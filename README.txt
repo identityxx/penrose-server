@@ -12,4 +12,4 @@ It provides namespace federation within a single LDAP view.
 Documentation
 -------------
 
-Please find Penrose documentation online at: http://penrose.safehaus.org/Documentation.
+Please find Penrose documentation online at http://penrose.safehaus.org/Documentation.
