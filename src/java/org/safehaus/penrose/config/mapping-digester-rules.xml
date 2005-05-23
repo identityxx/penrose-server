@@ -1,0 +1,63 @@
+<?xml version="1.0"?>
+<!--
+
+ Copyright (c) 1998-2005, Verge Lab., LLC.
+ All rights reserved.
+
+<!DOCTYPE digester-rules PUBLIC
+  "-//Jakarta Apache //DTD digester-rules XML V1.0//EN"
+  "digester-rules.dtd">
+-->
+<digester-rules>
+
+	<pattern value="*/entry">
+
+		<object-create-rule classname="org.safehaus.penrose.mapping.EntryDefinition" />
+		<set-properties-rule />
+
+		<pattern value="script">
+			<call-method-rule methodname="setScript" paramcount="0" />
+		</pattern>
+
+		<pattern value="oc">
+			<call-method-rule methodname="addObjectClass" paramcount="0" />
+		</pattern>
+
+		<pattern value="at">
+
+			<object-create-rule classname="org.safehaus.penrose.mapping.AttributeDefinition" />
+			<set-properties-rule />
+
+            <call-method-rule pattern="expression" methodname="setExpression" paramcount="0" />
+			<set-next-rule methodname="addAttributeDefinition" />
+
+		</pattern>
+
+		<pattern value="source">
+
+			<object-create-rule classname="org.safehaus.penrose.mapping.Source" />
+			<set-properties-rule />
+
+			<pattern value="field">
+				<object-create-rule classname="org.safehaus.penrose.mapping.Field" />
+				<set-properties-rule />
+				<call-method-rule pattern="expression" methodname="setExpression" paramcount="0" />
+				<set-next-rule methodname="addField" />
+			</pattern>
+
+			<set-next-rule methodname="addSource" />
+		</pattern>
+
+		<pattern value="relationship">
+
+			<object-create-rule classname="org.safehaus.penrose.mapping.Relationship" />
+            <call-method-rule pattern="expression" methodname="setExpression" paramcount="0" />
+			<set-next-rule methodname="addRelationship" />
+
+		</pattern>
+
+		<set-next-rule methodname="addEntryDefinition" />
+
+	</pattern>
+
+</digester-rules>

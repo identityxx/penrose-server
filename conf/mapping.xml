@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+<!DOCTYPE mapping PUBLIC 
+	"-//Penrose/Penrose Server Configuration DTD 1.0//EN" 
+	"http://penrose.safehaus.org/dtd/penrose-mapping-config-1.0.dtd">
+-->
+
+<mapping>
+
+  <entry dn="dc=penrose,dc=safehaus,dc=org">
+    <oc>dcObject</oc>
+    <oc>organization</oc>
+    <at name="dc" rdn="true">
+      <expression>"penrose"</expression>
+    </at>
+    <at name="o">
+      <expression>"penrose"</expression>
+    </at>
+  </entry>
+
+  <entry dn="cn=manager,dc=penrose,dc=safehaus,dc=org">
+    <oc>person</oc>
+    <oc>inetOrgPerson</oc>
+    <at name="cn" rdn="true">
+      <expression>"manager"</expression>
+    </at>
+    <at name="userPassword">
+      <expression>"secret"</expression>
+    </at>
+  </entry>
+
+  <entry dn="ou=users,dc=penrose,dc=safehaus,dc=org">
+    <oc>organizationalUnit</oc>
+    <at name="ou" rdn="true">
+      <expression>"users"</expression>
+    </at>
+  </entry>
+
+  <entry dn="ou=groups,dc=penrose,dc=safehaus,dc=org">
+    <oc>organizationalUnit</oc>
+    <at name="ou" rdn="true">
+      <expression>"groups"</expression>
+    </at>
+  </entry>
+
+</mapping>

@@ -1,0 +1,170 @@
+<!--
+ Copyright (c) 1998-2005, Verge Lab., LLC.
+ All rights reserved.
+-->
+<project name="penrose" default="build" basedir=".">
+
+    <property name="build.compiler" value="jikes"/>
+    <property name="conf" value="test"/>
+    <property name="penrose.version" value="0.9"/>
+    <property name="penrose.home" value="/usr/local/penrose"/>
+    <property name="iscc.path" value="ISCC.exe"/>
+
+    <path id="lib.path">
+        <fileset dir="lib">
+            <include name="**/*.jar"/>
+        </fileset>
+        <pathelement location="lib/"/>
+    </path>
+
+    <path id="main.path">
+        <pathelement location="target/classes"/>
+    </path>
+
+    <path id="test.path">
+        <pathelement location="target/test/main/classes"/>
+    </path>
+
+    <target name="init">
+        <tstamp>
+            <format property="TODAY" pattern="yyyyMMdd"/>
+        </tstamp>
+    </target>
+
+    <target name="build" depends="init">
+        <javacc
+            target="src/java/org/safehaus/penrose/filter/item/ItemParser.jj"
+            javacchome="javacc"
+            outputdirectory="src/java/org/safehaus/penrose/filter/item"
+        />
+        <javacc
+            target="src/java/org/safehaus/penrose/filter/FilterParser.jj"
+            javacchome="javacc"
+            outputdirectory="src/java/org/safehaus/penrose/filter"
+        />
+        <javacc
+            target="src/java/org/safehaus/penrose/openldap/config/SlapdParser.jj"
+            javacchome="javacc"
+            outputdirectory="src/java/org/safehaus/penrose/openldap/config"
+        />
+        <mkdir dir="target/classes"/>
+        <javac
+            srcdir="src/java"
+            destdir="target/classes"
+            classpathref="lib.path"
+        />
+        <rmic
+            base="target/classes"
+            classname="org.safehaus.penrose.PenroseRemoteObject"
+            classpathref="lib.path"
+        />
+        <copy
+            todir="target/classes">
+			<fileset dir="src/java" includes="**/*.xml"/>
+        </copy>
+        <mkdir dir="target/test/main/classes"/>
+        <javac
+            srcdir="src/test/main/java"
+            destdir="target/test/main/classes">
+            <classpath refid="lib.path"/>
+            <classpath refid="main.path"/>
+        </javac>
+        <jar jarfile="target/penrose-${penrose.version}.jar">
+            <fileset dir="target/classes"/>
+        </jar>
+    </target>
+
+    <target name="docs">
+        <mkdir dir="target/javadoc"/>
+        <javadoc packagenames="org.safehaus.penrose.*"
+            sourcepath="src/java"
+            destdir="target/javadoc"
+            classpathref="lib.path">
+        </javadoc>
+    </target>
+
+    <target name="update" depends="build">
+        <copy
+            file="target/penrose-${penrose.version}.jar"
+            todir="${penrose.home}/lib">
+        </copy>
+    </target>
+
+    <target name="install" depends="build,docs">
+        <mkdir dir="target/dist"/>
+        <copy todir="target/dist" file="README.txt"/>
+        <copy todir="target/dist" file="LICENSE.txt"/>
+        <copy todir="target/dist" file="COPYING.txt"/>
+        <copy todir="target/dist" file="INSTALL-BINARY.txt"/>
+        <copy todir="target/dist/docs">
+            <fileset dir="docs" includes="*.url"/>
+        </copy>
+<!--
+        <copy todir="target/dist/docs/ietf">
+            <fileset dir="docs/ietf"/>
+        </copy>
+-->
+        <copy todir="target/dist/docs/javadoc">
+            <fileset dir="target/javadoc"/>
+        </copy>
+        <copy todir="target/dist/lib">
+            <fileset dir="lib"/>
+        </copy>
+        <copy todir="target/dist/lib"
+            file="target/penrose-${penrose.version}.jar">
+        </copy>
+        <copy todir="target/dist/conf">
+            <fileset dir="conf"/>
+        </copy>
+        <copy todir="target/dist/schema">
+            <fileset dir="schema"/>
+        </copy>
+        <copy todir="target/dist"
+            file="images/penrose.ico">
+        </copy>
+        <copy todir="target/dist/bin">
+            <fileset dir="bin"/>
+        </copy>
+        <chmod dir="target/dist/bin" perm="ugo+rx" includes="**/*.sh"/>
+        <copy todir="target/dist/samples">
+            <fileset dir="samples"/>
+        </copy>
+        <mkdir dir="target/dist/var"/>
+    </target>
+
+    <target name="dist-unix" depends="install">
+        <zip destfile="target/penrose-${penrose.version}.zip"
+            basedir="target/dist"/>
+        <tar destfile="target/penrose-${penrose.version}.tar">
+            <tarfileset dir="target/dist"
+                prefix="penrose-${penrose.version}">
+            </tarfileset>
+        </tar>
+        <gzip destfile="target/penrose-${penrose.version}.tar.gz"
+            src="target/penrose-${penrose.version}.tar"/>
+    </target>
+
+    <target name="dist-win32" depends="install">
+        <echo message="Creating target/penrose-${penrose.version}.exe"/>
+        <exec executable="${iscc.path}" os="Windows NT,Windows 2000,Windows XP,Windows 2003">
+            <arg line="/Q penrose.iss"/>
+        </exec>
+    </target>
+
+    <target name="dist" depends="dist-unix,dist-win32">
+    </target>
+    
+    <target name="test-load" depends="build">
+        <java
+            classname="org.safehaus.penrose.load.BindTest">
+            <classpath refid="lib.path"/>
+            <classpath refid="main.path"/>
+            <classpath refid="test.path"/>
+        </java>
+    </target>
+
+    <target name="clean" depends="init">
+        <delete dir="target"/>
+    </target>
+
+</project>

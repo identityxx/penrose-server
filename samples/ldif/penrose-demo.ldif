@@ -1,0 +1,35 @@
+dn: dc=my-domain,dc=com
+objectClass: dcObject
+objectClass: organization
+dc: my-domain
+o: my-domain
+
+dn: ou=users,dc=my-domain,dc=com
+objectClass: organizationalUnit
+ou: users
+
+dn: cn=George Washington, ou=users,dc=my-domain,dc=com
+cn: George Washington
+sn: Washington
+objectClass: person
+userPassword: usa
+
+dn: cn=James Bond, ou=users,dc=my-domain,dc=com
+cn: James Bond
+sn: Bond
+objectClass: person
+userPassword: 007
+
+dn: ou=groups,dc=my-domain,dc=com
+objectClass: organizationalUnit
+ou: groups
+
+dn: cn=US Presidents, ou=groups,dc=my-domain,dc=com
+cn: US Presidents
+objectClass: groupOfUniqueNames
+uniqueMember: cn=George Washington,ou=users,dc=my-domain,dc=com
+
+dn: cn=British Agents, ou=groups,dc=my-domain,dc=com
+cn: British Agents
+objectClass: groupOfUniqueNames
+uniqueMember: cn=James Bond,ou=users,dc=my-domain,dc=com

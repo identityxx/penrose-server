@@ -1,0 +1,80 @@
+options {
+	LOOKAHEAD              = 10;
+	FORCE_LA_CHECK         = true;
+	SANITY_CHECK           = true;
+	DEBUG_PARSER           = false;
+	DEBUG_TOKEN_MANAGER    = false;
+	STATIC                 = false;
+}
+
+PARSER_BEGIN(SlapdParser)
+
+/**
+ * Copyright (c) 1998-2005, Verge Lab., LLC.
+ * All rights reserved.
+ */
+package org.safehaus.penrose.openldap.config;
+
+import java.io.*;
+import java.util.*;
+
+/**
+<pre>
+
+</pre>
+*/
+
+public class SlapdParser {
+
+}
+
+PARSER_END(SlapdParser)
+
+TOKEN : /* name */
+{
+	<NAME: (["A"-"Z","a"-"z","_"])(["A"-"Z","a"-"z","_","0"-"9"])* >
+}
+
+TOKEN : /* value */
+{
+	<VALUE: (~[" ","\t"])+ >
+}
+
+TOKEN : /* quoted value */
+{
+	<QDVALUE: "\"" (~["\""])+ "\"" >
+}
+
+TOKEN : /* whitespaces */
+{
+	<WS: ([" ","\t"])+ >
+}
+
+/**
+ * Name Value Configuration Item
+ * @return String array (of size 3) containing:
+ *          [0] name
+ *          [1] whitespace
+ *          [2] value
+ */
+String[] NameValue() :
+{
+	Token name, ws, value;
+	String[] result = new String[3];
+}
+{
+	(name = <NAME> | name = <VALUE>)
+	ws = <WS> 
+	(value = <VALUE> | value = <QDVALUE> | value = <NAME>)
+	{
+		result[0] = name.toString();
+		result[1] = ws.toString();
+		String s = value.toString();
+		if (s.startsWith("\"") && s.endsWith("\"")) {
+			s = s.substring(1, s.length()-1);
+		}
+		result[2] = s;
+		return result;
+	}
+}
+

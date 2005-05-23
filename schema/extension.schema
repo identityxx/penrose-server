@@ -1,0 +1,146 @@
+# This file can be used to define an objects to support MS/Outlook,
+# Netscape Communicator, and PAM.
+#
+# The first object type, "officePerson" is used to support the MS/Outlook email 
+# address book LDAP interface.
+# 
+# Requires files : core.schema, cosine.schema, inetorgperson.schema, 
+#                  officeperson.schema
+# Requires objects:
+# Modify: 
+# cosine.schema
+#    NAME ( 'pager' 'pagerTelephoneNumber' 'pagerPhone' )
+#
+# core.schema:
+#    NAME ( 'telephoneNumber' 'xmozillaanyphone' )
+#    NAME ( 'uid' 'userid' 'ntuid')
+#    NAME ( 'telephoneNumber' 'xmozillaanyphone' )
+#
+# nis.schema:
+#    NAME ( 'uidNumber' 'rid' )
+
+# MS/Active Directory schema:
+# objectClass: user
+#    objectSid:: AQUAAAAAAAUVAAAAmwvBHlQZDilDFwoyUAQAAA==
+# objectClass: computer
+# objectClass: group
+#    groupType: -2147483646
+
+# Author Greg Ippolito
+#
+# Extentions to support MS/Outlook using openldap experimental OID's
+
+attributetype ( 1.3.6.1.4.1.4203.666.100.121
+        NAME ( 'rdn' )
+        SUP name )
+
+attributetype ( 1.3.6.1.4.1.4203.666.100.122
+        NAME ( 'otherFacsimiletelephoneNumber' )
+        SUP telephoneNumber )
+
+attributetype ( 1.3.6.1.4.1.4203.666.100.123
+        NAME ( 'IPPhone' )
+        SUP telephoneNumber )
+
+# This attribute handles MS/Outlook and Netscape Communicator
+
+attributetype ( 1.3.6.1.4.1.4203.666.100.124
+        NAME ( 'URL' 'homeUrl' )
+        SUP name )
+
+attributetype ( 1.3.6.1.4.1.4203.666.100.125
+        NAME ( 'comment' )
+        SUP name )
+
+attributetype ( 1.3.6.1.4.1.4203.666.100.126
+        NAME ( 'conferenceInformation' )
+        SUP name )
+
+attributetype ( 1.3.6.1.4.1.4203.666.100.127
+        NAME ( 'reports' )
+        SUP manager )
+
+objectclass     ( 1.3.6.1.4.1.4203.666.100.1
+    NAME 'officePerson'
+        DESC 'Office employee or computer user'
+    SUP inetOrgPerson
+    STRUCTURAL
+        MAY  ( c $
+               rdn $
+               otherFacsimiletelephoneNumber $ 
+               IPPhone $ 
+               URL $ 
+               comment $ 
+               reports $
+               conferenceInformation )
+        )
+
+# SAMBA:
+#
+# Samba | Existing attribute | Schema file
+# ntuid | uid                | core.schema
+# rid   | uidNumber          | nis.schema
+# There is a conflict with loginShell. posixAccount would hold /bin/bash
+# while sambaAccount would hold /bin/pleurop
+
+#attributetype ( 1.3.6.1.4.1.4203.666.100.101
+#        NAME ( 'lmpassword' )
+#        SUP userPassword )
+#
+#attributetype ( 1.3.6.1.4.1.4203.666.100.102
+#        NAME ( 'ntpasswd' )
+#        SUP userPassword )
+#
+#objectclass     ( 1.3.6.1.4.1.4203.666.100.2
+#    NAME 'sambaAccount'
+#        DESC 'Samba user account'
+#    STRUCTURAL
+#        MAY  ( ntuid $ rid $ lmpassword $ ntpasswd $ loginshell )
+#        )
+
+# Extentions to support Netscape Communicator. 
+#
+# Note that some current attribute definitions may be modified to avoid 
+# duplication which would break database normalization:
+#
+#           Netscape   | inetOrgPerson | Microsoft | Schema file
+#           cellPhone  | mobile        |           | cosine.schema
+#           pagerPhone | pager         |           | cosine.schema
+#           homeUrl    | seeAlso       | URL       | core.schema
+#                        (distinguishedName)
+#           xmozillaanyphone|telephoneNumber       | core.schema
+# The inetorgperson.schema has a dificulty with the seeAlso attribute because 
+# it references a DN rather than the actual URL, thus I defined a new attribute
+# for ( 'homeUrl' 'URL' ) in this file.
+
+# Alter the schema files to add name as attribute is already defined:
+# Thus add cellPhone and pagerPhone to existing definitions in cosine.schema
+# and add homeUrl and xmozillaanyphone to existing definitions in core.schema.
+
+attributetype ( 1.3.6.1.4.1.4203.666.100.151
+            NAME ( 'xmozillanickname' )
+            EQUALITY caseIgnoreMatch
+            SUBSTR caseIgnoreSubstringsMatch
+            SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{1024} )
+ 
+attributetype ( 1.3.6.1.4.1.4203.666.100.152
+            NAME 'xmozillausehtmlmail'
+            EQUALITY caseIgnoreMatch
+            SUBSTR caseIgnoreSubstringsMatch
+            SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{64} )
+ 
+objectclass     ( 1.3.6.1.4.1.4203.666.100.5
+    NAME 'zillaPerson'
+        DESC 'Netscape Communicator Extensions'
+    SUP officePerson
+    STRUCTURAL
+        MAY  ( cellPhone $
+               pagerPhone $
+               description $
+               homeUrl $
+               xmozillaanyphone $
+               xmozillanickname $
+               xmozillausehtmlmail ) 
+        )
+
+

@@ -1,0 +1,40 @@
+<?xml version="1.0"?>
+<!--
+
+ Copyright (c) 1998-2005, Verge Lab., LLC.
+ All rights reserved.
+
+<!DOCTYPE digester-rules PUBLIC
+  "-//Jakarta Apache //DTD digester-rules XML V1.0//EN"
+  "digester-rules.dtd">
+-->
+<digester-rules>
+
+	<pattern value="sources">
+
+		<pattern value="source">
+
+			<object-create-rule classname="org.safehaus.penrose.mapping.SourceDefinition" />
+			<set-properties-rule />
+            <call-method-rule pattern="connection-name" methodname="setConnectionName" paramcount="0" />
+			<call-method-rule pattern="description" methodname="setDescription" paramcount="0" />
+
+			<pattern value="field">
+				<object-create-rule classname="org.safehaus.penrose.mapping.FieldDefinition" />
+				<set-properties-rule />
+				<set-next-rule methodname="addFieldDefinition" />
+			</pattern>
+
+			<pattern value="parameter">
+				<call-method-rule methodname="setParameter" paramcount="2" />
+				<call-param-rule pattern="param-name" paramnumber="0"/>
+				<call-param-rule pattern="param-value" paramnumber="1"/>
+			</pattern>
+
+			<set-next-rule methodname="addSourceDefinition" />
+
+		</pattern>
+
+	</pattern>
+
+</digester-rules>

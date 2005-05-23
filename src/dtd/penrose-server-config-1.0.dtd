@@ -1,0 +1,54 @@
+<?xml version='1.0' encoding='utf-8'?>
+
+<!-- Penrose Server Configuration DTD.
+
+<!DOCTYPE server PUBLIC 
+  "-//Penrose/Penrose Server Configuration DTD 1.0//EN"
+  "http://penrose.safehaus.org/dtd/penrose-server-config-1.0.dtd">
+
+An instance of this XML document contain the configuration 
+for Penrose server instance.
+-->
+
+<!-- Document Root -->
+<!ELEMENT server (cache, adapter*, connection*, root)>
+
+<!-- Cache -->
+<!ELEMENT cache (parameter*)>
+ <!ATTLIST cache driver CDATA #REQUIRED>
+ <!ATTLIST cache url CDATA #REQUIRED>
+ <!ATTLIST cache username CDATA #REQUIRED>
+ <!ATTLIST cache password CDATA #REQUIRED>
+ <!ATTLIST cache loadOnStartup (true|false) #REQUIRED>
+ <!ATTLIST cache poolSize CDATA #REQUIRED>
+ <!ATTLIST cache testQuery CDATA #REQUIRED>
+ <!ATTLIST cache cacheExpiration CDATA #REQUIRED>
+ 
+<!-- Adapter -->
+<!ELEMENT adapter EMPTY>
+ <!ATTLIST adapter type CDATA #REQUIRED>
+ <!ATTLIST adapter implClass CDATA #REQUIRED>
+
+<!-- Connection -->
+<!ELEMENT connection (description?, pool-size?, test-query?, parameter*)>
+ <!ATTLIST connection name CDATA #REQUIRED>
+ <!ATTLIST connection type CDATA #REQUIRED>
+
+<!-- Connection Parameter -->
+<!ELEMENT parameter (param-name, param-value)>
+<!ELEMENT param-name (#PCDATA)>
+<!ELEMENT param-value (#PCDATA)>
+
+<!-- Root -->
+<!ELEMENT root EMPTY>
+ <!ATTLIST root dn CDATA #REQUIRED>
+ <!ATTLIST root password CDATA #REQUIRED>
+
+<!-- Description -->
+<!ELEMENT description (#PCDATA)>
+
+<!-- Pool Size -->
+<!ELEMENT pool-size (#PCDATA)>
+
+<!-- Test Query -->
+<!ELEMENT test-query (#PCDATA)>

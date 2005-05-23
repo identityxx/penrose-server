@@ -1,0 +1,51 @@
+<?xml version="1.0"?>
+<!--
+
+ Copyright (c) 1998-2005, Verge Lab., LLC.
+ All rights reserved.
+
+<!DOCTYPE digester-rules PUBLIC
+  "-//Jakarta Apache //DTD digester-rules XML V1.0//EN"
+  "digester-rules.dtd">
+-->
+<digester-rules>
+
+	<pattern value="modules">
+
+		<pattern value="module">
+
+			<object-create-rule classname="org.safehaus.penrose.module.GenericModuleConfig" />
+
+            <set-properties-rule/>
+
+            <call-method-rule pattern="module-name" methodname="setModuleName" paramcount="0" />
+            <call-method-rule pattern="module-class" methodname="setModuleClass" paramcount="0" />
+
+			<pattern value="parameter">
+				<call-method-rule methodname="setParameter" paramcount="2" />
+				<call-param-rule pattern="param-name" paramnumber="0"/>
+				<call-param-rule pattern="param-value" paramnumber="1"/>
+			</pattern>
+
+			<set-next-rule methodname="addModuleConfig" />
+
+		</pattern>
+
+		<pattern value="module-mapping">
+
+			<object-create-rule classname="org.safehaus.penrose.module.GenericModuleMapping" />
+
+            <set-properties-rule/>
+
+            <call-method-rule pattern="module-name" methodname="setModuleName" paramcount="0" />
+            <call-method-rule pattern="base-dn" methodname="setBaseDn" paramcount="0" />
+            <call-method-rule pattern="filter" methodname="setFilter" paramcount="0" />
+            <call-method-rule pattern="scope" methodname="setScope" paramcount="0" />
+
+			<set-next-rule methodname="addModuleMapping" />
+
+		</pattern>
+
+	</pattern>
+
+</digester-rules>

@@ -1,0 +1,6 @@
+Penrose is licensed to you by Verge Lab, LLC.  under the
+Open Software License version 2.1, a copy of which is enclosed in the
+file LICENSE.txt.
+
+(If you cannot or do not wish to meet the requirements of the OSL 2.1,
+contact info@vergenet.com for alternative terms.)

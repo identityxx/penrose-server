@@ -1,0 +1,101 @@
+<?xml version="1.0"?>
+<!--
+
+ Copyright (c) 1998-2005, Verge Lab., LLC.
+ All rights reserved.
+
+<!DOCTYPE digester-rules PUBLIC
+  "-//Jakarta Apache //DTD digester-rules XML V1.0//EN"
+  "digester-rules.dtd">
+-->
+<digester-rules>
+
+	<pattern value="server">
+
+		<!-- interpreter -->
+		<pattern value="interpreter">
+			<object-create-rule classname="org.safehaus.penrose.interpreter.InterpreterConfig" />
+			<set-properties-rule/>
+            <call-method-rule pattern="interpreter-name" methodname="setInterpreterName" paramcount="0" />
+            <call-method-rule pattern="interpreter-class" methodname="setInterpreterClass" paramcount="0" />
+			<call-method-rule pattern="description" methodname="setDescription" paramcount="0" />
+			<pattern value="parameter">
+				<call-method-rule methodname="setParameter" paramcount="2" />
+				<call-param-rule pattern="param-name" paramnumber="0"/>
+				<call-param-rule pattern="param-value" paramnumber="1"/>
+			</pattern>
+			<set-next-rule methodname="addInterpreterConfig" />
+		</pattern>
+
+		<!-- engine -->
+		<pattern value="engine">
+			<object-create-rule classname="org.safehaus.penrose.engine.EngineConfig" />
+			<set-properties-rule/>
+            <call-method-rule pattern="engine-name" methodname="setEngineName" paramcount="0" />
+            <call-method-rule pattern="engine-class" methodname="setEngineClass" paramcount="0" />
+			<call-method-rule pattern="description" methodname="setDescription" paramcount="0" />
+			<call-method-rule pattern="add-handler-class" methodname="setAddHandlerClass" paramcount="0" />
+			<call-method-rule pattern="bind-handler-class" methodname="setBindHandlerClass" paramcount="0" />
+			<call-method-rule pattern="compare-handler-class" methodname="setCompareHandlerClass" paramcount="0" />
+			<call-method-rule pattern="delete-handler-class" methodname="setDeleteHandlerClass" paramcount="0" />
+			<call-method-rule pattern="modify-handler-class" methodname="setModifyHandlerClass" paramcount="0" />
+			<call-method-rule pattern="modrdn-handler-class" methodname="setModRdnHandlerClass" paramcount="0" />
+			<call-method-rule pattern="search-handler-class" methodname="setSearchHandlerClass" paramcount="0" />
+			<pattern value="parameter">
+				<call-method-rule methodname="setParameter" paramcount="2" />
+				<call-param-rule pattern="param-name" paramnumber="0"/>
+				<call-param-rule pattern="param-value" paramnumber="1"/>
+			</pattern>
+			<set-next-rule methodname="addEngineConfig" />
+		</pattern>
+
+		<!-- cache -->
+		<pattern value="cache">
+			<object-create-rule classname="org.safehaus.penrose.cache.CacheConfig" />
+			<set-properties-rule/>
+            <call-method-rule pattern="cache-name" methodname="setCacheName" paramcount="0" />
+            <call-method-rule pattern="cache-class" methodname="setCacheClass" paramcount="0" />
+			<call-method-rule pattern="description" methodname="setDescription" paramcount="0" />
+			<pattern value="parameter">
+				<call-method-rule methodname="setParameter" paramcount="2" />
+				<call-param-rule pattern="param-name" paramnumber="0"/>
+				<call-param-rule pattern="param-value" paramnumber="1"/>
+			</pattern>
+			<set-next-rule methodname="addCacheConfig" />
+		</pattern>
+
+		<!-- adapter -->
+		<pattern value="adapter">
+			<object-create-rule classname="org.safehaus.penrose.connection.AdapterConfig" />
+			<set-properties-rule/>
+            <call-method-rule pattern="adapter-name" methodname="setAdapterName" paramcount="0" />
+            <call-method-rule pattern="adapter-class" methodname="setAdapterClass" paramcount="0" />
+			<call-method-rule pattern="description" methodname="setDescription" paramcount="0" />
+			<set-next-rule methodname="addAdapterConfig" />
+		</pattern>
+
+		<!-- connection -->
+		<pattern value="connection">
+			<object-create-rule classname="org.safehaus.penrose.connection.ConnectionConfig" />
+			<set-properties-rule/>
+            <call-method-rule pattern="connection-name" methodname="setConnectionName" paramcount="0" />
+            <call-method-rule pattern="adapter-name" methodname="setAdapterName" paramcount="0" />
+			<call-method-rule pattern="description" methodname="setDescription" paramcount="0" />
+			<pattern value="parameter">
+				<call-method-rule methodname="setParameter" paramcount="2" />
+				<call-param-rule pattern="param-name" paramnumber="0"/>
+				<call-param-rule pattern="param-value" paramnumber="1"/>
+			</pattern>
+			<set-next-rule methodname="addConnectionConfig" />
+		</pattern>
+
+		<!-- root -->
+		<pattern value="root">
+			<set-properties-rule/>
+            <call-method-rule pattern="root-dn" methodname="setRootDn" paramcount="0" />
+            <call-method-rule pattern="root-password" methodname="setRootPassword" paramcount="0" />
+		</pattern>
+
+	</pattern>
+
+</digester-rules>

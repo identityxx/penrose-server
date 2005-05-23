@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+<!DOCTYPE mapping PUBLIC "-//Penrose/Penrose Server Configuration DTD 1.0//EN" "http://penrose.safehaus.org/dtd/penrose-sources-config-1.0.dtd">
+-->
+
+<sources>
+
+  <source name="u">
+
+    <connection-name>MySQL</connection-name>
+
+    <field name="username" primaryKey="true" />
+    <field name="firstName" />
+    <field name="lastName" />
+    <field name="password" />
+
+    <parameter>
+      <param-name>tableName</param-name>
+      <param-value>users</param-value>
+    </parameter>
+
+  </source>
+
+  <source name="g">
+
+    <connection-name>MySQL</connection-name>
+
+    <field name="groupname" primaryKey="true" />
+    <field name="description" />
+
+    <parameter>
+      <param-name>tableName</param-name>
+      <param-value>groups</param-value>
+    </parameter>
+
+  </source>
+
+  <source name="ug">
+
+    <connection-name>MySQL</connection-name>
+
+    <field name="groupname" primaryKey="true" />
+    <field name="username" primaryKey="true" />
+
+    <parameter>
+      <param-name>tableName</param-name>
+      <param-value>usergroups</param-value>
+    </parameter>
+
+  </source>
+
+</sources>

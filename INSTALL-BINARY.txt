@@ -1,0 +1,47 @@
+Installing Penrose on Windows
+-----------------------------
+
+On Windows platforms, double-click the installer program (penrose-0.9.exe).
+Select an installation directory (e.g. C:\Program Files\Penrose).
+We will refer the installation directory as PENROSE_HOME.
+
+Installing Penrose on Unix
+--------------------------
+
+On Linux and other Unix-like platforms, create an installation directory
+(e.g. /usr/local/penrose), then unzip/untar the distribution file.
+
+  tar xzvf penrose-0.9.tar.gz
+
+We will refer the installation directory as PENROSE_HOME.
+
+Running Penrose
+---------------
+
+On Windows platforms, go to Start -> Programs -> Penrose -> Penrose Server.
+
+On other platforms, go to PENROSE_HOME, execute:
+
+  sh bin/penrose.sh
+
+If you need to stop the server simply press Ctrl-C on the server window.
+
+Connecting to Penrose
+---------------------
+
+Use your favorite LDAP browser and enter the following settings:
+
+  Hostname      : localhost
+  Port          : 10389
+  Bind DN       : uid=admin,ou=system
+  Bind Password : secret
+  Suffix        : dc=penrose,dc=safehaus,dc=org
+
+Demo Setup
+----------
+
+Make sure you have a MySQL server running on your local machine. Create a MySQL user called "penrose"
+with password "penrose". Create a MySQL database called "penrose_demo". Populate the database with the
+SQL script provided in PENROSE_HOME/samples/sql.
+
+Copy the files in PENROSE_HOME/samples/conf into PENROSE_HOME/conf. Restart Penrose Server.

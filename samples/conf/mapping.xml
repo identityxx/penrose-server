@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+<!DOCTYPE mapping PUBLIC 
+	"-//Penrose/Penrose Server Configuration DTD 1.0//EN" 
+	"http://penrose.safehaus.org/dtd/penrose-mapping-config-1.0.dtd">
+-->
+
+<mapping>
+
+  <entry dn="dc=penrose,dc=safehaus,dc=org">
+    <oc>dcObject</oc>
+    <oc>organization</oc>
+    <at name="dc" rdn="true">
+      <expression>"penrose"</expression>
+    </at>
+    <at name="o">
+      <expression>"penrose"</expression>
+    </at>
+  </entry>
+
+  <entry dn="cn=manager,dc=penrose,dc=safehaus,dc=org">
+    <oc>person</oc>
+    <oc>inetOrgPerson</oc>
+    <at name="cn" rdn="true">
+      <expression>"manager"</expression>
+    </at>
+    <at name="userPassword">
+      <expression>"secret"</expression>
+    </at>
+  </entry>
+
+  <entry dn="ou=users,dc=penrose,dc=safehaus,dc=org">
+    <oc>organizationalUnit</oc>
+    <at name="ou" rdn="true">
+      <expression>"users"</expression>
+    </at>
+  </entry>
+
+  <entry dn="uid=...,ou=users,dc=penrose,dc=safehaus,dc=org">
+    <oc>person</oc>
+    <oc>inetOrgPerson</oc>
+    <at name="uid" rdn="true">
+      <expression>u.username</expression>
+    </at>
+    <at name="cn">
+      <expression>u.firstName+" "+u.lastName</expression>
+    </at>
+    <at name="sn">
+      <expression>u.lastName</expression>
+    </at>
+    <at name="userPassword">
+      <expression>u.password</expression>
+    </at>
+    <source name="u">
+      <field name="username">
+        <expression>uid</expression>
+      </field>
+      <field name="firstName">
+        <expression>
+if (cn == void || cn == null) return null;
+int i = cn.lastIndexOf(" ");
+return cn.substring(0, i);
+        </expression>
+      </field>
+      <field name="lastName">
+        <expression>
+if (cn == void || cn == null) return null;
+int i = cn.lastIndexOf(" ");
+return cn.substring(i+1);
+        </expression>
+      </field>
+      <field name="password">
+        <expression>userPassword</expression>
+      </field>
+    </source>
+  </entry>
+
+  <entry dn="ou=groups,dc=penrose,dc=safehaus,dc=org">
+    <oc>organizationalUnit</oc>
+    <at name="ou" rdn="true">
+      <expression>"groups"</expression>
+    </at>
+  </entry>
+
+  <entry dn="cn=...,ou=groups,dc=penrose,dc=safehaus,dc=org">
+    <oc>groupOfUniqueNames</oc>
+    <at name="cn" rdn="true">
+      <expression>g.groupname</expression>
+    </at>
+    <at name="description">
+      <expression>g.description</expression>
+    </at>
+    <at name="uniqueMember">
+      <expression>
+if (ug == void || ug == null) return null;
+return "uid="+ug.username+",ou=users,dc=penrose,dc=safehaus,dc=org";
+      </expression>
+    </at>
+
+    <source name="g">
+      <field name="groupname">
+        <expression>cn</expression>
+      </field>
+      <field name="description">
+        <expression>description</expression>
+      </field>
+    </source>
+
+    <source name="ug">
+      <field name="groupname">
+        <expression>cn</expression>
+      </field>
+      <field name="username">
+        <expression>
+if (uniqueMember == void || uniqueMember == null) return null;
+int i = uniqueMember.indexOf("=");
+int j = uniqueMember.indexOf(",", i+1);
+return uniqueMember.substring(i+1, j);
+        </expression>
+      </field>
+    </source>
+
+    <relationship>
+      <expression>g.groupname = ug.groupname</expression>
+    </relationship>
+
+  </entry>
+
+</mapping>

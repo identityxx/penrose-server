@@ -1,0 +1,38 @@
+<?xml version='1.0' encoding='utf-8'?>
+
+<!-- Penrose Modules Configuration DTD.
+
+<!DOCTYPE server PUBLIC 
+  "-//Penrose/Penrose Modules Configuration DTD 1.0//EN"
+  "http://penrose.safehaus.org/dtd/penrose-modules-config-1.0.dtd">
+
+An instance of this XML document contain the modules configuration
+for Penrose server instance.
+-->
+
+<!-- Document Root -->
+<!ELEMENT modules (module*, module-mapping*)>
+
+<!-- Module -->
+<!ELEMENT module (module-name, module-class, description?, parameter*)>
+
+<!-- Module Name -->
+<!ELEMENT module-name (#PCDATA)>
+
+<!-- Module Class -->
+<!ELEMENT module-class (#PCDATA)>
+
+<!-- Description -->
+<!ELEMENT description (#PCDATA)>
+
+<!-- Parameter -->
+<!ELEMENT parameter (param-name, param-value)>
+
+<!ELEMENT param-name (#PCDATA)>
+<!ELEMENT param-value (#PCDATA)>
+
+<!-- Module -->
+<!ELEMENT module-mapping (module-name, dn-pattern)>
+
+<!-- DN Pattern -->
+<!ELEMENT dn-pattern (#PCDATA)>
