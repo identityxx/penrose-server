@@ -292,19 +292,8 @@ public class DefaultModifyHandler implements ModifyHandler {
             if (result != LDAPException.SUCCESS) return result;
         }
 
-        Collection oldRows = engineContext.getTransformEngine().convert(oldValues);
-
-        for (Iterator i=oldRows.iterator(); i.hasNext(); ) {
-            Row row = (Row)i.next();
-            engine.getCache().delete(entry, row, date);
-        }
-
-        Collection newRows = engineContext.getTransformEngine().convert(newValues);
-
-        for (Iterator i=newRows.iterator(); i.hasNext(); ) {
-            Row row = (Row)i.next();
-            engine.getCache().insert(entry, row, date);
-        }
+        engine.getCache().delete(entry, oldValues, date);
+        engine.getCache().insert(entry, newValues, date);
 
         return LDAPException.SUCCESS;
     }
@@ -357,14 +346,14 @@ public class DefaultModifyHandler implements ModifyHandler {
 
             // Add rows
             for (Iterator i = addRows.iterator(); i.hasNext();) {
-                Map pk = (Map) i.next();
-                Row newEntry = (Row) newEntries.get(pk);
-                log.debug("ADDING ROW: " + newEntry.toString());
+                Row pk = (Row) i.next();
+                AttributeValues newEntry = (AttributeValues) newEntries.get(pk);
+                log.debug("ADDING ROW: " + newEntry);
 
-                AttributeValues attributes = engineContext.getTransformEngine().convert(newEntry);
+                //AttributeValues attributes = engineContext.getTransformEngine().convert(newEntry);
 
                 // Add row to source table in the source database/directory
-                int rc = source.add(attributes);
+                int rc = source.add(newEntry);
                 if (rc != LDAPException.SUCCESS) return rc;
 
                 // Add row to source table in the cache
@@ -373,14 +362,14 @@ public class DefaultModifyHandler implements ModifyHandler {
 
             // Remove rows
             for (Iterator i = removeRows.iterator(); i.hasNext();) {
-                Map pk = (Map) i.next();
-                Row oldEntry = (Row) oldEntries.get(pk);
-                log.debug("DELETE ROW: " + oldEntry.toString());
+                Row pk = (Row) i.next();
+                AttributeValues oldEntry = (AttributeValues) oldEntries.get(pk);
+                log.debug("DELETE ROW: " + oldEntry);
 
-                AttributeValues attributes = engineContext.getTransformEngine().convert(oldEntry);
+                //AttributeValues attributes = engineContext.getTransformEngine().convert(oldEntry);
 
                 // Delete row from source table in the source database/directory
-                int rc = source.delete(attributes);
+                int rc = source.delete(oldEntry);
                 if (rc != LDAPException.SUCCESS)
                     return rc;
 
@@ -390,20 +379,21 @@ public class DefaultModifyHandler implements ModifyHandler {
 
             // Replace rows
             for (Iterator i = replaceRows.iterator(); i.hasNext();) {
-                Map pk = (Map) i.next();
-                Row oldEntry = (Row) oldEntries.get(pk);
-                Row newEntry = (Row) newEntries.get(pk);
+                Row pk = (Row) i.next();
+                AttributeValues oldEntry = (AttributeValues) oldEntries.get(pk);
+                AttributeValues newEntry = (AttributeValues) newEntries.get(pk);
                 log.debug("REPLACE ROW: " + newEntry.toString());
 
-                AttributeValues oldAttributes = engineContext.getTransformEngine().convert(oldEntry);
-                AttributeValues newAttributes = engineContext.getTransformEngine().convert(newEntry);
+                //AttributeValues oldAttributes = engineContext.getTransformEngine().convert(oldEntry);
+                //AttributeValues newAttributes = engineContext.getTransformEngine().convert(newEntry);
 
                 // Modify row from source table in the source database/directory
-                int rc = source.modify(oldAttributes, newAttributes);
+                int rc = source.modify(oldEntry, newEntry);
                 if (rc != LDAPException.SUCCESS) return rc;
 
                 // Modify row from source table in the cache
-                engine.getCache().update(source, oldEntry, newEntry, date);
+                engine.getCache().delete(source, oldEntry, date);
+                engine.getCache().insert(source, newEntry, date);
             }
 
         } finally {

@@ -21,7 +21,7 @@ public class Row {
     }
 
     public Row(Map values) {
-        values.putAll(values);
+        this.values.putAll(values);
     }
 
     public Row(Row row) {
@@ -54,5 +54,16 @@ public class Row {
 
     public String toString() {
         return values.toString();
+    }
+
+    public int hashCode() {
+        return values.hashCode();
+    }
+
+    public boolean equals(Object object) {
+        if (object == null) return false;
+        if (!(object instanceof Row)) return false;
+        Row row = (Row)object;
+        return values.equals(row.values);
     }
 }

@@ -102,12 +102,7 @@ public class DefaultDeleteHandler implements DeleteHandler {
             if (rc != LDAPException.SUCCESS) return rc;
         }
 
-        Collection rows = engineContext.getTransformEngine().convert(values);
-
-        for (Iterator i=rows.iterator(); i.hasNext(); ) {
-            Row row = (Row)i.next();
-            engine.getCache().delete(entry, row, date);
-        }
+        engine.getCache().delete(entry, values, date);
 
         return LDAPException.SUCCESS;
     }
@@ -140,15 +135,15 @@ public class DefaultDeleteHandler implements DeleteHandler {
 	        log.debug("Rows to be deleted from "+source.getName()+": "+rows.size()+" rows");
 
 	        for (Iterator i=rows.keySet().iterator(); i.hasNext(); ) {
-	            Map pk = (Map)i.next();
-	            Row row = (Row)rows.get(pk);
+	            Row pk = (Row)i.next();
+	            AttributeValues attributes = (AttributeValues)rows.get(pk);
 
-                AttributeValues attributes = engineContext.getTransformEngine().convert(row);
+                //AttributeValues attributes = engineContext.getTransformEngine().convert(row);
 
 	            int rc = source.delete(attributes);
 	            if (rc != LDAPException.SUCCESS) return rc;
 
-	            engine.getCache().delete(source, row, date);
+	            engine.getCache().delete(source, attributes, date);
 	        }
 
         } finally {

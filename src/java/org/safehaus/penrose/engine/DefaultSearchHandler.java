@@ -419,7 +419,7 @@ public class DefaultSearchHandler implements SearchHandler {
         log.debug("--------------------------------------------------------------------------------------");
         log.debug("Getting entries from cache for "+entry.getDn()+" with "+filter);
 
-        MRSWLock lock = engine.getLock(engine.getCache().getTableNames(entry, false));
+        MRSWLock lock = engine.getLock(entry.getDn());
         lock.getReadLock(Penrose.WAIT_TIMEOUT);
 
         SearchResults results = new SearchResults();
@@ -644,7 +644,7 @@ public class DefaultSearchHandler implements SearchHandler {
         log.debug("--------------------------------------------------------------------------------------");
         log.debug("Joining sources ...");
 
-        MRSWLock lock = engine.getLock(engine.getCache().getTableNames(entry, false));
+        MRSWLock lock = engine.getLock(entry.getDn());
         lock.getWriteLock(Penrose.WAIT_TIMEOUT);
 
         try {

@@ -99,18 +99,22 @@ public class TransformEngine {
 
         if (pos < names.size()) {
 
+            // get each attribute's values
             String name = (String)names.get(pos);
             Collection c = (Collection)values.get(name);
+
             if (c.isEmpty()) {
                 c = new HashSet();
                 c.add(null);
             }
+
             if (crossProductDebug >= 65535) {
             	log.debug(name+": "+c);
             }
 
             for (Iterator iterator = c.iterator(); iterator.hasNext(); ) {
                 Object value = iterator.next();
+
                 temp.put(name, value);
 
                 convert(values, names, pos+1, temp, results);
@@ -121,8 +125,13 @@ public class TransformEngine {
             Row map = new Row(temp);
             results.add(map);
 
-            if (crossProductDebug >= 65535) {
+            //if (crossProductDebug >= 65535) {
             	log.debug("Generated: "+map);
+            //}
+
+        } else {
+            if (crossProductDebug >= 65535) {
+            	log.debug("Temp is empty: "+temp);
             }
         }
     }
@@ -137,7 +146,7 @@ public class TransformEngine {
      * @return
      * @throws Exception
      */
-    public boolean translate(Source source, Row row, Map pk, Row values) throws Exception {
+    public boolean translate(Source source, Row row, Row pk, Row values) throws Exception {
 
     	Interpreter interpreter = penrose.newInterpreter(row.getValues());
 
@@ -179,7 +188,7 @@ public class TransformEngine {
 
             if (field.isPrimaryKey()) {
                 if (value == null) return false;
-                pk.put(name, value);
+                pk.set(name, value);
             }
 
             values.set(name, value);
@@ -280,18 +289,19 @@ public class TransformEngine {
      */
     public Map transform(Source source, AttributeValues entry) throws Exception {
         Collection rows = convert(entry);
+        log.debug("Original rows: "+rows);
 
         Map map = new HashMap();
 
         for (Iterator i=rows.iterator(); i.hasNext(); ) {
             Row row = (Row)i.next();
-            Map pk = new HashMap();
+            Row pk = new Row();
             Row translatedRow = new Row();
 
             boolean validPK = translate(source, row, pk, translatedRow);
             if (!validPK) continue;
 
-            Set set = (Set)map.get(pk);
+            Collection set = (Collection)map.get(pk);
             if (set == null) {
                 set = new HashSet();
                 map.put(pk, set);
@@ -299,24 +309,24 @@ public class TransformEngine {
             set.add(translatedRow);
         }
 
-        log.debug("map : "+map);
+        log.debug("Valid rows: "+map.values());
 
         Map map2 = new HashMap();
 
         for (Iterator i=map.keySet().iterator(); i.hasNext(); ) {
-            Map pk = (Map)i.next();
+            Row pk = (Row)i.next();
             Set setOfRows = (Set)map.get(pk);
 
             AttributeValues values = new AttributeValues();
 
             for (Iterator j=setOfRows.iterator(); j.hasNext(); ) {
-                Map translatedRow = (Map)j.next();
+                Row translatedRow = (Row)j.next();
 
-                for (Iterator k=translatedRow.keySet().iterator(); k.hasNext(); ) {
+                for (Iterator k=translatedRow.getNames().iterator(); k.hasNext(); ) {
                     String name = (String)k.next();
                     String value = (String)translatedRow.get(name);
 
-                    Set set = (Set)values.get(name);
+                    Collection set = (Collection)values.get(name);
                     if (set == null) {
                         set = new HashSet();
                         values.set(name, set);
@@ -328,7 +338,7 @@ public class TransformEngine {
             map2.put(pk, values);
         }
 
-        log.debug("map2: "+map2);
+        log.debug("Translated rows: "+map2);
 
         return map2;
     }

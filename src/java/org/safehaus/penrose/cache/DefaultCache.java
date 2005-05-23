@@ -218,22 +218,26 @@ public class DefaultCache extends Cache {
         sourceExpirationHome.setExpiration(source, date);
     }
 
-    public void insert(Source source, Row row, Date date) throws Exception {
-        String tableName = getTableName(source, false);
-        SourceHome sourceHome = (SourceHome)sourceTables.get(tableName);
-        sourceHome.insert(row, date);
+    public void insert(Source source, AttributeValues values, Date date) throws Exception {
+        Collection rows = cacheContext.getTransformEngine().convert(values);
+
+        for (Iterator i=rows.iterator(); i.hasNext(); ) {
+            Row row = (Row)i.next();
+            String tableName = getTableName(source, false);
+            SourceHome sourceHome = (SourceHome)sourceTables.get(tableName);
+            sourceHome.insert(row, date);
+        }
     }
 
-    public void update(Source source, Row oldRow, Row newRow, Date date) throws Exception {
-        String tableName = getTableName(source, false);
-        SourceHome sourceHome = (SourceHome)sourceTables.get(tableName);
-        sourceHome.update(oldRow, newRow, date);
-    }
+    public void delete(Source source, AttributeValues values, Date date) throws Exception {
+        Collection rows = cacheContext.getTransformEngine().convert(values);
 
-    public void delete(Source source, Row row, Date date) throws Exception {
-        String tableName = getTableName(source, false);
-        SourceHome sourceHome = (SourceHome)sourceTables.get(tableName);
-        sourceHome.delete(row, date);
+        for (Iterator i=rows.iterator(); i.hasNext(); ) {
+            Row row = (Row)i.next();
+            String tableName = getTableName(source, false);
+            SourceHome sourceHome = (SourceHome)sourceTables.get(tableName);
+            sourceHome.delete(row, date);
+        }
     }
 
     public Collection search(EntryDefinition entry, Collection primaryKeys) throws Exception {
@@ -242,16 +246,30 @@ public class DefaultCache extends Cache {
         return r1.search(primaryKeys);
     }
 
+    public void insert(EntryDefinition entry, AttributeValues values, Date date) throws Exception {
+        Collection rows = cacheContext.getTransformEngine().convert(values);
+
+        for (Iterator i=rows.iterator(); i.hasNext(); ) {
+            Row row = (Row)i.next();
+            insert(entry, row, date);
+        }
+    }
+
     public void insert(EntryDefinition entry, Row row, Date date) throws Exception {
         String tableName = getTableName(entry, false);
         ResultHome resultHome = (ResultHome)resultTables.get(tableName);
         resultHome.insert(row, date);
     }
 
-    public void delete(EntryDefinition entry, Row row, Date date) throws Exception {
-        String tableName = getTableName(entry, false);
-        ResultHome resultHome = (ResultHome)resultTables.get(tableName);
-        resultHome.delete(row, date);
+    public void delete(EntryDefinition entry, AttributeValues values, Date date) throws Exception {
+        Collection rows = cacheContext.getTransformEngine().convert(values);
+
+        for (Iterator i=rows.iterator(); i.hasNext(); ) {
+            Row row = (Row)i.next();
+            String tableName = getTableName(entry, false);
+            ResultHome resultHome = (ResultHome)resultTables.get(tableName);
+            resultHome.delete(row, date);
+        }
     }
 
     public void delete(EntryDefinition entry, String filter, Date date) throws Exception {
@@ -699,28 +717,6 @@ public class DefaultCache extends Cache {
      */
     public String getTableName(Source source, boolean temporary) {
         return source.getName() + (temporary ? "__tmp" : "");
-    }
-
-    public void postCacheEvent(SourceDefinition sourceConfig, CacheEvent event)
-            throws Exception {
-        List listeners = sourceConfig.getListeners();
-
-        for (Iterator i = listeners.iterator(); i.hasNext();) {
-            Object listener = i.next();
-            if (!(listener instanceof CacheListener))
-                continue;
-
-            CacheListener cacheListener = (CacheListener) listener;
-            switch (event.getType()) {
-            case CacheEvent.BEFORE_LOAD_ENTRIES:
-                cacheListener.beforeLoadEntries(event);
-                break;
-
-            case CacheEvent.AFTER_LOAD_ENTRIES:
-                cacheListener.afterLoadEntries(event);
-                break;
-            }
-        }
     }
 
     public SearchResults loadSource(

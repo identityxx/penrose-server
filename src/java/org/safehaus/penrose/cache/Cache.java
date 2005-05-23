@@ -4,20 +4,16 @@
  */
 package org.safehaus.penrose.cache;
 
-import org.safehaus.penrose.mapping.Source;
-import org.safehaus.penrose.mapping.EntryDefinition;
-import org.safehaus.penrose.mapping.SourceDefinition;
-import org.safehaus.penrose.mapping.Row;
+import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.config.Config;
 import org.safehaus.penrose.event.CacheEvent;
+import org.safehaus.penrose.event.CacheListener;
 import org.safehaus.penrose.SearchResults;
 import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.filter.Filter;
 import org.apache.log4j.Logger;
 
-import java.util.Date;
-import java.util.Collection;
-import java.util.Map;
+import java.util.*;
 import java.sql.ResultSet;
 
 /**
@@ -47,52 +43,54 @@ public abstract class Cache {
     public abstract void refresh() throws Exception;
 
     public abstract Date getExpiration(Source source) throws Exception;
-
     public abstract void setExpiration(Source source, Date date) throws Exception;
 
-    public abstract void insert(Source source, Row row, Date date) throws Exception;
+    public abstract void insert(Source source, AttributeValues values, Date date) throws Exception;
+    public abstract void delete(Source source, AttributeValues values, Date date) throws Exception;
 
-    public abstract void update(Source source, Row oldRow, Row newRow, Date date) throws Exception;
-
-    public abstract void delete(Source source, Row row, Date date) throws Exception;
+    public abstract Date getModifyTime(Source source, String filter) throws Exception;
+    public abstract Date getModifyTime(Source source) throws Exception;
 
     public abstract Collection search(EntryDefinition entry, Collection primaryKeys) throws Exception;
 
+    public abstract void insert(EntryDefinition entry, AttributeValues values, Date date) throws Exception;
     public abstract void insert(EntryDefinition entry, Row row, Date date) throws Exception;
-
-    public abstract void delete(EntryDefinition entry, Row row, Date date) throws Exception;
-
+    public abstract void delete(EntryDefinition entry, AttributeValues values, Date date) throws Exception;
     public abstract void delete(EntryDefinition entry, String filter, Date date) throws Exception;
 
-    public abstract Date getModifyTime(Source source, String filter) throws Exception;
-
-    public abstract Date getModifyTime(Source source) throws Exception;
-
     public abstract Date getModifyTime(EntryDefinition entry, String filter) throws Exception;
-
     public abstract Date getModifyTime(EntryDefinition entry) throws Exception;
 
     public abstract void setModifyTime(EntryDefinition entry, Date date) throws Exception;
 
-    public abstract String getFieldNames(Collection sources);
-
-    public abstract String getTableNames(EntryDefinition entry, boolean temporary);
-
-    public abstract Row getRow(EntryDefinition entry, ResultSet rs) throws Exception;
-
     public abstract Collection joinSources(EntryDefinition entry) throws Exception;
-
-    public abstract String getPkAttributeNames(EntryDefinition entry);
 
     public abstract Collection searchPrimaryKeys(
             EntryDefinition entry,
             String filter)
             throws Exception;
 
-    public abstract Map getPk(EntryDefinition entry, ResultSet rs) throws Exception;
+    public void postCacheEvent(SourceDefinition sourceConfig, CacheEvent event)
+            throws Exception {
+        List listeners = sourceConfig.getListeners();
 
-    public abstract void postCacheEvent(SourceDefinition sourceConfig, CacheEvent event)
-            throws Exception;
+        for (Iterator i = listeners.iterator(); i.hasNext();) {
+            Object listener = i.next();
+            if (!(listener instanceof CacheListener))
+                continue;
+
+            CacheListener cacheListener = (CacheListener) listener;
+            switch (event.getType()) {
+            case CacheEvent.BEFORE_LOAD_ENTRIES:
+                cacheListener.beforeLoadEntries(event);
+                break;
+
+            case CacheEvent.AFTER_LOAD_ENTRIES:
+                cacheListener.afterLoadEntries(event);
+                break;
+            }
+        }
+    }
 
     public abstract SearchResults loadSource(
             EntryDefinition entry,

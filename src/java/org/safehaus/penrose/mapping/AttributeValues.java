@@ -43,4 +43,16 @@ public class AttributeValues {
     public String toString() {
         return values.toString();
     }
+
+
+    public int hashCode() {
+        return values.hashCode();
+    }
+
+    public boolean equals(Object object) {
+        if (object == null) return false;
+        if (!(object instanceof AttributeValues)) return false;
+        AttributeValues av = (AttributeValues)object;
+        return values.equals(av.values);
+    }
 }

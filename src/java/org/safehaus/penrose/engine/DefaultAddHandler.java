@@ -172,12 +172,7 @@ public class DefaultAddHandler implements AddHandler {
             if (rc != LDAPException.SUCCESS) return rc;
         }
 
-        Collection rows = engineContext.getTransformEngine().convert(values);
-
-        for (Iterator i=rows.iterator(); i.hasNext(); ) {
-            Row row = (Row)i.next();
-            engine.getCache().insert(entry, row, date);
-        }
+        engine.getCache().insert(entry, values, date);
 
         return LDAPException.SUCCESS;
     }
@@ -198,17 +193,17 @@ public class DefaultAddHandler implements AddHandler {
 	        log.debug("New entries: "+rows);
 
 	        for (Iterator i=rows.keySet().iterator(); i.hasNext(); ) {
-	            Map pk = (Map)i.next();
-	            Row row = (Row)rows.get(pk);
+	            Row pk = (Row)i.next();
+	            AttributeValues attributes = (AttributeValues)rows.get(pk);
 
-                AttributeValues attributes = engineContext.getTransformEngine().convert(row);
+                //AttributeValues attributes = engineContext.getTransformEngine().convert(row);
 
 	            // Add row to the source table in the source database/directory
 	            int rc = source.add(attributes);
 	            if (rc != LDAPException.SUCCESS) return rc;
 
 	            // Add row to the source table in the cache
-	            engine.getCache().insert(source, row, date);
+	            engine.getCache().insert(source, attributes, date);
 	        }
 
         } finally {
