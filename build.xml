@@ -5,7 +5,6 @@
 <project name="penrose" default="build" basedir=".">
 
     <property name="build.compiler" value="jikes"/>
-    <property name="conf" value="test"/>
     <property name="penrose.version" value="0.9"/>
     <property name="penrose.home" value="/usr/local/penrose"/>
     <property name="iscc.path" value="ISCC.exe"/>
@@ -19,10 +18,6 @@
 
     <path id="main.path">
         <pathelement location="target/classes"/>
-    </path>
-
-    <path id="test.path">
-        <pathelement location="target/test/main/classes"/>
     </path>
 
     <target name="init">
@@ -62,14 +57,7 @@
             todir="target/classes">
 			<fileset dir="src/java" includes="**/*.xml"/>
         </copy>
-        <mkdir dir="target/test/main/classes"/>
-        <javac
-            srcdir="src/test/main/java"
-            destdir="target/test/main/classes">
-            <classpath refid="lib.path"/>
-            <classpath refid="main.path"/>
-        </javac>
-        <jar jarfile="target/penrose-${penrose.version}.jar">
+       <jar jarfile="target/penrose-${penrose.version}.jar">
             <fileset dir="target/classes"/>
         </jar>
     </target>
@@ -99,11 +87,6 @@
         <copy todir="target/dist/docs">
             <fileset dir="docs" includes="*.url"/>
         </copy>
-<!--
-        <copy todir="target/dist/docs/ietf">
-            <fileset dir="docs/ietf"/>
-        </copy>
--->
         <copy todir="target/dist/docs/javadoc">
             <fileset dir="target/javadoc"/>
         </copy>
@@ -154,15 +137,6 @@
     <target name="dist" depends="dist-unix,dist-win32">
     </target>
     
-    <target name="test-load" depends="build">
-        <java
-            classname="org.safehaus.penrose.load.BindTest">
-            <classpath refid="lib.path"/>
-            <classpath refid="main.path"/>
-            <classpath refid="test.path"/>
-        </java>
-    </target>
-
     <target name="clean" depends="init">
         <delete dir="target"/>
     </target>
