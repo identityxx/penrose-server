@@ -163,7 +163,7 @@ public class DefaultModifyHandler implements ModifyHandler {
 					+ newValues.get(attributeName));
 
 			Set newValue = new HashSet();
-            newValue.addAll(value);
+            if (value != null) newValue.addAll(value);
 
 			switch (modification.getOp()) {
 			case LDAPModification.ADD:

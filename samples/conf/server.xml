@@ -87,7 +87,7 @@
   </adapter>
 
   <connection>
-    <connection-name> MySQL</connection-name>
+    <connection-name>MySQL</connection-name>
     <adapter-name>JDBC</adapter-name>
     <parameter>
       <param-name>driver</param-name>
