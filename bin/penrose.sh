@@ -28,8 +28,8 @@ if [ -z "$PENROSE_HOME" ] ; then
     PENROSE_HOME=/opt/penrose
   fi
 
-  if [ -d "${HOME}/opt/penrose" ] ; then
-    PENROSE_HOME="${HOME}/opt/penrose"
+  if [ -d "$HOME/opt/penrose" ] ; then
+    PENROSE_HOME="$HOME/opt/penrose"
   fi
 
   ## resolve links - $0 may be a link to Penrose's home
@@ -70,7 +70,7 @@ if $cygwin ; then
 fi
 
 # set PENROSE_LIB location
-PENROSE_LIB="${PENROSE_HOME}/lib"
+PENROSE_LIB="$PENROSE_HOME/lib"
 
 if [ -z "$JAVACMD" ] ; then
   if [ -n "$JAVA_HOME"  ] ; then
@@ -99,7 +99,7 @@ if [ -n "$CLASSPATH" ] ; then
 fi
 
 # add in the required dependency .jar files
-for i in "${PENROSE_LIB}"/*.jar
+for i in "$PENROSE_LIB"/*.jar
 do
   # if the directory is empty, then it will return the input string
   # this is stupid, so case for it
@@ -112,7 +112,7 @@ do
   fi
 done
 
-LOCALCLASSPATH="${PENROSE_HOME}/conf:$LOCALCLASSPATH"
+LOCALCLASSPATH="$PENROSE_HOME/conf:$LOCALCLASSPATH"
 
 # For Cygwin, switch paths to Windows format before running java
 if $cygwin; then
@@ -123,10 +123,31 @@ if $cygwin; then
   CYGHOME=`cygpath --windows "$HOME"`
 fi
 
-cd $PENROSE_HOME
+cd "$PENROSE_HOME"
+mkdir -p "$PENROSE_HOME/var"
+PENROSE_PID="$PENROSE_HOME/var/penrose.pid"
 
-if [ -n "$CYGHOME" ]; then
-    exec "$JAVACMD" $PENROSE_DEBUG_OPTS $PENROSE_OPTS -classpath "$LOCALCLASSPATH" -Dpenrose.home="${PENROSE_HOME}" -Dcygwin.user.home="$CYGHOME" org.apache.ldap.server.ServerMain "$PENROSE_HOME\\conf\\apacheds.properties" $PENROSE_ARGS "$@" >> "${PENROSE_HOME}/var/penrose.out" 2>&1 &
+if [ "$1" = "start" ] ; then
+
+  if [ -n "$CYGHOME" ]; then
+    exec "$JAVACMD" $PENROSE_DEBUG_OPTS $PENROSE_OPTS -classpath "$LOCALCLASSPATH" -Dpenrose.home="$PENROSE_HOME" -Dcygwin.user.home="$CYGHOME" org.apache.ldap.server.ServerMain "$PENROSE_HOME\\conf\\apacheds.properties" $PENROSE_ARGS "$@" >> "$PENROSE_HOME/var/penrose.out" 2>&1 &
+  else
+    exec "$JAVACMD" $PENROSE_DEBUG_OPTS $PENROSE_OPTS -classpath "$LOCALCLASSPATH" -Dpenrose.home="$PENROSE_HOME" org.apache.ldap.server.ServerMain "$PENROSE_HOME/conf/apacheds.properties" $PENROSE_ARGS "$@" >> "$PENROSE_HOME/var/penrose.out" 2>&1 &
+  fi
+
+  echo $! > "$PENROSE_PID"
+
+elif [ "$1" = "stop" ] ; then
+
+  kill -9 `cat "$PENROSE_PID"`
+
 else
-    exec "$JAVACMD" $PENROSE_DEBUG_OPTS $PENROSE_OPTS -classpath "$LOCALCLASSPATH" -Dpenrose.home="${PENROSE_HOME}" org.apache.ldap.server.ServerMain "$PENROSE_HOME/conf/apacheds.properties" $PENROSE_ARGS "$@" >> "${PENROSE_HOME}/var/penrose.out" 2>&1 &
+
+  echo "Usage: penrose.sh COMMAND"
+  echo
+  echo "Commands:"
+  echo "  start             Start Penrose Server"
+  echo "  stop              Stop Penrose Server"
+  exit 1
+
 fi
