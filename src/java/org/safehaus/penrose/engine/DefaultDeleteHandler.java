@@ -78,7 +78,7 @@ public class DefaultDeleteHandler implements DeleteHandler {
             children.remove(entry);
         }
 
-        config.removeEntry(entry);
+        config.removeEntryDefinition(entry);
 
         return LDAPException.SUCCESS;
     }

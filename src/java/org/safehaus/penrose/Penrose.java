@@ -267,30 +267,11 @@ public class Penrose implements AdapterContext, CacheContext, EngineContext, Mod
             for (Iterator j=entry.getSources().iterator(); j.hasNext(); ) {
                 Source source = (Source)j.next();
 
-                SourceDefinition sourceConfig = config.getSourceConfig(source);
-                source.setSourceDefinition(sourceConfig);
+                Connection connection = getConnection(source.getConnectionName());
+                source.setConnection(connection);
 
-                Connection connection = getConnection(sourceConfig.getConnectionName());
                 Adapter adapter = connection.getAdapter();
                 source.setAdapter(adapter);
-
-                Collection fieldConfigs = sourceConfig.getFields();
-
-                for (Iterator k=fieldConfigs.iterator(); k.hasNext(); ) {
-                    FieldDefinition fieldConfig = (FieldDefinition)k.next();
-                    String fieldName = fieldConfig.getName();
-
-                    // define any missing fields
-                    Field field = (Field)source.getField(fieldName);
-                    if (field == null) {
-                        field = new Field();
-                        field.setName(fieldName);
-                        source.addField(field);
-                    }
-
-                    field.setFieldDefinition(fieldConfig);
-                    if (fieldConfig.isPrimaryKey()) source.addPrimaryKeyField(field);
-                }
             }
         }
     }

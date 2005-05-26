@@ -4,7 +4,6 @@
  * All rights reserved.
  */
 package org.safehaus.penrose.filter;
-import java.util.*;
 
 public class FilterParserTokenManager implements FilterParserConstants
 {

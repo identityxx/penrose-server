@@ -10,6 +10,7 @@ import java.util.*;
 import org.apache.log4j.Logger;
 import org.safehaus.penrose.module.ModuleConfig;
 import org.safehaus.penrose.module.ModuleMapping;
+import org.safehaus.penrose.module.GenericModuleMapping;
 import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.cache.CacheConfig;
 import org.safehaus.penrose.engine.EngineConfig;
@@ -41,7 +42,7 @@ public class Config implements Serializable {
     private Map engineConfigs = new LinkedHashMap();
     private Map adapterConfigs = new LinkedHashMap();
     private Map connectionConfigs = new LinkedHashMap();
-    private Map sourceConfigs = new LinkedHashMap();
+    private Map sourceDefinitions = new LinkedHashMap();
 
     private Map moduleConfigs = new LinkedHashMap();
     private Map moduleMappings = new LinkedHashMap();
@@ -77,9 +78,35 @@ public class Config implements Serializable {
         	log.debug("Adding "+dn+" to rootEntryDefinitions");
         	rootEntryDefinitions.add(entry);
         }
+
+        // connecting all references to source and field definitions
+        for (Iterator j=entry.getSources().iterator(); j.hasNext(); ) {
+            Source source = (Source)j.next();
+
+            SourceDefinition sourceConfig = getSourceDefinition(source);
+            source.setSourceDefinition(sourceConfig);
+
+            Collection fieldConfigs = sourceConfig.getFields();
+
+            for (Iterator k=fieldConfigs.iterator(); k.hasNext(); ) {
+                FieldDefinition fieldConfig = (FieldDefinition)k.next();
+                String fieldName = fieldConfig.getName();
+
+                // define any missing fields
+                Field field = (Field)source.getField(fieldName);
+                if (field == null) {
+                    field = new Field();
+                    field.setName(fieldName);
+                    source.addField(field);
+                }
+
+                field.setFieldDefinition(fieldConfig);
+                if (fieldConfig.isPrimaryKey()) source.addPrimaryKeyField(field);
+            }
+        }
 	}
 
-    public void removeEntry(EntryDefinition entry) {
+    public void removeEntryDefinition(EntryDefinition entry) {
         if (entry.getParent() == null) {
             rootEntryDefinitions.remove(entry);
         } else {
@@ -89,7 +116,7 @@ public class Config implements Serializable {
         entryDefinitions.remove(entry.getDn());
     }
     
-    public void renameEntry(EntryDefinition entry, String newDn) {
+    public void renameEntryDefinition(EntryDefinition entry, String newDn) {
     	log.debug("renameEntry: "+entry.getDn()+" to "+newDn);
     	if (entry == null) return;
     	if (newDn.equals(entry.getDn())) return;
@@ -104,19 +131,25 @@ public class Config implements Serializable {
         	for (int i=0; i<cs.length; i++) {
         		EntryDefinition child = (EntryDefinition) cs[i];
                 String childNewDn = child.getRdn()+","+newDn;
-                renameEntry(child, childNewDn);
+                renameEntryDefinition(child, childNewDn);
         	}
         }
 		entryDefinitions.remove(oldDn);
     }
 
     public void addSourceDefinition(SourceDefinition sourceConfig) throws Exception {
-        sourceConfigs.put(sourceConfig.getName(), sourceConfig);
+        sourceDefinitions.put(sourceConfig.getName(), sourceConfig);
+
+        ConnectionConfig connectionConfig = getConnectionConfig(sourceConfig.getConnectionName());
+        sourceConfig.setConnectionConfig(connectionConfig);
+
+        AdapterConfig adapterConfig = getAdapterConfig(connectionConfig.getAdapterName());
+        sourceConfig.setAdapterConfig(adapterConfig);
     }
     
-    public void removeSourceConfig(String sourceName) {
-    	if (this.sourceConfigs != null) {
-    		this.sourceConfigs.remove(sourceName);
+    public void removeSourceDefinition(String sourceName) {
+    	if (this.sourceDefinitions != null) {
+    		this.sourceDefinitions.remove(sourceName);
     	}
     }
     
@@ -124,8 +157,15 @@ public class Config implements Serializable {
         moduleConfigs.put(moduleConfig.getModuleName(), moduleConfig);
     }
 
-    public void addModuleMapping(ModuleMapping mapping) {
+    public ModuleConfig getModuleConfig(String name) {
+        return (ModuleConfig)moduleConfigs.get(name);
+    }
+
+    public void addModuleMapping(GenericModuleMapping mapping) {
         moduleMappings.put(mapping.getModuleName(), mapping);
+
+        ModuleConfig moduleConfig = getModuleConfig(mapping.getModuleName());
+        mapping.setModuleConfig(moduleConfig);
     }
 
 	/**
@@ -135,9 +175,12 @@ public class Config implements Serializable {
 	 */
 	public void addConnectionConfig(ConnectionConfig connection) {
 		connectionConfigs.put(connection.getConnectionName(), connection);
+
+        AdapterConfig adapterConfig = getAdapterConfig(connection.getAdapterName());
+        connection.setAdapterConfig(adapterConfig);
 	}
 	
-	public void removeConnection(String connectionName) {
+	public void removeConnectionConfig(String connectionName) {
 		connectionConfigs.remove(connectionName);
 	}
 
@@ -241,7 +284,7 @@ public class Config implements Serializable {
         sb.append(nl);
         sb.append(nl);
 
-        for (Iterator i = sourceConfigs.values().iterator(); i.hasNext();) {
+        for (Iterator i = sourceDefinitions.values().iterator(); i.hasNext();) {
             SourceDefinition sourceConfig = (SourceDefinition)i.next();
             sb.append(sourceConfig.getName()+" ("+sourceConfig.getConnectionName() + ")" + nl);
             for (Iterator j = sourceConfig.getFields().iterator(); j.hasNext(); ) {
@@ -357,7 +400,15 @@ public class Config implements Serializable {
     public void addCacheConfig(CacheConfig cacheConfig) {
     	cacheConfigs.put(cacheConfig.getCacheName(), cacheConfig);
     }
-    
+
+    public CacheConfig getCacheConfig() {
+        return (CacheConfig)cacheConfigs.get("DEFAULT");
+    }
+
+    public CacheConfig getCacheConfig(String name) {
+        return (CacheConfig)cacheConfigs.get(name);
+    }
+
     public Collection getCacheConfigs() {
     	return cacheConfigs.values();
     }
@@ -369,12 +420,16 @@ public class Config implements Serializable {
 		return rootEntryDefinitions;
 	}
 
-    public Collection getSourceConfigs() {
-		return sourceConfigs.values();
+    public Collection getSourceDefinitions() {
+		return sourceDefinitions.values();
 	}
 
-    public SourceDefinition getSourceConfig(Source source) {
-        return (SourceDefinition)sourceConfigs.get(source.getName());
+    public SourceDefinition getSourceDefinition(String name) {
+        return (SourceDefinition)sourceDefinitions.get(name);
+    }
+
+    public SourceDefinition getSourceDefinition(Source source) {
+        return getSourceDefinition(source.getName());
     }
 
     public void removeModuleConfig(String moduleName) {
@@ -417,8 +472,8 @@ public class Config implements Serializable {
         this.moduleMappings = moduleMappings;
     }
 
-    public void setSourceConfigs(Map sourceConfigs) {
-        this.sourceConfigs = sourceConfigs;
+    public void setSourceDefinitions(Map sourceDefinitions) {
+        this.sourceDefinitions = sourceDefinitions;
     }
 
     public void setAdapterConfigs(Map adapterConfigs) {

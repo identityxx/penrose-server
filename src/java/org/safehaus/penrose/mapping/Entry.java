@@ -7,7 +7,6 @@ package org.safehaus.penrose.mapping;
 
 import org.safehaus.penrose.mapping.EntryDefinition;
 import org.safehaus.penrose.mapping.AttributeValues;
-import org.safehaus.penrose.PenroseConnection;
 import org.ietf.ldap.LDAPAttributeSet;
 import org.ietf.ldap.LDAPAttribute;
 import org.ietf.ldap.LDAPEntry;

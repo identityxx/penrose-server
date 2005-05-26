@@ -7,8 +7,6 @@ package org.safehaus.penrose.schema;
 
 import java.util.*;
 
-import org.safehaus.penrose.config.*;
-
 /**
 <pre>
 Grammar for the LDAP v3 Schema

@@ -9,7 +9,6 @@ import java.util.*;
 import java.io.StringReader;
 
 import org.apache.log4j.Logger;
-import org.safehaus.penrose.filter.*;
 import org.safehaus.penrose.mapping.AttributeValues;
 import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.mapping.Entry;

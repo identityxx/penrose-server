@@ -6,8 +6,6 @@ package org.safehaus.penrose.module;
 
 
 import java.util.Collection;
-import java.util.Map;
-
 import org.safehaus.penrose.event.*;
 
 /**

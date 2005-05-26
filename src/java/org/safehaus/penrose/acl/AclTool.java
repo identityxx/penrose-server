@@ -5,7 +5,6 @@
 package org.safehaus.penrose.acl;
 
 import org.safehaus.penrose.mapping.EntryDefinition;
-import org.safehaus.penrose.mapping.EntryDefinition;
 import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.PenroseConnection;
 import org.ietf.ldap.LDAPDN;

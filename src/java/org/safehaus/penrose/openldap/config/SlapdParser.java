@@ -5,9 +5,6 @@
  */
 package org.safehaus.penrose.openldap.config;
 
-import java.io.*;
-import java.util.*;
-
 /**
 <pre>
 

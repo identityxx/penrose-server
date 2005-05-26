@@ -5,7 +5,6 @@
 package org.safehaus.penrose;
 
 import org.ietf.ldap.LDAPEntry;
-import org.safehaus.penrose.event.Event;
 
 import java.util.Date;
 import java.util.List;

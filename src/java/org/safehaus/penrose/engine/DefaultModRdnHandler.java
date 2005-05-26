@@ -5,7 +5,6 @@
 package org.safehaus.penrose.engine;
 
 import org.ietf.ldap.*;
-import org.safehaus.penrose.config.*;
 import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.PenroseConnection;
 import org.apache.log4j.Logger;

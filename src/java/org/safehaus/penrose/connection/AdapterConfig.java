@@ -5,8 +5,6 @@
 package org.safehaus.penrose.connection;
 
 import java.io.Serializable;
-import java.util.Properties;
-import java.util.Collection;
 
 /**
  * @author Endi S. Dewata

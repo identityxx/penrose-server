@@ -6,7 +6,6 @@ package org.safehaus.penrose.engine;
 
 import org.ietf.ldap.LDAPDN;
 import org.ietf.ldap.LDAPException;
-import org.safehaus.penrose.config.*;
 import org.safehaus.penrose.util.PasswordUtil;
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.Penrose;

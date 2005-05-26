@@ -4,6 +4,9 @@
  */
 package org.safehaus.penrose.mapping;
 
+import org.safehaus.penrose.connection.AdapterConfig;
+import org.safehaus.penrose.connection.ConnectionConfig;
+
 import java.util.*;
 
 /**
@@ -24,6 +27,9 @@ public class SourceDefinition {
 	 * Connection name.
 	 */
 	private String connectionName;
+    
+    private ConnectionConfig connectionConfig;
+    private AdapterConfig adapterConfig;
 
 	/**
 	 * Fields. Each element is of type org.safehaus.penrose.mapping.FieldDefinition.
@@ -118,5 +124,21 @@ public class SourceDefinition {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public ConnectionConfig getConnectionConfig() {
+        return connectionConfig;
+    }
+
+    public void setConnectionConfig(ConnectionConfig connectionConfig) {
+        this.connectionConfig = connectionConfig;
+    }
+
+    public AdapterConfig getAdapterConfig() {
+        return adapterConfig;
+    }
+
+    public void setAdapterConfig(AdapterConfig adapterConfig) {
+        this.adapterConfig = adapterConfig;
     }
 }

@@ -4,17 +4,10 @@
  */
 package org.safehaus.penrose.engine;
 
-import org.safehaus.penrose.mapping.Source;
-import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.SearchResults;
 import org.safehaus.penrose.PenroseConnection;
-import org.safehaus.penrose.mapping.EntryDefinition;
-import org.safehaus.penrose.mapping.AttributeValues;
-import org.safehaus.penrose.mapping.*;
 import org.ietf.ldap.LDAPEntry;
 
-import java.util.Calendar;
-import java.util.Date;
 import java.util.Collection;
 import java.util.List;
 

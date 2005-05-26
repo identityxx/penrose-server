@@ -5,10 +5,7 @@
 package org.safehaus.penrose.mapping;
 
 
-import org.safehaus.penrose.config.*;
-import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.interpreter.Interpreter;
-import org.safehaus.penrose.connection.Connection;
 import org.ietf.ldap.LDAPEntry;
 import org.ietf.ldap.LDAPAttributeSet;
 import org.ietf.ldap.LDAPAttribute;

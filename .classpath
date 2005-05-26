@@ -1,9 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
 	<classpathentry kind="src" path="src/java"/>
-	<classpathentry kind="src" path="src/test/openldap/java"/>
-	<classpathentry kind="src" path="src/test/main/java"/>
-	<classpathentry kind="src" path="src/test/mysql/java"/>
 	<classpathentry kind="con" path="org.eclipse.pde.core.requiredPlugins"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry kind="lib" path="lib/apacheds-main-0.9-SNAPSHOT.jar"/>

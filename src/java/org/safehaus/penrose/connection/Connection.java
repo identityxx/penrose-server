@@ -1,8 +1,6 @@
 package org.safehaus.penrose.connection;
 
 import org.safehaus.penrose.connection.Adapter;
-import org.safehaus.penrose.connection.Adapter;
-
 import java.util.Collection;
 
 /**

@@ -12,7 +12,6 @@ import org.safehaus.penrose.SearchResults;
 
 import java.util.List;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Enumeration;
 
 /**

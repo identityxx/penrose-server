@@ -15,6 +15,8 @@ public class GenericModuleMapping implements ModuleMapping {
     public Logger log = Logger.getLogger(Penrose.MODULE_LOGGER);
 
     private String moduleName;
+    private ModuleConfig moduleConfig;
+
     private String baseDn;
     private String filter;
     private String scope;
@@ -131,5 +133,13 @@ public class GenericModuleMapping implements ModuleMapping {
         }
 
         return false;
+    }
+
+    public ModuleConfig getModuleConfig() {
+        return moduleConfig;
+    }
+
+    public void setModuleConfig(ModuleConfig moduleConfig) {
+        this.moduleConfig = moduleConfig;
     }
 }

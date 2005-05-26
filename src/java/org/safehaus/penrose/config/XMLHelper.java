@@ -17,7 +17,6 @@ import org.safehaus.penrose.module.ModuleMapping;
 import org.safehaus.penrose.connection.AdapterConfig;
 import org.safehaus.penrose.cache.CacheConfig;
 import org.safehaus.penrose.mapping.*;
-import org.safehaus.penrose.connection.AdapterConfig;
 import org.safehaus.penrose.connection.ConnectionConfig;
 import org.safehaus.penrose.schema.AttributeType;
 import org.safehaus.penrose.schema.ObjectClass;
@@ -94,7 +93,7 @@ public class XMLHelper {
 		Element sourcesElement = new DefaultElement("sources");
 
 		// entries
-		for (Iterator iter = config.getSourceConfigs().iterator(); iter.hasNext();) {
+		for (Iterator iter = config.getSourceDefinitions().iterator(); iter.hasNext();) {
 			SourceDefinition source = (SourceDefinition)iter.next();
 			Element element = toElement(source);
 			sourcesElement.add(element);

@@ -5,7 +5,6 @@
 package org.safehaus.penrose.module;
 
 import java.util.Collection;
-import java.util.Map;
 
 /**
  * @author Endi S. Dewata

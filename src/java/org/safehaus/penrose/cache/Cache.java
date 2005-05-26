@@ -14,7 +14,6 @@ import org.safehaus.penrose.filter.Filter;
 import org.apache.log4j.Logger;
 
 import java.util.*;
-import java.sql.ResultSet;
 
 /**
  * @author Endi S. Dewata

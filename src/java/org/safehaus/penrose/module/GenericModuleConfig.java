@@ -5,7 +5,6 @@
 package org.safehaus.penrose.module;
 
 import java.util.LinkedHashMap;
-import java.util.Map;
 import java.util.Collection;
 
 /**
@@ -23,6 +22,10 @@ public class GenericModuleConfig implements ModuleConfig {
 
     public void setModuleName(String moduleName) {
         this.moduleName = moduleName;
+    }
+
+    public void clearParameters() {
+        parameters.clear();
     }
 
     public void setParameter(String name, String value) {

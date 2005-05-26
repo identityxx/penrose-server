@@ -7,6 +7,9 @@ package org.safehaus.penrose.mapping;
 import org.safehaus.penrose.SearchResults;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.connection.Adapter;
+import org.safehaus.penrose.connection.Connection;
+import org.safehaus.penrose.connection.ConnectionConfig;
+import org.safehaus.penrose.connection.AdapterConfig;
 
 import java.util.*;
 import java.io.Serializable;
@@ -28,6 +31,7 @@ public class Source implements Cloneable, Serializable {
     private Collection primaryKeyFields = new ArrayList();
 
     private SourceDefinition sourceDefinition;
+    private Connection connection;
     private Adapter adapter;
 
 	public Source() {
@@ -120,7 +124,24 @@ public class Source implements Cloneable, Serializable {
         this.adapter = adapter;
     }
 
+    public AdapterConfig getAdapterConfig() {
+        return sourceDefinition.getAdapterConfig();
+    }
+
     public String getConnectionName() {
         return sourceDefinition.getConnectionName();
     }
+
+    public Connection getConnection() {
+        return connection;
+    }
+
+    public void setConnection(Connection connection) {
+        this.connection = connection;
+    }
+
+    public ConnectionConfig getConnectionConfig() {
+        return sourceDefinition.getConnectionConfig();
+    }
+
 }
