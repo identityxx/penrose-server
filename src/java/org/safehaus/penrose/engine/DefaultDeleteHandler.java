@@ -113,7 +113,7 @@ public class DefaultDeleteHandler implements DeleteHandler {
      * @param entry
      * @param source
      * @param values
-     * @return
+     * @return return code
      * @throws Exception
      */
     public int delete(Source source, EntryDefinition entry, AttributeValues values, Date date) throws Exception {

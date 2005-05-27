@@ -118,7 +118,7 @@ public class DefaultSearchHandler implements SearchHandler {
 	 * entry from all possible mappings.
 	 * 
 	 * @param dn
-	 * @return
+	 * @return virtual entry
 	 * @throws Exception
 	 */
 	public Entry getVirtualEntry(

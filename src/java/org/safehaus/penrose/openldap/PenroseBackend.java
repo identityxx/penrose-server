@@ -80,7 +80,7 @@ public class PenroseBackend implements Backend {
     /**
      * Initialize Penrose engine.
      *
-     * @return
+     * @return return code
      * @throws Exception
      */
     public int init() throws Exception {
@@ -202,7 +202,7 @@ public class PenroseBackend implements Backend {
      * Get connection.
      * 
      * @param connectionId
-     * @return
+     * @return connection
      */
     public PenroseConnection getConnection(int connectionId) throws Exception {
         return (PenroseConnection)connections.remove(new Integer(connectionId));
@@ -232,7 +232,7 @@ public class PenroseBackend implements Backend {
      * Set the location of slapd.conf.
      *
      * @param slapdConfig Location of slapd.conf.
-     * @return
+     * @return return value
      * @throws Exception
      */
     public int setSlapdConfig(String slapdConfig) throws Exception {
@@ -261,7 +261,7 @@ public class PenroseBackend implements Backend {
      * Set the properties.
      *
      * @param properties
-     * @return
+     * @return return value
      * @throws Exception
      */
     public int setProperties(Properties properties) throws Exception {
@@ -282,7 +282,7 @@ public class PenroseBackend implements Backend {
      * @param connectionId
      * @param dn
      * @param password
-     * @return
+     * @return return code
      * @throws Exception
      */
     public int bind(int connectionId, String dn, String password) throws Exception {
@@ -307,7 +307,7 @@ public class PenroseBackend implements Backend {
      * Performs unbind operation.
      * 
      * @param connectionId
-     * @return
+     * @return return value
      * @throws Exception
      */
     public int unbind(int connectionId) throws Exception {
@@ -336,7 +336,7 @@ public class PenroseBackend implements Backend {
      * @param scope
      * @param filter
      * @param attributeNames
-     * @return
+     * @return search result
      * @throws Exception
      */
     public Result search(
@@ -379,7 +379,7 @@ public class PenroseBackend implements Backend {
      * @param deref
      * @param filter
      * @param attributeNames
-     * @return
+     * @return search result
      * @throws Exception
      */
     public Result search(
@@ -419,7 +419,7 @@ public class PenroseBackend implements Backend {
      * 
      * @param connectionId
      * @param entry
-     * @return
+     * @return return code
      * @throws Exception
      */
     public int add(
@@ -448,7 +448,7 @@ public class PenroseBackend implements Backend {
      * 
      * @param connectionId
      * @param dn
-     * @return
+     * @return return code
      * @throws Exception
      */
     public int delete(
@@ -478,7 +478,7 @@ public class PenroseBackend implements Backend {
      * @param connectionId
      * @param dn
      * @param modifications
-     * @return
+     * @return return code
      * @throws Exception
      */
     public int modify(
@@ -510,7 +510,7 @@ public class PenroseBackend implements Backend {
      * @param dn
      * @param attributeName
      * @param attributeValue
-     * @return
+     * @return return code
      * @throws Exception
      */
     public int compare(

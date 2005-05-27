@@ -39,7 +39,7 @@ public class TransformEngine {
      * Output: AttributeValues(value1=Collection(a, b, c), value2=Collection(1, 2, 3))
      *
      * @param row
-     * @return
+     * @return attribute values
      */
     public AttributeValues convert(Row row) {
 
@@ -143,7 +143,7 @@ public class TransformEngine {
      * @param row
      * @param pk
      * @param values
-     * @return
+     * @return true if this generates a valid primary key
      * @throws Exception
      */
     public boolean translate(Source source, Row row, Row pk, Row values) throws Exception {
@@ -234,7 +234,7 @@ public class TransformEngine {
      *
      * @param entry
      * @param rows
-     * @return
+     * @return map of attribute values
      * @throws Exception
      */
     public Map transform(EntryDefinition entry, Collection rows) throws Exception {
@@ -284,7 +284,7 @@ public class TransformEngine {
      *
      * @param source
      * @param entry
-     * @return
+     * @return rows
      * @throws Exception
      */
     public Map transform(Source source, AttributeValues entry) throws Exception {
@@ -344,11 +344,11 @@ public class TransformEngine {
     }
 
     /**
-     * Merge rows into entries.
+     * Merge rows into attribute values.
      *
      * @param entry
      * @param rows
-     * @return
+     * @return attribute values
      */
     public Map merge(EntryDefinition entry, Collection rows) {
         Map attributes = entry.getAttributes();

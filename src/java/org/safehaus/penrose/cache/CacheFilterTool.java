@@ -31,8 +31,7 @@ public class CacheFilterTool {
     /**
      * Get the filter from a given entry and Filter
      *
-     * @param filter
-     *            the filter (from config)
+     * @param filter the filter (from config)
      * @return the filter string
      * @throws Exception
      */
@@ -48,10 +47,8 @@ public class CacheFilterTool {
     /**
      * Get the filter for a given entry and Filter
      *
-     * @param filter
-     *            the filter (from config)
-     * @param sb
-     *            string buffer to be appended to
+     * @param filter the filter (from config)
+     * @param sb string buffer to be appended to
      * @return always true
      * @throws Exception
      */
@@ -77,10 +74,8 @@ public class CacheFilterTool {
     /**
      * Get the filter for a given entry and SimpleFilter
      *
-     * @param filter
-     *            the filter (from config) - a SimpleFilter
-     * @param sb
-     *            string buffer to be appended to
+     * @param filter the filter (from config) - a SimpleFilter
+     * @param sb string buffer to be appended to
      * @return always true
      * @throws Exception
      */
@@ -111,10 +106,8 @@ public class CacheFilterTool {
     /**
      * Get the filter for a given entry and AndFilter
      *
-     * @param filter
-     *            the filter (from config) - an AndFilter
-     * @param sb
-     *            string buffer to be appended to
+     * @param filter the filter (from config) - an AndFilter
+     * @param sb string buffer to be appended to
      * @return always true
      * @throws Exception
      */
@@ -147,10 +140,8 @@ public class CacheFilterTool {
     /**
      * Get the filter for a given entry and OrFilter
      *
-     * @param filter
-     *            the filter (from config) - an OrFilter
-     * @param sb
-     *            string buffer to be appended to
+     * @param filter the filter (from config) - an OrFilter
+     * @param sb string buffer to be appended to
      * @return always true
      * @throws Exception
      */
@@ -185,7 +176,7 @@ public class CacheFilterTool {
      *
      * @param source
      * @param filter
-     * @return
+     * @return parsed SQL filter
      * @throws Exception
      */
     public Filter toSourceFilter(Source source, Filter filter) throws Exception {

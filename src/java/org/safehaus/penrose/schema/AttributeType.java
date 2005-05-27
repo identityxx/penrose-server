@@ -135,7 +135,7 @@ public class AttributeType implements Serializable {
 	}
 	/**
 	 * get the name (first index)
-	 * @return
+	 * @return attribute name
 	 */
     public String getName() {
     	if (names != null && names.size() >= 1) return names.get(0).toString();

@@ -129,7 +129,7 @@ public class PasswordUtil {
      * 
      * @param credential
      * @param digest
-     * @return
+     * @return true if password matches the digest
      * @throws Exception
      */
     public static boolean comparePassword(String credential, String digest) throws Exception {
@@ -168,7 +168,7 @@ public class PasswordUtil {
     /**
      * 
      * @param password
-     * @return
+     * @return unicode password
      * @throws Exception
      */
     public static byte[] toUnicodePassword(String password) throws Exception {

@@ -71,7 +71,7 @@ public class SchemaParser implements SchemaParserConstants {
 
   /**
    * Start parsing
-   * @returns the list of schema
+   * @return the list of schema
    */
   public List parse() throws ParseException {
     try {

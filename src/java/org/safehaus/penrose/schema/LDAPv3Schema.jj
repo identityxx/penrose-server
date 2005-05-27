@@ -9,7 +9,7 @@ options {
 
 PARSER_BEGIN(SchemaParser)
 
-/**
+/**  
  * Copyright (c) 1998-2005, Verge Lab., LLC.
  * All rights reserved.
  */
@@ -19,62 +19,64 @@ import java.util.*;
 import org.safehaus.penrose.config.*;
 
 /**
-<pre>
-Grammar for the LDAP v3 Schema
-------------------------------
-
-See also: http://www.geocities.com/raoavm/ldapdesign.html
-
-      AttributeTypeDescription = "(" whsp
-            numericoid whsp              ; AttributeType identifier
-          [ "NAME" qdescrs ]             ; name used in AttributeType
-          [ "DESC" qdstring ]            ; description
-          [ "OBSOLETE" whsp ]
-          [ "SUP" woid ]                 ; derived from this other
-                                         ; AttributeType
-          [ "EQUALITY" woid              ; Matching Rule name
-          [ "ORDERING" woid              ; Matching Rule name
-          [ "SUBSTR" woid ]              ; Matching Rule name
-          [ "SYNTAX" whsp noidlen whsp ] ; see section 4.3
-          [ "SINGLE-VALUE" whsp ]        ; default multi-valued
-          [ "COLLECTIVE" whsp ]          ; default not collective
-          [ "NO-USER-MODIFICATION" whsp ]; default user modifiable
-          [ "USAGE" whsp AttributeUsage ]; default userApplications
-          whsp ")"
-
-      AttributeUsage =
-          "userApplications"     /
-          "directoryOperation"   /
-          "distributedOperation" / ; DSA-shared
-          "dSAOperation"          ; DSA-specific, value depends on server
-
-From RFC 2252:
-
-      ObjectClassDescription = "(" whsp
-          numericoid whsp      ; ObjectClass identifier
-          [ "NAME" qdescrs ]
-          [ "DESC" qdstring ]
-          [ "OBSOLETE" whsp ]
-          [ "SUP" oids ]       ; Superior ObjectClasses
-          [ ( "ABSTRACT" / "STRUCTURAL" / "AUXILIARY" ) whsp ]
-                               ; default structural
-          [ "MUST" oids ]      ; AttributeTypes
-          [ "MAY" oids ]       ; AttributeTypes
-      whsp ")"
-
-
-Example to use this SchemaParser:
----------------------------------
-
-Reader in = ...;
-SchemaParser parser = new SchemaParser(in);
-List schema = parser.parse();
-List errors = parser.getErrors();
-
-Alternatively, you could also call getSchema() to get the List of schema.
-
-</pre>
-*/
+ * LDAP Schema Parser.
+ *
+ * <pre>
+ * Grammar for the LDAP v3 Schema
+ * ------------------------------
+ *
+ * See also: http://www.geocities.com/raoavm/ldapdesign.html
+ *
+ *       AttributeTypeDescription = "(" whsp
+ *             numericoid whsp              ; AttributeType identifier
+ *           [ "NAME" qdescrs ]             ; name used in AttributeType
+ *           [ "DESC" qdstring ]            ; description
+ *           [ "OBSOLETE" whsp ]
+ *           [ "SUP" woid ]                 ; derived from this other
+ *                                          ; AttributeType
+ *           [ "EQUALITY" woid              ; Matching Rule name
+ *           [ "ORDERING" woid              ; Matching Rule name
+ *           [ "SUBSTR" woid ]              ; Matching Rule name
+ *           [ "SYNTAX" whsp noidlen whsp ] ; see section 4.3
+ *           [ "SINGLE-VALUE" whsp ]        ; default multi-valued
+ *           [ "COLLECTIVE" whsp ]          ; default not collective
+ *           [ "NO-USER-MODIFICATION" whsp ]; default user modifiable
+ *           [ "USAGE" whsp AttributeUsage ]; default userApplications
+ *           whsp ")"
+ *
+ *       AttributeUsage =
+ *           "userApplications"     /
+ *           "directoryOperation"   /
+ *           "distributedOperation" / ; DSA-shared
+ *           "dSAOperation"          ; DSA-specific, value depends on server
+ *
+ * From RFC 2252:
+ *
+ *       ObjectClassDescription = "(" whsp
+ *           numericoid whsp      ; ObjectClass identifier
+ *           [ "NAME" qdescrs ]
+ *           [ "DESC" qdstring ]
+ *           [ "OBSOLETE" whsp ]
+ *           [ "SUP" oids ]       ; Superior ObjectClasses
+ *           [ ( "ABSTRACT" / "STRUCTURAL" / "AUXILIARY" ) whsp ]
+ *                                ; default structural
+ *           [ "MUST" oids ]      ; AttributeTypes
+ *           [ "MAY" oids ]       ; AttributeTypes
+ *       whsp ")"
+ *
+ *
+ * Example to use this SchemaParser:
+ * ---------------------------------
+ *
+ * Reader in = ...;
+ * SchemaParser parser = new SchemaParser(in);
+ * List schema = parser.parse();
+ * List errors = parser.getErrors();
+ *
+ * Alternatively, you could also call getSchema() to get the List of schema.
+ *
+ * </pre>
+ */
 public class SchemaParser {
 
   List schema = new ArrayList();
@@ -82,7 +84,7 @@ public class SchemaParser {
   
   /**
    * Start parsing
-   * @returns the list of schema
+   * @return the list of schema
    */
   public List parse() throws ParseException {
     try {
@@ -265,7 +267,7 @@ String AttributeUsage() :
 }
 
 /**
- * globally unique OID in dotted-decimal form (e.g. 1.1.0) 
+ * globally unique OID in dotted-decimal form (e.g. 1.1.0).
  */
 String numericoid() : 
 {
@@ -279,7 +281,7 @@ String numericoid() :
 }
 
 /**
- * single quoted string 
+ * single quoted string.
  */
 String qdstring() : 
 {
@@ -291,7 +293,7 @@ String qdstring() :
 }
 
 /**
- * single quoted identifier 
+ * single quoted identifier.
  */
 String qdident() : 
 {
@@ -304,7 +306,7 @@ String qdident() :
 }
 
 /**
- * one or more names 
+ * one or more names.
  */
 List qdescrs() : 
 {
@@ -319,7 +321,7 @@ List qdescrs() :
 }
 
 /**
- * syntax OID 
+ * syntax OID.
  */
 String noidlen() : 
 {
@@ -330,7 +332,7 @@ String noidlen() :
 }
 
 /**
- * either the name or OID optionally followed by a length specifier (e.g. {10}) 
+ * either the name or OID optionally followed by a length specifier (e.g. {10}).
  */
 String woid() : 
 {
@@ -346,7 +348,7 @@ String woid() :
 }
 
 /**
- * list of OIDs
+ * list of OIDs.
  */
 List oids() : 
 {

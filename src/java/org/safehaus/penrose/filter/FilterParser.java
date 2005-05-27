@@ -8,61 +8,63 @@ package org.safehaus.penrose.filter;
 import java.util.*;
 
 /**
-<pre>
-
-   See: http://www.faqs.org/rfcs/rfc2254.html
-
-        filter     = "(" filtercomp ")"
-        filtercomp = and / or / not / item
-        and        = "&" filterlist
-        or         = "|" filterlist
-        not        = "!" filter
-        filterlist = 1*filter
-        item       = simple / present / substring / extensible
-        simple     = attr filtertype value
-        filtertype = equal / approx / greater / less
-        equal      = "="
-        approx     = "~="
-        greater    = ">="
-        less       = "<="
-        extensible = attr [":dn"] [":" matchingrule] ":=" value
-                     / [":dn"] ":" matchingrule ":=" value
-        present    = attr "=*"
-        substring  = attr "=" [initial] any [final]
-        initial    = value
-        any        = "*" *(value "*")
-        final      = value
-        attr       = AttributeDescription from Section 4.1.5 of [1]
-        matchingrule = MatchingRuleId from Section 4.1.9 of [1]
-        value      = AttributeValue from Section 4.1.6 of [1]
-
-   If a value should contain any of the following characters
-
-           Character       ASCII value
-           ---------------------------
-           *               0x2a
-           (               0x28
-           )               0x29
-           \               0x5c
-           NUL             0x00
-
-   the character must be encoded as the backslash '\' character (ASCII
-   0x5c) followed by the two hexadecimal digits representing the ASCII
-   value of the encoded character. The case of the two hexadecimal
-   digits is not significant.
-   
-   Example usage:
-   
-   Reader in = ...;
-   FilterParser parser = new FilterParser(in);
-   try {
-     Filter filter = parser.parse();
-   } catch (ParseException ex) {
-     System.out.println(ex.getMessage());
-   }
-
-</pre>
-*/
+ * LDAP Filter Parser.
+ *
+ * <pre>
+ *
+ *    See: http://www.faqs.org/rfcs/rfc2254.html
+ *
+ *         filter     = "(" filtercomp ")"
+ *         filtercomp = and / or / not / item
+ *         and        = "&" filterlist
+ *         or         = "|" filterlist
+ *         not        = "!" filter
+ *         filterlist = 1*filter
+ *         item       = simple / present / substring / extensible
+ *         simple     = attr filtertype value
+ *         filtertype = equal / approx / greater / less
+ *         equal      = "="
+ *         approx     = "~="
+ *         greater    = ">="
+ *         less       = "<="
+ *         extensible = attr [":dn"] [":" matchingrule] ":=" value
+ *                      / [":dn"] ":" matchingrule ":=" value
+ *         present    = attr "=*"
+ *         substring  = attr "=" [initial] any [final]
+ *         initial    = value
+ *         any        = "*" *(value "*")
+ *         final      = value
+ *         attr       = AttributeDescription from Section 4.1.5 of [1]
+ *         matchingrule = MatchingRuleId from Section 4.1.9 of [1]
+ *         value      = AttributeValue from Section 4.1.6 of [1]
+ *
+ *    If a value should contain any of the following characters
+ *
+ *            Character       ASCII value
+ *            ---------------------------
+ *            *               0x2a
+ *            (               0x28
+ *            )               0x29
+ *            \               0x5c
+ *            NUL             0x00
+ *
+ *    the character must be encoded as the backslash '\' character (ASCII
+ *    0x5c) followed by the two hexadecimal digits representing the ASCII
+ *    value of the encoded character. The case of the two hexadecimal
+ *    digits is not significant.
+ *
+ *    Example usage:
+ *
+ *    Reader in = ...;
+ *    FilterParser parser = new FilterParser(in);
+ *    try {
+ *      Filter filter = parser.parse();
+ *    } catch (ParseException ex) {
+ *      System.out.println(ex.getMessage());
+ *    }
+ *
+ * </pre>
+ */
 
 public class FilterParser implements FilterParserConstants {
 
@@ -322,21 +324,6 @@ public class FilterParser implements FilterParserConstants {
     finally { jj_save(11, xla); }
   }
 
-  final private boolean jj_3_10() {
-    if (jj_3R_13()) return true;
-    Token xsp;
-    while (true) {
-      xsp = jj_scanpos;
-      if (jj_3_9()) { jj_scanpos = xsp; break; }
-    }
-    return false;
-  }
-
-  final private boolean jj_3_3() {
-    if (jj_3R_11()) return true;
-    return false;
-  }
-
   final private boolean jj_3R_12() {
     if (jj_scan_token(ITEM)) return true;
     return false;
@@ -457,6 +444,21 @@ public class FilterParser implements FilterParserConstants {
 
   final private boolean jj_3_5() {
     if (jj_scan_token(SPACE)) return true;
+    return false;
+  }
+
+  final private boolean jj_3_10() {
+    if (jj_3R_13()) return true;
+    Token xsp;
+    while (true) {
+      xsp = jj_scanpos;
+      if (jj_3_9()) { jj_scanpos = xsp; break; }
+    }
+    return false;
+  }
+
+  final private boolean jj_3_3() {
+    if (jj_3R_11()) return true;
     return false;
   }
 

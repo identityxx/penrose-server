@@ -16,7 +16,7 @@ public class JDBCFilterTool {
      * Convert parsed SQL filter into string to be used in SQL queries.
      *
      * @param filter
-     * @return
+     * @return string SQL filter
      * @throws Exception
      */
     public String convert(Filter filter) throws Exception {

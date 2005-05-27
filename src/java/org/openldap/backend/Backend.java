@@ -16,7 +16,7 @@ public interface Backend {
     /**
      * Initialize Penrose engine.
      *
-     * @return
+     * @return return value
      * @throws Exception
      */
     public int init() throws Exception;
@@ -67,7 +67,7 @@ public interface Backend {
      * Set the location of slapd.conf.
      *
      * @param slapdConfig Location of slapd.conf.
-     * @return
+     * @return return value
      * @throws Exception
      */
     public int setSlapdConfig(String slapdConfig) throws Exception;
@@ -76,7 +76,7 @@ public interface Backend {
      * Set the properties.
      *
      * @param properties
-     * @return
+     * @return return value
      * @throws Exception
      */
     public int setProperties(Properties properties) throws Exception;
@@ -87,7 +87,7 @@ public interface Backend {
      * @param connectionId Connection ID.
      * @param dn Bind DN.
      * @param password Bind password.
-     * @return
+     * @return return value
      * @throws Exception
      */
     public int bind(
@@ -100,7 +100,7 @@ public interface Backend {
      * Performs unbind operation.
      * 
      * @param connectionId Connection ID.
-     * @return
+     * @return return value
      * @throws Exception
      */
     public int unbind(
@@ -115,7 +115,7 @@ public interface Backend {
      * @param scope Scope (0: base, 1: one level, 2: subtree).
      * @param filter Search filter (e.g. objectClass=*).
      * @param attributeNames Attribute names to be returned.
-     * @return
+     * @return return value
      * @throws Exception
      */
     public Result search(
@@ -135,7 +135,7 @@ public interface Backend {
      * @param deref Dereference referrals.
      * @param filter Search filter (e.g. objectClass=*).
      * @param attributeNames Attribute names to be returned.
-     * @return
+     * @return return value
      * @throws Exception
      */
     public Result search(
@@ -152,7 +152,7 @@ public interface Backend {
      * 
      * @param connectionId Connection ID.
      * @param entry Entry to be added.
-     * @return
+     * @return return value
      * @throws Exception
      */
     public int add(
@@ -165,7 +165,7 @@ public interface Backend {
      * 
      * @param connectionId Connection ID.
      * @param dn DN of the entry to be deleted.
-     * @return
+     * @return return value
      * @throws Exception
      */
     public int delete(
@@ -179,7 +179,7 @@ public interface Backend {
      * @param connectionId Connection ID.
      * @param dn DN of the entry to be modified.
      * @param modifications Modification list.
-     * @return
+     * @return return value
      * @throws Exception
      */
     public int modify(
@@ -195,7 +195,7 @@ public interface Backend {
      * @param dn DN of the entry to be compared.
      * @param attributeName Attribute name to compare.
      * @param attributeValue Attribute value to compare.
-     * @return
+     * @return return value
      * @throws Exception
      */
     public int compare(

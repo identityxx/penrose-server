@@ -305,7 +305,7 @@ public class DefaultModifyHandler implements ModifyHandler {
      * @param source
      * @param oldValues
      * @param newValues
-     * @return
+     * @return return code
      * @throws Exception
      */
     public int modify(Source source, EntryDefinition entry, AttributeValues oldValues, AttributeValues newValues, Date date) throws Exception {

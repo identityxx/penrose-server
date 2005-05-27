@@ -52,10 +52,10 @@ public class GenericModuleMapping implements ModuleMapping {
 	}
 
     /**
-     * Compare rdn1 and rdn
+     * Compare dn and dn2
      * @param dn
      * @param dn2
-     * @return
+     * @return true if dn == dn2
      * @throws Exception
      */
     public boolean match(String dn, String dn2) throws Exception {

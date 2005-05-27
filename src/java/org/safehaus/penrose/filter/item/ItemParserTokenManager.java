@@ -4,6 +4,11 @@
  * All rights reserved.
  */
 package org.safehaus.penrose.filter.item;
+import org.safehaus.penrose.filter.Filter;
+import org.safehaus.penrose.filter.SimpleFilter;
+import org.safehaus.penrose.filter.SubstringFilter;
+import org.safehaus.penrose.filter.PresentFilter;
+import java.util.*;
 
 public class ItemParserTokenManager implements ItemParserConstants
 {

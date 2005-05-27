@@ -30,10 +30,10 @@ import org.safehaus.penrose.module.ModuleContext;
 import org.safehaus.penrose.module.Module;
 import org.safehaus.penrose.module.ModuleConfig;
 import org.safehaus.penrose.module.ModuleMapping;
-import org.safehaus.penrose.schema.SchemaParser;
 import org.safehaus.penrose.schema.Schema;
 import org.safehaus.penrose.schema.AttributeType;
 import org.safehaus.penrose.schema.ObjectClass;
+import org.safehaus.penrose.schema.SchemaParser;
 import org.safehaus.penrose.engine.Engine;
 import org.safehaus.penrose.engine.TransformEngine;
 import org.safehaus.penrose.engine.EngineConfig;
@@ -196,7 +196,7 @@ public class Penrose implements AdapterContext, CacheContext, EngineContext, Mod
      * Set the properties.
      *
      * @param properties
-     * @return
+     * @return return value
      * @throws Exception
      */
     public int setProperties(Properties properties) throws Exception {
@@ -783,9 +783,8 @@ public class Penrose implements AdapterContext, CacheContext, EngineContext, Mod
 	/**
 	 * Convert entry to string.
 	 * 
-	 * @param entry
-	 *            Entry.
-	 * @return
+	 * @param entry Entry.
+	 * @return LDAP entry in LDIF format
 	 * @throws Exception
 	 */
 	public String toString(LDAPEntry entry) throws Exception {

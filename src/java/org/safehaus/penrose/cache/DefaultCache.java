@@ -602,7 +602,7 @@ public class DefaultCache extends Cache {
     /**
      * @param entry
      * @param filter
-     * @return
+     * @return primary keys
      * @throws Exception
      */
     public Collection searchPrimaryKeys(
@@ -652,12 +652,10 @@ public class DefaultCache extends Cache {
     }
 
     /**
-     * Get the primary key from a given entry and result set
+     * Get the primary key from a given entry and result set.
      *
-     * @param entry
-     *            the entry (from config)
-     * @param rs
-     *            the result set
+     * @param entry the entry (from config)
+     * @param rs the result set
      * @return a Map containing primary keys and its values
      * @throws Exception
      */
@@ -689,13 +687,10 @@ public class DefaultCache extends Cache {
     }
 
     /**
-     * Get table name for a given dn (distinguished name) by replacing "=, ."
-     * with _
+     * Get table name for a given dn (distinguished name) by replacing "=, ." with "_".
      *
-     * @param entry
-     *            entry
-     * @param temporary
-     *            whether we are operating on temporary table
+     * @param entry entry
+     * @param temporary whether we are operating on temporary table
      * @return table name
      */
     public String getTableName(EntryDefinition entry, boolean temporary) {
@@ -708,7 +703,7 @@ public class DefaultCache extends Cache {
 	}
 
     /**
-     * Get the table name for a given source
+     * Get the table name for a given source.
      *
      * @param source the source
      * @param temporary whether we are operating on temporary table

@@ -80,8 +80,6 @@ public class BackgroundLoader extends NormalThread implements Runnable {
 
     /**
      * Get the lock for performing update
-     * 
-     * @param source the source to be operated on
      */
 /*
     public void getLockForUpdate(Source source) {
@@ -101,8 +99,6 @@ public class BackgroundLoader extends NormalThread implements Runnable {
 */
     /**
      * Release the lock after performing update
-     * 
-     * @param source the source to be operated on
      */
 /*
     public void releaseLockForUpdate(Source source) {

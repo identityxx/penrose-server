@@ -13,55 +13,57 @@ import org.safehaus.penrose.filter.PresentFilter;
 import java.util.*;
 
 /**
-<pre>
-
-   See: http://www.faqs.org/rfcs/rfc2254.html
-
-        item       = simple / present / substring / extensible
-        simple     = attr filtertype value
-        filtertype = equal / approx / greater / less
-        equal      = "="
-        approx     = "~="
-        greater    = ">="
-        less       = "<="
-        extensible = attr [":dn"] [":" matchingrule] ":=" value
-                     / [":dn"] ":" matchingrule ":=" value
-        present    = attr "=*"
-        substring  = attr "=" [initial] any [final]
-        initial    = value
-        any        = "*" *(value "*")
-        final      = value
-        attr       = AttributeDescription from Section 4.1.5 of [1]
-        matchingrule = MatchingRuleId from Section 4.1.9 of [1]
-        value      = AttributeValue from Section 4.1.6 of [1]
-
-   If a value should contain any of the following characters
-
-           Character       ASCII value
-           ---------------------------
-           *               0x2a
-           (               0x28
-           )               0x29
-           \               0x5c
-           NUL             0x00
-
-   the character must be encoded as the backslash '\' character (ASCII
-   0x5c) followed by the two hexadecimal digits representing the ASCII
-   value of the encoded character. The case of the two hexadecimal
-   digits is not significant.
-   
-   Example usage:
-   
-   Reader in = ...;
-   ItemParser parser = new ItemParser(in);
-   try {
-     Filter filter = parser.parse();
-   } catch (ParseException ex) {
-     System.out.println(ex.getMessage());
-   }
-
-</pre>
-*/
+ * LDAP Filter Item Parser.
+ *
+ * <pre>
+ *
+ *    See: http://www.faqs.org/rfcs/rfc2254.html
+ *
+ *         item       = simple / present / substring / extensible
+ *         simple     = attr filtertype value
+ *         filtertype = equal / approx / greater / less
+ *         equal      = "="
+ *         approx     = "~="
+ *         greater    = ">="
+ *         less       = "<="
+ *         extensible = attr [":dn"] [":" matchingrule] ":=" value
+ *                      / [":dn"] ":" matchingrule ":=" value
+ *         present    = attr "=*"
+ *         substring  = attr "=" [initial] any [final]
+ *         initial    = value
+ *         any        = "*" *(value "*")
+ *         final      = value
+ *         attr       = AttributeDescription from Section 4.1.5 of [1]
+ *         matchingrule = MatchingRuleId from Section 4.1.9 of [1]
+ *         value      = AttributeValue from Section 4.1.6 of [1]
+ *
+ *    If a value should contain any of the following characters
+ *
+ *            Character       ASCII value
+ *            ---------------------------
+ *            *               0x2a
+ *            (               0x28
+ *            )               0x29
+ *            \               0x5c
+ *            NUL             0x00
+ *
+ *    the character must be encoded as the backslash '\' character (ASCII
+ *    0x5c) followed by the two hexadecimal digits representing the ASCII
+ *    value of the encoded character. The case of the two hexadecimal
+ *    digits is not significant.
+ *
+ *    Example usage:
+ *
+ *    Reader in = ...;
+ *    ItemParser parser = new ItemParser(in);
+ *    try {
+ *      Filter filter = parser.parse();
+ *    } catch (ParseException ex) {
+ *      System.out.println(ex.getMessage());
+ *    }
+ *
+ * </pre>
+ */
 
 public class ItemParser implements ItemParserConstants {
 
