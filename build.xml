@@ -20,6 +20,14 @@
         <pathelement location="target/classes"/>
     </path>
 
+    <path id="project.classpath">
+        <fileset dir="svnant">
+            <include name="**/*.jar"/>
+        </fileset>
+    </path>
+
+    <taskdef resource="svntask.properties" classpathref="project.classpath"/>
+
     <target name="init">
         <tstamp>
             <format property="TODAY" pattern="yyyyMMdd"/>
@@ -71,14 +79,14 @@
         </javadoc>
     </target>
 
-    <target name="update" depends="build">
+    <target name="install" depends="build">
         <copy
             file="target/penrose-${penrose.version}.jar"
             todir="${penrose.home}/lib">
         </copy>
     </target>
 
-    <target name="install" depends="build,docs">
+    <target name="dist" depends="build,docs">
         <mkdir dir="target/dist"/>
         <copy todir="target/dist" file="README.txt"/>
         <copy todir="target/dist" file="LICENSE.txt"/>
@@ -115,7 +123,7 @@
         <mkdir dir="target/dist/var"/>
     </target>
 
-    <target name="dist-unix" depends="install">
+    <target name="dist-unix" depends="dist">
         <zip destfile="target/penrose-${penrose.version}.zip"
             basedir="target/dist"/>
         <tar destfile="target/penrose-${penrose.version}.tar">
@@ -127,18 +135,24 @@
             src="target/penrose-${penrose.version}.tar"/>
     </target>
 
-    <target name="dist-win32" depends="install">
+    <target name="dist-win32" depends="dist">
         <echo message="Creating target/penrose-${penrose.version}.exe"/>
         <exec executable="${iscc.path}" os="Windows NT,Windows 2000,Windows XP,Windows 2003">
             <arg line="/Q penrose.iss"/>
         </exec>
     </target>
 
-    <target name="dist" depends="dist-unix,dist-win32">
+    <target name="dist-all" depends="dist-unix,dist-win32">
     </target>
     
     <target name="clean" depends="init">
         <delete dir="target"/>
+    </target>
+
+    <target name="update">
+        <svn>
+            <update dir="."/>
+        </svn> 
     </target>
 
 </project>
