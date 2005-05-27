@@ -139,7 +139,7 @@ if [ "$1" = "start" ] ; then
 
 elif [ "$1" = "stop" ] ; then
 
-  kill -9 `cat "$PENROSE_PID"`
+  kill -9 `cat "$PENROSE_PID"` > /dev/null 2>&1
 
 else
 

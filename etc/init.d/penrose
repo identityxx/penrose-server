@@ -5,7 +5,7 @@
 # chkconfig: - 38 62
 # description: Penrose Virtual Directory Server.
 # processname: java
-# pidfile: /var/run/penrose.pid
+# pidfile: /usr/local/penrose/var/run/penrose.pid
 
 # Source function library.
 . /etc/init.d/functions
@@ -21,17 +21,20 @@ if [ -r /etc/sysconfig/penrose ] ; then
 	. /etc/sysconfig/penrose
 fi
 
-penrose=/usr/local/penrose/bin/penrose.sh
+PENROSE_HOME=/usr/local/penrose
+PENROSE_SCRIPT=$PENROSE_HOME/bin/penrose.sh
 
-[ -x ${penrose} ] || exit 0
+PENROSE_PROG=penrose
+PENROSE_USER=root
+
+[ -x $PENROSE_SCRIPT ] || exit 0
 
 RETVAL=0
 
 function start() {
         # Start daemons.
-	prog=`basename ${penrose}`
-        echo -n $"Starting $prog: "
-        daemon ${penrose}
+        echo -n $"Starting $PENROSE_PROG: "
+        daemon --user $PENROSE_USER $PENROSE_SCRIPT start
 	RETVAL=$?
         echo
 	[ $RETVAL -eq 0 ] && touch /var/lock/subsys/penrose
@@ -40,9 +43,8 @@ function start() {
 
 function stop() {
         # Stop daemons.
-	prog=`basename ${penrose}`
-	echo -n $"Stopping $prog: "
-	killproc ${penrose}
+	echo -n $"Stopping $PENROSE_PROG: "
+        daemon --user $PENROSE_USER $PENROSE_SCRIPT stop
 	RETVAL=$?
         echo
         [ $RETVAL -eq 0 ] && rm -f /var/lock/subsys/penrose /var/run/penrose.args
@@ -58,14 +60,14 @@ case "$1" in
         stop
         ;;
     status)
-        status ${penrose}
+        status $PENROSE_PROG
 	;;
     restart)
 	stop
 	start
 	;;
     reload)
-    	killproc ${penrose} -HUP
+    	killproc $PENROSE_PROG -HUP
 	RETVAL=$?
 	;;
     condrestart)
