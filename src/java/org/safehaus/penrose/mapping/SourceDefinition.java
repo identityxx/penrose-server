@@ -99,6 +99,10 @@ public class SourceDefinition {
         parameters.put(name, value);
     }
 
+    public void removeParameter(String name) {
+        parameters.remove(name);
+    }
+    
     public Collection getParameterNames() {
         return parameters.keySet();
     }

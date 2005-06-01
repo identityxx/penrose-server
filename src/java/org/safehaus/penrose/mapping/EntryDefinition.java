@@ -46,7 +46,7 @@ public class EntryDefinition implements Cloneable, Serializable {
     /**
      * Sources. Each element is of type org.safehaus.penrose.mapping.Source.
      */
-    private List sources = new ArrayList();
+    private Map sources = new LinkedHashMap();
     
     /**
      * Relationship. Each element is of type org.safehaus.penrose.mapping.Relationship.
@@ -175,11 +175,7 @@ public class EntryDefinition implements Cloneable, Serializable {
     }
 
     public Collection getSources() {
-        return sources;
-    }
-
-    public void setSources(List sources) {
-        this.sources = sources;
+        return sources.values();
     }
 
     public List getObjectClasses() {
@@ -203,7 +199,15 @@ public class EntryDefinition implements Cloneable, Serializable {
 	}
 
     public void addSource(Source source) {
-        sources.add(source);
+        sources.put(source.getName(), source);
+    }
+
+    public Source getSource(String name) {
+        return (Source)sources.get(name);
+    }
+
+    public Source removeSource(String name) {
+        return (Source)sources.remove(name);
     }
 
 	public void addAttributeDefinition(AttributeDefinition attribute) {
@@ -228,10 +232,9 @@ public class EntryDefinition implements Cloneable, Serializable {
             a.put(name, attribute.clone());
         }
 
-        Collection s = entry.getSources();
-        for (Iterator i=sources.iterator(); i.hasNext(); ) {
+        for (Iterator i=sources.values().iterator(); i.hasNext(); ) {
             Source source = (Source)i.next();
-            s.add(source.clone());
+            entry.addSource((Source)source.clone());
         }
 
         Collection r = entry.getRelationships();
@@ -328,7 +331,7 @@ public class EntryDefinition implements Cloneable, Serializable {
     	sb.append("], ");
 
     	sb.append("sources=[");
-    	iter = sources.iterator();
+    	iter = sources.values().iterator();
     	while (iter.hasNext()) {
     		Object next = (Object) iter.next();
     		sb.append(next.toString()+", ");
@@ -346,16 +349,6 @@ public class EntryDefinition implements Cloneable, Serializable {
     	return sb.toString();
     }
     
-    public boolean containsSource(String sourceName) {
-    	for (int i=0; i<sources.size(); i++) {
-    		Source s = (Source) sources.get(i);
-    		if (s.getName().equals(sourceName)) {
-    			return true;
-    		}
-    	}
-    	return false;
-    }
-
     public LDAPAttributeSet getAttributeSet(AttributeValues attributeValues) {
         LDAPAttributeSet set = new LDAPAttributeSet();
 

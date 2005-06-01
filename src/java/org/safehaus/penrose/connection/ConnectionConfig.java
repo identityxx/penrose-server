@@ -96,6 +96,10 @@ public class ConnectionConfig implements Serializable {
         parameters.setProperty(name, value);
     }
 
+    public void removeParameter(String name) {
+        parameters.remove(name);
+    }
+
 	/**
 	 * @return Returns the poolSize.
 	 */
@@ -180,5 +184,42 @@ public class ConnectionConfig implements Serializable {
 
     public void setAdapterConfig(AdapterConfig adapterConfig) {
         this.adapterConfig = adapterConfig;
+    }
+
+    public int hashCode() {
+        int value = connectionName.hashCode();
+        System.out.println("[ConnectionConfig("+connectionName+")] hashCode() => "+value);
+        return value;
+    }
+
+    public boolean equals(Object object) {
+        boolean value = false;
+        try {
+            if (object == null) {
+                value = false;
+                return value;
+            }
+
+            if (!(object instanceof ConnectionConfig)) {
+                value = false;
+                return value;
+            }
+
+            ConnectionConfig connectionConfig = (ConnectionConfig)object;
+            if (!connectionName.equals(connectionConfig.connectionName)) {
+                value = false;
+                return value;
+            }
+
+            value = true;
+            return value;
+
+        } finally {
+            System.out.println("["+this+"] equals("+object+") => "+value);
+        }
+    }
+
+    public String toString() {
+        return "ConnectionConfig("+connectionName+")";
     }
 }

@@ -30,7 +30,7 @@ public class InterpreterConfig {
        parameters.setProperty(name, value);
     }
 
-    public String getProperty(String name) {
+    public String getParameter(String name) {
         return parameters.getProperty(name);
     }
 

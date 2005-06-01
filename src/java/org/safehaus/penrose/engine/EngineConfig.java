@@ -24,7 +24,7 @@ public class EngineConfig implements Serializable {
     private String modRdnHandlerClass;
     private String searchHandlerClass;
 
-    private Properties properties = new Properties();
+    private Properties parameters = new Properties();
 
     public String getEngineClass() {
         return engineClass;
@@ -35,11 +35,15 @@ public class EngineConfig implements Serializable {
     }
 
     public void setParameter(String name, String value) {
-        properties.setProperty(name, value);
+        parameters.setProperty(name, value);
+    }
+
+    public void removeParameter(String name) {
+        parameters.remove(name);
     }
 
     public String getParameter(String name) {
-        return properties.getProperty(name);
+        return parameters.getProperty(name);
     }
 
     public String getEngineName() {

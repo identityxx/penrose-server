@@ -58,7 +58,7 @@ public class Config implements Serializable {
 
         String dn = entry.getDn();
 
-        if (entryDefinitions.get(dn) != null) throw new Exception("Entry already exists");
+        if (entryDefinitions.get(dn) != null) throw new Exception("Entry "+dn+" already exists");
 
         int i = dn.indexOf(",");
 
@@ -106,14 +106,16 @@ public class Config implements Serializable {
         }
 	}
 
-    public void removeEntryDefinition(EntryDefinition entry) {
+    public EntryDefinition removeEntryDefinition(EntryDefinition entry) {
         if (entry.getParent() == null) {
             rootEntryDefinitions.remove(entry);
+
         } else {
             Collection siblings = entry.getParent().getChildren();
             siblings.remove(entry);
         }
-        entryDefinitions.remove(entry.getDn());
+
+        return (EntryDefinition)entryDefinitions.remove(entry.getDn());
     }
     
     public void renameEntryDefinition(EntryDefinition entry, String newDn) {
@@ -137,20 +139,28 @@ public class Config implements Serializable {
 		entryDefinitions.remove(oldDn);
     }
 
-    public void addSourceDefinition(SourceDefinition sourceConfig) throws Exception {
-        sourceDefinitions.put(sourceConfig.getName(), sourceConfig);
+    public void addSourceDefinition(SourceDefinition sourceDefinition) throws Exception {
+        sourceDefinitions.put(sourceDefinition.getName(), sourceDefinition);
 
-        ConnectionConfig connectionConfig = getConnectionConfig(sourceConfig.getConnectionName());
-        sourceConfig.setConnectionConfig(connectionConfig);
+        String connectionName = sourceDefinition.getConnectionName();
+        if (connectionName == null) throw new Exception("Missing connection name");
 
-        AdapterConfig adapterConfig = getAdapterConfig(connectionConfig.getAdapterName());
-        sourceConfig.setAdapterConfig(adapterConfig);
+        ConnectionConfig connectionConfig = getConnectionConfig(connectionName);
+        if (connectionConfig == null) throw new Exception("Undefined connection "+connectionName);
+
+        sourceDefinition.setConnectionConfig(connectionConfig);
+
+        String adapterName = connectionConfig.getAdapterName();
+        if (adapterName == null) throw new Exception("Missing adapter name");
+
+        AdapterConfig adapterConfig = getAdapterConfig(adapterName);
+        if (adapterConfig == null) throw new Exception("Undefined adapter "+adapterName);
+
+        sourceDefinition.setAdapterConfig(adapterConfig);
     }
     
-    public void removeSourceDefinition(String sourceName) {
-    	if (this.sourceDefinitions != null) {
-    		this.sourceDefinitions.remove(sourceName);
-    	}
+    public SourceDefinition removeSourceDefinition(String sourceName) {
+    	return (SourceDefinition)sourceDefinitions.remove(sourceName);
     }
     
     public void addModuleConfig(ModuleConfig moduleConfig) throws Exception {
@@ -161,27 +171,37 @@ public class Config implements Serializable {
         return (ModuleConfig)moduleConfigs.get(name);
     }
 
-    public void addModuleMapping(GenericModuleMapping mapping) {
+    public void addModuleMapping(GenericModuleMapping mapping) throws Exception {
         moduleMappings.put(mapping.getModuleName(), mapping);
 
-        ModuleConfig moduleConfig = getModuleConfig(mapping.getModuleName());
+        String moduleName = mapping.getModuleName();
+        if (moduleName == null) throw new Exception("Missing module name");
+
+        ModuleConfig moduleConfig = getModuleConfig(moduleName);
+        if (moduleConfig == null) throw new Exception("Undefined module "+moduleName);
+
         mapping.setModuleConfig(moduleConfig);
     }
 
 	/**
 	 * Add connection object to this configuration
 	 * 
-	 * @param connection
+	 * @param connectionConfig
 	 */
-	public void addConnectionConfig(ConnectionConfig connection) {
-		connectionConfigs.put(connection.getConnectionName(), connection);
+	public void addConnectionConfig(ConnectionConfig connectionConfig) throws Exception {
+		connectionConfigs.put(connectionConfig.getConnectionName(), connectionConfig);
 
-        AdapterConfig adapterConfig = getAdapterConfig(connection.getAdapterName());
-        connection.setAdapterConfig(adapterConfig);
+        String adapterName = connectionConfig.getAdapterName();
+        if (adapterName == null) throw new Exception("Missing adapter name");
+
+        AdapterConfig adapterConfig = getAdapterConfig(adapterName);
+        if (adapterConfig == null) throw new Exception("Undefined adapter "+adapterName);
+
+        connectionConfig.setAdapterConfig(adapterConfig);
 	}
 	
-	public void removeConnectionConfig(String connectionName) {
-		connectionConfigs.remove(connectionName);
+	public ConnectionConfig removeConnectionConfig(String connectionName) {
+		return (ConnectionConfig)connectionConfigs.remove(connectionName);
 	}
 
     public ConnectionConfig getConnectionConfig(String name) {
@@ -259,7 +279,22 @@ public class Config implements Serializable {
         sb.append(nl);
         sb.append(nl);
         sb.append("CACHE:");
-        sb.append(cacheConfigs);
+        sb.append(nl);
+        sb.append(nl);
+
+        for (Iterator i = cacheConfigs.keySet().iterator(); i.hasNext();) {
+            String cacheName = (String) i.next();
+            CacheConfig cache = (CacheConfig) cacheConfigs.get(cacheName);
+            sb.append(cacheName + " (" + cache.getCacheClass() + ")" + nl);
+            sb.append("Parameters:" + nl);
+            for (Iterator j = cache.getParameterNames().iterator(); j.hasNext();) {
+                String name = (String) j.next();
+                String value = cache.getParameter(name);
+                sb.append("- " + name + ": " + value + nl);
+            }
+            sb.append(nl);
+        }
+
         sb.append(nl);
         sb.append(nl);
 
@@ -297,18 +332,6 @@ public class Config implements Serializable {
             }
             sb.append(nl);
         }
-
-		sb.append("ROOT ENTRIES:");
-        sb.append(nl);
-        sb.append(nl);
-
-		for (Iterator i = rootEntryDefinitions.iterator(); i.hasNext();) {
-			EntryDefinition entry = (EntryDefinition)i.next();
-            String dn = entry.getDn();
-			//if (entry.getParent() != null) continue;
-			sb.append("DN: "+dn + nl);
-			sb.append(toString(entry));
-		}
 
 		sb.append("ENTRIES:");
         sb.append(nl);
@@ -432,16 +455,16 @@ public class Config implements Serializable {
         return getSourceDefinition(source.getName());
     }
 
-    public void removeModuleConfig(String moduleName) {
-    	moduleConfigs.remove(moduleName);
+    public ModuleConfig removeModuleConfig(String moduleName) {
+    	return (ModuleConfig)moduleConfigs.remove(moduleName);
     }
     
     public Collection getModuleConfigs() {
     	return moduleConfigs.values();
     }
     
-    public void removeModuleMapping(String moduleName) {
-    	moduleMappings.remove(moduleName);
+    public ModuleMapping removeModuleMapping(String moduleName) {
+    	return (ModuleMapping)moduleMappings.remove(moduleName);
     }
 
     public Collection getEngineConfigs() {

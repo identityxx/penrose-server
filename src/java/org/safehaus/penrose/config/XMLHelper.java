@@ -20,6 +20,8 @@ import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.connection.ConnectionConfig;
 import org.safehaus.penrose.schema.AttributeType;
 import org.safehaus.penrose.schema.ObjectClass;
+import org.safehaus.penrose.interpreter.InterpreterConfig;
+import org.safehaus.penrose.engine.EngineConfig;
 
 /**
  * @author Adison Wongkar
@@ -43,13 +45,25 @@ public class XMLHelper {
 	public static Element toServerXmlElement(Config config) {
 		Element element = new DefaultElement("server");
 
-		// cache
+        // interpreters
+        for (Iterator iter = config.getInterpreterConfigs().iterator(); iter.hasNext();) {
+            InterpreterConfig interpreterConfig = (InterpreterConfig)iter.next();
+            element.add(toElement(interpreterConfig));
+        }
+
+        // engines
+        for (Iterator iter = config.getEngineConfigs().iterator(); iter.hasNext();) {
+            EngineConfig engineConfig = (EngineConfig)iter.next();
+            element.add(toElement(engineConfig));
+        }
+
+		// caches
         for (Iterator iter = config.getCacheConfigs().iterator(); iter.hasNext();) {
             CacheConfig cacheConfig = (CacheConfig)iter.next();
             element.add(toElement(cacheConfig));
         }
 
-        // adapterConfigs
+        // adapters
         for (Iterator iter = config.getAdapterConfigs().iterator(); iter.hasNext();) {
             AdapterConfig adapter = (AdapterConfig)iter.next();
             element.add(toElement(adapter));
@@ -63,9 +77,17 @@ public class XMLHelper {
 
 		// root
 		Element rootElement = new DefaultElement("root");
-		rootElement.addAttribute("dn", config.getRootDn());
-		rootElement.addAttribute("password", config.getRootPassword());
+
+        Element rootDn = new DefaultElement("root-dn");
+        rootDn.add(new DefaultText(config.getRootDn()));
+        rootElement.add(rootDn);
+
+        Element rootPassword = new DefaultElement("root-password");
+        rootPassword.add(new DefaultText(config.getRootPassword()));
+        rootElement.add(rootPassword);
+
 		element.add(rootElement);
+
 		return element;
 	}
 
@@ -124,9 +146,9 @@ public class XMLHelper {
 
 		// write expression
         if (field.getExpression() != null) {
-            Element writeExpressionElement = new DefaultElement("expression");
-            writeExpressionElement.add(new DefaultText(field.getExpression()));
-            element.add(writeExpressionElement);
+            Element expression = new DefaultElement("expression");
+            expression.add(new DefaultText(field.getExpression()));
+            element.add(expression);
         }
 
 		return element;
@@ -143,9 +165,11 @@ public class XMLHelper {
         adapterClass.add(new DefaultText(adapter.getAdapterClass()));
         element.add(adapterClass);
 
-        Element description = new DefaultElement("description");
-        description.add(new DefaultText(adapter.getDescription()));
-        element.add(description);
+        if (adapter.getDescription() != null) { 
+            Element description = new DefaultElement("description");
+            description.add(new DefaultText(adapter.getDescription()));
+            element.add(description);
+        }
 
         return element;
     }
@@ -238,13 +262,6 @@ public class XMLHelper {
 		for (Iterator i=source.getFields().iterator(); i.hasNext(); ) {
 			Field field = (Field)i.next();
 			Element fieldElement = toElement(field);
-
-            if (field.getExpression() != null) {
-                Element expressionElement = new DefaultElement("expression");
-                expressionElement.add(new DefaultText(field.getExpression()));
-                fieldElement.add(expressionElement);
-            }
-
             element.add(fieldElement);
 		}
     	// parameters
@@ -294,7 +311,7 @@ public class XMLHelper {
     		namesElement.add(nameElement);
     	}
     	element.add(namesElement);
-    	
+
     	Element descElement = new DefaultElement("description");
     	if (oc.getDescription() != null) descElement.add(new DefaultText(oc.getDescription()));
     	element.add(descElement);
@@ -418,25 +435,34 @@ public class XMLHelper {
 
     public static Element toElement(ModuleMapping mapping) {
         Element element = new DefaultElement("module-mapping");
+
         Element name = new DefaultElement("module-name");
         name.add(new DefaultText(mapping.getModuleName()));
         element.add(name);
+
         Element dn = new DefaultElement("base-dn");
         dn.add(new DefaultText(mapping.getBaseDn()));
         element.add(dn);
+
         Element filter = new DefaultElement("filter");
         filter.add(new DefaultText(mapping.getFilter()));
         element.add(filter);
+
         Element scope = new DefaultElement("scope");
         scope.add(new DefaultText(mapping.getScope()));
         element.add(scope);
+
         return element;
     }
     
     public static Element toElement(SourceDefinition source) {
     	Element element = new DefaultElement("source");
     	element.addAttribute("name", source.getName());
-    	element.addAttribute("connectionName", source.getConnectionName());
+
+        Element connectionName = new DefaultElement("connection-name");
+        connectionName.add(new DefaultText(source.getConnectionName()));
+        element.add(connectionName);
+
     	// field
     	Object[] fields = source.getFields().toArray();
     	for (int i=0; i<fields.length; i++) {
@@ -444,6 +470,7 @@ public class XMLHelper {
     		Element fieldElement = toElement(field);
     		element.add(fieldElement);
     	}
+
     	// parameter
         if (!source.getParameterNames().isEmpty()) {
         	Object[] paramNames = source.getParameterNames().toArray();
@@ -453,20 +480,98 @@ public class XMLHelper {
         		element.add(parameterElement);
         	}
         }
+
     	return element;
     }
     
+    public static Element toElement(InterpreterConfig interpreterConfig) {
+    	Element element = new DefaultElement("interpreter");
+
+        Element interpreterName = new DefaultElement("interpreter-name");
+        interpreterName.add(new DefaultText(interpreterConfig.getInterpreterName()));
+        element.add(interpreterName);
+
+        Element interpreterClass = new DefaultElement("interpreter-class");
+        interpreterClass.add(new DefaultText(interpreterConfig.getInterpreterClass()));
+        element.add(interpreterClass);
+
+        // parameters
+        for (Iterator iter = interpreterConfig.getParameterNames().iterator(); iter.hasNext();) {
+            String name = (String) iter.next();
+            String value = (String) interpreterConfig.getParameter(name);
+
+            Element parameter = new DefaultElement("parameter");
+
+            Element paramName = new DefaultElement("param-name");
+            paramName.add(new DefaultText(name));
+            parameter.add(paramName);
+
+            Element paramValue = new DefaultElement("param-value");
+            paramValue.add(new DefaultText(value));
+            parameter.add(paramValue);
+
+            element.add(parameter);
+        }
+    	return element;
+    }
+
+    public static Element toElement(EngineConfig engineConfig) {
+    	Element element = new DefaultElement("engine");
+
+        Element interpreterName = new DefaultElement("engine-name");
+        interpreterName.add(new DefaultText(engineConfig.getEngineName()));
+        element.add(interpreterName);
+
+        Element interpreterClass = new DefaultElement("engine-class");
+        interpreterClass.add(new DefaultText(engineConfig.getEngineClass()));
+        element.add(interpreterClass);
+
+        Element addHandlerClass = new DefaultElement("add-handler-class");
+        addHandlerClass.add(new DefaultText(engineConfig.getAddHandlerClass()));
+        element.add(addHandlerClass);
+
+        Element bindHandlerClass = new DefaultElement("bind-handler-class");
+        bindHandlerClass.add(new DefaultText(engineConfig.getBindHandlerClass()));
+        element.add(bindHandlerClass);
+
+        Element compareHandlerClass = new DefaultElement("compare-handler-class");
+        compareHandlerClass.add(new DefaultText(engineConfig.getCompareHandlerClass()));
+        element.add(compareHandlerClass);
+
+        Element deleteHandlerClass = new DefaultElement("delete-handler-class");
+        deleteHandlerClass.add(new DefaultText(engineConfig.getDeleteHandlerClass()));
+        element.add(deleteHandlerClass);
+
+        Element modifyHandlerClass = new DefaultElement("modify-handler-class");
+        modifyHandlerClass.add(new DefaultText(engineConfig.getModifyHandlerClass()));
+        element.add(modifyHandlerClass);
+
+        Element modrdnHandlerClass = new DefaultElement("modrdn-handler-class");
+        modrdnHandlerClass.add(new DefaultText(engineConfig.getModRdnHandlerClass()));
+        element.add(modrdnHandlerClass);
+
+        Element searchHandlerClass = new DefaultElement("search-handler-class");
+        searchHandlerClass.add(new DefaultText(engineConfig.getSearchHandlerClass()));
+        element.add(searchHandlerClass);
+
+        return element;
+    }
+
     public static Element toElement(CacheConfig cache) {
     	Element element = new DefaultElement("cache");
 
-        Element cacheClass = new DefaultElement("param-name");
+        Element cacheName = new DefaultElement("cache-name");
+        cacheName.add(new DefaultText(cache.getCacheName()));
+        element.add(cacheName);
+
+        Element cacheClass = new DefaultElement("cache-class");
         cacheClass.add(new DefaultText(cache.getCacheClass()));
         element.add(cacheClass);
 
         // parameters
-        for (Iterator iter = cache.parameters.keySet().iterator(); iter.hasNext();) {
+        for (Iterator iter = cache.getParameterNames().iterator(); iter.hasNext();) {
             String name = (String) iter.next();
-            String value = (String) cache.parameters.get(name);
+            String value = (String) cache.getParameter(name);
 
             Element parameter = new DefaultElement("parameter");
 
@@ -491,13 +596,17 @@ public class XMLHelper {
     }
     
     public static Element createParameterElement(String paramName, String paramValue) {
+
     	Element element = new DefaultElement("parameter");
+
     	Element name = new DefaultElement("param-name");
     	name.add(new DefaultText(paramName));
     	element.add(name);
+
     	Element value = new DefaultElement("param-value");
     	value.add(new DefaultText(paramValue));
     	element.add(value);
+
     	return element;
     }
     

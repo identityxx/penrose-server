@@ -38,6 +38,10 @@ public class CacheConfig implements Serializable {
         parameters.setProperty(name, value);
     }
 
+    public void removeParameter(String name) {
+        parameters.remove(name);
+    }
+
     public String getParameter(String name) {
         return parameters.getProperty(name);
     }

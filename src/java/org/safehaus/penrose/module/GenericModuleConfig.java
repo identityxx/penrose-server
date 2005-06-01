@@ -32,6 +32,10 @@ public class GenericModuleConfig implements ModuleConfig {
         parameters.put(name, value);
     }
 
+    public void removeParameter(String name) {
+        parameters.remove(name);
+    }
+
     public String getParameter(String name) {
         return (String)parameters.get(name);
     }
@@ -46,5 +50,45 @@ public class GenericModuleConfig implements ModuleConfig {
 
     public void setModuleClass(String moduleClass) {
         this.moduleClass = moduleClass;
+    }
+
+    public int hashCode() {
+        return moduleName.hashCode() + moduleClass.hashCode() + parameters.hashCode();
+    }
+
+    public boolean equals(Object object) {
+        boolean value = false;
+        try {
+            if (this == object) {
+                value = true;
+                return value;
+            }
+
+            if((object == null) || (object.getClass() != this.getClass())) {
+                value = false;
+                return value;
+            }
+
+            ModuleConfig moduleConfig = (ModuleConfig)object;
+            if (!moduleName.equals(moduleConfig.getModuleName())) {
+                value = false;
+                return value;
+            }
+
+            if (!moduleClass.equals(moduleConfig.getModuleClass())) {
+                value = false;
+                return value;
+            }
+
+            value = true;
+            return value;
+
+        } finally {
+            System.out.println("["+this+"] equals("+object+") => "+value);
+        }
+    }
+
+    public String toString() {
+        return "GenericModuleConfig("+moduleName+")";
     }
 }
