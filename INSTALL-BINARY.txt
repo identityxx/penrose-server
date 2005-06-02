@@ -1,7 +1,7 @@
 Installing Penrose on Windows
 -----------------------------
 
-On Windows platforms, double-click the installer program (penrose-0.9.exe).
+On Windows platforms, double-click the installer program (penrose-0.9.1.exe).
 Select an installation directory (e.g. C:\Program Files\Penrose).
 We will refer the installation directory as PENROSE_HOME.
 
@@ -11,7 +11,7 @@ Installing Penrose on Unix
 On Linux and other Unix-like platforms, create an installation directory
 (e.g. /usr/local/penrose), then unzip/untar the distribution file.
 
-  tar xzvf penrose-0.9.tar.gz
+  tar xzvf penrose-0.9.1.tar.gz
 
 We will refer the installation directory as PENROSE_HOME.
 

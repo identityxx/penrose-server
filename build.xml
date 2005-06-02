@@ -5,7 +5,8 @@
 <project name="penrose" default="build" basedir=".">
 
     <property name="build.compiler" value="jikes"/>
-    <property name="penrose.version" value="0.9"/>
+    <property name="project.name" value="penrose"/>
+    <property name="project.version" value="0.9.1"/>
     <property name="penrose.home" value="/usr/local/penrose"/>
     <property name="iscc.path" value="ISCC.exe"/>
 
@@ -65,7 +66,7 @@
             todir="target/classes">
 			<fileset dir="src/java" includes="**/*.xml"/>
         </copy>
-       <jar jarfile="target/penrose-${penrose.version}.jar">
+       <jar jarfile="target/${project.name}-${project.version}.jar">
             <fileset dir="target/classes"/>
         </jar>
     </target>
@@ -81,7 +82,7 @@
 
     <target name="install" depends="build">
         <copy
-            file="target/penrose-${penrose.version}.jar"
+            file="target/${project.name}-${project.version}.jar"
             todir="${penrose.home}/lib">
         </copy>
     </target>
@@ -102,7 +103,7 @@
             <fileset dir="lib"/>
         </copy>
         <copy todir="target/dist/lib"
-            file="target/penrose-${penrose.version}.jar">
+            file="target/${project.name}-${project.version}.jar">
         </copy>
         <copy todir="target/dist/conf">
             <fileset dir="conf"/>
@@ -124,19 +125,19 @@
     </target>
 
     <target name="dist-unix" depends="dist">
-        <zip destfile="target/penrose-${penrose.version}.zip"
+        <zip destfile="target/${project.name}-${project.version}.zip"
             basedir="target/dist"/>
-        <tar destfile="target/penrose-${penrose.version}.tar">
+        <tar destfile="target/${project.name}-${project.version}.tar">
             <tarfileset dir="target/dist"
-                prefix="penrose-${penrose.version}">
+                prefix="${project.name}-${project.version}">
             </tarfileset>
         </tar>
-        <gzip destfile="target/penrose-${penrose.version}.tar.gz"
-            src="target/penrose-${penrose.version}.tar"/>
+        <gzip destfile="target/${project.name}-${project.version}.tar.gz"
+            src="target/${project.name}-${project.version}.tar"/>
     </target>
 
     <target name="dist-win32" depends="dist">
-        <echo message="Creating target/penrose-${penrose.version}.exe"/>
+        <echo message="Creating target/${project.name}-${project.version}.exe"/>
         <exec executable="${iscc.path}" os="Windows NT,Windows 2000,Windows XP,Windows 2003">
             <arg line="/Q penrose.iss"/>
         </exec>

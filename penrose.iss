@@ -4,14 +4,14 @@
 [Setup]
 
 AppName=Penrose
-AppVerName=Penrose 0.9
+AppVerName=Penrose 0.9.1
 DefaultDirName={pf}\Penrose
 DefaultGroupName=Penrose
 UninstallDisplayName=Penrose
 UninstallDisplayIcon={app}\penrose.ico
 Compression=lzma
 SolidCompression=yes
-OutputBaseFilename=penrose-0.9
+OutputBaseFilename=penrose-0.9.1
 OutputDir=target
 LicenseFile=LICENSE.txt
 
