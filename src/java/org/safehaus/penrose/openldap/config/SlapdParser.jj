@@ -19,11 +19,8 @@ import java.io.*;
 import java.util.*;
 
 /**
-<pre>
-
-</pre>
-*/
-
+ * OpenLDAP configuration parser.
+ */
 public class SlapdParser {
 
 }
@@ -51,7 +48,8 @@ TOKEN : /* whitespaces */
 }
 
 /**
- * Name Value Configuration Item
+ * Name Value Configuration Item.
+ *
  * @return String array (of size 3) containing:
  *          [0] name
  *          [1] whitespace

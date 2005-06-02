@@ -5,16 +5,17 @@
  */
 package org.safehaus.penrose.openldap.config;
 
+import java.io.*;
+import java.util.*;
+
 /**
-<pre>
-
-</pre>
-*/
-
+ * OpenLDAP configuration parser.
+ */
 public class SlapdParser implements SlapdParserConstants {
 
 /**
- * Name Value Configuration Item
+ * Name Value Configuration Item.
+ *
  * @return String array (of size 3) containing:
  *          [0] name
  *          [1] whitespace
@@ -88,6 +89,11 @@ public class SlapdParser implements SlapdParserConstants {
     finally { jj_save(4, xla); }
   }
 
+  final private boolean jj_3_3() {
+    if (jj_scan_token(VALUE)) return true;
+    return false;
+  }
+
   final private boolean jj_3_1() {
     if (jj_scan_token(NAME)) return true;
     return false;
@@ -104,11 +110,6 @@ public class SlapdParser implements SlapdParserConstants {
   }
 
   final private boolean jj_3_2() {
-    if (jj_scan_token(VALUE)) return true;
-    return false;
-  }
-
-  final private boolean jj_3_3() {
     if (jj_scan_token(VALUE)) return true;
     return false;
   }

@@ -4,6 +4,8 @@
  * All rights reserved.
  */
 package org.safehaus.penrose.openldap.config;
+import java.io.*;
+import java.util.*;
 
 public class SlapdParserTokenManager implements SlapdParserConstants
 {

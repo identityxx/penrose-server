@@ -37,6 +37,11 @@
 
     <target name="build" depends="init">
         <javacc
+            target="src/java/org/safehaus/penrose/schema/LDAPv3Schema.jj"
+            javacchome="javacc"
+            outputdirectory="src/java/org/safehaus/penrose/schema"
+        />
+        <javacc
             target="src/java/org/safehaus/penrose/filter/item/ItemParser.jj"
             javacchome="javacc"
             outputdirectory="src/java/org/safehaus/penrose/filter/item"

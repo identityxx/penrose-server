@@ -34,7 +34,7 @@ public class Queue {
 	/**
 	 * Remove an object from the head of the queue
 	 * 
-	 * @return
+	 * @return the object
 	 * @throws EmptyQueueException if the queue is empty
 	 */
 	public synchronized Object remove() throws EmptyQueueException {
@@ -46,7 +46,7 @@ public class Queue {
 	/**
 	 * Peek an object from the head of the queue
 	 * 
-	 * @return  the object
+	 * @return the object
 	 * @throws EmptyQueueException if the queue is empty
 	 */
 	public synchronized Object peek() throws EmptyQueueException {

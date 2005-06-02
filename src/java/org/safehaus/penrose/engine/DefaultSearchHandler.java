@@ -270,11 +270,11 @@ public class DefaultSearchHandler implements SearchHandler {
 	}
 
 	/**
-	 * Find an virtual entry given an rdn and a mapping entry.
+	 * Find a virtual entry given an rdn and a mapping entry.
 	 * 
 	 * @param rdn
 	 * @param entryDefinition
-	 * @return
+	 * @return the entry
 	 * @throws Exception
 	 */
 	public Entry searchVirtualEntry(

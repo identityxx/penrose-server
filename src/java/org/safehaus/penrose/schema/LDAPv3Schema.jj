@@ -267,7 +267,7 @@ String AttributeUsage() :
 }
 
 /**
- * globally unique OID in dotted-decimal form (e.g. 1.1.0).
+ * globally unique OID in dotted-decimal form.
  */
 String numericoid() : 
 {
@@ -332,7 +332,7 @@ String noidlen() :
 }
 
 /**
- * either the name or OID optionally followed by a length specifier (e.g. {10}).
+ * either the name or OID optionally followed by a length specifier.
  */
 String woid() : 
 {
