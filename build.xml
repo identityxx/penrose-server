@@ -29,13 +29,7 @@
 
     <taskdef resource="svntask.properties" classpathref="project.classpath"/>
 
-    <target name="init">
-        <tstamp>
-            <format property="TODAY" pattern="yyyyMMdd"/>
-        </tstamp>
-    </target>
-
-    <target name="build" depends="init">
+    <target name="build">
         <javacc
             target="src/java/org/safehaus/penrose/schema/LDAPv3Schema.jj"
             javacchome="javacc"
@@ -85,11 +79,37 @@
         </javadoc>
     </target>
 
-    <target name="install" depends="build">
-        <copy
-            file="target/${project.name}-${project.version}.jar"
-            todir="${penrose.home}/lib">
+    <target name="install">
+        <tempfile property="temp.dir" destdir="${penrose.home}/conf"/>
+        <tstamp>
+            <format property="DSTAMP" pattern="yyyyMMdd"/>
+            <format property="TSTAMP" pattern="HHmmss"/>
+        </tstamp>
+        <!-- save original configuration -->
+        <move todir="${temp.dir}" overwrite="true" includeEmptyDirs="false" failonerror="false">
+            <fileset dir="${penrose.home}/conf" includes="*"/>
+        </move>
+        <!-- copy new files -->
+        <copy todir="${penrose.home}">
+            <fileset dir="target/dist" includes="**/*"/>
         </copy>
+        <!-- restore original configuration -->
+        <move todir="${penrose.home}/conf" overwrite="true" includeEmptyDirs="false" failonerror="false">
+            <fileset dir="${temp.dir}" includes="*"/>
+        </move>
+        <delete dir="${temp.dir}"/>
+    </target>
+
+    <target name="uninstall">
+        <delete failonerror="false" includeemptydirs="true">
+            <fileset dir="${penrose.home}/bin" includes="**/*"/>
+            <fileset dir="${penrose.home}/conf/default" includes="*"/>
+            <fileset dir="${penrose.home}/docs" includes="**/*"/>
+            <fileset dir="${penrose.home}/lib" includes="*"/>
+            <fileset dir="${penrose.home}/samples" includes="**/*"/>
+            <fileset dir="${penrose.home}/schema" includes="**/*"/>
+            <fileset dir="${penrose.home}" includes="*"/>
+        </delete>
     </target>
 
     <target name="dist" depends="build,docs">
@@ -110,7 +130,11 @@
         <copy todir="target/dist/lib"
             file="target/${project.name}-${project.version}.jar">
         </copy>
+        <mkdir dir="target/dist/lib/ext"/>
         <copy todir="target/dist/conf">
+            <fileset dir="conf"/>
+        </copy>
+        <copy todir="target/dist/conf/default">
             <fileset dir="conf"/>
         </copy>
         <copy todir="target/dist/schema">
@@ -151,7 +175,7 @@
     <target name="dist-all" depends="dist-unix,dist-win32">
     </target>
     
-    <target name="clean" depends="init">
+    <target name="clean">
         <delete dir="target"/>
     </target>
 

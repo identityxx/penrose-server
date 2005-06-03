@@ -11,12 +11,11 @@ import org.safehaus.penrose.config.*;
 /**
  * LDAP Schema Parser.
  *
- * <pre>
- * Grammar for the LDAP v3 Schema
- * ------------------------------
+ * <h3>Grammar for the LDAP v3 Schema</h3>
  *
  * See also: http://www.geocities.com/raoavm/ldapdesign.html
  *
+ * <pre>
  *       AttributeTypeDescription = "(" whsp
  *             numericoid whsp              ; AttributeType identifier
  *           [ "NAME" qdescrs ]             ; name used in AttributeType
@@ -39,9 +38,11 @@ import org.safehaus.penrose.config.*;
  *           "directoryOperation"   /
  *           "distributedOperation" / ; DSA-shared
  *           "dSAOperation"          ; DSA-specific, value depends on server
+ * </pre>
  *
  * From RFC 2252:
  *
+ * <pre>
  *       ObjectClassDescription = "(" whsp
  *           numericoid whsp      ; ObjectClass identifier
  *           [ "NAME" qdescrs ]
@@ -53,19 +54,19 @@ import org.safehaus.penrose.config.*;
  *           [ "MUST" oids ]      ; AttributeTypes
  *           [ "MAY" oids ]       ; AttributeTypes
  *       whsp ")"
+ * </pre>
  *
  *
- * Example to use this SchemaParser:
- * ---------------------------------
+ * <h3>Example to use this SchemaParser</h3>
  *
+ * <pre>
  * Reader in = ...;
  * SchemaParser parser = new SchemaParser(in);
  * List schema = parser.parse();
  * List errors = parser.getErrors();
+ * </pre>
  *
  * Alternatively, you could also call getSchema() to get the List of schema.
- *
- * </pre>
  */
 public class SchemaParser implements SchemaParserConstants {
 

@@ -1,10 +1,13 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
+
 <configuration port="9876">
+
    <startup>
-      <!-- JSR 160 Container -->
+
       <create classname="mx4j.tools.naming.NamingService" objectname="naming:type=rmiregistry">
          <arg type="int">1099</arg>
       </create>
+
       <call operation="start" objectname="naming:type=rmiregistry" />
 
       <object objectid="rmi">
@@ -18,30 +21,37 @@
             <arg type="javax.management.MBeanServer" />
          </call>
       </object>
+
       <register objectname="connectors:type=rmi,protocol=jrmp">
          <arg type="object" refobjectid="rmi" />
       </register>
+
       <call method="start" refobjectid="rmi" />
 
-      <!-- HTTP Adaptor -->
       <create classname="mx4j.tools.adaptor.http.HttpAdaptor" objectname="connectors:type=http" loadername="null">
          <arg type="int">8112</arg>
          <arg type="string">localhost</arg>
       </create>
+
       <create classname="mx4j.tools.adaptor.http.XSLTProcessor" objectname="connectors:type=http,processor=xslt" loadername="null"/>
+
       <call objectname="connectors:type=http" attribute="ProcessorNameString">
          <arg type="string">connectors:type=http,processor=xslt</arg>
       </call>
+
       <call objectname="connectors:type=http" operation="start"/>
 
    </startup>
 
    <shutdown>
-      <call objectname="connectors:type=http" operation="stop"/>
 
+      <call objectname="connectors:type=http" operation="stop"/>
       <call method="stop" refobjectid="rmi" />
       <call operation="stop" objectname="naming:type=rmiregistry" />
+       
       <unregister objectname="connectors:type=rmi,protocol=jrmp" />
       <unregister objectname="naming:type=rmiregistry" />
+
    </shutdown>
+
 </configuration>
