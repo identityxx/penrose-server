@@ -12,7 +12,7 @@ UninstallDisplayIcon={app}\penrose.ico
 Compression=lzma
 SolidCompression=yes
 OutputBaseFilename=penrose-0.9.1
-OutputDir=target
+OutputDir=dist
 LicenseFile=LICENSE.txt
 
 [Files]
