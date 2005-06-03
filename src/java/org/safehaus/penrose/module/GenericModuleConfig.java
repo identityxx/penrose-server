@@ -84,7 +84,7 @@ public class GenericModuleConfig implements ModuleConfig {
             return value;
 
         } finally {
-            System.out.println("["+this+"] equals("+object+") => "+value);
+            //System.out.println("["+this+"] equals("+object+") => "+value);
         }
     }
 

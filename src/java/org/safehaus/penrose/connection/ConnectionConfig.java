@@ -188,7 +188,7 @@ public class ConnectionConfig implements Serializable {
 
     public int hashCode() {
         int value = connectionName.hashCode();
-        System.out.println("[ConnectionConfig("+connectionName+")] hashCode() => "+value);
+        //System.out.println("[ConnectionConfig("+connectionName+")] hashCode() => "+value);
         return value;
     }
 
@@ -215,7 +215,7 @@ public class ConnectionConfig implements Serializable {
             return value;
 
         } finally {
-            System.out.println("["+this+"] equals("+object+") => "+value);
+            //System.out.println("["+this+"] equals("+object+") => "+value);
         }
     }
 

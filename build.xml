@@ -90,7 +90,7 @@
             <fileset dir="${penrose.home}/conf" includes="*"/>
         </move>
         <!-- copy new files -->
-        <copy todir="${penrose.home}">
+        <copy todir="${penrose.home}" overwrite="true">
             <fileset dir="target/dist" includes="**/*"/>
         </copy>
         <!-- restore original configuration -->

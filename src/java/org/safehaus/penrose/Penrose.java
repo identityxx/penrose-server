@@ -47,6 +47,7 @@ import org.safehaus.penrose.connection.*;
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.filter.FilterTool;
 import org.safehaus.penrose.acl.AclTool;
+import org.safehaus.penrose.management.PenroseClient;
 import org.apache.log4j.Logger;
 import sun.misc.SignalHandler;
 import sun.misc.Signal;
@@ -82,9 +83,7 @@ public class Penrose implements AdapterContext, CacheContext, EngineContext, Mod
     public final static String KEY_STORE_TRUSTED = "org.safehaus.penrose.keystore.trusted";
     public final static String SERVER_CONFIG     = "org.safehaus.penrose.server.config";
     public final static String SOURCES_CONFIG    = "org.safehaus.penrose.sources.config";
-    public final static String MAPPINGS          = "org.safehaus.penrose.mappings";
     public final static String MODULES_CONFIG    = "org.safehaus.penrose.modules.config";
-    public final static String MAPPING_SUFFIX    = "org.safehaus.penrose.mapping.suffix";
     public final static String MAPPING_CONFIG    = "org.safehaus.penrose.mapping.config";
     public final static String LOGGER_CONFIG     = "org.safehaus.penrose.logger.config";
     public final static String MANAGEMENT_CONFIG = "org.safehaus.penrose.management.config";
@@ -101,7 +100,7 @@ public class Penrose implements AdapterContext, CacheContext, EngineContext, Mod
 	private String trustedKeyStore;
 	private String serverConfig;
 	private String sourcesConfig;
-	private String mappingConfigs[];
+	private String mappingConfig;
 	private String modulesConfig;
     private String managementConfig;
 
@@ -357,8 +356,9 @@ public class Penrose implements AdapterContext, CacheContext, EngineContext, Mod
 
         if (mbs != null) {
             try {
+                mbs.registerMBean(this, new ObjectName(PenroseClient.MBEAN_NAME));
                 //mbs.registerMBean(engine, new ObjectName("Penrose:type=Engine"));
-                mbs.registerMBean(connectionPool, new ObjectName("Penrose:type=PenroseConnectionPool"));
+                //mbs.registerMBean(connectionPool, new ObjectName("Penrose:type=PenroseConnectionPool"));
                 //mbs.registerMBean(threadPool, new ObjectName("Penrose:type=ThreadPool"));
             } catch (Exception ex) {
                 log.error(ex.toString(), ex);
@@ -418,25 +418,9 @@ public class Penrose implements AdapterContext, CacheContext, EngineContext, Mod
         if (sourcesConfig != null) sourcesConfig = homeDirectory+"/"+sourcesConfig;
         log.debug(SOURCES_CONFIG+": "+sourcesConfig);
 
-        String mappings = properties.getProperty(MAPPINGS);
-        log.debug(MAPPINGS+": "+mappings);
-
-        if (mappings != null) {
-            StringTokenizer st = new StringTokenizer(mappings, ",");
-            List list = new ArrayList();
-
-            while (st.hasMoreTokens()) {
-                String mapping = st.nextToken();
-
-                String mappingConfig = properties.getProperty(MAPPING_CONFIG+"."+mapping);
-                if (mappingConfig != null) mappingConfig = homeDirectory+"/"+mappingConfig;
-                log.debug(MAPPING_CONFIG+"."+mapping+": "+mappingConfig);
-
-                list.add(mappingConfig);
-            }
-
-            mappingConfigs = (String[])list.toArray(new String[list.size()]);
-        }
+        mappingConfig = properties.getProperty(MAPPING_CONFIG);
+        if (mappingConfig != null) mappingConfig = homeDirectory+"/"+mappingConfig;
+        log.debug(MAPPING_CONFIG+": "+mappingConfig);
 
         modulesConfig = properties.getProperty(MODULES_CONFIG);
         if (modulesConfig != null) modulesConfig = homeDirectory+"/"+modulesConfig;
@@ -449,12 +433,7 @@ public class Penrose implements AdapterContext, CacheContext, EngineContext, Mod
         ConfigBuilder builder = new ConfigBuilder();
 		builder.loadServerConfig(serverConfig);
         builder.loadSourcesConfig(sourcesConfig);
-
-		for (int i = 0; i < mappingConfigs.length; i++) {
-			String mappingConfig = mappingConfigs[i];
-			builder.loadMappingConfig(mappingConfig);
-		}
-
+        builder.loadMappingConfig(mappingConfig);
         builder.loadModulesConfig(modulesConfig);
 
         config = builder.getConfig();
@@ -802,7 +781,8 @@ public class Penrose implements AdapterContext, CacheContext, EngineContext, Mod
             log.debug("Stop requested...");
             stopRequested = true;
 
-            getEngine().stop();
+            Engine engine = getEngine();
+            if (engine != null) engine.stop();
 
             // close all the pools, including all the connections
             //connectionPool.closeAll();
@@ -905,11 +885,11 @@ public class Penrose implements AdapterContext, CacheContext, EngineContext, Mod
 	public void setLog(Logger log) {
 		this.log = log;
 	}
-	public String[] getMappingConfigs() {
-		return mappingConfigs;
+	public String getMappingConfig() {
+		return mappingConfig;
 	}
-	public void setMappingConfigs(String[] mappingConfigs) {
-		this.mappingConfigs = mappingConfigs;
+	public void setMappingConfig(String mappingConfig) {
+		this.mappingConfig = mappingConfig;
 	}
 	public String getModulesConfig() {
 		return modulesConfig;

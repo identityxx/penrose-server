@@ -141,27 +141,70 @@ cd "$PENROSE_HOME"
 mkdir -p "$PENROSE_HOME/var"
 PENROSE_PID="$PENROSE_HOME/var/penrose.pid"
 
-if [ "$1" = "start" ] ; then
-
-  if [ -n "$CYGHOME" ]; then
-    exec "$JAVACMD" $PENROSE_DEBUG_OPTS $PENROSE_OPTS -classpath "$LOCALCLASSPATH" -Dpenrose.home="$PENROSE_HOME" -Dcygwin.user.home="$CYGHOME" org.apache.ldap.server.ServerMain "$PENROSE_HOME\\conf\\apacheds.properties" $PENROSE_ARGS "$@" >> "$PENROSE_HOME/var/penrose.out" 2>&1 &
+start() {
+  if [ -f "$PENROSE_PID" ] ; then
+    echo Penrose Server is running
+    exit 1
   else
-    exec "$JAVACMD" $PENROSE_DEBUG_OPTS $PENROSE_OPTS -classpath "$LOCALCLASSPATH" -Dpenrose.home="$PENROSE_HOME" org.apache.ldap.server.ServerMain "$PENROSE_HOME/conf/apacheds.properties" $PENROSE_ARGS "$@" >> "$PENROSE_HOME/var/penrose.out" 2>&1 &
+    if [ -n "$CYGHOME" ] ; then
+      exec "$JAVACMD" $PENROSE_DEBUG_OPTS $PENROSE_OPTS -classpath "$LOCALCLASSPATH" -Dpenrose.home="$PENROSE_HOME" -Dcygwin.user.home="$CYGHOME" org.apache.ldap.server.ServerMain "$PENROSE_HOME\\conf\\apacheds.properties" $PENROSE_ARGS "$@" >> "$PENROSE_HOME/var/penrose.out" 2>&1 &
+    else
+      exec "$JAVACMD" $PENROSE_DEBUG_OPTS $PENROSE_OPTS -classpath "$LOCALCLASSPATH" -Dpenrose.home="$PENROSE_HOME" org.apache.ldap.server.ServerMain "$PENROSE_HOME/conf/apacheds.properties" $PENROSE_ARGS "$@" >> "$PENROSE_HOME/var/penrose.out" 2>&1 &
+    fi
+
+    echo $! > "$PENROSE_PID"
   fi
+}
 
-  echo $! > "$PENROSE_PID"
+stop() {
+  if [ -f "$PENROSE_PID" ] ; then
+    kill -9 `cat "$PENROSE_PID"` > /dev/null 2>&1
+    rm -f "$PENROSE_PID"
+  else
+    echo Penrose Server is not running
+    exit 1
+  fi
+}
 
-elif [ "$1" = "stop" ] ; then
+status() {
+  if [ -f "$PENROSE_PID" ] ; then
+    echo Penrose Server is running
+  else
+    echo Penrose Server is not running
+  fi
+}
 
-  kill -9 `cat "$PENROSE_PID"` > /dev/null 2>&1
-
-else
-
+usage() {
   echo "Usage: penrose.sh COMMAND"
   echo
   echo "Commands:"
   echo "  start             Start Penrose Server"
   echo "  stop              Stop Penrose Server"
+  echo "  restart           Restart Penrose Server"
+  echo "  status            Check Penrose Server status"
   exit 1
+}
+
+if [ "$1" = "start" ] ; then
+
+  start
+
+elif [ "$1" = "stop" ] ; then
+
+  stop
+
+elif [ "$1" = "restart" ] ; then
+
+  stop
+  start
+
+elif [ "$1" = "status" ] ; then
+
+  status
+
+else
+
+  usage
 
 fi
+

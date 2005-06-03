@@ -76,8 +76,8 @@ public interface PenroseMBean {
 	public void setConnectionPool(PenroseConnectionPool connectionPool);
 	public Logger getLog();
 	public void setLog(Logger log);
-	public String[] getMappingConfigs();
-	public void setMappingConfigs(String[] mappingConfigs);
+	public String getMappingConfig();
+	public void setMappingConfig(String mappingConfig);
 	public String getModulesConfig();
 	public void setModulesConfig(String modulesConfig);
 	public List getNormalizedSuffixes();
