@@ -154,9 +154,11 @@
     </target>
 
     <target name="dist-unix" depends="dist">
+        <echo message="Creating dist/${project.name}-${project.version}.zip"/>
         <mkdir dir="dist"/>
         <zip destfile="dist/${project.name}-${project.version}.zip"
             basedir="target/dist"/>
+        <echo message="Creating dist/${project.name}-${project.version}.tar.gz"/>
         <tar destfile="target/${project.name}-${project.version}.tar">
             <tarfileset dir="target/dist"
                 prefix="${project.name}-${project.version}">
