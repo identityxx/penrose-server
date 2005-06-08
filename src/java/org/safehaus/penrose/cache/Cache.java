@@ -66,7 +66,7 @@ public abstract class Cache {
 
     public abstract Collection searchPrimaryKeys(
             EntryDefinition entry,
-            String filter)
+            Filter filter)
             throws Exception;
 
     public void postCacheEvent(SourceDefinition sourceConfig, CacheEvent event)

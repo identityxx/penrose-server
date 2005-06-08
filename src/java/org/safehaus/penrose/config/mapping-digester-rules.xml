@@ -15,12 +15,10 @@
 		<object-create-rule classname="org.safehaus.penrose.mapping.EntryDefinition" />
 		<set-properties-rule />
 
-		<pattern value="script">
-			<call-method-rule methodname="setScript" paramcount="0" />
-		</pattern>
+        <call-method-rule pattern="script" methodname="setScript" paramcount="0" />
 
 		<pattern value="oc">
-			<call-method-rule methodname="addObjectClass" paramcount="0" />
+			<call-method-rule pattern="oc" methodname="addObjectClass" paramcount="0" />
 		</pattern>
 
 		<pattern value="at">
@@ -37,6 +35,7 @@
 
 			<object-create-rule classname="org.safehaus.penrose.mapping.Source" />
 			<set-properties-rule />
+            <call-method-rule pattern="source-name" methodname="setSourceName" paramcount="0" />
 
 			<pattern value="field">
 				<object-create-rule classname="org.safehaus.penrose.mapping.Field" />

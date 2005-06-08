@@ -113,8 +113,8 @@ public class DefaultCache extends Cache {
                 Source source = (Source)j.next();
 
                 // if source has been initialized => skip
-                if (set.contains(source.getName())) continue;
-                set.add(source.getName());
+                if (set.contains(source.getSourceName())) continue;
+                set.add(source.getSourceName());
 
                 // create source cache tables
                 sourceExpirationHome.insert(source);
@@ -134,7 +134,7 @@ public class DefaultCache extends Cache {
 
                 // check source loading parameter
                 s = source.getParameter(SourceDefinition.LOAD_ON_STARTUP);
-                log.debug(source.getName()+"'s load on startup: "+s);
+                log.debug(source.getSourceName()+"'s load on startup: "+s);
 
                 // if no need to load => skip
                 boolean loadOnStartup = s == null ? globalLoadOnStartup : new Boolean(s).booleanValue();
@@ -177,8 +177,8 @@ public class DefaultCache extends Cache {
             for (Iterator j=sources.iterator(); j.hasNext(); ) {
                 Source source = (Source)j.next();
 
-                if (set.contains(source.getName())) continue;
-                set.add(source.getName());
+                if (set.contains(source.getSourceName())) continue;
+                set.add(source.getSourceName());
 
                 // Read the source's "cacheExpiration" parameter
                 String s = source.getParameter(SourceDefinition.CACHE_EXPIRATION);
@@ -304,13 +304,14 @@ public class DefaultCache extends Cache {
     /**
      * Get the field names
      *
-     * @param sources
-     *            the collection of sources (from config)
+     * @param entry
      * @return the string of field/column names separated by comma
      */
-    public String getFieldNames(Collection sources) {
+    public String getFieldNames(EntryDefinition entry) {
+
         List list = new ArrayList();
-        for (Iterator i = sources.iterator(); i.hasNext();) {
+
+        for (Iterator i = entry.getSources().iterator(); i.hasNext();) {
             Source source = (Source) i.next();
 
             Collection fields = source.getFields();
@@ -324,6 +325,27 @@ public class DefaultCache extends Cache {
 
                 list.add(source.getName() + "." + name);
             }
+        }
+
+        EntryDefinition parent = entry.getParent();
+        if (parent.isDynamic()) {
+
+            for (Iterator i = parent.getSources().iterator(); i.hasNext();) {
+                Source source = (Source) i.next();
+
+                Collection fields = source.getFields();
+                Set set = new HashSet();
+                for (Iterator j = fields.iterator(); j.hasNext();) {
+                    Field field = (Field)j.next();
+                    String name = field.getName();
+
+                    if (set.contains(name)) continue;
+                    set.add(name);
+
+                    list.add(source.getName() + "." + name);
+                }
+            }
+
         }
 
         StringBuffer sb = new StringBuffer();
@@ -341,9 +363,7 @@ public class DefaultCache extends Cache {
      * Get the table names (used in SELECT ... FROM ... clause)
      *
      * @param entry
-     *            the entry (from config)
-     * @param temporary
-     *            whether we are using temporary tables
+     * @param temporary whether we are using temporary tables
      * @return the string "left join table1 on ... left join table2 on ... etc."
      */
     public String getTableNames(EntryDefinition entry, boolean temporary) {
@@ -353,7 +373,7 @@ public class DefaultCache extends Cache {
         StringBuffer sb = new StringBuffer();
         for (Iterator i = entry.getSources().iterator(); i.hasNext();) {
             Source source = (Source) i.next();
-            String tableName = source.getName();
+            String tableName = source.getSourceName();
 
             boolean first = sb.length() == 0;
 
@@ -364,8 +384,8 @@ public class DefaultCache extends Cache {
             String sourceName = source.getName();
 
             sb.append(tableName);
-            //sb.append(" ");
-            //sb.append(sourceName);
+            sb.append(" ");
+            sb.append(sourceName);
 
             if (!first) {
                 Relationship relationship = (Relationship) iterator.next();
@@ -374,6 +394,46 @@ public class DefaultCache extends Cache {
                 sb.append(" on ");
                 sb.append(expression);
             }
+        }
+
+        EntryDefinition parent = entry.getParent();
+        if (parent.isDynamic()) {
+
+            Relationship relationship = (Relationship) iterator.next();
+            String joinExpression = relationship.getExpression();
+
+            if (parent.getRelationships() != null) {
+                relationships = parent.getRelationships();
+                iterator = relationships.iterator();
+            }
+
+            int counter = 0;
+            for (Iterator i = parent.getSources().iterator(); i.hasNext(); counter++) {
+                Source source = (Source) i.next();
+                String tableName = source.getSourceName();
+
+                sb.append(" left join ");
+
+                String sourceName = source.getName();
+
+                sb.append(tableName);
+                sb.append(" ");
+                sb.append(sourceName);
+
+                if (counter == 0) {
+                    sb.append(" on ");
+                    sb.append(joinExpression);
+
+                } else {
+                    relationship = (Relationship) iterator.next();
+                    String expression = relationship.getExpression();
+
+                    sb.append(" on ");
+                    sb.append(expression);
+                }
+
+            }
+
         }
 
         return sb.toString();
@@ -457,7 +517,7 @@ public class DefaultCache extends Cache {
      */
     public Collection joinSources(EntryDefinition entry) throws Exception {
 
-        String sqlFieldNames = getFieldNames(entry.getSources());
+        String sqlFieldNames = getFieldNames(entry);
 
         // don't use temporary entry tables here
         String sqlTableNames = getTableNames(entry, false);
@@ -607,8 +667,10 @@ public class DefaultCache extends Cache {
      */
     public Collection searchPrimaryKeys(
             EntryDefinition entry,
-            String filter)
+            Filter filter)
             throws Exception {
+
+        String sqlFilter = cacheFilterTool.toSQLFilter(entry, filter);
 
         String tableName = getTableName(entry, false);
 
@@ -616,8 +678,8 @@ public class DefaultCache extends Cache {
 
         String sql = "select distinct " + attributeNames + " from " + tableName;
 
-        if (filter != null) {
-            sql += " where " + filter;
+        if (sqlFilter != null) {
+            sql += " where " + sqlFilter;
         }
 
         Connection con = null;
@@ -710,7 +772,7 @@ public class DefaultCache extends Cache {
      * @return table name
      */
     public String getTableName(Source source, boolean temporary) {
-        return source.getName() + (temporary ? "__tmp" : "");
+        return source.getSourceName() + (temporary ? "__tmp" : "");
     }
 
     public SearchResults loadSource(
@@ -722,7 +784,7 @@ public class DefaultCache extends Cache {
 
         log.info("-------------------------------------------------");
         log.info("LOAD SOURCE");
-        log.info(" - source: " + source.getName());
+        log.info(" - source: " + source.getSourceName());
         log.info(" - filter: " + sqlFilter);
         log.info("");
 

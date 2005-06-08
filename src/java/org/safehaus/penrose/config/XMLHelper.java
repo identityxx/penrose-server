@@ -256,8 +256,14 @@ public class XMLHelper {
 
     public static Element toElement(Source source) {
 		Element element = new DefaultElement("source");
-    	// name
-    	element.add(new DefaultAttribute("name", source.getName()));
+
+        // name
+        element.add(new DefaultAttribute("name", source.getName()));
+
+        Element sourceName = new DefaultElement("source-name");
+        sourceName.add(new DefaultText(source.getSourceName()));
+        element.add(sourceName);
+
 		// fields
 		for (Iterator i=source.getFields().iterator(); i.hasNext(); ) {
 			Field field = (Field)i.next();

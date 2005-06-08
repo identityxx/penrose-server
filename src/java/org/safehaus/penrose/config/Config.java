@@ -295,9 +295,6 @@ public class Config implements Serializable {
             sb.append(nl);
         }
 
-        sb.append(nl);
-        sb.append(nl);
-
         sb.append("CONNECTIONS:");
         sb.append(nl);
         sb.append(nl);
@@ -341,7 +338,7 @@ public class Config implements Serializable {
 			String dn = (String) i.next();
 			EntryDefinition entry = (EntryDefinition) entryDefinitions.get(dn);
 			//if (entry.getParent() != null) continue;
-			sb.append("DN: "+dn + nl);
+			//sb.append("DN: "+dn + nl);
 			sb.append(toString(entry));
 		}
 
@@ -373,10 +370,10 @@ public class Config implements Serializable {
 		
 		String nl = System.getProperty("line.separator");
 		StringBuffer sb = new StringBuffer("dn: " + entry.getDn() + nl);
-		
+/*
 		sb.append("parentDn: "+entry.getParentDn() + nl);
 		sb.append("parent: "+(entry.getParent()==null?"null":"not null") + nl);
-
+*/
 		Collection oc = entry.getObjectClasses();
 		for (Iterator i = oc.iterator(); i.hasNext(); ) {
 			String value = (String) i.next();
@@ -394,13 +391,13 @@ public class Config implements Serializable {
 		}
 
         sb.append(nl);
-
+/*
 		Collection children = entry.getChildren();
 		for (Iterator i = children.iterator(); i.hasNext();) {
 			EntryDefinition child = (EntryDefinition) i.next();
 			sb.append(toString(child));
 		}
-
+*/
 		return sb.toString();
 	}
 
@@ -452,7 +449,7 @@ public class Config implements Serializable {
     }
 
     public SourceDefinition getSourceDefinition(Source source) {
-        return getSourceDefinition(source.getName());
+        return getSourceDefinition(source.getSourceName());
     }
 
     public ModuleConfig removeModuleConfig(String moduleName) {

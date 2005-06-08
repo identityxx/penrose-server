@@ -44,7 +44,7 @@ public class DefaultEngine extends Engine {
 	}
 
     public synchronized MRSWLock getLock(Source source) {
-		String name = source.getConnectionName() + "." + source.getName();
+		String name = source.getConnectionName() + "." + source.getSourceName();
 
 		MRSWLock lock = (MRSWLock) sourceLocks.get(name);
 

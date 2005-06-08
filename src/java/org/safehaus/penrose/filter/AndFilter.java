@@ -33,4 +33,8 @@ public class AndFilter extends Filter {
 		sb.append(")");
 		return sb.toString();
 	}
+
+    public int size() {
+        return filterList.size();
+    }
 }

@@ -9,9 +9,7 @@ import org.safehaus.penrose.filter.SimpleFilter;
 import org.safehaus.penrose.filter.AndFilter;
 import org.safehaus.penrose.filter.OrFilter;
 import org.safehaus.penrose.interpreter.Interpreter;
-import org.safehaus.penrose.mapping.EntryDefinition;
-import org.safehaus.penrose.mapping.Field;
-import org.safehaus.penrose.mapping.Source;
+import org.safehaus.penrose.mapping.*;
 
 import java.util.Iterator;
 import java.util.Collection;
@@ -179,22 +177,22 @@ public class CacheFilterTool {
      * @return parsed SQL filter
      * @throws Exception
      */
-    public Filter toSourceFilter(Source source, Filter filter) throws Exception {
+    public Filter toSourceFilter(Row parentRow, EntryDefinition entry, Source source, Filter filter) throws Exception {
 
         if (filter instanceof SimpleFilter) {
-            return toSourceFilter(source, (SimpleFilter) filter);
+            return toSourceFilter(parentRow, entry, source, (SimpleFilter) filter);
 
         } else if (filter instanceof AndFilter) {
-            return toSourceFilter(source, (AndFilter) filter);
+            return toSourceFilter(parentRow, entry, source, (AndFilter) filter);
 
         } else if (filter instanceof OrFilter) {
-            return toSourceFilter(source, (OrFilter) filter);
+            return toSourceFilter(parentRow, entry, source, (OrFilter) filter);
         }
 
         return null;
     }
 
-    public Filter toSourceFilter(Source source, SimpleFilter filter)
+    public Filter toSourceFilter(Row parentRow, EntryDefinition entry, Source source, SimpleFilter filter)
             throws Exception {
 
         String name = filter.getAttr();
@@ -207,6 +205,10 @@ public class CacheFilterTool {
 
         Interpreter interpreter = cacheContext.newInterpreter();
         interpreter.set(name, value);
+
+        if (parentRow != null) {
+            interpreter.set(parentRow);
+        }
 
         Collection fields = source.getFields();
         Filter newFilter = null;
@@ -241,7 +243,7 @@ public class CacheFilterTool {
         return newFilter;
     }
 
-    public Filter toSourceFilter(Source source, AndFilter filter)
+    public Filter toSourceFilter(Row parentRow, EntryDefinition entry, Source source, AndFilter filter)
             throws Exception {
 
         Collection filters = filter.getFilterList();
@@ -250,14 +252,18 @@ public class CacheFilterTool {
         for (Iterator i=filters.iterator(); i.hasNext(); ) {
             Filter f = (Filter)i.next();
 
-            Filter nf = toSourceFilter(source, f);
+            Filter nf = toSourceFilter(parentRow, entry, source, f);
+            if (nf == null) continue;
+
             af.addFilterList(nf);
         }
+
+        if (af.size() == 0) return null;
 
         return af;
     }
 
-    public Filter toSourceFilter(Source source, OrFilter filter)
+    public Filter toSourceFilter(Row parentRow, EntryDefinition entry, Source source, OrFilter filter)
             throws Exception {
 
         Collection filters = filter.getFilterList();
@@ -266,9 +272,13 @@ public class CacheFilterTool {
         for (Iterator i=filters.iterator(); i.hasNext(); ) {
             Filter f = (Filter)i.next();
 
-            Filter nf = toSourceFilter(source, f);
+            Filter nf = toSourceFilter(parentRow, entry, source, f);
+            if (nf == null) continue;
+
             of.addFilterList(nf);
         }
+
+        if (of.size() == 0) return null;
 
         return of;
     }

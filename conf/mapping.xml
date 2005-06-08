@@ -24,6 +24,9 @@
     <at name="cn" rdn="true">
       <expression>"manager"</expression>
     </at>
+    <at name="sn" rdn="true">
+      <expression>"manager"</expression>
+    </at>
     <at name="userPassword">
       <expression>"secret"</expression>
     </at>

@@ -218,19 +218,19 @@ public class DefaultSearchHandler implements SearchHandler {
 	 * Find entries given a parent entry. It could return real entries and/or
 	 * virtual entries.
 	 * 
-	 * @param baseEntry
+	 * @param parent
 	 * @param scope
 	 * @throws Exception
 	 */
 	public void searchChildren(
             PenroseConnection connection,
-			Entry baseEntry,
+			Entry parent,
             int scope,
             Filter filter,
 			Collection attributeNames,
             SearchResults results) throws Exception {
 
-		EntryDefinition parentEntry = baseEntry.getEntryDefinition();
+		EntryDefinition parentEntry = parent.getEntryDefinition();
 		Collection children = parentEntry.getChildren();
 		log.debug("Total children: " + children.size());
 
@@ -259,7 +259,7 @@ public class DefaultSearchHandler implements SearchHandler {
 
 			log.debug("Virtual children: " + entryDefinition.getDn());
 
-			SearchResults results2 = search(entryDefinition, filter, attributeNames);
+			SearchResults results2 = search(parent, entryDefinition, filter, attributeNames);
 
             for (Iterator j=results2.iterator(); j.hasNext(); ) {
                 Entry sr = (Entry)j.next();
@@ -322,10 +322,25 @@ public class DefaultSearchHandler implements SearchHandler {
 	}
 
     public SearchResults search(
+            Entry parent,
             EntryDefinition entry,
             Filter filter,
             Collection attributeNames
             ) throws Exception {
+
+
+        if (parent.isDynamic()) {
+            String rdn = parent.getRdn();
+            int index = rdn.indexOf("=");
+            String rdnAttribute = rdn.substring(0, index);
+            String rdnValue = rdn.substring(index+1);
+
+            AndFilter andFilter = new AndFilter();
+            andFilter.addFilterList(new SimpleFilter(rdnAttribute, "=", rdnValue));
+            andFilter.addFilterList(filter);
+
+            filter = andFilter;
+        }
 
         log.debug("--------------------------------------------------------------------------------------");
         log.debug("Searching for entry "+entry.getDn()+" with filter "+filter);
@@ -336,12 +351,11 @@ public class DefaultSearchHandler implements SearchHandler {
             Calendar calendar = Calendar.getInstance();
 
             // find the primary keys of the entries to be loaded
-            Collection keys = getPrimaryKeys(entry, filter, calendar);
+            Collection keys = getPrimaryKeys(parent, entry, filter, calendar);
             log.debug("Keys: "+keys);
 
             // find the primary keys of entries that has been loaded
-            String sqlFilter = engine.getCache().getCacheFilterTool().toSQLFilter(entry, filter);
-            Collection pks = engine.getCache().searchPrimaryKeys(entry, sqlFilter);
+            Collection pks = engine.getCache().searchPrimaryKeys(entry, filter);
             log.debug("Loaded Keys: "+pks);
 
             if (!keys.isEmpty() && pks.isEmpty()) { // never been loaded -> load everything at once
@@ -426,8 +440,7 @@ public class DefaultSearchHandler implements SearchHandler {
 
         try {
 
-            String sqlFilter = engine.getCache().getCacheFilterTool().toSQLFilter(entry, filter);
-            Collection pks = engine.getCache().searchPrimaryKeys(entry, sqlFilter);
+            Collection pks = engine.getCache().searchPrimaryKeys(entry, filter);
             log.debug("Primary keys: " + pks);
 
             Collection translatedRows = engine.getCache().search(entry, pks);
@@ -456,15 +469,143 @@ public class DefaultSearchHandler implements SearchHandler {
         return results;
     }
 
+    public Map createGraph(EntryDefinition entryDefinition) {
+
+        Map sources = new HashMap();
+
+        Collection relationships = entryDefinition.getRelationships();
+        for (Iterator i=relationships.iterator(); i.hasNext(); ) {
+            Relationship relationship = (Relationship)i.next();
+            // System.out.println("Checking ["+relationship.getExpression()+"]");
+
+            String lhs = relationship.getLhs();
+            int li = lhs.indexOf(".");
+            String lsource = lhs.substring(0, li);
+
+            Collection lcol = (Collection)sources.get(lsource);
+            if (lcol == null) {
+                lcol = new ArrayList();
+                sources.put(lsource, lcol);
+            }
+            lcol.add(relationship);
+
+            String rhs = relationship.getRhs();
+            int ri = rhs.indexOf(".");
+            String rsource = rhs.substring(0, ri);
+
+            Collection rcol = (Collection)sources.get(rsource);
+            if (rcol == null) {
+                rcol = new ArrayList();
+                sources.put(rsource, rcol);
+            }
+            rcol.add(relationship);
+        }
+
+        return sources;
+    }
+
+    public void traverseGraph(int level, String start, String dest, Map sources, Set visited) {
+
+        Collection c = (Collection)sources.get(dest);
+        if (c == null) return;
+
+        for (Iterator i=c.iterator(); i.hasNext(); ) {
+            Relationship relationship = (Relationship)i.next();
+            // System.out.println("Traversing ["+relationship.getExpression()+"]");
+
+            if (visited.contains(relationship)) continue;
+            visited.add(relationship);
+
+            String lhs = relationship.getLhs();
+            int li = lhs.indexOf(".");
+            String lsource = lhs.substring(0, li);
+
+            if (!dest.equals(lsource)) {
+                for (int j=0; j<level; j++) System.out.print("    ");
+                System.out.println(dest+" => "+lsource);
+                traverseGraph(level+1, dest, lsource, sources, visited);
+            }
+
+            String rhs = relationship.getRhs();
+            int ri = rhs.indexOf(".");
+            String rsource = rhs.substring(0, ri);
+
+            if (!dest.equals(rsource)) {
+                for (int j=0; j<level; j++) System.out.print("    ");
+                System.out.println(dest+" => "+rsource);
+                traverseGraph(level+1, dest, rsource, sources, visited);
+            }
+        }
+    }
+
+    public Collection traverseGraph(String sourceName, Map sources) {
+        Set visited = new LinkedHashSet();
+        traverseGraph(0, null, sourceName, sources, visited);
+        return visited;
+    }
+
+    public String getStartingSourceName(EntryDefinition entryDefinition) {
+
+        Collection relationships = entryDefinition.getRelationships();
+        for (Iterator i=relationships.iterator(); i.hasNext(); ) {
+            Relationship relationship = (Relationship)i.next();
+
+            String lhs = relationship.getLhs();
+            int li = lhs.indexOf(".");
+            String lsource = lhs.substring(0, li);
+            Source ls = entryDefinition.getSource(lsource);
+            if (ls == null) return lsource;
+
+            String rhs = relationship.getRhs();
+            int ri = rhs.indexOf(".");
+            String rsource = rhs.substring(0, ri);
+            Source rs = entryDefinition.getSource(lsource);
+            if (rs == null) return rsource;
+
+        }
+
+        Source source = (Source)entryDefinition.getSources().iterator().next();
+        return source.getName();
+    }
+
     public Collection getPrimaryKeys(
-            EntryDefinition entry,
+            Entry parent,
+            EntryDefinition entryDefinition,
             Filter filter,
             Calendar calendar
             ) throws Exception {
 
+        String startingSourceName = getStartingSourceName(entryDefinition);
+        Map sources = createGraph(entryDefinition);
+        Collection path = traverseGraph(startingSourceName, sources);
+
+        Row parentRow = new Row();
+
+        if (parent != null && parent.isDynamic()) {
+            AttributeValues values = parent.getAttributeValues();
+            Collection rows = engineContext.getTransformEngine().convert(values);
+            Row row = (Row)rows.iterator().next();
+
+            Interpreter interpreter = engineContext.newInterpreter();
+            interpreter.set(row);
+
+            for (Iterator i=parent.getSources().iterator(); i.hasNext(); ) {
+                Source s = (Source)i.next();
+
+                for (Iterator j=s.getFields().iterator(); j.hasNext(); ) {
+                    Field f = (Field)j.next();
+                    String expression = f.getExpression();
+                    Object v = interpreter.eval(expression);
+
+                    System.out.println("Setting parent's value "+s.getName()+"."+f.getName()+": "+v);
+                    parentRow.set(s.getName()+"."+f.getName(), v);
+                }
+            }
+        }
+
         log.debug("--------------------------------------------------------------------------------------");
 
-        Collection rdnAttributes = entry.getRdnAttributes();
+        Collection rdnAttributes = entryDefinition.getRdnAttributes();
 
         // TODO need to handle multiple rdn attributes
         AttributeDefinition rdnAttribute = (AttributeDefinition)rdnAttributes.iterator().next();
@@ -483,7 +624,7 @@ public class DefaultSearchHandler implements SearchHandler {
 
         Source primarySource = null;
 
-        for (Iterator i = entry.getSources().iterator(); i.hasNext();) {
+        for (Iterator i = entryDefinition.getSources().iterator(); i.hasNext();) {
             Source source = (Source) i.next();
 
             String sourceName = source.getName();
@@ -492,21 +633,21 @@ public class DefaultSearchHandler implements SearchHandler {
                 primarySource = source;
             }
 
-            Filter newFilter = engine.getCache().getCacheFilterTool().toSourceFilter(source, filter);
+            Filter newFilter = engine.getCache().getCacheFilterTool().toSourceFilter(parentRow, entryDefinition, source, filter);
             filters.put(sourceName, newFilter);
 
             log.debug("Filter for " + sourceName+": "+newFilter);
 
-            if (newFilter == null) {
+            if (newFilter == null) { // filter is not applicable to this source
                 nullList.add(source);
-            } else {
+            } else { // filter is applicable to this source
                 list.add(source);
             }
         }
 
         Filter primaryFilter;
 
-        Collection relationships = entry.getRelationships();
+        Collection relationships = entryDefinition.getRelationships();
         Relationship relationship = null;
         if (relationships.size() > 0) {
             relationship = (Relationship)relationships.iterator().next();
@@ -551,7 +692,7 @@ public class DefaultSearchHandler implements SearchHandler {
             primaryFilter = createFilter(keys);
 
         } else {
-            primaryFilter = engine.getCache().getCacheFilterTool().toSourceFilter(primarySource, filter);
+            primaryFilter = engine.getCache().getCacheFilterTool().toSourceFilter(parentRow, entryDefinition, primarySource, filter);
         }
 
         log.debug("Searching source "+primarySourceName+" for "+primaryFilter);
@@ -573,7 +714,7 @@ public class DefaultSearchHandler implements SearchHandler {
                 AttributeDefinition attr = (AttributeDefinition)k.next();
                 String name = attr.getName();
                 String expression = attr.getExpression();
-                String value = (String)interpreter.eval(expression);
+                Object value = interpreter.eval(expression);
                 pk.put(name, value);
             }
 
@@ -616,9 +757,9 @@ public class DefaultSearchHandler implements SearchHandler {
 
         for (Iterator j=values.keySet().iterator(); j.hasNext(); ) {
             String name = (String)j.next();
-            String value = (String)values.get(name);
+            Object value = values.get(name);
 
-            SimpleFilter sf = new SimpleFilter(name, "=", value);
+            SimpleFilter sf = new SimpleFilter(name, "=", value == null ? null : value.toString());
 
             if (f == null) {
                 f = sf;
@@ -704,7 +845,6 @@ public class DefaultSearchHandler implements SearchHandler {
 
         for (Iterator i = entry.getSources().iterator(); i.hasNext();) {
             Source source = (Source) i.next();
-
             String sourceName = source.getName();
 
             log.debug("--------------------------------------------------------------------------------------");
@@ -735,7 +875,7 @@ public class DefaultSearchHandler implements SearchHandler {
             }
 
             if (f == null) {
-                f = engine.getCache().getCacheFilterTool().toSourceFilter(source, filter);
+                f = engine.getCache().getCacheFilterTool().toSourceFilter(null, entry, source, filter);
             }
 
             MRSWLock lock = engine.getLock(source);

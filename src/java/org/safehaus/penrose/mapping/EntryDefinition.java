@@ -26,8 +26,12 @@ public class EntryDefinition implements Cloneable, Serializable {
     /**
      * Distinguished name.
      */
-	private String dn;
-	
+	//private String dn;
+
+    private String rdn;
+
+    private String parentDn;
+
 	/**
 	 * Children. Each element is of type org.safehaus.penrose.mapping.EntryDefinition.
 	 */
@@ -58,51 +62,72 @@ public class EntryDefinition implements Cloneable, Serializable {
 	public EntryDefinition() {
 	}
 
-    public EntryDefinition(EntryDefinition parent) {
-        this.parent = parent;
-    }
-
 	public EntryDefinition(String dn) {
         this.parent = null;
-        this.dn = dn;
+        //this.dn = dn;
+
+        int i = dn.indexOf(",");
+        rdn = dn.substring(0, i);
+        parentDn = dn.substring(i+1);
     }
 
     public EntryDefinition(String rdn, EntryDefinition parent) {
-        this.dn = rdn+","+parent.getDn();
+        //this.dn = rdn+","+parent.getDn();
+        this.rdn = rdn;
+        this.parentDn = parent.getDn();
         this.parent = parent;
     }
 
     public String getRdn() {
-        int i = dn.indexOf(",");
-        return dn.substring(0, i);
+        //int i = dn.indexOf(",");
+        //return dn.substring(0, i);
+        return rdn;
     }
     
+    public String getRdn(AttributeValues attributes) {
+        if (isDynamic()) {
+            Collection rdnAttributes = getRdnAttributes();
+
+            // TODO fix for multiple rdn attributes
+            AttributeDefinition rdnAttribute = (AttributeDefinition)rdnAttributes.iterator().next();
+
+            // TODO fix for multiple values
+            Collection rdnValues = attributes.get(rdnAttribute.getName());
+            Object rdnValue = rdnValues.iterator().next();
+
+            return rdnAttribute.getName()+"="+rdnValue;
+
+        } else {
+            return getRdn();
+        }
+    }
+
     public String getParentDn() {
-        int i = dn.indexOf(",");
-        String rdn = dn.substring(0, i);
-        String parentDn = dn.substring(i+1);
+        //int i = dn.indexOf(",");
+        //return dn.substring(i+1);
         return parentDn;
     }
 
     public boolean isDynamic() {
-        int i = dn.indexOf(",");
-        String rdn = dn.substring(0, i);
-        String parentDn = dn.substring(i+1);
-
+        //int i = dn.indexOf(",");
+        //String rdn = dn.substring(0, i);
         return rdn.indexOf("...") >= 0;
     }
     
-    public void setMapping(boolean mapping) {
-        int i = dn.indexOf(",");
-        String rdn = dn.substring(0, i);
-        String parentDn = dn.substring(i+1);
+    public void setDynamic(boolean mapping) {
+        //int i = dn.indexOf(",");
+        //String rdn = dn.substring(0, i);
+        //String parentDn = dn.substring(i+1);
+
     	if (mapping && !isDynamic()) {
     		int j = rdn.indexOf("=")+1;
     		rdn = rdn.substring(0, j) + "...";
+
     	} else if (!mapping && isDynamic()) {
     		rdn = rdn.replaceAll("\\.\\.\\.", "value");
     	}
-    	dn = rdn + "," + parentDn;
+
+    	//dn = rdn + "," + parentDn;
     }
 
     public String getDn(AttributeValues attributes) {
@@ -116,7 +141,7 @@ public class EntryDefinition implements Cloneable, Serializable {
             Collection rdnValues = attributes.get(rdnAttribute.getName());
             Object rdnValue = rdnValues.iterator().next();
 
-            // TODO fix if parent is also a mapping entry
+            // TODO fix if parent is also a dynamic entry
             return rdnAttribute.getName()+"="+rdnValue+","+parent.getDn();
 
         } else {
@@ -135,11 +160,14 @@ public class EntryDefinition implements Cloneable, Serializable {
     }
 
     public String getDn() {
-        return dn;
+        return rdn+","+parentDn;
     }
 
     public void setDn(String dn) {
-        this.dn = dn;
+        //this.dn = dn;
+        int i = dn.indexOf(",");
+        rdn = dn.substring(0, i);
+        parentDn = dn.substring(i+1);
     }
 
     public Map getAttributes() {
@@ -221,7 +249,7 @@ public class EntryDefinition implements Cloneable, Serializable {
     public Object clone() {
         EntryDefinition entry = new EntryDefinition();
         entry.setParent(parent);
-        entry.setDn(dn);
+        entry.setDn(getDn());
         entry.getChildren().addAll(children);
         entry.getObjectClasses().addAll(objectClasses);
 
@@ -295,7 +323,7 @@ public class EntryDefinition implements Cloneable, Serializable {
     	StringBuffer sb = new StringBuffer();
     	Iterator iter = null;
 
-    	sb.append("dn="+dn+", ");
+    	sb.append("dn="+rdn+","+parentDn+",");
 
     	sb.append("children=[");
     	iter = children.iterator();
@@ -432,5 +460,13 @@ public class EntryDefinition implements Cloneable, Serializable {
 
     public void setScript(String script) {
         this.script = script;
+    }
+
+    public void setRdn(String rdn) {
+        this.rdn = rdn;
+    }
+
+    public void setParentDn(String parentDn) {
+        this.parentDn = parentDn;
     }
 }

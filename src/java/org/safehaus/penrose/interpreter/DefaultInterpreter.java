@@ -1,6 +1,9 @@
 package org.safehaus.penrose.interpreter;
 
 import bsh.Interpreter;
+import org.safehaus.penrose.mapping.Row;
+
+import java.util.Iterator;
 
 /**
  * @author Endi S. Dewata
@@ -27,7 +30,8 @@ public class DefaultInterpreter extends org.safehaus.penrose.interpreter.Interpr
             return interpreter.eval(expression);
 
         } catch (Exception e) {
-        	e.printStackTrace();
+            System.out.println("BeanShellException: "+e.getMessage());
+        	//e.printStackTrace();
             return null;
         }
     }

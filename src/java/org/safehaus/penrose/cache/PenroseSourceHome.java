@@ -141,16 +141,16 @@ public class PenroseSourceHome {
 			log.debug("Executing " + sql);
 
 			ps = con.prepareStatement(sql);
-			ps.setString(1, source.getName());
+			ps.setString(1, source.getSourceName());
 			rs = ps.executeQuery();
 
 			if (!rs.next()) {
-				log.debug("Cache for " + source.getName() + " never created");
+				log.debug("Cache for " + source.getSourceName() + " never created");
 				return null;
 			}
 
 			Date expiration = rs.getTimestamp(1) == null ? null : new Date(rs.getTimestamp(1).getTime());
-			log.debug("Cache expiration for "+source.getName()+": "+expiration);
+			log.debug("Cache expiration for "+source.getSourceName()+": "+expiration);
 			return expiration;
 
 		} finally {
@@ -173,16 +173,16 @@ public class PenroseSourceHome {
 			log.debug("Executing " + sql);
 
 			ps = con.prepareStatement(sql);
-			ps.setString(1, source.getName());
+			ps.setString(1, source.getSourceName());
 			rs = ps.executeQuery();
 
 			if (!rs.next()) {
-				log.debug("Cache for " + source.getName() + " never created");
+				log.debug("Cache for " + source.getSourceName() + " never created");
 				return null;
 			}
 
 			Date modifyTime = rs.getTimestamp(1) == null ? null : new Date(rs.getTimestamp(1).getTime());
-			log.debug("Cache for " + source.getName() + " was modified on " + modifyTime);
+			log.debug("Cache for " + source.getSourceName() + " was modified on " + modifyTime);
 			return modifyTime;
 
 		} finally {
@@ -197,7 +197,7 @@ public class PenroseSourceHome {
             Date modifyTime)
 			throws Exception {
 
-		log.debug("Set modifyTime for " + source.getName());
+		log.debug("Set modifyTime for " + source.getSourceName());
 
         Connection con = null;
 		PreparedStatement ps = null;
@@ -212,7 +212,7 @@ public class PenroseSourceHome {
 
 			ps = con.prepareStatement(sql);
 			ps.setTimestamp(1, new Timestamp(modifyTime.getTime()));
-			ps.setString(2, source.getName());
+			ps.setString(2, source.getSourceName());
 			ps.execute();
 
 		} finally {
@@ -234,7 +234,7 @@ public class PenroseSourceHome {
             log.debug("Executing " + sql);
 
             ps = con.prepareStatement(sql);
-            ps.setString(1, source.getName());
+            ps.setString(1, source.getSourceName());
             ps.execute();
 
         } finally {
@@ -246,7 +246,7 @@ public class PenroseSourceHome {
 	public void setExpiration(Source source, Date time)
 			throws Exception {
 
-		log.debug("Setting cache expiration for " + source.getName() + " to " + time);
+		log.debug("Setting cache expiration for " + source.getSourceName() + " to " + time);
         Connection con = null;
         PreparedStatement ps = null;
 
@@ -259,7 +259,7 @@ public class PenroseSourceHome {
 
             ps = con.prepareStatement(sql);
             ps.setTimestamp(1, time == null ? null : new Timestamp(time.getTime()));
-            ps.setString(2, source.getName());
+            ps.setString(2, source.getSourceName());
             ps.execute();
 
 		} finally {

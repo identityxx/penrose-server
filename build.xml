@@ -55,6 +55,8 @@
             srcdir="src/java"
             destdir="target/classes"
             classpathref="lib.path"
+            debug="on"
+            debuglevel="lines,vars,source"
         />
         <rmic
             base="target/classes"

@@ -30,6 +30,10 @@ public class Entry {
         return entryDefinition.getDn(attributeValues);
     }
 
+    public String getRdn() {
+        return entryDefinition.getRdn(attributeValues);
+    }
+
     public AttributeValues getAttributeValues() {
         return attributeValues;
     }
@@ -119,5 +123,9 @@ public class Entry {
         attributeSet.retainAll(list);
 
         return ldapEntry;
+    }
+
+    public boolean isDynamic() {
+        return entryDefinition.isDynamic();
     }
 }
