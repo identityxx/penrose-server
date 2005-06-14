@@ -7,7 +7,8 @@
     <property name="build.compiler" value="jikes"/>
     <property name="project.name" value="penrose"/>
     <property name="project.version" value="0.9.1"/>
-    <property name="penrose.home" value="/usr/local/penrose"/>
+    <property name="prefix" value=""/>
+    <property name="penrose.home" value="${prefix}/usr/local/penrose"/>
     <property name="iscc.path" value="ISCC.exe"/>
 
     <path id="lib.path">
@@ -82,11 +83,8 @@
     </target>
 
     <target name="install">
+        <mkdir dir="${penrose.home}/conf"/>
         <tempfile property="temp.dir" destdir="${penrose.home}/conf"/>
-        <tstamp>
-            <format property="DSTAMP" pattern="yyyyMMdd"/>
-            <format property="TSTAMP" pattern="HHmmss"/>
-        </tstamp>
         <!-- save original configuration -->
         <copy todir="${temp.dir}" overwrite="true" includeEmptyDirs="false" failonerror="true">
             <fileset dir="${penrose.home}/conf" includes="*"/>

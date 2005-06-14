@@ -15,6 +15,7 @@ http://penrose.safehaus.org
 %setup -q
 
 %build
+ant dist
 
 %install
 ant -Dprefix=$RPM_BUILD_ROOT install
