@@ -4,7 +4,7 @@ Version: 0.9.1
 Release: 1
 Copyright: OSL 2.1
 Group: System Environment/Base
-Source: http://penrose.safehaus.org/download/penrose-0.9.1.tar.gz
+Source: http://penrose.safehaus.org/download/penrose-0.9.1-src.tar.gz
 BuildRoot: /var/tmp/%{name}-buildroot
 
 %description

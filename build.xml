@@ -88,9 +88,12 @@
             <format property="TSTAMP" pattern="HHmmss"/>
         </tstamp>
         <!-- save original configuration -->
-        <move todir="${temp.dir}" overwrite="true" includeEmptyDirs="false" failonerror="false">
+        <copy todir="${temp.dir}" overwrite="true" includeEmptyDirs="false" failonerror="true">
             <fileset dir="${penrose.home}/conf" includes="*"/>
-        </move>
+        </copy>
+        <delete failonerror="true">
+            <fileset dir="${penrose.home}/conf" includes="*"/>
+        </delete>
         <!-- copy new files -->
         <copy todir="${penrose.home}" overwrite="true">
             <fileset dir="target/dist" includes="**/*"/>
@@ -156,12 +159,30 @@
         <mkdir dir="target/dist/var"/>
     </target>
 
+    <target name="dist-src">
+        <echo message="Creating ${project.name}-${project.version}-src.zip"/>
+        <mkdir dir="dist"/>
+        <zip destfile="dist/${project.name}-${project.version}-src.zip"
+            excludes="dist/**"
+            basedir="."/>
+        <echo message="Creating ${project.name}-${project.version}-src.tar.gz"/>
+        <mkdir dir="target"/>
+        <tar destfile="target/${project.name}-${project.version}-src.tar">
+            <tarfileset dir="." prefix="${project.name}-${project.version}">
+                <exclude name="dist/**"/>
+            </tarfileset>
+        </tar>
+        <gzip destfile="dist/${project.name}-${project.version}-src.tar.gz"
+            src="target/${project.name}-${project.version}-src.tar"/>
+    </target>
+
     <target name="dist-unix" depends="dist">
-        <echo message="Creating dist/${project.name}-${project.version}.zip"/>
+        <echo message="Creating ${project.name}-${project.version}.zip"/>
         <mkdir dir="dist"/>
         <zip destfile="dist/${project.name}-${project.version}.zip"
             basedir="target/dist"/>
-        <echo message="Creating dist/${project.name}-${project.version}.tar.gz"/>
+        <echo message="Creating ${project.name}-${project.version}.tar.gz"/>
+        <mkdir dir="target"/>
         <tar destfile="target/${project.name}-${project.version}.tar">
             <tarfileset dir="target/dist"
                 prefix="${project.name}-${project.version}">
@@ -172,14 +193,14 @@
     </target>
 
     <target name="dist-win32" depends="dist">
-        <echo message="Creating dist/${project.name}-${project.version}.exe"/>
+        <echo message="Creating ${project.name}-${project.version}.exe"/>
         <mkdir dir="dist"/>
         <exec executable="${iscc.path}" os="Windows NT,Windows 2000,Windows XP,Windows 2003">
             <arg line="/Q penrose.iss"/>
         </exec>
     </target>
 
-    <target name="dist-all" depends="dist-unix,dist-win32">
+    <target name="dist-all" depends="dist-src,dist-unix,dist-win32">
     </target>
     
     <target name="clean">

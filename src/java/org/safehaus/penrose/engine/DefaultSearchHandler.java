@@ -328,7 +328,7 @@ public class DefaultSearchHandler implements SearchHandler {
             Collection attributeNames
             ) throws Exception {
 
-
+/*
         if (parent.isDynamic()) {
             String rdn = parent.getRdn();
             int index = rdn.indexOf("=");
@@ -341,7 +341,7 @@ public class DefaultSearchHandler implements SearchHandler {
 
             filter = andFilter;
         }
-
+*/
         log.debug("--------------------------------------------------------------------------------------");
         log.debug("Searching for entry "+entry.getDn()+" with filter "+filter);
 
@@ -504,14 +504,13 @@ public class DefaultSearchHandler implements SearchHandler {
         return sources;
     }
 
-    public void traverseGraph(int level, String start, String dest, Map sources, Set visited) {
+    public void traverseGraph(EntryDefinition entryDefinition, String start, String dest, Row row, Map sources, Filter filter, Set visited) throws Exception {
 
         Collection c = (Collection)sources.get(dest);
         if (c == null) return;
 
         for (Iterator i=c.iterator(); i.hasNext(); ) {
             Relationship relationship = (Relationship)i.next();
-            // System.out.println("Traversing ["+relationship.getExpression()+"]");
 
             if (visited.contains(relationship)) continue;
             visited.add(relationship);
@@ -519,28 +518,66 @@ public class DefaultSearchHandler implements SearchHandler {
             String lhs = relationship.getLhs();
             int li = lhs.indexOf(".");
             String lsource = lhs.substring(0, li);
-
-            if (!dest.equals(lsource)) {
-                for (int j=0; j<level; j++) System.out.print("    ");
-                System.out.println(dest+" => "+lsource);
-                traverseGraph(level+1, dest, lsource, sources, visited);
-            }
+            String lexp = lhs.substring(li+1);
 
             String rhs = relationship.getRhs();
             int ri = rhs.indexOf(".");
             String rsource = rhs.substring(0, ri);
+            String rexp = rhs.substring(ri+1);
+
+            if (!dest.equals(lsource)) {
+                traverseGraph(entryDefinition, rhs, lhs, dest, lsource, rexp, lexp, row, sources, filter, visited);
+            }
 
             if (!dest.equals(rsource)) {
-                for (int j=0; j<level; j++) System.out.print("    ");
-                System.out.println(dest+" => "+rsource);
-                traverseGraph(level+1, dest, rsource, sources, visited);
+                traverseGraph(entryDefinition, lhs, rhs, dest, rsource, lexp, rexp, row, sources, filter, visited);
             }
         }
     }
 
-    public Collection traverseGraph(String sourceName, Map sources) {
+    public void traverseGraph(EntryDefinition entryDefinition,
+                              String lhs, String rhs,
+                              String lsource, String rsource,
+                              String lexp, String rexp,
+                              Row row, Map sources, Filter filter,
+                              Set visited) throws Exception {
+        log.debug("Evaluating "+lhs+" => "+rhs);
+
+        Object value = row.get(lhs);
+        Row newRow = new Row();
+        newRow.set(rhs, row.get(lhs));
+
+        Source source = entryDefinition.getSource(rsource);
+        log.debug("Converting "+filter+" for " + source.getName()+" with "+newRow);
+
+        Filter sqlFilter = engine.getCache().getCacheFilterTool().toSourceFilter(newRow, entryDefinition, source, filter);
+        SimpleFilter sf = new SimpleFilter(rexp, "=", value.toString());
+        if (sqlFilter == null) {
+            sqlFilter = sf;
+        } else if (sqlFilter instanceof AndFilter) {
+            AndFilter andFilter = (AndFilter)sqlFilter;
+            andFilter.addFilterList(sf);
+        } else {
+            AndFilter andFilter = new AndFilter();
+            andFilter.addFilterList(sf);
+            andFilter.addFilterList(sqlFilter);
+            sqlFilter = andFilter;
+        }
+
+        log.debug("Searching source "+source.getName()+" for "+sqlFilter);
+        SearchResults results = source.search(sqlFilter);
+
+        for (Iterator j=results.iterator(); j.hasNext(); ) {
+            Row values = (Row)j.next();
+            log.debug(" - "+values);
+        }
+
+        traverseGraph(entryDefinition, lsource, rsource, newRow, sources, filter, visited);
+    }
+
+    public Collection traverseGraph(EntryDefinition entryDefinition, String sourceName, Row row, Map sources, Filter filter) throws Exception {
         Set visited = new LinkedHashSet();
-        traverseGraph(0, null, sourceName, sources, visited);
+        traverseGraph(entryDefinition, null, sourceName, row, sources, filter, visited);
         return visited;
     }
 
@@ -575,10 +612,6 @@ public class DefaultSearchHandler implements SearchHandler {
             Calendar calendar
             ) throws Exception {
 
-        String startingSourceName = getStartingSourceName(entryDefinition);
-        Map sources = createGraph(entryDefinition);
-        Collection path = traverseGraph(startingSourceName, sources);
-
         Row parentRow = new Row();
 
         if (parent != null && parent.isDynamic()) {
@@ -602,6 +635,11 @@ public class DefaultSearchHandler implements SearchHandler {
                 }
             }
         }
+
+        Map sources = createGraph(entryDefinition);
+
+        String startingSourceName = getStartingSourceName(entryDefinition);
+        Collection path = traverseGraph(entryDefinition, startingSourceName, parentRow, sources, filter);
 
         log.debug("--------------------------------------------------------------------------------------");
 
@@ -633,12 +671,12 @@ public class DefaultSearchHandler implements SearchHandler {
                 primarySource = source;
             }
 
-            Filter newFilter = engine.getCache().getCacheFilterTool().toSourceFilter(parentRow, entryDefinition, source, filter);
-            filters.put(sourceName, newFilter);
+            Filter sqlFilter = engine.getCache().getCacheFilterTool().toSourceFilter(parentRow, entryDefinition, source, filter);
+            filters.put(sourceName, sqlFilter);
 
-            log.debug("Filter for " + sourceName+": "+newFilter);
+            log.debug("Filter for " + sourceName+": "+sqlFilter);
 
-            if (newFilter == null) { // filter is not applicable to this source
+            if (sqlFilter == null) { // filter is not applicable to this source
                 nullList.add(source);
             } else { // filter is applicable to this source
                 list.add(source);
