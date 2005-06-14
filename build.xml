@@ -120,6 +120,7 @@
         <copy todir="target/dist" file="LICENSE.txt"/>
         <copy todir="target/dist" file="COPYING.txt"/>
         <copy todir="target/dist" file="INSTALL-BINARY.txt"/>
+        <copy todir="target/dist" file="rpm/build.xml"/>
         <copy todir="target/dist/docs">
             <fileset dir="docs" includes="*.url"/>
         </copy>

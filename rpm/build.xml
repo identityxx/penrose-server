@@ -1,0 +1,41 @@
+<!--
+ Copyright (c) 1998-2005, Verge Lab., LLC.
+ All rights reserved.
+-->
+<project name="penrose" default="build" basedir=".">
+
+    <property name="prefix" value=""/>
+    <property name="penrose.home" value="${prefix}/usr/local/penrose"/>
+
+    <target name="install">
+        <mkdir dir="${penrose.home}/conf"/>
+        <tempfile property="temp.dir" destdir="${penrose.home}/conf"/>
+        <!-- save original configuration -->
+        <move todir="${temp.dir}" overwrite="true" includeEmptyDirs="false" failonerror="false">
+            <fileset dir="${penrose.home}/conf" includes="*"/>
+        </move>
+        <!-- copy new files -->
+        <copy todir="${penrose.home}" overwrite="true" includeEmptyDirs="true">
+            <fileset dir="." includes="**/*"/>
+        </copy>
+        <chmod dir="${penrose.home}/bin" perm="ugo+rx" includes="**/*.sh"/>
+        <!-- restore original configuration -->
+        <move todir="${penrose.home}/conf" overwrite="true" includeEmptyDirs="false" failonerror="false">
+            <fileset dir="${temp.dir}" includes="*"/>
+        </move>
+        <delete dir="${temp.dir}"/>
+    </target>
+
+    <target name="uninstall">
+        <delete failonerror="false" includeemptydirs="true">
+            <fileset dir="${penrose.home}/bin" includes="**/*"/>
+            <fileset dir="${penrose.home}/conf/default" includes="*"/>
+            <fileset dir="${penrose.home}/docs" includes="**/*"/>
+            <fileset dir="${penrose.home}/lib" includes="*"/>
+            <fileset dir="${penrose.home}/samples" includes="**/*"/>
+            <fileset dir="${penrose.home}/schema" includes="**/*"/>
+            <fileset dir="${penrose.home}" includes="*"/>
+        </delete>
+    </target>
+
+</project>
