@@ -21,7 +21,6 @@ ant dist
 ant -Dprefix=$RPM_BUILD_ROOT install
 
 %clean
-#ant -Dprefix=$RPM_BUILD_ROOT uninstall
 rm -rf $RPM_BUILD_ROOT
 
 %files
