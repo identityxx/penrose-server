@@ -500,7 +500,7 @@ public class SourceHome {
 
     public void copy(SourceHome sourceHome, String filter) throws Exception {
 
-        String sql = "insert into " + tableName + " select * from " + sourceHome.tableName;
+        String sql = "insert into " + tableName + " select * from " + sourceHome.tableName+" "+sourceHome.source.getName();
 
         if (filter != null) {
             sql += " where "+filter;

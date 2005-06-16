@@ -83,8 +83,8 @@
     </target>
 
     <target name="install">
-        <mkdir dir="${penrose.home}/conf"/>
         <tempfile property="temp.dir" destdir="${penrose.home}/conf"/>
+        <mkdir dir="${temp.dir}"/>
         <!-- save original configuration -->
         <copy todir="${temp.dir}" overwrite="true" includeEmptyDirs="false" failonerror="true">
             <fileset dir="${penrose.home}/conf" includes="*"/>
@@ -97,9 +97,9 @@
             <fileset dir="target/dist" includes="**/*"/>
         </copy>
         <!-- restore original configuration -->
-        <move todir="${penrose.home}/conf" overwrite="true" includeEmptyDirs="false" failonerror="false">
+        <copy todir="${penrose.home}/conf" overwrite="true" includeEmptyDirs="false" failonerror="true">
             <fileset dir="${temp.dir}" includes="*"/>
-        </move>
+        </copy>
         <delete dir="${temp.dir}"/>
     </target>
 
@@ -115,7 +115,7 @@
         </delete>
     </target>
 
-    <target name="dist" depends="build,docs">
+    <target name="dist" depends="build">
         <mkdir dir="target/dist"/>
         <copy todir="target/dist" file="README.txt"/>
         <copy todir="target/dist" file="LICENSE.txt"/>
@@ -156,7 +156,7 @@
         <mkdir dir="target/dist/var"/>
     </target>
 
-    <target name="dist-src">
+    <target name="dist-src" depends="dist,docs">
         <echo message="Creating ${project.name}-${project.version}-src.zip"/>
         <mkdir dir="dist"/>
         <zip destfile="dist/${project.name}-${project.version}-src.zip"
@@ -173,7 +173,7 @@
             src="target/${project.name}-${project.version}-src.tar"/>
     </target>
 
-    <target name="dist-unix" depends="dist">
+    <target name="dist-unix" depends="dist,docs">
         <echo message="Creating ${project.name}-${project.version}.zip"/>
         <mkdir dir="dist"/>
         <zip destfile="dist/${project.name}-${project.version}.zip"
@@ -189,7 +189,7 @@
             src="target/${project.name}-${project.version}.tar"/>
     </target>
 
-    <target name="dist-win32" depends="dist">
+    <target name="dist-win32" depends="dist,docs">
         <echo message="Creating ${project.name}-${project.version}.exe"/>
         <mkdir dir="dist"/>
         <exec executable="${iscc.path}" os="Windows NT,Windows 2000,Windows XP,Windows 2003">

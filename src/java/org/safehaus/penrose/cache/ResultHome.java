@@ -176,10 +176,10 @@ public class ResultHome {
 
         StringBuffer sb = new StringBuffer();
         for (Iterator i = pks.iterator(); i.hasNext();) {
-            Map pk = (Map) i.next();
+            Row pk = (Row) i.next();
 
             StringBuffer sb2 = new StringBuffer();
-            for (Iterator j = pk.keySet().iterator(); j.hasNext();) {
+            for (Iterator j = pk.getNames().iterator(); j.hasNext();) {
                 String name = (String) j.next();
                 String value = (String) pk.get(name);
 

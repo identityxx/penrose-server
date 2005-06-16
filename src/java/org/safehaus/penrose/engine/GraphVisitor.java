@@ -1,0 +1,25 @@
+/**
+ * Copyright (c) 1998-2005, Verge Lab., LLC.
+ * All rights reserved.
+ */
+package org.safehaus.penrose.engine;
+
+/**
+ * @author Endi S. Dewata
+ */
+public class GraphVisitor {
+
+    public boolean preVisitNode(Object node, Object parameter) throws Exception {
+        System.out.println("Pre-visit Node "+node);
+        return true;
+    }
+
+    public void postVisitNode(Object node, Object parameter) throws Exception {
+        System.out.println("Post-visit Node "+node);
+    }
+
+    public boolean visitEdge(Object node1, Object node2, Object object, Object parameter) throws Exception {
+        System.out.println("Visit Edge <"+node1+", "+node2+"> "+object);
+        return true;
+    }
+}

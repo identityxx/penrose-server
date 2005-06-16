@@ -80,6 +80,8 @@ public class JDBCAdapter extends Adapter {
             Field field = (Field)i.next();
 
             if (sb.length() > 0) sb.append(", ");
+            sb.append(source.getName());
+            sb.append(".");
             sb.append(field.getName());
         }
 
@@ -95,7 +97,7 @@ public class JDBCAdapter extends Adapter {
         String tableName = source.getParameter("tableName");
 
         String fieldNames = getFieldNames(source);
-        String sql = "select "+fieldNames+" from "+tableName;
+        String sql = "select "+fieldNames+" from "+tableName+" "+source.getName();
 
         if (filter != null) {
             sql += " where "+filterTool.convert(filter);

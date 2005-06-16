@@ -86,8 +86,8 @@ public class CacheFilterTool {
             return true;
         }
 
-        Map attributes = entry.getAttributes();
-        if (!attributes.containsKey(name)) return false;
+        //Map attributes = entry.getAttributes();
+        //if (!attributes.containsKey(name)) return false;
 
         String lhs = name;
         String rhs = "'" + value + "'";
@@ -223,6 +223,7 @@ public class CacheFilterTool {
             String v = (String)interpreter.eval(expression);
             if (v == null) continue;
 
+            System.out.println("Adding filter "+field.getName()+"="+v);
             SimpleFilter f = new SimpleFilter(field.getName(), "=", v);
 
             if (newFilter == null) {

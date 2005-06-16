@@ -206,6 +206,13 @@ public class EntryDefinition implements Cloneable, Serializable {
         return sources.values();
     }
 
+    public Collection getEffectiveSources() {
+        List list = new ArrayList();
+        list.addAll(sources.values());
+        if (parent != null) list.addAll(parent.getEffectiveSources());
+        return list;
+    }
+
     public List getObjectClasses() {
         return objectClasses;
     }
@@ -232,6 +239,15 @@ public class EntryDefinition implements Cloneable, Serializable {
 
     public Source getSource(String name) {
         return (Source)sources.get(name);
+    }
+
+    public Source getEffectiveSource(String name) {
+        Source source = (Source)sources.get(name);
+        if (source != null) return source;
+
+        if (parent != null) return parent.getEffectiveSource(name);
+
+        return null;
     }
 
     public Source removeSource(String name) {

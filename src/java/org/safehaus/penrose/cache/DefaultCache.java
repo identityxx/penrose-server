@@ -7,6 +7,8 @@ package org.safehaus.penrose.cache;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.event.CacheEvent;
 import org.safehaus.penrose.SearchResults;
+import org.safehaus.penrose.engine.Graph;
+import org.safehaus.penrose.engine.JoinGraphVisitor;
 import org.safehaus.penrose.mapping.Row;
 import org.safehaus.penrose.mapping.SourceDefinition;
 import org.safehaus.penrose.mapping.Relationship;
@@ -359,44 +361,208 @@ public class DefaultCache extends Cache {
         return sb.toString();
     }
 
+    public Set traverseGraph(
+            EntryDefinition entryDefinition,
+            String start, String dest,
+            Map sourceGraph, Source primarySource,
+            StringBuffer fieldNames, StringBuffer tableNames,
+            Set visited) throws Exception {
+
+        Collection c = (Collection)sourceGraph.get(dest);
+        if (c == null) return null;
+
+        for (Iterator i=c.iterator(); i.hasNext(); ) {
+            Relationship relationship = (Relationship)i.next();
+
+            if (visited.contains(relationship)) continue;
+            visited.add(relationship);
+
+            String lhs = relationship.getLhs();
+            int li = lhs.indexOf(".");
+            String lsource = lhs.substring(0, li);
+            String lexp = lhs.substring(li+1);
+
+            String rhs = relationship.getRhs();
+            int ri = rhs.indexOf(".");
+            String rsource = rhs.substring(0, ri);
+            String rexp = rhs.substring(ri+1);
+
+            if (!dest.equals(lsource)) {
+                Set result = traverseGraph(
+                        entryDefinition,
+                        rhs, lhs,
+                        dest, lsource,
+                        rexp, lexp,
+                        sourceGraph, primarySource,
+                        fieldNames, tableNames,
+                        visited);
+                if (result != null) return result;
+            }
+
+            if (!dest.equals(rsource)) {
+                Set result = traverseGraph(
+                        entryDefinition,
+                        lhs, rhs,
+                        dest, rsource,
+                        lexp, rexp,
+                        sourceGraph, primarySource,
+                        fieldNames, tableNames,
+                        visited);
+                if (result != null) return result;
+            }
+        }
+
+        return null;
+    }
+
+    public Set traverseGraph(
+            EntryDefinition entryDefinition,
+            String lhs, String rhs,
+            String lsource, String rsource,
+            String lfield, String rfield,
+            Map sourceGraph, Source primarySource,
+            StringBuffer fieldNames, StringBuffer tableNames,
+            Set visited) throws Exception {
+
+        System.out.println("Visiting "+lhs+" = "+rhs);
+
+        Source source = entryDefinition.getSource(rsource);
+        
+        Collection fields = source.getFields();
+        Set set = new HashSet();
+        for (Iterator j = fields.iterator(); j.hasNext();) {
+            Field field = (Field)j.next();
+            String name = source.getName() + "." + field.getName();
+
+            if (set.contains(name)) continue;
+            set.add(name);
+
+            if (fieldNames.length() > 0) fieldNames.append(", ");
+            fieldNames.append(name);
+        }
+
+        boolean first = tableNames.length() == 0;
+
+        if (!first) {
+            tableNames.append(" left join ");
+        }
+
+        tableNames.append(source.getSourceName());
+        tableNames.append(" ");
+        tableNames.append(source.getName());
+
+        if (!first) {
+            tableNames.append(" on ");
+            tableNames.append(lhs);
+            tableNames.append(" = ");
+            tableNames.append(rhs);
+        }
+
+        return traverseGraph(
+                entryDefinition,
+                lsource, rsource,
+                sourceGraph, primarySource,
+                fieldNames, tableNames,
+                visited);
+    }
+
+    public Collection traverseGraph(
+            EntryDefinition entryDefinition,
+            Map sourceGraph,
+            Source primarySource,
+            StringBuffer fieldNames, StringBuffer tableNames) throws Exception {
+
+        // get the first source
+        String sourceName = null;
+        Collection relationships = entryDefinition.getRelationships();
+        for (Iterator i=relationships.iterator(); i.hasNext(); ) {
+            Relationship relationship = (Relationship)i.next();
+
+            String lhs = relationship.getLhs();
+            int li = lhs.indexOf(".");
+            String lsource = lhs.substring(0, li);
+            String lfield = lhs.substring(li+1);
+
+            String rhs = relationship.getRhs();
+            int ri = rhs.indexOf(".");
+            String rsource = rhs.substring(0, ri);
+            String rfield = rhs.substring(ri+1);
+
+            Source ls = entryDefinition.getSource(lsource);
+            if (ls == null) {
+                sourceName = lsource;
+                break;
+            }
+
+            Source rs = entryDefinition.getSource(lsource);
+            if (rs == null) {
+                sourceName = rsource;
+                break;
+            }
+
+        }
+
+        if (sourceName == null) {
+            Source source = (Source)entryDefinition.getSources().iterator().next();
+            sourceName = source.getName();
+        }
+
+        Set visited = new LinkedHashSet();
+        Set result = traverseGraph(
+                entryDefinition,
+                null, sourceName,
+                sourceGraph, primarySource,
+                fieldNames, tableNames,
+                visited);
+
+        return result;
+    }
+
     /**
      * Get the table names (used in SELECT ... FROM ... clause)
      *
-     * @param entry
-     * @param temporary whether we are using temporary tables
+     * @param entryDefinition
      * @return the string "left join table1 on ... left join table2 on ... etc."
      */
-    public String getTableNames(EntryDefinition entry, boolean temporary) {
-        Collection relationships = entry.getRelationships();
+    public String getTableNames(
+            EntryDefinition entryDefinition,
+            Graph graph,
+            Map sourceGraph,
+            Source primarySource,
+            StringBuffer fieldNames,
+            StringBuffer tableNames) throws Exception {
+
+        traverseGraph(entryDefinition, sourceGraph, primarySource, fieldNames, tableNames);
+
+        Collection relationships = entryDefinition.getRelationships();
         Iterator iterator = relationships.iterator();
 
-        StringBuffer sb = new StringBuffer();
-        for (Iterator i = entry.getSources().iterator(); i.hasNext();) {
+        for (Iterator i = entryDefinition.getSources().iterator(); i.hasNext();) {
             Source source = (Source) i.next();
             String tableName = source.getSourceName();
 
-            boolean first = sb.length() == 0;
+            boolean first = tableNames.length() == 0;
 
             if (!first) {
-                sb.append(" left join ");
+                tableNames.append(" left join ");
             }
 
             String sourceName = source.getName();
 
-            sb.append(tableName);
-            sb.append(" ");
-            sb.append(sourceName);
+            tableNames.append(tableName);
+            tableNames.append(" ");
+            tableNames.append(sourceName);
 
             if (!first) {
                 Relationship relationship = (Relationship) iterator.next();
                 String expression = relationship.getExpression();
 
-                sb.append(" on ");
-                sb.append(expression);
+                tableNames.append(" on ");
+                tableNames.append(expression);
             }
         }
 
-        EntryDefinition parent = entry.getParent();
+        EntryDefinition parent = entryDefinition.getParent();
         if (parent.isDynamic()) {
 
             Relationship relationship = (Relationship) iterator.next();
@@ -412,53 +578,58 @@ public class DefaultCache extends Cache {
                 Source source = (Source) i.next();
                 String tableName = source.getSourceName();
 
-                sb.append(" left join ");
+                tableNames.append(" left join ");
 
                 String sourceName = source.getName();
 
-                sb.append(tableName);
-                sb.append(" ");
-                sb.append(sourceName);
+                tableNames.append(tableName);
+                tableNames.append(" ");
+                tableNames.append(sourceName);
 
                 if (counter == 0) {
-                    sb.append(" on ");
-                    sb.append(joinExpression);
+                    tableNames.append(" on ");
+                    tableNames.append(joinExpression);
 
                 } else {
                     relationship = (Relationship) iterator.next();
                     String expression = relationship.getExpression();
 
-                    sb.append(" on ");
-                    sb.append(expression);
+                    tableNames.append(" on ");
+                    tableNames.append(expression);
                 }
 
             }
 
         }
 
-        return sb.toString();
+        return tableNames.toString();
     }
 
     /**
      * Get the row value
      *
-     * @param entry
-     *            the entry (from config)
-     * @param rs
-     *            the result set
+     * @param entry the entry (from config)
+     * @param rs the result set
      * @return the Map containing the fields/columns and its values
      * @throws Exception
      */
-    public Row getRow(EntryDefinition entry, ResultSet rs) throws Exception {
+    public Row getRow(EntryDefinition entry, List fieldNames, ResultSet rs) throws Exception {
+        Row values = new Row();
+
+        int c = 1;
+        for (Iterator i=fieldNames.iterator(); i.hasNext(); c++) {
+            String fieldName = (String)i.next();
+            Object value = rs.getObject(c);
+            values.set(fieldName, value);
+        }
+
+/*
         Collection sources = entry.getSources();
         Iterator iterator = entry.getRelationships().iterator();
-
-        Row values = new Row();
 
         ResultSetMetaData rsmd = rs.getMetaData();
         int count = rsmd.getColumnCount();
 
-        int c = 1;
         boolean first = true;
         for (Iterator i = sources.iterator(); i.hasNext() && c <= count;) {
             Source source = (Source) i.next();
@@ -486,8 +657,8 @@ public class DefaultCache extends Cache {
                 if (set.contains(name)) continue;
                 set.add(name);
 
-                Object value = rs.getObject(c);
                 String label = source.getName() + "." + name;
+                Object value = rs.getObject(c);
 
                 if (!first) {
                     // if the keys used in join relationship is null then the
@@ -495,7 +666,7 @@ public class DefaultCache extends Cache {
                     if ((label.equals(lhs) || label.equals(rhs)) && value == null) valid = false;
                 }
 
-                if (value != null) map.set(source.getName() + "." + name, value);
+                if (value != null) map.set(label, value);
 
                 c++;
             }
@@ -504,25 +675,71 @@ public class DefaultCache extends Cache {
 
             first = false;
         }
-
+*/
         return values;
     }
 
     /**
      * Join sources
      *
-     * @param entry the entry (from config)
+     * @param entryDefinition the entry definition (from config)
      * @return the Collection of rows resulting from the join
      * @throws Exception
      */
-    public Collection joinSources(EntryDefinition entry) throws Exception {
+    public Collection joinSources(
+            EntryDefinition entryDefinition,
+            Graph graph,
+            Map sourceGraph,
+            Source primarySource,
+            String sqlFilter) throws Exception {
 
-        String sqlFieldNames = getFieldNames(entry);
+        JoinGraphVisitor visitor = new JoinGraphVisitor(entryDefinition);
+        graph.traverse(visitor, primarySource);
 
-        // don't use temporary entry tables here
-        String sqlTableNames = getTableNames(entry, false);
+        List fieldNames = visitor.getFieldNames();
+        List tableNames = visitor.getTableNames();
+        List joins = visitor.getJoins();
 
-        String sql = "select " + sqlFieldNames + " from " + sqlTableNames;
+        StringBuffer sb = new StringBuffer();
+        sb.append("select ");
+
+        boolean first = true;
+
+        for (Iterator i=fieldNames.iterator(); i.hasNext(); ) {
+            String fieldName = (String)i.next();
+
+            if (first) {
+                first = false;
+            } else {
+                sb.append(", ");
+            }
+
+            sb.append(fieldName);
+        }
+
+        sb.append(" from ");
+
+        Iterator i = tableNames.iterator();
+        sb.append(i.next());
+
+        for (Iterator j = joins.iterator(); j.hasNext(); ) {
+            String tableName = (String)i.next();
+            String join = (String)j.next();
+
+            sb.append(" left join ");
+            sb.append(tableName);
+            sb.append(" on ");
+            sb.append(join);
+        }
+
+        if (sqlFilter != null) {
+            sb.append(" where ");
+            sb.append(sqlFilter);
+        }
+        
+        //getTableNames(entryDefinition, graph, sourceGraph, primarySource, fieldNames, tableNames);
+
+        String sql = sb.toString();
 
         List results = new ArrayList();
 
@@ -537,7 +754,7 @@ public class DefaultCache extends Cache {
             rs = ps.executeQuery();
 
             while (rs.next()) {
-                Row row = getRow(entry, rs);
+                Row row = getRow(entryDefinition, fieldNames, rs);
                 results.add(row);
             }
 
@@ -698,7 +915,7 @@ public class DefaultCache extends Cache {
 
             while (rs.next()) {
 
-                Map pk = getPk(entry, rs);
+                Row pk = getPk(entry, rs);
                 //log.debug(" - "+row);
 
                 pks.add(pk);
@@ -721,8 +938,8 @@ public class DefaultCache extends Cache {
      * @return a Map containing primary keys and its values
      * @throws Exception
      */
-    public Map getPk(EntryDefinition entry, ResultSet rs) throws Exception {
-        Map values = new HashMap();
+    public Row getPk(EntryDefinition entry, ResultSet rs) throws Exception {
+        Row values = new Row();
 
         ResultSetMetaData rsmd = rs.getMetaData();
         int count = rsmd.getColumnCount();
@@ -740,7 +957,7 @@ public class DefaultCache extends Cache {
 
             Object value = rs.getObject(c);
 
-            values.put(name, value);
+            values.set(name, value);
 
             c++;
         }

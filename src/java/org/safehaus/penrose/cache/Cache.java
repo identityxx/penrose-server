@@ -10,6 +10,7 @@ import org.safehaus.penrose.event.CacheEvent;
 import org.safehaus.penrose.event.CacheListener;
 import org.safehaus.penrose.SearchResults;
 import org.safehaus.penrose.Penrose;
+import org.safehaus.penrose.engine.Graph;
 import org.safehaus.penrose.filter.Filter;
 import org.apache.log4j.Logger;
 
@@ -62,7 +63,7 @@ public abstract class Cache {
 
     public abstract void setModifyTime(EntryDefinition entry, Date date) throws Exception;
 
-    public abstract Collection joinSources(EntryDefinition entry) throws Exception;
+    public abstract Collection joinSources(EntryDefinition entry, Graph graph, Map sourceGraph, Source primarySource, String sqlFilter) throws Exception;
 
     public abstract Collection searchPrimaryKeys(
             EntryDefinition entry,

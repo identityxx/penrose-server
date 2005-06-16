@@ -157,4 +157,8 @@ public class Source implements Cloneable, Serializable {
     public void setSourceName(String sourceName) {
         this.sourceName = sourceName;
     }
+
+    public String toString() {
+        return sourceName;
+    }
 }
