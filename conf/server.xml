@@ -24,9 +24,9 @@
     <search-handler-class>org.safehaus.penrose.engine.DefaultSearchHandler</search-handler-class>
   </engine>
 
-  <cache>
+  <source-cache>
     <cache-name>DEFAULT</cache-name>
-    <cache-class>org.safehaus.penrose.sourceCache.DefaultSourceCacheDefaultCache</cache-class>
+    <cache-class>org.safehaus.penrose.cache.DefaultSourceCache</cache-class>
     <parameter>
       <param-name>driver</param-name>
       <param-value>org.hsqldb.jdbcDriver</param-value>
@@ -47,34 +47,32 @@
       <param-name>cacheExpiration</param-name>
       <param-value>60</param-value>
     </parameter>
-  </cache>
+  </source-cache>
 
-<!--
-  <sourceCacheeCache>
-    <sourceCacheeCache-name>DEFAULT</sourceCacheeCache-name>
-    <sourceCacheeCache-class>org.safehaus.penrose.sourceCache.DefaultSourceCacheDefaultCache</sourceCacheeCache-class>
+  <entry-cache>
+    <cache-name>DEFAULT</cache-name>
+    <cache-class>org.safehaus.penrose.cache.DefaultEntryCache</cache-class>
     <parameter>
       <param-name>driver</param-name>
-      <param-value>com.mysql.jdbc.Driver</param-value>
+      <param-value>org.hsqldb.jdbcDriver</param-value>
     </parameter>
     <parameter>
       <param-name>url</param-name>
-      <param-value>jdbc:mysql://localhost/penrose?autoReconnect=true</param-value>
+      <param-value>jdbc:hsqldb:mem:penrose</param-value>
     </parameter>
     <parameter>
       <param-name>user</param-name>
-      <param-value>penrose</param-value>
+      <param-value>sa</param-value>
     </parameter>
     <parameter>
       <param-name>password</param-name>
-      <param-value>penrose</param-value>
+      <param-value></param-value>
     </parameter>
     <parameter>
       <param-name>cacheExpiration</param-name>
       <param-value>60</param-value>
     </parameter>
-  </sourceCacheeCache>
--->
+  </entry-cache>
 
   <adapter>
     <adapter-name>JDBC</adapter-name>
