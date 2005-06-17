@@ -102,7 +102,7 @@ public class DefaultDeleteHandler implements DeleteHandler {
             if (rc != LDAPException.SUCCESS) return rc;
         }
 
-        engine.getCache().delete(entry, values, date);
+        engine.getEntryCache().delete(entry, values, date);
 
         return LDAPException.SUCCESS;
     }
@@ -143,7 +143,7 @@ public class DefaultDeleteHandler implements DeleteHandler {
 	            int rc = source.delete(attributes);
 	            if (rc != LDAPException.SUCCESS) return rc;
 
-	            engine.getCache().delete(source, attributes, date);
+	            engine.getSourceCache().delete(source, attributes, date);
 	        }
 
         } finally {

@@ -26,7 +26,7 @@
 
   <cache>
     <cache-name>DEFAULT</cache-name>
-    <cache-class>org.safehaus.penrose.cache.DefaultCache</cache-class>
+    <cache-class>org.safehaus.penrose.sourceCache.DefaultSourceCacheDefaultCache</cache-class>
     <parameter>
       <param-name>driver</param-name>
       <param-value>org.hsqldb.jdbcDriver</param-value>
@@ -50,9 +50,9 @@
   </cache>
 
 <!--
-  <cache>
-    <cache-name>DEFAULT</cache-name>
-    <cache-class>org.safehaus.penrose.cache.DefaultCache</cache-class>
+  <sourceCacheeCache>
+    <sourceCacheeCache-name>DEFAULT</sourceCacheeCache-name>
+    <sourceCacheeCache-class>org.safehaus.penrose.sourceCache.DefaultSourceCacheDefaultCache</sourceCacheeCache-class>
     <parameter>
       <param-name>driver</param-name>
       <param-value>com.mysql.jdbc.Driver</param-value>
@@ -73,7 +73,7 @@
       <param-name>cacheExpiration</param-name>
       <param-value>60</param-value>
     </parameter>
-  </cache>
+  </sourceCacheeCache>
 -->
 
   <adapter>

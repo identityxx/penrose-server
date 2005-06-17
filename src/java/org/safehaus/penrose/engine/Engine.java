@@ -4,7 +4,8 @@
  */
 package org.safehaus.penrose.engine;
 
-import org.safehaus.penrose.cache.Cache;
+import org.safehaus.penrose.cache.SourceCache;
+import org.safehaus.penrose.cache.EntryCache;
 import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.SearchResults;
 import org.safehaus.penrose.*;
@@ -33,7 +34,8 @@ public abstract class Engine implements EngineMBean {
     private EngineConfig engineConfig;
     private EngineContext engineContext;
 
-    private Cache cache;
+    private SourceCache sourceCache;
+    private EntryCache entryCache;
 
     private boolean stopping = false;
 
@@ -46,7 +48,8 @@ public abstract class Engine implements EngineMBean {
     public void init(EngineConfig engineConfig, EngineContext engineContext) throws Exception {
         this.engineConfig = engineConfig;
         this.engineContext = engineContext;
-        this.cache = engineContext.getCache();
+        this.sourceCache = engineContext.getSourceCache();
+        this.entryCache = engineContext.getEntryCache();
 
         initHandlers();
         init();
@@ -140,12 +143,12 @@ public abstract class Engine implements EngineMBean {
         return stopping;
     }
 
-    public Cache getCache() {
-        return cache;
+    public SourceCache getSourceCache() {
+        return sourceCache;
     }
 
-    public void setCache(Cache cache) {
-        this.cache = cache;
+    public void setSourceCache(SourceCache sourceCache) {
+        this.sourceCache = sourceCache;
     }
 
     public BindHandler getBindHandler() {
@@ -220,5 +223,12 @@ public abstract class Engine implements EngineMBean {
         this.engineContext = engineContext;
     }
 
+    public EntryCache getEntryCache() {
+        return entryCache;
+    }
+
+    public void setEntryCache(EntryCache entryCache) {
+        this.entryCache = entryCache;
+    }
 }
 

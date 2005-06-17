@@ -17,9 +17,7 @@
 
         <call-method-rule pattern="script" methodname="setScript" paramcount="0" />
 
-		<pattern value="oc">
-			<call-method-rule pattern="oc" methodname="addObjectClass" paramcount="0" />
-		</pattern>
+        <call-method-rule pattern="oc" methodname="addObjectClass" paramcount="0" />
 
 		<pattern value="at">
 

@@ -124,7 +124,7 @@
         <copy todir="target/dist/docs">
             <fileset dir="docs" includes="*.url"/>
         </copy>
-        <copy todir="target/dist/docs/javadoc">
+        <copy todir="target/dist/docs/javadoc" failonerror="false">
             <fileset dir="target/javadoc"/>
         </copy>
         <copy todir="target/dist/lib">

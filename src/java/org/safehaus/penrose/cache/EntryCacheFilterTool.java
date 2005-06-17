@@ -18,11 +18,11 @@ import java.util.Map;
 /**
  * @author Endi S. Dewata
  */
-public class CacheFilterTool {
+public class EntryCacheFilterTool {
 
-    public CacheContext cacheContext;
+    public EntryCacheContext cacheContext;
 
-    public CacheFilterTool(CacheContext cacheContext) {
+    public EntryCacheFilterTool(EntryCacheContext cacheContext) {
         this.cacheContext = cacheContext;
     }
 

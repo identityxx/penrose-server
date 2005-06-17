@@ -12,10 +12,9 @@ import java.io.Serializable;
 /**
  * @author Administrator
  */
-public class CacheConfig implements Serializable {
+public class EntryCacheConfig implements Serializable {
 	
     public final static String CACHE_EXPIRATION = "cacheExpiration";
-    public final static String LOAD_ON_STARTUP  = "loadOnStartup";
     public final static String DRIVER           = "driver";
     public final static String URL              = "url";
     public final static String USER             = "user";

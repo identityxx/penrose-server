@@ -151,7 +151,7 @@ public class DefaultEngine extends Engine {
 
     public void updateExpiration(SourceDefinition sourceConfig, Calendar calendar) throws Exception {
 
-        int defaultCacheExpiration = config.getCache().getCacheExpiration();
+        int defaultCacheExpiration = config.getSourceCache().getCacheExpiration();
         String s = sourceConfig.getParameter(SourceDefinition.CACHE_EXPIRATION);
 
         Integer cacheExpiration = s == null ? new Integer(defaultCacheExpiration) : new Integer(s);

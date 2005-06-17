@@ -40,9 +40,7 @@ import org.safehaus.penrose.engine.EngineConfig;
 import org.safehaus.penrose.engine.EngineContext;
 import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.interpreter.InterpreterConfig;
-import org.safehaus.penrose.cache.Cache;
-import org.safehaus.penrose.cache.CacheConfig;
-import org.safehaus.penrose.cache.CacheContext;
+import org.safehaus.penrose.cache.*;
 import org.safehaus.penrose.connection.*;
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.filter.FilterTool;
@@ -55,7 +53,14 @@ import sun.misc.Signal;
 /**
  * @author Endi S. Dewata
  */
-public class Penrose implements AdapterContext, CacheContext, EngineContext, ModuleContext, PenroseMBean, SignalHandler {
+public class Penrose implements
+        AdapterContext,
+        SourceCacheContext,
+        EntryCacheContext,
+        EngineContext,
+        ModuleContext,
+        PenroseMBean,
+        SignalHandler {
 	
 	// ------------------------------------------------
 	// Constants
@@ -113,7 +118,8 @@ public class Penrose implements AdapterContext, CacheContext, EngineContext, Mod
 
 	private TransformEngine transformEngine;
 
-    private Map caches = new LinkedHashMap();
+    private Map sourceCaches = new LinkedHashMap();
+    private Map entryCaches = new LinkedHashMap();
 	private Map engines = new LinkedHashMap();
     private Map connections = new LinkedHashMap();
     private Map modules = new LinkedHashMap();
@@ -234,14 +240,24 @@ public class Penrose implements AdapterContext, CacheContext, EngineContext, Mod
 	}
 
     public void initCache() throws Exception {
-        for (Iterator i=config.getCacheConfigs().iterator(); i.hasNext(); ) {
-            CacheConfig cacheConfig = (CacheConfig)i.next();
+        for (Iterator i=config.getSourceCacheConfigs().iterator(); i.hasNext(); ) {
+            SourceCacheConfig sourceCacheConfig = (SourceCacheConfig)i.next();
 
-            Class clazz = Class.forName(cacheConfig.getCacheClass());
-            Cache cache = (Cache)clazz.newInstance();
-            cache.init(cacheConfig, this);
+            Class clazz = Class.forName(sourceCacheConfig.getCacheClass());
+            SourceCache sourceCache = (SourceCache)clazz.newInstance();
+            sourceCache.init(sourceCacheConfig, this);
 
-            caches.put(cacheConfig.getCacheName(), cache);
+            sourceCaches.put(sourceCacheConfig.getCacheName(), sourceCache);
+        }
+
+        for (Iterator i=config.getEntryCacheConfigs().iterator(); i.hasNext(); ) {
+            EntryCacheConfig entryCacheConfig = (EntryCacheConfig)i.next();
+
+            Class clazz = Class.forName(entryCacheConfig.getCacheClass());
+            EntryCache entryCache = (EntryCache)clazz.newInstance();
+            entryCache.init(entryCacheConfig, this);
+
+            entryCaches.put(entryCacheConfig.getCacheName(), entryCache);
         }
     }
 
@@ -1002,12 +1018,20 @@ public class Penrose implements AdapterContext, CacheContext, EngineContext, Mod
         return interpreter;
     }
 
-    public Cache getCache() {
-        return getCache("DEFAULT");
+    public SourceCache getSourceCache() {
+        return getSourceCache("DEFAULT");
     }
 
-    public Cache getCache(String name) {
-        return (Cache)caches.get(name);
+    public SourceCache getSourceCache(String name) {
+        return (SourceCache)sourceCaches.get(name);
+    }
+
+    public EntryCache getEntryCache() {
+        return getEntryCache("DEFAULT");
+    }
+
+    public EntryCache getEntryCache(String name) {
+        return (EntryCache)entryCaches.get(name);
     }
 
     public Schema getSchema() {

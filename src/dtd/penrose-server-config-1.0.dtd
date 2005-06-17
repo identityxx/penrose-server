@@ -11,19 +11,30 @@ for Penrose server instance.
 -->
 
 <!-- Document Root -->
-<!ELEMENT server (cache, adapter*, connection*, root)>
+<!ELEMENT server (source-cache, entry-cache, adapter*, connection*, root)>
 
-<!-- Cache -->
-<!ELEMENT cache (parameter*)>
- <!ATTLIST cache driver CDATA #REQUIRED>
- <!ATTLIST cache url CDATA #REQUIRED>
- <!ATTLIST cache username CDATA #REQUIRED>
- <!ATTLIST cache password CDATA #REQUIRED>
- <!ATTLIST cache loadOnStartup (true|false) #REQUIRED>
- <!ATTLIST cache poolSize CDATA #REQUIRED>
- <!ATTLIST cache testQuery CDATA #REQUIRED>
- <!ATTLIST cache cacheExpiration CDATA #REQUIRED>
+<!-- Source Cache -->
+<!ELEMENT source-cache (parameter*)>
+ <!ATTLIST source-cache driver CDATA #REQUIRED>
+ <!ATTLIST source-cache url CDATA #REQUIRED>
+ <!ATTLIST source-cache username CDATA #REQUIRED>
+ <!ATTLIST source-cache password CDATA #REQUIRED>
+ <!ATTLIST source-cache loadOnStartup (true|false) #REQUIRED>
+ <!ATTLIST source-cache poolSize CDATA #REQUIRED>
+ <!ATTLIST source-cache testQuery CDATA #REQUIRED>
+ <!ATTLIST source-cache cacheExpiration CDATA #REQUIRED>
  
+<!-- Entry Cache -->
+<!ELEMENT entry-cache (parameter*)>
+ <!ATTLIST entry-cache driver CDATA #REQUIRED>
+ <!ATTLIST entry-cache url CDATA #REQUIRED>
+ <!ATTLIST entry-cache username CDATA #REQUIRED>
+ <!ATTLIST entry-cache password CDATA #REQUIRED>
+ <!ATTLIST entry-cache loadOnStartup (true|false) #REQUIRED>
+ <!ATTLIST entry-cache poolSize CDATA #REQUIRED>
+ <!ATTLIST entry-cache testQuery CDATA #REQUIRED>
+ <!ATTLIST entry-cache cacheExpiration CDATA #REQUIRED>
+
 <!-- Adapter -->
 <!ELEMENT adapter EMPTY>
  <!ATTLIST adapter type CDATA #REQUIRED>

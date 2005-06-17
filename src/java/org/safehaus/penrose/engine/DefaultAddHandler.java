@@ -172,7 +172,7 @@ public class DefaultAddHandler implements AddHandler {
             if (rc != LDAPException.SUCCESS) return rc;
         }
 
-        engine.getCache().insert(entry, values, date);
+        engine.getEntryCache().insert(entry, values, date);
 
         return LDAPException.SUCCESS;
     }
@@ -203,7 +203,7 @@ public class DefaultAddHandler implements AddHandler {
 	            if (rc != LDAPException.SUCCESS) return rc;
 
 	            // Add row to the source table in the cache
-	            engine.getCache().insert(source, attributes, date);
+	            engine.getSourceCache().insert(source, attributes, date);
 	        }
 
         } finally {

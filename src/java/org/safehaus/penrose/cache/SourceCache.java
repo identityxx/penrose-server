@@ -19,22 +19,22 @@ import java.util.*;
 /**
  * @author Endi S. Dewata
  */
-public abstract class Cache {
+public abstract class SourceCache {
 
     public Logger log = Logger.getLogger(Penrose.CACHE_LOGGER);
 
-    private CacheConfig cacheConfig;
-    public CacheContext cacheContext;
+    private SourceCacheConfig sourceCacheConfig;
+    public SourceCacheContext sourceCacheContext;
     public Config config;
 
-    public CacheFilterTool cacheFilterTool;
+    public SourceCacheFilterTool sourceCacheFilterTool;
 
-    public void init(CacheConfig cacheConfig, CacheContext cacheContext) throws Exception {
-        this.cacheConfig = cacheConfig;
-        this.cacheContext = cacheContext;
-        this.config = this.cacheContext.getConfig();
+    public void init(SourceCacheConfig sourceCacheConfig, SourceCacheContext sourceCacheContext) throws Exception {
+        this.sourceCacheConfig = sourceCacheConfig;
+        this.sourceCacheContext = sourceCacheContext;
+        this.config = this.sourceCacheContext.getConfig();
 
-        cacheFilterTool = new CacheFilterTool(cacheContext);
+        sourceCacheFilterTool = new SourceCacheFilterTool(sourceCacheContext);
 
         init();
     }
@@ -51,24 +51,7 @@ public abstract class Cache {
     public abstract Date getModifyTime(Source source, String filter) throws Exception;
     public abstract Date getModifyTime(Source source) throws Exception;
 
-    public abstract Collection search(EntryDefinition entry, Collection primaryKeys) throws Exception;
-
-    public abstract void insert(EntryDefinition entry, AttributeValues values, Date date) throws Exception;
-    public abstract void insert(EntryDefinition entry, Row row, Date date) throws Exception;
-    public abstract void delete(EntryDefinition entry, AttributeValues values, Date date) throws Exception;
-    public abstract void delete(EntryDefinition entry, String filter, Date date) throws Exception;
-
-    public abstract Date getModifyTime(EntryDefinition entry, String filter) throws Exception;
-    public abstract Date getModifyTime(EntryDefinition entry) throws Exception;
-
-    public abstract void setModifyTime(EntryDefinition entry, Date date) throws Exception;
-
     public abstract Collection joinSources(EntryDefinition entry, Graph graph, Map sourceGraph, Source primarySource, String sqlFilter) throws Exception;
-
-    public abstract Collection searchPrimaryKeys(
-            EntryDefinition entry,
-            Filter filter)
-            throws Exception;
 
     public void postCacheEvent(SourceDefinition sourceConfig, CacheEvent event)
             throws Exception {
@@ -99,23 +82,23 @@ public abstract class Cache {
             Date date)
             throws Exception;
 
-    public abstract CacheFilterTool getCacheFilterTool();
+    public abstract SourceCacheFilterTool getCacheFilterTool();
 
-    public abstract void setCacheFilterTool(CacheFilterTool cacheFilterTool);
+    public abstract void setCacheFilterTool(SourceCacheFilterTool sourceCacheFilterTool);
 
-    public CacheConfig getCacheConfig() {
-        return cacheConfig;
+    public SourceCacheConfig getCacheConfig() {
+        return sourceCacheConfig;
     }
 
-    public void setCacheConfig(CacheConfig cacheConfig) {
-        this.cacheConfig = cacheConfig;
+    public void setCacheConfig(SourceCacheConfig sourceCacheConfig) {
+        this.sourceCacheConfig = sourceCacheConfig;
     }
 
     public Collection getParameterNames() {
-        return cacheConfig.getParameterNames();
+        return sourceCacheConfig.getParameterNames();
     }
 
     public String getParameter(String name) {
-        return cacheConfig.getParameter(name);
+        return sourceCacheConfig.getParameter(name);
     }
 }

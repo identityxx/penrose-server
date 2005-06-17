@@ -292,8 +292,8 @@ public class DefaultModifyHandler implements ModifyHandler {
             if (result != LDAPException.SUCCESS) return result;
         }
 
-        engine.getCache().delete(entry, oldValues, date);
-        engine.getCache().insert(entry, newValues, date);
+        engine.getEntryCache().delete(entry, oldValues, date);
+        //engine.getEntryCache().insert(entry, newValues, date);
 
         return LDAPException.SUCCESS;
     }
@@ -357,7 +357,7 @@ public class DefaultModifyHandler implements ModifyHandler {
                 if (rc != LDAPException.SUCCESS) return rc;
 
                 // Add row to source table in the cache
-                engine.getCache().insert(source, newEntry, date);
+                //engine.getSourceCache().insert(source, newEntry, date);
             }
 
             // Remove rows
@@ -374,7 +374,7 @@ public class DefaultModifyHandler implements ModifyHandler {
                     return rc;
 
                 // Delete row from source table in the cache
-                engine.getCache().delete(source, oldEntry, date);
+                engine.getSourceCache().delete(source, oldEntry, date);
             }
 
             // Replace rows
@@ -392,8 +392,8 @@ public class DefaultModifyHandler implements ModifyHandler {
                 if (rc != LDAPException.SUCCESS) return rc;
 
                 // Modify row from source table in the cache
-                engine.getCache().delete(source, oldEntry, date);
-                engine.getCache().insert(source, newEntry, date);
+                engine.getSourceCache().delete(source, oldEntry, date);
+                //engine.getSourceCache().insert(source, newEntry, date);
             }
 
         } finally {

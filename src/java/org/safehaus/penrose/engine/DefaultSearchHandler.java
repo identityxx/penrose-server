@@ -21,7 +21,7 @@ import org.safehaus.penrose.SearchResults;
 import org.safehaus.penrose.PenroseConnection;
 import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.thread.MRSWLock;
-import org.safehaus.penrose.cache.CacheConfig;
+import org.safehaus.penrose.cache.SourceCacheConfig;
 import org.apache.log4j.Logger;
 
 /**
@@ -358,7 +358,7 @@ public class DefaultSearchHandler implements SearchHandler {
             log.debug("Keys: "+keys);
 
             // find the primary keys of entries that has been loaded
-            Collection pks = engine.getCache().searchPrimaryKeys(entryDefinition, filter);
+            Collection pks = engine.getEntryCache().searchPrimaryKeys(entryDefinition, filter);
             log.debug("Loaded Keys: "+pks);
 
             if (!keys.isEmpty() && pks.isEmpty()) { // never been loaded -> load everything at once
@@ -409,7 +409,7 @@ public class DefaultSearchHandler implements SearchHandler {
 
         Calendar calendar = Calendar.getInstance();
 
-        String s = engine.getCache().getParameter(CacheConfig.CACHE_EXPIRATION);
+        String s = engine.getSourceCache().getParameter(SourceCacheConfig.CACHE_EXPIRATION);
         int cacheExpiration = s == null ? 0 : Integer.parseInt(s);
         log.debug("Expiration: "+cacheExpiration);
         if (cacheExpiration < 0) cacheExpiration = Integer.MAX_VALUE;
@@ -417,10 +417,10 @@ public class DefaultSearchHandler implements SearchHandler {
         Calendar c = (Calendar) calendar.clone();
         c.add(Calendar.MINUTE, -cacheExpiration);
 
-        String sqlFilter = engine.getCache().getCacheFilterTool().toSQLFilter(entryDefinition, filter);
+        String sqlFilter = engine.getSourceCache().getCacheFilterTool().toSQLFilter(entryDefinition, filter);
         log.debug("Checking cache with sql filter: "+sqlFilter);
 
-        Date modifyTime = engine.getCache().getModifyTime(entryDefinition, sqlFilter);
+        Date modifyTime = engine.getEntryCache().getModifyTime(entryDefinition, sqlFilter);
 
         boolean expired = modifyTime == null || modifyTime.before(c.getTime());
 
@@ -431,7 +431,7 @@ public class DefaultSearchHandler implements SearchHandler {
             joinSources(entryDefinition, graph, sourceGraph, primarySource, filter, calendar);
         }
 
-        Collection pks = engine.getCache().searchPrimaryKeys(entryDefinition, filter);
+        Collection pks = engine.getEntryCache().searchPrimaryKeys(entryDefinition, filter);
         log.debug("Primary keys: " + pks);
 
         return getEntries(entryDefinition, pks, filter, attributeNames);
@@ -452,7 +452,7 @@ public class DefaultSearchHandler implements SearchHandler {
         SearchResults results = new SearchResults();
 
         try {
-            Collection translatedRows = engine.getCache().search(entry, keys);
+            Collection translatedRows = engine.getEntryCache().search(entry, keys);
 
             log.debug("Merging " + translatedRows.size() + " rows:");
             Map entries = engineContext.getTransformEngine().merge(entry, translatedRows);
@@ -670,7 +670,7 @@ public class DefaultSearchHandler implements SearchHandler {
 
         log.debug("Converting "+filter+" for " + sourceName+" with "+row);
         Source source = entryDefinition.getSource(sourceName);
-        Filter sqlFilter = engine.getCache().getCacheFilterTool().toSourceFilter(row, entryDefinition, source, filter);
+        Filter sqlFilter = engine.getSourceCache().getCacheFilterTool().toSourceFilter(row, entryDefinition, source, filter);
 
         Object value = row.get(exp);
         log.debug("Adding "+exp+"="+ value);
@@ -792,7 +792,7 @@ public class DefaultSearchHandler implements SearchHandler {
             String primarySourceName = primarySource.getName();
             log.debug("Primary source: "+primarySourceName);
 
-            Filter f = engine.getCache().getCacheFilterTool().toSourceFilter(null, entryDefinition, primarySource, filter);
+            Filter f = engine.getSourceCache().getCacheFilterTool().toSourceFilter(null, entryDefinition, primarySource, filter);
 
             log.debug("Searching source "+primarySourceName+" for "+f);
             SearchResults results = primarySource.search(f);
@@ -831,7 +831,7 @@ public class DefaultSearchHandler implements SearchHandler {
                 if (!valid) continue;
                 keys.add(pk);
             }
-            
+
             return keys;
         }
 /*
@@ -844,7 +844,7 @@ public class DefaultSearchHandler implements SearchHandler {
 
             String sourceName = source.getName();
 
-            Filter sqlFilter = engine.getCache().getCacheFilterTool().toSourceFilter(initialRow, entryDefinition, source, filter);
+            Filter sqlFilter = engine.getSourceCache().getCacheFilterTool().toSourceFilter(initialRow, entryDefinition, source, filter);
             filters.put(sourceName, sqlFilter);
 
             log.debug("Filter for " + sourceName+": "+sqlFilter);
@@ -938,7 +938,7 @@ public class DefaultSearchHandler implements SearchHandler {
                 primaryFilter = createFilter(pks);
 
             } else {
-                primaryFilter = engine.getCache().getCacheFilterTool().toSourceFilter(initialRow, entryDefinition, primarySource, filter);
+                primaryFilter = engine.getSourceCache().getCacheFilterTool().toSourceFilter(initialRow, entryDefinition, primarySource, filter);
             }
 
             log.debug("Searching source "+primarySourceName+" for "+primaryFilter);
@@ -1038,9 +1038,9 @@ public class DefaultSearchHandler implements SearchHandler {
             Calendar calendar
             ) throws Exception {
 
-        String entryFilter = engine.getCache().getCacheFilterTool().toSQLFilter(entryDefinition, filter);
-        Filter newFilter = engine.getCache().getCacheFilterTool().toSourceFilter(null, entryDefinition, primarySource, filter);
-        String sqlFilter = engine.getCache().getCacheFilterTool().toSQLFilter(entryDefinition, newFilter);
+        String entryFilter = engine.getSourceCache().getCacheFilterTool().toSQLFilter(entryDefinition, filter);
+        Filter newFilter = engine.getSourceCache().getCacheFilterTool().toSourceFilter(null, entryDefinition, primarySource, filter);
+        String sqlFilter = engine.getSourceCache().getCacheFilterTool().toSQLFilter(entryDefinition, newFilter);
 
         log.debug("--------------------------------------------------------------------------------------");
         log.debug("Joining sources with filter "+filter);
@@ -1052,10 +1052,10 @@ public class DefaultSearchHandler implements SearchHandler {
 
         try {
 
-            Collection rows = engine.getCache().joinSources(entryDefinition, graph, sourceGraph, primarySource, sqlFilter);
+            Collection rows = engine.getSourceCache().joinSources(entryDefinition, graph, sourceGraph, primarySource, sqlFilter);
             log.debug("Joined " + rows.size() + " rows.");
 
-            engine.getCache().delete(entryDefinition, entryFilter, calendar.getTime());
+            engine.getEntryCache().delete(entryDefinition, entryFilter, calendar.getTime());
 
             for (Iterator i = rows.iterator(); i.hasNext();) {
                 Row row = (Row)i.next();
@@ -1065,7 +1065,7 @@ public class DefaultSearchHandler implements SearchHandler {
                 boolean validPK = engineContext.getTransformEngine().translate(entryDefinition, row, pk, translatedRow);
                 if (!validPK) continue;
 
-                engine.getCache().insert(entryDefinition, translatedRow, calendar.getTime());
+                engine.getEntryCache().insert(entryDefinition, translatedRow, calendar.getTime());
             }
 
             //r1.copy(r2, newFilter);
@@ -1137,7 +1137,7 @@ public class DefaultSearchHandler implements SearchHandler {
             }
 
             //if (f == null) {
-                f = engine.getCache().getCacheFilterTool().toSourceFilter(null, entry, source, filter);
+                f = engine.getSourceCache().getCacheFilterTool().toSourceFilter(null, entry, source, filter);
             //}
             log.debug("with filter " + f);
 
@@ -1146,7 +1146,7 @@ public class DefaultSearchHandler implements SearchHandler {
 
             try {
 
-                SearchResults results = engine.getCache().loadSource(entry, source, f, calendar.getTime());
+                SearchResults results = engine.getSourceCache().loadSource(entry, source, f, calendar.getTime());
 
                 // update key values
                 Set keys = new HashSet();
