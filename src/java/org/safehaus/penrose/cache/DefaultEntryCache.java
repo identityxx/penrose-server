@@ -114,66 +114,79 @@ public class DefaultEntryCache implements EntryCache {
 
             resultExpirationHome.insert(entry);
 
-            String t1 = getTableName(entry, false);
-            ResultHome r1 = new ResultHome(ds, entry, t1);
-            resultTables.put(t1, r1);
-
-            String t2 = getTableName(entry, true);
-            ResultHome r2 = new ResultHome(ds, entry, t2);
-            resultTables.put(t2, r2);
+            String tableName = getTableName(entry);
+            ResultHome resultHome = new ResultHome(ds, entry, tableName);
+            resultTables.put(tableName, resultHome);
         }
     }
 
-    public Collection search(EntryDefinition entry, Collection primaryKeys) throws Exception {
-        String t1 = getTableName(entry, false);
-        ResultHome r1 = (ResultHome)resultTables.get(t1);
-        return r1.search(primaryKeys);
+    public Entry get(EntryDefinition entry, Row pk) throws Exception {
+        List pks = new ArrayList();
+        pks.add(pk);
+
+        Map entries = get(entry, pks);
+
+        return (Entry)entries.get(pk);
     }
 
-    public void insert(EntryDefinition entry, AttributeValues values, Date date) throws Exception {
-        Collection rows = cacheContext.getTransformEngine().convert(values);
-
-        for (Iterator i=rows.iterator(); i.hasNext(); ) {
-            Row row = (Row)i.next();
-            insert(entry, row, date);
-        }
-    }
-
-    public void insert(EntryDefinition entry, Row row, Date date) throws Exception {
-        String tableName = getTableName(entry, false);
+    public Map get(EntryDefinition entry, Collection primaryKeys) throws Exception {
+        String tableName = getTableName(entry);
         ResultHome resultHome = (ResultHome)resultTables.get(tableName);
-        resultHome.insert(row, date);
+        Collection rows = resultHome.search(primaryKeys);
+
+        log.debug("Merging " + rows.size() + " rows:");
+        Map map = cacheContext.getTransformEngine().merge(entry, rows);
+
+        Map entries = new HashMap();
+        for (Iterator i = map.keySet().iterator(); i.hasNext();) {
+            Map pk = (Map)i.next();
+            AttributeValues values = (AttributeValues)map.get(pk);
+            log.debug(" - " + values);
+
+            Entry sr = new Entry(entry, values);
+            entries.put(pk, sr);
+        }
+
+        return entries;
     }
 
-    public void delete(EntryDefinition entry, AttributeValues values, Date date) throws Exception {
+    public void put(EntryDefinition entry, AttributeValues values, Date date) throws Exception {
         Collection rows = cacheContext.getTransformEngine().convert(values);
+
+        String tableName = getTableName(entry);
+        ResultHome resultHome = (ResultHome)resultTables.get(tableName);
 
         for (Iterator i=rows.iterator(); i.hasNext(); ) {
             Row row = (Row)i.next();
-            String tableName = getTableName(entry, false);
-            ResultHome resultHome = (ResultHome)resultTables.get(tableName);
+            resultHome.insert(row, date);
+        }
+    }
+
+    public void remove(EntryDefinition entry, AttributeValues values, Date date) throws Exception {
+        Collection rows = cacheContext.getTransformEngine().convert(values);
+
+        String tableName = getTableName(entry);
+        ResultHome resultHome = (ResultHome)resultTables.get(tableName);
+
+        for (Iterator i=rows.iterator(); i.hasNext(); ) {
+            Row row = (Row)i.next();
             resultHome.delete(row, date);
         }
     }
 
-    public void delete(EntryDefinition entry, String filter, Date date) throws Exception {
-        String tableName = getTableName(entry, false);
+    public Date getModifyTime(EntryDefinition entryDefinition, Collection pks) throws Exception {
+        String tableName = getTableName(entryDefinition);
         ResultHome resultHome = (ResultHome)resultTables.get(tableName);
-        resultHome.delete(filter, date);
+        return resultHome.getModifyTime(pks);
     }
 
-    public Date getModifyTime(EntryDefinition entry, String filter) throws Exception {
-        String t1 = getTableName(entry, false);
-        ResultHome r1 = (ResultHome)resultTables.get(t1);
-        return r1.getModifyTime(filter);
-    }
+    public Date getModifyTime(EntryDefinition entryDefinition, Row pk) throws Exception {
+        List pks = new ArrayList();
+        pks.add(pk);
 
-    public Date getModifyTime(EntryDefinition entry) throws Exception {
-        return resultExpirationHome.getModifyTime(entry);
-    }
+        return getModifyTime(entryDefinition, pks);
 
-    public void setModifyTime(EntryDefinition entry, Date date) throws Exception {
-        resultExpirationHome.setModifyTime(entry, date);
+        //return resultExpirationHome.getModifyTime(entry);
     }
 
     /**
@@ -210,14 +223,14 @@ public class DefaultEntryCache implements EntryCache {
      * @return primary keys
      * @throws Exception
      */
-    public Collection searchPrimaryKeys(
+    public Collection findPrimaryKeys(
             EntryDefinition entry,
             Filter filter)
             throws Exception {
 
         String sqlFilter = cacheFilterTool.toSQLFilter(entry, filter);
 
-        String tableName = getTableName(entry, false);
+        String tableName = getTableName(entry);
         String attributeNames = getPkAttributeNames(entry);
 
         String sql = "select distinct " + attributeNames + " from " + tableName;
@@ -296,16 +309,15 @@ public class DefaultEntryCache implements EntryCache {
      * Get table name for a given dn (distinguished name) by replacing "=, ." with "_".
      *
      * @param entry entry
-     * @param temporary whether we are operating on temporary table
      * @return table name
      */
-    public String getTableName(EntryDefinition entry, boolean temporary) {
+    public String getTableName(EntryDefinition entry) {
         String dn = entry.getDn();
 		dn = dn.replace('=', '_');
 		dn = dn.replace(',', '_');
 		dn = dn.replace(' ', '_');
 		dn = dn.replace('.', '_');
-		return temporary ? dn + "__tmp" : dn;
+		return dn;
 	}
 
     public EntryCacheFilterTool getCacheFilterTool() {

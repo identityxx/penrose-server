@@ -56,10 +56,12 @@ public class GraphIterator {
             }
 
             Object object = graph.getEdge(n1, n2);
-            b = visitor.visitEdge(n1, n2, object, parameter);
+            b = visitor.preVisitEdge(n1, n2, object, parameter);
             if (!b) continue;
 
             traverse(n2, parameter, visitedNodes, visitedEdges);
+
+            visitor.postVisitEdge(n1, n2, object, parameter);
         }
 
         visitor.postVisitNode(node, parameter);

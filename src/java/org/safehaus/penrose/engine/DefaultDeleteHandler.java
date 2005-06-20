@@ -49,7 +49,7 @@ public class DefaultDeleteHandler implements DeleteHandler {
         	// Virtual Entry
 	        Entry sr = null;
 	        try {
-                sr = ((DefaultSearchHandler)engine.getSearchHandler()).getVirtualEntry(connection, ndn, new ArrayList());
+                sr = ((DefaultSearchHandler)engine.getSearchHandler()).getEntry(connection, ndn, new ArrayList());
 	        } catch (Exception e) {
 	            // ignore
 	        }
@@ -102,7 +102,7 @@ public class DefaultDeleteHandler implements DeleteHandler {
             if (rc != LDAPException.SUCCESS) return rc;
         }
 
-        engine.getEntryCache().delete(entry, values, date);
+        engine.getEntryCache().remove(entry, values, date);
 
         return LDAPException.SUCCESS;
     }

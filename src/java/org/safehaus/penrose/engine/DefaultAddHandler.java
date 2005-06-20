@@ -172,7 +172,7 @@ public class DefaultAddHandler implements AddHandler {
             if (rc != LDAPException.SUCCESS) return rc;
         }
 
-        engine.getEntryCache().insert(entry, values, date);
+        engine.getEntryCache().put(entry, values, date);
 
         return LDAPException.SUCCESS;
     }

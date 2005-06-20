@@ -48,7 +48,7 @@ public class DefaultModifyHandler implements ModifyHandler {
 
 		Entry sr;
 		try {
-			sr = ((DefaultSearchHandler)engine.getSearchHandler()).getVirtualEntry(connection, ndn, new ArrayList());
+			sr = ((DefaultSearchHandler)engine.getSearchHandler()).getEntry(connection, ndn, new ArrayList());
 		} catch (LDAPException e) {
 			return e.getResultCode();
 		}
@@ -292,7 +292,7 @@ public class DefaultModifyHandler implements ModifyHandler {
             if (result != LDAPException.SUCCESS) return result;
         }
 
-        engine.getEntryCache().delete(entry, oldValues, date);
+        engine.getEntryCache().remove(entry, oldValues, date);
         //engine.getEntryCache().insert(entry, newValues, date);
 
         return LDAPException.SUCCESS;

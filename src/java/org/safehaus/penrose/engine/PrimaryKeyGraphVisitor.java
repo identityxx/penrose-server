@@ -37,9 +37,9 @@ public class PrimaryKeyGraphVisitor extends GraphVisitor {
         Source source = (Source)node;
         System.out.println("Source "+source.getName());
 
-        Set rows = (Set)stack.peek();
+        Collection rows = (Collection)stack.peek();
 
-        Set newRows = new HashSet();
+        Collection newRows = new HashSet();
         stack.push(newRows);
 
         if (entryDefinition.getSource(source.getName()) == null) return true;
@@ -88,12 +88,12 @@ public class PrimaryKeyGraphVisitor extends GraphVisitor {
         stack.pop();
     }
 
-    public boolean visitEdge(Object node1, Object node2, Object object, Object parameter) throws Exception {
+    public boolean preVisitEdge(Object node1, Object node2, Object object, Object parameter) throws Exception {
         Source source = (Source)node2;
         Relationship relationship = (Relationship)object;
 
-        Set newRows = (Set)stack.pop();
-        Set rows = (Set)stack.peek();
+        Collection newRows = (Collection)stack.pop();
+        Collection rows = (Collection)stack.peek();
 
         String lhs = relationship.getLhs();
         String rhs = relationship.getRhs();

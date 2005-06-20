@@ -1,8 +1,6 @@
 package org.safehaus.penrose.mapping;
 
-import java.util.TreeMap;
-import java.util.Map;
-import java.util.Collection;
+import java.util.*;
 
 /**
  * This class holds entry's attribute values. Each attribute value is a collection.
@@ -20,6 +18,20 @@ public class AttributeValues {
         values.putAll(attributes.getValues());
     }
 
+    public void add(Row row) {
+        for (Iterator i = row.getNames().iterator(); i.hasNext(); ) {
+            String name = (String)i.next();
+            Object value = row.get(name);
+
+            Collection c = get(name);
+            if (c == null) {
+                c = new HashSet();
+                set(name, c);
+            }
+            c.add(value);
+        }
+    }
+    
     public void set(String name, Collection values) {
         this.values.put(name, values);
     }

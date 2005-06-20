@@ -136,7 +136,7 @@ public class DefaultEngine extends Engine {
             if (entry.isDynamic() && dirty) {
                 String searchDn = dn.replace("...", "*");
                 log.debug("Loading results table for dn: " + searchDn);
-                Entry sr = penrose.getSearchHandler().searchObject(null, searchDn, new ArrayList());
+                Entry sr = penrose.getSearchHandler().loadObject(null, searchDn, new ArrayList());
             }
         }
     }

@@ -51,7 +51,7 @@ public class JoinGraphVisitor extends GraphVisitor {
         return true;
     }
 
-    public boolean visitEdge(Object node1, Object node2, Object object, Object parameter) throws Exception {
+    public boolean preVisitEdge(Object node1, Object node2, Object object, Object parameter) throws Exception {
         Source source = (Source)node2;
 
         if (entryDefinition.getSource(source.getName()) == null) return false;

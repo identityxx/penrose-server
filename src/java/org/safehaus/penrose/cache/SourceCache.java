@@ -51,7 +51,7 @@ public abstract class SourceCache {
     public abstract Date getModifyTime(Source source, String filter) throws Exception;
     public abstract Date getModifyTime(Source source) throws Exception;
 
-    public abstract Collection joinSources(EntryDefinition entry, Graph graph, Map sourceGraph, Source primarySource, String sqlFilter) throws Exception;
+    public abstract Collection joinSources(EntryDefinition entry, Graph graph, Source primarySource, String sqlFilter) throws Exception;
 
     public void postCacheEvent(SourceDefinition sourceConfig, CacheEvent event)
             throws Exception {

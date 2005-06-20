@@ -18,8 +18,12 @@ public class GraphVisitor {
         System.out.println("Post-visit Node "+node);
     }
 
-    public boolean visitEdge(Object node1, Object node2, Object object, Object parameter) throws Exception {
-        System.out.println("Visit Edge <"+node1+", "+node2+"> "+object);
+    public boolean preVisitEdge(Object node1, Object node2, Object edge, Object parameter) throws Exception {
+        System.out.println("Pre-visit Edge <"+node1+", "+node2+"> "+edge);
         return true;
+    }
+
+    public void postVisitEdge(Object node1, Object node2, Object edge, Object parameter) throws Exception {
+        System.out.println("Post-visit Edge <"+node1+", "+node2+"> "+edge);
     }
 }

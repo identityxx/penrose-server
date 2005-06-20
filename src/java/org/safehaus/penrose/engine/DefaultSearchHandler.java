@@ -63,7 +63,7 @@ public class DefaultSearchHandler implements SearchHandler {
 
 		Entry baseEntry;
 		try {
-			baseEntry = getVirtualEntry(connection, nbase, attributeNames);
+			baseEntry = getEntry(connection, nbase, attributeNames);
             
         } catch (LDAPException e) {
             log.debug(e.getMessage());
@@ -121,17 +121,28 @@ public class DefaultSearchHandler implements SearchHandler {
 	 * @return virtual entry
 	 * @throws Exception
 	 */
-	public Entry getVirtualEntry(
+	public Entry getEntry(
             PenroseConnection connection,
             String dn,
 			Collection attributeNames) throws Exception {
 
 		log.debug("----------------------------------------------------------------------------------");
-		log.debug("Searching entry: " + dn);
+		log.debug("Getting entry: " + dn);
+
+        // search the entry directly
+        EntryDefinition entry = config.getEntryDefinition(dn);
+
+        if (entry != null) {
+            log.debug("Found static entry: " + dn);
+
+            AttributeValues values = entry.getAttributeValues(engineContext.newInterpreter());
+            return new Entry(entry, values);
+        }
 
 		int i = dn.indexOf(",");
 		String rdn;
 		String parentDn;
+
 		if (i < 0) {
 			rdn = dn;
 			parentDn = null;
@@ -140,36 +151,26 @@ public class DefaultSearchHandler implements SearchHandler {
 			parentDn = dn.substring(i + 1);
 		}
 
-		String filter = "(" + rdn + ")";
-
-		Filter f = engineContext.getFilterTool().parseFilter(filter);
-		log.debug("Parsed filter: " + f);
-
-
-		EntryDefinition entry = config.getEntryDefinition(dn);
-
-		if (entry != null) {
-			log.debug("Found static entry: " + dn);
-
-			AttributeValues values = entry.getAttributeValues(engineContext.newInterpreter());
-			return new Entry(entry, values);
-		}
-
+        // search the parent entry
 		EntryDefinition parentEntry = config.getEntryDefinition(parentDn);
+
 		if (parentEntry == null) {
 			log.debug("Parent not found: " + dn);
 
 			throw new LDAPException("Can't find " + dn + ".",
-					LDAPException.NO_SUCH_OBJECT, "Can't find virtual entries "
+					LDAPException.NO_SUCH_OBJECT, "Can't find virtual entry "
 							+ dn + ".");
 		}
+
+		log.debug("Found parent entry: " + parentDn);
+		Collection children = parentEntry.getChildren();
+
+        Filter filter = engineContext.getFilterTool().parseFilter("(" + rdn + ")");
+        log.debug("Parsed filter: " + filter);
 
         int j = rdn.indexOf("=");
         String rdnAttribute = rdn.substring(0, j);
         String rdnValue = rdn.substring(j + 1);
-
-		log.debug("Found parent entry: " + parentDn);
-		Collection children = parentEntry.getChildren();
 
         // Find in each dynamic children
 		for (Iterator iterator = children.iterator(); iterator.hasNext(); ) {
@@ -179,25 +180,25 @@ public class DefaultSearchHandler implements SearchHandler {
             log.debug("Checking child: "+childRdn);
 
             int k = childRdn.indexOf("=");
-
             String childRdnAttribute = childRdn.substring(0, k);
             String childRdnValue = childRdn.substring(k+1);
 
+            // the rdn attribute types must match
             if (!rdnAttribute.equals(childRdnAttribute)) continue;
 
 			if (child.isDynamic()) {
 
-                // the rdn attribute types must match
-
-                log.debug("Found dynamic entry: " + child.getDn());
+                log.debug("Found entry definition: " + child.getDn());
 
                 try {
-                    Entry sr = searchVirtualEntry(connection, child, rdn, f, attributeNames);
+                    Entry sr = searchVirtualEntry(connection, child, rdn);
+                    log.debug("Found virtual entry: " + sr.getDn());
+
                     return sr;
 
                 } catch (Exception e) {
                     e.printStackTrace(System.out);
-                    // not found, continue to next mappingEntry
+                    // not found, continue to next entry definition
                 }
 
             } else {
@@ -211,7 +212,7 @@ public class DefaultSearchHandler implements SearchHandler {
 		}
 
 		throw new LDAPException("Can't find " + dn + ".",
-				LDAPException.NO_SUCH_OBJECT, "Can't find virtual entries " + dn + ".");
+				LDAPException.NO_SUCH_OBJECT, "Can't find virtual entry " + dn + ".");
 	}
 
 	/**
@@ -238,18 +239,18 @@ public class DefaultSearchHandler implements SearchHandler {
 			EntryDefinition entryDefinition = (EntryDefinition) i.next();
 			if (entryDefinition.isDynamic()) continue;
 
-			log.debug("Real children: " + entryDefinition.getDn());
+			log.debug("Static children: " + entryDefinition.getDn());
 
 			AttributeValues values = entryDefinition.getAttributeValues(engineContext.newInterpreter());
-			Entry sr2 = new Entry(entryDefinition, values);
+			Entry sr = new Entry(entryDefinition, values);
 
-			if (engineContext.getFilterTool().isValidEntry(sr2, filter)) {
-                LDAPEntry en2 = sr2.toLDAPEntry();
-				results.add(Entry.filterAttributes(en2, attributeNames));
+			if (engineContext.getFilterTool().isValidEntry(sr, filter)) {
+                LDAPEntry en = sr.toLDAPEntry();
+				results.add(Entry.filterAttributes(en, attributeNames));
 			}
 
 			if (scope == 2) {
-				searchChildren(connection, sr2, scope, filter, attributeNames, results);
+				searchChildren(connection, sr, scope, filter, attributeNames, results);
 			}
 		}
 
@@ -259,12 +260,15 @@ public class DefaultSearchHandler implements SearchHandler {
 
 			log.debug("Virtual children: " + entryDefinition.getDn());
 
-			SearchResults results2 = search(parent, entryDefinition, filter, attributeNames);
+			SearchResults results2 = searchVirtualEntries(parent, entryDefinition, filter);
 
             for (Iterator j=results2.iterator(); j.hasNext(); ) {
                 Entry sr = (Entry)j.next();
-                LDAPEntry en = sr.toLDAPEntry();
-                results.add(Entry.filterAttributes(en, attributeNames));
+
+                if (engineContext.getFilterTool().isValidEntry(sr, filter)) {
+                    LDAPEntry en = sr.toLDAPEntry();
+                    results.add(Entry.filterAttributes(en, attributeNames));
+                }
             }
 		}
 	}
@@ -280,13 +284,22 @@ public class DefaultSearchHandler implements SearchHandler {
 	public Entry searchVirtualEntry(
             PenroseConnection connection,
 			EntryDefinition entryDefinition,
-            String rdn,
-            Filter filter,
-            Collection attributeNames)
+            String rdn)
 			throws Exception {
 
-        // find entry using rdn as filter
-		SearchResults results = searchObject(entryDefinition, filter, attributeNames);
+        int i = rdn.indexOf("=");
+        String attr = rdn.substring(0, i);
+        String value = rdn.substring(i + 1);
+
+        Row pk = new Row();
+        pk.set(attr, value);
+
+        List pks = new ArrayList();
+        pks.add(pk);
+
+        // find entry using rdn as primary key
+        loadObject(entryDefinition, pk);
+        SearchResults results = getEntries(entryDefinition, pks);
 
         if (results.size() == 0) return null;
 
@@ -308,8 +321,8 @@ public class DefaultSearchHandler implements SearchHandler {
             // convert to lower cases
             List v2 = new ArrayList();
             for (Iterator k=v.iterator(); k.hasNext(); ) {
-                String value = (String)k.next();
-                v2.add(value.toLowerCase());
+                String val = (String)k.next();
+                v2.add(val.toLowerCase());
             }
 
             log.debug("Checking "+rdnName+"="+rdnValue+" with "+v2);
@@ -321,91 +334,60 @@ public class DefaultSearchHandler implements SearchHandler {
 		return entry;
 	}
 
-    public SearchResults search(
+    public SearchResults searchVirtualEntries(
             Entry parent,
             EntryDefinition entryDefinition,
-            Filter filter,
-            Collection attributeNames
+            Filter filter
             ) throws Exception {
-/*
-        if (parent.isDynamic()) {
-            String rdn = parent.getRdn();
-            int index = rdn.indexOf("=");
-            String rdnAttribute = rdn.substring(0, index);
-            String rdnValue = rdn.substring(index+1);
 
-            AndFilter andFilter = new AndFilter();
-            andFilter.addFilterList(new SimpleFilter(rdnAttribute, "=", rdnValue));
-            andFilter.addFilterList(filter);
-
-            filter = andFilter;
-        }
-*/
-        Graph graph = new Graph();
-        Map sourceGraph = createGraph(entryDefinition, graph);
+        Graph graph = createGraph(entryDefinition);
         Source primarySource = getPrimarySource(entryDefinition);;
 
         log.debug("--------------------------------------------------------------------------------------");
         log.debug("Searching for entry "+entryDefinition.getDn()+" with filter "+filter);
 
-        SearchResults results = new SearchResults();
-
         try {
             Calendar calendar = Calendar.getInstance();
 
             // find the primary keys of the entries to be loaded
-            Collection keys = getPrimaryKeys(parent, entryDefinition, graph, sourceGraph, primarySource, filter, calendar);
-            log.debug("Keys: "+keys);
+            Collection pks = getPrimaryKeys(parent, entryDefinition, graph, primarySource, filter, calendar);
+            log.debug("Keys: "+pks);
 
             // find the primary keys of entries that has been loaded
-            Collection pks = engine.getEntryCache().searchPrimaryKeys(entryDefinition, filter);
-            log.debug("Loaded Keys: "+pks);
+            Collection loadedPks = engine.getEntryCache().findPrimaryKeys(entryDefinition, filter);
+            log.debug("Loaded Keys: "+loadedPks);
 
-            if (!keys.isEmpty() && pks.isEmpty()) { // never been loaded -> load everything at once
+            if (!pks.isEmpty() && loadedPks.isEmpty()) { // never been loaded -> load everything at once
 
-                Filter f = createFilter(keys);
-                log.debug("Loading all keys with filter "+f);
-
-                loadSources(entryDefinition, f, calendar);
-                joinSources(entryDefinition, graph, sourceGraph, primarySource, f, calendar);
+                Filter f = createFilter(pks);
+                loadSources(entryDefinition, graph, primarySource, pks, f, calendar);
+                joinSources(entryDefinition, graph, primarySource, f, calendar);
 
             } else { // some has been loaded -> load each entry individually
 
-                for (Iterator i=keys.iterator(); i.hasNext(); ) {
+                for (Iterator i=pks.iterator(); i.hasNext(); ) {
                     Row pk = (Row)i.next();
-                    if (pks.contains(pk)) continue;
+                    if (loadedPks.contains(pk)) continue;
 
-                    log.debug("Loading key: "+pk);
-
-                    Filter f = createFilter(pk);
-                    SearchResults sr = searchObject(entryDefinition, f, attributeNames);
-
-                    for (Iterator j=sr.iterator(); j.hasNext(); ) {
-                        results.add(j.next());
-                    }
+                    loadObject(entryDefinition, pk);
                 }
-
             }
 
-            return getEntries(entryDefinition, keys, filter, attributeNames);
+            return getEntries(entryDefinition, pks);
 
         } finally {
-            results.close();
         }
     }
 
-    public SearchResults searchObject(
+    public void loadObject(
             EntryDefinition entryDefinition,
-            Filter filter,
-            Collection attributeNames
-            ) throws Exception {
-
-        Graph graph = new Graph();
-        Map sourceGraph = createGraph(entryDefinition, graph);
-        Source primarySource = getPrimarySource(entryDefinition);;
+            Row pk) throws Exception {
 
         log.debug("--------------------------------------------------------------------------------------");
-        log.debug("Searching entry "+entryDefinition.getDn()+" with filter "+filter);
+        log.debug("Loading entry "+entryDefinition.getDn()+" with pk "+pk);
+
+        Graph graph = createGraph(entryDefinition);
+        Source primarySource = getPrimarySource(entryDefinition);;
 
         Calendar calendar = Calendar.getInstance();
 
@@ -417,59 +399,41 @@ public class DefaultSearchHandler implements SearchHandler {
         Calendar c = (Calendar) calendar.clone();
         c.add(Calendar.MINUTE, -cacheExpiration);
 
-        String sqlFilter = engine.getSourceCache().getCacheFilterTool().toSQLFilter(entryDefinition, filter);
-        log.debug("Checking cache with sql filter: "+sqlFilter);
-
-        Date modifyTime = engine.getEntryCache().getModifyTime(entryDefinition, sqlFilter);
-
+        Date modifyTime = engine.getEntryCache().getModifyTime(entryDefinition, pk);
         boolean expired = modifyTime == null || modifyTime.before(c.getTime());
 
         log.debug("Comparing "+modifyTime+" with "+c.getTime()+" => "+(expired ? "expired" : "not expired"));
 
         if (expired) { // if cache expired => load this entry only
-            loadSources(entryDefinition, filter, calendar);
-            joinSources(entryDefinition, graph, sourceGraph, primarySource, filter, calendar);
+            Filter filter = createFilter(pk);
+            List pks = new ArrayList();
+            pks.add(pk);
+            loadSources(entryDefinition, graph, primarySource, pks, filter, calendar);
+            joinSources(entryDefinition, graph, primarySource, filter, calendar);
         }
-
-        Collection pks = engine.getEntryCache().searchPrimaryKeys(entryDefinition, filter);
-        log.debug("Primary keys: " + pks);
-
-        return getEntries(entryDefinition, pks, filter, attributeNames);
     }
 
     public SearchResults getEntries(
-            EntryDefinition entry,
-            Collection keys,
-            Filter filter,
-            Collection attributeNames) throws Exception {
+            EntryDefinition entryDefinition,
+            Collection keys) throws Exception {
 
         log.debug("--------------------------------------------------------------------------------------");
-        log.debug("Getting entries from cache for "+entry.getDn()+" with "+filter);
+        log.debug("Getting entries from cache with pks "+keys);
 
-        MRSWLock lock = engine.getLock(entry.getDn());
+        MRSWLock lock = engine.getLock(entryDefinition.getDn());
         lock.getReadLock(Penrose.WAIT_TIMEOUT);
 
         SearchResults results = new SearchResults();
 
         try {
-            Collection translatedRows = engine.getEntryCache().search(entry, keys);
-
-            log.debug("Merging " + translatedRows.size() + " rows:");
-            Map entries = engineContext.getTransformEngine().merge(entry, translatedRows);
+            Map entries = engine.getEntryCache().get(entryDefinition, keys);
 
             for (Iterator i = entries.values().iterator(); i.hasNext();) {
-                AttributeValues values = (AttributeValues) i.next();
-
-                Entry sr = new Entry(entry, values);
-
-                if (engineContext.getFilterTool().isValidEntry(sr, filter)) {
-                    log.debug(" - " + values+": ok");
-                    results.add(sr);
-
-                } else {
-                    log.debug(" - " + values+": not ok");
-                }
+                Entry sr = (Entry) i.next();
+                log.debug("Returning "+sr.getDn());
+                results.add(sr);
             }
+
         } finally {
             lock.releaseReadLock(Penrose.WAIT_TIMEOUT);
             results.close();
@@ -478,17 +442,15 @@ public class DefaultSearchHandler implements SearchHandler {
         return results;
     }
 
-    public Map createGraph(EntryDefinition entryDefinition, Graph graph) throws Exception {
+    public Graph createGraph(EntryDefinition entryDefinition) throws Exception {
 
-        Map sourceGraph = new HashMap();
+        Graph graph = new Graph();
 
         Collection sources = entryDefinition.getEffectiveSources();
         for (Iterator i=sources.iterator(); i.hasNext(); ) {
             Source source = (Source)i.next();
             graph.addNode(source);
         }
-
-        System.out.println("Graph: "+graph);
 
         Collection relationships = entryDefinition.getRelationships();
         for (Iterator i=relationships.iterator(); i.hasNext(); ) {
@@ -499,23 +461,9 @@ public class DefaultSearchHandler implements SearchHandler {
             int li = lhs.indexOf(".");
             String lsourceName = lhs.substring(0, li);
 
-            Collection lcol = (Collection)sourceGraph.get(lsourceName);
-            if (lcol == null) {
-                lcol = new ArrayList();
-                sourceGraph.put(lsourceName, lcol);
-            }
-            lcol.add(relationship);
-
             String rhs = relationship.getRhs();
             int ri = rhs.indexOf(".");
             String rsourceName = rhs.substring(0, ri);
-
-            Collection rcol = (Collection)sourceGraph.get(rsourceName);
-            if (rcol == null) {
-                rcol = new ArrayList();
-                sourceGraph.put(rsourceName, rcol);
-            }
-            rcol.add(relationship);
 
             Source lsource = entryDefinition.getEffectiveSource(lsourceName);
             Source rsource = entryDefinition.getEffectiveSource(rsourceName);
@@ -524,9 +472,9 @@ public class DefaultSearchHandler implements SearchHandler {
 
         System.out.println("Graph: "+graph);
 
-        return sourceGraph;
+        return graph;
     }
-
+/*
     public Set traverseGraph(
             EntryDefinition entryDefinition,
             String start, String dest,
@@ -699,7 +647,7 @@ public class DefaultSearchHandler implements SearchHandler {
         Set result = traverseGraph(entryDefinition, null, sourceName, sources, keys, sqlFilter, primarySource, visited);
         return result;
     }
-
+*/
     public String getStartingSourceName(EntryDefinition entryDefinition) {
 
         Collection relationships = entryDefinition.getRelationships();
@@ -748,7 +696,6 @@ public class DefaultSearchHandler implements SearchHandler {
             Entry parent,
             EntryDefinition entryDefinition,
             Graph graph,
-            Map sourceGraph,
             Source primarySource,
             Filter filter,
             Calendar calendar
@@ -1029,67 +976,55 @@ public class DefaultSearchHandler implements SearchHandler {
         return f;
     }
 
-    public void joinSources(
-            EntryDefinition entryDefinition,
-            Graph graph,
-            Map sourceGraph,
-            Source primarySource,
-            Filter filter,
-            Calendar calendar
-            ) throws Exception {
-
-        String entryFilter = engine.getSourceCache().getCacheFilterTool().toSQLFilter(entryDefinition, filter);
-        Filter newFilter = engine.getSourceCache().getCacheFilterTool().toSourceFilter(null, entryDefinition, primarySource, filter);
-        String sqlFilter = engine.getSourceCache().getCacheFilterTool().toSQLFilter(entryDefinition, newFilter);
-
-        log.debug("--------------------------------------------------------------------------------------");
-        log.debug("Joining sources with filter "+filter);
-        log.debug(" - new filter: "+newFilter);
-        log.debug(" - sql filter: "+sqlFilter);
-
-        MRSWLock lock = engine.getLock(entryDefinition.getDn());
-        lock.getWriteLock(Penrose.WAIT_TIMEOUT);
-
-        try {
-
-            Collection rows = engine.getSourceCache().joinSources(entryDefinition, graph, sourceGraph, primarySource, sqlFilter);
-            log.debug("Joined " + rows.size() + " rows.");
-
-            engine.getEntryCache().delete(entryDefinition, entryFilter, calendar.getTime());
-
-            for (Iterator i = rows.iterator(); i.hasNext();) {
-                Row row = (Row)i.next();
-                Map pk = new HashMap();
-                Row translatedRow = new Row();
-
-                boolean validPK = engineContext.getTransformEngine().translate(entryDefinition, row, pk, translatedRow);
-                if (!validPK) continue;
-
-                engine.getEntryCache().insert(entryDefinition, translatedRow, calendar.getTime());
-            }
-
-            //r1.copy(r2, newFilter);
-
-        } finally {
-            lock.releaseWriteLock(Penrose.WAIT_TIMEOUT);
-        }
-    }
-
     /**
      * Load sources of entries matching the filter.
      *
-     * @param entry
+     * @param entryDefinition
      * @param filter
      * @param calendar
      * @throws Exception
      */
     public void loadSources(
-            EntryDefinition entry,
+            EntryDefinition entryDefinition,
+            Graph graph,
+            Source primarySource,
+            Collection rdns,
             Filter filter,
             Calendar calendar
             ) throws Exception {
 
-        Collection relationships = entry.getRelationships();
+        log.debug("--------------------------------------------------------------------------------------");
+        log.debug("Loading all sources with filter " + filter);
+
+        // convert rdns into primary keys
+        Collection pks = new HashSet();
+        for (Iterator i=rdns.iterator(); i.hasNext(); ) {
+            Row rdn = (Row)i.next();
+
+            Interpreter interpreter = engineContext.newInterpreter();
+            interpreter.set(rdn);
+
+            Collection fields = primarySource.getPrimaryKeyFields();
+            Row pk = new Row();
+
+            for (Iterator j=fields.iterator(); j.hasNext(); ) {
+                Field field = (Field)j.next();
+                String name = field.getName();
+                String expression = field.getExpression();
+
+                Object value = interpreter.eval(expression);
+                pk.set(name, value);
+            }
+
+            pks.add(pk);
+        }
+
+        SourceLoaderGraphVisitor visitor = new SourceLoaderGraphVisitor(engine, entryDefinition, pks, calendar.getTime());
+        graph.traverse(visitor, primarySource);
+        //return visitor.getKeys();
+/*
+        // get the first relationship
+        Collection relationships = entryDefinition.getRelationships();
         Relationship relationship = null;
         if (relationships.size() > 0) {
             relationship = (Relationship)relationships.iterator().next();
@@ -1097,20 +1032,20 @@ public class DefaultSearchHandler implements SearchHandler {
 
         Set keyNames = new HashSet();
 
-        Collection rdnAttributes = entry.getRdnAttributes();
+        Collection rdnAttributes = entryDefinition.getRdnAttributes();
         for (Iterator i=rdnAttributes.iterator(); i.hasNext(); ) {
             AttributeDefinition attribute = (AttributeDefinition)i.next();
             keyNames.add(new String[] { attribute.getName(), attribute.getName() });
         }
 
-        Filter f = null;
-
-        for (Iterator i = entry.getSources().iterator(); i.hasNext();) {
+        for (Iterator i = entryDefinition.getSources().iterator(); i.hasNext();) {
             Source source = (Source) i.next();
             String sourceName = source.getName();
 
+            Filter f = engine.getSourceCache().getCacheFilterTool().toSourceFilter(null, entryDefinition, source, filter);
+
             log.debug("--------------------------------------------------------------------------------------");
-            log.debug("Loading source " + source.getName());
+            log.debug("Loading source " + source.getName() + " with filter " + f);
 
             if (relationship != null) {
 
@@ -1136,17 +1071,12 @@ public class DefaultSearchHandler implements SearchHandler {
                 keyNames.add(new String[] { keyName, nextKeyName });
             }
 
-            //if (f == null) {
-                f = engine.getSourceCache().getCacheFilterTool().toSourceFilter(null, entry, source, filter);
-            //}
-            log.debug("with filter " + f);
-
             MRSWLock lock = engine.getLock(source);
             lock.getWriteLock(Penrose.WAIT_TIMEOUT);
 
             try {
 
-                SearchResults results = engine.getSourceCache().loadSource(entry, source, f, calendar.getTime());
+                SearchResults results = engine.getSourceCache().loadSource(entryDefinition, source, f, calendar.getTime());
 
                 // update key values
                 Set keys = new HashSet();
@@ -1170,6 +1100,62 @@ public class DefaultSearchHandler implements SearchHandler {
                 lock.releaseWriteLock(Penrose.WAIT_TIMEOUT);
             }
        }
-
+*/
     }
+
+    public void joinSources(
+            EntryDefinition entryDefinition,
+            Graph graph,
+            Source primarySource,
+            Filter filter,
+            Calendar calendar
+            ) throws Exception {
+
+        Filter newFilter = engine.getSourceCache().getCacheFilterTool().toSourceFilter(null, entryDefinition, primarySource, filter);
+        String sqlFilter = engine.getSourceCache().getCacheFilterTool().toSQLFilter(entryDefinition, newFilter);
+
+        log.debug("--------------------------------------------------------------------------------------");
+        log.debug("Joining sources with filter "+filter);
+        log.debug(" - new filter: "+newFilter);
+        log.debug(" - sql filter: "+sqlFilter);
+
+        MRSWLock lock = engine.getLock(entryDefinition.getDn());
+        lock.getWriteLock(Penrose.WAIT_TIMEOUT);
+
+        try {
+
+            // join rows from sources
+            Collection rows = engine.getSourceCache().joinSources(entryDefinition, graph, primarySource, sqlFilter);
+            log.debug("Joined " + rows.size() + " rows.");
+
+            // merge rows into attribute values
+            Map entries = new HashMap();
+            for (Iterator i = rows.iterator(); i.hasNext();) {
+                Row row = (Row)i.next();
+                Map pk = new HashMap();
+                Row translatedRow = new Row();
+
+                boolean validPK = engineContext.getTransformEngine().translate(entryDefinition, row, pk, translatedRow);
+                if (!validPK) continue;
+
+                AttributeValues values = (AttributeValues)entries.get(pk);
+                if (values == null) {
+                    values = new AttributeValues();
+                    entries.put(pk, values);
+                }
+                values.add(translatedRow);
+            }
+
+            // update attribute values in entry cache
+            for (Iterator i=entries.values().iterator(); i.hasNext(); ) {
+                AttributeValues values = (AttributeValues)i.next();
+                engine.getEntryCache().remove(entryDefinition, values, calendar.getTime());
+                engine.getEntryCache().put(entryDefinition, values, calendar.getTime());
+            }
+
+        } finally {
+            lock.releaseWriteLock(Penrose.WAIT_TIMEOUT);
+        }
+    }
+
 }

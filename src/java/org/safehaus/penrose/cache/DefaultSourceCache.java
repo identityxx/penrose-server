@@ -107,13 +107,9 @@ public class DefaultSourceCache extends SourceCache {
                 // create source cache tables
                 sourceExpirationHome.insert(source);
 
-                String t1 = getTableName(source, false);
-                SourceHome s1 = new SourceHome(ds, source, t1);
-                sourceTables.put(t1, s1);
-
-                String t2 = getTableName(source, true);
-                SourceHome s2 = new SourceHome(ds, source, t2);
-                sourceTables.put(t2, s2);
+                String tableName = getTableName(source);
+                SourceHome sourceHome = new SourceHome(ds, source, tableName);
+                sourceTables.put(tableName, sourceHome);
 
                 // check global loading parameter
                 String s = getParameter(SourceCacheConfig.LOAD_ON_STARTUP);
@@ -210,7 +206,7 @@ public class DefaultSourceCache extends SourceCache {
 
         for (Iterator i=rows.iterator(); i.hasNext(); ) {
             Row row = (Row)i.next();
-            String tableName = getTableName(source, false);
+            String tableName = getTableName(source);
             SourceHome sourceHome = (SourceHome)sourceTables.get(tableName);
             sourceHome.insert(row, date);
         }
@@ -221,16 +217,16 @@ public class DefaultSourceCache extends SourceCache {
 
         for (Iterator i=rows.iterator(); i.hasNext(); ) {
             Row row = (Row)i.next();
-            String tableName = getTableName(source, false);
+            String tableName = getTableName(source);
             SourceHome sourceHome = (SourceHome)sourceTables.get(tableName);
             sourceHome.delete(row, date);
         }
     }
 
     public Date getModifyTime(Source source, String filter) throws Exception {
-        String t1 = getTableName(source, true);
-        SourceHome s1 = (SourceHome)sourceTables.get(t1);
-        return s1.getModifyTime(filter);
+        String tableName = getTableName(source);
+        SourceHome sourceHome = (SourceHome)sourceTables.get(tableName);
+        return sourceHome.getModifyTime(filter);
     }
 
     public Date getModifyTime(Source source) throws Exception {
@@ -268,7 +264,6 @@ public class DefaultSourceCache extends SourceCache {
     public Collection joinSources(
             EntryDefinition entryDefinition,
             Graph graph,
-            Map sourceGraph,
             Source primarySource,
             String sqlFilter) throws Exception {
 
@@ -348,11 +343,10 @@ public class DefaultSourceCache extends SourceCache {
      * Get the table name for a given source.
      *
      * @param source the source
-     * @param temporary whether we are operating on temporary table
      * @return table name
      */
-    public String getTableName(Source source, boolean temporary) {
-        return source.getSourceName() + (temporary ? "__tmp" : "");
+    public String getTableName(Source source) {
+        return source.getSourceName();
     }
 
     public SearchResults loadSource(
@@ -377,25 +371,29 @@ public class DefaultSourceCache extends SourceCache {
 
         String stringFilter = sourceCacheFilterTool.toSQLFilter(entry, sqlFilter);
 
-        String t1 = getTableName(source, true);
-        SourceHome s1 = (SourceHome)sourceTables.get(t1);
-        s1.delete(stringFilter, date);
+        delete(source, stringFilter, date);
 
         for (Iterator j = results.iterator(); j.hasNext();) {
             Row row = (Row) j.next();
-            s1.insert(row, date);
+            insert(source, row, date);
         }
-
-        String t2 = getTableName(source, false);
-        SourceHome s2 = (SourceHome)sourceTables.get(t2);
-        s2.delete(stringFilter, date);
-
-        s2.copy(s1, stringFilter);
 
         CacheEvent afterEvent = new CacheEvent(sourceCacheContext, sourceConfig, CacheEvent.AFTER_LOAD_ENTRIES);
         postCacheEvent(sourceConfig, afterEvent);
 
         return results;
+    }
+
+    public void delete(Source source, String filter, Date date) throws Exception {
+        String tableName = getTableName(source);
+        SourceHome sourceHome = (SourceHome)sourceTables.get(tableName);
+        sourceHome.delete(filter, date);
+    }
+
+    public void insert(Source source, Row row, Date date) throws Exception {
+        String tableName = getTableName(source);
+        SourceHome sourceHome = (SourceHome)sourceTables.get(tableName);
+        sourceHome.insert(row, date);
     }
 
     public SourceCacheFilterTool getCacheFilterTool() {

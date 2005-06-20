@@ -167,14 +167,19 @@ public class ResultHome {
         return values;
     }
 
-    public Collection search(Collection pks) throws Exception {
+    public Collection search(Row pk) throws Exception {
+        List pks = new ArrayList();
+        pks.add(pk);
 
-        if (pks == null || pks.isEmpty())
-            return new ArrayList();
+        return search(pks);
+    }
 
-        String attributeNames = getAttributeNames();
+    public String getFilter(Collection pks) throws Exception {
+
+        if (pks == null || pks.isEmpty()) return null;
 
         StringBuffer sb = new StringBuffer();
+
         for (Iterator i = pks.iterator(); i.hasNext();) {
             Row pk = (Row) i.next();
 
@@ -185,10 +190,11 @@ public class ResultHome {
 
                 if (sb2.length() > 0) sb2.append(" and ");
 
+                sb2.append("lower(");
                 sb2.append(name);
-                sb2.append("='");
+                sb2.append(")=lower('");
                 sb2.append(value);
-                sb2.append("'");
+                sb2.append("')");
             }
 
             if (sb.length() > 0) sb.append(" or ");
@@ -196,8 +202,18 @@ public class ResultHome {
             sb.append(sb2);
         }
 
+        return sb.toString();
+    }
+
+    public Collection search(Collection pks) throws Exception {
+
+        if (pks == null || pks.isEmpty()) return new ArrayList();
+
+        String attributeNames = getAttributeNames();
+        String filter = getFilter(pks);
+
         String sql = "select " + attributeNames + " from " + tableName
-                + " where " + sb;
+                + " where " + filter;
 
         sql += " order by "+getPkAttributeNames();
 
@@ -286,7 +302,7 @@ public class ResultHome {
                 }
 
                 ps.setString(index, string);
-                log.debug("- " + index + " = " + string);
+                //log.debug("- " + index + " = " + string);
             }
 
             ps.setTimestamp(index, new Timestamp(date.getTime()));
@@ -648,7 +664,7 @@ public class ResultHome {
     }
 
     public Date getModifyTime(
-            String filter)
+            Collection pks)
             throws Exception {
 
         Connection con = null;
@@ -659,6 +675,7 @@ public class ResultHome {
             con = ds.getConnection();
             String sql = "select "+MODIFY_TIME_FIELD+" from "+tableName;
 
+            String filter = getFilter(pks);
             if (filter != null) {
                 sql += " where "+filter;
             }

@@ -109,7 +109,7 @@ public class TransformEngine {
             }
 
             if (crossProductDebug >= 65535) {
-            	log.debug(name+": "+c);
+            	//log.debug(name+": "+c);
             }
 
             for (Iterator iterator = c.iterator(); iterator.hasNext(); ) {
@@ -126,12 +126,12 @@ public class TransformEngine {
             results.add(map);
 
             //if (crossProductDebug >= 65535) {
-            	log.debug("Generated: "+map);
+            	//log.debug("Generated: "+map);
             //}
 
         } else {
             if (crossProductDebug >= 65535) {
-            	log.debug("Temp is empty: "+temp);
+            	//log.debug("Temp is empty: "+temp);
             }
         }
     }
@@ -357,7 +357,7 @@ public class TransformEngine {
         for (Iterator i = rows.iterator(); i.hasNext(); ) {
             Row row = (Row)i.next();
 
-            // generate primary key from attirbute values
+            // generate primary key from attribute values
             Map pk = new HashMap();
             boolean validPk = true;
             for (Iterator j=attributes.values().iterator(); j.hasNext(); ) {

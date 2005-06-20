@@ -223,7 +223,7 @@ public class SourceCacheFilterTool {
             String v = (String)interpreter.eval(expression);
             if (v == null) continue;
 
-            System.out.println("Adding filter "+field.getName()+"="+v);
+            //System.out.println("Adding filter "+field.getName()+"="+v);
             SimpleFilter f = new SimpleFilter(field.getName(), "=", v);
 
             if (newFilter == null) {
