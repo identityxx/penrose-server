@@ -9,6 +9,9 @@ import org.safehaus.penrose.mapping.AttributeValues;
 import org.safehaus.penrose.mapping.Row;
 import org.safehaus.penrose.mapping.Entry;
 import org.safehaus.penrose.filter.Filter;
+import org.safehaus.penrose.Penrose;
+import org.safehaus.penrose.config.Config;
+import org.apache.log4j.Logger;
 
 import java.util.Collection;
 import java.util.Date;
@@ -17,24 +20,56 @@ import java.util.Map;
 /**
  * @author Endi S. Dewata
  */
-public interface EntryCache {
+public abstract class EntryCache {
 
-    public EntryCacheConfig getCacheConfig();
-    public void setCacheConfig(EntryCacheConfig cacheConfig);
+    public Logger log = Logger.getLogger(Penrose.CACHE_LOGGER);
 
-    public Collection getParameterNames();
-    public String getParameter(String name);
+    private Cache cache;
+    private CacheContext cacheContext;
+    private Config config;
 
-    public void init(EntryCacheConfig cacheConfig, EntryCacheContext cacheContext) throws Exception;
-    public void init() throws Exception;
+    public void init(Cache cache) throws Exception {
+        this.cache = cache;
+        this.cacheContext = cache.getCacheContext();
+        this.config = cacheContext.getConfig();
 
-    public Collection findPrimaryKeys(EntryDefinition entry, Filter filter) throws Exception;
-    public Entry get(EntryDefinition entry, Row pk) throws Exception;
-    public Map get(EntryDefinition entry, Collection pks) throws Exception;
+        init();
+    }
 
-    public void put(EntryDefinition entry, AttributeValues values, Date date) throws Exception;
-    public void remove(EntryDefinition entry, AttributeValues values, Date date) throws Exception;
+    public abstract void init() throws Exception;
 
-    public Date getModifyTime(EntryDefinition entry, Collection pks) throws Exception;
-    public Date getModifyTime(EntryDefinition entry, Row pk) throws Exception;
+    public abstract Collection findPrimaryKeys(EntryDefinition entry, Filter filter) throws Exception;
+    public abstract Entry get(EntryDefinition entry, Row pk) throws Exception;
+    public abstract Map get(EntryDefinition entry, Collection pks) throws Exception;
+
+    public abstract void put(EntryDefinition entry, AttributeValues values, Date date) throws Exception;
+    public abstract void remove(EntryDefinition entry, AttributeValues values, Date date) throws Exception;
+
+    public abstract Date getModifyTime(EntryDefinition entry, Collection pks) throws Exception;
+    public abstract Date getModifyTime(EntryDefinition entry, Row pk) throws Exception;
+
+
+    public Cache getCache() {
+        return cache;
+    }
+
+    public void setCache(Cache cache) {
+        this.cache = cache;
+    }
+
+    public CacheContext getCacheContext() {
+        return cacheContext;
+    }
+
+    public void setCacheContext(CacheContext cacheContext) {
+        this.cacheContext = cacheContext;
+    }
+
+    public Config getConfig() {
+        return config;
+    }
+
+    public void setConfig(Config config) {
+        this.config = config;
+    }
 }

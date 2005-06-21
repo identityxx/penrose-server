@@ -14,11 +14,6 @@ import org.safehaus.penrose.mapping.SourceDefinition;
 import org.safehaus.penrose.mapping.EntryDefinition;
 import org.safehaus.penrose.mapping.Source;
 import org.safehaus.penrose.mapping.*;
-import org.apache.commons.pool.impl.GenericObjectPool;
-import org.apache.commons.dbcp.ConnectionFactory;
-import org.apache.commons.dbcp.DriverManagerConnectionFactory;
-import org.apache.commons.dbcp.PoolableConnectionFactory;
-import org.apache.commons.dbcp.PoolingDataSource;
 
 import javax.sql.DataSource;
 import java.util.*;
@@ -31,63 +26,21 @@ import java.sql.Connection;
  */
 public class DefaultSourceCache extends SourceCache {
 
+    public DefaultCache cache;
+
     public PenroseSourceHome sourceExpirationHome;
     public Map sourceTables = new HashMap();
-
-    //public PenroseResultHome resultExpirationHome;
-    //public Map homes = new HashMap();
 
     private DataSource ds;
 
     public void init() throws Exception {
 
-        String driver    = getParameter(SourceCacheConfig.DRIVER);
-        String url       = getParameter(SourceCacheConfig.URL);
-        String username  = getParameter(SourceCacheConfig.USER);
-        String password  = getParameter(SourceCacheConfig.PASSWORD);
-
-        log.debug("Driver    : " + driver);
-        log.debug("Url       : " + url);
-        log.debug("Username  : " + username);
-        log.debug("Password  : " + password);
-
-        Properties properties = new Properties();
-        properties.put("driver", driver);
-        properties.put("url", url);
-        properties.put("user", username);
-        properties.put("password", password);
-
-        Class.forName(driver);
-
-        GenericObjectPool connectionPool = new GenericObjectPool(null);
-        //connectionPool.setMaxActive(0);
-
-        ConnectionFactory connectionFactory = new DriverManagerConnectionFactory(
-                url, properties);
-
-        PoolableConnectionFactory poolableConnectionFactory = new PoolableConnectionFactory(
-                connectionFactory, connectionPool, null, // statement pool
-                // factory
-                null, // test query
-                false, // read only
-                true // auto commit
-        );
-
-        ds = new PoolingDataSource(connectionPool);
-
-        initSources();
-    }
-
-    /**
-     * Load all sources for all entries during initialization.
-     *
-     * @throws Exception
-     */
-    public void initSources() throws Exception {
+        cache = (DefaultCache)super.getCache();
+        ds = cache.getDs();
 
         Date date = new Date();
 
-        Collection entries = config.getEntryDefinitions();
+        Collection entries = getConfig().getEntryDefinitions();
         Set set = new HashSet();
 
         sourceExpirationHome = new PenroseSourceHome(ds);
@@ -112,7 +65,7 @@ public class DefaultSourceCache extends SourceCache {
                 sourceTables.put(tableName, sourceHome);
 
                 // check global loading parameter
-                String s = getParameter(SourceCacheConfig.LOAD_ON_STARTUP);
+                String s = getCache().getParameter(CacheConfig.LOAD_ON_STARTUP);
                 boolean globalLoadOnStartup = s == null ? false : new Boolean(s).booleanValue();
                 log.debug("Global load on startup: "+globalLoadOnStartup);
 
@@ -150,7 +103,7 @@ public class DefaultSourceCache extends SourceCache {
 
         Date date = new Date();
 
-        Collection entries = config.getEntryDefinitions();
+        Collection entries = getConfig().getEntryDefinitions();
         Set set = new HashSet();
 
         for (Iterator i=entries.iterator(); i.hasNext(); ) {
@@ -202,7 +155,7 @@ public class DefaultSourceCache extends SourceCache {
     }
 
     public void insert(Source source, AttributeValues values, Date date) throws Exception {
-        Collection rows = sourceCacheContext.getTransformEngine().convert(values);
+        Collection rows = getCacheContext().getTransformEngine().convert(values);
 
         for (Iterator i=rows.iterator(); i.hasNext(); ) {
             Row row = (Row)i.next();
@@ -213,7 +166,7 @@ public class DefaultSourceCache extends SourceCache {
     }
 
     public void delete(Source source, AttributeValues values, Date date) throws Exception {
-        Collection rows = sourceCacheContext.getTransformEngine().convert(values);
+        Collection rows = getCacheContext().getTransformEngine().convert(values);
 
         for (Iterator i=rows.iterator(); i.hasNext(); ) {
             Row row = (Row)i.next();
@@ -364,12 +317,12 @@ public class DefaultSourceCache extends SourceCache {
 
         SourceDefinition sourceConfig = source.getSourceDefinition();
 
-        CacheEvent beforeEvent = new CacheEvent(sourceCacheContext, sourceConfig, CacheEvent.BEFORE_LOAD_ENTRIES);
+        CacheEvent beforeEvent = new CacheEvent(getCacheContext(), sourceConfig, CacheEvent.BEFORE_LOAD_ENTRIES);
         postCacheEvent(sourceConfig, beforeEvent);
 
         SearchResults results = source.search(sqlFilter);
 
-        String stringFilter = sourceCacheFilterTool.toSQLFilter(entry, sqlFilter);
+        String stringFilter = cache.getCacheFilterTool().toSQLFilter(entry, sqlFilter);
 
         delete(source, stringFilter, date);
 
@@ -378,7 +331,7 @@ public class DefaultSourceCache extends SourceCache {
             insert(source, row, date);
         }
 
-        CacheEvent afterEvent = new CacheEvent(sourceCacheContext, sourceConfig, CacheEvent.AFTER_LOAD_ENTRIES);
+        CacheEvent afterEvent = new CacheEvent(getCacheContext(), sourceConfig, CacheEvent.AFTER_LOAD_ENTRIES);
         postCacheEvent(sourceConfig, afterEvent);
 
         return results;
@@ -395,13 +348,4 @@ public class DefaultSourceCache extends SourceCache {
         SourceHome sourceHome = (SourceHome)sourceTables.get(tableName);
         sourceHome.insert(row, date);
     }
-
-    public SourceCacheFilterTool getCacheFilterTool() {
-        return sourceCacheFilterTool;
-    }
-
-    public void setCacheFilterTool(SourceCacheFilterTool sourceCacheFilterTool) {
-        this.sourceCacheFilterTool = sourceCacheFilterTool;
-    }
-
 }

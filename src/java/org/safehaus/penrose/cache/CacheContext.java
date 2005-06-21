@@ -11,7 +11,7 @@ import org.safehaus.penrose.engine.TransformEngine;
 /**
  * @author Endi S. Dewata
  */
-public interface SourceCacheContext {
+public interface CacheContext {
 
     public Config getConfig() throws Exception;
     public Interpreter newInterpreter() throws Exception;

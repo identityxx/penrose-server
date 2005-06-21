@@ -13,17 +13,16 @@ import org.safehaus.penrose.mapping.*;
 
 import java.util.Iterator;
 import java.util.Collection;
-import java.util.Map;
 
 /**
  * @author Endi S. Dewata
  */
-public class SourceCacheFilterTool {
+public class CacheFilterTool {
 
-    public SourceCacheContext sourceCacheContext;
+    public CacheContext cacheContext;
 
-    public SourceCacheFilterTool(SourceCacheContext sourceCacheContext) {
-        this.sourceCacheContext = sourceCacheContext;
+    public CacheFilterTool(CacheContext sourceCacheContext) {
+        this.cacheContext = sourceCacheContext;
     }
 
     /**
@@ -203,7 +202,7 @@ public class SourceCacheFilterTool {
                 return null;
         }
 
-        Interpreter interpreter = sourceCacheContext.newInterpreter();
+        Interpreter interpreter = cacheContext.newInterpreter();
         interpreter.set(name, value);
 
         if (parentRow != null) {

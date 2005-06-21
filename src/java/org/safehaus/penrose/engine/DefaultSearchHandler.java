@@ -19,9 +19,10 @@ import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.SearchResults;
 import org.safehaus.penrose.PenroseConnection;
+import org.safehaus.penrose.cache.CacheConfig;
+import org.safehaus.penrose.cache.DefaultCache;
 import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.thread.MRSWLock;
-import org.safehaus.penrose.cache.SourceCacheConfig;
 import org.apache.log4j.Logger;
 
 /**
@@ -32,11 +33,13 @@ public class DefaultSearchHandler implements SearchHandler {
     public Logger log = Logger.getLogger(Penrose.SEARCH_LOGGER);
 
     public DefaultEngine engine;
+    public DefaultCache cache;
 	public EngineContext engineContext;
     public Config config;
 
 	public void init(Engine engine, EngineContext engineContext) throws Exception {
-        this.engine = ((DefaultEngine)engine);
+        this.engine = (DefaultEngine)engine;
+        this.cache = (DefaultCache)engine.getCache();
 		this.engineContext = engineContext;
         config = engineContext.getConfig();
 	}
@@ -400,7 +403,7 @@ public class DefaultSearchHandler implements SearchHandler {
 
         Calendar calendar = Calendar.getInstance();
 
-        String s = engine.getSourceCache().getParameter(SourceCacheConfig.CACHE_EXPIRATION);
+        String s = cache.getParameter(CacheConfig.CACHE_EXPIRATION);
         int cacheExpiration = s == null ? 0 : Integer.parseInt(s);
         log.debug("Expiration: "+cacheExpiration);
         if (cacheExpiration < 0) cacheExpiration = Integer.MAX_VALUE;
@@ -759,7 +762,7 @@ public class DefaultSearchHandler implements SearchHandler {
             String primarySourceName = primarySource.getName();
             log.debug("Primary source: "+primarySourceName);
 
-            Filter f = engine.getSourceCache().getCacheFilterTool().toSourceFilter(null, entryDefinition, primarySource, filter);
+            Filter f = cache.getCacheFilterTool().toSourceFilter(null, entryDefinition, primarySource, filter);
 
             log.debug("Searching source "+primarySourceName+" for "+f);
             SearchResults results = primarySource.search(f);
@@ -1131,8 +1134,8 @@ public class DefaultSearchHandler implements SearchHandler {
             Calendar calendar
             ) throws Exception {
 
-        Filter newFilter = engine.getSourceCache().getCacheFilterTool().toSourceFilter(null, entryDefinition, primarySource, filter);
-        String sqlFilter = engine.getSourceCache().getCacheFilterTool().toSQLFilter(entryDefinition, newFilter);
+        Filter newFilter = cache.getCacheFilterTool().toSourceFilter(null, entryDefinition, primarySource, filter);
+        String sqlFilter = cache.getCacheFilterTool().toSQLFilter(entryDefinition, newFilter);
 
         log.debug("--------------------------------------------------------------------------------------");
         log.debug("Joining sources with filter "+filter);

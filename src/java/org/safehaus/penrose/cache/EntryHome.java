@@ -54,10 +54,11 @@ public class EntryHome {
             StringBuffer sb = new StringBuffer();
 
             Set set = new HashSet();
-            Map attributes = entry.getAttributes();
+            Collection rdnAttributes = entry.getRdnAttributes();
 
-            for (Iterator i = attributes.keySet().iterator(); i.hasNext();) {
-                String name = (String) i.next();
+            for (Iterator i = rdnAttributes.iterator(); i.hasNext();) {
+                AttributeDefinition attribute = (AttributeDefinition) i.next();
+                String name = attribute.getName();
 
                 // TODO need to handle multiple attribute definitions
                 if (set.contains(name)) continue;
@@ -105,36 +106,13 @@ public class EntryHome {
     public String getPkAttributeNames() {
         StringBuffer sb = new StringBuffer();
 
-        Map attributes = entry.getAttributes();
+        Collection rdnAttributes = entry.getRdnAttributes();
         Set set = new HashSet();
 
-        for (Iterator j = attributes.values().iterator(); j.hasNext();) {
-            AttributeDefinition attribute = (AttributeDefinition) j.next();
-            if (!attribute.isRdn()) continue;
-
-            String name = attribute.getName();
-
-            if (set.contains(name)) continue;
-            set.add(name);
-
-            if (sb.length() > 0) sb.append(", ");
-            sb.append(name);
-        }
-
-        return sb.toString();
-    }
-
-    public String getAttributeNames() {
-        StringBuffer sb = new StringBuffer();
-
-        Map attributes = entry.getAttributes();
-        Set set = new HashSet();
-
-        for (Iterator j = attributes.values().iterator(); j.hasNext();) {
+        for (Iterator j = rdnAttributes.iterator(); j.hasNext();) {
             AttributeDefinition attribute = (AttributeDefinition) j.next();
             String name = attribute.getName();
 
-            // TODO need to handle multiple attribute definitions
             if (set.contains(name)) continue;
             set.add(name);
 
@@ -150,9 +128,9 @@ public class EntryHome {
 
         Set set = new HashSet();
 
-        Map attributes = entry.getAttributes();
-        int c = 1;
-        for (Iterator j = attributes.values().iterator(); j.hasNext(); c++) {
+        Collection rdnAttributes = entry.getRdnAttributes();
+        int c = 0;
+        for (Iterator j = rdnAttributes.iterator(); j.hasNext();) {
             AttributeDefinition attribute = (AttributeDefinition) j.next();
             String name = attribute.getName();
 
@@ -160,7 +138,7 @@ public class EntryHome {
             if (set.contains(name)) continue;
             set.add(name);
 
-            Object value = rs.getObject(c);
+            Object value = rs.getObject(++c);
             if (value != null) values.set(name, value);
         }
 
@@ -209,13 +187,13 @@ public class EntryHome {
 
         if (pks == null || pks.isEmpty()) return new ArrayList();
 
-        String attributeNames = getAttributeNames();
+        String attributeNames = getPkAttributeNames();
         String filter = getFilter(pks);
 
         String sql = "select " + attributeNames + " from " + tableName
                 + " where " + filter;
 
-        sql += " order by "+getPkAttributeNames();
+        sql += " order by "+attributeNames;
 
         List results = new ArrayList();
 
@@ -253,11 +231,12 @@ public class EntryHome {
             StringBuffer sb = new StringBuffer();
             StringBuffer sb2 = new StringBuffer();
 
-            Map attributes = entry.getAttributes();
+            Collection rdnAttributes = entry.getRdnAttributes();
             Set set = new HashSet();
 
-            for (Iterator i = attributes.keySet().iterator(); i.hasNext();) {
-                String name = (String) i.next();
+            for (Iterator i = rdnAttributes.iterator(); i.hasNext();) {
+                AttributeDefinition attribute = (AttributeDefinition) i.next();
+                String name = attribute.getName();
 
                 // TODO need to handle multiple attribute definitions
                 if (set.contains(name)) continue;
@@ -281,9 +260,10 @@ public class EntryHome {
             ps = con.prepareStatement(sql);
 
             set = new HashSet();
-            int index = 1;
-            for (Iterator i = attributes.keySet().iterator(); i.hasNext(); index++) {
-                String name = (String) i.next();
+            int index = 0;
+            for (Iterator i = rdnAttributes.iterator(); i.hasNext(); ) {
+                AttributeDefinition attribute = (AttributeDefinition) i.next();
+                String name = attribute.getName();
 
                 // TODO need to handle multiple attribute definitions
                 if (set.contains(name)) continue;
@@ -301,11 +281,11 @@ public class EntryHome {
                     string = value.toString();
                 }
 
-                ps.setString(index, string);
+                ps.setString(++index, string);
                 //log.debug("- " + index + " = " + string);
             }
 
-            ps.setTimestamp(index, new Timestamp(date.getTime()));
+            ps.setTimestamp(++index, new Timestamp(date.getTime()));
 
             ps.execute();
 
@@ -314,9 +294,8 @@ public class EntryHome {
             if (con != null) try { con.close(); } catch (Exception ex) {}
         }
     }
-/*
-    public void insertOrUpdateRow(EntryDefinition entry,
-            Row row, boolean temporary) throws Exception {
+
+   public void delete(Row row, Date date) throws Exception {
 
         Connection con = null;
         PreparedStatement ps = null;
@@ -324,189 +303,11 @@ public class EntryHome {
         try {
             con = ds.getConnection();
             StringBuffer sb = new StringBuffer();
-            StringBuffer sb2 = new StringBuffer();
-            StringBuffer sb3 = new StringBuffer();
-            StringBuffer sb4 = new StringBuffer();
 
-            Map attributes = entry.getAttributeValues();
             Collection rdnAttributes = entry.getRdnAttributes();
             Set set = new HashSet();
 
-            for (Iterator iter = attributes.keySet().iterator(); iter.hasNext();) {
-
-                String name = (String) iter.next();
-
-                if (set.contains(name))
-                    continue;
-                set.add(name);
-
-                if (sb.length() > 0) {
-                    sb.append(", ");
-                    sb2.append(", ");
-                    sb4.append(", ");
-                }
-                sb.append(name);
-                sb2.append("?");
-                sb4.append(name + "=?");
-            }
-
-            set = new HashSet();
-            for (Iterator iter = rdnAttributes.iterator(); iter.hasNext();) {
-
-                AttributeDefinition attr = (AttributeDefinition) iter.next();
-                String name = attr.getName();
-                if (set.contains(name))
-                    continue;
-                set.add(name);
-
-                if (sb3.length() > 0) {
-                    sb3.append(" and ");
-                }
-                sb3.append(name + "=?");
-            }
-
-            String selectSql = "select * from " + tableName + " where " + sb3;
-            String updateSql = "update " + tableName + " set " + sb4
-                    + " where " + sb3;
-            String insertSql = "insert into " + tableName + " (" + sb
-                    + ","+MODIFY_TIME_FIELD+") values (" + sb2 + ",'1')";
-
-            // Check if such the row already exist
-            log
-                    .debug("********************************************************");
-            log.debug("Checking if row already exist");
-            log.debug("Executing " + selectSql);
-            ps = con.prepareStatement(selectSql);
-
-            set = new HashSet();
-            int i = 1;
-            for (Iterator iter = rdnAttributes.iterator(); iter.hasNext(); i++) {
-
-                AttributeDefinition attr = (AttributeDefinition) iter.next();
-                String name = attr.getName();
-
-                if (set.contains(name))
-                    continue;
-                set.add(name);
-
-                Object value = row.get(name);
-                String string;
-                if (value instanceof byte[]) {
-                    string = new String((byte[]) value);
-                } else {
-                    string = (String) value;
-                }
-
-                ps.setString(i, string);
-            }
-
-            ResultSet rs = ps.executeQuery();
-
-            if (rs.next()) {
-                // has result, means the row already exists
-                // So, we update the row
-                PreparedStatement ps2 = null;
-                try {
-                    log.debug("********************************************************");
-                    log.debug("Update the row");
-                    log.debug("Executing " + updateSql);
-                    ps2 = con.prepareStatement(updateSql);
-                    Set set2 = new HashSet();
-                    int j = 1;
-                    for (Iterator iter = attributes.keySet().iterator(); iter
-                            .hasNext(); j++) {
-
-                        String name = (String) iter.next();
-
-                        Object value = row.get(name);
-                        String string;
-                        if (value instanceof byte[]) {
-                            string = new String((byte[]) value);
-                        } else {
-                            string = (String) value;
-                        }
-
-                        ps2.setString(j, string);
-                        log.debug("- " + j + " = " + string);
-                    }
-
-                    for (Iterator iter = rdnAttributes.iterator(); iter
-                            .hasNext(); j++) {
-
-                        AttributeDefinition attr = (AttributeDefinition) iter.next();
-                        String name = attr.getName();
-
-                        Object value = row.get(name);
-                        String string;
-                        if (value instanceof byte[]) {
-                            string = new String((byte[]) value);
-                        } else {
-                            string = (String) value;
-                        }
-
-                        ps2.setString(j, string);
-                        log.debug("- " + j + " = " + string);
-                    }
-
-                    ps2.execute();
-
-                } catch (Exception ex) {
-                    log.error(ex.getMessage(), ex);
-                }
-
-            } else {
-                // no result, means the row has not already exist
-                // So, we insert the row
-                PreparedStatement ps2 = null;
-                try {
-                    log.debug("********************************************************");
-                    log.debug("Insert the row");
-                    log.debug("Executing " + insertSql);
-                    ps2 = con.prepareStatement(insertSql);
-                    int j = 1;
-                    for (Iterator iter = attributes.keySet().iterator(); iter
-                            .hasNext(); j++) {
-
-                        String name = (String) iter.next();
-
-                        Object value = row.get(name);
-                        String string;
-                        if (value instanceof byte[]) {
-                            string = new String((byte[]) value);
-                        } else {
-                            string = (String) value;
-                        }
-
-                        ps2.setString(j, string);
-                        log.debug("- " + j + " = " + string);
-                    }
-
-                    ps2.execute();
-
-                } catch (Exception ex) {
-                    log.error(ex.getMessage(), ex);
-                }
-            }
-
-        } finally {
-            if (ps != null) try { ps.close(); } catch (Exception e) {}
-            if (con != null) try { con.close(); } catch (Exception ex) {}
-        }
-    }
-*/
-    public void delete(Row row, Date date) throws Exception {
-
-        Connection con = null;
-        PreparedStatement ps = null;
-
-        try {
-            con = ds.getConnection();
-            StringBuffer sb = new StringBuffer();
-
-            Collection attributes = entry.getRdnAttributes();
-            Set set = new HashSet();
-
-            for (Iterator i = attributes.iterator(); i.hasNext();) {
+            for (Iterator i = rdnAttributes.iterator(); i.hasNext();) {
                 AttributeDefinition attribute = (AttributeDefinition)i.next();
                 String name = attribute.getName();
 
@@ -526,9 +327,9 @@ public class EntryHome {
             ps = con.prepareStatement(sql);
 
             set = new HashSet();
-            int index = 1;
+            int index = 0;
 
-            for (Iterator i = attributes.iterator(); i.hasNext();) {
+            for (Iterator i = rdnAttributes.iterator(); i.hasNext();) {
                 AttributeDefinition attribute = (AttributeDefinition)i.next();
                 String name = attribute.getName();
 
@@ -544,7 +345,7 @@ public class EntryHome {
                     string = (String)value;
                 }
 
-                ps.setString(index, string);
+                ps.setString(++index, string);
                 log.debug("- " + index + " = " + string);
             }
 
@@ -634,29 +435,6 @@ public class EntryHome {
             ps = con.prepareStatement(sql);
             ps.execute();
 
-        } finally {
-            if (ps != null) try { ps.close(); } catch (Exception e) {}
-            if (con != null) try { con.close(); } catch (Exception ex) {}
-        }
-    }
-
-    public void copy(EntryHome entryHome, String filter) throws Exception {
-
-        String sql = "insert into " + tableName + " select * from " + entryHome.tableName;
-
-        if (filter != null) {
-            sql += " where "+filter;
-        }
-
-        log.debug("Executing " + sql);
-
-        Connection con = null;
-        PreparedStatement ps = null;
-
-        try {
-            con = ds.getConnection();
-            ps = con.prepareStatement(sql);
-            ps.execute();
         } finally {
             if (ps != null) try { ps.close(); } catch (Exception e) {}
             if (con != null) try { con.close(); } catch (Exception ex) {}

@@ -15,7 +15,7 @@ import org.dom4j.tree.DefaultText;
 import org.safehaus.penrose.module.ModuleConfig;
 import org.safehaus.penrose.module.ModuleMapping;
 import org.safehaus.penrose.connection.AdapterConfig;
-import org.safehaus.penrose.cache.SourceCacheConfig;
+import org.safehaus.penrose.cache.CacheConfig;
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.connection.ConnectionConfig;
 import org.safehaus.penrose.schema.AttributeType;
@@ -58,9 +58,9 @@ public class XMLHelper {
         }
 
 		// caches
-        for (Iterator iter = config.getSourceCacheConfigs().iterator(); iter.hasNext();) {
-            SourceCacheConfig sourceCacheConfig = (SourceCacheConfig)iter.next();
-            element.add(toElement(sourceCacheConfig));
+        for (Iterator iter = config.getCacheConfigs().iterator(); iter.hasNext();) {
+            CacheConfig cacheConfig = (CacheConfig)iter.next();
+            element.add(toElement(cacheConfig));
         }
 
         // adapters
@@ -563,21 +563,33 @@ public class XMLHelper {
         return element;
     }
 
-    public static Element toElement(SourceCacheConfig sourceCache) {
+    public static Element toElement(CacheConfig cache) {
     	Element element = new DefaultElement("cache");
 
         Element cacheName = new DefaultElement("cache-name");
-        cacheName.add(new DefaultText(sourceCache.getCacheName()));
+        cacheName.add(new DefaultText(cache.getCacheName()));
         element.add(cacheName);
 
         Element cacheClass = new DefaultElement("cache-class");
-        cacheClass.add(new DefaultText(sourceCache.getCacheClass()));
+        cacheClass.add(new DefaultText(cache.getCacheClass()));
         element.add(cacheClass);
 
+        Element entryCacheClass = new DefaultElement("entry-cache-class");
+        entryCacheClass.add(new DefaultText(cache.getEntryCacheClass()));
+        element.add(entryCacheClass);
+
+        Element sourceCacheClass = new DefaultElement("source-cache-class");
+        sourceCacheClass.add(new DefaultText(cache.getSourceCacheClass()));
+        element.add(sourceCacheClass);
+
+        Element description = new DefaultElement("description");
+        description.add(new DefaultText(cache.getDescription()));
+        element.add(description);
+
         // parameters
-        for (Iterator iter = sourceCache.getParameterNames().iterator(); iter.hasNext();) {
+        for (Iterator iter = cache.getParameterNames().iterator(); iter.hasNext();) {
             String name = (String) iter.next();
-            String value = (String) sourceCache.getParameter(name);
+            String value = (String) cache.getParameter(name);
 
             Element parameter = new DefaultElement("parameter");
 

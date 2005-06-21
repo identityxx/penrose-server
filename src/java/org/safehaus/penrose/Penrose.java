@@ -55,8 +55,7 @@ import sun.misc.Signal;
  */
 public class Penrose implements
         AdapterContext,
-        SourceCacheContext,
-        EntryCacheContext,
+        CacheContext,
         EngineContext,
         ModuleContext,
         PenroseMBean,
@@ -118,8 +117,7 @@ public class Penrose implements
 
 	private TransformEngine transformEngine;
 
-    private Map sourceCaches = new LinkedHashMap();
-    private Map entryCaches = new LinkedHashMap();
+    private Map caches = new LinkedHashMap();
 	private Map engines = new LinkedHashMap();
     private Map connections = new LinkedHashMap();
     private Map modules = new LinkedHashMap();
@@ -240,24 +238,14 @@ public class Penrose implements
 	}
 
     public void initCache() throws Exception {
-        for (Iterator i=config.getSourceCacheConfigs().iterator(); i.hasNext(); ) {
-            SourceCacheConfig sourceCacheConfig = (SourceCacheConfig)i.next();
+        for (Iterator i=config.getCacheConfigs().iterator(); i.hasNext(); ) {
+            CacheConfig cacheConfig = (CacheConfig)i.next();
 
-            Class clazz = Class.forName(sourceCacheConfig.getCacheClass());
-            SourceCache sourceCache = (SourceCache)clazz.newInstance();
-            sourceCache.init(sourceCacheConfig, this);
+            Class clazz = Class.forName(cacheConfig.getCacheClass());
+            Cache cache = (Cache)clazz.newInstance();
+            cache.init(cacheConfig, this);
 
-            sourceCaches.put(sourceCacheConfig.getCacheName(), sourceCache);
-        }
-
-        for (Iterator i=config.getEntryCacheConfigs().iterator(); i.hasNext(); ) {
-            EntryCacheConfig entryCacheConfig = (EntryCacheConfig)i.next();
-
-            Class clazz = Class.forName(entryCacheConfig.getCacheClass());
-            EntryCache entryCache = (EntryCache)clazz.newInstance();
-            entryCache.init(entryCacheConfig, this);
-
-            entryCaches.put(entryCacheConfig.getCacheName(), entryCache);
+            caches.put(cacheConfig.getCacheName(), cache);
         }
     }
 
@@ -1018,20 +1006,12 @@ public class Penrose implements
         return interpreter;
     }
 
-    public SourceCache getSourceCache() {
-        return getSourceCache("DEFAULT");
+    public Cache getCache() {
+        return getCache("DEFAULT");
     }
 
-    public SourceCache getSourceCache(String name) {
-        return (SourceCache)sourceCaches.get(name);
-    }
-
-    public EntryCache getEntryCache() {
-        return getEntryCache("DEFAULT");
-    }
-
-    public EntryCache getEntryCache(String name) {
-        return (EntryCache)entryCaches.get(name);
+    public Cache getCache(String name) {
+        return (Cache)caches.get(name);
     }
 
     public Schema getSchema() {

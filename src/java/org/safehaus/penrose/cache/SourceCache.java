@@ -23,18 +23,14 @@ public abstract class SourceCache {
 
     public Logger log = Logger.getLogger(Penrose.CACHE_LOGGER);
 
-    private SourceCacheConfig sourceCacheConfig;
-    public SourceCacheContext sourceCacheContext;
-    public Config config;
+    private Cache cache;
+    private CacheContext cacheContext;
+    private Config config;
 
-    public SourceCacheFilterTool sourceCacheFilterTool;
-
-    public void init(SourceCacheConfig sourceCacheConfig, SourceCacheContext sourceCacheContext) throws Exception {
-        this.sourceCacheConfig = sourceCacheConfig;
-        this.sourceCacheContext = sourceCacheContext;
-        this.config = this.sourceCacheContext.getConfig();
-
-        sourceCacheFilterTool = new SourceCacheFilterTool(sourceCacheContext);
+    public void init(Cache cache) throws Exception {
+        this.cache = cache;
+        this.cacheContext = cache.getCacheContext();
+        this.config = cacheContext.getConfig();
 
         init();
     }
@@ -82,23 +78,27 @@ public abstract class SourceCache {
             Date date)
             throws Exception;
 
-    public abstract SourceCacheFilterTool getCacheFilterTool();
-
-    public abstract void setCacheFilterTool(SourceCacheFilterTool sourceCacheFilterTool);
-
-    public SourceCacheConfig getCacheConfig() {
-        return sourceCacheConfig;
+    public Cache getCache() {
+        return cache;
     }
 
-    public void setCacheConfig(SourceCacheConfig sourceCacheConfig) {
-        this.sourceCacheConfig = sourceCacheConfig;
+    public void setCache(Cache cache) {
+        this.cache = cache;
     }
 
-    public Collection getParameterNames() {
-        return sourceCacheConfig.getParameterNames();
+    public CacheContext getCacheContext() {
+        return cacheContext;
     }
 
-    public String getParameter(String name) {
-        return sourceCacheConfig.getParameter(name);
+    public void setCacheContext(CacheContext cacheContext) {
+        this.cacheContext = cacheContext;
+    }
+
+    public Config getConfig() {
+        return config;
+    }
+
+    public void setConfig(Config config) {
+        this.config = config;
     }
 }

@@ -24,7 +24,7 @@ public class DefaultCompareHandler implements CompareHandler {
     public DefaultEngine engine;
 
     public void init(Engine engine, EngineContext engineContext) throws Exception {
-        this.engine = ((DefaultEngine)engine);
+        this.engine = (DefaultEngine)engine;
     }
 
     public int compare(PenroseConnection connection, String dn, String attributeName,

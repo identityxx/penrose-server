@@ -11,11 +11,6 @@ import org.safehaus.penrose.mapping.Row;
 import org.safehaus.penrose.mapping.AttributeDefinition;
 import org.safehaus.penrose.mapping.EntryDefinition;
 import org.safehaus.penrose.mapping.*;
-import org.apache.commons.pool.impl.GenericObjectPool;
-import org.apache.commons.dbcp.ConnectionFactory;
-import org.apache.commons.dbcp.DriverManagerConnectionFactory;
-import org.apache.commons.dbcp.PoolableConnectionFactory;
-import org.apache.commons.dbcp.PoolingDataSource;
 import org.apache.log4j.Logger;
 
 import javax.sql.DataSource;
@@ -28,86 +23,20 @@ import java.sql.Connection;
 /**
  * @author Endi S. Dewata
  */
-public class DefaultEntryCache implements EntryCache {
+public class DefaultEntryCache extends EntryCache {
 
-    public Logger log = Logger.getLogger(Penrose.CACHE_LOGGER);
+    public DefaultCache cache;
 
-    private EntryCacheConfig cacheConfig;
-    public EntryCacheContext cacheContext;
-    public Config config;
-
-    public EntryCacheFilterTool cacheFilterTool;
-
-    public PenroseResultHome resultExpirationHome;
     public Map homes = new HashMap();
 
     private DataSource ds;
 
-    public EntryCacheConfig getCacheConfig() {
-        return cacheConfig;
-    }
-
-    public void setCacheConfig(EntryCacheConfig cacheConfig) {
-        this.cacheConfig = cacheConfig;
-    }
-
-    public Collection getParameterNames() {
-        return cacheConfig.getParameterNames();
-    }
-
-    public String getParameter(String name) {
-        return cacheConfig.getParameter(name);
-    }
-
-    public void init(EntryCacheConfig cacheConfig, EntryCacheContext cacheContext) throws Exception {
-        this.cacheConfig = cacheConfig;
-        this.cacheContext = cacheContext;
-        this.config = this.cacheContext.getConfig();
-
-        cacheFilterTool = new EntryCacheFilterTool(cacheContext);
-
-        init();
-    }
-
     public void init() throws Exception {
 
-        String driver    = getParameter(SourceCacheConfig.DRIVER);
-        String url       = getParameter(SourceCacheConfig.URL);
-        String username  = getParameter(SourceCacheConfig.USER);
-        String password  = getParameter(SourceCacheConfig.PASSWORD);
+        cache = (DefaultCache)super.getCache();
+        ds = cache.getDs();
 
-        log.debug("Driver    : " + driver);
-        log.debug("Url       : " + url);
-        log.debug("Username  : " + username);
-        log.debug("Password  : " + password);
-
-        Properties properties = new Properties();
-        properties.put("driver", driver);
-        properties.put("url", url);
-        properties.put("user", username);
-        properties.put("password", password);
-
-        Class.forName(driver);
-
-        GenericObjectPool connectionPool = new GenericObjectPool(null);
-        //connectionPool.setMaxActive(0);
-
-        ConnectionFactory connectionFactory = new DriverManagerConnectionFactory(
-                url, properties);
-
-        PoolableConnectionFactory poolableConnectionFactory = new PoolableConnectionFactory(
-                connectionFactory, connectionPool, null, // statement pool
-                // factory
-                null, // test query
-                false, // read only
-                true // auto commit
-        );
-
-        ds = new PoolingDataSource(connectionPool);
-
-        Collection entries = config.getEntryDefinitions();
-
-        resultExpirationHome = new PenroseResultHome(ds);
+        Collection entries = getConfig().getEntryDefinitions();
 
         for (Iterator i=entries.iterator(); i.hasNext(); ) {
             EntryDefinition entryDefinition = (EntryDefinition)i.next();
@@ -130,8 +59,6 @@ public class DefaultEntryCache implements EntryCache {
 	}
 
     public void createTables(EntryDefinition entryDefinition) throws Exception {
-        resultExpirationHome.insert(entryDefinition);
-
         String entryTableName = getEntryTableName(entryDefinition);
         EntryHome entryHome = new EntryHome(ds, entryDefinition, entryTableName);
         homes.put(entryTableName, entryHome);
@@ -227,18 +154,13 @@ public class DefaultEntryCache implements EntryCache {
     }
 
     public void put(EntryDefinition entryDefinition, AttributeValues values, Date date) throws Exception {
-        Collection rows = cacheContext.getTransformEngine().convert(values);
-
-        EntryHome entryHome = getEntryHome(entryDefinition);
-
-        for (Iterator i=rows.iterator(); i.hasNext(); ) {
-            Row row = (Row)i.next();
-            entryHome.insert(row, date);
-        }
-
-        EntryAttributeHome entryAttributeHome = getEntryAttributeHome(entryDefinition);
         Row pk = getPk(entryDefinition, values);
         System.out.println("Inserting pk: "+pk);
+
+        EntryHome entryHome = getEntryHome(entryDefinition);
+        entryHome.insert(pk, date);
+
+        EntryAttributeHome entryAttributeHome = getEntryAttributeHome(entryDefinition);
 
         for (Iterator i=values.getNames().iterator(); i.hasNext(); ) {
             String name = (String)i.next();
@@ -254,19 +176,13 @@ public class DefaultEntryCache implements EntryCache {
     }
 
     public void remove(EntryDefinition entryDefinition, AttributeValues values, Date date) throws Exception {
-        Collection rows = cacheContext.getTransformEngine().convert(values);
-
-        EntryHome entryHome = getEntryHome(entryDefinition);
-
-        for (Iterator i=rows.iterator(); i.hasNext(); ) {
-            Row row = (Row)i.next();
-            entryHome.delete(row, date);
-        }
-
-        EntryAttributeHome entryAttributeHome = getEntryAttributeHome(entryDefinition);
         Row pk = getPk(entryDefinition, values);
         System.out.println("Deleting pk: "+pk);
 
+        EntryHome entryHome = getEntryHome(entryDefinition);
+        entryHome.delete(pk, date);
+
+        EntryAttributeHome entryAttributeHome = getEntryAttributeHome(entryDefinition);
         entryAttributeHome.delete(pk, date);
     }
 
@@ -275,8 +191,6 @@ public class DefaultEntryCache implements EntryCache {
         pks.add(pk);
 
         return getModifyTime(entryDefinition, pks);
-
-        //return resultExpirationHome.getModifyTime(entry);
     }
 
     public Date getModifyTime(EntryDefinition entryDefinition, Collection pks) throws Exception {
@@ -294,19 +208,19 @@ public class DefaultEntryCache implements EntryCache {
     public String getPkAttributeNames(EntryDefinition entry) {
         StringBuffer sb = new StringBuffer();
 
-        Map attributes = entry.getAttributes();
+        Collection rdnRttributes = entry.getRdnAttributes();
         Set set = new HashSet();
-        for (Iterator j = attributes.values().iterator(); j.hasNext();) {
+
+        for (Iterator j = rdnRttributes.iterator(); j.hasNext();) {
             AttributeDefinition attribute = (AttributeDefinition) j.next();
-            if (!attribute.isRdn()) continue;
 
-            String name = attribute.getName();
+            String attrName = attribute.getName();
 
-            if (set.contains(name)) continue;
-            set.add(name);
+            if (set.contains(attrName)) continue;
+            set.add(attrName);
 
             if (sb.length() > 0) sb.append(", ");
-            sb.append(name);
+            sb.append(attrName);
         }
 
         return sb.toString();
@@ -323,7 +237,7 @@ public class DefaultEntryCache implements EntryCache {
             Filter filter)
             throws Exception {
 
-        String sqlFilter = cacheFilterTool.toSQLFilter(entry, filter);
+        String sqlFilter = cache.getCacheFilterTool().toSQLFilter(entry, filter);
 
         String tableName = getEntryTableName(entry);
         String attributeNames = getPkAttributeNames(entry);
@@ -390,22 +304,13 @@ public class DefaultEntryCache implements EntryCache {
             if (set.contains(name)) continue;
             set.add(name);
 
-            Object value = rs.getObject(c);
-
+            Object value = rs.getObject(c++);
             values.set(name, value);
 
             c++;
         }
 
         return values;
-    }
-
-    public EntryCacheFilterTool getCacheFilterTool() {
-        return cacheFilterTool;
-    }
-
-    public void setCacheFilterTool(EntryCacheFilterTool cacheFilterTool) {
-        this.cacheFilterTool = cacheFilterTool;
     }
 
     /**

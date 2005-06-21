@@ -12,8 +12,7 @@ import org.safehaus.penrose.module.ModuleConfig;
 import org.safehaus.penrose.module.ModuleMapping;
 import org.safehaus.penrose.module.GenericModuleMapping;
 import org.safehaus.penrose.Penrose;
-import org.safehaus.penrose.cache.SourceCacheConfig;
-import org.safehaus.penrose.cache.EntryCacheConfig;
+import org.safehaus.penrose.cache.CacheConfig;
 import org.safehaus.penrose.engine.EngineConfig;
 import org.safehaus.penrose.interpreter.InterpreterConfig;
 import org.safehaus.penrose.mapping.*;
@@ -39,8 +38,7 @@ public class Config implements Serializable {
     private String rootPassword;
 	
     private Map interpreterConfigs = new LinkedHashMap();
-    private Map sourceCacheConfigs = new LinkedHashMap();
-    private Map entryCacheConfigs = new LinkedHashMap();
+    private Map cacheConfigs = new LinkedHashMap();
     private Map engineConfigs = new LinkedHashMap();
     private Map adapterConfigs = new LinkedHashMap();
     private Map connectionConfigs = new LinkedHashMap();
@@ -281,35 +279,18 @@ public class Config implements Serializable {
         sb.append(nl);
         sb.append(nl);
 
-        sb.append("SOURCE CACHE:");
+        sb.append("CACHE:");
         sb.append(nl);
         sb.append(nl);
 
-        for (Iterator i = sourceCacheConfigs.keySet().iterator(); i.hasNext();) {
+        for (Iterator i = cacheConfigs.keySet().iterator(); i.hasNext();) {
             String cacheName = (String) i.next();
-            SourceCacheConfig sourceCache = (SourceCacheConfig) sourceCacheConfigs.get(cacheName);
+            CacheConfig sourceCache = (CacheConfig) cacheConfigs.get(cacheName);
             sb.append(cacheName + " (" + sourceCache.getCacheClass() + ")" + nl);
             sb.append("Parameters:" + nl);
             for (Iterator j = sourceCache.getParameterNames().iterator(); j.hasNext();) {
                 String name = (String) j.next();
                 String value = sourceCache.getParameter(name);
-                sb.append("- " + name + ": " + value + nl);
-            }
-            sb.append(nl);
-        }
-
-        sb.append("ENTRY CACHE:");
-        sb.append(nl);
-        sb.append(nl);
-
-        for (Iterator i = entryCacheConfigs.keySet().iterator(); i.hasNext();) {
-            String cacheName = (String) i.next();
-            EntryCacheConfig cache = (EntryCacheConfig) entryCacheConfigs.get(cacheName);
-            sb.append(cacheName + " (" + cache.getCacheClass() + ")" + nl);
-            sb.append("Parameters:" + nl);
-            for (Iterator j = cache.getParameterNames().iterator(); j.hasNext();) {
-                String name = (String) j.next();
-                String value = cache.getParameter(name);
                 sb.append("- " + name + ": " + value + nl);
             }
             sb.append(nl);
@@ -437,36 +418,20 @@ public class Config implements Serializable {
         this.schemaFiles = schemaFiles;
     }
     
-    public void addCacheConfig(SourceCacheConfig sourceCacheConfig) {
-    	sourceCacheConfigs.put(sourceCacheConfig.getCacheName(), sourceCacheConfig);
+    public void addCacheConfig(CacheConfig cacheConfig) {
+    	cacheConfigs.put(cacheConfig.getCacheName(), cacheConfig);
     }
 
-    public void addEntryCacheConfig(EntryCacheConfig cacheConfig) {
-    	entryCacheConfigs.put(cacheConfig.getCacheName(), cacheConfig);
+    public CacheConfig getCacheConfig() {
+        return (CacheConfig)cacheConfigs.get("DEFAULT");
     }
 
-    public SourceCacheConfig getCacheConfig() {
-        return (SourceCacheConfig)sourceCacheConfigs.get("DEFAULT");
+    public CacheConfig getCacheConfig(String name) {
+        return (CacheConfig)cacheConfigs.get(name);
     }
 
-    public EntryCacheConfig getEntryCacheConfig() {
-        return (EntryCacheConfig)entryCacheConfigs.get("DEFAULT");
-    }
-
-    public SourceCacheConfig getCacheConfig(String name) {
-        return (SourceCacheConfig)sourceCacheConfigs.get(name);
-    }
-
-    public EntryCacheConfig getEntryCacheConfig(String name) {
-        return (EntryCacheConfig)entryCacheConfigs.get(name);
-    }
-
-    public Collection getSourceCacheConfigs() {
-    	return sourceCacheConfigs.values();
-    }
-
-    public Collection getEntryCacheConfigs() {
-    	return entryCacheConfigs.values();
+    public Collection getCacheConfigs() {
+    	return cacheConfigs.values();
     }
 
 	public Collection getModuleMappings() {
@@ -536,12 +501,8 @@ public class Config implements Serializable {
         this.adapterConfigs = adapterConfigs;
     }
 
-    public void setSourceCacheConfigs(Map sourceCacheConfigs) {
-        this.sourceCacheConfigs = sourceCacheConfigs;
-    }
-
-    public void setEntryCacheConfigs(Map entryCacheConfigs) {
-        this.entryCacheConfigs = entryCacheConfigs;
+    public void setCacheConfigs(Map cacheConfigs) {
+        this.cacheConfigs = cacheConfigs;
     }
 
     public void setInterpreterConfigs(Map interpreterConfigs) {

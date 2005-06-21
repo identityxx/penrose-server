@@ -6,6 +6,8 @@ package org.safehaus.penrose.engine;
 
 import org.safehaus.penrose.cache.SourceCache;
 import org.safehaus.penrose.cache.EntryCache;
+import org.safehaus.penrose.cache.DefaultCache;
+import org.safehaus.penrose.cache.Cache;
 import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.SearchResults;
 import org.safehaus.penrose.*;
@@ -34,6 +36,7 @@ public abstract class Engine implements EngineMBean {
     private EngineConfig engineConfig;
     private EngineContext engineContext;
 
+    private Cache cache;
     private SourceCache sourceCache;
     private EntryCache entryCache;
 
@@ -48,8 +51,10 @@ public abstract class Engine implements EngineMBean {
     public void init(EngineConfig engineConfig, EngineContext engineContext) throws Exception {
         this.engineConfig = engineConfig;
         this.engineContext = engineContext;
-        this.sourceCache = engineContext.getSourceCache();
-        this.entryCache = engineContext.getEntryCache();
+
+        this.cache = engineContext.getCache();
+        this.sourceCache = cache.getSourceCache();
+        this.entryCache = cache.getEntryCache();
 
         initHandlers();
         init();
@@ -229,6 +234,14 @@ public abstract class Engine implements EngineMBean {
 
     public void setEntryCache(EntryCache entryCache) {
         this.entryCache = entryCache;
+    }
+
+    public Cache getCache() {
+        return cache;
+    }
+
+    public void setCache(Cache cache) {
+        this.cache = cache;
     }
 }
 

@@ -12,9 +12,10 @@ import java.io.Serializable;
 /**
  * @author Administrator
  */
-public class EntryCacheConfig implements Serializable {
+public class CacheConfig implements Serializable {
 	
     public final static String CACHE_EXPIRATION = "cacheExpiration";
+    public final static String LOAD_ON_STARTUP  = "loadOnStartup";
     public final static String DRIVER           = "driver";
     public final static String URL              = "url";
     public final static String USER             = "user";
@@ -22,6 +23,8 @@ public class EntryCacheConfig implements Serializable {
 
     private String cacheName;
     private String cacheClass;
+    private String entryCacheClass;
+    private String sourceCacheClass;
     private String description;
 
 	/**
@@ -67,5 +70,21 @@ public class EntryCacheConfig implements Serializable {
 
     public void setCacheName(String cacheName) {
         this.cacheName = cacheName;
+    }
+
+    public String getEntryCacheClass() {
+        return entryCacheClass;
+    }
+
+    public void setEntryCacheClass(String entryCacheClass) {
+        this.entryCacheClass = entryCacheClass;
+    }
+
+    public String getSourceCacheClass() {
+        return sourceCacheClass;
+    }
+
+    public void setSourceCacheClass(String sourceCacheClass) {
+        this.sourceCacheClass = sourceCacheClass;
     }
 }

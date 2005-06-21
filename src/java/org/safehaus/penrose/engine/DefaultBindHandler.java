@@ -27,7 +27,7 @@ public class DefaultBindHandler implements BindHandler {
     public EngineContext engineContext;
 
     public void init(Engine engine, EngineContext engineContext) throws Exception {
-        this.engine = ((DefaultEngine)engine);
+        this.engine = (DefaultEngine)engine;
         this.engineContext = engineContext;
     }
 

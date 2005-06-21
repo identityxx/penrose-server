@@ -27,7 +27,7 @@ public class DefaultDeleteHandler implements DeleteHandler {
     public Config config;
 
     public void init(Engine engine, EngineContext engineContext) throws Exception {
-        this.engine = ((DefaultEngine)engine);
+        this.engine = (DefaultEngine)engine;
         this.engineContext = engineContext;
         this.config = engineContext.getConfig();
     }
