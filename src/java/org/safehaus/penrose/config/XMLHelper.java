@@ -69,12 +69,6 @@ public class XMLHelper {
             element.add(toElement(adapter));
         }
 
-        // connections
-		for (Iterator iter = config.getConnectionConfigs().iterator(); iter.hasNext();) {
-			ConnectionConfig connection = (ConnectionConfig)iter.next();
-			element.add(toElement(connection));
-		}
-
 		// root
 		Element rootElement = new DefaultElement("root");
 
@@ -114,7 +108,13 @@ public class XMLHelper {
 	public static Element toSourcesXmlElement(Config config) {
 		Element sourcesElement = new DefaultElement("sources");
 
-		// entries
+        // connections
+		for (Iterator iter = config.getConnectionConfigs().iterator(); iter.hasNext();) {
+			ConnectionConfig connection = (ConnectionConfig)iter.next();
+			sourcesElement.add(toElement(connection));
+		}
+
+		// sources
 		for (Iterator iter = config.getSourceDefinitions().iterator(); iter.hasNext();) {
 			SourceDefinition source = (SourceDefinition)iter.next();
 			Element element = toElement(source);

@@ -76,21 +76,6 @@
 			<set-next-rule methodname="addAdapterConfig" />
 		</pattern>
 
-		<!-- connection -->
-		<pattern value="connection">
-			<object-create-rule classname="org.safehaus.penrose.connection.ConnectionConfig" />
-			<set-properties-rule/>
-            <call-method-rule pattern="connection-name" methodname="setConnectionName" paramcount="0" />
-            <call-method-rule pattern="adapter-name" methodname="setAdapterName" paramcount="0" />
-			<call-method-rule pattern="description" methodname="setDescription" paramcount="0" />
-			<pattern value="parameter">
-				<call-method-rule methodname="setParameter" paramcount="2" />
-				<call-param-rule pattern="param-name" paramnumber="0"/>
-				<call-param-rule pattern="param-value" paramnumber="1"/>
-			</pattern>
-			<set-next-rule methodname="addConnectionConfig" />
-		</pattern>
-
 		<!-- root -->
 		<pattern value="root">
 			<set-properties-rule/>
