@@ -5,48 +5,57 @@
 
 <sources>
 
-  <source name="u">
-
+  <connection>
     <connection-name>MySQL</connection-name>
+    <adapter-name>JDBC</adapter-name>
+    <parameter>
+      <param-name>driver</param-name>
+      <param-value>com.mysql.jdbc.Driver</param-value>
+    </parameter>
+    <parameter>
+      <param-name>url</param-name>
+      <param-value>jdbc:mysql://localhost/penrose_demo?autoReconnect=true</param-value>
+    </parameter>
+    <parameter>
+      <param-name>user</param-name>
+      <param-value>penrose</param-value>
+    </parameter>
+    <parameter>
+      <param-name>password</param-name>
+      <param-value>penrose</param-value>
+    </parameter>
+  </connection>
 
+  <source name="users">
+    <connection-name>MySQL</connection-name>
     <field name="username" primaryKey="true" />
     <field name="firstName" />
     <field name="lastName" />
     <field name="password" />
-
     <parameter>
       <param-name>tableName</param-name>
       <param-value>users</param-value>
     </parameter>
-
   </source>
 
-  <source name="g">
-
+  <source name="groups">
     <connection-name>MySQL</connection-name>
-
     <field name="groupname" primaryKey="true" />
     <field name="description" />
-
     <parameter>
       <param-name>tableName</param-name>
       <param-value>groups</param-value>
     </parameter>
-
   </source>
 
-  <source name="ug">
-
+  <source name="usergroups">
     <connection-name>MySQL</connection-name>
-
     <field name="groupname" primaryKey="true" />
     <field name="username" primaryKey="true" />
-
     <parameter>
       <param-name>tableName</param-name>
       <param-value>usergroups</param-value>
     </parameter>
-
   </source>
 
 </sources>
