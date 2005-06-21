@@ -39,7 +39,7 @@ public class DefaultEntryCache implements EntryCache {
     public EntryCacheFilterTool cacheFilterTool;
 
     public PenroseResultHome resultExpirationHome;
-    public Map resultTables = new HashMap();
+    public Map homes = new HashMap();
 
     private DataSource ds;
 
@@ -110,74 +110,164 @@ public class DefaultEntryCache implements EntryCache {
         resultExpirationHome = new PenroseResultHome(ds);
 
         for (Iterator i=entries.iterator(); i.hasNext(); ) {
-            EntryDefinition entry = (EntryDefinition)i.next();
+            EntryDefinition entryDefinition = (EntryDefinition)i.next();
 
-            resultExpirationHome.insert(entry);
-
-            String tableName = getTableName(entry);
-            ResultHome resultHome = new ResultHome(ds, entry, tableName);
-            resultTables.put(tableName, resultHome);
+            createTables(entryDefinition);
         }
     }
 
-    public Entry get(EntryDefinition entry, Row pk) throws Exception {
-        List pks = new ArrayList();
-        pks.add(pk);
+    public String getEntryTableName(EntryDefinition entry) {
+        String dn = entry.getDn();
+		dn = dn.replace('=', '_');
+		dn = dn.replace(',', '_');
+		dn = dn.replace(' ', '_');
+		dn = dn.replace('.', '_');
+		return dn;
+	}
 
-        Map entries = get(entry, pks);
+    public String getEntryAttributeTableName(EntryDefinition entry) {
+        return getEntryTableName(entry)+"_attributes";
+	}
 
-        return (Entry)entries.get(pk);
+    public void createTables(EntryDefinition entryDefinition) throws Exception {
+        resultExpirationHome.insert(entryDefinition);
+
+        String entryTableName = getEntryTableName(entryDefinition);
+        EntryHome entryHome = new EntryHome(ds, entryDefinition, entryTableName);
+        homes.put(entryTableName, entryHome);
+
+        String entryAttributeTableName = getEntryAttributeTableName(entryDefinition);
+        EntryAttributeHome entryAttributeHome = new EntryAttributeHome(ds, entryDefinition, entryAttributeTableName);
+        homes.put(entryAttributeTableName, entryAttributeHome);
     }
 
-    public Map get(EntryDefinition entry, Collection primaryKeys) throws Exception {
-        String tableName = getTableName(entry);
-        ResultHome resultHome = (ResultHome)resultTables.get(tableName);
-        Collection rows = resultHome.search(primaryKeys);
+    public EntryHome getEntryHome(EntryDefinition entryDefinition) throws Exception {
+        String tableName = getEntryTableName(entryDefinition);
+        return (EntryHome)homes.get(tableName);
+    }
 
-        log.debug("Merging " + rows.size() + " rows:");
-        Map map = cacheContext.getTransformEngine().merge(entry, rows);
+    public EntryAttributeHome getEntryAttributeHome(EntryDefinition entryDefinition) throws Exception {
+        String tableName = getEntryAttributeTableName(entryDefinition);
+        return (EntryAttributeHome)homes.get(tableName);
+    }
+
+    public Entry get(EntryDefinition entryDefinition, Row pk) throws Exception {
+
+        EntryAttributeHome entryAttributeHome = getEntryAttributeHome(entryDefinition);
+        System.out.println("Searching attributes for pk: "+pk);
+
+        Collection rows = entryAttributeHome.search(pk);
+
+        AttributeValues attributeValues = new AttributeValues();
+        for (Iterator i = rows.iterator(); i.hasNext();) {
+            Row row = (Row)i.next();
+
+            String name = (String)row.getNames().iterator().next();
+            Object value = row.get(name);
+
+            log.debug(" - "+name+": "+value);
+
+            Collection values = (Collection)attributeValues.get(name);
+            if (values == null) {
+                values = new ArrayList();
+                attributeValues.set(name, values);
+            }
+            values.add(value);
+        }
+
+        Entry sr = new Entry(entryDefinition, attributeValues);
+        return sr;
+    }
+
+    public Map get(EntryDefinition entryDefinition, Collection primaryKeys) throws Exception {
 
         Map entries = new HashMap();
+
+        for (Iterator i=primaryKeys.iterator(); i.hasNext(); ) {
+            Row pk = (Row)i.next();
+            Entry entry = get(entryDefinition, pk);
+            entries.put(pk, entry);
+        }
+
+        /*
+        EntryHome entryHome = getEntryHome(entryDefinition);
+        Collection rows = entryHome.search(primaryKeys);
+
+        log.debug("Merging " + rows.size() + " rows:");
+        Map map = cacheContext.getTransformEngine().merge(entryDefinition, rows);
+
         for (Iterator i = map.keySet().iterator(); i.hasNext();) {
             Map pk = (Map)i.next();
             AttributeValues values = (AttributeValues)map.get(pk);
             log.debug(" - " + values);
 
-            Entry sr = new Entry(entry, values);
+            Entry sr = new Entry(entryDefinition, values);
             entries.put(pk, sr);
         }
+        */
 
         return entries;
     }
 
-    public void put(EntryDefinition entry, AttributeValues values, Date date) throws Exception {
+    public Row getPk(EntryDefinition entry, AttributeValues attributeValues) throws Exception {
+        Row pk = new Row();
+        Collection rdnAttributes = entry.getRdnAttributes();
+
+        for (Iterator i = rdnAttributes.iterator(); i.hasNext();) {
+            AttributeDefinition attributeDefinition = (AttributeDefinition) i.next();
+            String name = attributeDefinition.getName();
+            Collection values = attributeValues.get(name);
+
+            // TODO need to handle multiple values
+            Object value = values.iterator().next();
+            pk.set(name, value);
+        }
+
+        return pk;
+    }
+
+    public void put(EntryDefinition entryDefinition, AttributeValues values, Date date) throws Exception {
         Collection rows = cacheContext.getTransformEngine().convert(values);
 
-        String tableName = getTableName(entry);
-        ResultHome resultHome = (ResultHome)resultTables.get(tableName);
+        EntryHome entryHome = getEntryHome(entryDefinition);
 
         for (Iterator i=rows.iterator(); i.hasNext(); ) {
             Row row = (Row)i.next();
-            resultHome.insert(row, date);
+            entryHome.insert(row, date);
+        }
+
+        EntryAttributeHome entryAttributeHome = getEntryAttributeHome(entryDefinition);
+        Row pk = getPk(entryDefinition, values);
+        System.out.println("Inserting pk: "+pk);
+
+        for (Iterator i=values.getNames().iterator(); i.hasNext(); ) {
+            String name = (String)i.next();
+            Collection c = values.get(name);
+            if (c == null) continue;
+
+            for (Iterator j=c.iterator(); j.hasNext(); ) {
+                Object value = j.next();
+                if (value == null) continue;
+                entryAttributeHome.insert(pk, name, value, date);
+            }
         }
     }
 
-    public void remove(EntryDefinition entry, AttributeValues values, Date date) throws Exception {
+    public void remove(EntryDefinition entryDefinition, AttributeValues values, Date date) throws Exception {
         Collection rows = cacheContext.getTransformEngine().convert(values);
 
-        String tableName = getTableName(entry);
-        ResultHome resultHome = (ResultHome)resultTables.get(tableName);
+        EntryHome entryHome = getEntryHome(entryDefinition);
 
         for (Iterator i=rows.iterator(); i.hasNext(); ) {
             Row row = (Row)i.next();
-            resultHome.delete(row, date);
+            entryHome.delete(row, date);
         }
-    }
 
-    public Date getModifyTime(EntryDefinition entryDefinition, Collection pks) throws Exception {
-        String tableName = getTableName(entryDefinition);
-        ResultHome resultHome = (ResultHome)resultTables.get(tableName);
-        return resultHome.getModifyTime(pks);
+        EntryAttributeHome entryAttributeHome = getEntryAttributeHome(entryDefinition);
+        Row pk = getPk(entryDefinition, values);
+        System.out.println("Deleting pk: "+pk);
+
+        entryAttributeHome.delete(pk, date);
     }
 
     public Date getModifyTime(EntryDefinition entryDefinition, Row pk) throws Exception {
@@ -187,6 +277,11 @@ public class DefaultEntryCache implements EntryCache {
         return getModifyTime(entryDefinition, pks);
 
         //return resultExpirationHome.getModifyTime(entry);
+    }
+
+    public Date getModifyTime(EntryDefinition entryDefinition, Collection pks) throws Exception {
+        EntryHome entryHome = getEntryHome(entryDefinition);
+        return entryHome.getModifyTime(pks);
     }
 
     /**
@@ -230,7 +325,7 @@ public class DefaultEntryCache implements EntryCache {
 
         String sqlFilter = cacheFilterTool.toSQLFilter(entry, filter);
 
-        String tableName = getTableName(entry);
+        String tableName = getEntryTableName(entry);
         String attributeNames = getPkAttributeNames(entry);
 
         String sql = "select distinct " + attributeNames + " from " + tableName;
@@ -304,21 +399,6 @@ public class DefaultEntryCache implements EntryCache {
 
         return values;
     }
-
-    /**
-     * Get table name for a given dn (distinguished name) by replacing "=, ." with "_".
-     *
-     * @param entry entry
-     * @return table name
-     */
-    public String getTableName(EntryDefinition entry) {
-        String dn = entry.getDn();
-		dn = dn.replace('=', '_');
-		dn = dn.replace(',', '_');
-		dn = dn.replace(' ', '_');
-		dn = dn.replace('.', '_');
-		return dn;
-	}
 
     public EntryCacheFilterTool getCacheFilterTool() {
         return cacheFilterTool;

@@ -20,7 +20,7 @@ import java.util.*;
 /**
  * @author Endi S. Dewata
  */
-public class ResultHome {
+public class EntryHome {
 
     protected Logger log = Logger.getLogger(Penrose.CACHE_LOGGER);
 
@@ -30,7 +30,7 @@ public class ResultHome {
     public EntryDefinition entry;
     public String tableName;
 
-    public ResultHome(DataSource ds, EntryDefinition entry, String tableName) throws Exception {
+    public EntryHome(DataSource ds, EntryDefinition entry, String tableName) throws Exception {
 
         this.ds = ds;
         this.entry = entry;
@@ -640,9 +640,9 @@ public class ResultHome {
         }
     }
 
-    public void copy(ResultHome resultHome, String filter) throws Exception {
+    public void copy(EntryHome entryHome, String filter) throws Exception {
 
-        String sql = "insert into " + tableName + " select * from " + resultHome.tableName;
+        String sql = "insert into " + tableName + " select * from " + entryHome.tableName;
 
         if (filter != null) {
             sql += " where "+filter;

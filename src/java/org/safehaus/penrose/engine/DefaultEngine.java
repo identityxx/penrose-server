@@ -105,7 +105,7 @@ public class DefaultEngine extends Engine {
 /*
     public void loadEntries(Source source, Filter filter, Collection attributeNames, boolean temporary) throws Exception {
         SourceDefinition sourceConfig = (SourceDefinition)penrose.getConfig().getSources().get(source.getName());
-    	String tableName = cache.getTableName(sourceConfig, false);
+    	String tableName = cache.getEntryTableName(sourceConfig, false);
     	Boolean locked = (Boolean)tableStatus.get(tableName);
     	while (locked == Boolean.TRUE) {
     		// need to wait
@@ -144,7 +144,7 @@ public class DefaultEngine extends Engine {
 
     public Date getModifyTime(EntryDefinition entry, SourceDefinition sourceConfig, String filter) throws Exception {
 
-        String t1 = cache.getTableName(sourceConfig, true);
+        String t1 = cache.getEntryTableName(sourceConfig, true);
         SourceHome s1 = (SourceHome)sourceTables.get(t1);
         return s1.getModifyTime(filter);
     }
@@ -225,8 +225,8 @@ public class DefaultEngine extends Engine {
                 log.debug("Invalidating cache: "+row);
             }
 
-            String tableName = getTableName(entry, false);
-            ResultHome resultHome = (ResultHome)resultTables.get(tableName);
+            String tableName = getEntryTableName(entry, false);
+            EntryHome resultHome = (EntryHome)homes.get(tableName);
             //resultHome.setValidity(row, validity);
         }
 
@@ -242,8 +242,8 @@ public class DefaultEngine extends Engine {
 		log.debug("row = " + row);
 		log.debug("temporary = " + temporary);
 
-        String tableName = getTableName(entry, temporary);
-        ResultHome resultHome = (ResultHome)resultTables.get(tableName);
+        String tableName = getEntryTableName(entry, temporary);
+        EntryHome resultHome = (EntryHome)homes.get(tableName);
 
         log.debug("row = " + row);
 

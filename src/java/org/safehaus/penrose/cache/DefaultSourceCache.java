@@ -35,7 +35,7 @@ public class DefaultSourceCache extends SourceCache {
     public Map sourceTables = new HashMap();
 
     //public PenroseResultHome resultExpirationHome;
-    //public Map resultTables = new HashMap();
+    //public Map homes = new HashMap();
 
     private DataSource ds;
 
