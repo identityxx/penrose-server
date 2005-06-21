@@ -18,10 +18,13 @@
     </at>
   </entry>
 
-  <entry dn="cn=manager,dc=penrose,dc=safehaus,dc=org">
+  <entry rdn="cn=manager" parentDn="dc=penrose,dc=safehaus,dc=org">
     <oc>person</oc>
     <oc>inetOrgPerson</oc>
     <at name="cn" rdn="true">
+      <expression>"manager"</expression>
+    </at>
+    <at name="sn">
       <expression>"manager"</expression>
     </at>
     <at name="userPassword">
@@ -29,14 +32,14 @@
     </at>
   </entry>
 
-  <entry dn="ou=users,dc=penrose,dc=safehaus,dc=org">
+  <entry rdn="ou=users" parentDn="dc=penrose,dc=safehaus,dc=org">
     <oc>organizationalUnit</oc>
     <at name="ou" rdn="true">
       <expression>"users"</expression>
     </at>
   </entry>
 
-  <entry dn="uid=...,ou=users,dc=penrose,dc=safehaus,dc=org">
+  <entry rdn="uid=..." parentDn="ou=users,dc=penrose,dc=safehaus,dc=org">
     <oc>person</oc>
     <oc>inetOrgPerson</oc>
     <at name="uid" rdn="true">
@@ -76,7 +79,7 @@ return cn.substring(i+1);
     </source>
   </entry>
 
-  <entry dn="cn=...,uid=...,ou=users,dc=penrose,dc=safehaus,dc=org">
+  <entry rdn="cn=..." parentDn="uid=...,ou=users,dc=penrose,dc=safehaus,dc=org">
     <oc>groupOfUniqueNames</oc>
     <at name="cn" rdn="true">
       <expression>ug.groupname</expression>
@@ -130,14 +133,14 @@ return uniqueMember.substring(i+1, j);
     </relationship>
   </entry>
 
-  <entry dn="ou=groups,dc=penrose,dc=safehaus,dc=org">
+  <entry rdn="ou=groups" parentDn="dc=penrose,dc=safehaus,dc=org">
     <oc>organizationalUnit</oc>
     <at name="ou" rdn="true">
       <expression>"groups"</expression>
     </at>
   </entry>
 
-  <entry dn="cn=...,ou=groups,dc=penrose,dc=safehaus,dc=org">
+  <entry rdn="cn=..." parentDn="ou=groups,dc=penrose,dc=safehaus,dc=org">
     <oc>groupOfUniqueNames</oc>
     <at name="cn" rdn="true">
       <expression>g.groupname</expression>
@@ -179,7 +182,7 @@ return uniqueMember.substring(i+1, j);
     </relationship>
   </entry>
 
-  <entry dn="uid=...,cn=...,ou=groups,dc=penrose,dc=safehaus,dc=org">
+  <entry rdn="uid=..." parentDn="cn=...,ou=groups,dc=penrose,dc=safehaus,dc=org">
     <oc>person</oc>
     <oc>inetOrgPerson</oc>
     <at name="uid" rdn="true">

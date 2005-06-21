@@ -8,12 +8,17 @@ import org.apache.commons.digester.Digester;
 import org.apache.commons.digester.xmlrules.DigesterLoader;
 import org.apache.log4j.Logger;
 import org.safehaus.penrose.Penrose;
+import org.safehaus.penrose.mapping.EntryDefinition;
+import org.safehaus.penrose.mapping.ChildDefinition;
 import org.dom4j.io.OutputFormat;
 import org.dom4j.io.XMLWriter;
 
 import java.io.File;
 import java.io.FileWriter;
 import java.net.URL;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.ArrayList;
 
 /**
  * @author Endi S. Dewata
@@ -58,7 +63,46 @@ public class ConfigBuilder {
         digester.setClassLoader(cl);
 		digester.push(config);
 		digester.parse(file);
+
+        // copy entry list to prevent concurrent modification
+        Collection entryDefinitions = new ArrayList(config.getEntryDefinitions());
+
+        for (Iterator i=entryDefinitions.iterator(); i.hasNext(); ) {
+            EntryDefinition entryDefinition = (EntryDefinition)i.next();
+
+            Collection childDefinitions = entryDefinition.getChildDefinitions();
+            for (Iterator j=childDefinitions.iterator(); j.hasNext(); ) {
+                ChildDefinition childDefinition = (ChildDefinition)j.next();
+                loadChildDefinition(file.getParentFile(), entryDefinition, childDefinition);
+            }
+        }
 	}
+
+    public void loadChildDefinition(File dir, EntryDefinition entryDefinition, ChildDefinition childDefinition) throws Exception {
+        File file = new File(dir, childDefinition.getFile());
+        log.debug("Loading "+entryDefinition.getDn()+"'s child definition from: "+file.getAbsolutePath());
+
+        ClassLoader cl = getClass().getClassLoader();
+        URL url = cl.getResource("org/safehaus/penrose/config/mapping-digester-rules.xml");
+		Digester digester = DigesterLoader.createDigester(url);
+		digester.setValidating(false);
+        digester.setClassLoader(cl);
+		digester.push(childDefinition);
+		digester.parse(file);
+
+        Collection entryDefinitions = childDefinition.getEntryDefinitions();
+        for (Iterator i=entryDefinitions.iterator(); i.hasNext(); ) {
+            EntryDefinition ed = (EntryDefinition)i.next();
+            ed.setParentDn(entryDefinition.getDn());
+            config.addEntryDefinition(ed);
+
+            Collection childDefinitions = ed.getChildDefinitions();
+            for (Iterator j=childDefinitions.iterator(); j.hasNext(); ) {
+                ChildDefinition cd = (ChildDefinition)j.next();
+                loadChildDefinition(file.getParentFile(), ed, cd);
+            }
+        }
+    }
 
     /**
      * Load modules configuration from a file

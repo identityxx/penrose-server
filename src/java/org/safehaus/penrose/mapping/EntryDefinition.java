@@ -37,6 +37,8 @@ public class EntryDefinition implements Cloneable, Serializable {
 	 */
     private List children = new ArrayList();
 
+    private List childDefinitions = new ArrayList();
+
     /**
      * Object classes. Each element is of type String.
      */
@@ -72,15 +74,12 @@ public class EntryDefinition implements Cloneable, Serializable {
     }
 
     public EntryDefinition(String rdn, EntryDefinition parent) {
-        //this.dn = rdn+","+parent.getDn();
         this.rdn = rdn;
         this.parentDn = parent.getDn();
         this.parent = parent;
     }
 
     public String getRdn() {
-        //int i = dn.indexOf(",");
-        //return dn.substring(0, i);
         return rdn;
     }
     
@@ -103,22 +102,14 @@ public class EntryDefinition implements Cloneable, Serializable {
     }
 
     public String getParentDn() {
-        //int i = dn.indexOf(",");
-        //return dn.substring(i+1);
         return parentDn;
     }
 
     public boolean isDynamic() {
-        //int i = dn.indexOf(",");
-        //String rdn = dn.substring(0, i);
         return rdn.indexOf("...") >= 0;
     }
     
     public void setDynamic(boolean mapping) {
-        //int i = dn.indexOf(",");
-        //String rdn = dn.substring(0, i);
-        //String parentDn = dn.substring(i+1);
-
     	if (mapping && !isDynamic()) {
     		int j = rdn.indexOf("=")+1;
     		rdn = rdn.substring(0, j) + "...";
@@ -126,8 +117,6 @@ public class EntryDefinition implements Cloneable, Serializable {
     	} else if (!mapping && isDynamic()) {
     		rdn = rdn.replaceAll("\\.\\.\\.", "value");
     	}
-
-    	//dn = rdn + "," + parentDn;
     }
 
     public String getDn(AttributeValues attributes) {
@@ -164,7 +153,6 @@ public class EntryDefinition implements Cloneable, Serializable {
     }
 
     public void setDn(String dn) {
-        //this.dn = dn;
         int i = dn.indexOf(",");
         rdn = dn.substring(0, i);
         parentDn = dn.substring(i+1);
@@ -233,6 +221,10 @@ public class EntryDefinition implements Cloneable, Serializable {
 		children.add(child);
 	}
 
+    public void addChildDefinition(ChildDefinition childDefinition) {
+        childDefinitions.add(childDefinition);
+    }
+    
     public void addSource(Source source) {
         sources.put(source.getName(), source);
     }
@@ -484,5 +476,13 @@ public class EntryDefinition implements Cloneable, Serializable {
 
     public void setParentDn(String parentDn) {
         this.parentDn = parentDn;
+    }
+
+    public List getChildDefinitions() {
+        return childDefinitions;
+    }
+
+    public void setChildDefinitions(List childDefinitions) {
+        this.childDefinitions = childDefinitions;
     }
 }

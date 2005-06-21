@@ -18,13 +18,13 @@
     </at>
   </entry>
 
-  <entry dn="cn=manager,dc=penrose,dc=safehaus,dc=org">
+  <entry rdn="cn=manager" parentDn="dc=penrose,dc=safehaus,dc=org">
     <oc>person</oc>
     <oc>inetOrgPerson</oc>
     <at name="cn" rdn="true">
       <expression>"manager"</expression>
     </at>
-    <at name="sn" rdn="true">
+    <at name="sn">
       <expression>"manager"</expression>
     </at>
     <at name="userPassword">
@@ -32,14 +32,14 @@
     </at>
   </entry>
 
-  <entry dn="ou=users,dc=penrose,dc=safehaus,dc=org">
+  <entry rdn="ou=users" parentDn="dc=penrose,dc=safehaus,dc=org">
     <oc>organizationalUnit</oc>
     <at name="ou" rdn="true">
       <expression>"users"</expression>
     </at>
   </entry>
 
-  <entry dn="ou=groups,dc=penrose,dc=safehaus,dc=org">
+  <entry rdn="ou=groups" parentDn="dc=penrose,dc=safehaus,dc=org">
     <oc>organizationalUnit</oc>
     <at name="ou" rdn="true">
       <expression>"groups"</expression>

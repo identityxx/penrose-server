@@ -29,7 +29,7 @@ public class Config implements Serializable {
 
     private int debug = 0;
 
-    private Map entryDefinitions = new LinkedHashMap();
+    private Map entryDefinitions = new TreeMap();
     private Collection rootEntryDefinitions = new ArrayList();
 
     private Collection schemaFiles = new ArrayList();
@@ -60,6 +60,8 @@ public class Config implements Serializable {
 
         if (entryDefinitions.get(dn) != null) throw new Exception("Entry "+dn+" already exists");
 
+        log.debug("Adding "+dn+".");
+
         int i = dn.indexOf(",");
 
         if (i >= 0) { // entry has parent
@@ -75,7 +77,6 @@ public class Config implements Serializable {
         entryDefinitions.put(dn, entry);
 
         if (entry.getParent() == null) {
-        	log.debug("Adding "+dn+" to rootEntryDefinitions");
         	rootEntryDefinitions.add(entry);
         }
 
@@ -338,8 +339,6 @@ public class Config implements Serializable {
 		for (Iterator i = entryDefinitions.keySet().iterator(); i.hasNext();) {
 			String dn = (String) i.next();
 			EntryDefinition entry = (EntryDefinition) entryDefinitions.get(dn);
-			//if (entry.getParent() != null) continue;
-			//sb.append("DN: "+dn + nl);
 			sb.append(toString(entry));
 		}
 
@@ -371,10 +370,6 @@ public class Config implements Serializable {
 		
 		String nl = System.getProperty("line.separator");
 		StringBuffer sb = new StringBuffer("dn: " + entry.getDn() + nl);
-/*
-		sb.append("parentDn: "+entry.getParentDn() + nl);
-		sb.append("parent: "+(entry.getParent()==null?"null":"not null") + nl);
-*/
 		Collection oc = entry.getObjectClasses();
 		for (Iterator i = oc.iterator(); i.hasNext(); ) {
 			String value = (String) i.next();
@@ -391,14 +386,14 @@ public class Config implements Serializable {
 					+ attribute.getExpression() + nl);
 		}
 
-        sb.append(nl);
-/*
-		Collection children = entry.getChildren();
-		for (Iterator i = children.iterator(); i.hasNext();) {
-			EntryDefinition child = (EntryDefinition) i.next();
-			sb.append(toString(child));
+		Collection childDefinitions = entry.getChildDefinitions();
+		for (Iterator i = childDefinitions.iterator(); i.hasNext();) {
+			ChildDefinition child = (ChildDefinition) i.next();
+			sb.append("=> "+child.getFile() + nl);
 		}
-*/
+
+        sb.append(nl);
+
 		return sb.toString();
 	}
 

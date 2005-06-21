@@ -10,51 +10,61 @@
 -->
 <digester-rules>
 
-	<pattern value="*/entry">
+    <pattern value="mapping">
 
-		<object-create-rule classname="org.safehaus.penrose.mapping.EntryDefinition" />
-		<set-properties-rule />
+        <pattern value="entry">
 
-        <call-method-rule pattern="script" methodname="setScript" paramcount="0" />
+            <object-create-rule classname="org.safehaus.penrose.mapping.EntryDefinition" />
+            <set-properties-rule />
 
-        <call-method-rule pattern="oc" methodname="addObjectClass" paramcount="0" />
+            <call-method-rule pattern="script" methodname="setScript" paramcount="0" />
 
-		<pattern value="at">
+            <call-method-rule pattern="oc" methodname="addObjectClass" paramcount="0" />
 
-			<object-create-rule classname="org.safehaus.penrose.mapping.AttributeDefinition" />
-			<set-properties-rule />
+            <pattern value="at">
 
-            <call-method-rule pattern="expression" methodname="setExpression" paramcount="0" />
-			<set-next-rule methodname="addAttributeDefinition" />
+                <object-create-rule classname="org.safehaus.penrose.mapping.AttributeDefinition" />
+                <set-properties-rule />
 
-		</pattern>
+                <call-method-rule pattern="expression" methodname="setExpression" paramcount="0" />
+                <set-next-rule methodname="addAttributeDefinition" />
 
-		<pattern value="source">
+            </pattern>
 
-			<object-create-rule classname="org.safehaus.penrose.mapping.Source" />
-			<set-properties-rule />
-            <call-method-rule pattern="source-name" methodname="setSourceName" paramcount="0" />
+            <pattern value="source">
 
-			<pattern value="field">
-				<object-create-rule classname="org.safehaus.penrose.mapping.Field" />
-				<set-properties-rule />
-				<call-method-rule pattern="expression" methodname="setExpression" paramcount="0" />
-				<set-next-rule methodname="addField" />
-			</pattern>
+                <object-create-rule classname="org.safehaus.penrose.mapping.Source" />
+                <set-properties-rule />
+                <call-method-rule pattern="source-name" methodname="setSourceName" paramcount="0" />
 
-			<set-next-rule methodname="addSource" />
-		</pattern>
+                <pattern value="field">
+                    <object-create-rule classname="org.safehaus.penrose.mapping.Field" />
+                    <set-properties-rule />
+                    <call-method-rule pattern="expression" methodname="setExpression" paramcount="0" />
+                    <set-next-rule methodname="addField" />
+                </pattern>
 
-		<pattern value="relationship">
+                <set-next-rule methodname="addSource" />
+            </pattern>
 
-			<object-create-rule classname="org.safehaus.penrose.mapping.Relationship" />
-            <call-method-rule pattern="expression" methodname="setExpression" paramcount="0" />
-			<set-next-rule methodname="addRelationship" />
+            <pattern value="relationship">
 
-		</pattern>
+                <object-create-rule classname="org.safehaus.penrose.mapping.Relationship" />
+                <call-method-rule pattern="expression" methodname="setExpression" paramcount="0" />
+                <set-next-rule methodname="addRelationship" />
 
-		<set-next-rule methodname="addEntryDefinition" />
+            </pattern>
 
-	</pattern>
+            <pattern value="child">
+                <object-create-rule classname="org.safehaus.penrose.mapping.ChildDefinition" />
+                <set-properties-rule />
+                <set-next-rule methodname="addChildDefinition" />
+            </pattern>
+
+            <set-next-rule methodname="addEntryDefinition" />
+
+        </pattern>
+        
+    </pattern>
 
 </digester-rules>
