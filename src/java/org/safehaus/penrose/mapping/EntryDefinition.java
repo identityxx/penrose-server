@@ -421,8 +421,8 @@ public class EntryDefinition implements Cloneable, Serializable {
         return set;
     }
 
-    public LDAPEntry toLDAPEntry(AttributeValues attributeValues) {
-        return new LDAPEntry(getDn(attributeValues), getAttributeSet(attributeValues));
+    public LDAPEntry toLDAPEntry(String dn, AttributeValues attributeValues) {
+        return new LDAPEntry(dn, getAttributeSet(attributeValues));
     }
 
     public String toString(AttributeValues attributeValues) {

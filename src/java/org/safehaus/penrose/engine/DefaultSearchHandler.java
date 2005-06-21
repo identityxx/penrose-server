@@ -63,7 +63,7 @@ public class DefaultSearchHandler implements SearchHandler {
 
 		Entry baseEntry;
 		try {
-			baseEntry = getEntry(connection, nbase, attributeNames);
+			baseEntry = findEntry(connection, nbase, attributeNames);
             
         } catch (LDAPException e) {
             log.debug(e.getMessage());
@@ -121,7 +121,7 @@ public class DefaultSearchHandler implements SearchHandler {
 	 * @return virtual entry
 	 * @throws Exception
 	 */
-	public Entry getEntry(
+	public Entry findEntry(
             PenroseConnection connection,
             String dn,
 			Collection attributeNames) throws Exception {
@@ -151,19 +151,21 @@ public class DefaultSearchHandler implements SearchHandler {
 			parentDn = dn.substring(i + 1);
 		}
 
-        // search the parent entry
-		EntryDefinition parentEntry = config.getEntryDefinition(parentDn);
+        // search the parent entry definition
+        Entry parent = findEntry(connection, parentDn, attributeNames);
 
-		if (parentEntry == null) {
-			log.debug("Parent not found: " + dn);
+		if (parent == null) {
+            log.debug("Parent not found: " + dn);
 
-			throw new LDAPException("Can't find " + dn + ".",
-					LDAPException.NO_SUCH_OBJECT, "Can't find virtual entry "
-							+ dn + ".");
+            throw new LDAPException("Can't find " + dn + ".",
+                    LDAPException.NO_SUCH_OBJECT, "Can't find virtual entry "
+                            + dn + ".");
 		}
 
+        EntryDefinition parentDefinition = parent.getEntryDefinition();
+
 		log.debug("Found parent entry: " + parentDn);
-		Collection children = parentEntry.getChildren();
+		Collection children = parentDefinition.getChildren();
 
         Filter filter = engineContext.getFilterTool().parseFilter("(" + rdn + ")");
         log.debug("Parsed filter: " + filter);
@@ -192,6 +194,7 @@ public class DefaultSearchHandler implements SearchHandler {
 
                 try {
                     Entry sr = searchVirtualEntry(connection, child, rdn);
+                    sr.setParent(parent);
                     log.debug("Found virtual entry: " + sr.getDn());
 
                     return sr;
@@ -207,7 +210,9 @@ public class DefaultSearchHandler implements SearchHandler {
                 log.debug("Found static entry: " + child.getDn());
 
                 AttributeValues values = child.getAttributeValues(engineContext.newInterpreter());
-                return new Entry(child, values);
+                Entry sr = new Entry(child, values);
+                sr.setParent(parent);
+                return sr;
             }
 		}
 
@@ -269,6 +274,10 @@ public class DefaultSearchHandler implements SearchHandler {
                     LDAPEntry en = sr.toLDAPEntry();
                     results.add(Entry.filterAttributes(en, attributeNames));
                 }
+                
+                if (scope == 2) {
+                    searchChildren(connection, sr, scope, filter, attributeNames, results);
+                }
             }
 		}
 	}
@@ -299,7 +308,7 @@ public class DefaultSearchHandler implements SearchHandler {
 
         // find entry using rdn as primary key
         loadObject(entryDefinition, pk);
-        SearchResults results = getEntries(entryDefinition, pks);
+        SearchResults results = getEntries(null, entryDefinition, pks);
 
         if (results.size() == 0) return null;
 
@@ -373,7 +382,7 @@ public class DefaultSearchHandler implements SearchHandler {
                 }
             }
 
-            return getEntries(entryDefinition, pks);
+            return getEntries(parent, entryDefinition, pks);
 
         } finally {
         }
@@ -413,7 +422,17 @@ public class DefaultSearchHandler implements SearchHandler {
         }
     }
 
+    /**
+     * Get entries from entry cache.
+     *
+     * @param parent
+     * @param entryDefinition
+     * @param keys
+     * @return entries
+     * @throws Exception
+     */
     public SearchResults getEntries(
+            Entry parent,
             EntryDefinition entryDefinition,
             Collection keys) throws Exception {
 
@@ -430,6 +449,7 @@ public class DefaultSearchHandler implements SearchHandler {
 
             for (Iterator i = entries.values().iterator(); i.hasNext();) {
                 Entry sr = (Entry) i.next();
+                sr.setParent(parent);
                 log.debug("Returning "+sr.getDn());
                 results.add(sr);
             }

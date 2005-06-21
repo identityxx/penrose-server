@@ -49,7 +49,7 @@ public class DefaultDeleteHandler implements DeleteHandler {
         	// Virtual Entry
 	        Entry sr = null;
 	        try {
-                sr = ((DefaultSearchHandler)engine.getSearchHandler()).getEntry(connection, ndn, new ArrayList());
+                sr = ((DefaultSearchHandler)engine.getSearchHandler()).findEntry(connection, ndn, new ArrayList());
 	        } catch (Exception e) {
 	            // ignore
 	        }

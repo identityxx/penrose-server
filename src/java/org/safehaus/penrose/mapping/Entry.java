@@ -18,6 +18,7 @@ import java.util.*;
  */
 public class Entry {
 
+    private Entry parent;
     private EntryDefinition entryDefinition;
     private AttributeValues attributeValues;
 
@@ -27,7 +28,46 @@ public class Entry {
     }
 
     public String getDn() {
-        return entryDefinition.getDn(attributeValues);
+        String dn;
+
+        if (isDynamic()) {
+            Collection rdnAttributes = entryDefinition.getRdnAttributes();
+
+            // TODO fix for multiple rdn attributes
+            AttributeDefinition rdnAttribute = (AttributeDefinition)rdnAttributes.iterator().next();
+
+            // TODO fix for multiple values
+            Collection rdnValues = attributeValues.get(rdnAttribute.getName());
+            Object rdnValue = rdnValues.iterator().next();
+
+            StringBuffer sb = new StringBuffer();
+            sb.append(rdnAttribute.getName());
+            sb.append("=");
+            sb.append(rdnValue);
+
+            if (parent != null) {
+                //System.out.println("parent: "+parent);
+                sb.append(",");
+                sb.append(parent.getDn());
+
+            } else if (entryDefinition.getParent() != null) {
+                //System.out.println("parent dn: "+entryDefinition.getParentDn());
+                sb.append(",");
+                sb.append(entryDefinition.getParentDn());
+
+            } else {
+                //System.out.println("no parent");
+            }
+
+            dn = sb.toString();
+
+        } else {
+            dn = entryDefinition.getDn();
+        }
+
+        //System.out.println("DN: "+dn);
+
+        return dn;
     }
 
     public String getRdn() {
@@ -59,11 +99,29 @@ public class Entry {
     }
 
     public LDAPEntry toLDAPEntry() {
-        return entryDefinition.toLDAPEntry(attributeValues);
+        return entryDefinition.toLDAPEntry(getDn(), attributeValues);
     }
 
     public String toString() {
-        return entryDefinition.toString(attributeValues);
+        StringBuffer sb = new StringBuffer();
+        sb.append("dn: "+getDn()+"\n");
+
+        for (Iterator i = entryDefinition.getObjectClasses().iterator(); i.hasNext(); ) {
+            String oc = (String)i.next();
+            sb.append("objectClass: "+oc+"\n");
+        }
+
+        for (Iterator i = attributeValues.getNames().iterator(); i.hasNext(); ) {
+            String name = (String)i.next();
+            Collection values = attributeValues.get(name);
+
+            for (Iterator j = values.iterator(); j.hasNext(); ) {
+                String value = (String)j.next();
+                sb.append(name+": "+value+"\n");
+            }
+        }
+
+        return sb.toString();
     }
 
     public static Map parseRdn(String rdn) throws Exception {
@@ -127,5 +185,13 @@ public class Entry {
 
     public boolean isDynamic() {
         return entryDefinition.isDynamic();
+    }
+
+    public Entry getParent() {
+        return parent;
+    }
+
+    public void setParent(Entry parent) {
+        this.parent = parent;
     }
 }
