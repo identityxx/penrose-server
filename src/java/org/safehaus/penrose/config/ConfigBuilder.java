@@ -9,7 +9,7 @@ import org.apache.commons.digester.xmlrules.DigesterLoader;
 import org.apache.log4j.Logger;
 import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.mapping.EntryDefinition;
-import org.safehaus.penrose.mapping.ChildDefinition;
+import org.safehaus.penrose.mapping.MappingRule;
 import org.dom4j.io.OutputFormat;
 import org.dom4j.io.XMLWriter;
 
@@ -44,62 +44,61 @@ public class ConfigBuilder {
      * @throws Exception
      */
     public void loadMappingConfig(String filename) throws Exception {
-        File file = new File(filename);
-        loadMappingConfig(file);
+        MappingRule mappingRule = new MappingRule();
+        mappingRule.setFile(filename);
+        loadMappingConfig(null, null, mappingRule);
     }
 
     /**
      * Load mapping configuration from a file
      *
-     * @param file the configuration file (ie. mapping.xml)
+     * @param dir
+     * @param baseDn
+     * @param mappingRule
      * @throws Exception
      */
-	public void loadMappingConfig(File file) throws Exception {
-        log.debug("Loading mapping configuration file from: "+file.getAbsolutePath());
+    public void loadMappingConfig(File dir, String baseDn, MappingRule mappingRule) throws Exception {
+        File file = new File(dir, mappingRule.getFile());
+        log.debug("Loading mapping rule from: "+file.getAbsolutePath());
+
         ClassLoader cl = getClass().getClassLoader();
         URL url = cl.getResource("org/safehaus/penrose/config/mapping-digester-rules.xml");
 		Digester digester = DigesterLoader.createDigester(url);
 		digester.setValidating(false);
         digester.setClassLoader(cl);
-		digester.push(config);
+		digester.push(mappingRule);
 		digester.parse(file);
 
-        // copy entry list to prevent concurrent modification
-        Collection entryDefinitions = new ArrayList(config.getEntryDefinitions());
-
-        for (Iterator i=entryDefinitions.iterator(); i.hasNext(); ) {
-            EntryDefinition entryDefinition = (EntryDefinition)i.next();
-
-            Collection childDefinitions = entryDefinition.getChildDefinitions();
-            for (Iterator j=childDefinitions.iterator(); j.hasNext(); ) {
-                ChildDefinition childDefinition = (ChildDefinition)j.next();
-                loadChildDefinition(file.getParentFile(), entryDefinition, childDefinition);
-            }
+        if (mappingRule.getBaseDn() != null) {
+            baseDn = mappingRule.getBaseDn();
         }
-	}
 
-    public void loadChildDefinition(File dir, EntryDefinition entryDefinition, ChildDefinition childDefinition) throws Exception {
-        File file = new File(dir, childDefinition.getFile());
-        log.debug("Loading "+entryDefinition.getDn()+"'s child definition from: "+file.getAbsolutePath());
+        Collection contents = mappingRule.getContents();
+        for (Iterator i=contents.iterator(); i.hasNext(); ) {
+            Object object = i.next();
 
-        ClassLoader cl = getClass().getClassLoader();
-        URL url = cl.getResource("org/safehaus/penrose/config/mapping-digester-rules.xml");
-		Digester digester = DigesterLoader.createDigester(url);
-		digester.setValidating(false);
-        digester.setClassLoader(cl);
-		digester.push(childDefinition);
-		digester.parse(file);
+            if (object instanceof MappingRule) {
 
-        Collection entryDefinitions = childDefinition.getEntryDefinitions();
-        for (Iterator i=entryDefinitions.iterator(); i.hasNext(); ) {
-            EntryDefinition ed = (EntryDefinition)i.next();
-            ed.setParentDn(entryDefinition.getDn());
-            config.addEntryDefinition(ed);
+                MappingRule mr = (MappingRule)object;
+                loadMappingConfig(file.getParentFile(), baseDn, mr);
 
-            Collection childDefinitions = ed.getChildDefinitions();
-            for (Iterator j=childDefinitions.iterator(); j.hasNext(); ) {
-                ChildDefinition cd = (ChildDefinition)j.next();
-                loadChildDefinition(file.getParentFile(), ed, cd);
+            } else if (object instanceof EntryDefinition) {
+
+                EntryDefinition ed = (EntryDefinition)object;
+                if (ed.getDn() == null) {
+                    ed.setDn(baseDn);
+
+                } else if (baseDn != null) {
+                    String parentDn = ed.getParentDn();
+                    ed.setParentDn(parentDn == null ? baseDn : parentDn+","+baseDn);
+                }
+                config.addEntryDefinition(ed);
+
+                Collection childDefinitions = ed.getChildDefinitions();
+                for (Iterator j=childDefinitions.iterator(); j.hasNext(); ) {
+                    MappingRule mr = (MappingRule)j.next();
+                    loadMappingConfig(file.getParentFile(), ed.getDn(), mr);
+                }
             }
         }
     }

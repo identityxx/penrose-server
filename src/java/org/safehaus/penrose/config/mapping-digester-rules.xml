@@ -12,6 +12,14 @@
 
     <pattern value="mapping">
 
+        <set-properties-rule />
+
+        <pattern value="include">
+            <object-create-rule classname="org.safehaus.penrose.mapping.MappingRule" />
+            <set-properties-rule />
+            <set-next-rule methodname="addContent" />
+        </pattern>
+
         <pattern value="entry">
 
             <object-create-rule classname="org.safehaus.penrose.mapping.EntryDefinition" />
@@ -55,13 +63,13 @@
 
             </pattern>
 
-            <pattern value="child">
-                <object-create-rule classname="org.safehaus.penrose.mapping.ChildDefinition" />
+            <pattern value="include">
+                <object-create-rule classname="org.safehaus.penrose.mapping.MappingRule" />
                 <set-properties-rule />
                 <set-next-rule methodname="addChildDefinition" />
             </pattern>
 
-            <set-next-rule methodname="addEntryDefinition" />
+            <set-next-rule methodname="addContent" />
 
         </pattern>
         

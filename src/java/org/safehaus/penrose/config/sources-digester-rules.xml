@@ -15,8 +15,9 @@
         <!-- connection -->
         <pattern value="connection">
             <object-create-rule classname="org.safehaus.penrose.connection.ConnectionConfig" />
-            <set-properties-rule/>
-            <call-method-rule pattern="connection-name" methodname="setConnectionName" paramcount="0" />
+            <set-properties-rule>
+                <alias attr-name="name" prop-name="connectionName" />
+            </set-properties-rule>
             <call-method-rule pattern="adapter-name" methodname="setAdapterName" paramcount="0" />
             <call-method-rule pattern="description" methodname="setDescription" paramcount="0" />
             <pattern value="parameter">

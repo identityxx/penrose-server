@@ -388,7 +388,7 @@ public class Config implements Serializable {
 
 		Collection childDefinitions = entry.getChildDefinitions();
 		for (Iterator i = childDefinitions.iterator(); i.hasNext();) {
-			ChildDefinition child = (ChildDefinition) i.next();
+			MappingRule child = (MappingRule) i.next();
 			sb.append("=> "+child.getFile() + nl);
 		}
 

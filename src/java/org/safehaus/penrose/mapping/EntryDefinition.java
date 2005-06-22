@@ -149,6 +149,8 @@ public class EntryDefinition implements Cloneable, Serializable {
     }
 
     public String getDn() {
+        if (rdn == null) return null;
+        if (parentDn == null) return rdn;
         return rdn+","+parentDn;
     }
 
@@ -221,8 +223,8 @@ public class EntryDefinition implements Cloneable, Serializable {
 		children.add(child);
 	}
 
-    public void addChildDefinition(ChildDefinition childDefinition) {
-        childDefinitions.add(childDefinition);
+    public void addChildDefinition(MappingRule mappingRule) {
+        childDefinitions.add(mappingRule);
     }
     
     public void addSource(Source source) {
