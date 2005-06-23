@@ -9,9 +9,6 @@ import org.safehaus.penrose.mapping.EntryDefinition;
 import org.safehaus.penrose.mapping.Relationship;
 import org.safehaus.penrose.mapping.Row;
 import org.safehaus.penrose.filter.Filter;
-import org.safehaus.penrose.filter.OrFilter;
-import org.safehaus.penrose.filter.SimpleFilter;
-import org.safehaus.penrose.filter.AndFilter;
 import org.safehaus.penrose.SearchResults;
 
 import java.util.*;
@@ -42,7 +39,7 @@ public class SourceLoaderGraphVisitor extends GraphVisitor {
         if (entryDefinition.getSource(source.getName()) == null) return false;
 
         Collection pks = (Collection)stack.peek();
-        Filter filter = createFilter(pks);
+        Filter filter = engine.getEngineContext().getFilterTool().createFilter(pks);
         System.out.println("Loading source "+source.getName()+" with filter "+filter);
 
         SearchResults results = engine.getSourceCache().loadSource(entryDefinition, source, filter, date);
@@ -106,61 +103,5 @@ public class SourceLoaderGraphVisitor extends GraphVisitor {
 
     public void postVisitEdge(Object node1, Object node2, Object edge, Object parameter) throws Exception {
         stack.pop();
-    }
-
-    public Filter createFilter(Collection keys) {
-
-        Filter filter = null;
-
-        for (Iterator i=keys.iterator(); i.hasNext(); ) {
-            Row pk = (Row)i.next();
-
-            Filter f = createFilter(pk);
-
-            if (filter == null) {
-                filter = f;
-
-            } else if (!(filter instanceof OrFilter)) {
-                OrFilter of = new OrFilter();
-                of.addFilterList(filter);
-                of.addFilterList(f);
-                filter = of;
-
-            } else {
-                OrFilter of = (OrFilter)filter;
-                of.addFilterList(f);
-            }
-        }
-
-        return filter;
-    }
-
-    public Filter createFilter(Row values) {
-
-        Filter f = null;
-
-        for (Iterator j=values.getNames().iterator(); j.hasNext(); ) {
-            String name = (String)j.next();
-            Object value = values.get(name);
-            if (value == null) continue;
-
-            SimpleFilter sf = new SimpleFilter(name, "=", value == null ? null : value.toString());
-
-            if (f == null) {
-                f = sf;
-
-            } else if (!(f instanceof AndFilter)) {
-                AndFilter af = new AndFilter();
-                af.addFilterList(f);
-                af.addFilterList(sf);
-                f = af;
-
-            } else {
-                AndFilter af = (AndFilter)f;
-                af.addFilterList(sf);
-            }
-        }
-
-        return f;
     }
 }

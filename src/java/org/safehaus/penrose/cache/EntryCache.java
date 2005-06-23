@@ -38,7 +38,7 @@ public abstract class EntryCache {
 
     public abstract void init() throws Exception;
 
-    public abstract Collection findPrimaryKeys(EntryDefinition entry, Filter filter) throws Exception;
+    public abstract Collection findPrimaryKeys(EntryDefinition entry, Collection pks) throws Exception;
     public abstract Entry get(EntryDefinition entry, Row pk) throws Exception;
     public abstract Map get(EntryDefinition entry, Collection pks) throws Exception;
 

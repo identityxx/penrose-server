@@ -5,13 +5,10 @@
 package org.safehaus.penrose.cache;
 
 import org.safehaus.penrose.filter.Filter;
-import org.safehaus.penrose.Penrose;
-import org.safehaus.penrose.config.Config;
 import org.safehaus.penrose.mapping.Row;
 import org.safehaus.penrose.mapping.AttributeDefinition;
 import org.safehaus.penrose.mapping.EntryDefinition;
 import org.safehaus.penrose.mapping.*;
-import org.apache.log4j.Logger;
 
 import javax.sql.DataSource;
 import java.util.*;
@@ -228,15 +225,16 @@ public class DefaultEntryCache extends EntryCache {
 
     /**
      * @param entry
-     * @param filter
-     * @return primary keys
+     * @param primaryKeys
+     * @return loaded primary keys
      * @throws Exception
      */
     public Collection findPrimaryKeys(
             EntryDefinition entry,
-            Filter filter)
+            Collection primaryKeys)
             throws Exception {
 
+        Filter filter = cache.getCacheContext().getFilterTool().createFilter(primaryKeys);
         String sqlFilter = cache.getCacheFilterTool().toSQLFilter(entry, filter);
 
         String tableName = getEntryTableName(entry);

@@ -442,6 +442,8 @@ public class Penrose implements
 
         config = builder.getConfig();
         log.debug(config);
+
+        config.analyze();
 	}
 
 	public void loadSchema(String filename) throws Exception {

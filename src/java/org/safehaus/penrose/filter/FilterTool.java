@@ -12,6 +12,7 @@ import org.apache.log4j.Logger;
 import org.safehaus.penrose.mapping.AttributeValues;
 import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.mapping.Entry;
+import org.safehaus.penrose.mapping.Row;
 
 /**
  * @author Endi S. Dewata
@@ -148,4 +149,61 @@ public class FilterTool {
 
         return false;
     }
+
+    public Filter createFilter(Collection keys) {
+
+        Filter filter = null;
+
+        for (Iterator i=keys.iterator(); i.hasNext(); ) {
+            Row pk = (Row)i.next();
+
+            Filter f = createFilter(pk);
+
+            if (filter == null) {
+                filter = f;
+
+            } else if (!(filter instanceof OrFilter)) {
+                OrFilter of = new OrFilter();
+                of.addFilterList(filter);
+                of.addFilterList(f);
+                filter = of;
+
+            } else {
+                OrFilter of = (OrFilter)filter;
+                of.addFilterList(f);
+            }
+        }
+
+        return filter;
+    }
+
+    public Filter createFilter(Row values) {
+
+        Filter f = null;
+
+        for (Iterator j=values.getNames().iterator(); j.hasNext(); ) {
+            String name = (String)j.next();
+            Object value = values.get(name);
+            if (value == null) continue;
+
+            SimpleFilter sf = new SimpleFilter(name, "=", value == null ? null : value.toString());
+
+            if (f == null) {
+                f = sf;
+
+            } else if (!(f instanceof AndFilter)) {
+                AndFilter af = new AndFilter();
+                af.addFilterList(f);
+                af.addFilterList(sf);
+                f = af;
+
+            } else {
+                AndFilter af = (AndFilter)f;
+                af.addFilterList(sf);
+            }
+        }
+
+        return f;
+    }
+
 }

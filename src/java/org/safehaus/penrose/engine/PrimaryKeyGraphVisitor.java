@@ -6,9 +6,6 @@ package org.safehaus.penrose.engine;
 
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.filter.Filter;
-import org.safehaus.penrose.filter.OrFilter;
-import org.safehaus.penrose.filter.SimpleFilter;
-import org.safehaus.penrose.filter.AndFilter;
 import org.safehaus.penrose.SearchResults;
 import org.safehaus.penrose.interpreter.Interpreter;
 
@@ -121,7 +118,7 @@ public class PrimaryKeyGraphVisitor extends GraphVisitor {
             System.out.println(rhs+" = "+value);
         }
 
-        Filter newFilter = createFilter(newRows);
+        Filter newFilter = engine.getEngineContext().getFilterTool().createFilter(newRows);
 
         System.out.println("Searching source "+source.getName()+" for "+newFilter);
         SearchResults results = source.search(newFilter);
@@ -136,62 +133,6 @@ public class PrimaryKeyGraphVisitor extends GraphVisitor {
         stack.push(newRows);
 
         return true;
-    }
-
-    public Filter createFilter(Collection keys) {
-
-        Filter filter = null;
-
-        for (Iterator i=keys.iterator(); i.hasNext(); ) {
-            Row pk = (Row)i.next();
-
-            Filter f = createFilter(pk);
-
-            if (filter == null) {
-                filter = f;
-
-            } else if (!(filter instanceof OrFilter)) {
-                OrFilter of = new OrFilter();
-                of.addFilterList(filter);
-                of.addFilterList(f);
-                filter = of;
-
-            } else {
-                OrFilter of = (OrFilter)filter;
-                of.addFilterList(f);
-            }
-        }
-
-        return filter;
-    }
-
-    public Filter createFilter(Row values) {
-
-        Filter f = null;
-
-        for (Iterator j=values.getNames().iterator(); j.hasNext(); ) {
-            String name = (String)j.next();
-            Object value = values.get(name);
-            if (value == null) continue;
-
-            SimpleFilter sf = new SimpleFilter(name, "=", value == null ? null : value.toString());
-
-            if (f == null) {
-                f = sf;
-
-            } else if (!(f instanceof AndFilter)) {
-                AndFilter af = new AndFilter();
-                af.addFilterList(f);
-                af.addFilterList(sf);
-                f = af;
-
-            } else {
-                AndFilter af = (AndFilter)f;
-                af.addFilterList(sf);
-            }
-        }
-
-        return f;
     }
 
     public Engine getEngine() {
