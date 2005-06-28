@@ -159,6 +159,6 @@ public class Source implements Cloneable, Serializable {
     }
 
     public String toString() {
-        return sourceName;
+        return name+" "+sourceName;
     }
 }

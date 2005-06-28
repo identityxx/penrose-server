@@ -14,7 +14,7 @@ import org.apache.log4j.Logger;
  */
 public class MRSWLock {
 
-	static Logger logger = Logger.getLogger(MRSWLock.class);
+	Logger logger = Logger.getLogger(MRSWLock.class);
 
 	/**
 	 * Internal integer value. Positive value is for read (no maximum or no
@@ -43,7 +43,7 @@ public class MRSWLock {
 	public synchronized boolean getReadLock(long msTimeout)
 			throws InterruptedException, TimeoutException {
 
-        logger.debug("Getting read lock.");
+        //logger.debug("Getting read lock.");
 
         queue.add(Thread.currentThread().getName());
 
@@ -58,14 +58,14 @@ public class MRSWLock {
 	public synchronized boolean releaseReadLock(long msTimeout)
 			throws InterruptedException, TimeoutException {
 
-        logger.debug("Releasing read lock.");
+        //logger.debug("Releasing read lock.");
 		queue.remove();
 
         if (value > 0) {
             setValue(value - 1);
         }
 
-        logger.debug("Read lock released.");
+        //logger.debug("Read lock released.");
 
         return true;
 	}
@@ -73,7 +73,7 @@ public class MRSWLock {
 	public synchronized boolean getWriteLock(long msTimeout)
 			throws InterruptedException, TimeoutException {
 
-        logger.debug("Getting write lock.");
+        //logger.debug("Getting write lock.");
 
         queue.add(Thread.currentThread().getName());
 
@@ -88,7 +88,7 @@ public class MRSWLock {
 	public synchronized boolean releaseWriteLock(long msTimeout)
 			throws InterruptedException, TimeoutException {
 
-        logger.debug("Releasing write lock.");
+        //logger.debug("Releasing write lock.");
 
         setValue(value + 1);
 

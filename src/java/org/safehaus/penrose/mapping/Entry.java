@@ -5,8 +5,6 @@
 package org.safehaus.penrose.mapping;
 
 
-import org.safehaus.penrose.mapping.EntryDefinition;
-import org.safehaus.penrose.mapping.AttributeValues;
 import org.ietf.ldap.LDAPAttributeSet;
 import org.ietf.ldap.LDAPAttribute;
 import org.ietf.ldap.LDAPEntry;
@@ -123,7 +121,7 @@ public class Entry {
 
         return sb.toString();
     }
-
+/*
     public static Map parseRdn(String rdn) throws Exception {
         Map map = new HashMap();
         StringTokenizer st = new StringTokenizer(rdn, "+");
@@ -140,7 +138,7 @@ public class Entry {
 
         return map;
     }
-
+*/
     public static String toString(LDAPEntry entry) throws Exception {
 
         StringBuffer sb = new StringBuffer();

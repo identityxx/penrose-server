@@ -305,24 +305,20 @@ public class DefaultSourceCache extends SourceCache {
     public SearchResults loadSource(
             EntryDefinition entry,
             Source source,
-            Filter sqlFilter,
+            Filter filter,
             Date date)
             throws Exception {
 
-        log.info("-------------------------------------------------");
-        log.info("LOAD SOURCE");
-        log.info(" - source: " + source.getSourceName());
-        log.info(" - filter: " + sqlFilter);
-        log.info("");
+        log.info("Loading source "+source.getSourceName()+" with filter "+filter);
 
         SourceDefinition sourceConfig = source.getSourceDefinition();
 
         CacheEvent beforeEvent = new CacheEvent(getCacheContext(), sourceConfig, CacheEvent.BEFORE_LOAD_ENTRIES);
         postCacheEvent(sourceConfig, beforeEvent);
 
-        SearchResults results = source.search(sqlFilter);
+        SearchResults results = source.search(filter);
 
-        String stringFilter = cache.getCacheFilterTool().toSQLFilter(entry, sqlFilter);
+        String stringFilter = cache.getCacheFilterTool().toSQLFilter(entry, filter);
 
         delete(source, stringFilter, date);
 

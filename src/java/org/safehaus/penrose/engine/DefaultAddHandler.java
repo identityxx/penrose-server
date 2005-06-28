@@ -69,17 +69,19 @@ public class DefaultAddHandler implements AddHandler {
         String rdn = dn.substring(0, i);
         String parentDn = dn.substring(i+1);
 
-        EntryDefinition parentEntry = config.getEntryDefinition(parentDn);
-        if (parentEntry == null) return LDAPException.NO_SUCH_OBJECT;
+        Entry parent = engine.getSearchHandler().findEntry(connection, parentDn);
+        if (parent == null) return LDAPException.NO_SUCH_OBJECT;
 
-        return add(connection, parentEntry, dn, values);
+        return add(connection, parent, dn, values);
     }
 
-    public int add(PenroseConnection connection, EntryDefinition parentEntry, String dn, AttributeValues values) throws Exception {
+    public int add(PenroseConnection connection, Entry parent, String dn, AttributeValues values) throws Exception {
 
-        log.debug("Adding entry under "+parentEntry.getDn());
+        EntryDefinition parentDefinition = parent.getEntryDefinition();
 
-        Collection children = parentEntry.getChildren();
+        log.debug("Adding entry under "+parent.getDn());
+
+        Collection children = parentDefinition.getChildren();
 
         // add into the first matching child
         for (Iterator iterator = children.iterator(); iterator.hasNext(); ) {
@@ -89,7 +91,7 @@ public class DefaultAddHandler implements AddHandler {
             return add(entry, values);
         }
 
-        return addStaticEntry(dn, values, parentEntry);
+        return addStaticEntry(dn, values, parentDefinition);
     }
 
     public int addStaticEntry(String dn, AttributeValues values, EntryDefinition parent) throws Exception {
@@ -159,21 +161,29 @@ public class DefaultAddHandler implements AddHandler {
         return LDAPException.SUCCESS;
     }
 
-    public int add(EntryDefinition entry, AttributeValues values) throws Exception {
+    public int add(EntryDefinition entryDefinition, AttributeValues values) throws Exception {
 
         Date date = new Date();
 
-        Collection sources = entry.getSources();
+        Graph graph = config.getGraph(entryDefinition);
+        Source primarySource = config.getPrimarySource(entryDefinition);
+
+        AddGraphVisitor visitor = new AddGraphVisitor(engine, this, entryDefinition, values, date);
+        graph.traverse(visitor, primarySource);
+
+        if (visitor.getReturnCode() != LDAPException.SUCCESS) return visitor.getReturnCode();
+/*
+        Collection sources = entryDefinition.getSources();
 
         for (Iterator i2 = sources.iterator(); i2.hasNext(); ) {
             Source source = (Source)i2.next();
 
-            int rc = add(source, entry, values, date);
+            int rc = add(source, entryDefinition, values, date);
             if (rc != LDAPException.SUCCESS) return rc;
         }
 
-        engine.getEntryCache().put(entry, values, date);
-
+        engine.getEntryCache().put(entryDefinition, values, date);
+*/
         return LDAPException.SUCCESS;
     }
 

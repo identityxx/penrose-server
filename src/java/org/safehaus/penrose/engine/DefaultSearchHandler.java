@@ -61,9 +61,10 @@ public class DefaultSearchHandler implements SearchHandler {
 		Filter f = engineContext.getFilterTool().parseFilter(filter);
 		log.debug("Parsed filter: " + f);
 
+        log.debug("----------------------------------------------------------------------------------");
 		Entry baseEntry;
 		try {
-			baseEntry = findEntry(connection, nbase, attributeNames);
+			baseEntry = findEntry(connection, nbase);
             
         } catch (LDAPException e) {
             log.debug(e.getMessage());
@@ -91,6 +92,7 @@ public class DefaultSearchHandler implements SearchHandler {
 			}
 		}
 
+        log.debug("----------------------------------------------------------------------------------");
 		if (scope == 1 || scope == 2) { // one level or subtree
 			log.debug("Searching children of " + baseEntry.getDn());
 			searchChildren(connection, baseEntry, scope, f, attributeNames, results);
@@ -123,11 +125,9 @@ public class DefaultSearchHandler implements SearchHandler {
 	 */
 	public Entry findEntry(
             PenroseConnection connection,
-            String dn,
-			Collection attributeNames) throws Exception {
+            String dn) throws Exception {
 
-		log.debug("----------------------------------------------------------------------------------");
-		log.debug("Getting entry: " + dn);
+		log.debug("Find entry: " + dn);
 
         // search the entry directly
         EntryDefinition entry = config.getEntryDefinition(dn);
@@ -152,7 +152,7 @@ public class DefaultSearchHandler implements SearchHandler {
 		}
 
         // find the parent entry
-        Entry parent = findEntry(connection, parentDn, attributeNames);
+        Entry parent = findEntry(connection, parentDn);
 
 		if (parent == null) {
             log.debug("Parent not found: " + dn);
@@ -164,7 +164,7 @@ public class DefaultSearchHandler implements SearchHandler {
 
         EntryDefinition parentDefinition = parent.getEntryDefinition();
 
-		log.debug("Found parent entry: " + parentDn);
+		//log.debug("Found parent entry: " + parentDn);
 		Collection children = parentDefinition.getChildren();
 
         int j = rdn.indexOf("=");
@@ -176,7 +176,7 @@ public class DefaultSearchHandler implements SearchHandler {
 			entry = (EntryDefinition) iterator.next();
 
             String childRdn = entry.getRdn();
-            log.debug("Checking child: "+childRdn);
+            //log.debug("Checking child: "+childRdn);
 
             int k = childRdn.indexOf("=");
             String childRdnAttribute = childRdn.substring(0, k);
@@ -191,6 +191,8 @@ public class DefaultSearchHandler implements SearchHandler {
 
                 try {
                     Entry sr = searchVirtualEntry(connection, parent, entry, rdn);
+                    if (sr == null) continue;
+
                     sr.setParent(parent);
                     log.debug("Found virtual entry: " + sr.getDn());
 
@@ -312,7 +314,7 @@ public class DefaultSearchHandler implements SearchHandler {
 
         // there should be only one entry
         Entry entry = (Entry)results.iterator().next();
-
+/*
         log.debug("Checking " + entry.getDn() + ": " + entry.getAttributeValues());
 
 		Map rdnValues = Entry.parseRdn(rdn);
@@ -337,7 +339,7 @@ public class DefaultSearchHandler implements SearchHandler {
                 return null;
             }
         }
-
+*/
 		return entry;
 	}
 
@@ -382,10 +384,10 @@ public class DefaultSearchHandler implements SearchHandler {
 
     public void loadObject(
             EntryDefinition entryDefinition,
-            Row pk) throws Exception {
+            Row rdn) throws Exception {
 
         log.debug("--------------------------------------------------------------------------------------");
-        log.debug("Loading entry "+entryDefinition.getDn()+" with pk "+pk);
+        log.debug("Loading entry "+entryDefinition.getDn()+" with rdn "+rdn);
 
         Calendar calendar = Calendar.getInstance();
 
@@ -397,7 +399,7 @@ public class DefaultSearchHandler implements SearchHandler {
         Calendar c = (Calendar) calendar.clone();
         c.add(Calendar.MINUTE, -cacheExpiration);
 
-        Date modifyTime = engine.getEntryCache().getModifyTime(entryDefinition, pk);
+        Date modifyTime = engine.getEntryCache().getModifyTime(entryDefinition, rdn);
         boolean expired = modifyTime == null || modifyTime.before(c.getTime());
 
         log.debug("Comparing "+modifyTime+" with "+c.getTime()+" => "+(expired ? "expired" : "not expired"));
@@ -405,7 +407,8 @@ public class DefaultSearchHandler implements SearchHandler {
         if (expired) { // if cache expired => load this entry only
 
             List rdns = new ArrayList();
-            rdns.add(pk);
+            rdns.add(rdn);
+
             Collection pks = rdnToPk(entryDefinition, rdns);
 
             loadSources(entryDefinition, pks, calendar);
@@ -493,30 +496,36 @@ public class DefaultSearchHandler implements SearchHandler {
 
             AttributeValues values = parent.getAttributeValues();
             Collection rows = engineContext.getTransformEngine().convert(values);
-            Row row = (Row)rows.iterator().next();
 
-            Interpreter interpreter = engineContext.newInterpreter();
-            interpreter.set(row);
+            Collection newRows = new HashSet();
+            for (Iterator i=rows.iterator(); i.hasNext(); ) {
+                Row row = (Row)i.next();
 
-            Row initialRow = new Row();
+                Interpreter interpreter = engineContext.newInterpreter();
+                interpreter.set(row);
 
-            for (Iterator i=parent.getSources().iterator(); i.hasNext(); ) {
-                Source s = (Source)i.next();
+                Row newRow = new Row();
 
-                for (Iterator j=s.getFields().iterator(); j.hasNext(); ) {
-                    Field f = (Field)j.next();
-                    String expression = f.getExpression();
-                    Object v = interpreter.eval(expression);
+                for (Iterator j=parent.getSources().iterator(); j.hasNext(); ) {
+                    Source s = (Source)j.next();
 
-                    System.out.println("Setting parent's value "+s.getName()+"."+f.getName()+": "+v);
-                    initialRow.set(s.getName()+"."+f.getName(), v);
+                    for (Iterator k=s.getFields().iterator(); k.hasNext(); ) {
+                        Field f = (Field)k.next();
+                        String expression = f.getExpression();
+                        Object v = interpreter.eval(expression);
+
+                        //log.debug("Setting parent's value "+s.getName()+"."+f.getName()+": "+v);
+                        newRow.set(f.getName(), v);
+                    }
                 }
+
+                newRows.add(newRow);
             }
 
             String startingSourceName = getStartingSourceName(entryDefinition);
             Source startingSource = entryDefinition.getEffectiveSource(startingSourceName);
 
-            PrimaryKeyGraphVisitor visitor = new PrimaryKeyGraphVisitor(engine, entryDefinition, initialRow);
+            PrimaryKeyGraphVisitor visitor = new PrimaryKeyGraphVisitor(engine, entryDefinition, newRows, primarySource);
             graph.traverse(visitor, startingSource);
             return visitor.getKeys();
 
@@ -730,6 +739,8 @@ public class DefaultSearchHandler implements SearchHandler {
                 String expression = field.getExpression();
 
                 Object value = interpreter.eval(expression);
+                if (value == null) continue;
+
                 pk.set(name, value);
             }
 
@@ -772,8 +783,10 @@ public class DefaultSearchHandler implements SearchHandler {
         Graph graph = config.getGraph(entryDefinition);
         Source primarySource = config.getPrimarySource(entryDefinition);
 
-        Filter newFilter = engine.getEngineContext().getFilterTool().createFilter(pks);
-        String sqlFilter = cache.getCacheFilterTool().toSQLFilter(entryDefinition, newFilter);
+        Filter filter = engine.getEngineContext().getFilterTool().createFilter(pks);
+
+        // TODO need to add primarySource's name to the filter
+        String sqlFilter = cache.getCacheFilterTool().toSQLFilter(entryDefinition, filter);
 
         log.debug("--------------------------------------------------------------------------------------");
         log.debug("Joining sources with pks "+pks);
@@ -804,6 +817,7 @@ public class DefaultSearchHandler implements SearchHandler {
                 }
                 values.add(translatedRow);
             }
+            log.debug("Merged " + entries.size() + " entries.");
 
             // update attribute values in entry cache
             for (Iterator i=entries.values().iterator(); i.hasNext(); ) {

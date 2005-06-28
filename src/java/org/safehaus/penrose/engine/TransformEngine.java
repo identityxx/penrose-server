@@ -148,7 +148,8 @@ public class TransformEngine {
      */
     public boolean translate(Source source, Row row, Row pk, Row values) throws Exception {
 
-    	Interpreter interpreter = penrose.newInterpreter(row.getValues());
+    	Interpreter interpreter = penrose.newInterpreter();
+        interpreter.set(row);
 
         Collection fields = source.getFields();
 
@@ -158,7 +159,10 @@ public class TransformEngine {
             String name = field.getName();
 
             String expression = field.getExpression();
-            if (expression == null) continue;
+            if (expression == null) {
+                if (field.isPrimaryKey()) return false;
+                continue;
+            }
 
             String value = (String)interpreter.eval(expression);
 
@@ -198,7 +202,7 @@ public class TransformEngine {
     }
 
     /**
-     * Translate join result row into actual entry attribute values 
+     * Translate source row into actual entry attribute values
      * 
      * @param entry the entry
      * @param row the join result row
@@ -209,9 +213,10 @@ public class TransformEngine {
      */
     public boolean translate(EntryDefinition entry, Row row, Map pk, Row values) throws Exception {
 
-        Interpreter interpreter = penrose.newInterpreter(row.getValues());
+        Interpreter interpreter = penrose.newInterpreter();
+        interpreter.set(row);
 
-        Map attributes = (Map)entry.getAttributes();
+        Map attributes = entry.getAttributes();
         
         for (Iterator j=attributes.values().iterator(); j.hasNext(); ) {
             AttributeDefinition attribute = (AttributeDefinition)j.next();

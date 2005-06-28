@@ -6,6 +6,7 @@ package org.safehaus.penrose.engine;
 
 import org.safehaus.penrose.SearchResults;
 import org.safehaus.penrose.PenroseConnection;
+import org.safehaus.penrose.mapping.Entry;
 
 import java.util.Collection;
 
@@ -15,7 +16,11 @@ import java.util.Collection;
 public interface SearchHandler {
 
     public void init(Engine engine, EngineContext engineContext) throws Exception;
-    
+
+    public Entry findEntry(
+            PenroseConnection connection,
+            String dn) throws Exception;
+
     public int search(
             PenroseConnection connection,
             String base,

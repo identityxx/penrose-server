@@ -49,7 +49,7 @@ public class DefaultDeleteHandler implements DeleteHandler {
         	// Virtual Entry
 	        Entry sr = null;
 	        try {
-                sr = ((DefaultSearchHandler)engine.getSearchHandler()).findEntry(connection, ndn, new ArrayList());
+                sr = ((DefaultSearchHandler)engine.getSearchHandler()).findEntry(connection, ndn);
 	        } catch (Exception e) {
 	            // ignore
 	        }
@@ -84,11 +84,19 @@ public class DefaultDeleteHandler implements DeleteHandler {
     }
 
 
-    public int delete(EntryDefinition entry, AttributeValues values) throws Exception {
+    public int delete(EntryDefinition entryDefinition, AttributeValues values) throws Exception {
 
         Date date = new Date();
 
-        Collection sources = entry.getSources();
+        Graph graph = config.getGraph(entryDefinition);
+        Source primarySource = config.getPrimarySource(entryDefinition);
+
+        DeleteGraphVisitor visitor = new DeleteGraphVisitor(engine, this, entryDefinition, values, date);
+        graph.traverse(visitor, primarySource);
+
+        if (visitor.getReturnCode() != LDAPException.SUCCESS) return visitor.getReturnCode();
+/*
+        Collection sources = entryDefinition.getSources();
 
         // delete from each source starting from the last one
         Source list[] = (Source[])sources.toArray(new Source[sources.size()]);
@@ -96,13 +104,13 @@ public class DefaultDeleteHandler implements DeleteHandler {
         for (int index=list.length-1; index>=0; index--) {
             Source source = list[index];
 
-            int rc = delete(source, entry, values, date);
+            int rc = delete(source, entryDefinition, values, date);
 
             if (rc == LDAPException.NO_SUCH_OBJECT) continue; // ignore
             if (rc != LDAPException.SUCCESS) return rc;
         }
-
-        engine.getEntryCache().remove(entry, values, date);
+*/
+        engine.getEntryCache().remove(entryDefinition, values, date);
 
         return LDAPException.SUCCESS;
     }

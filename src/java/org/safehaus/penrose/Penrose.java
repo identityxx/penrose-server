@@ -996,18 +996,6 @@ public class Penrose implements
         return (Interpreter)clazz.newInstance();
     }
 
-    public Interpreter newInterpreter(Map values) throws Exception {
-        Interpreter interpreter = newInterpreter();
-
-        for (Iterator i=values.keySet().iterator(); i.hasNext(); ) {
-            String name = (String)i.next();
-            Object value = values.get(name);
-            interpreter.set(name, value);
-        }
-
-        return interpreter;
-    }
-
     public Cache getCache() {
         return getCache("DEFAULT");
     }

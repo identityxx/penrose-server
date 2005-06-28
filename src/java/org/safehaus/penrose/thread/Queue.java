@@ -15,7 +15,7 @@ import org.safehaus.penrose.thread.EmptyQueueException;
 public class Queue {
 	
 	protected Vector queue = new Vector();
-	protected static Logger logger = Logger.getLogger(Queue.class); 
+	protected Logger logger = Logger.getLogger(Queue.class);
 	
 	public synchronized boolean isEmpty() {
 		return queue.size() == 0;
@@ -27,7 +27,7 @@ public class Queue {
 	 * @param obj
 	 */
 	public synchronized void add(Object obj) {
-		logger.debug("Adding: "+obj+" to "+toString());
+		//logger.debug("Adding: "+obj+" to "+toString());
 		queue.add(obj);
 	}
 	
@@ -38,7 +38,7 @@ public class Queue {
 	 * @throws EmptyQueueException if the queue is empty
 	 */
 	public synchronized Object remove() throws EmptyQueueException {
-		logger.debug("Removing: "+toString());
+		//logger.debug("Removing: "+toString());
 		if (isEmpty()) throw new EmptyQueueException();
 		return queue.remove(0);
 	}
@@ -50,7 +50,7 @@ public class Queue {
 	 * @throws EmptyQueueException if the queue is empty
 	 */
 	public synchronized Object peek() throws EmptyQueueException {
-		logger.debug("Content: "+toString());
+		//logger.debug("Content: "+toString());
 		if (isEmpty()) throw new EmptyQueueException();
 		return queue.get(0);
 	}
@@ -63,7 +63,7 @@ public class Queue {
 	 * @throws EmptyQueueException if the queue is empty
 	 */
 	public synchronized boolean removeIfSame(Object obj) throws EmptyQueueException {
-		logger.debug(toString());
+		//logger.debug(toString());
 		if (isEmpty()) throw new EmptyQueueException();
 		Object obj2 = queue.get(0);
 		if (obj2.equals(obj)) {

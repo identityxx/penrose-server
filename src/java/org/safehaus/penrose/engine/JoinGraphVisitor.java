@@ -8,6 +8,8 @@ import org.safehaus.penrose.mapping.Source;
 import org.safehaus.penrose.mapping.Field;
 import org.safehaus.penrose.mapping.Relationship;
 import org.safehaus.penrose.mapping.EntryDefinition;
+import org.safehaus.penrose.Penrose;
+import org.apache.log4j.Logger;
 
 import java.util.*;
 
@@ -15,6 +17,8 @@ import java.util.*;
  * @author Endi S. Dewata
  */
 public class JoinGraphVisitor extends GraphVisitor {
+
+    public Logger log = Logger.getLogger(Penrose.SEARCH_LOGGER);
 
     public EntryDefinition entryDefinition;
 
@@ -28,7 +32,7 @@ public class JoinGraphVisitor extends GraphVisitor {
 
     public boolean preVisitNode(Object node, Object parameter) throws Exception {
         Source source = (Source)node;
-        System.out.println("Source "+source);
+        log.debug("Source "+source);
 
         Collection fields = source.getFields();
         Set set = new HashSet();
@@ -42,11 +46,11 @@ public class JoinGraphVisitor extends GraphVisitor {
             getFieldNames().add(name);
         }
 
-        System.out.println("Field names: "+getFieldNames());
+        log.debug("Field names: "+getFieldNames());
 
         getTableNames().add(source.getSourceName()+" "+source.getName());
 
-        System.out.println("Table names: "+getTableNames());
+        log.debug("Table names: "+getTableNames());
 
         return true;
     }
@@ -57,11 +61,11 @@ public class JoinGraphVisitor extends GraphVisitor {
         if (entryDefinition.getSource(source.getName()) == null) return false;
 
         Relationship relationship = (Relationship)object;
-        System.out.println("Relationship "+relationship);
+        log.debug("Relationship "+relationship);
 
         getJoins().add(relationship.toString());
 
-        System.out.println("Joins: "+getJoins());
+        log.debug("Joins: "+getJoins());
 
         return true;
     }

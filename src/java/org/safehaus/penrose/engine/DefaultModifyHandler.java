@@ -48,7 +48,7 @@ public class DefaultModifyHandler implements ModifyHandler {
 
 		Entry sr;
 		try {
-			sr = ((DefaultSearchHandler)engine.getSearchHandler()).findEntry(connection, ndn, new ArrayList());
+			sr = ((DefaultSearchHandler)engine.getSearchHandler()).findEntry(connection, ndn);
 		} catch (LDAPException e) {
 			return e.getResultCode();
 		}
@@ -99,10 +99,9 @@ public class DefaultModifyHandler implements ModifyHandler {
             throws Exception {
 
 		EntryDefinition entryDefinition = entry.getEntryDefinition();
+        AttributeValues oldValues = entry.getAttributeValues();
 
 		convertValues(entryDefinition, modifications);
-
-		AttributeValues oldValues = entry.getAttributeValues();
 
 		log.debug("--- old values:");
 		log.debug(entry);
@@ -187,10 +186,13 @@ public class DefaultModifyHandler implements ModifyHandler {
 					+ newValues.get(attributeName));
 		}
 
-		log.debug("--- new values:");
-		log.debug(entryDefinition.toString(newValues));
+        Entry newEntry = new Entry(entryDefinition, newValues);
+        newEntry.setParent(entry.getParent());
 
-        return modify(entryDefinition, oldValues, newValues);
+		log.debug("--- new values:");
+		log.debug(newEntry);
+
+        return modify(entry, newValues);
 	}
 
 	public int modifyStaticEntry(EntryDefinition entry, Collection modifications)
@@ -278,22 +280,33 @@ public class DefaultModifyHandler implements ModifyHandler {
 		if (attrValue.equals(value)) attributes.remove(name);
 	}
 
-    public int modify(EntryDefinition entry, AttributeValues oldValues, AttributeValues newValues) throws Exception {
+    public int modify(Entry entry, AttributeValues newValues) throws Exception {
+
+        EntryDefinition entryDefinition = entry.getEntryDefinition();
+        AttributeValues oldValues = entry.getAttributeValues();
 
         Date date = new Date();
 
-        Collection sources = entry.getSources();
+        Graph graph = config.getGraph(entryDefinition);
+        Source primarySource = config.getPrimarySource(entryDefinition);
+
+        ModifyGraphVisitor visitor = new ModifyGraphVisitor(engine, this, entry, newValues, date);
+        graph.traverse(visitor, primarySource);
+
+        if (visitor.getReturnCode() != LDAPException.SUCCESS) return visitor.getReturnCode();
+/*
+        Collection sources = entryDefinition.getSources();
 
         for (Iterator iterator = sources.iterator(); iterator.hasNext();) {
             Source source = (Source) iterator.next();
 
-            int result = modify(source, entry, oldValues, newValues, date);
+            int result = modify(source, entryDefinition, oldValues, newValues, date);
 
             if (result != LDAPException.SUCCESS) return result;
         }
-
-        engine.getEntryCache().remove(entry, oldValues, date);
-        //engine.getEntryCache().insert(entry, newValues, date);
+*/
+        engine.getEntryCache().remove(entryDefinition, oldValues, date);
+        //engine.getEntryCache().insert(entryDefinition, newValues, date);
 
         return LDAPException.SUCCESS;
     }

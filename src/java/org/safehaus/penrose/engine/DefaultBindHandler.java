@@ -68,7 +68,7 @@ public class DefaultBindHandler implements BindHandler {
         attributeNames.add("userPassword");
         Entry sr = null;
         try {
-            sr = ((DefaultSearchHandler)engine.getSearchHandler()).findEntry(connection, dn, attributeNames);
+            sr = ((DefaultSearchHandler)engine.getSearchHandler()).findEntry(connection, dn);
         } catch (Exception e) {
             // ignore
         }

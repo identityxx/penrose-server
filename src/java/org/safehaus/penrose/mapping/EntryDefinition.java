@@ -419,29 +419,6 @@ public class EntryDefinition implements Cloneable, Serializable {
         return new LDAPEntry(dn, getAttributeSet(attributeValues));
     }
 
-    public String toString(AttributeValues attributeValues) {
-
-        StringBuffer sb = new StringBuffer();
-        sb.append("dn: "+getDn(attributeValues)+"\n");
-
-        for (Iterator i = objectClasses.iterator(); i.hasNext(); ) {
-            String oc = (String)i.next();
-            sb.append("objectClass: "+oc+"\n");
-        }
-
-        for (Iterator i = attributeValues.getNames().iterator(); i.hasNext(); ) {
-            String name = (String)i.next();
-            Collection values = attributeValues.get(name);
-
-            for (Iterator j = values.iterator(); j.hasNext(); ) {
-                String value = (String)j.next();
-                sb.append(name+": "+value+"\n");
-            }
-        }
-
-        return sb.toString();
-    }
-
     public AttributeValues getAttributeValues(Interpreter interpreter) throws Exception {
 
         AttributeValues values = new AttributeValues();

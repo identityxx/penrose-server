@@ -7,7 +7,9 @@ package org.safehaus.penrose.engine;
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.SearchResults;
+import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.interpreter.Interpreter;
+import org.apache.log4j.Logger;
 
 import java.util.*;
 
@@ -16,33 +18,61 @@ import java.util.*;
  */
 public class PrimaryKeyGraphVisitor extends GraphVisitor {
 
+    public Logger log = Logger.getLogger(Penrose.SEARCH_LOGGER);
+
     private Engine engine;
     private EntryDefinition entryDefinition;
+    private Source primarySource;
+
     private Stack stack = new Stack();
     private Set keys = new HashSet();
 
-    public PrimaryKeyGraphVisitor(Engine engine, EntryDefinition entryDefinition, Row row) {
+    public PrimaryKeyGraphVisitor(Engine engine, EntryDefinition entryDefinition, Collection rows, Source primarySource) {
         this.engine = engine;
         this.entryDefinition = entryDefinition;
+        this.primarySource = primarySource;
 
-        Set rows = new HashSet();
-        if (row != null) rows.add(row);
         stack.push(rows);
     }
 
     public boolean preVisitNode(Object node, Object parameter) throws Exception {
         Source source = (Source)node;
-        System.out.println("Source "+source.getName());
+        log.debug("Source "+source.getName());
 
         Collection rows = (Collection)stack.peek();
 
-        Collection newRows = new HashSet();
-        stack.push(newRows);
+        //Collection newRows = new HashSet();
+        //stack.push(newRows);
 
-        if (entryDefinition.getSource(source.getName()) == null) return true;
+        if (entryDefinition.getSource(source.getName()) == null) {
+            //newRows.addAll(rows);
+            return true;
+        }
 
+        if (source != primarySource) {
+/*
+            log.debug("Converting rows: "+rows);
+            for (Iterator i=rows.iterator(); i.hasNext(); ) {
+                Row row = (Row)i.next();
+
+                Row newRow = new Row();
+                for (Iterator k=row.getNames().iterator(); k.hasNext(); ) {
+                    String name = (String)k.next();
+                    Object value = row.get(name);
+                    newRow.set(source.getName()+"."+name, value);
+                }
+
+                newRows.add(newRow);
+            }
+            log.debug("to: "+newRows);
+*/
+            return true;
+        }
+
+        log.debug("Getting entry primary keys:");
         for (Iterator i=rows.iterator(); i.hasNext(); ) {
             Row row = (Row)i.next();
+            log.debug(" - "+row);
 
             Interpreter interpreter = engine.getEngineContext().newInterpreter();
             // interpreter.set(row);
@@ -75,21 +105,22 @@ public class PrimaryKeyGraphVisitor extends GraphVisitor {
             if (!valid) continue;
 
             keys.add(pk);
-            System.out.println(" - "+row+" => "+pk);
+            log.debug("   => "+pk);
         }
+        //log.debug("to: "+keys);
 
         return false;
     }
 
     public void postVisitNode(Object node, Object parameter) throws Exception {
-        stack.pop();
+        //stack.pop();
     }
 
     public boolean preVisitEdge(Object node1, Object node2, Object object, Object parameter) throws Exception {
         Source source = (Source)node2;
         Relationship relationship = (Relationship)object;
 
-        Collection newRows = (Collection)stack.pop();
+        //Collection newRows = (Collection)stack.pop();
         Collection rows = (Collection)stack.peek();
 
         String lhs = relationship.getLhs();
@@ -101,38 +132,47 @@ public class PrimaryKeyGraphVisitor extends GraphVisitor {
             rhs = exp;
         }
 
-        int index = rhs.indexOf(".");
-        String fieldName = rhs.substring(index+1);
+        int li = lhs.indexOf(".");
+        String lFieldName = lhs.substring(li+1);
+        int ri = rhs.indexOf(".");
+        String rFieldName = rhs.substring(ri+1);
 
-        System.out.println("Relationship "+lhs+" = "+rhs);
+        log.debug("Relationship "+lhs+" = "+rhs);
+        log.debug("with rows: "+rows);
 
+        Collection newRows = new HashSet();
         for (Iterator i=rows.iterator(); i.hasNext(); ) {
             Row row = (Row)i.next();
 
-            Object value = row.get(lhs);
+            Object value = row.get(lFieldName);
             Row newRow = new Row();
-            newRow.set(fieldName, value);
+            newRow.set(rFieldName, value);
 
             newRows.add(newRow);
 
-            System.out.println(rhs+" = "+value);
+            log.debug(" - "+lFieldName+" -> "+rFieldName+" = "+value);
         }
 
         Filter newFilter = engine.getEngineContext().getFilterTool().createFilter(newRows);
 
-        System.out.println("Searching source "+source.getName()+" for "+newFilter);
+        log.debug("Searching source "+source.getName()+" for "+newFilter);
         SearchResults results = source.search(newFilter);
 
+        log.debug("Source primary keys:");
         newRows = new HashSet();
         for (Iterator j=results.iterator(); j.hasNext(); ) {
             Row row = (Row)j.next();
-            //System.out.println(" - "+row);
+            log.debug(" - "+row);
             newRows.add(row);
         }
 
         stack.push(newRows);
 
         return true;
+    }
+
+    public void postVisitEdge(Object node1, Object node2, Object edge, Object parameter) throws Exception {
+        stack.pop();
     }
 
     public Engine getEngine() {
@@ -165,5 +205,13 @@ public class PrimaryKeyGraphVisitor extends GraphVisitor {
 
     public void setKeys(Set keys) {
         this.keys = keys;
+    }
+
+    public Source getPrimarySource() {
+        return primarySource;
+    }
+
+    public void setPrimarySource(Source primarySource) {
+        this.primarySource = primarySource;
     }
 }

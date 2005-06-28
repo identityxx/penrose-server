@@ -12,6 +12,5 @@ import java.util.Map;
 public interface AdapterContext {
 
     public Config getConfig() throws Exception;
-    public Interpreter newInterpreter(Map values) throws Exception;
     public TransformEngine getTransformEngine() throws Exception;
 }

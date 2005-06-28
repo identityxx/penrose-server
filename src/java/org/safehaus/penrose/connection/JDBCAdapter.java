@@ -154,8 +154,6 @@ public class JDBCAdapter extends Adapter {
             row.set(field.getName(), value);
         }
 
-        //log.debug("Get row: "+row);
-
         Row values = new Row();
 
         for (Iterator i=fields.iterator(); i.hasNext(); ) {
@@ -163,6 +161,9 @@ public class JDBCAdapter extends Adapter {
             String name = field.getName();
             values.set(name, row.get(field.getOriginalName()));
         }
+
+        //log.debug("=> values: "+values);
+        //log.debug("=> values: "+values);
 
         return values;
     }
@@ -281,7 +282,9 @@ public class JDBCAdapter extends Adapter {
             int c = 1;
             for (Iterator i=pkRow.getNames().iterator(); i.hasNext(); c++) {
                 String name = (String)i.next();
-                ps.setObject(c, row.get(name));
+                Object value = row.get(name);
+                ps.setObject(c, value);
+                log.debug(" - "+c+" = "+value);
             }
 
             int count = ps.executeUpdate();
@@ -297,7 +300,6 @@ public class JDBCAdapter extends Adapter {
 
     public int modify(Source source, AttributeValues oldEntry, AttributeValues newEntry) throws Exception {
         Map pk = getPkValues(source, newEntry.getValues());
-        log.debug("Replacing attributes "+newEntry);
 
         String tableName = source.getParameter("tableName");
 
@@ -307,6 +309,7 @@ public class JDBCAdapter extends Adapter {
 
         Row oldRow = (Row)oldRows.iterator().next();
     	Row newRow = (Row)newRows.iterator().next();
+        log.debug("Replacing "+oldRow+" with "+newRow);
 
         java.sql.Connection con = null;
         PreparedStatement ps = null;
@@ -342,12 +345,16 @@ public class JDBCAdapter extends Adapter {
             int c = 1;
             for (Iterator i=newRow.getNames().iterator(); i.hasNext(); c++) {
                 String name = (String)i.next();
-                ps.setObject(c, newRow.get(name));
+                Object value = newRow.get(name);
+                ps.setObject(c, value);
+                log.debug(" - "+c+" = "+value);
             }
 
             for (Iterator i=pk.keySet().iterator(); i.hasNext(); c++) {
                 String name = (String)i.next();
-                ps.setObject(c, oldRow.get(name));
+                Object value = oldRow.get(name);
+                ps.setObject(c, value);
+                log.debug(" - "+c+" = "+value);
             }
 
             int count = ps.executeUpdate();

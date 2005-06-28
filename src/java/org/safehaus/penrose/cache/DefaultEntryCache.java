@@ -9,6 +9,8 @@ import org.safehaus.penrose.mapping.Row;
 import org.safehaus.penrose.mapping.AttributeDefinition;
 import org.safehaus.penrose.mapping.EntryDefinition;
 import org.safehaus.penrose.mapping.*;
+import org.safehaus.penrose.Penrose;
+import org.apache.log4j.Logger;
 
 import javax.sql.DataSource;
 import java.util.*;
@@ -78,9 +80,10 @@ public class DefaultEntryCache extends EntryCache {
     public Entry get(EntryDefinition entryDefinition, Row pk) throws Exception {
 
         EntryAttributeHome entryAttributeHome = getEntryAttributeHome(entryDefinition);
-        System.out.println("Searching attributes for pk: "+pk);
+        log.debug("Getting entry cache for pk: "+pk);
 
         Collection rows = entryAttributeHome.search(pk);
+        if (rows.size() == 0) return null;
 
         AttributeValues attributeValues = new AttributeValues();
         for (Iterator i = rows.iterator(); i.hasNext();) {
@@ -109,26 +112,12 @@ public class DefaultEntryCache extends EntryCache {
 
         for (Iterator i=primaryKeys.iterator(); i.hasNext(); ) {
             Row pk = (Row)i.next();
+
             Entry entry = get(entryDefinition, pk);
+            if (entry == null) continue;
+
             entries.put(pk, entry);
         }
-
-        /*
-        EntryHome entryHome = getEntryHome(entryDefinition);
-        Collection rows = entryHome.search(primaryKeys);
-
-        log.debug("Merging " + rows.size() + " rows:");
-        Map map = cacheContext.getTransformEngine().merge(entryDefinition, rows);
-
-        for (Iterator i = map.keySet().iterator(); i.hasNext();) {
-            Map pk = (Map)i.next();
-            AttributeValues values = (AttributeValues)map.get(pk);
-            log.debug(" - " + values);
-
-            Entry sr = new Entry(entryDefinition, values);
-            entries.put(pk, sr);
-        }
-        */
 
         return entries;
     }
@@ -152,7 +141,7 @@ public class DefaultEntryCache extends EntryCache {
 
     public void put(EntryDefinition entryDefinition, AttributeValues values, Date date) throws Exception {
         Row pk = getPk(entryDefinition, values);
-        System.out.println("Inserting pk: "+pk);
+        log.debug("Adding entry cache with pk: "+pk);
 
         EntryHome entryHome = getEntryHome(entryDefinition);
         entryHome.insert(pk, date);
@@ -174,7 +163,7 @@ public class DefaultEntryCache extends EntryCache {
 
     public void remove(EntryDefinition entryDefinition, AttributeValues values, Date date) throws Exception {
         Row pk = getPk(entryDefinition, values);
-        System.out.println("Deleting pk: "+pk);
+        log.debug("Deleting entry cache with pk: "+pk);
 
         EntryHome entryHome = getEntryHome(entryDefinition);
         entryHome.delete(pk, date);

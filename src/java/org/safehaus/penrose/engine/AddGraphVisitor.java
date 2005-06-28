@@ -4,36 +4,78 @@
  */
 package org.safehaus.penrose.engine;
 
-import org.safehaus.penrose.mapping.Source;
-import org.safehaus.penrose.mapping.EntryDefinition;
-import org.safehaus.penrose.mapping.Relationship;
-import org.safehaus.penrose.mapping.Row;
-import org.safehaus.penrose.filter.Filter;
-import org.safehaus.penrose.SearchResults;
+import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.Penrose;
 import org.apache.log4j.Logger;
+import org.ietf.ldap.LDAPException;
 
 import java.util.*;
 
 /**
  * @author Endi S. Dewata
  */
-public class SourceLoaderGraphVisitor extends GraphVisitor {
+public class AddGraphVisitor extends GraphVisitor {
 
-    public Logger log = Logger.getLogger(Penrose.SEARCH_LOGGER);
+    public Logger log = Logger.getLogger(Penrose.ADD_LOGGER);
 
-    public Engine engine;
+    public DefaultEngine engine;
+    public DefaultAddHandler addHandler;
     public EntryDefinition entryDefinition;
+    public AttributeValues values;
     public Date date;
+    private int returnCode = LDAPException.SUCCESS;
 
     private Stack stack = new Stack();
 
-    public SourceLoaderGraphVisitor(Engine engine, EntryDefinition entryDefinition, Collection pks, Date date) {
+    public AddGraphVisitor(
+            DefaultEngine engine,
+            DefaultAddHandler addHandler,
+            EntryDefinition entryDefinition,
+            AttributeValues values,
+            Date date) throws Exception {
+
         this.engine = engine;
+        this.addHandler = addHandler;
         this.entryDefinition = entryDefinition;
+        this.values = values;
         this.date = date;
 
-        stack.push(pks);
+        Collection rows = engine.getEngineContext().getTransformEngine().convert(values);
+        Collection keys = new HashSet();
+/*
+        for (Iterator i=rows.iterator(); i.hasNext(); ) {
+            Row row = (Row)i.next();
+            log.debug(" - "+row);
+
+            Interpreter interpreter = engine.getEngineContext().newInterpreter();
+            interpreter.set(row);
+
+            Collection rdnAttributes = entryDefinition.getRdnAttributes();
+
+            Row pk = new Row();
+            boolean valid = true;
+
+            for (Iterator k=rdnAttributes.iterator(); k.hasNext(); ) {
+                AttributeDefinition attr = (AttributeDefinition)k.next();
+                String name = attr.getName();
+                String expression = attr.getExpression();
+                Object value = interpreter.eval(expression);
+
+                if (value == null) {
+                    valid = false;
+                    break;
+                }
+
+                pk.set(name, value);
+            }
+
+            if (!valid) continue;
+
+            keys.add(pk);
+        }
+*/
+        log.debug("Primary keys: "+keys);
+        stack.push(keys);
     }
 
     public boolean preVisitNode(Object node, Object parameter) throws Exception {
@@ -42,21 +84,10 @@ public class SourceLoaderGraphVisitor extends GraphVisitor {
 
         if (entryDefinition.getSource(source.getName()) == null) return false;
 
-        Collection pks = (Collection)stack.peek();
-        Filter filter = engine.getEngineContext().getFilterTool().createFilter(pks);
-        log.debug("Loading source "+source.getName()+" with filter "+filter);
+        returnCode = addHandler.add(source, entryDefinition, values, date);
 
-        SearchResults results = engine.getSourceCache().loadSource(entryDefinition, source, filter, date);
-
-        Collection newRows = new HashSet();
-        for (Iterator i = results.iterator(); i.hasNext(); ) {
-            Row row = (Row)i.next();
-            //log.debug(" - "+row);
-            newRows.add(row);
-        }
-
-        stack.pop();
-        stack.push(newRows);
+        if (returnCode == LDAPException.NO_SUCH_OBJECT) return true; // ignore
+        if (returnCode != LDAPException.SUCCESS) return false;
 
         return true;
     }
@@ -107,5 +138,13 @@ public class SourceLoaderGraphVisitor extends GraphVisitor {
 
     public void postVisitEdge(Object node1, Object node2, Object edge, Object parameter) throws Exception {
         stack.pop();
+    }
+
+    public int getReturnCode() {
+        return returnCode;
+    }
+
+    public void setReturnCode(int returnCode) {
+        this.returnCode = returnCode;
     }
 }
