@@ -43,10 +43,8 @@ public class SourceLoaderGraphVisitor extends GraphVisitor {
         if (entryDefinition.getSource(source.getName()) == null) return false;
 
         Collection pks = (Collection)stack.peek();
-        Filter filter = engine.getEngineContext().getFilterTool().createFilter(pks);
-        log.debug("Loading source "+source.getName()+" with filter "+filter);
 
-        SearchResults results = engine.getSourceCache().loadSource(entryDefinition, source, filter, date);
+        SearchResults results = engine.getSourceCache().loadSource(entryDefinition, source, pks, date);
         if (results.size() == 0) return false;
         
         Collection newRows = new HashSet();

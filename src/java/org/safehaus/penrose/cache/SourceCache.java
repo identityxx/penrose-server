@@ -74,7 +74,7 @@ public abstract class SourceCache {
     public abstract SearchResults loadSource(
             EntryDefinition entry,
             Source source,
-            Filter sqlFilter,
+            Collection pks,
             Date date)
             throws Exception;
 

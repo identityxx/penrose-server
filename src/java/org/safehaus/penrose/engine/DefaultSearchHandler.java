@@ -537,7 +537,7 @@ public class DefaultSearchHandler implements SearchHandler {
             Filter f = cache.getCacheFilterTool().toSourceFilter(null, entryDefinition, primarySource, filter);
 
             log.debug("Searching source "+primarySourceName+" for "+f);
-            SearchResults results = primarySource.search(f);
+            SearchResults results = primarySource.search(f, 100);
 
             Set keys = new HashSet();
 
@@ -784,8 +784,6 @@ public class DefaultSearchHandler implements SearchHandler {
         Source primarySource = config.getPrimarySource(entryDefinition);
 
         Filter filter = engine.getEngineContext().getFilterTool().createFilter(pks);
-
-        // TODO need to add primarySource's name to the filter
         String sqlFilter = cache.getCacheFilterTool().toSQLFilter(entryDefinition, filter);
 
         log.debug("--------------------------------------------------------------------------------------");

@@ -305,43 +305,34 @@ public class DefaultSourceCache extends SourceCache {
     public SearchResults loadSource(
             EntryDefinition entry,
             Source source,
-            Filter filter,
+            Collection pks,
             Date date)
             throws Exception {
 
-        log.info("Loading source "+source.getSourceName()+" with filter "+filter);
+        Filter filter = cache.getCacheContext().getFilterTool().createFilter(pks);
+        String stringFilter = cache.getCacheFilterTool().toSQLFilter(entry, filter);
+
+        log.info("Loading source "+source.getName()+" "+source.getSourceName()+" with filter "+filter);
 
         SourceDefinition sourceConfig = source.getSourceDefinition();
 
         CacheEvent beforeEvent = new CacheEvent(getCacheContext(), sourceConfig, CacheEvent.BEFORE_LOAD_ENTRIES);
         postCacheEvent(sourceConfig, beforeEvent);
 
-        SearchResults results = source.search(filter);
+        SearchResults results = source.search(filter, 0);
 
-        String stringFilter = cache.getCacheFilterTool().toSQLFilter(entry, filter);
-
-        delete(source, stringFilter, date);
+        String tableName = getTableName(source);
+        SourceHome sourceHome = (SourceHome)sourceTables.get(tableName);
+        sourceHome.delete(stringFilter, date);
 
         for (Iterator j = results.iterator(); j.hasNext();) {
             Row row = (Row) j.next();
-            insert(source, row, date);
+            sourceHome.insert(row, date);
         }
 
         CacheEvent afterEvent = new CacheEvent(getCacheContext(), sourceConfig, CacheEvent.AFTER_LOAD_ENTRIES);
         postCacheEvent(sourceConfig, afterEvent);
 
         return results;
-    }
-
-    public void delete(Source source, String filter, Date date) throws Exception {
-        String tableName = getTableName(source);
-        SourceHome sourceHome = (SourceHome)sourceTables.get(tableName);
-        sourceHome.delete(filter, date);
-    }
-
-    public void insert(Source source, Row row, Date date) throws Exception {
-        String tableName = getTableName(source);
-        SourceHome sourceHome = (SourceHome)sourceTables.get(tableName);
-        sourceHome.insert(row, date);
     }
 }

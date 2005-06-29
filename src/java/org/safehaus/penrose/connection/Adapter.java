@@ -52,7 +52,7 @@ public abstract class Adapter {
      *
      * @throws Exception
      */
-    public abstract SearchResults search(Source source, Filter filter) throws Exception;
+    public abstract SearchResults search(Source source, Filter filter, long sizeLimit) throws Exception;
 
     /**
      * Add.

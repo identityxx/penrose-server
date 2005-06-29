@@ -5,6 +5,7 @@
 package org.safehaus.penrose.cache;
 
 import org.safehaus.penrose.Penrose;
+import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.mapping.Row;
 import org.safehaus.penrose.mapping.EntryDefinition;
 import org.safehaus.penrose.mapping.AttributeDefinition;
@@ -27,12 +28,14 @@ public class EntryAttributeHome {
     public final static String MODIFY_TIME_FIELD = "__modifyTime";
 
     private DataSource ds;
+    private DefaultCache cache;
     public EntryDefinition entry;
     public String tableName;
 
-    public EntryAttributeHome(DataSource ds, EntryDefinition entry, String tableName) throws Exception {
+    public EntryAttributeHome(DataSource ds, DefaultCache cache, EntryDefinition entry, String tableName) throws Exception {
 
         this.ds = ds;
+        this.cache = cache;
         this.entry = entry;
         this.tableName = tableName;
 
@@ -165,7 +168,7 @@ public class EntryAttributeHome {
             StringBuffer sb2 = new StringBuffer();
             for (Iterator j = pk.getNames().iterator(); j.hasNext();) {
                 String name = (String) j.next();
-                String value = (String) pk.get(name);
+                Object value = pk.get(name);
 
                 if (sb2.length() > 0) sb2.append(" and ");
 
@@ -189,10 +192,13 @@ public class EntryAttributeHome {
         if (pks == null || pks.isEmpty()) return new ArrayList();
 
         String attributeNames = getAttributeNames();
-        String filter = getFilter(pks);
+
+        Filter filter = cache.getCacheContext().getFilterTool().createFilter(pks);
+        String sqlFilter = cache.getCacheFilterTool().toSQLFilter(entry, filter, false);
+        //String sqlFilter = getFilter(pks);
 
         String sql = "select " + attributeNames + " from " + tableName
-                + " where " + filter;
+                + " where " + sqlFilter;
 
         sql += " order by "+getPkAttributeNames();
 
@@ -206,6 +212,20 @@ public class EntryAttributeHome {
         try {
             con = ds.getConnection();
             ps = con.prepareStatement(sql);
+
+            int counter = 0;
+            for (Iterator i=pks.iterator(); i.hasNext(); ) {
+                Row pk = (Row)i.next();
+
+                for (Iterator j=pk.getNames().iterator(); j.hasNext(); ) {
+                    String name = (String)j.next();
+                    Object value = pk.get(name);
+
+                    ps.setObject(++counter, value);
+                    log.debug(" - "+counter+" = "+value);
+                }
+            }
+
             rs = ps.executeQuery();
 
             while (rs.next()) {

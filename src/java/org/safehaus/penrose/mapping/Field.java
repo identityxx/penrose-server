@@ -68,4 +68,8 @@ public class Field {
     public void setFieldDefinition(FieldDefinition fieldDefinition) {
         this.fieldDefinition = fieldDefinition;
     }
+
+    public String getType() {
+        return fieldDefinition.getType();
+    }
 }

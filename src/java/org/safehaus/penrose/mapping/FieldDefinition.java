@@ -16,6 +16,8 @@ public class FieldDefinition {
 
     private String originalName;
 
+    private String type = "string";
+
 	/**
 	 * This is a primary key.
 	 */
@@ -78,4 +80,11 @@ public class FieldDefinition {
         this.encoding = encoding;
     }
 
+    public String getType() {
+        return type;
+    }
+
+    public void setType(String type) {
+        this.type = type;
+    }
 }

@@ -4,6 +4,9 @@ import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.filter.SimpleFilter;
 import org.safehaus.penrose.filter.AndFilter;
 import org.safehaus.penrose.filter.OrFilter;
+import org.safehaus.penrose.mapping.Source;
+import org.safehaus.penrose.mapping.Field;
+import org.safehaus.penrose.mapping.FieldDefinition;
 
 import java.util.Iterator;
 
@@ -19,9 +22,9 @@ public class JDBCFilterTool {
      * @return string SQL filter
      * @throws Exception
      */
-    public String convert(Filter filter) throws Exception {
+    public String convert(Source source, Filter filter) throws Exception {
         StringBuffer sb = new StringBuffer();
-        boolean valid = convert(filter, sb);
+        boolean valid = convert(source, filter, sb);
 
         if (valid && sb.length() > 0) return sb.toString();
 
@@ -29,24 +32,25 @@ public class JDBCFilterTool {
     }
 
     boolean convert(
+            Source source,
             Filter filter,
             StringBuffer sb)
             throws Exception {
 
         if (filter instanceof SimpleFilter) {
-            return convert((SimpleFilter) filter, sb);
+            return convert(source, (SimpleFilter) filter, sb);
 
         } else if (filter instanceof AndFilter) {
-            return convert((AndFilter) filter, sb);
+            return convert(source, (AndFilter) filter, sb);
 
         } else if (filter instanceof OrFilter) {
-            return convert((OrFilter) filter, sb);
+            return convert(source, (OrFilter) filter, sb);
         }
 
         return true;
     }
 
-    boolean convert(SimpleFilter filter, StringBuffer sb)
+    boolean convert(Source source, SimpleFilter filter, StringBuffer sb)
             throws Exception {
         String name = filter.getAttr();
         String value = filter.getValue();
@@ -56,26 +60,32 @@ public class JDBCFilterTool {
                 return true;
         }
 
-        String lhs = name;
-        String rhs = "'" + value + "'";
+        Field field = source.getField(name);
 
-        sb.append("lower(");
-        sb.append(lhs);
-        sb.append(")=lower(");
-        sb.append(rhs);
-        sb.append(")");
+        if ("string".equals(field.getType())) {
+            sb.append("lower(");
+            sb.append(name);
+            sb.append(")=lower('");
+            sb.append(value);
+            sb.append("')");
+
+        } else {
+            sb.append(name);
+            sb.append("=");
+            sb.append(value);
+        }
 
         return true;
     }
 
-    boolean convert(AndFilter filter, StringBuffer sb)
+    boolean convert(Source source, AndFilter filter, StringBuffer sb)
             throws Exception {
         StringBuffer sb2 = new StringBuffer();
         for (Iterator i = filter.getFilterList().iterator(); i.hasNext();) {
             Filter f = (Filter) i.next();
 
             StringBuffer sb3 = new StringBuffer();
-            convert(f, sb3);
+            convert(source, f, sb3);
 
             if (sb2.length() > 0 && sb3.length() > 0) {
                 sb2.append(" and ");
@@ -94,14 +104,14 @@ public class JDBCFilterTool {
         return true;
     }
 
-    boolean convert(OrFilter filter, StringBuffer sb)
+    boolean convert(Source source, OrFilter filter, StringBuffer sb)
             throws Exception {
         StringBuffer sb2 = new StringBuffer();
         for (Iterator i = filter.getFilterList().iterator(); i.hasNext();) {
             Filter f = (Filter) i.next();
 
             StringBuffer sb3 = new StringBuffer();
-            convert(f, sb3);
+            convert(source, f, sb3);
 
             if (sb2.length() > 0 && sb3.length() > 0) {
                 sb2.append(" or ");

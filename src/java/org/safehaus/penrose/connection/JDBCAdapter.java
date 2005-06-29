@@ -10,6 +10,7 @@ import org.ietf.ldap.LDAPException;
 import org.safehaus.penrose.SearchResults;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.mapping.*;
+import org.hibernate.dialect.Dialect;
 
 import javax.sql.DataSource;
 import java.sql.PreparedStatement;
@@ -26,8 +27,10 @@ public class JDBCAdapter extends Adapter {
     public final static String URL      = "url";
     public final static String USER     = "user";
     public final static String PASSWORD = "password";
+    public final static String DIALECT = "dialect";
 
     public DataSource ds;
+    public Dialect dialect;
 
     public JDBCFilterTool filterTool;
 
@@ -41,6 +44,12 @@ public class JDBCAdapter extends Adapter {
         String url = getParameter(URL);
         String username = getParameter(USER);
         String password = getParameter(PASSWORD);
+
+        String dialectClass = getParameter(DIALECT);
+        dialect = (Dialect)Class.forName(dialectClass).newInstance();
+        String lowerCaseFunction = dialect.getLowercaseFunction();
+        log.debug("Lower case function: "+lowerCaseFunction);
+
 
         Class.forName(driver);
 
@@ -88,7 +97,7 @@ public class JDBCAdapter extends Adapter {
         return sb.toString();
     }
 
-    public SearchResults search(Source source, Filter filter) throws Exception {
+    public SearchResults search(Source source, Filter filter, long sizeLimit) throws Exception {
         SearchResults results = new SearchResults();
 
         log.debug("--------------------------------------------------------------------------------------");
@@ -100,10 +109,8 @@ public class JDBCAdapter extends Adapter {
         String sql = "select "+fieldNames+" from "+tableName; //+" "+source.getName();
 
         if (filter != null) {
-            sql += " where "+filterTool.convert(filter);
+            sql += " where "+filterTool.convert(source, filter);
         }
-
-        sql += " limit 1000";
 
         java.sql.Connection con = null;
         PreparedStatement ps = null;
@@ -119,7 +126,7 @@ public class JDBCAdapter extends Adapter {
 
             log.debug("Result:");
 
-            while (rs.next()) {
+            for (int i=0; rs.next() && (sizeLimit == 0 || i<sizeLimit); i++) {
 
                 Row row = getRow(source, rs);
                 log.debug(" - "+row);

@@ -102,8 +102,8 @@ public class Source implements Cloneable, Serializable {
         return adapter.bind(this, values, password);
     }
 
-    public SearchResults search(Filter filter) throws Exception {
-        return adapter.search(this, filter);
+    public SearchResults search(Filter filter, long sizeLimit) throws Exception {
+        return adapter.search(this, filter, sizeLimit);
     }
 
     public int add(AttributeValues values) throws Exception {

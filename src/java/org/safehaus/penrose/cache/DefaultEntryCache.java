@@ -50,20 +50,25 @@ public class DefaultEntryCache extends EntryCache {
 		dn = dn.replace(',', '_');
 		dn = dn.replace(' ', '_');
 		dn = dn.replace('.', '_');
-		return dn;
+
+        String hashCode = ""+entry.getDn().hashCode();
+        hashCode = hashCode.replace('-', '_');
+		return "entry"+hashCode;
 	}
 
     public String getEntryAttributeTableName(EntryDefinition entry) {
-        return getEntryTableName(entry)+"_attributes";
+        String hashCode = ""+entry.getDn().hashCode();
+        hashCode = hashCode.replace('-', '_');
+		return "attribute"+hashCode;
 	}
 
     public void createTables(EntryDefinition entryDefinition) throws Exception {
         String entryTableName = getEntryTableName(entryDefinition);
-        EntryHome entryHome = new EntryHome(ds, entryDefinition, entryTableName);
+        EntryHome entryHome = new EntryHome(ds, cache, entryDefinition, entryTableName);
         homes.put(entryTableName, entryHome);
 
         String entryAttributeTableName = getEntryAttributeTableName(entryDefinition);
-        EntryAttributeHome entryAttributeHome = new EntryAttributeHome(ds, entryDefinition, entryAttributeTableName);
+        EntryAttributeHome entryAttributeHome = new EntryAttributeHome(ds, cache, entryDefinition, entryAttributeTableName);
         homes.put(entryAttributeTableName, entryAttributeHome);
     }
 
@@ -224,7 +229,7 @@ public class DefaultEntryCache extends EntryCache {
             throws Exception {
 
         Filter filter = cache.getCacheContext().getFilterTool().createFilter(primaryKeys);
-        String sqlFilter = cache.getCacheFilterTool().toSQLFilter(entry, filter);
+        String sqlFilter = cache.getCacheFilterTool().toSQLFilter(entry, filter, false);
 
         String tableName = getEntryTableName(entry);
         String attributeNames = getPkAttributeNames(entry);
@@ -245,6 +250,20 @@ public class DefaultEntryCache extends EntryCache {
         try {
             con = ds.getConnection();
             ps = con.prepareStatement(sql);
+
+            int counter = 0;
+            for (Iterator i=primaryKeys.iterator(); i.hasNext(); ) {
+                Row pk = (Row)i.next();
+
+                for (Iterator j=pk.getNames().iterator(); j.hasNext(); ) {
+                    String name = (String)j.next();
+                    Object value = pk.get(name);
+
+                    ps.setObject(++counter, value);
+                    log.debug(" - "+counter+" = "+value);
+                }
+            }
+
             rs = ps.executeQuery();
 
             //log.debug("Result:");

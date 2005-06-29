@@ -151,13 +151,17 @@ public class FilterTool {
     }
 
     public Filter createFilter(Collection keys) {
+        return createFilter(keys, true);
+    }
+
+    public Filter createFilter(Collection keys, boolean includeValues) {
 
         Filter filter = null;
 
         for (Iterator i=keys.iterator(); i.hasNext(); ) {
             Row pk = (Row)i.next();
 
-            Filter f = createFilter(pk);
+            Filter f = createFilter(pk, includeValues);
 
             if (filter == null) {
                 filter = f;
@@ -177,7 +181,7 @@ public class FilterTool {
         return filter;
     }
 
-    public Filter createFilter(Row values) {
+    public Filter createFilter(Row values, boolean includeValues) {
 
         Filter f = null;
 
@@ -186,7 +190,14 @@ public class FilterTool {
             Object value = values.get(name);
             if (value == null) continue;
 
-            SimpleFilter sf = new SimpleFilter(name, "=", value == null ? null : value.toString());
+            String strVal;
+            if (includeValues) {
+                strVal = value == null ? null : value.toString();
+            } else {
+                strVal = "?";
+            }
+
+            SimpleFilter sf = new SimpleFilter(name, "=", strVal);
 
             if (f == null) {
                 f = sf;

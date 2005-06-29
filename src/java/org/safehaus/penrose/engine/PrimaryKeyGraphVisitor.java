@@ -156,7 +156,7 @@ public class PrimaryKeyGraphVisitor extends GraphVisitor {
         Filter newFilter = engine.getEngineContext().getFilterTool().createFilter(newRows);
 
         log.debug("Searching source "+source.getName()+" for "+newFilter);
-        SearchResults results = source.search(newFilter);
+        SearchResults results = source.search(newFilter, 100);
 
         log.debug("Source primary keys:");
         newRows = new HashSet();

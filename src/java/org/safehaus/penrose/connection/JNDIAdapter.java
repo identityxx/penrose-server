@@ -47,7 +47,7 @@ public class JNDIAdapter extends Adapter {
         ctx = new InitialDirContext(env);
     }
 
-    public SearchResults search(Source source, Filter filter2) throws Exception {
+    public SearchResults search(Source source, Filter filter, long sizeLimit) throws Exception {
 
         log.debug("JNDI Search:");
 
@@ -56,35 +56,35 @@ public class JNDIAdapter extends Adapter {
         log.debug("--------------------------------------------------------------------------------------");
         log.debug("JNDI Source: "+source.getConnectionName());
 
-        String base = source.getParameter(BASE_DN);
-        String scope = source.getParameter(SCOPE);
-        String filter = source.getParameter(FILTER);
+        String ldapBase = source.getParameter(BASE_DN);
+        String ldapScope = source.getParameter(SCOPE);
+        String ldapFilter = source.getParameter(FILTER);
 
-        if (filter2 != null) {
-            filter = "(&"+filter+filter2+")";
+        if (filter != null) {
+            ldapFilter = "(&"+ldapFilter+filter+")";
         }
 
-        log.debug("base: "+base);
-        log.debug("filter: "+filter);
+        log.debug("base: "+ldapBase);
+        log.debug("filter: "+ldapFilter);
 
         SearchControls ctls = new SearchControls();
-        if ("OBJECT".equals(scope)) {
+        if ("OBJECT".equals(ldapScope)) {
         	ctls.setSearchScope(SearchControls.OBJECT_SCOPE);
         	
-        } else if ("ONELEVEL".equals(scope)) {
+        } else if ("ONELEVEL".equals(ldapScope)) {
         	ctls.setSearchScope(SearchControls.ONELEVEL_SCOPE);
         	
-        } else if ("SUBTREE".equals(scope)) {
+        } else if ("SUBTREE".equals(ldapScope)) {
         	ctls.setSearchScope(SearchControls.SUBTREE_SCOPE);
         }
 
-        NamingEnumeration ne = ctx.search(base, filter, ctls);
+        NamingEnumeration ne = ctx.search(ldapBase, ldapFilter, ctls);
 
         log.debug("Result:");
 
         while (ne.hasMore()) {
             javax.naming.directory.SearchResult sr = (javax.naming.directory.SearchResult)ne.next();
-            log.debug(" - "+sr.getName()+","+base);
+            log.debug(" - "+sr.getName()+","+ldapBase);
 
             Collection rows = getRows(source, sr);
             results.addAll(rows);
