@@ -47,7 +47,8 @@ public class SourceLoaderGraphVisitor extends GraphVisitor {
         log.debug("Loading source "+source.getName()+" with filter "+filter);
 
         SearchResults results = engine.getSourceCache().loadSource(entryDefinition, source, filter, date);
-
+        if (results.size() == 0) return false;
+        
         Collection newRows = new HashSet();
         for (Iterator i = results.iterator(); i.hasNext(); ) {
             Row row = (Row)i.next();

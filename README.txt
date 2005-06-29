@@ -1,6 +1,6 @@
 Penrose Virtual Directory Server
 --------------------------------
-Version 0.9.1
+Version 0.9.2
 Copyright (c) Verge Labs, LLC.
 
 Overview

@@ -430,8 +430,8 @@ public class DefaultSearchHandler implements SearchHandler {
             EntryDefinition entryDefinition,
             Collection keys) throws Exception {
 
-        log.debug("--------------------------------------------------------------------------------------");
-        log.debug("Getting entries from cache with pks "+keys);
+        //log.debug("--------------------------------------------------------------------------------------");
+        //log.debug("Getting entries from cache with pks "+keys);
 
         MRSWLock lock = engine.getLock(entryDefinition.getDn());
         lock.getReadLock(Penrose.WAIT_TIMEOUT);
@@ -444,7 +444,7 @@ public class DefaultSearchHandler implements SearchHandler {
             for (Iterator i = entries.values().iterator(); i.hasNext();) {
                 Entry sr = (Entry) i.next();
                 sr.setParent(parent);
-                log.debug("Returning "+sr.getDn());
+                //log.debug("Returning "+sr.getDn());
                 results.add(sr);
             }
 
@@ -764,11 +764,11 @@ public class DefaultSearchHandler implements SearchHandler {
             Calendar calendar
             ) throws Exception {
 
-        Graph graph = config.getGraph(entryDefinition);
-        Source primarySource = config.getPrimarySource(entryDefinition);
-
         log.debug("--------------------------------------------------------------------------------------");
         log.debug("Loading all sources with pks " + pks);
+
+        Graph graph = config.getGraph(entryDefinition);
+        Source primarySource = config.getPrimarySource(entryDefinition);
 
         SourceLoaderGraphVisitor visitor = new SourceLoaderGraphVisitor(engine, entryDefinition, pks, calendar.getTime());
         graph.traverse(visitor, primarySource);

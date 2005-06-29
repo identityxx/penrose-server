@@ -150,22 +150,16 @@ public class JDBCAdapter extends Adapter {
 
         for (Iterator i=fields.iterator(); i.hasNext() && c<=count; c++) {
             Field field = (Field)i.next();
+            
             Object value = rs.getObject(c);
+            if (value == null) continue;
+
             row.set(field.getName(), value);
         }
 
-        Row values = new Row();
+        //log.debug("=> values: "+row);
 
-        for (Iterator i=fields.iterator(); i.hasNext(); ) {
-            Field field = (Field)i.next();
-            String name = field.getName();
-            values.set(name, row.get(field.getOriginalName()));
-        }
-
-        //log.debug("=> values: "+values);
-        //log.debug("=> values: "+values);
-
-        return values;
+        return row;
     }
 
     public int bind(Source source, AttributeValues values, String cred) throws Exception {
