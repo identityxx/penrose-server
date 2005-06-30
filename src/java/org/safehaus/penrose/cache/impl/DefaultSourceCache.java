@@ -2,13 +2,14 @@
  * Copyright (c) 1998-2005, Verge Lab., LLC.
  * All rights reserved.
  */
-package org.safehaus.penrose.cache;
+package org.safehaus.penrose.cache.impl;
 
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.event.CacheEvent;
 import org.safehaus.penrose.SearchResults;
 import org.safehaus.penrose.graph.Graph;
-import org.safehaus.penrose.engine.JoinGraphVisitor;
+import org.safehaus.penrose.cache.SourceCache;
+import org.safehaus.penrose.cache.CacheConfig;
 import org.safehaus.penrose.mapping.Row;
 import org.safehaus.penrose.mapping.SourceDefinition;
 import org.safehaus.penrose.mapping.EntryDefinition;

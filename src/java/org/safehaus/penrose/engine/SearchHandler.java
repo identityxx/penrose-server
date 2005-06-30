@@ -7,7 +7,6 @@ package org.safehaus.penrose.engine;
 import org.safehaus.penrose.SearchResults;
 import org.safehaus.penrose.PenroseConnection;
 import org.safehaus.penrose.Penrose;
-import org.safehaus.penrose.cache.DefaultCache;
 import org.safehaus.penrose.cache.Cache;
 import org.safehaus.penrose.config.Config;
 import org.safehaus.penrose.filter.Filter;

@@ -2,11 +2,13 @@
  * Copyright (c) 1998-2005, Verge Lab., LLC.
  * All rights reserved.
  */
-package org.safehaus.penrose.engine;
+package org.safehaus.penrose.engine.impl;
 
 import org.ietf.ldap.*;
 import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.PenroseConnection;
+import org.safehaus.penrose.engine.ModRdnHandler;
+import org.safehaus.penrose.engine.Engine;
 import org.apache.log4j.Logger;
 
 

@@ -2,7 +2,7 @@
  * Copyright (c) 1998-2005, Verge Lab., LLC.
  * All rights reserved.
  */
-package org.safehaus.penrose.engine;
+package org.safehaus.penrose.engine.impl;
 
 
 import java.util.*;
@@ -12,9 +12,10 @@ import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.SearchResults;
 import org.safehaus.penrose.PenroseConnection;
+import org.safehaus.penrose.engine.SearchHandler;
 import org.safehaus.penrose.graph.Graph;
 import org.safehaus.penrose.cache.CacheConfig;
-import org.safehaus.penrose.cache.DefaultCache;
+import org.safehaus.penrose.cache.impl.DefaultCache;
 import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.thread.MRSWLock;
 

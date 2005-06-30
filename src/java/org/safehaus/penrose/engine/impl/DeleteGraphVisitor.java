@@ -2,12 +2,11 @@
  * Copyright (c) 1998-2005, Verge Lab., LLC.
  * All rights reserved.
  */
-package org.safehaus.penrose.engine;
+package org.safehaus.penrose.engine.impl;
 
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.graph.GraphVisitor;
-import org.safehaus.penrose.interpreter.Interpreter;
 import org.apache.log4j.Logger;
 import org.ietf.ldap.LDAPException;
 
@@ -16,37 +15,35 @@ import java.util.*;
 /**
  * @author Endi S. Dewata
  */
-public class ModifyGraphVisitor extends GraphVisitor {
+public class DeleteGraphVisitor extends GraphVisitor {
 
-    public Logger log = Logger.getLogger(Penrose.MODIFY_LOGGER);
+    public Logger log = Logger.getLogger(Penrose.DELETE_LOGGER);
 
     public DefaultEngine engine;
-    public DefaultModifyHandler modifyHandler;
+    public DefaultDeleteHandler deleteHandler;
     public EntryDefinition entryDefinition;
-    public AttributeValues oldValues;
-    public AttributeValues newValues;
+    public AttributeValues values;
     public Date date;
     private int returnCode = LDAPException.SUCCESS;
 
     private Stack stack = new Stack();
 
-    public ModifyGraphVisitor(
+    public DeleteGraphVisitor(
             DefaultEngine engine,
-            DefaultModifyHandler modifyHandler,
-            Entry entry,
-            AttributeValues newValues,
+            DefaultDeleteHandler deleteHandler,
+            EntryDefinition entryDefinition,
+            AttributeValues values,
             Date date) throws Exception {
 
         this.engine = engine;
-        this.modifyHandler = modifyHandler;
-        this.entryDefinition = entry.getEntryDefinition();
-        this.oldValues = entry.getAttributeValues();
-        this.newValues = newValues;
+        this.deleteHandler = deleteHandler;
+        this.entryDefinition = entryDefinition;
+        this.values = values;
         this.date = date;
 
-        Collection rows = engine.getEngineContext().getTransformEngine().convert(oldValues);
+        Collection rows = engine.getEngineContext().getTransformEngine().convert(values);
         Collection keys = new HashSet();
-
+/*
         for (Iterator i=rows.iterator(); i.hasNext(); ) {
             Row row = (Row)i.next();
             log.debug(" - "+row);
@@ -77,7 +74,7 @@ public class ModifyGraphVisitor extends GraphVisitor {
 
             keys.add(pk);
         }
-
+*/
         log.debug("Primary keys: "+keys);
         stack.push(keys);
     }
@@ -88,7 +85,9 @@ public class ModifyGraphVisitor extends GraphVisitor {
 
         if (entryDefinition.getSource(source.getName()) == null) return false;
 
-        returnCode = modifyHandler.modify(source, entryDefinition, oldValues, newValues, date);
+        returnCode = deleteHandler.delete(source, entryDefinition, values, date);
+
+        if (returnCode == LDAPException.NO_SUCH_OBJECT) return true; // ignore
         if (returnCode != LDAPException.SUCCESS) return false;
 
         return true;

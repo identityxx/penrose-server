@@ -2,7 +2,7 @@
  * Copyright (c) 1998-2005, Verge Lab., LLC.
  * All rights reserved.
  */
-package org.safehaus.penrose.engine;
+package org.safehaus.penrose.engine.impl;
 
 
 import java.util.*;
@@ -13,6 +13,9 @@ import org.safehaus.penrose.thread.Queue;
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.SearchResults;
 import org.safehaus.penrose.PenroseConnection;
+import org.safehaus.penrose.engine.Engine;
+import org.safehaus.penrose.engine.RefreshThread;
+import org.safehaus.penrose.engine.SearchThread;
 import org.ietf.ldap.LDAPException;
 
 /**

@@ -2,7 +2,7 @@
  * Copyright (c) 1998-2005, Verge Lab., LLC.
  * All rights reserved.
  */
-package org.safehaus.penrose.cache;
+package org.safehaus.penrose.cache.impl;
 
 
 import java.util.Collection;

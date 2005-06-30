@@ -2,7 +2,7 @@
  * Copyright (c) 1998-2005, Verge Lab., LLC.
  * All rights reserved.
  */
-package org.safehaus.penrose.engine;
+package org.safehaus.penrose.engine.impl;
 
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.Penrose;
@@ -15,12 +15,12 @@ import java.util.*;
 /**
  * @author Endi S. Dewata
  */
-public class DeleteGraphVisitor extends GraphVisitor {
+public class AddGraphVisitor extends GraphVisitor {
 
-    public Logger log = Logger.getLogger(Penrose.DELETE_LOGGER);
+    public Logger log = Logger.getLogger(Penrose.ADD_LOGGER);
 
     public DefaultEngine engine;
-    public DefaultDeleteHandler deleteHandler;
+    public DefaultAddHandler addHandler;
     public EntryDefinition entryDefinition;
     public AttributeValues values;
     public Date date;
@@ -28,15 +28,15 @@ public class DeleteGraphVisitor extends GraphVisitor {
 
     private Stack stack = new Stack();
 
-    public DeleteGraphVisitor(
+    public AddGraphVisitor(
             DefaultEngine engine,
-            DefaultDeleteHandler deleteHandler,
+            DefaultAddHandler addHandler,
             EntryDefinition entryDefinition,
             AttributeValues values,
             Date date) throws Exception {
 
         this.engine = engine;
-        this.deleteHandler = deleteHandler;
+        this.addHandler = addHandler;
         this.entryDefinition = entryDefinition;
         this.values = values;
         this.date = date;
@@ -85,7 +85,7 @@ public class DeleteGraphVisitor extends GraphVisitor {
 
         if (entryDefinition.getSource(source.getName()) == null) return false;
 
-        returnCode = deleteHandler.delete(source, entryDefinition, values, date);
+        returnCode = addHandler.add(source, entryDefinition, values, date);
 
         if (returnCode == LDAPException.NO_SUCH_OBJECT) return true; // ignore
         if (returnCode != LDAPException.SUCCESS) return false;

@@ -2,10 +2,13 @@
  * Copyright (c) 1998-2005, Verge Lab., LLC.
  * All rights reserved.
  */
-package org.safehaus.penrose.cache;
+package org.safehaus.penrose.cache.impl;
 
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.Penrose;
+import org.safehaus.penrose.cache.Cache;
+import org.safehaus.penrose.cache.CacheFilterTool;
+import org.safehaus.penrose.cache.CacheConfig;
 import org.safehaus.penrose.config.Config;
 import org.safehaus.penrose.mapping.Row;
 import org.safehaus.penrose.mapping.AttributeDefinition;
