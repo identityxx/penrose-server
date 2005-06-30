@@ -11,6 +11,7 @@ import org.safehaus.penrose.mapping.Row;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.SearchResults;
 import org.safehaus.penrose.Penrose;
+import org.safehaus.penrose.graph.GraphVisitor;
 import org.apache.log4j.Logger;
 
 import java.util.*;

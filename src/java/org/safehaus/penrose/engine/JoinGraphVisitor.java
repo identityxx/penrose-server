@@ -9,6 +9,7 @@ import org.safehaus.penrose.mapping.Field;
 import org.safehaus.penrose.mapping.Relationship;
 import org.safehaus.penrose.mapping.EntryDefinition;
 import org.safehaus.penrose.Penrose;
+import org.safehaus.penrose.graph.GraphVisitor;
 import org.apache.log4j.Logger;
 
 import java.util.*;

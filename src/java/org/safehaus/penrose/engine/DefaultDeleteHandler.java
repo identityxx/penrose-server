@@ -10,6 +10,7 @@ import org.safehaus.penrose.config.*;
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.PenroseConnection;
+import org.safehaus.penrose.graph.Graph;
 import org.safehaus.penrose.thread.MRSWLock;
 import org.apache.log4j.Logger;
 

@@ -2,7 +2,9 @@
  * Copyright (c) 1998-2005, Verge Lab., LLC.
  * All rights reserved.
  */
-package org.safehaus.penrose.engine;
+package org.safehaus.penrose.graph;
+
+import org.safehaus.penrose.graph.Graph;
 
 import java.util.Collection;
 import java.util.Iterator;

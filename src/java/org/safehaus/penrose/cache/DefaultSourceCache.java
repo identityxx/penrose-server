@@ -7,7 +7,7 @@ package org.safehaus.penrose.cache;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.event.CacheEvent;
 import org.safehaus.penrose.SearchResults;
-import org.safehaus.penrose.engine.Graph;
+import org.safehaus.penrose.graph.Graph;
 import org.safehaus.penrose.engine.JoinGraphVisitor;
 import org.safehaus.penrose.mapping.Row;
 import org.safehaus.penrose.mapping.SourceDefinition;
