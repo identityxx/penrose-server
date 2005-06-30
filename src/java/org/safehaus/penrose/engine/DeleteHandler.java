@@ -9,9 +9,9 @@ import org.safehaus.penrose.PenroseConnection;
 /**
  * @author Endi S. Dewata
  */
-public interface DeleteHandler {
+public abstract class DeleteHandler {
 
-    public void init(Engine engine, EngineContext engineContext) throws Exception;
-    public int delete(PenroseConnection connection, String dn) throws Exception;
+    public abstract void init(Engine engine) throws Exception;
+    public abstract int delete(PenroseConnection connection, String dn) throws Exception;
 
 }

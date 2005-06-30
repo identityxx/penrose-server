@@ -9,10 +9,10 @@ import org.safehaus.penrose.PenroseConnection;
 /**
  * @author Endi S. Dewata
  */
-public interface BindHandler {
+public abstract class BindHandler {
 
-    public void init(Engine engine, EngineContext engineContext) throws Exception;
-    public int bind(PenroseConnection connection, String dn, String password) throws Exception;
-    public int unbind(PenroseConnection connection) throws Exception;
+    public abstract void init(Engine engine) throws Exception;
+    public abstract int bind(PenroseConnection connection, String dn, String password) throws Exception;
+    public abstract int unbind(PenroseConnection connection) throws Exception;
 
 }

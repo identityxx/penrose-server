@@ -23,7 +23,7 @@ import java.util.*;
 /**
  * @author Endi S. Dewata
  */
-public class DefaultModifyHandler implements ModifyHandler {
+public class DefaultModifyHandler extends ModifyHandler {
 
     public Logger log = Logger.getLogger(Penrose.MODIFY_LOGGER);
 
@@ -31,9 +31,9 @@ public class DefaultModifyHandler implements ModifyHandler {
 	public EngineContext engineContext;
     public Config config;
 
-	public void init(Engine engine, EngineContext engineContext) throws Exception {
+	public void init(Engine engine) throws Exception {
         this.engine = (DefaultEngine)engine;
-		this.engineContext = engineContext;
+        this.engineContext = engine.getEngineContext();
         this.config = engineContext.getConfig();
 	}
 
@@ -49,7 +49,7 @@ public class DefaultModifyHandler implements ModifyHandler {
 
 		Entry sr;
 		try {
-			sr = ((DefaultSearchHandler)engine.getSearchHandler()).findEntry(connection, ndn);
+			sr = engine.getSearchHandler().find(connection, ndn);
 		} catch (LDAPException e) {
 			return e.getResultCode();
 		}

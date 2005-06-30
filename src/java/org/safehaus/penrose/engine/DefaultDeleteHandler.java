@@ -19,7 +19,7 @@ import java.util.*;
 /**
  * @author Endi S. Dewata
  */
-public class DefaultDeleteHandler implements DeleteHandler {
+public class DefaultDeleteHandler extends DeleteHandler {
 
     public Logger log = Logger.getLogger(Penrose.DELETE_LOGGER);
 
@@ -27,9 +27,9 @@ public class DefaultDeleteHandler implements DeleteHandler {
     public EngineContext engineContext;
     public Config config;
 
-    public void init(Engine engine, EngineContext engineContext) throws Exception {
+    public void init(Engine engine) throws Exception {
         this.engine = (DefaultEngine)engine;
-        this.engineContext = engineContext;
+        this.engineContext = engine.getEngineContext();
         this.config = engineContext.getConfig();
     }
 
@@ -50,7 +50,7 @@ public class DefaultDeleteHandler implements DeleteHandler {
         	// Virtual Entry
 	        Entry sr = null;
 	        try {
-                sr = ((DefaultSearchHandler)engine.getSearchHandler()).findEntry(connection, ndn);
+                sr = engine.getSearchHandler().find(connection, ndn);
 	        } catch (Exception e) {
 	            // ignore
 	        }

@@ -7,10 +7,6 @@ package org.safehaus.penrose.engine;
 
 import java.util.*;
 
-import org.ietf.ldap.LDAPException;
-import org.ietf.ldap.LDAPDN;
-import org.ietf.ldap.LDAPEntry;
-import org.safehaus.penrose.config.*;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.Penrose;
@@ -21,268 +17,13 @@ import org.safehaus.penrose.cache.CacheConfig;
 import org.safehaus.penrose.cache.DefaultCache;
 import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.thread.MRSWLock;
-import org.apache.log4j.Logger;
 
 /**
  * @author Endi S. Dewata
  */
-public class DefaultSearchHandler implements SearchHandler {
+public class DefaultSearchHandler extends SearchHandler {
 
-    public Logger log = Logger.getLogger(Penrose.SEARCH_LOGGER);
-
-    public DefaultEngine engine;
-    public DefaultCache cache;
-	public EngineContext engineContext;
-    public Config config;
-
-	public void init(Engine engine, EngineContext engineContext) throws Exception {
-        this.engine = (DefaultEngine)engine;
-        this.cache = (DefaultCache)engine.getCache();
-		this.engineContext = engineContext;
-        config = engineContext.getConfig();
-	}
-
-    public int search(
-            PenroseConnection connection,
-            String base,
-            int scope,
-            int deref,
-            String filter,
-            Collection attributeNames,
-            SearchResults results) throws Exception {
-
-		String nbase;
-		try {
-			nbase = LDAPDN.normalize(base);
-		} catch (IllegalArgumentException e) {
-			results.setReturnCode(LDAPException.INVALID_DN_SYNTAX);
-			return LDAPException.INVALID_DN_SYNTAX;
-		}
-
-		Filter f = engineContext.getFilterTool().parseFilter(filter);
-		log.debug("Parsed filter: " + f);
-
-        log.debug("----------------------------------------------------------------------------------");
-		Entry baseEntry;
-		try {
-			baseEntry = findEntry(connection, nbase);
-            
-        } catch (LDAPException e) {
-            log.debug(e.getMessage());
-            results.setReturnCode(e.getResultCode());
-            return e.getResultCode();
-
-		} catch (Exception e) {
-			log.debug(e.getMessage(), e);
-			results.setReturnCode(LDAPException.OPERATIONS_ERROR);
-			return LDAPException.OPERATIONS_ERROR;
-		}
-
-		if (baseEntry == null) {
-			log.debug("Can't find " + nbase);
-			results.setReturnCode(LDAPException.NO_SUCH_OBJECT);
-			return LDAPException.NO_SUCH_OBJECT;
-		}
-
-		log.debug("Search base: " + baseEntry.getDn());
-
-		if (scope == 0 || scope == 2) { // base or subtree
-			if (engineContext.getFilterTool().isValidEntry(baseEntry, f)) {
-                LDAPEntry entry = baseEntry.toLDAPEntry();
-				results.add(Entry.filterAttributes(entry, attributeNames));
-			}
-		}
-
-        log.debug("----------------------------------------------------------------------------------");
-		if (scope == 1 || scope == 2) { // one level or subtree
-			log.debug("Searching children of " + baseEntry.getDn());
-			searchChildren(connection, baseEntry, scope, f, attributeNames, results);
-		}
-		/*
-		 * log.debug("-------------------------------------------------------------------------------");
-		 * log.debug("CHECKING FILTER: "+filter);
-		 * 
-		 * for (Iterator i=entries.iterator(); i.hasNext(); ) { Entry r =
-		 * (Entry)i.next();
-		 * 
-		 * if (penrose.filterTool.isValidEntry(r, f)) {
-		 * results.put(penrose.entryTool.toLDAPEntry(connection, r,
-		 * attributeNames)); log.debug(" - "+r.getDn()+" ok"); }
-		 * else { log.debug(" - "+r.getDn()+" failed"); } }
-		 * 
-		 * log.debug("-------------------------------------------------------------------------------");
-		 */
-		results.setReturnCode(LDAPException.SUCCESS);
-		return LDAPException.SUCCESS;
-	}
-
-	/**
-	 * Find an real entry given a dn. If not found it will search for a virtual
-	 * entry from all possible mappings.
-	 * 
-	 * @param dn
-	 * @return virtual entry
-	 * @throws Exception
-	 */
-	public Entry findEntry(
-            PenroseConnection connection,
-            String dn) throws Exception {
-
-		log.debug("Find entry: " + dn);
-
-        // search the entry directly
-        EntryDefinition entry = config.getEntryDefinition(dn);
-
-        if (entry != null) {
-            log.debug("Found static entry: " + dn);
-
-            AttributeValues values = entry.getAttributeValues(engineContext.newInterpreter());
-            return new Entry(entry, values);
-        }
-
-		int i = dn.indexOf(",");
-		String rdn;
-		String parentDn;
-
-		if (i < 0) {
-			rdn = dn;
-			parentDn = null;
-		} else {
-			rdn = dn.substring(0, i);
-			parentDn = dn.substring(i + 1);
-		}
-
-        // find the parent entry
-        Entry parent = findEntry(connection, parentDn);
-
-		if (parent == null) {
-            log.debug("Parent not found: " + dn);
-
-            throw new LDAPException("Can't find " + dn + ".",
-                    LDAPException.NO_SUCH_OBJECT, "Can't find virtual entry "
-                            + dn + ".");
-		}
-
-        EntryDefinition parentDefinition = parent.getEntryDefinition();
-
-		//log.debug("Found parent entry: " + parentDn);
-		Collection children = parentDefinition.getChildren();
-
-        int j = rdn.indexOf("=");
-        String rdnAttribute = rdn.substring(0, j);
-        String rdnValue = rdn.substring(j + 1);
-
-        // Find in each dynamic children
-		for (Iterator iterator = children.iterator(); iterator.hasNext(); ) {
-			entry = (EntryDefinition) iterator.next();
-
-            String childRdn = entry.getRdn();
-            //log.debug("Checking child: "+childRdn);
-
-            int k = childRdn.indexOf("=");
-            String childRdnAttribute = childRdn.substring(0, k);
-            String childRdnValue = childRdn.substring(k+1);
-
-            // the rdn attribute types must match
-            if (!rdnAttribute.equals(childRdnAttribute)) continue;
-
-			if (entry.isDynamic()) {
-
-                log.debug("Found entry definition: " + entry.getDn());
-
-                try {
-                    Entry sr = searchVirtualEntry(connection, parent, entry, rdn);
-                    if (sr == null) continue;
-
-                    sr.setParent(parent);
-                    log.debug("Found virtual entry: " + sr.getDn());
-
-                    return sr;
-
-                } catch (Exception e) {
-                    e.printStackTrace(System.out);
-                    // not found, continue to next entry definition
-                }
-
-            } else {
-                if (!rdnValue.toLowerCase().equals(childRdnValue.toLowerCase())) continue;
-
-                log.debug("Found static entry: " + entry.getDn());
-
-                AttributeValues values = entry.getAttributeValues(engineContext.newInterpreter());
-                Entry sr = new Entry(entry, values);
-                sr.setParent(parent);
-                return sr;
-            }
-		}
-
-		throw new LDAPException("Can't find " + dn + ".",
-				LDAPException.NO_SUCH_OBJECT, "Can't find virtual entry " + dn + ".");
-	}
-
-	/**
-	 * Find entries given a parent entry. It could return real entries and/or
-	 * virtual entries.
-	 * 
-	 * @param parent
-	 * @param scope
-	 * @throws Exception
-	 */
-	public void searchChildren(
-            PenroseConnection connection,
-			Entry parent,
-            int scope,
-            Filter filter,
-			Collection attributeNames,
-            SearchResults results) throws Exception {
-
-		EntryDefinition parentEntry = parent.getEntryDefinition();
-		Collection children = parentEntry.getChildren();
-		log.debug("Total children: " + children.size());
-
-		for (Iterator i = children.iterator(); i.hasNext();) {
-			EntryDefinition entryDefinition = (EntryDefinition) i.next();
-			if (entryDefinition.isDynamic()) continue;
-
-			log.debug("Static children: " + entryDefinition.getDn());
-
-			AttributeValues values = entryDefinition.getAttributeValues(engineContext.newInterpreter());
-			Entry sr = new Entry(entryDefinition, values);
-
-			if (engineContext.getFilterTool().isValidEntry(sr, filter)) {
-                LDAPEntry en = sr.toLDAPEntry();
-				results.add(Entry.filterAttributes(en, attributeNames));
-			}
-
-			if (scope == 2) {
-				searchChildren(connection, sr, scope, filter, attributeNames, results);
-			}
-		}
-
-		for (Iterator i = children.iterator(); i.hasNext();) {
-			EntryDefinition entryDefinition = (EntryDefinition) i.next();
-			if (!entryDefinition.isDynamic()) continue;
-
-			log.debug("Virtual children: " + entryDefinition.getDn());
-
-			SearchResults results2 = searchVirtualEntries(parent, entryDefinition, filter);
-
-            for (Iterator j=results2.iterator(); j.hasNext(); ) {
-                Entry sr = (Entry)j.next();
-
-                if (engineContext.getFilterTool().isValidEntry(sr, filter)) {
-                    LDAPEntry en = sr.toLDAPEntry();
-                    results.add(Entry.filterAttributes(en, attributeNames));
-                }
-                
-                if (scope == 2) {
-                    searchChildren(connection, sr, scope, filter, attributeNames, results);
-                }
-            }
-		}
-	}
-
-	/**
+    /**
 	 * Find a virtual entry given an rdn and a mapping entry.
 	 * 
 	 * @param rdn
@@ -290,7 +31,7 @@ public class DefaultSearchHandler implements SearchHandler {
 	 * @return the entry
 	 * @throws Exception
 	 */
-	public Entry searchVirtualEntry(
+	public Entry find(
             PenroseConnection connection,
             Entry parent,
 			EntryDefinition entryDefinition,
@@ -315,36 +56,12 @@ public class DefaultSearchHandler implements SearchHandler {
 
         // there should be only one entry
         Entry entry = (Entry)results.iterator().next();
-/*
-        log.debug("Checking " + entry.getDn() + ": " + entry.getAttributeValues());
 
-		Map rdnValues = Entry.parseRdn(rdn);
-        AttributeValues values = entry.getAttributeValues();
-
-        // check all values in rdn
-        for (Iterator j = rdnValues.keySet().iterator(); j.hasNext();) {
-            String rdnName = (String) j.next();
-
-            String rdnValue = ((String)rdnValues.get(rdnName)).toLowerCase();
-            Collection v = values.get(rdnName);
-
-            // convert to lower cases
-            List v2 = new ArrayList();
-            for (Iterator k=v.iterator(); k.hasNext(); ) {
-                String val = (String)k.next();
-                v2.add(val.toLowerCase());
-            }
-
-            log.debug("Checking "+rdnName+"="+rdnValue+" with "+v2);
-            if (!v2.contains(rdnValue)) {
-                return null;
-            }
-        }
-*/
 		return entry;
 	}
 
-    public SearchResults searchVirtualEntries(
+    public SearchResults search(
+            PenroseConnection connection,
             Entry parent,
             EntryDefinition entryDefinition,
             Filter filter
@@ -360,7 +77,7 @@ public class DefaultSearchHandler implements SearchHandler {
         log.debug("Keys: "+rdns);
 
         // find the primary keys of entries that has been loaded
-        Collection loadedPks = engine.getEntryCache().findPrimaryKeys(entryDefinition, rdns);
+        Collection loadedPks = getEngine().getEntryCache().findPrimaryKeys(entryDefinition, rdns);
         log.debug("Loaded Keys: "+loadedPks);
 
         if (!rdns.isEmpty() && loadedPks.isEmpty()) { // never been loaded -> load everything at once
@@ -392,7 +109,7 @@ public class DefaultSearchHandler implements SearchHandler {
 
         Calendar calendar = Calendar.getInstance();
 
-        String s = cache.getParameter(CacheConfig.CACHE_EXPIRATION);
+        String s = getCache().getParameter(CacheConfig.CACHE_EXPIRATION);
         int cacheExpiration = s == null ? 0 : Integer.parseInt(s);
         log.debug("Expiration: "+cacheExpiration);
         if (cacheExpiration < 0) cacheExpiration = Integer.MAX_VALUE;
@@ -400,7 +117,7 @@ public class DefaultSearchHandler implements SearchHandler {
         Calendar c = (Calendar) calendar.clone();
         c.add(Calendar.MINUTE, -cacheExpiration);
 
-        Date modifyTime = engine.getEntryCache().getModifyTime(entryDefinition, rdn);
+        Date modifyTime = getEngine().getEntryCache().getModifyTime(entryDefinition, rdn);
         boolean expired = modifyTime == null || modifyTime.before(c.getTime());
 
         log.debug("Comparing "+modifyTime+" with "+c.getTime()+" => "+(expired ? "expired" : "not expired"));
@@ -434,13 +151,13 @@ public class DefaultSearchHandler implements SearchHandler {
         //log.debug("--------------------------------------------------------------------------------------");
         //log.debug("Getting entries from cache with pks "+keys);
 
-        MRSWLock lock = engine.getLock(entryDefinition.getDn());
+        MRSWLock lock = ((DefaultEngine)getEngine()).getLock(entryDefinition.getDn());
         lock.getReadLock(Penrose.WAIT_TIMEOUT);
 
         SearchResults results = new SearchResults();
 
         try {
-            Map entries = engine.getEntryCache().get(entryDefinition, keys);
+            Map entries = getEngine().getEntryCache().get(entryDefinition, keys);
 
             for (Iterator i = entries.values().iterator(); i.hasNext();) {
                 Entry sr = (Entry) i.next();
@@ -488,21 +205,21 @@ public class DefaultSearchHandler implements SearchHandler {
             Calendar calendar
             ) throws Exception {
 
-        Graph graph = config.getGraph(entryDefinition);
-        Source primarySource = config.getPrimarySource(entryDefinition);
+        Graph graph = getConfig().getGraph(entryDefinition);
+        Source primarySource = getConfig().getPrimarySource(entryDefinition);
 
         log.debug("--------------------------------------------------------------------------------------");
 
         if (parent != null && parent.isDynamic()) {
 
             AttributeValues values = parent.getAttributeValues();
-            Collection rows = engineContext.getTransformEngine().convert(values);
+            Collection rows = getEngineContext().getTransformEngine().convert(values);
 
             Collection newRows = new HashSet();
             for (Iterator i=rows.iterator(); i.hasNext(); ) {
                 Row row = (Row)i.next();
 
-                Interpreter interpreter = engineContext.newInterpreter();
+                Interpreter interpreter = getEngineContext().newInterpreter();
                 interpreter.set(row);
 
                 Row newRow = new Row();
@@ -526,7 +243,7 @@ public class DefaultSearchHandler implements SearchHandler {
             String startingSourceName = getStartingSourceName(entryDefinition);
             Source startingSource = entryDefinition.getEffectiveSource(startingSourceName);
 
-            PrimaryKeyGraphVisitor visitor = new PrimaryKeyGraphVisitor(engine, entryDefinition, newRows, primarySource);
+            PrimaryKeyGraphVisitor visitor = new PrimaryKeyGraphVisitor(getEngine(), entryDefinition, newRows, primarySource);
             graph.traverse(visitor, startingSource);
             return visitor.getKeys();
 
@@ -535,7 +252,7 @@ public class DefaultSearchHandler implements SearchHandler {
             String primarySourceName = primarySource.getName();
             log.debug("Primary source: "+primarySourceName);
 
-            Filter f = cache.getCacheFilterTool().toSourceFilter(null, entryDefinition, primarySource, filter);
+            Filter f = ((DefaultCache)getCache()).getCacheFilterTool().toSourceFilter(null, entryDefinition, primarySource, filter);
 
             log.debug("Searching source "+primarySourceName+" for "+f);
             SearchResults results = primarySource.search(f, 100);
@@ -545,7 +262,7 @@ public class DefaultSearchHandler implements SearchHandler {
             for (Iterator j=results.iterator(); j.hasNext(); ) {
                 Row row = (Row)j.next();
 
-                Interpreter interpreter = engineContext.newInterpreter();
+                Interpreter interpreter = getEngineContext().newInterpreter();
                 for (Iterator k=row.getNames().iterator(); k.hasNext(); ) {
                     String name = (String)k.next();
                     Object value = row.get(name);
@@ -721,14 +438,14 @@ public class DefaultSearchHandler implements SearchHandler {
      */
     public Collection rdnToPk(EntryDefinition entryDefinition, Collection rdns) throws Exception {
 
-        Source primarySource = config.getPrimarySource(entryDefinition);
+        Source primarySource = getConfig().getPrimarySource(entryDefinition);
 
         Collection pks = new HashSet();
 
         for (Iterator i=rdns.iterator(); i.hasNext(); ) {
             Row rdn = (Row)i.next();
 
-            Interpreter interpreter = engineContext.newInterpreter();
+            Interpreter interpreter = getEngineContext().newInterpreter();
             interpreter.set(rdn);
 
             Collection fields = primarySource.getPrimaryKeyFields();
@@ -768,10 +485,10 @@ public class DefaultSearchHandler implements SearchHandler {
         log.debug("--------------------------------------------------------------------------------------");
         log.debug("Loading all sources with pks " + pks);
 
-        Graph graph = config.getGraph(entryDefinition);
-        Source primarySource = config.getPrimarySource(entryDefinition);
+        Graph graph = getConfig().getGraph(entryDefinition);
+        Source primarySource = getConfig().getPrimarySource(entryDefinition);
 
-        SourceLoaderGraphVisitor visitor = new SourceLoaderGraphVisitor(engine, entryDefinition, pks, calendar.getTime());
+        SourceLoaderGraphVisitor visitor = new SourceLoaderGraphVisitor(getEngine(), entryDefinition, pks, calendar.getTime());
         graph.traverse(visitor, primarySource);
     }
 
@@ -781,22 +498,22 @@ public class DefaultSearchHandler implements SearchHandler {
             Calendar calendar
             ) throws Exception {
 
-        Graph graph = config.getGraph(entryDefinition);
-        Source primarySource = config.getPrimarySource(entryDefinition);
+        Graph graph = getConfig().getGraph(entryDefinition);
+        Source primarySource = getConfig().getPrimarySource(entryDefinition);
 
-        Filter filter = engine.getEngineContext().getFilterTool().createFilter(pks);
-        String sqlFilter = cache.getCacheFilterTool().toSQLFilter(entryDefinition, filter);
+        Filter filter = getEngine().getEngineContext().getFilterTool().createFilter(pks);
+        String sqlFilter = ((DefaultCache)getCache()).getCacheFilterTool().toSQLFilter(entryDefinition, filter);
 
         log.debug("--------------------------------------------------------------------------------------");
         log.debug("Joining sources with pks "+pks);
 
-        MRSWLock lock = engine.getLock(entryDefinition.getDn());
+        MRSWLock lock = ((DefaultEngine)getEngine()).getLock(entryDefinition.getDn());
         lock.getWriteLock(Penrose.WAIT_TIMEOUT);
 
         try {
 
             // join rows from sources
-            Collection rows = engine.getSourceCache().joinSources(entryDefinition, graph, primarySource, sqlFilter);
+            Collection rows = getEngine().getSourceCache().joinSources(entryDefinition, graph, primarySource, sqlFilter);
             log.debug("Joined " + rows.size() + " rows.");
 
             // merge rows into attribute values
@@ -806,7 +523,7 @@ public class DefaultSearchHandler implements SearchHandler {
                 Map pk = new HashMap();
                 Row translatedRow = new Row();
 
-                boolean validPK = engineContext.getTransformEngine().translate(entryDefinition, row, pk, translatedRow);
+                boolean validPK = getEngineContext().getTransformEngine().translate(entryDefinition, row, pk, translatedRow);
                 if (!validPK) continue;
 
                 AttributeValues values = (AttributeValues)entries.get(pk);
@@ -821,13 +538,12 @@ public class DefaultSearchHandler implements SearchHandler {
             // update attribute values in entry cache
             for (Iterator i=entries.values().iterator(); i.hasNext(); ) {
                 AttributeValues values = (AttributeValues)i.next();
-                engine.getEntryCache().remove(entryDefinition, values, calendar.getTime());
-                engine.getEntryCache().put(entryDefinition, values, calendar.getTime());
+                getEngine().getEntryCache().remove(entryDefinition, values, calendar.getTime());
+                getEngine().getEntryCache().put(entryDefinition, values, calendar.getTime());
             }
 
         } finally {
             lock.releaseWriteLock(Penrose.WAIT_TIMEOUT);
         }
     }
-
 }

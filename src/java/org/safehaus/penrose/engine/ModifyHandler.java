@@ -11,9 +11,9 @@ import java.util.List;
 /**
  * @author Endi S. Dewata
  */
-public interface ModifyHandler {
+public abstract class ModifyHandler {
 
-    public void init(Engine engine, EngineContext engineContext) throws Exception;
-    public int modify(PenroseConnection connection, String dn, List modifications) throws Exception;
+    public abstract void init(Engine engine) throws Exception;
+    public abstract int modify(PenroseConnection connection, String dn, List modifications) throws Exception;
 
 }

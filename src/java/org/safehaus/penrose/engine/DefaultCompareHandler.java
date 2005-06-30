@@ -17,13 +17,13 @@ import java.util.Enumeration;
 /**
  * @author Endi S. Dewata
  */
-public class DefaultCompareHandler implements CompareHandler {
+public class DefaultCompareHandler extends CompareHandler {
 
     public Logger log = Logger.getLogger(Penrose.COMPARE_LOGGER);
 
     public DefaultEngine engine;
 
-    public void init(Engine engine, EngineContext engineContext) throws Exception {
+    public void init(Engine engine) throws Exception {
         this.engine = (DefaultEngine)engine;
     }
 

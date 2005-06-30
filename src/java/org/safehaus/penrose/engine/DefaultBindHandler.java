@@ -19,16 +19,16 @@ import java.util.*;
 /**
  * @author Endi S. Dewata
  */
-public class DefaultBindHandler implements BindHandler {
+public class DefaultBindHandler extends BindHandler {
 
     public Logger log = Logger.getLogger(Penrose.BIND_LOGGER);
 
     public DefaultEngine engine;
     public EngineContext engineContext;
 
-    public void init(Engine engine, EngineContext engineContext) throws Exception {
+    public void init(Engine engine) throws Exception {
         this.engine = (DefaultEngine)engine;
-        this.engineContext = engineContext;
+        this.engineContext = engine.getEngineContext();
     }
 
     public int bind(PenroseConnection connection, String dn, String password) throws Exception {
@@ -68,7 +68,7 @@ public class DefaultBindHandler implements BindHandler {
         attributeNames.add("userPassword");
         Entry sr = null;
         try {
-            sr = ((DefaultSearchHandler)engine.getSearchHandler()).findEntry(connection, dn);
+            sr = engine.getSearchHandler().find(connection, dn);
         } catch (Exception e) {
             // ignore
         }

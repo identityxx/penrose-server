@@ -9,9 +9,9 @@ import org.safehaus.penrose.PenroseConnection;
 /**
  * @author Endi S. Dewata
  */
-public interface ModRdnHandler {
+public abstract class ModRdnHandler {
 
-    public void init(Engine engine, EngineContext engineContext) throws Exception;
-    public int modrdn(PenroseConnection connection, String dn, String newRdn) throws Exception;
+    public abstract void init(Engine engine) throws Exception;
+    public abstract int modrdn(PenroseConnection connection, String dn, String newRdn) throws Exception;
 
 }

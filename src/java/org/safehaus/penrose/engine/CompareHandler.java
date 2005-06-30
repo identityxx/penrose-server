@@ -9,9 +9,9 @@ import org.safehaus.penrose.PenroseConnection;
 /**
  * @author Endi S. Dewata
  */
-public interface CompareHandler {
+public abstract class CompareHandler {
 
-    public void init(Engine engine, EngineContext engineContext) throws Exception;
-    public int compare(PenroseConnection connection, String dn, String attributeName, String attributeValue) throws Exception;
+    public abstract void init(Engine engine) throws Exception;
+    public abstract int compare(PenroseConnection connection, String dn, String attributeName, String attributeValue) throws Exception;
 
 }

@@ -13,13 +13,13 @@ import org.apache.log4j.Logger;
 /**
  * @author Endi S. Dewata
  */
-public class DefaultModRdnHandler implements ModRdnHandler {
+public class DefaultModRdnHandler extends ModRdnHandler {
 
     public Logger log = Logger.getLogger(Penrose.MODRDN_LOGGER);
 
     public DefaultEngine engine;
 
-	public void init(Engine engine, EngineContext engineContext) throws Exception {
+	public void init(Engine engine) throws Exception {
         this.engine = (DefaultEngine)engine;
 	}
 

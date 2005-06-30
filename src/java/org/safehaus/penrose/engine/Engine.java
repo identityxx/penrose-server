@@ -63,31 +63,31 @@ public abstract class Engine implements EngineMBean {
     public void initHandlers() throws Exception {
         Class addHandlerClass = Class.forName(engineConfig.getAddHandlerClass());
         addHandler = (AddHandler)addHandlerClass.newInstance();
-        addHandler.init(this, engineContext);
+        addHandler.init(this);
 
         Class bindHandlerClass = Class.forName(engineConfig.getBindHandlerClass());
         bindHandler = (BindHandler)bindHandlerClass.newInstance();
-        bindHandler.init(this, engineContext);
+        bindHandler.init(this);
 
         Class compareHandlerClass = Class.forName(engineConfig.getCompareHandlerClass());
         compareHandler = (CompareHandler)compareHandlerClass.newInstance();
-        compareHandler.init(this, engineContext);
+        compareHandler.init(this);
 
         Class deleteHandlerClass = Class.forName(engineConfig.getDeleteHandlerClass());
         deleteHandler = (DeleteHandler)deleteHandlerClass.newInstance();
-        deleteHandler.init(this, engineContext);
+        deleteHandler.init(this);
 
         Class modifyHandlerClass = Class.forName(engineConfig.getModifyHandlerClass());
         modifyHandler = (ModifyHandler)modifyHandlerClass.newInstance();
-        modifyHandler.init(this, engineContext);
+        modifyHandler.init(this);
 
         Class modRdnHandlerClass = Class.forName(engineConfig.getModRdnHandlerClass());
         modRdnHandler = (ModRdnHandler)modRdnHandlerClass.newInstance();
-        modRdnHandler.init(this, engineContext);
+        modRdnHandler.init(this);
 
         Class searchHandlerClass = Class.forName(engineConfig.getSearchHandlerClass());
         searchHandler = (SearchHandler)searchHandlerClass.newInstance();
-        searchHandler.init(this, engineContext);
+        searchHandler.init(this);
     }
 
 	public abstract void init() throws Exception;
