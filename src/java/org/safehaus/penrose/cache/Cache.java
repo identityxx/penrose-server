@@ -54,17 +54,29 @@ public abstract class Cache {
         this.cacheContext = cacheContext;
         this.config = cacheContext.getConfig();
 
+        createFilterCache();
+        createEntryCache();
+        createSourceCache();
+
         init();
 
-        filterCache = new FilterCache();
+        filterCache.init(this);
+        entryCache.init(this);
+        sourceCache.init(this);
+    }
 
+    public void createFilterCache() throws Exception {
+        filterCache = new FilterCache();
+    }
+
+    public void createEntryCache() throws Exception {
         Class entryCacheClass = Class.forName(cacheConfig.getEntryCacheClass());
         entryCache = (EntryCache)entryCacheClass.newInstance();
-        entryCache.init(this);
+    }
 
+    public void createSourceCache() throws Exception {
         Class sourceCacheClass = Class.forName(cacheConfig.getSourceCacheClass());
         sourceCache = (SourceCache)sourceCacheClass.newInstance();
-        sourceCache.init(this);
     }
 
     public abstract void init() throws Exception;

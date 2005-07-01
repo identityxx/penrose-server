@@ -160,11 +160,11 @@ public class PrimaryKeyGraphVisitor extends GraphVisitor {
         log.debug("Searching source "+source.getName()+" for "+newFilter);
         SearchResults results = source.search(newFilter, 100);
 
-        log.debug("Source primary keys:");
+        //log.debug("Source primary keys:");
         newRows = new HashSet();
         for (Iterator j=results.iterator(); j.hasNext(); ) {
             Row row = (Row)j.next();
-            log.debug(" - "+row);
+            //log.debug(" - "+row);
             newRows.add(row);
         }
 

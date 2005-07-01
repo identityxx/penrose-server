@@ -61,6 +61,17 @@ public class JoinGraphVisitor extends GraphVisitor {
 
         if (entryDefinition.getSource(source.getName()) == null) return false;
 
+        // visit this node if the pk fields are set
+        boolean visit = true;
+
+        Collection pkFields = source.getPrimaryKeyFields();
+        for (Iterator i=pkFields.iterator(); i.hasNext(); ) {
+            Field field = (Field)i.next();
+            visit &= field.getExpression() != null;
+        }
+
+        if (!visit) return false;
+
         Relationship relationship = (Relationship)object;
         log.debug("Relationship "+relationship);
 

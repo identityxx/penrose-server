@@ -109,7 +109,7 @@ public class DefaultEntryCache extends EntryCache {
 
     public Map get(EntryDefinition entryDefinition, Collection rdns) throws Exception {
 
-        Map entries = new HashMap();
+        Map results = new HashMap();
 
         for (Iterator i=rdns.iterator(); i.hasNext(); ) {
             Row rdn = (Row)i.next();
@@ -117,37 +117,21 @@ public class DefaultEntryCache extends EntryCache {
             Entry entry = get(entryDefinition, rdn);
             if (entry == null) continue;
 
-            entries.put(rdn, entry);
+            results.put(rdn, entry);
         }
 
-        return entries;
-    }
-
-    public Row getRdn(EntryDefinition entryDefinition, AttributeValues attributeValues) throws Exception {
-        Row rdn = new Row();
-        Collection rdnAttributes = entryDefinition.getRdnAttributes();
-
-        for (Iterator i = rdnAttributes.iterator(); i.hasNext();) {
-            AttributeDefinition attributeDefinition = (AttributeDefinition) i.next();
-            String name = attributeDefinition.getName();
-            Collection values = attributeValues.get(name);
-
-            Object value = values.iterator().next();
-            rdn.set(name, value);
-        }
-
-        return rdn;
+        return results;
     }
 
     public void put(Entry entry, Date date) throws Exception {
 
+        Row rdn = entry.getRdn();
+
         EntryDefinition entryDefinition = entry.getEntryDefinition();
         AttributeValues values = entry.getAttributeValues();
 
-        Row pk = getRdn(entryDefinition, values);
-
         EntryHome entryHome = getEntryHome(entryDefinition);
-        entryHome.insert(pk, date);
+        entryHome.insert(rdn, date);
 
         EntryAttributeHome entryAttributeHome = getEntryAttributeHome(entryDefinition);
 
@@ -159,23 +143,22 @@ public class DefaultEntryCache extends EntryCache {
             for (Iterator j=c.iterator(); j.hasNext(); ) {
                 Object value = j.next();
                 if (value == null) continue;
-                entryAttributeHome.insert(pk, name, value);
+                entryAttributeHome.insert(rdn, name, value);
             }
         }
     }
 
     public void remove(Entry entry) throws Exception {
 
-        EntryDefinition entryDefinition = entry.getEntryDefinition();
-        AttributeValues values = entry.getAttributeValues();
+        Row rdn = entry.getRdn();
 
-        Row pk = getRdn(entryDefinition, values);
+        EntryDefinition entryDefinition = entry.getEntryDefinition();
 
         EntryHome entryHome = getEntryHome(entryDefinition);
-        entryHome.delete(pk);
+        entryHome.delete(rdn);
 
         EntryAttributeHome entryAttributeHome = getEntryAttributeHome(entryDefinition);
-        entryAttributeHome.delete(pk);
+        entryAttributeHome.delete(rdn);
     }
 
     /**

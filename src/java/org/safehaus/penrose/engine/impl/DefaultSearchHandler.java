@@ -118,7 +118,8 @@ public class DefaultSearchHandler extends SearchHandler {
         Calendar c = (Calendar) calendar.clone();
         c.add(Calendar.MINUTE, -cacheExpiration);
 
-        Collection rdns = getCache().getFilterCache().get(entryDefinition, filter);
+        String key = entryDefinition.getDn()+","+parent.getDn() + ":" + filter;
+        Collection rdns = getCache().getFilterCache().get(key);
         if (rdns != null) {
             log.debug("Filter Cache found: "+rdns);
             return rdns;
@@ -131,7 +132,7 @@ public class DefaultSearchHandler extends SearchHandler {
 
         log.debug("--------------------------------------------------------------------------------------");
 
-        rdns = new HashSet();
+        rdns = new TreeSet();
 
         if (parent != null && parent.isDynamic()) {
 
@@ -168,7 +169,7 @@ public class DefaultSearchHandler extends SearchHandler {
 
             PrimaryKeyGraphVisitor visitor = new PrimaryKeyGraphVisitor(getEngine(), entryDefinition, newRows, primarySource);
             graph.traverse(visitor, startingSource);
-            rdns = visitor.getKeys();
+            rdns.addAll(visitor.getKeys());
 
         } else {
 
@@ -215,7 +216,7 @@ public class DefaultSearchHandler extends SearchHandler {
 
         }
 
-        getCache().getFilterCache().put(entryDefinition, filter, rdns);
+        getCache().getFilterCache().put(key, rdns);
 
         return rdns;
     }
@@ -227,7 +228,7 @@ public class DefaultSearchHandler extends SearchHandler {
 
         Source primarySource = getConfig().getPrimarySource(entryDefinition);
 
-        Collection pks = new HashSet();
+        Collection pks = new TreeSet();
 
         for (Iterator i=rdns.iterator(); i.hasNext(); ) {
             Row rdn = (Row)i.next();
@@ -284,9 +285,9 @@ public class DefaultSearchHandler extends SearchHandler {
         Collection loadedRdns = getEngine().getEntryCache().getRdns(entryDefinition, rdns, c.getTime());
         log.debug("Loaded rdns: "+loadedRdns);
 
-        Collection rdnsToLoad = new HashSet();
+        Collection rdnsToLoad = new TreeSet();
         rdnsToLoad.addAll(rdns);
-        rdnsToLoad.removeAll(loadedRdns);
+        if (loadedRdns != null) rdnsToLoad.removeAll(loadedRdns);
         log.debug("Rdns to load: "+rdnsToLoad);
 
         if (rdnsToLoad.isEmpty()) return getEntries(parent, entryDefinition, rdns);
@@ -299,14 +300,21 @@ public class DefaultSearchHandler extends SearchHandler {
         SourceLoaderGraphVisitor visitor = new SourceLoaderGraphVisitor(getEngine(), entryDefinition, pks, calendar.getTime());
         graph.traverse(visitor, primarySource);
 
-        Collection entries = join(parent, entryDefinition, pks, calendar);
         SearchResults results = new SearchResults();
 
-        // update attribute values in entry cache
+        Collection entries = join(parent, entryDefinition, pks, calendar);
+        log.debug("Loaded "+entries.size()+" new entries: "+rdnsToLoad);
         for (Iterator i=entries.iterator(); i.hasNext(); ) {
             Entry entry = (Entry)i.next();
             results.add(entry);
             getEngine().getEntryCache().put(entry, calendar.getTime());
+        }
+
+        SearchResults sr = getEntries(parent, entryDefinition, loadedRdns);
+        log.debug("Returned "+sr.size()+" cached entries: "+loadedRdns);
+        for (Iterator i=sr.iterator(); i.hasNext(); ) {
+            Entry entry = (Entry)i.next();
+            results.add(entry);
         }
 
         results.close();
@@ -338,11 +346,11 @@ public class DefaultSearchHandler extends SearchHandler {
         try {
 
             // join rows from sources
-            Collection rows = getEngine().getSourceCache().joinSources(entryDefinition, graph, primarySource, sqlFilter);
+            Collection rows = getEngine().getSourceCache().join(entryDefinition, graph, primarySource, sqlFilter);
             log.debug("Joined " + rows.size() + " rows.");
 
             // merge rows into attribute values
-            Map entries = new HashMap();
+            Map entries = new LinkedHashMap();
             for (Iterator i = rows.iterator(); i.hasNext();) {
                 Row row = (Row)i.next();
 
@@ -384,17 +392,14 @@ public class DefaultSearchHandler extends SearchHandler {
      *
      * @param parent
      * @param entryDefinition
-     * @param keys
+     * @param rdns
      * @return entries
      * @throws Exception
      */
     public SearchResults getEntries(
             Entry parent,
             EntryDefinition entryDefinition,
-            Collection keys) throws Exception {
-
-        //log.debug("--------------------------------------------------------------------------------------");
-        //log.debug("Getting entries from cache with pks "+keys);
+            Collection rdns) throws Exception {
 
         MRSWLock lock = ((DefaultEngine)getEngine()).getLock(entryDefinition.getDn());
         lock.getReadLock(Penrose.WAIT_TIMEOUT);
@@ -402,7 +407,7 @@ public class DefaultSearchHandler extends SearchHandler {
         SearchResults results = new SearchResults();
 
         try {
-            Map entries = getEngine().getEntryCache().get(entryDefinition, keys);
+            Map entries = getEngine().getEntryCache().get(entryDefinition, rdns);
 
             for (Iterator i = entries.values().iterator(); i.hasNext();) {
                 Entry entry = (Entry) i.next();

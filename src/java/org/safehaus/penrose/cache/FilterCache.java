@@ -4,34 +4,33 @@
  */
 package org.safehaus.penrose.cache;
 
-import org.safehaus.penrose.mapping.EntryDefinition;
-import org.safehaus.penrose.filter.Filter;
-
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Collection;
-import java.util.LinkedHashMap;
+import java.util.TreeMap;
 
 /**
  * @author Endi S. Dewata
  */
 public class FilterCache {
 
-    public LinkedHashMap map = new LinkedHashMap();
+    public Map map = new TreeMap();
 
-    public Collection get(EntryDefinition entryDefinition, Filter filter) throws Exception {
-        Map key = new HashMap();
-        key.put("dn", entryDefinition.getDn());
-        key.put("filter", filter.toString());
+    public Cache cache;
 
+    public void init(Cache cache) throws Exception {
+        this.cache = cache;
+
+        init();
+    }
+
+    public void init() throws Exception {
+    }
+
+    public Collection get(Object key) throws Exception {
         return (Collection)map.get(key);
     }
 
-    public void put(EntryDefinition entryDefinition, Filter filter, Collection rdns) throws Exception {
-        Map key = new HashMap();
-        key.put("dn", entryDefinition.getDn());
-        key.put("filter", filter.toString());
-
+    public void put(Object key, Collection rdns) throws Exception {
         map.put(key, rdns);
 
         if (map.size() > 20) {

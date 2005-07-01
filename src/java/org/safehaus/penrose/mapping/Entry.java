@@ -68,8 +68,24 @@ public class Entry {
         return dn;
     }
 
-    public String getRdn() {
-        return entryDefinition.getRdn(attributeValues);
+    public Row getRdn() throws Exception {
+
+        Row rdn = new Row();
+
+        Collection rdnAttributes = entryDefinition.getRdnAttributes();
+
+        for (Iterator i = rdnAttributes.iterator(); i.hasNext();) {
+            AttributeDefinition attributeDefinition = (AttributeDefinition) i.next();
+
+            String name = attributeDefinition.getName();
+            Collection values = attributeValues.get(name);
+            if (values == null) return null;
+
+            Object value = values.iterator().next();
+            rdn.set(name, value);
+        }
+
+        return rdn;
     }
 
     public AttributeValues getAttributeValues() {

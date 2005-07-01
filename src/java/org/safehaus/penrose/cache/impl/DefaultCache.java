@@ -9,6 +9,7 @@ import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.cache.Cache;
 import org.safehaus.penrose.cache.CacheFilterTool;
 import org.safehaus.penrose.cache.CacheConfig;
+import org.safehaus.penrose.cache.EntryCache;
 import org.safehaus.penrose.config.Config;
 import org.safehaus.penrose.mapping.Row;
 import org.safehaus.penrose.mapping.AttributeDefinition;
@@ -38,6 +39,10 @@ public class DefaultCache extends Cache {
     public Map homes = new HashMap();
 
     private DataSource ds;
+
+    public void createEntryCache() throws Exception {
+        setEntryCache(new EntryCache());
+    }
 
     public void init() throws Exception {
 

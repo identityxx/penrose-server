@@ -79,7 +79,7 @@ public class DefaultSourceCache extends SourceCache {
                 if (!loadOnStartup) continue;
 
                 // load the source
-                loadSource(entry, source, null, date);
+                load(entry, source, null, date);
 
                 // compute source cache expiration
                 s = source.getParameter(SourceDefinition.CACHE_EXPIRATION);
@@ -137,7 +137,7 @@ public class DefaultSourceCache extends SourceCache {
                 if (expiration != null && !expiration.before(date)) continue;
 
                 // reload source
-                loadSource(entry, source, null, date);
+                load(entry, source, null, date);
 
                 Calendar c = Calendar.getInstance();
                 c.add(Calendar.MINUTE, cacheExpiration);
@@ -215,7 +215,7 @@ public class DefaultSourceCache extends SourceCache {
      * @return the Collection of rows resulting from the join
      * @throws Exception
      */
-    public Collection joinSources(
+    public Collection join(
             EntryDefinition entryDefinition,
             Graph graph,
             Source primarySource,
@@ -264,7 +264,24 @@ public class DefaultSourceCache extends SourceCache {
             sb.append(" where ");
             sb.append(sqlFilter);
         }
-        
+
+        Collection fields = primarySource.getPrimaryKeyFields();
+        first = true;
+        for (Iterator j=fields.iterator(); j.hasNext(); ) {
+            Field field = (Field)j.next();
+
+            if (first) {
+                sb.append(" order by ");
+                first = false;
+            } else {
+                sb.append(", ");
+            }
+
+            sb.append(primarySource.getName());
+            sb.append(".");
+            sb.append(field.getName());
+        }
+
         String sql = sb.toString();
 
         List results = new ArrayList();
@@ -303,7 +320,7 @@ public class DefaultSourceCache extends SourceCache {
         return source.getSourceName();
     }
 
-    public SearchResults loadSource(
+    public SearchResults load(
             EntryDefinition entry,
             Source source,
             Collection pks,

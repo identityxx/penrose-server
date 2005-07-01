@@ -55,38 +55,58 @@ public abstract class Engine implements EngineMBean {
         this.sourceCache = cache.getSourceCache();
         this.entryCache = cache.getEntryCache();
 
-        initHandlers();
+        createAddHandler();
+        createBindHandler();
+        createCompareHandler();
+        createDeleteHandler();
+        createModifyHandler();
+        createModRdnHandler();
+        createSearchHandler();
+
         init();
+
+        addHandler.init(this);
+        bindHandler.init(this);
+        compareHandler.init(this);
+        deleteHandler.init(this);
+        modifyHandler.init(this);
+        modRdnHandler.init(this);
+        searchHandler.init(this);
     }
 
-    public void initHandlers() throws Exception {
+    public void createAddHandler() throws Exception {
         Class addHandlerClass = Class.forName(engineConfig.getAddHandlerClass());
         addHandler = (AddHandler)addHandlerClass.newInstance();
-        addHandler.init(this);
+    }
 
+    public void createBindHandler() throws Exception {
         Class bindHandlerClass = Class.forName(engineConfig.getBindHandlerClass());
         bindHandler = (BindHandler)bindHandlerClass.newInstance();
-        bindHandler.init(this);
+    }
 
+    public void createCompareHandler() throws Exception {
         Class compareHandlerClass = Class.forName(engineConfig.getCompareHandlerClass());
         compareHandler = (CompareHandler)compareHandlerClass.newInstance();
-        compareHandler.init(this);
+    }
 
+    public void createDeleteHandler() throws Exception {
         Class deleteHandlerClass = Class.forName(engineConfig.getDeleteHandlerClass());
         deleteHandler = (DeleteHandler)deleteHandlerClass.newInstance();
-        deleteHandler.init(this);
+    }
 
+    public void createModifyHandler() throws Exception {
         Class modifyHandlerClass = Class.forName(engineConfig.getModifyHandlerClass());
         modifyHandler = (ModifyHandler)modifyHandlerClass.newInstance();
-        modifyHandler.init(this);
+    }
 
+    public void createModRdnHandler() throws Exception {
         Class modRdnHandlerClass = Class.forName(engineConfig.getModRdnHandlerClass());
         modRdnHandler = (ModRdnHandler)modRdnHandlerClass.newInstance();
-        modRdnHandler.init(this);
+    }
 
+    public void createSearchHandler() throws Exception {
         Class searchHandlerClass = Class.forName(engineConfig.getSearchHandlerClass());
         searchHandler = (SearchHandler)searchHandlerClass.newInstance();
-        searchHandler.init(this);
     }
 
 	public abstract void init() throws Exception;

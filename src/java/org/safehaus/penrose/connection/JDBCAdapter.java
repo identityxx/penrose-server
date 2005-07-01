@@ -104,13 +104,23 @@ public class JDBCAdapter extends Adapter {
         log.debug("JDBC Source: "+source.getConnectionName());
 
         String tableName = source.getParameter("tableName");
-
         String fieldNames = getFieldNames(source);
-        String sql = "select "+fieldNames+" from "+tableName; //+" "+source.getName();
+        
+        StringBuffer sb = new StringBuffer();
+        sb.append("select ");
+        sb.append(fieldNames);
+        sb.append(" from ");
+        sb.append(tableName);
 
         if (filter != null) {
-            sql += " where "+filterTool.convert(source, filter);
+            sb.append(" where ");
+            sb.append(filterTool.convert(source, filter));
         }
+
+        sb.append(" order by ");
+        sb.append(fieldNames);
+
+        String sql = sb.toString();
 
         java.sql.Connection con = null;
         PreparedStatement ps = null;

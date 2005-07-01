@@ -47,7 +47,7 @@ public abstract class SourceCache {
     public abstract Date getModifyTime(Source source, String filter) throws Exception;
     public abstract Date getModifyTime(Source source) throws Exception;
 
-    public abstract Collection joinSources(EntryDefinition entry, Graph graph, Source primarySource, String sqlFilter) throws Exception;
+    public abstract Collection join(EntryDefinition entry, Graph graph, Source primarySource, String sqlFilter) throws Exception;
 
     public void postCacheEvent(SourceDefinition sourceConfig, CacheEvent event)
             throws Exception {
@@ -71,7 +71,7 @@ public abstract class SourceCache {
         }
     }
 
-    public abstract SearchResults loadSource(
+    public abstract SearchResults load(
             EntryDefinition entry,
             Source source,
             Collection pks,

@@ -53,7 +53,7 @@ public class SourceLoaderGraphVisitor extends GraphVisitor {
         
         Collection pks = (Collection)stack.peek();
 
-        SearchResults results = engine.getSourceCache().loadSource(entryDefinition, source, pks, date);
+        SearchResults results = engine.getSourceCache().load(entryDefinition, source, pks, date);
         if (results.size() == 0) return false;
         
         Collection newRows = new HashSet();
