@@ -29,6 +29,7 @@ public abstract class Cache {
     private CacheContext cacheContext;
     private Config config;
 
+    private FilterCache filterCache;
     private EntryCache entryCache;
     private SourceCache sourceCache;
 
@@ -54,6 +55,8 @@ public abstract class Cache {
         this.config = cacheContext.getConfig();
 
         init();
+
+        filterCache = new FilterCache();
 
         Class entryCacheClass = Class.forName(cacheConfig.getEntryCacheClass());
         entryCache = (EntryCache)entryCacheClass.newInstance();
@@ -96,5 +99,13 @@ public abstract class Cache {
 
     public void setConfig(Config config) {
         this.config = config;
+    }
+
+    public FilterCache getFilterCache() {
+        return filterCache;
+    }
+
+    public void setFilterCache(FilterCache filterCache) {
+        this.filterCache = filterCache;
     }
 }

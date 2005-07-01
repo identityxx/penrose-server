@@ -15,7 +15,6 @@ import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.sql.Timestamp;
 import java.util.*;
 
 /**
@@ -328,6 +327,8 @@ public class EntryAttributeHome {
 
     public void delete(Collection rdns) throws Exception {
 
+        if (rdns.size() == 0) return;
+
         Connection con = null;
         PreparedStatement ps = null;
 
@@ -385,68 +386,7 @@ public class EntryAttributeHome {
             if (con != null) try { con.close(); } catch (Exception ex) {}
         }
     }
-/*
-    public void setValidity(Row row, boolean validity) throws Exception {
 
-        Connection con = null;
-        PreparedStatement ps = null;
-
-        try {
-            con = ds.getConnection();
-            StringBuffer sb = new StringBuffer();
-
-            Map attributes = entry.getAttributeValues();
-            Set set = new HashSet();
-
-            for (Iterator i = attributes.keySet().iterator(); i.hasNext();) {
-
-                String name = (String) i.next();
-
-                // TODO need to handle multiple attribute definitions
-                if (set.contains(name)) continue;
-                set.add(name);
-
-                if (sb.length() > 0) sb.append(" and ");
-
-                sb.append(name + "=?");
-            }
-
-            String sql = "update " + tableName + " set "+MODIFY_TIME_FIELD+"='"+(validity?1:0)+"' where " + sb;
-
-            log.debug("Executing " + sql);
-            ps = con.prepareStatement(sql);
-
-            set = new HashSet();
-            int index = 1;
-            for (Iterator i = attributes.keySet().iterator(); i.hasNext();) {
-
-                String name = (String) i.next();
-
-                // TODO need to handle multiple attribute definitions
-                if (set.contains(name)) continue;
-                set.add(name);
-
-                Object value = row.get(name);
-                String string;
-                if (value instanceof byte[]) {
-                    string = new String((byte[]) value);
-                } else {
-                    string = (String) value;
-                }
-
-                ps.setString(index, string);
-                log.debug("- " + index + " = " + string);
-                index++;
-            }
-
-            ps.execute();
-
-        } finally {
-            if (ps != null) try { ps.close(); } catch (Exception e) {}
-            if (con != null) try { con.close(); } catch (Exception ex) {}
-        }
-    }
-*/
     public void delete(String filter, Date date) throws Exception {
 
         Connection con = null;

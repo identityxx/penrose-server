@@ -51,7 +51,7 @@ public class DefaultModifyHandler extends ModifyHandler {
             if (result != LDAPException.SUCCESS) return result;
         }
 */
-        getEngine().getEntryCache().remove(entryDefinition, oldValues);
+        getEngine().getEntryCache().remove(entry);
 
         return LDAPException.SUCCESS;
     }

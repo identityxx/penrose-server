@@ -123,9 +123,9 @@ public class DefaultEntryCache extends EntryCache {
         return entries;
     }
 
-    public Row getRdn(EntryDefinition entry, AttributeValues attributeValues) throws Exception {
+    public Row getRdn(EntryDefinition entryDefinition, AttributeValues attributeValues) throws Exception {
         Row rdn = new Row();
-        Collection rdnAttributes = entry.getRdnAttributes();
+        Collection rdnAttributes = entryDefinition.getRdnAttributes();
 
         for (Iterator i = rdnAttributes.iterator(); i.hasNext();) {
             AttributeDefinition attributeDefinition = (AttributeDefinition) i.next();
@@ -139,7 +139,11 @@ public class DefaultEntryCache extends EntryCache {
         return rdn;
     }
 
-    public void put(EntryDefinition entryDefinition, AttributeValues values, Date date) throws Exception {
+    public void put(Entry entry, Date date) throws Exception {
+
+        EntryDefinition entryDefinition = entry.getEntryDefinition();
+        AttributeValues values = entry.getAttributeValues();
+
         Row pk = getRdn(entryDefinition, values);
 
         EntryHome entryHome = getEntryHome(entryDefinition);
@@ -160,7 +164,11 @@ public class DefaultEntryCache extends EntryCache {
         }
     }
 
-    public void remove(EntryDefinition entryDefinition, AttributeValues values) throws Exception {
+    public void remove(Entry entry) throws Exception {
+
+        EntryDefinition entryDefinition = entry.getEntryDefinition();
+        AttributeValues values = entry.getAttributeValues();
+
         Row pk = getRdn(entryDefinition, values);
 
         EntryHome entryHome = getEntryHome(entryDefinition);
@@ -183,7 +191,7 @@ public class DefaultEntryCache extends EntryCache {
             throws Exception {
 
         EntryHome entryHome = getEntryHome(entryDefinition);
-        Collection expiredRdns = entryHome.getExpiredRdns(date);
+        Collection expiredRdns = entryHome.search(date);
         entryHome.delete(expiredRdns);
 
         EntryAttributeHome entryAttributeHome = getEntryAttributeHome(entryDefinition);

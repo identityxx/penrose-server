@@ -47,8 +47,8 @@ public abstract class EntryCache {
     public abstract Entry get(EntryDefinition entry, Row pk) throws Exception;
     public abstract Map get(EntryDefinition entry, Collection pks) throws Exception;
 
-    public abstract void put(EntryDefinition entry, AttributeValues values, Date date) throws Exception;
-    public abstract void remove(EntryDefinition entry, AttributeValues values) throws Exception;
+    public abstract void put(Entry entry, Date date) throws Exception;
+    public abstract void remove(Entry entry) throws Exception;
 
     public Cache getCache() {
         return cache;

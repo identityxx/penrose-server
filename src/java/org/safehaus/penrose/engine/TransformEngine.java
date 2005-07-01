@@ -222,12 +222,15 @@ public class TransformEngine {
             AttributeDefinition attribute = (AttributeDefinition)j.next();
 
             String name = attribute.getName();
-            String value = (String)interpreter.eval(attribute.getExpression());
+            Object value = interpreter.eval(attribute.getExpression());
+
+            if (value == null) continue;
 
             if (attribute.isRdn()) {
                 if (value == null) return false;
                 pk.put(name, value);
             }
+            
             values.set(name, value);
         }
 

@@ -45,7 +45,8 @@ public class DefaultDeleteHandler extends DeleteHandler {
             if (rc != LDAPException.SUCCESS) return rc;
         }
 */
-        getEngine().getEntryCache().remove(entryDefinition, values);
+        Entry entry = new Entry(entryDefinition, values);
+        getEngine().getEntryCache().remove(entry);
 
         return LDAPException.SUCCESS;
     }
