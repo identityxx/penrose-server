@@ -4,7 +4,6 @@
  */
 package org.safehaus.penrose.cache.impl;
 
-import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.mapping.Row;
 import org.safehaus.penrose.mapping.AttributeDefinition;
 import org.safehaus.penrose.mapping.EntryDefinition;
@@ -13,10 +12,6 @@ import org.safehaus.penrose.cache.EntryCache;
 
 import javax.sql.DataSource;
 import java.util.*;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.ResultSetMetaData;
-import java.sql.Connection;
 
 /**
  * @author Endi S. Dewata
@@ -81,13 +76,15 @@ public class DefaultEntryCache extends EntryCache {
         return (EntryAttributeHome)homes.get(tableName);
     }
 
-    public Entry get(EntryDefinition entryDefinition, Row pk) throws Exception {
+    public Entry get(EntryDefinition entryDefinition, Row rdn) throws Exception {
 
         EntryAttributeHome entryAttributeHome = getEntryAttributeHome(entryDefinition);
-        log.debug("Getting entry cache for pk: "+pk);
+        log.debug("Getting entry cache for rdn: "+rdn);
 
-        Collection rows = entryAttributeHome.search(pk);
+        Collection rows = entryAttributeHome.search(rdn);
         if (rows.size() == 0) return null;
+
+        log.debug("Attributes:");
 
         AttributeValues attributeValues = new AttributeValues();
         for (Iterator i = rows.iterator(); i.hasNext();) {
@@ -110,24 +107,24 @@ public class DefaultEntryCache extends EntryCache {
         return sr;
     }
 
-    public Map get(EntryDefinition entryDefinition, Collection primaryKeys) throws Exception {
+    public Map get(EntryDefinition entryDefinition, Collection rdns) throws Exception {
 
         Map entries = new HashMap();
 
-        for (Iterator i=primaryKeys.iterator(); i.hasNext(); ) {
-            Row pk = (Row)i.next();
+        for (Iterator i=rdns.iterator(); i.hasNext(); ) {
+            Row rdn = (Row)i.next();
 
-            Entry entry = get(entryDefinition, pk);
+            Entry entry = get(entryDefinition, rdn);
             if (entry == null) continue;
 
-            entries.put(pk, entry);
+            entries.put(rdn, entry);
         }
 
         return entries;
     }
 
-    public Row getPk(EntryDefinition entry, AttributeValues attributeValues) throws Exception {
-        Row pk = new Row();
+    public Row getRdn(EntryDefinition entry, AttributeValues attributeValues) throws Exception {
+        Row rdn = new Row();
         Collection rdnAttributes = entry.getRdnAttributes();
 
         for (Iterator i = rdnAttributes.iterator(); i.hasNext();) {
@@ -135,17 +132,15 @@ public class DefaultEntryCache extends EntryCache {
             String name = attributeDefinition.getName();
             Collection values = attributeValues.get(name);
 
-            // TODO need to handle multiple values
             Object value = values.iterator().next();
-            pk.set(name, value);
+            rdn.set(name, value);
         }
 
-        return pk;
+        return rdn;
     }
 
     public void put(EntryDefinition entryDefinition, AttributeValues values, Date date) throws Exception {
-        Row pk = getPk(entryDefinition, values);
-        log.debug("Adding entry cache with pk: "+pk);
+        Row pk = getRdn(entryDefinition, values);
 
         EntryHome entryHome = getEntryHome(entryDefinition);
         entryHome.insert(pk, date);
@@ -160,243 +155,40 @@ public class DefaultEntryCache extends EntryCache {
             for (Iterator j=c.iterator(); j.hasNext(); ) {
                 Object value = j.next();
                 if (value == null) continue;
-                entryAttributeHome.insert(pk, name, value, date);
+                entryAttributeHome.insert(pk, name, value);
             }
         }
     }
 
-    public void remove(EntryDefinition entryDefinition, AttributeValues values, Date date) throws Exception {
-        Row pk = getPk(entryDefinition, values);
-        log.debug("Deleting entry cache with pk: "+pk);
+    public void remove(EntryDefinition entryDefinition, AttributeValues values) throws Exception {
+        Row pk = getRdn(entryDefinition, values);
 
         EntryHome entryHome = getEntryHome(entryDefinition);
-        entryHome.delete(pk, date);
+        entryHome.delete(pk);
 
         EntryAttributeHome entryAttributeHome = getEntryAttributeHome(entryDefinition);
-        entryAttributeHome.delete(pk, date);
-    }
-
-    public Date getModifyTime(EntryDefinition entryDefinition, Row pk) throws Exception {
-        List pks = new ArrayList();
-        pks.add(pk);
-
-        return getModifyTime(entryDefinition, pks);
-    }
-
-    public Date getModifyTime(EntryDefinition entryDefinition, Collection pks) throws Exception {
-        EntryHome entryHome = getEntryHome(entryDefinition);
-        return entryHome.getModifyTime(pks);
+        entryAttributeHome.delete(pk);
     }
 
     /**
-     * Get the primary key attribute names
-     *
-     * @param entry
-     *            the entry (from config)
-     * @return the string "pk1, pk2, ..."
-     */
-    public String getPkAttributeNames(EntryDefinition entry) {
-        StringBuffer sb = new StringBuffer();
-
-        Collection rdnRttributes = entry.getRdnAttributes();
-        Set set = new HashSet();
-
-        for (Iterator j = rdnRttributes.iterator(); j.hasNext();) {
-            AttributeDefinition attribute = (AttributeDefinition) j.next();
-
-            String attrName = attribute.getName();
-
-            if (set.contains(attrName)) continue;
-            set.add(attrName);
-
-            if (sb.length() > 0) sb.append(", ");
-            sb.append(attrName);
-        }
-
-        return sb.toString();
-    }
-
-    /**
-     * @param entry
-     * @param primaryKeys
+     * @param entryDefinition
+     * @param rdns
      * @return loaded primary keys
      * @throws Exception
      */
-    public Collection findPrimaryKeys(
-            EntryDefinition entry,
-            Collection primaryKeys)
+    public Collection getRdns(
+            EntryDefinition entryDefinition,
+            Collection rdns,
+            Date date)
             throws Exception {
 
-        Filter filter = cache.getCacheContext().getFilterTool().createFilter(primaryKeys);
-        String sqlFilter = cache.getCacheFilterTool().toSQLFilter(entry, filter, false);
+        EntryHome entryHome = getEntryHome(entryDefinition);
+        Collection expiredRdns = entryHome.getExpiredRdns(date);
+        entryHome.delete(expiredRdns);
 
-        String tableName = getEntryTableName(entry);
-        String attributeNames = getPkAttributeNames(entry);
+        EntryAttributeHome entryAttributeHome = getEntryAttributeHome(entryDefinition);
+        entryAttributeHome.delete(expiredRdns);
 
-        String sql = "select distinct " + attributeNames + " from " + tableName;
-
-        if (sqlFilter != null) {
-            sql += " where " + sqlFilter;
-        }
-
-        Connection con = null;
-        PreparedStatement ps = null;
-        ResultSet rs = null;
-
-        List pks = new ArrayList();
-
-        log.debug("Executing " + sql);
-        try {
-            con = ds.getConnection();
-            ps = con.prepareStatement(sql);
-
-            int counter = 0;
-            for (Iterator i=primaryKeys.iterator(); i.hasNext(); ) {
-                Row pk = (Row)i.next();
-
-                for (Iterator j=pk.getNames().iterator(); j.hasNext(); ) {
-                    String name = (String)j.next();
-                    Object value = pk.get(name);
-
-                    ps.setObject(++counter, value);
-                    log.debug(" - "+counter+" = "+value);
-                }
-            }
-
-            rs = ps.executeQuery();
-
-            //log.debug("Result:");
-
-            while (rs.next()) {
-
-                Row pk = getPk(entry, rs);
-                //log.debug(" - "+row);
-
-                pks.add(pk);
-            }
-
-        } finally {
-            if (rs != null) try { rs.close(); } catch (Exception e) {}
-            if (ps != null) try { ps.close(); } catch (Exception e) {}
-            if (con != null) try { con.close(); } catch (Exception ex) {}
-        }
-
-        return pks;
+        return entryHome.search(rdns);
     }
-
-    /**
-     * Get the primary key from a given entry and result set.
-     *
-     * @param entry the entry (from config)
-     * @param rs the result set
-     * @return a Map containing primary keys and its values
-     * @throws Exception
-     */
-    public Row getPk(EntryDefinition entry, ResultSet rs) throws Exception {
-        Row values = new Row();
-
-        ResultSetMetaData rsmd = rs.getMetaData();
-        int count = rsmd.getColumnCount();
-
-        int c = 1;
-        Collection attributes = entry.getRdnAttributes();
-
-        Set set = new HashSet();
-        for (Iterator j = attributes.iterator(); j.hasNext() && c <= count;) {
-            AttributeDefinition attribute = (AttributeDefinition) j.next();
-            String name = attribute.getName();
-
-            if (set.contains(name)) continue;
-            set.add(name);
-
-            Object value = rs.getObject(c++);
-            values.set(name, value);
-
-            c++;
-        }
-
-        return values;
-    }
-
-    /**
-     * Join sources
-     *
-     * @param con
-     *            the JDBC connection
-     * @param entry
-     *            the entry (from config)
-     * @param temporary
-     *            whether we are using temporary tables
-     * @param sourceConfig
-     *            the source
-     * @return the Collection of rows resulting from the join
-     * @throws Exception
-     */
-/*
-    public Collection joinSourcesIncrementally(java.sql.Connection con,
-            EntryDefinition entry, boolean temporary, SourceDefinition sourceConfig, Map incRow)
-            throws Exception {
-
-        String sqlFieldNames = getFieldNames(entry.getSources());
-        // don't use temporary entry tables here
-        String sqlTableNames = getTableNames(entry, false);
-
-        String whereClause = "1=1";
-
-        String sql = "select " + sqlFieldNames + " from " + sqlTableNames + " where " + whereClause;
-
-        // Add pk clause
-        Collection pkFields = sourceConfig.getPrimaryKeyFields();
-        boolean started = false;
-        for (Iterator pkIter = pkFields.iterator(); pkIter.hasNext();) {
-            FieldDefinition pkField = (FieldDefinition) pkIter.next();
-            String pk = pkField.getName();
-            sql += (started ? " and " : " where ") + sourceConfig.getName() + "."
-                    + pk + " = ?";
-            started = true;
-        }
-        List results = new ArrayList();
-
-        log.debug("Executing " + sql);
-
-        PreparedStatement ps = null;
-        ResultSet rs = null;
-        try {
-            ps = con.prepareStatement(sql);
-            Iterator pkIter = pkFields.iterator();
-            for (int i = 1; pkIter.hasNext(); i++) {
-                FieldDefinition pkField = (FieldDefinition) pkIter.next();
-                String pk = pkField.getName();
-                Object obj = incRow.get(pk);
-                if (obj instanceof Collection && ((Collection) obj).size() == 1) {
-                    Collection coll = (Collection) obj;
-                    Iterator iter = coll.iterator();
-                    Object obj1 = iter.next();
-                    ps.setObject(i, obj1);
-                    log.debug(" - " + i + " = " + obj1.toString() + " (class="
-                            + obj1.getClass().getName() + ")");
-                    log.debug("   " + i + " = " + obj.toString() + " (class="
-                            + obj.getClass().getName() + ")");
-                } else {
-                    ps.setObject(i, obj);
-                    log.debug(" - " + i + " = " + obj.toString() + " (class="
-                            + obj.getClass().getName() + ")");
-                }
-            }
-            rs = ps.executeQuery();
-
-            while (rs.next()) {
-                Map row = getRow(entry, rs);
-
-                results.add(row);
-            }
-
-        } finally {
-            if (rs != null) try { rs.close(); } catch (Exception e) {}
-            if (ps != null) try { ps.close(); } catch (Exception e) {}
-        }
-
-        return results;
-    }
-*/
 }

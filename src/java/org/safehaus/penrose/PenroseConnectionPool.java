@@ -36,15 +36,15 @@ public class PenroseConnectionPool implements PenroseConnectionPoolMBean {
 	}
 
     public synchronized PenroseConnection createConnection() {
-        log.debug("Creating connection ...");
+        //log.debug("Creating connection ...");
         PenroseConnection connection;
 
         if (connectionPool.size() > 0) {
-            log.debug("Got connection from pool.");
+            //log.debug("Got connection from pool.");
             connection = (PenroseConnection)connectionPool.remove(0);
 
         } else {
-            log.debug("Reuse oldest connection.");
+            //log.debug("Reuse oldest connection.");
             Date date = (Date)activeConnections.firstKey();
             connection = (PenroseConnection)activeConnections.remove(date);
         }
@@ -58,7 +58,7 @@ public class PenroseConnectionPool implements PenroseConnectionPoolMBean {
     }
 
     public synchronized void removeConnection(PenroseConnection connection) {
-        log.debug("Returned connection to pool.");
+        //log.debug("Returned connection to pool.");
         activeConnections.remove(connection.getDate());
         connectionPool.add(connection);
     }

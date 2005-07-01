@@ -4,10 +4,7 @@
  */
 package org.safehaus.penrose.engine.impl;
 
-import org.safehaus.penrose.mapping.Source;
-import org.safehaus.penrose.mapping.EntryDefinition;
-import org.safehaus.penrose.mapping.Relationship;
-import org.safehaus.penrose.mapping.Row;
+import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.SearchResults;
 import org.safehaus.penrose.Penrose;
@@ -44,6 +41,16 @@ public class SourceLoaderGraphVisitor extends GraphVisitor {
 
         if (entryDefinition.getSource(source.getName()) == null) return false;
 
+        boolean load = true;
+
+        Collection fields = source.getPrimaryKeyFields();
+        for (Iterator i=fields.iterator(); i.hasNext(); ) {
+            Field field = (Field)i.next();
+            load &= field.getExpression() != null;
+        }
+
+        if (!load) return false;
+        
         Collection pks = (Collection)stack.peek();
 
         SearchResults results = engine.getSourceCache().loadSource(entryDefinition, source, pks, date);

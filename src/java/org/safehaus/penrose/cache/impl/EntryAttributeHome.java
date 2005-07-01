@@ -242,7 +242,7 @@ public class EntryAttributeHome {
         return results;
     }
 
-    public void insert(Row pk, String name, Object value, Date date) throws Exception {
+    public void insert(Row pk, String name, Object value) throws Exception {
 
         Connection con = null;
         PreparedStatement ps = null;
@@ -320,7 +320,13 @@ public class EntryAttributeHome {
         }
     }
 
-    public void delete(Row pk, Date date) throws Exception {
+    public void delete(Row rdn) throws Exception {
+        Collection rdns = new HashSet();
+        rdns.add(rdn);
+        delete(rdns);
+    }
+
+    public void delete(Collection rdns) throws Exception {
 
         Connection con = null;
         PreparedStatement ps = null;
@@ -328,20 +334,35 @@ public class EntryAttributeHome {
         try {
             con = ds.getConnection();
             StringBuffer sb = new StringBuffer();
+            List parameters = new ArrayList();
 
-            Set set = new HashSet();
             Collection rdnAttributes = entry.getRdnAttributes();
 
-            for (Iterator i = rdnAttributes.iterator(); i.hasNext();) {
-                AttributeDefinition attribute = (AttributeDefinition)i.next();
-                String name = attribute.getName();
+            for (Iterator i = rdns.iterator(); i.hasNext(); ) {
+                Row rdn = (Row)i.next();
 
-                // TODO need to handle multiple attribute definitions
-                if (set.contains(name)) continue;
-                set.add(name);
+                if (sb.length() > 0) sb.append(" or ");
 
-                if (sb.length() > 0) sb.append(" and ");
-                sb.append(name + "=?");
+                StringBuffer sb2 = new StringBuffer();
+                for (Iterator j = rdnAttributes.iterator(); j.hasNext();) {
+                    AttributeDefinition attribute = (AttributeDefinition)j.next();
+                    String name = attribute.getName();
+
+                    if (sb2.length() > 0) sb2.append(" and ");
+                    sb2.append(name + "=?");
+
+                    Object value = rdn.get(name);
+
+                    if (value instanceof byte[]) {
+                        value = new String((byte[]) value);
+                    }
+
+                    parameters.add(value);
+                }
+
+                sb.append("(");
+                sb.append(sb2);
+                sb.append(")");
             }
 
             String sql = "delete from " + tableName + " where " + sb;
@@ -349,27 +370,12 @@ public class EntryAttributeHome {
             log.debug("Executing " + sql);
             ps = con.prepareStatement(sql);
 
-            set = new HashSet();
-            int index = 1;
+            int index = 0;
 
-            for (Iterator i = rdnAttributes.iterator(); i.hasNext();) {
-                AttributeDefinition attribute = (AttributeDefinition)i.next();
-                String name = attribute.getName();
-
-                if (set.contains(name)) continue;
-                set.add(name);
-
-                Object value = pk.get(name);
-                String string;
-
-                if (value instanceof byte[]) {
-                    string = new String((byte[]) value);
-                } else {
-                    string = (String)value;
-                }
-
-                ps.setString(index, string);
-                log.debug("- " + index + " = " + string);
+            for (Iterator i = parameters.iterator(); i.hasNext();) {
+                Object parameter = i.next();
+                ps.setObject(++index, parameter);
+                log.debug("- " + index + " = " + parameter);
             }
 
             ps.execute();

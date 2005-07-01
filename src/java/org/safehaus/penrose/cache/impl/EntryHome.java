@@ -186,6 +186,45 @@ public class EntryHome {
         return sb.toString();
     }
 
+    public Collection getExpiredRdns(Date date) throws Exception {
+
+        String attributeNames = getPkAttributeNames();
+
+        String sql = "select " + attributeNames + " from " + tableName
+                + " where " + MODIFY_TIME_FIELD + " <= ?";
+
+        sql += " order by "+attributeNames;
+
+        List results = new ArrayList();
+
+        log.debug("Executing " + sql);
+
+        Connection con = null;
+        PreparedStatement ps = null;
+        ResultSet rs = null;
+        try {
+            con = ds.getConnection();
+            ps = con.prepareStatement(sql);
+
+            ps.setTimestamp(1, new Timestamp(date.getTime()));
+            log.debug(" - 1 = "+date);
+
+            rs = ps.executeQuery();
+
+            while (rs.next()) {
+                Row row = getRow(rs);
+                results.add(row);
+            }
+
+        } finally {
+            if (rs != null) try { rs.close(); } catch (Exception e) {}
+            if (ps != null) try { ps.close(); } catch (Exception e) {}
+            if (con != null) try { con.close(); } catch (Exception ex) {}
+        }
+
+        return results;
+    }
+
     public Collection search(Collection pks) throws Exception {
 
         if (pks == null || pks.isEmpty()) return new ArrayList();
@@ -315,7 +354,13 @@ public class EntryHome {
         }
     }
 
-   public void delete(Row row, Date date) throws Exception {
+    public void delete(Row rdn) throws Exception {
+        Collection rdns = new HashSet();
+        rdns.add(rdn);
+        delete(rdns);
+    }
+
+    public void delete(Collection rdns) throws Exception {
 
         Connection con = null;
         PreparedStatement ps = null;
@@ -323,22 +368,35 @@ public class EntryHome {
         try {
             con = ds.getConnection();
             StringBuffer sb = new StringBuffer();
+            List parameters = new ArrayList();
 
             Collection rdnAttributes = entry.getRdnAttributes();
-            Set set = new HashSet();
 
-            for (Iterator i = rdnAttributes.iterator(); i.hasNext();) {
-                AttributeDefinition attribute = (AttributeDefinition)i.next();
-                String name = attribute.getName();
+            for (Iterator i = rdns.iterator(); i.hasNext(); ) {
+                Row rdn = (Row)i.next();
 
-                // TODO need to handle multiple attribute definitions
-                if (set.contains(name)) continue;
-                set.add(name);
+                if (sb.length() > 0) sb.append(" or ");
 
+                StringBuffer sb2 = new StringBuffer();
+                for (Iterator j = rdnAttributes.iterator(); j.hasNext();) {
+                    AttributeDefinition attribute = (AttributeDefinition)j.next();
+                    String name = attribute.getName();
 
-                if (sb.length() > 0) sb.append(" and ");
+                    if (sb2.length() > 0) sb2.append(" and ");
+                    sb2.append(name + "=?");
 
-                sb.append(name + "=?");
+                    Object value = rdn.get(name);
+
+                    if (value instanceof byte[]) {
+                        value = new String((byte[]) value);
+                    }
+
+                    parameters.add(value);
+                }
+
+                sb.append("(");
+                sb.append(sb2);
+                sb.append(")");
             }
 
             String sql = "delete from " + tableName + " where " + sb;
@@ -346,27 +404,12 @@ public class EntryHome {
             log.debug("Executing " + sql);
             ps = con.prepareStatement(sql);
 
-            set = new HashSet();
             int index = 0;
 
-            for (Iterator i = rdnAttributes.iterator(); i.hasNext();) {
-                AttributeDefinition attribute = (AttributeDefinition)i.next();
-                String name = attribute.getName();
-
-                if (set.contains(name)) continue;
-                set.add(name);
-
-                Object value = row.get(name);
-                String string;
-
-                if (value instanceof byte[]) {
-                    string = new String((byte[]) value);
-                } else {
-                    string = (String)value;
-                }
-
-                ps.setString(++index, string);
-                log.debug("- " + index + " = " + string);
+            for (Iterator i = parameters.iterator(); i.hasNext();) {
+                Object parameter = i.next();
+                ps.setObject(++index, parameter);
+                log.debug("- " + index + " = " + parameter);
             }
 
             ps.execute();
@@ -376,6 +419,29 @@ public class EntryHome {
             if (con != null) try { con.close(); } catch (Exception ex) {}
         }
     }
+
+    public void delete(Date date) throws Exception {
+
+         Connection con = null;
+         PreparedStatement ps = null;
+
+         try {
+             con = ds.getConnection();
+             String sql = "delete from " + tableName + " where " + MODIFY_TIME_FIELD + " <= ?";
+
+             log.debug("Executing " + sql);
+             ps = con.prepareStatement(sql);
+
+             ps.setTimestamp(1, new Timestamp(date.getTime()));
+             log.debug("- 1 = " + date);
+             ps.execute();
+
+         } finally {
+             if (ps != null) try { ps.close(); } catch (Exception e) {}
+             if (con != null) try { con.close(); } catch (Exception ex) {}
+         }
+     }
+
 /*
     public void setValidity(Row row, boolean validity) throws Exception {
 

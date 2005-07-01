@@ -38,16 +38,17 @@ public abstract class EntryCache {
 
     public abstract void init() throws Exception;
 
-    public abstract Collection findPrimaryKeys(EntryDefinition entry, Collection pks) throws Exception;
+    public abstract Collection getRdns(
+            EntryDefinition entry,
+            Collection pks,
+            Date date)
+            throws Exception;
+
     public abstract Entry get(EntryDefinition entry, Row pk) throws Exception;
     public abstract Map get(EntryDefinition entry, Collection pks) throws Exception;
 
     public abstract void put(EntryDefinition entry, AttributeValues values, Date date) throws Exception;
-    public abstract void remove(EntryDefinition entry, AttributeValues values, Date date) throws Exception;
-
-    public abstract Date getModifyTime(EntryDefinition entry, Collection pks) throws Exception;
-    public abstract Date getModifyTime(EntryDefinition entry, Row pk) throws Exception;
-
+    public abstract void remove(EntryDefinition entry, AttributeValues values) throws Exception;
 
     public Cache getCache() {
         return cache;

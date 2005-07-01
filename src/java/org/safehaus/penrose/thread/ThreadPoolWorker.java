@@ -62,7 +62,7 @@ public class ThreadPoolWorker extends Object {
 		while (noStopRequested) {
 			try {
 				String threadName = Thread.currentThread().getName();
-				log.debug("workerID="+workerID+" (threadName="+threadName+"), ready for work");
+				//log.debug("workerID="+workerID+" (threadName="+threadName+"), ready for work");
 				// Worker is ready for work. 
 				// This will never block because the idleWorker FIFO queue 
 				// has enough capacity for all the workers
@@ -70,7 +70,7 @@ public class ThreadPoolWorker extends Object {
 				// wait here until the server adds a request
 				Runnable r = (Runnable) handoffBox.remove();
 				
-				log.debug("workerID="+workerID+", starting execution of new Runnable: "+r);
+				//log.debug("workerID="+workerID+", starting execution of new Runnable: "+r);
 				runIt(r); // catches all exceptions
 			} catch (InterruptedException ex) {
 				Thread.currentThread().interrupt(); // re-assert
@@ -93,7 +93,7 @@ public class ThreadPoolWorker extends Object {
 	}
 	
 	public void stopRequest() {
-		log.debug("workerID="+workerID+", stopRequest() received");
+		//log.debug("workerID="+workerID+", stopRequest() received");
 		noStopRequested = false;
 		internalThread.interrupt();
 	}
