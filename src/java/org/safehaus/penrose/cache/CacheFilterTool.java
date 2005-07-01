@@ -32,8 +32,8 @@ public class CacheFilterTool {
      * @return the filter string
      * @throws Exception
      */
-    public String toSQLFilter(EntryDefinition entry, Filter filter) throws Exception {
-        return toSQLFilter(entry, filter, true);
+    public String toSQLFilter(Filter filter) throws Exception {
+        return toSQLFilter(filter, true);
     }
 
     /**
@@ -43,9 +43,9 @@ public class CacheFilterTool {
      * @return the filter string
      * @throws Exception
      */
-    public String toSQLFilter(EntryDefinition entry, Filter filter, boolean includeValues) throws Exception {
+    public String toSQLFilter(Filter filter, boolean includeValues) throws Exception {
         StringBuffer sb = new StringBuffer();
-        boolean valid = toSQLFilter(entry, filter, includeValues, sb);
+        boolean valid = toSQLFilter(filter, includeValues, sb);
 
         if (valid && sb.length() > 0) return sb.toString();
 
@@ -61,20 +61,19 @@ public class CacheFilterTool {
      * @throws Exception
      */
     public boolean toSQLFilter(
-            EntryDefinition entry,
             Filter filter,
             boolean includeValues,
             StringBuffer sb)
             throws Exception {
 
         if (filter instanceof SimpleFilter) {
-            return toSQLFilter(entry, (SimpleFilter) filter, includeValues, sb);
+            return toSQLFilter((SimpleFilter) filter, includeValues, sb);
 
         } else if (filter instanceof AndFilter) {
-            return toSQLFilter(entry, (AndFilter) filter, includeValues, sb);
+            return toSQLFilter((AndFilter) filter, includeValues, sb);
 
         } else if (filter instanceof OrFilter) {
-            return toSQLFilter(entry, (OrFilter) filter, includeValues, sb);
+            return toSQLFilter((OrFilter) filter, includeValues, sb);
         }
 
         return true;
@@ -89,7 +88,6 @@ public class CacheFilterTool {
      * @throws Exception
      */
     public boolean toSQLFilter(
-            EntryDefinition entry,
             SimpleFilter filter,
             boolean includeValues,
             StringBuffer sb)
@@ -100,9 +98,6 @@ public class CacheFilterTool {
         if (name.toLowerCase().equals("objectclass")) {
             return true;
         }
-
-        //Map attributes = entry.getAttributes();
-        //if (!attributes.containsKey(name)) return false;
 
         sb.append("lower(");
         sb.append(name);
@@ -128,7 +123,6 @@ public class CacheFilterTool {
      * @throws Exception
      */
     public boolean toSQLFilter(
-            EntryDefinition entry,
             AndFilter filter,
             boolean includeValues,
             StringBuffer sb)
@@ -138,7 +132,7 @@ public class CacheFilterTool {
             Filter f = (Filter) i.next();
 
             StringBuffer sb3 = new StringBuffer();
-            toSQLFilter(entry, f, includeValues, sb3);
+            toSQLFilter(f, includeValues, sb3);
 
             if (sb2.length() > 0 && sb3.length() > 0) {
                 sb2.append(" and ");
@@ -176,7 +170,7 @@ public class CacheFilterTool {
             Filter f = (Filter) i.next();
 
             StringBuffer sb3 = new StringBuffer();
-            toSQLFilter(entry, f, includeValues, sb3);
+            toSQLFilter(f, includeValues, sb3);
 
             if (sb2.length() > 0 && sb3.length() > 0) {
                 sb2.append(" or ");

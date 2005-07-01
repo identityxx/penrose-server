@@ -6,9 +6,7 @@ package org.safehaus.penrose.cache.impl;
 
 import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.filter.Filter;
-import org.safehaus.penrose.mapping.Row;
-import org.safehaus.penrose.mapping.EntryDefinition;
-import org.safehaus.penrose.mapping.AttributeDefinition;
+import org.safehaus.penrose.mapping.*;
 import org.apache.log4j.Logger;
 
 import javax.sql.DataSource;
@@ -20,20 +18,20 @@ import java.util.*;
 /**
  * @author Endi S. Dewata
  */
-public class EntryAttributeHome {
+public class SourceFieldHome {
 
     protected Logger log = Logger.getLogger(Penrose.CACHE_LOGGER);
 
     private DataSource ds;
     private DefaultCache cache;
-    public EntryDefinition entry;
+    public Source source;
     public String tableName;
 
-    public EntryAttributeHome(DataSource ds, DefaultCache cache, EntryDefinition entry, String tableName) throws Exception {
+    public SourceFieldHome(DataSource ds, DefaultCache cache, Source source, String tableName) throws Exception {
 
         this.ds = ds;
         this.cache = cache;
-        this.entry = entry;
+        this.source = source;
         this.tableName = tableName;
 
         try {
@@ -53,11 +51,11 @@ public class EntryAttributeHome {
             con = ds.getConnection();
             StringBuffer sb = new StringBuffer();
 
-            Collection rdnAttributes = entry.getRdnAttributes();
+            Collection pkFields = source.getPrimaryKeyFields();
 
-            for (Iterator i = rdnAttributes.iterator(); i.hasNext();) {
-                AttributeDefinition attributeDefinition = (AttributeDefinition) i.next();
-                String name = attributeDefinition.getName();
+            for (Iterator i = pkFields.iterator(); i.hasNext();) {
+                Field field = (Field) i.next();
+                String name = field.getName();
 
                 if (sb.length() > 0) sb.append(", ");
 
@@ -102,12 +100,12 @@ public class EntryAttributeHome {
     public String getPkAttributeNames() {
         StringBuffer sb = new StringBuffer();
 
-        Collection attributes = entry.getRdnAttributes();
+        Collection fields = source.getPrimaryKeyFields();
 
-        for (Iterator i = attributes.iterator(); i.hasNext();) {
-            AttributeDefinition attribute = (AttributeDefinition) i.next();
+        for (Iterator i = fields.iterator(); i.hasNext();) {
+            Field field = (Field) i.next();
 
-            String name = attribute.getName();
+            String name = field.getName();
 
             if (sb.length() > 0) sb.append(", ");
             sb.append(name);
@@ -207,18 +205,18 @@ public class EntryAttributeHome {
             StringBuffer sb = new StringBuffer();
             StringBuffer sb2 = new StringBuffer();
 
-            Collection rdnAttributes = entry.getRdnAttributes();
+            Collection fields = source.getPrimaryKeyFields();
 
-            for (Iterator i = rdnAttributes.iterator(); i.hasNext();) {
-                AttributeDefinition attributeDefinition = (AttributeDefinition) i.next();
-                String attrName = attributeDefinition.getName();
+            for (Iterator i = fields.iterator(); i.hasNext();) {
+                Field field = (Field) i.next();
+                String fieldName = field.getName();
 
                 if (sb.length() > 0) {
                     sb.append(", ");
                     sb2.append(", ");
                 }
 
-                sb.append(attrName);
+                sb.append(fieldName);
                 sb2.append("?");
             }
 
@@ -232,11 +230,11 @@ public class EntryAttributeHome {
 
             int index = 0;
 
-            for (Iterator i = rdnAttributes.iterator(); i.hasNext(); ) {
-                AttributeDefinition attributeDefinition = (AttributeDefinition) i.next();
-                String attrName = attributeDefinition.getName();
+            for (Iterator i = fields.iterator(); i.hasNext(); ) {
+                Field field = (Field) i.next();
+                String fieldName = field.getName();
 
-                Object attrValue = pk.get(attrName);
+                Object attrValue = pk.get(fieldName);
                 String string;
                 if (attrValue == null) {
                     string = null;
@@ -283,7 +281,7 @@ public class EntryAttributeHome {
             StringBuffer sb = new StringBuffer();
             List parameters = new ArrayList();
 
-            Collection rdnAttributes = entry.getRdnAttributes();
+            Collection fields = source.getPrimaryKeyFields();
 
             for (Iterator i = rdns.iterator(); i.hasNext(); ) {
                 Row rdn = (Row)i.next();
@@ -291,9 +289,9 @@ public class EntryAttributeHome {
                 if (sb.length() > 0) sb.append(" or ");
 
                 StringBuffer sb2 = new StringBuffer();
-                for (Iterator j = rdnAttributes.iterator(); j.hasNext();) {
-                    AttributeDefinition attribute = (AttributeDefinition)j.next();
-                    String name = attribute.getName();
+                for (Iterator j = fields.iterator(); j.hasNext();) {
+                    Field field = (Field)j.next();
+                    String name = field.getName();
 
                     if (sb2.length() > 0) sb2.append(" and ");
                     sb2.append(name + "=?");

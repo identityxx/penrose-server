@@ -30,7 +30,7 @@ public class DefaultSourceCache extends SourceCache {
     public DefaultCache cache;
 
     public PenroseSourceHome sourceExpirationHome;
-    public Map sourceTables = new HashMap();
+    public Map homes = new HashMap();
 
     private DataSource ds;
 
@@ -61,9 +61,7 @@ public class DefaultSourceCache extends SourceCache {
                 // create source cache tables
                 sourceExpirationHome.insert(source);
 
-                String tableName = getTableName(source);
-                SourceHome sourceHome = new SourceHome(ds, source, tableName);
-                sourceTables.put(tableName, sourceHome);
+                createTables(source);
 
                 // check global loading parameter
                 String s = getCache().getParameter(CacheConfig.LOAD_ON_STARTUP);
@@ -79,7 +77,7 @@ public class DefaultSourceCache extends SourceCache {
                 if (!loadOnStartup) continue;
 
                 // load the source
-                load(entry, source, null, date);
+                load(source, null, date);
 
                 // compute source cache expiration
                 s = source.getParameter(SourceDefinition.CACHE_EXPIRATION);
@@ -90,9 +88,36 @@ public class DefaultSourceCache extends SourceCache {
                 c.add(Calendar.MINUTE, cacheExpiration);
 
                 setExpiration(source, cacheExpiration == 0 ? null : c.getTime());
-
             }
         }
+    }
+
+    public String getSourceTableName(Source source) {
+        return source.getSourceName();
+    }
+
+    public String getSourceFieldTableName(Source source) {
+        return getSourceTableName(source)+"_attribute";
+    }
+
+    public void createTables(Source source) throws Exception {
+        String sourceTableName = getSourceTableName(source);
+        SourceHome sourceHome = new SourceHome(ds, source, sourceTableName);
+        homes.put(sourceTableName, sourceHome);
+
+        String sourceFieldTableName = getSourceFieldTableName(source);
+        SourceFieldHome sourceFieldHome = new SourceFieldHome(ds, cache, source, sourceFieldTableName);
+        homes.put(sourceFieldTableName, sourceFieldHome);
+    }
+
+    public SourceHome getSourceHome(Source source) throws Exception {
+        String tableName = getSourceTableName(source);
+        return (SourceHome)homes.get(tableName);
+    }
+
+    public SourceFieldHome getSourceFieldHome(Source source) throws Exception {
+        String tableName = getSourceFieldTableName(source);
+        return (SourceFieldHome)homes.get(tableName);
     }
 
     /**
@@ -137,7 +162,7 @@ public class DefaultSourceCache extends SourceCache {
                 if (expiration != null && !expiration.before(date)) continue;
 
                 // reload source
-                load(entry, source, null, date);
+                load(source, null, date);
 
                 Calendar c = Calendar.getInstance();
                 c.add(Calendar.MINUTE, cacheExpiration);
@@ -155,14 +180,28 @@ public class DefaultSourceCache extends SourceCache {
         sourceExpirationHome.setExpiration(source, date);
     }
 
-    public void insert(Source source, AttributeValues values, Date date) throws Exception {
+    public void insert(Source source, Row pk, AttributeValues values, Date date) throws Exception {
         Collection rows = getCacheContext().getTransformEngine().convert(values);
+
+        SourceHome sourceHome = getSourceHome(source);
 
         for (Iterator i=rows.iterator(); i.hasNext(); ) {
             Row row = (Row)i.next();
-            String tableName = getTableName(source);
-            SourceHome sourceHome = (SourceHome)sourceTables.get(tableName);
             sourceHome.insert(row, date);
+        }
+
+        SourceFieldHome sourceFieldHome = getSourceFieldHome(source);
+
+        for (Iterator i=values.getNames().iterator(); i.hasNext(); ) {
+            String name = (String)i.next();
+            Collection c = values.get(name);
+            if (c == null) continue;
+
+            for (Iterator j=c.iterator(); j.hasNext(); ) {
+                Object value = j.next();
+                if (value == null) continue;
+                sourceFieldHome.insert(pk, name, value);
+            }
         }
     }
 
@@ -171,15 +210,15 @@ public class DefaultSourceCache extends SourceCache {
 
         for (Iterator i=rows.iterator(); i.hasNext(); ) {
             Row row = (Row)i.next();
-            String tableName = getTableName(source);
-            SourceHome sourceHome = (SourceHome)sourceTables.get(tableName);
+            String tableName = getSourceTableName(source);
+            SourceHome sourceHome = (SourceHome)homes.get(tableName);
             sourceHome.delete(row, date);
         }
     }
 
     public Date getModifyTime(Source source, String filter) throws Exception {
-        String tableName = getTableName(source);
-        SourceHome sourceHome = (SourceHome)sourceTables.get(tableName);
+        String tableName = getSourceTableName(source);
+        SourceHome sourceHome = (SourceHome)homes.get(tableName);
         return sourceHome.getModifyTime(filter);
     }
 
@@ -310,25 +349,29 @@ public class DefaultSourceCache extends SourceCache {
         return results;
     }
 
-    /**
-     * Get the table name for a given source.
-     *
-     * @param source the source
-     * @return table name
-     */
-    public String getTableName(Source source) {
-        return source.getSourceName();
+    public Row getPk(Source source, Row row) throws Exception {
+        Row pk = new Row();
+
+        Collection fields = source.getPrimaryKeyFields();
+        for (Iterator i=fields.iterator(); i.hasNext(); ) {
+            Field field = (Field)i.next();
+            String name = field.getName();
+            Object value = row.get(name);
+
+            pk.set(name, value);
+        }
+
+        return pk;
     }
 
     public SearchResults load(
-            EntryDefinition entry,
             Source source,
             Collection pks,
             Date date)
             throws Exception {
 
         Filter filter = cache.getCacheContext().getFilterTool().createFilter(pks);
-        String stringFilter = cache.getCacheFilterTool().toSQLFilter(entry, filter);
+        String stringFilter = cache.getCacheFilterTool().toSQLFilter(filter);
 
         log.info("Loading source "+source.getName()+" "+source.getSourceName()+" with filter "+filter);
 
@@ -339,13 +382,45 @@ public class DefaultSourceCache extends SourceCache {
 
         SearchResults results = source.search(filter, 0);
 
-        String tableName = getTableName(source);
-        SourceHome sourceHome = (SourceHome)sourceTables.get(tableName);
+        SourceHome sourceHome = getSourceHome(source);
         sourceHome.delete(stringFilter, date);
+
+        Map records = new HashMap();
 
         for (Iterator j = results.iterator(); j.hasNext();) {
             Row row = (Row) j.next();
             sourceHome.insert(row, date);
+
+            Row pk = getPk(source, row);
+
+            AttributeValues values = (AttributeValues)records.get(pk);
+            if (values == null) {
+                values = new AttributeValues();
+                records.put(pk, values);
+            }
+
+            values.add(row);
+        }
+
+        SourceFieldHome sourceFieldHome = getSourceFieldHome(source);
+
+        for (Iterator i=records.keySet().iterator(); i.hasNext(); ) {
+            Row pk = (Row)i.next();
+            AttributeValues values = (AttributeValues)records.get(pk);
+
+            sourceFieldHome.delete(pk);
+
+            for (Iterator j=values.getNames().iterator(); j.hasNext(); ) {
+                String name = (String)j.next();
+                Collection c = values.get(name);
+                if (c == null) continue;
+
+                for (Iterator k=c.iterator(); k.hasNext(); ) {
+                    Object value = k.next();
+                    if (value == null) continue;
+                    sourceFieldHome.insert(pk, name, value);
+                }
+            }
         }
 
         CacheEvent afterEvent = new CacheEvent(getCacheContext(), sourceConfig, CacheEvent.AFTER_LOAD_ENTRIES);

@@ -186,7 +186,7 @@ public class EntryHome {
         String attributeNames = getPkAttributeNames();
 
         Filter filter = cache.getCacheContext().getFilterTool().createFilter(rdns);
-        String sqlFilter = cache.getCacheFilterTool().toSQLFilter(entry, filter, false);
+        String sqlFilter = cache.getCacheFilterTool().toSQLFilter(filter, false);
 
         String sql = "select " + attributeNames + " from " + tableName
                 + " where " + sqlFilter;

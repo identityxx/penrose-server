@@ -336,7 +336,7 @@ public class DefaultSearchHandler extends SearchHandler {
         Source primarySource = getConfig().getPrimarySource(entryDefinition);
 
         Filter filter = getEngine().getEngineContext().getFilterTool().createFilter(pks);
-        String sqlFilter = ((DefaultCache)getCache()).getCacheFilterTool().toSQLFilter(entryDefinition, filter);
+        String sqlFilter = ((DefaultCache)getCache()).getCacheFilterTool().toSQLFilter(filter);
 
         MRSWLock lock = ((DefaultEngine)getEngine()).getLock(entryDefinition.getDn());
         lock.getWriteLock(Penrose.WAIT_TIMEOUT);

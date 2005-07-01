@@ -5,7 +5,6 @@
 package org.safehaus.penrose.cache.impl;
 
 import org.safehaus.penrose.mapping.Row;
-import org.safehaus.penrose.mapping.AttributeDefinition;
 import org.safehaus.penrose.mapping.EntryDefinition;
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.cache.EntryCache;

@@ -41,7 +41,7 @@ public abstract class SourceCache {
     public abstract Date getExpiration(Source source) throws Exception;
     public abstract void setExpiration(Source source, Date date) throws Exception;
 
-    public abstract void insert(Source source, AttributeValues values, Date date) throws Exception;
+    public abstract void insert(Source source, Row pk, AttributeValues values, Date date) throws Exception;
     public abstract void delete(Source source, AttributeValues values, Date date) throws Exception;
 
     public abstract Date getModifyTime(Source source, String filter) throws Exception;
@@ -72,7 +72,6 @@ public abstract class SourceCache {
     }
 
     public abstract SearchResults load(
-            EntryDefinition entry,
             Source source,
             Collection pks,
             Date date)

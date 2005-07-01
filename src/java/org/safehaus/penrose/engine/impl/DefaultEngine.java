@@ -148,7 +148,7 @@ public class DefaultEngine extends Engine {
     public Date getModifyTime(EntryDefinition entry, SourceDefinition sourceConfig, String filter) throws Exception {
 
         String t1 = cache.getEntryTableName(sourceConfig, true);
-        SourceHome s1 = (SourceHome)sourceTables.get(t1);
+        SourceHome s1 = (SourceHome)homes.get(t1);
         return s1.getModifyTime(filter);
     }
 
