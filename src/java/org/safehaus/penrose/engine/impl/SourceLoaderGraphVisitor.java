@@ -61,7 +61,7 @@ public class SourceLoaderGraphVisitor extends GraphVisitor {
         Collection newRows = new HashSet();
         for (Iterator i = results.keySet().iterator(); i.hasNext(); ) {
             Row row = (Row)i.next();
-            log.debug(" - "+row);
+            //log.debug(" - "+row);
             newRows.add(row);
         }
 

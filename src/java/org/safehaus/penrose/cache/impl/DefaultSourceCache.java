@@ -180,20 +180,28 @@ public class DefaultSourceCache extends SourceCache {
 
     public AttributeValues get(Source source, Row pk) throws Exception {
 
-        log.debug("Getting source cache for pk: "+pk);
+        //log.debug("Getting source cache for pk: "+pk);
 
         SourceFieldHome sourceFieldHome = getSourceFieldHome(source);
         Collection rows = sourceFieldHome.search(pk);
         if (rows.size() == 0) return null;
 
-        log.debug("Fields:");
+        //log.debug("Fields:");
 
         AttributeValues values = new AttributeValues();
         for (Iterator i = rows.iterator(); i.hasNext();) {
             Row row = (Row)i.next();
+            Row newRow = new Row();
 
-            log.debug(" - "+row);
-            values.add(row);
+            for (Iterator j = row.getNames().iterator(); j.hasNext(); ) {
+                String name = (String)j.next();
+                Object value = row.get(name);
+
+                newRow.set(source.getName()+"."+name, value);
+            }
+
+            //log.debug(" - "+newRow);
+            values.add(newRow);
         }
 
         return values;
@@ -286,7 +294,7 @@ public class DefaultSourceCache extends SourceCache {
         Graph graph = getConfig().getGraph(entryDefinition);
         Source primarySource = getConfig().getPrimarySource(entryDefinition);
 
-        JoinGraphVisitor visitor = new JoinGraphVisitor(entryDefinition, this, pk);
+        JoinGraphVisitor visitor = new JoinGraphVisitor(entryDefinition, primarySource, this, pk);
         graph.traverse(visitor, primarySource);
 
         AttributeValues values = visitor.getAttributeValues();
@@ -405,7 +413,7 @@ public class DefaultSourceCache extends SourceCache {
         return pk;
     }
 
-    public Collection search(
+    public Collection searchPks(
             Source source,
             Collection fields)
             throws Exception {

@@ -19,6 +19,7 @@ public class JoinGraphVisitor extends GraphVisitor {
     public Logger log = Logger.getLogger(Penrose.SEARCH_LOGGER);
 
     public EntryDefinition entryDefinition;
+    public Source primarySource;
     public DefaultSourceCache sourceCache;
 
     private List fieldNames = new ArrayList();
@@ -28,8 +29,9 @@ public class JoinGraphVisitor extends GraphVisitor {
     private Stack stack = new Stack();
     private AttributeValues attributeValues = new AttributeValues();
 
-    public JoinGraphVisitor(EntryDefinition entryDefinition, DefaultSourceCache sourceCache, Row pk) {
+    public JoinGraphVisitor(EntryDefinition entryDefinition, Source primarySource, DefaultSourceCache sourceCache, Row pk) {
         this.entryDefinition = entryDefinition;
+        this.primarySource = primarySource;
         this.sourceCache = sourceCache;
 
         Set pks = new HashSet();
@@ -46,10 +48,15 @@ public class JoinGraphVisitor extends GraphVisitor {
 
         Collection pks = (Collection)stack.peek();
 
-        log.debug("Joining source "+source+" with pks: "+pks);
+        if (source.equals(primarySource)) {
+            log.debug("Starting with source "+source+" with pks: "+pks);
 
-        Collection newPks = sourceCache.search(source, pks);
-        Map results = sourceCache.get(source, newPks);
+        } else {
+            log.debug("Joining with source "+source+" with pks: "+pks);
+            pks = sourceCache.searchPks(source, pks);
+        }
+
+        Map results = sourceCache.get(source, pks);
 
         log.debug("Records:");
         for (Iterator i = results.keySet().iterator(); i.hasNext(); ) {
@@ -57,13 +64,13 @@ public class JoinGraphVisitor extends GraphVisitor {
             AttributeValues values = (AttributeValues)results.get(pk);
 
             log.debug(" - "+pk+": "+values);
-            newPks.add(pk);
+            pks.add(pk);
 
             attributeValues.add(values);
         }
 
-        stack.push(newPks);
-
+        stack.push(pks);
+/*
         Collection fields = source.getFields();
         Set set = new HashSet();
         for (Iterator j = fields.iterator(); j.hasNext();) {
@@ -81,7 +88,7 @@ public class JoinGraphVisitor extends GraphVisitor {
         getTableNames().add(source.getSourceName()+" "+source.getName());
 
         //log.debug("Table names: "+getTableNames());
-
+*/
         return true;
     }
 
@@ -93,7 +100,6 @@ public class JoinGraphVisitor extends GraphVisitor {
         Source source = (Source)node2;
         Relationship relationship = (Relationship)edge;
 
-        log.debug("Relationship "+relationship);
         if (entryDefinition.getSource(source.getName()) == null) return false;
 
         // visit this node if the pk fields are set
@@ -107,9 +113,10 @@ public class JoinGraphVisitor extends GraphVisitor {
 
         if (!visit) return false;
 
-
+        log.debug("Relationship "+relationship);
+/*
         getJoins().add(relationship.toString());
-
+*/
         //log.debug("Joins: "+getJoins());
 
         String lhs = relationship.getLhs();

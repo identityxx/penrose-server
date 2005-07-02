@@ -151,7 +151,7 @@ public class SourceFieldHome {
         String name = rs.getString(c++);
         Object value = rs.getObject(c++);
 
-        values.set(source.getName()+"."+name, value);
+        values.set(name, value);
 
         return values;
     }

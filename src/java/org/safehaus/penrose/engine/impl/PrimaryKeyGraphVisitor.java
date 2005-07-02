@@ -74,7 +74,7 @@ public class PrimaryKeyGraphVisitor extends GraphVisitor {
         log.debug("Getting entry primary keys:");
         for (Iterator i=rows.iterator(); i.hasNext(); ) {
             Row row = (Row)i.next();
-            log.debug(" - "+row);
+            //log.debug(" - "+row);
 
             Interpreter interpreter = engine.getEngineContext().newInterpreter();
             // interpreter.set(row);
@@ -107,7 +107,7 @@ public class PrimaryKeyGraphVisitor extends GraphVisitor {
             if (!valid) continue;
 
             keys.add(pk);
-            log.debug("   => "+pk);
+            log.debug(" - "+pk);
         }
         //log.debug("to: "+keys);
 
