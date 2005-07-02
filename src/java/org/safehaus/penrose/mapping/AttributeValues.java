@@ -14,8 +14,18 @@ public class AttributeValues {
     public AttributeValues() {
     }
 
-    public AttributeValues(AttributeValues attributes) {
-        values.putAll(attributes.getValues());
+    public AttributeValues(AttributeValues attributeValues) {
+        add(attributeValues);
+    }
+
+    public void add(AttributeValues attributeValues) {
+        Map v = attributeValues.getValues();
+        for (Iterator i = v.keySet().iterator(); i.hasNext(); ) {
+            String name = (String)i.next();
+
+            Collection c = (Collection)v.get(name);
+            add(name, c);
+        }
     }
 
     public void add(Row row) {
@@ -31,7 +41,16 @@ public class AttributeValues {
             c.add(value);
         }
     }
-    
+
+    public void add(String name, Collection values) {
+        Collection c = (Collection)this.values.get(name);
+        if (c == null) {
+            this.values.put(name, values);
+        } else {
+            c.addAll(values);
+        }
+    }
+
     public void set(String name, Collection values) {
         this.values.put(name, values);
     }

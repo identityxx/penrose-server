@@ -66,16 +66,14 @@ public class DefaultAddHandler extends AddHandler {
 
 	        for (Iterator i=rows.keySet().iterator(); i.hasNext(); ) {
 	            Row pk = (Row)i.next();
-	            AttributeValues attributes = (AttributeValues)rows.get(pk);
-
-                //AttributeValues attributes = engineContext.getTransformEngine().convert(row);
+	            AttributeValues fieldValues = (AttributeValues)rows.get(pk);
 
 	            // Add row to the source table in the source database/directory
-	            int rc = source.add(attributes);
+	            int rc = source.add(fieldValues);
 	            if (rc != LDAPException.SUCCESS) return rc;
 
 	            // Add row to the source table in the cache
-	            getEngine().getSourceCache().insert(source, pk, attributes, date);
+	            getEngine().getSourceCache().put(source, pk, fieldValues, date);
 	        }
 
         } finally {

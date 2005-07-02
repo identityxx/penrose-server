@@ -140,7 +140,7 @@ public class EntryHome {
         return search(pks);
     }
 
-    public Collection search(Date date) throws Exception {
+    public Collection searchRdns(Date date) throws Exception {
 
         String attributeNames = getPkAttributeNames();
 

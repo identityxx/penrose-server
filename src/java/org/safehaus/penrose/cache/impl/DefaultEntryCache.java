@@ -77,9 +77,9 @@ public class DefaultEntryCache extends EntryCache {
 
     public Entry get(EntryDefinition entryDefinition, Row rdn) throws Exception {
 
-        EntryAttributeHome entryAttributeHome = getEntryAttributeHome(entryDefinition);
         log.debug("Getting entry cache for rdn: "+rdn);
 
+        EntryAttributeHome entryAttributeHome = getEntryAttributeHome(entryDefinition);
         Collection rows = entryAttributeHome.search(rdn);
         if (rows.size() == 0) return null;
 
@@ -173,7 +173,7 @@ public class DefaultEntryCache extends EntryCache {
             throws Exception {
 
         EntryHome entryHome = getEntryHome(entryDefinition);
-        Collection expiredRdns = entryHome.search(date);
+        Collection expiredRdns = entryHome.searchRdns(date);
         entryHome.delete(expiredRdns);
 
         EntryAttributeHome entryAttributeHome = getEntryAttributeHome(entryDefinition);

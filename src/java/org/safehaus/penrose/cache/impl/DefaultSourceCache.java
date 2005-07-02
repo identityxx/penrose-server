@@ -18,9 +18,7 @@ import org.safehaus.penrose.mapping.*;
 
 import javax.sql.DataSource;
 import java.util.*;
-import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.sql.Connection;
 
 /**
  * @author Endi S. Dewata
@@ -29,7 +27,7 @@ public class DefaultSourceCache extends SourceCache {
 
     public DefaultCache cache;
 
-    public PenroseSourceHome sourceExpirationHome;
+    public SourceExpirationHome sourceExpirationHome;
     public Map homes = new HashMap();
 
     private DataSource ds;
@@ -44,7 +42,7 @@ public class DefaultSourceCache extends SourceCache {
         Collection entries = getConfig().getEntryDefinitions();
         Set set = new HashSet();
 
-        sourceExpirationHome = new PenroseSourceHome(ds);
+        sourceExpirationHome = new SourceExpirationHome(ds);
 
         for (Iterator i=entries.iterator(); i.hasNext(); ) {
             EntryDefinition entry = (EntryDefinition)i.next();
@@ -180,15 +178,47 @@ public class DefaultSourceCache extends SourceCache {
         sourceExpirationHome.setExpiration(source, date);
     }
 
-    public void insert(Source source, Row pk, AttributeValues values, Date date) throws Exception {
-        Collection rows = getCacheContext().getTransformEngine().convert(values);
+    public AttributeValues get(Source source, Row pk) throws Exception {
+
+        log.debug("Getting source cache for pk: "+pk);
+
+        SourceFieldHome sourceFieldHome = getSourceFieldHome(source);
+        Collection rows = sourceFieldHome.search(pk);
+        if (rows.size() == 0) return null;
+
+        log.debug("Fields:");
+
+        AttributeValues values = new AttributeValues();
+        for (Iterator i = rows.iterator(); i.hasNext();) {
+            Row row = (Row)i.next();
+
+            log.debug(" - "+row);
+            values.add(row);
+        }
+
+        return values;
+    }
+
+    public Map get(Source source, Collection pks) throws Exception {
+
+        Map results = new HashMap();
+
+        for (Iterator i=pks.iterator(); i.hasNext(); ) {
+            Row pk = (Row)i.next();
+
+            AttributeValues values = get(source, pk);
+            if (values == null) continue;
+
+            results.put(pk, values);
+        }
+
+        return results;
+    }
+
+    public void put(Source source, Row pk, AttributeValues values, Date date) throws Exception {
 
         SourceHome sourceHome = getSourceHome(source);
-
-        for (Iterator i=rows.iterator(); i.hasNext(); ) {
-            Row row = (Row)i.next();
-            sourceHome.insert(row, date);
-        }
+        sourceHome.insert(pk, date);
 
         SourceFieldHome sourceFieldHome = getSourceFieldHome(source);
 
@@ -205,25 +235,12 @@ public class DefaultSourceCache extends SourceCache {
         }
     }
 
-    public void delete(Source source, AttributeValues values, Date date) throws Exception {
-        Collection rows = getCacheContext().getTransformEngine().convert(values);
+    public void delete(Source source, Row pk, AttributeValues values, Date date) throws Exception {
+        SourceHome sourceHome = getSourceHome(source);
+        sourceHome.delete(pk);
 
-        for (Iterator i=rows.iterator(); i.hasNext(); ) {
-            Row row = (Row)i.next();
-            String tableName = getSourceTableName(source);
-            SourceHome sourceHome = (SourceHome)homes.get(tableName);
-            sourceHome.delete(row, date);
-        }
-    }
-
-    public Date getModifyTime(Source source, String filter) throws Exception {
-        String tableName = getSourceTableName(source);
-        SourceHome sourceHome = (SourceHome)homes.get(tableName);
-        return sourceHome.getModifyTime(filter);
-    }
-
-    public Date getModifyTime(Source source) throws Exception {
-        return sourceExpirationHome.getModifyTime(source);
+        SourceFieldHome sourceFieldHome = getSourceFieldHome(source);
+        sourceFieldHome.delete(pk);
     }
 
     /**
@@ -247,21 +264,44 @@ public class DefaultSourceCache extends SourceCache {
         return values;
     }
 
-    /**
-     * Join sources
-     *
-     * @param entryDefinition the entry definition (from config)
-     * @return the Collection of rows resulting from the join
-     * @throws Exception
-     */
     public Collection join(
             EntryDefinition entryDefinition,
-            Graph graph,
-            Source primarySource,
-            String sqlFilter) throws Exception {
+            Collection pks) throws Exception {
 
-        JoinGraphVisitor visitor = new JoinGraphVisitor(entryDefinition);
+        Collection results = new ArrayList();
+
+        for (Iterator i=pks.iterator(); i.hasNext(); ) {
+            Row pk = (Row)i.next();
+            Collection rows = join(entryDefinition, pk);
+            results.addAll(rows);
+        }
+
+        return results;
+    }
+
+    public Collection join(
+            EntryDefinition entryDefinition,
+            Row pk) throws Exception {
+
+        Graph graph = getConfig().getGraph(entryDefinition);
+        Source primarySource = getConfig().getPrimarySource(entryDefinition);
+
+        JoinGraphVisitor visitor = new JoinGraphVisitor(entryDefinition, this, pk);
         graph.traverse(visitor, primarySource);
+
+        AttributeValues values = visitor.getAttributeValues();
+        log.debug("Rows:");
+
+        Collection rows = getCacheContext().getTransformEngine().convert(values);
+        for (Iterator i = rows.iterator(); i.hasNext(); ) {
+            Row row = (Row)i.next();
+            log.debug(" - "+row);
+        }
+
+        return rows;
+/*
+        Filter filter = getCacheContext().getFilterTool().createFilter(pks);
+        String sqlFilter = ((DefaultCache)getCache()).getCacheFilterTool().toSQLFilter(filter);
 
         List fieldNames = visitor.getFieldNames();
         List tableNames = visitor.getTableNames();
@@ -347,6 +387,7 @@ public class DefaultSourceCache extends SourceCache {
         }
 
         return results;
+*/
     }
 
     public Row getPk(Source source, Row row) throws Exception {
@@ -364,16 +405,25 @@ public class DefaultSourceCache extends SourceCache {
         return pk;
     }
 
-    public SearchResults load(
+    public Collection search(
+            Source source,
+            Collection fields)
+            throws Exception {
+
+        SourceFieldHome sourceFieldHome = getSourceFieldHome(source);
+        return sourceFieldHome.searchPks(fields);
+    }
+
+    public Map load(
             Source source,
             Collection pks,
             Date date)
             throws Exception {
 
-        Filter filter = cache.getCacheContext().getFilterTool().createFilter(pks);
-        String stringFilter = cache.getCacheFilterTool().toSQLFilter(filter);
+        log.info("Loading source "+source.getName()+" "+source.getSourceName()+" with pks "+pks);
 
-        log.info("Loading source "+source.getName()+" "+source.getSourceName()+" with filter "+filter);
+        Filter filter = cache.getCacheContext().getFilterTool().createFilter(pks);
+        String stringFilter = cache.getCacheFilterTool().toSQLFilter(filter, true);
 
         SourceDefinition sourceConfig = source.getSourceDefinition();
 
@@ -383,14 +433,11 @@ public class DefaultSourceCache extends SourceCache {
         SearchResults results = source.search(filter, 0);
 
         SourceHome sourceHome = getSourceHome(source);
-        sourceHome.delete(stringFilter, date);
 
         Map records = new HashMap();
 
         for (Iterator j = results.iterator(); j.hasNext();) {
             Row row = (Row) j.next();
-            sourceHome.insert(row, date);
-
             Row pk = getPk(source, row);
 
             AttributeValues values = (AttributeValues)records.get(pk);
@@ -407,6 +454,9 @@ public class DefaultSourceCache extends SourceCache {
         for (Iterator i=records.keySet().iterator(); i.hasNext(); ) {
             Row pk = (Row)i.next();
             AttributeValues values = (AttributeValues)records.get(pk);
+
+            sourceHome.delete(pk);
+            sourceHome.insert(pk, date);
 
             sourceFieldHome.delete(pk);
 
@@ -426,6 +476,6 @@ public class DefaultSourceCache extends SourceCache {
         CacheEvent afterEvent = new CacheEvent(getCacheContext(), sourceConfig, CacheEvent.AFTER_LOAD_ENTRIES);
         postCacheEvent(sourceConfig, afterEvent);
 
-        return results;
+        return records;
     }
 }

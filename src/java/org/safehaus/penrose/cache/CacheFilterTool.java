@@ -45,6 +45,7 @@ public class CacheFilterTool {
      */
     public String toSQLFilter(Filter filter, boolean includeValues) throws Exception {
         StringBuffer sb = new StringBuffer();
+
         boolean valid = toSQLFilter(filter, includeValues, sb);
 
         if (valid && sb.length() > 0) return sb.toString();
@@ -65,6 +66,8 @@ public class CacheFilterTool {
             boolean includeValues,
             StringBuffer sb)
             throws Exception {
+
+        //System.out.println("SQL Filter ("+filter.getClass()+"): "+filter);
 
         if (filter instanceof SimpleFilter) {
             return toSQLFilter((SimpleFilter) filter, includeValues, sb);
@@ -92,6 +95,7 @@ public class CacheFilterTool {
             boolean includeValues,
             StringBuffer sb)
             throws Exception {
+
         String name = filter.getAttr();
         String value = filter.getValue();
 
@@ -111,6 +115,8 @@ public class CacheFilterTool {
             sb.append("?");
         }
 
+        //System.out.println("SQL Filter: "+sb);
+
         return true;
     }
 
@@ -127,6 +133,7 @@ public class CacheFilterTool {
             boolean includeValues,
             StringBuffer sb)
             throws Exception {
+
         StringBuffer sb2 = new StringBuffer();
         for (Iterator i = filter.getFilterList().iterator(); i.hasNext();) {
             Filter f = (Filter) i.next();
@@ -160,11 +167,11 @@ public class CacheFilterTool {
      * @throws Exception
      */
     public boolean toSQLFilter(
-            EntryDefinition entry,
             OrFilter filter,
             boolean includeValues,
             StringBuffer sb)
             throws Exception {
+
         StringBuffer sb2 = new StringBuffer();
         for (Iterator i = filter.getFilterList().iterator(); i.hasNext();) {
             Filter f = (Filter) i.next();

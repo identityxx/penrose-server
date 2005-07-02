@@ -87,7 +87,7 @@ public class DefaultDeleteHandler extends DeleteHandler {
 	            int rc = source.delete(attributes);
 	            if (rc != LDAPException.SUCCESS) return rc;
 
-	            getEngine().getSourceCache().delete(source, attributes, date);
+	            getEngine().getSourceCache().delete(source, pk, attributes, date);
 	        }
 
         } finally {

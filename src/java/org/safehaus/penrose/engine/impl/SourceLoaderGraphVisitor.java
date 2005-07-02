@@ -53,20 +53,25 @@ public class SourceLoaderGraphVisitor extends GraphVisitor {
         
         Collection pks = (Collection)stack.peek();
 
-        SearchResults results = engine.getSourceCache().load(source, pks, date);
+        //log.debug("Loading source "+source+" with pks: "+pks);
+
+        Map results = engine.getSourceCache().load(source, pks, date);
         if (results.size() == 0) return false;
         
         Collection newRows = new HashSet();
-        for (Iterator i = results.iterator(); i.hasNext(); ) {
+        for (Iterator i = results.keySet().iterator(); i.hasNext(); ) {
             Row row = (Row)i.next();
-            //log.debug(" - "+row);
+            log.debug(" - "+row);
             newRows.add(row);
         }
 
-        stack.pop();
         stack.push(newRows);
 
         return true;
+    }
+
+    public void postVisitNode(Object node, Object parameter) throws Exception {
+        stack.pop();
     }
 
     public boolean preVisitEdge(Object node1, Object node2, Object edge, Object parameter) throws Exception {

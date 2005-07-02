@@ -41,13 +41,11 @@ public abstract class SourceCache {
     public abstract Date getExpiration(Source source) throws Exception;
     public abstract void setExpiration(Source source, Date date) throws Exception;
 
-    public abstract void insert(Source source, Row pk, AttributeValues values, Date date) throws Exception;
-    public abstract void delete(Source source, AttributeValues values, Date date) throws Exception;
+    public abstract void put(Source source, Row pk, AttributeValues values, Date date) throws Exception;
+    public abstract void delete(Source source, Row pk, AttributeValues values, Date date) throws Exception;
 
-    public abstract Date getModifyTime(Source source, String filter) throws Exception;
-    public abstract Date getModifyTime(Source source) throws Exception;
-
-    public abstract Collection join(EntryDefinition entry, Graph graph, Source primarySource, String sqlFilter) throws Exception;
+    public abstract Collection join(EntryDefinition entry, Collection pks) throws Exception;
+    public abstract Collection join(EntryDefinition entry, Row pk) throws Exception;
 
     public void postCacheEvent(SourceDefinition sourceConfig, CacheEvent event)
             throws Exception {
@@ -71,7 +69,7 @@ public abstract class SourceCache {
         }
     }
 
-    public abstract SearchResults load(
+    public abstract Map load(
             Source source,
             Collection pks,
             Date date)

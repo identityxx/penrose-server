@@ -73,7 +73,7 @@ public class DefaultSearchHandler extends SearchHandler {
 
         Calendar calendar = Calendar.getInstance();
 
-        Collection rdns = getRdns(parent, entryDefinition, filter, calendar);
+        Collection rdns = search(parent, entryDefinition, filter, calendar);
         log.debug("Searched rdns: "+rdns);
 
         return load(parent, entryDefinition, rdns, calendar);
@@ -103,7 +103,7 @@ public class DefaultSearchHandler extends SearchHandler {
         return source.getName();
     }
 
-    public Collection getRdns(
+    public Collection search(
             Entry parent,
             EntryDefinition entryDefinition,
             Filter filter,
@@ -332,12 +332,6 @@ public class DefaultSearchHandler extends SearchHandler {
         log.debug("--------------------------------------------------------------------------------------");
         log.debug("Joining sources with pks "+pks);
 
-        Graph graph = getConfig().getGraph(entryDefinition);
-        Source primarySource = getConfig().getPrimarySource(entryDefinition);
-
-        Filter filter = getEngine().getEngineContext().getFilterTool().createFilter(pks);
-        String sqlFilter = ((DefaultCache)getCache()).getCacheFilterTool().toSQLFilter(filter);
-
         MRSWLock lock = ((DefaultEngine)getEngine()).getLock(entryDefinition.getDn());
         lock.getWriteLock(Penrose.WAIT_TIMEOUT);
 
@@ -346,7 +340,7 @@ public class DefaultSearchHandler extends SearchHandler {
         try {
 
             // join rows from sources
-            Collection rows = getEngine().getSourceCache().join(entryDefinition, graph, primarySource, sqlFilter);
+            Collection rows = getEngine().getSourceCache().join(entryDefinition, pks);
             log.debug("Joined " + rows.size() + " rows.");
 
             // merge rows into attribute values

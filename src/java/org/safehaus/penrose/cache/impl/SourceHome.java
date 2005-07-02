@@ -53,15 +53,10 @@ public class SourceHome {
             con = ds.getConnection();
             StringBuffer sb = new StringBuffer();
 
-            Set set = new HashSet();
-            Collection fields = source.getFields();
+            Collection fields = source.getPrimaryKeyFields();
 
             for (Iterator i = fields.iterator(); i.hasNext();) {
                 Field field = (Field) i.next();
-
-                // TODO need to handle multiple field definitions
-                if (set.contains(field.getName())) continue;
-                set.add(field.getName());
 
                 if (sb.length() > 0) sb.append(", ");
                 sb.append(field.getName());
@@ -101,7 +96,7 @@ public class SourceHome {
         }
     }
 
-    public void insert(Row row, Date date) throws Exception {
+    public void insert(Row pk, Date date) throws Exception {
 
         Connection con = null;
         PreparedStatement ps = null;
@@ -112,15 +107,11 @@ public class SourceHome {
             StringBuffer sb = new StringBuffer();
             StringBuffer sb2 = new StringBuffer();
 
-            Collection fields = source.getFields();
-            Set set = new HashSet();
+            Collection fields = source.getPrimaryKeyFields();
 
             for (Iterator i = fields.iterator(); i.hasNext();) {
                 Field field = (Field) i.next();
                 String name = field.getName();
-
-                if (set.contains(name)) continue;
-                set.add(name);
 
                 if (sb.length() > 0) {
                     sb.append(", ");
@@ -139,20 +130,12 @@ public class SourceHome {
             log.debug("Executing " + sql);
             ps = con.prepareStatement(sql);
 
-            set = new HashSet();
             int index = 1;
             for (Iterator i = fields.iterator(); i.hasNext(); index++) {
                 Field field = (Field) i.next();
                 String name = field.getName();
 
-                if (set.contains(field.getName()))
-                    continue;
-                set.add(field.getName());
-
-                Object value = row.get(name);
-                //log.debug(" - " + index + ": " + value + " ("
-                //        + (value == null ? null : value.getClass().getName())
-                //        + ")");
+                Object value = pk.get(name);
 
                 String string;
 
@@ -183,123 +166,7 @@ public class SourceHome {
         }
     }
 
-    public void update(Row oldRow, Row newRow, Date date) throws Exception {
-
-        Connection con = null;
-        PreparedStatement ps = null;
-
-        try {
-            con = ds.getConnection();
-
-            Collection fields = source.getFields();
-
-            StringBuffer sb = new StringBuffer();
-            Set set = new HashSet();
-
-            for (Iterator i = fields.iterator(); i.hasNext();) {
-                Field field = (Field) i.next();
-                String name = field.getName();
-
-                if (set.contains(name)) continue;
-                set.add(name);
-
-                if (sb.length() > 0) {
-                    sb.append(", ");
-                }
-                sb.append(name);
-                sb.append("=?");
-            }
-
-            sb.append(", ");
-            sb.append(MODIFY_TIME_FIELD);
-            sb.append("=?");
-
-            StringBuffer sb2 = new StringBuffer();
-            set = new HashSet();
-
-            for (Iterator i = fields.iterator(); i.hasNext();) {
-                Field field = (Field) i.next();
-                if (!field.isPrimaryKey()) continue;
-
-                String name = field.getName();
-                if (set.contains(name)) continue;
-                set.add(name);
-
-                if (sb2.length() > 0) {
-                    sb2.append(" and ");
-                }
-                sb2.append(name);
-                sb2.append("=?");
-            }
-
-            String sql = "update " + tableName + " set " + sb + " where " + sb2;
-
-            log.debug("Executing " + sql);
-            ps = con.prepareStatement(sql);
-
-            set = new HashSet();
-            int index = 1;
-            for (Iterator i = fields.iterator(); i.hasNext();) {
-                Field field = (Field) i.next();
-                String name = field.getName();
-
-                if (set.contains(field.getName())) continue;
-                set.add(field.getName());
-
-                Object value = newRow.get(name);
-                String string;
-
-                if (value instanceof byte[]) {
-                    string = new String((byte[]) value);
-
-                } else if (value instanceof Set) {
-                    Set s = (Set) value;
-                    string = s.isEmpty() ? null : (String) s.iterator().next();
-
-                } else {
-                    string = (String) value;
-                }
-
-                ps.setString(index++, string);
-            }
-
-            ps.setTimestamp(index++, new Timestamp(date.getTime()));
-
-            set = new HashSet();
-            for (Iterator i = fields.iterator(); i.hasNext();) {
-                Field field = (Field) i.next();
-                if (!field.isPrimaryKey()) continue;
-
-                String name = field.getName();
-                if (set.contains(name)) continue;
-                set.add(name);
-
-                Object value = oldRow.get(name);
-                String string;
-
-                if (value instanceof byte[]) {
-                    string = new String((byte[]) value);
-
-                } else if (value instanceof Set) {
-                    Set s = (Set) value;
-                    string = s.isEmpty() ? null : (String) s.iterator().next();
-
-                } else {
-                    string = (String) value;
-                }
-
-                ps.setString(index++, string);
-            }
-
-            ps.execute();
-
-        } finally {
-            if (ps != null) try { ps.close(); } catch (Exception e) {}
-            if (con != null) try { con.close(); } catch (Exception ex) {}
-        }
-    }
-/*
-    public void setValidity(Row row, boolean validity) throws Exception {
+    public void delete(Row pk) throws Exception {
 
         Connection con = null;
         PreparedStatement ps = null;
@@ -308,87 +175,11 @@ public class SourceHome {
             con = ds.getConnection();
             StringBuffer sb = new StringBuffer();
 
-            Collection fields = sourceConfig.getFields();
-            Set set = new HashSet();
-
-            for (Iterator i = fields.iterator(); i.hasNext();) {
-                FieldDefinition field = (FieldDefinition) i.next();
-                if (!field.isPrimaryKey())
-                    continue;
-
-                String name = field.getName();
-                if (set.contains(name))
-                    continue;
-                set.add(name);
-
-                if (sb.length() > 0) {
-                    sb.append(" and ");
-                }
-                sb.append(name);
-                sb.append("=?");
-            }
-
-            String sql = "update " + tableName + " set "+MODIFY_TIME_FIELD+"='"+(validity?1:0)+"' where " + sb;
-
-            log.debug("Executing " + sql);
-            ps = con.prepareStatement(sql);
-
-            set = new HashSet();
-            int index = 1;
-            for (Iterator i = fields.iterator(); i.hasNext();) {
-                FieldDefinition field = (FieldDefinition) i.next();
-                if (!field.isPrimaryKey())
-                    continue;
-
-                String name = field.getName();
-                if (set.contains(name))
-                    continue;
-                set.add(name);
-
-                Object value = row.get(name);
-                String string;
-
-                if (value instanceof byte[]) {
-                    string = new String((byte[]) value);
-
-                } else if (value instanceof Set) {
-                    Set s = (Set) value;
-                    string = s.isEmpty() ? null : (String) s.iterator().next();
-
-                } else {
-                    string = (String) value;
-                }
-
-                ps.setString(index++, string);
-            }
-
-            ps.execute();
-
-        } finally {
-            if (ps != null) try { ps.close(); } catch (Exception e) {}
-            if (con != null) try { con.close(); } catch (Exception ex) {}
-        }
-    }
-*/
-    public void delete(Row row, Date date) throws Exception {
-
-        Connection con = null;
-        PreparedStatement ps = null;
-
-        try {
-            con = ds.getConnection();
-            StringBuffer sb = new StringBuffer();
-
-            Collection fields = source.getFields();
-            Set set = new HashSet();
+            Collection fields = source.getPrimaryKeyFields();
 
             for (Iterator i = fields.iterator(); i.hasNext();) {
                 Field field = (Field) i.next();
-                if (!field.isPrimaryKey()) continue;
-
                 String name = field.getName();
-                if (set.contains(name)) continue;
-                set.add(name);
 
                 if (sb.length() > 0) {
                     sb.append(" and ");
@@ -402,17 +193,12 @@ public class SourceHome {
             log.debug("Executing " + sql);
             ps = con.prepareStatement(sql);
 
-            set = new HashSet();
             int index = 1;
             for (Iterator i = fields.iterator(); i.hasNext();) {
                 Field field = (Field) i.next();
-                if (!field.isPrimaryKey()) continue;
-
                 String name = field.getName();
-                if (set.contains(name)) continue;
-                set.add(name);
 
-                Object value = row.get(name);
+                Object value = pk.get(name);
                 String string;
 
                 if (value instanceof byte[]) {
@@ -429,33 +215,6 @@ public class SourceHome {
                 ps.setString(index++, string);
             }
 
-            ps.execute();
-
-        } finally {
-            if (ps != null) try { ps.close(); } catch (Exception e) {}
-            if (con != null) try { con.close(); } catch (Exception ex) {}
-        }
-    }
-
-    public void delete(
-            String filter,
-            Date date)
-            throws Exception {
-
-        Connection con = null;
-        PreparedStatement ps = null;
-
-        try {
-            con = ds.getConnection();
-            String sql = "delete from " + tableName;
-
-            if (filter != null) {
-                sql += " where "+filter;
-            }
-
-            log.debug("Executing " + sql);
-
-            ps = con.prepareStatement(sql);
             ps.execute();
 
         } finally {

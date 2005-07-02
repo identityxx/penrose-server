@@ -6,6 +6,9 @@ package org.safehaus.penrose.cache.impl;
 
 import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.filter.Filter;
+import org.safehaus.penrose.filter.SimpleFilter;
+import org.safehaus.penrose.filter.AndFilter;
+import org.safehaus.penrose.filter.OrFilter;
 import org.safehaus.penrose.mapping.*;
 import org.apache.log4j.Logger;
 
@@ -51,9 +54,9 @@ public class SourceFieldHome {
             con = ds.getConnection();
             StringBuffer sb = new StringBuffer();
 
-            Collection pkFields = source.getPrimaryKeyFields();
+            Collection fields = source.getPrimaryKeyFields();
 
-            for (Iterator i = pkFields.iterator(); i.hasNext();) {
+            for (Iterator i = fields.iterator(); i.hasNext();) {
                 Field field = (Field) i.next();
                 String name = field.getName();
 
@@ -121,6 +124,25 @@ public class SourceFieldHome {
         return sb.toString();
     }
 
+    public Row getPk(ResultSet rs) throws Exception {
+        Row pk = new Row();
+
+        Collection fields = source.getPrimaryKeyFields();
+
+        int c = 0;
+        for (Iterator i = fields.iterator(); i.hasNext();) {
+            Field field = (Field) i.next();
+
+            String name = field.getName();
+            Object value = rs.getObject(++c);
+
+            pk.set(name, value);
+        }
+
+
+        return pk;
+    }
+
     public Row getRow(ResultSet rs) throws Exception {
         Row values = new Row();
 
@@ -129,7 +151,7 @@ public class SourceFieldHome {
         String name = rs.getString(c++);
         Object value = rs.getObject(c++);
 
-        values.set(name, value);
+        values.set(source.getName()+"."+name, value);
 
         return values;
     }
@@ -141,6 +163,161 @@ public class SourceFieldHome {
         return search(pks);
     }
 
+    public String toSQLFilter(Filter filter, boolean includeValues) throws Exception {
+        StringBuffer sb = new StringBuffer();
+        boolean valid = toSQLFilter(filter, includeValues, sb);
+
+        if (valid && sb.length() > 0) return sb.toString();
+
+        return null;
+    }
+
+    public boolean toSQLFilter(
+            Filter filter,
+            boolean includeValues,
+            StringBuffer sb)
+            throws Exception {
+
+        if (filter instanceof SimpleFilter) {
+            return toSQLFilter((SimpleFilter) filter, includeValues, sb);
+
+        } else if (filter instanceof AndFilter) {
+            return toSQLFilter((AndFilter) filter, includeValues, sb);
+
+        } else if (filter instanceof OrFilter) {
+            return toSQLFilter((OrFilter) filter, includeValues, sb);
+        }
+
+        return true;
+    }
+
+    public boolean toSQLFilter(
+            SimpleFilter filter,
+            boolean includeValues,
+            StringBuffer sb)
+            throws Exception {
+
+        sb.append("lower(name)=lower(?) and lower(value)=lower(?)");
+
+        return true;
+    }
+
+    public boolean toSQLFilter(
+            AndFilter filter,
+            boolean includeValues,
+            StringBuffer sb)
+            throws Exception {
+        StringBuffer sb2 = new StringBuffer();
+        for (Iterator i = filter.getFilterList().iterator(); i.hasNext();) {
+            Filter f = (Filter) i.next();
+
+            StringBuffer sb3 = new StringBuffer();
+            toSQLFilter(f, includeValues, sb3);
+
+            if (sb2.length() > 0 && sb3.length() > 0) {
+                sb2.append(" and ");
+            }
+
+            sb2.append(sb3);
+        }
+
+        if (sb2.length() == 0)
+            return true;
+
+        sb.append("(");
+        sb.append(sb2);
+        sb.append(")");
+
+        return true;
+    }
+
+    public boolean toSQLFilter(
+            EntryDefinition entry,
+            OrFilter filter,
+            boolean includeValues,
+            StringBuffer sb)
+            throws Exception {
+        StringBuffer sb2 = new StringBuffer();
+        for (Iterator i = filter.getFilterList().iterator(); i.hasNext();) {
+            Filter f = (Filter) i.next();
+
+            StringBuffer sb3 = new StringBuffer();
+            toSQLFilter(f, includeValues, sb3);
+
+            if (sb2.length() > 0 && sb3.length() > 0) {
+                sb2.append(" or ");
+            }
+
+            sb2.append(sb3);
+        }
+
+        if (sb2.length() == 0)
+            return true;
+
+        sb.append("(");
+        sb.append(sb2);
+        sb.append(")");
+
+        return true;
+    }
+
+    public Collection searchPks(Collection filters) throws Exception {
+
+        if (filters == null || filters.isEmpty()) return new ArrayList();
+
+        String attributeNames = getPkAttributeNames();
+
+        Filter filter = cache.getCacheContext().getFilterTool().createFilter(filters);
+        String sqlFilter = toSQLFilter(filter, false);
+
+        String sql = "select " + attributeNames + " from " + tableName
+                + " where " + sqlFilter;
+
+        sql += " order by "+attributeNames;
+
+        List results = new ArrayList();
+
+        log.debug("Executing " + sql);
+
+        Connection con = null;
+        PreparedStatement ps = null;
+        ResultSet rs = null;
+        try {
+            con = ds.getConnection();
+            ps = con.prepareStatement(sql);
+
+            int counter = 0;
+            for (Iterator i=filters.iterator(); i.hasNext(); ) {
+                Row pk = (Row)i.next();
+
+                for (Iterator j=pk.getNames().iterator(); j.hasNext(); ) {
+                    String name = (String)j.next();
+                    Object value = pk.get(name);
+
+                    ps.setObject(++counter, name);
+                    log.debug(" - "+counter+" = "+name);
+
+                    ps.setObject(++counter, value);
+                    log.debug(" - "+counter+" = "+value);
+                }
+            }
+
+            rs = ps.executeQuery();
+
+            while (rs.next()) {
+                Row pk = getPk(rs);
+                results.add(pk);
+            }
+
+        } finally {
+            if (rs != null) try { rs.close(); } catch (Exception e) {}
+            if (ps != null) try { ps.close(); } catch (Exception e) {}
+            if (con != null) try { con.close(); } catch (Exception ex) {}
+        }
+
+        return results;
+    }
+
     public Collection search(Collection pks) throws Exception {
 
         if (pks == null || pks.isEmpty()) return new ArrayList();
@@ -148,7 +325,7 @@ public class SourceFieldHome {
         String attributeNames = getAttributeNames();
 
         Filter filter = cache.getCacheContext().getFilterTool().createFilter(pks);
-        String sqlFilter = cache.getCacheFilterTool().toSQLFilter(filter, false);
+        String sqlFilter = ((DefaultCache)cache).getCacheFilterTool().toSQLFilter(filter, false);
 
         String sql = "select " + attributeNames + " from " + tableName
                 + " where " + sqlFilter;
@@ -263,15 +440,15 @@ public class SourceFieldHome {
         }
     }
 
-    public void delete(Row rdn) throws Exception {
-        Collection rdns = new HashSet();
-        rdns.add(rdn);
-        delete(rdns);
+    public void delete(Row pk) throws Exception {
+        Collection pks = new HashSet();
+        pks.add(pk);
+        delete(pks);
     }
 
-    public void delete(Collection rdns) throws Exception {
+    public void delete(Collection pks) throws Exception {
 
-        if (rdns.size() == 0) return;
+        if (pks.size() == 0) return;
 
         Connection con = null;
         PreparedStatement ps = null;
@@ -283,7 +460,7 @@ public class SourceFieldHome {
 
             Collection fields = source.getPrimaryKeyFields();
 
-            for (Iterator i = rdns.iterator(); i.hasNext(); ) {
+            for (Iterator i = pks.iterator(); i.hasNext(); ) {
                 Row rdn = (Row)i.next();
 
                 if (sb.length() > 0) sb.append(" or ");

@@ -4,10 +4,7 @@
  */
 package org.safehaus.penrose.cache.impl;
 
-import org.safehaus.penrose.mapping.Source;
-import org.safehaus.penrose.mapping.Field;
-import org.safehaus.penrose.mapping.Relationship;
-import org.safehaus.penrose.mapping.EntryDefinition;
+import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.graph.GraphVisitor;
 import org.apache.log4j.Logger;
@@ -22,18 +19,50 @@ public class JoinGraphVisitor extends GraphVisitor {
     public Logger log = Logger.getLogger(Penrose.SEARCH_LOGGER);
 
     public EntryDefinition entryDefinition;
+    public DefaultSourceCache sourceCache;
 
     private List fieldNames = new ArrayList();
     private List tableNames = new ArrayList();
     private List joins = new ArrayList();
 
-    public JoinGraphVisitor(EntryDefinition entryDefinition) {
+    private Stack stack = new Stack();
+    private AttributeValues attributeValues = new AttributeValues();
+
+    public JoinGraphVisitor(EntryDefinition entryDefinition, DefaultSourceCache sourceCache, Row pk) {
         this.entryDefinition = entryDefinition;
+        this.sourceCache = sourceCache;
+
+        Set pks = new HashSet();
+        pks.add(pk);
+
+        stack.push(pks);
     }
 
     public boolean preVisitNode(Object node, Object parameter) throws Exception {
         Source source = (Source)node;
-        log.debug("Source "+source);
+        //log.debug("Source "+source);
+
+        if (entryDefinition.getSource(source.getName()) == null) return false;
+
+        Collection pks = (Collection)stack.peek();
+
+        log.debug("Joining source "+source+" with pks: "+pks);
+
+        Collection newPks = sourceCache.search(source, pks);
+        Map results = sourceCache.get(source, newPks);
+
+        log.debug("Records:");
+        for (Iterator i = results.keySet().iterator(); i.hasNext(); ) {
+            Row pk = (Row)i.next();
+            AttributeValues values = (AttributeValues)results.get(pk);
+
+            log.debug(" - "+pk+": "+values);
+            newPks.add(pk);
+
+            attributeValues.add(values);
+        }
+
+        stack.push(newPks);
 
         Collection fields = source.getFields();
         Set set = new HashSet();
@@ -47,18 +76,24 @@ public class JoinGraphVisitor extends GraphVisitor {
             getFieldNames().add(name);
         }
 
-        log.debug("Field names: "+getFieldNames());
+        //log.debug("Field names: "+getFieldNames());
 
         getTableNames().add(source.getSourceName()+" "+source.getName());
 
-        log.debug("Table names: "+getTableNames());
+        //log.debug("Table names: "+getTableNames());
 
         return true;
     }
 
-    public boolean preVisitEdge(Object node1, Object node2, Object object, Object parameter) throws Exception {
-        Source source = (Source)node2;
+    public void postVisitNode(Object node, Object parameter) throws Exception {
+        stack.pop();
+    }
 
+    public boolean preVisitEdge(Object node1, Object node2, Object edge, Object parameter) throws Exception {
+        Source source = (Source)node2;
+        Relationship relationship = (Relationship)edge;
+
+        log.debug("Relationship "+relationship);
         if (entryDefinition.getSource(source.getName()) == null) return false;
 
         // visit this node if the pk fields are set
@@ -72,14 +107,49 @@ public class JoinGraphVisitor extends GraphVisitor {
 
         if (!visit) return false;
 
-        Relationship relationship = (Relationship)object;
-        log.debug("Relationship "+relationship);
 
         getJoins().add(relationship.toString());
 
-        log.debug("Joins: "+getJoins());
+        //log.debug("Joins: "+getJoins());
+
+        String lhs = relationship.getLhs();
+        String rhs = relationship.getRhs();
+
+        if (lhs.startsWith(source.getName()+".")) {
+            String exp = lhs;
+            lhs = rhs;
+            rhs = exp;
+        }
+
+        int li = lhs.indexOf(".");
+        String lField = lhs.substring(li+1);
+
+        int ri = rhs.indexOf(".");
+        String rField = rhs.substring(ri+1);
+
+        Collection pks = (Collection)stack.peek();
+
+        Collection newPks = new HashSet();
+        for (Iterator i=pks.iterator(); i.hasNext(); ) {
+            Row row = (Row)i.next();
+
+            Object value = row.get(lField);
+            Row newRow = new Row();
+            newRow.set(rField, value);
+
+            newPks.add(newRow);
+
+            //log.debug(lField+" = "+rField+" => "+value);
+        }
+        //log.debug("New pks: "+newPks);
+
+        stack.push(newPks);
 
         return true;
+    }
+
+    public void postVisitEdge(Object node1, Object node2, Object edge, Object parameter) throws Exception {
+        stack.pop();
     }
 
     public List getFieldNames() {
@@ -104,5 +174,13 @@ public class JoinGraphVisitor extends GraphVisitor {
 
     public void setJoins(List joins) {
         this.joins = joins;
+    }
+
+    public AttributeValues getAttributeValues() {
+        return attributeValues;
+    }
+
+    public void setAttributeValues(AttributeValues attributeValues) {
+        this.attributeValues = attributeValues;
     }
 }

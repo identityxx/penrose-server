@@ -22,7 +22,7 @@ import javax.sql.DataSource;
 /**
  * @author Endi S. Dewata
  */
-public class PenroseSourceHome {
+public class SourceExpirationHome {
 
 	protected Logger log = Logger.getLogger(Penrose.CACHE_LOGGER);
 
@@ -31,7 +31,7 @@ public class PenroseSourceHome {
 	public int debug = 0;
     private DataSource ds;
 
-	public PenroseSourceHome(DataSource ds) throws Exception {
+	public SourceExpirationHome(DataSource ds) throws Exception {
 
         this.ds = ds;
 
