@@ -6,6 +6,7 @@ package org.safehaus.penrose.cache.impl;
 
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.Penrose;
+import org.safehaus.penrose.cache.SourceCache;
 import org.safehaus.penrose.graph.GraphVisitor;
 import org.apache.log4j.Logger;
 
@@ -20,7 +21,7 @@ public class JoinGraphVisitor extends GraphVisitor {
 
     public EntryDefinition entryDefinition;
     public Source primarySource;
-    public DefaultSourceCache sourceCache;
+    public SourceCache sourceCache;
 
     private List fieldNames = new ArrayList();
     private List tableNames = new ArrayList();
@@ -29,7 +30,7 @@ public class JoinGraphVisitor extends GraphVisitor {
     private Stack stack = new Stack();
     private AttributeValues attributeValues = new AttributeValues();
 
-    public JoinGraphVisitor(EntryDefinition entryDefinition, Source primarySource, DefaultSourceCache sourceCache, Row pk) {
+    public JoinGraphVisitor(EntryDefinition entryDefinition, Source primarySource, SourceCache sourceCache, Row pk) {
         this.entryDefinition = entryDefinition;
         this.primarySource = primarySource;
         this.sourceCache = sourceCache;
@@ -62,11 +63,20 @@ public class JoinGraphVisitor extends GraphVisitor {
         for (Iterator i = results.keySet().iterator(); i.hasNext(); ) {
             Row pk = (Row)i.next();
             AttributeValues values = (AttributeValues)results.get(pk);
+            AttributeValues newValues = new AttributeValues();
 
-            log.debug(" - "+pk+": "+values);
+            Map v = values.getValues();
+            for (Iterator j = v.keySet().iterator(); j.hasNext(); ) {
+                String name = (String)j.next();
+
+                Collection c = (Collection)v.get(name);
+                newValues.add(source.getName()+"."+name, c);
+            }
+
+            log.debug(" - "+pk+": "+newValues);
             pks.add(pk);
 
-            attributeValues.add(values);
+            attributeValues.add(newValues);
         }
 
         stack.push(pks);

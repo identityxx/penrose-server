@@ -2,13 +2,11 @@
  * Copyright (c) 1998-2005, Verge Lab., LLC.
  * All rights reserved.
  */
-package org.safehaus.penrose.engine.impl;
+package org.safehaus.penrose.cache.impl;
 
 import org.safehaus.penrose.mapping.*;
-import org.safehaus.penrose.filter.Filter;
-import org.safehaus.penrose.SearchResults;
 import org.safehaus.penrose.Penrose;
-import org.safehaus.penrose.engine.Engine;
+import org.safehaus.penrose.cache.SourceCache;
 import org.safehaus.penrose.graph.GraphVisitor;
 import org.apache.log4j.Logger;
 
@@ -21,14 +19,14 @@ public class SourceLoaderGraphVisitor extends GraphVisitor {
 
     public Logger log = Logger.getLogger(Penrose.SEARCH_LOGGER);
 
-    public Engine engine;
+    public SourceCache sourceCache;
     public EntryDefinition entryDefinition;
     public Date date;
 
     private Stack stack = new Stack();
 
-    public SourceLoaderGraphVisitor(Engine engine, EntryDefinition entryDefinition, Collection pks, Date date) {
-        this.engine = engine;
+    public SourceLoaderGraphVisitor(SourceCache sourceCache, EntryDefinition entryDefinition, Collection pks, Date date) {
+        this.sourceCache = sourceCache;
         this.entryDefinition = entryDefinition;
         this.date = date;
 
@@ -55,7 +53,7 @@ public class SourceLoaderGraphVisitor extends GraphVisitor {
 
         //log.debug("Loading source "+source+" with pks: "+pks);
 
-        Map results = engine.getSourceCache().load(source, pks, date);
+        Map results = sourceCache.load(source, pks, date);
         if (results.size() == 0) return false;
         
         Collection newRows = new HashSet();

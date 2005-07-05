@@ -93,7 +93,7 @@ public class EntryCache {
     public void put(Entry entry, Date date) throws Exception {
 
         Row rdn = entry.getRdn();
-        log.debug("Putting entry: "+rdn);
+        log.debug("Storing entry: "+rdn);
 
         EntryDefinition entryDefinition = entry.getEntryDefinition();
 

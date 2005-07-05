@@ -396,8 +396,8 @@ public class EntryDefinition implements Cloneable, Serializable {
 
             LDAPAttribute attribute = new LDAPAttribute(name);
             for (Iterator j=values.iterator(); j.hasNext(); ) {
-                String value = (String)j.next();
-                attribute.addValue(value);
+                Object value = j.next();
+                attribute.addValue(value.toString());
             }
 
             set.add(attribute);

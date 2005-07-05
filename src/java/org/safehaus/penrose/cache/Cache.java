@@ -70,13 +70,11 @@ public abstract class Cache {
     }
 
     public void createEntryCache() throws Exception {
-        Class entryCacheClass = Class.forName(cacheConfig.getEntryCacheClass());
-        entryCache = (EntryCache)entryCacheClass.newInstance();
+        entryCache = new EntryCache();
     }
 
     public void createSourceCache() throws Exception {
-        Class sourceCacheClass = Class.forName(cacheConfig.getSourceCacheClass());
-        sourceCache = (SourceCache)sourceCacheClass.newInstance();
+        sourceCache = new SourceCache();
     }
 
     public abstract void init() throws Exception;

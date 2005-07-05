@@ -6,10 +6,7 @@ package org.safehaus.penrose.cache.impl;
 
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.Penrose;
-import org.safehaus.penrose.cache.Cache;
-import org.safehaus.penrose.cache.CacheFilterTool;
-import org.safehaus.penrose.cache.CacheConfig;
-import org.safehaus.penrose.cache.EntryCache;
+import org.safehaus.penrose.cache.*;
 import org.safehaus.penrose.config.Config;
 import org.safehaus.penrose.mapping.Row;
 import org.safehaus.penrose.mapping.AttributeDefinition;
@@ -42,6 +39,10 @@ public class DefaultCache extends Cache {
 
     public void createEntryCache() throws Exception {
         setEntryCache(new EntryCache());
+    }
+
+    public void createSourceCache() throws Exception {
+        setSourceCache(new SourceCache());
     }
 
     public void init() throws Exception {

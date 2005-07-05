@@ -261,13 +261,13 @@ public class SourceFieldHome {
         return true;
     }
 
-    public Collection searchPks(Collection filters) throws Exception {
+    public Collection searchPks(Collection pks) throws Exception {
 
-        if (filters == null || filters.isEmpty()) return new ArrayList();
+        if (pks == null || pks.isEmpty()) return new ArrayList();
 
         String attributeNames = getPkAttributeNames();
 
-        Filter filter = cache.getCacheContext().getFilterTool().createFilter(filters);
+        Filter filter = cache.getCacheContext().getFilterTool().createFilter(pks);
         String sqlFilter = toSQLFilter(filter, false);
 
         String sql = "select " + attributeNames + " from " + tableName
@@ -287,7 +287,7 @@ public class SourceFieldHome {
             ps = con.prepareStatement(sql);
 
             int counter = 0;
-            for (Iterator i=filters.iterator(); i.hasNext(); ) {
+            for (Iterator i=pks.iterator(); i.hasNext(); ) {
                 Row pk = (Row)i.next();
 
                 for (Iterator j=pk.getNames().iterator(); j.hasNext(); ) {

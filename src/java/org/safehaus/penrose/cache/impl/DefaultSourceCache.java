@@ -4,9 +4,6 @@
  */
 package org.safehaus.penrose.cache.impl;
 
-import org.safehaus.penrose.filter.Filter;
-import org.safehaus.penrose.event.CacheEvent;
-import org.safehaus.penrose.SearchResults;
 import org.safehaus.penrose.graph.Graph;
 import org.safehaus.penrose.cache.SourceCache;
 import org.safehaus.penrose.cache.CacheConfig;
@@ -197,7 +194,7 @@ public class DefaultSourceCache extends SourceCache {
                 String name = (String)j.next();
                 Object value = row.get(name);
 
-                newRow.set(source.getName()+"."+name, value);
+                newRow.set(name, value);
             }
 
             //log.debug(" - "+newRow);
@@ -207,28 +204,14 @@ public class DefaultSourceCache extends SourceCache {
         return values;
     }
 
-    public Map get(Source source, Collection pks) throws Exception {
-
-        Map results = new HashMap();
-
-        for (Iterator i=pks.iterator(); i.hasNext(); ) {
-            Row pk = (Row)i.next();
-
-            AttributeValues values = get(source, pk);
-            if (values == null) continue;
-
-            results.put(pk, values);
-        }
-
-        return results;
-    }
-
     public void put(Source source, Row pk, AttributeValues values, Date date) throws Exception {
 
         SourceHome sourceHome = getSourceHome(source);
+        sourceHome.delete(pk);
         sourceHome.insert(pk, date);
 
         SourceFieldHome sourceFieldHome = getSourceFieldHome(source);
+        sourceFieldHome.delete(pk);
 
         for (Iterator i=values.getNames().iterator(); i.hasNext(); ) {
             String name = (String)i.next();
@@ -243,7 +226,7 @@ public class DefaultSourceCache extends SourceCache {
         }
     }
 
-    public void delete(Source source, Row pk, AttributeValues values, Date date) throws Exception {
+    public void delete(Source source, Row pk, Date date) throws Exception {
         SourceHome sourceHome = getSourceHome(source);
         sourceHome.delete(pk);
 
@@ -272,218 +255,13 @@ public class DefaultSourceCache extends SourceCache {
         return values;
     }
 
-    public Collection join(
-            EntryDefinition entryDefinition,
-            Collection pks) throws Exception {
-
-        Collection results = new ArrayList();
-
-        for (Iterator i=pks.iterator(); i.hasNext(); ) {
-            Row pk = (Row)i.next();
-            Collection rows = join(entryDefinition, pk);
-            results.addAll(rows);
-        }
-
-        return results;
-    }
-
-    public Collection join(
-            EntryDefinition entryDefinition,
-            Row pk) throws Exception {
-
-        Graph graph = getConfig().getGraph(entryDefinition);
-        Source primarySource = getConfig().getPrimarySource(entryDefinition);
-
-        JoinGraphVisitor visitor = new JoinGraphVisitor(entryDefinition, primarySource, this, pk);
-        graph.traverse(visitor, primarySource);
-
-        AttributeValues values = visitor.getAttributeValues();
-        log.debug("Rows:");
-
-        Collection rows = getCacheContext().getTransformEngine().convert(values);
-        for (Iterator i = rows.iterator(); i.hasNext(); ) {
-            Row row = (Row)i.next();
-            log.debug(" - "+row);
-        }
-
-        return rows;
-/*
-        Filter filter = getCacheContext().getFilterTool().createFilter(pks);
-        String sqlFilter = ((DefaultCache)getCache()).getCacheFilterTool().toSQLFilter(filter);
-
-        List fieldNames = visitor.getFieldNames();
-        List tableNames = visitor.getTableNames();
-        List joins = visitor.getJoins();
-
-        StringBuffer sb = new StringBuffer();
-        sb.append("select ");
-
-        boolean first = true;
-
-        for (Iterator i=fieldNames.iterator(); i.hasNext(); ) {
-            String fieldName = (String)i.next();
-
-            if (first) {
-                first = false;
-            } else {
-                sb.append(", ");
-            }
-
-            sb.append(fieldName);
-        }
-
-        sb.append(" from ");
-
-        Iterator i = tableNames.iterator();
-        sb.append(i.next());
-
-        for (Iterator j = joins.iterator(); j.hasNext(); ) {
-            String tableName = (String)i.next();
-            String join = (String)j.next();
-
-            sb.append(" left join ");
-            sb.append(tableName);
-            sb.append(" on ");
-            sb.append(join);
-        }
-
-        if (sqlFilter != null) {
-            sb.append(" where ");
-            sb.append(sqlFilter);
-        }
-
-        Collection fields = primarySource.getPrimaryKeyFields();
-        first = true;
-        for (Iterator j=fields.iterator(); j.hasNext(); ) {
-            Field field = (Field)j.next();
-
-            if (first) {
-                sb.append(" order by ");
-                first = false;
-            } else {
-                sb.append(", ");
-            }
-
-            sb.append(primarySource.getName());
-            sb.append(".");
-            sb.append(field.getName());
-        }
-
-        String sql = sb.toString();
-
-        List results = new ArrayList();
-
-        log.debug("Executing " + sql);
-
-        Connection con = null;
-        PreparedStatement ps = null;
-        ResultSet rs = null;
-        try {
-            con = ds.getConnection();
-            ps = con.prepareStatement(sql);
-            rs = ps.executeQuery();
-
-            while (rs.next()) {
-                Row row = getRow(entryDefinition, fieldNames, rs);
-                results.add(row);
-            }
-
-        } finally {
-            if (rs != null) try { rs.close(); } catch (Exception e) {}
-            if (ps != null) try { ps.close(); } catch (Exception e) {}
-            if (con != null) try { con.close(); } catch (Exception ex) {}
-        }
-
-        return results;
-*/
-    }
-
-    public Row getPk(Source source, Row row) throws Exception {
-        Row pk = new Row();
-
-        Collection fields = source.getPrimaryKeyFields();
-        for (Iterator i=fields.iterator(); i.hasNext(); ) {
-            Field field = (Field)i.next();
-            String name = field.getName();
-            Object value = row.get(name);
-
-            pk.set(name, value);
-        }
-
-        return pk;
-    }
-
     public Collection searchPks(
             Source source,
-            Collection fields)
+            Collection pks)
             throws Exception {
 
         SourceFieldHome sourceFieldHome = getSourceFieldHome(source);
-        return sourceFieldHome.searchPks(fields);
+        return sourceFieldHome.searchPks(pks);
     }
 
-    public Map load(
-            Source source,
-            Collection pks,
-            Date date)
-            throws Exception {
-
-        log.info("Loading source "+source.getName()+" "+source.getSourceName()+" with pks "+pks);
-
-        Filter filter = cache.getCacheContext().getFilterTool().createFilter(pks);
-        String stringFilter = cache.getCacheFilterTool().toSQLFilter(filter, true);
-
-        SourceDefinition sourceConfig = source.getSourceDefinition();
-
-        CacheEvent beforeEvent = new CacheEvent(getCacheContext(), sourceConfig, CacheEvent.BEFORE_LOAD_ENTRIES);
-        postCacheEvent(sourceConfig, beforeEvent);
-
-        SearchResults results = source.search(filter, 0);
-
-        SourceHome sourceHome = getSourceHome(source);
-
-        Map records = new HashMap();
-
-        for (Iterator j = results.iterator(); j.hasNext();) {
-            Row row = (Row) j.next();
-            Row pk = getPk(source, row);
-
-            AttributeValues values = (AttributeValues)records.get(pk);
-            if (values == null) {
-                values = new AttributeValues();
-                records.put(pk, values);
-            }
-
-            values.add(row);
-        }
-
-        SourceFieldHome sourceFieldHome = getSourceFieldHome(source);
-
-        for (Iterator i=records.keySet().iterator(); i.hasNext(); ) {
-            Row pk = (Row)i.next();
-            AttributeValues values = (AttributeValues)records.get(pk);
-
-            sourceHome.delete(pk);
-            sourceHome.insert(pk, date);
-
-            sourceFieldHome.delete(pk);
-
-            for (Iterator j=values.getNames().iterator(); j.hasNext(); ) {
-                String name = (String)j.next();
-                Collection c = values.get(name);
-                if (c == null) continue;
-
-                for (Iterator k=c.iterator(); k.hasNext(); ) {
-                    Object value = k.next();
-                    if (value == null) continue;
-                    sourceFieldHome.insert(pk, name, value);
-                }
-            }
-        }
-
-        CacheEvent afterEvent = new CacheEvent(getCacheContext(), sourceConfig, CacheEvent.AFTER_LOAD_ENTRIES);
-        postCacheEvent(sourceConfig, afterEvent);
-
-        return records;
-    }
 }

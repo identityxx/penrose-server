@@ -292,17 +292,10 @@ public class DefaultSearchHandler extends SearchHandler {
 
         if (rdnsToLoad.isEmpty()) return getEntries(parent, entryDefinition, rdns);
 
-        Collection pks = rdnToPk(entryDefinition, rdnsToLoad);
-
-        Graph graph = getConfig().getGraph(entryDefinition);
-        Source primarySource = getConfig().getPrimarySource(entryDefinition);
-
-        SourceLoaderGraphVisitor visitor = new SourceLoaderGraphVisitor(getEngine(), entryDefinition, pks, calendar.getTime());
-        graph.traverse(visitor, primarySource);
+        Collection entries = join(parent, entryDefinition, rdns, calendar);
 
         SearchResults results = new SearchResults();
 
-        Collection entries = join(parent, entryDefinition, pks, calendar);
         log.debug("Loaded "+entries.size()+" new entries: "+rdnsToLoad);
         for (Iterator i=entries.iterator(); i.hasNext(); ) {
             Entry entry = (Entry)i.next();
@@ -325,12 +318,14 @@ public class DefaultSearchHandler extends SearchHandler {
     public Collection join(
             Entry parent,
             EntryDefinition entryDefinition,
-            Collection pks,
+            Collection rdns,
             Calendar calendar
             ) throws Exception {
 
         log.debug("--------------------------------------------------------------------------------------");
-        log.debug("Joining sources with pks "+pks);
+        log.debug("Load & joining sources with rdns "+rdns);
+
+        Collection pks = rdnToPk(entryDefinition, rdns);
 
         MRSWLock lock = ((DefaultEngine)getEngine()).getLock(entryDefinition.getDn());
         lock.getWriteLock(Penrose.WAIT_TIMEOUT);
@@ -338,15 +333,19 @@ public class DefaultSearchHandler extends SearchHandler {
         Collection results = new ArrayList();
 
         try {
+            // load sources
+            getEngine().getSourceCache().load(entryDefinition, pks, calendar.getTime());
 
             // join rows from sources
             Collection rows = getEngine().getSourceCache().join(entryDefinition, pks);
             log.debug("Joined " + rows.size() + " rows.");
 
+            log.debug("Merging:");
             // merge rows into attribute values
             Map entries = new LinkedHashMap();
             for (Iterator i = rows.iterator(); i.hasNext();) {
                 Row row = (Row)i.next();
+                log.debug(" - "+row);
 
                 Map rdn = new HashMap();
                 Row values = new Row();
@@ -354,7 +353,7 @@ public class DefaultSearchHandler extends SearchHandler {
                 boolean validPK = getEngineContext().getTransformEngine().translate(entryDefinition, row, rdn, values);
                 if (!validPK) continue;
 
-                log.debug(" - "+values);
+                log.debug(" - "+rdn+": "+values);
 
                 AttributeValues attributeValues = (AttributeValues)entries.get(rdn);
                 if (attributeValues == null) {
