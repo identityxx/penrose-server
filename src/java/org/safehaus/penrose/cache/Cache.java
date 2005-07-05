@@ -21,7 +21,7 @@ import java.util.Map;
 /**
  * @author Endi S. Dewata
  */
-public abstract class Cache {
+public class Cache {
 
     public Logger log = Logger.getLogger(Penrose.CACHE_LOGGER);
 
@@ -77,7 +77,8 @@ public abstract class Cache {
         sourceCache = new SourceCache();
     }
 
-    public abstract void init() throws Exception;
+    public void init() throws Exception {        
+    }
 
     public EntryCache getEntryCache() {
         return entryCache;

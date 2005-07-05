@@ -570,14 +570,6 @@ public class XMLHelper {
         cacheClass.add(new DefaultText(cache.getCacheClass()));
         element.add(cacheClass);
 
-        Element entryCacheClass = new DefaultElement("entry-cache-class");
-        entryCacheClass.add(new DefaultText(cache.getEntryCacheClass()));
-        element.add(entryCacheClass);
-
-        Element sourceCacheClass = new DefaultElement("source-cache-class");
-        sourceCacheClass.add(new DefaultText(cache.getSourceCacheClass()));
-        element.add(sourceCacheClass);
-
         Element description = new DefaultElement("description");
         description.add(new DefaultText(cache.getDescription()));
         element.add(description);

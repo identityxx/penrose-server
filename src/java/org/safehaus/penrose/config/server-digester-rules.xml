@@ -55,8 +55,6 @@
 			<set-properties-rule/>
             <call-method-rule pattern="cache-name" methodname="setCacheName" paramcount="0" />
             <call-method-rule pattern="cache-class" methodname="setCacheClass" paramcount="0" />
-            <call-method-rule pattern="entry-cache-class" methodname="setEntryCacheClass" paramcount="0" />
-            <call-method-rule pattern="source-cache-class" methodname="setSourceCacheClass" paramcount="0" />
 			<call-method-rule pattern="description" methodname="setDescription" paramcount="0" />
 			<pattern value="parameter">
 				<call-method-rule methodname="setParameter" paramcount="2" />

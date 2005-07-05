@@ -38,11 +38,11 @@ public class DefaultCache extends Cache {
     private DataSource ds;
 
     public void createEntryCache() throws Exception {
-        setEntryCache(new EntryCache());
+        setEntryCache(new DefaultEntryCache());
     }
 
     public void createSourceCache() throws Exception {
-        setSourceCache(new SourceCache());
+        setSourceCache(new DefaultSourceCache());
     }
 
     public void init() throws Exception {

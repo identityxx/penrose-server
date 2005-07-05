@@ -23,8 +23,6 @@ public class CacheConfig implements Serializable {
 
     private String cacheName;
     private String cacheClass;
-    private String entryCacheClass;
-    private String sourceCacheClass;
     private String description;
 
 	/**
@@ -70,21 +68,5 @@ public class CacheConfig implements Serializable {
 
     public void setCacheName(String cacheName) {
         this.cacheName = cacheName;
-    }
-
-    public String getEntryCacheClass() {
-        return entryCacheClass;
-    }
-
-    public void setEntryCacheClass(String entryCacheClass) {
-        this.entryCacheClass = entryCacheClass;
-    }
-
-    public String getSourceCacheClass() {
-        return sourceCacheClass;
-    }
-
-    public void setSourceCacheClass(String sourceCacheClass) {
-        this.sourceCacheClass = sourceCacheClass;
     }
 }
