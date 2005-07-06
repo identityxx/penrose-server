@@ -19,10 +19,10 @@ public class DefaultModRdnHandler extends ModRdnHandler {
 
     public Logger log = Logger.getLogger(Penrose.MODRDN_LOGGER);
 
-    public DefaultEngine engine;
+    public Engine engine;
 
 	public void init(Engine engine) throws Exception {
-        this.engine = (DefaultEngine)engine;
+        this.engine = engine;
 	}
 
 	public int modrdn(PenroseConnection connection, String dn, String newRdn)

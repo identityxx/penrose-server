@@ -10,8 +10,11 @@ import org.safehaus.penrose.cache.Cache;
 import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.SearchResults;
 import org.safehaus.penrose.*;
+import org.safehaus.penrose.thread.ThreadPool;
+import org.safehaus.penrose.thread.Queue;
+import org.safehaus.penrose.thread.MRSWLock;
+import org.safehaus.penrose.engine.impl.*;
 import org.safehaus.penrose.filter.Filter;
-import org.safehaus.penrose.event.CacheEvent;
 import org.safehaus.penrose.graph.Graph;
 import org.safehaus.penrose.mapping.*;
 import org.apache.log4j.Logger;
@@ -23,7 +26,7 @@ import java.util.*;
 /**
  * @author Endi S. Dewata
  */
-public abstract class Engine implements EngineMBean {
+public class Engine implements EngineMBean {
 
     public Logger log = Logger.getLogger(Penrose.ENGINE_LOGGER);
 
@@ -41,6 +44,12 @@ public abstract class Engine implements EngineMBean {
     private Cache cache;
     private SourceCache sourceCache;
     private EntryCache entryCache;
+
+    private Hashtable sourceLocks = new Hashtable();
+    private Hashtable resultLocks = new Hashtable();
+    private Queue threadWaiterQueue = new Queue();
+
+    private ThreadPool threadPool = null;
 
     private boolean stopping = false;
 
@@ -78,41 +87,51 @@ public abstract class Engine implements EngineMBean {
     }
 
     public void createAddHandler() throws Exception {
-        Class addHandlerClass = Class.forName(engineConfig.getAddHandlerClass());
-        addHandler = (AddHandler)addHandlerClass.newInstance();
+        setAddHandler(new DefaultAddHandler());
     }
 
     public void createBindHandler() throws Exception {
-        Class bindHandlerClass = Class.forName(engineConfig.getBindHandlerClass());
-        bindHandler = (BindHandler)bindHandlerClass.newInstance();
+        setBindHandler(new DefaultBindHandler());
     }
 
     public void createCompareHandler() throws Exception {
-        Class compareHandlerClass = Class.forName(engineConfig.getCompareHandlerClass());
-        compareHandler = (CompareHandler)compareHandlerClass.newInstance();
+        setCompareHandler(new DefaultCompareHandler());
     }
 
     public void createDeleteHandler() throws Exception {
-        Class deleteHandlerClass = Class.forName(engineConfig.getDeleteHandlerClass());
-        deleteHandler = (DeleteHandler)deleteHandlerClass.newInstance();
+        setDeleteHandler(new DefaultDeleteHandler());
     }
 
     public void createModifyHandler() throws Exception {
-        Class modifyHandlerClass = Class.forName(engineConfig.getModifyHandlerClass());
-        modifyHandler = (ModifyHandler)modifyHandlerClass.newInstance();
+        setModifyHandler(new DefaultModifyHandler());
     }
 
     public void createModRdnHandler() throws Exception {
-        Class modRdnHandlerClass = Class.forName(engineConfig.getModRdnHandlerClass());
-        modRdnHandler = (ModRdnHandler)modRdnHandlerClass.newInstance();
+        setModRdnHandler(new DefaultModRdnHandler());
     }
 
     public void createSearchHandler() throws Exception {
-        Class searchHandlerClass = Class.forName(engineConfig.getSearchHandlerClass());
-        searchHandler = (SearchHandler)searchHandlerClass.newInstance();
+        setSearchHandler(new DefaultSearchHandler());
     }
 
-	public abstract void init() throws Exception;
+    public void init() throws Exception {
+
+        log.debug("-------------------------------------------------");
+        log.debug("Initializing Engine");
+
+        initThreadPool();
+    }
+
+    public void initThreadPool() throws Exception {
+        // Now threadPoolSize is now hardcoded to 20
+        // TODO modify threadPoolSize to read from configuration if needed
+        int threadPoolSize = 20;
+        threadPool = new ThreadPool(threadPoolSize);
+
+        RefreshThread r1 = new RefreshThread(this);
+        threadPool.execute(r1);
+    }
+
 
     public int add(PenroseConnection connection, LDAPEntry entry) throws Exception {
         return getAddHandler().add(connection, entry);
@@ -149,8 +168,12 @@ public abstract class Engine implements EngineMBean {
             throws Exception {
 
         SearchResults results = new SearchResults();
+
         try {
-            getSearchHandler().search(connection, base, scope, deref, filter, attributeNames, results);
+            SearchThread searchRunnable = new SearchThread(getSearchHandler(),
+                    connection, base, scope, deref, filter, attributeNames,
+                    results);
+            threadPool.execute(searchRunnable);
 
         } catch (Throwable e) {
             log.error(e.getMessage(), e);
@@ -164,11 +187,35 @@ public abstract class Engine implements EngineMBean {
     public void stop() throws Exception {
         if (stopping) return;
         stopping = true;
+
+        // wait for all the worker threads to finish
+        threadPool.stopRequestAllWorkers();
     }
 
     public boolean isStopping() {
         return stopping;
     }
+
+    public synchronized MRSWLock getLock(Source source) {
+		String name = source.getConnectionName() + "." + source.getSourceName();
+
+		MRSWLock lock = (MRSWLock) sourceLocks.get(name);
+
+		if (lock == null) lock = new MRSWLock(threadWaiterQueue);
+		sourceLocks.put(name, lock);
+
+		return lock;
+	}
+
+	public synchronized MRSWLock getLock(String resultName) {
+
+		MRSWLock lock = (MRSWLock) resultLocks.get(resultName);
+
+		if (lock == null) lock = new MRSWLock(threadWaiterQueue);
+		resultLocks.put(resultName, lock);
+
+		return lock;
+	}
 
     public SourceCache getSourceCache() {
         return sourceCache;
@@ -381,31 +428,56 @@ public abstract class Engine implements EngineMBean {
         //CacheEvent beforeEvent = new CacheEvent(getCacheContext(), sourceConfig, CacheEvent.BEFORE_LOAD_ENTRIES);
         //postCacheEvent(sourceConfig, beforeEvent);
 
-        Filter filter = cache.getCacheContext().getFilterTool().createFilter(pks);
-        SearchResults sr = source.search(filter, 0);
+        Collection loadedPks = sourceCache.getPks(source, pks);
+        log.debug("Loaded pks: "+loadedPks);
+
+        Collection pksToLoad = new HashSet();
+        for (Iterator i=pks.iterator(); i.hasNext(); ) {
+            Row pk = (Row)i.next();
+
+            boolean found = false;
+            for (Iterator j=loadedPks.iterator(); !found && j.hasNext(); ) {
+                Row lpk = (Row)j.next();
+                if (match(lpk, pk)) found = true;
+            }
+
+            if (!found) pksToLoad.add(pk);
+        }
+        log.debug("Pks to load: "+pksToLoad);
 
         Map results = new HashMap();
 
-        for (Iterator j = sr.iterator(); j.hasNext();) {
-            Row row = (Row) j.next();
-            Row pk = getPk(source, row);
+        if (!pksToLoad.isEmpty()) {
+            Filter filter = cache.getCacheContext().getFilterTool().createFilter(pksToLoad);
+            SearchResults sr = source.search(filter, 0);
 
-            AttributeValues values = (AttributeValues)results.get(pk);
-            if (values == null) {
-                values = new AttributeValues();
-                results.put(pk, values);
+            for (Iterator j = sr.iterator(); j.hasNext();) {
+                Row row = (Row) j.next();
+                Row pk = getPk(source, row);
+
+                AttributeValues values = (AttributeValues)results.get(pk);
+                if (values == null) {
+                    values = new AttributeValues();
+                    results.put(pk, values);
+                }
+
+                values.add(row); // merging row
             }
 
-            values.add(row);
+            for (Iterator i=results.keySet().iterator(); i.hasNext(); ) {
+                Row pk = (Row)i.next();
+                AttributeValues values = (AttributeValues)results.get(pk);
+
+                sourceCache.put(source, pk, values);
+            }
         }
 
-        for (Iterator i=results.keySet().iterator(); i.hasNext(); ) {
-            Row pk = (Row)i.next();
-            AttributeValues values = (AttributeValues)results.get(pk);
-
-            //sourceCache.put(source, pk, values);
+        for (Iterator j=loadedPks.iterator();  j.hasNext(); ) {
+            Row pk = (Row)j.next();
+            AttributeValues values = sourceCache.get(source, pk);
+            results.put(pk, values);
         }
-
+        
         //CacheEvent afterEvent = new CacheEvent(getCacheContext(), sourceConfig, CacheEvent.AFTER_LOAD_ENTRIES);
         //postCacheEvent(sourceConfig, afterEvent);
 

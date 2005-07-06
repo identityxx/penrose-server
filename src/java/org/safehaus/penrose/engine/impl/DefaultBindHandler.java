@@ -44,7 +44,7 @@ public class DefaultBindHandler extends BindHandler {
         log.debug("Binding as entry in "+source.getName());
         log.debug("Values: "+attributes);
 
-        MRSWLock lock = ((DefaultEngine)getEngine()).getLock(source);
+        MRSWLock lock = getEngine().getLock(source);
         lock.getReadLock(Penrose.WAIT_TIMEOUT);
 
         try {

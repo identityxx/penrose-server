@@ -30,7 +30,7 @@ public class DefaultAddHandler extends AddHandler {
         Graph graph = getConfig().getGraph(entryDefinition);
         Source primarySource = getConfig().getPrimarySource(entryDefinition);
 
-        AddGraphVisitor visitor = new AddGraphVisitor((DefaultEngine)getEngine(), this, entryDefinition, values, date);
+        AddGraphVisitor visitor = new AddGraphVisitor(getEngine(), this, entryDefinition, values, date);
         graph.traverse(visitor, primarySource);
 
         if (visitor.getReturnCode() != LDAPException.SUCCESS) return visitor.getReturnCode();
@@ -55,7 +55,7 @@ public class DefaultAddHandler extends AddHandler {
         log.debug("Adding entry into "+source.getName());
         log.debug("Values: "+values);
 
-        MRSWLock lock = ((DefaultEngine)getEngine()).getLock(source);
+        MRSWLock lock = getEngine().getLock(source);
         lock.getWriteLock(Penrose.WAIT_TIMEOUT);
 
         try {

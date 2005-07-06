@@ -6,6 +6,7 @@ package org.safehaus.penrose.engine.impl;
 
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.Penrose;
+import org.safehaus.penrose.engine.Engine;
 import org.safehaus.penrose.graph.GraphVisitor;
 import org.safehaus.penrose.interpreter.Interpreter;
 import org.apache.log4j.Logger;
@@ -20,7 +21,7 @@ public class ModifyGraphVisitor extends GraphVisitor {
 
     public Logger log = Logger.getLogger(Penrose.MODIFY_LOGGER);
 
-    public DefaultEngine engine;
+    public Engine engine;
     public DefaultModifyHandler modifyHandler;
     public EntryDefinition entryDefinition;
     public AttributeValues oldValues;
@@ -31,7 +32,7 @@ public class ModifyGraphVisitor extends GraphVisitor {
     private Stack stack = new Stack();
 
     public ModifyGraphVisitor(
-            DefaultEngine engine,
+            Engine engine,
             DefaultModifyHandler modifyHandler,
             Entry entry,
             AttributeValues newValues,

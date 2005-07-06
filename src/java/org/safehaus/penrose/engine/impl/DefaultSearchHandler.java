@@ -274,7 +274,7 @@ public class DefaultSearchHandler extends SearchHandler {
         log.debug("--------------------------------------------------------------------------------------");
         log.debug("Loading entry "+entryDefinition.getDn()+" with rdns "+rdns);
 
-        MRSWLock lock = ((DefaultEngine)getEngine()).getLock(entryDefinition.getDn());
+        MRSWLock lock = getEngine().getLock(entryDefinition.getDn());
         lock.getWriteLock(Penrose.WAIT_TIMEOUT);
 
         SearchResults results = new SearchResults();

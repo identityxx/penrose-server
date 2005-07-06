@@ -14,14 +14,7 @@
 
   <engine>
     <engine-name>DEFAULT</engine-name>
-    <engine-class>org.safehaus.penrose.engine.impl.DefaultEngine</engine-class>
-    <add-handler-class>org.safehaus.penrose.engine.impl.DefaultAddHandler</add-handler-class>
-    <bind-handler-class>org.safehaus.penrose.engine.impl.DefaultBindHandler</bind-handler-class>
-    <compare-handler-class>org.safehaus.penrose.engine.impl.DefaultCompareHandler</compare-handler-class>
-    <delete-handler-class>org.safehaus.penrose.engine.impl.DefaultDeleteHandler</delete-handler-class>
-    <modify-handler-class>org.safehaus.penrose.engine.impl.DefaultModifyHandler</modify-handler-class>
-    <modrdn-handler-class>org.safehaus.penrose.engine.impl.DefaultModRdnHandler</modrdn-handler-class>
-    <search-handler-class>org.safehaus.penrose.engine.impl.DefaultSearchHandler</search-handler-class>
+    <engine-class>org.safehaus.penrose.engine.Engine</engine-class>
   </engine>
 
   <cache>

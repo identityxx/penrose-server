@@ -26,7 +26,7 @@ public class DefaultDeleteHandler extends DeleteHandler {
         Graph graph = getConfig().getGraph(entryDefinition);
         Source primarySource = getConfig().getPrimarySource(entryDefinition);
 
-        DeleteGraphVisitor visitor = new DeleteGraphVisitor((DefaultEngine)getEngine(), this, entryDefinition, values, date);
+        DeleteGraphVisitor visitor = new DeleteGraphVisitor(getEngine(), this, entryDefinition, values, date);
         graph.traverse(visitor, primarySource);
 
         if (visitor.getReturnCode() != LDAPException.SUCCESS) return visitor.getReturnCode();
@@ -65,7 +65,7 @@ public class DefaultDeleteHandler extends DeleteHandler {
         log.info("-------------------------------------------------");
         log.debug("Deleting entry in "+source.getName());
 
-        MRSWLock lock = ((DefaultEngine)getEngine()).getLock(source);
+        MRSWLock lock = getEngine().getLock(source);
         lock.getWriteLock(Penrose.WAIT_TIMEOUT);
 
         try {
@@ -87,7 +87,7 @@ public class DefaultDeleteHandler extends DeleteHandler {
 	            int rc = source.delete(attributes);
 	            if (rc != LDAPException.SUCCESS) return rc;
 
-	            //getEngine().getSourceCache().remove(source, pk);
+	            getEngine().getSourceCache().remove(source, pk);
 	        }
 
         } finally {

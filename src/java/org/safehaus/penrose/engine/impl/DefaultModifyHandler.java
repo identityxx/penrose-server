@@ -36,7 +36,7 @@ public class DefaultModifyHandler extends ModifyHandler {
         Graph graph = getConfig().getGraph(entryDefinition);
         Source primarySource = getConfig().getPrimarySource(entryDefinition);
 
-        ModifyGraphVisitor visitor = new ModifyGraphVisitor((DefaultEngine)getEngine(), this, entry, newValues, date);
+        ModifyGraphVisitor visitor = new ModifyGraphVisitor(getEngine(), this, entry, newValues, date);
         graph.traverse(visitor, primarySource);
 
         if (visitor.getReturnCode() != LDAPException.SUCCESS) return visitor.getReturnCode();
@@ -73,7 +73,7 @@ public class DefaultModifyHandler extends ModifyHandler {
         //log.debug("Old values: " + oldValues);
         //log.debug("New values: " + newValues);
 
-        MRSWLock lock = ((DefaultEngine)getEngine()).getLock(source);
+        MRSWLock lock = getEngine().getLock(source);
         lock.getWriteLock(Penrose.WAIT_TIMEOUT);
 
         try {
@@ -132,7 +132,7 @@ public class DefaultModifyHandler extends ModifyHandler {
                     return rc;
 
                 // Delete row from source table in the cache
-                //getEngine().getSourceCache().remove(source, pk);
+                getEngine().getSourceCache().remove(source, pk);
             }
 
             // Replace rows
@@ -150,7 +150,7 @@ public class DefaultModifyHandler extends ModifyHandler {
                 if (rc != LDAPException.SUCCESS) return rc;
 
                 // Modify row from source table in the cache
-                //getEngine().getSourceCache().remove(source, pk);
+                getEngine().getSourceCache().remove(source, pk);
                 //engine.getSourceCache().insert(source, newEntry);
             }
 

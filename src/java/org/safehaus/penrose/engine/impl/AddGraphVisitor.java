@@ -6,6 +6,7 @@ package org.safehaus.penrose.engine.impl;
 
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.Penrose;
+import org.safehaus.penrose.engine.Engine;
 import org.safehaus.penrose.graph.GraphVisitor;
 import org.apache.log4j.Logger;
 import org.ietf.ldap.LDAPException;
@@ -19,7 +20,7 @@ public class AddGraphVisitor extends GraphVisitor {
 
     public Logger log = Logger.getLogger(Penrose.ADD_LOGGER);
 
-    public DefaultEngine engine;
+    public Engine engine;
     public DefaultAddHandler addHandler;
     public EntryDefinition entryDefinition;
     public AttributeValues values;
@@ -29,7 +30,7 @@ public class AddGraphVisitor extends GraphVisitor {
     private Stack stack = new Stack();
 
     public AddGraphVisitor(
-            DefaultEngine engine,
+            Engine engine,
             DefaultAddHandler addHandler,
             EntryDefinition entryDefinition,
             AttributeValues values,
