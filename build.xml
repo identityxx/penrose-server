@@ -156,7 +156,7 @@
         <mkdir dir="target/dist/var"/>
     </target>
 
-    <target name="dist-src" depends="dist,docs">
+    <target name="dist-src" depends="docs,dist">
         <echo message="Creating ${project.name}-${project.version}-src.zip"/>
         <mkdir dir="dist"/>
         <zip destfile="dist/${project.name}-${project.version}-src.zip"
