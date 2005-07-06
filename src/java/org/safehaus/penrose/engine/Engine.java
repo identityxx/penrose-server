@@ -447,6 +447,12 @@ public class Engine implements EngineMBean {
 
         Map results = new HashMap();
 
+        for (Iterator i=loadedPks.iterator();  i.hasNext(); ) {
+            Row pk = (Row)i.next();
+            AttributeValues values = sourceCache.get(source, pk);
+            results.put(pk, values);
+        }
+
         if (!pksToLoad.isEmpty()) {
             Filter filter = cache.getCacheContext().getFilterTool().createFilter(pksToLoad);
             SearchResults sr = source.search(filter, 0);
@@ -472,12 +478,6 @@ public class Engine implements EngineMBean {
             }
         }
 
-        for (Iterator j=loadedPks.iterator();  j.hasNext(); ) {
-            Row pk = (Row)j.next();
-            AttributeValues values = sourceCache.get(source, pk);
-            results.put(pk, values);
-        }
-        
         //CacheEvent afterEvent = new CacheEvent(getCacheContext(), sourceConfig, CacheEvent.AFTER_LOAD_ENTRIES);
         //postCacheEvent(sourceConfig, afterEvent);
 

@@ -8,10 +8,7 @@ import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.config.Config;
 import org.safehaus.penrose.event.CacheEvent;
 import org.safehaus.penrose.event.CacheListener;
-import org.safehaus.penrose.SearchResults;
 import org.safehaus.penrose.Penrose;
-import org.safehaus.penrose.graph.Graph;
-import org.safehaus.penrose.filter.Filter;
 import org.apache.log4j.Logger;
 
 import java.util.*;
@@ -27,12 +24,17 @@ public class SourceCache {
     private CacheContext cacheContext;
     private Config config;
 
+    private int size;
+
     private Map records = new LinkedHashMap();
 
     public void init(Cache cache) throws Exception {
         this.cache = cache;
         this.cacheContext = cache.getCacheContext();
         this.config = cacheContext.getConfig();
+
+        String s = cache.getParameter("size");
+        size = s == null ? 50 : Integer.parseInt(s);
 
         init();
     }
@@ -96,7 +98,7 @@ public class SourceCache {
 
         Map map = getMap(source);
 
-        while (map.size() >= 20) {
+        while (map.size() >= size) {
             log.debug("Trimming source cache ("+map.size()+").");
             Row key = (Row)map.keySet().iterator().next();
             map.remove(key);
@@ -301,5 +303,13 @@ public class SourceCache {
 
     public void setConfig(Config config) {
         this.config = config;
+    }
+
+    public int getSize() {
+        return size;
+    }
+
+    public void setSize(int size) {
+        this.size = size;
     }
 }
