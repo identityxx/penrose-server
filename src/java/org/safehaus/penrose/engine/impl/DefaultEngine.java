@@ -13,9 +13,7 @@ import org.safehaus.penrose.thread.Queue;
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.SearchResults;
 import org.safehaus.penrose.PenroseConnection;
-import org.safehaus.penrose.engine.Engine;
-import org.safehaus.penrose.engine.RefreshThread;
-import org.safehaus.penrose.engine.SearchThread;
+import org.safehaus.penrose.engine.*;
 import org.ietf.ldap.LDAPException;
 
 /**
@@ -27,6 +25,34 @@ public class DefaultEngine extends Engine {
     private Hashtable resultLocks = new Hashtable();
     private Queue threadWaiterQueue = new Queue();
     private ThreadPool threadPool = null;
+
+    public void createAddHandler() throws Exception {
+        setAddHandler(new DefaultAddHandler());
+    }
+
+    public void createBindHandler() throws Exception {
+        setBindHandler(new DefaultBindHandler());
+    }
+
+    public void createCompareHandler() throws Exception {
+        setCompareHandler(new DefaultCompareHandler());
+    }
+
+    public void createDeleteHandler() throws Exception {
+        setDeleteHandler(new DefaultDeleteHandler());
+    }
+
+    public void createModifyHandler() throws Exception {
+        setModifyHandler(new DefaultModifyHandler());
+    }
+
+    public void createModRdnHandler() throws Exception {
+        setModRdnHandler(new DefaultModRdnHandler());
+    }
+
+    public void createSearchHandler() throws Exception {
+        setSearchHandler(new DefaultSearchHandler());
+    }
 
 	public void init() throws Exception {
 

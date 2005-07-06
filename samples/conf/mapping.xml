@@ -18,7 +18,7 @@
     </at>
   </entry>
 
-  <entry rdn="cn=manager" parentDn="dc=penrose,dc=safehaus,dc=org">
+  <entry dn="cn=manager,dc=penrose,dc=safehaus,dc=org">
     <oc>person</oc>
     <oc>inetOrgPerson</oc>
     <at name="cn" rdn="true">
@@ -32,14 +32,14 @@
     </at>
   </entry>
 
-  <entry rdn="ou=users" parentDn="dc=penrose,dc=safehaus,dc=org">
+  <entry dn="ou=users,dc=penrose,dc=safehaus,dc=org">
     <oc>organizationalUnit</oc>
     <at name="ou" rdn="true">
       <expression>"users"</expression>
     </at>
   </entry>
 
-  <entry rdn="uid=..." parentDn="ou=users,dc=penrose,dc=safehaus,dc=org">
+  <entry dn="uid=...,ou=users,dc=penrose,dc=safehaus,dc=org">
     <oc>person</oc>
     <oc>inetOrgPerson</oc>
     <at name="uid" rdn="true">
@@ -79,10 +79,10 @@ return cn.substring(i+1);
     </source>
   </entry>
 
-  <entry rdn="cn=..." parentDn="uid=...,ou=users,dc=penrose,dc=safehaus,dc=org">
+  <entry dn="cn=...,uid=...,ou=users,dc=penrose,dc=safehaus,dc=org">
     <oc>groupOfUniqueNames</oc>
     <at name="cn" rdn="true">
-      <expression>ug.groupname</expression>
+      <expression>g.groupname</expression>
     </at>
     <at name="description" rdn="false">
       <expression>g.description</expression>
@@ -95,9 +95,6 @@ return "uid="+ug2.username+",ou=users,dc=penrose,dc=safehaus,dc=org";
     </at>
     <source name="ug">
       <source-name>usergroups</source-name>
-      <field name="groupname">
-        <expression>cn</expression>
-      </field>
     </source>
     <source name="g">
       <source-name>groups</source-name>
@@ -133,14 +130,14 @@ return uniqueMember.substring(i+1, j);
     </relationship>
   </entry>
 
-  <entry rdn="ou=groups" parentDn="dc=penrose,dc=safehaus,dc=org">
+  <entry dn="ou=groups,dc=penrose,dc=safehaus,dc=org">
     <oc>organizationalUnit</oc>
     <at name="ou" rdn="true">
       <expression>"groups"</expression>
     </at>
   </entry>
 
-  <entry rdn="cn=..." parentDn="ou=groups,dc=penrose,dc=safehaus,dc=org">
+  <entry dn="cn=...,ou=groups,dc=penrose,dc=safehaus,dc=org">
     <oc>groupOfUniqueNames</oc>
     <at name="cn" rdn="true">
       <expression>g.groupname</expression>
@@ -182,7 +179,7 @@ return uniqueMember.substring(i+1, j);
     </relationship>
   </entry>
 
-  <entry rdn="uid=..." parentDn="cn=...,ou=groups,dc=penrose,dc=safehaus,dc=org">
+  <entry dn="uid=...,cn=...,ou=groups,dc=penrose,dc=safehaus,dc=org">
     <oc>person</oc>
     <oc>inetOrgPerson</oc>
     <at name="uid" rdn="true">

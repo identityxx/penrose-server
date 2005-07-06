@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-<!DOCTYPE mapping PUBLIC 
-	"-//Penrose/Penrose Server Configuration DTD 1.0//EN" 
+<!DOCTYPE mapping PUBLIC
+	"-//Penrose/Penrose Server Configuration DTD 1.0//EN"
 	"http://penrose.safehaus.org/dtd/penrose-mapping-config-1.0.dtd">
 -->
 
@@ -18,7 +18,7 @@
     </at>
   </entry>
 
-  <entry rdn="cn=manager" parentDn="dc=penrose,dc=safehaus,dc=org">
+  <entry dn="cn=manager,dc=penrose,dc=safehaus,dc=org">
     <oc>person</oc>
     <oc>inetOrgPerson</oc>
     <at name="cn" rdn="true">
@@ -32,14 +32,14 @@
     </at>
   </entry>
 
-  <entry rdn="ou=users" parentDn="dc=penrose,dc=safehaus,dc=org">
+  <entry dn="ou=users,dc=penrose,dc=safehaus,dc=org">
     <oc>organizationalUnit</oc>
     <at name="ou" rdn="true">
       <expression>"users"</expression>
     </at>
   </entry>
 
-  <entry rdn="ou=groups" parentDn="dc=penrose,dc=safehaus,dc=org">
+  <entry dn="ou=groups,dc=penrose,dc=safehaus,dc=org">
     <oc>organizationalUnit</oc>
     <at name="ou" rdn="true">
       <expression>"groups"</expression>

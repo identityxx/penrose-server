@@ -23,6 +23,10 @@
       <param-name>password</param-name>
       <param-value>penrose</param-value>
     </parameter>
+    <parameter>
+      <param-name>dialect</param-name>
+      <param-value>org.hibernate.dialect.MySQLDialect</param-value>
+    </parameter>
   </connection>
 
   <source name="users">
