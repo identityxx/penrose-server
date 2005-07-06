@@ -10,8 +10,6 @@ import org.safehaus.penrose.event.CacheEvent;
 import org.safehaus.penrose.event.CacheListener;
 import org.safehaus.penrose.SearchResults;
 import org.safehaus.penrose.Penrose;
-import org.safehaus.penrose.cache.impl.JoinGraphVisitor;
-import org.safehaus.penrose.cache.impl.SourceLoaderGraphVisitor;
 import org.safehaus.penrose.graph.Graph;
 import org.safehaus.penrose.filter.Filter;
 import org.apache.log4j.Logger;
@@ -29,7 +27,7 @@ public class SourceCache {
     private CacheContext cacheContext;
     private Config config;
 
-    private Map records = new HashMap();
+    private Map records = new LinkedHashMap();
 
     public void init(Cache cache) throws Exception {
         this.cache = cache;
@@ -65,8 +63,14 @@ public class SourceCache {
         Map map = getMap(source);
 
         for (Iterator i=map.keySet().iterator(); i.hasNext(); ) {
-            Row spk = (Row)i.next();
-            if (match(spk, pk)) return (AttributeValues)map.get(spk);
+            Row key = (Row)i.next();
+
+            if (cacheContext.getEngine().match(key, pk)) {
+                log.debug("Getting source cache ("+map.size()+"): "+key);
+                AttributeValues values = (AttributeValues)map.remove(key);
+                map.put(key, values);
+                return values;
+            }
         }
 
         return null;
@@ -88,35 +92,33 @@ public class SourceCache {
         return results;
     }
 
-    public void put(Source source, Row pk, AttributeValues values, Date date) throws Exception {
+    public void put(Source source, Row pk, AttributeValues values) throws Exception {
+
         Map map = getMap(source);
+
+        while (map.size() >= 20) {
+            log.debug("Trimming source cache ("+map.size()+").");
+            Row key = (Row)map.keySet().iterator().next();
+            map.remove(key);
+        }
+
+        log.debug("Storing source cache ("+map.size()+"): "+pk);
         map.put(pk, values);
     }
 
-    public void delete(Source source, Row pk, Date date) throws Exception {
+    public void remove(Source source, Row pk) throws Exception {
         Map map = getMap(source);
 
         for (Iterator i=map.keySet().iterator(); i.hasNext(); ) {
-            Row spk = (Row)i.next();
-            if (match(spk, pk)) map.remove(spk);
+            Row key = (Row)i.next();
+            if (cacheContext.getEngine().match(key, pk)) {
+                log.debug("Removing source cache ("+map.size()+"): "+key);
+                map.remove(key);
+            }
         }
     }
 
-    public Collection join(
-            EntryDefinition entryDefinition,
-            Collection pks) throws Exception {
-
-        Collection results = new ArrayList();
-
-        for (Iterator i=pks.iterator(); i.hasNext(); ) {
-            Row pk = (Row)i.next();
-            Collection rows = join(entryDefinition, pk);
-            results.addAll(rows);
-        }
-
-        return results;
-    }
-
+/*
     public Collection join(
             EntryDefinition entryDefinition,
             Row pk) throws Exception {
@@ -137,7 +139,7 @@ public class SourceCache {
         }
 
         return rows;
-/*
+
         Filter filter = getCacheContext().getFilterTool().createFilter(pks);
         String sqlFilter = ((DefaultCache)getCache()).getCacheFilterTool().toSQLFilter(filter);
 
@@ -225,9 +227,9 @@ public class SourceCache {
         }
 
         return results;
-*/
-    }
 
+    }
+*/
     public void postCacheEvent(SourceDefinition sourceConfig, CacheEvent event)
             throws Exception {
         List listeners = sourceConfig.getListeners();
@@ -250,57 +252,13 @@ public class SourceCache {
         }
     }
 
-    public boolean partialMatch(Row pk1, Row pk2) throws Exception {
-
-        for (Iterator i=pk2.getNames().iterator(); i.hasNext(); ) {
-            String name = (String)i.next();
-            Object v1 = pk1.get(name);
-            Object v2 = pk2.get(name);
-
-            if (v1 == null && v2 == null) {
-                continue;
-
-            } else if (v1 == null || v2 == null) {
-                return false;
-
-            } else  if (!(v1.toString()).equalsIgnoreCase(v2.toString())) {
-                return false;
-            }
-        }
-
-        return true;
-    }
-
-    public boolean match(Row pk1, Row pk2) throws Exception {
-
-        if (!pk1.getNames().equals(pk2.getNames())) return false;
-
-        for (Iterator i=pk2.getNames().iterator(); i.hasNext(); ) {
-            String name = (String)i.next();
-            Object v1 = pk1.get(name);
-            Object v2 = pk2.get(name);
-
-            if (v1 == null && v2 == null) {
-                continue;
-
-            } else if (v1 == null || v2 == null) {
-                return false;
-
-            } else  if (!(v1.toString()).equalsIgnoreCase(v2.toString())) {
-                return false;
-            }
-        }
-
-        return true;
-    }
-
-    public Collection searchPks(
+    public Collection getPks(
             Source source,
             Collection pks)
             throws Exception {
 
         Map map = getMap(source);
-        log.debug("PKs in cache: "+map.keySet());
+        //log.debug("PKs in cache: "+map.keySet());
 
         Collection results = new TreeSet();
 
@@ -312,84 +270,11 @@ public class SourceCache {
             for (Iterator j=pks.iterator(); !found && j.hasNext(); ) {
                 Row spk = (Row)j.next();
 
-                found = partialMatch(pk, spk);
+                found = cacheContext.getEngine().partialMatch(pk, spk);
             }
 
             if (found) results.add(pk);
         }
-
-        return results;
-    }
-
-    public Row getPk(Source source, Row row) throws Exception {
-        Row pk = new Row();
-
-        Collection fields = source.getPrimaryKeyFields();
-        for (Iterator i=fields.iterator(); i.hasNext(); ) {
-            Field field = (Field)i.next();
-            String name = field.getName();
-            Object value = row.get(name);
-
-            pk.set(name, value);
-        }
-
-        return pk;
-    }
-
-    public void load(
-            EntryDefinition entryDefinition,
-            Collection pks,
-            Date date)
-            throws Exception {
-
-        Graph graph = getConfig().getGraph(entryDefinition);
-        Source primarySource = getConfig().getPrimarySource(entryDefinition);
-
-        SourceLoaderGraphVisitor visitor = new SourceLoaderGraphVisitor(this, entryDefinition, pks, date);
-        graph.traverse(visitor, primarySource);
-    }
-
-    public Map load(
-            Source source,
-            Collection pks,
-            Date date)
-            throws Exception {
-
-        log.info("Loading source "+source.getName()+" "+source.getSourceName()+" with pks "+pks);
-
-        Filter filter = cache.getCacheContext().getFilterTool().createFilter(pks);
-
-        SourceDefinition sourceConfig = source.getSourceDefinition();
-
-        CacheEvent beforeEvent = new CacheEvent(getCacheContext(), sourceConfig, CacheEvent.BEFORE_LOAD_ENTRIES);
-        postCacheEvent(sourceConfig, beforeEvent);
-
-        SearchResults sr = source.search(filter, 0);
-
-        Map results = new HashMap();
-
-        for (Iterator j = sr.iterator(); j.hasNext();) {
-            Row row = (Row) j.next();
-            Row pk = getPk(source, row);
-
-            AttributeValues values = (AttributeValues)results.get(pk);
-            if (values == null) {
-                values = new AttributeValues();
-                results.put(pk, values);
-            }
-
-            values.add(row);
-        }
-
-        for (Iterator i=results.keySet().iterator(); i.hasNext(); ) {
-            Row pk = (Row)i.next();
-            AttributeValues values = (AttributeValues)results.get(pk);
-
-            put(source, pk, values, date);
-        }
-
-        CacheEvent afterEvent = new CacheEvent(getCacheContext(), sourceConfig, CacheEvent.AFTER_LOAD_ENTRIES);
-        postCacheEvent(sourceConfig, afterEvent);
 
         return results;
     }

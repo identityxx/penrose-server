@@ -10,12 +10,15 @@ import org.safehaus.penrose.cache.Cache;
 import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.SearchResults;
 import org.safehaus.penrose.*;
+import org.safehaus.penrose.filter.Filter;
+import org.safehaus.penrose.event.CacheEvent;
+import org.safehaus.penrose.graph.Graph;
+import org.safehaus.penrose.mapping.*;
 import org.apache.log4j.Logger;
 import org.ietf.ldap.LDAPEntry;
 import org.ietf.ldap.LDAPException;
 
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author Endi S. Dewata
@@ -262,5 +265,196 @@ public abstract class Engine implements EngineMBean {
     public void setCache(Cache cache) {
         this.cache = cache;
     }
+
+    public Collection load(
+            Entry parent,
+            EntryDefinition entryDefinition,
+            Collection pks)
+            throws Exception {
+
+        Graph graph = getEngineContext().getConfig().getGraph(entryDefinition);
+        Source primarySource = getEngineContext().getConfig().getPrimarySource(entryDefinition);
+
+        LoaderGraphVisitor loaderVisitor = new LoaderGraphVisitor(this, entryDefinition, pks);
+        graph.traverse(loaderVisitor, primarySource);
+
+        Collection results = new ArrayList();
+
+        Map attributeValues = loaderVisitor.getAttributeValues();
+        for (Iterator i=attributeValues.keySet().iterator(); i.hasNext(); ) {
+            Row pk = (Row)i.next();
+            AttributeValues values = (AttributeValues)attributeValues.get(pk);
+
+            Collection c = getEngineContext().getTransformEngine().convert(values);
+            results.addAll(c);
+        }
+/*
+
+        for (Iterator i=pks.iterator(); i.hasNext(); ) {
+            Row pk = (Row)i.next();
+
+            JoinGraphVisitor joinerVisitor = new JoinGraphVisitor(entryDefinition, primarySource, sourceCache, pk);
+            graph.traverse(joinerVisitor, primarySource);
+
+            AttributeValues values = joinerVisitor.getAttributeValues();
+            Collection c = getEngineContext().getTransformEngine().convert(values);
+
+            results.addAll(c);
+        }
+*/
+        log.debug("Rows:");
+
+        for (Iterator j = results.iterator(); j.hasNext(); ) {
+            Row row = (Row)j.next();
+            log.debug(" - "+row);
+        }
+
+        log.debug("Loaded " + results.size() + " rows.");
+
+        return results;
+    }
+
+    public Collection merge(Entry parent, EntryDefinition entryDefinition, Collection rows) throws Exception {
+
+        Collection results = new ArrayList();
+
+        //log.debug("Merging:");
+        // merge rows into attribute values
+        Map entries = new LinkedHashMap();
+        for (Iterator i = rows.iterator(); i.hasNext();) {
+            Row row = (Row)i.next();
+            //log.debug(" - "+row);
+
+            Map rdn = new HashMap();
+            Row values = new Row();
+
+            boolean validPK = getEngineContext().getTransformEngine().translate(entryDefinition, row, rdn, values);
+            if (!validPK) continue;
+
+            //log.debug(" - "+rdn+": "+values);
+
+            AttributeValues attributeValues = (AttributeValues)entries.get(rdn);
+            if (attributeValues == null) {
+                attributeValues = new AttributeValues();
+                entries.put(rdn, attributeValues);
+            }
+            attributeValues.add(values);
+        }
+
+        log.debug("Merged " + entries.size() + " entries.");
+
+        for (Iterator i=entries.values().iterator(); i.hasNext(); ) {
+            AttributeValues values = (AttributeValues)i.next();
+
+            Entry entry = new Entry(entryDefinition, values);
+            entry.setParent(parent);
+            results.add(entry);
+        }
+
+        return results;
+    }
+
+    public Row getPk(Source source, Row row) throws Exception {
+        Row pk = new Row();
+
+        Collection fields = source.getPrimaryKeyFields();
+        for (Iterator i=fields.iterator(); i.hasNext(); ) {
+            Field field = (Field)i.next();
+            String name = field.getName();
+            Object value = row.get(name);
+
+            pk.set(name, value);
+        }
+
+        return pk;
+    }
+
+    public Map load(
+            Source source,
+            Collection pks)
+            throws Exception {
+
+        log.info("Loading source "+source.getName()+" "+source.getSourceName()+" with pks "+pks);
+
+        SourceDefinition sourceConfig = source.getSourceDefinition();
+
+        //CacheEvent beforeEvent = new CacheEvent(getCacheContext(), sourceConfig, CacheEvent.BEFORE_LOAD_ENTRIES);
+        //postCacheEvent(sourceConfig, beforeEvent);
+
+        Filter filter = cache.getCacheContext().getFilterTool().createFilter(pks);
+        SearchResults sr = source.search(filter, 0);
+
+        Map results = new HashMap();
+
+        for (Iterator j = sr.iterator(); j.hasNext();) {
+            Row row = (Row) j.next();
+            Row pk = getPk(source, row);
+
+            AttributeValues values = (AttributeValues)results.get(pk);
+            if (values == null) {
+                values = new AttributeValues();
+                results.put(pk, values);
+            }
+
+            values.add(row);
+        }
+
+        for (Iterator i=results.keySet().iterator(); i.hasNext(); ) {
+            Row pk = (Row)i.next();
+            AttributeValues values = (AttributeValues)results.get(pk);
+
+            //sourceCache.put(source, pk, values);
+        }
+
+        //CacheEvent afterEvent = new CacheEvent(getCacheContext(), sourceConfig, CacheEvent.AFTER_LOAD_ENTRIES);
+        //postCacheEvent(sourceConfig, afterEvent);
+
+        return results;
+    }
+
+    public boolean partialMatch(Row pk1, Row pk2) throws Exception {
+
+        for (Iterator i=pk2.getNames().iterator(); i.hasNext(); ) {
+            String name = (String)i.next();
+            Object v1 = pk1.get(name);
+            Object v2 = pk2.get(name);
+
+            if (v1 == null && v2 == null) {
+                continue;
+
+            } else if (v1 == null || v2 == null) {
+                return false;
+
+            } else  if (!(v1.toString()).equalsIgnoreCase(v2.toString())) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    public boolean match(Row pk1, Row pk2) throws Exception {
+
+        if (!pk1.getNames().equals(pk2.getNames())) return false;
+
+        for (Iterator i=pk2.getNames().iterator(); i.hasNext(); ) {
+            String name = (String)i.next();
+            Object v1 = pk1.get(name);
+            Object v2 = pk2.get(name);
+
+            if (v1 == null && v2 == null) {
+                continue;
+
+            } else if (v1 == null || v2 == null) {
+                return false;
+
+            } else  if (!(v1.toString()).equalsIgnoreCase(v2.toString())) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
 }
 

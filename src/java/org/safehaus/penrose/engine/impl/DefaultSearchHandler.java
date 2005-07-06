@@ -15,7 +15,6 @@ import org.safehaus.penrose.PenroseConnection;
 import org.safehaus.penrose.engine.SearchHandler;
 import org.safehaus.penrose.graph.Graph;
 import org.safehaus.penrose.cache.CacheConfig;
-import org.safehaus.penrose.cache.impl.DefaultCache;
 import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.thread.MRSWLock;
 
@@ -155,6 +154,7 @@ public class DefaultSearchHandler extends SearchHandler {
                         Field f = (Field)k.next();
                         String expression = f.getExpression();
                         Object v = interpreter.eval(expression);
+                        if (v == null) continue;
 
                         //log.debug("Setting parent's value "+s.getName()+"."+f.getName()+": "+v);
                         newRow.set(f.getName(), v);
@@ -176,7 +176,7 @@ public class DefaultSearchHandler extends SearchHandler {
             String primarySourceName = primarySource.getName();
             log.debug("Primary source: "+primarySourceName);
 
-            Filter f = ((DefaultCache)getCache()).getCacheFilterTool().toSourceFilter(null, entryDefinition, primarySource, filter);
+            Filter f = getCache().getCacheFilterTool().toSourceFilter(null, entryDefinition, primarySource, filter);
 
             log.debug("Searching source "+primarySourceName+" for "+f);
             SearchResults results = primarySource.search(f, 100);
@@ -226,7 +226,7 @@ public class DefaultSearchHandler extends SearchHandler {
      */
     public Collection rdnToPk(EntryDefinition entryDefinition, Collection rdns) throws Exception {
 
-        Source primarySource = getConfig().getPrimarySource(entryDefinition);
+        Source source = getConfig().getPrimarySource(entryDefinition);
 
         Collection pks = new TreeSet();
 
@@ -236,7 +236,7 @@ public class DefaultSearchHandler extends SearchHandler {
             Interpreter interpreter = getEngineContext().newInterpreter();
             interpreter.set(rdn);
 
-            Collection fields = primarySource.getPrimaryKeyFields();
+            Collection fields = source.getFields();
             Row pk = new Row();
 
             for (Iterator j=fields.iterator(); j.hasNext(); ) {
@@ -274,107 +274,46 @@ public class DefaultSearchHandler extends SearchHandler {
         log.debug("--------------------------------------------------------------------------------------");
         log.debug("Loading entry "+entryDefinition.getDn()+" with rdns "+rdns);
 
-        String s = getCache().getParameter(CacheConfig.CACHE_EXPIRATION);
-        int cacheExpiration = s == null ? 0 : Integer.parseInt(s);
-        log.debug("Expiration: "+cacheExpiration);
-        if (cacheExpiration < 0) cacheExpiration = Integer.MAX_VALUE;
-
-        Calendar c = (Calendar) calendar.clone();
-        c.add(Calendar.MINUTE, -cacheExpiration);
-
-        Collection loadedRdns = getEngine().getEntryCache().getRdns(entryDefinition, rdns, c.getTime());
-        log.debug("Loaded rdns: "+loadedRdns);
-
-        Collection rdnsToLoad = new TreeSet();
-        rdnsToLoad.addAll(rdns);
-        if (loadedRdns != null) rdnsToLoad.removeAll(loadedRdns);
-        log.debug("Rdns to load: "+rdnsToLoad);
-
-        if (rdnsToLoad.isEmpty()) return getEntries(parent, entryDefinition, rdns);
-
-        Collection entries = join(parent, entryDefinition, rdns, calendar);
-
-        SearchResults results = new SearchResults();
-
-        log.debug("Loaded "+entries.size()+" new entries: "+rdnsToLoad);
-        for (Iterator i=entries.iterator(); i.hasNext(); ) {
-            Entry entry = (Entry)i.next();
-            results.add(entry);
-            getEngine().getEntryCache().put(entry, calendar.getTime());
-        }
-
-        SearchResults sr = getEntries(parent, entryDefinition, loadedRdns);
-        log.debug("Returned "+sr.size()+" cached entries: "+loadedRdns);
-        for (Iterator i=sr.iterator(); i.hasNext(); ) {
-            Entry entry = (Entry)i.next();
-            results.add(entry);
-        }
-
-        results.close();
-
-        return results;
-    }
-
-    public Collection join(
-            Entry parent,
-            EntryDefinition entryDefinition,
-            Collection rdns,
-            Calendar calendar
-            ) throws Exception {
-
-        log.debug("--------------------------------------------------------------------------------------");
-        log.debug("Load & joining sources with rdns "+rdns);
-
-        Collection pks = rdnToPk(entryDefinition, rdns);
-
         MRSWLock lock = ((DefaultEngine)getEngine()).getLock(entryDefinition.getDn());
         lock.getWriteLock(Penrose.WAIT_TIMEOUT);
 
-        Collection results = new ArrayList();
+        SearchResults results = new SearchResults();
 
         try {
-            // load sources
-            getEngine().getSourceCache().load(entryDefinition, pks, calendar.getTime());
+            String s = getCache().getParameter(CacheConfig.CACHE_EXPIRATION);
+            int cacheExpiration = s == null ? 0 : Integer.parseInt(s);
+            log.debug("Expiration: "+cacheExpiration);
+            if (cacheExpiration < 0) cacheExpiration = Integer.MAX_VALUE;
 
-            // join rows from sources
-            Collection rows = getEngine().getSourceCache().join(entryDefinition, pks);
-            log.debug("Joined " + rows.size() + " rows.");
+            Calendar c = (Calendar) calendar.clone();
+            c.add(Calendar.MINUTE, -cacheExpiration);
 
-            log.debug("Merging:");
-            // merge rows into attribute values
-            Map entries = new LinkedHashMap();
-            for (Iterator i = rows.iterator(); i.hasNext();) {
-                Row row = (Row)i.next();
-                log.debug(" - "+row);
+            Collection loadedRdns = getEngine().getEntryCache().getRdns(entryDefinition, rdns);
+            log.debug("Loaded rdns: "+loadedRdns);
 
-                Map rdn = new HashMap();
-                Row values = new Row();
+            Collection rdnsToLoad = new TreeSet();
+            rdnsToLoad.addAll(rdns);
+            if (loadedRdns != null) rdnsToLoad.removeAll(loadedRdns);
+            log.debug("Rdns to load: "+rdnsToLoad);
 
-                boolean validPK = getEngineContext().getTransformEngine().translate(entryDefinition, row, rdn, values);
-                if (!validPK) continue;
+            if (!rdnsToLoad.isEmpty()) {
 
-                log.debug(" - "+rdn+": "+values);
+                Collection pks = rdnToPk(entryDefinition, rdnsToLoad);
+                Collection rows = getEngine().load(parent, entryDefinition, pks);
+                Collection entries = getEngine().merge(parent, entryDefinition, rows);
 
-                AttributeValues attributeValues = (AttributeValues)entries.get(rdn);
-                if (attributeValues == null) {
-                    attributeValues = new AttributeValues();
-                    entries.put(rdn, attributeValues);
+                for (Iterator i=entries.iterator(); i.hasNext(); ) {
+                    Entry entry = (Entry)i.next();
+                    results.add(entry);
+                    getEngine().getEntryCache().put(entry);
                 }
-                attributeValues.add(values);
             }
 
-            log.debug("Merged " + entries.size() + " entries.");
-
-            for (Iterator i=entries.values().iterator(); i.hasNext(); ) {
-                AttributeValues values = (AttributeValues)i.next();
-
-                Entry entry = new Entry(entryDefinition, values);
-                entry.setParent(parent);
-                results.add(entry);
-            }
+            getEntries(parent, entryDefinition, loadedRdns, results);
 
         } finally {
             lock.releaseWriteLock(Penrose.WAIT_TIMEOUT);
+            results.close();
         }
 
         return results;
@@ -386,33 +325,21 @@ public class DefaultSearchHandler extends SearchHandler {
      * @param parent
      * @param entryDefinition
      * @param rdns
-     * @return entries
      * @throws Exception
      */
-    public SearchResults getEntries(
+    public void getEntries(
             Entry parent,
             EntryDefinition entryDefinition,
-            Collection rdns) throws Exception {
+            Collection rdns,
+            SearchResults results)
+            throws Exception {
 
-        MRSWLock lock = ((DefaultEngine)getEngine()).getLock(entryDefinition.getDn());
-        lock.getReadLock(Penrose.WAIT_TIMEOUT);
+        Map entries = getEngine().getEntryCache().get(entryDefinition, rdns);
 
-        SearchResults results = new SearchResults();
-
-        try {
-            Map entries = getEngine().getEntryCache().get(entryDefinition, rdns);
-
-            for (Iterator i = entries.values().iterator(); i.hasNext();) {
-                Entry entry = (Entry) i.next();
-                entry.setParent(parent);
-                results.add(entry);
-            }
-
-        } finally {
-            lock.releaseReadLock(Penrose.WAIT_TIMEOUT);
-            results.close();
+        for (Iterator i = entries.values().iterator(); i.hasNext(); ) {
+            Entry entry = (Entry) i.next();
+            entry.setParent(parent);
+            results.add(entry);
         }
-
-        return results;
     }
 }

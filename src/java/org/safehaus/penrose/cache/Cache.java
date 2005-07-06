@@ -32,6 +32,7 @@ public class Cache {
     private FilterCache filterCache;
     private EntryCache entryCache;
     private SourceCache sourceCache;
+    protected CacheFilterTool cacheFilterTool;
 
     public CacheConfig getCacheConfig() {
         return cacheConfig;
@@ -53,6 +54,8 @@ public class Cache {
         this.cacheConfig = cacheConfig;
         this.cacheContext = cacheContext;
         this.config = cacheContext.getConfig();
+
+        cacheFilterTool = new CacheFilterTool(getCacheContext());
 
         createFilterCache();
         createEntryCache();
@@ -77,7 +80,7 @@ public class Cache {
         sourceCache = new SourceCache();
     }
 
-    public void init() throws Exception {        
+    public void init() throws Exception {
     }
 
     public EntryCache getEntryCache() {
@@ -118,5 +121,13 @@ public class Cache {
 
     public void setFilterCache(FilterCache filterCache) {
         this.filterCache = filterCache;
+    }
+
+    public CacheFilterTool getCacheFilterTool() {
+        return cacheFilterTool;
+    }
+
+    public void setCacheFilterTool(CacheFilterTool cacheFilterTool) {
+        this.cacheFilterTool = cacheFilterTool;
     }
 }

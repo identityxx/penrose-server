@@ -132,7 +132,7 @@ public class DefaultModifyHandler extends ModifyHandler {
                     return rc;
 
                 // Delete row from source table in the cache
-                getEngine().getSourceCache().delete(source, pk, date);
+                //getEngine().getSourceCache().remove(source, pk);
             }
 
             // Replace rows
@@ -150,8 +150,8 @@ public class DefaultModifyHandler extends ModifyHandler {
                 if (rc != LDAPException.SUCCESS) return rc;
 
                 // Modify row from source table in the cache
-                getEngine().getSourceCache().delete(source, pk, date);
-                //engine.getSourceCache().insert(source, newEntry, date);
+                //getEngine().getSourceCache().remove(source, pk);
+                //engine.getSourceCache().insert(source, newEntry);
             }
 
         } finally {

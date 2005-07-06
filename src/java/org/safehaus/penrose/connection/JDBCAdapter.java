@@ -89,8 +89,20 @@ public class JDBCAdapter extends Adapter {
             Field field = (Field)i.next();
 
             if (sb.length() > 0) sb.append(", ");
-            //sb.append(source.getName());
-            //sb.append(".");
+            sb.append(field.getName());
+        }
+
+        return sb.toString();
+    }
+
+    public String getPkFieldNames(Source source) {
+        StringBuffer sb = new StringBuffer();
+
+        Collection fields = source.getPrimaryKeyFields();
+        for (Iterator i=fields.iterator(); i.hasNext(); ) {
+            Field field = (Field)i.next();
+
+            if (sb.length() > 0) sb.append(", ");
             sb.append(field.getName());
         }
 
@@ -104,21 +116,21 @@ public class JDBCAdapter extends Adapter {
         log.debug("JDBC Source: "+source.getConnectionName());
 
         String tableName = source.getParameter("tableName");
-        String fieldNames = getFieldNames(source);
-        
+
         StringBuffer sb = new StringBuffer();
         sb.append("select ");
-        sb.append(fieldNames);
+        sb.append(getFieldNames(source));
         sb.append(" from ");
         sb.append(tableName);
 
+        List parameters = new ArrayList();
         if (filter != null) {
             sb.append(" where ");
-            sb.append(filterTool.convert(source, filter));
+            sb.append(filterTool.convert(source, filter, parameters));
         }
 
         sb.append(" order by ");
-        sb.append(fieldNames);
+        sb.append(getPkFieldNames(source));
 
         String sql = sb.toString();
 
@@ -132,6 +144,14 @@ public class JDBCAdapter extends Adapter {
             log.debug("Executing "+sql);
 
             ps = con.prepareStatement(sql);
+
+            int counter = 0;
+            for (Iterator i=parameters.iterator(); i.hasNext(); ) {
+                Object param = i.next();
+                ps.setObject(++counter, param);
+                log.debug(" - "+counter+" = "+param);
+            }
+
             rs = ps.executeQuery();
 
             log.debug("Result:");

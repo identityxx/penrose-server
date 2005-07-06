@@ -73,7 +73,7 @@ public class DefaultAddHandler extends AddHandler {
 	            if (rc != LDAPException.SUCCESS) return rc;
 
 	            // Add row to the source table in the cache
-	            getEngine().getSourceCache().put(source, pk, fieldValues, date);
+	            //getEngine().getSourceCache().put(source, pk, fieldValues);
 	        }
 
         } finally {

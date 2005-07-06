@@ -33,7 +33,7 @@ public class RefreshThread implements Runnable {
 		while (!engine.isStopping()) {
 
 			try {
-				engine.getSourceCache().refresh();
+				//engine.getSourceCache().refresh();
 				Thread.sleep(2*60000); // sleep 2 minutes
 
 			} catch (Exception ex) {

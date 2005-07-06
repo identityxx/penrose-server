@@ -9,6 +9,7 @@ import org.safehaus.penrose.mapping.Field;
 import org.safehaus.penrose.mapping.FieldDefinition;
 
 import java.util.Iterator;
+import java.util.Collection;
 
 /**
  * @author Endi S. Dewata
@@ -22,9 +23,14 @@ public class JDBCFilterTool {
      * @return string SQL filter
      * @throws Exception
      */
-    public String convert(Source source, Filter filter) throws Exception {
+    public String convert(
+            Source source,
+            Filter filter,
+            Collection parameters)
+            throws Exception {
+
         StringBuffer sb = new StringBuffer();
-        boolean valid = convert(source, filter, sb);
+        boolean valid = convert(source, filter, parameters, sb);
 
         if (valid && sb.length() > 0) return sb.toString();
 
@@ -34,24 +40,30 @@ public class JDBCFilterTool {
     boolean convert(
             Source source,
             Filter filter,
+            Collection parameters,
             StringBuffer sb)
             throws Exception {
 
         if (filter instanceof SimpleFilter) {
-            return convert(source, (SimpleFilter) filter, sb);
+            return convert(source, (SimpleFilter) filter, parameters, sb);
 
         } else if (filter instanceof AndFilter) {
-            return convert(source, (AndFilter) filter, sb);
+            return convert(source, (AndFilter) filter, parameters, sb);
 
         } else if (filter instanceof OrFilter) {
-            return convert(source, (OrFilter) filter, sb);
+            return convert(source, (OrFilter) filter, parameters, sb);
         }
 
         return true;
     }
 
-    boolean convert(Source source, SimpleFilter filter, StringBuffer sb)
+    boolean convert(
+            Source source,
+            SimpleFilter filter,
+            Collection parameters,
+            StringBuffer sb)
             throws Exception {
+
         String name = filter.getAttr();
         String value = filter.getValue();
 
@@ -65,27 +77,31 @@ public class JDBCFilterTool {
         if ("string".equals(field.getType())) {
             sb.append("lower(");
             sb.append(name);
-            sb.append(")=lower('");
-            sb.append(value);
-            sb.append("')");
+            sb.append(")=lower(?)");
 
         } else {
             sb.append(name);
-            sb.append("=");
-            sb.append(value);
+            sb.append("=?");
         }
+
+        parameters.add(value);
 
         return true;
     }
 
-    boolean convert(Source source, AndFilter filter, StringBuffer sb)
+    boolean convert(
+            Source source,
+            AndFilter filter,
+            Collection parameters,
+            StringBuffer sb)
             throws Exception {
+
         StringBuffer sb2 = new StringBuffer();
         for (Iterator i = filter.getFilterList().iterator(); i.hasNext();) {
             Filter f = (Filter) i.next();
 
             StringBuffer sb3 = new StringBuffer();
-            convert(source, f, sb3);
+            convert(source, f, parameters, sb3);
 
             if (sb2.length() > 0 && sb3.length() > 0) {
                 sb2.append(" and ");
@@ -104,14 +120,19 @@ public class JDBCFilterTool {
         return true;
     }
 
-    boolean convert(Source source, OrFilter filter, StringBuffer sb)
+    boolean convert(
+            Source source,
+            OrFilter filter,
+            Collection parameters,
+            StringBuffer sb)
             throws Exception {
+
         StringBuffer sb2 = new StringBuffer();
         for (Iterator i = filter.getFilterList().iterator(); i.hasNext();) {
             Filter f = (Filter) i.next();
 
             StringBuffer sb3 = new StringBuffer();
-            convert(source, f, sb3);
+            convert(source, f, parameters, sb3);
 
             if (sb2.length() > 0 && sb3.length() > 0) {
                 sb2.append(" or ");

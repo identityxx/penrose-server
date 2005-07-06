@@ -2,7 +2,7 @@
  * Copyright (c) 1998-2005, Verge Lab., LLC.
  * All rights reserved.
  */
-package org.safehaus.penrose.cache.impl;
+package org.safehaus.penrose.engine;
 
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.Penrose;
@@ -54,7 +54,7 @@ public class JoinGraphVisitor extends GraphVisitor {
 
         } else {
             log.debug("Joining with source "+source+" with pks: "+pks);
-            pks = sourceCache.searchPks(source, pks);
+            pks = sourceCache.getPks(source, pks);
         }
 
         Map results = sourceCache.get(source, pks);
@@ -62,6 +62,8 @@ public class JoinGraphVisitor extends GraphVisitor {
         log.debug("Records:");
         for (Iterator i = results.keySet().iterator(); i.hasNext(); ) {
             Row pk = (Row)i.next();
+            log.debug(" - "+pk);
+
             AttributeValues values = (AttributeValues)results.get(pk);
             AttributeValues newValues = new AttributeValues();
 
@@ -73,7 +75,7 @@ public class JoinGraphVisitor extends GraphVisitor {
                 newValues.add(source.getName()+"."+name, c);
             }
 
-            log.debug(" - "+pk+": "+newValues);
+            //log.debug(" - "+pk+": "+newValues);
             pks.add(pk);
 
             attributeValues.add(newValues);

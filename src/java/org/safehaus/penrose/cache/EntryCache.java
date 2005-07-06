@@ -48,8 +48,7 @@ public class EntryCache {
 
     public Collection getRdns(
             EntryDefinition entryDefinition,
-            Collection rdns,
-            Date date)
+            Collection rdns)
             throws Exception {
 
         log.debug("Getting rdns: "+rdns);
@@ -67,9 +66,9 @@ public class EntryCache {
 
     public Entry get(EntryDefinition entryDefinition, Row rdn) throws Exception {
 
-        log.debug("Getting entry: "+rdn);
-
         Map map = getMap(entryDefinition.getDn());
+
+        log.debug("Getting entry cache ("+map.size()+"): "+rdn);
 
         return (Entry)map.get(rdn);
     }
@@ -90,25 +89,25 @@ public class EntryCache {
         return results;
     }
 
-    public void put(Entry entry, Date date) throws Exception {
+    public void put(Entry entry) throws Exception {
 
         Row rdn = entry.getRdn();
-        log.debug("Storing entry: "+rdn);
-
         EntryDefinition entryDefinition = entry.getEntryDefinition();
 
         Map map = getMap(entryDefinition.getDn());
+        log.debug("Storing entry cache ("+map.size()+"): "+rdn);
+
         map.put(rdn, entry);
     }
 
     public void remove(Entry entry) throws Exception {
 
         Row rdn = entry.getRdn();
-        log.debug("Removing entry: "+rdn);
-
         EntryDefinition entryDefinition = entry.getEntryDefinition();
 
         Map map = getMap(entryDefinition.getDn());
+        log.debug("Removing entry cache ("+map.size()+"): "+rdn);
+
         map.remove(rdn);
     }
 
