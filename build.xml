@@ -96,6 +96,7 @@
         <copy todir="${penrose.home}" overwrite="true">
             <fileset dir="target/dist" includes="**/*"/>
         </copy>
+        <chmod dir="${penrose.home}/bin" perm="ugo+rx" includes="**/*.sh"/>
         <!-- restore original configuration -->
         <copy todir="${penrose.home}/conf" overwrite="true" includeEmptyDirs="false" failonerror="true">
             <fileset dir="${temp.dir}" includes="*"/>
