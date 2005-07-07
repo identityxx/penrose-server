@@ -202,10 +202,10 @@
         <exec executable="/usr/bin/rpmbuild" os="Linux">
             <arg line="-ba rpm/penrose-0.9.2-1.spec"/>
         </exec>
-        <copy todir="dist"
+        <copy todir="dist" failonerror="false"
             file="/usr/src/redhat/SRPMS/penrose-0.9.2-1.src.rpm">
         </copy>
-        <copy todir="dist"
+        <copy todir="dist" failonerror="false"
             file="/usr/src/redhat/RPMS/i386/penrose-0.9.2-1.i386.rpm">
         </copy>
     </target>
