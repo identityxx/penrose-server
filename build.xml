@@ -64,9 +64,8 @@
             classname="org.safehaus.penrose.PenroseRemoteObject"
             classpathref="lib.path"
         />
-        <copy
-            todir="target/classes">
-			<fileset dir="src/java" includes="**/*.xml"/>
+        <copy todir="target/classes">
+            <fileset dir="src/java" includes="**/*.xml"/>
         </copy>
        <jar jarfile="target/${project.name}-${project.version}.jar">
             <fileset dir="target/classes"/>
@@ -97,6 +96,9 @@
             <fileset dir="target/dist" includes="**/*"/>
         </copy>
         <chmod dir="${penrose.home}/bin" perm="ugo+rx" includes="**/*.sh"/>
+        <copy todir="${prefix}/etc/init.d"
+            file="target/dist/etc/init.d/penrose" overwrite="true"/>
+        <chmod file="${prefix}/etc/init.d/penrose" perm="ugo+rx"/>
         <!-- restore original configuration -->
         <copy todir="${penrose.home}/conf" overwrite="true" includeEmptyDirs="false" failonerror="true">
             <fileset dir="${temp.dir}" includes="*"/>
@@ -113,6 +115,7 @@
             <fileset dir="${penrose.home}/samples" includes="**/*"/>
             <fileset dir="${penrose.home}/schema" includes="**/*"/>
             <fileset dir="${penrose.home}" includes="*"/>
+            <fileset dir="${prefix}/etc/init.d" includes="penrose"/>
         </delete>
     </target>
 
@@ -122,6 +125,10 @@
         <copy todir="target/dist" file="LICENSE.txt"/>
         <copy todir="target/dist" file="COPYING.txt"/>
         <copy todir="target/dist" file="INSTALL-BINARY.txt"/>
+        <copy todir="target/dist/etc">
+            <fileset dir="etc" includes="**/*"/>
+        </copy>
+        <chmod file="target/dist/etc/init.d/penrose" perm="ugo+rx"/>
         <copy todir="target/dist/docs">
             <fileset dir="docs" includes="*.url"/>
         </copy>
@@ -168,6 +175,7 @@
         <tar destfile="target/${project.name}-${project.version}-src.tar">
             <tarfileset dir="." prefix="${project.name}-${project.version}">
                 <exclude name="dist/**"/>
+                <exclude name="target/**"/>
             </tarfileset>
         </tar>
         <gzip destfile="dist/${project.name}-${project.version}-src.tar.gz"
@@ -188,6 +196,18 @@
         </tar>
         <gzip destfile="dist/${project.name}-${project.version}.tar.gz"
             src="target/${project.name}-${project.version}.tar"/>
+        <copy todir="/usr/src/redhat/SOURCES" overwrite="true"
+            file="dist/${project.name}-${project.version}-src.tar.gz">
+        </copy>
+        <exec executable="/usr/bin/rpmbuild" os="Linux">
+            <arg line="-ba rpm/penrose-0.9.2-1.spec"/>
+        </exec>
+        <copy todir="dist"
+            file="/usr/src/redhat/SRPMS/penrose-0.9.2-1.src.rpm">
+        </copy>
+        <copy todir="dist"
+            file="/usr/src/redhat/RPMS/i386/penrose-0.9.2-1.i386.rpm">
+        </copy>
     </target>
 
     <target name="dist-win32" depends="dist,docs">

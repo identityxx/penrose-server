@@ -26,4 +26,5 @@ rm -rf $RPM_BUILD_ROOT
 %files
 %defattr(-,root,root)
 
+/etc/init.d/penrose
 /usr/local/penrose
