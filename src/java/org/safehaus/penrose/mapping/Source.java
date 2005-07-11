@@ -52,7 +52,6 @@ public class Source implements Cloneable, Serializable {
 
 	public void setName(String name) {
 		this.name = name;
-        sourceName = name;
 	}
 
     public Field getField(String name) {
@@ -67,6 +66,10 @@ public class Source implements Cloneable, Serializable {
 		fields.put(field.getName(), field);
 	}
 
+    public Field removeField(String name) {
+        return (Field)fields.remove(name);
+    }
+    
     public void addPrimaryKeyField(Field field) {
         primaryKeyFields.add(field);
     }

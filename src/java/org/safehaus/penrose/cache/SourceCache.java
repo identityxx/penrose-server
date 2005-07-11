@@ -111,12 +111,18 @@ public class SourceCache {
     public void remove(Source source, Row pk) throws Exception {
         Map map = getMap(source);
 
+        Collection keys = new ArrayList();
         for (Iterator i=map.keySet().iterator(); i.hasNext(); ) {
             Row key = (Row)i.next();
             if (cacheContext.getEngine().match(key, pk)) {
                 log.debug("Removing source cache ("+map.size()+"): "+key);
-                map.remove(key);
+                keys.add(key);
             }
+        }
+
+        for (Iterator i=keys.iterator(); i.hasNext(); ) {
+            Row key = (Row)i.next();
+            map.remove(key);
         }
     }
 

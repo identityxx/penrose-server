@@ -239,7 +239,7 @@ public class XMLHelper {
     public static Element toElement(AttributeDefinition attribute) {
     	Element element = new DefaultElement("at");
     	element.add(new DefaultAttribute("name", attribute.getName()));
-    	element.add(new DefaultAttribute("rdn", Boolean.toString(attribute.isRdn())));
+    	if (attribute.isRdn()) element.add(new DefaultAttribute("rdn", "true"));
         // expression (actually the value)
         if (attribute.getExpression() != null) {
             Element expressionElement = new DefaultElement("expression");
@@ -260,9 +260,14 @@ public class XMLHelper {
         sourceName.add(new DefaultText(source.getSourceName()));
         element.add(sourceName);
 
+        SourceDefinition sourceDefinition = source.getSourceDefinition();
+
 		// fields
 		for (Iterator i=source.getFields().iterator(); i.hasNext(); ) {
 			Field field = (Field)i.next();
+
+            if (sourceDefinition.getFieldDefinition(field.getName()) == null) continue;
+            
 			Element fieldElement = toElement(field);
             element.add(fieldElement);
 		}
@@ -528,34 +533,6 @@ public class XMLHelper {
         interpreterClass.add(new DefaultText(engineConfig.getEngineClass()));
         element.add(interpreterClass);
 
-        Element addHandlerClass = new DefaultElement("add-handler-class");
-        addHandlerClass.add(new DefaultText(engineConfig.getAddHandlerClass()));
-        element.add(addHandlerClass);
-
-        Element bindHandlerClass = new DefaultElement("bind-handler-class");
-        bindHandlerClass.add(new DefaultText(engineConfig.getBindHandlerClass()));
-        element.add(bindHandlerClass);
-
-        Element compareHandlerClass = new DefaultElement("compare-handler-class");
-        compareHandlerClass.add(new DefaultText(engineConfig.getCompareHandlerClass()));
-        element.add(compareHandlerClass);
-
-        Element deleteHandlerClass = new DefaultElement("delete-handler-class");
-        deleteHandlerClass.add(new DefaultText(engineConfig.getDeleteHandlerClass()));
-        element.add(deleteHandlerClass);
-
-        Element modifyHandlerClass = new DefaultElement("modify-handler-class");
-        modifyHandlerClass.add(new DefaultText(engineConfig.getModifyHandlerClass()));
-        element.add(modifyHandlerClass);
-
-        Element modrdnHandlerClass = new DefaultElement("modrdn-handler-class");
-        modrdnHandlerClass.add(new DefaultText(engineConfig.getModRdnHandlerClass()));
-        element.add(modrdnHandlerClass);
-
-        Element searchHandlerClass = new DefaultElement("search-handler-class");
-        searchHandlerClass.add(new DefaultText(engineConfig.getSearchHandlerClass()));
-        element.add(searchHandlerClass);
-
         return element;
     }
 
@@ -570,9 +547,11 @@ public class XMLHelper {
         cacheClass.add(new DefaultText(cache.getCacheClass()));
         element.add(cacheClass);
 
-        Element description = new DefaultElement("description");
-        description.add(new DefaultText(cache.getDescription()));
-        element.add(description);
+        if (cache.getDescription() != null && !cache.getDescription().equals("")) {
+            Element description = new DefaultElement("description");
+            description.add(new DefaultText(cache.getDescription()));
+            element.add(description);
+        }
 
         // parameters
         for (Iterator iter = cache.getParameterNames().iterator(); iter.hasNext();) {
@@ -597,7 +576,7 @@ public class XMLHelper {
     public static Element toElement(FieldDefinition field) {
     	Element element = new DefaultElement("field");
     	element.addAttribute("name", field.getName());
-    	element.addAttribute("primaryKey", field.isPrimaryKey()?"true":"false");
+    	if (field.isPrimaryKey()) element.addAttribute("primaryKey", "true");
     	return element;
     }
     

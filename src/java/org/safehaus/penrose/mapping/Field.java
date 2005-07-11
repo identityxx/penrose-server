@@ -72,4 +72,8 @@ public class Field {
     public String getType() {
         return fieldDefinition.getType();
     }
+
+    public String toString() {
+        return name;
+    }
 }
