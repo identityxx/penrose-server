@@ -36,7 +36,7 @@ public class DefaultModifyHandler extends ModifyHandler {
         Graph graph = getConfig().getGraph(entryDefinition);
         Source primarySource = getConfig().getPrimarySource(entryDefinition);
 
-        ModifyGraphVisitor visitor = new ModifyGraphVisitor(getEngine(), this, entry, newValues, date);
+        ModifyGraphVisitor visitor = new ModifyGraphVisitor(getEngine(), this, primarySource, entry, newValues, date);
         graph.traverse(visitor, primarySource);
 
         if (visitor.getReturnCode() != LDAPException.SUCCESS) return visitor.getReturnCode();

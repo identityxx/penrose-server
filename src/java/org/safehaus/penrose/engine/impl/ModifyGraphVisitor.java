@@ -34,6 +34,7 @@ public class ModifyGraphVisitor extends GraphVisitor {
     public ModifyGraphVisitor(
             Engine engine,
             DefaultModifyHandler modifyHandler,
+            Source primarySource,
             Entry entry,
             AttributeValues newValues,
             Date date) throws Exception {
@@ -47,7 +48,7 @@ public class ModifyGraphVisitor extends GraphVisitor {
 
         Collection rows = engine.getEngineContext().getTransformEngine().convert(oldValues);
         Collection keys = new HashSet();
-
+/*
         for (Iterator i=rows.iterator(); i.hasNext(); ) {
             Row row = (Row)i.next();
             log.debug(" - "+row);
@@ -55,15 +56,15 @@ public class ModifyGraphVisitor extends GraphVisitor {
             Interpreter interpreter = engine.getEngineContext().newInterpreter();
             interpreter.set(row);
 
-            Collection rdnAttributes = entryDefinition.getRdnAttributes();
+            Collection fields = primarySource.getPrimaryKeyFields();
 
             Row pk = new Row();
             boolean valid = true;
 
-            for (Iterator k=rdnAttributes.iterator(); k.hasNext(); ) {
-                AttributeDefinition attr = (AttributeDefinition)k.next();
-                String name = attr.getName();
-                String expression = attr.getExpression();
+            for (Iterator j=fields.iterator(); j.hasNext(); ) {
+                Field field = (Field)j.next();
+                String name = field.getName();
+                String expression = field.getExpression();
                 Object value = interpreter.eval(expression);
 
                 if (value == null) {
@@ -78,7 +79,7 @@ public class ModifyGraphVisitor extends GraphVisitor {
 
             keys.add(pk);
         }
-
+*/
         log.debug("Primary keys: "+keys);
         stack.push(keys);
     }

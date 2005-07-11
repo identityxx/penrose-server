@@ -32,6 +32,7 @@ public class AddGraphVisitor extends GraphVisitor {
     public AddGraphVisitor(
             Engine engine,
             DefaultAddHandler addHandler,
+            Source primarySource,
             EntryDefinition entryDefinition,
             AttributeValues values,
             Date date) throws Exception {
@@ -52,15 +53,15 @@ public class AddGraphVisitor extends GraphVisitor {
             Interpreter interpreter = engine.getEngineContext().newInterpreter();
             interpreter.set(row);
 
-            Collection rdnAttributes = entryDefinition.getRdnAttributes();
+            Collection fields = primarySource.getPrimaryKeyFields();
 
             Row pk = new Row();
             boolean valid = true;
 
-            for (Iterator k=rdnAttributes.iterator(); k.hasNext(); ) {
-                AttributeDefinition attr = (AttributeDefinition)k.next();
-                String name = attr.getName();
-                String expression = attr.getExpression();
+            for (Iterator j=fields.iterator(); j.hasNext(); ) {
+                Field field = (Field)j.next();
+                String name = field.getName();
+                String expression = field.getExpression();
                 Object value = interpreter.eval(expression);
 
                 if (value == null) {

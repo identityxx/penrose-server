@@ -30,7 +30,7 @@ public class DefaultAddHandler extends AddHandler {
         Graph graph = getConfig().getGraph(entryDefinition);
         Source primarySource = getConfig().getPrimarySource(entryDefinition);
 
-        AddGraphVisitor visitor = new AddGraphVisitor(getEngine(), this, entryDefinition, values, date);
+        AddGraphVisitor visitor = new AddGraphVisitor(getEngine(), this, primarySource, entryDefinition, values, date);
         graph.traverse(visitor, primarySource);
 
         if (visitor.getReturnCode() != LDAPException.SUCCESS) return visitor.getReturnCode();

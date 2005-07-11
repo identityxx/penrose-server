@@ -26,7 +26,7 @@ public class DefaultDeleteHandler extends DeleteHandler {
         Graph graph = getConfig().getGraph(entryDefinition);
         Source primarySource = getConfig().getPrimarySource(entryDefinition);
 
-        DeleteGraphVisitor visitor = new DeleteGraphVisitor(getEngine(), this, entryDefinition, values, date);
+        DeleteGraphVisitor visitor = new DeleteGraphVisitor(getEngine(), this, primarySource, entryDefinition, values, date);
         graph.traverse(visitor, primarySource);
 
         if (visitor.getReturnCode() != LDAPException.SUCCESS) return visitor.getReturnCode();
