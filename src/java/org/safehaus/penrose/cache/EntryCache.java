@@ -56,7 +56,14 @@ public class EntryCache {
             Collection rdns)
             throws Exception {
 
-        log.debug("Getting rdns: "+rdns);
+        Collection nrdns = new ArrayList();
+
+        for (Iterator i=rdns.iterator(); i.hasNext(); ) {
+            Row rdn = (Row)i.next();
+            Row nrdn = cacheContext.getEngine().normalize(rdn);
+            nrdns.add(nrdn);
+        }
+        log.debug("Getting rdns: "+nrdns);
 
         Map map = getMap(entryDefinition.getDn());
 
@@ -64,7 +71,7 @@ public class EntryCache {
 
         Collection loadedRdns = new HashSet();
         loadedRdns.addAll(allRdns);
-        loadedRdns.retainAll(rdns);
+        loadedRdns.retainAll(nrdns);
 
         return loadedRdns;
     }
@@ -72,11 +79,12 @@ public class EntryCache {
     public Entry get(EntryDefinition entryDefinition, Row rdn) throws Exception {
 
         Map map = getMap(entryDefinition.getDn());
+        Row nrdn = cacheContext.getEngine().normalize(rdn);
 
-        log.debug("Getting entry cache ("+map.size()+"): "+rdn);
+        log.debug("Getting entry cache ("+map.size()+"): "+nrdn);
 
-        Entry entry = (Entry)map.remove(rdn);
-        map.put(rdn, entry);
+        Entry entry = (Entry)map.remove(nrdn);
+        map.put(nrdn, entry);
 
         return entry;
     }
@@ -100,6 +108,8 @@ public class EntryCache {
     public void put(Entry entry) throws Exception {
 
         Row rdn = entry.getRdn();
+        Row nrdn = cacheContext.getEngine().normalize(rdn);
+
         EntryDefinition entryDefinition = entry.getEntryDefinition();
 
         Map map = getMap(entryDefinition.getDn());
@@ -110,19 +120,20 @@ public class EntryCache {
             map.remove(key);
         }
 
-        log.debug("Storing entry cache ("+map.size()+"): "+rdn);
-        map.put(rdn, entry);
+        log.debug("Storing entry cache ("+map.size()+"): "+nrdn);
+        map.put(nrdn, entry);
     }
 
     public void remove(Entry entry) throws Exception {
 
         Row rdn = entry.getRdn();
+        Row nrdn = cacheContext.getEngine().normalize(rdn);
         EntryDefinition entryDefinition = entry.getEntryDefinition();
 
         Map map = getMap(entryDefinition.getDn());
-        log.debug("Removing entry cache ("+map.size()+"): "+rdn);
 
-        map.remove(rdn);
+        log.debug("Removing entry cache ("+map.size()+"): "+nrdn);
+        map.remove(nrdn);
     }
 
     public Cache getCache() {

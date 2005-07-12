@@ -63,13 +63,18 @@ public class SourceCache {
 
     public AttributeValues get(Source source, Row pk) throws Exception {
         Map map = getMap(source);
+        Row npk = cacheContext.getEngine().normalize(pk);
+
+        log.debug("Getting source cache ("+map.size()+"): "+npk);
+
+        AttributeValues values = (AttributeValues)map.get(npk);
+        if (values != null) return values;
 
         for (Iterator i=map.keySet().iterator(); i.hasNext(); ) {
             Row key = (Row)i.next();
 
-            if (cacheContext.getEngine().match(key, pk)) {
-                log.debug("Getting source cache ("+map.size()+"): "+key);
-                AttributeValues values = (AttributeValues)map.remove(key);
+            if (cacheContext.getEngine().match(key, npk)) {
+                values = (AttributeValues)map.remove(key);
                 map.put(key, values);
                 return values;
             }
@@ -97,6 +102,7 @@ public class SourceCache {
     public void put(Source source, Row pk, AttributeValues values) throws Exception {
 
         Map map = getMap(source);
+        Row npk = cacheContext.getEngine().normalize(pk);
 
         while (map.size() >= size) {
             log.debug("Trimming source cache ("+map.size()+").");
@@ -104,18 +110,26 @@ public class SourceCache {
             map.remove(key);
         }
 
-        log.debug("Storing source cache ("+map.size()+"): "+pk);
-        map.put(pk, values);
+        log.debug("Storing source cache ("+map.size()+"): "+npk);
+        map.put(npk, values);
     }
 
     public void remove(Source source, Row pk) throws Exception {
         Map map = getMap(source);
+        Row npk = cacheContext.getEngine().normalize(pk);
+
+        log.debug("Removing source cache ("+map.size()+"): "+npk);
+        
+        AttributeValues values = (AttributeValues)map.get(npk);
+        if (values != null) {
+            map.remove(npk);
+            return;
+        }
 
         Collection keys = new ArrayList();
         for (Iterator i=map.keySet().iterator(); i.hasNext(); ) {
             Row key = (Row)i.next();
-            if (cacheContext.getEngine().match(key, pk)) {
-                log.debug("Removing source cache ("+map.size()+"): "+key);
+            if (cacheContext.getEngine().match(key, npk)) {
                 keys.add(key);
             }
         }

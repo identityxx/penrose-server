@@ -484,6 +484,21 @@ public class Engine implements EngineMBean {
         return results;
     }
 
+    public Row normalize(Row row) throws Exception {
+
+        Row newRow = new Row();
+
+        for (Iterator i=row.getNames().iterator(); i.hasNext(); ) {
+            String name = (String)i.next();
+            Object value = row.get(name);
+
+            if (value == null) continue;
+            newRow.set(name.toLowerCase(), value.toString().toLowerCase());
+        }
+
+        return newRow;
+    }
+
     public boolean partialMatch(Row pk1, Row pk2) throws Exception {
 
         for (Iterator i=pk2.getNames().iterator(); i.hasNext(); ) {
