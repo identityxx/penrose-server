@@ -160,6 +160,8 @@ TOKEN : /* KEYWORDS */
 |   < AUXILIARY: "AUXILIARY" >
 |   < MUST: "MUST" >
 |   < MAY: "MAY" >
+|   < X_ORIGIN: "X-ORIGIN" >
+|   < X_DS_USE: "X-DS-USE" >
 }
 
 TOKEN : /* Attribute Usage */
@@ -168,6 +170,7 @@ TOKEN : /* Attribute Usage */
 |	< DIRECTORY_OPERATION: "directoryOperation" >
 |	< DISTRIBUTED_OPERATION: "distributedOperation" >
 |	< DSA_OPERATION: "dSAOperation" >
+|	< DSA_OPERATION2: "dsaOperation" >
 }
 
 TOKEN : /* others */
@@ -223,6 +226,8 @@ AttributeType AttributeType() :
 	|	<COLLECTIVE> { at.setCollective(true); }
 	|	<NO_USER_MODIFICATION> { at.setModifiable(false); }
 	|	<USAGE> usage = AttributeUsage() { at.setUsage(usage); }
+	|   <X_ORIGIN> qdstring() { }
+	|   <X_DS_USE> qdstring() { }
 	)*
 	<RPAREN> { return at; }
 	|	error_skipto(RPAREN) { return null; }
@@ -252,6 +257,8 @@ ObjectClass ObjectClass() :
 	|	<AUXILIARY> { oc.setType(ObjectClass.AUXILIARY); }
 	|	<MUST> must = oids() { oc.setRequiredAttributes(must); }
 	|	<MAY> may = oids() { oc.setOptionalAttributes(may); }
+	|   <X_ORIGIN> qdstring() { }
+	|   <X_DS_USE> qdstring() { }
 	)*
 	<RPAREN> { return oc; }
 	|	error_skipto(RPAREN) { return null; }
@@ -265,6 +272,7 @@ String AttributeUsage() :
 |	<DIRECTORY_OPERATION>   { return AttributeType.DIRECTORY_OPERATION; }
 |	<DISTRIBUTED_OPERATION> { return AttributeType.DISTRIBUTED_OPERATION; }
 |	<DSA_OPERATION>         { return AttributeType.DSA_OPERATION; }
+|	<DSA_OPERATION2>        { return AttributeType.DSA_OPERATION; }
 }
 
 /**

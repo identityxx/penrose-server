@@ -37,13 +37,16 @@ public interface SchemaParserConstants {
   int AUXILIARY = 31;
   int MUST = 32;
   int MAY = 33;
-  int USER_APPLICATIONS = 34;
-  int DIRECTORY_OPERATION = 35;
-  int DISTRIBUTED_OPERATION = 36;
-  int DSA_OPERATION = 37;
-  int DIGIT = 38;
-  int IDENT = 39;
-  int QDSTRING = 40;
+  int X_ORIGIN = 34;
+  int X_DS_USE = 35;
+  int USER_APPLICATIONS = 36;
+  int DIRECTORY_OPERATION = 37;
+  int DISTRIBUTED_OPERATION = 38;
+  int DSA_OPERATION = 39;
+  int DSA_OPERATION2 = 40;
+  int DIGIT = 41;
+  int IDENT = 42;
+  int QDSTRING = 43;
 
   int DEFAULT = 0;
 
@@ -82,10 +85,13 @@ public interface SchemaParserConstants {
     "\"AUXILIARY\"",
     "\"MUST\"",
     "\"MAY\"",
+    "\"X-ORIGIN\"",
+    "\"X-DS-USE\"",
     "\"userApplications\"",
     "\"directoryOperation\"",
     "\"distributedOperation\"",
     "\"dSAOperation\"",
+    "\"dsaOperation\"",
     "<DIGIT>",
     "<IDENT>",
     "<QDSTRING>",

@@ -132,7 +132,7 @@ public class SchemaParser implements SchemaParserConstants {
         String sup, equality, ordering, substr;
         String syntax;
         String usage;
-    if (jj_2_16(5)) {
+    if (jj_2_18(5)) {
       jj_consume_token(ATTRIBUTETYPE);
       jj_consume_token(LPAREN);
       oid = numericoid();
@@ -188,6 +188,14 @@ public class SchemaParser implements SchemaParserConstants {
           jj_consume_token(USAGE);
           usage = AttributeUsage();
                                                    at.setUsage(usage);
+        } else if (jj_2_16(5)) {
+          jj_consume_token(X_ORIGIN);
+          qdstring();
+
+        } else if (jj_2_17(5)) {
+          jj_consume_token(X_DS_USE);
+          qdstring();
+
         } else {
           jj_consume_token(-1);
           throw new ParseException();
@@ -210,50 +218,58 @@ public class SchemaParser implements SchemaParserConstants {
         String desc;
         List sup, must, may;
         String type;
-    if (jj_2_27(5)) {
+    if (jj_2_31(5)) {
       jj_consume_token(OBJECTCLASS);
       jj_consume_token(LPAREN);
       oid = numericoid();
                              oc.setOid(oid);
       label_3:
       while (true) {
-        if (jj_2_17(5)) {
+        if (jj_2_19(5)) {
           ;
         } else {
           break label_3;
         }
-        if (jj_2_18(5)) {
+        if (jj_2_20(5)) {
           jj_consume_token(NAME);
           names = qdescrs();
                                            oc.setNames(names);
-        } else if (jj_2_19(5)) {
+        } else if (jj_2_21(5)) {
           jj_consume_token(DESC);
           desc = qdstring();
                                            oc.setDescription(desc);
-        } else if (jj_2_20(5)) {
+        } else if (jj_2_22(5)) {
           jj_consume_token(OBSOLETE);
                              oc.setObsolete(true);
-        } else if (jj_2_21(5)) {
+        } else if (jj_2_23(5)) {
           jj_consume_token(SUP);
           sup = oids();
                                      oc.setSuperClasses(sup);
-        } else if (jj_2_22(5)) {
+        } else if (jj_2_24(5)) {
           jj_consume_token(ABSTRACT);
                              oc.setType(ObjectClass.ABSTRACT);
-        } else if (jj_2_23(5)) {
+        } else if (jj_2_25(5)) {
           jj_consume_token(STRUCTURAL);
                                oc.setType(ObjectClass.STRUCTURAL);
-        } else if (jj_2_24(5)) {
+        } else if (jj_2_26(5)) {
           jj_consume_token(AUXILIARY);
                               oc.setType(ObjectClass.AUXILIARY);
-        } else if (jj_2_25(5)) {
+        } else if (jj_2_27(5)) {
           jj_consume_token(MUST);
           must = oids();
                                        oc.setRequiredAttributes(must);
-        } else if (jj_2_26(5)) {
+        } else if (jj_2_28(5)) {
           jj_consume_token(MAY);
           may = oids();
                                      oc.setOptionalAttributes(may);
+        } else if (jj_2_29(5)) {
+          jj_consume_token(X_ORIGIN);
+          qdstring();
+
+        } else if (jj_2_30(5)) {
+          jj_consume_token(X_DS_USE);
+          qdstring();
+
         } else {
           jj_consume_token(-1);
           throw new ParseException();
@@ -269,17 +285,20 @@ public class SchemaParser implements SchemaParserConstants {
   }
 
   final public String AttributeUsage() throws ParseException {
-    if (jj_2_28(5)) {
+    if (jj_2_32(5)) {
       jj_consume_token(USER_APPLICATIONS);
                                   {if (true) return AttributeType.USER_APPLICATIONS;}
-    } else if (jj_2_29(5)) {
+    } else if (jj_2_33(5)) {
       jj_consume_token(DIRECTORY_OPERATION);
                                   {if (true) return AttributeType.DIRECTORY_OPERATION;}
-    } else if (jj_2_30(5)) {
+    } else if (jj_2_34(5)) {
       jj_consume_token(DISTRIBUTED_OPERATION);
                                   {if (true) return AttributeType.DISTRIBUTED_OPERATION;}
-    } else if (jj_2_31(5)) {
+    } else if (jj_2_35(5)) {
       jj_consume_token(DSA_OPERATION);
+                                  {if (true) return AttributeType.DSA_OPERATION;}
+    } else if (jj_2_36(5)) {
+      jj_consume_token(DSA_OPERATION2);
                                   {if (true) return AttributeType.DSA_OPERATION;}
     } else {
       jj_consume_token(-1);
@@ -298,7 +317,7 @@ public class SchemaParser implements SchemaParserConstants {
                       sb.append(t.toString());
     label_4:
     while (true) {
-      if (jj_2_32(5)) {
+      if (jj_2_37(5)) {
         ;
       } else {
         break label_4;
@@ -328,10 +347,10 @@ public class SchemaParser implements SchemaParserConstants {
   final public String qdident() throws ParseException {
         Token t;
         String s;
-    if (jj_2_33(5)) {
+    if (jj_2_38(5)) {
       t = jj_consume_token(QDSTRING);
                          s = t.toString(); s = s.substring(1, s.length()-1); {if (true) return s;}
-    } else if (jj_2_34(5)) {
+    } else if (jj_2_39(5)) {
       t = jj_consume_token(IDENT);
                       s = t.toString(); {if (true) return s;}
     } else {
@@ -347,16 +366,16 @@ public class SchemaParser implements SchemaParserConstants {
   final public List qdescrs() throws ParseException {
         String s;
         List l = new ArrayList();
-    if (jj_2_36(5)) {
+    if (jj_2_41(5)) {
       s = qdident();
                         l.add(s); {if (true) return l;}
-    } else if (jj_2_37(5)) {
+    } else if (jj_2_42(5)) {
       jj_consume_token(LPAREN);
       label_5:
       while (true) {
         s = qdident();
                                   l.add(s);
-        if (jj_2_35(5)) {
+        if (jj_2_40(5)) {
           ;
         } else {
           break label_5;
@@ -387,12 +406,12 @@ public class SchemaParser implements SchemaParserConstants {
   final public String woid() throws ParseException {
         Token t;
         String s;
-    if (jj_2_39(5)) {
+    if (jj_2_44(5)) {
       s = qdident();
                         {if (true) return s;}
-    } else if (jj_2_40(5)) {
+    } else if (jj_2_45(5)) {
       s = numericoid();
-      if (jj_2_38(5)) {
+      if (jj_2_43(5)) {
         jj_consume_token(LBRACE);
         t = jj_consume_token(DIGIT);
         jj_consume_token(RBRACE);
@@ -401,7 +420,7 @@ public class SchemaParser implements SchemaParserConstants {
         ;
       }
           {if (true) return s;}
-    } else if (jj_2_41(5)) {
+    } else if (jj_2_46(5)) {
       t = jj_consume_token(OBJECTCLASS);
                             {if (true) return t.toString();}
     } else {
@@ -417,16 +436,16 @@ public class SchemaParser implements SchemaParserConstants {
   final public List oids() throws ParseException {
         String s;
         List oids = new ArrayList();
-    if (jj_2_43(5)) {
+    if (jj_2_48(5)) {
       s = woid();
                      oids.add(s); {if (true) return oids;}
-    } else if (jj_2_44(5)) {
+    } else if (jj_2_49(5)) {
       jj_consume_token(LPAREN);
       s = woid();
                              oids.add(s);
       label_6:
       while (true) {
-        if (jj_2_42(5)) {
+        if (jj_2_47(5)) {
           ;
         } else {
           break label_6;
@@ -768,44 +787,84 @@ public class SchemaParser implements SchemaParserConstants {
     finally { jj_save(43, xla); }
   }
 
-  final private boolean jj_3_31() {
-    if (jj_scan_token(DSA_OPERATION)) return true;
+  final private boolean jj_2_45(int xla) {
+    jj_la = xla; jj_lastpos = jj_scanpos = token;
+    try { return !jj_3_45(); }
+    catch(LookaheadSuccess ls) { return true; }
+    finally { jj_save(44, xla); }
+  }
+
+  final private boolean jj_2_46(int xla) {
+    jj_la = xla; jj_lastpos = jj_scanpos = token;
+    try { return !jj_3_46(); }
+    catch(LookaheadSuccess ls) { return true; }
+    finally { jj_save(45, xla); }
+  }
+
+  final private boolean jj_2_47(int xla) {
+    jj_la = xla; jj_lastpos = jj_scanpos = token;
+    try { return !jj_3_47(); }
+    catch(LookaheadSuccess ls) { return true; }
+    finally { jj_save(46, xla); }
+  }
+
+  final private boolean jj_2_48(int xla) {
+    jj_la = xla; jj_lastpos = jj_scanpos = token;
+    try { return !jj_3_48(); }
+    catch(LookaheadSuccess ls) { return true; }
+    finally { jj_save(47, xla); }
+  }
+
+  final private boolean jj_2_49(int xla) {
+    jj_la = xla; jj_lastpos = jj_scanpos = token;
+    try { return !jj_3_49(); }
+    catch(LookaheadSuccess ls) { return true; }
+    finally { jj_save(48, xla); }
+  }
+
+  final private boolean jj_3_36() {
+    if (jj_scan_token(DSA_OPERATION2)) return true;
     return false;
   }
 
-  final private boolean jj_3_44() {
+  final private boolean jj_3_49() {
     if (jj_scan_token(LPAREN)) return true;
     if (jj_3R_9()) return true;
     Token xsp;
     while (true) {
       xsp = jj_scanpos;
-      if (jj_3_42()) { jj_scanpos = xsp; break; }
+      if (jj_3_47()) { jj_scanpos = xsp; break; }
     }
     if (jj_scan_token(RPAREN)) return true;
     return false;
   }
 
-  final private boolean jj_3_30() {
-    if (jj_scan_token(DISTRIBUTED_OPERATION)) return true;
+  final private boolean jj_3_35() {
+    if (jj_scan_token(DSA_OPERATION)) return true;
     return false;
   }
 
   final private boolean jj_3R_13() {
     Token xsp;
     xsp = jj_scanpos;
-    if (jj_3_43()) {
+    if (jj_3_48()) {
     jj_scanpos = xsp;
-    if (jj_3_44()) return true;
+    if (jj_3_49()) return true;
     }
     return false;
   }
 
-  final private boolean jj_3_43() {
+  final private boolean jj_3_48() {
     if (jj_3R_9()) return true;
     return false;
   }
 
-  final private boolean jj_3_29() {
+  final private boolean jj_3_34() {
+    if (jj_scan_token(DISTRIBUTED_OPERATION)) return true;
+    return false;
+  }
+
+  final private boolean jj_3_33() {
     if (jj_scan_token(DIRECTORY_OPERATION)) return true;
     return false;
   }
@@ -813,75 +872,98 @@ public class SchemaParser implements SchemaParserConstants {
   final private boolean jj_3R_11() {
     Token xsp;
     xsp = jj_scanpos;
-    if (jj_3_28()) {
+    if (jj_3_32()) {
     jj_scanpos = xsp;
-    if (jj_3_29()) {
+    if (jj_3_33()) {
     jj_scanpos = xsp;
-    if (jj_3_30()) {
+    if (jj_3_34()) {
     jj_scanpos = xsp;
-    if (jj_3_31()) return true;
+    if (jj_3_35()) {
+    jj_scanpos = xsp;
+    if (jj_3_36()) return true;
+    }
     }
     }
     }
     return false;
   }
 
-  final private boolean jj_3_28() {
+  final private boolean jj_3_32() {
     if (jj_scan_token(USER_APPLICATIONS)) return true;
     return false;
   }
 
-  final private boolean jj_3_26() {
+  final private boolean jj_3_28() {
     if (jj_scan_token(MAY)) return true;
     if (jj_3R_13()) return true;
     return false;
   }
 
-  final private boolean jj_3_25() {
+  final private boolean jj_3_27() {
     if (jj_scan_token(MUST)) return true;
     if (jj_3R_13()) return true;
     return false;
   }
 
-  final private boolean jj_3_24() {
+  final private boolean jj_3_26() {
     if (jj_scan_token(AUXILIARY)) return true;
     return false;
   }
 
-  final private boolean jj_3_23() {
+  final private boolean jj_3_30() {
+    if (jj_scan_token(X_DS_USE)) return true;
+    if (jj_3R_8()) return true;
+    return false;
+  }
+
+  final private boolean jj_3_25() {
     if (jj_scan_token(STRUCTURAL)) return true;
     return false;
   }
 
-  final private boolean jj_3_22() {
+  final private boolean jj_3_29() {
+    if (jj_scan_token(X_ORIGIN)) return true;
+    if (jj_3R_8()) return true;
+    return false;
+  }
+
+  final private boolean jj_3_24() {
     if (jj_scan_token(ABSTRACT)) return true;
     return false;
   }
 
-  final private boolean jj_3_21() {
+  final private boolean jj_3_23() {
     if (jj_scan_token(SUP)) return true;
     if (jj_3R_13()) return true;
     return false;
   }
 
-  final private boolean jj_3_20() {
+  final private boolean jj_3_46() {
+    if (jj_scan_token(OBJECTCLASS)) return true;
+    return false;
+  }
+
+  final private boolean jj_3_43() {
+    if (jj_scan_token(LBRACE)) return true;
+    if (jj_scan_token(DIGIT)) return true;
+    if (jj_scan_token(RBRACE)) return true;
+    return false;
+  }
+
+  final private boolean jj_3_22() {
     if (jj_scan_token(OBSOLETE)) return true;
     return false;
   }
 
-  final private boolean jj_3_19() {
+  final private boolean jj_3_21() {
     if (jj_scan_token(DESC)) return true;
     if (jj_3R_8()) return true;
     return false;
   }
 
-  final private boolean jj_3_17() {
+  final private boolean jj_3_19() {
     Token xsp;
     xsp = jj_scanpos;
-    if (jj_3_18()) {
-    jj_scanpos = xsp;
-    if (jj_3_19()) {
-    jj_scanpos = xsp;
     if (jj_3_20()) {
     jj_scanpos = xsp;
     if (jj_3_21()) {
@@ -894,7 +976,17 @@ public class SchemaParser implements SchemaParserConstants {
     jj_scanpos = xsp;
     if (jj_3_25()) {
     jj_scanpos = xsp;
-    if (jj_3_26()) return true;
+    if (jj_3_26()) {
+    jj_scanpos = xsp;
+    if (jj_3_27()) {
+    jj_scanpos = xsp;
+    if (jj_3_28()) {
+    jj_scanpos = xsp;
+    if (jj_3_29()) {
+    jj_scanpos = xsp;
+    if (jj_3_30()) return true;
+    }
+    }
     }
     }
     }
@@ -906,58 +998,46 @@ public class SchemaParser implements SchemaParserConstants {
     return false;
   }
 
-  final private boolean jj_3_18() {
+  final private boolean jj_3_20() {
     if (jj_scan_token(NAME)) return true;
     if (jj_3R_7()) return true;
     return false;
   }
 
-  final private boolean jj_3_41() {
-    if (jj_scan_token(OBJECTCLASS)) return true;
-    return false;
-  }
-
-  final private boolean jj_3_38() {
-    if (jj_scan_token(LBRACE)) return true;
-    if (jj_scan_token(DIGIT)) return true;
-    if (jj_scan_token(RBRACE)) return true;
-    return false;
-  }
-
-  final private boolean jj_3_40() {
+  final private boolean jj_3_45() {
     if (jj_3R_12()) return true;
     Token xsp;
     xsp = jj_scanpos;
-    if (jj_3_38()) jj_scanpos = xsp;
+    if (jj_3_43()) jj_scanpos = xsp;
     return false;
   }
 
   final private boolean jj_3R_9() {
     Token xsp;
     xsp = jj_scanpos;
-    if (jj_3_39()) {
+    if (jj_3_44()) {
     jj_scanpos = xsp;
-    if (jj_3_40()) {
+    if (jj_3_45()) {
     jj_scanpos = xsp;
-    if (jj_3_41()) return true;
+    if (jj_3_46()) return true;
     }
     }
     return false;
   }
 
-  final private boolean jj_3_39() {
+  final private boolean jj_3_44() {
     if (jj_3R_14()) return true;
     return false;
   }
 
-  final private boolean jj_3_27() {
+  final private boolean jj_3_31() {
     if (jj_scan_token(OBJECTCLASS)) return true;
     if (jj_scan_token(LPAREN)) return true;
     if (jj_3R_12()) return true;
     Token xsp;
     while (true) {
       xsp = jj_scanpos;
-      if (jj_3_17()) { jj_scanpos = xsp; break; }
+      if (jj_3_19()) { jj_scanpos = xsp; break; }
     }
     if (jj_scan_token(RPAREN)) return true;
     return false;
@@ -968,7 +1048,7 @@ public class SchemaParser implements SchemaParserConstants {
     return false;
   }
 
-  final private boolean jj_3_35() {
+  final private boolean jj_3_40() {
     if (jj_3R_14()) return true;
     return false;
   }
@@ -984,8 +1064,20 @@ public class SchemaParser implements SchemaParserConstants {
     return false;
   }
 
+  final private boolean jj_3_17() {
+    if (jj_scan_token(X_DS_USE)) return true;
+    if (jj_3R_8()) return true;
+    return false;
+  }
+
   final private boolean jj_3_13() {
     if (jj_scan_token(COLLECTIVE)) return true;
+    return false;
+  }
+
+  final private boolean jj_3_16() {
+    if (jj_scan_token(X_ORIGIN)) return true;
+    if (jj_3R_8()) return true;
     return false;
   }
 
@@ -994,9 +1086,36 @@ public class SchemaParser implements SchemaParserConstants {
     return false;
   }
 
+  final private boolean jj_3_42() {
+    if (jj_scan_token(LPAREN)) return true;
+    Token xsp;
+    if (jj_3_40()) return true;
+    while (true) {
+      xsp = jj_scanpos;
+      if (jj_3_40()) { jj_scanpos = xsp; break; }
+    }
+    if (jj_scan_token(RPAREN)) return true;
+    return false;
+  }
+
   final private boolean jj_3_11() {
     if (jj_scan_token(SYNTAX)) return true;
     if (jj_3R_10()) return true;
+    return false;
+  }
+
+  final private boolean jj_3R_7() {
+    Token xsp;
+    xsp = jj_scanpos;
+    if (jj_3_41()) {
+    jj_scanpos = xsp;
+    if (jj_3_42()) return true;
+    }
+    return false;
+  }
+
+  final private boolean jj_3_41() {
+    if (jj_3R_14()) return true;
     return false;
   }
 
@@ -1024,35 +1143,8 @@ public class SchemaParser implements SchemaParserConstants {
     return false;
   }
 
-  final private boolean jj_3_37() {
-    if (jj_scan_token(LPAREN)) return true;
-    Token xsp;
-    if (jj_3_35()) return true;
-    while (true) {
-      xsp = jj_scanpos;
-      if (jj_3_35()) { jj_scanpos = xsp; break; }
-    }
-    if (jj_scan_token(RPAREN)) return true;
-    return false;
-  }
-
   final private boolean jj_3_6() {
     if (jj_scan_token(OBSOLETE)) return true;
-    return false;
-  }
-
-  final private boolean jj_3R_7() {
-    Token xsp;
-    xsp = jj_scanpos;
-    if (jj_3_36()) {
-    jj_scanpos = xsp;
-    if (jj_3_37()) return true;
-    }
-    return false;
-  }
-
-  final private boolean jj_3_36() {
-    if (jj_3R_14()) return true;
     return false;
   }
 
@@ -1087,7 +1179,13 @@ public class SchemaParser implements SchemaParserConstants {
     jj_scanpos = xsp;
     if (jj_3_14()) {
     jj_scanpos = xsp;
-    if (jj_3_15()) return true;
+    if (jj_3_15()) {
+    jj_scanpos = xsp;
+    if (jj_3_16()) {
+    jj_scanpos = xsp;
+    if (jj_3_17()) return true;
+    }
+    }
     }
     }
     }
@@ -1108,7 +1206,27 @@ public class SchemaParser implements SchemaParserConstants {
     return false;
   }
 
-  final private boolean jj_3_16() {
+  final private boolean jj_3_39() {
+    if (jj_scan_token(IDENT)) return true;
+    return false;
+  }
+
+  final private boolean jj_3R_14() {
+    Token xsp;
+    xsp = jj_scanpos;
+    if (jj_3_38()) {
+    jj_scanpos = xsp;
+    if (jj_3_39()) return true;
+    }
+    return false;
+  }
+
+  final private boolean jj_3_38() {
+    if (jj_scan_token(QDSTRING)) return true;
+    return false;
+  }
+
+  final private boolean jj_3_18() {
     if (jj_scan_token(ATTRIBUTETYPE)) return true;
     if (jj_scan_token(LPAREN)) return true;
     if (jj_3R_12()) return true;
@@ -1118,26 +1236,6 @@ public class SchemaParser implements SchemaParserConstants {
       if (jj_3_3()) { jj_scanpos = xsp; break; }
     }
     if (jj_scan_token(RPAREN)) return true;
-    return false;
-  }
-
-  final private boolean jj_3_34() {
-    if (jj_scan_token(IDENT)) return true;
-    return false;
-  }
-
-  final private boolean jj_3R_14() {
-    Token xsp;
-    xsp = jj_scanpos;
-    if (jj_3_33()) {
-    jj_scanpos = xsp;
-    if (jj_3_34()) return true;
-    }
-    return false;
-  }
-
-  final private boolean jj_3_33() {
-    if (jj_scan_token(QDSTRING)) return true;
     return false;
   }
 
@@ -1156,7 +1254,7 @@ public class SchemaParser implements SchemaParserConstants {
     return false;
   }
 
-  final private boolean jj_3_32() {
+  final private boolean jj_3_37() {
     if (jj_scan_token(DOT)) return true;
     if (jj_scan_token(DIGIT)) return true;
     return false;
@@ -1167,12 +1265,12 @@ public class SchemaParser implements SchemaParserConstants {
     Token xsp;
     while (true) {
       xsp = jj_scanpos;
-      if (jj_3_32()) { jj_scanpos = xsp; break; }
+      if (jj_3_37()) { jj_scanpos = xsp; break; }
     }
     return false;
   }
 
-  final private boolean jj_3_42() {
+  final private boolean jj_3_47() {
     if (jj_scan_token(DOLLAR)) return true;
     if (jj_3R_9()) return true;
     return false;
@@ -1200,7 +1298,7 @@ public class SchemaParser implements SchemaParserConstants {
    private static void jj_la1_1() {
       jj_la1_1 = new int[] {};
    }
-  final private JJCalls[] jj_2_rtns = new JJCalls[44];
+  final private JJCalls[] jj_2_rtns = new JJCalls[49];
   private boolean jj_rescan = false;
   private int jj_gc = 0;
 
@@ -1369,8 +1467,8 @@ public class SchemaParser implements SchemaParserConstants {
 
   public ParseException generateParseException() {
     jj_expentries.removeAllElements();
-    boolean[] la1tokens = new boolean[41];
-    for (int i = 0; i < 41; i++) {
+    boolean[] la1tokens = new boolean[44];
+    for (int i = 0; i < 44; i++) {
       la1tokens[i] = false;
     }
     if (jj_kind >= 0) {
@@ -1389,7 +1487,7 @@ public class SchemaParser implements SchemaParserConstants {
         }
       }
     }
-    for (int i = 0; i < 41; i++) {
+    for (int i = 0; i < 44; i++) {
       if (la1tokens[i]) {
         jj_expentry = new int[1];
         jj_expentry[0] = i;
@@ -1414,7 +1512,7 @@ public class SchemaParser implements SchemaParserConstants {
 
   final private void jj_rescan_token() {
     jj_rescan = true;
-    for (int i = 0; i < 44; i++) {
+    for (int i = 0; i < 49; i++) {
       JJCalls p = jj_2_rtns[i];
       do {
         if (p.gen > jj_gen) {
@@ -1464,6 +1562,11 @@ public class SchemaParser implements SchemaParserConstants {
             case 41: jj_3_42(); break;
             case 42: jj_3_43(); break;
             case 43: jj_3_44(); break;
+            case 44: jj_3_45(); break;
+            case 45: jj_3_46(); break;
+            case 46: jj_3_47(); break;
+            case 47: jj_3_48(); break;
+            case 48: jj_3_49(); break;
           }
         }
         p = p.next;
