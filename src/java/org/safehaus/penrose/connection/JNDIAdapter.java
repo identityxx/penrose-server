@@ -17,6 +17,7 @@ import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.mapping.Row;
 import org.safehaus.penrose.mapping.Source;
 import org.safehaus.penrose.mapping.Field;
+import org.safehaus.penrose.mapping.AttributeValues;
 import org.safehaus.penrose.SearchResults;
 
 /**
@@ -30,6 +31,9 @@ public class JNDIAdapter extends Adapter {
 
     public DirContext ctx;
 
+    public String url;
+    public String suffix;
+
     public void init() throws Exception {
         String name = getConnectionName();
 
@@ -41,8 +45,27 @@ public class JNDIAdapter extends Adapter {
             String param = (String)i.next();
             String value = getParameter(param);
             log.debug(param+": "+value);
-            env.put(param, value);
+
+            if (param.equals(Context.PROVIDER_URL)) {
+
+                int index = value.indexOf("://");
+                index = value.indexOf("/", index+3);
+                if (index >= 0) { // extract suffix from url
+                    suffix = value.substring(index+1);
+                    url = value.substring(0, index);
+                } else {
+                    suffix = "";
+                    url = value;
+                }
+                env.put(param, url);
+
+            } else {
+                env.put(param, value);
+            }
         }
+
+        //log.debug("URL: "+url);
+        //log.debug("Suffix: "+suffix);
 
         ctx = new InitialDirContext(env);
     }
@@ -57,6 +80,12 @@ public class JNDIAdapter extends Adapter {
         log.debug("JNDI Source: "+source.getConnectionName());
 
         String ldapBase = source.getParameter(BASE_DN);
+        if ("".equals(ldapBase)) {
+            ldapBase = suffix;
+        } else {
+            ldapBase = ldapBase+","+suffix;
+        }
+
         String ldapScope = source.getParameter(SCOPE);
         String ldapFilter = source.getParameter(FILTER);
 
@@ -97,7 +126,7 @@ public class JNDIAdapter extends Adapter {
 
     public Collection getRows(Source source, javax.naming.directory.SearchResult sr) throws Exception {
 
-        org.safehaus.penrose.mapping.AttributeValues map = new org.safehaus.penrose.mapping.AttributeValues();
+        AttributeValues map = new AttributeValues();
 
         Attributes attrs = sr.getAttributes();
         Collection fields = source.getFields();
@@ -141,7 +170,9 @@ public class JNDIAdapter extends Adapter {
             for (Iterator j=fields.iterator(); j.hasNext(); ) {
                 Field field = (Field)j.next();
                 String name = field.getName();
-                values.set(name, row.get(field.getOriginalName()));
+                Object value = row.get(field.getOriginalName());
+                if (value == null) continue;
+                values.set(name, value);
             }
 
             //log.debug(" - "+values);
@@ -151,7 +182,7 @@ public class JNDIAdapter extends Adapter {
         return list;
     }
 
-    public int bind(Source source, org.safehaus.penrose.mapping.AttributeValues values, String password) throws Exception {
+    public int bind(Source source, AttributeValues values, String password) throws Exception {
 
         log.debug("JNDI Bind:");
 
@@ -159,12 +190,7 @@ public class JNDIAdapter extends Adapter {
             return LDAPException.INVALID_CREDENTIALS;
         }
 
-        String url = getParameter(Context.PROVIDER_URL);
-        int i = url.indexOf("://");
-        int j = url.indexOf("/", i+3);
-        String suffix = url.substring(j+1);
-
-        String dn = getDn(source, values)+","+suffix;
+        String dn = getDn(source, values);
         log.debug("Binding as "+dn);
 
         Hashtable env = new Hashtable();
@@ -184,12 +210,12 @@ public class JNDIAdapter extends Adapter {
         return LDAPException.SUCCESS;
     }
 
-    public int add(Source source, org.safehaus.penrose.mapping.AttributeValues entry) throws Exception {
+    public int add(Source source, AttributeValues entry) throws Exception {
         log.debug("JNDI Add:");
 
-        if (!entry.contains("objectClass")) {
-            return modifyAdd(source, entry);
-        }
+        //if (!entry.contains("objectClass")) {
+        //    return modifyAdd(source, entry);
+        //}
 
         String dn = getDn(source, entry);
 
@@ -218,14 +244,15 @@ public class JNDIAdapter extends Adapter {
         try {
             ctx.createSubcontext(dn, attrs);
         } catch (NameAlreadyBoundException e) {
-            log.debug("Error: "+e.getMessage());
-            return LDAPException.ENTRY_ALREADY_EXISTS;
+            return modifyAdd(source, entry);
+            //log.debug("Error: "+e.getMessage());
+            //return LDAPException.ENTRY_ALREADY_EXISTS;
         }
 
         return LDAPException.SUCCESS;
     }
 
-    public int modifyDelete(Source source, org.safehaus.penrose.mapping.AttributeValues entry) throws Exception {
+    public int modifyDelete(Source source, AttributeValues entry) throws Exception {
         log.debug("JNDI Modify Delete:");
 
         String dn = getDn(source, entry);
@@ -264,7 +291,7 @@ public class JNDIAdapter extends Adapter {
         return LDAPException.SUCCESS;
     }
 
-    public int delete(Source source, org.safehaus.penrose.mapping.AttributeValues entry) throws Exception {
+    public int delete(Source source, AttributeValues entry) throws Exception {
         log.debug("JNDI Delete:");
 
         if (!entry.contains("objectClass")) {
@@ -284,7 +311,7 @@ public class JNDIAdapter extends Adapter {
         return LDAPException.SUCCESS;
     }
 
-    public int modify(Source source, org.safehaus.penrose.mapping.AttributeValues oldEntry, org.safehaus.penrose.mapping.AttributeValues newEntry) throws Exception {
+    public int modify(Source source, AttributeValues oldEntry, AttributeValues newEntry) throws Exception {
         log.debug("JNDI Modify:");
 
         String dn = getDn(source, newEntry);
@@ -401,7 +428,7 @@ public class JNDIAdapter extends Adapter {
         return LDAPException.SUCCESS;
     }
 
-    public int modifyAdd(Source source, org.safehaus.penrose.mapping.AttributeValues entry) throws Exception {
+    public int modifyAdd(Source source, AttributeValues entry) throws Exception {
         log.debug("JNDI Modify Add:");
 
         String dn = getDn(source, entry);
@@ -446,7 +473,7 @@ public class JNDIAdapter extends Adapter {
         return LDAPException.SUCCESS;
     }
 
-    public String getDn(Source source, org.safehaus.penrose.mapping.AttributeValues columnValues) throws Exception {
+    public String getDn(Source source, AttributeValues columnValues) throws Exception {
         String baseDn = source.getParameter(BASE_DN);
 
         Collection fields= source.getFields();
@@ -469,6 +496,12 @@ public class JNDIAdapter extends Adapter {
             }
 
             sb.append(value);
+        }
+
+        if ("".equals(baseDn)) {
+            baseDn = suffix;
+        } else {
+            baseDn = baseDn+","+suffix;
         }
 
         return sb+","+baseDn;

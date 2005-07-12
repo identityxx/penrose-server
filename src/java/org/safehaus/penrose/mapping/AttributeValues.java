@@ -43,6 +43,7 @@ public class AttributeValues {
     }
 
     public void add(String name, Collection values) {
+        if (values == null) return;
         Collection c = (Collection)this.values.get(name);
         if (c == null) {
             this.values.put(name, values);

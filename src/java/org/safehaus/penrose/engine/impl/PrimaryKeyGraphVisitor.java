@@ -71,44 +71,7 @@ public class PrimaryKeyGraphVisitor extends GraphVisitor {
             return true;
         }
 
-        log.debug("Getting entry primary keys:");
-        for (Iterator i=rows.iterator(); i.hasNext(); ) {
-            Row row = (Row)i.next();
-            //log.debug(" - "+row);
-
-            Interpreter interpreter = engine.getEngineContext().newInterpreter();
-            // interpreter.set(row);
-
-            for (Iterator k=row.getNames().iterator(); k.hasNext(); ) {
-                String name = (String)k.next();
-                Object value = row.get(name);
-                interpreter.set(source.getName()+"."+name, value);
-            }
-
-            Collection rdnAttributes = entryDefinition.getRdnAttributes();
-
-            Row pk = new Row();
-            boolean valid = true;
-
-            for (Iterator k=rdnAttributes.iterator(); k.hasNext(); ) {
-                AttributeDefinition attr = (AttributeDefinition)k.next();
-                String name = attr.getName();
-                String expression = attr.getExpression();
-                Object value = interpreter.eval(expression);
-
-                if (value == null) {
-                    valid = false;
-                    break;
-                }
-
-                pk.set(name, value);
-            }
-
-            if (!valid) continue;
-
-            keys.add(pk);
-            log.debug(" - "+pk);
-        }
+        keys.addAll(rows);
         //log.debug("to: "+keys);
 
         return false;
@@ -161,12 +124,35 @@ public class PrimaryKeyGraphVisitor extends GraphVisitor {
         SearchResults results = source.search(newFilter, 100);
         if (results.size() == 0) return false;
         
-        //log.debug("Source primary keys:");
+        log.debug("Storing in source cache:");
         newRows = new HashSet();
+        Map map = new HashMap();
         for (Iterator j=results.iterator(); j.hasNext(); ) {
             Row row = (Row)j.next();
-            //log.debug(" - "+row);
+
+            Row pk = new Row();
+            Collection fields = source.getPrimaryKeyFields();
+            for (Iterator i=fields.iterator(); i.hasNext(); ) {
+                Field field = (Field)i.next();
+                Object value = row.get(field.getName());
+                pk.set(field.getName(), value);
+            }
+
+            AttributeValues values = (AttributeValues)map.get(pk);
+            if (values == null) {
+                values = new AttributeValues();
+                map.put(pk, values);
+            }
+            values.add(row);
+
             newRows.add(row);
+        }
+
+        for (Iterator j=map.keySet().iterator(); j.hasNext(); ) {
+            Row pk = (Row)j.next();
+            AttributeValues values = (AttributeValues)map.get(pk);
+            log.debug(" - "+pk+": "+values);
+            engine.getSourceCache().put(source, pk, values);
         }
 
         stack.push(newRows);

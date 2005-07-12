@@ -74,6 +74,8 @@ public class LoaderGraphVisitor extends GraphVisitor {
                 String name = (String)j.next();
 
                 Collection c = (Collection)v.get(name);
+                if (c == null) continue;
+                
                 newValues.add(source.getName()+"."+name, c);
             }
 

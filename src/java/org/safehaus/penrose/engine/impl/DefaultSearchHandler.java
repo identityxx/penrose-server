@@ -128,10 +128,11 @@ public class DefaultSearchHandler extends SearchHandler {
 
         Graph graph = getConfig().getGraph(entryDefinition);
         Source primarySource = getConfig().getPrimarySource(entryDefinition);
+        String primarySourceName = primarySource.getName();
 
         log.debug("--------------------------------------------------------------------------------------");
 
-        rdns = new TreeSet();
+        Set keys = new HashSet();
 
         if (parent != null && parent.isDynamic()) {
 
@@ -169,11 +170,10 @@ public class DefaultSearchHandler extends SearchHandler {
 
             PrimaryKeyGraphVisitor visitor = new PrimaryKeyGraphVisitor(getEngine(), entryDefinition, newRows, primarySource);
             graph.traverse(visitor, startingSource);
-            rdns.addAll(visitor.getKeys());
+            keys.addAll(visitor.getKeys());
 
         } else {
 
-            String primarySourceName = primarySource.getName();
             log.debug("Primary source: "+primarySourceName);
 
             Filter f = getCache().getCacheFilterTool().toSourceFilter(null, entryDefinition, primarySource, filter);
@@ -181,39 +181,71 @@ public class DefaultSearchHandler extends SearchHandler {
             log.debug("Searching source "+primarySourceName+" for "+f);
             SearchResults results = primarySource.search(f, 100);
 
+            log.debug("Storing in source cache:");
+            Map map = new HashMap();
             for (Iterator j=results.iterator(); j.hasNext(); ) {
                 Row row = (Row)j.next();
 
-                Interpreter interpreter = getEngineContext().newInterpreter();
-                for (Iterator k=row.getNames().iterator(); k.hasNext(); ) {
-                    String name = (String)k.next();
-                    Object value = row.get(name);
-                    interpreter.set(primarySourceName+"."+name, value);
-                }
-
-                Collection rdnAttributes = entryDefinition.getRdnAttributes();
-
                 Row pk = new Row();
-                boolean valid = true;
-
-                for (Iterator k=rdnAttributes.iterator(); k.hasNext(); ) {
-                    AttributeDefinition attr = (AttributeDefinition)k.next();
-                    String name = attr.getName();
-                    String expression = attr.getExpression();
-                    Object value = interpreter.eval(expression);
-
-                    if (value == null) {
-                        valid = false;
-                        break;
-                    }
-
-                    pk.set(name, value);
+                Collection fields = primarySource.getPrimaryKeyFields();
+                for (Iterator i=fields.iterator(); i.hasNext(); ) {
+                    Field field = (Field)i.next();
+                    Object value = row.get(field.getName());
+                    pk.set(field.getName(), value);
                 }
 
-                if (!valid) continue;
-                rdns.add(pk);
+                AttributeValues values = (AttributeValues)map.get(pk);
+                if (values == null) {
+                    values = new AttributeValues();
+                    map.put(pk, values);
+                }
+                values.add(row);
+
+                keys.add(row);
             }
 
+            for (Iterator j=map.keySet().iterator(); j.hasNext(); ) {
+                Row pk = (Row)j.next();
+                AttributeValues values = (AttributeValues)map.get(pk);
+                log.debug(" - "+pk+": "+values);
+                getEngine().getSourceCache().put(primarySource, pk, values);
+            }
+
+        }
+
+        rdns = new TreeSet();
+
+        for (Iterator j=keys.iterator(); j.hasNext(); ) {
+            Row row = (Row)j.next();
+
+            Interpreter interpreter = getEngineContext().newInterpreter();
+            for (Iterator k=row.getNames().iterator(); k.hasNext(); ) {
+                String name = (String)k.next();
+                Object value = row.get(name);
+                interpreter.set(primarySourceName+"."+name, value);
+            }
+
+            Collection rdnAttributes = entryDefinition.getRdnAttributes();
+
+            Row rdn = new Row();
+            boolean valid = true;
+
+            for (Iterator k=rdnAttributes.iterator(); k.hasNext(); ) {
+                AttributeDefinition attr = (AttributeDefinition)k.next();
+                String name = attr.getName();
+                String expression = attr.getExpression();
+                Object value = interpreter.eval(expression);
+
+                if (value == null) {
+                    valid = false;
+                    break;
+                }
+
+                rdn.set(name, value);
+            }
+
+            if (!valid) continue;
+            rdns.add(rdn);
         }
 
         getCache().getFilterCache().put(key, rdns);
@@ -236,7 +268,7 @@ public class DefaultSearchHandler extends SearchHandler {
             Interpreter interpreter = getEngineContext().newInterpreter();
             interpreter.set(rdn);
 
-            Collection fields = source.getFields();
+            Collection fields = source.getPrimaryKeyFields();
             Row pk = new Row();
 
             for (Iterator j=fields.iterator(); j.hasNext(); ) {
@@ -288,12 +320,20 @@ public class DefaultSearchHandler extends SearchHandler {
             Calendar c = (Calendar) calendar.clone();
             c.add(Calendar.MINUTE, -cacheExpiration);
 
-            Collection loadedRdns = getEngine().getEntryCache().getRdns(entryDefinition, rdns);
-            log.debug("Loaded rdns: "+loadedRdns);
-
             Collection rdnsToLoad = new TreeSet();
-            rdnsToLoad.addAll(rdns);
-            if (loadedRdns != null) rdnsToLoad.removeAll(loadedRdns);
+
+            for (Iterator i=rdns.iterator(); i.hasNext(); ) {
+                Row rdn = (Row)i.next();
+
+                Entry entry = getEngine().getEntryCache().get(entryDefinition, rdn);
+                if (entry == null) {
+                    rdnsToLoad.add(rdn);
+                } else {
+                    entry.setParent(parent);
+                    results.add(entry);
+                }
+            }
+
             log.debug("Rdns to load: "+rdnsToLoad);
 
             if (!rdnsToLoad.isEmpty()) {
@@ -304,12 +344,11 @@ public class DefaultSearchHandler extends SearchHandler {
 
                 for (Iterator i=entries.iterator(); i.hasNext(); ) {
                     Entry entry = (Entry)i.next();
+                    entry.setParent(parent);
                     results.add(entry);
                     getEngine().getEntryCache().put(entry);
                 }
             }
-
-            getEntries(parent, entryDefinition, loadedRdns, results);
 
         } finally {
             lock.releaseWriteLock(Penrose.WAIT_TIMEOUT);
@@ -317,29 +356,5 @@ public class DefaultSearchHandler extends SearchHandler {
         }
 
         return results;
-    }
-
-    /**
-     * Get entries from entry cache.
-     *
-     * @param parent
-     * @param entryDefinition
-     * @param rdns
-     * @throws Exception
-     */
-    public void getEntries(
-            Entry parent,
-            EntryDefinition entryDefinition,
-            Collection rdns,
-            SearchResults results)
-            throws Exception {
-
-        Map entries = getEngine().getEntryCache().get(entryDefinition, rdns);
-
-        for (Iterator i = entries.values().iterator(); i.hasNext(); ) {
-            Entry entry = (Entry) i.next();
-            entry.setParent(parent);
-            results.add(entry);
-        }
     }
 }
