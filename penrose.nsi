@@ -12,7 +12,7 @@
   ;Name and file
   Name "Penrose"
   BrandingText " "
-  OutFile "dist\penrose-0.9.2-nsis.exe"
+  OutFile "dist\penrose-0.9.3-nsis.exe"
 
   ;Default installation folder
   InstallDir "$PROGRAMFILES\Penrose"
