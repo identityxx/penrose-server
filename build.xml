@@ -72,7 +72,7 @@
         </jar>
     </target>
 
-    <target name="docs">
+    <target name="docs" depends="build">
         <mkdir dir="target/javadoc"/>
         <javadoc packagenames="org.safehaus.penrose.*"
             sourcepath="src/java"
@@ -182,7 +182,7 @@
             src="target/${project.name}-${project.version}-src.tar"/>
     </target>
 
-    <target name="dist-unix" depends="dist,docs">
+    <target name="dist-unix" depends="docs,dist">
         <echo message="Creating ${project.name}-${project.version}.zip"/>
         <mkdir dir="dist"/>
         <zip destfile="dist/${project.name}-${project.version}.zip"
@@ -210,7 +210,7 @@
         </copy>
     </target>
 
-    <target name="dist-win32" depends="dist,docs">
+    <target name="dist-win32" depends="docs,dist">
         <echo message="Creating ${project.name}-${project.version}.exe"/>
         <mkdir dir="dist"/>
         <exec executable="${iscc.path}" os="Windows NT,Windows 2000,Windows XP,Windows 2003">
