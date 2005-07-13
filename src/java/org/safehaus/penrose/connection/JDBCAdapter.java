@@ -10,7 +10,6 @@ import org.ietf.ldap.LDAPException;
 import org.safehaus.penrose.SearchResults;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.mapping.*;
-import org.hibernate.dialect.Dialect;
 
 import javax.sql.DataSource;
 import java.sql.PreparedStatement;
@@ -30,7 +29,6 @@ public class JDBCAdapter extends Adapter {
     public final static String DIALECT = "dialect";
 
     public DataSource ds;
-    public Dialect dialect;
 
     public JDBCFilterTool filterTool;
 
@@ -44,12 +42,6 @@ public class JDBCAdapter extends Adapter {
         String url = getParameter(URL);
         String username = getParameter(USER);
         String password = getParameter(PASSWORD);
-
-        String dialectClass = getParameter(DIALECT);
-        dialect = (Dialect)Class.forName(dialectClass).newInstance();
-        String lowerCaseFunction = dialect.getLowercaseFunction();
-        log.debug("Lower case function: "+lowerCaseFunction);
-
 
         Class.forName(driver);
 
