@@ -207,7 +207,7 @@ public class DefaultSearchHandler extends SearchHandler {
             for (Iterator j=map.keySet().iterator(); j.hasNext(); ) {
                 Row pk = (Row)j.next();
                 AttributeValues values = (AttributeValues)map.get(pk);
-                log.debug(" - "+pk+": "+values);
+                //log.debug(" - "+pk+": "+values);
                 getEngine().getSourceCache().put(primarySource, pk, values);
             }
 
