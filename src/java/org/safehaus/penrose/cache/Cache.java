@@ -4,19 +4,11 @@
  */
 package org.safehaus.penrose.cache;
 
-import org.safehaus.penrose.mapping.EntryDefinition;
-import org.safehaus.penrose.mapping.AttributeValues;
-import org.safehaus.penrose.mapping.Row;
-import org.safehaus.penrose.mapping.Entry;
-import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.Penrose;
-import org.safehaus.penrose.engine.AddHandler;
 import org.safehaus.penrose.config.Config;
 import org.apache.log4j.Logger;
 
 import java.util.Collection;
-import java.util.Date;
-import java.util.Map;
 
 /**
  * @author Endi S. Dewata

@@ -18,7 +18,6 @@ import java.io.FileWriter;
 import java.net.URL;
 import java.util.Collection;
 import java.util.Iterator;
-import java.util.ArrayList;
 
 /**
  * @author Endi S. Dewata

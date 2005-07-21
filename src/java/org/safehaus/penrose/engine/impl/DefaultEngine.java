@@ -5,16 +5,7 @@
 package org.safehaus.penrose.engine.impl;
 
 
-import java.util.*;
-
-import org.safehaus.penrose.thread.MRSWLock;
-import org.safehaus.penrose.thread.ThreadPool;
-import org.safehaus.penrose.thread.Queue;
-import org.safehaus.penrose.mapping.*;
-import org.safehaus.penrose.SearchResults;
-import org.safehaus.penrose.PenroseConnection;
 import org.safehaus.penrose.engine.*;
-import org.ietf.ldap.LDAPException;
 
 /**
  * @author Endi S. Dewata

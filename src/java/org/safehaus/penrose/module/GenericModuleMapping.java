@@ -142,4 +142,27 @@ public class GenericModuleMapping implements ModuleMapping {
     public void setModuleConfig(ModuleConfig moduleConfig) {
         this.moduleConfig = moduleConfig;
     }
+
+    public int hashCode() {
+        return moduleName.hashCode() + baseDn.hashCode() + scope.hashCode() + filter.hashCode();
+    }
+
+    public boolean equals(Object o1, Object o2) {
+        if (o1 == null && o2 == null) return true;
+        if (o1 != null) return o1.equals(o2);
+        return o2.equals(o1);
+    }
+
+    public boolean equals(Object o) {
+        if (o == null) return false;
+        if (!(o instanceof ModuleMapping)) return false;
+
+        ModuleMapping mapping = (ModuleMapping)o;
+        if (!equals(moduleName, mapping.getModuleName())) return false;
+        if (!equals(baseDn, mapping.getBaseDn())) return false;
+        if (!equals(scope, mapping.getScope())) return false;
+        if (!equals(filter, mapping.getFilter())) return false;
+        
+        return true;
+    }
 }

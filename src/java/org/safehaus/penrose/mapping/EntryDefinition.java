@@ -26,8 +26,6 @@ public class EntryDefinition implements Cloneable, Serializable {
     /**
      * Distinguished name.
      */
-	//private String dn;
-
     private String rdn;
 
     private String parentDn;
@@ -64,13 +62,29 @@ public class EntryDefinition implements Cloneable, Serializable {
 	public EntryDefinition() {
 	}
 
+    public int hashValue() {
+        return getDn().hashCode();
+    }
+
+    public boolean equals(Object o) {
+        if (o == null) return false;
+        if (!(o instanceof EntryDefinition)) return false;
+
+        EntryDefinition entryDefinition = (EntryDefinition)o;
+        return getDn().equals(entryDefinition.getDn());
+    }
+
 	public EntryDefinition(String dn) {
         this.parent = null;
-        //this.dn = dn;
 
         int i = dn.indexOf(",");
-        rdn = dn.substring(0, i);
-        parentDn = dn.substring(i+1);
+        if (i < 0) {
+            rdn = dn;
+            parentDn = null;
+        } else {
+            rdn = dn.substring(0, i);
+            parentDn = dn.substring(i+1);
+        }
     }
 
     public EntryDefinition(String rdn, EntryDefinition parent) {
@@ -156,8 +170,13 @@ public class EntryDefinition implements Cloneable, Serializable {
 
     public void setDn(String dn) {
         int i = dn.indexOf(",");
-        rdn = dn.substring(0, i);
-        parentDn = dn.substring(i+1);
+        if (i < 0) {
+            rdn = dn;
+            parentDn = null;
+        } else {
+            rdn = dn.substring(0, i);
+            parentDn = dn.substring(i+1);
+        }
     }
 
     public Map getAttributes() {
@@ -248,14 +267,26 @@ public class EntryDefinition implements Cloneable, Serializable {
         return (Source)sources.remove(name);
     }
 
+    public void removeAllSources() {
+        sources.clear();
+    }
+
 	public void addAttributeDefinition(AttributeDefinition attribute) {
 		attributes.put(attribute.getName(), attribute);
 	}
-	
+
+    public AttributeDefinition removeAttributeDefinition(String name) {
+        return (AttributeDefinition)attributes.remove(name);
+    }
+
 	public void addRelationship(Relationship relationship) {
 		relationships.add(relationship);
 	}
 
+    public void removeAllRelationships() {
+        relationships.clear();
+    }
+    
     public Object clone() {
         EntryDefinition entry = new EntryDefinition();
         entry.setParent(parent);
@@ -333,7 +364,11 @@ public class EntryDefinition implements Cloneable, Serializable {
     	StringBuffer sb = new StringBuffer();
     	Iterator iter = null;
 
-    	sb.append("dn="+rdn+","+parentDn+",");
+    	sb.append("dn="+rdn);
+        if (parentDn != null) {
+            sb.append(","+parentDn);
+        }
+        sb.append(",");
 
     	sb.append("children=[");
     	iter = children.iterator();

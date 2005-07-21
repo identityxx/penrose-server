@@ -69,6 +69,10 @@ public class Source implements Cloneable, Serializable {
     public Field removeField(String name) {
         return (Field)fields.remove(name);
     }
+
+    public void removeAllFields() {
+        fields.clear();
+    }
     
     public void addPrimaryKeyField(Field field) {
         primaryKeyFields.add(field);

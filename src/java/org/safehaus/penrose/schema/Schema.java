@@ -132,6 +132,12 @@ public class Schema {
         return map.values();
     }
 
+    public Collection getAllObjectClasses(String objectClassName) {
+        Map map = new HashMap();
+        getAllObjectClasses(objectClassName, map);
+        return map.values();
+    }
+
     public void getAllObjectClasses(String objectClassName, Map map) {
         if ("top".equals(objectClassName)) return;
         if (map.containsKey(objectClassName)) return;

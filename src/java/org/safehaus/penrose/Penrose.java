@@ -485,19 +485,21 @@ public class Penrose implements
     public Collection getModules(String dn) throws Exception {
         log.debug("Find matching module mapping for "+dn);
 
-        Collection mappings = config.getModuleMappings();
-        if (mappings == null) return null;
-
         Collection list = new ArrayList();
-        for (Iterator i=mappings.iterator(); i.hasNext(); ) {
-            ModuleMapping moduleMapping = (ModuleMapping)i.next();
 
-            String moduleName = moduleMapping.getModuleName();
-            Module module = (Module)modules.get(moduleName);
+        for (Iterator i = config.getModuleMappings().iterator(); i.hasNext(); ) {
+            Collection c = (Collection)i.next();
 
-            if (moduleMapping.match(dn)) {
-                log.debug(" - "+moduleName);
-                list.add(module);
+            for (Iterator j=c.iterator(); j.hasNext(); ) {
+                ModuleMapping moduleMapping = (ModuleMapping)j.next();
+
+                String moduleName = moduleMapping.getModuleName();
+                Module module = (Module)modules.get(moduleName);
+
+                if (moduleMapping.match(dn)) {
+                    log.debug(" - "+moduleName);
+                    list.add(module);
+                }
             }
         }
 

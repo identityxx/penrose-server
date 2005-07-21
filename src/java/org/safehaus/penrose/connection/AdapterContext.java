@@ -1,10 +1,7 @@
 package org.safehaus.penrose.connection;
 
-import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.engine.TransformEngine;
 import org.safehaus.penrose.config.Config;
-
-import java.util.Map;
 
 /**
  * @author Endi S. Dewata

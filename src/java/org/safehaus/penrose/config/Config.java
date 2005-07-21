@@ -15,7 +15,6 @@ import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.graph.Graph;
 import org.safehaus.penrose.cache.CacheConfig;
 import org.safehaus.penrose.engine.EngineConfig;
-import org.safehaus.penrose.graph.Graph;
 import org.safehaus.penrose.interpreter.InterpreterConfig;
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.connection.*;
@@ -65,7 +64,7 @@ public class Config implements Serializable {
 
         if (entryDefinitions.get(dn) != null) throw new Exception("Entry "+dn+" already exists.");
 
-        log.debug("Adding "+dn+".");
+        //System.out.println("Adding "+dn+".");
 
         int i = dn.indexOf(",");
 
@@ -75,6 +74,7 @@ public class Config implements Serializable {
             EntryDefinition parent = (EntryDefinition)entryDefinitions.get(parentDn);
 
             if (parent != null) { // parent found
+                //System.out.println("Found parent "+parentDn+".");
                 parent.addChild(entry);
             }
         }
@@ -219,24 +219,26 @@ public class Config implements Serializable {
     }
     
     public void renameEntryDefinition(EntryDefinition entry, String newDn) {
-    	log.debug("renameEntry: "+entry.getDn()+" to "+newDn);
     	if (entry == null) return;
+
     	if (newDn.equals(entry.getDn())) return;
-    	log.debug("renameEntry: "+entry.getDn()+" to "+newDn);
+    	//System.out.println("Renaming "+entry.getDn()+" to "+newDn);
+
     	String oldDn = entry.getDn();
     	entry.setDn(newDn);
-        entryDefinitions.remove(oldDn);
+
         entryDefinitions.put(newDn, entry);
+
         Collection children = entry.getChildren();
-        if (children != null) {
-        	Object[] cs = children.toArray();
-        	for (int i=0; i<cs.length; i++) {
-        		EntryDefinition child = (EntryDefinition) cs[i];
-                String childNewDn = child.getRdn()+","+newDn;
-                renameEntryDefinition(child, childNewDn);
-        	}
+        for (Iterator i=children.iterator(); i.hasNext(); ) {
+            EntryDefinition child = (EntryDefinition)i.next();
+            String childNewDn = child.getRdn()+","+newDn;
+            //System.out.println(" - renaming child "+child.getDn()+" to "+childNewDn);
+
+            renameEntryDefinition(child, childNewDn);
         }
-		entryDefinitions.remove(oldDn);
+
+        entryDefinitions.remove(oldDn);
     }
 
     public void addSourceDefinition(SourceDefinition sourceDefinition) throws Exception {
@@ -271,8 +273,17 @@ public class Config implements Serializable {
         return (ModuleConfig)moduleConfigs.get(name);
     }
 
+    public Collection getModuleMappings(String name) {
+        return (Collection)moduleMappings.get(name);
+    }
+
     public void addModuleMapping(GenericModuleMapping mapping) throws Exception {
-        moduleMappings.put(mapping.getModuleName(), mapping);
+        Collection c = (Collection)moduleMappings.get(mapping.getModuleName());
+        if (c == null) {
+            c = new ArrayList();
+            moduleMappings.put(mapping.getModuleName(), c);
+        }
+        c.add(mapping);
 
         String moduleName = mapping.getModuleName();
         if (moduleName == null) throw new Exception("Missing module name");
@@ -435,9 +446,8 @@ public class Config implements Serializable {
         sb.append(nl);
         sb.append(nl);
 
-		for (Iterator i = entryDefinitions.keySet().iterator(); i.hasNext();) {
-			String dn = (String) i.next();
-			EntryDefinition entry = (EntryDefinition) entryDefinitions.get(dn);
+		for (Iterator i = rootEntryDefinitions.iterator(); i.hasNext();) {
+			EntryDefinition entry = (EntryDefinition)i.next();
 			sb.append(toString(entry));
 		}
 
@@ -458,8 +468,11 @@ public class Config implements Serializable {
         sb.append(nl);
         sb.append(nl);
         for (Iterator i = moduleMappings.values().iterator(); i.hasNext(); ) {
-            ModuleMapping moduleMapping = (ModuleMapping)i.next();
-            sb.append(moduleMapping.getModuleName()+" -> "+ moduleMapping.getBaseDn() + nl);
+            Collection c = (Collection)i.next();
+            for (Iterator j = c.iterator(); j.hasNext(); ) {
+                ModuleMapping moduleMapping = (ModuleMapping)j.next();
+                sb.append(moduleMapping.getModuleName()+" -> "+ moduleMapping.getBaseDn() + nl);
+            }
         }
 
 		return sb.toString();
@@ -492,6 +505,12 @@ public class Config implements Serializable {
 		}
 
         sb.append(nl);
+
+        Collection children = entry.getChildren();
+        for (Iterator i = children.iterator(); i.hasNext();) {
+            EntryDefinition child = (EntryDefinition) i.next();
+            sb.append(toString(child));
+        }
 
 		return sb.toString();
 	}
@@ -555,8 +574,16 @@ public class Config implements Serializable {
     	return moduleConfigs.values();
     }
     
-    public ModuleMapping removeModuleMapping(String moduleName) {
-    	return (ModuleMapping)moduleMappings.remove(moduleName);
+    public Collection removeModuleMapping(String moduleName) {
+    	return (Collection)moduleMappings.remove(moduleName);
+    }
+
+    public void removeModuleMapping(ModuleMapping mapping) {
+        if (mapping == null) return;
+        if (mapping.getModuleName() == null) return;
+        
+        Collection c = (Collection)moduleMappings.get(mapping.getModuleName());
+        if (c != null) c.remove(mapping);
     }
 
     public Collection getEngineConfigs() {

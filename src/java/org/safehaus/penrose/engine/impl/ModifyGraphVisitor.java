@@ -8,7 +8,6 @@ import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.engine.Engine;
 import org.safehaus.penrose.graph.GraphVisitor;
-import org.safehaus.penrose.interpreter.Interpreter;
 import org.apache.log4j.Logger;
 import org.ietf.ldap.LDAPException;
 

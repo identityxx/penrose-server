@@ -5,19 +5,11 @@
 package org.safehaus.penrose.engine.impl;
 
 import org.ietf.ldap.*;
-import org.safehaus.penrose.config.*;
-import org.safehaus.penrose.util.PasswordUtil;
-import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.Penrose;
-import org.safehaus.penrose.PenroseConnection;
 import org.safehaus.penrose.engine.ModifyHandler;
 import org.safehaus.penrose.graph.Graph;
 import org.safehaus.penrose.thread.MRSWLock;
-import org.safehaus.penrose.schema.Schema;
-import org.safehaus.penrose.schema.ObjectClass;
-import org.apache.log4j.Logger;
-
 import java.util.*;
 
 

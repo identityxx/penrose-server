@@ -167,4 +167,29 @@ public class ObjectClass implements Serializable {
 				", superClasses="+superClasses+", requiredAttributes="+requiredAttributes+", optionalAttributes="+optionalAttributes);
 		return sb.toString();
 	}
+
+    public int hashCode() {
+        return oid.hashCode();
+    }
+
+    boolean compare(Object o1, Object o2) {
+        if (o1 == null && o2 == null) return true;
+        if (o1 != null) return o1.equals(o2);
+        return o2.equals(o1);
+    }
+
+    public boolean equals(Object object) {
+        if (object == null) return false;
+        if (!(object instanceof ObjectClass)) return false;
+
+        ObjectClass oc = (ObjectClass)object;
+        if (!compare(oid, oc.oid)) return false;
+        if (!compare(names, oc.names)) return false;
+        if (!compare(description, oc.description)) return false;
+        if (obsolete != oc.obsolete) return false;
+        if (!compare(superClasses, oc.superClasses)) return false;
+        if (!compare(type, oc.type)) return false;
+
+        return true;
+    }
 }

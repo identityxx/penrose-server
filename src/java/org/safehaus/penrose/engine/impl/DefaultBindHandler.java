@@ -4,15 +4,11 @@
  */
 package org.safehaus.penrose.engine.impl;
 
-import org.ietf.ldap.LDAPDN;
 import org.ietf.ldap.LDAPException;
-import org.safehaus.penrose.util.PasswordUtil;
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.Penrose;
-import org.safehaus.penrose.PenroseConnection;
 import org.safehaus.penrose.engine.BindHandler;
 import org.safehaus.penrose.thread.MRSWLock;
-import org.apache.log4j.Logger;
 
 import java.util.*;
 

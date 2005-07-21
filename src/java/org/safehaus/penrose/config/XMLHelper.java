@@ -7,6 +7,7 @@ package org.safehaus.penrose.config;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Collection;
 
 import org.dom4j.Element;
 import org.dom4j.tree.DefaultAttribute;
@@ -131,10 +132,14 @@ public class XMLHelper {
 			modulesElement.add(moduleElement);
 		}
 		// module-mapping
-		for (Iterator iter = config.getModuleMappings().iterator(); iter.hasNext();) {
-			ModuleMapping mapping = (ModuleMapping)iter.next();
-			Element mappingElement = toElement(mapping);
-			modulesElement.add(mappingElement);
+		for (Iterator i = config.getModuleMappings().iterator(); i.hasNext();) {
+            Collection c = (Collection)i.next();
+
+            for (Iterator j = c.iterator(); j.hasNext(); ) {
+                ModuleMapping mapping = (ModuleMapping)j.next();
+                Element mappingElement = toElement(mapping);
+                modulesElement.add(mappingElement);
+            }
 		}
 		return modulesElement;
 	}
@@ -213,7 +218,8 @@ public class XMLHelper {
 		Map attributes = entry.getAttributes();
 		for (Iterator i = attributes.values().iterator(); i.hasNext(); ) {
 			AttributeDefinition attribute = (AttributeDefinition)i.next();
-			entryElement.add(toElement(attribute));
+            if (attribute.getExpression() == null) continue;
+            entryElement.add(toElement(attribute));
 		}
 		// sources
 		for (Iterator i = entry.getSources().iterator(); i.hasNext(); ) {
@@ -267,9 +273,9 @@ public class XMLHelper {
 			Field field = (Field)i.next();
 
             if (sourceDefinition.getFieldDefinition(field.getName()) == null) continue;
-            
-			Element fieldElement = toElement(field);
-            element.add(fieldElement);
+            if (field.getExpression() == null) continue;
+
+            element.add(toElement(field));
 		}
     	// parameters
         Map parameters = new HashMap(); // source.getParameters();
