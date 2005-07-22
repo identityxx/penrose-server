@@ -196,6 +196,9 @@
         </tar>
         <gzip destfile="dist/${project.name}-${project.version}.tar.gz"
             src="target/${project.name}-${project.version}.tar"/>
+    </target>
+
+    <target name="dist-rpm" depends="dist-src">
         <copy todir="/usr/src/redhat/SOURCES" overwrite="true"
             file="dist/${project.name}-${project.version}-src.tar.gz">
         </copy>
