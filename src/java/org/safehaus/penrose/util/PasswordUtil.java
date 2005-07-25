@@ -134,8 +134,11 @@ public class PasswordUtil {
      */
     public static boolean comparePassword(String credential, String digest) throws Exception {
 
-        int i = digest.indexOf("}");
+        if (digest == null) return false;
+
         String encryption = getEncryptionMethod(digest);
+
+        int i = digest.indexOf("}");
         String storedPassword = digest.substring(i+1);
 
         String encoding = "Base64";

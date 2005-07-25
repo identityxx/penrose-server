@@ -93,7 +93,7 @@ public class DefaultSearchHandler extends SearchHandler {
             String rhs = relationship.getRhs();
             int ri = rhs.indexOf(".");
             String rsource = rhs.substring(0, ri);
-            Source rs = entryDefinition.getSource(lsource);
+            Source rs = entryDefinition.getSource(rsource);
             if (rs == null) return rsource;
 
         }

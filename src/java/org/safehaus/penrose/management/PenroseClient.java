@@ -10,6 +10,7 @@ import javax.management.remote.JMXConnectorFactory;
 import javax.management.MBeanServerConnection;
 import javax.management.ObjectName;
 import java.util.Map;
+import java.util.HashMap;
 
 public class PenroseClient {
 
@@ -25,17 +26,33 @@ public class PenroseClient {
 	public MBeanServerConnection connection;
 	public String domain;
 	public ObjectName name;
+    public String host;
+    public int port;
 
-	public PenroseClient(String url, String username, String password) throws Exception {
-		this.url = url;
+	public PenroseClient(String host, int port, String username, String password) throws Exception {
+        this.host = host;
+        this.port = port;
+        this.url = "service:jmx:rmi:///jndi/rmi://"+host+(port == 0 ? "" : ":"+port)+"/jmx";
+        //this.url = "service:jmx:rmi://"+host+(port == 0 ? "" : ":"+port);
 		this.username = username;
 		this.password = password;
 	}
 
 	public void connect() throws Exception {
 		address = new JMXServiceURL(url);
-		environment = null;
+        //address = new JMXServiceURL("rmi", host, port);
+
+        String[] credentials = new String[2];
+        credentials[0] = username;
+        credentials[1] = password;
+
+        environment = new HashMap();
+        environment.put(JMXConnector.CREDENTIALS, credentials);
+
 		connector = JMXConnectorFactory.connect(address, environment);
+        //connector = JMXConnectorFactory.newJMXConnector(address, null);
+        //connector.connect(environment);
+
 		connection = connector.getMBeanServerConnection();
 		domain = connection.getDefaultDomain();
 		name = new ObjectName(MBEAN_NAME);
@@ -64,5 +81,11 @@ public class PenroseClient {
                 new Object[] { filename, content },
                 new String[] { String.class.getName(), String.class.getName() }
         );
+    }
+
+    public static void main(String args[]) throws Exception {
+        PenroseClient client = new PenroseClient("localhost", 0, args[0], args[1]);
+        client.connect();
+        client.close();
     }
 }

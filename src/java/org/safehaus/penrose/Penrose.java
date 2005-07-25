@@ -74,6 +74,7 @@ public class Penrose implements
     public final static String CONNECTION_LOGGER = "org.safehaus.penrose.connection";
     public final static String TRANSFORM_LOGGER  = "org.safehaus.penrose.transform";
     public final static String MODULE_LOGGER     = "org.safehaus.penrose.module";
+    public final static String SECURITY_LOGGER   = "org.safehaus.penrose.security";
 
     public final static String SEARCH_LOGGER     = "org.safehaus.penrose.search";
     public final static String BIND_LOGGER       = "org.safehaus.penrose.bind";
@@ -320,16 +321,16 @@ public class Penrose implements
 
     public void initJmx() {
         // Register JMX
-        MBeanServer mbs = null;
+        MBeanServer server = null;
         try {
             ArrayList servers = MBeanServerFactory.findMBeanServer(null);
-            mbs = (MBeanServer) servers.get(0);
+            server = (MBeanServer) servers.get(0);
 
         } catch (Exception ex) {
             log.debug("Default MBeanServer has not been created yet.");
         }
 
-        if (mbs == null) {
+        if (server == null) {
             try {
                 log.debug("Creating MBeanServer...");
 
@@ -337,14 +338,14 @@ public class Penrose implements
                 mx4j.log.Log.redirectTo(new Log4JLogger());
 
                 // Create the MBeanServer
-                mbs = MBeanServerFactory.createMBeanServer();
+                server = MBeanServerFactory.createMBeanServer();
 
                 // Create the ConfigurationLoader
                 ConfigurationLoader loader = new ConfigurationLoader();
 
                 // Register the configuration loader into the MBeanServer
                 ObjectName name = ObjectName.getInstance(":service=configuration");
-                mbs.registerMBean(loader, name);
+                server.registerMBean(loader, name);
 
                 // Tell the configuration loader the XML configuration file
                 Reader reader = new BufferedReader(new FileReader(managementConfig));
@@ -358,12 +359,12 @@ public class Penrose implements
             }
         }
 
-        if (mbs != null) {
+        if (server != null) {
             try {
-                mbs.registerMBean(this, new ObjectName(PenroseClient.MBEAN_NAME));
-                //mbs.registerMBean(engine, new ObjectName("Penrose:type=Engine"));
-                //mbs.registerMBean(connectionPool, new ObjectName("Penrose:type=PenroseConnectionPool"));
-                //mbs.registerMBean(threadPool, new ObjectName("Penrose:type=ThreadPool"));
+                server.registerMBean(this, ObjectName.getInstance(PenroseClient.MBEAN_NAME));
+                //server.registerMBean(engine, ObjectName.getInstance("Penrose:type=Engine"));
+                //server.registerMBean(connectionPool, ObjectName.getInstance("Penrose:type=PenroseConnectionPool"));
+                //server.registerMBean(threadPool, ObjectName.getInstance("Penrose:type=ThreadPool"));
             } catch (Exception ex) {
                 log.error(ex.toString(), ex);
             }
