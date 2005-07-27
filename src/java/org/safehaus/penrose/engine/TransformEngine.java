@@ -164,7 +164,8 @@ public class TransformEngine {
                 continue;
             }
 
-            String value = (String)interpreter.eval(expression);
+            Object v = interpreter.eval(expression);
+            String value = v == null ? null : v.toString();
 
             if (field.getEncryption() != null) {
                 // if field encryption is enabled

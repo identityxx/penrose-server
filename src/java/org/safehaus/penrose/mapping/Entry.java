@@ -130,7 +130,7 @@ public class Entry {
             Collection values = attributeValues.get(name);
 
             for (Iterator j = values.iterator(); j.hasNext(); ) {
-                String value = (String)j.next();
+                Object value = j.next();
                 sb.append(name+": "+value+"\n");
             }
         }
