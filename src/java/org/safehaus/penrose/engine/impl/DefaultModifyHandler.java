@@ -43,6 +43,7 @@ public class DefaultModifyHandler extends ModifyHandler {
             if (result != LDAPException.SUCCESS) return result;
         }
 */
+        getEngineContext().getCache().getFilterCache().invalidate();
         getEngine().getEntryCache().remove(entry);
 
         return LDAPException.SUCCESS;

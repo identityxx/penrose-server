@@ -38,4 +38,8 @@ public class FilterCache {
             map.remove(key);
         }
     }
+
+    public void invalidate() throws Exception {
+        map.clear();
+    }
 }

@@ -46,6 +46,8 @@ public class DefaultAddHandler extends AddHandler {
 
         engine.getEntryCache().put(entryDefinition, values, date);
 */
+        getEngineContext().getCache().getFilterCache().invalidate();
+        
         return LDAPException.SUCCESS;
     }
 
