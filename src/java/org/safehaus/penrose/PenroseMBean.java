@@ -64,11 +64,6 @@ public interface PenroseMBean {
 	// Getters and Setters
 	// ------------------------------------------------
 	public void setSuffix(String suffixes[]);
-	public void setHomeDirectory(String homeDirectory);
-	public void setRoot();
-	public void setRoot(String rootDn, String rootPassword);
-	public int setProperties(Properties properties) throws Exception;
-	public int setPropertiesFilename(String propertiesFilename) throws Exception;
 	public AclTool getAclTool();
 	public void setAclTool(AclTool aclTool);
 	public Collection getEngines();
@@ -94,8 +89,6 @@ public interface PenroseMBean {
 	public void setStopRequested(boolean stopRequested);
 	public List getSuffixes();
 	public void setSuffixes(List suffixes);
-	public String getHomeDirectory();
-	public Properties getProperties();
 	public void setConfig(Config config);
 	public String readConfigFile(String filename) throws IOException;
 	public void writeConfigFile(String filename, String content) throws IOException;

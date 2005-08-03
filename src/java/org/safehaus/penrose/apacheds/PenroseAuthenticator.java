@@ -21,12 +21,18 @@ import javax.naming.NamingException;
  */
 public class PenroseAuthenticator extends AbstractAuthenticator {
 
+    public Penrose penrose;
+
     public PenroseAuthenticator( )
     {
         super( "simple" );
     }
 
     public void init() throws NamingException {
+    }
+
+    public void setPenrose(Penrose penrose) {
+        this.penrose = penrose;
     }
 
     public LdapPrincipal authenticate( ServerContext ctx ) throws NamingException {
@@ -39,7 +45,6 @@ public class PenroseAuthenticator extends AbstractAuthenticator {
             String password = new String((byte[])credentials);
             log.info("Login "+dn);
 
-            Penrose penrose = PenrosePartition.getPenrose();
             PenroseConnection connection = penrose.openConnection();
 
             int rc = connection.bind(dn.toString(), password);

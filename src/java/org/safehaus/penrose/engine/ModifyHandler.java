@@ -111,7 +111,7 @@ public abstract class ModifyHandler {
 		convertValues(entryDefinition, modifications);
 
 		log.debug("--- old values:");
-		log.debug(entry);
+		log.debug(entry.toString());
 
 		log.debug("--- perform modification:");
 		AttributeValues newValues = new AttributeValues(oldValues);
@@ -197,7 +197,7 @@ public abstract class ModifyHandler {
         newEntry.setParent(entry.getParent());
 
 		log.debug("--- new values:");
-		log.debug(newEntry);
+		log.debug(newEntry.toString());
 
         return modify(entry, newValues);
 	}

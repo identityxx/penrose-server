@@ -47,6 +47,7 @@ import org.safehaus.penrose.filter.FilterTool;
 import org.safehaus.penrose.acl.AclTool;
 import org.safehaus.penrose.management.PenroseClient;
 import org.apache.log4j.Logger;
+import org.apache.log4j.PropertyConfigurator;
 import sun.misc.SignalHandler;
 import sun.misc.Signal;
 
@@ -99,9 +100,6 @@ public class Penrose implements
 	private List suffixes = new ArrayList();
 	private List normalizedSuffixes = new ArrayList();
 
-	private String homeDirectory;
-
-	private Properties properties;
 	private String trustedKeyStore;
 	private String serverConfig;
 	private String sourcesConfig;
@@ -159,58 +157,13 @@ public class Penrose implements
 
 	}
 
-	public void setHomeDirectory(String homeDirectory) {
-
-        log.debug("-------------------------------------------------------------------------------");
-        log.debug("Penrose.setHomeDirectory(\""+homeDirectory+"\");");
-
-		this.homeDirectory = homeDirectory;
-	}
-	
-	public void setRoot() {
-		setRoot(config.getRootDn(), config.getRootPassword());
-	}
-
-	/**
-	 * Initialize server with root DN and password.
-	 * 
-	 * @param rootDn
-	 * @param rootPassword
-	 */
-	public void setRoot(String rootDn, String rootPassword) {
-		log.debug("-------------------------------------------------------------------------------");
-		log.debug("Penrose.setRoot(rootDn, rootPassword)");
-		log.debug(" rootDN           : " + rootDn);
-		log.debug(" rootPassword     : " + rootPassword);
-		
-		this.rootDn = rootDn;
-		this.rootPassword = rootPassword;
-	}
-	
-	public int setPropertiesFilename(String propertyFilename) throws Exception {
-		
-		FileInputStream fis = new FileInputStream(propertyFilename);
-		Properties prop = new Properties();
-		prop.load(fis);
-		return setProperties(prop);
-		
-	}
-
-    /**
-     * Set the properties.
-     *
-     * @param properties
-     * @return return value
-     * @throws Exception
-     */
-    public int setProperties(Properties properties) throws Exception {
-
-        this.properties = properties;
-
-        return LDAPException.SUCCESS;
-    }
-
 	public int init() throws Exception {
+
+        String loggerConfig = "conf/log4j.properties";
+
+        if (loggerConfig != null) {
+            PropertyConfigurator.configure(loggerConfig);
+        }
 
 		loadConfig();
 
@@ -219,6 +172,14 @@ public class Penrose implements
 		transformEngine = new TransformEngine(this);
 
         schema = new Schema();
+
+        File schemaDir = new File("schema");
+
+        File schemaFiles[] = schemaDir.listFiles();
+        for (int i=0; i<schemaFiles.length; i++) {
+            if (schemaFiles[i].isDirectory()) continue;
+            loadSchema(schemaFiles[i].getAbsolutePath());
+        }
 
         initConnections();
         initMappings();
@@ -409,30 +370,19 @@ public class Penrose implements
         log.debug("-------------------------------------------------------------------------------");
         log.debug("Penrose.loadConfig()");
 
-        homeDirectory = properties.getProperty(PENROSE_HOME);
-
-        trustedKeyStore = properties.getProperty(KEY_STORE_TRUSTED);
-        if (trustedKeyStore != null) trustedKeyStore = homeDirectory+"/"+trustedKeyStore;
-        log.debug(KEY_STORE_TRUSTED+": "+trustedKeyStore);
-
-        serverConfig = properties.getProperty(SERVER_CONFIG);
-        if (serverConfig != null) serverConfig = homeDirectory+"/"+serverConfig;
+        serverConfig = "conf/server.xml";
         log.debug(SERVER_CONFIG+": "+serverConfig);
 
-        sourcesConfig = properties.getProperty(SOURCES_CONFIG);
-        if (sourcesConfig != null) sourcesConfig = homeDirectory+"/"+sourcesConfig;
+        sourcesConfig = "conf/sources.xml";
         log.debug(SOURCES_CONFIG+": "+sourcesConfig);
 
-        mappingConfig = properties.getProperty(MAPPING_CONFIG);
-        if (mappingConfig != null) mappingConfig = homeDirectory+"/"+mappingConfig;
+        mappingConfig = "conf/mapping.xml";
         log.debug(MAPPING_CONFIG+": "+mappingConfig);
 
-        modulesConfig = properties.getProperty(MODULES_CONFIG);
-        if (modulesConfig != null) modulesConfig = homeDirectory+"/"+modulesConfig;
+        modulesConfig = "conf/modules.xml";
         log.debug(MODULES_CONFIG+": "+modulesConfig);
 
-        managementConfig = properties.getProperty(MANAGEMENT_CONFIG);
-        if (managementConfig != null) managementConfig = homeDirectory+"/"+managementConfig;
+        managementConfig = "conf/mx4j.xml";
         log.debug(MANAGEMENT_CONFIG+": "+managementConfig);
 
         ConfigBuilder builder = new ConfigBuilder();
@@ -442,7 +392,7 @@ public class Penrose implements
         builder.loadModulesConfig(modulesConfig);
 
         config = builder.getConfig();
-        log.debug(config);
+        log.debug(config.toString());
 
         config.analyze();
 	}
@@ -960,18 +910,12 @@ public class Penrose implements
 	public void setTrustedKeyStore(String trustedKeyStore) {
 		this.trustedKeyStore = trustedKeyStore;
 	}
-	public String getHomeDirectory() {
-		return homeDirectory;
-	}
-	public Properties getProperties() {
-		return properties;
-	}
 	public void setConfig(Config config) {
 		this.config = config;
 	}
 
 	public String readConfigFile(String filename) throws IOException {
-		File file = new File(homeDirectory, filename);
+		File file = new File(filename);
 		FileReader fr = new FileReader(file);
 		BufferedReader br = new BufferedReader(fr);
 		StringBuffer sb = new StringBuffer();
@@ -987,7 +931,7 @@ public class Penrose implements
 	}
 	
 	public void writeConfigFile(String filename, String content) throws IOException {
-		File file = new File(homeDirectory, filename);
+		File file = new File(filename);
 		FileWriter fw = new FileWriter(file);
 		fw.write(content);
 		fw.close();

@@ -4,7 +4,7 @@
  */
 package org.safehaus.penrose.apacheds;
 
-import org.apache.ldap.server.partition.AbstractPartition;
+import org.apache.ldap.server.partition.AbstractContextPartition;
 import org.apache.ldap.common.filter.ExprNode;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PropertyConfigurator;
@@ -24,7 +24,7 @@ import java.io.File;
 /**
  * @author Endi S. Dewata
  */
-public class PenrosePartition extends AbstractPartition {
+public class PenrosePartition extends AbstractContextPartition {
 
     //public Logger configLog = Logger.getLogger(Penrose.CONFIG_LOGGER);
     //public Logger engineLog = Logger.getLogger(Penrose.ENGINE_LOGGER);
@@ -32,60 +32,14 @@ public class PenrosePartition extends AbstractPartition {
 
     public static Penrose penrose;
 
-    public void init() throws NamingException {
-        try {
+    public void setPenrose(Penrose penrose) throws Exception {
 
-            if (penrose == null) createPenrose();
+        if (PenrosePartition.penrose != null) return;
 
-        } catch (Exception e) {
-            e.printStackTrace();
-            throw new NamingException(e.getMessage());
-        }
-    }
-
-    public Penrose createPenrose() throws Exception {
-        //System.out.println("[PenrosePartition] Initializing ...");
-
-        String homeDirectory = getInitParameter(Penrose.PENROSE_HOME);
-        String loggerConfig = homeDirectory == null ? null : homeDirectory+"/"+getInitParameter(Penrose.LOGGER_CONFIG);
-
-        if (loggerConfig != null) {
-            PropertyConfigurator.configure(loggerConfig);
-        }
-
-        Properties properties = new Properties();
-
-        for (Enumeration e = getPartitionConfig().getInitParameterNames(); e.hasMoreElements(); ) {
-            String name = (String)e.nextElement();
-            String value = getPartitionConfig().getInitParameter(name);
-
-            properties.setProperty(name, value);
-        }
-
-        penrose = new Penrose();
-        penrose.setRoot("uid=admin,ou=system", null);
-        penrose.setProperties(properties);
+        PenrosePartition.penrose = penrose;
         penrose.init();
-
-        Logger log = Logger.getLogger(PenrosePartition.class);
-
-        String penroseHome = properties.getProperty(Penrose.PENROSE_HOME);
-        File schemaDir = new File(penroseHome+"/schema");
-        log.debug("Loading schema from "+schemaDir.getAbsolutePath());
-
-        File schemaFiles[] = schemaDir.listFiles();
-        for (int i=0; i<schemaFiles.length; i++) {
-            if (schemaFiles[i].isDirectory()) continue;
-            penrose.loadSchema(schemaFiles[i].getAbsolutePath());
-        }
-
-        return penrose;
     }
 
-    public static Penrose getPenrose() throws Exception {
-        return penrose;
-    }
-    
     public void delete(Name dn) throws NamingException {
         Logger log = Logger.getLogger(PenrosePartition.class);
         log.info("Deleting \""+dn+"\"");
@@ -111,7 +65,7 @@ public class PenrosePartition extends AbstractPartition {
         Logger log = Logger.getLogger(PenrosePartition.class);
         log.info("Adding \""+upName+"\"");
 
-        if (getNormalizedSuffix().equals(normName)) return;
+        if (getSuffix(true).equals(normName)) return;
 
         try {
             LDAPAttributeSet attributeSet = new LDAPAttributeSet();

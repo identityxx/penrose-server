@@ -100,25 +100,10 @@ public class PenroseBackend implements Backend {
         log.debug("-------------------------------------------------------------------------------");
         log.debug("PenroseBackend.init();");
 
-        String homeDirectory = properties.getProperty(Penrose.PENROSE_HOME);
-        String loggerConfig = homeDirectory+"/"+properties.getProperty(Penrose.LOGGER_CONFIG);
-
-        if (loggerConfig != null) {
-            PropertyConfigurator.configure(loggerConfig);
-        }
-
         penrose = new Penrose();
-        penrose.setRoot(rootDn, rootPassword);
-        penrose.setProperties(properties);
-
+        penrose.setRootDn(rootDn);
+        penrose.setRootPassword(rootPassword);
         penrose.init();
-
-        Collection schemaFiles = getSchemaFiles();
-
-        for (Iterator i=schemaFiles.iterator(); i.hasNext(); ) {
-            String path = (String)i.next();
-            penrose.loadSchema(path);
-        }
 
         return LDAPException.SUCCESS;
     }

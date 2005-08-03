@@ -147,9 +147,9 @@ start() {
     exit 1
   else
     if [ -n "$CYGHOME" ] ; then
-      exec "$JAVACMD" $PENROSE_DEBUG_OPTS $PENROSE_OPTS -classpath "$LOCALCLASSPATH" -Dpenrose.home="$PENROSE_HOME" -Dcygwin.user.home="$CYGHOME" org.apache.ldap.server.ServerMain "$PENROSE_HOME\\conf\\apacheds.properties" $PENROSE_ARGS "$@" >> "$PENROSE_HOME/var/penrose.out" 2>&1 &
+      exec "$JAVACMD" $PENROSE_DEBUG_OPTS $PENROSE_OPTS -classpath "$LOCALCLASSPATH" -Dpenrose.home="$PENROSE_HOME" -Dcygwin.user.home="$CYGHOME" org.apache.ldap.server.ServerMain "$PENROSE_HOME\\conf\\apacheds.xml" $PENROSE_ARGS "$@" >> "$PENROSE_HOME/var/penrose.out" 2>&1 &
     else
-      exec "$JAVACMD" $PENROSE_DEBUG_OPTS $PENROSE_OPTS -classpath "$LOCALCLASSPATH" -Dpenrose.home="$PENROSE_HOME" org.apache.ldap.server.ServerMain "$PENROSE_HOME/conf/apacheds.properties" $PENROSE_ARGS "$@" >> "$PENROSE_HOME/var/penrose.out" 2>&1 &
+      exec "$JAVACMD" $PENROSE_DEBUG_OPTS $PENROSE_OPTS -classpath "$LOCALCLASSPATH" -Dpenrose.home="$PENROSE_HOME" org.apache.ldap.server.ServerMain "$PENROSE_HOME/conf/apacheds.xml" $PENROSE_ARGS "$@" >> "$PENROSE_HOME/var/penrose.out" 2>&1 &
     fi
 
     echo $! > "$PENROSE_PID"
