@@ -21,6 +21,7 @@ import org.ietf.ldap.LDAPEntry;
 
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.HashSet;
 
 /**
  * @author Endi S. Dewata
@@ -179,6 +180,12 @@ public abstract class SearchHandler {
 			return LDAPException.INVALID_DN_SYNTAX;
 		}
 
+        Collection normalizedAttributeNames = new HashSet();
+        for (Iterator i=attributeNames.iterator(); i.hasNext(); ) {
+            String attributeName = (String)i.next();
+            normalizedAttributeNames.add(attributeName.toLowerCase());
+        }
+
 		Filter f = engineContext.getFilterTool().parseFilter(filter);
 		log.debug("Parsed filter: " + f);
 
@@ -209,14 +216,14 @@ public abstract class SearchHandler {
 		if (scope == LDAPConnection.SCOPE_BASE || scope == LDAPConnection.SCOPE_SUB) { // base or subtree
 			if (engineContext.getFilterTool().isValidEntry(baseEntry, f)) {
                 LDAPEntry entry = baseEntry.toLDAPEntry();
-				results.add(Entry.filterAttributes(entry, attributeNames));
+				results.add(Entry.filterAttributes(entry, normalizedAttributeNames));
 			}
 		}
 
         log.debug("----------------------------------------------------------------------------------");
 		if (scope == LDAPConnection.SCOPE_ONE || scope == LDAPConnection.SCOPE_SUB) { // one level or subtree
 			log.debug("Searching children of " + baseEntry.getDn());
-			searchChildren(connection, baseEntry, scope, f, attributeNames, results);
+			searchChildren(connection, baseEntry, scope, f, normalizedAttributeNames, results);
 		}
 		/*
 		 * log.debug("-------------------------------------------------------------------------------");

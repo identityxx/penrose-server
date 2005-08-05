@@ -38,19 +38,31 @@ public class PenroseAuthenticator extends AbstractAuthenticator {
     public LdapPrincipal authenticate( ServerContext ctx ) throws NamingException {
         Logger log = Logger.getLogger(PenroseAuthenticator.class);
 
+        String dn = ( String ) ctx.getEnvironment().get( Context.SECURITY_PRINCIPAL );
+
+        Object credentials = ctx.getEnvironment().get( Context.SECURITY_CREDENTIALS );
+        String password = new String((byte[])credentials);
+
+        String rootDn = penrose.getRootDn();
+        String rootPassword = penrose.getRootPassword();
+
+        if (rootDn != null && rootPassword != null &&
+                rootDn.equals(dn) && rootPassword.equals(password)) {
+            return createLdapPrincipal( dn );
+        }
+
+        if ("".equals(dn)) {
+            return createLdapPrincipal( dn );
+        }
+        
+        log.info("Login "+dn);
+
         try {
-            String dn = ( String ) ctx.getEnvironment().get( Context.SECURITY_PRINCIPAL );
-            Object credentials = ctx.getEnvironment().get( Context.SECURITY_CREDENTIALS );
-
-            String password = new String((byte[])credentials);
-            log.info("Login "+dn);
-
             PenroseConnection connection = penrose.openConnection();
-
             int rc = connection.bind(dn.toString(), password);
             connection.close();
+
             if (rc != LDAPException.SUCCESS) {
-                log.info("Login failed.");
                 throw new LdapAuthenticationException();
             }
 
@@ -59,8 +71,8 @@ public class PenroseAuthenticator extends AbstractAuthenticator {
             return createLdapPrincipal( dn );
 
         } catch (NamingException e) {
-            log.info("Login failed: "+e.getMessage());
-            throw new LdapAuthenticationException();
+            log.info("Login failed.");
+            throw e;
 
         } catch (Exception e) {
             log.error(e.getMessage(), e);

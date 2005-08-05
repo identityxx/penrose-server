@@ -187,7 +187,7 @@ public class Entry {
 
         for (Iterator i=attributeSet.iterator(); i.hasNext(); ) {
             LDAPAttribute attribute = (LDAPAttribute)i.next();
-            String name = attribute.getName();
+            String name = attribute.getName().toLowerCase();
 
             if (attributeNames.contains(name)) list.add(attribute);
         }
