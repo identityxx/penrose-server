@@ -26,7 +26,7 @@ public class EntryCache {
 
     private int size;
 
-    private Map entries = new HashMap();
+    private Map entries = new LinkedHashMap();
 
     public void init(Cache cache) throws Exception {
         this.cache = cache;
@@ -42,98 +42,36 @@ public class EntryCache {
     public void init() throws Exception {
     }
 
-    public Map getMap(String dn) {
-        Map map = (Map)entries.get(dn);
-        if (map == null) {
-            map = new LinkedHashMap();
-            entries.put(dn, map);
-        }
-        return map;
-    }
+    public Entry get(String dn) throws Exception {
 
-    public Collection getRdns(
-            EntryDefinition entryDefinition,
-            Collection rdns)
-            throws Exception {
+        log.debug("Getting entry cache ("+entries.size()+"): "+dn);
 
-        Collection nrdns = new ArrayList();
-
-        for (Iterator i=rdns.iterator(); i.hasNext(); ) {
-            Row rdn = (Row)i.next();
-            Row nrdn = cacheContext.getEngine().normalize(rdn);
-            nrdns.add(nrdn);
-        }
-        log.debug("Getting rdns: "+nrdns);
-
-        Map map = getMap(entryDefinition.getDn());
-
-        Collection allRdns = map.keySet();
-
-        Collection loadedRdns = new HashSet();
-        loadedRdns.addAll(allRdns);
-        loadedRdns.retainAll(nrdns);
-
-        return loadedRdns;
-    }
-
-    public Entry get(EntryDefinition entryDefinition, Row rdn) throws Exception {
-
-        Map map = getMap(entryDefinition.getDn());
-        Row nrdn = cacheContext.getEngine().normalize(rdn);
-
-        log.debug("Getting entry cache ("+map.size()+"): "+nrdn);
-
-        Entry entry = (Entry)map.remove(nrdn);
-        map.put(nrdn, entry);
+        Entry entry = (Entry)entries.remove(dn);
+        entries.put(dn, entry);
 
         return entry;
     }
 
-    public Map get(EntryDefinition entryDefinition, Collection rdns) throws Exception {
-        Map results = new HashMap();
-        if (rdns == null) return results;
-
-        for (Iterator i=rdns.iterator(); i.hasNext(); ) {
-            Row rdn = (Row)i.next();
-
-            Entry entry = get(entryDefinition, rdn);
-            if (entry == null) continue;
-
-            results.put(rdn, entry);
-        }
-
-        return results;
-    }
-
     public void put(Entry entry) throws Exception {
 
-        Row rdn = entry.getRdn();
-        Row nrdn = cacheContext.getEngine().normalize(rdn);
+        String dn = entry.getDn();
 
-        EntryDefinition entryDefinition = entry.getEntryDefinition();
-
-        Map map = getMap(entryDefinition.getDn());
-
-        while (map.size() >= size) {
-            log.debug("Trimming source cache ("+map.size()+").");
-            Row key = (Row)map.keySet().iterator().next();
-            map.remove(key);
+        while (entries.size() >= size) {
+            log.debug("Trimming entry cache ("+entries.size()+").");
+            Row key = (Row)entries.keySet().iterator().next();
+            entries.remove(key);
         }
 
-        log.debug("Storing entry cache ("+map.size()+"): "+nrdn);
-        map.put(nrdn, entry);
+        log.debug("Storing entry cache ("+entries.size()+"): "+dn);
+        entries.put(dn, entry);
     }
 
     public void remove(Entry entry) throws Exception {
 
-        Row rdn = entry.getRdn();
-        Row nrdn = cacheContext.getEngine().normalize(rdn);
-        EntryDefinition entryDefinition = entry.getEntryDefinition();
+        String dn = entry.getDn();
 
-        Map map = getMap(entryDefinition.getDn());
-
-        log.debug("Removing entry cache ("+map.size()+"): "+nrdn);
-        map.remove(nrdn);
+        log.debug("Removing entry cache ("+entries.size()+"): "+dn);
+        entries.remove(dn);
     }
 
     public Cache getCache() {

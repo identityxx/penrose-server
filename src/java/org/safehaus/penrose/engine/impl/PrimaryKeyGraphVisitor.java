@@ -151,7 +151,7 @@ public class PrimaryKeyGraphVisitor extends GraphVisitor {
             Row pk = (Row)j.next();
             AttributeValues values = (AttributeValues)map.get(pk);
             log.debug(" - "+pk+": "+values);
-            engine.getSourceCache().put(source, pk, values);
+            engine.getCache().getSourceCache().put(source, pk, values);
         }
 
         stack.push(newRows);

@@ -42,8 +42,6 @@ public class Engine implements EngineMBean {
     private EngineContext engineContext;
 
     private Cache cache;
-    private SourceCache sourceCache;
-    private EntryCache entryCache;
 
     private Hashtable sourceLocks = new Hashtable();
     private Hashtable resultLocks = new Hashtable();
@@ -64,8 +62,6 @@ public class Engine implements EngineMBean {
         this.engineContext = engineContext;
 
         this.cache = engineContext.getCache();
-        this.sourceCache = cache.getSourceCache();
-        this.entryCache = cache.getEntryCache();
 
         createAddHandler();
         createBindHandler();
@@ -217,14 +213,6 @@ public class Engine implements EngineMBean {
 		return lock;
 	}
 
-    public SourceCache getSourceCache() {
-        return sourceCache;
-    }
-
-    public void setSourceCache(SourceCache sourceCache) {
-        this.sourceCache = sourceCache;
-    }
-
     public BindHandler getBindHandler() {
         return bindHandler;
     }
@@ -295,14 +283,6 @@ public class Engine implements EngineMBean {
 
     public void setEngineContext(EngineContext engineContext) {
         this.engineContext = engineContext;
-    }
-
-    public EntryCache getEntryCache() {
-        return entryCache;
-    }
-
-    public void setEntryCache(EntryCache entryCache) {
-        this.entryCache = entryCache;
     }
 
     public Cache getCache() {
@@ -428,7 +408,7 @@ public class Engine implements EngineMBean {
         //CacheEvent beforeEvent = new CacheEvent(getCacheContext(), sourceConfig, CacheEvent.BEFORE_LOAD_ENTRIES);
         //postCacheEvent(sourceConfig, beforeEvent);
 
-        Collection loadedPks = sourceCache.getPks(source, pks);
+        Collection loadedPks = cache.getSourceCache().getPks(source, pks);
         log.debug("Loaded pks: "+loadedPks);
 
         Collection pksToLoad = new HashSet();
@@ -449,7 +429,7 @@ public class Engine implements EngineMBean {
 
         for (Iterator i=loadedPks.iterator();  i.hasNext(); ) {
             Row pk = (Row)i.next();
-            AttributeValues values = sourceCache.get(source, pk);
+            AttributeValues values = cache.getSourceCache().get(source, pk);
             results.put(pk, values);
         }
 
@@ -474,7 +454,7 @@ public class Engine implements EngineMBean {
                 Row pk = (Row)i.next();
                 AttributeValues values = (AttributeValues)results.get(pk);
 
-                sourceCache.put(source, pk, values);
+                cache.getSourceCache().put(source, pk, values);
             }
         }
 

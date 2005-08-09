@@ -7,7 +7,6 @@ package org.safehaus.penrose.apacheds;
 import org.apache.ldap.server.partition.AbstractContextPartition;
 import org.apache.ldap.common.filter.ExprNode;
 import org.apache.log4j.Logger;
-import org.apache.log4j.PropertyConfigurator;
 import org.ietf.ldap.*;
 import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.SearchResults;
@@ -19,7 +18,6 @@ import javax.naming.NamingEnumeration;
 import javax.naming.NameNotFoundException;
 import javax.naming.directory.*;
 import java.util.*;
-import java.io.File;
 
 /**
  * @author Endi S. Dewata
@@ -30,14 +28,10 @@ public class PenrosePartition extends AbstractContextPartition {
     //public Logger engineLog = Logger.getLogger(Penrose.ENGINE_LOGGER);
     //public Logger searchLog = Logger.getLogger(Penrose.SEARCH_LOGGER);
 
-    public static Penrose penrose;
+    Penrose penrose;
 
     public void setPenrose(Penrose penrose) throws Exception {
-
-        if (PenrosePartition.penrose != null) return;
-
-        PenrosePartition.penrose = penrose;
-        penrose.init();
+        this.penrose = penrose;
     }
 
     public void delete(Name dn) throws NamingException {
@@ -61,7 +55,7 @@ public class PenrosePartition extends AbstractContextPartition {
         }
     }
 
-    public void add(String upName, Name normName, Attributes entry) throws NamingException {
+    public void add(String upName, Name normName, Attributes attributes) throws NamingException {
         Logger log = Logger.getLogger(PenrosePartition.class);
         log.info("Adding \""+upName+"\"");
 
@@ -69,8 +63,8 @@ public class PenrosePartition extends AbstractContextPartition {
 
         try {
             LDAPAttributeSet attributeSet = new LDAPAttributeSet();
-            for (Enumeration attributes = entry.getAll(); attributes.hasMoreElements(); ) {
-                Attribute attribute = (Attribute)attributes.nextElement();
+            for (Enumeration e = attributes.getAll(); e.hasMoreElements(); ) {
+                Attribute attribute = (Attribute)e.nextElement();
                 LDAPAttribute attr = new LDAPAttribute(attribute.getID());
 
                 for (Enumeration values = attribute.getAll(); values.hasMoreElements(); ) {
@@ -109,15 +103,15 @@ public class PenrosePartition extends AbstractContextPartition {
 
             for (Enumeration e=attributes.getAll(); e.hasMoreElements(); ) {
                 Attribute attribute = (Attribute)e.nextElement();
-                String name = attribute.getID();
+                String attrName = attribute.getID();
 
                 int op = LDAPModification.REPLACE;
-                LDAPAttribute attr = new LDAPAttribute(name);
+                LDAPAttribute attr = new LDAPAttribute(attrName);
 
-                log.debug("replace: "+name);
+                log.debug("replace: "+attrName);
                 for (Enumeration values = attribute.getAll(); values.hasMoreElements(); ) {
                     Object value = values.nextElement();
-                    log.debug(name+": "+value);
+                    log.debug(attrName+": "+value);
                     attr.addValue(value.toString());
                 }
                 log.debug("-");
@@ -153,29 +147,29 @@ public class PenrosePartition extends AbstractContextPartition {
             for (int i=0; i<modificationItems.length; i++) {
                 ModificationItem mi = modificationItems[i];
                 Attribute attribute = mi.getAttribute();
-                String name = attribute.getID();
+                String attrName = attribute.getID();
 
                 int op = LDAPModification.REPLACE;
                 switch (mi.getModificationOp()) {
                     case DirContext.ADD_ATTRIBUTE:
-                        log.debug("add: "+name);
+                        log.debug("add: "+attrName);
                         op = LDAPModification.ADD;
                         break;
                     case DirContext.REPLACE_ATTRIBUTE:
-                        log.debug("replace: "+name);
+                        log.debug("replace: "+attrName);
                         op = LDAPModification.REPLACE;
                         break;
                     case DirContext.REMOVE_ATTRIBUTE:
-                        log.debug("delete: "+name);
+                        log.debug("delete: "+attrName);
                         op = LDAPModification.DELETE;
                         break;
                 }
 
-                LDAPAttribute attr = new LDAPAttribute(name);
+                LDAPAttribute attr = new LDAPAttribute(attrName);
 
                 for (Enumeration values = attribute.getAll(); values.hasMoreElements(); ) {
                     Object value = values.nextElement();
-                    log.debug(name+": "+value);
+                    log.debug(attrName+": "+value);
                     attr.addValue(value.toString());
                 }
                 log.debug("-");

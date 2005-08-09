@@ -42,14 +42,25 @@ public class AttributeValues {
         }
     }
 
+    public void add(String name, Object value) {
+        if (value == null) return;
+
+        Collection c = (Collection)this.values.get(name);
+        if (c == null) {
+            c = new ArrayList();
+            this.values.put(name, c);
+        }
+        c.add(value);
+    }
+
     public void add(String name, Collection values) {
         if (values == null) return;
         Collection c = (Collection)this.values.get(name);
         if (c == null) {
-            this.values.put(name, values);
-        } else {
-            c.addAll(values);
+            c = new ArrayList();
+            this.values.put(name, c);
         }
+        c.addAll(values);
     }
 
     public void set(String name, Collection values) {

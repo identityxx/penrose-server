@@ -208,7 +208,7 @@ public class DefaultSearchHandler extends SearchHandler {
                 Row pk = (Row)j.next();
                 AttributeValues values = (AttributeValues)map.get(pk);
                 //log.debug(" - "+pk+": "+values);
-                getEngine().getSourceCache().put(primarySource, pk, values);
+                getEngine().getCache().getSourceCache().put(primarySource, pk, values);
             }
 
         }
@@ -325,11 +325,14 @@ public class DefaultSearchHandler extends SearchHandler {
             for (Iterator i=rdns.iterator(); i.hasNext(); ) {
                 Row rdn = (Row)i.next();
 
-                Entry entry = getEngine().getEntryCache().get(entryDefinition, rdn);
+                String dn = rdn.toString()+","+parent.getDn();
+
+                Entry entry = getEngine().getCache().getEntryCache().get(dn);
                 if (entry == null) {
                     rdnsToLoad.add(rdn);
                 } else {
                     entry.setParent(parent);
+                    entry.setEntryDefinition(entryDefinition);
                     results.add(entry);
                 }
             }
@@ -346,7 +349,7 @@ public class DefaultSearchHandler extends SearchHandler {
                     Entry entry = (Entry)i.next();
                     entry.setParent(parent);
                     results.add(entry);
-                    getEngine().getEntryCache().put(entry);
+                    getEngine().getCache().getEntryCache().put(entry);
                 }
             }
 

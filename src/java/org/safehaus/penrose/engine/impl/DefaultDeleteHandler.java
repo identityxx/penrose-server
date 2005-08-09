@@ -48,7 +48,7 @@ public class DefaultDeleteHandler extends DeleteHandler {
         getEngineContext().getCache().getFilterCache().invalidate();
 
         Entry entry = new Entry(entryDefinition, values);
-        getEngine().getEntryCache().remove(entry);
+        getEngine().getCache().getEntryCache().remove(entry);
 
         return LDAPException.SUCCESS;
     }
@@ -89,7 +89,7 @@ public class DefaultDeleteHandler extends DeleteHandler {
 	            int rc = source.delete(attributes);
 	            if (rc != LDAPException.SUCCESS) return rc;
 
-	            getEngine().getSourceCache().remove(source, pk);
+	            getEngine().getCache().getSourceCache().remove(source, pk);
 	        }
 
         } finally {

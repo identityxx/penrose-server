@@ -54,7 +54,18 @@ public class Row implements Comparable {
     }
 
     public String toString() {
-        return values.toString();
+        StringBuffer sb = new StringBuffer();
+        for (Iterator i=values.keySet().iterator(); i.hasNext(); ) {
+            String name = (String)i.next();
+            Object value = values.get(name);
+
+            if (sb.length() > 0) sb.append("+");
+            sb.append(name);
+            sb.append("=");
+            sb.append(value);
+        }
+
+        return sb.toString();
     }
 
     public int hashCode() {

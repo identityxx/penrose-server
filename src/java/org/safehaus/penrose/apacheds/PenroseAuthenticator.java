@@ -21,7 +21,7 @@ import javax.naming.NamingException;
  */
 public class PenroseAuthenticator extends AbstractAuthenticator {
 
-    public Penrose penrose;
+    Penrose penrose;
 
     public PenroseAuthenticator( )
     {
@@ -31,8 +31,9 @@ public class PenroseAuthenticator extends AbstractAuthenticator {
     public void init() throws NamingException {
     }
 
-    public void setPenrose(Penrose penrose) {
+    public void setPenrose(Penrose penrose) throws Exception {
         this.penrose = penrose;
+        penrose.init();
     }
 
     public LdapPrincipal authenticate( ServerContext ctx ) throws NamingException {
