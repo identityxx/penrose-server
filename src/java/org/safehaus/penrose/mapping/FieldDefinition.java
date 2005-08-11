@@ -7,7 +7,7 @@ package org.safehaus.penrose.mapping;
 /**
  * @author Endi S. Dewata
  */
-public class FieldDefinition {
+public class FieldDefinition implements Comparable {
 
 	/**
 	 * Name.
@@ -86,5 +86,38 @@ public class FieldDefinition {
 
     public void setType(String type) {
         this.type = type;
+    }
+
+    public int hashCode() {
+        return name.hashCode();
+    }
+
+    boolean compare(Object o1, Object o2) {
+        if (o1 == null && o2 == null) return true;
+        if (o1 != null) return o1.equals(o2);
+        return o2.equals(o1);
+    }
+
+    public boolean equals(Object object) {
+        if (object == null) return false;
+        if (!(object instanceof FieldDefinition)) return false;
+
+        FieldDefinition fd = (FieldDefinition)object;
+        if (!compare(name, fd.name)) return false;
+        if (!compare(originalName, fd.originalName)) return false;
+        if (!compare(type, fd.type)) return false;
+        if (primaryKey != fd.primaryKey) return false;
+        if (!compare(encryption, fd.encryption)) return false;
+        if (!compare(encoding, fd.encoding)) return false;
+
+        return true;
+    }
+
+    public int compareTo(Object object) {
+        if (object == null) return 0;
+        if (!(object instanceof FieldDefinition)) return 0;
+
+        FieldDefinition fd = (FieldDefinition)object;
+        return name.compareTo(fd.name);
     }
 }

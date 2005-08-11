@@ -25,8 +25,8 @@ public class ConfigReader {
 
     private Config config;
 
-    public ConfigReader(ServerConfig serverConfig) {
-        config = new Config(serverConfig);
+    public ConfigReader() {
+        config = new Config();
     }
 
     public ConfigReader(Config config) {

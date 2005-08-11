@@ -7,6 +7,7 @@ package org.safehaus.penrose.engine.impl;
 import org.ietf.ldap.LDAPException;
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.Penrose;
+import org.safehaus.penrose.connection.Connection;
 import org.safehaus.penrose.engine.DeleteHandler;
 import org.safehaus.penrose.graph.Graph;
 import org.safehaus.penrose.thread.MRSWLock;
@@ -85,8 +86,8 @@ public class DefaultDeleteHandler extends DeleteHandler {
 	            AttributeValues attributes = (AttributeValues)rows.get(pk);
 
                 //AttributeValues attributes = engineContext.getTransformEngine().convert(row);
-
-	            int rc = source.delete(attributes);
+                Connection connection = getEngineContext().getConnection(source.getConnectionName());
+	            int rc = connection.delete(source, attributes);
 	            if (rc != LDAPException.SUCCESS) return rc;
 
 	            getEngine().getCache().getSourceCache().remove(source, pk);

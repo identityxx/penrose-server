@@ -8,6 +8,7 @@ import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.SearchResults;
 import org.safehaus.penrose.Penrose;
+import org.safehaus.penrose.connection.Connection;
 import org.safehaus.penrose.engine.Engine;
 import org.safehaus.penrose.graph.GraphVisitor;
 import org.apache.log4j.Logger;
@@ -120,7 +121,8 @@ public class PrimaryKeyGraphVisitor extends GraphVisitor {
         Filter newFilter = engine.getEngineContext().getFilterTool().createFilter(newRows);
 
         log.debug("Searching source "+source.getName()+" for "+newFilter);
-        SearchResults results = source.search(newFilter, 100);
+        Connection connection = getEngine().getEngineContext().getConnection(source.getConnectionName());
+        SearchResults results = connection.search(source, newFilter, 100);
         if (results.size() == 0) return false;
         
         log.debug("Storing in source cache:");

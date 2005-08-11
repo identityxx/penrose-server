@@ -107,7 +107,6 @@ public class Penrose implements
     private Map caches = new LinkedHashMap();
 	private Map engines = new LinkedHashMap();
     private Map connections = new LinkedHashMap();
-    private Map modules = new LinkedHashMap();
 
     private ServerConfig serverConfig;
 	private Config config;
@@ -183,67 +182,8 @@ public class Penrose implements
         }
     }
 
-    public void initMappings(Config config) throws Exception {
-
-        for (Iterator i = config.getEntryDefinitions().iterator(); i.hasNext(); ) {
-            EntryDefinition entry = (EntryDefinition)i.next();
-
-            for (Iterator j=entry.getSources().iterator(); j.hasNext(); ) {
-                Source source = (Source)j.next();
-
-                Connection connection = getConnection(source.getConnectionName());
-                source.setConnection(connection);
-
-                Adapter adapter = connection.getAdapter();
-                source.setAdapter(adapter);
-            }
-        }
-    }
-
-    public void initModules(Config config) throws Exception {
-
-        for (Iterator i=config.getModuleConfigs().iterator(); i.hasNext(); ) {
-            ModuleConfig moduleConfig = (ModuleConfig)i.next();
-
-            Class clazz = Class.forName(moduleConfig.getModuleClass());
-            Module module = (Module)clazz.newInstance();
-            module.init(moduleConfig);
-
-            modules.put(moduleConfig.getModuleName(), module);
-        }
-
-    }
-
     public Connection getConnection(String name) {
         return (Connection)connections.get(name);
-    }
-
-    public void initConnections(Config config) throws Exception {
-        for (Iterator i = config.getConnectionConfigs().iterator(); i.hasNext();) {
-            ConnectionConfig connectionConfig = (ConnectionConfig) i.next();
-
-            String adapterName = connectionConfig.getAdapterName();
-            AdapterConfig adapterConfig = serverConfig.getAdapterConfig(adapterName);
-
-            String adapterClass = adapterConfig.getAdapterClass();
-            Class clazz = Class.forName(adapterClass);
-            Adapter adapter = (Adapter)clazz.newInstance();
-
-            Connection connection = new Connection();
-            connection.init(connectionConfig, adapter);
-
-            adapter.init(adapterConfig, this, connection);
-
-            connections.put(connectionConfig.getConnectionName(), connection);
-
-            for (Iterator j = connectionConfig.getSourceDefinitions().iterator(); j.hasNext(); ) {
-                SourceDefinition sourceDefinition = (SourceDefinition)j.next();
-                sourceDefinition.setConnectionConfig(connectionConfig);
-                sourceDefinition.setAdapterConfig(adapterConfig);
-            }
-
-        }
-
     }
 
     public void initJmx() {
@@ -305,7 +245,7 @@ public class Penrose implements
         log.debug("Penrose.initServer()");
 
         ServerConfigReader reader = new ServerConfigReader();
-        reader.loadServerConfig("conf/server.xml");
+        reader.read("conf/server.xml");
 
         serverConfig = reader.getServerConfig();
         log.debug(serverConfig.toString());
@@ -328,7 +268,7 @@ public class Penrose implements
         log.debug("-------------------------------------------------------------------------------");
         log.debug("Penrose.loadConfig(\""+directory+"\")");
 
-        ConfigReader reader = new ConfigReader(serverConfig);
+        ConfigReader reader = new ConfigReader();
         reader.loadSourcesConfig(directory+"/sources.xml");
         reader.loadMappingConfig(directory+"/mapping.xml");
         reader.loadModulesConfig(directory+"/modules.xml");
@@ -336,15 +276,37 @@ public class Penrose implements
         config = reader.getConfig();
         log.debug(config.toString());
 
-        config.analyze();
-
-        initConnections(config);
-        initMappings(config);
-        initModules(config);
+        config.init();
 
         Engine engine = getEngine();
         engine.setConfig(config);
+
+        initConnections(config, serverConfig);
 	}
+
+    public void initConnections(Config config, ServerConfig serverConfig) throws Exception {
+        for (Iterator i = config.getConnectionConfigs().iterator(); i.hasNext();) {
+            ConnectionConfig connectionConfig = (ConnectionConfig) i.next();
+
+            String adapterName = connectionConfig.getAdapterName();
+            if (adapterName == null) throw new Exception("Missing adapter name");
+
+            AdapterConfig adapterConfig = serverConfig.getAdapterConfig(adapterName);
+            if (adapterConfig == null) throw new Exception("Undefined adapter "+adapterName);
+
+            String adapterClass = adapterConfig.getAdapterClass();
+            Class clazz = Class.forName(adapterClass);
+            Adapter adapter = (Adapter)clazz.newInstance();
+
+            Connection connection = new Connection();
+            connection.init(connectionConfig, adapter);
+
+            adapter.init(adapterConfig, this, connection);
+
+            connections.put(connectionConfig.getConnectionName(), connection);
+        }
+
+    }
 
     public void loadSchema() throws Exception {
 
@@ -396,27 +358,7 @@ public class Penrose implements
     }
 
     public Collection getModules(String dn) throws Exception {
-        log.debug("Find matching module mapping for "+dn);
-
-        Collection list = new ArrayList();
-
-        for (Iterator i = config.getModuleMappings().iterator(); i.hasNext(); ) {
-            Collection c = (Collection)i.next();
-
-            for (Iterator j=c.iterator(); j.hasNext(); ) {
-                ModuleMapping moduleMapping = (ModuleMapping)j.next();
-
-                String moduleName = moduleMapping.getModuleName();
-                Module module = (Module)modules.get(moduleName);
-
-                if (moduleMapping.match(dn)) {
-                    log.debug(" - "+moduleName);
-                    list.add(module);
-                }
-            }
-        }
-
-        return list;
+        return config.getModules(dn);
     }
 
     public int bind(PenroseConnection connection, String dn, String password) throws Exception {

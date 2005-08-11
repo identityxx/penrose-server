@@ -12,6 +12,7 @@ import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.SearchResults;
 import org.safehaus.penrose.PenroseConnection;
+import org.safehaus.penrose.connection.Connection;
 import org.safehaus.penrose.engine.SearchHandler;
 import org.safehaus.penrose.graph.Graph;
 import org.safehaus.penrose.cache.CacheConfig;
@@ -179,7 +180,8 @@ public class DefaultSearchHandler extends SearchHandler {
             Filter f = getCache().getCacheFilterTool().toSourceFilter(null, entryDefinition, primarySource, filter);
 
             log.debug("Searching source "+primarySourceName+" for "+f);
-            SearchResults results = primarySource.search(f, 100);
+            Connection connection = getEngineContext().getConnection(primarySource.getConnectionName());
+            SearchResults results = connection.search(primarySource, f, 100);
 
             log.debug("Storing in source cache:");
             Map map = new HashMap();

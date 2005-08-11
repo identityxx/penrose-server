@@ -25,8 +25,6 @@ public class ConnectionConfig implements Serializable {
 	 */
 	public String adapterName;
 
-    private AdapterConfig adapterConfig;
-
 	/**
 	 * Connection pool size.
 	 */
@@ -185,14 +183,6 @@ public class ConnectionConfig implements Serializable {
         listeners.remove(listener);
     }
 
-    public AdapterConfig getAdapterConfig() {
-        return adapterConfig;
-    }
-
-    public void setAdapterConfig(AdapterConfig adapterConfig) {
-        this.adapterConfig = adapterConfig;
-    }
-
     public int hashCode() {
         int value = connectionName.hashCode();
         //System.out.println("[ConnectionConfig("+connectionName+")] hashCode() => "+value);
@@ -236,6 +226,7 @@ public class ConnectionConfig implements Serializable {
 
     public void addSourceDefinition(SourceDefinition sourceDefinition) {
         sourceDefinitions.put(sourceDefinition.getName(), sourceDefinition);
+        sourceDefinition.setConnectionConfig(this);
     }
 
     public SourceDefinition removeSourceDefinition(String sourceName) {

@@ -8,6 +8,7 @@ import org.ietf.ldap.*;
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.PenroseConnection;
+import org.safehaus.penrose.connection.Connection;
 import org.safehaus.penrose.engine.AddHandler;
 import org.safehaus.penrose.graph.Graph;
 import org.safehaus.penrose.thread.MRSWLock;
@@ -71,7 +72,8 @@ public class DefaultAddHandler extends AddHandler {
 	            AttributeValues fieldValues = (AttributeValues)rows.get(pk);
 
 	            // Add row to the source table in the source database/directory
-	            int rc = source.add(fieldValues);
+                Connection connection = getEngineContext().getConnection(source.getConnectionName());
+	            int rc = connection.add(source, fieldValues);
 	            if (rc != LDAPException.SUCCESS) return rc;
 
 	            // Add row to the source table in the cache

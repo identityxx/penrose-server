@@ -7,6 +7,7 @@ package org.safehaus.penrose.engine.impl;
 import org.ietf.ldap.LDAPException;
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.Penrose;
+import org.safehaus.penrose.connection.Connection;
 import org.safehaus.penrose.engine.BindHandler;
 import org.safehaus.penrose.thread.MRSWLock;
 
@@ -53,7 +54,8 @@ public class DefaultBindHandler extends BindHandler {
 	            Map pk = (Map)i.next();
 	            AttributeValues row = (AttributeValues)rows.get(pk);
 
-	            int rc = source.bind(row, password);
+                Connection connection = getEngineContext().getConnection(source.getConnectionName());
+	            int rc = connection.bind(source, row, password);
 
 	            if (rc != LDAPException.SUCCESS) return rc;
 	        }

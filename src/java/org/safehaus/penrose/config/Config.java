@@ -11,6 +11,7 @@ import org.apache.log4j.Logger;
 import org.safehaus.penrose.module.ModuleConfig;
 import org.safehaus.penrose.module.ModuleMapping;
 import org.safehaus.penrose.module.GenericModuleMapping;
+import org.safehaus.penrose.module.Module;
 import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.graph.Graph;
 import org.safehaus.penrose.mapping.*;
@@ -25,8 +26,6 @@ public class Config implements Serializable {
 
     public Logger log = Logger.getLogger(Penrose.CONFIG_LOGGER);
 
-    private ServerConfig serverConfig;
-
     private Map entryDefinitions = new TreeMap();
     private Collection rootEntryDefinitions = new ArrayList();
 
@@ -34,11 +33,12 @@ public class Config implements Serializable {
     private Map primarySources = new HashMap();
 
     private Map connectionConfigs = new LinkedHashMap();
+
     private Map moduleConfigs = new LinkedHashMap();
     private Map moduleMappings = new LinkedHashMap();
+    private Map modules = new LinkedHashMap();
 
-    public Config(ServerConfig serverConfig) {
-        this.serverConfig = serverConfig;
+    public Config() {
     }
 
 	public void addEntryDefinition(EntryDefinition entry) throws Exception {
@@ -76,9 +76,12 @@ public class Config implements Serializable {
             String connectionName = source.getConnectionName();
 
             ConnectionConfig connection = getConnectionConfig(connectionName);
-            SourceDefinition sourceDefinition = connection.getSourceDefinition(sourceName);
-            if (sourceDefinition == null) throw new Exception("Source "+source.getName()+" undefined.");
+            if (connection == null) throw new Exception("Connection "+connectionName+" undefined.");
 
+            SourceDefinition sourceDefinition = connection.getSourceDefinition(sourceName);
+            if (sourceDefinition == null) throw new Exception("Source "+sourceName+" undefined.");
+
+            source.setConnectionConfig(connection);
             source.setSourceDefinition(sourceDefinition);
 
             Collection fieldConfigs = sourceDefinition.getFields();
@@ -264,14 +267,6 @@ public class Config implements Serializable {
 	 */
 	public void addConnectionConfig(ConnectionConfig connectionConfig) throws Exception {
 		connectionConfigs.put(connectionConfig.getConnectionName(), connectionConfig);
-
-        String adapterName = connectionConfig.getAdapterName();
-        if (adapterName == null) throw new Exception("Missing adapter name");
-
-        AdapterConfig adapterConfig = serverConfig.getAdapterConfig(adapterName);
-        if (adapterConfig == null) throw new Exception("Undefined adapter "+adapterName);
-
-        connectionConfig.setAdapterConfig(adapterConfig);
 	}
 	
 	public ConnectionConfig removeConnectionConfig(String connectionName) {
@@ -557,11 +552,46 @@ public class Config implements Serializable {
         this.primarySources = primarySources;
     }
 
-    public ServerConfig getServerConfig() {
-        return serverConfig;
+    public void init() throws Exception {
+        initModules();
+        analyze();
     }
 
-    public void setServerConfig(ServerConfig serverConfig) {
-        this.serverConfig = serverConfig;
+    public void initModules() throws Exception {
+
+        for (Iterator i=getModuleConfigs().iterator(); i.hasNext(); ) {
+            ModuleConfig moduleConfig = (ModuleConfig)i.next();
+
+            Class clazz = Class.forName(moduleConfig.getModuleClass());
+            Module module = (Module)clazz.newInstance();
+            module.init(moduleConfig);
+
+            modules.put(moduleConfig.getModuleName(), module);
+        }
+
+    }
+
+    public Collection getModules(String dn) throws Exception {
+        log.debug("Find matching module mapping for "+dn);
+
+        Collection list = new ArrayList();
+
+        for (Iterator i = getModuleMappings().iterator(); i.hasNext(); ) {
+            Collection c = (Collection)i.next();
+
+            for (Iterator j=c.iterator(); j.hasNext(); ) {
+                ModuleMapping moduleMapping = (ModuleMapping)j.next();
+
+                String moduleName = moduleMapping.getModuleName();
+                Module module = (Module)modules.get(moduleName);
+
+                if (moduleMapping.match(dn)) {
+                    log.debug(" - "+moduleName);
+                    list.add(module);
+                }
+            }
+        }
+
+        return list;
     }
 }

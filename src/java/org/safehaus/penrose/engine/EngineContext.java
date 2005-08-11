@@ -9,6 +9,7 @@ import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.filter.FilterTool;
 import org.safehaus.penrose.schema.Schema;
 import org.safehaus.penrose.cache.Cache;
+import org.safehaus.penrose.connection.Connection;
 
 /**
  * @author Endi S. Dewata
@@ -25,4 +26,5 @@ public interface EngineContext {
     public Interpreter newInterpreter() throws Exception;
     public Config getConfig() throws Exception;
     public TransformEngine getTransformEngine() throws Exception;
+    public Connection getConnection(String connectionName) throws Exception;
 }

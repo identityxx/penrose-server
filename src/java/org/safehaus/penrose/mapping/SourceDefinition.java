@@ -24,7 +24,6 @@ public class SourceDefinition {
 	private String name;
 
     private ConnectionConfig connectionConfig;
-    private AdapterConfig adapterConfig;
 
 	/**
 	 * Fields. Each element is of type org.safehaus.penrose.mapping.FieldDefinition.
@@ -118,13 +117,5 @@ public class SourceDefinition {
 
     public void setConnectionConfig(ConnectionConfig connectionConfig) {
         this.connectionConfig = connectionConfig;
-    }
-
-    public AdapterConfig getAdapterConfig() {
-        return adapterConfig;
-    }
-
-    public void setAdapterConfig(AdapterConfig adapterConfig) {
-        this.adapterConfig = adapterConfig;
     }
 }

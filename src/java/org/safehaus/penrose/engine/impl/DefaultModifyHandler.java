@@ -7,6 +7,7 @@ package org.safehaus.penrose.engine.impl;
 import org.ietf.ldap.*;
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.Penrose;
+import org.safehaus.penrose.connection.Connection;
 import org.safehaus.penrose.engine.ModifyHandler;
 import org.safehaus.penrose.graph.Graph;
 import org.safehaus.penrose.thread.MRSWLock;
@@ -104,7 +105,8 @@ public class DefaultModifyHandler extends ModifyHandler {
                 //AttributeValues attributes = engineContext.getTransformEngine().convert(newEntry);
 
                 // Add row to source table in the source database/directory
-                int rc = source.add(newEntry);
+                Connection connection = getEngineContext().getConnection(source.getConnectionName());
+                int rc = connection.add(source, newEntry);
                 if (rc != LDAPException.SUCCESS) return rc;
 
                 // Add row to source table in the cache
@@ -120,7 +122,8 @@ public class DefaultModifyHandler extends ModifyHandler {
                 //AttributeValues attributes = engineContext.getTransformEngine().convert(oldEntry);
 
                 // Delete row from source table in the source database/directory
-                int rc = source.delete(oldEntry);
+                Connection connection = getEngineContext().getConnection(source.getConnectionName());
+                int rc = connection.delete(source, oldEntry);
                 if (rc != LDAPException.SUCCESS)
                     return rc;
 
@@ -139,7 +142,8 @@ public class DefaultModifyHandler extends ModifyHandler {
                 //AttributeValues newAttributes = engineContext.getTransformEngine().convert(newEntry);
 
                 // Modify row from source table in the source database/directory
-                int rc = source.modify(oldEntry, newEntry);
+                Connection connection = getEngineContext().getConnection(source.getConnectionName());
+                int rc = connection.modify(source, oldEntry, newEntry);
                 if (rc != LDAPException.SUCCESS) return rc;
 
                 // Modify row from source table in the cache

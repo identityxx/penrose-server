@@ -10,6 +10,7 @@ import org.safehaus.penrose.cache.Cache;
 import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.SearchResults;
 import org.safehaus.penrose.*;
+import org.safehaus.penrose.connection.Connection;
 import org.safehaus.penrose.config.Config;
 import org.safehaus.penrose.thread.ThreadPool;
 import org.safehaus.penrose.thread.Queue;
@@ -409,8 +410,6 @@ public class Engine implements EngineMBean {
 
         log.info("Loading source "+source.getName()+" "+source.getSourceName()+" with pks "+pks);
 
-        SourceDefinition sourceConfig = source.getSourceDefinition();
-
         //CacheEvent beforeEvent = new CacheEvent(getCacheContext(), sourceConfig, CacheEvent.BEFORE_LOAD_ENTRIES);
         //postCacheEvent(sourceConfig, beforeEvent);
 
@@ -441,7 +440,8 @@ public class Engine implements EngineMBean {
 
         if (!pksToLoad.isEmpty()) {
             Filter filter = cache.getCacheContext().getFilterTool().createFilter(pksToLoad);
-            SearchResults sr = source.search(filter, 0);
+            Connection connection = getEngineContext().getConnection(source.getConnectionName());
+            SearchResults sr = connection.search(source, filter, 0);
 
             for (Iterator j = sr.iterator(); j.hasNext();) {
                 Row row = (Row) j.next();

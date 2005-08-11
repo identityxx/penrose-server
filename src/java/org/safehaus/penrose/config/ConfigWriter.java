@@ -110,12 +110,6 @@ public class ConfigWriter {
 		for (Iterator i = config.getConnectionConfigs().iterator(); i.hasNext();) {
 			ConnectionConfig connection = (ConnectionConfig)i.next();
 			sourcesElement.add(toElement(connection));
-
-            // sources
-            for (Iterator k = connection.getSourceDefinitions().iterator(); k.hasNext();) {
-                SourceDefinition source = (SourceDefinition)k.next();
-                sourcesElement.add(toElement(source));
-            }
 		}
 
 		return sourcesElement;
@@ -181,6 +175,14 @@ public class ConfigWriter {
 
 			element.add(parameter);
 		}
+
+        Collection sourceDefinitions = connection.getSourceDefinitions();
+        for (Iterator i = sourceDefinitions.iterator(); i.hasNext(); ) {
+            SourceDefinition sourceDefinition = (SourceDefinition)i.next();
+            Element sourceElement = toElement(sourceDefinition);
+            element.add(sourceElement);
+        }
+
 		return element;
 	}
 
@@ -268,6 +270,10 @@ public class ConfigWriter {
         Element sourceName = new DefaultElement("source-name");
         sourceName.add(new DefaultText(source.getSourceName()));
         element.add(sourceName);
+
+        Element connectionName = new DefaultElement("connection-name");
+        connectionName.add(new DefaultText(source.getConnectionName()));
+        element.add(connectionName);
 
         SourceDefinition sourceDefinition = source.getSourceDefinition();
 

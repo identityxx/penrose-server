@@ -41,8 +41,7 @@ public class Source implements Cloneable, Serializable {
     private Collection primaryKeyFields = new ArrayList();
 
     private SourceDefinition sourceDefinition;
-    private Connection connection;
-    private Adapter adapter;
+    private ConnectionConfig connectionConfig;
 
 	public Source() {
 	}
@@ -110,52 +109,8 @@ public class Source implements Cloneable, Serializable {
         return sourceDefinition.getParameterNames();
     }
 
-    public int bind(AttributeValues values, String password) throws Exception {
-        return adapter.bind(this, values, password);
-    }
-
-    public SearchResults search(Filter filter, long sizeLimit) throws Exception {
-        return adapter.search(this, filter, sizeLimit);
-    }
-
-    public int add(AttributeValues values) throws Exception {
-        return adapter.add(this, values);
-    }
-
-    public int modify(AttributeValues oldValues, AttributeValues newValues) throws Exception {
-        return adapter.modify(this, oldValues, newValues);
-    }
-
-    public int delete(AttributeValues values) throws Exception {
-        return adapter.delete(this, values);
-    }
-
     public void setSourceDefinition(SourceDefinition sourceDefinition) {
         this.sourceDefinition = sourceDefinition;
-    }
-
-    public Adapter getAdapter() {
-        return adapter;
-    }
-
-    public void setAdapter(Adapter adapter) {
-        this.adapter = adapter;
-    }
-
-    public AdapterConfig getAdapterConfig() {
-        return sourceDefinition.getAdapterConfig();
-    }
-
-    public Connection getConnection() {
-        return connection;
-    }
-
-    public void setConnection(Connection connection) {
-        this.connection = connection;
-    }
-
-    public ConnectionConfig getConnectionConfig() {
-        return sourceDefinition.getConnectionConfig();
     }
 
     public String getSourceName() {
@@ -176,5 +131,13 @@ public class Source implements Cloneable, Serializable {
 
     public void setConnectionName(String connectionName) {
         this.connectionName = connectionName;
+    }
+
+    public ConnectionConfig getConnectionConfig() {
+        return connectionConfig;
+    }
+
+    public void setConnectionConfig(ConnectionConfig connectionConfig) {
+        this.connectionConfig = connectionConfig;
     }
 }

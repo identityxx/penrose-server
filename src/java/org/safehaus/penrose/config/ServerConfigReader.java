@@ -8,16 +8,9 @@ import org.apache.commons.digester.Digester;
 import org.apache.commons.digester.xmlrules.DigesterLoader;
 import org.apache.log4j.Logger;
 import org.safehaus.penrose.Penrose;
-import org.safehaus.penrose.mapping.EntryDefinition;
-import org.safehaus.penrose.mapping.MappingRule;
-import org.dom4j.io.OutputFormat;
-import org.dom4j.io.XMLWriter;
 
 import java.io.File;
-import java.io.FileWriter;
 import java.net.URL;
-import java.util.Collection;
-import java.util.Iterator;
 
 /**
  * @author Endi S. Dewata
@@ -42,9 +35,9 @@ public class ServerConfigReader {
      * @param filename the configuration file (ie. server.xml)
      * @throws Exception
      */
-    public void loadServerConfig(String filename) throws Exception {
+    public void read(String filename) throws Exception {
         File file = new File(filename);
-        loadServerConfig(file);
+        read(file);
     }
 
 	/**
@@ -53,7 +46,7 @@ public class ServerConfigReader {
 	 * @param file the configuration file (ie. server.xml)
 	 * @throws Exception
 	 */
-	public void loadServerConfig(File file) throws Exception {
+	public void read(File file) throws Exception {
 		log.debug("Loading server configuration file from: "+file.getAbsolutePath());
         ClassLoader cl = getClass().getClassLoader();
         URL url = cl.getResource("org/safehaus/penrose/config/server-digester-rules.xml");
