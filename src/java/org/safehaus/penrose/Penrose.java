@@ -86,13 +86,6 @@ public class Penrose implements
     public final static String MODRDN_LOGGER     = "org.safehaus.penrose.modrdn";
 
     public final static String PENROSE_HOME      = "org.safehaus.penrose.home";
-    public final static String KEY_STORE_TRUSTED = "org.safehaus.penrose.keystore.trusted";
-    public final static String SERVER_CONFIG     = "org.safehaus.penrose.server.config";
-    public final static String SOURCES_CONFIG    = "org.safehaus.penrose.sources.config";
-    public final static String MODULES_CONFIG    = "org.safehaus.penrose.modules.config";
-    public final static String MAPPING_CONFIG    = "org.safehaus.penrose.mapping.config";
-    public final static String LOGGER_CONFIG     = "org.safehaus.penrose.logger.config";
-    public final static String MANAGEMENT_CONFIG = "org.safehaus.penrose.management.config";
 
 	public final static boolean SEARCH_IN_BACKGROUND = true;
 	public final static int WAIT_TIMEOUT = 10000; // wait timeout is 10 seconds
@@ -101,11 +94,6 @@ public class Penrose implements
 	private List normalizedSuffixes = new ArrayList();
 
 	private String trustedKeyStore;
-	private String serverConfig;
-	private String sourcesConfig;
-	private String mappingConfig;
-	private String modulesConfig;
-    private String managementConfig;
 
 	private String rootDn;
 	private String rootPassword;
@@ -121,6 +109,7 @@ public class Penrose implements
     private Map connections = new LinkedHashMap();
     private Map modules = new LinkedHashMap();
 
+    private ServerConfig serverConfig;
 	private Config config;
     private Schema schema;
 
@@ -159,40 +148,10 @@ public class Penrose implements
 
 	public int init() throws Exception {
 
-        String loggerConfig = "conf/log4j.properties";
+        PropertyConfigurator.configure("conf/log4j.properties");
 
-        if (loggerConfig != null) {
-            PropertyConfigurator.configure(loggerConfig);
-        }
-
-		loadConfig();
-
-		aclTool = new AclTool(this);
-		filterTool = new FilterTool(this);
-		transformEngine = new TransformEngine(this);
-
-        schema = new Schema();
-
-        File schemaDir = new File("schema");
-
-        File schemaFiles[] = schemaDir.listFiles();
-        for (int i=0; i<schemaFiles.length; i++) {
-            if (schemaFiles[i].isDirectory()) continue;
-            loadSchema(schemaFiles[i].getAbsolutePath());
-        }
-
-        initConnections();
-        initMappings();
-        initCache();
-        initEngine();
-        initModules();
-
-		if (trustedKeyStore != null) System.setProperty("javax.net.ssl.trustStore", trustedKeyStore);
-
-        if (managementConfig != null) {
-            initJmx();
-        }
-        //initRmi();
+        initServer();
+        loadConfig("conf");
 
         log.warn("Penrose is ready.");
 
@@ -200,7 +159,7 @@ public class Penrose implements
 	}
 
     public void initCache() throws Exception {
-        for (Iterator i=config.getCacheConfigs().iterator(); i.hasNext(); ) {
+        for (Iterator i=serverConfig.getCacheConfigs().iterator(); i.hasNext(); ) {
             CacheConfig cacheConfig = (CacheConfig)i.next();
 
             Class clazz = Class.forName(cacheConfig.getCacheClass());
@@ -213,7 +172,7 @@ public class Penrose implements
 
     public void initEngine() throws Exception {
 
-        for (Iterator i=config.getEngineConfigs().iterator(); i.hasNext(); ) {
+        for (Iterator i=serverConfig.getEngineConfigs().iterator(); i.hasNext(); ) {
             EngineConfig engineConfig = (EngineConfig)i.next();
 
             Class clazz = Class.forName(engineConfig.getEngineClass());
@@ -224,7 +183,7 @@ public class Penrose implements
         }
     }
 
-    public void initMappings() throws Exception {
+    public void initMappings(Config config) throws Exception {
 
         for (Iterator i = config.getEntryDefinitions().iterator(); i.hasNext(); ) {
             EntryDefinition entry = (EntryDefinition)i.next();
@@ -241,7 +200,7 @@ public class Penrose implements
         }
     }
 
-    public void initModules() throws Exception {
+    public void initModules(Config config) throws Exception {
 
         for (Iterator i=config.getModuleConfigs().iterator(); i.hasNext(); ) {
             ModuleConfig moduleConfig = (ModuleConfig)i.next();
@@ -259,12 +218,12 @@ public class Penrose implements
         return (Connection)connections.get(name);
     }
 
-    public void initConnections() throws Exception {
+    public void initConnections(Config config) throws Exception {
         for (Iterator i = config.getConnectionConfigs().iterator(); i.hasNext();) {
             ConnectionConfig connectionConfig = (ConnectionConfig) i.next();
 
             String adapterName = connectionConfig.getAdapterName();
-            AdapterConfig adapterConfig = config.getAdapterConfig(adapterName);
+            AdapterConfig adapterConfig = serverConfig.getAdapterConfig(adapterName);
 
             String adapterClass = adapterConfig.getAdapterClass();
             Class clazz = Class.forName(adapterClass);
@@ -276,6 +235,13 @@ public class Penrose implements
             adapter.init(adapterConfig, this, connection);
 
             connections.put(connectionConfig.getConnectionName(), connection);
+
+            for (Iterator j = connectionConfig.getSourceDefinitions().iterator(); j.hasNext(); ) {
+                SourceDefinition sourceDefinition = (SourceDefinition)j.next();
+                sourceDefinition.setConnectionConfig(connectionConfig);
+                sourceDefinition.setAdapterConfig(adapterConfig);
+            }
+
         }
 
     }
@@ -309,7 +275,7 @@ public class Penrose implements
                 server.registerMBean(loader, name);
 
                 // Tell the configuration loader the XML configuration file
-                Reader reader = new BufferedReader(new FileReader(managementConfig));
+                Reader reader = new BufferedReader(new FileReader("conf/mx4j.xml"));
                 loader.startup(reader);
                 reader.close();
 
@@ -333,69 +299,65 @@ public class Penrose implements
 
     }
 
-	public void initRmi() {
-		if (System.getSecurityManager() == null) {
-			//System.setSecurityManager(new RMISecurityManager());
-		}
-
-		try {
-			Registry registry;
-            int port = Registry.REGISTRY_PORT;
-
-            try {
-				registry = LocateRegistry.createRegistry(port);
-
-			} catch (Exception e) {
-                log.debug("Port "+port+" already in use. Trying another port number.");
-
-                ServerSocket serverSocket = new ServerSocket(0);
-                port = serverSocket.getLocalPort();
-                serverSocket.close();
-
-				registry = LocateRegistry.createRegistry(port);
-			}
-
-			PenroseRemoteObject rmiHandler = new PenroseRemoteObject(this);
-			registry.rebind(PenroseRemote.NAME, rmiHandler);
-
-			log.warn("Penrose RMI registry is listening at port "+port);
-
-		} catch (Exception ex) {
-			log.error("PenroseRemoteObject err: ", ex);
-		}
-	}
-
-	public void loadConfig() throws Exception {
+    public void initServer() throws Exception {
 
         log.debug("-------------------------------------------------------------------------------");
-        log.debug("Penrose.loadConfig()");
+        log.debug("Penrose.initServer()");
 
-        serverConfig = "conf/server.xml";
-        log.debug(SERVER_CONFIG+": "+serverConfig);
+        ServerConfigReader reader = new ServerConfigReader();
+        reader.loadServerConfig("conf/server.xml");
 
-        sourcesConfig = "conf/sources.xml";
-        log.debug(SOURCES_CONFIG+": "+sourcesConfig);
+        serverConfig = reader.getServerConfig();
+        log.debug(serverConfig.toString());
 
-        mappingConfig = "conf/mapping.xml";
-        log.debug(MAPPING_CONFIG+": "+mappingConfig);
+        aclTool = new AclTool(this);
+        filterTool = new FilterTool(this);
+        transformEngine = new TransformEngine(this);
 
-        modulesConfig = "conf/modules.xml";
-        log.debug(MODULES_CONFIG+": "+modulesConfig);
+        loadSchema();
+        initCache();
+        initEngine();
 
-        managementConfig = "conf/mx4j.xml";
-        log.debug(MANAGEMENT_CONFIG+": "+managementConfig);
+        if (trustedKeyStore != null) System.setProperty("javax.net.ssl.trustStore", trustedKeyStore);
 
-        ConfigBuilder builder = new ConfigBuilder();
-		builder.loadServerConfig(serverConfig);
-        builder.loadSourcesConfig(sourcesConfig);
-        builder.loadMappingConfig(mappingConfig);
-        builder.loadModulesConfig(modulesConfig);
+        initJmx();
+    }
 
-        config = builder.getConfig();
+	public void loadConfig(String directory) throws Exception {
+
+        log.debug("-------------------------------------------------------------------------------");
+        log.debug("Penrose.loadConfig(\""+directory+"\")");
+
+        ConfigReader reader = new ConfigReader(serverConfig);
+        reader.loadSourcesConfig(directory+"/sources.xml");
+        reader.loadMappingConfig(directory+"/mapping.xml");
+        reader.loadModulesConfig(directory+"/modules.xml");
+
+        config = reader.getConfig();
         log.debug(config.toString());
 
         config.analyze();
+
+        initConnections(config);
+        initMappings(config);
+        initModules(config);
+
+        Engine engine = getEngine();
+        engine.setConfig(config);
 	}
+
+    public void loadSchema() throws Exception {
+
+        schema = new Schema();
+
+        File schemaDir = new File("schema");
+
+        File schemaFiles[] = schemaDir.listFiles();
+        for (int i=0; i<schemaFiles.length; i++) {
+            if (schemaFiles[i].isDirectory()) continue;
+            loadSchema(schemaFiles[i].getAbsolutePath());
+        }
+    }
 
 	public void loadSchema(String filename) throws Exception {
 
@@ -844,18 +806,6 @@ public class Penrose implements
 	public void setLog(Logger log) {
 		this.log = log;
 	}
-	public String getMappingConfig() {
-		return mappingConfig;
-	}
-	public void setMappingConfig(String mappingConfig) {
-		this.mappingConfig = mappingConfig;
-	}
-	public String getModulesConfig() {
-		return modulesConfig;
-	}
-	public void setModulesConfig(String modulesConfig) {
-		this.modulesConfig = modulesConfig;
-	}
 	public List getNormalizedSuffixes() {
 		return normalizedSuffixes;
 	}
@@ -873,18 +823,6 @@ public class Penrose implements
 	}
 	public void setRootPassword(String rootPassword) {
 		this.rootPassword = rootPassword;
-	}
-	public String getServerConfig() {
-		return serverConfig;
-	}
-	public void setServerConfig(String serverConfig) {
-		this.serverConfig = serverConfig;
-	}
-	public String getSourcesConfig() {
-		return sourcesConfig;
-	}
-	public void setSourcesConfig(String sourcesConfig) {
-		this.sourcesConfig = sourcesConfig;
 	}
 	public boolean isStopRequested() {
 		return stopRequested;
@@ -938,7 +876,7 @@ public class Penrose implements
 	}
 
     public Interpreter newInterpreter() throws Exception {
-        InterpreterConfig interpreterConfig = config.getInterpreterConfig("DEFAULT");
+        InterpreterConfig interpreterConfig = serverConfig.getInterpreterConfig("DEFAULT");
         Class clazz = Class.forName(interpreterConfig.getInterpreterClass());
         return (Interpreter)clazz.newInstance();
     }
@@ -1023,5 +961,13 @@ public class Penrose implements
         for (int i = 0; i < numGroups; i++) {
             visit(groups[i], level + 1);
         }
+    }
+
+    public ServerConfig getServerConfig() {
+        return serverConfig;
+    }
+
+    public void setServerConfig(ServerConfig serverConfig) {
+        this.serverConfig = serverConfig;
     }
 }

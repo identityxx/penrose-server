@@ -126,8 +126,8 @@ public class DefaultSearchHandler extends SearchHandler {
 
         log.debug("Filter Cache not found.");
 
-        Graph graph = getConfig().getGraph(entryDefinition);
-        Source primarySource = getConfig().getPrimarySource(entryDefinition);
+        Graph graph = getEngine().getConfig().getGraph(entryDefinition);
+        Source primarySource = getEngine().getConfig().getPrimarySource(entryDefinition);
         String primarySourceName = primarySource.getName();
 
         log.debug("--------------------------------------------------------------------------------------");
@@ -258,7 +258,7 @@ public class DefaultSearchHandler extends SearchHandler {
      */
     public Collection rdnToPk(EntryDefinition entryDefinition, Collection rdns) throws Exception {
 
-        Source source = getConfig().getPrimarySource(entryDefinition);
+        Source source = getEngine().getConfig().getPrimarySource(entryDefinition);
 
         Collection pks = new TreeSet();
 

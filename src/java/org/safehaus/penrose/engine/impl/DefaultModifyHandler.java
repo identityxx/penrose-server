@@ -25,8 +25,8 @@ public class DefaultModifyHandler extends ModifyHandler {
 
         Date date = new Date();
 
-        Graph graph = getConfig().getGraph(entryDefinition);
-        Source primarySource = getConfig().getPrimarySource(entryDefinition);
+        Graph graph = getEngine().getConfig().getGraph(entryDefinition);
+        Source primarySource = getEngine().getConfig().getPrimarySource(entryDefinition);
 
         ModifyGraphVisitor visitor = new ModifyGraphVisitor(getEngine(), this, primarySource, entry, newValues, date);
         graph.traverse(visitor, primarySource);

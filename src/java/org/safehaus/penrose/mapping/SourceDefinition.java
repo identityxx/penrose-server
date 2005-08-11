@@ -23,11 +23,6 @@ public class SourceDefinition {
 	 */
 	private String name;
 
-	/**
-	 * Connection name.
-	 */
-	private String connectionName;
-    
     private ConnectionConfig connectionConfig;
     private AdapterConfig adapterConfig;
 
@@ -53,25 +48,12 @@ public class SourceDefinition {
 	public SourceDefinition() {
 	}
 	
-	public SourceDefinition(String name, String connection) {
-		this.name = name;
-		this.connectionName = connection;
-	}
-
 	public String getName() {
 		return name;
 	}
 
 	public void setName(String name) {
 		this.name = name;
-	}
-
-	public String getConnectionName() {
-		return connectionName;
-	}
-
-	public void setConnectionName(String connectionName) {
-		this.connectionName = connectionName;
 	}
 
     public FieldDefinition getFieldDefinition(String name) {

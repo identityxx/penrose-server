@@ -33,13 +33,11 @@ public abstract class SearchHandler {
     private Engine engine;
     private Cache cache;
     private EngineContext engineContext;
-    private Config config;
 
     public void init(Engine engine) throws Exception {
         this.engine = engine;
         this.cache = engine.getCache();
 		this.engineContext = engine.getEngineContext();
-        config = engineContext.getConfig();
 
         init();
 	}
@@ -62,7 +60,7 @@ public abstract class SearchHandler {
 		log.debug("Find entry: " + dn);
 
         // search the entry directly
-        EntryDefinition entryDefinition = config.getEntryDefinition(dn);
+        EntryDefinition entryDefinition = getEngine().getConfig().getEntryDefinition(dn);
 
         if (entryDefinition != null) {
             log.debug("Found static entry: " + dn);
@@ -256,14 +254,6 @@ public abstract class SearchHandler {
 
     public void setEngineContext(EngineContext engineContext) {
         this.engineContext = engineContext;
-    }
-
-    public Config getConfig() {
-        return config;
-    }
-
-    public void setConfig(Config config) {
-        this.config = config;
     }
 
     /**

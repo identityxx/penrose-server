@@ -27,8 +27,8 @@ public class DefaultAddHandler extends AddHandler {
 
         Date date = new Date();
 
-        Graph graph = getConfig().getGraph(entryDefinition);
-        Source primarySource = getConfig().getPrimarySource(entryDefinition);
+        Graph graph = getEngine().getConfig().getGraph(entryDefinition);
+        Source primarySource = getEngine().getConfig().getPrimarySource(entryDefinition);
 
         AddGraphVisitor visitor = new AddGraphVisitor(getEngine(), this, primarySource, entryDefinition, values, date);
         graph.traverse(visitor, primarySource);

@@ -28,12 +28,10 @@ public abstract class AddHandler {
 
     private Engine engine;
     private EngineContext engineContext;
-    private Config config;
 
     public void init (Engine engine) throws Exception {
         this.engine = engine;
         this.engineContext = engine.getEngineContext();
-        this.config = engineContext.getConfig();
 
         init();
     }
@@ -120,14 +118,6 @@ public abstract class AddHandler {
         this.engineContext = engineContext;
     }
 
-    public Config getConfig() {
-        return config;
-    }
-
-    public void setConfig(Config config) {
-        this.config = config;
-    }
-
     public int addStaticEntry(EntryDefinition parent, AttributeValues values, String dn) throws Exception {
         log.debug("Adding regular entry "+dn);
 
@@ -153,7 +143,7 @@ public abstract class AddHandler {
         String rdnAttribute = rdn.substring(0, k);
         String rdnValue = rdn.substring(k+1);
 
-        getConfig().addEntryDefinition(newEntry);
+        getEngine().getConfig().addEntryDefinition(newEntry);
 
         Collection objectClasses = newEntry.getObjectClasses();
         Map attributes = newEntry.getAttributes();

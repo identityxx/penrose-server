@@ -20,7 +20,7 @@ public interface PenroseMBean {
 	// Functional Methods
 	// ------------------------------------------------
 	public int init() throws Exception;
-	public void loadConfig() throws Exception;
+	public void loadConfig(String directory) throws Exception;
 	public void loadSchema(String filename) throws Exception;
 	public void stop();
 
@@ -71,20 +71,12 @@ public interface PenroseMBean {
 	public void setConnectionPool(PenroseConnectionPool connectionPool);
 	public Logger getLog();
 	public void setLog(Logger log);
-	public String getMappingConfig();
-	public void setMappingConfig(String mappingConfig);
-	public String getModulesConfig();
-	public void setModulesConfig(String modulesConfig);
 	public List getNormalizedSuffixes();
 	public void setNormalizedSuffixes(List normalizedSuffixes);
 	public String getRootDn();
 	public void setRootDn(String rootDn);
 	public String getRootPassword();
 	public void setRootPassword(String rootPassword);
-	public String getServerConfig();
-	public void setServerConfig(String serverConfig);
-	public String getSourcesConfig();
-	public void setSourcesConfig(String sourcesConfig);
 	public boolean isStopRequested();
 	public void setStopRequested(boolean stopRequested);
 	public List getSuffixes();

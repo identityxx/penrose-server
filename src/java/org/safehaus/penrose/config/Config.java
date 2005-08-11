@@ -13,9 +13,6 @@ import org.safehaus.penrose.module.ModuleMapping;
 import org.safehaus.penrose.module.GenericModuleMapping;
 import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.graph.Graph;
-import org.safehaus.penrose.cache.CacheConfig;
-import org.safehaus.penrose.engine.EngineConfig;
-import org.safehaus.penrose.interpreter.InterpreterConfig;
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.connection.*;
 
@@ -28,7 +25,7 @@ public class Config implements Serializable {
 
     public Logger log = Logger.getLogger(Penrose.CONFIG_LOGGER);
 
-    private int debug = 0;
+    private ServerConfig serverConfig;
 
     private Map entryDefinitions = new TreeMap();
     private Collection rootEntryDefinitions = new ArrayList();
@@ -36,27 +33,13 @@ public class Config implements Serializable {
     private Map graphs = new HashMap();
     private Map primarySources = new HashMap();
 
-    private Collection schemaFiles = new ArrayList();
-
-    private String rootDn;
-    private String rootPassword;
-	
-    private Map interpreterConfigs = new LinkedHashMap();
-    private Map cacheConfigs = new LinkedHashMap();
-    private Map engineConfigs = new LinkedHashMap();
-    private Map adapterConfigs = new LinkedHashMap();
     private Map connectionConfigs = new LinkedHashMap();
-    private Map sourceDefinitions = new LinkedHashMap();
-
     private Map moduleConfigs = new LinkedHashMap();
     private Map moduleMappings = new LinkedHashMap();
 
-    public Config() {
+    public Config(ServerConfig serverConfig) {
+        this.serverConfig = serverConfig;
     }
-
-	public void setDebug(int debug) {
-		this.debug = debug;
-	}
 
 	public void addEntryDefinition(EntryDefinition entry) throws Exception {
 
@@ -89,12 +72,16 @@ public class Config implements Serializable {
         for (Iterator j=entry.getSources().iterator(); j.hasNext(); ) {
             Source source = (Source)j.next();
 
-            SourceDefinition sourceConfig = getSourceDefinition(source);
-            if (sourceConfig == null) throw new Exception("Source "+source.getName()+" undefined.");
+            String sourceName = source.getSourceName();
+            String connectionName = source.getConnectionName();
 
-            source.setSourceDefinition(sourceConfig);
+            ConnectionConfig connection = getConnectionConfig(connectionName);
+            SourceDefinition sourceDefinition = connection.getSourceDefinition(sourceName);
+            if (sourceDefinition == null) throw new Exception("Source "+source.getName()+" undefined.");
 
-            Collection fieldConfigs = sourceConfig.getFields();
+            source.setSourceDefinition(sourceDefinition);
+
+            Collection fieldConfigs = sourceDefinition.getFields();
 
             for (Iterator k=fieldConfigs.iterator(); k.hasNext(); ) {
                 FieldDefinition fieldConfig = (FieldDefinition)k.next();
@@ -241,30 +228,6 @@ public class Config implements Serializable {
         entryDefinitions.remove(oldDn);
     }
 
-    public void addSourceDefinition(SourceDefinition sourceDefinition) throws Exception {
-        sourceDefinitions.put(sourceDefinition.getName(), sourceDefinition);
-
-        String connectionName = sourceDefinition.getConnectionName();
-        if (connectionName == null) throw new Exception("Missing connection name");
-
-        ConnectionConfig connectionConfig = getConnectionConfig(connectionName);
-        if (connectionConfig == null) throw new Exception("Undefined connection "+connectionName);
-
-        sourceDefinition.setConnectionConfig(connectionConfig);
-
-        String adapterName = connectionConfig.getAdapterName();
-        if (adapterName == null) throw new Exception("Missing adapter name");
-
-        AdapterConfig adapterConfig = getAdapterConfig(adapterName);
-        if (adapterConfig == null) throw new Exception("Undefined adapter "+adapterName);
-
-        sourceDefinition.setAdapterConfig(adapterConfig);
-    }
-    
-    public SourceDefinition removeSourceDefinition(String sourceName) {
-    	return (SourceDefinition)sourceDefinitions.remove(sourceName);
-    }
-    
     public void addModuleConfig(ModuleConfig moduleConfig) throws Exception {
         moduleConfigs.put(moduleConfig.getModuleName(), moduleConfig);
     }
@@ -305,7 +268,7 @@ public class Config implements Serializable {
         String adapterName = connectionConfig.getAdapterName();
         if (adapterName == null) throw new Exception("Missing adapter name");
 
-        AdapterConfig adapterConfig = getAdapterConfig(adapterName);
+        AdapterConfig adapterConfig = serverConfig.getAdapterConfig(adapterName);
         if (adapterConfig == null) throw new Exception("Undefined adapter "+adapterName);
 
         connectionConfig.setAdapterConfig(adapterConfig);
@@ -317,10 +280,6 @@ public class Config implements Serializable {
 
     public ConnectionConfig getConnectionConfig(String name) {
         return (ConnectionConfig)connectionConfigs.get(name);
-    }
-
-    public void addAdapterConfig(AdapterConfig adapter) {
-        adapterConfigs.put(adapter.getAdapterName(), adapter);
     }
 
 	/**
@@ -430,32 +389,6 @@ public class Config implements Serializable {
 	public void setConnectionConfigs(Map connectionConfigs) {
 		this.connectionConfigs = connectionConfigs;
 	}
-	/**
-	 * @return Returns the rootDn.
-	 */
-	public String getRootDn() {
-		return rootDn;
-	}
-	/**
-	 * @param rootDn
-	 *            The rootDn to set.
-	 */
-	public void setRootDn(String rootDn) {
-		this.rootDn = rootDn;
-	}
-	/**
-	 * @return Returns the rootPassword.
-	 */
-	public String getRootPassword() {
-		return rootPassword;
-	}
-	/**
-	 * @param rootPassword
-	 *            The rootPassword to set.
-	 */
-	public void setRootPassword(String rootPassword) {
-		this.rootPassword = rootPassword;
-	}
 
 	public String toString() {
 
@@ -464,23 +397,6 @@ public class Config implements Serializable {
 		
         sb.append(nl);
         sb.append(nl);
-
-        sb.append("CACHE:");
-        sb.append(nl);
-        sb.append(nl);
-
-        for (Iterator i = cacheConfigs.keySet().iterator(); i.hasNext();) {
-            String cacheName = (String) i.next();
-            CacheConfig sourceCache = (CacheConfig) cacheConfigs.get(cacheName);
-            sb.append(cacheName + " (" + sourceCache.getCacheClass() + ")" + nl);
-            sb.append("Parameters:" + nl);
-            for (Iterator j = sourceCache.getParameterNames().iterator(); j.hasNext();) {
-                String name = (String) j.next();
-                String value = sourceCache.getParameter(name);
-                sb.append("- " + name + ": " + value + nl);
-            }
-            sb.append(nl);
-        }
 
         sb.append("CONNECTIONS:");
         sb.append(nl);
@@ -497,24 +413,20 @@ public class Config implements Serializable {
 				sb.append("- " + name + ": " + value + nl);
 			}
 			sb.append(nl);
-		}
 
-        sb.append("SOURCES:");
-        sb.append(nl);
-        sb.append(nl);
-
-        for (Iterator i = sourceDefinitions.values().iterator(); i.hasNext();) {
-            SourceDefinition sourceConfig = (SourceDefinition)i.next();
-            sb.append(sourceConfig.getName()+" ("+sourceConfig.getConnectionName() + ")" + nl);
-            for (Iterator j = sourceConfig.getFields().iterator(); j.hasNext(); ) {
-                FieldDefinition field = (FieldDefinition)j.next();
-                sb.append("- field: "+field.getName()+" "+(field.isPrimaryKey() ? "(primary key)" : "") + nl);
+            for (Iterator j = connection.getSourceDefinitions().iterator(); j.hasNext();) {
+                SourceDefinition sourceConfig = (SourceDefinition)j.next();
+                sb.append("Source "+sourceConfig.getName()+nl);
+                for (Iterator k = sourceConfig.getFields().iterator(); k.hasNext(); ) {
+                    FieldDefinition field = (FieldDefinition)k.next();
+                    sb.append("- field: "+field.getName()+" "+(field.isPrimaryKey() ? "(primary key)" : "") + nl);
+                }
+                for (Iterator k = sourceConfig.getParameterNames().iterator(); k.hasNext(); ) {
+                    String name = (String)k.next();
+                    sb.append("- "+name+": "+sourceConfig.getParameter(name) + nl);
+                }
+                sb.append(nl);
             }
-            for (Iterator j = sourceConfig.getParameterNames().iterator(); j.hasNext(); ) {
-                String name = (String)j.next();
-                sb.append("- "+name+": "+sourceConfig.getParameter(name) + nl);
-            }
-            sb.append(nl);
         }
 
 		sb.append("ENTRIES:");
@@ -590,56 +502,12 @@ public class Config implements Serializable {
 		return sb.toString();
 	}
 
-    public Collection getAdapterConfigs() {
-        return adapterConfigs.values();
-    }
-
-    public AdapterConfig getAdapterConfig(String name) {
-        return (AdapterConfig)adapterConfigs.get(name);
-    }
-
-    public Collection getSchemaFiles() {
-        return schemaFiles;
-    }
-
-    public void setSchemaFiles(List schemaFiles) {
-        this.schemaFiles = schemaFiles;
-    }
-    
-    public void addCacheConfig(CacheConfig cacheConfig) {
-    	cacheConfigs.put(cacheConfig.getCacheName(), cacheConfig);
-    }
-
-    public CacheConfig getCacheConfig() {
-        return (CacheConfig)cacheConfigs.get("DEFAULT");
-    }
-
-    public CacheConfig getCacheConfig(String name) {
-        return (CacheConfig)cacheConfigs.get(name);
-    }
-
-    public Collection getCacheConfigs() {
-    	return cacheConfigs.values();
-    }
-
 	public Collection getModuleMappings() {
 		return moduleMappings.values();
 	}
 	public Collection getRootEntryDefinitions() {
 		return rootEntryDefinitions;
 	}
-
-    public Collection getSourceDefinitions() {
-		return sourceDefinitions.values();
-	}
-
-    public SourceDefinition getSourceDefinition(String name) {
-        return (SourceDefinition)sourceDefinitions.get(name);
-    }
-
-    public SourceDefinition getSourceDefinition(Source source) {
-        return getSourceDefinition(source.getSourceName());
-    }
 
     public ModuleConfig removeModuleConfig(String moduleName) {
     	return (ModuleConfig)moduleConfigs.remove(moduleName);
@@ -661,52 +529,12 @@ public class Config implements Serializable {
         if (c != null) c.remove(mapping);
     }
 
-    public Collection getEngineConfigs() {
-        return engineConfigs.values();
-    }
-
-    public void addEngineConfig(EngineConfig engineConfig) {
-        engineConfigs.put(engineConfig.getEngineName(), engineConfig);
-    }
-
-    public void addInterpreterConfig(InterpreterConfig interpreterConfig) {
-        interpreterConfigs.put(interpreterConfig.getInterpreterName(), interpreterConfig);
-    }
-
-    public Collection getInterpreterConfigs() {
-        return interpreterConfigs.values();
-    }
-
-    public InterpreterConfig getInterpreterConfig(String name) {
-        return (InterpreterConfig)interpreterConfigs.get(name);
-    }
-
     public void setModuleConfigs(Map moduleConfigs) {
         this.moduleConfigs = moduleConfigs;
     }
 
     public void setModuleMappings(Map moduleMappings) {
         this.moduleMappings = moduleMappings;
-    }
-
-    public void setSourceDefinitions(Map sourceDefinitions) {
-        this.sourceDefinitions = sourceDefinitions;
-    }
-
-    public void setAdapterConfigs(Map adapterConfigs) {
-        this.adapterConfigs = adapterConfigs;
-    }
-
-    public void setCacheConfigs(Map cacheConfigs) {
-        this.cacheConfigs = cacheConfigs;
-    }
-
-    public void setInterpreterConfigs(Map interpreterConfigs) {
-        this.interpreterConfigs = interpreterConfigs;
-    }
-
-    public int getDebug() {
-        return debug;
     }
 
     public void setRootEntryDefinitions(Collection rootEntryDefinitions) {
@@ -727,5 +555,13 @@ public class Config implements Serializable {
 
     public void setPrimarySources(Map primarySources) {
         this.primarySources = primarySources;
+    }
+
+    public ServerConfig getServerConfig() {
+        return serverConfig;
+    }
+
+    public void setServerConfig(ServerConfig serverConfig) {
+        this.serverConfig = serverConfig;
     }
 }

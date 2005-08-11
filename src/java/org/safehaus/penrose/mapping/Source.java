@@ -29,6 +29,11 @@ public class Source implements Cloneable, Serializable {
      */
     private String sourceName;
 
+    /**
+     * Connection name.
+     */
+    private String connectionName;
+
 	/**
 	 * Fields. Each element is of type org.safehaus.penrose.mapping.Field.
 	 */
@@ -141,10 +146,6 @@ public class Source implements Cloneable, Serializable {
         return sourceDefinition.getAdapterConfig();
     }
 
-    public String getConnectionName() {
-        return sourceDefinition.getConnectionName();
-    }
-
     public Connection getConnection() {
         return connection;
     }
@@ -167,5 +168,13 @@ public class Source implements Cloneable, Serializable {
 
     public String toString() {
         return name+" "+sourceName;
+    }
+
+    public String getConnectionName() {
+        return connectionName;
+    }
+
+    public void setConnectionName(String connectionName) {
+        this.connectionName = connectionName;
     }
 }

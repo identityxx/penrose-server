@@ -59,11 +59,6 @@
             debug="on"
             debuglevel="lines,vars,source"
         />
-        <rmic
-            base="target/classes"
-            classname="org.safehaus.penrose.PenroseRemoteObject"
-            classpathref="lib.path"
-        />
         <copy todir="target/classes">
             <fileset dir="src/java" includes="**/*.xml"/>
         </copy>

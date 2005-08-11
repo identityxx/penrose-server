@@ -8,90 +8,87 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Collection;
+import java.io.File;
+import java.io.FileWriter;
 
 import org.dom4j.Element;
+import org.dom4j.io.OutputFormat;
+import org.dom4j.io.XMLWriter;
 import org.dom4j.tree.DefaultAttribute;
 import org.dom4j.tree.DefaultElement;
 import org.dom4j.tree.DefaultText;
 import org.safehaus.penrose.module.ModuleConfig;
 import org.safehaus.penrose.module.ModuleMapping;
-import org.safehaus.penrose.connection.AdapterConfig;
-import org.safehaus.penrose.cache.CacheConfig;
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.connection.ConnectionConfig;
 import org.safehaus.penrose.schema.AttributeType;
 import org.safehaus.penrose.schema.ObjectClass;
-import org.safehaus.penrose.interpreter.InterpreterConfig;
-import org.safehaus.penrose.engine.EngineConfig;
 
 /**
- * @author Adison Wongkar
  * @author Endi S. Dewata
  */
-public class XMLHelper {
+public class ConfigWriter {
 
-	/**
-	 * Constructor 
-	 */
-	public XMLHelper() {
-		super();
+    private Config config;
+
+	public ConfigWriter(Config config) {
+        this.config = config;
 	}
 
-	/**
-	 * Convert to Server XML element
-	 * 
-	 * @param config the configuration
-	 * @return XML Element
-	 */
-	public static Element toServerXmlElement(Config config) {
-		Element element = new DefaultElement("server");
+    public void storeMappingConfig(String filename) throws Exception {
+        File file = new File(filename);
+        storeMappingConfig(file);
+    }
 
-        // interpreters
-        for (Iterator iter = config.getInterpreterConfigs().iterator(); iter.hasNext();) {
-            InterpreterConfig interpreterConfig = (InterpreterConfig)iter.next();
-            element.add(toElement(interpreterConfig));
-        }
+	public void storeMappingConfig(File file) throws Exception {
+		FileWriter fw = new FileWriter(file);
+		OutputFormat format = OutputFormat.createPrettyPrint();
+        format.setTrimText(false);
 
-        // engines
-        for (Iterator iter = config.getEngineConfigs().iterator(); iter.hasNext();) {
-            EngineConfig engineConfig = (EngineConfig)iter.next();
-            element.add(toElement(engineConfig));
-        }
-
-		// caches
-        for (Iterator iter = config.getCacheConfigs().iterator(); iter.hasNext();) {
-            CacheConfig cacheConfig = (CacheConfig)iter.next();
-            element.add(toElement(cacheConfig));
-        }
-
-        // adapters
-        for (Iterator iter = config.getAdapterConfigs().iterator(); iter.hasNext();) {
-            AdapterConfig adapter = (AdapterConfig)iter.next();
-            element.add(toElement(adapter));
-        }
-
-		// root
-		Element rootElement = new DefaultElement("root");
-
-        Element rootDn = new DefaultElement("root-dn");
-        rootDn.add(new DefaultText(config.getRootDn()));
-        rootElement.add(rootDn);
-
-        Element rootPassword = new DefaultElement("root-password");
-        rootPassword.add(new DefaultText(config.getRootPassword()));
-        rootElement.add(rootPassword);
-
-		element.add(rootElement);
-
-		return element;
+		XMLWriter writer = new XMLWriter(fw, format);
+		writer.startDocument();
+		/*
+		writer.startDTD("mapping",
+				"-//Penrose/Penrose Server Configuration DTD 1.0//EN",
+				"http://penrose.safehaus.org/dtd/penrose-mapping-config-1.0.dtd");
+				*/
+		writer.write(toMappingXmlElement());
+		writer.close();
 	}
 
-	/**
-	 * Convert to Mapping XML element
-	 * @param config
-	 * @return XML Element
-	 */
-	public static Element toMappingXmlElement(Config config) {
+    public void storeSourcesConfig(File file) throws Exception {
+		FileWriter fw = new FileWriter(file);
+		OutputFormat format = OutputFormat.createPrettyPrint();
+        format.setTrimText(false);
+
+		XMLWriter writer = new XMLWriter(fw, format);
+		writer.startDocument();
+		/*
+		writer.startDTD("mapping",
+				"-//Penrose/Penrose Server Configuration DTD 1.0//EN",
+				"http://penrose.safehaus.org/dtd/penrose-mapping-config-1.0.dtd");
+				*/
+		writer.write(toSourcesXmlElement());
+		writer.close();
+    }
+
+    public void storeModulesConfig(File file) throws Exception {
+		FileWriter fw = new FileWriter(file);
+		OutputFormat format = OutputFormat.createPrettyPrint();
+        format.setTrimText(false);
+
+		XMLWriter writer = new XMLWriter(fw, format);
+		writer.startDocument();
+		/*
+		writer.startDTD("mapping",
+				"-//Penrose/Penrose Server Configuration DTD 1.0//EN",
+				"http://penrose.safehaus.org/dtd/penrose-mapping-config-1.0.dtd");
+				*/
+		writer.write(toModulesXmlElement());
+		writer.close();
+    }
+
+	public Element toMappingXmlElement() {
 		Element mappingElement = new DefaultElement("mapping");
 		// entries
 		for (Iterator iter = config.getEntryDefinitions().iterator(); iter.hasNext();) {
@@ -106,24 +103,25 @@ public class XMLHelper {
 		return mappingElement;
 	}
 	
-	public static Element toSourcesXmlElement(Config config) {
+	public Element toSourcesXmlElement() {
 		Element sourcesElement = new DefaultElement("sources");
 
         // connections
-		for (Iterator iter = config.getConnectionConfigs().iterator(); iter.hasNext();) {
-			ConnectionConfig connection = (ConnectionConfig)iter.next();
+		for (Iterator i = config.getConnectionConfigs().iterator(); i.hasNext();) {
+			ConnectionConfig connection = (ConnectionConfig)i.next();
 			sourcesElement.add(toElement(connection));
+
+            // sources
+            for (Iterator k = connection.getSourceDefinitions().iterator(); k.hasNext();) {
+                SourceDefinition source = (SourceDefinition)k.next();
+                sourcesElement.add(toElement(source));
+            }
 		}
 
-		// sources
-		for (Iterator iter = config.getSourceDefinitions().iterator(); iter.hasNext();) {
-			SourceDefinition source = (SourceDefinition)iter.next();
-			sourcesElement.add(toElement(source));
-		}
 		return sourcesElement;
 	}
 
-	public static Element toModulesXmlElement(Config config) {
+	public Element toModulesXmlElement() {
 		Element modulesElement = new DefaultElement("modules");
 		// module
 		for (Iterator iter = config.getModuleConfigs().iterator(); iter.hasNext();) {
@@ -144,7 +142,7 @@ public class XMLHelper {
 		return modulesElement;
 	}
 
-	public static Element toElement(Field field) {
+	public Element toElement(Field field) {
 		Element element = new DefaultElement("field");
 		element.add(new DefaultAttribute("name", field.getName()));
 
@@ -158,27 +156,7 @@ public class XMLHelper {
 		return element;
 	}
 
-    public static Element toElement(AdapterConfig adapter) {
-        Element element = new DefaultElement("adapter");
-
-        Element adapterName = new DefaultElement("adapter-name");
-        adapterName.add(new DefaultText(adapter.getAdapterName()));
-        element.add(adapterName);
-
-        Element adapterClass = new DefaultElement("adapter-class");
-        adapterClass.add(new DefaultText(adapter.getAdapterClass()));
-        element.add(adapterClass);
-
-        if (adapter.getDescription() != null) { 
-            Element description = new DefaultElement("description");
-            description.add(new DefaultText(adapter.getDescription()));
-            element.add(description);
-        }
-
-        return element;
-    }
-
-    public static Element toElement(ConnectionConfig connection) {
+    public Element toElement(ConnectionConfig connection) {
 		Element element = new DefaultElement("connection");
         element.add(new DefaultAttribute("name", connection.getConnectionName()));
 
@@ -206,7 +184,32 @@ public class XMLHelper {
 		return element;
 	}
 
-	public static Element toElement(EntryDefinition entry, Element entryElement, Element configElement) {
+    public Element toElement(SourceDefinition source) {
+    	Element element = new DefaultElement("source");
+    	element.addAttribute("name", source.getName());
+
+    	// field
+    	Object[] fields = source.getFields().toArray();
+    	for (int i=0; i<fields.length; i++) {
+    		FieldDefinition field = (FieldDefinition) fields[i];
+    		Element fieldElement = toElement(field);
+    		element.add(fieldElement);
+    	}
+
+    	// parameter
+        if (!source.getParameterNames().isEmpty()) {
+        	Object[] paramNames = source.getParameterNames().toArray();
+        	for (int i=0; i<paramNames.length; i++) {
+        		String paramValue = source.getParameter(paramNames[i].toString());
+        		Element parameterElement = createParameterElement(paramNames[i].toString(), paramValue);
+        		element.add(parameterElement);
+        	}
+        }
+
+    	return element;
+    }
+
+	public Element toElement(EntryDefinition entry, Element entryElement, Element configElement) {
 		// object classes
 		for (int i = 0; i < entry.getObjectClasses().size(); i++) {
 			String objectClass = (String) entry.getObjectClasses().get(i);
@@ -242,7 +245,7 @@ public class XMLHelper {
 		return entryElement;
 	}
 
-    public static Element toElement(AttributeDefinition attribute) {
+    public Element toElement(AttributeDefinition attribute) {
     	Element element = new DefaultElement("at");
     	element.add(new DefaultAttribute("name", attribute.getName()));
     	if (attribute.isRdn()) element.add(new DefaultAttribute("rdn", "true"));
@@ -256,7 +259,7 @@ public class XMLHelper {
     	return element;
     }
 
-    public static Element toElement(Source source) {
+    public Element toElement(Source source) {
 		Element element = new DefaultElement("source");
 
         // name
@@ -300,7 +303,7 @@ public class XMLHelper {
     	return element;
     }
 
-    public static Element toElement(Relationship relationship) {
+    public Element toElement(Relationship relationship) {
     	Element element = new DefaultElement("relationship");
 
         Element expressionElement = new DefaultElement("expression");
@@ -310,7 +313,7 @@ public class XMLHelper {
     	return element;
     }
 
-    public static Element toElement(ObjectClass oc) {
+    public Element toElement(ObjectClass oc) {
     	Element element = new DefaultElement("objectclass");
     	
     	Element oidElement = new DefaultElement("oid");
@@ -364,7 +367,7 @@ public class XMLHelper {
     	return element;
     }
     
-    public static Element toElement(AttributeType at) {
+    public Element toElement(AttributeType at) {
     	Element element = new DefaultElement("attributetype");
 
     	Element oidElement = new DefaultElement("oid");
@@ -426,7 +429,7 @@ public class XMLHelper {
     	return element;
     }
 
-    public static Element toElement(ModuleConfig module) {
+    public Element toElement(ModuleConfig module) {
         Element element = new DefaultElement("module");
         Element moduleName = new DefaultElement("module-name");
         moduleName.add(new DefaultText(module.getModuleName()));
@@ -446,7 +449,7 @@ public class XMLHelper {
         return element;
     }
 
-    public static Element toElement(ModuleMapping mapping) {
+    public Element toElement(ModuleMapping mapping) {
         Element element = new DefaultElement("module-mapping");
 
         Element name = new DefaultElement("module-name");
@@ -468,125 +471,14 @@ public class XMLHelper {
         return element;
     }
     
-    public static Element toElement(SourceDefinition source) {
-    	Element element = new DefaultElement("source");
-    	element.addAttribute("name", source.getName());
-
-        Element connectionName = new DefaultElement("connection-name");
-        connectionName.add(new DefaultText(source.getConnectionName()));
-        element.add(connectionName);
-
-    	// field
-    	Object[] fields = source.getFields().toArray();
-    	for (int i=0; i<fields.length; i++) {
-    		FieldDefinition field = (FieldDefinition) fields[i];
-    		Element fieldElement = toElement(field);
-    		element.add(fieldElement);
-    	}
-
-    	// parameter
-        if (!source.getParameterNames().isEmpty()) {
-        	Object[] paramNames = source.getParameterNames().toArray();
-        	for (int i=0; i<paramNames.length; i++) {
-        		String paramValue = source.getParameter(paramNames[i].toString());
-        		Element parameterElement = createParameterElement(paramNames[i].toString(), paramValue);
-        		element.add(parameterElement);
-        	}
-        }
-
-    	return element;
-    }
-    
-    public static Element toElement(InterpreterConfig interpreterConfig) {
-    	Element element = new DefaultElement("interpreter");
-
-        Element interpreterName = new DefaultElement("interpreter-name");
-        interpreterName.add(new DefaultText(interpreterConfig.getInterpreterName()));
-        element.add(interpreterName);
-
-        Element interpreterClass = new DefaultElement("interpreter-class");
-        interpreterClass.add(new DefaultText(interpreterConfig.getInterpreterClass()));
-        element.add(interpreterClass);
-
-        // parameters
-        for (Iterator iter = interpreterConfig.getParameterNames().iterator(); iter.hasNext();) {
-            String name = (String) iter.next();
-            String value = (String) interpreterConfig.getParameter(name);
-
-            Element parameter = new DefaultElement("parameter");
-
-            Element paramName = new DefaultElement("param-name");
-            paramName.add(new DefaultText(name));
-            parameter.add(paramName);
-
-            Element paramValue = new DefaultElement("param-value");
-            paramValue.add(new DefaultText(value));
-            parameter.add(paramValue);
-
-            element.add(parameter);
-        }
-    	return element;
-    }
-
-    public static Element toElement(EngineConfig engineConfig) {
-    	Element element = new DefaultElement("engine");
-
-        Element interpreterName = new DefaultElement("engine-name");
-        interpreterName.add(new DefaultText(engineConfig.getEngineName()));
-        element.add(interpreterName);
-
-        Element interpreterClass = new DefaultElement("engine-class");
-        interpreterClass.add(new DefaultText(engineConfig.getEngineClass()));
-        element.add(interpreterClass);
-
-        return element;
-    }
-
-    public static Element toElement(CacheConfig cache) {
-    	Element element = new DefaultElement("cache");
-
-        Element cacheName = new DefaultElement("cache-name");
-        cacheName.add(new DefaultText(cache.getCacheName()));
-        element.add(cacheName);
-
-        Element cacheClass = new DefaultElement("cache-class");
-        cacheClass.add(new DefaultText(cache.getCacheClass()));
-        element.add(cacheClass);
-
-        if (cache.getDescription() != null && !cache.getDescription().equals("")) {
-            Element description = new DefaultElement("description");
-            description.add(new DefaultText(cache.getDescription()));
-            element.add(description);
-        }
-
-        // parameters
-        for (Iterator iter = cache.getParameterNames().iterator(); iter.hasNext();) {
-            String name = (String) iter.next();
-            String value = (String) cache.getParameter(name);
-
-            Element parameter = new DefaultElement("parameter");
-
-            Element paramName = new DefaultElement("param-name");
-            paramName.add(new DefaultText(name));
-            parameter.add(paramName);
-
-            Element paramValue = new DefaultElement("param-value");
-            paramValue.add(new DefaultText(value));
-            parameter.add(paramValue);
-
-            element.add(parameter);
-        }
-    	return element;
-    }
-    
-    public static Element toElement(FieldDefinition field) {
+    public Element toElement(FieldDefinition field) {
     	Element element = new DefaultElement("field");
     	element.addAttribute("name", field.getName());
     	if (field.isPrimaryKey()) element.addAttribute("primaryKey", "true");
     	return element;
     }
     
-    public static Element createParameterElement(String paramName, String paramValue) {
+    public Element createParameterElement(String paramName, String paramValue) {
 
     	Element element = new DefaultElement("parameter");
 
@@ -600,5 +492,12 @@ public class XMLHelper {
 
     	return element;
     }
-    
+
+    public Config getConfig() {
+        return config;
+    }
+
+    public void setConfig(Config config) {
+        this.config = config;
+    }
 }

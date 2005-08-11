@@ -25,12 +25,10 @@ public abstract class DeleteHandler {
 
     private Engine engine;
     private EngineContext engineContext;
-    private Config config;
 
     public void init(Engine engine) throws Exception {
         this.engine = engine;
         this.engineContext = engine.getEngineContext();
-        this.config = engineContext.getConfig();
 
         init();
     }
@@ -44,7 +42,7 @@ public abstract class DeleteHandler {
 
         int result;
 
-        EntryDefinition entryDefinition = config.getEntryDefinition(ndn);
+        EntryDefinition entryDefinition = getEngine().getConfig().getEntryDefinition(ndn);
         if (entryDefinition != null) {
 
         	// Static Entry
@@ -84,7 +82,7 @@ public abstract class DeleteHandler {
             children.remove(entry);
         }
 
-        config.removeEntryDefinition(entry);
+        getEngine().getConfig().removeEntryDefinition(entry);
 
         return LDAPException.SUCCESS;
     }
@@ -105,13 +103,5 @@ public abstract class DeleteHandler {
 
     public void setEngineContext(EngineContext engineContext) {
         this.engineContext = engineContext;
-    }
-
-    public Config getConfig() {
-        return config;
-    }
-
-    public void setConfig(Config config) {
-        this.config = config;
     }
 }

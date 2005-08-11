@@ -10,11 +10,8 @@ import org.apache.log4j.Logger;
 import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.mapping.EntryDefinition;
 import org.safehaus.penrose.mapping.MappingRule;
-import org.dom4j.io.OutputFormat;
-import org.dom4j.io.XMLWriter;
 
 import java.io.File;
-import java.io.FileWriter;
 import java.net.URL;
 import java.util.Collection;
 import java.util.Iterator;
@@ -22,17 +19,17 @@ import java.util.Iterator;
 /**
  * @author Endi S. Dewata
  */
-public class ConfigBuilder {
+public class ConfigReader {
 
     public Logger log = Logger.getLogger(Penrose.CONFIG_LOGGER);
 
     private Config config;
 
-    public ConfigBuilder() {
-        config = new Config();
+    public ConfigReader(ServerConfig serverConfig) {
+        config = new Config(serverConfig);
     }
 
-    public ConfigBuilder(Config config) {
+    public ConfigReader(Config config) {
         this.config = config;
     }
 
@@ -132,34 +129,6 @@ public class ConfigBuilder {
 	}
 
     /**
-     * Load server configuration from a file
-     *
-     * @param filename the configuration file (ie. server.xml)
-     * @throws Exception
-     */
-    public void loadServerConfig(String filename) throws Exception {
-        File file = new File(filename);
-        loadServerConfig(file);
-    }
-
-	/**
-	 * Load server configuration from a file
-	 *
-	 * @param file the configuration file (ie. server.xml)
-	 * @throws Exception
-	 */
-	public void loadServerConfig(File file) throws Exception {
-		log.debug("Loading server configuration file from: "+file.getAbsolutePath());
-        ClassLoader cl = getClass().getClassLoader();
-        URL url = cl.getResource("org/safehaus/penrose/config/server-digester-rules.xml");
-		Digester digester = DigesterLoader.createDigester(url);
-		digester.setValidating(false);
-        digester.setClassLoader(cl);
-		digester.push(config);
-		digester.parse(file);
-	}
-
-    /**
      * Load sources configuration from a file
      *
      * @param filename the configuration file (ie. sources.xml)
@@ -186,86 +155,6 @@ public class ConfigBuilder {
         digester.push(config);
         digester.parse(file);
 	}
-
-    public void storeServerConfig(String filename) throws Exception {
-        File file = new File(filename);
-        storeServerConfig(file);
-    }
-
-	/**
-	 * Store configuration into xml file.
-	 *
-	 * @param file
-	 * @throws Exception
-	 */
-	public void storeServerConfig(File file) throws Exception {
-		FileWriter fw = new FileWriter(file);
-		OutputFormat format = OutputFormat.createPrettyPrint();
-        format.setTrimText(false);
-
-		XMLWriter writer = new XMLWriter(fw, format);
-		writer.startDocument();
-		/*
-		writer.startDTD("server",
-				"-//Penrose/Penrose Server Configuration DTD 1.0//EN",
-				"http://penrose.safehaus.org/dtd/penrose-server-config-1.0.dtd");
-				*/
-		writer.write(XMLHelper.toServerXmlElement(config));
-		writer.close();
-	}
-
-    public void storeMappingConfig(String filename) throws Exception {
-        File file = new File(filename);
-        storeMappingConfig(file);
-    }
-
-	public void storeMappingConfig(File file) throws Exception {
-		FileWriter fw = new FileWriter(file);
-		OutputFormat format = OutputFormat.createPrettyPrint();
-        format.setTrimText(false);
-
-		XMLWriter writer = new XMLWriter(fw, format);
-		writer.startDocument();
-		/*
-		writer.startDTD("mapping",
-				"-//Penrose/Penrose Server Configuration DTD 1.0//EN",
-				"http://penrose.safehaus.org/dtd/penrose-mapping-config-1.0.dtd");
-				*/
-		writer.write(XMLHelper.toMappingXmlElement(config));
-		writer.close();
-	}
-
-    public void storeSourcesConfig(File file) throws Exception {
-		FileWriter fw = new FileWriter(file);
-		OutputFormat format = OutputFormat.createPrettyPrint();
-        format.setTrimText(false);
-
-		XMLWriter writer = new XMLWriter(fw, format);
-		writer.startDocument();
-		/*
-		writer.startDTD("mapping",
-				"-//Penrose/Penrose Server Configuration DTD 1.0//EN",
-				"http://penrose.safehaus.org/dtd/penrose-mapping-config-1.0.dtd");
-				*/
-		writer.write(XMLHelper.toSourcesXmlElement(config));
-		writer.close();
-    }
-
-    public void storeModulesConfig(File file) throws Exception {
-		FileWriter fw = new FileWriter(file);
-		OutputFormat format = OutputFormat.createPrettyPrint();
-        format.setTrimText(false);
-
-		XMLWriter writer = new XMLWriter(fw, format);
-		writer.startDocument();
-		/*
-		writer.startDTD("mapping",
-				"-//Penrose/Penrose Server Configuration DTD 1.0//EN",
-				"http://penrose.safehaus.org/dtd/penrose-mapping-config-1.0.dtd");
-				*/
-		writer.write(XMLHelper.toModulesXmlElement(config));
-		writer.close();
-    }
 
     public Config getConfig() {
         return config;

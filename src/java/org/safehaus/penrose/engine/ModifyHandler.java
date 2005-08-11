@@ -30,12 +30,10 @@ public abstract class ModifyHandler {
 
     private Engine engine;
     private EngineContext engineContext;
-    private Config config;
 
     public void init(Engine engine) throws Exception {
         this.engine = engine;
         this.engineContext = engine.getEngineContext();
-        this.config = engineContext.getConfig();
 
         init();
 	}
@@ -48,7 +46,7 @@ public abstract class ModifyHandler {
 
 		String ndn = LDAPDN.normalize(dn);
 
-		EntryDefinition entry = config.getEntryDefinition(ndn);
+		EntryDefinition entry = getEngine().getConfig().getEntryDefinition(ndn);
 		if (entry != null) {
 			return modifyStaticEntry(entry, modifications);
 		}
@@ -303,13 +301,5 @@ public abstract class ModifyHandler {
 
     public void setEngineContext(EngineContext engineContext) {
         this.engineContext = engineContext;
-    }
-
-    public Config getConfig() {
-        return config;
-    }
-
-    public void setConfig(Config config) {
-        this.config = config;
     }
 }

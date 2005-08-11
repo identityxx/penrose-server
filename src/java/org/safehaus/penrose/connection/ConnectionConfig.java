@@ -4,6 +4,8 @@
  */
 package org.safehaus.penrose.connection;
 
+import org.safehaus.penrose.mapping.SourceDefinition;
+
 import java.util.*;
 import java.io.Serializable;
 
@@ -47,6 +49,11 @@ public class ConnectionConfig implements Serializable {
 
     private List listenerClasses = new ArrayList();
     private List listeners = new ArrayList();
+
+    /**
+     * Sources.
+     */
+    private Map sourceDefinitions = new TreeMap();
 
 	/**
 	 * Default constructor (provided for convenience for Apache Digester to be
@@ -217,6 +224,22 @@ public class ConnectionConfig implements Serializable {
         } finally {
             //System.out.println("["+this+"] equals("+object+") => "+value);
         }
+    }
+
+    public Collection getSourceDefinitions() {
+        return sourceDefinitions.values();
+    }
+
+    public SourceDefinition getSourceDefinition(String sourceName) {
+        return (SourceDefinition)sourceDefinitions.get(sourceName);
+    }
+
+    public void addSourceDefinition(SourceDefinition sourceDefinition) {
+        sourceDefinitions.put(sourceDefinition.getName(), sourceDefinition);
+    }
+
+    public SourceDefinition removeSourceDefinition(String sourceName) {
+        return (SourceDefinition)sourceDefinitions.remove(sourceName);
     }
 
     public String toString() {

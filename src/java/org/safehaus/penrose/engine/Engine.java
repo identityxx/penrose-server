@@ -10,6 +10,7 @@ import org.safehaus.penrose.cache.Cache;
 import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.SearchResults;
 import org.safehaus.penrose.*;
+import org.safehaus.penrose.config.Config;
 import org.safehaus.penrose.thread.ThreadPool;
 import org.safehaus.penrose.thread.Queue;
 import org.safehaus.penrose.thread.MRSWLock;
@@ -41,6 +42,7 @@ public class Engine implements EngineMBean {
     private EngineConfig engineConfig;
     private EngineContext engineContext;
 
+    private Config config;
     private Cache cache;
 
     private Hashtable sourceLocks = new Hashtable();
@@ -80,6 +82,10 @@ public class Engine implements EngineMBean {
         modifyHandler.init(this);
         modRdnHandler.init(this);
         searchHandler.init(this);
+    }
+
+    public void setConfig(Config config) {
+        this.config = config;
     }
 
     public void createAddHandler() throws Exception {
@@ -523,5 +529,8 @@ public class Engine implements EngineMBean {
         return true;
     }
 
+    public Config getConfig() {
+        return config;
+    }
 }
 

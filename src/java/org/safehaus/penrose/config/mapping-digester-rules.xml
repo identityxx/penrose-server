@@ -44,6 +44,7 @@
                 <object-create-rule classname="org.safehaus.penrose.mapping.Source" />
                 <set-properties-rule />
                 <call-method-rule pattern="source-name" methodname="setSourceName" paramcount="0" />
+                <call-method-rule pattern="connection-name" methodname="setConnectionName" paramcount="0" />
 
                 <pattern value="field">
                     <object-create-rule classname="org.safehaus.penrose.mapping.Field" />

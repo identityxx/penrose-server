@@ -53,7 +53,6 @@ public class ApacheDSEntryCache extends EntryCache {
         log.debug("===============================================================================");
 
         LdapName baseDn = new LdapName(dn);
-        //LdapName baseDn = new LdapName("dc=vergenet,dc=com");
         Map env = new HashMap();
 
         FilterParserImpl parser = new FilterParserImpl();
