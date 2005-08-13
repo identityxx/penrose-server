@@ -17,12 +17,12 @@ import org.dom4j.io.XMLWriter;
 import org.dom4j.tree.DefaultAttribute;
 import org.dom4j.tree.DefaultElement;
 import org.dom4j.tree.DefaultText;
-import org.safehaus.penrose.module.ModuleConfig;
-import org.safehaus.penrose.module.ModuleMapping;
 import org.safehaus.penrose.mapping.*;
-import org.safehaus.penrose.connection.ConnectionConfig;
+import org.safehaus.penrose.mapping.ConnectionConfig;
 import org.safehaus.penrose.schema.AttributeType;
 import org.safehaus.penrose.schema.ObjectClass;
+import org.safehaus.penrose.module.ModuleConfig;
+import org.safehaus.penrose.module.ModuleMapping;
 
 /**
  * @author Endi S. Dewata
@@ -480,6 +480,7 @@ public class ConfigWriter {
     public Element toElement(FieldDefinition field) {
     	Element element = new DefaultElement("field");
     	element.addAttribute("name", field.getName());
+        if (!"VARCHAR".equals(field.getType())) element.addAttribute("type", field.getType());
     	if (field.isPrimaryKey()) element.addAttribute("primaryKey", "true");
     	return element;
     }

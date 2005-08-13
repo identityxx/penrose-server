@@ -11,7 +11,7 @@ import org.safehaus.penrose.event.*;
 /**
  * @author Endi S. Dewata
  */
-public class GenericModule implements Module, ModuleConfig {
+public class GenericModule implements Module {
 
     private ModuleConfig moduleConfig;
 

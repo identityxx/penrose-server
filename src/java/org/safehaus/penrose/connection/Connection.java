@@ -4,6 +4,7 @@ import org.safehaus.penrose.connection.Adapter;
 import org.safehaus.penrose.SearchResults;
 import org.safehaus.penrose.mapping.Source;
 import org.safehaus.penrose.mapping.AttributeValues;
+import org.safehaus.penrose.mapping.ConnectionConfig;
 import org.safehaus.penrose.filter.Filter;
 
 import java.util.Collection;

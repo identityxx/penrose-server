@@ -7,7 +7,7 @@ package org.safehaus.penrose.mapping;
 /**
  * @author Endi S. Dewata
  */
-public class FieldDefinition implements Comparable {
+public class FieldDefinition implements Comparable, Cloneable {
 
 	/**
 	 * Name.
@@ -16,7 +16,7 @@ public class FieldDefinition implements Comparable {
 
     private String originalName;
 
-    private String type = "string";
+    private String type = "VARCHAR";
 
 	/**
 	 * This is a primary key.
@@ -120,4 +120,16 @@ public class FieldDefinition implements Comparable {
         FieldDefinition fd = (FieldDefinition)object;
         return name.compareTo(fd.name);
     }
+
+    public Object clone() {
+        FieldDefinition fieldDefinition = new FieldDefinition();
+        fieldDefinition.name = name;
+        fieldDefinition.originalName = originalName;
+        fieldDefinition.type = type;
+        fieldDefinition.primaryKey = primaryKey;
+        fieldDefinition.encryption = encryption;
+        fieldDefinition.encoding = encoding;
+        return fieldDefinition;
+    }
+
 }

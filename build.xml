@@ -4,6 +4,8 @@
 -->
 <project name="penrose" default="build" basedir=".">
 
+    <description>Penrose</description>
+
     <property name="build.compiler" value="jikes"/>
     <property name="project.name" value="penrose"/>
     <property name="project.version" value="0.9.3"/>
@@ -162,9 +164,12 @@
     <target name="dist-src" depends="docs,dist">
         <echo message="Creating ${project.name}-${project.version}-src.zip"/>
         <mkdir dir="dist"/>
-        <zip destfile="dist/${project.name}-${project.version}-src.zip"
-            excludes="dist/**"
-            basedir="."/>
+        <zip destfile="dist/${project.name}-${project.version}-src.zip">
+            <zipfileset dir=".">
+                <exclude name="dist/**"/>
+                <exclude name="target/**"/>
+            </zipfileset>
+        </zip>
         <echo message="Creating ${project.name}-${project.version}-src.tar.gz"/>
         <mkdir dir="target"/>
         <tar destfile="target/${project.name}-${project.version}-src.tar">

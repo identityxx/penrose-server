@@ -28,8 +28,6 @@ import org.safehaus.penrose.config.*;
 import org.safehaus.penrose.event.*;
 import org.safehaus.penrose.module.ModuleContext;
 import org.safehaus.penrose.module.Module;
-import org.safehaus.penrose.module.ModuleConfig;
-import org.safehaus.penrose.module.ModuleMapping;
 import org.safehaus.penrose.schema.Schema;
 import org.safehaus.penrose.schema.AttributeType;
 import org.safehaus.penrose.schema.ObjectClass;

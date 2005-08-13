@@ -8,15 +8,10 @@ import java.io.Serializable;
 import java.util.*;
 
 import org.apache.log4j.Logger;
-import org.safehaus.penrose.module.ModuleConfig;
-import org.safehaus.penrose.module.ModuleMapping;
-import org.safehaus.penrose.module.GenericModuleMapping;
 import org.safehaus.penrose.Penrose;
-import org.safehaus.penrose.graph.Graph;
 import org.safehaus.penrose.cache.CacheConfig;
 import org.safehaus.penrose.engine.EngineConfig;
 import org.safehaus.penrose.interpreter.InterpreterConfig;
-import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.connection.*;
 
 

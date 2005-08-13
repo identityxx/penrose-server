@@ -74,7 +74,7 @@ public class JDBCFilterTool {
 
         Field field = source.getField(name);
 
-        if ("string".equals(field.getType())) {
+        if ("VARCHAR".equals(field.getType())) {
             sb.append("lower(");
             sb.append(name);
             sb.append(")=lower(?)");

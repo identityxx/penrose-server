@@ -8,7 +8,6 @@ import org.safehaus.penrose.SearchResults;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.connection.Adapter;
 import org.safehaus.penrose.connection.Connection;
-import org.safehaus.penrose.connection.ConnectionConfig;
 import org.safehaus.penrose.connection.AdapterConfig;
 
 import java.util.*;

@@ -14,7 +14,7 @@
 
 		<pattern value="module">
 
-			<object-create-rule classname="org.safehaus.penrose.module.GenericModuleConfig" />
+			<object-create-rule classname="org.safehaus.penrose.module.ModuleConfig" />
 
             <set-properties-rule/>
 
@@ -33,7 +33,7 @@
 
 		<pattern value="module-mapping">
 
-			<object-create-rule classname="org.safehaus.penrose.module.GenericModuleMapping" />
+			<object-create-rule classname="org.safehaus.penrose.module.ModuleMapping" />
 
             <set-properties-rule/>
 

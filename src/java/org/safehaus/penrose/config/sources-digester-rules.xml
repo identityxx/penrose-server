@@ -14,7 +14,7 @@
 
         <pattern value="connection">
 
-            <object-create-rule classname="org.safehaus.penrose.connection.ConnectionConfig" />
+            <object-create-rule classname="org.safehaus.penrose.mapping.ConnectionConfig" />
             <set-properties-rule>
                 <alias attr-name="name" prop-name="connectionName" />
             </set-properties-rule>

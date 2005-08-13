@@ -5,14 +5,13 @@
 package org.safehaus.penrose.mapping;
 
 import org.safehaus.penrose.connection.AdapterConfig;
-import org.safehaus.penrose.connection.ConnectionConfig;
 
 import java.util.*;
 
 /**
  * @author Endi S. Dewata
  */
-public class SourceDefinition {
+public class SourceDefinition implements Cloneable {
 
     public final static String LOAD_ON_STARTUP      = "loadOnStartup";
     public final static String CACHE_EXPIRATION     = "cacheExpiration";
@@ -22,6 +21,8 @@ public class SourceDefinition {
 	 * Name.
 	 */
 	private String name;
+
+    private String description;
 
     private ConnectionConfig connectionConfig;
 
@@ -40,9 +41,10 @@ public class SourceDefinition {
      */
     private Properties parameters = new Properties();
 
+    /**
+     * Listeners.
+     */
     private List listeners = new ArrayList();
-
-    private String description;
 
 	public SourceDefinition() {
 	}
@@ -117,5 +119,22 @@ public class SourceDefinition {
 
     public void setConnectionConfig(ConnectionConfig connectionConfig) {
         this.connectionConfig = connectionConfig;
+    }
+
+    public Object clone() {
+        SourceDefinition sourceDefinition = new SourceDefinition();
+        sourceDefinition.name = name;
+        sourceDefinition.description = description;
+        sourceDefinition.connectionConfig = connectionConfig;
+
+        for (Iterator i = fields.values().iterator(); i.hasNext(); ) {
+            FieldDefinition fieldDefinition = (FieldDefinition)((FieldDefinition)i.next()).clone();
+            sourceDefinition.addFieldDefinition(fieldDefinition);
+        }
+
+        sourceDefinition.parameters.putAll(parameters);
+        sourceDefinition.listeners.addAll(listeners);
+
+        return sourceDefinition;
     }
 }

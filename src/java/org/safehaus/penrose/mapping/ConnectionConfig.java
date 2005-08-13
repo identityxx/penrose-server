@@ -2,7 +2,7 @@
  * Copyright (c) 1998-2005, Verge Lab., LLC.
  * All rights reserved.
  */
-package org.safehaus.penrose.connection;
+package org.safehaus.penrose.mapping;
 
 import org.safehaus.penrose.mapping.SourceDefinition;
 
@@ -13,7 +13,7 @@ import java.io.Serializable;
 /**
  * @author Endi S. Dewata
  */
-public class ConnectionConfig implements Serializable {
+public class ConnectionConfig implements Serializable, Cloneable {
 
 	/**
 	 * Name.
@@ -53,10 +53,25 @@ public class ConnectionConfig implements Serializable {
      */
     private Map sourceDefinitions = new TreeMap();
 
-	/**
-	 * Default constructor (provided for convenience for Apache Digester to be
-	 * able to instantiate w/ default constructor)
-	 */
+    public Object clone() {
+        ConnectionConfig connectionConfig = new ConnectionConfig();
+        connectionConfig.connectionName = connectionName;
+        connectionConfig.adapterName = adapterName;
+        connectionConfig.poolSize = poolSize;
+        connectionConfig.testQuery = testQuery;
+        connectionConfig.description = description;
+        connectionConfig.parameters.putAll(parameters);
+        connectionConfig.listenerClasses.addAll(listenerClasses);
+        connectionConfig.listeners.addAll(listeners);
+
+        for (Iterator i=sourceDefinitions.values().iterator(); i.hasNext(); ) {
+            SourceDefinition sourceDefinition = (SourceDefinition)((SourceDefinition)i.next()).clone();
+            connectionConfig.addSourceDefinition(sourceDefinition);
+        }
+        
+        return connectionConfig;
+    }
+
 	public ConnectionConfig() {
 	}
 
