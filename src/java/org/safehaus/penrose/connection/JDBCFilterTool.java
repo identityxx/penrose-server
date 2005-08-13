@@ -76,11 +76,11 @@ public class JDBCFilterTool {
 
         if ("VARCHAR".equals(field.getType())) {
             sb.append("lower(");
-            sb.append(name);
+            sb.append(field.getOriginalName() == null ? field.getName() : field.getOriginalName());
             sb.append(")=lower(?)");
 
         } else {
-            sb.append(name);
+            sb.append(field.getOriginalName() == null ? field.getName() : field.getOriginalName());
             sb.append("=?");
         }
 

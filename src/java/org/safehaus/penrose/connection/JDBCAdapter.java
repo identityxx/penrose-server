@@ -81,7 +81,7 @@ public class JDBCAdapter extends Adapter {
             Field field = (Field)i.next();
 
             if (sb.length() > 0) sb.append(", ");
-            sb.append(field.getName());
+            sb.append(field.getOriginalName() == null ? field.getName() : field.getOriginalName());
         }
 
         return sb.toString();
@@ -95,7 +95,7 @@ public class JDBCAdapter extends Adapter {
             Field field = (Field)i.next();
 
             if (sb.length() > 0) sb.append(", ");
-            sb.append(field.getName());
+            sb.append(field.getOriginalName() == null ? field.getName() : field.getOriginalName());
         }
 
         return sb.toString();
@@ -212,16 +212,21 @@ public class JDBCAdapter extends Adapter {
             StringBuffer sb = new StringBuffer();
             StringBuffer sb2 = new StringBuffer();
 
-            for (Iterator i=row.getNames().iterator(); i.hasNext(); ) {
-                String name = (String)i.next();
+            Collection fields = source.getFields();
+            Collection parameters = new ArrayList();
+            for (Iterator i=fields.iterator(); i.hasNext(); ) {
+                Field field = (Field)i.next();
 
                 if (sb.length() > 0) {
                     sb.append(", ");
                     sb2.append(", ");
                 }
 
-                sb.append(name);
+                sb.append(field.getOriginalName() == null ? field.getName() : field.getOriginalName());
                 sb2.append("?");
+
+                Object obj = row.get(field.getName());
+                parameters.add(obj);
             }
 
             String sql = "insert into "+tableName+" ("+sb+") values ("+sb2+")";
@@ -230,9 +235,8 @@ public class JDBCAdapter extends Adapter {
             ps = con.prepareStatement(sql);
 
             int c = 1;
-            for (Iterator i=row.getNames().iterator(); i.hasNext(); c++) {
-                String name = (String)i.next();
-                Object obj = row.get(name);
+            for (Iterator i=parameters.iterator(); i.hasNext(); c++) {
+                Object obj = i.next();
                 ps.setObject(c, obj);
                 log.debug(" - "+c+" = "+(obj == null ? null : obj.toString()));
             }
@@ -341,23 +345,33 @@ public class JDBCAdapter extends Adapter {
             con = ds.getConnection();
 
             StringBuffer sb = new StringBuffer();
-            for (Iterator i=newRow.getNames().iterator(); i.hasNext(); ) {
-                String name = (String)i.next();
+            StringBuffer sb2 = new StringBuffer();
+            Collection parameters = new ArrayList();
+
+            Collection fields = source.getFields();
+            for (Iterator i=fields.iterator(); i.hasNext(); ) {
+                Field field = (Field)i.next();
 
                 if (sb.length() > 0) sb.append(", ");
 
-                sb.append(name);
+                sb.append(field.getOriginalName() == null ? field.getName() : field.getOriginalName());
                 sb.append("=?");
+
+                Object value = newRow.get(field.getName());
+                parameters.add(value);
             }
 
-            StringBuffer sb2 = new StringBuffer();
-            for (Iterator i=pk.keySet().iterator(); i.hasNext(); ) {
-                String name = (String)i.next();
+            Collection pkFields = source.getPrimaryKeyFields();
+            for (Iterator i=pkFields.iterator(); i.hasNext(); ) {
+                Field field = (Field)i.next();
 
                 if (sb2.length() > 0) sb2.append(" and ");
 
-                sb2.append(name);
+                sb2.append(field.getOriginalName() == null ? field.getName() : field.getOriginalName());
                 sb2.append("=?");
+
+                Object value = oldRow.get(field.getName());
+                parameters.add(value);
             }
 
             String sql = "update "+tableName+" set "+sb+" where "+sb2;
@@ -366,16 +380,8 @@ public class JDBCAdapter extends Adapter {
             ps = con.prepareStatement(sql);
 
             int c = 1;
-            for (Iterator i=newRow.getNames().iterator(); i.hasNext(); c++) {
-                String name = (String)i.next();
-                Object value = newRow.get(name);
-                ps.setObject(c, value);
-                log.debug(" - "+c+" = "+value);
-            }
-
-            for (Iterator i=pk.keySet().iterator(); i.hasNext(); c++) {
-                String name = (String)i.next();
-                Object value = oldRow.get(name);
+            for (Iterator i=parameters.iterator(); i.hasNext(); c++) {
+                Object value = i.next();
                 ps.setObject(c, value);
                 log.debug(" - "+c+" = "+value);
             }

@@ -135,7 +135,7 @@ public class JNDIAdapter extends Adapter {
             String name = field.getName();
             if (name.equals("objectClass")) continue;
 
-            javax.naming.directory.Attribute attr = attrs.get(field.getName());
+            javax.naming.directory.Attribute attr = attrs.get(field.getOriginalName() == null ? field.getName() : field.getOriginalName());
             if (attr == null) continue;
 
             boolean binary = false;
@@ -170,7 +170,7 @@ public class JNDIAdapter extends Adapter {
             for (Iterator j=fields.iterator(); j.hasNext(); ) {
                 Field field = (Field)j.next();
                 String name = field.getName();
-                Object value = row.get(field.getOriginalName());
+                Object value = row.get(field.getName());
                 if (value == null) continue;
                 values.set(name, value);
             }
