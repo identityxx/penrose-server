@@ -58,7 +58,7 @@ public class EntryCache {
 
         while (entries.size() >= size) {
             log.debug("Trimming entry cache ("+entries.size()+").");
-            Row key = (Row)entries.keySet().iterator().next();
+            String key = (String)entries.keySet().iterator().next();
             entries.remove(key);
         }
 

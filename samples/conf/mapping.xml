@@ -56,6 +56,7 @@
     </at>
     <source name="u">
       <source-name>users</source-name>
+      <connection-name>MySQL</connection-name>
       <field name="username">
         <expression>uid</expression>
       </field>
@@ -98,6 +99,7 @@ return "uid="+ug2.username+",ou=users,dc=penrose,dc=safehaus,dc=org";
     </source>
     <source name="g">
       <source-name>groups</source-name>
+      <connection-name>MySQL</connection-name>
       <field name="description">
         <expression>description</expression>
       </field>
@@ -162,6 +164,7 @@ return "uid="+ug.username+",ou=users,dc=penrose,dc=safehaus,dc=org";
     </source>
     <source name="ug">
       <source-name>usergroups</source-name>
+      <connection-name>MySQL</connection-name>
       <field name="groupname">
         <expression>cn</expression>
       </field>
@@ -196,6 +199,7 @@ return uniqueMember.substring(i+1, j);
     </at>
     <source name="u">
       <source-name>users</source-name>
+      <connection-name>MySQL</connection-name>
       <field name="username">
         <expression>uid</expression>
       </field>

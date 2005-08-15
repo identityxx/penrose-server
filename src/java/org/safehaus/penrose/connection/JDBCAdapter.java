@@ -81,7 +81,7 @@ public class JDBCAdapter extends Adapter {
             Field field = (Field)i.next();
 
             if (sb.length() > 0) sb.append(", ");
-            sb.append(field.getOriginalName() == null ? field.getName() : field.getOriginalName());
+            sb.append(field.getOriginalName());
         }
 
         return sb.toString();
@@ -95,7 +95,7 @@ public class JDBCAdapter extends Adapter {
             Field field = (Field)i.next();
 
             if (sb.length() > 0) sb.append(", ");
-            sb.append(field.getOriginalName() == null ? field.getName() : field.getOriginalName());
+            sb.append(field.getOriginalName());
         }
 
         return sb.toString();
@@ -222,7 +222,7 @@ public class JDBCAdapter extends Adapter {
                     sb2.append(", ");
                 }
 
-                sb.append(field.getOriginalName() == null ? field.getName() : field.getOriginalName());
+                sb.append(field.getOriginalName());
                 sb2.append("?");
 
                 Object obj = row.get(field.getName());
@@ -354,7 +354,7 @@ public class JDBCAdapter extends Adapter {
 
                 if (sb.length() > 0) sb.append(", ");
 
-                sb.append(field.getOriginalName() == null ? field.getName() : field.getOriginalName());
+                sb.append(field.getOriginalName());
                 sb.append("=?");
 
                 Object value = newRow.get(field.getName());
@@ -367,7 +367,7 @@ public class JDBCAdapter extends Adapter {
 
                 if (sb2.length() > 0) sb2.append(" and ");
 
-                sb2.append(field.getOriginalName() == null ? field.getName() : field.getOriginalName());
+                sb2.append(field.getOriginalName());
                 sb2.append("=?");
 
                 Object value = oldRow.get(field.getName());

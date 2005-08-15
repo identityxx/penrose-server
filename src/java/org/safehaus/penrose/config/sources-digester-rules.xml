@@ -39,9 +39,6 @@
 
                     <object-create-rule classname="org.safehaus.penrose.mapping.FieldDefinition" />
                     <set-properties-rule />
-
-                    <call-method-rule pattern="original-name" methodname="setOriginalName" paramcount="0" />
-
                     <set-next-rule methodname="addFieldDefinition" />
 
                 </pattern>

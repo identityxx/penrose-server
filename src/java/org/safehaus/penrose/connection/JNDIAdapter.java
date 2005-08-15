@@ -135,7 +135,7 @@ public class JNDIAdapter extends Adapter {
             String name = field.getName();
             if (name.equals("objectClass")) continue;
 
-            javax.naming.directory.Attribute attr = attrs.get(field.getOriginalName() == null ? field.getName() : field.getOriginalName());
+            javax.naming.directory.Attribute attr = attrs.get(field.getOriginalName());
             if (attr == null) continue;
 
             boolean binary = false;

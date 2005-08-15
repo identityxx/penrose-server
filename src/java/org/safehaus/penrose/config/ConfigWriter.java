@@ -482,11 +482,7 @@ public class ConfigWriter {
     	element.addAttribute("name", field.getName());
         if (!"VARCHAR".equals(field.getType())) element.addAttribute("type", field.getType());
     	if (field.isPrimaryKey()) element.addAttribute("primaryKey", "true");
-
-        Element originalName = new DefaultElement("original-name");
-        if (field.getOriginalName() != null) originalName.add(new DefaultText(field.getOriginalName()));
-        element.add(originalName);
-
+        if (!field.getName().equals(field.getOriginalName())) element.addAttribute("originalName", field.getOriginalName());
     	return element;
     }
     
