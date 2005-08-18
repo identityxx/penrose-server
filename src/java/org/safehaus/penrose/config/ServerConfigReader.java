@@ -7,7 +7,6 @@ package org.safehaus.penrose.config;
 import org.apache.commons.digester.Digester;
 import org.apache.commons.digester.xmlrules.DigesterLoader;
 import org.apache.log4j.Logger;
-import org.safehaus.penrose.Penrose;
 
 import java.io.File;
 import java.net.URL;
@@ -17,7 +16,7 @@ import java.net.URL;
  */
 public class ServerConfigReader {
 
-    public Logger log = Logger.getLogger(Penrose.CONFIG_LOGGER);
+    public Logger log = Logger.getLogger(getClass());
 
     private ServerConfig serverConfig;
 

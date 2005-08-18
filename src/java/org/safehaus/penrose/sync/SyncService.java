@@ -41,8 +41,8 @@ public class SyncService {
 
         Date date = new Date();
 
-        Graph graph = penrose.getConfig().getGraph(entryDefinition);
-        Source primarySource = penrose.getConfig().getPrimarySource(entryDefinition);
+        Graph graph = penrose.getGraph(entryDefinition);
+        Source primarySource = penrose.getPrimarySource(entryDefinition);
 
         AddGraphVisitor visitor = new AddGraphVisitor(penrose, this, primarySource, entryDefinition, values, date);
         graph.traverse(visitor, primarySource);
@@ -135,8 +135,8 @@ public class SyncService {
 
          Date date = new Date();
 
-         Graph graph = penrose.getConfig().getGraph(entryDefinition);
-         Source primarySource = penrose.getConfig().getPrimarySource(entryDefinition);
+         Graph graph = penrose.getGraph(entryDefinition);
+         Source primarySource = penrose.getPrimarySource(entryDefinition);
 
          DeleteGraphVisitor visitor = new DeleteGraphVisitor(penrose, this, primarySource, entryDefinition, values, date);
          graph.traverse(visitor, primarySource);
@@ -307,8 +307,8 @@ public class SyncService {
 
         Date date = new Date();
 
-        Graph graph = penrose.getConfig().getGraph(entryDefinition);
-        Source primarySource = penrose.getConfig().getPrimarySource(entryDefinition);
+        Graph graph = penrose.getGraph(entryDefinition);
+        Source primarySource = penrose.getPrimarySource(entryDefinition);
 
         ModifyGraphVisitor visitor = new ModifyGraphVisitor(penrose, this, primarySource, entry, newValues, date);
         graph.traverse(visitor, primarySource);
@@ -334,7 +334,7 @@ public class SyncService {
     public Collection search(Entry parent, EntryDefinition entryDefinition, Filter filter) throws Exception {
         Set keys = new HashSet();
 
-        Source primarySource = penrose.getConfig().getPrimarySource(entryDefinition);
+        Source primarySource = penrose.getPrimarySource(entryDefinition);
         String primarySourceName = primarySource.getName();
 
         if (parent != null && parent.isDynamic()) {
@@ -371,7 +371,7 @@ public class SyncService {
             String startingSourceName = getStartingSourceName(entryDefinition);
             Source startingSource = entryDefinition.getEffectiveSource(startingSourceName);
 
-            Graph graph = penrose.getConfig().getGraph(entryDefinition);
+            Graph graph = penrose.getGraph(entryDefinition);
 
             SearchGraphVisitor visitor = new SearchGraphVisitor(penrose, entryDefinition, newRows, primarySource);
             graph.traverse(visitor, startingSource);
@@ -452,8 +452,8 @@ public class SyncService {
             Collection pks)
             throws Exception {
 
-        Graph graph = penrose.getConfig().getGraph(entryDefinition);
-        Source primarySource = penrose.getConfig().getPrimarySource(entryDefinition);
+        Graph graph = penrose.getGraph(entryDefinition);
+        Source primarySource = penrose.getPrimarySource(entryDefinition);
 
         LoaderGraphVisitor loaderVisitor = new LoaderGraphVisitor(penrose, this, entryDefinition, pks);
         graph.traverse(loaderVisitor, primarySource);
@@ -550,7 +550,7 @@ public class SyncService {
 
                     pk.set(name, value);
                 }
-                
+
                 AttributeValues values = (AttributeValues)results.get(pk);
                 if (values == null) {
                     values = new AttributeValues();

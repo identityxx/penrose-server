@@ -7,7 +7,6 @@ package org.safehaus.penrose.engine;
 import org.safehaus.penrose.PenroseConnection;
 import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.config.Config;
-import org.safehaus.penrose.thread.MRSWLock;
 import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.schema.Schema;
 import org.safehaus.penrose.schema.ObjectClass;
@@ -46,7 +45,10 @@ public class ModifyHandler {
 
 		String ndn = LDAPDN.normalize(dn);
 
-		EntryDefinition entry = getEngineContext().getConfig().getEntryDefinition(ndn);
+        Config config = getEngineContext().getConfig(ndn);
+        if (config == null) return LDAPException.NO_SUCH_OBJECT;
+
+		EntryDefinition entry = config.getEntryDefinition(ndn);
 		if (entry != null) {
 			return modifyStaticEntry(entry, modifications);
 		}

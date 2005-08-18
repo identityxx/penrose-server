@@ -11,6 +11,8 @@ import org.ietf.ldap.*;
 import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.SearchResults;
 import org.safehaus.penrose.PenroseConnection;
+import org.safehaus.penrose.config.ConfigReader;
+import org.safehaus.penrose.config.Config;
 
 import javax.naming.Name;
 import javax.naming.NamingException;
@@ -18,6 +20,7 @@ import javax.naming.NamingEnumeration;
 import javax.naming.NameNotFoundException;
 import javax.naming.directory.*;
 import java.util.*;
+import java.io.File;
 
 /**
  * @author Endi S. Dewata
@@ -34,8 +37,32 @@ public class PenrosePartition extends AbstractContextPartition {
         this.penrose = penrose;
     }
 
+    public void doInit() throws NamingException {
+
+        String name = getConfiguration().getName();
+
+        Logger log = Logger.getLogger(getClass());
+        log.debug("-------------------------------------------------------------------------------");
+        log.info("Initializing "+name+" partition ...");
+
+        try {
+            File dir = new File("partitions/"+name);
+            
+            if (dir.exists()) {
+                ConfigReader reader = new ConfigReader();
+                Config config = reader.read(dir.getAbsolutePath());
+                log.debug(config.toString());
+
+                penrose.addConfig(config);
+            }
+
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+        }
+    }
+
     public void delete(Name dn) throws NamingException {
-        Logger log = Logger.getLogger(PenrosePartition.class);
+        Logger log = Logger.getLogger(getClass());
         log.info("Deleting \""+dn+"\"");
 
         try {
@@ -56,7 +83,7 @@ public class PenrosePartition extends AbstractContextPartition {
     }
 
     public void add(String upName, Name normName, Attributes attributes) throws NamingException {
-        Logger log = Logger.getLogger(PenrosePartition.class);
+        Logger log = Logger.getLogger(getClass());
         log.info("Adding \""+upName+"\"");
 
         if (getSuffix(true).equals(normName)) return;
@@ -94,7 +121,7 @@ public class PenrosePartition extends AbstractContextPartition {
     }
 
     public void modify(Name dn, int i, Attributes attributes) throws NamingException {
-        Logger log = Logger.getLogger(PenrosePartition.class);
+        Logger log = Logger.getLogger(getClass());
         log.info("Modifying \""+dn+"\"");
         log.debug("changetype: modify");
 
@@ -137,7 +164,7 @@ public class PenrosePartition extends AbstractContextPartition {
     }
 
     public void modify(Name dn, ModificationItem[] modificationItems) throws NamingException {
-        Logger log = Logger.getLogger(PenrosePartition.class);
+        Logger log = Logger.getLogger(getClass());
         log.info("Modifying \""+dn+"\"");
         log.debug("changetype: modify");
 
@@ -195,7 +222,7 @@ public class PenrosePartition extends AbstractContextPartition {
     }
 
     public NamingEnumeration list(Name dn) throws NamingException {
-        Logger log = Logger.getLogger(PenrosePartition.class);
+        Logger log = Logger.getLogger(getClass());
         log.info("Listing \""+dn+"\"");
 
         try {
@@ -256,7 +283,7 @@ public class PenrosePartition extends AbstractContextPartition {
 
     public NamingEnumeration search(Name base, Map env, ExprNode filter, SearchControls searchControls) throws NamingException {
 
-        Logger log = Logger.getLogger(PenrosePartition.class);
+        Logger log = Logger.getLogger(getClass());
         String deref = (String)env.get("java.naming.ldap.derefAliases");
         int scope = searchControls.getSearchScope();
         String returningAttributes[] = searchControls.getReturningAttributes();
@@ -341,7 +368,7 @@ public class PenrosePartition extends AbstractContextPartition {
     }
 
     public Attributes lookup(Name dn) throws NamingException {
-        Logger log = Logger.getLogger(PenrosePartition.class);
+        Logger log = Logger.getLogger(getClass());
         log.debug("Looking up \""+dn+"\"");
 
         try {
@@ -391,7 +418,7 @@ public class PenrosePartition extends AbstractContextPartition {
     }
 
     public Attributes lookup(Name dn, String[] attrIds) throws NamingException {
-        Logger log = Logger.getLogger(PenrosePartition.class);
+        Logger log = Logger.getLogger(getClass());
         log.debug("Looking up \""+dn+"\", \""+attrIds+"\"");
 
         for (int i=0; attrIds != null && i<attrIds.length; i++) {
@@ -402,7 +429,7 @@ public class PenrosePartition extends AbstractContextPartition {
     }
 
     public boolean hasEntry(Name name) throws NamingException {
-        Logger log = Logger.getLogger(PenrosePartition.class);
+        Logger log = Logger.getLogger(getClass());
         log.info("Checking \""+name+"\"");
 
         try {
@@ -428,17 +455,17 @@ public class PenrosePartition extends AbstractContextPartition {
     }
 
     public void modifyRn(Name name, String newRn, boolean deleteOldRn) throws NamingException {
-        Logger log = Logger.getLogger(PenrosePartition.class);
+        Logger log = Logger.getLogger(getClass());
         log.info("Renaming \""+name+"\"");
     }
 
     public void move(Name oriChildName, Name newParentName) throws NamingException {
-        Logger log = Logger.getLogger(PenrosePartition.class);
+        Logger log = Logger.getLogger(getClass());
         log.info("Moving \""+oriChildName+"\" to \""+newParentName+"\"");
     }
 
     public void move(Name oriChildName, Name newParentName, String newRn, boolean deleteOldRn) throws NamingException {
-        Logger log = Logger.getLogger(PenrosePartition.class);
+        Logger log = Logger.getLogger(getClass());
         log.info("Moving \""+oriChildName+"\" to \""+newParentName+"\"");
     }
 
@@ -447,7 +474,7 @@ public class PenrosePartition extends AbstractContextPartition {
     }
 
     public void close() throws NamingException {
-        Logger log = Logger.getLogger(PenrosePartition.class);
+        Logger log = Logger.getLogger(getClass());
         try {
             penrose.stop();
 

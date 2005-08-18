@@ -4,11 +4,8 @@
  */
 package org.safehaus.penrose.cache;
 
-import org.safehaus.penrose.mapping.EntryDefinition;
-import org.safehaus.penrose.mapping.Row;
 import org.safehaus.penrose.mapping.Entry;
 import org.safehaus.penrose.Penrose;
-import org.safehaus.penrose.config.Config;
 import org.apache.log4j.Logger;
 
 import java.util.*;
@@ -22,7 +19,6 @@ public class EntryCache {
 
     private Cache cache;
     private CacheContext cacheContext;
-    private Config config;
 
     private int size;
 
@@ -31,7 +27,6 @@ public class EntryCache {
     public void init(Cache cache) throws Exception {
         this.cache = cache;
         this.cacheContext = cache.getCacheContext();
-        this.config = cacheContext.getConfig();
 
         String s = cache.getParameter("size");
         size = s == null ? 50 : Integer.parseInt(s);
@@ -92,14 +87,6 @@ public class EntryCache {
 
     public void setCacheContext(CacheContext cacheContext) {
         this.cacheContext = cacheContext;
-    }
-
-    public Config getConfig() {
-        return config;
-    }
-
-    public void setConfig(Config config) {
-        this.config = config;
     }
 
     public Map getEntries() {

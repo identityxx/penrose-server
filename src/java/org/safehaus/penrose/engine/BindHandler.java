@@ -6,8 +6,6 @@ package org.safehaus.penrose.engine;
 
 import org.safehaus.penrose.PenroseConnection;
 import org.safehaus.penrose.Penrose;
-import org.safehaus.penrose.connection.Connection;
-import org.safehaus.penrose.thread.MRSWLock;
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.util.PasswordUtil;
 import org.ietf.ldap.LDAPDN;

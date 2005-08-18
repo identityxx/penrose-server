@@ -7,8 +7,8 @@ package org.safehaus.penrose.engine;
 import org.safehaus.penrose.SearchResults;
 import org.safehaus.penrose.PenroseConnection;
 import org.safehaus.penrose.Penrose;
-import org.safehaus.penrose.cache.Cache;
 import org.safehaus.penrose.config.Config;
+import org.safehaus.penrose.cache.Cache;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.mapping.Entry;
 import org.safehaus.penrose.mapping.EntryDefinition;
@@ -59,8 +59,11 @@ public abstract class SearchHandler {
 
 		log.debug("Find entry: " + dn);
 
+        Config config = getEngineContext().getConfig(dn);
+        if (config == null) return null;
+
         // search the entry directly
-        EntryDefinition entryDefinition = getEngineContext().getConfig().getEntryDefinition(dn);
+        EntryDefinition entryDefinition = config.getEntryDefinition(dn);
 
         if (entryDefinition != null) {
             log.debug("Found static entry: " + dn);

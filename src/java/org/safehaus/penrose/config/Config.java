@@ -9,10 +9,7 @@ import java.util.*;
 
 import org.apache.log4j.Logger;
 import org.safehaus.penrose.module.ModuleMapping;
-import org.safehaus.penrose.module.Module;
 import org.safehaus.penrose.module.ModuleConfig;
-import org.safehaus.penrose.Penrose;
-import org.safehaus.penrose.graph.Graph;
 import org.safehaus.penrose.mapping.*;
 
 
@@ -22,19 +19,15 @@ import org.safehaus.penrose.mapping.*;
  */
 public class Config implements Serializable {
 
-    public Logger log = Logger.getLogger(Penrose.CONFIG_LOGGER);
+    public Logger log = Logger.getLogger(getClass());
 
     private Map entryDefinitions = new TreeMap();
     private Collection rootEntryDefinitions = new ArrayList();
-
-    private Map graphs = new HashMap();
-    private Map primarySources = new HashMap();
 
     private Map connectionConfigs = new LinkedHashMap();
 
     private Map moduleConfigs = new LinkedHashMap();
     private Map moduleMappings = new LinkedHashMap();
-    private Map modules = new LinkedHashMap();
 
     public Config() {
     }
@@ -100,98 +93,6 @@ public class Config implements Serializable {
                 if (fieldConfig.isPrimaryKey()) source.addPrimaryKeyField(field);
             }
         }
-    }
-
-    public void analyze() throws Exception {
-
-        for (Iterator i=rootEntryDefinitions.iterator(); i.hasNext(); ) {
-            EntryDefinition entryDefinition = (EntryDefinition)i.next();
-            analyze(entryDefinition);
-        }
-    }
-
-    public void analyze(EntryDefinition entryDefinition) throws Exception {
-
-        log.debug("Entry "+entryDefinition.getDn()+":");
-
-        Source source = computePrimarySource(entryDefinition);
-        primarySources.put(entryDefinition, source);
-        log.debug(" - primary source: "+source);
-
-        Graph graph = computeGraph(entryDefinition);
-        graphs.put(entryDefinition, graph);
-        log.debug(" - graph: "+graph);
-
-        for (Iterator i=entryDefinition.getChildren().iterator(); i.hasNext(); ) {
-            EntryDefinition childDefinition = (EntryDefinition)i.next();
-            analyze(childDefinition);
-        }
-	}
-
-    public Source getPrimarySource(EntryDefinition entryDefinition) {
-        return (Source)primarySources.get(entryDefinition);
-    }
-
-    Source computePrimarySource(EntryDefinition entryDefinition) {
-
-        Collection rdnAttributes = entryDefinition.getRdnAttributes();
-
-        // TODO need to handle multiple rdn attributes
-        AttributeDefinition rdnAttribute = (AttributeDefinition)rdnAttributes.iterator().next();
-        String exp = rdnAttribute.getExpression();
-
-        // TODO need to handle complex expression
-        int index = exp.indexOf(".");
-        if (index < 0) return null;
-
-        String primarySourceName = exp.substring(0, index);
-
-        for (Iterator i = entryDefinition.getSources().iterator(); i.hasNext();) {
-            Source source = (Source) i.next();
-            if (source.getName().equals(primarySourceName)) return source;
-        }
-
-        return null;
-    }
-
-    public Graph getGraph(EntryDefinition entryDefinition) throws Exception {
-
-        return (Graph)graphs.get(entryDefinition);
-    }
-
-    Graph computeGraph(EntryDefinition entryDefinition) throws Exception {
-
-        Graph graph = new Graph();
-
-        Collection sources = entryDefinition.getEffectiveSources();
-        if (sources.size() == 0) return null;
-
-        for (Iterator i=sources.iterator(); i.hasNext(); ) {
-            Source source = (Source)i.next();
-            graph.addNode(source);
-        }
-
-        Collection relationships = entryDefinition.getRelationships();
-        for (Iterator i=relationships.iterator(); i.hasNext(); ) {
-            Relationship relationship = (Relationship)i.next();
-            // System.out.println("Checking ["+relationship.getExpression()+"]");
-
-            String lhs = relationship.getLhs();
-            int li = lhs.indexOf(".");
-            String lsourceName = lhs.substring(0, li);
-
-            String rhs = relationship.getRhs();
-            int ri = rhs.indexOf(".");
-            String rsourceName = rhs.substring(0, ri);
-
-            Source lsource = entryDefinition.getEffectiveSource(lsourceName);
-            Source rsource = entryDefinition.getEffectiveSource(rsourceName);
-            graph.addEdge(lsource, rsource, relationship);
-        }
-
-        // System.out.println("Graph: "+graph);
-
-        return graph;
     }
 
     public EntryDefinition removeEntryDefinition(EntryDefinition entry) {
@@ -532,64 +433,5 @@ public class Config implements Serializable {
 
     public void setRootEntryDefinitions(Collection rootEntryDefinitions) {
         this.rootEntryDefinitions = rootEntryDefinitions;
-    }
-
-    public Map getGraphs() {
-        return graphs;
-    }
-
-    public void setGraphs(Map graphs) {
-        this.graphs = graphs;
-    }
-
-    public Map getPrimarySources() {
-        return primarySources;
-    }
-
-    public void setPrimarySources(Map primarySources) {
-        this.primarySources = primarySources;
-    }
-
-    public void init() throws Exception {
-        initModules();
-        analyze();
-    }
-
-    public void initModules() throws Exception {
-
-        for (Iterator i=getModuleConfigs().iterator(); i.hasNext(); ) {
-            ModuleConfig moduleConfig = (ModuleConfig)i.next();
-
-            Class clazz = Class.forName(moduleConfig.getModuleClass());
-            Module module = (Module)clazz.newInstance();
-            module.init(moduleConfig);
-
-            modules.put(moduleConfig.getModuleName(), module);
-        }
-
-    }
-
-    public Collection getModules(String dn) throws Exception {
-        log.debug("Find matching module mapping for "+dn);
-
-        Collection list = new ArrayList();
-
-        for (Iterator i = getModuleMappings().iterator(); i.hasNext(); ) {
-            Collection c = (Collection)i.next();
-
-            for (Iterator j=c.iterator(); j.hasNext(); ) {
-                ModuleMapping moduleMapping = (ModuleMapping)j.next();
-
-                String moduleName = moduleMapping.getModuleName();
-                Module module = (Module)modules.get(moduleName);
-
-                if (moduleMapping.match(dn)) {
-                    log.debug(" - "+moduleName);
-                    list.add(module);
-                }
-            }
-        }
-
-        return list;
     }
 }

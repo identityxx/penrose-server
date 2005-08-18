@@ -72,7 +72,12 @@ public class PenroseInterceptor extends BaseInterceptor {
         log.debug("add(\""+dn+"\")");
 
         try {
-            Config config = penrose.getConfig();
+            Config config = penrose.getConfig(dn);
+            if (config == null) {
+                log.debug(dn+" is a static entry");
+                next.add(upName, normName, attributes);
+            }
+
             EntryDefinition ed = config.findEntryDefinition(dn);
             if (ed == null) {
                 log.debug(dn+" is a static entry");
@@ -128,7 +133,12 @@ public class PenroseInterceptor extends BaseInterceptor {
         log.debug("delete(\""+dn+"\")");
 
         try {
-            Config config = penrose.getConfig();
+            Config config = penrose.getConfig(dn);
+            if (config == null) {
+                log.debug(dn+" is a static entry");
+                next.delete(name);
+            }
+
             EntryDefinition ed = config.findEntryDefinition(dn);
             if (ed == null) {
                 log.debug(dn+" is a static entry");
@@ -161,7 +171,12 @@ public class PenroseInterceptor extends BaseInterceptor {
         log.debug("list(\""+dn+"\")");
 
         try {
-            Config config = penrose.getConfig();
+            Config config = penrose.getConfig(dn);
+            if (config == null) {
+                log.debug(dn+" is a static entry");
+                return next.list(name);
+            }
+
             EntryDefinition ed = config.findEntryDefinition(dn);
             if (ed == null) {
                 log.debug(dn+" is a static entry");
@@ -233,7 +248,12 @@ public class PenroseInterceptor extends BaseInterceptor {
         log.debug("hasEntry(\""+dn+"\")");
 
         try {
-            Config config = penrose.getConfig();
+            Config config = penrose.getConfig(dn);
+            if (config == null) {
+                log.debug(dn+" is a static entry");
+                return next.hasEntry(name);
+            }
+
             EntryDefinition ed = config.findEntryDefinition(dn);
             if (ed == null) {
                 log.debug(dn+" is a static entry");
@@ -274,7 +294,12 @@ public class PenroseInterceptor extends BaseInterceptor {
         log.debug("lookup(\""+dn+"\")");
 
         try {
-            Config config = penrose.getConfig();
+            Config config = penrose.getConfig(dn);
+            if (config == null) {
+                log.debug(dn+" is a static entry");
+                return next.lookup(name, attrIds);
+            }
+
             EntryDefinition ed = config.findEntryDefinition(dn);
             if (ed == null) {
                 log.debug(dn+" is a static entry");
@@ -303,7 +328,12 @@ public class PenroseInterceptor extends BaseInterceptor {
         log.debug("lookup(\""+dn+"\")");
 
         try {
-            Config config = penrose.getConfig();
+            Config config = penrose.getConfig(dn);
+            if (config == null) {
+                log.debug(dn+" is a static entry");
+                return next.lookup(name);
+            }
+
             EntryDefinition ed = config.findEntryDefinition(dn);
             if (ed == null) {
                 log.debug(dn+" is a static entry");
@@ -371,7 +401,12 @@ public class PenroseInterceptor extends BaseInterceptor {
         log.debug("search(\""+baseDn+"\")");
 
         try {
-            Config config = penrose.getConfig();
+            Config config = penrose.getConfig(baseDn);
+            if (config == null) {
+                log.debug(baseDn+" is a static entry");
+                return next.search(base, env, filter, searchControls);
+            }
+
             EntryDefinition ed = config.findEntryDefinition(baseDn);
             if (ed == null) {
                 log.debug(baseDn+" is a static entry");
@@ -477,7 +512,12 @@ public class PenroseInterceptor extends BaseInterceptor {
         log.debug("modify(\""+dn+"\")");
 
         try {
-            Config config = penrose.getConfig();
+            Config config = penrose.getConfig(dn);
+            if (config == null) {
+                log.debug(dn+" is a static entry");
+                next.modify(name, modOp, attributes);
+            }
+
             EntryDefinition ed = config.findEntryDefinition(dn);
             if (ed == null) {
                 log.debug(dn+" is a static entry");
@@ -533,7 +573,12 @@ public class PenroseInterceptor extends BaseInterceptor {
         log.debug("modify(\""+dn+"\")");
 
         try {
-            Config config = penrose.getConfig();
+            Config config = penrose.getConfig(dn);
+            if (config == null) {
+                log.debug(dn+" is a static entry");
+                next.modify(name, modificationItems);
+            }
+
             EntryDefinition ed = config.findEntryDefinition(dn);
             if (ed == null) {
                 log.debug(dn+" is a static entry");

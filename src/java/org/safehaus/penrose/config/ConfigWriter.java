@@ -18,7 +18,6 @@ import org.dom4j.tree.DefaultAttribute;
 import org.dom4j.tree.DefaultElement;
 import org.dom4j.tree.DefaultText;
 import org.safehaus.penrose.mapping.*;
-import org.safehaus.penrose.mapping.ConnectionConfig;
 import org.safehaus.penrose.schema.AttributeType;
 import org.safehaus.penrose.schema.ObjectClass;
 import org.safehaus.penrose.module.ModuleConfig;

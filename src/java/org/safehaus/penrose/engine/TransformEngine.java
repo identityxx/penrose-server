@@ -8,7 +8,6 @@ package org.safehaus.penrose.engine;
 import java.util.*;
 
 import org.apache.log4j.Logger;
-import org.safehaus.penrose.config.*;
 import org.safehaus.penrose.util.PasswordUtil;
 import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.Penrose;
@@ -22,14 +21,12 @@ public class TransformEngine {
     public Logger log = Logger.getLogger(Penrose.TRANSFORM_LOGGER);
 
     public Penrose penrose;
-    public Config config;
 
     public int joinDebug = 0;
     public int crossProductDebug = 0;
 
     public TransformEngine(Penrose penrose) {
         this.penrose = penrose;
-        this.config = penrose.getConfig();
     }
 
     /**

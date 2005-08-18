@@ -20,7 +20,7 @@ public interface PenroseMBean {
 	// Functional Methods
 	// ------------------------------------------------
 	public int init() throws Exception;
-	public void loadConfig(String directory) throws Exception;
+	public void addConfig(Config config) throws Exception;
 	public void loadSchema(String filename) throws Exception;
 	public void stop();
 
@@ -81,7 +81,6 @@ public interface PenroseMBean {
 	public void setStopRequested(boolean stopRequested);
 	public List getSuffixes();
 	public void setSuffixes(List suffixes);
-	public void setConfig(Config config);
 	public String readConfigFile(String filename) throws IOException;
 	public void writeConfigFile(String filename, String content) throws IOException;
 

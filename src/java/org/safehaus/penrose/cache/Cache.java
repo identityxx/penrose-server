@@ -5,7 +5,6 @@
 package org.safehaus.penrose.cache;
 
 import org.safehaus.penrose.Penrose;
-import org.safehaus.penrose.config.Config;
 import org.apache.log4j.Logger;
 
 import java.util.Collection;
@@ -19,7 +18,6 @@ public class Cache {
 
     private CacheConfig cacheConfig;
     private CacheContext cacheContext;
-    private Config config;
 
     private FilterCache filterCache;
     private EntryCache entryCache;
@@ -45,7 +43,6 @@ public class Cache {
     public void init(CacheConfig cacheConfig, CacheContext cacheContext) throws Exception {
         this.cacheConfig = cacheConfig;
         this.cacheContext = cacheContext;
-        this.config = cacheContext.getConfig();
 
         cacheFilterTool = new CacheFilterTool(getCacheContext());
 
@@ -97,14 +94,6 @@ public class Cache {
 
     public void setCacheContext(CacheContext cacheContext) {
         this.cacheContext = cacheContext;
-    }
-
-    public Config getConfig() {
-        return config;
-    }
-
-    public void setConfig(Config config) {
-        this.config = config;
     }
 
     public FilterCache getFilterCache() {

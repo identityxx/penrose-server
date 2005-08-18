@@ -5,7 +5,6 @@
 package org.safehaus.penrose.cache;
 
 import org.safehaus.penrose.mapping.*;
-import org.safehaus.penrose.config.Config;
 import org.safehaus.penrose.event.CacheEvent;
 import org.safehaus.penrose.event.CacheListener;
 import org.safehaus.penrose.Penrose;
@@ -22,7 +21,6 @@ public class SourceCache {
 
     private Cache cache;
     private CacheContext cacheContext;
-    private Config config;
 
     private int size;
 
@@ -31,7 +29,6 @@ public class SourceCache {
     public void init(Cache cache) throws Exception {
         this.cache = cache;
         this.cacheContext = cache.getCacheContext();
-        this.config = cacheContext.getConfig();
 
         String s = cache.getParameter("size");
         size = s == null ? 50 : Integer.parseInt(s);
@@ -315,14 +312,6 @@ public class SourceCache {
 
     public void setCacheContext(CacheContext cacheContext) {
         this.cacheContext = cacheContext;
-    }
-
-    public Config getConfig() {
-        return config;
-    }
-
-    public void setConfig(Config config) {
-        this.config = config;
     }
 
     public int getSize() {

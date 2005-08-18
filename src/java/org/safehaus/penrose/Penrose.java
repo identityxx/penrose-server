@@ -28,6 +28,8 @@ import org.safehaus.penrose.config.*;
 import org.safehaus.penrose.event.*;
 import org.safehaus.penrose.module.ModuleContext;
 import org.safehaus.penrose.module.Module;
+import org.safehaus.penrose.module.ModuleMapping;
+import org.safehaus.penrose.module.ModuleConfig;
 import org.safehaus.penrose.schema.Schema;
 import org.safehaus.penrose.schema.AttributeType;
 import org.safehaus.penrose.schema.ObjectClass;
@@ -45,6 +47,7 @@ import org.safehaus.penrose.filter.FilterTool;
 import org.safehaus.penrose.acl.AclTool;
 import org.safehaus.penrose.management.PenroseClient;
 import org.safehaus.penrose.sync.SyncService;
+import org.safehaus.penrose.graph.Graph;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PropertyConfigurator;
 import sun.misc.SignalHandler;
@@ -105,10 +108,15 @@ public class Penrose implements
 
     private Map caches = new LinkedHashMap();
 	private Map engines = new LinkedHashMap();
+
     private Map connections = new LinkedHashMap();
+    private Map modules = new LinkedHashMap();
+    private Map graphs = new HashMap();
+    private Map primarySources = new HashMap();
+
 
     private ServerConfig serverConfig;
-	private Config config;
+    private Map configs = new TreeMap();
     private Schema schema;
 
 	private Logger log = Logger.getLogger(ENGINE_LOGGER);
@@ -120,8 +128,8 @@ public class Penrose implements
 	public Penrose() {
 	}
 
-	public Config getConfig() {
-		return config;
+	public Collection getConfigs() {
+		return configs.values();
 	}
 
 	/**
@@ -149,7 +157,12 @@ public class Penrose implements
         PropertyConfigurator.configure("conf/log4j.properties");
 
         initServer();
-        loadConfig("conf");
+
+        ConfigReader reader = new ConfigReader();
+        Config config = reader.read("conf");
+        log.debug(config.toString());
+
+        addConfig(config);
 
         log.warn("Penrose is ready.");
 
@@ -263,25 +276,23 @@ public class Penrose implements
         initJmx();
     }
 
-	public void loadConfig(String directory) throws Exception {
-
+	public void addConfig(Config config) throws Exception {
         log.debug("-------------------------------------------------------------------------------");
-        log.debug("Penrose.loadConfig(\""+directory+"\")");
+        log.debug("Penrose.addConfig(config)");
 
-        ConfigReader reader = new ConfigReader();
-        reader.loadSourcesConfig(directory+"/sources.xml");
-        reader.loadMappingConfig(directory+"/mapping.xml");
-        reader.loadModulesConfig(directory+"/modules.xml");
+        log.debug("Registering suffixes:");
+        for (Iterator i=config.getRootEntryDefinitions().iterator(); i.hasNext(); ) {
+            EntryDefinition entryDefinition = (EntryDefinition)i.next();
+            log.debug(" - "+entryDefinition.getDn());
+            configs.put(entryDefinition.getDn(), config);
+        }
 
-        config = reader.getConfig();
-        log.debug(config.toString());
-
-        config.init();
-
-        initConnections(config, serverConfig);
+        initConnections(config);
+        initModules(config);
+        analyze(config);
 	}
 
-    public void initConnections(Config config, ServerConfig serverConfig) throws Exception {
+    public void initConnections(Config config) throws Exception {
         for (Iterator i = config.getConnectionConfigs().iterator(); i.hasNext();) {
             ConnectionConfig connectionConfig = (ConnectionConfig) i.next();
 
@@ -303,6 +314,131 @@ public class Penrose implements
             connections.put(connectionConfig.getConnectionName(), connection);
         }
 
+    }
+
+    public void initModules(Config config) throws Exception {
+
+        for (Iterator i=config.getModuleConfigs().iterator(); i.hasNext(); ) {
+            ModuleConfig moduleConfig = (ModuleConfig)i.next();
+
+            Class clazz = Class.forName(moduleConfig.getModuleClass());
+            Module module = (Module)clazz.newInstance();
+            module.init(moduleConfig);
+
+            modules.put(moduleConfig.getModuleName(), module);
+        }
+    }
+
+    public Map getGraphs() {
+        return graphs;
+    }
+
+    public void setGraphs(Map graphs) {
+        this.graphs = graphs;
+    }
+
+    public Map getPrimarySources() {
+        return primarySources;
+    }
+
+    public void setPrimarySources(Map primarySources) {
+        this.primarySources = primarySources;
+    }
+
+    public Graph getGraph(EntryDefinition entryDefinition) throws Exception {
+
+        return (Graph)graphs.get(entryDefinition);
+    }
+
+    Graph computeGraph(EntryDefinition entryDefinition) throws Exception {
+
+        Graph graph = new Graph();
+
+        Collection sources = entryDefinition.getEffectiveSources();
+        if (sources.size() == 0) return null;
+
+        for (Iterator i=sources.iterator(); i.hasNext(); ) {
+            Source source = (Source)i.next();
+            graph.addNode(source);
+        }
+
+        Collection relationships = entryDefinition.getRelationships();
+        for (Iterator i=relationships.iterator(); i.hasNext(); ) {
+            Relationship relationship = (Relationship)i.next();
+            // System.out.println("Checking ["+relationship.getExpression()+"]");
+
+            String lhs = relationship.getLhs();
+            int li = lhs.indexOf(".");
+            String lsourceName = lhs.substring(0, li);
+
+            String rhs = relationship.getRhs();
+            int ri = rhs.indexOf(".");
+            String rsourceName = rhs.substring(0, ri);
+
+            Source lsource = entryDefinition.getEffectiveSource(lsourceName);
+            Source rsource = entryDefinition.getEffectiveSource(rsourceName);
+            graph.addEdge(lsource, rsource, relationship);
+        }
+
+        // System.out.println("Graph: "+graph);
+
+        return graph;
+    }
+
+    public void analyze(Config config) throws Exception {
+
+        for (Iterator i=config.getRootEntryDefinitions().iterator(); i.hasNext(); ) {
+            EntryDefinition entryDefinition = (EntryDefinition)i.next();
+            analyze(entryDefinition);
+        }
+    }
+
+    public void analyze(EntryDefinition entryDefinition) throws Exception {
+
+        log.debug("Entry "+entryDefinition.getDn()+":");
+
+        Source source = computePrimarySource(entryDefinition);
+        if (source != null) {
+            primarySources.put(entryDefinition, source);
+            log.debug(" - primary source: "+source);
+        }
+
+        Graph graph = computeGraph(entryDefinition);
+        if (graph != null) {
+            graphs.put(entryDefinition, graph);
+            log.debug(" - graph: "+graph);
+        }
+
+        for (Iterator i=entryDefinition.getChildren().iterator(); i.hasNext(); ) {
+            EntryDefinition childDefinition = (EntryDefinition)i.next();
+            analyze(childDefinition);
+        }
+	}
+
+    public Source getPrimarySource(EntryDefinition entryDefinition) {
+        return (Source)primarySources.get(entryDefinition);
+    }
+
+    Source computePrimarySource(EntryDefinition entryDefinition) {
+
+        Collection rdnAttributes = entryDefinition.getRdnAttributes();
+
+        // TODO need to handle multiple rdn attributes
+        AttributeDefinition rdnAttribute = (AttributeDefinition)rdnAttributes.iterator().next();
+        String exp = rdnAttribute.getExpression();
+
+        // TODO need to handle complex expression
+        int index = exp.indexOf(".");
+        if (index < 0) return null;
+
+        String primarySourceName = exp.substring(0, index);
+
+        for (Iterator i = entryDefinition.getSources().iterator(); i.hasNext();) {
+            Source source = (Source) i.next();
+            if (source.getName().equals(primarySourceName)) return source;
+        }
+
+        return null;
     }
 
     public void loadSchema() throws Exception {
@@ -354,8 +490,39 @@ public class Penrose implements
         return (Engine)engines.get(name);
     }
 
+    public Config getConfig(String dn) throws Exception {
+        for (Iterator i=configs.keySet().iterator(); i.hasNext(); ) {
+            String suffix = (String)i.next();
+            if (dn.endsWith(suffix)) return (Config)configs.get(suffix);
+        }
+        return null;
+    }
+
     public Collection getModules(String dn) throws Exception {
-        return config.getModules(dn);
+        log.debug("Find matching module mapping for "+dn);
+
+        Collection list = new ArrayList();
+
+        Config config = getConfig(dn);
+        if (config == null) return list;
+        
+        for (Iterator i = config.getModuleMappings().iterator(); i.hasNext(); ) {
+            Collection c = (Collection)i.next();
+
+            for (Iterator j=c.iterator(); j.hasNext(); ) {
+                ModuleMapping moduleMapping = (ModuleMapping)j.next();
+
+                String moduleName = moduleMapping.getModuleName();
+                Module module = (Module)modules.get(moduleName);
+
+                if (moduleMapping.match(dn)) {
+                    log.debug(" - "+moduleName);
+                    list.add(module);
+                }
+            }
+        }
+
+        return list;
     }
 
     public int bind(PenroseConnection connection, String dn, String password) throws Exception {
@@ -786,9 +953,6 @@ public class Penrose implements
 	}
 	public void setTrustedKeyStore(String trustedKeyStore) {
 		this.trustedKeyStore = trustedKeyStore;
-	}
-	public void setConfig(Config config) {
-		this.config = config;
 	}
 
 	public String readConfigFile(String filename) throws IOException {

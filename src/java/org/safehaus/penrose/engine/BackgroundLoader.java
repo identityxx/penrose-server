@@ -8,7 +8,6 @@ import java.util.Hashtable;
 import java.util.Vector;
 
 import org.apache.log4j.Logger;
-import org.safehaus.penrose.config.Config;
 import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.thread.NormalThread;
 
@@ -43,7 +42,6 @@ public class BackgroundLoader extends NormalThread implements Runnable {
 	}
 	
 	private Penrose penrose;
-	private Config config;
 	private Vector updaterQueue;
 
 	/**
@@ -60,7 +58,6 @@ public class BackgroundLoader extends NormalThread implements Runnable {
 	public BackgroundLoader(Penrose penrose) throws Exception {
 		super();
 		this.penrose = penrose;
-		this.config = penrose.getConfig();
 	}
 	
 	/**

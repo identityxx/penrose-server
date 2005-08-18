@@ -40,9 +40,12 @@ public class DeleteHandler {
 
         String ndn = LDAPDN.normalize(dn);
 
+        Config config = getEngineContext().getConfig(ndn);
+        if (config == null) return LDAPException.NO_SUCH_OBJECT;
+
         int result;
 
-        EntryDefinition entryDefinition = getEngineContext().getConfig().getEntryDefinition(ndn);
+        EntryDefinition entryDefinition = config.getEntryDefinition(ndn);
         if (entryDefinition != null) {
 
         	// Static Entry
@@ -82,7 +85,10 @@ public class DeleteHandler {
             children.remove(entry);
         }
 
-        getEngineContext().getConfig().removeEntryDefinition(entry);
+        Config config = getEngineContext().getConfig(entry.getDn());
+        if (config == null) return LDAPException.NO_SUCH_OBJECT;
+
+        config.removeEntryDefinition(entry);
 
         return LDAPException.SUCCESS;
     }

@@ -4,23 +4,13 @@
  */
 package org.safehaus.penrose.apacheds;
 
-import org.safehaus.penrose.mapping.EntryDefinition;
 import org.safehaus.penrose.mapping.Row;
 import org.safehaus.penrose.mapping.Entry;
 import org.safehaus.penrose.mapping.AttributeValues;
-import org.safehaus.penrose.Penrose;
-import org.safehaus.penrose.cache.Cache;
-import org.safehaus.penrose.cache.CacheContext;
 import org.safehaus.penrose.cache.EntryCache;
-import org.safehaus.penrose.config.Config;
-import org.apache.log4j.Logger;
 import org.apache.ldap.server.interceptor.NextInterceptor;
-import org.apache.ldap.server.interceptor.InterceptorChain;
 import org.apache.ldap.server.invocation.InvocationStack;
 import org.apache.ldap.server.invocation.Invocation;
-import org.apache.ldap.server.jndi.ServerLdapContext;
-import org.apache.ldap.server.jndi.ContextFactoryService;
-import org.apache.ldap.server.authn.LdapPrincipal;
 import org.apache.ldap.common.name.LdapName;
 import org.apache.ldap.common.filter.FilterParserImpl;
 import org.apache.ldap.common.filter.ExprNode;

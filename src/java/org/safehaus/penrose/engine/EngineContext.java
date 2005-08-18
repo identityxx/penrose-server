@@ -11,6 +11,9 @@ import org.safehaus.penrose.schema.Schema;
 import org.safehaus.penrose.cache.Cache;
 import org.safehaus.penrose.connection.Connection;
 import org.safehaus.penrose.sync.SyncService;
+import org.safehaus.penrose.mapping.Source;
+import org.safehaus.penrose.mapping.EntryDefinition;
+import org.safehaus.penrose.graph.Graph;
 
 /**
  * @author Endi S. Dewata
@@ -25,8 +28,10 @@ public interface EngineContext {
     public Schema getSchema() throws Exception;
     public FilterTool getFilterTool() throws Exception;
     public Interpreter newInterpreter() throws Exception;
-    public Config getConfig() throws Exception;
+    public Config getConfig(String dn) throws Exception;
     public TransformEngine getTransformEngine() throws Exception;
     public SyncService getSyncService() throws Exception;
     public Connection getConnection(String connectionName) throws Exception;
+    public Graph getGraph(EntryDefinition entryDefinition) throws Exception;
+    public Source getPrimarySource(EntryDefinition entryDefinition) throws Exception;
 }
