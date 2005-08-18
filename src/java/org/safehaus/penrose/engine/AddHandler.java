@@ -22,7 +22,7 @@ import java.util.*;
 /**
  * @author Endi S. Dewata
  */
-public abstract class AddHandler {
+public class AddHandler {
 
     public Logger log = Logger.getLogger(Penrose.ADD_LOGGER);
 
@@ -96,7 +96,7 @@ public abstract class AddHandler {
             EntryDefinition childDefinition = (EntryDefinition)iterator.next();
             if (!childDefinition.isDynamic()) continue;
 
-            return add(connection, childDefinition, values);
+            return getEngineContext().getSyncService().add(connection, childDefinition, values);
         }
 
         return addStaticEntry(parentDefinition, values, dn);
@@ -143,7 +143,7 @@ public abstract class AddHandler {
         String rdnAttribute = rdn.substring(0, k);
         String rdnValue = rdn.substring(k+1);
 
-        getEngine().getConfig().addEntryDefinition(newEntry);
+        getEngineContext().getConfig().addEntryDefinition(newEntry);
 
         Collection objectClasses = newEntry.getObjectClasses();
         Map attributes = newEntry.getAttributes();
@@ -184,10 +184,4 @@ public abstract class AddHandler {
 
         return LDAPException.SUCCESS;
     }
-
-    public abstract int add(
-            PenroseConnection connection,
-            EntryDefinition entryDefinition,
-            AttributeValues values)
-            throws Exception;
 }

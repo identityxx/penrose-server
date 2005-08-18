@@ -2,11 +2,10 @@
  * Copyright (c) 1998-2005, Verge Lab., LLC.
  * All rights reserved.
  */
-package org.safehaus.penrose.engine.impl;
+package org.safehaus.penrose.sync;
 
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.Penrose;
-import org.safehaus.penrose.engine.Engine;
 import org.safehaus.penrose.graph.GraphVisitor;
 import org.apache.log4j.Logger;
 import org.ietf.ldap.LDAPException;
@@ -16,34 +15,34 @@ import java.util.*;
 /**
  * @author Endi S. Dewata
  */
-public class AddGraphVisitor extends GraphVisitor {
+public class ModifyGraphVisitor extends GraphVisitor {
 
-    public Logger log = Logger.getLogger(Penrose.ADD_LOGGER);
+    public Logger log = Logger.getLogger(Penrose.MODIFY_LOGGER);
 
-    public Engine engine;
-    public DefaultAddHandler addHandler;
+    public SyncService syncService;
     public EntryDefinition entryDefinition;
-    public AttributeValues values;
+    public AttributeValues oldValues;
+    public AttributeValues newValues;
     public Date date;
     private int returnCode = LDAPException.SUCCESS;
 
     private Stack stack = new Stack();
 
-    public AddGraphVisitor(
-            Engine engine,
-            DefaultAddHandler addHandler,
+    public ModifyGraphVisitor(
+            Penrose penrose,
+            SyncService syncService,
             Source primarySource,
-            EntryDefinition entryDefinition,
-            AttributeValues values,
+            Entry entry,
+            AttributeValues newValues,
             Date date) throws Exception {
 
-        this.engine = engine;
-        this.addHandler = addHandler;
-        this.entryDefinition = entryDefinition;
-        this.values = values;
+        this.syncService = syncService;
+        this.entryDefinition = entry.getEntryDefinition();
+        this.oldValues = entry.getAttributeValues();
+        this.newValues = newValues;
         this.date = date;
 
-        Collection rows = engine.getEngineContext().getTransformEngine().convert(values);
+        Collection rows = penrose.getTransformEngine().convert(oldValues);
         Collection keys = new HashSet();
 /*
         for (Iterator i=rows.iterator(); i.hasNext(); ) {
@@ -87,9 +86,7 @@ public class AddGraphVisitor extends GraphVisitor {
 
         if (entryDefinition.getSource(source.getName()) == null) return false;
 
-        returnCode = addHandler.add(source, entryDefinition, values, date);
-
-        if (returnCode == LDAPException.NO_SUCH_OBJECT) return true; // ignore
+        returnCode = syncService.modify(source, entryDefinition, oldValues, newValues, date);
         if (returnCode != LDAPException.SUCCESS) return false;
 
         return true;

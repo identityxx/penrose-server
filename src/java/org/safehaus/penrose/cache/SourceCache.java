@@ -63,7 +63,7 @@ public class SourceCache {
 
     public AttributeValues get(Source source, Row pk) throws Exception {
         Map map = getMap(source);
-        Row npk = cacheContext.getEngine().normalize(pk);
+        Row npk = cacheContext.getSchema().normalize(pk);
 
         log.debug("Getting source cache ("+map.size()+"): "+npk);
 
@@ -73,7 +73,7 @@ public class SourceCache {
         for (Iterator i=map.keySet().iterator(); i.hasNext(); ) {
             Row key = (Row)i.next();
 
-            if (cacheContext.getEngine().match(key, npk)) {
+            if (cacheContext.getSchema().match(key, npk)) {
                 values = (AttributeValues)map.remove(key);
                 map.put(key, values);
                 return values;
@@ -102,7 +102,7 @@ public class SourceCache {
     public void put(Source source, Row pk, AttributeValues values) throws Exception {
 
         Map map = getMap(source);
-        Row npk = cacheContext.getEngine().normalize(pk);
+        Row npk = cacheContext.getSchema().normalize(pk);
 
         while (map.size() >= size) {
             log.debug("Trimming source cache ("+map.size()+").");
@@ -116,7 +116,7 @@ public class SourceCache {
 
     public void remove(Source source, Row pk) throws Exception {
         Map map = getMap(source);
-        Row npk = cacheContext.getEngine().normalize(pk);
+        Row npk = cacheContext.getSchema().normalize(pk);
 
         log.debug("Removing source cache ("+map.size()+"): "+npk);
         
@@ -129,7 +129,7 @@ public class SourceCache {
         Collection keys = new ArrayList();
         for (Iterator i=map.keySet().iterator(); i.hasNext(); ) {
             Row key = (Row)i.next();
-            if (cacheContext.getEngine().match(key, npk)) {
+            if (cacheContext.getSchema().match(key, npk)) {
                 keys.add(key);
             }
         }
@@ -292,7 +292,7 @@ public class SourceCache {
             for (Iterator j=pks.iterator(); !found && j.hasNext(); ) {
                 Row spk = (Row)j.next();
 
-                found = cacheContext.getEngine().partialMatch(pk, spk);
+                found = cacheContext.getSchema().partialMatch(pk, spk);
             }
 
             if (found) results.add(pk);

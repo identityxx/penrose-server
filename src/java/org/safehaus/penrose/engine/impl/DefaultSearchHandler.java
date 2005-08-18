@@ -12,9 +12,7 @@ import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.SearchResults;
 import org.safehaus.penrose.PenroseConnection;
-import org.safehaus.penrose.connection.Connection;
 import org.safehaus.penrose.engine.SearchHandler;
-import org.safehaus.penrose.graph.Graph;
 import org.safehaus.penrose.cache.CacheConfig;
 import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.thread.MRSWLock;
@@ -79,30 +77,6 @@ public class DefaultSearchHandler extends SearchHandler {
         return load(parent, entryDefinition, rdns, calendar);
     }
 
-    public String getStartingSourceName(EntryDefinition entryDefinition) {
-
-        Collection relationships = entryDefinition.getRelationships();
-        for (Iterator i=relationships.iterator(); i.hasNext(); ) {
-            Relationship relationship = (Relationship)i.next();
-
-            String lhs = relationship.getLhs();
-            int li = lhs.indexOf(".");
-            String lsource = lhs.substring(0, li);
-            Source ls = entryDefinition.getSource(lsource);
-            if (ls == null) return lsource;
-
-            String rhs = relationship.getRhs();
-            int ri = rhs.indexOf(".");
-            String rsource = rhs.substring(0, ri);
-            Source rs = entryDefinition.getSource(rsource);
-            if (rs == null) return rsource;
-
-        }
-
-        Source source = (Source)entryDefinition.getSources().iterator().next();
-        return source.getName();
-    }
-
     public Collection search(
             Entry parent,
             EntryDefinition entryDefinition,
@@ -127,93 +101,12 @@ public class DefaultSearchHandler extends SearchHandler {
 
         log.debug("Filter Cache not found.");
 
-        Graph graph = getEngine().getConfig().getGraph(entryDefinition);
-        Source primarySource = getEngine().getConfig().getPrimarySource(entryDefinition);
+        Source primarySource = getEngineContext().getConfig().getPrimarySource(entryDefinition);
         String primarySourceName = primarySource.getName();
 
         log.debug("--------------------------------------------------------------------------------------");
 
-        Set keys = new HashSet();
-
-        if (parent != null && parent.isDynamic()) {
-
-            AttributeValues values = parent.getAttributeValues();
-            Collection rows = getEngineContext().getTransformEngine().convert(values);
-
-            Collection newRows = new HashSet();
-            for (Iterator i=rows.iterator(); i.hasNext(); ) {
-                Row row = (Row)i.next();
-
-                Interpreter interpreter = getEngineContext().newInterpreter();
-                interpreter.set(row);
-
-                Row newRow = new Row();
-
-                for (Iterator j=parent.getSources().iterator(); j.hasNext(); ) {
-                    Source s = (Source)j.next();
-
-                    for (Iterator k=s.getFields().iterator(); k.hasNext(); ) {
-                        Field f = (Field)k.next();
-                        String expression = f.getExpression();
-                        Object v = interpreter.eval(expression);
-                        if (v == null) continue;
-
-                        //log.debug("Setting parent's value "+s.getName()+"."+f.getName()+": "+v);
-                        newRow.set(f.getName(), v);
-                    }
-                }
-
-                newRows.add(newRow);
-            }
-
-            String startingSourceName = getStartingSourceName(entryDefinition);
-            Source startingSource = entryDefinition.getEffectiveSource(startingSourceName);
-
-            PrimaryKeyGraphVisitor visitor = new PrimaryKeyGraphVisitor(getEngine(), entryDefinition, newRows, primarySource);
-            graph.traverse(visitor, startingSource);
-            keys.addAll(visitor.getKeys());
-
-        } else {
-
-            log.debug("Primary source: "+primarySourceName);
-
-            Filter f = getCache().getCacheFilterTool().toSourceFilter(null, entryDefinition, primarySource, filter);
-
-            log.debug("Searching source "+primarySourceName+" for "+f);
-            Connection connection = getEngineContext().getConnection(primarySource.getConnectionName());
-            SearchResults results = connection.search(primarySource, f, 100);
-
-            log.debug("Storing in source cache:");
-            Map map = new HashMap();
-            for (Iterator j=results.iterator(); j.hasNext(); ) {
-                Row row = (Row)j.next();
-
-                Row pk = new Row();
-                Collection fields = primarySource.getPrimaryKeyFields();
-                for (Iterator i=fields.iterator(); i.hasNext(); ) {
-                    Field field = (Field)i.next();
-                    Object value = row.get(field.getName());
-                    pk.set(field.getName(), value);
-                }
-
-                AttributeValues values = (AttributeValues)map.get(pk);
-                if (values == null) {
-                    values = new AttributeValues();
-                    map.put(pk, values);
-                }
-                values.add(row);
-
-                keys.add(row);
-            }
-
-            for (Iterator j=map.keySet().iterator(); j.hasNext(); ) {
-                Row pk = (Row)j.next();
-                AttributeValues values = (AttributeValues)map.get(pk);
-                //log.debug(" - "+pk+": "+values);
-                getEngine().getCache().getSourceCache().put(primarySource, pk, values);
-            }
-
-        }
+        Collection keys = getEngineContext().getSyncService().search(parent, entryDefinition, filter);
 
         rdns = new TreeSet();
 
@@ -260,7 +153,7 @@ public class DefaultSearchHandler extends SearchHandler {
      */
     public Collection rdnToPk(EntryDefinition entryDefinition, Collection rdns) throws Exception {
 
-        Source source = getEngine().getConfig().getPrimarySource(entryDefinition);
+        Source source = getEngineContext().getConfig().getPrimarySource(entryDefinition);
 
         Collection pks = new TreeSet();
 
@@ -344,7 +237,7 @@ public class DefaultSearchHandler extends SearchHandler {
             if (!rdnsToLoad.isEmpty()) {
 
                 Collection pks = rdnToPk(entryDefinition, rdnsToLoad);
-                Collection rows = getEngine().load(parent, entryDefinition, pks);
+                Collection rows = getEngineContext().getSyncService().load(parent, entryDefinition, pks);
                 Collection entries = getEngine().merge(parent, entryDefinition, rows);
 
                 for (Iterator i=entries.iterator(); i.hasNext(); ) {

@@ -24,7 +24,7 @@ import java.util.*;
 /**
  * @author Endi S. Dewata
  */
-public abstract class ModifyHandler {
+public class ModifyHandler {
 
     public Logger log = Logger.getLogger(Penrose.MODIFY_LOGGER);
 
@@ -46,7 +46,7 @@ public abstract class ModifyHandler {
 
 		String ndn = LDAPDN.normalize(dn);
 
-		EntryDefinition entry = getEngine().getConfig().getEntryDefinition(ndn);
+		EntryDefinition entry = getEngineContext().getConfig().getEntryDefinition(ndn);
 		if (entry != null) {
 			return modifyStaticEntry(entry, modifications);
 		}
@@ -197,7 +197,7 @@ public abstract class ModifyHandler {
 		log.debug("--- new values:");
 		log.debug(newEntry.toString());
 
-        return modify(entry, newValues);
+        return getEngineContext().getSyncService().modify(entry, newValues);
 	}
 
     public int modifyStaticEntry(EntryDefinition entry, Collection modifications)
@@ -284,8 +284,6 @@ public abstract class ModifyHandler {
 		String attrValue = (String)interpreter.eval(attribute.getExpression());
 		if (attrValue.equals(value)) attributes.remove(name);
 	}
-
-    public abstract int modify(Entry entry, AttributeValues newValues) throws Exception;
 
     public Engine getEngine() {
         return engine;

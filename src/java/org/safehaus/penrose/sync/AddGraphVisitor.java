@@ -2,11 +2,10 @@
  * Copyright (c) 1998-2005, Verge Lab., LLC.
  * All rights reserved.
  */
-package org.safehaus.penrose.engine.impl;
+package org.safehaus.penrose.sync;
 
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.Penrose;
-import org.safehaus.penrose.engine.Engine;
 import org.safehaus.penrose.graph.GraphVisitor;
 import org.apache.log4j.Logger;
 import org.ietf.ldap.LDAPException;
@@ -16,12 +15,11 @@ import java.util.*;
 /**
  * @author Endi S. Dewata
  */
-public class DeleteGraphVisitor extends GraphVisitor {
+public class AddGraphVisitor extends GraphVisitor {
 
-    public Logger log = Logger.getLogger(Penrose.DELETE_LOGGER);
+    public Logger log = Logger.getLogger(Penrose.ADD_LOGGER);
 
-    public Engine engine;
-    public DefaultDeleteHandler deleteHandler;
+    public SyncService syncService;
     public EntryDefinition entryDefinition;
     public AttributeValues values;
     public Date date;
@@ -29,21 +27,20 @@ public class DeleteGraphVisitor extends GraphVisitor {
 
     private Stack stack = new Stack();
 
-    public DeleteGraphVisitor(
-            Engine engine,
-            DefaultDeleteHandler deleteHandler,
+    public AddGraphVisitor(
+            Penrose penrose,
+            SyncService addHandler,
             Source primarySource,
             EntryDefinition entryDefinition,
             AttributeValues values,
             Date date) throws Exception {
 
-        this.engine = engine;
-        this.deleteHandler = deleteHandler;
+        this.syncService = addHandler;
         this.entryDefinition = entryDefinition;
         this.values = values;
         this.date = date;
 
-        Collection rows = engine.getEngineContext().getTransformEngine().convert(values);
+        Collection rows = penrose.getTransformEngine().convert(values);
         Collection keys = new HashSet();
 /*
         for (Iterator i=rows.iterator(); i.hasNext(); ) {
@@ -87,7 +84,7 @@ public class DeleteGraphVisitor extends GraphVisitor {
 
         if (entryDefinition.getSource(source.getName()) == null) return false;
 
-        returnCode = deleteHandler.delete(source, entryDefinition, values, date);
+        returnCode = syncService.add(source, entryDefinition, values, date);
 
         if (returnCode == LDAPException.NO_SUCH_OBJECT) return true; // ignore
         if (returnCode != LDAPException.SUCCESS) return false;

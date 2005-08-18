@@ -17,7 +17,7 @@ import java.util.Enumeration;
 /**
  * @author Endi S. Dewata
  */
-public abstract class CompareHandler {
+public class CompareHandler {
 
     public Logger log = Logger.getLogger(Penrose.COMPARE_LOGGER);
 

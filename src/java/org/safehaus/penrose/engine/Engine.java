@@ -4,20 +4,14 @@
  */
 package org.safehaus.penrose.engine;
 
-import org.safehaus.penrose.cache.SourceCache;
-import org.safehaus.penrose.cache.EntryCache;
 import org.safehaus.penrose.cache.Cache;
 import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.SearchResults;
 import org.safehaus.penrose.*;
-import org.safehaus.penrose.connection.Connection;
-import org.safehaus.penrose.config.Config;
 import org.safehaus.penrose.thread.ThreadPool;
 import org.safehaus.penrose.thread.Queue;
 import org.safehaus.penrose.thread.MRSWLock;
 import org.safehaus.penrose.engine.impl.*;
-import org.safehaus.penrose.filter.Filter;
-import org.safehaus.penrose.graph.Graph;
 import org.safehaus.penrose.mapping.*;
 import org.apache.log4j.Logger;
 import org.ietf.ldap.LDAPEntry;
@@ -43,7 +37,6 @@ public class Engine implements EngineMBean {
     private EngineConfig engineConfig;
     private EngineContext engineContext;
 
-    private Config config;
     private Cache cache;
 
     private Hashtable sourceLocks = new Hashtable();
@@ -85,32 +78,28 @@ public class Engine implements EngineMBean {
         searchHandler.init(this);
     }
 
-    public void setConfig(Config config) {
-        this.config = config;
-    }
-
     public void createAddHandler() throws Exception {
-        setAddHandler(new DefaultAddHandler());
+        setAddHandler(new AddHandler());
     }
 
     public void createBindHandler() throws Exception {
-        setBindHandler(new DefaultBindHandler());
+        setBindHandler(new BindHandler());
     }
 
     public void createCompareHandler() throws Exception {
-        setCompareHandler(new DefaultCompareHandler());
+        setCompareHandler(new CompareHandler());
     }
 
     public void createDeleteHandler() throws Exception {
-        setDeleteHandler(new DefaultDeleteHandler());
+        setDeleteHandler(new DeleteHandler());
     }
 
     public void createModifyHandler() throws Exception {
-        setModifyHandler(new DefaultModifyHandler());
+        setModifyHandler(new ModifyHandler());
     }
 
     public void createModRdnHandler() throws Exception {
-        setModRdnHandler(new DefaultModRdnHandler());
+        setModRdnHandler(new ModRdnHandler());
     }
 
     public void createSearchHandler() throws Exception {
@@ -300,54 +289,6 @@ public class Engine implements EngineMBean {
         this.cache = cache;
     }
 
-    public Collection load(
-            Entry parent,
-            EntryDefinition entryDefinition,
-            Collection pks)
-            throws Exception {
-
-        Graph graph = getEngineContext().getConfig().getGraph(entryDefinition);
-        Source primarySource = getEngineContext().getConfig().getPrimarySource(entryDefinition);
-
-        LoaderGraphVisitor loaderVisitor = new LoaderGraphVisitor(this, entryDefinition, pks);
-        graph.traverse(loaderVisitor, primarySource);
-
-        Collection results = new ArrayList();
-
-        Map attributeValues = loaderVisitor.getAttributeValues();
-        for (Iterator i=attributeValues.keySet().iterator(); i.hasNext(); ) {
-            Row pk = (Row)i.next();
-            AttributeValues values = (AttributeValues)attributeValues.get(pk);
-
-            Collection c = getEngineContext().getTransformEngine().convert(values);
-            results.addAll(c);
-        }
-/*
-
-        for (Iterator i=pks.iterator(); i.hasNext(); ) {
-            Row pk = (Row)i.next();
-
-            JoinGraphVisitor joinerVisitor = new JoinGraphVisitor(entryDefinition, primarySource, sourceCache, pk);
-            graph.traverse(joinerVisitor, primarySource);
-
-            AttributeValues values = joinerVisitor.getAttributeValues();
-            Collection c = getEngineContext().getTransformEngine().convert(values);
-
-            results.addAll(c);
-        }
-*/
-        log.debug("Rows:");
-
-        for (Iterator j = results.iterator(); j.hasNext(); ) {
-            Row row = (Row)j.next();
-            log.debug(" - "+row);
-        }
-
-        log.debug("Loaded " + results.size() + " rows.");
-
-        return results;
-    }
-
     public Collection merge(Entry parent, EntryDefinition entryDefinition, Collection rows) throws Exception {
 
         Collection results = new ArrayList();
@@ -386,151 +327,6 @@ public class Engine implements EngineMBean {
         }
 
         return results;
-    }
-
-    public Row getPk(Source source, Row row) throws Exception {
-        Row pk = new Row();
-
-        Collection fields = source.getPrimaryKeyFields();
-        for (Iterator i=fields.iterator(); i.hasNext(); ) {
-            Field field = (Field)i.next();
-            String name = field.getName();
-            Object value = row.get(name);
-
-            pk.set(name, value);
-        }
-
-        return pk;
-    }
-
-    public Map load(
-            Source source,
-            Collection pks)
-            throws Exception {
-
-        log.info("Loading source "+source.getName()+" "+source.getSourceName()+" with pks "+pks);
-
-        //CacheEvent beforeEvent = new CacheEvent(getCacheContext(), sourceConfig, CacheEvent.BEFORE_LOAD_ENTRIES);
-        //postCacheEvent(sourceConfig, beforeEvent);
-
-        Collection loadedPks = cache.getSourceCache().getPks(source, pks);
-        log.debug("Loaded pks: "+loadedPks);
-
-        Collection pksToLoad = new HashSet();
-        for (Iterator i=pks.iterator(); i.hasNext(); ) {
-            Row pk = (Row)i.next();
-
-            boolean found = false;
-            for (Iterator j=loadedPks.iterator(); !found && j.hasNext(); ) {
-                Row lpk = (Row)j.next();
-                if (match(lpk, pk)) found = true;
-            }
-
-            if (!found) pksToLoad.add(pk);
-        }
-        log.debug("Pks to load: "+pksToLoad);
-
-        Map results = new HashMap();
-
-        for (Iterator i=loadedPks.iterator();  i.hasNext(); ) {
-            Row pk = (Row)i.next();
-            AttributeValues values = cache.getSourceCache().get(source, pk);
-            results.put(pk, values);
-        }
-
-        if (!pksToLoad.isEmpty()) {
-            Filter filter = cache.getCacheContext().getFilterTool().createFilter(pksToLoad);
-            Connection connection = getEngineContext().getConnection(source.getConnectionName());
-            SearchResults sr = connection.search(source, filter, 0);
-
-            for (Iterator j = sr.iterator(); j.hasNext();) {
-                Row row = (Row) j.next();
-                Row pk = getPk(source, row);
-
-                AttributeValues values = (AttributeValues)results.get(pk);
-                if (values == null) {
-                    values = new AttributeValues();
-                    results.put(pk, values);
-                }
-
-                values.add(row); // merging row
-            }
-
-            for (Iterator i=results.keySet().iterator(); i.hasNext(); ) {
-                Row pk = (Row)i.next();
-                AttributeValues values = (AttributeValues)results.get(pk);
-
-                cache.getSourceCache().put(source, pk, values);
-            }
-        }
-
-        //CacheEvent afterEvent = new CacheEvent(getCacheContext(), sourceConfig, CacheEvent.AFTER_LOAD_ENTRIES);
-        //postCacheEvent(sourceConfig, afterEvent);
-
-        return results;
-    }
-
-    public Row normalize(Row row) throws Exception {
-
-        Row newRow = new Row();
-
-        for (Iterator i=row.getNames().iterator(); i.hasNext(); ) {
-            String name = (String)i.next();
-            Object value = row.get(name);
-
-            if (value == null) continue;
-            newRow.set(name.toLowerCase(), value.toString().toLowerCase());
-        }
-
-        return newRow;
-    }
-
-    public boolean partialMatch(Row pk1, Row pk2) throws Exception {
-
-        for (Iterator i=pk2.getNames().iterator(); i.hasNext(); ) {
-            String name = (String)i.next();
-            Object v1 = pk1.get(name);
-            Object v2 = pk2.get(name);
-
-            if (v1 == null && v2 == null) {
-                continue;
-
-            } else if (v1 == null || v2 == null) {
-                return false;
-
-            } else  if (!(v1.toString()).equalsIgnoreCase(v2.toString())) {
-                return false;
-            }
-        }
-
-        return true;
-    }
-
-    public boolean match(Row pk1, Row pk2) throws Exception {
-
-        if (!pk1.getNames().equals(pk2.getNames())) return false;
-
-        for (Iterator i=pk2.getNames().iterator(); i.hasNext(); ) {
-            String name = (String)i.next();
-            Object v1 = pk1.get(name);
-            Object v2 = pk2.get(name);
-
-            if (v1 == null && v2 == null) {
-                continue;
-
-            } else if (v1 == null || v2 == null) {
-                return false;
-
-            } else  if (!(v1.toString()).equalsIgnoreCase(v2.toString())) {
-                return false;
-            }
-        }
-
-        return true;
-    }
-
-    public Config getConfig() {
-        return config;
     }
 }
 

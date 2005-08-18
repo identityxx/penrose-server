@@ -60,7 +60,7 @@ public abstract class SearchHandler {
 		log.debug("Find entry: " + dn);
 
         // search the entry directly
-        EntryDefinition entryDefinition = getEngine().getConfig().getEntryDefinition(dn);
+        EntryDefinition entryDefinition = getEngineContext().getConfig().getEntryDefinition(dn);
 
         if (entryDefinition != null) {
             log.debug("Found static entry: " + dn);

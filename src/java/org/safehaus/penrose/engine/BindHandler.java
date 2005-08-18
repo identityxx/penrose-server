@@ -6,10 +6,9 @@ package org.safehaus.penrose.engine;
 
 import org.safehaus.penrose.PenroseConnection;
 import org.safehaus.penrose.Penrose;
-import org.safehaus.penrose.mapping.Entry;
-import org.safehaus.penrose.mapping.EntryDefinition;
-import org.safehaus.penrose.mapping.AttributeValues;
-import org.safehaus.penrose.mapping.AttributeDefinition;
+import org.safehaus.penrose.connection.Connection;
+import org.safehaus.penrose.thread.MRSWLock;
+import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.util.PasswordUtil;
 import org.ietf.ldap.LDAPDN;
 import org.ietf.ldap.LDAPException;
@@ -20,7 +19,7 @@ import java.util.*;
 /**
  * @author Endi S. Dewata
  */
-public abstract class BindHandler {
+public class BindHandler {
 
     public Logger log = Logger.getLogger(Penrose.BIND_LOGGER);
 
@@ -133,7 +132,22 @@ public abstract class BindHandler {
         return LDAPException.INVALID_CREDENTIALS;
     }
 
-    public abstract int bind(EntryDefinition entry, AttributeValues values, String password) throws Exception;
+    public int bind(EntryDefinition entry, AttributeValues values, String password) throws Exception {
+
+        Date date = new Date();
+
+        Collection sources = entry.getSources();
+
+        for (Iterator i=sources.iterator(); i.hasNext(); ) {
+            Source source = (Source)i.next();
+
+            int rc = getEngineContext().getSyncService().bind(source, entry, values, password, date);
+
+            if (rc == LDAPException.SUCCESS) return rc;
+        }
+
+        return LDAPException.INVALID_CREDENTIALS;
+    }
 
     public Engine getEngine() {
         return engine;

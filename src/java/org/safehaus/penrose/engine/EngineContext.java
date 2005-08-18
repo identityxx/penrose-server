@@ -10,6 +10,7 @@ import org.safehaus.penrose.filter.FilterTool;
 import org.safehaus.penrose.schema.Schema;
 import org.safehaus.penrose.cache.Cache;
 import org.safehaus.penrose.connection.Connection;
+import org.safehaus.penrose.sync.SyncService;
 
 /**
  * @author Endi S. Dewata
@@ -26,5 +27,6 @@ public interface EngineContext {
     public Interpreter newInterpreter() throws Exception;
     public Config getConfig() throws Exception;
     public TransformEngine getTransformEngine() throws Exception;
+    public SyncService getSyncService() throws Exception;
     public Connection getConnection(String connectionName) throws Exception;
 }

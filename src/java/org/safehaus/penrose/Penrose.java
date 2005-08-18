@@ -44,6 +44,7 @@ import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.filter.FilterTool;
 import org.safehaus.penrose.acl.AclTool;
 import org.safehaus.penrose.management.PenroseClient;
+import org.safehaus.penrose.sync.SyncService;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PropertyConfigurator;
 import sun.misc.SignalHandler;
@@ -99,8 +100,8 @@ public class Penrose implements
 	private AclTool aclTool;
 	private FilterTool filterTool;
 
-
 	private TransformEngine transformEngine;
+    private SyncService syncService;
 
     private Map caches = new LinkedHashMap();
 	private Map engines = new LinkedHashMap();
@@ -251,6 +252,7 @@ public class Penrose implements
         aclTool = new AclTool(this);
         filterTool = new FilterTool(this);
         transformEngine = new TransformEngine(this);
+        syncService = new SyncService(this);
 
         loadSchema();
         initCache();
@@ -275,9 +277,6 @@ public class Penrose implements
         log.debug(config.toString());
 
         config.init();
-
-        Engine engine = getEngine();
-        engine.setConfig(config);
 
         initConnections(config, serverConfig);
 	}
@@ -909,5 +908,13 @@ public class Penrose implements
 
     public void setServerConfig(ServerConfig serverConfig) {
         this.serverConfig = serverConfig;
+    }
+
+    public SyncService getSyncService() {
+        return syncService;
+    }
+
+    public void setSyncService(SyncService syncService) {
+        this.syncService = syncService;
     }
 }

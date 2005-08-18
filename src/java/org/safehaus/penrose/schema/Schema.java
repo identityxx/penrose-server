@@ -5,6 +5,7 @@
 package org.safehaus.penrose.schema;
 
 import org.safehaus.penrose.mapping.EntryDefinition;
+import org.safehaus.penrose.mapping.Row;
 import org.safehaus.penrose.Penrose;
 import org.apache.log4j.Logger;
 
@@ -161,4 +162,64 @@ public class Schema {
             getAllObjectClasses(ocName, map);
         }
     }
+
+    public boolean partialMatch(Row pk1, Row pk2) throws Exception {
+
+        for (Iterator i=pk2.getNames().iterator(); i.hasNext(); ) {
+            String name = (String)i.next();
+            Object v1 = pk1.get(name);
+            Object v2 = pk2.get(name);
+
+            if (v1 == null && v2 == null) {
+                continue;
+
+            } else if (v1 == null || v2 == null) {
+                return false;
+
+            } else  if (!(v1.toString()).equalsIgnoreCase(v2.toString())) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    public boolean match(Row pk1, Row pk2) throws Exception {
+
+        if (!pk1.getNames().equals(pk2.getNames())) return false;
+
+        for (Iterator i=pk2.getNames().iterator(); i.hasNext(); ) {
+            String name = (String)i.next();
+            Object v1 = pk1.get(name);
+            Object v2 = pk2.get(name);
+
+            if (v1 == null && v2 == null) {
+                continue;
+
+            } else if (v1 == null || v2 == null) {
+                return false;
+
+            } else  if (!(v1.toString()).equalsIgnoreCase(v2.toString())) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    public Row normalize(Row row) throws Exception {
+
+        Row newRow = new Row();
+
+        for (Iterator i=row.getNames().iterator(); i.hasNext(); ) {
+            String name = (String)i.next();
+            Object value = row.get(name);
+
+            if (value == null) continue;
+            newRow.set(name.toLowerCase(), value.toString().toLowerCase());
+        }
+
+        return newRow;
+    }
+
 }

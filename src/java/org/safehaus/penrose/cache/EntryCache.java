@@ -74,6 +74,10 @@ public class EntryCache {
         entries.remove(dn);
     }
 
+    public void invalidate(String dn) throws Exception {
+
+    }
+    
     public Cache getCache() {
         return cache;
     }

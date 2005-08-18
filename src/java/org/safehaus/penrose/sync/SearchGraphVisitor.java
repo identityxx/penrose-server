@@ -2,14 +2,13 @@
  * Copyright (c) 1998-2005, Verge Lab., LLC.
  * All rights reserved.
  */
-package org.safehaus.penrose.engine.impl;
+package org.safehaus.penrose.sync;
 
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.SearchResults;
 import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.connection.Connection;
-import org.safehaus.penrose.engine.Engine;
 import org.safehaus.penrose.graph.GraphVisitor;
 import org.apache.log4j.Logger;
 
@@ -18,19 +17,19 @@ import java.util.*;
 /**
  * @author Endi S. Dewata
  */
-public class PrimaryKeyGraphVisitor extends GraphVisitor {
+public class SearchGraphVisitor extends GraphVisitor {
 
     public Logger log = Logger.getLogger(Penrose.SEARCH_LOGGER);
 
-    private Engine engine;
+    private Penrose penrose;
     private EntryDefinition entryDefinition;
     private Source primarySource;
 
     private Stack stack = new Stack();
     private Set keys = new HashSet();
 
-    public PrimaryKeyGraphVisitor(Engine engine, EntryDefinition entryDefinition, Collection rows, Source primarySource) {
-        this.engine = engine;
+    public SearchGraphVisitor(Penrose engine, EntryDefinition entryDefinition, Collection rows, Source primarySource) {
+        this.penrose = engine;
         this.entryDefinition = entryDefinition;
         this.primarySource = primarySource;
 
@@ -118,10 +117,10 @@ public class PrimaryKeyGraphVisitor extends GraphVisitor {
             log.debug(" - "+lFieldName+" -> "+rFieldName+" = "+value);
         }
 
-        Filter newFilter = engine.getEngineContext().getFilterTool().createFilter(newRows);
+        Filter newFilter = penrose.getFilterTool().createFilter(newRows);
 
         log.debug("Searching source "+source.getName()+" for "+newFilter);
-        Connection connection = getEngine().getEngineContext().getConnection(source.getConnectionName());
+        Connection connection = penrose.getConnection(source.getConnectionName());
         SearchResults results = connection.search(source, newFilter, 100);
         if (results.size() == 0) return false;
         
@@ -153,7 +152,7 @@ public class PrimaryKeyGraphVisitor extends GraphVisitor {
             Row pk = (Row)j.next();
             AttributeValues values = (AttributeValues)map.get(pk);
             log.debug(" - "+pk+": "+values);
-            engine.getCache().getSourceCache().put(source, pk, values);
+            penrose.getCache().getSourceCache().put(source, pk, values);
         }
 
         stack.push(newRows);
@@ -163,14 +162,6 @@ public class PrimaryKeyGraphVisitor extends GraphVisitor {
 
     public void postVisitEdge(Object node1, Object node2, Object edge, Object parameter) throws Exception {
         stack.pop();
-    }
-
-    public Engine getEngine() {
-        return engine;
-    }
-
-    public void setEngine(Engine engine) {
-        this.engine = engine;
     }
 
     public EntryDefinition getEntryDefinition() {

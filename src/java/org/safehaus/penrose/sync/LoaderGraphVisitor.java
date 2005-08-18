@@ -2,7 +2,7 @@
  * Copyright (c) 1998-2005, Verge Lab., LLC.
  * All rights reserved.
  */
-package org.safehaus.penrose.engine;
+package org.safehaus.penrose.sync;
 
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.Penrose;
@@ -18,14 +18,16 @@ public class LoaderGraphVisitor extends GraphVisitor {
 
     public Logger log = Logger.getLogger(Penrose.SEARCH_LOGGER);
 
-    private Engine engine;
+    private SyncService syncService;
+    private Penrose penrose;
     private EntryDefinition entryDefinition;
     private Map attributeValues = new HashMap();
 
     private Stack stack = new Stack();
 
-    public LoaderGraphVisitor(Engine engine, EntryDefinition entryDefinition, Collection pks) {
-        this.engine = engine;
+    public LoaderGraphVisitor(Penrose penrose, SyncService syncService, EntryDefinition entryDefinition, Collection pks) {
+        this.penrose = penrose;
+        this.syncService = syncService;
         this.entryDefinition = entryDefinition;
 
         Map map = new HashMap();
@@ -58,7 +60,7 @@ public class LoaderGraphVisitor extends GraphVisitor {
 
         //log.debug("Loading source "+source+" with pks: "+pks);
 
-        Map results = engine.load(source, pks);
+        Map results = syncService.load(source, pks);
         if (results.size() == 0) return false;
         
         log.debug("Records:");
@@ -83,7 +85,7 @@ public class LoaderGraphVisitor extends GraphVisitor {
             for (Iterator j=pks.iterator(); j.hasNext(); ) {
                 Row p = (Row)j.next();
 
-                if (!engine.partialMatch(pk, p)) continue;
+                if (!penrose.getSchema().partialMatch(pk, p)) continue;
                 mainPk = (Row)map.get(p);
             }
 
@@ -171,14 +173,6 @@ public class LoaderGraphVisitor extends GraphVisitor {
 
     public void postVisitEdge(Object node1, Object node2, Object edge, Object parameter) throws Exception {
         stack.pop();
-    }
-
-    public Engine getEngine() {
-        return engine;
-    }
-
-    public void setEngine(Engine engine) {
-        this.engine = engine;
     }
 
     public EntryDefinition getEntryDefinition() {

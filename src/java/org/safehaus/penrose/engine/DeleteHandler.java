@@ -19,7 +19,7 @@ import java.util.Collection;
 /**
  * @author Endi S. Dewata
  */
-public abstract class DeleteHandler {
+public class DeleteHandler {
 
     public Logger log = Logger.getLogger(Penrose.DELETE_LOGGER);
 
@@ -42,7 +42,7 @@ public abstract class DeleteHandler {
 
         int result;
 
-        EntryDefinition entryDefinition = getEngine().getConfig().getEntryDefinition(ndn);
+        EntryDefinition entryDefinition = getEngineContext().getConfig().getEntryDefinition(ndn);
         if (entryDefinition != null) {
 
         	// Static Entry
@@ -63,7 +63,7 @@ public abstract class DeleteHandler {
             entryDefinition = entry.getEntryDefinition();
             AttributeValues values = entry.getAttributeValues();
 
-	        result = delete(entryDefinition, values);
+	        result = getEngineContext().getSyncService().delete(entryDefinition, values);
 
         }
         return result;
@@ -82,12 +82,10 @@ public abstract class DeleteHandler {
             children.remove(entry);
         }
 
-        getEngine().getConfig().removeEntryDefinition(entry);
+        getEngineContext().getConfig().removeEntryDefinition(entry);
 
         return LDAPException.SUCCESS;
     }
-
-    public abstract int delete(EntryDefinition entryDefinition, AttributeValues values) throws Exception;
 
     public Engine getEngine() {
         return engine;
