@@ -8,7 +8,8 @@ import org.safehaus.penrose.PenroseConnection;
 import org.safehaus.penrose.SearchResults;
 import org.safehaus.penrose.Penrose;
 import org.ietf.ldap.*;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.ArrayList;
@@ -19,7 +20,7 @@ import java.util.Enumeration;
  */
 public class CompareHandler {
 
-    public Logger log = Logger.getLogger(Penrose.COMPARE_LOGGER);
+    Logger log = LoggerFactory.getLogger(getClass());
 
     private Engine engine;
 

@@ -15,7 +15,8 @@ import org.ietf.ldap.LDAPEntry;
 import org.ietf.ldap.LDAPDN;
 import org.ietf.ldap.LDAPException;
 import org.ietf.ldap.LDAPAttribute;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
 
@@ -24,7 +25,7 @@ import java.util.*;
  */
 public class AddHandler {
 
-    public Logger log = Logger.getLogger(Penrose.ADD_LOGGER);
+    Logger log = LoggerFactory.getLogger(getClass());
 
     private Engine engine;
     private EngineContext engineContext;

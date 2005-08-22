@@ -12,7 +12,8 @@ import org.safehaus.penrose.mapping.Entry;
 import org.safehaus.penrose.mapping.AttributeValues;
 import org.ietf.ldap.LDAPDN;
 import org.ietf.ldap.LDAPException;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
 
@@ -21,7 +22,7 @@ import java.util.Collection;
  */
 public class DeleteHandler {
 
-    public Logger log = Logger.getLogger(Penrose.DELETE_LOGGER);
+    Logger log = LoggerFactory.getLogger(getClass());
 
     private Engine engine;
     private EngineContext engineContext;

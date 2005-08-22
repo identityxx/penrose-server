@@ -4,7 +4,8 @@
  */
 package org.safehaus.penrose.thread;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 /**
@@ -14,7 +15,7 @@ import org.apache.log4j.Logger;
  */
 public class MRSWLock {
 
-	Logger logger = Logger.getLogger(MRSWLock.class);
+    Logger log = LoggerFactory.getLogger(getClass());
 
 	/**
 	 * Internal integer value. Positive value is for read (no maximum or no

@@ -9,7 +9,8 @@ import sun.misc.BASE64Encoder;
 import javax.crypto.spec.SecretKeySpec;
 import javax.crypto.Cipher;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.safehaus.penrose.Penrose;
 
 import java.security.MessageDigest;
@@ -20,9 +21,9 @@ import java.math.BigInteger;
  * @author Endi S. Dewata
  */
 public class PasswordUtil {
-	
-	protected static Logger log = Logger.getLogger(Penrose.PASSWORD_LOGGER);
-	
+
+    public static Logger log = LoggerFactory.getLogger(PasswordUtil.class);
+
 	protected final static boolean DEBUG = true;
 
     public static String encrypt(String method, String encoding, String password) throws Exception {

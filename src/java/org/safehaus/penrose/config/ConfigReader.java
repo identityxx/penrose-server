@@ -6,7 +6,8 @@ package org.safehaus.penrose.config;
 
 import org.apache.commons.digester.Digester;
 import org.apache.commons.digester.xmlrules.DigesterLoader;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.safehaus.penrose.mapping.EntryDefinition;
 import org.safehaus.penrose.mapping.MappingRule;
 
@@ -20,7 +21,7 @@ import java.util.Iterator;
  */
 public class ConfigReader {
 
-    public Logger log = Logger.getLogger(getClass());
+    Logger log = LoggerFactory.getLogger(getClass());
 
     public ConfigReader() {
     }

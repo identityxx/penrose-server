@@ -7,7 +7,8 @@ package org.safehaus.penrose.schema;
 import org.safehaus.penrose.mapping.EntryDefinition;
 import org.safehaus.penrose.mapping.Row;
 import org.safehaus.penrose.Penrose;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
 
@@ -16,7 +17,7 @@ import java.util.*;
  */
 public class Schema {
 
-    protected Logger log = Logger.getLogger(Penrose.SCHEMA_LOGGER);
+    Logger log = LoggerFactory.getLogger(getClass());
     /**
      * Attribute type definitions.
      */

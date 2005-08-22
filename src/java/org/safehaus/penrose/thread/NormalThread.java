@@ -4,7 +4,8 @@
  */
 package org.safehaus.penrose.thread;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.safehaus.penrose.thread.BooleanLock;
 
 /**
@@ -12,7 +13,7 @@ import org.safehaus.penrose.thread.BooleanLock;
  */
 public abstract class NormalThread extends Object {
 
-	private Logger log = Logger.getLogger(getClass());
+    Logger log = LoggerFactory.getLogger(getClass());
 
 	protected Thread internalThread;
 	protected volatile boolean stopRequested;

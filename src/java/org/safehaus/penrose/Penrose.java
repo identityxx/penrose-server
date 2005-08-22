@@ -48,8 +48,9 @@ import org.safehaus.penrose.acl.AclTool;
 import org.safehaus.penrose.management.PenroseClient;
 import org.safehaus.penrose.sync.SyncService;
 import org.safehaus.penrose.graph.Graph;
-import org.apache.log4j.Logger;
-import org.apache.log4j.PropertyConfigurator;
+import org.slf4j.Logger;
+//import org.apache.log4j.PropertyConfigurator;
+import org.slf4j.LoggerFactory;
 import sun.misc.SignalHandler;
 import sun.misc.Signal;
 
@@ -119,7 +120,7 @@ public class Penrose implements
     private Map configs = new TreeMap();
     private Schema schema;
 
-	private Logger log = Logger.getLogger(ENGINE_LOGGER);
+    private Logger log = LoggerFactory.getLogger(getClass());
 
 	private boolean stopRequested = false;
 
@@ -154,7 +155,7 @@ public class Penrose implements
 
 	public int init() throws Exception {
 
-        PropertyConfigurator.configure("conf/log4j.properties");
+        //PropertyConfigurator.configure("conf/log4j.properties");
 
         initServer();
 

@@ -7,7 +7,7 @@ package org.safehaus.penrose;
 import java.io.IOException;
 import java.util.*;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
 import org.safehaus.penrose.config.Config;
 import org.safehaus.penrose.acl.AclTool;
 

@@ -9,13 +9,12 @@ import java.util.Date;
 import java.util.List;
 import java.util.TreeMap;
 
-import org.apache.log4j.Logger;
-import org.safehaus.penrose.Penrose;
-import org.safehaus.penrose.PenroseConnection;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class PenroseConnectionPool implements PenroseConnectionPoolMBean {
 	
-	Logger log = Logger.getLogger(Penrose.CONNECTION_LOGGER);
+	public Logger log = LoggerFactory.getLogger(getClass());
 
 	public List connectionPool = new ArrayList();
 	public TreeMap activeConnections = new TreeMap();

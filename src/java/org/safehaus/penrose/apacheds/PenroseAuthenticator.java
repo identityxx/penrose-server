@@ -8,10 +8,11 @@ import org.apache.ldap.server.authn.AbstractAuthenticator;
 import org.apache.ldap.server.authn.LdapPrincipal;
 import org.apache.ldap.server.jndi.ServerContext;
 import org.apache.ldap.common.exception.LdapAuthenticationException;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
 import org.ietf.ldap.LDAPException;
 import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.PenroseConnection;
+import org.slf4j.LoggerFactory;
 
 import javax.naming.Context;
 import javax.naming.NamingException;
@@ -37,7 +38,7 @@ public class PenroseAuthenticator extends AbstractAuthenticator {
     }
 
     public LdapPrincipal authenticate( ServerContext ctx ) throws NamingException {
-        Logger log = Logger.getLogger(PenroseAuthenticator.class);
+        Logger log = LoggerFactory.getLogger(getClass());
 
         String dn = ( String ) ctx.getEnvironment().get( Context.SECURITY_PRINCIPAL );
 

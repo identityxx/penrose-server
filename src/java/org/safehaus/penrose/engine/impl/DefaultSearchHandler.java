@@ -16,11 +16,15 @@ import org.safehaus.penrose.engine.SearchHandler;
 import org.safehaus.penrose.cache.CacheConfig;
 import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.thread.MRSWLock;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Endi S. Dewata
  */
 public class DefaultSearchHandler extends SearchHandler {
+
+    Logger log = LoggerFactory.getLogger(getClass());
 
     /**
 	 * Find a virtual entry given an rdn and a mapping entry.

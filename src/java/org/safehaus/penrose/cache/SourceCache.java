@@ -8,7 +8,8 @@ import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.event.CacheEvent;
 import org.safehaus.penrose.event.CacheListener;
 import org.safehaus.penrose.Penrose;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
 
@@ -17,7 +18,7 @@ import java.util.*;
  */
 public class SourceCache {
 
-    public Logger log = Logger.getLogger(Penrose.CACHE_LOGGER);
+    Logger log = LoggerFactory.getLogger(getClass());
 
     private Cache cache;
     private CacheContext cacheContext;

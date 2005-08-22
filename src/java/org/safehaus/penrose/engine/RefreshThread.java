@@ -4,7 +4,8 @@
  */
 package org.safehaus.penrose.engine;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.safehaus.penrose.Penrose;
 
 /**
@@ -12,7 +13,7 @@ import org.safehaus.penrose.Penrose;
  */
 public class RefreshThread implements Runnable {
 
-    public Logger log = Logger.getLogger(Penrose.CACHE_LOGGER);
+    Logger log = LoggerFactory.getLogger(getClass());
 
 	private Engine engine;
 	

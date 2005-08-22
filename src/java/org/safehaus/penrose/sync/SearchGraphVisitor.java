@@ -10,7 +10,8 @@ import org.safehaus.penrose.SearchResults;
 import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.connection.Connection;
 import org.safehaus.penrose.graph.GraphVisitor;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
 
@@ -19,7 +20,7 @@ import java.util.*;
  */
 public class SearchGraphVisitor extends GraphVisitor {
 
-    public Logger log = Logger.getLogger(Penrose.SEARCH_LOGGER);
+    Logger log = LoggerFactory.getLogger(getClass());
 
     private Penrose penrose;
     private EntryDefinition entryDefinition;

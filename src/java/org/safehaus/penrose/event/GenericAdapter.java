@@ -4,7 +4,8 @@
  */
 package org.safehaus.penrose.event;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.safehaus.penrose.Penrose;
 
 /**
@@ -12,7 +13,7 @@ import org.safehaus.penrose.Penrose;
  */
 public class GenericAdapter implements BindListener, AddListener, ModifyListener {
 
-    private Logger log = Logger.getLogger(Penrose.ADAPTER_LOGGER);
+    Logger log = LoggerFactory.getLogger(getClass());
 
     public GenericAdapter() {
     	log.debug("GenericAdapter.<init>()");

@@ -6,7 +6,8 @@ package org.safehaus.penrose.openldap.config;
 
 import java.io.StringReader;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.safehaus.penrose.Penrose;
 
 
@@ -14,9 +15,9 @@ import org.safehaus.penrose.Penrose;
  * @author Administrator
  */
 public class NameValueItem extends ConfigurationItem {
-	
-	Logger log = Logger.getLogger(Penrose.CONFIG_LOGGER);
-	
+
+    Logger log = LoggerFactory.getLogger(getClass());
+
 	protected String name;
 	protected String whitespace;
 	protected String value;

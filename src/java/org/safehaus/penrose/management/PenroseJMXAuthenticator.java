@@ -4,7 +4,8 @@
  */
 package org.safehaus.penrose.management;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.safehaus.penrose.Penrose;
 
 import javax.management.remote.JMXAuthenticator;
@@ -20,7 +21,7 @@ import java.util.Properties;
  */
 public class PenroseJMXAuthenticator implements JMXAuthenticator {
 
-    public Logger log = Logger.getLogger(Penrose.SECURITY_LOGGER);
+    Logger log = LoggerFactory.getLogger(getClass());
 
     public String url;
     public String pattern;

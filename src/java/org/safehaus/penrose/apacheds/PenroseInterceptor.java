@@ -6,11 +6,11 @@ package org.safehaus.penrose.apacheds;
 
 import org.apache.ldap.server.interceptor.BaseInterceptor;
 import org.apache.ldap.server.interceptor.NextInterceptor;
-import org.apache.ldap.server.interceptor.Interceptor;
 import org.apache.ldap.server.jndi.ContextFactoryConfiguration;
 import org.apache.ldap.server.configuration.InterceptorConfiguration;
 import org.apache.ldap.common.filter.ExprNode;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.PenroseConnection;
 import org.safehaus.penrose.SearchResults;
@@ -31,7 +31,7 @@ import java.util.*;
  */
 public class PenroseInterceptor extends BaseInterceptor {
 
-    Logger log = Logger.getLogger(PenroseInterceptor.class);
+    public Logger log = LoggerFactory.getLogger(getClass());
 
     Penrose penrose;
     ApacheDSEntryCache entryCache;

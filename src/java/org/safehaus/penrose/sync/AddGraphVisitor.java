@@ -7,7 +7,8 @@ package org.safehaus.penrose.sync;
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.graph.GraphVisitor;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.ietf.ldap.LDAPException;
 
 import java.util.*;
@@ -17,7 +18,7 @@ import java.util.*;
  */
 public class AddGraphVisitor extends GraphVisitor {
 
-    public Logger log = Logger.getLogger(Penrose.ADD_LOGGER);
+    Logger log = LoggerFactory.getLogger(getClass());
 
     public SyncService syncService;
     public EntryDefinition entryDefinition;

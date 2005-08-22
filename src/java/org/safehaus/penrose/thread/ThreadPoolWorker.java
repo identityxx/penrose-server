@@ -4,7 +4,8 @@
  */
 package org.safehaus.penrose.thread;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.safehaus.penrose.thread.ObjectFIFO;
 
 /**
@@ -12,7 +13,7 @@ import org.safehaus.penrose.thread.ObjectFIFO;
  */
 public class ThreadPoolWorker extends Object {
 
-	private Logger log = Logger.getLogger(getClass());
+    Logger log = LoggerFactory.getLogger(getClass());
 
 	private static int nextWorkerID = 0;
 	

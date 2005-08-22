@@ -5,7 +5,8 @@
 package org.safehaus.penrose.cache;
 
 import org.safehaus.penrose.Penrose;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
 
@@ -14,7 +15,7 @@ import java.util.Collection;
  */
 public class Cache {
 
-    public Logger log = Logger.getLogger(Penrose.CACHE_LOGGER);
+    Logger log = LoggerFactory.getLogger(getClass());
 
     private CacheConfig cacheConfig;
     private CacheContext cacheContext;

@@ -15,7 +15,8 @@ import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.engine.Engine;
 import org.safehaus.penrose.graph.Graph;
 import org.safehaus.penrose.mapping.*;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.ietf.ldap.LDAPException;
 
 import java.util.*;
@@ -25,7 +26,7 @@ import java.util.*;
  */
 public class SyncService {
 
-    public Logger log = Logger.getLogger(getClass());
+    Logger log = LoggerFactory.getLogger(getClass());
 
     public Penrose penrose;
 

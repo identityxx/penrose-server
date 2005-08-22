@@ -14,6 +14,8 @@ import org.apache.ldap.server.invocation.Invocation;
 import org.apache.ldap.common.name.LdapName;
 import org.apache.ldap.common.filter.FilterParserImpl;
 import org.apache.ldap.common.filter.ExprNode;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.naming.directory.SearchControls;
 import javax.naming.directory.SearchResult;
@@ -27,6 +29,8 @@ import java.util.*;
  * @author Endi S. Dewata
  */
 public class ApacheDSEntryCache extends EntryCache {
+
+    Logger log = LoggerFactory.getLogger(getClass());
 
     private NextInterceptor nextInterceptor;
     private Context context;

@@ -8,7 +8,8 @@ package org.safehaus.penrose.filter;
 import java.util.*;
 import java.io.StringReader;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.safehaus.penrose.mapping.AttributeValues;
 import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.mapping.Entry;
@@ -19,7 +20,7 @@ import org.safehaus.penrose.mapping.Row;
  */
 public class FilterTool {
 
-    public Logger log = Logger.getLogger(Penrose.FILTER_LOGGER);
+    Logger log = LoggerFactory.getLogger(getClass());
 
     public Penrose penrose;
     public int debug = 0;

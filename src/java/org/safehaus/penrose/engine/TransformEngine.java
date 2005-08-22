@@ -7,7 +7,8 @@ package org.safehaus.penrose.engine;
 
 import java.util.*;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.safehaus.penrose.util.PasswordUtil;
 import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.Penrose;
@@ -18,7 +19,7 @@ import org.safehaus.penrose.mapping.*;
  */
 public class TransformEngine {
 
-    public Logger log = Logger.getLogger(Penrose.TRANSFORM_LOGGER);
+    Logger log = LoggerFactory.getLogger(getClass());
 
     public Penrose penrose;
 
