@@ -64,7 +64,7 @@
         <copy todir="target/classes">
             <fileset dir="src/java" includes="**/*.xml"/>
         </copy>
-       <jar jarfile="target/${project.name}-${project.version}.jar">
+        <jar jarfile="target/${project.name}-${project.version}.jar">
             <fileset dir="target/classes"/>
         </jar>
     </target>
@@ -159,6 +159,27 @@
             <fileset dir="samples"/>
         </copy>
         <mkdir dir="target/dist/var"/>
+    </target>
+
+    <target name="dist-jboss" depends="build">
+        <mkdir dir="target/penrose.sar"/>
+        <copy todir="target/penrose.sar" includeEmptyDirs="false">
+            <fileset dir="lib" includes="*"/>
+<!--
+            <fileset dir="target/classes"/>
+-->
+        </copy>
+        <copy todir="target/penrose.sar"
+            file="target/${project.name}-${project.version}.jar">
+        </copy>
+        <mkdir dir="target/penrose.sar/META-INF"/>
+        <copy todir="target/penrose.sar/META-INF">
+            <fileset file="conf/jboss/jboss-service.xml"/>
+        </copy>
+        <copy todir="target/penrose.sar/conf" includeEmptyDirs="false">
+            <fileset dir="conf" includes="*" />
+        </copy>
+        <jar basedir="target/penrose.sar" jarfile="target/${project.name}-${project.version}.sar"/>
     </target>
 
     <target name="dist-src" depends="docs,dist">
