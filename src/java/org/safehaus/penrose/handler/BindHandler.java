@@ -2,10 +2,9 @@
  * Copyright (c) 1998-2005, Verge Lab., LLC.
  * All rights reserved.
  */
-package org.safehaus.penrose.engine;
+package org.safehaus.penrose.handler;
 
 import org.safehaus.penrose.PenroseConnection;
-import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.util.PasswordUtil;
 import org.ietf.ldap.LDAPDN;
@@ -22,18 +21,19 @@ public class BindHandler {
 
     Logger log = LoggerFactory.getLogger(getClass());
 
-    private Engine engine;
-    private EngineContext engineContext;
+    private Handler handler;
+    private HandlerContext handlerContext;
 
-    public void init(Engine engine) throws Exception {
-        this.engine = engine;
-        this.engineContext = engine.getEngineContext();
+    public BindHandler(Handler handler) throws Exception {
+        this.handler = handler;
+        this.handlerContext = handler.getHandlerContext();
     }
+
     public int bind(PenroseConnection connection, String dn, String password) throws Exception {
 
         String ndn = LDAPDN.normalize(dn);
 
-        if (ndn.equals(LDAPDN.normalize(engineContext.getRootDn()))) { // bind as root
+        if (ndn.equals(LDAPDN.normalize(handlerContext.getRootDn()))) { // bind as root
 
             int rc = bindAsRoot(password);
             if (rc != LDAPException.SUCCESS) return rc;
@@ -63,7 +63,7 @@ public class BindHandler {
     public int bindAsRoot(String password) throws Exception {
         log.debug("Comparing root's password");
 
-        if (!PasswordUtil.comparePassword(password, engineContext.getRootPassword())) {
+        if (!PasswordUtil.comparePassword(password, handlerContext.getRootPassword())) {
             log.debug("Password doesn't match => BIND FAILED");
             return LDAPException.INVALID_CREDENTIALS;
         }
@@ -78,7 +78,7 @@ public class BindHandler {
         attributeNames.add("userPassword");
         Entry sr = null;
         try {
-            sr = engine.getSearchHandler().find(connection, dn);
+            sr = handler.getSearchHandler().find(connection, dn);
         } catch (Exception e) {
             // ignore
         }
@@ -148,19 +148,19 @@ public class BindHandler {
         return LDAPException.INVALID_CREDENTIALS;
     }
 
-    public Engine getEngine() {
-        return engine;
+    public Handler getEngine() {
+        return handler;
     }
 
-    public void setEngine(Engine engine) {
-        this.engine = engine;
+    public void setEngine(Handler handler) {
+        this.handler = handler;
     }
 
-    public EngineContext getEngineContext() {
-        return engineContext;
+    public HandlerContext getEngineContext() {
+        return handlerContext;
     }
 
-    public void setEngineContext(EngineContext engineContext) {
-        this.engineContext = engineContext;
+    public void setEngineContext(HandlerContext handlerContext) {
+        this.handlerContext = handlerContext;
     }
 }

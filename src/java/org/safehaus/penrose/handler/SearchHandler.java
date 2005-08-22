@@ -2,17 +2,15 @@
  * Copyright (c) 1998-2005, Verge Lab., LLC.
  * All rights reserved.
  */
-package org.safehaus.penrose.engine;
+package org.safehaus.penrose.handler;
 
 import org.safehaus.penrose.SearchResults;
 import org.safehaus.penrose.PenroseConnection;
-import org.safehaus.penrose.Penrose;
+import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.config.Config;
-import org.safehaus.penrose.cache.Cache;
+import org.safehaus.penrose.cache.CacheConfig;
 import org.safehaus.penrose.filter.Filter;
-import org.safehaus.penrose.mapping.Entry;
-import org.safehaus.penrose.mapping.EntryDefinition;
-import org.safehaus.penrose.mapping.AttributeValues;
+import org.safehaus.penrose.mapping.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.ietf.ldap.LDAPException;
@@ -20,30 +18,19 @@ import org.ietf.ldap.LDAPDN;
 import org.ietf.ldap.LDAPConnection;
 import org.ietf.ldap.LDAPEntry;
 
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.HashSet;
+import java.util.*;
 
 /**
  * @author Endi S. Dewata
  */
-public abstract class SearchHandler {
+public class SearchHandler {
 
     Logger log = LoggerFactory.getLogger(getClass());
 
-    private Engine engine;
-    private Cache cache;
-    private EngineContext engineContext;
+    private HandlerContext handlerContext;
 
-    public void init(Engine engine) throws Exception {
-        this.engine = engine;
-        this.cache = engine.getCache();
-		this.engineContext = engine.getEngineContext();
-
-        init();
-	}
-
-    public void init() throws Exception {
+    public SearchHandler(Handler handler) throws Exception {
+        this.handlerContext = handler.getHandlerContext();
     }
 
     /**
@@ -69,7 +56,7 @@ public abstract class SearchHandler {
         if (entryDefinition != null) {
             log.debug("Found static entry: " + dn);
 
-            AttributeValues values = entryDefinition.getAttributeValues(engineContext.newInterpreter());
+            AttributeValues values = entryDefinition.getAttributeValues(handlerContext.newInterpreter());
             return new Entry(entryDefinition, values);
         }
 
@@ -147,7 +134,7 @@ public abstract class SearchHandler {
 
                 log.debug("Found static entry: " + childDefinition.getDn());
 
-                AttributeValues values = childDefinition.getAttributeValues(engineContext.newInterpreter());
+                AttributeValues values = childDefinition.getAttributeValues(handlerContext.newInterpreter());
                 Entry entry = new Entry(childDefinition, values);
                 entry.setParent(parent);
                 return entry;
@@ -158,12 +145,34 @@ public abstract class SearchHandler {
 				LDAPException.NO_SUCH_OBJECT, "Can't find virtual entry " + dn + ".");
 	}
 
-    public abstract Entry find(
+    public Entry find(
             PenroseConnection connection,
             Entry parent,
             EntryDefinition entryDefinition,
             String rdn)
-            throws Exception;
+            throws Exception {
+
+        Calendar calendar = Calendar.getInstance();
+
+        int i = rdn.indexOf("=");
+        String attr = rdn.substring(0, i);
+        String value = rdn.substring(i + 1);
+
+        Row pk = new Row();
+        pk.set(attr, value);
+
+        List rdns = new ArrayList();
+        rdns.add(pk);
+
+        SearchResults results = handlerContext.getEngine().load(parent, entryDefinition, rdns, calendar);
+
+        if (results.size() == 0) return null;
+
+        // there should be only one entry
+        Entry entry = (Entry)results.iterator().next();
+
+        return entry;
+    }
 
     public int search(
             PenroseConnection connection,
@@ -188,7 +197,7 @@ public abstract class SearchHandler {
             normalizedAttributeNames.add(attributeName.toLowerCase());
         }
 
-		Filter f = engineContext.getFilterTool().parseFilter(filter);
+		Filter f = handlerContext.getFilterTool().parseFilter(filter);
 		log.debug("Parsed filter: " + f);
 
         log.debug("----------------------------------------------------------------------------------");
@@ -216,7 +225,7 @@ public abstract class SearchHandler {
 		log.debug("Search base: " + baseEntry.getDn());
 
 		if (scope == LDAPConnection.SCOPE_BASE || scope == LDAPConnection.SCOPE_SUB) { // base or subtree
-			if (engineContext.getFilterTool().isValidEntry(baseEntry, f)) {
+			if (handlerContext.getFilterTool().isValidEntry(baseEntry, f)) {
                 LDAPEntry entry = baseEntry.toLDAPEntry();
 				results.add(Entry.filterAttributes(entry, normalizedAttributeNames));
 			}
@@ -245,19 +254,30 @@ public abstract class SearchHandler {
 		return LDAPException.SUCCESS;
 	}
 
-    public abstract SearchResults search(
+    public SearchResults search(
             PenroseConnection connection,
             Entry parent,
             EntryDefinition entryDefinition,
-            Filter filter)
-            throws Exception;
+            Filter filter
+            ) throws Exception {
 
-    public EngineContext getEngineContext() {
-        return engineContext;
+        log.debug("--------------------------------------------------------------------------------------");
+        log.debug("Searching for entry "+entryDefinition.getDn()+" with filter "+filter);
+
+        Calendar calendar = Calendar.getInstance();
+
+        Collection rdns = search(parent, entryDefinition, filter, calendar);
+        log.debug("Searched rdns: "+rdns);
+
+        return handlerContext.getEngine().load(parent, entryDefinition, rdns, calendar);
     }
 
-    public void setEngineContext(EngineContext engineContext) {
-        this.engineContext = engineContext;
+    public HandlerContext getEngineContext() {
+        return handlerContext;
+    }
+
+    public void setEngineContext(HandlerContext handlerContext) {
+        this.handlerContext = handlerContext;
     }
 
     /**
@@ -286,10 +306,10 @@ public abstract class SearchHandler {
 
 			log.debug("Static children: " + childDefinition.getDn());
 
-			AttributeValues values = childDefinition.getAttributeValues(engineContext.newInterpreter());
+			AttributeValues values = childDefinition.getAttributeValues(handlerContext.newInterpreter());
 			Entry child = new Entry(childDefinition, values);
 
-			if (engineContext.getFilterTool().isValidEntry(child, filter)) {
+			if (handlerContext.getFilterTool().isValidEntry(child, filter)) {
                 LDAPEntry en = child.toLDAPEntry();
 				results.add(Entry.filterAttributes(en, attributeNames));
 			}
@@ -310,7 +330,7 @@ public abstract class SearchHandler {
             for (Iterator j=results2.iterator(); j.hasNext(); ) {
                 Entry child = (Entry)j.next();
 
-                if (engineContext.getFilterTool().isValidEntry(child, filter)) {
+                if (handlerContext.getFilterTool().isValidEntry(child, filter)) {
                     LDAPEntry en = child.toLDAPEntry();
                     results.add(Entry.filterAttributes(en, attributeNames));
                 }
@@ -322,19 +342,79 @@ public abstract class SearchHandler {
 		}
 	}
 
-    public Engine getEngine() {
-        return engine;
+    public Collection search(
+            Entry parent,
+            EntryDefinition entryDefinition,
+            Filter filter,
+            Calendar calendar
+            ) throws Exception {
+
+        String str = handlerContext.getCache().getParameter(CacheConfig.CACHE_EXPIRATION);
+        int cacheExpiration = str == null ? 0 : Integer.parseInt(str);
+        log.debug("Filter Cache Expiration: "+cacheExpiration);
+        if (cacheExpiration < 0) cacheExpiration = Integer.MAX_VALUE;
+
+        Calendar c = (Calendar) calendar.clone();
+        c.add(Calendar.MINUTE, -cacheExpiration);
+
+        String key = entryDefinition.getDn()+","+parent.getDn() + ":" + filter;
+        Collection rdns = handlerContext.getCache().getFilterCache().get(key);
+        if (rdns != null) {
+            log.debug("Filter Cache found: "+rdns);
+            return rdns;
+        }
+
+        log.debug("Filter Cache not found.");
+
+        Source primarySource = getEngineContext().getPrimarySource(entryDefinition);
+        String primarySourceName = primarySource.getName();
+
+        log.debug("--------------------------------------------------------------------------------------");
+
+        Collection keys = handlerContext.getEngine().search(parent, entryDefinition, filter);
+
+        rdns = new TreeSet();
+
+        for (Iterator j=keys.iterator(); j.hasNext(); ) {
+            Row row = (Row)j.next();
+
+            Interpreter interpreter = getEngineContext().newInterpreter();
+            for (Iterator k=row.getNames().iterator(); k.hasNext(); ) {
+                String name = (String)k.next();
+                Object value = row.get(name);
+                interpreter.set(primarySourceName+"."+name, value);
+            }
+
+            Collection rdnAttributes = entryDefinition.getRdnAttributes();
+
+            Row rdn = new Row();
+            boolean valid = true;
+
+            for (Iterator k=rdnAttributes.iterator(); k.hasNext(); ) {
+                AttributeDefinition attr = (AttributeDefinition)k.next();
+                String name = attr.getName();
+                String expression = attr.getExpression();
+                Object value = interpreter.eval(expression);
+
+                if (value == null) {
+                    valid = false;
+                    break;
+                }
+
+                rdn.set(name, value);
+            }
+
+            if (!valid) continue;
+            rdns.add(rdn);
+        }
+
+        handlerContext.getCache().getFilterCache().put(key, rdns);
+
+        return rdns;
     }
 
-    public void setEngine(Engine engine) {
-        this.engine = engine;
-    }
+    /**
+     * Convert rdns into primary keys
+     */
 
-    public Cache getCache() {
-        return cache;
-    }
-
-    public void setCache(Cache cache) {
-        this.cache = cache;
-    }
 }

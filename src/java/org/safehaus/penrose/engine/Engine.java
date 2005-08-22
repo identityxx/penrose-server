@@ -4,18 +4,18 @@
  */
 package org.safehaus.penrose.engine;
 
-import org.safehaus.penrose.cache.Cache;
-import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.SearchResults;
 import org.safehaus.penrose.*;
+import org.safehaus.penrose.filter.Filter;
+import org.safehaus.penrose.interpreter.Interpreter;
+import org.safehaus.penrose.cache.CacheConfig;
+import org.safehaus.penrose.graph.Graph;
 import org.safehaus.penrose.thread.ThreadPool;
 import org.safehaus.penrose.thread.Queue;
 import org.safehaus.penrose.thread.MRSWLock;
-import org.safehaus.penrose.engine.impl.*;
 import org.safehaus.penrose.mapping.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.ietf.ldap.LDAPEntry;
 import org.ietf.ldap.LDAPException;
 
 import java.util.*;
@@ -23,26 +23,14 @@ import java.util.*;
 /**
  * @author Endi S. Dewata
  */
-public class Engine implements EngineMBean {
+public class Engine {
 
     Logger log = LoggerFactory.getLogger(getClass());
 
-    private AddHandler addHandler;
-    private BindHandler bindHandler;
-    private CompareHandler compareHandler;
-    private DeleteHandler deleteHandler;
-    private ModifyHandler modifyHandler;
-    private ModRdnHandler modRdnHandler;
-    private SearchHandler searchHandler;
-
-    private EngineConfig engineConfig;
     private EngineContext engineContext;
 
-    private Cache cache;
-
-    private Hashtable sourceLocks = new Hashtable();
-    private Hashtable resultLocks = new Hashtable();
-    private Queue threadWaiterQueue = new Queue();
+    private Map locks = new HashMap();
+    private Queue queue = new Queue();
 
     private ThreadPool threadPool = null;
 
@@ -55,126 +43,22 @@ public class Engine implements EngineMBean {
      * @throws Exception
      */
     public void init(EngineConfig engineConfig, EngineContext engineContext) throws Exception {
-        this.engineConfig = engineConfig;
         this.engineContext = engineContext;
-
-        this.cache = engineContext.getCache();
-
-        createAddHandler();
-        createBindHandler();
-        createCompareHandler();
-        createDeleteHandler();
-        createModifyHandler();
-        createModRdnHandler();
-        createSearchHandler();
-
-        init();
-
-        addHandler.init(this);
-        bindHandler.init(this);
-        compareHandler.init(this);
-        deleteHandler.init(this);
-        modifyHandler.init(this);
-        modRdnHandler.init(this);
-        searchHandler.init(this);
-    }
-
-    public void createAddHandler() throws Exception {
-        setAddHandler(new AddHandler());
-    }
-
-    public void createBindHandler() throws Exception {
-        setBindHandler(new BindHandler());
-    }
-
-    public void createCompareHandler() throws Exception {
-        setCompareHandler(new CompareHandler());
-    }
-
-    public void createDeleteHandler() throws Exception {
-        setDeleteHandler(new DeleteHandler());
-    }
-
-    public void createModifyHandler() throws Exception {
-        setModifyHandler(new ModifyHandler());
-    }
-
-    public void createModRdnHandler() throws Exception {
-        setModRdnHandler(new ModRdnHandler());
-    }
-
-    public void createSearchHandler() throws Exception {
-        setSearchHandler(new DefaultSearchHandler());
-    }
-
-    public void init() throws Exception {
 
         log.debug("-------------------------------------------------");
         log.debug("Initializing Engine");
 
-        initThreadPool();
-    }
+        // Now size is now hardcoded to 20
+        // TODO modify size to read from configuration if needed
+        int size = 20;
+        threadPool = new ThreadPool(size);
 
-    public void initThreadPool() throws Exception {
-        // Now threadPoolSize is now hardcoded to 20
-        // TODO modify threadPoolSize to read from configuration if needed
-        int threadPoolSize = 20;
-        threadPool = new ThreadPool(threadPoolSize);
-
-        RefreshThread r1 = new RefreshThread(this);
-        threadPool.execute(r1);
+        execute(new RefreshThread(this));
     }
 
 
-    public int add(PenroseConnection connection, LDAPEntry entry) throws Exception {
-        return getAddHandler().add(connection, entry);
-    }
-
-    public int bind(PenroseConnection connection, String dn, String password) throws Exception {
-        return getBindHandler().bind(connection, dn, password);
-    }
-
-    public int compare(PenroseConnection connection, String dn, String attributeName,
-            String attributeValue) throws Exception {
-
-        return getCompareHandler().compare(connection, dn, attributeName, attributeValue);
-    }
-
-    public int unbind(PenroseConnection connection) throws Exception {
-        return getBindHandler().unbind(connection);
-    }
-
-    public int delete(PenroseConnection connection, String dn) throws Exception {
-        return getDeleteHandler().delete(connection, dn);
-    }
-
-    public int modify(PenroseConnection connection, String dn, List modifications) throws Exception {
-        return getModifyHandler().modify(connection, dn, modifications);
-    }
-
-    public int modrdn(PenroseConnection connection, String dn, String newRdn) throws Exception {
-        return getModRdnHandler().modrdn(connection, dn, newRdn);
-    }
-
-    public SearchResults search(PenroseConnection connection, String base, int scope,
-            int deref, String filter, Collection attributeNames)
-            throws Exception {
-
-        SearchResults results = new SearchResults();
-
-        try {
-            SearchThread searchRunnable = new SearchThread(getSearchHandler(),
-                    connection, base, scope, deref, filter, attributeNames,
-                    results);
-            threadPool.execute(searchRunnable);
-
-        } catch (Throwable e) {
-            log.error(e.getMessage(), e);
-            results.setReturnCode(LDAPException.OPERATIONS_ERROR);
-            results.close();
-        }
-
-        return results;
+    public void execute(Runnable runnable) throws Exception {
+        threadPool.execute(runnable);
     }
 
     public void stop() throws Exception {
@@ -189,106 +73,15 @@ public class Engine implements EngineMBean {
         return stopping;
     }
 
-    public synchronized MRSWLock getLock(Source source) {
-		String name = source.getConnectionName() + "." + source.getSourceName();
+	public synchronized MRSWLock getLock(String dn) {
 
-		MRSWLock lock = (MRSWLock) sourceLocks.get(name);
+		MRSWLock lock = (MRSWLock)locks.get(dn);
 
-		if (lock == null) lock = new MRSWLock(threadWaiterQueue);
-		sourceLocks.put(name, lock);
-
-		return lock;
-	}
-
-	public synchronized MRSWLock getLock(String resultName) {
-
-		MRSWLock lock = (MRSWLock) resultLocks.get(resultName);
-
-		if (lock == null) lock = new MRSWLock(threadWaiterQueue);
-		resultLocks.put(resultName, lock);
+		if (lock == null) lock = new MRSWLock(queue);
+		locks.put(dn, lock);
 
 		return lock;
 	}
-
-    public BindHandler getBindHandler() {
-        return bindHandler;
-    }
-
-    public void setBindHandler(BindHandler bindHandler) {
-        this.bindHandler = bindHandler;
-    }
-
-    public SearchHandler getSearchHandler() {
-        return searchHandler;
-    }
-
-    public void setSearchHandler(SearchHandler searchHandler) {
-        this.searchHandler = searchHandler;
-    }
-
-    public AddHandler getAddHandler() {
-        return addHandler;
-    }
-
-    public void setAddHandler(AddHandler addHandler) {
-        this.addHandler = addHandler;
-    }
-
-    public ModifyHandler getModifyHandler() {
-        return modifyHandler;
-    }
-
-    public void setModifyHandler(ModifyHandler modifyHandler) {
-        this.modifyHandler = modifyHandler;
-    }
-
-    public DeleteHandler getDeleteHandler() {
-        return deleteHandler;
-    }
-
-    public void setDeleteHandler(DeleteHandler deleteHandler) {
-        this.deleteHandler = deleteHandler;
-    }
-
-    public CompareHandler getCompareHandler() {
-        return compareHandler;
-    }
-
-    public void setCompareHandler(CompareHandler compareHandler) {
-        this.compareHandler = compareHandler;
-    }
-
-    public ModRdnHandler getModRdnHandler() {
-        return modRdnHandler;
-    }
-
-    public void setModRdnHandler(ModRdnHandler modRdnHandler) {
-        this.modRdnHandler = modRdnHandler;
-    }
-
-    public EngineConfig getEngineConfig() {
-        return engineConfig;
-    }
-
-    public void setEngineConfig(EngineConfig engineConfig) {
-        this.engineConfig = engineConfig;
-    }
-
-    public EngineContext getEngineContext() {
-        return engineContext;
-    }
-
-    public void setEngineContext(EngineContext engineContext) {
-        this.engineContext = engineContext;
-    }
-
-    public Cache getCache() {
-        return cache;
-    }
-
-    public void setCache(Cache cache) {
-        this.cache = cache;
-    }
 
     public Collection merge(Entry parent, EntryDefinition entryDefinition, Collection rows) throws Exception {
 
@@ -329,5 +122,320 @@ public class Engine implements EngineMBean {
 
         return results;
     }
+
+    public ThreadPool getThreadPool() {
+        return threadPool;
+    }
+
+    public void setThreadPool(ThreadPool threadPool) {
+        this.threadPool = threadPool;
+    }
+
+    public EngineContext getEngineContext() {
+        return engineContext;
+    }
+
+    public void setEngineContext(EngineContext engineContext) {
+        this.engineContext = engineContext;
+    }
+
+    public int add(
+            EntryDefinition entryDefinition,
+            AttributeValues values)
+            throws Exception {
+
+        Date date = new Date();
+
+        Graph graph = getEngineContext().getGraph(entryDefinition);
+        Source primarySource = getEngineContext().getPrimarySource(entryDefinition);
+
+        AddGraphVisitor visitor = new AddGraphVisitor(getEngineContext(), getEngineContext().getSyncService(), primarySource, entryDefinition, values, date);
+        graph.traverse(visitor, primarySource);
+
+        if (visitor.getReturnCode() != LDAPException.SUCCESS) return visitor.getReturnCode();
+/*
+        Collection sources = entryDefinition.getSources();
+
+        for (Iterator i2 = sources.iterator(); i2.hasNext(); ) {
+            Source source = (Source)i2.next();
+
+            int rc = add(source, entryDefinition, values, date);
+            if (rc != LDAPException.SUCCESS) return rc;
+        }
+
+        engine.getEntryCache().put(entryDefinition, values, date);
+*/
+        return LDAPException.SUCCESS;
+    }
+
+    public int delete(EntryDefinition entryDefinition, AttributeValues values) throws Exception {
+
+         Date date = new Date();
+
+         Graph graph = getEngineContext().getGraph(entryDefinition);
+         Source primarySource = getEngineContext().getPrimarySource(entryDefinition);
+
+         DeleteGraphVisitor visitor = new DeleteGraphVisitor(getEngineContext(), getEngineContext().getSyncService(), primarySource, entryDefinition, values, date);
+         graph.traverse(visitor, primarySource);
+
+         if (visitor.getReturnCode() != LDAPException.SUCCESS) return visitor.getReturnCode();
+
+         Entry entry = new Entry(entryDefinition, values);
+         getEngineContext().getCache().getEntryCache().remove(entry);
+
+         return LDAPException.SUCCESS;
+     }
+
+    public int modify(Entry entry, AttributeValues newValues) throws Exception {
+
+        EntryDefinition entryDefinition = entry.getEntryDefinition();
+        AttributeValues oldValues = entry.getAttributeValues();
+
+        Date date = new Date();
+
+        Graph graph = getEngineContext().getGraph(entryDefinition);
+        Source primarySource = getEngineContext().getPrimarySource(entryDefinition);
+
+        ModifyGraphVisitor visitor = new ModifyGraphVisitor(getEngineContext(), getEngineContext().getSyncService(), primarySource, entry, newValues, date);
+        graph.traverse(visitor, primarySource);
+
+        if (visitor.getReturnCode() != LDAPException.SUCCESS) return visitor.getReturnCode();
+
+        getEngineContext().getCache().getEntryCache().remove(entry);
+
+        return LDAPException.SUCCESS;
+    }
+
+    /**
+     * Load sources of entries matching the filter.
+     *
+     * @param entryDefinition
+     * @param rdns
+     * @param calendar
+     * @throws Exception
+     */
+    public SearchResults load(
+            Entry parent,
+            EntryDefinition entryDefinition,
+            Collection rdns,
+            Calendar calendar
+            ) throws Exception {
+
+        log.debug("--------------------------------------------------------------------------------------");
+        log.debug("Loading entry "+entryDefinition.getDn()+" with rdns "+rdns);
+
+        MRSWLock lock = getLock(entryDefinition.getDn());
+        lock.getWriteLock(Penrose.WAIT_TIMEOUT);
+
+        SearchResults results = new SearchResults();
+
+        try {
+            String s = getEngineContext().getCache().getParameter(CacheConfig.CACHE_EXPIRATION);
+            int cacheExpiration = s == null ? 0 : Integer.parseInt(s);
+            log.debug("Expiration: "+cacheExpiration);
+            if (cacheExpiration < 0) cacheExpiration = Integer.MAX_VALUE;
+
+            Calendar c = (Calendar) calendar.clone();
+            c.add(Calendar.MINUTE, -cacheExpiration);
+
+            Collection rdnsToLoad = new TreeSet();
+
+            for (Iterator i=rdns.iterator(); i.hasNext(); ) {
+                Row rdn = (Row)i.next();
+
+                String dn = rdn.toString()+","+parent.getDn();
+
+                Entry entry = getEngineContext().getCache().getEntryCache().get(dn);
+                if (entry == null) {
+                    rdnsToLoad.add(rdn);
+                } else {
+                    entry.setParent(parent);
+                    entry.setEntryDefinition(entryDefinition);
+                    results.add(entry);
+                }
+            }
+
+            log.debug("Rdns to load: "+rdnsToLoad);
+
+            if (!rdnsToLoad.isEmpty()) {
+
+                Collection pks = rdnToPk(entryDefinition, rdnsToLoad);
+                Collection rows = load(parent, entryDefinition, pks);
+                Collection entries = merge(parent, entryDefinition, rows);
+
+                for (Iterator i=entries.iterator(); i.hasNext(); ) {
+                    Entry entry = (Entry)i.next();
+                    entry.setParent(parent);
+                    results.add(entry);
+                    getEngineContext().getCache().getEntryCache().put(entry);
+                }
+            }
+
+        } finally {
+            lock.releaseWriteLock(Penrose.WAIT_TIMEOUT);
+            results.close();
+        }
+
+        return results;
+    }
+
+    public Collection rdnToPk(EntryDefinition entryDefinition, Collection rdns) throws Exception {
+
+        Source source = getEngineContext().getPrimarySource(entryDefinition);
+
+        Collection pks = new TreeSet();
+
+        for (Iterator i=rdns.iterator(); i.hasNext(); ) {
+            Row rdn = (Row)i.next();
+
+            Interpreter interpreter = getEngineContext().newInterpreter();
+            interpreter.set(rdn);
+
+            Collection fields = source.getPrimaryKeyFields();
+            Row pk = new Row();
+
+            for (Iterator j=fields.iterator(); j.hasNext(); ) {
+                Field field = (Field)j.next();
+                String name = field.getName();
+                String expression = field.getExpression();
+
+                Object value = interpreter.eval(expression);
+                if (value == null) continue;
+
+                pk.set(name, value);
+            }
+
+            pks.add(pk);
+        }
+
+        return pks;
+    }
+
+    public Collection load(
+            Entry parent,
+            EntryDefinition entryDefinition,
+            Collection pks)
+            throws Exception {
+
+        Graph graph = getEngineContext().getGraph(entryDefinition);
+        Source primarySource = getEngineContext().getPrimarySource(entryDefinition);
+
+        LoaderGraphVisitor loaderVisitor = new LoaderGraphVisitor(getEngineContext(), getEngineContext().getSyncService(), entryDefinition, pks);
+        graph.traverse(loaderVisitor, primarySource);
+
+        Collection results = new ArrayList();
+
+        Map attributeValues = loaderVisitor.getAttributeValues();
+        for (Iterator i=attributeValues.keySet().iterator(); i.hasNext(); ) {
+            Row pk = (Row)i.next();
+            AttributeValues values = (AttributeValues)attributeValues.get(pk);
+
+            Collection c = getEngineContext().getTransformEngine().convert(values);
+            results.addAll(c);
+        }
+/*
+
+        for (Iterator i=pks.iterator(); i.hasNext(); ) {
+            Row pk = (Row)i.next();
+
+            JoinGraphVisitor joinerVisitor = new JoinGraphVisitor(entryDefinition, primarySource, sourceCache, pk);
+            graph.traverse(joinerVisitor, primarySource);
+
+            AttributeValues values = joinerVisitor.getAttributeValues();
+            Collection c = getEngineContext().getTransformEngine().convert(values);
+
+            results.addAll(c);
+        }
+*/
+        log.debug("Rows:");
+
+        for (Iterator j = results.iterator(); j.hasNext(); ) {
+            Row row = (Row)j.next();
+            log.debug(" - "+row);
+        }
+
+        log.debug("Loaded " + results.size() + " rows.");
+
+        return results;
+    }
+
+    public Collection search(Entry parent, EntryDefinition entryDefinition, Filter filter) throws Exception {
+        Source primarySource = getEngineContext().getPrimarySource(entryDefinition);
+
+        if (parent == null || !parent.isDynamic()) {
+
+            log.debug("Primary source: "+primarySource.getName());
+
+            Filter f = engineContext.getCache().getCacheFilterTool().toSourceFilter(null, entryDefinition, primarySource, filter);
+            return engineContext.getSyncService().search(primarySource, f);
+        }
+
+        AttributeValues values = parent.getAttributeValues();
+        Collection rows = getEngineContext().getTransformEngine().convert(values);
+
+        Collection newRows = new HashSet();
+        for (Iterator i=rows.iterator(); i.hasNext(); ) {
+            Row row = (Row)i.next();
+
+            Interpreter interpreter = getEngineContext().newInterpreter();
+            interpreter.set(row);
+
+            Row newRow = new Row();
+
+            for (Iterator j=parent.getSources().iterator(); j.hasNext(); ) {
+                Source s = (Source)j.next();
+
+                for (Iterator k=s.getFields().iterator(); k.hasNext(); ) {
+                    Field f = (Field)k.next();
+                    String expression = f.getExpression();
+                    Object v = interpreter.eval(expression);
+                    if (v == null) continue;
+
+                    //log.debug("Setting parent's value "+s.getName()+"."+f.getName()+": "+v);
+                    newRow.set(f.getName(), v);
+                }
+            }
+
+            newRows.add(newRow);
+        }
+
+        String startingSourceName = getStartingSourceName(entryDefinition);
+        Source startingSource = entryDefinition.getEffectiveSource(startingSourceName);
+
+        Graph graph = getEngineContext().getGraph(entryDefinition);
+
+        Collection keys = new HashSet();
+
+        SearchGraphVisitor visitor = new SearchGraphVisitor(getEngineContext(), entryDefinition, newRows, primarySource);
+        graph.traverse(visitor, startingSource);
+        keys.addAll(visitor.getKeys());
+
+        return keys;
+    }
+
+    public String getStartingSourceName(EntryDefinition entryDefinition) {
+
+        Collection relationships = entryDefinition.getRelationships();
+        for (Iterator i=relationships.iterator(); i.hasNext(); ) {
+            Relationship relationship = (Relationship)i.next();
+
+            String lhs = relationship.getLhs();
+            int li = lhs.indexOf(".");
+            String lsource = lhs.substring(0, li);
+            Source ls = entryDefinition.getSource(lsource);
+            if (ls == null) return lsource;
+
+            String rhs = relationship.getRhs();
+            int ri = rhs.indexOf(".");
+            String rsource = rhs.substring(0, ri);
+            Source rs = entryDefinition.getSource(rsource);
+            if (rs == null) return rsource;
+
+        }
+
+        Source source = (Source)entryDefinition.getSources().iterator().next();
+        return source.getName();
+    }
+
 }
 

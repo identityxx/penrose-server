@@ -6,7 +6,6 @@ package org.safehaus.penrose.engine;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.safehaus.penrose.Penrose;
 
 /**
  * @author Administrator
@@ -34,7 +33,7 @@ public class RefreshThread implements Runnable {
 		while (!engine.isStopping()) {
 
 			try {
-				//engine.getSourceCache().refresh();
+				//handler.getSourceCache().refresh();
 				Thread.sleep(2*60000); // sleep 2 minutes
 
 			} catch (Exception ex) {

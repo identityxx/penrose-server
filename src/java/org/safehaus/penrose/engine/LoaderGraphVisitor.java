@@ -2,10 +2,10 @@
  * Copyright (c) 1998-2005, Verge Lab., LLC.
  * All rights reserved.
  */
-package org.safehaus.penrose.sync;
+package org.safehaus.penrose.engine;
 
 import org.safehaus.penrose.mapping.*;
-import org.safehaus.penrose.Penrose;
+import org.safehaus.penrose.sync.SyncService;
 import org.safehaus.penrose.graph.GraphVisitor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,14 +20,14 @@ public class LoaderGraphVisitor extends GraphVisitor {
     Logger log = LoggerFactory.getLogger(getClass());
 
     private SyncService syncService;
-    private Penrose penrose;
+    private EngineContext engineContext;
     private EntryDefinition entryDefinition;
     private Map attributeValues = new HashMap();
 
     private Stack stack = new Stack();
 
-    public LoaderGraphVisitor(Penrose penrose, SyncService syncService, EntryDefinition entryDefinition, Collection pks) {
-        this.penrose = penrose;
+    public LoaderGraphVisitor(EngineContext engineContext, SyncService syncService, EntryDefinition entryDefinition, Collection pks) {
+        this.engineContext = engineContext;
         this.syncService = syncService;
         this.entryDefinition = entryDefinition;
 
@@ -86,7 +86,7 @@ public class LoaderGraphVisitor extends GraphVisitor {
             for (Iterator j=pks.iterator(); j.hasNext(); ) {
                 Row p = (Row)j.next();
 
-                if (!penrose.getSchema().partialMatch(pk, p)) continue;
+                if (!engineContext.getSchema().partialMatch(pk, p)) continue;
                 mainPk = (Row)map.get(p);
             }
 

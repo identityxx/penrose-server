@@ -2,10 +2,9 @@
  * Copyright (c) 1998-2005, Verge Lab., LLC.
  * All rights reserved.
  */
-package org.safehaus.penrose.engine;
+package org.safehaus.penrose.handler;
 
 import org.safehaus.penrose.PenroseConnection;
-import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.config.Config;
 import org.safehaus.penrose.mapping.EntryDefinition;
 import org.safehaus.penrose.mapping.Entry;
@@ -24,40 +23,35 @@ public class DeleteHandler {
 
     Logger log = LoggerFactory.getLogger(getClass());
 
-    private Engine engine;
-    private EngineContext engineContext;
+    private Handler handler;
+    private HandlerContext handlerContext;
 
-    public void init(Engine engine) throws Exception {
-        this.engine = engine;
-        this.engineContext = engine.getEngineContext();
-
-        init();
-    }
-
-    public void init() throws Exception {        
+    public DeleteHandler(Handler handler) throws Exception {
+        this.handler = handler;
+        this.handlerContext = handler.getHandlerContext();
     }
 
     public int delete(PenroseConnection connection, String dn) throws Exception {
 
         String ndn = LDAPDN.normalize(dn);
 
-        Config config = getEngineContext().getConfig(ndn);
+        Config config = getHandlerContext().getConfig(ndn);
         if (config == null) return LDAPException.NO_SUCH_OBJECT;
 
-        int result;
+        int rc;
 
         EntryDefinition entryDefinition = config.getEntryDefinition(ndn);
         if (entryDefinition != null) {
 
         	// Static Entry
-        	result = deleteStaticEntry(entryDefinition);
+        	rc = deleteStaticEntry(entryDefinition);
 
         } else {
 
         	// Virtual Entry
 	        Entry entry = null;
 	        try {
-                entry = engine.getSearchHandler().find(connection, ndn);
+                entry = handler.getSearchHandler().find(connection, ndn);
 	        } catch (Exception e) {
 	            // ignore
 	        }
@@ -67,10 +61,14 @@ public class DeleteHandler {
             entryDefinition = entry.getEntryDefinition();
             AttributeValues values = entry.getAttributeValues();
 
-	        result = getEngineContext().getSyncService().delete(entryDefinition, values);
+	        rc = handlerContext.getEngine().delete(entryDefinition, values);
+
+            if (rc == LDAPException.SUCCESS) {
+                getHandlerContext().getCache().getFilterCache().invalidate();
+            }
 
         }
-        return result;
+        return rc;
     }
 
     public int deleteStaticEntry(EntryDefinition entry) throws Exception {
@@ -86,7 +84,7 @@ public class DeleteHandler {
             children.remove(entry);
         }
 
-        Config config = getEngineContext().getConfig(entry.getDn());
+        Config config = getHandlerContext().getConfig(entry.getDn());
         if (config == null) return LDAPException.NO_SUCH_OBJECT;
 
         config.removeEntryDefinition(entry);
@@ -94,19 +92,19 @@ public class DeleteHandler {
         return LDAPException.SUCCESS;
     }
 
-    public Engine getEngine() {
-        return engine;
+    public Handler getHandler() {
+        return handler;
     }
 
-    public void setEngine(Engine engine) {
-        this.engine = engine;
+    public void getHandler(Handler handler) {
+        this.handler = handler;
     }
 
-    public EngineContext getEngineContext() {
-        return engineContext;
+    public HandlerContext getHandlerContext() {
+        return handlerContext;
     }
 
-    public void setEngineContext(EngineContext engineContext) {
-        this.engineContext = engineContext;
+    public void setHandlerContext(HandlerContext handlerContext) {
+        this.handlerContext = handlerContext;
     }
 }

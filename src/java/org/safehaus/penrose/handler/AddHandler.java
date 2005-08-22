@@ -2,10 +2,9 @@
  * Copyright (c) 1998-2005, Verge Lab., LLC.
  * All rights reserved.
  */
-package org.safehaus.penrose.engine;
+package org.safehaus.penrose.handler;
 
 import org.safehaus.penrose.PenroseConnection;
-import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.config.Config;
 import org.safehaus.penrose.mapping.Entry;
 import org.safehaus.penrose.mapping.AttributeValues;
@@ -27,17 +26,12 @@ public class AddHandler {
 
     Logger log = LoggerFactory.getLogger(getClass());
 
-    private Engine engine;
-    private EngineContext engineContext;
+    private Handler handler;
+    private HandlerContext handlerContext;
 
-    public void init (Engine engine) throws Exception {
-        this.engine = engine;
-        this.engineContext = engine.getEngineContext();
-
-        init();
-    }
-
-    public void init() throws Exception {        
+    public AddHandler(Handler handler) throws Exception {
+        this.handler = handler;
+        this.handlerContext = handler.getHandlerContext();
     }
 
     /**
@@ -57,7 +51,7 @@ public class AddHandler {
 
         // find existing entry
         try {
-            Entry en = getEngine().getSearchHandler().find(connection, dn);
+            Entry en = getHandler().getSearchHandler().find(connection, dn);
             if (en != null) return LDAPException.ENTRY_ALREADY_EXISTS;
         } catch (Exception e) {
             // ignore
@@ -83,7 +77,7 @@ public class AddHandler {
         String rdn = dn.substring(0, i);
         String parentDn = dn.substring(i+1);
 
-        Entry parent = getEngine().getSearchHandler().find(connection, parentDn);
+        Entry parent = getHandler().getSearchHandler().find(connection, parentDn);
         if (parent == null) return LDAPException.NO_SUCH_OBJECT;
 
         EntryDefinition parentDefinition = parent.getEntryDefinition();
@@ -97,26 +91,32 @@ public class AddHandler {
             EntryDefinition childDefinition = (EntryDefinition)iterator.next();
             if (!childDefinition.isDynamic()) continue;
 
-            return getEngineContext().getSyncService().add(connection, childDefinition, values);
+            int rc = handlerContext.getEngine().add(childDefinition, values);
+
+            if (rc == LDAPException.SUCCESS) {
+                getHandlerContext().getCache().getFilterCache().invalidate();
+            }
+
+            return rc;
         }
 
         return addStaticEntry(parentDefinition, values, dn);
     }
 
-    public Engine getEngine() {
-        return engine;
+    public Handler getHandler() {
+        return handler;
     }
 
-    public void setEngine(Engine engine) {
-        this.engine = engine;
+    public void setHandler(Handler handler) {
+        this.handler = handler;
     }
 
-    public EngineContext getEngineContext() {
-        return engineContext;
+    public HandlerContext getHandlerContext() {
+        return handlerContext;
     }
 
-    public void setEngineContext(EngineContext engineContext) {
-        this.engineContext = engineContext;
+    public void setHandlerContext(HandlerContext handlerContext) {
+        this.handlerContext = handlerContext;
     }
 
     public int addStaticEntry(EntryDefinition parent, AttributeValues values, String dn) throws Exception {
@@ -144,7 +144,7 @@ public class AddHandler {
         String rdnAttribute = rdn.substring(0, k);
         String rdnValue = rdn.substring(k+1);
 
-        Config config = getEngineContext().getConfig(dn);
+        Config config = getHandlerContext().getConfig(dn);
         if (config == null) return LDAPException.NO_SUCH_OBJECT;
 
         config.addEntryDefinition(newEntry);

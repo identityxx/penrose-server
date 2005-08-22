@@ -2,10 +2,10 @@
  * Copyright (c) 1998-2005, Verge Lab., LLC.
  * All rights reserved.
  */
-package org.safehaus.penrose.sync;
+package org.safehaus.penrose.engine;
 
 import org.safehaus.penrose.mapping.*;
-import org.safehaus.penrose.Penrose;
+import org.safehaus.penrose.sync.SyncService;
 import org.safehaus.penrose.graph.GraphVisitor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,7 +29,7 @@ public class DeleteGraphVisitor extends GraphVisitor {
     private Stack stack = new Stack();
 
     public DeleteGraphVisitor(
-            Penrose penrose,
+            EngineContext engineContext,
             SyncService deleteHandler,
             Source primarySource,
             EntryDefinition entryDefinition,
@@ -41,7 +41,7 @@ public class DeleteGraphVisitor extends GraphVisitor {
         this.values = values;
         this.date = date;
 
-        Collection rows = penrose.getTransformEngine().convert(values);
+        Collection rows = engineContext.getTransformEngine().convert(values);
         Collection keys = new HashSet();
 /*
         for (Iterator i=rows.iterator(); i.hasNext(); ) {

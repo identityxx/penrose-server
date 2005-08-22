@@ -2,10 +2,9 @@
  * Copyright (c) 1998-2005, Verge Lab., LLC.
  * All rights reserved.
  */
-package org.safehaus.penrose.engine;
+package org.safehaus.penrose.handler;
 
 import org.safehaus.penrose.PenroseConnection;
-import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.config.Config;
 import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.schema.Schema;
@@ -28,17 +27,12 @@ public class ModifyHandler {
 
     Logger log = LoggerFactory.getLogger(getClass());
 
-    private Engine engine;
-    private EngineContext engineContext;
+    private Handler handler;
+    private HandlerContext handlerContext;
 
-    public void init(Engine engine) throws Exception {
-        this.engine = engine;
-        this.engineContext = engine.getEngineContext();
-
-        init();
-	}
-
-    public void init() throws Exception {
+    public ModifyHandler(Handler handler) throws Exception {
+        this.handler = handler;
+        this.handlerContext = handler.getHandlerContext();
     }
 
     public int modify(PenroseConnection connection, String dn, List modifications)
@@ -56,7 +50,7 @@ public class ModifyHandler {
 
 		Entry sr;
 		try {
-			sr = engine.getSearchHandler().find(connection, ndn);
+			sr = handler.getSearchHandler().find(connection, ndn);
 		} catch (LDAPException e) {
 			return e.getResultCode();
 		}
@@ -117,7 +111,7 @@ public class ModifyHandler {
 		log.debug("--- perform modification:");
 		AttributeValues newValues = new AttributeValues(oldValues);
 
-        Schema schema = engineContext.getSchema();
+        Schema schema = handlerContext.getSchema();
 		Collection objectClasses = schema.getObjectClasses(entryDefinition);
 		//log.debug("Object Classes: " + objectClasses);
 
@@ -200,7 +194,13 @@ public class ModifyHandler {
 		log.debug("--- new values:");
 		log.debug(newEntry.toString());
 
-        return getEngineContext().getSyncService().modify(entry, newValues);
+        int rc = handlerContext.getEngine().modify(entry, newValues);
+
+        if (rc == LDAPException.SUCCESS) {
+            getEngineContext().getCache().getFilterCache().invalidate();
+        }
+
+        return rc;
 	}
 
     public int modifyStaticEntry(EntryDefinition entry, Collection modifications)
@@ -282,25 +282,25 @@ public class ModifyHandler {
 		AttributeDefinition attribute = (AttributeDefinition) attributes.get(name);
 		if (attribute == null) return;
 
-		Interpreter interpreter = engineContext.newInterpreter();
+		Interpreter interpreter = handlerContext.newInterpreter();
 
 		String attrValue = (String)interpreter.eval(attribute.getExpression());
 		if (attrValue.equals(value)) attributes.remove(name);
 	}
 
-    public Engine getEngine() {
-        return engine;
+    public Handler getEngine() {
+        return handler;
     }
 
-    public void setEngine(Engine engine) {
-        this.engine = engine;
+    public void setEngine(Handler handler) {
+        this.handler = handler;
     }
 
-    public EngineContext getEngineContext() {
-        return engineContext;
+    public HandlerContext getEngineContext() {
+        return handlerContext;
     }
 
-    public void setEngineContext(EngineContext engineContext) {
-        this.engineContext = engineContext;
+    public void setEngineContext(HandlerContext handlerContext) {
+        this.handlerContext = handlerContext;
     }
 }

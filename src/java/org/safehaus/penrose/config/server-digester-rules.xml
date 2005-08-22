@@ -34,13 +34,6 @@
             <call-method-rule pattern="engine-name" methodname="setEngineName" paramcount="0" />
             <call-method-rule pattern="engine-class" methodname="setEngineClass" paramcount="0" />
 			<call-method-rule pattern="description" methodname="setDescription" paramcount="0" />
-			<call-method-rule pattern="add-handler-class" methodname="setAddHandlerClass" paramcount="0" />
-			<call-method-rule pattern="bind-handler-class" methodname="setBindHandlerClass" paramcount="0" />
-			<call-method-rule pattern="compare-handler-class" methodname="setCompareHandlerClass" paramcount="0" />
-			<call-method-rule pattern="delete-handler-class" methodname="setDeleteHandlerClass" paramcount="0" />
-			<call-method-rule pattern="modify-handler-class" methodname="setModifyHandlerClass" paramcount="0" />
-			<call-method-rule pattern="modrdn-handler-class" methodname="setModRdnHandlerClass" paramcount="0" />
-			<call-method-rule pattern="search-handler-class" methodname="setSearchHandlerClass" paramcount="0" />
 			<pattern value="parameter">
 				<call-method-rule methodname="setParameter" paramcount="2" />
 				<call-param-rule pattern="param-name" paramnumber="0"/>

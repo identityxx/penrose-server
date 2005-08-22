@@ -2,12 +2,11 @@
  * Copyright (c) 1998-2005, Verge Lab., LLC.
  * All rights reserved.
  */
-package org.safehaus.penrose.sync;
+package org.safehaus.penrose.engine;
 
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.SearchResults;
-import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.connection.Connection;
 import org.safehaus.penrose.graph.GraphVisitor;
 import org.slf4j.Logger;
@@ -22,15 +21,15 @@ public class SearchGraphVisitor extends GraphVisitor {
 
     Logger log = LoggerFactory.getLogger(getClass());
 
-    private Penrose penrose;
+    private EngineContext engineContext;
     private EntryDefinition entryDefinition;
     private Source primarySource;
 
     private Stack stack = new Stack();
     private Set keys = new HashSet();
 
-    public SearchGraphVisitor(Penrose engine, EntryDefinition entryDefinition, Collection rows, Source primarySource) {
-        this.penrose = engine;
+    public SearchGraphVisitor(EngineContext engineContext, EntryDefinition entryDefinition, Collection rows, Source primarySource) {
+        this.engineContext = engineContext;
         this.entryDefinition = entryDefinition;
         this.primarySource = primarySource;
 
@@ -118,45 +117,12 @@ public class SearchGraphVisitor extends GraphVisitor {
             log.debug(" - "+lFieldName+" -> "+rFieldName+" = "+value);
         }
 
-        Filter newFilter = penrose.getFilterTool().createFilter(newRows);
+        Filter newFilter = engineContext.getFilterTool().createFilter(newRows);
 
-        log.debug("Searching source "+source.getName()+" for "+newFilter);
-        Connection connection = penrose.getConnection(source.getConnectionName());
-        SearchResults results = connection.search(source, newFilter, 100);
+        Collection results = engineContext.getSyncService().search(source, newFilter);
         if (results.size() == 0) return false;
-        
-        log.debug("Storing in source cache:");
-        newRows = new HashSet();
-        Map map = new HashMap();
-        for (Iterator j=results.iterator(); j.hasNext(); ) {
-            Row row = (Row)j.next();
 
-            Row pk = new Row();
-            Collection fields = source.getPrimaryKeyFields();
-            for (Iterator i=fields.iterator(); i.hasNext(); ) {
-                Field field = (Field)i.next();
-                Object value = row.get(field.getName());
-                pk.set(field.getName(), value);
-            }
-
-            AttributeValues values = (AttributeValues)map.get(pk);
-            if (values == null) {
-                values = new AttributeValues();
-                map.put(pk, values);
-            }
-            values.add(row);
-
-            newRows.add(row);
-        }
-
-        for (Iterator j=map.keySet().iterator(); j.hasNext(); ) {
-            Row pk = (Row)j.next();
-            AttributeValues values = (AttributeValues)map.get(pk);
-            log.debug(" - "+pk+": "+values);
-            penrose.getCache().getSourceCache().put(source, pk, values);
-        }
-
-        stack.push(newRows);
+        stack.push(results);
 
         return true;
     }

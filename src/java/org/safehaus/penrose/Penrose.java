@@ -7,14 +7,10 @@ package org.safehaus.penrose;
 import java.util.*;
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Reader;
-import java.rmi.registry.LocateRegistry;
-import java.rmi.registry.Registry;
-import java.net.ServerSocket;
 
 import javax.management.MBeanServer;
 import javax.management.MBeanServerFactory;
@@ -34,10 +30,12 @@ import org.safehaus.penrose.schema.Schema;
 import org.safehaus.penrose.schema.AttributeType;
 import org.safehaus.penrose.schema.ObjectClass;
 import org.safehaus.penrose.schema.SchemaParser;
-import org.safehaus.penrose.engine.Engine;
 import org.safehaus.penrose.engine.TransformEngine;
 import org.safehaus.penrose.engine.EngineConfig;
+import org.safehaus.penrose.engine.Engine;
 import org.safehaus.penrose.engine.EngineContext;
+import org.safehaus.penrose.handler.Handler;
+import org.safehaus.penrose.handler.HandlerContext;
 import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.interpreter.InterpreterConfig;
 import org.safehaus.penrose.cache.*;
@@ -47,6 +45,7 @@ import org.safehaus.penrose.filter.FilterTool;
 import org.safehaus.penrose.acl.AclTool;
 import org.safehaus.penrose.management.PenroseClient;
 import org.safehaus.penrose.sync.SyncService;
+import org.safehaus.penrose.sync.SyncContext;
 import org.safehaus.penrose.graph.Graph;
 import org.slf4j.Logger;
 //import org.apache.log4j.PropertyConfigurator;
@@ -60,7 +59,9 @@ import sun.misc.Signal;
 public class Penrose implements
         AdapterContext,
         CacheContext,
+        HandlerContext,
         EngineContext,
+        SyncContext,
         ModuleContext,
         PenroseMBean,
         SignalHandler {
@@ -101,6 +102,7 @@ public class Penrose implements
 	private String rootDn;
 	private String rootPassword;
 
+    private Handler handler;
 	private AclTool aclTool;
 	private FilterTool filterTool;
 
@@ -263,6 +265,7 @@ public class Penrose implements
         serverConfig = reader.getServerConfig();
         log.debug(serverConfig.toString());
 
+        handler = new Handler(this);
         aclTool = new AclTool(this);
         filterTool = new FilterTool(this);
         transformEngine = new TransformEngine(this);
@@ -271,6 +274,7 @@ public class Penrose implements
         loadSchema();
         initCache();
         initEngine();
+
 
         if (trustedKeyStore != null) System.setProperty("javax.net.ssl.trustStore", trustedKeyStore);
 
@@ -491,6 +495,10 @@ public class Penrose implements
         return (Engine)engines.get(name);
     }
 
+    public Handler getHandler() {
+        return handler;
+    }
+
     public Config getConfig(String dn) throws Exception {
         for (Iterator i=configs.keySet().iterator(); i.hasNext(); ) {
             String suffix = (String)i.next();
@@ -535,7 +543,7 @@ public class Penrose implements
         BindEvent beforeBindEvent = new BindEvent(this, BindEvent.BEFORE_BIND, connection, dn, password);
         postEvent(dn, beforeBindEvent);
 
-        int rc = getEngine().bind(connection, dn, password);
+        int rc = getHandler().bind(connection, dn, password);
 
         BindEvent afterBindEvent = new BindEvent(this, BindEvent.AFTER_BIND, connection, dn, password);
         afterBindEvent.setReturnCode(rc);
@@ -545,7 +553,7 @@ public class Penrose implements
     }
 
     public int unbind(PenroseConnection connection) throws Exception {
-        return getEngine().unbind(connection);
+        return getHandler().unbind(connection);
     }
 
     public SearchResults search(PenroseConnection connection, String base, int scope,
@@ -594,7 +602,7 @@ public class Penrose implements
         SearchEvent beforeSearchEvent = new SearchEvent(this, SearchEvent.BEFORE_SEARCH, connection, base);
         postEvent(base, beforeSearchEvent);
 
-        SearchResults results = getEngine().search(connection, base, scope, deref, filter, attributeNames);
+        SearchResults results = getHandler().search(connection, base, scope, deref, filter, attributeNames);
 
         SearchEvent afterSearchEvent = new SearchEvent(this, SearchEvent.AFTER_SEARCH, connection, base);
         afterSearchEvent.setReturnCode(results.getReturnCode());
@@ -614,7 +622,7 @@ public class Penrose implements
         AddEvent beforeModifyEvent = new AddEvent(this, AddEvent.BEFORE_ADD, connection, entry);
         postEvent(entry.getDN(), beforeModifyEvent);
 
-        int rc = getEngine().add(connection, entry);
+        int rc = getHandler().add(connection, entry);
 
         AddEvent afterModifyEvent = new AddEvent(this, AddEvent.AFTER_ADD, connection, entry);
         afterModifyEvent.setReturnCode(rc);
@@ -634,7 +642,7 @@ public class Penrose implements
         DeleteEvent beforeDeleteEvent = new DeleteEvent(this, DeleteEvent.BEFORE_DELETE, connection, dn);
         postEvent(dn, beforeDeleteEvent);
 
-        int rc = getEngine().delete(connection, dn);
+        int rc = getHandler().delete(connection, dn);
 
         DeleteEvent afterDeleteEvent = new DeleteEvent(this, DeleteEvent.AFTER_DELETE, connection, dn);
         afterDeleteEvent.setReturnCode(rc);
@@ -684,7 +692,7 @@ public class Penrose implements
         ModifyEvent beforeModifyEvent = new ModifyEvent(this, ModifyEvent.BEFORE_MODIFY, connection, dn, modifications);
         postEvent(dn, beforeModifyEvent);
 
-        int rc = getEngine().modify(connection, dn, modifications);
+        int rc = getHandler().modify(connection, dn, modifications);
 
         ModifyEvent afterModifyEvent = new ModifyEvent(this, ModifyEvent.AFTER_MODIFY, connection, dn, modifications);
         afterModifyEvent.setReturnCode(rc);
@@ -701,7 +709,7 @@ public class Penrose implements
         log.debug("  dn: " + dn);
         log.debug("  new rdn: " + newRdn);
 
-        return getEngine().modrdn(connection, dn, newRdn);
+        return getHandler().modrdn(connection, dn, newRdn);
     }
 
 	public int compare(PenroseConnection connection, String dn, String attributeName,
@@ -715,7 +723,7 @@ public class Penrose implements
         log.debug("  attributeValue: " + attributeValue);
         log.debug("-------------------------------------------------------------------------------");
 
-        return getEngine().compare(connection, dn, attributeName, attributeValue);
+        return getHandler().compare(connection, dn, attributeName, attributeValue);
 	}
 
     public void postEvent(String dn, Event event) throws Exception {

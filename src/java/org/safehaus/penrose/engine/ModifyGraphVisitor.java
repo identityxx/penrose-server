@@ -2,10 +2,10 @@
  * Copyright (c) 1998-2005, Verge Lab., LLC.
  * All rights reserved.
  */
-package org.safehaus.penrose.sync;
+package org.safehaus.penrose.engine;
 
 import org.safehaus.penrose.mapping.*;
-import org.safehaus.penrose.Penrose;
+import org.safehaus.penrose.sync.SyncService;
 import org.safehaus.penrose.graph.GraphVisitor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,32 +16,34 @@ import java.util.*;
 /**
  * @author Endi S. Dewata
  */
-public class AddGraphVisitor extends GraphVisitor {
+public class ModifyGraphVisitor extends GraphVisitor {
 
     Logger log = LoggerFactory.getLogger(getClass());
 
     public SyncService syncService;
     public EntryDefinition entryDefinition;
-    public AttributeValues values;
+    public AttributeValues oldValues;
+    public AttributeValues newValues;
     public Date date;
     private int returnCode = LDAPException.SUCCESS;
 
     private Stack stack = new Stack();
 
-    public AddGraphVisitor(
-            Penrose penrose,
-            SyncService addHandler,
+    public ModifyGraphVisitor(
+            EngineContext engineContext,
+            SyncService syncService,
             Source primarySource,
-            EntryDefinition entryDefinition,
-            AttributeValues values,
+            Entry entry,
+            AttributeValues newValues,
             Date date) throws Exception {
 
-        this.syncService = addHandler;
-        this.entryDefinition = entryDefinition;
-        this.values = values;
+        this.syncService = syncService;
+        this.entryDefinition = entry.getEntryDefinition();
+        this.oldValues = entry.getAttributeValues();
+        this.newValues = newValues;
         this.date = date;
 
-        Collection rows = penrose.getTransformEngine().convert(values);
+        Collection rows = engineContext.getTransformEngine().convert(oldValues);
         Collection keys = new HashSet();
 /*
         for (Iterator i=rows.iterator(); i.hasNext(); ) {
@@ -85,9 +87,7 @@ public class AddGraphVisitor extends GraphVisitor {
 
         if (entryDefinition.getSource(source.getName()) == null) return false;
 
-        returnCode = syncService.add(source, entryDefinition, values, date);
-
-        if (returnCode == LDAPException.NO_SUCH_OBJECT) return true; // ignore
+        returnCode = syncService.modify(source, entryDefinition, oldValues, newValues, date);
         if (returnCode != LDAPException.SUCCESS) return false;
 
         return true;

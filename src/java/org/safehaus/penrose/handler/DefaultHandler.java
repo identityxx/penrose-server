@@ -2,15 +2,13 @@
  * Copyright (c) 1998-2005, Verge Lab., LLC.
  * All rights reserved.
  */
-package org.safehaus.penrose.engine.impl;
+package org.safehaus.penrose.handler;
 
-
-import org.safehaus.penrose.engine.*;
 
 /**
  * @author Endi S. Dewata
  */
-public class DefaultEngine extends Engine {
+public class DefaultHandler extends Handler {
 
 
     /**

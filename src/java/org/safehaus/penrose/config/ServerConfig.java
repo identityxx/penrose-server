@@ -74,6 +74,25 @@ public class ServerConfig implements Serializable {
         sb.append(nl);
         sb.append(nl);
 
+        sb.append("ENGINE:");
+        sb.append(nl);
+        sb.append(nl);
+
+        for (Iterator i = engineConfigs.keySet().iterator(); i.hasNext();) {
+            String engineName = (String) i.next();
+            EngineConfig engineConfig = (EngineConfig)engineConfigs.get(engineName);
+            sb.append(" - "+engineName + " (" + engineConfig.getEngineClass() + ")" + nl);
+            sb.append("   Parameters:" + nl);
+            for (Iterator j = engineConfig.getParameterNames().iterator(); j.hasNext();) {
+                String name = (String) j.next();
+                String value = engineConfig.getParameter(name);
+                sb.append("   - " + name + ": " + value + nl);
+            }
+            sb.append(nl);
+        }
+
+        sb.append(nl);
+
         sb.append("CACHE:");
         sb.append(nl);
         sb.append(nl);
@@ -81,12 +100,29 @@ public class ServerConfig implements Serializable {
         for (Iterator i = cacheConfigs.keySet().iterator(); i.hasNext();) {
             String cacheName = (String) i.next();
             CacheConfig sourceCache = (CacheConfig) cacheConfigs.get(cacheName);
-            sb.append(cacheName + " (" + sourceCache.getCacheClass() + ")" + nl);
-            sb.append("Parameters:" + nl);
+            sb.append(" - "+ cacheName + " (" + sourceCache.getCacheClass() + ")" + nl);
+            sb.append("   Parameters:" + nl);
             for (Iterator j = sourceCache.getParameterNames().iterator(); j.hasNext();) {
                 String name = (String) j.next();
                 String value = sourceCache.getParameter(name);
-                sb.append("- " + name + ": " + value + nl);
+                sb.append("   - " + name + ": " + value + nl);
+            }
+            sb.append(nl);
+        }
+
+        sb.append("ADAPTERS:");
+        sb.append(nl);
+        sb.append(nl);
+
+        for (Iterator i = adapterConfigs.keySet().iterator(); i.hasNext();) {
+            String adapterName = (String) i.next();
+            AdapterConfig adapterClass = (AdapterConfig) adapterConfigs.get(adapterName);
+            sb.append(" - "+ adapterName + " (" + adapterClass.getAdapterClass() + ")" + nl);
+            sb.append("   Parameters:" + nl);
+            for (Iterator j = adapterClass.getParameterNames().iterator(); j.hasNext();) {
+                String name = (String) j.next();
+                String value = adapterClass.getParameter(name);
+                sb.append("   - " + name + ": " + value + nl);
             }
             sb.append(nl);
         }

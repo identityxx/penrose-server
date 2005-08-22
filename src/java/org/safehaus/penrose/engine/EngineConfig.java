@@ -6,6 +6,7 @@ package org.safehaus.penrose.engine;
 
 import java.io.Serializable;
 import java.util.Properties;
+import java.util.Collection;
 
 /**
  * @author Endi S. Dewata
@@ -15,14 +16,6 @@ public class EngineConfig implements Serializable {
     private String engineName;
     private String engineClass;
     private String description;
-
-    private String addHandlerClass;
-    private String bindHandlerClass;
-    private String compareHandlerClass;
-    private String deleteHandlerClass;
-    private String modifyHandlerClass;
-    private String modRdnHandlerClass;
-    private String searchHandlerClass;
 
     private Properties parameters = new Properties();
 
@@ -40,6 +33,10 @@ public class EngineConfig implements Serializable {
 
     public void removeParameter(String name) {
         parameters.remove(name);
+    }
+
+    public Collection getParameterNames() {
+        return parameters.keySet();
     }
 
     public String getParameter(String name) {
@@ -62,59 +59,4 @@ public class EngineConfig implements Serializable {
         this.description = description;
     }
 
-    public String getAddHandlerClass() {
-        return addHandlerClass;
-    }
-
-    public void setAddHandlerClass(String addHandlerClass) {
-        this.addHandlerClass = addHandlerClass;
-    }
-
-    public String getBindHandlerClass() {
-        return bindHandlerClass;
-    }
-
-    public void setBindHandlerClass(String bindHandlerClass) {
-        this.bindHandlerClass = bindHandlerClass;
-    }
-
-    public String getCompareHandlerClass() {
-        return compareHandlerClass;
-    }
-
-    public void setCompareHandlerClass(String compareHandlerClass) {
-        this.compareHandlerClass = compareHandlerClass;
-    }
-
-    public String getDeleteHandlerClass() {
-        return deleteHandlerClass;
-    }
-
-    public void setDeleteHandlerClass(String deleteHandlerClass) {
-        this.deleteHandlerClass = deleteHandlerClass;
-    }
-
-    public String getModifyHandlerClass() {
-        return modifyHandlerClass;
-    }
-
-    public void setModifyHandlerClass(String modifyHandlerClass) {
-        this.modifyHandlerClass = modifyHandlerClass;
-    }
-
-    public String getModRdnHandlerClass() {
-        return modRdnHandlerClass;
-    }
-
-    public void setModRdnHandlerClass(String modRdnHandlerClass) {
-        this.modRdnHandlerClass = modRdnHandlerClass;
-    }
-
-    public String getSearchHandlerClass() {
-        return searchHandlerClass;
-    }
-
-    public void setSearchHandlerClass(String searchHandlerClass) {
-        this.searchHandlerClass = searchHandlerClass;
-    }
 }

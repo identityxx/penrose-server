@@ -5,7 +5,6 @@
 package org.safehaus.penrose.engine;
 
 import org.safehaus.penrose.mapping.*;
-import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.cache.SourceCache;
 import org.safehaus.penrose.graph.GraphVisitor;
 import org.slf4j.Logger;

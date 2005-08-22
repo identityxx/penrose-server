@@ -2,11 +2,10 @@
  * Copyright (c) 1998-2005, Verge Lab., LLC.
  * All rights reserved.
  */
-package org.safehaus.penrose.engine;
+package org.safehaus.penrose.handler;
 
 import org.safehaus.penrose.PenroseConnection;
 import org.safehaus.penrose.SearchResults;
-import org.safehaus.penrose.Penrose;
 import org.ietf.ldap.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,15 +21,10 @@ public class CompareHandler {
 
     Logger log = LoggerFactory.getLogger(getClass());
 
-    private Engine engine;
+    private Handler handler;
 
-    public void init(Engine engine) throws Exception {
-        this.engine = engine;
-
-        init();
-    }
-
-    public void init() throws Exception {
+    public CompareHandler(Handler handler) throws Exception {
+        this.handler = handler;
     }
     
     public int compare(PenroseConnection connection, String dn, String attributeName,
@@ -41,7 +35,7 @@ public class CompareHandler {
 
         SearchResults results = new SearchResults();
         try {
-            engine.getSearchHandler().search(
+            handler.getSearchHandler().search(
                     connection,
                     dn,
                     LDAPConnection.SCOPE_SUB,
@@ -65,11 +59,11 @@ public class CompareHandler {
         return LDAPException.COMPARE_FALSE;
     }
 
-    public Engine getEngine() {
-        return engine;
+    public Handler getEngine() {
+        return handler;
     }
 
-    public void setEngine(Engine engine) {
-        this.engine = engine;
+    public void setEngine(Handler handler) {
+        this.handler = handler;
     }
 }
