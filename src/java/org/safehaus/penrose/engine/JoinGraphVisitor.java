@@ -54,7 +54,7 @@ public class JoinGraphVisitor extends GraphVisitor {
 
         } else {
             log.debug("Joining with source "+source+" with pks: "+pks);
-            pks = sourceCache.getPks(source, pks);
+            pks = sourceCache.getByPks(source, pks).keySet();
         }
 
         Map results = sourceCache.get(source, pks);

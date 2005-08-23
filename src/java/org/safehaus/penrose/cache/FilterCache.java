@@ -34,7 +34,7 @@ public class FilterCache {
         map.put(key, rdns);
 
         if (map.size() > 20) {
-            key = (Map)map.keySet().iterator().next();
+            key = map.keySet().iterator().next();
             map.remove(key);
         }
     }

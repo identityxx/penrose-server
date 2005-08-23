@@ -44,7 +44,7 @@ public class LoaderGraphVisitor extends GraphVisitor {
         //log.debug("Source "+source.getName());
 
         if (entryDefinition.getSource(source.getName()) == null) return false;
-
+/*
         boolean allPksDefined = true; // check if the source is a connecting source
 
         Collection fields = source.getPrimaryKeyFields();
@@ -54,12 +54,13 @@ public class LoaderGraphVisitor extends GraphVisitor {
         }
 
         // if connecting source, dont visit
+        log.debug(source+" is a connecting source: "+!allPksDefined);
         if (!allPksDefined) return false;
-        
+*/        
         Map map = (Map)stack.peek();
         Collection pks = map.keySet();
 
-        //log.debug("Loading source "+source+" with pks: "+pks);
+        log.debug("Loading source "+source+" with pks: "+pks);
 
         Map results = syncService.load(source, pks);
         if (results.size() == 0) return false;

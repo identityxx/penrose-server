@@ -35,7 +35,7 @@ public class AttributeValues {
 
             Collection c = get(name);
             if (c == null) {
-                c = new HashSet();
+                c = new TreeSet();
                 set(name, c);
             }
             c.add(value);
@@ -47,7 +47,7 @@ public class AttributeValues {
 
         Collection c = (Collection)this.values.get(name);
         if (c == null) {
-            c = new ArrayList();
+            c = new TreeSet();
             this.values.put(name, c);
         }
         c.add(value);
@@ -57,7 +57,7 @@ public class AttributeValues {
         if (values == null) return;
         Collection c = (Collection)this.values.get(name);
         if (c == null) {
-            c = new ArrayList();
+            c = new TreeSet();
             this.values.put(name, c);
         }
         c.addAll(values);

@@ -47,7 +47,7 @@ public class SearchHandler {
 
 		log.debug("Find entry: " + dn);
 
-        Config config = getEngineContext().getConfig(dn);
+        Config config = getHandlerContext().getConfig(dn);
         if (config == null) return null;
 
         // search the entry directly
@@ -272,11 +272,11 @@ public class SearchHandler {
         return handlerContext.getEngine().load(parent, entryDefinition, rdns, calendar);
     }
 
-    public HandlerContext getEngineContext() {
+    public HandlerContext getHandlerContext() {
         return handlerContext;
     }
 
-    public void setEngineContext(HandlerContext handlerContext) {
+    public void setHandlerContext(HandlerContext handlerContext) {
         this.handlerContext = handlerContext;
     }
 
@@ -357,16 +357,18 @@ public class SearchHandler {
         Calendar c = (Calendar) calendar.clone();
         c.add(Calendar.MINUTE, -cacheExpiration);
 
-        String key = entryDefinition.getDn()+","+parent.getDn() + ":" + filter;
+        String key = entryDefinition.getRdn()+","+parent.getDn() + ":" + filter;
+        log.debug("Checking filter cache for ["+key+"]");
+
         Collection rdns = handlerContext.getCache().getFilterCache().get(key);
         if (rdns != null) {
-            log.debug("Filter Cache found: "+rdns);
+            log.debug("Filter cache found: "+rdns);
             return rdns;
         }
 
-        log.debug("Filter Cache not found.");
+        log.debug("Filter cache not found.");
 
-        Source primarySource = getEngineContext().getPrimarySource(entryDefinition);
+        Source primarySource = getHandlerContext().getPrimarySource(entryDefinition);
         String primarySourceName = primarySource.getName();
 
         log.debug("--------------------------------------------------------------------------------------");
@@ -378,7 +380,7 @@ public class SearchHandler {
         for (Iterator j=keys.iterator(); j.hasNext(); ) {
             Row row = (Row)j.next();
 
-            Interpreter interpreter = getEngineContext().newInterpreter();
+            Interpreter interpreter = getHandlerContext().newInterpreter();
             for (Iterator k=row.getNames().iterator(); k.hasNext(); ) {
                 String name = (String)k.next();
                 Object value = row.get(name);

@@ -223,4 +223,7 @@ public class Schema {
         return newRow;
     }
 
+    public String normalize(String dn) throws Exception {
+        return dn.toLowerCase();
+    }
 }

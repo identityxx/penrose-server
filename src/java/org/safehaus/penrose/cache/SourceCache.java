@@ -80,7 +80,7 @@ public class SourceCache {
         return null;
     }
 
-    public Map get(Source source, Collection pks) throws Exception {
+    public Map getByPks(Source source, Collection pks) throws Exception {
 
         Map results = new HashMap();
 
@@ -91,6 +91,40 @@ public class SourceCache {
             if (values == null) continue;
 
             results.put(pk, values);
+        }
+
+        return results;
+    }
+
+    public Map get(
+            Source source,
+            Collection pks)
+            throws Exception {
+
+        Map results = new HashMap();
+        Map map = getMap(source);
+        //log.debug("PKs in cache: "+map.keySet());
+
+        for (Iterator i=pks.iterator(); i.hasNext(); ) {
+            Row spk = (Row)i.next();
+
+            // TODO need to handle multiple attribute names
+            String attributeName = (String)spk.getNames().iterator().next();
+            Object attributeValue = spk.get(attributeName);
+
+            boolean found = false;
+
+            for (Iterator j=map.keySet().iterator(); !found && j.hasNext(); ) {
+                Row pk = (Row)j.next();
+                AttributeValues attributeValues = (AttributeValues)map.get(pk);
+
+                Collection values = attributeValues.get(attributeName);
+                found = values.contains(attributeValue);
+
+                //found = cacheContext.getSchema().partialMatch(pk, spk);
+                if (found) results.put(spk, attributeValues);
+            }
+
         }
 
         return results;
@@ -269,33 +303,6 @@ public class SourceCache {
                 break;
             }
         }
-    }
-
-    public Collection getPks(
-            Source source,
-            Collection pks)
-            throws Exception {
-
-        Map map = getMap(source);
-        //log.debug("PKs in cache: "+map.keySet());
-
-        Collection results = new TreeSet();
-
-        for (Iterator i=map.keySet().iterator(); i.hasNext(); ) {
-            Row pk = (Row)i.next();
-
-            boolean found = false;
-
-            for (Iterator j=pks.iterator(); !found && j.hasNext(); ) {
-                Row spk = (Row)j.next();
-
-                found = cacheContext.getSchema().partialMatch(pk, spk);
-            }
-
-            if (found) results.add(pk);
-        }
-
-        return results;
     }
 
     public Cache getCache() {

@@ -17,6 +17,7 @@ import org.safehaus.penrose.mapping.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.ietf.ldap.LDAPException;
+import org.ietf.ldap.LDAPDN;
 
 import java.util.*;
 
@@ -110,14 +111,17 @@ public class Engine {
             attributeValues.add(values);
         }
 
-        log.debug("Merged " + entries.size() + " entries.");
+        log.debug("Merged into " + entries.size() + " entries.");
 
-        for (Iterator i=entries.values().iterator(); i.hasNext(); ) {
+        int counter = 1;
+        for (Iterator i=entries.values().iterator(); i.hasNext(); counter++) {
             AttributeValues values = (AttributeValues)i.next();
 
             Entry entry = new Entry(entryDefinition, values);
             entry.setParent(parent);
             results.add(entry);
+
+            log.debug("Entry #"+counter+":\n"+entry+"\n");
         }
 
         return results;
@@ -281,30 +285,28 @@ public class Engine {
 
     public Collection rdnToPk(EntryDefinition entryDefinition, Collection rdns) throws Exception {
 
-        Source source = getEngineContext().getPrimarySource(entryDefinition);
+        Collection attributes = entryDefinition.getRdnAttributes();
+
+        // TODO need to handle composite rdn
+        AttributeDefinition attribute = (AttributeDefinition)attributes.iterator().next();
+        String expression = attribute.getExpression();
+
+        // TODO need to handle complex expression
+        int pos = expression.indexOf(".");
+        String sourceName = expression.substring(0, pos);
+        String fieldName = expression.substring(pos+1);
 
         Collection pks = new TreeSet();
 
         for (Iterator i=rdns.iterator(); i.hasNext(); ) {
             Row rdn = (Row)i.next();
 
-            Interpreter interpreter = getEngineContext().newInterpreter();
-            interpreter.set(rdn);
+            // TODO need to handle composite rdn
+            String attributeName = (String)rdn.getNames().iterator().next();
+            Object value = rdn.get(attributeName);
 
-            Collection fields = source.getPrimaryKeyFields();
             Row pk = new Row();
-
-            for (Iterator j=fields.iterator(); j.hasNext(); ) {
-                Field field = (Field)j.next();
-                String name = field.getName();
-                String expression = field.getExpression();
-
-                Object value = interpreter.eval(expression);
-                if (value == null) continue;
-
-                pk.set(name, value);
-            }
-
+            pk.set(fieldName, value);
             pks.add(pk);
         }
 
@@ -317,6 +319,8 @@ public class Engine {
             Collection pks)
             throws Exception {
 
+        log.debug("Loading: "+pks);
+
         Graph graph = getEngineContext().getGraph(entryDefinition);
         Source primarySource = getEngineContext().getPrimarySource(entryDefinition);
 
@@ -326,8 +330,12 @@ public class Engine {
         Collection results = new ArrayList();
 
         Map attributeValues = loaderVisitor.getAttributeValues();
+
+        log.debug("Rows:");
         for (Iterator i=attributeValues.keySet().iterator(); i.hasNext(); ) {
             Row pk = (Row)i.next();
+            log.debug(" - "+pk);
+
             AttributeValues values = (AttributeValues)attributeValues.get(pk);
 
             Collection c = getEngineContext().getTransformEngine().convert(values);

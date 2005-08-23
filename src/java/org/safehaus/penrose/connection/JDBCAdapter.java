@@ -105,7 +105,7 @@ public class JDBCAdapter extends Adapter {
         SearchResults results = new SearchResults();
 
         log.debug("--------------------------------------------------------------------------------------");
-        log.debug("JDBC Source: "+source.getConnectionName());
+        log.debug("JDBC Source: "+source.getConnectionName()+" ["+getParameter(DRIVER)+"]");
 
         String tableName = source.getParameter("tableName");
 

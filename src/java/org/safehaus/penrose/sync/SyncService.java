@@ -257,15 +257,15 @@ public class SyncService {
         //CacheEvent beforeEvent = new CacheEvent(getCacheContext(), sourceConfig, CacheEvent.BEFORE_LOAD_ENTRIES);
         //postCacheEvent(sourceConfig, beforeEvent);
 
-        Collection loadedPks = syncContext.getCache().getSourceCache().getPks(source, pks);
-        log.debug("Loaded pks: "+loadedPks);
+        Map rows = syncContext.getCache().getSourceCache().get(source, pks);
+        log.debug("Loaded pks: "+rows.keySet());
 
         Collection pksToLoad = new HashSet();
         for (Iterator i=pks.iterator(); i.hasNext(); ) {
             Row pk = (Row)i.next();
 
             boolean found = false;
-            for (Iterator j=loadedPks.iterator(); !found && j.hasNext(); ) {
+            for (Iterator j=rows.keySet().iterator(); !found && j.hasNext(); ) {
                 Row lpk = (Row)j.next();
                 if (syncContext.getSchema().match(lpk, pk)) found = true;
             }
@@ -276,9 +276,9 @@ public class SyncService {
 
         Map results = new HashMap();
 
-        for (Iterator i=loadedPks.iterator();  i.hasNext(); ) {
+        for (Iterator i=rows.keySet().iterator();  i.hasNext(); ) {
             Row pk = (Row)i.next();
-            AttributeValues values = syncContext.getCache().getSourceCache().get(source, pk);
+            AttributeValues values = (AttributeValues)rows.get(pk);
             results.put(pk, values);
         }
 

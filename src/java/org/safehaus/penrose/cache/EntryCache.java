@@ -7,6 +7,7 @@ package org.safehaus.penrose.cache;
 import org.safehaus.penrose.mapping.Entry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.ietf.ldap.LDAPDN;
 
 import java.util.*;
 
@@ -39,10 +40,12 @@ public class EntryCache {
 
     public Entry get(String dn) throws Exception {
 
-        log.debug("Getting entry cache ("+entries.size()+"): "+dn);
+        String ndn = cacheContext.getSchema().normalize(dn);
 
-        Entry entry = (Entry)entries.remove(dn);
-        entries.put(dn, entry);
+        log.debug("Getting entry cache ("+entries.size()+"): "+ndn);
+
+        Entry entry = (Entry)entries.remove(ndn);
+        entries.put(ndn, entry);
 
         return entry;
     }
@@ -50,6 +53,7 @@ public class EntryCache {
     public void put(Entry entry) throws Exception {
 
         String dn = entry.getDn();
+        String ndn = cacheContext.getSchema().normalize(dn);
 
         while (entries.size() >= size) {
             log.debug("Trimming entry cache ("+entries.size()+").");
@@ -57,20 +61,21 @@ public class EntryCache {
             entries.remove(key);
         }
 
-        log.debug("Storing entry cache ("+entries.size()+"): "+dn);
-        entries.put(dn, entry);
+        log.debug("Storing entry cache ("+entries.size()+"): "+ndn);
+        entries.put(ndn, entry);
     }
 
     public void remove(Entry entry) throws Exception {
 
         String dn = entry.getDn();
+        String ndn = cacheContext.getSchema().normalize(dn);
 
-        log.debug("Removing entry cache ("+entries.size()+"): "+dn);
-        entries.remove(dn);
+        log.debug("Removing entry cache ("+entries.size()+"): "+ndn);
+        entries.remove(ndn);
     }
 
     public void invalidate(String dn) throws Exception {
-
+        String ndn = cacheContext.getSchema().normalize(dn);
     }
     
     public Cache getCache() {

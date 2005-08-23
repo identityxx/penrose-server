@@ -40,7 +40,7 @@ public class ModifyHandler {
 
 		String ndn = LDAPDN.normalize(dn);
 
-        Config config = getEngineContext().getConfig(ndn);
+        Config config = getHandlerContext().getConfig(ndn);
         if (config == null) return LDAPException.NO_SUCH_OBJECT;
 
 		EntryDefinition entry = config.getEntryDefinition(ndn);
@@ -197,7 +197,7 @@ public class ModifyHandler {
         int rc = handlerContext.getEngine().modify(entry, newValues);
 
         if (rc == LDAPException.SUCCESS) {
-            getEngineContext().getCache().getFilterCache().invalidate();
+            getHandlerContext().getCache().getFilterCache().invalidate();
         }
 
         return rc;
@@ -288,19 +288,19 @@ public class ModifyHandler {
 		if (attrValue.equals(value)) attributes.remove(name);
 	}
 
-    public Handler getEngine() {
+    public Handler getHandler() {
         return handler;
     }
 
-    public void setEngine(Handler handler) {
+    public void setHandler(Handler handler) {
         this.handler = handler;
     }
 
-    public HandlerContext getEngineContext() {
+    public HandlerContext getHandlerContext() {
         return handlerContext;
     }
 
-    public void setEngineContext(HandlerContext handlerContext) {
+    public void setHandlerContext(HandlerContext handlerContext) {
         this.handlerContext = handlerContext;
     }
 }
