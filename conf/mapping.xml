@@ -7,18 +7,31 @@
 
 <mapping>
 
-  <entry dn="dc=penrose,dc=safehaus,dc=org">
+  <entry dn="dc=example,dc=com">
     <oc>dcObject</oc>
     <oc>organization</oc>
     <at name="dc" rdn="true">
-      <expression>"penrose"</expression>
+      <expression>"example"</expression>
     </at>
     <at name="o">
-      <expression>"penrose"</expression>
+      <expression>"example"</expression>
     </at>
+    <aci subject="anybody">
+      <target>OBJECT</target>
+      <scope>SUBTREE</scope>
+      <action>grant</action>
+      <permission>rs</permission>
+    </aci>
+    <aci subject="anybody">
+      <target>ATTRIBUTES</target>
+      <attributes>*</attributes>
+      <scope>SUBTREE</scope>
+      <action>grant</action>
+      <permission>rs</permission>
+    </aci>
   </entry>
 
-  <entry dn="cn=manager,dc=penrose,dc=safehaus,dc=org">
+  <entry dn="cn=manager,dc=example,dc=com">
     <oc>person</oc>
     <oc>inetOrgPerson</oc>
     <at name="cn" rdn="true">
@@ -32,14 +45,14 @@
     </at>
   </entry>
 
-  <entry dn="ou=users,dc=penrose,dc=safehaus,dc=org">
+  <entry dn="ou=users,dc=example,dc=com">
     <oc>organizationalUnit</oc>
     <at name="ou" rdn="true">
       <expression>"users"</expression>
     </at>
   </entry>
 
-  <entry dn="ou=groups,dc=penrose,dc=safehaus,dc=org">
+  <entry dn="ou=groups,dc=example,dc=com">
     <oc>organizationalUnit</oc>
     <at name="ou" rdn="true">
       <expression>"groups"</expression>

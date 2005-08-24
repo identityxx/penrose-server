@@ -224,6 +224,7 @@ public class Schema {
     }
 
     public String normalize(String dn) throws Exception {
+        if (dn == null) return null;
         return dn.toLowerCase();
     }
 }

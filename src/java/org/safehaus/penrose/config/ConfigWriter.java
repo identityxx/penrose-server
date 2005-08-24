@@ -22,6 +22,7 @@ import org.safehaus.penrose.schema.AttributeType;
 import org.safehaus.penrose.schema.ObjectClass;
 import org.safehaus.penrose.module.ModuleConfig;
 import org.safehaus.penrose.module.ModuleMapping;
+import org.safehaus.penrose.acl.ACI;
 
 /**
  * @author Endi S. Dewata
@@ -235,6 +236,11 @@ public class ConfigWriter {
 			Relationship relationship = (Relationship)i.next();
 			entryElement.add(toElement(relationship));
 		}
+        // acl
+        for (Iterator i = entry.getACL().iterator(); i.hasNext(); ) {
+            ACI aci = (ACI)i.next();
+            entryElement.add(toElement(aci));
+        }
 		// children
 		for (Iterator i = entry.getChildren().iterator(); i.hasNext(); ) {
 			EntryDefinition child = (EntryDefinition)i.next();
@@ -314,6 +320,35 @@ public class ConfigWriter {
         Element expressionElement = new DefaultElement("expression");
         expressionElement.add(new DefaultText(relationship.getExpression()));
         element.add(expressionElement);
+
+    	return element;
+    }
+
+    public Element toElement(ACI aci) {
+    	Element element = new DefaultElement("aci");
+        element.add(new DefaultAttribute("subject", aci.getSubject()));
+
+        Element targetElement = new DefaultElement("target");
+        targetElement.add(new DefaultText(aci.getTarget()));
+        element.add(targetElement);
+
+        if (aci.getAttributes() != null && !"".equals(aci.getAttributes())) {
+            Element attributesElement = new DefaultElement("attributes");
+            attributesElement.add(new DefaultText(aci.getAttributes()));
+            element.add(attributesElement);
+        }
+
+        Element scopeElement = new DefaultElement("scope");
+        scopeElement.add(new DefaultText(aci.getScope()));
+        element.add(scopeElement);
+
+        Element actionElement = new DefaultElement("action");
+        actionElement.add(new DefaultText(aci.getAction()));
+        element.add(actionElement);
+
+        Element permissionElement = new DefaultElement("permission");
+        permissionElement.add(new DefaultText(aci.getPermission()));
+        element.add(permissionElement);
 
     	return element;
     }

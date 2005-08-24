@@ -9,7 +9,7 @@ import java.util.*;
 
 import org.slf4j.Logger;
 import org.safehaus.penrose.config.Config;
-import org.safehaus.penrose.acl.AclTool;
+import org.safehaus.penrose.acl.ACLEngine;
 
 /**
  * @author Administrator
@@ -64,8 +64,8 @@ public interface PenroseMBean {
 	// Getters and Setters
 	// ------------------------------------------------
 	public void setSuffix(String suffixes[]);
-	public AclTool getAclTool();
-	public void setAclTool(AclTool aclTool);
+	public ACLEngine getACLEngine();
+	public void setACLEngine(ACLEngine aclEngine);
 	public Collection getEngines();
 	public PenroseConnectionPool getConnectionPool();
 	public void setConnectionPool(PenroseConnectionPool connectionPool);

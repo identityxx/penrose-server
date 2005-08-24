@@ -64,6 +64,19 @@
 
             </pattern>
 
+            <pattern value="aci">
+
+                <object-create-rule classname="org.safehaus.penrose.acl.ACI" />
+                <set-properties-rule />
+                <call-method-rule pattern="target" methodname="setTarget" paramcount="0" />
+                <call-method-rule pattern="attributes" methodname="setAttributes" paramcount="0" />
+                <call-method-rule pattern="scope" methodname="setScope" paramcount="0" />
+                <call-method-rule pattern="action" methodname="setAction" paramcount="0" />
+                <call-method-rule pattern="permission" methodname="setPermission" paramcount="0" />
+                <set-next-rule methodname="addACI" />
+
+            </pattern>
+
             <pattern value="include">
                 <object-create-rule classname="org.safehaus.penrose.mapping.MappingRule" />
                 <set-properties-rule />

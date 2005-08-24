@@ -7,18 +7,18 @@
 
 <mapping>
 
-  <entry dn="dc=penrose,dc=safehaus,dc=org">
+  <entry dn="dc=example,dc=com">
     <oc>dcObject</oc>
     <oc>organization</oc>
     <at name="dc" rdn="true">
-      <expression>"penrose"</expression>
+      <expression>"example"</expression>
     </at>
     <at name="o">
-      <expression>"penrose"</expression>
+      <expression>"example"</expression>
     </at>
   </entry>
 
-  <entry dn="cn=manager,dc=penrose,dc=safehaus,dc=org">
+  <entry dn="cn=manager,dc=example,dc=com">
     <oc>person</oc>
     <oc>inetOrgPerson</oc>
     <at name="cn" rdn="true">
@@ -32,14 +32,14 @@
     </at>
   </entry>
 
-  <entry dn="ou=users,dc=penrose,dc=safehaus,dc=org">
+  <entry dn="ou=users,dc=example,dc=com">
     <oc>organizationalUnit</oc>
     <at name="ou" rdn="true">
       <expression>"users"</expression>
     </at>
   </entry>
 
-  <entry dn="uid=...,ou=users,dc=penrose,dc=safehaus,dc=org">
+  <entry dn="uid=...,ou=users,dc=example,dc=com">
     <oc>person</oc>
     <oc>inetOrgPerson</oc>
     <at name="uid" rdn="true">
@@ -80,7 +80,7 @@ return cn.substring(i+1);
     </source>
   </entry>
 
-  <entry dn="cn=...,uid=...,ou=users,dc=penrose,dc=safehaus,dc=org">
+  <entry dn="cn=...,uid=...,ou=users,dc=example,dc=com">
     <oc>groupOfUniqueNames</oc>
     <at name="cn" rdn="true">
       <expression>g.groupname</expression>
@@ -91,11 +91,12 @@ return cn.substring(i+1);
     <at name="uniqueMember" rdn="false">
       <expression>
 if (ug2 == void || ug2 == null) return null;
-return "uid="+ug2.username+",ou=users,dc=penrose,dc=safehaus,dc=org";
+return "uid="+ug2.username+",ou=users,dc=example,dc=com";
       </expression>
     </at>
     <source name="ug">
       <source-name>usergroups</source-name>
+      <connection-name>MySQL</connection-name>
     </source>
     <source name="g">
       <source-name>groups</source-name>
@@ -109,6 +110,7 @@ return "uid="+ug2.username+",ou=users,dc=penrose,dc=safehaus,dc=org";
     </source>
     <source name="ug2">
       <source-name>usergroups</source-name>
+      <connection-name>MySQL</connection-name>
       <field name="groupname">
         <expression>cn</expression>
       </field>
@@ -132,14 +134,14 @@ return uniqueMember.substring(i+1, j);
     </relationship>
   </entry>
 
-  <entry dn="ou=groups,dc=penrose,dc=safehaus,dc=org">
+  <entry dn="ou=groups,dc=example,dc=com">
     <oc>organizationalUnit</oc>
     <at name="ou" rdn="true">
       <expression>"groups"</expression>
     </at>
   </entry>
 
-  <entry dn="cn=...,ou=groups,dc=penrose,dc=safehaus,dc=org">
+  <entry dn="cn=...,ou=groups,dc=example,dc=com">
     <oc>groupOfUniqueNames</oc>
     <at name="cn" rdn="true">
       <expression>g.groupname</expression>
@@ -150,11 +152,12 @@ return uniqueMember.substring(i+1, j);
     <at name="uniqueMember">
       <expression>
 if (ug == void || ug == null) return null;
-return "uid="+ug.username+",ou=users,dc=penrose,dc=safehaus,dc=org";
+return "uid="+ug.username+",ou=users,dc=example,dc=com";
       </expression>
     </at>
     <source name="g">
       <source-name>groups</source-name>
+      <connection-name>MySQL</connection-name>
       <field name="groupname">
         <expression>cn</expression>
       </field>
@@ -182,7 +185,7 @@ return uniqueMember.substring(i+1, j);
     </relationship>
   </entry>
 
-  <entry dn="uid=...,cn=...,ou=groups,dc=penrose,dc=safehaus,dc=org">
+  <entry dn="uid=...,cn=...,ou=groups,dc=example,dc=com">
     <oc>person</oc>
     <oc>inetOrgPerson</oc>
     <at name="uid" rdn="true">

@@ -42,7 +42,7 @@ import org.safehaus.penrose.cache.*;
 import org.safehaus.penrose.connection.*;
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.filter.FilterTool;
-import org.safehaus.penrose.acl.AclTool;
+import org.safehaus.penrose.acl.ACLEngine;
 import org.safehaus.penrose.management.PenroseClient;
 import org.safehaus.penrose.sync.SyncService;
 import org.safehaus.penrose.sync.SyncContext;
@@ -103,7 +103,7 @@ public class Penrose implements
 	private String rootPassword;
 
     private Handler handler;
-	private AclTool aclTool;
+	private ACLEngine aclEngine;
 	private FilterTool filterTool;
 
 	private TransformEngine transformEngine;
@@ -266,7 +266,7 @@ public class Penrose implements
         log.debug(serverConfig.toString());
 
         handler = new Handler(this);
-        aclTool = new AclTool(this);
+        aclEngine = new ACLEngine(this);
         filterTool = new FilterTool(this);
         transformEngine = new TransformEngine(this);
         syncService = new SyncService(this);
@@ -891,12 +891,12 @@ public class Penrose implements
 	// Getters and Setters
 	// ------------------------------------------------
 	
-	public AclTool getAclTool() {
-		return aclTool;
+	public ACLEngine getACLEngine() {
+		return aclEngine;
 	}
 
-    public void setAclTool(AclTool aclTool) {
-		this.aclTool = aclTool;
+    public void setACLEngine(ACLEngine aclEngine) {
+		this.aclEngine = aclEngine;
 	}
 
 	public Collection getEngines() {

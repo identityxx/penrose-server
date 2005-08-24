@@ -24,13 +24,8 @@
             <param-name>password</param-name>
             <param-value>penrose</param-value>
         </parameter>
-        <parameter>
-            <param-name>dialect</param-name>
-            <param-value>org.hibernate.dialect.MySQLDialect</param-value>
-        </parameter>
 
         <source name="users">
-            <connection-name>MySQL</connection-name>
             <field name="username" primaryKey="true" />
             <field name="firstName" />
             <field name="lastName" />
@@ -42,7 +37,6 @@
         </source>
         
         <source name="groups">
-            <connection-name>MySQL</connection-name>
             <field name="groupname" primaryKey="true" />
             <field name="description" />
             <parameter>
@@ -52,7 +46,6 @@
         </source>
 
         <source name="usergroups">
-            <connection-name>MySQL</connection-name>
             <field name="groupname" primaryKey="true" />
             <field name="username" primaryKey="true" />
             <parameter>

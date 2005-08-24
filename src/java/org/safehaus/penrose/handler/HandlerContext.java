@@ -16,6 +16,7 @@ import org.safehaus.penrose.mapping.EntryDefinition;
 import org.safehaus.penrose.graph.Graph;
 import org.safehaus.penrose.engine.TransformEngine;
 import org.safehaus.penrose.engine.Engine;
+import org.safehaus.penrose.acl.ACLEngine;
 
 /**
  * @author Endi S. Dewata
@@ -27,6 +28,7 @@ public interface HandlerContext {
 
     public Cache getCache() throws Exception;
 
+    public ACLEngine getACLEngine() throws Exception;
     public Engine getEngine() throws Exception;
     public Schema getSchema() throws Exception;
     public FilterTool getFilterTool() throws Exception;

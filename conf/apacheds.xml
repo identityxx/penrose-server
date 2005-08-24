@@ -29,7 +29,7 @@
     </property>
     <property name="contextPartitionConfigurations">
       <set>
-        <ref bean="penrosePartitionConfiguration"/>
+        <ref bean="examplePartitionConfiguration"/>
       </set>
     </property>
     <property name="bootstrapSchemas">
@@ -105,9 +105,9 @@
     </property>
   </bean>
 
-  <bean id="penrosePartitionConfiguration" class="org.apache.ldap.server.configuration.MutableContextPartitionConfiguration">
-    <property name="name"><value>penrose</value></property>
-    <property name="suffix"><value>dc=penrose,dc=safehaus,dc=org</value></property>
+  <bean id="examplePartitionConfiguration" class="org.apache.ldap.server.configuration.MutableContextPartitionConfiguration">
+    <property name="name"><value>example</value></property>
+    <property name="suffix"><value>dc=example,dc=com</value></property>
     <property name="contextPartition">
       <bean class="org.safehaus.penrose.apacheds.PenrosePartition">
         <property name="penrose">
@@ -127,7 +127,7 @@
         objectClass: top
         objectClass: domain
         objectClass: extensibleObject
-        dc: penrose
+        dc: example
       </value>
     </property>
   </bean>

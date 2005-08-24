@@ -175,12 +175,12 @@ public class Entry {
         return sb.toString();
     }
 
-    public static LDAPEntry filterAttributes(
+    public static void filterAttributes(
             LDAPEntry ldapEntry,
             Collection attributeNames)
             throws Exception {
 
-        if (attributeNames == null || attributeNames.size() == 0 || attributeNames.contains("*")) return ldapEntry;
+        if (attributeNames == null || attributeNames.size() == 0 || attributeNames.contains("*")) return;
 
         LDAPAttributeSet attributeSet = ldapEntry.getAttributeSet();
         Collection list = new ArrayList();
@@ -193,8 +193,6 @@ public class Entry {
         }
 
         attributeSet.retainAll(list);
-
-        return ldapEntry;
     }
 
     public boolean isDynamic() {
@@ -207,5 +205,9 @@ public class Entry {
 
     public void setParent(Entry parent) {
         this.parent = parent;
+    }
+
+    public Collection getACL() {
+        return entryDefinition.getACL();
     }
 }

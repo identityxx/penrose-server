@@ -6,6 +6,7 @@ package org.safehaus.penrose.mapping;
 
 
 import org.safehaus.penrose.interpreter.Interpreter;
+import org.safehaus.penrose.acl.ACI;
 import org.ietf.ldap.LDAPEntry;
 import org.ietf.ldap.LDAPAttributeSet;
 import org.ietf.ldap.LDAPAttribute;
@@ -58,6 +59,8 @@ public class EntryDefinition implements Cloneable, Serializable {
     private List relationships = new ArrayList();
 
     private String script;
+
+    private Collection acl = new ArrayList();
 
 	public EntryDefinition() {
 	}
@@ -498,5 +501,17 @@ public class EntryDefinition implements Cloneable, Serializable {
 
     public void setChildDefinitions(List childDefinitions) {
         this.childDefinitions = childDefinitions;
+    }
+
+    public void addACI(ACI aci) {
+        acl.add(aci);
+    }
+
+    public Collection getACL() {
+        return acl;
+    }
+
+    public void removeAllACL() {
+        acl.clear();
     }
 }
