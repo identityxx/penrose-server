@@ -7,8 +7,6 @@ package org.safehaus.penrose.apacheds;
 import org.apache.ldap.server.interceptor.BaseInterceptor;
 import org.apache.ldap.server.interceptor.NextInterceptor;
 import org.apache.ldap.server.jndi.ContextFactoryConfiguration;
-import org.apache.ldap.server.jndi.ServerContext;
-import org.apache.ldap.server.jndi.ServerLdapContext;
 import org.apache.ldap.server.configuration.InterceptorConfiguration;
 import org.apache.ldap.common.filter.ExprNode;
 import org.slf4j.Logger;
@@ -16,8 +14,7 @@ import org.slf4j.LoggerFactory;
 import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.PenroseConnection;
 import org.safehaus.penrose.SearchResults;
-import org.safehaus.penrose.acl.ACLEngine;
-import org.safehaus.penrose.cache.Cache;
+import org.safehaus.penrose.util.ExceptionUtil;
 import org.safehaus.penrose.mapping.EntryDefinition;
 import org.safehaus.penrose.config.Config;
 import org.ietf.ldap.*;
@@ -67,9 +64,11 @@ public class PenroseInterceptor extends BaseInterceptor {
             Attributes attributes)
             throws NamingException {
 
+        Name principalDn = getPrincipal() == null ? null : getPrincipal().getJndiName();
+
         String dn = normName.toString();
         log.debug("===============================================================================");
-        log.debug("add(\""+dn+"\")");
+        log.debug("add(\""+dn+"\") as "+principalDn);
 
         try {
             Config config = penrose.getConfig(dn);
@@ -111,14 +110,18 @@ public class PenroseInterceptor extends BaseInterceptor {
             LDAPEntry ldapEntry = new LDAPEntry(upName, attributeSet);
 
             PenroseConnection connection = penrose.openConnection();
+            connection.setBindDn(principalDn.toString());
 
             int rc = connection.add(ldapEntry);
 
             connection.close();
 
             if (rc != LDAPException.SUCCESS) {
-                throw new NamingException("RC: "+rc);
+                ExceptionUtil.throwNamingException(rc);
             }
+
+        } catch (NamingException e) {
+            throw e;
 
         } catch (Exception e) {
             log.error(e.getMessage(), e);
@@ -130,6 +133,8 @@ public class PenroseInterceptor extends BaseInterceptor {
             NextInterceptor next,
             Name name)
             throws NamingException {
+
+        Name principalDn = getPrincipal() == null ? null : getPrincipal().getJndiName();
 
         String dn = name.toString();
         log.debug("===============================================================================");
@@ -151,14 +156,18 @@ public class PenroseInterceptor extends BaseInterceptor {
             }
 
             PenroseConnection connection = penrose.openConnection();
+            connection.setBindDn(principalDn.toString());
 
             int rc = connection.delete(dn.toString());
 
             connection.close();
 
             if (rc != LDAPException.SUCCESS) {
-                throw new NamingException("RC: "+rc);
+                ExceptionUtil.throwNamingException(rc);
             }
+
+        } catch (NamingException e) {
+            throw e;
 
         } catch (Exception e) {
             log.error(e.getMessage(), e);
@@ -206,6 +215,8 @@ public class PenroseInterceptor extends BaseInterceptor {
             Name name)
             throws NamingException {
 
+        Name principalDn = getPrincipal() == null ? null : getPrincipal().getJndiName();
+
         String dn = name.toString();
         log.debug("===============================================================================");
         log.debug("list(\""+dn+"\")");
@@ -224,6 +235,7 @@ public class PenroseInterceptor extends BaseInterceptor {
             }
 
             PenroseConnection connection = penrose.openConnection();
+            connection.setBindDn(principalDn.toString());
 
             String baseDn = dn.toString();
             SearchResults results = connection.search(
@@ -237,7 +249,7 @@ public class PenroseInterceptor extends BaseInterceptor {
             connection.close();
 
             if (rc != LDAPException.SUCCESS) {
-                throw new NamingException("RC: "+rc);
+                ExceptionUtil.throwNamingException(rc);
             }
 
             List list = new ArrayList();
@@ -271,6 +283,9 @@ public class PenroseInterceptor extends BaseInterceptor {
             }
 
             return new PenroseEnumeration(list);
+
+        } catch (NamingException e) {
+            throw e;
 
         } catch (Exception e) {
             log.error(e.getMessage(), e);
@@ -366,6 +381,8 @@ public class PenroseInterceptor extends BaseInterceptor {
             Name name)
             throws NamingException {
 
+        Name principalDn = getPrincipal() == null ? null : getPrincipal().getJndiName();
+
         String dn = name.toString();
         log.debug("===============================================================================");
         log.debug("lookup(\""+dn+"\")");
@@ -384,6 +401,7 @@ public class PenroseInterceptor extends BaseInterceptor {
             }
 
             PenroseConnection connection = penrose.openConnection();
+            connection.setBindDn(principalDn.toString());
 
             String baseDn = dn.toString();
             SearchResults results = connection.search(
@@ -396,11 +414,8 @@ public class PenroseInterceptor extends BaseInterceptor {
             int rc = results.getReturnCode();
             connection.close();
 
-            if (rc != LDAPException.SUCCESS) return null;
-            //throwNamingException(rc, baseDn);
-
-            if (!results.hasNext()) {
-                throw new NameNotFoundException("No such object.");
+            if (rc != LDAPException.SUCCESS) {
+                ExceptionUtil.throwNamingException(rc);
             }
 
             LDAPEntry result = (LDAPEntry)results.next();
@@ -421,6 +436,9 @@ public class PenroseInterceptor extends BaseInterceptor {
             }
 
             return attributes;
+
+        } catch (NamingException e) {
+            throw e;
 
         } catch (Exception e) {
             log.error(e.getMessage(), e);
@@ -505,8 +523,9 @@ public class PenroseInterceptor extends BaseInterceptor {
             int rc = results.getReturnCode();
             connection.close();
 
-            if (rc != LDAPException.SUCCESS) return null;
-            //throwNamingException(rc, baseDn);
+            if (rc != LDAPException.SUCCESS) {
+                ExceptionUtil.throwNamingException(rc);
+            }
 
             List list = new ArrayList();
 
@@ -540,6 +559,9 @@ public class PenroseInterceptor extends BaseInterceptor {
 
             return new PenroseEnumeration(list);
 
+        } catch (NamingException e) {
+            throw e;
+
         } catch (Exception e) {
             log.error(e.getMessage(), e);
             throw new NamingException(e.getMessage());
@@ -552,6 +574,8 @@ public class PenroseInterceptor extends BaseInterceptor {
             int modOp,
             Attributes attributes)
             throws NamingException {
+
+        Name principalDn = getPrincipal() == null ? null : getPrincipal().getJndiName();
 
         String dn = name.toString();
         log.debug("===============================================================================");
@@ -594,14 +618,18 @@ public class PenroseInterceptor extends BaseInterceptor {
             }
 
             PenroseConnection connection = penrose.openConnection();
+            connection.setBindDn(principalDn.toString());
 
             int rc = connection.modify(dn.toString(), modifications);
 
             connection.close();
 
             if (rc != LDAPException.SUCCESS) {
-                throw new NamingException("RC: "+rc);
+                ExceptionUtil.throwNamingException(rc);
             }
+
+        } catch (NamingException e) {
+            throw e;
 
         } catch (Exception e) {
             log.error(e.getMessage(), e);
@@ -615,6 +643,8 @@ public class PenroseInterceptor extends BaseInterceptor {
             Name name,
             ModificationItem[] modificationItems)
             throws NamingException {
+
+        Name principalDn = getPrincipal() == null ? null : getPrincipal().getJndiName();
 
         String dn = name.toString();
         log.debug("===============================================================================");
@@ -672,14 +702,18 @@ public class PenroseInterceptor extends BaseInterceptor {
             }
 
             PenroseConnection connection = penrose.openConnection();
+            connection.setBindDn(principalDn.toString());
 
             int rc = connection.modify(dn.toString(), modifications);
 
             connection.close();
 
             if (rc != LDAPException.SUCCESS) {
-                throw new NamingException("RC: "+rc);
+                ExceptionUtil.throwNamingException(rc);
             }
+
+        } catch (NamingException e) {
+            throw e;
 
         } catch (Exception e) {
             log.error(e.getMessage(), e);

@@ -30,30 +30,30 @@ public class ACLEngine {
         this.penrose = penrose;
     }
 
-    public void add(ACI aci, Set grants, Set denies) {
-        if (aci.getAction().equals("grant")) {
-            add(grants, aci.getPermission());
-
-        } else if (aci.getAction().equals("deny")) {
-            add(denies, aci.getPermission());
-        }
-    }
-
-    public void add(Set set, String permission) {
+    public void addPermission(Set set, String permission) {
         for (int i=0; i<permission.length(); i++) {
             set.add(permission.substring(i, i+1));
         }
     }
 
+    public void addPermission(ACI aci, Set grants, Set denies) {
+        if (aci.getAction().equals("grant")) {
+            addPermission(grants, aci.getPermission());
+
+        } else if (aci.getAction().equals("deny")) {
+            addPermission(denies, aci.getPermission());
+        }
+    }
+
     public void getObjectPermission(
             String bindDn,
-            String dn,
+            String targetDn,
             EntryDefinition entry,
             String scope,
             Set grants,
             Set denies) throws Exception {
 
-        log.debug(" * "+dn+":");
+        log.debug(" * "+entry.getDn()+":");
 
         for (Iterator i=entry.getACL().iterator(); i.hasNext(); ) {
             ACI aci = (ACI)i.next();
@@ -65,41 +65,32 @@ public class ACLEngine {
             String subject = penrose.getSchema().normalize(aci.getSubject());
 
             if (subject.equals(bindDn)) {
-                add(aci, grants, denies);
+                addPermission(aci, grants, denies);
 
-            } else if (subject.equals("self") && dn.equals(bindDn)) {
-                add(aci, grants, denies);
+            } else if (subject.equals("self") && targetDn.equals(bindDn)) {
+                addPermission(aci, grants, denies);
 
             } else if (subject.equals("authenticated") && bindDn != null && !bindDn.equals("")) {
-                add(aci, grants, denies);
+                addPermission(aci, grants, denies);
 
             } else if (subject.equals("anybody")) {
-                add(aci, grants, denies);
+                addPermission(aci, grants, denies);
 
             }
         }
 
-        int i = dn.indexOf(",");
-        if (i < 0) return;
-
-        dn = dn.substring(i+1);
-
         entry = entry.getParent();
         if (entry == null) return;
 
-        getObjectPermission(bindDn, dn, entry, "SUBTREE", grants, denies);
+        getObjectPermission(bindDn, targetDn, entry, "SUBTREE", grants, denies);
     }
 
-    public Set getObjectPermission(String bindDn, Entry entry, String target) throws Exception {
-
-        log.debug("Evaluating object permission for "+bindDn);
+    public Set getObjectPermission(String bindDn, String targetDn, Entry entry, String target) throws Exception {
 
         Set grants = new HashSet();
         Set denies = new HashSet();
 
-        String dn = penrose.getSchema().normalize(entry.getDn());
-
-        getObjectPermission(bindDn, dn, entry.getEntryDefinition(), null, grants, denies);
+        getObjectPermission(bindDn, targetDn, entry.getEntryDefinition(), null, grants, denies);
 
         grants.removeAll(denies);
         denies.removeAll(grants);
@@ -109,19 +100,47 @@ public class ACLEngine {
         return grants;
     }
 
-    public int checkSearch(PenroseConnection connection, Entry entry) throws Exception {
+    public int checkPermission(PenroseConnection connection, Entry entry, String permission) throws Exception {
     	
-    	if (connection == null) return LDAPException.SUCCESS;
+        log.debug("Evaluating object permission for "+connection.getBindDn());
 
-        String rootDn = penrose.getSchema().normalize(penrose.getRootDn());
-        String bindDn = penrose.getSchema().normalize(connection.getBindDn());
-    	if (rootDn.equals(bindDn)) return LDAPException.SUCCESS;
+        int rc = LDAPException.SUCCESS;
+        try {
+            if (connection == null) {
+                return rc;
+            }
 
-        Set permission = getObjectPermission(bindDn, entry, "OBJECT");
+            String rootDn = penrose.getSchema().normalize(penrose.getRootDn());
+            String bindDn = penrose.getSchema().normalize(connection.getBindDn());
+            if (rootDn.equals(bindDn)) {
+                return rc;
+            }
 
-        if (permission.contains("s")) return LDAPException.SUCCESS;
+            String targetDn = penrose.getSchema().normalize(entry.getDn());
+            Set set = getObjectPermission(bindDn, targetDn, entry, "OBJECT");
 
-        return LDAPException.INSUFFICIENT_ACCESS_RIGHTS;
+            if (set.contains(permission)) {
+                return rc;
+            }
+
+            rc = LDAPException.INSUFFICIENT_ACCESS_RIGHTS;
+            return rc;
+
+        } finally {
+            return rc;
+        }
+    }
+
+    public int checkSearch(PenroseConnection connection, Entry entry) throws Exception {
+    	return checkPermission(connection, entry, "s");
+    }
+
+    public int checkAdd(PenroseConnection connection, Entry entry) throws Exception {
+    	return checkPermission(connection, entry, "a");
+    }
+
+    public int checkDelete(PenroseConnection connection, Entry entry) throws Exception {
+    	return checkPermission(connection, entry, "d");
     }
 
     public void addAttributes(Set set, String attributes) {
@@ -145,13 +164,13 @@ public class ACLEngine {
 
     public void getReadableAttributes(
             String bindDn,
-            String dn,
+            String targetDn,
             EntryDefinition entry,
             String scope,
             Set grants,
             Set denies) throws Exception {
 
-        log.debug(" * "+dn+":");
+        log.debug(" * "+entry.getDn()+":");
 
         for (Iterator i=entry.getACL().iterator(); i.hasNext(); ) {
             ACI aci = (ACI)i.next();
@@ -166,7 +185,7 @@ public class ACLEngine {
             if (subject.equals(bindDn)) {
                 addAttributes(aci, grants, denies);
 
-            } else if (subject.equals("self") && dn.equals(bindDn)) {
+            } else if (subject.equals("self") && targetDn.equals(bindDn)) {
                 addAttributes(aci, grants, denies);
 
             } else if (subject.equals("authenticated") && bindDn != null && !bindDn.equals("")) {
@@ -178,15 +197,10 @@ public class ACLEngine {
             }
         }
 
-        int i = dn.indexOf(",");
-        if (i < 0) return;
-
-        dn = dn.substring(i+1);
-
         entry = entry.getParent();
         if (entry == null) return;
 
-        getReadableAttributes(bindDn, dn, entry, "SUBTREE", grants, denies);
+        getReadableAttributes(bindDn, targetDn, entry, "SUBTREE", grants, denies);
     }
 
     public void getReadableAttributes(
@@ -202,9 +216,9 @@ public class ACLEngine {
             return;
         }
 
-        String dn = penrose.getSchema().normalize(entry.getDn());
+        String targetDn = penrose.getSchema().normalize(entry.getDn());
 
-        getReadableAttributes(bindDn, dn, entry.getEntryDefinition(), null, grants, denies);
+        getReadableAttributes(bindDn, targetDn, entry.getEntryDefinition(), null, grants, denies);
 
         grants.removeAll(denies);
         denies.removeAll(grants);

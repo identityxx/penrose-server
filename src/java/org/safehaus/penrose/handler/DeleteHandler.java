@@ -33,32 +33,25 @@ public class DeleteHandler {
 
     public int delete(PenroseConnection connection, String dn) throws Exception {
 
-        String ndn = LDAPDN.normalize(dn);
+        dn = LDAPDN.normalize(dn);
 
-        Config config = getHandlerContext().getConfig(ndn);
-        if (config == null) return LDAPException.NO_SUCH_OBJECT;
+        // find existing entry
+        Entry entry = null;
+        try {
+            entry = getHandler().getSearchHandler().find(connection, dn);
+            if (entry == null) return LDAPException.NO_SUCH_OBJECT;
+        } catch (Exception e) {
+            // ignore
+        }
 
-        int rc;
+        int rc = handlerContext.getACLEngine().checkDelete(connection, entry);
+        if (rc != LDAPException.SUCCESS) return rc;
 
-        EntryDefinition entryDefinition = config.getEntryDefinition(ndn);
-        if (entryDefinition != null) {
+        log.debug("Deleting entry "+dn);
 
-        	// Static Entry
-        	rc = deleteStaticEntry(entryDefinition);
+        EntryDefinition entryDefinition = entry.getEntryDefinition();
+        if (entryDefinition.isDynamic()) {
 
-        } else {
-
-        	// Virtual Entry
-	        Entry entry = null;
-	        try {
-                entry = handler.getSearchHandler().find(connection, ndn);
-	        } catch (Exception e) {
-	            // ignore
-	        }
-
-	        if (entry == null) return LDAPException.NO_SUCH_OBJECT;
-
-            entryDefinition = entry.getEntryDefinition();
             AttributeValues values = entry.getAttributeValues();
 
 	        rc = handlerContext.getEngine().delete(entryDefinition, values);
@@ -67,12 +60,17 @@ public class DeleteHandler {
                 getHandlerContext().getCache().getFilterCache().invalidate();
             }
 
+        } else {
+
+            // Static Entry
+            rc = deleteStaticEntry(entryDefinition);
+
         }
+
         return rc;
     }
 
     public int deleteStaticEntry(EntryDefinition entry) throws Exception {
-        log.debug("Deleting static entry "+entry.getDn());
 
         // can't delete no leaf
         if (!entry.getChildren().isEmpty()) return LDAPException.NOT_ALLOWED_ON_NONLEAF;

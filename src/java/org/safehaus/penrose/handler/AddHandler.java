@@ -57,6 +57,22 @@ public class AddHandler {
             // ignore
         }
 
+        // find parent entry
+        int i = dn.indexOf(",");
+        String rdn = dn.substring(0, i);
+        String parentDn = dn.substring(i+1);
+
+        Entry parent = getHandler().getSearchHandler().find(connection, parentDn);
+        if (parent == null) return LDAPException.NO_SUCH_OBJECT;
+
+        int rc = handlerContext.getACLEngine().checkAdd(connection, parent);
+        if (rc != LDAPException.SUCCESS) return rc;
+
+        log.debug("Adding entry under "+parent.getDn());
+
+        EntryDefinition parentDefinition = parent.getEntryDefinition();
+        Collection children = parentDefinition.getChildren();
+
         AttributeValues values = new AttributeValues();
 
         for (Iterator iterator=entry.getAttributeSet().iterator(); iterator.hasNext(); ) {
@@ -72,26 +88,12 @@ public class AddHandler {
             set.addAll(Arrays.asList(v));
         }
 
-        // find parent entry
-        int i = dn.indexOf(",");
-        String rdn = dn.substring(0, i);
-        String parentDn = dn.substring(i+1);
-
-        Entry parent = getHandler().getSearchHandler().find(connection, parentDn);
-        if (parent == null) return LDAPException.NO_SUCH_OBJECT;
-
-        EntryDefinition parentDefinition = parent.getEntryDefinition();
-
-        log.debug("Adding entry under "+parent.getDn());
-
-        Collection children = parentDefinition.getChildren();
-
         // add into the first matching child
         for (Iterator iterator = children.iterator(); iterator.hasNext(); ) {
             EntryDefinition childDefinition = (EntryDefinition)iterator.next();
             if (!childDefinition.isDynamic()) continue;
 
-            int rc = handlerContext.getEngine().add(childDefinition, values);
+            rc = handlerContext.getEngine().add(childDefinition, values);
 
             if (rc == LDAPException.SUCCESS) {
                 getHandlerContext().getCache().getFilterCache().invalidate();
