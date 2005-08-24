@@ -39,10 +39,11 @@ public class DeleteHandler {
         Entry entry = null;
         try {
             entry = getHandler().getSearchHandler().find(connection, dn);
-            if (entry == null) return LDAPException.NO_SUCH_OBJECT;
         } catch (Exception e) {
             // ignore
         }
+
+        if (entry == null) return LDAPException.NO_SUCH_OBJECT;
 
         int rc = handlerContext.getACLEngine().checkDelete(connection, entry);
         if (rc != LDAPException.SUCCESS) return rc;

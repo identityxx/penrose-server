@@ -38,24 +38,26 @@ public class AddHandler {
      * The interface function called to add an LDAP entry
      *
      * @param connection the connection
-     * @param entry the entry to be added
+     * @param ldapEntry the entry to be added
      * @return return code (see LDAPException)
      * @throws Exception
      */
     public int add(
             PenroseConnection connection,
-            LDAPEntry entry)
+            LDAPEntry ldapEntry)
     throws Exception {
 
-        String dn = LDAPDN.normalize(entry.getDN());
+        String dn = LDAPDN.normalize(ldapEntry.getDN());
 
         // find existing entry
+        Entry entry = null;
         try {
-            Entry en = getHandler().getSearchHandler().find(connection, dn);
-            if (en != null) return LDAPException.ENTRY_ALREADY_EXISTS;
+            entry = getHandler().getSearchHandler().find(connection, dn);
         } catch (Exception e) {
             // ignore
         }
+
+        if (entry != null) return LDAPException.ENTRY_ALREADY_EXISTS;
 
         // find parent entry
         int i = dn.indexOf(",");
@@ -75,7 +77,7 @@ public class AddHandler {
 
         AttributeValues values = new AttributeValues();
 
-        for (Iterator iterator=entry.getAttributeSet().iterator(); iterator.hasNext(); ) {
+        for (Iterator iterator=ldapEntry.getAttributeSet().iterator(); iterator.hasNext(); ) {
             LDAPAttribute attribute = (LDAPAttribute)iterator.next();
             String attributeName = attribute.getName();
 

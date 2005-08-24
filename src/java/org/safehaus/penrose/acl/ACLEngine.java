@@ -143,6 +143,10 @@ public class ACLEngine {
     	return checkPermission(connection, entry, "d");
     }
 
+    public int checkModify(PenroseConnection connection, Entry entry) throws Exception {
+    	return checkPermission(connection, entry, "w");
+    }
+
     public void addAttributes(Set set, String attributes) {
         log.debug("Adding attributes: "+attributes);
         StringTokenizer st = new StringTokenizer(attributes, ",");

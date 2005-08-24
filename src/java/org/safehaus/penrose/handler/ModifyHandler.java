@@ -40,24 +40,25 @@ public class ModifyHandler {
 
 		String ndn = LDAPDN.normalize(dn);
 
-        Config config = getHandlerContext().getConfig(ndn);
-        if (config == null) return LDAPException.NO_SUCH_OBJECT;
+        Entry entry = null;
+        try {
+            entry = handler.getSearchHandler().find(connection, ndn);
+        } catch (LDAPException e) {
+            // ignore
+        }
 
-		EntryDefinition entry = config.getEntryDefinition(ndn);
-		if (entry != null) {
-			return modifyStaticEntry(entry, modifications);
-		}
+        if (entry == null) return LDAPException.NO_SUCH_OBJECT;
 
-		Entry sr;
-		try {
-			sr = handler.getSearchHandler().find(connection, ndn);
-		} catch (LDAPException e) {
-			return e.getResultCode();
-		}
+        int rc = handlerContext.getACLEngine().checkModify(connection, entry);
+        if (rc != LDAPException.SUCCESS) return rc;
 
-		if (sr == null) return LDAPException.NO_SUCH_OBJECT;
+        EntryDefinition entryDefinition = entry.getEntryDefinition();
+        if (entryDefinition.isDynamic()) {
+            return modifyVirtualEntry(connection, entry, modifications);
 
-		return modifyVirtualEntry(connection, sr, modifications);
+        } else {
+            return modifyStaticEntry(entryDefinition, modifications);
+        }
 	}
 
     /**
