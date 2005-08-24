@@ -45,13 +45,12 @@ public class ACLEngine {
         }
     }
 
-    public void getObjectPermission(
+    public boolean getObjectPermission(
             String bindDn,
             String targetDn,
             EntryDefinition entry,
             String scope,
-            Set grants,
-            Set denies) throws Exception {
+            String permission) throws Exception {
 
         log.debug(" * "+entry.getDn()+":");
 
@@ -60,52 +59,43 @@ public class ACLEngine {
 
             if (!aci.getTarget().equals(ACI.TARGET_OBJECT)) continue;
             if (scope != null && !scope.equals(aci.getScope())) continue;
+            if (aci.getPermission().indexOf(permission) < 0) continue;
 
             log.debug("   - "+aci);
             String subject = penrose.getSchema().normalize(aci.getSubject());
 
-            if (subject.equals(bindDn)) {
-                addPermission(aci, grants, denies);
+            if (subject.equals(ACI.SUBJECT_USER) && aci.getDn().equals(bindDn)) {
+                return aci.getAction().equals(ACI.ACTION_GRANT);
 
             } else if (subject.equals(ACI.SUBJECT_SELF) && targetDn.equals(bindDn)) {
-                addPermission(aci, grants, denies);
+                return aci.getAction().equals(ACI.ACTION_GRANT);
 
             } else if (subject.equals(ACI.SUBJECT_ANONYMOUS) && (bindDn == null || bindDn.equals(""))) {
-                addPermission(aci, grants, denies);
+                return aci.getAction().equals(ACI.ACTION_GRANT);
 
             } else if (subject.equals(ACI.SUBJECT_AUTHENTICATED) && bindDn != null && !bindDn.equals("")) {
-                addPermission(aci, grants, denies);
+                return aci.getAction().equals(ACI.ACTION_GRANT);
 
             } else if (subject.equals(ACI.SUBJECT_ANYBODY)) {
-                addPermission(aci, grants, denies);
+                return aci.getAction().equals(ACI.ACTION_GRANT);
 
             }
         }
 
         entry = entry.getParent();
-        if (entry == null) return;
+        if (entry == null) return false;
 
-        getObjectPermission(bindDn, targetDn, entry, ACI.SCOPE_SUBTREE, grants, denies);
+        return getObjectPermission(bindDn, targetDn, entry, ACI.SCOPE_SUBTREE, permission);
     }
 
-    public Set getObjectPermission(String bindDn, String targetDn, Entry entry, String target) throws Exception {
+    public boolean getObjectPermission(String bindDn, String targetDn, Entry entry, String target, String permission) throws Exception {
 
-        Set grants = new HashSet();
-        Set denies = new HashSet();
-
-        getObjectPermission(bindDn, targetDn, entry.getEntryDefinition(), null, grants, denies);
-
-        grants.removeAll(denies);
-        denies.removeAll(grants);
-
-        log.debug("Object permission: "+grants);
-
-        return grants;
+        return getObjectPermission(bindDn, targetDn, entry.getEntryDefinition(), null, permission);
     }
 
     public int checkPermission(PenroseConnection connection, Entry entry, String permission) throws Exception {
     	
-        log.debug("Evaluating object permission for "+connection.getBindDn());
+        log.debug("Evaluating object \""+permission+"\" permission for "+entry.getDn());
 
         int rc = LDAPException.SUCCESS;
         try {
@@ -120,9 +110,10 @@ public class ACLEngine {
             }
 
             String targetDn = penrose.getSchema().normalize(entry.getDn());
-            Set set = getObjectPermission(bindDn, targetDn, entry, ACI.SCOPE_OBJECT);
+            boolean result = getObjectPermission(bindDn, targetDn, entry, ACI.SCOPE_OBJECT, permission);
+            log.debug("Result: "+result);
 
-            if (set.contains(permission)) {
+            if (result) {
                 return rc;
             }
 
