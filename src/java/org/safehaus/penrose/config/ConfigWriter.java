@@ -326,11 +326,22 @@ public class ConfigWriter {
 
     public Element toElement(ACI aci) {
     	Element element = new DefaultElement("aci");
-        element.add(new DefaultAttribute("subject", aci.getSubject()));
 
-        Element targetElement = new DefaultElement("target");
-        targetElement.add(new DefaultText(aci.getTarget()));
-        element.add(targetElement);
+        if (!ACI.SUBJECT_ANYBODY.equals(aci.getSubject())) {
+            element.add(new DefaultAttribute("subject", aci.getSubject()));
+        }
+
+        if (aci.getDn() != null && !"".equals(aci.getDn())) {
+            Element dnElement = new DefaultElement("dn");
+            dnElement.add(new DefaultText(aci.getDn()));
+            element.add(dnElement);
+        }
+
+        if (!ACI.TARGET_OBJECT.equals(aci.getTarget())) {
+            Element targetElement = new DefaultElement("target");
+            targetElement.add(new DefaultText(aci.getTarget()));
+            element.add(targetElement);
+        }
 
         if (aci.getAttributes() != null && !"".equals(aci.getAttributes())) {
             Element attributesElement = new DefaultElement("attributes");
@@ -338,13 +349,17 @@ public class ConfigWriter {
             element.add(attributesElement);
         }
 
-        Element scopeElement = new DefaultElement("scope");
-        scopeElement.add(new DefaultText(aci.getScope()));
-        element.add(scopeElement);
+        if (!ACI.SCOPE_SUBTREE.equals(aci.getScope())) {
+            Element scopeElement = new DefaultElement("scope");
+            scopeElement.add(new DefaultText(aci.getScope()));
+            element.add(scopeElement);
+        }
 
-        Element actionElement = new DefaultElement("action");
-        actionElement.add(new DefaultText(aci.getAction()));
-        element.add(actionElement);
+        if (!ACI.ACTION_GRANT.equals(aci.getAction())) {
+            Element actionElement = new DefaultElement("action");
+            actionElement.add(new DefaultText(aci.getAction()));
+            element.add(actionElement);
+        }
 
         Element permissionElement = new DefaultElement("permission");
         permissionElement.add(new DefaultText(aci.getPermission()));

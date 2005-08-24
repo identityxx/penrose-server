@@ -229,10 +229,13 @@ public class SearchHandler {
 
 		if (scope == LDAPConnection.SCOPE_BASE || scope == LDAPConnection.SCOPE_SUB) { // base or subtree
 			if (handlerContext.getFilterTool().isValidEntry(baseEntry, f)) {
-                LDAPEntry ldapEntry = baseEntry.toLDAPEntry();
-                Entry.filterAttributes(ldapEntry, normalizedAttributeNames);
-                handlerContext.getACLEngine().filterAttributes(connection, baseEntry, ldapEntry);
-                results.add(ldapEntry);
+
+                rc = handlerContext.getACLEngine().checkRead(connection, baseEntry);
+                if (rc == LDAPException.SUCCESS) {
+                    LDAPEntry ldapEntry = baseEntry.toLDAPEntry();
+                    Entry.filterAttributes(ldapEntry, normalizedAttributeNames);
+                    results.add(ldapEntry);
+                }
 			}
 		}
 
@@ -318,10 +321,13 @@ public class SearchHandler {
             if (rc != LDAPException.SUCCESS) continue;
 
 			if (handlerContext.getFilterTool().isValidEntry(child, filter)) {
-                LDAPEntry en = child.toLDAPEntry();
-                Entry.filterAttributes(en, attributeNames);
-                handlerContext.getACLEngine().filterAttributes(connection, child, en);
-				results.add(en);
+
+                rc = handlerContext.getACLEngine().checkRead(connection, child);
+                if (rc == LDAPException.SUCCESS) {
+                    LDAPEntry en = child.toLDAPEntry();
+                    Entry.filterAttributes(en, attributeNames);
+                    results.add(en);
+                }
 			}
 
 			if (scope == LDAPConnection.SCOPE_SUB) {
@@ -344,10 +350,13 @@ public class SearchHandler {
                 if (rc != LDAPException.SUCCESS) continue;
 
                 if (handlerContext.getFilterTool().isValidEntry(child, filter)) {
-                    LDAPEntry en = child.toLDAPEntry();
-                    Entry.filterAttributes(en, attributeNames);
-                    handlerContext.getACLEngine().filterAttributes(connection, child, en);
-                    results.add(en);
+
+                    rc = handlerContext.getACLEngine().checkRead(connection, child);
+                    if (rc == LDAPException.SUCCESS) {
+                        LDAPEntry en = child.toLDAPEntry();
+                        Entry.filterAttributes(en, attributeNames);
+                        results.add(en);
+                    }
                 }
 
                 if (scope == LDAPConnection.SCOPE_SUB) {

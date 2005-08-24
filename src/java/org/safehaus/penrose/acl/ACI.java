@@ -9,11 +9,35 @@ package org.safehaus.penrose.acl;
  */
 public class ACI {
 
-    private String subject;
-    private String target;
+    public final static String SUBJECT_USER          = "user";
+    public final static String SUBJECT_GROUP         = "group";
+    public final static String SUBJECT_SELF          = "self";
+    public final static String SUBJECT_ANYBODY       = "anybody";
+    public final static String SUBJECT_ANONYMOUS     = "anonymous";
+    public final static String SUBJECT_AUTHENTICATED = "authenticated";
+
+    public final static String TARGET_OBJECT         = "OBJECT";
+    public final static String TARGET_ATTRIBUTES     = "ATTRIBUTES";
+
+    public final static String SCOPE_OBJECT          = "OBJECT";
+    public final static String SCOPE_SUBTREE         = "SUBTREE";
+
+    public final static String ACTION_GRANT          = "grant";
+    public final static String ACTION_DENY           = "deny";
+
+    public final static String PERMISSION_READ       = "r";
+    public final static String PERMISSION_WRITE      = "w";
+    public final static String PERMISSION_SEARCH     = "s";
+    public final static String PERMISSION_ADD        = "a";
+    public final static String PERMISSION_DELETE     = "d";
+
+
+    private String subject     = SUBJECT_ANYBODY;
+    private String dn;
+    private String target      = TARGET_OBJECT;
     private String attributes;
-    private String scope;
-    private String action;
+    private String scope       = SCOPE_SUBTREE;
+    private String action      = ACTION_GRANT;
     private String permission;
 
     public String getScope() {
@@ -49,7 +73,9 @@ public class ACI {
     }
 
     public String toString() {
-        return "ACI "+subject+" ["+target+("OBJECT".equals(target) ? "" : ":"+attributes)+"] "+scope+" "+action+" "+permission;
+        return "ACI ["+subject+(SUBJECT_USER.equals(subject) || SUBJECT_GROUP.equals(subject) ? dn : "")+"] "
+                +" ["+target+(TARGET_OBJECT.equals(target) ? "" : ":"+attributes)+"] "
+                +scope+" "+action+" "+permission;
     }
 
     public String getTarget() {
@@ -66,5 +92,13 @@ public class ACI {
 
     public void setAttributes(String attributes) {
         this.attributes = attributes;
+    }
+
+    public String getDn() {
+        return dn;
+    }
+
+    public void setDn(String dn) {
+        this.dn = dn;
     }
 }

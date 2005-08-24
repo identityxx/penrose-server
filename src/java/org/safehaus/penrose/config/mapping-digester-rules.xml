@@ -68,6 +68,7 @@
 
                 <object-create-rule classname="org.safehaus.penrose.acl.ACI" />
                 <set-properties-rule />
+                <call-method-rule pattern="dn" methodname="setDn" paramcount="0" />
                 <call-method-rule pattern="target" methodname="setTarget" paramcount="0" />
                 <call-method-rule pattern="attributes" methodname="setAttributes" paramcount="0" />
                 <call-method-rule pattern="scope" methodname="setScope" paramcount="0" />

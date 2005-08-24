@@ -37,10 +37,10 @@ public class ACLEngine {
     }
 
     public void addPermission(ACI aci, Set grants, Set denies) {
-        if (aci.getAction().equals("grant")) {
+        if (aci.getAction().equals(ACI.ACTION_GRANT)) {
             addPermission(grants, aci.getPermission());
 
-        } else if (aci.getAction().equals("deny")) {
+        } else if (aci.getAction().equals(ACI.ACTION_DENY)) {
             addPermission(denies, aci.getPermission());
         }
     }
@@ -58,7 +58,7 @@ public class ACLEngine {
         for (Iterator i=entry.getACL().iterator(); i.hasNext(); ) {
             ACI aci = (ACI)i.next();
 
-            if (!aci.getTarget().equals("OBJECT")) continue;
+            if (!aci.getTarget().equals(ACI.TARGET_OBJECT)) continue;
             if (scope != null && !scope.equals(aci.getScope())) continue;
 
             log.debug("   - "+aci);
@@ -67,13 +67,16 @@ public class ACLEngine {
             if (subject.equals(bindDn)) {
                 addPermission(aci, grants, denies);
 
-            } else if (subject.equals("self") && targetDn.equals(bindDn)) {
+            } else if (subject.equals(ACI.SUBJECT_SELF) && targetDn.equals(bindDn)) {
                 addPermission(aci, grants, denies);
 
-            } else if (subject.equals("authenticated") && bindDn != null && !bindDn.equals("")) {
+            } else if (subject.equals(ACI.SUBJECT_ANONYMOUS) && (bindDn == null || bindDn.equals(""))) {
                 addPermission(aci, grants, denies);
 
-            } else if (subject.equals("anybody")) {
+            } else if (subject.equals(ACI.SUBJECT_AUTHENTICATED) && bindDn != null && !bindDn.equals("")) {
+                addPermission(aci, grants, denies);
+
+            } else if (subject.equals(ACI.SUBJECT_ANYBODY)) {
                 addPermission(aci, grants, denies);
 
             }
@@ -82,7 +85,7 @@ public class ACLEngine {
         entry = entry.getParent();
         if (entry == null) return;
 
-        getObjectPermission(bindDn, targetDn, entry, "SUBTREE", grants, denies);
+        getObjectPermission(bindDn, targetDn, entry, ACI.SCOPE_SUBTREE, grants, denies);
     }
 
     public Set getObjectPermission(String bindDn, String targetDn, Entry entry, String target) throws Exception {
@@ -117,7 +120,7 @@ public class ACLEngine {
             }
 
             String targetDn = penrose.getSchema().normalize(entry.getDn());
-            Set set = getObjectPermission(bindDn, targetDn, entry, "OBJECT");
+            Set set = getObjectPermission(bindDn, targetDn, entry, ACI.SCOPE_OBJECT);
 
             if (set.contains(permission)) {
                 return rc;
@@ -131,20 +134,24 @@ public class ACLEngine {
         }
     }
 
+    public int checkRead(PenroseConnection connection, Entry entry) throws Exception {
+    	return checkPermission(connection, entry, ACI.PERMISSION_READ);
+    }
+
     public int checkSearch(PenroseConnection connection, Entry entry) throws Exception {
-    	return checkPermission(connection, entry, "s");
+    	return checkPermission(connection, entry, ACI.PERMISSION_SEARCH);
     }
 
     public int checkAdd(PenroseConnection connection, Entry entry) throws Exception {
-    	return checkPermission(connection, entry, "a");
+    	return checkPermission(connection, entry, ACI.PERMISSION_ADD);
     }
 
     public int checkDelete(PenroseConnection connection, Entry entry) throws Exception {
-    	return checkPermission(connection, entry, "d");
+    	return checkPermission(connection, entry, ACI.PERMISSION_DELETE);
     }
 
     public int checkModify(PenroseConnection connection, Entry entry) throws Exception {
-    	return checkPermission(connection, entry, "w");
+    	return checkPermission(connection, entry, ACI.PERMISSION_WRITE);
     }
 
     public void addAttributes(Set set, String attributes) {
@@ -158,10 +165,10 @@ public class ACLEngine {
     }
 
     public void addAttributes(ACI aci, Set grants, Set denies) {
-        if (aci.getAction().equals("grant")) {
+        if (aci.getAction().equals(ACI.ACTION_GRANT)) {
             addAttributes(grants, aci.getAttributes());
 
-        } else if (aci.getAction().equals("deny")) {
+        } else if (aci.getAction().equals(ACI.ACTION_DENY)) {
             addAttributes(denies, aci.getAttributes());
         }
     }
@@ -179,9 +186,9 @@ public class ACLEngine {
         for (Iterator i=entry.getACL().iterator(); i.hasNext(); ) {
             ACI aci = (ACI)i.next();
 
-            if (!aci.getTarget().equals("ATTRIBUTES")) continue;
+            if (!aci.getTarget().equals(ACI.TARGET_ATTRIBUTES)) continue;
             if (scope != null && !scope.equals(aci.getScope())) continue;
-            if (aci.getPermission().indexOf("r") < 0) continue;
+            if (aci.getPermission().indexOf(ACI.PERMISSION_READ) < 0) continue;
 
             log.debug("   - "+aci);
             String subject = penrose.getSchema().normalize(aci.getSubject());
@@ -189,13 +196,16 @@ public class ACLEngine {
             if (subject.equals(bindDn)) {
                 addAttributes(aci, grants, denies);
 
-            } else if (subject.equals("self") && targetDn.equals(bindDn)) {
+            } else if (subject.equals(ACI.SUBJECT_SELF) && targetDn.equals(bindDn)) {
                 addAttributes(aci, grants, denies);
 
-            } else if (subject.equals("authenticated") && bindDn != null && !bindDn.equals("")) {
+            } else if (subject.equals(ACI.SUBJECT_ANONYMOUS) && (bindDn == null || bindDn.equals(""))) {
                 addAttributes(aci, grants, denies);
 
-            } else if (subject.equals("anybody")) {
+            } else if (subject.equals(ACI.SUBJECT_AUTHENTICATED) && bindDn != null && !bindDn.equals("")) {
+                addAttributes(aci, grants, denies);
+
+            } else if (subject.equals(ACI.SUBJECT_ANYBODY)) {
                 addAttributes(aci, grants, denies);
 
             }
@@ -204,7 +214,7 @@ public class ACLEngine {
         entry = entry.getParent();
         if (entry == null) return;
 
-        getReadableAttributes(bindDn, targetDn, entry, "SUBTREE", grants, denies);
+        getReadableAttributes(bindDn, targetDn, entry, ACI.SCOPE_SUBTREE, grants, denies);
     }
 
     public void getReadableAttributes(
