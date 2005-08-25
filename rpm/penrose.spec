@@ -1,10 +1,10 @@
 Summary: Penrose Virtual Directory Server
 Name: penrose
-Version: 0.9.3
+Version: 0.9.4
 Release: 1
 Copyright: OSL 2.1
 Group: System Environment/Base
-Source: http://penrose.safehaus.org/download/penrose-0.9.3-src.tar.gz
+Source: http://penrose.safehaus.org/download/penrose-0.9.4-src.tar.gz
 BuildRoot: /var/tmp/%{name}-buildroot
 
 %description

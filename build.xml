@@ -8,7 +8,7 @@
 
     <property name="build.compiler" value="jikes"/>
     <property name="project.name" value="penrose"/>
-    <property name="project.version" value="0.9.3"/>
+    <property name="project.version" value="0.9.4"/>
     <property name="prefix" value=""/>
     <property name="penrose.home" value="${prefix}/usr/local/penrose"/>
     <property name="iscc.path" value="ISCC.exe"/>
@@ -227,10 +227,10 @@
             <arg line="-ba rpm/penrose.spec"/>
         </exec>
         <copy todir="dist" failonerror="false"
-            file="/usr/src/redhat/SRPMS/penrose-0.9.3-1.src.rpm">
+            file="/usr/src/redhat/SRPMS/${project.name}-${project.version}-1.src.rpm">
         </copy>
         <copy todir="dist" failonerror="false"
-            file="/usr/src/redhat/RPMS/i386/penrose-0.9.3-1.i386.rpm">
+            file="/usr/src/redhat/RPMS/i386/${project.name}-${project.version}-1.i386.rpm">
         </copy>
     </target>
 

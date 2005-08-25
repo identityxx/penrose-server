@@ -7,8 +7,6 @@ package org.safehaus.penrose.cache;
 import org.safehaus.penrose.mapping.Entry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.ietf.ldap.LDAPDN;
-
 import java.util.*;
 
 /**

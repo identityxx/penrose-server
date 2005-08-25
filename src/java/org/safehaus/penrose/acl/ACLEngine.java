@@ -121,7 +121,7 @@ public class ACLEngine {
             return rc;
 
         } finally {
-            return rc;
+            log.debug("Result: "+rc);
         }
     }
 
