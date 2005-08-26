@@ -213,8 +213,8 @@ public class ConfigWriter {
 
 	public Element toElement(EntryDefinition entry, Element entryElement, Element configElement) {
 		// object classes
-		for (int i = 0; i < entry.getObjectClasses().size(); i++) {
-			String objectClass = (String) entry.getObjectClasses().get(i);
+		for (Iterator i=entry.getObjectClasses().iterator(); i.hasNext(); ) {
+			String objectClass = (String)i.next();
 			Element objectClassElement = new DefaultElement("oc");
 			objectClassElement.setText(objectClass);
 			entryElement.add(objectClassElement);

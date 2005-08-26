@@ -34,14 +34,14 @@ public class EntryDefinition implements Cloneable, Serializable {
 	/**
 	 * Children. Each element is of type org.safehaus.penrose.mapping.EntryDefinition.
 	 */
-    private List children = new ArrayList();
+    private Collection children = new ArrayList();
 
-    private List childDefinitions = new ArrayList();
+    private Collection childDefinitions = new ArrayList();
 
     /**
      * Object classes. Each element is of type String.
      */
-    private List objectClasses = new ArrayList();
+    private Collection objectClasses = new ArrayList();
     
     /**
      * Attributes. The keys are the attribute names (java.lang.String). Each value is of type org.safehaus.penrose.mapping.AttributeDefinition.
@@ -56,7 +56,7 @@ public class EntryDefinition implements Cloneable, Serializable {
     /**
      * Relationship. Each element is of type org.safehaus.penrose.mapping.Relationship.
      */
-    private List relationships = new ArrayList();
+    private Collection relationships = new ArrayList();
 
     private String script;
 
@@ -156,7 +156,7 @@ public class EntryDefinition implements Cloneable, Serializable {
     }
 
     public Collection getRdnAttributes() {
-        List results = new ArrayList();
+        Collection results = new ArrayList();
         for (Iterator i=attributes.values().iterator(); i.hasNext(); ) {
             AttributeDefinition attribute = (AttributeDefinition)i.next();
             if (!attribute.isRdn()) continue;
@@ -202,7 +202,7 @@ public class EntryDefinition implements Cloneable, Serializable {
         return children;
     }
 
-    public void setChildren(List children) {
+    public void setChildren(Collection children) {
         this.children = children;
     }
 
@@ -210,7 +210,7 @@ public class EntryDefinition implements Cloneable, Serializable {
         return relationships;
     }
 
-    public void setRelationships(List relationships) {
+    public void setRelationships(Collection relationships) {
         this.relationships = relationships;
     }
 
@@ -219,17 +219,17 @@ public class EntryDefinition implements Cloneable, Serializable {
     }
 
     public Collection getEffectiveSources() {
-        List list = new ArrayList();
+        Collection list = new ArrayList();
         list.addAll(sources.values());
         if (parent != null) list.addAll(parent.getEffectiveSources());
         return list;
     }
 
-    public List getObjectClasses() {
+    public Collection getObjectClasses() {
         return objectClasses;
     }
 
-    public void setObjectClasses(List objectClasses) {
+    public void setObjectClasses(Collection objectClasses) {
         this.objectClasses = objectClasses;
     }
 
@@ -319,8 +319,8 @@ public class EntryDefinition implements Cloneable, Serializable {
     }
 
     public void normalize() {
-        List list = new ArrayList();
-        List rdns = new ArrayList();
+        Collection list = new ArrayList();
+        Collection rdns = new ArrayList();
 
         for (Iterator i=attributes.keySet().iterator(); i.hasNext(); ) {
             String name = (String)i.next();
@@ -495,7 +495,7 @@ public class EntryDefinition implements Cloneable, Serializable {
         this.parentDn = parentDn;
     }
 
-    public List getChildDefinitions() {
+    public Collection getChildDefinitions() {
         return childDefinitions;
     }
 
