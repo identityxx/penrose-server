@@ -95,14 +95,7 @@ public class AddHandler {
             EntryDefinition entryDefinition = (EntryDefinition)iterator.next();
             if (!entryDefinition.isDynamic()) continue;
 
-            rc = handlerContext.getEngine().add(entryDefinition, values);
-
-            if (rc == LDAPException.SUCCESS) {
-                String key = entryDefinition.getRdn()+","+parent.getDn();
-                getHandlerContext().getCache().getEntryFilterCache().invalidate(key);
-            }
-
-            return rc;
+            return handlerContext.getEngine().add(parent, entryDefinition, values);
         }
 
         return addStaticEntry(parentDefinition, values, dn);

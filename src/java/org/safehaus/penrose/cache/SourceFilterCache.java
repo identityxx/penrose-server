@@ -52,7 +52,7 @@ public class SourceFilterCache {
         log.debug("Getting source filter cache ("+map.size()+"): "+filter);
 
         Collection pks = (Collection)map.remove(filter == null ? "" : filter.toString());
-        map.put(filter == null ? "" : filter.toString(), pks);
+        if (pks != null) map.put(filter == null ? "" : filter.toString(), pks);
 
         return pks;
     }

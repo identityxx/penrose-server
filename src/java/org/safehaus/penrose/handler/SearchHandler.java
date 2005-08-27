@@ -274,7 +274,7 @@ public class SearchHandler {
 
         Calendar calendar = Calendar.getInstance();
 
-        Collection rdns = search(parent, entryDefinition, filter, calendar);
+        Collection rdns = handlerContext.getEngine().search(parent, entryDefinition, filter, calendar);
         log.debug("Searched rdns: "+rdns);
 
         return handlerContext.getEngine().load(parent, entryDefinition, rdns, calendar);
@@ -365,84 +365,4 @@ public class SearchHandler {
             }
 		}
 	}
-
-    public Collection search(
-            Entry parent,
-            EntryDefinition entryDefinition,
-            Filter filter,
-            Calendar calendar
-            ) throws Exception {
-
-        String str = handlerContext.getCache().getParameter(CacheConfig.CACHE_EXPIRATION);
-        int cacheExpiration = str == null ? 0 : Integer.parseInt(str);
-        log.debug("Filter Cache Expiration: "+cacheExpiration);
-        if (cacheExpiration < 0) cacheExpiration = Integer.MAX_VALUE;
-
-        Calendar c = (Calendar) calendar.clone();
-        c.add(Calendar.MINUTE, -cacheExpiration);
-
-        String key = entryDefinition.getRdn()+","+parent.getDn();
-        log.debug("Checking filter cache for ["+key+"]");
-
-        Collection rdns = handlerContext.getCache().getEntryFilterCache().get(key, filter);
-        if (rdns != null) {
-            log.debug("Filter cache found: "+rdns);
-            return rdns;
-        }
-
-        log.debug("Filter cache not found.");
-
-        Source primarySource = getHandlerContext().getPrimarySource(entryDefinition);
-        String primarySourceName = primarySource.getName();
-
-        log.debug("--------------------------------------------------------------------------------------");
-
-        Collection keys = handlerContext.getEngine().search(parent, entryDefinition, filter);
-
-        rdns = new TreeSet();
-
-        //log.debug("Results:");
-        for (Iterator j=keys.iterator(); j.hasNext(); ) {
-            Row row = (Row)j.next();
-            //log.debug(" - "+row);
-
-            Interpreter interpreter = getHandlerContext().newInterpreter();
-            for (Iterator k=row.getNames().iterator(); k.hasNext(); ) {
-                String name = (String)k.next();
-                Object value = row.get(name);
-                interpreter.set(primarySourceName+"."+name, value);
-            }
-
-            Collection rdnAttributes = entryDefinition.getRdnAttributes();
-
-            Row rdn = new Row();
-            boolean valid = true;
-
-            for (Iterator k=rdnAttributes.iterator(); k.hasNext(); ) {
-                AttributeDefinition attr = (AttributeDefinition)k.next();
-                String name = attr.getName();
-                String expression = attr.getExpression();
-                Object value = interpreter.eval(expression);
-
-                if (value == null) {
-                    valid = false;
-                    break;
-                }
-
-                rdn.set(name, value);
-            }
-
-            if (!valid) continue;
-            rdns.add(rdn);
-        }
-
-        handlerContext.getCache().getEntryFilterCache().put(key, filter, rdns);
-
-        return rdns;
-    }
-
-    /**
-     * Convert rdns into primary keys
-     */
-
 }

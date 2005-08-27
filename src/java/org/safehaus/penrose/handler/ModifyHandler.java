@@ -195,14 +195,7 @@ public class ModifyHandler {
 		log.debug("--- new values:");
 		log.debug(newEntry.toString());
 
-        int rc = handlerContext.getEngine().modify(entry, newValues);
-
-        if (rc == LDAPException.SUCCESS) {
-            String key = entryDefinition.getRdn()+","+entry.getParent().getDn();
-            getHandlerContext().getCache().getEntryFilterCache().invalidate(key);
-        }
-
-        return rc;
+        return handlerContext.getEngine().modify(entry, newValues);
 	}
 
     public int modifyStaticEntry(EntryDefinition entry, Collection modifications)

@@ -53,7 +53,7 @@ public class EntryFilterCache {
         log.debug("Getting entry filter cache ("+map.size()+"): "+filter);
 
         Collection rdns = (Collection)map.remove(filter == null ? "" : filter.toString());
-        map.put(filter == null ? "" : filter.toString(), rdns);
+        if (rdns != null) map.put(filter == null ? "" : filter.toString(), rdns);
 
         return rdns;
     }

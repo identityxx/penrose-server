@@ -55,21 +55,14 @@ public class DeleteHandler {
 
             AttributeValues values = entry.getAttributeValues();
 
-	        rc = handlerContext.getEngine().delete(entryDefinition, values);
-
-            if (rc == LDAPException.SUCCESS) {
-                String key = entryDefinition.getRdn()+","+entry.getParent().getDn();
-                getHandlerContext().getCache().getEntryFilterCache().invalidate(key);
-            }
+	        return handlerContext.getEngine().delete(entryDefinition, values);
 
         } else {
 
             // Static Entry
-            rc = deleteStaticEntry(entryDefinition);
+            return deleteStaticEntry(entryDefinition);
 
         }
-
-        return rc;
     }
 
     public int deleteStaticEntry(EntryDefinition entry) throws Exception {

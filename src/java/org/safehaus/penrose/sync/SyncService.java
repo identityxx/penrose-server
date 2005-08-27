@@ -307,48 +307,52 @@ public class SyncService {
         String key = source.getConnectionConfig().getConnectionName()+"."+source.getSourceName();
         log.debug("Checking source filter cache for ["+key+"]");
 
-        Collection primaryKeys = syncContext.getCache().getSourceFilterCache().get(key, filter);
+        Collection pks = syncContext.getCache().getSourceFilterCache().get(key, filter);
 
-        if (primaryKeys == null) {
-            primaryKeys = new TreeSet();
-
-            log.debug("Searching source "+source.getName()+" for "+filter);
-            Connection connection = syncContext.getConnection(source.getConnectionName());
-            SearchResults sr = connection.search(source, filter, 100);
-
-            log.debug("Search results:");
-            for (Iterator i=sr.iterator(); i.hasNext();) {
-                AttributeValues av = (AttributeValues)i.next();
-
-                Row pk = new Row();
-
-                Collection fields = source.getPrimaryKeyFields();
-                for (Iterator j=fields.iterator(); j.hasNext(); ) {
-                    Field field = (Field)j.next();
-                    String name = field.getName();
-                    Object value = av.get(name).iterator().next();
-
-                    pk.set(name, value);
-                }
-                log.debug(" - "+pk);
-
-                primaryKeys.add(pk);
-                results.put(pk, av);
-
-                syncContext.getCache().getSourceCache().put(source, pk, av);
-            }
-
-            syncContext.getCache().getSourceFilterCache().put(key, filter, primaryKeys);
-
-            filter = syncContext.getCache().getCacheContext().getFilterTool().createFilter(primaryKeys);
-            syncContext.getCache().getSourceFilterCache().put(key, filter, primaryKeys);
-
-        } else {
-            Map map = syncContext.getCache().getSourceCache().get(source, primaryKeys);
+        if (pks != null) {
+            Map map = syncContext.getCache().getSourceCache().get(source, pks);
             results.putAll(map);
+            return;
         }
 
-        log.debug("Loaded: "+primaryKeys);
+        log.debug("Source filter cache not found.");
+        log.debug("Searching source "+key+" for "+filter);
+
+        Connection connection = syncContext.getConnection(source.getConnectionName());
+        SearchResults sr = connection.search(source, filter, 100);
+
+        log.debug("Search results:");
+        pks = new TreeSet();
+
+        for (Iterator i=sr.iterator(); i.hasNext();) {
+            AttributeValues av = (AttributeValues)i.next();
+
+            Row pk = new Row();
+
+            Collection fields = source.getPrimaryKeyFields();
+            for (Iterator j=fields.iterator(); j.hasNext(); ) {
+                Field field = (Field)j.next();
+                String name = field.getName();
+                Object value = av.get(name).iterator().next();
+
+                pk.set(name, value);
+            }
+
+            Row npk = syncContext.getSchema().normalize(pk);
+            log.debug(" - PK: "+npk);
+
+            pks.add(npk);
+            results.put(npk, av);
+
+            syncContext.getCache().getSourceCache().put(source, npk, av);
+        }
+
+        syncContext.getCache().getSourceFilterCache().put(key, filter, pks);
+
+        filter = syncContext.getCache().getCacheContext().getFilterTool().createFilter(pks);
+        syncContext.getCache().getSourceFilterCache().put(key, filter, pks);
+
+        log.debug("Loaded: "+pks);
     }
 
 }

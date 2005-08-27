@@ -31,7 +31,7 @@ public class LoaderGraphVisitor extends GraphVisitor {
         this.syncService = syncService;
         this.entryDefinition = entryDefinition;
 
-        Map map = new HashMap();
+        Map map = new TreeMap();
         for (Iterator i=pks.iterator(); i.hasNext(); ) {
             Row pk = (Row)i.next();
             map.put(pk, pk);
