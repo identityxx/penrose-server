@@ -4,9 +4,10 @@
  */
 package org.safehaus.penrose.cache;
 
+import org.safehaus.penrose.mapping.EntryDefinition;
+import org.safehaus.penrose.filter.Filter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.safehaus.penrose.filter.Filter;
 
 import java.util.Map;
 import java.util.Collection;
@@ -15,7 +16,7 @@ import java.util.TreeMap;
 /**
  * @author Endi S. Dewata
  */
-public class SourceFilterCache {
+public class EntryFilterCache {
 
     Logger log = LoggerFactory.getLogger(getClass());
 
@@ -49,26 +50,26 @@ public class SourceFilterCache {
     public Collection get(Object key, Filter filter) throws Exception {
         Map map = getMap(key);
 
-        log.debug("Getting source filter cache ("+map.size()+"): "+filter);
+        log.debug("Getting entry filter cache ("+map.size()+"): "+filter);
 
-        Collection pks = (Collection)map.remove(filter == null ? "" : filter.toString());
-        map.put(filter == null ? "" : filter.toString(), pks);
+        Collection rdns = (Collection)map.remove(filter == null ? "" : filter.toString());
+        map.put(filter == null ? "" : filter.toString(), rdns);
 
-        return pks;
+        return rdns;
     }
 
-    public void put(Object key, Filter filter, Collection pks) throws Exception {
+    public void put(Object key, Filter filter, Collection rdns) throws Exception {
 
         Map map = getMap(key);
 
         if (map.size() >= size) {
-            log.debug("Trimming source filter cache ("+map.size()+").");
+            log.debug("Trimming entry filter cache ("+map.size()+").");
             Object o = map.keySet().iterator().next();
             map.remove(o);
         }
 
-        log.debug("Storing source filter cache ("+map.size()+"): "+filter);
-        map.put(filter == null ? "" : filter.toString(), pks);
+        log.debug("Storing entry filter cache ("+map.size()+"): "+filter);
+        map.put(filter == null ? "" : filter.toString(), rdns);
     }
 
     public void invalidate(Object key) throws Exception {

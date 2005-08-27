@@ -381,10 +381,10 @@ public class SearchHandler {
         Calendar c = (Calendar) calendar.clone();
         c.add(Calendar.MINUTE, -cacheExpiration);
 
-        String key = entryDefinition.getRdn()+","+parent.getDn() + ":" + filter;
+        String key = entryDefinition.getRdn()+","+parent.getDn();
         log.debug("Checking filter cache for ["+key+"]");
 
-        Collection rdns = handlerContext.getCache().getFilterCache().get(key);
+        Collection rdns = handlerContext.getCache().getEntryFilterCache().get(key, filter);
         if (rdns != null) {
             log.debug("Filter cache found: "+rdns);
             return rdns;
@@ -436,7 +436,7 @@ public class SearchHandler {
             rdns.add(rdn);
         }
 
-        handlerContext.getCache().getFilterCache().put(key, rdns);
+        handlerContext.getCache().getEntryFilterCache().put(key, filter, rdns);
 
         return rdns;
     }

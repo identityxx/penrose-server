@@ -267,6 +267,7 @@ public class SyncService {
                 normalizedFilters.add(normalizedFilter);
             }
         }
+
         log.info("Loading source "+source.getName()+" "+source.getSourceName()+" with pks "+normalizedFilters);
 
         //CacheEvent beforeEvent = new CacheEvent(getCacheContext(), sourceConfig, CacheEvent.BEFORE_LOAD_ENTRIES);
@@ -283,26 +284,7 @@ public class SyncService {
         Collection pksToLoad = new HashSet();
         pksToLoad.addAll(results.keySet());
         pksToLoad.removeAll(rows.keySet());
-/*
-        for (Iterator i=primaryKeys.iterator(); i.hasNext(); ) {
-            Row pk = (Row)i.next();
 
-            boolean found = false;
-            for (Iterator j=rows.keySet().iterator(); !found && j.hasNext(); ) {
-                Row lpk = (Row)j.next();
-                if (syncContext.getSchema().match(lpk, pk)) found = true;
-            }
-
-            if (!found) pksToLoad.add(pk);
-        }
-
-        for (Iterator i=rows.keySet().iterator();  i.hasNext(); ) {
-            Row pk = (Row)i.next();
-            AttributeValues values = (AttributeValues)rows.get(pk);
-            results.put(pk, values);
-        }
-
-*/
         log.debug("Pks to load: "+pksToLoad);
 
         if (!pksToLoad.isEmpty()) {
@@ -322,10 +304,10 @@ public class SyncService {
             filter = syncContext.getCache().getCacheContext().getFilterTool().createFilter(filters);
         }
 
-        String key = source.getConnectionConfig().getConnectionName()+"."+source.getSourceName() + ":" +filter;
+        String key = source.getConnectionConfig().getConnectionName()+"."+source.getSourceName();
         log.debug("Checking source filter cache for ["+key+"]");
 
-        Collection primaryKeys = syncContext.getCache().getSourceFilterCache().get(key);
+        Collection primaryKeys = syncContext.getCache().getSourceFilterCache().get(key, filter);
 
         if (primaryKeys == null) {
             primaryKeys = new TreeSet();
@@ -356,11 +338,10 @@ public class SyncService {
                 syncContext.getCache().getSourceCache().put(source, pk, av);
             }
 
-            syncContext.getCache().getSourceFilterCache().put(key, primaryKeys);
+            syncContext.getCache().getSourceFilterCache().put(key, filter, primaryKeys);
 
             filter = syncContext.getCache().getCacheContext().getFilterTool().createFilter(primaryKeys);
-            key = source.getConnectionConfig().getConnectionName()+"."+source.getSourceName() + ":" +filter;
-            syncContext.getCache().getSourceFilterCache().put(key, primaryKeys);
+            syncContext.getCache().getSourceFilterCache().put(key, filter, primaryKeys);
 
         } else {
             Map map = syncContext.getCache().getSourceCache().get(source, primaryKeys);

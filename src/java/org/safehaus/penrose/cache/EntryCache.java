@@ -86,8 +86,9 @@ public class EntryCache {
         map.remove(ndn);
     }
 
-    public void invalidate(String dn) throws Exception {
-        String ndn = cacheContext.getSchema().normalize(dn);
+    public void invalidate(EntryDefinition entryDefinition) throws Exception {
+        Map map = getMap(entryDefinition);
+        map.clear();
     }
     
     public Cache getCache() {

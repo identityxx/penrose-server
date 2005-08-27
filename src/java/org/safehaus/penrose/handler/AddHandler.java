@@ -92,13 +92,14 @@ public class AddHandler {
 
         // add into the first matching child
         for (Iterator iterator = children.iterator(); iterator.hasNext(); ) {
-            EntryDefinition childDefinition = (EntryDefinition)iterator.next();
-            if (!childDefinition.isDynamic()) continue;
+            EntryDefinition entryDefinition = (EntryDefinition)iterator.next();
+            if (!entryDefinition.isDynamic()) continue;
 
-            rc = handlerContext.getEngine().add(childDefinition, values);
+            rc = handlerContext.getEngine().add(entryDefinition, values);
 
             if (rc == LDAPException.SUCCESS) {
-                getHandlerContext().getCache().getFilterCache().invalidate();
+                String key = entryDefinition.getRdn()+","+parent.getDn();
+                getHandlerContext().getCache().getEntryFilterCache().invalidate(key);
             }
 
             return rc;

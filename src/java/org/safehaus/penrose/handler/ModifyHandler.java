@@ -198,7 +198,8 @@ public class ModifyHandler {
         int rc = handlerContext.getEngine().modify(entry, newValues);
 
         if (rc == LDAPException.SUCCESS) {
-            getHandlerContext().getCache().getFilterCache().invalidate();
+            String key = entryDefinition.getRdn()+","+entry.getParent().getDn();
+            getHandlerContext().getCache().getEntryFilterCache().invalidate(key);
         }
 
         return rc;

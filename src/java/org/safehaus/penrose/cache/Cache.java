@@ -19,7 +19,7 @@ public class Cache {
     private CacheConfig cacheConfig;
     private CacheContext cacheContext;
 
-    private FilterCache filterCache;
+    private EntryFilterCache entryFilterCache;
     private EntryCache entryCache;
     private SourceCache sourceCache;
     private SourceFilterCache sourceFilterCache;
@@ -55,14 +55,14 @@ public class Cache {
 
         init();
 
-        filterCache.init(this);
+        entryFilterCache.init(this);
         entryCache.init(this);
         sourceCache.init(this);
         sourceFilterCache.init(this);
     }
 
     public void createFilterCache() throws Exception {
-        filterCache = new FilterCache();
+        entryFilterCache = new EntryFilterCache();
     }
 
     public void createEntryCache() throws Exception {
@@ -104,12 +104,12 @@ public class Cache {
         this.cacheContext = cacheContext;
     }
 
-    public FilterCache getFilterCache() {
-        return filterCache;
+    public EntryFilterCache getEntryFilterCache() {
+        return entryFilterCache;
     }
 
-    public void setFilterCache(FilterCache filterCache) {
-        this.filterCache = filterCache;
+    public void setEntryFilterCache(EntryFilterCache entryFilterCache) {
+        this.entryFilterCache = entryFilterCache;
     }
 
     public CacheFilterTool getCacheFilterTool() {
