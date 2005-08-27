@@ -5,6 +5,8 @@
 package org.safehaus.penrose.cache;
 
 import org.safehaus.penrose.mapping.Entry;
+import org.safehaus.penrose.mapping.Source;
+import org.safehaus.penrose.mapping.EntryDefinition;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import java.util.*;
@@ -36,40 +38,52 @@ public class EntryCache {
     public void init() throws Exception {
     }
 
-    public Entry get(String dn) throws Exception {
+    public Map getMap(EntryDefinition entryDefinition) {
+        Map map = (Map)entries.get(entryDefinition.getDn());
+        if (map == null) {
+            map = new TreeMap();
+            entries.put(entryDefinition.getDn(), map);
+        }
+        return map;
+    }
 
+    public Entry get(String dn, EntryDefinition entryDefinition) throws Exception {
+
+        Map map = getMap(entryDefinition);
         String ndn = cacheContext.getSchema().normalize(dn);
 
-        log.debug("Getting entry cache ("+entries.size()+"): "+ndn);
+        log.debug("Getting entry cache ("+map.size()+"): "+ndn);
 
-        Entry entry = (Entry)entries.remove(ndn);
-        entries.put(ndn, entry);
+        Entry entry = (Entry)map.remove(ndn);
+        map.put(ndn, entry);
 
         return entry;
     }
 
     public void put(Entry entry) throws Exception {
 
+        Map map = getMap(entry.getEntryDefinition());
         String dn = entry.getDn();
         String ndn = cacheContext.getSchema().normalize(dn);
 
-        while (entries.size() >= size) {
-            log.debug("Trimming entry cache ("+entries.size()+").");
-            String key = (String)entries.keySet().iterator().next();
-            entries.remove(key);
+        while (map.size() >= size) {
+            log.debug("Trimming entry cache ("+map.size()+").");
+            Object key = map.keySet().iterator().next();
+            map.remove(key);
         }
 
-        log.debug("Storing entry cache ("+entries.size()+"): "+ndn);
-        entries.put(ndn, entry);
+        log.debug("Storing entry cache ("+map.size()+"): "+ndn);
+        map.put(ndn, entry);
     }
 
     public void remove(Entry entry) throws Exception {
 
+        Map map = getMap(entry.getEntryDefinition());
         String dn = entry.getDn();
         String ndn = cacheContext.getSchema().normalize(dn);
 
-        log.debug("Removing entry cache ("+entries.size()+"): "+ndn);
-        entries.remove(ndn);
+        log.debug("Removing entry cache ("+map.size()+"): "+ndn);
+        map.remove(ndn);
     }
 
     public void invalidate(String dn) throws Exception {
@@ -90,14 +104,6 @@ public class EntryCache {
 
     public void setCacheContext(CacheContext cacheContext) {
         this.cacheContext = cacheContext;
-    }
-
-    public Map getEntries() {
-        return entries;
-    }
-
-    public void setEntries(Map entries) {
-        this.entries = entries;
     }
 
     public int getSize() {

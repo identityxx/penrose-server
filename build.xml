@@ -132,8 +132,8 @@
         <copy todir="target/dist/docs/javadoc" failonerror="false">
             <fileset dir="target/javadoc"/>
         </copy>
-        <copy todir="target/dist/lib">
-            <fileset dir="lib"/>
+        <copy todir="target/dist/lib" includeEmptyDirs="false">
+            <fileset dir="lib" includes="*"/>
         </copy>
         <copy todir="target/dist/lib"
             file="target/${project.name}-${project.version}.jar">

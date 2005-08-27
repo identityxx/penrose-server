@@ -7,6 +7,7 @@ package org.safehaus.penrose.apacheds;
 import org.safehaus.penrose.mapping.Row;
 import org.safehaus.penrose.mapping.Entry;
 import org.safehaus.penrose.mapping.AttributeValues;
+import org.safehaus.penrose.mapping.EntryDefinition;
 import org.safehaus.penrose.cache.EntryCache;
 import org.apache.ldap.server.interceptor.NextInterceptor;
 import org.apache.ldap.server.invocation.InvocationStack;
@@ -40,10 +41,21 @@ public class ApacheDSEntryCache extends EntryCache {
     public void init() throws Exception {
     }
 
-    public Entry get(String dn) throws Exception {
+    public Map getMap(EntryDefinition entryDefinition) {
+        Map map = (Map)entries.get(entryDefinition.getDn());
+        if (map == null) {
+            map = new TreeMap();
+            entries.put(entryDefinition.getDn(), map);
+        }
+        return map;
+    }
+
+    public Entry get(String dn, EntryDefinition entryDefinition) throws Exception {
+
+        Map map = getMap(entryDefinition);
 
         log.debug("===============================================================================");
-        log.debug("Getting entry cache ("+entries.size()+"): "+dn);
+        log.debug("Getting entry cache ("+map.size()+"): "+dn);
         log.debug("===============================================================================");
 
         LdapName baseDn = new LdapName(dn);
@@ -101,32 +113,26 @@ public class ApacheDSEntryCache extends EntryCache {
 
     public void put(Entry entry) throws Exception {
 
+        Map map = getMap(entry.getEntryDefinition());
         String dn = entry.getDn();
 
-        while (entries.size() >= getSize()) {
-            log.debug("Trimming entry cache ("+entries.size()+").");
-            Row key = (Row)entries.keySet().iterator().next();
-            entries.remove(key);
+        while (map.size() >= getSize()) {
+            log.debug("Trimming entry cache ("+map.size()+").");
+            Row key = (Row)map.keySet().iterator().next();
+            map.remove(key);
         }
 
-        log.debug("Storing entry cache ("+entries.size()+"): "+dn);
-        entries.put(dn, entry);
+        log.debug("Storing entry cache ("+map.size()+"): "+dn);
+        map.put(dn, entry);
     }
 
     public void remove(Entry entry) throws Exception {
 
+        Map map = getMap(entry.getEntryDefinition());
         String dn = entry.getDn();
 
-        log.debug("Removing entry cache ("+entries.size()+"): "+dn);
-        entries.remove(dn);
-    }
-
-    public Map getEntries() {
-        return entries;
-    }
-
-    public void setEntries(Map entries) {
-        this.entries = entries;
+        log.debug("Removing entry cache ("+map.size()+"): "+dn);
+        map.remove(dn);
     }
 
     public NextInterceptor getNextInterceptor() {

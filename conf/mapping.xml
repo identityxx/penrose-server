@@ -16,17 +16,7 @@
     <at name="o">
       <expression>"example"</expression>
     </at>
-    <aci subject="anybody">
-      <target>OBJECT</target>
-      <scope>SUBTREE</scope>
-      <action>grant</action>
-      <permission>rs</permission>
-    </aci>
-    <aci subject="anybody">
-      <target>ATTRIBUTES</target>
-      <attributes>*</attributes>
-      <scope>SUBTREE</scope>
-      <action>grant</action>
+    <aci>
       <permission>rs</permission>
     </aci>
   </entry>

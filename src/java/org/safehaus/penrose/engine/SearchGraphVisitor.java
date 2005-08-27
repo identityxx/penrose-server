@@ -28,7 +28,12 @@ public class SearchGraphVisitor extends GraphVisitor {
     private Stack stack = new Stack();
     private Set keys = new HashSet();
 
-    public SearchGraphVisitor(EngineContext engineContext, EntryDefinition entryDefinition, Collection rows, Source primarySource) {
+    public SearchGraphVisitor(
+            EngineContext engineContext,
+            EntryDefinition entryDefinition,
+            Collection rows,
+            Source primarySource) {
+
         this.engineContext = engineContext;
         this.entryDefinition = entryDefinition;
         this.primarySource = primarySource;
@@ -38,19 +43,34 @@ public class SearchGraphVisitor extends GraphVisitor {
 
     public boolean preVisitNode(Object node, Object parameter) throws Exception {
         Source source = (Source)node;
-        log.debug("Source "+source.getName());
-
         Collection rows = (Collection)stack.peek();
+        log.debug("Searching "+source.getName()+" for "+rows);
 
         //Collection newRows = new HashSet();
         //stack.push(newRows);
 
         if (entryDefinition.getSource(source.getName()) == null) {
+            log.debug("Source "+source.getName()+" is not defined in entry "+entryDefinition.getDn());
             //newRows.addAll(rows);
             return true;
         }
 
+        Map map = engineContext.getSyncService().search(source, rows);
+        if (map.size() == 0) return false;
+
+        Collection results = new ArrayList();
+        for (Iterator i=map.values().iterator(); i.hasNext(); ) {
+            AttributeValues av = (AttributeValues)i.next();
+            Collection r = engineContext.getTransformEngine().convert(av);
+            results.addAll(r);
+        }
+
+        stack.push(results);
+
+        if (results != null) keys.addAll(results);
+
         if (source != primarySource) {
+            log.debug("Source "+source.getName()+" is not the primary source of entry "+entryDefinition.getDn());
 /*
             log.debug("Converting rows: "+rows);
             for (Iterator i=rows.iterator(); i.hasNext(); ) {
@@ -69,9 +89,6 @@ public class SearchGraphVisitor extends GraphVisitor {
 */
             return true;
         }
-
-        keys.addAll(rows);
-        //log.debug("to: "+keys);
 
         return false;
     }
@@ -101,28 +118,26 @@ public class SearchGraphVisitor extends GraphVisitor {
         int ri = rhs.indexOf(".");
         String rFieldName = rhs.substring(ri+1);
 
-        log.debug("Relationship "+lhs+" = "+rhs);
-        log.debug("with rows: "+rows);
+        log.debug("Relationship "+lhs+" = "+rhs+":");
 
         Collection newRows = new HashSet();
         for (Iterator i=rows.iterator(); i.hasNext(); ) {
             Row row = (Row)i.next();
+            log.debug(" - "+row);
 
             Object value = row.get(lFieldName);
+            if (value == null) continue;
+
             Row newRow = new Row();
             newRow.set(rFieldName, value);
-
             newRows.add(newRow);
 
-            log.debug(" - "+lFieldName+" -> "+rFieldName+" = "+value);
+            log.debug("   - "+lFieldName+" -> "+rFieldName+" = "+value);
         }
 
-        Filter newFilter = engineContext.getFilterTool().createFilter(newRows);
+        if (newRows.size() == 0) return false;
 
-        Collection results = engineContext.getSyncService().search(source, newFilter);
-        if (results.size() == 0) return false;
-
-        stack.push(results);
+        stack.push(newRows);
 
         return true;
     }

@@ -105,7 +105,7 @@ public class JDBCAdapter extends Adapter {
         SearchResults results = new SearchResults();
 
         log.debug("--------------------------------------------------------------------------------------");
-        log.debug("JDBC Source: "+source.getConnectionName()+" ["+getParameter(DRIVER)+"]");
+        log.debug("Searching JDBC Source: "+source.getConnectionName()+"/"+source.getSourceName()+": "+filter);
 
         String tableName = source.getParameter("tableName");
 
@@ -150,10 +150,10 @@ public class JDBCAdapter extends Adapter {
 
             for (int i=0; rs.next() && (sizeLimit == 0 || i<sizeLimit); i++) {
 
-                Row row = getRow(source, rs);
-                log.debug(" - "+row);
+                AttributeValues av = getValues(source, rs);
+                log.debug(" - "+av);
 
-                results.add(row);
+                results.add(av);
             }
 
         } finally {
@@ -167,9 +167,9 @@ public class JDBCAdapter extends Adapter {
         return results;
     }
 
-    public Row getRow(Source source, ResultSet rs) throws Exception {
+    public AttributeValues getValues(Source source, ResultSet rs) throws Exception {
 
-        Row row = new Row();
+        AttributeValues row = new AttributeValues();
 
         ResultSetMetaData rsmd = rs.getMetaData();
         int count = rsmd.getColumnCount();
@@ -183,7 +183,7 @@ public class JDBCAdapter extends Adapter {
             Object value = rs.getObject(c);
             if (value == null) continue;
 
-            row.set(field.getName(), value);
+            row.add(field.getName(), value);
         }
 
         //log.debug("=> values: "+row);

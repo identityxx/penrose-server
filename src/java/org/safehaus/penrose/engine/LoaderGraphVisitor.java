@@ -58,17 +58,18 @@ public class LoaderGraphVisitor extends GraphVisitor {
         if (!allPksDefined) return false;
 */        
         Map map = (Map)stack.peek();
+        log.debug("MAP: "+map);
+
         Collection pks = map.keySet();
 
-        log.debug("Loading source "+source+" with pks: "+pks);
-
-        Map results = syncService.load(source, pks);
+        Map results = syncService.search(source, pks);
         if (results.size() == 0) return false;
         
         log.debug("Records:");
         Map newMap = new HashMap();
         for (Iterator i = results.keySet().iterator(); i.hasNext(); ) {
             Row pk = (Row)i.next();
+            log.debug(" - "+pk);
 
             AttributeValues values = (AttributeValues)results.get(pk);
             AttributeValues newValues = new AttributeValues();
@@ -86,12 +87,15 @@ public class LoaderGraphVisitor extends GraphVisitor {
             Row mainPk = null;
             for (Iterator j=pks.iterator(); j.hasNext(); ) {
                 Row p = (Row)j.next();
+                //log.debug("   checking "+values+" with "+p);
 
-                if (!engineContext.getSchema().partialMatch(pk, p)) continue;
+                if (!engineContext.getSchema().partialMatch(values, p)) continue;
+
                 mainPk = (Row)map.get(p);
+                break;
             }
 
-            //log.debug(" - "+pk+" -> "+mainPk);
+            //log.debug("   original filter: "+mainPk);
 
             newMap.put(pk, mainPk);
 
@@ -103,7 +107,7 @@ public class LoaderGraphVisitor extends GraphVisitor {
 
             av.add(newValues);
 
-            log.debug(" - "+av);
+            log.debug("   - "+av);
         }
 
         stack.push(newMap);

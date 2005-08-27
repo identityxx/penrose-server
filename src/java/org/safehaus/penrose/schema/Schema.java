@@ -6,6 +6,7 @@ package org.safehaus.penrose.schema;
 
 import org.safehaus.penrose.mapping.EntryDefinition;
 import org.safehaus.penrose.mapping.Row;
+import org.safehaus.penrose.mapping.AttributeValues;
 import org.safehaus.penrose.Penrose;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -164,12 +165,16 @@ public class Schema {
         }
     }
 
+    /**
+     * Check if pk2 is a subset of pk1.
+     */
     public boolean partialMatch(Row pk1, Row pk2) throws Exception {
 
         for (Iterator i=pk2.getNames().iterator(); i.hasNext(); ) {
             String name = (String)i.next();
             Object v1 = pk1.get(name);
             Object v2 = pk2.get(name);
+            //log.debug("   - comparing "+name+": ["+v1+"] ["+v2+"]");
 
             if (v1 == null && v2 == null) {
                 continue;
@@ -179,6 +184,35 @@ public class Schema {
 
             } else  if (!(v1.toString()).equalsIgnoreCase(v2.toString())) {
                 return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * Check if row is a subset of av.
+     */
+    public boolean partialMatch(AttributeValues av, Row row) throws Exception {
+
+        for (Iterator i=row.getNames().iterator(); i.hasNext(); ) {
+            String name = (String)i.next();
+            Collection values = av.get(name);
+            Object value = row.get(name);
+
+            if (values == null && value == null) {
+                continue;
+
+            } else if (values == null || value == null) {
+                return false;
+
+            } else {
+                boolean found = false;
+                for (Iterator j=values.iterator(); j.hasNext() && !found; ) {
+                    Object v = j.next();
+                    if (v.toString().equalsIgnoreCase(value.toString())) found = true;
+                }
+                if (!found) return false;
             }
         }
 
@@ -217,7 +251,12 @@ public class Schema {
             Object value = row.get(name);
 
             if (value == null) continue;
-            newRow.set(name.toLowerCase(), value.toString().toLowerCase());
+            //newRow.set(name.toLowerCase(), value.toString().toLowerCase());
+            if (value instanceof String) {
+                value = ((String)value).toLowerCase();
+            }
+            
+            newRow.set(name, value);
         }
 
         return newRow;

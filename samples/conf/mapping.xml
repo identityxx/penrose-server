@@ -16,6 +16,9 @@
     <at name="o">
       <expression>"example"</expression>
     </at>
+    <aci>
+      <permission>rs</permission>
+    </aci>
   </entry>
 
   <entry dn="cn=manager,dc=example,dc=com">

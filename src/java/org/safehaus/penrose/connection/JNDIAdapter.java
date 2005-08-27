@@ -115,8 +115,8 @@ public class JNDIAdapter extends Adapter {
             javax.naming.directory.SearchResult sr = (javax.naming.directory.SearchResult)ne.next();
             log.debug(" - "+sr.getName()+","+ldapBase);
 
-            Collection rows = getRows(source, sr);
-            results.addAll(rows);
+            AttributeValues av = getRows(source, sr);
+            results.add(av);
         }
 
         results.close();
@@ -124,9 +124,9 @@ public class JNDIAdapter extends Adapter {
         return results;
     }
 
-    public Collection getRows(Source source, javax.naming.directory.SearchResult sr) throws Exception {
+    public AttributeValues getRows(Source source, javax.naming.directory.SearchResult sr) throws Exception {
 
-        AttributeValues map = new AttributeValues();
+        AttributeValues av = new AttributeValues();
 
         Attributes attrs = sr.getAttributes();
         Collection fields = source.getFields();
@@ -145,41 +145,14 @@ public class JNDIAdapter extends Adapter {
                 binary = "SyntaxDefinition/1.3.6.1.4.1.1466.115.121.1.40".equals(e.getMessage());
             }
 
-            Set set = (Set)map.get(name);
-
-            if (set == null) {
-                set = new HashSet();
-                map.set(name, set);
-            }
-
             NamingEnumeration attributeValues = attr.getAll();
             while (attributeValues.hasMore()) {
                 Object value = attributeValues.next();
-                set.add(value);
+                av.add(name, value);
             }
         }
 
-        Collection rows = getAdapterContext().getTransformEngine().convert(map);
-
-        List list = new ArrayList();
-
-        for (Iterator i=rows.iterator(); i.hasNext(); ) {
-            Row row = (Row)i.next();
-            Row values = new Row();
-
-            for (Iterator j=fields.iterator(); j.hasNext(); ) {
-                Field field = (Field)j.next();
-                String name = field.getName();
-                Object value = row.get(field.getName());
-                if (value == null) continue;
-                values.set(name, value);
-            }
-
-            //log.debug(" - "+values);
-            list.add(values);
-        }
-
-        return list;
+        return av;
     }
 
     public int bind(Source source, AttributeValues values, String password) throws Exception {

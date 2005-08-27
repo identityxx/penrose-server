@@ -63,6 +63,7 @@ public class Row implements Comparable {
             sb.append(name);
             sb.append("=");
             sb.append(value);
+            //sb.append(value+"("+value.getClass().getName()+")");
         }
 
         return sb.toString();

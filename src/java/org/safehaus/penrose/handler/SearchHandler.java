@@ -401,8 +401,10 @@ public class SearchHandler {
 
         rdns = new TreeSet();
 
+        //log.debug("Results:");
         for (Iterator j=keys.iterator(); j.hasNext(); ) {
             Row row = (Row)j.next();
+            //log.debug(" - "+row);
 
             Interpreter interpreter = getHandlerContext().newInterpreter();
             for (Iterator k=row.getNames().iterator(); k.hasNext(); ) {

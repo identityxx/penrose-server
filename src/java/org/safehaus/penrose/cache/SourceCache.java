@@ -98,31 +98,23 @@ public class SourceCache {
 
     public Map get(
             Source source,
-            Collection pks)
+            Collection filters)
             throws Exception {
 
-        Map results = new HashMap();
+        Map results = new TreeMap();
         Map map = getMap(source);
         //log.debug("PKs in cache: "+map.keySet());
 
-        for (Iterator i=pks.iterator(); i.hasNext(); ) {
-            Row spk = (Row)i.next();
+        for (Iterator i=map.keySet().iterator(); i.hasNext(); ) {
+            Row pk = (Row)i.next();
+            AttributeValues attributeValues = (AttributeValues)map.get(pk);
 
-            // TODO need to handle multiple attribute names
-            String attributeName = (String)spk.getNames().iterator().next();
-            Object attributeValue = spk.get(attributeName);
+            for (Iterator j=filters.iterator(); j.hasNext(); ) {
+                Row filter = (Row)j.next();
 
-            boolean found = false;
+                boolean found = cacheContext.getSchema().partialMatch(attributeValues, filter);
 
-            for (Iterator j=map.keySet().iterator(); !found && j.hasNext(); ) {
-                Row pk = (Row)j.next();
-                AttributeValues attributeValues = (AttributeValues)map.get(pk);
-
-                Collection values = attributeValues.get(attributeName);
-                found = values.contains(attributeValue);
-
-                //found = cacheContext.getSchema().partialMatch(pk, spk);
-                if (found) results.put(spk, attributeValues);
+                if (found) results.put(pk, attributeValues);
             }
 
         }
@@ -137,7 +129,7 @@ public class SourceCache {
 
         while (map.size() >= size) {
             log.debug("Trimming source cache ("+map.size()+").");
-            Row key = (Row)map.keySet().iterator().next();
+            Object key = map.keySet().iterator().next();
             map.remove(key);
         }
 
@@ -269,7 +261,7 @@ public class SourceCache {
             rs = ps.executeQuery();
 
             while (rs.next()) {
-                Row row = getRow(entryDefinition, fieldNames, rs);
+                Row row = getValues(entryDefinition, fieldNames, rs);
                 results.add(row);
             }
 

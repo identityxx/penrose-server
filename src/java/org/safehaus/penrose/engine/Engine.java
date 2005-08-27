@@ -249,7 +249,7 @@ public class Engine {
 
                 String dn = rdn.toString()+","+parent.getDn();
 
-                Entry entry = getEngineContext().getCache().getEntryCache().get(dn);
+                Entry entry = getEngineContext().getCache().getEntryCache().get(dn, entryDefinition);
                 if (entry == null) {
                     rdnsToLoad.add(rdn);
                 } else {
@@ -369,7 +369,7 @@ public class Engine {
 
     public Collection search(Entry parent, EntryDefinition entryDefinition, Filter filter) throws Exception {
         Source primarySource = getEngineContext().getPrimarySource(entryDefinition);
-
+/*
         if (parent == null || !parent.isDynamic()) {
 
             log.debug("Primary source: "+primarySource.getName());
@@ -377,34 +377,41 @@ public class Engine {
             Filter f = engineContext.getCache().getCacheFilterTool().toSourceFilter(null, entryDefinition, primarySource, filter);
             return engineContext.getSyncService().search(primarySource, f);
         }
+*/
+        Collection newRows = null;
 
-        AttributeValues values = parent.getAttributeValues();
-        Collection rows = getEngineContext().getTransformEngine().convert(values);
+        if (parent.getSources().size() > 0) {
 
-        Collection newRows = new HashSet();
-        for (Iterator i=rows.iterator(); i.hasNext(); ) {
-            Row row = (Row)i.next();
+            AttributeValues values = parent.getAttributeValues();
+            Collection rows = getEngineContext().getTransformEngine().convert(values);
 
-            Interpreter interpreter = getEngineContext().newInterpreter();
-            interpreter.set(row);
+            newRows = new HashSet();
+            log.debug("Parent's values:");
 
-            Row newRow = new Row();
+            for (Iterator i=rows.iterator(); i.hasNext(); ) {
+                Row row = (Row)i.next();
 
-            for (Iterator j=parent.getSources().iterator(); j.hasNext(); ) {
-                Source s = (Source)j.next();
+                Interpreter interpreter = getEngineContext().newInterpreter();
+                interpreter.set(row);
 
-                for (Iterator k=s.getFields().iterator(); k.hasNext(); ) {
-                    Field f = (Field)k.next();
-                    String expression = f.getExpression();
-                    Object v = interpreter.eval(expression);
-                    if (v == null) continue;
+                Row newRow = new Row();
 
-                    //log.debug("Setting parent's value "+s.getName()+"."+f.getName()+": "+v);
-                    newRow.set(f.getName(), v);
+                for (Iterator j=parent.getSources().iterator(); j.hasNext(); ) {
+                    Source s = (Source)j.next();
+
+                    for (Iterator k=s.getFields().iterator(); k.hasNext(); ) {
+                        Field f = (Field)k.next();
+                        String expression = f.getExpression();
+                        Object v = interpreter.eval(expression);
+                        if (v == null) continue;
+
+                        newRow.set(f.getName(), v);
+                    }
                 }
-            }
 
-            newRows.add(newRow);
+                log.debug(" - "+newRow);
+                newRows.add(newRow);
+            }
         }
 
         String startingSourceName = getStartingSourceName(entryDefinition);
