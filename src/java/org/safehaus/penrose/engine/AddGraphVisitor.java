@@ -20,26 +20,23 @@ public class AddGraphVisitor extends GraphVisitor {
 
     Logger log = LoggerFactory.getLogger(getClass());
 
-    public SyncService syncService;
+    public EngineContext engineContext;
     public EntryDefinition entryDefinition;
     public AttributeValues values;
-    public Date date;
     private int returnCode = LDAPException.SUCCESS;
 
     private Stack stack = new Stack();
 
     public AddGraphVisitor(
             EngineContext engineContext,
-            SyncService addHandler,
             Source primarySource,
             EntryDefinition entryDefinition,
-            AttributeValues values,
-            Date date) throws Exception {
+            AttributeValues values
+            ) throws Exception {
 
-        this.syncService = addHandler;
+        this.engineContext = engineContext;
         this.entryDefinition = entryDefinition;
         this.values = values;
-        this.date = date;
 
         Collection rows = engineContext.getTransformEngine().convert(values);
         Collection keys = new HashSet();
@@ -85,7 +82,7 @@ public class AddGraphVisitor extends GraphVisitor {
 
         if (entryDefinition.getSource(source.getName()) == null) return false;
 
-        returnCode = syncService.add(source, entryDefinition, values, date);
+        returnCode = engineContext.getSyncService().add(source, entryDefinition, values);
 
         if (returnCode == LDAPException.NO_SUCH_OBJECT) return true; // ignore
         if (returnCode != LDAPException.SUCCESS) return false;

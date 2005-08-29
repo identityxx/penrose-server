@@ -42,7 +42,7 @@
 			<set-next-rule methodname="addEngineConfig" />
 		</pattern>
 
-		<!-- source cache -->
+		<!-- cache -->
 		<pattern value="cache">
 			<object-create-rule classname="org.safehaus.penrose.cache.CacheConfig" />
 			<set-properties-rule/>

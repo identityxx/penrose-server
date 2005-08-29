@@ -5,7 +5,6 @@
 package org.safehaus.penrose.engine;
 
 import org.safehaus.penrose.mapping.*;
-import org.safehaus.penrose.sync.SyncService;
 import org.safehaus.penrose.graph.GraphVisitor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,16 +18,14 @@ public class LoaderGraphVisitor extends GraphVisitor {
 
     Logger log = LoggerFactory.getLogger(getClass());
 
-    private SyncService syncService;
     private EngineContext engineContext;
     private EntryDefinition entryDefinition;
     private Map attributeValues = new HashMap();
 
     private Stack stack = new Stack();
 
-    public LoaderGraphVisitor(EngineContext engineContext, SyncService syncService, EntryDefinition entryDefinition, Collection pks) {
+    public LoaderGraphVisitor(EngineContext engineContext, EntryDefinition entryDefinition, Collection pks) {
         this.engineContext = engineContext;
-        this.syncService = syncService;
         this.entryDefinition = entryDefinition;
 
         Map map = new TreeMap();
@@ -62,7 +59,7 @@ public class LoaderGraphVisitor extends GraphVisitor {
 
         Collection pks = map.keySet();
 
-        Map results = syncService.search(source, pks);
+        Map results = engineContext.getSyncService().search(source, pks);
         if (results.size() == 0) return false;
         
         log.debug("Records:");

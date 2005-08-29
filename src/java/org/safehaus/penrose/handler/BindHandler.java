@@ -133,14 +133,12 @@ public class BindHandler {
 
     public int bind(EntryDefinition entry, AttributeValues values, String password) throws Exception {
 
-        Date date = new Date();
-
         Collection sources = entry.getSources();
 
         for (Iterator i=sources.iterator(); i.hasNext(); ) {
             Source source = (Source)i.next();
 
-            int rc = getEngineContext().getSyncService().bind(source, entry, values, password, date);
+            int rc = getEngineContext().getSyncService().bind(source, entry, values, password);
 
             if (rc == LDAPException.SUCCESS) return rc;
         }

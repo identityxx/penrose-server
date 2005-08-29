@@ -111,6 +111,72 @@ public class JDBCAdapter extends Adapter {
 
         StringBuffer sb = new StringBuffer();
         sb.append("select ");
+        sb.append(getPkFieldNames(source));
+        sb.append(" from ");
+        sb.append(tableName);
+
+        List parameters = new ArrayList();
+        if (filter != null) {
+            sb.append(" where ");
+            sb.append(filterTool.convert(source, filter, parameters));
+        }
+
+        sb.append(" order by ");
+        sb.append(getPkFieldNames(source));
+
+        String sql = sb.toString();
+
+        java.sql.Connection con = null;
+        PreparedStatement ps = null;
+        ResultSet rs = null;
+
+        try {
+            con = ds.getConnection();
+
+            log.debug("Executing "+sql);
+
+            ps = con.prepareStatement(sql);
+
+            int counter = 0;
+            for (Iterator i=parameters.iterator(); i.hasNext(); ) {
+                Object param = i.next();
+                ps.setObject(++counter, param);
+                log.debug(" - "+counter+" = "+param);
+            }
+
+            rs = ps.executeQuery();
+
+            log.debug("Result:");
+
+            for (int i=0; rs.next() && (sizeLimit == 0 || i<sizeLimit); i++) {
+
+                Row row = getPkValues(source, rs);
+                log.debug(" - "+row);
+
+                results.add(row);
+            }
+
+        } finally {
+            if (rs != null) try { rs.close(); } catch (Exception e) {}
+            if (ps != null) try { ps.close(); } catch (Exception e) {}
+            if (con != null) try { con.close(); } catch (Exception e) {}
+        }
+
+        results.close();
+
+        return results;
+    }
+
+    public SearchResults load(Source source, Filter filter, long sizeLimit) throws Exception {
+        SearchResults results = new SearchResults();
+
+        //log.debug("--------------------------------------------------------------------------------------");
+        log.debug("Loading JDBC Source: "+source.getConnectionName()+"/"+source.getSourceName()+": "+filter);
+
+        String tableName = source.getParameter("tableName");
+
+        StringBuffer sb = new StringBuffer();
+        sb.append("select ");
         sb.append(getFieldNames(source));
         sb.append(" from ");
         sb.append(tableName);
@@ -165,6 +231,30 @@ public class JDBCAdapter extends Adapter {
         results.close();
 
         return results;
+    }
+
+    public Row getPkValues(Source source, ResultSet rs) throws Exception {
+
+        Row row = new Row();
+
+        ResultSetMetaData rsmd = rs.getMetaData();
+        int count = rsmd.getColumnCount();
+
+        int c = 1;
+        Collection fields = source.getPrimaryKeyFields();
+
+        for (Iterator i=fields.iterator(); i.hasNext() && c<=count; c++) {
+            Field field = (Field)i.next();
+
+            Object value = rs.getObject(c);
+            if (value == null) continue;
+
+            row.set(field.getName(), value);
+        }
+
+        //log.debug("=> values: "+row);
+
+        return row;
     }
 
     public AttributeValues getValues(Source source, ResultSet rs) throws Exception {

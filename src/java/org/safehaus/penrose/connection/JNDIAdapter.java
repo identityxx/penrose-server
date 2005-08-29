@@ -97,6 +97,7 @@ public class JNDIAdapter extends Adapter {
         log.debug("filter: "+ldapFilter);
 
         SearchControls ctls = new SearchControls();
+        ctls.setReturningAttributes(new String[] { "dn" });
         if ("OBJECT".equals(ldapScope)) {
         	ctls.setSearchScope(SearchControls.OBJECT_SCOPE);
         	
@@ -115,8 +116,8 @@ public class JNDIAdapter extends Adapter {
             javax.naming.directory.SearchResult sr = (javax.naming.directory.SearchResult)ne.next();
             log.debug(" - "+sr.getName()+","+ldapBase);
 
-            AttributeValues av = getRows(source, sr);
-            results.add(av);
+            Row row = getPkValues(source, sr);
+            results.add(row);
         }
 
         results.close();
@@ -124,7 +125,92 @@ public class JNDIAdapter extends Adapter {
         return results;
     }
 
-    public AttributeValues getRows(Source source, javax.naming.directory.SearchResult sr) throws Exception {
+    public SearchResults load(Source source, Filter filter, long sizeLimit) throws Exception {
+
+        log.debug("JNDI Search:");
+
+        SearchResults results = new SearchResults();
+
+        //log.debug("--------------------------------------------------------------------------------------");
+        log.debug("JNDI Source: "+source.getConnectionName());
+
+        String ldapBase = source.getParameter(BASE_DN);
+        if ("".equals(ldapBase)) {
+            ldapBase = suffix;
+        } else {
+            ldapBase = ldapBase+","+suffix;
+        }
+
+        String ldapScope = source.getParameter(SCOPE);
+        String ldapFilter = source.getParameter(FILTER);
+
+        if (filter != null) {
+            ldapFilter = "(&"+ldapFilter+filter+")";
+        }
+
+        log.debug("base: "+ldapBase);
+        log.debug("filter: "+ldapFilter);
+
+        SearchControls ctls = new SearchControls();
+        if ("OBJECT".equals(ldapScope)) {
+        	ctls.setSearchScope(SearchControls.OBJECT_SCOPE);
+
+        } else if ("ONELEVEL".equals(ldapScope)) {
+        	ctls.setSearchScope(SearchControls.ONELEVEL_SCOPE);
+
+        } else if ("SUBTREE".equals(ldapScope)) {
+        	ctls.setSearchScope(SearchControls.SUBTREE_SCOPE);
+        }
+
+        NamingEnumeration ne = ctx.search(ldapBase, ldapFilter, ctls);
+
+        log.debug("Result:");
+
+        while (ne.hasMore()) {
+            javax.naming.directory.SearchResult sr = (javax.naming.directory.SearchResult)ne.next();
+            log.debug(" - "+sr.getName()+","+ldapBase);
+
+            AttributeValues av = getValues(source, sr);
+            results.add(av);
+        }
+
+        results.close();
+
+        return results;
+    }
+
+    public Row getPkValues(Source source, javax.naming.directory.SearchResult sr) throws Exception {
+
+        Row row = new Row();
+
+        Attributes attrs = sr.getAttributes();
+        Collection fields = source.getPrimaryKeyFields();
+        for (Iterator i=fields.iterator(); i.hasNext(); ) {
+            Field field = (Field)i.next();
+            String name = field.getName();
+            if (name.equals("objectClass")) continue;
+
+            javax.naming.directory.Attribute attr = attrs.get(field.getOriginalName());
+            if (attr == null) continue;
+
+            boolean binary = false;
+            try {
+                attr.getAttributeSyntaxDefinition();
+            } catch (Exception e) {
+                binary = "SyntaxDefinition/1.3.6.1.4.1.1466.115.121.1.40".equals(e.getMessage());
+            }
+
+            NamingEnumeration attributeValues = attr.getAll();
+            while (attributeValues.hasMore()) {
+                Object value = attributeValues.next();
+                row.set(name, value);
+            }
+        }
+
+        return row;
+    }
+
+    public AttributeValues getValues(Source source, javax.naming.directory.SearchResult sr) throws Exception {
 
         AttributeValues av = new AttributeValues();
 

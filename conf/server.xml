@@ -7,34 +7,34 @@
 
 <server>
 
-  <interpreter>
-    <interpreter-name>DEFAULT</interpreter-name>
-    <interpreter-class>org.safehaus.penrose.interpreter.DefaultInterpreter</interpreter-class>
-  </interpreter>
+    <interpreter>
+        <interpreter-name>DEFAULT</interpreter-name>
+        <interpreter-class>org.safehaus.penrose.interpreter.DefaultInterpreter</interpreter-class>
+    </interpreter>
 
-  <engine>
-    <engine-name>DEFAULT</engine-name>
-    <engine-class>org.safehaus.penrose.engine.Engine</engine-class>
-  </engine>
+    <engine>
+        <engine-name>DEFAULT</engine-name>
+        <engine-class>org.safehaus.penrose.engine.Engine</engine-class>
+    </engine>
 
-  <cache>
-    <cache-name>DEFAULT</cache-name>
-    <cache-class>org.safehaus.penrose.cache.Cache</cache-class>
-  </cache>
+    <cache>
+        <cache-name>DEFAULT</cache-name>
+        <cache-class>org.safehaus.penrose.cache.Cache</cache-class>
+    </cache>
 
-  <adapter>
-    <adapter-name>JDBC</adapter-name>
-    <adapter-class>org.safehaus.penrose.connection.JDBCAdapter</adapter-class>
-  </adapter>
+    <adapter>
+        <adapter-name>JDBC</adapter-name>
+        <adapter-class>org.safehaus.penrose.connection.JDBCAdapter</adapter-class>
+    </adapter>
 
-  <adapter>
-    <adapter-name>JNDI</adapter-name>
-    <adapter-class>org.safehaus.penrose.connection.JNDIAdapter</adapter-class>
-  </adapter>
+    <adapter>
+        <adapter-name>JNDI</adapter-name>
+        <adapter-class>org.safehaus.penrose.connection.JNDIAdapter</adapter-class>
+    </adapter>
 
-  <root>
-    <root-dn>cn=manager,dc=penrose,dc=safehaus,dc=org</root-dn>
-    <root-password>secret</root-password>
-  </root>
+    <root>
+        <root-dn>cn=manager,dc=penrose,dc=safehaus,dc=org</root-dn>
+        <root-password>secret</root-password>
+    </root>
 
 </server>

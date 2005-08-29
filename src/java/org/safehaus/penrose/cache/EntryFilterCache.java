@@ -29,7 +29,7 @@ public class EntryFilterCache {
         this.cache = cache;
 
         String s = cache.getParameter("size");
-        size = s == null ? 50 : Integer.parseInt(s);
+        size = s == null ? 100 : Integer.parseInt(s);
 
         s = cache.getParameter("expiration");
         expiration = s == null ? 5 : Integer.parseInt(s);

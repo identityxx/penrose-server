@@ -56,6 +56,13 @@ public abstract class Adapter {
     public abstract SearchResults search(Source source, Filter filter, long sizeLimit) throws Exception;
 
     /**
+     * Load.
+     *
+     * @throws Exception
+     */
+    public abstract SearchResults load(Source source, Filter filter, long sizeLimit) throws Exception;
+
+    /**
      * Add.
      * 
      * @throws Exception

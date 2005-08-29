@@ -5,7 +5,6 @@
 package org.safehaus.penrose.engine;
 
 import org.safehaus.penrose.mapping.*;
-import org.safehaus.penrose.sync.SyncService;
 import org.safehaus.penrose.graph.GraphVisitor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,28 +19,25 @@ public class ModifyGraphVisitor extends GraphVisitor {
 
     Logger log = LoggerFactory.getLogger(getClass());
 
-    public SyncService syncService;
+    public EngineContext engineContext;
     public EntryDefinition entryDefinition;
     public AttributeValues oldValues;
     public AttributeValues newValues;
-    public Date date;
     private int returnCode = LDAPException.SUCCESS;
 
     private Stack stack = new Stack();
 
     public ModifyGraphVisitor(
             EngineContext engineContext,
-            SyncService syncService,
             Source primarySource,
             Entry entry,
-            AttributeValues newValues,
-            Date date) throws Exception {
+            AttributeValues newValues
+            ) throws Exception {
 
-        this.syncService = syncService;
+        this.engineContext = engineContext;
         this.entryDefinition = entry.getEntryDefinition();
         this.oldValues = entry.getAttributeValues();
         this.newValues = newValues;
-        this.date = date;
 
         Collection rows = engineContext.getTransformEngine().convert(oldValues);
         Collection keys = new HashSet();
@@ -87,7 +83,7 @@ public class ModifyGraphVisitor extends GraphVisitor {
 
         if (entryDefinition.getSource(source.getName()) == null) return false;
 
-        returnCode = syncService.modify(source, entryDefinition, oldValues, newValues, date);
+        returnCode = engineContext.getSyncService().modify(source, entryDefinition, oldValues, newValues);
         if (returnCode != LDAPException.SUCCESS) return false;
 
         return true;

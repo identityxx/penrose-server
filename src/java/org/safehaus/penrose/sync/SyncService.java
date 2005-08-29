@@ -45,7 +45,7 @@ public class SyncService {
 		return lock;
 	}
 
-    public int bind(Source source, EntryDefinition entry, AttributeValues attributes, String password, Date date) throws Exception {
+    public int bind(Source source, EntryDefinition entry, AttributeValues attributes, String password) throws Exception {
         log.debug("----------------------------------------------------------------");
         log.debug("Binding as entry in "+source.getName());
         log.debug("Values: "+attributes);
@@ -76,7 +76,7 @@ public class SyncService {
         return LDAPException.SUCCESS;
     }
 
-    public int add(Source source, EntryDefinition entry, AttributeValues values, Date date) throws Exception {
+    public int add(Source source, EntryDefinition entry, AttributeValues values) throws Exception {
 
         log.debug("----------------------------------------------------------------");
         log.debug("Adding entry into "+source.getName());
@@ -111,7 +111,7 @@ public class SyncService {
         return LDAPException.SUCCESS;
     }
 
-    public int delete(Source source, EntryDefinition entry, AttributeValues values, Date date) throws Exception {
+    public int delete(Source source, EntryDefinition entry, AttributeValues values) throws Exception {
 
         log.info("-------------------------------------------------");
         log.debug("Deleting entry in "+source.getName());
@@ -152,7 +152,7 @@ public class SyncService {
         return LDAPException.SUCCESS;
     }
 
-    public int modify(Source source, EntryDefinition entry, AttributeValues oldValues, AttributeValues newValues, Date date) throws Exception {
+    public int modify(Source source, EntryDefinition entry, AttributeValues oldValues, AttributeValues newValues) throws Exception {
 
         log.debug("----------------------------------------------------------------");
         log.debug("Updating entry in " + source.getName());
@@ -271,62 +271,102 @@ public class SyncService {
             }
         }
 
-        log.info("Searching source "+source.getName()+" "+source.getSourceName()+" with pks "+normalizedFilters);
-
-        //CacheEvent beforeEvent = new CacheEvent(getCacheContext(), sourceConfig, CacheEvent.BEFORE_LOAD_ENTRIES);
-        //postCacheEvent(sourceConfig, beforeEvent);
-
-        Map results = new TreeMap();
-        load(source, normalizedFilters, results);
-        Collection pks = results.keySet();
-
-        log.debug("Checking source cache for "+pks);
-        String key = source.getConnectionConfig().getConnectionName()+"."+source.getSourceName();
-        Map rows = syncContext.getCache().getSourceDataCache().get(key, pks);
-        log.debug("Loaded: "+rows.keySet());
-
-        Collection pksToLoad = new HashSet();
-        pksToLoad.addAll(results.keySet());
-        pksToLoad.removeAll(rows.keySet());
-
-        log.debug("Pks to load: "+pksToLoad);
-
-        if (!pksToLoad.isEmpty()) {
-            load(source, pksToLoad, results);
-        }
-
-        //CacheEvent afterEvent = new CacheEvent(getCacheContext(), sourceConfig, CacheEvent.AFTER_LOAD_ENTRIES);
-        //postCacheEvent(sourceConfig, afterEvent);
-
-        return results;
-    }
-
-    public void load(Source source, Collection filters, Map results) throws Exception {
-
         Filter filter = null;
         if (filters != null) {
-            filter = syncContext.getCache().getCacheContext().getFilterTool().createFilter(filters);
+            filter = syncContext.getCache().getCacheContext().getFilterTool().createFilter(normalizedFilters);
         }
+
+        log.info("Searching source "+source.getName()+" "+source.getSourceName()+" with filter "+filter);
 
         String key = source.getConnectionConfig().getConnectionName()+"."+source.getSourceName();
         log.debug("Checking source filter cache for ["+key+"]");
 
         Collection pks = syncContext.getCache().getSourceFilterCache().get(key, filter);
+        if (pks == null) {
 
-        if (pks != null) {
-            Map rows = syncContext.getCache().getSourceDataCache().get(key, pks);
-            results.putAll(rows);
-            return;
+            String method = source.getParameter("loadingMethod");
+            log.debug("Loading method: "+method);
+            
+            if ("searchAndLoad".equals(method)) {
+                log.debug("Searching pks for: "+filter);
+                pks = searchEntries(source, filter);
+
+            } else {
+                log.debug("Loading entries for: "+filter);
+                Map map = loadEntries(source, filter);
+                pks = map.keySet();
+
+                for (Iterator i=map.keySet().iterator(); i.hasNext(); ) {
+                    Row pk = (Row)i.next();
+                    AttributeValues values = (AttributeValues)map.get(pk);
+                    syncContext.getCache().getSourceDataCache().put(key, pk, values);
+                }
+            }
+
+            syncContext.getCache().getSourceFilterCache().put(key, filter, pks);
+
+            Filter newFilter = syncContext.getCache().getCacheContext().getFilterTool().createFilter(pks);
+            syncContext.getCache().getSourceFilterCache().put(key, newFilter, pks);
         }
 
-        log.debug("Source filter cache not found.");
-        //log.debug("Searching source "+key+" for "+filter);
+        Map results = new TreeMap();
+
+        log.debug("Checking source cache for pks "+pks);
+        Map loadedRows = syncContext.getCache().getSourceDataCache().get(key, pks);
+        log.debug("Loaded rows: "+loadedRows.keySet());
+        results.putAll(loadedRows);
+
+        Collection pksToLoad = new HashSet();
+        pksToLoad.addAll(pks);
+        pksToLoad.removeAll(loadedRows.keySet());
+
+        if (!pksToLoad.isEmpty()) {
+            log.debug("Loading pks: "+pksToLoad);
+            Filter newFilter = syncContext.getCache().getCacheContext().getFilterTool().createFilter(pksToLoad);
+            Map map = loadEntries(source, newFilter);
+            results.putAll(map);
+
+            for (Iterator i=map.keySet().iterator(); i.hasNext(); ) {
+                Row pk = (Row)i.next();
+                AttributeValues values = (AttributeValues)map.get(pk);
+                syncContext.getCache().getSourceDataCache().put(key, pk, values);
+            }
+
+            syncContext.getCache().getSourceFilterCache().put(key, newFilter, map.keySet());
+        }
+
+        return results;
+    }
+
+    public Collection searchEntries(Source source, Filter filter) throws Exception {
+
+        Collection results = new TreeSet();
 
         Connection connection = syncContext.getConnection(source.getConnectionName());
         SearchResults sr = connection.search(source, filter, 100);
 
         log.debug("Search results:");
-        pks = new TreeSet();
+
+        for (Iterator i=sr.iterator(); i.hasNext();) {
+            Row pk = (Row)i.next();
+
+            Row npk = syncContext.getSchema().normalize(pk);
+            log.debug(" - PK: "+npk);
+
+            results.add(npk);
+        }
+
+        return results;
+    }
+
+    public Map loadEntries(Source source, Filter filter) throws Exception {
+
+        Map results = new TreeMap();
+
+        Connection connection = syncContext.getConnection(source.getConnectionName());
+        SearchResults sr = connection.load(source, filter, 100);
+
+        log.debug("Load results:");
 
         for (Iterator i=sr.iterator(); i.hasNext();) {
             AttributeValues av = (AttributeValues)i.next();
@@ -345,16 +385,10 @@ public class SyncService {
             Row npk = syncContext.getSchema().normalize(pk);
             log.debug(" - PK: "+npk);
 
-            pks.add(npk);
             results.put(npk, av);
-
-            syncContext.getCache().getSourceDataCache().put(key, npk, av);
         }
 
-        syncContext.getCache().getSourceFilterCache().put(key, filter, pks);
-
-        filter = syncContext.getCache().getCacheContext().getFilterTool().createFilter(pks);
-        syncContext.getCache().getSourceFilterCache().put(key, filter, pks);
+        return results;
     }
 
 }

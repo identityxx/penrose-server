@@ -58,6 +58,10 @@ public class Connection {
         return adapter.search(source, filter, sizeLimit);
     }
 
+    public SearchResults load(Source source, Filter filter, long sizeLimit) throws Exception {
+        return adapter.load(source, filter, sizeLimit);
+    }
+
     public int add(Source source, AttributeValues values) throws Exception {
         return adapter.add(source, values);
     }

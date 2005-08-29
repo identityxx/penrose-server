@@ -5,7 +5,6 @@
 package org.safehaus.penrose.engine;
 
 import org.safehaus.penrose.mapping.*;
-import org.safehaus.penrose.sync.SyncService;
 import org.safehaus.penrose.graph.GraphVisitor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,26 +19,23 @@ public class DeleteGraphVisitor extends GraphVisitor {
 
     Logger log = LoggerFactory.getLogger(getClass());
 
-    public SyncService syncService;
+    public EngineContext engineContext;
     public EntryDefinition entryDefinition;
     public AttributeValues values;
-    public Date date;
     private int returnCode = LDAPException.SUCCESS;
 
     private Stack stack = new Stack();
 
     public DeleteGraphVisitor(
             EngineContext engineContext,
-            SyncService deleteHandler,
             Source primarySource,
             EntryDefinition entryDefinition,
-            AttributeValues values,
-            Date date) throws Exception {
+            AttributeValues values
+            ) throws Exception {
 
-        this.syncService = deleteHandler;
+        this.engineContext = engineContext;
         this.entryDefinition = entryDefinition;
         this.values = values;
-        this.date = date;
 
         Collection rows = engineContext.getTransformEngine().convert(values);
         Collection keys = new HashSet();
@@ -85,7 +81,7 @@ public class DeleteGraphVisitor extends GraphVisitor {
 
         if (entryDefinition.getSource(source.getName()) == null) return false;
 
-        returnCode = syncService.delete(source, entryDefinition, values, date);
+        returnCode = engineContext.getSyncService().delete(source, entryDefinition, values);
 
         if (returnCode == LDAPException.NO_SUCH_OBJECT) return true; // ignore
         if (returnCode != LDAPException.SUCCESS) return false;

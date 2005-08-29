@@ -150,12 +150,10 @@ public class Engine {
             AttributeValues values)
             throws Exception {
 
-        Date date = new Date();
-
         Graph graph = getEngineContext().getGraph(entryDefinition);
         Source primarySource = getEngineContext().getPrimarySource(entryDefinition);
 
-        AddGraphVisitor visitor = new AddGraphVisitor(getEngineContext(), getEngineContext().getSyncService(), primarySource, entryDefinition, values, date);
+        AddGraphVisitor visitor = new AddGraphVisitor(getEngineContext(), primarySource, entryDefinition, values);
         graph.traverse(visitor, primarySource);
 
         if (visitor.getReturnCode() != LDAPException.SUCCESS) return visitor.getReturnCode();
@@ -168,15 +166,13 @@ public class Engine {
 
     public int delete(Entry entry) throws Exception {
 
-        Date date = new Date();
-
         EntryDefinition entryDefinition = entry.getEntryDefinition();
         AttributeValues values = entry.getAttributeValues();
 
         Graph graph = getEngineContext().getGraph(entryDefinition);
         Source primarySource = getEngineContext().getPrimarySource(entryDefinition);
 
-        DeleteGraphVisitor visitor = new DeleteGraphVisitor(getEngineContext(), getEngineContext().getSyncService(), primarySource, entryDefinition, values, date);
+        DeleteGraphVisitor visitor = new DeleteGraphVisitor(getEngineContext(), primarySource, entryDefinition, values);
         graph.traverse(visitor, primarySource);
 
         if (visitor.getReturnCode() != LDAPException.SUCCESS) return visitor.getReturnCode();
@@ -195,12 +191,10 @@ public class Engine {
         EntryDefinition entryDefinition = entry.getEntryDefinition();
         AttributeValues oldValues = entry.getAttributeValues();
 
-        Date date = new Date();
-
         Graph graph = getEngineContext().getGraph(entryDefinition);
         Source primarySource = getEngineContext().getPrimarySource(entryDefinition);
 
-        ModifyGraphVisitor visitor = new ModifyGraphVisitor(getEngineContext(), getEngineContext().getSyncService(), primarySource, entry, newValues, date);
+        ModifyGraphVisitor visitor = new ModifyGraphVisitor(getEngineContext(), primarySource, entry, newValues);
         graph.traverse(visitor, primarySource);
 
         if (visitor.getReturnCode() != LDAPException.SUCCESS) return visitor.getReturnCode();
@@ -320,7 +314,7 @@ public class Engine {
         Graph graph = getEngineContext().getGraph(entryDefinition);
         Source primarySource = getEngineContext().getPrimarySource(entryDefinition);
 
-        LoaderGraphVisitor loaderVisitor = new LoaderGraphVisitor(getEngineContext(), getEngineContext().getSyncService(), entryDefinition, pks);
+        LoaderGraphVisitor loaderVisitor = new LoaderGraphVisitor(getEngineContext(), entryDefinition, pks);
         graph.traverse(loaderVisitor, primarySource);
 
         Collection results = new ArrayList();
