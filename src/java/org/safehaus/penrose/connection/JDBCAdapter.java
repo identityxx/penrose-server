@@ -104,7 +104,7 @@ public class JDBCAdapter extends Adapter {
     public SearchResults search(Source source, Filter filter, long sizeLimit) throws Exception {
         SearchResults results = new SearchResults();
 
-        log.debug("--------------------------------------------------------------------------------------");
+        //log.debug("--------------------------------------------------------------------------------------");
         log.debug("Searching JDBC Source: "+source.getConnectionName()+"/"+source.getSourceName()+": "+filter);
 
         String tableName = source.getParameter("tableName");

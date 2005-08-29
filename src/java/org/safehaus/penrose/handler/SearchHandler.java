@@ -152,8 +152,6 @@ public class SearchHandler {
             String rdn)
             throws Exception {
 
-        Calendar calendar = Calendar.getInstance();
-
         int i = rdn.indexOf("=");
         String attr = rdn.substring(0, i);
         String value = rdn.substring(i + 1);
@@ -164,7 +162,15 @@ public class SearchHandler {
         List rdns = new ArrayList();
         rdns.add(pk);
 
-        SearchResults results = handlerContext.getEngine().load(parent, entryDefinition, rdns, calendar);
+        //Filter filter = handlerContext.getFilterTool().createFilter(rdns);
+
+        //log.debug("--------------------------------------------------------------------------------------");
+        //log.debug("Searching for entry "+entryDefinition.getDn()+" with filter "+filters);
+
+        //Collection rdns = handlerContext.getEngine().search(parent, entryDefinition, filter);
+        //log.debug("Searched rdns: "+rdns);
+
+        SearchResults results = handlerContext.getEngine().load(parent, entryDefinition, rdns);
 
         if (results.size() == 0) return null;
 
@@ -183,6 +189,8 @@ public class SearchHandler {
             Collection attributeNames,
             SearchResults results) throws Exception {
 
+        log.debug("----------------------------------------------------------------------------------");
+
 		String nbase;
 		try {
 			nbase = LDAPDN.normalize(base);
@@ -200,7 +208,6 @@ public class SearchHandler {
 		Filter f = handlerContext.getFilterTool().parseFilter(filter);
 		log.debug("Parsed filter: " + f);
 
-        log.debug("----------------------------------------------------------------------------------");
 		Entry baseEntry;
 		try {
 			baseEntry = find(connection, nbase);
@@ -239,7 +246,7 @@ public class SearchHandler {
 			}
 		}
 
-        log.debug("----------------------------------------------------------------------------------");
+        //log.debug("----------------------------------------------------------------------------------");
 		if (scope == LDAPConnection.SCOPE_ONE || scope == LDAPConnection.SCOPE_SUB) { // one level or subtree
 			log.debug("Searching children of " + baseEntry.getDn());
 			searchChildren(connection, baseEntry, scope, f, normalizedAttributeNames, results);
@@ -269,15 +276,9 @@ public class SearchHandler {
             Filter filter
             ) throws Exception {
 
-        log.debug("--------------------------------------------------------------------------------------");
-        log.debug("Searching for entry "+entryDefinition.getDn()+" with filter "+filter);
+        Collection rdns = handlerContext.getEngine().search(parent, entryDefinition, filter);
 
-        Calendar calendar = Calendar.getInstance();
-
-        Collection rdns = handlerContext.getEngine().search(parent, entryDefinition, filter, calendar);
-        log.debug("Searched rdns: "+rdns);
-
-        return handlerContext.getEngine().load(parent, entryDefinition, rdns, calendar);
+        return handlerContext.getEngine().load(parent, entryDefinition, rdns);
     }
 
     public HandlerContext getHandlerContext() {

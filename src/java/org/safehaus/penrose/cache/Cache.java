@@ -20,8 +20,8 @@ public class Cache {
     private CacheContext cacheContext;
 
     private EntryFilterCache entryFilterCache;
-    private EntryCache entryCache;
-    private SourceCache sourceCache;
+    private EntryDataCache entryDataCache;
+    private SourceDataCache sourceDataCache;
     private SourceFilterCache sourceFilterCache;
 
     protected CacheFilterTool cacheFilterTool;
@@ -56,8 +56,8 @@ public class Cache {
         init();
 
         entryFilterCache.init(this);
-        entryCache.init(this);
-        sourceCache.init(this);
+        entryDataCache.init(this);
+        sourceDataCache.init(this);
         sourceFilterCache.init(this);
     }
 
@@ -66,11 +66,11 @@ public class Cache {
     }
 
     public void createEntryCache() throws Exception {
-        entryCache = new EntryCache();
+        entryDataCache = new EntryDataCache();
     }
 
     public void createSourceCache() throws Exception {
-        sourceCache = new SourceCache();
+        sourceDataCache = new SourceDataCache();
     }
 
     public void createSourceFilterCache() throws Exception {
@@ -80,20 +80,20 @@ public class Cache {
     public void init() throws Exception {
     }
 
-    public EntryCache getEntryCache() {
-        return entryCache;
+    public EntryDataCache getEntryDataCache() {
+        return entryDataCache;
     }
 
-    public void setEntryCache(EntryCache entryCache) {
-        this.entryCache = entryCache;
+    public void setEntryDataCache(EntryDataCache entryDataCache) {
+        this.entryDataCache = entryDataCache;
     }
 
-    public SourceCache getSourceCache() {
-        return sourceCache;
+    public SourceDataCache getSourceDataCache() {
+        return sourceDataCache;
     }
 
-    public void setSourceCache(SourceCache sourceCache) {
-        this.sourceCache = sourceCache;
+    public void setSourceDataCache(SourceDataCache sourceDataCache) {
+        this.sourceDataCache = sourceDataCache;
     }
 
     public CacheContext getCacheContext() {

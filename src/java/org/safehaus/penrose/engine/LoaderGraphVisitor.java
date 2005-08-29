@@ -107,7 +107,7 @@ public class LoaderGraphVisitor extends GraphVisitor {
 
             av.add(newValues);
 
-            log.debug("   - "+av);
+            //log.debug("   - "+av);
         }
 
         stack.push(newMap);

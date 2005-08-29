@@ -76,7 +76,7 @@ public class JNDIAdapter extends Adapter {
 
         SearchResults results = new SearchResults();
 
-        log.debug("--------------------------------------------------------------------------------------");
+        //log.debug("--------------------------------------------------------------------------------------");
         log.debug("JNDI Source: "+source.getConnectionName());
 
         String ldapBase = source.getParameter(BASE_DN);

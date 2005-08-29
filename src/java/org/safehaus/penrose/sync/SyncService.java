@@ -7,7 +7,6 @@ package org.safehaus.penrose.sync;
 import org.safehaus.penrose.SearchResults;
 import org.safehaus.penrose.thread.MRSWLock;
 import org.safehaus.penrose.thread.Queue;
-import org.safehaus.penrose.cache.SourceCache;
 import org.safehaus.penrose.connection.Connection;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.mapping.*;
@@ -100,10 +99,10 @@ public class SyncService {
                 Connection connection = syncContext.getConnection(source.getConnectionName());
 	            int rc = connection.add(source, fieldValues);
 	            if (rc != LDAPException.SUCCESS) return rc;
-
-	            // Add row to the source table in the cache
-	            //getEngine().getSourceCache().put(source, pk, fieldValues);
 	        }
+
+            String key = source.getConnectionConfig().getConnectionName()+"."+source.getSourceName();
+            syncContext.getCache().getSourceFilterCache().remove(key);
 
         } finally {
         	lock.releaseWriteLock(WAIT_TIMEOUT);
@@ -130,6 +129,8 @@ public class SyncService {
 
 	        log.debug("Rows to be deleted from "+source.getName()+": "+rows.size()+" rows");
 
+            String key = source.getConnectionConfig().getConnectionName()+"."+source.getSourceName();
+
 	        for (Iterator i=rows.keySet().iterator(); i.hasNext(); ) {
 	            Row pk = (Row)i.next();
 	            AttributeValues attributes = (AttributeValues)rows.get(pk);
@@ -139,8 +140,10 @@ public class SyncService {
 	            int rc = connection.delete(source, attributes);
 	            if (rc != LDAPException.SUCCESS) return rc;
 
-	            syncContext.getCache().getSourceCache().remove(source, pk);
+	            syncContext.getCache().getSourceDataCache().remove(key, pk);
 	        }
+
+            syncContext.getCache().getSourceFilterCache().remove(key);
 
         } finally {
             lock.releaseWriteLock(WAIT_TIMEOUT);
@@ -185,6 +188,8 @@ public class SyncService {
             replaceRows.retainAll(newPKs);
             log.debug("PKs to replace: " + replaceRows);
 
+            String key = source.getConnectionConfig().getConnectionName()+"."+source.getSourceName();
+
             // Add rows
             for (Iterator i = addRows.iterator(); i.hasNext();) {
                 Row pk = (Row) i.next();
@@ -197,9 +202,6 @@ public class SyncService {
                 Connection connection = syncContext.getConnection(source.getConnectionName());
                 int rc = connection.add(source, newEntry);
                 if (rc != LDAPException.SUCCESS) return rc;
-
-                // Add row to source table in the cache
-                //engine.getSourceCache().insert(source, newEntry, date);
             }
 
             // Remove rows
@@ -217,7 +219,7 @@ public class SyncService {
                     return rc;
 
                 // Delete row from source table in the cache
-                syncContext.getCache().getSourceCache().remove(source, pk);
+                syncContext.getCache().getSourceDataCache().remove(key, pk);
             }
 
             // Replace rows
@@ -236,9 +238,10 @@ public class SyncService {
                 if (rc != LDAPException.SUCCESS) return rc;
 
                 // Modify row from source table in the cache
-                syncContext.getCache().getSourceCache().remove(source, pk);
-                //engine.getSourceCache().insert(source, newEntry);
+                syncContext.getCache().getSourceDataCache().remove(key, pk);
             }
+
+            syncContext.getCache().getSourceFilterCache().remove(key);
 
         } finally {
             lock.releaseWriteLock(WAIT_TIMEOUT);
@@ -268,17 +271,18 @@ public class SyncService {
             }
         }
 
-        log.info("Loading source "+source.getName()+" "+source.getSourceName()+" with pks "+normalizedFilters);
+        log.info("Searching source "+source.getName()+" "+source.getSourceName()+" with pks "+normalizedFilters);
 
         //CacheEvent beforeEvent = new CacheEvent(getCacheContext(), sourceConfig, CacheEvent.BEFORE_LOAD_ENTRIES);
         //postCacheEvent(sourceConfig, beforeEvent);
 
         Map results = new TreeMap();
         load(source, normalizedFilters, results);
-        Collection primaryKeys = results.keySet();
+        Collection pks = results.keySet();
 
-        log.debug("Checking source cache for "+primaryKeys);
-        Map rows = syncContext.getCache().getSourceCache().get(source, primaryKeys);
+        log.debug("Checking source cache for "+pks);
+        String key = source.getConnectionConfig().getConnectionName()+"."+source.getSourceName();
+        Map rows = syncContext.getCache().getSourceDataCache().get(key, pks);
         log.debug("Loaded: "+rows.keySet());
 
         Collection pksToLoad = new HashSet();
@@ -310,13 +314,13 @@ public class SyncService {
         Collection pks = syncContext.getCache().getSourceFilterCache().get(key, filter);
 
         if (pks != null) {
-            Map map = syncContext.getCache().getSourceCache().get(source, pks);
-            results.putAll(map);
+            Map rows = syncContext.getCache().getSourceDataCache().get(key, pks);
+            results.putAll(rows);
             return;
         }
 
         log.debug("Source filter cache not found.");
-        log.debug("Searching source "+key+" for "+filter);
+        //log.debug("Searching source "+key+" for "+filter);
 
         Connection connection = syncContext.getConnection(source.getConnectionName());
         SearchResults sr = connection.search(source, filter, 100);
@@ -344,15 +348,13 @@ public class SyncService {
             pks.add(npk);
             results.put(npk, av);
 
-            syncContext.getCache().getSourceCache().put(source, npk, av);
+            syncContext.getCache().getSourceDataCache().put(key, npk, av);
         }
 
         syncContext.getCache().getSourceFilterCache().put(key, filter, pks);
 
         filter = syncContext.getCache().getCacheContext().getFilterTool().createFilter(pks);
         syncContext.getCache().getSourceFilterCache().put(key, filter, pks);
-
-        log.debug("Loaded: "+pks);
     }
 
 }

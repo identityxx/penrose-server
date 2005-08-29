@@ -8,9 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.safehaus.penrose.filter.Filter;
 
-import java.util.Map;
-import java.util.Collection;
-import java.util.TreeMap;
+import java.util.*;
 
 /**
  * @author Endi S. Dewata
@@ -19,11 +17,13 @@ public class SourceFilterCache {
 
     Logger log = LoggerFactory.getLogger(getClass());
 
-    public Map maps = new TreeMap();
+    public Map data = new TreeMap();
+    public Map expirations = new TreeMap();
 
     public Cache cache;
 
     private int size;
+    private int expiration; // minutes
 
     public void init(Cache cache) throws Exception {
         this.cache = cache;
@@ -31,49 +31,80 @@ public class SourceFilterCache {
         String s = cache.getParameter("size");
         size = s == null ? 50 : Integer.parseInt(s);
 
+        s = cache.getParameter("expiration");
+        expiration = s == null ? 5 : Integer.parseInt(s);
+
         init();
     }
 
     public void init() throws Exception {
     }
 
-    public Map getMap(Object key) {
-        Map map = (Map)maps.get(key);
+    public Map getDataMap(String sourceName) {
+        Map map = (Map)data.get(sourceName);
         if (map == null) {
             map = new TreeMap();
-            maps.put(key, map);
+            data.put(sourceName, map);
         }
         return map;
     }
 
-    public Collection get(Object key, Filter filter) throws Exception {
-        Map map = getMap(key);
+    public Map getExpirationMap(String sourceName) {
+        Map map = (Map)expirations.get(sourceName);
+        if (map == null) {
+            map = new LinkedHashMap();
+            expirations.put(sourceName, map);
+        }
+        return map;
+    }
 
-        log.debug("Getting source filter cache ("+map.size()+"): "+filter);
+    public Collection get(String sourceName, Filter filter) throws Exception {
 
-        Collection pks = (Collection)map.remove(filter == null ? "" : filter.toString());
-        if (pks != null) map.put(filter == null ? "" : filter.toString(), pks);
+        Map dataMap = getDataMap(sourceName);
+        Map expirationMap = getExpirationMap(sourceName);
+
+        String key = filter == null ? "" : filter.toString();
+        log.debug("Getting source filter cache ("+dataMap.size()+"): "+key);
+
+        Collection pks = (Collection)dataMap.get(key);
+        Date date = (Date)expirationMap.get(key);
+
+        if (date == null || date.getTime() <= System.currentTimeMillis()) {
+            dataMap.remove(key);
+            expirationMap.remove(key);
+            return null;
+        }
 
         return pks;
     }
 
-    public void put(Object key, Filter filter, Collection pks) throws Exception {
+    public void put(String sourceName, Filter filter, Collection pks) throws Exception {
 
-        Map map = getMap(key);
+        Map dataMap = getDataMap(sourceName);
+        Map expirationMap = getExpirationMap(sourceName);
 
-        if (map.size() >= size) {
-            log.debug("Trimming source filter cache ("+map.size()+").");
-            Object o = map.keySet().iterator().next();
-            map.remove(o);
+        String key = filter == null ? "" : filter.toString();
+
+        Object object = dataMap.get(key);
+
+        while (object == null && dataMap.size() >= size) {
+            log.debug("Trimming source filter cache ("+dataMap.size()+").");
+            Object k = dataMap.keySet().iterator().next();
+            dataMap.remove(k);
+            expirationMap.remove(k);
         }
 
-        log.debug("Storing source filter cache ("+map.size()+"): "+filter);
-        map.put(filter == null ? "" : filter.toString(), pks);
+        log.debug("Storing source filter cache ("+dataMap.size()+"): "+key);
+        dataMap.put(key, pks);
+        expirationMap.put(key, new Date(System.currentTimeMillis() + expiration * 60 * 1000));
     }
 
-    public void invalidate(Object key) throws Exception {
-        Map map = getMap(key);
-        map.clear();
+    public void remove(String sourceName) throws Exception {
+        Map dataMap = getDataMap(sourceName);
+        Map expirationMap = getExpirationMap(sourceName);
+
+        dataMap.clear();
+        expirationMap.clear();
     }
 
     public int getSize() {

@@ -52,14 +52,9 @@ public class DeleteHandler {
 
         EntryDefinition entryDefinition = entry.getEntryDefinition();
         if (entryDefinition.isDynamic()) {
-
-            AttributeValues values = entry.getAttributeValues();
-
-	        return handlerContext.getEngine().delete(entryDefinition, values);
+	        return handlerContext.getEngine().delete(entry);
 
         } else {
-
-            // Static Entry
             return deleteStaticEntry(entryDefinition);
 
         }

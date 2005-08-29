@@ -8,7 +8,7 @@ import org.safehaus.penrose.mapping.Row;
 import org.safehaus.penrose.mapping.Entry;
 import org.safehaus.penrose.mapping.AttributeValues;
 import org.safehaus.penrose.mapping.EntryDefinition;
-import org.safehaus.penrose.cache.EntryCache;
+import org.safehaus.penrose.cache.EntryDataCache;
 import org.apache.ldap.server.interceptor.NextInterceptor;
 import org.apache.ldap.server.invocation.InvocationStack;
 import org.apache.ldap.server.invocation.Invocation;
@@ -29,7 +29,7 @@ import java.util.*;
 /**
  * @author Endi S. Dewata
  */
-public class ApacheDSEntryCache extends EntryCache {
+public class ApacheDSEntryDataCache extends EntryDataCache {
 
     Logger log = LoggerFactory.getLogger(getClass());
 
@@ -41,7 +41,7 @@ public class ApacheDSEntryCache extends EntryCache {
     public void init() throws Exception {
     }
 
-    public Map getMap(EntryDefinition entryDefinition) {
+    public Map getDataMap(EntryDefinition entryDefinition) {
         Map map = (Map)entries.get(entryDefinition.getDn());
         if (map == null) {
             map = new TreeMap();
@@ -50,9 +50,9 @@ public class ApacheDSEntryCache extends EntryCache {
         return map;
     }
 
-    public Entry get(String dn, EntryDefinition entryDefinition) throws Exception {
+    public Entry get(EntryDefinition entryDefinition, String dn) throws Exception {
 
-        Map map = getMap(entryDefinition);
+        Map map = getDataMap(entryDefinition.getDn());
 
         log.debug("===============================================================================");
         log.debug("Getting entry cache ("+map.size()+"): "+dn);
@@ -113,7 +113,7 @@ public class ApacheDSEntryCache extends EntryCache {
 
     public void put(Entry entry) throws Exception {
 
-        Map map = getMap(entry.getEntryDefinition());
+        Map map = getDataMap(entry.getEntryDefinition().getDn());
         String dn = entry.getDn();
 
         while (map.size() >= getSize()) {
@@ -128,7 +128,7 @@ public class ApacheDSEntryCache extends EntryCache {
 
     public void remove(Entry entry) throws Exception {
 
-        Map map = getMap(entry.getEntryDefinition());
+        Map map = getDataMap(entry.getEntryDefinition());
         String dn = entry.getDn();
 
         log.debug("Removing entry cache ("+map.size()+"): "+dn);

@@ -159,27 +159,19 @@ public class Engine {
         graph.traverse(visitor, primarySource);
 
         if (visitor.getReturnCode() != LDAPException.SUCCESS) return visitor.getReturnCode();
-/*
-        Collection sources = entryDefinition.getSources();
 
-        for (Iterator i2 = sources.iterator(); i2.hasNext(); ) {
-            Source source = (Source)i2.next();
-
-            int rc = add(source, entryDefinition, values, date);
-            if (rc != LDAPException.SUCCESS) return rc;
-        }
-
-        engine.getEntryCache().put(entryDefinition, values, date);
-*/
         String key = entryDefinition.getRdn()+","+parent.getDn();
-        engineContext.getCache().getEntryFilterCache().invalidate(key);
+        engineContext.getCache().getEntryFilterCache().remove(key);
 
         return LDAPException.SUCCESS;
     }
 
-    public int delete(EntryDefinition entryDefinition, AttributeValues values) throws Exception {
+    public int delete(Entry entry) throws Exception {
 
         Date date = new Date();
+
+        EntryDefinition entryDefinition = entry.getEntryDefinition();
+        AttributeValues values = entry.getAttributeValues();
 
         Graph graph = getEngineContext().getGraph(entryDefinition);
         Source primarySource = getEngineContext().getPrimarySource(entryDefinition);
@@ -189,11 +181,11 @@ public class Engine {
 
         if (visitor.getReturnCode() != LDAPException.SUCCESS) return visitor.getReturnCode();
 
-        Entry entry = new Entry(entryDefinition, values);
-        getEngineContext().getCache().getEntryCache().remove(entry);
-
         String key = entryDefinition.getRdn()+","+entry.getParent().getDn();
-        engineContext.getCache().getEntryFilterCache().invalidate(key);
+
+        getEngineContext().getCache().getEntryDataCache().remove(key, entry.getRdn());
+
+        engineContext.getCache().getEntryFilterCache().remove(key);
 
         return LDAPException.SUCCESS;
     }
@@ -213,10 +205,10 @@ public class Engine {
 
         if (visitor.getReturnCode() != LDAPException.SUCCESS) return visitor.getReturnCode();
 
-        getEngineContext().getCache().getEntryCache().remove(entry);
-
         String key = entryDefinition.getRdn()+","+entry.getParent().getDn();
-        engineContext.getCache().getEntryFilterCache().invalidate(key);
+
+        getEngineContext().getCache().getEntryDataCache().remove(key, entry.getRdn());
+        engineContext.getCache().getEntryFilterCache().remove(key);
 
         return LDAPException.SUCCESS;
     }
@@ -226,14 +218,12 @@ public class Engine {
      *
      * @param entryDefinition
      * @param rdns
-     * @param calendar
      * @throws Exception
      */
     public SearchResults load(
             Entry parent,
             EntryDefinition entryDefinition,
-            Collection rdns,
-            Calendar calendar
+            Collection rdns
             ) throws Exception {
 
         log.debug("--------------------------------------------------------------------------------------");
@@ -245,24 +235,17 @@ public class Engine {
         SearchResults results = new SearchResults();
 
         try {
-            String s = getEngineContext().getCache().getParameter(CacheConfig.CACHE_EXPIRATION);
-            int cacheExpiration = s == null ? 0 : Integer.parseInt(s);
-            log.debug("Expiration: "+cacheExpiration);
-            if (cacheExpiration < 0) cacheExpiration = Integer.MAX_VALUE;
-
-            Calendar c = (Calendar) calendar.clone();
-            c.add(Calendar.MINUTE, -cacheExpiration);
-
             Collection rdnsToLoad = new TreeSet();
 
             for (Iterator i=rdns.iterator(); i.hasNext(); ) {
                 Row rdn = (Row)i.next();
 
-                String dn = rdn.toString()+","+parent.getDn();
+                String dn = entryDefinition.getRdn()+","+parent.getDn();
 
-                Entry entry = getEngineContext().getCache().getEntryCache().get(dn, entryDefinition);
+                Entry entry = getEngineContext().getCache().getEntryDataCache().get(dn, rdn);
                 if (entry == null) {
                     rdnsToLoad.add(rdn);
+
                 } else {
                     entry.setParent(parent);
                     entry.setEntryDefinition(entryDefinition);
@@ -275,14 +258,16 @@ public class Engine {
             if (!rdnsToLoad.isEmpty()) {
 
                 Collection pks = rdnToPk(entryDefinition, rdnsToLoad);
-                Collection rows = load(parent, entryDefinition, pks);
+                Collection rows = loadEntries(parent, entryDefinition, pks);
                 Collection entries = merge(parent, entryDefinition, rows);
+
+                String dn = entryDefinition.getRdn()+","+parent.getDn();
 
                 for (Iterator i=entries.iterator(); i.hasNext(); ) {
                     Entry entry = (Entry)i.next();
                     entry.setParent(parent);
                     results.add(entry);
-                    getEngineContext().getCache().getEntryCache().put(entry);
+                    getEngineContext().getCache().getEntryDataCache().put(dn, entry.getRdn(), entry);
                 }
             }
 
@@ -324,7 +309,7 @@ public class Engine {
         return pks;
     }
 
-    public Collection load(
+    public Collection loadEntries(
             Entry parent,
             EntryDefinition entryDefinition,
             Collection pks)
@@ -342,10 +327,10 @@ public class Engine {
 
         Map attributeValues = loaderVisitor.getAttributeValues();
 
-        log.debug("Rows:");
+        //log.debug("Rows:");
         for (Iterator i=attributeValues.keySet().iterator(); i.hasNext(); ) {
             Row pk = (Row)i.next();
-            log.debug(" - "+pk);
+            //log.debug(" - "+pk);
 
             AttributeValues values = (AttributeValues)attributeValues.get(pk);
 
@@ -362,14 +347,16 @@ public class Engine {
     public Collection search(
             Entry parent,
             EntryDefinition entryDefinition,
-            Filter filter,
-            Calendar calendar
+            Filter filter
             ) throws Exception {
 
-        String key = entryDefinition.getRdn()+","+parent.getDn();
-        log.debug("Checking entry filter cache for ["+key+"]");
+        log.debug("--------------------------------------------------------------------------------------");
+        log.debug("Searching for entry "+entryDefinition.getDn()+" with filter "+filter);
 
-        Collection rdns = engineContext.getCache().getEntryFilterCache().get(key, filter);
+        String dn = entryDefinition.getRdn()+","+parent.getDn();
+        log.debug("Checking entry filter cache for ["+dn+"]");
+
+        Collection rdns = engineContext.getCache().getEntryFilterCache().get(dn, filter);
 
         if (rdns != null) {
             log.debug("Entry filter cache found: "+filter);
@@ -377,11 +364,11 @@ public class Engine {
         }
 
         log.debug("Entry filter cache not found.");
-        log.debug("Searching entry "+key+" for "+filter);
+        log.debug("Searching entry "+dn+" for "+filter);
 
         Source primarySource = engineContext.getPrimarySource(entryDefinition);
         String primarySourceName = primarySource.getName();
-        Collection keys = search(parent, entryDefinition, filter);
+        Collection keys = searchEntries(parent, entryDefinition, filter);
 
         //log.debug("Search results:");
         rdns = new TreeSet();
@@ -424,15 +411,15 @@ public class Engine {
             rdns.add(nrdn);
         }
 
-        engineContext.getCache().getEntryFilterCache().put(key, filter, rdns);
+        engineContext.getCache().getEntryFilterCache().put(dn, filter, rdns);
 
         filter = engineContext.getCache().getCacheContext().getFilterTool().createFilter(rdns);
-        engineContext.getCache().getEntryFilterCache().put(key, filter, rdns);
+        engineContext.getCache().getEntryFilterCache().put(dn, filter, rdns);
 
         return rdns;
     }
 
-    public Collection search(Entry parent, EntryDefinition entryDefinition, Filter filter) throws Exception {
+    public Collection searchEntries(Entry parent, EntryDefinition entryDefinition, Filter filter) throws Exception {
         Source primarySource = getEngineContext().getPrimarySource(entryDefinition);
 
         Collection newRows = null;
