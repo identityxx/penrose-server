@@ -84,17 +84,23 @@ public class ServerConfigWriter {
         }
 
 		// root
-		Element rootElement = new DefaultElement("root");
+        if (serverConfig.getRootDn() != null || serverConfig.getRootPassword() != null) {
+            Element rootElement = new DefaultElement("root");
 
-        Element rootDn = new DefaultElement("root-dn");
-        rootDn.add(new DefaultText(serverConfig.getRootDn()));
-        rootElement.add(rootDn);
+            if (serverConfig.getRootDn() != null) {
+                Element rootDn = new DefaultElement("root-dn");
+                rootDn.add(new DefaultText(serverConfig.getRootDn()));
+                rootElement.add(rootDn);
+            }
 
-        Element rootPassword = new DefaultElement("root-password");
-        rootPassword.add(new DefaultText(serverConfig.getRootPassword()));
-        rootElement.add(rootPassword);
+            if (serverConfig.getRootPassword() != null) {
+                Element rootPassword = new DefaultElement("root-password");
+                rootPassword.add(new DefaultText(serverConfig.getRootPassword()));
+                rootElement.add(rootPassword);
+            }
 
-		element.add(rootElement);
+            element.add(rootElement);
+        }
 
 		return element;
 	}

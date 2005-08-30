@@ -95,7 +95,7 @@ public class ACLEngine {
 
     public int checkPermission(PenroseConnection connection, Entry entry, String permission) throws Exception {
     	
-        log.debug("Evaluating object \""+permission+"\" permission for "+entry.getDn());
+        log.debug("Evaluating object \""+permission+"\" permission for "+entry.getDn()+(connection == null ? null : " as "+connection.getBindDn()));
 
         int rc = LDAPException.SUCCESS;
         try {
