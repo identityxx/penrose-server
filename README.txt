@@ -1,7 +1,7 @@
 Penrose Virtual Directory Server
 --------------------------------
 Version 0.9.4
-Copyright (c) Verge Labs, LLC.
+Copyright (c) 2000-2005, Identyx Corporation.
 
 Overview
 --------

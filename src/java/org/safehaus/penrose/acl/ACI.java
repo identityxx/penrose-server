@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 1998-2005, Verge Lab., LLC.
+ * Copyright (c) 2000-2005, Identyx Corporation.
  * All rights reserved.
  */
 package org.safehaus.penrose.acl;
