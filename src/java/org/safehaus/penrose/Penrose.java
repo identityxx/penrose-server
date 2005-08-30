@@ -263,6 +263,8 @@ public class Penrose implements
         reader.read("conf/server.xml");
 
         serverConfig = reader.getServerConfig();
+        if (serverConfig.getRootDn() != null) rootDn = serverConfig.getRootDn();
+        if (serverConfig.getRootPassword() != null) rootPassword = serverConfig.getRootPassword();
         log.debug(serverConfig.toString());
 
         handler = new Handler(this);
@@ -591,7 +593,7 @@ public class Penrose implements
 
         log.info("-------------------------------------------------");
         log.info("SEARCH:");
-        if (connection.getBindDn() != null) log.info(" - bindDn: " + connection.getBindDn());
+        if (connection != null && connection.getBindDn() != null) log.info(" - bindDn: " + connection.getBindDn());
         log.info(" - base: " + base);
         log.info(" - scope: " + s);
         log.debug(" - deref: " + d);

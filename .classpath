@@ -21,7 +21,7 @@
 	<classpathentry kind="lib" path="lib/mx4j-tools.jar"/>
 	<classpathentry kind="lib" path="lib/mysql-connector-java-3.0.16-ga-bin.jar"/>
 	<classpathentry kind="lib" path="lib/nlog4j-1.2.14.jar"/>
-	<classpathentry kind="lib" path="lib/apacheds-main-0.9.1.jar"/>
+	<classpathentry kind="lib" path="C:/svn.safehaus.org/penrose-mt/lib/runtime/apacheds-main-0.9.3-SNAPSHOT.jar"/>
 	<classpathentry kind="lib" path="lib/hibernate3.jar"/>
 	<classpathentry kind="lib" path="lib/jboss/jboss-system.jar"/>
 	<classpathentry kind="output" path="target/classes"/>

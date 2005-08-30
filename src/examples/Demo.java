@@ -19,7 +19,7 @@ import junit.framework.TestCase;
  */
 public class Demo extends TestCase {
 	
-	public final static String SUFFIX = "dc=penrose,dc=safehaus,dc=org";
+	public final static String SUFFIX = "dc=example,dc=com";
 
 	public Penrose penrose;
     public PenroseConnection connection;
@@ -37,6 +37,11 @@ public class Demo extends TestCase {
 
     public void tearDown() throws Exception {
         connection.close();
+    }
+
+    public void testBind() throws Throwable {
+        connection.bind("uid=admin,ou=system", "secret");
+        connection.unbind();
     }
 
 	public void testSearchAll() throws Throwable {
@@ -94,7 +99,7 @@ public class Demo extends TestCase {
                 SUFFIX,
                 LDAPConnection.SCOPE_SUB,
                 LDAPSearchConstraints.DEREF_ALWAYS,
-                "(uniqueMember=uid=jbond,ou=Users,dc=penrose,dc=safehaus,dc=org)",
+                "(uniqueMember=uid=jbond,ou=users,dc=example,dc=com)",
                 attributeNames);
 
         for (Iterator i = results.iterator(); i.hasNext();) {

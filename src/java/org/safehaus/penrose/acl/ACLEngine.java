@@ -105,7 +105,7 @@ public class ACLEngine {
 
             String rootDn = penrose.getSchema().normalize(penrose.getRootDn());
             String bindDn = penrose.getSchema().normalize(connection.getBindDn());
-            if (rootDn.equals(bindDn)) {
+            if (rootDn != null && rootDn.equals(bindDn)) {
                 return rc;
             }
 

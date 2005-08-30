@@ -33,7 +33,7 @@ public class BindHandler {
 
         String ndn = LDAPDN.normalize(dn);
 
-        if (ndn.equals(LDAPDN.normalize(handlerContext.getRootDn()))) { // bind as root
+        if (handlerContext.getRootDn() != null && ndn.equals(LDAPDN.normalize(handlerContext.getRootDn()))) { // bind as root
 
             int rc = bindAsRoot(password);
             if (rc != LDAPException.SUCCESS) return rc;
@@ -52,6 +52,8 @@ public class BindHandler {
 
         log.debug("-------------------------------------------------------------------------------");
         log.debug("UNBIND:");
+
+        if (connection == null) return 0;
 
         connection.setBindDn(null);
 
