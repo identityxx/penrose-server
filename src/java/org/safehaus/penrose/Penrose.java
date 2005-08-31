@@ -202,6 +202,10 @@ public class Penrose implements
     }
 
     public void initJmx() {
+
+        File file = new File("conf/mx4j.xml");
+        if (!file.exists()) return;
+        
         // Register JMX
         MBeanServer server = null;
         try {
@@ -230,7 +234,7 @@ public class Penrose implements
                 server.registerMBean(loader, name);
 
                 // Tell the configuration loader the XML configuration file
-                Reader reader = new BufferedReader(new FileReader("conf/mx4j.xml"));
+                Reader reader = new BufferedReader(new FileReader(file));
                 loader.startup(reader);
                 reader.close();
 

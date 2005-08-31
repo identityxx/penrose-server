@@ -16,9 +16,9 @@ insert into users values ('Bill', 'Fairbanks', 'bfairbanks', '002');
 insert into users values ('Stuart', 'Thomas', 'sthomas', '005');
 insert into users values ('Alec', 'Trevelyan', 'atrevelyan', '006');
 insert into users values ('James', 'Bond', 'jbond', '007');
-insert into users values ('Brosnan', 'Pierce', 'pbrosnan', 'k33ly');
-insert into users values ('Williams', 'Vanessa', 'vwilliams', 'p0cah0nta5');
-insert into users values ('Bean', 'Julian', 'jbean', 'mrbean');
+insert into users values ('Pierce', 'Brosnan', 'pbrosnan', 'k33ly');
+insert into users values ('Vanessa', 'Williams', 'vwilliams', 'p0cah0nta5');
+insert into users values ('Julian', 'Bean', 'jbean', 'mrbean');
 
 drop table groups;
 

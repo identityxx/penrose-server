@@ -101,8 +101,7 @@ public class Config implements Serializable {
             rootEntryDefinitions.remove(entry);
 
         } else {
-            Collection siblings = entry.getParent().getChildren();
-            siblings.remove(entry);
+            entry.getParent().removeChild(entry);
         }
 
         return (EntryDefinition)entryDefinitions.remove(entry.getDn());

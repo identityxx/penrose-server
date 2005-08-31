@@ -281,7 +281,10 @@ public class SyncService {
         String key = source.getConnectionConfig().getConnectionName()+"."+source.getSourceName();
         log.debug("Checking source filter cache for ["+key+"]");
 
+        Map results = new TreeMap();
+
         Collection pks = syncContext.getCache().getSourceFilterCache().get(key, filter);
+
         if (pks == null) {
 
             String method = source.getParameter("loadingMethod");
@@ -295,6 +298,7 @@ public class SyncService {
                 log.debug("Loading entries for: "+filter);
                 Map map = loadEntries(source, filter);
                 pks = map.keySet();
+                results.putAll(map);
 
                 for (Iterator i=map.keySet().iterator(); i.hasNext(); ) {
                     Row pk = (Row)i.next();
@@ -309,8 +313,6 @@ public class SyncService {
             syncContext.getCache().getSourceFilterCache().put(key, newFilter, pks);
         }
 
-        Map results = new TreeMap();
-
         log.debug("Checking source cache for pks "+pks);
         Map loadedRows = syncContext.getCache().getSourceDataCache().get(key, pks);
         log.debug("Loaded rows: "+loadedRows.keySet());
@@ -318,6 +320,7 @@ public class SyncService {
 
         Collection pksToLoad = new HashSet();
         pksToLoad.addAll(pks);
+        pksToLoad.removeAll(results.keySet());
         pksToLoad.removeAll(loadedRows.keySet());
 
         if (!pksToLoad.isEmpty()) {

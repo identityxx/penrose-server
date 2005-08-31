@@ -245,6 +245,11 @@ public class EntryDefinition implements Cloneable, Serializable {
 		children.add(child);
 	}
 
+    public void removeChild(EntryDefinition child) {
+        child.setParent(null);
+        children.remove(child);
+    }
+    
     public void addChildDefinition(MappingRule mappingRule) {
         childDefinitions.add(mappingRule);
     }

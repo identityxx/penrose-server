@@ -12,6 +12,7 @@ import org.ietf.ldap.*;
 import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.SearchResults;
 import org.safehaus.penrose.PenroseConnection;
+import org.safehaus.penrose.mapping.EntryDefinition;
 import org.safehaus.penrose.config.ConfigReader;
 import org.safehaus.penrose.config.Config;
 
@@ -42,20 +43,19 @@ public class PenrosePartition extends AbstractContextPartition {
 
         String name = getConfiguration().getName();
 
+        File dir = new File("partitions/"+name);
+        if (!dir.exists()) return;
+
         Logger log = LoggerFactory.getLogger(getClass());
         log.debug("-------------------------------------------------------------------------------");
-        log.info("Initializing "+name+" partition ...");
+        log.debug("Initializing "+name+" partition ...");
 
         try {
-            File dir = new File("partitions/"+name);
-            
-            if (dir.exists()) {
-                ConfigReader reader = new ConfigReader();
-                Config config = reader.read(dir.getAbsolutePath());
-                log.debug(config.toString());
+            ConfigReader reader = new ConfigReader();
+            Config config = reader.read(dir.getAbsolutePath());
+            log.debug(config.toString());
 
-                penrose.addConfig(config);
-            }
+            penrose.addConfig(config);
 
         } catch (Exception e) {
             log.error(e.getMessage(), e);
