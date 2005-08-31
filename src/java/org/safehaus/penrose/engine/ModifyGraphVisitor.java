@@ -39,7 +39,6 @@ public class ModifyGraphVisitor extends GraphVisitor {
         this.oldValues = entry.getAttributeValues();
         this.newValues = newValues;
 
-        Collection rows = engineContext.getTransformEngine().convert(oldValues);
         Collection keys = new HashSet();
 /*
         for (Iterator i=rows.iterator(); i.hasNext(); ) {

@@ -31,32 +31,6 @@ public class TransformEngine {
     }
 
     /**
-     * Convert rows into attribute values.
-     *
-     * Input: Row(value1=a, value2=1)
-     * Output: AttributeValues(value1=Collection(a, b, c), value2=Collection(1, 2, 3))
-     *
-     * @param row
-     * @return attribute values
-     */
-    public AttributeValues convert(Row row) {
-
-        AttributeValues attributes = new AttributeValues();
-
-        for (Iterator i=row.getNames().iterator(); i.hasNext(); ) {
-            String name = (String)i.next();
-            Object value = row.get(name);
-
-            Set set = new HashSet();
-            set.add(value);
-
-            attributes.set(name, set);
-        }
-
-        return attributes;
-    }
-
-    /**
      * Convert attribute values into rows.
      *
      * Input: AttributeValues(value1=Collection(a, b, c), value2=Collection(1, 2, 3))
@@ -138,18 +112,18 @@ public class TransformEngine {
      * Translate attribute values into rows in the source
      *
      * @param source
-     * @param row
-     * @param pk
-     * @param values
-     * @return true if this generates a valid primary key
+     * @param inputRow
+     * @param outputRow
+     * @return pk if this generates a valid primary key
      * @throws Exception
      */
-    public boolean translate(Source source, Row row, Row pk, Row values) throws Exception {
+    public Row translate(Source source, Row inputRow, Row outputRow) throws Exception {
 
     	Interpreter interpreter = penrose.newInterpreter();
-        interpreter.set(row);
+        interpreter.set(inputRow);
 
         Collection fields = source.getFields();
+        Row pk = new Row();
 
         for (Iterator j=fields.iterator(); j.hasNext(); ) {
             Field field = (Field)j.next();
@@ -158,7 +132,7 @@ public class TransformEngine {
 
             String expression = field.getExpression();
             if (expression == null) {
-                if (field.isPrimaryKey()) return false;
+                if (field.isPrimaryKey()) return null;
                 continue;
             }
 
@@ -190,33 +164,23 @@ public class TransformEngine {
             }
 
             if (field.isPrimaryKey()) {
-                if (value == null) return false;
+                if (value == null) return null;
                 pk.set(name, value);
             }
 
-            values.set(name, value);
+            outputRow.set(name, value);
         }
 
-        return true;
+        return pk;
     }
 
-    /**
-     * Translate source row into actual entry attribute values
-     * 
-     * @param entry the entry
-     * @param row the join result row
-     * @param pk the primary key(s)
-     * @param values attribute values to be populated
-     * @return whether we got a valid PK
-     * @throws Exception
-     */
-    public boolean translate(EntryDefinition entry, Row row, Map pk, Row values) throws Exception {
+    public Map translate(EntryDefinition entry, AttributeValues input, AttributeValues output) throws Exception {
 
         Interpreter interpreter = penrose.newInterpreter();
-        interpreter.set(row);
+        interpreter.set(input);
 
+        Map pk = new TreeMap();
         Map attributes = entry.getAttributes();
-        
         for (Iterator j=attributes.values().iterator(); j.hasNext(); ) {
             AttributeDefinition attribute = (AttributeDefinition)j.next();
 
@@ -226,64 +190,14 @@ public class TransformEngine {
             if (value == null) continue;
 
             if (attribute.isRdn()) {
-                if (value == null) return false;
+                if (value == null) return null;
                 pk.put(name, value);
             }
-            
-            values.set(name, value);
+
+            output.add(name, value);
         }
 
-        return true;
-    }
-
-    /**
-     * Transform source's rows into entry's attribute values.
-     *
-     * @param entry
-     * @param rows
-     * @return map of attribute values
-     * @throws Exception
-     */
-    public Map transform(EntryDefinition entry, Collection rows) throws Exception {
-
-        Map map = new HashMap();
-
-        for (Iterator i=rows.iterator(); i.hasNext(); ) {
-            Row row = (Row)i.next();
-            Map pk = new HashMap();
-            Row translatedRow = new Row();
-
-            log.debug(" - before: "+row);
-
-            boolean validPK = translate(entry, row, pk, translatedRow);
-
-            log.debug(" - after: "+translatedRow);
-
-            if (!validPK) continue;
-
-            Map values = (Map)map.get(pk);
-            if (values == null) {
-                values = new HashMap();
-                map.put(pk, values);
-            }
-
-            for (Iterator k=translatedRow.getNames().iterator(); k.hasNext(); ) {
-                String name = (String)k.next();
-                String value = (String)translatedRow.get(name);
-
-                Set set = (Set)values.get(name);
-                if (set == null) {
-                    set = new HashSet();
-                    values.put(name, set);
-                }
-                if (value != null) {
-                	set.add(value);
-                }
-
-            }
-        }
-
-        return map;
+        return pk;
     }
 
     /**
@@ -301,19 +215,18 @@ public class TransformEngine {
         Map map = new HashMap();
 
         for (Iterator i=rows.iterator(); i.hasNext(); ) {
-            Row row = (Row)i.next();
-            Row pk = new Row();
-            Row translatedRow = new Row();
+            Row attributeValues = (Row)i.next();
+            Row sourceValues = new Row();
 
-            boolean validPK = translate(source, row, pk, translatedRow);
-            if (!validPK) continue;
+            Row pk = translate(source, attributeValues, sourceValues);
+            if (pk == null) continue;
 
             Collection set = (Collection)map.get(pk);
             if (set == null) {
                 set = new HashSet();
                 map.put(pk, set);
             }
-            set.add(translatedRow);
+            set.add(sourceValues);
         }
 
         log.debug("Valid rows: "+map.values());

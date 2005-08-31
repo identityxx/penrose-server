@@ -1,8 +1,10 @@
 package org.safehaus.penrose.interpreter;
 
 import org.safehaus.penrose.mapping.Row;
+import org.safehaus.penrose.mapping.AttributeValues;
 
 import java.util.Iterator;
+import java.util.Collection;
 
 /**
  * @author Endi S. Dewata
@@ -13,6 +15,20 @@ public abstract class Interpreter {
         for (Iterator i=row.getNames().iterator(); i.hasNext(); ) {
             String name = (String)i.next();
             Object value = row.get(name);
+            set(name, value);
+        }
+    }
+
+    public void set(AttributeValues av) throws Exception {
+        for (Iterator i=av.getNames().iterator(); i.hasNext(); ) {
+            String name = (String)i.next();
+            Collection list = av.get(name);
+            Object value;
+            if (list.size() == 1) {
+                value = list.iterator().next();
+            } else {
+                value = list;
+            }
             set(name, value);
         }
     }

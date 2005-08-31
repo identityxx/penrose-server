@@ -166,45 +166,5 @@ public class Handler {
     public void setHandlerContext(HandlerContext handlerContext) {
         this.handlerContext = handlerContext;
     }
-
-    public Collection merge(Entry parent, EntryDefinition entryDefinition, Collection rows) throws Exception {
-
-        Collection results = new ArrayList();
-
-        //log.debug("Merging:");
-        // merge rows into attribute values
-        Map entries = new LinkedHashMap();
-        for (Iterator i = rows.iterator(); i.hasNext();) {
-            Row row = (Row)i.next();
-            //log.debug(" - "+row);
-
-            Map rdn = new HashMap();
-            Row values = new Row();
-
-            boolean validPK = getHandlerContext().getTransformEngine().translate(entryDefinition, row, rdn, values);
-            if (!validPK) continue;
-
-            //log.debug(" - "+rdn+": "+values);
-
-            AttributeValues attributeValues = (AttributeValues)entries.get(rdn);
-            if (attributeValues == null) {
-                attributeValues = new AttributeValues();
-                entries.put(rdn, attributeValues);
-            }
-            attributeValues.add(values);
-        }
-
-        log.debug("Merged " + entries.size() + " entries.");
-
-        for (Iterator i=entries.values().iterator(); i.hasNext(); ) {
-            AttributeValues values = (AttributeValues)i.next();
-
-            Entry entry = new Entry(entryDefinition, values);
-            entry.setParent(parent);
-            results.add(entry);
-        }
-
-        return results;
-    }
 }
 

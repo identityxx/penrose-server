@@ -84,41 +84,27 @@ public class Engine {
 		return lock;
 	}
 
-    public Collection merge(Entry parent, EntryDefinition entryDefinition, Collection rows) throws Exception {
+    public Collection merge(Entry parent, EntryDefinition entryDefinition, Map avs) throws Exception {
 
         Collection results = new ArrayList();
 
-        //log.debug("Merging:");
+        log.debug("Merging:");
+        int counter = 1;
         // merge rows into attribute values
         Map entries = new LinkedHashMap();
-        for (Iterator i = rows.iterator(); i.hasNext();) {
-            Row row = (Row)i.next();
-            //log.debug(" - "+row);
+        for (Iterator i = avs.keySet().iterator(); i.hasNext(); counter++) {
+            Row pk = (Row)i.next();
+            log.debug(" - "+pk);
 
-            Map rdn = new HashMap();
-            Row values = new Row();
+            AttributeValues sourceValues = (AttributeValues)avs.get(pk);
+            AttributeValues attributeValues = new AttributeValues();
 
-            boolean validPK = getEngineContext().getTransformEngine().translate(entryDefinition, row, rdn, values);
-            if (!validPK) continue;
+            Map rdn = getEngineContext().getTransformEngine().translate(entryDefinition, sourceValues, attributeValues);
+            if (rdn == null) continue;
 
-            //log.debug(" - "+rdn);
-            //log.debug(" - "+rdn+": "+values);
+            //log.debug("   => "+rdn+": "+attributeValues);
 
-            AttributeValues attributeValues = (AttributeValues)entries.get(rdn);
-            if (attributeValues == null) {
-                attributeValues = new AttributeValues();
-                entries.put(rdn, attributeValues);
-            }
-            attributeValues.add(values);
-        }
-
-        log.debug("Merged into " + entries.size() + " entries.");
-
-        int counter = 1;
-        for (Iterator i=entries.values().iterator(); i.hasNext(); counter++) {
-            AttributeValues values = (AttributeValues)i.next();
-
-            Entry entry = new Entry(entryDefinition, values);
+            Entry entry = new Entry(entryDefinition, attributeValues);
             entry.setParent(parent);
             results.add(entry);
 
@@ -127,6 +113,7 @@ public class Engine {
 
         return results;
     }
+
 
     public ThreadPool getThreadPool() {
         return threadPool;
@@ -252,8 +239,8 @@ public class Engine {
             if (!rdnsToLoad.isEmpty()) {
 
                 Collection pks = rdnToPk(entryDefinition, rdnsToLoad);
-                Collection rows = loadEntries(parent, entryDefinition, pks);
-                Collection entries = merge(parent, entryDefinition, rows);
+                Map avs = loadEntries(parent, entryDefinition, pks);
+                Collection entries = merge(parent, entryDefinition, avs);
 
                 String dn = entryDefinition.getRdn()+","+parent.getDn();
 
@@ -303,7 +290,7 @@ public class Engine {
         return pks;
     }
 
-    public Collection loadEntries(
+    public Map loadEntries(
             Entry parent,
             EntryDefinition entryDefinition,
             Collection pks)
@@ -317,11 +304,11 @@ public class Engine {
         LoaderGraphVisitor loaderVisitor = new LoaderGraphVisitor(getEngineContext(), entryDefinition, pks);
         graph.traverse(loaderVisitor, primarySource);
 
-        Collection results = new ArrayList();
-
         Map attributeValues = loaderVisitor.getAttributeValues();
-
+        return attributeValues;
+/*
         //log.debug("Rows:");
+        Collection results = new ArrayList();
         for (Iterator i=attributeValues.keySet().iterator(); i.hasNext(); ) {
             Row pk = (Row)i.next();
             //log.debug(" - "+pk);
@@ -335,6 +322,7 @@ public class Engine {
         log.debug("Loaded " + results.size() + " rows.");
 
         return results;
+*/
     }
 
 

@@ -38,9 +38,14 @@ public class LoaderGraphVisitor extends GraphVisitor {
 
     public boolean preVisitNode(Object node, Object parameter) throws Exception {
         Source source = (Source)node;
-        //log.debug("Source "+source.getName());
+        Map map = (Map)stack.peek();
+        Collection pks = map.keySet();
+        log.debug("Loading "+source.getName()+" for "+pks);
 
-        if (entryDefinition.getSource(source.getName()) == null) return false;
+        if (entryDefinition.getSource(source.getName()) == null) {
+            log.debug("Source "+source.getName()+" is not defined in entry "+entryDefinition.getDn());
+            return true;
+        }
 /*
         boolean allPksDefined = true; // check if the source is a connecting source
 
@@ -54,10 +59,6 @@ public class LoaderGraphVisitor extends GraphVisitor {
         log.debug(source+" is a connecting source: "+!allPksDefined);
         if (!allPksDefined) return false;
 */        
-        Map map = (Map)stack.peek();
-        log.debug("MAP: "+map);
-
-        Collection pks = map.keySet();
 
         Map results = engineContext.getSyncService().search(source, pks);
         if (results.size() == 0) return false;
@@ -121,7 +122,7 @@ public class LoaderGraphVisitor extends GraphVisitor {
         Relationship relationship = (Relationship)edge;
 
         if (entryDefinition.getSource(source.getName()) == null) return false;
-
+/*
         boolean allPksDefined = true; // check if the source is a connecting source
 
         Collection fields = source.getPrimaryKeyFields();
@@ -132,7 +133,7 @@ public class LoaderGraphVisitor extends GraphVisitor {
 
         // if connecting source, dont visit
         if (!allPksDefined) return false;
-
+*/
         log.debug("Relationship "+relationship);
 
         String lhs = relationship.getLhs();

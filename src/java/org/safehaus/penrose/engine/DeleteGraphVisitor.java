@@ -37,7 +37,6 @@ public class DeleteGraphVisitor extends GraphVisitor {
         this.entryDefinition = entryDefinition;
         this.values = values;
 
-        Collection rows = engineContext.getTransformEngine().convert(values);
         Collection keys = new HashSet();
 /*
         for (Iterator i=rows.iterator(); i.hasNext(); ) {

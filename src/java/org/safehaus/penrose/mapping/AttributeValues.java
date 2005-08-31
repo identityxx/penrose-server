@@ -43,6 +43,11 @@ public class AttributeValues {
     }
 
     public void add(String name, Object value) {
+        if (value instanceof Collection) {
+            add(name, (Collection)value);
+            return;
+        }
+        
         if (value == null) return;
 
         Collection c = (Collection)this.values.get(name);

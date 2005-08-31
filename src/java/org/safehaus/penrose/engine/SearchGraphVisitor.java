@@ -115,6 +115,7 @@ public class SearchGraphVisitor extends GraphVisitor {
 
         int li = lhs.indexOf(".");
         String lFieldName = lhs.substring(li+1);
+        
         int ri = rhs.indexOf(".");
         String rFieldName = rhs.substring(ri+1);
 
