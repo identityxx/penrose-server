@@ -504,7 +504,7 @@ public class PenroseInterceptor extends BaseInterceptor {
             filter.printToBuffer(sb);
             String newFilter = sb.toString();
 
-            log.info("Searching \""+base+"\"");
+            log.debug("Searching \""+base+"\"");
             log.debug(" - deref: "+deref);
             log.debug(" - scope: "+scope);
             log.debug(" - filter: "+newFilter+" ("+filter.getClass().getName()+")");

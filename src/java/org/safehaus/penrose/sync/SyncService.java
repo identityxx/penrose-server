@@ -276,7 +276,7 @@ public class SyncService {
             filter = syncContext.getCache().getCacheContext().getFilterTool().createFilter(normalizedFilters);
         }
 
-        log.info("Searching source "+source.getName()+" "+source.getSourceName()+" with filter "+filter);
+        log.debug("Searching source "+source.getName()+" "+source.getSourceName()+" with filter "+filter);
 
         String key = source.getConnectionConfig().getConnectionName()+"."+source.getSourceName();
         log.debug("Checking source filter cache for ["+key+"]");

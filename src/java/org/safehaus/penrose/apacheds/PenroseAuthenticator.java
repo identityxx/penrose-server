@@ -34,7 +34,6 @@ public class PenroseAuthenticator extends AbstractAuthenticator {
 
     public void setPenrose(Penrose penrose) throws Exception {
         this.penrose = penrose;
-        penrose.init();
     }
 
     public LdapPrincipal authenticate( ServerContext ctx ) throws NamingException {
