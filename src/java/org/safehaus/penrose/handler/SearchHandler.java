@@ -170,7 +170,9 @@ public class SearchHandler {
         //Collection rdns = handlerContext.getEngine().search(parent, entryDefinition, filter);
         //log.debug("Searched rdns: "+rdns);
 
-        SearchResults results = handlerContext.getEngine().load(parent, entryDefinition, rdns);
+        SearchResults results = new SearchResults();
+
+        handlerContext.getEngine().load(parent, entryDefinition, rdns, results);
 
         if (results.size() == 0) return null;
 
@@ -278,7 +280,11 @@ public class SearchHandler {
 
         Collection rdns = handlerContext.getEngine().search(parent, entryDefinition, filter);
 
-        return handlerContext.getEngine().load(parent, entryDefinition, rdns);
+        SearchResults results = new SearchResults();
+
+        handlerContext.getEngine().load(parent, entryDefinition, rdns, results);
+
+        return results;
     }
 
     public HandlerContext getHandlerContext() {

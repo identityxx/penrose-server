@@ -201,10 +201,11 @@ public class Engine {
      * @param rdns
      * @throws Exception
      */
-    public SearchResults load(
+    public void load(
             Entry parent,
             EntryDefinition entryDefinition,
-            Collection rdns
+            Collection rdns,
+            SearchResults results
             ) throws Exception {
 
         log.debug("--------------------------------------------------------------------------------------");
@@ -212,8 +213,6 @@ public class Engine {
 
         MRSWLock lock = getLock(entryDefinition.getDn());
         lock.getWriteLock(Penrose.WAIT_TIMEOUT);
-
-        SearchResults results = new SearchResults();
 
         try {
             Collection rdnsToLoad = new TreeSet();
@@ -256,8 +255,6 @@ public class Engine {
             lock.releaseWriteLock(Penrose.WAIT_TIMEOUT);
             results.close();
         }
-
-        return results;
     }
 
     public Collection rdnToPk(EntryDefinition entryDefinition, Collection rdns) throws Exception {

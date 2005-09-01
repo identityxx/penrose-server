@@ -345,8 +345,11 @@ public class SyncService {
 
         Collection results = new TreeSet();
 
+        String s = source.getParameter("sizeLimit");
+        int sizeLimit = s == null ? 100 : Integer.parseInt(s);
+
         Connection connection = syncContext.getConnection(source.getConnectionName());
-        SearchResults sr = connection.search(source, filter, 100);
+        SearchResults sr = connection.search(source, filter, sizeLimit);
 
         log.debug("Search results:");
 
@@ -366,8 +369,11 @@ public class SyncService {
 
         Map results = new TreeMap();
 
+        String s = source.getParameter("sizeLimit");
+        int sizeLimit = s == null ? 100 : Integer.parseInt(s);
+
         Connection connection = syncContext.getConnection(source.getConnectionName());
-        SearchResults sr = connection.load(source, filter, 100);
+        SearchResults sr = connection.load(source, filter, sizeLimit);
 
         log.debug("Load results:");
 
