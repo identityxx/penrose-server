@@ -188,22 +188,19 @@ public class ConfigWriter {
     	Element element = new DefaultElement("source");
     	element.addAttribute("name", source.getName());
 
-    	// field
-    	Object[] fields = source.getFields().toArray();
-    	for (int i=0; i<fields.length; i++) {
-    		FieldDefinition field = (FieldDefinition) fields[i];
+    	for (Iterator i = source.getFields().iterator(); i.hasNext(); ) {
+    		FieldDefinition field = (FieldDefinition)i.next();
     		Element fieldElement = toElement(field);
     		element.add(fieldElement);
     	}
 
-    	// parameter
-        if (!source.getParameterNames().isEmpty()) {
-        	Object[] paramNames = source.getParameterNames().toArray();
-        	for (int i=0; i<paramNames.length; i++) {
-        		String paramValue = source.getParameter(paramNames[i].toString());
-        		Element parameterElement = createParameterElement(paramNames[i].toString(), paramValue);
-        		element.add(parameterElement);
-        	}
+        for (Iterator i = source.getParameterNames().iterator(); i.hasNext(); ) {
+            String name = (String)i.next();
+            String value = source.getParameter(name);
+            if ("".equals(value)) continue;
+
+            Element parameterElement = createParameterElement(name, value);
+            element.add(parameterElement);
         }
 
     	return element;
@@ -308,6 +305,7 @@ public class ConfigWriter {
         for (Iterator i = parameters.keySet().iterator(); i.hasNext(); ) {
             String name = (String)i.next();
             String value = (String)parameters.get(name);
+            if ("".equals(value)) continue;
 
             Element parameterElement = new DefaultElement("parameter");
 

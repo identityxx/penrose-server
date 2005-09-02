@@ -264,7 +264,7 @@ public class ModifyHandler {
             // if already exists, don't add
 			if (attribute.getExpression().getScript().equals(value)) return;
 
-			attribute.setExpression(value);
+			attribute.getExpression().setScript(value);
 		}
 	}
 

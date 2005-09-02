@@ -22,11 +22,13 @@ import java.util.*;
  */
 public class JDBCAdapter extends Adapter {
 
-    public final static String DRIVER   = "driver";
-    public final static String URL      = "url";
-    public final static String USER     = "user";
-    public final static String PASSWORD = "password";
-    public final static String DIALECT = "dialect";
+    public final static String DRIVER     = "driver";
+    public final static String URL        = "url";
+    public final static String USER       = "user";
+    public final static String PASSWORD   = "password";
+
+    public final static String TABLE_NAME = "tableName";
+    public final static String FILTER     = "filter";
 
     public DataSource ds;
 
@@ -40,8 +42,6 @@ public class JDBCAdapter extends Adapter {
 
         String driver = getParameter(DRIVER);
         String url = getParameter(URL);
-        String username = getParameter(USER);
-        String password = getParameter(PASSWORD);
 
         Class.forName(driver);
 
@@ -107,7 +107,10 @@ public class JDBCAdapter extends Adapter {
         //log.debug("--------------------------------------------------------------------------------------");
         log.debug("Searching JDBC Source: "+source.getConnectionName()+"/"+source.getSourceName()+": "+filter);
 
-        String tableName = source.getParameter("tableName");
+        String tableName = source.getParameter(TABLE_NAME);
+        String sqlFilter = source.getParameter(FILTER);
+        log.debug("tableName: "+tableName);
+        log.debug("filter: "+sqlFilter);
 
         StringBuffer sb = new StringBuffer();
         sb.append("select ");
@@ -115,10 +118,20 @@ public class JDBCAdapter extends Adapter {
         sb.append(" from ");
         sb.append(tableName);
 
+        StringBuffer sb2 = new StringBuffer();
+        if (sqlFilter != null) {
+            sb2.append(sqlFilter);
+        }
+
         List parameters = new ArrayList();
         if (filter != null) {
+            if (sb2.length() > 0) sb2.append(" and ");
+            sb2.append(filterTool.convert(source, filter, parameters));
+        }
+
+        if (sb2.length() > 0) {
             sb.append(" where ");
-            sb.append(filterTool.convert(source, filter, parameters));
+            sb.append(sb2);
         }
 
         sb.append(" order by ");
@@ -173,7 +186,10 @@ public class JDBCAdapter extends Adapter {
         //log.debug("--------------------------------------------------------------------------------------");
         log.debug("Loading JDBC Source: "+source.getConnectionName()+"/"+source.getSourceName()+": "+filter);
 
-        String tableName = source.getParameter("tableName");
+        String tableName = source.getParameter(TABLE_NAME);
+        String sqlFilter = source.getParameter(FILTER);
+        log.debug("tableName: "+tableName);
+        log.debug("filter: "+sqlFilter);
 
         StringBuffer sb = new StringBuffer();
         sb.append("select ");
@@ -181,10 +197,20 @@ public class JDBCAdapter extends Adapter {
         sb.append(" from ");
         sb.append(tableName);
 
+        StringBuffer sb2 = new StringBuffer();
+        if (sqlFilter != null) {
+            sb2.append(sqlFilter);
+        }
+
         List parameters = new ArrayList();
         if (filter != null) {
+            if (sb2.length() > 0) sb2.append(" and ");
+            sb2.append(filterTool.convert(source, filter, parameters));
+        }
+
+        if (sb2.length() > 0) {
             sb.append(" where ");
-            sb.append(filterTool.convert(source, filter, parameters));
+            sb.append(sb2);
         }
 
         sb.append(" order by ");
@@ -287,7 +313,7 @@ public class JDBCAdapter extends Adapter {
 
     public int add(Source source, AttributeValues entry) throws Exception {
 
-        String tableName = source.getParameter("tableName");
+        String tableName = source.getParameter(TABLE_NAME);
 
         // convert sets into single values
         Collection rows = getAdapterContext().getTransformEngine().convert(entry);
@@ -364,7 +390,7 @@ public class JDBCAdapter extends Adapter {
         Map pk = getPkValues(source, entry.getValues());
         log.debug("Deleting entry "+pk);
 
-        String tableName = source.getParameter("tableName");
+        String tableName = source.getParameter(TABLE_NAME);
 
         // convert sets into single values
         Collection pkRows = getAdapterContext().getTransformEngine().convert(pk);
@@ -418,7 +444,7 @@ public class JDBCAdapter extends Adapter {
     public int modify(Source source, AttributeValues oldEntry, AttributeValues newEntry) throws Exception {
         Map pk = getPkValues(source, newEntry.getValues());
 
-        String tableName = source.getParameter("tableName");
+        String tableName = source.getParameter(TABLE_NAME);
 
         // convert sets into single values
         Collection oldRows = getAdapterContext().getTransformEngine().convert(oldEntry);

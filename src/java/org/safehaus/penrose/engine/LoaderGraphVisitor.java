@@ -20,7 +20,7 @@ public class LoaderGraphVisitor extends GraphVisitor {
 
     private EngineContext engineContext;
     private EntryDefinition entryDefinition;
-    private Map attributeValues = new HashMap();
+    private Map attributeValues = new TreeMap();
 
     private Stack stack = new Stack();
 
@@ -64,7 +64,7 @@ public class LoaderGraphVisitor extends GraphVisitor {
         if (results.size() == 0) return false;
         
         log.debug("Records:");
-        Map newMap = new HashMap();
+        Map newMap = new TreeMap();
         for (Iterator i = results.keySet().iterator(); i.hasNext(); ) {
             Row pk = (Row)i.next();
             log.debug(" - "+pk);

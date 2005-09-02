@@ -174,7 +174,9 @@ public class AddHandler {
 
                 newAttribute.setName(name);
 
-                newAttribute.setExpression(newExpressions);
+                Expression expression = new Expression();
+                expression.setScript(newExpressions);
+                newAttribute.setExpression(expression);
 
                 newAttribute.setRdn(rdnAttribute.equals(name));
             }

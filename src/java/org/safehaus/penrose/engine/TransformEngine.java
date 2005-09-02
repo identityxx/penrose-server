@@ -299,8 +299,8 @@ public class TransformEngine {
 
         log.debug("Merging:");
         int counter = 1;
+
         // merge rows into attribute values
-        Map entries = new LinkedHashMap();
         for (Iterator i = values.keySet().iterator(); i.hasNext(); counter++) {
             Row pk = (Row)i.next();
             log.debug(" - "+pk);
