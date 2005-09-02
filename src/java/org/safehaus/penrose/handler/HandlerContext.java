@@ -37,6 +37,4 @@ public interface HandlerContext {
     public TransformEngine getTransformEngine() throws Exception;
     public SyncService getSyncService() throws Exception;
     public Connection getConnection(String connectionName) throws Exception;
-    public Graph getGraph(EntryDefinition entryDefinition) throws Exception;
-    public Source getPrimarySource(EntryDefinition entryDefinition) throws Exception;
 }

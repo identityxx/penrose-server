@@ -114,9 +114,6 @@ public class Penrose implements
 
     private Map connections = new LinkedHashMap();
     private Map modules = new LinkedHashMap();
-    private Map graphs = new HashMap();
-    private Map primarySources = new HashMap();
-
 
     private ServerConfig serverConfig;
     private Map configs = new TreeMap();
@@ -300,7 +297,7 @@ public class Penrose implements
 
         initConnections(config);
         initModules(config);
-        analyze(config);
+        getEngine().analyze(config);
 	}
 
     public void initConnections(Config config) throws Exception {
@@ -338,118 +335,6 @@ public class Penrose implements
 
             modules.put(moduleConfig.getModuleName(), module);
         }
-    }
-
-    public Map getGraphs() {
-        return graphs;
-    }
-
-    public void setGraphs(Map graphs) {
-        this.graphs = graphs;
-    }
-
-    public Map getPrimarySources() {
-        return primarySources;
-    }
-
-    public void setPrimarySources(Map primarySources) {
-        this.primarySources = primarySources;
-    }
-
-    public Graph getGraph(EntryDefinition entryDefinition) throws Exception {
-
-        return (Graph)graphs.get(entryDefinition);
-    }
-
-    Graph computeGraph(EntryDefinition entryDefinition) throws Exception {
-
-        Graph graph = new Graph();
-
-        Collection sources = entryDefinition.getEffectiveSources();
-        if (sources.size() == 0) return null;
-
-        for (Iterator i=sources.iterator(); i.hasNext(); ) {
-            Source source = (Source)i.next();
-            graph.addNode(source);
-        }
-
-        Collection relationships = entryDefinition.getRelationships();
-        for (Iterator i=relationships.iterator(); i.hasNext(); ) {
-            Relationship relationship = (Relationship)i.next();
-            // System.out.println("Checking ["+relationship.getExpression()+"]");
-
-            String lhs = relationship.getLhs();
-            int li = lhs.indexOf(".");
-            String lsourceName = lhs.substring(0, li);
-
-            String rhs = relationship.getRhs();
-            int ri = rhs.indexOf(".");
-            String rsourceName = rhs.substring(0, ri);
-
-            Source lsource = entryDefinition.getEffectiveSource(lsourceName);
-            Source rsource = entryDefinition.getEffectiveSource(rsourceName);
-            graph.addEdge(lsource, rsource, relationship);
-        }
-
-        // System.out.println("Graph: "+graph);
-
-        return graph;
-    }
-
-    public void analyze(Config config) throws Exception {
-
-        for (Iterator i=config.getRootEntryDefinitions().iterator(); i.hasNext(); ) {
-            EntryDefinition entryDefinition = (EntryDefinition)i.next();
-            analyze(entryDefinition);
-        }
-    }
-
-    public void analyze(EntryDefinition entryDefinition) throws Exception {
-
-        log.debug("Entry "+entryDefinition.getDn()+":");
-
-        Source source = computePrimarySource(entryDefinition);
-        if (source != null) {
-            primarySources.put(entryDefinition, source);
-            log.debug(" - primary source: "+source);
-        }
-
-        Graph graph = computeGraph(entryDefinition);
-        if (graph != null) {
-            graphs.put(entryDefinition, graph);
-            log.debug(" - graph: "+graph);
-        }
-
-        for (Iterator i=entryDefinition.getChildren().iterator(); i.hasNext(); ) {
-            EntryDefinition childDefinition = (EntryDefinition)i.next();
-            analyze(childDefinition);
-        }
-	}
-
-    public Source getPrimarySource(EntryDefinition entryDefinition) {
-        return (Source)primarySources.get(entryDefinition);
-    }
-
-    Source computePrimarySource(EntryDefinition entryDefinition) {
-
-        Collection rdnAttributes = entryDefinition.getRdnAttributes();
-
-        // TODO need to handle multiple rdn attributes
-        AttributeDefinition rdnAttribute = (AttributeDefinition)rdnAttributes.iterator().next();
-        String exp = rdnAttribute.getExpression().getScript();
-
-        // TODO need to handle complex expression
-        int index = exp.indexOf(".");
-        if (index < 0) return null;
-
-        String primarySourceName = exp.substring(0, index);
-
-        for (Iterator i = entryDefinition.getSources().iterator(); i.hasNext();) {
-            Source source = (Source) i.next();
-            if (source.getName().equals(primarySourceName)) return source;
-        }
-
-        return null;
     }
 
     public void loadSchema() throws Exception {

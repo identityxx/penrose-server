@@ -6,6 +6,7 @@ package org.safehaus.penrose.engine;
 
 import org.safehaus.penrose.SearchResults;
 import org.safehaus.penrose.*;
+import org.safehaus.penrose.config.Config;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.cache.CacheConfig;
@@ -29,6 +30,9 @@ public class Engine {
     Logger log = LoggerFactory.getLogger(getClass());
 
     private EngineContext engineContext;
+
+    private Map graphs = new HashMap();
+    private Map primarySources = new HashMap();
 
     private Map locks = new HashMap();
     private Queue queue = new Queue();
@@ -57,6 +61,117 @@ public class Engine {
         execute(new RefreshThread(this));
     }
 
+    public void analyze(Config config) throws Exception {
+
+        for (Iterator i=config.getRootEntryDefinitions().iterator(); i.hasNext(); ) {
+            EntryDefinition entryDefinition = (EntryDefinition)i.next();
+            analyze(entryDefinition);
+        }
+    }
+
+    public void analyze(EntryDefinition entryDefinition) throws Exception {
+
+        log.debug("Entry "+entryDefinition.getDn()+":");
+
+        Source source = computePrimarySource(entryDefinition);
+        if (source != null) {
+            primarySources.put(entryDefinition, source);
+            log.debug(" - primary source: "+source);
+        }
+
+        Graph graph = computeGraph(entryDefinition);
+        if (graph != null) {
+            graphs.put(entryDefinition, graph);
+            log.debug(" - graph: "+graph);
+        }
+
+        for (Iterator i=entryDefinition.getChildren().iterator(); i.hasNext(); ) {
+            EntryDefinition childDefinition = (EntryDefinition)i.next();
+            analyze(childDefinition);
+        }
+	}
+
+    public Source getPrimarySource(EntryDefinition entryDefinition) {
+        return (Source)primarySources.get(entryDefinition);
+    }
+
+    Source computePrimarySource(EntryDefinition entryDefinition) {
+
+        Collection rdnAttributes = entryDefinition.getRdnAttributes();
+
+        // TODO need to handle multiple rdn attributes
+        AttributeDefinition rdnAttribute = (AttributeDefinition)rdnAttributes.iterator().next();
+        String exp = rdnAttribute.getExpression().getScript();
+
+        // TODO need to handle complex expression
+        int index = exp.indexOf(".");
+        if (index < 0) return null;
+
+        String primarySourceName = exp.substring(0, index);
+
+        for (Iterator i = entryDefinition.getSources().iterator(); i.hasNext();) {
+            Source source = (Source) i.next();
+            if (source.getName().equals(primarySourceName)) return source;
+        }
+
+        return null;
+    }
+
+    public Map getGraphs() {
+        return graphs;
+    }
+
+    public void setGraphs(Map graphs) {
+        this.graphs = graphs;
+    }
+
+    public Map getPrimarySources() {
+        return primarySources;
+    }
+
+    public void setPrimarySources(Map primarySources) {
+        this.primarySources = primarySources;
+    }
+
+    public Graph getGraph(EntryDefinition entryDefinition) throws Exception {
+
+        return (Graph)graphs.get(entryDefinition);
+    }
+
+    Graph computeGraph(EntryDefinition entryDefinition) throws Exception {
+
+        Graph graph = new Graph();
+
+        Collection sources = entryDefinition.getEffectiveSources();
+        if (sources.size() == 0) return null;
+
+        for (Iterator i=sources.iterator(); i.hasNext(); ) {
+            Source source = (Source)i.next();
+            graph.addNode(source);
+        }
+
+        Collection relationships = entryDefinition.getRelationships();
+        for (Iterator i=relationships.iterator(); i.hasNext(); ) {
+            Relationship relationship = (Relationship)i.next();
+            // System.out.println("Checking ["+relationship.getExpression()+"]");
+
+            String lhs = relationship.getLhs();
+            int li = lhs.indexOf(".");
+            String lsourceName = lhs.substring(0, li);
+
+            String rhs = relationship.getRhs();
+            int ri = rhs.indexOf(".");
+            String rsourceName = rhs.substring(0, ri);
+
+            Source lsource = entryDefinition.getEffectiveSource(lsourceName);
+            Source rsource = entryDefinition.getEffectiveSource(rsourceName);
+            graph.addEdge(lsource, rsource, relationship);
+        }
+
+        // System.out.println("Graph: "+graph);
+
+        return graph;
+    }
 
     public void execute(Runnable runnable) throws Exception {
         threadPool.execute(runnable);
@@ -106,8 +221,8 @@ public class Engine {
             AttributeValues values)
             throws Exception {
 
-        Graph graph = getEngineContext().getGraph(entryDefinition);
-        Source primarySource = getEngineContext().getPrimarySource(entryDefinition);
+        Graph graph = getGraph(entryDefinition);
+        Source primarySource = getPrimarySource(entryDefinition);
 
         AddGraphVisitor visitor = new AddGraphVisitor(getEngineContext(), primarySource, entryDefinition, values);
         graph.traverse(visitor, primarySource);
@@ -125,8 +240,8 @@ public class Engine {
         EntryDefinition entryDefinition = entry.getEntryDefinition();
         AttributeValues values = entry.getAttributeValues();
 
-        Graph graph = getEngineContext().getGraph(entryDefinition);
-        Source primarySource = getEngineContext().getPrimarySource(entryDefinition);
+        Graph graph = getGraph(entryDefinition);
+        Source primarySource = getPrimarySource(entryDefinition);
 
         DeleteGraphVisitor visitor = new DeleteGraphVisitor(getEngineContext(), primarySource, entryDefinition, values);
         graph.traverse(visitor, primarySource);
@@ -147,8 +262,8 @@ public class Engine {
         EntryDefinition entryDefinition = entry.getEntryDefinition();
         AttributeValues oldValues = entry.getAttributeValues();
 
-        Graph graph = getEngineContext().getGraph(entryDefinition);
-        Source primarySource = getEngineContext().getPrimarySource(entryDefinition);
+        Graph graph = getGraph(entryDefinition);
+        Source primarySource = getPrimarySource(entryDefinition);
 
         ModifyGraphVisitor visitor = new ModifyGraphVisitor(getEngineContext(), primarySource, entry, newValues);
         graph.traverse(visitor, primarySource);
@@ -264,8 +379,8 @@ public class Engine {
 
         log.debug("Loading: "+pks);
 
-        Graph graph = getEngineContext().getGraph(entryDefinition);
-        Source primarySource = getEngineContext().getPrimarySource(entryDefinition);
+        Graph graph = getGraph(entryDefinition);
+        Source primarySource = getPrimarySource(entryDefinition);
 
         LoaderGraphVisitor loaderVisitor = new LoaderGraphVisitor(getEngineContext(), entryDefinition, pks);
         graph.traverse(loaderVisitor, primarySource);
@@ -314,7 +429,7 @@ public class Engine {
         log.debug("Entry filter cache not found.");
         log.debug("Searching entry "+dn+" for "+filter);
 
-        Source primarySource = engineContext.getPrimarySource(entryDefinition);
+        Source primarySource = getPrimarySource(entryDefinition);
         String primarySourceName = primarySource.getName();
         Collection keys = searchEntries(parent, entryDefinition, filter);
 
@@ -368,7 +483,7 @@ public class Engine {
     }
 
     public Collection searchEntries(Entry parent, EntryDefinition entryDefinition, Filter filter) throws Exception {
-        Source primarySource = getEngineContext().getPrimarySource(entryDefinition);
+        Source primarySource = getPrimarySource(entryDefinition);
 
         Collection newRows = null;
 
@@ -413,7 +528,7 @@ public class Engine {
         String startingSourceName = getStartingSourceName(entryDefinition);
         Source startingSource = entryDefinition.getEffectiveSource(startingSourceName);
 
-        Graph graph = getEngineContext().getGraph(entryDefinition);
+        Graph graph = getGraph(entryDefinition);
 
         Collection keys = new TreeSet();
 
