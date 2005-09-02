@@ -4,7 +4,7 @@
 	<classpathentry kind="con" path="org.eclipse.pde.core.requiredPlugins"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry kind="lib" path="lib/bcprov-jdk14-125.jar"/>
-	<classpathentry kind="lib" path="lib/bsh-2.0b1.jar"/>
+	<classpathentry kind="lib" path="C:/svn.safehaus.org/penrose-mt/lib/runtime/bsh-2.0b4.jar"/>
 	<classpathentry kind="lib" path="lib/commons-beanutils-1.6.jar"/>
 	<classpathentry kind="lib" path="lib/commons-dbcp-1.2.jar"/>
 	<classpathentry kind="lib" path="lib/commons-digester-1.5.jar"/>

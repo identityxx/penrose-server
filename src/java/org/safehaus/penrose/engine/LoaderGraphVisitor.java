@@ -24,14 +24,14 @@ public class LoaderGraphVisitor extends GraphVisitor {
 
     private Stack stack = new Stack();
 
-    public LoaderGraphVisitor(EngineContext engineContext, EntryDefinition entryDefinition, Collection pks) {
+    public LoaderGraphVisitor(EngineContext engineContext, EntryDefinition entryDefinition, Collection filters) {
         this.engineContext = engineContext;
         this.entryDefinition = entryDefinition;
 
         Map map = new TreeMap();
-        for (Iterator i=pks.iterator(); i.hasNext(); ) {
-            Row pk = (Row)i.next();
-            map.put(pk, pk);
+        for (Iterator i=filters.iterator(); i.hasNext(); ) {
+            Row filter = (Row)i.next();
+            map.put(filter, filter);
         }
         stack.push(map);
     }
@@ -39,8 +39,8 @@ public class LoaderGraphVisitor extends GraphVisitor {
     public boolean preVisitNode(Object node, Object parameter) throws Exception {
         Source source = (Source)node;
         Map map = (Map)stack.peek();
-        Collection pks = map.keySet();
-        log.debug("Loading "+source.getName()+" for "+pks);
+        Collection filters = map.keySet();
+        log.debug("Loading "+source.getName()+" for "+filters);
 
         if (entryDefinition.getSource(source.getName()) == null) {
             log.debug("Source "+source.getName()+" is not defined in entry "+entryDefinition.getDn());
@@ -60,7 +60,7 @@ public class LoaderGraphVisitor extends GraphVisitor {
         if (!allPksDefined) return false;
 */        
 
-        Map results = engineContext.getSyncService().search(source, pks);
+        Map results = engineContext.getSyncService().search(source, filters);
         if (results.size() == 0) return false;
         
         log.debug("Records:");
@@ -83,7 +83,7 @@ public class LoaderGraphVisitor extends GraphVisitor {
             }
 
             Row mainPk = null;
-            for (Iterator j=pks.iterator(); j.hasNext(); ) {
+            for (Iterator j=filters.iterator(); j.hasNext(); ) {
                 Row p = (Row)j.next();
                 //log.debug("   checking "+values+" with "+p);
 

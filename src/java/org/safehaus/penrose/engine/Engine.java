@@ -95,7 +95,7 @@ public class Engine {
         return (Source)primarySources.get(entryDefinition);
     }
 
-    Source computePrimarySource(EntryDefinition entryDefinition) {
+    Source computePrimarySource(EntryDefinition entryDefinition) throws Exception {
 
         Collection rdnAttributes = entryDefinition.getRdnAttributes();
 
@@ -103,11 +103,11 @@ public class Engine {
         AttributeDefinition rdnAttribute = (AttributeDefinition)rdnAttributes.iterator().next();
         String exp = rdnAttribute.getExpression().getScript();
 
-        // TODO need to handle complex expression
-        int index = exp.indexOf(".");
-        if (index < 0) return null;
+        Interpreter interpreter = engineContext.newInterpreter();
+        Collection variables = interpreter.parseVariables(exp);
+        if (variables.size() == 0) return null;
 
-        String primarySourceName = exp.substring(0, index);
+        String primarySourceName = (String)variables.iterator().next();
 
         for (Iterator i = entryDefinition.getSources().iterator(); i.hasNext();) {
             Source source = (Source) i.next();
@@ -321,8 +321,8 @@ public class Engine {
 
             if (!rdnsToLoad.isEmpty()) {
 
-                Collection pks = rdnToPk(entryDefinition, rdnsToLoad);
-                Map avs = loadEntries(parent, entryDefinition, pks);
+                Collection filters = rdnToFilter(entryDefinition, rdnsToLoad);
+                Map avs = loadEntries(parent, entryDefinition, filters);
                 Collection entries = getEngineContext().getTransformEngine().merge(parent, entryDefinition, avs);
 
                 String dn = entryDefinition.getRdn()+","+parent.getDn();
@@ -341,48 +341,53 @@ public class Engine {
         }
     }
 
-    public Collection rdnToPk(EntryDefinition entryDefinition, Collection rdns) throws Exception {
+    public Collection rdnToFilter(EntryDefinition entryDefinition, Collection rdns) throws Exception {
 
-        Collection attributes = entryDefinition.getRdnAttributes();
+        Collection filters = new TreeSet();
 
-        // TODO need to handle composite rdn
-        AttributeDefinition attribute = (AttributeDefinition)attributes.iterator().next();
-        String expression = attribute.getExpression().getScript();
+        Source primarySource = getPrimarySource(entryDefinition);
+        Collection fields = primarySource.getFields();
 
-        // TODO need to handle complex expression
-        int pos = expression.indexOf(".");
-        String sourceName = expression.substring(0, pos);
-        String fieldName = expression.substring(pos+1);
-
-        Collection pks = new TreeSet();
-
+        //log.debug("Creating filters:");
         for (Iterator i=rdns.iterator(); i.hasNext(); ) {
             Row rdn = (Row)i.next();
+            //log.debug(" - "+rdn);
 
-            // TODO need to handle composite rdn
-            String attributeName = (String)rdn.getNames().iterator().next();
-            Object value = rdn.get(attributeName);
+            Interpreter interpreter = engineContext.newInterpreter();
+            interpreter.set(rdn);
 
-            Row pk = new Row();
-            pk.set(fieldName, value);
-            pks.add(pk);
+            Row filter = new Row();
+            for (Iterator j=fields.iterator(); j.hasNext(); ) {
+                Field field = (Field)j.next();
+                Expression exp = field.getExpression();
+                if (exp == null) continue;
+
+                String script = exp.getScript();
+                //log.debug("   - "+field.getName()+": "+script);
+                Object value = interpreter.eval(script);
+                if (value == null) continue;
+
+                filter.set(field.getName(), value);
+            }
+
+            filters.add(filter);
         }
 
-        return pks;
+        return filters;
     }
 
     public Map loadEntries(
             Entry parent,
             EntryDefinition entryDefinition,
-            Collection pks)
+            Collection filters)
             throws Exception {
 
-        log.debug("Loading: "+pks);
+        log.debug("Loading: "+filters);
 
         Graph graph = getGraph(entryDefinition);
         Source primarySource = getPrimarySource(entryDefinition);
 
-        LoaderGraphVisitor loaderVisitor = new LoaderGraphVisitor(getEngineContext(), entryDefinition, pks);
+        LoaderGraphVisitor loaderVisitor = new LoaderGraphVisitor(getEngineContext(), entryDefinition, filters);
         graph.traverse(loaderVisitor, primarySource);
 
         Map attributeValues = loaderVisitor.getAttributeValues();

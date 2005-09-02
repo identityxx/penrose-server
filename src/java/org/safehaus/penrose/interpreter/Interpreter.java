@@ -37,6 +37,8 @@ public abstract class Interpreter {
         }
     }
 
+    public abstract Collection parseVariables(String script) throws Exception;
+
     public abstract void set(String name, Object value) throws Exception;
 
     public abstract Object get(String name) throws Exception;
