@@ -55,16 +55,16 @@ public class SyncService {
 
         try {
 
-	        Map rows = syncContext.getTransformEngine().transform(source, attributes);
+	        Map entries = syncContext.getTransformEngine().split(source, attributes);
 
-	        log.debug("Entries: "+rows);
+	        log.debug("Entries: "+entries);
 
-	        for (Iterator i=rows.keySet().iterator(); i.hasNext(); ) {
+	        for (Iterator i=entries.keySet().iterator(); i.hasNext(); ) {
 	            Map pk = (Map)i.next();
-	            AttributeValues row = (AttributeValues)rows.get(pk);
+	            AttributeValues values = (AttributeValues)entries.get(pk);
 
                 Connection connection = syncContext.getConnection(source.getConnectionName());
-	            int rc = connection.bind(source, row, password);
+	            int rc = connection.bind(source, values, password);
 
 	            if (rc != LDAPException.SUCCESS) return rc;
 	        }
@@ -87,13 +87,13 @@ public class SyncService {
 
         try {
 
-	        Map rows = syncContext.getTransformEngine().transform(source, values);
+            Map entries = syncContext.getTransformEngine().split(source, values);
 
-	        log.debug("New entries: "+rows);
+	        log.debug("New entries: "+entries);
 
-	        for (Iterator i=rows.keySet().iterator(); i.hasNext(); ) {
+	        for (Iterator i=entries.keySet().iterator(); i.hasNext(); ) {
 	            Row pk = (Row)i.next();
-	            AttributeValues fieldValues = (AttributeValues)rows.get(pk);
+	            AttributeValues fieldValues = (AttributeValues)entries.get(pk);
 
 	            // Add row to the source table in the source database/directory
                 Connection connection = syncContext.getConnection(source.getConnectionName());
@@ -123,17 +123,17 @@ public class SyncService {
 
 	        log.debug("Values: "+values);
 
-	        Map rows = syncContext.getTransformEngine().transform(source, values);
+            Map entries = syncContext.getTransformEngine().split(source, values);
 
-	        log.debug("Entries: "+rows);
+	        log.debug("Entries: "+entries);
 
-	        log.debug("Rows to be deleted from "+source.getName()+": "+rows.size()+" rows");
+	        log.debug("Rows to be deleted from "+source.getName()+": "+entries.size()+" rows");
 
             String key = source.getConnectionConfig().getConnectionName()+"."+source.getSourceName();
 
-	        for (Iterator i=rows.keySet().iterator(); i.hasNext(); ) {
+	        for (Iterator i=entries.keySet().iterator(); i.hasNext(); ) {
 	            Row pk = (Row)i.next();
-	            AttributeValues attributes = (AttributeValues)rows.get(pk);
+	            AttributeValues attributes = (AttributeValues)entries.get(pk);
 
                 //AttributeValues attributes = engineContext.getTransformEngine().convert(row);
                 Connection connection = syncContext.getConnection(source.getConnectionName());
@@ -164,8 +164,8 @@ public class SyncService {
 
         try {
 
-            Map oldEntries = syncContext.getTransformEngine().transform(source, oldValues);
-            Map newEntries = syncContext.getTransformEngine().transform(source, newValues);
+            Map oldEntries = syncContext.getTransformEngine().split(source, oldValues);
+            Map newEntries = syncContext.getTransformEngine().split(source, newValues);
 
             //log.debug("Old entries: " + oldEntries);
             //log.debug("New entries: " + newEntries);

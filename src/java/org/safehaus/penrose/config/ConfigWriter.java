@@ -142,9 +142,7 @@ public class ConfigWriter {
 
 		// write expression
         if (field.getExpression() != null) {
-            Element expression = new DefaultElement("expression");
-            expression.add(new DefaultText(field.getExpression()));
-            element.add(expression);
+            element.add(toElement(field.getExpression()));
         }
 
 		return element;
@@ -256,14 +254,26 @@ public class ConfigWriter {
     	Element element = new DefaultElement("at");
     	element.add(new DefaultAttribute("name", attribute.getName()));
     	if (attribute.isRdn()) element.add(new DefaultAttribute("rdn", "true"));
-        // expression (actually the value)
+
+        if (attribute.getScript() != null) {
+            Element scriptElement = new DefaultElement("script");
+            scriptElement.setText(attribute.getScript());
+            element.add(scriptElement);
+        }
+
         if (attribute.getExpression() != null) {
-            Element expressionElement = new DefaultElement("expression");
-            expressionElement.setText(attribute.getExpression());
-            element.add(expressionElement);
+            element.add(toElement(attribute.getExpression()));
         }
 
     	return element;
+    }
+
+    public Element toElement(Expression expression) {
+        Element element = new DefaultElement("expression");
+        if (expression.getForeach() != null) element.add(new DefaultAttribute("foreach", expression.getForeach()));
+
+        element.setText(expression.getScript());
+        return element;
     }
 
     public Element toElement(Source source) {
@@ -287,10 +297,11 @@ public class ConfigWriter {
 			Field field = (Field)i.next();
 
             if (sourceDefinition.getFieldDefinition(field.getName()) == null) continue;
-            if (field.getExpression() == null) continue;
+            if (field.getExpression().getScript() == null) continue;
 
             element.add(toElement(field));
 		}
+
     	// parameters
         Map parameters = new HashMap(); // source.getParameters();
 

@@ -347,9 +347,11 @@ public class PenroseInterceptor extends BaseInterceptor {
             String[] attrIds)
             throws NamingException {
 
+        Name principalDn = getPrincipal() == null ? null : getPrincipal().getJndiName();
         String dn = name.toString();
+
         log.debug("===============================================================================");
-        log.debug("lookup(\""+dn+"\")");
+        log.debug("lookup(\""+dn+"\", "+attrIds+")");
 
         try {
             Config config = penrose.getConfig(dn);
@@ -368,7 +370,42 @@ public class PenroseInterceptor extends BaseInterceptor {
                 log.debug("- "+attrIds[i]);
             }
 
-            return null;
+            PenroseConnection connection = penrose.openConnection();
+            connection.setBindDn(principalDn.toString());
+
+            String baseDn = dn.toString();
+            SearchResults results = connection.search(
+                    baseDn,
+                    LDAPConnection.SCOPE_BASE,
+                    LDAPSearchConstraints.DEREF_ALWAYS,
+                    "(objectClass=*)",
+                    new ArrayList());
+
+            int rc = results.getReturnCode();
+            connection.close();
+
+            if (rc != LDAPException.SUCCESS) {
+                ExceptionUtil.throwNamingException(rc);
+            }
+
+            LDAPEntry result = (LDAPEntry)results.next();
+
+            LDAPAttributeSet attributeSet = result.getAttributeSet();
+            Attributes attributes = new BasicAttributes();
+
+            for (Iterator j = attributeSet.iterator(); j.hasNext(); ) {
+                LDAPAttribute attribute = (LDAPAttribute)j.next();
+                Attribute attr = new BasicAttribute(attribute.getName());
+
+                for (Enumeration k=attribute.getStringValues(); k.hasMoreElements(); ) {
+                    String value = (String)k.nextElement();
+                    attr.add(value);
+                }
+
+                attributes.put(attr);
+            }
+
+            return attributes;
 
         } catch (Exception e) {
             log.error(e.getMessage(), e);
@@ -382,8 +419,8 @@ public class PenroseInterceptor extends BaseInterceptor {
             throws NamingException {
 
         Name principalDn = getPrincipal() == null ? null : getPrincipal().getJndiName();
-
         String dn = name.toString();
+
         log.debug("===============================================================================");
         log.debug("lookup(\""+dn+"\")");
 

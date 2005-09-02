@@ -15,11 +15,16 @@ public class AttributeDefinition implements Cloneable, Serializable {
 	 * Name. This refers to AttributeType's name.
 	 */
 	private String name;
-	
+
+    /**
+     * Script.
+     */
+    private String script;
+
 	/**
 	 * Values.
 	 */
-	private String expression;
+    private Expression expression;
 
     /**
      * This attribute is used in RDN.
@@ -39,17 +44,23 @@ public class AttributeDefinition implements Cloneable, Serializable {
     public AttributeDefinition() {
     }
 
-    public AttributeDefinition(String name) {
-        this(name, null, false);
+    public AttributeDefinition(String name, String expression) {
+        this(name, expression, false);
     }
 
-    public AttributeDefinition(String name, String expression) {
+    public AttributeDefinition(String name, Expression expression) {
         this(name, expression, false);
     }
 
     public AttributeDefinition(String name, String value, boolean rdn) {
         this.name = name;
-        this.expression = value;
+        this.expression = new Expression(value);
+        this.rdn = rdn;
+    }
+
+    public AttributeDefinition(String name, Expression expression, boolean rdn) {
+        this.name = name;
+        this.expression = expression;
         this.rdn = rdn;
     }
 
@@ -61,12 +72,12 @@ public class AttributeDefinition implements Cloneable, Serializable {
         this.name = name;
     }
 
-    public String getExpression() {
+    public Expression getExpression() {
         return expression;
     }
 
     public void setExpression(String expression) {
-        this.expression = expression;
+        this.expression.setScript(expression);
     }
 
     public boolean isRdn() {
@@ -98,13 +109,7 @@ public class AttributeDefinition implements Cloneable, Serializable {
     }
 
     public String getConstant() {
-        if (expression == null || "".equals(expression.trim())) return null;
-        if (expression.length() < 2) return null;
-        if (!expression.startsWith("\"")) return null;
-        if (!expression.endsWith("\"")) return null;
-        String constant = expression.substring(1, expression.length()-1);
-        if (constant.indexOf("\"") >= 0) return null;
-        return constant;
+        return expression.getConstant();
     }
 
     public String getEncryption() {
@@ -121,5 +126,17 @@ public class AttributeDefinition implements Cloneable, Serializable {
 
     public void setEncoding(String encoding) {
         this.encoding = encoding;
+    }
+
+    public String getScript() {
+        return script;
+    }
+
+    public void setScript(String script) {
+        this.script = script;
+    }
+
+    public void addExpression(Expression expression) {
+        this.expression = expression;
     }
 }

@@ -84,37 +84,6 @@ public class Engine {
 		return lock;
 	}
 
-    public Collection merge(Entry parent, EntryDefinition entryDefinition, Map avs) throws Exception {
-
-        Collection results = new ArrayList();
-
-        log.debug("Merging:");
-        int counter = 1;
-        // merge rows into attribute values
-        Map entries = new LinkedHashMap();
-        for (Iterator i = avs.keySet().iterator(); i.hasNext(); counter++) {
-            Row pk = (Row)i.next();
-            log.debug(" - "+pk);
-
-            AttributeValues sourceValues = (AttributeValues)avs.get(pk);
-            AttributeValues attributeValues = new AttributeValues();
-
-            Map rdn = getEngineContext().getTransformEngine().translate(entryDefinition, sourceValues, attributeValues);
-            if (rdn == null) continue;
-
-            //log.debug("   => "+rdn+": "+attributeValues);
-
-            Entry entry = new Entry(entryDefinition, attributeValues);
-            entry.setParent(parent);
-            results.add(entry);
-
-            log.debug("Entry #"+counter+":\n"+entry+"\n");
-        }
-
-        return results;
-    }
-
-
     public ThreadPool getThreadPool() {
         return threadPool;
     }
@@ -239,7 +208,7 @@ public class Engine {
 
                 Collection pks = rdnToPk(entryDefinition, rdnsToLoad);
                 Map avs = loadEntries(parent, entryDefinition, pks);
-                Collection entries = merge(parent, entryDefinition, avs);
+                Collection entries = getEngineContext().getTransformEngine().merge(parent, entryDefinition, avs);
 
                 String dn = entryDefinition.getRdn()+","+parent.getDn();
 
@@ -263,7 +232,7 @@ public class Engine {
 
         // TODO need to handle composite rdn
         AttributeDefinition attribute = (AttributeDefinition)attributes.iterator().next();
-        String expression = attribute.getExpression();
+        String expression = attribute.getExpression().getScript();
 
         // TODO need to handle complex expression
         int pos = expression.indexOf(".");
@@ -371,7 +340,7 @@ public class Engine {
             for (Iterator k=rdnAttributes.iterator(); k.hasNext(); ) {
                 AttributeDefinition attr = (AttributeDefinition)k.next();
                 String name = attr.getName();
-                String expression = attr.getExpression();
+                String expression = attr.getExpression().getScript();
                 Object value = interpreter.eval(expression);
 
                 if (value == null) {
@@ -424,8 +393,12 @@ public class Engine {
 
                     for (Iterator k=s.getFields().iterator(); k.hasNext(); ) {
                         Field f = (Field)k.next();
-                        String expression = f.getExpression();
-                        Object v = interpreter.eval(expression);
+
+                        Expression expression = f.getExpression();
+                        if (expression == null) continue;
+
+                        String script = expression.getScript();
+                        Object v = interpreter.eval(script);
                         if (v == null) continue;
 
                         newRow.set(f.getName(), v);

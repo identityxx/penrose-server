@@ -436,7 +436,7 @@ public class Penrose implements
 
         // TODO need to handle multiple rdn attributes
         AttributeDefinition rdnAttribute = (AttributeDefinition)rdnAttributes.iterator().next();
-        String exp = rdnAttribute.getExpression();
+        String exp = rdnAttribute.getExpression().getScript();
 
         // TODO need to handle complex expression
         int index = exp.indexOf(".");

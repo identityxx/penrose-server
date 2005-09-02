@@ -261,8 +261,9 @@ public class ModifyHandler {
 			attributes.put(name, attribute);
 
 		} else {
-			if (attribute.getExpression().equals(value))
-				return; // if already exists, don't add
+            // if already exists, don't add
+			if (attribute.getExpression().getScript().equals(value)) return;
+
 			attribute.setExpression(value);
 		}
 	}
@@ -279,7 +280,7 @@ public class ModifyHandler {
 
 		Interpreter interpreter = handlerContext.newInterpreter();
 
-		String attrValue = (String)interpreter.eval(attribute.getExpression());
+		String attrValue = (String)interpreter.eval(attribute.getExpression().getScript());
 		if (attrValue.equals(value)) attributes.remove(name);
 	}
 

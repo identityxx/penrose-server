@@ -16,10 +16,15 @@ public class Field {
 	 */
 	private String name;
 
+    /**
+     * Script.
+     */
+    private String script;
+
 	/**
 	 * Expression.
 	 */
-	private String expression;
+	private Expression expression;
 
 
     public Field() {
@@ -37,13 +42,17 @@ public class Field {
 		this.name = name;
 	}
 
-	public String getExpression() {
+	public Expression getExpression() {
 		return expression;
 	}
 
 	public void setExpression(String expression) {
-		this.expression = expression;
+		this.expression.setScript(expression);
 	}
+
+    public void addExpression(Expression expression) {
+        this.expression = expression;
+    }
 
     public boolean isPrimaryKey() {
         return fieldDefinition.isPrimaryKey();
@@ -75,5 +84,13 @@ public class Field {
 
     public String toString() {
         return name;
+    }
+
+    public String getScript() {
+        return script;
+    }
+
+    public void setScript(String script) {
+        this.script = script;
     }
 }

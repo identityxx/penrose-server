@@ -34,7 +34,17 @@
                 <object-create-rule classname="org.safehaus.penrose.mapping.AttributeDefinition" />
                 <set-properties-rule />
 
-                <call-method-rule pattern="expression" methodname="setExpression" paramcount="0" />
+                <call-method-rule pattern="script" methodname="setScript" paramcount="0" />
+
+                <pattern value="expression">
+                    <object-create-rule classname="org.safehaus.penrose.mapping.Expression" />
+                    <set-properties-rule />
+
+                    <call-method-rule methodname="setScript" paramcount="0" />
+
+                    <set-next-rule methodname="addExpression" />
+                </pattern>
+
                 <set-next-rule methodname="addAttributeDefinition" />
 
             </pattern>
@@ -49,7 +59,20 @@
                 <pattern value="field">
                     <object-create-rule classname="org.safehaus.penrose.mapping.Field" />
                     <set-properties-rule />
+
+                    <call-method-rule pattern="script" methodname="setScript" paramcount="0" />
+
+                    <pattern value="expression">
+                        <object-create-rule classname="org.safehaus.penrose.mapping.Expression" />
+                        <set-properties-rule />
+
+                        <call-method-rule methodname="setScript" paramcount="0" />
+
+                        <set-next-rule methodname="addExpression" />
+                    </pattern>
+<!--
                     <call-method-rule pattern="expression" methodname="setExpression" paramcount="0" />
+-->
                     <set-next-rule methodname="addField" />
                 </pattern>
 

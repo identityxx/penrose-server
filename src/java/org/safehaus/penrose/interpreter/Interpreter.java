@@ -1,3 +1,7 @@
+/**
+ * Copyright (c) 2000-2005, Identyx Corporation.
+ * All rights reserved.
+ */
 package org.safehaus.penrose.interpreter;
 
 import org.safehaus.penrose.mapping.Row;

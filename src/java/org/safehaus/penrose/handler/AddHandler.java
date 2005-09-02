@@ -6,10 +6,7 @@ package org.safehaus.penrose.handler;
 
 import org.safehaus.penrose.PenroseConnection;
 import org.safehaus.penrose.config.Config;
-import org.safehaus.penrose.mapping.Entry;
-import org.safehaus.penrose.mapping.AttributeValues;
-import org.safehaus.penrose.mapping.EntryDefinition;
-import org.safehaus.penrose.mapping.AttributeDefinition;
+import org.safehaus.penrose.mapping.*;
 import org.ietf.ldap.LDAPEntry;
 import org.ietf.ldap.LDAPDN;
 import org.ietf.ldap.LDAPException;
@@ -176,6 +173,7 @@ public class AddHandler {
                 log.debug("Add attribute "+name+": "+newExpressions);
 
                 newAttribute.setName(name);
+
                 newAttribute.setExpression(newExpressions);
 
                 newAttribute.setRdn(rdnAttribute.equals(name));

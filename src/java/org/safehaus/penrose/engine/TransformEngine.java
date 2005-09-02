@@ -108,37 +108,122 @@ public class TransformEngine {
         }
     }
 
-    /**
-     * Translate attribute values into rows in the source
-     *
-     * @param source
-     * @param inputRow
-     * @param outputRow
-     * @return pk if this generates a valid primary key
-     * @throws Exception
-     */
-    public Row translate(Source source, Row inputRow, Row outputRow) throws Exception {
+    public Map translate(EntryDefinition entry, AttributeValues input, AttributeValues output) throws Exception {
 
-    	Interpreter interpreter = penrose.newInterpreter();
-        interpreter.set(inputRow);
+        Interpreter interpreter = penrose.newInterpreter();
+        interpreter.set(input);
 
+        Map pk = new TreeMap();
+        Map attributes = entry.getAttributes();
+
+        for (Iterator j=attributes.values().iterator(); j.hasNext(); ) {
+            AttributeDefinition attribute = (AttributeDefinition)j.next();
+
+            String name = attribute.getName();
+            Expression expression = attribute.getExpression();
+            String variable = expression.getForeach();
+
+            Object value = null;
+            if (variable == null) {
+                //log.debug("Evaluating expression: "+expression);
+                value = interpreter.eval(expression.getScript());
+
+            } else {
+                //log.debug("Evaluating expression: "+expression);
+
+                Collection values = input.get(variable);
+                //log.debug("Values: "+values);
+
+                if (values != null) {
+
+                    Collection newValues = new ArrayList();
+                    for (Iterator i=values.iterator(); i.hasNext(); ) {
+                        Object o = i.next();
+                        interpreter.set(variable, o);
+                        value = interpreter.eval(attribute.getExpression().getScript());
+                        //log.debug(" - "+value);
+                        newValues.add(value);
+                    }
+
+                    // restore old values
+                    if (values.size() > 1) {
+                        interpreter.set(variable, values);
+                    }
+
+                    value = newValues;
+                }
+            }
+
+            //log.debug("Result: "+value);
+
+            if (value == null) continue;
+
+            if (attribute.isRdn()) {
+                if (value == null) return null;
+                pk.put(name, value);
+            }
+
+            output.add(name, value);
+        }
+
+        return pk;
+    }
+
+    public Map translate(Source source, AttributeValues input, AttributeValues output) throws Exception {
+
+        Interpreter interpreter = penrose.newInterpreter();
+        interpreter.set(input);
+
+        Map pk = new TreeMap();
         Collection fields = source.getFields();
-        Row pk = new Row();
 
         for (Iterator j=fields.iterator(); j.hasNext(); ) {
             Field field = (Field)j.next();
 
             String name = field.getName();
+            Expression expression = field.getExpression();
 
-            String expression = field.getExpression();
             if (expression == null) {
                 if (field.isPrimaryKey()) return null;
                 continue;
             }
 
-            Object v = interpreter.eval(expression);
-            String value = v == null ? null : v.toString();
+            String variable = expression.getForeach();
 
+            Collection newValue = new ArrayList();
+            if (variable == null) {
+                //log.debug("Evaluating expression: "+expression);
+                Object value = interpreter.eval(expression.getScript());
+                if (value == null) continue;
+
+                newValue.add(value);
+
+            } else {
+                //log.debug("Evaluating expression: "+expression);
+
+                Collection oldValues = input.get(variable);
+                //log.debug("Values: "+oldValues);
+
+                if (oldValues != null) {
+
+                    for (Iterator i=oldValues.iterator(); i.hasNext(); ) {
+                        Object o = i.next();
+                        interpreter.set(variable, o);
+                        Object value = interpreter.eval(field.getExpression().getScript());
+                        if (value == null) continue;
+
+                        newValue.add(value);
+                        //log.debug(" - "+value);
+                    }
+
+                    // restore old values
+                    if (oldValues.size() > 1) {
+                        interpreter.set(variable, oldValues);
+                    }
+                }
+            }
+
+/*
             if (field.getEncryption() != null) {
                 // if field encryption is enabled
 
@@ -162,159 +247,80 @@ public class TransformEngine {
                 	log.debug("TRANSLATE - unchanged: "+value);
                 }
             }
+*/
+            //log.debug("Result: "+newValue);
+
+            if (newValue == null) continue;
 
             if (field.isPrimaryKey()) {
-                if (value == null) return null;
-                pk.set(name, value);
+                if (newValue == null) return null;
+                pk.put(name, newValue);
             }
 
-            outputRow.set(name, value);
+            output.add(name, newValue);
         }
 
         return pk;
     }
 
-    public Map translate(EntryDefinition entry, AttributeValues input, AttributeValues output) throws Exception {
+    public Map split(Source source, AttributeValues entry) throws Exception {
 
-        Interpreter interpreter = penrose.newInterpreter();
-        interpreter.set(input);
+        AttributeValues output = new AttributeValues();
+        Map m = translate(source, entry, output);
+        log.debug("PKs: "+m);
+        log.debug("Output: "+output);
 
-        Map pk = new TreeMap();
-        Map attributes = entry.getAttributes();
-        for (Iterator j=attributes.values().iterator(); j.hasNext(); ) {
-            AttributeDefinition attribute = (AttributeDefinition)j.next();
-
-            String name = attribute.getName();
-            Object value = interpreter.eval(attribute.getExpression());
-
-            if (value == null) continue;
-
-            if (attribute.isRdn()) {
-                if (value == null) return null;
-                pk.put(name, value);
-            }
-
-            output.add(name, value);
-        }
-
-        return pk;
-    }
-
-    /**
-     * Transform entry's attribute values into the source's rows.
-     *
-     * @param source
-     * @param entry
-     * @return rows
-     * @throws Exception
-     */
-    public Map transform(Source source, AttributeValues entry) throws Exception {
-        Collection rows = convert(entry);
-        log.debug("Original rows: "+rows);
-
-        Map map = new HashMap();
+        Collection rows = convert(output);
+        Map map = new TreeMap();
 
         for (Iterator i=rows.iterator(); i.hasNext(); ) {
-            Row attributeValues = (Row)i.next();
-            Row sourceValues = new Row();
-
-            Row pk = translate(source, attributeValues, sourceValues);
-            if (pk == null) continue;
-
-            Collection set = (Collection)map.get(pk);
-            if (set == null) {
-                set = new HashSet();
-                map.put(pk, set);
-            }
-            set.add(sourceValues);
-        }
-
-        log.debug("Valid rows: "+map.values());
-
-        Map map2 = new HashMap();
-
-        for (Iterator i=map.keySet().iterator(); i.hasNext(); ) {
-            Row pk = (Row)i.next();
-            Set setOfRows = (Set)map.get(pk);
-
-            AttributeValues values = new AttributeValues();
-
-            for (Iterator j=setOfRows.iterator(); j.hasNext(); ) {
-                Row translatedRow = (Row)j.next();
-
-                for (Iterator k=translatedRow.getNames().iterator(); k.hasNext(); ) {
-                    String name = (String)k.next();
-                    String value = (String)translatedRow.get(name);
-
-                    Collection set = (Collection)values.get(name);
-                    if (set == null) {
-                        set = new HashSet();
-                        values.set(name, set);
-                    }
-                    if (value != null) set.add(value);
-                }
-            }
-
-            map2.put(pk, values);
-        }
-
-        log.debug("Translated rows: "+map2);
-
-        return map2;
-    }
-
-    /**
-     * Merge rows into attribute values.
-     *
-     * @param entry
-     * @param rows
-     * @return attribute values
-     */
-    public Map merge(EntryDefinition entry, Collection rows) {
-        Map attributes = entry.getAttributes();
-        Map entries = new LinkedHashMap(); // use LinkedHashMap to maintain row order
-
-        for (Iterator i = rows.iterator(); i.hasNext(); ) {
             Row row = (Row)i.next();
+            log.debug(" - "+row);
 
-            // generate primary key from attribute values
-            Map pk = new HashMap();
-            boolean validPk = true;
-            for (Iterator j=attributes.values().iterator(); j.hasNext(); ) {
-                AttributeDefinition attribute = (AttributeDefinition)j.next();
-                String name = attribute.getName();
-                String value = (String)row.get(name);
+            AttributeValues av = new AttributeValues();
+            av.add(row);
 
-                if (attribute.isRdn()) {
-                    if (value == null) validPk = false;
-                    pk.put(name, value);
-                }
+            Row pk = new Row();
+            Collection fields = source.getPrimaryKeyFields();
+            for (Iterator j=fields.iterator(); j.hasNext(); ) {
+                Field field = (Field)j.next();
+                pk.set(field.getName(), row.get(field.getName()));
             }
 
-            if (!validPk) continue;
-
-            log.debug("Merging entry "+pk);
-
-            AttributeValues values = (AttributeValues)entries.get(pk);
-            if (values == null) {
-                values = new AttributeValues();
-                entries.put(pk, values);
-            }
-
-            // merging each attribute value
-            for (Iterator j = row.getNames().iterator(); j.hasNext(); ) {
-                String name = (String)j.next();
-                String value = (String)row.get(name);
-
-                Set set = (Set)values.get(name);
-                if (set == null) {
-                    set = new TreeSet();
-                    values.set(name, set);
-                }
-                if (value != null) set.add(value);
-            }
+            map.put(pk, av);
         }
 
-        return entries;
+        return map;
     }
+
+    public Collection merge(Entry parent, EntryDefinition entryDefinition, Map values) throws Exception {
+
+        Collection results = new ArrayList();
+
+        log.debug("Merging:");
+        int counter = 1;
+        // merge rows into attribute values
+        Map entries = new LinkedHashMap();
+        for (Iterator i = values.keySet().iterator(); i.hasNext(); counter++) {
+            Row pk = (Row)i.next();
+            log.debug(" - "+pk);
+
+            AttributeValues sourceValues = (AttributeValues)values.get(pk);
+            AttributeValues attributeValues = new AttributeValues();
+
+            Map rdn = translate(entryDefinition, sourceValues, attributeValues);
+            if (rdn == null) continue;
+
+            //log.debug("   => "+rdn+": "+attributeValues);
+
+            Entry entry = new Entry(entryDefinition, attributeValues);
+            entry.setParent(parent);
+            results.add(entry);
+
+            log.debug("Entry #"+counter+":\n"+entry+"\n");
+        }
+
+        return results;
+    }
+
 }
