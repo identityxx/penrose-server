@@ -296,8 +296,8 @@ public class ConfigWriter {
 		for (Iterator i=source.getFields().iterator(); i.hasNext(); ) {
 			Field field = (Field)i.next();
 
-            if (sourceDefinition.getFieldDefinition(field.getName()) == null) continue;
-            if (field.getExpression().getScript() == null) continue;
+            if (sourceDefinition.getFieldDefinition(field.getName()) == null) continue;            
+            if (field.getExpression() == null) continue;
 
             element.add(toElement(field));
 		}

@@ -46,8 +46,8 @@ public class Field {
 		return expression;
 	}
 
-	public void setExpression(String expression) {
-		this.expression.setScript(expression);
+	public void setExpression(Expression expression) {
+		this.expression = expression;
 	}
 
     public void addExpression(Expression expression) {
