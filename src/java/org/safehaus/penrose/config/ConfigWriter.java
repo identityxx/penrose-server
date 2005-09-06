@@ -91,14 +91,12 @@ public class ConfigWriter {
 	public Element toMappingXmlElement() {
 		Element mappingElement = new DefaultElement("mapping");
 		// entries
-		for (Iterator iter = config.getEntryDefinitions().iterator(); iter.hasNext();) {
+		for (Iterator iter = config.getRootEntryDefinitions().iterator(); iter.hasNext();) {
 			EntryDefinition entry = (EntryDefinition)iter.next();
-			if (entry.getParent() == null) {
-                Element entryElement = new DefaultElement("entry");
-                entryElement.add(new DefaultAttribute("dn", entry.getDn()));
-				mappingElement.add(entryElement);
-                toElement(entry, entryElement, mappingElement);
-			}
+            Element entryElement = new DefaultElement("entry");
+            entryElement.add(new DefaultAttribute("dn", entry.getDn()));
+            mappingElement.add(entryElement);
+            toElement(entry, entryElement, mappingElement);
 		}
 		return mappingElement;
 	}
@@ -236,14 +234,17 @@ public class ConfigWriter {
             ACI aci = (ACI)i.next();
             entryElement.add(toElement(aci));
         }
-		// children
-		for (Iterator i = entry.getChildren().iterator(); i.hasNext(); ) {
-			EntryDefinition child = (EntryDefinition)i.next();
-            Element childElement = new DefaultElement("entry");
-            childElement.add(new DefaultAttribute("dn", child.getDn()));
-			configElement.add(childElement);
-            toElement(child, childElement, configElement);
-		}
+
+        Collection children = config.getChildren(entry);
+        if (children != null) {
+            for (Iterator i = children.iterator(); i.hasNext(); ) {
+                EntryDefinition child = (EntryDefinition)i.next();
+                Element childElement = new DefaultElement("entry");
+                childElement.add(new DefaultAttribute("dn", child.getDn()));
+                configElement.add(childElement);
+                toElement(child, childElement, configElement);
+            }
+        }
 		return entryElement;
 	}
 

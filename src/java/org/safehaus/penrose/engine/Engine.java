@@ -85,9 +85,13 @@ public class Engine {
             log.debug(" - graph: "+graph);
         }
 
-        for (Iterator i=entryDefinition.getChildren().iterator(); i.hasNext(); ) {
-            EntryDefinition childDefinition = (EntryDefinition)i.next();
-            analyze(childDefinition);
+        Config config = engineContext.getConfig(entryDefinition.getDn());
+        Collection children = config.getChildren(entryDefinition);
+        if (children != null) {
+            for (Iterator i=children.iterator(); i.hasNext(); ) {
+                EntryDefinition childDefinition = (EntryDefinition)i.next();
+                analyze(childDefinition);
+            }
         }
 	}
 
@@ -142,7 +146,8 @@ public class Engine {
 
         Graph graph = new Graph();
 
-        Collection sources = entryDefinition.getEffectiveSources();
+        Config config = engineContext.getConfig(entryDefinition.getDn());
+        Collection sources = config.getEffectiveSources(entryDefinition);
         if (sources.size() == 0) return null;
 
         for (Iterator i=sources.iterator(); i.hasNext(); ) {
@@ -163,8 +168,8 @@ public class Engine {
             int ri = rhs.indexOf(".");
             String rsourceName = rhs.substring(0, ri);
 
-            Source lsource = entryDefinition.getEffectiveSource(lsourceName);
-            Source rsource = entryDefinition.getEffectiveSource(rsourceName);
+            Source lsource = config.getEffectiveSource(entryDefinition, lsourceName);
+            Source rsource = config.getEffectiveSource(entryDefinition, rsourceName);
             graph.addEdge(lsource, rsource, relationship);
         }
 
@@ -530,8 +535,10 @@ public class Engine {
             }
         }
 
+        Config config = engineContext.getConfig(entryDefinition.getDn());
+
         String startingSourceName = getStartingSourceName(entryDefinition);
-        Source startingSource = entryDefinition.getEffectiveSource(startingSourceName);
+        Source startingSource = config.getEffectiveSource(entryDefinition, startingSourceName);
 
         Graph graph = getGraph(entryDefinition);
 

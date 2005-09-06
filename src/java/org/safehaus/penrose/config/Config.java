@@ -24,6 +24,7 @@ public class Config implements Serializable {
 
     private Map entryDefinitions = new TreeMap();
     private Collection rootEntryDefinitions = new ArrayList();
+    private Map childrenMap = new TreeMap();
 
     private Map connectionConfigs = new LinkedHashMap();
 
@@ -41,22 +42,22 @@ public class Config implements Serializable {
 
         //System.out.println("Adding "+dn+".");
 
-        int i = dn.indexOf(",");
+        EntryDefinition parent = getParent(entry);
 
-        if (i >= 0) { // entry has parent
+        if (parent != null) { // parent found
+            //System.out.println("Found parent "+parentDn+".");
 
-            String parentDn = dn.substring(i+1);
-            EntryDefinition parent = (EntryDefinition)entryDefinitions.get(parentDn);
-
-            if (parent != null) { // parent found
-                //System.out.println("Found parent "+parentDn+".");
-                parent.addChild(entry);
+            Collection children = getChildren(parent);
+            if (children == null) {
+                children = new ArrayList();
+                setChildren(parent, children);
             }
+            children.add(entry);
         }
 
         entryDefinitions.put(dn, entry);
 
-        if (entry.getParent() == null) {
+        if (parent == null) {
         	rootEntryDefinitions.add(entry);
         }
 
@@ -97,37 +98,142 @@ public class Config implements Serializable {
     }
 
     public EntryDefinition removeEntryDefinition(EntryDefinition entry) {
-        if (entry.getParent() == null) {
+        EntryDefinition parent = getParent(entry);
+        if (parent == null) {
             rootEntryDefinitions.remove(entry);
 
         } else {
-            entry.getParent().removeChild(entry);
+            Collection children = getChildren(parent);
+            if (children != null) children.remove(entry);
         }
 
         return (EntryDefinition)entryDefinitions.remove(entry.getDn());
     }
-    
+
     public void renameEntryDefinition(EntryDefinition entry, String newDn) {
     	if (entry == null) return;
 
     	if (newDn.equals(entry.getDn())) return;
     	//System.out.println("Renaming "+entry.getDn()+" to "+newDn);
 
+        EntryDefinition oldParent = getParent(entry);
     	String oldDn = entry.getDn();
-    	entry.setDn(newDn);
 
+    	entry.setDn(newDn);
         entryDefinitions.put(newDn, entry);
 
-        Collection children = entry.getChildren();
-        for (Iterator i=children.iterator(); i.hasNext(); ) {
-            EntryDefinition child = (EntryDefinition)i.next();
-            String childNewDn = child.getRdn()+","+newDn;
-            //System.out.println(" - renaming child "+child.getDn()+" to "+childNewDn);
+        EntryDefinition newParent = getParent(entry);
 
-            renameEntryDefinition(child, childNewDn);
+        if (newParent != null) {
+            Collection newSiblings = getChildren(newParent);
+            if (newSiblings == null) {
+                newSiblings = new ArrayList();
+                setChildren(newParent, newSiblings);
+            }
+            newSiblings.add(entry);
+        }
+
+        Collection children = getChildren(oldDn);
+
+        if (children != null) {
+            setChildren(newDn, children);
+
+            for (Iterator i=children.iterator(); i.hasNext(); ) {
+                EntryDefinition child = (EntryDefinition)i.next();
+                String childNewDn = child.getRdn()+","+newDn;
+                //System.out.println(" - renaming child "+child.getDn()+" to "+childNewDn);
+
+                renameChildren(child, childNewDn);
+            }
+
+            removeChildren(oldDn);
         }
 
         entryDefinitions.remove(oldDn);
+
+        if (oldParent != null) {
+            Collection oldSiblings = getChildren(oldParent);
+            if (oldSiblings != null) oldSiblings.remove(entry);
+        }
+
+    }
+
+    public void renameChildren(EntryDefinition entry, String newDn) {
+    	if (entry == null) return;
+
+    	if (newDn.equals(entry.getDn())) return;
+
+        String oldDn = entry.getDn();
+
+        entry.setDn(newDn);
+        entryDefinitions.put(newDn, entry);
+
+        Collection children = getChildren(oldDn);
+
+        if (children != null) {
+            setChildren(newDn, children);
+
+            for (Iterator i=children.iterator(); i.hasNext(); ) {
+                EntryDefinition child = (EntryDefinition)i.next();
+                String childNewDn = child.getRdn()+","+newDn;
+                //System.out.println(" - renaming child "+child.getDn()+" to "+childNewDn);
+
+                renameChildren(child, childNewDn);
+            }
+
+            removeChildren(oldDn);
+        }
+
+        entryDefinitions.remove(oldDn);
+    }
+
+    public EntryDefinition getParent(EntryDefinition entry) {
+        String parentDn = entry.getParentDn();
+        return getEntryDefinition(parentDn);
+    }
+
+    public Collection getChildren(EntryDefinition entry) {
+        return getChildren(entry.getDn());
+    }
+
+    public Collection getChildren(String dn) {
+        return (Collection)childrenMap.get(dn);
+    }
+
+    public void setChildren(EntryDefinition entry, Collection children) {
+        setChildren(entry.getDn(), children);
+    }
+
+    public void setChildren(String dn, Collection children) {
+        childrenMap.put(dn, children);
+    }
+
+    public Collection removeChildren(EntryDefinition entry) {
+        return removeChildren(entry.getDn());
+    }
+
+    public Collection removeChildren(String dn) {
+        return (Collection)childrenMap.remove(dn);
+    }
+
+    public Collection getEffectiveSources(EntryDefinition entry) {
+        Collection list = new ArrayList();
+        list.addAll(entry.getSources());
+
+        EntryDefinition parent = getParent(entry);
+        if (parent != null) list.addAll(getEffectiveSources(parent));
+
+        return list;
+    }
+
+    public Source getEffectiveSource(EntryDefinition entry, String name) {
+        Source source = (Source)entry.getSource(name);
+        if (source != null) return source;
+
+        EntryDefinition parent = getParent(entry);
+        if (parent != null) return getEffectiveSource(parent, name);
+
+        return null;
     }
 
     public void addModuleConfig(ModuleConfig moduleConfig) throws Exception {
@@ -236,7 +342,8 @@ public class Config implements Serializable {
                     return result;
                 }
 
-                list = parentDefinition.getChildren();
+                list = getChildren(parentDefinition);
+                if (list == null) return result;
             }
 
             int j = rdn.indexOf("=");
@@ -387,10 +494,12 @@ public class Config implements Serializable {
 
         sb.append(nl);
 
-        Collection children = entry.getChildren();
-        for (Iterator i = children.iterator(); i.hasNext();) {
-            EntryDefinition child = (EntryDefinition) i.next();
-            sb.append(toString(child));
+        Collection children = getChildren(entry);
+        if (children != null) {
+            for (Iterator i = children.iterator(); i.hasNext();) {
+                EntryDefinition child = (EntryDefinition) i.next();
+                sb.append(toString(child));
+            }
         }
 
 		return sb.toString();

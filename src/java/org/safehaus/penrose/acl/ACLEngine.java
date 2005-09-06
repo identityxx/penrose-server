@@ -8,6 +8,7 @@ import org.safehaus.penrose.mapping.Entry;
 import org.safehaus.penrose.mapping.EntryDefinition;
 import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.PenroseConnection;
+import org.safehaus.penrose.config.Config;
 import org.ietf.ldap.LDAPException;
 import org.ietf.ldap.LDAPEntry;
 import org.ietf.ldap.LDAPAttributeSet;
@@ -82,7 +83,10 @@ public class ACLEngine {
             }
         }
 
-        entry = entry.getParent();
+        Config config = penrose.getConfig(entry.getDn());
+        if (config == null) return false;
+
+        entry = config.getParent(entry);
         if (entry == null) return false;
 
         return getObjectPermission(bindDn, targetDn, entry, ACI.SCOPE_SUBTREE, permission);
@@ -202,7 +206,10 @@ public class ACLEngine {
             }
         }
 
-        entry = entry.getParent();
+        Config config = penrose.getConfig(entry.getDn());
+        if (config == null) return;
+
+        entry = config.getParent(entry);
         if (entry == null) return;
 
         getReadableAttributes(bindDn, targetDn, entry, ACI.SCOPE_SUBTREE, grants, denies);

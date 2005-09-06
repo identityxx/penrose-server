@@ -91,7 +91,14 @@ public class SearchHandler {
         EntryDefinition parentDefinition = parent.getEntryDefinition();
 
 		//log.debug("Found parent entry: " + parentDn);
-		Collection children = parentDefinition.getChildren();
+		Collection children = config.getChildren(parentDefinition);
+
+        if (children == null) {
+            log.debug("Children not found: " + dn);
+
+            throw new LDAPException("Can't find " + dn + ".",
+                    LDAPException.NO_SUCH_OBJECT, "Can't find " + dn + ".");
+        }
 
         int j = rdn.indexOf("=");
         String rdnAttribute = rdn.substring(0, j);
@@ -312,7 +319,12 @@ public class SearchHandler {
             SearchResults results) throws Exception {
 
 		EntryDefinition entryDefinition = entry.getEntryDefinition();
-		Collection children = entryDefinition.getChildren();
+        Config config = handlerContext.getConfig(entryDefinition.getDn());
+		Collection children = config.getChildren(entryDefinition);
+        if (children == null) {
+            return;
+        }
+        
 		log.debug("Total children: " + children.size());
 
 		for (Iterator i = children.iterator(); i.hasNext();) {

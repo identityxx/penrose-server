@@ -70,7 +70,8 @@ public class AddHandler {
         log.debug("Adding entry under "+parent.getDn());
 
         EntryDefinition parentDefinition = parent.getEntryDefinition();
-        Collection children = parentDefinition.getChildren();
+        Config config = handlerContext.getConfig(parentDefinition.getDn());
+        Collection children = config.getChildren(parentDefinition);
 
         AttributeValues values = new AttributeValues();
 
@@ -88,11 +89,13 @@ public class AddHandler {
         }
 
         // add into the first matching child
-        for (Iterator iterator = children.iterator(); iterator.hasNext(); ) {
-            EntryDefinition entryDefinition = (EntryDefinition)iterator.next();
-            if (!entryDefinition.isDynamic()) continue;
+        if (children != null) {
+            for (Iterator iterator = children.iterator(); iterator.hasNext(); ) {
+                EntryDefinition entryDefinition = (EntryDefinition)iterator.next();
+                if (!entryDefinition.isDynamic()) continue;
 
-            return handlerContext.getEngine().add(parent, entryDefinition, values);
+                return handlerContext.getEngine().add(parent, entryDefinition, values);
+            }
         }
 
         return addStaticEntry(parentDefinition, values, dn);

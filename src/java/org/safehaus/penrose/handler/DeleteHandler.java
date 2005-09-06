@@ -62,18 +62,12 @@ public class DeleteHandler {
 
     public int deleteStaticEntry(EntryDefinition entry) throws Exception {
 
-        // can't delete no leaf
-        if (!entry.getChildren().isEmpty()) return LDAPException.NOT_ALLOWED_ON_NONLEAF;
-
-        // detach from parent
-        EntryDefinition parent = entry.getParent();
-        if (parent != null) {
-            Collection children = parent.getChildren();
-            children.remove(entry);
-        }
-
         Config config = getHandlerContext().getConfig(entry.getDn());
         if (config == null) return LDAPException.NO_SUCH_OBJECT;
+
+        // can't delete no leaf
+        Collection children = config.getChildren(entry);
+        if (children != null && !children.isEmpty()) return LDAPException.NOT_ALLOWED_ON_NONLEAF;
 
         config.removeEntryDefinition(entry);
 

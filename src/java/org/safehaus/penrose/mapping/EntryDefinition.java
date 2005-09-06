@@ -19,11 +19,6 @@ import java.io.Serializable;
  */
 public class EntryDefinition implements Cloneable, Serializable {
 
-	/**
-	 * Parent entry. If this is a root entry, parent is null.
-	 */
-    private EntryDefinition parent;
-    
     /**
      * Distinguished name.
      */
@@ -34,8 +29,6 @@ public class EntryDefinition implements Cloneable, Serializable {
 	/**
 	 * Children. Each element is of type org.safehaus.penrose.mapping.EntryDefinition.
 	 */
-    private Collection children = new ArrayList();
-
     private Collection childDefinitions = new ArrayList();
 
     /**
@@ -78,8 +71,6 @@ public class EntryDefinition implements Cloneable, Serializable {
     }
 
 	public EntryDefinition(String dn) {
-        this.parent = null;
-
         int i = dn.indexOf(",");
         if (i < 0) {
             rdn = dn;
@@ -93,7 +84,6 @@ public class EntryDefinition implements Cloneable, Serializable {
     public EntryDefinition(String rdn, EntryDefinition parent) {
         this.rdn = rdn;
         this.parentDn = parent.getDn();
-        this.parent = parent;
     }
 
     public String getRdn() {
@@ -148,7 +138,7 @@ public class EntryDefinition implements Cloneable, Serializable {
             Object rdnValue = rdnValues.iterator().next();
 
             // TODO fix if parent is also a dynamic entry
-            return rdnAttribute.getName()+"="+rdnValue+","+parent.getDn();
+            return rdnAttribute.getName()+"="+rdnValue+","+parentDn;
 
         } else {
             return getDn();
@@ -190,22 +180,6 @@ public class EntryDefinition implements Cloneable, Serializable {
         this.attributes = attributes;
     }
 
-    public EntryDefinition getParent() {
-        return parent;
-    }
-
-    public void setParent(EntryDefinition parent) {
-        this.parent = parent;
-    }
-
-    public Collection getChildren() {
-        return children;
-    }
-
-    public void setChildren(Collection children) {
-        this.children = children;
-    }
-
     public Collection getRelationships() {
         return relationships;
     }
@@ -218,13 +192,6 @@ public class EntryDefinition implements Cloneable, Serializable {
         return sources.values();
     }
 
-    public Collection getEffectiveSources() {
-        Collection list = new ArrayList();
-        list.addAll(sources.values());
-        if (parent != null) list.addAll(parent.getEffectiveSources());
-        return list;
-    }
-
     public Collection getObjectClasses() {
         return objectClasses;
     }
@@ -233,23 +200,10 @@ public class EntryDefinition implements Cloneable, Serializable {
         this.objectClasses = objectClasses;
     }
 
-    ///////////
-    
-
 	public void addObjectClass(String oc) {
 		objectClasses.add(oc);
 	}
 
-	public void addChild(EntryDefinition child) {
-		child.setParent(this);
-		children.add(child);
-	}
-
-    public void removeChild(EntryDefinition child) {
-        child.setParent(null);
-        children.remove(child);
-    }
-    
     public void addChildDefinition(MappingRule mappingRule) {
         childDefinitions.add(mappingRule);
     }
@@ -260,15 +214,6 @@ public class EntryDefinition implements Cloneable, Serializable {
 
     public Source getSource(String name) {
         return (Source)sources.get(name);
-    }
-
-    public Source getEffectiveSource(String name) {
-        Source source = (Source)sources.get(name);
-        if (source != null) return source;
-
-        if (parent != null) return parent.getEffectiveSource(name);
-
-        return null;
     }
 
     public Source removeSource(String name) {
@@ -297,9 +242,7 @@ public class EntryDefinition implements Cloneable, Serializable {
     
     public Object clone() {
         EntryDefinition entry = new EntryDefinition();
-        entry.setParent(parent);
         entry.setDn(getDn());
-        entry.getChildren().addAll(children);
         entry.getObjectClasses().addAll(objectClasses);
 
         Map a = entry.getAttributes();
@@ -360,9 +303,9 @@ public class EntryDefinition implements Cloneable, Serializable {
             sb.append(value);
         }
 
-        if (parent != null) {
+        if (parentDn != null) {
             sb.append(",");
-            sb.append(parent.getDn());
+            sb.append(parentDn);
         }
 
         setDn(sb.toString());
@@ -378,14 +321,6 @@ public class EntryDefinition implements Cloneable, Serializable {
         }
         sb.append(",");
 
-    	sb.append("children=[");
-    	iter = children.iterator();
-    	while (iter.hasNext()) {
-    		Object next = (Object) iter.next();
-    		sb.append(next.toString()+", ");
-    	}
-    	sb.append("], ");
-		
     	sb.append("objectClasses=[");
     	iter = objectClasses.iterator();
     	while (iter.hasNext()) {

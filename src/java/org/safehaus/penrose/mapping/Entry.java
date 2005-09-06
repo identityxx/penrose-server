@@ -47,12 +47,12 @@ public class Entry {
                 //System.out.println("parent: "+parent);
                 sb.append(",");
                 sb.append(parent.getDn());
-
+/*
             } else if (entryDefinition.getParent() != null) {
                 //System.out.println("parent dn: "+entryDefinition.getParentDn());
                 sb.append(",");
                 sb.append(entryDefinition.getParentDn());
-
+*/
             } else {
                 //System.out.println("no parent");
             }
