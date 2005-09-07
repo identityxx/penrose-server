@@ -72,6 +72,9 @@ public class JDBCFilterTool {
                 return true;
         }
 
+        int i = name.indexOf(".");
+        if (i >= 0) name = name.substring(i+1);
+        
         Field field = source.getField(name);
 
         if ("VARCHAR".equals(field.getType())) {

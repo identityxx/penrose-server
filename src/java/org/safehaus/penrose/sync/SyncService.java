@@ -260,12 +260,17 @@ public class SyncService {
             normalizedFilters = new TreeSet();
             for (Iterator i=filters.iterator(); i.hasNext(); ) {
                 Row filter = (Row)i.next();
+
                 Row f = new Row();
                 for (Iterator j=filter.getNames().iterator(); j.hasNext(); ) {
                     String name = (String)j.next();
-                    if (source.getField(name) == null) continue;
-                    f.set(name, filter.get(name));
+                    String newName = name;
+                    if (name.startsWith(source.getName()+".")) newName = name.substring(source.getName().length()+1);
+
+                    if (source.getField(newName) == null) continue;
+                    f.set(newName, filter.get(name));
                 }
+
                 Row normalizedFilter = syncContext.getSchema().normalize(f);
                 normalizedFilters.add(normalizedFilter);
             }

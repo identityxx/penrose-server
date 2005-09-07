@@ -17,6 +17,8 @@ import java.util.*;
 public class Entry {
 
     private Entry parent;
+
+    private String dn;
     private EntryDefinition entryDefinition;
     private AttributeValues attributeValues;
 
@@ -25,7 +27,13 @@ public class Entry {
         this.attributeValues = attributes;
     }
 
+    public Entry(String dn, EntryDefinition entry, AttributeValues attributes) {
+        this.dn = dn;
+        this.entryDefinition = entry;
+        this.attributeValues = attributes;
+    }
     public String getDn() {
+/*
         String dn;
 
         if (isDynamic()) {
@@ -47,12 +55,6 @@ public class Entry {
                 //System.out.println("parent: "+parent);
                 sb.append(",");
                 sb.append(parent.getDn());
-/*
-            } else if (entryDefinition.getParent() != null) {
-                //System.out.println("parent dn: "+entryDefinition.getParentDn());
-                sb.append(",");
-                sb.append(entryDefinition.getParentDn());
-*/
             } else {
                 //System.out.println("no parent");
             }
@@ -64,7 +66,7 @@ public class Entry {
         }
 
         //System.out.println("DN: "+dn);
-
+*/
         return dn;
     }
 

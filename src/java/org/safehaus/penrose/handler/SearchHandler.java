@@ -57,7 +57,7 @@ public class SearchHandler {
             log.debug("Found static entry: " + dn);
 
             AttributeValues values = entryDefinition.getAttributeValues(handlerContext.newInterpreter());
-            return new Entry(entryDefinition, values);
+            return new Entry(dn, entryDefinition, values);
         }
 
 		int i = dn.indexOf(",");
@@ -142,7 +142,7 @@ public class SearchHandler {
                 log.debug("Found static entry: " + childDefinition.getDn());
 
                 AttributeValues values = childDefinition.getAttributeValues(handlerContext.newInterpreter());
-                Entry entry = new Entry(childDefinition, values);
+                Entry entry = new Entry(dn, childDefinition, values);
                 entry.setParent(parent);
                 return entry;
             }
@@ -324,17 +324,18 @@ public class SearchHandler {
         if (children == null) {
             return;
         }
-        
+
 		log.debug("Total children: " + children.size());
 
 		for (Iterator i = children.iterator(); i.hasNext();) {
 			EntryDefinition childDefinition = (EntryDefinition) i.next();
 			if (childDefinition.isDynamic()) continue;
 
-			log.debug("Static children: " + childDefinition.getDn());
+            String childDn = childDefinition.getRdn()+","+entry.getDn();
+			log.debug("Static children: "+childDn);
 
 			AttributeValues values = childDefinition.getAttributeValues(handlerContext.newInterpreter());
-			Entry child = new Entry(childDefinition, values);
+			Entry child = new Entry(childDn, childDefinition, values);
 
             int rc = handlerContext.getACLEngine().checkSearch(connection, child);
             if (rc != LDAPException.SUCCESS) continue;

@@ -93,7 +93,7 @@ public class ApacheDSEntryDataCache extends EntryDataCache {
                 }
             }
 
-            Entry entry = new Entry(null, attributeValues);
+            Entry entry = new Entry(dn, null, attributeValues);
             return entry;
 
         } catch (Exception e) {

@@ -108,12 +108,12 @@ public class TransformEngine {
         }
     }
 
-    public Map translate(EntryDefinition entry, AttributeValues input, AttributeValues output) throws Exception {
+    public Row translate(EntryDefinition entry, AttributeValues input, AttributeValues output) throws Exception {
 
         Interpreter interpreter = penrose.newInterpreter();
         interpreter.set(input);
 
-        Map pk = new TreeMap();
+        Row pk = new Row();
         Map attributes = entry.getAttributes();
 
         for (Iterator j=attributes.values().iterator(); j.hasNext(); ) {
@@ -160,7 +160,7 @@ public class TransformEngine {
 
             if (attribute.isRdn()) {
                 if (value == null) return null;
-                pk.put(name, value);
+                pk.set(name, value);
             }
 
             output.add(name, value);
@@ -169,12 +169,12 @@ public class TransformEngine {
         return pk;
     }
 
-    public Map translate(Source source, AttributeValues input, AttributeValues output) throws Exception {
+    public Row translate(Source source, AttributeValues input, AttributeValues output) throws Exception {
 
         Interpreter interpreter = penrose.newInterpreter();
         interpreter.set(input);
 
-        Map pk = new TreeMap();
+        Row pk = new Row();
         Collection fields = source.getFields();
 
         for (Iterator j=fields.iterator(); j.hasNext(); ) {
@@ -254,7 +254,7 @@ public class TransformEngine {
 
             if (field.isPrimaryKey()) {
                 if (newValue == null) return null;
-                pk.put(name, newValue);
+                pk.set(name, newValue);
             }
 
             output.add(name, newValue);
@@ -266,7 +266,7 @@ public class TransformEngine {
     public Map split(Source source, AttributeValues entry) throws Exception {
 
         AttributeValues output = new AttributeValues();
-        Map m = translate(source, entry, output);
+        Row m = translate(source, entry, output);
         log.debug("PKs: "+m);
         log.debug("Output: "+output);
 
@@ -308,12 +308,12 @@ public class TransformEngine {
             AttributeValues sourceValues = (AttributeValues)values.get(pk);
             AttributeValues attributeValues = new AttributeValues();
 
-            Map rdn = translate(entryDefinition, sourceValues, attributeValues);
+            Row rdn = translate(entryDefinition, sourceValues, attributeValues);
             if (rdn == null) continue;
 
             //log.debug("   => "+rdn+": "+attributeValues);
 
-            Entry entry = new Entry(entryDefinition, attributeValues);
+            Entry entry = new Entry(rdn+","+parent.getDn(), entryDefinition, attributeValues);
             entry.setParent(parent);
             results.add(entry);
 

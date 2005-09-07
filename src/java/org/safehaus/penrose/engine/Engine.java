@@ -298,7 +298,7 @@ public class Engine {
             ) throws Exception {
 
         log.debug("--------------------------------------------------------------------------------------");
-        log.debug("Loading entry "+entryDefinition.getDn()+" with rdns "+rdns);
+        log.debug("Loading entry under "+parent.getDn()+" with rdns "+rdns);
 
         MRSWLock lock = getLock(entryDefinition.getDn());
         lock.getWriteLock(Penrose.WAIT_TIMEOUT);
@@ -492,11 +492,46 @@ public class Engine {
         return rdns;
     }
 
+    public void getFieldValues(String prefix, Entry entry, AttributeValues results) throws Exception {
+        if (entry.getParent() != null) {
+            getFieldValues(prefix+".parent", entry.getParent(), results);
+        }
+
+        log.debug(entry.getDn()+"'s values:");
+
+        Collection sources = entry.getSources();
+        if (sources.size() == 0) return;
+
+        AttributeValues values = entry.getAttributeValues();
+/*
+        for (Iterator i=values.getNames().iterator(); i.hasNext(); ) {
+            String name = (String)i.next();
+            Collection value = values.get(name);
+            log.debug(" - "+prefix+"."+name+": "+value);
+            results.set(prefix+"."+name, value);
+        }
+*/
+        for (Iterator i=entry.getSources().iterator(); i.hasNext(); ) {
+            Source source = (Source)i.next();
+
+            AttributeValues output = new AttributeValues();
+            getEngineContext().getTransformEngine().translate(source, values, output);
+
+            for (Iterator j=output.getNames().iterator(); j.hasNext(); ) {
+                String name = (String)j.next();
+                Collection value = output.get(name);
+                log.debug(" - "+source.getName()+"."+name+": "+value);
+                results.set(source.getName()+"."+name, value);
+            }
+        }
+    }
+
     public Collection searchEntries(Entry parent, EntryDefinition entryDefinition, Filter filter) throws Exception {
-        Source primarySource = getPrimarySource(entryDefinition);
+        AttributeValues allValues = new AttributeValues();
+        getFieldValues("parent", parent, allValues);
 
-        Collection newRows = null;
-
+        Collection newRows = getEngineContext().getTransformEngine().convert(allValues);
+/*
         if (parent.getSources().size() > 0) {
 
             AttributeValues values = parent.getAttributeValues();
@@ -534,13 +569,13 @@ public class Engine {
                 newRows.add(newRow);
             }
         }
-
+*/
         Config config = engineContext.getConfig(entryDefinition.getDn());
 
+        Graph graph = getGraph(entryDefinition);
+        Source primarySource = getPrimarySource(entryDefinition);
         String startingSourceName = getStartingSourceName(entryDefinition);
         Source startingSource = config.getEffectiveSource(entryDefinition, startingSourceName);
-
-        Graph graph = getGraph(entryDefinition);
 
         Collection keys = new TreeSet();
 

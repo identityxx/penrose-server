@@ -44,7 +44,12 @@ public class SearchGraphVisitor extends GraphVisitor {
     public boolean preVisitNode(Object node, Object parameter) throws Exception {
         Source source = (Source)node;
         Collection rows = (Collection)stack.peek();
-        log.debug("Searching "+source.getName()+" for "+rows);
+
+        log.debug("Searching "+source.getName()+" for:");
+        for (Iterator i=rows.iterator(); i.hasNext(); ) {
+            Row row = (Row)i.next();
+            log.debug(" - "+row);
+        }
 
         //Collection newRows = new HashSet();
         //stack.push(newRows);
@@ -61,8 +66,16 @@ public class SearchGraphVisitor extends GraphVisitor {
         Collection results = new ArrayList();
         for (Iterator i=map.values().iterator(); i.hasNext(); ) {
             AttributeValues av = (AttributeValues)i.next();
-            Collection r = engineContext.getTransformEngine().convert(av);
-            results.addAll(r);
+            Collection list = engineContext.getTransformEngine().convert(av);
+            for (Iterator j=list.iterator(); j.hasNext(); ) {
+                Row row = (Row)j.next();
+                Row newRow = new Row();
+                for (Iterator k=row.getNames().iterator(); k.hasNext(); ) {
+                    String name = (String)k.next();
+                    newRow.set(source.getName()+"."+name, row.get(name));
+                }
+                results.add(newRow);
+            }
         }
 
         stack.push(results);
@@ -126,14 +139,14 @@ public class SearchGraphVisitor extends GraphVisitor {
             Row row = (Row)i.next();
             log.debug(" - "+row);
 
-            Object value = row.get(lFieldName);
+            Object value = row.get(lhs);
             if (value == null) continue;
 
             Row newRow = new Row();
-            newRow.set(rFieldName, value);
+            newRow.set(rhs, value);
             newRows.add(newRow);
 
-            log.debug("   - "+lFieldName+" -> "+rFieldName+" = "+value);
+            log.debug("   - "+lhs+" -> "+rhs+" = "+value);
         }
 
         if (newRows.size() == 0) return false;
