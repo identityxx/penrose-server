@@ -106,8 +106,8 @@ public class Row implements Comparable {
                 Object value2 = row.values.get(name2);
 
                 if (value1 instanceof Comparable && value2 instanceof Comparable) {
-                    Comparable v1 = (Comparable)value1;
-                    Comparable v2 = (Comparable)value2;
+                    Comparable v1 = (Comparable)value1.toString();
+                    Comparable v2 = (Comparable)value2.toString();
 
                     c = v1.compareTo(v2);
                     if (c != 0) return c;

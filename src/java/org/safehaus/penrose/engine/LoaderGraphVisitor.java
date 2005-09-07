@@ -67,9 +67,9 @@ public class LoaderGraphVisitor extends GraphVisitor {
         Map newMap = new TreeMap();
         for (Iterator i = results.keySet().iterator(); i.hasNext(); ) {
             Row pk = (Row)i.next();
+            AttributeValues values = (AttributeValues)results.get(pk);
             log.debug(" - "+pk);
 
-            AttributeValues values = (AttributeValues)results.get(pk);
             AttributeValues newValues = new AttributeValues();
 
             Map v = values.getValues();

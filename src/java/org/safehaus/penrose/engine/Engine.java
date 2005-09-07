@@ -369,6 +369,7 @@ public class Engine {
 
                 String script = exp.getScript();
                 //log.debug("   - "+field.getName()+": "+script);
+
                 Object value = interpreter.eval(script);
                 if (value == null) continue;
 
