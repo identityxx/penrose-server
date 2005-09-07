@@ -353,10 +353,10 @@ public class Engine {
         Source primarySource = getPrimarySource(entryDefinition);
         Collection fields = primarySource.getFields();
 
-        //log.debug("Creating filters:");
+        log.debug("Creating filters:");
         for (Iterator i=rdns.iterator(); i.hasNext(); ) {
             Row rdn = (Row)i.next();
-            //log.debug(" - "+rdn);
+            log.debug(" - "+rdn);
 
             Interpreter interpreter = engineContext.newInterpreter();
             interpreter.set(rdn);
@@ -368,7 +368,7 @@ public class Engine {
                 if (exp == null) continue;
 
                 String script = exp.getScript();
-                //log.debug("   - "+field.getName()+": "+script);
+                log.debug("   - "+field.getName()+": "+script);
 
                 Object value = interpreter.eval(script);
                 if (value == null) continue;

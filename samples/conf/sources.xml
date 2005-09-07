@@ -1,59 +1,70 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!--
-<!DOCTYPE mapping PUBLIC "-//Penrose/Penrose Server Configuration DTD 1.0//EN" "http://penrose.safehaus.org/dtd/penrose-sources-config-1.0.dtd">
--->
 
 <sources>
-
-    <connection name="MySQL">
-
-        <adapter-name>JDBC</adapter-name>
-        <parameter>
-            <param-name>driver</param-name>
-            <param-value>com.mysql.jdbc.Driver</param-value>
-        </parameter>
-        <parameter>
-            <param-name>url</param-name>
-            <param-value>jdbc:mysql://localhost/penrose_demo?autoReconnect=true</param-value>
-        </parameter>
-        <parameter>
-            <param-name>user</param-name>
-            <param-value>penrose</param-value>
-        </parameter>
-        <parameter>
-            <param-name>password</param-name>
-            <param-value>penrose</param-value>
-        </parameter>
-
-        <source name="users">
-            <field name="username" primaryKey="true" />
-            <field name="firstName" />
-            <field name="lastName" />
-            <field name="password" />
-            <parameter>
-                <param-name>tableName</param-name>
-                <param-value>users</param-value>
-            </parameter>
-        </source>
-        
-        <source name="groups">
-            <field name="groupname" primaryKey="true" />
-            <field name="description" />
-            <parameter>
-                <param-name>tableName</param-name>
-                <param-value>groups</param-value>
-            </parameter>
-        </source>
-
-        <source name="usergroups">
-            <field name="groupname" primaryKey="true" />
-            <field name="username" primaryKey="true" />
-            <parameter>
-                <param-name>tableName</param-name>
-                <param-value>usergroups</param-value>
-            </parameter>
-        </source>
-
-    </connection>
-
+  <connection name="MySQL">
+    <adapter-name>JDBC</adapter-name>
+    <parameter>
+      <param-name>user</param-name>
+      <param-value>penrose</param-value>
+    </parameter>
+    <parameter>
+      <param-name>url</param-name>
+      <param-value>jdbc:mysql://localhost/penrose_demo?autoReconnect=true</param-value>
+    </parameter>
+    <parameter>
+      <param-name>password</param-name>
+      <param-value>penrose</param-value>
+    </parameter>
+    <parameter>
+      <param-name>driver</param-name>
+      <param-value>com.mysql.jdbc.Driver</param-value>
+    </parameter>
+    <source name="categories">
+      <field name="description" type="LONGVARCHAR"/>
+      <field name="id" type="INTEGER" primaryKey="true"/>
+      <field name="name"/>
+      <parameter>
+        <param-name>tableName</param-name>
+        <param-value>categories</param-value>
+      </parameter>
+    </source>
+    <source name="customers">
+      <field name="firstName"/>
+      <field name="id" type="INTEGER" primaryKey="true"/>
+      <field name="lastName"/>
+      <parameter>
+        <param-name>tableName</param-name>
+        <param-value>customers</param-value>
+      </parameter>
+    </source>
+    <source name="order_details">
+      <field name="orderId" type="INTEGER" primaryKey="true"/>
+      <field name="price" type="DOUBLE"/>
+      <field name="productId" type="INTEGER" primaryKey="true"/>
+      <field name="quantity" type="INTEGER"/>
+      <parameter>
+        <param-name>tableName</param-name>
+        <param-value>order_details</param-value>
+      </parameter>
+    </source>
+    <source name="orders">
+      <field name="customerId" type="INTEGER"/>
+      <field name="date" type="TIMESTAMP"/>
+      <field name="id" type="INTEGER" primaryKey="true"/>
+      <parameter>
+        <param-name>tableName</param-name>
+        <param-value>orders</param-value>
+      </parameter>
+    </source>
+    <source name="products">
+      <field name="categoryId" type="INTEGER"/>
+      <field name="id" type="INTEGER" primaryKey="true"/>
+      <field name="name"/>
+      <field name="price" type="DOUBLE"/>
+      <parameter>
+        <param-name>tableName</param-name>
+        <param-value>products</param-value>
+      </parameter>
+    </source>
+  </connection>
 </sources>

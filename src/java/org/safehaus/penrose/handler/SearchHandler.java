@@ -359,7 +359,8 @@ public class SearchHandler {
 			EntryDefinition childDefinition = (EntryDefinition) i.next();
 			if (!childDefinition.isDynamic()) continue;
 
-			log.debug("Virtual children: " + childDefinition.getDn());
+            String childDn = childDefinition.getRdn()+","+entry.getDn();
+			log.debug("Virtual children: " + childDn);
 
 			SearchResults results2 = search(connection, entry, childDefinition, filter);
 

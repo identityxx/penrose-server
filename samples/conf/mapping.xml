@@ -1,12 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!--
-<!DOCTYPE mapping PUBLIC 
-	"-//Penrose/Penrose Server Configuration DTD 1.0//EN" 
-	"http://penrose.safehaus.org/dtd/penrose-mapping-config-1.0.dtd">
--->
 
 <mapping>
-
   <entry dn="dc=example,dc=com">
     <oc>dcObject</oc>
     <oc>organization</oc>
@@ -20,216 +14,423 @@
       <permission>rs</permission>
     </aci>
   </entry>
-
-  <entry dn="cn=manager,dc=example,dc=com">
-    <oc>person</oc>
-    <oc>inetOrgPerson</oc>
-    <at name="cn" rdn="true">
-      <expression>"manager"</expression>
-    </at>
-    <at name="sn">
-      <expression>"manager"</expression>
-    </at>
-    <at name="userPassword">
-      <expression>"secret"</expression>
-    </at>
-  </entry>
-
-  <entry dn="ou=users,dc=example,dc=com">
+  <entry dn="ou=Products,dc=example,dc=com">
     <oc>organizationalUnit</oc>
     <at name="ou" rdn="true">
-      <expression>"users"</expression>
+      <expression>"Products"</expression>
     </at>
   </entry>
-
-  <entry dn="uid=...,ou=users,dc=example,dc=com">
-    <oc>person</oc>
+  <entry dn="cn=...,ou=Products,dc=example,dc=com">
     <oc>inetOrgPerson</oc>
-    <at name="uid" rdn="true">
-      <expression>u.username</expression>
+    <oc>organizationalPerson</oc>
+    <oc>person</oc>
+    <at name="cn" rdn="true">
+      <expression>products.name</expression>
     </at>
-    <at name="cn">
-      <expression>u.firstName+" "+u.lastName</expression>
+    <at name="uid">
+      <expression>products.id</expression>
     </at>
-    <at name="sn">
-      <expression>u.lastName</expression>
-    </at>
-    <at name="userPassword">
-      <expression>u.password</expression>
-    </at>
-    <source name="u">
-      <source-name>users</source-name>
+    <source name="products">
+      <source-name>products</source-name>
       <connection-name>MySQL</connection-name>
-      <field name="username">
+      <field name="name">
+        <expression>cn</expression>
+      </field>
+    </source>
+  </entry>
+  <entry dn="ou=Categories,dc=example,dc=com">
+    <oc>organizationalUnit</oc>
+    <at name="ou" rdn="true">
+      <expression>"Categories"</expression>
+    </at>
+  </entry>
+  <entry dn="cn=...,ou=Categories,dc=example,dc=com">
+    <oc>inetOrgPerson</oc>
+    <oc>organizationalPerson</oc>
+    <oc>person</oc>
+    <at name="cn" rdn="true">
+      <expression>categories.name</expression>
+    </at>
+    <at name="uid">
+      <expression>categories.id</expression>
+    </at>
+    <source name="categories">
+      <source-name>categories</source-name>
+      <connection-name>MySQL</connection-name>
+      <field name="id">
         <expression>uid</expression>
       </field>
-      <field name="firstName">
-        <expression>
-if (cn == void || cn == null) return null;
-int i = cn.lastIndexOf(" ");
-return cn.substring(0, i);
-        </expression>
-      </field>
-      <field name="lastName">
-        <expression>
-if (cn == void || cn == null) return null;
-int i = cn.lastIndexOf(" ");
-return cn.substring(i+1);
-        </expression>
-      </field>
-      <field name="password">
-        <expression>userPassword</expression>
-      </field>
-    </source>
-  </entry>
-
-  <entry dn="cn=...,uid=...,ou=users,dc=example,dc=com">
-    <oc>groupOfUniqueNames</oc>
-    <at name="cn" rdn="true">
-      <expression>g.groupname</expression>
-    </at>
-    <at name="description" rdn="false">
-      <expression>g.description</expression>
-    </at>
-    <at name="uniqueMember" rdn="false">
-      <expression>
-if (ug2 == void || ug2 == null) return null;
-return "uid="+ug2.username+",ou=users,dc=example,dc=com";
-      </expression>
-    </at>
-    <source name="ug">
-      <source-name>usergroups</source-name>
-      <connection-name>MySQL</connection-name>
-    </source>
-    <source name="g">
-      <source-name>groups</source-name>
-      <connection-name>MySQL</connection-name>
-      <field name="description">
-        <expression>description</expression>
-      </field>
-      <field name="groupname">
+      <field name="name">
         <expression>cn</expression>
       </field>
     </source>
-    <source name="ug2">
-      <source-name>usergroups</source-name>
-      <connection-name>MySQL</connection-name>
-      <field name="groupname">
-        <expression>cn</expression>
-      </field>
-      <field name="username">
-        <expression>
-if (uniqueMember == void || uniqueMember == null) return null;
-int i = uniqueMember.indexOf("=");
-int j = uniqueMember.indexOf(",", i+1);
-return uniqueMember.substring(i+1, j);
-        </expression>
-      </field>
-    </source>
-    <relationship>
-      <expression>u.username = ug.username</expression>
-    </relationship>
-    <relationship>
-      <expression>g.groupname = ug.groupname</expression>
-    </relationship>
-    <relationship>
-      <expression>g.groupname = ug2.groupname</expression>
-    </relationship>
   </entry>
-
-  <entry dn="ou=groups,dc=example,dc=com">
+  <entry dn="ou=Products,cn=...,ou=Categories,dc=example,dc=com">
     <oc>organizationalUnit</oc>
     <at name="ou" rdn="true">
-      <expression>"groups"</expression>
+      <expression>"Products"</expression>
     </at>
   </entry>
-
-  <entry dn="cn=...,ou=groups,dc=example,dc=com">
-    <oc>groupOfUniqueNames</oc>
+  <entry dn="cn=...,ou=Products,cn=...,ou=Categories,dc=example,dc=com">
+    <oc>inetOrgPerson</oc>
+    <oc>organizationalPerson</oc>
+    <oc>person</oc>
     <at name="cn" rdn="true">
-      <expression>g.groupname</expression>
+      <expression>products.name</expression>
+    </at>
+    <at name="uid">
+      <expression>products.id</expression>
+    </at>
+    <source name="products">
+      <source-name>products</source-name>
+      <connection-name>MySQL</connection-name>
+      <field name="id">
+        <expression>uid</expression>
+      </field>
+      <field name="name">
+        <expression>cn</expression>
+      </field>
+    </source>
+    <relationship>
+      <expression>categories.id = products.categoryId</expression>
+    </relationship>
+  </entry>
+  <entry dn="ou=Orders,cn=...,ou=Products,cn=...,ou=Categories,dc=example,dc=com">
+    <oc>organizationalUnit</oc>
+    <at name="ou" rdn="true">
+      <expression>"Orders"</expression>
+    </at>
+  </entry>
+  <entry dn="uid=...,ou=Orders,cn=...,ou=Products,cn=...,ou=Categories,dc=example,dc=com">
+    <oc>inetOrgPerson</oc>
+    <oc>organizationalPerson</oc>
+    <oc>person</oc>
+    <at name="description">
+      <expression>orders.date</expression>
+    </at>
+    <at name="uid" rdn="true">
+      <expression>orders.id</expression>
+    </at>
+    <source name="order_details">
+      <source-name>order_details</source-name>
+      <connection-name>MySQL</connection-name>
+    </source>
+    <source name="orders">
+      <source-name>orders</source-name>
+      <connection-name>MySQL</connection-name>
+      <field name="id">
+        <expression>uid</expression>
+      </field>
+    </source>
+    <relationship>
+      <expression>products.id = order_details.productId</expression>
+    </relationship>
+    <relationship>
+      <expression>order_details.orderId = orders.id</expression>
+    </relationship>
+  </entry>
+  <entry dn="ou=Customers,cn=...,ou=Products,cn=...,ou=Categories,dc=example,dc=com">
+    <oc>organizationalUnit</oc>
+    <at name="ou" rdn="true">
+      <expression>"Customers"</expression>
+    </at>
+  </entry>
+  <entry dn="cn=...,ou=Customers,cn=...,ou=Products,cn=...,ou=Categories,dc=example,dc=com">
+    <oc>inetOrgPerson</oc>
+    <oc>organizationalPerson</oc>
+    <oc>person</oc>
+    <at name="cn" rdn="true">
+      <expression>customers.firstName+" "+customers.lastName</expression>
+    </at>
+    <source name="order_details">
+      <source-name>order_details</source-name>
+      <connection-name>MySQL</connection-name>
+    </source>
+    <source name="orders">
+      <source-name>orders</source-name>
+      <connection-name>MySQL</connection-name>
+    </source>
+    <source name="customers">
+      <source-name>customers</source-name>
+      <connection-name>MySQL</connection-name>
+      <field name="firstName">
+        <expression>int i = cn.indexOf(" ");
+return cn.substring(0, i);</expression>
+      </field>
+      <field name="lastName">
+        <expression>int i = cn.indexOf(" ");
+return cn.substring(i+1);</expression>
+      </field>
+    </source>
+    <relationship>
+      <expression>products.id = order_details.productId</expression>
+    </relationship>
+    <relationship>
+      <expression>order_details.orderId = orders.id</expression>
+    </relationship>
+    <relationship>
+      <expression>orders.customerId = customers.id</expression>
+    </relationship>
+  </entry>
+  <entry dn="ou=Customers,dc=example,dc=com">
+    <oc>organizationalUnit</oc>
+    <at name="ou" rdn="true">
+      <expression>"Customers"</expression>
+    </at>
+  </entry>
+  <entry dn="cn=...,ou=Customers,dc=example,dc=com">
+    <oc>inetOrgPerson</oc>
+    <oc>organizationalPerson</oc>
+    <oc>person</oc>
+    <at name="cn" rdn="true">
+      <expression>customers.firstName+" "+customers.lastName</expression>
+    </at>
+    <at name="uid">
+      <expression>customers.id</expression>
+    </at>
+    <source name="customers">
+      <source-name>customers</source-name>
+      <connection-name>MySQL</connection-name>
+      <field name="firstName">
+        <expression>int i = cn.indexOf(" ");
+return cn.substring(0, i);</expression>
+      </field>
+      <field name="id">
+        <expression>uid</expression>
+      </field>
+      <field name="lastName">
+        <expression>int i = cn.indexOf(" ");
+return cn.substring(i+1);</expression>
+      </field>
+    </source>
+  </entry>
+  <entry dn="ou=Orders,cn=...,ou=Customers,dc=example,dc=com">
+    <oc>organizationalUnit</oc>
+    <at name="ou" rdn="true">
+      <expression>"Orders"</expression>
+    </at>
+  </entry>
+  <entry dn="cn=...,ou=Orders,cn=...,ou=Customers,dc=example,dc=com">
+    <oc>inetOrgPerson</oc>
+    <oc>organizationalPerson</oc>
+    <oc>person</oc>
+    <at name="cn" rdn="true">
+      <expression>orders.id</expression>
     </at>
     <at name="description">
-      <expression>g.description</expression>
+      <expression>orders.date</expression>
     </at>
-    <at name="uniqueMember">
-      <expression>
-if (ug == void || ug == null) return null;
-return "uid="+ug.username+",ou=users,dc=example,dc=com";
-      </expression>
-    </at>
-    <source name="g">
-      <source-name>groups</source-name>
+    <source name="orders">
+      <source-name>orders</source-name>
       <connection-name>MySQL</connection-name>
-      <field name="groupname">
+      <field name="id">
         <expression>cn</expression>
       </field>
-      <field name="description">
+    </source>
+    <relationship>
+      <expression>customers.id = orders.customerId</expression>
+    </relationship>
+  </entry>
+  <entry dn="ou=Products,cn=...,ou=Orders,cn=...,ou=Customers,dc=example,dc=com">
+    <oc>organizationalUnit</oc>
+    <at name="ou" rdn="true">
+      <expression>"Products"</expression>
+    </at>
+  </entry>
+  <entry dn="cn=...,ou=Products,cn=...,ou=Orders,cn=...,ou=Customers,dc=example,dc=com">
+    <oc>inetOrgPerson</oc>
+    <oc>organizationalPerson</oc>
+    <oc>person</oc>
+    <at name="cn" rdn="true">
+      <expression>products.name</expression>
+    </at>
+    <at name="description">
+      <expression>products.categoryId</expression>
+    </at>
+    <at name="uid">
+      <expression>products.id</expression>
+    </at>
+    <source name="order_details">
+      <source-name>order_details</source-name>
+      <connection-name>MySQL</connection-name>
+    </source>
+    <source name="products">
+      <source-name>products</source-name>
+      <connection-name>MySQL</connection-name>
+      <field name="categoryId">
         <expression>description</expression>
       </field>
-    </source>
-    <source name="ug">
-      <source-name>usergroups</source-name>
-      <connection-name>MySQL</connection-name>
-      <field name="groupname">
-        <expression>cn</expression>
-      </field>
-      <field name="username">
-        <expression>
-if (uniqueMember == void || uniqueMember == null) return null;
-int i = uniqueMember.indexOf("=");
-int j = uniqueMember.indexOf(",", i+1);
-return uniqueMember.substring(i+1, j);
-        </expression>
-      </field>
-    </source>
-    <relationship>
-      <expression>g.groupname = ug.groupname</expression>
-    </relationship>
-  </entry>
-
-  <entry dn="uid=...,cn=...,ou=groups,dc=example,dc=com">
-    <oc>person</oc>
-    <oc>inetOrgPerson</oc>
-    <at name="uid" rdn="true">
-      <expression>u.username</expression>
-    </at>
-    <at name="cn">
-      <expression>u.firstName+" "+u.lastName</expression>
-    </at>
-    <at name="sn">
-      <expression>u.lastName</expression>
-    </at>
-    <at name="userPassword">
-      <expression>u.password</expression>
-    </at>
-    <source name="u">
-      <source-name>users</source-name>
-      <connection-name>MySQL</connection-name>
-      <field name="username">
+      <field name="id">
         <expression>uid</expression>
       </field>
-      <field name="firstName">
-        <expression>
-if (cn == void || cn == null) return null;
-int i = cn.lastIndexOf(" ");
-return cn.substring(0, i);
-        </expression>
-      </field>
-      <field name="lastName">
-        <expression>
-if (cn == void || cn == null) return null;
-int i = cn.lastIndexOf(" ");
-return cn.substring(i+1);
-        </expression>
-      </field>
-      <field name="password">
-        <expression>userPassword</expression>
+      <field name="name">
+        <expression>cn</expression>
       </field>
     </source>
     <relationship>
-      <expression>ug.username = u.username</expression>
+      <expression>orders.id = order_details.orderId</expression>
+    </relationship>
+    <relationship>
+      <expression>order_details.productId = products.id</expression>
     </relationship>
   </entry>
-
+  <entry dn="ou=Categories,cn=...,ou=Products,cn=...,ou=Orders,cn=...,ou=Customers,dc=example,dc=com">
+    <oc>organizationalUnit</oc>
+    <at name="ou" rdn="true">
+      <expression>"Categories"</expression>
+    </at>
+  </entry>
+  <entry dn="cn=...,ou=Categories,cn=...,ou=Products,cn=...,ou=Orders,cn=...,ou=Customers,dc=example,dc=com">
+    <oc>inetOrgPerson</oc>
+    <oc>organizationalPerson</oc>
+    <oc>person</oc>
+    <at name="cn" rdn="true">
+      <expression>categories.name</expression>
+    </at>
+    <source name="categories">
+      <source-name>categories</source-name>
+      <connection-name>MySQL</connection-name>
+      <field name="name">
+        <expression>cn</expression>
+      </field>
+    </source>
+    <relationship>
+      <expression>products.categoryId = categories.id</expression>
+    </relationship>
+  </entry>
+  <entry dn="ou=Products,cn=...,ou=Customers,dc=example,dc=com">
+    <oc>organizationalUnit</oc>
+    <at name="ou" rdn="true">
+      <expression>"Products"</expression>
+    </at>
+  </entry>
+  <entry dn="cn=...,ou=Products,cn=...,ou=Customers,dc=example,dc=com">
+    <oc>inetOrgPerson</oc>
+    <oc>organizationalPerson</oc>
+    <oc>person</oc>
+    <at name="cn" rdn="true">
+      <expression>products.name</expression>
+    </at>
+    <source name="orders">
+      <source-name>orders</source-name>
+      <connection-name>MySQL</connection-name>
+    </source>
+    <source name="order_details">
+      <source-name>order_details</source-name>
+      <connection-name>MySQL</connection-name>
+    </source>
+    <source name="products">
+      <source-name>products</source-name>
+      <connection-name>MySQL</connection-name>
+      <field name="name">
+        <expression>cn</expression>
+      </field>
+    </source>
+    <relationship>
+      <expression>customers.id = orders.customerId</expression>
+    </relationship>
+    <relationship>
+      <expression>orders.id = order_details.orderId</expression>
+    </relationship>
+    <relationship>
+      <expression>order_details.productId = products.id</expression>
+    </relationship>
+  </entry>
+  <entry dn="ou=Categories,cn=...,ou=Customers,dc=example,dc=com">
+    <oc>organizationalUnit</oc>
+    <at name="ou" rdn="true">
+      <expression>"Categories"</expression>
+    </at>
+  </entry>
+  <entry dn="cn=...,ou=Categories,cn=...,ou=Customers,dc=example,dc=com">
+    <oc>inetOrgPerson</oc>
+    <oc>organizationalPerson</oc>
+    <oc>person</oc>
+    <at name="cn" rdn="true">
+      <expression>categories.name</expression>
+    </at>
+    <source name="orders">
+      <source-name>orders</source-name>
+      <connection-name>MySQL</connection-name>
+    </source>
+    <source name="order_details">
+      <source-name>order_details</source-name>
+      <connection-name>MySQL</connection-name>
+    </source>
+    <source name="products">
+      <source-name>products</source-name>
+      <connection-name>MySQL</connection-name>
+    </source>
+    <source name="categories">
+      <source-name>categories</source-name>
+      <connection-name>MySQL</connection-name>
+      <field name="name">
+        <expression>cn</expression>
+      </field>
+    </source>
+    <relationship>
+      <expression>customers.id = orders.customerId</expression>
+    </relationship>
+    <relationship>
+      <expression>orders.id = order_details.orderId</expression>
+    </relationship>
+    <relationship>
+      <expression>order_details.productId = products.id</expression>
+    </relationship>
+    <relationship>
+      <expression>products.categoryId = categories.id</expression>
+    </relationship>
+  </entry>
+  <entry dn="ou=Orders,dc=example,dc=com">
+    <oc>organizationalUnit</oc>
+    <at name="ou" rdn="true">
+      <expression>"Orders"</expression>
+    </at>
+  </entry>
+  <entry dn="cn=...,ou=Orders,dc=example,dc=com">
+    <oc>inetOrgPerson</oc>
+    <oc>organizationalPerson</oc>
+    <oc>person</oc>
+    <at name="cn" rdn="true">
+      <expression>orders.id</expression>
+    </at>
+    <source name="orders">
+      <source-name>orders</source-name>
+      <connection-name>MySQL</connection-name>
+      <field name="id">
+        <expression>cn</expression>
+      </field>
+    </source>
+  </entry>
+  <entry dn="ou=Products,cn=...,ou=Orders,dc=example,dc=com">
+    <oc>inetOrgPerson</oc>
+    <at name="ou" rdn="true">
+      <expression>"Products"</expression>
+    </at>
+  </entry>
+  <entry dn="cn=...,ou=Products,cn=...,ou=Orders,dc=example,dc=com">
+    <oc>inetOrgPerson</oc>
+    <oc>organizationalPerson</oc>
+    <oc>person</oc>
+    <at name="cn" rdn="true">
+      <expression>products.name</expression>
+    </at>
+    <source name="order_details">
+      <source-name>order_details</source-name>
+      <connection-name>MySQL</connection-name>
+    </source>
+    <source name="products">
+      <source-name>products</source-name>
+      <connection-name>MySQL</connection-name>
+      <field name="name">
+        <expression>cn</expression>
+      </field>
+    </source>
+    <relationship>
+      <expression>orders.id = order_details.orderId</expression>
+    </relationship>
+    <relationship>
+      <expression>order_details.productId = products.id</expression>
+    </relationship>
+  </entry>
 </mapping>

@@ -1,0 +1,12 @@
+attributetype ( 1.1.1.1.1 NAME ( 'categoryId' ) SUP cn )
+attributetype ( 1.1.1.1.2 NAME ( 'productId' ) SUP cn )
+attributetype ( 1.1.1.1.3 NAME ( 'orderId' ) SUP cn )
+attributetype ( 1.1.1.1.4 NAME ( 'customerId' ) SUP cn )
+attributetype ( 1.1.1.1.5 NAME ( 'price' ) SUP cn )
+attributetype ( 1.1.1.1.6 NAME ( 'quantity' ) SUP cn )
+attributetype ( 1.1.1.1.7 NAME ( 'date' ) SUP cn )
+
+objectclass ( 1.1.1.2.1 NAME 'category' SUP top STRUCTURAL MAY ( categoryId $ cn $ description ) )
+objectclass ( 1.1.1.2.2 NAME 'product' SUP top STRUCTURAL MAY ( productId $ categoryId $ cn $ price ) )
+objectclass ( 1.1.1.2.3 NAME 'order' SUP top STRUCTURAL MAY ( orderId $ customerId $ date ) )
+objectclass ( 1.1.1.2.4 NAME 'customer' SUP top STRUCTURAL MAY ( customerId $ cn ) )
