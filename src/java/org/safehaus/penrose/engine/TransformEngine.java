@@ -313,7 +313,7 @@ public class TransformEngine {
 
             //log.debug("   => "+rdn+": "+attributeValues);
 
-            Entry entry = new Entry(rdn+","+parent.getDn(), entryDefinition, attributeValues);
+            Entry entry = new Entry(rdn+","+parent.getDn(), entryDefinition, sourceValues, attributeValues);
             entry.setParent(parent);
             results.add(entry);
 

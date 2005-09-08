@@ -20,53 +20,24 @@ public class Entry {
 
     private String dn;
     private EntryDefinition entryDefinition;
-    private AttributeValues attributeValues;
 
-    public Entry(EntryDefinition entry, AttributeValues attributes) {
-        this.entryDefinition = entry;
-        this.attributeValues = attributes;
-    }
+    private AttributeValues sourceValues;
+    private AttributeValues attributeValues;
 
     public Entry(String dn, EntryDefinition entry, AttributeValues attributes) {
         this.dn = dn;
         this.entryDefinition = entry;
         this.attributeValues = attributes;
     }
+
+    public Entry(String dn, EntryDefinition entry, AttributeValues sourceValues, AttributeValues attributeValues) {
+        this.dn = dn;
+        this.entryDefinition = entry;
+        this.sourceValues = sourceValues;
+        this.attributeValues = attributeValues;
+    }
+
     public String getDn() {
-/*
-        String dn;
-
-        if (isDynamic()) {
-            Collection rdnAttributes = entryDefinition.getRdnAttributes();
-
-            // TODO fix for multiple rdn attributes
-            AttributeDefinition rdnAttribute = (AttributeDefinition)rdnAttributes.iterator().next();
-
-            // TODO fix for multiple values
-            Collection rdnValues = attributeValues.get(rdnAttribute.getName());
-            Object rdnValue = rdnValues.iterator().next();
-
-            StringBuffer sb = new StringBuffer();
-            sb.append(rdnAttribute.getName());
-            sb.append("=");
-            sb.append(rdnValue);
-
-            if (parent != null) {
-                //System.out.println("parent: "+parent);
-                sb.append(",");
-                sb.append(parent.getDn());
-            } else {
-                //System.out.println("no parent");
-            }
-
-            dn = sb.toString();
-
-        } else {
-            dn = entryDefinition.getDn();
-        }
-
-        //System.out.println("DN: "+dn);
-*/
         return dn;
     }
 
@@ -139,24 +110,7 @@ public class Entry {
 
         return sb.toString();
     }
-/*
-    public static Map parseRdn(String rdn) throws Exception {
-        Map map = new HashMap();
-        StringTokenizer st = new StringTokenizer(rdn, "+");
 
-        while (st.hasMoreTokens()) {
-            String rdnComponent = st.nextToken();
-
-            int i = rdnComponent.indexOf("=");
-            String name = rdnComponent.substring(0, i);
-            String value = rdnComponent.substring(i+1);
-
-            map.put(name, value);
-        }
-
-        return map;
-    }
-*/
     public static String toString(LDAPEntry entry) throws Exception {
 
         StringBuffer sb = new StringBuffer();
@@ -211,5 +165,13 @@ public class Entry {
 
     public Collection getACL() {
         return entryDefinition.getACL();
+    }
+
+    public AttributeValues getSourceValues() {
+        return sourceValues;
+    }
+
+    public void setSourceValues(AttributeValues sourceValues) {
+        this.sourceValues = sourceValues;
     }
 }

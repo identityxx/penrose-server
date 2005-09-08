@@ -189,7 +189,7 @@ public class ModifyHandler {
 					+ newValues.get(attributeName));
 		}
 
-        Entry newEntry = new Entry(entry.getDn(), entryDefinition, newValues);
+        Entry newEntry = new Entry(entry.getDn(), entryDefinition, entry.getSourceValues(), newValues);
         newEntry.setParent(entry.getParent());
 
 		log.debug("--- new values:");

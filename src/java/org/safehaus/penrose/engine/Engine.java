@@ -498,13 +498,25 @@ public class Engine {
             getFieldValues(prefix+".parent", entry.getParent(), results);
         }
 
-        log.debug(entry.getDn()+"'s values:");
+        log.debug(entry.getDn()+"'s source values:");
 
         Collection sources = entry.getSources();
         if (sources.size() == 0) return;
 
-        AttributeValues values = entry.getAttributeValues();
+        AttributeValues sourceValues = entry.getSourceValues();
+        if (sourceValues != null) {
+            for (Iterator i=sourceValues.getNames().iterator(); i.hasNext(); ) {
+                String name = (String)i.next();
+                Collection value = sourceValues.get(name);
+                log.debug(" - "+name+": "+value);
+            }
+            results.add(sourceValues);
+        }
+
+        log.debug(entry.getDn()+"'s attribute values:");
 /*
+        AttributeValues attributeValues = entry.getAttributeValues();
+
         for (Iterator i=values.getNames().iterator(); i.hasNext(); ) {
             String name = (String)i.next();
             Collection value = values.get(name);
@@ -512,11 +524,12 @@ public class Engine {
             results.set(prefix+"."+name, value);
         }
 */
+/*        
         for (Iterator i=entry.getSources().iterator(); i.hasNext(); ) {
             Source source = (Source)i.next();
 
             AttributeValues output = new AttributeValues();
-            getEngineContext().getTransformEngine().translate(source, values, output);
+            getEngineContext().getTransformEngine().translate(source, attributeValues, output);
 
             for (Iterator j=output.getNames().iterator(); j.hasNext(); ) {
                 String name = (String)j.next();
@@ -525,6 +538,7 @@ public class Engine {
                 results.set(source.getName()+"."+name, value);
             }
         }
+*/
     }
 
     public Collection searchEntries(Entry parent, EntryDefinition entryDefinition, Filter filter) throws Exception {
@@ -532,45 +546,7 @@ public class Engine {
         getFieldValues("parent", parent, allValues);
 
         Collection newRows = getEngineContext().getTransformEngine().convert(allValues);
-/*
-        if (parent.getSources().size() > 0) {
 
-            AttributeValues values = parent.getAttributeValues();
-            Collection rows = getEngineContext().getTransformEngine().convert(values);
-
-            newRows = new HashSet();
-            log.debug("Parent's values:");
-
-            for (Iterator i=rows.iterator(); i.hasNext(); ) {
-                Row row = (Row)i.next();
-
-                Interpreter interpreter = getEngineContext().newInterpreter();
-                interpreter.set(row);
-
-                Row newRow = new Row();
-
-                for (Iterator j=parent.getSources().iterator(); j.hasNext(); ) {
-                    Source s = (Source)j.next();
-
-                    for (Iterator k=s.getFields().iterator(); k.hasNext(); ) {
-                        Field f = (Field)k.next();
-
-                        Expression expression = f.getExpression();
-                        if (expression == null) continue;
-
-                        String script = expression.getScript();
-                        Object v = interpreter.eval(script);
-                        if (v == null) continue;
-
-                        newRow.set(f.getName(), v);
-                    }
-                }
-
-                log.debug(" - "+newRow);
-                newRows.add(newRow);
-            }
-        }
-*/
         Config config = engineContext.getConfig(entryDefinition.getDn());
 
         Graph graph = getGraph(entryDefinition);
