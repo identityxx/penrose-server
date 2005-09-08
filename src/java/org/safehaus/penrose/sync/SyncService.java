@@ -111,7 +111,7 @@ public class SyncService {
         return LDAPException.SUCCESS;
     }
 
-    public int delete(Source source, EntryDefinition entry, AttributeValues values) throws Exception {
+    public int delete(Source source, AttributeValues sourceValues) throws Exception {
 
         log.info("-------------------------------------------------");
         log.debug("Deleting entry in "+source.getName());
@@ -121,27 +121,29 @@ public class SyncService {
 
         try {
 
-	        log.debug("Values: "+values);
+            Connection connection = syncContext.getConnection(source.getConnectionName());
+            int rc = connection.delete(source, sourceValues);
+            if (rc != LDAPException.SUCCESS) return rc;
 
-            Map entries = syncContext.getTransformEngine().split(source, values);
+            AttributeValues av = new AttributeValues();
+            Collection fields = source.getPrimaryKeyFields();
+            for (Iterator j=fields.iterator(); j.hasNext(); ) {
+                Field field = (Field)j.next();
+                Collection values = sourceValues.get(field.getName());
+                if (values == null) continue;
 
-	        log.debug("Entries: "+entries);
+                av.set(field.getName(), values);
+            }
 
-	        log.debug("Rows to be deleted from "+source.getName()+": "+entries.size()+" rows");
+            Collection pks = syncContext.getTransformEngine().convert(av);
 
             String key = source.getConnectionConfig().getConnectionName()+"."+source.getSourceName();
 
-	        for (Iterator i=entries.keySet().iterator(); i.hasNext(); ) {
-	            Row pk = (Row)i.next();
-	            AttributeValues attributes = (AttributeValues)entries.get(pk);
-
-                //AttributeValues attributes = engineContext.getTransformEngine().convert(row);
-                Connection connection = syncContext.getConnection(source.getConnectionName());
-	            int rc = connection.delete(source, attributes);
-	            if (rc != LDAPException.SUCCESS) return rc;
-
-	            syncContext.getCache().getSourceDataCache().remove(key, pk);
-	        }
+            for (Iterator i=pks.iterator(); i.hasNext(); ) {
+                Row pk = (Row)i.next();
+                //log.debug(" - "+pk);
+                syncContext.getCache().getSourceDataCache().remove(key, pk);
+            }
 
             syncContext.getCache().getSourceFilterCache().remove(key);
 

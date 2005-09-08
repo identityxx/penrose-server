@@ -378,9 +378,11 @@ public class JDBCAdapter extends Adapter {
 
         for (Iterator i=fields.iterator(); i.hasNext(); ) {
             Field field = (Field)i.next();
-
             String name = field.getName();
-            pk.put(name, entry.get(name));
+            Object value = entry.get(name);
+            if (value == null) continue;
+
+            pk.put(name, value);
         }
 
         return pk;
@@ -442,7 +444,6 @@ public class JDBCAdapter extends Adapter {
     }
 
     public int modify(Source source, AttributeValues oldEntry, AttributeValues newEntry) throws Exception {
-        Map pk = getPkValues(source, newEntry.getValues());
 
         String tableName = source.getParameter(TABLE_NAME);
 

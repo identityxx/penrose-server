@@ -51,12 +51,8 @@ public class SearchGraphVisitor extends GraphVisitor {
             log.debug(" - "+row);
         }
 
-        //Collection newRows = new HashSet();
-        //stack.push(newRows);
-
         if (entryDefinition.getSource(source.getName()) == null) {
             log.debug("Source "+source.getName()+" is not defined in entry "+entryDefinition.getDn());
-            //newRows.addAll(rows);
             return true;
         }
 
@@ -84,22 +80,6 @@ public class SearchGraphVisitor extends GraphVisitor {
 
         if (source != primarySource) {
             log.debug("Source "+source.getName()+" is not the primary source of entry "+entryDefinition.getDn());
-/*
-            log.debug("Converting rows: "+rows);
-            for (Iterator i=rows.iterator(); i.hasNext(); ) {
-                Row row = (Row)i.next();
-
-                Row newRow = new Row();
-                for (Iterator k=row.getNames().iterator(); k.hasNext(); ) {
-                    String name = (String)k.next();
-                    Object value = row.get(name);
-                    newRow.set(source.getName()+"."+name, value);
-                }
-
-                newRows.add(newRow);
-            }
-            log.debug("to: "+newRows);
-*/
             return true;
         }
 
@@ -114,7 +94,7 @@ public class SearchGraphVisitor extends GraphVisitor {
         Source source = (Source)node2;
         Relationship relationship = (Relationship)object;
 
-        //Collection newRows = (Collection)stack.pop();
+        log.debug("Relationship "+relationship);
         Collection rows = (Collection)stack.peek();
 
         String lhs = relationship.getLhs();
@@ -125,14 +105,6 @@ public class SearchGraphVisitor extends GraphVisitor {
             lhs = rhs;
             rhs = exp;
         }
-
-        int li = lhs.indexOf(".");
-        String lFieldName = lhs.substring(li+1);
-        
-        int ri = rhs.indexOf(".");
-        String rFieldName = rhs.substring(ri+1);
-
-        log.debug("Relationship "+lhs+" = "+rhs+":");
 
         Collection newRows = new HashSet();
         for (Iterator i=rows.iterator(); i.hasNext(); ) {

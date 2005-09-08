@@ -241,14 +241,19 @@ public class Engine {
     }
 
     public int delete(Entry entry) throws Exception {
+        AttributeValues allValues = new AttributeValues();
+        getFieldValues(entry, allValues);
+
+        Collection newRows = getEngineContext().getTransformEngine().convert(allValues);
 
         EntryDefinition entryDefinition = entry.getEntryDefinition();
-        AttributeValues values = entry.getAttributeValues();
+        AttributeValues sourceValues = entry.getSourceValues();
+        AttributeValues attributeValues = entry.getAttributeValues();
 
         Graph graph = getGraph(entryDefinition);
         Source primarySource = getPrimarySource(entryDefinition);
 
-        DeleteGraphVisitor visitor = new DeleteGraphVisitor(getEngineContext(), primarySource, entryDefinition, values);
+        DeleteGraphVisitor visitor = new DeleteGraphVisitor(getEngineContext(), entryDefinition, sourceValues);
         graph.traverse(visitor, primarySource);
 
         if (visitor.getReturnCode() != LDAPException.SUCCESS) return visitor.getReturnCode();
@@ -493,9 +498,13 @@ public class Engine {
         return rdns;
     }
 
+    public void getFieldValues(Entry entry, AttributeValues results) throws Exception {
+        getFieldValues(null, entry, results);
+    }
+
     public void getFieldValues(String prefix, Entry entry, AttributeValues results) throws Exception {
         if (entry.getParent() != null) {
-            getFieldValues(prefix+".parent", entry.getParent(), results);
+            getFieldValues((prefix == null ? "" : prefix+".")+"parent", entry.getParent(), results);
         }
 
         log.debug(entry.getDn()+"'s source values:");
@@ -524,7 +533,7 @@ public class Engine {
             results.set(prefix+"."+name, value);
         }
 */
-/*        
+/*
         for (Iterator i=entry.getSources().iterator(); i.hasNext(); ) {
             Source source = (Source)i.next();
 

@@ -21,66 +21,51 @@ public class DeleteGraphVisitor extends GraphVisitor {
 
     public EngineContext engineContext;
     public EntryDefinition entryDefinition;
-    public AttributeValues values;
+
     private int returnCode = LDAPException.SUCCESS;
 
     private Stack stack = new Stack();
 
     public DeleteGraphVisitor(
             EngineContext engineContext,
-            Source primarySource,
             EntryDefinition entryDefinition,
-            AttributeValues values
+            AttributeValues sourceValues
             ) throws Exception {
 
         this.engineContext = engineContext;
         this.entryDefinition = entryDefinition;
-        this.values = values;
 
-        Collection keys = new HashSet();
-/*
-        for (Iterator i=rows.iterator(); i.hasNext(); ) {
-            Row row = (Row)i.next();
-            log.debug(" - "+row);
-
-            Interpreter interpreter = engine.getEngineContext().newInterpreter();
-            interpreter.set(row);
-
-            Collection fields = primarySource.getPrimaryKeyFields();
-
-            Row pk = new Row();
-            boolean valid = true;
-
-            for (Iterator j=fields.iterator(); j.hasNext(); ) {
-                Field field = (Field)j.next();
-                String name = field.getName();
-                String expression = field.getExpression();
-                Object value = interpreter.eval(expression);
-
-                if (value == null) {
-                    valid = false;
-                    break;
-                }
-
-                pk.set(name, value);
-            }
-
-            if (!valid) continue;
-
-            keys.add(pk);
-        }
-*/
-        log.debug("Primary keys: "+keys);
-        stack.push(keys);
+        stack.push(sourceValues);
     }
 
     public boolean preVisitNode(Object node, Object parameter) throws Exception {
         Source source = (Source)node;
-        //log.debug("Source "+source.getName());
+        AttributeValues sourceValues = (AttributeValues)stack.peek();
 
-        if (entryDefinition.getSource(source.getName()) == null) return false;
+        log.debug("Deleting "+source.getName()+" with: "+sourceValues);
 
-        returnCode = engineContext.getSyncService().delete(source, entryDefinition, values);
+        if (!source.isIncludeOnDelete()) {
+            log.debug("Source "+source.getName()+" is not included on delete");
+            return true;
+        }
+
+        if (entryDefinition.getSource(source.getName()) == null) {
+            log.debug("Source "+source.getName()+" is not defined in entry "+entryDefinition.getDn());
+            return true;
+        }
+
+        AttributeValues newSourceValues = new AttributeValues();
+        for (Iterator i=sourceValues.getNames().iterator(); i.hasNext(); ) {
+            String name = (String)i.next();
+            Collection values = sourceValues.get(name);
+
+            if (!name.startsWith(source.getName()+".")) continue;
+
+            name = name.substring(source.getName().length()+1);
+            newSourceValues.set(name, values);
+        }
+
+        returnCode = engineContext.getSyncService().delete(source, newSourceValues);
 
         if (returnCode == LDAPException.NO_SUCH_OBJECT) return true; // ignore
         if (returnCode != LDAPException.SUCCESS) return false;
@@ -94,6 +79,7 @@ public class DeleteGraphVisitor extends GraphVisitor {
 
         log.debug("Relationship "+relationship);
         if (entryDefinition.getSource(source.getName()) == null) return false;
+        AttributeValues sourceValues = (AttributeValues)stack.peek();
 
         String lhs = relationship.getLhs();
         String rhs = relationship.getRhs();
@@ -104,30 +90,14 @@ public class DeleteGraphVisitor extends GraphVisitor {
             rhs = exp;
         }
 
-        int li = lhs.indexOf(".");
-        String lField = lhs.substring(li+1);
+        Collection lhsValues = sourceValues.get(lhs);
+        log.debug(" - "+lhs+": "+lhsValues);
 
-        int ri = rhs.indexOf(".");
-        String rField = rhs.substring(ri+1);
+        AttributeValues newSourceValues = new AttributeValues();
+        newSourceValues.set(rhs, lhsValues);
+        log.debug(" - "+rhs+": "+lhsValues);
 
-        Collection rows = (Collection)stack.peek();
-        //log.debug("Rows: "+rows);
-
-        Collection newRows = new HashSet();
-        for (Iterator i=rows.iterator(); i.hasNext(); ) {
-            Row row = (Row)i.next();
-
-            Object value = row.get(lField);
-            Row newRow = new Row();
-            newRow.set(rField, value);
-
-            newRows.add(newRow);
-
-            //log.debug(lField+" = "+rField+" => "+value);
-        }
-        //log.debug("New Rows: "+newRows);
-
-        stack.push(newRows);
+        stack.push(newSourceValues);
 
         return true;
     }
