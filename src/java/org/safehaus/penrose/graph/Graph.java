@@ -57,6 +57,17 @@ public class Graph {
         return (Collection)indices.get(node);
     }
 
+    public Collection getEdgeObjects(Object node) throws Exception {
+        Collection list = getEdges(node);
+        Collection objects = new ArrayList();
+        for (Iterator i=list.iterator(); i.hasNext(); ) {
+            Set edge = (Set)i.next();
+            Object object = getEdgeObject(edge);
+            objects.add(object);
+        }
+        return objects;
+    }
+
     public Object getEdge(Object node1, Object node2) throws Exception {
         if (!nodes.contains(node1)) throw new Exception("Node "+node1+" is not in the graph.");
         if (!nodes.contains(node2)) throw new Exception("Node "+node2+" is not in the graph.");
@@ -64,6 +75,10 @@ public class Graph {
         Set edge = new HashSet();
         edge.add(node1);
         edge.add(node2);
+        return edges.get(edge);
+    }
+
+    public Object getEdgeObject(Set edge) throws Exception {
         return edges.get(edge);
     }
 

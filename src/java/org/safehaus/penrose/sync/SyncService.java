@@ -76,30 +76,20 @@ public class SyncService {
         return LDAPException.SUCCESS;
     }
 
-    public int add(Source source, EntryDefinition entry, AttributeValues values) throws Exception {
+    public int add(Source source, AttributeValues sourceValues) throws Exception {
 
         log.debug("----------------------------------------------------------------");
         log.debug("Adding entry into "+source.getName());
-        log.debug("Values: "+values);
+        log.debug("Values: "+sourceValues);
 
         MRSWLock lock = getLock(source);
         lock.getWriteLock(WAIT_TIMEOUT);
 
         try {
 
-            Map entries = syncContext.getTransformEngine().split(source, values);
-
-	        log.debug("New entries: "+entries);
-
-	        for (Iterator i=entries.keySet().iterator(); i.hasNext(); ) {
-	            Row pk = (Row)i.next();
-	            AttributeValues fieldValues = (AttributeValues)entries.get(pk);
-
-	            // Add row to the source table in the source database/directory
-                Connection connection = syncContext.getConnection(source.getConnectionName());
-	            int rc = connection.add(source, fieldValues);
-	            if (rc != LDAPException.SUCCESS) return rc;
-	        }
+            Connection connection = syncContext.getConnection(source.getConnectionName());
+            int rc = connection.add(source, sourceValues);
+            if (rc != LDAPException.SUCCESS) return rc;
 
             String key = source.getConnectionConfig().getConnectionName()+"."+source.getSourceName();
             syncContext.getCache().getSourceFilterCache().remove(key);

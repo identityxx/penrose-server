@@ -51,7 +51,7 @@ public class DeleteGraphVisitor extends GraphVisitor {
 
         if (entryDefinition.getSource(source.getName()) == null) {
             log.debug("Source "+source.getName()+" is not defined in entry "+entryDefinition.getDn());
-            return true;
+            return false;
         }
 
         AttributeValues newSourceValues = new AttributeValues();
@@ -79,6 +79,7 @@ public class DeleteGraphVisitor extends GraphVisitor {
 
         log.debug("Relationship "+relationship);
         if (entryDefinition.getSource(source.getName()) == null) return false;
+
         AttributeValues sourceValues = (AttributeValues)stack.peek();
 
         String lhs = relationship.getLhs();
@@ -91,11 +92,10 @@ public class DeleteGraphVisitor extends GraphVisitor {
         }
 
         Collection lhsValues = sourceValues.get(lhs);
-        log.debug(" - "+lhs+": "+lhsValues);
+        log.debug(" - "+lhs+" -> "+rhs+": "+lhsValues);
 
         AttributeValues newSourceValues = new AttributeValues();
         newSourceValues.set(rhs, lhsValues);
-        log.debug(" - "+rhs+": "+lhsValues);
 
         stack.push(newSourceValues);
 

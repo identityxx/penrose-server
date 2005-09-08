@@ -223,13 +223,58 @@ public class Engine {
     public int add(
             Entry parent,
             EntryDefinition entryDefinition,
-            AttributeValues values)
+            AttributeValues attributeValues)
             throws Exception {
+
+        AttributeValues sourceValues = new AttributeValues();
+        getFieldValues("parent", parent, sourceValues);
+
+        Collection sources = entryDefinition.getSources();
+        for (Iterator i=sources.iterator(); i.hasNext(); ) {
+            Source source = (Source)i.next();
+
+            AttributeValues output = new AttributeValues();
+            Row pk = engineContext.getTransformEngine().translate(source, attributeValues, output);
+            if (pk == null) continue;
+
+            log.debug(" - "+pk+": "+output);
+            for (Iterator j=output.getNames().iterator(); j.hasNext(); ) {
+                String name = (String)j.next();
+                Collection values = output.get(name);
+                sourceValues.add(source.getName()+"."+name, values);
+            }
+        }
+
+        log.debug("Adding entry "+entryDefinition.getRdn()+","+parent.getDn()+" with values: "+sourceValues);
+
+        Config config = engineContext.getConfig(entryDefinition.getDn());
 
         Graph graph = getGraph(entryDefinition);
         Source primarySource = getPrimarySource(entryDefinition);
+        String startingSourceName = getStartingSourceName(entryDefinition);
+        Source startingSource = config.getEffectiveSource(entryDefinition, startingSourceName);
 
-        AddGraphVisitor visitor = new AddGraphVisitor(getEngineContext(), primarySource, entryDefinition, values);
+        log.debug("Starting from source: "+startingSourceName);
+        Collection relationships = graph.getEdgeObjects(startingSource);
+        for (Iterator i=relationships.iterator(); i.hasNext(); ) {
+            Relationship relationship = (Relationship)i.next();
+            log.debug("Relationship "+relationship);
+
+            String lhs = relationship.getLhs();
+            String rhs = relationship.getRhs();
+
+            if (rhs.startsWith(startingSourceName+".")) {
+                String exp = lhs;
+                lhs = rhs;
+                rhs = exp;
+            }
+
+            Collection lhsValues = sourceValues.get(lhs);
+            log.debug(" - "+lhs+" -> "+rhs+": "+lhsValues);
+            sourceValues.set(rhs, lhsValues);
+        }
+
+        AddGraphVisitor visitor = new AddGraphVisitor(getEngineContext(), entryDefinition, sourceValues);
         graph.traverse(visitor, primarySource);
 
         if (visitor.getReturnCode() != LDAPException.SUCCESS) return visitor.getReturnCode();
@@ -241,14 +286,9 @@ public class Engine {
     }
 
     public int delete(Entry entry) throws Exception {
-        AttributeValues allValues = new AttributeValues();
-        getFieldValues(entry, allValues);
-
-        Collection newRows = getEngineContext().getTransformEngine().convert(allValues);
 
         EntryDefinition entryDefinition = entry.getEntryDefinition();
         AttributeValues sourceValues = entry.getSourceValues();
-        AttributeValues attributeValues = entry.getAttributeValues();
 
         Graph graph = getGraph(entryDefinition);
         Source primarySource = getPrimarySource(entryDefinition);
@@ -261,7 +301,6 @@ public class Engine {
         String key = entryDefinition.getRdn()+","+entry.getParent().getDn();
 
         getEngineContext().getCache().getEntryDataCache().remove(key, entry.getRdn());
-
         engineContext.getCache().getEntryFilterCache().remove(key);
 
         return LDAPException.SUCCESS;
@@ -373,7 +412,7 @@ public class Engine {
                 if (exp == null) continue;
 
                 String script = exp.getScript();
-                log.debug("   - "+field.getName()+": "+script);
+                //log.debug("   - "+field.getName()+": "+script);
 
                 Object value = interpreter.eval(script);
                 if (value == null) continue;

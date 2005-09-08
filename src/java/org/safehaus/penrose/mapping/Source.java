@@ -42,6 +42,7 @@ public class Source implements Cloneable, Serializable {
     private SourceDefinition sourceDefinition;
     private ConnectionConfig connectionConfig;
 
+    private boolean includeOnAdd = true;
     private boolean includeOnDelete = true;
 
 	public Source() {
@@ -148,5 +149,13 @@ public class Source implements Cloneable, Serializable {
 
     public void setIncludeOnDelete(boolean includeOnDelete) {
         this.includeOnDelete = includeOnDelete;
+    }
+
+    public boolean isIncludeOnAdd() {
+        return includeOnAdd;
+    }
+
+    public void setIncludeOnAdd(boolean includeOnAdd) {
+        this.includeOnAdd = includeOnAdd;
     }
 }

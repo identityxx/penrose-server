@@ -311,12 +311,12 @@ public class JDBCAdapter extends Adapter {
         return LDAPException.INVALID_CREDENTIALS;
     }
 
-    public int add(Source source, AttributeValues entry) throws Exception {
+    public int add(Source source, AttributeValues fieldValues) throws Exception {
 
         String tableName = source.getParameter(TABLE_NAME);
 
         // convert sets into single values
-        Collection rows = getAdapterContext().getTransformEngine().convert(entry);
+        Collection rows = getAdapterContext().getTransformEngine().convert(fieldValues);
     	Row row = (Row)rows.iterator().next();
 
         java.sql.Connection con = null;
@@ -388,15 +388,15 @@ public class JDBCAdapter extends Adapter {
         return pk;
     }
 
-    public int delete(Source source, AttributeValues entry) throws Exception {
-        Map pk = getPkValues(source, entry.getValues());
+    public int delete(Source source, AttributeValues fieldValues) throws Exception {
+        Map pk = getPkValues(source, fieldValues.getValues());
         log.debug("Deleting entry "+pk);
 
         String tableName = source.getParameter(TABLE_NAME);
 
         // convert sets into single values
         Collection pkRows = getAdapterContext().getTransformEngine().convert(pk);
-        Collection rows = getAdapterContext().getTransformEngine().convert(entry);
+        Collection rows = getAdapterContext().getTransformEngine().convert(fieldValues);
 
     	Row pkRow = (Row)pkRows.iterator().next();
     	Row row = (Row)rows.iterator().next();

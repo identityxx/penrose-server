@@ -177,10 +177,13 @@ public class TransformEngine {
         Row pk = new Row();
         Collection fields = source.getFields();
 
+        log.debug("Translating for source "+source.getName()+":");
         for (Iterator j=fields.iterator(); j.hasNext(); ) {
             Field field = (Field)j.next();
 
             String name = field.getName();
+            //log.debug(" - "+name);
+
             Expression expression = field.getExpression();
 
             if (expression == null) {
@@ -188,18 +191,16 @@ public class TransformEngine {
                 continue;
             }
 
+            String script = expression.getScript();
             String variable = expression.getForeach();
+            //log.debug("   - expression: "+variable+": "+script);
 
-            Collection newValue = new ArrayList();
+            Collection newValues = new ArrayList();
             if (variable == null) {
-                //log.debug("Evaluating expression: "+expression);
                 Object value = interpreter.eval(expression.getScript());
-                if (value == null) continue;
-
-                newValue.add(value);
+                if (value != null) newValues.add(value);
 
             } else {
-                //log.debug("Evaluating expression: "+expression);
 
                 Collection oldValues = input.get(variable);
                 //log.debug("Values: "+oldValues);
@@ -209,10 +210,10 @@ public class TransformEngine {
                     for (Iterator i=oldValues.iterator(); i.hasNext(); ) {
                         Object o = i.next();
                         interpreter.set(variable, o);
-                        Object value = interpreter.eval(field.getExpression().getScript());
+                        Object value = interpreter.eval(script);
                         if (value == null) continue;
 
-                        newValue.add(value);
+                        newValues.add(value);
                         //log.debug(" - "+value);
                     }
 
@@ -248,16 +249,16 @@ public class TransformEngine {
                 }
             }
 */
-            //log.debug("Result: "+newValue);
+            if (newValues.size() == 0) continue;
 
-            if (newValue == null) continue;
+            log.debug(" - "+name+": "+newValues);
 
             if (field.isPrimaryKey()) {
-                if (newValue == null) return null;
-                pk.set(name, newValue);
+                if (newValues.size() == 0) return null;
+                pk.set(name, newValues);
             }
 
-            output.add(name, newValue);
+            output.add(name, newValues);
         }
 
         return pk;

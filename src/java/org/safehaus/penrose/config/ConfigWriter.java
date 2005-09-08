@@ -278,6 +278,7 @@ public class ConfigWriter {
 		Element element = new DefaultElement("source");
 
         element.add(new DefaultAttribute("name", source.getName()));
+        if (!source.isIncludeOnAdd()) element.add(new DefaultAttribute("includeOnAdd", "false"));
         if (!source.isIncludeOnDelete()) element.add(new DefaultAttribute("includeOnDelete", "false"));
 
         Element sourceName = new DefaultElement("source-name");
