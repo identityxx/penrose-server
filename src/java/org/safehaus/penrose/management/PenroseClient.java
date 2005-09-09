@@ -11,6 +11,7 @@ import javax.management.MBeanServerConnection;
 import javax.management.ObjectName;
 import java.util.Map;
 import java.util.HashMap;
+import java.util.Collection;
 
 public class PenroseClient {
 
@@ -66,6 +67,14 @@ public class PenroseClient {
 		Object obj = connection.invoke(name, method, paramValues, paramClassNames);
 		return obj;
 	}
+
+    public Collection getFileNames(String directory) throws Exception {
+        return (Collection)connection.invoke(name,
+                "getFileNames",
+                new Object[] { directory },
+                new String[] { String.class.getName() }
+        );
+    }
 
     public String readConfigFile(String filename) throws Exception {
         return (String)connection.invoke(name,

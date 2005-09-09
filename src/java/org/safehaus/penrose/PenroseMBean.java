@@ -21,7 +21,6 @@ public interface PenroseMBean {
 	// ------------------------------------------------
 	public int init() throws Exception;
 	public void addConfig(Config config) throws Exception;
-	public void loadSchema(String filename) throws Exception;
 	public void stop();
 
 	/*
@@ -83,5 +82,6 @@ public interface PenroseMBean {
 	public void setSuffixes(List suffixes);
 	public String readConfigFile(String filename) throws IOException;
 	public void writeConfigFile(String filename, String content) throws IOException;
+    public Collection getFileNames(String directory) throws Exception;
 
 }

@@ -26,10 +26,7 @@ import org.safehaus.penrose.module.ModuleContext;
 import org.safehaus.penrose.module.Module;
 import org.safehaus.penrose.module.ModuleMapping;
 import org.safehaus.penrose.module.ModuleConfig;
-import org.safehaus.penrose.schema.Schema;
-import org.safehaus.penrose.schema.AttributeType;
-import org.safehaus.penrose.schema.ObjectClass;
-import org.safehaus.penrose.schema.SchemaParser;
+import org.safehaus.penrose.schema.*;
 import org.safehaus.penrose.engine.TransformEngine;
 import org.safehaus.penrose.engine.EngineConfig;
 import org.safehaus.penrose.engine.Engine;
@@ -338,45 +335,21 @@ public class Penrose implements
     }
 
     public void loadSchema() throws Exception {
-
-        schema = new Schema();
-
-        File schemaDir = new File("schema");
-
-        File schemaFiles[] = schemaDir.listFiles();
-        for (int i=0; i<schemaFiles.length; i++) {
-            if (schemaFiles[i].isDirectory()) continue;
-            loadSchema(schemaFiles[i].getAbsolutePath());
-        }
+        SchemaReader reader = new SchemaReader();
+        reader.readDirectory("schema");
+        schema = reader.getSchema();
     }
 
-	public void loadSchema(String filename) throws Exception {
-
-        log.debug("Penrose.loadSchema(\""+filename+"\")");
-
-		FileReader in = new FileReader(filename);
-		SchemaParser parser = new SchemaParser(in);
-		Collection c = parser.parse();
-
-		Map attributeTypes = schema.getAttributeTypes();
-		Map objectClasses = schema.getObjectClasses();
-
-		for (Iterator i = c.iterator(); i.hasNext();) {
-			Object o = i.next();
-			if (o instanceof AttributeType) {
-				AttributeType at = (AttributeType) o;
-				attributeTypes.put(at.getName(), at);
-
-			} else if (o instanceof ObjectClass) {
-				ObjectClass oc = (ObjectClass) o;
-				//log.debug("Adding object class "+oc.getName());
-				objectClasses.put(oc.getName(), oc);
-
-			} else {
-				//log.debug(" - ERROR");
-			}
-		}
-	}
+    public Collection getFileNames(String directory) throws Exception {
+        File file = new File(directory);
+        File children[] = file.listFiles();
+        Collection result = new ArrayList();
+        for (int i=0; i<children.length; i++) {
+            if (children[i].isDirectory()) continue;
+            result.add(children[i].getName());
+        }
+        return result;
+    }
 
     public Engine getEngine() {
         return getEngine("DEFAULT");

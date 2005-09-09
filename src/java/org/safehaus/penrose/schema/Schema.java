@@ -115,7 +115,7 @@ public class Schema {
         List superClasses = oc.getSuperClasses();
         for (Iterator i=superClasses.iterator(); i.hasNext(); ) {
             String supName = (String)i.next();
-            log.debug(" - comparing "+parent+" with "+supName+": "+supName.equals(parent));
+            //log.debug(" - comparing "+parent+" with "+supName+": "+supName.equals(parent));
             if (supName.equals(parent)) return true;
 
             boolean result = isSuperClass(parent, supName);
@@ -146,14 +146,14 @@ public class Schema {
         if (map.containsKey(objectClassName)) return;
 
         // add itself
-        log.debug("Searching for object class "+objectClassName+" ... ");
+        //log.debug("Searching for object class "+objectClassName+" ... ");
         ObjectClass objectClass = (ObjectClass)objectClasses.get(objectClassName);
         if (objectClass == null) {
-            log.debug("--> NOT FOUND");
+            //log.debug("--> NOT FOUND");
             return;
         }
 
-        log.debug("--> FOUND");
+        //log.debug("--> FOUND");
         map.put(objectClassName, objectClass);
 
         if (objectClass.getSuperClasses() == null) return;
