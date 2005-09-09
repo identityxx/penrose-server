@@ -68,25 +68,25 @@ public class PenroseClient {
 		return obj;
 	}
 
-    public Collection getFileNames(String directory) throws Exception {
+    public Collection listFiles(String directory) throws Exception {
         return (Collection)connection.invoke(name,
-                "getFileNames",
+                "listFiles",
                 new Object[] { directory },
                 new String[] { String.class.getName() }
         );
     }
 
-    public String readConfigFile(String filename) throws Exception {
+    public String download(String filename) throws Exception {
         return (String)connection.invoke(name,
-                "readConfigFile",
+                "download",
                 new Object[] { filename },
                 new String[] { String.class.getName() }
         );
     }
 
-    public void writeConfigFile(String filename, String content) throws Exception {
+    public void upload(String filename, String content) throws Exception {
         connection.invoke(name,
-                "writeConfigFile",
+                "upload",
                 new Object[] { filename, content },
                 new String[] { String.class.getName(), String.class.getName() }
         );

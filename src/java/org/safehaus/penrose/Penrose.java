@@ -96,6 +96,8 @@ public class Penrose implements
 
 	private String trustedKeyStore;
 
+    private String homeDirectory;
+
 	private String rootDn;
 	private String rootPassword;
 
@@ -156,12 +158,10 @@ public class Penrose implements
         initServer();
 
         ConfigReader reader = new ConfigReader();
-        Config config = reader.read("conf");
+        Config config = reader.read((homeDirectory == null ? "" : homeDirectory+File.separator)+"conf");
         log.debug(config.toString());
 
         addConfig(config);
-
-        log.warn("Penrose is ready.");
 
 		return LDAPException.SUCCESS;
 	}
@@ -197,7 +197,7 @@ public class Penrose implements
 
     public void initJmx() {
 
-        File file = new File("conf/mx4j.xml");
+        File file = new File((homeDirectory == null ? "" : homeDirectory+File.separator)+"conf"+File.separator+"mx4j.xml");
         if (!file.exists()) return;
         
         // Register JMX
@@ -258,7 +258,7 @@ public class Penrose implements
         log.debug("Penrose.initServer()");
 
         ServerConfigReader reader = new ServerConfigReader();
-        reader.read("conf/server.xml");
+        reader.read((homeDirectory == null ? "" : homeDirectory+File.separator)+"conf"+File.separator+"server.xml");
 
         serverConfig = reader.getServerConfig();
         if (serverConfig.getRootDn() != null) rootDn = serverConfig.getRootDn();
@@ -274,7 +274,6 @@ public class Penrose implements
         loadSchema();
         initCache();
         initEngine();
-
 
         if (trustedKeyStore != null) System.setProperty("javax.net.ssl.trustStore", trustedKeyStore);
 
@@ -336,12 +335,12 @@ public class Penrose implements
 
     public void loadSchema() throws Exception {
         SchemaReader reader = new SchemaReader();
-        reader.readDirectory("schema");
+        reader.readDirectory((homeDirectory == null ? "" : homeDirectory+File.separator)+"schema");
         schema = reader.getSchema();
     }
 
-    public Collection getFileNames(String directory) throws Exception {
-        File file = new File(directory);
+    public Collection listFiles(String directory) throws Exception {
+        File file = new File((homeDirectory == null ? "" : homeDirectory+File.separator)+directory);
         File children[] = file.listFiles();
         Collection result = new ArrayList();
         for (int i=0; i<children.length; i++) {
@@ -828,8 +827,8 @@ public class Penrose implements
 		this.trustedKeyStore = trustedKeyStore;
 	}
 
-	public String readConfigFile(String filename) throws IOException {
-		File file = new File(filename);
+	public String download(String filename) throws IOException {
+		File file = new File((homeDirectory == null ? "" : homeDirectory+File.separator)+filename);
 		FileReader fr = new FileReader(file);
 		BufferedReader br = new BufferedReader(fr);
 		StringBuffer sb = new StringBuffer();
@@ -844,8 +843,8 @@ public class Penrose implements
 		return sb.toString();
 	}
 	
-	public void writeConfigFile(String filename, String content) throws IOException {
-		File file = new File(filename);
+	public void upload(String filename, String content) throws IOException {
+		File file = new File((homeDirectory == null ? "" : homeDirectory+File.separator)+filename);
 		FileWriter fw = new FileWriter(file);
 		fw.write(content);
 		fw.close();
@@ -953,5 +952,13 @@ public class Penrose implements
 
     public void setSyncService(SyncService syncService) {
         this.syncService = syncService;
+    }
+
+    public String getHomeDirectory() {
+        return homeDirectory;
+    }
+
+    public void setHomeDirectory(String homeDirectory) {
+        this.homeDirectory = homeDirectory;
     }
 }

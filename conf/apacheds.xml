@@ -97,10 +97,7 @@
     </property>
   </bean>
 
-  <bean id="penrose" class="org.safehaus.penrose.Penrose">
-    <property name="rootDn"><value>uid=admin,ou=system</value></property>
-    <property name="rootPassword"><value>secret</value></property>
-  </bean>
+  <bean id="penrose" class="org.safehaus.penrose.Penrose"/>
 
   <bean id="penroseAuthenticatorConfiguration" class="org.apache.ldap.server.configuration.MutableAuthenticatorConfiguration">
     <property name="name"><value>penrose</value></property>

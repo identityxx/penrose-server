@@ -37,8 +37,6 @@ public class PenroseInterceptor extends BaseInterceptor {
 
     public void setPenrose(Penrose penrose) throws Exception {
         this.penrose = penrose;
-
-        penrose.init();
 /*
         Cache cache = penrose.getCache();
 

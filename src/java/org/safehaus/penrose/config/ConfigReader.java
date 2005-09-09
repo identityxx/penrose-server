@@ -28,9 +28,9 @@ public class ConfigReader {
 
     public Config read(String directory) throws Exception {
         Config config = new Config();
-        loadSourcesConfig(directory+"/sources.xml", config);
-        loadMappingConfig(directory+"/mapping.xml", config);
-        loadModulesConfig(directory+"/modules.xml", config);
+        loadSourcesConfig(directory+File.separator+"sources.xml", config);
+        loadMappingConfig(directory+File.separator+"mapping.xml", config);
+        loadModulesConfig(directory+File.separator+"modules.xml", config);
         return config;
     }
 

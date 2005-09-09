@@ -80,8 +80,8 @@ public interface PenroseMBean {
 	public void setStopRequested(boolean stopRequested);
 	public List getSuffixes();
 	public void setSuffixes(List suffixes);
-	public String readConfigFile(String filename) throws IOException;
-	public void writeConfigFile(String filename, String content) throws IOException;
-    public Collection getFileNames(String directory) throws Exception;
+	public String download(String filename) throws IOException;
+	public void upload(String filename, String content) throws IOException;
+    public Collection listFiles(String directory) throws Exception;
 
 }
