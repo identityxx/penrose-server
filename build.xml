@@ -8,7 +8,7 @@
 
     <property name="build.compiler" value="jikes"/>
     <property name="project.name" value="penrose"/>
-    <property name="project.version" value="0.9.4"/>
+    <property name="project.version" value="0.9.5"/>
     <property name="prefix" value=""/>
     <property name="penrose.home" value="${prefix}/usr/local/penrose"/>
     <property name="iscc.path" value="ISCC.exe"/>
