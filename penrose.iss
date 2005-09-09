@@ -9,7 +9,6 @@ DefaultDirName={pf}\Penrose
 DefaultGroupName=Penrose
 UninstallDisplayName=Penrose
 UninstallDisplayIcon={app}\penrose.ico
-;Compression=lzma
 Compression=zip
 SolidCompression=yes
 OutputBaseFilename=penrose-0.9.4
@@ -54,4 +53,6 @@ Name: "{group}\Penrose Server"; Filename: "{app}\bin\penrose.bat"; IconFilename:
 Name: "{group}\Configuration Files"; Filename: "{app}\conf";
 Name: "{group}\Sample Files"; Filename: "{app}\samples";
 Name: "{group}\Schema Files"; Filename: "{app}\schema";
+Name: "{group}\Install Penrose Service"; Filename: "{app}\bin\install-penrose-service.bat"; IconFilename: "{app}\penrose.ico"; WorkingDir: "{app}"
+Name: "{group}\Uninstall Penrose Service"; Filename: "{app}\bin\uninstall-penrose-service.bat"; IconFilename: "{app}\penrose.ico"; WorkingDir: "{app}"
 Name: "{group}\Uninstall Penrose"; Filename: "{uninstallexe}"
