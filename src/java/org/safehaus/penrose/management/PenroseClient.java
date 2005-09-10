@@ -12,6 +12,7 @@ import javax.management.ObjectName;
 import java.util.Map;
 import java.util.HashMap;
 import java.util.Collection;
+import java.lang.reflect.Array;
 
 public class PenroseClient {
 
@@ -76,19 +77,19 @@ public class PenroseClient {
         );
     }
 
-    public String download(String filename) throws Exception {
-        return (String)connection.invoke(name,
+    public byte[] download(String filename) throws Exception {
+        return (byte[])connection.invoke(name,
                 "download",
                 new Object[] { filename },
                 new String[] { String.class.getName() }
         );
     }
 
-    public void upload(String filename, String content) throws Exception {
+    public void upload(String filename, byte content[]) throws Exception {
         connection.invoke(name,
                 "upload",
                 new Object[] { filename, content },
-                new String[] { String.class.getName(), String.class.getName() }
+                new String[] { String.class.getName(), "[B" }
         );
     }
 

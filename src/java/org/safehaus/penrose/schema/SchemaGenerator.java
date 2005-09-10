@@ -57,8 +57,6 @@ public class SchemaGenerator {
         String pkg = "org.apache.ldap.server.schema.bootstrap";
         String dependencies[] = new String[] { "system", "core" };
 
-        //System.out.println("Generating schema classes for "+name+".schema");
-
         AbstractBootstrapSchema schema = new AbstractBootstrapSchema(owner, name, pkg, dependencies) {};
 
         DirectorySchemaTool tool = new DirectorySchemaTool();
@@ -66,7 +64,6 @@ public class SchemaGenerator {
         tool.setSchemaSrcDir(schemaDir.getAbsolutePath());
         tool.setSchemaTargetDir(sourceDir.getAbsolutePath());
         tool.generate();
-
     }
 
     public void compile() throws Exception {
@@ -159,7 +156,12 @@ public class SchemaGenerator {
             System.exit(0);
         }
 
+        System.out.print("Generating schema classes for "+args[0]+"...");
+        System.out.flush();
+
         SchemaGenerator sg = new SchemaGenerator(args[0]);
         sg.run();
+
+        System.out.println("done.");
     }
 }

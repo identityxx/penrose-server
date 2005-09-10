@@ -227,7 +227,7 @@ public class SearchHandler {
             return e.getResultCode();
 
 		} catch (Exception e) {
-			log.debug(e.getMessage(), e);
+			log.error(e.getMessage(), e);
 			results.setReturnCode(LDAPException.OPERATIONS_ERROR);
 			return LDAPException.OPERATIONS_ERROR;
 		}

@@ -162,15 +162,20 @@
     </target>
 
     <target name="dist-jboss" depends="build">
+        <mkdir dir="target/nlog4j"/>
+        <unjar src="lib/nlog4j-1.2.17.jar" dest="target/nlog4j">
+            <patternset excludes="META-INF/MANIFEST.MF"/>
+        </unjar>
+        <jar jarfile="target/${project.name}-jboss-${project.version}.jar">
+            <fileset dir="target/classes"/>
+            <fileset dir="target/nlog4j"/>
+        </jar>
         <mkdir dir="target/penrose.sar"/>
         <copy todir="target/penrose.sar" includeEmptyDirs="false">
             <fileset dir="lib" includes="*"/>
-<!--
-            <fileset dir="target/classes"/>
--->
         </copy>
         <copy todir="target/penrose.sar"
-            file="target/${project.name}-${project.version}.jar">
+            file="target/${project.name}-jboss-${project.version}.jar">
         </copy>
         <mkdir dir="target/penrose.sar/META-INF"/>
         <copy todir="target/penrose.sar/META-INF">

@@ -5,11 +5,7 @@
 package org.safehaus.penrose;
 
 import java.util.*;
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
+import java.io.*;
 
 import org.ietf.ldap.*;
 import org.safehaus.penrose.config.*;
@@ -269,8 +265,11 @@ public class Penrose implements
         File children[] = file.listFiles();
         Collection result = new ArrayList();
         for (int i=0; i<children.length; i++) {
-            if (children[i].isDirectory()) continue;
-            result.add(children[i].getName());
+            if (children[i].isDirectory()) {
+                result.addAll(listFiles(directory+File.separator+children[i].getName()));
+            } else {
+                result.add(directory+File.separator+children[i].getName());
+            }
         }
         return result;
     }
@@ -752,27 +751,23 @@ public class Penrose implements
 		this.trustedKeyStore = trustedKeyStore;
 	}
 
-	public String download(String filename) throws IOException {
+	public byte[] download(String filename) throws IOException {
 		File file = new File((homeDirectory == null ? "" : homeDirectory+File.separator)+filename);
-		FileReader fr = new FileReader(file);
-		BufferedReader br = new BufferedReader(fr);
-		StringBuffer sb = new StringBuffer();
-		String line = "";
-		while (line != null) {
-			line = br.readLine();
-			if (line == null) break;
-			sb.append(line);
-			sb.append("\n");
-		}
-		fr.close();
-		return sb.toString();
+        FileInputStream in = new FileInputStream(file);
+
+        byte content[] = new byte[(int)file.length()];
+        in.read(content);
+
+        in.close();
+
+		return content;
 	}
 	
-	public void upload(String filename, String content) throws IOException {
+	public void upload(String filename, byte content[]) throws IOException {
 		File file = new File((homeDirectory == null ? "" : homeDirectory+File.separator)+filename);
-		FileWriter fw = new FileWriter(file);
-		fw.write(content);
-		fw.close();
+		FileOutputStream out = new FileOutputStream(file);
+		out.write(content);
+		out.close();
 	}
 
     public Interpreter newInterpreter() throws Exception {

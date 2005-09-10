@@ -38,28 +38,20 @@ import sun.misc.SignalHandler;
  */
 public class PenroseServer implements SignalHandler {
 
-    Logger log = LoggerFactory.getLogger(getClass());
+    public static Logger log = LoggerFactory.getLogger(PenroseServer.class);
 
     Properties env;
 
     String homeDirectory;
     Penrose penrose;
 
-    public PenroseServer() throws Exception {
+    public PenroseServer(String homeDirectory) throws Exception {
+        this.homeDirectory = homeDirectory;
     }
 
     public void run() throws Exception {
 
-        homeDirectory = System.getProperty("penrose.home");
-
-        File log4jProperties = new File((homeDirectory == null ? "" : homeDirectory+File.separator)+"conf"+File.separator+"log4j.properties");
-        if (log4jProperties.exists()) {
-            PropertyConfigurator.configure(log4jProperties.getAbsolutePath());
-        }
-
         String config = (homeDirectory == null ? "" : homeDirectory+File.separator)+"conf"+File.separator+"apacheds.xml";
-
-        log.info("Loading server configuration "+config);
 
         ApplicationContext factory = new FileSystemXmlApplicationContext(config);
 
@@ -77,12 +69,10 @@ public class PenroseServer implements SignalHandler {
         penrose.setRootPassword(env.getProperty(Context.SECURITY_CREDENTIALS));
         penrose.init();
 
-        startJmx();
-
         new InitialDirContext(env);
+    }
 
-        log.info("Penrose Server is ready.");
-
+    public void loop() throws Exception {
         while (true) {
             try {
                 Thread.sleep( 20000 );
@@ -95,7 +85,7 @@ public class PenroseServer implements SignalHandler {
         }
     }
 
-    public void startJmx() {
+    public void runJmx() {
 
         File file = new File((homeDirectory == null ? "" : homeDirectory+File.separator)+"conf"+File.separator+"mx4j.xml");
         if (!file.exists()) return;
@@ -219,7 +209,20 @@ public class PenroseServer implements SignalHandler {
     }
 
     public static void main( String[] args ) throws Exception {
-        PenroseServer server = new PenroseServer();
+
+        String home = System.getProperty("penrose.home");
+
+        File log4jProperties = new File((home == null ? "" : home+File.separator)+"conf"+File.separator+"log4j.properties");
+        if (log4jProperties.exists()) {
+            PropertyConfigurator.configure(log4jProperties.getAbsolutePath());
+        }
+
+        PenroseServer server = new PenroseServer(home);
         server.run();
+        server.runJmx();
+
+        log.info("Penrose Server is ready.");
+
+        server.loop();
     }
 }
