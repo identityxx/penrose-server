@@ -10,14 +10,6 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.io.Reader;
-
-import javax.management.MBeanServer;
-import javax.management.MBeanServerFactory;
-import javax.management.ObjectName;
-
-import mx4j.log.Log4JLogger;
-import mx4j.tools.config.ConfigurationLoader;
 
 import org.ietf.ldap.*;
 import org.safehaus.penrose.config.*;
@@ -40,15 +32,10 @@ import org.safehaus.penrose.connection.*;
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.filter.FilterTool;
 import org.safehaus.penrose.acl.ACLEngine;
-import org.safehaus.penrose.management.PenroseClient;
 import org.safehaus.penrose.sync.SyncService;
 import org.safehaus.penrose.sync.SyncContext;
-import org.safehaus.penrose.graph.Graph;
 import org.slf4j.Logger;
-//import org.apache.log4j.PropertyConfigurator;
 import org.slf4j.LoggerFactory;
-import sun.misc.SignalHandler;
-import sun.misc.Signal;
 
 /**
  * @author Endi S. Dewata
@@ -60,8 +47,7 @@ public class Penrose implements
         EngineContext,
         SyncContext,
         ModuleContext,
-        PenroseMBean,
-        SignalHandler {
+        PenroseMBean {
 	
 	// ------------------------------------------------
 	// Constants
@@ -153,8 +139,6 @@ public class Penrose implements
 
 	public int init() throws Exception {
 
-        //PropertyConfigurator.configure("conf/log4j.properties");
-
         initServer();
 
         ConfigReader reader = new ConfigReader();
@@ -195,63 +179,6 @@ public class Penrose implements
         return (Connection)connections.get(name);
     }
 
-    public void initJmx() {
-
-        File file = new File((homeDirectory == null ? "" : homeDirectory+File.separator)+"conf"+File.separator+"mx4j.xml");
-        if (!file.exists()) return;
-        
-        // Register JMX
-        MBeanServer server = null;
-        try {
-            ArrayList servers = MBeanServerFactory.findMBeanServer(null);
-            server = (MBeanServer) servers.get(0);
-
-        } catch (Exception ex) {
-            log.debug("Default MBeanServer has not been created yet.");
-        }
-
-        if (server == null) {
-            try {
-                log.debug("Creating MBeanServer...");
-
-                // MX4J's logging redirection to Apache's Commons Logging
-                mx4j.log.Log.redirectTo(new Log4JLogger());
-
-                // Create the MBeanServer
-                server = MBeanServerFactory.createMBeanServer();
-
-                // Create the ConfigurationLoader
-                ConfigurationLoader loader = new ConfigurationLoader();
-
-                // Register the configuration loader into the MBeanServer
-                ObjectName name = ObjectName.getInstance(":service=configuration");
-                server.registerMBean(loader, name);
-
-                // Tell the configuration loader the XML configuration file
-                Reader reader = new BufferedReader(new FileReader(file));
-                loader.startup(reader);
-                reader.close();
-
-                log.debug("Done creating MBeanServer.");
-
-            } catch (Exception ex) {
-                log.error(ex.toString(), ex);
-            }
-        }
-
-        if (server != null) {
-            try {
-                server.registerMBean(this, ObjectName.getInstance(PenroseClient.MBEAN_NAME));
-                //server.registerMBean(engine, ObjectName.getInstance("Penrose:type=Engine"));
-                //server.registerMBean(connectionPool, ObjectName.getInstance("Penrose:type=PenroseConnectionPool"));
-                //server.registerMBean(threadPool, ObjectName.getInstance("Penrose:type=ThreadPool"));
-            } catch (Exception ex) {
-                log.error(ex.toString(), ex);
-            }
-        }
-
-    }
-
     public void initServer() throws Exception {
 
         log.debug("-------------------------------------------------------------------------------");
@@ -276,8 +203,6 @@ public class Penrose implements
         initEngine();
 
         if (trustedKeyStore != null) System.setProperty("javax.net.ssl.trustStore", trustedKeyStore);
-
-        initJmx();
     }
 
 	public void addConfig(Config config) throws Exception {
@@ -870,72 +795,6 @@ public class Penrose implements
 
     public void setSchema(Schema schema) {
         this.schema = schema;
-    }
-
-    /**
-     * Ctrl-C (Interrupt Signal) handler
-     *
-     * The obvious drawback with this is that it relies on undocumented classes from
-     * Sun. There are other solutions, including one given at
-     * http://www.naturalbridge.com/useful/index.html and another at
-     * http://interstice.com/~kevinh/projects/javasignals/ but both of these use
-     * native code.
-     */
-    public void initSignalHandler() {
-        Signal.handle(new Signal("INT"), this);
-    }
-
-    public void handle(Signal sig) {
-        //code to be executed goes here
-        log.info("Interrupt Signal (Ctrl-C) caught! Initiating shutdown...");
-        listAllThreads();
-        stop();
-    }
-
-    public void listAllThreads() {
-        // Find the root thread group
-        ThreadGroup root = Thread.currentThread().getThreadGroup();
-        log.debug(".. ThreadGroup: "+root.getName());
-
-        while (root.getParent() != null) {
-            root = root.getParent();
-            log.debug(".. ThreadGroup: "+root.getName());
-        }
-
-        // Visit each thread group
-        visit(root, 0);
-    }
-
-    /**
-     * This method recursively visits all thread groups under `group'.
-     */
-    private void visit(ThreadGroup group, int level) {
-        //logger.debug(group.toString());
-
-        // Get threads in 'group'
-        int numThreads = group.activeCount();
-        Thread[] threads = new Thread[numThreads * 2];
-        numThreads = group.enumerate(threads, false);
-
-        // Enumerate each thread in 'group'
-        for (int i = 0; i < numThreads; i++) {
-            // Get thread
-            Thread thread = threads[i];
-            StringBuffer sb = new StringBuffer();
-            for (int j=0; j<level; j++) sb.append("  ");
-            sb.append(thread.toString());
-            log.debug(sb.toString());
-        }
-
-        // Get thread subgroups of 'group'
-        int numGroups = group.activeGroupCount();
-        ThreadGroup[] groups = new ThreadGroup[numGroups * 2];
-        numGroups = group.enumerate(groups, false);
-
-        // Recursively visit each subgroup
-        for (int i = 0; i < numGroups; i++) {
-            visit(groups[i], level + 1);
-        }
     }
 
     public ServerConfig getServerConfig() {
