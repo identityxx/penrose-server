@@ -53,6 +53,8 @@ Name: "{group}\Penrose Server"; Filename: "{app}\bin\penrose.bat"; IconFilename:
 Name: "{group}\Configuration Files"; Filename: "{app}\conf";
 Name: "{group}\Sample Files"; Filename: "{app}\samples";
 Name: "{group}\Schema Files"; Filename: "{app}\schema";
-Name: "{group}\Install Penrose Service"; Filename: "{app}\bin\install-penrose-service.bat"; IconFilename: "{app}\penrose.ico"; WorkingDir: "{app}"
-Name: "{group}\Uninstall Penrose Service"; Filename: "{app}\bin\uninstall-penrose-service.bat"; IconFilename: "{app}\penrose.ico"; WorkingDir: "{app}"
+Name: "{group}\Penrose Service\Start Penrose Service"; Filename: "{sys}\net.exe"; Parameters: "start ""Penrose Virtual Directory Server"""; IconFilename: "{app}\penrose.ico"; WorkingDir: "{app}"
+Name: "{group}\Penrose Service\Stop Penrose Service"; Filename: "{sys}\net.exe"; Parameters: "stop ""Penrose Virtual Directory Server"""; IconFilename: "{app}\penrose.ico"; WorkingDir: "{app}"
+Name: "{group}\Penrose Service\Register Penrose Service"; Filename: "{app}\bin\install-penrose-service.bat"; IconFilename: "{app}\penrose.ico"; WorkingDir: "{app}"
+Name: "{group}\Penrose Service\Unregister Penrose Service"; Filename: "{app}\bin\uninstall-penrose-service.bat"; IconFilename: "{app}\penrose.ico"; WorkingDir: "{app}"
 Name: "{group}\Uninstall Penrose"; Filename: "{uninstallexe}"
