@@ -15,7 +15,7 @@
       </props>
     </property>
   </bean>
-  
+
   <bean id="configuration" class="org.apache.ldap.server.configuration.MutableServerStartupConfiguration">
     <property name="workingDirectory"><value>var/data</value></property>
     <property name="allowAnonymousAccess"><value>true</value></property>
@@ -112,7 +112,7 @@
 
   <bean id="examplePartitionConfiguration" class="org.apache.ldap.server.configuration.MutableContextPartitionConfiguration">
     <property name="name"><value>example</value></property>
-    <property name="suffix"><value>dc=example,dc=com</value></property>
+    <property name="suffix"><value>dc=Example,dc=com</value></property>
     <property name="contextPartition">
       <bean class="org.safehaus.penrose.apacheds.PenrosePartition">
         <property name="penrose">
@@ -132,7 +132,7 @@
         objectClass: top
         objectClass: domain
         objectClass: extensibleObject
-        dc: example
+        dc: Example
       </value>
     </property>
   </bean>

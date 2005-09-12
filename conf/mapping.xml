@@ -7,21 +7,21 @@
 
 <mapping>
 
-  <entry dn="dc=example,dc=com">
+  <entry dn="dc=Example,dc=com">
     <oc>dcObject</oc>
     <oc>organization</oc>
     <at name="dc" rdn="true">
-      <expression>"example"</expression>
+      <expression>"Example"</expression>
     </at>
     <at name="o">
-      <expression>"example"</expression>
+      <expression>"Example"</expression>
     </at>
     <aci>
       <permission>rs</permission>
     </aci>
   </entry>
 
-  <entry dn="cn=manager,dc=example,dc=com">
+  <entry dn="cn=manager,dc=Example,dc=com">
     <oc>person</oc>
     <oc>inetOrgPerson</oc>
     <at name="cn" rdn="true">
@@ -35,17 +35,17 @@
     </at>
   </entry>
 
-  <entry dn="ou=users,dc=example,dc=com">
+  <entry dn="ou=Users,dc=Example,dc=com">
     <oc>organizationalUnit</oc>
     <at name="ou" rdn="true">
-      <expression>"users"</expression>
+      <expression>"Users"</expression>
     </at>
   </entry>
 
-  <entry dn="ou=groups,dc=example,dc=com">
+  <entry dn="ou=Groups,dc=Example,dc=com">
     <oc>organizationalUnit</oc>
     <at name="ou" rdn="true">
-      <expression>"groups"</expression>
+      <expression>"Groups"</expression>
     </at>
   </entry>
 

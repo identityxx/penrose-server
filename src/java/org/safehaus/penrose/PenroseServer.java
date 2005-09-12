@@ -52,8 +52,9 @@ public class PenroseServer implements SignalHandler {
     public void run() throws Exception {
 
         String config = (homeDirectory == null ? "" : homeDirectory+File.separator)+"conf"+File.separator+"apacheds.xml";
+        File file = new File(config);
 
-        ApplicationContext factory = new FileSystemXmlApplicationContext(config);
+        ApplicationContext factory = new FileSystemXmlApplicationContext("file:///"+file.getAbsolutePath());
 
         MutableServerStartupConfiguration cfg = (MutableServerStartupConfiguration)factory.getBean("configuration");
         cfg.setWorkingDirectory(new File((homeDirectory == null ? "" : homeDirectory+File.separator)+"var"+File.separator+"data"));
@@ -212,8 +213,11 @@ public class PenroseServer implements SignalHandler {
 
         String home = System.getProperty("penrose.home");
 
+        log.debug("PENROSE_HOME: "+home);
+
         File log4jProperties = new File((home == null ? "" : home+File.separator)+"conf"+File.separator+"log4j.properties");
         if (log4jProperties.exists()) {
+            log.debug("Loading "+log4jProperties.getPath());
             PropertyConfigurator.configure(log4jProperties.getAbsolutePath());
         }
 

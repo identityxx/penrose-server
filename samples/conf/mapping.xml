@@ -1,26 +1,26 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <mapping>
-  <entry dn="dc=example,dc=com">
+  <entry dn="dc=Example,dc=com">
     <oc>dcObject</oc>
     <oc>organization</oc>
     <at name="dc" rdn="true">
-      <expression>"example"</expression>
+      <expression>"Example"</expression>
     </at>
     <at name="o">
-      <expression>"example"</expression>
+      <expression>"Example"</expression>
     </at>
     <aci>
       <permission>rs</permission>
     </aci>
   </entry>
-  <entry dn="ou=Products,dc=example,dc=com">
+  <entry dn="ou=Products,dc=Example,dc=com">
     <oc>organizationalUnit</oc>
     <at name="ou" rdn="true">
       <expression>"Products"</expression>
     </at>
   </entry>
-  <entry dn="cn=...,ou=Products,dc=example,dc=com">
+  <entry dn="cn=...,ou=Products,dc=Example,dc=com">
     <oc>inetOrgPerson</oc>
     <oc>organizationalPerson</oc>
     <oc>person</oc>
@@ -38,13 +38,13 @@
       </field>
     </source>
   </entry>
-  <entry dn="ou=Categories,dc=example,dc=com">
+  <entry dn="ou=Categories,dc=Example,dc=com">
     <oc>organizationalUnit</oc>
     <at name="ou" rdn="true">
       <expression>"Categories"</expression>
     </at>
   </entry>
-  <entry dn="cn=...,ou=Categories,dc=example,dc=com">
+  <entry dn="cn=...,ou=Categories,dc=Example,dc=com">
     <oc>inetOrgPerson</oc>
     <oc>organizationalPerson</oc>
     <oc>person</oc>
@@ -59,13 +59,13 @@
       </field>
     </source>
   </entry>
-  <entry dn="ou=Products,cn=...,ou=Categories,dc=example,dc=com">
+  <entry dn="ou=Products,cn=...,ou=Categories,dc=Example,dc=com">
     <oc>organizationalUnit</oc>
     <at name="ou" rdn="true">
       <expression>"Products"</expression>
     </at>
   </entry>
-  <entry dn="cn=...,ou=Products,cn=...,ou=Categories,dc=example,dc=com">
+  <entry dn="cn=...,ou=Products,cn=...,ou=Categories,dc=Example,dc=com">
     <oc>inetOrgPerson</oc>
     <oc>organizationalPerson</oc>
     <oc>person</oc>
@@ -83,13 +83,13 @@
       <expression>categories.id = products.categoryId</expression>
     </relationship>
   </entry>
-  <entry dn="ou=Orders,cn=...,ou=Products,cn=...,ou=Categories,dc=example,dc=com">
+  <entry dn="ou=Orders,cn=...,ou=Products,cn=...,ou=Categories,dc=Example,dc=com">
     <oc>organizationalUnit</oc>
     <at name="ou" rdn="true">
       <expression>"Orders"</expression>
     </at>
   </entry>
-  <entry dn="uid=...,ou=Orders,cn=...,ou=Products,cn=...,ou=Categories,dc=example,dc=com">
+  <entry dn="uid=...,ou=Orders,cn=...,ou=Products,cn=...,ou=Categories,dc=Example,dc=com">
     <oc>inetOrgPerson</oc>
     <oc>organizationalPerson</oc>
     <oc>person</oc>
@@ -117,13 +117,13 @@
       <expression>order_details.orderId = orders.id</expression>
     </relationship>
   </entry>
-  <entry dn="ou=Customers,cn=...,ou=Products,cn=...,ou=Categories,dc=example,dc=com">
+  <entry dn="ou=Customers,cn=...,ou=Products,cn=...,ou=Categories,dc=Example,dc=com">
     <oc>organizationalUnit</oc>
     <at name="ou" rdn="true">
       <expression>"Customers"</expression>
     </at>
   </entry>
-  <entry dn="cn=...,ou=Customers,cn=...,ou=Products,cn=...,ou=Categories,dc=example,dc=com">
+  <entry dn="cn=...,ou=Customers,cn=...,ou=Products,cn=...,ou=Categories,dc=Example,dc=com">
     <oc>inetOrgPerson</oc>
     <oc>organizationalPerson</oc>
     <oc>person</oc>
@@ -160,13 +160,13 @@ return cn.substring(i+1);</expression>
       <expression>orders.customerId = customers.id</expression>
     </relationship>
   </entry>
-  <entry dn="ou=Customers,dc=example,dc=com">
+  <entry dn="ou=Customers,dc=Example,dc=com">
     <oc>organizationalUnit</oc>
     <at name="ou" rdn="true">
       <expression>"Customers"</expression>
     </at>
   </entry>
-  <entry dn="cn=...,ou=Customers,dc=example,dc=com">
+  <entry dn="cn=...,ou=Customers,dc=Example,dc=com">
     <oc>inetOrgPerson</oc>
     <oc>organizationalPerson</oc>
     <oc>person</oc>
@@ -186,13 +186,13 @@ return cn.substring(i+1);</expression>
       </field>
     </source>
   </entry>
-  <entry dn="ou=Orders,cn=...,ou=Customers,dc=example,dc=com">
+  <entry dn="ou=Orders,cn=...,ou=Customers,dc=Example,dc=com">
     <oc>organizationalUnit</oc>
     <at name="ou" rdn="true">
       <expression>"Orders"</expression>
     </at>
   </entry>
-  <entry dn="cn=...,ou=Orders,cn=...,ou=Customers,dc=example,dc=com">
+  <entry dn="cn=...,ou=Orders,cn=...,ou=Customers,dc=Example,dc=com">
     <oc>inetOrgPerson</oc>
     <oc>organizationalPerson</oc>
     <oc>person</oc>
@@ -213,13 +213,13 @@ return cn.substring(i+1);</expression>
       <expression>customers.id = orders.customerId</expression>
     </relationship>
   </entry>
-  <entry dn="ou=Products,cn=...,ou=Orders,cn=...,ou=Customers,dc=example,dc=com">
+  <entry dn="ou=Products,cn=...,ou=Orders,cn=...,ou=Customers,dc=Example,dc=com">
     <oc>organizationalUnit</oc>
     <at name="ou" rdn="true">
       <expression>"Products"</expression>
     </at>
   </entry>
-  <entry dn="cn=...,ou=Products,cn=...,ou=Orders,cn=...,ou=Customers,dc=example,dc=com">
+  <entry dn="cn=...,ou=Products,cn=...,ou=Orders,cn=...,ou=Customers,dc=Example,dc=com">
     <oc>inetOrgPerson</oc>
     <oc>organizationalPerson</oc>
     <oc>person</oc>
@@ -244,13 +244,13 @@ return cn.substring(i+1);</expression>
       <expression>order_details.productId = products.id</expression>
     </relationship>
   </entry>
-  <entry dn="ou=Categories,cn=...,ou=Products,cn=...,ou=Orders,cn=...,ou=Customers,dc=example,dc=com">
+  <entry dn="ou=Categories,cn=...,ou=Products,cn=...,ou=Orders,cn=...,ou=Customers,dc=Example,dc=com">
     <oc>organizationalUnit</oc>
     <at name="ou" rdn="true">
       <expression>"Categories"</expression>
     </at>
   </entry>
-  <entry dn="cn=...,ou=Categories,cn=...,ou=Products,cn=...,ou=Orders,cn=...,ou=Customers,dc=example,dc=com">
+  <entry dn="cn=...,ou=Categories,cn=...,ou=Products,cn=...,ou=Orders,cn=...,ou=Customers,dc=Example,dc=com">
     <oc>inetOrgPerson</oc>
     <oc>organizationalPerson</oc>
     <oc>person</oc>
@@ -268,13 +268,13 @@ return cn.substring(i+1);</expression>
       <expression>products.categoryId = categories.id</expression>
     </relationship>
   </entry>
-  <entry dn="ou=Products,cn=...,ou=Customers,dc=example,dc=com">
+  <entry dn="ou=Products,cn=...,ou=Customers,dc=Example,dc=com">
     <oc>organizationalUnit</oc>
     <at name="ou" rdn="true">
       <expression>"Products"</expression>
     </at>
   </entry>
-  <entry dn="cn=...,ou=Products,cn=...,ou=Customers,dc=example,dc=com">
+  <entry dn="cn=...,ou=Products,cn=...,ou=Customers,dc=Example,dc=com">
     <oc>inetOrgPerson</oc>
     <oc>organizationalPerson</oc>
     <oc>person</oc>
@@ -306,13 +306,13 @@ return cn.substring(i+1);</expression>
       <expression>order_details.productId = products.id</expression>
     </relationship>
   </entry>
-  <entry dn="ou=Categories,cn=...,ou=Customers,dc=example,dc=com">
+  <entry dn="ou=Categories,cn=...,ou=Customers,dc=Example,dc=com">
     <oc>organizationalUnit</oc>
     <at name="ou" rdn="true">
       <expression>"Categories"</expression>
     </at>
   </entry>
-  <entry dn="cn=...,ou=Categories,cn=...,ou=Customers,dc=example,dc=com">
+  <entry dn="cn=...,ou=Categories,cn=...,ou=Customers,dc=Example,dc=com">
     <oc>inetOrgPerson</oc>
     <oc>organizationalPerson</oc>
     <oc>person</oc>
@@ -351,13 +351,17 @@ return cn.substring(i+1);</expression>
       <expression>products.categoryId = categories.id</expression>
     </relationship>
   </entry>
-  <entry dn="ou=Orders,dc=example,dc=com">
+  <entry dn="ou=Orders,dc=Example,dc=com">
     <oc>organizationalUnit</oc>
     <at name="ou" rdn="true">
       <expression>"Orders"</expression>
     </at>
+    <aci>
+      <action>deny</action>
+      <permission>rs</permission>
+    </aci>
   </entry>
-  <entry dn="cn=...,ou=Orders,dc=example,dc=com">
+  <entry dn="cn=...,ou=Orders,dc=Example,dc=com">
     <oc>inetOrgPerson</oc>
     <oc>organizationalPerson</oc>
     <oc>person</oc>
@@ -372,13 +376,13 @@ return cn.substring(i+1);</expression>
       </field>
     </source>
   </entry>
-  <entry dn="ou=Products,cn=...,ou=Orders,dc=example,dc=com">
+  <entry dn="ou=Products,cn=...,ou=Orders,dc=Example,dc=com">
     <oc>inetOrgPerson</oc>
     <at name="ou" rdn="true">
       <expression>"Products"</expression>
     </at>
   </entry>
-  <entry dn="cn=...,ou=Products,cn=...,ou=Orders,dc=example,dc=com">
+  <entry dn="cn=...,ou=Products,cn=...,ou=Orders,dc=Example,dc=com">
     <oc>inetOrgPerson</oc>
     <oc>organizationalPerson</oc>
     <oc>person</oc>
@@ -403,19 +407,19 @@ return cn.substring(i+1);</expression>
       <expression>order_details.productId = products.id</expression>
     </relationship>
   </entry>
-  <entry dn="ou=Families,dc=example,dc=com">
+  <entry dn="ou=Families,dc=Example,dc=com">
     <oc>organizationalUnit</oc>
     <at name="ou" rdn="true">
       <expression>"Families"</expression>
     </at>
   </entry>
-  <entry dn="cn=...,ou=Families,dc=example,dc=com">
+  <entry dn="cn=...,ou=Families,dc=Example,dc=com">
     <oc>groupOfUniqueNames</oc>
     <at name="cn" rdn="true">
       <expression>customers.lastName</expression>
     </at>
     <at name="uniqueMember">
-      <expression foreach="customers.firstName">"cn="+customers.firstName+" "+customers.lastName+",ou=Customers,dc=example,dc=com"</expression>
+      <expression foreach="customers.firstName">"cn="+customers.firstName+" "+customers.lastName+",ou=Customers,dc=Example,dc=com"</expression>
     </at>
     <source name="customers">
       <source-name>customers</source-name>
@@ -425,13 +429,13 @@ return cn.substring(i+1);</expression>
       </field>
     </source>
   </entry>
-  <entry dn="ou=Members,cn=...,ou=Families,dc=example,dc=com">
+  <entry dn="ou=Members,cn=...,ou=Families,dc=Example,dc=com">
     <oc>organizationalUnit</oc>
     <at name="ou" rdn="true">
       <expression>"Members"</expression>
     </at>
   </entry>
-  <entry dn="cn=...,ou=Members,cn=...,ou=Families,dc=example,dc=com">
+  <entry dn="cn=...,ou=Members,cn=...,ou=Families,dc=Example,dc=com">
     <oc>inetOrgPerson</oc>
     <oc>organizationalPerson</oc>
     <oc>person</oc>
