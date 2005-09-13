@@ -8,12 +8,12 @@
       <param-value>penrose</param-value>
     </parameter>
     <parameter>
-      <param-name>url</param-name>
-      <param-value>jdbc:mysql://localhost/penrose_demo?autoReconnect=true</param-value>
-    </parameter>
-    <parameter>
       <param-name>password</param-name>
       <param-value>penrose</param-value>
+    </parameter>
+    <parameter>
+      <param-name>url</param-name>
+      <param-value>jdbc:mysql://localhost/penrose_demo?autoReconnect=true</param-value>
     </parameter>
     <parameter>
       <param-name>driver</param-name>
@@ -30,8 +30,9 @@
     </source>
     <source name="customers">
       <field name="firstName"/>
-      <field name="id" type="INTEGER" primaryKey="true"/>
       <field name="lastName"/>
+      <field name="password"/>
+      <field name="username" primaryKey="true"/>
       <parameter>
         <param-name>tableName</param-name>
         <param-value>customers</param-value>
@@ -48,9 +49,9 @@
       </parameter>
     </source>
     <source name="orders">
-      <field name="customerId" type="INTEGER"/>
       <field name="date" type="TIMESTAMP"/>
       <field name="id" type="INTEGER" primaryKey="true"/>
+      <field name="username"/>
       <parameter>
         <param-name>tableName</param-name>
         <param-value>orders</param-value>

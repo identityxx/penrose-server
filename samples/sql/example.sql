@@ -81,43 +81,69 @@ insert into order_details values (7, 2, 2, 2);
 insert into order_details values (8, 8, 6, 1);
 insert into order_details values (9, 16, 3, 3);
 insert into order_details values (10, 24, 1, 1);
+insert into order_details values (11, 1, 6, 2);
+insert into order_details values (11, 3, 3, 1);
+insert into order_details values (12, 14, 2, 1);
+insert into order_details values (12, 11, 1, 2);
+insert into order_details values (13, 6, 4, 1);
+insert into order_details values (14, 14, 5, 3);
+insert into order_details values (14, 4, 5, 2);
+insert into order_details values (15, 18, 1, 1);
+insert into order_details values (16, 19, 5, 2);
+insert into order_details values (16, 21, 6, 1);
+insert into order_details values (16, 5, 2, 1);
+insert into order_details values (17, 22, 2, 2);
+insert into order_details values (18, 8, 6, 1);
+insert into order_details values (19, 16, 3, 3);
+insert into order_details values (20, 28, 1, 1);
 
 drop table orders;
 
 create table orders (
     id int(11),
-    customerId int(11),
+    username varchar(10),
     date datetime,
     primary key (id)
 );
 
-insert into orders values (1, 3, '2004-08-10');
-insert into orders values (2, 2, '2004-12-22');
-insert into orders values (3, 3, '2005-02-02');
-insert into orders values (4, 2, '2005-02-10');
-insert into orders values (5, 5, '2005-02-10');
-insert into orders values (6, 3, '2005-04-17');
-insert into orders values (7, 1, '2005-05-25');
-insert into orders values (8, 1, '2005-07-11');
-insert into orders values (9, 6, '2005-08-09');
-insert into orders values (10, 4, '2005-09-07');
+insert into orders values (1, 'ewalker', '2004-08-10');
+insert into orders values (2, 'scarter', '2004-12-22');
+insert into orders values (3, 'ewalker', '2005-01-02');
+insert into orders values (4, 'scarter', '2005-01-10');
+insert into orders values (5, 'jcarter', '2005-02-10');
+insert into orders values (6, 'ewalker', '2005-02-17');
+insert into orders values (7, 'tmorris', '2005-02-25');
+insert into orders values (8, 'tmorris', '2005-03-11');
+insert into orders values (9, 'kjensen', '2005-04-09');
+insert into orders values (10, 'jcarter', '2005-05-07');
+insert into orders values (11, 'tmorris', '2005-05-15');
+insert into orders values (12, 'ewalker', '2005-06-06');
+insert into orders values (13, 'rmills', '2005-06-27');
+insert into orders values (14, 'mhunter', '2005-07-14');
+insert into orders values (15, 'rmills', '2005-07-14');
+insert into orders values (16, 'jcarter', '2005-07-25');
+insert into orders values (17, 'bhall', '2005-08-06');
+insert into orders values (18, 'tmorris', '2005-08-18');
+insert into orders values (19, 'scarter', '2005-09-07');
+insert into orders values (20, 'emorris', '2005-09-12');
 
 drop table customers;
 
 create table customers (
-    id int(11),
+    username varchar(10),
     firstName varchar(50),
     lastName varchar(50),
-    primary key (id)
+    password varchar(10),
+    primary key (username)
 );
 
-insert into customers values (1, 'Ted', 'Morris');
-insert into customers values (2, 'Sam', 'Carter');
-insert into customers values (3, 'Eric', 'Walker');
-insert into customers values (4, 'Randy', 'Mills');
-insert into customers values (5, 'Janet', 'Carter');
-insert into customers values (6, 'Karen', 'Jensen');
-insert into customers values (7, 'Martin', 'Hunter');
-insert into customers values (8, 'Ted', 'Jensen');
-insert into customers values (9, 'Eric', 'Morris');
-insert into customers values (10, 'Benjamin', 'Hall');
+insert into customers values ('tmorris', 'Ted', 'Morris', 'tm0rr1s');
+insert into customers values ('scarter', 'Sam', 'Carter', '5c4rt3r');
+insert into customers values ('ewalker', 'Eric', 'Walker', '3w4lk3r');
+insert into customers values ('rmills', 'Randy', 'Mills', 'rm1ll5');
+insert into customers values ('jcarter', 'Janet', 'Carter', 'jc4rt3r');
+insert into customers values ('kjensen', 'Karen', 'Jensen', 'kj3n53n');
+insert into customers values ('mhunter', 'Martin', 'Hunter', 'mhunt3r');
+insert into customers values ('tjensen', 'Ted', 'Jensen', 'tj3n53n');
+insert into customers values ('emorris', 'Eric', 'Morris', '3m0rr15');
+insert into customers values ('bhall', 'Benjamin', 'Hall', 'bh4ll');

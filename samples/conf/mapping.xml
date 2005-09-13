@@ -25,6 +25,9 @@
     <at name="cn" rdn="true">
       <expression>products.name</expression>
     </at>
+    <at name="description">
+      <expression>cat.name</expression>
+    </at>
     <at name="price">
       <expression>products.price</expression>
     </at>
@@ -35,6 +38,13 @@
         <expression>cn</expression>
       </field>
     </source>
+    <source name="cat">
+      <source-name>categories</source-name>
+      <connection-name>MySQL</connection-name>
+    </source>
+    <relationship>
+      <expression>products.categoryId = cat.id</expression>
+    </relationship>
   </entry>
   <entry dn="ou=Categories,cn=...,ou=Products,dc=Example,dc=com">
     <oc>organizationalUnit</oc>
@@ -128,6 +138,9 @@
     <at name="orderId" rdn="true">
       <expression>orders.id</expression>
     </at>
+    <at name="uid">
+      <expression>orders.username</expression>
+    </at>
     <source name="order_details">
       <source-name>order_details</source-name>
       <connection-name>MySQL</connection-name>
@@ -140,6 +153,9 @@
       </field>
       <field name="id">
         <expression>orderId</expression>
+      </field>
+      <field name="username">
+        <expression>uid</expression>
       </field>
     </source>
     <relationship>
@@ -187,7 +203,7 @@ return cn.substring(i+1);</expression>
       <expression>order_details.orderId = orders.id</expression>
     </relationship>
     <relationship>
-      <expression>orders.customerId = customers.id</expression>
+      <expression>orders.username = customers.username</expression>
     </relationship>
   </entry>
   <entry dn="ou=Customers,dc=Example,dc=com">
@@ -201,6 +217,15 @@ return cn.substring(i+1);</expression>
     <at name="cn" rdn="true">
       <expression>customers.firstName+" "+customers.lastName</expression>
     </at>
+    <at name="sn">
+      <expression>customers.lastName</expression>
+    </at>
+    <at name="uid">
+      <expression>customers.username</expression>
+    </at>
+    <at name="userPassword">
+      <expression>customers.password</expression>
+    </at>
     <source name="customers">
       <source-name>customers</source-name>
       <connection-name>MySQL</connection-name>
@@ -211,6 +236,12 @@ return cn.substring(0, i);</expression>
       <field name="lastName">
         <expression>int i = cn.indexOf(" ");
 return cn.substring(i+1);</expression>
+      </field>
+      <field name="password">
+        <expression>userPassword</expression>
+      </field>
+      <field name="username">
+        <expression>uid</expression>
       </field>
     </source>
   </entry>
@@ -239,7 +270,7 @@ return cn.substring(i+1);</expression>
       </field>
     </source>
     <relationship>
-      <expression>customers.id = orders.customerId</expression>
+      <expression>customers.username = orders.username</expression>
     </relationship>
   </entry>
   <entry dn="ou=Products,orderId=...,ou=Orders,cn=...,ou=Customers,dc=Example,dc=com">
@@ -338,13 +369,13 @@ return cn.substring(i+1);</expression>
       </field>
     </source>
     <relationship>
-      <expression>customers.id = orders.customerId</expression>
-    </relationship>
-    <relationship>
       <expression>orders.id = order_details.orderId</expression>
     </relationship>
     <relationship>
       <expression>order_details.productId = products.id</expression>
+    </relationship>
+    <relationship>
+      <expression>customers.username = orders.username</expression>
     </relationship>
   </entry>
   <entry dn="ou=Categories,cn=...,ou=Customers,dc=Example,dc=com">
@@ -384,9 +415,6 @@ return cn.substring(i+1);</expression>
       </field>
     </source>
     <relationship>
-      <expression>customers.id = orders.customerId</expression>
-    </relationship>
-    <relationship>
       <expression>orders.id = order_details.orderId</expression>
     </relationship>
     <relationship>
@@ -394,6 +422,9 @@ return cn.substring(i+1);</expression>
     </relationship>
     <relationship>
       <expression>products.categoryId = categories.id</expression>
+    </relationship>
+    <relationship>
+      <expression>customers.username = orders.username</expression>
     </relationship>
   </entry>
   <entry dn="ou=Orders,dc=Example,dc=com">
@@ -436,9 +467,6 @@ return cn.substring(i+1);</expression>
     <at name="cn" rdn="true">
       <expression>products.name</expression>
     </at>
-    <at name="price">
-      <expression>products.price</expression>
-    </at>
     <source name="order_details">
       <source-name>order_details</source-name>
       <connection-name>MySQL</connection-name>
@@ -448,9 +476,6 @@ return cn.substring(i+1);</expression>
       <connection-name>MySQL</connection-name>
       <field name="name">
         <expression>cn</expression>
-      </field>
-      <field name="price">
-        <expression>price</expression>
       </field>
     </source>
     <relationship>
@@ -470,6 +495,13 @@ return cn.substring(i+1);</expression>
     <oc>groupOfUniqueNames</oc>
     <at name="cn" rdn="true">
       <expression>customers.lastName</expression>
+    </at>
+    <at name="description">
+      <expression>if (customers.firstName instanceof Collection) {
+    return customers.firstName.size()+" members";
+} else {
+    return "1 member";
+}</expression>
     </at>
     <at name="uniqueMember">
       <expression foreach="customers.firstName">"cn="+customers.firstName+" "+customers.lastName+",ou=Customers,dc=Example,dc=com"</expression>
@@ -493,6 +525,15 @@ return cn.substring(i+1);</expression>
     <at name="cn" rdn="true">
       <expression>customers2.firstName+" "+customers2.lastName</expression>
     </at>
+    <at name="sn">
+      <expression>customers2.lastName</expression>
+    </at>
+    <at name="uid">
+      <expression>customers2.username</expression>
+    </at>
+    <at name="userPassword">
+      <expression>customers2.password</expression>
+    </at>
     <source name="customers2">
       <source-name>customers</source-name>
       <connection-name>MySQL</connection-name>
@@ -504,9 +545,56 @@ return cn.substring(0, i);</expression>
         <expression>int i = cn.indexOf(" ");
 return cn.substring(i+1);</expression>
       </field>
+      <field name="password">
+        <expression>userPassword</expression>
+      </field>
+      <field name="username">
+        <expression>uid</expression>
+      </field>
     </source>
     <relationship>
       <expression>customers.lastName = customers2.lastName</expression>
+    </relationship>
+  </entry>
+  <entry dn="ou=Orders,cn=...,ou=Families,dc=Example,dc=com">
+    <oc>organizationalUnit</oc>
+    <at name="ou" rdn="true">
+      <expression>"Orders"</expression>
+    </at>
+  </entry>
+  <entry dn="orderId=...,ou=Orders,cn=...,ou=Families,dc=Example,dc=com">
+    <oc>order</oc>
+    <at name="date">
+      <expression>orders.date</expression>
+    </at>
+    <at name="orderId" rdn="true">
+      <expression>orders.id</expression>
+    </at>
+    <at name="uid">
+      <expression>orders.username</expression>
+    </at>
+    <source name="customers2">
+      <source-name>customers</source-name>
+      <connection-name>MySQL</connection-name>
+    </source>
+    <source name="orders">
+      <source-name>orders</source-name>
+      <connection-name>MySQL</connection-name>
+      <field name="date">
+        <expression>date</expression>
+      </field>
+      <field name="id">
+        <expression>orderId</expression>
+      </field>
+      <field name="username">
+        <expression>uid</expression>
+      </field>
+    </source>
+    <relationship>
+      <expression>customers.lastName = customers2.lastName</expression>
+    </relationship>
+    <relationship>
+      <expression>customers2.username = orders.username</expression>
     </relationship>
   </entry>
 </mapping>
