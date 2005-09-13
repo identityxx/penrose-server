@@ -58,8 +58,9 @@ public class Graph {
     }
 
     public Collection getEdgeObjects(Object node) throws Exception {
-        Collection list = getEdges(node);
         Collection objects = new ArrayList();
+        Collection list = getEdges(node);
+        if (list == null) return objects;
         for (Iterator i=list.iterator(); i.hasNext(); ) {
             Set edge = (Set)i.next();
             Object object = getEdgeObject(edge);

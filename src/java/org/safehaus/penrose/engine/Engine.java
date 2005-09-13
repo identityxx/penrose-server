@@ -41,6 +41,9 @@ public class Engine {
 
     private boolean stopping = false;
 
+    private SearchEngine searchEngine;
+    private JoinEngine joinEngine;
+
     /**
      * Initialize the engine with a Penrose instance
      *
@@ -52,6 +55,9 @@ public class Engine {
 
         log.debug("-------------------------------------------------");
         log.debug("Initializing Engine");
+
+        searchEngine = new SearchEngine(this);
+        joinEngine = new JoinEngine(this);
 
         // Now size is now hardcoded to 20
         // TODO modify size to read from configuration if needed
@@ -274,7 +280,7 @@ public class Engine {
             sourceValues.set(rhs, lhsValues);
         }
 
-        AddGraphVisitor visitor = new AddGraphVisitor(getEngineContext(), entryDefinition, sourceValues);
+        AddGraphVisitor visitor = new AddGraphVisitor(engineContext, entryDefinition, sourceValues);
         graph.traverse(visitor, primarySource);
 
         if (visitor.getReturnCode() != LDAPException.SUCCESS) return visitor.getReturnCode();
@@ -293,14 +299,14 @@ public class Engine {
         Graph graph = getGraph(entryDefinition);
         Source primarySource = getPrimarySource(entryDefinition);
 
-        DeleteGraphVisitor visitor = new DeleteGraphVisitor(getEngineContext(), entryDefinition, sourceValues);
+        DeleteGraphVisitor visitor = new DeleteGraphVisitor(engineContext, entryDefinition, sourceValues);
         graph.traverse(visitor, primarySource);
 
         if (visitor.getReturnCode() != LDAPException.SUCCESS) return visitor.getReturnCode();
 
         String key = entryDefinition.getRdn()+","+entry.getParent().getDn();
 
-        getEngineContext().getCache().getEntryDataCache().remove(key, entry.getRdn());
+        engineContext.getCache().getEntryDataCache().remove(key, entry.getRdn());
         engineContext.getCache().getEntryFilterCache().remove(key);
 
         return LDAPException.SUCCESS;
@@ -314,14 +320,14 @@ public class Engine {
         Graph graph = getGraph(entryDefinition);
         Source primarySource = getPrimarySource(entryDefinition);
 
-        ModifyGraphVisitor visitor = new ModifyGraphVisitor(getEngineContext(), primarySource, entry, newValues);
+        ModifyGraphVisitor visitor = new ModifyGraphVisitor(engineContext, primarySource, entry, newValues);
         graph.traverse(visitor, primarySource);
 
         if (visitor.getReturnCode() != LDAPException.SUCCESS) return visitor.getReturnCode();
 
         String key = entryDefinition.getRdn()+","+entry.getParent().getDn();
 
-        getEngineContext().getCache().getEntryDataCache().remove(key, entry.getRdn());
+        engineContext.getCache().getEntryDataCache().remove(key, entry.getRdn());
         engineContext.getCache().getEntryFilterCache().remove(key);
 
         return LDAPException.SUCCESS;
@@ -355,7 +361,7 @@ public class Engine {
 
                 String dn = entryDefinition.getRdn()+","+parent.getDn();
 
-                Entry entry = getEngineContext().getCache().getEntryDataCache().get(dn, rdn);
+                Entry entry = engineContext.getCache().getEntryDataCache().get(dn, rdn);
                 if (entry == null) {
                     rdnsToLoad.add(rdn);
 
@@ -370,9 +376,7 @@ public class Engine {
 
             if (!rdnsToLoad.isEmpty()) {
 
-                Collection filters = rdnToFilter(entryDefinition, rdnsToLoad);
-                Map filterValuesMap = loadEntries(parent, entryDefinition, filters);
-                Collection entries = getEngineContext().getTransformEngine().merge(parent, entryDefinition, filterValuesMap);
+                Collection entries = joinEngine.load(parent, entryDefinition, rdnsToLoad);
 
                 String dn = entryDefinition.getRdn()+","+parent.getDn();
 
@@ -380,7 +384,7 @@ public class Engine {
                     Entry entry = (Entry)i.next();
                     entry.setParent(parent);
                     results.add(entry);
-                    getEngineContext().getCache().getEntryDataCache().put(dn, entry.getRdn(), entry);
+                    engineContext.getCache().getEntryDataCache().put(dn, entry.getRdn(), entry);
                 }
             }
 
@@ -389,76 +393,6 @@ public class Engine {
             results.close();
         }
     }
-
-    public Collection rdnToFilter(EntryDefinition entryDefinition, Collection rdns) throws Exception {
-
-        Collection filters = new TreeSet();
-
-        Source primarySource = getPrimarySource(entryDefinition);
-        Collection fields = primarySource.getFields();
-
-        log.debug("Creating filters:");
-        for (Iterator i=rdns.iterator(); i.hasNext(); ) {
-            Row rdn = (Row)i.next();
-            log.debug(" - "+rdn);
-
-            Interpreter interpreter = engineContext.newInterpreter();
-            interpreter.set(rdn);
-
-            Row filter = new Row();
-            for (Iterator j=fields.iterator(); j.hasNext(); ) {
-                Field field = (Field)j.next();
-                Expression exp = field.getExpression();
-                if (exp == null) continue;
-
-                String script = exp.getScript();
-                log.debug("   - "+primarySource.getName()+"."+field.getName()+": "+script);
-
-                Object value = interpreter.eval(script);
-                if (value == null) continue;
-
-                filter.set(primarySource.getName()+"."+field.getName(), value);
-            }
-
-            filters.add(filter);
-        }
-
-        return filters;
-    }
-
-    public Map loadEntries(
-            Entry parent,
-            EntryDefinition entryDefinition,
-            Collection filters)
-            throws Exception {
-
-        Graph graph = getGraph(entryDefinition);
-        Source primarySource = getPrimarySource(entryDefinition);
-
-        LoaderGraphVisitor loaderVisitor = new LoaderGraphVisitor(getEngineContext(), entryDefinition, filters);
-        graph.traverse(loaderVisitor, primarySource);
-
-        Map attributeValues = loaderVisitor.getAttributeValues();
-        return attributeValues;
-/*
-        //log.debug("Rows:");
-        Collection results = new ArrayList();
-        for (Iterator i=attributeValues.keySet().iterator(); i.hasNext(); ) {
-            Row pk = (Row)i.next();
-            //log.debug(" - "+pk);
-
-            AttributeValues values = (AttributeValues)attributeValues.get(pk);
-
-            Collection c = getEngineContext().getTransformEngine().convert(values);
-            results.addAll(c);
-        }
-
-        log.debug("Loaded " + results.size() + " rows.");
-
-        return results;
-*/
-    }
-
 
     public Collection search(
             Entry parent,
@@ -482,50 +416,7 @@ public class Engine {
         log.debug("Entry filter cache not found.");
         log.debug("Searching entry "+dn+" for "+filter);
 
-        Source primarySource = getPrimarySource(entryDefinition);
-        String primarySourceName = primarySource.getName();
-        Collection keys = searchEntries(parent, entryDefinition, filter);
-
-        //log.debug("Search results:");
-        rdns = new TreeSet();
-
-        for (Iterator j=keys.iterator(); j.hasNext(); ) {
-            Row row = (Row)j.next();
-            //log.debug(" - "+row);
-
-            Interpreter interpreter = engineContext.newInterpreter();
-            for (Iterator k=row.getNames().iterator(); k.hasNext(); ) {
-                String name = (String)k.next();
-                Object value = row.get(name);
-                interpreter.set(primarySourceName+"."+name, value);
-            }
-
-            Collection rdnAttributes = entryDefinition.getRdnAttributes();
-
-            Row rdn = new Row();
-            boolean valid = true;
-
-            for (Iterator k=rdnAttributes.iterator(); k.hasNext(); ) {
-                AttributeDefinition attr = (AttributeDefinition)k.next();
-                String name = attr.getName();
-                String expression = attr.getExpression().getScript();
-                Object value = interpreter.eval(expression);
-
-                if (value == null) {
-                    valid = false;
-                    break;
-                }
-
-                rdn.set(name, value);
-            }
-
-            if (!valid) continue;
-
-            Row nrdn = engineContext.getSchema().normalize(rdn);
-            //log.debug(" - RDN: "+nrdn);
-
-            rdns.add(nrdn);
-        }
+        rdns = searchEngine.search(parent, entryDefinition, filter);
 
         engineContext.getCache().getEntryFilterCache().put(dn, filter, rdns);
 
@@ -587,28 +478,6 @@ public class Engine {
 */
     }
 
-    public Collection searchEntries(Entry parent, EntryDefinition entryDefinition, Filter filter) throws Exception {
-        AttributeValues allValues = new AttributeValues();
-        getFieldValues("parent", parent, allValues);
-
-        Collection newRows = getEngineContext().getTransformEngine().convert(allValues);
-
-        Config config = engineContext.getConfig(entryDefinition.getDn());
-
-        Graph graph = getGraph(entryDefinition);
-        Source primarySource = getPrimarySource(entryDefinition);
-        String startingSourceName = getStartingSourceName(entryDefinition);
-        Source startingSource = config.getEffectiveSource(entryDefinition, startingSourceName);
-
-        Collection keys = new TreeSet();
-
-        SearchGraphVisitor visitor = new SearchGraphVisitor(getEngineContext(), entryDefinition, newRows, primarySource);
-        graph.traverse(visitor, startingSource);
-        keys.addAll(visitor.getKeys());
-
-        return keys;
-    }
-
     public String getStartingSourceName(EntryDefinition entryDefinition) {
 
         Collection relationships = entryDefinition.getRelationships();
@@ -633,5 +502,20 @@ public class Engine {
         return source.getName();
     }
 
+    public SearchEngine getSearchEngine() {
+        return searchEngine;
+    }
+
+    public void setSearchEngine(SearchEngine searchEngine) {
+        this.searchEngine = searchEngine;
+    }
+
+    public JoinEngine getJoinEngine() {
+        return joinEngine;
+    }
+
+    public void setJoinEngine(JoinEngine joinEngine) {
+        this.joinEngine = joinEngine;
+    }
 }
 

@@ -257,6 +257,7 @@ public class Penrose implements
     public void loadSchema() throws Exception {
         SchemaReader reader = new SchemaReader();
         reader.readDirectory((homeDirectory == null ? "" : homeDirectory+File.separator)+"schema");
+        reader.readDirectory((homeDirectory == null ? "" : homeDirectory+File.separator)+"schema"+File.separator+"ext");
         schema = reader.getSchema();
     }
 

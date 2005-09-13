@@ -20,6 +20,8 @@ public class LoaderGraphVisitor extends GraphVisitor {
 
     private EngineContext engineContext;
     private EntryDefinition entryDefinition;
+
+    private Map sourceValues = new TreeMap();
     private Map attributeValues = new TreeMap();
 
     private Stack stack = new Stack();
@@ -49,7 +51,8 @@ public class LoaderGraphVisitor extends GraphVisitor {
         log.debug("Loading "+source.getName()+" for:");
         for (Iterator i=filterMap.keySet().iterator(); i.hasNext(); ) {
             Row row = (Row)i.next();
-            log.debug(" - "+row);
+            Collection filterList = (Collection)filterMap.get(row);
+            log.debug(" - "+row+": "+filterList);
         }
 
         if (entryDefinition.getSource(source.getName()) == null) {
@@ -73,7 +76,7 @@ public class LoaderGraphVisitor extends GraphVisitor {
         Collection filters = filterMap.keySet();
         Map map = engineContext.getSyncService().search(source, filters);
         if (map.size() == 0) return false;
-        
+
         log.debug("Records:");
         Map newFilterMap = new HashMap();
         for (Iterator i = map.keySet().iterator(); i.hasNext(); ) {
@@ -107,15 +110,23 @@ public class LoaderGraphVisitor extends GraphVisitor {
             Collection filterList = null;
             for (Iterator j=filters.iterator(); j.hasNext(); ) {
                 Row filter = (Row)j.next();
-                //log.debug("   checking "+values+" with "+filter);
 
-                if (!engineContext.getSchema().partialMatch(newValues, filter)) continue;
+                Row newFilter = new Row();
+                for (Iterator k=filter.getNames().iterator(); k.hasNext(); ) {
+                    String name = (String)k.next();
+                    if (!name.startsWith(source.getName()+".")) continue;
+                    newFilter.set(name, filter.get(name));
+                }
+
+                //log.debug("   checking "+newValues+" with "+newFilter);
+
+                if (!engineContext.getSchema().partialMatch(newValues, newFilter)) continue;
 
                 filterList = (Collection)filterMap.get(filter);
                 break;
             }
 
-            //log.debug("   original filter: "+mainPk);
+            //log.debug("   original filters: "+filterList);
 
             for (Iterator j=newRows.iterator(); j.hasNext(); ) {
                 Row row = (Row)j.next();
@@ -189,6 +200,7 @@ public class LoaderGraphVisitor extends GraphVisitor {
 
             Row newRow = new Row();
             newRow.set(rhs, value);
+            //newRow.add(row);
 
             Collection list = (Collection)newMap.get(newRow);
             if (list == null) {
@@ -224,5 +236,13 @@ public class LoaderGraphVisitor extends GraphVisitor {
 
     public void setAttributeValues(Map attributeValues) {
         this.attributeValues = attributeValues;
+    }
+
+    public Map getSourceValues() {
+        return sourceValues;
+    }
+
+    public void setSourceValues(Map sourceValues) {
+        this.sourceValues = sourceValues;
     }
 }

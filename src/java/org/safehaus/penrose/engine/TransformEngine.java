@@ -294,35 +294,4 @@ public class TransformEngine {
         return map;
     }
 
-    public Collection merge(Entry parent, EntryDefinition entryDefinition, Map pkValuesMap) throws Exception {
-
-        Collection results = new ArrayList();
-
-        log.debug("Merging:");
-        int counter = 1;
-
-        // merge rows into attribute values
-        for (Iterator i = pkValuesMap.keySet().iterator(); i.hasNext(); counter++) {
-            Row pk = (Row)i.next();
-            AttributeValues sourceValues = (AttributeValues)pkValuesMap.get(pk);
-            
-            log.debug(" - "+pk+": "+sourceValues);
-
-            AttributeValues attributeValues = new AttributeValues();
-
-            Row rdn = translate(entryDefinition, sourceValues, attributeValues);
-            if (rdn == null) continue;
-
-            //log.debug("   => "+rdn+": "+attributeValues);
-
-            Entry entry = new Entry(rdn+","+parent.getDn(), entryDefinition, sourceValues, attributeValues);
-            entry.setParent(parent);
-            results.add(entry);
-
-            log.debug("Entry #"+counter+":\n"+entry+"\n");
-        }
-
-        return results;
-    }
-
 }

@@ -78,7 +78,7 @@ public class SearchGraphVisitor extends GraphVisitor {
 
         stack.push(results);
 
-        if (results != null) keys.addAll(results);
+        keys.addAll(results);
 
         if (source != primarySource) {
             log.debug("Source "+source.getName()+" is not the primary source of entry "+entryDefinition.getDn());
