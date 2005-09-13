@@ -24,23 +24,33 @@ public class LoaderGraphVisitor extends GraphVisitor {
 
     private Stack stack = new Stack();
 
-    public LoaderGraphVisitor(EngineContext engineContext, EntryDefinition entryDefinition, Collection filters) {
+    public LoaderGraphVisitor(
+            EngineContext engineContext,
+            EntryDefinition entryDefinition,
+            Collection filters) {
+
         this.engineContext = engineContext;
         this.entryDefinition = entryDefinition;
 
-        Map map = new TreeMap();
+        Map map = new HashMap();
         for (Iterator i=filters.iterator(); i.hasNext(); ) {
             Row filter = (Row)i.next();
-            map.put(filter, filter);
+            Collection filterList = new ArrayList();
+            filterList.add(filter);
+            map.put(filter, filterList);
         }
         stack.push(map);
     }
 
     public boolean preVisitNode(Object node, Object parameter) throws Exception {
         Source source = (Source)node;
-        Map map = (Map)stack.peek();
-        Collection filters = map.keySet();
-        log.debug("Loading "+source.getName()+" for "+filters);
+        Map filterMap = (Map)stack.peek();
+
+        log.debug("Loading "+source.getName()+" for:");
+        for (Iterator i=filterMap.keySet().iterator(); i.hasNext(); ) {
+            Row row = (Row)i.next();
+            log.debug(" - "+row);
+        }
 
         if (entryDefinition.getSource(source.getName()) == null) {
             log.debug("Source "+source.getName()+" is not defined in entry "+entryDefinition.getDn());
@@ -60,55 +70,74 @@ public class LoaderGraphVisitor extends GraphVisitor {
         if (!allPksDefined) return false;
 */        
 
-        Map results = engineContext.getSyncService().search(source, filters);
-        if (results.size() == 0) return false;
+        Collection filters = filterMap.keySet();
+        Map map = engineContext.getSyncService().search(source, filters);
+        if (map.size() == 0) return false;
         
         log.debug("Records:");
-        Map newMap = new TreeMap();
-        for (Iterator i = results.keySet().iterator(); i.hasNext(); ) {
+        Map newFilterMap = new HashMap();
+        for (Iterator i = map.keySet().iterator(); i.hasNext(); ) {
             Row pk = (Row)i.next();
-            AttributeValues values = (AttributeValues)results.get(pk);
-            log.debug(" - "+pk);
+            AttributeValues values = (AttributeValues)map.get(pk);
+            log.debug(" - "+pk+": "+values);
 
-            AttributeValues newValues = new AttributeValues();
-
-            Map v = values.getValues();
-            for (Iterator j = v.keySet().iterator(); j.hasNext(); ) {
-                String name = (String)j.next();
-
-                Collection c = (Collection)v.get(name);
-                if (c == null) continue;
-                
-                newValues.add(source.getName()+"."+name, c);
+            Collection list = engineContext.getTransformEngine().convert(values);
+            Collection newRows = new ArrayList();
+            for (Iterator j=list.iterator(); j.hasNext(); ) {
+                Row row = (Row)j.next();
+                Row newRow = new Row();
+                for (Iterator k=row.getNames().iterator(); k.hasNext(); ) {
+                    String name = (String)k.next();
+                    Object value = row.get(name);
+                    if (value == null) continue;
+                    newRow.set(source.getName()+"."+name, value);
+                }
+                newRows.add(newRow);
             }
 
-            Row mainPk = null;
+            AttributeValues newValues = new AttributeValues();
+            for (Iterator j=values.getNames().iterator(); j.hasNext(); ) {
+                String name = (String)j.next();
+                Collection value = values.get(name);
+                if (value == null) continue;
+                newValues.set(source.getName()+"."+name, value);
+            }
+
+            // find the original filter that produces this record
+            Collection filterList = null;
             for (Iterator j=filters.iterator(); j.hasNext(); ) {
-                Row p = (Row)j.next();
-                //log.debug("   checking "+values+" with "+p);
+                Row filter = (Row)j.next();
+                //log.debug("   checking "+values+" with "+filter);
 
-                if (!engineContext.getSchema().partialMatch(values, p)) continue;
+                if (!engineContext.getSchema().partialMatch(newValues, filter)) continue;
 
-                mainPk = (Row)map.get(p);
+                filterList = (Collection)filterMap.get(filter);
                 break;
             }
 
             //log.debug("   original filter: "+mainPk);
 
-            newMap.put(pk, mainPk);
-
-            AttributeValues av = (AttributeValues)attributeValues.get(mainPk);
-            if (av == null) {
-                av = new AttributeValues();
-                attributeValues.put(mainPk, av);
+            for (Iterator j=newRows.iterator(); j.hasNext(); ) {
+                Row row = (Row)j.next();
+                newFilterMap.put(row, filterList);
             }
 
-            av.add(newValues);
+            for (Iterator j=filterList.iterator(); j.hasNext(); ) {
+                Row filter = (Row)j.next();
 
-            //log.debug("   - "+av);
+                AttributeValues av = (AttributeValues)attributeValues.get(filter);
+                if (av == null) {
+                    av = new AttributeValues();
+                    attributeValues.put(filter, av);
+                }
+
+                av.add(newValues);
+                log.debug("   - "+av);
+            }
+
         }
 
-        stack.push(newMap);
+        stack.push(newFilterMap);
 
         return true;
     }
@@ -120,6 +149,10 @@ public class LoaderGraphVisitor extends GraphVisitor {
     public boolean preVisitEdge(Object node1, Object node2, Object edge, Object parameter) throws Exception {
         Source source = (Source)node2;
         Relationship relationship = (Relationship)edge;
+
+        log.debug("Relationship "+relationship);
+        Map map = (Map)stack.peek();
+        Collection rows = map.keySet();
 
         if (entryDefinition.getSource(source.getName()) == null) return false;
 /*
@@ -134,7 +167,6 @@ public class LoaderGraphVisitor extends GraphVisitor {
         // if connecting source, dont visit
         if (!allPksDefined) return false;
 */
-        log.debug("Relationship "+relationship);
 
         String lhs = relationship.getLhs();
         String rhs = relationship.getRhs();
@@ -145,28 +177,27 @@ public class LoaderGraphVisitor extends GraphVisitor {
             rhs = exp;
         }
 
-        int li = lhs.indexOf(".");
-        String lField = lhs.substring(li+1);
-
-        int ri = rhs.indexOf(".");
-        String rField = rhs.substring(ri+1);
-
-        Map map = (Map)stack.peek();
-        Collection pks = map.keySet();
-        //log.debug("Rows: "+pks);
-
         Map newMap = new HashMap();
-        for (Iterator i=pks.iterator(); i.hasNext(); ) {
-            Row pk = (Row)i.next();
-            Row mainPk = (Row)map.get(pk);
 
-            Object value = pk.get(lField);
-            Row newPk = new Row();
-            newPk.set(rField, value);
+        for (Iterator i=rows.iterator(); i.hasNext(); ) {
+            Row row = (Row)i.next();
+            Collection filterList = (Collection)map.get(row);
+            log.debug(" - "+row+": "+filterList);
 
-            newMap.put(newPk, mainPk);
+            Object value = row.get(lhs);
+            if (value == null) continue;
 
-            //log.debug(lField+" = "+rField+" => "+value);
+            Row newRow = new Row();
+            newRow.set(rhs, value);
+
+            Collection list = (Collection)newMap.get(newRow);
+            if (list == null) {
+                list = new ArrayList();
+                newMap.put(newRow, list);
+            }
+            list.addAll(filterList);
+
+            log.debug("   - "+lhs+" = "+rhs+" => "+value);
         }
         //log.debug("New Rows: "+newMap);
 

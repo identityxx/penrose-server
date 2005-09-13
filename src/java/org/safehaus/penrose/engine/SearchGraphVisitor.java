@@ -31,22 +31,22 @@ public class SearchGraphVisitor extends GraphVisitor {
     public SearchGraphVisitor(
             EngineContext engineContext,
             EntryDefinition entryDefinition,
-            Collection rows,
+            Collection filters,
             Source primarySource) {
 
         this.engineContext = engineContext;
         this.entryDefinition = entryDefinition;
         this.primarySource = primarySource;
 
-        stack.push(rows);
+        stack.push(filters);
     }
 
     public boolean preVisitNode(Object node, Object parameter) throws Exception {
         Source source = (Source)node;
-        Collection rows = (Collection)stack.peek();
+        Collection filters = (Collection)stack.peek();
 
         log.debug("Searching "+source.getName()+" for:");
-        for (Iterator i=rows.iterator(); i.hasNext(); ) {
+        for (Iterator i=filters.iterator(); i.hasNext(); ) {
             Row row = (Row)i.next();
             log.debug(" - "+row);
         }
@@ -56,7 +56,7 @@ public class SearchGraphVisitor extends GraphVisitor {
             return true;
         }
 
-        Map map = engineContext.getSyncService().search(source, rows);
+        Map map = engineContext.getSyncService().search(source, filters);
         if (map.size() == 0) return false;
 
         Collection results = new ArrayList();
@@ -68,7 +68,9 @@ public class SearchGraphVisitor extends GraphVisitor {
                 Row newRow = new Row();
                 for (Iterator k=row.getNames().iterator(); k.hasNext(); ) {
                     String name = (String)k.next();
-                    newRow.set(source.getName()+"."+name, row.get(name));
+                    Object value = row.get(name);
+                    if (value == null) continue;
+                    newRow.set(source.getName()+"."+name, value);
                 }
                 results.add(newRow);
             }

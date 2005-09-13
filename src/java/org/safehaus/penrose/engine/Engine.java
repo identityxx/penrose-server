@@ -371,8 +371,8 @@ public class Engine {
             if (!rdnsToLoad.isEmpty()) {
 
                 Collection filters = rdnToFilter(entryDefinition, rdnsToLoad);
-                Map avs = loadEntries(parent, entryDefinition, filters);
-                Collection entries = getEngineContext().getTransformEngine().merge(parent, entryDefinition, avs);
+                Map filterValuesMap = loadEntries(parent, entryDefinition, filters);
+                Collection entries = getEngineContext().getTransformEngine().merge(parent, entryDefinition, filterValuesMap);
 
                 String dn = entryDefinition.getRdn()+","+parent.getDn();
 
@@ -412,12 +412,12 @@ public class Engine {
                 if (exp == null) continue;
 
                 String script = exp.getScript();
-                //log.debug("   - "+field.getName()+": "+script);
+                log.debug("   - "+primarySource.getName()+"."+field.getName()+": "+script);
 
                 Object value = interpreter.eval(script);
                 if (value == null) continue;
 
-                filter.set(field.getName(), value);
+                filter.set(primarySource.getName()+"."+field.getName(), value);
             }
 
             filters.add(filter);
@@ -431,8 +431,6 @@ public class Engine {
             EntryDefinition entryDefinition,
             Collection filters)
             throws Exception {
-
-        log.debug("Loading: "+filters);
 
         Graph graph = getGraph(entryDefinition);
         Source primarySource = getPrimarySource(entryDefinition);

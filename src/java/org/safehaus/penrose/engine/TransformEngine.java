@@ -294,7 +294,7 @@ public class TransformEngine {
         return map;
     }
 
-    public Collection merge(Entry parent, EntryDefinition entryDefinition, Map values) throws Exception {
+    public Collection merge(Entry parent, EntryDefinition entryDefinition, Map pkValuesMap) throws Exception {
 
         Collection results = new ArrayList();
 
@@ -302,11 +302,12 @@ public class TransformEngine {
         int counter = 1;
 
         // merge rows into attribute values
-        for (Iterator i = values.keySet().iterator(); i.hasNext(); counter++) {
+        for (Iterator i = pkValuesMap.keySet().iterator(); i.hasNext(); counter++) {
             Row pk = (Row)i.next();
-            log.debug(" - "+pk);
+            AttributeValues sourceValues = (AttributeValues)pkValuesMap.get(pk);
+            
+            log.debug(" - "+pk+": "+sourceValues);
 
-            AttributeValues sourceValues = (AttributeValues)values.get(pk);
             AttributeValues attributeValues = new AttributeValues();
 
             Row rdn = translate(entryDefinition, sourceValues, attributeValues);

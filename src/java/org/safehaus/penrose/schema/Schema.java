@@ -210,6 +210,7 @@ public class Schema {
                 boolean found = false;
                 for (Iterator j=values.iterator(); j.hasNext() && !found; ) {
                     Object v = j.next();
+                    //log.debug("comparing ["+v+"] with ["+value+"]: "+v.toString().equalsIgnoreCase(value.toString()));
                     if (v.toString().equalsIgnoreCase(value.toString())) found = true;
                 }
                 if (!found) return false;

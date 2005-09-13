@@ -21,14 +21,12 @@
     </at>
   </entry>
   <entry dn="cn=...,ou=Products,dc=Example,dc=com">
-    <oc>inetOrgPerson</oc>
-    <oc>organizationalPerson</oc>
-    <oc>person</oc>
+    <oc>product</oc>
     <at name="cn" rdn="true">
       <expression>products.name</expression>
     </at>
-    <at name="uid">
-      <expression>products.id</expression>
+    <at name="price">
+      <expression>products.price</expression>
     </at>
     <source name="products">
       <source-name>products</source-name>
@@ -38,6 +36,34 @@
       </field>
     </source>
   </entry>
+  <entry dn="ou=Categories,cn=...,ou=Products,dc=Example,dc=com">
+    <oc>organizationalUnit</oc>
+    <at name="ou" rdn="true">
+      <expression>"Categories"</expression>
+    </at>
+  </entry>
+  <entry dn="cn=...,ou=Categories,cn=...,ou=Products,dc=Example,dc=com">
+    <oc>category</oc>
+    <at name="cn" rdn="true">
+      <expression>categories.name</expression>
+    </at>
+    <at name="description">
+      <expression>categories.description</expression>
+    </at>
+    <source name="categories">
+      <source-name>categories</source-name>
+      <connection-name>MySQL</connection-name>
+      <field name="description">
+        <expression>description</expression>
+      </field>
+      <field name="name">
+        <expression>cn</expression>
+      </field>
+    </source>
+    <relationship>
+      <expression>products.categoryId = categories.id</expression>
+    </relationship>
+  </entry>
   <entry dn="ou=Categories,dc=Example,dc=com">
     <oc>organizationalUnit</oc>
     <at name="ou" rdn="true">
@@ -45,15 +71,19 @@
     </at>
   </entry>
   <entry dn="cn=...,ou=Categories,dc=Example,dc=com">
-    <oc>inetOrgPerson</oc>
-    <oc>organizationalPerson</oc>
-    <oc>person</oc>
+    <oc>category</oc>
     <at name="cn" rdn="true">
       <expression>categories.name</expression>
+    </at>
+    <at name="description">
+      <expression>categories.description</expression>
     </at>
     <source name="categories">
       <source-name>categories</source-name>
       <connection-name>MySQL</connection-name>
+      <field name="description">
+        <expression>description</expression>
+      </field>
       <field name="name">
         <expression>cn</expression>
       </field>
@@ -66,11 +96,12 @@
     </at>
   </entry>
   <entry dn="cn=...,ou=Products,cn=...,ou=Categories,dc=Example,dc=com">
-    <oc>inetOrgPerson</oc>
-    <oc>organizationalPerson</oc>
-    <oc>person</oc>
+    <oc>product</oc>
     <at name="cn" rdn="true">
       <expression>products.name</expression>
+    </at>
+    <at name="price">
+      <expression>products.price</expression>
     </at>
     <source name="products">
       <source-name>products</source-name>
@@ -89,14 +120,12 @@
       <expression>"Orders"</expression>
     </at>
   </entry>
-  <entry dn="uid=...,ou=Orders,cn=...,ou=Products,cn=...,ou=Categories,dc=Example,dc=com">
-    <oc>inetOrgPerson</oc>
-    <oc>organizationalPerson</oc>
-    <oc>person</oc>
-    <at name="description">
+  <entry dn="orderId=...,ou=Orders,cn=...,ou=Products,cn=...,ou=Categories,dc=Example,dc=com">
+    <oc>order</oc>
+    <at name="date">
       <expression>orders.date</expression>
     </at>
-    <at name="uid" rdn="true">
+    <at name="orderId" rdn="true">
       <expression>orders.id</expression>
     </at>
     <source name="order_details">
@@ -106,8 +135,11 @@
     <source name="orders">
       <source-name>orders</source-name>
       <connection-name>MySQL</connection-name>
+      <field name="date">
+        <expression>date</expression>
+      </field>
       <field name="id">
-        <expression>uid</expression>
+        <expression>orderId</expression>
       </field>
     </source>
     <relationship>
@@ -124,9 +156,7 @@
     </at>
   </entry>
   <entry dn="cn=...,ou=Customers,cn=...,ou=Products,cn=...,ou=Categories,dc=Example,dc=com">
-    <oc>inetOrgPerson</oc>
-    <oc>organizationalPerson</oc>
-    <oc>person</oc>
+    <oc>customer</oc>
     <at name="cn" rdn="true">
       <expression>customers.firstName+" "+customers.lastName</expression>
     </at>
@@ -167,9 +197,7 @@ return cn.substring(i+1);</expression>
     </at>
   </entry>
   <entry dn="cn=...,ou=Customers,dc=Example,dc=com">
-    <oc>inetOrgPerson</oc>
-    <oc>organizationalPerson</oc>
-    <oc>person</oc>
+    <oc>customer</oc>
     <at name="cn" rdn="true">
       <expression>customers.firstName+" "+customers.lastName</expression>
     </at>
@@ -192,39 +220,41 @@ return cn.substring(i+1);</expression>
       <expression>"Orders"</expression>
     </at>
   </entry>
-  <entry dn="cn=...,ou=Orders,cn=...,ou=Customers,dc=Example,dc=com">
-    <oc>inetOrgPerson</oc>
-    <oc>organizationalPerson</oc>
-    <oc>person</oc>
-    <at name="cn" rdn="true">
-      <expression>orders.id</expression>
-    </at>
-    <at name="description">
+  <entry dn="orderId=...,ou=Orders,cn=...,ou=Customers,dc=Example,dc=com">
+    <oc>order</oc>
+    <at name="date">
       <expression>orders.date</expression>
+    </at>
+    <at name="orderId" rdn="true">
+      <expression>orders.id</expression>
     </at>
     <source name="orders">
       <source-name>orders</source-name>
       <connection-name>MySQL</connection-name>
+      <field name="date">
+        <expression>date</expression>
+      </field>
       <field name="id">
-        <expression>cn</expression>
+        <expression>orderId</expression>
       </field>
     </source>
     <relationship>
       <expression>customers.id = orders.customerId</expression>
     </relationship>
   </entry>
-  <entry dn="ou=Products,cn=...,ou=Orders,cn=...,ou=Customers,dc=Example,dc=com">
+  <entry dn="ou=Products,orderId=...,ou=Orders,cn=...,ou=Customers,dc=Example,dc=com">
     <oc>organizationalUnit</oc>
     <at name="ou" rdn="true">
       <expression>"Products"</expression>
     </at>
   </entry>
-  <entry dn="cn=...,ou=Products,cn=...,ou=Orders,cn=...,ou=Customers,dc=Example,dc=com">
-    <oc>inetOrgPerson</oc>
-    <oc>organizationalPerson</oc>
-    <oc>person</oc>
+  <entry dn="cn=...,ou=Products,orderId=...,ou=Orders,cn=...,ou=Customers,dc=Example,dc=com">
+    <oc>product</oc>
     <at name="cn" rdn="true">
       <expression>products.name</expression>
+    </at>
+    <at name="price">
+      <expression>products.price</expression>
     </at>
     <source name="order_details">
       <source-name>order_details</source-name>
@@ -236,6 +266,9 @@ return cn.substring(i+1);</expression>
       <field name="name">
         <expression>cn</expression>
       </field>
+      <field name="price">
+        <expression>price</expression>
+      </field>
     </source>
     <relationship>
       <expression>orders.id = order_details.orderId</expression>
@@ -244,22 +277,26 @@ return cn.substring(i+1);</expression>
       <expression>order_details.productId = products.id</expression>
     </relationship>
   </entry>
-  <entry dn="ou=Categories,cn=...,ou=Products,cn=...,ou=Orders,cn=...,ou=Customers,dc=Example,dc=com">
+  <entry dn="ou=Categories,cn=...,ou=Products,orderId=...,ou=Orders,cn=...,ou=Customers,dc=Example,dc=com">
     <oc>organizationalUnit</oc>
     <at name="ou" rdn="true">
       <expression>"Categories"</expression>
     </at>
   </entry>
-  <entry dn="cn=...,ou=Categories,cn=...,ou=Products,cn=...,ou=Orders,cn=...,ou=Customers,dc=Example,dc=com">
-    <oc>inetOrgPerson</oc>
-    <oc>organizationalPerson</oc>
-    <oc>person</oc>
+  <entry dn="cn=...,ou=Categories,cn=...,ou=Products,orderId=...,ou=Orders,cn=...,ou=Customers,dc=Example,dc=com">
+    <oc>category</oc>
     <at name="cn" rdn="true">
       <expression>categories.name</expression>
+    </at>
+    <at name="description">
+      <expression>categories.description</expression>
     </at>
     <source name="categories">
       <source-name>categories</source-name>
       <connection-name>MySQL</connection-name>
+      <field name="description">
+        <expression>description</expression>
+      </field>
       <field name="name">
         <expression>cn</expression>
       </field>
@@ -275,11 +312,12 @@ return cn.substring(i+1);</expression>
     </at>
   </entry>
   <entry dn="cn=...,ou=Products,cn=...,ou=Customers,dc=Example,dc=com">
-    <oc>inetOrgPerson</oc>
-    <oc>organizationalPerson</oc>
-    <oc>person</oc>
+    <oc>product</oc>
     <at name="cn" rdn="true">
       <expression>products.name</expression>
+    </at>
+    <at name="price">
+      <expression>products.price</expression>
     </at>
     <source name="orders">
       <source-name>orders</source-name>
@@ -294,6 +332,9 @@ return cn.substring(i+1);</expression>
       <connection-name>MySQL</connection-name>
       <field name="name">
         <expression>cn</expression>
+      </field>
+      <field name="price">
+        <expression>price</expression>
       </field>
     </source>
     <relationship>
@@ -313,11 +354,12 @@ return cn.substring(i+1);</expression>
     </at>
   </entry>
   <entry dn="cn=...,ou=Categories,cn=...,ou=Customers,dc=Example,dc=com">
-    <oc>inetOrgPerson</oc>
-    <oc>organizationalPerson</oc>
-    <oc>person</oc>
+    <oc>category</oc>
     <at name="cn" rdn="true">
       <expression>categories.name</expression>
+    </at>
+    <at name="description">
+      <expression>categories.description</expression>
     </at>
     <source name="orders">
       <source-name>orders</source-name>
@@ -334,6 +376,9 @@ return cn.substring(i+1);</expression>
     <source name="categories">
       <source-name>categories</source-name>
       <connection-name>MySQL</connection-name>
+      <field name="description">
+        <expression>description</expression>
+      </field>
       <field name="name">
         <expression>cn</expression>
       </field>
@@ -361,33 +406,38 @@ return cn.substring(i+1);</expression>
       <permission>rs</permission>
     </aci>
   </entry>
-  <entry dn="cn=...,ou=Orders,dc=Example,dc=com">
-    <oc>inetOrgPerson</oc>
-    <oc>organizationalPerson</oc>
-    <oc>person</oc>
-    <at name="cn" rdn="true">
+  <entry dn="orderId=...,ou=Orders,dc=Example,dc=com">
+    <oc>order</oc>
+    <at name="date">
+      <expression>orders.date</expression>
+    </at>
+    <at name="orderId" rdn="true">
       <expression>orders.id</expression>
     </at>
     <source name="orders">
       <source-name>orders</source-name>
       <connection-name>MySQL</connection-name>
+      <field name="date">
+        <expression>date</expression>
+      </field>
       <field name="id">
-        <expression>cn</expression>
+        <expression>orderId</expression>
       </field>
     </source>
   </entry>
-  <entry dn="ou=Products,cn=...,ou=Orders,dc=Example,dc=com">
+  <entry dn="ou=Products,orderId=...,ou=Orders,dc=Example,dc=com">
     <oc>inetOrgPerson</oc>
     <at name="ou" rdn="true">
       <expression>"Products"</expression>
     </at>
   </entry>
-  <entry dn="cn=...,ou=Products,cn=...,ou=Orders,dc=Example,dc=com">
-    <oc>inetOrgPerson</oc>
-    <oc>organizationalPerson</oc>
-    <oc>person</oc>
+  <entry dn="cn=...,ou=Products,orderId=...,ou=Orders,dc=Example,dc=com">
+    <oc>product</oc>
     <at name="cn" rdn="true">
       <expression>products.name</expression>
+    </at>
+    <at name="price">
+      <expression>products.price</expression>
     </at>
     <source name="order_details">
       <source-name>order_details</source-name>
@@ -398,6 +448,9 @@ return cn.substring(i+1);</expression>
       <connection-name>MySQL</connection-name>
       <field name="name">
         <expression>cn</expression>
+      </field>
+      <field name="price">
+        <expression>price</expression>
       </field>
     </source>
     <relationship>
@@ -436,9 +489,7 @@ return cn.substring(i+1);</expression>
     </at>
   </entry>
   <entry dn="cn=...,ou=Members,cn=...,ou=Families,dc=Example,dc=com">
-    <oc>inetOrgPerson</oc>
-    <oc>organizationalPerson</oc>
-    <oc>person</oc>
+    <oc>customer</oc>
     <at name="cn" rdn="true">
       <expression>customers2.firstName+" "+customers2.lastName</expression>
     </at>
