@@ -495,10 +495,41 @@ public class PenroseInterceptor extends BaseInterceptor {
         //entryCache.setContext(getContext());
 
         String baseDn = base.toString();
+        Collection attrs = Arrays.asList(searchControls.getReturningAttributes());
+
         log.debug("===============================================================================");
         log.debug("search(\""+baseDn+"\") as "+principalDn);
 
         try {
+            if ("".equals(baseDn) && searchControls.getSearchScope() == SearchControls.OBJECT_SCOPE && attrs.contains("*")) {
+
+                NamingEnumeration ne = next.search(base, env, filter, searchControls);
+                SearchResult sr = (SearchResult)ne.next();
+                Attributes attributes = sr.getAttributes();
+
+                Attribute attr = attributes.get("vendorName");
+                attr.clear();
+                attr.add("Penrose Virtual Directory Server");
+                
+                // add virtual naming contexts
+                attr = attributes.get("namingContexts");
+                Collection configs = penrose.getConfigs();
+                for (Iterator i=configs.iterator(); i.hasNext(); ) {
+                    Config config = (Config)i.next();
+                    Collection roots = config.getRootEntryDefinitions();
+                    for (Iterator j=roots.iterator(); j.hasNext(); ) {
+                        EntryDefinition ed = (EntryDefinition)j.next();
+                        if (attr.contains(ed.getDn())) continue;
+                        attr.add(ed.getDn());
+                    }
+                }
+
+                List list = new ArrayList();
+                list.add(sr);
+
+                return new PenroseEnumeration(list);
+            }
+
             Config config = penrose.getConfig(baseDn);
             if (config == null) {
                 log.debug(baseDn+" is a static entry");
@@ -583,7 +614,7 @@ public class PenroseInterceptor extends BaseInterceptor {
                     attributes.put(attr);
                 }
 
-                javax.naming.directory.SearchResult sr = new javax.naming.directory.SearchResult(
+                SearchResult sr = new SearchResult(
                         result.getDN(),
                         result,
                         attributes
