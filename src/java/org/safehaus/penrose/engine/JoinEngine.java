@@ -119,9 +119,13 @@ public class JoinEngine {
                 filter.set(primarySource.getName()+"."+field.getName(), value);
             }
 
+            if (filter.isEmpty()) continue;
+
             filters.add(filter);
         }
 
+        log.debug("Filters: "+filters);
+        
         return filters;
     }
 

@@ -6,6 +6,7 @@ package org.safehaus.penrose.engine;
 
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.graph.GraphVisitor;
+import org.safehaus.penrose.interpreter.Interpreter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -108,6 +109,7 @@ public class LoaderGraphVisitor extends GraphVisitor {
 
             // find the original filter that produces this record
             Collection filterList = null;
+
             for (Iterator j=filters.iterator(); j.hasNext(); ) {
                 Row filter = (Row)j.next();
 
@@ -127,6 +129,24 @@ public class LoaderGraphVisitor extends GraphVisitor {
             }
 
             //log.debug("   original filters: "+filterList);
+            if (filterList == null) {
+                filterList = new ArrayList();
+                Row rdn = new Row();
+                Interpreter interpreter = engineContext.newInterpreter();
+                interpreter.set(newValues);
+
+                for (Iterator j=entryDefinition.getAttributeDefinitions().iterator(); j.hasNext(); ) {
+                    AttributeDefinition ad = (AttributeDefinition)j.next();
+                    if (!ad.isRdn()) continue;
+
+                    Expression expression = ad.getExpression();
+                    Object value = interpreter.eval(expression.getScript());
+                    if (value == null) continue;
+
+                    rdn.set(ad.getName(), value);
+                }
+                filterList.add(rdn);
+            }
 
             for (Iterator j=newRows.iterator(); j.hasNext(); ) {
                 Row row = (Row)j.next();

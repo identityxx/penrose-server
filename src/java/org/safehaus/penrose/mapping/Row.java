@@ -29,6 +29,10 @@ public class Row implements Comparable {
         values.putAll(row.getValues());
     }
 
+    public boolean isEmpty() {
+        return values.isEmpty();
+    }
+    
     public void add(Row row) {
         values.putAll(row.getValues());
     }
