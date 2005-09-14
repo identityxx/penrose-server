@@ -4,9 +4,8 @@ import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.filter.SimpleFilter;
 import org.safehaus.penrose.filter.AndFilter;
 import org.safehaus.penrose.filter.OrFilter;
-import org.safehaus.penrose.mapping.Source;
-import org.safehaus.penrose.mapping.Field;
-import org.safehaus.penrose.mapping.FieldDefinition;
+import org.safehaus.penrose.mapping.*;
+import org.safehaus.penrose.config.Config;
 
 import java.util.Iterator;
 import java.util.Collection;
@@ -15,6 +14,12 @@ import java.util.Collection;
  * @author Endi S. Dewata
  */
 public class JDBCFilterTool {
+
+    private AdapterContext adapterContext;
+
+    public JDBCFilterTool(AdapterContext adapterContext) {
+        this.adapterContext = adapterContext;
+    }
 
     /**
      * Convert parsed SQL filter into string to be used in SQL queries.
@@ -64,6 +69,10 @@ public class JDBCFilterTool {
             StringBuffer sb)
             throws Exception {
 
+        Config config = getAdapterContext().getConfig(source);
+        ConnectionConfig connectionConfig = config.getConnectionConfig(source.getConnectionName());
+        SourceDefinition sourceDefinition = connectionConfig.getSourceDefinition(source.getSourceName());
+
         String name = filter.getAttr();
         String value = filter.getValue();
 
@@ -76,14 +85,15 @@ public class JDBCFilterTool {
         if (i >= 0) name = name.substring(i+1);
         
         Field field = source.getField(name);
+        FieldDefinition fieldDefinition = sourceDefinition.getFieldDefinition(field.getName());
 
-        if ("VARCHAR".equals(field.getType())) {
+        if ("VARCHAR".equals(fieldDefinition.getType())) {
             sb.append("lower(");
-            sb.append(field.getOriginalName());
+            sb.append(fieldDefinition.getOriginalName());
             sb.append(")=lower(?)");
 
         } else {
-            sb.append(field.getOriginalName());
+            sb.append(fieldDefinition.getOriginalName());
             sb.append("=?");
         }
 
@@ -154,4 +164,11 @@ public class JDBCFilterTool {
         return true;
     }
 
+    public AdapterContext getAdapterContext() {
+        return adapterContext;
+    }
+
+    public void setAdapterContext(AdapterContext adapterContext) {
+        this.adapterContext = adapterContext;
+    }
 }

@@ -61,7 +61,6 @@ public class Config implements Serializable {
         	rootEntryDefinitions.add(entry);
         }
 
-        // connecting all references to source and field definitions
         for (Iterator j=entry.getSources().iterator(); j.hasNext(); ) {
             Source source = (Source)j.next();
 
@@ -73,9 +72,6 @@ public class Config implements Serializable {
 
             SourceDefinition sourceDefinition = connection.getSourceDefinition(sourceName);
             if (sourceDefinition == null) throw new Exception("Source "+sourceName+" undefined.");
-
-            source.setConnectionConfig(connection);
-            source.setSourceDefinition(sourceDefinition);
 
             Collection fieldConfigs = sourceDefinition.getFields();
 
@@ -90,11 +86,13 @@ public class Config implements Serializable {
                     field.setName(fieldName);
                     source.addField(field);
                 }
-
-                field.setFieldDefinition(fieldConfig);
-                if (fieldConfig.isPrimaryKey()) source.addPrimaryKeyField(field);
             }
         }
+    }
+
+    public void modifyEntryDefinition(String dn, EntryDefinition newEntry) {
+        EntryDefinition entry = getEntryDefinition(dn);
+        entry.copy(newEntry);
     }
 
     public EntryDefinition removeEntryDefinition(EntryDefinition entry) {
@@ -476,8 +474,8 @@ public class Config implements Serializable {
 			sb.append("objectClass: " + value + nl);
 		}
 
-		Map attributes = entry.getAttributes();
-		for (Iterator i = attributes.values().iterator(); i.hasNext(); ) {
+		Collection attributes = entry.getAttributeDefinitions();
+		for (Iterator i = attributes.iterator(); i.hasNext(); ) {
 			AttributeDefinition attribute = (AttributeDefinition) i.next();
 			if (attribute.getName().equals("objectClass"))
 				continue;

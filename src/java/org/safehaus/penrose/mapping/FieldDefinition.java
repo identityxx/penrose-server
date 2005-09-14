@@ -92,7 +92,7 @@ public class FieldDefinition implements Comparable, Cloneable {
         return name.hashCode();
     }
 
-    boolean compare(Object o1, Object o2) {
+    boolean equals(Object o1, Object o2) {
         if (o1 == null && o2 == null) return true;
         if (o1 != null) return o1.equals(o2);
         return o2.equals(o1);
@@ -103,12 +103,12 @@ public class FieldDefinition implements Comparable, Cloneable {
         if (!(object instanceof FieldDefinition)) return false;
 
         FieldDefinition fd = (FieldDefinition)object;
-        if (!compare(name, fd.name)) return false;
-        if (!compare(originalName, fd.originalName)) return false;
-        if (!compare(type, fd.type)) return false;
+        if (!equals(name, fd.name)) return false;
+        if (!equals(originalName, fd.originalName)) return false;
+        if (!equals(type, fd.type)) return false;
         if (primaryKey != fd.primaryKey) return false;
-        if (!compare(encryption, fd.encryption)) return false;
-        if (!compare(encoding, fd.encoding)) return false;
+        if (!equals(encryption, fd.encryption)) return false;
+        if (!equals(encoding, fd.encoding)) return false;
 
         return true;
     }

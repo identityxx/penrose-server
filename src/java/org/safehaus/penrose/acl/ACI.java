@@ -7,7 +7,7 @@ package org.safehaus.penrose.acl;
 /**
  * @author Endi S. Dewata
  */
-public class ACI {
+public class ACI implements Cloneable {
 
     public final static String SUBJECT_USER          = "user";
     public final static String SUBJECT_GROUP         = "group";
@@ -72,12 +72,6 @@ public class ACI {
         this.permission = permission;
     }
 
-    public String toString() {
-        return "ACI ["+subject+(SUBJECT_USER.equals(subject) || SUBJECT_GROUP.equals(subject) ? dn : "")+"] "
-                +" ["+target+(TARGET_OBJECT.equals(target) ? "" : ":"+attributes)+"] "
-                +scope+" "+action+" "+permission;
-    }
-
     public String getTarget() {
         return target;
     }
@@ -101,4 +95,55 @@ public class ACI {
     public void setDn(String dn) {
         this.dn = dn;
     }
+
+    public Object clone() {
+        ACI aci = new ACI();
+        aci.subject    = subject;
+        aci.dn         = dn;
+        aci.target     = target;
+        aci.attributes = attributes;
+        aci.scope      = scope;
+        aci.action     = action;
+        aci.permission = permission;
+        return aci;
+    }
+
+    public int hashCode() {
+        return (subject == null ? 0 : subject.hashCode()) +
+                (dn == null ? 0 : dn.hashCode()) +
+                (target == null ? 0 : target.hashCode()) +
+                (attributes == null ? 0 : attributes.hashCode()) +
+                (scope == null ? 0 : scope.hashCode()) +
+                (action == null ? 0 : action.hashCode()) +
+                (permission == null ? 0 : permission.hashCode());
+    }
+
+    boolean equals(Object o1, Object o2) {
+        if (o1 == null && o2 == null) return true;
+        if (o1 != null) return o1.equals(o2);
+        return o2.equals(o1);
+    }
+
+    public boolean equals(Object object) {
+        if (this == object) return true;
+        if((object == null) || (object.getClass() != this.getClass())) return false;
+
+        ACI aci = (ACI)object;
+        if (!equals(subject, aci.subject)) return false;
+        if (!equals(dn, aci.dn)) return false;
+        if (!equals(target, aci.target)) return false;
+        if (!equals(attributes, aci.attributes)) return false;
+        if (!equals(scope, aci.scope)) return false;
+        if (!equals(action, aci.action)) return false;
+        if (!equals(permission, aci.permission)) return false;
+
+        return true;
+    }
+
+    public String toString() {
+        return "ACI ["+subject+(SUBJECT_USER.equals(subject) || SUBJECT_GROUP.equals(subject) ? dn : "")+"] "
+                +" ["+target+(TARGET_OBJECT.equals(target) ? "" : ":"+attributes)+"] "
+                +scope+" "+action+" "+permission;
+    }
+
 }

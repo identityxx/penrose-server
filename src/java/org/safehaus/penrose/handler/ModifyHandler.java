@@ -69,7 +69,6 @@ public class ModifyHandler {
      */
 	public void convertValues(EntryDefinition entry, Collection modifications)
 			throws Exception {
-		Map attributes = entry.getAttributes();
 
 		for (Iterator i = modifications.iterator(); i.hasNext();) {
 			LDAPModification modification = (LDAPModification) i.next();
@@ -78,7 +77,7 @@ public class ModifyHandler {
 			String attributeName = attribute.getName();
 			String values[] = attribute.getStringValueArray();
 
-			AttributeDefinition attr = (AttributeDefinition) attributes.get(attributeName);
+			AttributeDefinition attr = entry.getAttributeDefinition(attributeName);
 			if (attr == null) continue;
 
 			String encryption = attr.getEncryption();
@@ -203,8 +202,6 @@ public class ModifyHandler {
 
 		convertValues(entry, modifications);
 
-		Map attributes = entry.getAttributes();
-
 		for (Iterator i = modifications.iterator(); i.hasNext();) {
 			LDAPModification modification = (LDAPModification) i.next();
 
@@ -217,27 +214,27 @@ public class ModifyHandler {
 			case LDAPModification.ADD:
 				for (int j = 0; j < attributeValues.length; j++) {
 					String v = "\"" + attributeValues[j] + "\"";
-					addAttribute(attributes, attributeName, v);
+					addAttribute(entry, attributeName, v);
 				}
 				break;
 
 			case LDAPModification.DELETE:
 				if (attributeValues.length == 0) {
-					deleteAttribute(attributes, attributeName);
+					deleteAttribute(entry, attributeName);
 
 				} else {
 					for (int j = 0; j < attributeValues.length; j++) {
 						String v = "\"" + attributeValues[j] + "\"";
-						deleteAttribute(attributes, attributeName, v);
+						deleteAttribute(entry, attributeName, v);
 					}
 				}
 				break;
 			case LDAPModification.REPLACE:
-				deleteAttribute(attributes, attributeName);
+				deleteAttribute(entry, attributeName);
 
 				for (int j = 0; j < attributeValues.length; j++) {
 					String v = "\"" + attributeValues[j] + "\"";
-					addAttribute(attributes, attributeName, v);
+					addAttribute(entry, attributeName, v);
 				}
 				break;
 			}
@@ -251,14 +248,14 @@ public class ModifyHandler {
 		return LDAPException.SUCCESS;
 	}
 
-    public void addAttribute(Map attributes, String name, String value)
+    public void addAttribute(EntryDefinition entry, String name, String value)
 			throws Exception {
 
-		AttributeDefinition attribute = (AttributeDefinition) attributes.get(name);
+		AttributeDefinition attribute = entry.getAttributeDefinition(name);
 
 		if (attribute == null) {
 			attribute = new AttributeDefinition(name, value);
-			attributes.put(name, attribute);
+			entry.addAttributeDefinition(attribute);
 
 		} else {
             // if already exists, don't add
@@ -268,20 +265,20 @@ public class ModifyHandler {
 		}
 	}
 
-    public void deleteAttribute(Map attributes, String name) throws Exception {
-		attributes.remove(name);
+    public void deleteAttribute(EntryDefinition entry, String name) throws Exception {
+		entry.removeAttributeDefinition(name);
 	}
 
-    public void deleteAttribute(Map attributes, String name, String value)
+    public void deleteAttribute(EntryDefinition entry, String name, String value)
 			throws Exception {
 
-		AttributeDefinition attribute = (AttributeDefinition) attributes.get(name);
+		AttributeDefinition attribute = entry.getAttributeDefinition(name);
 		if (attribute == null) return;
 
 		Interpreter interpreter = handlerContext.newInterpreter();
 
 		String attrValue = (String)interpreter.eval(attribute.getExpression().getScript());
-		if (attrValue.equals(value)) attributes.remove(name);
+		if (attrValue.equals(value)) entry.removeAttributeDefinition(name);
 	}
 
     public Handler getHandler() {

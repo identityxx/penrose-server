@@ -92,18 +92,6 @@ public class AttributeDefinition implements Cloneable, Serializable {
     	this.rdn = Boolean.getBoolean(rdn);
     }
 
-    public String toString() {
-        return "["+name+":"+expression+"]";
-    }
-    
-    public Object clone() {
-        AttributeDefinition attribute = new AttributeDefinition(name, expression);
-        attribute.setRdn(rdn);
-        attribute.setEncryption(encryption);
-        attribute.setEncoding(encoding);
-        return attribute;
-    }
-
     public boolean isConstant() {
         return getConstant() != null;
     }
@@ -136,7 +124,49 @@ public class AttributeDefinition implements Cloneable, Serializable {
         this.script = script;
     }
 
-    public void addExpression(Expression expression) {
-        this.expression = expression;
+    public int hashCode() {
+        return (name == null ? 0 : name.hashCode()) +
+                (script == null ? 0 : script.hashCode()) +
+                (expression == null ? 0 : expression.hashCode()) +
+                (rdn ? 0 : 1) +
+                (encryption == null ? 0 : encryption.hashCode()) +
+                (encoding == null ? 0 : encoding.hashCode());
     }
+
+    boolean equals(Object o1, Object o2) {
+        if (o1 == null && o2 == null) return true;
+        if (o1 != null) return o1.equals(o2);
+        return o2.equals(o1);
+    }
+
+    public boolean equals(Object object) {
+        if (this == object) return true;
+        if((object == null) || (object.getClass() != this.getClass())) return false;
+
+        AttributeDefinition attributeDefinition = (AttributeDefinition)object;
+        if (!equals(name, attributeDefinition.name)) return false;
+        if (!equals(script, attributeDefinition.script)) return false;
+        if (!equals(expression, attributeDefinition.expression)) return false;
+        if (rdn != attributeDefinition.rdn) return false;
+        if (!equals(encryption, attributeDefinition.encryption)) return false;
+        if (!equals(encoding, attributeDefinition.encoding)) return false;
+
+        return true;
+    }
+
+    public Object clone() {
+        AttributeDefinition attribute = new AttributeDefinition();
+        attribute.name = name;
+        attribute.script = script;
+        attribute.expression = expression == null ? null : (Expression)expression.clone();
+        attribute.rdn = rdn;
+        attribute.encryption = encryption;
+        attribute.encoding = encoding;
+        return attribute;
+    }
+
+    public String toString() {
+        return "["+name+":"+expression+"]";
+    }
+
 }

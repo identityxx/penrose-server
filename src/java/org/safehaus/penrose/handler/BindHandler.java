@@ -117,8 +117,7 @@ public class BindHandler {
         EntryDefinition entry = sr.getEntryDefinition();
         AttributeValues values = sr.getAttributeValues();
 
-        Map attributes = entry.getAttributes();
-        AttributeDefinition attribute = (AttributeDefinition)attributes.get("userPassword");
+        AttributeDefinition attribute = entry.getAttributeDefinition("userPassword");
         String encryption = attribute.getEncryption();
         String encoding = attribute.getEncoding();
 

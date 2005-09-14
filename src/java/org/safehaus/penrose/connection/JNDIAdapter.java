@@ -14,11 +14,9 @@ import java.util.*;
 import org.ietf.ldap.LDAPException;
 import org.safehaus.penrose.util.PasswordUtil;
 import org.safehaus.penrose.filter.Filter;
-import org.safehaus.penrose.mapping.Row;
-import org.safehaus.penrose.mapping.Source;
-import org.safehaus.penrose.mapping.Field;
-import org.safehaus.penrose.mapping.AttributeValues;
+import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.SearchResults;
+import org.safehaus.penrose.config.Config;
 
 /**
  * @author Endi S. Dewata
@@ -79,15 +77,19 @@ public class JNDIAdapter extends Adapter {
         //log.debug("--------------------------------------------------------------------------------------");
         log.debug("JNDI Source: "+source.getConnectionName());
 
-        String ldapBase = source.getParameter(BASE_DN);
+        Config config = getAdapterContext().getConfig(source);
+        ConnectionConfig connectionConfig = config.getConnectionConfig(source.getConnectionName());
+        SourceDefinition sourceDefinition = connectionConfig.getSourceDefinition(source.getSourceName());
+
+        String ldapBase = sourceDefinition.getParameter(BASE_DN);
         if ("".equals(ldapBase)) {
             ldapBase = suffix;
         } else {
             ldapBase = ldapBase+","+suffix;
         }
 
-        String ldapScope = source.getParameter(SCOPE);
-        String ldapFilter = source.getParameter(FILTER);
+        String ldapScope = sourceDefinition.getParameter(SCOPE);
+        String ldapFilter = sourceDefinition.getParameter(FILTER);
 
         if (filter != null) {
             ldapFilter = "(&"+ldapFilter+filter+")";
@@ -134,15 +136,19 @@ public class JNDIAdapter extends Adapter {
         //log.debug("--------------------------------------------------------------------------------------");
         log.debug("JNDI Source: "+source.getConnectionName());
 
-        String ldapBase = source.getParameter(BASE_DN);
+        Config config = getAdapterContext().getConfig(source);
+        ConnectionConfig connectionConfig = config.getConnectionConfig(source.getConnectionName());
+        SourceDefinition sourceDefinition = connectionConfig.getSourceDefinition(source.getSourceName());
+
+        String ldapBase = sourceDefinition.getParameter(BASE_DN);
         if ("".equals(ldapBase)) {
             ldapBase = suffix;
         } else {
             ldapBase = ldapBase+","+suffix;
         }
 
-        String ldapScope = source.getParameter(SCOPE);
-        String ldapFilter = source.getParameter(FILTER);
+        String ldapScope = sourceDefinition.getParameter(SCOPE);
+        String ldapFilter = sourceDefinition.getParameter(FILTER);
 
         if (filter != null) {
             ldapFilter = "(&"+ldapFilter+filter+")";
@@ -181,16 +187,23 @@ public class JNDIAdapter extends Adapter {
 
     public Row getPkValues(Source source, javax.naming.directory.SearchResult sr) throws Exception {
 
+        Config config = getAdapterContext().getConfig(source);
+        ConnectionConfig connectionConfig = config.getConnectionConfig(source.getConnectionName());
+        SourceDefinition sourceDefinition = connectionConfig.getSourceDefinition(source.getSourceName());
+
         Row row = new Row();
 
         Attributes attrs = sr.getAttributes();
-        Collection fields = source.getPrimaryKeyFields();
+        Collection fields = source.getFields();
         for (Iterator i=fields.iterator(); i.hasNext(); ) {
             Field field = (Field)i.next();
             String name = field.getName();
             if (name.equals("objectClass")) continue;
 
-            javax.naming.directory.Attribute attr = attrs.get(field.getOriginalName());
+            FieldDefinition fieldDefinition = sourceDefinition.getFieldDefinition(name);
+            if (!fieldDefinition.isPrimaryKey()) continue;
+
+            javax.naming.directory.Attribute attr = attrs.get(fieldDefinition.getOriginalName());
             if (attr == null) continue;
 
             boolean binary = false;
@@ -212,6 +225,10 @@ public class JNDIAdapter extends Adapter {
 
     public AttributeValues getValues(Source source, javax.naming.directory.SearchResult sr) throws Exception {
 
+        Config config = getAdapterContext().getConfig(source);
+        ConnectionConfig connectionConfig = config.getConnectionConfig(source.getConnectionName());
+        SourceDefinition sourceDefinition = connectionConfig.getSourceDefinition(source.getSourceName());
+
         AttributeValues av = new AttributeValues();
 
         Attributes attrs = sr.getAttributes();
@@ -221,7 +238,9 @@ public class JNDIAdapter extends Adapter {
             String name = field.getName();
             if (name.equals("objectClass")) continue;
 
-            javax.naming.directory.Attribute attr = attrs.get(field.getOriginalName());
+            FieldDefinition fieldDefinition = sourceDefinition.getFieldDefinition(name);
+
+            javax.naming.directory.Attribute attr = attrs.get(fieldDefinition.getOriginalName());
             if (attr == null) continue;
 
             boolean binary = false;
@@ -312,13 +331,18 @@ public class JNDIAdapter extends Adapter {
     }
 
     public int modifyDelete(Source source, AttributeValues entry) throws Exception {
+
+        Config config = getAdapterContext().getConfig(source);
+        ConnectionConfig connectionConfig = config.getConnectionConfig(source.getConnectionName());
+        SourceDefinition sourceDefinition = connectionConfig.getSourceDefinition(source.getSourceName());
+
         log.debug("JNDI Modify Delete:");
 
         String dn = getDn(source, entry);
         log.debug("Deleting attributes in "+dn);
 
         List list = new ArrayList();
-        Collection fields = source.getPrimaryKeyFields();
+        Collection fields = source.getFields();
 
         for (Iterator i=entry.getNames().iterator(); i.hasNext(); ) {
             String name = (String)i.next();
@@ -326,6 +350,8 @@ public class JNDIAdapter extends Adapter {
             boolean primaryKey = false;
             for (Iterator j=fields.iterator(); j.hasNext(); ) {
                 Field field = (Field)j.next();
+                FieldDefinition fieldDefinition = sourceDefinition.getFieldDefinition(field.getName());
+                if (!fieldDefinition.isPrimaryKey()) continue;
                 if (!field.getName().equals(name)) continue;
                 primaryKey = true;
                 break;
@@ -373,11 +399,15 @@ public class JNDIAdapter extends Adapter {
     public int modify(Source source, AttributeValues oldEntry, AttributeValues newEntry) throws Exception {
         log.debug("JNDI Modify:");
 
+        Config config = getAdapterContext().getConfig(source);
+        ConnectionConfig connectionConfig = config.getConnectionConfig(source.getConnectionName());
+        SourceDefinition sourceDefinition = connectionConfig.getSourceDefinition(source.getSourceName());
+
         String dn = getDn(source, newEntry);
         log.debug("Replacing attributes "+dn);
 
         List list = new ArrayList();
-        Collection fields = source.getPrimaryKeyFields();
+        Collection fields = source.getFields();
 
         Set addAttributes = new HashSet(newEntry.getNames());
         addAttributes.removeAll(oldEntry.getNames());
@@ -398,6 +428,8 @@ public class JNDIAdapter extends Adapter {
             boolean primaryKey = false;
             for (Iterator j=fields.iterator(); j.hasNext(); ) {
                 Field field = (Field)j.next();
+                FieldDefinition fieldDefinition = sourceDefinition.getFieldDefinition(field.getName());
+                if (!fieldDefinition.isPrimaryKey()) continue;
                 if (!field.getName().equals(name)) continue;
                 primaryKey = true;
                 break;
@@ -430,6 +462,8 @@ public class JNDIAdapter extends Adapter {
             boolean primaryKey = false;
             for (Iterator j=fields.iterator(); j.hasNext(); ) {
                 Field field = (Field)j.next();
+                FieldDefinition fieldDefinition = sourceDefinition.getFieldDefinition(field.getName());
+                if (!fieldDefinition.isPrimaryKey()) continue;
                 if (!field.getName().equals(name)) continue;
                 primaryKey = true;
                 break;
@@ -456,6 +490,8 @@ public class JNDIAdapter extends Adapter {
             boolean primaryKey = false;
             for (Iterator j=fields.iterator(); j.hasNext(); ) {
                 Field field = (Field)j.next();
+                FieldDefinition fieldDefinition = sourceDefinition.getFieldDefinition(field.getName());
+                if (!fieldDefinition.isPrimaryKey()) continue;
                 if (!field.getName().equals(name)) continue;
                 primaryKey = true;
                 break;
@@ -490,10 +526,14 @@ public class JNDIAdapter extends Adapter {
     public int modifyAdd(Source source, AttributeValues entry) throws Exception {
         log.debug("JNDI Modify Add:");
 
+        Config config = getAdapterContext().getConfig(source);
+        ConnectionConfig connectionConfig = config.getConnectionConfig(source.getConnectionName());
+        SourceDefinition sourceDefinition = connectionConfig.getSourceDefinition(source.getSourceName());
+
         String dn = getDn(source, entry);
         log.debug("Replacing attributes "+dn);
 
-        Collection fields = source.getPrimaryKeyFields();
+        Collection fields = source.getFields();
         List list = new ArrayList();
 
         for (Iterator i=entry.getNames().iterator(); i.hasNext(); ) {
@@ -504,6 +544,8 @@ public class JNDIAdapter extends Adapter {
             boolean primaryKey = false;
             for (Iterator j=fields.iterator(); j.hasNext(); ) {
                 Field field = (Field)j.next();
+                FieldDefinition fieldDefinition = sourceDefinition.getFieldDefinition(field.getName());
+                if (!fieldDefinition.isPrimaryKey()) continue;
                 if (!field.getName().equals(name)) continue;
                 primaryKey = true;
                 break;
@@ -533,14 +575,21 @@ public class JNDIAdapter extends Adapter {
     }
 
     public String getDn(Source source, AttributeValues columnValues) throws Exception {
-        String baseDn = source.getParameter(BASE_DN);
+
+        Config config = getAdapterContext().getConfig(source);
+        ConnectionConfig connectionConfig = config.getConnectionConfig(source.getConnectionName());
+        SourceDefinition sourceDefinition = connectionConfig.getSourceDefinition(source.getSourceName());
+
+        String baseDn = sourceDefinition.getParameter(BASE_DN);
 
         Collection fields= source.getFields();
         StringBuffer sb = new StringBuffer();
 
         for (Iterator i=fields.iterator(); i.hasNext(); ) {
             Field field = (Field)i.next();
-            if (!field.isPrimaryKey()) continue;
+
+            FieldDefinition fieldDefinition = sourceDefinition.getFieldDefinition(field.getName());
+            if (!fieldDefinition.isPrimaryKey()) continue;
 
             if (sb.length() > 0) sb.append("+");
 

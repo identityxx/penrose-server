@@ -148,7 +148,7 @@ public class AddHandler {
         config.addEntryDefinition(newEntry);
 
         Collection objectClasses = newEntry.getObjectClasses();
-        Map attributes = newEntry.getAttributes();
+        Collection attributes = newEntry.getAttributeDefinitions();
 
         for (Iterator iterator=values.getNames().iterator(); iterator.hasNext(); ) {
             String name = (String)iterator.next();
@@ -170,18 +170,18 @@ public class AddHandler {
                 String value = (String)j.next();
 
                 AttributeDefinition newAttribute = new AttributeDefinition();
-                attributes.put(name, newAttribute);
+                newAttribute.setName(name);
 
                 String newExpressions = "\""+value+"\"";
-                log.debug("Add attribute "+name+": "+newExpressions);
-
-                newAttribute.setName(name);
 
                 Expression expression = new Expression();
                 expression.setScript(newExpressions);
                 newAttribute.setExpression(expression);
 
                 newAttribute.setRdn(rdnAttribute.equals(name));
+
+                log.debug("Add attribute "+name+": "+newExpressions);
+                newEntry.addAttributeDefinition(newAttribute);
             }
         }
 

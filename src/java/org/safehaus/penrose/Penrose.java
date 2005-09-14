@@ -208,8 +208,9 @@ public class Penrose implements
         log.debug("Registering suffixes:");
         for (Iterator i=config.getRootEntryDefinitions().iterator(); i.hasNext(); ) {
             EntryDefinition entryDefinition = (EntryDefinition)i.next();
-            log.debug(" - "+entryDefinition.getDn());
-            configs.put(entryDefinition.getDn(), config);
+            String ndn = schema.normalize(entryDefinition.getDn());
+            log.debug(" - "+ndn);
+            configs.put(ndn, config);
         }
 
         initConnections(config);
@@ -287,10 +288,20 @@ public class Penrose implements
         return handler;
     }
 
+    public Config getConfig(Source source) throws Exception {
+        String connectionName = source.getConnectionName();
+        for (Iterator i=configs.values().iterator(); i.hasNext(); ) {
+            Config config = (Config)i.next();
+            if (config.getConnectionConfig(connectionName) != null) return config;
+        }
+        return null;
+    }
+    
     public Config getConfig(String dn) throws Exception {
+        String ndn = schema.normalize(dn);
         for (Iterator i=configs.keySet().iterator(); i.hasNext(); ) {
             String suffix = (String)i.next();
-            if (dn.endsWith(suffix)) return (Config)configs.get(suffix);
+            if (ndn.endsWith(suffix)) return (Config)configs.get(suffix);
         }
         return null;
     }

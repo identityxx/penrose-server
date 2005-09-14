@@ -5,6 +5,7 @@
 package org.safehaus.penrose.sync;
 
 import org.safehaus.penrose.SearchResults;
+import org.safehaus.penrose.config.Config;
 import org.safehaus.penrose.thread.MRSWLock;
 import org.safehaus.penrose.thread.Queue;
 import org.safehaus.penrose.connection.Connection;
@@ -91,7 +92,7 @@ public class SyncService {
             int rc = connection.add(source, sourceValues);
             if (rc != LDAPException.SUCCESS) return rc;
 
-            String key = source.getConnectionConfig().getConnectionName()+"."+source.getSourceName();
+            String key = source.getConnectionName()+"."+source.getSourceName();
             syncContext.getCache().getSourceFilterCache().remove(key);
 
         } finally {
@@ -115,10 +116,18 @@ public class SyncService {
             int rc = connection.delete(source, sourceValues);
             if (rc != LDAPException.SUCCESS) return rc;
 
+            Config config = syncContext.getConfig(source);
+            ConnectionConfig connectionConfig = config.getConnectionConfig(source.getConnectionName());
+            SourceDefinition sourceDefinition = connectionConfig.getSourceDefinition(source.getSourceName());
+
             AttributeValues av = new AttributeValues();
-            Collection fields = source.getPrimaryKeyFields();
+
+            Collection fields = source.getFields();
             for (Iterator j=fields.iterator(); j.hasNext(); ) {
                 Field field = (Field)j.next();
+                FieldDefinition fieldDefinition = sourceDefinition.getFieldDefinition(field.getName());
+                if (!fieldDefinition.isPrimaryKey()) continue;
+
                 Collection values = sourceValues.get(field.getName());
                 if (values == null) continue;
 
@@ -127,7 +136,7 @@ public class SyncService {
 
             Collection pks = syncContext.getTransformEngine().convert(av);
 
-            String key = source.getConnectionConfig().getConnectionName()+"."+source.getSourceName();
+            String key = source.getConnectionName()+"."+source.getSourceName();
 
             for (Iterator i=pks.iterator(); i.hasNext(); ) {
                 Row pk = (Row)i.next();
@@ -180,7 +189,7 @@ public class SyncService {
             replaceRows.retainAll(newPKs);
             log.debug("PKs to replace: " + replaceRows);
 
-            String key = source.getConnectionConfig().getConnectionName()+"."+source.getSourceName();
+            String key = source.getConnectionName()+"."+source.getSourceName();
 
             // Add rows
             for (Iterator i = addRows.iterator(); i.hasNext();) {
@@ -275,7 +284,7 @@ public class SyncService {
 
         log.debug("Searching source "+source.getName()+" "+source.getSourceName()+" with filter "+filter);
 
-        String key = source.getConnectionConfig().getConnectionName()+"."+source.getSourceName();
+        String key = source.getConnectionName()+"."+source.getSourceName();
         log.debug("Checking source filter cache for ["+key+"]");
 
         Map results = new TreeMap();
@@ -284,7 +293,11 @@ public class SyncService {
 
         if (pks == null) {
 
-            String method = source.getParameter("loadingMethod");
+            Config config = syncContext.getConfig(source);
+            ConnectionConfig connectionConfig = config.getConnectionConfig(source.getConnectionName());
+            SourceDefinition sourceDefinition = connectionConfig.getSourceDefinition(source.getSourceName());
+
+            String method = sourceDefinition.getParameter("loadingMethod");
             log.debug("Loading method: "+method);
             
             if ("searchAndLoad".equals(method)) {
@@ -342,7 +355,11 @@ public class SyncService {
 
         Collection results = new TreeSet();
 
-        String s = source.getParameter("sizeLimit");
+        Config config = syncContext.getConfig(source);
+        ConnectionConfig connectionConfig = config.getConnectionConfig(source.getConnectionName());
+        SourceDefinition sourceDefinition = connectionConfig.getSourceDefinition(source.getSourceName());
+
+        String s = sourceDefinition.getParameter("sizeLimit");
         int sizeLimit = s == null ? 100 : Integer.parseInt(s);
 
         Connection connection = syncContext.getConnection(source.getConnectionName());
@@ -366,7 +383,11 @@ public class SyncService {
 
         Map results = new TreeMap();
 
-        String s = source.getParameter("sizeLimit");
+        Config config = syncContext.getConfig(source);
+        ConnectionConfig connectionConfig = config.getConnectionConfig(source.getConnectionName());
+        SourceDefinition sourceDefinition = connectionConfig.getSourceDefinition(source.getSourceName());
+
+        String s = sourceDefinition.getParameter("sizeLimit");
         int sizeLimit = s == null ? 100 : Integer.parseInt(s);
 
         Connection connection = syncContext.getConnection(source.getConnectionName());
@@ -379,10 +400,13 @@ public class SyncService {
 
             Row pk = new Row();
 
-            Collection fields = source.getPrimaryKeyFields();
+            Collection fields = source.getFields();
             for (Iterator j=fields.iterator(); j.hasNext(); ) {
                 Field field = (Field)j.next();
                 String name = field.getName();
+                FieldDefinition fieldDefinition = sourceDefinition.getFieldDefinition(name);
+                if (!fieldDefinition.isPrimaryKey()) continue;
+
                 Object value = av.get(name).iterator().next();
 
                 pk.set(name, value);

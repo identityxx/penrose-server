@@ -8,6 +8,7 @@ import org.apache.commons.dbcp.*;
 import org.apache.commons.pool.impl.GenericObjectPool;
 import org.ietf.ldap.LDAPException;
 import org.safehaus.penrose.SearchResults;
+import org.safehaus.penrose.config.Config;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.mapping.*;
 
@@ -70,32 +71,43 @@ public class JDBCAdapter extends Adapter {
 
         ds = new PoolingDataSource(connectionPool);
 
-        filterTool = new JDBCFilterTool();
+        filterTool = new JDBCFilterTool(getAdapterContext());
     }
 
-    public String getFieldNames(Source source) {
+    public String getFieldNames(Source source) throws Exception {
         StringBuffer sb = new StringBuffer();
+
+        Config config = getAdapterContext().getConfig(source);
+        ConnectionConfig connectionConfig = config.getConnectionConfig(source.getConnectionName());
+        SourceDefinition sourceDefinition = connectionConfig.getSourceDefinition(source.getSourceName());
 
         Collection fields = source.getFields();
         for (Iterator i=fields.iterator(); i.hasNext(); ) {
             Field field = (Field)i.next();
+            FieldDefinition fieldDefinition = sourceDefinition.getFieldDefinition(field.getName());
 
             if (sb.length() > 0) sb.append(", ");
-            sb.append(field.getOriginalName());
+            sb.append(fieldDefinition.getOriginalName());
         }
 
         return sb.toString();
     }
 
-    public String getPkFieldNames(Source source) {
+    public String getPkFieldNames(Source source) throws Exception {
         StringBuffer sb = new StringBuffer();
 
-        Collection fields = source.getPrimaryKeyFields();
+        Config config = getAdapterContext().getConfig(source);
+        ConnectionConfig connectionConfig = config.getConnectionConfig(source.getConnectionName());
+        SourceDefinition sourceDefinition = connectionConfig.getSourceDefinition(source.getSourceName());
+
+        Collection fields = source.getFields();
         for (Iterator i=fields.iterator(); i.hasNext(); ) {
             Field field = (Field)i.next();
+            FieldDefinition fieldDefinition = sourceDefinition.getFieldDefinition(field.getName());
+            if (!fieldDefinition.isPrimaryKey()) continue;
 
             if (sb.length() > 0) sb.append(", ");
-            sb.append(field.getOriginalName());
+            sb.append(fieldDefinition.getOriginalName());
         }
 
         return sb.toString();
@@ -107,8 +119,12 @@ public class JDBCAdapter extends Adapter {
         //log.debug("--------------------------------------------------------------------------------------");
         log.debug("Searching JDBC Source: "+source.getConnectionName()+"/"+source.getSourceName()+": "+filter);
 
-        String tableName = source.getParameter(TABLE_NAME);
-        String sqlFilter = source.getParameter(FILTER);
+        Config config = getAdapterContext().getConfig(source);
+        ConnectionConfig connectionConfig = config.getConnectionConfig(source.getConnectionName());
+        SourceDefinition sourceDefinition = connectionConfig.getSourceDefinition(source.getSourceName());
+
+        String tableName = sourceDefinition.getParameter(TABLE_NAME);
+        String sqlFilter = sourceDefinition.getParameter(FILTER);
         log.debug("tableName: "+tableName);
         log.debug("filter: "+sqlFilter);
 
@@ -186,8 +202,12 @@ public class JDBCAdapter extends Adapter {
         //log.debug("--------------------------------------------------------------------------------------");
         log.debug("Loading JDBC Source: "+source.getConnectionName()+"/"+source.getSourceName()+": "+filter);
 
-        String tableName = source.getParameter(TABLE_NAME);
-        String sqlFilter = source.getParameter(FILTER);
+        Config config = getAdapterContext().getConfig(source);
+        ConnectionConfig connectionConfig = config.getConnectionConfig(source.getConnectionName());
+        SourceDefinition sourceDefinition = connectionConfig.getSourceDefinition(source.getSourceName());
+
+        String tableName = sourceDefinition.getParameter(TABLE_NAME);
+        String sqlFilter = sourceDefinition.getParameter(FILTER);
         log.debug("tableName: "+tableName);
         log.debug("filter: "+sqlFilter);
 
@@ -261,16 +281,22 @@ public class JDBCAdapter extends Adapter {
 
     public Row getPkValues(Source source, ResultSet rs) throws Exception {
 
+        Config config = getAdapterContext().getConfig(source);
+        ConnectionConfig connectionConfig = config.getConnectionConfig(source.getConnectionName());
+        SourceDefinition sourceDefinition = connectionConfig.getSourceDefinition(source.getSourceName());
+
         Row row = new Row();
 
         ResultSetMetaData rsmd = rs.getMetaData();
         int count = rsmd.getColumnCount();
 
         int c = 1;
-        Collection fields = source.getPrimaryKeyFields();
+        Collection fields = source.getFields();
 
         for (Iterator i=fields.iterator(); i.hasNext() && c<=count; c++) {
             Field field = (Field)i.next();
+            FieldDefinition fieldDefinition = sourceDefinition.getFieldDefinition(field.getName());
+            if (!fieldDefinition.isPrimaryKey()) continue;
 
             Object value = rs.getObject(c);
             if (value == null) continue;
@@ -313,7 +339,11 @@ public class JDBCAdapter extends Adapter {
 
     public int add(Source source, AttributeValues fieldValues) throws Exception {
 
-        String tableName = source.getParameter(TABLE_NAME);
+        Config config = getAdapterContext().getConfig(source);
+        ConnectionConfig connectionConfig = config.getConnectionConfig(source.getConnectionName());
+        SourceDefinition sourceDefinition = connectionConfig.getSourceDefinition(source.getSourceName());
+
+        String tableName = sourceDefinition.getParameter(TABLE_NAME);
 
         // convert sets into single values
         Collection rows = getAdapterContext().getTransformEngine().convert(fieldValues);
@@ -332,13 +362,14 @@ public class JDBCAdapter extends Adapter {
             Collection parameters = new ArrayList();
             for (Iterator i=fields.iterator(); i.hasNext(); ) {
                 Field field = (Field)i.next();
+                FieldDefinition fieldDefinition = sourceDefinition.getFieldDefinition(field.getName());
 
                 if (sb.length() > 0) {
                     sb.append(", ");
                     sb2.append(", ");
                 }
 
-                sb.append(field.getOriginalName());
+                sb.append(fieldDefinition.getOriginalName());
                 sb2.append("?");
 
                 Object obj = row.get(field.getName());
@@ -372,13 +403,22 @@ public class JDBCAdapter extends Adapter {
     }
 
     public Map getPkValues(Source source, Map entry) throws Exception {
+
+        Config config = getAdapterContext().getConfig(source);
+        ConnectionConfig connectionConfig = config.getConnectionConfig(source.getConnectionName());
+        SourceDefinition sourceDefinition = connectionConfig.getSourceDefinition(source.getSourceName());
+
         Map pk = new HashMap();
 
-        Collection fields = source.getPrimaryKeyFields();
+        Collection fields = source.getFields();
 
         for (Iterator i=fields.iterator(); i.hasNext(); ) {
             Field field = (Field)i.next();
             String name = field.getName();
+
+            FieldDefinition fieldDefinition = sourceDefinition.getFieldDefinition(name);
+            if (!fieldDefinition.isPrimaryKey()) continue;
+
             Object value = entry.get(name);
             if (value == null) continue;
 
@@ -392,7 +432,11 @@ public class JDBCAdapter extends Adapter {
         Map pk = getPkValues(source, fieldValues.getValues());
         log.debug("Deleting entry "+pk);
 
-        String tableName = source.getParameter(TABLE_NAME);
+        Config config = getAdapterContext().getConfig(source);
+        ConnectionConfig connectionConfig = config.getConnectionConfig(source.getConnectionName());
+        SourceDefinition sourceDefinition = connectionConfig.getSourceDefinition(source.getSourceName());
+
+        String tableName = sourceDefinition.getParameter(TABLE_NAME);
 
         // convert sets into single values
         Collection pkRows = getAdapterContext().getTransformEngine().convert(pk);
@@ -445,7 +489,11 @@ public class JDBCAdapter extends Adapter {
 
     public int modify(Source source, AttributeValues oldEntry, AttributeValues newEntry) throws Exception {
 
-        String tableName = source.getParameter(TABLE_NAME);
+        Config config = getAdapterContext().getConfig(source);
+        ConnectionConfig connectionConfig = config.getConnectionConfig(source.getConnectionName());
+        SourceDefinition sourceDefinition = connectionConfig.getSourceDefinition(source.getSourceName());
+
+        String tableName = sourceDefinition.getParameter(TABLE_NAME);
 
         // convert sets into single values
         Collection oldRows = getAdapterContext().getTransformEngine().convert(oldEntry);
@@ -468,23 +516,25 @@ public class JDBCAdapter extends Adapter {
             Collection fields = source.getFields();
             for (Iterator i=fields.iterator(); i.hasNext(); ) {
                 Field field = (Field)i.next();
+                FieldDefinition fieldDefinition = sourceDefinition.getFieldDefinition(field.getName());
 
                 if (sb.length() > 0) sb.append(", ");
 
-                sb.append(field.getOriginalName());
+                sb.append(fieldDefinition.getOriginalName());
                 sb.append("=?");
 
                 Object value = newRow.get(field.getName());
                 parameters.add(value);
             }
 
-            Collection pkFields = source.getPrimaryKeyFields();
-            for (Iterator i=pkFields.iterator(); i.hasNext(); ) {
+            for (Iterator i=fields.iterator(); i.hasNext(); ) {
                 Field field = (Field)i.next();
+                FieldDefinition fieldDefinition = sourceDefinition.getFieldDefinition(field.getName());
+                if (!fieldDefinition.isPrimaryKey()) continue;
 
                 if (sb2.length() > 0) sb2.append(" and ");
 
-                sb2.append(field.getOriginalName());
+                sb2.append(fieldDefinition.getOriginalName());
                 sb2.append("=?");
 
                 Object value = oldRow.get(field.getName());

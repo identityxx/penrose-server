@@ -213,8 +213,8 @@ public class ConfigWriter {
 			entryElement.add(objectClassElement);
 		}
 		// attributes
-		Map attributes = entry.getAttributes();
-		for (Iterator i = attributes.values().iterator(); i.hasNext(); ) {
+		Collection attributes = entry.getAttributeDefinitions();
+		for (Iterator i = attributes.iterator(); i.hasNext(); ) {
 			AttributeDefinition attribute = (AttributeDefinition)i.next();
             if (attribute.getExpression() == null) continue;
             entryElement.add(toElement(attribute));
@@ -269,6 +269,7 @@ public class ConfigWriter {
     public Element toElement(Expression expression) {
         Element element = new DefaultElement("expression");
         if (expression.getForeach() != null) element.add(new DefaultAttribute("foreach", expression.getForeach()));
+        if (expression.getVar() != null) element.add(new DefaultAttribute("var", expression.getVar()));
 
         element.setText(expression.getScript());
         return element;
@@ -289,7 +290,8 @@ public class ConfigWriter {
         connectionName.add(new DefaultText(source.getConnectionName()));
         element.add(connectionName);
 
-        SourceDefinition sourceDefinition = source.getSourceDefinition();
+        ConnectionConfig connectionConfig = config.getConnectionConfig(source.getConnectionName());
+        SourceDefinition sourceDefinition = connectionConfig.getSourceDefinition(source.getSourceName());
 
 		// fields
 		for (Iterator i=source.getFields().iterator(); i.hasNext(); ) {

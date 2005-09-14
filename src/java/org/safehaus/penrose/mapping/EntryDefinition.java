@@ -34,41 +34,32 @@ public class EntryDefinition implements Cloneable, Serializable {
     /**
      * Object classes. Each element is of type String.
      */
-    private Collection objectClasses = new ArrayList();
+    private Collection objectClasses = new TreeSet();
     
+    private String script;
+
     /**
      * Attributes. The keys are the attribute names (java.lang.String). Each value is of type org.safehaus.penrose.mapping.AttributeDefinition.
      */
-    private Map attributes = new LinkedHashMap();
+    private Map attributeDefinitions = new TreeMap();
 
     /**
      * Sources. Each element is of type org.safehaus.penrose.mapping.Source.
      */
-    private Map sources = new LinkedHashMap();
+    private Map sources = new TreeMap();
     
     /**
      * Relationship. Each element is of type org.safehaus.penrose.mapping.Relationship.
      */
     private Collection relationships = new ArrayList();
 
-    private String script;
-
+    /**
+     * Access Control Instruction. Each element is of type org.safehaus.penrose.acl.ACI.
+     */
     private Collection acl = new ArrayList();
 
 	public EntryDefinition() {
 	}
-
-    public int hashValue() {
-        return getDn().hashCode();
-    }
-
-    public boolean equals(Object o) {
-        if (o == null) return false;
-        if (!(o instanceof EntryDefinition)) return false;
-
-        EntryDefinition entryDefinition = (EntryDefinition)o;
-        return getDn().equals(entryDefinition.getDn());
-    }
 
 	public EntryDefinition(String dn) {
         int i = dn.indexOf(",");
@@ -147,7 +138,7 @@ public class EntryDefinition implements Cloneable, Serializable {
 
     public Collection getRdnAttributes() {
         Collection results = new ArrayList();
-        for (Iterator i=attributes.values().iterator(); i.hasNext(); ) {
+        for (Iterator i=attributeDefinitions.values().iterator(); i.hasNext(); ) {
             AttributeDefinition attribute = (AttributeDefinition)i.next();
             if (!attribute.isRdn()) continue;
             results.add(attribute);
@@ -172,12 +163,16 @@ public class EntryDefinition implements Cloneable, Serializable {
         }
     }
 
-    public Map getAttributes() {
-        return attributes;
+    public Collection getAttributeDefinitions() {
+        return attributeDefinitions.values();
     }
 
-    public void setAttributes(Map attributes) {
-        this.attributes = attributes;
+    public void setAttributeDefinitions(Map attributeDefinitions) {
+        this.attributeDefinitions = attributeDefinitions;
+    }
+
+    public void removeAttributeDefinitions() {
+        attributeDefinitions.clear();
     }
 
     public Collection getRelationships() {
@@ -204,12 +199,24 @@ public class EntryDefinition implements Cloneable, Serializable {
 		objectClasses.add(oc);
 	}
 
+    public void removeObjectClass(String oc) {
+        objectClasses.remove(oc);
+    }
+
+    public void removeObjectClasses() {
+        objectClasses.clear();
+    }
+
     public void addChildDefinition(MappingRule mappingRule) {
         childDefinitions.add(mappingRule);
     }
     
     public void addSource(Source source) {
         sources.put(source.getName(), source);
+    }
+
+    public void removeSources() {
+        sources.clear();
     }
 
     public Source getSource(String name) {
@@ -220,149 +227,28 @@ public class EntryDefinition implements Cloneable, Serializable {
         return (Source)sources.remove(name);
     }
 
-    public void removeAllSources() {
-        sources.clear();
-    }
-
 	public void addAttributeDefinition(AttributeDefinition attribute) {
-		attributes.put(attribute.getName(), attribute);
+		attributeDefinitions.put(attribute.getName(), attribute);
 	}
 
+    public AttributeDefinition getAttributeDefinition(String name) {
+        return (AttributeDefinition)attributeDefinitions.get(name);
+    }
+
     public AttributeDefinition removeAttributeDefinition(String name) {
-        return (AttributeDefinition)attributes.remove(name);
+        return (AttributeDefinition)attributeDefinitions.remove(name);
     }
 
 	public void addRelationship(Relationship relationship) {
 		relationships.add(relationship);
 	}
 
-    public void removeAllRelationships() {
+    public void removeRelationship(Relationship relationship) {
+        relationships.remove(relationship);
+    }
+
+    public void removeRelationships() {
         relationships.clear();
-    }
-    
-    public Object clone() {
-        EntryDefinition entry = new EntryDefinition();
-        entry.setDn(getDn());
-        entry.getObjectClasses().addAll(objectClasses);
-
-        Map a = entry.getAttributes();
-        for (Iterator i=attributes.keySet().iterator(); i.hasNext(); ) {
-            String name = (String)i.next();
-            AttributeDefinition attribute = (AttributeDefinition)attributes.get(name);
-            a.put(name, attribute.clone());
-        }
-
-        for (Iterator i=sources.values().iterator(); i.hasNext(); ) {
-            Source source = (Source)i.next();
-            entry.addSource((Source)source.clone());
-        }
-
-        Collection r = entry.getRelationships();
-        for (Iterator i=relationships.iterator(); i.hasNext(); ) {
-            Relationship relationship = (Relationship)i.next();
-            r.add(relationship.clone());
-        }
-
-        return entry;
-    }
-
-    public void normalize() {
-        Collection list = new ArrayList();
-        Collection rdns = new ArrayList();
-
-        for (Iterator i=attributes.keySet().iterator(); i.hasNext(); ) {
-            String name = (String)i.next();
-            AttributeDefinition attribute = (AttributeDefinition)attributes.get(name);
-
-            if (attribute.getExpression() == null) { // remove empty attributes
-                list.add(name);
-                continue;
-            }
-
-            if (attribute.isRdn()) {
-                rdns.add(attribute);
-            }
-        }
-
-        for (Iterator i=list.iterator(); i.hasNext(); ) {
-            String name = (String)i.next();
-            attributes.remove(name);
-        }
-
-        StringBuffer sb = new StringBuffer();
-        for (Iterator i=rdns.iterator(); i.hasNext(); ) {
-            AttributeDefinition attribute = (AttributeDefinition)i.next();
-            String name = attribute.getName();
-            String value = attribute.getConstant();
-            if (value == null) value = "...";
-
-            if (sb.length() > 0) sb.append("+");
-
-            sb.append(name);
-            sb.append("=");
-            sb.append(value);
-        }
-
-        if (parentDn != null) {
-            sb.append(",");
-            sb.append(parentDn);
-        }
-
-        setDn(sb.toString());
-    }
-
-    public String toString() {
-    	StringBuffer sb = new StringBuffer();
-    	Iterator iter = null;
-
-    	sb.append("dn="+rdn);
-        if (parentDn != null) {
-            sb.append(","+parentDn);
-        }
-        sb.append(",");
-
-    	sb.append("objectClasses=[");
-    	iter = objectClasses.iterator();
-    	while (iter.hasNext()) {
-    		Object next = (Object) iter.next();
-    		sb.append(next.toString()+", ");
-    	}
-    	sb.append("], ");
-		
-    	sb.append("objectClasses=[");
-    	iter = objectClasses.iterator();
-    	while (iter.hasNext()) {
-    		Object next = (Object) iter.next();
-    		sb.append(next.toString()+", ");
-    	}
-    	sb.append("], ");
-
-    	sb.append("attributes=[");
-    	iter = attributes.keySet().iterator();
-    	while (iter.hasNext()) {
-    		Object next = (Object) iter.next();
-    		Object val  = (Object) attributes.get(next); 
-    		sb.append(next.toString()+"="+val+", ");
-    	}
-    	sb.append("], ");
-
-    	sb.append("sources=[");
-    	iter = sources.values().iterator();
-    	while (iter.hasNext()) {
-    		Object next = (Object) iter.next();
-    		sb.append(next.toString()+", ");
-    	}
-    	sb.append("], ");
-
-    	sb.append("relationships=[");
-    	iter = relationships.iterator();
-    	while (iter.hasNext()) {
-    		Object next = (Object) iter.next();
-    		sb.append(next.toString()+", ");
-    	}
-    	sb.append("], ");
-
-    	return sb.toString();
     }
     
     public LDAPAttributeSet getAttributeSet(AttributeValues attributeValues) {
@@ -401,7 +287,7 @@ public class EntryDefinition implements Cloneable, Serializable {
 
         AttributeValues values = new AttributeValues();
 
-        for (Iterator i=attributes.values().iterator(); i.hasNext(); ) {
+        for (Iterator i=attributeDefinitions.values().iterator(); i.hasNext(); ) {
             AttributeDefinition attribute = (AttributeDefinition)i.next();
 
             String name = attribute.getName();
@@ -451,7 +337,148 @@ public class EntryDefinition implements Cloneable, Serializable {
         return acl;
     }
 
-    public void removeAllACL() {
+    public void removeACI(ACI aci) {
+        acl.remove(aci);
+    }
+    
+    public void removeACL() {
         acl.clear();
     }
+
+    public void copy(EntryDefinition entry) {
+        rdn = entry.rdn;
+        parentDn = entry.parentDn;
+        script = entry.script;
+
+        removeObjectClasses();
+        for (Iterator i=entry.objectClasses.iterator(); i.hasNext(); ) {
+            String objectClass = (String)i.next();
+            addObjectClass(objectClass);
+        }
+
+        removeAttributeDefinitions();
+        for (Iterator i=entry.attributeDefinitions.values().iterator(); i.hasNext(); ) {
+            AttributeDefinition attribute = (AttributeDefinition)i.next();
+            addAttributeDefinition((AttributeDefinition)attribute.clone());
+        }
+
+        removeSources();
+        for (Iterator i=entry.sources.values().iterator(); i.hasNext(); ) {
+            Source source = (Source)i.next();
+            addSource((Source)source.clone());
+        }
+
+        removeRelationships();
+        for (Iterator i=entry.relationships.iterator(); i.hasNext(); ) {
+            Relationship relationship = (Relationship)i.next();
+            addRelationship((Relationship)relationship.clone());
+        }
+
+        removeACL();
+        for (Iterator i=entry.acl.iterator(); i.hasNext(); ) {
+            ACI aci = (ACI)i.next();
+            addACI((ACI)aci.clone());
+        }
+    }
+
+    public Object clone() {
+        EntryDefinition entry = new EntryDefinition();
+        entry.copy(this);
+        return entry;
+    }
+
+    public int hashCode() {
+        return (rdn == null ? 0 : rdn.hashCode()) +
+                (parentDn == null ? 0 : parentDn.hashCode()) +
+                (objectClasses == null ? 0 : objectClasses.hashCode()) +
+                (script == null ? 0 : script.hashCode()) +
+                (attributeDefinitions == null ? 0 : attributeDefinitions.hashCode()) +
+                (sources == null ? 0 : sources.hashCode()) +
+                (relationships == null ? 0 : relationships.hashCode()) +
+                (acl == null ? 0 : acl.hashCode());
+    }
+
+    boolean equals(Object o1, Object o2) {
+        if (o1 == null && o2 == null) return true;
+        if (o1 != null) return o1.equals(o2);
+        return o2.equals(o1);
+    }
+
+    public boolean equals(Object object) {
+        if (this == object) return true;
+        if((object == null) || (object.getClass() != this.getClass())) return false;
+
+        EntryDefinition entryDefinition = (EntryDefinition)object;
+        System.out.println("[EntryDefinition] Comparing "+getDn()+" with "+entryDefinition.getDn());
+        if (!equals(rdn, entryDefinition.rdn)) return false;
+        if (!equals(parentDn, entryDefinition.parentDn)) return false;
+        System.out.println("[EntryDefinition] object classes");
+        if (!equals(objectClasses, entryDefinition.objectClasses)) return false;
+        if (!equals(script, entryDefinition.script)) return false;
+        System.out.println("[EntryDefinition] attribute definitions");
+        if (!equals(attributeDefinitions, entryDefinition.attributeDefinitions)) return false;
+        System.out.println("[EntryDefinition] sources");
+        if (!equals(sources, entryDefinition.sources)) return false;
+        System.out.println("[EntryDefinition] relationships");
+        if (!equals(relationships, entryDefinition.relationships)) return false;
+        System.out.println("[EntryDefinition] acl");
+        if (!equals(acl, entryDefinition.acl)) return false;
+
+        return true;
+    }
+
+    public String toString() {
+    	StringBuffer sb = new StringBuffer();
+    	Iterator iter = null;
+
+    	sb.append("dn="+rdn);
+        if (parentDn != null) {
+            sb.append(","+parentDn);
+        }
+        sb.append(",");
+
+    	sb.append("objectClasses=[");
+    	iter = objectClasses.iterator();
+    	while (iter.hasNext()) {
+    		Object next = (Object) iter.next();
+    		sb.append(next.toString()+", ");
+    	}
+    	sb.append("], ");
+
+    	sb.append("objectClasses=[");
+    	iter = objectClasses.iterator();
+    	while (iter.hasNext()) {
+    		Object next = (Object) iter.next();
+    		sb.append(next.toString()+", ");
+    	}
+    	sb.append("], ");
+
+    	sb.append("attributes=[");
+    	iter = attributeDefinitions.keySet().iterator();
+    	while (iter.hasNext()) {
+    		Object next = (Object) iter.next();
+    		Object val  = (Object) attributeDefinitions.get(next);
+    		sb.append(next.toString()+"="+val+", ");
+    	}
+    	sb.append("], ");
+
+    	sb.append("sources=[");
+    	iter = sources.values().iterator();
+    	while (iter.hasNext()) {
+    		Object next = (Object) iter.next();
+    		sb.append(next.toString()+", ");
+    	}
+    	sb.append("], ");
+
+    	sb.append("relationships=[");
+    	iter = relationships.iterator();
+    	while (iter.hasNext()) {
+    		Object next = (Object) iter.next();
+    		sb.append(next.toString()+", ");
+    	}
+    	sb.append("], ");
+
+    	return sb.toString();
+    }
+
 }

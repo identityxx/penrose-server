@@ -12,6 +12,7 @@ import org.slf4j.LoggerFactory;
 import org.safehaus.penrose.util.PasswordUtil;
 import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.Penrose;
+import org.safehaus.penrose.config.Config;
 import org.safehaus.penrose.mapping.*;
 
 /**
@@ -114,24 +115,25 @@ public class TransformEngine {
         interpreter.set(input);
 
         Row pk = new Row();
-        Map attributes = entry.getAttributes();
+        Collection attributes = entry.getAttributeDefinitions();
 
-        for (Iterator j=attributes.values().iterator(); j.hasNext(); ) {
+        for (Iterator j=attributes.iterator(); j.hasNext(); ) {
             AttributeDefinition attribute = (AttributeDefinition)j.next();
 
             String name = attribute.getName();
             Expression expression = attribute.getExpression();
-            String variable = expression.getForeach();
+            String foreach = expression.getForeach();
+            String var = expression.getVar();
 
             Object value = null;
-            if (variable == null) {
+            if (foreach == null) {
                 //log.debug("Evaluating expression: "+expression);
                 value = interpreter.eval(expression.getScript());
 
             } else {
                 //log.debug("Evaluating expression: "+expression);
 
-                Collection values = input.get(variable);
+                Collection values = input.get(foreach);
                 //log.debug("Values: "+values);
 
                 if (values != null) {
@@ -139,15 +141,10 @@ public class TransformEngine {
                     Collection newValues = new ArrayList();
                     for (Iterator i=values.iterator(); i.hasNext(); ) {
                         Object o = i.next();
-                        interpreter.set(variable, o);
+                        interpreter.set(var, o);
                         value = interpreter.eval(attribute.getExpression().getScript());
                         //log.debug(" - "+value);
                         newValues.add(value);
-                    }
-
-                    // restore old values
-                    if (values.size() > 1) {
-                        interpreter.set(variable, values);
                     }
 
                     value = newValues;
@@ -171,6 +168,10 @@ public class TransformEngine {
 
     public Row translate(Source source, AttributeValues input, AttributeValues output) throws Exception {
 
+        Config config = penrose.getConfig(source);
+        ConnectionConfig connectionConfig = config.getConnectionConfig(source.getConnectionName());
+        SourceDefinition sourceDefinition = connectionConfig.getSourceDefinition(source.getSourceName());
+
         Interpreter interpreter = penrose.newInterpreter();
         interpreter.set(input);
 
@@ -180,6 +181,7 @@ public class TransformEngine {
         log.debug("Translating for source "+source.getName()+":");
         for (Iterator j=fields.iterator(); j.hasNext(); ) {
             Field field = (Field)j.next();
+            FieldDefinition fieldDefinition = sourceDefinition.getFieldDefinition(field.getName());
 
             String name = field.getName();
             //log.debug(" - "+name);
@@ -187,39 +189,35 @@ public class TransformEngine {
             Expression expression = field.getExpression();
 
             if (expression == null) {
-                if (field.isPrimaryKey()) return null;
+                if (fieldDefinition.isPrimaryKey()) return null;
                 continue;
             }
 
             String script = expression.getScript();
-            String variable = expression.getForeach();
-            //log.debug("   - expression: "+variable+": "+script);
+            String foreach = expression.getForeach();
+            String var = expression.getVar();
+            //log.debug("   - expression: "+foreach+": "+script);
 
             Collection newValues = new ArrayList();
-            if (variable == null) {
+            if (foreach == null) {
                 Object value = interpreter.eval(expression.getScript());
                 if (value != null) newValues.add(value);
 
             } else {
 
-                Collection oldValues = input.get(variable);
+                Collection oldValues = input.get(foreach);
                 //log.debug("Values: "+oldValues);
 
                 if (oldValues != null) {
 
                     for (Iterator i=oldValues.iterator(); i.hasNext(); ) {
                         Object o = i.next();
-                        interpreter.set(variable, o);
+                        interpreter.set(var, o);
                         Object value = interpreter.eval(script);
                         if (value == null) continue;
 
                         newValues.add(value);
                         //log.debug(" - "+value);
-                    }
-
-                    // restore old values
-                    if (oldValues.size() > 1) {
-                        interpreter.set(variable, oldValues);
                     }
                 }
             }
@@ -253,7 +251,7 @@ public class TransformEngine {
 
             log.debug(" - "+name+": "+newValues);
 
-            if (field.isPrimaryKey()) {
+            if (fieldDefinition.isPrimaryKey()) {
                 if (newValues.size() == 0) return null;
                 pk.set(name, newValues);
             }
@@ -265,6 +263,10 @@ public class TransformEngine {
     }
 
     public Map split(Source source, AttributeValues entry) throws Exception {
+
+        Config config = penrose.getConfig(source);
+        ConnectionConfig connectionConfig = config.getConnectionConfig(source.getConnectionName());
+        SourceDefinition sourceDefinition = connectionConfig.getSourceDefinition(source.getSourceName());
 
         AttributeValues output = new AttributeValues();
         Row m = translate(source, entry, output);
@@ -282,9 +284,11 @@ public class TransformEngine {
             av.add(row);
 
             Row pk = new Row();
-            Collection fields = source.getPrimaryKeyFields();
+            Collection fields = source.getFields();
             for (Iterator j=fields.iterator(); j.hasNext(); ) {
                 Field field = (Field)j.next();
+                FieldDefinition fieldDefinition = sourceDefinition.getFieldDefinition(field.getName());
+                if (!fieldDefinition.isPrimaryKey()) continue;
                 pk.set(field.getName(), row.get(field.getName()));
             }
 

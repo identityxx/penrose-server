@@ -42,7 +42,7 @@
 
                     <call-method-rule methodname="setScript" paramcount="0" />
 
-                    <set-next-rule methodname="addExpression" />
+                    <set-next-rule methodname="setExpression" />
                 </pattern>
 
                 <set-next-rule methodname="addAttributeDefinition" />
@@ -68,11 +68,9 @@
 
                         <call-method-rule methodname="setScript" paramcount="0" />
 
-                        <set-next-rule methodname="addExpression" />
+                        <set-next-rule methodname="setExpression" />
                     </pattern>
-<!--
-                    <call-method-rule pattern="expression" methodname="setExpression" paramcount="0" />
--->
+
                     <set-next-rule methodname="addField" />
                 </pattern>
 
