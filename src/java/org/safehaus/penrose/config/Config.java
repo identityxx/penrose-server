@@ -296,6 +296,7 @@ public class Config implements Serializable {
 	}
 
     public EntryDefinition getEntryDefinition(String dn) {
+        if (dn == null) return null;
         return (EntryDefinition)entryDefinitions.get(dn);
     }
 
