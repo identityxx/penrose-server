@@ -27,7 +27,7 @@ public class JNDIAdapter extends Adapter {
     public final static String SCOPE   = "scope";
     public final static String FILTER  = "filter";
 
-    public DirContext ctx;
+    Hashtable parameters;
 
     public String url;
     public String suffix;
@@ -38,7 +38,7 @@ public class JNDIAdapter extends Adapter {
     	log.debug("-------------------------------------------------------------------------------");
     	log.debug("Initializing JNDI connection "+name+":");
 
-        Hashtable env = new Hashtable();
+        parameters = new Hashtable();
         for (Iterator i=getParameterNames().iterator(); i.hasNext(); ) {
             String param = (String)i.next();
             String value = getParameter(param);
@@ -55,17 +55,17 @@ public class JNDIAdapter extends Adapter {
                     suffix = "";
                     url = value;
                 }
-                env.put(param, url);
+                parameters.put(param, url);
 
             } else {
-                env.put(param, value);
+                parameters.put(param, value);
             }
         }
 
+        parameters.put("com.sun.jndi.ldap.connect.pool", "true");
+
         //log.debug("URL: "+url);
         //log.debug("Suffix: "+suffix);
-
-        ctx = new InitialDirContext(env);
     }
 
     public SearchResults search(Source source, Filter filter, long sizeLimit) throws Exception {
@@ -110,6 +110,7 @@ public class JNDIAdapter extends Adapter {
         	ctls.setSearchScope(SearchControls.SUBTREE_SCOPE);
         }
 
+        DirContext ctx = new InitialDirContext(parameters);
         NamingEnumeration ne = ctx.search(ldapBase, ldapFilter, ctls);
 
         log.debug("Result:");
@@ -168,6 +169,7 @@ public class JNDIAdapter extends Adapter {
         	ctls.setSearchScope(SearchControls.SUBTREE_SCOPE);
         }
 
+        DirContext ctx = new InitialDirContext(parameters);
         NamingEnumeration ne = ctx.search(ldapBase, ldapFilter, ctls);
 
         log.debug("Result:");
@@ -320,6 +322,7 @@ public class JNDIAdapter extends Adapter {
 
         log.debug("Adding "+dn);
         try {
+            DirContext ctx = new InitialDirContext(parameters);
             ctx.createSubcontext(dn, attrs);
         } catch (NameAlreadyBoundException e) {
             return modifyAdd(source, entry);
@@ -371,6 +374,7 @@ public class JNDIAdapter extends Adapter {
 
         ModificationItem mods[] = (ModificationItem[])list.toArray(new ModificationItem[list.size()]);
 
+        DirContext ctx = new InitialDirContext(parameters);
         ctx.modifyAttributes(dn, mods);
 
         return LDAPException.SUCCESS;
@@ -387,6 +391,7 @@ public class JNDIAdapter extends Adapter {
         log.debug("Deleting entry "+dn);
 
         try {
+            DirContext ctx = new InitialDirContext(parameters);
             ctx.destroySubcontext(dn);
             
         } catch (NameNotFoundException e) {
@@ -518,6 +523,7 @@ public class JNDIAdapter extends Adapter {
 
         ModificationItem mods[] = (ModificationItem[])list.toArray(new ModificationItem[list.size()]);
 
+        DirContext ctx = new InitialDirContext(parameters);
         ctx.modifyAttributes(dn, mods);
 
         return LDAPException.SUCCESS;
@@ -569,6 +575,7 @@ public class JNDIAdapter extends Adapter {
         log.debug("Updating "+dn);
 
         ModificationItem mods[] = (ModificationItem[])list.toArray(new ModificationItem[list.size()]);
+        DirContext ctx = new InitialDirContext(parameters);
         ctx.modifyAttributes(dn, mods);
 
         return LDAPException.SUCCESS;

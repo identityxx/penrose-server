@@ -211,22 +211,31 @@ public class PenroseServer implements SignalHandler {
 
     public static void main( String[] args ) throws Exception {
 
-        String home = System.getProperty("penrose.home");
+        try {
+            String home = System.getProperty("penrose.home");
 
-        log.debug("PENROSE_HOME: "+home);
+            log.debug("PENROSE_HOME: "+home);
 
-        File log4jProperties = new File((home == null ? "" : home+File.separator)+"conf"+File.separator+"log4j.properties");
-        if (log4jProperties.exists()) {
-            log.debug("Loading "+log4jProperties.getPath());
-            PropertyConfigurator.configure(log4jProperties.getAbsolutePath());
+            File log4jProperties = new File((home == null ? "" : home+File.separator)+"conf"+File.separator+"log4j.properties");
+            if (log4jProperties.exists()) {
+                log.debug("Loading "+log4jProperties.getPath());
+                PropertyConfigurator.configure(log4jProperties.getAbsolutePath());
+            }
+
+            PenroseServer server = new PenroseServer(home);
+            server.run();
+            server.runJmx();
+
+            log.info("Penrose Server is ready.");
+
+            server.loop();
+
+        } catch (Exception e) {
+            String name = e.getClass().getName();
+            name = name.substring(name.lastIndexOf(".")+1);
+            log.error(name+": "+e.getMessage());
+            log.error("Penrose Server failed to start.");
+            System.exit(1);
         }
-
-        PenroseServer server = new PenroseServer(home);
-        server.run();
-        server.runJmx();
-
-        log.info("Penrose Server is ready.");
-
-        server.loop();
     }
 }

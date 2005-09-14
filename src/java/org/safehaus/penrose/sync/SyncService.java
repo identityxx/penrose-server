@@ -363,7 +363,13 @@ public class SyncService {
         int sizeLimit = s == null ? 100 : Integer.parseInt(s);
 
         Connection connection = syncContext.getConnection(source.getConnectionName());
-        SearchResults sr = connection.search(source, filter, sizeLimit);
+        SearchResults sr;
+        try {
+            sr = connection.search(source, filter, sizeLimit);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return results;
+        }
 
         log.debug("Search results:");
 
@@ -391,7 +397,13 @@ public class SyncService {
         int sizeLimit = s == null ? 100 : Integer.parseInt(s);
 
         Connection connection = syncContext.getConnection(source.getConnectionName());
-        SearchResults sr = connection.load(source, filter, sizeLimit);
+        SearchResults sr;
+        try {
+            sr = connection.load(source, filter, sizeLimit);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return results;
+        }
 
         log.debug("Load results:");
 
