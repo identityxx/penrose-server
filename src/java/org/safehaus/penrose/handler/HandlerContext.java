@@ -18,6 +18,8 @@ import org.safehaus.penrose.engine.TransformEngine;
 import org.safehaus.penrose.engine.Engine;
 import org.safehaus.penrose.acl.ACLEngine;
 
+import java.util.Collection;
+
 /**
  * @author Endi S. Dewata
  */
@@ -34,6 +36,7 @@ public interface HandlerContext {
     public FilterTool getFilterTool() throws Exception;
     public Interpreter newInterpreter() throws Exception;
     public Config getConfig(String dn) throws Exception;
+    public Collection getConfigs() throws Exception;
     public TransformEngine getTransformEngine() throws Exception;
     public SyncService getSyncService() throws Exception;
     public Connection getConnection(String connectionName) throws Exception;

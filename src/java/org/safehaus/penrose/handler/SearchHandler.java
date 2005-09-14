@@ -13,10 +13,7 @@ import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.mapping.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.ietf.ldap.LDAPException;
-import org.ietf.ldap.LDAPDN;
-import org.ietf.ldap.LDAPConnection;
-import org.ietf.ldap.LDAPEntry;
+import org.ietf.ldap.*;
 
 import java.util.*;
 
@@ -212,6 +209,30 @@ public class SearchHandler {
         for (Iterator i=attributeNames.iterator(); i.hasNext(); ) {
             String attributeName = (String)i.next();
             normalizedAttributeNames.add(attributeName.toLowerCase());
+        }
+
+        if ("".equals(base) && scope == LDAPConnection.SCOPE_BASE) { // finding root DSE
+            LDAPAttributeSet set = new LDAPAttributeSet();
+            set.add(new LDAPAttribute("objectClass", new String[] { "top", "extensibleObject" }));
+            set.add(new LDAPAttribute("vendorName", new String[] { "Penrose Virtual Directory Server" }));
+            set.add(new LDAPAttribute("vendorVersion", new String[] { "0.9.5" }));
+
+            LDAPAttribute namingContexts = new LDAPAttribute("namingContexts");
+            for (Iterator i=handlerContext.getConfigs().iterator(); i.hasNext(); ) {
+                Config config = (Config)i.next();
+                for (Iterator j=config.getRootEntryDefinitions().iterator(); j.hasNext(); ) {
+                    EntryDefinition entry = (EntryDefinition)j.next();
+                    namingContexts.addValue(entry.getDn());
+                }
+            }
+            set.add(namingContexts);
+
+            LDAPEntry ldapEntry = new LDAPEntry("", set);
+            Entry.filterAttributes(ldapEntry, normalizedAttributeNames);
+            results.add(ldapEntry);
+
+            results.setReturnCode(LDAPException.SUCCESS);
+            return LDAPException.SUCCESS;
         }
 
 		Filter f = handlerContext.getFilterTool().parseFilter(filter);
