@@ -53,19 +53,15 @@ public class SchemaReader {
         SchemaParser parser = new SchemaParser(in);
         Collection c = parser.parse();
 
-        Map attributeTypes = schema.getAttributeTypes();
-        Map objectClasses = schema.getObjectClasses();
-
         for (Iterator i = c.iterator(); i.hasNext();) {
             Object o = i.next();
             if (o instanceof AttributeType) {
                 AttributeType at = (AttributeType) o;
-                attributeTypes.put(at.getName(), at);
+                schema.addAttributeType(at);
 
             } else if (o instanceof ObjectClass) {
                 ObjectClass oc = (ObjectClass) o;
-                //log.debug("Adding object class "+oc.getName());
-                objectClasses.put(oc.getName(), oc);
+                schema.addObjectClass(oc);
 
             } else {
                 //log.debug(" - ERROR");

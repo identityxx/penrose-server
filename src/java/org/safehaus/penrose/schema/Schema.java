@@ -32,8 +32,20 @@ public class Schema {
     /**
      * @return Returns the attributeTypes.
      */
-    public Map getAttributeTypes() {
-        return attributeTypes;
+    public Collection getAttributeTypes() {
+        return attributeTypes.values();
+    }
+
+    public AttributeType getAttributeType(String name) {
+        return (AttributeType)attributeTypes.get(name);
+    }
+
+    public void addAttributeType(AttributeType at) {
+        attributeTypes.put(at.getName(), at);
+    }
+
+    public AttributeType removeAttributeType(String name) {
+        return (AttributeType)attributeTypes.remove(name);
     }
 
     /**
@@ -47,8 +59,20 @@ public class Schema {
     /**
      * @return Returns the objectClassMap.
      */
-    public Map getObjectClasses() {
-        return objectClasses;
+    public Collection getObjectClasses() {
+        return objectClasses.values();
+    }
+
+    public ObjectClass getObjectClass(String name) {
+        return (ObjectClass)objectClasses.get(name);
+    }
+
+    public void addObjectClass(ObjectClass oc) {
+        objectClasses.put(oc.getName(), oc);
+    }
+
+    public ObjectClass removeObjectClass(String name) {
+        return (ObjectClass)objectClasses.remove(name);
     }
 
     /**
@@ -72,8 +96,8 @@ public class Schema {
         return set;
     }
 
-    public List getAllObjectClassNames(EntryDefinition entry) {
-        List list = new ArrayList();
+    public Collection getAllObjectClassNames(EntryDefinition entry) {
+        Collection list = new ArrayList();
 
         for (Iterator i=entry.getObjectClasses().iterator(); i.hasNext(); ) {
             String ocName = (String)i.next();
@@ -84,13 +108,13 @@ public class Schema {
         return list;
     }
 
-    public List getAllObjectClassNames(String ocName) {
-        List list = new ArrayList();
+    public Collection getAllObjectClassNames(String ocName) {
+        Collection list = new ArrayList();
         getAllObjectClassNames(list, ocName);
         return list;
     }
 
-    public void getAllObjectClassNames(List list, String ocName) {
+    public void getAllObjectClassNames(Collection list, String ocName) {
     	if (list.contains(ocName)) return;
 
         ObjectClass oc = (ObjectClass)objectClasses.get(ocName);
