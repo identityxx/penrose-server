@@ -102,7 +102,7 @@ public class SearchGraphVisitor extends GraphVisitor {
     }
 
     public void postVisitNode(Object node, Object parameter) throws Exception {
-        //stack.pop();
+        stack.pop();
     }
 
     public boolean preVisitEdge(Object node1, Object node2, Object object, Object parameter) throws Exception {

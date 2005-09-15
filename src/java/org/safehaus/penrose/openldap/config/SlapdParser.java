@@ -102,11 +102,6 @@ public class SlapdParser implements SlapdParserConstants {
     finally { jj_save(4, xla); }
   }
 
-  final private boolean jj_3_3() {
-    if (jj_scan_token(VALUE)) return true;
-    return false;
-  }
-
   final private boolean jj_3_1() {
     if (jj_scan_token(NAME)) return true;
     return false;
@@ -123,6 +118,11 @@ public class SlapdParser implements SlapdParserConstants {
   }
 
   final private boolean jj_3_2() {
+    if (jj_scan_token(VALUE)) return true;
+    return false;
+  }
+
+  final private boolean jj_3_3() {
     if (jj_scan_token(VALUE)) return true;
     return false;
   }

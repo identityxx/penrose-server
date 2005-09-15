@@ -835,116 +835,6 @@ public class SchemaParser implements SchemaParserConstants {
     finally { jj_save(48, xla); }
   }
 
-  final private boolean jj_3_36() {
-    if (jj_scan_token(DSA_OPERATION2)) return true;
-    return false;
-  }
-
-  final private boolean jj_3_49() {
-    if (jj_scan_token(LPAREN)) return true;
-    if (jj_3R_9()) return true;
-    Token xsp;
-    while (true) {
-      xsp = jj_scanpos;
-      if (jj_3_47()) { jj_scanpos = xsp; break; }
-    }
-    if (jj_scan_token(RPAREN)) return true;
-    return false;
-  }
-
-  final private boolean jj_3_35() {
-    if (jj_scan_token(DSA_OPERATION)) return true;
-    return false;
-  }
-
-  final private boolean jj_3R_13() {
-    Token xsp;
-    xsp = jj_scanpos;
-    if (jj_3_48()) {
-    jj_scanpos = xsp;
-    if (jj_3_49()) return true;
-    }
-    return false;
-  }
-
-  final private boolean jj_3_48() {
-    if (jj_3R_9()) return true;
-    return false;
-  }
-
-  final private boolean jj_3_34() {
-    if (jj_scan_token(DISTRIBUTED_OPERATION)) return true;
-    return false;
-  }
-
-  final private boolean jj_3_33() {
-    if (jj_scan_token(DIRECTORY_OPERATION)) return true;
-    return false;
-  }
-
-  final private boolean jj_3R_11() {
-    Token xsp;
-    xsp = jj_scanpos;
-    if (jj_3_32()) {
-    jj_scanpos = xsp;
-    if (jj_3_33()) {
-    jj_scanpos = xsp;
-    if (jj_3_34()) {
-    jj_scanpos = xsp;
-    if (jj_3_35()) {
-    jj_scanpos = xsp;
-    if (jj_3_36()) return true;
-    }
-    }
-    }
-    }
-    return false;
-  }
-
-  final private boolean jj_3_32() {
-    if (jj_scan_token(USER_APPLICATIONS)) return true;
-    return false;
-  }
-
-  final private boolean jj_3_28() {
-    if (jj_scan_token(MAY)) return true;
-    if (jj_3R_13()) return true;
-    return false;
-  }
-
-  final private boolean jj_3_27() {
-    if (jj_scan_token(MUST)) return true;
-    if (jj_3R_13()) return true;
-    return false;
-  }
-
-  final private boolean jj_3_26() {
-    if (jj_scan_token(AUXILIARY)) return true;
-    return false;
-  }
-
-  final private boolean jj_3_30() {
-    if (jj_scan_token(X_DS_USE)) return true;
-    if (jj_3R_8()) return true;
-    return false;
-  }
-
-  final private boolean jj_3_25() {
-    if (jj_scan_token(STRUCTURAL)) return true;
-    return false;
-  }
-
-  final private boolean jj_3_29() {
-    if (jj_scan_token(X_ORIGIN)) return true;
-    if (jj_3R_8()) return true;
-    return false;
-  }
-
-  final private boolean jj_3_24() {
-    if (jj_scan_token(ABSTRACT)) return true;
-    return false;
-  }
-
   final private boolean jj_3_23() {
     if (jj_scan_token(SUP)) return true;
     if (jj_3R_13()) return true;
@@ -1286,6 +1176,116 @@ public class SchemaParser implements SchemaParserConstants {
   final private boolean jj_3_47() {
     if (jj_scan_token(DOLLAR)) return true;
     if (jj_3R_9()) return true;
+    return false;
+  }
+
+  final private boolean jj_3_36() {
+    if (jj_scan_token(DSA_OPERATION2)) return true;
+    return false;
+  }
+
+  final private boolean jj_3_49() {
+    if (jj_scan_token(LPAREN)) return true;
+    if (jj_3R_9()) return true;
+    Token xsp;
+    while (true) {
+      xsp = jj_scanpos;
+      if (jj_3_47()) { jj_scanpos = xsp; break; }
+    }
+    if (jj_scan_token(RPAREN)) return true;
+    return false;
+  }
+
+  final private boolean jj_3_35() {
+    if (jj_scan_token(DSA_OPERATION)) return true;
+    return false;
+  }
+
+  final private boolean jj_3R_13() {
+    Token xsp;
+    xsp = jj_scanpos;
+    if (jj_3_48()) {
+    jj_scanpos = xsp;
+    if (jj_3_49()) return true;
+    }
+    return false;
+  }
+
+  final private boolean jj_3_48() {
+    if (jj_3R_9()) return true;
+    return false;
+  }
+
+  final private boolean jj_3_34() {
+    if (jj_scan_token(DISTRIBUTED_OPERATION)) return true;
+    return false;
+  }
+
+  final private boolean jj_3_33() {
+    if (jj_scan_token(DIRECTORY_OPERATION)) return true;
+    return false;
+  }
+
+  final private boolean jj_3R_11() {
+    Token xsp;
+    xsp = jj_scanpos;
+    if (jj_3_32()) {
+    jj_scanpos = xsp;
+    if (jj_3_33()) {
+    jj_scanpos = xsp;
+    if (jj_3_34()) {
+    jj_scanpos = xsp;
+    if (jj_3_35()) {
+    jj_scanpos = xsp;
+    if (jj_3_36()) return true;
+    }
+    }
+    }
+    }
+    return false;
+  }
+
+  final private boolean jj_3_32() {
+    if (jj_scan_token(USER_APPLICATIONS)) return true;
+    return false;
+  }
+
+  final private boolean jj_3_28() {
+    if (jj_scan_token(MAY)) return true;
+    if (jj_3R_13()) return true;
+    return false;
+  }
+
+  final private boolean jj_3_27() {
+    if (jj_scan_token(MUST)) return true;
+    if (jj_3R_13()) return true;
+    return false;
+  }
+
+  final private boolean jj_3_26() {
+    if (jj_scan_token(AUXILIARY)) return true;
+    return false;
+  }
+
+  final private boolean jj_3_30() {
+    if (jj_scan_token(X_DS_USE)) return true;
+    if (jj_3R_8()) return true;
+    return false;
+  }
+
+  final private boolean jj_3_25() {
+    if (jj_scan_token(STRUCTURAL)) return true;
+    return false;
+  }
+
+  final private boolean jj_3_29() {
+    if (jj_scan_token(X_ORIGIN)) return true;
+    if (jj_3R_8()) return true;
+    return false;
+  }
+
+  final private boolean jj_3_24() {
+    if (jj_scan_token(ABSTRACT)) return true;
     return false;
   }
 
