@@ -92,8 +92,7 @@ public class SyncService {
             int rc = connection.add(source, sourceValues);
             if (rc != LDAPException.SUCCESS) return rc;
 
-            String key = source.getConnectionName()+"."+source.getSourceName();
-            syncContext.getCache().getSourceFilterCache().remove(key);
+            syncContext.getCache().getSourceFilterCache(source).invalidate();
 
         } finally {
         	lock.releaseWriteLock(WAIT_TIMEOUT);
@@ -136,15 +135,13 @@ public class SyncService {
 
             Collection pks = syncContext.getTransformEngine().convert(av);
 
-            String key = source.getConnectionName()+"."+source.getSourceName();
-
             for (Iterator i=pks.iterator(); i.hasNext(); ) {
                 Row pk = (Row)i.next();
                 //log.debug(" - "+pk);
-                syncContext.getCache().getSourceDataCache().remove(key, pk);
+                syncContext.getCache().getSourceDataCache(source).remove(pk);
             }
 
-            syncContext.getCache().getSourceFilterCache().remove(key);
+            syncContext.getCache().getSourceFilterCache(source).invalidate();
 
         } finally {
             lock.releaseWriteLock(WAIT_TIMEOUT);
@@ -189,8 +186,6 @@ public class SyncService {
             replaceRows.retainAll(newPKs);
             log.debug("PKs to replace: " + replaceRows);
 
-            String key = source.getConnectionName()+"."+source.getSourceName();
-
             // Add rows
             for (Iterator i = addRows.iterator(); i.hasNext();) {
                 Row pk = (Row) i.next();
@@ -220,7 +215,7 @@ public class SyncService {
                     return rc;
 
                 // Delete row from source table in the cache
-                syncContext.getCache().getSourceDataCache().remove(key, pk);
+                syncContext.getCache().getSourceDataCache(source).remove(pk);
             }
 
             // Replace rows
@@ -239,10 +234,10 @@ public class SyncService {
                 if (rc != LDAPException.SUCCESS) return rc;
 
                 // Modify row from source table in the cache
-                syncContext.getCache().getSourceDataCache().remove(key, pk);
+                syncContext.getCache().getSourceDataCache(source).remove(pk);
             }
 
-            syncContext.getCache().getSourceFilterCache().remove(key);
+            syncContext.getCache().getSourceFilterCache(source).invalidate();
 
         } finally {
             lock.releaseWriteLock(WAIT_TIMEOUT);
@@ -289,7 +284,7 @@ public class SyncService {
 
         Map results = new TreeMap();
 
-        Collection pks = syncContext.getCache().getSourceFilterCache().get(key, filter);
+        Collection pks = syncContext.getCache().getSourceFilterCache(source).get(filter);
 
         if (pks == null) {
 
@@ -297,7 +292,7 @@ public class SyncService {
             ConnectionConfig connectionConfig = config.getConnectionConfig(source.getConnectionName());
             SourceDefinition sourceDefinition = connectionConfig.getSourceDefinition(source.getSourceName());
 
-            String method = sourceDefinition.getParameter("loadingMethod");
+            String method = sourceDefinition.getParameter(SourceDefinition.LOADING_METHOD);
             log.debug("Loading method: "+method);
             
             if ("searchAndLoad".equals(method)) {
@@ -313,18 +308,18 @@ public class SyncService {
                 for (Iterator i=map.keySet().iterator(); i.hasNext(); ) {
                     Row pk = (Row)i.next();
                     AttributeValues values = (AttributeValues)map.get(pk);
-                    syncContext.getCache().getSourceDataCache().put(key, pk, values);
+                    syncContext.getCache().getSourceDataCache(source).put(pk, values);
                 }
             }
 
-            syncContext.getCache().getSourceFilterCache().put(key, filter, pks);
+            syncContext.getCache().getSourceFilterCache(source).put(filter, pks);
 
             Filter newFilter = syncContext.getCache().getCacheContext().getFilterTool().createFilter(pks);
-            syncContext.getCache().getSourceFilterCache().put(key, newFilter, pks);
+            syncContext.getCache().getSourceFilterCache(source).put(newFilter, pks);
         }
 
         log.debug("Checking source cache for pks "+pks);
-        Map loadedRows = syncContext.getCache().getSourceDataCache().get(key, pks);
+        Map loadedRows = syncContext.getCache().getSourceDataCache(source).get(pks);
         log.debug("Loaded rows: "+loadedRows.keySet());
         results.putAll(loadedRows);
 
@@ -342,10 +337,10 @@ public class SyncService {
             for (Iterator i=map.keySet().iterator(); i.hasNext(); ) {
                 Row pk = (Row)i.next();
                 AttributeValues values = (AttributeValues)map.get(pk);
-                syncContext.getCache().getSourceDataCache().put(key, pk, values);
+                syncContext.getCache().getSourceDataCache(source).put(pk, values);
             }
 
-            syncContext.getCache().getSourceFilterCache().put(key, newFilter, map.keySet());
+            syncContext.getCache().getSourceFilterCache(source).put(newFilter, map.keySet());
         }
 
         return results;
@@ -359,7 +354,7 @@ public class SyncService {
         ConnectionConfig connectionConfig = config.getConnectionConfig(source.getConnectionName());
         SourceDefinition sourceDefinition = connectionConfig.getSourceDefinition(source.getSourceName());
 
-        String s = sourceDefinition.getParameter("sizeLimit");
+        String s = sourceDefinition.getParameter(SourceDefinition.SIZE_LIMIT);
         int sizeLimit = s == null ? 100 : Integer.parseInt(s);
 
         Connection connection = syncContext.getConnection(source.getConnectionName());
@@ -393,7 +388,7 @@ public class SyncService {
         ConnectionConfig connectionConfig = config.getConnectionConfig(source.getConnectionName());
         SourceDefinition sourceDefinition = connectionConfig.getSourceDefinition(source.getSourceName());
 
-        String s = sourceDefinition.getParameter("sizeLimit");
+        String s = sourceDefinition.getParameter(SourceDefinition.SIZE_LIMIT);
         int sizeLimit = s == null ? 100 : Integer.parseInt(s);
 
         Connection connection = syncContext.getConnection(source.getConnectionName());

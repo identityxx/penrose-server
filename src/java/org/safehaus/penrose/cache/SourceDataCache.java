@@ -20,8 +20,8 @@ public class SourceDataCache {
     private Cache cache;
     private CacheContext cacheContext;
 
-    private Map data = new TreeMap();
-    private Map expirations = new TreeMap();
+    private Map dataMap = new TreeMap();
+    private Map expirationMap = new TreeMap();
 
     private int size;
     private int expiration; // minutes
@@ -30,10 +30,10 @@ public class SourceDataCache {
         this.cache = cache;
         this.cacheContext = cache.getCacheContext();
 
-        String s = cache.getParameter("size");
+        String s = cache.getParameter(Cache.SIZE);
         size = s == null ? 100 : Integer.parseInt(s);
 
-        s = cache.getParameter("expiration");
+        s = cache.getParameter(Cache.EXPIRATION);
         expiration = s == null ? 5 : Integer.parseInt(s);
 
         init();
@@ -42,36 +42,9 @@ public class SourceDataCache {
     public void init() throws Exception {
     }
 
-    public void refresh() throws Exception {
-    }
-
-    public Map getDataMap(String sourceName) {
-        Map map = (Map)data.get(sourceName);
-        if (map == null) {
-            map = new TreeMap();
-            data.put(sourceName, map);
-        }
-        return map;
-    }
-
-    public Map getExpirationMap(String sourceName) {
-        Map map = (Map)expirations.get(sourceName);
-        if (map == null) {
-            map = new LinkedHashMap();
-            expirations.put(sourceName, map);
-        }
-        return map;
-    }
-
-    public Map get(
-            String sourceName,
-            Collection filters)
-            throws Exception {
+    public Map get(Collection filters) throws Exception {
 
         Map results = new TreeMap();
-
-        Map dataMap = getDataMap(sourceName);
-        Map expirationMap = getExpirationMap(sourceName);
 
         for (Iterator i=dataMap.keySet().iterator(); i.hasNext(); ) {
             Row pk = (Row)i.next();
@@ -98,10 +71,7 @@ public class SourceDataCache {
         return results;
     }
 
-    public void put(String sourceName, Row pk, AttributeValues values) throws Exception {
-
-        Map dataMap = getDataMap(sourceName);
-        Map expirationMap = getExpirationMap(sourceName);
+    public void put(Row pk, AttributeValues values) throws Exception {
 
         Row key = cacheContext.getSchema().normalize(pk);
 
@@ -119,10 +89,7 @@ public class SourceDataCache {
         expirationMap.put(key, new Date(System.currentTimeMillis() + expiration * 60 * 1000));
     }
 
-    public void remove(String sourceName, Row pk) throws Exception {
-
-        Map dataMap = getDataMap(sourceName);
-        Map expirationMap = getExpirationMap(sourceName);
+    public void remove(Row pk) throws Exception {
 
         Row key = cacheContext.getSchema().normalize(pk);
 

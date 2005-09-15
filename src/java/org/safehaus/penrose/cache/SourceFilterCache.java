@@ -17,8 +17,8 @@ public class SourceFilterCache {
 
     Logger log = LoggerFactory.getLogger(getClass());
 
-    public Map data = new TreeMap();
-    public Map expirations = new TreeMap();
+    public Map dataMap = new TreeMap();
+    public Map expirationMap = new TreeMap();
 
     public Cache cache;
 
@@ -28,10 +28,10 @@ public class SourceFilterCache {
     public void init(Cache cache) throws Exception {
         this.cache = cache;
 
-        String s = cache.getParameter("size");
+        String s = cache.getParameter(Cache.SIZE);
         size = s == null ? 100 : Integer.parseInt(s);
 
-        s = cache.getParameter("expiration");
+        s = cache.getParameter(Cache.EXPIRATION);
         expiration = s == null ? 5 : Integer.parseInt(s);
 
         init();
@@ -40,28 +40,7 @@ public class SourceFilterCache {
     public void init() throws Exception {
     }
 
-    public Map getDataMap(String sourceName) {
-        Map map = (Map)data.get(sourceName);
-        if (map == null) {
-            map = new TreeMap();
-            data.put(sourceName, map);
-        }
-        return map;
-    }
-
-    public Map getExpirationMap(String sourceName) {
-        Map map = (Map)expirations.get(sourceName);
-        if (map == null) {
-            map = new LinkedHashMap();
-            expirations.put(sourceName, map);
-        }
-        return map;
-    }
-
-    public Collection get(String sourceName, Filter filter) throws Exception {
-
-        Map dataMap = getDataMap(sourceName);
-        Map expirationMap = getExpirationMap(sourceName);
+    public Collection get(Filter filter) throws Exception {
 
         String key = filter == null ? "" : filter.toString();
         log.debug("Getting source filter cache ("+dataMap.size()+"): "+key);
@@ -78,10 +57,7 @@ public class SourceFilterCache {
         return pks;
     }
 
-    public void put(String sourceName, Filter filter, Collection pks) throws Exception {
-
-        Map dataMap = getDataMap(sourceName);
-        Map expirationMap = getExpirationMap(sourceName);
+    public void put(Filter filter, Collection pks) throws Exception {
 
         String key = filter == null ? "" : filter.toString();
 
@@ -99,10 +75,7 @@ public class SourceFilterCache {
         expirationMap.put(key, new Date(System.currentTimeMillis() + expiration * 60 * 1000));
     }
 
-    public void remove(String sourceName) throws Exception {
-        Map dataMap = getDataMap(sourceName);
-        Map expirationMap = getExpirationMap(sourceName);
-
+    public void invalidate() throws Exception {
         dataMap.clear();
         expirationMap.clear();
     }

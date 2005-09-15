@@ -17,8 +17,8 @@ public class EntryFilterCache {
 
     Logger log = LoggerFactory.getLogger(getClass());
 
-    public Map data = new TreeMap();
-    public Map expirations = new TreeMap();
+    public Map dataMap = new TreeMap();
+    public Map expirationMap = new TreeMap();
 
     public Cache cache;
 
@@ -28,10 +28,10 @@ public class EntryFilterCache {
     public void init(Cache cache) throws Exception {
         this.cache = cache;
 
-        String s = cache.getParameter("size");
+        String s = cache.getParameter(Cache.SIZE);
         size = s == null ? 100 : Integer.parseInt(s);
 
-        s = cache.getParameter("expiration");
+        s = cache.getParameter(Cache.EXPIRATION);
         expiration = s == null ? 5 : Integer.parseInt(s);
 
         init();
@@ -40,28 +40,7 @@ public class EntryFilterCache {
     public void init() throws Exception {
     }
 
-    public Map getDataMap(String dn) {
-        Map map = (Map)data.get(dn);
-        if (map == null) {
-            map = new TreeMap();
-            data.put(dn, map);
-        }
-        return map;
-    }
-
-    public Map getExpirationMap(String dn) {
-        Map map = (Map)expirations.get(dn);
-        if (map == null) {
-            map = new LinkedHashMap();
-            expirations.put(dn, map);
-        }
-        return map;
-    }
-
-    public Collection get(String dn, Filter filter) throws Exception {
-
-        Map dataMap = getDataMap(dn);
-        Map expirationMap = getExpirationMap(dn);
+    public Collection get(Filter filter) throws Exception {
 
         String key = filter == null ? "" : filter.toString();
         log.debug("Getting entry filter cache ("+dataMap.size()+"): "+key);
@@ -78,10 +57,7 @@ public class EntryFilterCache {
         return rdns;
     }
 
-    public void put(String dn, Filter filter, Collection rdns) throws Exception {
-
-        Map dataMap = getDataMap(dn);
-        Map expirationMap = getExpirationMap(dn);
+    public void put(Filter filter, Collection rdns) throws Exception {
 
         String key = filter == null ? "" : filter.toString();
 
@@ -99,10 +75,7 @@ public class EntryFilterCache {
         expirationMap.put(key, new Date(System.currentTimeMillis() + expiration * 60 * 1000));
     }
 
-    public void remove(String dn) throws Exception {
-        Map dataMap = getDataMap(dn);
-        Map expirationMap = getExpirationMap(dn);
-
+    public void invalidate() throws Exception {
         dataMap.clear();
         expirationMap.clear();
     }

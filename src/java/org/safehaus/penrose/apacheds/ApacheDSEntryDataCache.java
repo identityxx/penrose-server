@@ -33,6 +33,8 @@ public class ApacheDSEntryDataCache extends EntryDataCache {
 
     Logger log = LoggerFactory.getLogger(getClass());
 
+    Map map = new TreeMap();
+
     private NextInterceptor nextInterceptor;
     private Context context;
 
@@ -41,18 +43,7 @@ public class ApacheDSEntryDataCache extends EntryDataCache {
     public void init() throws Exception {
     }
 
-    public Map getDataMap(EntryDefinition entryDefinition) {
-        Map map = (Map)entries.get(entryDefinition.getDn());
-        if (map == null) {
-            map = new TreeMap();
-            entries.put(entryDefinition.getDn(), map);
-        }
-        return map;
-    }
-
     public Entry get(EntryDefinition entryDefinition, String dn) throws Exception {
-
-        Map map = getDataMap(entryDefinition.getDn());
 
         log.debug("===============================================================================");
         log.debug("Getting entry cache ("+map.size()+"): "+dn);
@@ -113,7 +104,6 @@ public class ApacheDSEntryDataCache extends EntryDataCache {
 
     public void put(Entry entry) throws Exception {
 
-        Map map = getDataMap(entry.getEntryDefinition().getDn());
         String dn = entry.getDn();
 
         while (map.size() >= getSize()) {
@@ -128,7 +118,6 @@ public class ApacheDSEntryDataCache extends EntryDataCache {
 
     public void remove(Entry entry) throws Exception {
 
-        Map map = getDataMap(entry.getEntryDefinition());
         String dn = entry.getDn();
 
         log.debug("Removing entry cache ("+map.size()+"): "+dn);

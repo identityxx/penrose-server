@@ -5,7 +5,6 @@
 package org.safehaus.penrose.cache;
 
 import org.safehaus.penrose.mapping.Entry;
-import org.safehaus.penrose.mapping.EntryDefinition;
 import org.safehaus.penrose.mapping.Row;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,8 +20,8 @@ public class EntryDataCache {
     private Cache cache;
     private CacheContext cacheContext;
 
-    private Map data = new TreeMap();
-    private Map expirations = new TreeMap();
+    private Map dataMap = new TreeMap();
+    private Map expirationMap = new TreeMap();
 
     private int size;
     private int expiration; // minutes
@@ -31,10 +30,10 @@ public class EntryDataCache {
         this.cache = cache;
         this.cacheContext = cache.getCacheContext();
 
-        String s = cache.getParameter("size");
+        String s = cache.getParameter(Cache.SIZE);
         size = s == null ? 100 : Integer.parseInt(s);
 
-        s = cache.getParameter("expiration");
+        s = cache.getParameter(Cache.EXPIRATION);
         expiration = s == null ? 5 : Integer.parseInt(s);
 
         init();
@@ -43,28 +42,7 @@ public class EntryDataCache {
     public void init() throws Exception {
     }
 
-    public Map getDataMap(String dn) {
-        Map map = (Map)data.get(dn);
-        if (map == null) {
-            map = new TreeMap();
-            data.put(dn, map);
-        }
-        return map;
-    }
-
-    public Map getExpirationMap(String dn) {
-        Map map = (Map)expirations.get(dn);
-        if (map == null) {
-            map = new LinkedHashMap();
-            expirations.put(dn, map);
-        }
-        return map;
-    }
-
-    public Entry get(String dn, Row rdn) throws Exception {
-
-        Map dataMap = getDataMap(dn);
-        Map expirationMap = getExpirationMap(dn);
+    public Entry get(Row rdn) throws Exception {
 
         Row key = cacheContext.getSchema().normalize(rdn);
 
@@ -82,10 +60,7 @@ public class EntryDataCache {
         return entry;
     }
 
-    public void put(String dn, Row rdn, Entry entry) throws Exception {
-
-        Map dataMap = getDataMap(dn);
-        Map expirationMap = getExpirationMap(dn);
+    public void put(Row rdn, Entry entry) throws Exception {
 
         Row key = cacheContext.getSchema().normalize(rdn);
 
@@ -103,10 +78,7 @@ public class EntryDataCache {
         expirationMap.put(key, new Date(System.currentTimeMillis() + expiration * 60 * 1000));
     }
 
-    public void remove(String dn, Row rdn) throws Exception {
-
-        Map dataMap = getDataMap(dn);
-        Map expirationMap = getExpirationMap(dn);
+    public void remove(Row rdn) throws Exception {
 
         Row key = cacheContext.getSchema().normalize(rdn);
 

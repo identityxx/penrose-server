@@ -17,6 +17,9 @@ public class SourceDefinition implements Cloneable {
     public final static String CACHE_EXPIRATION     = "cacheExpiration";
     public final static String LOAD_UPON_EXPIRATION = "loadUponExpiration";
 
+    public final static String SIZE_LIMIT     = "sizeLimit";
+    public final static String LOADING_METHOD = "loadingMethod";
+
 	/**
 	 * Name.
 	 */

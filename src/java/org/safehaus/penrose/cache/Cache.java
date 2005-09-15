@@ -6,23 +6,32 @@ package org.safehaus.penrose.cache;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.safehaus.penrose.mapping.Source;
+import org.safehaus.penrose.mapping.EntryDefinition;
+import org.safehaus.penrose.mapping.Entry;
 
 import java.util.Collection;
+import java.util.TreeMap;
+import java.util.Map;
 
 /**
  * @author Endi S. Dewata
  */
 public class Cache {
 
+    public final static String SIZE       = "size";
+    public final static String EXPIRATION = "expiration";
+
     Logger log = LoggerFactory.getLogger(getClass());
 
     private CacheConfig cacheConfig;
     private CacheContext cacheContext;
 
-    private EntryFilterCache entryFilterCache;
-    private EntryDataCache entryDataCache;
-    private SourceDataCache sourceDataCache;
-    private SourceFilterCache sourceFilterCache;
+    private Map entryFilterCaches = new TreeMap();
+    private Map entryDataCaches = new TreeMap();
+
+    private Map sourceFilterCaches = new TreeMap();
+    private Map sourceDataCaches = new TreeMap();
 
     protected CacheFilterTool cacheFilterTool;
 
@@ -48,52 +57,54 @@ public class Cache {
 
         cacheFilterTool = new CacheFilterTool(getCacheContext());
 
-        createFilterCache();
-        createEntryCache();
-        createSourceCache();
-        createSourceFilterCache();
-
         init();
-
-        entryFilterCache.init(this);
-        entryDataCache.init(this);
-        sourceDataCache.init(this);
-        sourceFilterCache.init(this);
-    }
-
-    public void createFilterCache() throws Exception {
-        entryFilterCache = new EntryFilterCache();
-    }
-
-    public void createEntryCache() throws Exception {
-        entryDataCache = new EntryDataCache();
-    }
-
-    public void createSourceCache() throws Exception {
-        sourceDataCache = new SourceDataCache();
-    }
-
-    public void createSourceFilterCache() throws Exception {
-        sourceFilterCache = new SourceFilterCache();
     }
 
     public void init() throws Exception {
     }
 
-    public EntryDataCache getEntryDataCache() {
-        return entryDataCache;
+    public EntryFilterCache getEntryFilterCache(Entry parent, EntryDefinition entry) throws Exception {
+        String key = entry.getRdn()+","+parent.getDn();
+        EntryFilterCache cache = (EntryFilterCache)entryFilterCaches.get(key);
+        if (cache == null) {
+            cache = new EntryFilterCache();
+            cache.init(this);
+            entryFilterCaches.put(key, cache);
+        }
+        return cache;
     }
 
-    public void setEntryDataCache(EntryDataCache entryDataCache) {
-        this.entryDataCache = entryDataCache;
+    public EntryDataCache getEntryDataCache(Entry parent, EntryDefinition entry) throws Exception {
+        String key = entry.getRdn()+","+parent.getDn();
+        EntryDataCache cache = (EntryDataCache)entryDataCaches.get(key);
+        if (cache == null) {
+            cache = new EntryDataCache();
+            cache.init(this);
+            entryDataCaches.put(key, cache);
+        }
+        return cache;
     }
 
-    public SourceDataCache getSourceDataCache() {
-        return sourceDataCache;
+    public SourceDataCache getSourceDataCache(Source source) throws Exception {
+        String key = source.getConnectionName()+"."+source.getSourceName();
+        SourceDataCache cache = (SourceDataCache)sourceDataCaches.get(key);
+        if (cache == null) {
+            cache = new SourceDataCache();
+            cache.init(this);
+            sourceDataCaches.put(key, cache);
+        }
+        return cache;
     }
 
-    public void setSourceDataCache(SourceDataCache sourceDataCache) {
-        this.sourceDataCache = sourceDataCache;
+    public SourceFilterCache getSourceFilterCache(Source source) throws Exception {
+        String key = source.getConnectionName()+"."+source.getSourceName();
+        SourceFilterCache cache = (SourceFilterCache)sourceFilterCaches.get(key);
+        if (cache == null) {
+            cache = new SourceFilterCache();
+            cache.init(this);
+            sourceFilterCaches.put(key, cache);
+        }
+        return cache;
     }
 
     public CacheContext getCacheContext() {
@@ -104,27 +115,11 @@ public class Cache {
         this.cacheContext = cacheContext;
     }
 
-    public EntryFilterCache getEntryFilterCache() {
-        return entryFilterCache;
-    }
-
-    public void setEntryFilterCache(EntryFilterCache entryFilterCache) {
-        this.entryFilterCache = entryFilterCache;
-    }
-
     public CacheFilterTool getCacheFilterTool() {
         return cacheFilterTool;
     }
 
     public void setCacheFilterTool(CacheFilterTool cacheFilterTool) {
         this.cacheFilterTool = cacheFilterTool;
-    }
-
-    public SourceFilterCache getSourceFilterCache() {
-        return sourceFilterCache;
-    }
-
-    public void setSourceFilterCache(SourceFilterCache sourceFilterCache) {
-        this.sourceFilterCache = sourceFilterCache;
     }
 }
