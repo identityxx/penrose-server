@@ -1,15 +1,38 @@
-/** * Copyright (c) 2000-2005, Identyx Corporation.
- * 
- *  This program is free software; you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation; either version 2 of the License, or
- *  (at your option) any later version.
- *
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License
- *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */package org.safehaus.penrose.util;import org.ietf.ldap.LDAPException;import javax.naming.NamingException;import javax.naming.NoPermissionException;import javax.naming.NameNotFoundException;import javax.naming.NameAlreadyBoundException;/** * @author Endi S. Dewata */public class ExceptionUtil {    public static void throwNamingException(int rc) throws NamingException {        throwNamingException(rc, null);    }    public static void throwNamingException(int rc, String message) throws NamingException {        switch (rc) {            case LDAPException.ENTRY_ALREADY_EXISTS:                throw new NameAlreadyBoundException(message);            case LDAPException.NO_SUCH_OBJECT:                throw new NameNotFoundException(message);            case LDAPException.INSUFFICIENT_ACCESS_RIGHTS:                throw new NoPermissionException(message);            default:                throw new NamingException(message);        }    }}
+/**
+ * Copyright (c) 2000-2005, Identyx Corporation.
+ * All rights reserved.
+ */
+package org.safehaus.penrose.util;
+
+import org.ietf.ldap.LDAPException;
+
+import javax.naming.NamingException;
+import javax.naming.NoPermissionException;
+import javax.naming.NameNotFoundException;
+import javax.naming.NameAlreadyBoundException;
+
+/**
+ * @author Endi S. Dewata
+ */
+public class ExceptionUtil {
+
+    public static void throwNamingException(int rc) throws NamingException {
+        throwNamingException(rc, null);
+    }
+
+    public static void throwNamingException(int rc, String message) throws NamingException {
+        switch (rc) {
+            case LDAPException.ENTRY_ALREADY_EXISTS:
+                throw new NameAlreadyBoundException(message);
+
+            case LDAPException.NO_SUCH_OBJECT:
+                throw new NameNotFoundException(message);
+
+            case LDAPException.INSUFFICIENT_ACCESS_RIGHTS:
+                throw new NoPermissionException(message);
+
+            default:
+                throw new NamingException(message);
+        }
+    }
+}
