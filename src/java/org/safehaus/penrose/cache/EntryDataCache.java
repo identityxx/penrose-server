@@ -6,6 +6,7 @@ package org.safehaus.penrose.cache;
 
 import org.safehaus.penrose.mapping.Entry;
 import org.safehaus.penrose.mapping.Row;
+import org.safehaus.penrose.mapping.EntryDefinition;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import java.util.*;
@@ -17,26 +18,26 @@ public class EntryDataCache {
 
     Logger log = LoggerFactory.getLogger(getClass());
 
+    private EntryDefinition entryDefinition;
     private Cache cache;
     private CacheContext cacheContext;
 
     private Map dataMap = new TreeMap();
-    private Map expirationMap = new TreeMap();
+    private Map expirationMap = new LinkedHashMap();
 
     private int size;
     private int expiration; // minutes
 
-    public void init(Cache cache) throws Exception {
+    public EntryDataCache(Cache cache, EntryDefinition entryDefinition) {
         this.cache = cache;
         this.cacheContext = cache.getCacheContext();
+        this.entryDefinition = entryDefinition;
 
-        String s = cache.getParameter(Cache.SIZE);
+        String s = entryDefinition.getParameter(EntryDefinition.DATA_CACHE_SIZE);
         size = s == null ? 100 : Integer.parseInt(s);
 
-        s = cache.getParameter(Cache.EXPIRATION);
+        s = entryDefinition.getParameter(EntryDefinition.DATA_CACHE_EXPIRATION);
         expiration = s == null ? 5 : Integer.parseInt(s);
-
-        init();
     }
 
     public void init() throws Exception {

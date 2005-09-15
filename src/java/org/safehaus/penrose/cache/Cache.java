@@ -6,9 +6,7 @@ package org.safehaus.penrose.cache;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.safehaus.penrose.mapping.Source;
-import org.safehaus.penrose.mapping.EntryDefinition;
-import org.safehaus.penrose.mapping.Entry;
+import org.safehaus.penrose.mapping.*;
 
 import java.util.Collection;
 import java.util.TreeMap;
@@ -18,9 +16,6 @@ import java.util.Map;
  * @author Endi S. Dewata
  */
 public class Cache {
-
-    public final static String SIZE       = "size";
-    public final static String EXPIRATION = "expiration";
 
     Logger log = LoggerFactory.getLogger(getClass());
 
@@ -56,19 +51,13 @@ public class Cache {
         this.cacheContext = cacheContext;
 
         cacheFilterTool = new CacheFilterTool(getCacheContext());
-
-        init();
-    }
-
-    public void init() throws Exception {
     }
 
     public EntryFilterCache getEntryFilterCache(Entry parent, EntryDefinition entry) throws Exception {
         String key = entry.getRdn()+","+parent.getDn();
         EntryFilterCache cache = (EntryFilterCache)entryFilterCaches.get(key);
         if (cache == null) {
-            cache = new EntryFilterCache();
-            cache.init(this);
+            cache = new EntryFilterCache(this, entry);
             entryFilterCaches.put(key, cache);
         }
         return cache;
@@ -78,30 +67,27 @@ public class Cache {
         String key = entry.getRdn()+","+parent.getDn();
         EntryDataCache cache = (EntryDataCache)entryDataCaches.get(key);
         if (cache == null) {
-            cache = new EntryDataCache();
-            cache.init(this);
+            cache = new EntryDataCache(this, entry);
             entryDataCaches.put(key, cache);
         }
         return cache;
     }
 
-    public SourceDataCache getSourceDataCache(Source source) throws Exception {
-        String key = source.getConnectionName()+"."+source.getSourceName();
+    public SourceDataCache getSourceDataCache(ConnectionConfig connectionConfig, SourceDefinition sourceDefinition) throws Exception {
+        String key = connectionConfig.getConnectionName()+"."+sourceDefinition.getName();
         SourceDataCache cache = (SourceDataCache)sourceDataCaches.get(key);
         if (cache == null) {
-            cache = new SourceDataCache();
-            cache.init(this);
+            cache = new SourceDataCache(this, sourceDefinition);
             sourceDataCaches.put(key, cache);
         }
         return cache;
     }
 
-    public SourceFilterCache getSourceFilterCache(Source source) throws Exception {
-        String key = source.getConnectionName()+"."+source.getSourceName();
+    public SourceFilterCache getSourceFilterCache(ConnectionConfig connectionConfig, SourceDefinition sourceDefinition) throws Exception {
+        String key = connectionConfig.getConnectionName()+"."+sourceDefinition.getName();
         SourceFilterCache cache = (SourceFilterCache)sourceFilterCaches.get(key);
         if (cache == null) {
-            cache = new SourceFilterCache();
-            cache.init(this);
+            cache = new SourceFilterCache(this, sourceDefinition);
             sourceFilterCaches.put(key, cache);
         }
         return cache;

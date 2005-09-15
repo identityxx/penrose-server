@@ -265,8 +265,7 @@ public class TransformEngine {
     public Map split(Source source, AttributeValues entry) throws Exception {
 
         Config config = penrose.getConfig(source);
-        ConnectionConfig connectionConfig = config.getConnectionConfig(source.getConnectionName());
-        SourceDefinition sourceDefinition = connectionConfig.getSourceDefinition(source.getSourceName());
+        Collection fields = config.getPrimaryKeyFields(source);
 
         AttributeValues output = new AttributeValues();
         Row m = translate(source, entry, output);
@@ -284,11 +283,8 @@ public class TransformEngine {
             av.add(row);
 
             Row pk = new Row();
-            Collection fields = source.getFields();
             for (Iterator j=fields.iterator(); j.hasNext(); ) {
                 Field field = (Field)j.next();
-                FieldDefinition fieldDefinition = sourceDefinition.getFieldDefinition(field.getName());
-                if (!fieldDefinition.isPrimaryKey()) continue;
                 pk.set(field.getName(), row.get(field.getName()));
             }
 

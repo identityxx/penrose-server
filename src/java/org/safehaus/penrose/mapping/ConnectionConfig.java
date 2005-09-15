@@ -241,11 +241,24 @@ public class ConnectionConfig implements Serializable, Cloneable {
 
     public void addSourceDefinition(SourceDefinition sourceDefinition) {
         sourceDefinitions.put(sourceDefinition.getName(), sourceDefinition);
-        sourceDefinition.setConnectionConfig(this);
+        sourceDefinition.setConnectionName(connectionName);
     }
 
     public SourceDefinition removeSourceDefinition(String sourceName) {
         return (SourceDefinition)sourceDefinitions.remove(sourceName);
+    }
+
+    public void renameSourceDefinition(SourceDefinition sourceDefinition, String newName) {
+        if (sourceDefinition == null) return;
+        if (sourceDefinition.getName().equals(newName)) return;
+
+        sourceDefinitions.remove(sourceDefinition.getName());
+        sourceDefinitions.put(newName, sourceDefinition);
+    }
+
+    public void modifySourceDefinition(String name, SourceDefinition newSourceDefinition) {
+        SourceDefinition sourceDefinition = (SourceDefinition)sourceDefinitions.get(name);
+        sourceDefinition.copy(newSourceDefinition);
     }
 
     public String toString() {

@@ -99,6 +99,12 @@
 
             </pattern>
 
+            <pattern value="parameter">
+                <call-method-rule methodname="setParameter" paramcount="2" />
+                <call-param-rule pattern="param-name" paramnumber="0"/>
+                <call-param-rule pattern="param-value" paramnumber="1"/>
+            </pattern>
+
             <pattern value="include">
                 <object-create-rule classname="org.safehaus.penrose.mapping.MappingRule" />
                 <set-properties-rule />

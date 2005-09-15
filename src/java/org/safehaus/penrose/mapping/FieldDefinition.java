@@ -89,7 +89,12 @@ public class FieldDefinition implements Comparable, Cloneable {
     }
 
     public int hashCode() {
-        return name.hashCode();
+        return (name == null ? 0 : name.hashCode()) +
+                (originalName == null ? 0 : originalName.hashCode()) +
+                (type == null ? 0 : type.hashCode()) +
+                (primaryKey ? 0 : 1) +
+                (encryption == null ? 0 : encryption.hashCode()) +
+                (encoding == null ? 0 : encoding.hashCode());
     }
 
     boolean equals(Object o1, Object o2) {
@@ -121,14 +126,18 @@ public class FieldDefinition implements Comparable, Cloneable {
         return name.compareTo(fd.name);
     }
 
+    public void copy(FieldDefinition fieldDefinition) {
+        name = fieldDefinition.name;
+        originalName = fieldDefinition.originalName;
+        type = fieldDefinition.type;
+        primaryKey = fieldDefinition.primaryKey;
+        encryption = fieldDefinition.encryption;
+        encoding = fieldDefinition.encoding;
+    }
+
     public Object clone() {
         FieldDefinition fieldDefinition = new FieldDefinition();
-        fieldDefinition.name = name;
-        fieldDefinition.originalName = originalName;
-        fieldDefinition.type = type;
-        fieldDefinition.primaryKey = primaryKey;
-        fieldDefinition.encryption = encryption;
-        fieldDefinition.encoding = encoding;
+        fieldDefinition.copy(this);
         return fieldDefinition;
     }
 

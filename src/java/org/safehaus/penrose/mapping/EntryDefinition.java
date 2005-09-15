@@ -19,6 +19,12 @@ import java.io.Serializable;
  */
 public class EntryDefinition implements Cloneable, Serializable {
 
+    public final static String FILTER_CACHE_SIZE       = "filterCacheSize";
+    public final static String FILTER_CACHE_EXPIRATION = "filterCacheExpiration";
+
+    public final static String DATA_CACHE_SIZE         = "dataCacheSize";
+    public final static String DATA_CACHE_EXPIRATION   = "dataCacheExpiration";
+
     /**
      * Distinguished name.
      */
@@ -57,6 +63,8 @@ public class EntryDefinition implements Cloneable, Serializable {
      * Access Control Instruction. Each element is of type org.safehaus.penrose.acl.ACI.
      */
     private Collection acl = new ArrayList();
+
+    private Map parameters = new TreeMap();
 
 	public EntryDefinition() {
 	}
@@ -379,6 +387,25 @@ public class EntryDefinition implements Cloneable, Serializable {
             ACI aci = (ACI)i.next();
             addACI((ACI)aci.clone());
         }
+
+        parameters.clear();
+        parameters.putAll(entry.parameters);
+    }
+
+    public String getParameter(String name) {
+        return (String)parameters.get(name);
+    }
+
+    public void setParameter(String name, String value) {
+        parameters.put(name, value);
+    }
+
+    public void removeParameter(String name) {
+        parameters.remove(name);
+    }
+
+    public Collection getParameterNames() {
+        return parameters.keySet();
     }
 
     public Object clone() {
@@ -395,7 +422,8 @@ public class EntryDefinition implements Cloneable, Serializable {
                 (attributeDefinitions == null ? 0 : attributeDefinitions.hashCode()) +
                 (sources == null ? 0 : sources.hashCode()) +
                 (relationships == null ? 0 : relationships.hashCode()) +
-                (acl == null ? 0 : acl.hashCode());
+                (acl == null ? 0 : acl.hashCode()) +
+                (parameters == null ? 0 : parameters.hashCode());
     }
 
     boolean equals(Object o1, Object o2) {
@@ -409,20 +437,15 @@ public class EntryDefinition implements Cloneable, Serializable {
         if((object == null) || (object.getClass() != this.getClass())) return false;
 
         EntryDefinition entryDefinition = (EntryDefinition)object;
-        System.out.println("[EntryDefinition] Comparing "+getDn()+" with "+entryDefinition.getDn());
         if (!equals(rdn, entryDefinition.rdn)) return false;
         if (!equals(parentDn, entryDefinition.parentDn)) return false;
-        System.out.println("[EntryDefinition] object classes");
         if (!equals(objectClasses, entryDefinition.objectClasses)) return false;
         if (!equals(script, entryDefinition.script)) return false;
-        System.out.println("[EntryDefinition] attribute definitions");
         if (!equals(attributeDefinitions, entryDefinition.attributeDefinitions)) return false;
-        System.out.println("[EntryDefinition] sources");
         if (!equals(sources, entryDefinition.sources)) return false;
-        System.out.println("[EntryDefinition] relationships");
         if (!equals(relationships, entryDefinition.relationships)) return false;
-        System.out.println("[EntryDefinition] acl");
         if (!equals(acl, entryDefinition.acl)) return false;
+        if (!equals(parameters, entryDefinition.parameters)) return false;
 
         return true;
     }

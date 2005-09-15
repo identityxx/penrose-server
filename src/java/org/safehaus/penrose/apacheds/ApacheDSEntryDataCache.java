@@ -9,6 +9,7 @@ import org.safehaus.penrose.mapping.Entry;
 import org.safehaus.penrose.mapping.AttributeValues;
 import org.safehaus.penrose.mapping.EntryDefinition;
 import org.safehaus.penrose.cache.EntryDataCache;
+import org.safehaus.penrose.cache.Cache;
 import org.apache.ldap.server.interceptor.NextInterceptor;
 import org.apache.ldap.server.invocation.InvocationStack;
 import org.apache.ldap.server.invocation.Invocation;
@@ -40,7 +41,8 @@ public class ApacheDSEntryDataCache extends EntryDataCache {
 
     private Map entries = new HashMap();
 
-    public void init() throws Exception {
+    public ApacheDSEntryDataCache(Cache cache, EntryDefinition entryDefinition) {
+        super(cache, entryDefinition);
     }
 
     public Entry get(EntryDefinition entryDefinition, String dn) throws Exception {

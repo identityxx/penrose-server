@@ -281,22 +281,18 @@ public class JDBCAdapter extends Adapter {
 
     public Row getPkValues(Source source, ResultSet rs) throws Exception {
 
-        Config config = getAdapterContext().getConfig(source);
-        ConnectionConfig connectionConfig = config.getConnectionConfig(source.getConnectionName());
-        SourceDefinition sourceDefinition = connectionConfig.getSourceDefinition(source.getSourceName());
-
         Row row = new Row();
 
         ResultSetMetaData rsmd = rs.getMetaData();
         int count = rsmd.getColumnCount();
 
         int c = 1;
-        Collection fields = source.getFields();
+
+        Config config = getAdapterContext().getConfig(source);
+        Collection fields = config.getPrimaryKeyFields(source);
 
         for (Iterator i=fields.iterator(); i.hasNext() && c<=count; c++) {
             Field field = (Field)i.next();
-            FieldDefinition fieldDefinition = sourceDefinition.getFieldDefinition(field.getName());
-            if (!fieldDefinition.isPrimaryKey()) continue;
 
             Object value = rs.getObject(c);
             if (value == null) continue;
@@ -404,20 +400,14 @@ public class JDBCAdapter extends Adapter {
 
     public Map getPkValues(Source source, Map entry) throws Exception {
 
-        Config config = getAdapterContext().getConfig(source);
-        ConnectionConfig connectionConfig = config.getConnectionConfig(source.getConnectionName());
-        SourceDefinition sourceDefinition = connectionConfig.getSourceDefinition(source.getSourceName());
-
         Map pk = new HashMap();
 
-        Collection fields = source.getFields();
+        Config config = getAdapterContext().getConfig(source);
+        Collection fields = config.getPrimaryKeyFields(source);
 
         for (Iterator i=fields.iterator(); i.hasNext(); ) {
             Field field = (Field)i.next();
             String name = field.getName();
-
-            FieldDefinition fieldDefinition = sourceDefinition.getFieldDefinition(name);
-            if (!fieldDefinition.isPrimaryKey()) continue;
 
             Object value = entry.get(name);
             if (value == null) continue;

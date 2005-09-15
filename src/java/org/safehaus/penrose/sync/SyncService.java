@@ -86,13 +86,17 @@ public class SyncService {
         MRSWLock lock = getLock(source);
         lock.getWriteLock(WAIT_TIMEOUT);
 
+        Config config = syncContext.getConfig(source);
+        ConnectionConfig connectionConfig = config.getConnectionConfig(source.getConnectionName());
+        SourceDefinition sourceDefinition = connectionConfig.getSourceDefinition(source.getSourceName());
+
         try {
 
             Connection connection = syncContext.getConnection(source.getConnectionName());
             int rc = connection.add(source, sourceValues);
             if (rc != LDAPException.SUCCESS) return rc;
 
-            syncContext.getCache().getSourceFilterCache(source).invalidate();
+            syncContext.getCache().getSourceFilterCache(connectionConfig, sourceDefinition).invalidate();
 
         } finally {
         	lock.releaseWriteLock(WAIT_TIMEOUT);
@@ -138,10 +142,10 @@ public class SyncService {
             for (Iterator i=pks.iterator(); i.hasNext(); ) {
                 Row pk = (Row)i.next();
                 //log.debug(" - "+pk);
-                syncContext.getCache().getSourceDataCache(source).remove(pk);
+                syncContext.getCache().getSourceDataCache(connectionConfig, sourceDefinition).remove(pk);
             }
 
-            syncContext.getCache().getSourceFilterCache(source).invalidate();
+            syncContext.getCache().getSourceFilterCache(connectionConfig, sourceDefinition).invalidate();
 
         } finally {
             lock.releaseWriteLock(WAIT_TIMEOUT);
@@ -156,6 +160,10 @@ public class SyncService {
         log.debug("Updating entry in " + source.getName());
         //log.debug("Old values: " + oldValues);
         //log.debug("New values: " + newValues);
+
+        Config config = syncContext.getConfig(source);
+        ConnectionConfig connectionConfig = config.getConnectionConfig(source.getConnectionName());
+        SourceDefinition sourceDefinition = connectionConfig.getSourceDefinition(source.getSourceName());
 
         MRSWLock lock = getLock(source);
         lock.getWriteLock(WAIT_TIMEOUT);
@@ -215,7 +223,7 @@ public class SyncService {
                     return rc;
 
                 // Delete row from source table in the cache
-                syncContext.getCache().getSourceDataCache(source).remove(pk);
+                syncContext.getCache().getSourceDataCache(connectionConfig, sourceDefinition).remove(pk);
             }
 
             // Replace rows
@@ -234,10 +242,10 @@ public class SyncService {
                 if (rc != LDAPException.SUCCESS) return rc;
 
                 // Modify row from source table in the cache
-                syncContext.getCache().getSourceDataCache(source).remove(pk);
+                syncContext.getCache().getSourceDataCache(connectionConfig, sourceDefinition).remove(pk);
             }
 
-            syncContext.getCache().getSourceFilterCache(source).invalidate();
+            syncContext.getCache().getSourceFilterCache(connectionConfig, sourceDefinition).invalidate();
 
         } finally {
             lock.releaseWriteLock(WAIT_TIMEOUT);
@@ -250,6 +258,10 @@ public class SyncService {
             Source source,
             Collection filters)
             throws Exception {
+
+        Config config = syncContext.getConfig(source);
+        ConnectionConfig connectionConfig = config.getConnectionConfig(source.getConnectionName());
+        SourceDefinition sourceDefinition = connectionConfig.getSourceDefinition(source.getSourceName());
 
         Collection normalizedFilters = null;
         if (filters != null) {
@@ -284,18 +296,14 @@ public class SyncService {
 
         Map results = new TreeMap();
 
-        Collection pks = syncContext.getCache().getSourceFilterCache(source).get(filter);
+        Collection pks = syncContext.getCache().getSourceFilterCache(connectionConfig, sourceDefinition).get(filter);
 
         if (pks == null) {
-
-            Config config = syncContext.getConfig(source);
-            ConnectionConfig connectionConfig = config.getConnectionConfig(source.getConnectionName());
-            SourceDefinition sourceDefinition = connectionConfig.getSourceDefinition(source.getSourceName());
 
             String method = sourceDefinition.getParameter(SourceDefinition.LOADING_METHOD);
             log.debug("Loading method: "+method);
             
-            if ("searchAndLoad".equals(method)) {
+            if (SourceDefinition.SEARCH_AND_LOAD.equals(method)) {
                 log.debug("Searching pks for: "+filter);
                 pks = searchEntries(source, filter);
 
@@ -308,18 +316,18 @@ public class SyncService {
                 for (Iterator i=map.keySet().iterator(); i.hasNext(); ) {
                     Row pk = (Row)i.next();
                     AttributeValues values = (AttributeValues)map.get(pk);
-                    syncContext.getCache().getSourceDataCache(source).put(pk, values);
+                    syncContext.getCache().getSourceDataCache(connectionConfig, sourceDefinition).put(pk, values);
                 }
             }
 
-            syncContext.getCache().getSourceFilterCache(source).put(filter, pks);
+            syncContext.getCache().getSourceFilterCache(connectionConfig, sourceDefinition).put(filter, pks);
 
             Filter newFilter = syncContext.getCache().getCacheContext().getFilterTool().createFilter(pks);
-            syncContext.getCache().getSourceFilterCache(source).put(newFilter, pks);
+            syncContext.getCache().getSourceFilterCache(connectionConfig, sourceDefinition).put(newFilter, pks);
         }
 
         log.debug("Checking source cache for pks "+pks);
-        Map loadedRows = syncContext.getCache().getSourceDataCache(source).get(pks);
+        Map loadedRows = syncContext.getCache().getSourceDataCache(connectionConfig, sourceDefinition).get(pks);
         log.debug("Loaded rows: "+loadedRows.keySet());
         results.putAll(loadedRows);
 
@@ -337,10 +345,10 @@ public class SyncService {
             for (Iterator i=map.keySet().iterator(); i.hasNext(); ) {
                 Row pk = (Row)i.next();
                 AttributeValues values = (AttributeValues)map.get(pk);
-                syncContext.getCache().getSourceDataCache(source).put(pk, values);
+                syncContext.getCache().getSourceDataCache(connectionConfig, sourceDefinition).put(pk, values);
             }
 
-            syncContext.getCache().getSourceFilterCache(source).put(newFilter, map.keySet());
+            syncContext.getCache().getSourceFilterCache(connectionConfig, sourceDefinition).put(newFilter, map.keySet());
         }
 
         return results;
@@ -355,7 +363,7 @@ public class SyncService {
         SourceDefinition sourceDefinition = connectionConfig.getSourceDefinition(source.getSourceName());
 
         String s = sourceDefinition.getParameter(SourceDefinition.SIZE_LIMIT);
-        int sizeLimit = s == null ? 100 : Integer.parseInt(s);
+        int sizeLimit = s == null ? SourceDefinition.DEFAULT_SIZE_LIMIT : Integer.parseInt(s);
 
         Connection connection = syncContext.getConnection(source.getConnectionName());
         SearchResults sr;
@@ -389,7 +397,7 @@ public class SyncService {
         SourceDefinition sourceDefinition = connectionConfig.getSourceDefinition(source.getSourceName());
 
         String s = sourceDefinition.getParameter(SourceDefinition.SIZE_LIMIT);
-        int sizeLimit = s == null ? 100 : Integer.parseInt(s);
+        int sizeLimit = s == null ? SourceDefinition.DEFAULT_SIZE_LIMIT : Integer.parseInt(s);
 
         Connection connection = syncContext.getConnection(source.getConnectionName());
         SearchResults sr;

@@ -17,26 +17,26 @@ public class SourceDataCache {
 
     Logger log = LoggerFactory.getLogger(getClass());
 
+    private SourceDefinition sourceDefinition;
     private Cache cache;
     private CacheContext cacheContext;
 
     private Map dataMap = new TreeMap();
-    private Map expirationMap = new TreeMap();
+    private Map expirationMap = new LinkedHashMap();
 
     private int size;
     private int expiration; // minutes
 
-    public void init(Cache cache) throws Exception {
+    public SourceDataCache(Cache cache, SourceDefinition sourceDefinition) {
         this.cache = cache;
         this.cacheContext = cache.getCacheContext();
+        this.sourceDefinition = sourceDefinition;
 
-        String s = cache.getParameter(Cache.SIZE);
-        size = s == null ? 100 : Integer.parseInt(s);
+        String s = sourceDefinition.getParameter(SourceDefinition.DATA_CACHE_SIZE);
+        size = s == null ? SourceDefinition.DEFAULT_DATA_CACHE_SIZE : Integer.parseInt(s);
 
-        s = cache.getParameter(Cache.EXPIRATION);
-        expiration = s == null ? 5 : Integer.parseInt(s);
-
-        init();
+        s = sourceDefinition.getParameter(SourceDefinition.DATA_CACHE_EXPIRATION);
+        expiration = s == null ? SourceDefinition.DEFAULT_DATA_CACHE_EXPIRATION : Integer.parseInt(s);
     }
 
     public void init() throws Exception {
@@ -128,5 +128,13 @@ public class SourceDataCache {
 
     public void setExpiration(int expiration) {
         this.expiration = expiration;
+    }
+
+    public SourceDefinition getSourceDefinition() {
+        return sourceDefinition;
+    }
+
+    public void setSourceDefinition(SourceDefinition sourceDefinition) {
+        this.sourceDefinition = sourceDefinition;
     }
 }

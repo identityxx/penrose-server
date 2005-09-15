@@ -111,7 +111,7 @@ public class JoinEngine {
                 if (exp == null) continue;
 
                 String script = exp.getScript();
-                log.debug("   - "+primarySource.getName()+"."+field.getName()+": "+script);
+                //log.debug("   - "+primarySource.getName()+"."+field.getName()+": "+script);
 
                 Object value = interpreter.eval(script);
                 if (value == null) continue;
@@ -125,7 +125,7 @@ public class JoinEngine {
         }
 
         log.debug("Filters: "+filters);
-        
+
         return filters;
     }
 

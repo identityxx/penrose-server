@@ -7,6 +7,7 @@ package org.safehaus.penrose.cache;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.safehaus.penrose.filter.Filter;
+import org.safehaus.penrose.mapping.SourceDefinition;
 
 import java.util.*;
 
@@ -18,26 +19,25 @@ public class SourceFilterCache {
     Logger log = LoggerFactory.getLogger(getClass());
 
     public Map dataMap = new TreeMap();
-    public Map expirationMap = new TreeMap();
+    public Map expirationMap = new LinkedHashMap();
 
+    public SourceDefinition sourceDefinition;
     public Cache cache;
+    public CacheContext cacheContext;
 
     private int size;
     private int expiration; // minutes
 
-    public void init(Cache cache) throws Exception {
+    public SourceFilterCache(Cache cache, SourceDefinition sourceDefinition) {
         this.cache = cache;
+        this.cacheContext = cache.getCacheContext();
+        this.sourceDefinition = sourceDefinition;
 
-        String s = cache.getParameter(Cache.SIZE);
-        size = s == null ? 100 : Integer.parseInt(s);
+        String s = sourceDefinition.getParameter(SourceDefinition.FILTER_CACHE_SIZE);
+        size = s == null ? SourceDefinition.DEFAULT_FILTER_CACHE_SIZE : Integer.parseInt(s);
 
-        s = cache.getParameter(Cache.EXPIRATION);
-        expiration = s == null ? 5 : Integer.parseInt(s);
-
-        init();
-    }
-
-    public void init() throws Exception {
+        s = sourceDefinition.getParameter(SourceDefinition.FILTER_CACHE_EXPIRATION);
+        expiration = s == null ? SourceDefinition.DEFAULT_FILTER_CACHE_EXPIRATION : Integer.parseInt(s);
     }
 
     public Collection get(Filter filter) throws Exception {

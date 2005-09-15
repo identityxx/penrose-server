@@ -110,9 +110,7 @@ public class Config implements Serializable {
 
     public void renameEntryDefinition(EntryDefinition entry, String newDn) {
     	if (entry == null) return;
-
-    	if (newDn.equals(entry.getDn())) return;
-    	//System.out.println("Renaming "+entry.getDn()+" to "+newDn);
+    	if (entry.getDn().equals(newDn)) return;
 
         EntryDefinition oldParent = getParent(entry);
     	String oldDn = entry.getDn();
@@ -541,5 +539,20 @@ public class Config implements Serializable {
 
     public void setRootEntryDefinitions(Collection rootEntryDefinitions) {
         this.rootEntryDefinitions = rootEntryDefinitions;
+    }
+
+    public Collection getPrimaryKeyFields(Source source) {
+        ConnectionConfig connectionConfig = getConnectionConfig(source.getConnectionName());
+        SourceDefinition sourceDefinition = connectionConfig.getSourceDefinition(source.getSourceName());
+
+        Collection results = new ArrayList();
+        for (Iterator i=source.getFields().iterator(); i.hasNext(); ) {
+            Field field = (Field)i.next();
+            FieldDefinition fieldDefinition = sourceDefinition.getFieldDefinition(field.getName());
+            if (!fieldDefinition.isPrimaryKey()) continue;
+            results.add(field);
+        }
+        
+        return results;
     }
 }

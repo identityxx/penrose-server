@@ -93,10 +93,8 @@ public class ConfigWriter {
 		// entries
 		for (Iterator iter = config.getRootEntryDefinitions().iterator(); iter.hasNext();) {
 			EntryDefinition entry = (EntryDefinition)iter.next();
-            Element entryElement = new DefaultElement("entry");
-            entryElement.add(new DefaultAttribute("dn", entry.getDn()));
-            mappingElement.add(entryElement);
-            toElement(entry, entryElement, mappingElement);
+
+            toElement(entry, mappingElement);
 		}
 		return mappingElement;
 	}
@@ -204,47 +202,58 @@ public class ConfigWriter {
     	return element;
     }
 
-	public Element toElement(EntryDefinition entry, Element entryElement, Element configElement) {
-		// object classes
+	public Element toElement(EntryDefinition entry, Element configElement) {
+
+        Element entryElement = new DefaultElement("entry");
+        entryElement.add(new DefaultAttribute("dn", entry.getDn()));
+        configElement.add(entryElement);
+
 		for (Iterator i=entry.getObjectClasses().iterator(); i.hasNext(); ) {
 			String objectClass = (String)i.next();
 			Element objectClassElement = new DefaultElement("oc");
 			objectClassElement.setText(objectClass);
 			entryElement.add(objectClassElement);
 		}
-		// attributes
+
 		Collection attributes = entry.getAttributeDefinitions();
 		for (Iterator i = attributes.iterator(); i.hasNext(); ) {
 			AttributeDefinition attribute = (AttributeDefinition)i.next();
             if (attribute.getExpression() == null) continue;
             entryElement.add(toElement(attribute));
 		}
-		// sources
+
 		for (Iterator i = entry.getSources().iterator(); i.hasNext(); ) {
 			Source source = (Source)i.next();
             entryElement.add(toElement(source));
 		}
-		// relationships
+
 		for (Iterator i = entry.getRelationships().iterator(); i.hasNext(); ) {
 			Relationship relationship = (Relationship)i.next();
 			entryElement.add(toElement(relationship));
 		}
-        // acl
+
         for (Iterator i = entry.getACL().iterator(); i.hasNext(); ) {
             ACI aci = (ACI)i.next();
             entryElement.add(toElement(aci));
+        }
+
+        for (Iterator i = entry.getParameterNames().iterator(); i.hasNext(); ) {
+            String name = (String)i.next();
+            String value = entry.getParameter(name);
+            if ("".equals(value)) continue;
+
+            Element parameterElement = createParameterElement(name, value);
+            entryElement.add(parameterElement);
         }
 
         Collection children = config.getChildren(entry);
         if (children != null) {
             for (Iterator i = children.iterator(); i.hasNext(); ) {
                 EntryDefinition child = (EntryDefinition)i.next();
-                Element childElement = new DefaultElement("entry");
-                childElement.add(new DefaultAttribute("dn", child.getDn()));
-                configElement.add(childElement);
-                toElement(child, childElement, configElement);
+                toElement(child, configElement);
             }
         }
+
 		return entryElement;
 	}
 
@@ -290,14 +299,9 @@ public class ConfigWriter {
         connectionName.add(new DefaultText(source.getConnectionName()));
         element.add(connectionName);
 
-        ConnectionConfig connectionConfig = config.getConnectionConfig(source.getConnectionName());
-        SourceDefinition sourceDefinition = connectionConfig.getSourceDefinition(source.getSourceName());
-
 		// fields
 		for (Iterator i=source.getFields().iterator(); i.hasNext(); ) {
 			Field field = (Field)i.next();
-
-            if (sourceDefinition.getFieldDefinition(field.getName()) == null) continue;            
             if (field.getExpression() == null) continue;
 
             element.add(toElement(field));
