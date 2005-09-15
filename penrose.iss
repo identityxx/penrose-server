@@ -3,11 +3,11 @@
 
 [Setup]
 
-AppName=Penrose
-AppVerName=Penrose 0.9.5
-DefaultDirName={pf}\Penrose
-DefaultGroupName=Penrose
-UninstallDisplayName=Penrose
+AppName=Penrose Server
+AppVerName=Penrose Server 0.9.5
+DefaultDirName={pf}\Penrose Server
+DefaultGroupName=Penrose Server
+UninstallDisplayName=Penrose Server
 UninstallDisplayIcon={app}\penrose.ico
 Compression=zip
 SolidCompression=yes

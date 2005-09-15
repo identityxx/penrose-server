@@ -31,16 +31,16 @@
     <at name="price">
       <expression>products.price</expression>
     </at>
+    <source name="cat">
+      <source-name>categories</source-name>
+      <connection-name>MySQL</connection-name>
+    </source>
     <source name="products">
       <source-name>products</source-name>
       <connection-name>MySQL</connection-name>
       <field name="name">
         <expression>cn</expression>
       </field>
-    </source>
-    <source name="cat">
-      <source-name>categories</source-name>
-      <connection-name>MySQL</connection-name>
     </source>
     <relationship>
       <expression>products.categoryId = cat.id</expression>
@@ -176,14 +176,6 @@
     <at name="cn" rdn="true">
       <expression>customers.firstName+" "+customers.lastName</expression>
     </at>
-    <source name="order_details">
-      <source-name>order_details</source-name>
-      <connection-name>MySQL</connection-name>
-    </source>
-    <source name="orders">
-      <source-name>orders</source-name>
-      <connection-name>MySQL</connection-name>
-    </source>
     <source name="customers">
       <source-name>customers</source-name>
       <connection-name>MySQL</connection-name>
@@ -195,6 +187,14 @@ return cn.substring(0, i);</expression>
         <expression>int i = cn.indexOf(" ");
 return cn.substring(i+1);</expression>
       </field>
+    </source>
+    <source name="order_details">
+      <source-name>order_details</source-name>
+      <connection-name>MySQL</connection-name>
+    </source>
+    <source name="orders">
+      <source-name>orders</source-name>
+      <connection-name>MySQL</connection-name>
     </source>
     <relationship>
       <expression>products.id = order_details.productId</expression>
@@ -350,12 +350,12 @@ return cn.substring(i+1);</expression>
     <at name="price">
       <expression>products.price</expression>
     </at>
-    <source name="orders">
-      <source-name>orders</source-name>
-      <connection-name>MySQL</connection-name>
-    </source>
     <source name="order_details">
       <source-name>order_details</source-name>
+      <connection-name>MySQL</connection-name>
+    </source>
+    <source name="orders">
+      <source-name>orders</source-name>
       <connection-name>MySQL</connection-name>
     </source>
     <source name="products">
@@ -392,18 +392,6 @@ return cn.substring(i+1);</expression>
     <at name="description">
       <expression>categories.description</expression>
     </at>
-    <source name="orders">
-      <source-name>orders</source-name>
-      <connection-name>MySQL</connection-name>
-    </source>
-    <source name="order_details">
-      <source-name>order_details</source-name>
-      <connection-name>MySQL</connection-name>
-    </source>
-    <source name="products">
-      <source-name>products</source-name>
-      <connection-name>MySQL</connection-name>
-    </source>
     <source name="categories">
       <source-name>categories</source-name>
       <connection-name>MySQL</connection-name>
@@ -413,6 +401,18 @@ return cn.substring(i+1);</expression>
       <field name="name">
         <expression>cn</expression>
       </field>
+    </source>
+    <source name="order_details">
+      <source-name>order_details</source-name>
+      <connection-name>MySQL</connection-name>
+    </source>
+    <source name="orders">
+      <source-name>orders</source-name>
+      <connection-name>MySQL</connection-name>
+    </source>
+    <source name="products">
+      <source-name>products</source-name>
+      <connection-name>MySQL</connection-name>
     </source>
     <relationship>
       <expression>orders.id = order_details.orderId</expression>
@@ -504,11 +504,16 @@ return cn.substring(i+1);</expression>
 }</expression>
     </at>
     <at name="uniqueMember">
-      <expression foreach="customers.firstName">"cn="+customers.firstName+" "+customers.lastName+",ou=Customers,dc=Example,dc=com"</expression>
+      <expression foreach="customers.firstName" var="x">"cn="+x+" "+customers.lastName+",ou=Customers,dc=Example,dc=com"</expression>
     </at>
     <source name="customers">
       <source-name>customers</source-name>
       <connection-name>MySQL</connection-name>
+      <field name="firstName">
+        <expression foreach="uniqueMember" var="x">int i = x.indexOf("=");
+int j = x.indexOf(",");
+return x.substring(i+1, j);</expression>
+      </field>
       <field name="lastName">
         <expression>cn</expression>
       </field>

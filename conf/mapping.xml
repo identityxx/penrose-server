@@ -21,14 +21,14 @@
     </aci>
   </entry>
 
-  <entry dn="cn=manager,dc=Example,dc=com">
+  <entry dn="cn=Manager,dc=Example,dc=com">
     <oc>person</oc>
     <oc>inetOrgPerson</oc>
     <at name="cn" rdn="true">
-      <expression>"manager"</expression>
+      <expression>"Manager"</expression>
     </at>
     <at name="sn">
-      <expression>"manager"</expression>
+      <expression>"Manager"</expression>
     </at>
     <at name="userPassword">
       <expression>"secret"</expression>

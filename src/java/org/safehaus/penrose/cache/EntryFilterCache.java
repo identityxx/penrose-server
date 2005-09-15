@@ -34,10 +34,10 @@ public class EntryFilterCache {
         this.entryDefinition = entryDefinition;
 
         String s = entryDefinition.getParameter(EntryDefinition.FILTER_CACHE_SIZE);
-        size = s == null ? 100 : Integer.parseInt(s);
+        size = s == null ? EntryDefinition.DEFAULT_FILTER_CACHE_SIZE : Integer.parseInt(s);
 
         s = entryDefinition.getParameter(EntryDefinition.FILTER_CACHE_EXPIRATION);
-        expiration = s == null ? 5 : Integer.parseInt(s);
+        expiration = s == null ? EntryDefinition.DEFAULT_FILTER_CACHE_EXPIRATION : Integer.parseInt(s);
     }
 
     public void init() throws Exception {
