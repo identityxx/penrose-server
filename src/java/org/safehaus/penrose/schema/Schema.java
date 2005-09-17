@@ -133,7 +133,7 @@ public class Schema {
         ObjectClass oc = (ObjectClass)objectClasses.get(ocName);
         if (oc == null) return;
 
-    	List superClasses = oc.getSuperClasses();
+    	Collection superClasses = oc.getSuperClasses();
     	for (Iterator i=superClasses.iterator(); i.hasNext(); ) {
     		String supName = (String)i.next();
 
@@ -149,7 +149,7 @@ public class Schema {
         ObjectClass oc = (ObjectClass)objectClasses.get(child);
         if (oc == null) return false;
 
-        List superClasses = oc.getSuperClasses();
+        Collection superClasses = oc.getSuperClasses();
         for (Iterator i=superClasses.iterator(); i.hasNext(); ) {
             String supName = (String)i.next();
             //log.debug(" - comparing "+parent+" with "+supName+": "+supName.equals(parent));

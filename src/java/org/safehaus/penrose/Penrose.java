@@ -96,6 +96,7 @@ public class Penrose implements
 	private String rootDn;
 	private String rootPassword;
 
+    private ConfigValidator configValidator;
     private Handler handler;
 	private ACLEngine aclEngine;
 	private FilterTool filterTool;
@@ -211,10 +212,29 @@ public class Penrose implements
         initCache();
         initEngine();
 
+        configValidator = new ConfigValidator();
+        configValidator.setServerConfig(serverConfig);
+        configValidator.setSchema(schema);
+
         if (trustedKeyStore != null) System.setProperty("javax.net.ssl.trustStore", trustedKeyStore);
     }
 
 	public void addConfig(Config config) throws Exception {
+
+        log.debug("-------------------------------------------------------------------------------");
+        log.debug("Validating config...");
+
+        Collection results = configValidator.validate(config);
+        for (Iterator i=results.iterator(); i.hasNext(); ) {
+            ConfigValidationResult result = (ConfigValidationResult)i.next();
+
+            if (result.getType().equals(ConfigValidationResult.ERROR)) {
+                log.error("ERROR: "+result.getMessage()+" ["+result.getSource()+"]");
+            } else {
+                log.warn("WARNING: "+result.getMessage()+" ["+result.getSource()+"]");
+            }
+        }
+
         log.debug("-------------------------------------------------------------------------------");
         log.debug("Penrose.addConfig(config)");
 
@@ -839,5 +859,13 @@ public class Penrose implements
 
     public void setHomeDirectory(String homeDirectory) {
         this.homeDirectory = homeDirectory;
+    }
+
+    public ConfigValidator getConfigValidator() {
+        return configValidator;
+    }
+
+    public void setConfigValidator(ConfigValidator configValidator) {
+        this.configValidator = configValidator;
     }
 }

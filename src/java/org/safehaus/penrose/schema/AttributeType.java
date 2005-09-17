@@ -18,7 +18,7 @@
 package org.safehaus.penrose.schema;
 
 import java.util.ArrayList;
-import java.util.List;
+import java.util.Collection;
 import java.io.Serializable;
 
 /**
@@ -40,7 +40,7 @@ public class AttributeType implements Serializable {
 	/**
 	 * Name.
 	 */
-	public List names;
+	public Collection names;
 	
 	/**
 	 * Description.
@@ -151,7 +151,7 @@ public class AttributeType implements Serializable {
 	 * @return attribute name
 	 */
     public String getName() {
-    	if (names != null && names.size() >= 1) return names.get(0).toString();
+    	if (names != null && names.size() >= 1) return names.iterator().next().toString();
     	return null;
     }
     /**
@@ -166,13 +166,13 @@ public class AttributeType implements Serializable {
 	/**
 	 * @return Returns the name.
 	 */
-	public List getNames() {
+	public Collection getNames() {
 		return names;
 	}
 	/**
 	 * @param names The name to set.
 	 */
-	public void setNames(List names) {
+	public void setNames(Collection names) {
 		this.names = names;
 	}
 	/**

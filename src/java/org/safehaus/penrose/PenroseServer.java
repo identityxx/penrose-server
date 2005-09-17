@@ -20,6 +20,8 @@ package org.safehaus.penrose;
 
 import java.util.Properties;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Set;
 import java.io.File;
 import java.io.Reader;
 import java.io.BufferedReader;
@@ -33,6 +35,7 @@ import javax.management.ObjectName;
 
 import org.apache.ldap.server.configuration.SyncConfiguration;
 import org.apache.ldap.server.configuration.MutableServerStartupConfiguration;
+import org.apache.ldap.server.configuration.MutableAuthenticatorConfiguration;
 import org.apache.ldap.server.jndi.ServerContextFactory;
 import org.apache.log4j.PropertyConfigurator;
 import org.springframework.context.ApplicationContext;
@@ -40,6 +43,7 @@ import org.springframework.context.support.FileSystemXmlApplicationContext;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 import org.safehaus.penrose.management.PenroseClient;
+import org.safehaus.penrose.apacheds.PenroseAuthenticator;
 import mx4j.log.Log4JLogger;
 import mx4j.tools.config.ConfigurationLoader;
 import sun.misc.Signal;
@@ -72,12 +76,24 @@ public class PenroseServer implements SignalHandler {
         MutableServerStartupConfiguration cfg = (MutableServerStartupConfiguration)factory.getBean("configuration");
         cfg.setWorkingDirectory(new File((homeDirectory == null ? "" : homeDirectory+File.separator)+"var"+File.separator+"data"));
 
+        penrose = (Penrose)factory.getBean("penrose");
+
+        PenroseAuthenticator authenticator = new PenroseAuthenticator();
+        authenticator.setPenrose(penrose);
+
+        MutableAuthenticatorConfiguration authenticatorConfig = new MutableAuthenticatorConfiguration();
+        authenticatorConfig.setName("penrose");
+        authenticatorConfig.setAuthenticator(authenticator);
+
+        Set authenticators = cfg.getAuthenticatorConfigurations();
+        authenticators.add(authenticatorConfig);
+        cfg.setAuthenticatorConfigurations(authenticators);
+
         env = (Properties)factory.getBean("environment");
         env.setProperty(Context.PROVIDER_URL, "ou=system");
         env.setProperty(Context.INITIAL_CONTEXT_FACTORY, ServerContextFactory.class.getName() );
         env.putAll(cfg.toJndiEnvironment());
 
-        penrose = (Penrose)factory.getBean("penrose");
         penrose.setHomeDirectory(homeDirectory);
         penrose.setRootDn(env.getProperty(Context.SECURITY_PRINCIPAL));
         penrose.setRootPassword(env.getProperty(Context.SECURITY_CREDENTIALS));
@@ -246,8 +262,8 @@ public class PenroseServer implements SignalHandler {
         } catch (Exception e) {
             String name = e.getClass().getName();
             name = name.substring(name.lastIndexOf(".")+1);
-            log.error(name+": "+e.getMessage());
-            log.error("Penrose Server failed to start.");
+            log.debug(name, e);
+            log.error("Penrose Server failed to start: "+name+": "+e.getMessage());
             System.exit(1);
         }
     }

@@ -231,7 +231,8 @@ public class ConfigWriter {
 		Collection attributes = entry.getAttributeDefinitions();
 		for (Iterator i = attributes.iterator(); i.hasNext(); ) {
 			AttributeDefinition attribute = (AttributeDefinition)i.next();
-            if (attribute.getExpression() == null) continue;
+            Expression expression = attribute.getExpression();
+            if (expression == null || expression.getScript() == null) continue;
             entryElement.add(toElement(attribute));
 		}
 
@@ -281,9 +282,7 @@ public class ConfigWriter {
             element.add(scriptElement);
         }
 
-        if (attribute.getExpression() != null) {
-            element.add(toElement(attribute.getExpression()));
-        }
+        element.add(toElement(attribute.getExpression()));
 
     	return element;
     }
@@ -406,9 +405,10 @@ public class ConfigWriter {
     	element.add(oidElement);
     	
     	Element namesElement = new DefaultElement("names");
-    	for (int i=0; oc.getNames() != null && i<oc.getNames().size(); i++) {
+    	for (Iterator i=oc.getNames().iterator(); i.hasNext(); ) {
+            String name = (String)i.next();
     		Element nameElement = new DefaultElement("name");
-    		nameElement.add(new DefaultText(oc.getNames().get(i).toString()));
+    		nameElement.add(new DefaultText(name));
     		namesElement.add(nameElement);
     	}
     	element.add(namesElement);
@@ -422,9 +422,10 @@ public class ConfigWriter {
     	element.add(obsoleteElement);
     	
     	Element superclassesElement = new DefaultElement("superclasses");
-    	for (int i=0; oc.getSuperClasses() != null && i<oc.getSuperClasses().size(); i++) {
+    	for (Iterator i=oc.getSuperClasses().iterator(); i.hasNext(); ) {
+            String superClass = (String)i.next();
     		Element ocElement = new DefaultElement("oc");
-    		ocElement.add(new DefaultText(oc.getSuperClasses().get(i).toString()));
+    		ocElement.add(new DefaultText(superClass));
     		superclassesElement.add(ocElement);
     	}
     	element.add(superclassesElement);
@@ -434,17 +435,19 @@ public class ConfigWriter {
     	element.add(typeElement);
     	
     	Element requiredAttributesElement = new DefaultElement("required-attributes");
-    	for (int i=0; oc.getRequiredAttributes() != null && i<oc.getRequiredAttributes().size(); i++) {
+    	for (Iterator i=oc.getRequiredAttributes().iterator(); i.hasNext(); ) {
+            String name = (String)i.next();
     		Element atElement = new DefaultElement("at");
-    		atElement.add(new DefaultText(oc.getRequiredAttributes().get(i).toString()));
+    		atElement.add(new DefaultText(name));
     		requiredAttributesElement.add(atElement);
     	}
     	element.add(requiredAttributesElement);
     	
     	Element optionalAttributesElement = new DefaultElement("optional-attributes");
-    	for (int i=0; oc.getOptionalAttributes() != null && i<oc.getOptionalAttributes().size(); i++) {
+    	for (Iterator i=oc.getOptionalAttributes().iterator(); i.hasNext(); ) {
+            String name = (String)i.next();
     		Element atElement = new DefaultElement("at");
-    		atElement.add(new DefaultText(oc.getOptionalAttributes().get(i).toString()));
+    		atElement.add(new DefaultText(name));
     		optionalAttributesElement.add(atElement);
     	}
     	element.add(optionalAttributesElement);
@@ -460,9 +463,10 @@ public class ConfigWriter {
     	element.add(oidElement);
     	
     	Element namesElement = new DefaultElement("names");
-    	for (int i=0; at.getNames() != null && i<at.getNames().size(); i++) {
+    	for (Iterator i=at.getNames().iterator(); i.hasNext(); ) {
+            String name = (String)i.next();
     		Element nameElement = new DefaultElement("name");
-    		nameElement.add(new DefaultText(at.getNames().get(i).toString()));
+    		nameElement.add(new DefaultText(name));
     		namesElement.add(nameElement);
     	}
     	element.add(namesElement);

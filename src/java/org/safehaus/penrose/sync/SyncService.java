@@ -435,11 +435,18 @@ public class SyncService {
                 FieldDefinition fieldDefinition = sourceDefinition.getFieldDefinition(name);
                 if (!fieldDefinition.isPrimaryKey()) continue;
 
-                Object value = av.get(name).iterator().next();
+                Collection values = av.get(name);
+                if (values == null) {
+                    pk = null;
+                    break;
+                }
 
+                Object value = values.iterator().next();
                 pk.set(name, value);
             }
 
+            if (pk == null) continue;
+            
             Row npk = syncContext.getSchema().normalize(pk);
             log.debug(" - PK: "+npk);
 

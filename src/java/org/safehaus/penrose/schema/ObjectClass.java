@@ -18,7 +18,7 @@
 package org.safehaus.penrose.schema;
 
 import java.util.ArrayList;
-import java.util.List;
+import java.util.Collection;
 import java.io.Serializable;
 
 /**
@@ -39,7 +39,7 @@ public class ObjectClass implements Serializable {
 	/**
 	 * Name.
 	 */
-	public List names = new ArrayList();
+	public Collection names = new ArrayList();
     
     /**
      * Description.
@@ -54,7 +54,7 @@ public class ObjectClass implements Serializable {
     /**
      * Super class.
      */
-	public List superClasses = new ArrayList();
+	public Collection superClasses = new ArrayList();
     
     /**
      * Type (ABSTRACT, STRUCTURAL, AUXILIARY). Default: STRUCTURAL.
@@ -64,12 +64,12 @@ public class ObjectClass implements Serializable {
     /**
      * Required attribute types. Each element is of type AttributeType.
      */
-	public List requiredAttributes = new ArrayList();
+	public Collection requiredAttributes = new ArrayList();
     
     /**
      * Optional attribute types. Each element is of type AttributeType.
      */
-	public List optionalAttributes = new ArrayList();
+	public Collection optionalAttributes = new ArrayList();
 	
 	public ObjectClass() {
 		super();
@@ -81,14 +81,14 @@ public class ObjectClass implements Serializable {
         this.description = description;
     }
 
-    public ObjectClass(List names, List superClasses, String description) {
+    public ObjectClass(Collection names, Collection superClasses, String description) {
         this.names.addAll(names);
         this.superClasses.addAll(superClasses);
         this.description = description;
     }
     
     public String getName() {
-    	if (names != null && names.size() >= 1) return names.get(0).toString();
+    	if (names != null && names.size() >= 1) return names.iterator().next().toString();
     	return null;
     }
     
@@ -98,19 +98,19 @@ public class ObjectClass implements Serializable {
     	names.add(name);
     }
 
-    public List getNames() {
+    public Collection getNames() {
         return names;
     }
 
-    public void setNames(List names) {
+    public void setNames(Collection names) {
         this.names = names;
     }
 
-    public List getSuperClasses() {
+    public Collection getSuperClasses() {
         return superClasses;
     }
 
-    public void setSuperClasses(List superClasses) {
+    public void setSuperClasses(Collection superClasses) {
         this.superClasses = superClasses;
     }
 
@@ -122,19 +122,19 @@ public class ObjectClass implements Serializable {
         this.description = description;
     }
 
-    public List getRequiredAttributes() {
+    public Collection getRequiredAttributes() {
         return requiredAttributes;
     }
 
-    public void setRequiredAttributes(List requiredAttributes) {
+    public void setRequiredAttributes(Collection requiredAttributes) {
         this.requiredAttributes = requiredAttributes;
     }
 
-    public List getOptionalAttributes() {
+    public Collection getOptionalAttributes() {
         return optionalAttributes;
     }
 
-    public void setOptionalAttributes(List optionalAttributes) {
+    public void setOptionalAttributes(Collection optionalAttributes) {
         this.optionalAttributes = optionalAttributes;
     }
 	/**

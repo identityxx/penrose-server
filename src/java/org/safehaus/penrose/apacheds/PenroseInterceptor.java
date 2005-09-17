@@ -352,6 +352,10 @@ public class PenroseInterceptor extends BaseInterceptor {
 
             return result;
 
+        } catch (NamingException e) {
+            e.printStackTrace();
+            throw e;
+
         } catch (Exception e) {
             log.error(e.getMessage(), e);
             throw new NamingException(e.getMessage());
@@ -423,6 +427,9 @@ public class PenroseInterceptor extends BaseInterceptor {
             }
 
             return attributes;
+
+        } catch (NamingException e) {
+            throw e;
 
         } catch (Exception e) {
             log.error(e.getMessage(), e);

@@ -27,8 +27,8 @@ rem by the user or the %0 problem on Windows 9x
 if exist "%PENROSE_HOME%\README.txt" goto checkJava
 
 rem check for Penrose in Program Files on system drive
-if not exist "%SystemDrive%\Program Files\Penrose" goto checkSystemDrive
-set PENROSE_HOME=%SystemDrive%\Program Files\Penrose
+if not exist "%SystemDrive%\Program Files\Penrose Server" goto checkSystemDrive
+set PENROSE_HOME=%SystemDrive%\Program Files\Penrose Server
 goto checkJava
 
 :checkSystemDrive

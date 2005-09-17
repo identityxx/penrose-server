@@ -37,11 +37,13 @@
         <bean class="org.apache.ldap.server.schema.bootstrap.CoreSchema"/>
         <bean class="org.apache.ldap.server.schema.bootstrap.CosineSchema"/>
         <bean class="org.apache.ldap.server.schema.bootstrap.ApacheSchema"/>
+        <bean class="org.apache.ldap.server.schema.bootstrap.CollectiveSchema"/>
         <bean class="org.apache.ldap.server.schema.bootstrap.InetorgpersonSchema"/>
         <bean class="org.apache.ldap.server.schema.bootstrap.JavaSchema"/>
         <bean class="org.apache.ldap.server.schema.bootstrap.Krb5kdcSchema"/>
         <bean class="org.apache.ldap.server.schema.bootstrap.NisSchema"/>
         <bean class="org.apache.ldap.server.schema.bootstrap.SystemSchema"/>
+        <bean class="org.apache.ldap.server.schema.bootstrap.ApachednsSchema"/>
       </set>
     </property>
     
@@ -87,12 +89,30 @@
             <bean class="org.apache.ldap.server.schema.SchemaService" />
           </property>
         </bean>
+          <bean class="org.apache.ldap.server.configuration.MutableInterceptorConfiguration">
+            <property name="name"><value>subentryService</value></property>
+            <property name="interceptor">
+              <bean class="org.apache.ldap.server.subtree.SubentryService" />
+            </property>
+          </bean>
         <bean class="org.apache.ldap.server.configuration.MutableInterceptorConfiguration">
           <property name="name"><value>operationalAttributeService</value></property>
           <property name="interceptor">
             <bean class="org.apache.ldap.server.operational.OperationalAttributeService" />
           </property>
         </bean>
+          <bean class="org.apache.ldap.server.configuration.MutableInterceptorConfiguration">
+            <property name="name"><value>collectiveAttributeService</value></property>
+            <property name="interceptor">
+              <bean class="org.apache.ldap.server.collective.CollectiveAttributeService" />
+            </property>
+          </bean>
+          <bean class="org.apache.ldap.server.configuration.MutableInterceptorConfiguration">
+            <property name="name"><value>eventService</value></property>
+            <property name="interceptor">
+              <bean class="org.apache.ldap.server.event.EventService" />
+            </property>
+          </bean>
       </list>
     </property>
   </bean>
