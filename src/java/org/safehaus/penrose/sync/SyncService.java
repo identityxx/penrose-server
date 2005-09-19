@@ -104,10 +104,20 @@ public class SyncService {
         SourceDefinition sourceDefinition = connectionConfig.getSourceDefinition(source.getSourceName());
 
         try {
+            Collection pks = syncContext.getTransformEngine().getPrimaryKeys(source, sourceValues);
 
-            Connection connection = syncContext.getConnection(source.getConnectionName());
-            int rc = connection.add(source, sourceValues);
-            if (rc != LDAPException.SUCCESS) return rc;
+            // Add rows
+            for (Iterator i = pks.iterator(); i.hasNext();) {
+                Row pk = (Row) i.next();
+                AttributeValues newEntry = (AttributeValues)sourceValues.clone();
+                newEntry.set(pk);
+                log.debug("ADDING ROW: " + newEntry);
+
+                // Add row to source table in the source database/directory
+                Connection connection = syncContext.getConnection(source.getConnectionName());
+                int rc = connection.add(source, newEntry);
+                if (rc != LDAPException.SUCCESS) return rc;
+            }
 
             syncContext.getCache().getSourceFilterCache(connectionConfig, sourceDefinition).invalidate();
 
@@ -126,35 +136,27 @@ public class SyncService {
         MRSWLock lock = getLock(source);
         lock.getWriteLock(WAIT_TIMEOUT);
 
+        Config config = syncContext.getConfig(source);
+        ConnectionConfig connectionConfig = config.getConnectionConfig(source.getConnectionName());
+        SourceDefinition sourceDefinition = connectionConfig.getSourceDefinition(source.getSourceName());
+
         try {
+            Collection pks = syncContext.getTransformEngine().getPrimaryKeys(source, sourceValues);
 
-            Connection connection = syncContext.getConnection(source.getConnectionName());
-            int rc = connection.delete(source, sourceValues);
-            if (rc != LDAPException.SUCCESS) return rc;
+            // Remove rows
+            for (Iterator i = pks.iterator(); i.hasNext();) {
+                Row pk = (Row) i.next();
+                AttributeValues oldEntry = (AttributeValues)sourceValues.clone();
+                oldEntry.set(pk);
+                log.debug("DELETE ROW: " + oldEntry);
 
-            Config config = syncContext.getConfig(source);
-            ConnectionConfig connectionConfig = config.getConnectionConfig(source.getConnectionName());
-            SourceDefinition sourceDefinition = connectionConfig.getSourceDefinition(source.getSourceName());
+                // Delete row from source table in the source database/directory
+                Connection connection = syncContext.getConnection(source.getConnectionName());
+                int rc = connection.delete(source, oldEntry);
+                if (rc != LDAPException.SUCCESS)
+                    return rc;
 
-            AttributeValues av = new AttributeValues();
-
-            Collection fields = source.getFields();
-            for (Iterator j=fields.iterator(); j.hasNext(); ) {
-                Field field = (Field)j.next();
-                FieldDefinition fieldDefinition = sourceDefinition.getFieldDefinition(field.getName());
-                if (!fieldDefinition.isPrimaryKey()) continue;
-
-                Collection values = sourceValues.get(field.getName());
-                if (values == null) continue;
-
-                av.set(field.getName(), values);
-            }
-
-            Collection pks = syncContext.getTransformEngine().convert(av);
-
-            for (Iterator i=pks.iterator(); i.hasNext(); ) {
-                Row pk = (Row)i.next();
-                //log.debug(" - "+pk);
+                // Delete row from source table in the cache
                 syncContext.getCache().getSourceDataCache(connectionConfig, sourceDefinition).remove(pk);
             }
 
@@ -167,30 +169,23 @@ public class SyncService {
         return LDAPException.SUCCESS;
     }
 
-    public int modify(Source source, EntryDefinition entry, AttributeValues oldValues, AttributeValues newValues) throws Exception {
+    public int modify(Source source, AttributeValues oldValues, AttributeValues newValues) throws Exception {
 
         log.debug("----------------------------------------------------------------");
-        log.debug("Updating entry in " + source.getName());
-        //log.debug("Old values: " + oldValues);
-        //log.debug("New values: " + newValues);
+        log.debug("Modifying entry in " + source.getName());
+        log.debug("Old values: " + oldValues);
+        log.debug("New values: " + newValues);
+
+        MRSWLock lock = getLock(source);
+        lock.getWriteLock(WAIT_TIMEOUT);
 
         Config config = syncContext.getConfig(source);
         ConnectionConfig connectionConfig = config.getConnectionConfig(source.getConnectionName());
         SourceDefinition sourceDefinition = connectionConfig.getSourceDefinition(source.getSourceName());
 
-        MRSWLock lock = getLock(source);
-        lock.getWriteLock(WAIT_TIMEOUT);
-
         try {
-
-            Map oldEntries = syncContext.getTransformEngine().split(source, oldValues);
-            Map newEntries = syncContext.getTransformEngine().split(source, newValues);
-
-            //log.debug("Old entries: " + oldEntries);
-            //log.debug("New entries: " + newEntries);
-
-            Collection oldPKs = oldEntries.keySet();
-            Collection newPKs = newEntries.keySet();
+            Collection oldPKs = syncContext.getTransformEngine().getPrimaryKeys(source, oldValues);
+            Collection newPKs = syncContext.getTransformEngine().getPrimaryKeys(source, newValues);
 
             log.debug("Old PKs: " + oldPKs);
             log.debug("New PKs: " + newPKs);
@@ -210,10 +205,9 @@ public class SyncService {
             // Add rows
             for (Iterator i = addRows.iterator(); i.hasNext();) {
                 Row pk = (Row) i.next();
-                AttributeValues newEntry = (AttributeValues) newEntries.get(pk);
+                AttributeValues newEntry = (AttributeValues)newValues.clone();
+                newEntry.set(pk);
                 log.debug("ADDING ROW: " + newEntry);
-
-                //AttributeValues attributes = engineContext.getTransformEngine().convert(newEntry);
 
                 // Add row to source table in the source database/directory
                 Connection connection = syncContext.getConnection(source.getConnectionName());
@@ -224,10 +218,9 @@ public class SyncService {
             // Remove rows
             for (Iterator i = removeRows.iterator(); i.hasNext();) {
                 Row pk = (Row) i.next();
-                AttributeValues oldEntry = (AttributeValues) oldEntries.get(pk);
+                AttributeValues oldEntry = (AttributeValues)oldValues.clone();
+                oldEntry.set(pk);
                 log.debug("DELETE ROW: " + oldEntry);
-
-                //AttributeValues attributes = engineContext.getTransformEngine().convert(oldEntry);
 
                 // Delete row from source table in the source database/directory
                 Connection connection = syncContext.getConnection(source.getConnectionName());
@@ -242,12 +235,11 @@ public class SyncService {
             // Replace rows
             for (Iterator i = replaceRows.iterator(); i.hasNext();) {
                 Row pk = (Row) i.next();
-                AttributeValues oldEntry = (AttributeValues) oldEntries.get(pk);
-                AttributeValues newEntry = (AttributeValues) newEntries.get(pk);
-                log.debug("REPLACE ROW: " + newEntry.toString());
-
-                //AttributeValues oldAttributes = engineContext.getTransformEngine().convert(oldEntry);
-                //AttributeValues newAttributes = engineContext.getTransformEngine().convert(newEntry);
+                AttributeValues oldEntry = (AttributeValues)oldValues.clone();
+                oldEntry.set(pk);
+                AttributeValues newEntry = (AttributeValues)newValues.clone();
+                newEntry.set(pk);
+                log.debug("REPLACE ROW: " + oldEntry+" with "+newEntry);
 
                 // Modify row from source table in the source database/directory
                 Connection connection = syncContext.getConnection(source.getConnectionName());

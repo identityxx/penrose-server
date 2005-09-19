@@ -348,15 +348,15 @@ public class JDBCAdapter extends Adapter {
 
     public int add(Source source, AttributeValues fieldValues) throws Exception {
 
+        // convert sets into single values
+        Collection rows = getAdapterContext().getTransformEngine().convert(fieldValues);
+    	Row row = (Row)rows.iterator().next();
+
         Config config = getAdapterContext().getConfig(source);
         ConnectionConfig connectionConfig = config.getConnectionConfig(source.getConnectionName());
         SourceDefinition sourceDefinition = connectionConfig.getSourceDefinition(source.getSourceName());
 
         String tableName = sourceDefinition.getParameter(TABLE_NAME);
-
-        // convert sets into single values
-        Collection rows = getAdapterContext().getTransformEngine().convert(fieldValues);
-    	Row row = (Row)rows.iterator().next();
 
         java.sql.Connection con = null;
         PreparedStatement ps = null;
@@ -433,22 +433,20 @@ public class JDBCAdapter extends Adapter {
 
     public int delete(Source source, AttributeValues fieldValues) throws Exception {
         Map pk = getPkValues(source, fieldValues.getValues());
-        log.debug("Deleting entry "+pk);
+        //log.debug("Deleting entry "+pk);
+
+        // convert sets into single values
+        Collection pkRows = getAdapterContext().getTransformEngine().convert(pk);
+        //Collection rows = getAdapterContext().getTransformEngine().convert(fieldValues);
+
+        Row pkRow = (Row)pkRows.iterator().next();
+        //Row row = (Row)rows.iterator().next();
 
         Config config = getAdapterContext().getConfig(source);
         ConnectionConfig connectionConfig = config.getConnectionConfig(source.getConnectionName());
         SourceDefinition sourceDefinition = connectionConfig.getSourceDefinition(source.getSourceName());
 
         String tableName = sourceDefinition.getParameter(TABLE_NAME);
-
-        // convert sets into single values
-        Collection pkRows = getAdapterContext().getTransformEngine().convert(pk);
-        Collection rows = getAdapterContext().getTransformEngine().convert(fieldValues);
-
-    	Row pkRow = (Row)pkRows.iterator().next();
-    	Row row = (Row)rows.iterator().next();
-
-    	log.debug("Deleting attributes in "+pk);
 
         java.sql.Connection con = null;
         PreparedStatement ps = null;
@@ -474,7 +472,7 @@ public class JDBCAdapter extends Adapter {
             int c = 1;
             for (Iterator i=pkRow.getNames().iterator(); i.hasNext(); c++) {
                 String name = (String)i.next();
-                Object value = row.get(name);
+                Object value = pkRow.get(name);
                 ps.setObject(c, value);
                 log.debug(" - "+c+" = "+value);
             }
@@ -492,19 +490,20 @@ public class JDBCAdapter extends Adapter {
 
     public int modify(Source source, AttributeValues oldEntry, AttributeValues newEntry) throws Exception {
 
-        Config config = getAdapterContext().getConfig(source);
-        ConnectionConfig connectionConfig = config.getConnectionConfig(source.getConnectionName());
-        SourceDefinition sourceDefinition = connectionConfig.getSourceDefinition(source.getSourceName());
-
-        String tableName = sourceDefinition.getParameter(TABLE_NAME);
-
         // convert sets into single values
         Collection oldRows = getAdapterContext().getTransformEngine().convert(oldEntry);
         Collection newRows = getAdapterContext().getTransformEngine().convert(newEntry);
 
         Row oldRow = (Row)oldRows.iterator().next();
-    	Row newRow = (Row)newRows.iterator().next();
-        log.debug("Replacing "+oldRow+" with "+newRow);
+        Row newRow = (Row)newRows.iterator().next();
+
+        //log.debug("Modifying source "+source.getName()+": "+oldRow+" with "+newRow);
+
+        Config config = getAdapterContext().getConfig(source);
+        ConnectionConfig connectionConfig = config.getConnectionConfig(source.getConnectionName());
+        SourceDefinition sourceDefinition = connectionConfig.getSourceDefinition(source.getSourceName());
+
+        String tableName = sourceDefinition.getParameter(TABLE_NAME);
 
         java.sql.Connection con = null;
         PreparedStatement ps = null;

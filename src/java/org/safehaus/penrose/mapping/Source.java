@@ -52,6 +52,7 @@ public class Source implements Cloneable, Serializable {
 	private Map fields = new TreeMap();
 
     private boolean includeOnAdd = true;
+    private boolean includeOnModify = true;
     private boolean includeOnDelete = true;
 
 	public Source() {
@@ -123,6 +124,7 @@ public class Source implements Cloneable, Serializable {
                 (connectionName == null ? 0 : connectionName.hashCode()) +
                 (fields == null ? 0 : fields.hashCode()) +
                 (includeOnAdd ? 0 : 1) +
+                (includeOnModify? 0 : 1) +
                 (includeOnDelete ? 0 : 1);
     }
 
@@ -142,6 +144,7 @@ public class Source implements Cloneable, Serializable {
         if (!equals(connectionName, source.connectionName)) return false;
         if (!equals(fields, source.fields)) return false;
         if (includeOnAdd != source.includeOnAdd) return false;
+        if (includeOnModify != source.includeOnModify) return false;
         if (includeOnDelete != source.includeOnDelete) return false;
 
         return true;
@@ -159,6 +162,7 @@ public class Source implements Cloneable, Serializable {
         }
 
         source.includeOnAdd = includeOnAdd;
+        source.includeOnModify = includeOnModify;
         source.includeOnDelete = includeOnDelete;
 
         return source;
@@ -168,4 +172,11 @@ public class Source implements Cloneable, Serializable {
         return name+" "+sourceName;
     }
 
+    public boolean isIncludeOnModify() {
+        return includeOnModify;
+    }
+
+    public void setIncludeOnModify(boolean includeOnModify) {
+        this.includeOnModify = includeOnModify;
+    }
 }

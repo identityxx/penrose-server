@@ -306,10 +306,14 @@ public class Engine {
     public int delete(Entry entry) throws Exception {
 
         EntryDefinition entryDefinition = entry.getEntryDefinition();
-        AttributeValues sourceValues = entry.getSourceValues();
+
+        AttributeValues sourceValues = new AttributeValues();
+        getFieldValues(entry, sourceValues);
 
         Graph graph = getGraph(entryDefinition);
         Source primarySource = getPrimarySource(entryDefinition);
+
+        log.debug("Deleting entry "+entry.getDn()+" ["+sourceValues+"]");
 
         DeleteGraphVisitor visitor = new DeleteGraphVisitor(engineContext, entryDefinition, sourceValues);
         graph.traverse(visitor, primarySource);
@@ -322,14 +326,36 @@ public class Engine {
         return LDAPException.SUCCESS;
     }
 
-    public int modify(Entry entry, AttributeValues newValues) throws Exception {
+    public int modify(Entry entry, AttributeValues oldValues, AttributeValues newValues) throws Exception {
 
+        Entry parent = entry.getParent();
         EntryDefinition entryDefinition = entry.getEntryDefinition();
+        Collection sources = entryDefinition.getSources();
+
+        AttributeValues oldSourceValues = new AttributeValues();
+        getFieldValues(entry, oldSourceValues);
+
+        AttributeValues newSourceValues = (AttributeValues)oldSourceValues.clone();
+        for (Iterator i=sources.iterator(); i.hasNext(); ) {
+            Source source = (Source)i.next();
+
+            AttributeValues output = new AttributeValues();
+            engineContext.getTransformEngine().translate(source, newValues, output);
+
+            log.debug(" - "+output);
+            for (Iterator j=output.getNames().iterator(); j.hasNext(); ) {
+                String name = (String)j.next();
+                Collection values = output.get(name);
+                newSourceValues.set(source.getName()+"."+name, values);
+            }
+        }
+
+        log.debug("Modifying entry "+entryDefinition.getRdn()+","+parent.getDn()+" ["+oldSourceValues+"] with: "+newSourceValues);
 
         Graph graph = getGraph(entryDefinition);
         Source primarySource = getPrimarySource(entryDefinition);
 
-        ModifyGraphVisitor visitor = new ModifyGraphVisitor(engineContext, primarySource, entry, newValues);
+        ModifyGraphVisitor visitor = new ModifyGraphVisitor(engineContext, entryDefinition, oldSourceValues, newSourceValues);
         graph.traverse(visitor, primarySource);
 
         if (visitor.getReturnCode() != LDAPException.SUCCESS) return visitor.getReturnCode();

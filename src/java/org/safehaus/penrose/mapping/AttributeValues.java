@@ -7,7 +7,7 @@ import java.util.*;
  *
  * @author Endi S. Dewata
  */
-public class AttributeValues {
+public class AttributeValues implements Cloneable {
 
     public Map values = new TreeMap();
 
@@ -35,10 +35,22 @@ public class AttributeValues {
 
             Collection c = get(name);
             if (c == null) {
-                c = new TreeSet();
+                //c = new TreeSet();
+                c = new HashSet();
                 set(name, c);
             }
             c.add(value);
+        }
+    }
+
+    public void set(Row row) {
+        for (Iterator i = row.getNames().iterator(); i.hasNext(); ) {
+            String name = (String)i.next();
+            Object value = row.get(name);
+
+            Collection c = new HashSet();
+            c.add(value);
+            set(name, c);
         }
     }
 
@@ -52,7 +64,8 @@ public class AttributeValues {
 
         Collection c = (Collection)this.values.get(name);
         if (c == null) {
-            c = new TreeSet();
+            //c = new TreeSet();
+            c = new HashSet();
             this.values.put(name, c);
         }
         c.add(value);
@@ -62,7 +75,8 @@ public class AttributeValues {
         if (values == null) return;
         Collection c = (Collection)this.values.get(name);
         if (c == null) {
-            c = new TreeSet();
+            //c = new TreeSet();
+            c = new HashSet();
             this.values.put(name, c);
         }
         c.addAll(values);
@@ -102,5 +116,17 @@ public class AttributeValues {
         if (!(object instanceof AttributeValues)) return false;
         AttributeValues av = (AttributeValues)object;
         return values.equals(av.values);
+    }
+
+    public Object clone() {
+        AttributeValues attributeValues = new AttributeValues();
+        for (Iterator i=values.keySet().iterator(); i.hasNext(); ) {
+            String name = (String)i.next();
+            Collection c = (Collection)values.get(name);
+            Collection s = new HashSet();
+            s.addAll(c);
+            attributeValues.values.put(name, s);
+        }
+        return attributeValues;
     }
 }

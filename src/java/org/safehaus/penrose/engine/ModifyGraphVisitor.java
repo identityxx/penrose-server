@@ -34,68 +34,68 @@ public class ModifyGraphVisitor extends GraphVisitor {
 
     public EngineContext engineContext;
     public EntryDefinition entryDefinition;
-    public AttributeValues oldValues;
     public AttributeValues newValues;
+
     private int returnCode = LDAPException.SUCCESS;
 
     private Stack stack = new Stack();
 
     public ModifyGraphVisitor(
             EngineContext engineContext,
-            Source primarySource,
-            Entry entry,
+            EntryDefinition entryDefinition,
+            AttributeValues sourceValues,
             AttributeValues newValues
             ) throws Exception {
 
         this.engineContext = engineContext;
-        this.entryDefinition = entry.getEntryDefinition();
-        this.oldValues = entry.getAttributeValues();
+        this.engineContext = engineContext;
+        this.entryDefinition = entryDefinition;
+
         this.newValues = newValues;
 
-        Collection keys = new HashSet();
-/*
-        for (Iterator i=rows.iterator(); i.hasNext(); ) {
-            Row row = (Row)i.next();
-            log.debug(" - "+row);
-
-            Interpreter interpreter = engine.getEngineContext().newInterpreter();
-            interpreter.set(row);
-
-            Collection fields = primarySource.getPrimaryKeyFields();
-
-            Row pk = new Row();
-            boolean valid = true;
-
-            for (Iterator j=fields.iterator(); j.hasNext(); ) {
-                Field field = (Field)j.next();
-                String name = field.getName();
-                String expression = field.getExpression();
-                Object value = interpreter.eval(expression);
-
-                if (value == null) {
-                    valid = false;
-                    break;
-                }
-
-                pk.set(name, value);
-            }
-
-            if (!valid) continue;
-
-            keys.add(pk);
-        }
-*/
-        log.debug("Primary keys: "+keys);
-        stack.push(keys);
+        stack.push(sourceValues);
     }
 
     public boolean preVisitNode(Object node, Object parameter) throws Exception {
         Source source = (Source)node;
-        //log.debug("Source "+source.getName());
+        AttributeValues sourceValues = (AttributeValues)stack.peek();
 
-        if (entryDefinition.getSource(source.getName()) == null) return false;
+        log.debug("Modifying "+source.getName()+" ["+sourceValues+"] with "+newValues);
 
-        returnCode = engineContext.getSyncService().modify(source, entryDefinition, oldValues, newValues);
+        if (!source.isIncludeOnModify()) {
+            log.debug("Source "+source.getName()+" is not included on modify");
+            return true;
+        }
+
+        if (entryDefinition.getSource(source.getName()) == null) {
+            log.debug("Source "+source.getName()+" is not defined in entry "+entryDefinition.getDn());
+            return true;
+        }
+
+        AttributeValues oldSourceValues = new AttributeValues();
+        for (Iterator i=sourceValues.getNames().iterator(); i.hasNext(); ) {
+            String name = (String)i.next();
+            Collection values = sourceValues.get(name);
+
+            if (!name.startsWith(source.getName()+".")) continue;
+
+            name = name.substring(source.getName().length()+1);
+            oldSourceValues.set(name, values);
+        }
+
+        AttributeValues newSourceValues = new AttributeValues();
+        for (Iterator i=newValues.getNames().iterator(); i.hasNext(); ) {
+            String name = (String)i.next();
+            Collection values = newValues.get(name);
+
+            if (!name.startsWith(source.getName()+".")) continue;
+
+            name = name.substring(source.getName().length()+1);
+            newSourceValues.set(name, values);
+        }
+
+        returnCode = engineContext.getSyncService().modify(source, oldSourceValues, newSourceValues);
+
         if (returnCode != LDAPException.SUCCESS) return false;
 
         return true;
@@ -108,6 +108,8 @@ public class ModifyGraphVisitor extends GraphVisitor {
         log.debug("Relationship "+relationship);
         if (entryDefinition.getSource(source.getName()) == null) return false;
 
+        AttributeValues sourceValues = (AttributeValues)stack.peek();
+
         String lhs = relationship.getLhs();
         String rhs = relationship.getRhs();
 
@@ -117,30 +119,14 @@ public class ModifyGraphVisitor extends GraphVisitor {
             rhs = exp;
         }
 
-        int li = lhs.indexOf(".");
-        String lField = lhs.substring(li+1);
+        Collection lhsValues = sourceValues.get(lhs);
+        log.debug(" - "+lhs+" -> "+rhs+": "+lhsValues);
 
-        int ri = rhs.indexOf(".");
-        String rField = rhs.substring(ri+1);
+        AttributeValues newSourceValues = new AttributeValues();
+        newSourceValues.add(sourceValues);
+        newSourceValues.set(rhs, lhsValues);
 
-        Collection rows = (Collection)stack.peek();
-        //log.debug("Rows: "+rows);
-
-        Collection newRows = new HashSet();
-        for (Iterator i=rows.iterator(); i.hasNext(); ) {
-            Row row = (Row)i.next();
-
-            Object value = row.get(lField);
-            Row newRow = new Row();
-            newRow.set(rField, value);
-
-            newRows.add(newRow);
-
-            //log.debug(lField+" = "+rField+" => "+value);
-        }
-        //log.debug("New Rows: "+newRows);
-
-        stack.push(newRows);
+        stack.push(newSourceValues);
 
         return true;
     }

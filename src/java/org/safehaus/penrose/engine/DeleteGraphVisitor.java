@@ -108,6 +108,7 @@ public class DeleteGraphVisitor extends GraphVisitor {
         log.debug(" - "+lhs+" -> "+rhs+": "+lhsValues);
 
         AttributeValues newSourceValues = new AttributeValues();
+        newSourceValues.add(sourceValues);
         newSourceValues.set(rhs, lhsValues);
 
         stack.push(newSourceValues);

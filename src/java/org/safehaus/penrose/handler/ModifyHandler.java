@@ -207,7 +207,7 @@ public class ModifyHandler {
 		log.debug("--- new values:");
 		log.debug(newEntry.toString());
 
-        return handlerContext.getEngine().modify(entry, newValues);
+        return handlerContext.getEngine().modify(entry, oldValues, newValues);
 	}
 
     public int modifyStaticEntry(EntryDefinition entry, Collection modifications)

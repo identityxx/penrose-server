@@ -191,7 +191,7 @@ public class TransformEngine {
         Row pk = new Row();
         Collection fields = source.getFields();
 
-        log.debug("Translating for source "+source.getName()+":");
+        //log.debug("Translating for source "+source.getName()+":");
         for (Iterator j=fields.iterator(); j.hasNext(); ) {
             Field field = (Field)j.next();
             FieldDefinition fieldDefinition = sourceDefinition.getFieldDefinition(field.getName());
@@ -202,7 +202,7 @@ public class TransformEngine {
             Expression expression = field.getExpression();
 
             if (expression == null) {
-                if (fieldDefinition.isPrimaryKey()) return null;
+                if (fieldDefinition.isPrimaryKey()) pk = null;
                 continue;
             }
 
@@ -262,17 +262,36 @@ public class TransformEngine {
 */
             if (newValues.size() == 0) continue;
 
-            log.debug(" - "+name+": "+newValues);
+            //log.debug("   => "+newValues);
 
             if (fieldDefinition.isPrimaryKey()) {
                 if (newValues.size() == 0) return null;
-                pk.set(name, newValues);
+                if (pk != null) pk.set(name, newValues);
             }
 
             output.add(name, newValues);
         }
 
         return pk;
+    }
+
+    public Collection getPrimaryKeys(Source source, AttributeValues sourceValues) throws Exception {
+        Config config = penrose.getConfig(source);
+        Collection pkFields = config.getPrimaryKeyFields(source);
+
+        AttributeValues pkValues = new AttributeValues();
+        for (Iterator j=pkFields.iterator(); j.hasNext(); ) {
+            Field field = (Field)j.next();
+
+            Collection values = sourceValues.get(field.getName());
+            if (values == null) {
+                return new ArrayList();
+            }
+
+            pkValues.set(field.getName(), values);
+        }
+
+        return convert(pkValues);
     }
 
     public Map split(Source source, AttributeValues entry) throws Exception {
