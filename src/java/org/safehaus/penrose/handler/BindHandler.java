@@ -18,6 +18,7 @@
 package org.safehaus.penrose.handler;
 
 import org.safehaus.penrose.PenroseConnection;
+import org.safehaus.penrose.event.BindEvent;
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.util.PasswordUtil;
 import org.ietf.ldap.LDAPDN;
@@ -43,6 +44,24 @@ public class BindHandler {
     }
 
     public int bind(PenroseConnection connection, String dn, String password) throws Exception {
+
+        log.info("-------------------------------------------------");
+        log.info("BIND:");
+        log.info(" - dn      : "+dn);
+
+        BindEvent beforeBindEvent = new BindEvent(this, BindEvent.BEFORE_BIND, connection, dn, password);
+        handler.postEvent(dn, beforeBindEvent);
+
+        int rc = performBind(connection, dn, password);
+
+        BindEvent afterBindEvent = new BindEvent(this, BindEvent.AFTER_BIND, connection, dn, password);
+        afterBindEvent.setReturnCode(rc);
+        handler.postEvent(dn, afterBindEvent);
+
+        return rc;
+    }
+
+    public int performBind(PenroseConnection connection, String dn, String password) throws Exception {
 
         String ndn = LDAPDN.normalize(dn);
 

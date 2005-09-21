@@ -19,7 +19,6 @@ package org.safehaus.penrose.apacheds;
 
 import javax.naming.NamingEnumeration;
 import javax.naming.NamingException;
-import java.util.List;
 import java.util.Iterator;
 
 /**
@@ -29,8 +28,8 @@ public class PenroseEnumeration implements NamingEnumeration {
 
     public Iterator iterator;
 
-    public PenroseEnumeration(List list) {
-        this.iterator = list.iterator();
+    public PenroseEnumeration(Iterator iterator) {
+        this.iterator = iterator;
     }
 
     public void close() throws NamingException {

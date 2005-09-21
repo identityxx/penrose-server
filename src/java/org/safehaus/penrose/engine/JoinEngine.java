@@ -20,11 +20,13 @@ package org.safehaus.penrose.engine;
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.graph.Graph;
 import org.safehaus.penrose.interpreter.Interpreter;
-import org.safehaus.penrose.config.Config;
+import org.safehaus.penrose.SearchResults;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
+
+import com.novell.ldap.LDAPException;
 
 /**
  * @author Endi S. Dewata
@@ -41,65 +43,48 @@ public class JoinEngine {
         this.engineContext = engine.getEngineContext();
     }
 
-    public Collection load(
-            Entry parent,
-            EntryDefinition entryDefinition,
-            Collection rdnsToLoad)
+    public SearchResults load(
+            final Entry parent,
+            final EntryDefinition entryDefinition,
+            final Collection rdnsToLoad)
             throws Exception {
 
-        //AttributeValues sourceValues = new AttributeValues();
-        //engine.getFieldValues("parent", parent, sourceValues);
+        final SearchResults results = new SearchResults();
 
-        //log.debug("Loading entry "+entryDefinition.getRdn()+","+parent.getDn()+" with values: "+sourceValues);
+        engine.execute(new Runnable() {
+            public void run() {
+                try {
+                    load(parent, entryDefinition, rdnsToLoad, results);
 
-        //Config config = engineContext.getConfig(entryDefinition.getDn());
+                } catch (Throwable e) {
+                    e.printStackTrace(System.out);
+                    results.setReturnCode(LDAPException.OPERATIONS_ERROR);
+                    results.close();
+                }
+            }
+        });
+
+        return results;
+    }
+
+    public void load(
+            Entry parent,
+            EntryDefinition entryDefinition,
+            Collection rdnsToLoad,
+            SearchResults results)
+            throws Exception {
 
         Graph graph = engine.getGraph(entryDefinition);
         Source primarySource = engine.getPrimarySource(entryDefinition);
-/*
-        String startingSourceName = engine.getStartingSourceName(entryDefinition);
 
-        log.debug("Starting from source: "+startingSourceName);
-        Source startingSource = config.getEffectiveSource(entryDefinition, startingSourceName);
-
-        Collection relationships = graph.getEdgeObjects(startingSource);
-        AttributeValues startingValues = new AttributeValues();
-        for (Iterator i=relationships.iterator(); i.hasNext(); ) {
-            Relationship relationship = (Relationship)i.next();
-            log.debug("Relationship "+relationship);
-
-            String lhs = relationship.getLhs();
-            String rhs = relationship.getRhs();
-
-            if (rhs.startsWith(startingSourceName+".")) {
-                String exp = lhs;
-                lhs = rhs;
-                rhs = exp;
-            }
-
-            Collection lhsValues = sourceValues.get(lhs);
-            log.debug(" - "+lhs+" -> "+rhs+": "+lhsValues);
-            startingValues.set(rhs, lhsValues);
-        }
-
-        Collection values = engineContext.getTransformEngine().convert(startingValues);
-*/
         Collection filters = rdnToFilter(entryDefinition, rdnsToLoad);
-/*
-        for (Iterator i=filters.iterator(); i.hasNext(); ) {
-            Row filter = (Row)i.next();
-            for (Iterator j=values.iterator(); j.hasNext(); ) {
-                Row row = (Row)j.next();
-                filter.add(row);
-            }
-        }
-*/
+
         LoaderGraphVisitor loaderVisitor = new LoaderGraphVisitor(engineContext, entryDefinition, filters);
         graph.traverse(loaderVisitor, primarySource);
 
         Map attributeValues = loaderVisitor.getAttributeValues();
 
-        return merge(parent, entryDefinition, attributeValues);
+        merge(parent, entryDefinition, attributeValues, results);
     }
 
     public Collection rdnToFilter(EntryDefinition entryDefinition, Collection rdns) throws Exception {
@@ -124,9 +109,10 @@ public class JoinEngine {
                 if (exp == null) continue;
 
                 String script = exp.getScript();
-                //log.debug("   - "+primarySource.getName()+"."+field.getName()+": "+script);
 
                 Object value = interpreter.eval(script);
+                //log.debug("   - "+primarySource.getName()+"."+field.getName()+": "+value);
+
                 if (value == null) continue;
 
                 filter.set(primarySource.getName()+"."+field.getName(), value);
@@ -142,9 +128,7 @@ public class JoinEngine {
         return filters;
     }
 
-    public Collection merge(Entry parent, EntryDefinition entryDefinition, Map pkValuesMap) throws Exception {
-
-        Collection results = new ArrayList();
+    public void merge(Entry parent, EntryDefinition entryDefinition, Map pkValuesMap, SearchResults results) throws Exception {
 
         log.debug("Merging:");
         int counter = 1;
@@ -170,7 +154,7 @@ public class JoinEngine {
             log.debug("Entry #"+counter+":\n"+entry+"\n");
         }
 
-        return results;
+        results.close();
     }
 
 

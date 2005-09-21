@@ -18,6 +18,7 @@
 package org.safehaus.penrose.handler;
 
 import org.safehaus.penrose.PenroseConnection;
+import org.safehaus.penrose.event.AddEvent;
 import org.safehaus.penrose.config.Config;
 import org.safehaus.penrose.mapping.*;
 import org.ietf.ldap.LDAPEntry;
@@ -48,11 +49,34 @@ public class AddHandler {
      * The interface function called to add an LDAP entry
      *
      * @param connection the connection
-     * @param ldapEntry the entry to be added
+     * @param entry the entry to be added
      * @return return code (see LDAPException)
      * @throws Exception
      */
     public int add(
+            PenroseConnection connection,
+            LDAPEntry entry)
+    throws Exception {
+
+        log.info("-------------------------------------------------");
+        log.info("ADD:");
+        if (connection.getBindDn() != null) log.info(" - bindDn: "+connection.getBindDn());
+        log.info(Entry.toString(entry));
+        log.info("");
+
+        AddEvent beforeModifyEvent = new AddEvent(this, AddEvent.BEFORE_ADD, connection, entry);
+        handler.postEvent(entry.getDN(), beforeModifyEvent);
+
+        int rc = performAdd(connection, entry);
+
+        AddEvent afterModifyEvent = new AddEvent(this, AddEvent.AFTER_ADD, connection, entry);
+        afterModifyEvent.setReturnCode(rc);
+        handler.postEvent(entry.getDN(), afterModifyEvent);
+
+        return rc;
+    }
+
+    public int performAdd(
             PenroseConnection connection,
             LDAPEntry ldapEntry)
     throws Exception {

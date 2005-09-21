@@ -19,6 +19,7 @@ package org.safehaus.penrose.handler;
 
 import org.safehaus.penrose.SearchResults;
 import org.safehaus.penrose.PenroseConnection;
+import org.safehaus.penrose.event.SearchEvent;
 import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.config.Config;
 import org.safehaus.penrose.cache.CacheConfig;
@@ -37,9 +38,11 @@ public class SearchHandler {
 
     Logger log = LoggerFactory.getLogger(getClass());
 
+    private Handler handler;
     private HandlerContext handlerContext;
 
     public SearchHandler(Handler handler) throws Exception {
+        this.handler = handler;
         this.handlerContext = handler.getHandlerContext();
     }
 
@@ -176,8 +179,9 @@ public class SearchHandler {
         Row pk = new Row();
         pk.set(attr, value);
 
-        List rdns = new ArrayList();
+        SearchResults rdns = new SearchResults();
         rdns.add(pk);
+        rdns.close();
 
         //Filter filter = handlerContext.getFilterTool().createFilter(rdns);
 
@@ -188,7 +192,6 @@ public class SearchHandler {
         //log.debug("Searched rdns: "+rdns);
 
         SearchResults results = new SearchResults();
-
         handlerContext.getEngine().load(parent, entryDefinition, rdns, results);
 
         if (results.size() == 0) return null;
@@ -208,7 +211,76 @@ public class SearchHandler {
             Collection attributeNames,
             SearchResults results) throws Exception {
 
+        String s = null;
+        switch (scope) {
+        case LDAPConnection.SCOPE_BASE:
+            s = "base";
+            break;
+        case LDAPConnection.SCOPE_ONE:
+            s = "one level";
+            break;
+        case LDAPConnection.SCOPE_SUB:
+            s = "subtree";
+            break;
+        }
+
+        String d = null;
+        switch (deref) {
+        case LDAPSearchConstraints.DEREF_NEVER:
+            d = "never";
+            break;
+        case LDAPSearchConstraints.DEREF_SEARCHING:
+            d = "searching";
+            break;
+        case LDAPSearchConstraints.DEREF_FINDING:
+            d = "finding";
+            break;
+        case LDAPSearchConstraints.DEREF_ALWAYS:
+            d = "always";
+            break;
+        }
+
         log.debug("----------------------------------------------------------------------------------");
+        log.info("SEARCH:");
+        if (connection != null && connection.getBindDn() != null) log.info(" - bindDn: " + connection.getBindDn());
+        log.info(" - base: " + base);
+        log.info(" - scope: " + s);
+        log.debug(" - deref: " + d);
+        log.info(" - filter: " + filter);
+        log.debug(" - attr: " + attributeNames);
+        log.info("");
+
+        SearchEvent beforeSearchEvent = new SearchEvent(this, SearchEvent.BEFORE_SEARCH, connection, base);
+        handler.postEvent(base, beforeSearchEvent);
+
+        int rc;
+
+        try {
+            rc = performSearch(connection, base, scope, deref, filter, attributeNames, results);
+
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+            rc = LDAPException.OPERATIONS_ERROR;
+
+        } finally {
+            results.close();
+        }
+
+        SearchEvent afterSearchEvent = new SearchEvent(this, SearchEvent.AFTER_SEARCH, connection, base);
+        afterSearchEvent.setReturnCode(rc);
+        handler.postEvent(base, afterSearchEvent);
+
+        return rc;
+    }
+
+    public int performSearch(
+            PenroseConnection connection,
+            String base,
+            int scope,
+            int deref,
+            String filter,
+            Collection attributeNames,
+            SearchResults results) throws Exception {
 
 		String nbase;
 		try {
@@ -289,44 +361,14 @@ public class SearchHandler {
 			}
 		}
 
-        //log.debug("----------------------------------------------------------------------------------");
 		if (scope == LDAPConnection.SCOPE_ONE || scope == LDAPConnection.SCOPE_SUB) { // one level or subtree
 			log.debug("Searching children of " + baseEntry.getDn());
 			searchChildren(connection, baseEntry, scope, f, normalizedAttributeNames, results);
 		}
-		/*
-		 * log.debug("-------------------------------------------------------------------------------");
-		 * log.debug("CHECKING FILTER: "+filter);
-		 *
-		 * for (Iterator i=entries.iterator(); i.hasNext(); ) { Entry r =
-		 * (Entry)i.next();
-		 *
-		 * if (penrose.filterTool.isValidEntry(r, f)) {
-		 * results.put(penrose.entryTool.toLDAPEntry(connection, r,
-		 * attributeNames)); log.debug(" - "+r.getDn()+" ok"); }
-		 * else { log.debug(" - "+r.getDn()+" failed"); } }
-		 *
-		 * log.debug("-------------------------------------------------------------------------------");
-		 */
+
 		results.setReturnCode(LDAPException.SUCCESS);
 		return LDAPException.SUCCESS;
 	}
-
-    public SearchResults search(
-            PenroseConnection connection,
-            Entry parent,
-            EntryDefinition entryDefinition,
-            Filter filter
-            ) throws Exception {
-
-        Collection rdns = handlerContext.getEngine().search(parent, entryDefinition, filter);
-
-        SearchResults results = new SearchResults();
-
-        handlerContext.getEngine().load(parent, entryDefinition, rdns, results);
-
-        return results;
-    }
 
     public HandlerContext getHandlerContext() {
         return handlerContext;
@@ -396,10 +438,11 @@ public class SearchHandler {
             String childDn = childDefinition.getRdn()+","+entry.getDn();
 			log.debug("Virtual children: " + childDn);
 
-			SearchResults results2 = search(connection, entry, childDefinition, filter);
+			SearchResults results2 = new SearchResults();
+            handlerContext.getEngine().search(connection, entry, childDefinition, filter, results2);
 
-            for (Iterator j=results2.iterator(); j.hasNext(); ) {
-                Entry child = (Entry)j.next();
+            while (results2.hasNext()) {
+                Entry child = (Entry)results2.next();
 
                 int rc = handlerContext.getACLEngine().checkSearch(connection, child);
                 if (rc != LDAPException.SUCCESS) continue;

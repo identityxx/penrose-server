@@ -287,7 +287,7 @@ public class PenrosePartition extends AbstractContextPartition {
                 list.add(sr);
             }
 
-            return new PenroseEnumeration(list);
+            return new PenroseEnumeration(list.iterator());
 
         } catch (Exception e) {
             log.error(e.getMessage(), e);
@@ -360,7 +360,7 @@ public class PenrosePartition extends AbstractContextPartition {
                 list.add(sr);
             }
 
-            return new PenroseEnumeration(list);
+            return new PenroseEnumeration(list.iterator());
 
         } catch (Exception e) {
             log.error(e.getMessage(), e);

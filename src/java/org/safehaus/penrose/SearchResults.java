@@ -29,7 +29,7 @@ import java.util.Iterator;
 /**
  * @author Endi S. Dewata
  */
-public class SearchResults {
+public class SearchResults implements Iterator {
 
     public Logger log = LoggerFactory.getLogger(getClass());
 
@@ -48,8 +48,19 @@ public class SearchResults {
         notifyAll();
     }
 
-    public synchronized Object next() {
+    public synchronized boolean hasNext() {
+        while (!done && results.size() == 0) {
+            try {
+                wait();
+            } catch (Exception e) {
+                e.printStackTrace(System.out);
+            }
+        }
 
+        return results.size() > 0;
+    }
+
+    public synchronized Object next() {
         while (!done && results.size() == 0) {
             try {
                 wait();
@@ -92,16 +103,8 @@ public class SearchResults {
         return results.size();
     }
 
-    public synchronized Iterator iterator() {
-        while (!done) {
-            try {
-                wait();
-            } catch (Exception e) {
-                e.printStackTrace(System.out);
-            }
-        }
-
-        return results.iterator();
+    public Iterator iterator() {
+        return this;
     }
 
     public synchronized int getReturnCode() {
@@ -116,20 +119,14 @@ public class SearchResults {
         return returnCode;
     }
 
-    public synchronized boolean hasNext() {
-        while (!done) {
-            try {
-                wait();
-            } catch (Exception e) {
-                e.printStackTrace(System.out);
-            }
-        }
-
-        return results.size() > 0;
+    public void remove() {
     }
 
     public void setReturnCode(int returnCode) {
         this.returnCode = returnCode;
     }
 
+    public boolean isClosed() {
+        return done;
+    }
 }

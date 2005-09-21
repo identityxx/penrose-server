@@ -22,7 +22,6 @@ import org.safehaus.penrose.*;
 import org.safehaus.penrose.config.Config;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.interpreter.Interpreter;
-import org.safehaus.penrose.cache.CacheConfig;
 import org.safehaus.penrose.graph.Graph;
 import org.safehaus.penrose.thread.ThreadPool;
 import org.safehaus.penrose.thread.Queue;
@@ -31,7 +30,6 @@ import org.safehaus.penrose.mapping.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.ietf.ldap.LDAPException;
-import org.ietf.ldap.LDAPDN;
 
 import java.util.*;
 
@@ -366,6 +364,27 @@ public class Engine {
         return LDAPException.SUCCESS;
     }
 
+    public void load(
+            final Entry parent,
+            final EntryDefinition entryDefinition,
+            final SearchResults rdns,
+            final SearchResults results)
+            throws Exception {
+
+        execute(new Runnable() {
+            public void run() {
+                try {
+                    loadBackground(parent, entryDefinition, rdns, results);
+
+                } catch (Throwable e) {
+                    e.printStackTrace(System.out);
+                    results.setReturnCode(LDAPException.OPERATIONS_ERROR);
+                    results.close();
+                }
+            }
+        });
+    }
+
     /**
      * Load sources of entries matching the filter.
      *
@@ -373,15 +392,15 @@ public class Engine {
      * @param rdns
      * @throws Exception
      */
-    public void load(
+    public void loadBackground(
             Entry parent,
             EntryDefinition entryDefinition,
-            Collection rdns,
+            SearchResults rdns,
             SearchResults results
             ) throws Exception {
 
         log.debug("--------------------------------------------------------------------------------------");
-        log.debug("Loading entry under "+parent.getDn()+" with rdns "+rdns);
+        log.debug("Loading entry under "+parent.getDn()+" with rdns:");
 
         MRSWLock lock = getLock(entryDefinition.getDn());
         lock.getWriteLock(Penrose.WAIT_TIMEOUT);
@@ -389,25 +408,39 @@ public class Engine {
         try {
             Collection rdnsToLoad = new TreeSet();
 
-            for (Iterator i=rdns.iterator(); i.hasNext(); ) {
-                Row rdn = (Row)i.next();
+            String s = entryDefinition.getParameter(EntryDefinition.BATCH_SIZE);
+            int batchSize = s == null ? EntryDefinition.DEFAULT_BATCH_SIZE : Integer.parseInt(s);
+
+            while (rdns.hasNext()) {
+                Row rdn = (Row)rdns.next();
+                log.debug(" - "+rdn);
 
                 Entry entry = engineContext.getCache().getEntryDataCache(parent, entryDefinition).get(rdn);
-                if (entry == null) {
-                    rdnsToLoad.add(rdn);
-
-                } else {
+                if (entry != null) {
                     entry.setParent(parent);
                     entry.setEntryDefinition(entryDefinition);
                     results.add(entry);
+                    continue;
                 }
+
+                rdnsToLoad.add(rdn);
+
+                if (rdnsToLoad.size() < batchSize) continue;
+
+                SearchResults entries = joinEngine.load(parent, entryDefinition, rdnsToLoad);
+
+                for (Iterator i=entries.iterator(); i.hasNext(); ) {
+                    entry = (Entry)i.next();
+                    entry.setParent(parent);
+                    results.add(entry);
+                    engineContext.getCache().getEntryDataCache(parent, entryDefinition).put(entry.getRdn(), entry);
+                }
+
+                rdnsToLoad.clear();
             }
 
-            log.debug("Rdns to load: "+rdnsToLoad);
-
-            if (!rdnsToLoad.isEmpty()) {
-
-                Collection entries = joinEngine.load(parent, entryDefinition, rdnsToLoad);
+            if (rdnsToLoad.size() > 0) {
+                SearchResults entries = joinEngine.load(parent, entryDefinition, rdnsToLoad);
 
                 for (Iterator i=entries.iterator(); i.hasNext(); ) {
                     Entry entry = (Entry)i.next();
@@ -423,36 +456,81 @@ public class Engine {
         }
     }
 
-    public Collection search(
+    public SearchResults search(
+            PenroseConnection connection,
             Entry parent,
             EntryDefinition entryDefinition,
-            Filter filter
+            Filter filter,
+            SearchResults results
             ) throws Exception {
 
-        log.debug("--------------------------------------------------------------------------------------");
-        log.debug("Searching for entry "+entryDefinition.getDn()+" with filter "+filter);
+        SearchResults rdns = search(parent, entryDefinition, filter);
+        load(parent, entryDefinition, rdns, results);
 
-        String dn = entryDefinition.getRdn()+","+parent.getDn();
-        log.debug("Checking entry filter cache for ["+dn+"]");
+        return results;
+    }
 
-        Collection rdns = engineContext.getCache().getEntryFilterCache(parent, entryDefinition).get(filter);
+    public SearchResults search(
+            final Entry parent,
+            final EntryDefinition entryDefinition,
+            final Filter filter)
+            throws Exception {
 
-        if (rdns != null) {
-            log.debug("Entry filter cache found: "+filter);
-            return rdns;
+        final SearchResults results = new SearchResults();
+
+        execute(new Runnable() {
+            public void run() {
+                try {
+                    search(parent, entryDefinition, filter, results);
+
+                } catch (Throwable e) {
+                    e.printStackTrace(System.out);
+                    results.setReturnCode(LDAPException.OPERATIONS_ERROR);
+                    results.close();
+                }
+            }
+        });
+
+        return results;
+    }
+
+    public void search(
+            Entry parent,
+            EntryDefinition entryDefinition,
+            Filter filter,
+            SearchResults results
+            ) throws Exception {
+
+        try {
+            log.debug("--------------------------------------------------------------------------------------");
+            log.debug("Searching for entry "+entryDefinition.getDn()+" with filter "+filter);
+
+            String dn = entryDefinition.getRdn()+","+parent.getDn();
+            log.debug("Checking entry filter cache for ["+dn+"]");
+
+            Collection rdns = engineContext.getCache().getEntryFilterCache(parent, entryDefinition).get(filter);
+
+            if (rdns != null) {
+                log.debug("Entry filter cache found: "+filter);
+                results.addAll(rdns);
+                return;
+            }
+
+            log.debug("Entry filter cache not found.");
+            log.debug("Searching entry "+dn+" for "+filter);
+
+            rdns = searchEngine.search(parent, entryDefinition, filter);
+
+            engineContext.getCache().getEntryFilterCache(parent, entryDefinition).put(filter, rdns);
+
+            filter = engineContext.getCache().getCacheContext().getFilterTool().createFilter(rdns);
+            engineContext.getCache().getEntryFilterCache(parent, entryDefinition).put(filter, rdns);
+
+            results.addAll(rdns);
+
+        } finally {
+            results.close();
         }
-
-        log.debug("Entry filter cache not found.");
-        log.debug("Searching entry "+dn+" for "+filter);
-
-        rdns = searchEngine.search(parent, entryDefinition, filter);
-
-        engineContext.getCache().getEntryFilterCache(parent, entryDefinition).put(filter, rdns);
-
-        filter = engineContext.getCache().getCacheContext().getFilterTool().createFilter(rdns);
-        engineContext.getCache().getEntryFilterCache(parent, entryDefinition).put(filter, rdns);
-
-        return rdns;
     }
 
     public void getFieldValues(Entry entry, AttributeValues results) throws Exception {

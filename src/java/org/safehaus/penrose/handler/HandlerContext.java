@@ -43,6 +43,7 @@ public interface HandlerContext {
 
     public Cache getCache() throws Exception;
 
+    public Collection getModules(String dn) throws Exception;
     public ACLEngine getACLEngine() throws Exception;
     public Engine getEngine() throws Exception;
     public Schema getSchema() throws Exception;

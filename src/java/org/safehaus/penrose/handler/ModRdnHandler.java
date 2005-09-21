@@ -38,6 +38,12 @@ public class ModRdnHandler {
 	public int modrdn(PenroseConnection connection, String dn, String newRdn)
 			throws Exception {
 
+        log.debug("-------------------------------------------------------------------------------");
+        log.debug("MODRDN:");
+        if (connection.getBindDn() != null) log.info(" - bindDn: " + connection.getBindDn());
+        log.debug("  dn: " + dn);
+        log.debug("  new rdn: " + newRdn);
+
 		return LDAPException.LDAP_NOT_SUPPORTED;
 	}
 }

@@ -43,6 +43,14 @@ public class CompareHandler {
     public int compare(PenroseConnection connection, String dn, String attributeName,
             String attributeValue) throws Exception {
 
+        log.debug("-------------------------------------------------------------------------------");
+        log.debug("COMPARE:");
+        if (connection.getBindDn() != null) log.info(" - bindDn: " + connection.getBindDn());
+        log.debug("  dn: " + dn);
+        log.debug("  attributeName: " + attributeName);
+        log.debug("  attributeValue: " + attributeValue);
+        log.debug("-------------------------------------------------------------------------------");
+
         List attributeNames = new ArrayList();
         attributeNames.add(attributeName);
 

@@ -18,6 +18,7 @@
 package org.safehaus.penrose.handler;
 
 import org.safehaus.penrose.PenroseConnection;
+import org.safehaus.penrose.event.DeleteEvent;
 import org.safehaus.penrose.config.Config;
 import org.safehaus.penrose.mapping.EntryDefinition;
 import org.safehaus.penrose.mapping.Entry;
@@ -45,6 +46,26 @@ public class DeleteHandler {
     }
 
     public int delete(PenroseConnection connection, String dn) throws Exception {
+
+        log.info("-------------------------------------------------");
+        log.info("DELETE:");
+        if (connection.getBindDn() != null) log.info(" - bindDn: "+connection.getBindDn());
+        log.info(" - dn: "+dn);
+        log.info("");
+
+        DeleteEvent beforeDeleteEvent = new DeleteEvent(this, DeleteEvent.BEFORE_DELETE, connection, dn);
+        handler.postEvent(dn, beforeDeleteEvent);
+
+        int rc = performDelete(connection, dn);
+
+        DeleteEvent afterDeleteEvent = new DeleteEvent(this, DeleteEvent.AFTER_DELETE, connection, dn);
+        afterDeleteEvent.setReturnCode(rc);
+        handler.postEvent(dn, afterDeleteEvent);
+
+        return rc;
+    }
+
+    public int performDelete(PenroseConnection connection, String dn) throws Exception {
 
         dn = LDAPDN.normalize(dn);
 

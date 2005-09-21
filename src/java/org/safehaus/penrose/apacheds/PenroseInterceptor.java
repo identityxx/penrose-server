@@ -298,7 +298,7 @@ public class PenroseInterceptor extends BaseInterceptor {
                 list.add(sr);
             }
 
-            return new PenroseEnumeration(list);
+            return new PenroseEnumeration(list.iterator());
 
         } catch (NamingException e) {
             throw e;
@@ -579,7 +579,7 @@ public class PenroseInterceptor extends BaseInterceptor {
                     List list = new ArrayList();
                     list.add(sr);
 
-                    return new PenroseEnumeration(list);
+                    return new PenroseEnumeration(list.iterator());
                 }
             }
 
@@ -638,18 +638,21 @@ public class PenroseInterceptor extends BaseInterceptor {
                     LDAPSearchConstraints.DEREF_ALWAYS,
                     newFilter,
                     attributeNames);
-
+/*
             int rc = results.getReturnCode();
             connection.close();
 
             if (rc != LDAPException.SUCCESS) {
                 ExceptionUtil.throwNamingException(rc);
             }
+*/
 
-            List list = new ArrayList();
+            return new ApacheDSEnumeration(results);
+/*
+            Collection list = new ArrayList();
 
-            for (Iterator i=results.iterator(); i.hasNext(); ) {
-                LDAPEntry result = (LDAPEntry)i.next();
+            while (results.hasNext()) {
+                LDAPEntry result = (LDAPEntry)results.next();
                 log.debug("-> "+result.getDN());
 
                 LDAPAttributeSet attributeSet = result.getAttributeSet();
@@ -676,8 +679,8 @@ public class PenroseInterceptor extends BaseInterceptor {
                 list.add(sr);
             }
 
-            return new PenroseEnumeration(list);
-
+            return new PenroseEnumeration(list.iterator());
+*/
         } catch (NamingException e) {
             throw e;
 

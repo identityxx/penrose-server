@@ -18,6 +18,7 @@
 package org.safehaus.penrose.handler;
 
 import org.safehaus.penrose.PenroseConnection;
+import org.safehaus.penrose.event.ModifyEvent;
 import org.safehaus.penrose.config.Config;
 import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.schema.Schema;
@@ -49,6 +50,57 @@ public class ModifyHandler {
     }
 
     public int modify(PenroseConnection connection, String dn, List modifications)
+			throws Exception {
+
+        log.info("-------------------------------------------------");
+		log.info("MODIFY:");
+		if (connection.getBindDn() != null) log.info(" - bindDn: " + connection.getBindDn());
+        log.info(" - dn: " + dn);
+        log.debug("-------------------------------------------------");
+		log.debug("changetype: modify");
+
+		for (Iterator i = modifications.iterator(); i.hasNext();) {
+			LDAPModification modification = (LDAPModification) i.next();
+
+			LDAPAttribute attribute = modification.getAttribute();
+			String attributeName = attribute.getName();
+			String values[] = attribute.getStringValueArray();
+
+			switch (modification.getOp()) {
+			case LDAPModification.ADD:
+				log.debug("add: " + attributeName);
+				for (int j = 0; j < values.length; j++)
+					log.debug(attributeName + ": " + values[j]);
+				break;
+			case LDAPModification.DELETE:
+				log.debug("delete: " + attributeName);
+				for (int j = 0; j < values.length; j++)
+					log.debug(attributeName + ": " + values[j]);
+				break;
+			case LDAPModification.REPLACE:
+				log.debug("replace: " + attributeName);
+				for (int j = 0; j < values.length; j++)
+					log.debug(attributeName + ": " + values[j]);
+				break;
+			}
+			log.debug("-");
+		}
+
+        log.info("");
+
+        ModifyEvent beforeModifyEvent = new ModifyEvent(this, ModifyEvent.BEFORE_MODIFY, connection, dn, modifications);
+        handler.postEvent(dn, beforeModifyEvent);
+
+        int rc = performModify(connection, dn, modifications);
+
+        ModifyEvent afterModifyEvent = new ModifyEvent(this, ModifyEvent.AFTER_MODIFY, connection, dn, modifications);
+        afterModifyEvent.setReturnCode(rc);
+        handler.postEvent(dn, afterModifyEvent);
+
+        return rc;
+    }
+
+    public int performModify(PenroseConnection connection, String dn, List modifications)
 			throws Exception {
 
 		String ndn = LDAPDN.normalize(dn);

@@ -72,27 +72,27 @@ public class PenroseConnection implements Serializable {
     }
 
     public int add(LDAPEntry entry) throws Exception {
-        return penrose.add(this, entry);
+        return penrose.getHandler().add(this, entry);
     }
 
     public int bind(String dn, String password) throws Exception {
-        return penrose.bind(this, dn, password);
+        return penrose.getHandler().bind(this, dn, password);
     }
 
     public int compare(String dn, String attributeName, String attributeValue) throws Exception {
-        return penrose.compare(this, dn, attributeName, attributeValue);
+        return penrose.getHandler().compare(this, dn, attributeName, attributeValue);
      }
 
     public int delete(String dn) throws Exception {
-        return penrose.delete(this, dn);
+        return penrose.getHandler().delete(this, dn);
     }
 
     public int modify(String dn, List modifications) throws Exception {
-        return penrose.modify(this, dn, modifications);
+        return penrose.getHandler().modify(this, dn, modifications);
     }
 
     public int modrdn(String dn, String newRdn) throws Exception {
-        return penrose.modrdn(this, dn, newRdn);
+        return penrose.getHandler().modrdn(this, dn, newRdn);
     }
 
     public SearchResults search(
@@ -103,11 +103,11 @@ public class PenroseConnection implements Serializable {
             Collection attributeNames)
             throws Exception {
 
-        return penrose.search(this, base, scope, deref, filter, attributeNames);
+        return penrose.getHandler().search(this, base, scope, deref, filter, attributeNames);
     }
 
     public int unbind() throws Exception {
-        return penrose.unbind(this);
+        return penrose.getHandler().unbind(this);
     }
 
     public void close() throws Exception {

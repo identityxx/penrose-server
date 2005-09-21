@@ -366,266 +366,33 @@ public class Penrose implements
         return list;
     }
 
-    public int bind(PenroseConnection connection, String dn, String password) throws Exception {
-
-        log.info("-------------------------------------------------");
-        log.info("BIND:");
-        log.info(" - dn      : "+dn);
-
-        BindEvent beforeBindEvent = new BindEvent(this, BindEvent.BEFORE_BIND, connection, dn, password);
-        postEvent(dn, beforeBindEvent);
-
-        int rc = getHandler().bind(connection, dn, password);
-
-        BindEvent afterBindEvent = new BindEvent(this, BindEvent.AFTER_BIND, connection, dn, password);
-        afterBindEvent.setReturnCode(rc);
-        postEvent(dn, afterBindEvent);
-
-        return rc;
-    }
-
-    public int unbind(PenroseConnection connection) throws Exception {
-        return getHandler().unbind(connection);
-    }
-
-    public SearchResults search(PenroseConnection connection, String base, int scope,
+    public SearchResults search(String base, int scope,
             int deref, String filter, Collection attributeNames)
             throws Exception {
 
-        String s = null;
-        switch (scope) {
-        case LDAPConnection.SCOPE_BASE:
-            s = "base";
-            break;
-        case LDAPConnection.SCOPE_ONE:
-            s = "one level";
-            break;
-        case LDAPConnection.SCOPE_SUB:
-            s = "subtree";
-            break;
-        }
-
-        String d = null;
-        switch (deref) {
-        case LDAPSearchConstraints.DEREF_NEVER:
-            d = "never";
-            break;
-        case LDAPSearchConstraints.DEREF_SEARCHING:
-            d = "searching";
-            break;
-        case LDAPSearchConstraints.DEREF_FINDING:
-            d = "finding";
-            break;
-        case LDAPSearchConstraints.DEREF_ALWAYS:
-            d = "always";
-            break;
-        }
-
-        log.info("-------------------------------------------------");
-        log.info("SEARCH:");
-        if (connection != null && connection.getBindDn() != null) log.info(" - bindDn: " + connection.getBindDn());
-        log.info(" - base: " + base);
-        log.info(" - scope: " + s);
-        log.debug(" - deref: " + d);
-        log.info(" - filter: " + filter);
-        log.debug(" - attr: " + attributeNames);
-        log.info("");
-
-        SearchEvent beforeSearchEvent = new SearchEvent(this, SearchEvent.BEFORE_SEARCH, connection, base);
-        postEvent(base, beforeSearchEvent);
-
-        SearchResults results = getHandler().search(connection, base, scope, deref, filter, attributeNames);
-
-        SearchEvent afterSearchEvent = new SearchEvent(this, SearchEvent.AFTER_SEARCH, connection, base);
-        afterSearchEvent.setReturnCode(results.getReturnCode());
-        postEvent(base, afterSearchEvent);
-
-        return results;
+        return getHandler().search(null, base, scope, deref, filter, attributeNames);
     }
 
-    public int add(PenroseConnection connection, LDAPEntry entry) throws Exception {
-
-        log.info("-------------------------------------------------");
-        log.info("ADD:");
-        if (connection.getBindDn() != null) log.info(" - bindDn: "+connection.getBindDn());
-        log.info(Entry.toString(entry));
-        log.info("");
-
-        AddEvent beforeModifyEvent = new AddEvent(this, AddEvent.BEFORE_ADD, connection, entry);
-        postEvent(entry.getDN(), beforeModifyEvent);
-
-        int rc = getHandler().add(connection, entry);
-
-        AddEvent afterModifyEvent = new AddEvent(this, AddEvent.AFTER_ADD, connection, entry);
-        afterModifyEvent.setReturnCode(rc);
-        postEvent(entry.getDN(), afterModifyEvent);
-
-        return rc;
+    public int add(LDAPEntry entry) throws Exception {
+        return getHandler().add(null, entry);
     }
 
-    public int delete(PenroseConnection connection, String dn) throws Exception {
-
-        log.info("-------------------------------------------------");
-        log.info("DELETE:");
-        if (connection.getBindDn() != null) log.info(" - bindDn: "+connection.getBindDn());
-        log.info(" - dn: "+dn);
-        log.info("");
-
-        DeleteEvent beforeDeleteEvent = new DeleteEvent(this, DeleteEvent.BEFORE_DELETE, connection, dn);
-        postEvent(dn, beforeDeleteEvent);
-
-        int rc = getHandler().delete(connection, dn);
-
-        DeleteEvent afterDeleteEvent = new DeleteEvent(this, DeleteEvent.AFTER_DELETE, connection, dn);
-        afterDeleteEvent.setReturnCode(rc);
-        postEvent(dn, afterDeleteEvent);
-
-        return rc;
+    public int delete(String dn) throws Exception {
+        return getHandler().delete(null, dn);
     }
 
-    public int modify(PenroseConnection connection, String dn, List modifications) throws Exception {
-
-        log.info("-------------------------------------------------");
-		log.info("MODIFY:");
-		if (connection.getBindDn() != null) log.info(" - bindDn: " + connection.getBindDn());
-        log.info(" - dn: " + dn);
-        log.debug("-------------------------------------------------");
-		log.debug("changetype: modify");
-
-		for (Iterator i = modifications.iterator(); i.hasNext();) {
-			LDAPModification modification = (LDAPModification) i.next();
-
-			LDAPAttribute attribute = modification.getAttribute();
-			String attributeName = attribute.getName();
-			String values[] = attribute.getStringValueArray();
-
-			switch (modification.getOp()) {
-			case LDAPModification.ADD:
-				log.debug("add: " + attributeName);
-				for (int j = 0; j < values.length; j++)
-					log.debug(attributeName + ": " + values[j]);
-				break;
-			case LDAPModification.DELETE:
-				log.debug("delete: " + attributeName);
-				for (int j = 0; j < values.length; j++)
-					log.debug(attributeName + ": " + values[j]);
-				break;
-			case LDAPModification.REPLACE:
-				log.debug("replace: " + attributeName);
-				for (int j = 0; j < values.length; j++)
-					log.debug(attributeName + ": " + values[j]);
-				break;
-			}
-			log.debug("-");
-		}
-
-        log.info("");
-
-        ModifyEvent beforeModifyEvent = new ModifyEvent(this, ModifyEvent.BEFORE_MODIFY, connection, dn, modifications);
-        postEvent(dn, beforeModifyEvent);
-
-        int rc = getHandler().modify(connection, dn, modifications);
-
-        ModifyEvent afterModifyEvent = new ModifyEvent(this, ModifyEvent.AFTER_MODIFY, connection, dn, modifications);
-        afterModifyEvent.setReturnCode(rc);
-        postEvent(dn, afterModifyEvent);
-
-        return rc;
+    public int modify(String dn, List modifications) throws Exception {
+        return getHandler().modify(null, dn, modifications);
     }
 
-    public int modrdn(PenroseConnection connection, String dn, String newRdn) throws Exception {
-
-        log.debug("-------------------------------------------------------------------------------");
-        log.debug("COMPARE:");
-        if (connection.getBindDn() != null) log.info(" - bindDn: " + connection.getBindDn());
-        log.debug("  dn: " + dn);
-        log.debug("  new rdn: " + newRdn);
-
-        return getHandler().modrdn(connection, dn, newRdn);
+    public int modrdn(String dn, String newRdn) throws Exception {
+        return getHandler().modrdn(null, dn, newRdn);
     }
 
-	public int compare(PenroseConnection connection, String dn, String attributeName,
+	public int compare(String dn, String attributeName,
 			String attributeValue) throws Exception {
-
-        log.debug("-------------------------------------------------------------------------------");
-        log.debug("COMPARE:");
-        if (connection.getBindDn() != null) log.info(" - bindDn: " + connection.getBindDn());
-        log.debug("  dn: " + dn);
-        log.debug("  attributeName: " + attributeName);
-        log.debug("  attributeValue: " + attributeValue);
-        log.debug("-------------------------------------------------------------------------------");
-
-        return getHandler().compare(connection, dn, attributeName, attributeValue);
+        return getHandler().compare(null, dn, attributeName, attributeValue);
 	}
-
-    public void postEvent(String dn, Event event) throws Exception {
-        Collection c = getModules(dn);
-
-        for (Iterator i=c.iterator(); i.hasNext(); ) {
-            Module module = (Module)i.next();
-
-            if (event instanceof AddEvent) {
-                switch (event.getType()) {
-                    case AddEvent.BEFORE_ADD:
-                        module.beforeAdd((AddEvent)event);
-                        break;
-
-                    case AddEvent.AFTER_ADD:
-                        module.afterAdd((AddEvent)event);
-                        break;
-                }
-
-            } else if (event instanceof BindEvent) {
-
-                switch (event.getType()) {
-                    case BindEvent.BEFORE_BIND:
-                        module.beforeBind((BindEvent)event);
-                        break;
-
-                    case BindEvent.AFTER_BIND:
-                        module.afterBind((BindEvent)event);
-                        break;
-                }
-
-            } else if (event instanceof DeleteEvent) {
-
-                switch (event.getType()) {
-                    case DeleteEvent.BEFORE_DELETE:
-                        module.beforeDelete((DeleteEvent)event);
-                        break;
-
-                    case DeleteEvent.AFTER_DELETE:
-                        module.afterDelete((DeleteEvent)event);
-                        break;
-                }
-
-            } else if (event instanceof ModifyEvent) {
-
-                switch (event.getType()) {
-                case ModifyEvent.BEFORE_MODIFY:
-                    module.beforeModify((ModifyEvent)event);
-                    break;
-
-                case ModifyEvent.AFTER_MODIFY:
-                    module.afterModify((ModifyEvent)event);
-                    break;
-                }
-
-            } else if (event instanceof SearchEvent) {
-
-                switch (event.getType()) {
-                    case SearchEvent.BEFORE_SEARCH:
-                        module.beforeSearch((SearchEvent)event);
-                        break;
-
-                    case SearchEvent.AFTER_SEARCH:
-                        module.afterSearch((SearchEvent)event);
-                        break;
-                }
-
-            }
-        }
-    }
 
 	/**
 	 * Convert entry to string.

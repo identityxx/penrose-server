@@ -19,6 +19,8 @@ package org.safehaus.penrose.handler;
 
 import org.safehaus.penrose.SearchResults;
 import org.safehaus.penrose.*;
+import org.safehaus.penrose.module.Module;
+import org.safehaus.penrose.event.*;
 import org.safehaus.penrose.mapping.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -95,23 +97,31 @@ public class Handler {
         return getModRdnHandler().modrdn(connection, dn, newRdn);
     }
 
-    public SearchResults search(PenroseConnection connection, String base, int scope,
-            int deref, String filter, Collection attributeNames)
+    public SearchResults search(
+            final PenroseConnection connection,
+            final String base,
+            final int scope,
+            final int deref,
+            final String filter,
+            final Collection attributeNames)
             throws Exception {
 
-        SearchResults results = new SearchResults();
+        final SearchResults results = new SearchResults();
 
-        try {
-            SearchThread searchRunnable = new SearchThread(getSearchHandler(),
-                    connection, base, scope, deref, filter, attributeNames,
-                    results);
-            handlerContext.getEngine().execute(searchRunnable);
+        //getSearchHandler().search(connection, base, scope, deref, filter, attributeNames, results);
 
-        } catch (Throwable e) {
-            log.error(e.getMessage(), e);
-            results.setReturnCode(LDAPException.OPERATIONS_ERROR);
-            results.close();
-        }
+        handlerContext.getEngine().execute(new Runnable() {
+            public void run() {
+                try {
+                    getSearchHandler().search(connection, base, scope, deref, filter, attributeNames, results);
+
+                } catch (Throwable e) {
+                    e.printStackTrace(System.out);
+                    results.setReturnCode(LDAPException.OPERATIONS_ERROR);
+                    results.close();
+                }
+            }
+        });
 
         return results;
     }
@@ -178,6 +188,75 @@ public class Handler {
 
     public void setHandlerContext(HandlerContext handlerContext) {
         this.handlerContext = handlerContext;
+    }
+
+    public void postEvent(String dn, Event event) throws Exception {
+        Collection c = handlerContext.getModules(dn);
+
+        for (Iterator i=c.iterator(); i.hasNext(); ) {
+            Module module = (Module)i.next();
+
+            if (event instanceof AddEvent) {
+                switch (event.getType()) {
+                    case AddEvent.BEFORE_ADD:
+                        module.beforeAdd((AddEvent)event);
+                        break;
+
+                    case AddEvent.AFTER_ADD:
+                        module.afterAdd((AddEvent)event);
+                        break;
+                }
+
+            } else if (event instanceof BindEvent) {
+
+                switch (event.getType()) {
+                    case BindEvent.BEFORE_BIND:
+                        module.beforeBind((BindEvent)event);
+                        break;
+
+                    case BindEvent.AFTER_BIND:
+                        module.afterBind((BindEvent)event);
+                        break;
+                }
+
+            } else if (event instanceof DeleteEvent) {
+
+                switch (event.getType()) {
+                    case DeleteEvent.BEFORE_DELETE:
+                        module.beforeDelete((DeleteEvent)event);
+                        break;
+
+                    case DeleteEvent.AFTER_DELETE:
+                        module.afterDelete((DeleteEvent)event);
+                        break;
+                }
+
+            } else if (event instanceof ModifyEvent) {
+
+                switch (event.getType()) {
+                case ModifyEvent.BEFORE_MODIFY:
+                    module.beforeModify((ModifyEvent)event);
+                    break;
+
+                case ModifyEvent.AFTER_MODIFY:
+                    module.afterModify((ModifyEvent)event);
+                    break;
+                }
+
+            } else if (event instanceof SearchEvent) {
+
+                switch (event.getType()) {
+                    case SearchEvent.BEFORE_SEARCH:
+                        module.beforeSearch((SearchEvent)event);
+                        break;
+
+                    case SearchEvent.AFTER_SEARCH:
+                        module.afterSearch((SearchEvent)event);
+                        break;
+                }
+
+            }
+        }
     }
 }
 
