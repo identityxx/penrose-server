@@ -565,6 +565,8 @@ public class ConfigWriter {
     	Element element = new DefaultElement("field");
     	element.addAttribute("name", field.getName());
         if (!"VARCHAR".equals(field.getType())) element.addAttribute("type", field.getType());
+        if (field.getLength() != 50) element.addAttribute("length", ""+field.getLength());
+        if (field.getPrecision() != 0) element.addAttribute("precision", ""+field.getPrecision());
     	if (field.isPrimaryKey()) element.addAttribute("primaryKey", "true");
         if (!field.getName().equals(field.getOriginalName())) element.addAttribute("originalName", field.getOriginalName());
     	return element;

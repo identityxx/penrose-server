@@ -31,6 +31,9 @@ public class FieldDefinition implements Comparable, Cloneable {
 
     private String type = "VARCHAR";
 
+    private int length = 50;
+    private int precision = 0;
+
 	/**
 	 * This is a primary key.
 	 */
@@ -101,13 +104,31 @@ public class FieldDefinition implements Comparable, Cloneable {
         this.type = type;
     }
 
+    public int getLength() {
+        return length;
+    }
+
+    public void setLength(int length) {
+        this.length = length;
+    }
+
+    public int getPrecision() {
+        return precision;
+    }
+
+    public void setPrecision(int precision) {
+        this.precision = precision;
+    }
+
     public int hashCode() {
         return (name == null ? 0 : name.hashCode()) +
                 (originalName == null ? 0 : originalName.hashCode()) +
                 (type == null ? 0 : type.hashCode()) +
                 (primaryKey ? 0 : 1) +
                 (encryption == null ? 0 : encryption.hashCode()) +
-                (encoding == null ? 0 : encoding.hashCode());
+                (encoding == null ? 0 : encoding.hashCode()) +
+                (length) +
+                (precision);
     }
 
     boolean equals(Object o1, Object o2) {
@@ -120,13 +141,15 @@ public class FieldDefinition implements Comparable, Cloneable {
         if (object == null) return false;
         if (!(object instanceof FieldDefinition)) return false;
 
-        FieldDefinition fd = (FieldDefinition)object;
-        if (!equals(name, fd.name)) return false;
-        if (!equals(originalName, fd.originalName)) return false;
-        if (!equals(type, fd.type)) return false;
-        if (primaryKey != fd.primaryKey) return false;
-        if (!equals(encryption, fd.encryption)) return false;
-        if (!equals(encoding, fd.encoding)) return false;
+        FieldDefinition fieldDefinition = (FieldDefinition)object;
+        if (!equals(name, fieldDefinition.name)) return false;
+        if (!equals(originalName, fieldDefinition.originalName)) return false;
+        if (!equals(type, fieldDefinition.type)) return false;
+        if (primaryKey != fieldDefinition.primaryKey) return false;
+        if (!equals(encryption, fieldDefinition.encryption)) return false;
+        if (!equals(encoding, fieldDefinition.encoding)) return false;
+        if (length != fieldDefinition.length) return false;
+        if (precision != fieldDefinition.precision) return false;
 
         return true;
     }
@@ -146,6 +169,8 @@ public class FieldDefinition implements Comparable, Cloneable {
         primaryKey = fieldDefinition.primaryKey;
         encryption = fieldDefinition.encryption;
         encoding = fieldDefinition.encoding;
+        length = fieldDefinition.length;
+        precision = fieldDefinition.precision;
     }
 
     public Object clone() {
@@ -153,5 +178,4 @@ public class FieldDefinition implements Comparable, Cloneable {
         fieldDefinition.copy(this);
         return fieldDefinition;
     }
-
 }

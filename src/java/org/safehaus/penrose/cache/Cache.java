@@ -24,6 +24,7 @@ import org.safehaus.penrose.mapping.*;
 import java.util.Collection;
 import java.util.TreeMap;
 import java.util.Map;
+import java.lang.reflect.Constructor;
 
 /**
  * @author Endi S. Dewata
@@ -90,7 +91,12 @@ public class Cache {
         String key = connectionConfig.getConnectionName()+"."+sourceDefinition.getName();
         SourceDataCache cache = (SourceDataCache)sourceDataCaches.get(key);
         if (cache == null) {
-            cache = new SourceDataCache(this, sourceDefinition);
+            String sourceDataCache = getParameter("sourceDataCache");
+            sourceDataCache = sourceDataCache == null ? InMemorySourceDataCache.class.getName() : sourceDataCache;
+            Class clazz = Class.forName(sourceDataCache);
+            Constructor constructor = clazz.getConstructor(new Class[] { Cache.class, SourceDefinition.class });
+            cache = (SourceDataCache)constructor.newInstance(new Object[] { this, sourceDefinition });
+            cache.init();
             sourceDataCaches.put(key, cache);
         }
         return cache;
