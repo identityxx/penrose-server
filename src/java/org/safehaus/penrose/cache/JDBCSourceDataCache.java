@@ -20,10 +20,7 @@ package org.safehaus.penrose.cache;
 import org.safehaus.penrose.mapping.*;
 
 import java.util.*;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
+import java.sql.*;
 
 /**
  * @author Endi S. Dewata
@@ -121,6 +118,8 @@ public class JDBCSourceDataCache extends SourceDataCache {
             if (primaryKeys.length() > 0) primaryKeys.append(", ");
             primaryKeys.append(fieldDefinition.getName());
         }
+
+        columns.append(", expiration DATETIME");
 
         StringBuffer sb = new StringBuffer();
         sb.append("create table ");
@@ -236,6 +235,7 @@ public class JDBCSourceDataCache extends SourceDataCache {
 
     public Map get(Collection filters) throws Exception {
 
+        Collection pks = search(filters);
         Map values = new TreeMap();
 
         Collection fields = sourceDefinition.getFields();
@@ -243,13 +243,165 @@ public class JDBCSourceDataCache extends SourceDataCache {
             FieldDefinition fieldDefinition = (FieldDefinition)i.next();
             if (fieldDefinition.isPrimaryKey()) continue;
 
-            getFieldValues(fieldDefinition, filters, values);
+            getFieldValues(fieldDefinition, pks, values);
         }
 
         return values;
     }
 
-    public Map getFieldValues(FieldDefinition fieldDefinition, Collection filters, Map values) throws Exception {
+    public Collection search(Collection filters) throws Exception {
+
+        StringBuffer columns = new StringBuffer();
+
+        Collection fields = sourceDefinition.getFields();
+        for (Iterator i=fields.iterator(); i.hasNext(); ) {
+            FieldDefinition fieldDefinition = (FieldDefinition)i.next();
+            if (!fieldDefinition.isPrimaryKey()) continue;
+
+            if (columns.length() > 0) columns.append(", ");
+            columns.append(getTableName());
+            columns.append(".");
+            columns.append(fieldDefinition.getName());
+        }
+
+        Collection tables = new LinkedHashSet();
+
+        StringBuffer where = new StringBuffer();
+        Collection parameters = new ArrayList();
+
+        for (Iterator i=filters.iterator(); i.hasNext(); ) {
+            Row filter = (Row)i.next();
+
+            StringBuffer sb = new StringBuffer();
+            for (Iterator j=filter.getNames().iterator(); j.hasNext(); ) {
+                String name = (String)j.next();
+                Object value = filter.get(name);
+
+                FieldDefinition fieldDefinition = sourceDefinition.getFieldDefinition(name);
+
+                String tableName;
+                if (fieldDefinition.isPrimaryKey()) {
+                    tableName = getTableName();
+                } else {
+                    tableName = getTableName()+"_"+name;
+                    tables.add(tableName);
+                }
+
+                if (sb.length() > 0) sb.append(" and ");
+                sb.append(tableName);
+                sb.append(".");
+                sb.append(name);
+                sb.append(" = ?");
+
+                parameters.add(value);
+            }
+
+            if (where.length() > 0) where.append(" or ");
+            where.append("(");
+            where.append(sb);
+            where.append(")");
+        }
+
+        StringBuffer tableNames = new StringBuffer();
+        tableNames.append(getTableName());
+
+        for (Iterator i=tables.iterator(); i.hasNext(); ) {
+            String tableName = (String)i.next();
+            tableNames.append(" left join ");
+            tableNames.append(tableName);
+            tableNames.append(" on ");
+
+            StringBuffer sb = new StringBuffer();
+            for (Iterator j=fields.iterator(); j.hasNext(); ) {
+                FieldDefinition fieldDefinition = (FieldDefinition)j.next();
+                if (!fieldDefinition.isPrimaryKey()) continue;
+
+                if (columns.length() > 0) columns.append(" and ");
+                sb.append(getTableName());
+                sb.append(".");
+                sb.append(fieldDefinition.getName());
+                sb.append("=");
+                sb.append(tableName);
+                sb.append(".");
+                sb.append(fieldDefinition.getName());
+            }
+
+            tableNames.append(sb);
+        }
+
+        StringBuffer sb = new StringBuffer();
+        sb.append("select ");
+        sb.append(columns);
+        sb.append(" from ");
+        sb.append(tableNames);
+        sb.append(" where (");
+        sb.append(where);
+        sb.append(") and ");
+        sb.append(getTableName());
+        sb.append(".expiration >= ?");
+
+        parameters.add(new Timestamp(System.currentTimeMillis()));
+
+        String sql = sb.toString();
+
+        Connection con = null;
+        PreparedStatement ps = null;
+        ResultSet rs = null;
+
+        Collection pks = new ArrayList();
+
+        try {
+            con = getConnection();
+
+            log.debug("Executing "+sql);
+            ps = con.prepareStatement(sql);
+
+            int counter = 1;
+            for (Iterator i=parameters.iterator(); i.hasNext(); counter++) {
+                Object v = i.next();
+                ps.setObject(counter, v);
+                log.debug(" "+counter+" = "+v);
+            }
+
+            rs = ps.executeQuery();
+
+            log.debug("Results:");
+            while (rs.next()) {
+
+                counter = 1;
+                sb = new StringBuffer();
+
+                Row pk = new Row();
+                for (Iterator i=fields.iterator(); i.hasNext(); ) {
+                    FieldDefinition field = (FieldDefinition)i.next();
+                    if (!field.isPrimaryKey()) continue;
+
+                    Object value = rs.getObject(counter);
+                    sb.append(field.getName());
+                    sb.append("=");
+                    sb.append(value);
+                    sb.append(", ");
+
+                    pk.set(field.getName(), value);
+                    counter++;
+                }
+
+                pks.add(pk);
+            }
+
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+
+        } finally {
+            if (rs != null) try { rs.close(); } catch (Exception e) {}
+            if (ps != null) try { ps.close(); } catch (Exception e) {}
+            if (con != null) try { con.close(); } catch (Exception e) {}
+        }
+
+        return pks;
+    }
+
+    public Map getFieldValues(FieldDefinition fieldDefinition, Collection pks, Map values) throws Exception {
 
         StringBuffer columns = new StringBuffer();
 
@@ -268,7 +420,7 @@ public class JDBCSourceDataCache extends SourceDataCache {
         StringBuffer where = new StringBuffer();
         Collection parameters = new ArrayList();
 
-        for (Iterator i=filters.iterator(); i.hasNext(); ) {
+        for (Iterator i=pks.iterator(); i.hasNext(); ) {
             Row filter = (Row)i.next();
 
             StringBuffer sb = new StringBuffer();
@@ -372,6 +524,8 @@ public class JDBCSourceDataCache extends SourceDataCache {
 
     public void put(Row pk, AttributeValues sourceValues) throws Exception {
 
+        remove(pk);
+        
         insertEntry(sourceValues);
 
         Collection fields = sourceDefinition.getFields();
@@ -419,6 +573,10 @@ public class JDBCSourceDataCache extends SourceDataCache {
 
             parameters.add(v);
         }
+
+        columns.append(", expiration");
+        questionMarks.append(", ?");
+        parameters.add(new Timestamp(System.currentTimeMillis() + expiration * 60 * 1000));
 
         StringBuffer sb = new StringBuffer();
         sb.append("insert into ");
