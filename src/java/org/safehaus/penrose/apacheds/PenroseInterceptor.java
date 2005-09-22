@@ -260,45 +260,15 @@ public class PenroseInterceptor extends BaseInterceptor {
                     LDAPSearchConstraints.DEREF_ALWAYS,
                     "(objectClass=*)",
                     new ArrayList());
-
+/*
             int rc = results.getReturnCode();
             connection.close();
 
             if (rc != LDAPException.SUCCESS) {
                 ExceptionUtil.throwNamingException(rc);
             }
-
-            List list = new ArrayList();
-
-            for (Iterator i=results.iterator(); i.hasNext(); ) {
-                LDAPEntry result = (LDAPEntry)i.next();
-                log.debug("-> "+result.getDN());
-
-                LDAPAttributeSet attributeSet = result.getAttributeSet();
-                Attributes attributes = new BasicAttributes();
-
-                for (Iterator j = attributeSet.iterator(); j.hasNext(); ) {
-                    LDAPAttribute attribute = (LDAPAttribute)j.next();
-                    Attribute attr = new BasicAttribute(attribute.getName());
-
-                    for (Enumeration k=attribute.getStringValues(); k.hasMoreElements(); ) {
-                        String value = (String)k.nextElement();
-                        attr.add(value);
-                    }
-
-                    attributes.put(attr);
-                }
-
-                javax.naming.directory.SearchResult sr = new javax.naming.directory.SearchResult(
-                        result.getDN(),
-                        result,
-                        attributes
-                );
-
-                list.add(sr);
-            }
-
-            return new PenroseEnumeration(list.iterator());
+*/
+            return new ApacheDSEnumeration(results);
 
         } catch (NamingException e) {
             throw e;
@@ -648,39 +618,7 @@ public class PenroseInterceptor extends BaseInterceptor {
 */
 
             return new ApacheDSEnumeration(results);
-/*
-            Collection list = new ArrayList();
 
-            while (results.hasNext()) {
-                LDAPEntry result = (LDAPEntry)results.next();
-                log.debug("-> "+result.getDN());
-
-                LDAPAttributeSet attributeSet = result.getAttributeSet();
-                Attributes attributes = new BasicAttributes();
-
-                for (Iterator j = attributeSet.iterator(); j.hasNext(); ) {
-                    LDAPAttribute attribute = (LDAPAttribute)j.next();
-                    Attribute attr = new BasicAttribute(attribute.getName());
-
-                    for (Enumeration k=attribute.getStringValues(); k.hasMoreElements(); ) {
-                        String value = (String)k.nextElement();
-                        attr.add(value);
-                    }
-
-                    attributes.put(attr);
-                }
-
-                SearchResult sr = new SearchResult(
-                        result.getDN(),
-                        result,
-                        attributes
-                );
-
-                list.add(sr);
-            }
-
-            return new PenroseEnumeration(list.iterator());
-*/
         } catch (NamingException e) {
             throw e;
 

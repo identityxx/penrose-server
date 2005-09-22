@@ -74,7 +74,7 @@ public class EntryDefinition implements Cloneable, Serializable {
     /**
      * Sources. Each element is of type org.safehaus.penrose.mapping.Source.
      */
-    private Map sources = new TreeMap();
+    private List sources = new ArrayList();
     
     /**
      * Relationship. Each element is of type org.safehaus.penrose.mapping.Relationship.
@@ -214,7 +214,7 @@ public class EntryDefinition implements Cloneable, Serializable {
     }
 
     public Collection getSources() {
-        return sources.values();
+        return sources;
     }
 
     public Collection getObjectClasses() {
@@ -242,7 +242,16 @@ public class EntryDefinition implements Cloneable, Serializable {
     }
     
     public void addSource(Source source) {
-        sources.put(source.getName(), source);
+        sources.add(source);
+    }
+
+    public int getSourceIndex(Source source) {
+        return sources.indexOf(source);
+    }
+
+    public void setSourceIndex(Source source, int index) {
+        sources.remove(source);
+        sources.add(index, source);
     }
 
     public void removeSources() {
@@ -250,11 +259,19 @@ public class EntryDefinition implements Cloneable, Serializable {
     }
 
     public Source getSource(String name) {
-        return (Source)sources.get(name);
+        for (Iterator i=sources.iterator(); i.hasNext(); ) {
+            Source source = (Source)i.next();
+            if (name.equals(source.getName())) return source;
+        }
+        return null;
     }
 
     public Source removeSource(String name) {
-        return (Source)sources.remove(name);
+        Source source = getSource(name);
+        if (source != null) {
+            sources.remove(source);
+        }
+        return source;
     }
 
 	public void addAttributeDefinition(AttributeDefinition attribute) {
@@ -393,7 +410,7 @@ public class EntryDefinition implements Cloneable, Serializable {
         }
 
         removeSources();
-        for (Iterator i=entry.sources.values().iterator(); i.hasNext(); ) {
+        for (Iterator i=entry.sources.iterator(); i.hasNext(); ) {
             Source source = (Source)i.next();
             addSource((Source)source.clone());
         }
@@ -508,7 +525,7 @@ public class EntryDefinition implements Cloneable, Serializable {
     	sb.append("], ");
 
     	sb.append("sources=[");
-    	iter = sources.values().iterator();
+    	iter = sources.iterator();
     	while (iter.hasNext()) {
     		Object next = (Object) iter.next();
     		sb.append(next.toString()+", ");

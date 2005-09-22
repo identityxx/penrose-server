@@ -52,8 +52,8 @@ public class ApacheDSEnumeration implements NamingEnumeration {
 
     public Object next() throws NamingException {
         LDAPEntry result = (LDAPEntry)searchResults.next();
-        log.debug("================> "+result.getDN());
-        
+        //log.debug("================> "+result.getDN());
+
         LDAPAttributeSet attributeSet = result.getAttributeSet();
         Attributes attributes = new BasicAttributes();
 
