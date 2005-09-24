@@ -37,6 +37,7 @@ public interface EngineContext {
     public String getRootPassword() throws Exception;
 
     public Cache getCache() throws Exception;
+    public Cache getCache(EntryDefinition entryDefinition) throws Exception;
 
     public Schema getSchema() throws Exception;
     public FilterTool getFilterTool() throws Exception;

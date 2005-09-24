@@ -64,15 +64,18 @@ public class JDBCSourceDataCache extends SourceDataCache {
         sb.append(fieldDefinition.getName());
         sb.append(" ");
         sb.append(fieldDefinition.getType());
-        sb.append("(");
-        sb.append(fieldDefinition.getLength());
 
-        if ("DOUBLE".equals(fieldDefinition.getType())) {
-            sb.append(", ");
-            sb.append(fieldDefinition.getPrecision());
+        if (fieldDefinition.getLength() != FieldDefinition.DEFAULT_LENGTH) {
+            sb.append("(");
+            sb.append(fieldDefinition.getLength());
+
+            if ("DOUBLE".equals(fieldDefinition.getType())) {
+                sb.append(", ");
+                sb.append(fieldDefinition.getPrecision());
+            }
+
+            sb.append(")");
         }
-
-        sb.append(")");
 
         return sb.toString();
     }
@@ -525,7 +528,7 @@ public class JDBCSourceDataCache extends SourceDataCache {
     public void put(Row pk, AttributeValues sourceValues) throws Exception {
 
         remove(pk);
-        
+
         insertEntry(sourceValues);
 
         Collection fields = sourceDefinition.getFields();

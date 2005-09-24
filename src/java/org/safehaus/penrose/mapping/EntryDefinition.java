@@ -40,6 +40,8 @@ public class EntryDefinition implements Cloneable, Serializable {
 
     public final static String BATCH_SIZE              = "batchSize";
 
+    public final static String CACHE                   = "cache";
+
     public final static int    DEFAULT_FILTER_CACHE_SIZE       = 100;
     public final static int    DEFAULT_FILTER_CACHE_EXPIRATION = 5;
 
@@ -47,6 +49,9 @@ public class EntryDefinition implements Cloneable, Serializable {
     public final static int    DEFAULT_DATA_CACHE_EXPIRATION   = 5;
 
     public final static int    DEFAULT_BATCH_SIZE              = 20;
+
+    public final static String DEFAULT_CACHE                   = "DEFAULT";
+
     /**
      * Distinguished name.
      */

@@ -163,6 +163,10 @@ public class ServerConfig implements Serializable {
     	cacheConfigs.put(cacheConfig.getCacheName(), cacheConfig);
     }
 
+    public CacheConfig removeCacheConfig(String name) {
+        return (CacheConfig)cacheConfigs.remove(name);
+    }
+
     public CacheConfig getCacheConfig() {
         return (CacheConfig)cacheConfigs.get("DEFAULT");
     }

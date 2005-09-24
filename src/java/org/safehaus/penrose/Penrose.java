@@ -596,6 +596,18 @@ public class Penrose implements
         return (Cache)caches.get(name);
     }
 
+    public Cache getCache(SourceDefinition sourceDefinition) {
+        String cacheName = sourceDefinition.getParameter(SourceDefinition.DEFAULT_CACHE);
+        if (cacheName == null) cacheName = SourceDefinition.DEFAULT_CACHE;
+        return getCache(cacheName);
+    }
+
+    public Cache getCache(EntryDefinition entryDefinition) {
+        String cacheName = entryDefinition.getParameter(SourceDefinition.DEFAULT_CACHE);
+        if (cacheName == null) cacheName = SourceDefinition.DEFAULT_CACHE;
+        return getCache(cacheName);
+    }
+
     public Schema getSchema() {
         return schema;
     }

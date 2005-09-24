@@ -41,6 +41,8 @@ public class SourceDefinition implements Cloneable {
     public final static String LOAD_ALL                = "loadAll";
     public final static String SEARCH_AND_LOAD         = "searchAndLoad";
 
+    public final static String CACHE                   = "cache";
+
     public final static int    DEFAULT_FILTER_CACHE_SIZE       = 100;
     public final static int    DEFAULT_FILTER_CACHE_EXPIRATION = 5;
 
@@ -49,6 +51,8 @@ public class SourceDefinition implements Cloneable {
 
     public final static int    DEFAULT_SIZE_LIMIT              = 100;
     public final static String DEFAULT_LOADING_METHOD          = LOAD_ALL;
+
+    public final static String DEFAULT_CACHE                   = "DEFAULT";
 
 	/**
 	 * Name.
@@ -92,11 +96,13 @@ public class SourceDefinition implements Cloneable {
 		fields.put(fieldDefinition.getName(), fieldDefinition);
 	}
 
-    public void renameFieldDefinition(FieldDefinition fieldDefinition, String newName) {
-        if (fieldDefinition == null) return;
-        if (fieldDefinition.getName().equals(newName)) return;
+    public void renameFieldDefinition(String oldName, String newName) {
+        if (oldName.equals(newName)) return;
 
-        fields.remove(fieldDefinition.getName());
+        FieldDefinition fieldDefinition = (FieldDefinition)fields.get(oldName);
+        if (fieldDefinition == null) return;
+
+        fields.remove(oldName);
         fields.put(newName, fieldDefinition);
     }
 

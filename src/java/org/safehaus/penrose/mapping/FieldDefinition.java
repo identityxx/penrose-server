@@ -22,6 +22,10 @@ package org.safehaus.penrose.mapping;
  */
 public class FieldDefinition implements Comparable, Cloneable {
 
+    public final static String DEFAULT_TYPE   = "VARCHAR";
+    public final static int DEFAULT_LENGTH    = 0;
+    public final static int DEFAULT_PRECISION = 0;
+
 	/**
 	 * Name.
 	 */
@@ -29,10 +33,9 @@ public class FieldDefinition implements Comparable, Cloneable {
 
     private String originalName;
 
-    private String type = "VARCHAR";
-
-    private int length = 50;
-    private int precision = 0;
+    private String type = DEFAULT_TYPE;
+    private int length    = DEFAULT_LENGTH;
+    private int precision = DEFAULT_PRECISION;
 
 	/**
 	 * This is a primary key.

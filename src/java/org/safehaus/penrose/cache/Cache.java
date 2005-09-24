@@ -90,15 +90,20 @@ public class Cache {
     public SourceDataCache getSourceDataCache(ConnectionConfig connectionConfig, SourceDefinition sourceDefinition) throws Exception {
         String key = connectionConfig.getConnectionName()+"."+sourceDefinition.getName();
         SourceDataCache cache = (SourceDataCache)sourceDataCaches.get(key);
+
         if (cache == null) {
-            String sourceDataCache = getParameter("sourceDataCache");
-            sourceDataCache = sourceDataCache == null ? InMemorySourceDataCache.class.getName() : sourceDataCache;
+            String sourceDataCache = getParameter(CacheConfig.SOURCE_DATA_CACHE);
+            sourceDataCache = sourceDataCache == null ? CacheConfig.DEFAULT_SOURCE_DATA_CACHE : sourceDataCache;
+
             Class clazz = Class.forName(sourceDataCache);
             Constructor constructor = clazz.getConstructor(new Class[] { Cache.class, SourceDefinition.class });
+
             cache = (SourceDataCache)constructor.newInstance(new Object[] { this, sourceDefinition });
             cache.init();
+
             sourceDataCaches.put(key, cache);
         }
+        
         return cache;
     }
 

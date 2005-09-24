@@ -18,17 +18,23 @@
 package org.safehaus.penrose.cache;
 
 import java.util.Collection;
-import java.util.Properties;
+import java.util.Map;
+import java.util.TreeMap;
 import java.io.Serializable;
 
 
 /**
  * @author Administrator
  */
-public class CacheConfig implements Serializable {
+public class CacheConfig implements Cloneable, Serializable {
 	
     public final static String CACHE_EXPIRATION = "cacheExpiration";
     public final static String LOAD_ON_STARTUP  = "loadOnStartup";
+
+    public final static String SOURCE_DATA_CACHE         = "sourceDataCache";
+
+    public final static String DEFAULT_SOURCE_DATA_CACHE = InMemorySourceDataCache.class.getName();
+
     public final static String DRIVER           = "driver";
     public final static String URL              = "url";
     public final static String USER             = "user";
@@ -41,14 +47,14 @@ public class CacheConfig implements Serializable {
 	/**
 	 * Parameters.
 	 */
-	public Properties parameters = new Properties();
+	public Map parameters = new TreeMap();
 
 	public Collection getParameterNames() {
 		return parameters.keySet();
 	}
 
     public void setParameter(String name, String value) {
-        parameters.setProperty(name, value);
+        parameters.put(name, value);
     }
 
     public void removeParameter(String name) {
@@ -56,7 +62,7 @@ public class CacheConfig implements Serializable {
     }
 
     public String getParameter(String name) {
-        return parameters.getProperty(name);
+        return (String)parameters.get(name);
     }
 
     public String getCacheClass() {
@@ -81,5 +87,46 @@ public class CacheConfig implements Serializable {
 
     public void setCacheName(String cacheName) {
         this.cacheName = cacheName;
+    }
+
+    public int hashCode() {
+        return (cacheName == null ? 0 : cacheName.hashCode()) +
+                (cacheClass == null ? 0 : cacheClass.hashCode()) +
+                (description == null ? 0 : description.hashCode()) +
+                (parameters == null ? 0 : parameters.hashCode());
+    }
+
+    boolean equals(Object o1, Object o2) {
+        if (o1 == null && o2 == null) return true;
+        if (o1 != null) return o1.equals(o2);
+        return o2.equals(o1);
+    }
+
+    public boolean equals(Object object) {
+        if (object == null) return false;
+        if (!(object instanceof CacheConfig)) return false;
+
+        CacheConfig fieldDefinition = (CacheConfig)object;
+        if (!equals(cacheName, fieldDefinition.cacheName)) return false;
+        if (!equals(cacheClass, fieldDefinition.cacheClass)) return false;
+        if (!equals(description, fieldDefinition.description)) return false;
+        if (!equals(parameters, fieldDefinition.parameters)) return false;
+
+        return true;
+    }
+
+    public void copy(CacheConfig cacheConfig) {
+        cacheName = cacheConfig.cacheName;
+        cacheClass = cacheConfig.cacheClass;
+        description = cacheConfig.description;
+
+        parameters.clear();
+        parameters.putAll(cacheConfig.parameters);
+    }
+
+    public Object clone() {
+        CacheConfig cacheConfig = new CacheConfig();
+        cacheConfig.copy(this);
+        return cacheConfig;
     }
 }
