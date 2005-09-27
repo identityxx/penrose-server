@@ -375,9 +375,14 @@ public class JDBCEntryDataCache extends EntryDataCache {
         sb.append(columns);
         sb.append(" from ");
         sb.append(tableNames);
-        sb.append(" where (");
-        sb.append(where);
-        sb.append(") and ");
+        sb.append(" where ");
+
+        if (where.length() > 0) {
+            sb.append("(");
+            sb.append(where);
+            sb.append(") and ");
+        }
+
         sb.append(getTableName());
         sb.append(".expiration >= ?");
 
@@ -490,8 +495,11 @@ public class JDBCEntryDataCache extends EntryDataCache {
         sb.append(getTableName());
         sb.append("_");
         sb.append(attributeDefinition.getName());
-        sb.append(" where ");
-        sb.append(where);
+
+        if (where.length() > 0) {
+            sb.append(" where ");
+            sb.append(where);
+        }
 
         String sql = sb.toString();
 

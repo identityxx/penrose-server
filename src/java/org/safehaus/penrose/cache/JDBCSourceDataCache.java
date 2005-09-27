@@ -370,9 +370,14 @@ public class JDBCSourceDataCache extends SourceDataCache {
         sb.append(columns);
         sb.append(" from ");
         sb.append(tableNames);
-        sb.append(" where (");
-        sb.append(where);
-        sb.append(") and ");
+        sb.append(" where ");
+
+        if (where.length() > 0) {
+            sb.append("(");
+            sb.append(where);
+            sb.append(") and ");
+        }
+
         sb.append(getTableName());
         sb.append(".expiration >= ?");
 
@@ -485,8 +490,11 @@ public class JDBCSourceDataCache extends SourceDataCache {
         sb.append(getTableName());
         sb.append("_");
         sb.append(fieldDefinition.getName());
-        sb.append(" where ");
-        sb.append(where);
+
+        if (where.length() > 0) {
+            sb.append(" where ");
+            sb.append(where);
+        }
 
         String sql = sb.toString();
 
