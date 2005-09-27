@@ -50,7 +50,7 @@ public class EntryDefinition implements Cloneable, Serializable {
 
     public final static int    DEFAULT_BATCH_SIZE              = 20;
 
-    public final static String DEFAULT_CACHE                   = "ENTRY_CACHE";
+    public final static String DEFAULT_CACHE                   = "EntryCache";
 
     /**
      * Distinguished name.

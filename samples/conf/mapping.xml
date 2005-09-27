@@ -467,6 +467,9 @@ return cn.substring(i+1);</expression>
     <at name="cn" rdn="true">
       <expression>products.name</expression>
     </at>
+    <at name="description">
+      <expression>categories.name</expression>
+    </at>
     <source name="order_details">
       <source-name>order_details</source-name>
       <connection-name>MySQL</connection-name>
@@ -478,11 +481,18 @@ return cn.substring(i+1);</expression>
         <expression>cn</expression>
       </field>
     </source>
+    <source name="categories">
+      <source-name>categories</source-name>
+      <connection-name>MySQL</connection-name>
+    </source>
     <relationship>
       <expression>orders.id = order_details.orderId</expression>
     </relationship>
     <relationship>
       <expression>order_details.productId = products.id</expression>
+    </relationship>
+    <relationship>
+      <expression>products.categoryId = categories.id</expression>
     </relationship>
   </entry>
   <entry dn="ou=Families,dc=Example,dc=com">
