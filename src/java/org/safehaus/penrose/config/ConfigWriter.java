@@ -271,18 +271,21 @@ public class ConfigWriter {
 		return entryElement;
 	}
 
-    public Element toElement(AttributeDefinition attribute) {
+    public Element toElement(AttributeDefinition attributeDefinition) {
     	Element element = new DefaultElement("at");
-    	element.add(new DefaultAttribute("name", attribute.getName()));
-    	if (attribute.isRdn()) element.add(new DefaultAttribute("rdn", "true"));
+    	element.add(new DefaultAttribute("name", attributeDefinition.getName()));
+    	if (attributeDefinition.isRdn()) element.add(new DefaultAttribute("rdn", "true"));
+        if (!AttributeDefinition.DEFAULT_TYPE.equals(attributeDefinition.getType())) element.addAttribute("type", attributeDefinition.getType());
+        if (attributeDefinition.getLength() > 0) element.addAttribute("length", ""+attributeDefinition.getLength());
+        if (attributeDefinition.getPrecision() > 0) element.addAttribute("precision", ""+attributeDefinition.getPrecision());
 
-        if (attribute.getScript() != null) {
+        if (attributeDefinition.getScript() != null) {
             Element scriptElement = new DefaultElement("script");
-            scriptElement.setText(attribute.getScript());
+            scriptElement.setText(attributeDefinition.getScript());
             element.add(scriptElement);
         }
 
-        element.add(toElement(attribute.getExpression()));
+        element.add(toElement(attributeDefinition.getExpression()));
 
     	return element;
     }
@@ -564,11 +567,11 @@ public class ConfigWriter {
     public Element toElement(FieldDefinition field) {
     	Element element = new DefaultElement("field");
     	element.addAttribute("name", field.getName());
-        if (!FieldDefinition.DEFAULT_TYPE.equals(field.getType())) element.addAttribute("type", field.getType());
-        if (field.getLength() != FieldDefinition.DEFAULT_LENGTH) element.addAttribute("length", ""+field.getLength());
-        if (field.getPrecision() != FieldDefinition.DEFAULT_PRECISION) element.addAttribute("precision", ""+field.getPrecision());
-    	if (field.isPrimaryKey()) element.addAttribute("primaryKey", "true");
         if (!field.getName().equals(field.getOriginalName())) element.addAttribute("originalName", field.getOriginalName());
+        if (field.isPrimaryKey()) element.addAttribute("primaryKey", "true");
+        if (!FieldDefinition.DEFAULT_TYPE.equals(field.getType())) element.addAttribute("type", field.getType());
+        if (field.getLength() > 0) element.addAttribute("length", ""+field.getLength());
+        if (field.getPrecision() > 0) element.addAttribute("precision", ""+field.getPrecision());
     	return element;
     }
     

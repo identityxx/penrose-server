@@ -24,6 +24,10 @@ import java.io.Serializable;
  */
 public class AttributeDefinition implements Cloneable, Serializable {
 
+    public final static String DEFAULT_TYPE   = "VARCHAR";
+    public final static int DEFAULT_LENGTH    = 50;
+    public final static int DEFAULT_PRECISION = 0;
+
 	/**
 	 * Name. This refers to AttributeType's name.
 	 */
@@ -53,6 +57,10 @@ public class AttributeDefinition implements Cloneable, Serializable {
      * Encoding method used to encode the value
      */
     private String encoding;
+
+    private String type   = DEFAULT_TYPE;
+    private int length    = DEFAULT_LENGTH;
+    private int precision = DEFAULT_PRECISION;
 
     public AttributeDefinition() {
     }
@@ -137,13 +145,40 @@ public class AttributeDefinition implements Cloneable, Serializable {
         this.script = script;
     }
 
+    public String getType() {
+        return type;
+    }
+
+    public void setType(String type) {
+        this.type = type;
+    }
+
+    public int getLength() {
+        return length;
+    }
+
+    public void setLength(int length) {
+        this.length = length;
+    }
+
+    public int getPrecision() {
+        return precision;
+    }
+
+    public void setPrecision(int precision) {
+        this.precision = precision;
+    }
+
     public int hashCode() {
         return (name == null ? 0 : name.hashCode()) +
                 (script == null ? 0 : script.hashCode()) +
                 (expression == null ? 0 : expression.hashCode()) +
                 (rdn ? 0 : 1) +
                 (encryption == null ? 0 : encryption.hashCode()) +
-                (encoding == null ? 0 : encoding.hashCode());
+                (encoding == null ? 0 : encoding.hashCode()) +
+                (type == null ? 0 : type.hashCode()) +
+                (length) +
+                (precision);
     }
 
     boolean equals(Object o1, Object o2) {
@@ -163,23 +198,33 @@ public class AttributeDefinition implements Cloneable, Serializable {
         if (rdn != attributeDefinition.rdn) return false;
         if (!equals(encryption, attributeDefinition.encryption)) return false;
         if (!equals(encoding, attributeDefinition.encoding)) return false;
+        if (!equals(type, attributeDefinition.type)) return false;
+        if (length != attributeDefinition.length) return false;
+        if (precision != attributeDefinition.precision) return false;
 
         return true;
     }
 
+    public Object copy(AttributeDefinition attributeDefinition) {
+        name = attributeDefinition.name;
+        script = attributeDefinition.script;
+        expression = attributeDefinition.expression == null ? null : (Expression)attributeDefinition.expression.clone();
+        rdn = attributeDefinition.rdn;
+        encryption = attributeDefinition.encryption;
+        encoding = attributeDefinition.encoding;
+        type = attributeDefinition.type;
+        length = attributeDefinition.length;
+        precision = attributeDefinition.precision;
+        return attributeDefinition;
+    }
+
     public Object clone() {
-        AttributeDefinition attribute = new AttributeDefinition();
-        attribute.name = name;
-        attribute.script = script;
-        attribute.expression = expression == null ? null : (Expression)expression.clone();
-        attribute.rdn = rdn;
-        attribute.encryption = encryption;
-        attribute.encoding = encoding;
-        return attribute;
+        AttributeDefinition attributeDefinition = new AttributeDefinition();
+        attributeDefinition.copy(this);
+        return attributeDefinition;
     }
 
     public String toString() {
         return "["+name+":"+expression+"]";
     }
-
 }

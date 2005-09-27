@@ -18,77 +18,17 @@
 package org.safehaus.penrose.cache;
 
 import org.safehaus.penrose.mapping.*;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.*;
 
 /**
  * @author Endi S. Dewata
  */
-public abstract class SourceDataCache {
-
-    Logger log = LoggerFactory.getLogger(getClass());
+public abstract class SourceDataCache extends Cache {
 
     SourceDefinition sourceDefinition;
-    Cache cache;
-    CacheContext cacheContext;
 
-    int size;
-    int expiration; // minutes
-
-    public SourceDataCache(Cache cache, SourceDefinition sourceDefinition) {
-        this.cache = cache;
-        this.cacheContext = cache.getCacheContext();
-        this.sourceDefinition = sourceDefinition;
-
-        String s = sourceDefinition.getParameter(SourceDefinition.DATA_CACHE_SIZE);
-        size = s == null ? SourceDefinition.DEFAULT_DATA_CACHE_SIZE : Integer.parseInt(s);
-
-        s = sourceDefinition.getParameter(SourceDefinition.DATA_CACHE_EXPIRATION);
-        expiration = s == null ? SourceDefinition.DEFAULT_DATA_CACHE_EXPIRATION : Integer.parseInt(s);
-    }
-
-    public void init() throws Exception {
-    }
-
-    public abstract Map get(Collection filters) throws Exception;
-
-    public abstract void put(Row pk, AttributeValues values) throws Exception;
-
-    public abstract void remove(Row pk) throws Exception;
-
-    public Cache getCache() {
-        return cache;
-    }
-
-    public void setCache(Cache cache) {
-        this.cache = cache;
-    }
-
-    public CacheContext getCacheContext() {
-        return cacheContext;
-    }
-
-    public void setCacheContext(CacheContext cacheContext) {
-        this.cacheContext = cacheContext;
-    }
-
-    public int getSize() {
-        return size;
-    }
-
-    public void setSize(int size) {
-        this.size = size;
-    }
-
-    public int getExpiration() {
-        return expiration;
-    }
-
-    public void setExpiration(int expiration) {
-        this.expiration = expiration;
-    }
+    public abstract Map search(Collection filters) throws Exception;
 
     public SourceDefinition getSourceDefinition() {
         return sourceDefinition;
@@ -96,5 +36,11 @@ public abstract class SourceDataCache {
 
     public void setSourceDefinition(SourceDefinition sourceDefinition) {
         this.sourceDefinition = sourceDefinition;
+
+        String s = sourceDefinition.getParameter(SourceDefinition.DATA_CACHE_SIZE);
+        size = s == null ? SourceDefinition.DEFAULT_DATA_CACHE_SIZE : Integer.parseInt(s);
+
+        s = sourceDefinition.getParameter(SourceDefinition.DATA_CACHE_EXPIRATION);
+        expiration = s == null ? SourceDefinition.DEFAULT_DATA_CACHE_EXPIRATION : Integer.parseInt(s);
     }
 }

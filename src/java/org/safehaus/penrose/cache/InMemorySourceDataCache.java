@@ -29,26 +29,25 @@ public class InMemorySourceDataCache extends SourceDataCache {
     Map dataMap = new TreeMap();
     Map expirationMap = new LinkedHashMap();
 
-    public InMemorySourceDataCache(Cache cache, SourceDefinition sourceDefinition) {
-        super(cache, sourceDefinition);
+    public Object get(Row pk) throws Exception {
+        AttributeValues attributeValues = (AttributeValues)dataMap.get(pk);
+        if (attributeValues == null) return null;
+
+        Date date = (Date)expirationMap.get(pk);
+        if (date == null || date.getTime() <= System.currentTimeMillis()) return null;
+
+        return attributeValues;
     }
 
-    public void init() throws Exception {
-    }
-
-    public Map get(Collection filters) throws Exception {
+    public Map search(Collection filters) throws Exception {
 
         Map results = new TreeMap();
 
         for (Iterator i=dataMap.keySet().iterator(); i.hasNext(); ) {
             Row pk = (Row)i.next();
 
-            AttributeValues attributeValues = (AttributeValues)dataMap.get(pk);
-            Date date = (Date)expirationMap.get(pk);
-
-            if (date == null || date.getTime() <= System.currentTimeMillis()) {
-                continue;
-            }
+            AttributeValues attributeValues = (AttributeValues)get(pk);
+            if (attributeValues == null) continue;
 
             for (Iterator j=filters.iterator(); j.hasNext(); ) {
                 Row filter = (Row)j.next();
@@ -65,13 +64,11 @@ public class InMemorySourceDataCache extends SourceDataCache {
         return results;
     }
 
-    public void put(Row pk, AttributeValues values) throws Exception {
-
+    public void put(Row pk, Object object) throws Exception {
+        AttributeValues values = (AttributeValues)object;
         Row key = cacheContext.getSchema().normalize(pk);
 
-        Object object = dataMap.get(key);
-
-        while (object == null && dataMap.size() >= size) {
+        while (dataMap.get(key) == null && dataMap.size() >= size) {
             log.debug("Trimming source cache ("+dataMap.size()+").");
             Object k = expirationMap.keySet().iterator().next();
             dataMap.remove(k);
@@ -90,21 +87,5 @@ public class InMemorySourceDataCache extends SourceDataCache {
         log.debug("Removing source cache ("+dataMap.size()+"): "+key);
         dataMap.remove(key);
         expirationMap.remove(key);
-    }
-
-    public Map getDataMap() {
-        return dataMap;
-    }
-
-    public void setDataMap(Map dataMap) {
-        this.dataMap = dataMap;
-    }
-
-    public Map getExpirationMap() {
-        return expirationMap;
-    }
-
-    public void setExpirationMap(Map expirationMap) {
-        this.expirationMap = expirationMap;
     }
 }

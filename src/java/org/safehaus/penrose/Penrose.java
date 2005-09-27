@@ -19,6 +19,7 @@ package org.safehaus.penrose;
 
 import java.util.*;
 import java.io.*;
+import java.lang.reflect.Constructor;
 
 import org.ietf.ldap.*;
 import org.safehaus.penrose.config.*;
@@ -104,7 +105,12 @@ public class Penrose implements
 	private TransformEngine transformEngine;
     private SyncService syncService;
 
-    private Map caches = new LinkedHashMap();
+    private Map entryFilterCaches = new TreeMap();
+    private Map entryDataCaches = new TreeMap();
+
+    private Map sourceFilterCaches = new TreeMap();
+    private Map sourceDataCaches = new TreeMap();
+
 	private Map engines = new LinkedHashMap();
 
     private Map connections = new LinkedHashMap();
@@ -160,18 +166,6 @@ public class Penrose implements
 		return LDAPException.SUCCESS;
 	}
 
-    public void initCache() throws Exception {
-        for (Iterator i=serverConfig.getCacheConfigs().iterator(); i.hasNext(); ) {
-            CacheConfig cacheConfig = (CacheConfig)i.next();
-
-            Class clazz = Class.forName(cacheConfig.getCacheClass());
-            Cache cache = (Cache)clazz.newInstance();
-            cache.init(cacheConfig, this);
-
-            caches.put(cacheConfig.getCacheName(), cache);
-        }
-    }
-
     public void initEngine() throws Exception {
 
         for (Iterator i=serverConfig.getEngineConfigs().iterator(); i.hasNext(); ) {
@@ -209,7 +203,6 @@ public class Penrose implements
         syncService = new SyncService(this);
 
         loadSchema();
-        initCache();
         initEngine();
 
         configValidator = new ConfigValidator();
@@ -588,24 +581,85 @@ public class Penrose implements
         return (Interpreter)clazz.newInstance();
     }
 
-    public Cache getCache() {
-        return getCache("DEFAULT");
+    public EntryFilterCache getEntryFilterCache(Entry parent, EntryDefinition entryDefinition) throws Exception {
+        String cacheName = entryDefinition.getParameter(EntryDefinition.CACHE);
+        cacheName = cacheName == null ? EntryDefinition.DEFAULT_CACHE : cacheName;
+
+        CacheConfig cacheConfig = serverConfig.getCacheConfig(cacheName);
+
+        String key = entryDefinition.getRdn()+","+parent.getDn();
+        EntryFilterCache entryFilterCache = (EntryFilterCache)entryFilterCaches.get(key);
+
+        if (entryFilterCache == null) {
+            entryFilterCache = new EntryFilterCache(this, entryDefinition);
+            entryFilterCaches.put(key, entryFilterCache);
+        }
+
+        return entryFilterCache;
     }
 
-    public Cache getCache(String name) {
-        return (Cache)caches.get(name);
+    public EntryDataCache getEntryDataCache(Entry parent, EntryDefinition entryDefinition) throws Exception {
+        String cacheName = entryDefinition.getParameter(EntryDefinition.CACHE);
+        cacheName = cacheName == null ? EntryDefinition.DEFAULT_CACHE : cacheName;
+
+        CacheConfig cacheConfig = serverConfig.getCacheConfig(cacheName);
+
+        String key = entryDefinition.getRdn()+","+parent.getDn();
+        EntryDataCache cache = (EntryDataCache)entryDataCaches.get(key);
+
+        if (cache == null) {
+            String cacheClass = cacheConfig.getCacheClass();
+            cacheClass = cacheClass == null ? CacheConfig.DEFAULT_ENTRY_DATA_CACHE : cacheClass;
+
+            Class clazz = Class.forName(cacheClass);
+            cache = (EntryDataCache)clazz.newInstance();
+            cache.setParent(parent);
+            cache.setEntryDefinition(entryDefinition);
+            cache.init(cacheConfig, this);
+
+            entryDataCaches.put(key, cache);
+        }
+
+        return cache;
     }
 
-    public Cache getCache(SourceDefinition sourceDefinition) {
-        String cacheName = sourceDefinition.getParameter(SourceDefinition.DEFAULT_CACHE);
-        if (cacheName == null) cacheName = SourceDefinition.DEFAULT_CACHE;
-        return getCache(cacheName);
+    public SourceFilterCache getSourceFilterCache(ConnectionConfig connectionConfig, SourceDefinition sourceDefinition) throws Exception {
+        String cacheName = sourceDefinition.getParameter(SourceDefinition.CACHE);
+        cacheName = cacheName == null ? SourceDefinition.DEFAULT_CACHE : cacheName;
+
+        CacheConfig cacheConfig = serverConfig.getCacheConfig(cacheName);
+
+        String key = connectionConfig.getConnectionName()+"."+sourceDefinition.getName();
+        SourceFilterCache cache = (SourceFilterCache)sourceFilterCaches.get(key);
+        if (cache == null) {
+            cache = new SourceFilterCache(this, sourceDefinition);
+            sourceFilterCaches.put(key, cache);
+        }
+        return cache;
     }
 
-    public Cache getCache(EntryDefinition entryDefinition) {
-        String cacheName = entryDefinition.getParameter(SourceDefinition.DEFAULT_CACHE);
-        if (cacheName == null) cacheName = SourceDefinition.DEFAULT_CACHE;
-        return getCache(cacheName);
+    public SourceDataCache getSourceDataCache(ConnectionConfig connectionConfig, SourceDefinition sourceDefinition) throws Exception {
+        String cacheName = sourceDefinition.getParameter(SourceDefinition.CACHE);
+        cacheName = cacheName == null ? SourceDefinition.DEFAULT_CACHE : cacheName;
+
+        CacheConfig cacheConfig = serverConfig.getCacheConfig(cacheName);
+
+        String key = connectionConfig.getConnectionName()+"."+sourceDefinition.getName();
+        SourceDataCache cache = (SourceDataCache)sourceDataCaches.get(key);
+
+        if (cache == null) {
+            String cacheClass = cacheConfig.getCacheClass();
+            cacheClass = cacheClass == null ? CacheConfig.DEFAULT_SOURCE_DATA_CACHE : cacheClass;
+
+            Class clazz = Class.forName(cacheClass);
+            cache = (SourceDataCache)clazz.newInstance();
+            cache.setSourceDefinition(sourceDefinition);
+            cache.init(cacheConfig, this);
+
+            sourceDataCaches.put(key, cache);
+        }
+
+        return cache;
     }
 
     public Schema getSchema() {

@@ -35,15 +35,13 @@ public class EntryFilterCache {
     public Map expirationMap = new LinkedHashMap();
 
     public EntryDefinition entryDefinition;
-    public Cache cache;
     public CacheContext cacheContext;
 
     private int size;
     private int expiration; // minutes
 
-    public EntryFilterCache(Cache cache, EntryDefinition entryDefinition) {
-        this.cache = cache;
-        this.cacheContext = cache.getCacheContext();
+    public EntryFilterCache(CacheContext cacheContext, EntryDefinition entryDefinition) {
+        this.cacheContext = cacheContext;
         this.entryDefinition = entryDefinition;
 
         String s = entryDefinition.getParameter(EntryDefinition.FILTER_CACHE_SIZE);

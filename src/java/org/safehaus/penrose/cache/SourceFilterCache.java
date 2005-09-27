@@ -35,15 +35,13 @@ public class SourceFilterCache {
     public Map expirationMap = new LinkedHashMap();
 
     public SourceDefinition sourceDefinition;
-    public Cache cache;
     public CacheContext cacheContext;
 
     private int size;
     private int expiration; // minutes
 
-    public SourceFilterCache(Cache cache, SourceDefinition sourceDefinition) {
-        this.cache = cache;
-        this.cacheContext = cache.getCacheContext();
+    public SourceFilterCache(CacheContext cacheContext, SourceDefinition sourceDefinition) {
+        this.cacheContext = cacheContext;
         this.sourceDefinition = sourceDefinition;
 
         String s = sourceDefinition.getParameter(SourceDefinition.FILTER_CACHE_SIZE);

@@ -296,7 +296,7 @@ public class Engine {
 
         if (visitor.getReturnCode() != LDAPException.SUCCESS) return visitor.getReturnCode();
 
-        engineContext.getCache(entryDefinition).getEntryFilterCache(parent, entryDefinition).invalidate();
+        engineContext.getEntryFilterCache(parent, entryDefinition).invalidate();
 
         return LDAPException.SUCCESS;
     }
@@ -318,8 +318,8 @@ public class Engine {
 
         if (visitor.getReturnCode() != LDAPException.SUCCESS) return visitor.getReturnCode();
 
-        engineContext.getCache(entryDefinition).getEntryDataCache(entry.getParent(), entryDefinition).remove(entry.getRdn());
-        engineContext.getCache(entryDefinition).getEntryFilterCache(entry.getParent(), entryDefinition).invalidate();
+        engineContext.getEntryDataCache(entry.getParent(), entryDefinition).remove(entry.getRdn());
+        engineContext.getEntryFilterCache(entry.getParent(), entryDefinition).invalidate();
 
         return LDAPException.SUCCESS;
     }
@@ -358,8 +358,8 @@ public class Engine {
 
         if (visitor.getReturnCode() != LDAPException.SUCCESS) return visitor.getReturnCode();
 
-        engineContext.getCache(entryDefinition).getEntryDataCache(entry.getParent(), entryDefinition).remove(entry.getRdn());
-        engineContext.getCache(entryDefinition).getEntryFilterCache(entry.getParent(), entryDefinition).invalidate();
+        engineContext.getEntryDataCache(entry.getParent(), entryDefinition).remove(entry.getRdn());
+        engineContext.getEntryFilterCache(entry.getParent(), entryDefinition).invalidate();
 
         return LDAPException.SUCCESS;
     }
@@ -415,10 +415,9 @@ public class Engine {
                 Row rdn = (Row)rdns.next();
                 log.debug(" - "+rdn);
 
-                Entry entry = engineContext.getCache(entryDefinition).getEntryDataCache(parent, entryDefinition).get(rdn);
+                Entry entry = (Entry)engineContext.getEntryDataCache(parent, entryDefinition).get(rdn);
                 if (entry != null) {
                     entry.setParent(parent);
-                    entry.setEntryDefinition(entryDefinition);
                     results.add(entry);
                     continue;
                 }
@@ -433,7 +432,7 @@ public class Engine {
                     entry = (Entry)i.next();
                     entry.setParent(parent);
                     results.add(entry);
-                    engineContext.getCache(entryDefinition).getEntryDataCache(parent, entryDefinition).put(entry.getRdn(), entry);
+                    engineContext.getEntryDataCache(parent, entryDefinition).put(entry.getRdn(), entry);
                 }
 
                 rdnsToLoad.clear();
@@ -446,7 +445,7 @@ public class Engine {
                     Entry entry = (Entry)i.next();
                     entry.setParent(parent);
                     results.add(entry);
-                    engineContext.getCache(entryDefinition).getEntryDataCache(parent, entryDefinition).put(entry.getRdn(), entry);
+                    engineContext.getEntryDataCache(parent, entryDefinition).put(entry.getRdn(), entry);
                 }
             }
 
@@ -508,7 +507,7 @@ public class Engine {
             String dn = entryDefinition.getRdn()+","+parent.getDn();
             log.debug("Checking entry filter cache for ["+dn+"]");
 
-            Collection rdns = engineContext.getCache(entryDefinition).getEntryFilterCache(parent, entryDefinition).get(filter);
+            Collection rdns = engineContext.getEntryFilterCache(parent, entryDefinition).get(filter);
 
             if (rdns != null) {
                 log.debug("Entry filter cache found: "+filter);
@@ -521,10 +520,10 @@ public class Engine {
 
             rdns = searchEngine.search(parent, entryDefinition, filter);
 
-            engineContext.getCache(entryDefinition).getEntryFilterCache(parent, entryDefinition).put(filter, rdns);
+            engineContext.getEntryFilterCache(parent, entryDefinition).put(filter, rdns);
 
             filter = engineContext.getFilterTool().createFilter(rdns);
-            engineContext.getCache(entryDefinition).getEntryFilterCache(parent, entryDefinition).put(filter, rdns);
+            engineContext.getEntryFilterCache(parent, entryDefinition).put(filter, rdns);
 
             results.addAll(rdns);
 

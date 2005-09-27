@@ -50,7 +50,7 @@ public class EntryDefinition implements Cloneable, Serializable {
 
     public final static int    DEFAULT_BATCH_SIZE              = 20;
 
-    public final static String DEFAULT_CACHE                   = "DEFAULT";
+    public final static String DEFAULT_CACHE                   = "ENTRY_CACHE";
 
     /**
      * Distinguished name.
@@ -117,21 +117,25 @@ public class EntryDefinition implements Cloneable, Serializable {
     }
     
     public String getRdn(AttributeValues attributes) {
-        if (isDynamic()) {
-            Collection rdnAttributes = getRdnAttributes();
+        if (!isDynamic()) return getRdn();
 
-            // TODO fix for multiple rdn attributes
-            AttributeDefinition rdnAttribute = (AttributeDefinition)rdnAttributes.iterator().next();
+        Collection rdnAttributes = getRdnAttributes();
+        StringBuffer sb = new StringBuffer();
+        for (Iterator i=rdnAttributes.iterator(); i.hasNext(); ) {
+            AttributeDefinition rdnAttribute = (AttributeDefinition)i.next();
 
             // TODO fix for multiple values
-            Collection rdnValues = attributes.get(rdnAttribute.getName());
-            Object rdnValue = rdnValues.iterator().next();
+            Collection values = attributes.get(rdnAttribute.getName());
+            Object value = values.iterator().next();
 
-            return rdnAttribute.getName()+"="+rdnValue;
-
-        } else {
-            return getRdn();
+            if (sb.length() > 0) sb.append("+");
+            sb.append(rdnAttribute.getName());
+            sb.append("=");
+            sb.append(value);
         }
+
+        // TODO fix if parent is also a dynamic entry
+        return sb.toString();
     }
 
     public String getParentDn() {
@@ -150,25 +154,6 @@ public class EntryDefinition implements Cloneable, Serializable {
     	} else if (!mapping && isDynamic()) {
     		rdn = rdn.replaceAll("\\.\\.\\.", "value");
     	}
-    }
-
-    public String getDn(AttributeValues attributes) {
-        if (isDynamic()) {
-            Collection rdnAttributes = getRdnAttributes();
-
-            // TODO fix for multiple rdn attributes
-            AttributeDefinition rdnAttribute = (AttributeDefinition)rdnAttributes.iterator().next();
-
-            // TODO fix for multiple values
-            Collection rdnValues = attributes.get(rdnAttribute.getName());
-            Object rdnValue = rdnValues.iterator().next();
-
-            // TODO fix if parent is also a dynamic entry
-            return rdnAttribute.getName()+"="+rdnValue+","+parentDn;
-
-        } else {
-            return getDn();
-        }
     }
 
     public Collection getRdnAttributes() {

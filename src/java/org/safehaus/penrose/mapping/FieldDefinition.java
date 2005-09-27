@@ -23,7 +23,7 @@ package org.safehaus.penrose.mapping;
 public class FieldDefinition implements Comparable, Cloneable {
 
     public final static String DEFAULT_TYPE   = "VARCHAR";
-    public final static int DEFAULT_LENGTH    = 0;
+    public final static int DEFAULT_LENGTH    = 50;
     public final static int DEFAULT_PRECISION = 0;
 
 	/**
@@ -33,7 +33,7 @@ public class FieldDefinition implements Comparable, Cloneable {
 
     private String originalName;
 
-    private String type = DEFAULT_TYPE;
+    private String type   = DEFAULT_TYPE;
     private int length    = DEFAULT_LENGTH;
     private int precision = DEFAULT_PRECISION;
 
@@ -126,10 +126,10 @@ public class FieldDefinition implements Comparable, Cloneable {
     public int hashCode() {
         return (name == null ? 0 : name.hashCode()) +
                 (originalName == null ? 0 : originalName.hashCode()) +
-                (type == null ? 0 : type.hashCode()) +
                 (primaryKey ? 0 : 1) +
                 (encryption == null ? 0 : encryption.hashCode()) +
                 (encoding == null ? 0 : encoding.hashCode()) +
+                (type == null ? 0 : type.hashCode()) +
                 (length) +
                 (precision);
     }
@@ -147,10 +147,10 @@ public class FieldDefinition implements Comparable, Cloneable {
         FieldDefinition fieldDefinition = (FieldDefinition)object;
         if (!equals(name, fieldDefinition.name)) return false;
         if (!equals(originalName, fieldDefinition.originalName)) return false;
-        if (!equals(type, fieldDefinition.type)) return false;
         if (primaryKey != fieldDefinition.primaryKey) return false;
         if (!equals(encryption, fieldDefinition.encryption)) return false;
         if (!equals(encoding, fieldDefinition.encoding)) return false;
+        if (!equals(type, fieldDefinition.type)) return false;
         if (length != fieldDefinition.length) return false;
         if (precision != fieldDefinition.precision) return false;
 
@@ -168,10 +168,10 @@ public class FieldDefinition implements Comparable, Cloneable {
     public void copy(FieldDefinition fieldDefinition) {
         name = fieldDefinition.name;
         originalName = fieldDefinition.originalName;
-        type = fieldDefinition.type;
         primaryKey = fieldDefinition.primaryKey;
         encryption = fieldDefinition.encryption;
         encoding = fieldDefinition.encoding;
+        type = fieldDefinition.type;
         length = fieldDefinition.length;
         precision = fieldDefinition.precision;
     }

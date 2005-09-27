@@ -19,30 +19,22 @@ package org.safehaus.penrose.cache;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.safehaus.penrose.mapping.*;
+import org.safehaus.penrose.mapping.Row;
 
 import java.util.Collection;
-import java.util.TreeMap;
-import java.util.Map;
-import java.lang.reflect.Constructor;
 
 /**
  * @author Endi S. Dewata
  */
-public class Cache {
+public abstract class Cache {
 
     Logger log = LoggerFactory.getLogger(getClass());
 
-    private CacheConfig cacheConfig;
-    private CacheContext cacheContext;
+    CacheConfig cacheConfig;
+    CacheContext cacheContext;
 
-    private Map entryFilterCaches = new TreeMap();
-    private Map entryDataCaches = new TreeMap();
-
-    private Map sourceFilterCaches = new TreeMap();
-    private Map sourceDataCaches = new TreeMap();
-
-    protected CacheFilterTool cacheFilterTool;
+    int size;
+    int expiration; // minutes
 
     public CacheConfig getCacheConfig() {
         return cacheConfig;
@@ -64,57 +56,10 @@ public class Cache {
         this.cacheConfig = cacheConfig;
         this.cacheContext = cacheContext;
 
-        cacheFilterTool = new CacheFilterTool(getCacheContext());
+        init();
     }
 
-    public EntryFilterCache getEntryFilterCache(Entry parent, EntryDefinition entry) throws Exception {
-        String key = entry.getRdn()+","+parent.getDn();
-        EntryFilterCache cache = (EntryFilterCache)entryFilterCaches.get(key);
-        if (cache == null) {
-            cache = new EntryFilterCache(this, entry);
-            entryFilterCaches.put(key, cache);
-        }
-        return cache;
-    }
-
-    public EntryDataCache getEntryDataCache(Entry parent, EntryDefinition entry) throws Exception {
-        String key = entry.getRdn()+","+parent.getDn();
-        EntryDataCache cache = (EntryDataCache)entryDataCaches.get(key);
-        if (cache == null) {
-            cache = new EntryDataCache(this, entry);
-            entryDataCaches.put(key, cache);
-        }
-        return cache;
-    }
-
-    public SourceDataCache getSourceDataCache(ConnectionConfig connectionConfig, SourceDefinition sourceDefinition) throws Exception {
-        String key = connectionConfig.getConnectionName()+"."+sourceDefinition.getName();
-        SourceDataCache cache = (SourceDataCache)sourceDataCaches.get(key);
-
-        if (cache == null) {
-            String sourceDataCache = getParameter(CacheConfig.SOURCE_DATA_CACHE);
-            sourceDataCache = sourceDataCache == null ? CacheConfig.DEFAULT_SOURCE_DATA_CACHE : sourceDataCache;
-
-            Class clazz = Class.forName(sourceDataCache);
-            Constructor constructor = clazz.getConstructor(new Class[] { Cache.class, SourceDefinition.class });
-
-            cache = (SourceDataCache)constructor.newInstance(new Object[] { this, sourceDefinition });
-            cache.init();
-
-            sourceDataCaches.put(key, cache);
-        }
-        
-        return cache;
-    }
-
-    public SourceFilterCache getSourceFilterCache(ConnectionConfig connectionConfig, SourceDefinition sourceDefinition) throws Exception {
-        String key = connectionConfig.getConnectionName()+"."+sourceDefinition.getName();
-        SourceFilterCache cache = (SourceFilterCache)sourceFilterCaches.get(key);
-        if (cache == null) {
-            cache = new SourceFilterCache(this, sourceDefinition);
-            sourceFilterCaches.put(key, cache);
-        }
-        return cache;
+    public void init() throws Exception {
     }
 
     public CacheContext getCacheContext() {
@@ -125,11 +70,26 @@ public class Cache {
         this.cacheContext = cacheContext;
     }
 
-    public CacheFilterTool getCacheFilterTool() {
-        return cacheFilterTool;
+    public int getSize() {
+        return size;
     }
 
-    public void setCacheFilterTool(CacheFilterTool cacheFilterTool) {
-        this.cacheFilterTool = cacheFilterTool;
+    public void setSize(int size) {
+        this.size = size;
     }
+
+    public int getExpiration() {
+        return expiration;
+    }
+
+    public void setExpiration(int expiration) {
+        this.expiration = expiration;
+    }
+
+    public abstract Object get(Row pk) throws Exception;
+
+    public abstract void put(Row pk, Object object) throws Exception;
+
+    public abstract void remove(Row pk) throws Exception;
+
 }

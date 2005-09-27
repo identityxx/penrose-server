@@ -22,7 +22,6 @@ import org.safehaus.penrose.mapping.Entry;
 import org.safehaus.penrose.mapping.AttributeValues;
 import org.safehaus.penrose.mapping.EntryDefinition;
 import org.safehaus.penrose.cache.EntryDataCache;
-import org.safehaus.penrose.cache.Cache;
 import org.apache.ldap.server.interceptor.NextInterceptor;
 import org.apache.ldap.server.invocation.InvocationStack;
 import org.apache.ldap.server.invocation.Invocation;
@@ -52,10 +51,8 @@ public class ApacheDSEntryDataCache extends EntryDataCache {
     private NextInterceptor nextInterceptor;
     private Context context;
 
-    private Map entries = new HashMap();
-
-    public ApacheDSEntryDataCache(Cache cache, EntryDefinition entryDefinition) {
-        super(cache, entryDefinition);
+    public Object get(Row rdn) throws Exception {
+        return null;
     }
 
     public Entry get(EntryDefinition entryDefinition, String dn) throws Exception {
@@ -117,6 +114,10 @@ public class ApacheDSEntryDataCache extends EntryDataCache {
 */
     }
 
+    public void put(Row rdn, Object object) throws Exception {
+        Entry entry = (Entry)object;
+    }
+
     public void put(Entry entry) throws Exception {
 
         String dn = entry.getDn();
@@ -129,6 +130,10 @@ public class ApacheDSEntryDataCache extends EntryDataCache {
 
         log.debug("Storing entry cache ("+map.size()+"): "+dn);
         map.put(dn, entry);
+    }
+
+    public void remove(Row rdn) throws Exception {
+
     }
 
     public void remove(Entry entry) throws Exception {

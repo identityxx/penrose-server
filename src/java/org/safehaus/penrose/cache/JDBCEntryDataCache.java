@@ -25,7 +25,7 @@ import java.sql.*;
 /**
  * @author Endi S. Dewata
  */
-public class JDBCSourceDataCache extends SourceDataCache {
+public class JDBCEntryDataCache extends EntryDataCache {
 
     public Connection getConnection() throws Exception {
         String url = cacheConfig.getParameter("url");
@@ -36,30 +36,35 @@ public class JDBCSourceDataCache extends SourceDataCache {
     }
 
     public String getTableName() {
-        return sourceDefinition.getConnectionName()+"_"+sourceDefinition.getName();
+        String key = entryDefinition.getRdn()+","+parent.getDn();
+        key = key.replace('=', '_');
+        key = key.replace(',', '_');
+        key = key.replace('.', '_');
+        key = key.replace(' ', '_');
+        return key;
     }
 
     public Collection getPrimaryColumns() {
-        Collection attributes = sourceDefinition.getFields();
+        Collection attributes = entryDefinition.getAttributeDefinitions();
         Collection results = new ArrayList();
 
         for (Iterator i=attributes.iterator(); i.hasNext(); ) {
-            FieldDefinition fieldDefinition = (FieldDefinition)i.next();
-            if (!fieldDefinition.isPrimaryKey()) continue;
-            results.add(fieldDefinition);
+            AttributeDefinition attributeDefinition = (AttributeDefinition)i.next();
+            if (!attributeDefinition.isRdn()) continue;
+            results.add(attributeDefinition);
         }
 
         return results;
     }
 
     public Collection getNonPrimaryColumns() {
-        Collection attributes = sourceDefinition.getFields();
+        Collection attributes = entryDefinition.getAttributeDefinitions();
         Collection results = new ArrayList();
 
         for (Iterator i=attributes.iterator(); i.hasNext(); ) {
-            FieldDefinition fieldDefinition = (FieldDefinition)i.next();
-            if (fieldDefinition.isPrimaryKey()) continue;
-            results.add(fieldDefinition);
+            AttributeDefinition attributeDefinition = (AttributeDefinition)i.next();
+            if (attributeDefinition.isRdn()) continue;
+            results.add(attributeDefinition);
         }
 
         return results;
@@ -72,28 +77,28 @@ public class JDBCSourceDataCache extends SourceDataCache {
         dropMainTable();
         createMainTable();
 
-        Collection fields = getNonPrimaryColumns();
-        for (Iterator i=fields.iterator(); i.hasNext(); ) {
-            FieldDefinition fieldDefinition = (FieldDefinition)i.next();
+        Collection attributes = getNonPrimaryColumns();
+        for (Iterator i=attributes.iterator(); i.hasNext(); ) {
+            AttributeDefinition attributeDefinition = (AttributeDefinition)i.next();
 
-            dropFieldTable(fieldDefinition);
-            createFieldTable(fieldDefinition);
+            dropFieldTable(attributeDefinition);
+            createFieldTable(attributeDefinition);
         }
     }
 
-    public String getColumnDeclaration(FieldDefinition fieldDefinition) {
+    public String getColumnDeclaration(AttributeDefinition attributeDefinition) {
         StringBuffer sb = new StringBuffer();
-        sb.append(fieldDefinition.getName());
+        sb.append(attributeDefinition.getName());
         sb.append(" ");
-        sb.append(fieldDefinition.getType());
+        sb.append(attributeDefinition.getType());
 
-        if (fieldDefinition.getLength() > 0) {
+        if (attributeDefinition.getLength() > 0) {
             sb.append("(");
-            sb.append(fieldDefinition.getLength());
+            sb.append(attributeDefinition.getLength());
 
-            if ("DOUBLE".equals(fieldDefinition.getType())) {
+            if ("DOUBLE".equals(attributeDefinition.getType())) {
                 sb.append(", ");
-                sb.append(fieldDefinition.getPrecision());
+                sb.append(attributeDefinition.getPrecision());
             }
 
             sb.append(")");
@@ -134,13 +139,13 @@ public class JDBCSourceDataCache extends SourceDataCache {
 
         Collection fields = getPrimaryColumns();
         for (Iterator i=fields.iterator(); i.hasNext(); ) {
-            FieldDefinition fieldDefinition = (FieldDefinition)i.next();
+            AttributeDefinition attributeDefinition = (AttributeDefinition)i.next();
 
             if (columns.length() > 0) columns.append(", ");
-            columns.append(getColumnDeclaration(fieldDefinition));
+            columns.append(getColumnDeclaration(attributeDefinition));
 
             if (primaryKeys.length() > 0) primaryKeys.append(", ");
-            primaryKeys.append(fieldDefinition.getName());
+            primaryKeys.append(attributeDefinition.getName());
         }
 
         columns.append(", expiration DATETIME");
@@ -175,12 +180,12 @@ public class JDBCSourceDataCache extends SourceDataCache {
         }
     }
 
-    public void dropFieldTable(FieldDefinition fieldDefinition) throws Exception {
+    public void dropFieldTable(AttributeDefinition attributeDefinition) throws Exception {
         StringBuffer sb = new StringBuffer();
         sb.append("drop table ");
         sb.append(getTableName());
         sb.append("_");
-        sb.append(fieldDefinition.getName());
+        sb.append(attributeDefinition.getName());
 
         String sql = sb.toString();
 
@@ -203,32 +208,32 @@ public class JDBCSourceDataCache extends SourceDataCache {
         }
     }
 
-    public void createFieldTable(FieldDefinition fieldDefinition) throws Exception {
+    public void createFieldTable(AttributeDefinition attributeDefinition) throws Exception {
         StringBuffer columns = new StringBuffer();
         StringBuffer primaryKeys = new StringBuffer();
 
-        Collection fields = getPrimaryColumns();
-        for (Iterator i=fields.iterator(); i.hasNext(); ) {
-            FieldDefinition field = (FieldDefinition)i.next();
+        Collection attributes = getPrimaryColumns();
+        for (Iterator i=attributes.iterator(); i.hasNext(); ) {
+            AttributeDefinition attribute = (AttributeDefinition)i.next();
 
             if (columns.length() > 0) columns.append(", ");
-            columns.append(getColumnDeclaration(field));
+            columns.append(getColumnDeclaration(attribute));
 
             if (primaryKeys.length() > 0) primaryKeys.append(", ");
-            primaryKeys.append(field.getName());
+            primaryKeys.append(attribute.getName());
         }
 
         columns.append(", ");
-        columns.append(getColumnDeclaration(fieldDefinition));
+        columns.append(getColumnDeclaration(attributeDefinition));
 
         primaryKeys.append(", ");
-        primaryKeys.append(fieldDefinition.getName());
+        primaryKeys.append(attributeDefinition.getName());
 
         StringBuffer sb = new StringBuffer();
         sb.append("create table ");
         sb.append(getTableName());
         sb.append("_");
-        sb.append(fieldDefinition.getName());
+        sb.append(attributeDefinition.getName());
         sb.append(" (");
         sb.append(columns);
         sb.append(", primary key (");
@@ -264,8 +269,8 @@ public class JDBCSourceDataCache extends SourceDataCache {
 
         Collection fields = getNonPrimaryColumns();
         for (Iterator i=fields.iterator(); i.hasNext(); ) {
-            FieldDefinition fieldDefinition = (FieldDefinition)i.next();
-            getColumnValues(fieldDefinition, pks, values);
+            AttributeDefinition attributeDefinition = (AttributeDefinition)i.next();
+            getColumnValues(attributeDefinition, pks, values);
         }
 
         AttributeValues av = (AttributeValues)values.get(pk);
@@ -280,8 +285,8 @@ public class JDBCSourceDataCache extends SourceDataCache {
 
         Collection fields = getNonPrimaryColumns();
         for (Iterator i=fields.iterator(); i.hasNext(); ) {
-            FieldDefinition fieldDefinition = (FieldDefinition)i.next();
-            getColumnValues(fieldDefinition, pks, values);
+            AttributeDefinition attributeDefinition = (AttributeDefinition)i.next();
+            getColumnValues(attributeDefinition, pks, values);
         }
 
         return values;
@@ -293,12 +298,12 @@ public class JDBCSourceDataCache extends SourceDataCache {
 
         Collection primaryColumns = getPrimaryColumns();
         for (Iterator i=primaryColumns.iterator(); i.hasNext(); ) {
-            FieldDefinition fieldDefinition = (FieldDefinition)i.next();
+            AttributeDefinition attributeDefinition = (AttributeDefinition)i.next();
 
             if (columns.length() > 0) columns.append(", ");
             columns.append(getTableName());
             columns.append(".");
-            columns.append(fieldDefinition.getName());
+            columns.append(attributeDefinition.getName());
         }
 
         Collection tables = new LinkedHashSet();
@@ -314,10 +319,10 @@ public class JDBCSourceDataCache extends SourceDataCache {
                 String name = (String)j.next();
                 Object value = filter.get(name);
 
-                FieldDefinition fieldDefinition = sourceDefinition.getFieldDefinition(name);
+                AttributeDefinition attributeDefinition = entryDefinition.getAttributeDefinition(name);
 
                 String tableName;
-                if (fieldDefinition.isPrimaryKey()) {
+                if (attributeDefinition.isRdn()) {
                     tableName = getTableName();
                 } else {
                     tableName = getTableName()+"_"+name;
@@ -350,16 +355,16 @@ public class JDBCSourceDataCache extends SourceDataCache {
 
             StringBuffer sb = new StringBuffer();
             for (Iterator j=primaryColumns.iterator(); j.hasNext(); ) {
-                FieldDefinition fieldDefinition = (FieldDefinition)j.next();
+                AttributeDefinition attributeDefinition = (AttributeDefinition)j.next();
 
                 if (columns.length() > 0) columns.append(" and ");
                 sb.append(getTableName());
                 sb.append(".");
-                sb.append(fieldDefinition.getName());
+                sb.append(attributeDefinition.getName());
                 sb.append("=");
                 sb.append(tableName);
                 sb.append(".");
-                sb.append(fieldDefinition.getName());
+                sb.append(attributeDefinition.getName());
             }
 
             tableNames.append(sb);
@@ -409,16 +414,16 @@ public class JDBCSourceDataCache extends SourceDataCache {
 
                 Row pk = new Row();
                 for (Iterator i=primaryColumns.iterator(); i.hasNext(); ) {
-                    FieldDefinition field = (FieldDefinition)i.next();
+                    AttributeDefinition attributeDefinition = (AttributeDefinition)i.next();
 
                     Object value = rs.getObject(counter);
 
                     if (sb.length() > 0) sb.append(", ");
-                    sb.append(field.getName());
+                    sb.append(attributeDefinition.getName());
                     sb.append("=");
                     sb.append(value);
 
-                    pk.set(field.getName(), value);
+                    pk.set(attributeDefinition.getName(), value);
                     counter++;
                 }
 
@@ -439,20 +444,20 @@ public class JDBCSourceDataCache extends SourceDataCache {
         return pks;
     }
 
-    public Map getColumnValues(FieldDefinition fieldDefinition, Collection pks, Map values) throws Exception {
+    public Map getColumnValues(AttributeDefinition attributeDefinition, Collection pks, Map values) throws Exception {
 
         StringBuffer columns = new StringBuffer();
 
         Collection fields = getPrimaryColumns();
         for (Iterator i=fields.iterator(); i.hasNext(); ) {
-            FieldDefinition field = (FieldDefinition)i.next();
+            AttributeDefinition field = (AttributeDefinition)i.next();
 
             if (columns.length() > 0) columns.append(", ");
             columns.append(field.getName());
         }
 
         columns.append(", ");
-        columns.append(fieldDefinition.getName());
+        columns.append(attributeDefinition.getName());
 
         StringBuffer where = new StringBuffer();
         Collection parameters = new ArrayList();
@@ -484,7 +489,7 @@ public class JDBCSourceDataCache extends SourceDataCache {
         sb.append(" from ");
         sb.append(getTableName());
         sb.append("_");
-        sb.append(fieldDefinition.getName());
+        sb.append(attributeDefinition.getName());
         sb.append(" where ");
         sb.append(where);
 
@@ -517,7 +522,7 @@ public class JDBCSourceDataCache extends SourceDataCache {
 
                 Row pk = new Row();
                 for (Iterator i=fields.iterator(); i.hasNext(); ) {
-                    FieldDefinition field = (FieldDefinition)i.next();
+                    AttributeDefinition field = (AttributeDefinition)i.next();
 
                     Object value = rs.getObject(counter);
                     sb.append(field.getName());
@@ -530,7 +535,7 @@ public class JDBCSourceDataCache extends SourceDataCache {
                 }
 
                 Object value = rs.getObject(counter);
-                sb.append(fieldDefinition.getName());
+                sb.append(attributeDefinition.getName());
                 sb.append("=");
                 sb.append(value);
 
@@ -543,7 +548,7 @@ public class JDBCSourceDataCache extends SourceDataCache {
                     values.put(pk, av);
                 }
 
-                av.add(fieldDefinition.getName(), value);
+                av.add(attributeDefinition.getName(), value);
             }
 
         } catch (Exception e) {
@@ -567,9 +572,9 @@ public class JDBCSourceDataCache extends SourceDataCache {
 
         Collection fields = getNonPrimaryColumns();
         for (Iterator i=fields.iterator(); i.hasNext(); ) {
-            FieldDefinition fieldDefinition = (FieldDefinition)i.next();
+            AttributeDefinition attributeDefinition = (AttributeDefinition)i.next();
 
-            Collection values = sourceValues.get(fieldDefinition.getName());
+            Collection values = sourceValues.get(attributeDefinition.getName());
             if (values == null) continue;
 
             Iterator iterator = values.iterator();
@@ -578,7 +583,7 @@ public class JDBCSourceDataCache extends SourceDataCache {
             Object value = iterator.next();
             if (value == null) continue;
 
-            insertColumnValue(fieldDefinition, sourceValues, value);
+            insertColumnValue(attributeDefinition, sourceValues, value);
         }
     }
 
@@ -590,7 +595,7 @@ public class JDBCSourceDataCache extends SourceDataCache {
 
         Collection fields = getPrimaryColumns();
         for (Iterator i=fields.iterator(); i.hasNext(); ) {
-            FieldDefinition field = (FieldDefinition)i.next();
+            AttributeDefinition field = (AttributeDefinition)i.next();
 
             Collection values = sourceValues.get(field.getName());
             if (values == null) continue;
@@ -651,7 +656,7 @@ public class JDBCSourceDataCache extends SourceDataCache {
         }
     }
 
-    public void insertColumnValue(FieldDefinition fieldDefinition, AttributeValues sourceValues, Object value) throws Exception {
+    public void insertColumnValue(AttributeDefinition attributeDefinition, AttributeValues sourceValues, Object value) throws Exception {
 
         StringBuffer columns = new StringBuffer();
         StringBuffer questionMarks = new StringBuffer();
@@ -659,9 +664,9 @@ public class JDBCSourceDataCache extends SourceDataCache {
 
         Collection fields = getPrimaryColumns();
         for (Iterator i=fields.iterator(); i.hasNext(); ) {
-            FieldDefinition field = (FieldDefinition)i.next();
+            AttributeDefinition attribute = (AttributeDefinition)i.next();
 
-            Collection values = sourceValues.get(field.getName());
+            Collection values = sourceValues.get(attribute.getName());
             if (values == null) continue;
 
             Iterator iterator = values.iterator();
@@ -670,7 +675,7 @@ public class JDBCSourceDataCache extends SourceDataCache {
             Object v = iterator.next();
 
             if (columns.length() > 0) columns.append(", ");
-            columns.append(field.getName());
+            columns.append(attribute.getName());
 
             if (questionMarks.length() > 0) questionMarks.append(", ");
             questionMarks.append("?");
@@ -679,7 +684,7 @@ public class JDBCSourceDataCache extends SourceDataCache {
         }
 
         columns.append(", ");
-        columns.append(fieldDefinition.getName());
+        columns.append(attributeDefinition.getName());
 
         questionMarks.append(", ?");
 
@@ -689,7 +694,7 @@ public class JDBCSourceDataCache extends SourceDataCache {
         sb.append("insert into ");
         sb.append(getTableName());
         sb.append("_");
-        sb.append(fieldDefinition.getName());
+        sb.append(attributeDefinition.getName());
         sb.append(" (");
         sb.append(columns);
         sb.append(") values (");
@@ -731,8 +736,8 @@ public class JDBCSourceDataCache extends SourceDataCache {
 
         Collection fields = getNonPrimaryColumns();
         for (Iterator i=fields.iterator(); i.hasNext(); ) {
-            FieldDefinition fieldDefinition = (FieldDefinition)i.next();
-            deleteColumnValue(fieldDefinition, pk);
+            AttributeDefinition attributeDefinition = (AttributeDefinition)i.next();
+            deleteColumnValue(attributeDefinition, pk);
         }
     }
 
@@ -787,7 +792,7 @@ public class JDBCSourceDataCache extends SourceDataCache {
         }
     }
 
-    public void deleteColumnValue(FieldDefinition fieldDefinition, Row pk) throws Exception {
+    public void deleteColumnValue(AttributeDefinition attributeDefinition, Row pk) throws Exception {
 
         StringBuffer where = new StringBuffer();
         Collection parameters = new ArrayList();
@@ -807,7 +812,7 @@ public class JDBCSourceDataCache extends SourceDataCache {
         sb.append("delete from ");
         sb.append(getTableName());
         sb.append("_");
-        sb.append(fieldDefinition.getName());
+        sb.append(attributeDefinition.getName());
         sb.append(" where ");
         sb.append(where);
 

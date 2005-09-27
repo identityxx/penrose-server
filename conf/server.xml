@@ -18,8 +18,13 @@
     </engine>
 
     <cache>
-        <cache-name>DEFAULT</cache-name>
-        <cache-class>org.safehaus.penrose.cache.Cache</cache-class>
+        <cache-name>ENTRY_CACHE</cache-name>
+        <cache-class>org.safehaus.penrose.cache.InMemoryEntryDataCache</cache-class>
+    </cache>
+
+    <cache>
+        <cache-name>SOURCE_CACHE</cache-name>
+        <cache-class>org.safehaus.penrose.cache.InMemorySourceDataCache</cache-class>
     </cache>
 
     <adapter>

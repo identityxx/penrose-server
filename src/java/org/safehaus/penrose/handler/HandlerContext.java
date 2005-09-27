@@ -21,12 +21,8 @@ import org.safehaus.penrose.config.Config;
 import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.filter.FilterTool;
 import org.safehaus.penrose.schema.Schema;
-import org.safehaus.penrose.cache.Cache;
 import org.safehaus.penrose.connection.Connection;
 import org.safehaus.penrose.sync.SyncService;
-import org.safehaus.penrose.mapping.Source;
-import org.safehaus.penrose.mapping.EntryDefinition;
-import org.safehaus.penrose.graph.Graph;
 import org.safehaus.penrose.engine.TransformEngine;
 import org.safehaus.penrose.engine.Engine;
 import org.safehaus.penrose.acl.ACLEngine;
@@ -40,8 +36,6 @@ public interface HandlerContext {
 
     public String getRootDn() throws Exception;
     public String getRootPassword() throws Exception;
-
-    public Cache getCache() throws Exception;
 
     public Collection getModules(String dn) throws Exception;
     public ACLEngine getACLEngine() throws Exception;

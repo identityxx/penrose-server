@@ -31,8 +31,10 @@ public class CacheConfig implements Cloneable, Serializable {
     public final static String CACHE_EXPIRATION = "cacheExpiration";
     public final static String LOAD_ON_STARTUP  = "loadOnStartup";
 
+    public final static String ENTRY_DATA_CACHE          = "entryDataCache";
     public final static String SOURCE_DATA_CACHE         = "sourceDataCache";
 
+    public final static String DEFAULT_ENTRY_DATA_CACHE  = InMemoryEntryDataCache.class.getName();
     public final static String DEFAULT_SOURCE_DATA_CACHE = InMemorySourceDataCache.class.getName();
 
     public final static String DRIVER           = "driver";

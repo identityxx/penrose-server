@@ -119,7 +119,7 @@ public class SyncService {
                 if (rc != LDAPException.SUCCESS) return rc;
             }
 
-            syncContext.getCache(sourceDefinition).getSourceFilterCache(connectionConfig, sourceDefinition).invalidate();
+            syncContext.getSourceFilterCache(connectionConfig, sourceDefinition).invalidate();
 
         } finally {
         	lock.releaseWriteLock(WAIT_TIMEOUT);
@@ -157,10 +157,10 @@ public class SyncService {
                     return rc;
 
                 // Delete row from source table in the cache
-                syncContext.getCache(sourceDefinition).getSourceDataCache(connectionConfig, sourceDefinition).remove(pk);
+                syncContext.getSourceDataCache(connectionConfig, sourceDefinition).remove(pk);
             }
 
-            syncContext.getCache(sourceDefinition).getSourceFilterCache(connectionConfig, sourceDefinition).invalidate();
+            syncContext.getSourceFilterCache(connectionConfig, sourceDefinition).invalidate();
 
         } finally {
             lock.releaseWriteLock(WAIT_TIMEOUT);
@@ -229,7 +229,7 @@ public class SyncService {
                     return rc;
 
                 // Delete row from source table in the cache
-                syncContext.getCache(sourceDefinition).getSourceDataCache(connectionConfig, sourceDefinition).remove(pk);
+                syncContext.getSourceDataCache(connectionConfig, sourceDefinition).remove(pk);
             }
 
             // Replace rows
@@ -247,10 +247,10 @@ public class SyncService {
                 if (rc != LDAPException.SUCCESS) return rc;
 
                 // Modify row from source table in the cache
-                syncContext.getCache(sourceDefinition).getSourceDataCache(connectionConfig, sourceDefinition).remove(pk);
+                syncContext.getSourceDataCache(connectionConfig, sourceDefinition).remove(pk);
             }
 
-            syncContext.getCache(sourceDefinition).getSourceFilterCache(connectionConfig, sourceDefinition).invalidate();
+            syncContext.getSourceFilterCache(connectionConfig, sourceDefinition).invalidate();
 
         } finally {
             lock.releaseWriteLock(WAIT_TIMEOUT);
@@ -301,7 +301,7 @@ public class SyncService {
 
         Map results = new TreeMap();
 
-        Collection pks = syncContext.getCache(sourceDefinition).getSourceFilterCache(connectionConfig, sourceDefinition).get(filter);
+        Collection pks = syncContext.getSourceFilterCache(connectionConfig, sourceDefinition).get(filter);
 
         if (pks == null) {
 
@@ -321,18 +321,18 @@ public class SyncService {
                 for (Iterator i=map.keySet().iterator(); i.hasNext(); ) {
                     Row pk = (Row)i.next();
                     AttributeValues values = (AttributeValues)map.get(pk);
-                    syncContext.getCache(sourceDefinition).getSourceDataCache(connectionConfig, sourceDefinition).put(pk, values);
+                    syncContext.getSourceDataCache(connectionConfig, sourceDefinition).put(pk, values);
                 }
             }
 
-            syncContext.getCache(sourceDefinition).getSourceFilterCache(connectionConfig, sourceDefinition).put(filter, pks);
+            syncContext.getSourceFilterCache(connectionConfig, sourceDefinition).put(filter, pks);
 
             Filter newFilter = syncContext.getFilterTool().createFilter(pks);
-            syncContext.getCache(sourceDefinition).getSourceFilterCache(connectionConfig, sourceDefinition).put(newFilter, pks);
+            syncContext.getSourceFilterCache(connectionConfig, sourceDefinition).put(newFilter, pks);
         }
 
         log.debug("Checking source cache for pks "+pks);
-        Map loadedRows = syncContext.getCache(sourceDefinition).getSourceDataCache(connectionConfig, sourceDefinition).get(pks);
+        Map loadedRows = syncContext.getSourceDataCache(connectionConfig, sourceDefinition).search(pks);
         log.debug("Loaded rows: "+loadedRows.keySet());
         results.putAll(loadedRows);
 
@@ -341,8 +341,8 @@ public class SyncService {
         pksToLoad.removeAll(results.keySet());
         pksToLoad.removeAll(loadedRows.keySet());
 
+        log.debug("PKs to load: "+pksToLoad);
         if (!pksToLoad.isEmpty()) {
-            log.debug("Loading pks: "+pksToLoad);
             Filter newFilter = syncContext.getFilterTool().createFilter(pksToLoad);
             Map map = loadEntries(source, newFilter);
             results.putAll(map);
@@ -350,12 +350,13 @@ public class SyncService {
             for (Iterator i=map.keySet().iterator(); i.hasNext(); ) {
                 Row pk = (Row)i.next();
                 AttributeValues values = (AttributeValues)map.get(pk);
-                syncContext.getCache(sourceDefinition).getSourceDataCache(connectionConfig, sourceDefinition).put(pk, values);
+                syncContext.getSourceDataCache(connectionConfig, sourceDefinition).put(pk, values);
             }
 
-            syncContext.getCache(sourceDefinition).getSourceFilterCache(connectionConfig, sourceDefinition).put(newFilter, map.keySet());
+            syncContext.getSourceFilterCache(connectionConfig, sourceDefinition).put(newFilter, map.keySet());
         }
 
+        log.debug("Results: "+results);
         return results;
     }
 

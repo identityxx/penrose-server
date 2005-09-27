@@ -52,7 +52,7 @@ public class SourceDefinition implements Cloneable {
     public final static int    DEFAULT_SIZE_LIMIT              = 100;
     public final static String DEFAULT_LOADING_METHOD          = LOAD_ALL;
 
-    public final static String DEFAULT_CACHE                   = "DEFAULT";
+    public final static String DEFAULT_CACHE                   = "SOURCE_CACHE";
 
 	/**
 	 * Name.

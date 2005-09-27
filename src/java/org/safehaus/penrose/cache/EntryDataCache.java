@@ -17,33 +17,22 @@
  */
 package org.safehaus.penrose.cache;
 
-import org.safehaus.penrose.mapping.Entry;
-import org.safehaus.penrose.mapping.Row;
 import org.safehaus.penrose.mapping.EntryDefinition;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import java.util.*;
+import org.safehaus.penrose.mapping.Entry;
 
 /**
  * @author Endi S. Dewata
  */
-public class EntryDataCache {
+public abstract class EntryDataCache extends Cache {
 
-    Logger log = LoggerFactory.getLogger(getClass());
+    Entry parent;
+    EntryDefinition entryDefinition;
 
-    private EntryDefinition entryDefinition;
-    private Cache cache;
-    private CacheContext cacheContext;
+    public EntryDefinition getEntryDefinition() {
+        return entryDefinition;
+    }
 
-    private Map dataMap = new TreeMap();
-    private Map expirationMap = new LinkedHashMap();
-
-    private int size;
-    private int expiration; // minutes
-
-    public EntryDataCache(Cache cache, EntryDefinition entryDefinition) {
-        this.cache = cache;
-        this.cacheContext = cache.getCacheContext();
+    public void setEntryDefinition(EntryDefinition entryDefinition) {
         this.entryDefinition = entryDefinition;
 
         String s = entryDefinition.getParameter(EntryDefinition.DATA_CACHE_SIZE);
@@ -53,83 +42,11 @@ public class EntryDataCache {
         expiration = s == null ? EntryDefinition.DEFAULT_DATA_CACHE_EXPIRATION : Integer.parseInt(s);
     }
 
-    public void init() throws Exception {
+    public Entry getParent() {
+        return parent;
     }
 
-    public Entry get(Row rdn) throws Exception {
-
-        Row key = cacheContext.getSchema().normalize(rdn);
-
-        log.debug("Getting entry cache ("+dataMap.size()+"): "+key);
-
-        Entry entry = (Entry)dataMap.get(key);
-        Date date = (Date)expirationMap.get(key);
-
-        if (date == null || date.getTime() <= System.currentTimeMillis()) {
-            dataMap.remove(key);
-            expirationMap.remove(key);
-            return null;
-        }
-
-        return entry;
-    }
-
-    public void put(Row rdn, Entry entry) throws Exception {
-
-        Row key = cacheContext.getSchema().normalize(rdn);
-
-        Object object = dataMap.get(key);
-
-        while (object == null && dataMap.size() >= size) {
-            log.debug("Trimming entry cache ("+dataMap.size()+").");
-            Object k = expirationMap.keySet().iterator().next();
-            dataMap.remove(k);
-            expirationMap.remove(k);
-        }
-
-        log.debug("Storing entry cache ("+dataMap.size()+"): "+key);
-        dataMap.put(key, entry);
-        expirationMap.put(key, new Date(System.currentTimeMillis() + expiration * 60 * 1000));
-    }
-
-    public void remove(Row rdn) throws Exception {
-
-        Row key = cacheContext.getSchema().normalize(rdn);
-
-        log.debug("Removing entry cache ("+dataMap.size()+"): "+key);
-        dataMap.remove(key);
-        expirationMap.remove(key);
-    }
-
-    public Cache getCache() {
-        return cache;
-    }
-
-    public void setCache(Cache cache) {
-        this.cache = cache;
-    }
-
-    public CacheContext getCacheContext() {
-        return cacheContext;
-    }
-
-    public void setCacheContext(CacheContext cacheContext) {
-        this.cacheContext = cacheContext;
-    }
-
-    public int getSize() {
-        return size;
-    }
-
-    public void setSize(int size) {
-        this.size = size;
-    }
-
-    public int getExpiration() {
-        return expiration;
-    }
-
-    public void setExpiration(int expiration) {
-        this.expiration = expiration;
+    public void setParent(Entry parent) {
+        this.parent = parent;
     }
 }
