@@ -20,11 +20,6 @@
     <property name="workingDirectory"><value>var/data</value></property>
     <property name="allowAnonymousAccess"><value>true</value></property>
     <property name="ldapPort"><value>10389</value></property>
-    <property name="authenticatorConfigurations">
-      <set>
-        <ref bean="penroseAuthenticatorConfiguration"/>
-      </set>
-    </property>
     <property name="contextPartitionConfigurations">
       <set>
         <ref bean="examplePartitionConfiguration"/>
@@ -46,7 +41,9 @@
         <bean class="org.apache.ldap.server.schema.bootstrap.ApachednsSchema"/>
       </set>
     </property>
-    
+
+    <bean id="penrose" class="org.safehaus.penrose.Penrose"/>
+
     <property name="interceptorConfigurations">
       <list>
         <bean class="org.apache.ldap.server.configuration.MutableInterceptorConfiguration">
@@ -89,12 +86,14 @@
             <bean class="org.apache.ldap.server.schema.SchemaService" />
           </property>
         </bean>
-          <bean class="org.apache.ldap.server.configuration.MutableInterceptorConfiguration">
-            <property name="name"><value>subentryService</value></property>
-            <property name="interceptor">
-              <bean class="org.apache.ldap.server.subtree.SubentryService" />
-            </property>
-          </bean>
+<!--
+        <bean class="org.apache.ldap.server.configuration.MutableInterceptorConfiguration">
+          <property name="name"><value>subentryService</value></property>
+          <property name="interceptor">
+            <bean class="org.apache.ldap.server.subtree.SubentryService" />
+          </property>
+        </bean>
+-->
         <bean class="org.apache.ldap.server.configuration.MutableInterceptorConfiguration">
           <property name="name"><value>operationalAttributeService</value></property>
           <property name="interceptor">
@@ -114,19 +113,6 @@
             </property>
           </bean>
       </list>
-    </property>
-  </bean>
-
-  <bean id="penrose" class="org.safehaus.penrose.Penrose"/>
-
-  <bean id="penroseAuthenticatorConfiguration" class="org.apache.ldap.server.configuration.MutableAuthenticatorConfiguration">
-    <property name="name"><value>penrose</value></property>
-    <property name="authenticator">
-      <bean class="org.safehaus.penrose.apacheds.PenroseAuthenticator">
-        <property name="penrose">
-          <ref bean="penrose"/>
-        </property>
-      </bean>
     </property>
   </bean>
 

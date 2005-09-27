@@ -276,8 +276,8 @@ public class ConfigWriter {
     	element.add(new DefaultAttribute("name", attributeDefinition.getName()));
     	if (attributeDefinition.isRdn()) element.add(new DefaultAttribute("rdn", "true"));
         if (!AttributeDefinition.DEFAULT_TYPE.equals(attributeDefinition.getType())) element.addAttribute("type", attributeDefinition.getType());
-        if (attributeDefinition.getLength() > 0) element.addAttribute("length", ""+attributeDefinition.getLength());
-        if (attributeDefinition.getPrecision() > 0) element.addAttribute("precision", ""+attributeDefinition.getPrecision());
+        if (attributeDefinition.getLength() != AttributeDefinition.DEFAULT_LENGTH) element.addAttribute("length", ""+attributeDefinition.getLength());
+        if (attributeDefinition.getPrecision() != AttributeDefinition.DEFAULT_PRECISION) element.addAttribute("precision", ""+attributeDefinition.getPrecision());
 
         if (attributeDefinition.getScript() != null) {
             Element scriptElement = new DefaultElement("script");
