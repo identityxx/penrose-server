@@ -264,10 +264,6 @@ public class SyncService {
             Collection filters)
             throws Exception {
 
-        Config config = syncContext.getConfig(source);
-        ConnectionConfig connectionConfig = config.getConnectionConfig(source.getConnectionName());
-        SourceDefinition sourceDefinition = connectionConfig.getSourceDefinition(source.getSourceName());
-
         Collection normalizedFilters = null;
         if (filters != null) {
             normalizedFilters = new TreeSet();
@@ -294,12 +290,24 @@ public class SyncService {
             filter = syncContext.getFilterTool().createFilter(normalizedFilters);
         }
 
+        return search(source, filter);
+    }
+
+    public Map search(
+            Source source,
+            Filter filter)
+            throws Exception {
+
         log.debug("Searching source "+source.getName()+" "+source.getSourceName()+" with filter "+filter);
 
         String key = source.getConnectionName()+"."+source.getSourceName();
         log.debug("Checking source filter cache for ["+key+"]");
 
         Map results = new TreeMap();
+
+        Config config = syncContext.getConfig(source);
+        ConnectionConfig connectionConfig = config.getConnectionConfig(source.getConnectionName());
+        SourceDefinition sourceDefinition = connectionConfig.getSourceDefinition(source.getSourceName());
 
         Collection pks = syncContext.getSourceFilterCache(connectionConfig, sourceDefinition).get(filter);
 

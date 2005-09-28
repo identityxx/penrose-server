@@ -21,6 +21,7 @@ import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.graph.Graph;
 import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.SearchResults;
+import org.safehaus.penrose.config.Config;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -74,12 +75,33 @@ public class JoinEngine {
             SearchResults results)
             throws Exception {
 
+        Config config = engineContext.getConfig(entryDefinition.getDn());
         Graph graph = engine.getGraph(entryDefinition);
         Source primarySource = engine.getPrimarySource(entryDefinition);
 
+        ExecutionPlanner executionPlanner = new ExecutionPlanner(config, graph, entryDefinition);
+        graph.traverse(executionPlanner, primarySource);
+
+        Collection sources = executionPlanner.getSources();
+        Map filterMap = executionPlanner.getFilters();
+
+        log.debug("Execution plan:");
+        for (Iterator i = sources.iterator(); i.hasNext(); ) {
+            Source source = (Source)i.next();
+            log.debug(" - load source "+source.getName());
+
+            Collection filters = (Collection)filterMap.get(source);
+            if (filters == null) continue;
+
+            for (Iterator j=filters.iterator(); j.hasNext(); ) {
+                Relationship filter = (Relationship)j.next();
+                log.debug("   - filter with "+filter);
+            }
+        }
+
         Collection filters = rdnToFilter(entryDefinition, rdnsToLoad);
 
-        LoaderGraphVisitor loaderVisitor = new LoaderGraphVisitor(engineContext, entryDefinition, filters);
+        LoaderGraphVisitor loaderVisitor = new LoaderGraphVisitor(config, graph, engineContext, entryDefinition, filters);
         graph.traverse(loaderVisitor, primarySource);
 
         Map attributeValues = loaderVisitor.getAttributeValues();

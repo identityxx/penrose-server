@@ -73,7 +73,8 @@ public class JDBCFilterTool {
         ConnectionConfig connectionConfig = config.getConnectionConfig(source.getConnectionName());
         SourceDefinition sourceDefinition = connectionConfig.getSourceDefinition(source.getSourceName());
 
-        String name = filter.getAttr();
+        String name = filter.getAttribute();
+        String operator = filter.getOperator();
         String value = filter.getValue();
 
         if (name.equals("objectClass")) {
@@ -90,11 +91,14 @@ public class JDBCFilterTool {
         if ("VARCHAR".equals(fieldDefinition.getType())) {
             sb.append("lower(");
             sb.append(fieldDefinition.getOriginalName());
-            sb.append(")=lower(?)");
+            sb.append(")");
+            sb.append(operator);
+            sb.append("lower(?)");
 
         } else {
             sb.append(fieldDefinition.getOriginalName());
-            sb.append("=?");
+            sb.append(operator);
+            sb.append("?");
         }
 
         parameters.add(value);

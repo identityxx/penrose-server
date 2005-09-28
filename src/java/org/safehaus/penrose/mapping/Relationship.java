@@ -17,16 +17,26 @@
  */
 package org.safehaus.penrose.mapping;
 
+import Zql.ZqlParser;
+import Zql.ZExpression;
+import Zql.ZExp;
+
 import java.io.Serializable;
+import java.io.ByteArrayInputStream;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author Endi S. Dewata
  */
 public class Relationship implements Cloneable, Serializable {
 
-    private String lhs;
     private String operator;
-    private String rhs;
+    private List operands = new ArrayList();
+    //private String lhs;
+    //private String rhs;
 
     public Relationship() {
     }
@@ -36,22 +46,43 @@ public class Relationship implements Cloneable, Serializable {
     }
 
     public String getExpression() {
-        return lhs+" "+operator+" "+rhs;
+        return getLhs()+" "+operator+" "+getRhs();
     }
 
     public void setExpression(String expression) {
-        int i = expression.indexOf("=");
-        lhs = expression.substring(0, i).trim();
-        operator = "=";
-        rhs = expression.substring(i+1).trim();
+        try {
+            ZqlParser parser = new ZqlParser(new ByteArrayInputStream(expression.getBytes()));
+
+            ZExpression exp = (ZExpression)parser.readExpression();
+            //System.out.println("Operator: "+exp.getOperator());
+            operator = exp.getOperator();
+
+            for (Iterator i=exp.getOperands().iterator(); i.hasNext(); ) {
+                ZExp operand = (ZExp)i.next();
+                //System.out.println("Operand: "+operand);
+                operands.add(operand.toString());
+            }
+
+            //System.out.println("Polish: "+exp.toReversePolish());
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        //int i = expression.indexOf("=");
+        //operator = "=";
+        //lhs = expression.substring(0, i).trim();
+        //rhs = expression.substring(i+1).trim();
     }
     
     public String getLhs() {
-        return lhs;
+        //return lhs;
+        return (String)operands.get(0);
     }
 
     public void setLhs(String lhs) {
-        this.lhs = lhs;
+        //this.lhs = lhs;
+        operands.set(0, lhs);
     }
 
     public String getOperator() {
@@ -63,17 +94,20 @@ public class Relationship implements Cloneable, Serializable {
     }
 
     public String getRhs() {
-        return rhs;
+        //return rhs;
+        return (String)operands.get(1);
     }
 
     public void setRhs(String rhs) {
-        this.rhs = rhs;
+        //this.rhs = rhs;
+        operands.set(1, rhs);
     }
 
     public int hashCode() {
-        return (lhs == null ? 0 : lhs.hashCode()) +
-                (operator == null ? 0 : operator.hashCode()) +
-                (rhs == null ? 0 : rhs.hashCode());
+        return (operator == null ? 0 : operator.hashCode()) +
+                //(lhs == null ? 0 : lhs.hashCode()) +
+                //(rhs == null ? 0 : rhs.hashCode()) +
+                (operands == null ? 0 : operands.hashCode());
     }
 
     boolean equals(Object o1, Object o2) {
@@ -87,23 +121,28 @@ public class Relationship implements Cloneable, Serializable {
         if((object == null) || (object.getClass() != this.getClass())) return false;
 
         Relationship relationship = (Relationship)object;
-        if (!equals(lhs, relationship.lhs)) return false;
         if (!equals(operator, relationship.operator)) return false;
-        if (!equals(rhs, relationship.rhs)) return false;
+        //if (!equals(lhs, relationship.lhs)) return false;
+        //if (!equals(rhs, relationship.rhs)) return false;
+        if (!equals(operands, relationship.operands)) return false;
 
         return true;
     }
 
     public Object clone() {
         Relationship relationship = new Relationship();
-        relationship.lhs = lhs;
         relationship.operator = operator;
-        relationship.rhs = rhs;
+        //relationship.lhs = lhs;
+        //relationship.rhs = rhs;
+        relationship.operands = operands;
         return relationship;
     }
 
     public String toString() {
-    	return lhs+" "+operator+" "+rhs;
+    	return getExpression();
     }
 
+    public Collection getOperands() {
+        return operands;
+    }
 }

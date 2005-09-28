@@ -17,28 +17,38 @@
  */
 package org.safehaus.penrose.graph;
 
+import java.util.ArrayList;
 import java.util.Collection;
 
 /**
  * @author Endi S. Dewata
  */
-public class GraphVisitor {
+public class GraphEdge {
 
-    public boolean preVisitNode(Object node, Object parameter) throws Exception {
-        //System.out.println("Pre-visit Node "+node);
-        return true;
+    private Collection nodes = new ArrayList();
+    private Collection objects = new ArrayList();
+
+    public void addNode(Object node) {
+        nodes.add(node);
     }
 
-    public void postVisitNode(Object node, Object parameter) throws Exception {
-        //System.out.println("Post-visit Node "+node);
+    public Collection getNodes() {
+        return nodes;
     }
 
-    public boolean preVisitEdge(Collection nodes, Object object, Object parameter) throws Exception {
-        //System.out.println("Pre-visit Edge <"+node1+", "+node2+"> "+object);
-        return true;
+    public void removeNode(Object node) {
+        nodes.remove(node);
     }
 
-    public void postVisitEdge(Collection nodes, Object object, Object parameter) throws Exception {
-        //System.out.println("Post-visit Edge <"+node1+", "+node2+"> "+object);
+    public void addObject(Object object) {
+        objects.add(object);
+    }
+
+    public Collection getObjects() {
+        return objects;
+    }
+
+    public void removeObject(Object object) {
+        objects.remove(object);
     }
 }

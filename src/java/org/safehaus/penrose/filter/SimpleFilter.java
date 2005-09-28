@@ -19,40 +19,41 @@ package org.safehaus.penrose.filter;
 
 public class SimpleFilter extends Filter {
 
-	protected String attr;
-	protected String filterType;
+	protected String attribute;
+	protected String operator;
 	protected String value;
-	
-	public SimpleFilter() {
-		super();
-	}
-	
-	public SimpleFilter(String attr, String filterType, String value) {
-		this.attr = attr;
-		this.filterType = filterType;
+
+	public SimpleFilter(String attribute, String operator, String value) {
+		this.attribute = attribute;
+		this.operator = operator;
 		this.value = value;
 	}
 	
-	public String getAttr() {
-		return attr;
+	public String getAttribute() {
+		return attribute;
 	}
-	public void setAttr(String attr) {
-		this.attr = attr;
+
+	public void setAttribute(String attribute) {
+		this.attribute = attribute;
 	}
-	public String getFilterType() {
-		return filterType;
+
+	public String getOperator() {
+		return operator;
 	}
-	public void setFilterType(String filterType) {
-		this.filterType = filterType;
+
+	public void setOperator(String operator) {
+		this.operator = operator;
 	}
+
 	public String getValue() {
 		return value;
 	}
+
 	public void setValue(String value) {
 		this.value = value;
 	}
 	
 	public String toString() {
-		return "(" + attr + filterType + value + ")";
+		return "(" + attribute + operator + value + ")";
 	}
 }

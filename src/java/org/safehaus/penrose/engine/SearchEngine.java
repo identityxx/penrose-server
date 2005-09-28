@@ -45,6 +45,10 @@ public class SearchEngine {
     }
 
     public Collection search(Entry parent, EntryDefinition entryDefinition, Filter filter) throws Exception {
+
+        String dn = entryDefinition.getRdn()+","+parent.getDn();
+        log.debug("Searching entry "+dn+" for "+filter);
+
         AttributeValues allValues = new AttributeValues();
         engine.getFieldValues("parent", parent, allValues);
 
@@ -54,12 +58,14 @@ public class SearchEngine {
 
         Graph graph = engine.getGraph(entryDefinition);
         Source primarySource = engine.getPrimarySource(entryDefinition);
+
         String startingSourceName = engine.getStartingSourceName(entryDefinition);
         Source startingSource = config.getEffectiveSource(entryDefinition, startingSourceName);
+        log.debug("Starting from source "+startingSourceName);
 
         Collection rows = new TreeSet();
 
-        SearchGraphVisitor visitor = new SearchGraphVisitor(engineContext, entryDefinition, newRows, primarySource);
+        SearchGraphVisitor visitor = new SearchGraphVisitor(config, graph, engineContext, entryDefinition, newRows, primarySource);
         graph.traverse(visitor, startingSource);
         rows.addAll(visitor.getKeys());
 

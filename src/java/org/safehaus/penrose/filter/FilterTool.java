@@ -95,7 +95,7 @@ public class FilterTool {
     }
 
     public boolean isValidEntry(Entry sr, SimpleFilter filter) throws Exception {
-        String attributeName = filter.getAttr();
+        String attributeName = filter.getAttribute();
         String attributeComparison = filter.getValue();
 
         if (attributeName.toLowerCase().equals("objectclass")) {

@@ -28,7 +28,7 @@ create table products (
 insert into products values (1, 1, 'Bagel', 3);
 insert into products values (2, 1, 'Baguette', 2);
 insert into products values (3, 1, 'French Bread', 3);
-insert into products values (4, 1, 'Taco shell', 1);
+insert into products values (4, 1, 'Taco shell', 2);
 insert into products values (5, 1, 'Tortilla', 4);
 insert into products values (6, 2, 'Beer', 3);
 insert into products values (7, 2, 'Champagne', 5);
@@ -49,12 +49,12 @@ insert into products values (21, 5, 'Pork Chop', 5);
 insert into products values (22, 6, 'Banana', 2);
 insert into products values (23, 6, 'Grape', 2);
 insert into products values (24, 6, 'Lemon', 1);
-insert into products values (25, 6, 'Tomatoe', 1);
-insert into products values (26, 6, 'Mushroom', 1);
+insert into products values (25, 6, 'Tomato', 1);
+insert into products values (26, 6, 'Mushroom', 2);
 insert into products values (27, 7, 'Catfish', 3);
 insert into products values (28, 7, 'Salmon', 5);
-insert into products values (29, 7, 'Crab', 7);
-insert into products values (30, 7, 'Shrimp', 5);
+insert into products values (29, 7, 'Crab', 10);
+insert into products values (30, 7, 'Shrimp', 8);
 
 drop table order_details;
 

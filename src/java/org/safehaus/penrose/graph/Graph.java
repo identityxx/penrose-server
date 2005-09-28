@@ -37,28 +37,25 @@ public class Graph {
         return nodes;
     }
 
-    public void addEdge(Object node1, Object node2, Object object) throws Exception {
-        if (!nodes.contains(node1)) throw new Exception("Node "+node1+" is not in the graph.");
-        if (!nodes.contains(node2)) throw new Exception("Node "+node2+" is not in the graph.");
+    public void addEdge(Collection edge, Object object) throws Exception {
+        for (Iterator i=edge.iterator(); i.hasNext(); ) {
+            Object node = i.next();
+            if (!nodes.contains(node)) throw new Exception("Node "+node+" is not in the graph.");
+        }
 
-        Set edge = new HashSet();
-        edge.add(node1);
-        edge.add(node2);
         edges.put(edge, object);
 
-        Set index1 = (Set)indices.get(node1);
-        if (index1 == null) {
-            index1 = new HashSet();
-            indices.put(node1, index1);
-        }
-        index1.add(edge);
+        for (Iterator i=edge.iterator(); i.hasNext(); ) {
+            Object node = i.next();
 
-        Set index2 = (Set)indices.get(node2);
-        if (index2 == null) {
-            index2 = new HashSet();
-            indices.put(node2, index2);
+            Set index = (Set)indices.get(node);
+            if (index == null) {
+                index = new HashSet();
+                indices.put(node, index);
+            }
+
+            index.add(edge);
         }
-        index2.add(edge);
     }
 
     public Collection getEdges() {
@@ -72,27 +69,25 @@ public class Graph {
 
     public Collection getEdgeObjects(Object node) throws Exception {
         Collection objects = new ArrayList();
+
         Collection list = getEdges(node);
         if (list == null) return objects;
+
         for (Iterator i=list.iterator(); i.hasNext(); ) {
-            Set edge = (Set)i.next();
-            Object object = getEdgeObject(edge);
+            Collection edge = (Set)i.next();
+            Object object = edges.get(edge);
             objects.add(object);
         }
+
         return objects;
     }
 
-    public Object getEdge(Object node1, Object node2) throws Exception {
-        if (!nodes.contains(node1)) throw new Exception("Node "+node1+" is not in the graph.");
-        if (!nodes.contains(node2)) throw new Exception("Node "+node2+" is not in the graph.");
-
-        Set edge = new HashSet();
-        edge.add(node1);
-        edge.add(node2);
-        return edges.get(edge);
-    }
-
     public Object getEdgeObject(Set edge) throws Exception {
+        for (Iterator i=edge.iterator(); i.hasNext(); ) {
+            Object node = i.next();
+            if (!nodes.contains(node)) throw new Exception("Node "+node+" is not in the graph.");
+        }
+
         return edges.get(edge);
     }
 

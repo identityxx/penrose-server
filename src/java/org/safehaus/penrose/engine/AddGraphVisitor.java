@@ -87,19 +87,22 @@ public class AddGraphVisitor extends GraphVisitor {
         return true;
     }
 
-    public boolean preVisitEdge(Object node1, Object node2, Object edge, Object parameter) throws Exception {
-        Source source = (Source)node2;
-        Relationship relationship = (Relationship)edge;
-
+    public boolean preVisitEdge(Collection nodes, Object object, Object parameter) throws Exception {
+        Relationship relationship = (Relationship)object;
         log.debug("Relationship "+relationship);
-        if (entryDefinition.getSource(source.getName()) == null) return false;
+
+        Iterator iterator = nodes.iterator();
+        Source fromSource = (Source)iterator.next();
+        Source toSource = (Source)iterator.next();
+
+        if (entryDefinition.getSource(toSource.getName()) == null) return false;
 
         AttributeValues sourceValues = (AttributeValues)stack.peek();
 
         String lhs = relationship.getLhs();
         String rhs = relationship.getRhs();
 
-        if (lhs.startsWith(source.getName()+".")) {
+        if (lhs.startsWith(toSource.getName()+".")) {
             String exp = lhs;
             lhs = rhs;
             rhs = exp;
@@ -117,7 +120,7 @@ public class AddGraphVisitor extends GraphVisitor {
         return true;
     }
 
-    public void postVisitEdge(Object node1, Object node2, Object edge, Object parameter) throws Exception {
+    public void postVisitEdge(Collection nodes, Object object, Object parameter) throws Exception {
         stack.pop();
     }
 

@@ -19,7 +19,12 @@ package org.safehaus.penrose.engine;
 
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.graph.GraphVisitor;
+import org.safehaus.penrose.graph.Graph;
 import org.safehaus.penrose.interpreter.Interpreter;
+import org.safehaus.penrose.config.Config;
+import org.safehaus.penrose.filter.Filter;
+import org.safehaus.penrose.filter.AndFilter;
+import org.safehaus.penrose.filter.SimpleFilter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,6 +37,8 @@ public class LoaderGraphVisitor extends GraphVisitor {
 
     Logger log = LoggerFactory.getLogger(getClass());
 
+    private Config config;
+    private Graph graph;
     private EngineContext engineContext;
     private EntryDefinition entryDefinition;
 
@@ -41,10 +48,14 @@ public class LoaderGraphVisitor extends GraphVisitor {
     private Stack stack = new Stack();
 
     public LoaderGraphVisitor(
+            Config config,
+            Graph graph,
             EngineContext engineContext,
             EntryDefinition entryDefinition,
             Collection filters) {
 
+        this.config = config;
+        this.graph = graph;
         this.engineContext = engineContext;
         this.entryDefinition = entryDefinition;
 
@@ -73,22 +84,43 @@ public class LoaderGraphVisitor extends GraphVisitor {
             log.debug("Source "+source.getName()+" is not defined in entry "+entryDefinition.getDn());
             return true;
         }
-/*
-        boolean allPksDefined = true; // check if the source is a connecting source
 
-        Collection fields = source.getPrimaryKeyFields();
-        for (Iterator i=fields.iterator(); i.hasNext(); ) {
-            Field field = (Field)i.next();
-            allPksDefined &= field.getExpression() != null;
+        Collection pks = filterMap.keySet();
+        Filter filter = createFilter(source, pks);
+
+        Collection relationships = graph.getEdgeObjects(source);
+
+        for (Iterator i=relationships.iterator(); i.hasNext(); ) {
+            Relationship relationship = (Relationship)i.next();
+            if (isJoinRelationship(relationship)) continue;
+
+            Collection operands = relationship.getOperands();
+            Iterator iterator = operands.iterator();
+            String operand = (String)iterator.next();
+            int index = operand.indexOf(".");
+            String attribute = operand.substring(index+1);
+
+            String value = (String)iterator.next();
+
+            SimpleFilter sf = new SimpleFilter(attribute, relationship.getOperator(), value);
+
+            log.debug("Filter with "+sf);
+            if (filter == null) {
+                filter = sf;
+
+            } else if (filter instanceof AndFilter) {
+                AndFilter andFilter = (AndFilter)filter;
+                andFilter.addFilterList(sf);
+
+            } else {
+                AndFilter andFilter = new AndFilter();
+                andFilter.addFilterList(filter);
+                andFilter.addFilterList(sf);
+                filter = andFilter;
+            }
         }
 
-        // if connecting source, dont visit
-        log.debug(source+" is a connecting source: "+!allPksDefined);
-        if (!allPksDefined) return false;
-*/        
-
-        Collection filters = filterMap.keySet();
-        Map map = engineContext.getSyncService().search(source, filters);
+        Map map = engineContext.getSyncService().search(source, filter);
         if (map.size() == 0) return false;
 
         log.debug("Records:");
@@ -123,21 +155,21 @@ public class LoaderGraphVisitor extends GraphVisitor {
             // find the original filter that produces this record
             Collection filterList = null;
 
-            for (Iterator j=filters.iterator(); j.hasNext(); ) {
-                Row filter = (Row)j.next();
+            for (Iterator j=pks.iterator(); j.hasNext(); ) {
+                Row pkFilter = (Row)j.next();
 
                 Row newFilter = new Row();
-                for (Iterator k=filter.getNames().iterator(); k.hasNext(); ) {
+                for (Iterator k=pkFilter.getNames().iterator(); k.hasNext(); ) {
                     String name = (String)k.next();
                     if (!name.startsWith(source.getName()+".")) continue;
-                    newFilter.set(name, filter.get(name));
+                    newFilter.set(name, pkFilter.get(name));
                 }
 
                 //log.debug("   checking "+newValues+" with "+newFilter);
 
                 if (!engineContext.getSchema().partialMatch(newValues, newFilter)) continue;
 
-                filterList = (Collection)filterMap.get(filter);
+                filterList = (Collection)filterMap.get(pkFilter);
                 break;
             }
 
@@ -167,12 +199,12 @@ public class LoaderGraphVisitor extends GraphVisitor {
             }
 
             for (Iterator j=filterList.iterator(); j.hasNext(); ) {
-                Row filter = (Row)j.next();
+                Row pkFilter = (Row)j.next();
 
-                AttributeValues av = (AttributeValues)attributeValues.get(filter);
+                AttributeValues av = (AttributeValues)attributeValues.get(pkFilter);
                 if (av == null) {
                     av = new AttributeValues();
-                    attributeValues.put(filter, av);
+                    attributeValues.put(pkFilter, av);
                 }
 
                 av.add(newValues);
@@ -190,32 +222,81 @@ public class LoaderGraphVisitor extends GraphVisitor {
         stack.pop();
     }
 
-    public boolean preVisitEdge(Object node1, Object node2, Object edge, Object parameter) throws Exception {
-        Source source = (Source)node2;
-        Relationship relationship = (Relationship)edge;
+    public Filter createFilter(Source source, Collection pks) throws Exception {
+        ConnectionConfig connectionConfig = config.getConnectionConfig(source.getConnectionName());
+        SourceDefinition sourceDefinition = connectionConfig.getSourceDefinition(source.getSourceName());
+
+        Collection normalizedFilters = null;
+        if (pks != null) {
+            normalizedFilters = new TreeSet();
+            for (Iterator i=pks.iterator(); i.hasNext(); ) {
+                Row filter = (Row)i.next();
+
+                Row f = new Row();
+                for (Iterator j=filter.getNames().iterator(); j.hasNext(); ) {
+                    String name = (String)j.next();
+                    String newName = name;
+                    if (name.startsWith(source.getName()+".")) newName = name.substring(source.getName().length()+1);
+
+                    if (source.getField(newName) == null) continue;
+                    f.set(newName, filter.get(name));
+                }
+
+                Row normalizedFilter = engineContext.getSchema().normalize(f);
+                normalizedFilters.add(normalizedFilter);
+            }
+        }
+
+        Filter filter = null;
+        if (pks != null) {
+            filter = engineContext.getFilterTool().createFilter(normalizedFilters);
+        }
+
+        return filter;
+    }
+
+    public boolean isJoinRelationship(Relationship relationship) {
+        Collection operands = relationship.getOperands();
+        if (operands.size() < 2) return false;
+
+        int counter = 0;
+        for (Iterator j=operands.iterator(); j.hasNext(); ) {
+            String operand = (String)j.next();
+
+            int index = operand.indexOf(".");
+            if (index < 0) continue;
+
+            String sourceName = operand.substring(0, index);
+            Source src = config.getEffectiveSource(entryDefinition, sourceName);
+            if (src == null) continue;
+
+            counter++;
+        }
+
+        if (counter < 2) return false;
+
+        return true;
+    }
+
+    public boolean preVisitEdge(Collection nodes, Object object, Object parameter) throws Exception {
+        Relationship relationship = (Relationship)object;
+        if (!isJoinRelationship(relationship)) return false;
 
         log.debug("Relationship "+relationship);
+
+        Iterator iterator = nodes.iterator();
+        Source fromSource = (Source)iterator.next();
+        Source toSource = (Source)iterator.next();
+
         Map map = (Map)stack.peek();
         Collection rows = map.keySet();
 
-        if (entryDefinition.getSource(source.getName()) == null) return false;
-/*
-        boolean allPksDefined = true; // check if the source is a connecting source
-
-        Collection fields = source.getPrimaryKeyFields();
-        for (Iterator i=fields.iterator(); i.hasNext(); ) {
-            Field field = (Field)i.next();
-            allPksDefined &= field.getExpression() != null;
-        }
-
-        // if connecting source, dont visit
-        if (!allPksDefined) return false;
-*/
+        if (entryDefinition.getSource(toSource.getName()) == null) return false;
 
         String lhs = relationship.getLhs();
         String rhs = relationship.getRhs();
 
-        if (lhs.startsWith(source.getName()+".")) {
+        if (lhs.startsWith(toSource.getName()+".")) {
             String exp = lhs;
             lhs = rhs;
             rhs = exp;
@@ -251,7 +332,7 @@ public class LoaderGraphVisitor extends GraphVisitor {
         return true;
     }
 
-    public void postVisitEdge(Object node1, Object node2, Object edge, Object parameter) throws Exception {
+    public void postVisitEdge(Collection nodes, Object object, Object parameter) throws Exception {
         stack.pop();
     }
 

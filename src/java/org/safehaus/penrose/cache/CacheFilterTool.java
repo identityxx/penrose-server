@@ -109,7 +109,7 @@ public class CacheFilterTool {
             StringBuffer sb)
             throws Exception {
 
-        String name = filter.getAttr();
+        String name = filter.getAttribute();
         String value = filter.getValue();
 
         if (name.toLowerCase().equals("objectclass")) {
@@ -235,7 +235,7 @@ public class CacheFilterTool {
     public Filter toSourceFilter(Row parentRow, EntryDefinition entry, Source source, SimpleFilter filter)
             throws Exception {
 
-        String name = filter.getAttr();
+        String name = filter.getAttribute();
         String value = filter.getValue();
 
         if (name.equals("objectClass")) {

@@ -175,19 +175,23 @@ public class Engine {
         Collection relationships = entryDefinition.getRelationships();
         for (Iterator i=relationships.iterator(); i.hasNext(); ) {
             Relationship relationship = (Relationship)i.next();
-            // System.out.println("Checking ["+relationship.getExpression()+"]");
+            log.debug("Checking ["+relationship.getExpression()+"]");
 
-            String lhs = relationship.getLhs();
-            int li = lhs.indexOf(".");
-            String lsourceName = lhs.substring(0, li);
+            Set edge = new HashSet();
+            for (Iterator j = relationship.getOperands().iterator(); j.hasNext(); ) {
+                String operand = (String)j.next();
 
-            String rhs = relationship.getRhs();
-            int ri = rhs.indexOf(".");
-            String rsourceName = rhs.substring(0, ri);
+                int index = operand.indexOf(".");
+                if (index < 0) continue;
 
-            Source lsource = config.getEffectiveSource(entryDefinition, lsourceName);
-            Source rsource = config.getEffectiveSource(entryDefinition, rsourceName);
-            graph.addEdge(lsource, rsource, relationship);
+                String sourceName = operand.substring(0, index);
+                Source source = config.getEffectiveSource(entryDefinition, sourceName);
+                if (source == null) continue;
+
+                edge.add(source);
+            }
+
+            graph.addEdge(edge, relationship);
         }
 
         // System.out.println("Graph: "+graph);
@@ -516,7 +520,6 @@ public class Engine {
             }
 
             log.debug("Entry filter cache not found.");
-            log.debug("Searching entry "+dn+" for "+filter);
 
             rdns = searchEngine.search(parent, entryDefinition, filter);
 
@@ -584,24 +587,27 @@ public class Engine {
 */
     }
 
-    public String getStartingSourceName(EntryDefinition entryDefinition) {
+    public String getStartingSourceName(EntryDefinition entryDefinition) throws Exception {
+
+        Config config = engineContext.getConfig(entryDefinition.getDn());
 
         Collection relationships = entryDefinition.getRelationships();
         for (Iterator i=relationships.iterator(); i.hasNext(); ) {
             Relationship relationship = (Relationship)i.next();
 
-            String lhs = relationship.getLhs();
-            int li = lhs.indexOf(".");
-            String lsource = lhs.substring(0, li);
-            Source ls = entryDefinition.getSource(lsource);
-            if (ls == null) return lsource;
+            for (Iterator j=relationship.getOperands().iterator(); j.hasNext(); ) {
+                String operand = (String)j.next();
 
-            String rhs = relationship.getRhs();
-            int ri = rhs.indexOf(".");
-            String rsource = rhs.substring(0, ri);
-            Source rs = entryDefinition.getSource(rsource);
-            if (rs == null) return rsource;
+                int index = operand.indexOf(".");
+                if (index < 0) continue;
 
+                String sourceName = operand.substring(0, index);
+                Source source = entryDefinition.getSource(sourceName);
+                Source effectiveSource = config.getEffectiveSource(entryDefinition, sourceName);
+
+                if (source == null && effectiveSource != null) return sourceName;
+
+            }
         }
 
         Source source = (Source)entryDefinition.getSources().iterator().next();

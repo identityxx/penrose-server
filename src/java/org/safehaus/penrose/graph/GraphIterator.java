@@ -19,10 +19,7 @@ package org.safehaus.penrose.graph;
 
 import org.safehaus.penrose.graph.Graph;
 
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.Set;
-import java.util.HashSet;
+import java.util.*;
 
 /**
  * @author Endi S. Dewata
@@ -59,24 +56,36 @@ public class GraphIterator {
             if (visitedEdges.contains(edge)) continue;
 
             visitedEdges.add(edge);
+            Object object = graph.getEdgeObject(edge);
 
-            Iterator j=edge.iterator();
-            Object n1 = j.next();
-            Object n2 = j.next();
+            Collection nodes = new ArrayList();
+            Object node1 = null;
+            Object node2 = null;
 
-            if (node == n2) { // move from left to right
-                Object n = n1;
-                n1 = n2;
-                n2 = n;
+            if (edge.size() == 1) {
+                nodes.addAll(edge);
+
+            } else {
+                Iterator j=edge.iterator();
+                node1 = j.next();
+                node2 = j.next();
+
+                if (node == node2) { // move from left to right
+                    Object n = node1;
+                    node1 = node2;
+                    node2 = n;
+                }
+
+                nodes.add(node1);
+                nodes.add(node2);
             }
 
-            Object object = graph.getEdge(n1, n2);
-            b = visitor.preVisitEdge(n1, n2, object, parameter);
+            b = visitor.preVisitEdge(nodes, object, parameter);
             if (!b) continue;
 
-            traverse(n2, parameter, visitedNodes, visitedEdges);
+            if (node2 != null) traverse(node2, parameter, visitedNodes, visitedEdges);
 
-            visitor.postVisitEdge(n1, n2, object, parameter);
+            visitor.postVisitEdge(nodes, object, parameter);
         }
 
         visitor.postVisitNode(node, parameter);
