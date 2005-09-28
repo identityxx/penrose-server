@@ -21,9 +21,7 @@ import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.filter.SimpleFilter;
 import org.safehaus.penrose.filter.AndFilter;
-import org.safehaus.penrose.SearchResults;
 import org.safehaus.penrose.config.Config;
-import org.safehaus.penrose.connection.Connection;
 import org.safehaus.penrose.graph.GraphVisitor;
 import org.safehaus.penrose.graph.Graph;
 import org.slf4j.Logger;
@@ -89,11 +87,12 @@ public class SearchGraphVisitor extends GraphVisitor {
 
             Collection operands = relationship.getOperands();
             Iterator iterator = operands.iterator();
-            String operand = (String)iterator.next();
+
+            String operand = iterator.next().toString();
             int index = operand.indexOf(".");
             String attribute = operand.substring(index+1);
 
-            String value = (String)iterator.next();
+            String value = iterator.next().toString();
 
             SimpleFilter sf = new SimpleFilter(attribute, relationship.getOperator(), value);
 
@@ -157,7 +156,7 @@ public class SearchGraphVisitor extends GraphVisitor {
 
         int counter = 0;
         for (Iterator j=operands.iterator(); j.hasNext(); ) {
-            String operand = (String)j.next();
+            String operand = j.next().toString();
 
             int index = operand.indexOf(".");
             if (index < 0) continue;
@@ -185,11 +184,13 @@ public class SearchGraphVisitor extends GraphVisitor {
                 Row f = new Row();
                 for (Iterator j=filter.getNames().iterator(); j.hasNext(); ) {
                     String name = (String)j.next();
-                    String newName = name;
-                    if (name.startsWith(source.getName()+".")) newName = name.substring(source.getName().length()+1);
+                    if (!name.startsWith(source.getName()+".")) continue;
 
+                    String newName = name.substring(source.getName().length()+1);
                     f.set(newName, filter.get(name));
                 }
+
+                if (f.isEmpty()) continue;
 
                 Row normalizedFilter = engineContext.getSchema().normalize(f);
                 normalizedFilters.add(normalizedFilter);

@@ -96,11 +96,13 @@ public class LoaderGraphVisitor extends GraphVisitor {
 
             Collection operands = relationship.getOperands();
             Iterator iterator = operands.iterator();
-            String operand = (String)iterator.next();
+
+            String operand = iterator.next().toString();
+
             int index = operand.indexOf(".");
             String attribute = operand.substring(index+1);
 
-            String value = (String)iterator.next();
+            String value = iterator.next().toString();
 
             SimpleFilter sf = new SimpleFilter(attribute, relationship.getOperator(), value);
 
@@ -258,7 +260,7 @@ public class LoaderGraphVisitor extends GraphVisitor {
 
         int counter = 0;
         for (Iterator j=operands.iterator(); j.hasNext(); ) {
-            String operand = (String)j.next();
+            String operand = j.next().toString();
 
             int index = operand.indexOf(".");
             if (index < 0) continue;

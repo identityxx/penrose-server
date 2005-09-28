@@ -264,12 +264,13 @@ public class SyncService {
             Filter filter)
             throws Exception {
 
-        log.debug("Searching source "+source.getName()+" "+source.getSourceName()+" with filter "+filter);
-
-        String key = source.getConnectionName()+"."+source.getSourceName();
-        log.debug("Checking source filter cache for ["+key+"]");
+        log.debug("Searching source "+source.getName()+" with filter "+filter);
 
         Map results = new TreeMap();
+        if (source.getSourceName() == null) return results;
+        
+        String key = source.getConnectionName()+"."+source.getSourceName();
+        log.debug("Checking source filter cache for ["+key+"]");
 
         Config config = syncContext.getConfig(source);
         ConnectionConfig connectionConfig = config.getConnectionConfig(source.getConnectionName());

@@ -35,8 +35,6 @@ public class Relationship implements Cloneable, Serializable {
 
     private String operator;
     private List operands = new ArrayList();
-    //private String lhs;
-    //private String rhs;
 
     public Relationship() {
     }
@@ -51,6 +49,8 @@ public class Relationship implements Cloneable, Serializable {
 
     public void setExpression(String expression) {
         try {
+            //System.out.println("EXPRESSION: "+expression);
+
             ZqlParser parser = new ZqlParser(new ByteArrayInputStream(expression.getBytes()));
 
             ZExpression exp = (ZExpression)parser.readExpression();
@@ -59,8 +59,7 @@ public class Relationship implements Cloneable, Serializable {
 
             for (Iterator i=exp.getOperands().iterator(); i.hasNext(); ) {
                 ZExp operand = (ZExp)i.next();
-                //System.out.println("Operand: "+operand);
-                operands.add(operand.toString());
+                operands.add(operand);
             }
 
             //System.out.println("Polish: "+exp.toReversePolish());
@@ -68,20 +67,13 @@ public class Relationship implements Cloneable, Serializable {
         } catch (Exception e) {
             e.printStackTrace();
         }
-
-        //int i = expression.indexOf("=");
-        //operator = "=";
-        //lhs = expression.substring(0, i).trim();
-        //rhs = expression.substring(i+1).trim();
     }
     
     public String getLhs() {
-        //return lhs;
-        return (String)operands.get(0);
+        return operands.get(0).toString();
     }
 
     public void setLhs(String lhs) {
-        //this.lhs = lhs;
         operands.set(0, lhs);
     }
 
@@ -94,19 +86,15 @@ public class Relationship implements Cloneable, Serializable {
     }
 
     public String getRhs() {
-        //return rhs;
-        return (String)operands.get(1);
+        return operands.get(1).toString();
     }
 
     public void setRhs(String rhs) {
-        //this.rhs = rhs;
         operands.set(1, rhs);
     }
 
     public int hashCode() {
         return (operator == null ? 0 : operator.hashCode()) +
-                //(lhs == null ? 0 : lhs.hashCode()) +
-                //(rhs == null ? 0 : rhs.hashCode()) +
                 (operands == null ? 0 : operands.hashCode());
     }
 
@@ -122,8 +110,6 @@ public class Relationship implements Cloneable, Serializable {
 
         Relationship relationship = (Relationship)object;
         if (!equals(operator, relationship.operator)) return false;
-        //if (!equals(lhs, relationship.lhs)) return false;
-        //if (!equals(rhs, relationship.rhs)) return false;
         if (!equals(operands, relationship.operands)) return false;
 
         return true;
@@ -132,8 +118,6 @@ public class Relationship implements Cloneable, Serializable {
     public Object clone() {
         Relationship relationship = new Relationship();
         relationship.operator = operator;
-        //relationship.lhs = lhs;
-        //relationship.rhs = rhs;
         relationship.operands = operands;
         return relationship;
     }

@@ -6,6 +6,8 @@ import org.safehaus.penrose.filter.AndFilter;
 import org.safehaus.penrose.filter.OrFilter;
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.config.Config;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Iterator;
 import java.util.Collection;
@@ -14,6 +16,8 @@ import java.util.Collection;
  * @author Endi S. Dewata
  */
 public class JDBCFilterTool {
+
+    Logger log = LoggerFactory.getLogger(getClass());
 
     private AdapterContext adapterContext;
 
@@ -77,6 +81,8 @@ public class JDBCFilterTool {
         String operator = filter.getOperator();
         String value = filter.getValue();
 
+        log.debug("Converting "+name+" "+operator+" "+value);
+
         if (name.equals("objectClass")) {
             if (value.equals("*"))
                 return true;
@@ -84,20 +90,25 @@ public class JDBCFilterTool {
 
         int i = name.indexOf(".");
         if (i >= 0) name = name.substring(i+1);
-        
+
+        if (value.startsWith("'") && value.endsWith("'")) {
+            value = value.substring(1, value.length()-1);
+        }
+
         FieldDefinition fieldDefinition = sourceDefinition.getFieldDefinition(name);
 
         if ("VARCHAR".equals(fieldDefinition.getType())) {
             sb.append("lower(");
             sb.append(fieldDefinition.getOriginalName());
-            sb.append(")");
+            sb.append(") ");
             sb.append(operator);
-            sb.append("lower(?)");
+            sb.append(" lower(?)");
 
         } else {
             sb.append(fieldDefinition.getOriginalName());
+            sb.append(" ");
             sb.append(operator);
-            sb.append("?");
+            sb.append(" ?");
         }
 
         parameters.add(value);

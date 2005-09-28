@@ -20,7 +20,6 @@ package org.safehaus.penrose.engine;
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.graph.GraphVisitor;
 import org.safehaus.penrose.graph.Graph;
-import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.config.Config;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -82,7 +81,7 @@ public class ExecutionPlanner extends GraphVisitor {
 
         int counter = 0;
         for (Iterator j=operands.iterator(); j.hasNext(); ) {
-            String operand = (String)j.next();
+            String operand = j.next().toString();
 
             int index = operand.indexOf(".");
             if (index < 0) continue;

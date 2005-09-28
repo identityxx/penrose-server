@@ -179,7 +179,7 @@ public class Engine {
 
             Set edge = new HashSet();
             for (Iterator j = relationship.getOperands().iterator(); j.hasNext(); ) {
-                String operand = (String)j.next();
+                String operand = j.next().toString();
 
                 int index = operand.indexOf(".");
                 if (index < 0) continue;
@@ -591,6 +591,8 @@ public class Engine {
 
     public String getStartingSourceName(EntryDefinition entryDefinition) throws Exception {
 
+        log.debug("Searching the starting source for "+entryDefinition.getDn());
+
         Config config = engineContext.getConfig(entryDefinition.getDn());
 
         Collection relationships = entryDefinition.getRelationships();
@@ -598,7 +600,7 @@ public class Engine {
             Relationship relationship = (Relationship)i.next();
 
             for (Iterator j=relationship.getOperands().iterator(); j.hasNext(); ) {
-                String operand = (String)j.next();
+                String operand = j.next().toString();
 
                 int index = operand.indexOf(".");
                 if (index < 0) continue;
@@ -607,7 +609,10 @@ public class Engine {
                 Source source = entryDefinition.getSource(sourceName);
                 Source effectiveSource = config.getEffectiveSource(entryDefinition, sourceName);
 
-                if (source == null && effectiveSource != null) return sourceName;
+                if (source == null && effectiveSource != null) {
+                    log.debug("Source "+sourceName+" is defined in parent entry");
+                    return sourceName;
+                }
 
             }
         }
@@ -616,6 +621,7 @@ public class Engine {
         if (!i.hasNext()) return null;
 
         Source source = (Source)i.next();
+        log.debug("Source "+source.getName()+" is the first defined in entry");
         return source.getName();
     }
 
