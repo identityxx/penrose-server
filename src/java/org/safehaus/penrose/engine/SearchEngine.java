@@ -59,15 +59,18 @@ public class SearchEngine {
         Graph graph = engine.getGraph(entryDefinition);
         Source primarySource = engine.getPrimarySource(entryDefinition);
 
-        String startingSourceName = engine.getStartingSourceName(entryDefinition);
-        Source startingSource = config.getEffectiveSource(entryDefinition, startingSourceName);
-        log.debug("Starting from source "+startingSourceName);
-
         Collection rows = new TreeSet();
 
-        SearchGraphVisitor visitor = new SearchGraphVisitor(config, graph, engineContext, entryDefinition, newRows, primarySource);
-        graph.traverse(visitor, startingSource);
-        rows.addAll(visitor.getKeys());
+        String startingSourceName = engine.getStartingSourceName(entryDefinition);
+
+        if (startingSourceName != null) {            
+            Source startingSource = config.getEffectiveSource(entryDefinition, startingSourceName);
+            log.debug("Starting from source "+startingSourceName);
+
+            SearchGraphVisitor visitor = new SearchGraphVisitor(config, graph, engineContext, entryDefinition, newRows, primarySource);
+            graph.traverse(visitor, startingSource);
+            rows.addAll(visitor.getKeys());
+        }
 
         return computeRdns(entryDefinition, rows);
     }

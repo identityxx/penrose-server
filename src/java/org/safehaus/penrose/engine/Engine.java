@@ -273,6 +273,8 @@ public class Engine {
         Graph graph = getGraph(entryDefinition);
         Source primarySource = getPrimarySource(entryDefinition);
         String startingSourceName = getStartingSourceName(entryDefinition);
+        if (startingSourceName == null) return LDAPException.SUCCESS;
+
         Source startingSource = config.getEffectiveSource(entryDefinition, startingSourceName);
 
         log.debug("Starting from source: "+startingSourceName);
@@ -610,7 +612,10 @@ public class Engine {
             }
         }
 
-        Source source = (Source)entryDefinition.getSources().iterator().next();
+        Iterator i = entryDefinition.getSources().iterator();
+        if (!i.hasNext()) return null;
+
+        Source source = (Source)i.next();
         return source.getName();
     }
 

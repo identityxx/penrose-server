@@ -85,8 +85,7 @@ public class JDBCFilterTool {
         int i = name.indexOf(".");
         if (i >= 0) name = name.substring(i+1);
         
-        Field field = source.getField(name);
-        FieldDefinition fieldDefinition = sourceDefinition.getFieldDefinition(field.getName());
+        FieldDefinition fieldDefinition = sourceDefinition.getFieldDefinition(name);
 
         if ("VARCHAR".equals(fieldDefinition.getType())) {
             sb.append("lower(");

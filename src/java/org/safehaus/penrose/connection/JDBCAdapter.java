@@ -94,10 +94,9 @@ public class JDBCAdapter extends Adapter {
         ConnectionConfig connectionConfig = config.getConnectionConfig(source.getConnectionName());
         SourceDefinition sourceDefinition = connectionConfig.getSourceDefinition(source.getSourceName());
 
-        Collection fields = source.getFields();
+        Collection fields = sourceDefinition.getFields();
         for (Iterator i=fields.iterator(); i.hasNext(); ) {
-            Field field = (Field)i.next();
-            FieldDefinition fieldDefinition = sourceDefinition.getFieldDefinition(field.getName());
+            FieldDefinition fieldDefinition = (FieldDefinition)i.next();
 
             if (sb.length() > 0) sb.append(", ");
             sb.append(fieldDefinition.getOriginalName());
@@ -113,10 +112,9 @@ public class JDBCAdapter extends Adapter {
         ConnectionConfig connectionConfig = config.getConnectionConfig(source.getConnectionName());
         SourceDefinition sourceDefinition = connectionConfig.getSourceDefinition(source.getSourceName());
 
-        Collection fields = source.getFields();
+        Collection fields = sourceDefinition.getFields();
         for (Iterator i=fields.iterator(); i.hasNext(); ) {
-            Field field = (Field)i.next();
-            FieldDefinition fieldDefinition = sourceDefinition.getFieldDefinition(field.getName());
+            FieldDefinition fieldDefinition = (FieldDefinition)i.next();
             if (!fieldDefinition.isPrimaryKey()) continue;
 
             if (sb.length() > 0) sb.append(", ");
@@ -305,12 +303,12 @@ public class JDBCAdapter extends Adapter {
         Collection fields = config.getPrimaryKeyFields(source);
 
         for (Iterator i=fields.iterator(); i.hasNext() && c<=count; c++) {
-            Field field = (Field)i.next();
+            FieldDefinition fieldDefinition = (FieldDefinition)i.next();
 
             Object value = rs.getObject(c);
             if (value == null) continue;
 
-            row.set(field.getName(), value);
+            row.set(fieldDefinition.getName(), value);
         }
 
         //log.debug("=> values: "+row);
@@ -326,15 +324,20 @@ public class JDBCAdapter extends Adapter {
         int count = rsmd.getColumnCount();
 
         int c = 1;
-        Collection fields = source.getFields();
+
+        Config config = getAdapterContext().getConfig(source);
+        ConnectionConfig connectionConfig = config.getConnectionConfig(source.getConnectionName());
+        SourceDefinition sourceDefinition = connectionConfig.getSourceDefinition(source.getSourceName());
+
+        Collection fields = sourceDefinition.getFields();
 
         for (Iterator i=fields.iterator(); i.hasNext() && c<=count; c++) {
-            Field field = (Field)i.next();
+            FieldDefinition fieldDefinition = (FieldDefinition)i.next();
             
             Object value = rs.getObject(c);
             if (value == null) continue;
 
-            row.add(field.getName(), value);
+            row.add(fieldDefinition.getName(), value);
         }
 
         //log.debug("=> values: "+row);
@@ -367,11 +370,10 @@ public class JDBCAdapter extends Adapter {
             StringBuffer sb = new StringBuffer();
             StringBuffer sb2 = new StringBuffer();
 
-            Collection fields = source.getFields();
+            Collection fields = sourceDefinition.getFields();
             Collection parameters = new ArrayList();
             for (Iterator i=fields.iterator(); i.hasNext(); ) {
-                Field field = (Field)i.next();
-                FieldDefinition fieldDefinition = sourceDefinition.getFieldDefinition(field.getName());
+                FieldDefinition fieldDefinition = (FieldDefinition)i.next();
 
                 if (sb.length() > 0) {
                     sb.append(", ");
@@ -381,7 +383,7 @@ public class JDBCAdapter extends Adapter {
                 sb.append(fieldDefinition.getOriginalName());
                 sb2.append("?");
 
-                Object obj = row.get(field.getName());
+                Object obj = row.get(fieldDefinition.getName());
                 parameters.add(obj);
             }
 
@@ -419,8 +421,8 @@ public class JDBCAdapter extends Adapter {
         Collection fields = config.getPrimaryKeyFields(source);
 
         for (Iterator i=fields.iterator(); i.hasNext(); ) {
-            Field field = (Field)i.next();
-            String name = field.getName();
+            FieldDefinition fieldDefinition = (FieldDefinition)i.next();
+            String name = fieldDefinition.getName();
 
             Object value = entry.get(name);
             if (value == null) continue;
@@ -515,17 +517,16 @@ public class JDBCAdapter extends Adapter {
             StringBuffer sb2 = new StringBuffer();
             Collection parameters = new ArrayList();
 
-            Collection fields = source.getFields();
+            Collection fields = sourceDefinition.getFields();
             for (Iterator i=fields.iterator(); i.hasNext(); ) {
-                Field field = (Field)i.next();
-                FieldDefinition fieldDefinition = sourceDefinition.getFieldDefinition(field.getName());
+                FieldDefinition fieldDefinition = (FieldDefinition)i.next();
 
                 if (sb.length() > 0) sb.append(", ");
 
                 sb.append(fieldDefinition.getOriginalName());
                 sb.append("=?");
 
-                Object value = newRow.get(field.getName());
+                Object value = newRow.get(fieldDefinition.getName());
                 parameters.add(value);
             }
 

@@ -116,6 +116,7 @@ public class SearchGraphVisitor extends GraphVisitor {
         Map map = engineContext.getSyncService().search(source, filter);
         if (map.size() == 0) return false;
 
+        log.debug("Records:");
         Collection results = new ArrayList();
         for (Iterator i=map.values().iterator(); i.hasNext(); ) {
             AttributeValues av = (AttributeValues)i.next();
@@ -129,6 +130,7 @@ public class SearchGraphVisitor extends GraphVisitor {
                     if (value == null) continue;
                     newRow.set(source.getName()+"."+name, value);
                 }
+                log.debug(" - "+newRow);
                 results.add(newRow);
             }
         }
@@ -173,8 +175,6 @@ public class SearchGraphVisitor extends GraphVisitor {
     }
 
     public Filter createFilter(Source source, Collection pks) throws Exception {
-        ConnectionConfig connectionConfig = config.getConnectionConfig(source.getConnectionName());
-        SourceDefinition sourceDefinition = connectionConfig.getSourceDefinition(source.getSourceName());
 
         Collection normalizedFilters = null;
         if (pks != null) {
@@ -188,7 +188,6 @@ public class SearchGraphVisitor extends GraphVisitor {
                     String newName = name;
                     if (name.startsWith(source.getName()+".")) newName = name.substring(source.getName().length()+1);
 
-                    if (source.getField(newName) == null) continue;
                     f.set(newName, filter.get(name));
                 }
 

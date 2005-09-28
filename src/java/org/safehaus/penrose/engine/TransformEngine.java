@@ -281,14 +281,14 @@ public class TransformEngine {
 
         AttributeValues pkValues = new AttributeValues();
         for (Iterator j=pkFields.iterator(); j.hasNext(); ) {
-            Field field = (Field)j.next();
+            FieldDefinition fieldDefinition = (FieldDefinition)j.next();
 
-            Collection values = sourceValues.get(field.getName());
+            Collection values = sourceValues.get(fieldDefinition.getName());
             if (values == null) {
                 return new ArrayList();
             }
 
-            pkValues.set(field.getName(), values);
+            pkValues.set(fieldDefinition.getName(), values);
         }
 
         return convert(pkValues);
@@ -316,8 +316,8 @@ public class TransformEngine {
 
             Row pk = new Row();
             for (Iterator j=fields.iterator(); j.hasNext(); ) {
-                Field field = (Field)j.next();
-                pk.set(field.getName(), row.get(field.getName()));
+                FieldDefinition fieldDefinition = (FieldDefinition)j.next();
+                pk.set(fieldDefinition.getName(), row.get(fieldDefinition.getName()));
             }
 
             map.put(pk, av);

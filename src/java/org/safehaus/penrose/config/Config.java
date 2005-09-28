@@ -73,7 +73,7 @@ public class Config implements Serializable {
         if (parent == null) {
         	rootEntryDefinitions.add(entry);
         }
-
+/*
         for (Iterator j=entry.getSources().iterator(); j.hasNext(); ) {
             Source source = (Source)j.next();
 
@@ -94,13 +94,14 @@ public class Config implements Serializable {
 
                 // define any missing fields
                 Field field = (Field)source.getField(fieldName);
-                if (field == null) {
-                    field = new Field();
-                    field.setName(fieldName);
-                    source.addField(field);
-                }
+                if (field != null) continue;
+
+                field = new Field();
+                field.setName(fieldName);
+                source.addField(field);
             }
         }
+*/
     }
 
     public void modifyEntryDefinition(String dn, EntryDefinition newEntry) {
@@ -559,11 +560,10 @@ public class Config implements Serializable {
         SourceDefinition sourceDefinition = connectionConfig.getSourceDefinition(source.getSourceName());
 
         Collection results = new ArrayList();
-        for (Iterator i=source.getFields().iterator(); i.hasNext(); ) {
-            Field field = (Field)i.next();
-            FieldDefinition fieldDefinition = sourceDefinition.getFieldDefinition(field.getName());
+        for (Iterator i=sourceDefinition.getFields().iterator(); i.hasNext(); ) {
+            FieldDefinition fieldDefinition = (FieldDefinition)i.next();
             if (!fieldDefinition.isPrimaryKey()) continue;
-            results.add(field);
+            results.add(fieldDefinition);
         }
         
         return results;

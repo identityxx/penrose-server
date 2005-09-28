@@ -223,8 +223,6 @@ public class LoaderGraphVisitor extends GraphVisitor {
     }
 
     public Filter createFilter(Source source, Collection pks) throws Exception {
-        ConnectionConfig connectionConfig = config.getConnectionConfig(source.getConnectionName());
-        SourceDefinition sourceDefinition = connectionConfig.getSourceDefinition(source.getSourceName());
 
         Collection normalizedFilters = null;
         if (pks != null) {
@@ -238,7 +236,6 @@ public class LoaderGraphVisitor extends GraphVisitor {
                     String newName = name;
                     if (name.startsWith(source.getName()+".")) newName = name.substring(source.getName().length()+1);
 
-                    if (source.getField(newName) == null) continue;
                     f.set(newName, filter.get(name));
                 }
 

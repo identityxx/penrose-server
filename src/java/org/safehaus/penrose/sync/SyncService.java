@@ -261,40 +261,6 @@ public class SyncService {
 
     public Map search(
             Source source,
-            Collection filters)
-            throws Exception {
-
-        Collection normalizedFilters = null;
-        if (filters != null) {
-            normalizedFilters = new TreeSet();
-            for (Iterator i=filters.iterator(); i.hasNext(); ) {
-                Row filter = (Row)i.next();
-
-                Row f = new Row();
-                for (Iterator j=filter.getNames().iterator(); j.hasNext(); ) {
-                    String name = (String)j.next();
-                    String newName = name;
-                    if (name.startsWith(source.getName()+".")) newName = name.substring(source.getName().length()+1);
-
-                    if (source.getField(newName) == null) continue;
-                    f.set(newName, filter.get(name));
-                }
-
-                Row normalizedFilter = syncContext.getSchema().normalize(f);
-                normalizedFilters.add(normalizedFilter);
-            }
-        }
-
-        Filter filter = null;
-        if (filters != null) {
-            filter = syncContext.getFilterTool().createFilter(normalizedFilters);
-        }
-
-        return search(source, filter);
-    }
-
-    public Map search(
-            Source source,
             Filter filter)
             throws Exception {
 
@@ -429,13 +395,12 @@ public class SyncService {
 
             Row pk = new Row();
 
-            Collection fields = source.getFields();
+            Collection fields = sourceDefinition.getFields();
             for (Iterator j=fields.iterator(); j.hasNext(); ) {
-                Field field = (Field)j.next();
-                String name = field.getName();
-                FieldDefinition fieldDefinition = sourceDefinition.getFieldDefinition(name);
+                FieldDefinition fieldDefinition = (FieldDefinition)j.next();
                 if (!fieldDefinition.isPrimaryKey()) continue;
 
+                String name = fieldDefinition.getName();
                 Collection values = av.get(name);
                 if (values == null) {
                     pk = null;

@@ -209,14 +209,13 @@ public class JNDIAdapter extends Adapter {
         Row row = new Row();
 
         Attributes attrs = sr.getAttributes();
-        Collection fields = source.getFields();
+        Collection fields = sourceDefinition.getFields();
         for (Iterator i=fields.iterator(); i.hasNext(); ) {
-            Field field = (Field)i.next();
-            String name = field.getName();
-            if (name.equals("objectClass")) continue;
-
-            FieldDefinition fieldDefinition = sourceDefinition.getFieldDefinition(name);
+            FieldDefinition fieldDefinition = (FieldDefinition)i.next();
             if (!fieldDefinition.isPrimaryKey()) continue;
+
+            String name = fieldDefinition.getName();
+            if (name.equals("objectClass")) continue;
 
             javax.naming.directory.Attribute attr = attrs.get(fieldDefinition.getOriginalName());
             if (attr == null) continue;
@@ -247,13 +246,11 @@ public class JNDIAdapter extends Adapter {
         AttributeValues av = new AttributeValues();
 
         Attributes attrs = sr.getAttributes();
-        Collection fields = source.getFields();
+        Collection fields = sourceDefinition.getFields();
         for (Iterator i=fields.iterator(); i.hasNext(); ) {
-            Field field = (Field)i.next();
-            String name = field.getName();
+            FieldDefinition fieldDefinition = (FieldDefinition)i.next();
+            String name = fieldDefinition.getName();
             if (name.equals("objectClass")) continue;
-
-            FieldDefinition fieldDefinition = sourceDefinition.getFieldDefinition(name);
 
             javax.naming.directory.Attribute attr = attrs.get(fieldDefinition.getOriginalName());
             if (attr == null) continue;
@@ -358,17 +355,16 @@ public class JNDIAdapter extends Adapter {
         log.debug("Deleting attributes in "+dn);
 
         List list = new ArrayList();
-        Collection fields = source.getFields();
+        Collection fields = sourceDefinition.getFields();
 
         for (Iterator i=entry.getNames().iterator(); i.hasNext(); ) {
             String name = (String)i.next();
 
             boolean primaryKey = false;
             for (Iterator j=fields.iterator(); j.hasNext(); ) {
-                Field field = (Field)j.next();
-                FieldDefinition fieldDefinition = sourceDefinition.getFieldDefinition(field.getName());
+                FieldDefinition fieldDefinition = (FieldDefinition)j.next();
                 if (!fieldDefinition.isPrimaryKey()) continue;
-                if (!field.getName().equals(name)) continue;
+                if (!fieldDefinition.getName().equals(name)) continue;
                 primaryKey = true;
                 break;
             }
@@ -425,7 +421,7 @@ public class JNDIAdapter extends Adapter {
         log.debug("Replacing attributes "+dn);
 
         List list = new ArrayList();
-        Collection fields = source.getFields();
+        Collection fields = sourceDefinition.getFields();
 
         Set addAttributes = new HashSet(newEntry.getNames());
         addAttributes.removeAll(oldEntry.getNames());
@@ -445,10 +441,9 @@ public class JNDIAdapter extends Adapter {
 
             boolean primaryKey = false;
             for (Iterator j=fields.iterator(); j.hasNext(); ) {
-                Field field = (Field)j.next();
-                FieldDefinition fieldDefinition = sourceDefinition.getFieldDefinition(field.getName());
+                FieldDefinition fieldDefinition = (FieldDefinition)j.next();
                 if (!fieldDefinition.isPrimaryKey()) continue;
-                if (!field.getName().equals(name)) continue;
+                if (!fieldDefinition.getName().equals(name)) continue;
                 primaryKey = true;
                 break;
             }
@@ -552,7 +547,7 @@ public class JNDIAdapter extends Adapter {
         String dn = getDn(source, entry);
         log.debug("Replacing attributes "+dn);
 
-        Collection fields = source.getFields();
+        Collection fields = sourceDefinition.getFields();
         List list = new ArrayList();
 
         for (Iterator i=entry.getNames().iterator(); i.hasNext(); ) {
@@ -562,10 +557,9 @@ public class JNDIAdapter extends Adapter {
 
             boolean primaryKey = false;
             for (Iterator j=fields.iterator(); j.hasNext(); ) {
-                Field field = (Field)j.next();
-                FieldDefinition fieldDefinition = sourceDefinition.getFieldDefinition(field.getName());
+                FieldDefinition fieldDefinition = (FieldDefinition)j.next();
                 if (!fieldDefinition.isPrimaryKey()) continue;
-                if (!field.getName().equals(name)) continue;
+                if (!fieldDefinition.getName().equals(name)) continue;
                 primaryKey = true;
                 break;
             }
@@ -602,18 +596,16 @@ public class JNDIAdapter extends Adapter {
 
         String baseDn = sourceDefinition.getParameter(BASE_DN);
 
-        Collection fields= source.getFields();
+        Collection fields= sourceDefinition.getFields();
         StringBuffer sb = new StringBuffer();
 
         for (Iterator i=fields.iterator(); i.hasNext(); ) {
-            Field field = (Field)i.next();
-
-            FieldDefinition fieldDefinition = sourceDefinition.getFieldDefinition(field.getName());
+            FieldDefinition fieldDefinition = (FieldDefinition)i.next();
             if (!fieldDefinition.isPrimaryKey()) continue;
 
             if (sb.length() > 0) sb.append("+");
 
-            String name = field.getName();
+            String name = fieldDefinition.getName();
             sb.append(name);
             sb.append("=");
 
