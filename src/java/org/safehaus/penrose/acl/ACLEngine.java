@@ -112,7 +112,7 @@ public class ACLEngine {
 
     public int checkPermission(PenroseConnection connection, Entry entry, String permission) throws Exception {
     	
-        log.debug("Evaluating object \""+permission+"\" permission for "+entry.getDn()+(connection == null ? null : " as "+connection.getBindDn()));
+        //log.debug("Evaluating object \""+permission+"\" permission for "+entry.getDn()+(connection == null ? null : " as "+connection.getBindDn()));
 
         int rc = LDAPException.SUCCESS;
         try {
@@ -128,7 +128,7 @@ public class ACLEngine {
 
             String targetDn = penrose.getSchema().normalize(entry.getDn());
             boolean result = getObjectPermission(bindDn, targetDn, entry, ACI.SCOPE_OBJECT, permission);
-            log.debug("Result: "+result);
+            //log.debug("Result: "+result);
 
             if (result) {
                 return rc;
@@ -138,7 +138,7 @@ public class ACLEngine {
             return rc;
 
         } finally {
-            log.debug("Result: "+rc);
+            //log.debug("Result: "+rc);
         }
     }
 

@@ -54,9 +54,10 @@ public class InMemorySourceDataCache extends SourceDataCache {
 
                 boolean found = cacheContext.getSchema().partialMatch(attributeValues, filter);
 
-                if (found) {
-                    results.put(pk, attributeValues);
-                }
+                if (!found) continue;
+
+                results.put(pk, attributeValues);
+                break;
             }
 
         }

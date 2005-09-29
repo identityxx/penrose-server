@@ -135,13 +135,16 @@ public class TransformEngine {
 
             String name = attribute.getName();
             Expression expression = attribute.getExpression();
+            if (expression == null) continue;
+
             String foreach = expression.getForeach();
             String var = expression.getVar();
+            String script = expression.getScript();
 
             Object value = null;
             if (foreach == null) {
                 //log.debug("Evaluating expression: "+expression);
-                value = interpreter.eval(expression.getScript());
+                value = interpreter.eval(script);
 
             } else {
                 //log.debug("Evaluating expression: "+expression);
@@ -155,7 +158,7 @@ public class TransformEngine {
                     for (Iterator i=values.iterator(); i.hasNext(); ) {
                         Object o = i.next();
                         interpreter.set(var, o);
-                        value = interpreter.eval(attribute.getExpression().getScript());
+                        value = interpreter.eval(script);
                         //log.debug(" - "+value);
                         newValues.add(value);
                     }

@@ -27,11 +27,36 @@ import java.sql.*;
  */
 public class JDBCEntryDataCache extends EntryDataCache {
 
-    public Connection getConnection() throws Exception {
-        String url = cacheConfig.getParameter("url");
-        String user = cacheConfig.getParameter("user");
-        String password = cacheConfig.getParameter("password");
+    private String driver;
+    private String url;
+    private String user;
+    private String password;
 
+    public void init() throws Exception {
+        driver = cacheConfig.getParameter("driver");
+        url = cacheConfig.getParameter("url");
+        user = cacheConfig.getParameter("user");
+        password = cacheConfig.getParameter("password");
+
+        initDatabase();
+    }
+
+    public void initDatabase() throws Exception {
+        Class.forName(driver);
+
+        dropMainTable();
+        createMainTable();
+
+        Collection attributes = getNonPrimaryColumns();
+        for (Iterator i=attributes.iterator(); i.hasNext(); ) {
+            AttributeDefinition attributeDefinition = (AttributeDefinition)i.next();
+
+            dropFieldTable(attributeDefinition);
+            createFieldTable(attributeDefinition);
+        }
+    }
+
+    public Connection getConnection() throws Exception {
         return DriverManager.getConnection(url, user, password);
     }
 
@@ -70,37 +95,15 @@ public class JDBCEntryDataCache extends EntryDataCache {
         return results;
     }
 
-    public void init() throws Exception {
-        String driver = cacheConfig.getParameter("driver");
-        Class.forName(driver);
-
-        dropMainTable();
-        createMainTable();
-
-        Collection attributes = getNonPrimaryColumns();
-        for (Iterator i=attributes.iterator(); i.hasNext(); ) {
-            AttributeDefinition attributeDefinition = (AttributeDefinition)i.next();
-
-            dropFieldTable(attributeDefinition);
-            createFieldTable(attributeDefinition);
-        }
-    }
-
     public String getColumnDeclaration(AttributeDefinition attributeDefinition) {
         StringBuffer sb = new StringBuffer();
         sb.append(attributeDefinition.getName());
         sb.append(" ");
         sb.append(attributeDefinition.getType());
 
-        if (attributeDefinition.getLength() > 0) {
+        if ("VARCHAR".equals(attributeDefinition.getType()) && attributeDefinition.getLength() > 0) {
             sb.append("(");
             sb.append(attributeDefinition.getLength());
-
-            if ("DOUBLE".equals(attributeDefinition.getType())) {
-                sb.append(", ");
-                sb.append(attributeDefinition.getPrecision());
-            }
-
             sb.append(")");
         }
 
@@ -851,5 +854,37 @@ public class JDBCEntryDataCache extends EntryDataCache {
             if (ps != null) try { ps.close(); } catch (Exception e) {}
             if (con != null) try { con.close(); } catch (Exception e) {}
         }
+    }
+
+    public String getDriver() {
+        return driver;
+    }
+
+    public void setDriver(String driver) {
+        this.driver = driver;
+    }
+
+    public String getUrl() {
+        return url;
+    }
+
+    public void setUrl(String url) {
+        this.url = url;
+    }
+
+    public String getUser() {
+        return user;
+    }
+
+    public void setUser(String user) {
+        this.user = user;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
     }
 }

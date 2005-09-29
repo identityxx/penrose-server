@@ -35,7 +35,7 @@ public class CacheConfig implements Cloneable, Serializable {
     public final static String SOURCE_DATA_CACHE         = "sourceDataCache";
 
     public final static String DEFAULT_ENTRY_DATA_CACHE  = InMemoryEntryDataCache.class.getName();
-    public final static String DEFAULT_SOURCE_DATA_CACHE = InMemorySourceDataCache.class.getName();
+    public final static String DEFAULT_SOURCE_DATA_CACHE = DefaultSourceDataCache.class.getName();
 
     public final static String DRIVER           = "driver";
     public final static String URL              = "url";

@@ -27,11 +27,36 @@ import java.sql.*;
  */
 public class JDBCSourceDataCache extends SourceDataCache {
 
-    public Connection getConnection() throws Exception {
-        String url = cacheConfig.getParameter("url");
-        String user = cacheConfig.getParameter("user");
-        String password = cacheConfig.getParameter("password");
+    private String driver;
+    private String url;
+    private String user;
+    private String password;
 
+    public void init() throws Exception {
+        driver = cacheConfig.getParameter("driver");
+        url = cacheConfig.getParameter("url");
+        user = cacheConfig.getParameter("user");
+        password = cacheConfig.getParameter("password");
+
+        initDatabase();
+    }
+
+    public void initDatabase() throws Exception {
+        Class.forName(driver);
+
+        dropMainTable();
+        createMainTable();
+
+        Collection fields = getNonPrimaryColumns();
+        for (Iterator i=fields.iterator(); i.hasNext(); ) {
+            FieldDefinition fieldDefinition = (FieldDefinition)i.next();
+
+            dropFieldTable(fieldDefinition);
+            createFieldTable(fieldDefinition);
+        }
+    }
+
+    public Connection getConnection() throws Exception {
         return DriverManager.getConnection(url, user, password);
     }
 
@@ -65,37 +90,15 @@ public class JDBCSourceDataCache extends SourceDataCache {
         return results;
     }
 
-    public void init() throws Exception {
-        String driver = cacheConfig.getParameter("driver");
-        Class.forName(driver);
-
-        dropMainTable();
-        createMainTable();
-
-        Collection fields = getNonPrimaryColumns();
-        for (Iterator i=fields.iterator(); i.hasNext(); ) {
-            FieldDefinition fieldDefinition = (FieldDefinition)i.next();
-
-            dropFieldTable(fieldDefinition);
-            createFieldTable(fieldDefinition);
-        }
-    }
-
     public String getColumnDeclaration(FieldDefinition fieldDefinition) {
         StringBuffer sb = new StringBuffer();
         sb.append(fieldDefinition.getName());
         sb.append(" ");
         sb.append(fieldDefinition.getType());
 
-        if (fieldDefinition.getLength() > 0) {
+        if ("VARCHAR".equals(fieldDefinition.getType()) && fieldDefinition.getLength() > 0) {
             sb.append("(");
             sb.append(fieldDefinition.getLength());
-
-            if ("DOUBLE".equals(fieldDefinition.getType())) {
-                sb.append(", ");
-                sb.append(fieldDefinition.getPrecision());
-            }
-
             sb.append(")");
         }
 
@@ -275,8 +278,10 @@ public class JDBCSourceDataCache extends SourceDataCache {
 
     public Map search(Collection filters) throws Exception {
 
-        Collection pks = findPks(filters);
         Map values = new TreeMap();
+        if (filters.isEmpty()) return values;
+        
+        Collection pks = findPks(filters);
 
         Collection fields = getNonPrimaryColumns();
         for (Iterator i=fields.iterator(); i.hasNext(); ) {
@@ -846,5 +851,37 @@ public class JDBCSourceDataCache extends SourceDataCache {
             if (ps != null) try { ps.close(); } catch (Exception e) {}
             if (con != null) try { con.close(); } catch (Exception e) {}
         }
+    }
+
+    public String getDriver() {
+        return driver;
+    }
+
+    public void setDriver(String driver) {
+        this.driver = driver;
+    }
+
+    public String getUrl() {
+        return url;
+    }
+
+    public void setUrl(String url) {
+        this.url = url;
+    }
+
+    public String getUser() {
+        return user;
+    }
+
+    public void setUser(String user) {
+        this.user = user;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
     }
 }
