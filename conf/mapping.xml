@@ -23,6 +23,7 @@
 
   <entry dn="cn=Manager,dc=Example,dc=com">
     <oc>person</oc>
+    <oc>organizationalPerson</oc>
     <oc>inetOrgPerson</oc>
     <at name="cn" rdn="true">
       <expression>"Manager"</expression>

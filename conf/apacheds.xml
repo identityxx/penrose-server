@@ -16,6 +16,8 @@
     </property>
   </bean>
 
+  <bean id="penrose" class="org.safehaus.penrose.Penrose"/>
+
   <bean id="configuration" class="org.apache.ldap.server.configuration.MutableServerStartupConfiguration">
     <property name="workingDirectory"><value>var/data</value></property>
     <property name="allowAnonymousAccess"><value>true</value></property>
@@ -41,8 +43,6 @@
         <bean class="org.apache.ldap.server.schema.bootstrap.ApachednsSchema"/>
       </set>
     </property>
-
-    <bean id="penrose" class="org.safehaus.penrose.Penrose"/>
 
     <property name="interceptorConfigurations">
       <list>
