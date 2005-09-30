@@ -122,17 +122,26 @@ public class Engine {
 
         // TODO need to handle multiple rdn attributes
         AttributeDefinition rdnAttribute = (AttributeDefinition)rdnAttributes.iterator().next();
-        String exp = rdnAttribute.getExpression().getScript();
+        Expression expression = rdnAttribute.getExpression();
 
         Interpreter interpreter = engineContext.newInterpreter();
-        Collection variables = interpreter.parseVariables(exp);
-        if (variables.size() == 0) return null;
 
-        String primarySourceName = (String)variables.iterator().next();
+        if (expression.getForeach() != null) {
+            Collection variables = interpreter.parseVariables(expression.getForeach());
 
-        for (Iterator i = entryDefinition.getSources().iterator(); i.hasNext();) {
-            Source source = (Source) i.next();
-            if (source.getName().equals(primarySourceName)) return source;
+            for (Iterator i=variables.iterator(); i.hasNext(); ) {
+                String sourceName = (String)i.next();
+                Source source = entryDefinition.getSource(sourceName);
+                if (source != null) return source;
+            }
+        }
+
+        Collection variables = interpreter.parseVariables(expression.getScript());
+
+        for (Iterator i=variables.iterator(); i.hasNext(); ) {
+            String sourceName = (String)i.next();
+            Source source = entryDefinition.getSource(sourceName);
+            if (source != null) return source;
         }
 
         return null;

@@ -147,3 +147,20 @@ insert into customers values ('mhunter', 'Martin', 'Hunter', 'mhunt3r');
 insert into customers values ('tjensen', 'Ted', 'Jensen', 'tj3n53n');
 insert into customers values ('emorris', 'Eric', 'Morris', '3m0rr15');
 insert into customers values ('bhall', 'Benjamin', 'Hall', 'bh4ll');
+
+drop table customer_emails;
+
+create table customer_emails (
+    username varchar(10),
+    email varchar(50),
+    primary key (email)
+);
+
+insert into customer_emails values ('tmorris', 'tmorris@yahoo.com');
+insert into customer_emails values ('tmorris', 'tmorris@hotmail.com');
+insert into customer_emails values ('ewalker', 'ewalker@yahoo.com');
+insert into customer_emails values ('ewalker', 'ewalker@hotmail.com');
+insert into customer_emails values ('ewalker', 'ewalker@gmail.com');
+insert into customer_emails values ('kjensen', 'kjensen@gmail.com');
+insert into customer_emails values ('tjensen', 'tjensen@hotmail.com');
+insert into customer_emails values ('jcarter', 'jcarter@yahoo.com');

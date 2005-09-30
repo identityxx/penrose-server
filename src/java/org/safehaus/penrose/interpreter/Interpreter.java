@@ -19,9 +19,12 @@ package org.safehaus.penrose.interpreter;
 
 import org.safehaus.penrose.mapping.Row;
 import org.safehaus.penrose.mapping.AttributeValues;
+import org.safehaus.penrose.mapping.Expression;
 
 import java.util.Iterator;
 import java.util.Collection;
+import java.util.ArrayList;
+import java.util.HashSet;
 
 /**
  * @author Endi S. Dewata
@@ -56,5 +59,54 @@ public abstract class Interpreter {
 
     public abstract Object get(String name) throws Exception;
 
-    public abstract Object eval(String expression) throws Exception;
+    public abstract Object eval(String script) throws Exception;
+
+    public Object eval(Expression expression) throws Exception {
+
+        String foreach = expression.getForeach();
+        String var = expression.getVar();
+        String script = expression.getScript();
+
+        Object value = null;
+        if (foreach == null) {
+            //log.debug("Evaluating expression: "+expression);
+            value = eval(script);
+
+        } else {
+            //log.debug("Evaluating expression: "+expression);
+
+            Object v = get(foreach);
+            //log.debug("Values: "+v);
+
+            if (v != null) {
+                Collection values;
+                if (v instanceof Collection) {
+                    values = (Collection)v;
+                } else {
+                    values = new ArrayList();
+                    values.add(v);
+                }
+
+                Collection newValues = new HashSet();
+                for (Iterator k=values.iterator(); k.hasNext(); ) {
+                    Object o = k.next();
+                    set(var, o);
+                    value = eval(script);
+                    if (value == null) continue;
+
+                    //log.debug(" - "+value);
+                    newValues.add(value);
+                }
+
+                if (newValues.size() == 1) {
+                    value = newValues.iterator().next();
+                    
+                } else if (newValues.size() > 1) {
+                    value = newValues;
+                }
+            }
+        }
+
+        return value;
+    }
 }

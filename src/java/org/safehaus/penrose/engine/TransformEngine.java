@@ -137,6 +137,8 @@ public class TransformEngine {
             Expression expression = attribute.getExpression();
             if (expression == null) continue;
 
+            Object value = interpreter.eval(expression);
+/*
             String foreach = expression.getForeach();
             String var = expression.getVar();
             String script = expression.getScript();
@@ -166,7 +168,7 @@ public class TransformEngine {
                     value = newValues;
                 }
             }
-
+*/
             //log.debug("Result: "+value);
 
             if (value == null) continue;
@@ -209,6 +211,8 @@ public class TransformEngine {
                 continue;
             }
 
+            Object newValues = interpreter.eval(expression);
+/*
             String script = expression.getScript();
             String foreach = expression.getForeach();
             String var = expression.getVar();
@@ -237,7 +241,7 @@ public class TransformEngine {
                     }
                 }
             }
-
+*/
 /*
             if (field.getEncryption() != null) {
                 // if field encryption is enabled
@@ -263,12 +267,11 @@ public class TransformEngine {
                 }
             }
 */
-            if (newValues.size() == 0) continue;
+            if (newValues == null) continue;
 
             //log.debug("   => "+newValues);
 
             if (fieldDefinition.isPrimaryKey()) {
-                if (newValues.size() == 0) return null;
                 if (pk != null) pk.set(name, newValues);
             }
 

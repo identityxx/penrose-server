@@ -67,13 +67,18 @@ public class DefaultInterpreter extends org.safehaus.penrose.interpreter.Interpr
     }
 
     public Object get(String name) throws Exception {
+        int i = name.indexOf(".");
+        if (i >= 0) {
+            String object = name.substring(0, i);
+            if (interpreter.get(object) == null) return null;
+        }
         return interpreter.get(name);
     }
 
-    public Object eval(String expression) throws Exception {
+    public Object eval(String script) throws Exception {
         try {
-            if (expression == null) return null;
-            return interpreter.eval(expression);
+            if (script == null) return null;
+            return interpreter.eval(script);
 
         } catch (Exception e) {
             log.debug("BeanShellException: "+e.getMessage());

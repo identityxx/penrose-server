@@ -83,29 +83,33 @@ public class SearchEngine {
     public Map computeRdns(EntryDefinition entryDefinition, Collection rows) throws Exception {
         Source primarySource = engine.getPrimarySource(entryDefinition);
 
-        //log.debug("Search results:");
+        log.debug("Search results:");
         Map rdns = new TreeMap();
 
-        for (Iterator j=rows.iterator(); j.hasNext(); ) {
-            Row row = (Row)j.next();
-            //log.debug(" - "+row);
+        Collection rdnAttributes = entryDefinition.getRdnAttributes();
+
+        for (Iterator i=rows.iterator(); i.hasNext(); ) {
+            Row row = (Row)i.next();
+            log.debug(" - "+row);
 
             Interpreter interpreter = engineContext.newInterpreter();
             for (Iterator k=row.getNames().iterator(); k.hasNext(); ) {
                 String name = (String)k.next();
                 Object value = row.get(name);
+                if (value == null) continue;
                 interpreter.set(primarySource.getName()+"."+name, value);
             }
-
-            Collection rdnAttributes = entryDefinition.getRdnAttributes();
 
             Row rdn = new Row();
             boolean valid = true;
 
-            for (Iterator k=rdnAttributes.iterator(); k.hasNext(); ) {
-                AttributeDefinition attr = (AttributeDefinition)k.next();
+            for (Iterator j=rdnAttributes.iterator(); j.hasNext(); ) {
+                AttributeDefinition attr = (AttributeDefinition)j.next();
                 String name = attr.getName();
-                String expression = attr.getExpression().getScript();
+
+                Expression expression = attr.getExpression();
+                if (expression == null) continue;
+
                 Object value = interpreter.eval(expression);
 
                 if (value == null) {

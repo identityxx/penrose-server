@@ -137,47 +137,10 @@ public class JoinEngine {
                 Expression expression = field.getExpression();
                 if (expression == null) continue;
 
-                String foreach = expression.getForeach();
-                String var = expression.getVar();
-                String script = expression.getScript();
-
-                Object value = null;
-                if (foreach == null) {
-                    //log.debug("Evaluating expression: "+expression);
-                    value = interpreter.eval(script);
-
-                } else {
-                    //log.debug("Evaluating expression: "+expression);
-
-                    Object v = interpreter.get(foreach);
-                    //log.debug("Values: "+v);
-
-                    if (v != null) {
-                        Collection values;
-                        if (v instanceof Collection) {
-                            values = (Collection)v;
-                        } else {
-                            values = new ArrayList();
-                            values.add(v);
-                        }
-
-                        Collection newValues = new ArrayList();
-                        for (Iterator k=values.iterator(); k.hasNext(); ) {
-                            Object o = k.next();
-                            interpreter.set(var, o);
-                            value = interpreter.eval(script);
-                            //log.debug(" - "+value);
-                            newValues.add(value);
-                        }
-
-                        value = newValues;
-                    }
-                }
-
-                log.debug("   - "+primarySource.getName()+"."+field.getName()+": "+value);
-
+                Object value = interpreter.eval(expression);
                 if (value == null) continue;
 
+                log.debug("   - "+primarySource.getName()+"."+field.getName()+": "+value);
                 filter.set(primarySource.getName()+"."+name, value);
             }
 

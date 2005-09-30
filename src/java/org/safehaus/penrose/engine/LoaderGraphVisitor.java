@@ -187,7 +187,9 @@ public class LoaderGraphVisitor extends GraphVisitor {
                     if (!ad.isRdn()) continue;
 
                     Expression expression = ad.getExpression();
-                    Object value = interpreter.eval(expression.getScript());
+                    if (expression == null) continue;
+
+                    Object value = interpreter.eval(expression);
                     if (value == null) continue;
 
                     rdn.set(ad.getName(), value);
