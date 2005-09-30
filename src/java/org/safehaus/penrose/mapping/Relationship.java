@@ -30,7 +30,7 @@ import java.util.*;
  */
 public class Relationship implements Cloneable, Serializable {
 
-    private String operator;
+    private String operator = "=";
     private List operands = new ArrayList();
 
     public Relationship() {
@@ -64,6 +64,7 @@ public class Relationship implements Cloneable, Serializable {
             //System.out.println("Operator: "+exp.getOperator());
             operator = exp.getOperator();
 
+            operands.clear();
             for (Iterator i=exp.getOperands().iterator(); i.hasNext(); ) {
                 ZExp operand = (ZExp)i.next();
                 //System.out.println("Operand: "+operand+" ("+operand.getClass()+")");
@@ -78,6 +79,7 @@ public class Relationship implements Cloneable, Serializable {
     }
     
     public String getLhs() {
+        if (operands.size() < 1) return null;
         return operands.get(0).toString();
     }
 
@@ -94,6 +96,7 @@ public class Relationship implements Cloneable, Serializable {
     }
 
     public String getRhs() {
+        if (operands.size() < 2) return null;
         return operands.get(1).toString();
     }
 
