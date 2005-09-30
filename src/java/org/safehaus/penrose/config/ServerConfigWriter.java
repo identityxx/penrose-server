@@ -190,17 +190,18 @@ public class ServerConfigWriter {
         cacheName.add(new DefaultText(cache.getCacheName()));
         element.add(cacheName);
 
-        Element cacheClass = new DefaultElement("cache-class");
-        cacheClass.add(new DefaultText(cache.getCacheClass()));
-        element.add(cacheClass);
+        if (cache.getCacheClass() != null && !"".equals(cache.getCacheClass())) {
+            Element cacheClass = new DefaultElement("cache-class");
+            cacheClass.add(new DefaultText(cache.getCacheClass()));
+            element.add(cacheClass);
+        }
 
-        if (cache.getDescription() != null && !cache.getDescription().equals("")) {
+        if (cache.getDescription() != null && !"".equals(cache.getDescription())) {
             Element description = new DefaultElement("description");
             description.add(new DefaultText(cache.getDescription()));
             element.add(description);
         }
 
-        // parameters
         for (Iterator iter = cache.getParameterNames().iterator(); iter.hasNext();) {
             String name = (String) iter.next();
             String value = (String) cache.getParameter(name);
@@ -217,6 +218,7 @@ public class ServerConfigWriter {
 
             element.add(parameter);
         }
+
     	return element;
     }
 

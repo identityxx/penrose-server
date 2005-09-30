@@ -90,7 +90,7 @@
     </at>
   </entry>
   <entry dn="price=...,ou=Prices,ou=Products,dc=Example,dc=com">
-    <oc>organizationalUnit</oc>
+    <oc>product</oc>
     <at name="price" rdn="true">
       <expression>"$"+products.price</expression>
     </at>
@@ -104,7 +104,7 @@ return price.substring(1);</expression>
     </source>
   </entry>
   <entry dn="cn=...,price=...,ou=Prices,ou=Products,dc=Example,dc=com">
-    <oc>organizationalUnit</oc>
+    <oc>product</oc>
     <at name="cn" rdn="true">
       <expression>products2.name</expression>
     </at>
@@ -129,7 +129,7 @@ return price.substring(1);</expression>
     </at>
   </entry>
   <entry dn="price=...,ou=Price Ranges,ou=Products,dc=Example,dc=com">
-    <oc>organizationalUnit</oc>
+    <oc>product</oc>
     <at name="price" rdn="true">
       <expression>"$"+products.price+" or under"</expression>
     </at>
@@ -144,7 +144,7 @@ return price.substring(1, i);</expression>
     </source>
   </entry>
   <entry dn="cn=...,price=...,ou=Price Ranges,ou=Products,dc=Example,dc=com">
-    <oc>organizationalUnit</oc>
+    <oc>product</oc>
     <at name="cn" rdn="true">
       <expression>products2.name</expression>
     </at>
