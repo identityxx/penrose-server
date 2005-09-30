@@ -88,7 +88,7 @@ public class SourceDefinition implements Cloneable {
         return (FieldDefinition)fields.get(name);
     }
     
-	public Collection getFields() {
+	public Collection getFieldDefinitions() {
 		return fields.values();
 	}
 

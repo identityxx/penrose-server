@@ -197,7 +197,7 @@ public class ConfigWriter {
     	Element element = new DefaultElement("source");
     	element.addAttribute("name", source.getName());
 
-    	for (Iterator i = source.getFields().iterator(); i.hasNext(); ) {
+    	for (Iterator i = source.getFieldDefinitions().iterator(); i.hasNext(); ) {
     		FieldDefinition field = (FieldDefinition)i.next();
     		Element fieldElement = toElement(field);
     		element.add(fieldElement);
@@ -569,6 +569,7 @@ public class ConfigWriter {
     	element.addAttribute("name", field.getName());
         if (!field.getName().equals(field.getOriginalName())) element.addAttribute("originalName", field.getOriginalName());
         if (field.isPrimaryKey()) element.addAttribute("primaryKey", "true");
+        if (!field.isSearchable()) element.addAttribute("searchable", "false");
         if (!FieldDefinition.DEFAULT_TYPE.equals(field.getType())) element.addAttribute("type", field.getType());
         if (field.getLength() > 0) element.addAttribute("length", ""+field.getLength());
         if (field.getPrecision() > 0) element.addAttribute("precision", ""+field.getPrecision());

@@ -94,7 +94,7 @@ public class JDBCAdapter extends Adapter {
         ConnectionConfig connectionConfig = config.getConnectionConfig(source.getConnectionName());
         SourceDefinition sourceDefinition = connectionConfig.getSourceDefinition(source.getSourceName());
 
-        Collection fields = sourceDefinition.getFields();
+        Collection fields = sourceDefinition.getFieldDefinitions();
         for (Iterator i=fields.iterator(); i.hasNext(); ) {
             FieldDefinition fieldDefinition = (FieldDefinition)i.next();
 
@@ -112,7 +112,7 @@ public class JDBCAdapter extends Adapter {
         ConnectionConfig connectionConfig = config.getConnectionConfig(source.getConnectionName());
         SourceDefinition sourceDefinition = connectionConfig.getSourceDefinition(source.getSourceName());
 
-        Collection fields = sourceDefinition.getFields();
+        Collection fields = sourceDefinition.getFieldDefinitions();
         for (Iterator i=fields.iterator(); i.hasNext(); ) {
             FieldDefinition fieldDefinition = (FieldDefinition)i.next();
             if (!fieldDefinition.isPrimaryKey()) continue;
@@ -300,7 +300,7 @@ public class JDBCAdapter extends Adapter {
         int c = 1;
 
         Config config = getAdapterContext().getConfig(source);
-        Collection fields = config.getPrimaryKeyFields(source);
+        Collection fields = config.getPrimaryKeyFieldDefinitions(source);
 
         for (Iterator i=fields.iterator(); i.hasNext() && c<=count; c++) {
             FieldDefinition fieldDefinition = (FieldDefinition)i.next();
@@ -329,7 +329,7 @@ public class JDBCAdapter extends Adapter {
         ConnectionConfig connectionConfig = config.getConnectionConfig(source.getConnectionName());
         SourceDefinition sourceDefinition = connectionConfig.getSourceDefinition(source.getSourceName());
 
-        Collection fields = sourceDefinition.getFields();
+        Collection fields = sourceDefinition.getFieldDefinitions();
 
         for (Iterator i=fields.iterator(); i.hasNext() && c<=count; c++) {
             FieldDefinition fieldDefinition = (FieldDefinition)i.next();
@@ -370,7 +370,7 @@ public class JDBCAdapter extends Adapter {
             StringBuffer sb = new StringBuffer();
             StringBuffer sb2 = new StringBuffer();
 
-            Collection fields = sourceDefinition.getFields();
+            Collection fields = sourceDefinition.getFieldDefinitions();
             Collection parameters = new ArrayList();
             for (Iterator i=fields.iterator(); i.hasNext(); ) {
                 FieldDefinition fieldDefinition = (FieldDefinition)i.next();
@@ -418,7 +418,7 @@ public class JDBCAdapter extends Adapter {
         Map pk = new HashMap();
 
         Config config = getAdapterContext().getConfig(source);
-        Collection fields = config.getPrimaryKeyFields(source);
+        Collection fields = config.getPrimaryKeyFieldDefinitions(source);
 
         for (Iterator i=fields.iterator(); i.hasNext(); ) {
             FieldDefinition fieldDefinition = (FieldDefinition)i.next();
@@ -517,7 +517,7 @@ public class JDBCAdapter extends Adapter {
             StringBuffer sb2 = new StringBuffer();
             Collection parameters = new ArrayList();
 
-            Collection fields = sourceDefinition.getFields();
+            Collection fields = sourceDefinition.getFieldDefinitions();
             for (Iterator i=fields.iterator(); i.hasNext(); ) {
                 FieldDefinition fieldDefinition = (FieldDefinition)i.next();
 

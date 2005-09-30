@@ -86,7 +86,7 @@ public class Config implements Serializable {
             SourceDefinition sourceDefinition = connection.getSourceDefinition(sourceName);
             if (sourceDefinition == null) throw new Exception("Source "+sourceName+" undefined.");
 
-            Collection fieldConfigs = sourceDefinition.getFields();
+            Collection fieldConfigs = sourceDefinition.getFieldDefinitions();
 
             for (Iterator k=fieldConfigs.iterator(); k.hasNext(); ) {
                 FieldDefinition fieldConfig = (FieldDefinition)k.next();
@@ -429,7 +429,7 @@ public class Config implements Serializable {
             for (Iterator j = connection.getSourceDefinitions().iterator(); j.hasNext();) {
                 SourceDefinition sourceConfig = (SourceDefinition)j.next();
                 sb.append("Source "+sourceConfig.getName()+nl);
-                for (Iterator k = sourceConfig.getFields().iterator(); k.hasNext(); ) {
+                for (Iterator k = sourceConfig.getFieldDefinitions().iterator(); k.hasNext(); ) {
                     FieldDefinition field = (FieldDefinition)k.next();
                     sb.append("- field: "+field.getName()+" "+(field.isPrimaryKey() ? "(primary key)" : "") + nl);
                 }
@@ -555,17 +555,32 @@ public class Config implements Serializable {
         this.rootEntryDefinitions = rootEntryDefinitions;
     }
 
-    public Collection getPrimaryKeyFields(Source source) {
+    public Collection getPrimaryKeyFieldDefinitions(Source source) {
         ConnectionConfig connectionConfig = getConnectionConfig(source.getConnectionName());
         SourceDefinition sourceDefinition = connectionConfig.getSourceDefinition(source.getSourceName());
 
         Collection results = new ArrayList();
-        for (Iterator i=sourceDefinition.getFields().iterator(); i.hasNext(); ) {
+        for (Iterator i=sourceDefinition.getFieldDefinitions().iterator(); i.hasNext(); ) {
             FieldDefinition fieldDefinition = (FieldDefinition)i.next();
             if (!fieldDefinition.isPrimaryKey()) continue;
             results.add(fieldDefinition);
         }
         
+        return results;
+    }
+
+    public Collection getSearchableFields(Source source) {
+        ConnectionConfig connectionConfig = getConnectionConfig(source.getConnectionName());
+        SourceDefinition sourceDefinition = connectionConfig.getSourceDefinition(source.getSourceName());
+
+        Collection results = new ArrayList();
+        for (Iterator i=source.getFields().iterator(); i.hasNext(); ) {
+            Field field = (Field)i.next();
+            FieldDefinition fieldDefinition = sourceDefinition.getFieldDefinition(field.getName());
+            if (!fieldDefinition.isSearchable()) continue;
+            results.add(field);
+        }
+
         return results;
     }
 }

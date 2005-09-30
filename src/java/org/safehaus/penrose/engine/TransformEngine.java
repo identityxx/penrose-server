@@ -280,7 +280,7 @@ public class TransformEngine {
 
     public Collection getPrimaryKeys(Source source, AttributeValues sourceValues) throws Exception {
         Config config = penrose.getConfig(source);
-        Collection pkFields = config.getPrimaryKeyFields(source);
+        Collection pkFields = config.getPrimaryKeyFieldDefinitions(source);
 
         AttributeValues pkValues = new AttributeValues();
         for (Iterator j=pkFields.iterator(); j.hasNext(); ) {
@@ -300,7 +300,7 @@ public class TransformEngine {
     public Map split(Source source, AttributeValues entry) throws Exception {
 
         Config config = penrose.getConfig(source);
-        Collection fields = config.getPrimaryKeyFields(source);
+        Collection fields = config.getPrimaryKeyFieldDefinitions(source);
 
         AttributeValues output = new AttributeValues();
         Row m = translate(source, entry, output);

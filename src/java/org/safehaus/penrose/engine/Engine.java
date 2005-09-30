@@ -486,7 +486,7 @@ public class Engine {
         execute(new Runnable() {
             public void run() {
                 try {
-                    search(parent, entryDefinition, filter, results);
+                    searchBackground(parent, entryDefinition, filter, results);
 
                 } catch (Throwable e) {
                     e.printStackTrace(System.out);
@@ -499,7 +499,7 @@ public class Engine {
         return results;
     }
 
-    public void search(
+    public void searchBackground(
             Entry parent,
             EntryDefinition entryDefinition,
             Filter filter,
@@ -523,7 +523,8 @@ public class Engine {
 
             log.debug("Entry filter cache not found.");
 
-            rdns = searchEngine.search(parent, entryDefinition, filter);
+            Map rows = searchEngine.search(parent, entryDefinition, filter);
+            rdns = rows.keySet();
 
             engineContext.getEntryFilterCache(parent, entryDefinition).put(filter, rdns);
 
@@ -640,7 +641,7 @@ public class Engine {
     public void setJoinEngine(JoinEngine joinEngine) {
         this.joinEngine = joinEngine;
     }
-    
+
     public Filter createFilter(Source source, Collection pks) throws Exception {
 
         Collection normalizedFilters = null;

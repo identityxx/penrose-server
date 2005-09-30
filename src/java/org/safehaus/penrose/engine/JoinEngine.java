@@ -114,7 +114,12 @@ public class JoinEngine {
         Collection filters = new TreeSet();
 
         Source primarySource = engine.getPrimarySource(entryDefinition);
-        Collection fields = primarySource.getFields();
+
+        Config config = engineContext.getConfig(entryDefinition.getDn());
+        ConnectionConfig connectionConfig = config.getConnectionConfig(primarySource.getConnectionName());
+        SourceDefinition sourceDefinition = connectionConfig.getSourceDefinition(primarySource.getSourceName());
+
+        Collection fields = config.getSearchableFields(primarySource);
 
         log.debug("Creating filters:");
         for (Iterator i=rdns.iterator(); i.hasNext(); ) {
@@ -127,8 +132,8 @@ public class JoinEngine {
             Row filter = new Row();
             for (Iterator j=fields.iterator(); j.hasNext(); ) {
                 Field field = (Field)j.next();
-
                 String name = field.getName();
+
                 Expression expression = field.getExpression();
                 if (expression == null) continue;
 
@@ -169,7 +174,7 @@ public class JoinEngine {
                     }
                 }
 
-                //log.debug("   - "+primarySource.getName()+"."+field.getName()+": "+value);
+                log.debug("   - "+primarySource.getName()+"."+field.getName()+": "+value);
 
                 if (value == null) continue;
 

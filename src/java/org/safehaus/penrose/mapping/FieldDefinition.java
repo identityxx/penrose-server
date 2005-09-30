@@ -37,10 +37,8 @@ public class FieldDefinition implements Comparable, Cloneable {
     private int length    = DEFAULT_LENGTH;
     private int precision = DEFAULT_PRECISION;
 
-	/**
-	 * This is a primary key.
-	 */
 	private boolean primaryKey;
+    private boolean searchable = true;
 
     /**
      * Encryption method used to encrypt the value
@@ -123,10 +121,19 @@ public class FieldDefinition implements Comparable, Cloneable {
         this.precision = precision;
     }
 
+    public boolean isSearchable() {
+        return searchable;
+    }
+
+    public void setSearchable(boolean searchable) {
+        this.searchable = searchable;
+    }
+
     public int hashCode() {
         return (name == null ? 0 : name.hashCode()) +
                 (originalName == null ? 0 : originalName.hashCode()) +
                 (primaryKey ? 0 : 1) +
+                (searchable ? 0 : 1) +
                 (encryption == null ? 0 : encryption.hashCode()) +
                 (encoding == null ? 0 : encoding.hashCode()) +
                 (type == null ? 0 : type.hashCode()) +
@@ -148,6 +155,7 @@ public class FieldDefinition implements Comparable, Cloneable {
         if (!equals(name, fieldDefinition.name)) return false;
         if (!equals(originalName, fieldDefinition.originalName)) return false;
         if (primaryKey != fieldDefinition.primaryKey) return false;
+        if (searchable != fieldDefinition.searchable) return false;
         if (!equals(encryption, fieldDefinition.encryption)) return false;
         if (!equals(encoding, fieldDefinition.encoding)) return false;
         if (!equals(type, fieldDefinition.type)) return false;
@@ -169,6 +177,7 @@ public class FieldDefinition implements Comparable, Cloneable {
         name = fieldDefinition.name;
         originalName = fieldDefinition.originalName;
         primaryKey = fieldDefinition.primaryKey;
+        searchable = fieldDefinition.searchable;
         encryption = fieldDefinition.encryption;
         encoding = fieldDefinition.encoding;
         type = fieldDefinition.type;

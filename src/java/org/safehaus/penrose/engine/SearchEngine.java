@@ -25,9 +25,7 @@ import org.safehaus.penrose.interpreter.Interpreter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Collection;
-import java.util.TreeSet;
-import java.util.Iterator;
+import java.util.*;
 
 /**
  * @author Endi S. Dewata
@@ -44,7 +42,7 @@ public class SearchEngine {
         this.engineContext = engine.getEngineContext();
     }
 
-    public Collection search(Entry parent, EntryDefinition entryDefinition, Filter filter) throws Exception {
+    public Map search(Entry parent, EntryDefinition entryDefinition, Filter filter) throws Exception {
 
         String dn = entryDefinition.getRdn()+","+parent.getDn();
         log.debug("Searching entry "+dn+" for "+filter);
@@ -82,11 +80,11 @@ public class SearchEngine {
         return computeRdns(entryDefinition, rows);
     }
 
-    public Collection computeRdns(EntryDefinition entryDefinition, Collection rows) throws Exception {
+    public Map computeRdns(EntryDefinition entryDefinition, Collection rows) throws Exception {
         Source primarySource = engine.getPrimarySource(entryDefinition);
 
         //log.debug("Search results:");
-        TreeSet rdns = new TreeSet();
+        Map rdns = new TreeMap();
 
         for (Iterator j=rows.iterator(); j.hasNext(); ) {
             Row row = (Row)j.next();
@@ -123,7 +121,7 @@ public class SearchEngine {
             Row nrdn = engineContext.getSchema().normalize(rdn);
             //log.debug(" - RDN: "+nrdn);
 
-            rdns.add(nrdn);
+            rdns.put(nrdn, row);
         }
 
         return rdns;

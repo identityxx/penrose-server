@@ -65,7 +65,7 @@ public class JDBCSourceDataCache extends SourceDataCache {
     }
 
     public Collection getPrimaryColumns() {
-        Collection attributes = sourceDefinition.getFields();
+        Collection attributes = sourceDefinition.getFieldDefinitions();
         Collection results = new ArrayList();
 
         for (Iterator i=attributes.iterator(); i.hasNext(); ) {
@@ -78,7 +78,7 @@ public class JDBCSourceDataCache extends SourceDataCache {
     }
 
     public Collection getNonPrimaryColumns() {
-        Collection attributes = sourceDefinition.getFields();
+        Collection attributes = sourceDefinition.getFieldDefinitions();
         Collection results = new ArrayList();
 
         for (Iterator i=attributes.iterator(); i.hasNext(); ) {

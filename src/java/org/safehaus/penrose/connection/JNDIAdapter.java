@@ -209,7 +209,7 @@ public class JNDIAdapter extends Adapter {
         Row row = new Row();
 
         Attributes attrs = sr.getAttributes();
-        Collection fields = sourceDefinition.getFields();
+        Collection fields = sourceDefinition.getFieldDefinitions();
         for (Iterator i=fields.iterator(); i.hasNext(); ) {
             FieldDefinition fieldDefinition = (FieldDefinition)i.next();
             if (!fieldDefinition.isPrimaryKey()) continue;
@@ -246,7 +246,7 @@ public class JNDIAdapter extends Adapter {
         AttributeValues av = new AttributeValues();
 
         Attributes attrs = sr.getAttributes();
-        Collection fields = sourceDefinition.getFields();
+        Collection fields = sourceDefinition.getFieldDefinitions();
         for (Iterator i=fields.iterator(); i.hasNext(); ) {
             FieldDefinition fieldDefinition = (FieldDefinition)i.next();
             String name = fieldDefinition.getName();
@@ -355,7 +355,7 @@ public class JNDIAdapter extends Adapter {
         log.debug("Deleting attributes in "+dn);
 
         List list = new ArrayList();
-        Collection fields = sourceDefinition.getFields();
+        Collection fields = sourceDefinition.getFieldDefinitions();
 
         for (Iterator i=entry.getNames().iterator(); i.hasNext(); ) {
             String name = (String)i.next();
@@ -421,7 +421,7 @@ public class JNDIAdapter extends Adapter {
         log.debug("Replacing attributes "+dn);
 
         List list = new ArrayList();
-        Collection fields = sourceDefinition.getFields();
+        Collection fields = sourceDefinition.getFieldDefinitions();
 
         Set addAttributes = new HashSet(newEntry.getNames());
         addAttributes.removeAll(oldEntry.getNames());
@@ -547,7 +547,7 @@ public class JNDIAdapter extends Adapter {
         String dn = getDn(source, entry);
         log.debug("Replacing attributes "+dn);
 
-        Collection fields = sourceDefinition.getFields();
+        Collection fields = sourceDefinition.getFieldDefinitions();
         List list = new ArrayList();
 
         for (Iterator i=entry.getNames().iterator(); i.hasNext(); ) {
@@ -596,7 +596,7 @@ public class JNDIAdapter extends Adapter {
 
         String baseDn = sourceDefinition.getParameter(BASE_DN);
 
-        Collection fields= sourceDefinition.getFields();
+        Collection fields= sourceDefinition.getFieldDefinitions();
         StringBuffer sb = new StringBuffer();
 
         for (Iterator i=fields.iterator(); i.hasNext(); ) {

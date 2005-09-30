@@ -99,7 +99,7 @@ public class ConfigValidator {
 
                 boolean hasPrimaryKey = false;
 
-                for (Iterator k=sourceDefinition.getFields().iterator(); k.hasNext(); ) {
+                for (Iterator k=sourceDefinition.getFieldDefinitions().iterator(); k.hasNext(); ) {
                     FieldDefinition fieldDefinition = (FieldDefinition)k.next();
                     //log.debug("Validating field "+connectionConfig.getConnectionName()+"/"+sourceDefinition.getName()+"."+fieldDefinition.getName());
 

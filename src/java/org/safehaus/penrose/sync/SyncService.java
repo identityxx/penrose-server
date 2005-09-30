@@ -331,7 +331,6 @@ public class SyncService {
             syncContext.getSourceFilterCache(connectionConfig, sourceDefinition).put(newFilter, map.keySet());
         }
 
-        log.debug("Results: "+results);
         return results;
     }
 
@@ -396,7 +395,7 @@ public class SyncService {
 
             Row pk = new Row();
 
-            Collection fields = sourceDefinition.getFields();
+            Collection fields = sourceDefinition.getFieldDefinitions();
             for (Iterator j=fields.iterator(); j.hasNext(); ) {
                 FieldDefinition fieldDefinition = (FieldDefinition)j.next();
                 if (!fieldDefinition.isPrimaryKey()) continue;
