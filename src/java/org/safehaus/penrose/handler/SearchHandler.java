@@ -299,8 +299,8 @@ public class SearchHandler {
         if ("".equals(base) && scope == LDAPConnection.SCOPE_BASE) { // finding root DSE
             LDAPAttributeSet set = new LDAPAttributeSet();
             set.add(new LDAPAttribute("objectClass", new String[] { "top", "extensibleObject" }));
-            set.add(new LDAPAttribute("vendorName", new String[] { "Penrose Virtual Directory Server" }));
-            set.add(new LDAPAttribute("vendorVersion", new String[] { "0.9.5" }));
+            set.add(new LDAPAttribute("vendorName", new String[] { "Identyx Corporation" }));
+            set.add(new LDAPAttribute("vendorVersion", new String[] { "Penrose Virtual Directory Server 0.9.6" }));
 
             LDAPAttribute namingContexts = new LDAPAttribute("namingContexts");
             for (Iterator i=handlerContext.getConfigs().iterator(); i.hasNext(); ) {

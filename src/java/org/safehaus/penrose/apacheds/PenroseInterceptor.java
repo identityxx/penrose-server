@@ -514,7 +514,7 @@ public class PenroseInterceptor extends BaseInterceptor {
                         } else {
                             attr.clear();
                         }
-                        attr.add("Penrose Virtual Directory Server");
+                        attr.add("Identyx Corporation");
                     }
 
                     if (requestedAttrs.contains("*") || requestedAttrs.contains("vendorVersion")) {
@@ -525,7 +525,7 @@ public class PenroseInterceptor extends BaseInterceptor {
                         } else {
                             attr.clear();
                         }
-                        attr.add("0.9.5");
+                        attr.add("Penrose Virtual Directory Server 0.9.6");
                     }
 
                     if (requestedAttrs.contains("*") || requestedAttrs.contains("namingContexts")) {
