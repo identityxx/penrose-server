@@ -98,10 +98,8 @@
       <source-name>products</source-name>
       <connection-name>MySQL</connection-name>
       <field name="price">
-        <expression>
-if (price == void || price == null) return null;
-return price.substring(1);
-        </expression>
+        <expression>if (price == void || price == null) return null;
+return price.substring(1);</expression>
       </field>
     </source>
   </entry>
@@ -139,11 +137,9 @@ return price.substring(1);
       <source-name>products</source-name>
       <connection-name>MySQL</connection-name>
       <field name="price">
-        <expression>
-if (price == void || price == null) return;
+        <expression>if (price == void || price == null) return;
 int i = price.indexOf(" ");
-return price.substring(1, i);
-        </expression>
+return price.substring(1, i);</expression>
       </field>
     </source>
   </entry>
@@ -265,11 +261,11 @@ return price.substring(1, i);
     <source name="orders">
       <source-name>orders</source-name>
       <connection-name>MySQL</connection-name>
-      <field name="orderDate">
-        <expression>date</expression>
-      </field>
       <field name="id">
         <expression>orderId</expression>
+      </field>
+      <field name="orderDate">
+        <expression>date</expression>
       </field>
       <field name="username">
         <expression>uid</expression>
@@ -423,11 +419,11 @@ return cn.substring(i+1);</expression>
     <source name="orders">
       <source-name>orders</source-name>
       <connection-name>MySQL</connection-name>
-      <field name="orderDate">
-        <expression>date</expression>
-      </field>
       <field name="id">
         <expression>orderId</expression>
+      </field>
+      <field name="orderDate">
+        <expression>date</expression>
       </field>
     </source>
     <relationship>
@@ -613,8 +609,7 @@ return cn.substring(i+1);</expression>
       <source-name>customers</source-name>
       <connection-name>MySQL</connection-name>
       <field name="firstName">
-        <expression foreach="uniqueMember" var="x">
-int i = x.indexOf("=");
+        <expression foreach="uniqueMember" var="x">int i = x.indexOf("=");
 int j = x.indexOf(",");
 return x.substring(i+1, j);</expression>
       </field>
@@ -689,11 +684,11 @@ return cn.substring(i+1);</expression>
     <source name="orders">
       <source-name>orders</source-name>
       <connection-name>MySQL</connection-name>
-      <field name="orderDate">
-        <expression>date</expression>
-      </field>
       <field name="id">
         <expression>orderId</expression>
+      </field>
+      <field name="orderDate">
+        <expression>date</expression>
       </field>
       <field name="username">
         <expression>uid</expression>
@@ -733,11 +728,11 @@ return cn.substring(i+1);</expression>
     <source name="orders">
       <source-name>orders</source-name>
       <connection-name>MySQL</connection-name>
-      <field name="orderDate">
-        <expression>date</expression>
-      </field>
       <field name="id">
         <expression>orderId</expression>
+      </field>
+      <field name="orderDate">
+        <expression>date</expression>
       </field>
     </source>
   </entry>
@@ -797,11 +792,11 @@ return cn.substring(i+1);</expression>
     <source name="orders">
       <source-name>orders</source-name>
       <connection-name>MySQL</connection-name>
-      <field name="orderDate">
-        <expression>date</expression>
-      </field>
       <field name="id">
         <expression>orderId</expression>
+      </field>
+      <field name="orderDate">
+        <expression>date</expression>
       </field>
     </source>
     <relationship>

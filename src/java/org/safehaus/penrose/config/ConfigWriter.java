@@ -571,8 +571,8 @@ public class ConfigWriter {
         if (field.isPrimaryKey()) element.addAttribute("primaryKey", "true");
         if (!field.isSearchable()) element.addAttribute("searchable", "false");
         if (!FieldDefinition.DEFAULT_TYPE.equals(field.getType())) element.addAttribute("type", field.getType());
-        if (field.getLength() > 0) element.addAttribute("length", ""+field.getLength());
-        if (field.getPrecision() > 0) element.addAttribute("precision", ""+field.getPrecision());
+        if (field.getLength() != FieldDefinition.DEFAULT_LENGTH) element.addAttribute("length", ""+field.getLength());
+        if (field.getPrecision() != FieldDefinition.DEFAULT_PRECISION) element.addAttribute("precision", ""+field.getPrecision());
     	return element;
     }
     

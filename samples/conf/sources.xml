@@ -8,12 +8,12 @@
       <param-value>penrose</param-value>
     </parameter>
     <parameter>
-      <param-name>password</param-name>
-      <param-value>penrose</param-value>
-    </parameter>
-    <parameter>
       <param-name>url</param-name>
       <param-value>jdbc:mysql://localhost/penrose_demo?autoReconnect=true</param-value>
+    </parameter>
+    <parameter>
+      <param-name>password</param-name>
+      <param-value>penrose</param-value>
     </parameter>
     <parameter>
       <param-name>driver</param-name>
@@ -22,23 +22,23 @@
     <source name="categories">
       <field name="description" length="100"/>
       <field name="id" primaryKey="true" type="INTEGER"/>
-      <field name="name" length="50"/>
+      <field name="name"/>
       <parameter>
         <param-name>tableName</param-name>
         <param-value>categories</param-value>
       </parameter>
     </source>
     <source name="customer_emails">
-      <field name="email" primaryKey="true" length="50"/>
-      <field name="username" length="50"/>
+      <field name="email" primaryKey="true"/>
+      <field name="username"/>
       <parameter>
         <param-name>tableName</param-name>
         <param-value>customer_emails</param-value>
       </parameter>
     </source>
     <source name="customers">
-      <field name="firstName" length="50"/>
-      <field name="lastName" length="50"/>
+      <field name="firstName"/>
+      <field name="lastName"/>
       <field name="password" length="10"/>
       <field name="username" primaryKey="true" length="10"/>
       <parameter>
@@ -57,8 +57,8 @@
       </parameter>
     </source>
     <source name="orders">
-      <field name="orderDate" type="TIMESTAMP"/>
       <field name="id" primaryKey="true" type="INTEGER"/>
+      <field name="orderDate" type="TIMESTAMP"/>
       <field name="username" length="10"/>
       <parameter>
         <param-name>tableName</param-name>
@@ -68,7 +68,7 @@
     <source name="products">
       <field name="categoryId" type="INTEGER"/>
       <field name="id" primaryKey="true" type="INTEGER"/>
-      <field name="name" length="50"/>
+      <field name="name"/>
       <field name="price" type="DOUBLE"/>
       <parameter>
         <param-name>tableName</param-name>
