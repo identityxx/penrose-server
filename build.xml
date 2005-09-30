@@ -53,6 +53,11 @@
             javacchome="javacc"
             outputdirectory="src/java/org/safehaus/penrose/openldap/config"
         />
+        <javacc
+            target="src/java/org/safehaus/penrose/sql/SQLParser.jj"
+            javacchome="javacc"
+            outputdirectory="src/java/org/safehaus/penrose/sql"
+        />
         <mkdir dir="target/classes"/>
         <javac
             srcdir="src/java"

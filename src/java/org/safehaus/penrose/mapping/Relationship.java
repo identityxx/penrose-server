@@ -23,10 +23,7 @@ import Zql.ZExp;
 
 import java.io.Serializable;
 import java.io.ByteArrayInputStream;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author Endi S. Dewata
@@ -44,7 +41,17 @@ public class Relationship implements Cloneable, Serializable {
     }
 
     public String getExpression() {
-        return getLhs()+" "+operator+" "+getRhs();
+        StringBuffer sb = new StringBuffer();
+        for (Iterator i=operands.iterator(); i.hasNext(); ) {
+            String operand = i.next().toString();
+            if (sb.length() > 0) {
+                sb.append(" ");
+                sb.append(operator);
+                sb.append(" ");
+            }
+            sb.append(operand);
+        }
+        return sb.toString();
     }
 
     public void setExpression(String expression) {
@@ -59,6 +66,7 @@ public class Relationship implements Cloneable, Serializable {
 
             for (Iterator i=exp.getOperands().iterator(); i.hasNext(); ) {
                 ZExp operand = (ZExp)i.next();
+                //System.out.println("Operand: "+operand+" ("+operand.getClass()+")");
                 operands.add(operand);
             }
 

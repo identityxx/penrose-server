@@ -67,7 +67,14 @@ public class SearchEngine {
             Source startingSource = config.getEffectiveSource(entryDefinition, startingSourceName);
             log.debug("Starting from source "+startingSourceName);
 
-            SearchGraphVisitor visitor = new SearchGraphVisitor(config, graph, engineContext, entryDefinition, newRows, primarySource);
+            Object object = null;
+            if (entryDefinition.getSource(startingSourceName) == null) {
+                object = newRows;
+            } else {
+                object = engine.createFilter(startingSource, rows);
+            }
+
+            SearchGraphVisitor visitor = new SearchGraphVisitor(config, graph, engine, entryDefinition, object, primarySource);
             graph.traverse(visitor, startingSource);
             rows.addAll(visitor.getKeys());
         }

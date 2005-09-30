@@ -66,7 +66,7 @@ public class ACLEngine {
             String scope,
             String permission) throws Exception {
 
-        log.debug(" * "+entry.getDn()+":");
+        //log.debug(" * "+entry.getDn()+":");
 
         for (Iterator i=entry.getACL().iterator(); i.hasNext(); ) {
             ACI aci = (ACI)i.next();
@@ -75,7 +75,7 @@ public class ACLEngine {
             if (scope != null && !scope.equals(aci.getScope())) continue;
             if (aci.getPermission().indexOf(permission) < 0) continue;
 
-            log.debug("   - "+aci);
+            //log.debug("   - "+aci);
             String subject = penrose.getSchema().normalize(aci.getSubject());
 
             if (subject.equals(ACI.SUBJECT_USER) && aci.getDn().equals(bindDn)) {

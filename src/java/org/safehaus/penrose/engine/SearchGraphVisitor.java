@@ -21,6 +21,7 @@ import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.filter.SimpleFilter;
 import org.safehaus.penrose.filter.AndFilter;
+import org.safehaus.penrose.filter.OrFilter;
 import org.safehaus.penrose.config.Config;
 import org.safehaus.penrose.graph.GraphVisitor;
 import org.safehaus.penrose.graph.Graph;
@@ -38,7 +39,7 @@ public class SearchGraphVisitor extends GraphVisitor {
 
     private Config config;
     private Graph graph;
-    private EngineContext engineContext;
+    private Engine engine;
     private EntryDefinition entryDefinition;
     private Source primarySource;
 
@@ -48,36 +49,29 @@ public class SearchGraphVisitor extends GraphVisitor {
     public SearchGraphVisitor(
             Config config,
             Graph graph,
-            EngineContext engineContext,
+            Engine engine,
             EntryDefinition entryDefinition,
-            Collection filters,
-            Source primarySource) {
+            Object object,
+            Source primarySource) throws Exception {
 
         this.config = config;
         this.graph = graph;
-        this.engineContext = engineContext;
+        this.engine = engine;
         this.entryDefinition = entryDefinition;
         this.primarySource = primarySource;
 
-        stack.push(filters);
+        stack.push(object);
     }
 
     public boolean preVisitNode(Object node, Object parameter) throws Exception {
         Source source = (Source)node;
-        Collection pks = (Collection)stack.peek();
-
-        log.debug("Searching "+source.getName()+" for:");
-        for (Iterator i=pks.iterator(); i.hasNext(); ) {
-            Row row = (Row)i.next();
-            log.debug(" - "+row);
-        }
-
         if (entryDefinition.getSource(source.getName()) == null) {
             log.debug("Source "+source.getName()+" is not defined in entry "+entryDefinition.getDn());
             return true;
         }
 
-        Filter filter = createFilter(source, pks);
+        Filter filter = (Filter)stack.peek();
+        log.debug("Searching "+source.getName()+" for: "+filter);
 
         Collection relationships = graph.getEdgeObjects(source);
 
@@ -112,14 +106,14 @@ public class SearchGraphVisitor extends GraphVisitor {
             }
         }
 
-        Map map = engineContext.getSyncService().search(source, filter);
+        Map map = engine.getEngineContext().getSyncService().search(source, filter);
         if (map.size() == 0) return false;
 
         log.debug("Records:");
         Collection results = new ArrayList();
         for (Iterator i=map.values().iterator(); i.hasNext(); ) {
             AttributeValues av = (AttributeValues)i.next();
-            Collection list = engineContext.getTransformEngine().convert(av);
+            Collection list = engine.getEngineContext().getTransformEngine().convert(av);
             for (Iterator j=list.iterator(); j.hasNext(); ) {
                 Row row = (Row)j.next();
                 Row newRow = new Row();
@@ -173,38 +167,6 @@ public class SearchGraphVisitor extends GraphVisitor {
         return true;
     }
 
-    public Filter createFilter(Source source, Collection pks) throws Exception {
-
-        Collection normalizedFilters = null;
-        if (pks != null) {
-            normalizedFilters = new TreeSet();
-            for (Iterator i=pks.iterator(); i.hasNext(); ) {
-                Row filter = (Row)i.next();
-
-                Row f = new Row();
-                for (Iterator j=filter.getNames().iterator(); j.hasNext(); ) {
-                    String name = (String)j.next();
-                    if (!name.startsWith(source.getName()+".")) continue;
-
-                    String newName = name.substring(source.getName().length()+1);
-                    f.set(newName, filter.get(name));
-                }
-
-                if (f.isEmpty()) continue;
-
-                Row normalizedFilter = engineContext.getSchema().normalize(f);
-                normalizedFilters.add(normalizedFilter);
-            }
-        }
-
-        Filter filter = null;
-        if (pks != null) {
-            filter = engineContext.getFilterTool().createFilter(normalizedFilters);
-        }
-
-        return filter;
-    }
-
     public boolean preVisitEdge(Collection nodes, Object object, Object parameter) throws Exception {
         Relationship relationship = (Relationship)object;
         if (!isJoinRelationship(relationship)) return false;
@@ -217,32 +179,54 @@ public class SearchGraphVisitor extends GraphVisitor {
         Collection rows = (Collection)stack.peek();
 
         String lhs = relationship.getLhs();
+        String operator = relationship.getOperator();
         String rhs = relationship.getRhs();
 
-        if (lhs.startsWith(toSource.getName()+".")) {
+        if (rhs.startsWith(toSource.getName()+".")) {
             String exp = lhs;
             lhs = rhs;
             rhs = exp;
         }
 
         Collection newRows = new HashSet();
+        Filter filter = null;
+
+        log.debug("Primary keys:");
         for (Iterator i=rows.iterator(); i.hasNext(); ) {
             Row row = (Row)i.next();
             log.debug(" - "+row);
 
-            Object value = row.get(lhs);
+            Object value = row.get(rhs);
             if (value == null) continue;
 
-            Row newRow = new Row();
-            newRow.set(rhs, value);
-            newRows.add(newRow);
+            int index = lhs.indexOf(".");
+            String name = lhs.substring(index+1);
 
-            log.debug("   - "+lhs+" -> "+rhs+" = "+value);
+            SimpleFilter sf = new SimpleFilter(name, operator, value.toString());
+            log.debug("   - "+rhs+" -> "+sf);
+
+            if (filter == null) {
+                filter = sf;
+
+            } else if (filter instanceof OrFilter) {
+                OrFilter of = (OrFilter)filter;
+                of.addFilterList(sf);
+
+            } else {
+                OrFilter of = new OrFilter();
+                of.addFilterList(filter);
+                of.addFilterList(sf);
+                filter = of;
+            }
+
+            Row newRow = new Row();
+            newRow.set(lhs, value);
+            newRows.add(newRow);
         }
 
         if (newRows.size() == 0) return false;
 
-        stack.push(newRows);
+        stack.push(filter);
 
         return true;
     }

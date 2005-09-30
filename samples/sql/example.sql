@@ -102,7 +102,7 @@ drop table orders;
 create table orders (
     id int(11),
     username varchar(10),
-    date datetime,
+    orderDate datetime,
     primary key (id)
 );
 

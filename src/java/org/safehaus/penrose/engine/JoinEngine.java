@@ -99,7 +99,7 @@ public class JoinEngine {
             }
         }
 
-        Collection filters = rdnToFilter(entryDefinition, rdnsToLoad);
+        Collection filters = createFilter(entryDefinition, rdnsToLoad);
 
         LoaderGraphVisitor loaderVisitor = new LoaderGraphVisitor(config, graph, engineContext, entryDefinition, filters);
         graph.traverse(loaderVisitor, primarySource);
@@ -109,7 +109,7 @@ public class JoinEngine {
         merge(parent, entryDefinition, attributeValues, results);
     }
 
-    public Collection rdnToFilter(EntryDefinition entryDefinition, Collection rdns) throws Exception {
+    public Collection createFilter(EntryDefinition entryDefinition, Collection rdns) throws Exception {
 
         Collection filters = new TreeSet();
 

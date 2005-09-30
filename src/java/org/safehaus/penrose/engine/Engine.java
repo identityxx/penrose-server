@@ -640,5 +640,37 @@ public class Engine {
     public void setJoinEngine(JoinEngine joinEngine) {
         this.joinEngine = joinEngine;
     }
+    
+    public Filter createFilter(Source source, Collection pks) throws Exception {
+
+        Collection normalizedFilters = null;
+        if (pks != null) {
+            normalizedFilters = new TreeSet();
+            for (Iterator i=pks.iterator(); i.hasNext(); ) {
+                Row filter = (Row)i.next();
+
+                Row f = new Row();
+                for (Iterator j=filter.getNames().iterator(); j.hasNext(); ) {
+                    String name = (String)j.next();
+                    if (!name.startsWith(source.getName()+".")) continue;
+
+                    String newName = name.substring(source.getName().length()+1);
+                    f.set(newName, filter.get(name));
+                }
+
+                if (f.isEmpty()) continue;
+
+                Row normalizedFilter = engineContext.getSchema().normalize(f);
+                normalizedFilters.add(normalizedFilter);
+            }
+        }
+
+        Filter filter = null;
+        if (pks != null) {
+            filter = engineContext.getFilterTool().createFilter(normalizedFilters);
+        }
+
+        return filter;
+    }
 }
 
