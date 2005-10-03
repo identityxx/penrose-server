@@ -29,24 +29,27 @@ public class GraphIterator {
     public Graph graph;
     public GraphVisitor visitor;
 
+    Set visitedNodes = new HashSet();
+    Set visitedEdges = new HashSet();
+
     public GraphIterator(Graph graph, GraphVisitor visitor) {
         this.graph = graph;
         this.visitor = visitor;
     }
 
-    public void traverse(Object node, Object parameter) throws Exception {
-        Set visitedNodes = new HashSet();
-        Set visitedEdges = new HashSet();
-        traverse(node, parameter, visitedNodes, visitedEdges);
-    }
-
-    public void traverse(Object node, Object parameter, Set visitedNodes, Set visitedEdges) throws Exception {
+    public void traverse(Object node) throws Exception {
         if (visitedNodes.contains(node)) return;
 
         visitedNodes.add(node);
-        boolean b = visitor.preVisitNode(node, parameter);
+        boolean b = visitor.preVisitNode(node);
         if (!b) return;
 
+        traverseEdges(node);
+
+        visitor.postVisitNode(node);
+    }
+
+    public void traverseEdges(Object node) throws Exception {
         Collection edges = graph.getEdges(node);
         if (edges == null) return;
 
@@ -80,14 +83,13 @@ public class GraphIterator {
                 nodes.add(node2);
             }
 
-            b = visitor.preVisitEdge(nodes, object, parameter);
+            boolean b = visitor.preVisitEdge(nodes, object);
             if (!b) continue;
 
-            if (node2 != null) traverse(node2, parameter, visitedNodes, visitedEdges);
+            if (node2 != null) traverse(node2);
 
-            visitor.postVisitEdge(nodes, object, parameter);
+            visitor.postVisitEdge(nodes, object);
         }
 
-        visitor.postVisitNode(node, parameter);
     }
 }

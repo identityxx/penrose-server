@@ -97,14 +97,10 @@ public class Graph {
 
     public void traverse(GraphVisitor visitor) throws Exception {
         Object node = getNodes().iterator().next();
-        traverse(visitor, node, null);
+        traverse(visitor, node);
     }
 
     public void traverse(GraphVisitor visitor, Object node) throws Exception {
-        traverse(visitor, node, null);
-    }
-
-    public void traverse(GraphVisitor visitor, Object node, Object parameter) throws Exception {
-        new GraphIterator(this, visitor).traverse(node, parameter);
+        new GraphIterator(this, visitor).traverse(node);
     }
 }

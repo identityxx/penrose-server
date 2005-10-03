@@ -52,7 +52,7 @@ public class AddGraphVisitor extends GraphVisitor {
         stack.push(sourceValues);
     }
 
-    public boolean preVisitNode(Object node, Object parameter) throws Exception {
+    public boolean preVisitNode(Object node) throws Exception {
         Source source = (Source)node;
         AttributeValues sourceValues = (AttributeValues)stack.peek();
 
@@ -87,7 +87,7 @@ public class AddGraphVisitor extends GraphVisitor {
         return true;
     }
 
-    public boolean preVisitEdge(Collection nodes, Object object, Object parameter) throws Exception {
+    public boolean preVisitEdge(Collection nodes, Object object) throws Exception {
         Relationship relationship = (Relationship)object;
         log.debug("Relationship "+relationship);
 
@@ -120,7 +120,7 @@ public class AddGraphVisitor extends GraphVisitor {
         return true;
     }
 
-    public void postVisitEdge(Collection nodes, Object object, Object parameter) throws Exception {
+    public void postVisitEdge(Collection nodes, Object object) throws Exception {
         stack.pop();
     }
 

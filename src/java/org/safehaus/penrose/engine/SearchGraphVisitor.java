@@ -51,7 +51,7 @@ public class SearchGraphVisitor extends GraphVisitor {
             Graph graph,
             Engine engine,
             EntryDefinition entryDefinition,
-            Object object,
+            Filter filter,
             Source primarySource) throws Exception {
 
         this.config = config;
@@ -60,19 +60,19 @@ public class SearchGraphVisitor extends GraphVisitor {
         this.entryDefinition = entryDefinition;
         this.primarySource = primarySource;
 
-        stack.push(object);
+        stack.push(filter);
     }
 
-    public boolean preVisitNode(Object node, Object parameter) throws Exception {
+    public boolean preVisitNode(Object node) throws Exception {
         Source source = (Source)node;
-        if (entryDefinition.getSource(source.getName()) == null) {
-            log.debug("Source "+source.getName()+" is not defined in entry "+entryDefinition.getDn());
-            return true;
-        }
-
         Filter filter = (Filter)stack.peek();
         log.debug("Searching "+source.getName()+" for: "+filter);
 
+        if (entryDefinition.getSource(source.getName()) == null) {
+            log.debug("Source "+source.getName()+" is not defined in entry "+entryDefinition.getDn());
+            return false;
+        }
+/*
         Collection relationships = graph.getEdgeObjects(source);
 
         for (Iterator i=relationships.iterator(); i.hasNext(); ) {
@@ -105,7 +105,7 @@ public class SearchGraphVisitor extends GraphVisitor {
                 filter = andFilter;
             }
         }
-
+*/
         Map map = engine.getEngineContext().getSyncService().search(source, filter);
         if (map.size() == 0) return false;
 
@@ -130,17 +130,17 @@ public class SearchGraphVisitor extends GraphVisitor {
 
         stack.push(results);
 
-        keys.addAll(results);
-
         if (source != primarySource) {
             log.debug("Source "+source.getName()+" is not the primary source of entry "+entryDefinition.getDn());
             return true;
         }
 
+        keys.addAll(results);
+
         return false;
     }
 
-    public void postVisitNode(Object node, Object parameter) throws Exception {
+    public void postVisitNode(Object node) throws Exception {
         stack.pop();
     }
 
@@ -156,7 +156,7 @@ public class SearchGraphVisitor extends GraphVisitor {
             if (index < 0) continue;
 
             String sourceName = operand.substring(0, index);
-            Source src = config.getEffectiveSource(entryDefinition, sourceName);
+            Source src = entryDefinition.getSource(sourceName);
             if (src == null) continue;
 
             counter++;
@@ -167,10 +167,11 @@ public class SearchGraphVisitor extends GraphVisitor {
         return true;
     }
 
-    public boolean preVisitEdge(Collection nodes, Object object, Object parameter) throws Exception {
+    public boolean preVisitEdge(Collection nodes, Object object) throws Exception {
         Relationship relationship = (Relationship)object;
-        if (!isJoinRelationship(relationship)) return false;
         log.debug("Relationship "+relationship);
+
+        if (!isJoinRelationship(relationship)) return false;
 
         Iterator iterator = nodes.iterator();
         Source fromSource = (Source)iterator.next();
@@ -178,60 +179,18 @@ public class SearchGraphVisitor extends GraphVisitor {
 
         Collection rows = (Collection)stack.peek();
 
-        String lhs = relationship.getLhs();
-        String operator = relationship.getOperator();
-        String rhs = relationship.getRhs();
+        Collection relationships = new ArrayList();
+        relationships.add(relationship);
 
-        if (rhs.startsWith(toSource.getName()+".")) {
-            String exp = lhs;
-            lhs = rhs;
-            rhs = exp;
-        }
-
-        Collection newRows = new HashSet();
-        Filter filter = null;
-
-        log.debug("Primary keys:");
-        for (Iterator i=rows.iterator(); i.hasNext(); ) {
-            Row row = (Row)i.next();
-            log.debug(" - "+row);
-
-            Object value = row.get(rhs);
-            if (value == null) continue;
-
-            int index = lhs.indexOf(".");
-            String name = lhs.substring(index+1);
-
-            SimpleFilter sf = new SimpleFilter(name, operator, value.toString());
-            log.debug("   - "+rhs+" -> "+sf);
-
-            if (filter == null) {
-                filter = sf;
-
-            } else if (filter instanceof OrFilter) {
-                OrFilter of = (OrFilter)filter;
-                of.addFilterList(sf);
-
-            } else {
-                OrFilter of = new OrFilter();
-                of.addFilterList(filter);
-                of.addFilterList(sf);
-                filter = of;
-            }
-
-            Row newRow = new Row();
-            newRow.set(lhs, value);
-            newRows.add(newRow);
-        }
-
-        if (newRows.size() == 0) return false;
+        Filter filter = engine.generateFilter(toSource, relationships, rows);
+        if (filter == null) return false;
 
         stack.push(filter);
 
         return true;
     }
 
-    public void postVisitEdge(Collection nodes, Object object, Object parameter) throws Exception {
+    public void postVisitEdge(Collection nodes, Object object) throws Exception {
         stack.pop();
     }
 

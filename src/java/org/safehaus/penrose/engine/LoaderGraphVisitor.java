@@ -69,7 +69,7 @@ public class LoaderGraphVisitor extends GraphVisitor {
         stack.push(map);
     }
 
-    public boolean preVisitNode(Object node, Object parameter) throws Exception {
+    public boolean preVisitNode(Object node) throws Exception {
         Source source = (Source)node;
         Map filterMap = (Map)stack.peek();
 
@@ -222,7 +222,7 @@ public class LoaderGraphVisitor extends GraphVisitor {
         return true;
     }
 
-    public void postVisitNode(Object node, Object parameter) throws Exception {
+    public void postVisitNode(Object node) throws Exception {
         stack.pop();
     }
 
@@ -279,7 +279,7 @@ public class LoaderGraphVisitor extends GraphVisitor {
         return true;
     }
 
-    public boolean preVisitEdge(Collection nodes, Object object, Object parameter) throws Exception {
+    public boolean preVisitEdge(Collection nodes, Object object) throws Exception {
         Relationship relationship = (Relationship)object;
         if (!isJoinRelationship(relationship)) return false;
 
@@ -333,7 +333,7 @@ public class LoaderGraphVisitor extends GraphVisitor {
         return true;
     }
 
-    public void postVisitEdge(Collection nodes, Object object, Object parameter) throws Exception {
+    public void postVisitEdge(Collection nodes, Object object) throws Exception {
         stack.pop();
     }
 

@@ -57,25 +57,46 @@ public class SearchEngine {
         Graph graph = engine.getGraph(entryDefinition);
         Source primarySource = engine.getPrimarySource(entryDefinition);
 
-        Collection rows = new TreeSet();
-
         String startingSourceName = engine.getStartingSourceName(entryDefinition);
 
-        if (startingSourceName != null) {            
-            Source startingSource = config.getEffectiveSource(entryDefinition, startingSourceName);
-            log.debug("Starting from source "+startingSourceName);
-
-            Object object = null;
-            if (entryDefinition.getSource(startingSourceName) == null) {
-                object = newRows;
-            } else {
-                object = engine.createFilter(startingSource, rows);
-            }
-
-            SearchGraphVisitor visitor = new SearchGraphVisitor(config, graph, engine, entryDefinition, object, primarySource);
-            graph.traverse(visitor, startingSource);
-            rows.addAll(visitor.getKeys());
+        if (startingSourceName == null) {
+            return new TreeMap();
         }
+
+        Source startingSource;
+
+        Filter newFilter = null;
+
+        Relationship relationship = engine.getConnectingRelationship(entryDefinition);
+        if (relationship != null) {
+            String lhs = relationship.getLhs();
+            String lsourceName = lhs.substring(0, lhs.indexOf("."));
+            Source lsource = entryDefinition.getSource(lsourceName);
+
+            String rhs = relationship.getRhs();
+            String rsourceName = rhs.substring(0, rhs.indexOf("."));
+            Source rsource = entryDefinition.getSource(rsourceName);
+
+            startingSource = lsource == null ? rsource : lsource;
+
+            Collection relationships = new ArrayList();
+            relationships.add(relationship);
+
+            newFilter = engine.generateFilter(startingSource, relationships, newRows);
+
+        } else {
+            startingSource = primarySource;
+            newFilter = engine.getFilterTool().toSourceFilter(allValues, entryDefinition, startingSource, filter);
+        }
+
+        log.debug("Starting from source: "+startingSource.getName());
+        log.debug("With filter: "+newFilter);
+
+        SearchGraphVisitor visitor = new SearchGraphVisitor(config, graph, engine, entryDefinition, newFilter, primarySource);
+        graph.traverse(visitor, startingSource);
+
+        Collection rows = new TreeSet();
+        rows.addAll(visitor.getKeys());
 
         return computeRdns(entryDefinition, rows);
     }

@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
-package org.safehaus.penrose.cache;
+package org.safehaus.penrose.engine;
 
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.filter.SimpleFilter;
@@ -30,12 +30,12 @@ import java.util.Collection;
 /**
  * @author Endi S. Dewata
  */
-public class CacheFilterTool {
+public class EngineFilterTool {
 
-    public CacheContext cacheContext;
+    public EngineContext engineContext;
 
-    public CacheFilterTool(CacheContext sourceCacheContext) {
-        this.cacheContext = sourceCacheContext;
+    public EngineFilterTool(EngineContext engineContext) {
+        this.engineContext = engineContext;
     }
 
     /**
@@ -217,22 +217,22 @@ public class CacheFilterTool {
      * @return parsed SQL filter
      * @throws Exception
      */
-    public Filter toSourceFilter(Row parentRow, EntryDefinition entry, Source source, Filter filter) throws Exception {
+    public Filter toSourceFilter(AttributeValues parentValues, EntryDefinition entry, Source source, Filter filter) throws Exception {
 
         if (filter instanceof SimpleFilter) {
-            return toSourceFilter(parentRow, entry, source, (SimpleFilter) filter);
+            return toSourceFilter(parentValues, entry, source, (SimpleFilter) filter);
 
         } else if (filter instanceof AndFilter) {
-            return toSourceFilter(parentRow, entry, source, (AndFilter) filter);
+            return toSourceFilter(parentValues, entry, source, (AndFilter) filter);
 
         } else if (filter instanceof OrFilter) {
-            return toSourceFilter(parentRow, entry, source, (OrFilter) filter);
+            return toSourceFilter(parentValues, entry, source, (OrFilter) filter);
         }
 
         return null;
     }
 
-    public Filter toSourceFilter(Row parentRow, EntryDefinition entry, Source source, SimpleFilter filter)
+    public Filter toSourceFilter(AttributeValues parentValues, EntryDefinition entry, Source source, SimpleFilter filter)
             throws Exception {
 
         String name = filter.getAttribute();
@@ -243,11 +243,11 @@ public class CacheFilterTool {
                 return null;
         }
 
-        Interpreter interpreter = cacheContext.newInterpreter();
+        Interpreter interpreter = engineContext.newInterpreter();
         interpreter.set(name, value);
 
-        if (parentRow != null) {
-            interpreter.set(parentRow);
+        if (parentValues != null) {
+            interpreter.set(parentValues);
         }
 
         Collection fields = source.getFields();
@@ -284,7 +284,7 @@ public class CacheFilterTool {
         return newFilter;
     }
 
-    public Filter toSourceFilter(Row parentRow, EntryDefinition entry, Source source, AndFilter filter)
+    public Filter toSourceFilter(AttributeValues parentValues, EntryDefinition entry, Source source, AndFilter filter)
             throws Exception {
 
         Collection filters = filter.getFilterList();
@@ -293,7 +293,7 @@ public class CacheFilterTool {
         for (Iterator i=filters.iterator(); i.hasNext(); ) {
             Filter f = (Filter)i.next();
 
-            Filter nf = toSourceFilter(parentRow, entry, source, f);
+            Filter nf = toSourceFilter(parentValues, entry, source, f);
             if (nf == null) continue;
 
             af.addFilterList(nf);
@@ -304,7 +304,7 @@ public class CacheFilterTool {
         return af;
     }
 
-    public Filter toSourceFilter(Row parentRow, EntryDefinition entry, Source source, OrFilter filter)
+    public Filter toSourceFilter(AttributeValues parentValues, EntryDefinition entry, Source source, OrFilter filter)
             throws Exception {
 
         Collection filters = filter.getFilterList();
@@ -313,7 +313,7 @@ public class CacheFilterTool {
         for (Iterator i=filters.iterator(); i.hasNext(); ) {
             Filter f = (Filter)i.next();
 
-            Filter nf = toSourceFilter(parentRow, entry, source, f);
+            Filter nf = toSourceFilter(parentValues, entry, source, f);
             if (nf == null) continue;
 
             of.addFilterList(nf);

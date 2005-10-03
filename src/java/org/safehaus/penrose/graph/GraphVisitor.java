@@ -24,21 +24,21 @@ import java.util.Collection;
  */
 public class GraphVisitor {
 
-    public boolean preVisitNode(Object node, Object parameter) throws Exception {
+    public boolean preVisitNode(Object node) throws Exception {
         //System.out.println("Pre-visit Node "+node);
         return true;
     }
 
-    public void postVisitNode(Object node, Object parameter) throws Exception {
+    public void postVisitNode(Object node) throws Exception {
         //System.out.println("Post-visit Node "+node);
     }
 
-    public boolean preVisitEdge(Collection nodes, Object object, Object parameter) throws Exception {
+    public boolean preVisitEdge(Collection nodes, Object object) throws Exception {
         //System.out.println("Pre-visit Edge <"+node1+", "+node2+"> "+object);
         return true;
     }
 
-    public void postVisitEdge(Collection nodes, Object object, Object parameter) throws Exception {
+    public void postVisitEdge(Collection nodes, Object object) throws Exception {
         //System.out.println("Post-visit Edge <"+node1+", "+node2+"> "+object);
     }
 }

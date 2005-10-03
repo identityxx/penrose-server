@@ -18,8 +18,4 @@
 package org.safehaus.penrose.filter;
 
 public abstract class Filter {
-
-	public Filter() {
-		super();
-	}
 }

@@ -21,6 +21,9 @@ import org.safehaus.penrose.SearchResults;
 import org.safehaus.penrose.*;
 import org.safehaus.penrose.config.Config;
 import org.safehaus.penrose.filter.Filter;
+import org.safehaus.penrose.filter.SimpleFilter;
+import org.safehaus.penrose.filter.OrFilter;
+import org.safehaus.penrose.filter.AndFilter;
 import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.graph.Graph;
 import org.safehaus.penrose.thread.ThreadPool;
@@ -52,6 +55,7 @@ public class Engine {
 
     private boolean stopping = false;
 
+    private EngineFilterTool filterTool;
     private SearchEngine searchEngine;
     private JoinEngine joinEngine;
 
@@ -67,6 +71,7 @@ public class Engine {
         log.debug("-------------------------------------------------");
         log.debug("Initializing Engine");
 
+        filterTool = new EngineFilterTool(engineContext);
         searchEngine = new SearchEngine(this);
         joinEngine = new JoinEngine(this);
 
@@ -285,8 +290,8 @@ public class Engine {
         if (startingSourceName == null) return LDAPException.SUCCESS;
 
         Source startingSource = config.getEffectiveSource(entryDefinition, startingSourceName);
-
         log.debug("Starting from source: "+startingSourceName);
+
         Collection relationships = graph.getEdgeObjects(startingSource);
         for (Iterator i=relationships.iterator(); i.hasNext(); ) {
             Relationship relationship = (Relationship)i.next();
@@ -635,6 +640,37 @@ public class Engine {
         return source.getName();
     }
 
+    public Relationship getConnectingRelationship(EntryDefinition entryDefinition) throws Exception {
+
+        log.debug("Searching the connecting relationship for "+entryDefinition.getDn());
+
+        Config config = engineContext.getConfig(entryDefinition.getDn());
+
+        Collection relationships = entryDefinition.getRelationships();
+        for (Iterator i=relationships.iterator(); i.hasNext(); ) {
+            Relationship relationship = (Relationship)i.next();
+
+            for (Iterator j=relationship.getOperands().iterator(); j.hasNext(); ) {
+                String operand = j.next().toString();
+
+                int index = operand.indexOf(".");
+                if (index < 0) continue;
+
+                String sourceName = operand.substring(0, index);
+                Source source = entryDefinition.getSource(sourceName);
+                Source effectiveSource = config.getEffectiveSource(entryDefinition, sourceName);
+
+                if (source == null && effectiveSource != null) {
+                    log.debug("Source "+sourceName+" is defined in parent entry");
+                    return relationship;
+                }
+
+            }
+        }
+
+        return null;
+    }
+
     public SearchEngine getSearchEngine() {
         return searchEngine;
     }
@@ -678,6 +714,80 @@ public class Engine {
         Filter filter = null;
         if (pks != null) {
             filter = engineContext.getFilterTool().createFilter(normalizedFilters);
+        }
+
+        return filter;
+    }
+
+    public EngineFilterTool getFilterTool() {
+        return filterTool;
+    }
+
+    public void setFilterTool(EngineFilterTool filterTool) {
+        this.filterTool = filterTool;
+    }
+
+    public Filter generateFilter(Source toSource, Collection relationships, Collection rows) {
+        log.debug("Generating filters:");
+
+        Filter filter = null;
+        for (Iterator i=rows.iterator(); i.hasNext(); ) {
+            Row row = (Row)i.next();
+            log.debug(" - "+row);
+
+            Filter subFilter = null;
+
+            for (Iterator j=relationships.iterator(); j.hasNext(); ) {
+                Relationship relationship = (Relationship)j.next();
+
+                String lhs = relationship.getLhs();
+                String operator = relationship.getOperator();
+                String rhs = relationship.getRhs();
+
+                if (rhs.startsWith(toSource.getName()+".")) {
+                    String exp = lhs;
+                    lhs = rhs;
+                    rhs = exp;
+                }
+
+                int index = lhs.indexOf(".");
+                String name = lhs.substring(index+1);
+
+                log.debug("   Filter: ("+name+" "+operator+" ?)");
+                Object value = row.get(rhs);
+                if (value == null) continue;
+
+                SimpleFilter sf = new SimpleFilter(name, operator, value.toString());
+                log.debug("   - "+rhs+" -> "+sf);
+
+                if (subFilter == null) {
+                    subFilter = sf;
+
+                } else if (filter instanceof AndFilter) {
+                    AndFilter af = (AndFilter)filter;
+                    af.addFilterList(sf);
+
+                } else {
+                    AndFilter af = new AndFilter();
+                    af.addFilterList(filter);
+                    af.addFilterList(sf);
+                    subFilter = af;
+                }
+            }
+
+            if (filter == null) {
+                filter = subFilter;
+
+            } else if (filter instanceof OrFilter) {
+                OrFilter of = (OrFilter)filter;
+                of.addFilterList(subFilter);
+
+            } else {
+                OrFilter of = new OrFilter();
+                of.addFilterList(filter);
+                of.addFilterList(subFilter);
+                filter = of;
+            }
         }
 
         return filter;
