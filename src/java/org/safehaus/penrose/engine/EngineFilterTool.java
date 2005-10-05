@@ -148,7 +148,7 @@ public class EngineFilterTool {
             throws Exception {
 
         StringBuffer sb2 = new StringBuffer();
-        for (Iterator i = filter.getFilterList().iterator(); i.hasNext();) {
+        for (Iterator i = filter.getFilters().iterator(); i.hasNext();) {
             Filter f = (Filter) i.next();
 
             StringBuffer sb3 = new StringBuffer();
@@ -186,7 +186,7 @@ public class EngineFilterTool {
             throws Exception {
 
         StringBuffer sb2 = new StringBuffer();
-        for (Iterator i = filter.getFilterList().iterator(); i.hasNext();) {
+        for (Iterator i = filter.getFilters().iterator(); i.hasNext();) {
             Filter f = (Filter) i.next();
 
             StringBuffer sb3 = new StringBuffer();
@@ -266,19 +266,7 @@ public class EngineFilterTool {
             //System.out.println("Adding filter "+field.getName()+"="+v);
             SimpleFilter f = new SimpleFilter(field.getName(), "=", v);
 
-            if (newFilter == null) {
-                newFilter = f;
-
-            } else if (newFilter instanceof SimpleFilter) {
-                AndFilter af = new AndFilter();
-                af.addFilterList(newFilter);
-                af.addFilterList(f);
-                newFilter = af;
-
-            } else { // newFilter instanceof AndFilter
-                AndFilter af = (AndFilter)newFilter;
-                af.addFilterList(f);
-            }
+            newFilter = engineContext.getFilterTool().appendAndFilter(newFilter, f);
         }
 
         return newFilter;
@@ -287,7 +275,7 @@ public class EngineFilterTool {
     public Filter toSourceFilter(AttributeValues parentValues, EntryDefinition entry, Source source, AndFilter filter)
             throws Exception {
 
-        Collection filters = filter.getFilterList();
+        Collection filters = filter.getFilters();
 
         AndFilter af = new AndFilter();
         for (Iterator i=filters.iterator(); i.hasNext(); ) {
@@ -296,7 +284,7 @@ public class EngineFilterTool {
             Filter nf = toSourceFilter(parentValues, entry, source, f);
             if (nf == null) continue;
 
-            af.addFilterList(nf);
+            af.addFilter(nf);
         }
 
         if (af.size() == 0) return null;
@@ -307,7 +295,7 @@ public class EngineFilterTool {
     public Filter toSourceFilter(AttributeValues parentValues, EntryDefinition entry, Source source, OrFilter filter)
             throws Exception {
 
-        Collection filters = filter.getFilterList();
+        Collection filters = filter.getFilters();
 
         OrFilter of = new OrFilter();
         for (Iterator i=filters.iterator(); i.hasNext(); ) {
@@ -316,7 +304,7 @@ public class EngineFilterTool {
             Filter nf = toSourceFilter(parentValues, entry, source, f);
             if (nf == null) continue;
 
-            of.addFilterList(nf);
+            of.addFilter(nf);
         }
 
         if (of.size() == 0) return null;

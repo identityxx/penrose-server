@@ -285,7 +285,9 @@ public class SyncService {
             
             if (SourceDefinition.SEARCH_AND_LOAD.equals(method)) {
                 log.debug("Searching pks for: "+filter);
-                pks = searchEntries(source, filter);
+                SearchResults sr = searchEntries(source, filter);
+                pks = new ArrayList();
+                pks.addAll(sr.getAll());
 
             } else {
                 log.debug("Loading entries for: "+filter);
@@ -306,7 +308,53 @@ public class SyncService {
             syncContext.getSourceFilterCache(connectionConfig, sourceDefinition).put(newFilter, pks);
         }
 
+        results.putAll(load(source, pks));
+/*
         log.debug("Checking source cache for pks "+pks);
+        Map loadedRows = syncContext.getSourceDataCache(connectionConfig, sourceDefinition).search(pks);
+        log.debug("Loaded rows: "+loadedRows.keySet());
+        results.putAll(loadedRows);
+
+        Collection pksToLoad = new HashSet();
+        pksToLoad.addAll(pks);
+        pksToLoad.removeAll(results.keySet());
+        pksToLoad.removeAll(loadedRows.keySet());
+
+        log.debug("PKs to load: "+pksToLoad);
+        if (!pksToLoad.isEmpty()) {
+            Filter newFilter = syncContext.getFilterTool().createFilter(pksToLoad);
+            Map map = loadEntries(source, newFilter);
+            results.putAll(map);
+
+            for (Iterator i=map.keySet().iterator(); i.hasNext(); ) {
+                Row pk = (Row)i.next();
+                AttributeValues values = (AttributeValues)map.get(pk);
+                syncContext.getSourceDataCache(connectionConfig, sourceDefinition).put(pk, values);
+            }
+
+            syncContext.getSourceFilterCache(connectionConfig, sourceDefinition).put(newFilter, map.keySet());
+        }
+*/
+        return results;
+    }
+
+    public Map load(
+            Source source,
+            Collection pks)
+            throws Exception {
+
+        log.debug("Loading source "+source.getName()+" with pks "+pks);
+
+        Map results = new TreeMap();
+        if (source.getSourceName() == null) return results;
+
+        String key = source.getConnectionName()+"."+source.getSourceName();
+        log.debug("Checking source filter cache for ["+key+"]");
+
+        Config config = syncContext.getConfig(source);
+        ConnectionConfig connectionConfig = config.getConnectionConfig(source.getConnectionName());
+        SourceDefinition sourceDefinition = connectionConfig.getSourceDefinition(source.getSourceName());
+
         Map loadedRows = syncContext.getSourceDataCache(connectionConfig, sourceDefinition).search(pks);
         log.debug("Loaded rows: "+loadedRows.keySet());
         results.putAll(loadedRows);
@@ -334,9 +382,9 @@ public class SyncService {
         return results;
     }
 
-    public Collection searchEntries(Source source, Filter filter) throws Exception {
+    public SearchResults searchEntries(Source source, Filter filter) throws Exception {
 
-        Collection results = new TreeSet();
+        SearchResults results = new SearchResults();
 
         Config config = syncContext.getConfig(source);
         ConnectionConfig connectionConfig = config.getConnectionConfig(source.getConnectionName());
@@ -349,8 +397,10 @@ public class SyncService {
         SearchResults sr;
         try {
             sr = connection.search(source, filter, sizeLimit);
+
         } catch (Exception e) {
             e.printStackTrace();
+            results.close();
             return results;
         }
 
@@ -364,6 +414,9 @@ public class SyncService {
 
             results.add(npk);
         }
+
+        results.setReturnCode(sr.getReturnCode());
+        results.close();
 
         return results;
     }

@@ -21,6 +21,7 @@ import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.graph.Graph;
 import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.SearchResults;
+import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.config.Config;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -47,7 +48,7 @@ public class JoinEngine {
     public SearchResults load(
             final Entry parent,
             final EntryDefinition entryDefinition,
-            final Collection rdnsToLoad)
+            final Collection pks)
             throws Exception {
 
         final SearchResults results = new SearchResults();
@@ -55,7 +56,7 @@ public class JoinEngine {
         engine.execute(new Runnable() {
             public void run() {
                 try {
-                    load(parent, entryDefinition, rdnsToLoad, results);
+                    load(parent, entryDefinition, pks, results);
 
                 } catch (Throwable e) {
                     e.printStackTrace(System.out);
@@ -71,7 +72,7 @@ public class JoinEngine {
     public void load(
             Entry parent,
             EntryDefinition entryDefinition,
-            Collection rdnsToLoad,
+            Collection pks,
             SearchResults results)
             throws Exception {
 
@@ -99,59 +100,30 @@ public class JoinEngine {
             }
         }
 
-        Collection filters = createFilter(entryDefinition, rdnsToLoad);
+        //Filter filter  = engineContext.getFilterTool().createFilter(pks);
 
-        LoaderGraphVisitor loaderVisitor = new LoaderGraphVisitor(config, graph, engineContext, entryDefinition, filters);
+        LoaderGraphVisitor loaderVisitor = new LoaderGraphVisitor(config, graph, engine, entryDefinition, pks);
         graph.traverse(loaderVisitor, primarySource);
+        //Map attributeValues = loaderVisitor.getAttributeValues();
 
-        Map attributeValues = loaderVisitor.getAttributeValues();
+        Map attributeValues = new TreeMap();
+        for (Iterator i=pks.iterator(); i.hasNext(); ) {
+            Row pk = (Row)i.next();
+            Collection list = new ArrayList();
+            list.add(pk);
 
-        merge(parent, entryDefinition, attributeValues, results);
-    }
+            //Filter filter  = engineContext.getFilterTool().createFilter(pk, true);
 
-    public Collection createFilter(EntryDefinition entryDefinition, Collection rdns) throws Exception {
+            MergerGraphVisitor mergerVisitor = new MergerGraphVisitor(config, graph, engine, entryDefinition, list);
+            graph.traverse(mergerVisitor, primarySource);
 
-        Collection filters = new TreeSet();
+            AttributeValues av = mergerVisitor.getAttributeValues();
+            //log.debug("Merged: "+av);
 
-        Source primarySource = engine.getPrimarySource(entryDefinition);
-
-        Config config = engineContext.getConfig(entryDefinition.getDn());
-        ConnectionConfig connectionConfig = config.getConnectionConfig(primarySource.getConnectionName());
-        SourceDefinition sourceDefinition = connectionConfig.getSourceDefinition(primarySource.getSourceName());
-
-        Collection fields = config.getSearchableFields(primarySource);
-
-        log.debug("Creating filters:");
-        for (Iterator i=rdns.iterator(); i.hasNext(); ) {
-            Row rdn = (Row)i.next();
-            log.debug(" - "+rdn);
-
-            Interpreter interpreter = engineContext.newInterpreter();
-            interpreter.set(rdn);
-
-            Row filter = new Row();
-            for (Iterator j=fields.iterator(); j.hasNext(); ) {
-                Field field = (Field)j.next();
-                String name = field.getName();
-
-                Expression expression = field.getExpression();
-                if (expression == null) continue;
-
-                Object value = interpreter.eval(expression);
-                if (value == null) continue;
-
-                log.debug("   - "+primarySource.getName()+"."+field.getName()+": "+value);
-                filter.set(primarySource.getName()+"."+name, value);
-            }
-
-            if (filter.isEmpty()) continue;
-
-            filters.add(filter);
+            attributeValues.put(pk, av);
         }
 
-        log.debug("Filters: "+filters);
-
-        return filters;
+        merge(parent, entryDefinition, attributeValues, results);
     }
 
     public void merge(Entry parent, EntryDefinition entryDefinition, Map pkValuesMap, SearchResults results) throws Exception {

@@ -31,6 +31,8 @@ import java.io.Serializable;
  */
 public class Source implements Cloneable, Serializable {
 
+    public final static String FILTER     = "filter";
+
 	/**
 	 * Name.
 	 */
@@ -50,6 +52,11 @@ public class Source implements Cloneable, Serializable {
 	 * Fields. Each element is of type org.safehaus.penrose.mapping.Field.
 	 */
 	private Map fields = new TreeMap();
+
+    /**
+     * Parameters.
+     */
+    private Properties parameters = new Properties();
 
     private boolean includeOnAdd = true;
     private boolean includeOnModify = true;
@@ -102,6 +109,22 @@ public class Source implements Cloneable, Serializable {
         this.connectionName = connectionName;
     }
 
+    public String getParameter(String name) {
+        return parameters.getProperty(name);
+    }
+
+    public void setParameter(String name, String value) {
+        parameters.put(name, value);
+    }
+
+    public void removeParameter(String name) {
+        parameters.remove(name);
+    }
+
+    public Collection getParameterNames() {
+        return parameters.keySet();
+    }
+
     public boolean isIncludeOnDelete() {
         return includeOnDelete;
     }
@@ -118,11 +141,20 @@ public class Source implements Cloneable, Serializable {
         this.includeOnAdd = includeOnAdd;
     }
 
+    public boolean isIncludeOnModify() {
+        return includeOnModify;
+    }
+
+    public void setIncludeOnModify(boolean includeOnModify) {
+        this.includeOnModify = includeOnModify;
+    }
+
     public int hashCode() {
         return (name == null ? 0 : name.hashCode()) +
                 (sourceName == null ? 0 : sourceName.hashCode()) +
                 (connectionName == null ? 0 : connectionName.hashCode()) +
                 (fields == null ? 0 : fields.hashCode()) +
+                (parameters == null ? 0 : parameters.hashCode()) +
                 (includeOnAdd ? 0 : 1) +
                 (includeOnModify? 0 : 1) +
                 (includeOnDelete ? 0 : 1);
@@ -143,6 +175,7 @@ public class Source implements Cloneable, Serializable {
         if (!equals(sourceName, source.sourceName)) return false;
         if (!equals(connectionName, source.connectionName)) return false;
         if (!equals(fields, source.fields)) return false;
+        if (!equals(parameters, source.parameters)) return false;
         if (includeOnAdd != source.includeOnAdd) return false;
         if (includeOnModify != source.includeOnModify) return false;
         if (includeOnDelete != source.includeOnDelete) return false;
@@ -161,6 +194,8 @@ public class Source implements Cloneable, Serializable {
             source.addField((Field)field.clone());
         }
 
+        source.parameters.putAll(source.parameters);
+
         source.includeOnAdd = includeOnAdd;
         source.includeOnModify = includeOnModify;
         source.includeOnDelete = includeOnDelete;
@@ -170,13 +205,5 @@ public class Source implements Cloneable, Serializable {
 
     public String toString() {
         return name+" "+sourceName;
-    }
-
-    public boolean isIncludeOnModify() {
-        return includeOnModify;
-    }
-
-    public void setIncludeOnModify(boolean includeOnModify) {
-        this.includeOnModify = includeOnModify;
     }
 }

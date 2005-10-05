@@ -124,7 +124,7 @@ public class JDBCFilterTool {
             throws Exception {
 
         StringBuffer sb2 = new StringBuffer();
-        for (Iterator i = filter.getFilterList().iterator(); i.hasNext();) {
+        for (Iterator i = filter.getFilters().iterator(); i.hasNext();) {
             Filter f = (Filter) i.next();
 
             StringBuffer sb3 = new StringBuffer();
@@ -155,7 +155,7 @@ public class JDBCFilterTool {
             throws Exception {
 
         StringBuffer sb2 = new StringBuffer();
-        for (Iterator i = filter.getFilterList().iterator(); i.hasNext();) {
+        for (Iterator i = filter.getFilters().iterator(); i.hasNext();) {
             Filter f = (Filter) i.next();
 
             StringBuffer sb3 = new StringBuffer();

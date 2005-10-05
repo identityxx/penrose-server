@@ -19,12 +19,16 @@ public class AttributeValues implements Cloneable {
     }
 
     public void add(AttributeValues attributeValues) {
+        add(null, attributeValues);
+    }
+
+    public void add(String prefix, AttributeValues attributeValues) {
         Map v = attributeValues.getValues();
         for (Iterator i = v.keySet().iterator(); i.hasNext(); ) {
             String name = (String)i.next();
 
             Collection c = (Collection)v.get(name);
-            add(name, c);
+            add(prefix == null ? name : prefix+"."+name, c);
         }
     }
 

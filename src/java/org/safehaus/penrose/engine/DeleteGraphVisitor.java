@@ -19,6 +19,7 @@ package org.safehaus.penrose.engine;
 
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.graph.GraphVisitor;
+import org.safehaus.penrose.graph.GraphIterator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.ietf.ldap.LDAPException;
@@ -86,15 +87,18 @@ public class DeleteGraphVisitor extends GraphVisitor {
         return true;
     }
 
-    public boolean preVisitEdge(Collection nodes, Object object) throws Exception {
+    public void visitEdge(GraphIterator graphIterator, Object node1, Object node2, Object object) throws Exception {
+
         Relationship relationship = (Relationship)object;
         log.debug("Relationship "+relationship);
 
-        Iterator iterator = nodes.iterator();
-        Source fromSource = (Source)iterator.next();
-        Source toSource = (Source)iterator.next();
+        Source fromSource = (Source)node1;
+        Source toSource = (Source)node2;
 
-        if (entryDefinition.getSource(toSource.getName()) == null) return false;
+        if (entryDefinition.getSource(toSource.getName()) == null) {
+            log.debug("Source "+toSource.getName()+" is not defined in entry "+entryDefinition.getDn());
+            return;
+        }
 
         AttributeValues sourceValues = (AttributeValues)stack.peek();
 
@@ -116,10 +120,8 @@ public class DeleteGraphVisitor extends GraphVisitor {
 
         stack.push(newSourceValues);
 
-        return true;
-    }
+        graphIterator.traverse(node2);
 
-    public void postVisitEdge(Collection nodes, Object object) throws Exception {
         stack.pop();
     }
 

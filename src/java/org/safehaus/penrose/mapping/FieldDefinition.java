@@ -39,6 +39,7 @@ public class FieldDefinition implements Comparable, Cloneable {
 
 	private boolean primaryKey;
     private boolean searchable = true;
+    private boolean unique;
 
     /**
      * Encryption method used to encrypt the value
@@ -189,5 +190,13 @@ public class FieldDefinition implements Comparable, Cloneable {
         FieldDefinition fieldDefinition = new FieldDefinition();
         fieldDefinition.copy(this);
         return fieldDefinition;
+    }
+
+    public boolean isUnique() {
+        return unique;
+    }
+
+    public void setUnique(boolean unique) {
+        this.unique = unique;
     }
 }

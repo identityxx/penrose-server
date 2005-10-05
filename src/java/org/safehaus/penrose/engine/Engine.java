@@ -34,6 +34,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.ietf.ldap.LDAPException;
 
+import javax.naming.directory.SearchResult;
 import java.util.*;
 
 /**
@@ -391,10 +392,24 @@ public class Engine {
             final SearchResults results)
             throws Exception {
 
+        final SearchResults batches = new SearchResults();
+
         execute(new Runnable() {
             public void run() {
                 try {
-                    loadBackground(parent, entryDefinition, rdns, results);
+                    createBatches(parent, entryDefinition, rdns, results, batches);
+
+                } catch (Throwable e) {
+                    e.printStackTrace(System.out);
+                    batches.close();
+                }
+            }
+        });
+
+        execute(new Runnable() {
+            public void run() {
+                try {
+                    loadBackground(parent, entryDefinition, batches, results);
 
                 } catch (Throwable e) {
                     e.printStackTrace(System.out);
@@ -405,61 +420,72 @@ public class Engine {
         });
     }
 
+    public void createBatches(
+            Entry parent,
+            EntryDefinition entryDefinition,
+            SearchResults rdns,
+            SearchResults results,
+            SearchResults batches
+            ) throws Exception {
+
+        log.debug("Checking loaded rdns:");
+
+        Source primarySource = getPrimarySource(entryDefinition);
+
+        Collection batch = new TreeSet();
+
+        String s = entryDefinition.getParameter(EntryDefinition.BATCH_SIZE);
+        int batchSize = s == null ? EntryDefinition.DEFAULT_BATCH_SIZE : Integer.parseInt(s);
+
+        while (rdns.hasNext()) {
+            Row rdn = (Row)rdns.next();
+            log.debug(" - "+rdn);
+
+            Entry entry = (Entry)engineContext.getEntryDataCache(parent, entryDefinition).get(rdn);
+            if (entry != null) {
+                entry.setParent(parent);
+                results.add(entry);
+                continue;
+            }
+
+            Row filter = createFilter(primarySource, entryDefinition, rdn);
+            if (filter == null) continue;
+            batch.add(filter);
+
+            if (batch.size() < batchSize) continue;
+
+            batches.add(batch);
+            batch = new TreeSet();
+        }
+
+        if (!batch.isEmpty()) batches.add(batch);
+
+        batches.close();
+    }
+    
     /**
      * Load sources of entries matching the filter.
      *
      * @param entryDefinition
-     * @param rdns
+     * @param batches
      * @throws Exception
      */
     public void loadBackground(
             Entry parent,
             EntryDefinition entryDefinition,
-            SearchResults rdns,
+            SearchResults batches,
             SearchResults results
             ) throws Exception {
 
-        log.debug("--------------------------------------------------------------------------------------");
-        log.debug("Loading entry under "+parent.getDn()+" with rdns:");
+        log.debug("Loading entries:");
 
         MRSWLock lock = getLock(entryDefinition.getDn());
         lock.getWriteLock(Penrose.WAIT_TIMEOUT);
 
         try {
-            Collection rdnsToLoad = new TreeSet();
-
-            String s = entryDefinition.getParameter(EntryDefinition.BATCH_SIZE);
-            int batchSize = s == null ? EntryDefinition.DEFAULT_BATCH_SIZE : Integer.parseInt(s);
-
-            while (rdns.hasNext()) {
-                Row rdn = (Row)rdns.next();
-                log.debug(" - "+rdn);
-
-                Entry entry = (Entry)engineContext.getEntryDataCache(parent, entryDefinition).get(rdn);
-                if (entry != null) {
-                    entry.setParent(parent);
-                    results.add(entry);
-                    continue;
-                }
-
-                rdnsToLoad.add(rdn);
-
-                if (rdnsToLoad.size() < batchSize) continue;
-
-                SearchResults entries = joinEngine.load(parent, entryDefinition, rdnsToLoad);
-
-                for (Iterator i=entries.iterator(); i.hasNext(); ) {
-                    entry = (Entry)i.next();
-                    entry.setParent(parent);
-                    results.add(entry);
-                    engineContext.getEntryDataCache(parent, entryDefinition).put(entry.getRdn(), entry);
-                }
-
-                rdnsToLoad.clear();
-            }
-
-            if (rdnsToLoad.size() > 0) {
-                SearchResults entries = joinEngine.load(parent, entryDefinition, rdnsToLoad);
+            while (batches.hasNext()) {
+                Collection filters = (Collection)batches.next();
+                SearchResults entries = joinEngine.load(parent, entryDefinition, filters);
 
                 for (Iterator i=entries.iterator(); i.hasNext(); ) {
                     Entry entry = (Entry)i.next();
@@ -687,6 +713,14 @@ public class Engine {
         this.joinEngine = joinEngine;
     }
 
+    public EngineFilterTool getFilterTool() {
+        return filterTool;
+    }
+
+    public void setFilterTool(EngineFilterTool filterTool) {
+        this.filterTool = filterTool;
+    }
+
     public Filter createFilter(Source source, Collection pks) throws Exception {
 
         Collection normalizedFilters = null;
@@ -719,15 +753,38 @@ public class Engine {
         return filter;
     }
 
-    public EngineFilterTool getFilterTool() {
-        return filterTool;
+    public Row createFilter(Source source, EntryDefinition entryDefinition, Row rdn) throws Exception {
+
+        log.debug(" - "+rdn);
+
+        Config config = engineContext.getConfig(entryDefinition.getDn());
+        Collection fields = config.getSearchableFields(source);
+
+        Interpreter interpreter = engineContext.newInterpreter();
+        interpreter.set(rdn);
+
+        Row filter = new Row();
+        for (Iterator j=fields.iterator(); j.hasNext(); ) {
+            Field field = (Field)j.next();
+            String name = field.getName();
+
+            Expression expression = field.getExpression();
+            if (expression == null) continue;
+
+            Object value = interpreter.eval(expression);
+            if (value == null) continue;
+
+            log.debug("   - "+source.getName()+"."+field.getName()+": "+value);
+            //filter.set(source.getName()+"."+name, value);
+            filter.set(name, value);
+        }
+
+        if (filter.isEmpty()) return null;
+
+        return filter;
     }
 
-    public void setFilterTool(EngineFilterTool filterTool) {
-        this.filterTool = filterTool;
-    }
-
-    public Filter generateFilter(Source toSource, Collection relationships, Collection rows) {
+    public Filter generateFilter(Source toSource, Collection relationships, Collection rows) throws Exception {
         log.debug("Generating filters:");
 
         Filter filter = null;
@@ -753,41 +810,17 @@ public class Engine {
                 int index = lhs.indexOf(".");
                 String name = lhs.substring(index+1);
 
-                log.debug("   Filter: ("+name+" "+operator+" ?)");
+                //log.debug("   Filter: ("+name+" "+operator+" ?)");
                 Object value = row.get(rhs);
                 if (value == null) continue;
 
                 SimpleFilter sf = new SimpleFilter(name, operator, value.toString());
                 log.debug("   - "+rhs+" -> "+sf);
 
-                if (subFilter == null) {
-                    subFilter = sf;
-
-                } else if (filter instanceof AndFilter) {
-                    AndFilter af = (AndFilter)filter;
-                    af.addFilterList(sf);
-
-                } else {
-                    AndFilter af = new AndFilter();
-                    af.addFilterList(filter);
-                    af.addFilterList(sf);
-                    subFilter = af;
-                }
+                subFilter = engineContext.getFilterTool().appendAndFilter(subFilter, sf);
             }
 
-            if (filter == null) {
-                filter = subFilter;
-
-            } else if (filter instanceof OrFilter) {
-                OrFilter of = (OrFilter)filter;
-                of.addFilterList(subFilter);
-
-            } else {
-                OrFilter of = new OrFilter();
-                of.addFilterList(filter);
-                of.addFilterList(subFilter);
-                filter = of;
-            }
+            filter = engineContext.getFilterTool().appendOrFilter(filter, subFilter);
         }
 
         return filter;

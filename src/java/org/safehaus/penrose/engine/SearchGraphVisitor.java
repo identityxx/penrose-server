@@ -19,12 +19,11 @@ package org.safehaus.penrose.engine;
 
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.filter.Filter;
-import org.safehaus.penrose.filter.SimpleFilter;
 import org.safehaus.penrose.filter.AndFilter;
-import org.safehaus.penrose.filter.OrFilter;
 import org.safehaus.penrose.config.Config;
 import org.safehaus.penrose.graph.GraphVisitor;
 import org.safehaus.penrose.graph.Graph;
+import org.safehaus.penrose.graph.GraphIterator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,7 +39,9 @@ public class SearchGraphVisitor extends GraphVisitor {
     private Config config;
     private Graph graph;
     private Engine engine;
+    private EngineContext engineContext;
     private EntryDefinition entryDefinition;
+    private Filter searchFilter;
     private Source primarySource;
 
     private Stack stack = new Stack();
@@ -51,63 +52,45 @@ public class SearchGraphVisitor extends GraphVisitor {
             Graph graph,
             Engine engine,
             EntryDefinition entryDefinition,
-            Filter filter,
+            Filter initialFilter,
+            Filter searchFilter,
             Source primarySource) throws Exception {
 
         this.config = config;
         this.graph = graph;
         this.engine = engine;
+        this.engineContext = engine.getEngineContext();
         this.entryDefinition = entryDefinition;
+        this.searchFilter = searchFilter;
         this.primarySource = primarySource;
 
-        stack.push(filter);
+        stack.push(initialFilter);
     }
 
-    public boolean preVisitNode(Object node) throws Exception {
+    public void visitNode(GraphIterator graphIterator, Object node) throws Exception {
+
         Source source = (Source)node;
         Filter filter = (Filter)stack.peek();
         log.debug("Searching "+source.getName()+" for: "+filter);
 
         if (entryDefinition.getSource(source.getName()) == null) {
             log.debug("Source "+source.getName()+" is not defined in entry "+entryDefinition.getDn());
-            return false;
+            return;
         }
-/*
-        Collection relationships = graph.getEdgeObjects(source);
 
-        for (Iterator i=relationships.iterator(); i.hasNext(); ) {
-            Relationship relationship = (Relationship)i.next();
-            if (isJoinRelationship(relationship)) continue;
+        Filter f = engine.getFilterTool().toSourceFilter(null, entryDefinition, source, searchFilter);
+        log.debug("Search filter: "+f);
 
-            Collection operands = relationship.getOperands();
-            Iterator iterator = operands.iterator();
+        filter = engineContext.getFilterTool().appendAndFilter(filter, f);
 
-            String operand = iterator.next().toString();
-            int index = operand.indexOf(".");
-            String attribute = operand.substring(index+1);
-
-            String value = iterator.next().toString();
-
-            SimpleFilter sf = new SimpleFilter(attribute, relationship.getOperator(), value);
-
-            log.debug("Filter with "+sf);
-            if (filter == null) {
-                filter = sf;
-
-            } else if (filter instanceof AndFilter) {
-                AndFilter andFilter = (AndFilter)filter;
-                andFilter.addFilterList(sf);
-
-            } else {
-                AndFilter andFilter = new AndFilter();
-                andFilter.addFilterList(filter);
-                andFilter.addFilterList(sf);
-                filter = andFilter;
-            }
+        String s = source.getParameter(Source.FILTER);
+        if (s != null) {
+            Filter sourceFilter = engineContext.getFilterTool().parseFilter(s);
+            filter = engineContext.getFilterTool().appendAndFilter(filter, sourceFilter);
         }
-*/
+
         Map map = engine.getEngineContext().getSyncService().search(source, filter);
-        if (map.size() == 0) return false;
+        if (map.size() == 0) return;
 
         log.debug("Records:");
         Collection results = new ArrayList();
@@ -128,54 +111,31 @@ public class SearchGraphVisitor extends GraphVisitor {
             }
         }
 
-        stack.push(results);
-
-        if (source != primarySource) {
-            log.debug("Source "+source.getName()+" is not the primary source of entry "+entryDefinition.getDn());
-            return true;
+        if (source == primarySource) {
+            log.debug("Source "+source.getName()+" is the primary source of entry "+entryDefinition.getDn());
+            keys.addAll(results);
+            return;
         }
 
-        keys.addAll(results);
+        stack.push(results);
 
-        return false;
-    }
+        graphIterator.traverseEdges(node);
 
-    public void postVisitNode(Object node) throws Exception {
         stack.pop();
     }
 
-    public boolean isJoinRelationship(Relationship relationship) {
-        Collection operands = relationship.getOperands();
-        if (operands.size() < 2) return false;
+    public void visitEdge(GraphIterator graphIterator, Object node1, Object node2, Object object) throws Exception {
 
-        int counter = 0;
-        for (Iterator j=operands.iterator(); j.hasNext(); ) {
-            String operand = j.next().toString();
-
-            int index = operand.indexOf(".");
-            if (index < 0) continue;
-
-            String sourceName = operand.substring(0, index);
-            Source src = entryDefinition.getSource(sourceName);
-            if (src == null) continue;
-
-            counter++;
-        }
-
-        if (counter < 2) return false;
-
-        return true;
-    }
-
-    public boolean preVisitEdge(Collection nodes, Object object) throws Exception {
         Relationship relationship = (Relationship)object;
         log.debug("Relationship "+relationship);
 
-        if (!isJoinRelationship(relationship)) return false;
+        Source fromSource = (Source)node1;
+        Source toSource = (Source)node2;
 
-        Iterator iterator = nodes.iterator();
-        Source fromSource = (Source)iterator.next();
-        Source toSource = (Source)iterator.next();
+        if (entryDefinition.getSource(toSource.getName()) == null) {
+            log.debug("Source "+toSource.getName()+" is not defined in entry "+entryDefinition.getDn());
+            return;
+        }
 
         Collection rows = (Collection)stack.peek();
 
@@ -183,14 +143,12 @@ public class SearchGraphVisitor extends GraphVisitor {
         relationships.add(relationship);
 
         Filter filter = engine.generateFilter(toSource, relationships, rows);
-        if (filter == null) return false;
+        if (filter == null) return;
 
         stack.push(filter);
 
-        return true;
-    }
+        graphIterator.traverse(node2);
 
-    public void postVisitEdge(Collection nodes, Object object) throws Exception {
         stack.pop();
     }
 

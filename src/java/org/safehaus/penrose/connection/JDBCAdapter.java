@@ -196,6 +196,11 @@ public class JDBCAdapter extends Adapter {
                 results.add(row);
             }
 
+            if (rs.next()) {
+                log.debug("RC: size limit exceeded.");
+                results.setReturnCode(LDAPException.SIZE_LIMIT_EXCEEDED);
+            }
+
         } finally {
             if (rs != null) try { rs.close(); } catch (Exception e) {}
             if (ps != null) try { ps.close(); } catch (Exception e) {}
@@ -277,6 +282,11 @@ public class JDBCAdapter extends Adapter {
                 log.debug(" - "+av);
 
                 results.add(av);
+            }
+
+            if (rs.next()) {
+                log.debug("RC: size limit exceeded.");
+                results.setReturnCode(LDAPException.SIZE_LIMIT_EXCEEDED);
             }
 
         } finally {

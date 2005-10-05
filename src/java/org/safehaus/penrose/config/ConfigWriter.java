@@ -324,11 +324,9 @@ public class ConfigWriter {
 		}
 
     	// parameters
-        Map parameters = new HashMap(); // source.getParameters();
-
-        for (Iterator i = parameters.keySet().iterator(); i.hasNext(); ) {
+        for (Iterator i = source.getParameterNames().iterator(); i.hasNext(); ) {
             String name = (String)i.next();
-            String value = (String)parameters.get(name);
+            String value = source.getParameter(name);
             if ("".equals(value)) continue;
 
             Element parameterElement = new DefaultElement("parameter");
@@ -570,6 +568,7 @@ public class ConfigWriter {
         if (!field.getName().equals(field.getOriginalName())) element.addAttribute("originalName", field.getOriginalName());
         if (field.isPrimaryKey()) element.addAttribute("primaryKey", "true");
         if (!field.isSearchable()) element.addAttribute("searchable", "false");
+        if (field.isUnique()) element.addAttribute("unique", "true");
         if (!FieldDefinition.DEFAULT_TYPE.equals(field.getType())) element.addAttribute("type", field.getType());
         if (field.getLength() != FieldDefinition.DEFAULT_LENGTH) element.addAttribute("length", ""+field.getLength());
         if (field.getPrecision() != FieldDefinition.DEFAULT_PRECISION) element.addAttribute("precision", ""+field.getPrecision());

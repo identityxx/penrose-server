@@ -92,7 +92,7 @@ public class SearchEngine {
         log.debug("Starting from source: "+startingSource.getName());
         log.debug("With filter: "+newFilter);
 
-        SearchGraphVisitor visitor = new SearchGraphVisitor(config, graph, engine, entryDefinition, newFilter, primarySource);
+        SearchGraphVisitor visitor = new SearchGraphVisitor(config, graph, engine, entryDefinition, newFilter, filter, primarySource);
         graph.traverse(visitor, startingSource);
 
         Collection rows = new TreeSet();

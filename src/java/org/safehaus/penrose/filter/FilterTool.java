@@ -79,13 +79,13 @@ public class FilterTool {
     }
 
     public boolean isValidEntry(Entry sr, SubstringFilter filter) throws Exception {
-        String attributeName = filter.getAttr();
-        List substrings = filter.getSubstrings();
+        String attributeName = filter.getAttribute();
+        Collection substrings = filter.getSubstrings();
         return true;
     }
 
     public boolean isValidEntry(Entry sr, PresentFilter filter) throws Exception {
-        String attributeName = filter.getAttr();
+        String attributeName = filter.getAttribute();
         if (attributeName.toLowerCase().equals("objectclass")) {
             return true;
         } else {
@@ -114,7 +114,7 @@ public class FilterTool {
     }
 
     public boolean isValidEntry(Entry sr, AndFilter filter) throws Exception {
-        for (Iterator i=filter.getFilterList().iterator(); i.hasNext(); ) {
+        for (Iterator i=filter.getFilters().iterator(); i.hasNext(); ) {
             Filter f = (Filter)i.next();
             boolean result = isValidEntry(sr, f);
             if (!result) return false;
@@ -123,7 +123,7 @@ public class FilterTool {
     }
 
     public boolean isValidEntry(Entry sr, OrFilter filter) throws Exception {
-        for (Iterator i=filter.getFilterList().iterator(); i.hasNext(); ) {
+        for (Iterator i=filter.getFilters().iterator(); i.hasNext(); ) {
             Filter f = (Filter)i.next();
             boolean result = isValidEntry(sr, f);
             if (result) return true;
@@ -176,20 +176,7 @@ public class FilterTool {
             Row pk = (Row)i.next();
 
             Filter f = createFilter(pk, includeValues);
-
-            if (filter == null) {
-                filter = f;
-
-            } else if (!(filter instanceof OrFilter)) {
-                OrFilter of = new OrFilter();
-                of.addFilterList(filter);
-                of.addFilterList(f);
-                filter = of;
-
-            } else {
-                OrFilter of = (OrFilter)filter;
-                of.addFilterList(f);
-            }
+            filter = appendOrFilter(filter, f);
         }
 
         return filter;
@@ -212,23 +199,51 @@ public class FilterTool {
             }
 
             SimpleFilter sf = new SimpleFilter(name, "=", strVal);
-
-            if (f == null) {
-                f = sf;
-
-            } else if (!(f instanceof AndFilter)) {
-                AndFilter af = new AndFilter();
-                af.addFilterList(f);
-                af.addFilterList(sf);
-                f = af;
-
-            } else {
-                AndFilter af = (AndFilter)f;
-                af.addFilterList(sf);
-            }
+            f = appendAndFilter(f, sf);
         }
 
         return f;
     }
 
+    public Filter appendAndFilter(Filter filter, Filter newFilter) {
+        if (newFilter == null) {
+            // ignore
+
+        } else if (filter == null) {
+            filter = newFilter;
+
+        } else if (filter instanceof AndFilter) {
+            AndFilter af = (AndFilter)filter;
+            if (!af.containsFilter(newFilter)) af.addFilter(newFilter);
+
+        } else if (!filter.equals(newFilter)) {
+            AndFilter af = new AndFilter();
+            af.addFilter(filter);
+            af.addFilter(newFilter);
+            filter = af;
+        }
+
+        return filter;
+    }
+
+    public Filter appendOrFilter(Filter filter, Filter newFilter) {
+        if (newFilter == null) {
+            // ignore
+
+        } else if (filter == null) {
+            filter = newFilter;
+
+        } else if (filter instanceof OrFilter) {
+            OrFilter of = (OrFilter)filter;
+            if (!of.containsFilter(newFilter)) of.addFilter(newFilter);
+
+        } else if (!filter.equals(newFilter)) {
+            OrFilter of = new OrFilter();
+            of.addFilter(filter);
+            of.addFilter(newFilter);
+            filter = of;
+        }
+
+        return filter;
+    }
 }

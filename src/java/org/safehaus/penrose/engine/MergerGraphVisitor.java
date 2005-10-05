@@ -31,7 +31,7 @@ import java.util.*;
 /**
  * @author Endi S. Dewata
  */
-public class LoaderGraphVisitor extends GraphVisitor {
+public class MergerGraphVisitor extends GraphVisitor {
 
     Logger log = LoggerFactory.getLogger(getClass());
 
@@ -41,9 +41,11 @@ public class LoaderGraphVisitor extends GraphVisitor {
     private EngineContext engineContext;
     private EntryDefinition entryDefinition;
 
+    private AttributeValues attributeValues = new AttributeValues();
+
     private Stack stack = new Stack();
 
-    public LoaderGraphVisitor(
+    public MergerGraphVisitor(
             Config config,
             Graph graph,
             Engine engine,
@@ -62,7 +64,7 @@ public class LoaderGraphVisitor extends GraphVisitor {
     public void visitNode(GraphIterator graphIterator, Object node) throws Exception {
 
         Source source = (Source)node;
-        log.debug("Loading "+source.getName());
+        log.debug("Merging "+source.getName());
 
         if (entryDefinition.getSource(source.getName()) == null) {
             log.debug("Source "+source.getName()+" is not defined in entry "+entryDefinition.getDn());
@@ -90,6 +92,8 @@ public class LoaderGraphVisitor extends GraphVisitor {
         for (Iterator i=map.values().iterator(); i.hasNext(); ) {
             AttributeValues av = (AttributeValues)i.next();
 
+            attributeValues.add(source.getName(), av);
+
             Collection list = engine.getEngineContext().getTransformEngine().convert(av);
             for (Iterator j=list.iterator(); j.hasNext(); ) {
                 Row row = (Row)j.next();
@@ -112,10 +116,35 @@ public class LoaderGraphVisitor extends GraphVisitor {
         stack.pop();
     }
 
+    public boolean isJoinRelationship(Relationship relationship) {
+        Collection operands = relationship.getOperands();
+        if (operands.size() < 2) return false;
+
+        int counter = 0;
+        for (Iterator j=operands.iterator(); j.hasNext(); ) {
+            String operand = j.next().toString();
+
+            int index = operand.indexOf(".");
+            if (index < 0) continue;
+
+            String sourceName = operand.substring(0, index);
+            Source src = config.getEffectiveSource(entryDefinition, sourceName);
+            if (src == null) continue;
+
+            counter++;
+        }
+
+        if (counter < 2) return false;
+
+        return true;
+    }
+
     public void visitEdge(GraphIterator graphIterator, Object node1, Object node2, Object object) throws Exception {
 
         Relationship relationship = (Relationship)object;
         log.debug("Relationship "+relationship);
+
+        if (!isJoinRelationship(relationship)) return;
 
         Source fromSource = (Source)node1;
         Source toSource = (Source)node2;
@@ -138,5 +167,13 @@ public class LoaderGraphVisitor extends GraphVisitor {
         graphIterator.traverse(node2);
 
         stack.pop();
+    }
+
+    public AttributeValues getAttributeValues() {
+        return attributeValues;
+    }
+
+    public void setAttributeValues(AttributeValues attributeValues) {
+        this.attributeValues = attributeValues;
     }
 }

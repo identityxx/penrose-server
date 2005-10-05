@@ -170,7 +170,7 @@ Filter And() :
     { filter = new AndFilter(); }
     (
         f = Filter()
-        { filter.addFilterList(f); }
+        { filter.addFilter(f); }
         ( <SPACE> )*
     )+
 	{ return filter; }
@@ -187,7 +187,7 @@ Filter Or() :
     { filter = new OrFilter(); }
     (
         f = Filter()
-        { filter.addFilterList(f); }
+        { filter.addFilter(f); }
         ( <SPACE> )*
     )+
 	{ return filter; }

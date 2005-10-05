@@ -128,7 +128,7 @@ public class FilterParser implements FilterParserConstants {
     label_2:
     while (true) {
       f = Filter();
-          filter.addFilterList(f);
+          filter.addFilter(f);
       label_3:
       while (true) {
         if (jj_2_6(10)) {
@@ -165,7 +165,7 @@ public class FilterParser implements FilterParserConstants {
     label_5:
     while (true) {
       f = Filter();
-          filter.addFilterList(f);
+          filter.addFilter(f);
       label_6:
       while (true) {
         if (jj_2_9(10)) {

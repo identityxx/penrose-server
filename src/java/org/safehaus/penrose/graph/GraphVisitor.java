@@ -29,6 +29,10 @@ public class GraphVisitor {
         return true;
     }
 
+    public void visitNode(GraphIterator graphIterator, Object node) throws Exception {
+        graphIterator.traverseEdges(node);
+    }
+
     public void postVisitNode(Object node) throws Exception {
         //System.out.println("Post-visit Node "+node);
     }
@@ -36,6 +40,10 @@ public class GraphVisitor {
     public boolean preVisitEdge(Collection nodes, Object object) throws Exception {
         //System.out.println("Pre-visit Edge <"+node1+", "+node2+"> "+object);
         return true;
+    }
+
+    public void visitEdge(GraphIterator graphIterator, Object node1, Object node2, Object object) throws Exception {
+        graphIterator.traverse(node2);
     }
 
     public void postVisitEdge(Collection nodes, Object object) throws Exception {

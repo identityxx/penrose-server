@@ -19,41 +19,69 @@ package org.safehaus.penrose.filter;
 
 public class ExtensibleFilter extends Filter {
 
-	protected String attr;
+	protected String attribute;
 	protected String matchingRule;
 	protected String value;
 	
 	public ExtensibleFilter() {
-		super();
 	}
 	
 	public ExtensibleFilter(String attr, String matchingRule, String value) {
-		this.attr = attr;
+		this.attribute = attr;
 		this.matchingRule = matchingRule;
 		this.value = value;
 	}
 	
-	public String getAttr() {
-		return attr;
+	public String getAttribute() {
+		return attribute;
 	}
-	public void setAttr(String attr) {
-		this.attr = attr;
+
+	public void setAttribute(String attribute) {
+		this.attribute = attribute;
 	}
+
 	public String getMatchingRule() {
 		return matchingRule;
 	}
+
 	public void setMatchingRule(String matchingRule) {
 		this.matchingRule = matchingRule;
 	}
+
 	public String getValue() {
 		return value;
 	}
+
 	public void setValue(String value) {
 		this.value = value;
 	}
+
+    public int hashCode() {
+        return (attribute == null ? 0 : attribute.hashCode()) +
+                (matchingRule == null ? 0 : matchingRule.hashCode()) +
+                (value == null ? 0 : value.hashCode());
+    }
+
+    boolean equals(Object o1, Object o2) {
+        if (o1 == null && o2 == null) return true;
+        if (o1 != null) return o1.equals(o2);
+        return o2.equals(o1);
+    }
+
+    public boolean equals(Object object) {
+        if (this == object) return true;
+        if((object == null) || (object.getClass() != this.getClass())) return false;
+
+        ExtensibleFilter extensibleFilter = (ExtensibleFilter)object;
+        if (!equals(attribute, extensibleFilter.attribute)) return false;
+        if (!equals(matchingRule, extensibleFilter.matchingRule)) return false;
+        if (!equals(value, extensibleFilter.value)) return false;
+
+        return true;
+    }
 	
 	public String toString() {
-		return "(" + (attr != null ? attr : "") + 
+		return "(" + (attribute != null ? attribute : "") +
 		":dn:" + matchingRule + ":=" + value + ")";
 	}
 }

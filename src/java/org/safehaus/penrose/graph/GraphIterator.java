@@ -44,7 +44,7 @@ public class GraphIterator {
         boolean b = visitor.preVisitNode(node);
         if (!b) return;
 
-        traverseEdges(node);
+        visitor.visitNode(this, node);
 
         visitor.postVisitNode(node);
     }
@@ -66,6 +66,7 @@ public class GraphIterator {
             Object node2 = null;
 
             if (edge.size() == 1) {
+                node1 = edge.iterator().next();
                 nodes.addAll(edge);
 
             } else {
@@ -86,7 +87,7 @@ public class GraphIterator {
             boolean b = visitor.preVisitEdge(nodes, object);
             if (!b) continue;
 
-            if (node2 != null) traverse(node2);
+            if (node2 != null) visitor.visitEdge(this, node1, node2, object);
 
             visitor.postVisitEdge(nodes, object);
         }
