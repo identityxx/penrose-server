@@ -27,6 +27,7 @@ import org.safehaus.penrose.mapping.AttributeValues;
 import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.mapping.Entry;
 import org.safehaus.penrose.mapping.Row;
+import org.safehaus.penrose.mapping.EntryDefinition;
 
 /**
  * @author Endi S. Dewata
@@ -53,24 +54,24 @@ public class FilterTool {
         return isValidEntry(sr, filter);
     }
 
-    public boolean isValidEntry(Entry sr, Filter filter) throws Exception {
+    public boolean isValidEntry(Entry entry, Filter filter) throws Exception {
         //penrose.log.filter.debug(filter.getClass().getName()+": "+filter);
         boolean result = false;
 
         if (filter instanceof SimpleFilter) {
-            result = isValidEntry(sr, (SimpleFilter)filter);
+            result = isValidEntry(entry, (SimpleFilter)filter);
 
         } else if (filter instanceof SubstringFilter) {
-            result = isValidEntry(sr, (SubstringFilter)filter);
+            result = isValidEntry(entry, (SubstringFilter)filter);
 
         } else if (filter instanceof PresentFilter) {
-            result = isValidEntry(sr, (PresentFilter)filter);
+            result = isValidEntry(entry, (PresentFilter)filter);
 
         } else if (filter instanceof AndFilter) {
-            result = isValidEntry(sr, (AndFilter)filter);
+            result = isValidEntry(entry, (AndFilter)filter);
 
         } else if (filter instanceof OrFilter) {
-            result = isValidEntry(sr, (OrFilter)filter);
+            result = isValidEntry(entry, (OrFilter)filter);
         }
 
         log.debug(" - "+filter+" -> "+(result ? "ok" : "false"));
@@ -78,31 +79,31 @@ public class FilterTool {
         return result;
     }
 
-    public boolean isValidEntry(Entry sr, SubstringFilter filter) throws Exception {
+    public boolean isValidEntry(Entry entry, SubstringFilter filter) throws Exception {
         String attributeName = filter.getAttribute();
         Collection substrings = filter.getSubstrings();
         return true;
     }
 
-    public boolean isValidEntry(Entry sr, PresentFilter filter) throws Exception {
+    public boolean isValidEntry(Entry entry, PresentFilter filter) throws Exception {
         String attributeName = filter.getAttribute();
         if (attributeName.toLowerCase().equals("objectclass")) {
             return true;
         } else {
-            AttributeValues values = sr.getAttributeValues();
+            AttributeValues values = entry.getAttributeValues();
             return values.contains(attributeName);
         }
     }
 
-    public boolean isValidEntry(Entry sr, SimpleFilter filter) throws Exception {
+    public boolean isValidEntry(Entry entry, SimpleFilter filter) throws Exception {
         String attributeName = filter.getAttribute();
         String attributeComparison = filter.getValue();
 
         if (attributeName.toLowerCase().equals("objectclass")) {
-            return sr.getEntryDefinition().getObjectClasses().contains(attributeComparison);
+            return entry.getEntryDefinition().getObjectClasses().contains(attributeComparison);
         }
 
-        AttributeValues values = sr.getAttributeValues();
+        AttributeValues values = entry.getAttributeValues();
         Collection set = values.get(attributeName);
         if (set == null) return false;
 
@@ -113,19 +114,19 @@ public class FilterTool {
         return false;
     }
 
-    public boolean isValidEntry(Entry sr, AndFilter filter) throws Exception {
+    public boolean isValidEntry(Entry entry, AndFilter filter) throws Exception {
         for (Iterator i=filter.getFilters().iterator(); i.hasNext(); ) {
             Filter f = (Filter)i.next();
-            boolean result = isValidEntry(sr, f);
+            boolean result = isValidEntry(entry, f);
             if (!result) return false;
         }
         return true;
     }
 
-    public boolean isValidEntry(Entry sr, OrFilter filter) throws Exception {
+    public boolean isValidEntry(Entry entry, OrFilter filter) throws Exception {
         for (Iterator i=filter.getFilters().iterator(); i.hasNext(); ) {
             Filter f = (Filter)i.next();
-            boolean result = isValidEntry(sr, f);
+            boolean result = isValidEntry(entry, f);
             if (result) return true;
         }
         return false;
@@ -246,4 +247,60 @@ public class FilterTool {
 
         return filter;
     }
+
+    public boolean isValidEntry(EntryDefinition entryDefinition, Filter filter) throws Exception {
+        boolean result = false;
+
+        if (filter instanceof SimpleFilter) {
+            result = isValidEntry(entryDefinition, (SimpleFilter)filter);
+
+        } else if (filter instanceof AndFilter) {
+            result = isValidEntry(entryDefinition, (AndFilter)filter);
+
+        } else if (filter instanceof OrFilter) {
+            result = isValidEntry(entryDefinition, (OrFilter)filter);
+
+        } else if (filter instanceof PresentFilter) {
+            result = isValidEntry(entryDefinition, (PresentFilter)filter);
+        }
+
+        log.debug("=> "+filter+" ("+filter.getClass().getName()+"): "+result);
+
+        return result;
+    }
+
+    public boolean isValidEntry(EntryDefinition entryDefinition, SimpleFilter filter) throws Exception {
+        String attributeName = filter.getAttribute();
+
+        if (attributeName.toLowerCase().equals("objectclass")) return true;
+
+        return entryDefinition.getAttributeDefinition(attributeName) != null;
+    }
+
+    public boolean isValidEntry(EntryDefinition entryDefinition, PresentFilter filter) throws Exception {
+        String attributeName = filter.getAttribute();
+
+        if (attributeName.toLowerCase().equals("objectclass")) return true;
+
+        return entryDefinition.getAttributeDefinition(attributeName) != null;
+    }
+
+    public boolean isValidEntry(EntryDefinition entryDefinition, AndFilter filter) throws Exception {
+        for (Iterator i=filter.getFilters().iterator(); i.hasNext(); ) {
+            Filter f = (Filter)i.next();
+            boolean result = isValidEntry(entryDefinition, f);
+            if (!result) return false;
+        }
+        return true;
+    }
+
+    public boolean isValidEntry(EntryDefinition entryDefinition, OrFilter filter) throws Exception {
+        for (Iterator i=filter.getFilters().iterator(); i.hasNext(); ) {
+            Filter f = (Filter)i.next();
+            boolean result = isValidEntry(entryDefinition, f);
+            if (result) return true;
+        }
+        return false;
+    }
+
 }

@@ -259,14 +259,14 @@ public class SyncService {
         return LDAPException.SUCCESS;
     }
 
-    public Map search(
+    public Collection search(
             Source source,
             Filter filter)
             throws Exception {
 
         log.debug("Searching source "+source.getName()+" with filter "+filter);
 
-        Map results = new TreeMap();
+        Collection results = new ArrayList();
         if (source.getSourceName() == null) return results;
         
         String key = source.getConnectionName()+"."+source.getSourceName();
@@ -293,7 +293,7 @@ public class SyncService {
                 log.debug("Loading entries for: "+filter);
                 Map map = loadEntries(source, filter);
                 pks = map.keySet();
-                results.putAll(map);
+                results.addAll(map.values());
 
                 for (Iterator i=map.keySet().iterator(); i.hasNext(); ) {
                     Row pk = (Row)i.next();
@@ -308,7 +308,7 @@ public class SyncService {
             syncContext.getSourceFilterCache(connectionConfig, sourceDefinition).put(newFilter, pks);
         }
 
-        results.putAll(load(source, pks));
+        results.addAll(load(source, pks));
 /*
         log.debug("Checking source cache for pks "+pks);
         Map loadedRows = syncContext.getSourceDataCache(connectionConfig, sourceDefinition).search(pks);
@@ -338,7 +338,7 @@ public class SyncService {
         return results;
     }
 
-    public Map load(
+    public Collection load(
             Source source,
             Collection pks)
             throws Exception {
@@ -346,7 +346,7 @@ public class SyncService {
         log.debug("Loading source "+source.getName()+" with pks "+pks);
 
         Map results = new TreeMap();
-        if (source.getSourceName() == null) return results;
+        if (source.getSourceName() == null) return results.values();
 
         String key = source.getConnectionName()+"."+source.getSourceName();
         log.debug("Checking source filter cache for ["+key+"]");
@@ -379,7 +379,7 @@ public class SyncService {
             syncContext.getSourceFilterCache(connectionConfig, sourceDefinition).put(newFilter, map.keySet());
         }
 
-        return results;
+        return results.values();
     }
 
     public SearchResults searchEntries(Source source, Filter filter) throws Exception {

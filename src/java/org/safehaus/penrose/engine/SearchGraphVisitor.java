@@ -41,6 +41,7 @@ public class SearchGraphVisitor extends GraphVisitor {
     private Engine engine;
     private EngineContext engineContext;
     private EntryDefinition entryDefinition;
+    private AttributeValues sourceValues;
     private Filter searchFilter;
     private Source primarySource;
 
@@ -52,6 +53,7 @@ public class SearchGraphVisitor extends GraphVisitor {
             Graph graph,
             Engine engine,
             EntryDefinition entryDefinition,
+            AttributeValues sourceValues,
             Filter initialFilter,
             Filter searchFilter,
             Source primarySource) throws Exception {
@@ -61,6 +63,7 @@ public class SearchGraphVisitor extends GraphVisitor {
         this.engine = engine;
         this.engineContext = engine.getEngineContext();
         this.entryDefinition = entryDefinition;
+        this.sourceValues = sourceValues;
         this.searchFilter = searchFilter;
         this.primarySource = primarySource;
 
@@ -73,41 +76,50 @@ public class SearchGraphVisitor extends GraphVisitor {
         Filter filter = (Filter)stack.peek();
         log.debug("Searching "+source.getName()+" for: "+filter);
 
-        if (entryDefinition.getSource(source.getName()) == null) {
-            log.debug("Source "+source.getName()+" is not defined in entry "+entryDefinition.getDn());
-            return;
-        }
-
-        Filter f = engine.getFilterTool().toSourceFilter(null, entryDefinition, source, searchFilter);
-        log.debug("Search filter: "+f);
-
-        filter = engineContext.getFilterTool().appendAndFilter(filter, f);
-
-        String s = source.getParameter(Source.FILTER);
-        if (s != null) {
-            Filter sourceFilter = engineContext.getFilterTool().parseFilter(s);
-            filter = engineContext.getFilterTool().appendAndFilter(filter, sourceFilter);
-        }
-
-        Map map = engine.getEngineContext().getSyncService().search(source, filter);
-        if (map.size() == 0) return;
-
-        log.debug("Records:");
         Collection results = new ArrayList();
-        for (Iterator i=map.values().iterator(); i.hasNext(); ) {
-            AttributeValues av = (AttributeValues)i.next();
-            Collection list = engine.getEngineContext().getTransformEngine().convert(av);
+
+        if (entryDefinition.getSource(source.getName()) == null && sourceValues.contains(source.getName())) {
+            Collection list = engine.getEngineContext().getTransformEngine().convert(sourceValues);
             for (Iterator j=list.iterator(); j.hasNext(); ) {
                 Row row = (Row)j.next();
-                Row newRow = new Row();
-                for (Iterator k=row.getNames().iterator(); k.hasNext(); ) {
-                    String name = (String)k.next();
-                    Object value = row.get(name);
-                    if (value == null) continue;
-                    newRow.set(source.getName()+"."+name, value);
+                log.debug(" - "+row);
+                results.add(row);
+            }
+
+        } else {
+            Collection values;
+
+            Filter f = engine.getFilterTool().toSourceFilter(null, entryDefinition, source, searchFilter);
+            log.debug("Search filter: "+f);
+
+            filter = engineContext.getFilterTool().appendAndFilter(filter, f);
+
+            String s = source.getParameter(Source.FILTER);
+            if (s != null) {
+                Filter sourceFilter = engineContext.getFilterTool().parseFilter(s);
+                filter = engineContext.getFilterTool().appendAndFilter(filter, sourceFilter);
+            }
+
+            values = engine.getEngineContext().getSyncService().search(source, filter);
+
+            if (values.size() == 0) return;
+
+            log.debug("Records:");
+            for (Iterator i=values.iterator(); i.hasNext(); ) {
+                AttributeValues av = (AttributeValues)i.next();
+                Collection list = engine.getEngineContext().getTransformEngine().convert(av);
+                for (Iterator j=list.iterator(); j.hasNext(); ) {
+                    Row row = (Row)j.next();
+                    Row newRow = new Row();
+                    for (Iterator k=row.getNames().iterator(); k.hasNext(); ) {
+                        String name = (String)k.next();
+                        Object value = row.get(name);
+                        if (value == null) continue;
+                        newRow.set(source.getName()+"."+name, value);
+                    }
+                    log.debug(" - "+newRow);
+                    results.add(newRow);
                 }
-                log.debug(" - "+newRow);
-                results.add(newRow);
             }
         }
 
@@ -132,10 +144,10 @@ public class SearchGraphVisitor extends GraphVisitor {
         Source fromSource = (Source)node1;
         Source toSource = (Source)node2;
 
-        if (entryDefinition.getSource(toSource.getName()) == null) {
-            log.debug("Source "+toSource.getName()+" is not defined in entry "+entryDefinition.getDn());
-            return;
-        }
+        //if (entryDefinition.getSource(toSource.getName()) == null) {
+        //    log.debug("Source "+toSource.getName()+" is not defined in entry "+entryDefinition.getDn());
+        //    return;
+        //}
 
         Collection rows = (Collection)stack.peek();
 

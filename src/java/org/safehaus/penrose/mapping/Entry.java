@@ -29,9 +29,8 @@ import java.util.*;
  */
 public class Entry {
 
-    private Entry parent;
-
     private String dn;
+    private String parentDn;
     private EntryDefinition entryDefinition;
 
     private AttributeValues sourceValues;
@@ -39,12 +38,21 @@ public class Entry {
 
     public Entry(String dn, EntryDefinition entry, AttributeValues attributes) {
         this.dn = dn;
+        int i = dn.indexOf(",");
+        if (i >= 0) {
+            parentDn = dn.substring(i+1);
+        }
         this.entryDefinition = entry;
+        this.sourceValues = new AttributeValues();
         this.attributeValues = attributes;
     }
 
     public Entry(String dn, EntryDefinition entry, AttributeValues sourceValues, AttributeValues attributeValues) {
         this.dn = dn;
+        int i = dn.indexOf(",");
+        if (i >= 0) {
+            parentDn = dn.substring(i+1);
+        }
         this.entryDefinition = entry;
         this.sourceValues = sourceValues;
         this.attributeValues = attributeValues;
@@ -168,14 +176,6 @@ public class Entry {
         return entryDefinition.isDynamic();
     }
 
-    public Entry getParent() {
-        return parent;
-    }
-
-    public void setParent(Entry parent) {
-        this.parent = parent;
-    }
-
     public Collection getACL() {
         return entryDefinition.getACL();
     }
@@ -186,5 +186,13 @@ public class Entry {
 
     public void setSourceValues(AttributeValues sourceValues) {
         this.sourceValues = sourceValues;
+    }
+
+    public String getParentDn() {
+        return parentDn;
+    }
+
+    public void setParentDn(String parentDn) {
+        this.parentDn = parentDn;
     }
 }

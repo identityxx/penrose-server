@@ -61,7 +61,7 @@ public class JDBCEntryDataCache extends EntryDataCache {
     }
 
     public String getTableName() {
-        String key = entryDefinition.getRdn()+","+parent.getDn();
+        String key = entryDefinition.getRdn()+","+parentDn;
         key = key.replace('=', '_');
         key = key.replace(',', '_');
         key = key.replace('.', '_');

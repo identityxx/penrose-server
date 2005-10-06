@@ -42,29 +42,36 @@ public class SearchEngine {
         this.engineContext = engine.getEngineContext();
     }
 
-    public Map search(Entry parent, EntryDefinition entryDefinition, Filter filter) throws Exception {
+    public Collection search(
+            Collection parents,
+            EntryDefinition entryDefinition,
+            Filter filter)
+            throws Exception {
 
-        String dn = entryDefinition.getRdn()+","+parent.getDn();
+        Entry parent = parents.isEmpty() ? null : (Entry)parents.iterator().next();
+        String dn = parent == null ? entryDefinition.getDn() : entryDefinition.getRdn()+","+parent.getDn();
         log.debug("Searching entry "+dn+" for "+filter);
 
-        AttributeValues allValues = new AttributeValues();
-        engine.getFieldValues("parent", parent, allValues);
+        AttributeValues sourceValues = new AttributeValues();
+        //if (parent != null) engine.getFieldValues("parent", dn, sourceValues);
 
-        Collection newRows = engineContext.getTransformEngine().convert(allValues);
+        log.debug("Parent entries:");
+        for (Iterator i=parents.iterator(); i.hasNext(); ) {
+            Entry entry = (Entry)i.next();
+            AttributeValues values = entry.getSourceValues();
+            log.debug(" - "+entry.getDn()+": "+values);            
+            sourceValues.add(values);
+        }
+        log.debug("Parent values: "+sourceValues);
+
+        Collection newRows = engineContext.getTransformEngine().convert(sourceValues);
 
         Config config = engineContext.getConfig(entryDefinition.getDn());
 
         Graph graph = engine.getGraph(entryDefinition);
         Source primarySource = engine.getPrimarySource(entryDefinition);
 
-        String startingSourceName = engine.getStartingSourceName(entryDefinition);
-
-        if (startingSourceName == null) {
-            return new TreeMap();
-        }
-
         Source startingSource;
-
         Filter newFilter = null;
 
         Relationship relationship = engine.getConnectingRelationship(entryDefinition);
@@ -85,29 +92,38 @@ public class SearchEngine {
             newFilter = engine.generateFilter(startingSource, relationships, newRows);
 
         } else {
+
             startingSource = primarySource;
-            newFilter = engine.getFilterTool().toSourceFilter(allValues, entryDefinition, startingSource, filter);
+            newFilter = engine.getFilterTool().toSourceFilter(sourceValues, entryDefinition, startingSource, filter);
         }
 
-        log.debug("Starting from source: "+startingSource.getName());
+        log.debug("Starting from source: "+(startingSource == null ? null : startingSource.getName()));
         log.debug("With filter: "+newFilter);
 
-        SearchGraphVisitor visitor = new SearchGraphVisitor(config, graph, engine, entryDefinition, newFilter, filter, primarySource);
-        graph.traverse(visitor, startingSource);
 
-        Collection rows = new TreeSet();
-        rows.addAll(visitor.getKeys());
+        if (startingSource == null) {
+            Interpreter interpreter = engineContext.newInterpreter();
+            Row rdn = computeRdn(entryDefinition, interpreter);
 
-        return computeRdns(entryDefinition, rows);
+            Collection rdns = new ArrayList();
+            rdns.add(rdn);
+            return rdns;
+
+        } else {
+            SearchGraphVisitor visitor = new SearchGraphVisitor(config, graph, engine, entryDefinition, sourceValues, newFilter, filter, primarySource);
+            graph.traverse(visitor, startingSource);
+
+            Collection rows = new TreeSet();
+            rows.addAll(visitor.getKeys());
+            return computeRdns(entryDefinition, rows);
+        }
     }
 
-    public Map computeRdns(EntryDefinition entryDefinition, Collection rows) throws Exception {
+    public Collection computeRdns(EntryDefinition entryDefinition, Collection rows) throws Exception {
         Source primarySource = engine.getPrimarySource(entryDefinition);
 
         log.debug("Search results:");
-        Map rdns = new TreeMap();
-
-        Collection rdnAttributes = entryDefinition.getRdnAttributes();
+        Collection rdns = new ArrayList();
 
         for (Iterator i=rows.iterator(); i.hasNext(); ) {
             Row row = (Row)i.next();
@@ -121,35 +137,36 @@ public class SearchEngine {
                 interpreter.set(primarySource.getName()+"."+name, value);
             }
 
-            Row rdn = new Row();
-            boolean valid = true;
+            Row rdn = computeRdn(entryDefinition, interpreter);
+            if (rdn == null) continue;
 
-            for (Iterator j=rdnAttributes.iterator(); j.hasNext(); ) {
-                AttributeDefinition attr = (AttributeDefinition)j.next();
-                String name = attr.getName();
-
-                Expression expression = attr.getExpression();
-                if (expression == null) continue;
-
-                Object value = interpreter.eval(expression);
-
-                if (value == null) {
-                    valid = false;
-                    break;
-                }
-
-                rdn.set(name, value);
-            }
-
-            if (!valid) continue;
-
-            Row nrdn = engineContext.getSchema().normalize(rdn);
-            //log.debug(" - RDN: "+nrdn);
-
-            rdns.put(nrdn, row);
+            log.debug("   ==> RDN: "+rdn);
+            rdns.add(rdn);
         }
 
         return rdns;
+    }
+
+    public Row computeRdn(EntryDefinition entryDefinition, Interpreter interpreter) throws Exception {
+        Row rdn = new Row();
+
+        Collection rdnAttributes = entryDefinition.getRdnAttributes();
+        for (Iterator j=rdnAttributes.iterator(); j.hasNext(); ) {
+            AttributeDefinition attr = (AttributeDefinition)j.next();
+            String name = attr.getName();
+
+            Expression expression = attr.getExpression();
+            if (expression == null) continue;
+
+            Object value = interpreter.eval(expression);
+            if (value == null) return null;
+
+            rdn.set(name, value);
+        }
+
+        Row nrdn = engineContext.getSchema().normalize(rdn);
+
+        return nrdn;
     }
 
     public Engine getEngine() {

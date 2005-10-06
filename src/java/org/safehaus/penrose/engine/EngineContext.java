@@ -27,6 +27,7 @@ import org.safehaus.penrose.connection.Connection;
 import org.safehaus.penrose.sync.SyncService;
 import org.safehaus.penrose.mapping.EntryDefinition;
 import org.safehaus.penrose.mapping.Entry;
+import org.safehaus.penrose.mapping.Source;
 
 /**
  * @author Endi S. Dewata
@@ -36,12 +37,13 @@ public interface EngineContext {
     public String getRootDn() throws Exception;
     public String getRootPassword() throws Exception;
 
-    public EntryFilterCache getEntryFilterCache(Entry parent, EntryDefinition entryDefinition) throws Exception;
-    public EntryDataCache getEntryDataCache(Entry parent, EntryDefinition entryDefinition) throws Exception;
+    public EntryFilterCache getEntryFilterCache(String parentDn, EntryDefinition entryDefinition) throws Exception;
+    public EntryDataCache getEntryDataCache(String parentDn, EntryDefinition entryDefinition) throws Exception;
 
     public Schema getSchema() throws Exception;
     public FilterTool getFilterTool() throws Exception;
     public Interpreter newInterpreter() throws Exception;
+    public Config getConfig(Source source) throws Exception;
     public Config getConfig(String dn) throws Exception;
     public TransformEngine getTransformEngine() throws Exception;
     public SyncService getSyncService() throws Exception;

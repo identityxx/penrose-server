@@ -25,7 +25,7 @@ import org.safehaus.penrose.mapping.Entry;
  */
 public abstract class EntryDataCache extends Cache {
 
-    Entry parent;
+    String parentDn;
     EntryDefinition entryDefinition;
 
     public EntryDefinition getEntryDefinition() {
@@ -42,11 +42,11 @@ public abstract class EntryDataCache extends Cache {
         expiration = s == null ? EntryDefinition.DEFAULT_DATA_CACHE_EXPIRATION : Integer.parseInt(s);
     }
 
-    public Entry getParent() {
-        return parent;
+    public String getParentDn() {
+        return parentDn;
     }
 
-    public void setParent(Entry parent) {
-        this.parent = parent;
+    public void setParentDn(String parentDn) {
+        this.parentDn = parentDn;
     }
 }

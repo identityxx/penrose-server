@@ -254,7 +254,6 @@ public class ModifyHandler {
 		}
 
         Entry newEntry = new Entry(entry.getDn(), entryDefinition, entry.getSourceValues(), newValues);
-        newEntry.setParent(entry.getParent());
 
 		log.debug("--- new values:");
 		log.debug(newEntry.toString());

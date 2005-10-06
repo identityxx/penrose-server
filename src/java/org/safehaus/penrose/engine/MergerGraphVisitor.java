@@ -40,6 +40,7 @@ public class MergerGraphVisitor extends GraphVisitor {
     private Engine engine;
     private EngineContext engineContext;
     private EntryDefinition entryDefinition;
+    private AttributeValues sourceValues;
 
     private AttributeValues attributeValues = new AttributeValues();
 
@@ -50,6 +51,7 @@ public class MergerGraphVisitor extends GraphVisitor {
             Graph graph,
             Engine engine,
             EntryDefinition entryDefinition,
+            AttributeValues sourceValues,
             Object object) {
 
         this.config = config;
@@ -57,6 +59,7 @@ public class MergerGraphVisitor extends GraphVisitor {
         this.engine = engine;
         this.engineContext = engine.getEngineContext();
         this.entryDefinition = entryDefinition;
+        this.sourceValues = sourceValues;
 
         stack.push(object);
     }
@@ -64,48 +67,60 @@ public class MergerGraphVisitor extends GraphVisitor {
     public void visitNode(GraphIterator graphIterator, Object node) throws Exception {
 
         Source source = (Source)node;
-        log.debug("Merging "+source.getName());
-
-        if (entryDefinition.getSource(source.getName()) == null) {
-            log.debug("Source "+source.getName()+" is not defined in entry "+entryDefinition.getDn());
-            return;
-        }
-
         Object object = stack.peek();
-        Map map;
-        if (object instanceof Filter) {
-            Filter filter = (Filter)object;
-            map = engineContext.getSyncService().search(source, filter);
+        log.debug("Merging "+source.getName()+" with "+object);
 
-        } else if (object instanceof Collection) {
-            Collection pks = (Collection)object;
-            map = engineContext.getSyncService().load(source, pks);
+        //if (entryDefinition.getSource(source.getName()) == null) {
+        //    log.debug("Source "+source.getName()+" is not defined in entry "+entryDefinition.getDn());
+        //    return;
+        //}
 
-        } else {
-            return;
-        }
-
-        if (map.size() == 0) return;
-
-        log.debug("Records:");
         Collection results = new ArrayList();
-        for (Iterator i=map.values().iterator(); i.hasNext(); ) {
-            AttributeValues av = (AttributeValues)i.next();
 
-            attributeValues.add(source.getName(), av);
-
-            Collection list = engine.getEngineContext().getTransformEngine().convert(av);
+        if (entryDefinition.getSource(source.getName()) == null && sourceValues.contains(source.getName())) {
+            attributeValues.add(sourceValues);
+            Collection list = engine.getEngineContext().getTransformEngine().convert(sourceValues);
             for (Iterator j=list.iterator(); j.hasNext(); ) {
                 Row row = (Row)j.next();
-                Row newRow = new Row();
-                for (Iterator k=row.getNames().iterator(); k.hasNext(); ) {
-                    String name = (String)k.next();
-                    Object value = row.get(name);
-                    if (value == null) continue;
-                    newRow.set(source.getName()+"."+name, value);
+                log.debug(" - "+row);
+                results.add(row);
+            }
+
+        } else {
+            Collection values;
+            if (object instanceof Filter) {
+                Filter filter = (Filter)object;
+                values = engineContext.getSyncService().search(source, filter);
+
+            } else if (object instanceof Collection) {
+                Collection pks = (Collection)object;
+                values = engineContext.getSyncService().load(source, pks);
+
+            } else {
+                return;
+            }
+
+            if (values.size() == 0) return;
+
+            log.debug("Records:");
+            for (Iterator i=values.iterator(); i.hasNext(); ) {
+                AttributeValues av = (AttributeValues)i.next();
+
+                attributeValues.add(source.getName(), av);
+
+                Collection list = engine.getEngineContext().getTransformEngine().convert(av);
+                for (Iterator j=list.iterator(); j.hasNext(); ) {
+                    Row row = (Row)j.next();
+                    Row newRow = new Row();
+                    for (Iterator k=row.getNames().iterator(); k.hasNext(); ) {
+                        String name = (String)k.next();
+                        Object value = row.get(name);
+                        if (value == null) continue;
+                        newRow.set(source.getName()+"."+name, value);
+                    }
+                    log.debug(" - "+newRow);
+                    results.add(newRow);
                 }
-                log.debug(" - "+newRow);
-                results.add(newRow);
             }
         }
 
@@ -149,10 +164,10 @@ public class MergerGraphVisitor extends GraphVisitor {
         Source fromSource = (Source)node1;
         Source toSource = (Source)node2;
 
-        if (entryDefinition.getSource(toSource.getName()) == null) {
-            log.debug("Source "+toSource.getName()+" is not defined in entry "+entryDefinition.getDn());
-            return;
-        }
+        //if (entryDefinition.getSource(toSource.getName()) == null) {
+        //    log.debug("Source "+toSource.getName()+" is not defined in entry "+entryDefinition.getDn());
+        //    return;
+        //}
 
         Collection rows = (Collection)stack.peek();
 

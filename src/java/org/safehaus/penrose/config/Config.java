@@ -197,21 +197,21 @@ public class Config implements Serializable {
         entryDefinitions.remove(oldDn);
     }
 
-    public EntryDefinition getParent(EntryDefinition entry) {
-        String parentDn = entry.getParentDn();
+    public EntryDefinition getParent(EntryDefinition entryDefinition) {
+        String parentDn = entryDefinition.getParentDn();
         return getEntryDefinition(parentDn);
     }
 
-    public Collection getChildren(EntryDefinition entry) {
-        return getChildren(entry.getDn());
+    public Collection getChildren(EntryDefinition entryDefinition) {
+        return getChildren(entryDefinition.getDn());
     }
 
     public Collection getChildren(String dn) {
         return (Collection)childrenMap.get(dn);
     }
 
-    public void setChildren(EntryDefinition entry, Collection children) {
-        setChildren(entry.getDn(), children);
+    public void setChildren(EntryDefinition entryDefinition, Collection children) {
+        setChildren(entryDefinition.getDn(), children);
     }
 
     public void setChildren(String dn, Collection children) {
@@ -236,14 +236,24 @@ public class Config implements Serializable {
         return list;
     }
 
-    public Source getEffectiveSource(EntryDefinition entry, String name) {
-        Source source = (Source)entry.getSource(name);
+    public Source getEffectiveSource(EntryDefinition entryDefinition, String name) {
+        Source source = (Source)entryDefinition.getSource(name);
         if (source != null) return source;
 
-        EntryDefinition parent = getParent(entry);
+        EntryDefinition parent = getParent(entryDefinition);
         if (parent != null) return getEffectiveSource(parent, name);
 
         return null;
+    }
+
+    public Collection getEffectiveRelationships(EntryDefinition entryDefinition) {
+        Collection relationships = new ArrayList();
+        relationships.addAll(entryDefinition.getRelationships());
+
+        EntryDefinition parent = getParent(entryDefinition);
+        if (parent != null) relationships.addAll(getEffectiveRelationships(parent));
+
+        return relationships;
     }
 
     public void addModuleConfig(ModuleConfig moduleConfig) throws Exception {

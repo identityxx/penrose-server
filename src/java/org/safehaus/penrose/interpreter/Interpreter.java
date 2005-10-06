@@ -43,6 +43,8 @@ public abstract class Interpreter {
         for (Iterator i=av.getNames().iterator(); i.hasNext(); ) {
             String name = (String)i.next();
             Collection list = av.get(name);
+            //set(name, list);
+
             Object value;
             if (list.size() == 1) {
                 value = list.iterator().next();
@@ -50,6 +52,7 @@ public abstract class Interpreter {
                 value = list;
             }
             set(name, value);
+
         }
     }
 

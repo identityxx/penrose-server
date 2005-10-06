@@ -118,8 +118,15 @@ public class Engine {
         }
 	}
 
-    public Source getPrimarySource(EntryDefinition entryDefinition) {
-        return (Source)primarySources.get(entryDefinition);
+    public Source getPrimarySource(EntryDefinition entryDefinition) throws Exception {
+        Source source = (Source)primarySources.get(entryDefinition);
+        if (source != null) return source;
+
+        Config config = engineContext.getConfig(entryDefinition.getDn());
+        entryDefinition = config.getParent(entryDefinition);
+        if (entryDefinition == null) return null;
+
+        return getPrimarySource(entryDefinition);
     }
 
     Source computePrimarySource(EntryDefinition entryDefinition) throws Exception {
@@ -176,18 +183,20 @@ public class Engine {
 
     Graph computeGraph(EntryDefinition entryDefinition) throws Exception {
 
+        //if (entryDefinition.getSources().isEmpty()) return null;
+
         Graph graph = new Graph();
 
         Config config = engineContext.getConfig(entryDefinition.getDn());
         Collection sources = config.getEffectiveSources(entryDefinition);
-        if (sources.size() == 0) return null;
+        //if (sources.size() == 0) return null;
 
         for (Iterator i=sources.iterator(); i.hasNext(); ) {
             Source source = (Source)i.next();
             graph.addNode(source);
         }
 
-        Collection relationships = entryDefinition.getRelationships();
+        Collection relationships = config.getEffectiveRelationships(entryDefinition);
         for (Iterator i=relationships.iterator(); i.hasNext(); ) {
             Relationship relationship = (Relationship)i.next();
             log.debug("Checking ["+relationship.getExpression()+"]");
@@ -263,7 +272,7 @@ public class Engine {
             throws Exception {
 
         AttributeValues sourceValues = new AttributeValues();
-        getFieldValues("parent", parent, sourceValues);
+        getFieldValues("parent", parent == null ? null : parent.getDn(), sourceValues);
 
         Collection sources = entryDefinition.getSources();
         for (Iterator i=sources.iterator(); i.hasNext(); ) {
@@ -317,7 +326,7 @@ public class Engine {
 
         if (visitor.getReturnCode() != LDAPException.SUCCESS) return visitor.getReturnCode();
 
-        engineContext.getEntryFilterCache(parent, entryDefinition).invalidate();
+        engineContext.getEntryFilterCache(parent == null ? null : parent.getDn(), entryDefinition).invalidate();
 
         return LDAPException.SUCCESS;
     }
@@ -327,7 +336,7 @@ public class Engine {
         EntryDefinition entryDefinition = entry.getEntryDefinition();
 
         AttributeValues sourceValues = new AttributeValues();
-        getFieldValues(entry, sourceValues);
+        getFieldValues(entry.getDn(), sourceValues);
 
         Graph graph = getGraph(entryDefinition);
         Source primarySource = getPrimarySource(entryDefinition);
@@ -339,20 +348,20 @@ public class Engine {
 
         if (visitor.getReturnCode() != LDAPException.SUCCESS) return visitor.getReturnCode();
 
-        engineContext.getEntryDataCache(entry.getParent(), entryDefinition).remove(entry.getRdn());
-        engineContext.getEntryFilterCache(entry.getParent(), entryDefinition).invalidate();
+        engineContext.getEntryDataCache(entry.getParentDn(), entryDefinition).remove(entry.getRdn());
+        engineContext.getEntryFilterCache(entry.getParentDn(), entryDefinition).invalidate();
 
         return LDAPException.SUCCESS;
     }
 
     public int modify(Entry entry, AttributeValues oldValues, AttributeValues newValues) throws Exception {
 
-        Entry parent = entry.getParent();
+        //Entry parent = entry.getParent();
         EntryDefinition entryDefinition = entry.getEntryDefinition();
         Collection sources = entryDefinition.getSources();
 
         AttributeValues oldSourceValues = new AttributeValues();
-        getFieldValues(entry, oldSourceValues);
+        getFieldValues(entry.getDn(), oldSourceValues);
 
         AttributeValues newSourceValues = (AttributeValues)oldSourceValues.clone();
         for (Iterator i=sources.iterator(); i.hasNext(); ) {
@@ -369,7 +378,7 @@ public class Engine {
             }
         }
 
-        log.debug("Modifying entry "+entryDefinition.getRdn()+","+parent.getDn()+" ["+oldSourceValues+"] with: "+newSourceValues);
+        log.debug("Modifying entry "+entryDefinition.getRdn()+","+entry.getParentDn()+" ["+oldSourceValues+"] with: "+newSourceValues);
 
         Graph graph = getGraph(entryDefinition);
         Source primarySource = getPrimarySource(entryDefinition);
@@ -379,19 +388,20 @@ public class Engine {
 
         if (visitor.getReturnCode() != LDAPException.SUCCESS) return visitor.getReturnCode();
 
-        engineContext.getEntryDataCache(entry.getParent(), entryDefinition).remove(entry.getRdn());
-        engineContext.getEntryFilterCache(entry.getParent(), entryDefinition).invalidate();
+        engineContext.getEntryDataCache(entry.getParentDn(), entryDefinition).remove(entry.getRdn());
+        engineContext.getEntryFilterCache(entry.getParentDn(), entryDefinition).invalidate();
 
         return LDAPException.SUCCESS;
     }
 
     public void load(
-            final Entry parent,
+            final Collection parents,
             final EntryDefinition entryDefinition,
-            final SearchResults rdns,
+            final Collection rdns,
             final SearchResults results)
             throws Exception {
 
+        final Entry parent = parents.isEmpty() ? null : (Entry)parents.iterator().next();
         final SearchResults batches = new SearchResults();
 
         execute(new Runnable() {
@@ -409,7 +419,7 @@ public class Engine {
         execute(new Runnable() {
             public void run() {
                 try {
-                    loadBackground(parent, entryDefinition, batches, results);
+                    loadSources(parents, entryDefinition, batches, results);
 
                 } catch (Throwable e) {
                     e.printStackTrace(System.out);
@@ -423,7 +433,7 @@ public class Engine {
     public void createBatches(
             Entry parent,
             EntryDefinition entryDefinition,
-            SearchResults rdns,
+            Collection rdns,
             SearchResults results,
             SearchResults batches
             ) throws Exception {
@@ -437,13 +447,12 @@ public class Engine {
         String s = entryDefinition.getParameter(EntryDefinition.BATCH_SIZE);
         int batchSize = s == null ? EntryDefinition.DEFAULT_BATCH_SIZE : Integer.parseInt(s);
 
-        while (rdns.hasNext()) {
-            Row rdn = (Row)rdns.next();
+        for (Iterator i=rdns.iterator(); i.hasNext(); ) {
+            Row rdn = (Row)i.next();
             log.debug(" - "+rdn);
 
-            Entry entry = (Entry)engineContext.getEntryDataCache(parent, entryDefinition).get(rdn);
+            Entry entry = (Entry)engineContext.getEntryDataCache(parent == null ? entryDefinition.getParentDn() : parent.getDn(), entryDefinition).get(rdn);
             if (entry != null) {
-                entry.setParent(parent);
                 results.add(entry);
                 continue;
             }
@@ -470,8 +479,8 @@ public class Engine {
      * @param batches
      * @throws Exception
      */
-    public void loadBackground(
-            Entry parent,
+    public void loadSources(
+            Collection parents,
             EntryDefinition entryDefinition,
             SearchResults batches,
             SearchResults results
@@ -485,13 +494,12 @@ public class Engine {
         try {
             while (batches.hasNext()) {
                 Collection filters = (Collection)batches.next();
-                SearchResults entries = joinEngine.load(parent, entryDefinition, filters);
+                SearchResults entries = joinEngine.load(parents, entryDefinition, filters);
 
                 for (Iterator i=entries.iterator(); i.hasNext(); ) {
                     Entry entry = (Entry)i.next();
-                    entry.setParent(parent);
                     results.add(entry);
-                    engineContext.getEntryDataCache(parent, entryDefinition).put(entry.getRdn(), entry);
+                    engineContext.getEntryDataCache(entryDefinition.getParentDn(), entryDefinition).put(entry.getRdn(), entry);
                 }
             }
 
@@ -503,88 +511,72 @@ public class Engine {
 
     public SearchResults search(
             PenroseConnection connection,
-            Entry parent,
+            Collection parents,
             EntryDefinition entryDefinition,
             Filter filter,
             SearchResults results
             ) throws Exception {
 
-        SearchResults rdns = search(parent, entryDefinition, filter);
-        load(parent, entryDefinition, rdns, results);
+        Collection rdns = search(parents, entryDefinition, filter);
+        load(parents, entryDefinition, rdns, results);
 
         return results;
     }
 
-    public SearchResults search(
-            final Entry parent,
-            final EntryDefinition entryDefinition,
-            final Filter filter)
+    public Collection search(
+            Collection parents,
+            EntryDefinition entryDefinition,
+            Filter filter)
             throws Exception {
 
-        final SearchResults results = new SearchResults();
+        Entry parent = parents.isEmpty() ? null : (Entry)parents.iterator().next();
 
-        execute(new Runnable() {
-            public void run() {
-                try {
-                    searchBackground(parent, entryDefinition, filter, results);
+        log.debug("--------------------------------------------------------------------------------------");
+        log.debug("Searching for entry "+entryDefinition.getDn()+" with filter "+filter);
 
-                } catch (Throwable e) {
-                    e.printStackTrace(System.out);
-                    results.setReturnCode(LDAPException.OPERATIONS_ERROR);
-                    results.close();
-                }
-            }
-        });
+        String dn = parent == null ? entryDefinition.getDn() : entryDefinition.getRdn()+","+parent.getDn();
+        log.debug("Checking entry filter cache for ["+dn+"]");
 
-        return results;
-    }
+        Collection rdns = engineContext.getEntryFilterCache(parent == null ? entryDefinition.getParentDn() : parent.getDn(), entryDefinition).get(filter);
 
-    public void searchBackground(
-            Entry parent,
-            EntryDefinition entryDefinition,
-            Filter filter,
-            SearchResults results
-            ) throws Exception {
-
-        try {
-            log.debug("--------------------------------------------------------------------------------------");
-            log.debug("Searching for entry "+entryDefinition.getDn()+" with filter "+filter);
-
-            String dn = entryDefinition.getRdn()+","+parent.getDn();
-            log.debug("Checking entry filter cache for ["+dn+"]");
-
-            Collection rdns = engineContext.getEntryFilterCache(parent, entryDefinition).get(filter);
-
-            if (rdns != null) {
-                log.debug("Entry filter cache found: "+filter);
-                results.addAll(rdns);
-                return;
-            }
-
-            log.debug("Entry filter cache not found.");
-
-            Map rows = searchEngine.search(parent, entryDefinition, filter);
-            rdns = rows.keySet();
-
-            engineContext.getEntryFilterCache(parent, entryDefinition).put(filter, rdns);
-
-            filter = engineContext.getFilterTool().createFilter(rdns);
-            engineContext.getEntryFilterCache(parent, entryDefinition).put(filter, rdns);
-
-            results.addAll(rdns);
-
-        } finally {
-            results.close();
+        if (rdns != null) {
+            log.debug("Entry filter cache found: "+filter);
+            return rdns;
         }
+
+        log.debug("Entry filter cache not found.");
+
+        rdns = searchEngine.search(parents, entryDefinition, filter);
+
+        engineContext.getEntryFilterCache(parent == null ? entryDefinition.getParentDn() : parent.getDn(), entryDefinition).put(filter, rdns);
+
+        filter = engineContext.getFilterTool().createFilter(rdns);
+        engineContext.getEntryFilterCache(parent == null ? entryDefinition.getParentDn() : parent.getDn(), entryDefinition).put(filter, rdns);
+
+        return rdns;
     }
 
-    public void getFieldValues(Entry entry, AttributeValues results) throws Exception {
-        getFieldValues(null, entry, results);
+    public void getFieldValues(String dn, AttributeValues results) throws Exception {
+        getFieldValues(null, dn, results);
     }
 
-    public void getFieldValues(String prefix, Entry entry, AttributeValues results) throws Exception {
-        if (entry.getParent() != null) {
-            getFieldValues((prefix == null ? "" : prefix+".")+"parent", entry.getParent(), results);
+    public void getFieldValues(String prefix, String dn, AttributeValues results) throws Exception {
+        int i = dn.indexOf(",");
+        String rdn = i < 0 ? dn : dn.substring(0, i);
+        String parentDn = i < 0 ? null : dn.substring(i+1);
+
+        i = rdn.indexOf("=");
+        String attrName = rdn.substring(0, i);
+        String attrValue = rdn.substring(i+1);
+        Row row = new Row();
+        row.set(attrName, attrValue);
+
+        Config config = engineContext.getConfig(dn);
+        EntryDefinition entryDefinition = config.findEntryDefinition(dn);
+        Entry entry = (Entry)engineContext.getEntryDataCache(entryDefinition.getParentDn(), entryDefinition).get(row);
+
+        if (parentDn != null) {
+            getFieldValues((prefix == null ? "" : prefix+".")+"parent", parentDn, results);
         }
 
         log.debug(entry.getDn()+"'s source values:");
@@ -594,8 +586,8 @@ public class Engine {
 
         AttributeValues sourceValues = entry.getSourceValues();
         if (sourceValues != null) {
-            for (Iterator i=sourceValues.getNames().iterator(); i.hasNext(); ) {
-                String name = (String)i.next();
+            for (Iterator j=sourceValues.getNames().iterator(); j.hasNext(); ) {
+                String name = (String)j.next();
                 Collection value = sourceValues.get(name);
                 log.debug(" - "+name+": "+value);
             }
@@ -672,9 +664,10 @@ public class Engine {
 
         Config config = engineContext.getConfig(entryDefinition.getDn());
 
-        Collection relationships = entryDefinition.getRelationships();
+        Collection relationships = config.getEffectiveRelationships(entryDefinition);
         for (Iterator i=relationships.iterator(); i.hasNext(); ) {
             Relationship relationship = (Relationship)i.next();
+            log.debug(" - checking "+relationship);
 
             for (Iterator j=relationship.getOperands().iterator(); j.hasNext(); ) {
                 String operand = j.next().toString();
@@ -757,6 +750,10 @@ public class Engine {
 
         log.debug(" - "+rdn);
 
+        if (source == null) {
+            return new Row();
+        }
+
         Config config = engineContext.getConfig(entryDefinition.getDn());
         Collection fields = config.getSearchableFields(source);
 
@@ -774,18 +771,18 @@ public class Engine {
             Object value = interpreter.eval(expression);
             if (value == null) continue;
 
-            log.debug("   - "+source.getName()+"."+field.getName()+": "+value);
+            log.debug("   ==> Filter: "+source.getName()+"."+field.getName()+"="+value);
             //filter.set(source.getName()+"."+name, value);
             filter.set(name, value);
         }
 
-        if (filter.isEmpty()) return null;
+        //if (filter.isEmpty()) return null;
 
         return filter;
     }
 
-    public Filter generateFilter(Source toSource, Collection relationships, Collection rows) throws Exception {
-        log.debug("Generating filters:");
+    public Filter generateFilter(Source source, Collection relationships, Collection rows) throws Exception {
+        log.debug("Generating filters for source "+source.getName());
 
         Filter filter = null;
         for (Iterator i=rows.iterator(); i.hasNext(); ) {
@@ -801,7 +798,7 @@ public class Engine {
                 String operator = relationship.getOperator();
                 String rhs = relationship.getRhs();
 
-                if (rhs.startsWith(toSource.getName()+".")) {
+                if (rhs.startsWith(source.getName()+".")) {
                     String exp = lhs;
                     lhs = rhs;
                     rhs = exp;
@@ -810,12 +807,12 @@ public class Engine {
                 int index = lhs.indexOf(".");
                 String name = lhs.substring(index+1);
 
-                //log.debug("   Filter: ("+name+" "+operator+" ?)");
+                log.debug("   - "+rhs+" ==> ("+name+" "+operator+" ?)");
                 Object value = row.get(rhs);
                 if (value == null) continue;
 
                 SimpleFilter sf = new SimpleFilter(name, operator, value.toString());
-                log.debug("   - "+rhs+" -> "+sf);
+                log.debug("     --> "+sf);
 
                 subFilter = engineContext.getFilterTool().appendAndFilter(subFilter, sf);
             }
@@ -825,5 +822,96 @@ public class Engine {
 
         return filter;
     }
+
+    public void createEntries(
+            EntryDefinition entryDefinition,
+            AttributeValues sourceValues,
+            SearchResults results)
+            throws Exception {
+
+        Interpreter interpreter = engineContext.newInterpreter();
+        interpreter.set(sourceValues);
+
+        Row rdn = new Row();
+        Collection attributes = entryDefinition.getAttributeDefinitions();
+
+        AttributeValues attributeValues = new AttributeValues();
+
+        for (Iterator j=attributes.iterator(); j.hasNext(); ) {
+            AttributeDefinition attribute = (AttributeDefinition)j.next();
+
+            String name = attribute.getName();
+            Expression expression = attribute.getExpression();
+            if (expression == null) continue;
+
+            Object value = interpreter.eval(expression);
+            if (value == null) {
+                if (attribute.isRdn()) return;
+                continue;
+            }
+
+            if (attribute.isRdn()) rdn.set(name, value);
+
+            attributeValues.add(name, value);
+        }
+
+        Collection dns = computeParentDns(entryDefinition, interpreter, rdn.toString());
+
+        for (Iterator i=dns.iterator(); i.hasNext(); ) {
+            String dn = (String)i.next();
+
+            Entry entry = new Entry(dn, entryDefinition, sourceValues, attributeValues);
+            
+            results.add(entry);
+            log.debug("Entry:\n"+entry+"\n");
+        }
+    }
+    
+    public Collection computeParentDns(EntryDefinition entryDefinition, Interpreter interpreter, String dnPrefix) throws Exception {
+        Config config = engineContext.getConfig(entryDefinition.getDn());
+        EntryDefinition parentDefinition = config.getParent(entryDefinition);
+
+        Collection results = new ArrayList();
+        computeParentDns(parentDefinition, interpreter, dnPrefix, results);
+
+        return results;
+    }
+
+    public void computeParentDns(EntryDefinition entryDefinition, Interpreter interpreter, String dnPrefix, Collection results) throws Exception {
+
+        Collection attributeDefinitions = entryDefinition.getAttributeDefinitions();
+        AttributeValues av = new AttributeValues();
+
+        for (Iterator j=attributeDefinitions.iterator(); j.hasNext(); ) {
+            AttributeDefinition attribute = (AttributeDefinition)j.next();
+            if (!attribute.isRdn()) continue;
+
+            String name = attribute.getName();
+            Expression expression = attribute.getExpression();
+            if (expression == null) continue;
+
+            Object value = interpreter.eval(expression);
+            if (value == null) continue;
+
+            av.add(name, value);
+        }
+
+        Config config = engineContext.getConfig(entryDefinition.getDn());
+        EntryDefinition parentDefinition = config.getParent(entryDefinition);
+
+        Collection rows = engineContext.getTransformEngine().convert(av);
+        for (Iterator i=rows.iterator(); i.hasNext(); ) {
+            Row row = (Row)i.next();
+            String newDnPrefix = dnPrefix+","+row;
+
+            if (parentDefinition == null) {
+                String dn = newDnPrefix +(entryDefinition.getParentDn() == null ? "" : ","+entryDefinition.getParentDn());
+                results.add(dn);
+            } else {
+                computeParentDns(parentDefinition, interpreter, newDnPrefix, results);
+            }
+        }
+    }
+
 }
 

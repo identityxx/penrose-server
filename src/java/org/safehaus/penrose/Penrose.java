@@ -581,13 +581,15 @@ public class Penrose implements
         return (Interpreter)clazz.newInstance();
     }
 
-    public EntryFilterCache getEntryFilterCache(Entry parent, EntryDefinition entryDefinition) throws Exception {
+    public EntryFilterCache getEntryFilterCache(String parentDn, EntryDefinition entryDefinition) throws Exception {
         String cacheName = entryDefinition.getParameter(EntryDefinition.CACHE);
         cacheName = cacheName == null ? EntryDefinition.DEFAULT_CACHE : cacheName;
 
         CacheConfig cacheConfig = serverConfig.getCacheConfig(cacheName);
 
-        String key = entryDefinition.getRdn()+","+parent.getDn();
+        String key = entryDefinition.getRdn()+","+parentDn;
+        log.debug("Getting entry filter cache for: "+key);
+
         EntryFilterCache entryFilterCache = (EntryFilterCache)entryFilterCaches.get(key);
 
         if (entryFilterCache == null) {
@@ -598,13 +600,15 @@ public class Penrose implements
         return entryFilterCache;
     }
 
-    public EntryDataCache getEntryDataCache(Entry parent, EntryDefinition entryDefinition) throws Exception {
+    public EntryDataCache getEntryDataCache(String parentDn, EntryDefinition entryDefinition) throws Exception {
         String cacheName = entryDefinition.getParameter(EntryDefinition.CACHE);
         cacheName = cacheName == null ? EntryDefinition.DEFAULT_CACHE : cacheName;
 
         CacheConfig cacheConfig = serverConfig.getCacheConfig(cacheName);
 
-        String key = entryDefinition.getRdn()+","+parent.getDn();
+        String key = entryDefinition.getRdn()+","+parentDn;
+        log.debug("Getting entry data cache for: "+key);
+
         EntryDataCache cache = (EntryDataCache)entryDataCaches.get(key);
 
         if (cache == null) {
@@ -613,7 +617,7 @@ public class Penrose implements
 
             Class clazz = Class.forName(cacheClass);
             cache = (EntryDataCache)clazz.newInstance();
-            cache.setParent(parent);
+            cache.setParentDn(parentDn);
             cache.setEntryDefinition(entryDefinition);
             cache.init(cacheConfig, this);
 

@@ -24,6 +24,7 @@ import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.config.Config;
 import org.safehaus.penrose.cache.CacheConfig;
 import org.safehaus.penrose.filter.Filter;
+import org.safehaus.penrose.filter.SimpleFilter;
 import org.safehaus.penrose.mapping.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -117,6 +118,10 @@ public class SearchHandler {
         String rdnAttribute = rdn.substring(0, j);
         String rdnValue = rdn.substring(j + 1);
 
+        Collection parents = new ArrayList();
+        parents.add(parent);
+        Filter filter = new SimpleFilter(rdnAttribute, "=", rdnValue);
+
         // Find in each dynamic children
 		for (Iterator iterator = children.iterator(); iterator.hasNext(); ) {
 			EntryDefinition childDefinition = (EntryDefinition) iterator.next();
@@ -131,6 +136,15 @@ public class SearchHandler {
             // the rdn attribute types must match
             if (!rdnAttribute.equals(childRdnAttribute)) continue;
 
+//---------------------------------
+            SearchResults sr = new SearchResults();
+            handlerContext.getEngine().search(connection, parents, childDefinition, filter, sr);
+
+            while (sr.hasNext()) {
+                Entry child = (Entry)sr.next();
+                return child;
+            }
+//---------------------------------
 			if (childDefinition.isDynamic()) {
 
                 log.debug("Found entry definition: " + childDefinition.getDn());
@@ -139,7 +153,6 @@ public class SearchHandler {
                     Entry entry = find(connection, parent, childDefinition, rdn);
                     if (entry == null) continue;
 
-                    entry.setParent(parent);
                     log.debug("Found virtual entry: " + entry.getDn());
 
                     return entry;
@@ -156,7 +169,6 @@ public class SearchHandler {
 
                 AttributeValues values = childDefinition.getAttributeValues(handlerContext.newInterpreter());
                 Entry entry = new Entry(dn, childDefinition, values);
-                entry.setParent(parent);
                 return entry;
             }
 		}
@@ -176,12 +188,11 @@ public class SearchHandler {
         String attr = rdn.substring(0, i);
         String value = rdn.substring(i + 1);
 
-        Row pk = new Row();
-        pk.set(attr, value);
+        Row row = new Row();
+        row.set(attr, value);
 
-        SearchResults rdns = new SearchResults();
-        rdns.add(pk);
-        rdns.close();
+        Collection rdns = new ArrayList();
+        rdns.add(row);
 
         //Filter filter = handlerContext.getFilterTool().createFilter(rdns);
 
@@ -191,8 +202,11 @@ public class SearchHandler {
         //Collection rdns = handlerContext.getEngine().search(parent, entryDefinition, filter);
         //log.debug("Searched rdns: "+rdns);
 
+        Collection parents = new ArrayList();
+        parents.add(parent);
+
         SearchResults results = new SearchResults();
-        handlerContext.getEngine().load(parent, entryDefinition, rdns, results);
+        handlerContext.getEngine().load(parents, entryDefinition, rdns, results);
 
         if (results.size() == 0) return null;
 
@@ -363,7 +377,10 @@ public class SearchHandler {
 
 		if (scope == LDAPConnection.SCOPE_ONE || scope == LDAPConnection.SCOPE_SUB) { // one level or subtree
 			log.debug("Searching children of " + baseEntry.getDn());
-			searchChildren(connection, baseEntry, scope, f, normalizedAttributeNames, results);
+			//searchChildren(connection, baseEntry, scope, f, normalizedAttributeNames, results);
+            Collection parents = new ArrayList();
+            parents.add(baseEntry);
+            searchChildren2(connection, parents, baseEntry.getEntryDefinition(), scope, f, normalizedAttributeNames, results, true);
 		}
 
 		results.setReturnCode(LDAPException.SUCCESS);
@@ -376,6 +393,73 @@ public class SearchHandler {
 
     public void setHandlerContext(HandlerContext handlerContext) {
         this.handlerContext = handlerContext;
+    }
+
+    public void searchChildren2(
+            PenroseConnection connection,
+            Collection parents,
+            EntryDefinition entryDefinition,
+            int scope,
+            Filter filter,
+            Collection attributeNames,
+            SearchResults results,
+            boolean first) throws Exception {
+
+        log.debug("Search "+entryDefinition.getDn()+" with parent entries:");
+        for (Iterator i=parents.iterator(); i.hasNext(); ) {
+            Entry entry = (Entry)i.next();
+            AttributeValues values = entry.getSourceValues();
+            log.debug(" - "+entry.getDn()+": "+values);
+        }
+
+        Config config = handlerContext.getConfig(entryDefinition.getDn());
+        Collection children = config.getChildren(entryDefinition);
+        if (children == null) {
+            return;
+        }
+
+        Collection newParents = new ArrayList();
+
+        for (Iterator i = children.iterator(); i.hasNext();) {
+            EntryDefinition childDefinition = (EntryDefinition) i.next();
+
+            String childDn = childDefinition.getRdn()+","+entryDefinition.getDn();
+            log.debug("Checking children: " + childDn);
+
+            if (!handlerContext.getFilterTool().isValidEntry(childDefinition, filter)) {
+                log.debug("==> filter not applicable");
+                continue;
+            }
+
+            SearchResults sr = new SearchResults();
+            handlerContext.getEngine().search(connection, parents, childDefinition, filter, sr);
+
+            while (sr.hasNext()) {
+                Entry child = (Entry)sr.next();
+
+                int rc = handlerContext.getACLEngine().checkSearch(connection, child);
+                if (rc != LDAPException.SUCCESS) continue;
+
+                if (handlerContext.getFilterTool().isValidEntry(child, filter)) {
+
+                    rc = handlerContext.getACLEngine().checkRead(connection, child);
+                    if (rc == LDAPException.SUCCESS) {
+                        newParents.add(child);
+
+                        LDAPEntry en = child.toLDAPEntry();
+                        Entry.filterAttributes(en, attributeNames);
+                        results.add(en);
+                    }
+                }
+            }
+        }
+
+        if (scope == LDAPConnection.SCOPE_SUB) {
+            for (Iterator i = children.iterator(); i.hasNext();) {
+                EntryDefinition childDefinition = (EntryDefinition) i.next();
+                searchChildren2(connection, newParents, childDefinition, scope, filter, attributeNames, results, false);
+            }
+        }
     }
 
     /**
@@ -431,6 +515,9 @@ public class SearchHandler {
 			}
 		}
 
+        Collection parents = new ArrayList();
+        parents.add(entry);
+
 		for (Iterator i = children.iterator(); i.hasNext();) {
 			EntryDefinition childDefinition = (EntryDefinition) i.next();
 			if (!childDefinition.isDynamic()) continue;
@@ -439,7 +526,7 @@ public class SearchHandler {
 			log.debug("Virtual children: " + childDn);
 
 			SearchResults results2 = new SearchResults();
-            handlerContext.getEngine().search(connection, entry, childDefinition, filter, results2);
+            handlerContext.getEngine().search(connection, parents, childDefinition, filter, results2);
 
             while (results2.hasNext()) {
                 Entry child = (Entry)results2.next();

@@ -35,13 +35,13 @@ public class TransformEngine {
 
     Logger log = LoggerFactory.getLogger(getClass());
 
-    public Penrose penrose;
+    public EngineContext engineContext;
 
     public int joinDebug = 0;
     public int crossProductDebug = 0;
 
-    public TransformEngine(Penrose penrose) {
-        this.penrose = penrose;
+    public TransformEngine(EngineContext engineContext) {
+        this.engineContext = engineContext;
     }
 
     /**
@@ -122,75 +122,13 @@ public class TransformEngine {
         }
     }
 
-    public Row translate(EntryDefinition entry, AttributeValues input, AttributeValues output) throws Exception {
-
-        Interpreter interpreter = penrose.newInterpreter();
-        interpreter.set(input);
-
-        Row pk = new Row();
-        Collection attributes = entry.getAttributeDefinitions();
-
-        for (Iterator j=attributes.iterator(); j.hasNext(); ) {
-            AttributeDefinition attribute = (AttributeDefinition)j.next();
-
-            String name = attribute.getName();
-            Expression expression = attribute.getExpression();
-            if (expression == null) continue;
-
-            Object value = interpreter.eval(expression);
-/*
-            String foreach = expression.getForeach();
-            String var = expression.getVar();
-            String script = expression.getScript();
-
-            Object value = null;
-            if (foreach == null) {
-                //log.debug("Evaluating expression: "+expression);
-                value = interpreter.eval(script);
-
-            } else {
-                //log.debug("Evaluating expression: "+expression);
-
-                Collection values = input.get(foreach);
-                //log.debug("Values: "+values);
-
-                if (values != null) {
-
-                    Collection newValues = new ArrayList();
-                    for (Iterator i=values.iterator(); i.hasNext(); ) {
-                        Object o = i.next();
-                        interpreter.set(var, o);
-                        value = interpreter.eval(script);
-                        //log.debug(" - "+value);
-                        newValues.add(value);
-                    }
-
-                    value = newValues;
-                }
-            }
-*/
-            //log.debug("Result: "+value);
-
-            if (value == null) continue;
-
-            if (attribute.isRdn()) {
-                if (value == null) return null;
-                pk.set(name, value);
-            }
-
-            output.add(name, value);
-        }
-
-        return pk;
-    }
-
     public Row translate(Source source, AttributeValues input, AttributeValues output) throws Exception {
 
-        Config config = penrose.getConfig(source);
+        Config config = engineContext.getConfig(source);
         ConnectionConfig connectionConfig = config.getConnectionConfig(source.getConnectionName());
         SourceDefinition sourceDefinition = connectionConfig.getSourceDefinition(source.getSourceName());
 
-        Interpreter interpreter = penrose.newInterpreter();
+        Interpreter interpreter = engineContext.newInterpreter();
         interpreter.set(input);
 
         Row pk = new Row();
@@ -282,7 +220,7 @@ public class TransformEngine {
     }
 
     public Collection getPrimaryKeys(Source source, AttributeValues sourceValues) throws Exception {
-        Config config = penrose.getConfig(source);
+        Config config = engineContext.getConfig(source);
         Collection pkFields = config.getPrimaryKeyFieldDefinitions(source);
 
         AttributeValues pkValues = new AttributeValues();
@@ -302,7 +240,7 @@ public class TransformEngine {
 
     public Map split(Source source, AttributeValues entry) throws Exception {
 
-        Config config = penrose.getConfig(source);
+        Config config = engineContext.getConfig(source);
         Collection fields = config.getPrimaryKeyFieldDefinitions(source);
 
         AttributeValues output = new AttributeValues();

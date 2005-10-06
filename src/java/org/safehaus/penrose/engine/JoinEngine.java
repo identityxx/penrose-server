@@ -46,7 +46,7 @@ public class JoinEngine {
     }
 
     public SearchResults load(
-            final Entry parent,
+            final Collection parents,
             final EntryDefinition entryDefinition,
             final Collection pks)
             throws Exception {
@@ -56,7 +56,7 @@ public class JoinEngine {
         engine.execute(new Runnable() {
             public void run() {
                 try {
-                    load(parent, entryDefinition, pks, results);
+                    load(parents, entryDefinition, pks, results);
 
                 } catch (Throwable e) {
                     e.printStackTrace(System.out);
@@ -70,16 +70,36 @@ public class JoinEngine {
     }
 
     public void load(
-            Entry parent,
+            Collection parents,
             EntryDefinition entryDefinition,
             Collection pks,
             SearchResults results)
             throws Exception {
 
+        Entry parent = parents.isEmpty() ? null : (Entry)parents.iterator().next();
+        String dn = parent == null ? entryDefinition.getDn() : entryDefinition.getRdn()+","+parent.getDn();
+        log.debug("Loading entry "+dn+" with pks "+pks);
+
+        AttributeValues sourceValues = new AttributeValues();
+        log.debug("Parent entries:");
+        for (Iterator i=parents.iterator(); i.hasNext(); ) {
+            Entry entry = (Entry)i.next();
+            AttributeValues values = entry.getSourceValues();
+            log.debug(" - "+entry.getDn()+": "+values);
+            sourceValues.add(values);
+        }
+        log.debug("Parent values: "+sourceValues);
+
         Config config = engineContext.getConfig(entryDefinition.getDn());
         Graph graph = engine.getGraph(entryDefinition);
         Source primarySource = engine.getPrimarySource(entryDefinition);
 
+        if (primarySource == null) {
+            engine.createEntries(entryDefinition, sourceValues, results);
+            results.close();
+            return;
+        }
+/*
         ExecutionPlanner executionPlanner = new ExecutionPlanner(config, graph, entryDefinition);
         graph.traverse(executionPlanner, primarySource);
 
@@ -99,57 +119,56 @@ public class JoinEngine {
                 log.debug("   - filter with "+filter);
             }
         }
-
+*/
         //Filter filter  = engineContext.getFilterTool().createFilter(pks);
 
-        LoaderGraphVisitor loaderVisitor = new LoaderGraphVisitor(config, graph, engine, entryDefinition, pks);
+        LoaderGraphVisitor loaderVisitor = new LoaderGraphVisitor(config, graph, engine, entryDefinition, sourceValues, pks);
         graph.traverse(loaderVisitor, primarySource);
         //Map attributeValues = loaderVisitor.getAttributeValues();
 
-        Map attributeValues = new TreeMap();
+        log.debug("Parent entries:");
+        for (Iterator i=parents.iterator(); i.hasNext(); ) {
+            Entry entry = (Entry)i.next();
+            AttributeValues values = entry.getSourceValues();
+            log.debug(" - "+entry.getDn()+": "+values);
+        }
+
+        Collection entries = new ArrayList();
         for (Iterator i=pks.iterator(); i.hasNext(); ) {
             Row pk = (Row)i.next();
+
             Collection list = new ArrayList();
             list.add(pk);
 
             //Filter filter  = engineContext.getFilterTool().createFilter(pk, true);
 
-            MergerGraphVisitor mergerVisitor = new MergerGraphVisitor(config, graph, engine, entryDefinition, list);
+            MergerGraphVisitor mergerVisitor = new MergerGraphVisitor(config, graph, engine, entryDefinition, sourceValues, list);
             graph.traverse(mergerVisitor, primarySource);
 
             AttributeValues av = mergerVisitor.getAttributeValues();
-            //log.debug("Merged: "+av);
+            log.debug("Merged: "+av);
 
-            attributeValues.put(pk, av);
+            entries.add(av);
         }
 
-        merge(parent, entryDefinition, attributeValues, results);
+        log.debug("Parent entries:");
+        for (Iterator i=parents.iterator(); i.hasNext(); ) {
+            Entry entry = (Entry)i.next();
+            AttributeValues values = entry.getSourceValues();
+            log.debug(" - "+entry.getDn()+": "+values);
+        }
+
+        merge(parent, entryDefinition, entries, results);
     }
 
-    public void merge(Entry parent, EntryDefinition entryDefinition, Map pkValuesMap, SearchResults results) throws Exception {
+    public void merge(Entry parent, EntryDefinition entryDefinition, Collection entries, SearchResults results) throws Exception {
 
         log.debug("Merging:");
-        int counter = 1;
 
         // merge rows into attribute values
-        for (Iterator i = pkValuesMap.keySet().iterator(); i.hasNext(); counter++) {
-            Row pk = (Row)i.next();
-            AttributeValues sourceValues = (AttributeValues)pkValuesMap.get(pk);
-
-            log.debug(" - "+pk+": "+sourceValues);
-
-            AttributeValues attributeValues = new AttributeValues();
-
-            Row rdn = engineContext.getTransformEngine().translate(entryDefinition, sourceValues, attributeValues);
-            if (rdn == null) continue;
-
-            //log.debug("   => "+rdn+": "+attributeValues);
-
-            Entry entry = new Entry(rdn+","+parent.getDn(), entryDefinition, sourceValues, attributeValues);
-            entry.setParent(parent);
-            results.add(entry);
-
-            log.debug("Entry #"+counter+":\n"+entry+"\n");
+        for (Iterator i = entries.iterator(); i.hasNext(); ) {
+            AttributeValues sourceValues = (AttributeValues)i.next();
+            engine.createEntries(entryDefinition, sourceValues, results);
         }
 
         results.close();

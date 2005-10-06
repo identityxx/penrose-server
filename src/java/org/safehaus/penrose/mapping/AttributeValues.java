@@ -87,7 +87,9 @@ public class AttributeValues implements Cloneable {
     }
 
     public void set(String name, Collection values) {
-        this.values.put(name, values);
+        Collection c = new HashSet();
+        c.addAll(values);
+        this.values.put(name, c);
     }
 
     public Collection get(String name) {
@@ -99,7 +101,15 @@ public class AttributeValues implements Cloneable {
     }
 
     public boolean contains(String name) {
-        return values.containsKey(name);
+        boolean b = values.containsKey(name);
+        if (b) return true;
+
+        for (Iterator i=values.keySet().iterator(); i.hasNext(); ) {
+            String s = (String)i.next();
+            if (s.startsWith(name+".")) return true;
+        }
+
+        return false;
     }
 
     public Map getValues() {
