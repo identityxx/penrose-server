@@ -127,7 +127,7 @@ public class SearchHandler {
 			EntryDefinition childDefinition = (EntryDefinition) iterator.next();
 
             String childRdn = childDefinition.getRdn();
-            //log.debug("Checking child: "+childRdn);
+            log.debug("Finding entry in "+childDefinition.getDn()+" with "+filter);
 
             int k = childRdn.indexOf("=");
             String childRdnAttribute = childRdn.substring(0, k);
@@ -136,15 +136,14 @@ public class SearchHandler {
             // the rdn attribute types must match
             if (!rdnAttribute.equals(childRdnAttribute)) continue;
 
-//---------------------------------
             SearchResults sr = new SearchResults();
             handlerContext.getEngine().search(connection, parents, childDefinition, filter, sr);
 
             while (sr.hasNext()) {
                 Entry child = (Entry)sr.next();
-                return child;
+                if (handlerContext.getFilterTool().isValidEntry(child, filter)) return child;
             }
-//---------------------------------
+/*
 			if (childDefinition.isDynamic()) {
 
                 log.debug("Found entry definition: " + childDefinition.getDn());
@@ -171,6 +170,7 @@ public class SearchHandler {
                 Entry entry = new Entry(dn, childDefinition, values);
                 return entry;
             }
+*/
 		}
 
 		throw new LDAPException("Can't find " + dn + ".",
