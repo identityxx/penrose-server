@@ -207,7 +207,7 @@ public class FilterTool {
     }
 
     public Filter appendAndFilter(Filter filter, Filter newFilter) {
-        if (newFilter == null) {
+        if (newFilter == null || newFilter.equals(filter)) {
             // ignore
 
         } else if (filter == null) {
@@ -215,9 +215,16 @@ public class FilterTool {
 
         } else if (filter instanceof AndFilter) {
             AndFilter af = (AndFilter)filter;
-            if (!af.containsFilter(newFilter)) af.addFilter(newFilter);
+            if (newFilter instanceof AndFilter) {
+                for (Iterator i=((AndFilter)newFilter).getFilters().iterator(); i.hasNext(); ) {
+                    Filter f = (Filter)i.next();
+                    if (!af.containsFilter(f)) af.addFilter(f);
+                }
+            } else {
+                if (!af.containsFilter(newFilter)) af.addFilter(newFilter);
+            }
 
-        } else if (!filter.equals(newFilter)) {
+        } else {
             AndFilter af = new AndFilter();
             af.addFilter(filter);
             af.addFilter(newFilter);
@@ -228,7 +235,7 @@ public class FilterTool {
     }
 
     public Filter appendOrFilter(Filter filter, Filter newFilter) {
-        if (newFilter == null) {
+        if (newFilter == null || newFilter.equals(filter)) {
             // ignore
 
         } else if (filter == null) {
@@ -236,9 +243,16 @@ public class FilterTool {
 
         } else if (filter instanceof OrFilter) {
             OrFilter of = (OrFilter)filter;
-            if (!of.containsFilter(newFilter)) of.addFilter(newFilter);
+            if (newFilter instanceof OrFilter) {
+                for (Iterator i=((OrFilter)newFilter).getFilters().iterator(); i.hasNext(); ) {
+                    Filter f = (Filter)i.next();
+                    if (!of.containsFilter(f)) of.addFilter(f);
+                }
+            } else {
+                if (!of.containsFilter(newFilter)) of.addFilter(newFilter);
+            }
 
-        } else if (!filter.equals(newFilter)) {
+        } else {
             OrFilter of = new OrFilter();
             of.addFilter(filter);
             of.addFilter(newFilter);

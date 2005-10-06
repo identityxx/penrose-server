@@ -534,9 +534,6 @@ public class Engine {
         log.debug("--------------------------------------------------------------------------------------");
         log.debug("Searching for entry "+entryDefinition.getDn()+" with filter "+filter);
 
-        String dn = parent == null ? entryDefinition.getDn() : entryDefinition.getRdn()+","+parent.getDn();
-        log.debug("Checking entry filter cache for ["+dn+"]");
-
         Collection rdns = engineContext.getEntryFilterCache(parent == null ? entryDefinition.getParentDn() : parent.getDn(), entryDefinition).get(filter);
 
         if (rdns != null) {
@@ -669,21 +666,19 @@ public class Engine {
             Relationship relationship = (Relationship)i.next();
             log.debug(" - checking "+relationship);
 
-            for (Iterator j=relationship.getOperands().iterator(); j.hasNext(); ) {
-                String operand = j.next().toString();
+            String lhs = relationship.getLhs();
+            String rhs = relationship.getRhs();
 
-                int index = operand.indexOf(".");
-                if (index < 0) continue;
+            int lindex = lhs.indexOf(".");
+            String lsourceName = lindex < 0 ? lhs : lhs.substring(0, lindex);
+            Source lsource = entryDefinition.getSource(lsourceName);
 
-                String sourceName = operand.substring(0, index);
-                Source source = entryDefinition.getSource(sourceName);
-                Source effectiveSource = config.getEffectiveSource(entryDefinition, sourceName);
+            int rindex = rhs.indexOf(".");
+            String rsourceName = rindex < 0 ? rhs : rhs.substring(0, rindex);
+            Source rsource = entryDefinition.getSource(rsourceName);
 
-                if (source == null && effectiveSource != null) {
-                    log.debug("Source "+sourceName+" is defined in parent entry");
-                    return relationship;
-                }
-
+            if (lsource == null && rsource != null || lsource != null && rsource == null) {
+                return relationship;
             }
         }
 

@@ -90,7 +90,6 @@ public class SearchGraphVisitor extends GraphVisitor {
             Collection values;
 
             Filter f = engine.getFilterTool().toSourceFilter(null, entryDefinition, source, searchFilter);
-            log.debug("Search filter: "+f);
 
             filter = engineContext.getFilterTool().appendAndFilter(filter, f);
 
