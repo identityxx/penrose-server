@@ -54,7 +54,6 @@ public class SourceFilterCache {
     public Collection get(Filter filter) throws Exception {
 
         String key = filter == null ? "" : filter.toString();
-        log.debug("Getting source filter cache ("+dataMap.size()+"): "+key);
 
         Collection pks = (Collection)dataMap.get(key);
         Date date = (Date)expirationMap.get(key);
@@ -62,8 +61,10 @@ public class SourceFilterCache {
         if (date == null || date.getTime() <= System.currentTimeMillis()) {
             dataMap.remove(key);
             expirationMap.remove(key);
-            return null;
+            pks = null;
         }
+
+        //log.debug("Getting source filter cache: ["+key+"] => "+pks);
 
         return pks;
     }
@@ -75,13 +76,13 @@ public class SourceFilterCache {
         Object object = dataMap.get(key);
 
         while (object == null && dataMap.size() >= size) {
-            log.debug("Trimming source filter cache ("+dataMap.size()+").");
+            //log.debug("Trimming source filter cache ("+dataMap.size()+").");
             Object k = dataMap.keySet().iterator().next();
             dataMap.remove(k);
             expirationMap.remove(k);
         }
 
-        log.debug("Storing source filter cache ("+dataMap.size()+"): "+key);
+        //log.debug("Storing source filter cache: ["+key+"] => "+pks);
         dataMap.put(key, pks);
         expirationMap.put(key, new Date(System.currentTimeMillis() + expiration * 60 * 1000));
     }

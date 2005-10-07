@@ -274,6 +274,7 @@ public class SyncService {
         SourceDefinition sourceDefinition = connectionConfig.getSourceDefinition(source.getSourceName());
 
         Collection uniqueFieldDefinitions = config.getUniqueFieldDefinitions(source);
+        Collection indexedFieldDefinitions = config.getIndexedFieldDefinitions(source);
 
         log.debug("Checking source filter cache for "+filter);
         Collection pks = syncContext.getSourceFilterCache(connectionConfig, sourceDefinition).get(filter);
@@ -285,7 +286,7 @@ public class SyncService {
         }
 
         String method = sourceDefinition.getParameter(SourceDefinition.LOADING_METHOD);
-        log.debug("Loading method: "+method);
+        //log.debug("Loading method: "+method);
 
         if (SourceDefinition.SEARCH_AND_LOAD.equals(method)) {
             log.debug("Searching pks for: "+filter);
@@ -309,11 +310,13 @@ public class SyncService {
                 AttributeValues values = (AttributeValues)map.get(pk);
                 syncContext.getSourceDataCache(connectionConfig, sourceDefinition).put(npk, values);
 
-                Collection list = new ArrayList();
+                Filter f = syncContext.getFilterTool().createFilter(npk);
+                Collection list = new TreeSet();
                 list.add(npk);
-                Filter f = syncContext.getFilterTool().createFilter(list);
+
                 syncContext.getSourceFilterCache(connectionConfig, sourceDefinition).put(f, list);
 
+                log.debug("Unique fields:");
                 for (Iterator j=uniqueFieldDefinitions.iterator(); j.hasNext(); ) {
                     FieldDefinition fieldDefinition = (FieldDefinition)j.next();
                     Object value = values.getOne(fieldDefinition.getName());
@@ -322,15 +325,37 @@ public class SyncService {
                     uniqueKey.set(fieldDefinition.getName(), value);
                     Row normalizedUniqueKey = syncContext.getSchema().normalize(uniqueKey);
 
-                    syncContext.getSourceDataCache(connectionConfig, sourceDefinition).put(uniqueKey, values);
+                    f = syncContext.getFilterTool().createFilter(normalizedUniqueKey);
+                    list = new TreeSet();
+                    list.add(npk);
 
-                    list = new ArrayList();
-                    list.add(normalizedUniqueKey);
-                    f = syncContext.getFilterTool().createFilter(list);
-
+                    log.debug(" - "+f+" => "+list);
                     syncContext.getSourceFilterCache(connectionConfig, sourceDefinition).put(f, list);
 
                     uniqueKeys.add(normalizedUniqueKey);
+                }
+
+                log.debug("Indexed fields:");
+                for (Iterator j=indexedFieldDefinitions.iterator(); j.hasNext(); ) {
+                    FieldDefinition fieldDefinition = (FieldDefinition)j.next();
+                    Collection v = values.get(fieldDefinition.getName());
+
+                    for (Iterator k=v.iterator(); k.hasNext(); ) {
+                        Object value = k.next();
+
+                        Row indexKey = new Row();
+                        indexKey.set(fieldDefinition.getName(), value);
+                        Row normalizedIndexKey = syncContext.getSchema().normalize(indexKey);
+
+                        f = syncContext.getFilterTool().createFilter(normalizedIndexKey);
+
+                        list = syncContext.getSourceFilterCache(connectionConfig, sourceDefinition).get(f);
+                        if (list == null) list = new TreeSet();
+                        list.add(npk);
+
+                        log.debug(" - "+f+" => "+list);
+                        syncContext.getSourceFilterCache(connectionConfig, sourceDefinition).put(f, list);
+                    }
                 }
             }
 
@@ -376,10 +401,10 @@ public class SyncService {
 
     public Collection load(
             Source source,
-            Collection pks)
+            Collection keys)
             throws Exception {
 
-        log.debug("Loading source "+source.getName()+" with pks "+pks);
+        log.debug("Loading source "+source.getName()+" with keys "+keys);
 
         Map results = new TreeMap();
         if (source.getSourceName() == null) return results.values();
@@ -392,19 +417,22 @@ public class SyncService {
         SourceDefinition sourceDefinition = connectionConfig.getSourceDefinition(source.getSourceName());
 
         Collection uniqueFieldDefinitions = config.getUniqueFieldDefinitions(source);
+        Collection indexedFieldDefinitions = config.getIndexedFieldDefinitions(source);
+        Collection missingKeys = new ArrayList();
 
-        Map loadedRows = syncContext.getSourceDataCache(connectionConfig, sourceDefinition).search(pks);
+        Map loadedRows = syncContext.getSourceDataCache(connectionConfig, sourceDefinition).search(keys, missingKeys);
+
         log.debug("Loaded rows: "+loadedRows.keySet());
         results.putAll(loadedRows);
 
-        Collection pksToLoad = new TreeSet();
-        pksToLoad.addAll(pks);
-        pksToLoad.removeAll(results.keySet());
-        pksToLoad.removeAll(loadedRows.keySet());
+        Collection keysToLoad = new TreeSet();
+        keysToLoad.addAll(missingKeys);
+        //keysToLoad.removeAll(results.keySet());
+        //keysToLoad.removeAll(loadedRows.keySet());
 
-        log.debug("PKs to load: "+pksToLoad);
-        if (!pksToLoad.isEmpty()) {
-            Filter newFilter = syncContext.getFilterTool().createFilter(pksToLoad);
+        log.debug("PKs to load: "+keysToLoad);
+        if (!keysToLoad.isEmpty()) {
+            Filter newFilter = syncContext.getFilterTool().createFilter(keysToLoad);
             Map map = loadEntries(source, newFilter);
             results.putAll(map);
 
@@ -417,12 +445,13 @@ public class SyncService {
 
                 syncContext.getSourceDataCache(connectionConfig, sourceDefinition).put(npk, values);
 
-                Collection list = new ArrayList();
+                Filter f = syncContext.getFilterTool().createFilter(npk);
+                Collection list = new TreeSet();
                 list.add(npk);
-                Filter f = syncContext.getFilterTool().createFilter(list);
 
                 syncContext.getSourceFilterCache(connectionConfig, sourceDefinition).put(f, list);
 
+                log.debug("Unique fields:");
                 for (Iterator j=uniqueFieldDefinitions.iterator(); j.hasNext(); ) {
                     FieldDefinition fieldDefinition = (FieldDefinition)j.next();
                     Object value = values.getOne(fieldDefinition.getName());
@@ -431,21 +460,43 @@ public class SyncService {
                     uniqueKey.set(fieldDefinition.getName(), value);
                     Row normalizedUniqueKey = syncContext.getSchema().normalize(uniqueKey);
 
-                    syncContext.getSourceDataCache(connectionConfig, sourceDefinition).put(uniqueKey, values);
+                    f = syncContext.getFilterTool().createFilter(normalizedUniqueKey);
+                    list = new TreeSet();
+                    list.add(npk);
 
-                    list = new ArrayList();
-                    list.add(normalizedUniqueKey);
-                    f = syncContext.getFilterTool().createFilter(list);
-
+                    log.debug(" - "+f+" => "+list);
                     syncContext.getSourceFilterCache(connectionConfig, sourceDefinition).put(f, list);
 
                     uniqueKeys.add(normalizedUniqueKey);
+                }
+
+                log.debug("Indexed fields:");
+                for (Iterator j=indexedFieldDefinitions.iterator(); j.hasNext(); ) {
+                    FieldDefinition fieldDefinition = (FieldDefinition)j.next();
+                    Collection v = values.get(fieldDefinition.getName());
+
+                    for (Iterator k=v.iterator(); k.hasNext(); ) {
+                        Object value = k.next();
+
+                        Row indexKey = new Row();
+                        indexKey.set(fieldDefinition.getName(), value);
+                        Row normalizedIndexKey = syncContext.getSchema().normalize(indexKey);
+
+                        f = syncContext.getFilterTool().createFilter(normalizedIndexKey);
+
+                        list = syncContext.getSourceFilterCache(connectionConfig, sourceDefinition).get(f);
+                        if (list == null) list = new TreeSet();
+                        list.add(npk);
+
+                        log.debug(" - "+f+" => "+list);
+                        syncContext.getSourceFilterCache(connectionConfig, sourceDefinition).put(f, list);
+                    }
                 }
             }
 
             if (!uniqueKeys.isEmpty()) {
                 Filter f = syncContext.getFilterTool().createFilter(uniqueKeys);
-                syncContext.getSourceFilterCache(connectionConfig, sourceDefinition).put(f, pks);
+                syncContext.getSourceFilterCache(connectionConfig, sourceDefinition).put(f, keys);
             }
 
             syncContext.getSourceFilterCache(connectionConfig, sourceDefinition).put(newFilter, map.keySet());

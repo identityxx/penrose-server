@@ -361,7 +361,7 @@ public class SearchHandler {
         int rc = handlerContext.getACLEngine().checkSearch(connection, baseEntry);
         if (rc != LDAPException.SUCCESS) return rc;
 
-		log.debug("Search base: " + baseEntry.getDn());
+		//log.debug("Search base: " + baseEntry.getDn());
 
 		if (scope == LDAPConnection.SCOPE_BASE || scope == LDAPConnection.SCOPE_SUB) { // base or subtree
 			if (handlerContext.getFilterTool().isValidEntry(baseEntry, f)) {
@@ -376,7 +376,7 @@ public class SearchHandler {
 		}
 
 		if (scope == LDAPConnection.SCOPE_ONE || scope == LDAPConnection.SCOPE_SUB) { // one level or subtree
-			log.debug("Searching children of " + baseEntry.getDn());
+			//log.debug("Searching children of " + baseEntry.getDn());
 			//searchChildren(connection, baseEntry, scope, f, normalizedAttributeNames, results);
             Collection parents = new ArrayList();
             parents.add(baseEntry);

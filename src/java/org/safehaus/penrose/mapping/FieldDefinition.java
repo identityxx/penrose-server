@@ -40,6 +40,7 @@ public class FieldDefinition implements Comparable, Cloneable {
 	private boolean primaryKey;
     private boolean searchable = true;
     private boolean unique;
+    private boolean index;
 
     /**
      * Encryption method used to encrypt the value
@@ -135,6 +136,8 @@ public class FieldDefinition implements Comparable, Cloneable {
                 (originalName == null ? 0 : originalName.hashCode()) +
                 (primaryKey ? 0 : 1) +
                 (searchable ? 0 : 1) +
+                (unique ? 0 : 1) +
+                (index ? 0 : 1) +
                 (encryption == null ? 0 : encryption.hashCode()) +
                 (encoding == null ? 0 : encoding.hashCode()) +
                 (type == null ? 0 : type.hashCode()) +
@@ -157,6 +160,8 @@ public class FieldDefinition implements Comparable, Cloneable {
         if (!equals(originalName, fieldDefinition.originalName)) return false;
         if (primaryKey != fieldDefinition.primaryKey) return false;
         if (searchable != fieldDefinition.searchable) return false;
+        if (unique != fieldDefinition.unique) return false;
+        if (index != fieldDefinition.index) return false;
         if (!equals(encryption, fieldDefinition.encryption)) return false;
         if (!equals(encoding, fieldDefinition.encoding)) return false;
         if (!equals(type, fieldDefinition.type)) return false;
@@ -179,6 +184,8 @@ public class FieldDefinition implements Comparable, Cloneable {
         originalName = fieldDefinition.originalName;
         primaryKey = fieldDefinition.primaryKey;
         searchable = fieldDefinition.searchable;
+        unique = fieldDefinition.unique;
+        index = fieldDefinition.index;
         encryption = fieldDefinition.encryption;
         encoding = fieldDefinition.encoding;
         type = fieldDefinition.type;
@@ -198,5 +205,13 @@ public class FieldDefinition implements Comparable, Cloneable {
 
     public void setUnique(boolean unique) {
         this.unique = unique;
+    }
+
+    public boolean isIndex() {
+        return index;
+    }
+
+    public void setIndex(boolean index) {
+        this.index = index;
     }
 }

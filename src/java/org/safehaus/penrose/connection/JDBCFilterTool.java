@@ -81,7 +81,7 @@ public class JDBCFilterTool {
         String operator = filter.getOperator();
         String value = filter.getValue();
 
-        log.debug("Converting "+name+" "+operator+" "+value);
+        //log.debug("Converting "+name+" "+operator+" "+value);
 
         if (name.equals("objectClass")) {
             if (value.equals("*"))

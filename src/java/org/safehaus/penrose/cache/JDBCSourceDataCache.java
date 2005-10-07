@@ -276,7 +276,7 @@ public class JDBCSourceDataCache extends SourceDataCache {
         return av;
     }
 
-    public Map search(Collection filters) throws Exception {
+    public Map search(Collection filters, Collection missingKeys) throws Exception {
 
         Map values = new TreeMap();
         if (filters.isEmpty()) return values;

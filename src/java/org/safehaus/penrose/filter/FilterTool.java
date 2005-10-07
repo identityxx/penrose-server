@@ -74,7 +74,7 @@ public class FilterTool {
             result = isValidEntry(entry, (OrFilter)filter);
         }
 
-        log.debug(" - "+filter+" -> "+(result ? "ok" : "false"));
+        //log.debug(" - "+filter+" -> "+(result ? "ok" : "false"));
 
         return result;
     }
@@ -183,13 +183,17 @@ public class FilterTool {
         return filter;
     }
 
-    public Filter createFilter(Row values, boolean includeValues) {
+    public Filter createFilter(Row row) {
+        return createFilter(row, true);
+    }
+
+    public Filter createFilter(Row row, boolean includeValues) {
 
         Filter f = null;
 
-        for (Iterator j=values.getNames().iterator(); j.hasNext(); ) {
+        for (Iterator j=row.getNames().iterator(); j.hasNext(); ) {
             String name = (String)j.next();
-            Object value = values.get(name);
+            Object value = row.get(name);
             if (value == null) continue;
 
             String strVal;
