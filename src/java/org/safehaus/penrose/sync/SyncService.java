@@ -268,47 +268,83 @@ public class SyncService {
 
         Collection results = new ArrayList();
         if (source.getSourceName() == null) return results;
-        
-        String key = source.getConnectionName()+"."+source.getSourceName();
-        log.debug("Checking source filter cache for ["+key+"]");
 
         Config config = syncContext.getConfig(source);
         ConnectionConfig connectionConfig = config.getConnectionConfig(source.getConnectionName());
         SourceDefinition sourceDefinition = connectionConfig.getSourceDefinition(source.getSourceName());
 
+        Collection uniqueFieldDefinitions = config.getUniqueFieldDefinitions(source);
+
+        log.debug("Checking source filter cache for "+filter);
         Collection pks = syncContext.getSourceFilterCache(connectionConfig, sourceDefinition).get(filter);
+        log.debug("Cache content: "+pks);
 
-        if (pks == null) {
+        if (pks != null) {
+            results.addAll(load(source, pks));
+            return results;
+        }
 
-            String method = sourceDefinition.getParameter(SourceDefinition.LOADING_METHOD);
-            log.debug("Loading method: "+method);
-            
-            if (SourceDefinition.SEARCH_AND_LOAD.equals(method)) {
-                log.debug("Searching pks for: "+filter);
-                SearchResults sr = searchEntries(source, filter);
-                pks = new ArrayList();
-                pks.addAll(sr.getAll());
+        String method = sourceDefinition.getParameter(SourceDefinition.LOADING_METHOD);
+        log.debug("Loading method: "+method);
 
-            } else {
-                log.debug("Loading entries for: "+filter);
-                Map map = loadEntries(source, filter);
-                pks = map.keySet();
-                results.addAll(map.values());
+        if (SourceDefinition.SEARCH_AND_LOAD.equals(method)) {
+            log.debug("Searching pks for: "+filter);
+            SearchResults sr = searchEntries(source, filter);
+            pks = new ArrayList();
+            pks.addAll(sr.getAll());
 
-                for (Iterator i=map.keySet().iterator(); i.hasNext(); ) {
-                    Row pk = (Row)i.next();
-                    AttributeValues values = (AttributeValues)map.get(pk);
-                    syncContext.getSourceDataCache(connectionConfig, sourceDefinition).put(pk, values);
+            results.addAll(load(source, pks));
+
+        } else {
+            log.debug("Loading entries for: "+filter);
+            Map map = loadEntries(source, filter);
+            pks = map.keySet();
+            results.addAll(map.values());
+
+            Collection uniqueKeys = new TreeSet();
+
+            for (Iterator i=map.keySet().iterator(); i.hasNext(); ) {
+                Row pk = (Row)i.next();
+                Row npk = syncContext.getSchema().normalize(pk);
+                AttributeValues values = (AttributeValues)map.get(pk);
+                syncContext.getSourceDataCache(connectionConfig, sourceDefinition).put(npk, values);
+
+                Collection list = new ArrayList();
+                list.add(npk);
+                Filter f = syncContext.getFilterTool().createFilter(list);
+                syncContext.getSourceFilterCache(connectionConfig, sourceDefinition).put(f, list);
+
+                for (Iterator j=uniqueFieldDefinitions.iterator(); j.hasNext(); ) {
+                    FieldDefinition fieldDefinition = (FieldDefinition)j.next();
+                    Object value = values.getOne(fieldDefinition.getName());
+
+                    Row uniqueKey = new Row();
+                    uniqueKey.set(fieldDefinition.getName(), value);
+                    Row normalizedUniqueKey = syncContext.getSchema().normalize(uniqueKey);
+
+                    syncContext.getSourceDataCache(connectionConfig, sourceDefinition).put(uniqueKey, values);
+
+                    list = new ArrayList();
+                    list.add(normalizedUniqueKey);
+                    f = syncContext.getFilterTool().createFilter(list);
+
+                    syncContext.getSourceFilterCache(connectionConfig, sourceDefinition).put(f, list);
+
+                    uniqueKeys.add(normalizedUniqueKey);
                 }
             }
 
-            syncContext.getSourceFilterCache(connectionConfig, sourceDefinition).put(filter, pks);
-
-            Filter newFilter = syncContext.getFilterTool().createFilter(pks);
-            syncContext.getSourceFilterCache(connectionConfig, sourceDefinition).put(newFilter, pks);
+            if (!uniqueKeys.isEmpty()) {
+                Filter f = syncContext.getFilterTool().createFilter(uniqueKeys);
+                syncContext.getSourceFilterCache(connectionConfig, sourceDefinition).put(f, pks);
+            }
         }
 
-        results.addAll(load(source, pks));
+        syncContext.getSourceFilterCache(connectionConfig, sourceDefinition).put(filter, pks);
+
+        Filter newFilter = syncContext.getFilterTool().createFilter(pks);
+        syncContext.getSourceFilterCache(connectionConfig, sourceDefinition).put(newFilter, pks);
+
 /*
         log.debug("Checking source cache for pks "+pks);
         Map loadedRows = syncContext.getSourceDataCache(connectionConfig, sourceDefinition).search(pks);
@@ -355,11 +391,13 @@ public class SyncService {
         ConnectionConfig connectionConfig = config.getConnectionConfig(source.getConnectionName());
         SourceDefinition sourceDefinition = connectionConfig.getSourceDefinition(source.getSourceName());
 
+        Collection uniqueFieldDefinitions = config.getUniqueFieldDefinitions(source);
+
         Map loadedRows = syncContext.getSourceDataCache(connectionConfig, sourceDefinition).search(pks);
         log.debug("Loaded rows: "+loadedRows.keySet());
         results.putAll(loadedRows);
 
-        Collection pksToLoad = new HashSet();
+        Collection pksToLoad = new TreeSet();
         pksToLoad.addAll(pks);
         pksToLoad.removeAll(results.keySet());
         pksToLoad.removeAll(loadedRows.keySet());
@@ -370,10 +408,44 @@ public class SyncService {
             Map map = loadEntries(source, newFilter);
             results.putAll(map);
 
+            Collection uniqueKeys = new TreeSet();
+
             for (Iterator i=map.keySet().iterator(); i.hasNext(); ) {
                 Row pk = (Row)i.next();
+                Row npk = syncContext.getSchema().normalize(pk);
                 AttributeValues values = (AttributeValues)map.get(pk);
-                syncContext.getSourceDataCache(connectionConfig, sourceDefinition).put(pk, values);
+
+                syncContext.getSourceDataCache(connectionConfig, sourceDefinition).put(npk, values);
+
+                Collection list = new ArrayList();
+                list.add(npk);
+                Filter f = syncContext.getFilterTool().createFilter(list);
+
+                syncContext.getSourceFilterCache(connectionConfig, sourceDefinition).put(f, list);
+
+                for (Iterator j=uniqueFieldDefinitions.iterator(); j.hasNext(); ) {
+                    FieldDefinition fieldDefinition = (FieldDefinition)j.next();
+                    Object value = values.getOne(fieldDefinition.getName());
+
+                    Row uniqueKey = new Row();
+                    uniqueKey.set(fieldDefinition.getName(), value);
+                    Row normalizedUniqueKey = syncContext.getSchema().normalize(uniqueKey);
+
+                    syncContext.getSourceDataCache(connectionConfig, sourceDefinition).put(uniqueKey, values);
+
+                    list = new ArrayList();
+                    list.add(normalizedUniqueKey);
+                    f = syncContext.getFilterTool().createFilter(list);
+
+                    syncContext.getSourceFilterCache(connectionConfig, sourceDefinition).put(f, list);
+
+                    uniqueKeys.add(normalizedUniqueKey);
+                }
+            }
+
+            if (!uniqueKeys.isEmpty()) {
+                Filter f = syncContext.getFilterTool().createFilter(uniqueKeys);
+                syncContext.getSourceFilterCache(connectionConfig, sourceDefinition).put(f, pks);
             }
 
             syncContext.getSourceFilterCache(connectionConfig, sourceDefinition).put(newFilter, map.keySet());
@@ -404,13 +476,13 @@ public class SyncService {
             return results;
         }
 
-        log.debug("Search results:");
+        //log.debug("Search results:");
 
         for (Iterator i=sr.iterator(); i.hasNext();) {
             Row pk = (Row)i.next();
 
             Row npk = syncContext.getSchema().normalize(pk);
-            log.debug(" - PK: "+npk);
+            //log.debug(" - PK: "+npk);
 
             results.add(npk);
         }
@@ -441,7 +513,7 @@ public class SyncService {
             return results;
         }
 
-        log.debug("Load results:");
+        //log.debug("Load results:");
 
         for (Iterator i=sr.iterator(); i.hasNext();) {
             AttributeValues av = (AttributeValues)i.next();
@@ -467,7 +539,7 @@ public class SyncService {
             if (pk == null) continue;
             
             Row npk = syncContext.getSchema().normalize(pk);
-            log.debug(" - PK: "+npk);
+            //log.debug(" - PK: "+npk);
 
             results.put(npk, av);
         }

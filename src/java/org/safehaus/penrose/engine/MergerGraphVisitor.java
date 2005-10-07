@@ -94,6 +94,8 @@ public class MergerGraphVisitor extends GraphVisitor {
 
             } else if (object instanceof Collection) {
                 Collection pks = (Collection)object;
+                //Filter f = engineContext.getFilterTool().createFilter(pks);
+                //values = engineContext.getSyncService().search(source, f);
                 values = engineContext.getSyncService().load(source, pks);
 
             } else {

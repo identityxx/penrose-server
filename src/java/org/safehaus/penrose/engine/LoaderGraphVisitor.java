@@ -73,7 +73,7 @@ public class LoaderGraphVisitor extends GraphVisitor {
         //    return;
         //}
 
-        Collection results = new ArrayList();
+        Collection results = new TreeSet();
 
         if (entryDefinition.getSource(source.getName()) == null && sourceValues.contains(source.getName())) {
             Collection list = engine.getEngineContext().getTransformEngine().convert(sourceValues);
@@ -92,6 +92,8 @@ public class LoaderGraphVisitor extends GraphVisitor {
 
             } else if (object instanceof Collection) {
                 Collection pks = (Collection)object;
+                //Filter f = engineContext.getFilterTool().createFilter(pks);
+                //values = engineContext.getSyncService().search(source, f);
                 values = engineContext.getSyncService().load(source, pks);
 
             } else {

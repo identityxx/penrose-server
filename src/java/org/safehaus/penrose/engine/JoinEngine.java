@@ -126,13 +126,6 @@ public class JoinEngine {
         graph.traverse(loaderVisitor, primarySource);
         //Map attributeValues = loaderVisitor.getAttributeValues();
 
-        log.debug("Parent entries:");
-        for (Iterator i=parents.iterator(); i.hasNext(); ) {
-            Entry entry = (Entry)i.next();
-            AttributeValues values = entry.getSourceValues();
-            log.debug(" - "+entry.getDn()+": "+values);
-        }
-
         Collection entries = new ArrayList();
         for (Iterator i=pks.iterator(); i.hasNext(); ) {
             Row pk = (Row)i.next();
@@ -149,13 +142,6 @@ public class JoinEngine {
             log.debug("Merged: "+av);
 
             entries.add(av);
-        }
-
-        log.debug("Parent entries:");
-        for (Iterator i=parents.iterator(); i.hasNext(); ) {
-            Entry entry = (Entry)i.next();
-            AttributeValues values = entry.getSourceValues();
-            log.debug(" - "+entry.getDn()+": "+values);
         }
 
         merge(parent, entryDefinition, entries, results);

@@ -108,8 +108,8 @@ public class FilterTool {
         if (set == null) return false;
 
         for (Iterator i=set.iterator(); i.hasNext(); ) {
-            String value = (String)i.next();
-            if (attributeComparison.equalsIgnoreCase(value)) return true;
+            Object value = i.next();
+            if (attributeComparison.equalsIgnoreCase(value.toString())) return true;
         }
         return false;
     }

@@ -96,6 +96,12 @@ public class AttributeValues implements Cloneable {
         return (Collection)values.get(name);
     }
 
+    public Object getOne(String name) {
+        Collection c = (Collection)values.get(name);
+        if (c == null || c.isEmpty()) return null;
+        return c.iterator().next();
+    }
+    
     public Collection getNames() {
         return values.keySet();
     }

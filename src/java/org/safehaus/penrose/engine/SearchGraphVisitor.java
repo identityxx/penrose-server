@@ -19,7 +19,6 @@ package org.safehaus.penrose.engine;
 
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.filter.Filter;
-import org.safehaus.penrose.filter.AndFilter;
 import org.safehaus.penrose.config.Config;
 import org.safehaus.penrose.graph.GraphVisitor;
 import org.safehaus.penrose.graph.Graph;
@@ -103,9 +102,10 @@ public class SearchGraphVisitor extends GraphVisitor {
 
             if (values.size() == 0) return;
 
-            log.debug("Records:");
+            log.debug("Found "+values.size()+" record(s):");
             for (Iterator i=values.iterator(); i.hasNext(); ) {
                 AttributeValues av = (AttributeValues)i.next();
+                log.debug(" - "+av);
                 Collection list = engine.getEngineContext().getTransformEngine().convert(av);
                 for (Iterator j=list.iterator(); j.hasNext(); ) {
                     Row row = (Row)j.next();
@@ -116,7 +116,7 @@ public class SearchGraphVisitor extends GraphVisitor {
                         if (value == null) continue;
                         newRow.set(source.getName()+"."+name, value);
                     }
-                    log.debug(" - "+newRow);
+                    log.debug("   - Row: "+newRow);
                     results.add(newRow);
                 }
             }

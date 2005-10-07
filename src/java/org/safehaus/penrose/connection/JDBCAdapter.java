@@ -21,6 +21,7 @@ import org.apache.commons.dbcp.*;
 import org.apache.commons.pool.impl.GenericObjectPool;
 import org.ietf.ldap.LDAPException;
 import org.safehaus.penrose.SearchResults;
+import org.safehaus.penrose.logger.LoggerTool;
 import org.safehaus.penrose.config.Config;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.mapping.*;
@@ -127,7 +128,6 @@ public class JDBCAdapter extends Adapter {
     public SearchResults search(Source source, Filter filter, long sizeLimit) throws Exception {
         SearchResults results = new SearchResults();
 
-        //log.debug("--------------------------------------------------------------------------------------");
         log.debug("Searching JDBC Source: "+source.getConnectionName()+"/"+source.getSourceName()+": "+filter);
 
         Config config = getAdapterContext().getConfig(source);
@@ -173,16 +173,22 @@ public class JDBCAdapter extends Adapter {
         try {
             con = ds.getConnection();
 
-            log.debug("Executing "+sql);
+            log.debug(LoggerTool.displaySeparator(80));
+            log.debug(LoggerTool.displayLine(sql, 80));
+            log.debug(LoggerTool.displaySeparator(80));
 
             ps = con.prepareStatement(sql);
+
+            log.debug(LoggerTool.displayLine("Parameters:", 80));
 
             int counter = 0;
             for (Iterator i=parameters.iterator(); i.hasNext(); ) {
                 Object param = i.next();
                 ps.setObject(++counter, param);
-                log.debug(" - "+counter+" = "+param);
+                log.debug(LoggerTool.displayLine(" - "+counter+" = "+param, 80));
             }
+
+            log.debug(LoggerTool.displaySeparator(80));
 
             rs = ps.executeQuery();
 
@@ -223,34 +229,43 @@ public class JDBCAdapter extends Adapter {
         SourceDefinition sourceDefinition = connectionConfig.getSourceDefinition(source.getSourceName());
 
         String tableName = sourceDefinition.getParameter(TABLE_NAME);
-        String sqlFilter = sourceDefinition.getParameter(FILTER);
-        log.debug("tableName: "+tableName);
-        log.debug("filter: "+sqlFilter);
+        String s = sourceDefinition.getParameter(FILTER);
+
+        StringBuffer sqlFilter = new StringBuffer();
+        if (s != null) sqlFilter.append(s);
 
         StringBuffer sb = new StringBuffer();
-        sb.append("select ");
-        sb.append(getFieldNames(source));
-        sb.append(" from ");
-        sb.append(tableName);
 
-        StringBuffer sb2 = new StringBuffer();
-        if (sqlFilter != null) {
-            sb2.append(sqlFilter);
-        }
+        StringBuffer select = new StringBuffer();
+        select.append("select ");
+        select.append(getFieldNames(source));
+        sb.append(select);
+
+        StringBuffer from = new StringBuffer();
+        from.append("from ");
+        from.append(tableName);
+        sb.append(" ");
+        sb.append(from);
 
         List parameters = new ArrayList();
         if (filter != null) {
-            if (sb2.length() > 0) sb2.append(" and ");
-            sb2.append(filterTool.convert(source, filter, parameters));
+            if (sqlFilter.length() > 0) sqlFilter.append(" and ");
+            sqlFilter.append(filterTool.convert(source, filter, parameters));
         }
 
-        if (sb2.length() > 0) {
-            sb.append(" where ");
-            sb.append(sb2);
+        StringBuffer whereClause = new StringBuffer();
+        if (sqlFilter.length() > 0) {
+            whereClause.append("where ");
+            whereClause.append(sqlFilter);
+            sb.append(" ");
+            sb.append(whereClause);
         }
 
-        sb.append(" order by ");
-        sb.append(getPkFieldNames(source));
+        StringBuffer orderBy = new StringBuffer();
+        orderBy.append("order by ");
+        orderBy.append(getPkFieldNames(source));
+        sb.append(" ");
+        sb.append(orderBy);
 
         String sql = sb.toString();
 
@@ -261,15 +276,30 @@ public class JDBCAdapter extends Adapter {
         try {
             con = ds.getConnection();
 
-            log.debug("Executing "+sql);
+            log.debug(LoggerTool.displaySeparator(80));
+            log.debug(LoggerTool.displayLine(select.toString(), 80));
+            log.debug(LoggerTool.displayLine(from.toString(), 80));
+
+            if (whereClause.length() > 0) {
+                log.debug(LoggerTool.displayLine(whereClause.toString(), 80));
+            }
+
+            log.debug(LoggerTool.displayLine(orderBy.toString(), 80));
+            log.debug(LoggerTool.displaySeparator(80));
 
             ps = con.prepareStatement(sql);
 
-            int counter = 0;
-            for (Iterator i=parameters.iterator(); i.hasNext(); ) {
-                Object param = i.next();
-                ps.setObject(++counter, param);
-                log.debug(" - "+counter+" = "+param);
+            if (parameters.size() > 0) {
+                log.debug(LoggerTool.displayLine("Parameters:", 80));
+
+                int counter = 0;
+                for (Iterator i=parameters.iterator(); i.hasNext(); ) {
+                    Object param = i.next();
+                    ps.setObject(++counter, param);
+                    log.debug(LoggerTool.displayLine(" - "+counter+" = "+param, 80));
+                }
+
+                log.debug(LoggerTool.displaySeparator(80));
             }
 
             rs = ps.executeQuery();
@@ -398,16 +428,23 @@ public class JDBCAdapter extends Adapter {
             }
 
             String sql = "insert into "+tableName+" ("+sb+") values ("+sb2+")";
-            log.debug("Executing "+sql);
+
+            log.debug(LoggerTool.displaySeparator(80));
+            log.debug(LoggerTool.displayLine(sql, 80));
+            log.debug(LoggerTool.displaySeparator(80));
 
             ps = con.prepareStatement(sql);
+
+            log.debug(LoggerTool.displayLine("Parameters:", 80));
 
             int c = 1;
             for (Iterator i=parameters.iterator(); i.hasNext(); c++) {
                 Object obj = i.next();
                 ps.setObject(c, obj);
-                log.debug(" - "+c+" = "+(obj == null ? null : obj.toString()));
+                log.debug(LoggerTool.displayLine(" - "+c+" = "+(obj == null ? null : obj.toString()), 80));
             }
+
+            log.debug(LoggerTool.displaySeparator(80));
 
             ps.executeUpdate();
 
@@ -477,17 +514,24 @@ public class JDBCAdapter extends Adapter {
             }
 
             String sql = "delete from "+tableName+" where "+sb;
-            log.debug("Executing "+sql);
+
+            log.debug(LoggerTool.displaySeparator(80));
+            log.debug(LoggerTool.displayLine(sql, 80));
+            log.debug(LoggerTool.displaySeparator(80));
 
             ps = con.prepareStatement(sql);
+
+            log.debug(LoggerTool.displayLine("Parameters:", 80));
 
             int c = 1;
             for (Iterator i=pkRow.getNames().iterator(); i.hasNext(); c++) {
                 String name = (String)i.next();
                 Object value = pkRow.get(name);
                 ps.setObject(c, value);
-                log.debug(" - "+c+" = "+value);
+                log.debug(LoggerTool.displayLine(" - "+c+" = "+value, 80));
             }
+
+            log.debug(LoggerTool.displaySeparator(80));
 
             int count = ps.executeUpdate();
             if (count == 0) return LDAPException.NO_SUCH_OBJECT;
@@ -555,16 +599,23 @@ public class JDBCAdapter extends Adapter {
             }
 
             String sql = "update "+tableName+" set "+sb+" where "+sb2;
-            log.debug("Executing "+sql);
+
+            log.debug(LoggerTool.displaySeparator(80));
+            log.debug(LoggerTool.displayLine(sql, 80));
+            log.debug(LoggerTool.displaySeparator(80));
 
             ps = con.prepareStatement(sql);
+
+            log.debug(LoggerTool.displayLine("Parameters:", 80));
 
             int c = 1;
             for (Iterator i=parameters.iterator(); i.hasNext(); c++) {
                 Object value = i.next();
                 ps.setObject(c, value);
-                log.debug(" - "+c+" = "+value);
+                log.debug(LoggerTool.displayLine(" - "+c+" = "+value, 80));
             }
+
+            log.debug(LoggerTool.displaySeparator(80));
 
             int count = ps.executeUpdate();
             if (count == 0) return LDAPException.NO_SUCH_OBJECT;

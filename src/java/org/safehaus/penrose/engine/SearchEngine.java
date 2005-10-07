@@ -59,7 +59,7 @@ public class SearchEngine {
         for (Iterator i=parents.iterator(); i.hasNext(); ) {
             Entry entry = (Entry)i.next();
             AttributeValues values = entry.getSourceValues();
-            log.debug(" - "+entry.getDn()+": "+values);            
+            log.debug(" - "+entry.getDn()+": "+values);
             sourceValues.add(values);
         }
         log.debug("Parent values: "+sourceValues);
@@ -123,7 +123,7 @@ public class SearchEngine {
         Source primarySource = engine.getPrimarySource(entryDefinition);
 
         log.debug("Search results:");
-        Collection rdns = new ArrayList();
+        Collection rdns = new TreeSet();
 
         for (Iterator i=rows.iterator(); i.hasNext(); ) {
             Row row = (Row)i.next();
