@@ -126,7 +126,8 @@ public class JoinEngine {
         graph.traverse(loaderVisitor, primarySource);
         //Map attributeValues = loaderVisitor.getAttributeValues();
 
-        Collection entries = new ArrayList();
+        log.debug("Merging:");
+
         for (Iterator i=pks.iterator(); i.hasNext(); ) {
             Row pk = (Row)i.next();
 
@@ -141,25 +142,11 @@ public class JoinEngine {
             AttributeValues av = mergerVisitor.getAttributeValues();
             log.debug("Merged: "+av);
 
-            entries.add(av);
-        }
-
-        merge(parent, entryDefinition, entries, results);
-    }
-
-    public void merge(Entry parent, EntryDefinition entryDefinition, Collection entries, SearchResults results) throws Exception {
-
-        log.debug("Merging:");
-
-        // merge rows into attribute values
-        for (Iterator i = entries.iterator(); i.hasNext(); ) {
-            AttributeValues sourceValues = (AttributeValues)i.next();
-            engine.createEntries(entryDefinition, sourceValues, results);
+            engine.createEntries(entryDefinition, av, results);
         }
 
         results.close();
     }
-
 
     public Engine getEngine() {
         return engine;
