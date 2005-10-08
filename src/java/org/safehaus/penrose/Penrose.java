@@ -588,7 +588,7 @@ public class Penrose implements
         CacheConfig cacheConfig = serverConfig.getCacheConfig(cacheName);
 
         String key = entryDefinition.getRdn()+","+parentDn;
-        log.debug("Getting entry filter cache for: "+key);
+        //log.debug("Getting entry filter cache for: "+key);
 
         EntryFilterCache entryFilterCache = (EntryFilterCache)entryFilterCaches.get(key);
 
@@ -607,7 +607,7 @@ public class Penrose implements
         CacheConfig cacheConfig = serverConfig.getCacheConfig(cacheName);
 
         String key = entryDefinition.getRdn()+","+parentDn;
-        log.debug("Getting entry data cache for: "+key);
+        //log.debug("Getting entry data cache for: "+key);
 
         EntryDataCache cache = (EntryDataCache)entryDataCaches.get(key);
 

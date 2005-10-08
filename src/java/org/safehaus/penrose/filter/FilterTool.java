@@ -282,7 +282,7 @@ public class FilterTool {
             result = isValidEntry(entryDefinition, (PresentFilter)filter);
         }
 
-        log.debug("=> "+filter+" ("+filter.getClass().getName()+"): "+result);
+        // log.debug("=> "+filter+" ("+filter.getClass().getName()+"): "+result);
 
         return result;
     }

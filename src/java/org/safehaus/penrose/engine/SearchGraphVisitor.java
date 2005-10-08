@@ -73,11 +73,13 @@ public class SearchGraphVisitor extends GraphVisitor {
 
         Source source = (Source)node;
         Filter filter = (Filter)stack.peek();
-        log.debug("Searching "+source.getName()+" for: "+filter);
+        log.debug("Visiting source "+source.getName());
 
         Collection results = new ArrayList();
 
         if (entryDefinition.getSource(source.getName()) == null && sourceValues.contains(source.getName())) {
+            log.debug("Source "+source.getName()+" has been searched:");
+
             Collection list = engine.getEngineContext().getTransformEngine().convert(sourceValues);
             for (Iterator j=list.iterator(); j.hasNext(); ) {
                 Row row = (Row)j.next();
@@ -86,6 +88,7 @@ public class SearchGraphVisitor extends GraphVisitor {
             }
 
         } else {
+
             Collection values;
 
             Filter f = engine.getFilterTool().toSourceFilter(null, entryDefinition, source, searchFilter);
@@ -97,6 +100,8 @@ public class SearchGraphVisitor extends GraphVisitor {
                 Filter sourceFilter = engineContext.getFilterTool().parseFilter(s);
                 filter = engineContext.getFilterTool().appendAndFilter(filter, sourceFilter);
             }
+
+            log.debug("Searching source "+source.getName()+" with filter "+filter);
 
             values = engine.getEngineContext().getSyncService().search(source, filter);
 

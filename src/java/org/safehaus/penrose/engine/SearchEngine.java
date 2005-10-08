@@ -22,6 +22,7 @@ import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.config.Config;
 import org.safehaus.penrose.graph.Graph;
 import org.safehaus.penrose.interpreter.Interpreter;
+import org.safehaus.penrose.util.Formatter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -50,19 +51,18 @@ public class SearchEngine {
 
         Entry parent = parents.isEmpty() ? null : (Entry)parents.iterator().next();
         String dn = parent == null ? entryDefinition.getDn() : entryDefinition.getRdn()+","+parent.getDn();
-        log.debug("Searching entry "+dn+" for "+filter);
+        //log.debug("Searching entry "+dn+" for "+filter);
 
         AttributeValues sourceValues = new AttributeValues();
         //if (parent != null) engine.getFieldValues("parent", dn, sourceValues);
 
-        log.debug("Parent entries:");
+        //log.debug("Parent entries:");
         for (Iterator i=parents.iterator(); i.hasNext(); ) {
             Entry entry = (Entry)i.next();
             AttributeValues values = entry.getSourceValues();
-            log.debug(" - "+entry.getDn()+": "+values);
+            //log.debug(" - "+entry.getDn()+": "+values);
             sourceValues.add(values);
         }
-        log.debug("Parent values: "+sourceValues);
 
         Collection newRows = engineContext.getTransformEngine().convert(sourceValues);
 
@@ -75,6 +75,8 @@ public class SearchEngine {
         Filter newFilter = null;
 
         Relationship relationship = engine.getConnectingRelationship(entryDefinition);
+        log.debug("Connecting relationship: "+relationship);
+
         if (relationship != null) {
             String lhs = relationship.getLhs();
             String lsourceName = lhs.substring(0, lhs.indexOf("."));
@@ -97,9 +99,8 @@ public class SearchEngine {
             newFilter = engine.getFilterTool().toSourceFilter(sourceValues, entryDefinition, startingSource, filter);
         }
 
-        log.debug("Starting from source: "+(startingSource == null ? null : startingSource.getName()));
-        log.debug("With filter: "+newFilter);
-
+        log.debug("Starting source: "+startingSource);
+        log.debug("Starting filter: "+newFilter);
 
         if (startingSource == null) {
             Interpreter interpreter = engineContext.newInterpreter();
@@ -122,12 +123,12 @@ public class SearchEngine {
     public Collection computeRdns(EntryDefinition entryDefinition, Collection rows) throws Exception {
         Source primarySource = engine.getPrimarySource(entryDefinition);
 
-        log.debug("Search results:");
+        //log.debug("Generating RDNs:");
         Collection rdns = new TreeSet();
 
         for (Iterator i=rows.iterator(); i.hasNext(); ) {
             Row row = (Row)i.next();
-            log.debug(" - "+row);
+            //log.debug(" - "+row);
 
             Interpreter interpreter = engineContext.newInterpreter();
             for (Iterator k=row.getNames().iterator(); k.hasNext(); ) {
@@ -140,7 +141,7 @@ public class SearchEngine {
             Row rdn = computeRdn(entryDefinition, interpreter);
             if (rdn == null) continue;
 
-            log.debug("   ==> RDN: "+rdn);
+            //log.debug(" - "+rdn);
             rdns.add(rdn);
         }
 
@@ -164,9 +165,9 @@ public class SearchEngine {
             rdn.set(name, value);
         }
 
-        Row nrdn = engineContext.getSchema().normalize(rdn);
+        //Row nrdn = engineContext.getSchema().normalize(rdn);
 
-        return nrdn;
+        return rdn;
     }
 
     public Engine getEngine() {

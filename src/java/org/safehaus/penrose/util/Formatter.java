@@ -15,19 +15,24 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
-package org.safehaus.penrose.logger;
+package org.safehaus.penrose.util;
 
 /**
  * @author Endi S. Dewata
  */
-public class LoggerTool {
+public class Formatter {
 
     public static String displaySeparator(int length) {
         return "+"+repeat("-", length-2)+"+";
     }
 
     public static String displayLine(String string, int length) {
-        return "| "+string+repeat(" ", length-string.length()-4)+" |";
+        return "| "+rightPad(string, length-4)+" |";
+    }
+
+    public static String rightPad(String s, int length) {
+        if (s.length() > length) return s.substring(0, length);
+        return s+repeat(" ", length-s.length());
     }
 
     public static String repeat(String s, int length) {

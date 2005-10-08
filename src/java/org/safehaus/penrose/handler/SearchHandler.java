@@ -405,13 +405,6 @@ public class SearchHandler {
             SearchResults results,
             boolean first) throws Exception {
 
-        log.debug("Search "+entryDefinition.getDn()+" with parent entries:");
-        for (Iterator i=parents.iterator(); i.hasNext(); ) {
-            Entry entry = (Entry)i.next();
-            AttributeValues values = entry.getSourceValues();
-            log.debug(" - "+entry.getDn()+": "+values);
-        }
-
         Config config = handlerContext.getConfig(entryDefinition.getDn());
         Collection children = config.getChildren(entryDefinition);
         if (children == null) {
@@ -422,14 +415,9 @@ public class SearchHandler {
 
         for (Iterator i = children.iterator(); i.hasNext();) {
             EntryDefinition childDefinition = (EntryDefinition) i.next();
+            //log.debug("Checking children: " + childDefinition.getDn());
 
-            String childDn = childDefinition.getRdn()+","+entryDefinition.getDn();
-            log.debug("Checking children: " + childDn);
-
-            if (!handlerContext.getFilterTool().isValidEntry(childDefinition, filter)) {
-                log.debug("==> filter not applicable");
-                continue;
-            }
+            if (!handlerContext.getFilterTool().isValidEntry(childDefinition, filter)) continue;
 
             SearchResults sr = new SearchResults();
             handlerContext.getEngine().search(connection, parents, childDefinition, filter, sr);
@@ -440,17 +428,16 @@ public class SearchHandler {
                 int rc = handlerContext.getACLEngine().checkSearch(connection, child);
                 if (rc != LDAPException.SUCCESS) continue;
 
-                if (handlerContext.getFilterTool().isValidEntry(child, filter)) {
+                if (!handlerContext.getFilterTool().isValidEntry(child, filter)) continue;
 
-                    rc = handlerContext.getACLEngine().checkRead(connection, child);
-                    if (rc == LDAPException.SUCCESS) {
-                        newParents.add(child);
+                rc = handlerContext.getACLEngine().checkRead(connection, child);
+                if (rc != LDAPException.SUCCESS) continue;
 
-                        LDAPEntry en = child.toLDAPEntry();
-                        Entry.filterAttributes(en, attributeNames);
-                        results.add(en);
-                    }
-                }
+                newParents.add(child);
+
+                LDAPEntry en = child.toLDAPEntry();
+                Entry.filterAttributes(en, attributeNames);
+                results.add(en);
             }
         }
 

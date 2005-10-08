@@ -88,7 +88,7 @@ public class JoinEngine {
             log.debug(" - "+entry.getDn()+": "+values);
             sourceValues.add(values);
         }
-        log.debug("Parent values: "+sourceValues);
+        //log.debug("Parent values: "+sourceValues);
 
         Config config = engineContext.getConfig(entryDefinition.getDn());
         Graph graph = engine.getGraph(entryDefinition);

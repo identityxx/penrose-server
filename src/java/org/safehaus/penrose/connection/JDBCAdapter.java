@@ -21,7 +21,8 @@ import org.apache.commons.dbcp.*;
 import org.apache.commons.pool.impl.GenericObjectPool;
 import org.ietf.ldap.LDAPException;
 import org.safehaus.penrose.SearchResults;
-import org.safehaus.penrose.logger.LoggerTool;
+import org.safehaus.penrose.util.Formatter;
+import org.safehaus.penrose.util.Formatter;
 import org.safehaus.penrose.config.Config;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.mapping.*;
@@ -128,7 +129,7 @@ public class JDBCAdapter extends Adapter {
     public SearchResults search(Source source, Filter filter, long sizeLimit) throws Exception {
         SearchResults results = new SearchResults();
 
-        log.debug("Searching JDBC Source: "+source.getConnectionName()+"/"+source.getSourceName()+": "+filter);
+        log.debug("Searching JDBC source "+source.getConnectionName()+"/"+source.getSourceName());
 
         Config config = getAdapterContext().getConfig(source);
         ConnectionConfig connectionConfig = config.getConnectionConfig(source.getConnectionName());
@@ -173,22 +174,22 @@ public class JDBCAdapter extends Adapter {
         try {
             con = ds.getConnection();
 
-            log.debug(LoggerTool.displaySeparator(80));
-            log.debug(LoggerTool.displayLine(sql, 80));
-            log.debug(LoggerTool.displaySeparator(80));
+            log.debug(Formatter.displaySeparator(80));
+            log.debug(Formatter.displayLine(sql, 80));
+            log.debug(Formatter.displaySeparator(80));
 
             ps = con.prepareStatement(sql);
 
-            log.debug(LoggerTool.displayLine("Parameters:", 80));
+            log.debug(Formatter.displayLine("Parameters:", 80));
 
             int counter = 0;
             for (Iterator i=parameters.iterator(); i.hasNext(); ) {
                 Object param = i.next();
                 ps.setObject(++counter, param);
-                log.debug(LoggerTool.displayLine(" - "+counter+" = "+param, 80));
+                log.debug(Formatter.displayLine(" - "+counter+" = "+param, 80));
             }
 
-            log.debug(LoggerTool.displaySeparator(80));
+            log.debug(Formatter.displaySeparator(80));
 
             rs = ps.executeQuery();
 
@@ -221,8 +222,7 @@ public class JDBCAdapter extends Adapter {
     public SearchResults load(Source source, Filter filter, long sizeLimit) throws Exception {
         SearchResults results = new SearchResults();
 
-        //log.debug("--------------------------------------------------------------------------------------");
-        log.debug("Loading JDBC Source: "+source.getConnectionName()+"/"+source.getSourceName()+": "+filter);
+        log.debug("Loading JDBC source "+source.getConnectionName()+"/"+source.getSourceName());
 
         Config config = getAdapterContext().getConfig(source);
         ConnectionConfig connectionConfig = config.getConnectionConfig(source.getConnectionName());
@@ -276,42 +276,96 @@ public class JDBCAdapter extends Adapter {
         try {
             con = ds.getConnection();
 
-            log.debug(LoggerTool.displaySeparator(80));
-            log.debug(LoggerTool.displayLine(select.toString(), 80));
-            log.debug(LoggerTool.displayLine(from.toString(), 80));
+            log.debug(Formatter.displaySeparator(80));
+            log.debug(Formatter.displayLine(select.toString(), 80));
+            log.debug(Formatter.displayLine(from.toString(), 80));
 
             if (whereClause.length() > 0) {
-                log.debug(LoggerTool.displayLine(whereClause.toString(), 80));
+                log.debug(Formatter.displayLine(whereClause.toString(), 80));
             }
 
-            log.debug(LoggerTool.displayLine(orderBy.toString(), 80));
-            log.debug(LoggerTool.displaySeparator(80));
+            log.debug(Formatter.displayLine(orderBy.toString(), 80));
+            log.debug(Formatter.displaySeparator(80));
 
             ps = con.prepareStatement(sql);
 
             if (parameters.size() > 0) {
-                log.debug(LoggerTool.displayLine("Parameters:", 80));
+                log.debug(Formatter.displayLine("Parameters:", 80));
 
                 int counter = 0;
                 for (Iterator i=parameters.iterator(); i.hasNext(); ) {
                     Object param = i.next();
                     ps.setObject(++counter, param);
-                    log.debug(LoggerTool.displayLine(" - "+counter+" = "+param, 80));
+                    log.debug(Formatter.displayLine(" - "+counter+" = "+param, 80));
                 }
 
-                log.debug(LoggerTool.displaySeparator(80));
+                log.debug(Formatter.displaySeparator(80));
             }
 
             rs = ps.executeQuery();
 
-            log.debug("Result:");
+            int width = 0;
+            boolean first = true;
 
             for (int i=0; rs.next() && (sizeLimit == 0 || i<sizeLimit); i++) {
-
                 AttributeValues av = getValues(source, rs);
-                log.debug(" - "+av);
-
                 results.add(av);
+
+                if (first) {
+                    StringBuffer resultHeader = new StringBuffer();
+                    resultHeader.append("|");
+
+                    Collection fields = sourceDefinition.getFieldDefinitions();
+                    for (Iterator j=fields.iterator(); j.hasNext(); ) {
+                        FieldDefinition fieldDefinition = (FieldDefinition)j.next();
+
+                        String name = fieldDefinition.getName();
+                        int length = fieldDefinition.getLength() > 15 ? 15 : fieldDefinition.getLength();
+
+                        resultHeader.append(" ");
+                        resultHeader.append(Formatter.rightPad(name, length));
+                        resultHeader.append(" |");
+                    }
+
+                    width = resultHeader.length();
+
+                    log.debug("Results:");
+                    log.debug(Formatter.displaySeparator(width));
+                    log.debug(resultHeader.toString());
+                    log.debug(Formatter.displaySeparator(width));
+
+                    first = false;
+                }
+
+                StringBuffer resultFields = new StringBuffer();
+                resultFields.append("| ");
+
+                Collection fields = sourceDefinition.getFieldDefinitions();
+                for (Iterator j=fields.iterator(); j.hasNext(); ) {
+                    FieldDefinition fieldDefinition = (FieldDefinition)j.next();
+
+                    Collection c = av.get(fieldDefinition.getName());
+
+                    String value;
+                    if (c == null) {
+                        value = null;
+                    } else if (c.size() == 1) {
+                        value = c.iterator().next().toString();
+                    } else {
+                        value = c.toString();
+                    }
+
+                    int length = fieldDefinition.getLength() > 15 ? 15 : fieldDefinition.getLength();
+
+                    resultFields.append(Formatter.rightPad(value, length));
+                    resultFields.append(" | ");
+                }
+
+                log.debug(resultFields.toString());
+            }
+
+            if (width > 0) {
+                log.debug(Formatter.displaySeparator(width));
             }
 
             if (rs.next()) {
@@ -429,22 +483,22 @@ public class JDBCAdapter extends Adapter {
 
             String sql = "insert into "+tableName+" ("+sb+") values ("+sb2+")";
 
-            log.debug(LoggerTool.displaySeparator(80));
-            log.debug(LoggerTool.displayLine(sql, 80));
-            log.debug(LoggerTool.displaySeparator(80));
+            log.debug(Formatter.displaySeparator(80));
+            log.debug(Formatter.displayLine(sql, 80));
+            log.debug(Formatter.displaySeparator(80));
 
             ps = con.prepareStatement(sql);
 
-            log.debug(LoggerTool.displayLine("Parameters:", 80));
+            log.debug(Formatter.displayLine("Parameters:", 80));
 
             int c = 1;
             for (Iterator i=parameters.iterator(); i.hasNext(); c++) {
                 Object obj = i.next();
                 ps.setObject(c, obj);
-                log.debug(LoggerTool.displayLine(" - "+c+" = "+(obj == null ? null : obj.toString()), 80));
+                log.debug(Formatter.displayLine(" - "+c+" = "+(obj == null ? null : obj.toString()), 80));
             }
 
-            log.debug(LoggerTool.displaySeparator(80));
+            log.debug(Formatter.displaySeparator(80));
 
             ps.executeUpdate();
 
@@ -515,23 +569,23 @@ public class JDBCAdapter extends Adapter {
 
             String sql = "delete from "+tableName+" where "+sb;
 
-            log.debug(LoggerTool.displaySeparator(80));
-            log.debug(LoggerTool.displayLine(sql, 80));
-            log.debug(LoggerTool.displaySeparator(80));
+            log.debug(Formatter.displaySeparator(80));
+            log.debug(Formatter.displayLine(sql, 80));
+            log.debug(Formatter.displaySeparator(80));
 
             ps = con.prepareStatement(sql);
 
-            log.debug(LoggerTool.displayLine("Parameters:", 80));
+            log.debug(Formatter.displayLine("Parameters:", 80));
 
             int c = 1;
             for (Iterator i=pkRow.getNames().iterator(); i.hasNext(); c++) {
                 String name = (String)i.next();
                 Object value = pkRow.get(name);
                 ps.setObject(c, value);
-                log.debug(LoggerTool.displayLine(" - "+c+" = "+value, 80));
+                log.debug(Formatter.displayLine(" - "+c+" = "+value, 80));
             }
 
-            log.debug(LoggerTool.displaySeparator(80));
+            log.debug(Formatter.displaySeparator(80));
 
             int count = ps.executeUpdate();
             if (count == 0) return LDAPException.NO_SUCH_OBJECT;
@@ -600,22 +654,22 @@ public class JDBCAdapter extends Adapter {
 
             String sql = "update "+tableName+" set "+sb+" where "+sb2;
 
-            log.debug(LoggerTool.displaySeparator(80));
-            log.debug(LoggerTool.displayLine(sql, 80));
-            log.debug(LoggerTool.displaySeparator(80));
+            log.debug(Formatter.displaySeparator(80));
+            log.debug(Formatter.displayLine(sql, 80));
+            log.debug(Formatter.displaySeparator(80));
 
             ps = con.prepareStatement(sql);
 
-            log.debug(LoggerTool.displayLine("Parameters:", 80));
+            log.debug(Formatter.displayLine("Parameters:", 80));
 
             int c = 1;
             for (Iterator i=parameters.iterator(); i.hasNext(); c++) {
                 Object value = i.next();
                 ps.setObject(c, value);
-                log.debug(LoggerTool.displayLine(" - "+c+" = "+value, 80));
+                log.debug(Formatter.displayLine(" - "+c+" = "+value, 80));
             }
 
-            log.debug(LoggerTool.displaySeparator(80));
+            log.debug(Formatter.displaySeparator(80));
 
             int count = ps.executeUpdate();
             if (count == 0) return LDAPException.NO_SUCH_OBJECT;

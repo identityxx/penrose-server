@@ -57,7 +57,7 @@ public class EntryFilterCache {
     public Collection get(Filter filter) throws Exception {
 
         String key = filter == null ? "" : filter.toString();
-        log.debug("Getting entry filter cache ("+dataMap.size()+"): "+key);
+        //log.debug("Getting entry filter cache ("+dataMap.size()+"): "+key);
 
         Collection rdns = (Collection)dataMap.get(key);
         Date date = (Date)expirationMap.get(key);
@@ -78,13 +78,13 @@ public class EntryFilterCache {
         Object object = (Collection)dataMap.remove(key);
 
         while (object == null && dataMap.size() >= size) {
-            log.debug("Trimming entry filter cache ("+dataMap.size()+").");
+            //log.debug("Trimming entry filter cache ("+dataMap.size()+").");
             Object k = expirationMap.keySet().iterator().next();
             dataMap.remove(k);
             expirationMap.remove(k);
         }
 
-        log.debug("Storing entry filter cache ("+dataMap.size()+"): "+key);
+        //log.debug("Storing entry filter cache ("+dataMap.size()+"): "+key);
         dataMap.put(key, rdns);
         expirationMap.put(key, new Date(System.currentTimeMillis() + expiration * 60 * 1000));
     }

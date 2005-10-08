@@ -32,7 +32,7 @@ public class InMemoryEntryDataCache extends EntryDataCache {
 
         Row key = getCacheContext().getSchema().normalize(rdn);
 
-        log.debug("Getting entry cache ("+dataMap.size()+"): "+key);
+        //log.debug("Getting entry cache ("+dataMap.size()+"): "+key);
 
         Object object = dataMap.get(key);
         Date date = (Date)expirationMap.get(key);
@@ -50,13 +50,13 @@ public class InMemoryEntryDataCache extends EntryDataCache {
         Row key = getCacheContext().getSchema().normalize(rdn);
 
         while (dataMap.get(key) == null && dataMap.size() >= size) {
-            log.debug("Trimming entry cache ("+dataMap.size()+").");
+            //log.debug("Trimming entry cache ("+dataMap.size()+").");
             Object k = expirationMap.keySet().iterator().next();
             dataMap.remove(k);
             expirationMap.remove(k);
         }
 
-        log.debug("Storing entry cache ("+dataMap.size()+"): "+key);
+        //log.debug("Storing entry cache ("+dataMap.size()+"): "+key);
         dataMap.put(key, object);
         expirationMap.put(key, new Date(System.currentTimeMillis() + expiration * 60 * 1000));
     }
@@ -65,7 +65,7 @@ public class InMemoryEntryDataCache extends EntryDataCache {
 
         Row key = getCacheContext().getSchema().normalize(rdn);
 
-        log.debug("Removing entry cache ("+dataMap.size()+"): "+key);
+        //log.debug("Removing entry cache ("+dataMap.size()+"): "+key);
         dataMap.remove(key);
         expirationMap.remove(key);
     }
