@@ -50,7 +50,7 @@ public class SearchPrimarySourceRunner extends GraphVisitor {
     private Stack filterStack = new Stack();
     private Stack depthStack = new Stack();
 
-    private Collection results = new ArrayList();
+    private Collection results = new TreeSet();
 
     public SearchPrimarySourceRunner(
             Engine engine,
@@ -90,7 +90,7 @@ public class SearchPrimarySourceRunner extends GraphVisitor {
     public void run() throws Exception {
         graph.traverse(this, startingSource);
     }
-    
+
     public void visitNode(GraphIterator graphIterator, Object node) throws Exception {
 
         Source source = (Source)node;

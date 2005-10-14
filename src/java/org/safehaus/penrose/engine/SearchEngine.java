@@ -227,9 +227,14 @@ public class SearchEngine {
         log.debug(Formatter.displaySeparator(80));
         log.debug(Formatter.displayLine("Results after searching local:", 80));
 
-        for (Iterator j=results.iterator(); j.hasNext(); ) {
-            AttributeValues av = (AttributeValues)j.next();
+        for (Iterator i=results.iterator(); i.hasNext(); ) {
+            AttributeValues av = (AttributeValues)i.next();
             log.debug(Formatter.displayLine(" - "+av, 80));
+            for (Iterator j=av.getNames().iterator(); j.hasNext(); ) {
+                String name = (String)j.next();
+                Collection v = av.get(name);
+                log.debug(Formatter.displayLine("   "+name+": "+v, 80));
+            }
         }
 
         log.debug(Formatter.displaySeparator(80));
@@ -249,9 +254,14 @@ public class SearchEngine {
         log.debug(Formatter.displaySeparator(80));
         log.debug(Formatter.displayLine("Results after searching parents:", 80));
 
-        for (Iterator j=values.iterator(); j.hasNext(); ) {
-            AttributeValues av = (AttributeValues)j.next();
+        for (Iterator i=values.iterator(); i.hasNext(); ) {
+            AttributeValues av = (AttributeValues)i.next();
             log.debug(Formatter.displayLine(" - "+av, 80));
+            for (Iterator j=av.getNames().iterator(); j.hasNext(); ) {
+                String name = (String)j.next();
+                Collection v = av.get(name);
+                log.debug(Formatter.displayLine("   "+name+": "+v, 80));
+            }
         }
 
         log.debug(Formatter.displaySeparator(80));

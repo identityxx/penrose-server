@@ -121,7 +121,13 @@ public class LoadGraphVisitor extends GraphVisitor {
         if (results.isEmpty()) {
             results.addAll(list);
         } else {
-            Collection temp = engine.getJoinEngine().leftJoin(results, list, relationships);
+            Collection temp;
+            if (source.isOptional()) {
+                temp = engine.getJoinEngine().leftJoin(results, list, relationships);
+            } else {
+                temp = engine.getJoinEngine().join(results, list, relationships);
+            }
+
             results.clear();
             results.addAll(temp);
         }

@@ -473,13 +473,13 @@ public class Engine {
         }
 
         if (true) {
-            loadEngine.loadEntries(parentSourceValues, entryDefinition, batches, loadedBatches);
+            loadEngine.load(parentSourceValues, entryDefinition, batches, loadedBatches);
 
         } else {
             execute(new Runnable() {
                 public void run() {
                     try {
-                        loadEngine.loadEntries(parentSourceValues, entryDefinition, batches, loadedBatches);
+                        loadEngine.load(parentSourceValues, entryDefinition, batches, loadedBatches);
 
                     } catch (Throwable e) {
                         e.printStackTrace(System.out);
@@ -489,14 +489,14 @@ public class Engine {
             });
         }
 
-        if (true) {
-            mergeEngine.mergeEntries(parentSourceValues, entryDefinition, loadedBatches, results);
+        if (false) {
+            mergeEngine.merge(parentSourceValues, entryDefinition, loadedBatches, results);
 
         } else {
             execute(new Runnable() {
                 public void run() {
                     try {
-                        mergeEngine.mergeEntries(parentSourceValues, entryDefinition, loadedBatches, results);
+                        mergeEngine.merge(parentSourceValues, entryDefinition, loadedBatches, results);
 
                     } catch (Throwable e) {
                         e.printStackTrace(System.out);
@@ -526,13 +526,8 @@ public class Engine {
                 String dn = (String)i.next();
                 AttributeValues sv = (AttributeValues)maps.get(dn);
 
-                int index = dn.indexOf(",");
-                s = dn.substring(0, index);
-                String parentDn = dn.substring(index+1);
-
-                index = s.indexOf("=");
-                Row rdn = new Row();
-                rdn.set(s.substring(0, index), s.substring(index+1));
+                Row rdn = getRdn(dn);
+                String parentDn = getParentDn(dn);
 
                 log.debug("Checking "+rdn+" in entry data cache for "+parentDn);
                 Entry entry = (Entry)engineContext.getEntryDataCache(parentDn, entryDefinition).get(rdn);
@@ -567,7 +562,24 @@ public class Engine {
             batches.close();
         }
     }
-    
+
+    public Row getRdn(String dn) {
+        int index = dn.indexOf(",");
+        String s = index < 0 ? dn : dn.substring(0, index);
+
+        // TODO need to handle composite RDN
+        index = s.indexOf("=");
+        Row rdn = new Row();
+        rdn.set(s.substring(0, index), s.substring(index+1));
+
+        return rdn;
+    }
+
+    public String getParentDn(String dn) {
+        int index = dn.indexOf(",");
+        return index < 0 ? null : dn.substring(index+1);
+    }
+
     public void getFieldValues(String dn, AttributeValues results) throws Exception {
         getFieldValues(null, dn, results);
     }
@@ -880,6 +892,62 @@ public class Engine {
         return filter;
     }
 
+    public Collection computeDns(
+            EntryDefinition entryDefinition,
+            AttributeValues sourceValues)
+            throws Exception {
+
+        Interpreter interpreter = engineContext.newInterpreter();
+        interpreter.set(sourceValues);
+
+        Collection results = new ArrayList();
+
+        results.add(computeDns(entryDefinition, interpreter));
+
+        return results;
+    }
+
+    public String computeDns(EntryDefinition entryDefinition, Interpreter interpreter) throws Exception {
+
+        Row rdn = computeRdn(entryDefinition, interpreter);
+
+        Config config = engineContext.getConfig(entryDefinition.getDn());
+        EntryDefinition parentDefinition = config.getParent(entryDefinition);
+
+        String parentDn;
+        if (parentDefinition != null) {
+            parentDn = computeDns(parentDefinition, interpreter);
+        } else {
+            parentDn = entryDefinition.getParentDn();
+        }
+
+        return rdn +(parentDn == null ? "" : ","+parentDn);
+    }
+
+    public Row computeRdn(
+            EntryDefinition entryDefinition,
+            Interpreter interpreter)
+            throws Exception {
+
+        Row rdn = new Row();
+
+        Collection rdnAttributes = entryDefinition.getRdnAttributes();
+        for (Iterator i=rdnAttributes.iterator(); i.hasNext(); ) {
+            AttributeDefinition attributeDefinition = (AttributeDefinition)i.next();
+            String name = attributeDefinition.getName();
+
+            Expression expression = attributeDefinition.getExpression();
+            if (expression == null) continue;
+
+            Object value = interpreter.eval(expression);
+            if (value == null) return null;
+
+            rdn.set(name, value);
+        }
+
+        return rdn;
+    }
+
     public AttributeValues computeAttributeValues(
             EntryDefinition entryDefinition,
             AttributeValues sourceValues)
@@ -904,67 +972,7 @@ public class Engine {
             attributeValues.add(name, value);
         }
 
-        //.debug("sourceValues: "+sourceValues);
-        //log.debug("attributeValues: "+attributeValues);
-
         return attributeValues;
-    }
-
-    public Collection computeDns(
-            EntryDefinition entryDefinition,
-            AttributeValues sourceValues)
-            throws Exception {
-
-        Config config = engineContext.getConfig(entryDefinition.getDn());
-        EntryDefinition parentDefinition = config.getParent(entryDefinition);
-
-        Row rdn = computeRdn(entryDefinition, sourceValues);
-
-        Collection results = new ArrayList();
-
-        results.add(computeDns(parentDefinition, sourceValues, rdn.toString()));
-
-        return results;
-    }
-
-    public String computeDns(EntryDefinition entryDefinition, AttributeValues sourceValues, String dnPrefix) throws Exception {
-
-        AttributeValues attributeValues = computeAttributeValues(entryDefinition, sourceValues);
-
-        Config config = engineContext.getConfig(entryDefinition.getDn());
-        EntryDefinition parentDefinition = config.getParent(entryDefinition);
-
-        Row rdn = entryDefinition.getRdn(attributeValues);
-        String newDnPrefix = dnPrefix+","+rdn;
-
-        if (parentDefinition != null) {
-            return computeDns(parentDefinition, sourceValues, newDnPrefix);
-        }
-
-        return newDnPrefix +(entryDefinition.getParentDn() == null ? "" : ","+entryDefinition.getParentDn());
-    }
-
-    public Row computeRdn(EntryDefinition entryDefinition, AttributeValues sourceValues) throws Exception {
-
-        Interpreter interpreter = engineContext.newInterpreter();
-        interpreter.set(sourceValues);
-
-        Row rdn = new Row();
-        Collection rdnAttributes = entryDefinition.getRdnAttributes();
-        for (Iterator j=rdnAttributes.iterator(); j.hasNext(); ) {
-            AttributeDefinition attributeDefinition = (AttributeDefinition)j.next();
-            String name = attributeDefinition.getName();
-
-            Expression expression = attributeDefinition.getExpression();
-            if (expression == null) continue;
-
-            Object value = interpreter.eval(expression);
-            if (value == null) return null;
-
-            rdn.set(name, value);
-        }
-
-        return rdn;
     }
 
     public LoadEngine getLoadEngine() {

@@ -46,7 +46,7 @@ public class LoadEngine {
         this.engineContext = engine.getEngineContext();
     }
 
-    public void loadEntries(
+    public void load(
             Collection parentSourceValues,
             EntryDefinition entryDefinition,
             SearchResults batches,
@@ -59,8 +59,6 @@ public class LoadEngine {
         try {
             while (batches.hasNext()) {
                 Collection keys = (Collection)batches.next();
-
-                Collection list = new TreeSet();
 
                 log.debug(Formatter.displaySeparator(80));
                 log.debug(Formatter.displayLine("LOAD ("+entryDefinition.getDn()+")", 80));
@@ -79,15 +77,17 @@ public class LoadEngine {
                         Collection values = sv.get(name);
                         log.debug(Formatter.displayLine("   - "+name+": "+values, 80));
                     }
-
-                    list.add(sv);
                 }
 
                 log.debug(Formatter.displaySeparator(80));
 
-                Collection results = load(parentSourceValues, entryDefinition, keys);
-                //loadedBatches.add(results);
-                loadedBatches.add(list);
+                loadEntries(parentSourceValues, entryDefinition, keys);
+
+                for (Iterator i=keys.iterator(); i.hasNext(); ) {
+                    Map map = (Map)i.next();
+
+                    loadedBatches.add(map);
+                }
             }
 
         } finally {
@@ -96,7 +96,7 @@ public class LoadEngine {
         }
     }
 
-    public Collection load(
+    public Collection loadEntries(
             Collection parentSourceValues,
             EntryDefinition entryDefinition,
             Collection maps)

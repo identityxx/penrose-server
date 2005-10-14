@@ -420,44 +420,42 @@ public class SearchHandler {
             return;
         }
 
-        Collection newParents = new ArrayList();
-
         for (Iterator i = children.iterator(); i.hasNext();) {
             EntryDefinition childDefinition = (EntryDefinition) i.next();
             //log.debug("Checking children: " + childDefinition.getDn());
 
-            if (!handlerContext.getFilterTool().isValidEntry(childDefinition, filter)) continue;
+            Collection newParents = new ArrayList();
 
-            SearchResults sr = handlerContext.getEngine().search(
-                    connection,
-                    parents,
-                    childDefinition,
-                    filter,
-                    attributeNames
-            );
+            if (handlerContext.getFilterTool().isValidEntry(childDefinition, filter)) {
 
-            while (sr.hasNext()) {
-                Entry child = (Entry)sr.next();
+                SearchResults sr = handlerContext.getEngine().search(
+                        connection,
+                        parents,
+                        childDefinition,
+                        filter,
+                        attributeNames
+                );
 
-                int rc = handlerContext.getACLEngine().checkSearch(connection, child);
-                if (rc != LDAPException.SUCCESS) continue;
+                while (sr.hasNext()) {
+                    Entry child = (Entry)sr.next();
 
-                if (!handlerContext.getFilterTool().isValidEntry(child, filter)) continue;
+                    int rc = handlerContext.getACLEngine().checkSearch(connection, child);
+                    if (rc != LDAPException.SUCCESS) continue;
 
-                rc = handlerContext.getACLEngine().checkRead(connection, child);
-                if (rc != LDAPException.SUCCESS) continue;
+                    if (!handlerContext.getFilterTool().isValidEntry(child, filter)) continue;
 
-                newParents.add(child);
+                    rc = handlerContext.getACLEngine().checkRead(connection, child);
+                    if (rc != LDAPException.SUCCESS) continue;
 
-                LDAPEntry en = child.toLDAPEntry();
-                Entry.filterAttributes(en, attributeNames);
-                results.add(en);
+                    newParents.add(child);
+
+                    LDAPEntry en = child.toLDAPEntry();
+                    Entry.filterAttributes(en, attributeNames);
+                    results.add(en);
+                }
             }
-        }
 
-        if (scope == LDAPConnection.SCOPE_SUB) {
-            for (Iterator i = children.iterator(); i.hasNext();) {
-                EntryDefinition childDefinition = (EntryDefinition) i.next();
+            if (scope == LDAPConnection.SCOPE_SUB) {
                 searchChildren(connection, newParents, childDefinition, scope, filter, attributeNames, results, false);
             }
         }

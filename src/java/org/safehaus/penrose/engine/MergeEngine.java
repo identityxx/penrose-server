@@ -46,7 +46,7 @@ public class MergeEngine {
         this.engineContext = engine.getEngineContext();
     }
 
-    public void mergeEntries(
+    public void merge(
             Collection parentSourceValues,
             EntryDefinition entryDefinition,
             SearchResults loadedBatches,
@@ -58,27 +58,18 @@ public class MergeEngine {
 
         try {
             while (loadedBatches.hasNext()) {
-                Collection keys = (Collection)loadedBatches.next();
+                Map map = (Map)loadedBatches.next();
+                String dn = (String)map.get("dn");
+                AttributeValues sv = (AttributeValues)map.get("sourceValues");
+                Row filter = (Row)map.get("filter");
 
                 log.debug(Formatter.displaySeparator(80));
-                log.debug(Formatter.displayLine("MERGE ("+entryDefinition.getDn()+")", 80));
-
-                for (Iterator i=keys.iterator(); i.hasNext(); ) {
-                    AttributeValues sv = (AttributeValues)i.next();
-                    log.debug(Formatter.displayLine(" - "+sv, 80));
-                }
-
+                log.debug(Formatter.displayLine("MERGE", 80));
+                log.debug(Formatter.displayLine(" - "+dn, 80));
+                log.debug(Formatter.displayLine("   "+sv, 80));
                 log.debug(Formatter.displaySeparator(80));
 
-                SearchResults entries = merge(parentSourceValues, entryDefinition, keys);
-
-                for (Iterator i=entries.iterator(); i.hasNext(); ) {
-                    Entry entry = (Entry)i.next();
-                    log.debug("Storing "+entry.getRdn()+" in entry data cache for "+entry.getParentDn());
-                    engineContext.getEntryDataCache(entry.getParentDn(), entryDefinition).put(entry.getRdn(), entry);
-
-                    results.add(entry);
-                }
+                mergeEntries(dn, parentSourceValues, entryDefinition, sv, results);
             }
 
         } finally {
@@ -87,13 +78,13 @@ public class MergeEngine {
         }
     }
 
-    public SearchResults merge(
-            final Collection parentSourceValues,
-            final EntryDefinition entryDefinition,
-            final Collection maps)
+    public SearchResults mergeEntries(
+            String dn,
+            Collection parentSourceValues,
+            EntryDefinition entryDefinition,
+            AttributeValues sv,
+            SearchResults results)
             throws Exception {
-
-        SearchResults results = new SearchResults();
 
         AttributeValues sourceValues = new AttributeValues();
 
@@ -104,77 +95,74 @@ public class MergeEngine {
         Source primarySource = engine.getPrimarySource(entryDefinition);
 
         if (primarySource == null) {
-            mergeEntries(entryDefinition, sourceValues, entries);
+            mergeEntries(dn, entryDefinition, sourceValues, entries);
 
         } else {
 
-            for (Iterator i=maps.iterator(); i.hasNext(); ) {
-                AttributeValues sv = (AttributeValues)i.next();
+            log.debug("Merging "+sv);
 
-                log.debug("Merging "+sv);
+            MergeGraphVisitor merger = new MergeGraphVisitor(
+                    config,
+                    graph,
+                    engine,
+                    entryDefinition,
+                    parentSourceValues,
+                    sv,
+                    primarySource);
 
-                MergeGraphVisitor merger = new MergeGraphVisitor(
-                        config,
-                        graph,
-                        engine,
-                        entryDefinition,
-                        parentSourceValues,
-                        sv,
-                        primarySource);
+            graph.traverse(merger, primarySource);
 
-                graph.traverse(merger, primarySource);
-
-                log.debug("Merged source values:");
-                Collection values = merger.getResults();
-                for (Iterator j=values.iterator(); j.hasNext(); ) {
-                    AttributeValues av = (AttributeValues)j.next();
-                    log.debug(" - "+av);
-                    mergeEntries(entryDefinition, av, entries);
-                }
-
+            log.debug("Merged source values:");
+            Collection values = merger.getResults();
+            for (Iterator j=values.iterator(); j.hasNext(); ) {
+                AttributeValues av = (AttributeValues)j.next();
+                log.debug(" - "+av);
+                mergeEntries(dn, entryDefinition, av, entries);
             }
         }
 
         for (Iterator j=entries.values().iterator(); j.hasNext(); ) {
             Entry entry = (Entry)j.next();
-            results.add(entry);
+            engineContext.getEntryDataCache(entry.getParentDn(), entryDefinition).put(entry.getRdn(), entry);
+
             log.debug("Entry:");
             log.debug(" - source values: "+entry.getSourceValues());
             log.debug(" - attribute values: "+entry.getAttributeValues());
             log.debug("\n"+entry);
+            results.add(entry);
         }
-
-        results.close();
 
         return results;
     }
 
     public void mergeEntries(
+            String dn,
             EntryDefinition entryDefinition,
             AttributeValues sourceValues,
             Map entries)
             throws Exception {
 
         AttributeValues attributeValues = engine.computeAttributeValues(entryDefinition, sourceValues);
-        Collection dns = engine.computeDns(entryDefinition, sourceValues);
+        //Collection dns = engine.computeDns(entryDefinition, sourceValues);
 
-        for (Iterator i = dns.iterator(); i.hasNext(); ) {
-            String dn = (String)i.next();
+        //for (Iterator i = dns.iterator(); i.hasNext(); ) {
+            //String dn = (String)i.next();
             //log.debug("Merging entry "+dn);
 
             Entry entry = (Entry)entries.get(dn);
             if (entry == null) {
                 entry = new Entry(dn, entryDefinition, sourceValues, attributeValues);
                 entries.put(dn, entry);
-                continue;
+                //continue;
             }
-
+/*
             AttributeValues sv = entry.getSourceValues();
             sv.add(sourceValues);
 
             AttributeValues av = entry.getAttributeValues();
             av.add(attributeValues);
-        }
+*/
+        //}
     }
 
     public Engine getEngine() {

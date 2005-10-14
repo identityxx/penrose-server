@@ -49,7 +49,7 @@ public class SearchParentRunner extends GraphVisitor {
 
     private Stack stack = new Stack();
     
-    private Collection results = new ArrayList();
+    private Collection results = new TreeSet();
 
     public SearchParentRunner(
             Engine engine,
@@ -140,7 +140,12 @@ public class SearchParentRunner extends GraphVisitor {
         if (results.isEmpty()) {
             results.addAll(list);
         } else {
-            Collection temp = engine.getJoinEngine().leftJoin(results, list, relationships);
+            Collection temp;
+            if (source.isOptional()) {
+                temp = engine.getJoinEngine().leftJoin(results, list, relationships);
+            } else {
+                temp = engine.getJoinEngine().join(results, list, relationships);
+            }
             results.clear();
             results.addAll(temp);
         }
