@@ -19,36 +19,39 @@ package org.safehaus.penrose.graph;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 
 /**
  * @author Endi S. Dewata
  */
 public class GraphEdge {
 
-    private Collection nodes = new ArrayList();
-    private Collection objects = new ArrayList();
+    private Collection nodes = new HashSet();
+    private Object object;
 
-    public void addNode(Object node) {
-        nodes.add(node);
+    public GraphEdge(Object node1, Object node2) {
+        this(node1, node2, null);
+    }
+
+    public GraphEdge(Object node1, Object node2, Object object) {
+        nodes.add(node1);
+        nodes.add(node2);
+        this.object = object;
     }
 
     public Collection getNodes() {
         return nodes;
     }
 
-    public void removeNode(Object node) {
-        nodes.remove(node);
+    public void setObject(Object object) {
+        this.object = object;
     }
 
-    public void addObject(Object object) {
-        objects.add(object);
+    public Object getObject() {
+        return object;
     }
 
-    public Collection getObjects() {
-        return objects;
-    }
-
-    public void removeObject(Object object) {
-        objects.remove(object);
+    public String toString() {
+        return "<"+nodes+": "+object+">";
     }
 }

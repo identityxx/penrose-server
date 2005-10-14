@@ -259,7 +259,7 @@ public class JDBCSourceDataCache extends SourceDataCache {
         }
     }
 
-    public Object get(Row pk) throws Exception {
+    public Object get(Object pk) throws Exception {
         Collection pks = new ArrayList();
         pks.add(pk);
 
@@ -571,7 +571,7 @@ public class JDBCSourceDataCache extends SourceDataCache {
         return values;
     }
 
-    public void put(Row pk, Object object) throws Exception {
+    public void put(Object pk, Object object) throws Exception {
         AttributeValues sourceValues = (AttributeValues)object;
 
         remove(pk);
@@ -738,7 +738,7 @@ public class JDBCSourceDataCache extends SourceDataCache {
         }
     }
 
-    public void remove(Row pk) throws Exception {
+    public void remove(Object pk) throws Exception {
 
         deleteEntry(pk);
 
@@ -749,7 +749,8 @@ public class JDBCSourceDataCache extends SourceDataCache {
         }
     }
 
-    public void deleteEntry(Row pk) throws Exception {
+    public void deleteEntry(Object key) throws Exception {
+        Row pk = (Row)key;
 
         StringBuffer where = new StringBuffer();
         Collection parameters = new ArrayList();
@@ -800,7 +801,8 @@ public class JDBCSourceDataCache extends SourceDataCache {
         }
     }
 
-    public void deleteColumnValue(FieldDefinition fieldDefinition, Row pk) throws Exception {
+    public void deleteColumnValue(FieldDefinition fieldDefinition, Object key) throws Exception {
+        Row pk = (Row)key;
 
         StringBuffer where = new StringBuffer();
         Collection parameters = new ArrayList();

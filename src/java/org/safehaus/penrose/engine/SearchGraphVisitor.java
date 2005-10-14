@@ -23,6 +23,7 @@ import org.safehaus.penrose.config.Config;
 import org.safehaus.penrose.graph.GraphVisitor;
 import org.safehaus.penrose.graph.Graph;
 import org.safehaus.penrose.graph.GraphIterator;
+import org.safehaus.penrose.util.Formatter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,20 +41,20 @@ public class SearchGraphVisitor extends GraphVisitor {
     private Engine engine;
     private EngineContext engineContext;
     private EntryDefinition entryDefinition;
-    private AttributeValues sourceValues;
+    private Collection parentSourceValues;
     private Filter searchFilter;
     private Source primarySource;
 
     private Stack stack = new Stack();
-    private Set keys = new HashSet();
+    private Set results = new HashSet();
 
     public SearchGraphVisitor(
             Config config,
             Graph graph,
             Engine engine,
             EntryDefinition entryDefinition,
-            AttributeValues sourceValues,
-            Filter initialFilter,
+            Collection parentSourceValues,
+            Collection filters,
             Filter searchFilter,
             Source primarySource) throws Exception {
 
@@ -62,19 +63,82 @@ public class SearchGraphVisitor extends GraphVisitor {
         this.engine = engine;
         this.engineContext = engine.getEngineContext();
         this.entryDefinition = entryDefinition;
-        this.sourceValues = sourceValues;
+        this.parentSourceValues = parentSourceValues;
         this.searchFilter = searchFilter;
         this.primarySource = primarySource;
 
-        stack.push(initialFilter);
+        stack.push(filters);
     }
 
     public void visitNode(GraphIterator graphIterator, Object node) throws Exception {
 
         Source source = (Source)node;
-        Filter filter = (Filter)stack.peek();
-        log.debug("Visiting source "+source.getName());
+        Collection filters = (Collection)stack.peek();
 
+        log.debug(Formatter.displaySeparator(40));
+        log.debug(Formatter.displayLine("Searching "+source.getName(), 40));
+        log.debug(Formatter.displaySeparator(40));
+
+        Collection values = new ArrayList();
+
+        for (Iterator i=filters.iterator(); i.hasNext(); ) {
+            Map map = (Map)i.next();
+
+            AttributeValues attributeValues = (AttributeValues)map.get("attributeValues");
+            Filter filter = (Filter)map.get("filter");
+            log.debug(" - filter: "+filter);
+
+            Collection list;
+            if (entryDefinition.getSource(source.getName()) == null) {
+                list = new ArrayList();
+                for (Iterator j=parentSourceValues.iterator(); j.hasNext(); ) {
+                    AttributeValues sourceValues = (AttributeValues)j.next();
+
+                    AttributeValues av = new AttributeValues();
+                    for (Iterator k=sourceValues.getNames().iterator(); k.hasNext(); ) {
+                        String name = (String)k.next();
+                        if (!name.startsWith(source.getName()+".")) continue;
+
+                        int index = name.indexOf(".");
+                        String fieldName = name.substring(index+1);
+
+                        Collection v = sourceValues.get(name);
+                        av.set(fieldName, v);
+                    }
+
+                    list.add(av);
+                }
+
+            } else {
+                Filter f = engine.getFilterTool().toSourceFilter(null, entryDefinition, source, searchFilter);
+
+                filter = engineContext.getFilterTool().appendAndFilter(filter, f);
+
+                String s = source.getParameter(Source.FILTER);
+                if (s != null) {
+                    Filter sourceFilter = engineContext.getFilterTool().parseFilter(s);
+                    filter = engineContext.getFilterTool().appendAndFilter(filter, sourceFilter);
+                }
+
+                log.debug("Searching source "+source.getName()+" with filter "+filter);
+
+                list = engineContext.getSyncService().search(source, filter);
+            }
+
+            log.debug("Searching results:");
+            for (Iterator j=list.iterator(); j.hasNext(); ) {
+                AttributeValues av = (AttributeValues)j.next();
+                log.debug(" - "+av);
+
+                AttributeValues newAttributeValues = new AttributeValues();
+                newAttributeValues.add(attributeValues);
+                newAttributeValues.add(source.getName(), av);
+
+                values.add(newAttributeValues);
+                //log.debug(" - "+newAttributeValues);
+            }
+        }
+/*
         Collection results = new ArrayList();
 
         if (entryDefinition.getSource(source.getName()) == null && sourceValues.contains(source.getName())) {
@@ -126,14 +190,14 @@ public class SearchGraphVisitor extends GraphVisitor {
                 }
             }
         }
-
+*/
         if (source == primarySource) {
             log.debug("Source "+source.getName()+" is the primary source of entry "+entryDefinition.getDn());
-            keys.addAll(results);
+            results.addAll(values);
             return;
         }
 
-        stack.push(results);
+        stack.push(values);
 
         graphIterator.traverseEdges(node);
 
@@ -142,69 +206,53 @@ public class SearchGraphVisitor extends GraphVisitor {
 
     public void visitEdge(GraphIterator graphIterator, Object node1, Object node2, Object object) throws Exception {
 
-        Relationship relationship = (Relationship)object;
-        log.debug("Relationship "+relationship);
-
         Source fromSource = (Source)node1;
         Source toSource = (Source)node2;
+        Relationship relationship = (Relationship)object;
+
+        log.debug(Formatter.displaySeparator(40));
+        log.debug(Formatter.displayLine(relationship.toString(), 40));
+        log.debug(Formatter.displaySeparator(40));
 
         //if (entryDefinition.getSource(toSource.getName()) == null) {
         //    log.debug("Source "+toSource.getName()+" is not defined in entry "+entryDefinition.getDn());
         //    return;
         //}
 
-        Collection rows = (Collection)stack.peek();
-
         Collection relationships = new ArrayList();
         relationships.add(relationship);
 
-        Filter filter = engine.generateFilter(toSource, relationships, rows);
-        if (filter == null) return;
+        Collection values = (Collection)stack.peek();
+        Collection filters = new ArrayList();
+        for (Iterator i=values.iterator(); i.hasNext(); ) {
+            AttributeValues av = (AttributeValues)i.next();
 
-        stack.push(filter);
+            Filter filter = engine.generateFilter(toSource, relationships, av);
+            //Filter filter = engine.generateFilter(toSource, relationships, rows);
+
+            log.debug(" - filter: "+filter);
+            log.debug("   attribute values: "+av);
+            //if (filter == null) continue;
+
+            Map map = new HashMap();
+            map.put("attributeValues", av);
+            map.put("filter", filter);
+
+            filters.add(map);
+        }
+
+        stack.push(filters);
 
         graphIterator.traverse(node2);
 
         stack.pop();
     }
 
-    public EntryDefinition getEntryDefinition() {
-        return entryDefinition;
+    public Set getResults() {
+        return results;
     }
 
-    public void setEntryDefinition(EntryDefinition entryDefinition) {
-        this.entryDefinition = entryDefinition;
-    }
-
-    public Stack getStack() {
-        return stack;
-    }
-
-    public void setStack(Stack stack) {
-        this.stack = stack;
-    }
-
-    public Set getKeys() {
-        return keys;
-    }
-
-    public void setKeys(Set keys) {
-        this.keys = keys;
-    }
-
-    public Source getPrimarySource() {
-        return primarySource;
-    }
-
-    public void setPrimarySource(Source primarySource) {
-        this.primarySource = primarySource;
-    }
-
-    public Config getConfig() {
-        return config;
-    }
-
-    public void setConfig(Config config) {
-        this.config = config;
+    public void setResults(Set results) {
+        this.results = results;
     }
 }

@@ -86,10 +86,10 @@ public abstract class Cache {
         this.expiration = expiration;
     }
 
-    public abstract Object get(Row pk) throws Exception;
+    public abstract Object get(Object key) throws Exception;
 
-    public abstract void put(Row pk, Object object) throws Exception;
+    public abstract void put(Object key, Object object) throws Exception;
 
-    public abstract void remove(Row pk) throws Exception;
+    public abstract void remove(Object key) throws Exception;
 
 }

@@ -23,6 +23,7 @@ import org.safehaus.penrose.filter.FilterTool;
 import org.safehaus.penrose.schema.Schema;
 import org.safehaus.penrose.cache.EntryDataCache;
 import org.safehaus.penrose.cache.EntryFilterCache;
+import org.safehaus.penrose.cache.EntrySourceCache;
 import org.safehaus.penrose.connection.Connection;
 import org.safehaus.penrose.sync.SyncService;
 import org.safehaus.penrose.mapping.EntryDefinition;
@@ -39,6 +40,7 @@ public interface EngineContext {
 
     public EntryFilterCache getEntryFilterCache(String parentDn, EntryDefinition entryDefinition) throws Exception;
     public EntryDataCache getEntryDataCache(String parentDn, EntryDefinition entryDefinition) throws Exception;
+    public EntrySourceCache getEntrySourceCache(String parentDn, EntryDefinition entryDefinition) throws Exception;
 
     public Schema getSchema() throws Exception;
     public FilterTool getFilterTool() throws Exception;

@@ -289,11 +289,12 @@ public class Schema {
             Object value = row.get(name);
 
             if (value == null) continue;
-            //newRow.set(name.toLowerCase(), value.toString().toLowerCase());
+/*
             if (value instanceof String) {
                 value = ((String)value).toLowerCase();
             }
-            
+*/            
+            value = value.toString().toLowerCase();
             newRow.set(name, value);
         }
 

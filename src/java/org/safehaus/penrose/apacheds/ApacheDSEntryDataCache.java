@@ -51,7 +51,7 @@ public class ApacheDSEntryDataCache extends EntryDataCache {
     private NextInterceptor nextInterceptor;
     private Context context;
 
-    public Object get(Row rdn) throws Exception {
+    public Object get(Object rdn) throws Exception {
         return null;
     }
 
@@ -114,7 +114,7 @@ public class ApacheDSEntryDataCache extends EntryDataCache {
 */
     }
 
-    public void put(Row rdn, Object object) throws Exception {
+    public void put(Object rdn, Object object) throws Exception {
         Entry entry = (Entry)object;
     }
 
@@ -132,7 +132,7 @@ public class ApacheDSEntryDataCache extends EntryDataCache {
         map.put(dn, entry);
     }
 
-    public void remove(Row rdn) throws Exception {
+    public void remove(Object rdn) throws Exception {
 
     }
 

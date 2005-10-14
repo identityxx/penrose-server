@@ -264,7 +264,7 @@ public class JDBCEntryDataCache extends EntryDataCache {
         }
     }
 
-    public Object get(Row pk) throws Exception {
+    public Object get(Object pk) throws Exception {
         Collection pks = new ArrayList();
         pks.add(pk);
 
@@ -574,7 +574,7 @@ public class JDBCEntryDataCache extends EntryDataCache {
         return values;
     }
 
-    public void put(Row pk, Object object) throws Exception {
+    public void put(Object pk, Object object) throws Exception {
         AttributeValues sourceValues = (AttributeValues)object;
 
         remove(pk);
@@ -741,7 +741,7 @@ public class JDBCEntryDataCache extends EntryDataCache {
         }
     }
 
-    public void remove(Row pk) throws Exception {
+    public void remove(Object pk) throws Exception {
 
         deleteEntry(pk);
 
@@ -752,7 +752,8 @@ public class JDBCEntryDataCache extends EntryDataCache {
         }
     }
 
-    public void deleteEntry(Row pk) throws Exception {
+    public void deleteEntry(Object key) throws Exception {
+        Row pk = (Row)key;
 
         StringBuffer where = new StringBuffer();
         Collection parameters = new ArrayList();
@@ -803,7 +804,8 @@ public class JDBCEntryDataCache extends EntryDataCache {
         }
     }
 
-    public void deleteColumnValue(AttributeDefinition attributeDefinition, Row pk) throws Exception {
+    public void deleteColumnValue(AttributeDefinition attributeDefinition, Object key) throws Exception {
+        Row pk = (Row)key;
 
         StringBuffer where = new StringBuffer();
         Collection parameters = new ArrayList();

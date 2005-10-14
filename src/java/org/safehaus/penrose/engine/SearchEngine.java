@@ -43,131 +43,414 @@ public class SearchEngine {
         this.engineContext = engine.getEngineContext();
     }
 
-    public Collection search(
+    public Map search(
             Collection parents,
             EntryDefinition entryDefinition,
             Filter filter)
             throws Exception {
 
-        Entry parent = parents.isEmpty() ? null : (Entry)parents.iterator().next();
-        String dn = parent == null ? entryDefinition.getDn() : entryDefinition.getRdn()+","+parent.getDn();
-        //log.debug("Searching entry "+dn+" for "+filter);
+        log.debug(Formatter.displaySeparator(80));
+        log.debug(Formatter.displayLine("SEARCH", 80));
+        log.debug(Formatter.displayLine("Entry: "+entryDefinition.getDn(), 80));
+        log.debug(Formatter.displayLine("Filter: "+filter, 80));
+        log.debug(Formatter.displayLine("Parents:", 80));
 
+        Collection parentSourceValues = new TreeSet();
         AttributeValues sourceValues = new AttributeValues();
-        //if (parent != null) engine.getFieldValues("parent", dn, sourceValues);
-
-        //log.debug("Parent entries:");
         for (Iterator i=parents.iterator(); i.hasNext(); ) {
             Entry entry = (Entry)i.next();
-            AttributeValues values = entry.getSourceValues();
-            //log.debug(" - "+entry.getDn()+": "+values);
-            sourceValues.add(values);
+            log.debug(Formatter.displayLine(" - "+entry.getDn(), 80));
+
+            AttributeValues sv = entry.getSourceValues();
+            sourceValues.add(sv);
+            parentSourceValues.add(sv);
+
+            for (Iterator j=sv.getNames().iterator(); j.hasNext(); ) {
+                String name = (String)j.next();
+                Collection values = sv.get(name);
+                log.debug(Formatter.displayLine("   - "+name+": "+values, 80));
+            }
         }
 
-        Collection newRows = engineContext.getTransformEngine().convert(sourceValues);
+        log.debug(Formatter.displaySeparator(80));
 
-        Config config = engineContext.getConfig(entryDefinition.getDn());
+        Collection dns = new TreeSet();
+        for (Iterator i=parents.iterator(); i.hasNext(); ) {
+            Entry entry = (Entry)i.next();
+            String parentDn = entry.getDn();
 
-        Graph graph = engine.getGraph(entryDefinition);
-        Source primarySource = engine.getPrimarySource(entryDefinition);
-
-        Source startingSource;
-        Filter newFilter = null;
-
-        Relationship relationship = engine.getConnectingRelationship(entryDefinition);
-        log.debug("Connecting relationship: "+relationship);
-
-        if (relationship != null) {
-            String lhs = relationship.getLhs();
-            String lsourceName = lhs.substring(0, lhs.indexOf("."));
-            Source lsource = entryDefinition.getSource(lsourceName);
-
-            String rhs = relationship.getRhs();
-            String rsourceName = rhs.substring(0, rhs.indexOf("."));
-            Source rsource = entryDefinition.getSource(rsourceName);
-
-            startingSource = lsource == null ? rsource : lsource;
-
-            Collection relationships = new ArrayList();
-            relationships.add(relationship);
-
-            newFilter = engine.generateFilter(startingSource, relationships, newRows);
-
-        } else {
-
-            startingSource = primarySource;
-            newFilter = engine.getFilterTool().toSourceFilter(sourceValues, entryDefinition, startingSource, filter);
+            log.debug("Checking "+filter+" in entry filter cache for "+parentDn);
+            Collection list = engineContext.getEntryFilterCache(parentDn, entryDefinition).get(filter);
+            if (list != null) dns.addAll(list);
         }
 
-        log.debug("Starting source: "+startingSource);
-        log.debug("Starting filter: "+newFilter);
+        Map results = new TreeMap();
 
-        if (startingSource == null) {
-            Interpreter interpreter = engineContext.newInterpreter();
-            Row rdn = computeRdn(entryDefinition, interpreter);
+        if (dns.isEmpty()) {
+            log.debug("Cache not found.");
 
-            Collection rdns = new ArrayList();
-            rdns.add(rdn);
-            return rdns;
+            Collection values = searchEntries(parentSourceValues, entryDefinition, filter);
 
-        } else {
-            SearchGraphVisitor visitor = new SearchGraphVisitor(config, graph, engine, entryDefinition, sourceValues, newFilter, filter, primarySource);
-            graph.traverse(visitor, startingSource);
+            Map map2 = new HashMap();
 
-            Collection rows = new TreeSet();
-            rows.addAll(visitor.getKeys());
-            return computeRdns(entryDefinition, rows);
-        }
-    }
+            log.debug("Search results:");
+            for (Iterator i=values.iterator(); i.hasNext(); ) {
+                AttributeValues sv = (AttributeValues)i.next();
 
-    public Collection computeRdns(EntryDefinition entryDefinition, Collection rows) throws Exception {
-        Source primarySource = engine.getPrimarySource(entryDefinition);
+                Collection list = engine.computeDns(entryDefinition, sv);
+                for (Iterator j=list.iterator(); j.hasNext(); ) {
+                    String dn = (String)j.next();
+                    log.debug(" - "+dn);
 
-        //log.debug("Generating RDNs:");
-        Collection rdns = new TreeSet();
+                    int index = dn.indexOf(",");
+                    String rdn = dn.substring(0, index);
+                    String parentDn = dn.substring(index+1);
 
-        for (Iterator i=rows.iterator(); i.hasNext(); ) {
-            Row row = (Row)i.next();
-            //log.debug(" - "+row);
+                    index = rdn.indexOf("=");
+                    String rdnAttr = rdn.substring(0, index);
+                    String rdnValue = rdn.substring(index+1);
 
-            Interpreter interpreter = engineContext.newInterpreter();
-            for (Iterator k=row.getNames().iterator(); k.hasNext(); ) {
-                String name = (String)k.next();
-                Object value = row.get(name);
-                if (value == null) continue;
-                interpreter.set(primarySource.getName()+"."+name, value);
+                    Row row = new Row();
+                    row.set(rdnAttr, rdnValue);
+
+                    log.debug("   Storing "+rdn+" in entry source cache.");
+                    engineContext.getEntrySourceCache(parentDn, entryDefinition).put(row, sv);
+
+                    AttributeValues av = (AttributeValues)results.get(dn);
+                    if (av == null) {
+                        av = new AttributeValues();
+                        results.put(dn, av);
+                    }
+                    av.add(sv);
+
+                    Collection c = (Collection)map2.get(parentDn);
+                    if (c == null) {
+                        c = new TreeSet();
+                        map2.put(parentDn, c);
+                    }
+                    c.add(dn);
+                }
             }
 
-            Row rdn = computeRdn(entryDefinition, interpreter);
-            if (rdn == null) continue;
+            log.debug("Storing "+filter+" in entry filter cache:");
+            for (Iterator i=map2.keySet().iterator(); i.hasNext(); ) {
+                String parentDn = (String)i.next();
+                Collection c = (Collection)map2.get(parentDn);
 
-            //log.debug(" - "+rdn);
-            rdns.add(rdn);
+                log.debug(" - "+parentDn+":");
+                for (Iterator j=c.iterator(); j.hasNext(); ) {
+                    String dn = (String)j.next();
+                    log.debug("   - "+dn);
+                }
+
+                engineContext.getEntryFilterCache(parentDn, entryDefinition).put(filter, c);
+
+            }
+            //filter = engineContext.getFilterTool().createFilter(rdns);
+            //log.debug("Storing "+filter+" in entry filter cache for "+parentDn+" => "+rdns);
+            //engineContext.getEntryFilterCache(parentDn, entryDefinition).put(filter, rdns);
+
+        } else {
+            log.debug("Cache found: "+dns);
+
+            for (Iterator i=dns.iterator(); i.hasNext(); ) {
+                String dn = (String)i.next();
+
+                int index = dn.indexOf(",");
+                String s = dn.substring(0, index);
+                String parentDn = dn.substring(index+1);
+
+                index = s.indexOf("=");
+                Row rdn = new Row();
+                rdn.set(s.substring(0, index), s.substring(index+1));
+
+                log.debug("Getting "+rdn+" from entry source cache for "+parentDn);
+                AttributeValues sv = (AttributeValues)engineContext.getEntrySourceCache(parentDn, entryDefinition).get(rdn);
+                log.debug("Entry source cache: "+sv);
+
+                AttributeValues av = (AttributeValues)results.get(dn);
+                if (av == null) {
+                    av = new AttributeValues();
+                    results.put(dn, av);
+                }
+                av.add(sv);
+            }
         }
 
-        return rdns;
+        log.debug(Formatter.displaySeparator(80));
+        log.debug(Formatter.displayLine("SEARCH RESULTS", 80));
+        log.debug(Formatter.displayLine("Entry: "+entryDefinition.getDn(), 80));
+        log.debug(Formatter.displayLine("Results:", 80));
+
+        for (Iterator i=results.keySet().iterator(); i.hasNext(); ) {
+            String dn = (String)i.next();
+            AttributeValues sv = (AttributeValues)results.get(dn);
+            log.debug(Formatter.displayLine(" - "+dn, 80));
+            log.debug(Formatter.displayLine("   "+sv, 80));
+        }
+
+        log.debug(Formatter.displaySeparator(80));
+
+        return results;
     }
 
-    public Row computeRdn(EntryDefinition entryDefinition, Interpreter interpreter) throws Exception {
-        Row rdn = new Row();
+    public Collection searchEntries(
+            Collection parentSourceValues,
+            EntryDefinition entryDefinition,
+            Filter filter)
+            throws Exception {
 
-        Collection rdnAttributes = entryDefinition.getRdnAttributes();
-        for (Iterator j=rdnAttributes.iterator(); j.hasNext(); ) {
-            AttributeDefinition attr = (AttributeDefinition)j.next();
-            String name = attr.getName();
+        Source primarySource = engine.getPrimarySource(entryDefinition);
 
-            Expression expression = attr.getExpression();
-            if (expression == null) continue;
-
-            Object value = interpreter.eval(expression);
-            if (value == null) return null;
-
-            rdn.set(name, value);
+        if (primarySource == null || entryDefinition.getSource(primarySource.getName()) == null) {
+            return parentSourceValues;
         }
 
-        //Row nrdn = engineContext.getSchema().normalize(rdn);
+        SearchPlanner planner = new SearchPlanner(
+                engine,
+                entryDefinition,
+                filter,
+                parentSourceValues);
 
-        return rdn;
+        planner.run();
+
+        Collection startingSources = planner.getStartingSources();
+        Collection connectingRelationships = planner.getConnectingRelationships();
+
+        Collection results = searchLocal(
+                entryDefinition,
+                parentSourceValues,
+                planner,
+                startingSources
+        );
+
+        log.debug(Formatter.displaySeparator(80));
+        log.debug(Formatter.displayLine("Results after searching local:", 80));
+
+        for (Iterator j=results.iterator(); j.hasNext(); ) {
+            AttributeValues av = (AttributeValues)j.next();
+            log.debug(Formatter.displayLine(" - "+av, 80));
+        }
+
+        log.debug(Formatter.displaySeparator(80));
+
+        if (results.isEmpty()) return results;
+
+        Collection parentResults = searchParent(
+                entryDefinition,
+                parentSourceValues,
+                planner,
+                results,
+                startingSources
+        );
+
+        Collection values = engine.getJoinEngine().leftJoin(results, parentResults, connectingRelationships);
+
+        log.debug(Formatter.displaySeparator(80));
+        log.debug(Formatter.displayLine("Results after searching parents:", 80));
+
+        for (Iterator j=values.iterator(); j.hasNext(); ) {
+            AttributeValues av = (AttributeValues)j.next();
+            log.debug(Formatter.displayLine(" - "+av, 80));
+        }
+
+        log.debug(Formatter.displaySeparator(80));
+
+        return values;
+    }
+
+    public Collection searchLocal(
+            EntryDefinition entryDefinition,
+            Collection parentSourceValues,
+            SearchPlanner planner,
+            Collection startingSources) throws Exception {
+
+        Collection results = new ArrayList();
+
+        Source primarySource = engine.getPrimarySource(entryDefinition);
+
+        Map filters = planner.getFilters();
+
+        AttributeValues sourceValues = new AttributeValues();
+        for (Iterator i=parentSourceValues.iterator(); i.hasNext(); ) {
+            AttributeValues sv = (AttributeValues)i.next();
+            sourceValues.add(sv);
+        }
+
+        Map map = null;
+        for (Iterator i=startingSources.iterator(); i.hasNext(); ) {
+            Map m = (Map)i.next();
+
+            Source fromSource = (Source)m.get("fromSource");
+            Source toSource = (Source)m.get("toSource");
+            Collection relationships = (Collection)m.get("relationships");
+
+            Filter toFilter = (Filter)filters.get(toSource);
+            Filter tf = engine.generateFilter(toSource, relationships, sourceValues);
+            toFilter = engineContext.getFilterTool().appendAndFilter(toFilter, tf);
+            filters.put(toSource, toFilter);
+
+            log.debug("Filter for "+toSource.getName()+": "+toFilter);
+
+            if (toFilter == null && map == null) continue;
+
+            map = m;
+        }
+
+        if (map == null) {
+
+            // if there's no parent source that can be used as filters
+            // start from any local source that has a filter
+
+            for (Iterator i=entryDefinition.getSources().iterator(); i.hasNext(); ) {
+                Source source = (Source)i.next();
+                Filter f = (Filter)filters.get(source);
+                if (f == null) continue;
+
+                map = new HashMap();
+                map.put("toSource", source);
+                map.put("relationships", new ArrayList());
+
+                break;
+            }
+
+            // if there isn't any local source that has a filter, start from the primary source
+
+            if (map == null) {
+                map = new HashMap();
+                map.put("toSource", primarySource);
+                map.put("relationships", new ArrayList());
+            }
+
+            Source toSource = (Source)map.get("toSource");
+            Collection relationships = (Collection)map.get("relationships");
+
+            log.debug(Formatter.displaySeparator(80));
+            log.debug(Formatter.displayLine("Searching source "+primarySource.getName(), 80));
+            log.debug(Formatter.displayLine("Relationships:", 80));
+
+            log.debug(Formatter.displaySeparator(80));
+
+            SearchLocalRunner runner = new SearchLocalRunner(
+                    engine,
+                    entryDefinition,
+                    parentSourceValues,
+                    planner.getFilters(),
+                    planner.getDepths(),
+                    toSource,
+                    relationships);
+
+            runner.run();
+
+            results.addAll(runner.getResults());
+
+        } else {
+
+            Source toSource = (Source)map.get("toSource");
+            Collection relationships = (Collection)map.get("relationships");
+
+            log.debug(Formatter.displaySeparator(80));
+            log.debug(Formatter.displayLine("Search local sources starting from "+toSource.getName(), 80));
+            log.debug(Formatter.displayLine("Relationships:", 80));
+
+            for (Iterator j=relationships.iterator(); j.hasNext(); ) {
+                Relationship relationship = (Relationship)j.next();
+                log.debug(Formatter.displayLine(" - "+relationship, 80));
+            }
+
+            log.debug(Formatter.displaySeparator(80));
+
+            SearchPrimarySourceRunner runner = new SearchPrimarySourceRunner(
+                    engine,
+                    entryDefinition,
+                    parentSourceValues,
+                    planner.getFilters(),
+                    planner.getDepths(),
+                    toSource,
+                    relationships);
+
+            runner.run();
+
+            results.addAll(runner.getResults());
+        }
+        
+        return results;
+    }
+
+    public Collection searchParent(
+            EntryDefinition entryDefinition,
+            Collection parentSourceValues,
+            SearchPlanner planner,
+            Collection results,
+            Collection startingSources) throws Exception {
+
+        AttributeValues sourceValues = new AttributeValues();
+        for (Iterator i=results.iterator(); i.hasNext(); ) {
+            AttributeValues sv = (AttributeValues)i.next();
+            sourceValues.add(sv);
+        }
+
+        Map filters = planner.getFilters();
+        
+        for (Iterator i=startingSources.iterator(); i.hasNext(); ) {
+            Map m = (Map)i.next();
+
+            Source fromSource = (Source)m.get("fromSource");
+            Source toSource = (Source)m.get("toSource");
+            Collection relationships = (Collection)m.get("relationships");
+
+            Filter fromFilter = (Filter)filters.get(fromSource);
+            Filter tf = engine.generateFilter(fromSource, relationships, sourceValues);
+            fromFilter = engineContext.getFilterTool().appendAndFilter(fromFilter, tf);
+            filters.put(fromSource, fromFilter);
+
+            log.debug("Filter for "+fromSource.getName()+": "+fromFilter);
+        }
+
+        Collection parentResults = new ArrayList();
+
+        for (Iterator i=startingSources.iterator(); i.hasNext(); ) {
+            Map m = (Map)i.next();
+
+            Source fromSource = (Source)m.get("fromSource");
+            Source toSource = (Source)m.get("toSource");
+            Collection relationships = (Collection)m.get("relationships");
+
+            log.debug(Formatter.displaySeparator(80));
+            log.debug(Formatter.displayLine("Search parent sources starting from "+fromSource.getName(), 80));
+            log.debug(Formatter.displayLine("Relationships:", 80));
+
+            for (Iterator j=relationships.iterator(); j.hasNext(); ) {
+                Relationship relationship = (Relationship)j.next();
+                log.debug(Formatter.displayLine(" - "+relationship, 80));
+            }
+
+            log.debug(Formatter.displaySeparator(80));
+
+            SearchParentRunner runner = new SearchParentRunner(
+                    engine,
+                    entryDefinition,
+                    parentSourceValues,
+                    planner.getFilters(),
+                    planner.getDepths(),
+                    fromSource,
+                    relationships);
+
+            runner.run();
+
+            log.debug(Formatter.displaySeparator(80));
+            log.debug(Formatter.displayLine("Results:", 80));
+
+            for (Iterator j=runner.getResults().iterator(); j.hasNext(); ) {
+                AttributeValues av = (AttributeValues)j.next();
+                log.debug(Formatter.displayLine(" - "+av, 80));
+                parentResults.add(av);
+            }
+
+            log.debug(Formatter.displaySeparator(80));
+        }
+
+        return parentResults;
     }
 
     public Engine getEngine() {

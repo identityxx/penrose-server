@@ -17,150 +17,155 @@
  */
 package org.safehaus.penrose.engine;
 
-import org.safehaus.penrose.mapping.*;
-import org.safehaus.penrose.graph.Graph;
-import org.safehaus.penrose.interpreter.Interpreter;
-import org.safehaus.penrose.SearchResults;
-import org.safehaus.penrose.filter.Filter;
-import org.safehaus.penrose.config.Config;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.safehaus.penrose.mapping.AttributeValues;
+import org.safehaus.penrose.mapping.Relationship;
 
-import java.util.*;
-
-import com.novell.ldap.LDAPException;
+import java.util.Collection;
+import java.util.ArrayList;
+import java.util.Iterator;
 
 /**
  * @author Endi S. Dewata
  */
 public class JoinEngine {
 
-    Logger log = LoggerFactory.getLogger(getClass());
-
-    private Engine engine;
-    private EngineContext engineContext;
-
     public JoinEngine(Engine engine) {
-        this.engine = engine;
-        this.engineContext = engine.getEngineContext();
+
     }
 
-    public SearchResults load(
-            final Collection parents,
-            final EntryDefinition entryDefinition,
-            final Collection pks)
-            throws Exception {
+    public Collection join(Collection list1, Collection list2, Collection relationships) throws Exception {
+        Collection results = new ArrayList();
 
-        final SearchResults results = new SearchResults();
+        //log.debug("Left join:");
+        for (Iterator i=list1.iterator(); i.hasNext(); ) {
+            AttributeValues av1 = (AttributeValues)i.next();
+            //log.debug(" - "+av1);
 
-        engine.execute(new Runnable() {
-            public void run() {
-                try {
-                    load(parents, entryDefinition, pks, results);
+            boolean found = false;
 
-                } catch (Throwable e) {
-                    e.printStackTrace(System.out);
-                    results.setReturnCode(LDAPException.OPERATIONS_ERROR);
-                    results.close();
+            for (Iterator j=list2.iterator(); j.hasNext(); ) {
+                AttributeValues av2 = (AttributeValues)j.next();
+                //log.debug("    - "+av2);
+
+                AttributeValues sv = new AttributeValues();
+                sv.add(av1);
+                sv.add(av2);
+
+                if (evaluate(relationships, sv)) {
+                    results.add(sv);
+                    found = true;
+                    //log.debug("     => true");
+                } else {
+                    //log.debug("     => false");
                 }
+
             }
-        });
+
+        }
 
         return results;
     }
 
-    public void load(
-            Collection parents,
-            EntryDefinition entryDefinition,
-            Collection pks,
-            SearchResults results)
-            throws Exception {
+    public Collection leftJoin(Collection list1, Collection list2, Collection relationships) throws Exception {
+        Collection results = new ArrayList();
 
-        Entry parent = parents.isEmpty() ? null : (Entry)parents.iterator().next();
-        String dn = parent == null ? entryDefinition.getDn() : entryDefinition.getRdn()+","+parent.getDn();
-        log.debug("Loading entry "+dn+" with pks "+pks);
+        //log.debug("Left join:");
+        for (Iterator i=list1.iterator(); i.hasNext(); ) {
+            AttributeValues av1 = (AttributeValues)i.next();
+            //log.debug(" - "+av1);
 
-        AttributeValues sourceValues = new AttributeValues();
-        log.debug("Parent entries:");
-        for (Iterator i=parents.iterator(); i.hasNext(); ) {
-            Entry entry = (Entry)i.next();
-            AttributeValues values = entry.getSourceValues();
-            log.debug(" - "+entry.getDn()+": "+values);
-            sourceValues.add(values);
-        }
-        //log.debug("Parent values: "+sourceValues);
+            boolean found = false;
 
-        Config config = engineContext.getConfig(entryDefinition.getDn());
-        Graph graph = engine.getGraph(entryDefinition);
-        Source primarySource = engine.getPrimarySource(entryDefinition);
+            for (Iterator j=list2.iterator(); j.hasNext(); ) {
+                AttributeValues av2 = (AttributeValues)j.next();
+                //log.debug("    - "+av2);
 
-        if (primarySource == null) {
-            engine.createEntries(entryDefinition, sourceValues, results);
-            results.close();
-            return;
-        }
-/*
-        ExecutionPlanner executionPlanner = new ExecutionPlanner(config, graph, entryDefinition);
-        graph.traverse(executionPlanner, primarySource);
+                AttributeValues sv = new AttributeValues();
+                sv.add(av1);
+                sv.add(av2);
 
-        Collection sources = executionPlanner.getSources();
-        Map filterMap = executionPlanner.getFilters();
+                if (evaluate(relationships, sv)) {
+                    results.add(sv);
+                    found = true;
+                    //log.debug("     => true");
+                } else {
+                    //log.debug("     => false");
+                }
 
-        log.debug("Execution plan:");
-        for (Iterator i = sources.iterator(); i.hasNext(); ) {
-            Source source = (Source)i.next();
-            log.debug(" - load source "+source.getName());
+            }
 
-            Collection filters = (Collection)filterMap.get(source);
-            if (filters == null) continue;
-
-            for (Iterator j=filters.iterator(); j.hasNext(); ) {
-                Relationship filter = (Relationship)j.next();
-                log.debug("   - filter with "+filter);
+            if (!found) {
+                //log.debug("   => no match found");
+                results.add(av1);
             }
         }
-*/
-        //Filter filter  = engineContext.getFilterTool().createFilter(pks);
 
-        LoaderGraphVisitor loaderVisitor = new LoaderGraphVisitor(config, graph, engine, entryDefinition, sourceValues, pks);
-        graph.traverse(loaderVisitor, primarySource);
-        //Map attributeValues = loaderVisitor.getAttributeValues();
+        return results;
+    }
 
-        log.debug("Merging:");
+    public boolean evaluate(Collection relationships, AttributeValues sourceValues) {
+        if (relationships == null) return true;
 
-        for (Iterator i=pks.iterator(); i.hasNext(); ) {
-            Row pk = (Row)i.next();
+        for (Iterator i=relationships.iterator(); i.hasNext(); ) {
+            Relationship relationship = (Relationship)i.next();
+            //log.debug("Comparing "+relationship+":");
 
-            Collection list = new ArrayList();
-            list.add(pk);
+            String lhs = relationship.getLhs();
+            String operator = relationship.getOperator();
+            String rhs = relationship.getRhs();
 
-            //Filter filter  = engineContext.getFilterTool().createFilter(pk, true);
+            Collection values1 = sourceValues.get(lhs);
+            Collection values2 = sourceValues.get(rhs);
 
-            MergerGraphVisitor mergerVisitor = new MergerGraphVisitor(config, graph, engine, entryDefinition, sourceValues, list);
-            graph.traverse(mergerVisitor, primarySource);
+            //log.debug(" - "+lhs+": "+values1);
+            //log.debug(" - "+rhs+": "+values2);
 
-            AttributeValues av = mergerVisitor.getAttributeValues();
-            log.debug("Merged: "+av);
+            if (values1 == null || values2 == null) return false;
 
-            engine.createEntries(entryDefinition, av, results);
+            boolean result = false;
+
+            for (Iterator j=values1.iterator(); !result && j.hasNext(); ) {
+                String value1 = j.next().toString();
+
+                for (Iterator k=values2.iterator(); !result && k.hasNext(); ) {
+                    String value2 = k.next().toString();
+
+                    int comparison = value1.compareToIgnoreCase(value2);
+
+                    if ("=".equals(operator) && comparison == 0) {
+                        result = true;
+                        break;
+
+                    } else if ("<".equals(operator) && comparison < 0) {
+                        result = true;
+                        break;
+
+                    } else if ("<=".equals(operator) && comparison <= 0) {
+                        result = true;
+                        break;
+
+                    } else if (">".equals(operator) && comparison > 0) {
+                        result = true;
+                        break;
+
+                    } else if (">=".equals(operator) && comparison >= 0) {
+                        result = true;
+                        break;
+
+                    } else if ("<>".equals(operator) && comparison != 0) {
+                        result = true;
+                        break;
+
+                    }
+                }
+            }
+
+            //log.debug("Result: "+result);
+
+            if (!result) return false;
         }
 
-        results.close();
+        return true;
     }
 
-    public Engine getEngine() {
-        return engine;
-    }
-
-    public void setEngine(Engine engine) {
-        this.engine = engine;
-    }
-
-    public EngineContext getEngineContext() {
-        return engineContext;
-    }
-
-    public void setEngineContext(EngineContext engineContext) {
-        this.engineContext = engineContext;
-    }
 }

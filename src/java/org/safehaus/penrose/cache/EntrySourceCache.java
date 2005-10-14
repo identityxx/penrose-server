@@ -23,50 +23,50 @@ import java.util.*;
 /**
  * @author Endi S. Dewata
  */
-public class InMemoryEntryDataCache extends EntryDataCache {
+public class EntrySourceCache extends EntryDataCache {
 
     Map dataMap = new TreeMap();
     Map expirationMap = new LinkedHashMap();
 
-    public Object get(Object rdn) throws Exception {
+    public Object get(Object key) throws Exception {
 
-        Row key = getCacheContext().getSchema().normalize((Row)rdn);
+        Row rdn = getCacheContext().getSchema().normalize((Row)key);
 
-        //log.debug("Getting entry cache ("+dataMap.size()+"): "+key);
+        //log.debug("Getting entry cache ("+dataMap.size()+"): "+rdn);
 
-        Object object = dataMap.get(key);
-        Date date = (Date)expirationMap.get(key);
+        Object object = dataMap.get(rdn);
+        Date date = (Date)expirationMap.get(rdn);
 
         if (date == null || date.getTime() <= System.currentTimeMillis()) {
-            dataMap.remove(key);
-            expirationMap.remove(key);
+            dataMap.remove(rdn);
+            expirationMap.remove(rdn);
             return null;
         }
 
         return object;
     }
 
-    public void put(Object rdn, Object object) throws Exception {
-        Row key = getCacheContext().getSchema().normalize((Row)rdn);
+    public void put(Object key, Object object) throws Exception {
+        Row rdn = getCacheContext().getSchema().normalize((Row)key);
 
-        while (dataMap.get(key) == null && dataMap.size() >= size) {
+        while (dataMap.get(rdn) == null && dataMap.size() >= size) {
             //log.debug("Trimming entry cache ("+dataMap.size()+").");
             Object k = expirationMap.keySet().iterator().next();
             dataMap.remove(k);
             expirationMap.remove(k);
         }
 
-        //log.debug("Storing entry cache ("+dataMap.size()+"): "+key);
-        dataMap.put(key, object);
-        expirationMap.put(key, new Date(System.currentTimeMillis() + expiration * 60 * 1000));
+        //log.debug("Storing entry cache ("+dataMap.size()+"): "+rdn);
+        dataMap.put(rdn, object);
+        expirationMap.put(rdn, new Date(System.currentTimeMillis() + expiration * 60 * 1000));
     }
 
-    public void remove(Object rdn) throws Exception {
+    public void remove(Object key) throws Exception {
 
-        Row key = getCacheContext().getSchema().normalize((Row)rdn);
+        Row rdn = getCacheContext().getSchema().normalize((Row)key);
 
-        //log.debug("Removing entry cache ("+dataMap.size()+"): "+key);
-        dataMap.remove(key);
-        expirationMap.remove(key);
+        //log.debug("Removing entry cache ("+dataMap.size()+"): "+rdn);
+        dataMap.remove(rdn);
+        expirationMap.remove(rdn);
     }
 }

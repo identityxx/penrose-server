@@ -116,26 +116,18 @@ public class EntryDefinition implements Cloneable, Serializable {
         return rdn;
     }
     
-    public String getRdn(AttributeValues attributes) {
-        if (!isDynamic()) return getRdn();
-
+    public Row getRdn(AttributeValues attributeValues) {
         Collection rdnAttributes = getRdnAttributes();
-        StringBuffer sb = new StringBuffer();
+        Row row = new Row();
+
         for (Iterator i=rdnAttributes.iterator(); i.hasNext(); ) {
             AttributeDefinition rdnAttribute = (AttributeDefinition)i.next();
-
-            // TODO fix for multiple values
-            Collection values = attributes.get(rdnAttribute.getName());
-            Object value = values.iterator().next();
-
-            if (sb.length() > 0) sb.append("+");
-            sb.append(rdnAttribute.getName());
-            sb.append("=");
-            sb.append(value);
+            String name = rdnAttribute.getName();
+            Object value = attributeValues.getOne(name);
+            row.set(name, value);
         }
 
-        // TODO fix if parent is also a dynamic entry
-        return sb.toString();
+        return row;
     }
 
     public String getParentDn() {
@@ -272,6 +264,17 @@ public class EntryDefinition implements Cloneable, Serializable {
         return (AttributeDefinition)attributeDefinitions.get(name);
     }
 
+    public Collection getAttributeDefinitions(Collection names) {
+        Collection results = new ArrayList();
+        for (Iterator i=names.iterator(); i.hasNext(); ) {
+            String name = (String)i.next();
+            AttributeDefinition attributeDefinition = (AttributeDefinition)attributeDefinitions.get(name);
+            if (attributeDefinition == null) continue;
+            results.add(attributeDefinition);
+        }
+        return results;
+    }
+
     public AttributeDefinition removeAttributeDefinition(String name) {
         return (AttributeDefinition)attributeDefinitions.remove(name);
     }
@@ -331,12 +334,9 @@ public class EntryDefinition implements Cloneable, Serializable {
             Object value = interpreter.eval(attribute.getExpression().getScript());
 
             Collection set = values.get(name);
-            if (set == null) {
-                set = new HashSet();
-                values.set(name, set);
-            }
-
+            if (set == null) set = new HashSet();
             set.add(value);
+            values.set(name, set);
         }
 
         return values;

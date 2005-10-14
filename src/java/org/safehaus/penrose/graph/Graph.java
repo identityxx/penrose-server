@@ -25,7 +25,7 @@ import java.util.*;
 public class Graph {
 
     private Set nodes = new HashSet();
-    private Map edges = new HashMap();
+    private Set edges = new HashSet();
 
     private Map indices = new HashMap();
 
@@ -37,29 +37,29 @@ public class Graph {
         return nodes;
     }
 
-    public void addEdge(Collection edge, Object object) throws Exception {
-        for (Iterator i=edge.iterator(); i.hasNext(); ) {
+    public void addEdge(GraphEdge edge) throws Exception {
+        for (Iterator i=edge.getNodes().iterator(); i.hasNext(); ) {
             Object node = i.next();
             if (!nodes.contains(node)) throw new Exception("Node "+node+" is not in the graph.");
         }
 
-        edges.put(edge, object);
+        edges.add(edge);
 
-        for (Iterator i=edge.iterator(); i.hasNext(); ) {
+        for (Iterator i=edge.getNodes().iterator(); i.hasNext(); ) {
             Object node = i.next();
 
-            Set index = (Set)indices.get(node);
-            if (index == null) {
-                index = new HashSet();
-                indices.put(node, index);
+            Set set = (Set)indices.get(node);
+            if (set == null) {
+                set = new HashSet();
+                indices.put(node, set);
             }
 
-            index.add(edge);
+            set.add(edge);
         }
     }
 
     public Collection getEdges() {
-        return edges.keySet();
+        return edges;
     }
 
     public Collection getEdges(Object node) throws Exception {
@@ -70,29 +70,20 @@ public class Graph {
     public Collection getEdgeObjects(Object node) throws Exception {
         Collection objects = new ArrayList();
 
-        Collection list = getEdges(node);
-        if (list == null) return objects;
+        Collection set = getEdges(node);
+        if (set == null) return objects;
 
-        for (Iterator i=list.iterator(); i.hasNext(); ) {
-            Collection edge = (Set)i.next();
-            Object object = edges.get(edge);
+        for (Iterator i=set.iterator(); i.hasNext(); ) {
+            GraphEdge edge = (GraphEdge)i.next();
+            Object object = edge.getObject();
             objects.add(object);
         }
 
         return objects;
     }
 
-    public Object getEdgeObject(Set edge) throws Exception {
-        for (Iterator i=edge.iterator(); i.hasNext(); ) {
-            Object node = i.next();
-            if (!nodes.contains(node)) throw new Exception("Node "+node+" is not in the graph.");
-        }
-
-        return edges.get(edge);
-    }
-
     public String toString() {
-        return "Nodes: "+nodes+", Edges: "+edges.keySet();
+        return "Nodes: "+nodes+", Edges: "+edges;
     }
 
     public void traverse(GraphVisitor visitor) throws Exception {

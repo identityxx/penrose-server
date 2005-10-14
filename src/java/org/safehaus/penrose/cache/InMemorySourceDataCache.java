@@ -30,8 +30,8 @@ public class InMemorySourceDataCache extends SourceDataCache {
     Map uniqueKeys = new TreeMap();
     Map expirationMap = new LinkedHashMap();
 
-    public Object get(Row key) throws Exception {
-        Row normalizedKey = cacheContext.getSchema().normalize(key);
+    public Object get(Object key) throws Exception {
+        Row normalizedKey = cacheContext.getSchema().normalize((Row)key);
 
         AttributeValues attributeValues = (AttributeValues)dataMap.get(normalizedKey);
         if (attributeValues == null) return null;
@@ -84,8 +84,8 @@ public class InMemorySourceDataCache extends SourceDataCache {
         return results;
     }
 
-    public void put(Row key, Object object) throws Exception {
-        Row normalizedKey = cacheContext.getSchema().normalize(key);
+    public void put(Object key, Object object) throws Exception {
+        Row normalizedKey = cacheContext.getSchema().normalize((Row)key);
         AttributeValues values = (AttributeValues)object;
 
         while (dataMap.get(normalizedKey) == null && dataMap.size() >= size) {
@@ -112,9 +112,9 @@ public class InMemorySourceDataCache extends SourceDataCache {
         }
     }
 
-    public void remove(Row key) throws Exception {
+    public void remove(Object key) throws Exception {
 
-        Row normalizedKey = cacheContext.getSchema().normalize(key);
+        Row normalizedKey = cacheContext.getSchema().normalize((Row)key);
 
         //log.debug("Removing source data cache ("+dataMap.size()+"): "+normalizedKey);
         dataMap.remove(normalizedKey);

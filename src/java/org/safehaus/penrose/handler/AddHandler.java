@@ -118,11 +118,9 @@ public class AddHandler {
 
             String v[] = attribute.getStringValueArray();
             Set set = (Set)values.get(attributeName);
-            if (set == null) {
-                set = new HashSet();
-                values.set(attributeName, set);
-            }
+            if (set == null) set = new HashSet();
             set.addAll(Arrays.asList(v));
+            values.set(attributeName, set);
         }
 
         // add into the first matching child

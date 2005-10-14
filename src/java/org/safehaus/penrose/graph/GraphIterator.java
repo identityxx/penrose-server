@@ -29,8 +29,8 @@ public class GraphIterator {
     public Graph graph;
     public GraphVisitor visitor;
 
-    Set visitedNodes = new HashSet();
-    Set visitedEdges = new HashSet();
+    private Collection visitedNodes = new HashSet();
+    private Collection visitedEdges = new HashSet();
 
     public GraphIterator(Graph graph, GraphVisitor visitor) {
         this.graph = graph;
@@ -49,48 +49,41 @@ public class GraphIterator {
         visitor.postVisitNode(node);
     }
 
-    public void traverseEdges(Object node) throws Exception {
+    public int traverseEdges(Object node) throws Exception {
         Collection edges = graph.getEdges(node);
-        if (edges == null) return;
+        if (edges == null) return 0;
 
+        int counter = 0;
         for (Iterator i=edges.iterator(); i.hasNext(); ) {
-            Set edge = (Set)i.next();
+            GraphEdge edge = (GraphEdge)i.next();
 
             if (visitedEdges.contains(edge)) continue;
 
             visitedEdges.add(edge);
-            Object object = graph.getEdgeObject(edge);
+            Object object = edge.getObject();
 
-            Collection nodes = new ArrayList();
-            Object node1 = null;
-            Object node2 = null;
+            Iterator j=edge.getNodes().iterator();
+            Object node1 = j.next();
+            Object node2 = j.next();
 
-            if (edge.size() == 1) {
-                node1 = edge.iterator().next();
-                nodes.addAll(edge);
-
-            } else {
-                Iterator j=edge.iterator();
-                node1 = j.next();
-                node2 = j.next();
-
-                if (node == node2) { // move from left to right
-                    Object n = node1;
-                    node1 = node2;
-                    node2 = n;
-                }
-
-                nodes.add(node1);
-                nodes.add(node2);
+            if (node == node2) { // move from left to right
+                Object n = node1;
+                node1 = node2;
+                node2 = n;
             }
 
-            boolean b = visitor.preVisitEdge(nodes, object);
-            if (!b) continue;
-
-            if (node2 != null) visitor.visitEdge(this, node1, node2, object);
-
-            visitor.postVisitEdge(nodes, object);
+            visitor.visitEdge(this, node1, node2, object);
+            counter++;
         }
 
+        return counter;
+    }
+
+    public Collection getVisitedNodes() {
+        return visitedNodes;
+    }
+
+    public Collection getVisitedEdges() {
+        return visitedEdges;
     }
 }

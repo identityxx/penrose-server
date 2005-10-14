@@ -7,7 +7,7 @@ import java.util.*;
  *
  * @author Endi S. Dewata
  */
-public class AttributeValues implements Cloneable {
+public class AttributeValues implements Cloneable, Comparable {
 
     public Map values = new TreeMap();
 
@@ -18,6 +18,10 @@ public class AttributeValues implements Cloneable {
         add(attributeValues);
     }
 
+    public boolean isEmpty() {
+        return values.isEmpty();
+    }
+    
     public void add(AttributeValues attributeValues) {
         add(null, attributeValues);
     }
@@ -38,12 +42,9 @@ public class AttributeValues implements Cloneable {
             Object value = row.get(name);
 
             Collection c = get(name);
-            if (c == null) {
-                //c = new TreeSet();
-                c = new HashSet();
-                set(name, c);
-            }
+            if (c == null) c = new HashSet();
             c.add(value);
+            set(name, c);
         }
     }
 
@@ -118,6 +119,31 @@ public class AttributeValues implements Cloneable {
         return false;
     }
 
+    public void remove(String name) {
+        Collection list = new ArrayList();
+        list.addAll(values.keySet());
+
+        for (Iterator i=list.iterator(); i.hasNext(); ) {
+            String s = (String)i.next();
+            if (s.equals(name) || s.startsWith(name+".")) {
+                values.remove(s);
+            }
+        }
+    }
+
+
+    public void retain(String name) {
+        Collection list = new ArrayList();
+        list.addAll(values.keySet());
+
+        for (Iterator i=list.iterator(); i.hasNext(); ) {
+            String s = (String)i.next();
+            if (!s.equals(name) && !s.startsWith(name+".")) {
+                values.remove(s);
+            }
+        }
+    }
+    
     public Map getValues() {
         return values;
     }
@@ -148,5 +174,58 @@ public class AttributeValues implements Cloneable {
             attributeValues.values.put(name, s);
         }
         return attributeValues;
+    }
+
+    public int compareTo(Object object) {
+
+        int c = 0;
+
+        try {
+            if (object == null) return 0;
+            if (!(object instanceof AttributeValues)) return 0;
+
+            AttributeValues attributeValues = (AttributeValues)object;
+
+            Iterator i = values.keySet().iterator();
+            Iterator j = attributeValues.values.keySet().iterator();
+
+            while (i.hasNext() && j.hasNext()) {
+                String name1 = (String)i.next();
+                String name2 = (String)j.next();
+
+                c = name1.compareTo(name2);
+                if (c != 0) return c;
+
+                Collection values1 = (Collection)values.get(name1);
+                Collection values2 = (Collection)attributeValues.values.get(name2);
+
+                Iterator k = values1.iterator();
+                Iterator l = values2.iterator();
+
+                while (k.hasNext() && l.hasNext()) {
+                    Object value1 = k.next();
+                    Object value2 = l.next();
+
+                    if (value1 instanceof Comparable && value2 instanceof Comparable) {
+                        Comparable v1 = (Comparable)value1.toString();
+                        Comparable v2 = (Comparable)value2.toString();
+
+                        c = v1.compareTo(v2);
+                        if (c != 0) return c;
+                    }
+                }
+
+                if (k.hasNext()) return 1;
+                if (l.hasNext()) return -1;
+            }
+
+            if (i.hasNext()) return 1;
+            if (j.hasNext()) return -1;
+
+        } finally {
+            //System.out.println("Comparing "+this+" with "+object+": "+c);
+        }
+
+        return c;
     }
 }

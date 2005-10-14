@@ -107,6 +107,7 @@ public class Penrose implements
 
     private Map entryFilterCaches = new TreeMap();
     private Map entryDataCaches = new TreeMap();
+    private Map entrySourceCaches = new TreeMap();
 
     private Map sourceFilterCaches = new TreeMap();
     private Map sourceDataCaches = new TreeMap();
@@ -585,10 +586,7 @@ public class Penrose implements
         String cacheName = entryDefinition.getParameter(EntryDefinition.CACHE);
         cacheName = cacheName == null ? EntryDefinition.DEFAULT_CACHE : cacheName;
 
-        CacheConfig cacheConfig = serverConfig.getCacheConfig(cacheName);
-
         String key = entryDefinition.getRdn()+","+parentDn;
-        //log.debug("Getting entry filter cache for: "+key);
 
         EntryFilterCache entryFilterCache = (EntryFilterCache)entryFilterCaches.get(key);
 
@@ -600,6 +598,26 @@ public class Penrose implements
         return entryFilterCache;
     }
 
+    public EntrySourceCache getEntrySourceCache(String parentDn, EntryDefinition entryDefinition) throws Exception {
+        String cacheName = "EntrySource";
+
+        CacheConfig cacheConfig = serverConfig.getCacheConfig(cacheName);
+
+        String key = entryDefinition.getRdn()+","+parentDn;
+
+        EntrySourceCache entrySourceCache = (EntrySourceCache)entrySourceCaches.get(key);
+
+        if (entrySourceCache == null) {
+            entrySourceCache = new EntrySourceCache();
+            entrySourceCache.setParentDn(parentDn);
+            entrySourceCache.setEntryDefinition(entryDefinition);
+            entrySourceCache.init(cacheConfig, this);
+            entrySourceCaches.put(key, entrySourceCache);
+        }
+
+        return entrySourceCache;
+    }
+
     public EntryDataCache getEntryDataCache(String parentDn, EntryDefinition entryDefinition) throws Exception {
         String cacheName = entryDefinition.getParameter(EntryDefinition.CACHE);
         cacheName = cacheName == null ? EntryDefinition.DEFAULT_CACHE : cacheName;
@@ -607,7 +625,6 @@ public class Penrose implements
         CacheConfig cacheConfig = serverConfig.getCacheConfig(cacheName);
 
         String key = entryDefinition.getRdn()+","+parentDn;
-        //log.debug("Getting entry data cache for: "+key);
 
         EntryDataCache cache = (EntryDataCache)entryDataCaches.get(key);
 

@@ -31,6 +31,7 @@ public class Formatter {
     }
 
     public static String rightPad(String s, int length) {
+        if (s == null) s = "";
         if (s.length() > length) return s.substring(0, length);
         return s+repeat(" ", length-s.length());
     }
