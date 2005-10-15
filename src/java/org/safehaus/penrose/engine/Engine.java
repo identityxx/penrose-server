@@ -423,8 +423,9 @@ public class Engine {
         }
 
         Collection attributeDefinitions = entryDefinition.getAttributeDefinitions(attributeNames);
+        log.debug("attributeDefinitions: "+attributeDefinitions);
 
-        if (attributeNames.contains("dn") && attributeDefinitions.size() == 0) {
+        if (attributeNames.contains("dn") && attributeDefinitions.size() == 0 && "(objectclass=*)".equals(filter.toString().toLowerCase())) {
             for (Iterator i=maps.keySet().iterator(); i.hasNext(); ) {
                 String dn = (String)i.next();
                 Entry entry = new Entry(dn, entryDefinition, new AttributeValues());
@@ -490,13 +491,13 @@ public class Engine {
         }
 
         if (false) {
-            mergeEngine.merge(parentSourceValues, entryDefinition, loadedBatches, results);
+            mergeEngine.merge(entryDefinition, loadedBatches, results);
 
         } else {
             execute(new Runnable() {
                 public void run() {
                     try {
-                        mergeEngine.merge(parentSourceValues, entryDefinition, loadedBatches, results);
+                        mergeEngine.merge(entryDefinition, loadedBatches, results);
 
                     } catch (Throwable e) {
                         e.printStackTrace(System.out);

@@ -47,11 +47,12 @@ public class JoinEngine {
                 AttributeValues av2 = (AttributeValues)j.next();
                 //log.debug("    - "+av2);
 
-                AttributeValues sv = new AttributeValues();
-                sv.add(av1);
-                sv.add(av2);
+                if (evaluate(relationships, av1, av2)) {
 
-                if (evaluate(relationships, sv)) {
+                    AttributeValues sv = new AttributeValues();
+                    sv.add(av1);
+                    sv.add(av2);
+
                     results.add(sv);
                     found = true;
                     //log.debug("     => true");
@@ -80,11 +81,12 @@ public class JoinEngine {
                 AttributeValues av2 = (AttributeValues)j.next();
                 //log.debug("    - "+av2);
 
-                AttributeValues sv = new AttributeValues();
-                sv.add(av1);
-                sv.add(av2);
+                if (evaluate(relationships, av1, av2)) {
 
-                if (evaluate(relationships, sv)) {
+                    AttributeValues sv = new AttributeValues();
+                    sv.add(av1);
+                    sv.add(av2);
+
                     results.add(sv);
                     found = true;
                     //log.debug("     => true");
@@ -103,7 +105,7 @@ public class JoinEngine {
         return results;
     }
 
-    public boolean evaluate(Collection relationships, AttributeValues sourceValues) {
+    public boolean evaluate(Collection relationships, AttributeValues sv1, AttributeValues sv2) {
         if (relationships == null) return true;
 
         for (Iterator i=relationships.iterator(); i.hasNext(); ) {
@@ -114,8 +116,13 @@ public class JoinEngine {
             String operator = relationship.getOperator();
             String rhs = relationship.getRhs();
 
-            Collection values1 = sourceValues.get(lhs);
-            Collection values2 = sourceValues.get(rhs);
+            Collection values1 = sv1.get(lhs);
+            Collection values2 = sv2.get(rhs);
+
+            if (values1 == null && values2 == null) {
+                values1 = sv1.get(rhs);
+                values2 = sv2.get(lhs);
+            }
 
             //log.debug(" - "+lhs+": "+values1);
             //log.debug(" - "+rhs+": "+values2);

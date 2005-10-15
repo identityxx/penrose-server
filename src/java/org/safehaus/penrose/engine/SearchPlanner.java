@@ -50,8 +50,9 @@ public class SearchPlanner extends GraphVisitor {
 
     private Map filters = new HashMap();
     private Map depths = new HashMap();
+    
     private Collection connectingRelationships = new ArrayList();
-    private Collection startingSources = new ArrayList();
+    private Collection connectingSources = new ArrayList();
 
     public SearchPlanner(
             Engine engine,
@@ -121,7 +122,7 @@ public class SearchPlanner extends GraphVisitor {
             map.put("toSource", toSource);
             map.put("relationships", relationships);
 
-            startingSources.add(map);
+            connectingSources.add(map);
         }
     }
 
@@ -129,15 +130,15 @@ public class SearchPlanner extends GraphVisitor {
 
         Source source = (Source)node;
 
-        //log.debug(Formatter.displaySeparator(40));
-        //log.debug(Formatter.displayLine("Visiting "+source.getName(), 40));
-        //log.debug(Formatter.displaySeparator(40));
+        log.debug(Formatter.displaySeparator(40));
+        log.debug(Formatter.displayLine("Visiting "+source.getName(), 40));
+        log.debug(Formatter.displaySeparator(40));
 
         Integer depth = (Integer)depthStack.peek();
 
         Filter sourceFilter = engine.getFilterTool().toSourceFilter(null, entryDefinition, source, searchFilter);
-        //log.debug("Filter: "+sourceFilter+" ("+(sourceFilter == null ? "null" : "not null")+")");
-        //log.debug("Depth: "+depth);
+        log.debug("Filter: "+sourceFilter+" ("+(sourceFilter == null ? "null" : "not null")+")");
+        log.debug("Depth: "+depth);
 
         filters.put(source, sourceFilter);
         depths.put(source, depth);
@@ -224,7 +225,7 @@ public class SearchPlanner extends GraphVisitor {
         return connectingRelationships;
     }
 
-    public Collection getStartingSources() {
-        return startingSources;
+    public Collection getConnectingSources() {
+        return connectingSources;
     }
 }

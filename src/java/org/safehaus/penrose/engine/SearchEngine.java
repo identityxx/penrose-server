@@ -214,16 +214,16 @@ public class SearchEngine {
 
         planner.run();
 
-        Collection startingSources = planner.getStartingSources();
+        Collection connectingSources = planner.getConnectingSources();
         Collection connectingRelationships = planner.getConnectingRelationships();
 
         Collection results = searchLocal(
                 entryDefinition,
                 parentSourceValues,
                 planner,
-                startingSources
+                connectingSources
         );
-
+/*
         log.debug(Formatter.displaySeparator(80));
         log.debug(Formatter.displayLine("Results after searching local:", 80));
 
@@ -238,7 +238,7 @@ public class SearchEngine {
         }
 
         log.debug(Formatter.displaySeparator(80));
-
+*/
         if (results.isEmpty()) return results;
 
         Collection parentResults = searchParent(
@@ -246,11 +246,11 @@ public class SearchEngine {
                 parentSourceValues,
                 planner,
                 results,
-                startingSources
+                connectingSources
         );
 
         Collection values = engine.getJoinEngine().leftJoin(results, parentResults, connectingRelationships);
-
+/*
         log.debug(Formatter.displaySeparator(80));
         log.debug(Formatter.displayLine("Results after searching parents:", 80));
 
@@ -265,7 +265,7 @@ public class SearchEngine {
         }
 
         log.debug(Formatter.displaySeparator(80));
-
+*/
         return values;
     }
 
@@ -273,7 +273,7 @@ public class SearchEngine {
             EntryDefinition entryDefinition,
             Collection parentSourceValues,
             SearchPlanner planner,
-            Collection startingSources) throws Exception {
+            Collection connectingSources) throws Exception {
 
         Collection results = new ArrayList();
 
@@ -288,7 +288,7 @@ public class SearchEngine {
         }
 
         Map map = null;
-        for (Iterator i=startingSources.iterator(); i.hasNext(); ) {
+        for (Iterator i=connectingSources.iterator(); i.hasNext(); ) {
             Map m = (Map)i.next();
 
             Source fromSource = (Source)m.get("fromSource");
@@ -352,7 +352,26 @@ public class SearchEngine {
 
             runner.run();
 
-            results.addAll(runner.getResults());
+            Collection list = runner.getResults();
+
+            SearchCleaner cleaner = new SearchCleaner(
+                    engine,
+                    entryDefinition,
+                    planner.getFilters(),
+                    planner.getDepths(),
+                    primarySource);
+
+            for (Iterator i=connectingSources.iterator(); i.hasNext(); ) {
+                Map m = (Map)i.next();
+
+                Source source = (Source)m.get("toSource");
+
+                cleaner.run(source);
+            }
+
+            cleaner.clean(list);
+
+            results.addAll(list);
 
         } else {
 

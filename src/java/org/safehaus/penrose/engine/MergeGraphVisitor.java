@@ -42,33 +42,36 @@ public class MergeGraphVisitor extends GraphVisitor {
     private Engine engine;
     private EngineContext engineContext;
     private EntryDefinition entryDefinition;
-    private Collection parentSourceValues;
-    private AttributeValues sourceValues;
+    private AttributeValues primarySourceValues;
+    private AttributeValues loadedSourceValues;
     private Source primarySource;
 
-    private Collection results = new ArrayList();
+    private AttributeValues sourceValues = new AttributeValues();
 
     private Stack stack = new Stack();
 
     public MergeGraphVisitor(
-            Config config,
-            Graph graph,
             Engine engine,
             EntryDefinition entryDefinition,
-            Collection parentSourceValues,
-            AttributeValues sourceValues,
-            Source primarySource) {
+            AttributeValues primarySourceValues,
+            AttributeValues loadedSourceValues,
+            Source primarySource) throws Exception {
 
-        this.config = config;
-        this.graph = graph;
         this.engine = engine;
         this.engineContext = engine.getEngineContext();
         this.entryDefinition = entryDefinition;
-        this.parentSourceValues = parentSourceValues;
-        this.sourceValues = sourceValues;
+        this.primarySourceValues = primarySourceValues;
+        this.loadedSourceValues = loadedSourceValues;
         this.primarySource = primarySource;
 
-        results.add(sourceValues);
+        config = engineContext.getConfig(entryDefinition.getDn());
+        graph = engine.getGraph(entryDefinition);
+
+        sourceValues.add(primarySourceValues);
+    }
+
+    public void run() throws Exception {
+        graph.traverse(this, primarySource);
     }
 
     public void visitNode(GraphIterator graphIterator, Object node) throws Exception {
@@ -76,7 +79,7 @@ public class MergeGraphVisitor extends GraphVisitor {
         Source source = (Source)node;
 
         log.debug(Formatter.displaySeparator(40));
-        log.debug(Formatter.displayLine("Merging "+source.getName(), 40));
+        log.debug(Formatter.displayLine("Visiting "+source.getName(), 40));
         log.debug(Formatter.displaySeparator(40));
 
         if (source == primarySource) {
@@ -97,41 +100,28 @@ public class MergeGraphVisitor extends GraphVisitor {
             filter = engineContext.getFilterTool().appendAndFilter(filter, sourceFilter);
         }
 
-        if (!sourceValues.contains(source.getName())) {
+        if (!primarySourceValues.contains(source.getName())) {
 
-            log.debug("Loading source "+source.getName()+" with filter "+filter);
-            Collection tmp = engineContext.getSyncService().search(source, filter);
-            Collection list = new ArrayList();
-            for (Iterator i=tmp.iterator(); i.hasNext(); ) {
+            //log.debug("Loaded values:");
+            Collection list = loadedSourceValues.get(source.getName());
+
+            for (Iterator i=list.iterator(); i.hasNext(); ) {
                 AttributeValues av = (AttributeValues)i.next();
+                //log.debug(" - "+av);
 
-                AttributeValues sv = new AttributeValues();
-                sv.add(source.getName(), av);
-                list.add(sv);
-            }
+                if (!engine.getJoinEngine().evaluate(relationships, primarySourceValues, av)) continue;
 
-            if (results.isEmpty()) {
-                results.addAll(list);
-            } else {
-                Collection temp;
-                if (source.isOptional()) {
-                    temp = engine.getJoinEngine().leftJoin(results, list, relationships);
-                } else {
-                    temp = engine.getJoinEngine().join(results, list, relationships);
-                }
-
-                results.clear();
-                results.addAll(temp);
+                sourceValues.add(av);
             }
         }
-
-        log.debug("Total load results:");
-
-        for (Iterator j=results.iterator(); j.hasNext(); ) {
-            AttributeValues sv = (AttributeValues)j.next();
-            log.debug(" - "+sv);
+/*
+        log.debug("Source values:");
+        for (Iterator i=sourceValues.getNames().iterator(); i.hasNext(); ) {
+            String name = (String)i.next();
+            Collection values = sourceValues.get(name);
+            log.debug(" - "+name+": "+values);
         }
-
+*/
         graphIterator.traverseEdges(node);
     }
 
@@ -153,17 +143,7 @@ public class MergeGraphVisitor extends GraphVisitor {
         Collection relationships = new ArrayList();
         relationships.add(relationship);
 
-        Filter filter = null;
-
-        log.debug("Generating filters:");
-        for (Iterator i=results.iterator(); i.hasNext(); ) {
-            AttributeValues av = (AttributeValues)i.next();
-
-            Filter f = engine.generateFilter(toSource, relationships, av);
-            log.debug(" - "+f);
-
-            filter = engineContext.getFilterTool().appendOrFilter(filter, f);
-        }
+        Filter filter = engine.generateFilter(toSource, relationships, sourceValues);
 
         Map map = new HashMap();
         map.put("filter", filter);
@@ -176,11 +156,7 @@ public class MergeGraphVisitor extends GraphVisitor {
         stack.pop();
     }
 
-    public Collection getResults() {
-        return results;
-    }
-
-    public void setResults(Collection results) {
-        this.results = results;
+    public AttributeValues getSourceValues() {
+        return sourceValues;
     }
 }

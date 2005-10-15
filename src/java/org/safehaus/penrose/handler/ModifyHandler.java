@@ -341,7 +341,7 @@ public class ModifyHandler {
 
 		Interpreter interpreter = handlerContext.newInterpreter();
 
-		String attrValue = (String)interpreter.eval(attribute.getExpression().getScript());
+		String attrValue = (String)interpreter.eval(attribute.getExpression());
 		if (attrValue.equals(value)) entry.removeAttributeDefinition(name);
 	}
 

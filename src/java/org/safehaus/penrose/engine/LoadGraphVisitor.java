@@ -41,13 +41,13 @@ public class LoadGraphVisitor extends GraphVisitor {
     private Engine engine;
     private EngineContext engineContext;
     private EntryDefinition entryDefinition;
-    private Collection parentSourceValues;
     private AttributeValues sourceValues;
     private Source primarySource;
 
     private Stack stack = new Stack();
 
     private Collection results = new ArrayList();
+    private AttributeValues loadedSourceValues = new AttributeValues();
 
     public LoadGraphVisitor(
             Config config,
@@ -63,7 +63,6 @@ public class LoadGraphVisitor extends GraphVisitor {
         this.engine = engine;
         this.engineContext = engine.getEngineContext();
         this.entryDefinition = entryDefinition;
-        this.parentSourceValues = parentSourceValues;
         this.primarySource = primarySource;
 
         sourceValues = new AttributeValues();
@@ -72,7 +71,7 @@ public class LoadGraphVisitor extends GraphVisitor {
             sourceValues.add(sv);
         }
 
-        this.results.addAll(parentSourceValues);
+        //this.results.addAll(parentSourceValues);
     }
 
     public void visitNode(GraphIterator graphIterator, Object node) throws Exception {
@@ -109,6 +108,7 @@ public class LoadGraphVisitor extends GraphVisitor {
         }
 
         Collection tmp = engineContext.getSyncService().search(source, filter);
+
         Collection list = new ArrayList();
         for (Iterator i=tmp.iterator(); i.hasNext(); ) {
             AttributeValues av = (AttributeValues)i.next();
@@ -118,8 +118,12 @@ public class LoadGraphVisitor extends GraphVisitor {
             list.add(sv);
         }
 
+        loadedSourceValues.set(source.getName(), list);
+
+/*
         if (results.isEmpty()) {
             results.addAll(list);
+
         } else {
             Collection temp;
             if (source.isOptional()) {
@@ -139,6 +143,16 @@ public class LoadGraphVisitor extends GraphVisitor {
             log.debug(" - "+sv);
         }
 
+        for (Iterator i=loadedSourceValues.getNames().iterator(); i.hasNext(); ) {
+            String name = (String)i.next();
+            log.debug(" - "+name+":");
+            Collection values = (Collection)loadedSourceValues.get(name);
+            for (Iterator j=values.iterator(); j.hasNext(); ) {
+                AttributeValues sv = (AttributeValues)j.next();
+                log.debug("   "+sv);
+            }
+        }
+*/
         graphIterator.traverseEdges(node);
     }
 
@@ -159,7 +173,7 @@ public class LoadGraphVisitor extends GraphVisitor {
 
         Collection relationships = new ArrayList();
         relationships.add(relationship);
-
+/*
         Filter filter = null;
 
         log.debug("Generating filters:");
@@ -171,6 +185,8 @@ public class LoadGraphVisitor extends GraphVisitor {
 
             filter = engineContext.getFilterTool().appendOrFilter(filter, f);
         }
+*/
+        Filter filter = engine.generateFilter(toSource, relationships, sourceValues);
 
         Map map = new HashMap();
         map.put("filter", filter);
@@ -185,5 +201,9 @@ public class LoadGraphVisitor extends GraphVisitor {
 
     public Collection getResults() {
         return results;
+    }
+
+    public AttributeValues getLoadedSourceValues() {
+        return loadedSourceValues;
     }
 }

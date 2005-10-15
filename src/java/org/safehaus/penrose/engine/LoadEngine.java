@@ -81,10 +81,12 @@ public class LoadEngine {
 
                 log.debug(Formatter.displaySeparator(80));
 
-                loadEntries(parentSourceValues, entryDefinition, keys);
+                AttributeValues loadedSourceValues = loadEntries(parentSourceValues, entryDefinition, keys);
 
                 for (Iterator i=keys.iterator(); i.hasNext(); ) {
                     Map map = (Map)i.next();
+
+                    map.put("loadedSourceValues", loadedSourceValues);
 
                     loadedBatches.add(map);
                 }
@@ -96,7 +98,7 @@ public class LoadEngine {
         }
     }
 
-    public Collection loadEntries(
+    public AttributeValues loadEntries(
             Collection parentSourceValues,
             EntryDefinition entryDefinition,
             Collection maps)
@@ -112,7 +114,7 @@ public class LoadEngine {
         Graph graph = engine.getGraph(entryDefinition);
         Source primarySource = engine.getPrimarySource(entryDefinition);
 
-        if (primarySource == null) return new ArrayList();
+        if (primarySource == null) return sourceValues;
 
         Collection pks = new TreeSet();
         for (Iterator i=maps.iterator(); i.hasNext(); ) {
@@ -135,7 +137,7 @@ public class LoadEngine {
         LoadGraphVisitor loadVisitor = new LoadGraphVisitor(config, graph, engine, entryDefinition, parentSourceValues, filters, primarySource);
         graph.traverse(loadVisitor, primarySource);
 
-        return loadVisitor.getResults();
+        return loadVisitor.getLoadedSourceValues();
     }
 
     public Engine getEngine() {

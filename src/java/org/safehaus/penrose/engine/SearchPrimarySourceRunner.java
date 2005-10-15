@@ -48,7 +48,6 @@ public class SearchPrimarySourceRunner extends GraphVisitor {
     private Source startingSource;
 
     private Stack filterStack = new Stack();
-    private Stack depthStack = new Stack();
 
     private Collection results = new TreeSet();
 
