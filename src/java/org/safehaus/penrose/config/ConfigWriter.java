@@ -303,7 +303,7 @@ public class ConfigWriter {
 		Element element = new DefaultElement("source");
 
         element.add(new DefaultAttribute("name", source.getName()));
-        if (source.isOptional()) element.add(new DefaultAttribute("optional", "true"));
+        if (!source.isRequired()) element.add(new DefaultAttribute("required", "false"));
         if (!source.isIncludeOnAdd()) element.add(new DefaultAttribute("includeOnAdd", "false"));
         if (!source.isIncludeOnModify()) element.add(new DefaultAttribute("includeOnModify", "false"));
         if (!source.isIncludeOnDelete()) element.add(new DefaultAttribute("includeOnDelete", "false"));

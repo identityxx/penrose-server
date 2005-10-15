@@ -139,13 +139,13 @@ public class SearchLocalRunner extends GraphVisitor {
 
         if (results.isEmpty()) {
             results.addAll(list);
-            
+
         } else {
             Collection temp;
-            if (source.isOptional()) {
-                temp = engine.getJoinEngine().leftJoin(results, list, relationships);
-            } else {
+            if (source.isRequired()) {
                 temp = engine.getJoinEngine().join(results, list, relationships);
+            } else {
+                temp = engine.getJoinEngine().leftJoin(results, list, relationships);
             }
 
             results.clear();

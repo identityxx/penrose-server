@@ -120,39 +120,6 @@ public class LoadGraphVisitor extends GraphVisitor {
 
         loadedSourceValues.set(source.getName(), list);
 
-/*
-        if (results.isEmpty()) {
-            results.addAll(list);
-
-        } else {
-            Collection temp;
-            if (source.isOptional()) {
-                temp = engine.getJoinEngine().leftJoin(results, list, relationships);
-            } else {
-                temp = engine.getJoinEngine().join(results, list, relationships);
-            }
-
-            results.clear();
-            results.addAll(temp);
-        }
-
-        log.debug("Total load results:");
-
-        for (Iterator j=results.iterator(); j.hasNext(); ) {
-            AttributeValues sv = (AttributeValues)j.next();
-            log.debug(" - "+sv);
-        }
-
-        for (Iterator i=loadedSourceValues.getNames().iterator(); i.hasNext(); ) {
-            String name = (String)i.next();
-            log.debug(" - "+name+":");
-            Collection values = (Collection)loadedSourceValues.get(name);
-            for (Iterator j=values.iterator(); j.hasNext(); ) {
-                AttributeValues sv = (AttributeValues)j.next();
-                log.debug("   "+sv);
-            }
-        }
-*/
         graphIterator.traverseEdges(node);
     }
 

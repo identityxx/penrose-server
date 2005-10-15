@@ -21,8 +21,8 @@
     </parameter>
     <source name="categories">
       <field name="description" length="100"/>
-      <field name="id" primaryKey="true" type="INTEGER"/>
-      <field name="name"/>
+      <field name="id" primaryKey="true" type="INTEGER" length="5"/>
+      <field name="name" unique="true"/>
       <parameter>
         <param-name>tableName</param-name>
         <param-value>categories</param-value>
@@ -30,27 +30,27 @@
     </source>
     <source name="customer_emails">
       <field name="email" primaryKey="true"/>
-      <field name="username"/>
+      <field name="username" index="true"/>
       <parameter>
         <param-name>tableName</param-name>
         <param-value>customer_emails</param-value>
       </parameter>
     </source>
     <source name="customers">
-      <field name="firstName"/>
-      <field name="lastName"/>
+      <field name="firstName" primaryKey="true"/>
+      <field name="lastName" primaryKey="true"/>
       <field name="password" length="10"/>
-      <field name="username" primaryKey="true" length="10"/>
+      <field name="username" unique="true" length="10"/>
       <parameter>
         <param-name>tableName</param-name>
         <param-value>customers</param-value>
       </parameter>
     </source>
     <source name="order_details">
-      <field name="orderId" primaryKey="true" type="INTEGER"/>
-      <field name="price" type="DOUBLE"/>
-      <field name="productId" primaryKey="true" type="INTEGER"/>
-      <field name="quantity" type="INTEGER"/>
+      <field name="orderId" primaryKey="true" type="INTEGER" length="5"/>
+      <field name="price" type="DOUBLE" length="8"/>
+      <field name="productId" primaryKey="true" type="INTEGER" length="5"/>
+      <field name="quantity" type="INTEGER" length="5"/>
       <parameter>
         <param-name>tableName</param-name>
         <param-value>order_details</param-value>
@@ -66,10 +66,10 @@
       </parameter>
     </source>
     <source name="products">
-      <field name="categoryId" type="INTEGER"/>
-      <field name="id" primaryKey="true" type="INTEGER"/>
-      <field name="name"/>
-      <field name="price" type="DOUBLE"/>
+      <field name="categoryId" type="INTEGER" length="5"/>
+      <field name="id" primaryKey="true" type="INTEGER" length="5"/>
+      <field name="name" unique="true"/>
+      <field name="price" type="DOUBLE" length="8"/>
       <parameter>
         <param-name>tableName</param-name>
         <param-value>products</param-value>
