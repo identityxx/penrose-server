@@ -47,7 +47,7 @@ public class BindHandler {
 
         log.info("-------------------------------------------------");
         log.info("BIND:");
-        log.info(" - dn      : "+dn);
+        log.info(" - DN      : "+dn);
 
         BindEvent beforeBindEvent = new BindEvent(this, BindEvent.BEFORE_BIND, connection, dn, password);
         handler.postEvent(dn, beforeBindEvent);

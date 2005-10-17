@@ -176,7 +176,7 @@ public class SearchEngine {
                 av.add(sv);
             }
         }
-
+/*
         log.debug(Formatter.displaySeparator(80));
         log.debug(Formatter.displayLine("SEARCH RESULTS", 80));
         log.debug(Formatter.displayLine("Entry: "+entryDefinition.getDn(), 80));
@@ -190,7 +190,7 @@ public class SearchEngine {
         }
 
         log.debug(Formatter.displaySeparator(80));
-
+*/
         return results;
     }
 

@@ -40,9 +40,9 @@ public class ModRdnHandler {
 
         log.debug("-------------------------------------------------------------------------------");
         log.debug("MODRDN:");
-        if (connection.getBindDn() != null) log.info(" - bindDn: " + connection.getBindDn());
-        log.debug("  dn: " + dn);
-        log.debug("  new rdn: " + newRdn);
+        if (connection.getBindDn() != null) log.info(" - Bind DN: " + connection.getBindDn());
+        log.debug(" - DN: " + dn);
+        log.debug(" - New RDN: " + newRdn);
 
 		return LDAPException.LDAP_NOT_SUPPORTED;
 	}

@@ -42,7 +42,7 @@ public class PenroseJMXAuthenticator implements JMXAuthenticator {
     public PenroseJMXAuthenticator(String url, String pattern) {
         this.url = url;
         this.pattern = pattern;
-        log.debug("Initializing PenroseJMXAuthenticator");
+        log.debug("Initializing PenroseJMXAuthenticator.");
     }
 
     public Subject authenticate(Object o) throws SecurityException {

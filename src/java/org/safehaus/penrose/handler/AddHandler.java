@@ -60,8 +60,8 @@ public class AddHandler {
 
         log.info("-------------------------------------------------");
         log.info("ADD:");
-        if (connection.getBindDn() != null) log.info(" - bindDn: "+connection.getBindDn());
-        log.info(Entry.toString(entry));
+        if (connection.getBindDn() != null) log.info(" - Bind DN: "+connection.getBindDn());
+        log.info(" - Entry:\n"+Entry.toString(entry));
         log.info("");
 
         AddEvent beforeModifyEvent = new AddEvent(this, AddEvent.BEFORE_ADD, connection, entry);

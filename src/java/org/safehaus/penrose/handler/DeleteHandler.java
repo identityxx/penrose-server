@@ -49,8 +49,8 @@ public class DeleteHandler {
 
         log.info("-------------------------------------------------");
         log.info("DELETE:");
-        if (connection.getBindDn() != null) log.info(" - bindDn: "+connection.getBindDn());
-        log.info(" - dn: "+dn);
+        if (connection.getBindDn() != null) log.info(" - Bind DN: "+connection.getBindDn());
+        log.info(" - DN: "+dn);
         log.info("");
 
         DeleteEvent beforeDeleteEvent = new DeleteEvent(this, DeleteEvent.BEFORE_DELETE, connection, dn);

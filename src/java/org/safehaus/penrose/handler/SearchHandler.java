@@ -265,12 +265,12 @@ public class SearchHandler {
 
         log.debug("----------------------------------------------------------------------------------");
         log.info("SEARCH:");
-        if (connection != null && connection.getBindDn() != null) log.info(" - bindDn: " + connection.getBindDn());
-        log.info(" - base: " + base);
-        log.info(" - scope: " + s);
-        log.debug(" - deref: " + d);
-        log.info(" - filter: " + filter);
-        log.debug(" - attr: " + attributeNames);
+        if (connection != null && connection.getBindDn() != null) log.info(" - Bind DN: " + connection.getBindDn());
+        log.info(" - Base DN: " + base);
+        log.info(" - Scope: " + s);
+        log.debug(" - Alias Dereferencing: " + d);
+        log.info(" - Filter: " + filter);
+        log.debug(" - Attribute Names: " + attributeNames);
         log.info("");
 
         SearchEvent beforeSearchEvent = new SearchEvent(this, SearchEvent.BEFORE_SEARCH, connection, base);

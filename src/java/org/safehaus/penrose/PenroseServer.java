@@ -139,12 +139,12 @@ public class PenroseServer implements SignalHandler {
             server = (MBeanServer) servers.get(0);
 
         } catch (Exception ex) {
-            log.debug("Default MBeanServer has not been created yet.");
+            //log.debug("Default MBeanServer has not been created yet.");
         }
 
         if (server == null) {
             try {
-                log.debug("Creating MBeanServer...");
+                log.debug("Creating MBeanServer.");
 
                 // MX4J's logging redirection to Apache's Commons Logging
                 mx4j.log.Log.redirectTo(new Log4JLogger());
@@ -164,7 +164,7 @@ public class PenroseServer implements SignalHandler {
                 loader.startup(reader);
                 reader.close();
 
-                log.debug("Done creating MBeanServer.");
+                //log.debug("Done creating MBeanServer.");
 
             } catch (Exception ex) {
                 log.error(ex.toString(), ex);

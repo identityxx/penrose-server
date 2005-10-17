@@ -55,7 +55,7 @@ public class JNDIAdapter extends Adapter {
         for (Iterator i=getParameterNames().iterator(); i.hasNext(); ) {
             String param = (String)i.next();
             String value = getParameter(param);
-            log.debug(param+": "+value);
+            log.debug(" - "+param+": "+value);
 
             if (param.equals(Context.PROVIDER_URL)) {
 

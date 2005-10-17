@@ -167,23 +167,6 @@ public class Penrose implements
 		return LDAPException.SUCCESS;
 	}
 
-    public void initEngine() throws Exception {
-
-        for (Iterator i=serverConfig.getEngineConfigs().iterator(); i.hasNext(); ) {
-            EngineConfig engineConfig = (EngineConfig)i.next();
-
-            Class clazz = Class.forName(engineConfig.getEngineClass());
-            Engine engine = (Engine)clazz.newInstance();
-            engine.init(engineConfig, this);
-
-            engines.put(engineConfig.getEngineName(), engine);
-        }
-    }
-
-    public Connection getConnection(String name) {
-        return (Connection)connections.get(name);
-    }
-
     public void initServer() throws Exception {
 
         log.debug("-------------------------------------------------------------------------------");
@@ -211,6 +194,19 @@ public class Penrose implements
         configValidator.setSchema(schema);
 
         if (trustedKeyStore != null) System.setProperty("javax.net.ssl.trustStore", trustedKeyStore);
+    }
+
+    public void initEngine() throws Exception {
+
+        for (Iterator i=serverConfig.getEngineConfigs().iterator(); i.hasNext(); ) {
+            EngineConfig engineConfig = (EngineConfig)i.next();
+
+            Class clazz = Class.forName(engineConfig.getEngineClass());
+            Engine engine = (Engine)clazz.newInstance();
+            engine.init(engineConfig, this);
+
+            engines.put(engineConfig.getEngineName(), engine);
+        }
     }
 
 	public void addConfig(Config config) throws Exception {
@@ -244,6 +240,10 @@ public class Penrose implements
         initModules(config);
         getEngine().analyze(config);
 	}
+
+    public Connection getConnection(String name) {
+        return (Connection)connections.get(name);
+    }
 
     public void initConnections(Config config) throws Exception {
         for (Iterator i = config.getConnectionConfigs().iterator(); i.hasNext();) {

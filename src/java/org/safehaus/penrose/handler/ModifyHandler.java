@@ -54,8 +54,8 @@ public class ModifyHandler {
 
         log.info("-------------------------------------------------");
 		log.info("MODIFY:");
-		if (connection.getBindDn() != null) log.info(" - bindDn: " + connection.getBindDn());
-        log.info(" - dn: " + dn);
+		if (connection.getBindDn() != null) log.info(" - Bind DN: " + connection.getBindDn());
+        log.info(" - DN: " + dn);
         log.debug("-------------------------------------------------");
 		log.debug("changetype: modify");
 

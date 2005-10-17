@@ -45,10 +45,10 @@ public class CompareHandler {
 
         log.debug("-------------------------------------------------------------------------------");
         log.debug("COMPARE:");
-        if (connection.getBindDn() != null) log.info(" - bindDn: " + connection.getBindDn());
-        log.debug("  dn: " + dn);
-        log.debug("  attributeName: " + attributeName);
-        log.debug("  attributeValue: " + attributeValue);
+        if (connection.getBindDn() != null) log.info(" - Bind DN: " + connection.getBindDn());
+        log.debug(" - DN: " + dn);
+        log.debug(" - Attribute Name: " + attributeName);
+        log.debug(" - Attribute Value: " + attributeValue);
         log.debug("-------------------------------------------------------------------------------");
 
         List attributeNames = new ArrayList();

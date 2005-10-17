@@ -40,9 +40,7 @@ public class SchemaGenerator {
     File sourceDir;
     File output;
 
-    public SchemaGenerator(String filename) throws Exception {
-        File file = new File(filename);
-
+    public SchemaGenerator(File file) throws Exception {
         this.schemaDir = file.getParentFile();
         this.name = file.getName();
 
@@ -169,10 +167,12 @@ public class SchemaGenerator {
             System.exit(0);
         }
 
-        System.out.print("Generating schema classes for "+args[0]+"...");
+        File file = new File(args[0]);
+
+        System.out.print("Generating schema classes for "+file.getAbsolutePath()+"...");
         System.out.flush();
 
-        SchemaGenerator sg = new SchemaGenerator(args[0]);
+        SchemaGenerator sg = new SchemaGenerator(file);
         sg.run();
 
         System.out.println("done.");
