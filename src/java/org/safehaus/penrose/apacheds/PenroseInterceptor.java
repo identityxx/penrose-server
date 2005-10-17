@@ -19,23 +19,24 @@ package org.safehaus.penrose.apacheds;
 
 import org.apache.ldap.server.interceptor.BaseInterceptor;
 import org.apache.ldap.server.interceptor.NextInterceptor;
-import org.apache.ldap.server.jndi.ContextFactoryConfiguration;
 import org.apache.ldap.server.configuration.InterceptorConfiguration;
+import org.apache.ldap.server.DirectoryServiceConfiguration;
 import org.apache.ldap.common.filter.ExprNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.PenroseConnection;
 import org.safehaus.penrose.SearchResults;
-import org.safehaus.penrose.schema.Schema;
 import org.safehaus.penrose.util.ExceptionUtil;
 import org.safehaus.penrose.mapping.EntryDefinition;
 import org.safehaus.penrose.config.Config;
+import org.safehaus.penrose.config.ConfigReader;
 import org.ietf.ldap.*;
 
 import javax.naming.*;
 import javax.naming.directory.*;
 import java.util.*;
+import java.io.File;
 
 /**
  * @author Endi S. Dewata
@@ -47,7 +48,7 @@ public class PenroseInterceptor extends BaseInterceptor {
     Penrose penrose;
     ApacheDSEntryDataCache entryCache;
 
-    ContextFactoryConfiguration factoryCfg;
+    DirectoryServiceConfiguration factoryCfg;
 
     public void setPenrose(Penrose penrose) throws Exception {
         this.penrose = penrose;
@@ -60,13 +61,35 @@ public class PenroseInterceptor extends BaseInterceptor {
 */
     }
 
-    public void init(ContextFactoryConfiguration factoryCfg, InterceptorConfiguration cfg) throws NamingException
+    public void init(DirectoryServiceConfiguration factoryCfg, InterceptorConfiguration cfg) throws NamingException
     {
         log.debug("===============================================================================");
         log.debug("init");
         super.init(factoryCfg, cfg);
-
         this.factoryCfg = factoryCfg;
+
+        File partitions = new File(penrose.getHomeDirectory()+File.separator+"partitions");
+        if (!partitions.exists()) return;
+
+        File files[] = partitions.listFiles();
+        for (int i=0; i<files.length; i++) {
+            File partition = files[i];
+            String name = partition.getName();
+
+            log.debug("-------------------------------------------------------------------------------");
+            log.debug("Initializing "+name+" partition ...");
+
+            try {
+                ConfigReader reader = new ConfigReader();
+                Config config = reader.read(partition.getAbsolutePath());
+                //log.debug(config.toString());
+
+                penrose.addConfig(config);
+
+            } catch (Exception e) {
+                log.error(e.getMessage(), e);
+            }
+        }
     }
 
     public void add(
@@ -90,7 +113,7 @@ public class PenroseInterceptor extends BaseInterceptor {
                 next.add(upName, normName, attributes);
                 return;
             }
-
+/*
             EntryDefinition ed = config.findEntryDefinition(dn);
             if (ed == null) {
                 log.debug(dn+" is a static entry");
@@ -103,8 +126,8 @@ public class PenroseInterceptor extends BaseInterceptor {
                 next.add(upName, normName, attributes);
                 return;
             }
-
-            log.debug("suffix: "+getSuffix(next, normName, true));
+*/
+            //log.debug("suffix: "+getSuffix(next, normName, true));
             //if (getSuffix(next, normName, true).equals(normName)) return;
 
             LDAPAttributeSet attributeSet = new LDAPAttributeSet();
@@ -525,7 +548,7 @@ public class PenroseInterceptor extends BaseInterceptor {
                         } else {
                             attr.clear();
                         }
-                        attr.add("Penrose Virtual Directory Server 0.9.6");
+                        attr.add("Penrose Virtual Directory Server 0.9.7");
                     }
 
                     if (requestedAttrs.contains("*") || requestedAttrs.contains("namingContexts")) {

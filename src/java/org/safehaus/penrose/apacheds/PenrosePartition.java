@@ -17,7 +17,7 @@
  */
 package org.safehaus.penrose.apacheds;
 
-import org.apache.ldap.server.partition.AbstractContextPartition;
+import org.apache.ldap.server.partition.AbstractDirectoryPartition;
 import org.apache.ldap.common.filter.ExprNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,7 +25,6 @@ import org.ietf.ldap.*;
 import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.SearchResults;
 import org.safehaus.penrose.PenroseConnection;
-import org.safehaus.penrose.mapping.EntryDefinition;
 import org.safehaus.penrose.config.ConfigReader;
 import org.safehaus.penrose.config.Config;
 
@@ -40,7 +39,7 @@ import java.io.File;
 /**
  * @author Endi S. Dewata
  */
-public class PenrosePartition extends AbstractContextPartition {
+public class PenrosePartition extends AbstractDirectoryPartition {
 
     //public Logger configLog = Logger.getLogger(Penrose.CONFIG_LOGGER);
     //public Logger engineLog = Logger.getLogger(Penrose.ENGINE_LOGGER);
@@ -66,7 +65,7 @@ public class PenrosePartition extends AbstractContextPartition {
         try {
             ConfigReader reader = new ConfigReader();
             Config config = reader.read(dir.getAbsolutePath());
-            log.debug(config.toString());
+            //log.debug(config.toString());
 
             penrose.addConfig(config);
 

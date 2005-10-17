@@ -160,7 +160,7 @@ public class Penrose implements
 
         ConfigReader reader = new ConfigReader();
         Config config = reader.read((homeDirectory == null ? "" : homeDirectory+File.separator)+"conf");
-        log.debug(config.toString());
+        //log.debug(config.toString());
 
         addConfig(config);
 
@@ -195,7 +195,7 @@ public class Penrose implements
         serverConfig = reader.getServerConfig();
         if (serverConfig.getRootDn() != null) rootDn = serverConfig.getRootDn();
         if (serverConfig.getRootPassword() != null) rootPassword = serverConfig.getRootPassword();
-        log.debug(serverConfig.toString());
+        //log.debug(serverConfig.toString());
 
         handler = new Handler(this);
         aclEngine = new ACLEngine(this);

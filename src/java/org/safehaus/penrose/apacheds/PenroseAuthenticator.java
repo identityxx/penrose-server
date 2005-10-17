@@ -21,6 +21,7 @@ import org.apache.ldap.server.authn.AbstractAuthenticator;
 import org.apache.ldap.server.authn.LdapPrincipal;
 import org.apache.ldap.server.jndi.ServerContext;
 import org.apache.ldap.common.exception.LdapAuthenticationException;
+import org.apache.ldap.common.aci.AuthenticationLevel;
 import org.slf4j.Logger;
 import org.ietf.ldap.LDAPException;
 import org.safehaus.penrose.Penrose;
@@ -62,11 +63,11 @@ public class PenroseAuthenticator extends AbstractAuthenticator {
 
         if (rootDn != null && rootPassword != null &&
                 rootDn.equals(dn) && rootPassword.equals(password)) {
-            return createLdapPrincipal( dn );
+            return createLdapPrincipal( dn, AuthenticationLevel.SIMPLE );
         }
 
         if ("".equals(dn)) {
-            return createLdapPrincipal( dn );
+            return createLdapPrincipal( dn, AuthenticationLevel.SIMPLE );
         }
         
         log.info("Login "+dn);
@@ -82,7 +83,7 @@ public class PenroseAuthenticator extends AbstractAuthenticator {
 
             log.info("Login success.");
 
-            return createLdapPrincipal( dn );
+            return createLdapPrincipal( dn, AuthenticationLevel.SIMPLE );
 
         } catch (NamingException e) {
             log.info("Login failed.");

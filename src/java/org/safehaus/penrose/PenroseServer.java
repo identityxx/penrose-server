@@ -18,10 +18,7 @@
 package org.safehaus.penrose;
 
 
-import java.util.Properties;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Set;
+import java.util.*;
 import java.io.File;
 import java.io.Reader;
 import java.io.BufferedReader;
@@ -36,6 +33,7 @@ import javax.management.ObjectName;
 import org.apache.ldap.server.configuration.SyncConfiguration;
 import org.apache.ldap.server.configuration.MutableServerStartupConfiguration;
 import org.apache.ldap.server.configuration.MutableAuthenticatorConfiguration;
+import org.apache.ldap.server.configuration.MutableInterceptorConfiguration;
 import org.apache.ldap.server.jndi.ServerContextFactory;
 import org.apache.log4j.PropertyConfigurator;
 import org.springframework.context.ApplicationContext;
@@ -44,6 +42,7 @@ import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 import org.safehaus.penrose.management.PenroseClient;
 import org.safehaus.penrose.apacheds.PenroseAuthenticator;
+import org.safehaus.penrose.apacheds.PenroseInterceptor;
 import mx4j.log.Log4JLogger;
 import mx4j.tools.config.ConfigurationLoader;
 import sun.misc.Signal;
@@ -69,14 +68,21 @@ public class PenroseServer implements SignalHandler {
     public void run() throws Exception {
 
         String config = (homeDirectory == null ? "" : homeDirectory+File.separator)+"conf"+File.separator+"apacheds.xml";
+        String workingDirectory = (homeDirectory == null ? "" : homeDirectory+File.separator)+"var"+File.separator+"data";
+
         File file = new File(config);
 
         ApplicationContext factory = new FileSystemXmlApplicationContext("file:///"+file.getAbsolutePath());
+        env = (Properties)factory.getBean("environment");
 
         MutableServerStartupConfiguration cfg = (MutableServerStartupConfiguration)factory.getBean("configuration");
-        cfg.setWorkingDirectory(new File((homeDirectory == null ? "" : homeDirectory+File.separator)+"var"+File.separator+"data"));
+        cfg.setWorkingDirectory(new File(workingDirectory));
 
-        penrose = (Penrose)factory.getBean("penrose");
+        penrose = new Penrose();
+        penrose.setHomeDirectory(homeDirectory);
+        penrose.setRootDn(env.getProperty(Context.SECURITY_PRINCIPAL));
+        penrose.setRootPassword(env.getProperty(Context.SECURITY_CREDENTIALS));
+        penrose.init();
 
         PenroseAuthenticator authenticator = new PenroseAuthenticator();
         authenticator.setPenrose(penrose);
@@ -89,15 +95,21 @@ public class PenroseServer implements SignalHandler {
         authenticators.add(authenticatorConfig);
         cfg.setAuthenticatorConfigurations(authenticators);
 
-        env = (Properties)factory.getBean("environment");
+        PenroseInterceptor interceptor = new PenroseInterceptor();
+        interceptor.setPenrose(penrose);
+
+        MutableInterceptorConfiguration interceptorConfig = new MutableInterceptorConfiguration();
+        interceptorConfig.setName("penroseService");
+        interceptorConfig.setInterceptor(interceptor);
+
+        List interceptors = new ArrayList();
+        interceptors.add(interceptorConfig);
+        interceptors.addAll(cfg.getInterceptorConfigurations());
+        cfg.setInterceptorConfigurations(interceptors);
+
         env.setProperty(Context.PROVIDER_URL, "ou=system");
         env.setProperty(Context.INITIAL_CONTEXT_FACTORY, ServerContextFactory.class.getName() );
         env.putAll(cfg.toJndiEnvironment());
-
-        penrose.setHomeDirectory(homeDirectory);
-        penrose.setRootDn(env.getProperty(Context.SECURITY_PRINCIPAL));
-        penrose.setRootPassword(env.getProperty(Context.SECURITY_CREDENTIALS));
-        penrose.init();
 
         new InitialDirContext(env);
     }

@@ -101,18 +101,18 @@ public class Engine {
 
     public void analyze(EntryDefinition entryDefinition) throws Exception {
 
-        log.debug("Entry "+entryDefinition.getDn()+":");
+        //log.debug("Entry "+entryDefinition.getDn()+":");
 
         Source source = computePrimarySource(entryDefinition);
         if (source != null) {
             primarySources.put(entryDefinition, source);
-            log.debug(" - primary source: "+source);
+            //log.debug(" - primary source: "+source);
         }
 
         Graph graph = computeGraph(entryDefinition);
         if (graph != null) {
             graphs.put(entryDefinition, graph);
-            log.debug(" - graph: "+graph);
+            //log.debug(" - graph: "+graph);
         }
 
         Config config = engineContext.getConfig(entryDefinition.getDn());
@@ -206,7 +206,7 @@ public class Engine {
         Collection relationships = config.getEffectiveRelationships(entryDefinition);
         for (Iterator i=relationships.iterator(); i.hasNext(); ) {
             Relationship relationship = (Relationship)i.next();
-            log.debug("Checking ["+relationship.getExpression()+"]");
+            //log.debug("Checking ["+relationship.getExpression()+"]");
 
             String lhs = relationship.getLhs();
             int lindex = lhs.indexOf(".");
@@ -586,23 +586,23 @@ public class Engine {
     }
 
     public void getFieldValues(String prefix, String dn, AttributeValues results) throws Exception {
-        int i = dn.indexOf(",");
-        String rdn = i < 0 ? dn : dn.substring(0, i);
-        String parentDn = i < 0 ? null : dn.substring(i+1);
-
-        i = rdn.indexOf("=");
-        String attrName = rdn.substring(0, i);
-        String attrValue = rdn.substring(i+1);
-        Row row = new Row();
-        row.set(attrName, attrValue);
 
         Config config = engineContext.getConfig(dn);
-        EntryDefinition entryDefinition = config.findEntryDefinition(dn);
-        Entry entry = (Entry)engineContext.getEntryDataCache(parentDn, entryDefinition).get(row);
+        log.debug("Config for "+dn+": "+(config == null ? "null" : "not null"));
+        if (config == null) return;
 
+        String parentDn = getParentDn(dn);
         if (parentDn != null) {
             getFieldValues((prefix == null ? "" : prefix+".")+"parent", parentDn, results);
         }
+
+        Row rdn = getRdn(dn);
+
+        EntryDefinition entryDefinition = config.findEntryDefinition(dn);
+
+        Entry entry = (Entry)engineContext.getEntryDataCache(parentDn, entryDefinition).get(rdn);
+        log.debug("Entry "+dn+": "+(entry == null ? null : "not null"));
+        if (entry == null) return;
 
         log.debug(entry.getDn()+"'s source values:");
 

@@ -1,6 +1,6 @@
 Penrose Virtual Directory Server
 --------------------------------
-Version 0.9.6
+Version 0.9.7
 Copyright (c) 2000-2005, Identyx Corporation.
 
 Overview

@@ -163,12 +163,12 @@ public class ACLEngine {
     }
 
     public void addAttributes(Set set, String attributes) {
-        log.debug("Adding attributes: "+attributes);
+        //log.debug("Adding attributes: "+attributes);
         StringTokenizer st = new StringTokenizer(attributes, ",");
         while (st.hasMoreTokens()) {
             String attributeName = st.nextToken().trim();
             set.add(attributeName);
-            log.debug("Adding attribute: "+attributeName);
+            //log.debug("Adding attribute: "+attributeName);
         }
     }
 
@@ -189,7 +189,7 @@ public class ACLEngine {
             Set grants,
             Set denies) throws Exception {
 
-        log.debug(" * "+entry.getDn()+":");
+        //log.debug(" * "+entry.getDn()+":");
 
         for (Iterator i=entry.getACL().iterator(); i.hasNext(); ) {
             ACI aci = (ACI)i.next();
@@ -198,7 +198,7 @@ public class ACLEngine {
             if (scope != null && !scope.equals(aci.getScope())) continue;
             if (aci.getPermission().indexOf(ACI.PERMISSION_READ) < 0) continue;
 
-            log.debug("   - "+aci);
+            //log.debug("   - "+aci);
             String subject = penrose.getSchema().normalize(aci.getSubject());
 
             if (subject.equals(bindDn)) {
@@ -266,12 +266,12 @@ public class ACLEngine {
         Set grants = new HashSet();
         Set denies = new HashSet();
 
-        log.debug("Evaluating attributes read permission for "+bindDn);
+        //log.debug("Evaluating attributes read permission for "+bindDn);
 
         getReadableAttributes(bindDn, entry, grants, denies);
 
-        log.debug("Readable attributes: "+grants);
-        log.debug("Unreadable attributes: "+denies);
+        //log.debug("Readable attributes: "+grants);
+        //log.debug("Unreadable attributes: "+denies);
 
         LDAPAttributeSet attributeSet = ldapEntry.getAttributeSet();
 

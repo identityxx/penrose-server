@@ -639,8 +639,7 @@ public class JDBCAdapter extends Adapter {
             }
 
             for (Iterator i=fields.iterator(); i.hasNext(); ) {
-                Field field = (Field)i.next();
-                FieldDefinition fieldDefinition = sourceDefinition.getFieldDefinition(field.getName());
+                FieldDefinition fieldDefinition = (FieldDefinition)i.next();
                 if (!fieldDefinition.isPrimaryKey()) continue;
 
                 if (sb2.length() > 0) sb2.append(" and ");
@@ -648,7 +647,7 @@ public class JDBCAdapter extends Adapter {
                 sb2.append(fieldDefinition.getOriginalName());
                 sb2.append("=?");
 
-                Object value = oldRow.get(field.getName());
+                Object value = oldRow.get(fieldDefinition.getName());
                 parameters.add(value);
             }
 
