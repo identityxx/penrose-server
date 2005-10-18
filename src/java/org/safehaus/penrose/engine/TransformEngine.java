@@ -151,36 +151,6 @@ public class TransformEngine {
 
             Object newValues = interpreter.eval(expression);
 /*
-            String script = expression.getScript();
-            String foreach = expression.getForeach();
-            String var = expression.getVar();
-            //log.debug("   - expression: "+foreach+": "+script);
-
-            Collection newValues = new ArrayList();
-            if (foreach == null) {
-                Object value = interpreter.eval(expression.getScript());
-                if (value != null) newValues.add(value);
-
-            } else {
-
-                Collection oldValues = input.get(foreach);
-                //log.debug("Values: "+oldValues);
-
-                if (oldValues != null) {
-
-                    for (Iterator i=oldValues.iterator(); i.hasNext(); ) {
-                        Object o = i.next();
-                        interpreter.set(var, o);
-                        Object value = interpreter.eval(script);
-                        if (value == null) continue;
-
-                        newValues.add(value);
-                        //log.debug(" - "+value);
-                    }
-                }
-            }
-*/
-/*
             if (field.getEncryption() != null) {
                 // if field encryption is enabled
 

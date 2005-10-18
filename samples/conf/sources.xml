@@ -37,6 +37,7 @@
       </parameter>
     </source>
     <source name="customers">
+      <field name="encPassword" length="255"/>
       <field name="firstName" primaryKey="true"/>
       <field name="lastName" primaryKey="true"/>
       <field name="password" length="10"/>

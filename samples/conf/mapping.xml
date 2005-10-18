@@ -391,7 +391,14 @@ return customer_emails.email;
       <expression>customers.username</expression>
     </at>
     <at name="userPassword">
-      <expression>customers.password</expression>
+      <expression>
+import org.safehaus.penrose.util.*;
+
+if (customers.encPassword == void || customers.encPassword == null) return null;
+
+byte[] bytes = PasswordUtil.decode("BigInteger", customers.encPassword);
+return "{SHA}"+PasswordUtil.encode("Base64", bytes);
+      </expression>
     </at>
     <source name="customers">
       <source-name>customers</source-name>
@@ -411,8 +418,28 @@ int i = cn.indexOf(" ");
 if (i &lt; 0) return null;
 return cn.substring(i+1);</expression>
       </field>
-      <field name="password">
-        <expression>userPassword</expression>
+      <field name="encPassword">
+        <expression>
+import org.safehaus.penrose.util.*;
+
+if (userPassword == void || userPassword == null) return null;
+
+byte[] bytes;
+
+String method = PasswordUtil.getEncryptionMethod(userPassword);
+if (method == null) {
+    bytes = PasswordUtil.encrypt("SHA", userPassword);
+
+} else if ("SHA".equals(method)) {
+    String password = PasswordUtil.getEncryptedPassword(userPassword);
+    bytes = PasswordUtil.decode("Base64", password);
+
+} else {
+    throw new Exception("Unsupported encryption: "+method);
+}
+
+return PasswordUtil.encode("BigInteger", bytes);
+        </expression>
       </field>
       <field name="username">
         <expression>uid</expression>

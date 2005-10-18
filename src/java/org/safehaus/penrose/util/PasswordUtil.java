@@ -18,13 +18,13 @@
 package org.safehaus.penrose.util;
 
 import sun.misc.BASE64Encoder;
+import sun.misc.BASE64Decoder;
 
 import javax.crypto.spec.SecretKeySpec;
 import javax.crypto.Cipher;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.safehaus.penrose.Penrose;
 
 import java.security.MessageDigest;
 import java.math.BigInteger;
@@ -40,28 +40,15 @@ public class PasswordUtil {
 	protected final static boolean DEBUG = true;
 
     public static String encrypt(String method, String encoding, String password) throws Exception {
-        if (password == null) return null;
-        
-        if (method == null || method.trim().equals("")) {
-            return password;
-        }
-        
         byte[] bytes = encrypt(method, password);
-
-        if ("Base64".equals(encoding)) {
-            BASE64Encoder enc = new BASE64Encoder();
-            return enc.encode(bytes);
-
-        } else {
-            return toString(bytes);
-        }
-
+        return encode(encoding, bytes);
     }
 
     public static byte[] encrypt(String method, String password) throws Exception {
         if (password == null) return null;
 
         byte[] bytes = password.getBytes();
+        if (method == null) return password.getBytes();
 
         MessageDigest md = MessageDigest.getInstance(method);
         md.update(bytes);
@@ -69,14 +56,54 @@ public class PasswordUtil {
         return md.digest();
     }
 
-    public static String toString(byte[] b) {
-        if (b == null) return null;
-        String s = new BigInteger(1, b).toString(16);
-        while (s.length() < b.length*2) s = "0"+s;
-        return s;
+    public static String encode(byte[] bytes) throws Exception {
+        return encode(null, bytes);
     }
 
-    
+    public static String encode(String encoding, byte[] bytes) throws Exception {
+        if (bytes == null) return null;
+
+        String string;
+
+        if ("Base64".equals(encoding)) {
+            BASE64Encoder enc = new BASE64Encoder();
+            string = enc.encode(bytes);
+
+        } else if ("BigInteger".equals(encoding)) {
+            string = new BigInteger(1, bytes).toString(16);
+            while (string.length() < bytes.length*2) string = "0"+string;
+
+        } else {
+            string = new String(bytes);
+        }
+
+        return string;
+    }
+
+    public static byte[] decode(String string) throws Exception {
+        return decode(null, string);
+    }
+
+    public static byte[] decode(String encoding, String string) throws Exception {
+        if (string == null) return null;
+
+        byte[] bytes;
+
+        if ("Base64".equals(encoding)) {
+            BASE64Decoder decoder = new BASE64Decoder();
+            bytes = decoder.decodeBuffer(string);
+
+        } else if ("BigInteger".equals(encoding)) {
+            BigInteger bigInteger = new BigInteger(string, 16);
+            bytes = bigInteger.toByteArray();
+
+        } else {
+            bytes = string.getBytes();
+        }
+
+        return bytes;
+    }
+
     public static byte[] encryptNTPassword(String password) throws Exception {
         if (password == null) return null;
 
@@ -112,13 +139,13 @@ public class PasswordUtil {
             for (int i=0; i<bytes.length && i<14; i++) b[i] = bytes[i];
             bytes = b;
         }
-        log.debug("BYTES ("+bytes.length+"):"+toString(bytes));
+        //log.debug("BYTES ("+bytes.length+"):"+encode(bytes));
 
         byte[] key1 = convert(bytes, 0);
         byte[] key2 = convert(bytes, 7);
 
-        log.debug("KEY1 ("+key1.length+"): "+toString(key1));
-        log.debug("KEY2 ("+key2.length+"): "+toString(key2));
+        //log.debug("KEY1 ("+key1.length+"): "+encode(key1));
+        //log.debug("KEY2 ("+key2.length+"): "+encode(key2));
 
         byte[] magic = new BigInteger("4B47532140232425", 16).toByteArray();
 
@@ -126,13 +153,13 @@ public class PasswordUtil {
         Cipher cipher1 = Cipher.getInstance("DES");
         cipher1.init(Cipher.ENCRYPT_MODE, spec1);
         byte[] result1 = cipher1.doFinal(magic);
-        log.debug("RESULT1 ("+result1.length+"): "+toString(result1));
+        //log.debug("RESULT1 ("+result1.length+"): "+encode(result1));
 
         SecretKeySpec spec2 = new SecretKeySpec(key2, "DES");
         Cipher cipher2 = Cipher.getInstance("DES");
         cipher2.init(Cipher.ENCRYPT_MODE, spec2);
         byte[] result2 = cipher2.doFinal(magic);
-        log.debug("RESULT2 ("+result2.length+"): "+toString(result2));
+        //log.debug("RESULT2 ("+result2.length+"): "+encode(result2));
 
         for (int i=0; i<8; i++) result1[i+8] = result2[i];
 
@@ -150,27 +177,21 @@ public class PasswordUtil {
 
         if (digest == null) return false;
 
-        String encryption = getEncryptionMethod(digest);
-
-        int i = digest.indexOf("}");
-        String storedPassword = digest.substring(i+1);
-
-        String encoding = "Base64";
+        String encryption     = getEncryptionMethod(digest);
+        String encoding       = getEncodingMethod(digest);
+        String storedPassword = getEncryptedPassword(digest);
 
         return comparePassword(credential, encryption, encoding, storedPassword);
     }
 
     public static boolean comparePassword(String credential, String encryption, String encoding, String storedPassword) throws Exception {
-        encryption = getEncryptionMethod(storedPassword);
-        encoding = getEncodingMethod(storedPassword);
-        storedPassword = getEncryptedPassword(storedPassword);
-
         log.debug("COMPARING PASSWORDS:");
         log.debug("  encryption      : ["+encryption+"]");
         log.debug("  encoding        : ["+encoding+"]");
         log.debug("  digest          : ["+storedPassword+"]");
 
-        String encryptedCredential = encrypt(encryption, encoding, credential);
+        byte[] bytes = encrypt(encryption, credential);
+        String encryptedCredential = encode(encoding, bytes);
 
         //log.debug("  credential      : ["+credential+"]");
         log.debug("  enc credential  : ["+encryptedCredential+"]");
@@ -222,7 +243,7 @@ public class PasswordUtil {
         String s = password.substring(1, i);
 
         i = s.indexOf("|");
-        if (i < 0) return null; // no encoding
+        if (i < 0) return "Base64"; // no encoding
 
         return s.substring(i+1);
     }

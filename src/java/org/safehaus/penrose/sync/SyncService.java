@@ -274,7 +274,6 @@ public class SyncService {
         SourceDefinition sourceDefinition = connectionConfig.getSourceDefinition(source.getSourceName());
 
         Collection uniqueFieldDefinitions = config.getUniqueFieldDefinitions(source);
-        Collection indexedFieldDefinitions = config.getIndexedFieldDefinitions(source);
 
         log.debug("Checking source filter cache for "+filter);
         Collection pks = syncContext.getSourceFilterCache(connectionConfig, sourceDefinition).get(filter);
@@ -424,7 +423,6 @@ public class SyncService {
         SourceDefinition sourceDefinition = connectionConfig.getSourceDefinition(source.getSourceName());
 
         Collection uniqueFieldDefinitions = config.getUniqueFieldDefinitions(source);
-        Collection indexedFieldDefinitions = config.getIndexedFieldDefinitions(source);
         Collection missingKeys = new ArrayList();
 
         //log.debug("Searching source data cache for "+keys);

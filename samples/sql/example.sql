@@ -133,20 +133,21 @@ create table customers (
     username varchar(10),
     firstName varchar(50),
     lastName varchar(50),
+    encPassword varchar(255),
     password varchar(10),
     primary key (username)
 );
 
-insert into customers values ('tmorris', 'Ted', 'Morris', 'tm0rr1s');
-insert into customers values ('scarter', 'Sam', 'Carter', '5c4rt3r');
-insert into customers values ('ewalker', 'Eric', 'Walker', '3w4lk3r');
-insert into customers values ('rmills', 'Randy', 'Mills', 'rm1ll5');
-insert into customers values ('jcarter', 'Janet', 'Carter', 'jc4rt3r');
-insert into customers values ('kjensen', 'Karen', 'Jensen', 'kj3n53n');
-insert into customers values ('mhunter', 'Martin', 'Hunter', 'mhunt3r');
-insert into customers values ('tjensen', 'Ted', 'Jensen', 'tj3n53n');
-insert into customers values ('emorris', 'Eric', 'Morris', '3m0rr15');
-insert into customers values ('bhall', 'Benjamin', 'Hall', 'bh4ll');
+insert into customers values ('tmorris', 'Ted', 'Morris', '47af3474c807aaea8b876c39e6ce8fb41e7ac637', 'tm0rr1s');
+insert into customers values ('scarter', 'Sam', 'Carter', '73789cc546472c6c629aecf1a04c3648ac040eab', '5c4rt3r');
+insert into customers values ('ewalker', 'Eric', 'Walker', '745aeca50e677d42ddfe39b5571957569369f1b4', '3w4lk3r');
+insert into customers values ('rmills', 'Randy', 'Mills', '4940b343329fa425ce84de5fb36f66affde6d119', 'rm1ll5');
+insert into customers values ('jcarter', 'Janet', 'Carter', '85dba07e21b1597a516ffe570901ee578d00a3a1', 'jc4rt3r');
+insert into customers values ('kjensen', 'Karen', 'Jensen', 'c28d795d02b12866752b55518f473f753fc3ffff', 'kj3n53n');
+insert into customers values ('mhunter', 'Martin', 'Hunter', '545196b256ceded969568c31d642ef96f9d5b893', 'mhunt3r');
+insert into customers values ('tjensen', 'Ted', 'Jensen', '269cc231e17c496728557dd02c38ec7e016b96c9', 'tj3n53n');
+insert into customers values ('emorris', 'Eric', 'Morris', 'ec3260802722cc08a2b665744120476e3de73fa1', '3m0rr15');
+insert into customers values ('bhall', 'Benjamin', 'Hall', '399fa0b37c78c6d8fc43b304fb7989a2750611c0', 'bh4ll');
 
 drop table customer_emails;
 

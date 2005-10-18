@@ -146,19 +146,14 @@ public class BindHandler {
     }
 
     public int bindAsStaticUser(Entry sr, String cred) throws Exception {
-        EntryDefinition entry = sr.getEntryDefinition();
         AttributeValues values = sr.getAttributeValues();
-
-        AttributeDefinition attribute = entry.getAttributeDefinition("userPassword");
-        String encryption = attribute.getEncryption();
-        String encoding = attribute.getEncoding();
 
         Collection set = values.get("userPassword");
 
         for (Iterator i = set.iterator(); i.hasNext(); ) {
             String userPassword = (String)i.next();
             log.debug("userPassword: "+userPassword);
-            if (PasswordUtil.comparePassword(cred, encryption, encoding, userPassword)) return LDAPException.SUCCESS;
+            if (PasswordUtil.comparePassword(cred, userPassword)) return LDAPException.SUCCESS;
         }
 
         return LDAPException.INVALID_CREDENTIALS;
