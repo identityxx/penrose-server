@@ -133,40 +133,29 @@ public class BindHandler {
         log.debug("Bind as user "+sr.getDn());
 
         EntryDefinition entry = sr.getEntryDefinition();
-        AttributeValues attributes = sr.getAttributeValues();
+        AttributeValues attributeValues = sr.getAttributeValues();
 
-        Collection set = attributes.get("userPassword");
-
-        if (set != null && !set.isEmpty()) {
-            log.debug("Entry has userPassword");
-            return bindAsStaticUser(sr, password);
-        }
-
-        return bind(entry, attributes, password);
+        return bind(entry, attributeValues, password);
     }
 
-    public int bindAsStaticUser(Entry sr, String cred) throws Exception {
-        AttributeValues values = sr.getAttributeValues();
+    public int bind(EntryDefinition entry, AttributeValues attributeValues, String password) throws Exception {
 
-        Collection set = values.get("userPassword");
+        Collection set = attributeValues.get("userPassword");
 
-        for (Iterator i = set.iterator(); i.hasNext(); ) {
-            String userPassword = (String)i.next();
-            log.debug("userPassword: "+userPassword);
-            if (PasswordUtil.comparePassword(cred, userPassword)) return LDAPException.SUCCESS;
+        if (set != null) {
+            for (Iterator i = set.iterator(); i.hasNext(); ) {
+                String userPassword = (String)i.next();
+                log.debug("userPassword: "+userPassword);
+                if (PasswordUtil.comparePassword(password, userPassword)) return LDAPException.SUCCESS;
+            }
         }
-
-        return LDAPException.INVALID_CREDENTIALS;
-    }
-
-    public int bind(EntryDefinition entry, AttributeValues values, String password) throws Exception {
 
         Collection sources = entry.getSources();
 
         for (Iterator i=sources.iterator(); i.hasNext(); ) {
             Source source = (Source)i.next();
 
-            int rc = getEngineContext().getSyncService().bind(source, entry, values, password);
+            int rc = getEngineContext().getSyncService().bind(source, entry, attributeValues, password);
 
             if (rc == LDAPException.SUCCESS) return rc;
         }

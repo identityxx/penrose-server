@@ -59,26 +59,26 @@ public class SyncService {
 		return lock;
 	}
 
-    public int bind(Source source, EntryDefinition entry, AttributeValues attributes, String password) throws Exception {
+    public int bind(Source source, EntryDefinition entry, AttributeValues attributeValues, String password) throws Exception {
         log.debug("----------------------------------------------------------------");
         log.debug("Binding as entry in "+source.getName());
-        log.debug("Values: "+attributes);
+        log.debug("Values: "+attributeValues);
 
         MRSWLock lock = getLock(source);
         lock.getReadLock(WAIT_TIMEOUT);
 
         try {
 
-	        Map entries = syncContext.getTransformEngine().split(source, attributes);
-
-	        log.debug("Entries: "+entries);
+	        Map entries = syncContext.getTransformEngine().split(source, attributeValues);
 
 	        for (Iterator i=entries.keySet().iterator(); i.hasNext(); ) {
-	            Map pk = (Map)i.next();
-	            AttributeValues values = (AttributeValues)entries.get(pk);
+	            Row pk = (Row)i.next();
+	            AttributeValues sourceValues = (AttributeValues)entries.get(pk);
+
+                log.debug("Bind to "+source.getName()+" as "+pk+": "+sourceValues);
 
                 Connection connection = syncContext.getConnection(source.getConnectionName());
-	            int rc = connection.bind(source, values, password);
+	            int rc = connection.bind(source, sourceValues, password);
 
 	            if (rc != LDAPException.SUCCESS) return rc;
 	        }

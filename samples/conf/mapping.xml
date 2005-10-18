@@ -300,15 +300,13 @@ return price.substring(1, i);</expression>
       <source-name>customers</source-name>
       <connection-name>MySQL</connection-name>
       <field name="firstName">
-        <expression>
-if (cn == void || cn == null) return null;
+        <expression>if (cn == void || cn == null) return null;
 int i = cn.indexOf(" ");
 if (i &lt; 0) return null;
 return cn.substring(0, i);</expression>
       </field>
       <field name="lastName">
-        <expression>
-if (sn != void &amp;&amp; sn != null) return sn;
+        <expression>if (sn != void &amp;&amp; sn != null) return sn;
 if (cn == void || cn == null) return null;
 int i = cn.indexOf(" ");
 return cn.substring(i+1);</expression>
@@ -379,10 +377,8 @@ return cn.substring(i+1);</expression>
       <expression>customers.firstName+" "+customers.lastName</expression>
     </at>
     <at name="mail">
-      <expression>
-if (customer_emails == void || customer_emails == null) return null;
-return customer_emails.email;
-      </expression>
+      <expression>if (customer_emails == void || customer_emails == null) return null;
+return customer_emails.email;</expression>
     </at>
     <at name="sn">
       <expression>customers.lastName</expression>
@@ -391,36 +387,18 @@ return customer_emails.email;
       <expression>customers.username</expression>
     </at>
     <at name="userPassword">
-      <expression>
-import org.safehaus.penrose.util.*;
+      <expression>import org.safehaus.penrose.util.*;
 
 if (customers.encPassword == void || customers.encPassword == null) return null;
 
 byte[] bytes = PasswordUtil.decode("BigInteger", customers.encPassword);
-return "{SHA}"+PasswordUtil.encode("Base64", bytes);
-      </expression>
+return "{SHA}"+PasswordUtil.encode("Base64", bytes);</expression>
     </at>
     <source name="customers">
       <source-name>customers</source-name>
       <connection-name>MySQL</connection-name>
-      <field name="firstName">
-        <expression>
-if (cn == void || cn == null) return null;
-int i = cn.indexOf(" ");
-if (i &lt; 0) return null;
-return cn.substring(0, i);</expression>
-      </field>
-      <field name="lastName">
-        <expression>
-if (sn != void &amp;&amp; sn != null) return sn;
-if (cn == void || cn == null) return null;
-int i = cn.indexOf(" ");
-if (i &lt; 0) return null;
-return cn.substring(i+1);</expression>
-      </field>
       <field name="encPassword">
-        <expression>
-import org.safehaus.penrose.util.*;
+        <expression>import org.safehaus.penrose.util.*;
 
 if (userPassword == void || userPassword == null) return null;
 
@@ -438,8 +416,20 @@ if (method == null) {
     throw new Exception("Unsupported encryption: "+method);
 }
 
-return PasswordUtil.encode("BigInteger", bytes);
-        </expression>
+return PasswordUtil.encode("BigInteger", bytes);</expression>
+      </field>
+      <field name="firstName">
+        <expression>if (cn == void || cn == null) return null;
+int i = cn.indexOf(" ");
+if (i &lt; 0) return null;
+return cn.substring(0, i);</expression>
+      </field>
+      <field name="lastName">
+        <expression>if (sn != void &amp;&amp; sn != null) return sn;
+if (cn == void || cn == null) return null;
+int i = cn.indexOf(" ");
+if (i &lt; 0) return null;
+return cn.substring(i+1);</expression>
       </field>
       <field name="username">
         <expression>uid</expression>
@@ -646,15 +636,15 @@ return PasswordUtil.encode("BigInteger", bytes);
   </entry>
   <entry dn="sn=...,ou=Families,ou=Customers,dc=Example,dc=com">
     <oc>groupOfUniqueNames</oc>
-    <at name="sn" rdn="true">
-      <expression>customers.lastName</expression>
-    </at>
     <at name="description">
       <expression>if (customers.firstName instanceof Collection) {
     return customers.firstName.size()+" members";
 } else {
     return "1 member";
 }</expression>
+    </at>
+    <at name="sn" rdn="true">
+      <expression>customers.lastName</expression>
     </at>
     <at name="uniqueMember">
       <expression foreach="customers.firstName" var="x">"cn="+x+" "+customers.lastName+",ou=Customers,dc=Example,dc=com"</expression>
@@ -696,18 +686,15 @@ return x.substring(i+1, j);</expression>
       <source-name>customers</source-name>
       <connection-name>MySQL</connection-name>
       <field name="firstName">
-        <expression>
-if (cn == void || cn == null) return null;
+        <expression>if (cn == void || cn == null) return null;
 int i = cn.indexOf(" ");
 return cn.substring(0, i);</expression>
       </field>
       <field name="lastName">
-        <expression>
-if (sn != void &amp;&amp; sn != null) return sn;
+        <expression>if (sn != void &amp;&amp; sn != null) return sn;
 if (cn == void || cn == null) return null;
 int i = cn.indexOf(" ");
-return cn.substring(i+1);
-        </expression>
+return cn.substring(i+1);</expression>
       </field>
       <field name="password">
         <expression>userPassword</expression>
