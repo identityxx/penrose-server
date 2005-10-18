@@ -434,131 +434,133 @@ public class Penrose implements
         connectionPool.removeConnection(connection);
     }
 
-	// ------------------------------------------------
-	// Listeners
-	// ------------------------------------------------
+    // ------------------------------------------------
+    // Listeners
+    // ------------------------------------------------
 
-	public void addConnectionListener(ConnectionListener l) {
-	}
+    public void addConnectionListener(ConnectionListener l) {
+    }
 
-	public void removeConnectionListener(ConnectionListener l) {
-	}
+    public void removeConnectionListener(ConnectionListener l) {
+    }
 
-	public void addBindListener(BindListener l) {
-	}
+    public void addBindListener(BindListener l) {
+    }
 
-	public void removeBindListener(BindListener l) {
-	}
+    public void removeBindListener(BindListener l) {
+    }
 
-	public void addSearchListener(SearchListener l) {
-	}
+    public void addSearchListener(SearchListener l) {
+    }
 
-	public void removeSearchListener(SearchListener l) {
-	}
+    public void removeSearchListener(SearchListener l) {
+    }
 
-	public void addCompareListener(CompareListener l) {
-	}
+    public void addCompareListener(CompareListener l) {
+    }
 
-	public void removeCompareListener(CompareListener l) {
-	}
+    public void removeCompareListener(CompareListener l) {
+    }
 
-	public void addAddListener(AddListener l) {
-	}
+    public void addAddListener(AddListener l) {
+    }
 
-	public void removeAddListener(AddListener l) {
-	}
+    public void removeAddListener(AddListener l) {
+    }
 
-	public void addDeleteListener(DeleteListener l) {
-	}
+    public void addDeleteListener(DeleteListener l) {
+    }
 
-	public void removeDeleteListener(DeleteListener l) {
-	}
+    public void removeDeleteListener(DeleteListener l) {
+    }
 
-	public void addModifyListener(ModifyListener l) {
-	}
+    public void addModifyListener(ModifyListener l) {
+    }
 
-	public void removeModifyListener(ModifyListener l) {
-	}
+    public void removeModifyListener(ModifyListener l) {
+    }
 
-	// ------------------------------------------------
-	// Getters and Setters
-	// ------------------------------------------------
+    // ------------------------------------------------
+    // Getters and Setters
+    // ------------------------------------------------
 	
-	public ACLEngine getACLEngine() {
-		return aclEngine;
-	}
+    public ACLEngine getACLEngine() {
+        return aclEngine;
+    }
 
     public void setACLEngine(ACLEngine aclEngine) {
-		this.aclEngine = aclEngine;
-	}
+        this.aclEngine = aclEngine;
+    }
 
-	public Collection getEngines() {
-		return engines.values();
-	}
-	public PenroseConnectionPool getConnectionPool() {
-		return connectionPool;
-	}
-	public void setConnectionPool(PenroseConnectionPool connectionPool) {
-		this.connectionPool = connectionPool;
-	}
+    public Collection getEngines() {
+        return engines.values();
+    }
+    public PenroseConnectionPool getConnectionPool() {
+        return connectionPool;
+    }
+    public void setConnectionPool(PenroseConnectionPool connectionPool) {
+        this.connectionPool = connectionPool;
+    }
 
-	public FilterTool getFilterTool() {
-		return filterTool;
-	}
-	public void setFilterTool(FilterTool filterTool) {
-		this.filterTool = filterTool;
-	}
-	public Logger getLog() {
-		return log;
-	}
-	public void setLog(Logger log) {
-		this.log = log;
-	}
-	public List getNormalizedSuffixes() {
-		return normalizedSuffixes;
-	}
-	public void setNormalizedSuffixes(List normalizedSuffixes) {
-		this.normalizedSuffixes = normalizedSuffixes;
-	}
-	public String getRootDn() {
-		return rootDn;
-	}
-	public void setRootDn(String rootDn) {
-		this.rootDn = rootDn;
-	}
-	public String getRootPassword() {
-		return rootPassword;
-	}
-	public void setRootPassword(String rootPassword) {
-		this.rootPassword = rootPassword;
-	}
-	public boolean isStopRequested() {
-		return stopRequested;
-	}
-	public void setStopRequested(boolean stopRequested) {
-		this.stopRequested = stopRequested;
-	}
-	public List getSuffixes() {
-		return suffixes;
-	}
-	public void setSuffixes(List suffixes) {
-		this.suffixes = suffixes;
-	}
-	public TransformEngine getTransformEngine() {
-		return transformEngine;
-	}
-	public void setTransformEngine(TransformEngine transformEngine) {
-		this.transformEngine = transformEngine;
-	}
-	public String getTrustedKeyStore() {
-		return trustedKeyStore;
-	}
-	public void setTrustedKeyStore(String trustedKeyStore) {
-		this.trustedKeyStore = trustedKeyStore;
-	}
+    public FilterTool getFilterTool() {
+        return filterTool;
+    }
+    public void setFilterTool(FilterTool filterTool) {
+        this.filterTool = filterTool;
+    }
+    public Logger getLog() {
+        return log;
+    }
+    public void setLog(Logger log) {
+        this.log = log;
+    }
+    public List getNormalizedSuffixes() {
+        return normalizedSuffixes;
+    }
+    public void setNormalizedSuffixes(List normalizedSuffixes) {
+        this.normalizedSuffixes = normalizedSuffixes;
+    }
+    public String getRootDn() {
+        return rootDn;
+    }
+    public void setRootDn(String rootDn) {
+        this.rootDn = rootDn;
+    }
+    public String getRootPassword() {
+        return rootPassword;
+    }
+    public void setRootPassword(String rootPassword) {
+        this.rootPassword = rootPassword;
+    }
+    public boolean isStopRequested() {
+        return stopRequested;
+    }
+    public void setStopRequested(boolean stopRequested) {
+        this.stopRequested = stopRequested;
+    }
+    public List getSuffixes() {
+        return suffixes;
+    }
+    public void setSuffixes(List suffixes) {
+        this.suffixes = suffixes;
+    }
+    public TransformEngine getTransformEngine() {
+        return transformEngine;
+    }
+    public void setTransformEngine(TransformEngine transformEngine) {
+        this.transformEngine = transformEngine;
+    }
+    public String getTrustedKeyStore() {
+        return trustedKeyStore;
+    }
+    public void setTrustedKeyStore(String trustedKeyStore) {
+        this.trustedKeyStore = trustedKeyStore;
+    }
 
-	public byte[] download(String filename) throws IOException {
-		File file = new File((homeDirectory == null ? "" : homeDirectory+File.separator)+filename);
+    public byte[] download(String filename) throws IOException {
+        File file = new File((homeDirectory == null ? "" : homeDirectory+File.separator)+filename);
+        log.debug("Downloading "+file.getAbsolutePath());
+
         FileInputStream in = new FileInputStream(file);
 
         byte content[] = new byte[(int)file.length()];
@@ -566,15 +568,16 @@ public class Penrose implements
 
         in.close();
 
-		return content;
-	}
+        return content;
+    }
 	
-	public void upload(String filename, byte content[]) throws IOException {
-		File file = new File((homeDirectory == null ? "" : homeDirectory+File.separator)+filename);
-		FileOutputStream out = new FileOutputStream(file);
-		out.write(content);
-		out.close();
-	}
+    public void upload(String filename, byte content[]) throws IOException {
+        File file = new File((homeDirectory == null ? "" : homeDirectory+File.separator)+filename);
+        log.debug("Uploading "+file.getAbsolutePath());
+        FileOutputStream out = new FileOutputStream(file);
+        out.write(content);
+        out.close();
+    }
 
     public Interpreter newInterpreter() throws Exception {
         InterpreterConfig interpreterConfig = serverConfig.getInterpreterConfig("DEFAULT");
