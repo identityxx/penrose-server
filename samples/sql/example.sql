@@ -1,9 +1,9 @@
 drop table categories;
 
 create table categories (
-    id int(11),
+    id integer,
     name varchar(50),
-    description text,
+    description varchar(255),
     primary key (id)
 );
 
@@ -18,8 +18,8 @@ insert into categories values (7, 'Seafood', 'Fish, Shellfish');
 drop table products;
 
 create table products (
-    id int(11),
-    categoryId int(11),
+    id integer,
+    categoryId integer,
     name varchar(50),
     price double,
     primary key (id)
@@ -59,10 +59,10 @@ insert into products values (30, 7, 'Shrimp', 8);
 drop table order_details;
 
 create table order_details (
-    orderId int(11),
-    productId int(11),
+    orderId integer,
+    productId integer,
     price double,
-    quantity int(11),
+    quantity integer,
     primary key (orderId, productId)
 );
 
@@ -100,7 +100,7 @@ insert into order_details values (20, 28, 1, 1);
 drop table orders;
 
 create table orders (
-    id int(11),
+    id integer,
     username varchar(10),
     orderDate datetime,
     primary key (id)
