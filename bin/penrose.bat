@@ -71,7 +71,7 @@ set LOCALCLASSPATH=%PENROSE_HOME%\conf;%LOCALCLASSPATH%
 
 cd %PENROSE_HOME%
 
-"%_JAVACMD%" %PENROSE_DEBUG_OPTS% %PENROSE_OPTS% -classpath "%LOCALCLASSPATH%" -Dpenrose.home="%PENROSE_HOME%" org.safehaus.penrose.PenroseServer %PENROSE_ARGS% %PENROSE_CMD_LINE_ARGS%
+"%_JAVACMD%" %PENROSE_DEBUG_OPTS% %PENROSE_OPTS% -classpath "%LOCALCLASSPATH%" -Djavax.management.builder.initial=mx4j.server.MX4JMBeanServerBuilder -Dpenrose.home="%PENROSE_HOME%" org.safehaus.penrose.PenroseServer %PENROSE_ARGS% %PENROSE_CMD_LINE_ARGS%
 goto end
 
 
