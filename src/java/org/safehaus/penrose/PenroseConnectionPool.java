@@ -22,12 +22,11 @@ import java.util.Date;
 import java.util.List;
 import java.util.TreeMap;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.log4j.Logger;
 
 public class PenroseConnectionPool implements PenroseConnectionPoolMBean {
 	
-	public Logger log = LoggerFactory.getLogger(getClass());
+	public Logger log = Logger.getLogger(getClass());
 
 	public List connectionPool = new ArrayList();
 	public TreeMap activeConnections = new TreeMap();

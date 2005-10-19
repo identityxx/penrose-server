@@ -22,8 +22,7 @@ import org.apache.ldap.server.interceptor.NextInterceptor;
 import org.apache.ldap.server.configuration.InterceptorConfiguration;
 import org.apache.ldap.server.DirectoryServiceConfiguration;
 import org.apache.ldap.common.filter.ExprNode;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.log4j.Logger;
 import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.PenroseConnection;
 import org.safehaus.penrose.SearchResults;
@@ -43,7 +42,7 @@ import java.io.File;
  */
 public class PenroseInterceptor extends BaseInterceptor {
 
-    public Logger log = LoggerFactory.getLogger(getClass());
+    public Logger log = Logger.getLogger(getClass());
 
     Penrose penrose;
     ApacheDSEntryDataCache entryCache;

@@ -19,8 +19,7 @@ package org.safehaus.penrose.apacheds;
 
 import org.apache.ldap.server.partition.AbstractDirectoryPartition;
 import org.apache.ldap.common.filter.ExprNode;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.log4j.Logger;
 import org.ietf.ldap.*;
 import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.SearchResults;
@@ -58,7 +57,7 @@ public class PenrosePartition extends AbstractDirectoryPartition {
         File dir = new File("partitions/"+name);
         if (!dir.exists()) return;
 
-        Logger log = LoggerFactory.getLogger(getClass());
+        Logger log = Logger.getLogger(getClass());
         log.debug("-------------------------------------------------------------------------------");
         log.debug("Initializing "+name+" partition ...");
 
@@ -75,7 +74,7 @@ public class PenrosePartition extends AbstractDirectoryPartition {
     }
 
     public void delete(Name dn) throws NamingException {
-        Logger log = LoggerFactory.getLogger(getClass());
+        Logger log = Logger.getLogger(getClass());
         log.info("Deleting \""+dn+"\"");
 
         try {
@@ -96,7 +95,7 @@ public class PenrosePartition extends AbstractDirectoryPartition {
     }
 
     public void add(String upName, Name normName, Attributes attributes) throws NamingException {
-        Logger log = LoggerFactory.getLogger(getClass());
+        Logger log = Logger.getLogger(getClass());
         log.info("Adding \""+upName+"\"");
 
         if (getSuffix(true).equals(normName)) return;
@@ -134,7 +133,7 @@ public class PenrosePartition extends AbstractDirectoryPartition {
     }
 
     public void modify(Name dn, int i, Attributes attributes) throws NamingException {
-        Logger log = LoggerFactory.getLogger(getClass());
+        Logger log = Logger.getLogger(getClass());
         log.info("Modifying \""+dn+"\"");
         log.debug("changetype: modify");
 
@@ -177,7 +176,7 @@ public class PenrosePartition extends AbstractDirectoryPartition {
     }
 
     public void modify(Name dn, ModificationItem[] modificationItems) throws NamingException {
-        Logger log = LoggerFactory.getLogger(getClass());
+        Logger log = Logger.getLogger(getClass());
         log.info("Modifying \""+dn+"\"");
         log.debug("changetype: modify");
 
@@ -235,7 +234,7 @@ public class PenrosePartition extends AbstractDirectoryPartition {
     }
 
     public NamingEnumeration list(Name dn) throws NamingException {
-        Logger log = LoggerFactory.getLogger(getClass());
+        Logger log = Logger.getLogger(getClass());
         log.info("Listing \""+dn+"\"");
 
         try {
@@ -266,7 +265,7 @@ public class PenrosePartition extends AbstractDirectoryPartition {
 
     public NamingEnumeration search(Name base, Map env, ExprNode filter, SearchControls searchControls) throws NamingException {
 
-        Logger log = LoggerFactory.getLogger(getClass());
+        Logger log = Logger.getLogger(getClass());
         String deref = (String)env.get("java.naming.ldap.derefAliases");
         int scope = searchControls.getSearchScope();
         String returningAttributes[] = searchControls.getReturningAttributes();
@@ -321,7 +320,7 @@ public class PenrosePartition extends AbstractDirectoryPartition {
     }
 
     public Attributes lookup(Name dn) throws NamingException {
-        Logger log = LoggerFactory.getLogger(getClass());
+        Logger log = Logger.getLogger(getClass());
         log.debug("Looking up \""+dn+"\"");
 
         try {
@@ -371,7 +370,7 @@ public class PenrosePartition extends AbstractDirectoryPartition {
     }
 
     public Attributes lookup(Name dn, String[] attrIds) throws NamingException {
-        Logger log = LoggerFactory.getLogger(getClass());
+        Logger log = Logger.getLogger(getClass());
         log.debug("Looking up \""+dn+"\", \""+attrIds+"\"");
 
         for (int i=0; attrIds != null && i<attrIds.length; i++) {
@@ -382,7 +381,7 @@ public class PenrosePartition extends AbstractDirectoryPartition {
     }
 
     public boolean hasEntry(Name name) throws NamingException {
-        Logger log = LoggerFactory.getLogger(getClass());
+        Logger log = Logger.getLogger(getClass());
         log.info("Checking \""+name+"\"");
 
         try {
@@ -408,17 +407,17 @@ public class PenrosePartition extends AbstractDirectoryPartition {
     }
 
     public void modifyRn(Name name, String newRn, boolean deleteOldRn) throws NamingException {
-        Logger log = LoggerFactory.getLogger(getClass());
+        Logger log = Logger.getLogger(getClass());
         log.info("Renaming \""+name+"\"");
     }
 
     public void move(Name oriChildName, Name newParentName) throws NamingException {
-        Logger log = LoggerFactory.getLogger(getClass());
+        Logger log = Logger.getLogger(getClass());
         log.info("Moving \""+oriChildName+"\" to \""+newParentName+"\"");
     }
 
     public void move(Name oriChildName, Name newParentName, String newRn, boolean deleteOldRn) throws NamingException {
-        Logger log = LoggerFactory.getLogger(getClass());
+        Logger log = Logger.getLogger(getClass());
         log.info("Moving \""+oriChildName+"\" to \""+newParentName+"\"");
     }
 
@@ -427,7 +426,7 @@ public class PenrosePartition extends AbstractDirectoryPartition {
     }
 
     public void close() throws NamingException {
-        Logger log = LoggerFactory.getLogger(getClass());
+        Logger log = Logger.getLogger(getClass());
         try {
             penrose.stop();
 

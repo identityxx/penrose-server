@@ -17,8 +17,7 @@
  */
 package org.safehaus.penrose.cache;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.log4j.Logger;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.mapping.SourceDefinition;
 
@@ -29,7 +28,7 @@ import java.util.*;
  */
 public class SourceFilterCache {
 
-    Logger log = LoggerFactory.getLogger(getClass());
+    Logger log = Logger.getLogger(getClass());
 
     public Map dataMap = new TreeMap();
     public Map expirationMap = new LinkedHashMap();

@@ -24,8 +24,7 @@ import org.safehaus.penrose.thread.Queue;
 import org.safehaus.penrose.connection.Connection;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.mapping.*;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.log4j.Logger;
 import org.ietf.ldap.LDAPException;
 
 import java.util.*;
@@ -37,7 +36,7 @@ public class SyncService {
 
     public final static int WAIT_TIMEOUT = 10000; // wait timeout is 10 seconds
 
-    Logger log = LoggerFactory.getLogger(getClass());
+    Logger log = Logger.getLogger(getClass());
 
     public SyncContext syncContext;
 

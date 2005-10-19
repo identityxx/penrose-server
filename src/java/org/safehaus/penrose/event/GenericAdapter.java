@@ -17,16 +17,14 @@
  */
 package org.safehaus.penrose.event;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.safehaus.penrose.Penrose;
+import org.apache.log4j.Logger;
 
 /**
  * @author Endi S. Dewata
  */
 public class GenericAdapter implements BindListener, AddListener, ModifyListener {
 
-    Logger log = LoggerFactory.getLogger(getClass());
+    Logger log = Logger.getLogger(getClass());
 
     public GenericAdapter() {
     	log.debug("GenericAdapter.<init>()");

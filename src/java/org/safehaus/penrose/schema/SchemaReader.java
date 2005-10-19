@@ -17,8 +17,7 @@
  */
 package org.safehaus.penrose.schema;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.log4j.Logger;
 
 import java.util.Collection;
 import java.util.Iterator;
@@ -32,7 +31,7 @@ import java.io.FilenameFilter;
  */
 public class SchemaReader {
 
-    private Logger log = LoggerFactory.getLogger(getClass());
+    private Logger log = Logger.getLogger(getClass());
 
     private Schema schema;
 

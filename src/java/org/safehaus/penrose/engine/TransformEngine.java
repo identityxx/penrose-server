@@ -20,11 +20,8 @@ package org.safehaus.penrose.engine;
 
 import java.util.*;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.safehaus.penrose.util.PasswordUtil;
+import org.apache.log4j.Logger;
 import org.safehaus.penrose.interpreter.Interpreter;
-import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.config.Config;
 import org.safehaus.penrose.mapping.*;
 
@@ -33,7 +30,7 @@ import org.safehaus.penrose.mapping.*;
  */
 public class TransformEngine {
 
-    Logger log = LoggerFactory.getLogger(getClass());
+    Logger log = Logger.getLogger(getClass());
 
     public EngineContext engineContext;
 

@@ -18,8 +18,7 @@
 package org.safehaus.penrose.jboss;
 
 import org.safehaus.penrose.PenroseServer;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.log4j.Logger;
 
 import java.lang.reflect.Method;
 
@@ -28,7 +27,7 @@ import java.lang.reflect.Method;
  */
 public class PenroseService implements PenroseServiceMBean {
 
-    Logger log = LoggerFactory.getLogger(getClass());
+    Logger log = Logger.getLogger(getClass());
 
     private String home;
     private int port;

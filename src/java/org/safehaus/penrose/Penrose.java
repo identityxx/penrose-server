@@ -19,8 +19,9 @@ package org.safehaus.penrose;
 
 import java.util.*;
 import java.io.*;
-import java.lang.reflect.Constructor;
 
+import org.apache.log4j.LogManager;
+import org.apache.log4j.Logger;
 import org.ietf.ldap.*;
 import org.safehaus.penrose.config.*;
 import org.safehaus.penrose.event.*;
@@ -44,8 +45,6 @@ import org.safehaus.penrose.filter.FilterTool;
 import org.safehaus.penrose.acl.ACLEngine;
 import org.safehaus.penrose.sync.SyncService;
 import org.safehaus.penrose.sync.SyncContext;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * @author Endi S. Dewata
@@ -121,7 +120,7 @@ public class Penrose implements
     private Map configs = new TreeMap();
     private Schema schema;
 
-    private Logger log = LoggerFactory.getLogger(getClass());
+    private Logger log = Logger.getLogger(getClass());
 
 	private boolean stopRequested = false;
 
@@ -301,6 +300,20 @@ public class Penrose implements
             }
         }
         return result;
+    }
+
+    public Collection getLoggerNames(String path) throws Exception {
+        log.debug("Loggers under "+path);
+        Collection loggerNames = new TreeSet();
+
+        Enumeration e = LogManager.getCurrentLoggers();
+        while (e.hasMoreElements()) {
+    		Logger logger = (Logger)e.nextElement();
+    		log.debug(" - "+logger.getName()+": "+logger.getEffectiveLevel());
+            loggerNames.add(logger.getName());
+    	}
+
+        return loggerNames;
     }
 
     public Engine getEngine() {
@@ -507,12 +520,6 @@ public class Penrose implements
     }
     public void setFilterTool(FilterTool filterTool) {
         this.filterTool = filterTool;
-    }
-    public Logger getLog() {
-        return log;
-    }
-    public void setLog(Logger log) {
-        this.log = log;
     }
     public List getNormalizedSuffixes() {
         return normalizedSuffixes;

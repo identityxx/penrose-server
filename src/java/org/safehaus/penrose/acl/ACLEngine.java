@@ -26,8 +26,7 @@ import org.ietf.ldap.LDAPException;
 import org.ietf.ldap.LDAPEntry;
 import org.ietf.ldap.LDAPAttributeSet;
 import org.ietf.ldap.LDAPAttribute;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.log4j.Logger;
 
 import java.util.*;
 
@@ -36,7 +35,7 @@ import java.util.*;
  */
 public class ACLEngine {
 
-    public Logger log = LoggerFactory.getLogger(getClass());
+    public Logger log = Logger.getLogger(getClass());
 
     public Penrose penrose;
 

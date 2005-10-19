@@ -28,9 +28,7 @@ import org.safehaus.penrose.openldap.config.SlapdConfig;
 import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.PenroseConnection;
 import org.safehaus.penrose.SearchResults;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-//import org.apache.log4j.PropertyConfigurator;
+import org.apache.log4j.Logger;
 import org.openldap.backend.Backend;
 import org.openldap.backend.Result;
 
@@ -98,7 +96,7 @@ public class PenroseBackend implements Backend {
      * @throws Exception
      */
     public int init() throws Exception {
-        Logger log = LoggerFactory.getLogger(getClass());
+        Logger log = Logger.getLogger(getClass());
 
         try {
             return initImpl();
@@ -110,7 +108,7 @@ public class PenroseBackend implements Backend {
 
     public int initImpl() throws Exception {
     	
-        Logger log = LoggerFactory.getLogger(getClass());
+        Logger log = Logger.getLogger(getClass());
         log.debug("-------------------------------------------------------------------------------");
         log.debug("PenroseBackend.init();");
 
@@ -155,7 +153,7 @@ public class PenroseBackend implements Backend {
      * @param schemaDn
      */
     public void setSchema(String schemaDn) {
-        Logger log = LoggerFactory.getLogger(getClass());
+        Logger log = Logger.getLogger(getClass());
         log.debug("-------------------------------------------------------------------------------");
         log.debug("Penrose.setSchema(schemaDn);");
         log.debug(" schemaDN           : " + schemaDn);
@@ -169,7 +167,7 @@ public class PenroseBackend implements Backend {
      * @param suffixes
      */
     public void setSuffix(String suffixes[]) {
-        Logger log = LoggerFactory.getLogger(getClass());
+        Logger log = Logger.getLogger(getClass());
        	log.debug("-------------------------------------------------------------------------------");
        	log.debug("PenroseBackend.setSuffix(suffixArray);");
        	
@@ -187,7 +185,7 @@ public class PenroseBackend implements Backend {
      * @param rootPassword
      */
     public void setRoot(String rootDn, String rootPassword) {
-        Logger log = LoggerFactory.getLogger(getClass());
+        Logger log = Logger.getLogger(getClass());
     	log.debug("-------------------------------------------------------------------------------");
     	log.debug("PenroseBackend.setRoot(rootDn, rootPassword)");
     	log.debug(" rootDN           : "+rootDn);
@@ -235,7 +233,7 @@ public class PenroseBackend implements Backend {
      * @throws Exception
      */
     public int setSlapdConfig(String slapdConfig) throws Exception {
-        Logger log = LoggerFactory.getLogger(getClass());
+        Logger log = Logger.getLogger(getClass());
         try {
             return setSlapdConfigImpl(slapdConfig);
         } catch (Throwable e) {
@@ -246,7 +244,7 @@ public class PenroseBackend implements Backend {
 
     public int setSlapdConfigImpl(String slapdConfig) throws Throwable {
 
-        Logger log = LoggerFactory.getLogger(getClass());
+        Logger log = Logger.getLogger(getClass());
     	log.debug("-------------------------------------------------------------------------------");
     	log.debug("PenroseBackend.setSlapdConfig(slapdConfig)");
     	log.debug(" slapdConfig: "+slapdConfig);
@@ -265,7 +263,7 @@ public class PenroseBackend implements Backend {
      */
     public int setProperties(Properties properties) throws Exception {
 
-        Logger log = LoggerFactory.getLogger(getClass());
+        Logger log = Logger.getLogger(getClass());
     	log.debug("-------------------------------------------------------------------------------");
     	log.debug("PenroseBackend.setProperties(properties)");
 
@@ -286,7 +284,7 @@ public class PenroseBackend implements Backend {
      */
     public int bind(int connectionId, String dn, String password) throws Exception {
 
-        Logger log = LoggerFactory.getLogger(getClass());
+        Logger log = Logger.getLogger(getClass());
         PenroseConnection connection = getConnection(connectionId);
         if (connection == null) {
             createConnection(connectionId);
@@ -311,7 +309,7 @@ public class PenroseBackend implements Backend {
      */
     public int unbind(int connectionId) throws Exception {
 
-        Logger log = LoggerFactory.getLogger(getClass());
+        Logger log = Logger.getLogger(getClass());
         PenroseConnection connection = getConnection(connectionId);
         if (connection == null) {
             createConnection(connectionId);
@@ -346,7 +344,7 @@ public class PenroseBackend implements Backend {
             Collection attributeNames)
     throws Exception {
 
-        Logger log = LoggerFactory.getLogger(getClass());
+        Logger log = Logger.getLogger(getClass());
         PenroseConnection connection = getConnection(connectionId);
         if (connection == null) {
             createConnection(connectionId);
@@ -390,7 +388,7 @@ public class PenroseBackend implements Backend {
             Collection attributeNames)
     throws Exception {
 
-        Logger log = LoggerFactory.getLogger(getClass());
+        Logger log = Logger.getLogger(getClass());
         PenroseConnection connection = getConnection(connectionId);
         if (connection == null) {
             createConnection(connectionId);
@@ -426,7 +424,7 @@ public class PenroseBackend implements Backend {
             LDAPEntry entry)
     throws Exception {
 
-        Logger log = LoggerFactory.getLogger(getClass());
+        Logger log = Logger.getLogger(getClass());
         PenroseConnection connection = getConnection(connectionId);
         if (connection == null) {
             createConnection(connectionId);
@@ -455,7 +453,7 @@ public class PenroseBackend implements Backend {
             String dn)
     throws Exception {
 
-        Logger log = LoggerFactory.getLogger(getClass());
+        Logger log = Logger.getLogger(getClass());
         PenroseConnection connection = getConnection(connectionId);
         if (connection == null) {
             createConnection(connectionId);
@@ -486,7 +484,7 @@ public class PenroseBackend implements Backend {
             List modifications)
     throws Exception {
 
-        Logger log = LoggerFactory.getLogger(getClass());
+        Logger log = Logger.getLogger(getClass());
         PenroseConnection connection = getConnection(connectionId);
         if (connection == null) {
             createConnection(connectionId);
@@ -519,7 +517,7 @@ public class PenroseBackend implements Backend {
             String attributeValue)
     throws Exception {
 
-        Logger log = LoggerFactory.getLogger(getClass());
+        Logger log = Logger.getLogger(getClass());
         PenroseConnection connection = getConnection(connectionId);
         if (connection == null) {
             createConnection(connectionId);

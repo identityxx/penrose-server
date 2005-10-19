@@ -38,8 +38,7 @@ import org.apache.ldap.server.jndi.ServerContextFactory;
 import org.apache.log4j.PropertyConfigurator;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.support.FileSystemXmlApplicationContext;
-import org.slf4j.LoggerFactory;
-import org.slf4j.Logger;
+import org.apache.log4j.Logger;
 import org.safehaus.penrose.management.PenroseClient;
 import org.safehaus.penrose.apacheds.PenroseAuthenticator;
 import org.safehaus.penrose.apacheds.PenroseInterceptor;
@@ -54,7 +53,7 @@ import sun.misc.SignalHandler;
  */
 public class PenroseServer implements SignalHandler {
 
-    public static Logger log = LoggerFactory.getLogger(PenroseServer.class);
+    public static Logger log = Logger.getLogger(PenroseServer.class);
 
     Properties env;
 

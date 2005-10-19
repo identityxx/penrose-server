@@ -32,8 +32,7 @@ import org.safehaus.penrose.thread.ThreadPool;
 import org.safehaus.penrose.thread.Queue;
 import org.safehaus.penrose.thread.MRSWLock;
 import org.safehaus.penrose.mapping.*;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.log4j.Logger;
 import org.ietf.ldap.LDAPException;
 
 import javax.naming.directory.SearchResult;
@@ -44,7 +43,7 @@ import java.util.*;
  */
 public class Engine {
 
-    Logger log = LoggerFactory.getLogger(getClass());
+    Logger log = Logger.getLogger(getClass());
 
     private EngineContext engineContext;
 
@@ -846,13 +845,13 @@ public class Engine {
     }
 
     public Filter generateFilter(Source toSource, Collection relationships, AttributeValues av) throws Exception {
-        //log.debug("Filters:");
+        log.debug("Filters:");
 
         Filter filter = null;
 
         for (Iterator j=relationships.iterator(); j.hasNext(); ) {
             Relationship relationship = (Relationship)j.next();
-            //log.debug(" - "+relationship);
+            log.debug(" - "+relationship);
 
             String lhs = relationship.getLhs();
             String operator = relationship.getOperator();
@@ -872,9 +871,10 @@ public class Engine {
             String rsourceName = rhs.substring(0, rindex);
             String rname = rhs.substring(rindex+1);
 
-            //log.debug("   converting "+rhs+" ==> ("+lname+" "+operator+" ?)");
+            log.debug("   converting "+rhs+" ==> ("+lname+" "+operator+" ?)");
 
             Collection v = av.get(rhs);
+            log.debug("   - found "+v);
             if (v == null) continue;
 
             Filter orFilter = null;
@@ -882,7 +882,7 @@ public class Engine {
                 Object value = k.next();
 
                 SimpleFilter sf = new SimpleFilter(lname, operator, value.toString());
-                //log.debug(" - "+sf);
+                log.debug("   - "+sf);
 
                 orFilter = engineContext.getFilterTool().appendOrFilter(orFilter, sf);
             }

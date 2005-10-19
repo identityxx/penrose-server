@@ -20,14 +20,11 @@ package org.safehaus.penrose.handler;
 import org.safehaus.penrose.SearchResults;
 import org.safehaus.penrose.PenroseConnection;
 import org.safehaus.penrose.event.SearchEvent;
-import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.config.Config;
-import org.safehaus.penrose.cache.CacheConfig;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.filter.SimpleFilter;
 import org.safehaus.penrose.mapping.*;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.log4j.Logger;
 import org.ietf.ldap.*;
 
 import java.util.*;
@@ -37,7 +34,7 @@ import java.util.*;
  */
 public class SearchHandler {
 
-    Logger log = LoggerFactory.getLogger(getClass());
+    Logger log = Logger.getLogger(getClass());
 
     private Handler handler;
     private HandlerContext handlerContext;

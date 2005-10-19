@@ -17,16 +17,14 @@
  */
 package org.safehaus.penrose.thread;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.safehaus.penrose.thread.BooleanLock;
+import org.apache.log4j.Logger;
 
 /**
  * @author Administrator
  */
 public abstract class NormalThread extends Object {
 
-    Logger log = LoggerFactory.getLogger(getClass());
+    Logger log = Logger.getLogger(getClass());
 
 	protected Thread internalThread;
 	protected volatile boolean stopRequested;

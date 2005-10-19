@@ -19,9 +19,7 @@ package org.safehaus.penrose.thread;
 
 import java.util.Vector;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.safehaus.penrose.thread.EmptyQueueException;
+import org.apache.log4j.Logger;
 
 /**
  * @author Administrator
@@ -29,7 +27,7 @@ import org.safehaus.penrose.thread.EmptyQueueException;
 public class Queue {
 	
 	protected Vector queue = new Vector();
-    Logger log = LoggerFactory.getLogger(getClass());
+    Logger log = Logger.getLogger(getClass());
 	
 	public synchronized boolean isEmpty() {
 		return queue.size() == 0;

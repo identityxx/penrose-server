@@ -17,8 +17,7 @@
  */
 package org.safehaus.penrose.module;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.log4j.Logger;
 import org.safehaus.penrose.Penrose;
 
 /**
@@ -30,7 +29,7 @@ public class ModuleMapping implements Cloneable {
     public final static String ONELEVEL = "ONELEVEL";
     public final static String SUBTREE  = "SUBTREE";
 
-    Logger log = LoggerFactory.getLogger(getClass());
+    Logger log = Logger.getLogger(getClass());
 
     private String moduleName;
     private ModuleConfig moduleConfig;

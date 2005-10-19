@@ -28,8 +28,7 @@ import org.apache.ldap.server.invocation.Invocation;
 import org.apache.ldap.common.name.LdapName;
 import org.apache.ldap.common.filter.FilterParserImpl;
 import org.apache.ldap.common.filter.ExprNode;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.log4j.Logger;
 
 import javax.naming.directory.SearchControls;
 import javax.naming.directory.SearchResult;
@@ -44,7 +43,7 @@ import java.util.*;
  */
 public class ApacheDSEntryDataCache extends EntryDataCache {
 
-    Logger log = LoggerFactory.getLogger(getClass());
+    Logger log = Logger.getLogger(getClass());
 
     Map map = new TreeMap();
 

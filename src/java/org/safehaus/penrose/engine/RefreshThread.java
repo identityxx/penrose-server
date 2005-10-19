@@ -17,15 +17,14 @@
  */
 package org.safehaus.penrose.engine;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.log4j.Logger;
 
 /**
  * @author Administrator
  */
 public class RefreshThread implements Runnable {
 
-    Logger log = LoggerFactory.getLogger(getClass());
+    Logger log = Logger.getLogger(getClass());
 
 	private Engine engine;
 	

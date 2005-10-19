@@ -24,8 +24,7 @@ import org.safehaus.penrose.graph.GraphIterator;
 import org.safehaus.penrose.config.Config;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.util.Formatter;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.log4j.Logger;
 
 import java.util.*;
 
@@ -34,7 +33,7 @@ import java.util.*;
  */
 public class LoadGraphVisitor extends GraphVisitor {
 
-    Logger log = LoggerFactory.getLogger(getClass());
+    Logger log = Logger.getLogger(getClass());
 
     private Config config;
     private Graph graph;
@@ -71,6 +70,7 @@ public class LoadGraphVisitor extends GraphVisitor {
             sourceValues.add(sv);
         }
 
+        loadedSourceValues.add(sourceValues);
         //this.results.addAll(parentSourceValues);
     }
 
@@ -116,6 +116,8 @@ public class LoadGraphVisitor extends GraphVisitor {
             AttributeValues sv = new AttributeValues();
             sv.add(source.getName(), av);
             list.add(sv);
+
+            sourceValues.add(source.getName(), av);
         }
 
         loadedSourceValues.set(source.getName(), list);

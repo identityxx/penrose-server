@@ -18,8 +18,7 @@
 package org.safehaus.penrose.handler;
 
 import org.safehaus.penrose.PenroseConnection;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.log4j.Logger;
 import org.ietf.ldap.LDAPException;
 
 /**
@@ -27,7 +26,7 @@ import org.ietf.ldap.LDAPException;
  */
 public class ModRdnHandler {
 
-    Logger log = LoggerFactory.getLogger(getClass());
+    Logger log = Logger.getLogger(getClass());
 
     public Handler handler;
 

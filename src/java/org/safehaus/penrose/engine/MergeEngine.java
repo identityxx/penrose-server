@@ -18,14 +18,9 @@
 package org.safehaus.penrose.engine;
 
 import org.safehaus.penrose.mapping.*;
-import org.safehaus.penrose.graph.Graph;
-import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.SearchResults;
 import org.safehaus.penrose.util.Formatter;
-import org.safehaus.penrose.filter.Filter;
-import org.safehaus.penrose.config.Config;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.log4j.Logger;
 
 import java.util.*;
 
@@ -36,7 +31,7 @@ import com.novell.ldap.LDAPException;
  */
 public class MergeEngine {
 
-    Logger log = LoggerFactory.getLogger(getClass());
+    Logger log = Logger.getLogger(getClass());
 
     private Engine engine;
     private EngineContext engineContext;
@@ -123,15 +118,16 @@ public class MergeEngine {
             sourceValues = new AttributeValues();
         }
 
+        log.debug("Entry:");
+        log.debug(" - source values: "+sourceValues);
+
         AttributeValues attributeValues = engine.computeAttributeValues(entryDefinition, sourceValues);
+        log.debug(" - attribute values: "+attributeValues);
+
         Entry entry = new Entry(dn, entryDefinition, sourceValues, attributeValues);
+        log.debug("\n"+entry);
 
         engineContext.getEntryDataCache(entry.getParentDn(), entryDefinition).put(entry.getRdn(), entry);
-
-        log.debug("Entry:");
-        log.debug(" - source values: "+entry.getSourceValues());
-        log.debug(" - attribute values: "+entry.getAttributeValues());
-        log.debug("\n"+entry);
 
         results.add(entry);
 

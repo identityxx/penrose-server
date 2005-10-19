@@ -21,8 +21,7 @@ import org.safehaus.penrose.SearchResults;
 import org.ietf.ldap.LDAPEntry;
 import org.ietf.ldap.LDAPAttributeSet;
 import org.ietf.ldap.LDAPAttribute;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.log4j.Logger;
 
 import javax.naming.NamingEnumeration;
 import javax.naming.NamingException;
@@ -35,7 +34,7 @@ import java.util.Enumeration;
  */
 public class ApacheDSEnumeration implements NamingEnumeration {
 
-    Logger log = LoggerFactory.getLogger(getClass());
+    Logger log = Logger.getLogger(getClass());
 
     public SearchResults searchResults;
 

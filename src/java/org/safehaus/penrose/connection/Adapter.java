@@ -22,9 +22,7 @@ import org.safehaus.penrose.mapping.AttributeValues;
 import org.safehaus.penrose.mapping.Source;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.SearchResults;
-import org.safehaus.penrose.Penrose;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.log4j.Logger;
 
 import java.util.Collection;
 
@@ -33,7 +31,7 @@ import java.util.Collection;
  */
 public abstract class Adapter {
 
-    Logger log = LoggerFactory.getLogger(getClass());
+    Logger log = Logger.getLogger(getClass());
 
     private AdapterContext adapterContext;
     private AdapterConfig adapterConfig;

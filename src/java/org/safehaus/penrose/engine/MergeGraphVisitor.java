@@ -23,10 +23,8 @@ import org.safehaus.penrose.graph.Graph;
 import org.safehaus.penrose.graph.GraphIterator;
 import org.safehaus.penrose.config.Config;
 import org.safehaus.penrose.filter.Filter;
-import org.safehaus.penrose.filter.SimpleFilter;
 import org.safehaus.penrose.util.Formatter;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.log4j.Logger;
 
 import java.util.*;
 
@@ -35,7 +33,7 @@ import java.util.*;
  */
 public class MergeGraphVisitor extends GraphVisitor {
 
-    Logger log = LoggerFactory.getLogger(getClass());
+    Logger log = Logger.getLogger(getClass());
 
     private Config config;
     private Graph graph;
@@ -100,7 +98,7 @@ public class MergeGraphVisitor extends GraphVisitor {
             filter = engineContext.getFilterTool().appendAndFilter(filter, sourceFilter);
         }
 
-        if (!primarySourceValues.contains(source.getName())) {
+        if (!sourceValues.contains(source.getName())) {
 
             //log.debug("Loaded values:");
             Collection list = loadedSourceValues.get(source.getName());
@@ -109,19 +107,19 @@ public class MergeGraphVisitor extends GraphVisitor {
                 AttributeValues av = (AttributeValues)i.next();
                 //log.debug(" - "+av);
 
-                if (!engine.getJoinEngine().evaluate(relationships, primarySourceValues, av)) continue;
+                if (!engine.getJoinEngine().evaluate(relationships, sourceValues, av)) continue;
 
                 sourceValues.add(av);
             }
         }
-/*
+
         log.debug("Source values:");
         for (Iterator i=sourceValues.getNames().iterator(); i.hasNext(); ) {
             String name = (String)i.next();
             Collection values = sourceValues.get(name);
             log.debug(" - "+name+": "+values);
         }
-*/
+
         graphIterator.traverseEdges(node);
     }
 

@@ -26,15 +26,14 @@ import java.io.StringReader;
 import java.util.Collection;
 import java.util.ArrayList;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.log4j.Logger;
 
 /**
  * @author Endi S. Dewata
  */
 public class DefaultInterpreter extends org.safehaus.penrose.interpreter.Interpreter {
 
-    Logger log = LoggerFactory.getLogger(getClass());
+    Logger log = Logger.getLogger(getClass());
 
     public Interpreter interpreter;
 

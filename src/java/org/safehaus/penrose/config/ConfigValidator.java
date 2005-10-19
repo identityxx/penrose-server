@@ -24,8 +24,7 @@ import org.safehaus.penrose.schema.Schema;
 import org.safehaus.penrose.schema.ObjectClass;
 import org.safehaus.penrose.schema.AttributeType;
 import org.ietf.ldap.LDAPDN;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.log4j.Logger;
 
 import java.util.Collection;
 import java.util.ArrayList;
@@ -37,7 +36,7 @@ import java.util.TreeSet;
  */
 public class ConfigValidator {
 
-    Logger log = LoggerFactory.getLogger(getClass());
+    Logger log = Logger.getLogger(getClass());
 
     private ServerConfig serverConfig;
     private Schema schema;

@@ -20,8 +20,7 @@ package org.safehaus.penrose.config;
 import java.io.Serializable;
 import java.util.*;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.log4j.Logger;
 import org.safehaus.penrose.module.ModuleMapping;
 import org.safehaus.penrose.module.ModuleConfig;
 import org.safehaus.penrose.mapping.*;
@@ -33,7 +32,7 @@ import org.safehaus.penrose.mapping.*;
  */
 public class Config implements Serializable {
 
-    Logger log = LoggerFactory.getLogger(getClass());
+    Logger log = Logger.getLogger(getClass());
 
     private Map entryDefinitions = new TreeMap();
     private Collection rootEntryDefinitions = new ArrayList();

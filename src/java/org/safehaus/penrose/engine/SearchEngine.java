@@ -23,8 +23,7 @@ import org.safehaus.penrose.config.Config;
 import org.safehaus.penrose.graph.Graph;
 import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.util.Formatter;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.log4j.Logger;
 
 import java.util.*;
 
@@ -33,7 +32,7 @@ import java.util.*;
  */
 public class SearchEngine {
 
-    Logger log = LoggerFactory.getLogger(getClass());
+    Logger log = Logger.getLogger(getClass());
 
     private Engine engine;
     private EngineContext engineContext;

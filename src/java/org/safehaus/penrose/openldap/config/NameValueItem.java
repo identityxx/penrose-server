@@ -19,9 +19,7 @@ package org.safehaus.penrose.openldap.config;
 
 import java.io.StringReader;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.safehaus.penrose.Penrose;
+import org.apache.log4j.Logger;
 
 
 /**
@@ -29,7 +27,7 @@ import org.safehaus.penrose.Penrose;
  */
 public class NameValueItem extends ConfigurationItem {
 
-    Logger log = LoggerFactory.getLogger(getClass());
+    Logger log = Logger.getLogger(getClass());
 
 	protected String name;
 	protected String whitespace;

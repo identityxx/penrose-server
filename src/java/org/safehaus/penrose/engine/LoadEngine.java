@@ -24,8 +24,7 @@ import org.safehaus.penrose.SearchResults;
 import org.safehaus.penrose.util.Formatter;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.config.Config;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.log4j.Logger;
 
 import java.util.*;
 
@@ -36,7 +35,7 @@ import com.novell.ldap.LDAPException;
  */
 public class LoadEngine {
 
-    Logger log = LoggerFactory.getLogger(getClass());
+    Logger log = Logger.getLogger(getClass());
 
     private Engine engine;
     private EngineContext engineContext;

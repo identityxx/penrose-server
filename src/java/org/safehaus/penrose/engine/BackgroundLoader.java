@@ -20,8 +20,7 @@ package org.safehaus.penrose.engine;
 import java.util.Hashtable;
 import java.util.Vector;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.log4j.Logger;
 import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.thread.NormalThread;
 
@@ -36,7 +35,7 @@ import org.safehaus.penrose.thread.NormalThread;
  */
 public class BackgroundLoader extends NormalThread implements Runnable {
 
-    Logger log = LoggerFactory.getLogger(getClass());
+    Logger log = Logger.getLogger(getClass());
 
 	final static int WAKE_UP_INTERVAL = 1000; // every second
 	final static boolean DEBUG = true;

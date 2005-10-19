@@ -25,7 +25,7 @@ import javax.management.ObjectName;
 import java.util.Map;
 import java.util.HashMap;
 import java.util.Collection;
-import java.lang.reflect.Array;
+import java.util.ArrayList;
 
 public class PenroseClient {
 
@@ -78,31 +78,34 @@ public class PenroseClient {
     }
 
 	public Object invoke(String method, Object[] paramValues, String[] paramClassNames) throws Exception {
-		Object obj = connection.invoke(name, method, paramValues, paramClassNames);
-		return obj;
+		return connection.invoke(name, method, paramValues, paramClassNames);
 	}
 
     public Collection listFiles(String directory) throws Exception {
-        return (Collection)connection.invoke(name,
-                "listFiles",
+        return (Collection)invoke("listFiles",
                 new Object[] { directory },
                 new String[] { String.class.getName() }
         );
     }
 
     public byte[] download(String filename) throws Exception {
-        return (byte[])connection.invoke(name,
-                "download",
+        return (byte[])invoke("download",
                 new Object[] { filename },
                 new String[] { String.class.getName() }
         );
     }
 
     public void upload(String filename, byte content[]) throws Exception {
-        connection.invoke(name,
-                "upload",
+        invoke("upload",
                 new Object[] { filename, content },
                 new String[] { String.class.getName(), "[B" }
+        );
+    }
+
+    public Collection getLoggerNames(String path) throws Exception {
+        return (Collection)invoke("getLoggerNames",
+                new Object[] { path },
+                new String[] { String.class.getName() }
         );
     }
 

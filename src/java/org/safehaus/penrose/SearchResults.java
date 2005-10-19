@@ -18,8 +18,7 @@
 package org.safehaus.penrose;
 
 import org.ietf.ldap.LDAPException;
-import org.slf4j.LoggerFactory;
-import org.slf4j.Logger;
+import org.apache.log4j.Logger;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -31,7 +30,7 @@ import java.util.Iterator;
  */
 public class SearchResults implements Iterator {
 
-    public Logger log = LoggerFactory.getLogger(getClass());
+    public Logger log = Logger.getLogger(getClass());
 
     public List results = new ArrayList();
     public boolean done = false;

@@ -21,9 +21,7 @@ import org.safehaus.penrose.SearchResults;
 import org.safehaus.penrose.*;
 import org.safehaus.penrose.module.Module;
 import org.safehaus.penrose.event.*;
-import org.safehaus.penrose.mapping.*;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.log4j.Logger;
 import org.ietf.ldap.LDAPEntry;
 import org.ietf.ldap.LDAPException;
 
@@ -34,7 +32,7 @@ import java.util.*;
  */
 public class Handler {
 
-    Logger log = LoggerFactory.getLogger(getClass());
+    Logger log = Logger.getLogger(getClass());
 
     private AddHandler addHandler;
     private BindHandler bindHandler;

@@ -20,8 +20,7 @@ package org.safehaus.penrose.config;
 import java.io.Serializable;
 import java.util.*;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.log4j.Logger;
 import org.safehaus.penrose.cache.CacheConfig;
 import org.safehaus.penrose.engine.EngineConfig;
 import org.safehaus.penrose.interpreter.InterpreterConfig;
@@ -33,7 +32,7 @@ import org.safehaus.penrose.connection.*;
  */
 public class ServerConfig implements Serializable {
 
-    Logger log = LoggerFactory.getLogger(getClass());
+    Logger log = Logger.getLogger(getClass());
 
     private Collection schemaFiles = new ArrayList();
 

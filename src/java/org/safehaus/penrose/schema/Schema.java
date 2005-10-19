@@ -20,9 +20,7 @@ package org.safehaus.penrose.schema;
 import org.safehaus.penrose.mapping.EntryDefinition;
 import org.safehaus.penrose.mapping.Row;
 import org.safehaus.penrose.mapping.AttributeValues;
-import org.safehaus.penrose.Penrose;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.log4j.Logger;
 
 import java.util.*;
 
@@ -31,7 +29,7 @@ import java.util.*;
  */
 public class Schema {
 
-    Logger log = LoggerFactory.getLogger(getClass());
+    Logger log = Logger.getLogger(getClass());
     /**
      * Attribute type definitions.
      */

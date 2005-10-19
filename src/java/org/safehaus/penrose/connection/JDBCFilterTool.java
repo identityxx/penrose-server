@@ -6,8 +6,7 @@ import org.safehaus.penrose.filter.AndFilter;
 import org.safehaus.penrose.filter.OrFilter;
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.config.Config;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.log4j.Logger;
 
 import java.util.Iterator;
 import java.util.Collection;
@@ -17,7 +16,7 @@ import java.util.Collection;
  */
 public class JDBCFilterTool {
 
-    Logger log = LoggerFactory.getLogger(getClass());
+    Logger log = Logger.getLogger(getClass());
 
     private AdapterContext adapterContext;
 

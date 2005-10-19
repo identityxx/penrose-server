@@ -20,7 +20,6 @@ package org.safehaus.penrose;
 import java.io.IOException;
 import java.util.*;
 
-import org.slf4j.Logger;
 import org.safehaus.penrose.config.Config;
 import org.safehaus.penrose.acl.ACLEngine;
 
@@ -81,8 +80,6 @@ public interface PenroseMBean {
 	public Collection getEngines();
 	public PenroseConnectionPool getConnectionPool();
 	public void setConnectionPool(PenroseConnectionPool connectionPool);
-	public Logger getLog();
-	public void setLog(Logger log);
 	public List getNormalizedSuffixes();
 	public void setNormalizedSuffixes(List normalizedSuffixes);
 	public String getRootDn();
@@ -96,5 +93,6 @@ public interface PenroseMBean {
 	public byte[] download(String filename) throws IOException;
 	public void upload(String filename, byte content[]) throws IOException;
     public Collection listFiles(String directory) throws Exception;
+    public Collection getLoggerNames(String path) throws Exception;
 
 }

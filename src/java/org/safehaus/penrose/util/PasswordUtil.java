@@ -23,8 +23,7 @@ import sun.misc.BASE64Decoder;
 import javax.crypto.spec.SecretKeySpec;
 import javax.crypto.Cipher;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.log4j.Logger;
 
 import java.security.MessageDigest;
 import java.math.BigInteger;
@@ -35,7 +34,7 @@ import java.math.BigInteger;
  */
 public class PasswordUtil {
 
-    public static Logger log = LoggerFactory.getLogger(PasswordUtil.class);
+    public static Logger log = Logger.getLogger(PasswordUtil.class);
 
 	protected final static boolean DEBUG = true;
 
