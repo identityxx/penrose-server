@@ -117,7 +117,7 @@ public class LoadGraphVisitor extends GraphVisitor {
             sv.add(source.getName(), av);
             list.add(sv);
 
-            sourceValues.add(source.getName(), av);
+            sourceValues.add(sv);
         }
 
         loadedSourceValues.set(source.getName(), list);

@@ -20,6 +20,7 @@ package org.safehaus.penrose.engine;
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.graph.GraphVisitor;
 import org.safehaus.penrose.graph.GraphIterator;
+import org.safehaus.penrose.util.Formatter;
 import org.apache.log4j.Logger;
 import org.ietf.ldap.LDAPException;
 
@@ -34,16 +35,16 @@ public class ModifyGraphVisitor extends GraphVisitor {
 
     public EngineContext engineContext;
     public EntryDefinition entryDefinition;
+
+    public AttributeValues oldValues;
     public AttributeValues newValues;
 
     private int returnCode = LDAPException.SUCCESS;
 
-    private Stack stack = new Stack();
-
     public ModifyGraphVisitor(
             EngineContext engineContext,
             EntryDefinition entryDefinition,
-            AttributeValues sourceValues,
+            AttributeValues oldValues,
             AttributeValues newValues
             ) throws Exception {
 
@@ -51,92 +52,60 @@ public class ModifyGraphVisitor extends GraphVisitor {
         this.engineContext = engineContext;
         this.entryDefinition = entryDefinition;
 
+        this.oldValues = oldValues;
         this.newValues = newValues;
-
-        stack.push(sourceValues);
     }
 
-    public boolean preVisitNode(Object node) throws Exception {
-        Source source = (Source)node;
-        AttributeValues sourceValues = (AttributeValues)stack.peek();
+    public void visitNode(GraphIterator graphIterator, Object node) throws Exception {
 
-        log.debug("Modifying "+source.getName()+" ["+sourceValues+"] with "+newValues);
+        Source source = (Source)node;
+
+        log.debug(Formatter.displaySeparator(40));
+        log.debug(Formatter.displayLine("Visiting "+source.getName(), 40));
+        log.debug(Formatter.displaySeparator(40));
 
         if (!source.isIncludeOnModify()) {
             log.debug("Source "+source.getName()+" is not included on modify");
-            return true;
+            graphIterator.traverseEdges(node);
+            return;
         }
 
         if (entryDefinition.getSource(source.getName()) == null) {
             log.debug("Source "+source.getName()+" is not defined in entry "+entryDefinition.getDn());
-            return true;
+            graphIterator.traverseEdges(node);
+            return;
         }
 
+        log.debug("Old values:");
         AttributeValues oldSourceValues = new AttributeValues();
-        for (Iterator i=sourceValues.getNames().iterator(); i.hasNext(); ) {
+        for (Iterator i=oldValues.getNames().iterator(); i.hasNext(); ) {
             String name = (String)i.next();
-            Collection values = sourceValues.get(name);
-
             if (!name.startsWith(source.getName()+".")) continue;
+
+            Collection values = oldValues.get(name);
+            log.debug(" - "+name+": "+values);
 
             name = name.substring(source.getName().length()+1);
             oldSourceValues.set(name, values);
         }
 
+        log.debug("New values:");
         AttributeValues newSourceValues = new AttributeValues();
         for (Iterator i=newValues.getNames().iterator(); i.hasNext(); ) {
             String name = (String)i.next();
-            Collection values = newValues.get(name);
-
             if (!name.startsWith(source.getName()+".")) continue;
+
+            Collection values = newValues.get(name);
+            log.debug(" - "+name+": "+values);
 
             name = name.substring(source.getName().length()+1);
             newSourceValues.set(name, values);
         }
 
         returnCode = engineContext.getSyncService().modify(source, oldSourceValues, newSourceValues);
+        if (returnCode != LDAPException.SUCCESS) return;
 
-        if (returnCode != LDAPException.SUCCESS) return false;
-
-        return true;
-    }
-
-    public void visitEdge(GraphIterator graphIterator, Object node1, Object node2, Object object) throws Exception {
-
-        Relationship relationship = (Relationship)object;
-        log.debug("Relationship "+relationship);
-
-        Source fromSource = (Source)node1;
-        Source toSource = (Source)node2;
-
-        if (entryDefinition.getSource(toSource.getName()) == null) {
-            log.debug("Source "+toSource.getName()+" is not defined in entry "+entryDefinition.getDn());
-            return;
-        }
-
-        AttributeValues sourceValues = (AttributeValues)stack.peek();
-
-        String lhs = relationship.getLhs();
-        String rhs = relationship.getRhs();
-
-        if (lhs.startsWith(toSource.getName()+".")) {
-            String exp = lhs;
-            lhs = rhs;
-            rhs = exp;
-        }
-
-        Collection lhsValues = sourceValues.get(lhs);
-        log.debug(" - "+lhs+" -> "+rhs+": "+lhsValues);
-
-        AttributeValues newSourceValues = new AttributeValues();
-        newSourceValues.add(sourceValues);
-        newSourceValues.set(rhs, lhsValues);
-
-        stack.push(newSourceValues);
-
-        graphIterator.traverse(node2);
-
-        stack.pop();
+        graphIterator.traverseEdges(node);
     }
 
     public int getReturnCode() {
