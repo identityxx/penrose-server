@@ -595,43 +595,58 @@ public class Penrose implements
     public EntryFilterCache getEntryFilterCache(String parentDn, EntryDefinition entryDefinition) throws Exception {
         String cacheName = entryDefinition.getParameter(EntryDefinition.CACHE);
         cacheName = cacheName == null ? EntryDefinition.DEFAULT_CACHE : cacheName;
-
-        String key = entryDefinition.getRdn()+","+parentDn;
-
-        EntryFilterCache entryFilterCache = (EntryFilterCache)entryFilterCaches.get(key);
-
-        if (entryFilterCache == null) {
-            entryFilterCache = new EntryFilterCache(this, entryDefinition);
-            entryFilterCaches.put(key, entryFilterCache);
-        }
-
-        return entryFilterCache;
-    }
-
-    public EntrySourceCache getEntrySourceCache(String parentDn, EntryDefinition entryDefinition) throws Exception {
-        String cacheName = "EntrySource";
-
         CacheConfig cacheConfig = serverConfig.getCacheConfig(cacheName);
 
         String key = entryDefinition.getRdn()+","+parentDn;
 
-        EntrySourceCache entrySourceCache = (EntrySourceCache)entrySourceCaches.get(key);
+        EntryFilterCache cache = (EntryFilterCache)entryFilterCaches.get(key);
 
-        if (entrySourceCache == null) {
-            entrySourceCache = new EntrySourceCache();
-            entrySourceCache.setParentDn(parentDn);
-            entrySourceCache.setEntryDefinition(entryDefinition);
-            entrySourceCache.init(cacheConfig, this);
-            entrySourceCaches.put(key, entrySourceCache);
+        if (cache == null) {
+            String cacheClass = cacheConfig.getCacheClass();
+            cacheClass = cacheClass == null ? CacheConfig.DEFAULT_ENTRY_FILTER_CACHE : cacheClass;
+
+            Class clazz = Class.forName(cacheClass);
+            cache = (EntryFilterCache)clazz.newInstance();
+
+            cache.setParentDn(parentDn);
+            cache.setEntryDefinition(entryDefinition);
+            cache.init(cacheConfig, this);
+
+            entryFilterCaches.put(key, cache);
         }
 
-        return entrySourceCache;
+        return cache;
+    }
+
+    public EntrySourceCache getEntrySourceCache(String parentDn, EntryDefinition entryDefinition) throws Exception {
+        String cacheName = entryDefinition.getParameter(EntryDefinition.CACHE);
+        cacheName = cacheName == null ? EntryDefinition.DEFAULT_CACHE : cacheName;
+        CacheConfig cacheConfig = serverConfig.getCacheConfig(cacheName);
+
+        String key = entryDefinition.getRdn()+","+parentDn;
+
+        EntrySourceCache cache = (EntrySourceCache)entrySourceCaches.get(key);
+
+        if (cache == null) {
+            String cacheClass = cacheConfig.getCacheClass();
+            cacheClass = cacheClass == null ? CacheConfig.DEFAULT_ENTRY_SOURCE_CACHE : cacheClass;
+
+            Class clazz = Class.forName(cacheClass);
+            cache = (EntrySourceCache)clazz.newInstance();
+
+            cache.setParentDn(parentDn);
+            cache.setEntryDefinition(entryDefinition);
+            cache.init(cacheConfig, this);
+
+            entrySourceCaches.put(key, cache);
+        }
+
+        return cache;
     }
 
     public EntryDataCache getEntryDataCache(String parentDn, EntryDefinition entryDefinition) throws Exception {
         String cacheName = entryDefinition.getParameter(EntryDefinition.CACHE);
         cacheName = cacheName == null ? EntryDefinition.DEFAULT_CACHE : cacheName;
-
         CacheConfig cacheConfig = serverConfig.getCacheConfig(cacheName);
 
         String key = entryDefinition.getRdn()+","+parentDn;
@@ -644,6 +659,7 @@ public class Penrose implements
 
             Class clazz = Class.forName(cacheClass);
             cache = (EntryDataCache)clazz.newInstance();
+
             cache.setParentDn(parentDn);
             cache.setEntryDefinition(entryDefinition);
             cache.init(cacheConfig, this);
@@ -657,15 +673,25 @@ public class Penrose implements
     public SourceFilterCache getSourceFilterCache(ConnectionConfig connectionConfig, SourceDefinition sourceDefinition) throws Exception {
         String cacheName = sourceDefinition.getParameter(SourceDefinition.CACHE);
         cacheName = cacheName == null ? SourceDefinition.DEFAULT_CACHE : cacheName;
-
         CacheConfig cacheConfig = serverConfig.getCacheConfig(cacheName);
 
         String key = connectionConfig.getConnectionName()+"."+sourceDefinition.getName();
+
         SourceFilterCache cache = (SourceFilterCache)sourceFilterCaches.get(key);
+
         if (cache == null) {
-            cache = new SourceFilterCache(this, sourceDefinition);
+            String cacheClass = cacheConfig.getCacheClass();
+            cacheClass = cacheClass == null ? CacheConfig.DEFAULT_SOURCE_FILTER_CACHE : cacheClass;
+
+            Class clazz = Class.forName(cacheClass);
+            cache = (SourceFilterCache)clazz.newInstance();
+
+            cache.setSourceDefinition(sourceDefinition);
+            cache.init(cacheConfig, this);
+
             sourceFilterCaches.put(key, cache);
         }
+
         return cache;
     }
 
@@ -684,6 +710,7 @@ public class Penrose implements
 
             Class clazz = Class.forName(cacheClass);
             cache = (SourceDataCache)clazz.newInstance();
+            
             cache.setSourceDefinition(sourceDefinition);
             cache.init(cacheConfig, this);
 

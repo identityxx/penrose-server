@@ -38,6 +38,9 @@ public class EntryDefinition implements Cloneable, Serializable {
     public final static String DATA_CACHE_SIZE         = "dataCacheSize";
     public final static String DATA_CACHE_EXPIRATION   = "dataCacheExpiration";
 
+    public final static String SOURCE_CACHE_SIZE       = "sourceCacheSize";
+    public final static String SOURCE_CACHE_EXPIRATION = "sourceCacheExpiration";
+
     public final static String BATCH_SIZE              = "batchSize";
 
     public final static String CACHE                   = "cache";

@@ -36,11 +36,15 @@ public abstract class SourceDataCache extends Cache {
 
     public void setSourceDefinition(SourceDefinition sourceDefinition) {
         this.sourceDefinition = sourceDefinition;
+    }
+
+    public void init() throws Exception {
+        super.init();
 
         String s = sourceDefinition.getParameter(SourceDefinition.DATA_CACHE_SIZE);
-        size = s == null ? SourceDefinition.DEFAULT_DATA_CACHE_SIZE : Integer.parseInt(s);
+        if (s != null) size = Integer.parseInt(s);
 
         s = sourceDefinition.getParameter(SourceDefinition.DATA_CACHE_EXPIRATION);
-        expiration = s == null ? SourceDefinition.DEFAULT_DATA_CACHE_EXPIRATION : Integer.parseInt(s);
+        if (s != null) expiration = Integer.parseInt(s);
     }
 }

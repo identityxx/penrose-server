@@ -33,21 +33,37 @@ public class SourceFilterCache {
     public Map dataMap = new TreeMap();
     public Map expirationMap = new LinkedHashMap();
 
-    public SourceDefinition sourceDefinition;
+    private CacheConfig cacheConfig;
     public CacheContext cacheContext;
+
+    private SourceDefinition sourceDefinition;
 
     private int size;
     private int expiration; // minutes
 
-    public SourceFilterCache(CacheContext cacheContext, SourceDefinition sourceDefinition) {
-        this.cacheContext = cacheContext;
+    public void setSourceDefinition(SourceDefinition sourceDefinition) {
         this.sourceDefinition = sourceDefinition;
+    }
 
+    public void init(CacheConfig cacheConfig, CacheContext cacheContext) throws Exception {
+        this.cacheConfig = cacheConfig;
+        this.cacheContext = cacheContext;
+
+        String s = cacheConfig.getParameter(CacheConfig.CACHE_SIZE);
+        size = s == null ? CacheConfig.DEFAULT_CACHE_SIZE : Integer.parseInt(s);
+
+        s = cacheConfig.getParameter(CacheConfig.CACHE_EXPIRATION);
+        expiration = s == null ? CacheConfig.DEFAULT_CACHE_EXPIRATION : Integer.parseInt(s);
+
+        init();
+    }
+
+    public void init() throws Exception {
         String s = sourceDefinition.getParameter(SourceDefinition.FILTER_CACHE_SIZE);
-        size = s == null ? SourceDefinition.DEFAULT_FILTER_CACHE_SIZE : Integer.parseInt(s);
+        if (s != null) size = Integer.parseInt(s);
 
         s = sourceDefinition.getParameter(SourceDefinition.FILTER_CACHE_EXPIRATION);
-        expiration = s == null ? SourceDefinition.DEFAULT_FILTER_CACHE_EXPIRATION : Integer.parseInt(s);
+        if (s != null) expiration = Integer.parseInt(s);
     }
 
     public Collection get(Filter filter) throws Exception {
@@ -97,5 +113,17 @@ public class SourceFilterCache {
 
     public void setSize(int size) {
         this.size = size;
+    }
+
+    public CacheConfig getCacheConfig() {
+        return cacheConfig;
+    }
+
+    public void setCacheConfig(CacheConfig cacheConfig) {
+        this.cacheConfig = cacheConfig;
+    }
+
+    public SourceDefinition getSourceDefinition() {
+        return sourceDefinition;
     }
 }

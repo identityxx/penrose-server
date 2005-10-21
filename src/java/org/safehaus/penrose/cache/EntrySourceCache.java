@@ -28,6 +28,16 @@ public class EntrySourceCache extends EntryDataCache {
     Map dataMap = new TreeMap();
     Map expirationMap = new LinkedHashMap();
 
+    public void init() throws Exception {
+        super.init();
+
+        String s = entryDefinition.getParameter(EntryDefinition.SOURCE_CACHE_SIZE);
+        if (s != null) size = Integer.parseInt(s);
+
+        s = entryDefinition.getParameter(EntryDefinition.SOURCE_CACHE_EXPIRATION);
+        if (s != null) expiration = Integer.parseInt(s);
+    }
+
     public Object get(Object key) throws Exception {
 
         Row rdn = getCacheContext().getSchema().normalize((Row)key);

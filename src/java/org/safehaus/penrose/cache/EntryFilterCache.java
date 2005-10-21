@@ -33,24 +33,34 @@ public class EntryFilterCache {
     public Map dataMap = new TreeMap();
     public Map expirationMap = new LinkedHashMap();
 
-    public EntryDefinition entryDefinition;
-    public CacheContext cacheContext;
+    private CacheConfig cacheConfig;
+    private CacheContext cacheContext;
+
+    private String parentDn;
+    private EntryDefinition entryDefinition;
 
     private int size;
     private int expiration; // minutes
 
-    public EntryFilterCache(CacheContext cacheContext, EntryDefinition entryDefinition) {
+    public void init(CacheConfig cacheConfig, CacheContext cacheContext) throws Exception {
+        this.cacheConfig = cacheConfig;
         this.cacheContext = cacheContext;
-        this.entryDefinition = entryDefinition;
 
-        String s = entryDefinition.getParameter(EntryDefinition.FILTER_CACHE_SIZE);
-        size = s == null ? EntryDefinition.DEFAULT_FILTER_CACHE_SIZE : Integer.parseInt(s);
+        String s = cacheConfig.getParameter(CacheConfig.CACHE_SIZE);
+        size = s == null ? CacheConfig.DEFAULT_CACHE_SIZE : Integer.parseInt(s);
 
-        s = entryDefinition.getParameter(EntryDefinition.FILTER_CACHE_EXPIRATION);
-        expiration = s == null ? EntryDefinition.DEFAULT_FILTER_CACHE_EXPIRATION : Integer.parseInt(s);
+        s = cacheConfig.getParameter(CacheConfig.CACHE_EXPIRATION);
+        expiration = s == null ? CacheConfig.DEFAULT_CACHE_EXPIRATION : Integer.parseInt(s);
+
+        init();
     }
 
     public void init() throws Exception {
+        String s = entryDefinition.getParameter(EntryDefinition.FILTER_CACHE_SIZE);
+        if (s != null) size = Integer.parseInt(s);
+
+        s = entryDefinition.getParameter(EntryDefinition.FILTER_CACHE_EXPIRATION);
+        if (s != null) expiration = Integer.parseInt(s);
     }
 
     public Collection get(Filter filter) throws Exception {
@@ -107,5 +117,37 @@ public class EntryFilterCache {
 
     public void setExpiration(int expiration) {
         this.expiration = expiration;
+    }
+
+    public CacheConfig getCacheConfig() {
+        return cacheConfig;
+    }
+
+    public void setCacheConfig(CacheConfig cacheConfig) {
+        this.cacheConfig = cacheConfig;
+    }
+
+    public CacheContext getCacheContext() {
+        return cacheContext;
+    }
+
+    public void setCacheContext(CacheContext cacheContext) {
+        this.cacheContext = cacheContext;
+    }
+
+    public String getParentDn() {
+        return parentDn;
+    }
+
+    public void setParentDn(String parentDn) {
+        this.parentDn = parentDn;
+    }
+
+    public EntryDefinition getEntryDefinition() {
+        return entryDefinition;
+    }
+
+    public void setEntryDefinition(EntryDefinition entryDefinition) {
+        this.entryDefinition = entryDefinition;
     }
 }

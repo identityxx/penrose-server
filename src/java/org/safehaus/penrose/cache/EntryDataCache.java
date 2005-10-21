@@ -28,18 +28,22 @@ public abstract class EntryDataCache extends Cache {
     String parentDn;
     EntryDefinition entryDefinition;
 
+    public void init() throws Exception {
+        super.init();
+
+        String s = entryDefinition.getParameter(EntryDefinition.DATA_CACHE_SIZE);
+        if (s != null) size = Integer.parseInt(s);
+
+        s = entryDefinition.getParameter(EntryDefinition.DATA_CACHE_EXPIRATION);
+        if (s != null) expiration = Integer.parseInt(s);
+    }
+
     public EntryDefinition getEntryDefinition() {
         return entryDefinition;
     }
 
     public void setEntryDefinition(EntryDefinition entryDefinition) {
         this.entryDefinition = entryDefinition;
-
-        String s = entryDefinition.getParameter(EntryDefinition.DATA_CACHE_SIZE);
-        size = s == null ? EntryDefinition.DEFAULT_DATA_CACHE_SIZE : Integer.parseInt(s);
-
-        s = entryDefinition.getParameter(EntryDefinition.DATA_CACHE_EXPIRATION);
-        expiration = s == null ? EntryDefinition.DEFAULT_DATA_CACHE_EXPIRATION : Integer.parseInt(s);
     }
 
     public String getParentDn() {

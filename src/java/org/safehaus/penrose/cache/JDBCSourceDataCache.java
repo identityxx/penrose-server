@@ -33,6 +33,8 @@ public class JDBCSourceDataCache extends SourceDataCache {
     private String password;
 
     public void init() throws Exception {
+        super.init();
+
         driver = cacheConfig.getParameter("driver");
         url = cacheConfig.getParameter("url");
         user = cacheConfig.getParameter("user");

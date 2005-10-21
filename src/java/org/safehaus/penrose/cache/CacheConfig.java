@@ -28,19 +28,23 @@ import java.io.Serializable;
  */
 public class CacheConfig implements Cloneable, Serializable {
 	
-    public final static String CACHE_EXPIRATION = "cacheExpiration";
-    public final static String LOAD_ON_STARTUP  = "loadOnStartup";
+    public final static String DEFAULT_ENTRY_FILTER_CACHE  = EntryFilterCache.class.getName();
+    public final static String DEFAULT_ENTRY_DATA_CACHE    = InMemoryEntryDataCache.class.getName();
+    public final static String DEFAULT_ENTRY_SOURCE_CACHE  = EntrySourceCache.class.getName();
 
-    public final static String ENTRY_DATA_CACHE          = "entryDataCache";
-    public final static String SOURCE_DATA_CACHE         = "sourceDataCache";
+    public final static String DEFAULT_SOURCE_FILTER_CACHE = SourceFilterCache.class.getName();
+    public final static String DEFAULT_SOURCE_DATA_CACHE   = InMemorySourceDataCache.class.getName();
 
-    public final static String DEFAULT_ENTRY_DATA_CACHE  = InMemoryEntryDataCache.class.getName();
-    public final static String DEFAULT_SOURCE_DATA_CACHE = InMemorySourceDataCache.class.getName();
+    public final static String DRIVER                      = "driver";
+    public final static String URL                         = "url";
+    public final static String USER                        = "user";
+    public final static String PASSWORD                    = "password";
 
-    public final static String DRIVER           = "driver";
-    public final static String URL              = "url";
-    public final static String USER             = "user";
-    public final static String PASSWORD         = "password";
+    public final static String CACHE_SIZE                  = "cacheSize";
+    public final static String CACHE_EXPIRATION            = "cacheExpiration";
+
+    public final static int DEFAULT_CACHE_SIZE             = 100;
+    public final static int DEFAULT_CACHE_EXPIRATION       = 5;
 
     private String cacheName;
     private String cacheClass;

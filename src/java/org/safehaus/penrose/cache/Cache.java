@@ -18,6 +18,7 @@
 package org.safehaus.penrose.cache;
 
 import org.apache.log4j.Logger;
+import org.safehaus.penrose.mapping.EntryDefinition;
 
 import java.util.Collection;
 
@@ -53,6 +54,12 @@ public abstract class Cache {
     public void init(CacheConfig cacheConfig, CacheContext cacheContext) throws Exception {
         this.cacheConfig = cacheConfig;
         this.cacheContext = cacheContext;
+
+        String s = cacheConfig.getParameter(CacheConfig.CACHE_SIZE);
+        size = s == null ? CacheConfig.DEFAULT_CACHE_SIZE : Integer.parseInt(s);
+
+        s = cacheConfig.getParameter(CacheConfig.CACHE_EXPIRATION);
+        expiration = s == null ? CacheConfig.DEFAULT_CACHE_EXPIRATION : Integer.parseInt(s);
 
         init();
     }
