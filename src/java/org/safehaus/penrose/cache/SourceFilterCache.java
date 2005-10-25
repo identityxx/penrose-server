@@ -85,7 +85,8 @@ public class SourceFilterCache {
     }
 
     public void put(Filter filter, Collection pks) throws Exception {
-
+        if (size == 0) return;
+        
         String key = filter == null ? "" : filter.toString();
 
         Object object = dataMap.get(key);

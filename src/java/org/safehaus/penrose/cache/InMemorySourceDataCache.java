@@ -85,6 +85,8 @@ public class InMemorySourceDataCache extends SourceDataCache {
     }
 
     public void put(Object key, Object object) throws Exception {
+        if (size == 0) return;
+
         Row normalizedKey = cacheContext.getSchema().normalize((Row)key);
         AttributeValues values = (AttributeValues)object;
 

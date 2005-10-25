@@ -47,6 +47,8 @@ public class InMemoryEntryDataCache extends EntryDataCache {
     }
 
     public void put(Object rdn, Object object) throws Exception {
+        if (size == 0) return;
+
         Row key = getCacheContext().getSchema().normalize((Row)rdn);
 
         while (dataMap.get(key) == null && dataMap.size() >= size) {

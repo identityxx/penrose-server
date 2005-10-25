@@ -57,6 +57,8 @@ public class EntrySourceCache extends EntryDataCache {
     }
 
     public void put(Object key, Object object) throws Exception {
+        if (size == 0) return;
+
         Row rdn = getCacheContext().getSchema().normalize((Row)key);
 
         while (dataMap.get(rdn) == null && dataMap.size() >= size) {

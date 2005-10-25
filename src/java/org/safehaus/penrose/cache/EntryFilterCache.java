@@ -81,6 +81,7 @@ public class EntryFilterCache {
     }
 
     public void put(Filter filter, Collection rdns) throws Exception {
+        if (size == 0) return;
 
         String key = filter == null ? "" : filter.toString();
 
