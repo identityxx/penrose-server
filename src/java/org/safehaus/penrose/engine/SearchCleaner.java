@@ -49,15 +49,14 @@ public class SearchCleaner extends GraphVisitor {
     public SearchCleaner(
             Engine engine,
             EntryDefinition entryDefinition,
-            Map filters,
-            Map depths,
+            SearchPlanner planner,
             Source primarySource) throws Exception {
 
         this.engine = engine;
         this.engineContext = engine.getEngineContext();
         this.entryDefinition = entryDefinition;
-        this.filters = filters;
-        this.depths = depths;
+        this.filters = planner.getFilters();
+        this.depths = planner.getDepths();
         this.primarySource = primarySource;
 
         config = engineContext.getConfig(entryDefinition.getDn());

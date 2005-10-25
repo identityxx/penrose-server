@@ -406,7 +406,7 @@ public class Engine {
 
     public SearchResults search(
             PenroseConnection connection,
-            Collection parents,
+            Stack stack,
             EntryDefinition entryDefinition,
             Filter filter,
             Collection attributeNames) throws Exception {
@@ -414,7 +414,7 @@ public class Engine {
         SearchResults results = new SearchResults();
         Collection parentSourceValues = new HashSet();
 
-        Map maps = searchEngine.search(parents, entryDefinition, filter);
+        Map maps = searchEngine.search(stack, entryDefinition, filter);
 
         if (maps.isEmpty()) {
             results.close();
@@ -427,7 +427,8 @@ public class Engine {
         if (attributeNames.contains("dn") && attributeDefinitions.size() == 0 && "(objectclass=*)".equals(filter.toString().toLowerCase())) {
             for (Iterator i=maps.keySet().iterator(); i.hasNext(); ) {
                 String dn = (String)i.next();
-                Entry entry = new Entry(dn, entryDefinition, new AttributeValues());
+                AttributeValues av = entryDefinition.getAttributeValues(engineContext.newInterpreter());
+                Entry entry = new Entry(dn, entryDefinition, av);
                 results.add(entry);
             }
             results.close();

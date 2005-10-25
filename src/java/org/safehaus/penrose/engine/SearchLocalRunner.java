@@ -41,41 +41,30 @@ public class SearchLocalRunner extends GraphVisitor {
     private EngineContext engineContext;
     private EntryDefinition entryDefinition;
     private AttributeValues sourceValues;
-    private Collection parentSourceValues;
     private Map filters;
-    private Map depths;
     private Source startingSource;
 
     private Stack filterStack = new Stack();
-    private Stack depthStack = new Stack();
 
     private Collection results = new TreeSet();
 
     public SearchLocalRunner(
             Engine engine,
             EntryDefinition entryDefinition,
-            Collection parentSourceValues,
-            Map filters,
-            Map depths,
+            AttributeValues sourceValues,
+            SearchPlanner planner,
             Source startingSource,
             Collection relationships) throws Exception {
 
         this.engine = engine;
         this.engineContext = engine.getEngineContext();
         this.entryDefinition = entryDefinition;
-        this.parentSourceValues = parentSourceValues;
-        this.filters = filters;
-        this.depths = depths;
+        this.filters = planner.getFilters();
         this.startingSource = startingSource;
+        this.sourceValues = sourceValues;
 
         config = engineContext.getConfig(entryDefinition.getDn());
         graph = engine.getGraph(entryDefinition);
-
-        sourceValues = new AttributeValues();
-        for (Iterator i=parentSourceValues.iterator(); i.hasNext(); ) {
-            AttributeValues sv = (AttributeValues)i.next();
-            sourceValues.add(sv);
-        }
 
         Filter filter = (Filter)filters.get(startingSource);
 
@@ -112,30 +101,31 @@ public class SearchLocalRunner extends GraphVisitor {
         }
 
         log.debug("Searching source "+source.getName()+" with filter "+filter);
+        Collection tmp = engineContext.getSyncService().search(source, filter);
 
         Collection list = new ArrayList();
-        if (sourceValues.contains(source.getName())) {
-            list = new ArrayList();
-            for (Iterator i=parentSourceValues.iterator(); i.hasNext(); ) {
-                AttributeValues av = (AttributeValues)i.next();
+        for (Iterator i=tmp.iterator(); i.hasNext(); ) {
+            AttributeValues av = (AttributeValues)i.next();
 
-                AttributeValues sv = new AttributeValues(av);
-                sv.retain(source.getName());
+            AttributeValues sv = new AttributeValues();
+            sv.add(sourceValues);
+            sv.add(source.getName(), av);
+            list.add(sv);
+        }
+/*
+        log.debug("Search results:");
 
-                list.add(sv);
-            }
-
-        } else {
-            Collection tmp = engineContext.getSyncService().search(source, filter);
-            for (Iterator i=tmp.iterator(); i.hasNext(); ) {
-                AttributeValues av = (AttributeValues)i.next();
-
-                AttributeValues sv = new AttributeValues();
-                sv.add(source.getName(), av);
-                list.add(sv);
+        int counter = 1;
+        for (Iterator j=list.iterator(); j.hasNext(); counter++) {
+            AttributeValues sv = (AttributeValues)j.next();
+            log.debug(" - Result #"+counter);
+            for (Iterator k=sv.getNames().iterator(); k.hasNext(); ) {
+                String name = (String)k.next();
+                Collection values = sv.get(name);
+                log.debug("   - "+name+": "+values);
             }
         }
-
+*/
         if (results.isEmpty()) {
             results.addAll(list);
 
@@ -149,13 +139,6 @@ public class SearchLocalRunner extends GraphVisitor {
 
             results.clear();
             results.addAll(temp);
-        }
-
-        log.debug("Total search results:");
-
-        for (Iterator j=results.iterator(); j.hasNext(); ) {
-            AttributeValues sv = (AttributeValues)j.next();
-            log.debug(" - "+sv);
         }
 
         graphIterator.traverseEdges(node);

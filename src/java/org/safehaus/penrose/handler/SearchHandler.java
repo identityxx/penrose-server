@@ -68,7 +68,14 @@ public class SearchHandler {
             log.debug("Found static entry: " + dn);
 
             AttributeValues values = entryDefinition.getAttributeValues(handlerContext.newInterpreter());
-            return new Entry(dn, entryDefinition, values);
+            Entry entry = new Entry(dn, entryDefinition, values);
+
+            log.debug("Entry:");
+            log.debug(" - sourceValues: "+entry.getSourceValues());
+            log.debug(" - attributeValues: "+entry.getAttributeValues());
+            log.debug("\n"+entry);
+
+            return entry;
         }
 
 		int i = dn.indexOf(",");
@@ -118,6 +125,10 @@ public class SearchHandler {
 
         Collection parents = new ArrayList();
         parents.add(parent);
+
+        Stack stack = new Stack();
+        stack.push(parents);
+
         Filter filter = new SimpleFilter(rdnAttribute, "=", rdnValue);
 
         // Find in each dynamic children
@@ -136,7 +147,7 @@ public class SearchHandler {
 
             SearchResults sr = handlerContext.getEngine().search(
                     connection,
-                    parents,
+                    stack,
                     childDefinition,
                     filter,
                     new ArrayList()
@@ -364,10 +375,10 @@ public class SearchHandler {
 			return LDAPException.NO_SUCH_OBJECT;
 		}
 
+        log.debug("Found base entry: " + baseEntry.getDn());
+
         int rc = handlerContext.getACLEngine().checkSearch(connection, baseEntry);
         if (rc != LDAPException.SUCCESS) return rc;
-
-		//log.debug("Search base: " + baseEntry.getDn());
 
 		if (scope == LDAPConnection.SCOPE_BASE || scope == LDAPConnection.SCOPE_SUB) { // base or subtree
 			if (handlerContext.getFilterTool().isValidEntry(baseEntry, f)) {
@@ -386,7 +397,11 @@ public class SearchHandler {
 			//searchChildren(connection, baseEntry, scope, f, normalizedAttributeNames, results);
             Collection parents = new ArrayList();
             parents.add(baseEntry);
-            searchChildren(connection, parents, baseEntry.getEntryDefinition(), scope, f, normalizedAttributeNames, results, true);
+
+            Stack stack = new Stack();
+            stack.push(parents);
+
+            searchChildren(connection, stack, baseEntry.getEntryDefinition(), scope, f, normalizedAttributeNames, results, true);
 		}
 
 		results.setReturnCode(LDAPException.SUCCESS);
@@ -403,13 +418,15 @@ public class SearchHandler {
 
     public void searchChildren(
             PenroseConnection connection,
-            Collection parents,
+            Stack stack,
             EntryDefinition entryDefinition,
             int scope,
             Filter filter,
             Collection attributeNames,
             SearchResults results,
             boolean first) throws Exception {
+
+        Collection parents = (Collection)stack.peek();
 
         Config config = handlerContext.getConfig(entryDefinition.getDn());
         Collection children = config.getChildren(entryDefinition);
@@ -427,7 +444,7 @@ public class SearchHandler {
 
                 SearchResults sr = handlerContext.getEngine().search(
                         connection,
-                        parents,
+                        stack,
                         childDefinition,
                         filter,
                         attributeNames
@@ -444,7 +461,7 @@ public class SearchHandler {
                     rc = handlerContext.getACLEngine().checkRead(connection, child);
                     if (rc != LDAPException.SUCCESS) continue;
 
-                    newParents.add(child);
+                    //newParents.add(child);
 
                     LDAPEntry en = child.toLDAPEntry();
                     Entry.filterAttributes(en, attributeNames);
@@ -453,7 +470,11 @@ public class SearchHandler {
             }
 
             if (scope == LDAPConnection.SCOPE_SUB) {
-                searchChildren(connection, newParents, childDefinition, scope, filter, attributeNames, results, false);
+                Stack newStack = new Stack();
+                newStack.addAll(stack);
+                newStack.push(newParents);
+                
+                searchChildren(connection, newStack, childDefinition, scope, filter, attributeNames, results, false);
             }
         }
     }

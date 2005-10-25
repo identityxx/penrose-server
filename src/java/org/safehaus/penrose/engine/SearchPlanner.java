@@ -57,22 +57,17 @@ public class SearchPlanner extends GraphVisitor {
             Engine engine,
             EntryDefinition entryDefinition,
             Filter filter,
-            Collection parentSourceValues) throws Exception {
+            AttributeValues sourceValues) throws Exception {
 
         this.engine = engine;
         this.engineContext = engine.getEngineContext();
         this.entryDefinition = entryDefinition;
         this.searchFilter = filter;
+        this.sourceValues = sourceValues;
 
         config = engineContext.getConfig(entryDefinition.getDn());
         graph = engine.getGraph(entryDefinition);
-        primarySource = engine.getPrimarySource(entryDefinition);
-                          
-        sourceValues = new AttributeValues();
-        for (Iterator i=parentSourceValues.iterator(); i.hasNext(); ) {
-            AttributeValues sv = (AttributeValues)i.next();
-            sourceValues.add(sv);
-        }
+        primarySource = engine.getPrimarySource(entryDefinition);                          
     }
 
     public void run() throws Exception {

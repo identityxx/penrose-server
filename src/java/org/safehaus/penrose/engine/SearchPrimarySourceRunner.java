@@ -41,9 +41,7 @@ public class SearchPrimarySourceRunner extends GraphVisitor {
     private EngineContext engineContext;
     private EntryDefinition entryDefinition;
     private AttributeValues sourceValues;
-    private Collection parentSourceValues;
     private Map filters;
-    private Map depths;
     private Source startingSource;
 
     private Stack filterStack = new Stack();
@@ -54,17 +52,14 @@ public class SearchPrimarySourceRunner extends GraphVisitor {
             Engine engine,
             EntryDefinition entryDefinition,
             Collection parentSourceValues,
-            Map filters,
-            Map depths,
+            SearchPlanner planner,
             Source startingSource,
             Collection relationships) throws Exception {
 
         this.engine = engine;
         this.engineContext = engine.getEngineContext();
         this.entryDefinition = entryDefinition;
-        this.parentSourceValues = parentSourceValues;
-        this.filters = filters;
-        this.depths = depths;
+        this.filters = planner.getFilters();
         this.startingSource = startingSource;
 
         config = engineContext.getConfig(entryDefinition.getDn());
@@ -111,43 +106,43 @@ public class SearchPrimarySourceRunner extends GraphVisitor {
         }
 
         log.debug("Searching source "+source.getName()+" with filter "+filter);
+        Collection tmp = engineContext.getSyncService().search(source, filter);
 
         Collection list = new ArrayList();
-        if (sourceValues.contains(source.getName())) {
-            list = new ArrayList();
-            for (Iterator i=parentSourceValues.iterator(); i.hasNext(); ) {
-                AttributeValues av = (AttributeValues)i.next();
+        for (Iterator i=tmp.iterator(); i.hasNext(); ) {
+            AttributeValues av = (AttributeValues)i.next();
 
-                AttributeValues sv = new AttributeValues(av);
-                sv.retain(source.getName());
+            AttributeValues sv = new AttributeValues();
+            sv.add(source.getName(), av);
+            list.add(sv);
+        }
 
-                list.add(sv);
-            }
+        log.debug("Search results:");
 
-        } else {
-            Collection tmp = engineContext.getSyncService().search(source, filter);
-            for (Iterator i=tmp.iterator(); i.hasNext(); ) {
-                AttributeValues av = (AttributeValues)i.next();
-
-                AttributeValues sv = new AttributeValues();
-                sv.add(source.getName(), av);
-                list.add(sv);
+        int counter = 1;
+        for (Iterator j=list.iterator(); j.hasNext(); counter++) {
+            AttributeValues sv = (AttributeValues)j.next();
+            log.debug(" - Result #"+counter);
+            for (Iterator k=sv.getNames().iterator(); k.hasNext(); ) {
+                String name = (String)k.next();
+                Collection values = sv.get(name);
+                log.debug("   - "+name+": "+values);
             }
         }
 
         if (results.isEmpty()) {
             results.addAll(list);
+
         } else {
-            Collection temp = engine.getJoinEngine().join(results, list, relationships);
+            Collection temp;
+            if (source.isRequired()) {
+                temp = engine.getJoinEngine().join(results, list, relationships);
+            } else {
+                temp = engine.getJoinEngine().leftJoin(results, list, relationships);
+            }
+
             results.clear();
             results.addAll(temp);
-        }
-
-        log.debug("Total search results:");
-
-        for (Iterator j=results.iterator(); j.hasNext(); ) {
-            AttributeValues sv = (AttributeValues)j.next();
-            log.debug(" - "+sv);
         }
 
         graphIterator.traverseEdges(node);
@@ -163,16 +158,8 @@ public class SearchPrimarySourceRunner extends GraphVisitor {
         log.debug(Formatter.displayLine(relationship.toString(), 40));
         log.debug(Formatter.displaySeparator(40));
 
-        Integer depth1 = (Integer)depths.get(fromSource);
-        Integer depth2 = (Integer)depths.get(toSource);
-
         if (entryDefinition.getSource(toSource.getName()) == null) {
             log.debug("Source "+toSource.getName()+" is not defined in entry.");
-            return;
-        }
-
-        if (depth2.intValue() >= depth1.intValue()) {
-            log.debug("Source "+toSource.getName()+" is further away from primary source.");
             return;
         }
 

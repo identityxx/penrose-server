@@ -43,7 +43,7 @@ public class SearchEngine {
     }
 
     public Map search(
-            Collection parents,
+            Stack stack,
             EntryDefinition entryDefinition,
             Filter filter)
             throws Exception {
@@ -55,25 +55,51 @@ public class SearchEngine {
         log.debug(Formatter.displayLine("Parents:", 80));
 
         Collection parentSourceValues = new TreeSet();
-        AttributeValues sourceValues = new AttributeValues();
-        for (Iterator i=parents.iterator(); i.hasNext(); ) {
-            Entry entry = (Entry)i.next();
-            log.debug(Formatter.displayLine(" - "+entry.getDn(), 80));
+        String prefix = null;
 
-            AttributeValues sv = entry.getSourceValues();
-            sourceValues.add(sv);
-            parentSourceValues.add(sv);
+        Stack newStack = new Stack();
+        newStack.addAll(stack);
 
-            for (Iterator j=sv.getNames().iterator(); j.hasNext(); ) {
-                String name = (String)j.next();
-                Collection values = sv.get(name);
-                log.debug(Formatter.displayLine("   - "+name+": "+values, 80));
+        while (!newStack.isEmpty()) {
+            Collection list = (Collection)newStack.pop();
+            prefix = prefix == null ? "parent." : "parent."+prefix;
+
+            for (Iterator i=list.iterator(); i.hasNext(); ) {
+                Entry entry = (Entry)i.next();
+                log.debug(Formatter.displayLine(" - "+entry.getDn(), 80));
+
+                AttributeValues sourceValues = new AttributeValues();
+
+                AttributeValues av = entry.getAttributeValues();
+                for (Iterator j=av.getNames().iterator(); j.hasNext(); ) {
+                    String name = (String)j.next();
+                    Collection values = av.get(name);
+                    sourceValues.add(prefix+name, values);
+                }
+
+                AttributeValues sv = entry.getSourceValues();
+                for (Iterator j=sv.getNames().iterator(); j.hasNext(); ) {
+                    String name = (String)j.next();
+                    Collection values = sv.get(name);
+                    if (name.startsWith("parent.")) name = prefix+name;
+                    sourceValues.add(name, values);
+                }
+
+                for (Iterator j=sourceValues.getNames().iterator(); j.hasNext(); ) {
+                    String name = (String)j.next();
+                    Collection values = sourceValues.get(name);
+                    log.debug(Formatter.displayLine("   - "+name+": "+values, 80));
+                }
+
+                parentSourceValues.add(sourceValues);
             }
         }
 
         log.debug(Formatter.displaySeparator(80));
 
+        Collection parents = (Collection)stack.peek();
         Collection dns = new TreeSet();
+
         for (Iterator i=parents.iterator(); i.hasNext(); ) {
             Entry entry = (Entry)i.next();
             String parentDn = entry.getDn();
@@ -202,14 +228,21 @@ public class SearchEngine {
         Source primarySource = engine.getPrimarySource(entryDefinition);
 
         if (primarySource == null || entryDefinition.getSource(primarySource.getName()) == null) {
+            log.debug("Entry "+entryDefinition.getDn()+" doesn't have any sources.");
             return parentSourceValues;
+        }
+
+        AttributeValues sourceValues = new AttributeValues();
+        for (Iterator i=parentSourceValues.iterator(); i.hasNext(); ) {
+            AttributeValues sv = (AttributeValues)i.next();
+            sourceValues.add(sv);
         }
 
         SearchPlanner planner = new SearchPlanner(
                 engine,
                 entryDefinition,
                 filter,
-                parentSourceValues);
+                sourceValues);
 
         planner.run();
 
@@ -218,40 +251,24 @@ public class SearchEngine {
 
         Collection results = searchLocal(
                 entryDefinition,
-                parentSourceValues,
+                sourceValues,
                 planner,
                 connectingSources
         );
-/*
-        log.debug(Formatter.displaySeparator(80));
-        log.debug(Formatter.displayLine("Results after searching local:", 80));
 
-        for (Iterator i=results.iterator(); i.hasNext(); ) {
-            AttributeValues av = (AttributeValues)i.next();
-            log.debug(Formatter.displayLine(" - "+av, 80));
-            for (Iterator j=av.getNames().iterator(); j.hasNext(); ) {
-                String name = (String)j.next();
-                Collection v = av.get(name);
-                log.debug(Formatter.displayLine("   "+name+": "+v, 80));
-            }
-        }
-
-        log.debug(Formatter.displaySeparator(80));
-*/
         if (results.isEmpty()) return results;
 
         Collection parentResults = searchParent(
                 entryDefinition,
-                parentSourceValues,
                 planner,
                 results,
                 connectingSources
         );
 
-        Collection values = engine.getJoinEngine().leftJoin(results, parentResults, connectingRelationships);
+        //Collection values = engine.getJoinEngine().leftJoin(results, parentResults, connectingRelationships);
 /*
         log.debug(Formatter.displaySeparator(80));
-        log.debug(Formatter.displayLine("Results after searching parents:", 80));
+        log.debug(Formatter.displayLine("Results:", 80));
 
         for (Iterator i=values.iterator(); i.hasNext(); ) {
             AttributeValues av = (AttributeValues)i.next();
@@ -265,12 +282,12 @@ public class SearchEngine {
 
         log.debug(Formatter.displaySeparator(80));
 */
-        return values;
+        return results;
     }
 
     public Collection searchLocal(
             EntryDefinition entryDefinition,
-            Collection parentSourceValues,
+            AttributeValues sourceValues,
             SearchPlanner planner,
             Collection connectingSources) throws Exception {
 
@@ -279,12 +296,6 @@ public class SearchEngine {
         Source primarySource = engine.getPrimarySource(entryDefinition);
 
         Map filters = planner.getFilters();
-
-        AttributeValues sourceValues = new AttributeValues();
-        for (Iterator i=parentSourceValues.iterator(); i.hasNext(); ) {
-            AttributeValues sv = (AttributeValues)i.next();
-            sourceValues.add(sv);
-        }
 
         Map map = null;
         for (Iterator i=connectingSources.iterator(); i.hasNext(); ) {
@@ -307,7 +318,6 @@ public class SearchEngine {
         }
 
         if (map == null) {
-
             // if there's no parent source that can be used as filters
             // start from any local source that has a filter
 
@@ -322,98 +332,95 @@ public class SearchEngine {
 
                 break;
             }
-
-            // if there isn't any local source that has a filter, start from the primary source
-
-            if (map == null) {
-                map = new HashMap();
-                map.put("toSource", primarySource);
-                map.put("relationships", new ArrayList());
-            }
-
-            Source toSource = (Source)map.get("toSource");
-            Collection relationships = (Collection)map.get("relationships");
-
-            log.debug(Formatter.displaySeparator(80));
-            log.debug(Formatter.displayLine("Searching source "+primarySource.getName(), 80));
-            log.debug(Formatter.displayLine("Relationships:", 80));
-
-            log.debug(Formatter.displaySeparator(80));
-
-            SearchLocalRunner runner = new SearchLocalRunner(
-                    engine,
-                    entryDefinition,
-                    parentSourceValues,
-                    planner.getFilters(),
-                    planner.getDepths(),
-                    toSource,
-                    relationships);
-
-            runner.run();
-
-            Collection list = runner.getResults();
-
-            SearchCleaner cleaner = new SearchCleaner(
-                    engine,
-                    entryDefinition,
-                    planner.getFilters(),
-                    planner.getDepths(),
-                    primarySource);
-
-            for (Iterator i=connectingSources.iterator(); i.hasNext(); ) {
-                Map m = (Map)i.next();
-
-                Source source = (Source)m.get("toSource");
-
-                cleaner.run(source);
-            }
-
-            cleaner.clean(list);
-
-            results.addAll(list);
-
-        } else {
-
-            Source toSource = (Source)map.get("toSource");
-            Collection relationships = (Collection)map.get("relationships");
-
-            log.debug(Formatter.displaySeparator(80));
-            log.debug(Formatter.displayLine("Search local sources starting from "+toSource.getName(), 80));
-            log.debug(Formatter.displayLine("Relationships:", 80));
-
-            for (Iterator j=relationships.iterator(); j.hasNext(); ) {
-                Relationship relationship = (Relationship)j.next();
-                log.debug(Formatter.displayLine(" - "+relationship, 80));
-            }
-
-            log.debug(Formatter.displaySeparator(80));
-
-            SearchPrimarySourceRunner runner = new SearchPrimarySourceRunner(
-                    engine,
-                    entryDefinition,
-                    parentSourceValues,
-                    planner.getFilters(),
-                    planner.getDepths(),
-                    toSource,
-                    relationships);
-
-            runner.run();
-
-            results.addAll(runner.getResults());
         }
-        
+
+        // start from the primary source
+        if (map == null) {
+            map = new HashMap();
+            map.put("toSource", primarySource);
+            map.put("relationships", new ArrayList());
+        }
+
+        Source startingSource = (Source)map.get("toSource");
+        Collection relationships = (Collection)map.get("relationships");
+
+        log.debug(Formatter.displaySeparator(80));
+        log.debug(Formatter.displayLine("SEARCH LOCAL", 80));
+        log.debug(Formatter.displayLine("Parent source values:", 80));
+
+        for (Iterator j=sourceValues.getNames().iterator(); j.hasNext(); ) {
+            String name = (String)j.next();
+            Collection v = sourceValues.get(name);
+            log.debug(Formatter.displayLine(" - "+name+": "+v, 80));
+        }
+
+        log.debug(Formatter.displayLine("Starting source: "+startingSource.getName(), 80));
+        log.debug(Formatter.displayLine("Relationships:", 80));
+
+        for (Iterator j=relationships.iterator(); j.hasNext(); ) {
+            Relationship relationship = (Relationship)j.next();
+            log.debug(Formatter.displayLine(" - "+relationship, 80));
+        }
+
+        log.debug(Formatter.displaySeparator(80));
+
+        SearchLocalRunner runner = new SearchLocalRunner(
+                engine,
+                entryDefinition,
+                sourceValues,
+                planner,
+                startingSource,
+                relationships);
+
+        runner.run();
+
+        Collection list = runner.getResults();
+
+        SearchCleaner cleaner = new SearchCleaner(
+                engine,
+                entryDefinition,
+                planner,
+                primarySource);
+
+        for (Iterator i=connectingSources.iterator(); i.hasNext(); ) {
+            Map m = (Map)i.next();
+            Source source = (Source)m.get("toSource");
+            cleaner.run(source);
+        }
+
+        cleaner.clean(list);
+
+        results.addAll(list);
+
+        log.debug(Formatter.displaySeparator(80));
+        log.debug(Formatter.displayLine("SEARCH LOCAL RESULTS", 80));
+
+        int counter = 1;
+        for (Iterator i=results.iterator(); i.hasNext(); counter++) {
+            AttributeValues av = (AttributeValues)i.next();
+            log.debug(Formatter.displayLine("Result #"+counter, 80));
+            for (Iterator j=av.getNames().iterator(); j.hasNext(); ) {
+                String name = (String)j.next();
+                Collection v = av.get(name);
+                log.debug(Formatter.displayLine(" - "+name+": "+v, 80));
+            }
+        }
+
+        log.debug(Formatter.displaySeparator(80));
+
         return results;
     }
 
     public Collection searchParent(
             EntryDefinition entryDefinition,
-            Collection parentSourceValues,
             SearchPlanner planner,
-            Collection results,
+            Collection localResults,
             Collection startingSources) throws Exception {
 
+        Collection results = new ArrayList();
+
         AttributeValues sourceValues = new AttributeValues();
-        for (Iterator i=results.iterator(); i.hasNext(); ) {
+        for (Iterator i=localResults.iterator(); i.hasNext(); ) {
             AttributeValues sv = (AttributeValues)i.next();
             sourceValues.add(sv);
         }
@@ -435,8 +442,6 @@ public class SearchEngine {
             log.debug("Filter for "+fromSource.getName()+": "+fromFilter);
         }
 
-        Collection parentResults = new ArrayList();
-
         for (Iterator i=startingSources.iterator(); i.hasNext(); ) {
             Map m = (Map)i.next();
 
@@ -445,7 +450,16 @@ public class SearchEngine {
             Collection relationships = (Collection)m.get("relationships");
 
             log.debug(Formatter.displaySeparator(80));
-            log.debug(Formatter.displayLine("Search parent sources starting from "+fromSource.getName(), 80));
+            log.debug(Formatter.displayLine("SEARCH PARENT", 80));
+            log.debug(Formatter.displayLine("Local source values:", 80));
+
+            for (Iterator j=sourceValues.getNames().iterator(); j.hasNext(); ) {
+                String name = (String)j.next();
+                Collection values = sourceValues.get(name);
+                log.debug(Formatter.displayLine(" - "+name+": "+values, 80));
+            }
+
+            log.debug(Formatter.displayLine("Starting source: "+fromSource.getName(), 80));
             log.debug(Formatter.displayLine("Relationships:", 80));
 
             for (Iterator j=relationships.iterator(); j.hasNext(); ) {
@@ -453,32 +467,42 @@ public class SearchEngine {
                 log.debug(Formatter.displayLine(" - "+relationship, 80));
             }
 
+            Filter filter = (Filter)filters.get(fromSource);
+            log.debug(Formatter.displayLine("Filter: "+filter, 80));
+
             log.debug(Formatter.displaySeparator(80));
 
             SearchParentRunner runner = new SearchParentRunner(
                     engine,
                     entryDefinition,
-                    parentSourceValues,
-                    planner.getFilters(),
-                    planner.getDepths(),
+                    localResults,
+                    sourceValues,
+                    planner,
                     fromSource,
                     relationships);
 
             runner.run();
 
             log.debug(Formatter.displaySeparator(80));
-            log.debug(Formatter.displayLine("Results:", 80));
+            log.debug(Formatter.displayLine("SEARCH PARENT RESULTS", 80));
 
-            for (Iterator j=runner.getResults().iterator(); j.hasNext(); ) {
+            int counter = 1;
+            for (Iterator j=runner.getResults().iterator(); j.hasNext(); counter++) {
                 AttributeValues av = (AttributeValues)j.next();
-                log.debug(Formatter.displayLine(" - "+av, 80));
-                parentResults.add(av);
+                log.debug(Formatter.displayLine("Result #"+counter, 80));
+                results.add(av);
+
+                for (Iterator k=av.getNames().iterator(); k.hasNext(); ) {
+                    String name = (String)k.next();
+                    Collection values = av.get(name);
+                    log.debug(Formatter.displayLine(" - "+name+": "+values, 80));
+                }
             }
 
             log.debug(Formatter.displaySeparator(80));
         }
 
-        return parentResults;
+        return results;
     }
 
     public Engine getEngine() {

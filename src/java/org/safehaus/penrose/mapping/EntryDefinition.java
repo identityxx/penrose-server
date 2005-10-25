@@ -335,7 +335,8 @@ public class EntryDefinition implements Cloneable, Serializable {
 
             String name = attribute.getName();
             Object value = interpreter.eval(attribute.getExpression());
-
+            if (value == null) continue;
+            
             Collection set = values.get(name);
             if (set == null) set = new HashSet();
             set.add(value);
