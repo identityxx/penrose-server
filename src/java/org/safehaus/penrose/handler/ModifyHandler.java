@@ -323,10 +323,7 @@ public class ModifyHandler {
 			entry.addAttributeDefinition(attribute);
 
 		} else {
-            // if already exists, don't add
-			if (attribute.getExpression().getScript().equals(value)) return;
-
-			attribute.getExpression().setScript(value);
+			attribute.setConstant(value);
 		}
 	}
 
@@ -337,12 +334,12 @@ public class ModifyHandler {
     public void deleteAttribute(EntryDefinition entry, String name, String value)
 			throws Exception {
 
-		AttributeDefinition attribute = entry.getAttributeDefinition(name);
-		if (attribute == null) return;
+		AttributeDefinition attributeDefinition = entry.getAttributeDefinition(name);
+		if (attributeDefinition == null) return;
 
 		Interpreter interpreter = handlerContext.newInterpreter();
 
-		String attrValue = (String)interpreter.eval(attribute.getExpression());
+		String attrValue = (String)interpreter.eval(attributeDefinition);
 		if (attrValue.equals(value)) entry.removeAttributeDefinition(name);
 	}
 

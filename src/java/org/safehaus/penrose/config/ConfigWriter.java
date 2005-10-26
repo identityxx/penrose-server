@@ -285,7 +285,19 @@ public class ConfigWriter {
             element.add(scriptElement);
         }
 
-        element.add(toElement(attributeDefinition.getExpression()));
+        if (attributeDefinition.getConstant() != null) {
+            Element scriptElement = new DefaultElement("constant");
+            scriptElement.setText(attributeDefinition.getConstant());
+            element.add(scriptElement);
+
+        } else if (attributeDefinition.getVariable() != null) {
+            Element scriptElement = new DefaultElement("variable");
+            scriptElement.setText(attributeDefinition.getVariable());
+            element.add(scriptElement);
+
+        } else {
+            element.add(toElement(attributeDefinition.getExpression()));
+        }
 
     	return element;
     }

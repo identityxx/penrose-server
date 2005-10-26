@@ -20,6 +20,7 @@ package org.safehaus.penrose.interpreter;
 import org.safehaus.penrose.mapping.Row;
 import org.safehaus.penrose.mapping.AttributeValues;
 import org.safehaus.penrose.mapping.Expression;
+import org.safehaus.penrose.mapping.AttributeDefinition;
 
 import java.util.Iterator;
 import java.util.Collection;
@@ -63,6 +64,18 @@ public abstract class Interpreter {
     public abstract Object get(String name) throws Exception;
 
     public abstract Object eval(String script) throws Exception;
+
+    public Object eval(AttributeDefinition attributeDefinition) throws Exception {
+        if (attributeDefinition.getConstant() != null) {
+            return attributeDefinition.getConstant();
+
+        } else if (attributeDefinition.getVariable() != null) {
+            return get(attributeDefinition.getVariable());
+
+        } else {
+            return eval(attributeDefinition.getExpression());
+        }
+    }
 
     public Object eval(Expression expression) throws Exception {
 

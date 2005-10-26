@@ -49,6 +49,10 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 
                 <call-method-rule pattern="script" methodname="setScript" paramcount="0" />
 
+                <call-method-rule pattern="constant" methodname="setConstant" paramcount="0" />
+
+                <call-method-rule pattern="variable" methodname="setVariable" paramcount="0" />
+
                 <pattern value="expression">
                     <object-create-rule classname="org.safehaus.penrose.mapping.Expression" />
                     <set-properties-rule />

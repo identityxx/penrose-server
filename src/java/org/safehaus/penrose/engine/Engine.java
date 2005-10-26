@@ -141,18 +141,25 @@ public class Engine {
 
         // TODO need to handle multiple rdn attributes
         AttributeDefinition rdnAttribute = (AttributeDefinition)rdnAttributes.iterator().next();
-        Expression expression = rdnAttribute.getExpression();
+        if (rdnAttribute.getConstant() != null) return null;
+
+        String variable = rdnAttribute.getVariable();
+        if (variable != null) {
+            int i = variable.indexOf(".");
+            String sourceName = variable.substring(0, i);
+            Source source = entryDefinition.getSource(sourceName);
+            return source;
+        }
 
         Interpreter interpreter = engineContext.newInterpreter();
 
-        if (expression.getForeach() != null) {
-            Collection variables = interpreter.parseVariables(expression.getForeach());
-
-            for (Iterator i=variables.iterator(); i.hasNext(); ) {
-                String sourceName = (String)i.next();
-                Source source = entryDefinition.getSource(sourceName);
-                if (source != null) return source;
-            }
+        Expression expression = rdnAttribute.getExpression();
+        String foreach = expression.getForeach();
+        if (foreach != null) {
+            int i = foreach.indexOf(".");
+            String sourceName = foreach.substring(0, i);
+            Source source = entryDefinition.getSource(sourceName);
+            return source;
         }
 
         Collection variables = interpreter.parseVariables(expression.getScript());
@@ -938,10 +945,7 @@ public class Engine {
             AttributeDefinition attributeDefinition = (AttributeDefinition)i.next();
             String name = attributeDefinition.getName();
 
-            Expression expression = attributeDefinition.getExpression();
-            if (expression == null) continue;
-
-            Object value = interpreter.eval(expression);
+            Object value = interpreter.eval(attributeDefinition);
             if (value == null) return null;
 
             rdn.set(name, value);
@@ -963,14 +967,11 @@ public class Engine {
         Collection attributeDefinitions = entryDefinition.getAttributeDefinitions();
         for (Iterator j=attributeDefinitions.iterator(); j.hasNext(); ) {
             AttributeDefinition attributeDefinition = (AttributeDefinition)j.next();
-            String name = attributeDefinition.getName();
 
-            Expression expression = attributeDefinition.getExpression();
-            if (expression == null) continue;
-
-            Object value = interpreter.eval(expression);
+            Object value = interpreter.eval(attributeDefinition);
             if (value == null) continue;
 
+            String name = attributeDefinition.getName();
             attributeValues.add(name, value);
         }
 

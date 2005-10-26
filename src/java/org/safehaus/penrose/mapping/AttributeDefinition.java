@@ -41,6 +41,8 @@ public class AttributeDefinition implements Cloneable, Serializable {
 	/**
 	 * Values.
 	 */
+    private String constant;
+    private String variable;
     private Expression expression;
 
     /**
@@ -113,12 +115,20 @@ public class AttributeDefinition implements Cloneable, Serializable {
     	this.rdn = Boolean.getBoolean(rdn);
     }
 
-    public boolean isConstant() {
-        return getConstant() != null;
+    public String getConstant() {
+        return constant;
     }
 
-    public String getConstant() {
-        return expression.getConstant();
+    public void setConstant(String constant) {
+        this.constant = constant;
+    }
+
+    public String getVariable() {
+        return variable;
+    }
+
+    public void setVariable(String variable) {
+        this.variable = variable;
     }
 
     public String getEncryption() {
@@ -172,6 +182,8 @@ public class AttributeDefinition implements Cloneable, Serializable {
     public int hashCode() {
         return (name == null ? 0 : name.hashCode()) +
                 (script == null ? 0 : script.hashCode()) +
+                (constant == null ? 0 : constant.hashCode()) +
+                (variable == null ? 0 : variable.hashCode()) +
                 (expression == null ? 0 : expression.hashCode()) +
                 (rdn ? 0 : 1) +
                 (encryption == null ? 0 : encryption.hashCode()) +
@@ -194,6 +206,8 @@ public class AttributeDefinition implements Cloneable, Serializable {
         AttributeDefinition attributeDefinition = (AttributeDefinition)object;
         if (!equals(name, attributeDefinition.name)) return false;
         if (!equals(script, attributeDefinition.script)) return false;
+        if (!equals(constant, attributeDefinition.constant)) return false;
+        if (!equals(variable, attributeDefinition.variable)) return false;
         if (!equals(expression, attributeDefinition.expression)) return false;
         if (rdn != attributeDefinition.rdn) return false;
         if (!equals(encryption, attributeDefinition.encryption)) return false;
@@ -208,6 +222,8 @@ public class AttributeDefinition implements Cloneable, Serializable {
     public Object copy(AttributeDefinition attributeDefinition) {
         name = attributeDefinition.name;
         script = attributeDefinition.script;
+        constant = attributeDefinition.constant;
+        variable = attributeDefinition.variable;
         expression = attributeDefinition.expression == null ? null : (Expression)attributeDefinition.expression.clone();
         rdn = attributeDefinition.rdn;
         encryption = attributeDefinition.encryption;
@@ -225,6 +241,25 @@ public class AttributeDefinition implements Cloneable, Serializable {
     }
 
     public String toString() {
-        return "["+name+":"+expression+"]";
+        StringBuffer sb = new StringBuffer();
+        sb.append("[");
+        sb.append(name);
+        sb.append(": ");
+
+        if (constant != null) {
+            sb.append("\"");
+            sb.append(constant);
+            sb.append("\"");
+
+        } else if (variable != null) {
+            sb.append(variable);
+
+        } else {
+            sb.append("...");
+        }
+
+        sb.append("]");
+
+        return sb.toString();
     }
 }

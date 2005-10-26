@@ -331,10 +331,10 @@ public class EntryDefinition implements Cloneable, Serializable {
         AttributeValues values = new AttributeValues();
 
         for (Iterator i=attributeDefinitions.values().iterator(); i.hasNext(); ) {
-            AttributeDefinition attribute = (AttributeDefinition)i.next();
+            AttributeDefinition attributeDefinition = (AttributeDefinition)i.next();
 
-            String name = attribute.getName();
-            Object value = interpreter.eval(attribute.getExpression());
+            String name = attributeDefinition.getName();
+            Object value = interpreter.eval(attributeDefinition);
             if (value == null) continue;
             
             Collection set = values.get(name);

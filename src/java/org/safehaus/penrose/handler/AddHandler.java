@@ -206,15 +206,11 @@ public class AddHandler {
                 AttributeDefinition newAttribute = new AttributeDefinition();
                 newAttribute.setName(name);
 
-                String newExpressions = "\""+value+"\"";
-
-                Expression expression = new Expression();
-                expression.setScript(newExpressions);
-                newAttribute.setExpression(expression);
+                newAttribute.setConstant(value);
 
                 newAttribute.setRdn(rdnAttribute.equals(name));
 
-                log.debug("Add attribute "+name+": "+newExpressions);
+                log.debug("Add attribute "+name+": "+value);
                 newEntry.addAttributeDefinition(newAttribute);
             }
         }
