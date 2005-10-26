@@ -104,14 +104,10 @@ public class ModifyHandler {
 
 		String ndn = LDAPDN.normalize(dn);
 
-        Entry entry = null;
-        try {
-            entry = handler.getSearchHandler().find(connection, ndn);
-        } catch (LDAPException e) {
-            // ignore
-        }
+        List path = handler.getSearchHandler().find(connection, ndn);
+        if (path == null) return LDAPException.NO_SUCH_OBJECT;
 
-        if (entry == null) return LDAPException.NO_SUCH_OBJECT;
+        Entry entry = (Entry)path.iterator().next();
 
         int rc = handlerContext.getACLEngine().checkModify(connection, entry);
         if (rc != LDAPException.SUCCESS) return rc;

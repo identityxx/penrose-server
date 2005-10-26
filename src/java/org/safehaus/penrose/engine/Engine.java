@@ -413,15 +413,14 @@ public class Engine {
 
     public SearchResults search(
             PenroseConnection connection,
-            Stack stack,
+            Collection path,
             EntryDefinition entryDefinition,
             Filter filter,
             Collection attributeNames) throws Exception {
 
         SearchResults results = new SearchResults();
-        Collection parentSourceValues = new HashSet();
 
-        Map maps = searchEngine.search(stack, entryDefinition, filter);
+        Map maps = searchEngine.search(path, entryDefinition, filter);
 
         if (maps.isEmpty()) {
             results.close();
@@ -429,7 +428,7 @@ public class Engine {
         }
 
         Collection attributeDefinitions = entryDefinition.getAttributeDefinitions(attributeNames);
-        log.debug("attributeDefinitions: "+attributeDefinitions);
+        log.debug("Attribute definitions: "+attributeDefinitions);
 
         if (attributeNames.contains("dn") && attributeDefinitions.size() == 0 && "(objectclass=*)".equals(filter.toString().toLowerCase())) {
             for (Iterator i=maps.keySet().iterator(); i.hasNext(); ) {
@@ -442,26 +441,25 @@ public class Engine {
             return results;
         }
 
-        for (Iterator i=maps.keySet().iterator(); i.hasNext(); ) {
-            String dn = (String)i.next();
-            AttributeValues sv = (AttributeValues)maps.get(dn);
-            parentSourceValues.add(sv);
-        }
-
-        load(entryDefinition, parentSourceValues, maps, results);
+        load(entryDefinition, maps, results);
 
         return results;
     }
 
     public void load(
             final EntryDefinition entryDefinition,
-            final Collection parentSourceValues,
             final Map maps,
             final SearchResults results)
             throws Exception {
 
+        final Collection parentSourceValues = new HashSet();
+        for (Iterator i=maps.keySet().iterator(); i.hasNext(); ) {
+            String dn = (String)i.next();
+            AttributeValues sv = (AttributeValues)maps.get(dn);
+            parentSourceValues.add(sv);
+        }
+
         final SearchResults batches = new SearchResults();
-        final SearchResults loadedBatches = new SearchResults();
 
         if (true) {
             createBatches(entryDefinition, maps, results, batches);
@@ -479,6 +477,8 @@ public class Engine {
                 }
             });
         }
+
+        final SearchResults loadedBatches = new SearchResults();
 
         if (true) {
             loadEngine.load(parentSourceValues, entryDefinition, batches, loadedBatches);
@@ -584,6 +584,7 @@ public class Engine {
     }
 
     public String getParentDn(String dn) {
+        if (dn == null) return null;
         int index = dn.indexOf(",");
         return index < 0 ? null : dn.substring(index+1);
     }

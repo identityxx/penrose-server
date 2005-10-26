@@ -206,6 +206,14 @@ public class EntryDefinition implements Cloneable, Serializable {
         return objectClasses;
     }
 
+    public boolean containsObjectClass(String objectClass) {
+        for (Iterator i=objectClasses.iterator(); i.hasNext(); ) {
+            String oc = (String)i.next();
+            if (oc.equalsIgnoreCase(objectClass)) return true;
+        }
+        return false;
+    }
+    
     public void setObjectClasses(Collection objectClasses) {
         this.objectClasses = objectClasses;
     }

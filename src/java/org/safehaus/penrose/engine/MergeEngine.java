@@ -61,12 +61,12 @@ public class MergeEngine {
 
                 log.debug(Formatter.displaySeparator(80));
                 log.debug(Formatter.displayLine("MERGE", 80));
-                log.debug(Formatter.displayLine(" - "+dn, 80));
+                log.debug(Formatter.displayLine(dn, 80));
 
                 for (Iterator j=primarySourceValues.getNames().iterator(); j.hasNext(); ) {
                     String name = (String)j.next();
                     Collection v = primarySourceValues.get(name);
-                    log.debug(Formatter.displayLine("   "+name+": "+v, 80));
+                    log.debug(Formatter.displayLine(" - "+name+": "+v, 80));
                 }
 
                 log.debug(Formatter.displaySeparator(80));

@@ -27,6 +27,7 @@ import org.ietf.ldap.LDAPException;
 import org.apache.log4j.Logger;
 
 import java.util.Collection;
+import java.util.List;
 
 /**
  * @author Endi S. Dewata
@@ -67,15 +68,10 @@ public class DeleteHandler {
 
         dn = LDAPDN.normalize(dn);
 
-        // find existing entry
-        Entry entry = null;
-        try {
-            entry = getHandler().getSearchHandler().find(connection, dn);
-        } catch (Exception e) {
-            // ignore
-        }
+        List path = getHandler().getSearchHandler().find(connection, dn);
+        if (path == null) return LDAPException.NO_SUCH_OBJECT;
 
-        if (entry == null) return LDAPException.NO_SUCH_OBJECT;
+        Entry entry = (Entry)path.iterator().next();
 
         int rc = handlerContext.getACLEngine().checkDelete(connection, entry);
         if (rc != LDAPException.SUCCESS) return rc;

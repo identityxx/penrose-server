@@ -43,7 +43,7 @@ public class SearchEngine {
     }
 
     public Map search(
-            Stack stack,
+            Collection path,
             EntryDefinition entryDefinition,
             Filter filter)
             throws Exception {
@@ -54,55 +54,43 @@ public class SearchEngine {
         log.debug(Formatter.displayLine("Filter: "+filter, 80));
         log.debug(Formatter.displayLine("Parents:", 80));
 
-        Collection parentSourceValues = new TreeSet();
+        AttributeValues sourceValues = new AttributeValues();
         String prefix = null;
 
-        Stack newStack = new Stack();
-        newStack.addAll(stack);
+        for (Iterator iterator = path.iterator(); iterator.hasNext(); ) {
+            Entry entry = (Entry)iterator.next();
+            if (entry == null) continue;
 
-        while (!newStack.isEmpty()) {
-            Collection list = (Collection)newStack.pop();
+            log.debug(Formatter.displayLine(" - "+entry.getDn(), 80));
+
             prefix = prefix == null ? "parent." : "parent."+prefix;
 
-            for (Iterator i=list.iterator(); i.hasNext(); ) {
-                Entry entry = (Entry)i.next();
-                log.debug(Formatter.displayLine(" - "+entry.getDn(), 80));
+            AttributeValues av = entry.getAttributeValues();
+            for (Iterator j=av.getNames().iterator(); j.hasNext(); ) {
+                String name = (String)j.next();
+                Collection values = av.get(name);
+                name = prefix+name;
+                log.debug(Formatter.displayLine("   - "+name+": "+values, 80));
+                sourceValues.add(name, values);
+            }
 
-                AttributeValues sourceValues = new AttributeValues();
-
-                AttributeValues av = entry.getAttributeValues();
-                for (Iterator j=av.getNames().iterator(); j.hasNext(); ) {
-                    String name = (String)j.next();
-                    Collection values = av.get(name);
-                    sourceValues.add(prefix+name, values);
-                }
-
-                AttributeValues sv = entry.getSourceValues();
-                for (Iterator j=sv.getNames().iterator(); j.hasNext(); ) {
-                    String name = (String)j.next();
-                    Collection values = sv.get(name);
-                    if (name.startsWith("parent.")) name = prefix+name;
-                    sourceValues.add(name, values);
-                }
-
-                for (Iterator j=sourceValues.getNames().iterator(); j.hasNext(); ) {
-                    String name = (String)j.next();
-                    Collection values = sourceValues.get(name);
-                    log.debug(Formatter.displayLine("   - "+name+": "+values, 80));
-                }
-
-                parentSourceValues.add(sourceValues);
+            AttributeValues sv = entry.getSourceValues();
+            for (Iterator j=sv.getNames().iterator(); j.hasNext(); ) {
+                String name = (String)j.next();
+                Collection values = sv.get(name);
+                if (name.startsWith("parent.")) name = prefix+name;
+                log.debug(Formatter.displayLine("   - "+name+": "+values, 80));
+                sourceValues.add(name, values);
             }
         }
 
         log.debug(Formatter.displaySeparator(80));
 
-        Collection parents = (Collection)stack.peek();
         Collection dns = new TreeSet();
 
-        for (Iterator i=parents.iterator(); i.hasNext(); ) {
-            Entry entry = (Entry)i.next();
-            String parentDn = entry.getDn();
+        Entry parent = (Entry)path.iterator().next();
+        if (parent != null) {
+            String parentDn = parent.getDn();
 
             log.debug("Checking "+filter+" in entry filter cache for "+parentDn);
             Collection list = engineContext.getEntryFilterCache(parentDn, entryDefinition).get(filter);
@@ -112,9 +100,9 @@ public class SearchEngine {
         Map results = new TreeMap();
 
         if (dns.isEmpty()) {
-            log.debug("Cache not found.");
+            log.debug("Filter cache does not contain "+filter);
 
-            Collection values = searchEntries(parentSourceValues, entryDefinition, filter);
+            Collection values = searchEntries(sourceValues, entryDefinition, filter);
 
             Map map2 = new HashMap();
 
@@ -220,7 +208,7 @@ public class SearchEngine {
     }
 
     public Collection searchEntries(
-            Collection parentSourceValues,
+            AttributeValues sourceValues,
             EntryDefinition entryDefinition,
             Filter filter)
             throws Exception {
@@ -229,13 +217,9 @@ public class SearchEngine {
 
         if (primarySource == null || entryDefinition.getSource(primarySource.getName()) == null) {
             log.debug("Entry "+entryDefinition.getDn()+" doesn't have any sources.");
+            Collection parentSourceValues = new ArrayList();
+            parentSourceValues.add(sourceValues);
             return parentSourceValues;
-        }
-
-        AttributeValues sourceValues = new AttributeValues();
-        for (Iterator i=parentSourceValues.iterator(); i.hasNext(); ) {
-            AttributeValues sv = (AttributeValues)i.next();
-            sourceValues.add(sv);
         }
 
         SearchPlanner planner = new SearchPlanner(
@@ -247,7 +231,6 @@ public class SearchEngine {
         planner.run();
 
         Collection connectingSources = planner.getConnectingSources();
-        Collection connectingRelationships = planner.getConnectingRelationships();
 
         Collection results = searchLocal(
                 entryDefinition,

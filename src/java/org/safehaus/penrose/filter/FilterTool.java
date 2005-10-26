@@ -22,11 +22,8 @@ import java.util.*;
 import java.io.StringReader;
 
 import org.apache.log4j.Logger;
-import org.safehaus.penrose.mapping.AttributeValues;
 import org.safehaus.penrose.Penrose;
-import org.safehaus.penrose.mapping.Entry;
-import org.safehaus.penrose.mapping.Row;
-import org.safehaus.penrose.mapping.EntryDefinition;
+import org.safehaus.penrose.mapping.*;
 
 /**
  * @author Endi S. Dewata
@@ -86,7 +83,7 @@ public class FilterTool {
 
     public boolean isValidEntry(Entry entry, PresentFilter filter) throws Exception {
         String attributeName = filter.getAttribute();
-        if (attributeName.toLowerCase().equals("objectclass")) {
+        if (attributeName.equalsIgnoreCase("objectclass")) {
             return true;
         } else {
             AttributeValues values = entry.getAttributeValues();
@@ -96,10 +93,10 @@ public class FilterTool {
 
     public boolean isValidEntry(Entry entry, SimpleFilter filter) throws Exception {
         String attributeName = filter.getAttribute();
-        String attributeComparison = filter.getValue();
+        String attributeValue = filter.getValue();
 
-        if (attributeName.toLowerCase().equals("objectclass")) {
-            return entry.getEntryDefinition().getObjectClasses().contains(attributeComparison);
+        if (attributeName.equalsIgnoreCase("objectclass")) {
+            return entry.getEntryDefinition().containsObjectClass(attributeValue);
         }
 
         AttributeValues values = entry.getAttributeValues();
@@ -108,8 +105,9 @@ public class FilterTool {
 
         for (Iterator i=set.iterator(); i.hasNext(); ) {
             Object value = i.next();
-            if (attributeComparison.equalsIgnoreCase(value.toString())) return true;
+            if (attributeValue.equalsIgnoreCase(value.toString())) return true;
         }
+
         return false;
     }
 
@@ -288,16 +286,23 @@ public class FilterTool {
 
     public boolean isValidEntry(EntryDefinition entryDefinition, SimpleFilter filter) throws Exception {
         String attributeName = filter.getAttribute();
+        String attributeValue = filter.getValue();
 
-        if (attributeName.toLowerCase().equals("objectclass")) return true;
+        if (attributeName.equalsIgnoreCase("objectclass") && entryDefinition.containsObjectClass(attributeValue)) return true;
 
-        return entryDefinition.getAttributeDefinition(attributeName) != null;
+        AttributeDefinition attributeDefinition = entryDefinition.getAttributeDefinition(attributeName);
+        if (attributeDefinition == null) return false;
+
+        String constant = attributeDefinition.getConstant();
+        if (constant != null && !attributeValue.equals(constant)) return false;
+
+        return true;
     }
 
     public boolean isValidEntry(EntryDefinition entryDefinition, PresentFilter filter) throws Exception {
         String attributeName = filter.getAttribute();
 
-        if (attributeName.toLowerCase().equals("objectclass")) return true;
+        if (attributeName.equalsIgnoreCase("objectclass")) return true;
 
         return entryDefinition.getAttributeDefinition(attributeName) != null;
     }

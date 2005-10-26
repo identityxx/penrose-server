@@ -44,19 +44,40 @@ public class SearchHandler {
         this.handlerContext = handler.getHandlerContext();
     }
 
+    public HandlerContext getHandlerContext() {
+        return handlerContext;
+    }
+
+    public void setHandlerContext(HandlerContext handlerContext) {
+        this.handlerContext = handlerContext;
+    }
+
     /**
-	 * Find an real entry given a dn. If not found it will search for a virtual
-	 * entry from all possible mappings.
+	 * Find an entry given a dn.
 	 *
 	 * @param dn
-	 * @return virtual entry
-	 * @throws Exception
+	 * @return path from the entry to the root entry
 	 */
-	public Entry find(
+    public List find(
             PenroseConnection connection,
             String dn) throws Exception {
 
-		log.debug("Find entry: " + dn);
+        if (dn == null) return null;
+
+        String parentDn = handlerContext.getEngine().getParentDn(dn);
+        Row rdn = handlerContext.getEngine().getRdn(dn);
+
+        List path = find(connection, parentDn);
+        Entry parent;
+
+        if (path == null) {
+            path = new ArrayList();
+            parent = null;
+        } else {
+            parent = (Entry)path.iterator().next();
+        }
+
+		log.debug("Find entry: ["+rdn+"] ["+parentDn+"]");
 
         Config config = getHandlerContext().getConfig(dn);
         if (config == null) return null;
@@ -75,79 +96,39 @@ public class SearchHandler {
             log.debug(" - attributeValues: "+entry.getAttributeValues());
             log.debug("\n"+entry);
 
-            return entry;
+            path.add(0, entry);
+            return path;
         }
 
-		int i = dn.indexOf(",");
-		String rdn;
-		String parentDn;
-
-		if (i < 0) {
-			rdn = dn;
-			parentDn = null;
-		} else {
-			rdn = dn.substring(0, i);
-			parentDn = dn.substring(i + 1);
-		}
-
-        // find the parent entry
-        Entry parent = null;
-
-        try {
-            parent = find(connection, parentDn);
-        } catch (Exception e) {
-            log.debug("Exception: "+e.getMessage(), e);
-            // ignore
-        }
-
-		if (parent == null) {
-            log.debug("Parent not found: " + dn);
-
-            throw new LDAPException("Can't find " + dn + ".",
-                    LDAPException.NO_SUCH_OBJECT, "Can't find " + dn + ".");
-		}
+        if (parent == null) return null;
 
         EntryDefinition parentDefinition = parent.getEntryDefinition();
 
 		//log.debug("Found parent entry: " + parentDn);
 		Collection children = config.getChildren(parentDefinition);
+        if (children == null) return null;
 
-        if (children == null) {
-            log.debug("Children not found: " + dn);
+        Filter filter = null;
+        for (Iterator iterator=rdn.getNames().iterator(); iterator.hasNext(); ) {
+            String name = (String)iterator.next();
+            String value = (String)rdn.get(name);
 
-            throw new LDAPException("Can't find " + dn + ".",
-                    LDAPException.NO_SUCH_OBJECT, "Can't find " + dn + ".");
+            SimpleFilter sf = new SimpleFilter(name, "=", value);
+            filter = handlerContext.getFilterTool().appendAndFilter(filter, sf);
         }
-
-        int j = rdn.indexOf("=");
-        String rdnAttribute = rdn.substring(0, j);
-        String rdnValue = rdn.substring(j + 1);
-
-        Collection parents = new ArrayList();
-        parents.add(parent);
-
-        Stack stack = new Stack();
-        stack.push(parents);
-
-        Filter filter = new SimpleFilter(rdnAttribute, "=", rdnValue);
 
         // Find in each dynamic children
 		for (Iterator iterator = children.iterator(); iterator.hasNext(); ) {
 			EntryDefinition childDefinition = (EntryDefinition) iterator.next();
 
-            String childRdn = childDefinition.getRdn();
+            Row childRdn = handlerContext.getEngine().getRdn(childDefinition.getRdn());
             log.debug("Finding entry in "+childDefinition.getDn()+" with "+filter);
 
-            int k = childRdn.indexOf("=");
-            String childRdnAttribute = childRdn.substring(0, k);
-            String childRdnValue = childRdn.substring(k+1);
-
-            // the rdn attribute types must match
-            if (!rdnAttribute.equals(childRdnAttribute)) continue;
+            if (!rdn.getNames().equals(childRdn.getNames())) continue;
 
             SearchResults sr = handlerContext.getEngine().search(
                     connection,
-                    stack,
+                    path,
                     childDefinition,
                     filter,
                     new ArrayList()
@@ -155,83 +136,15 @@ public class SearchHandler {
 
             while (sr.hasNext()) {
                 Entry child = (Entry)sr.next();
-                if (handlerContext.getFilterTool().isValidEntry(child, filter)) return child;
-            }
-/*
-			if (childDefinition.isDynamic()) {
-
-                log.debug("Found entry definition: " + childDefinition.getDn());
-
-                try {
-                    Entry entry = find(connection, parent, childDefinition, rdn);
-                    if (entry == null) continue;
-
-                    log.debug("Found virtual entry: " + entry.getDn());
-
-                    return entry;
-
-                } catch (Exception e) {
-                    e.printStackTrace(System.out);
-                    // not found, continue to next entry definition
+                if (handlerContext.getFilterTool().isValidEntry(child, filter)) {
+                    path.add(0, child);
+                    return path;
                 }
-
-            } else {
-                if (!rdnValue.toLowerCase().equals(childRdnValue.toLowerCase())) continue;
-
-                log.debug("Found static entry: " + childDefinition.getDn());
-
-                AttributeValues values = childDefinition.getAttributeValues(handlerContext.newInterpreter());
-                Entry entry = new Entry(dn, childDefinition, values);
-                return entry;
             }
-*/
 		}
 
-		throw new LDAPException("Can't find " + dn + ".",
-				LDAPException.NO_SUCH_OBJECT, "Can't find virtual entry " + dn + ".");
+		return null;
 	}
-
-    public Entry find(
-            PenroseConnection connection,
-            Entry parent,
-            EntryDefinition entryDefinition,
-            String rdn)
-            throws Exception {
-
-        int i = rdn.indexOf("=");
-        String attr = rdn.substring(0, i);
-        String value = rdn.substring(i + 1);
-
-        Row row = new Row();
-        row.set(attr, value);
-
-        Map rdns = new TreeMap();
-        rdns.put(rdn+","+parent.getDn(), parent.getSourceValues());
-
-        //Filter filter = handlerContext.getFilterTool().createFilter(rdns);
-
-        //log.debug("--------------------------------------------------------------------------------------");
-        //log.debug("Searching for entry "+entryDefinition.getDn()+" with filter "+filters);
-
-        //Collection rdns = handlerContext.getEngine().search(parent, entryDefinition, filter);
-        //log.debug("Searched rdns: "+rdns);
-
-        Collection parents = new ArrayList();
-        parents.add(parent);
-
-        Collection parentSourceValues = new ArrayList();
-        parentSourceValues.add(parent.getSourceValues());
-
-        SearchResults results = new SearchResults();
-        handlerContext.getEngine().load(entryDefinition, parentSourceValues, rdns, results);
-
-        if (results.size() == 0) return null;
-
-        // there should be only one entry
-        Entry entry = (Entry)results.iterator().next();
-
-        return entry;
-    }
 
     public int search(
             PenroseConnection connection,
@@ -354,27 +267,15 @@ public class SearchHandler {
 		Filter f = handlerContext.getFilterTool().parseFilter(filter);
 		log.debug("Parsed filter: " + f);
 
-		Entry baseEntry;
-		try {
-			baseEntry = find(connection, nbase);
+		List path = find(connection, nbase);
 
-        } catch (LDAPException e) {
-            log.debug(e.getMessage());
-            results.setReturnCode(e.getResultCode());
-            return e.getResultCode();
-
-		} catch (Exception e) {
-			log.error(e.getMessage(), e);
-			results.setReturnCode(LDAPException.OPERATIONS_ERROR);
-			return LDAPException.OPERATIONS_ERROR;
-		}
-
-		if (baseEntry == null) {
+		if (path == null) {
 			log.debug("Can't find " + nbase);
 			results.setReturnCode(LDAPException.NO_SUCH_OBJECT);
 			return LDAPException.NO_SUCH_OBJECT;
 		}
 
+        Entry baseEntry = (Entry)path.iterator().next();
         log.debug("Found base entry: " + baseEntry.getDn());
 
         int rc = handlerContext.getACLEngine().checkSearch(connection, baseEntry);
@@ -393,40 +294,22 @@ public class SearchHandler {
 		}
 
 		if (scope == LDAPConnection.SCOPE_ONE || scope == LDAPConnection.SCOPE_SUB) { // one level or subtree
-			//log.debug("Searching children of " + baseEntry.getDn());
-			//searchChildren(connection, baseEntry, scope, f, normalizedAttributeNames, results);
-            Collection parents = new ArrayList();
-            parents.add(baseEntry);
-
-            Stack stack = new Stack();
-            stack.push(parents);
-
-            searchChildren(connection, stack, baseEntry.getEntryDefinition(), scope, f, normalizedAttributeNames, results, true);
+            searchChildren(connection, path, baseEntry.getEntryDefinition(), scope, f, normalizedAttributeNames, results, true);
 		}
 
 		results.setReturnCode(LDAPException.SUCCESS);
 		return LDAPException.SUCCESS;
 	}
 
-    public HandlerContext getHandlerContext() {
-        return handlerContext;
-    }
-
-    public void setHandlerContext(HandlerContext handlerContext) {
-        this.handlerContext = handlerContext;
-    }
-
     public void searchChildren(
             PenroseConnection connection,
-            Stack stack,
+            Collection path,
             EntryDefinition entryDefinition,
             int scope,
             Filter filter,
             Collection attributeNames,
             SearchResults results,
             boolean first) throws Exception {
-
-        Collection parents = (Collection)stack.peek();
 
         Config config = handlerContext.getConfig(entryDefinition.getDn());
         Collection children = config.getChildren(entryDefinition);
@@ -438,13 +321,11 @@ public class SearchHandler {
             EntryDefinition childDefinition = (EntryDefinition) i.next();
             //log.debug("Checking children: " + childDefinition.getDn());
 
-            Collection newParents = new ArrayList();
-
             if (handlerContext.getFilterTool().isValidEntry(childDefinition, filter)) {
 
                 SearchResults sr = handlerContext.getEngine().search(
                         connection,
-                        stack,
+                        path,
                         childDefinition,
                         filter,
                         attributeNames
@@ -470,11 +351,11 @@ public class SearchHandler {
             }
 
             if (scope == LDAPConnection.SCOPE_SUB) {
-                Stack newStack = new Stack();
-                newStack.addAll(stack);
-                newStack.push(newParents);
-                
-                searchChildren(connection, newStack, childDefinition, scope, filter, attributeNames, results, false);
+                Collection newPath = new ArrayList();
+                newPath.add(null);
+                newPath.addAll(path);
+
+                searchChildren(connection, newPath, childDefinition, scope, filter, attributeNames, results, false);
             }
         }
     }
