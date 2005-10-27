@@ -21,6 +21,7 @@ import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.graph.GraphVisitor;
 import org.safehaus.penrose.graph.GraphIterator;
 import org.safehaus.penrose.util.Formatter;
+import org.safehaus.penrose.config.Config;
 import org.apache.log4j.Logger;
 import org.ietf.ldap.LDAPException;
 
@@ -83,7 +84,11 @@ public class DeleteGraphVisitor extends GraphVisitor {
             newSourceValues.set(name, values);
         }
 
-        returnCode = engineContext.getSyncService().delete(source, newSourceValues);
+        Config config = engineContext.getConfig(source);
+        ConnectionConfig connectionConfig = config.getConnectionConfig(source.getConnectionName());
+        SourceDefinition sourceDefinition = connectionConfig.getSourceDefinition(source.getSourceName());
+
+        returnCode = engineContext.getSyncService().delete(sourceDefinition, newSourceValues);
         if (returnCode != LDAPException.SUCCESS) return;
 
         graphIterator.traverseEdges(node);

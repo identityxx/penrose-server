@@ -77,11 +77,7 @@ public class EngineFilterTool {
         for (Iterator i=fields.iterator(); i.hasNext(); ) {
             Field field = (Field)i.next();
 
-            Expression expression = field.getExpression();
-            if (expression == null) continue;
-
-            // this assumes that the field's value can be computed using the attribute value in the filter
-            String v = (String)interpreter.eval(expression);
+            String v = (String)interpreter.eval(field);
             if (v == null) continue;
 
             //System.out.println("Adding filter "+field.getName()+"="+v);

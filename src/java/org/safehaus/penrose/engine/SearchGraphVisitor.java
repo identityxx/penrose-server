@@ -121,7 +121,10 @@ public class SearchGraphVisitor extends GraphVisitor {
 
                 log.debug("Searching source "+source.getName()+" with filter "+filter);
 
-                list = engineContext.getSyncService().search(source, filter);
+                ConnectionConfig connectionConfig = config.getConnectionConfig(source.getConnectionName());
+                SourceDefinition sourceDefinition = connectionConfig.getSourceDefinition(source.getSourceName());
+
+                list = engineContext.getSyncService().search(sourceDefinition, filter);
             }
 
             log.debug("Searching results:");

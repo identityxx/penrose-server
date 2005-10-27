@@ -23,6 +23,7 @@ import org.safehaus.penrose.config.Config;
 import org.safehaus.penrose.graph.Graph;
 import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.util.Formatter;
+import org.safehaus.penrose.SearchResults;
 import org.apache.log4j.Logger;
 
 import java.util.*;
@@ -42,15 +43,106 @@ public class SearchEngine {
         this.engineContext = engine.getEngineContext();
     }
 
-    public Map search(
+    /**
+     * Check whether all rdn attributes are either constant or unique variable, or use all primary keys from one source.
+     */
+    public boolean isRdnUnique(EntryDefinition entryDefinition) throws Exception {
+
+        Collection sources = new TreeSet();
+        Collection fields = new TreeSet();
+
+        Collection attributeDefinitions = entryDefinition.getRdnAttributes();
+        for (Iterator i=attributeDefinitions.iterator(); i.hasNext(); ) {
+            AttributeDefinition attributeDefinition = (AttributeDefinition)i.next();
+
+            if (attributeDefinition.getConstant() != null) continue;
+
+            String variable = attributeDefinition.getVariable();
+
+            if (variable != null) { // get the source and field name
+                int j = variable.indexOf(".");
+                String sourceAlias = variable.substring(0, j);
+                String fieldName = variable.substring(j+1);
+
+                sources.add(sourceAlias);
+                fields.add(fieldName);
+
+                continue;
+            }
+
+            // attribute is an expression
+            return false;
+        }
+
+        //log.debug("RDN sources: "+sources);
+
+        // rdn is constant
+        if (sources.isEmpty()) return true;
+
+        // rdn uses more than one source
+        if (sources.size() > 1) return false;
+
+        String sourceAlias = (String)sources.iterator().next();
+        Source source = entryDefinition.getSource(sourceAlias);
+
+        Config config = engineContext.getConfig(entryDefinition.getDn());
+        ConnectionConfig connectionConfig = config.getConnectionConfig(source.getConnectionName());
+        SourceDefinition sourceDefinition = connectionConfig.getSourceDefinition(source.getSourceName());
+
+        Collection uniqueFields = new TreeSet();
+        Collection pkFields = new TreeSet();
+
+        for (Iterator i=fields.iterator(); i.hasNext(); ) {
+            String fieldName = (String)i.next();
+            FieldDefinition fieldDefinition = sourceDefinition.getFieldDefinition(fieldName);
+
+            if (fieldDefinition.isUnique()) {
+                uniqueFields.add(fieldName);
+                continue;
+            }
+
+            if (fieldDefinition.isPrimaryKey()) {
+                pkFields.add(fieldName);
+                continue;
+            }
+
+            return false;
+        }
+
+        //log.debug("RDN unique fields: "+uniqueFields);
+        //log.debug("RDN PK fields: "+pkFields);
+
+        // rdn uses unique fields
+        if (pkFields.isEmpty() && !uniqueFields.isEmpty()) return true;
+
+        Collection list = new TreeSet();
+        for (Iterator i=sourceDefinition.getFieldDefinitions().iterator(); i.hasNext(); ) {
+            FieldDefinition fieldDefinition = (FieldDefinition)i.next();
+            if (!fieldDefinition.isPrimaryKey()) continue;
+            list.add(fieldDefinition.getName());
+        }
+
+        //log.debug("Source PK fields: "+list);
+
+        // rdn uses primary key fields
+        return pkFields.equals(list);
+    }
+
+    public void search(
             Collection path,
             EntryDefinition entryDefinition,
-            Filter filter)
+            Filter filter,
+            SearchResults entries)
             throws Exception {
+
+        Map results = new TreeMap();
+
+        boolean unique = isRdnUnique(entryDefinition);
 
         log.debug(Formatter.displaySeparator(80));
         log.debug(Formatter.displayLine("SEARCH", 80));
         log.debug(Formatter.displayLine("Entry: "+entryDefinition.getDn(), 80));
+        log.debug(Formatter.displayLine("RDN Unique: "+unique, 80));
         log.debug(Formatter.displayLine("Filter: "+filter, 80));
         log.debug(Formatter.displayLine("Parents:", 80));
 
@@ -97,8 +189,6 @@ public class SearchEngine {
             if (list != null) dns.addAll(list);
         }
 
-        Map results = new TreeMap();
-
         if (dns.isEmpty()) {
             log.debug("Filter cache does not contain "+filter);
 
@@ -115,19 +205,17 @@ public class SearchEngine {
                     String dn = (String)j.next();
                     log.debug(" - "+dn);
 
-                    int index = dn.indexOf(",");
-                    String rdn = dn.substring(0, index);
-                    String parentDn = dn.substring(index+1);
-
-                    index = rdn.indexOf("=");
-                    String rdnAttr = rdn.substring(0, index);
-                    String rdnValue = rdn.substring(index+1);
-
-                    Row row = new Row();
-                    row.set(rdnAttr, rdnValue);
+                    Row rdn = engine.getRdn(dn);
+                    String parentDn = engine.getParentDn(dn);
 
                     log.debug("   Storing "+rdn+" in entry source cache.");
-                    engineContext.getEntrySourceCache(parentDn, entryDefinition).put(row, sv);
+                    engineContext.getEntrySourceCache(parentDn, entryDefinition).put(rdn, sv);
+
+                    if (unique && !dns.contains(dn)) {
+                        Entry entry = new Entry(dn, entryDefinition, sv, new AttributeValues());
+                        entries.add(entry);
+                        dns.add(dn);
+                    }
 
                     AttributeValues av = (AttributeValues)results.get(dn);
                     if (av == null) {
@@ -169,17 +257,17 @@ public class SearchEngine {
             for (Iterator i=dns.iterator(); i.hasNext(); ) {
                 String dn = (String)i.next();
 
-                int index = dn.indexOf(",");
-                String s = dn.substring(0, index);
-                String parentDn = dn.substring(index+1);
-
-                index = s.indexOf("=");
-                Row rdn = new Row();
-                rdn.set(s.substring(0, index), s.substring(index+1));
+                Row rdn = engine.getRdn(dn);
+                String parentDn = engine.getParentDn(dn);
 
                 log.debug("Getting "+rdn+" from entry source cache for "+parentDn);
                 AttributeValues sv = (AttributeValues)engineContext.getEntrySourceCache(parentDn, entryDefinition).get(rdn);
-                log.debug("Entry source cache: "+sv);
+                //log.debug("Entry source cache: "+sv);
+
+                if (unique) {
+                    Entry entry = new Entry(dn, entryDefinition, sv, new AttributeValues());
+                    entries.add(entry);
+                }
 
                 AttributeValues av = (AttributeValues)results.get(dn);
                 if (av == null) {
@@ -189,22 +277,18 @@ public class SearchEngine {
                 av.add(sv);
             }
         }
-/*
-        log.debug(Formatter.displaySeparator(80));
-        log.debug(Formatter.displayLine("SEARCH RESULTS", 80));
-        log.debug(Formatter.displayLine("Entry: "+entryDefinition.getDn(), 80));
-        log.debug(Formatter.displayLine("Results:", 80));
 
-        for (Iterator i=results.keySet().iterator(); i.hasNext(); ) {
-            String dn = (String)i.next();
-            AttributeValues sv = (AttributeValues)results.get(dn);
-            log.debug(Formatter.displayLine(" - "+dn, 80));
-            log.debug(Formatter.displayLine("   "+sv, 80));
+        if (!unique) {
+            for (Iterator i=results.keySet().iterator(); i.hasNext(); ) {
+                String dn = (String)i.next();
+                AttributeValues sv = (AttributeValues)results.get(dn);
+
+                Entry entry = new Entry(dn, entryDefinition, sv, new AttributeValues());
+                entries.add(entry);
+            }
         }
 
-        log.debug(Formatter.displaySeparator(80));
-*/
-        return results;
+        entries.close();
     }
 
     public Collection searchEntries(

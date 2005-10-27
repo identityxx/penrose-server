@@ -45,6 +45,7 @@ public class Engine {
 
     Logger log = Logger.getLogger(getClass());
 
+    private EngineConfig engineConfig;
     private EngineContext engineContext;
 
     private Map graphs = new HashMap();
@@ -53,7 +54,7 @@ public class Engine {
     private Map locks = new HashMap();
     private Queue queue = new Queue();
 
-    private ThreadPool threadPool = null;
+    private ThreadPool threadPool;
 
     private boolean stopping = false;
 
@@ -70,10 +71,14 @@ public class Engine {
      * @throws Exception
      */
     public void init(EngineConfig engineConfig, EngineContext engineContext) throws Exception {
+        this.engineConfig = engineConfig;
         this.engineContext = engineContext;
 
         log.debug("-------------------------------------------------");
         log.debug("Initializing Engine");
+
+        String s = engineConfig.getParameter(EngineConfig.THREAD_POOL_SIZE);
+        int threadPoolSize = s == null ? EngineConfig.DEFAULT_THREAD_POOL_SIZE : Integer.parseInt(s);
 
         filterTool = new EngineFilterTool(engineContext);
 
@@ -82,10 +87,7 @@ public class Engine {
         mergeEngine = new MergeEngine(this);
         joinEngine = new JoinEngine(this);
 
-        // Now size is now hardcoded to 20
-        // TODO modify size to read from configuration if needed
-        int size = 20;
-        threadPool = new ThreadPool(size);
+        threadPool = new ThreadPool(threadPoolSize);
 
         execute(new RefreshThread(this));
     }
@@ -413,62 +415,70 @@ public class Engine {
 
     public SearchResults search(
             PenroseConnection connection,
-            Collection path,
-            EntryDefinition entryDefinition,
-            Filter filter,
+            final Collection path,
+            final EntryDefinition entryDefinition,
+            final Filter filter,
             Collection attributeNames) throws Exception {
 
-        SearchResults results = new SearchResults();
+        final SearchResults entries = new SearchResults();
 
-        Map maps = searchEngine.search(path, entryDefinition, filter);
+        if (false) {
+            searchEngine.search(path, entryDefinition, filter, entries);
 
-        if (maps.isEmpty()) {
-            results.close();
-            return results;
+        } else {
+            execute(new Runnable() {
+                public void run() {
+                    try {
+                        searchEngine.search(path, entryDefinition, filter, entries);
+
+                    } catch (Throwable e) {
+                        e.printStackTrace(System.out);
+                        entries.setReturnCode(LDAPException.OPERATIONS_ERROR);
+                    }
+                }
+            });
         }
+
+        SearchResults results = new SearchResults();
 
         Collection attributeDefinitions = entryDefinition.getAttributeDefinitions(attributeNames);
         log.debug("Attribute definitions: "+attributeDefinitions);
 
-        if (attributeNames.contains("dn") && attributeDefinitions.size() == 0 && "(objectclass=*)".equals(filter.toString().toLowerCase())) {
-            for (Iterator i=maps.keySet().iterator(); i.hasNext(); ) {
-                String dn = (String)i.next();
-                AttributeValues av = entryDefinition.getAttributeValues(engineContext.newInterpreter());
-                Entry entry = new Entry(dn, entryDefinition, av);
+        // check if client only requests the dn to be returned
+        if (attributeNames.contains("dn")
+                && attributeDefinitions.isEmpty()
+                && "(objectclass=*)".equals(filter.toString().toLowerCase())) {
+
+            for (Iterator i=entries.iterator(); i.hasNext(); ) {
+                Entry entry = (Entry)i.next();
                 results.add(entry);
             }
+
             results.close();
             return results;
         }
 
-        load(entryDefinition, maps, results);
+        load(entryDefinition, entries, results);
 
         return results;
     }
 
     public void load(
             final EntryDefinition entryDefinition,
-            final Map maps,
+            final SearchResults entries,
             final SearchResults results)
             throws Exception {
 
-        final Collection parentSourceValues = new HashSet();
-        for (Iterator i=maps.keySet().iterator(); i.hasNext(); ) {
-            String dn = (String)i.next();
-            AttributeValues sv = (AttributeValues)maps.get(dn);
-            parentSourceValues.add(sv);
-        }
-
         final SearchResults batches = new SearchResults();
 
-        if (true) {
-            createBatches(entryDefinition, maps, results, batches);
+        if (false) {
+            createBatches(entryDefinition, entries, results, batches);
 
         } else {
             execute(new Runnable() {
                 public void run() {
                     try {
-                        createBatches(entryDefinition, maps, results, batches);
+                        createBatches(entryDefinition, entries, results, batches);
 
                     } catch (Throwable e) {
                         e.printStackTrace(System.out);
@@ -480,14 +490,14 @@ public class Engine {
 
         final SearchResults loadedBatches = new SearchResults();
 
-        if (true) {
-            loadEngine.load(parentSourceValues, entryDefinition, batches, loadedBatches);
+        if (false) {
+            loadEngine.load(entryDefinition, batches, loadedBatches);
 
         } else {
             execute(new Runnable() {
                 public void run() {
                     try {
-                        loadEngine.load(parentSourceValues, entryDefinition, batches, loadedBatches);
+                        loadEngine.load(entryDefinition, batches, loadedBatches);
 
                     } catch (Throwable e) {
                         e.printStackTrace(System.out);
@@ -517,7 +527,7 @@ public class Engine {
 
     public void createBatches(
             EntryDefinition entryDefinition,
-            Map maps,
+            SearchResults entries,
             SearchResults results,
             SearchResults batches
             ) throws Exception {
@@ -530,9 +540,10 @@ public class Engine {
             String s = entryDefinition.getParameter(EntryDefinition.BATCH_SIZE);
             int batchSize = s == null ? EntryDefinition.DEFAULT_BATCH_SIZE : Integer.parseInt(s);
 
-            for (Iterator i=maps.keySet().iterator(); i.hasNext(); ) {
-                String dn = (String)i.next();
-                AttributeValues sv = (AttributeValues)maps.get(dn);
+            for (Iterator i=entries.iterator(); i.hasNext(); ) {
+                Entry e = (Entry)i.next();
+                String dn = e.getDn();
+                AttributeValues sv = e.getSourceValues();
 
                 Row rdn = getRdn(dn);
                 String parentDn = getParentDn(dn);
@@ -795,10 +806,7 @@ public class Engine {
             Field field = (Field)j.next();
             String name = field.getName();
 
-            Expression expression = field.getExpression();
-            if (expression == null) continue;
-
-            Object value = interpreter.eval(expression);
+            Object value = interpreter.eval(field);
             if (value == null) continue;
 
             //log.debug("   ==> "+field.getName()+"="+value);

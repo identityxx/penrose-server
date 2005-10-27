@@ -17,10 +17,7 @@
  */
 package org.safehaus.penrose.interpreter;
 
-import org.safehaus.penrose.mapping.Row;
-import org.safehaus.penrose.mapping.AttributeValues;
-import org.safehaus.penrose.mapping.Expression;
-import org.safehaus.penrose.mapping.AttributeDefinition;
+import org.safehaus.penrose.mapping.*;
 
 import java.util.Iterator;
 import java.util.Collection;
@@ -72,8 +69,26 @@ public abstract class Interpreter {
         } else if (attributeDefinition.getVariable() != null) {
             return get(attributeDefinition.getVariable());
 
-        } else {
+        } else if (attributeDefinition.getExpression() != null) {
             return eval(attributeDefinition.getExpression());
+
+        } else {
+            return null;
+        }
+    }
+
+    public Object eval(Field field) throws Exception {
+        if (field.getConstant() != null) {
+            return field.getConstant();
+
+        } else if (field.getVariable() != null) {
+            return get(field.getVariable());
+
+        } else if (field.getExpression() != null) {
+            return eval(field.getExpression());
+
+        } else {
+            return null;
         }
     }
 

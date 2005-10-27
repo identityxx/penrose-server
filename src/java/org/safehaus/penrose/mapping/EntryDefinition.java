@@ -154,9 +154,9 @@ public class EntryDefinition implements Cloneable, Serializable {
     public Collection getRdnAttributes() {
         Collection results = new ArrayList();
         for (Iterator i=attributeDefinitions.values().iterator(); i.hasNext(); ) {
-            AttributeDefinition attribute = (AttributeDefinition)i.next();
-            if (!attribute.isRdn()) continue;
-            results.add(attribute);
+            AttributeDefinition attributeDefinition = (AttributeDefinition)i.next();
+            if (!attributeDefinition.isRdn()) continue;
+            results.add(attributeDefinition);
         }
         return results;
     }
@@ -213,7 +213,7 @@ public class EntryDefinition implements Cloneable, Serializable {
         }
         return false;
     }
-    
+
     public void setObjectClasses(Collection objectClasses) {
         this.objectClasses = objectClasses;
     }

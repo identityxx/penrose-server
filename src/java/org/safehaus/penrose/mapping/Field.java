@@ -35,6 +35,8 @@ public class Field implements Cloneable {
 	/**
 	 * Expression.
 	 */
+    private String constant;
+    private String variable;
 	private Expression expression;
 
 
@@ -72,6 +74,8 @@ public class Field implements Cloneable {
     public int hashCode() {
         return (name == null ? 0 : name.hashCode()) +
                 (script == null ? 0 : script.hashCode()) +
+                (constant == null ? 0 : constant.hashCode()) +
+                (variable == null ? 0 : variable.hashCode()) +
                 (expression == null ? 0 : expression.hashCode());
     }
 
@@ -88,6 +92,8 @@ public class Field implements Cloneable {
         Field field = (Field)object;
         if (!equals(name, field.name)) return false;
         if (!equals(script, field.script)) return false;
+        if (!equals(constant, field.constant)) return false;
+        if (!equals(variable, field.variable)) return false;
         if (!equals(expression, field.expression)) return false;
 
         return true;
@@ -97,6 +103,8 @@ public class Field implements Cloneable {
         Field field = new Field();
         field.name = name;
         field.script = script;
+        field.constant = constant;
+        field.variable = variable;
         field.expression = expression == null ? null : (Expression)expression.clone();
         return field;
     }
@@ -105,4 +113,19 @@ public class Field implements Cloneable {
         return name;
     }
 
+    public String getConstant() {
+        return constant;
+    }
+
+    public void setConstant(String constant) {
+        this.constant = constant;
+    }
+
+    public String getVariable() {
+        return variable;
+    }
+
+    public void setVariable(String variable) {
+        this.variable = variable;
+    }
 }

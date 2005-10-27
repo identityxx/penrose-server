@@ -82,13 +82,9 @@ public class JNDIAdapter extends Adapter {
         //log.debug("Suffix: "+suffix);
     }
 
-    public SearchResults search(Source source, Filter filter, long sizeLimit) throws Exception {
+    public SearchResults search(SourceDefinition sourceDefinition, Filter filter, long sizeLimit) throws Exception {
 
         SearchResults results = new SearchResults();
-
-        Config config = getAdapterContext().getConfig(source);
-        ConnectionConfig connectionConfig = config.getConnectionConfig(source.getConnectionName());
-        SourceDefinition sourceDefinition = connectionConfig.getSourceDefinition(source.getSourceName());
 
         String ldapBase = sourceDefinition.getParameter(BASE_DN);
         if ("".equals(ldapBase)) {
@@ -105,7 +101,7 @@ public class JNDIAdapter extends Adapter {
         }
 
         log.debug(Formatter.displaySeparator(80));
-        log.debug(Formatter.displayLine("JNDI Search "+source.getSourceName()+"/"+source.getConnectionName(), 80));
+        log.debug(Formatter.displayLine("JNDI Search "+sourceDefinition.getConnectionName()+"/"+sourceDefinition.getName(), 80));
         log.debug(Formatter.displayLine(" - Base DN: "+ldapBase, 80));
         log.debug(Formatter.displayLine(" - Scope: "+ldapScope, 80));
         log.debug(Formatter.displayLine(" - Filter: "+ldapFilter, 80));
@@ -132,7 +128,7 @@ public class JNDIAdapter extends Adapter {
             javax.naming.directory.SearchResult sr = (javax.naming.directory.SearchResult)ne.next();
             log.debug(" - "+sr.getName()+","+ldapBase);
 
-            Row row = getPkValues(source, sr);
+            Row row = getPkValues(sourceDefinition, sr);
             results.add(row);
         }
 
@@ -141,13 +137,9 @@ public class JNDIAdapter extends Adapter {
         return results;
     }
 
-    public SearchResults load(Source source, Filter filter, long sizeLimit) throws Exception {
+    public SearchResults load(SourceDefinition sourceDefinition, Filter filter, long sizeLimit) throws Exception {
 
         SearchResults results = new SearchResults();
-
-        Config config = getAdapterContext().getConfig(source);
-        ConnectionConfig connectionConfig = config.getConnectionConfig(source.getConnectionName());
-        SourceDefinition sourceDefinition = connectionConfig.getSourceDefinition(source.getSourceName());
 
         String ldapBase = sourceDefinition.getParameter(BASE_DN);
         if ("".equals(ldapBase)) {
@@ -164,7 +156,7 @@ public class JNDIAdapter extends Adapter {
         }
 
         log.debug(Formatter.displaySeparator(80));
-        log.debug(Formatter.displayLine("JNDI Search "+source.getSourceName()+"/"+source.getConnectionName(), 80));
+        log.debug(Formatter.displayLine("JNDI Search "+sourceDefinition.getConnectionName()+"/"+sourceDefinition.getName(), 80));
         log.debug(Formatter.displayLine(" - Base DN: "+ldapBase, 80));
         log.debug(Formatter.displayLine(" - Scope: "+ldapScope, 80));
         log.debug(Formatter.displayLine(" - Filter: "+ldapFilter, 80));
@@ -190,7 +182,7 @@ public class JNDIAdapter extends Adapter {
             javax.naming.directory.SearchResult sr = (javax.naming.directory.SearchResult)ne.next();
             log.debug(" - "+sr.getName()+","+ldapBase);
 
-            AttributeValues av = getValues(source, sr);
+            AttributeValues av = getValues(sourceDefinition, sr);
             results.add(av);
         }
 
@@ -199,11 +191,7 @@ public class JNDIAdapter extends Adapter {
         return results;
     }
 
-    public Row getPkValues(Source source, javax.naming.directory.SearchResult sr) throws Exception {
-
-        Config config = getAdapterContext().getConfig(source);
-        ConnectionConfig connectionConfig = config.getConnectionConfig(source.getConnectionName());
-        SourceDefinition sourceDefinition = connectionConfig.getSourceDefinition(source.getSourceName());
+    public Row getPkValues(SourceDefinition sourceDefinition, javax.naming.directory.SearchResult sr) throws Exception {
 
         Row row = new Row();
 
@@ -236,11 +224,7 @@ public class JNDIAdapter extends Adapter {
         return row;
     }
 
-    public AttributeValues getValues(Source source, javax.naming.directory.SearchResult sr) throws Exception {
-
-        Config config = getAdapterContext().getConfig(source);
-        ConnectionConfig connectionConfig = config.getConnectionConfig(source.getConnectionName());
-        SourceDefinition sourceDefinition = connectionConfig.getSourceDefinition(source.getSourceName());
+    public AttributeValues getValues(SourceDefinition sourceDefinition, javax.naming.directory.SearchResult sr) throws Exception {
 
         AttributeValues av = new AttributeValues();
 
@@ -271,14 +255,9 @@ public class JNDIAdapter extends Adapter {
         return av;
     }
 
-    public int bind(Source source, AttributeValues sourceValues, String password) throws Exception {
+    public int bind(SourceDefinition sourceDefinition, AttributeValues sourceValues, String password) throws Exception {
 
-/*
-        if (!sourceValues.contains("objectClass")) {
-            return LDAPException.INVALID_CREDENTIALS;
-        }
-*/
-        String dn = getDn(source, sourceValues);
+        String dn = getDn(sourceDefinition, sourceValues);
 
         log.debug(Formatter.displaySeparator(80));
         log.debug(Formatter.displayLine("JNDI Bind", 80));
@@ -302,16 +281,12 @@ public class JNDIAdapter extends Adapter {
         return LDAPException.SUCCESS;
     }
 
-    public int add(Source source, AttributeValues entry) throws Exception {
+    public int add(SourceDefinition sourceDefinition, AttributeValues entry) throws Exception {
 
-        //if (!entry.contains("objectClass")) {
-        //    return modifyAdd(source, entry);
-        //}
-
-        String dn = getDn(source, entry);
+        String dn = getDn(sourceDefinition, entry);
 
         log.debug(Formatter.displaySeparator(80));
-        log.debug(Formatter.displayLine("JNDI Add "+source.getSourceName()+"/"+source.getConnectionName(), 80));
+        log.debug(Formatter.displayLine("JNDI Add "+sourceDefinition.getConnectionName()+"/"+sourceDefinition.getName(), 80));
         log.debug(Formatter.displayLine(" - DN: "+dn, 80));
         log.debug(Formatter.displaySeparator(80));
 
@@ -341,7 +316,7 @@ public class JNDIAdapter extends Adapter {
             DirContext ctx = new InitialDirContext(parameters);
             ctx.createSubcontext(dn, attrs);
         } catch (NameAlreadyBoundException e) {
-            return modifyAdd(source, entry);
+            return modifyAdd(sourceDefinition, entry);
             //log.debug("Error: "+e.getMessage());
             //return LDAPException.ENTRY_ALREADY_EXISTS;
         }
@@ -349,15 +324,11 @@ public class JNDIAdapter extends Adapter {
         return LDAPException.SUCCESS;
     }
 
-    public int modifyDelete(Source source, AttributeValues entry) throws Exception {
-
-        Config config = getAdapterContext().getConfig(source);
-        ConnectionConfig connectionConfig = config.getConnectionConfig(source.getConnectionName());
-        SourceDefinition sourceDefinition = connectionConfig.getSourceDefinition(source.getSourceName());
+    public int modifyDelete(SourceDefinition sourceDefinition, AttributeValues entry) throws Exception {
 
         log.debug("JNDI Modify Delete:");
 
-        String dn = getDn(source, entry);
+        String dn = getDn(sourceDefinition, entry);
         log.debug("Deleting attributes in "+dn);
 
         List list = new ArrayList();
@@ -395,16 +366,12 @@ public class JNDIAdapter extends Adapter {
         return LDAPException.SUCCESS;
     }
 
-    public int delete(Source source, AttributeValues entry) throws Exception {
-/*
-        if (!entry.contains("objectClass")) {
-            return modifyDelete(source, entry);
-        }
-*/
-        String dn = getDn(source, entry);
+    public int delete(SourceDefinition sourceDefinition, AttributeValues entry) throws Exception {
+
+        String dn = getDn(sourceDefinition, entry);
 
         log.debug(Formatter.displaySeparator(80));
-        log.debug(Formatter.displayLine("JNDI Delete "+source.getSourceName()+"/"+source.getConnectionName(), 80));
+        log.debug(Formatter.displayLine("JNDI Delete "+sourceDefinition.getConnectionName()+"/"+sourceDefinition.getName(), 80));
         log.debug(Formatter.displayLine(" - DN: "+dn, 80));
         log.debug(Formatter.displaySeparator(80));
 
@@ -419,16 +386,12 @@ public class JNDIAdapter extends Adapter {
         return LDAPException.SUCCESS;
     }
 
-    public int modify(Source source, AttributeValues oldEntry, AttributeValues newEntry) throws Exception {
+    public int modify(SourceDefinition sourceDefinition, AttributeValues oldEntry, AttributeValues newEntry) throws Exception {
 
-        Config config = getAdapterContext().getConfig(source);
-        ConnectionConfig connectionConfig = config.getConnectionConfig(source.getConnectionName());
-        SourceDefinition sourceDefinition = connectionConfig.getSourceDefinition(source.getSourceName());
-
-        String dn = getDn(source, newEntry);
+        String dn = getDn(sourceDefinition, newEntry);
 
         log.debug(Formatter.displaySeparator(80));
-        log.debug(Formatter.displayLine("JNDI Modify "+source.getSourceName()+"/"+source.getConnectionName(), 80));
+        log.debug(Formatter.displayLine("JNDI Modify "+sourceDefinition.getConnectionName()+"/"+sourceDefinition.getName(), 80));
         log.debug(Formatter.displayLine(" - DN: "+dn, 80));
         log.debug(Formatter.displaySeparator(80));
 
@@ -547,14 +510,10 @@ public class JNDIAdapter extends Adapter {
         return LDAPException.SUCCESS;
     }
 
-    public int modifyAdd(Source source, AttributeValues entry) throws Exception {
+    public int modifyAdd(SourceDefinition sourceDefinition, AttributeValues entry) throws Exception {
         log.debug("JNDI Modify Add:");
 
-        Config config = getAdapterContext().getConfig(source);
-        ConnectionConfig connectionConfig = config.getConnectionConfig(source.getConnectionName());
-        SourceDefinition sourceDefinition = connectionConfig.getSourceDefinition(source.getSourceName());
-
-        String dn = getDn(source, entry);
+        String dn = getDn(sourceDefinition, entry);
         log.debug("Replacing attributes "+dn);
 
         Collection fields = sourceDefinition.getFieldDefinitions();
@@ -598,12 +557,8 @@ public class JNDIAdapter extends Adapter {
         return LDAPException.SUCCESS;
     }
 
-    public String getDn(Source source, AttributeValues sourceValues) throws Exception {
+    public String getDn(SourceDefinition sourceDefinition, AttributeValues sourceValues) throws Exception {
         //log.debug("Computing DN for "+source.getName()+" with "+sourceValues);
-
-        Config config = getAdapterContext().getConfig(source);
-        ConnectionConfig connectionConfig = config.getConnectionConfig(source.getConnectionName());
-        SourceDefinition sourceDefinition = connectionConfig.getSourceDefinition(source.getSourceName());
 
         String baseDn = sourceDefinition.getParameter(BASE_DN);
         //log.debug("Base DN: "+baseDn);

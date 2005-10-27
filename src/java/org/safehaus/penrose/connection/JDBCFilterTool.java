@@ -32,13 +32,13 @@ public class JDBCFilterTool {
      * @throws Exception
      */
     public String convert(
-            Source source,
+            SourceDefinition sourceDefinition,
             Filter filter,
             Collection parameters)
             throws Exception {
 
         StringBuffer sb = new StringBuffer();
-        boolean valid = convert(source, filter, parameters, sb);
+        boolean valid = convert(sourceDefinition, filter, parameters, sb);
 
         if (valid && sb.length() > 0) return sb.toString();
 
@@ -46,35 +46,31 @@ public class JDBCFilterTool {
     }
 
     boolean convert(
-            Source source,
+            SourceDefinition sourceDefinition,
             Filter filter,
             Collection parameters,
             StringBuffer sb)
             throws Exception {
 
         if (filter instanceof SimpleFilter) {
-            return convert(source, (SimpleFilter) filter, parameters, sb);
+            return convert(sourceDefinition, (SimpleFilter) filter, parameters, sb);
 
         } else if (filter instanceof AndFilter) {
-            return convert(source, (AndFilter) filter, parameters, sb);
+            return convert(sourceDefinition, (AndFilter) filter, parameters, sb);
 
         } else if (filter instanceof OrFilter) {
-            return convert(source, (OrFilter) filter, parameters, sb);
+            return convert(sourceDefinition, (OrFilter) filter, parameters, sb);
         }
 
         return true;
     }
 
     boolean convert(
-            Source source,
+            SourceDefinition sourceDefinition,
             SimpleFilter filter,
             Collection parameters,
             StringBuffer sb)
             throws Exception {
-
-        Config config = getAdapterContext().getConfig(source);
-        ConnectionConfig connectionConfig = config.getConnectionConfig(source.getConnectionName());
-        SourceDefinition sourceDefinition = connectionConfig.getSourceDefinition(source.getSourceName());
 
         String name = filter.getAttribute();
         String operator = filter.getOperator();
@@ -116,7 +112,7 @@ public class JDBCFilterTool {
     }
 
     boolean convert(
-            Source source,
+            SourceDefinition sourceDefinition,
             AndFilter filter,
             Collection parameters,
             StringBuffer sb)
@@ -127,7 +123,7 @@ public class JDBCFilterTool {
             Filter f = (Filter) i.next();
 
             StringBuffer sb3 = new StringBuffer();
-            convert(source, f, parameters, sb3);
+            convert(sourceDefinition, f, parameters, sb3);
 
             if (sb2.length() > 0 && sb3.length() > 0) {
                 sb2.append(" and ");
@@ -147,7 +143,7 @@ public class JDBCFilterTool {
     }
 
     boolean convert(
-            Source source,
+            SourceDefinition sourceDefinition,
             OrFilter filter,
             Collection parameters,
             StringBuffer sb)
@@ -158,7 +154,7 @@ public class JDBCFilterTool {
             Filter f = (Filter) i.next();
 
             StringBuffer sb3 = new StringBuffer();
-            convert(source, f, parameters, sb3);
+            convert(sourceDefinition, f, parameters, sb3);
 
             if (sb2.length() > 0 && sb3.length() > 0) {
                 sb2.append(" or ");

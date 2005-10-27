@@ -564,48 +564,6 @@ public class Config implements Serializable {
         this.rootEntryDefinitions = rootEntryDefinitions;
     }
 
-    public Collection getPrimaryKeyFieldDefinitions(Source source) {
-        ConnectionConfig connectionConfig = getConnectionConfig(source.getConnectionName());
-        SourceDefinition sourceDefinition = connectionConfig.getSourceDefinition(source.getSourceName());
-
-        Collection results = new ArrayList();
-        for (Iterator i=sourceDefinition.getFieldDefinitions().iterator(); i.hasNext(); ) {
-            FieldDefinition fieldDefinition = (FieldDefinition)i.next();
-            if (!fieldDefinition.isPrimaryKey()) continue;
-            results.add(fieldDefinition);
-        }
-        
-        return results;
-    }
-
-    public Collection getUniqueFieldDefinitions(Source source) {
-        ConnectionConfig connectionConfig = getConnectionConfig(source.getConnectionName());
-        SourceDefinition sourceDefinition = connectionConfig.getSourceDefinition(source.getSourceName());
-
-        Collection results = new ArrayList();
-        for (Iterator i=sourceDefinition.getFieldDefinitions().iterator(); i.hasNext(); ) {
-            FieldDefinition fieldDefinition = (FieldDefinition)i.next();
-            if (!fieldDefinition.isUnique()) continue;
-            results.add(fieldDefinition);
-        }
-
-        return results;
-    }
-
-    public Collection getIndexedFieldDefinitions(Source source) {
-        ConnectionConfig connectionConfig = getConnectionConfig(source.getConnectionName());
-        SourceDefinition sourceDefinition = connectionConfig.getSourceDefinition(source.getSourceName());
-
-        Collection results = new ArrayList();
-        for (Iterator i=sourceDefinition.getFieldDefinitions().iterator(); i.hasNext(); ) {
-            FieldDefinition fieldDefinition = (FieldDefinition)i.next();
-            if (!fieldDefinition.isPrimaryKey() && !fieldDefinition.isUnique() && !fieldDefinition.isIndex()) continue;
-            results.add(fieldDefinition);
-        }
-
-        return results;
-    }
-
     public Collection getSearchableFields(Source source) {
         ConnectionConfig connectionConfig = getConnectionConfig(source.getConnectionName());
         SourceDefinition sourceDefinition = connectionConfig.getSourceDefinition(source.getSourceName());

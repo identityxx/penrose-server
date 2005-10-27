@@ -139,14 +139,12 @@ public class TransformEngine {
             String name = field.getName();
             //log.debug(" - "+name);
 
-            Expression expression = field.getExpression();
+            Object newValues = interpreter.eval(field);
 
-            if (expression == null) {
+            if (newValues == null) {
                 if (fieldDefinition.isPrimaryKey()) pk = null;
                 continue;
             }
-
-            Object newValues = interpreter.eval(expression);
 /*
             if (field.getEncryption() != null) {
                 // if field encryption is enabled
@@ -172,7 +170,6 @@ public class TransformEngine {
                 }
             }
 */
-            if (newValues == null) continue;
 
             //log.debug("   => "+newValues);
 
@@ -186,9 +183,8 @@ public class TransformEngine {
         return pk;
     }
 
-    public Collection getPrimaryKeys(Source source, AttributeValues sourceValues) throws Exception {
-        Config config = engineContext.getConfig(source);
-        Collection pkFields = config.getPrimaryKeyFieldDefinitions(source);
+    public Collection getPrimaryKeys(SourceDefinition sourceDefinition, AttributeValues sourceValues) throws Exception {
+        Collection pkFields = sourceDefinition.getPrimaryKeyFieldDefinitions();
 
         AttributeValues pkValues = new AttributeValues();
         for (Iterator j=pkFields.iterator(); j.hasNext(); ) {
@@ -208,7 +204,10 @@ public class TransformEngine {
     public Map split(Source source, AttributeValues entry) throws Exception {
 
         Config config = engineContext.getConfig(source);
-        Collection fields = config.getPrimaryKeyFieldDefinitions(source);
+        ConnectionConfig connectionConfig = config.getConnectionConfig(source.getConnectionName());
+        SourceDefinition sourceDefinition = connectionConfig.getSourceDefinition(source.getSourceName());
+
+        Collection fields = sourceDefinition.getPrimaryKeyFieldDefinitions();
 
         AttributeValues output = new AttributeValues();
         Row m = translate(source, entry, output);

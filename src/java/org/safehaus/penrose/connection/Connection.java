@@ -5,6 +5,7 @@ import org.safehaus.penrose.SearchResults;
 import org.safehaus.penrose.mapping.Source;
 import org.safehaus.penrose.mapping.AttributeValues;
 import org.safehaus.penrose.mapping.ConnectionConfig;
+import org.safehaus.penrose.mapping.SourceDefinition;
 import org.safehaus.penrose.filter.Filter;
 
 import java.util.Collection;
@@ -50,27 +51,27 @@ public class Connection {
         return connectionConfig.getConnectionName();
     }
 
-    public int bind(Source source, AttributeValues values, String password) throws Exception {
-        return adapter.bind(source, values, password);
+    public int bind(SourceDefinition sourceDefinition, AttributeValues values, String password) throws Exception {
+        return adapter.bind(sourceDefinition, values, password);
     }
 
-    public SearchResults search(Source source, Filter filter, long sizeLimit) throws Exception {
-        return adapter.search(source, filter, sizeLimit);
+    public SearchResults search(SourceDefinition sourceDefinition, Filter filter, long sizeLimit) throws Exception {
+        return adapter.search(sourceDefinition, filter, sizeLimit);
     }
 
-    public SearchResults load(Source source, Filter filter, long sizeLimit) throws Exception {
-        return adapter.load(source, filter, sizeLimit);
+    public SearchResults load(SourceDefinition sourceDefinition, Filter filter, long sizeLimit) throws Exception {
+        return adapter.load(sourceDefinition, filter, sizeLimit);
     }
 
-    public int add(Source source, AttributeValues values) throws Exception {
-        return adapter.add(source, values);
+    public int add(SourceDefinition sourceDefinition, AttributeValues values) throws Exception {
+        return adapter.add(sourceDefinition, values);
     }
 
-    public int modify(Source source, AttributeValues oldValues, AttributeValues newValues) throws Exception {
-        return adapter.modify(source, oldValues, newValues);
+    public int modify(SourceDefinition sourceDefinition, AttributeValues oldValues, AttributeValues newValues) throws Exception {
+        return adapter.modify(sourceDefinition, oldValues, newValues);
     }
 
-    public int delete(Source source, AttributeValues values) throws Exception {
-        return adapter.delete(source, values);
+    public int delete(SourceDefinition sourceDefinition, AttributeValues values) throws Exception {
+        return adapter.delete(sourceDefinition, values);
     }
 }

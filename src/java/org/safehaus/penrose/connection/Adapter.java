@@ -20,6 +20,7 @@ package org.safehaus.penrose.connection;
 
 import org.safehaus.penrose.mapping.AttributeValues;
 import org.safehaus.penrose.mapping.Source;
+import org.safehaus.penrose.mapping.SourceDefinition;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.SearchResults;
 import org.apache.log4j.Logger;
@@ -57,42 +58,42 @@ public abstract class Adapter {
 	 * 
 	 * @throws Exception
 	 */
-    public abstract int bind(Source source, AttributeValues values, String password) throws Exception;
+    public abstract int bind(SourceDefinition sourceDefinition, AttributeValues values, String password) throws Exception;
     
     /**
      * Search.
      *
      * @throws Exception
      */
-    public abstract SearchResults search(Source source, Filter filter, long sizeLimit) throws Exception;
+    public abstract SearchResults search(SourceDefinition sourceDefinition, Filter filter, long sizeLimit) throws Exception;
 
     /**
      * Load.
      *
      * @throws Exception
      */
-    public abstract SearchResults load(Source source, Filter filter, long sizeLimit) throws Exception;
+    public abstract SearchResults load(SourceDefinition sourceDefinition, Filter filter, long sizeLimit) throws Exception;
 
     /**
      * Add.
      * 
      * @throws Exception
      */
-    public abstract int add(Source source, AttributeValues values) throws Exception;
+    public abstract int add(SourceDefinition sourceDefinition, AttributeValues values) throws Exception;
     
     /**
      * Modify.
      * 
      * @throws Exception
      */
-    public abstract int modify(Source source, AttributeValues oldValues, AttributeValues newValues) throws Exception;
+    public abstract int modify(SourceDefinition sourceDefinition, AttributeValues oldValues, AttributeValues newValues) throws Exception;
 
     /**
      * Delete.
      * 
      * @throws Exception
      */
-    public abstract int delete(Source source, AttributeValues values) throws Exception;
+    public abstract int delete(SourceDefinition sourceDefinition, AttributeValues values) throws Exception;
 
     public AdapterContext getAdapterContext() {
         return adapterContext;

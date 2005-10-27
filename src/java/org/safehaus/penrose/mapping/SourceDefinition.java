@@ -17,14 +17,14 @@
  */
 package org.safehaus.penrose.mapping;
 
-import org.safehaus.penrose.connection.AdapterConfig;
-
 import java.util.*;
 
 /**
  * @author Endi S. Dewata
  */
 public class SourceDefinition implements Cloneable {
+
+    public final static String AUTO_RELOAD             = "autoReload";
 
     public final static String LOAD_ON_STARTUP         = "loadOnStartup";
     public final static String LOAD_UPON_EXPIRATION    = "loadUponExpiration";
@@ -42,6 +42,8 @@ public class SourceDefinition implements Cloneable {
     public final static String SEARCH_AND_LOAD         = "searchAndLoad";
 
     public final static String CACHE                   = "cache";
+
+    public final static boolean DEFAULT_AUTO_RELOAD            = false;
 
     public final static int    DEFAULT_FILTER_CACHE_SIZE       = 100;
     public final static int    DEFAULT_FILTER_CACHE_EXPIRATION = 5;
@@ -87,7 +89,37 @@ public class SourceDefinition implements Cloneable {
     public FieldDefinition getFieldDefinition(String name) {
         return (FieldDefinition)fields.get(name);
     }
-    
+
+    public Collection getPrimaryKeyFieldDefinitions() {
+        Collection results = new ArrayList();
+        for (Iterator i=fields.values().iterator(); i.hasNext(); ) {
+            FieldDefinition fieldDefinition = (FieldDefinition)i.next();
+            if (!fieldDefinition.isPrimaryKey()) continue;
+            results.add(fieldDefinition);
+        }
+        return results;
+    }
+
+    public Collection getUniqueFieldDefinitions() {
+        Collection results = new ArrayList();
+        for (Iterator i=fields.values().iterator(); i.hasNext(); ) {
+            FieldDefinition fieldDefinition = (FieldDefinition)i.next();
+            if (!fieldDefinition.isUnique()) continue;
+            results.add(fieldDefinition);
+        }
+        return results;
+    }
+
+    public Collection getIndexedFieldDefinitions() {
+        Collection results = new ArrayList();
+        for (Iterator i=fields.values().iterator(); i.hasNext(); ) {
+            FieldDefinition fieldDefinition = (FieldDefinition)i.next();
+            if (!fieldDefinition.isPrimaryKey() && !fieldDefinition.isUnique() && !fieldDefinition.isIndex()) continue;
+            results.add(fieldDefinition);
+        }
+        return results;
+    }
+
 	public Collection getFieldDefinitions() {
 		return fields.values();
 	}

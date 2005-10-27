@@ -149,9 +149,21 @@ public class ConfigWriter {
 		Element element = new DefaultElement("field");
 		element.add(new DefaultAttribute("name", field.getName()));
 
-		// write expression
-        if (field.getExpression() != null) {
+        if (field.getConstant() != null) {
+            Element scriptElement = new DefaultElement("constant");
+            scriptElement.setText(field.getConstant());
+            element.add(scriptElement);
+
+        } else if (field.getVariable() != null) {
+            Element scriptElement = new DefaultElement("variable");
+            scriptElement.setText(field.getVariable());
+            element.add(scriptElement);
+
+        } else if (field.getExpression() != null) {
             element.add(toElement(field.getExpression()));
+
+        } else {
+            return null;
         }
 
 		return element;
@@ -231,9 +243,11 @@ public class ConfigWriter {
 		Collection attributes = entry.getAttributeDefinitions();
 		for (Iterator i = attributes.iterator(); i.hasNext(); ) {
 			AttributeDefinition attribute = (AttributeDefinition)i.next();
-            Expression expression = attribute.getExpression();
-            if (expression == null || expression.getScript() == null) continue;
-            entryElement.add(toElement(attribute));
+
+            Element child = toElement(attribute);
+            if (child == null) continue;
+
+            entryElement.add(child);
 		}
 
 		for (Iterator i = entry.getSources().iterator(); i.hasNext(); ) {
@@ -295,8 +309,11 @@ public class ConfigWriter {
             scriptElement.setText(attributeDefinition.getVariable());
             element.add(scriptElement);
 
-        } else {
+        } else if (attributeDefinition.getExpression() != null) {
             element.add(toElement(attributeDefinition.getExpression()));
+
+        } else {
+            return null;
         }
 
     	return element;
@@ -331,9 +348,11 @@ public class ConfigWriter {
 		// fields
 		for (Iterator i=source.getFields().iterator(); i.hasNext(); ) {
 			Field field = (Field)i.next();
-            if (field.getExpression() == null) continue;
 
-            element.add(toElement(field));
+            Element child = toElement(field);
+            if (child == null) continue;
+
+            element.add(child);
 		}
 
     	// parameters

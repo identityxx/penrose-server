@@ -18,6 +18,7 @@
 package org.safehaus.penrose.handler;
 
 import org.safehaus.penrose.PenroseConnection;
+import org.safehaus.penrose.config.Config;
 import org.safehaus.penrose.event.BindEvent;
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.util.PasswordUtil;
@@ -142,13 +143,25 @@ public class BindHandler {
         }
 
         Collection sources = entry.getSources();
+        Config config = handlerContext.getConfig(entry.getDn());
 
         for (Iterator i=sources.iterator(); i.hasNext(); ) {
             Source source = (Source)i.next();
 
-            int rc = getEngineContext().getSyncService().bind(source, entry, attributeValues, password);
+            ConnectionConfig connectionConfig = config.getConnectionConfig(source.getConnectionName());
+            SourceDefinition sourceDefinition = connectionConfig.getSourceDefinition(source.getSourceName());
 
-            if (rc == LDAPException.SUCCESS) return rc;
+            Map entries = handlerContext.getTransformEngine().split(source, attributeValues);
+
+            for (Iterator j=entries.keySet().iterator(); j.hasNext(); ) {
+                Row pk = (Row)j.next();
+                AttributeValues sourceValues = (AttributeValues)entries.get(pk);
+
+                log.debug("Bind to "+source.getName()+" as "+pk+": "+sourceValues);
+
+                int rc = getEngineContext().getSyncService().bind(sourceDefinition, entry, sourceValues, password);
+                if (rc == LDAPException.SUCCESS) return rc;
+            }
         }
 
         return LDAPException.INVALID_CREDENTIALS;

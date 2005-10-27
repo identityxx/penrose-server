@@ -49,29 +49,24 @@ public class LoadGraphVisitor extends GraphVisitor {
     private AttributeValues loadedSourceValues = new AttributeValues();
 
     public LoadGraphVisitor(
-            Config config,
-            Graph graph,
             Engine engine,
             EntryDefinition entryDefinition,
-            Collection parentSourceValues,
-            Collection filters,
-            Source primarySource) {
+            AttributeValues sourceValues) throws Exception {
 
-        this.config = config;
-        this.graph = graph;
         this.engine = engine;
         this.engineContext = engine.getEngineContext();
         this.entryDefinition = entryDefinition;
-        this.primarySource = primarySource;
+        this.sourceValues = sourceValues;
 
-        sourceValues = new AttributeValues();
-        for (Iterator i=parentSourceValues.iterator(); i.hasNext(); ) {
-            AttributeValues sv = (AttributeValues)i.next();
-            sourceValues.add(sv);
-        }
+        config = engineContext.getConfig(entryDefinition.getDn());
+        graph = engine.getGraph(entryDefinition);
+        primarySource = engine.getPrimarySource(entryDefinition);
 
-        loadedSourceValues.add(sourceValues);
-        //this.results.addAll(parentSourceValues);
+        //loadedSourceValues.add(sourceValues);
+    }
+
+    public void run() throws Exception {
+        graph.traverse(this, primarySource);
     }
 
     public void visitNode(GraphIterator graphIterator, Object node) throws Exception {
@@ -107,7 +102,10 @@ public class LoadGraphVisitor extends GraphVisitor {
             return;
         }
 
-        Collection tmp = engineContext.getSyncService().search(source, filter);
+        ConnectionConfig connectionConfig = config.getConnectionConfig(source.getConnectionName());
+        SourceDefinition sourceDefinition = connectionConfig.getSourceDefinition(source.getSourceName());
+
+        Collection tmp = engineContext.getSyncService().search(sourceDefinition, filter);
 
         Collection list = new ArrayList();
         for (Iterator i=tmp.iterator(); i.hasNext(); ) {
@@ -117,7 +115,7 @@ public class LoadGraphVisitor extends GraphVisitor {
             sv.add(source.getName(), av);
             list.add(sv);
 
-            sourceValues.add(sv);
+            //sourceValues.add(sv);
         }
 
         loadedSourceValues.set(source.getName(), list);

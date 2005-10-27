@@ -171,6 +171,8 @@ public class Penrose implements
         log.debug("-------------------------------------------------------------------------------");
         log.debug("Penrose.initServer()");
 
+        if (trustedKeyStore != null) System.setProperty("javax.net.ssl.trustStore", trustedKeyStore);
+
         ServerConfigReader reader = new ServerConfigReader();
         reader.read((homeDirectory == null ? "" : homeDirectory+File.separator)+"conf"+File.separator+"server.xml");
 
@@ -183,16 +185,19 @@ public class Penrose implements
         aclEngine = new ACLEngine(this);
         filterTool = new FilterTool(this);
         transformEngine = new TransformEngine(this);
-        syncService = new SyncService(this);
 
         loadSchema();
+        initSyncService();
         initEngine();
 
         configValidator = new ConfigValidator();
         configValidator.setServerConfig(serverConfig);
         configValidator.setSchema(schema);
+    }
 
-        if (trustedKeyStore != null) System.setProperty("javax.net.ssl.trustStore", trustedKeyStore);
+    public void initSyncService() throws Exception {
+        syncService = new SyncService(this);
+        syncService.init();
     }
 
     public void initEngine() throws Exception {
@@ -238,6 +243,7 @@ public class Penrose implements
         initConnections(config);
         initModules(config);
         getEngine().analyze(config);
+        syncService.init(config);
 	}
 
     public Connection getConnection(String name) {
@@ -337,6 +343,15 @@ public class Penrose implements
         return null;
     }
     
+    public Config getConfig(SourceDefinition sourceDefinition) throws Exception {
+        String connectionName = sourceDefinition.getConnectionName();
+        for (Iterator i=configs.values().iterator(); i.hasNext(); ) {
+            Config config = (Config)i.next();
+            if (config.getConnectionConfig(connectionName) != null) return config;
+        }
+        return null;
+    }
+
     public Config getConfig(String dn) throws Exception {
         String ndn = schema.normalize(dn);
         for (Iterator i=configs.keySet().iterator(); i.hasNext(); ) {

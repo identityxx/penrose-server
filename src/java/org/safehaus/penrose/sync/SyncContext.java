@@ -28,12 +28,16 @@ import org.safehaus.penrose.mapping.ConnectionConfig;
 import org.safehaus.penrose.config.Config;
 import org.safehaus.penrose.filter.FilterTool;
 
+import java.util.Collection;
+
 /**
  * @author Endi S. Dewata
  */
 public interface SyncContext {
 
     public Config getConfig(Source source) throws Exception;
+    public Config getConfig(SourceDefinition sourceDefinition) throws Exception;
+    public Collection getConfigs() throws Exception;
     public SourceFilterCache getSourceFilterCache(ConnectionConfig connectionConfig, SourceDefinition sourceDefinition) throws Exception;
     public SourceDataCache getSourceDataCache(ConnectionConfig connectionConfig, SourceDefinition sourceDefinition) throws Exception;
     public FilterTool getFilterTool() throws Exception;

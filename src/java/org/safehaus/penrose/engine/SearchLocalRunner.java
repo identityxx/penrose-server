@@ -101,7 +101,11 @@ public class SearchLocalRunner extends GraphVisitor {
         }
 
         log.debug("Searching source "+source.getName()+" with filter "+filter);
-        Collection tmp = engineContext.getSyncService().search(source, filter);
+
+        ConnectionConfig connectionConfig = config.getConnectionConfig(source.getConnectionName());
+        SourceDefinition sourceDefinition = connectionConfig.getSourceDefinition(source.getSourceName());
+
+        Collection tmp = engineContext.getSyncService().search(sourceDefinition, filter);
 
         Collection list = new ArrayList();
         for (Iterator i=tmp.iterator(); i.hasNext(); ) {

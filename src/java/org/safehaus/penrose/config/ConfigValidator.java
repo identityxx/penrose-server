@@ -206,6 +206,15 @@ public class ConfigValidator {
                 results.add(new ConfigValidationResult(ConfigValidationResult.WARNING, "Attribute type "+name+" is not defined in the schema.", entryDefinition.getDn(), entryDefinition));
             }
 */
+            Expression expression = attributeDefinition.getExpression();
+            if (expression != null) {
+                String foreach = expression.getForeach();
+                String var = expression.getVar();
+                if (foreach != null && (var == null || "".equals(var))) {
+                    results.add(new ConfigValidationResult(ConfigValidationResult.ERROR, "Missing variable name.", entryDefinition.getDn()+"/"+name, entryDefinition));
+                }
+            }
+
         }
 
         Collection objectClasses = schema.getObjectClasses(entryDefinition);

@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
-package org.safehaus.penrose.engine;
+package org.safehaus.penrose.sync;
 
 import java.io.Serializable;
 import java.util.Properties;
@@ -24,24 +24,24 @@ import java.util.Collection;
 /**
  * @author Endi S. Dewata
  */
-public class EngineConfig implements Serializable {
+public class SyncConfig implements Serializable {
 
     public final static String THREAD_POOL_SIZE = "threadPoolSize";
 
     public final static int DEFAULT_THREAD_POOL_SIZE = 20;
 
-    private String engineName;
-    private String engineClass;
+    private String syncName;
+    private String syncClass;
     private String description;
 
     private Properties parameters = new Properties();
 
-    public String getEngineClass() {
-        return engineClass;
+    public String getSyncClass() {
+        return syncClass;
     }
 
-    public void setEngineClass(String engineClass) {
-        this.engineClass = engineClass;
+    public void setSyncClass(String syncClass) {
+        this.syncClass = syncClass;
     }
 
     public void setParameter(String name, String value) {
@@ -60,12 +60,12 @@ public class EngineConfig implements Serializable {
         return parameters.getProperty(name);
     }
 
-    public String getEngineName() {
-        return engineName;
+    public String getSyncName() {
+        return syncName;
     }
 
-    public void setEngineName(String engineName) {
-        this.engineName = engineName;
+    public void setSyncName(String syncName) {
+        this.syncName = syncName;
     }
 
     public String getDescription() {
