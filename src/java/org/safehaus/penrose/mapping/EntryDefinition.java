@@ -103,11 +103,10 @@ public class EntryDefinition implements Cloneable, Serializable {
         int i = dn.indexOf(",");
         if (i < 0) {
             rdn = dn;
-            parentDn = null;
         } else {
             rdn = dn.substring(0, i);
-            parentDn = dn.substring(i+1);
         }
+        parentDn = Entry.getParentDn(dn);
     }
 
     public EntryDefinition(String rdn, EntryDefinition parent) {

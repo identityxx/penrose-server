@@ -205,8 +205,8 @@ public class SearchEngine {
                     String dn = (String)j.next();
                     log.debug(" - "+dn);
 
-                    Row rdn = engine.getRdn(dn);
-                    String parentDn = engine.getParentDn(dn);
+                    Row rdn = Entry.getRdn(dn);
+                    String parentDn = Entry.getParentDn(dn);
 
                     log.debug("   Storing "+rdn+" in entry source cache.");
                     engineContext.getEntrySourceCache(parentDn, entryDefinition).put(rdn, sv);
@@ -257,8 +257,8 @@ public class SearchEngine {
             for (Iterator i=dns.iterator(); i.hasNext(); ) {
                 String dn = (String)i.next();
 
-                Row rdn = engine.getRdn(dn);
-                String parentDn = engine.getParentDn(dn);
+                Row rdn = Entry.getRdn(dn);
+                String parentDn = Entry.getParentDn(dn);
 
                 log.debug("Getting "+rdn+" from entry source cache for "+parentDn);
                 AttributeValues sv = (AttributeValues)engineContext.getEntrySourceCache(parentDn, entryDefinition).get(rdn);

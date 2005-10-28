@@ -38,10 +38,7 @@ public class Entry {
 
     public Entry(String dn, EntryDefinition entry, AttributeValues attributes) {
         this.dn = dn;
-        int i = dn.indexOf(",");
-        if (i >= 0) {
-            parentDn = dn.substring(i+1);
-        }
+        this.parentDn = getParentDn(dn);
         this.entryDefinition = entry;
         this.sourceValues = new AttributeValues();
         this.attributeValues = attributes;
@@ -49,10 +46,7 @@ public class Entry {
 
     public Entry(String dn, EntryDefinition entry, AttributeValues sourceValues, AttributeValues attributeValues) {
         this.dn = dn;
-        int i = dn.indexOf(",");
-        if (i >= 0) {
-            parentDn = dn.substring(i+1);
-        }
+        this.parentDn = getParentDn(dn);
         this.entryDefinition = entry;
         this.sourceValues = sourceValues;
         this.attributeValues = attributeValues;
@@ -195,4 +189,28 @@ public class Entry {
     public void setParentDn(String parentDn) {
         this.parentDn = parentDn;
     }
+
+    public static Row getRdn(String dn) {
+
+        int index = dn.indexOf(",");
+        String s = index < 0 ? dn : dn.substring(0, index);
+
+        StringTokenizer st = new StringTokenizer(s, "+");
+        Row rdn = new Row();
+
+        while (st.hasMoreTokens()) {
+            s = st.nextToken();
+            index = s.indexOf("=");
+            rdn.set(s.substring(0, index), s.substring(index+1));
+        }
+
+        return rdn;
+    }
+
+    public static String getParentDn(String dn) {
+        if (dn == null) return null;
+        int index = dn.indexOf(",");
+        return index < 0 ? null : dn.substring(index+1);
+    }
+
 }

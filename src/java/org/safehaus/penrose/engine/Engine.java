@@ -353,8 +353,8 @@ public class Engine {
 
         EntryDefinition entryDefinition = entry.getEntryDefinition();
 
-        AttributeValues sourceValues = new AttributeValues();
-        getFieldValues(entry.getDn(), sourceValues);
+        AttributeValues sourceValues = entry.getSourceValues();
+        //getFieldValues(entry.getDn(), sourceValues);
 
         Graph graph = getGraph(entryDefinition);
         Source primarySource = getPrimarySource(entryDefinition);
@@ -378,8 +378,8 @@ public class Engine {
         EntryDefinition entryDefinition = entry.getEntryDefinition();
         Collection sources = entryDefinition.getSources();
 
-        AttributeValues oldSourceValues = new AttributeValues();
-        getFieldValues(entry.getDn(), oldSourceValues);
+        AttributeValues oldSourceValues = entry.getSourceValues();
+        //getFieldValues(entry.getDn(), oldSourceValues);
 
         AttributeValues newSourceValues = (AttributeValues)oldSourceValues.clone();
         for (Iterator i=sources.iterator(); i.hasNext(); ) {
@@ -545,8 +545,8 @@ public class Engine {
                 String dn = e.getDn();
                 AttributeValues sv = e.getSourceValues();
 
-                Row rdn = getRdn(dn);
-                String parentDn = getParentDn(dn);
+                Row rdn = Entry.getRdn(dn);
+                String parentDn = Entry.getParentDn(dn);
 
                 log.debug("Checking "+rdn+" in entry data cache for "+parentDn);
                 Entry entry = (Entry)engineContext.getEntryDataCache(parentDn, entryDefinition).get(rdn);
@@ -582,40 +582,18 @@ public class Engine {
         }
     }
 
-    public Row getRdn(String dn) {
-        int index = dn.indexOf(",");
-        String s = index < 0 ? dn : dn.substring(0, index);
-
-        // TODO need to handle composite RDN
-        index = s.indexOf("=");
-        Row rdn = new Row();
-        rdn.set(s.substring(0, index), s.substring(index+1));
-
-        return rdn;
-    }
-
-    public String getParentDn(String dn) {
-        if (dn == null) return null;
-        int index = dn.indexOf(",");
-        return index < 0 ? null : dn.substring(index+1);
-    }
-
-    public void getFieldValues(String dn, AttributeValues results) throws Exception {
-        getFieldValues(null, dn, results);
-    }
-
     public void getFieldValues(String prefix, String dn, AttributeValues results) throws Exception {
 
         Config config = engineContext.getConfig(dn);
         log.debug("Config for "+dn+": "+(config == null ? "null" : "not null"));
         if (config == null) return;
 
-        String parentDn = getParentDn(dn);
+        String parentDn = Entry.getParentDn(dn);
         if (parentDn != null) {
             getFieldValues((prefix == null ? "" : prefix+".")+"parent", parentDn, results);
         }
 
-        Row rdn = getRdn(dn);
+        Row rdn = Entry.getRdn(dn);
 
         EntryDefinition entryDefinition = config.findEntryDefinition(dn);
 
@@ -639,31 +617,6 @@ public class Engine {
         }
 
         log.debug(entry.getDn()+"'s attribute values:");
-/*
-        AttributeValues attributeValues = entry.getAttributeValues();
-
-        for (Iterator i=values.getNames().iterator(); i.hasNext(); ) {
-            String name = (String)i.next();
-            Collection value = values.get(name);
-            log.debug(" - "+prefix+"."+name+": "+value);
-            results.set(prefix+"."+name, value);
-        }
-*/
-/*
-        for (Iterator i=entry.getSources().iterator(); i.hasNext(); ) {
-            Source source = (Source)i.next();
-
-            AttributeValues output = new AttributeValues();
-            getEngineContext().getTransformEngine().translate(source, attributeValues, output);
-
-            for (Iterator j=output.getNames().iterator(); j.hasNext(); ) {
-                String name = (String)j.next();
-                Collection value = output.get(name);
-                log.debug(" - "+source.getName()+"."+name+": "+value);
-                results.set(source.getName()+"."+name, value);
-            }
-        }
-*/
     }
 
     public String getStartingSourceName(EntryDefinition entryDefinition) throws Exception {

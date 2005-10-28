@@ -19,6 +19,10 @@ package org.safehaus.penrose.module;
 
 import org.apache.log4j.Logger;
 import org.safehaus.penrose.Penrose;
+import org.safehaus.penrose.mapping.Entry;
+import org.safehaus.penrose.mapping.Row;
+
+import java.util.Iterator;
 
 /**
  * @author Endi S. Dewata
@@ -69,43 +73,40 @@ public class ModuleMapping implements Cloneable {
 	}
 
     /**
-     * Compare dn and dn2
-     * @param dn
+     * Compare dn1 and dn2
+     * @param dn1
      * @param dn2
-     * @return true if dn == dn2
+     * @return true if dn1 == dn2
      * @throws Exception
      */
-    public boolean match(String dn, String dn2) throws Exception {
+    public boolean match(String dn1, String dn2) throws Exception {
 
-        //log.debug("Matching ["+dn+"] with ["+dn2+"]");
-        int p = dn.indexOf("=");
-        int q = dn.indexOf(",");
-
-        String attr = dn.substring(0, p);
-        String value = q >= 0 ? dn.substring(p+1, q) : dn.substring(p+1);
-        String parent = q >= 0 ? dn.substring(q+1) : null;
-
-        p = dn2.indexOf("=");
-        q = dn2.indexOf(",");
-
-        String attr2 = dn2.substring(0, p);
-        String value2 = q >= 0 ? dn2.substring(p+1, q) : dn2.substring(p+1);
-        String parent2 = q >= 0 ? dn2.substring(q+1) : null;
+        //log.debug("Matching ["+dn1+"] with ["+dn2+"]");
+        Row rdn1 = Entry.getRdn(dn1);
+        Row rdn2 = Entry.getRdn(dn2);
 
         // if attribute types don't match => false
         //log.debug(" - Comparing attribute types ["+attr+"] with ["+attr2+"]");
-        if (!attr.equals(attr2)) return false;
+        if (!rdn1.getNames().equals(rdn2.getNames())) return false;
 
         // if values are not dynamic and they don't match => false
-        //log.debug(" - Comparing attribute values ["+value+"] with ["+value2+"]");
-        if (!"...".equals(value) && !"...".equals(value2) && !value.equals(value2)) return false;
+        for (Iterator i=rdn1.getNames().iterator(); i.hasNext(); ) {
+            String name = (String)i.next();
+            String value = (String)rdn1.get(name);
+            String value2 = (String)rdn2.get(name);
+            //log.debug(" - Comparing attribute values ["+value+"] with ["+value2+"]");
+            if (!"...".equals(value) && !"...".equals(value2) && !value.equals(value2)) return false;
+        }
+
+        String parentDn1 = Entry.getParentDn(dn1);
+        String parentDn2 = Entry.getParentDn(dn2);
 
         // if parents matches => true
-        //log.debug(" - Comparing parents ["+parent+"] with ["+parent2+"]");
-        if (parent != null && parent2 != null && parent.equals(parent2)) return true;
+        //log.debug(" - Comparing parents ["+parentDn1+"] with ["+parentDn2+"]");
+        if (parentDn1 != null && parentDn2 != null && parentDn1.equals(parentDn2)) return true;
 
         // if neither has parents => true
-        return parent == null && parent2 == null;
+        return parentDn1 == null && parentDn2 == null;
     }
 
     public boolean match(String dn) throws Exception {
@@ -118,8 +119,7 @@ public class ModuleMapping implements Cloneable {
         } else if ("ONELEVEL".equals(scope)) {
 
             //log.debug("Matching onelevel ["+baseDn+"] with ["+dn+"]");
-            int i = dn.indexOf(",");
-            String parent = dn.substring(i+1);
+            String parent = Entry.getParentDn(dn);
             if (match(baseDn, parent)) return true;
 
         } else if ("SUBTREE".equals(scope)) {

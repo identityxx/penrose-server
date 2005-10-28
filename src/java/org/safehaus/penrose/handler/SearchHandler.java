@@ -64,8 +64,8 @@ public class SearchHandler {
 
         if (dn == null) return null;
 
-        String parentDn = handlerContext.getEngine().getParentDn(dn);
-        Row rdn = handlerContext.getEngine().getRdn(dn);
+        String parentDn = Entry.getParentDn(dn);
+        Row rdn = Entry.getRdn(dn);
 
         List path = find(connection, parentDn);
         Entry parent;
@@ -121,7 +121,7 @@ public class SearchHandler {
 		for (Iterator iterator = children.iterator(); iterator.hasNext(); ) {
 			EntryDefinition childDefinition = (EntryDefinition) iterator.next();
 
-            Row childRdn = handlerContext.getEngine().getRdn(childDefinition.getRdn());
+            Row childRdn = Entry.getRdn(childDefinition.getRdn());
             log.debug("Finding entry in "+childDefinition.getDn()+" with "+filter);
 
             if (!rdn.getNames().equals(childRdn.getNames())) continue;

@@ -87,7 +87,7 @@ public class AddHandler {
         if (path != null) return LDAPException.ENTRY_ALREADY_EXISTS;
 
         // find parent entry
-        String parentDn = handlerContext.getEngine().getParentDn(dn);
+        String parentDn = Entry.getParentDn(dn);
         path = getHandler().getSearchHandler().find(connection, parentDn);
         if (path == null) return LDAPException.NO_SUCH_OBJECT;
 
@@ -147,27 +147,16 @@ public class AddHandler {
     public int addStaticEntry(EntryDefinition parent, AttributeValues values, String dn) throws Exception {
         log.debug("Adding regular entry "+dn);
 
-        int i = dn.indexOf(",");
         EntryDefinition newEntry;
 
-        String rdn;
+        Row rdn = Entry.getRdn(dn);
 
-        if (i < 0) { // no commas
-            rdn = dn;
-            newEntry = new EntryDefinition(dn);
-
-        } else if (parent == null) { // no parent
-            rdn = dn.substring(0, i);
+        if (parent == null) {
             newEntry = new EntryDefinition(dn);
 
         } else {
-            rdn = dn.substring(0, i);
-            newEntry = new EntryDefinition(rdn, parent);
+            newEntry = new EntryDefinition(rdn.toString(), parent);
         }
-
-        int k = rdn.indexOf("=");
-        String rdnAttribute = rdn.substring(0, k);
-        String rdnValue = rdn.substring(k+1);
 
         Config config = getHandlerContext().getConfig(dn);
         if (config == null) return LDAPException.NO_SUCH_OBJECT;
@@ -198,10 +187,8 @@ public class AddHandler {
 
                 AttributeDefinition newAttribute = new AttributeDefinition();
                 newAttribute.setName(name);
-
                 newAttribute.setConstant(value);
-
-                newAttribute.setRdn(rdnAttribute.equals(name));
+                newAttribute.setRdn(rdn.contains(name));
 
                 log.debug("Add attribute "+name+": "+value);
                 newEntry.addAttributeDefinition(newAttribute);

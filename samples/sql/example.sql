@@ -101,31 +101,32 @@ drop table orders;
 
 create table orders (
     id integer,
-    username varchar(10),
+    customer varchar(10),
+    employee varchar(10),
     orderDate datetime,
     primary key (id)
 );
 
-insert into orders values (1, 'ewalker', '2004-08-10');
-insert into orders values (2, 'scarter', '2004-12-22');
-insert into orders values (3, 'ewalker', '2005-01-02');
-insert into orders values (4, 'scarter', '2005-01-10');
-insert into orders values (5, 'jcarter', '2005-02-10');
-insert into orders values (6, 'ewalker', '2005-02-17');
-insert into orders values (7, 'tmorris', '2005-02-25');
-insert into orders values (8, 'tmorris', '2005-03-11');
-insert into orders values (9, 'kjensen', '2005-04-09');
-insert into orders values (10, 'jcarter', '2005-05-07');
-insert into orders values (11, 'tmorris', '2005-05-15');
-insert into orders values (12, 'ewalker', '2005-06-06');
-insert into orders values (13, 'rmills', '2005-06-27');
-insert into orders values (14, 'mhunter', '2005-07-14');
-insert into orders values (15, 'rmills', '2005-07-14');
-insert into orders values (16, 'jcarter', '2005-07-25');
-insert into orders values (17, 'bhall', '2005-08-06');
-insert into orders values (18, 'tmorris', '2005-08-18');
-insert into orders values (19, 'scarter', '2005-09-07');
-insert into orders values (20, 'emorris', '2005-09-12');
+insert into orders values (1, 'ewalker', 'swhite', '2004-08-10');
+insert into orders values (2, 'scarter', 'swhite', '2004-12-22');
+insert into orders values (3, 'ewalker', 'pfarmer', '2005-01-02');
+insert into orders values (4, 'scarter', 'jstockton', '2005-01-10');
+insert into orders values (5, 'jcarter', 'jstockton', '2005-02-10');
+insert into orders values (6, 'ewalker', 'lwalker', '2005-02-17');
+insert into orders values (7, 'tmorris', 'pfarmer', '2005-02-25');
+insert into orders values (8, 'tmorris', 'swhite', '2005-03-11');
+insert into orders values (9, 'kjensen', 'pfarmer', '2005-04-09');
+insert into orders values (10, 'jcarter', 'jstockton', '2005-05-07');
+insert into orders values (11, 'tmorris', 'swhite', '2005-05-15');
+insert into orders values (12, 'ewalker', 'swhite', '2005-06-06');
+insert into orders values (13, 'rmills', 'jstockton', '2005-06-27');
+insert into orders values (14, 'mhunter', 'lwalker', '2005-07-14');
+insert into orders values (15, 'rmills', 'swhite', '2005-07-14');
+insert into orders values (16, 'jcarter', 'pfarmer', '2005-07-25');
+insert into orders values (17, 'bhall', 'jstockton', '2005-08-06');
+insert into orders values (18, 'tmorris', 'pfarmer', '2005-08-18');
+insert into orders values (19, 'scarter', 'jstockton', '2005-09-07');
+insert into orders values (20, 'emorris', 'lwalker', '2005-09-12');
 
 drop table customers;
 
@@ -152,16 +153,33 @@ insert into customers values ('bhall', 'Benjamin', 'Hall', '399fa0b37c78c6d8fc43
 drop table customer_emails;
 
 create table customer_emails (
-    username varchar(10),
     email varchar(50),
+    username varchar(10),
     primary key (email)
 );
 
-insert into customer_emails values ('tmorris', 'tmorris@yahoo.com');
-insert into customer_emails values ('tmorris', 'tmorris@hotmail.com');
-insert into customer_emails values ('ewalker', 'ewalker@yahoo.com');
-insert into customer_emails values ('ewalker', 'ewalker@hotmail.com');
-insert into customer_emails values ('ewalker', 'ewalker@gmail.com');
-insert into customer_emails values ('kjensen', 'kjensen@gmail.com');
-insert into customer_emails values ('tjensen', 'tjensen@hotmail.com');
-insert into customer_emails values ('jcarter', 'jcarter@yahoo.com');
+insert into customer_emails values ('tmorris@yahoo.com', 'tmorris');
+insert into customer_emails values ('tmorris@hotmail.com', 'tmorris');
+insert into customer_emails values ('ewalker@yahoo.com', 'ewalker');
+insert into customer_emails values ('ewalker@hotmail.com', 'ewalker');
+insert into customer_emails values ('ewalker@gmail.com', 'ewalker');
+insert into customer_emails values ('kjensen@gmail.com', 'kjensen');
+insert into customer_emails values ('tjensen@hotmail.com', 'tjensen');
+insert into customer_emails values ('jcarter@yahoo.com', 'jcarter');
+
+drop table employees;
+
+create table employees (
+    username varchar(10),
+    firstName varchar(50),
+    lastName varchar(50),
+    encPassword varchar(255),
+    password varchar(10),
+    primary key (username)
+);
+
+insert into employees values ('jstockton', 'Jim', 'Stockton', '29609449ad6a267aac664f9c1d9c267b54aade19', 'j5t0ckt0n');
+insert into employees values ('swhite', 'Scott', 'White', '1c60f10728e0f6878d60f7345225a8c680844d19', 'swh1t3');
+insert into employees values ('pfarmer', 'Pete', 'Farmer', 'e7beca51ea8907ea427f538c73638058401ff795', 'pf4rm3r');
+insert into employees values ('lwalker', 'Lee', 'Walker', 'ed7369e175739f26aa2f421a67e3d8a66d753bdd', 'lw4lk3r');
+insert into employees values ('alange', 'Andy', 'Lange', '47af3474c807aaea8b876c39e6ce8fb41e7ac637', '4l4ng3');

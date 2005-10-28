@@ -338,18 +338,8 @@ public class Config implements Serializable {
                 return result;
             }
 
-            int i = dn.indexOf(",");
-            String rdn;
-            String parentDn;
-
-            if (i < 0) {
-                rdn = dn;
-                parentDn = null;
-
-            } else {
-                rdn = dn.substring(0, i);
-                parentDn = dn.substring(i + 1);
-            }
+            Row rdn = Entry.getRdn(dn);
+            String parentDn = Entry.getParentDn(dn);
 
             Collection list;
 
@@ -366,26 +356,18 @@ public class Config implements Serializable {
                 if (list == null) return result;
             }
 
-            int j = rdn.indexOf("=");
-            String rdnAttribute = rdn.substring(0, j);
-            String rdnValue = rdn.substring(j + 1);
-
             for (Iterator iterator = list.iterator(); iterator.hasNext(); ) {
                 EntryDefinition childDefinition = (EntryDefinition) iterator.next();
-                String childRdn = childDefinition.getRdn();
+                Row childRdn = Entry.getRdn(childDefinition.getRdn());
 
-                int k = childRdn.indexOf("=");
-                String childRdnAttribute = childRdn.substring(0, k);
-                String childRdnValue = childRdn.substring(k+1);
-
-                if (!rdnAttribute.equals(childRdnAttribute)) continue;
+                if (!rdn.getNames().equals(childRdn.getNames())) continue;
 
                 if (childDefinition.isDynamic()) {
                     result = childDefinition;
                     return result;
                 }
 
-                if (!rdnValue.toLowerCase().equals(childRdnValue.toLowerCase())) continue;
+                if (!rdn.equals(childRdn)) continue;
 
                 return childDefinition;
             }

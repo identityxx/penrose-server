@@ -265,7 +265,7 @@ return price.substring(1, i);</expression>
       <variable>orders.id</variable>
     </at>
     <at name="uid">
-      <variable>orders.username</variable>
+      <variable>orders.customer</variable>
     </at>
     <source name="order_details">
       <source-name>order_details</source-name>
@@ -274,14 +274,14 @@ return price.substring(1, i);</expression>
     <source name="orders">
       <source-name>orders</source-name>
       <connection-name>MySQL</connection-name>
+      <field name="customer">
+        <variable>uid</variable>
+      </field>
       <field name="id">
         <variable>orderId</variable>
       </field>
       <field name="orderDate">
         <variable>date</variable>
-      </field>
-      <field name="username">
-        <variable>uid</variable>
       </field>
     </source>
     <relationship>
@@ -336,7 +336,7 @@ return cn.substring(i+1);</expression>
       <expression>order_details.orderId = orders.id</expression>
     </relationship>
     <relationship>
-      <expression>orders.username = customers.username</expression>
+      <expression>orders.customer = customers.username</expression>
     </relationship>
   </entry>
   <entry dn="ou=Expensive Products,cn=...,ou=Categories,dc=Example,dc=com">
@@ -380,18 +380,18 @@ return cn.substring(i+1);</expression>
       <constant>All Customers</constant>
     </at>
   </entry>
-  <entry dn="cn=...,ou=All Customers,ou=Customers,dc=Example,dc=com">
+  <entry dn="cn=...+uid=...,ou=All Customers,ou=Customers,dc=Example,dc=com">
     <oc>customer</oc>
     <at name="cn" rdn="true">
       <expression>customers.firstName+" "+customers.lastName</expression>
     </at>
-    <at name="mail">
+    <at name="email">
       <variable>customer_emails.email</variable>
     </at>
     <at name="sn">
       <variable>customers.lastName</variable>
     </at>
-    <at name="uid">
+    <at name="uid" rdn="true">
       <variable>customers.username</variable>
     </at>
     <at name="userPassword">
@@ -447,20 +447,20 @@ return cn.substring(i+1);</expression>
       <source-name>customer_emails</source-name>
       <connection-name>MySQL</connection-name>
       <field name="email">
-        <variable>mail</variable>
+        <variable>email</variable>
       </field>
     </source>
     <relationship>
       <expression>customers.username = customer_emails.username</expression>
     </relationship>
   </entry>
-  <entry dn="ou=Orders,cn=...,ou=All Customers,ou=Customers,dc=Example,dc=com">
+  <entry dn="ou=Orders,cn=...+uid=...,ou=All Customers,ou=Customers,dc=Example,dc=com">
     <oc>organizationalUnit</oc>
     <at name="ou" rdn="true">
       <constant>Orders</constant>
     </at>
   </entry>
-  <entry dn="orderId=...,ou=Orders,cn=...,ou=All Customers,ou=Customers,dc=Example,dc=com">
+  <entry dn="orderId=...,ou=Orders,cn=...+uid=...,ou=All Customers,ou=Customers,dc=Example,dc=com">
     <oc>order</oc>
     <at name="date">
       <variable>orders.orderDate</variable>
@@ -479,16 +479,16 @@ return cn.substring(i+1);</expression>
       </field>
     </source>
     <relationship>
-      <expression>customers.username = orders.username</expression>
+      <expression>customers.username = orders.customer</expression>
     </relationship>
   </entry>
-  <entry dn="ou=Products,orderId=...,ou=Orders,cn=...,ou=All Customers,ou=Customers,dc=Example,dc=com">
+  <entry dn="ou=Products,orderId=...,ou=Orders,cn=...+uid=...,ou=All Customers,ou=Customers,dc=Example,dc=com">
     <oc>organizationalUnit</oc>
     <at name="ou" rdn="true">
       <constant>Products</constant>
     </at>
   </entry>
-  <entry dn="cn=...,ou=Products,orderId=...,ou=Orders,cn=...,ou=All Customers,ou=Customers,dc=Example,dc=com">
+  <entry dn="cn=...,ou=Products,orderId=...,ou=Orders,cn=...+uid=...,ou=All Customers,ou=Customers,dc=Example,dc=com">
     <oc>product</oc>
     <at name="cn" rdn="true">
       <variable>products.name</variable>
@@ -517,13 +517,13 @@ return cn.substring(i+1);</expression>
       <expression>order_details.productId = products.id</expression>
     </relationship>
   </entry>
-  <entry dn="ou=Categories,cn=...,ou=Products,orderId=...,ou=Orders,cn=...,ou=All Customers,ou=Customers,dc=Example,dc=com">
+  <entry dn="ou=Categories,cn=...,ou=Products,orderId=...,ou=Orders,cn=...+uid=...,ou=All Customers,ou=Customers,dc=Example,dc=com">
     <oc>organizationalUnit</oc>
     <at name="ou" rdn="true">
       <constant>Categories</constant>
     </at>
   </entry>
-  <entry dn="cn=...,ou=Categories,cn=...,ou=Products,orderId=...,ou=Orders,cn=...,ou=All Customers,ou=Customers,dc=Example,dc=com">
+  <entry dn="cn=...,ou=Categories,cn=...,ou=Products,orderId=...,ou=Orders,cn=...+uid=...,ou=All Customers,ou=Customers,dc=Example,dc=com">
     <oc>category</oc>
     <at name="cn" rdn="true">
       <variable>categories.name</variable>
@@ -545,13 +545,13 @@ return cn.substring(i+1);</expression>
       <expression>products.categoryId = categories.id</expression>
     </relationship>
   </entry>
-  <entry dn="ou=Products,cn=...,ou=All Customers,ou=Customers,dc=Example,dc=com">
+  <entry dn="ou=Products,cn=...+uid=...,ou=All Customers,ou=Customers,dc=Example,dc=com">
     <oc>organizationalUnit</oc>
     <at name="ou" rdn="true">
       <constant>Products</constant>
     </at>
   </entry>
-  <entry dn="cn=...,ou=Products,cn=...,ou=All Customers,ou=Customers,dc=Example,dc=com">
+  <entry dn="cn=...,ou=Products,cn=...+uid=...,ou=All Customers,ou=Customers,dc=Example,dc=com">
     <oc>product</oc>
     <at name="cn" rdn="true">
       <variable>products.name</variable>
@@ -584,16 +584,16 @@ return cn.substring(i+1);</expression>
       <expression>order_details.productId = products.id</expression>
     </relationship>
     <relationship>
-      <expression>customers.username = orders.username</expression>
+      <expression>customers.username = orders.customer</expression>
     </relationship>
   </entry>
-  <entry dn="ou=Categories,cn=...,ou=All Customers,ou=Customers,dc=Example,dc=com">
+  <entry dn="ou=Categories,cn=...+uid=...,ou=All Customers,ou=Customers,dc=Example,dc=com">
     <oc>organizationalUnit</oc>
     <at name="ou" rdn="true">
       <constant>Categories</constant>
     </at>
   </entry>
-  <entry dn="cn=...,ou=Categories,cn=...,ou=All Customers,ou=Customers,dc=Example,dc=com">
+  <entry dn="cn=...,ou=Categories,cn=...+uid=...,ou=All Customers,ou=Customers,dc=Example,dc=com">
     <oc>category</oc>
     <at name="cn" rdn="true">
       <variable>categories.name</variable>
@@ -633,7 +633,7 @@ return cn.substring(i+1);</expression>
       <expression>products.categoryId = categories.id</expression>
     </relationship>
     <relationship>
-      <expression>customers.username = orders.username</expression>
+      <expression>customers.username = orders.customer</expression>
     </relationship>
   </entry>
   <entry dn="ou=Families,ou=Customers,dc=Example,dc=com">
@@ -732,7 +732,7 @@ return cn.substring(i+1);</expression>
       <variable>orders.id</variable>
     </at>
     <at name="uid">
-      <variable>orders.username</variable>
+      <variable>orders.customer</variable>
     </at>
     <source name="customers2">
       <source-name>customers</source-name>
@@ -741,21 +741,21 @@ return cn.substring(i+1);</expression>
     <source name="orders">
       <source-name>orders</source-name>
       <connection-name>MySQL</connection-name>
+      <field name="customer">
+        <variable>uid</variable>
+      </field>
       <field name="id">
         <variable>orderId</variable>
       </field>
       <field name="orderDate">
         <variable>date</variable>
       </field>
-      <field name="username">
-        <variable>uid</variable>
-      </field>
     </source>
     <relationship>
       <expression>customers.lastName = customers2.lastName</expression>
     </relationship>
     <relationship>
-      <expression>customers2.username = orders.username</expression>
+      <expression>customers2.username = orders.customer</expression>
     </relationship>
   </entry>
   <entry dn="ou=Orders,dc=Example,dc=com">
@@ -859,6 +859,79 @@ return cn.substring(i+1);</expression>
         <param-name>filter</param-name>
         <param-value>(orderDate&gt;=2005-06-01)</param-value>
       </parameter>
+    </source>
+  </entry>
+  <entry dn="ou=Employees,dc=Example,dc=com">
+    <oc>organizationalUnit</oc>
+    <at name="ou" rdn="true">
+      <constant>Employees</constant>
+    </at>
+  </entry>
+  <entry dn="ou=All Employees,ou=Employees,dc=Example,dc=com">
+    <oc>organizationalUnit</oc>
+    <at name="ou" rdn="true">
+      <constant>All Employees</constant>
+    </at>
+  </entry>
+  <entry dn="uid=...,ou=All Employees,ou=Employees,dc=Example,dc=com">
+    <oc>customer</oc>
+    <at name="cn">
+      <expression>employees.firstName+" "+employees.lastName</expression>
+    </at>
+    <at name="sn">
+      <variable>employees.lastName</variable>
+    </at>
+    <at name="uid" rdn="true">
+      <variable>employees.username</variable>
+    </at>
+    <at name="userPassword">
+      <expression>import org.safehaus.penrose.util.*;
+
+if (employees.encPassword == void || employees.encPassword == null) return null;
+
+byte[] bytes = PasswordUtil.decode("BigInteger", employees.encPassword);
+return "{SHA}"+PasswordUtil.encode("Base64", bytes);</expression>
+    </at>
+    <source name="employees">
+      <source-name>employees</source-name>
+      <connection-name>MySQL</connection-name>
+      <field name="encPassword">
+        <expression>import org.safehaus.penrose.util.*;
+
+if (userPassword == void || userPassword == null) return null;
+
+byte[] bytes;
+
+String method = PasswordUtil.getEncryptionMethod(userPassword);
+if (method == null) {
+    bytes = PasswordUtil.encrypt("SHA", userPassword);
+
+} else if ("SHA".equals(method)) {
+    String password = PasswordUtil.getEncryptedPassword(userPassword);
+    bytes = PasswordUtil.decode("Base64", password);
+
+} else {
+    throw new Exception("Unsupported encryption: "+method);
+}
+
+return PasswordUtil.encode("BigInteger", bytes);</expression>
+      </field>
+      <field name="firstName">
+        <expression>if (cn == void || cn == null) return null;
+int i = cn.indexOf(" ");
+if (i &lt; 0) return null;
+return cn.substring(0, i);</expression>
+      </field>
+      <field name="lastName">
+        <expression>if (sn != void &amp;&amp; sn != null) return sn;
+if (cn == void || cn == null) return null;
+int i = cn.indexOf(" ");
+if (i &lt; 0) return null;
+return cn.substring(i+1);</expression>
+      </field>
+      <field name="username">
+        <variable>uid</variable>
+      </field>
     </source>
   </entry>
 </mapping>
