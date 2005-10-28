@@ -17,13 +17,21 @@
  */
 package org.safehaus.penrose.schema.matchingRule;
 
+import org.apache.log4j.Logger;
+
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.regex.Pattern;
+import java.util.regex.Matcher;
 
 /**
  * @author Endi S. Dewata
  */
 public class SubstringsMatchingRule {
+
+    Logger log = Logger.getLogger(getClass());
 
     public final static String CASE_IGNORE      = "caseIgnoreSubstringsMatch";
     public final static String CASE_EXACT       = "caseExactSubstringsMatch";
@@ -48,5 +56,22 @@ public class SubstringsMatchingRule {
         if (substringsMatchingRule == null) return DEFAULT;
 
         return substringsMatchingRule;
+    }
+
+    public boolean compare(Object object, Collection substrings) {
+        log.debug("comparing ["+object+"] with "+substrings);
+        if (object == null) return false;
+
+        StringBuffer sb = new StringBuffer();
+        for (Iterator i=substrings.iterator(); i.hasNext(); ) {
+            String substring = (String)i.next();
+            if ("*".equals(substring)) sb.append(".");
+            sb.append(substring);
+        }
+
+        Pattern pattern = Pattern.compile(sb.toString());
+        Matcher matcher = pattern.matcher(object.toString());
+
+        return matcher.find();
     }
 }

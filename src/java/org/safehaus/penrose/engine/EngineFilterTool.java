@@ -20,6 +20,7 @@ package org.safehaus.penrose.engine;
 import org.safehaus.penrose.filter.*;
 import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.mapping.*;
+import org.apache.log4j.Logger;
 
 import java.util.Iterator;
 import java.util.Collection;
@@ -29,6 +30,8 @@ import java.util.Collection;
  */
 public class EngineFilterTool {
 
+    Logger log = Logger.getLogger(getClass());
+
     public EngineContext engineContext;
 
     public EngineFilterTool(EngineContext engineContext) {
@@ -36,6 +39,7 @@ public class EngineFilterTool {
     }
 
     public Filter toSourceFilter(AttributeValues parentValues, EntryDefinition entry, Source source, Filter filter) throws Exception {
+        log.debug("Converting filter "+filter+" for "+source.getName());
 
         if (filter instanceof NotFilter) {
             return toSourceFilter(parentValues, entry, source, (NotFilter) filter);
@@ -48,6 +52,9 @@ public class EngineFilterTool {
 
         } else if (filter instanceof SimpleFilter) {
             return toSourceFilter(parentValues, entry, source, (SimpleFilter) filter);
+
+        } else if (filter instanceof SubstringFilter) {
+            return toSourceFilter(parentValues, entry, source, (SubstringFilter) filter);
         }
 
         return null;
@@ -88,6 +95,41 @@ public class EngineFilterTool {
         }
 
         return newFilter;
+    }
+
+    public Filter toSourceFilter(AttributeValues parentValues, EntryDefinition entry, Source source, SubstringFilter filter)
+            throws Exception {
+
+        String attributeName = filter.getAttribute();
+        Collection substrings = filter.getSubstrings();
+
+        AttributeDefinition attributeDefinition = entry.getAttributeDefinition(attributeName);
+        String variable = attributeDefinition.getVariable();
+        log.debug("variable: "+variable);
+
+        if (variable == null) return null;
+
+        int index = variable.indexOf(".");
+        String sourceName = variable.substring(0, index);
+        String fieldName = variable.substring(index+1);
+        log.debug("sourceName: "+sourceName);
+        log.debug("fieldName: "+fieldName);
+
+        if (!sourceName.equals(source.getName())) return null;
+
+        Field field = source.getField(fieldName);
+
+        StringBuffer sb = new StringBuffer();
+        for (Iterator i=substrings.iterator(); i.hasNext(); ) {
+            String substring = (String)i.next();
+            if ("*".equals(substring)) {
+                sb.append("%");
+            } else {
+                sb.append(substring);
+            }
+        }
+
+        return new SimpleFilter(field.getName(), "like", sb.toString());
     }
 
     public Filter toSourceFilter(AttributeValues parentValues, EntryDefinition entry, Source source, NotFilter filter)

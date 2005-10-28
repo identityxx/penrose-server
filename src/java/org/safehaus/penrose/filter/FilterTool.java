@@ -26,6 +26,7 @@ import org.safehaus.penrose.schema.Schema;
 import org.safehaus.penrose.schema.AttributeType;
 import org.safehaus.penrose.schema.matchingRule.EqualityMatchingRule;
 import org.safehaus.penrose.schema.matchingRule.OrderingMatchingRule;
+import org.safehaus.penrose.schema.matchingRule.SubstringsMatchingRule;
 import org.safehaus.penrose.mapping.*;
 
 /**
@@ -87,8 +88,28 @@ public class FilterTool {
     public boolean isValidEntry(Entry entry, SubstringFilter filter) throws Exception {
         String attributeName = filter.getAttribute();
         Collection substrings = filter.getSubstrings();
-        return true;
+
+        AttributeValues values = entry.getAttributeValues();
+        Collection set = values.get(attributeName);
+        if (set == null) return false;
+
+        AttributeType attributeType = schema.getAttributeType(attributeName);
+
+        String substring = attributeType == null ? null : attributeType.getSubstring();
+        SubstringsMatchingRule substringsMatchingRule = SubstringsMatchingRule.getInstance(substring);
+
+        for (Iterator i=set.iterator(); i.hasNext(); ) {
+            String value = i.next().toString();
+
+            boolean b = substringsMatchingRule.compare(value, substrings);
+            log.debug(" - ["+value+"] => "+b);
+
+            if (b) return true;
+        }
+
+        return false;
     }
+
 
     public boolean isValidEntry(Entry entry, PresentFilter filter) throws Exception {
         String attributeName = filter.getAttribute();
@@ -321,11 +342,14 @@ public class FilterTool {
         } else if (filter instanceof OrFilter) {
             result = isValidEntry(entryDefinition, (OrFilter)filter);
 
+        } else if (filter instanceof SimpleFilter) {
+            result = isValidEntry(entryDefinition, (SimpleFilter)filter);
+
         } else if (filter instanceof PresentFilter) {
             result = isValidEntry(entryDefinition, (PresentFilter)filter);
 
-        } else if (filter instanceof SimpleFilter) {
-            result = isValidEntry(entryDefinition, (SimpleFilter)filter);
+        } else if (filter instanceof SubstringFilter) {
+            result = isValidEntry(entryDefinition, (SubstringFilter)filter);
         }
 
         // log.debug("=> "+filter+" ("+filter.getClass().getName()+"): "+result);
@@ -381,6 +405,27 @@ public class FilterTool {
         if (attributeName.equalsIgnoreCase("objectclass")) return true;
 
         return entryDefinition.getAttributeDefinition(attributeName) != null;
+    }
+
+    public boolean isValidEntry(EntryDefinition entryDefinition, SubstringFilter filter) throws Exception {
+        String attributeName = filter.getAttribute();
+        Collection substrings = filter.getSubstrings();
+
+        AttributeDefinition attributeDefinition = entryDefinition.getAttributeDefinition(attributeName);
+        if (attributeDefinition == null) return false;
+
+        String value = attributeDefinition.getConstant();
+        if (value == null) return true;
+
+        AttributeType attributeType = schema.getAttributeType(attributeName);
+
+        String substring = attributeType == null ? null : attributeType.getSubstring();
+        SubstringsMatchingRule substringsMatchingRule = SubstringsMatchingRule.getInstance(substring);
+
+        boolean b = substringsMatchingRule.compare(value, substrings);
+        log.debug(" - ["+value+"] => "+b);
+
+        return b;
     }
 
     public boolean isValidEntry(EntryDefinition entryDefinition, NotFilter filter) throws Exception {
