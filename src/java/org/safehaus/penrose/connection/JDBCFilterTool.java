@@ -1,9 +1,6 @@
 package org.safehaus.penrose.connection;
 
-import org.safehaus.penrose.filter.Filter;
-import org.safehaus.penrose.filter.SimpleFilter;
-import org.safehaus.penrose.filter.AndFilter;
-import org.safehaus.penrose.filter.OrFilter;
+import org.safehaus.penrose.filter.*;
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.config.Config;
 import org.apache.log4j.Logger;
@@ -52,14 +49,17 @@ public class JDBCFilterTool {
             StringBuffer sb)
             throws Exception {
 
-        if (filter instanceof SimpleFilter) {
-            return convert(sourceDefinition, (SimpleFilter) filter, parameters, sb);
+        if (filter instanceof NotFilter) {
+            return convert(sourceDefinition, (NotFilter) filter, parameters, sb);
 
         } else if (filter instanceof AndFilter) {
             return convert(sourceDefinition, (AndFilter) filter, parameters, sb);
 
         } else if (filter instanceof OrFilter) {
             return convert(sourceDefinition, (OrFilter) filter, parameters, sb);
+
+        } else if (filter instanceof SimpleFilter) {
+            return convert(sourceDefinition, (SimpleFilter) filter, parameters, sb);
         }
 
         return true;
@@ -107,6 +107,25 @@ public class JDBCFilterTool {
         }
 
         parameters.add(value);
+
+        return true;
+    }
+
+    boolean convert(
+            SourceDefinition sourceDefinition,
+            NotFilter filter,
+            Collection parameters,
+            StringBuffer sb)
+            throws Exception {
+
+        StringBuffer sb2 = new StringBuffer();
+
+        Filter f = filter.getFilter();
+        convert(sourceDefinition, f, parameters, sb2);
+
+        sb.append("not (");
+        sb.append(sb2);
+        sb.append(")");
 
         return true;
     }

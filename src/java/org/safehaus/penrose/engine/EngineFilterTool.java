@@ -17,10 +17,7 @@
  */
 package org.safehaus.penrose.engine;
 
-import org.safehaus.penrose.filter.Filter;
-import org.safehaus.penrose.filter.SimpleFilter;
-import org.safehaus.penrose.filter.AndFilter;
-import org.safehaus.penrose.filter.OrFilter;
+import org.safehaus.penrose.filter.*;
 import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.mapping.*;
 
@@ -40,14 +37,17 @@ public class EngineFilterTool {
 
     public Filter toSourceFilter(AttributeValues parentValues, EntryDefinition entry, Source source, Filter filter) throws Exception {
 
-        if (filter instanceof SimpleFilter) {
-            return toSourceFilter(parentValues, entry, source, (SimpleFilter) filter);
+        if (filter instanceof NotFilter) {
+            return toSourceFilter(parentValues, entry, source, (NotFilter) filter);
 
         } else if (filter instanceof AndFilter) {
             return toSourceFilter(parentValues, entry, source, (AndFilter) filter);
 
         } else if (filter instanceof OrFilter) {
             return toSourceFilter(parentValues, entry, source, (OrFilter) filter);
+
+        } else if (filter instanceof SimpleFilter) {
+            return toSourceFilter(parentValues, entry, source, (SimpleFilter) filter);
         }
 
         return null;
@@ -88,6 +88,16 @@ public class EngineFilterTool {
         }
 
         return newFilter;
+    }
+
+    public Filter toSourceFilter(AttributeValues parentValues, EntryDefinition entry, Source source, NotFilter filter)
+            throws Exception {
+
+        Filter f = filter.getFilter();
+
+        Filter newFilter = toSourceFilter(parentValues, entry, source, f);
+
+        return new NotFilter(newFilter);
     }
 
     public Filter toSourceFilter(AttributeValues parentValues, EntryDefinition entry, Source source, AndFilter filter)

@@ -60,8 +60,14 @@ public class FilterTool {
         log.debug("Checking filter "+filter);
         boolean result = false;
 
-        if (filter instanceof SimpleFilter) {
-            result = isValidEntry(entry, (SimpleFilter)filter);
+        if (filter instanceof NotFilter) {
+            result = isValidEntry(entry, (NotFilter)filter);
+
+        } else if (filter instanceof AndFilter) {
+            result = isValidEntry(entry, (AndFilter)filter);
+
+        } else if (filter instanceof OrFilter) {
+            result = isValidEntry(entry, (OrFilter)filter);
 
         } else if (filter instanceof SubstringFilter) {
             result = isValidEntry(entry, (SubstringFilter)filter);
@@ -69,11 +75,8 @@ public class FilterTool {
         } else if (filter instanceof PresentFilter) {
             result = isValidEntry(entry, (PresentFilter)filter);
 
-        } else if (filter instanceof AndFilter) {
-            result = isValidEntry(entry, (AndFilter)filter);
-
-        } else if (filter instanceof OrFilter) {
-            result = isValidEntry(entry, (OrFilter)filter);
+        } else if (filter instanceof SimpleFilter) {
+            result = isValidEntry(entry, (SimpleFilter)filter);
         }
 
         //log.debug(" - "+filter+" -> "+(result ? "ok" : "false"));
@@ -144,6 +147,12 @@ public class FilterTool {
         }
 
         return false;
+    }
+
+    public boolean isValidEntry(Entry entry, NotFilter filter) throws Exception {
+        Filter f = filter.getFilter();
+        boolean result = isValidEntry(entry, f);
+        return !result;
     }
 
     public boolean isValidEntry(Entry entry, AndFilter filter) throws Exception {
@@ -303,8 +312,8 @@ public class FilterTool {
 
         boolean result = false;
 
-        if (filter instanceof SimpleFilter) {
-            result = isValidEntry(entryDefinition, (SimpleFilter)filter);
+        if (filter instanceof NotFilter) {
+            result = isValidEntry(entryDefinition, (NotFilter)filter);
 
         } else if (filter instanceof AndFilter) {
             result = isValidEntry(entryDefinition, (AndFilter)filter);
@@ -314,6 +323,9 @@ public class FilterTool {
 
         } else if (filter instanceof PresentFilter) {
             result = isValidEntry(entryDefinition, (PresentFilter)filter);
+
+        } else if (filter instanceof SimpleFilter) {
+            result = isValidEntry(entryDefinition, (SimpleFilter)filter);
         }
 
         // log.debug("=> "+filter+" ("+filter.getClass().getName()+"): "+result);
@@ -369,6 +381,12 @@ public class FilterTool {
         if (attributeName.equalsIgnoreCase("objectclass")) return true;
 
         return entryDefinition.getAttributeDefinition(attributeName) != null;
+    }
+
+    public boolean isValidEntry(EntryDefinition entryDefinition, NotFilter filter) throws Exception {
+        Filter f = filter.getFilter();
+        boolean result = isValidEntry(entryDefinition, f);
+        return result;
     }
 
     public boolean isValidEntry(EntryDefinition entryDefinition, AndFilter filter) throws Exception {

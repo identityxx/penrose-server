@@ -189,8 +189,8 @@ public class SearchHandler {
         if (connection != null && connection.getBindDn() != null) log.info(" - Bind DN: " + connection.getBindDn());
         log.info(" - Base DN: " + base);
         log.info(" - Scope: " + s);
+        log.info(" - Filter: "+filter);
         log.debug(" - Alias Dereferencing: " + d);
-        log.info(" - Filter: " + filter);
         log.debug(" - Attribute Names: " + attributeNames);
         log.info("");
 
@@ -265,7 +265,7 @@ public class SearchHandler {
         }
 
 		Filter f = handlerContext.getFilterTool().parseFilter(filter);
-		log.debug("Parsed filter: " + f);
+		log.debug("Parsed filter: "+f+" ("+f.getClass().getName()+")");
 
 		List path = find(connection, nbase);
 
