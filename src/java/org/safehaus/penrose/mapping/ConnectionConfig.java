@@ -56,7 +56,7 @@ public class ConnectionConfig implements Serializable, Cloneable {
 	/**
 	 * Parameters.
 	 */
-	public Properties parameters = new Properties();
+	public Map parameters = new TreeMap();
 
     private List listenerClasses = new ArrayList();
     private List listeners = new ArrayList();
@@ -122,11 +122,11 @@ public class ConnectionConfig implements Serializable, Cloneable {
     }
 
     public String getParameter(String name) {
-        return parameters.getProperty(name);
+        return (String)parameters.get(name);
     }
 
     public void setParameter(String name, String value) {
-        parameters.setProperty(name, value);
+        parameters.put(name, value);
     }
 
     public void removeParameter(String name) {

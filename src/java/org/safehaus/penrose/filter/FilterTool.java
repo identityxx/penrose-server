@@ -22,7 +22,10 @@ import java.util.*;
 import java.io.StringReader;
 
 import org.apache.log4j.Logger;
-import org.safehaus.penrose.Penrose;
+import org.safehaus.penrose.schema.Schema;
+import org.safehaus.penrose.schema.AttributeType;
+import org.safehaus.penrose.schema.matchingRule.EqualityMatchingRule;
+import org.safehaus.penrose.schema.matchingRule.OrderingMatchingRule;
 import org.safehaus.penrose.mapping.*;
 
 /**
@@ -32,11 +35,14 @@ public class FilterTool {
 
     Logger log = Logger.getLogger(getClass());
 
-    public Penrose penrose;
+    public FilterContext filterContext;
+    public Schema schema;
+
     public int debug = 0;
 
-    public FilterTool(Penrose penrose) {
-        this.penrose = penrose;
+    public FilterTool(FilterContext filterContext) throws Exception {
+        this.filterContext = filterContext;
+        schema = filterContext.getSchema();
     }
 
     public Filter parseFilter(String filter) throws Exception {
@@ -51,7 +57,7 @@ public class FilterTool {
     }
 
     public boolean isValidEntry(Entry entry, Filter filter) throws Exception {
-        //penrose.log.filter.debug(filter.getClass().getName()+": "+filter);
+        log.debug("Checking filter "+filter);
         boolean result = false;
 
         if (filter instanceof SimpleFilter) {
@@ -93,6 +99,7 @@ public class FilterTool {
 
     public boolean isValidEntry(Entry entry, SimpleFilter filter) throws Exception {
         String attributeName = filter.getAttribute();
+        String operator = filter.getOperator();
         String attributeValue = filter.getValue();
 
         if (attributeName.equalsIgnoreCase("objectclass")) {
@@ -103,9 +110,37 @@ public class FilterTool {
         Collection set = values.get(attributeName);
         if (set == null) return false;
 
-        for (Iterator i=set.iterator(); i.hasNext(); ) {
-            Object value = i.next();
-            if (attributeValue.equalsIgnoreCase(value.toString())) return true;
+        AttributeType attributeType = schema.getAttributeType(attributeName);
+
+        if ("=".equals(operator)) {
+            String equality = attributeType == null ? null : attributeType.getEquality();
+            EqualityMatchingRule equalityMatchingRule = EqualityMatchingRule.getInstance(equality);
+
+            for (Iterator i=set.iterator(); i.hasNext(); ) {
+                String value = i.next().toString();
+
+                boolean b = equalityMatchingRule.compare(value, attributeValue);
+                log.debug(" - ["+value+"] => "+b);
+
+                if (b) return true;
+            }
+
+        } else if ("<=".equals(operator) || ">=".equals(operator)) {
+            String ordering = attributeType == null ? null : attributeType.getOrdering();
+            OrderingMatchingRule orderingMatchingRule = OrderingMatchingRule.getInstance(ordering);
+
+            for (Iterator i=set.iterator(); i.hasNext(); ) {
+                String value = i.next().toString();
+
+                int c = orderingMatchingRule.compare(value, attributeValue);
+                log.debug(" - ["+value+"] => "+c);
+
+                if ("<=".equals(operator) && c <= 0) return true;
+                if (">=".equals(operator) && c >= 0) return true;
+            }
+
+        } else {
+            throw new Exception("Unsupported operator \""+operator+"\" in \""+filter+"\"");
         }
 
         return false;
@@ -264,6 +299,8 @@ public class FilterTool {
     }
 
     public boolean isValidEntry(EntryDefinition entryDefinition, Filter filter) throws Exception {
+        log.debug("Checking filter "+filter);
+
         boolean result = false;
 
         if (filter instanceof SimpleFilter) {
@@ -286,6 +323,7 @@ public class FilterTool {
 
     public boolean isValidEntry(EntryDefinition entryDefinition, SimpleFilter filter) throws Exception {
         String attributeName = filter.getAttribute();
+        String operator = filter.getOperator();
         String attributeValue = filter.getValue();
 
         if (attributeName.equalsIgnoreCase("objectclass") && entryDefinition.containsObjectClass(attributeValue)) return true;
@@ -293,8 +331,34 @@ public class FilterTool {
         AttributeDefinition attributeDefinition = entryDefinition.getAttributeDefinition(attributeName);
         if (attributeDefinition == null) return false;
 
-        String constant = attributeDefinition.getConstant();
-        if (constant != null && !attributeValue.equals(constant)) return false;
+        String value = attributeDefinition.getConstant();
+        if (value == null) return true;
+
+        AttributeType attributeType = schema.getAttributeType(attributeName);
+
+        if ("=".equals(operator)) {
+            String equality = attributeType == null ? null : attributeType.getEquality();
+            EqualityMatchingRule equalityMatchingRule = EqualityMatchingRule.getInstance(equality);
+
+
+            boolean b = equalityMatchingRule.compare(value, attributeValue);
+            log.debug(" - ["+value+"] => "+b);
+
+            if (!b) return false;
+
+        } else if ("<=".equals(operator) || ">=".equals(operator)) {
+            String ordering = attributeType == null ? null : attributeType.getOrdering();
+            OrderingMatchingRule orderingMatchingRule = OrderingMatchingRule.getInstance(ordering);
+
+            int c = orderingMatchingRule.compare(value, attributeValue);
+            log.debug(" - ["+value+"] => "+c);
+
+            if ("<=".equals(operator) && c > 0) return true;
+            if (">=".equals(operator) && c < 0) return true;
+
+        } else {
+            throw new Exception("Unsupported operator \""+operator+"\" in \""+filter+"\"");
+        }
 
         return true;
     }

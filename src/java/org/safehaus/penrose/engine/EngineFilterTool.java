@@ -56,16 +56,17 @@ public class EngineFilterTool {
     public Filter toSourceFilter(AttributeValues parentValues, EntryDefinition entry, Source source, SimpleFilter filter)
             throws Exception {
 
-        String name = filter.getAttribute();
-        String value = filter.getValue();
+        String attributeName = filter.getAttribute();
+        String operator = filter.getOperator();
+        String attributeValue = filter.getValue();
 
-        if (name.equals("objectClass")) {
-            if (value.equals("*"))
+        if (attributeName.equals("objectClass")) {
+            if (attributeValue.equals("*"))
                 return null;
         }
 
         Interpreter interpreter = engineContext.newInterpreter();
-        interpreter.set(name, value);
+        interpreter.set(attributeName, attributeValue);
 
         if (parentValues != null) {
             interpreter.set(parentValues);
@@ -81,7 +82,7 @@ public class EngineFilterTool {
             if (v == null) continue;
 
             //System.out.println("Adding filter "+field.getName()+"="+v);
-            SimpleFilter f = new SimpleFilter(field.getName(), "=", v);
+            SimpleFilter f = new SimpleFilter(field.getName(), operator, v);
 
             newFilter = engineContext.getFilterTool().appendAndFilter(newFilter, f);
         }

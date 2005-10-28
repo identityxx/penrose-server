@@ -42,6 +42,7 @@ import org.safehaus.penrose.cache.*;
 import org.safehaus.penrose.connection.*;
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.filter.FilterTool;
+import org.safehaus.penrose.filter.FilterContext;
 import org.safehaus.penrose.acl.ACLEngine;
 import org.safehaus.penrose.sync.SyncService;
 import org.safehaus.penrose.sync.SyncContext;
@@ -52,10 +53,11 @@ import org.safehaus.penrose.sync.SyncContext;
 public class Penrose implements
         AdapterContext,
         CacheContext,
-        HandlerContext,
         EngineContext,
-        SyncContext,
+        FilterContext,
+        HandlerContext,
         ModuleContext,
+        SyncContext,
         PenroseMBean {
 	
 	// ------------------------------------------------
@@ -181,12 +183,13 @@ public class Penrose implements
         if (serverConfig.getRootPassword() != null) rootPassword = serverConfig.getRootPassword();
         //log.debug(serverConfig.toString());
 
+        loadSchema();
+
         handler = new Handler(this);
         aclEngine = new ACLEngine(this);
         filterTool = new FilterTool(this);
         transformEngine = new TransformEngine(this);
 
-        loadSchema();
         initSyncService();
         initEngine();
 

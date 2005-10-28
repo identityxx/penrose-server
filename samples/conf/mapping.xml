@@ -34,11 +34,11 @@
     <at name="description">
       <variable>cat.name</variable>
     </at>
-    <at name="price">
-      <variable>products.price</variable>
-    </at>
     <at name="info">
       <constant>All Products</constant>
+    </at>
+    <at name="price">
+      <variable>products.price</variable>
     </at>
     <source name="products">
       <source-name>products</source-name>
@@ -179,11 +179,11 @@ return price.substring(1, i);</expression>
     <at name="cn" rdn="true">
       <variable>products.name</variable>
     </at>
-    <at name="price">
-      <variable>products.price</variable>
-    </at>
     <at name="info">
       <constant>Expensive Products</constant>
+    </at>
+    <at name="price">
+      <variable>products.price</variable>
     </at>
     <source name="products">
       <source-name>products</source-name>
