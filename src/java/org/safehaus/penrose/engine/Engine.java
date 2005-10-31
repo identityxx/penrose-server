@@ -198,6 +198,8 @@ public class Engine {
 
     Graph computeGraph(EntryDefinition entryDefinition) throws Exception {
 
+        //log.debug("Graph for "+entryDefinition.getDn()+":");
+
         //if (entryDefinition.getSources().isEmpty()) return null;
 
         Graph graph = new Graph();
@@ -232,11 +234,25 @@ public class Engine {
             Source rsource = config.getEffectiveSource(entryDefinition, rsourceName);
             if (rsource == null) continue;
 
-            GraphEdge edge = new GraphEdge(lsource, rsource, relationship);
-            graph.addEdge(edge);
+            Set nodes = new HashSet();
+            nodes.add(lsource);
+            nodes.add(rsource);
+
+            GraphEdge edge = graph.getEdge(nodes);
+            if (edge == null) {
+                edge = new GraphEdge(lsource, rsource, new ArrayList());
+                graph.addEdge(edge);
+            }
+
+            Collection list = (Collection)edge.getObject();
+            list.add(relationship);
         }
 
-        // System.out.println("Graph: "+graph);
+        Collection edges = graph.getEdges();
+        for (Iterator i=edges.iterator(); i.hasNext(); ) {
+            GraphEdge edge = (GraphEdge)i.next();
+            //log.debug(" - "+edge);
+        }
 
         return graph;
     }
@@ -289,8 +305,7 @@ public class Engine {
             AttributeValues attributeValues)
             throws Exception {
 
-        AttributeValues sourceValues = new AttributeValues();
-        getFieldValues("parent", parent == null ? null : parent.getDn(), sourceValues);
+        AttributeValues sourceValues = parent.getSourceValues();
 
         Collection sources = entryDefinition.getSources();
         for (Iterator i=sources.iterator(); i.hasNext(); ) {
@@ -322,21 +337,25 @@ public class Engine {
 
         Collection relationships = graph.getEdgeObjects(startingSource);
         for (Iterator i=relationships.iterator(); i.hasNext(); ) {
-            Relationship relationship = (Relationship)i.next();
-            log.debug("Relationship "+relationship);
+            Collection list = (Collection)i.next();
 
-            String lhs = relationship.getLhs();
-            String rhs = relationship.getRhs();
+            for (Iterator j=list.iterator(); j.hasNext(); ) {
+                Relationship relationship = (Relationship)j.next();
+                log.debug("Relationship "+relationship);
 
-            if (rhs.startsWith(startingSourceName+".")) {
-                String exp = lhs;
-                lhs = rhs;
-                rhs = exp;
+                String lhs = relationship.getLhs();
+                String rhs = relationship.getRhs();
+
+                if (rhs.startsWith(startingSourceName+".")) {
+                    String exp = lhs;
+                    lhs = rhs;
+                    rhs = exp;
+                }
+
+                Collection lhsValues = sourceValues.get(lhs);
+                log.debug(" - "+lhs+" -> "+rhs+": "+lhsValues);
+                sourceValues.set(rhs, lhsValues);
             }
-
-            Collection lhsValues = sourceValues.get(lhs);
-            log.debug(" - "+lhs+" -> "+rhs+": "+lhsValues);
-            sourceValues.set(rhs, lhsValues);
         }
 
         AddGraphVisitor visitor = new AddGraphVisitor(engineContext, entryDefinition, sourceValues);
@@ -580,43 +599,6 @@ public class Engine {
         } finally {
             batches.close();
         }
-    }
-
-    public void getFieldValues(String prefix, String dn, AttributeValues results) throws Exception {
-
-        Config config = engineContext.getConfig(dn);
-        log.debug("Config for "+dn+": "+(config == null ? "null" : "not null"));
-        if (config == null) return;
-
-        String parentDn = Entry.getParentDn(dn);
-        if (parentDn != null) {
-            getFieldValues((prefix == null ? "" : prefix+".")+"parent", parentDn, results);
-        }
-
-        Row rdn = Entry.getRdn(dn);
-
-        EntryDefinition entryDefinition = config.findEntryDefinition(dn);
-
-        Entry entry = (Entry)engineContext.getEntryDataCache(parentDn, entryDefinition).get(rdn);
-        log.debug("Entry "+dn+": "+(entry == null ? null : "not null"));
-        if (entry == null) return;
-
-        log.debug(entry.getDn()+"'s source values:");
-
-        Collection sources = entry.getSources();
-        if (sources.size() == 0) return;
-
-        AttributeValues sourceValues = entry.getSourceValues();
-        if (sourceValues != null) {
-            for (Iterator j=sourceValues.getNames().iterator(); j.hasNext(); ) {
-                String name = (String)j.next();
-                Collection value = sourceValues.get(name);
-                log.debug(" - "+name+": "+value);
-            }
-            results.add(sourceValues);
-        }
-
-        log.debug(entry.getDn()+"'s attribute values:");
     }
 
     public String getStartingSourceName(EntryDefinition entryDefinition) throws Exception {

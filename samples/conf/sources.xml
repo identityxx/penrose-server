@@ -68,6 +68,16 @@
         <param-value>order_details</param-value>
       </parameter>
     </source>
+    <source name="order_histories">
+      <field name="description"/>
+      <field name="historyDate" primaryKey="true" type="TIMESTAMP"/>
+      <field name="orderId" primaryKey="true" type="INTEGER"/>
+      <field name="productId" primaryKey="true" type="INTEGER"/>
+      <parameter>
+        <param-name>tableName</param-name>
+        <param-value>order_histories</param-value>
+      </parameter>
+    </source>
     <source name="orders">
       <field name="customer" length="10"/>
       <field name="employee" length="10"/>

@@ -128,6 +128,80 @@ insert into orders values (18, 'tmorris', 'pfarmer', '2005-08-18');
 insert into orders values (19, 'scarter', 'jstockton', '2005-09-07');
 insert into orders values (20, 'emorris', 'lwalker', '2005-09-12');
 
+drop table order_histories;
+
+create table order_histories (
+    orderId integer,
+    productId integer,
+    historyDate datetime,
+    description varchar(50),
+    primary key (orderId, productId, historyDate)
+);
+
+insert into order_histories values (1, 8, '2004-08-10', 'PENDING');
+insert into order_histories values (1, 16, '2004-08-10', 'PENDING');
+insert into order_histories values (1, 8, '2004-08-11', 'PROCESSING');
+insert into order_histories values (1, 16, '2004-08-11', 'PROCESSING');
+insert into order_histories values (1, 8, '2004-08-12', 'SHIPPED');
+insert into order_histories values (1, 16, '2004-08-12', 'SHIPPED');
+insert into order_histories values (2, 2, '2004-12-22', 'PENDING');
+insert into order_histories values (2, 26, '2004-12-22', 'PENDING');
+insert into order_histories values (2, 2, '2004-12-23', 'CANCELLED');
+insert into order_histories values (2, 26, '2004-12-23', 'CANCELLED');
+insert into order_histories values (3, 17, '2005-01-02', 'PENDING');
+insert into order_histories values (3, 17, '2005-01-03', 'PROCESSING');
+insert into order_histories values (3, 17, '2005-01-04', 'SHIPPED');
+insert into order_histories values (4, 14, '2005-01-10', 'PENDING');
+insert into order_histories values (4, 30, '2005-01-10', 'PENDING');
+insert into order_histories values (4, 14, '2005-01-11', 'PROCESSING');
+insert into order_histories values (4, 30, '2005-01-11', 'PROCESSING');
+insert into order_histories values (4, 14, '2005-01-12', 'SHIPPED');
+insert into order_histories values (5, 9, '2005-02-10', 'PENDING');
+insert into order_histories values (5, 9, '2005-02-11', 'PROCESSING');
+insert into order_histories values (5, 9, '2005-02-12', 'SHIPPED');
+insert into order_histories values (6, 30, '2005-02-17', 'PENDING');
+insert into order_histories values (6, 8, '2005-02-17', 'PENDING');
+insert into order_histories values (6, 15, '2005-02-17', 'PENDING');
+insert into order_histories values (6, 30, '2005-02-18', 'PROCESSING');
+insert into order_histories values (6, 8, '2005-02-18', 'PROCESSING');
+insert into order_histories values (6, 15, '2005-02-18', 'PROCESSING');
+insert into order_histories values (6, 30, '2005-02-19', 'SHIPPED');
+insert into order_histories values (6, 8, '2005-02-19', 'SHIPPED');
+insert into order_histories values (7, 2, '2005-02-25', 'PENDING');
+insert into order_histories values (7, 2, '2005-02-26', 'CANCELLED');
+insert into order_histories values (8, 8, '2005-03-11', 'PENDING');
+insert into order_histories values (8, 8, '2005-03-12', 'PROCESSING');
+insert into order_histories values (9, 16, '2005-04-09', 'PENDING');
+insert into order_histories values (9, 16, '2005-04-10', 'PROCESSING');
+insert into order_histories values (10, 24, '2005-05-07', 'PENDING');
+insert into order_histories values (10, 24, '2005-05-08', 'PROCESSING');
+insert into order_histories values (10, 24, '2005-05-09', 'CANCELLED');
+insert into order_histories values (11, 1, '2005-05-15', 'PENDING');
+insert into order_histories values (11, 3, '2005-05-15', 'PENDING');
+insert into order_histories values (11, 1, '2005-05-16', 'PROCESSING');
+insert into order_histories values (11, 3, '2005-05-16', 'PROCESSING');
+insert into order_histories values (11, 1, '2005-05-17', 'SHIPPED');
+insert into order_histories values (11, 3, '2005-05-17', 'SHIPPED');
+insert into order_histories values (12, 14, '2005-06-06', 'PENDING');
+insert into order_histories values (12, 11, '2005-06-06', 'PENDING');
+insert into order_histories values (12, 14, '2005-06-07', 'PROCESSING');
+insert into order_histories values (12, 11, '2005-06-07', 'PROCESSING');
+insert into order_histories values (13, 6, '2005-06-27', 'PENDING');
+insert into order_histories values (13, 6, '2005-06-28', 'CANCELLED');
+insert into order_histories values (14, 14, '2005-07-14', 'PENDING');
+insert into order_histories values (14, 4, '2005-07-14', 'PENDING');
+insert into order_histories values (14, 14, '2005-07-15', 'PROCESSING');
+insert into order_histories values (14, 4, '2005-07-15', 'PROCESSING');
+insert into order_histories values (15, 18, '2005-07-14', 'PENDING');
+insert into order_histories values (15, 18, '2005-07-15', 'PROCESSING');
+insert into order_histories values (16, 19, '2005-07-25', 'PENDING');
+insert into order_histories values (16, 21, '2005-07-25', 'PENDING');
+insert into order_histories values (16, 5, '2005-07-25', 'PENDING');
+insert into order_histories values (17, 22, '2005-08-06', 'PENDING');
+insert into order_histories values (18, 8, '2005-08-18', 'PENDING');
+insert into order_histories values (19, 16, '2005-09-07', 'PENDING');
+insert into order_histories values (20, 28, '2005-09-12', 'PENDING');
+
 drop table customers;
 
 create table customers (

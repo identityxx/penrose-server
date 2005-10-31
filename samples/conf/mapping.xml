@@ -832,6 +832,69 @@ return cn.substring(i+1);</expression>
       <expression>products.categoryId = categories.id</expression>
     </relationship>
   </entry>
+  <entry dn="ou=Histories,cn=...,ou=Products,orderId=...,ou=All Orders,ou=Orders,dc=Example,dc=com">
+    <oc>organizationalUnit</oc>
+    <at name="ou" rdn="true">
+      <constant>Histories</constant>
+    </at>
+  </entry>
+  <entry dn="date=...,ou=Histories,cn=...,ou=Products,orderId=...,ou=All Orders,ou=Orders,dc=Example,dc=com">
+    <oc>orderDetail</oc>
+    <at name="date" rdn="true">
+      <variable>order_histories.historyDate</variable>
+    </at>
+    <at name="description">
+      <variable>order_histories.description</variable>
+    </at>
+    <at name="orderId">
+      <variable>order_histories.orderId</variable>
+    </at>
+    <at name="productId">
+      <variable>order_histories.productId</variable>
+    </at>
+    <source name="order_histories">
+      <source-name>order_histories</source-name>
+      <connection-name>MySQL</connection-name>
+    </source>
+    <relationship>
+      <expression>order_details.orderId = order_histories.orderId</expression>
+    </relationship>
+    <relationship>
+      <expression>order_details.productId = order_histories.productId</expression>
+    </relationship>
+  </entry>
+  <entry dn="ou=Histories,orderId=...,ou=All Orders,ou=Orders,dc=Example,dc=com">
+    <oc>organizationalUnit</oc>
+    <at name="ou" rdn="true">
+      <constant>Histories</constant>
+    </at>
+  </entry>
+  <entry dn="date=...+productId=...,ou=Histories,orderId=...,ou=All Orders,ou=Orders,dc=Example,dc=com">
+    <oc>orderDetail</oc>
+    <at name="date" rdn="true">
+      <variable>order_histories.historyDate</variable>
+    </at>
+    <at name="productId" rdn="true">
+      <variable>order_histories.productId</variable>
+    </at>
+    <source name="order_details">
+      <source-name>order_details</source-name>
+      <connection-name>MySQL</connection-name>
+    </source>
+    <source name="order_histories">
+      <source-name>order_histories</source-name>
+      <connection-name>MySQL</connection-name>
+    </source>
+    <relationship>
+      <expression>orders.id = order_details.orderId</expression>
+    </relationship>
+    <relationship>
+      <expression>order_details.orderId = order_histories.orderId</expression>
+    </relationship>
+    <relationship>
+      <expression>order_details.productId = order_histories.productId</expression>
+    </relationship>
+  </entry>
   <entry dn="ou=Recent Orders,ou=Orders,dc=Example,dc=com">
     <oc>organizationalUnit</oc>
     <at name="ou" rdn="true">

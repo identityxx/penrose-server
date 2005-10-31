@@ -25,7 +25,7 @@ import java.util.*;
 public class Graph {
 
     private Set nodes = new HashSet();
-    private Set edges = new HashSet();
+    private Map edges = new HashMap();
 
     private Map indices = new HashMap();
 
@@ -43,7 +43,7 @@ public class Graph {
             if (!nodes.contains(node)) throw new Exception("Node "+node+" is not in the graph.");
         }
 
-        edges.add(edge);
+        edges.put(edge.getNodes(), edge);
 
         for (Iterator i=edge.getNodes().iterator(); i.hasNext(); ) {
             Object node = i.next();
@@ -58,8 +58,12 @@ public class Graph {
         }
     }
 
+    public GraphEdge getEdge(Set nodes) {
+        return (GraphEdge)edges.get(nodes);
+    }
+    
     public Collection getEdges() {
-        return edges;
+        return edges.values();
     }
 
     public Collection getEdges(Object node) throws Exception {

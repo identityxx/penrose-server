@@ -88,9 +88,9 @@ public class SearchCleaner extends GraphVisitor {
 
         Source source = (Source)node;
 
-        log.debug(Formatter.displaySeparator(40));
-        log.debug(Formatter.displayLine("Visiting "+source.getName(), 40));
-        log.debug(Formatter.displaySeparator(40));
+        log.debug(Formatter.displaySeparator(60));
+        log.debug(Formatter.displayLine("Visiting "+source.getName(), 60));
+        log.debug(Formatter.displaySeparator(60));
 
         needCleaning.put(source, new Boolean(false));
 
@@ -101,11 +101,14 @@ public class SearchCleaner extends GraphVisitor {
 
         Source fromSource = (Source)node1;
         Source toSource = (Source)node2;
-        Relationship relationship = (Relationship)object;
+        Collection relationships = (Collection)object;
 
-        log.debug(Formatter.displaySeparator(40));
-        log.debug(Formatter.displayLine(relationship.toString(), 40));
-        log.debug(Formatter.displaySeparator(40));
+        log.debug(Formatter.displaySeparator(60));
+        for (Iterator i=relationships.iterator(); i.hasNext(); ) {
+            Relationship relationship = (Relationship)i.next();
+            log.debug(Formatter.displayLine(relationship.toString(), 60));
+        }
+        log.debug(Formatter.displaySeparator(60));
 
         Integer depth1 = (Integer)depths.get(fromSource);
         Integer depth2 = (Integer)depths.get(toSource);
