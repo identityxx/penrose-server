@@ -9,6 +9,7 @@
     <property name="build.compiler" value="jikes"/>
     <property name="project.name" value="penrose"/>
     <property name="project.version" value="0.9.8"/>
+    <property name="project.dist" value="dist"/>
     <property name="prefix" value=""/>
     <property name="penrose.home" value="${prefix}/usr/local/penrose"/>
     <property name="iscc.path" value="ISCC.exe"/>
@@ -194,10 +195,10 @@
 
     <target name="dist-src" depends="docs,dist">
         <echo message="Creating ${project.name}-${project.version}-src.zip"/>
-        <mkdir dir="dist"/>
-        <zip destfile="dist/${project.name}-${project.version}-src.zip">
+        <mkdir dir="${project.dist}"/>
+        <zip destfile="${project.dist}/${project.name}-${project.version}-src.zip">
             <zipfileset dir=".">
-                <exclude name="dist/**"/>
+                <exclude name="${project.dist}/**"/>
                 <exclude name="target/**"/>
             </zipfileset>
         </zip>
@@ -205,18 +206,18 @@
         <mkdir dir="target"/>
         <tar destfile="target/${project.name}-${project.version}-src.tar">
             <tarfileset dir="." prefix="${project.name}-${project.version}">
-                <exclude name="dist/**"/>
+                <exclude name="${project.dist}/**"/>
                 <exclude name="target/**"/>
             </tarfileset>
         </tar>
-        <gzip destfile="dist/${project.name}-${project.version}-src.tar.gz"
+        <gzip destfile="${project.dist}/${project.name}-${project.version}-src.tar.gz"
             src="target/${project.name}-${project.version}-src.tar"/>
     </target>
 
     <target name="dist-unix" depends="docs,dist">
         <echo message="Creating ${project.name}-${project.version}.zip"/>
-        <mkdir dir="dist"/>
-        <zip destfile="dist/${project.name}-${project.version}.zip"
+        <mkdir dir="${project.dist}"/>
+        <zip destfile="${project.dist}/${project.name}-${project.version}.zip"
             basedir="target/dist"/>
         <echo message="Creating ${project.name}-${project.version}.tar.gz"/>
         <mkdir dir="target"/>
@@ -225,28 +226,28 @@
                 prefix="${project.name}-${project.version}">
             </tarfileset>
         </tar>
-        <gzip destfile="dist/${project.name}-${project.version}.tar.gz"
+        <gzip destfile="${project.dist}/${project.name}-${project.version}.tar.gz"
             src="target/${project.name}-${project.version}.tar"/>
     </target>
 
     <target name="dist-rpm" depends="dist-src">
         <copy todir="/usr/src/redhat/SOURCES" overwrite="true"
-            file="dist/${project.name}-${project.version}-src.tar.gz">
+            file="${project.dist}/${project.name}-${project.version}-src.tar.gz">
         </copy>
         <exec executable="/usr/bin/rpmbuild" os="Linux">
             <arg line="-ba rpm/penrose.spec"/>
         </exec>
-        <copy todir="dist" failonerror="false"
+        <copy todir="${project.dist}" failonerror="false"
             file="/usr/src/redhat/SRPMS/${project.name}-${project.version}-1.src.rpm">
         </copy>
-        <copy todir="dist" failonerror="false"
+        <copy todir="${project.dist}" failonerror="false"
             file="/usr/src/redhat/RPMS/i386/${project.name}-${project.version}-1.i386.rpm">
         </copy>
     </target>
 
     <target name="dist-win32" depends="docs,dist">
         <echo message="Creating ${project.name}-${project.version}.exe"/>
-        <mkdir dir="dist"/>
+        <mkdir dir="${project.dist}"/>
         <exec executable="${iscc.path}" os="Windows NT,Windows 2000,Windows XP,Windows 2003">
             <arg line="/Q penrose.iss"/>
         </exec>
