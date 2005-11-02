@@ -18,13 +18,13 @@
 package org.safehaus.penrose.interpreter;
 
 import bsh.Interpreter;
-import bsh.Token;
 import bsh.Parser;
 import bsh.ParserConstants;
 
 import java.io.StringReader;
 import java.util.Collection;
 import java.util.ArrayList;
+import java.util.List;
 
 import org.apache.log4j.Logger;
 
@@ -41,12 +41,45 @@ public class DefaultInterpreter extends org.safehaus.penrose.interpreter.Interpr
         interpreter = new Interpreter();
     }
 
+    public Collection parse(String script) throws Exception {
+        List tokens = new ArrayList();
+        try {
+            Parser parser = new Parser(new StringReader(script+";"));
+            //log.debug("Parsing: "+script);
+            bsh.Token token = parser.getNextToken();
+            while (token != null && !"".equals(token.image)) {
+                //log.debug(" - ["+token.image+"] ("+token.kind+")");
+
+                if (token.kind == ParserConstants.IDENTIFIER) {
+                    tokens.add(new Token(token.image, Token.IDENTIFIER));
+
+                } else if (token.kind == ParserConstants.STRING_LITERAL) {
+                    tokens.add(new Token(token.image, Token.STRING_LITERAL));
+
+                } else if (token.kind == ParserConstants.DOT) {
+                    tokens.add(new Token(token.image, Token.DOT));
+
+                } else {
+                    tokens.add(new Token(token.image, Token.OTHER));
+                }
+
+                token = parser.getNextToken();
+            }
+
+            tokens.remove(tokens.size()-1);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return tokens;
+    }
+
     public Collection parseVariables(String script) throws Exception {
         Collection tokens = new ArrayList();
         try {
             Parser parser = new Parser(new StringReader(script+";"));
             //log.debug("Parsing: "+script);
-            Token token = parser.getNextToken();
+            bsh.Token token = parser.getNextToken();
             while (token != null && !"".equals(token.image)) {
                 //log.debug(" - ["+token.image+"] ("+token.kind+")");
                 if (token.kind == ParserConstants.IDENTIFIER) {

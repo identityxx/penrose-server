@@ -20,8 +20,9 @@ package org.safehaus.penrose.config;
 import org.apache.commons.digester.Digester;
 import org.apache.commons.digester.xmlrules.DigesterLoader;
 import org.apache.log4j.Logger;
-import org.safehaus.penrose.mapping.EntryDefinition;
-import org.safehaus.penrose.mapping.MappingRule;
+import org.safehaus.penrose.mapping.*;
+import org.safehaus.penrose.interpreter.DefaultInterpreter;
+import org.safehaus.penrose.interpreter.Token;
 
 import java.io.File;
 import java.net.URL;
@@ -101,12 +102,98 @@ public class ConfigReader {
                     String parentDn = ed.getParentDn();
                     ed.setParentDn(parentDn == null ? baseDn : parentDn+","+baseDn);
                 }
+
+                convert(ed);
+
                 config.addEntryDefinition(ed);
 
                 Collection childDefinitions = ed.getChildDefinitions();
                 for (Iterator j=childDefinitions.iterator(); j.hasNext(); ) {
                     MappingRule mr = (MappingRule)j.next();
                     loadMappingConfig(file.getParentFile(), ed.getDn(), mr, config);
+                }
+            }
+        }
+    }
+
+    public void convert(EntryDefinition ed) throws Exception {
+        DefaultInterpreter interpreter = new DefaultInterpreter();
+
+        for (Iterator i=ed.getAttributeDefinitions().iterator(); i.hasNext(); ) {
+            AttributeDefinition ad = (AttributeDefinition)i.next();
+
+            if (ad.getConstant() != null) continue;
+            if (ad.getVariable() != null) continue;
+
+            Expression expression = ad.getExpression();
+            if (expression.getForeach() != null) continue;
+            if (expression.getVar() != null) continue;
+
+            String script = expression.getScript();
+            Collection tokens = interpreter.parse(script);
+
+            if (tokens.size() == 1) {
+
+                Token token = (Token)tokens.iterator().next();
+                if (token.getType() != Token.STRING_LITERAL) continue;
+
+                String constant = script.substring(1, script.length()-1);
+                ad.setConstant(constant);
+                ad.setExpression(null);
+
+                log.debug("Converting "+script+" into constant.");
+
+            } else if (tokens.size() == 3) {
+
+                Iterator iterator = tokens.iterator();
+                Token sourceName = (Token)iterator.next();
+                if (sourceName.getType() != Token.IDENTIFIER) continue;
+
+                Token dot = (Token)iterator.next();
+                if (dot.getType() != Token.DOT) continue;
+
+                Token fieldName = (Token)iterator.next();
+                if (fieldName.getType() != Token.IDENTIFIER) continue;
+
+                ad.setVariable(sourceName.getImage()+"."+fieldName.getImage());
+                ad.setExpression(null);
+
+                log.debug("Converting "+script+" into variable.");
+            }
+        }
+
+        for (Iterator i=ed.getSources().iterator(); i.hasNext(); ) {
+            Source source = (Source)i.next();
+            for (Iterator j=source.getFields().iterator(); j.hasNext(); ) {
+                Field field = (Field)j.next();
+
+                if (field.getConstant() != null) continue;
+                if (field.getVariable() != null) continue;
+
+                Expression expression = field.getExpression();
+                if (expression.getForeach() != null) continue;
+                if (expression.getVar() != null) continue;
+
+                String script = expression.getScript();
+                Collection tokens = interpreter.parse(script);
+
+                if (tokens.size() != 1) continue;
+                Token token = (Token)tokens.iterator().next();
+
+                if (token.getType() == Token.STRING_LITERAL) {
+                    String constant = token.getImage();
+                    constant = constant.substring(1, constant.length()-1);
+                    field.setConstant(constant);
+                    field.setExpression(null);
+
+                    log.debug("Converting "+script+" into constant.");
+
+                } else if (token.getType() == Token.IDENTIFIER) {
+                    String variable = token.getImage();
+                    field.setVariable(variable);
+                    field.setExpression(null);
+
+                    log.debug("Converting "+script+" into variable.");
                 }
             }
         }
