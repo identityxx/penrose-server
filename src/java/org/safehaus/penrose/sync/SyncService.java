@@ -151,7 +151,6 @@ public class SyncService {
         Config config = syncContext.getConfig(sourceDefinition);
         ConnectionConfig connectionConfig = config.getConnectionConfig(sourceDefinition.getConnectionName());
 
-        log.info("-------------------------------------------------");
         log.debug("Deleting entry in "+sourceDefinition.getName());
 
         MRSWLock lock = getLock(sourceDefinition);
@@ -165,7 +164,7 @@ public class SyncService {
                 Row pk = (Row) i.next();
                 AttributeValues oldEntry = (AttributeValues)sourceValues.clone();
                 oldEntry.set(pk);
-                log.debug("DELETE ROW: " + oldEntry);
+                //log.debug("DELETE ROW: " + oldEntry);
 
                 // Delete row from source table in the source database/directory
                 Connection connection = syncContext.getConnection(sourceDefinition.getConnectionName());
@@ -194,10 +193,9 @@ public class SyncService {
         Config config = syncContext.getConfig(sourceDefinition);
         ConnectionConfig connectionConfig = config.getConnectionConfig(sourceDefinition.getConnectionName());
 
-        log.debug("----------------------------------------------------------------");
         log.debug("Modifying entry in " + sourceDefinition.getName());
-        log.debug("Old values: " + oldSourceValues);
-        log.debug("New values: " + newSourceValues);
+        //log.debug("Old values: " + oldSourceValues);
+        //log.debug("New values: " + newSourceValues);
 
         MRSWLock lock = getLock(sourceDefinition);
         lock.getWriteLock(WAIT_TIMEOUT);
@@ -226,7 +224,7 @@ public class SyncService {
                 Row pk = (Row) i.next();
                 AttributeValues newEntry = (AttributeValues)newSourceValues.clone();
                 newEntry.set(pk);
-                log.debug("ADDING ROW: " + newEntry);
+                //log.debug("ADDING ROW: " + newEntry);
 
                 // Add row to source table in the source database/directory
                 Connection connection = syncContext.getConnection(sourceDefinition.getConnectionName());
@@ -239,7 +237,7 @@ public class SyncService {
                 Row pk = (Row) i.next();
                 AttributeValues oldEntry = (AttributeValues)oldSourceValues.clone();
                 oldEntry.set(pk);
-                log.debug("DELETE ROW: " + oldEntry);
+                //log.debug("DELETE ROW: " + oldEntry);
 
                 // Delete row from source table in the source database/directory
                 Connection connection = syncContext.getConnection(sourceDefinition.getConnectionName());
@@ -258,7 +256,7 @@ public class SyncService {
                 oldEntry.set(pk);
                 AttributeValues newEntry = (AttributeValues)newSourceValues.clone();
                 newEntry.set(pk);
-                log.debug("REPLACE ROW: " + oldEntry+" with "+newEntry);
+                //log.debug("REPLACE ROW: " + oldEntry+" with "+newEntry);
 
                 // Modify row from source table in the source database/directory
                 Connection connection = syncContext.getConnection(sourceDefinition.getConnectionName());
@@ -267,6 +265,57 @@ public class SyncService {
 
                 // Modify row from source table in the cache
                 syncContext.getSourceDataCache(connectionConfig, sourceDefinition).remove(pk);
+            }
+
+            syncContext.getSourceFilterCache(connectionConfig, sourceDefinition).invalidate();
+
+        } finally {
+            lock.releaseWriteLock(WAIT_TIMEOUT);
+        }
+
+        return LDAPException.SUCCESS;
+    }
+
+    public int modrdn(
+            SourceDefinition sourceDefinition,
+            AttributeValues oldSourceValues,
+            AttributeValues newSourceValues) throws Exception {
+
+        Config config = syncContext.getConfig(sourceDefinition);
+        ConnectionConfig connectionConfig = config.getConnectionConfig(sourceDefinition.getConnectionName());
+
+        log.debug("Renaming entry in " + sourceDefinition.getName());
+
+        MRSWLock lock = getLock(sourceDefinition);
+        lock.getWriteLock(WAIT_TIMEOUT);
+
+        try {
+            Collection oldPKs = syncContext.getTransformEngine().getPrimaryKeys(sourceDefinition, oldSourceValues);
+            Collection newPKs = syncContext.getTransformEngine().getPrimaryKeys(sourceDefinition, newSourceValues);
+
+            log.debug("Old PKs: " + oldPKs);
+            log.debug("New PKs: " + newPKs);
+
+            Iterator i = oldPKs.iterator();
+            Iterator j = newPKs.iterator();
+
+            while (i.hasNext() && j.hasNext()) {
+                Row oldPk = (Row)i.next();
+                Row newPk = (Row)j.next();
+
+                // Rename row from source table in the source database/directory
+                Connection connection = syncContext.getConnection(sourceDefinition.getConnectionName());
+
+                int rc;
+                if (oldPk.equals(newPk)) {
+                    rc = connection.modify(sourceDefinition, oldSourceValues, newSourceValues);
+                } else {
+                    rc = connection.modrdn(sourceDefinition, oldPk, newPk);
+                }
+
+                if (rc != LDAPException.SUCCESS) return rc;
+
+                syncContext.getSourceDataCache(connectionConfig, sourceDefinition).remove(oldPk);
             }
 
             syncContext.getSourceFilterCache(connectionConfig, sourceDefinition).invalidate();

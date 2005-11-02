@@ -805,12 +805,53 @@ public class PenroseInterceptor extends BaseInterceptor {
         }
     }
 
-    public void modifyRn( NextInterceptor next, Name name, String newRn, boolean deleteOldRn ) throws NamingException
-    {
-        String dn = name.toString();
-        log.debug("===============================================================================");
-        log.debug("modifyRn(\""+dn+"\")");
-        next.modifyRn( name, newRn, deleteOldRn );
+    public void modifyRn(
+            NextInterceptor next,
+            Name name,
+            String newRn,
+            boolean deleteOldRn
+            ) throws NamingException {
+
+        Name principalDn = getPrincipal() == null ? null : getPrincipal().getJndiName();
+
+        try {
+            String dn = name.toString();
+
+            log.debug("===============================================================================");
+            log.debug("modifyRn(\""+dn+"\")");
+
+            Config config = penrose.getConfig(dn);
+            if (config == null) {
+                log.debug(dn+" is a static entry");
+                next.modifyRn(name, newRn, deleteOldRn);
+                return;
+            }
+
+            EntryDefinition ed = config.findEntryDefinition(dn);
+            if (ed == null) {
+                log.debug(dn+" is a static entry");
+                next.modifyRn(name, newRn, deleteOldRn);
+                return;
+            }
+
+            PenroseConnection connection = penrose.openConnection();
+            connection.setBindDn(principalDn.toString());
+
+            int rc = connection.modrdn(dn.toString(), newRn);
+
+            connection.close();
+
+            if (rc != LDAPException.SUCCESS) {
+                ExceptionUtil.throwNamingException(rc);
+            }
+
+        } catch (NamingException e) {
+            throw e;
+
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+            throw new NamingException(e.getMessage());
+        }
     }
 
     public void move( NextInterceptor next, Name oriChildName, Name newParentName, String newRn, boolean deleteOldRn ) throws NamingException

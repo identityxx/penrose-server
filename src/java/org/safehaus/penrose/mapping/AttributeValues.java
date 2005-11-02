@@ -87,6 +87,14 @@ public class AttributeValues implements Cloneable, Comparable {
         c.addAll(values);
     }
 
+    public void set(String prefix, AttributeValues attributeValues) {
+        for (Iterator i=attributeValues.getNames().iterator(); i.hasNext(); ) {
+            String name = (String)i.next();
+            Collection c = attributeValues.get(name);
+            set(prefix+"."+name, c);
+        }
+    }
+
     public void set(String name, Collection values) {
         Collection c = new HashSet();
         c.addAll(values);

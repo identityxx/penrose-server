@@ -21,6 +21,7 @@ package org.safehaus.penrose.connection;
 import org.safehaus.penrose.mapping.AttributeValues;
 import org.safehaus.penrose.mapping.Source;
 import org.safehaus.penrose.mapping.SourceDefinition;
+import org.safehaus.penrose.mapping.Row;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.SearchResults;
 import org.apache.log4j.Logger;
@@ -87,6 +88,13 @@ public abstract class Adapter {
      * @throws Exception
      */
     public abstract int modify(SourceDefinition sourceDefinition, AttributeValues oldValues, AttributeValues newValues) throws Exception;
+
+    /**
+     * Modify RDN.
+     *
+     * @throws Exception
+     */
+    public abstract int modrdn(SourceDefinition sourceDefinition, Row oldValues, Row newValues) throws Exception;
 
     /**
      * Delete.

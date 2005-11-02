@@ -424,10 +424,10 @@ public class JDBCAdapter extends Adapter {
         return LDAPException.INVALID_CREDENTIALS;
     }
 
-    public int add(SourceDefinition sourceDefinition, AttributeValues fieldValues) throws Exception {
+    public int add(SourceDefinition sourceDefinition, AttributeValues sourceValues) throws Exception {
 
         // convert sets into single values
-        Collection rows = getAdapterContext().getTransformEngine().convert(fieldValues);
+        Collection rows = getAdapterContext().getTransformEngine().convert(sourceValues);
     	Row row = (Row)rows.iterator().next();
 
         String tableName = sourceDefinition.getParameter(TABLE_NAME);
@@ -510,14 +510,14 @@ public class JDBCAdapter extends Adapter {
         return pk;
     }
 
-    public int delete(SourceDefinition sourceDefinition, AttributeValues fieldValues) throws Exception {
+    public int delete(SourceDefinition sourceDefinition, AttributeValues sourceValues) throws Exception {
 
-        Map pk = getPkValues(sourceDefinition, fieldValues.getValues());
+        Map pk = getPkValues(sourceDefinition, sourceValues.getValues());
         //log.debug("Deleting entry "+pk);
 
         // convert sets into single values
         Collection pkRows = getAdapterContext().getTransformEngine().convert(pk);
-        //Collection rows = getAdapterContext().getTransformEngine().convert(fieldValues);
+        //Collection rows = getAdapterContext().getTransformEngine().convert(sourceValues);
 
         Row pkRow = (Row)pkRows.iterator().next();
         //Row row = (Row)rows.iterator().next();
@@ -590,18 +590,18 @@ public class JDBCAdapter extends Adapter {
         try {
             con = ds.getConnection();
 
-            StringBuffer sb = new StringBuffer();
-            StringBuffer sb2 = new StringBuffer();
+            StringBuffer columns = new StringBuffer();
+            StringBuffer whereClause = new StringBuffer();
             Collection parameters = new ArrayList();
 
             Collection fields = sourceDefinition.getFieldDefinitions();
             for (Iterator i=fields.iterator(); i.hasNext(); ) {
                 FieldDefinition fieldDefinition = (FieldDefinition)i.next();
 
-                if (sb.length() > 0) sb.append(", ");
+                if (columns.length() > 0) columns.append(", ");
 
-                sb.append(fieldDefinition.getOriginalName());
-                sb.append("=?");
+                columns.append(fieldDefinition.getOriginalName());
+                columns.append("=?");
 
                 Object value = newRow.get(fieldDefinition.getName());
                 parameters.add(value);
@@ -611,19 +611,21 @@ public class JDBCAdapter extends Adapter {
                 FieldDefinition fieldDefinition = (FieldDefinition)i.next();
                 if (!fieldDefinition.isPrimaryKey()) continue;
 
-                if (sb2.length() > 0) sb2.append(" and ");
+                if (whereClause.length() > 0) whereClause.append(" and ");
 
-                sb2.append(fieldDefinition.getOriginalName());
-                sb2.append("=?");
+                whereClause.append(fieldDefinition.getOriginalName());
+                whereClause.append("=?");
 
                 Object value = oldRow.get(fieldDefinition.getName());
                 parameters.add(value);
             }
 
-            String sql = "update "+tableName+" set "+sb+" where "+sb2;
+            String sql = "update "+tableName+" set "+columns+" where "+whereClause;
 
             log.debug(Formatter.displaySeparator(80));
-            log.debug(Formatter.displayLine(sql, 80));
+            log.debug(Formatter.displayLine("update "+tableName, 80));
+            log.debug(Formatter.displayLine("set "+columns, 80));
+            log.debug(Formatter.displayLine("where "+whereClause, 80));
             log.debug(Formatter.displaySeparator(80));
 
             ps = con.prepareStatement(sql);
@@ -649,5 +651,84 @@ public class JDBCAdapter extends Adapter {
         
         return LDAPException.SUCCESS;
     }
-    
+
+    public int modrdn(
+            SourceDefinition sourceDefinition,
+            Row oldRdn,
+            Row newRdn)
+            throws Exception {
+
+        //log.debug("Renaming source "+source.getName()+": "+oldRdn+" with "+newRdn);
+
+        String tableName = sourceDefinition.getParameter(TABLE_NAME);
+
+        java.sql.Connection con = null;
+        PreparedStatement ps = null;
+
+        try {
+            con = ds.getConnection();
+
+            StringBuffer columns = new StringBuffer();
+            StringBuffer whereClause = new StringBuffer();
+            Collection parameters = new ArrayList();
+
+            Collection fields = sourceDefinition.getFieldDefinitions();
+            for (Iterator i=fields.iterator(); i.hasNext(); ) {
+                FieldDefinition fieldDefinition = (FieldDefinition)i.next();
+                if (!fieldDefinition.isPrimaryKey()) continue;
+
+                if (columns.length() > 0) columns.append(", ");
+
+                columns.append(fieldDefinition.getOriginalName());
+                columns.append("=?");
+
+                Object value = newRdn.get(fieldDefinition.getName());
+                parameters.add(value);
+            }
+
+            for (Iterator i=fields.iterator(); i.hasNext(); ) {
+                FieldDefinition fieldDefinition = (FieldDefinition)i.next();
+                if (!fieldDefinition.isPrimaryKey()) continue;
+
+                if (whereClause.length() > 0) whereClause.append(" and ");
+
+                whereClause.append(fieldDefinition.getOriginalName());
+                whereClause.append("=?");
+
+                Object value = oldRdn.get(fieldDefinition.getName());
+                parameters.add(value);
+            }
+
+            String sql = "update "+tableName+" set "+columns+" where "+whereClause;
+
+            log.debug(Formatter.displaySeparator(80));
+            log.debug(Formatter.displayLine("update "+tableName, 80));
+            log.debug(Formatter.displayLine("set "+columns, 80));
+            log.debug(Formatter.displayLine("where "+whereClause, 80));
+            log.debug(Formatter.displaySeparator(80));
+
+            ps = con.prepareStatement(sql);
+
+            log.debug(Formatter.displayLine("Parameters:", 80));
+
+            int c = 1;
+            for (Iterator i=parameters.iterator(); i.hasNext(); c++) {
+                Object value = i.next();
+                ps.setObject(c, value);
+                log.debug(Formatter.displayLine(" - "+c+" = "+value, 80));
+            }
+
+            log.debug(Formatter.displaySeparator(80));
+
+            int count = ps.executeUpdate();
+            if (count == 0) return LDAPException.NO_SUCH_OBJECT;
+
+        } finally {
+            if (ps != null) try { ps.close(); } catch (Exception e) {}
+            if (con != null) try { con.close(); } catch (Exception e) {}
+        }
+
+        return LDAPException.SUCCESS;
+    }
+
 }

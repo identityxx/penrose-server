@@ -167,8 +167,8 @@ public class ModifyHandler {
 
 		convertValues(entryDefinition, modifications);
 
-		log.debug("--- old values:");
-		log.debug(entry.toString());
+		log.debug("Old entry:");
+		log.debug("\n"+entry.toString());
 
 		log.debug("--- perform modification:");
 		AttributeValues newValues = new AttributeValues(oldValues);
@@ -198,9 +198,9 @@ public class ModifyHandler {
 			boolean found = false;
 			for (Iterator j = objectClasses.iterator(); j.hasNext();) {
 				ObjectClass oc = (ObjectClass) j.next();
-				log.debug("Object Class: " + oc.getName());
-				log.debug(" - required: " + oc.getRequiredAttributes());
-				log.debug(" - optional: " + oc.getOptionalAttributes());
+				//log.debug("Object Class: " + oc.getName());
+				//log.debug(" - required: " + oc.getRequiredAttributes());
+				//log.debug(" - optional: " + oc.getOptionalAttributes());
 
 				if (oc.getRequiredAttributes().contains(attributeName)
 						|| oc.getOptionalAttributes().contains(attributeName)) {
@@ -252,54 +252,55 @@ public class ModifyHandler {
 
         Entry newEntry = new Entry(entry.getDn(), entryDefinition, entry.getSourceValues(), newValues);
 
-		log.debug("--- new values:");
-		log.debug(newEntry.toString());
+		log.debug("New entry:");
+		log.debug("\n"+newEntry.toString());
 
         return handlerContext.getEngine().modify(entry, oldValues, newValues);
 	}
 
-    public int modifyStaticEntry(EntryDefinition entry, Collection modifications)
-			throws Exception {
 
-		convertValues(entry, modifications);
+        public int modifyStaticEntry(EntryDefinition entry, Collection modifications)
+                throws Exception {
 
-		for (Iterator i = modifications.iterator(); i.hasNext();) {
-			LDAPModification modification = (LDAPModification) i.next();
+            convertValues(entry, modifications);
 
-			LDAPAttribute attribute = modification.getAttribute();
-			String attributeName = attribute.getName();
+            for (Iterator i = modifications.iterator(); i.hasNext();) {
+                LDAPModification modification = (LDAPModification) i.next();
 
-			String attributeValues[] = attribute.getStringValueArray();
+                LDAPAttribute attribute = modification.getAttribute();
+                String attributeName = attribute.getName();
 
-			switch (modification.getOp()) {
-			case LDAPModification.ADD:
-				for (int j = 0; j < attributeValues.length; j++) {
-					String v = "\"" + attributeValues[j] + "\"";
-					addAttribute(entry, attributeName, v);
-				}
-				break;
+                String attributeValues[] = attribute.getStringValueArray();
 
-			case LDAPModification.DELETE:
-				if (attributeValues.length == 0) {
-					deleteAttribute(entry, attributeName);
+                switch (modification.getOp()) {
+                case LDAPModification.ADD:
+                    for (int j = 0; j < attributeValues.length; j++) {
+                        String v = "\"" + attributeValues[j] + "\"";
+                        addAttribute(entry, attributeName, v);
+                    }
+                    break;
 
-				} else {
-					for (int j = 0; j < attributeValues.length; j++) {
-						String v = "\"" + attributeValues[j] + "\"";
-						deleteAttribute(entry, attributeName, v);
-					}
-				}
-				break;
-			case LDAPModification.REPLACE:
-				deleteAttribute(entry, attributeName);
+                case LDAPModification.DELETE:
+                    if (attributeValues.length == 0) {
+                        deleteAttribute(entry, attributeName);
 
-				for (int j = 0; j < attributeValues.length; j++) {
-					String v = "\"" + attributeValues[j] + "\"";
-					addAttribute(entry, attributeName, v);
-				}
-				break;
-			}
-		}
+                    } else {
+                        for (int j = 0; j < attributeValues.length; j++) {
+                            String v = "\"" + attributeValues[j] + "\"";
+                            deleteAttribute(entry, attributeName, v);
+                        }
+                    }
+                    break;
+                case LDAPModification.REPLACE:
+                    deleteAttribute(entry, attributeName);
+
+                    for (int j = 0; j < attributeValues.length; j++) {
+                        String v = "\"" + attributeValues[j] + "\"";
+                        addAttribute(entry, attributeName, v);
+                    }
+                    break;
+                }
+            }
 
 		/*
 		 * for (Iterator i = attributes.iterator(); i.hasNext(); ) { AttributeDefinition

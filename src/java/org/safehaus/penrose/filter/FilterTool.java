@@ -58,7 +58,7 @@ public class FilterTool {
     }
 
     public boolean isValidEntry(Entry entry, Filter filter) throws Exception {
-        log.debug("Checking filter "+filter);
+        //log.debug("Checking filter "+filter);
         boolean result = false;
 
         if (filter instanceof NotFilter) {
@@ -144,7 +144,7 @@ public class FilterTool {
                 String value = i.next().toString();
 
                 boolean b = equalityMatchingRule.compare(value, attributeValue);
-                log.debug(" - ["+value+"] => "+b);
+                //log.debug(" - ["+value+"] => "+b);
 
                 if (b) return true;
             }

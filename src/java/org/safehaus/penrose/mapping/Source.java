@@ -62,6 +62,7 @@ public class Source implements Cloneable, Serializable {
 
     private boolean includeOnAdd = true;
     private boolean includeOnModify = true;
+    private boolean includeOnModRdn = true;
     private boolean includeOnDelete = true;
 
 	public Source() {
@@ -127,6 +128,14 @@ public class Source implements Cloneable, Serializable {
         return parameters.keySet();
     }
 
+    public boolean isRequired() {
+        return required;
+    }
+
+    public void setRequired(boolean required) {
+        this.required = required;
+    }
+
     public boolean isIncludeOnDelete() {
         return includeOnDelete;
     }
@@ -151,6 +160,14 @@ public class Source implements Cloneable, Serializable {
         this.includeOnModify = includeOnModify;
     }
 
+    public boolean isIncludeOnModRdn() {
+        return includeOnModRdn;
+    }
+
+    public void setIncludeOnModRdn(boolean includeOnModRdn) {
+        this.includeOnModRdn = includeOnModRdn;
+    }
+
     public int hashCode() {
         return (name == null ? 0 : name.hashCode()) +
                 (sourceName == null ? 0 : sourceName.hashCode()) +
@@ -160,6 +177,7 @@ public class Source implements Cloneable, Serializable {
                 (required ? 0 : 1) +
                 (includeOnAdd ? 0 : 1) +
                 (includeOnModify? 0 : 1) +
+                (includeOnModRdn? 0 : 1) +
                 (includeOnDelete ? 0 : 1);
     }
 
@@ -182,6 +200,7 @@ public class Source implements Cloneable, Serializable {
         if (required != source.required) return false;
         if (includeOnAdd != source.includeOnAdd) return false;
         if (includeOnModify != source.includeOnModify) return false;
+        if (includeOnModRdn != source.includeOnModRdn) return false;
         if (includeOnDelete != source.includeOnDelete) return false;
 
         return true;
@@ -203,6 +222,7 @@ public class Source implements Cloneable, Serializable {
         source.required = required;
         source.includeOnAdd = includeOnAdd;
         source.includeOnModify = includeOnModify;
+        source.includeOnModRdn = includeOnModRdn;
         source.includeOnDelete = includeOnDelete;
 
         return source;
@@ -210,13 +230,5 @@ public class Source implements Cloneable, Serializable {
 
     public String toString() {
         return name+" "+sourceName;
-    }
-
-    public boolean isRequired() {
-        return required;
-    }
-
-    public void setRequired(boolean required) {
-        this.required = required;
     }
 }

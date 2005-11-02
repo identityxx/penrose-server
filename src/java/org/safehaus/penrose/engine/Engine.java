@@ -391,31 +391,108 @@ public class Engine {
         return LDAPException.SUCCESS;
     }
 
+    public int modrdn(Entry entry, String newRdn) throws Exception {
+
+        EntryDefinition entryDefinition = entry.getEntryDefinition();
+        AttributeValues oldAttributeValues = entry.getAttributeValues();
+        AttributeValues oldSourceValues = entry.getSourceValues();
+
+        Row rdn = Entry.getRdn(newRdn);
+
+        AttributeValues newAttributeValues = new AttributeValues(oldAttributeValues);
+        Collection rdnAttributes = entryDefinition.getRdnAttributes();
+        for (Iterator i=rdnAttributes.iterator(); i.hasNext(); ) {
+            AttributeDefinition attributeDefinition = (AttributeDefinition)i.next();
+            String name = attributeDefinition.getName();
+            String newValue = (String)rdn.get(name);
+
+            newAttributeValues.remove(name);
+            newAttributeValues.add(name, newValue);
+        }
+
+        AttributeValues newSourceValues = new AttributeValues(oldSourceValues);
+        Collection sources = entryDefinition.getSources();
+        for (Iterator i=sources.iterator(); i.hasNext(); ) {
+            Source source = (Source)i.next();
+
+            AttributeValues output = new AttributeValues();
+            engineContext.getTransformEngine().translate(source, newAttributeValues, output);
+            newSourceValues.set(source.getName(), output);
+        }
+
+        log.debug(Formatter.displaySeparator(80));
+        log.debug(Formatter.displayLine("MODRDN", 80));
+        log.debug(Formatter.displayLine("Entry: "+entry.getDn(), 80));
+        log.debug(Formatter.displayLine("New RDN: "+newRdn, 80));
+
+        log.debug(Formatter.displayLine("Attribute values:", 80));
+        for (Iterator iterator = newAttributeValues.getNames().iterator(); iterator.hasNext(); ) {
+            String name = (String)iterator.next();
+            Collection values = newAttributeValues.get(name);
+            log.debug(Formatter.displayLine(" - "+name+": "+values, 80));
+        }
+
+        log.debug(Formatter.displayLine("Old source values:", 80));
+        for (Iterator iterator = oldSourceValues.getNames().iterator(); iterator.hasNext(); ) {
+            String name = (String)iterator.next();
+            Collection values = oldSourceValues.get(name);
+            log.debug(Formatter.displayLine(" - "+name+": "+values, 80));
+        }
+
+        log.debug(Formatter.displayLine("New source values:", 80));
+        for (Iterator iterator = newSourceValues.getNames().iterator(); iterator.hasNext(); ) {
+            String name = (String)iterator.next();
+            Collection values = newSourceValues.get(name);
+            log.debug(Formatter.displayLine(" - "+name+": "+values, 80));
+        }
+
+        log.debug(Formatter.displaySeparator(80));
+
+        ModRdnGraphVisitor visitor = new ModRdnGraphVisitor(this, entryDefinition, oldSourceValues, newSourceValues);
+        visitor.run();
+
+        if (visitor.getReturnCode() != LDAPException.SUCCESS) return visitor.getReturnCode();
+
+        engineContext.getEntryDataCache(entry.getParentDn(), entryDefinition).remove(entry.getRdn());
+        engineContext.getEntryFilterCache(entry.getParentDn(), entryDefinition).invalidate();
+
+        return LDAPException.SUCCESS;
+    }
+
     public int modify(Entry entry, AttributeValues oldValues, AttributeValues newValues) throws Exception {
 
-        //Entry parent = entry.getParent();
         EntryDefinition entryDefinition = entry.getEntryDefinition();
-        Collection sources = entryDefinition.getSources();
-
         AttributeValues oldSourceValues = entry.getSourceValues();
-        //getFieldValues(entry.getDn(), oldSourceValues);
 
         AttributeValues newSourceValues = (AttributeValues)oldSourceValues.clone();
+        Collection sources = entryDefinition.getSources();
         for (Iterator i=sources.iterator(); i.hasNext(); ) {
             Source source = (Source)i.next();
 
             AttributeValues output = new AttributeValues();
             engineContext.getTransformEngine().translate(source, newValues, output);
-
-            log.debug(" - "+output);
-            for (Iterator j=output.getNames().iterator(); j.hasNext(); ) {
-                String name = (String)j.next();
-                Collection values = output.get(name);
-                newSourceValues.set(source.getName()+"."+name, values);
-            }
+            newSourceValues.set(source.getName(), output);
         }
 
-        log.debug("Modifying entry "+entryDefinition.getRdn()+","+entry.getParentDn()+" ["+oldSourceValues+"] with: "+newSourceValues);
+        log.debug(Formatter.displaySeparator(80));
+        log.debug(Formatter.displayLine("MODIFY", 80));
+        log.debug(Formatter.displayLine("Entry: "+entry.getDn(), 80));
+
+        log.debug(Formatter.displayLine("Old source values:", 80));
+        for (Iterator iterator = oldSourceValues.getNames().iterator(); iterator.hasNext(); ) {
+            String name = (String)iterator.next();
+            Collection values = oldSourceValues.get(name);
+            log.debug(Formatter.displayLine(" - "+name+": "+values, 80));
+        }
+
+        log.debug(Formatter.displayLine("New source values:", 80));
+        for (Iterator iterator = newSourceValues.getNames().iterator(); iterator.hasNext(); ) {
+            String name = (String)iterator.next();
+            Collection values = newSourceValues.get(name);
+            log.debug(Formatter.displayLine(" - "+name+": "+values, 80));
+        }
+
+        log.debug(Formatter.displaySeparator(80));
 
         Graph graph = getGraph(entryDefinition);
         Source primarySource = getPrimarySource(entryDefinition);

@@ -2,10 +2,7 @@ package org.safehaus.penrose.connection;
 
 import org.safehaus.penrose.connection.Adapter;
 import org.safehaus.penrose.SearchResults;
-import org.safehaus.penrose.mapping.Source;
-import org.safehaus.penrose.mapping.AttributeValues;
-import org.safehaus.penrose.mapping.ConnectionConfig;
-import org.safehaus.penrose.mapping.SourceDefinition;
+import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.filter.Filter;
 
 import java.util.Collection;
@@ -69,6 +66,10 @@ public class Connection {
 
     public int modify(SourceDefinition sourceDefinition, AttributeValues oldValues, AttributeValues newValues) throws Exception {
         return adapter.modify(sourceDefinition, oldValues, newValues);
+    }
+
+    public int modrdn(SourceDefinition sourceDefinition, Row oldValues, Row newValues) throws Exception {
+        return adapter.modrdn(sourceDefinition, oldValues, newValues);
     }
 
     public int delete(SourceDefinition sourceDefinition, AttributeValues values) throws Exception {

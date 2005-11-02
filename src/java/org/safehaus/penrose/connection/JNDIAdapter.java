@@ -510,6 +510,23 @@ public class JNDIAdapter extends Adapter {
         return LDAPException.SUCCESS;
     }
 
+    public int modrdn(SourceDefinition sourceDefinition, Row oldEntry, Row newEntry) throws Exception {
+
+        String dn = getDn(sourceDefinition, oldEntry);
+        String newRdn = newEntry.toString();
+
+        log.debug(Formatter.displaySeparator(80));
+        log.debug(Formatter.displayLine("JNDI ModRDN "+sourceDefinition.getConnectionName()+"/"+sourceDefinition.getName(), 80));
+        log.debug(Formatter.displayLine(" - DN: "+dn, 80));
+        log.debug(Formatter.displayLine(" - New RDN: "+newRdn, 80));
+        log.debug(Formatter.displaySeparator(80));
+
+        DirContext ctx = new InitialDirContext(parameters);
+        ctx.rename(dn, newRdn);
+
+        return LDAPException.SUCCESS;
+    }
+
     public int modifyAdd(SourceDefinition sourceDefinition, AttributeValues entry) throws Exception {
         log.debug("JNDI Modify Add:");
 
@@ -560,9 +577,6 @@ public class JNDIAdapter extends Adapter {
     public String getDn(SourceDefinition sourceDefinition, AttributeValues sourceValues) throws Exception {
         //log.debug("Computing DN for "+source.getName()+" with "+sourceValues);
 
-        String baseDn = sourceDefinition.getParameter(BASE_DN);
-        //log.debug("Base DN: "+baseDn);
-
         Collection fields = sourceDefinition.getFieldDefinitions();
         StringBuffer sb = new StringBuffer();
 
@@ -591,15 +605,37 @@ public class JNDIAdapter extends Adapter {
 
         //log.debug("RDN: "+sb);
 
-        if ("".equals(baseDn)) {
-            baseDn = suffix;
-        } else {
-            baseDn = baseDn+","+suffix;
-        }
+        String baseDn = sourceDefinition.getParameter(BASE_DN);
+        //log.debug("Base DN: "+baseDn);
 
-        String dn = sb+","+baseDn;
-        //log.debug("DN: "+dn);
+        String dn = append(sb.toString(), baseDn);
+        dn = append(dn, suffix);
+
+        //log.debug("DN: "+sb);
 
         return dn;
+    }
+
+    public String getDn(SourceDefinition sourceDefinition, Row rdn) throws Exception {
+        String baseDn = sourceDefinition.getParameter(BASE_DN);
+        //log.debug("Base DN: "+baseDn);
+
+        String dn = append(rdn.toString(), baseDn);
+        dn = append(dn, suffix);
+
+        //log.debug("DN: "+sb);
+
+        return dn;
+    }
+
+    public String append(String dn, String suffix) {
+        if ("".equals(suffix)) return dn;
+
+        StringBuffer sb = new StringBuffer(dn);
+
+        if (sb.length() > 0) sb.append(",");
+        sb.append(suffix);
+
+        return sb.toString();
     }
 }
