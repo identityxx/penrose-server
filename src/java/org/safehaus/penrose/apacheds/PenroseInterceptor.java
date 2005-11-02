@@ -547,7 +547,7 @@ public class PenroseInterceptor extends BaseInterceptor {
                         } else {
                             attr.clear();
                         }
-                        attr.add("Penrose Virtual Directory Server 0.9.7");
+                        attr.add("Penrose Virtual Directory Server 0.9.8");
                     }
 
                     if (requestedAttrs.contains("*") || requestedAttrs.contains("namingContexts")) {

@@ -266,7 +266,7 @@ public class PenroseServer implements SignalHandler {
             server.run();
             server.runJmx();
 
-            log.info("Penrose Server is ready.");
+            log.info("Penrose Server 0.9.8 is ready.");
 
             server.loop();
 
