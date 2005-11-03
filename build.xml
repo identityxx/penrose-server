@@ -254,6 +254,9 @@
     </target>
 
     <target name="dist-all" depends="dist-src,dist-unix,dist-win32">
+        <copy todir="${project.dist}"
+            file="target/${project.name}-${project.version}.jar">
+        </copy>
     </target>
     
     <target name="clean">
