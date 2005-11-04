@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
-package org.safehaus.penrose.sync;
+package org.safehaus.penrose.connector;
 
 import org.safehaus.penrose.engine.TransformEngine;
 import org.safehaus.penrose.connection.Connection;
@@ -33,7 +33,7 @@ import java.util.Collection;
 /**
  * @author Endi S. Dewata
  */
-public interface SyncContext {
+public interface ConnectorContext {
 
     public Config getConfig(Source source) throws Exception;
     public Config getConfig(SourceDefinition sourceDefinition) throws Exception;

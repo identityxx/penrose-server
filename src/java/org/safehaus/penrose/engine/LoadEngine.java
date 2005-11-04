@@ -121,6 +121,8 @@ public class LoadEngine {
             throws Exception {
 
         Source primarySource = engine.getPrimarySource(entryDefinition);
+        log.debug("Primary source: "+(primarySource == null ? null : primarySource.getName()));
+
         if (primarySource == null) return sourceValues;
 
         Collection pks = new TreeSet();

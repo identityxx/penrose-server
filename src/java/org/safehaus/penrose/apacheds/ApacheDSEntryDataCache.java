@@ -54,6 +54,11 @@ public class ApacheDSEntryDataCache extends EntryDataCache {
         return null;
     }
 
+    public Map getExpired() throws Exception {
+        Map results = new TreeMap();
+        return results;
+    }
+
     public Entry get(EntryDefinition entryDefinition, String dn) throws Exception {
 
         log.debug("===============================================================================");

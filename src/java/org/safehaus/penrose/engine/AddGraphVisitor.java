@@ -88,7 +88,7 @@ public class AddGraphVisitor extends GraphVisitor {
         ConnectionConfig connectionConfig = config.getConnectionConfig(source.getConnectionName());
         SourceDefinition sourceDefinition = connectionConfig.getSourceDefinition(source.getSourceName());
 
-        returnCode = engineContext.getSyncService().add(sourceDefinition, newSourceValues);
+        returnCode = engineContext.getConnector().add(sourceDefinition, newSourceValues);
         if (returnCode != LDAPException.SUCCESS) return;
 
         graphIterator.traverseEdges(node);

@@ -44,8 +44,9 @@ import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.filter.FilterTool;
 import org.safehaus.penrose.filter.FilterContext;
 import org.safehaus.penrose.acl.ACLEngine;
-import org.safehaus.penrose.sync.SyncService;
-import org.safehaus.penrose.sync.SyncContext;
+import org.safehaus.penrose.connector.Connector;
+import org.safehaus.penrose.connector.ConnectorContext;
+import org.safehaus.penrose.connector.*;
 
 /**
  * @author Endi S. Dewata
@@ -57,7 +58,7 @@ public class Penrose implements
         FilterContext,
         HandlerContext,
         ModuleContext,
-        SyncContext,
+        ConnectorContext,
         PenroseMBean {
 	
 	// ------------------------------------------------
@@ -104,7 +105,6 @@ public class Penrose implements
 	private FilterTool filterTool;
 
 	private TransformEngine transformEngine;
-    private SyncService syncService;
 
     private Map entryFilterCaches = new TreeMap();
     private Map entryDataCaches = new TreeMap();
@@ -113,6 +113,7 @@ public class Penrose implements
     private Map sourceFilterCaches = new TreeMap();
     private Map sourceDataCaches = new TreeMap();
 
+    private Map connectors = new LinkedHashMap();
 	private Map engines = new LinkedHashMap();
 
     private Map connections = new LinkedHashMap();
@@ -157,6 +158,7 @@ public class Penrose implements
 
 	public int init() throws Exception {
 
+        loadServerConfig();
         initServer();
 
         ConfigReader reader = new ConfigReader();
@@ -168,10 +170,9 @@ public class Penrose implements
 		return LDAPException.SUCCESS;
 	}
 
-    public void initServer() throws Exception {
-
+    public void loadServerConfig() throws Exception {
         log.debug("-------------------------------------------------------------------------------");
-        log.debug("Penrose.initServer()");
+        log.debug("Loading server configurration ...");
 
         if (trustedKeyStore != null) System.setProperty("javax.net.ssl.trustStore", trustedKeyStore);
 
@@ -182,7 +183,9 @@ public class Penrose implements
         if (serverConfig.getRootDn() != null) rootDn = serverConfig.getRootDn();
         if (serverConfig.getRootPassword() != null) rootPassword = serverConfig.getRootPassword();
         //log.debug(serverConfig.toString());
+    }
 
+    public void initServer() throws Exception {
         loadSchema();
 
         handler = new Handler(this);
@@ -190,20 +193,28 @@ public class Penrose implements
         filterTool = new FilterTool(this);
         transformEngine = new TransformEngine(this);
 
-        initSyncService();
-        initEngine();
+        initConnectors();
+        initEngines();
 
         configValidator = new ConfigValidator();
         configValidator.setServerConfig(serverConfig);
         configValidator.setSchema(schema);
     }
 
-    public void initSyncService() throws Exception {
-        syncService = new SyncService(this);
-        syncService.init();
+    public void initConnectors() throws Exception {
+
+        for (Iterator i=serverConfig.getConnectorConfigs().iterator(); i.hasNext(); ) {
+            ConnectorConfig connectorConfig = (ConnectorConfig)i.next();
+
+            Class clazz = Class.forName(connectorConfig.getConnectorClass());
+            Connector connector = (Connector)clazz.newInstance();
+            connector.init(connectorConfig, this);
+
+            connectors.put(connectorConfig.getConnectorName(), connector);
+        }
     }
 
-    public void initEngine() throws Exception {
+    public void initEngines() throws Exception {
 
         for (Iterator i=serverConfig.getEngineConfigs().iterator(); i.hasNext(); ) {
             EngineConfig engineConfig = (EngineConfig)i.next();
@@ -246,7 +257,7 @@ public class Penrose implements
         initConnections(config);
         initModules(config);
         getEngine().analyze(config);
-        syncService.init(config);
+        getConnector().init(config);
 	}
 
     public Connection getConnection(String name) {
@@ -331,6 +342,14 @@ public class Penrose implements
 
     public Engine getEngine(String name) {
         return (Engine)engines.get(name);
+    }
+
+    public Connector getConnector() {
+        return getConnector("DEFAULT");
+    }
+
+    public Connector getConnector(String name) {
+        return (Connector)connectors.get(name);
     }
 
     public Handler getHandler() {
@@ -443,6 +462,9 @@ public class Penrose implements
 
             Engine engine = getEngine();
             if (engine != null) engine.stop();
+
+            Connector connector = getConnector();
+            if (connector != null) connector.stop();
 
             // close all the pools, including all the connections
             //connectionPool.closeAll();
@@ -752,14 +774,6 @@ public class Penrose implements
 
     public void setServerConfig(ServerConfig serverConfig) {
         this.serverConfig = serverConfig;
-    }
-
-    public SyncService getSyncService() {
-        return syncService;
-    }
-
-    public void setSyncService(SyncService syncService) {
-        this.syncService = syncService;
     }
 
     public String getHomeDirectory() {

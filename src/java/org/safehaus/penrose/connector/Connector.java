@@ -15,9 +15,10 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
-package org.safehaus.penrose.sync;
+package org.safehaus.penrose.connector;
 
 import org.safehaus.penrose.SearchResults;
+import org.safehaus.penrose.engine.EngineConfig;
 import org.safehaus.penrose.util.Formatter;
 import org.safehaus.penrose.config.Config;
 import org.safehaus.penrose.thread.MRSWLock;
@@ -34,28 +35,56 @@ import java.util.*;
 /**
  * @author Endi S. Dewata
  */
-public class SyncService {
+public class Connector {
 
     public final static int WAIT_TIMEOUT = 10000; // wait timeout is 10 seconds
 
     Logger log = Logger.getLogger(getClass());
 
-    public SyncContext syncContext;
+    private ConnectorConfig connectorConfig;
+    private ConnectorContext connectorContext;
 
     private ThreadPool threadPool;
+    private boolean stopping = false;
 
     private Map locks = new HashMap();
     private Queue queue = new Queue();
 
-    public SyncService(SyncContext syncContext) throws Exception {
-        this.syncContext = syncContext;
+    public Collection configs = new ArrayList();
+
+    public void init(ConnectorConfig connectorConfig, ConnectorContext connectorContext) throws Exception {
+        this.connectorConfig = connectorConfig;
+        this.connectorContext = connectorContext;
+
+        log.debug("-------------------------------------------------");
+        log.debug("Initializing "+connectorConfig.getConnectorName()+" connector ...");
+
+        String s = connectorConfig.getParameter(ConnectorConfig.THREAD_POOL_SIZE);
+        int threadPoolSize = s == null ? ConnectorConfig.DEFAULT_THREAD_POOL_SIZE : Integer.parseInt(s);
+
+        threadPool = new ThreadPool(threadPoolSize);
+
+        execute(new ReloadThread(this));
     }
 
-    public void init() throws Exception {
+    public boolean isStopping() {
+        return stopping;
+    }
 
+    public void execute(Runnable runnable) throws Exception {
+        threadPool.execute(runnable);
+    }
+
+    public void stop() throws Exception {
+        if (stopping) return;
+        stopping = true;
+
+        // wait for all the worker threads to finish
+        threadPool.stopRequestAllWorkers();
     }
 
     public void init(Config config) throws Exception {
+        configs.add(config);
 
         Collection connectionConfigs = config.getConnectionConfigs();
         for (Iterator j=connectionConfigs.iterator(); j.hasNext(); ) {
@@ -79,6 +108,48 @@ public class SyncService {
         }
     }
 
+    public void refresh() throws Exception {
+        for (Iterator i=configs.iterator(); i.hasNext(); ) {
+            Config config = (Config)i.next();
+
+            Collection connectionConfigs = config.getConnectionConfigs();
+            for (Iterator j=connectionConfigs.iterator(); j.hasNext(); ) {
+                ConnectionConfig connectionConfig = (ConnectionConfig)j.next();
+
+                Collection sourceDefinitions = connectionConfig.getSourceDefinitions();
+                for (Iterator k=sourceDefinitions.iterator(); k.hasNext(); ) {
+                    SourceDefinition sourceDefinition = (SourceDefinition)k.next();
+
+                    String s = sourceDefinition.getParameter(SourceDefinition.AUTO_RELOAD);
+                    boolean autoReload = s == null ? SourceDefinition.DEFAULT_AUTO_RELOAD : new Boolean(s).booleanValue();
+
+                    if (!autoReload) continue;
+
+                    log.debug(Formatter.displaySeparator(80));
+                    log.debug(Formatter.displayLine("Refreshing source caches for "+sourceDefinition.getConnectionName()+"/"+sourceDefinition.getName(), 80));
+                    log.debug(Formatter.displaySeparator(80));
+
+                    refresh(connectionConfig, sourceDefinition);
+                }
+            }
+        }
+    }
+
+    public void refresh(ConnectionConfig connectionConfig, SourceDefinition sourceDefinition) throws Exception {
+        Map map = connectorContext.getSourceDataCache(connectionConfig, sourceDefinition).getExpired();
+
+        for (Iterator i=map.keySet().iterator(); i.hasNext(); ) {
+            Row pk = (Row)i.next();
+            AttributeValues av = (AttributeValues)map.get(pk);
+            log.debug("Refreshing "+pk+": "+av);
+        }
+
+        Filter f = connectorContext.getFilterTool().createFilter(map.keySet());
+        if (f == null) return;
+
+        load(sourceDefinition, map.keySet());
+    }
+
     public synchronized MRSWLock getLock(SourceDefinition sourceDefinition) {
 		String name = sourceDefinition.getConnectionName() + "." + sourceDefinition.getName();
 
@@ -99,7 +170,7 @@ public class SyncService {
         lock.getReadLock(WAIT_TIMEOUT);
 
         try {
-            Connection connection = syncContext.getConnection(sourceDefinition.getConnectionName());
+            Connection connection = connectorContext.getConnection(sourceDefinition.getConnectionName());
             int rc = connection.bind(sourceDefinition, sourceValues, password);
 
             return rc;
@@ -111,7 +182,7 @@ public class SyncService {
 
     public int add(SourceDefinition sourceDefinition, AttributeValues sourceValues) throws Exception {
 
-        Config config = syncContext.getConfig(sourceDefinition);
+        Config config = connectorContext.getConfig(sourceDefinition);
         ConnectionConfig connectionConfig = config.getConnectionConfig(sourceDefinition.getConnectionName());
 
         log.debug("----------------------------------------------------------------");
@@ -122,7 +193,7 @@ public class SyncService {
         lock.getWriteLock(WAIT_TIMEOUT);
 
         try {
-            Collection pks = syncContext.getTransformEngine().getPrimaryKeys(sourceDefinition, sourceValues);
+            Collection pks = connectorContext.getTransformEngine().getPrimaryKeys(sourceDefinition, sourceValues);
 
             // Add rows
             for (Iterator i = pks.iterator(); i.hasNext();) {
@@ -132,12 +203,12 @@ public class SyncService {
                 log.debug("ADDING ROW: " + newEntry);
 
                 // Add row to source table in the source database/directory
-                Connection connection = syncContext.getConnection(sourceDefinition.getConnectionName());
+                Connection connection = connectorContext.getConnection(sourceDefinition.getConnectionName());
                 int rc = connection.add(sourceDefinition, newEntry);
                 if (rc != LDAPException.SUCCESS) return rc;
             }
 
-            syncContext.getSourceFilterCache(connectionConfig, sourceDefinition).invalidate();
+            connectorContext.getSourceFilterCache(connectionConfig, sourceDefinition).invalidate();
 
         } finally {
         	lock.releaseWriteLock(WAIT_TIMEOUT);
@@ -148,7 +219,7 @@ public class SyncService {
 
     public int delete(SourceDefinition sourceDefinition, AttributeValues sourceValues) throws Exception {
 
-        Config config = syncContext.getConfig(sourceDefinition);
+        Config config = connectorContext.getConfig(sourceDefinition);
         ConnectionConfig connectionConfig = config.getConnectionConfig(sourceDefinition.getConnectionName());
 
         log.debug("Deleting entry in "+sourceDefinition.getName());
@@ -157,7 +228,7 @@ public class SyncService {
         lock.getWriteLock(WAIT_TIMEOUT);
 
         try {
-            Collection pks = syncContext.getTransformEngine().getPrimaryKeys(sourceDefinition, sourceValues);
+            Collection pks = connectorContext.getTransformEngine().getPrimaryKeys(sourceDefinition, sourceValues);
 
             // Remove rows
             for (Iterator i = pks.iterator(); i.hasNext();) {
@@ -167,16 +238,16 @@ public class SyncService {
                 //log.debug("DELETE ROW: " + oldEntry);
 
                 // Delete row from source table in the source database/directory
-                Connection connection = syncContext.getConnection(sourceDefinition.getConnectionName());
+                Connection connection = connectorContext.getConnection(sourceDefinition.getConnectionName());
                 int rc = connection.delete(sourceDefinition, oldEntry);
                 if (rc != LDAPException.SUCCESS)
                     return rc;
 
                 // Delete row from source table in the cache
-                syncContext.getSourceDataCache(connectionConfig, sourceDefinition).remove(pk);
+                connectorContext.getSourceDataCache(connectionConfig, sourceDefinition).remove(pk);
             }
 
-            syncContext.getSourceFilterCache(connectionConfig, sourceDefinition).invalidate();
+            connectorContext.getSourceFilterCache(connectionConfig, sourceDefinition).invalidate();
 
         } finally {
             lock.releaseWriteLock(WAIT_TIMEOUT);
@@ -190,7 +261,7 @@ public class SyncService {
             AttributeValues oldSourceValues,
             AttributeValues newSourceValues) throws Exception {
 
-        Config config = syncContext.getConfig(sourceDefinition);
+        Config config = connectorContext.getConfig(sourceDefinition);
         ConnectionConfig connectionConfig = config.getConnectionConfig(sourceDefinition.getConnectionName());
 
         log.debug("Modifying entry in " + sourceDefinition.getName());
@@ -201,8 +272,8 @@ public class SyncService {
         lock.getWriteLock(WAIT_TIMEOUT);
 
         try {
-            Collection oldPKs = syncContext.getTransformEngine().getPrimaryKeys(sourceDefinition, oldSourceValues);
-            Collection newPKs = syncContext.getTransformEngine().getPrimaryKeys(sourceDefinition, newSourceValues);
+            Collection oldPKs = connectorContext.getTransformEngine().getPrimaryKeys(sourceDefinition, oldSourceValues);
+            Collection newPKs = connectorContext.getTransformEngine().getPrimaryKeys(sourceDefinition, newSourceValues);
 
             log.debug("Old PKs: " + oldPKs);
             log.debug("New PKs: " + newPKs);
@@ -227,7 +298,7 @@ public class SyncService {
                 //log.debug("ADDING ROW: " + newEntry);
 
                 // Add row to source table in the source database/directory
-                Connection connection = syncContext.getConnection(sourceDefinition.getConnectionName());
+                Connection connection = connectorContext.getConnection(sourceDefinition.getConnectionName());
                 int rc = connection.add(sourceDefinition, newEntry);
                 if (rc != LDAPException.SUCCESS) return rc;
             }
@@ -240,13 +311,13 @@ public class SyncService {
                 //log.debug("DELETE ROW: " + oldEntry);
 
                 // Delete row from source table in the source database/directory
-                Connection connection = syncContext.getConnection(sourceDefinition.getConnectionName());
+                Connection connection = connectorContext.getConnection(sourceDefinition.getConnectionName());
                 int rc = connection.delete(sourceDefinition, oldEntry);
                 if (rc != LDAPException.SUCCESS)
                     return rc;
 
                 // Delete row from source table in the cache
-                syncContext.getSourceDataCache(connectionConfig, sourceDefinition).remove(pk);
+                connectorContext.getSourceDataCache(connectionConfig, sourceDefinition).remove(pk);
             }
 
             // Replace rows
@@ -259,15 +330,15 @@ public class SyncService {
                 //log.debug("REPLACE ROW: " + oldEntry+" with "+newEntry);
 
                 // Modify row from source table in the source database/directory
-                Connection connection = syncContext.getConnection(sourceDefinition.getConnectionName());
+                Connection connection = connectorContext.getConnection(sourceDefinition.getConnectionName());
                 int rc = connection.modify(sourceDefinition, oldEntry, newEntry);
                 if (rc != LDAPException.SUCCESS) return rc;
 
                 // Modify row from source table in the cache
-                syncContext.getSourceDataCache(connectionConfig, sourceDefinition).remove(pk);
+                connectorContext.getSourceDataCache(connectionConfig, sourceDefinition).remove(pk);
             }
 
-            syncContext.getSourceFilterCache(connectionConfig, sourceDefinition).invalidate();
+            connectorContext.getSourceFilterCache(connectionConfig, sourceDefinition).invalidate();
 
         } finally {
             lock.releaseWriteLock(WAIT_TIMEOUT);
@@ -281,7 +352,7 @@ public class SyncService {
             AttributeValues oldSourceValues,
             AttributeValues newSourceValues) throws Exception {
 
-        Config config = syncContext.getConfig(sourceDefinition);
+        Config config = connectorContext.getConfig(sourceDefinition);
         ConnectionConfig connectionConfig = config.getConnectionConfig(sourceDefinition.getConnectionName());
 
         log.debug("Renaming entry in " + sourceDefinition.getName());
@@ -290,8 +361,8 @@ public class SyncService {
         lock.getWriteLock(WAIT_TIMEOUT);
 
         try {
-            Collection oldPKs = syncContext.getTransformEngine().getPrimaryKeys(sourceDefinition, oldSourceValues);
-            Collection newPKs = syncContext.getTransformEngine().getPrimaryKeys(sourceDefinition, newSourceValues);
+            Collection oldPKs = connectorContext.getTransformEngine().getPrimaryKeys(sourceDefinition, oldSourceValues);
+            Collection newPKs = connectorContext.getTransformEngine().getPrimaryKeys(sourceDefinition, newSourceValues);
 
             log.debug("Old PKs: " + oldPKs);
             log.debug("New PKs: " + newPKs);
@@ -304,7 +375,7 @@ public class SyncService {
                 Row newPk = (Row)j.next();
 
                 // Rename row from source table in the source database/directory
-                Connection connection = syncContext.getConnection(sourceDefinition.getConnectionName());
+                Connection connection = connectorContext.getConnection(sourceDefinition.getConnectionName());
 
                 int rc;
                 if (oldPk.equals(newPk)) {
@@ -315,10 +386,10 @@ public class SyncService {
 
                 if (rc != LDAPException.SUCCESS) return rc;
 
-                syncContext.getSourceDataCache(connectionConfig, sourceDefinition).remove(oldPk);
+                connectorContext.getSourceDataCache(connectionConfig, sourceDefinition).remove(oldPk);
             }
 
-            syncContext.getSourceFilterCache(connectionConfig, sourceDefinition).invalidate();
+            connectorContext.getSourceFilterCache(connectionConfig, sourceDefinition).invalidate();
 
         } finally {
             lock.releaseWriteLock(WAIT_TIMEOUT);
@@ -336,13 +407,13 @@ public class SyncService {
 
         Collection results = new ArrayList();
 
-        Config config = syncContext.getConfig(sourceDefinition);
+        Config config = connectorContext.getConfig(sourceDefinition);
         ConnectionConfig connectionConfig = config.getConnectionConfig(sourceDefinition.getConnectionName());
 
         Collection uniqueFieldDefinitions = sourceDefinition.getUniqueFieldDefinitions();
 
         log.debug("Checking source filter cache for "+filter);
-        Collection pks = syncContext.getSourceFilterCache(connectionConfig, sourceDefinition).get(filter);
+        Collection pks = connectorContext.getSourceFilterCache(connectionConfig, sourceDefinition).get(filter);
 
         if (pks != null) {
             log.debug("Source filter cache found: "+pks);
@@ -376,16 +447,16 @@ public class SyncService {
 
             for (Iterator i=map.keySet().iterator(); i.hasNext(); ) {
                 Row pk = (Row)i.next();
-                Row npk = syncContext.getSchema().normalize(pk);
+                Row npk = connectorContext.getSchema().normalize(pk);
                 AttributeValues values = (AttributeValues)map.get(pk);
-                syncContext.getSourceDataCache(connectionConfig, sourceDefinition).put(npk, values);
+                connectorContext.getSourceDataCache(connectionConfig, sourceDefinition).put(npk, values);
 
-                Filter f = syncContext.getFilterTool().createFilter(npk);
+                Filter f = connectorContext.getFilterTool().createFilter(npk);
                 Collection list = new TreeSet();
                 list.add(npk);
 
                 log.debug("Storing source filter cache "+f+": "+list);
-                syncContext.getSourceFilterCache(connectionConfig, sourceDefinition).put(f, list);
+                connectorContext.getSourceFilterCache(connectionConfig, sourceDefinition).put(f, list);
 
                 //log.debug("Unique fields:");
                 for (Iterator j=uniqueFieldDefinitions.iterator(); j.hasNext(); ) {
@@ -395,12 +466,12 @@ public class SyncService {
                     Row uniqueKey = new Row();
                     uniqueKey.set(fieldDefinition.getName(), value);
 
-                    //f = syncContext.getFilterTool().createFilter(uniqueKey);
+                    //f = connectorContext.getFilterTool().createFilter(uniqueKey);
                     //list = new TreeSet();
                     //list.add(npk);
 
                     //log.debug(" - "+f+" => "+list);
-                    //syncContext.getSourceFilterCache(connectionConfig, sourceDefinition).put(f, list);
+                    //connectorContext.getSourceFilterCache(connectionConfig, sourceDefinition).put(f, list);
 
                     uniqueKeys.add(uniqueKey);
                 }
@@ -416,38 +487,38 @@ public class SyncService {
                         Row indexKey = new Row();
                         indexKey.set(fieldDefinition.getName(), value);
 
-                        f = syncContext.getFilterTool().createFilter(indexKey);
+                        f = connectorContextntextntext.getFilterTool().createFilter(indexKey);
 
-                        list = syncContext.getSourceFilterCache(connectionConfig, sourceDefinition).get(f);
+                        list = connectorContextntextntext.getSourceFilterCache(connectionConfig, sourceDefinition).get(f);
                         if (list == null) list = new TreeSet();
                         list.add(npk);
 
                         log.debug("Storing source filter cache "+f+": "+list);
-                        syncContext.getSourceFilterCache(connectionConfig, sourceDefinition).put(f, list);
+                        connectorContextntextntext.getSourceFilterCache(connectionConfig, sourceDefinition).put(f, list);
                     }
                 }
 */
             }
 
             if (!uniqueKeys.isEmpty()) {
-                Filter f = syncContext.getFilterTool().createFilter(uniqueKeys);
+                Filter f = connectorContext.getFilterTool().createFilter(uniqueKeys);
                 log.debug("Storing source filter cache "+f+": "+pks);
-                syncContext.getSourceFilterCache(connectionConfig, sourceDefinition).put(f, pks);
+                connectorContext.getSourceFilterCache(connectionConfig, sourceDefinition).put(f, pks);
             }
         }
 
         log.debug("Storing source filter cache "+filter+": "+pks);
-        syncContext.getSourceFilterCache(connectionConfig, sourceDefinition).put(filter, pks);
+        connectorContext.getSourceFilterCache(connectionConfig, sourceDefinition).put(filter, pks);
 
-        Filter newFilter = syncContext.getFilterTool().createFilter(pks);
+        Filter newFilter = connectorContext.getFilterTool().createFilter(pks);
         if (newFilter != null) {
             log.debug("Storing source filter cache "+newFilter+": "+pks);
-            syncContext.getSourceFilterCache(connectionConfig, sourceDefinition).put(newFilter, pks);
+            connectorContext.getSourceFilterCache(connectionConfig, sourceDefinition).put(newFilter, pks);
         }
 
 /*
         log.debug("Checking source cache for pks "+pks);
-        Map loadedRows = syncContext.getSourceDataCache(connectionConfig, sourceDefinition).search(pks);
+        Map loadedRows = connectorContextntextntextntext.getSourceDataCache(connectionConfig, sourceDefinition).search(pks);
         log.debug("Loaded rows: "+loadedRows.keySet());
         results.putAll(loadedRows);
 
@@ -458,17 +529,17 @@ public class SyncService {
 
         log.debug("PKs to load: "+pksToLoad);
         if (!pksToLoad.isEmpty()) {
-            Filter newFilter = syncContext.getFilterTool().createFilter(pksToLoad);
+            Filter newFilter = connectorContextntextntextntext.getFilterTool().createFilter(pksToLoad);
             Map map = loadEntries(source, newFilter);
             results.putAll(map);
 
             for (Iterator i=map.keySet().iterator(); i.hasNext(); ) {
                 Row pk = (Row)i.next();
                 AttributeValues values = (AttributeValues)map.get(pk);
-                syncContext.getSourceDataCache(connectionConfig, sourceDefinition).put(pk, values);
+                connectorContextntextntextntext.getSourceDataCache(connectionConfig, sourceDefinition).put(pk, values);
             }
 
-            syncContext.getSourceFilterCache(connectionConfig, sourceDefinition).put(newFilter, map.keySet());
+            connectorContextntextntextntext.getSourceFilterCache(connectionConfig, sourceDefinition).put(newFilter, map.keySet());
         }
 */
         return results;
@@ -483,14 +554,14 @@ public class SyncService {
 
         Map results = new TreeMap();
 
-        Config config = syncContext.getConfig(sourceDefinition);
+        Config config = connectorContext.getConfig(sourceDefinition);
         ConnectionConfig connectionConfig = config.getConnectionConfig(sourceDefinition.getConnectionName());
 
         Collection uniqueFieldDefinitions = sourceDefinition.getUniqueFieldDefinitions();
         Collection missingKeys = new ArrayList();
 
         //log.debug("Searching source data cache for "+keys);
-        Map loadedRows = syncContext.getSourceDataCache(connectionConfig, sourceDefinition).search(keys, missingKeys);
+        Map loadedRows = connectorContext.getSourceDataCache(connectionConfig, sourceDefinition).search(keys, missingKeys);
 
         //log.debug("Loaded rows: "+loadedRows.keySet());
         results.putAll(loadedRows);
@@ -502,7 +573,7 @@ public class SyncService {
 
         //log.debug("PKs to load: "+keysToLoad);
         if (!keysToLoad.isEmpty()) {
-            Filter newFilter = syncContext.getFilterTool().createFilter(keysToLoad);
+            Filter newFilter = connectorContext.getFilterTool().createFilter(keysToLoad);
             Map map = loadEntries(sourceDefinition, newFilter);
             results.putAll(map);
 
@@ -510,17 +581,17 @@ public class SyncService {
 
             for (Iterator i=map.keySet().iterator(); i.hasNext(); ) {
                 Row pk = (Row)i.next();
-                Row npk = syncContext.getSchema().normalize(pk);
+                Row npk = connectorContext.getSchema().normalize(pk);
                 AttributeValues values = (AttributeValues)map.get(pk);
 
-                syncContext.getSourceDataCache(connectionConfig, sourceDefinition).put(npk, values);
+                connectorContext.getSourceDataCache(connectionConfig, sourceDefinition).put(npk, values);
 
-                Filter f = syncContext.getFilterTool().createFilter(npk);
+                Filter f = connectorContext.getFilterTool().createFilter(npk);
                 Collection list = new TreeSet();
                 list.add(npk);
 
                 log.debug("Storing source filter cache "+f+": "+list);
-                syncContext.getSourceFilterCache(connectionConfig, sourceDefinition).put(f, list);
+                connectorContext.getSourceFilterCache(connectionConfig, sourceDefinition).put(f, list);
 
                 //log.debug("Unique fields:");
                 for (Iterator j=uniqueFieldDefinitions.iterator(); j.hasNext(); ) {
@@ -530,12 +601,12 @@ public class SyncService {
                     Row uniqueKey = new Row();
                     uniqueKey.set(fieldDefinition.getName(), value);
 
-                    //f = syncContext.getFilterTool().createFilter(normalizedUniqueKey);
+                    //f = connectorContext.getFilterTool().createFilter(normalizedUniqueKey);
                     //list = new TreeSet();
                     //list.add(npk);
 
                     //log.debug(" - "+f+" => "+list);
-                    //syncContext.getSourceFilterCache(connectionConfig, sourceDefinition).put(f, list);
+                    //connectorContext.getSourceFilterCache(connectionConfig, sourceDefinition).put(f, list);
 
                     uniqueKeys.add(uniqueKey);
                 }
@@ -550,31 +621,31 @@ public class SyncService {
 
                         Row indexKey = new Row();
                         indexKey.set(fieldDefinition.getName(), value);
-                        Row normalizedIndexKey = syncContext.getSchema().normalize(indexKey);
+                        Row normalizedIndexKey = connectorContextntextntextntext.getSchema().normalize(indexKey);
 
-                        f = syncContext.getFilterTool().createFilter(normalizedIndexKey);
+                        f = connectorContextntextntextntext.getFilterTool().createFilter(normalizedIndexKey);
 
-                        list = syncContext.getSourceFilterCache(connectionConfig, sourceDefinition).get(f);
+                        list = connectorContextntextntextntext.getSourceFilterCache(connectionConfig, sourceDefinition).get(f);
                         if (list == null) list = new TreeSet();
                         list.add(npk);
 
                         log.debug("Storing source filter cache "+f+": "+list);
-                        syncContext.getSourceFilterCache(connectionConfig, sourceDefinition).put(f, list);
+                        connectorContextntextntextntext.getSourceFilterCache(connectionConfig, sourceDefinition).put(f, list);
                     }
                 }
 */
             }
 
             if (!uniqueKeys.isEmpty()) {
-                Filter f = syncContext.getFilterTool().createFilter(uniqueKeys);
+                Filter f = connectorContext.getFilterTool().createFilter(uniqueKeys);
                 log.debug("Storing source filter cache "+f+": "+keys);
-                syncContext.getSourceFilterCache(connectionConfig, sourceDefinition).put(f, keys);
+                connectorContext.getSourceFilterCache(connectionConfig, sourceDefinition).put(f, keys);
             }
 
             Collection list = new TreeSet();
             list.addAll(map.keySet());
             log.debug("Storing source filter cache "+newFilter+": "+list);
-            syncContext.getSourceFilterCache(connectionConfig, sourceDefinition).put(newFilter, list);
+            connectorContext.getSourceFilterCache(connectionConfig, sourceDefinition).put(newFilter, list);
         }
 
         return results.values();
@@ -587,7 +658,7 @@ public class SyncService {
         String s = sourceDefinition.getParameter(SourceDefinition.SIZE_LIMIT);
         int sizeLimit = s == null ? SourceDefinition.DEFAULT_SIZE_LIMIT : Integer.parseInt(s);
 
-        Connection connection = syncContext.getConnection(sourceDefinition.getConnectionName());
+        Connection connection = connectorContext.getConnection(sourceDefinition.getConnectionName());
         SearchResults sr;
         try {
             sr = connection.search(sourceDefinition, filter, sizeLimit);
@@ -603,7 +674,7 @@ public class SyncService {
         for (Iterator i=sr.iterator(); i.hasNext();) {
             Row pk = (Row)i.next();
 
-            Row npk = syncContext.getSchema().normalize(pk);
+            Row npk = connectorContext.getSchema().normalize(pk);
             //log.debug(" - PK: "+npk);
 
             results.add(npk);
@@ -620,7 +691,7 @@ public class SyncService {
         String s = sourceDefinition.getParameter(SourceDefinition.SIZE_LIMIT);
         int sizeLimit = s == null ? SourceDefinition.DEFAULT_SIZE_LIMIT : Integer.parseInt(s);
 
-        Connection connection = syncContext.getConnection(sourceDefinition.getConnectionName());
+        Connection connection = connectorContext.getConnection(sourceDefinition.getConnectionName());
 
         SearchResults sr;
         try {
@@ -639,7 +710,7 @@ public class SyncService {
         String s = sourceDefinition.getParameter(SourceDefinition.SIZE_LIMIT);
         int sizeLimit = s == null ? SourceDefinition.DEFAULT_SIZE_LIMIT : Integer.parseInt(s);
 
-        Connection connection = syncContext.getConnection(sourceDefinition.getConnectionName());
+        Connection connection = connectorContext.getConnection(sourceDefinition.getConnectionName());
         SearchResults sr;
         try {
             sr = connection.load(sourceDefinition, filter, sizeLimit);
@@ -673,7 +744,7 @@ public class SyncService {
 
             if (pk == null) continue;
 
-            Row npk = syncContext.getSchema().normalize(pk);
+            Row npk = connectorContext.getSchema().normalize(pk);
             //log.debug(" - PK: "+npk);
 
             results.put(npk, av);
@@ -682,4 +753,19 @@ public class SyncService {
         return results;
     }
 
+    public ConnectorConfig getConnectorConfig() {
+        return connectorConfig;
+    }
+
+    public void setConnectorConfig(ConnectorConfig connectorConfig) {
+        this.connectorConfig = connectorConfig;
+    }
+
+    public ConnectorContext getConnectorContext() {
+        return connectorContext;
+    }
+
+    public void setConnectorContext(ConnectorContext connectorContext) {
+        this.connectorContext = connectorContext;
+    }
 }

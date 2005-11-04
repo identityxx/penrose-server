@@ -88,7 +88,7 @@ public class DeleteGraphVisitor extends GraphVisitor {
         ConnectionConfig connectionConfig = config.getConnectionConfig(source.getConnectionName());
         SourceDefinition sourceDefinition = connectionConfig.getSourceDefinition(source.getSourceName());
 
-        returnCode = engineContext.getSyncService().delete(sourceDefinition, newSourceValues);
+        returnCode = engineContext.getConnector().delete(sourceDefinition, newSourceValues);
         if (returnCode != LDAPException.SUCCESS) return;
 
         graphIterator.traverseEdges(node);

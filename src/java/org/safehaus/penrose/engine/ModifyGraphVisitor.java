@@ -107,7 +107,7 @@ public class ModifyGraphVisitor extends GraphVisitor {
         ConnectionConfig connectionConfig = config.getConnectionConfig(source.getConnectionName());
         SourceDefinition sourceDefinition = connectionConfig.getSourceDefinition(source.getSourceName());
 
-        returnCode = engineContext.getSyncService().modify(sourceDefinition, oldSourceValues, newSourceValues);
+        returnCode = engineContext.getConnector().modify(sourceDefinition, oldSourceValues, newSourceValues);
         if (returnCode != LDAPException.SUCCESS) return;
 
         graphIterator.traverseEdges(node);

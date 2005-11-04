@@ -21,6 +21,7 @@ import org.apache.log4j.Logger;
 import org.safehaus.penrose.mapping.EntryDefinition;
 
 import java.util.Collection;
+import java.util.Map;
 
 /**
  * @author Endi S. Dewata
@@ -92,6 +93,8 @@ public abstract class Cache {
     }
 
     public abstract Object get(Object key) throws Exception;
+
+    public abstract Map getExpired() throws Exception;
 
     public abstract void put(Object key, Object object) throws Exception;
 

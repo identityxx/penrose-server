@@ -88,14 +88,16 @@ public class SearchHandler {
         if (entryDefinition != null) {
             log.debug("Found static entry: " + dn);
 
-            AttributeValues values = entryDefinition.getAttributeValues(handlerContext.newInterpreter());
-            Entry entry = new Entry(dn, entryDefinition, values);
+            Entry entry = handlerContext.getEngine().find(connection, path, entryDefinition);
+/*
+            //AttributeValues values = entryDefinition.getAttributeValues(handlerContext.newInterpreter());
+            //Entry entry = new Entry(dn, entryDefinition, values);
 
             log.debug("Entry:");
             log.debug(" - sourceValues: "+entry.getSourceValues());
             log.debug(" - attributeValues: "+entry.getAttributeValues());
             log.debug("\n"+entry);
-
+*/
             path.add(0, entry);
             return path;
         }

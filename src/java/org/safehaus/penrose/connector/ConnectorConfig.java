@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
-package org.safehaus.penrose.sync;
+package org.safehaus.penrose.connector;
 
 import java.io.Serializable;
 import java.util.Properties;
@@ -24,24 +24,24 @@ import java.util.Collection;
 /**
  * @author Endi S. Dewata
  */
-public class SyncConfig implements Serializable {
+public class ConnectorConfig implements Serializable {
 
     public final static String THREAD_POOL_SIZE = "threadPoolSize";
 
     public final static int DEFAULT_THREAD_POOL_SIZE = 20;
 
-    private String syncName;
-    private String syncClass;
+    private String connectorName;
+    private String connectorClass;
     private String description;
 
     private Properties parameters = new Properties();
 
-    public String getSyncClass() {
-        return syncClass;
+    public String getConnectorClass() {
+        return connectorClass;
     }
 
-    public void setSyncClass(String syncClass) {
-        this.syncClass = syncClass;
+    public void setConnectorClass(String connectorClass) {
+        this.connectorClass = connectorClass;
     }
 
     public void setParameter(String name, String value) {
@@ -60,12 +60,12 @@ public class SyncConfig implements Serializable {
         return parameters.getProperty(name);
     }
 
-    public String getSyncName() {
-        return syncName;
+    public String getConnectorName() {
+        return connectorName;
     }
 
-    public void setSyncName(String syncName) {
-        this.syncName = syncName;
+    public void setConnectorName(String connectorName) {
+        this.connectorName = connectorName;
     }
 
     public String getDescription() {

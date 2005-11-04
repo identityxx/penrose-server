@@ -120,7 +120,7 @@ public class ModRdnGraphVisitor extends GraphVisitor {
             newValues.set(name, values);
         }
 
-        returnCode = engineContext.getSyncService().modrdn(sourceDefinition, oldValues, newValues);
+        returnCode = engineContext.getConnector().modrdn(sourceDefinition, oldValues, newValues);
         if (returnCode != LDAPException.SUCCESS) return;
 
         graphIterator.traverseEdges(node);

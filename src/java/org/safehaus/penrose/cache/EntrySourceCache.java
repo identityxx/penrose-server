@@ -56,6 +56,11 @@ public class EntrySourceCache extends EntryDataCache {
         return object;
     }
 
+    public Map getExpired() throws Exception {
+        Map results = new TreeMap();
+        return results;
+    }
+
     public void put(Object key, Object object) throws Exception {
         if (size == 0) return;
 

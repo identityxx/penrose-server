@@ -159,7 +159,7 @@ public class BindHandler {
 
                 log.debug("Bind to "+source.getName()+" as "+pk+": "+sourceValues);
 
-                int rc = getEngineContext().getSyncService().bind(sourceDefinition, entry, sourceValues, password);
+                int rc = getEngineContext().getConnector().bind(sourceDefinition, entry, sourceValues, password);
                 if (rc == LDAPException.SUCCESS) return rc;
             }
         }

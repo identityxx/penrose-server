@@ -30,6 +30,7 @@ import org.safehaus.penrose.connection.AdapterConfig;
 import org.safehaus.penrose.cache.CacheConfig;
 import org.safehaus.penrose.interpreter.InterpreterConfig;
 import org.safehaus.penrose.engine.EngineConfig;
+import org.safehaus.penrose.connector.ConnectorConfig;
 
 /**
  * @author Endi S. Dewata
@@ -65,11 +66,11 @@ public class ServerConfigWriter {
 				"-//Penrose/Penrose Server Configuration DTD 1.0//EN",
 				"http://penrose.safehaus.org/dtd/penrose-server-config-1.0.dtd");
 				*/
-		writer.write(toServerXmlElement());
+		writer.write(toElement());
 		writer.close();
 	}
 
-	public Element toServerXmlElement() {
+	public Element toElement() {
 		Element element = new DefaultElement("server");
 
         // interpreters
@@ -90,10 +91,16 @@ public class ServerConfigWriter {
             element.add(toElement(cacheConfig));
         }
 
+        // connectors
+        for (Iterator iter = serverConfig.getConnectorConfigs().iterator(); iter.hasNext();) {
+            ConnectorConfig connectorConfig = (ConnectorConfig)iter.next();
+            element.add(toElement(connectorConfig));
+        }
+
         // adapters
         for (Iterator iter = serverConfig.getAdapterConfigs().iterator(); iter.hasNext();) {
-            AdapterConfig adapter = (AdapterConfig)iter.next();
-            element.add(toElement(adapter));
+            AdapterConfig adapterConfig = (AdapterConfig)iter.next();
+            element.add(toElement(adapterConfig));
         }
 
 		// root
@@ -118,21 +125,38 @@ public class ServerConfigWriter {
 		return element;
 	}
 
-    public Element toElement(AdapterConfig adapter) {
+    public Element toElement(AdapterConfig adapterConfig) {
         Element element = new DefaultElement("adapter");
 
         Element adapterName = new DefaultElement("adapter-name");
-        adapterName.add(new DefaultText(adapter.getAdapterName()));
+        adapterName.add(new DefaultText(adapterConfig.getAdapterName()));
         element.add(adapterName);
 
         Element adapterClass = new DefaultElement("adapter-class");
-        adapterClass.add(new DefaultText(adapter.getAdapterClass()));
+        adapterClass.add(new DefaultText(adapterConfig.getAdapterClass()));
         element.add(adapterClass);
 
-        if (adapter.getDescription() != null) { 
+        if (adapterConfig.getDescription() != null && !"".equals(adapterConfig.getDescription())) {
             Element description = new DefaultElement("description");
-            description.add(new DefaultText(adapter.getDescription()));
+            description.add(new DefaultText(adapterConfig.getDescription()));
             element.add(description);
+        }
+
+        for (Iterator i = adapterConfig.getParameterNames().iterator(); i.hasNext();) {
+            String name = (String)i.next();
+            String value = (String)adapterConfig.getParameter(name);
+
+            Element parameter = new DefaultElement("parameter");
+
+            Element paramName = new DefaultElement("param-name");
+            paramName.add(new DefaultText(name));
+            parameter.add(paramName);
+
+            Element paramValue = new DefaultElement("param-value");
+            paramValue.add(new DefaultText(value));
+            parameter.add(paramValue);
+
+            element.add(parameter);
         }
 
         return element;
@@ -149,10 +173,15 @@ public class ServerConfigWriter {
         interpreterClass.add(new DefaultText(interpreterConfig.getInterpreterClass()));
         element.add(interpreterClass);
 
-        // parameters
-        for (Iterator iter = interpreterConfig.getParameterNames().iterator(); iter.hasNext();) {
-            String name = (String) iter.next();
-            String value = (String) interpreterConfig.getParameter(name);
+        if (interpreterConfig.getDescription() != null && !"".equals(interpreterConfig.getDescription())) {
+            Element description = new DefaultElement("description");
+            description.add(new DefaultText(interpreterConfig.getDescription()));
+            element.add(description);
+        }
+
+        for (Iterator i = interpreterConfig.getParameterNames().iterator(); i.hasNext();) {
+            String name = (String)i.next();
+            String value = (String)interpreterConfig.getParameter(name);
 
             Element parameter = new DefaultElement("parameter");
 
@@ -166,45 +195,108 @@ public class ServerConfigWriter {
 
             element.add(parameter);
         }
+
     	return element;
     }
 
     public Element toElement(EngineConfig engineConfig) {
     	Element element = new DefaultElement("engine");
 
-        Element interpreterName = new DefaultElement("engine-name");
-        interpreterName.add(new DefaultText(engineConfig.getEngineName()));
-        element.add(interpreterName);
+        Element engineName = new DefaultElement("engine-name");
+        engineName.add(new DefaultText(engineConfig.getEngineName()));
+        element.add(engineName);
 
-        Element interpreterClass = new DefaultElement("engine-class");
-        interpreterClass.add(new DefaultText(engineConfig.getEngineClass()));
-        element.add(interpreterClass);
+        Element engineClass = new DefaultElement("engine-class");
+        engineClass.add(new DefaultText(engineConfig.getEngineClass()));
+        element.add(engineClass);
+
+        if (engineConfig.getDescription() != null && !"".equals(engineConfig.getDescription())) {
+            Element description = new DefaultElement("description");
+            description.add(new DefaultText(engineConfig.getDescription()));
+            element.add(description);
+        }
+
+        for (Iterator i = engineConfig.getParameterNames().iterator(); i.hasNext();) {
+            String name = (String)i.next();
+            String value = (String)engineConfig.getParameter(name);
+
+            Element parameter = new DefaultElement("parameter");
+
+            Element paramName = new DefaultElement("param-name");
+            paramName.add(new DefaultText(name));
+            parameter.add(paramName);
+
+            Element paramValue = new DefaultElement("param-value");
+            paramValue.add(new DefaultText(value));
+            parameter.add(paramValue);
+
+            element.add(parameter);
+        }
 
         return element;
     }
 
-    public Element toElement(CacheConfig cache) {
+    public Element toElement(CacheConfig cacheConfig) {
     	Element element = new DefaultElement("cache");
 
         Element cacheName = new DefaultElement("cache-name");
-        cacheName.add(new DefaultText(cache.getCacheName()));
+        cacheName.add(new DefaultText(cacheConfig.getCacheName()));
         element.add(cacheName);
 
-        if (cache.getCacheClass() != null && !"".equals(cache.getCacheClass())) {
+        if (cacheConfig.getCacheClass() != null && !"".equals(cacheConfig.getCacheClass())) {
             Element cacheClass = new DefaultElement("cache-class");
-            cacheClass.add(new DefaultText(cache.getCacheClass()));
+            cacheClass.add(new DefaultText(cacheConfig.getCacheClass()));
             element.add(cacheClass);
         }
 
-        if (cache.getDescription() != null && !"".equals(cache.getDescription())) {
+        if (cacheConfig.getDescription() != null && !"".equals(cacheConfig.getDescription())) {
             Element description = new DefaultElement("description");
-            description.add(new DefaultText(cache.getDescription()));
+            description.add(new DefaultText(cacheConfig.getDescription()));
             element.add(description);
         }
 
-        for (Iterator iter = cache.getParameterNames().iterator(); iter.hasNext();) {
-            String name = (String) iter.next();
-            String value = (String) cache.getParameter(name);
+        for (Iterator i = cacheConfig.getParameterNames().iterator(); i.hasNext();) {
+            String name = (String)i.next();
+            String value = (String)cacheConfig.getParameter(name);
+
+            Element parameter = new DefaultElement("parameter");
+
+            Element paramName = new DefaultElement("param-name");
+            paramName.add(new DefaultText(name));
+            parameter.add(paramName);
+
+            Element paramValue = new DefaultElement("param-value");
+            paramValue.add(new DefaultText(value));
+            parameter.add(paramValue);
+
+            element.add(parameter);
+        }
+
+    	return element;
+    }
+
+    public Element toElement(ConnectorConfig connectorConfig) {
+    	Element element = new DefaultElement("connector");
+
+        Element cacheName = new DefaultElement("connector-name");
+        cacheName.add(new DefaultText(connectorConfig.getConnectorName()));
+        element.add(cacheName);
+
+        if (connectorConfig.getConnectorClass() != null && !"".equals(connectorConfig.getConnectorClass())) {
+            Element cacheClass = new DefaultElement("connector-class");
+            cacheClass.add(new DefaultText(connectorConfig.getConnectorClass()));
+            element.add(cacheClass);
+        }
+
+        if (connectorConfig.getDescription() != null && !"".equals(connectorConfig.getDescription())) {
+            Element description = new DefaultElement("description");
+            description.add(new DefaultText(connectorConfig.getDescription()));
+            element.add(description);
+        }
+
+        for (Iterator i = connectorConfig.getParameterNames().iterator(); i.hasNext();) {
+            String name = (String)i.next();
+            String value = (String)connectorConfig.getParameter(name);
 
             Element parameter = new DefaultElement("parameter");
 

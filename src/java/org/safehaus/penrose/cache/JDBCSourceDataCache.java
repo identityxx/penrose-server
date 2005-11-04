@@ -278,6 +278,11 @@ public class JDBCSourceDataCache extends SourceDataCache {
         return av;
     }
 
+    public Map getExpired() throws Exception {
+        Map results = new TreeMap();
+        return results;
+    }
+    
     public Map search(Collection filters, Collection missingKeys) throws Exception {
 
         Map values = new TreeMap();

@@ -25,6 +25,11 @@
         <cache-name>SourceCache</cache-name>
     </cache>
 
+    <connector>
+        <connector-name>DEFAULT</connector-name>
+        <connector-class>org.safehaus.penrose.connector.Connector</connector-class>
+    </connector>
+
     <adapter>
         <adapter-name>JDBC</adapter-name>
         <adapter-class>org.safehaus.penrose.connection.JDBCAdapter</adapter-class>

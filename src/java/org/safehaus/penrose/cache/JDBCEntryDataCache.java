@@ -283,6 +283,11 @@ public class JDBCEntryDataCache extends EntryDataCache {
         return av;
     }
 
+    public Map getExpired() throws Exception {
+        Map results = new TreeMap();
+        return results;
+    }
+
     public Map search(Collection filters) throws Exception {
 
         Collection pks = findPks(filters);

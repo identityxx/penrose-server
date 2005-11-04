@@ -580,13 +580,13 @@ public class PenroseInterceptor extends BaseInterceptor {
                 log.debug(baseDn+" is a static entry");
                 return next.search(base, env, filter, searchControls);
             }
-
+/*
             EntryDefinition ed = config.findEntryDefinition(baseDn);
             if (ed == null) {
                 log.debug(baseDn+" is a static entry");
                 return next.search(base, env, filter, searchControls);
             }
-/*
+
             if (!ed.isDynamic()) {
                 log.debug(baseDn+" is a static entry");
                 NamingEnumeration ne = next.search(base, env, filter, searchControls);

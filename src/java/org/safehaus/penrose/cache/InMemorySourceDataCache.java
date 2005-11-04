@@ -42,6 +42,22 @@ public class InMemorySourceDataCache extends SourceDataCache {
         return attributeValues;
     }
 
+    public Map getExpired() throws Exception {
+        Map results = new TreeMap();
+
+        for (Iterator j=dataMap.keySet().iterator(); j.hasNext(); ) {
+            Row pk = (Row)j.next();
+            AttributeValues attributeValues = (AttributeValues)dataMap.get(pk);
+
+            Date date = (Date)expirationMap.get(pk);
+            if (date != null && date.getTime() > System.currentTimeMillis()) continue;
+
+            results.put(pk, attributeValues);
+        }
+
+        return results;
+    }
+
     public Map search(Collection keys, Collection missingKeys) throws Exception {
 
         Map results = new TreeMap();

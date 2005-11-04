@@ -25,6 +25,7 @@ import org.safehaus.penrose.cache.CacheConfig;
 import org.safehaus.penrose.engine.EngineConfig;
 import org.safehaus.penrose.interpreter.InterpreterConfig;
 import org.safehaus.penrose.connection.*;
+import org.safehaus.penrose.connector.ConnectorConfig;
 
 
 /**
@@ -42,13 +43,10 @@ public class ServerConfig implements Serializable {
     private Map interpreterConfigs = new LinkedHashMap();
     private Map cacheConfigs = new LinkedHashMap();
     private Map engineConfigs = new LinkedHashMap();
+    private Map connectorConfigs = new LinkedHashMap();
     private Map adapterConfigs = new LinkedHashMap();
 
     public ServerConfig() {
-    }
-
-    public void addAdapterConfig(AdapterConfig adapter) {
-        adapterConfigs.put(adapter.getAdapterName(), adapter);
     }
 
 	/**
@@ -178,12 +176,12 @@ public class ServerConfig implements Serializable {
     	return cacheConfigs.values();
     }
 
-    public Collection getEngineConfigs() {
-        return engineConfigs.values();
-    }
-
     public void addEngineConfig(EngineConfig engineConfig) {
         engineConfigs.put(engineConfig.getEngineName(), engineConfig);
+    }
+
+    public Collection getEngineConfigs() {
+        return engineConfigs.values();
     }
 
     public void addInterpreterConfig(InterpreterConfig interpreterConfig) {
@@ -202,11 +200,35 @@ public class ServerConfig implements Serializable {
         this.adapterConfigs = adapterConfigs;
     }
 
+    public void addAdapterConfig(AdapterConfig adapter) {
+        adapterConfigs.put(adapter.getAdapterName(), adapter);
+    }
+
     public void setCacheConfigs(Map cacheConfigs) {
         this.cacheConfigs = cacheConfigs;
     }
 
     public void setInterpreterConfigs(Map interpreterConfigs) {
         this.interpreterConfigs = interpreterConfigs;
+    }
+
+    public void addConnectorConfig(ConnectorConfig connectorConfig) {
+        connectorConfigs.put(connectorConfig.getConnectorName(), connectorConfig);
+    }
+
+    public ConnectorConfig getConnectorConfig(String connectorName) {
+        return (ConnectorConfig)connectorConfigs.get(connectorName);
+    }
+
+    public Collection getConnectorConfigs() {
+        return connectorConfigs.values();
+    }
+
+    public ConnectorConfig removeConnectorConfig(String connectorName) {
+        return (ConnectorConfig)connectorConfigs.remove(connectorName);
+    }
+
+    public void setConnectorConfigs(Map connectorConfigs) {
+        this.connectorConfigs = connectorConfigs;
     }
 }

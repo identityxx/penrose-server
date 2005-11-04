@@ -25,10 +25,11 @@ import org.safehaus.penrose.cache.EntryDataCache;
 import org.safehaus.penrose.cache.EntryFilterCache;
 import org.safehaus.penrose.cache.EntrySourceCache;
 import org.safehaus.penrose.connection.Connection;
-import org.safehaus.penrose.sync.SyncService;
+import org.safehaus.penrose.connector.Connector;
 import org.safehaus.penrose.mapping.EntryDefinition;
 import org.safehaus.penrose.mapping.Entry;
 import org.safehaus.penrose.mapping.Source;
+import org.safehaus.penrose.connector.Connector;
 
 /**
  * @author Endi S. Dewata
@@ -48,6 +49,6 @@ public interface EngineContext {
     public Config getConfig(Source source) throws Exception;
     public Config getConfig(String dn) throws Exception;
     public TransformEngine getTransformEngine() throws Exception;
-    public SyncService getSyncService() throws Exception;
+    public Connector getConnector() throws Exception;
     public Connection getConnection(String connectionName) throws Exception;
 }

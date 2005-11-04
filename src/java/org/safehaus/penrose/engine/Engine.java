@@ -75,7 +75,7 @@ public class Engine {
         this.engineContext = engineContext;
 
         log.debug("-------------------------------------------------");
-        log.debug("Initializing Engine");
+        log.debug("Initializing "+engineConfig.getEngineName()+" engine ...");
 
         String s = engineConfig.getParameter(EngineConfig.THREAD_POOL_SIZE);
         int threadPoolSize = s == null ? EngineConfig.DEFAULT_THREAD_POOL_SIZE : Integer.parseInt(s);
@@ -143,36 +143,40 @@ public class Engine {
 
         // TODO need to handle multiple rdn attributes
         AttributeDefinition rdnAttribute = (AttributeDefinition)rdnAttributes.iterator().next();
-        if (rdnAttribute.getConstant() != null) return null;
 
-        String variable = rdnAttribute.getVariable();
-        if (variable != null) {
-            int i = variable.indexOf(".");
-            String sourceName = variable.substring(0, i);
-            Source source = entryDefinition.getSource(sourceName);
-            return source;
+        if (rdnAttribute.getConstant() == null) {
+            String variable = rdnAttribute.getVariable();
+            if (variable != null) {
+                int i = variable.indexOf(".");
+                String sourceName = variable.substring(0, i);
+                Source source = entryDefinition.getSource(sourceName);
+                return source;
+            }
+
+            Interpreter interpreter = engineContext.newInterpreter();
+
+            Expression expression = rdnAttribute.getExpression();
+            String foreach = expression.getForeach();
+            if (foreach != null) {
+                int i = foreach.indexOf(".");
+                String sourceName = foreach.substring(0, i);
+                Source source = entryDefinition.getSource(sourceName);
+                return source;
+            }
+
+            Collection variables = interpreter.parseVariables(expression.getScript());
+
+            for (Iterator i=variables.iterator(); i.hasNext(); ) {
+                String sourceName = (String)i.next();
+                Source source = entryDefinition.getSource(sourceName);
+                if (source != null) return source;
+            }
         }
 
-        Interpreter interpreter = engineContext.newInterpreter();
+        Collection sources = entryDefinition.getSources();
+        if (sources.isEmpty()) return null;
 
-        Expression expression = rdnAttribute.getExpression();
-        String foreach = expression.getForeach();
-        if (foreach != null) {
-            int i = foreach.indexOf(".");
-            String sourceName = foreach.substring(0, i);
-            Source source = entryDefinition.getSource(sourceName);
-            return source;
-        }
-
-        Collection variables = interpreter.parseVariables(expression.getScript());
-
-        for (Iterator i=variables.iterator(); i.hasNext(); ) {
-            String sourceName = (String)i.next();
-            Source source = entryDefinition.getSource(sourceName);
-            if (source != null) return source;
-        }
-
-        return null;
+        return (Source)sources.iterator().next();
     }
 
     public Map getGraphs() {
@@ -509,6 +513,32 @@ public class Engine {
     }
 
 
+    public Entry find(
+            PenroseConnection connection,
+            Collection path,
+            EntryDefinition entryDefinition
+            ) throws Exception {
+/*
+        AttributeValues attributeValues = entryDefinition.getAttributeValues(engineContext.newInterpreter());
+        Entry entry = new Entry(entryDefinition.getDn(), entryDefinition, attributeValues);
+
+        SearchResults entries = new SearchResults();
+        entries.add(entry);
+        entries.close();
+*/
+        SearchResults entries = new SearchResults();
+
+        searchEngine.search(path, entryDefinition, null, entries);
+
+        SearchResults results = new SearchResults();
+
+        load(entryDefinition, entries, results);
+
+        if (results.size() == 0) return null;
+
+        return (Entry)results.next();
+    }
+    
     public SearchResults search(
             PenroseConnection connection,
             final Collection path,
@@ -1013,6 +1043,14 @@ public class Engine {
 
     public void setJoinEngine(JoinEngine joinEngine) {
         this.joinEngine = joinEngine;
+    }
+
+    public EngineConfig getEngineConfig() {
+        return engineConfig;
+    }
+
+    public void setEngineConfig(EngineConfig engineConfig) {
+        this.engineConfig = engineConfig;
     }
 }
 

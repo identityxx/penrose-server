@@ -22,10 +22,11 @@ import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.filter.FilterTool;
 import org.safehaus.penrose.schema.Schema;
 import org.safehaus.penrose.connection.Connection;
-import org.safehaus.penrose.sync.SyncService;
+import org.safehaus.penrose.connector.Connector;
 import org.safehaus.penrose.engine.TransformEngine;
 import org.safehaus.penrose.engine.Engine;
 import org.safehaus.penrose.acl.ACLEngine;
+import org.safehaus.penrose.connector.Connector;
 
 import java.util.Collection;
 
@@ -46,6 +47,6 @@ public interface HandlerContext {
     public Config getConfig(String dn) throws Exception;
     public Collection getConfigs() throws Exception;
     public TransformEngine getTransformEngine() throws Exception;
-    public SyncService getSyncService() throws Exception;
+    public Connector getConnector() throws Exception;
     public Connection getConnection(String connectionName) throws Exception;
 }

@@ -15,39 +15,34 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
-package org.safehaus.penrose.sync;
+package org.safehaus.penrose.connector;
 
 import org.apache.log4j.Logger;
-import org.safehaus.penrose.engine.Engine;
 
 /**
- * @author Administrator
+ * @author Endi S. Dewata
  */
 public class ReloadThread implements Runnable {
 
     Logger log = Logger.getLogger(getClass());
 
-	private Engine engine;
+	private Connector connector;
 	
-	public ReloadThread(Engine penrose) {
-		this.engine = penrose;
+	public ReloadThread(Connector connector) {
+		this.connector = connector;
 	}
 
 	public void run() {
+        //log.debug("ReloadThread has been started");
 
-		try {
-			// sleep 5 minutes first, to allow server initialization 
-			Thread.sleep(5*60000);
-
-		} catch (InterruptedException ex) {
-			// ignore
-		}
-
-		while (!engine.isStopping()) {
+		while (!connector.isStopping()) {
 
 			try {
-				//handler.getSourceCache().refresh();
-				Thread.sleep(2*60000); // sleep 2 minutes
+                //Thread.sleep(2 * 60 * 1000); // sleep 2 minutes
+				Thread.sleep(30 * 1000);
+
+                //log.debug("Refreshing connector cache ...");
+                connector.refresh();
 
 			} catch (Exception ex) {
 				log.error(ex.getMessage(), ex);

@@ -141,7 +141,7 @@ public class ConfigReader {
                 ad.setConstant(constant);
                 ad.setExpression(null);
 
-                log.debug("Converting "+script+" into constant.");
+                //log.debug("Converting "+script+" into constant.");
 
             } else if (tokens.size() == 3) {
 
@@ -158,7 +158,7 @@ public class ConfigReader {
                 ad.setVariable(sourceName.getImage()+"."+fieldName.getImage());
                 ad.setExpression(null);
 
-                log.debug("Converting "+script+" into variable.");
+                //log.debug("Converting "+script+" into variable.");
             }
         }
 
@@ -186,14 +186,14 @@ public class ConfigReader {
                     field.setConstant(constant);
                     field.setExpression(null);
 
-                    log.debug("Converting "+script+" into constant.");
+                    //log.debug("Converting "+script+" into constant.");
 
                 } else if (token.getType() == Token.IDENTIFIER) {
                     String variable = token.getImage();
                     field.setVariable(variable);
                     field.setExpression(null);
 
-                    log.debug("Converting "+script+" into variable.");
+                    //log.debug("Converting "+script+" into variable.");
                 }
             }
         }
