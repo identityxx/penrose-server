@@ -25,6 +25,7 @@ import org.safehaus.penrose.thread.MRSWLock;
 import org.safehaus.penrose.thread.Queue;
 import org.safehaus.penrose.thread.ThreadPool;
 import org.safehaus.penrose.connection.Connection;
+import org.safehaus.penrose.connection.Adapter;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.mapping.*;
 import org.apache.log4j.Logger;
@@ -37,9 +38,9 @@ import java.util.*;
  */
 public class Connector {
 
-    public final static int WAIT_TIMEOUT = 10000; // wait timeout is 10 seconds
-
     Logger log = Logger.getLogger(getClass());
+
+    public final static int WAIT_TIMEOUT = 10000; // wait timeout is 10 seconds
 
     private ConnectorConfig connectorConfig;
     private ConnectorContext connectorContext;
@@ -64,7 +65,7 @@ public class Connector {
 
         threadPool = new ThreadPool(threadPoolSize);
 
-        execute(new ReloadThread(this));
+        execute(new RefreshThread(this));
     }
 
     public boolean isStopping() {
@@ -85,7 +86,7 @@ public class Connector {
 
     public void init(Config config) throws Exception {
         configs.add(config);
-
+/*
         Collection connectionConfigs = config.getConnectionConfigs();
         for (Iterator j=connectionConfigs.iterator(); j.hasNext(); ) {
             ConnectionConfig connectionConfig = (ConnectionConfig)j.next();
@@ -94,10 +95,10 @@ public class Connector {
             for (Iterator k=sourceDefinitions.iterator(); k.hasNext(); ) {
                 SourceDefinition sourceDefinition = (SourceDefinition)k.next();
 
-                String s = sourceDefinition.getParameter(SourceDefinition.AUTO_RELOAD);
-                boolean autoReload = s == null ? SourceDefinition.DEFAULT_AUTO_RELOAD : new Boolean(s).booleanValue();
+                String s = sourceDefinition.getParameter(SourceDefinition.AUTO_REFRESH);
+                boolean autoRefresh = s == null ? SourceDefinition.DEFAULT_AUTO_REFRESH : new Boolean(s).booleanValue();
 
-                if (!autoReload) continue;
+                if (!autoRefresh) continue;
 
                 log.debug(Formatter.displaySeparator(80));
                 log.debug(Formatter.displayLine("Loading source caches for "+sourceDefinition.getConnectionName()+"/"+sourceDefinition.getName(), 80));
@@ -106,6 +107,7 @@ public class Connector {
                 search(sourceDefinition, null);
             }
         }
+*/
     }
 
     public void refresh() throws Exception {
@@ -120,28 +122,76 @@ public class Connector {
                 for (Iterator k=sourceDefinitions.iterator(); k.hasNext(); ) {
                     SourceDefinition sourceDefinition = (SourceDefinition)k.next();
 
-                    String s = sourceDefinition.getParameter(SourceDefinition.AUTO_RELOAD);
-                    boolean autoReload = s == null ? SourceDefinition.DEFAULT_AUTO_RELOAD : new Boolean(s).booleanValue();
+                    String s = sourceDefinition.getParameter(SourceDefinition.AUTO_REFRESH);
+                    boolean autoRefresh = s == null ? SourceDefinition.DEFAULT_AUTO_REFRESH : new Boolean(s).booleanValue();
 
-                    if (!autoReload) continue;
+                    if (!autoRefresh) continue;
 
                     log.debug(Formatter.displaySeparator(80));
                     log.debug(Formatter.displayLine("Refreshing source caches for "+sourceDefinition.getConnectionName()+"/"+sourceDefinition.getName(), 80));
                     log.debug(Formatter.displaySeparator(80));
 
-                    refresh(connectionConfig, sourceDefinition);
+                    s = sourceDefinition.getParameter(SourceDefinition.REFRESH_METHOD);
+                    String refreshMethod = s == null ? SourceDefinition.DEFAULT_REFRESH_METHOD : s;
+
+                    if (SourceDefinition.POLL_CHANGES.equals(refreshMethod)) {
+                        pollChanges(connectionConfig, sourceDefinition);
+
+                    } else { // if (SourceDefinition.RELOAD_EXPIRED.equals(refreshMethod)) {
+                        reloadExpired(connectionConfig, sourceDefinition);
+                    }
                 }
             }
         }
     }
 
-    public void refresh(ConnectionConfig connectionConfig, SourceDefinition sourceDefinition) throws Exception {
+    public void pollChanges(ConnectionConfig connectionConfig, SourceDefinition sourceDefinition) throws Exception {
+
+        int lastChangeNumber = connectorContext.getSourceDataCache(connectionConfig, sourceDefinition).getLastChangeNumber();
+
+        Connection connection = connectorContext.getConnection(sourceDefinition.getConnectionName());
+        SearchResults sr = connection.getChanges(sourceDefinition, lastChangeNumber);
+        if (!sr.hasNext()) return;
+
+        Collection pks = new HashSet();
+
+        log.debug("Synchronizing changes:");
+        while (sr.hasNext()) {
+            Row pk = (Row)sr.next();
+
+            Integer changeNumber = (Integer)pk.remove("changeNumber");
+            Object changeTime = pk.remove("changeTime");
+            Object changeAction = pk.remove("changeAction");
+
+            log.debug(" - "+pk+": "+changeAction);
+
+            connectorContext.getSourceDataCache(connectionConfig, sourceDefinition).remove(pk);
+
+            if ("DELETE".equals(changeAction)) {
+                pks.remove(pk);
+            } else {
+                pks.add(pk);
+            }
+
+            lastChangeNumber = changeNumber.intValue();
+        }
+
+        if (pks.isEmpty()) return;
+
+        load(sourceDefinition, pks);
+        connectorContext.getSourceDataCache(connectionConfig, sourceDefinition).setLastChangeNumber(lastChangeNumber);
+    }
+
+    public void reloadExpired(ConnectionConfig connectionConfig, SourceDefinition sourceDefinition) throws Exception {
+
         Map map = connectorContext.getSourceDataCache(connectionConfig, sourceDefinition).getExpired();
+
+        log.debug("Reloading expired caches...");
 
         for (Iterator i=map.keySet().iterator(); i.hasNext(); ) {
             Row pk = (Row)i.next();
             AttributeValues av = (AttributeValues)map.get(pk);
-            log.debug("Refreshing "+pk+": "+av);
+            log.debug(" - "+pk+": "+av);
         }
 
         Filter f = connectorContext.getFilterTool().createFilter(map.keySet());
@@ -560,18 +610,19 @@ public class Connector {
         Collection uniqueFieldDefinitions = sourceDefinition.getUniqueFieldDefinitions();
         Collection missingKeys = new ArrayList();
 
-        //log.debug("Searching source data cache for "+keys);
+        log.debug("Searching source data cache for "+keys);
         Map loadedRows = connectorContext.getSourceDataCache(connectionConfig, sourceDefinition).search(keys, missingKeys);
-
-        //log.debug("Loaded rows: "+loadedRows.keySet());
         results.putAll(loadedRows);
+
+        log.debug("Loaded rows: "+loadedRows.keySet());
+        log.debug("Missing keys: "+missingKeys);
 
         Collection keysToLoad = new TreeSet();
         keysToLoad.addAll(missingKeys);
         //keysToLoad.removeAll(results.keySet());
         //keysToLoad.removeAll(loadedRows.keySet());
 
-        //log.debug("PKs to load: "+keysToLoad);
+        log.debug("PKs to load: "+keysToLoad);
         if (!keysToLoad.isEmpty()) {
             Filter newFilter = connectorContext.getFilterTool().createFilter(keysToLoad);
             Map map = loadEntries(sourceDefinition, newFilter);
@@ -722,32 +773,15 @@ public class Connector {
         //log.debug("Load results:");
 
         for (Iterator i=sr.iterator(); i.hasNext();) {
-            AttributeValues av = (AttributeValues)i.next();
+            AttributeValues sourceValues = (AttributeValues)i.next();
 
-            Row pk = new Row();
-
-            Collection fields = sourceDefinition.getFieldDefinitions();
-            for (Iterator j=fields.iterator(); j.hasNext(); ) {
-                FieldDefinition fieldDefinition = (FieldDefinition)j.next();
-                if (!fieldDefinition.isPrimaryKey()) continue;
-
-                String name = fieldDefinition.getName();
-                Collection values = av.get(name);
-                if (values == null) {
-                    pk = null;
-                    break;
-                }
-
-                Object value = values.iterator().next();
-                pk.set(name, value);
-            }
-
+            Row pk = Adapter.getPrimaryKeyValues(sourceDefinition, sourceValues);
             if (pk == null) continue;
 
             Row npk = connectorContext.getSchema().normalize(pk);
             //log.debug(" - PK: "+npk);
 
-            results.put(npk, av);
+            results.put(npk, sourceValues);
         }
 
         return results;

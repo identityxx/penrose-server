@@ -30,12 +30,12 @@ import org.safehaus.penrose.mapping.*;
  */
 public class TransformEngine {
 
-    Logger log = Logger.getLogger(getClass());
+    static Logger log = Logger.getLogger(TransformEngine.class);
 
     public EngineContext engineContext;
 
     public int joinDebug = 0;
-    public int crossProductDebug = 0;
+    public static int crossProductDebug = 0;
 
     public TransformEngine(EngineContext engineContext) {
         this.engineContext = engineContext;
@@ -50,7 +50,7 @@ public class TransformEngine {
      * @param attributes
      * @return collection of Rows
      */
-    public Collection convert(AttributeValues attributes) {
+    public static Collection convert(AttributeValues attributes) {
         return convert(attributes.getValues());
     }
 
@@ -63,7 +63,7 @@ public class TransformEngine {
      * @param values Map of collections.
      * @return collection of Rows
      */
-    public Collection convert(Map values) {
+    public static Collection convert(Map values) {
         List names = new ArrayList(values.keySet());
         List results = new ArrayList();
         Map temp = new HashMap();
@@ -78,7 +78,7 @@ public class TransformEngine {
         return results;
     }
 
-    public void convert(Map values, List names, int pos, Map temp, Collection results) {
+    public static void convert(Map values, List names, int pos, Map temp, Collection results) {
 
         if (pos < names.size()) {
 

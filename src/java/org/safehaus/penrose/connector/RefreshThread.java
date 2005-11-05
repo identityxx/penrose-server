@@ -15,23 +15,42 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
-package org.safehaus.penrose.cache;
+package org.safehaus.penrose.connector;
 
-import org.safehaus.penrose.mapping.*;
-
-import java.util.*;
-import java.sql.*;
+import org.apache.log4j.Logger;
 
 /**
  * @author Endi S. Dewata
  */
-public class DefaultSourceDataCache extends JDBCSourceDataCache {
+public class RefreshThread implements Runnable {
 
-    public void init() throws Exception {
-        setDriver("org.hsqldb.jdbcDriver");
-        setUrl("jdbc:hsqldb:mem:penrose");
-        setUser("sa");
+    Logger log = Logger.getLogger(getClass());
 
-        initDatabase();
-    }
+	private Connector connector;
+	
+	public RefreshThread(Connector connector) {
+		this.connector = connector;
+	}
+
+	public void run() {
+        //log.debug("RefreshThread has been started");
+
+		while (!connector.isStopping()) {
+
+			try {
+                //Thread.sleep(2 * 60 * 1000); // sleep 2 minutes
+				Thread.sleep(30 * 1000);
+
+                log.debug("Refreshing cache ...");
+                connector.refresh();
+
+			} catch (Exception ex) {
+				log.error(ex.getMessage(), ex);
+			}
+		}
+		
+	}
+
+	
+
 }

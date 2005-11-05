@@ -177,9 +177,8 @@ public class Penrose implements
         if (trustedKeyStore != null) System.setProperty("javax.net.ssl.trustStore", trustedKeyStore);
 
         ServerConfigReader reader = new ServerConfigReader();
-        reader.read((homeDirectory == null ? "" : homeDirectory+File.separator)+"conf"+File.separator+"server.xml");
+        serverConfig = reader.read((homeDirectory == null ? "" : homeDirectory+File.separator)+"conf"+File.separator+"server.xml");
 
-        serverConfig = reader.getServerConfig();
         if (serverConfig.getRootDn() != null) rootDn = serverConfig.getRootDn();
         if (serverConfig.getRootPassword() != null) rootPassword = serverConfig.getRootPassword();
         //log.debug(serverConfig.toString());
@@ -281,7 +280,7 @@ public class Penrose implements
             Connection connection = new Connection();
             connection.init(connectionConfig, adapter);
 
-            adapter.init(adapterConfig, this, connection);
+            adapter.init(adapterConfig, connection);
 
             connections.put(connectionConfig.getConnectionName(), connection);
         }
@@ -720,7 +719,7 @@ public class Penrose implements
         SourceFilterCache cache = (SourceFilterCache)sourceFilterCaches.get(key);
 
         if (cache == null) {
-            String cacheClass = cacheConfig.getCacheClass();
+            String cacheClass = null; // cacheConfig.getCacheClass();
             cacheClass = cacheClass == null ? CacheConfig.DEFAULT_SOURCE_FILTER_CACHE : cacheClass;
 
             Class clazz = Class.forName(cacheClass);

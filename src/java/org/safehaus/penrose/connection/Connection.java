@@ -6,6 +6,7 @@ import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.filter.Filter;
 
 import java.util.Collection;
+import java.util.ArrayList;
 
 /**
  * @author Endi S. Dewata
@@ -74,5 +75,9 @@ public class Connection {
 
     public int delete(SourceDefinition sourceDefinition, AttributeValues values) throws Exception {
         return adapter.delete(sourceDefinition, values);
+    }
+
+    public SearchResults getChanges(SourceDefinition sourceDefinition, int lastChangeNumber) throws Exception {
+        return adapter.getChanges(sourceDefinition, lastChangeNumber);
     }
 }

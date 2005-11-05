@@ -69,7 +69,7 @@ public class ConfigReader {
      */
     public void loadMappingConfig(File dir, String baseDn, MappingRule mappingRule, Config config) throws Exception {
         File file = new File(dir, mappingRule.getFile());
-        log.debug("Loading mapping rule from: "+file.getAbsolutePath());
+        //log.debug("Loading mapping rule from: "+file.getAbsolutePath());
 
         ClassLoader cl = getClass().getClassLoader();
         URL url = cl.getResource("org/safehaus/penrose/config/mapping-digester-rules.xml");
@@ -218,7 +218,7 @@ public class ConfigReader {
      * @throws Exception
      */
 	public void loadModulesConfig(File file, Config config) throws Exception {
-        log.debug("Loading modules configuration from: "+file.getAbsolutePath());
+        //log.debug("Loading modules configuration from: "+file.getAbsolutePath());
         ClassLoader cl = getClass().getClassLoader();
         URL url = cl.getResource("org/safehaus/penrose/config/modules-digester-rules.xml");
 		Digester digester = DigesterLoader.createDigester(url);
@@ -246,7 +246,7 @@ public class ConfigReader {
 	 * @throws Exception
 	 */
 	public void loadSourcesConfig(File file, Config config) throws Exception {
-		log.debug("Loading source configuration from: "+file.getAbsolutePath());
+		//log.debug("Loading source configuration from: "+file.getAbsolutePath());
         ClassLoader cl = getClass().getClassLoader();
         URL url = cl.getResource("org/safehaus/penrose/config/sources-digester-rules.xml");
 		Digester digester = DigesterLoader.createDigester(url);

@@ -18,15 +18,13 @@
 package org.safehaus.penrose.connection;
 
 
-import org.safehaus.penrose.mapping.AttributeValues;
-import org.safehaus.penrose.mapping.Source;
-import org.safehaus.penrose.mapping.SourceDefinition;
-import org.safehaus.penrose.mapping.Row;
+import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.SearchResults;
 import org.apache.log4j.Logger;
 
 import java.util.Collection;
+import java.util.Iterator;
 
 /**
  * @author Endi S. Dewata 
@@ -35,13 +33,11 @@ public abstract class Adapter {
 
     Logger log = Logger.getLogger(getClass());
 
-    private AdapterContext adapterContext;
     private AdapterConfig adapterConfig;
     private Connection connection;
 
-    public void init(AdapterConfig adapterConfig, AdapterContext adapterContext, Connection connection) throws Exception {
+    public void init(AdapterConfig adapterConfig, Connection connection) throws Exception {
         this.adapterConfig = adapterConfig;
-        this.adapterContext = adapterContext;
         this.connection = connection;
 
         init();
@@ -103,13 +99,9 @@ public abstract class Adapter {
      */
     public abstract int delete(SourceDefinition sourceDefinition, AttributeValues values) throws Exception;
 
-    public AdapterContext getAdapterContext() {
-        return adapterContext;
-    }
+    public abstract int getLastChangeNumber(SourceDefinition sourceDefinition) throws Exception;
 
-    public void setAdapterContext(AdapterContext adapterContext) {
-        this.adapterContext = adapterContext;
-    }
+    public abstract SearchResults getChanges(SourceDefinition sourceDefinition, int lastChangeNumber) throws Exception;
 
     public AdapterConfig getAdapterConfig() {
         return adapterConfig;
@@ -142,4 +134,29 @@ public abstract class Adapter {
     public String getConnectionName() {
         return connection.getConnectionName();
     }
+
+    public static Row getPrimaryKeyValues(SourceDefinition sourceDefinition, AttributeValues sourceValues) throws Exception {
+
+        Row pk = new Row();
+
+        Collection fields = sourceDefinition.getPrimaryKeyFieldDefinitions();
+
+        for (Iterator i=fields.iterator(); i.hasNext(); ) {
+            FieldDefinition fieldDefinition = (FieldDefinition)i.next();
+            String name = fieldDefinition.getName();
+
+            Collection values = sourceValues.get(name);
+            if (values == null) return null;
+
+            Iterator iterator = values.iterator();
+            if (!iterator.hasNext()) return null;
+
+            Object value = iterator.next();
+
+            pk.set(name, value);
+        }
+
+        return pk;
+    }
+
 }

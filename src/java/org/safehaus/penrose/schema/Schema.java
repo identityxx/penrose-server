@@ -287,12 +287,12 @@ public class Schema {
             Object value = row.get(name);
 
             if (value == null) continue;
-/*
+
             if (value instanceof String) {
                 value = ((String)value).toLowerCase();
             }
-*/            
-            value = value.toString().toLowerCase();
+
+            //value = value.toString().toLowerCase();
             newRow.set(name, value);
         }
 

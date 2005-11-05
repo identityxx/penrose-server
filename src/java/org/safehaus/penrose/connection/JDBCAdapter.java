@@ -21,6 +21,7 @@ import org.apache.commons.dbcp.*;
 import org.apache.commons.pool.impl.GenericObjectPool;
 import org.ietf.ldap.LDAPException;
 import org.safehaus.penrose.SearchResults;
+import org.safehaus.penrose.engine.TransformEngine;
 import org.safehaus.penrose.util.Formatter;
 import org.safehaus.penrose.util.Formatter;
 import org.safehaus.penrose.config.Config;
@@ -86,7 +87,7 @@ public class JDBCAdapter extends Adapter {
 
         ds = new PoolingDataSource(connectionPool);
 
-        filterTool = new JDBCFilterTool(getAdapterContext());
+        filterTool = new JDBCFilterTool();
     }
 
     public String getFieldNames(SourceDefinition sourceDefinition) throws Exception {
@@ -182,15 +183,22 @@ public class JDBCAdapter extends Adapter {
 
             rs = ps.executeQuery();
 
-            log.debug("Result:");
+            int width = 0;
+            boolean first = true;
 
             for (int i=0; rs.next() && (sizeLimit == 0 || i<sizeLimit); i++) {
-
                 Row row = getPkValues(sourceDefinition, rs);
-                log.debug(" - "+row);
-
                 results.add(row);
+
+                if (first) {
+                    width = printHeader(sourceDefinition);
+                    first = false;
+                }
+
+                printValues(sourceDefinition, row);
             }
+
+            if (width > 0) printFooter(width);
 
             if (rs.next()) {
                 log.debug("RC: size limit exceeded.");
@@ -298,61 +306,14 @@ public class JDBCAdapter extends Adapter {
                 results.add(av);
 
                 if (first) {
-                    StringBuffer resultHeader = new StringBuffer();
-                    resultHeader.append("|");
-
-                    Collection fields = sourceDefinition.getFieldDefinitions();
-                    for (Iterator j=fields.iterator(); j.hasNext(); ) {
-                        FieldDefinition fieldDefinition = (FieldDefinition)j.next();
-
-                        String name = fieldDefinition.getName();
-                        int length = fieldDefinition.getLength() > 15 ? 15 : fieldDefinition.getLength();
-
-                        resultHeader.append(" ");
-                        resultHeader.append(Formatter.rightPad(name, length));
-                        resultHeader.append(" |");
-                    }
-
-                    width = resultHeader.length();
-
-                    log.debug("Results:");
-                    log.debug(Formatter.displaySeparator(width));
-                    log.debug(resultHeader.toString());
-                    log.debug(Formatter.displaySeparator(width));
-
+                    width = printHeader(sourceDefinition);
                     first = false;
                 }
 
-                StringBuffer resultFields = new StringBuffer();
-                resultFields.append("| ");
-
-                Collection fields = sourceDefinition.getFieldDefinitions();
-                for (Iterator j=fields.iterator(); j.hasNext(); ) {
-                    FieldDefinition fieldDefinition = (FieldDefinition)j.next();
-
-                    Collection c = av.get(fieldDefinition.getName());
-
-                    String value;
-                    if (c == null) {
-                        value = null;
-                    } else if (c.size() == 1) {
-                        value = c.iterator().next().toString();
-                    } else {
-                        value = c.toString();
-                    }
-
-                    int length = fieldDefinition.getLength() > 15 ? 15 : fieldDefinition.getLength();
-
-                    resultFields.append(Formatter.rightPad(value, length));
-                    resultFields.append(" | ");
-                }
-
-                log.debug(resultFields.toString());
+                printValues(sourceDefinition, av);
             }
 
-            if (width > 0) {
-                log.debug(Formatter.displaySeparator(width));
-            }
+            if (width > 0) printFooter(width);
 
             if (rs.next()) {
                 log.debug("RC: size limit exceeded.");
@@ -373,11 +334,10 @@ public class JDBCAdapter extends Adapter {
     public Row getPkValues(SourceDefinition sourceDefinition, ResultSet rs) throws Exception {
 
         Row row = new Row();
+        int c = 1;
 
         ResultSetMetaData rsmd = rs.getMetaData();
         int count = rsmd.getColumnCount();
-
-        int c = 1;
 
         Collection fields = sourceDefinition.getPrimaryKeyFieldDefinitions();
 
@@ -391,6 +351,28 @@ public class JDBCAdapter extends Adapter {
         }
 
         //log.debug("=> values: "+row);
+
+        return row;
+    }
+
+    public Row getChanges(SourceDefinition sourceDefinition, ResultSet rs) throws Exception {
+
+        Row row = new Row();
+        int c = 1;
+
+        row.set("changeNumber", rs.getObject(c++));
+        row.set("changeTime", rs.getObject(c++));
+        row.set("changeAction", rs.getObject(c++));
+
+        Collection fields = sourceDefinition.getPrimaryKeyFieldDefinitions();
+        for (Iterator i=fields.iterator(); i.hasNext(); c++) {
+            FieldDefinition fieldDefinition = (FieldDefinition)i.next();
+
+            Object value = rs.getObject(c);
+            if (value == null) continue;
+
+            row.set(fieldDefinition.getName(), value);
+        }
 
         return row;
     }
@@ -427,7 +409,7 @@ public class JDBCAdapter extends Adapter {
     public int add(SourceDefinition sourceDefinition, AttributeValues sourceValues) throws Exception {
 
         // convert sets into single values
-        Collection rows = getAdapterContext().getTransformEngine().convert(sourceValues);
+        Collection rows = TransformEngine.convert(sourceValues);
     	Row row = (Row)rows.iterator().next();
 
         String tableName = sourceDefinition.getParameter(TABLE_NAME);
@@ -491,36 +473,10 @@ public class JDBCAdapter extends Adapter {
         return LDAPException.SUCCESS;
     }
 
-    public Map getPkValues(SourceDefinition sourceDefinition, Map entry) throws Exception {
-
-        Map pk = new HashMap();
-
-        Collection fields = sourceDefinition.getPrimaryKeyFieldDefinitions();
-
-        for (Iterator i=fields.iterator(); i.hasNext(); ) {
-            FieldDefinition fieldDefinition = (FieldDefinition)i.next();
-            String name = fieldDefinition.getName();
-
-            Object value = entry.get(name);
-            if (value == null) continue;
-
-            pk.put(name, value);
-        }
-
-        return pk;
-    }
-
     public int delete(SourceDefinition sourceDefinition, AttributeValues sourceValues) throws Exception {
 
-        Map pk = getPkValues(sourceDefinition, sourceValues.getValues());
+        Row pk = getPrimaryKeyValues(sourceDefinition, sourceValues);
         //log.debug("Deleting entry "+pk);
-
-        // convert sets into single values
-        Collection pkRows = getAdapterContext().getTransformEngine().convert(pk);
-        //Collection rows = getAdapterContext().getTransformEngine().convert(sourceValues);
-
-        Row pkRow = (Row)pkRows.iterator().next();
-        //Row row = (Row)rows.iterator().next();
 
         String tableName = sourceDefinition.getParameter(TABLE_NAME);
 
@@ -531,7 +487,7 @@ public class JDBCAdapter extends Adapter {
             con = ds.getConnection();
 
             StringBuffer sb = new StringBuffer();
-            for (Iterator i=pkRow.getNames().iterator(); i.hasNext(); ) {
+            for (Iterator i=pk.getNames().iterator(); i.hasNext(); ) {
                 String name = (String)i.next();
 
                 if (sb.length() > 0) sb.append(" and ");
@@ -551,9 +507,9 @@ public class JDBCAdapter extends Adapter {
             log.debug(Formatter.displayLine("Parameters:", 80));
 
             int c = 1;
-            for (Iterator i=pkRow.getNames().iterator(); i.hasNext(); c++) {
+            for (Iterator i=pk.getNames().iterator(); i.hasNext(); c++) {
                 String name = (String)i.next();
-                Object value = pkRow.get(name);
+                Object value = pk.get(name);
                 ps.setObject(c, value);
                 log.debug(Formatter.displayLine(" - "+c+" = "+value, 80));
             }
@@ -574,8 +530,8 @@ public class JDBCAdapter extends Adapter {
     public int modify(SourceDefinition sourceDefinition, AttributeValues oldEntry, AttributeValues newEntry) throws Exception {
 
         // convert sets into single values
-        Collection oldRows = getAdapterContext().getTransformEngine().convert(oldEntry);
-        Collection newRows = getAdapterContext().getTransformEngine().convert(newEntry);
+        Collection oldRows = TransformEngine.convert(oldEntry);
+        Collection newRows = TransformEngine.convert(newEntry);
 
         Row oldRow = (Row)oldRows.iterator().next();
         Row newRow = (Row)newRows.iterator().next();
@@ -729,6 +685,258 @@ public class JDBCAdapter extends Adapter {
         }
 
         return LDAPException.SUCCESS;
+    }
+
+    public int getLastChangeNumber(SourceDefinition sourceDefinition) throws Exception {
+        String tableName = sourceDefinition.getParameter(TABLE_NAME);
+        String sql = "select max(changeNumber) from "+tableName+"_changes";
+
+        java.sql.Connection con = null;
+        PreparedStatement ps = null;
+        ResultSet rs = null;
+
+        try {
+            con = ds.getConnection();
+
+            log.debug(Formatter.displaySeparator(80));
+            log.debug(Formatter.displayLine(sql, 80));
+            log.debug(Formatter.displaySeparator(80));
+
+            ps = con.prepareStatement(sql);
+            rs = ps.executeQuery();
+
+            if (!rs.next()) return 0;
+
+            Integer value = (Integer)rs.getObject(1);
+            log.debug("Last change number: "+value);
+            
+            if (value == null) return 0;
+
+            return value.intValue();
+
+        } finally {
+            if (rs != null) try { rs.close(); } catch (Exception e) {}
+            if (ps != null) try { ps.close(); } catch (Exception e) {}
+            if (con != null) try { con.close(); } catch (Exception e) {}
+        }
+    }
+
+    public SearchResults getChanges(SourceDefinition sourceDefinition, int lastChangeNumber) throws Exception {
+
+        log.debug("Searching JDBC source "+sourceDefinition.getConnectionName()+"/"+sourceDefinition.getName());
+
+        SearchResults results = new SearchResults();
+
+        String tableName = sourceDefinition.getParameter(TABLE_NAME);
+        int sizeLimit = 100;
+
+        StringBuffer columns = new StringBuffer();
+        columns.append("select changeNumber, changeTime, changeAction, ");
+        columns.append(getPkFieldNames(sourceDefinition));
+
+        StringBuffer table = new StringBuffer();
+        table.append("from ");
+        table.append(tableName+"_changes");
+
+        StringBuffer whereClause = new StringBuffer();
+        whereClause.append("where changeNumber > ? order by changeNumber");
+
+        List parameters = new ArrayList();
+        parameters.add(new Integer(lastChangeNumber));
+
+        String sql = columns+" "+table+" "+whereClause;
+
+        java.sql.Connection con = null;
+        PreparedStatement ps = null;
+        ResultSet rs = null;
+
+        try {
+            con = ds.getConnection();
+
+            log.debug(Formatter.displaySeparator(80));
+            log.debug(Formatter.displayLine(columns.toString(), 80));
+            log.debug(Formatter.displayLine(table.toString(), 80));
+            log.debug(Formatter.displayLine(whereClause.toString(), 80));
+            log.debug(Formatter.displaySeparator(80));
+
+            ps = con.prepareStatement(sql);
+
+            log.debug(Formatter.displayLine("Parameters:", 80));
+
+            int counter = 0;
+            for (Iterator i=parameters.iterator(); i.hasNext(); ) {
+                Object param = i.next();
+                ps.setObject(++counter, param);
+                log.debug(Formatter.displayLine(" - "+counter+" = "+param, 80));
+            }
+
+            log.debug(Formatter.displaySeparator(80));
+
+            rs = ps.executeQuery();
+
+            int width = 0;
+            boolean first = true;
+
+            for (int i=0; rs.next() && (sizeLimit == 0 || i<sizeLimit); i++) {
+                Row row = getChanges(sourceDefinition, rs);
+                results.add(row);
+
+                if (first) {
+                    width = printChangesHeader(sourceDefinition);
+                    first = false;
+                }
+
+                printChanges(sourceDefinition, row);
+            }
+
+            if (width > 0) printFooter(width);
+
+            if (rs.next()) {
+                log.debug("RC: size limit exceeded.");
+                results.setReturnCode(LDAPException.SIZE_LIMIT_EXCEEDED);
+            }
+
+        } finally {
+            if (rs != null) try { rs.close(); } catch (Exception e) {}
+            if (ps != null) try { ps.close(); } catch (Exception e) {}
+            if (con != null) try { con.close(); } catch (Exception e) {}
+        }
+
+        results.close();
+
+        return results;
+    }
+
+    public int printHeader(SourceDefinition sourceDefinition) throws Exception {
+
+        StringBuffer resultHeader = new StringBuffer();
+        resultHeader.append("|");
+
+        Collection fields = sourceDefinition.getFieldDefinitions();
+        for (Iterator j=fields.iterator(); j.hasNext(); ) {
+            FieldDefinition fieldDefinition = (FieldDefinition)j.next();
+
+            String name = fieldDefinition.getName();
+            int length = fieldDefinition.getLength() > 15 ? 15 : fieldDefinition.getLength();
+
+            resultHeader.append(" ");
+            resultHeader.append(Formatter.rightPad(name, length));
+            resultHeader.append(" |");
+        }
+
+        int width = resultHeader.length();
+
+        log.debug("Results:");
+        log.debug(Formatter.displaySeparator(width));
+        log.debug(resultHeader.toString());
+        log.debug(Formatter.displaySeparator(width));
+
+        return width;
+    }
+
+    public int printChangesHeader(SourceDefinition sourceDefinition) throws Exception {
+
+        StringBuffer resultHeader = new StringBuffer();
+        resultHeader.append("| ");
+        resultHeader.append(Formatter.rightPad("#", 10));
+        resultHeader.append(" | ");
+        resultHeader.append(Formatter.rightPad("time", 19));
+        resultHeader.append(" | ");
+        resultHeader.append(Formatter.rightPad("action", 10));
+        resultHeader.append(" |");
+
+
+        Collection fields = sourceDefinition.getPrimaryKeyFieldDefinitions();
+        for (Iterator j=fields.iterator(); j.hasNext(); ) {
+            FieldDefinition fieldDefinition = (FieldDefinition)j.next();
+
+            String name = fieldDefinition.getName();
+            int length = fieldDefinition.getLength() > 15 ? 15 : fieldDefinition.getLength();
+
+            resultHeader.append(" ");
+            resultHeader.append(Formatter.rightPad(name, length));
+            resultHeader.append(" |");
+        }
+
+        int width = resultHeader.length();
+
+        log.debug("Results:");
+        log.debug(Formatter.displaySeparator(width));
+        log.debug(resultHeader.toString());
+        log.debug(Formatter.displaySeparator(width));
+
+        return width;
+    }
+
+    public void printValues(SourceDefinition sourceDefinition, AttributeValues av) throws Exception {
+
+        Row row = new Row();
+
+        for (Iterator i=av.getNames().iterator(); i.hasNext(); ) {
+            String name = (String)i.next();
+            Collection c = av.get(name);
+
+            Object value;
+            if (c == null) {
+                value = null;
+            } else if (c.size() == 1) {
+                value = c.iterator().next().toString();
+            } else {
+                value = c.toString();
+            }
+
+            row.set(name, value);
+        }
+
+        printValues(sourceDefinition, row);
+    }
+
+    public void printValues(SourceDefinition sourceDefinition, Row row) throws Exception {
+        StringBuffer resultFields = new StringBuffer();
+        resultFields.append("|");
+
+        Collection fields = sourceDefinition.getFieldDefinitions();
+        for (Iterator j=fields.iterator(); j.hasNext(); ) {
+            FieldDefinition fieldDefinition = (FieldDefinition)j.next();
+
+            Object value = row.get(fieldDefinition.getName());
+            int length = fieldDefinition.getLength() > 15 ? 15 : fieldDefinition.getLength();
+
+            resultFields.append(" ");
+            resultFields.append(Formatter.rightPad(value == null ? "null" : value.toString(), length));
+            resultFields.append(" |");
+        }
+
+        log.debug(resultFields.toString());
+    }
+
+    public void printChanges(SourceDefinition sourceDefinition, Row row) throws Exception {
+        StringBuffer resultFields = new StringBuffer();
+        resultFields.append("| ");
+        resultFields.append(Formatter.rightPad(row.get("changeNumber").toString(), 10));
+        resultFields.append(" | ");
+        resultFields.append(Formatter.rightPad(row.get("changeTime").toString(), 19));
+        resultFields.append(" | ");
+        resultFields.append(Formatter.rightPad(row.get("changeAction").toString(), 10));
+        resultFields.append(" |");
+
+        Collection fields = sourceDefinition.getPrimaryKeyFieldDefinitions();
+        for (Iterator j=fields.iterator(); j.hasNext(); ) {
+            FieldDefinition fieldDefinition = (FieldDefinition)j.next();
+
+            Object value = row.get(fieldDefinition.getName());
+            int length = fieldDefinition.getLength() > 15 ? 15 : fieldDefinition.getLength();
+
+            resultFields.append(" ");
+            resultFields.append(Formatter.rightPad(value == null ? "null" : value.toString(), length));
+            resultFields.append(" |");
+        }
+
+        log.debug(resultFields.toString());
+    }
+
+    public void printFooter(int width) throws Exception {
+        log.debug(Formatter.displaySeparator(width));
     }
 
 }

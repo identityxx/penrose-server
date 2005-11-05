@@ -58,6 +58,10 @@ public class Row implements Comparable {
         return values.get(name);
     }
 
+    public Object remove(String name) {
+        return values.remove(name);
+    }
+    
     public Collection getNames() {
         return values.keySet();
     }

@@ -26,6 +26,7 @@ import java.util.*;
  */
 public class InMemorySourceDataCache extends SourceDataCache {
 
+    int lastChangeNumber;
     Map dataMap = new TreeMap();
     Map uniqueKeys = new TreeMap();
     Map expirationMap = new LinkedHashMap();
@@ -138,5 +139,13 @@ public class InMemorySourceDataCache extends SourceDataCache {
         dataMap.remove(normalizedKey);
         expirationMap.remove(normalizedKey);
 
+    }
+
+    public int getLastChangeNumber() {
+        return lastChangeNumber;
+    }
+
+    public void setLastChangeNumber(int lastChangeNumber) {
+        this.lastChangeNumber = lastChangeNumber;
     }
 }

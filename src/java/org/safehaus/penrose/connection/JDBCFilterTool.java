@@ -15,12 +15,6 @@ public class JDBCFilterTool {
 
     Logger log = Logger.getLogger(getClass());
 
-    private AdapterContext adapterContext;
-
-    public JDBCFilterTool(AdapterContext adapterContext) {
-        this.adapterContext = adapterContext;
-    }
-
     /**
      * Convert parsed SQL filter into string to be used in SQL queries.
      *
@@ -190,13 +184,5 @@ public class JDBCFilterTool {
         sb.append(")");
 
         return true;
-    }
-
-    public AdapterContext getAdapterContext() {
-        return adapterContext;
-    }
-
-    public void setAdapterContext(AdapterContext adapterContext) {
-        this.adapterContext = adapterContext;
     }
 }

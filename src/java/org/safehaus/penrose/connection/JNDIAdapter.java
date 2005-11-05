@@ -196,10 +196,9 @@ public class JNDIAdapter extends Adapter {
         Row row = new Row();
 
         Attributes attrs = sr.getAttributes();
-        Collection fields = sourceDefinition.getFieldDefinitions();
+        Collection fields = sourceDefinition.getPrimaryKeyFieldDefinitions();
         for (Iterator i=fields.iterator(); i.hasNext(); ) {
             FieldDefinition fieldDefinition = (FieldDefinition)i.next();
-            if (!fieldDefinition.isPrimaryKey()) continue;
 
             String name = fieldDefinition.getName();
             if (name.equals("objectClass")) continue;
@@ -577,38 +576,12 @@ public class JNDIAdapter extends Adapter {
     public String getDn(SourceDefinition sourceDefinition, AttributeValues sourceValues) throws Exception {
         //log.debug("Computing DN for "+source.getName()+" with "+sourceValues);
 
-        Collection fields = sourceDefinition.getFieldDefinitions();
-        StringBuffer sb = new StringBuffer();
-
-        //log.debug("Creating RDN:");
-        for (Iterator i=fields.iterator(); i.hasNext(); ) {
-            FieldDefinition fieldDefinition = (FieldDefinition)i.next();
-            if (!fieldDefinition.isPrimaryKey()) continue;
-            //log.debug(" - "+fieldDefinition.getName());
-
-            if (sb.length() > 0) sb.append("+");
-
-            String name = fieldDefinition.getName();
-            sb.append(name);
-            sb.append("=");
-
-            Object value = sourceValues.get(name);
-            //log.debug("   "+value);
-
-            if (value instanceof Collection) {
-                Collection c = (Collection)value;
-                value = c.iterator().next();
-            }
-
-            sb.append(value);
-        }
-
-        //log.debug("RDN: "+sb);
+        Row pk = getPrimaryKeyValues(sourceDefinition, sourceValues);
 
         String baseDn = sourceDefinition.getParameter(BASE_DN);
         //log.debug("Base DN: "+baseDn);
 
-        String dn = append(sb.toString(), baseDn);
+        String dn = append(pk.toString(), baseDn);
         dn = append(dn, suffix);
 
         //log.debug("DN: "+sb);
@@ -638,4 +611,45 @@ public class JNDIAdapter extends Adapter {
 
         return sb.toString();
     }
+
+    public int getLastChangeNumber(SourceDefinition sourceDefinition) throws Exception {
+        return 0;
+    }
+    
+    public SearchResults getChanges(SourceDefinition sourceDefinition, int lastChangeNumber) throws Exception {
+
+        SearchResults results = new SearchResults();
+
+        int sizeLimit = 100;
+
+        String ldapBase = "cn=changelog";
+        String ldapFilter = "(&(changeNumber>="+lastChangeNumber+")(!(changeNumber="+lastChangeNumber+")))";
+
+        log.debug(Formatter.displaySeparator(80));
+        log.debug(Formatter.displayLine("JNDI Search "+sourceDefinition.getConnectionName()+"/"+sourceDefinition.getName(), 80));
+        log.debug(Formatter.displayLine(" - Base DN: "+ldapBase, 80));
+        log.debug(Formatter.displayLine(" - Filter: "+ldapFilter, 80));
+        log.debug(Formatter.displaySeparator(80));
+
+        SearchControls ctls = new SearchControls();
+        ctls.setSearchScope(SearchControls.ONELEVEL_SCOPE);
+
+        DirContext ctx = new InitialDirContext(parameters);
+        NamingEnumeration ne = ctx.search(ldapBase, ldapFilter, ctls);
+
+        log.debug("Result:");
+
+        while (ne.hasMore()) {
+            javax.naming.directory.SearchResult sr = (javax.naming.directory.SearchResult)ne.next();
+            log.debug(" - "+sr.getName()+","+ldapBase);
+
+            Row row = getPkValues(sourceDefinition, sr);
+            results.add(row);
+        }
+
+        results.close();
+
+        return results;
+    }
+
 }

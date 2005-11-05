@@ -28,6 +28,8 @@ public abstract class SourceDataCache extends Cache {
 
     SourceDefinition sourceDefinition;
 
+    public abstract int getLastChangeNumber() throws Exception;
+    public abstract void setLastChangeNumber(int lastChangeNumber) throws Exception;
     public abstract Map search(Collection filters, Collection missingKeys) throws Exception;
 
     public SourceDefinition getSourceDefinition() {

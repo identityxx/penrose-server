@@ -31,14 +31,7 @@ public class ServerConfigReader {
 
     Logger log = Logger.getLogger(getClass());
 
-    private ServerConfig serverConfig;
-
     public ServerConfigReader() {
-        serverConfig = new ServerConfig();
-    }
-
-    public ServerConfigReader(ServerConfig config) {
-        this.serverConfig = config;
     }
 
     /**
@@ -47,9 +40,11 @@ public class ServerConfigReader {
      * @param filename the configuration file (ie. server.xml)
      * @throws Exception
      */
-    public void read(String filename) throws Exception {
+    public ServerConfig read(String filename) throws Exception {
+        ServerConfig serverConfig = new ServerConfig();
         File file = new File(filename);
-        read(file);
+        read(file, serverConfig);
+        return serverConfig;
     }
 
 	/**
@@ -58,8 +53,8 @@ public class ServerConfigReader {
 	 * @param file the configuration file (ie. server.xml)
 	 * @throws Exception
 	 */
-	public void read(File file) throws Exception {
-		log.debug("Loading server configuration file from: "+file.getAbsolutePath());
+	public void read(File file, ServerConfig serverConfig) throws Exception {
+		//log.debug("Loading server configuration file from: "+file.getAbsolutePath());
         ClassLoader cl = getClass().getClassLoader();
         URL url = cl.getResource("org/safehaus/penrose/config/server-digester-rules.xml");
 		Digester digester = DigesterLoader.createDigester(url);
@@ -68,13 +63,4 @@ public class ServerConfigReader {
 		digester.push(serverConfig);
 		digester.parse(file);
 	}
-
-    public ServerConfig getServerConfig() {
-        return serverConfig;
-    }
-
-    public void setServerConfig(ServerConfig serverConfig) {
-        this.serverConfig = serverConfig;
-    }
-
 }
