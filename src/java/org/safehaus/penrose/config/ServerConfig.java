@@ -204,10 +204,6 @@ public class ServerConfig implements Serializable {
         adapterConfigs.put(adapter.getAdapterName(), adapter);
     }
 
-    public void setCacheConfigs(Map cacheConfigs) {
-        this.cacheConfigs = cacheConfigs;
-    }
-
     public void setInterpreterConfigs(Map interpreterConfigs) {
         this.interpreterConfigs = interpreterConfigs;
     }
@@ -216,6 +212,10 @@ public class ServerConfig implements Serializable {
         connectorConfigs.put(connectorConfig.getConnectorName(), connectorConfig);
     }
 
+    public ConnectorConfig getConnectorConfig() {
+        return getConnectorConfig("DEFAULT");
+    }
+    
     public ConnectorConfig getConnectorConfig(String connectorName) {
         return (ConnectorConfig)connectorConfigs.get(connectorName);
     }

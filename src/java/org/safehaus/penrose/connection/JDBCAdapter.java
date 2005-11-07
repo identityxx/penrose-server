@@ -54,8 +54,8 @@ public class JDBCAdapter extends Adapter {
     public void init() throws Exception {
         String name = getConnectionName();
 
-    	log.debug("-------------------------------------------------------------------------------");
-    	log.debug("Initializing JDBC connection "+name+":");
+    	//log.debug("-------------------------------------------------------------------------------");
+    	//log.debug("Initializing JDBC connection "+name+":");
 
         String driver = getParameter(DRIVER);
         String url = getParameter(URL);
@@ -66,7 +66,7 @@ public class JDBCAdapter extends Adapter {
         for (Iterator i=getParameterNames().iterator(); i.hasNext(); ) {
             String param = (String)i.next();
             String value = getParameter(param);
-            log.debug(" - "+param+": "+value);
+            //log.debug(" - "+param+": "+value);
             properties.setProperty(param, value);
         }
 
@@ -475,7 +475,7 @@ public class JDBCAdapter extends Adapter {
 
     public int delete(SourceDefinition sourceDefinition, AttributeValues sourceValues) throws Exception {
 
-        Row pk = getPrimaryKeyValues(sourceDefinition, sourceValues);
+        Row pk = sourceDefinition.getPrimaryKeyValues(sourceValues);
         //log.debug("Deleting entry "+pk);
 
         String tableName = sourceDefinition.getParameter(TABLE_NAME);
@@ -713,6 +713,9 @@ public class JDBCAdapter extends Adapter {
             if (value == null) return 0;
 
             return value.intValue();
+
+        } catch (Exception e) {
+            return 0;
 
         } finally {
             if (rs != null) try { rs.close(); } catch (Exception e) {}

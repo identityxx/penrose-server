@@ -34,8 +34,6 @@ public class SourceFilterCache {
     public Map expirationMap = new LinkedHashMap();
 
     private CacheConfig cacheConfig;
-    public CacheContext cacheContext;
-
     private SourceDefinition sourceDefinition;
 
     private int size;
@@ -45,9 +43,8 @@ public class SourceFilterCache {
         this.sourceDefinition = sourceDefinition;
     }
 
-    public void init(CacheConfig cacheConfig, CacheContext cacheContext) throws Exception {
+    public void init(CacheConfig cacheConfig) throws Exception {
         this.cacheConfig = cacheConfig;
-        this.cacheContext = cacheContext;
 
         String s = cacheConfig.getParameter(CacheConfig.CACHE_SIZE);
         size = s == null ? CacheConfig.DEFAULT_CACHE_SIZE : Integer.parseInt(s);

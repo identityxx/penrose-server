@@ -30,8 +30,8 @@ public class EngineConfig implements Serializable {
 
     public final static int DEFAULT_THREAD_POOL_SIZE = 20;
 
-    private String engineName;
-    private String engineClass;
+    private String engineName = "DEFAULT";
+    private String engineClass = EngineConfig.class.getName();
     private String description;
 
     private Properties parameters = new Properties();

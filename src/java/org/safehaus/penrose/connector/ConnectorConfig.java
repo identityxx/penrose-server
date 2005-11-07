@@ -17,9 +17,13 @@
  */
 package org.safehaus.penrose.connector;
 
+import org.safehaus.penrose.cache.CacheConfig;
+
 import java.io.Serializable;
 import java.util.Properties;
 import java.util.Collection;
+import java.util.Map;
+import java.util.LinkedHashMap;
 
 /**
  * @author Endi S. Dewata
@@ -30,11 +34,13 @@ public class ConnectorConfig implements Serializable {
 
     public final static int DEFAULT_THREAD_POOL_SIZE = 20;
 
-    private String connectorName;
-    private String connectorClass;
+    private String connectorName = "DEFAULT";
+    private String connectorClass = Connector.class.getName();
     private String description;
 
     private Properties parameters = new Properties();
+
+    private Map cacheConfigs = new LinkedHashMap();
 
     public String getConnectorClass() {
         return connectorClass;
@@ -74,6 +80,26 @@ public class ConnectorConfig implements Serializable {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public void addCacheConfig(CacheConfig cacheConfig) {
+    	cacheConfigs.put(cacheConfig.getCacheName(), cacheConfig);
+    }
+
+    public CacheConfig removeCacheConfig(String name) {
+        return (CacheConfig)cacheConfigs.remove(name);
+    }
+
+    public CacheConfig getCacheConfig() {
+        return (CacheConfig)cacheConfigs.get("DEFAULT");
+    }
+
+    public CacheConfig getCacheConfig(String name) {
+        return (CacheConfig)cacheConfigs.get(name);
+    }
+
+    public Collection getCacheConfigs() {
+    	return cacheConfigs.values();
     }
 
 }

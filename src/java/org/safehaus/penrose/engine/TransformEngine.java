@@ -183,7 +183,7 @@ public class TransformEngine {
         return pk;
     }
 
-    public Collection getPrimaryKeys(SourceDefinition sourceDefinition, AttributeValues sourceValues) throws Exception {
+    public static Collection getPrimaryKeys(SourceDefinition sourceDefinition, AttributeValues sourceValues) throws Exception {
         Collection pkFields = sourceDefinition.getPrimaryKeyFieldDefinitions();
 
         AttributeValues pkValues = new AttributeValues();

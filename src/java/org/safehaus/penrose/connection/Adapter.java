@@ -134,29 +134,4 @@ public abstract class Adapter {
     public String getConnectionName() {
         return connection.getConnectionName();
     }
-
-    public static Row getPrimaryKeyValues(SourceDefinition sourceDefinition, AttributeValues sourceValues) throws Exception {
-
-        Row pk = new Row();
-
-        Collection fields = sourceDefinition.getPrimaryKeyFieldDefinitions();
-
-        for (Iterator i=fields.iterator(); i.hasNext(); ) {
-            FieldDefinition fieldDefinition = (FieldDefinition)i.next();
-            String name = fieldDefinition.getName();
-
-            Collection values = sourceValues.get(name);
-            if (values == null) return null;
-
-            Iterator iterator = values.iterator();
-            if (!iterator.hasNext()) return null;
-
-            Object value = iterator.next();
-
-            pk.set(name, value);
-        }
-
-        return pk;
-    }
-
 }

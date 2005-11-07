@@ -227,11 +227,11 @@ public class FilterTool {
         return false;
     }
 
-    public Filter createFilter(Collection keys) {
+    public static Filter createFilter(Collection keys) {
         return createFilter(keys, true);
     }
 
-    public Filter createFilter(Collection keys, boolean includeValues) {
+    public static Filter createFilter(Collection keys, boolean includeValues) {
 
         Filter filter = null;
 
@@ -245,11 +245,11 @@ public class FilterTool {
         return filter;
     }
 
-    public Filter createFilter(Row row) {
+    public static Filter createFilter(Row row) {
         return createFilter(row, true);
     }
 
-    public Filter createFilter(Row row, boolean includeValues) {
+    public static Filter createFilter(Row row, boolean includeValues) {
 
         Filter f = null;
 
@@ -272,7 +272,7 @@ public class FilterTool {
         return f;
     }
 
-    public Filter appendAndFilter(Filter filter, Filter newFilter) {
+    public static Filter appendAndFilter(Filter filter, Filter newFilter) {
         if (newFilter == null || newFilter.equals(filter)) {
             // ignore
 
@@ -300,7 +300,7 @@ public class FilterTool {
         return filter;
     }
 
-    public Filter appendOrFilter(Filter filter, Filter newFilter) {
+    public static Filter appendOrFilter(Filter filter, Filter newFilter) {
         if (newFilter == null || newFilter.equals(filter)) {
             // ignore
 

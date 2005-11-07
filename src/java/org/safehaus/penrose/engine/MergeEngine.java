@@ -127,7 +127,9 @@ public class MergeEngine {
         Entry entry = new Entry(dn, entryDefinition, sourceValues, attributeValues);
         log.debug("\n"+entry);
 
-        engineContext.getEntryDataCache(entry.getParentDn(), entryDefinition).put(entry.getRdn(), entry);
+        Row rdn = getEngineContext().getSchema().normalize((Row)entry.getRdn());
+
+        engineContext.getEntryDataCache(entry.getParentDn(), entryDefinition).put(rdn, entry);
 
         results.add(entry);
 

@@ -23,6 +23,7 @@ import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.SearchResults;
 import org.safehaus.penrose.util.Formatter;
 import org.safehaus.penrose.filter.Filter;
+import org.safehaus.penrose.filter.FilterTool;
 import org.safehaus.penrose.config.Config;
 import org.apache.log4j.Logger;
 
@@ -134,7 +135,7 @@ public class LoadEngine {
             pks.add(pk);
         }
 
-        Filter filter  = engineContext.getFilterTool().createFilter(pks, true);
+        Filter filter  = FilterTool.createFilter(pks, true);
 
         Map map = new HashMap();
         map.put("attributeValues", sourceValues);

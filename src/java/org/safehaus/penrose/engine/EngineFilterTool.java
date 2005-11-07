@@ -91,7 +91,7 @@ public class EngineFilterTool {
             //System.out.println("Adding filter "+field.getName()+"="+v);
             SimpleFilter f = new SimpleFilter(field.getName(), operator, v);
 
-            newFilter = engineContext.getFilterTool().appendAndFilter(newFilter, f);
+            newFilter = FilterTool.appendAndFilter(newFilter, f);
         }
 
         return newFilter;

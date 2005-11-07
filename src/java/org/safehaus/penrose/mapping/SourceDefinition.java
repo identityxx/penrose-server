@@ -59,7 +59,7 @@ public class SourceDefinition implements Cloneable {
     public final static int    DEFAULT_SIZE_LIMIT              = 100;
     public final static String DEFAULT_LOADING_METHOD          = LOAD_ALL;
 
-    public final static String DEFAULT_CACHE                   = "SourceCache";
+    public final static String DEFAULT_CACHE                   = "DEFAULT";
 
 	/**
 	 * Name.
@@ -192,6 +192,31 @@ public class SourceDefinition implements Cloneable {
 
     public void setConnectionName(String connectionName) {
         this.connectionName = connectionName;
+    }
+
+
+    public Row getPrimaryKeyValues(AttributeValues sourceValues) throws Exception {
+
+        Row pk = new Row();
+
+        for (Iterator i=fields.values().iterator(); i.hasNext(); ) {
+            FieldDefinition fieldDefinition = (FieldDefinition)i.next();
+            if (!fieldDefinition.isPrimaryKey()) continue;
+
+            String fieldName = fieldDefinition.getName();
+
+            Collection values = sourceValues.get(fieldName);
+            if (values == null) return null;
+
+            Iterator iterator = values.iterator();
+            if (!iterator.hasNext()) return null;
+
+            Object value = iterator.next();
+
+            pk.set(fieldName, value);
+        }
+
+        return pk;
     }
 
     public int hashCode() {

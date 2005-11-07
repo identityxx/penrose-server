@@ -17,18 +17,10 @@
  */
 package org.safehaus.penrose.cache;
 
-import org.safehaus.penrose.config.ServerConfigReader;
-import org.safehaus.penrose.config.ServerConfig;
-import org.safehaus.penrose.config.ConfigReader;
-import org.safehaus.penrose.config.Config;
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.util.Formatter;
-import org.safehaus.penrose.connection.AdapterConfig;
-import org.safehaus.penrose.connection.Adapter;
-import org.safehaus.penrose.SearchResults;
 import org.apache.log4j.Logger;
 
-import java.io.File;
 import java.sql.*;
 import java.util.*;
 
@@ -60,11 +52,11 @@ public class JDBCCache {
 
     public void init() throws Exception {
 
-        log.debug("Cache parameters:");
+        //log.debug("Cache parameters:");
         for (Iterator i=cacheConfig.getParameterNames().iterator(); i.hasNext(); ) {
             String name = (String)i.next();
             String value = cacheConfig.getParameter(name);
-            log.debug(" - "+name+": "+value);
+            //log.debug(" - "+name+": "+value);
         }
 
         driver = cacheConfig.getParameter("driver");
@@ -72,11 +64,11 @@ public class JDBCCache {
         user = cacheConfig.getParameter("user");
         password = cacheConfig.getParameter("password");
 
-        log.debug("Source parameters:");
+        //log.debug("Source parameters:");
         for (Iterator i=sourceDefinition.getParameterNames().iterator(); i.hasNext(); ) {
             String name = (String)i.next();
             String value = sourceDefinition.getParameter(name);
-            log.debug(" - "+name+": "+value);
+            //log.debug(" - "+name+": "+value);
         }
 
         String s = sourceDefinition.getParameter(SourceDefinition.DATA_CACHE_SIZE);
@@ -1055,86 +1047,6 @@ public class JDBCCache {
             if (ps != null) try { ps.close(); } catch (Exception e) {}
             if (con != null) try { con.close(); } catch (Exception e) {}
         }
-    }
-
-    public static void main(String args[]) throws Exception {
-
-        if (args.length == 0) {
-            System.out.println("Usage: JDBCCache [command]");
-            System.out.println();
-            System.out.println("Commands:");
-            System.out.println("    create - create database tables");
-            System.out.println("    load   - load data source");
-            System.out.println("    drop   - drop database tables");
-            System.exit(0);
-        }
-
-        String command = args[0];
-
-        String homeDirectory = System.getProperty("penrose.home");
-
-        ServerConfigReader serverConfigReader = new ServerConfigReader();
-        ServerConfig serverCfg = serverConfigReader.read((homeDirectory == null ? "" : homeDirectory+File.separator)+"conf"+File.separator+"server.xml");
-
-        CacheConfig cacheCfg = serverCfg.getCacheConfig(SourceDefinition.DEFAULT_CACHE);
-
-        ConfigReader configReader = new ConfigReader();
-        Config config = configReader.read((homeDirectory == null ? "" : homeDirectory+File.separator)+"conf");
-
-        Collection connectionConfigs = config.getConnectionConfigs();
-        for (Iterator i=connectionConfigs.iterator(); i.hasNext(); ) {
-            ConnectionConfig conCfg = (ConnectionConfig)i.next();
-
-            String adapterName = conCfg.getAdapterName();
-            if (adapterName == null) throw new Exception("Missing adapter name");
-
-            AdapterConfig adapterConfig = serverCfg.getAdapterConfig(adapterName);
-            if (adapterConfig == null) throw new Exception("Undefined adapter "+adapterName);
-
-            String adapterClass = adapterConfig.getAdapterClass();
-            Class clazz = Class.forName(adapterClass);
-            Adapter adapter = (Adapter)clazz.newInstance();
-
-            org.safehaus.penrose.connection.Connection connection = new org.safehaus.penrose.connection.Connection();
-            connection.init(conCfg, adapter);
-
-            adapter.init(adapterConfig, connection);
-
-            Collection sourceDefinitions = conCfg.getSourceDefinitions();
-            for (Iterator j=sourceDefinitions.iterator(); j.hasNext(); ) {
-                SourceDefinition srcDef = (SourceDefinition)j.next();
-
-                JDBCCache cache = new JDBCCache(cacheCfg, srcDef);
-                cache.init();
-
-                if ("create".equals(command)) {
-                    cache.create();
-
-                } else if ("load".equals(command)) {
-                    load(adapter, cache, srcDef);
-
-                } else if ("drop".equals(command)) {
-                    cache.drop();
-
-                }
-            }
-        }
-    }
-
-    public static void load(Adapter adapter, JDBCCache cache, SourceDefinition srcDef) throws Exception {
-        SearchResults sr = adapter.load(srcDef, null, 100);
-
-        //log.debug("Results:");
-        while (sr.hasNext()) {
-            AttributeValues sourceValues = (AttributeValues)sr.next();
-            Row pk = Adapter.getPrimaryKeyValues(srcDef, sourceValues);
-            //log.debug(" - "+pk+": "+sourceValues);
-
-            cache.put(pk, sourceValues);
-        }
-
-        int lastChangeNumber = adapter.getLastChangeNumber(srcDef);
-        cache.setLastChangeNumber(lastChangeNumber);
     }
 
     public String getDriver() {

@@ -21,10 +21,7 @@ import org.safehaus.penrose.SearchResults;
 import org.safehaus.penrose.*;
 import org.safehaus.penrose.util.Formatter;
 import org.safehaus.penrose.config.Config;
-import org.safehaus.penrose.filter.Filter;
-import org.safehaus.penrose.filter.SimpleFilter;
-import org.safehaus.penrose.filter.OrFilter;
-import org.safehaus.penrose.filter.AndFilter;
+import org.safehaus.penrose.filter.*;
 import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.graph.Graph;
 import org.safehaus.penrose.graph.GraphEdge;
@@ -389,7 +386,9 @@ public class Engine {
 
         if (visitor.getReturnCode() != LDAPException.SUCCESS) return visitor.getReturnCode();
 
-        engineContext.getEntryDataCache(entry.getParentDn(), entryDefinition).remove(entry.getRdn());
+        Row key = getEngineContext().getSchema().normalize((Row)entry.getRdn());
+
+        engineContext.getEntryDataCache(entry.getParentDn(), entryDefinition).remove(key);
         engineContext.getEntryFilterCache(entry.getParentDn(), entryDefinition).invalidate();
 
         return LDAPException.SUCCESS;
@@ -457,7 +456,9 @@ public class Engine {
 
         if (visitor.getReturnCode() != LDAPException.SUCCESS) return visitor.getReturnCode();
 
-        engineContext.getEntryDataCache(entry.getParentDn(), entryDefinition).remove(entry.getRdn());
+        Row key = getEngineContext().getSchema().normalize((Row)entry.getRdn());
+
+        engineContext.getEntryDataCache(entry.getParentDn(), entryDefinition).remove(key);
         engineContext.getEntryFilterCache(entry.getParentDn(), entryDefinition).invalidate();
 
         return LDAPException.SUCCESS;
@@ -506,7 +507,9 @@ public class Engine {
 
         if (visitor.getReturnCode() != LDAPException.SUCCESS) return visitor.getReturnCode();
 
-        engineContext.getEntryDataCache(entry.getParentDn(), entryDefinition).remove(entry.getRdn());
+        Row key = getEngineContext().getSchema().normalize((Row)entry.getRdn());
+
+        engineContext.getEntryDataCache(entry.getParentDn(), entryDefinition).remove(key);
         engineContext.getEntryFilterCache(entry.getParentDn(), entryDefinition).invalidate();
 
         return LDAPException.SUCCESS;
@@ -672,10 +675,11 @@ public class Engine {
                 AttributeValues sv = e.getSourceValues();
 
                 Row rdn = Entry.getRdn(dn);
+                Row normalizedRdn = getEngineContext().getSchema().normalize(rdn);
                 String parentDn = Entry.getParentDn(dn);
 
                 log.debug("Checking "+rdn+" in entry data cache for "+parentDn);
-                Entry entry = (Entry)engineContext.getEntryDataCache(parentDn, entryDefinition).get(rdn);
+                Entry entry = (Entry)engineContext.getEntryDataCache(parentDn, entryDefinition).get(normalizedRdn);
 
                 if (entry != null) {
                     log.debug(" - "+rdn+" has been loaded");
@@ -825,7 +829,7 @@ public class Engine {
 
         Filter filter = null;
         if (pks != null) {
-            filter = engineContext.getFilterTool().createFilter(normalizedFilters);
+            filter = FilterTool.createFilter(normalizedFilters);
         }
 
         return filter;
@@ -894,10 +898,10 @@ public class Engine {
                 SimpleFilter sf = new SimpleFilter(name, operator, value.toString());
                 log.debug("     --> "+sf);
 
-                subFilter = engineContext.getFilterTool().appendAndFilter(subFilter, sf);
+                subFilter = FilterTool.appendAndFilter(subFilter, sf);
             }
 
-            filter = engineContext.getFilterTool().appendOrFilter(filter, subFilter);
+            filter = FilterTool.appendOrFilter(filter, subFilter);
         }
 
         return filter;
@@ -943,10 +947,10 @@ public class Engine {
                 SimpleFilter sf = new SimpleFilter(lname, operator, value.toString());
                 log.debug("   - "+sf);
 
-                orFilter = engineContext.getFilterTool().appendOrFilter(orFilter, sf);
+                orFilter = FilterTool.appendOrFilter(orFilter, sf);
             }
 
-            filter = engineContext.getFilterTool().appendAndFilter(filter, orFilter);
+            filter = FilterTool.appendAndFilter(filter, orFilter);
         }
 
         return filter;

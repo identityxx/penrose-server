@@ -19,6 +19,7 @@ package org.safehaus.penrose.engine;
 
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.filter.Filter;
+import org.safehaus.penrose.filter.FilterTool;
 import org.safehaus.penrose.config.Config;
 import org.safehaus.penrose.graph.GraphVisitor;
 import org.safehaus.penrose.graph.Graph;
@@ -100,7 +101,7 @@ public class SearchParentRunner extends GraphVisitor {
         String s = source.getParameter(Source.FILTER);
         if (s != null) {
             Filter sourceFilter = engineContext.getFilterTool().parseFilter(s);
-            filter = engineContext.getFilterTool().appendAndFilter(filter, sourceFilter);
+            filter = FilterTool.appendAndFilter(filter, sourceFilter);
         }
 
         if (sourceValues.contains(source.getName())) {
@@ -183,11 +184,11 @@ public class SearchParentRunner extends GraphVisitor {
             Filter f = engine.generateFilter(toSource, relationships, av);
             log.debug(" - "+f);
 
-            filter = engineContext.getFilterTool().appendOrFilter(filter, f);
+            filter = FilterTool.appendOrFilter(filter, f);
         }
 
         Filter sourceFilter = (Filter)filters.get(toSource);
-        filter = engineContext.getFilterTool().appendAndFilter(filter, sourceFilter);
+        filter = FilterTool.appendAndFilter(filter, sourceFilter);
 
         if (filter == null) return;
 

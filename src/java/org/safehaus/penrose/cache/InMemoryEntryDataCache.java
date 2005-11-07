@@ -28,11 +28,9 @@ public class InMemoryEntryDataCache extends EntryDataCache {
     Map dataMap = new TreeMap();
     Map expirationMap = new LinkedHashMap();
 
-    public Object get(Object rdn) throws Exception {
+    public Object get(Object key) throws Exception {
 
-        Row key = getCacheContext().getSchema().normalize((Row)rdn);
-
-        //log.debug("Getting entry cache ("+dataMap.size()+"): "+key);
+        //log.debug("Getting entry cache ("+dataMap.size()+"): "+rdn);
 
         Object object = dataMap.get(key);
         Date date = (Date)expirationMap.get(key);
@@ -51,10 +49,8 @@ public class InMemoryEntryDataCache extends EntryDataCache {
         return results;
     }
 
-    public void put(Object rdn, Object object) throws Exception {
+    public void put(Object key, Object object) throws Exception {
         if (size == 0) return;
-
-        Row key = getCacheContext().getSchema().normalize((Row)rdn);
 
         while (dataMap.get(key) == null && dataMap.size() >= size) {
             //log.debug("Trimming entry cache ("+dataMap.size()+").");
@@ -68,9 +64,7 @@ public class InMemoryEntryDataCache extends EntryDataCache {
         expirationMap.put(key, new Date(System.currentTimeMillis() + expiration * 60 * 1000));
     }
 
-    public void remove(Object rdn) throws Exception {
-
-        Row key = getCacheContext().getSchema().normalize((Row)rdn);
+    public void remove(Object key) throws Exception {
 
         //log.debug("Removing entry cache ("+dataMap.size()+"): "+key);
         dataMap.remove(key);

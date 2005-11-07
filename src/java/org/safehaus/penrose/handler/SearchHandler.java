@@ -23,6 +23,7 @@ import org.safehaus.penrose.event.SearchEvent;
 import org.safehaus.penrose.config.Config;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.filter.SimpleFilter;
+import org.safehaus.penrose.filter.FilterTool;
 import org.safehaus.penrose.mapping.*;
 import org.apache.log4j.Logger;
 import org.ietf.ldap.*;
@@ -116,7 +117,7 @@ public class SearchHandler {
             String value = (String)rdn.get(name);
 
             SimpleFilter sf = new SimpleFilter(name, "=", value);
-            filter = handlerContext.getFilterTool().appendAndFilter(filter, sf);
+            filter = FilterTool.appendAndFilter(filter, sf);
         }
 
         // Find in each dynamic children

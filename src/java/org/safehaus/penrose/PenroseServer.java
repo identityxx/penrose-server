@@ -253,7 +253,6 @@ public class PenroseServer implements SignalHandler {
 
         try {
             String home = System.getProperty("penrose.home");
-
             log.debug("PENROSE_HOME: "+home);
 
             File log4jProperties = new File((home == null ? "" : home+File.separator)+"conf"+File.separator+"log4j.properties");

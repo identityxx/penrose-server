@@ -576,7 +576,7 @@ public class JNDIAdapter extends Adapter {
     public String getDn(SourceDefinition sourceDefinition, AttributeValues sourceValues) throws Exception {
         //log.debug("Computing DN for "+source.getName()+" with "+sourceValues);
 
-        Row pk = getPrimaryKeyValues(sourceDefinition, sourceValues);
+        Row pk = sourceDefinition.getPrimaryKeyValues(sourceValues);
 
         String baseDn = sourceDefinition.getParameter(BASE_DN);
         //log.debug("Base DN: "+baseDn);

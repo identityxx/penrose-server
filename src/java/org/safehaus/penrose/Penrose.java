@@ -45,7 +45,6 @@ import org.safehaus.penrose.filter.FilterTool;
 import org.safehaus.penrose.filter.FilterContext;
 import org.safehaus.penrose.acl.ACLEngine;
 import org.safehaus.penrose.connector.Connector;
-import org.safehaus.penrose.connector.ConnectorContext;
 import org.safehaus.penrose.connector.*;
 
 /**
@@ -53,12 +52,10 @@ import org.safehaus.penrose.connector.*;
  */
 public class Penrose implements
         AdapterContext,
-        CacheContext,
         EngineContext,
         FilterContext,
         HandlerContext,
         ModuleContext,
-        ConnectorContext,
         PenroseMBean {
 	
 	// ------------------------------------------------
@@ -110,13 +107,9 @@ public class Penrose implements
     private Map entryDataCaches = new TreeMap();
     private Map entrySourceCaches = new TreeMap();
 
-    private Map sourceFilterCaches = new TreeMap();
-    private Map sourceDataCaches = new TreeMap();
-
     private Map connectors = new LinkedHashMap();
 	private Map engines = new LinkedHashMap();
 
-    private Map connections = new LinkedHashMap();
     private Map modules = new LinkedHashMap();
 
     private ServerConfig serverConfig;
@@ -158,12 +151,15 @@ public class Penrose implements
 
 	public int init() throws Exception {
 
+        loadSchema();
         loadServerConfig();
         initServer();
 
-        ConfigReader reader = new ConfigReader();
-        Config config = reader.read((homeDirectory == null ? "" : homeDirectory+File.separator)+"conf");
-        //log.debug(config.toString());
+        initConnectors();
+        initEngines();
+
+        ConfigReader configReader = new ConfigReader();
+        Config config = configReader.read((homeDirectory == null ? "" : homeDirectory+File.separator)+"conf");
 
         addConfig(config);
 
@@ -185,15 +181,10 @@ public class Penrose implements
     }
 
     public void initServer() throws Exception {
-        loadSchema();
-
         handler = new Handler(this);
         aclEngine = new ACLEngine(this);
         filterTool = new FilterTool(this);
         transformEngine = new TransformEngine(this);
-
-        initConnectors();
-        initEngines();
 
         configValidator = new ConfigValidator();
         configValidator.setServerConfig(serverConfig);
@@ -207,7 +198,8 @@ public class Penrose implements
 
             Class clazz = Class.forName(connectorConfig.getConnectorClass());
             Connector connector = (Connector)clazz.newInstance();
-            connector.init(connectorConfig, this);
+            connector.init(serverConfig, connectorConfig);
+            connector.start();
 
             connectors.put(connectorConfig.getConnectorName(), connector);
         }
@@ -253,39 +245,10 @@ public class Penrose implements
             configs.put(ndn, config);
         }
 
-        initConnections(config);
         initModules(config);
         getEngine().analyze(config);
-        getConnector().init(config);
+        getConnector().addConfig(config);
 	}
-
-    public Connection getConnection(String name) {
-        return (Connection)connections.get(name);
-    }
-
-    public void initConnections(Config config) throws Exception {
-        for (Iterator i = config.getConnectionConfigs().iterator(); i.hasNext();) {
-            ConnectionConfig connectionConfig = (ConnectionConfig) i.next();
-
-            String adapterName = connectionConfig.getAdapterName();
-            if (adapterName == null) throw new Exception("Missing adapter name");
-
-            AdapterConfig adapterConfig = serverConfig.getAdapterConfig(adapterName);
-            if (adapterConfig == null) throw new Exception("Undefined adapter "+adapterName);
-
-            String adapterClass = adapterConfig.getAdapterClass();
-            Class clazz = Class.forName(adapterClass);
-            Adapter adapter = (Adapter)clazz.newInstance();
-
-            Connection connection = new Connection();
-            connection.init(connectionConfig, adapter);
-
-            adapter.init(adapterConfig, connection);
-
-            connections.put(connectionConfig.getConnectionName(), connection);
-        }
-
-    }
 
     public void initModules(Config config) throws Exception {
 
@@ -649,7 +612,7 @@ public class Penrose implements
 
             cache.setParentDn(parentDn);
             cache.setEntryDefinition(entryDefinition);
-            cache.init(cacheConfig, this);
+            cache.init(cacheConfig);
 
             entryFilterCaches.put(key, cache);
         }
@@ -675,7 +638,7 @@ public class Penrose implements
 
             cache.setParentDn(parentDn);
             cache.setEntryDefinition(entryDefinition);
-            cache.init(cacheConfig, this);
+            cache.init(cacheConfig);
 
             entrySourceCaches.put(key, cache);
         }
@@ -701,59 +664,9 @@ public class Penrose implements
 
             cache.setParentDn(parentDn);
             cache.setEntryDefinition(entryDefinition);
-            cache.init(cacheConfig, this);
+            cache.init(cacheConfig);
 
             entryDataCaches.put(key, cache);
-        }
-
-        return cache;
-    }
-
-    public SourceFilterCache getSourceFilterCache(ConnectionConfig connectionConfig, SourceDefinition sourceDefinition) throws Exception {
-        String cacheName = sourceDefinition.getParameter(SourceDefinition.CACHE);
-        cacheName = cacheName == null ? SourceDefinition.DEFAULT_CACHE : cacheName;
-        CacheConfig cacheConfig = serverConfig.getCacheConfig(cacheName);
-
-        String key = connectionConfig.getConnectionName()+"."+sourceDefinition.getName();
-
-        SourceFilterCache cache = (SourceFilterCache)sourceFilterCaches.get(key);
-
-        if (cache == null) {
-            String cacheClass = null; // cacheConfig.getCacheClass();
-            cacheClass = cacheClass == null ? CacheConfig.DEFAULT_SOURCE_FILTER_CACHE : cacheClass;
-
-            Class clazz = Class.forName(cacheClass);
-            cache = (SourceFilterCache)clazz.newInstance();
-
-            cache.setSourceDefinition(sourceDefinition);
-            cache.init(cacheConfig, this);
-
-            sourceFilterCaches.put(key, cache);
-        }
-
-        return cache;
-    }
-
-    public SourceDataCache getSourceDataCache(ConnectionConfig connectionConfig, SourceDefinition sourceDefinition) throws Exception {
-        String cacheName = sourceDefinition.getParameter(SourceDefinition.CACHE);
-        cacheName = cacheName == null ? SourceDefinition.DEFAULT_CACHE : cacheName;
-
-        CacheConfig cacheConfig = serverConfig.getCacheConfig(cacheName);
-
-        String key = connectionConfig.getConnectionName()+"."+sourceDefinition.getName();
-        SourceDataCache cache = (SourceDataCache)sourceDataCaches.get(key);
-
-        if (cache == null) {
-            String cacheClass = cacheConfig.getCacheClass();
-            cacheClass = cacheClass == null ? CacheConfig.DEFAULT_SOURCE_DATA_CACHE : cacheClass;
-
-            Class clazz = Class.forName(cacheClass);
-            cache = (SourceDataCache)clazz.newInstance();
-            
-            cache.setSourceDefinition(sourceDefinition);
-            cache.init(cacheConfig, this);
-
-            sourceDataCaches.put(key, cache);
         }
 
         return cache;

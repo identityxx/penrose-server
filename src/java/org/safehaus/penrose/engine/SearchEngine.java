@@ -19,6 +19,7 @@ package org.safehaus.penrose.engine;
 
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.filter.Filter;
+import org.safehaus.penrose.filter.FilterTool;
 import org.safehaus.penrose.config.Config;
 import org.safehaus.penrose.graph.Graph;
 import org.safehaus.penrose.interpreter.Interpreter;
@@ -208,14 +209,15 @@ public class SearchEngine {
                     log.debug(" - "+dn);
 
                     Row rdn = Entry.getRdn(dn);
+                    Row normalizedRdn = getEngineContext().getSchema().normalize(rdn);
                     String parentDn = Entry.getParentDn(dn);
 
                     //log.debug("    Getting "+rdn+" from entry source cache for "+parentDn);
-                    AttributeValues oldSv = (AttributeValues)engineContext.getEntrySourceCache(parentDn, entryDefinition).get(rdn);
+                    AttributeValues oldSv = (AttributeValues)engineContext.getEntrySourceCache(parentDn, entryDefinition).get(normalizedRdn);
 
                     if (oldSv == null) {
                         //log.debug("   Storing "+rdn+" in entry source cache.");
-                        engineContext.getEntrySourceCache(parentDn, entryDefinition).put(rdn, sv);
+                        engineContext.getEntrySourceCache(parentDn, entryDefinition).put(normalizedRdn, sv);
                     } else {
                         //log.debug("   Adding "+rdn+" in entry source cache.");
                         oldSv.add(sv);
@@ -270,10 +272,11 @@ public class SearchEngine {
                 String dn = (String)i.next();
 
                 Row rdn = Entry.getRdn(dn);
+                Row normalizedRdn = getEngineContext().getSchema().normalize(rdn);
                 String parentDn = Entry.getParentDn(dn);
 
                 log.debug("Getting "+rdn+" from entry source cache for "+parentDn);
-                AttributeValues sv = (AttributeValues)engineContext.getEntrySourceCache(parentDn, entryDefinition).get(rdn);
+                AttributeValues sv = (AttributeValues)engineContext.getEntrySourceCache(parentDn, entryDefinition).get(normalizedRdn);
                 //log.debug("Entry source cache: "+sv);
 
                 if (unique) {
@@ -386,7 +389,7 @@ public class SearchEngine {
 
             Filter toFilter = (Filter)filters.get(toSource);
             Filter tf = engine.generateFilter(toSource, relationships, sourceValues);
-            toFilter = engineContext.getFilterTool().appendAndFilter(toFilter, tf);
+            toFilter = FilterTool.appendAndFilter(toFilter, tf);
             filters.put(toSource, toFilter);
 
             log.debug("Filter for "+toSource.getName()+": "+toFilter);
@@ -515,7 +518,7 @@ public class SearchEngine {
 
             Filter fromFilter = (Filter)filters.get(fromSource);
             Filter tf = engine.generateFilter(fromSource, relationships, sourceValues);
-            fromFilter = engineContext.getFilterTool().appendAndFilter(fromFilter, tf);
+            fromFilter = FilterTool.appendAndFilter(fromFilter, tf);
             filters.put(fromSource, fromFilter);
 
             log.debug("Filter for "+fromSource.getName()+": "+fromFilter);

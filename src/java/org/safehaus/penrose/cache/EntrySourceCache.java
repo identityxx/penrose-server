@@ -40,16 +40,14 @@ public class EntrySourceCache extends EntryDataCache {
 
     public Object get(Object key) throws Exception {
 
-        Row rdn = getCacheContext().getSchema().normalize((Row)key);
-
         //log.debug("Getting entry cache ("+dataMap.size()+"): "+rdn);
 
-        Object object = dataMap.get(rdn);
-        Date date = (Date)expirationMap.get(rdn);
+        Object object = dataMap.get(key);
+        Date date = (Date)expirationMap.get(key);
 
         if (date == null || date.getTime() <= System.currentTimeMillis()) {
-            dataMap.remove(rdn);
-            expirationMap.remove(rdn);
+            dataMap.remove(key);
+            expirationMap.remove(key);
             return null;
         }
 
@@ -64,26 +62,22 @@ public class EntrySourceCache extends EntryDataCache {
     public void put(Object key, Object object) throws Exception {
         if (size == 0) return;
 
-        Row rdn = getCacheContext().getSchema().normalize((Row)key);
-
-        while (dataMap.get(rdn) == null && dataMap.size() >= size) {
+        while (dataMap.get(key) == null && dataMap.size() >= size) {
             //log.debug("Trimming entry cache ("+dataMap.size()+").");
             Object k = expirationMap.keySet().iterator().next();
             dataMap.remove(k);
             expirationMap.remove(k);
         }
 
-        //log.debug("Storing entry cache ("+dataMap.size()+"): "+rdn);
-        dataMap.put(rdn, object);
-        expirationMap.put(rdn, new Date(System.currentTimeMillis() + expiration * 60 * 1000));
+        //log.debug("Storing entry cache ("+dataMap.size()+"): "+key);
+        dataMap.put(key, object);
+        expirationMap.put(key, new Date(System.currentTimeMillis() + expiration * 60 * 1000));
     }
 
     public void remove(Object key) throws Exception {
 
-        Row rdn = getCacheContext().getSchema().normalize((Row)key);
-
-        //log.debug("Removing entry cache ("+dataMap.size()+"): "+rdn);
-        dataMap.remove(rdn);
-        expirationMap.remove(rdn);
+        //log.debug("Removing entry cache ("+dataMap.size()+"): "+key);
+        dataMap.remove(key);
+        expirationMap.remove(key);
     }
 }

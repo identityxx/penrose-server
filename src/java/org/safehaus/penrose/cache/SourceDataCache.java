@@ -49,4 +49,10 @@ public abstract class SourceDataCache extends Cache {
         s = sourceDefinition.getParameter(SourceDefinition.DATA_CACHE_EXPIRATION);
         if (s != null) expiration = Integer.parseInt(s);
     }
+
+    public void create() throws Exception {
+    }
+
+    public void clean() throws Exception {
+    }
 }

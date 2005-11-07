@@ -31,12 +31,18 @@ public class JDBCSourceDataCache extends SourceDataCache {
     public void init() throws Exception {
         super.init();
 
-        log.debug("Initializing JDBC Source Data Cache ...");
-
         cache = new JDBCCache(cacheConfig, sourceDefinition);
         cache.setSize(size);
         cache.setExpiration(expiration);
         cache.init();
+    }
+
+    public void create() throws Exception {
+        cache.create();
+    }
+
+    public void clean() throws Exception {
+        cache.drop();
     }
 
     public Object get(Object key) throws Exception {

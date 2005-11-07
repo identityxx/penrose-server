@@ -18,7 +18,6 @@
 package org.safehaus.penrose.cache;
 
 import org.apache.log4j.Logger;
-import org.safehaus.penrose.mapping.EntryDefinition;
 
 import java.util.Collection;
 import java.util.Map;
@@ -31,7 +30,6 @@ public abstract class Cache {
     Logger log = Logger.getLogger(getClass());
 
     CacheConfig cacheConfig;
-    CacheContext cacheContext;
 
     int size;
     int expiration; // minutes
@@ -52,9 +50,8 @@ public abstract class Cache {
         return cacheConfig.getParameter(name);
     }
 
-    public void init(CacheConfig cacheConfig, CacheContext cacheContext) throws Exception {
+    public void init(CacheConfig cacheConfig) throws Exception {
         this.cacheConfig = cacheConfig;
-        this.cacheContext = cacheContext;
 
         String s = cacheConfig.getParameter(CacheConfig.CACHE_SIZE);
         size = s == null ? CacheConfig.DEFAULT_CACHE_SIZE : Integer.parseInt(s);
@@ -66,14 +63,6 @@ public abstract class Cache {
     }
 
     public void init() throws Exception {
-    }
-
-    public CacheContext getCacheContext() {
-        return cacheContext;
-    }
-
-    public void setCacheContext(CacheContext cacheContext) {
-        this.cacheContext = cacheContext;
     }
 
     public int getSize() {

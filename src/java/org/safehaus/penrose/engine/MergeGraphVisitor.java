@@ -23,6 +23,7 @@ import org.safehaus.penrose.graph.Graph;
 import org.safehaus.penrose.graph.GraphIterator;
 import org.safehaus.penrose.config.Config;
 import org.safehaus.penrose.filter.Filter;
+import org.safehaus.penrose.filter.FilterTool;
 import org.safehaus.penrose.util.Formatter;
 import org.apache.log4j.Logger;
 
@@ -95,7 +96,7 @@ public class MergeGraphVisitor extends GraphVisitor {
         String s = source.getParameter(Source.FILTER);
         if (s != null) {
             Filter sourceFilter = engineContext.getFilterTool().parseFilter(s);
-            filter = engineContext.getFilterTool().appendAndFilter(filter, sourceFilter);
+            filter = FilterTool.appendAndFilter(filter, sourceFilter);
         }
 
         if (!sourceValues.contains(source.getName())) {

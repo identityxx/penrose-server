@@ -34,7 +34,6 @@ public class EntryFilterCache {
     public Map expirationMap = new LinkedHashMap();
 
     private CacheConfig cacheConfig;
-    private CacheContext cacheContext;
 
     private String parentDn;
     private EntryDefinition entryDefinition;
@@ -42,9 +41,8 @@ public class EntryFilterCache {
     private int size;
     private int expiration; // minutes
 
-    public void init(CacheConfig cacheConfig, CacheContext cacheContext) throws Exception {
+    public void init(CacheConfig cacheConfig) throws Exception {
         this.cacheConfig = cacheConfig;
-        this.cacheContext = cacheContext;
 
         String s = cacheConfig.getParameter(CacheConfig.CACHE_SIZE);
         size = s == null ? CacheConfig.DEFAULT_CACHE_SIZE : Integer.parseInt(s);
@@ -126,14 +124,6 @@ public class EntryFilterCache {
 
     public void setCacheConfig(CacheConfig cacheConfig) {
         this.cacheConfig = cacheConfig;
-    }
-
-    public CacheContext getCacheContext() {
-        return cacheContext;
-    }
-
-    public void setCacheContext(CacheContext cacheContext) {
-        this.cacheContext = cacheContext;
     }
 
     public String getParentDn() {

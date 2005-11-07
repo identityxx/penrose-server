@@ -32,12 +32,11 @@ public class InMemorySourceDataCache extends SourceDataCache {
     Map expirationMap = new LinkedHashMap();
 
     public Object get(Object key) throws Exception {
-        Row normalizedKey = cacheContext.getSchema().normalize((Row)key);
 
-        AttributeValues attributeValues = (AttributeValues)dataMap.get(normalizedKey);
+        AttributeValues attributeValues = (AttributeValues)dataMap.get(key);
         if (attributeValues == null) return null;
 
-        Date date = (Date)expirationMap.get(normalizedKey);
+        Date date = (Date)expirationMap.get(key);
         if (date == null || date.getTime() <= System.currentTimeMillis()) return null;
 
         return attributeValues;
@@ -59,18 +58,64 @@ public class InMemorySourceDataCache extends SourceDataCache {
         return results;
     }
 
+    public Row normalize(Row row) throws Exception {
+
+        Row newRow = new Row();
+
+        for (Iterator i=row.getNames().iterator(); i.hasNext(); ) {
+            String name = (String)i.next();
+            Object value = row.get(name);
+
+            if (value == null) continue;
+
+            if (value instanceof String) {
+                value = ((String)value).toLowerCase();
+            }
+
+            newRow.set(name, value);
+        }
+
+        return newRow;
+    }
+
+    public boolean partialMatch(AttributeValues av, Row row) throws Exception {
+
+        for (Iterator i=row.getNames().iterator(); i.hasNext(); ) {
+            String name = (String)i.next();
+            Collection values = av.get(name);
+            Object value = row.get(name);
+
+            if (values == null && value == null) {
+                continue;
+
+            } else if (values == null || value == null) {
+                return false;
+
+            } else {
+                boolean found = false;
+                for (Iterator j=values.iterator(); j.hasNext() && !found; ) {
+                    Object v = j.next();
+                    //log.debug("comparing ["+v+"] with ["+value+"]: "+v.toString().equalsIgnoreCase(value.toString()));
+                    if (v.toString().equalsIgnoreCase(value.toString())) found = true;
+                }
+                if (!found) return false;
+            }
+        }
+
+        return true;
+    }
+
     public Map search(Collection keys, Collection missingKeys) throws Exception {
 
         Map results = new TreeMap();
 
         for (Iterator i=keys.iterator(); i.hasNext(); ) {
             Row key = (Row)i.next();
-            Row normalizedKey = cacheContext.getSchema().normalize(key);
 
-            AttributeValues attributeValues = (AttributeValues)get(normalizedKey);
+            AttributeValues attributeValues = (AttributeValues)get(key);
 
             if (attributeValues == null) {
-                attributeValues = (AttributeValues)uniqueKeys.get(normalizedKey);
+                attributeValues = (AttributeValues)uniqueKeys.get(key);
             }
 
             if (attributeValues == null) {
@@ -86,7 +131,7 @@ public class InMemorySourceDataCache extends SourceDataCache {
                 Date date = (Date)expirationMap.get(pk);
                 if (date == null || date.getTime() <= System.currentTimeMillis()) continue;
 
-                boolean f = cacheContext.getSchema().partialMatch(attributeValues, normalizedKey);
+                boolean f = partialMatch(attributeValues, key);
                 if (!f) continue;
 
                 results.put(pk, attributeValues);
@@ -104,19 +149,18 @@ public class InMemorySourceDataCache extends SourceDataCache {
     public void put(Object key, Object object) throws Exception {
         if (size == 0) return;
 
-        Row normalizedKey = cacheContext.getSchema().normalize((Row)key);
         AttributeValues values = (AttributeValues)object;
 
-        while (dataMap.get(normalizedKey) == null && dataMap.size() >= size) {
+        while (dataMap.get(key) == null && dataMap.size() >= size) {
             //log.debug("Trimming source data cache ("+dataMap.size()+").");
             Object k = expirationMap.keySet().iterator().next();
             dataMap.remove(k);
             expirationMap.remove(k);
         }
 
-        //log.debug("Storing source data cache ("+dataMap.size()+"): "+normalizedKey);
-        dataMap.put(normalizedKey, values);
-        expirationMap.put(normalizedKey, new Date(System.currentTimeMillis() + expiration * 60 * 1000));
+        //log.debug("Storing source data cache ("+dataMap.size()+"): "+key);
+        dataMap.put(key, values);
+        expirationMap.put(key, new Date(System.currentTimeMillis() + expiration * 60 * 1000));
 
         for (Iterator j=sourceDefinition.getFieldDefinitions().iterator(); j.hasNext(); ) {
             FieldDefinition fieldDefinition = (FieldDefinition)j.next();
@@ -126,18 +170,16 @@ public class InMemorySourceDataCache extends SourceDataCache {
 
             Row uniqueKey = new Row();
             uniqueKey.set(fieldDefinition.getName(), value);
-            Row normalizedUniqueKey = cacheContext.getSchema().normalize(uniqueKey);
+            Row normalizedUniqueKey = normalize(uniqueKey);
             uniqueKeys.put(normalizedUniqueKey, values);
         }
     }
 
     public void remove(Object key) throws Exception {
 
-        Row normalizedKey = cacheContext.getSchema().normalize((Row)key);
-
-        //log.debug("Removing source data cache ("+dataMap.size()+"): "+normalizedKey);
-        dataMap.remove(normalizedKey);
-        expirationMap.remove(normalizedKey);
+        //log.debug("Removing source data cache ("+dataMap.size()+"): "+key);
+        dataMap.remove(key);
+        expirationMap.remove(key);
 
     }
 
