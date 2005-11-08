@@ -68,10 +68,8 @@ public class DeleteHandler {
 
         dn = LDAPDN.normalize(dn);
 
-        List path = getHandler().getSearchHandler().find(connection, dn);
-        if (path == null) return LDAPException.NO_SUCH_OBJECT;
-
-        Entry entry = (Entry)path.iterator().next();
+        Entry entry = getHandler().getSearchHandler().find(connection, dn);
+        if (entry == null) return LDAPException.NO_SUCH_OBJECT;
 
         int rc = handlerContext.getACLEngine().checkDelete(connection, entry);
         if (rc != LDAPException.SUCCESS) return rc;

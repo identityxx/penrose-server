@@ -59,7 +59,18 @@ public class SearchHandler {
 	 * @param dn
 	 * @return path from the entry to the root entry
 	 */
-    public List find(
+    public Entry find(
+            PenroseConnection connection,
+            String dn) throws Exception {
+
+        List path = findPath(connection, dn);
+        if (path == null) return null;
+        if (path.size() == 0) return null;
+
+        return (Entry)path.get(0);
+    }
+
+    public List findPath(
             PenroseConnection connection,
             String dn) throws Exception {
 
@@ -68,7 +79,7 @@ public class SearchHandler {
         String parentDn = Entry.getParentDn(dn);
         Row rdn = Entry.getRdn(dn);
 
-        List path = find(connection, parentDn);
+        List path = findPath(connection, parentDn);
         Entry parent;
 
         if (path == null) {
@@ -269,7 +280,7 @@ public class SearchHandler {
 		Filter f = handlerContext.getFilterTool().parseFilter(filter);
 		log.debug("Parsed filter: "+f+" ("+f.getClass().getName()+")");
 
-		List path = find(connection, nbase);
+		List path = findPath(connection, nbase);
 
 		if (path == null) {
 			log.debug("Can't find " + nbase);

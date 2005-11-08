@@ -208,6 +208,7 @@ public class Penrose implements
             Class clazz = Class.forName(engineConfig.getEngineClass());
             Engine engine = (Engine)clazz.newInstance();
             engine.init(engineConfig, this);
+            engine.start();
 
             engines.put(engineConfig.getEngineName(), engine);
         }
@@ -241,7 +242,7 @@ public class Penrose implements
         }
 
         initModules(config);
-        getEngine().analyze(config);
+        getEngine().addConfig(config);
         getConnector().addConfig(config);
 	}
 
@@ -322,15 +323,6 @@ public class Penrose implements
         return null;
     }
     
-    public Config getConfig(SourceDefinition sourceDefinition) throws Exception {
-        String connectionName = sourceDefinition.getConnectionName();
-        for (Iterator i=configs.values().iterator(); i.hasNext(); ) {
-            Config config = (Config)i.next();
-            if (config.getConnectionConfig(connectionName) != null) return config;
-        }
-        return null;
-    }
-
     public Config getConfig(String dn) throws Exception {
         String ndn = schema.normalize(dn);
         for (Iterator i=configs.keySet().iterator(); i.hasNext(); ) {

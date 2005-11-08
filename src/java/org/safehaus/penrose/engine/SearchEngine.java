@@ -86,7 +86,7 @@ public class SearchEngine {
         String sourceAlias = (String)sources.iterator().next();
         Source source = entryDefinition.getSource(sourceAlias);
 
-        Config config = engineContext.getConfig(entryDefinition.getDn());
+        Config config = engine.getConfig(entryDefinition.getDn());
         ConnectionConfig connectionConfig = config.getConnectionConfig(source.getConnectionName());
         SourceDefinition sourceDefinition = connectionConfig.getSourceDefinition(source.getSourceName());
 
@@ -145,7 +145,7 @@ public class SearchEngine {
         log.debug(Formatter.displayLine("Filter: "+filter, 80));
         log.debug(Formatter.displayLine("Parents:", 80));
 
-        Config config = engineContext.getConfig(entryDefinition.getDn());
+        Config config = engine.getConfig(entryDefinition.getDn());
         EntryDefinition parentDefinition = config.getParent(entryDefinition);
 
         AttributeValues sourceValues = new AttributeValues();

@@ -64,7 +64,7 @@ public class MergeGraphVisitor extends GraphVisitor {
         this.loadedSourceValues = loadedSourceValues;
         this.primarySource = primarySource;
 
-        config = engineContext.getConfig(entryDefinition.getDn());
+        config = engine.getConfig(entryDefinition.getDn());
         graph = engine.getGraph(entryDefinition);
 
         sourceValues.add(primarySourceValues);

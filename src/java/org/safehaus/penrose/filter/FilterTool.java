@@ -376,7 +376,6 @@ public class FilterTool {
             String equality = attributeType == null ? null : attributeType.getEquality();
             EqualityMatchingRule equalityMatchingRule = EqualityMatchingRule.getInstance(equality);
 
-
             boolean b = equalityMatchingRule.compare(value, attributeValue);
             log.debug(" - ["+value+"] => "+b);
 

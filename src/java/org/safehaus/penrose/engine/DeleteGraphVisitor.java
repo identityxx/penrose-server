@@ -34,6 +34,7 @@ public class DeleteGraphVisitor extends GraphVisitor {
 
     Logger log = Logger.getLogger(getClass());
 
+    public Engine engine;
     public EngineContext engineContext;
     public EntryDefinition entryDefinition;
     public AttributeValues sourceValues;
@@ -41,11 +42,13 @@ public class DeleteGraphVisitor extends GraphVisitor {
     private int returnCode = LDAPException.SUCCESS;
 
     public DeleteGraphVisitor(
+            Engine engine,
             EngineContext engineContext,
             EntryDefinition entryDefinition,
             AttributeValues sourceValues
             ) throws Exception {
 
+        this.engine = engine;
         this.engineContext = engineContext;
         this.entryDefinition = entryDefinition;
         this.sourceValues = sourceValues;
@@ -84,7 +87,7 @@ public class DeleteGraphVisitor extends GraphVisitor {
             newSourceValues.set(name, values);
         }
 
-        Config config = engineContext.getConfig(source);
+        Config config = engine.getConfig(source);
         ConnectionConfig connectionConfig = config.getConnectionConfig(source.getConnectionName());
         SourceDefinition sourceDefinition = connectionConfig.getSourceDefinition(source.getSourceName());
 

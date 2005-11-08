@@ -164,6 +164,55 @@ public class PenroseInterceptor extends BaseInterceptor {
         }
     }
 
+    public boolean compare(
+            NextInterceptor next,
+            Name name,
+            String attributeName,
+            Object value)
+            throws NamingException {
+
+        Name principalDn = getPrincipal() == null ? null : getPrincipal().getJndiName();
+
+        try {
+            String dn = name.toString();
+
+            log.debug("===============================================================================");
+            log.debug("compare(\""+dn+"\")");
+
+            Config config = penrose.getConfig(dn);
+            if (config == null) {
+                log.debug(dn+" is a static entry");
+                return next.compare(name, attributeName, value);
+            }
+
+            EntryDefinition ed = config.findEntryDefinition(dn);
+            if (ed == null) {
+                log.debug(dn+" is a static entry");
+                return next.compare(name, attributeName, value);
+            }
+
+            PenroseConnection connection = penrose.openConnection();
+            connection.setBindDn(principalDn.toString());
+
+            int rc = connection.compare(dn, attributeName, value.toString());
+
+            connection.close();
+
+            if (rc != LDAPException.COMPARE_TRUE && rc != LDAPException.COMPARE_FALSE) {
+                ExceptionUtil.throwNamingException(rc);
+            }
+
+            return rc == LDAPException.COMPARE_TRUE;
+            
+        } catch (NamingException e) {
+            throw e;
+
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+            throw new NamingException(e.getMessage());
+        }
+    }
+
     public void delete(
             NextInterceptor next,
             Name name)
@@ -194,7 +243,7 @@ public class PenroseInterceptor extends BaseInterceptor {
             PenroseConnection connection = penrose.openConnection();
             connection.setBindDn(principalDn.toString());
 
-            int rc = connection.delete(dn.toString());
+            int rc = connection.delete(dn);
 
             connection.close();
 

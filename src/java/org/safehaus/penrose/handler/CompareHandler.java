@@ -19,12 +19,14 @@ package org.safehaus.penrose.handler;
 
 import org.safehaus.penrose.PenroseConnection;
 import org.safehaus.penrose.SearchResults;
+import org.safehaus.penrose.schema.AttributeType;
+import org.safehaus.penrose.schema.matchingRule.EqualityMatchingRule;
+import org.safehaus.penrose.mapping.Entry;
+import org.safehaus.penrose.mapping.AttributeValues;
 import org.ietf.ldap.*;
 import org.apache.log4j.Logger;
 
-import java.util.List;
-import java.util.ArrayList;
-import java.util.Enumeration;
+import java.util.*;
 
 /**
  * @author Endi S. Dewata
@@ -34,9 +36,11 @@ public class CompareHandler {
     Logger log = Logger.getLogger(getClass());
 
     private Handler handler;
+    private HandlerContext handlerContext;
 
     public CompareHandler(Handler handler) throws Exception {
         this.handler = handler;
+        this.handlerContext = handler.getHandlerContext();
     }
     
     public int compare(PenroseConnection connection, String dn, String attributeName,
@@ -53,29 +57,26 @@ public class CompareHandler {
         List attributeNames = new ArrayList();
         attributeNames.add(attributeName);
 
-        SearchResults results = new SearchResults();
-        try {
-            handler.getSearchHandler().search(
-                    connection,
-                    dn,
-                    LDAPConnection.SCOPE_SUB,
-                    LDAPSearchConstraints.DEREF_ALWAYS,
-                    "(objectClass=*)",
-                    attributeNames,
-                    results);
-        } catch (Exception e) {
-            // ignore
+        Entry entry = handler.getSearchHandler().find(connection, dn);
+
+        AttributeValues attributeValues = entry.getAttributeValues();
+        Collection values = attributeValues.get(attributeName);
+
+        AttributeType attributeType = handlerContext.getSchema().getAttributeType(attributeName);
+
+        String equality = attributeType == null ? null : attributeType.getEquality();
+        EqualityMatchingRule equalityMatchingRule = EqualityMatchingRule.getInstance(equality);
+
+        log.debug("Comparing values:");
+        for (Iterator i=values.iterator(); i.hasNext(); ) {
+            Object value = i.next();
+
+            boolean b = equalityMatchingRule.compare(value, attributeValue);
+            log.debug(" - ["+value+"] => "+b);
+
+            if (b) return LDAPException.COMPARE_TRUE;
+
         }
-
-        LDAPEntry entry = (LDAPEntry)results.next();
-        LDAPAttributeSet attributes = entry.getAttributeSet();
-        LDAPAttribute attribute = attributes.getAttribute(attributeName);
-
-        for (Enumeration e = attribute.getStringValues(); e.hasMoreElements(); ) {
-            String value = (String)e.nextElement();
-            if (value.equals(attributeValue)) return LDAPException.COMPARE_TRUE;
-        }
-
         return LDAPException.COMPARE_FALSE;
     }
 

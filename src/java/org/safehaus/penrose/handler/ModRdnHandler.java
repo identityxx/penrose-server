@@ -68,10 +68,8 @@ public class ModRdnHandler {
 
 		String ndn = LDAPDN.normalize(dn);
 
-        List path = handler.getSearchHandler().find(connection, ndn);
-        if (path == null) return LDAPException.NO_SUCH_OBJECT;
-
-        Entry entry = (Entry)path.iterator().next();
+        Entry entry = handler.getSearchHandler().find(connection, ndn);
+        if (entry == null) return LDAPException.NO_SUCH_OBJECT;
 
         int rc = handlerContext.getACLEngine().checkModify(connection, entry);
         if (rc != LDAPException.SUCCESS) return rc;

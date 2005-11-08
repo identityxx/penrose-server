@@ -34,6 +34,7 @@ public class ModifyGraphVisitor extends GraphVisitor {
 
     Logger log = Logger.getLogger(getClass());
 
+    public Engine engine;
     public EngineContext engineContext;
     public EntryDefinition entryDefinition;
 
@@ -43,13 +44,14 @@ public class ModifyGraphVisitor extends GraphVisitor {
     private int returnCode = LDAPException.SUCCESS;
 
     public ModifyGraphVisitor(
+            Engine engine,
             EngineContext engineContext,
             EntryDefinition entryDefinition,
             AttributeValues oldValues,
             AttributeValues newValues
             ) throws Exception {
 
-        this.engineContext = engineContext;
+        this.engine = engine;
         this.engineContext = engineContext;
         this.entryDefinition = entryDefinition;
 
@@ -103,7 +105,7 @@ public class ModifyGraphVisitor extends GraphVisitor {
             newSourceValues.set(name, values);
         }
 
-        Config config = engineContext.getConfig(source);
+        Config config = engine.getConfig(source);
         ConnectionConfig connectionConfig = config.getConnectionConfig(source.getConnectionName());
         SourceDefinition sourceDefinition = connectionConfig.getSourceDefinition(source.getSourceName());
 

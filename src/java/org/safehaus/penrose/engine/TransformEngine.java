@@ -24,6 +24,7 @@ import org.apache.log4j.Logger;
 import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.config.Config;
 import org.safehaus.penrose.mapping.*;
+import org.safehaus.penrose.Penrose;
 
 /**
  * @author Endi S. Dewata
@@ -32,13 +33,13 @@ public class TransformEngine {
 
     static Logger log = Logger.getLogger(TransformEngine.class);
 
-    public EngineContext engineContext;
+    public Penrose penrose;
 
     public int joinDebug = 0;
     public static int crossProductDebug = 0;
 
-    public TransformEngine(EngineContext engineContext) {
-        this.engineContext = engineContext;
+    public TransformEngine(Penrose penrose) {
+        this.penrose = penrose;
     }
 
     /**
@@ -121,11 +122,11 @@ public class TransformEngine {
 
     public Row translate(Source source, AttributeValues input, AttributeValues output) throws Exception {
 
-        Config config = engineContext.getConfig(source);
+        Config config = penrose.getConfig(source);
         ConnectionConfig connectionConfig = config.getConnectionConfig(source.getConnectionName());
         SourceDefinition sourceDefinition = connectionConfig.getSourceDefinition(source.getSourceName());
 
-        Interpreter interpreter = engineContext.newInterpreter();
+        Interpreter interpreter = penrose.newInterpreter();
         interpreter.set(input);
 
         Row pk = new Row();
@@ -203,7 +204,7 @@ public class TransformEngine {
 
     public Map split(Source source, AttributeValues entry) throws Exception {
 
-        Config config = engineContext.getConfig(source);
+        Config config = penrose.getConfig(source);
         ConnectionConfig connectionConfig = config.getConnectionConfig(source.getConnectionName());
         SourceDefinition sourceDefinition = connectionConfig.getSourceDefinition(source.getSourceName());
 

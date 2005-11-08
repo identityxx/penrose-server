@@ -90,7 +90,7 @@ public class ModRdnGraphVisitor extends GraphVisitor {
             return;
         }
 
-        Config config = engineContext.getConfig(source);
+        Config config = engine.getConfig(source);
         ConnectionConfig connectionConfig = config.getConnectionConfig(source.getConnectionName());
         SourceDefinition sourceDefinition = connectionConfig.getSourceDefinition(source.getSourceName());
 

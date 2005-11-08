@@ -83,15 +83,13 @@ public class AddHandler {
         String dn = LDAPDN.normalize(ldapEntry.getDN());
 
         // find existing entry
-        List path = getHandler().getSearchHandler().find(connection, dn);
-        if (path != null) return LDAPException.ENTRY_ALREADY_EXISTS;
+        Entry entry = getHandler().getSearchHandler().find(connection, dn);
+        if (entry != null) return LDAPException.ENTRY_ALREADY_EXISTS;
 
         // find parent entry
         String parentDn = Entry.getParentDn(dn);
-        path = getHandler().getSearchHandler().find(connection, parentDn);
-        if (path == null) return LDAPException.NO_SUCH_OBJECT;
-
-        Entry parent = (Entry)path.iterator().next();
+        Entry parent = getHandler().getSearchHandler().find(connection, parentDn);
+        if (parent == null) return LDAPException.NO_SUCH_OBJECT;
 
         int rc = handlerContext.getACLEngine().checkAdd(connection, parent);
         if (rc != LDAPException.SUCCESS) return rc;

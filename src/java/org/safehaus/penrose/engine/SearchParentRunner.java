@@ -66,7 +66,7 @@ public class SearchParentRunner extends GraphVisitor {
         this.results = results;
         this.sourceValues = sourceValues;
 
-        config = engineContext.getConfig(entryDefinition.getDn());
+        config = engine.getConfig(entryDefinition.getDn());
         graph = engine.getGraph(entryDefinition);
 
         Filter filter = (Filter)filters.get(startingSource);

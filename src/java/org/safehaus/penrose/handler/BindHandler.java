@@ -108,13 +108,12 @@ public class BindHandler {
     public int bindAsUser(PenroseConnection connection, String dn, String password) throws Exception {
         log.debug("Searching for "+dn);
 
-        List path = handler.getSearchHandler().find(connection, dn);
-        if (path == null) {
+        Entry entry = handler.getSearchHandler().find(connection, dn);
+        if (entry == null) {
             log.debug("Entry "+dn+" not found => BIND FAILED");
             return LDAPException.INVALID_CREDENTIALS;
         }
 
-        Entry entry = (Entry)path.iterator().next();
         log.debug("Found "+entry.getDn());
 
         return bindAsUser(connection, entry, password);

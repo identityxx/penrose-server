@@ -17,12 +17,10 @@
  */
 package org.safehaus.penrose.engine;
 
-import org.safehaus.penrose.config.Config;
 import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.filter.FilterTool;
 import org.safehaus.penrose.schema.Schema;
 import org.safehaus.penrose.connector.Connector;
-import org.safehaus.penrose.mapping.Source;
 
 /**
  * @author Endi S. Dewata
@@ -32,8 +30,6 @@ public interface EngineContext {
     public Schema getSchema() throws Exception;
     public FilterTool getFilterTool() throws Exception;
     public Interpreter newInterpreter() throws Exception;
-    public Config getConfig(Source source) throws Exception;
-    public Config getConfig(String dn) throws Exception;
     public TransformEngine getTransformEngine() throws Exception;
     public Connector getConnector() throws Exception;
 }

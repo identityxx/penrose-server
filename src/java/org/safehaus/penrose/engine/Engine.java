@@ -62,6 +62,8 @@ public class Engine {
     private MergeEngine mergeEngine;
     private JoinEngine joinEngine;
 
+    private Map configs = new TreeMap();
+
     private Map entryFilterCaches = new TreeMap();
     private Map entryDataCaches = new TreeMap();
 
@@ -78,27 +80,50 @@ public class Engine {
         log.debug("-------------------------------------------------");
         log.debug("Initializing "+engineConfig.getEngineName()+" engine ...");
 
-        String s = engineConfig.getParameter(EngineConfig.THREAD_POOL_SIZE);
-        int threadPoolSize = s == null ? EngineConfig.DEFAULT_THREAD_POOL_SIZE : Integer.parseInt(s);
-
         filterTool = new EngineFilterTool(engineContext);
 
         searchEngine = new SearchEngine(this);
         loadEngine = new LoadEngine(this);
         mergeEngine = new MergeEngine(this);
         joinEngine = new JoinEngine(this);
+    }
+
+    public void start() throws Exception {
+        String s = engineConfig.getParameter(EngineConfig.THREAD_POOL_SIZE);
+        int threadPoolSize = s == null ? EngineConfig.DEFAULT_THREAD_POOL_SIZE : Integer.parseInt(s);
 
         threadPool = new ThreadPool(threadPoolSize);
-
         execute(new RefreshThread(this));
     }
 
-    public void analyze(Config config) throws Exception {
+    public void addConfig(Config config) throws Exception {
 
         for (Iterator i=config.getRootEntryDefinitions().iterator(); i.hasNext(); ) {
             EntryDefinition entryDefinition = (EntryDefinition)i.next();
+
+            String ndn = engineContext.getSchema().normalize(entryDefinition.getDn());
+            configs.put(ndn, config);
+
             analyze(entryDefinition);
         }
+    }
+
+    public Config getConfig(Source source) throws Exception {
+        String connectionName = source.getConnectionName();
+        for (Iterator i=configs.values().iterator(); i.hasNext(); ) {
+            Config config = (Config)i.next();
+            if (config.getConnectionConfig(connectionName) != null) return config;
+        }
+        return null;
+    }
+
+    public Config getConfig(String dn) throws Exception {
+        String ndn = engineContext.getSchema().normalize(dn);
+        for (Iterator i=configs.keySet().iterator(); i.hasNext(); ) {
+            String suffix = (String)i.next();
+            if (ndn.endsWith(suffix)) return (Config)configs.get(suffix);
+        }
+        return null;
     }
 
     public void analyze(EntryDefinition entryDefinition) throws Exception {
@@ -117,7 +142,7 @@ public class Engine {
             //log.debug(" - graph: "+graph);
         }
 
-        Config config = engineContext.getConfig(entryDefinition.getDn());
+        Config config = getConfig(entryDefinition.getDn());
         Collection children = config.getChildren(entryDefinition);
         if (children != null) {
             for (Iterator i=children.iterator(); i.hasNext(); ) {
@@ -131,7 +156,7 @@ public class Engine {
         Source source = (Source)primarySources.get(entryDefinition);
         if (source != null) return source;
 
-        Config config = engineContext.getConfig(entryDefinition.getDn());
+        Config config = getConfig(entryDefinition.getDn());
         entryDefinition = config.getParent(entryDefinition);
         if (entryDefinition == null) return null;
 
@@ -209,7 +234,7 @@ public class Engine {
 
         Graph graph = new Graph();
 
-        Config config = engineContext.getConfig(entryDefinition.getDn());
+        Config config = getConfig(entryDefinition.getDn());
         Collection sources = config.getEffectiveSources(entryDefinition);
         //if (sources.size() == 0) return null;
 
@@ -330,7 +355,7 @@ public class Engine {
 
         log.debug("Adding entry "+entryDefinition.getRdn()+","+parent.getDn()+" with values: "+sourceValues);
 
-        Config config = engineContext.getConfig(entryDefinition.getDn());
+        Config config = getConfig(entryDefinition.getDn());
 
         Graph graph = getGraph(entryDefinition);
         Source primarySource = getPrimarySource(entryDefinition);
@@ -363,7 +388,7 @@ public class Engine {
             }
         }
 
-        AddGraphVisitor visitor = new AddGraphVisitor(engineContext, entryDefinition, sourceValues);
+        AddGraphVisitor visitor = new AddGraphVisitor(this, engineContext, entryDefinition, sourceValues);
         graph.traverse(visitor, primarySource);
 
         if (visitor.getReturnCode() != LDAPException.SUCCESS) return visitor.getReturnCode();
@@ -385,7 +410,7 @@ public class Engine {
 
         log.debug("Deleting entry "+entry.getDn()+" ["+sourceValues+"]");
 
-        DeleteGraphVisitor visitor = new DeleteGraphVisitor(engineContext, entryDefinition, sourceValues);
+        DeleteGraphVisitor visitor = new DeleteGraphVisitor(this, engineContext, entryDefinition, sourceValues);
         graph.traverse(visitor, primarySource);
 
         if (visitor.getReturnCode() != LDAPException.SUCCESS) return visitor.getReturnCode();
@@ -506,7 +531,7 @@ public class Engine {
         Graph graph = getGraph(entryDefinition);
         Source primarySource = getPrimarySource(entryDefinition);
 
-        ModifyGraphVisitor visitor = new ModifyGraphVisitor(engineContext, entryDefinition, oldSourceValues, newSourceValues);
+        ModifyGraphVisitor visitor = new ModifyGraphVisitor(this, engineContext, entryDefinition, oldSourceValues, newSourceValues);
         graph.traverse(visitor, primarySource);
 
         if (visitor.getReturnCode() != LDAPException.SUCCESS) return visitor.getReturnCode();
@@ -718,7 +743,7 @@ public class Engine {
 
         log.debug("Searching the starting source for "+entryDefinition.getDn());
 
-        Config config = engineContext.getConfig(entryDefinition.getDn());
+        Config config = getConfig(entryDefinition.getDn());
 
         Collection relationships = entryDefinition.getRelationships();
         for (Iterator i=relationships.iterator(); i.hasNext(); ) {
@@ -754,7 +779,7 @@ public class Engine {
 
         // log.debug("Searching the connecting relationship for "+entryDefinition.getDn());
 
-        Config config = engineContext.getConfig(entryDefinition.getDn());
+        Config config = getConfig(entryDefinition.getDn());
 
         Collection relationships = config.getEffectiveRelationships(entryDefinition);
 
@@ -843,7 +868,7 @@ public class Engine {
             return new Row();
         }
 
-        Config config = engineContext.getConfig(entryDefinition.getDn());
+        Config config = getConfig(entryDefinition.getDn());
         Collection fields = config.getSearchableFields(source);
 
         Interpreter interpreter = engineContext.newInterpreter();
@@ -977,7 +1002,7 @@ public class Engine {
 
         Row rdn = computeRdn(entryDefinition, interpreter);
 
-        Config config = engineContext.getConfig(entryDefinition.getDn());
+        Config config = getConfig(entryDefinition.getDn());
         EntryDefinition parentDefinition = config.getParent(entryDefinition);
 
         String parentDn;
