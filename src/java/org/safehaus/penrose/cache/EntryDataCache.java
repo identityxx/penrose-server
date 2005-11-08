@@ -36,6 +36,7 @@ public abstract class EntryDataCache extends Cache {
 
         s = entryDefinition.getParameter(EntryDefinition.DATA_CACHE_EXPIRATION);
         if (s != null) expiration = Integer.parseInt(s);
+        expiration = 0;
     }
 
     public EntryDefinition getEntryDefinition() {

@@ -52,7 +52,8 @@ public class LoadGraphVisitor extends GraphVisitor {
     public LoadGraphVisitor(
             Engine engine,
             EntryDefinition entryDefinition,
-            AttributeValues sourceValues) throws Exception {
+            AttributeValues sourceValues,
+            Filter filter) throws Exception {
 
         this.engine = engine;
         this.engineContext = engine.getEngineContext();
@@ -63,6 +64,10 @@ public class LoadGraphVisitor extends GraphVisitor {
         graph = engine.getGraph(entryDefinition);
         primarySource = engine.getPrimarySource(entryDefinition);
 
+        Map map = new HashMap();
+        map.put("filter", filter);
+
+        stack.push(map);
         //loadedSourceValues.add(sourceValues);
     }
 
@@ -77,12 +82,12 @@ public class LoadGraphVisitor extends GraphVisitor {
         log.debug(Formatter.displaySeparator(60));
         log.debug(Formatter.displayLine("Visiting "+source.getName(), 60));
         log.debug(Formatter.displaySeparator(60));
-
+/*
         if (source == primarySource) {
             graphIterator.traverseEdges(node);
             return;
         }
-
+*/
         Map map = (Map)stack.peek();
         Filter filter = (Filter)map.get("filter");
         Collection relationships = (Collection)map.get("relationships");
@@ -96,12 +101,13 @@ public class LoadGraphVisitor extends GraphVisitor {
             filter = FilterTool.appendAndFilter(filter, sourceFilter);
         }
 
-        log.debug("Loading source "+source.getName()+" with filter "+filter);
-
         if (sourceValues.contains(source.getName())) {
+            log.debug("Source "+source.getName()+" has been loaded.");
             graphIterator.traverseEdges(node);
             return;
         }
+
+        log.debug("Loading source "+source.getName()+" with filter "+filter);
 
         ConnectionConfig connectionConfig = config.getConnectionConfig(source.getConnectionName());
         SourceDefinition sourceDefinition = connectionConfig.getSourceDefinition(source.getSourceName());

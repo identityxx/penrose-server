@@ -21,24 +21,13 @@ import org.safehaus.penrose.config.Config;
 import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.filter.FilterTool;
 import org.safehaus.penrose.schema.Schema;
-import org.safehaus.penrose.cache.EntryDataCache;
-import org.safehaus.penrose.cache.EntryFilterCache;
-import org.safehaus.penrose.cache.EntrySourceCache;
 import org.safehaus.penrose.connector.Connector;
-import org.safehaus.penrose.mapping.EntryDefinition;
 import org.safehaus.penrose.mapping.Source;
 
 /**
  * @author Endi S. Dewata
  */
 public interface EngineContext {
-
-    public String getRootDn() throws Exception;
-    public String getRootPassword() throws Exception;
-
-    public EntryFilterCache getEntryFilterCache(String parentDn, EntryDefinition entryDefinition) throws Exception;
-    public EntryDataCache getEntryDataCache(String parentDn, EntryDefinition entryDefinition) throws Exception;
-    public EntrySourceCache getEntrySourceCache(String parentDn, EntryDefinition entryDefinition) throws Exception;
 
     public Schema getSchema() throws Exception;
     public FilterTool getFilterTool() throws Exception;

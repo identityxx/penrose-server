@@ -1,43 +1,24 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!--
-<!DOCTYPE server 
-	PUBLIC "-//Penrose/Penrose Server Configuration DTD 1.0//EN" 
-	"http://penrose.safehaus.org/dtd/penrose-server-config-1.0.dtd">
--->
 
 <server>
-
-    <interpreter>
-        <interpreter-name>DEFAULT</interpreter-name>
-        <interpreter-class>org.safehaus.penrose.interpreter.DefaultInterpreter</interpreter-class>
-    </interpreter>
-
-    <engine>
-        <engine-name>DEFAULT</engine-name>
-        <engine-class>org.safehaus.penrose.engine.Engine</engine-class>
-    </engine>
-
-    <cache>
-        <cache-name>EntryCache</cache-name>
-    </cache>
-
-    <cache>
-        <cache-name>SourceCache</cache-name>
-    </cache>
-
-    <connector>
-        <connector-name>DEFAULT</connector-name>
-        <connector-class>org.safehaus.penrose.connector.Connector</connector-class>
-    </connector>
-
-    <adapter>
-        <adapter-name>JDBC</adapter-name>
-        <adapter-class>org.safehaus.penrose.connection.JDBCAdapter</adapter-class>
-    </adapter>
-
-    <adapter>
-        <adapter-name>JNDI</adapter-name>
-        <adapter-class>org.safehaus.penrose.connection.JNDIAdapter</adapter-class>
-    </adapter>
-
+  <interpreter>
+    <interpreter-name>DEFAULT</interpreter-name>
+    <interpreter-class>org.safehaus.penrose.interpreter.DefaultInterpreter</interpreter-class>
+  </interpreter>
+  <engine>
+    <engine-name>DEFAULT</engine-name>
+    <engine-class>org.safehaus.penrose.engine.Engine</engine-class>
+  </engine>
+  <connector>
+    <connector-name>DEFAULT</connector-name>
+    <connector-class>org.safehaus.penrose.connector.Connector</connector-class>
+  </connector>
+  <adapter>
+    <adapter-name>JDBC</adapter-name>
+    <adapter-class>org.safehaus.penrose.connection.JDBCAdapter</adapter-class>
+  </adapter>
+  <adapter>
+    <adapter-name>JNDI</adapter-name>
+    <adapter-class>org.safehaus.penrose.connection.JNDIAdapter</adapter-class>
+  </adapter>
 </server>

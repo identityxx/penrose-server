@@ -27,6 +27,7 @@ public class AttributeValues implements Cloneable, Comparable {
     }
 
     public void add(String prefix, AttributeValues attributeValues) {
+        if (attributeValues == null) return;
         Map v = attributeValues.getValues();
         for (Iterator i = v.keySet().iterator(); i.hasNext(); ) {
             String name = (String)i.next();

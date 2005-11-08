@@ -18,6 +18,11 @@
 package org.safehaus.penrose.connector;
 
 import org.apache.log4j.Logger;
+import org.safehaus.penrose.config.Config;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Iterator;
 
 /**
  * @author Endi S. Dewata
@@ -41,8 +46,13 @@ public class RefreshThread implements Runnable {
                 //Thread.sleep(2 * 60 * 1000); // sleep 2 minutes
 				Thread.sleep(30 * 1000);
 
-                log.debug("Refreshing cache ...");
-                connector.refresh();
+                Collection configs = new ArrayList();
+                configs.addAll(connector.getConfigs());
+
+                for (Iterator i=configs.iterator(); i.hasNext(); ) {
+                    Config config = (Config)i.next();
+                    connector.refresh(config);
+                }
 
 			} catch (Exception ex) {
 				log.error(ex.getMessage(), ex);

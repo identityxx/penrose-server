@@ -70,10 +70,12 @@ public class LoadEngine {
                     AttributeValues sv = (AttributeValues)map.get("sourceValues");
                     Row filter = (Row)map.get("filter");
 
-                    sourceValues.add(sv);
-
                     log.debug(Formatter.displayLine(" - "+dn, 80));
                     log.debug(Formatter.displayLine("   filter: "+filter, 80));
+
+                    if (sv == null) continue;
+
+                    sourceValues.add(sv);
 
                     for (Iterator j=sv.getNames().iterator(); j.hasNext(); ) {
                         String name = (String)j.next();
@@ -88,13 +90,28 @@ public class LoadEngine {
 
                 log.debug(Formatter.displaySeparator(80));
                 log.debug(Formatter.displayLine("LOAD RESULT", 80));
+
+                int c = 1;
+
                 for (Iterator i=loadedSourceValues.getNames().iterator(); i.hasNext(); ) {
-                    String name = (String)i.next();
-                    log.debug(Formatter.displayLine(" - "+name+":", 80));
-                    Collection values = loadedSourceValues.get(name);
-                    for (Iterator j=values.iterator(); j.hasNext(); ) {
-                        Object value = j.next();
-                        log.debug(Formatter.displayLine("   "+value, 80));
+                    String sourceName = (String)i.next();
+                    Collection values = loadedSourceValues.get(sourceName);
+
+                    for (Iterator j=values.iterator(); j.hasNext(); c++) {
+                        Object object = j.next();
+                        log.debug(Formatter.displayLine(" - "+sourceName+": "+object.getClass().getName(), 80));
+
+                        if (object instanceof AttributeValues) {
+                            AttributeValues avs = (AttributeValues)object;
+                            for (Iterator k=avs.getNames().iterator(); k.hasNext(); ) {
+                                String name = (String)k.next();
+                                Collection list = avs.get(name);
+                                log.debug(Formatter.displayLine("   - "+name+": "+list, 80));
+                            }
+
+                        } else {
+                            log.debug(Formatter.displayLine("   - "+sourceName+": "+object, 80));
+                        }
                     }
                 }
 
@@ -124,7 +141,28 @@ public class LoadEngine {
         Source primarySource = engine.getPrimarySource(entryDefinition);
         log.debug("Primary source: "+(primarySource == null ? null : primarySource.getName()));
 
-        if (primarySource == null) return sourceValues;
+        if (primarySource == null) {
+            Collection sourceNames = new TreeSet();
+            for (Iterator i=sourceValues.getNames().iterator(); i.hasNext(); ) {
+                String name = (String)i.next();
+                int index = name.indexOf(".");
+                String sourceName = name.substring(0, index);
+                sourceNames.add(sourceName);
+            }
+
+            AttributeValues newSourceValues = new AttributeValues();
+            for (Iterator i=sourceNames.iterator(); i.hasNext(); ) {
+                String sourceName = (String)i.next();
+                if ("parent".equals(sourceName)) continue;
+
+                AttributeValues sv = new AttributeValues(sourceValues);
+                sv.retain(sourceName);
+
+                newSourceValues.add(sourceName, sv);
+            }
+
+            return newSourceValues;
+        }
 
         Collection pks = new TreeSet();
         for (Iterator i=maps.iterator(); i.hasNext(); ) {
@@ -144,7 +182,7 @@ public class LoadEngine {
         Collection filters = new ArrayList();
         filters.add(map);
 
-        LoadGraphVisitor loadVisitor = new LoadGraphVisitor(engine, entryDefinition, sourceValues);
+        LoadGraphVisitor loadVisitor = new LoadGraphVisitor(engine, entryDefinition, sourceValues, filter);
         loadVisitor.run();
 
         return loadVisitor.getLoadedSourceValues();

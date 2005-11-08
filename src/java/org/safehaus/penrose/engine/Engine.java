@@ -18,7 +18,9 @@
 package org.safehaus.penrose.engine;
 
 import org.safehaus.penrose.SearchResults;
-import org.safehaus.penrose.*;
+import org.safehaus.penrose.cache.EntryFilterCache;
+import org.safehaus.penrose.cache.CacheConfig;
+import org.safehaus.penrose.cache.EntryDataCache;
 import org.safehaus.penrose.util.Formatter;
 import org.safehaus.penrose.config.Config;
 import org.safehaus.penrose.filter.*;
@@ -32,7 +34,6 @@ import org.safehaus.penrose.mapping.*;
 import org.apache.log4j.Logger;
 import org.ietf.ldap.LDAPException;
 
-import javax.naming.directory.SearchResult;
 import java.util.*;
 
 /**
@@ -60,6 +61,9 @@ public class Engine {
     private LoadEngine loadEngine;
     private MergeEngine mergeEngine;
     private JoinEngine joinEngine;
+
+    private Map entryFilterCaches = new TreeMap();
+    private Map entryDataCaches = new TreeMap();
 
     /**
      * Initialize the engine with a Penrose instance
@@ -364,7 +368,7 @@ public class Engine {
 
         if (visitor.getReturnCode() != LDAPException.SUCCESS) return visitor.getReturnCode();
 
-        engineContext.getEntryFilterCache(parent == null ? null : parent.getDn(), entryDefinition).invalidate();
+        getEntryFilterCache(parent == null ? null : parent.getDn(), entryDefinition).invalidate();
 
         return LDAPException.SUCCESS;
     }
@@ -388,8 +392,8 @@ public class Engine {
 
         Row key = getEngineContext().getSchema().normalize((Row)entry.getRdn());
 
-        engineContext.getEntryDataCache(entry.getParentDn(), entryDefinition).remove(key);
-        engineContext.getEntryFilterCache(entry.getParentDn(), entryDefinition).invalidate();
+        getEntryDataCache(entry.getParentDn(), entryDefinition).remove(key);
+        getEntryFilterCache(entry.getParentDn(), entryDefinition).invalidate();
 
         return LDAPException.SUCCESS;
     }
@@ -458,8 +462,8 @@ public class Engine {
 
         Row key = getEngineContext().getSchema().normalize((Row)entry.getRdn());
 
-        engineContext.getEntryDataCache(entry.getParentDn(), entryDefinition).remove(key);
-        engineContext.getEntryFilterCache(entry.getParentDn(), entryDefinition).invalidate();
+        getEntryDataCache(entry.getParentDn(), entryDefinition).remove(key);
+        getEntryFilterCache(entry.getParentDn(), entryDefinition).invalidate();
 
         return LDAPException.SUCCESS;
     }
@@ -509,15 +513,14 @@ public class Engine {
 
         Row key = getEngineContext().getSchema().normalize((Row)entry.getRdn());
 
-        engineContext.getEntryDataCache(entry.getParentDn(), entryDefinition).remove(key);
-        engineContext.getEntryFilterCache(entry.getParentDn(), entryDefinition).invalidate();
+        getEntryDataCache(entry.getParentDn(), entryDefinition).remove(key);
+        getEntryFilterCache(entry.getParentDn(), entryDefinition).invalidate();
 
         return LDAPException.SUCCESS;
     }
 
 
     public Entry find(
-            PenroseConnection connection,
             Collection path,
             EntryDefinition entryDefinition
             ) throws Exception {
@@ -543,7 +546,6 @@ public class Engine {
     }
     
     public SearchResults search(
-            PenroseConnection connection,
             final Collection path,
             final EntryDefinition entryDefinition,
             final Filter filter,
@@ -551,7 +553,7 @@ public class Engine {
 
         final SearchResults entries = new SearchResults();
 
-        if (false) {
+        if (true) {
             searchEngine.search(path, entryDefinition, filter, entries);
 
         } else {
@@ -600,7 +602,7 @@ public class Engine {
 
         final SearchResults batches = new SearchResults();
 
-        if (false) {
+        if (true) {
             createBatches(entryDefinition, entries, results, batches);
 
         } else {
@@ -619,7 +621,7 @@ public class Engine {
 
         final SearchResults loadedBatches = new SearchResults();
 
-        if (false) {
+        if (true) {
             loadEngine.load(entryDefinition, batches, loadedBatches);
 
         } else {
@@ -636,7 +638,7 @@ public class Engine {
             });
         }
 
-        if (false) {
+        if (true) {
             mergeEngine.merge(entryDefinition, loadedBatches, results);
 
         } else {
@@ -679,7 +681,7 @@ public class Engine {
                 String parentDn = Entry.getParentDn(dn);
 
                 log.debug("Checking "+rdn+" in entry data cache for "+parentDn);
-                Entry entry = (Entry)engineContext.getEntryDataCache(parentDn, entryDefinition).get(normalizedRdn);
+                Entry entry = (Entry)getEntryDataCache(parentDn, entryDefinition).get(normalizedRdn);
 
                 if (entry != null) {
                     log.debug(" - "+rdn+" has been loaded");
@@ -934,7 +936,7 @@ public class Engine {
             String rsourceName = rhs.substring(0, rindex);
             String rname = rhs.substring(rindex+1);
 
-            log.debug("   converting "+rhs+" ==> ("+lname+" "+operator+" ?)");
+            //log.debug("   converting "+rhs+" ==> ("+lname+" "+operator+" ?)");
 
             Collection v = av.get(rhs);
             log.debug("   - found "+v);
@@ -945,7 +947,7 @@ public class Engine {
                 Object value = k.next();
 
                 SimpleFilter sf = new SimpleFilter(lname, operator, value.toString());
-                log.debug("   - "+sf);
+                //log.debug("   - "+sf);
 
                 orFilter = FilterTool.appendOrFilter(orFilter, sf);
             }
@@ -1056,5 +1058,72 @@ public class Engine {
     public void setEngineConfig(EngineConfig engineConfig) {
         this.engineConfig = engineConfig;
     }
+
+    public EntryFilterCache getEntryFilterCache(String parentDn, EntryDefinition entryDefinition) throws Exception {
+        String cacheName = entryDefinition.getParameter(EntryDefinition.CACHE);
+        cacheName = cacheName == null ? EntryDefinition.DEFAULT_CACHE : cacheName;
+        CacheConfig cacheConfig = engineConfig.getCacheConfig("EntryFilterCache");
+
+        String key = entryDefinition.getRdn()+","+parentDn;
+
+        EntryFilterCache cache = (EntryFilterCache)entryFilterCaches.get(key);
+
+        if (cache == null) {
+            if (cacheConfig == null) {
+                cacheConfig = new CacheConfig();
+                cacheConfig.setCacheName("EntryFilterCache");
+                cacheConfig.setCacheClass(CacheConfig.DEFAULT_ENTRY_FILTER_CACHE);
+                engineConfig.addCacheConfig(cacheConfig);
+            }
+
+            String cacheClass = cacheConfig.getCacheClass();
+            cacheClass = cacheClass == null ? CacheConfig.DEFAULT_ENTRY_FILTER_CACHE : cacheClass;
+
+            Class clazz = Class.forName(cacheClass);
+            cache = (EntryFilterCache)clazz.newInstance();
+
+            cache.setParentDn(parentDn);
+            cache.setEntryDefinition(entryDefinition);
+            cache.init(cacheConfig);
+
+            entryFilterCaches.put(key, cache);
+        }
+
+        return cache;
+    }
+
+    public EntryDataCache getEntryDataCache(String parentDn, EntryDefinition entryDefinition) throws Exception {
+        String cacheName = entryDefinition.getParameter(EntryDefinition.CACHE);
+        cacheName = cacheName == null ? EntryDefinition.DEFAULT_CACHE : cacheName;
+        CacheConfig cacheConfig = engineConfig.getCacheConfig("EntryDataCache");
+
+        String key = entryDefinition.getRdn()+","+parentDn;
+
+        EntryDataCache cache = (EntryDataCache)entryDataCaches.get(key);
+
+        if (cache == null) {
+            if (cacheConfig == null) {
+                cacheConfig = new CacheConfig();
+                cacheConfig.setCacheName("EntryDataCache");
+                cacheConfig.setCacheClass(CacheConfig.DEFAULT_ENTRY_DATA_CACHE);
+                engineConfig.addCacheConfig(cacheConfig);
+            }
+
+            String cacheClass = cacheConfig.getCacheClass();
+            cacheClass = cacheClass == null ? CacheConfig.DEFAULT_ENTRY_DATA_CACHE : cacheClass;
+
+            Class clazz = Class.forName(cacheClass);
+            cache = (EntryDataCache)clazz.newInstance();
+
+            cache.setParentDn(parentDn);
+            cache.setEntryDefinition(entryDefinition);
+            cache.init(cacheConfig);
+
+            entryDataCaches.put(key, cache);
+        }
+
+        return cache;
+    }
+
 }
 

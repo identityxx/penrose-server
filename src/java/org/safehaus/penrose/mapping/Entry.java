@@ -36,18 +36,26 @@ public class Entry {
     private AttributeValues sourceValues;
     private AttributeValues attributeValues;
 
-    public Entry(String dn, EntryDefinition entry, AttributeValues attributes) {
+    public Entry(String dn, EntryDefinition entryDefinition) {
         this.dn = dn;
         this.parentDn = getParentDn(dn);
-        this.entryDefinition = entry;
+        this.entryDefinition = entryDefinition;
+        this.sourceValues = new AttributeValues();
+        this.attributeValues = new AttributeValues();
+    }
+
+    public Entry(String dn, EntryDefinition entryDefinition, AttributeValues attributes) {
+        this.dn = dn;
+        this.parentDn = getParentDn(dn);
+        this.entryDefinition = entryDefinition;
         this.sourceValues = new AttributeValues();
         this.attributeValues = attributes;
     }
 
-    public Entry(String dn, EntryDefinition entry, AttributeValues sourceValues, AttributeValues attributeValues) {
+    public Entry(String dn, EntryDefinition entryDefinition, AttributeValues sourceValues, AttributeValues attributeValues) {
         this.dn = dn;
         this.parentDn = getParentDn(dn);
-        this.entryDefinition = entry;
+        this.entryDefinition = entryDefinition;
         this.sourceValues = sourceValues;
         this.attributeValues = attributeValues;
     }

@@ -117,20 +117,7 @@ public class SearchLocalRunner extends GraphVisitor {
             sv.add(source.getName(), av);
             list.add(sv);
         }
-/*
-        log.debug("Search results:");
 
-        int counter = 1;
-        for (Iterator j=list.iterator(); j.hasNext(); counter++) {
-            AttributeValues sv = (AttributeValues)j.next();
-            log.debug(" - Result #"+counter);
-            for (Iterator k=sv.getNames().iterator(); k.hasNext(); ) {
-                String name = (String)k.next();
-                Collection values = sv.get(name);
-                log.debug("   - "+name+": "+values);
-            }
-        }
-*/
         if (results.isEmpty()) {
             results.addAll(list);
 
@@ -145,7 +132,20 @@ public class SearchLocalRunner extends GraphVisitor {
             results.clear();
             results.addAll(temp);
         }
+/*
+        log.debug("Search results:");
 
+        int counter = 1;
+        for (Iterator j=results.iterator(); j.hasNext(); counter++) {
+            AttributeValues sv = (AttributeValues)j.next();
+            log.debug(" - Result #"+counter);
+            for (Iterator k=sv.getNames().iterator(); k.hasNext(); ) {
+                String name = (String)k.next();
+                Collection values = sv.get(name);
+                log.debug("   - "+name+": "+values);
+            }
+        }
+*/
         graphIterator.traverseEdges(node);
     }
 

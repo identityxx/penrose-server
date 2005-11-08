@@ -30,7 +30,6 @@ public class CacheConfig implements Cloneable, Serializable {
 	
     public final static String DEFAULT_ENTRY_FILTER_CACHE  = EntryFilterCache.class.getName();
     public final static String DEFAULT_ENTRY_DATA_CACHE    = InMemoryEntryDataCache.class.getName();
-    public final static String DEFAULT_ENTRY_SOURCE_CACHE  = EntrySourceCache.class.getName();
 
     public final static String DEFAULT_SOURCE_FILTER_CACHE = SourceFilterCache.class.getName();
     public final static String DEFAULT_SOURCE_DATA_CACHE   = InMemorySourceDataCache.class.getName();

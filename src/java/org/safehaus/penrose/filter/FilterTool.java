@@ -452,4 +452,96 @@ public class FilterTool {
         return false;
     }
 
+    public boolean isValidEntry(AttributeValues attributeValues, Filter filter) throws Exception {
+        log.debug("Checking filter "+filter);
+
+        boolean result = false;
+
+        if (filter instanceof NotFilter) {
+            result = isValidEntry(attributeValues, (NotFilter)filter);
+
+        } else if (filter instanceof AndFilter) {
+            result = isValidEntry(attributeValues, (AndFilter)filter);
+
+        } else if (filter instanceof OrFilter) {
+            result = isValidEntry(attributeValues, (OrFilter)filter);
+
+        } else if (filter instanceof SimpleFilter) {
+            result = isValidEntry(attributeValues, (SimpleFilter)filter);
+
+        } else if (filter instanceof PresentFilter) {
+            result = isValidEntry(attributeValues, (PresentFilter)filter);
+        }
+
+        // log.debug("=> "+filter+" ("+filter.getClass().getName()+"): "+result);
+
+        return result;
+    }
+
+    public boolean isValidEntry(AttributeValues attributeValues, SimpleFilter filter) throws Exception {
+        String attributeName = filter.getAttribute();
+        String operator = filter.getOperator();
+        String attributeValue = filter.getValue();
+
+        Collection values = attributeValues.get(attributeName);
+
+        for (Iterator i=values.iterator(); i.hasNext(); ) {
+            String value = i.next().toString();
+
+            int c = attributeValue.toString().compareTo(value);
+
+            if ("=".equals(operator)) {
+                if (c != 0) return false;
+
+            } else if ("<".equals(operator)) {
+                if (c >= 0) return false;
+
+            } else if ("<=".equals(operator)) {
+                if (c > 0) return false;
+
+            } else if (">".equals(operator)) {
+                if (c <= 0) return false;
+
+            } else if (">=".equals(operator)) {
+                if (c < 0) return false;
+
+            } else {
+                throw new Exception("Unsupported operator \""+operator+"\" in \""+filter+"\"");
+            }
+        }
+
+        return true;
+    }
+
+    public boolean isValidEntry(AttributeValues attributeValues, PresentFilter filter) throws Exception {
+        String attributeName = filter.getAttribute();
+
+        if (attributeName.equalsIgnoreCase("objectclass")) return true;
+
+        return attributeValues.contains(attributeName);
+    }
+
+    public boolean isValidEntry(AttributeValues attributeValues, NotFilter filter) throws Exception {
+        Filter f = filter.getFilter();
+        boolean result = isValidEntry(attributeValues, f);
+        return result;
+    }
+
+    public boolean isValidEntry(AttributeValues attributeValues, AndFilter filter) throws Exception {
+        for (Iterator i=filter.getFilters().iterator(); i.hasNext(); ) {
+            Filter f = (Filter)i.next();
+            boolean result = isValidEntry(attributeValues, f);
+            if (!result) return false;
+        }
+        return true;
+    }
+
+    public boolean isValidEntry(AttributeValues attributeValues, OrFilter filter) throws Exception {
+        for (Iterator i=filter.getFilters().iterator(); i.hasNext(); ) {
+            Filter f = (Filter)i.next();
+            boolean result = isValidEntry(attributeValues, f);
+            if (result) return true;
+        }
+        return false;
+    }
 }

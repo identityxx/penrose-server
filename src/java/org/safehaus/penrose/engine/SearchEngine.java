@@ -136,8 +136,6 @@ public class SearchEngine {
             SearchResults entries)
             throws Exception {
 
-        Map results = new TreeMap();
-
         boolean unique = false; //isRdnUnique(entryDefinition);
 
         log.debug(Formatter.displaySeparator(80));
@@ -147,34 +145,57 @@ public class SearchEngine {
         log.debug(Formatter.displayLine("Filter: "+filter, 80));
         log.debug(Formatter.displayLine("Parents:", 80));
 
+        Config config = engineContext.getConfig(entryDefinition.getDn());
+        EntryDefinition parentDefinition = config.getParent(entryDefinition);
+
         AttributeValues sourceValues = new AttributeValues();
         String prefix = null;
 
         for (Iterator iterator = path.iterator(); iterator.hasNext(); ) {
             Entry entry = (Entry)iterator.next();
-            if (entry == null) continue;
 
-            log.debug(Formatter.displayLine(" - "+entry.getDn(), 80));
+            String dn;
+            if (entry == null) {
+                dn = parentDefinition.getDn();
+            } else {
+                dn = entry.getDn();
+            }
+
+            log.debug(Formatter.displayLine(" - "+dn, 80));
 
             prefix = prefix == null ? "parent." : "parent."+prefix;
 
-            AttributeValues av = entry.getAttributeValues();
-            for (Iterator j=av.getNames().iterator(); j.hasNext(); ) {
-                String name = (String)j.next();
-                Collection values = av.get(name);
-                name = prefix+name;
-                log.debug(Formatter.displayLine("   - "+name+": "+values, 80));
-                sourceValues.add(name, values);
+            if (entry == null) {
+                AttributeValues av = parentDefinition.getAttributeValues(engineContext.newInterpreter());
+                for (Iterator j=av.getNames().iterator(); j.hasNext(); ) {
+                    String name = (String)j.next();
+                    Collection values = av.get(name);
+                    name = prefix+name;
+                    log.debug(Formatter.displayLine("   - "+name+": "+values, 80));
+                    sourceValues.add(name, values);
+                }
+
+            } else {
+                AttributeValues av = entry.getAttributeValues();
+                for (Iterator j=av.getNames().iterator(); j.hasNext(); ) {
+                    String name = (String)j.next();
+                    Collection values = av.get(name);
+                    name = prefix+name;
+                    log.debug(Formatter.displayLine("   - "+name+": "+values, 80));
+                    sourceValues.add(name, values);
+                }
+
+                AttributeValues sv = entry.getSourceValues();
+                for (Iterator j=sv.getNames().iterator(); j.hasNext(); ) {
+                    String name = (String)j.next();
+                    Collection values = sv.get(name);
+                    if (name.startsWith("parent.")) name = prefix+name;
+                    log.debug(Formatter.displayLine("   - "+name+": "+values, 80));
+                    sourceValues.add(name, values);
+                }
             }
 
-            AttributeValues sv = entry.getSourceValues();
-            for (Iterator j=sv.getNames().iterator(); j.hasNext(); ) {
-                String name = (String)j.next();
-                Collection values = sv.get(name);
-                if (name.startsWith("parent.")) name = prefix+name;
-                log.debug(Formatter.displayLine("   - "+name+": "+values, 80));
-                sourceValues.add(name, values);
-            }
+            parentDefinition = config.getParent(parentDefinition);
         }
 
         log.debug(Formatter.displaySeparator(80));
@@ -187,10 +208,14 @@ public class SearchEngine {
                 String parentDn = parent.getDn();
 
                 log.debug("Checking "+filter+" in entry filter cache for "+parentDn);
-                Collection list = engineContext.getEntryFilterCache(parentDn, entryDefinition).get(filter);
+                Collection list = engine.getEntryFilterCache(parentDn, entryDefinition).get(filter);
                 if (list != null) dns.addAll(list);
             }
         }
+
+        log.debug("DNs: "+dns);
+
+        Map results = new TreeMap();
 
         if (dns.isEmpty()) {
             log.debug("Filter cache does not contain "+filter);
@@ -199,36 +224,21 @@ public class SearchEngine {
 
             Map childDns = new HashMap();
 
-            log.debug("Search results:");
+            //log.debug("Search results:");
             for (Iterator i=values.iterator(); i.hasNext(); ) {
                 AttributeValues sv = (AttributeValues)i.next();
+                //log.debug(" - "+sv);
 
                 Collection list = engine.computeDns(entryDefinition, sv);
                 for (Iterator j=list.iterator(); j.hasNext(); ) {
                     String dn = (String)j.next();
-                    log.debug(" - "+dn);
+                    //log.debug("   - "+dn);
+
+                    dns.add(dn);
 
                     Row rdn = Entry.getRdn(dn);
                     Row normalizedRdn = getEngineContext().getSchema().normalize(rdn);
                     String parentDn = Entry.getParentDn(dn);
-
-                    //log.debug("    Getting "+rdn+" from entry source cache for "+parentDn);
-                    AttributeValues oldSv = (AttributeValues)engineContext.getEntrySourceCache(parentDn, entryDefinition).get(normalizedRdn);
-
-                    if (oldSv == null) {
-                        //log.debug("   Storing "+rdn+" in entry source cache.");
-                        engineContext.getEntrySourceCache(parentDn, entryDefinition).put(normalizedRdn, sv);
-                    } else {
-                        //log.debug("   Adding "+rdn+" in entry source cache.");
-                        oldSv.add(sv);
-                    }
-                    //log.debug("   source values1: "+oldSv);
-
-                    if (unique && !dns.contains(dn)) {
-                        Entry entry = new Entry(dn, entryDefinition, sv, new AttributeValues());
-                        entries.add(entry);
-                        dns.add(dn);
-                    }
 
                     AttributeValues av = (AttributeValues)results.get(dn);
                     if (av == null) {
@@ -236,7 +246,6 @@ public class SearchEngine {
                         results.put(dn, av);
                     }
                     av.add(sv);
-                    //log.debug("   source values2: "+av);
 
                     Collection c = (Collection)childDns.get(parentDn);
                     if (c == null) {
@@ -258,29 +267,34 @@ public class SearchEngine {
                     log.debug("   - "+dn);
                 }
 
-                engineContext.getEntryFilterCache(parentDn, entryDefinition).put(filter, c);
+                engine.getEntryFilterCache(parentDn, entryDefinition).put(filter, c);
 
             }
             //filter = engineContext.getFilterTool().createFilter(rdns);
             //log.debug("Storing "+filter+" in entry filter cache for "+parentDn+" => "+rdns);
             //engineContext.getEntryFilterCache(parentDn, entryDefinition).put(filter, rdns);
-
         } else {
-            log.debug("Cache found: "+dns);
+            log.debug("Filter cache found:");
 
             for (Iterator i=dns.iterator(); i.hasNext(); ) {
                 String dn = (String)i.next();
-
+                log.debug(" - "+dn);
+                results.put(dn, null);
+            }
+/*
+            for (Iterator i=dns.iterator(); i.hasNext(); ) {
+                String dn = (String)i.next();
                 Row rdn = Entry.getRdn(dn);
                 Row normalizedRdn = getEngineContext().getSchema().normalize(rdn);
                 String parentDn = Entry.getParentDn(dn);
 
                 log.debug("Getting "+rdn+" from entry source cache for "+parentDn);
-                AttributeValues sv = (AttributeValues)engineContext.getEntrySourceCache(parentDn, entryDefinition).get(normalizedRdn);
+                Entry entry = (Entry)engineContext.getEntryDataCache(parentDn, entryDefinition).get(normalizedRdn);
+                AttributeValues sv = entry.getSourceValues(); //(AttributeValues)engineContext.getEntrySourceCache(parentDn, entryDefinition).get(normalizedRdn));
                 //log.debug("Entry source cache: "+sv);
 
                 if (unique) {
-                    Entry entry = new Entry(dn, entryDefinition, sv, new AttributeValues());
+                    //Entry entry = new Entry(dn, entryDefinition, sv, new AttributeValues());
                     entries.add(entry);
                 }
 
@@ -291,17 +305,57 @@ public class SearchEngine {
                 }
                 av.add(sv);
             }
+*/
         }
+/*
+        log.debug("Getting source values:");
 
-        if (!unique) {
+        for (Iterator i=results.keySet().iterator(); i.hasNext(); ) {
+            String dn = (String)i.next();
+            log.debug(" - "+dn);
+
+            AttributeValues sv = (AttributeValues)results.get(dn);
+            if (sv != null) continue;
+
+            Row rdn = Entry.getRdn(dn);
+            Row normalizedRdn = getEngineContext().getSchema().normalize(rdn);
+            String parentDn = Entry.getParentDn(dn);
+
+            Entry entry = (Entry)engineContext.getEntryDataCache(parentDn, entryDefinition).get(normalizedRdn);
+            if (entry == null) {
+                entry = new Entry(dn, entryDefinition, sv, new AttributeValues());
+            }
+
+            AttributeValues oldSv = entry.getSourceValues(); //(AttributeValues)engineContext.getEntrySourceCache(parentDn, entryDefinition).get(normalizedRdn);
+
+            if (oldSv == null) {
+                //log.debug("   Storing "+rdn+" in entry source cache.");
+                engineContext.getEntrySourceCache(parentDn, entryDefinition).put(normalizedRdn, sv);
+            } else {
+                //log.debug("   Adding "+rdn+" in entry source cache.");
+                oldSv.add(sv);
+            }
+            //log.debug("   source values1: "+oldSv);
+
+            if (unique && !dns.contains(dn)) {
+                //Entry entry = new Entry(dn, entryDefinition, sv, new AttributeValues());
+                entries.add(entry);
+                dns.add(dn);
+            }
+            //log.debug("   source values2: "+av);
+
+        }
+*/
+        //if (!unique) {
             for (Iterator i=results.keySet().iterator(); i.hasNext(); ) {
                 String dn = (String)i.next();
                 AttributeValues sv = (AttributeValues)results.get(dn);
 
                 Entry entry = new Entry(dn, entryDefinition, sv, new AttributeValues());
+                //Entry entry = new Entry(dn, entryDefinition);
                 entries.add(entry);
             }
-        }
+        //}
 
         entries.close();
     }

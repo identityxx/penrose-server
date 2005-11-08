@@ -38,7 +38,6 @@ import org.safehaus.penrose.handler.Handler;
 import org.safehaus.penrose.handler.HandlerContext;
 import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.interpreter.InterpreterConfig;
-import org.safehaus.penrose.cache.*;
 import org.safehaus.penrose.connection.*;
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.filter.FilterTool;
@@ -102,10 +101,6 @@ public class Penrose implements
 	private FilterTool filterTool;
 
 	private TransformEngine transformEngine;
-
-    private Map entryFilterCaches = new TreeMap();
-    private Map entryDataCaches = new TreeMap();
-    private Map entrySourceCaches = new TreeMap();
 
     private Map connectors = new LinkedHashMap();
 	private Map engines = new LinkedHashMap();
@@ -592,84 +587,6 @@ public class Penrose implements
         InterpreterConfig interpreterConfig = serverConfig.getInterpreterConfig("DEFAULT");
         Class clazz = Class.forName(interpreterConfig.getInterpreterClass());
         return (Interpreter)clazz.newInstance();
-    }
-
-    public EntryFilterCache getEntryFilterCache(String parentDn, EntryDefinition entryDefinition) throws Exception {
-        String cacheName = entryDefinition.getParameter(EntryDefinition.CACHE);
-        cacheName = cacheName == null ? EntryDefinition.DEFAULT_CACHE : cacheName;
-        CacheConfig cacheConfig = serverConfig.getCacheConfig(cacheName);
-
-        String key = entryDefinition.getRdn()+","+parentDn;
-
-        EntryFilterCache cache = (EntryFilterCache)entryFilterCaches.get(key);
-
-        if (cache == null) {
-            String cacheClass = cacheConfig.getCacheClass();
-            cacheClass = cacheClass == null ? CacheConfig.DEFAULT_ENTRY_FILTER_CACHE : cacheClass;
-
-            Class clazz = Class.forName(cacheClass);
-            cache = (EntryFilterCache)clazz.newInstance();
-
-            cache.setParentDn(parentDn);
-            cache.setEntryDefinition(entryDefinition);
-            cache.init(cacheConfig);
-
-            entryFilterCaches.put(key, cache);
-        }
-
-        return cache;
-    }
-
-    public EntrySourceCache getEntrySourceCache(String parentDn, EntryDefinition entryDefinition) throws Exception {
-        String cacheName = entryDefinition.getParameter(EntryDefinition.CACHE);
-        cacheName = cacheName == null ? EntryDefinition.DEFAULT_CACHE : cacheName;
-        CacheConfig cacheConfig = serverConfig.getCacheConfig(cacheName);
-
-        String key = entryDefinition.getRdn()+","+parentDn;
-
-        EntrySourceCache cache = (EntrySourceCache)entrySourceCaches.get(key);
-
-        if (cache == null) {
-            String cacheClass = cacheConfig.getCacheClass();
-            cacheClass = cacheClass == null ? CacheConfig.DEFAULT_ENTRY_SOURCE_CACHE : cacheClass;
-
-            Class clazz = Class.forName(cacheClass);
-            cache = (EntrySourceCache)clazz.newInstance();
-
-            cache.setParentDn(parentDn);
-            cache.setEntryDefinition(entryDefinition);
-            cache.init(cacheConfig);
-
-            entrySourceCaches.put(key, cache);
-        }
-
-        return cache;
-    }
-
-    public EntryDataCache getEntryDataCache(String parentDn, EntryDefinition entryDefinition) throws Exception {
-        String cacheName = entryDefinition.getParameter(EntryDefinition.CACHE);
-        cacheName = cacheName == null ? EntryDefinition.DEFAULT_CACHE : cacheName;
-        CacheConfig cacheConfig = serverConfig.getCacheConfig(cacheName);
-
-        String key = entryDefinition.getRdn()+","+parentDn;
-
-        EntryDataCache cache = (EntryDataCache)entryDataCaches.get(key);
-
-        if (cache == null) {
-            String cacheClass = cacheConfig.getCacheClass();
-            cacheClass = cacheClass == null ? CacheConfig.DEFAULT_ENTRY_DATA_CACHE : cacheClass;
-
-            Class clazz = Class.forName(cacheClass);
-            cache = (EntryDataCache)clazz.newInstance();
-
-            cache.setParentDn(parentDn);
-            cache.setEntryDefinition(entryDefinition);
-            cache.init(cacheConfig);
-
-            entryDataCaches.put(key, cache);
-        }
-
-        return cache;
     }
 
     public Schema getSchema() {

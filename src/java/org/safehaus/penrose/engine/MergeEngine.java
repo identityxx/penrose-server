@@ -19,6 +19,8 @@ package org.safehaus.penrose.engine;
 
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.SearchResults;
+import org.safehaus.penrose.filter.Filter;
+import org.safehaus.penrose.filter.FilterTool;
 import org.safehaus.penrose.util.Formatter;
 import org.apache.log4j.Logger;
 
@@ -61,17 +63,45 @@ public class MergeEngine {
 
                 log.debug(Formatter.displaySeparator(80));
                 log.debug(Formatter.displayLine("MERGE", 80));
-                log.debug(Formatter.displayLine(dn, 80));
+                log.debug(Formatter.displayLine("Entry: "+dn, 80));
+                log.debug(Formatter.displayLine("Filter: "+filter, 80));
 
-                for (Iterator j=primarySourceValues.getNames().iterator(); j.hasNext(); ) {
-                    String name = (String)j.next();
-                    Collection v = primarySourceValues.get(name);
-                    log.debug(Formatter.displayLine(" - "+name+": "+v, 80));
+                if (primarySourceValues != null) {
+                    log.debug(Formatter.displayLine("Primary source values:", 80));
+                    for (Iterator j=primarySourceValues.getNames().iterator(); j.hasNext(); ) {
+                        String name = (String)j.next();
+                        Collection v = primarySourceValues.get(name);
+                        log.debug(Formatter.displayLine(" - "+name+": "+v, 80));
+                    }
+                }
+
+                log.debug(Formatter.displayLine("Loaded source values:", 80));
+                for (Iterator i=loadedSourceValues.getNames().iterator(); i.hasNext(); ) {
+                    String sourceName = (String)i.next();
+                    Collection values = loadedSourceValues.get(sourceName);
+
+                    for (Iterator j=values.iterator(); j.hasNext(); ) {
+                        Object object = j.next();
+                        log.debug(Formatter.displayLine(" - "+sourceName+": "+object.getClass().getName(), 80));
+
+                        if (object instanceof AttributeValues) {
+                            AttributeValues av = (AttributeValues)object;
+
+                            for (Iterator k=av.getNames().iterator(); k.hasNext(); ) {
+                                String name = (String)k.next();
+                                Collection list = av.get(name);
+                                log.debug(Formatter.displayLine("   - "+name+": "+list, 80));
+                            }
+
+                        } else {
+                            log.debug(Formatter.displayLine("   - "+sourceName+": "+object, 80));
+                        }
+                    }
                 }
 
                 log.debug(Formatter.displaySeparator(80));
 
-                mergeEntries(dn, entryDefinition, primarySourceValues, loadedSourceValues, results);
+                mergeEntries(dn, entryDefinition, primarySourceValues, loadedSourceValues, filter, results);
             }
 
         } finally {
@@ -85,6 +115,7 @@ public class MergeEngine {
             EntryDefinition entryDefinition,
             AttributeValues primarySourceValues,
             AttributeValues loadedSourceValues,
+            Row pk,
             SearchResults results)
             throws Exception {
 
@@ -93,12 +124,18 @@ public class MergeEngine {
 
         if (primarySource != null) {
 
+            Row key = new Row();
+            key.add(primarySource.getName(), pk);
+
+            Filter filter  = FilterTool.createFilter(key, true);
+
             MergeGraphVisitor merger = new MergeGraphVisitor(
                     engine,
                     entryDefinition,
                     primarySourceValues,
                     loadedSourceValues,
-                    primarySource
+                    primarySource,
+                    filter
             );
 
             merger.run();
@@ -129,7 +166,7 @@ public class MergeEngine {
 
         Row rdn = getEngineContext().getSchema().normalize((Row)entry.getRdn());
 
-        engineContext.getEntryDataCache(entry.getParentDn(), entryDefinition).put(rdn, entry);
+        engine.getEntryDataCache(entry.getParentDn(), entryDefinition).put(rdn, entry);
 
         results.add(entry);
 

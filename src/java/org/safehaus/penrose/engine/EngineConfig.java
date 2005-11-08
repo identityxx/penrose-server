@@ -17,9 +17,13 @@
  */
 package org.safehaus.penrose.engine;
 
+import org.safehaus.penrose.cache.CacheConfig;
+
 import java.io.Serializable;
 import java.util.Properties;
 import java.util.Collection;
+import java.util.Map;
+import java.util.LinkedHashMap;
 
 /**
  * @author Endi S. Dewata
@@ -35,6 +39,8 @@ public class EngineConfig implements Serializable {
     private String description;
 
     private Properties parameters = new Properties();
+
+    private Map cacheConfigs = new LinkedHashMap();
 
     public String getEngineClass() {
         return engineClass;
@@ -74,6 +80,26 @@ public class EngineConfig implements Serializable {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public void addCacheConfig(CacheConfig cacheConfig) {
+    	cacheConfigs.put(cacheConfig.getCacheName(), cacheConfig);
+    }
+
+    public CacheConfig removeCacheConfig(String name) {
+        return (CacheConfig)cacheConfigs.remove(name);
+    }
+
+    public CacheConfig getCacheConfig() {
+        return (CacheConfig)cacheConfigs.get("DEFAULT");
+    }
+
+    public CacheConfig getCacheConfig(String name) {
+        return (CacheConfig)cacheConfigs.get(name);
+    }
+
+    public Collection getCacheConfigs() {
+    	return cacheConfigs.values();
     }
 
 }

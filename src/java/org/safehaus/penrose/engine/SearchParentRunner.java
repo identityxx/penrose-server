@@ -126,20 +126,20 @@ public class SearchParentRunner extends GraphVisitor {
             sv.add(source.getName(), av);
             list.add(sv);
         }
-
+/*
         log.debug("Search results:");
 
         int counter = 1;
         for (Iterator j=list.iterator(); j.hasNext(); counter++) {
             AttributeValues sv = (AttributeValues)j.next();
-            log.debug(" - Result #"+counter);
+            log.debug("Result #"+counter);
             for (Iterator k=sv.getNames().iterator(); k.hasNext(); ) {
                 String name = (String)k.next();
                 Collection values = sv.get(name);
-                log.debug("   - "+name+": "+values);
+                log.debug(" - "+name+": "+values);
             }
         }
-
+*/
         if (results.isEmpty()) {
             results.addAll(list);
 

@@ -50,6 +50,14 @@ public class Row implements Comparable {
         values.putAll(row.getValues());
     }
 
+    public void add(String prefix, Row row) {
+        for (Iterator i=row.getNames().iterator(); i.hasNext(); ) {
+            String name = (String)i.next();
+            Object value = row.get(name);
+            values.put(prefix == null ? name : prefix+"."+name, value);
+        }
+    }
+
     public void set(String name, Object value) {
         this.values.put(name, value);
     }

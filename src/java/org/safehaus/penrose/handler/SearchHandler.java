@@ -89,7 +89,7 @@ public class SearchHandler {
         if (entryDefinition != null) {
             log.debug("Found static entry: " + dn);
 
-            Entry entry = handlerContext.getEngine().find(connection, path, entryDefinition);
+            Entry entry = handlerContext.getEngine().find(path, entryDefinition);
 /*
             //AttributeValues values = entryDefinition.getAttributeValues(handlerContext.newInterpreter());
             //Entry entry = new Entry(dn, entryDefinition, values);
@@ -130,7 +130,6 @@ public class SearchHandler {
             if (!rdn.getNames().equals(childRdn.getNames())) continue;
 
             SearchResults sr = handlerContext.getEngine().search(
-                    connection,
                     path,
                     childDefinition,
                     filter,
@@ -327,7 +326,6 @@ public class SearchHandler {
             if (handlerContext.getFilterTool().isValidEntry(childDefinition, filter)) {
 
                 SearchResults sr = handlerContext.getEngine().search(
-                        connection,
                         path,
                         childDefinition,
                         filter,

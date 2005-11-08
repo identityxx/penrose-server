@@ -128,6 +128,13 @@ public class Connector {
                 cacheName = cacheName == null ? SourceDefinition.DEFAULT_CACHE : cacheName;
                 CacheConfig cacheConfig = connectorConfig.getCacheConfig(cacheName);
 
+                if (cacheConfig == null) {
+                    cacheConfig = new CacheConfig();
+                    cacheConfig.setCacheName("DEFAULT");
+                    cacheConfig.setCacheClass(CacheConfig.DEFAULT_SOURCE_DATA_CACHE);
+                    connectorConfig.addCacheConfig(cacheConfig);
+                }
+
                 String cacheClass = null; // cacheConfig.getCacheClass();
                 cacheClass = cacheClass == null ? CacheConfig.DEFAULT_SOURCE_FILTER_CACHE : cacheClass;
 
@@ -164,36 +171,39 @@ public class Connector {
         return null;
     }
 
-    public void refresh() throws Exception {
-        for (Iterator i=configs.iterator(); i.hasNext(); ) {
-            Config config = (Config)i.next();
+    public Collection getConfigs() {
+        return configs;
+    }
 
-            Collection connectionConfigs = config.getConnectionConfigs();
-            for (Iterator j=connectionConfigs.iterator(); j.hasNext(); ) {
-                ConnectionConfig connectionConfig = (ConnectionConfig)j.next();
+    public void refresh(Config config) throws Exception {
 
-                Collection sourceDefinitions = connectionConfig.getSourceDefinitions();
-                for (Iterator k=sourceDefinitions.iterator(); k.hasNext(); ) {
-                    SourceDefinition sourceDefinition = (SourceDefinition)k.next();
+        //log.debug("Refreshing cache ...");
 
-                    String s = sourceDefinition.getParameter(SourceDefinition.AUTO_REFRESH);
-                    boolean autoRefresh = s == null ? SourceDefinition.DEFAULT_AUTO_REFRESH : new Boolean(s).booleanValue();
+        Collection connectionConfigs = config.getConnectionConfigs();
+        for (Iterator j=connectionConfigs.iterator(); j.hasNext(); ) {
+            ConnectionConfig connectionConfig = (ConnectionConfig)j.next();
 
-                    if (!autoRefresh) continue;
+            Collection sourceDefinitions = connectionConfig.getSourceDefinitions();
+            for (Iterator k=sourceDefinitions.iterator(); k.hasNext(); ) {
+                SourceDefinition sourceDefinition = (SourceDefinition)k.next();
 
-                    log.debug(Formatter.displaySeparator(80));
-                    log.debug(Formatter.displayLine("Refreshing source caches for "+sourceDefinition.getConnectionName()+"/"+sourceDefinition.getName(), 80));
-                    log.debug(Formatter.displaySeparator(80));
+                String s = sourceDefinition.getParameter(SourceDefinition.AUTO_REFRESH);
+                boolean autoRefresh = s == null ? SourceDefinition.DEFAULT_AUTO_REFRESH : new Boolean(s).booleanValue();
 
-                    s = sourceDefinition.getParameter(SourceDefinition.REFRESH_METHOD);
-                    String refreshMethod = s == null ? SourceDefinition.DEFAULT_REFRESH_METHOD : s;
+                if (!autoRefresh) continue;
 
-                    if (SourceDefinition.POLL_CHANGES.equals(refreshMethod)) {
-                        pollChanges(connectionConfig, sourceDefinition);
+                log.debug(Formatter.displaySeparator(80));
+                log.debug(Formatter.displayLine("Refreshing source caches for "+sourceDefinition.getConnectionName()+"/"+sourceDefinition.getName(), 80));
+                log.debug(Formatter.displaySeparator(80));
 
-                    } else { // if (SourceDefinition.RELOAD_EXPIRED.equals(refreshMethod)) {
-                        reloadExpired(connectionConfig, sourceDefinition);
-                    }
+                s = sourceDefinition.getParameter(SourceDefinition.REFRESH_METHOD);
+                String refreshMethod = s == null ? SourceDefinition.DEFAULT_REFRESH_METHOD : s;
+
+                if (SourceDefinition.POLL_CHANGES.equals(refreshMethod)) {
+                    pollChanges(connectionConfig, sourceDefinition);
+
+                } else { // if (SourceDefinition.RELOAD_EXPIRED.equals(refreshMethod)) {
+                    reloadExpired(connectionConfig, sourceDefinition);
                 }
             }
         }

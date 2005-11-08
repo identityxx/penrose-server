@@ -54,7 +54,8 @@ public class MergeGraphVisitor extends GraphVisitor {
             EntryDefinition entryDefinition,
             AttributeValues primarySourceValues,
             AttributeValues loadedSourceValues,
-            Source primarySource) throws Exception {
+            Source primarySource,
+            Filter filter) throws Exception {
 
         this.engine = engine;
         this.engineContext = engine.getEngineContext();
@@ -67,6 +68,11 @@ public class MergeGraphVisitor extends GraphVisitor {
         graph = engine.getGraph(entryDefinition);
 
         sourceValues.add(primarySourceValues);
+
+        Map map = new HashMap();
+        map.put("filter", filter);
+
+        stack.push(map);
     }
 
     public void run() throws Exception {
@@ -80,12 +86,12 @@ public class MergeGraphVisitor extends GraphVisitor {
         log.debug(Formatter.displaySeparator(60));
         log.debug(Formatter.displayLine("Visiting "+source.getName(), 60));
         log.debug(Formatter.displaySeparator(60));
-
+/*
         if (source == primarySource) {
             graphIterator.traverseEdges(node);
             return;
         }
-
+*/
         Map map = (Map)stack.peek();
         Filter filter = (Filter)map.get("filter");
         Collection relationships = (Collection)map.get("relationships");
@@ -108,7 +114,12 @@ public class MergeGraphVisitor extends GraphVisitor {
                 AttributeValues av = (AttributeValues)i.next();
                 //log.debug(" - "+av);
 
-                if (!engine.getJoinEngine().evaluate(relationships, sourceValues, av)) continue;
+                if (relationships == null) {
+                    if (!engineContext.getFilterTool().isValidEntry(av, filter)) continue;
+
+                } else {
+                    if (!engine.getJoinEngine().evaluate(relationships, sourceValues, av)) continue;
+                }
 
                 sourceValues.add(av);
             }
