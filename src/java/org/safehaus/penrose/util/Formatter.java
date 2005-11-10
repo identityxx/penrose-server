@@ -17,10 +17,23 @@
  */
 package org.safehaus.penrose.util;
 
+import java.util.Collection;
+import java.util.ArrayList;
+
 /**
  * @author Endi S. Dewata
  */
 public class Formatter {
+
+    public static Collection split(String s, int length) {
+        Collection list = new ArrayList();
+        while (s.length() > length-4) {
+            list.add(s.substring(0, length-4));
+            s = s.substring(length-4);
+        }
+        list.add(s);
+        return list;
+    }
 
     public static String displaySeparator(int length) {
         return "+"+repeat("-", length-2)+"+";

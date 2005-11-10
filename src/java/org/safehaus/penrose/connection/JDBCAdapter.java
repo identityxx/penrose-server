@@ -271,14 +271,11 @@ public class JDBCAdapter extends Adapter {
             con = ds.getConnection();
 
             log.debug(Formatter.displaySeparator(80));
-            log.debug(Formatter.displayLine(select.toString(), 80));
-            log.debug(Formatter.displayLine(from.toString(), 80));
-
-            if (whereClause.length() > 0) {
-                log.debug(Formatter.displayLine(whereClause.toString(), 80));
+            Collection lines = Formatter.split(sql, 80);
+            for (Iterator i=lines.iterator(); i.hasNext(); ) {
+                String line = (String)i.next();
+                log.debug(Formatter.displayLine(line, 80));
             }
-
-            log.debug(Formatter.displayLine(orderBy.toString(), 80));
             log.debug(Formatter.displaySeparator(80));
 
             ps = con.prepareStatement(sql);
@@ -363,6 +360,7 @@ public class JDBCAdapter extends Adapter {
         row.set("changeNumber", rs.getObject(c++));
         row.set("changeTime", rs.getObject(c++));
         row.set("changeAction", rs.getObject(c++));
+        row.set("changeUser", rs.getObject(c++));
 
         Collection fields = sourceDefinition.getPrimaryKeyFieldDefinitions();
         for (Iterator i=fields.iterator(); i.hasNext(); c++) {
@@ -734,7 +732,7 @@ public class JDBCAdapter extends Adapter {
         int sizeLimit = 100;
 
         StringBuffer columns = new StringBuffer();
-        columns.append("select changeNumber, changeTime, changeAction, ");
+        columns.append("select changeNumber, changeTime, changeAction, changeUser, ");
         columns.append(getPkFieldNames(sourceDefinition));
 
         StringBuffer table = new StringBuffer();
@@ -757,9 +755,11 @@ public class JDBCAdapter extends Adapter {
             con = ds.getConnection();
 
             log.debug(Formatter.displaySeparator(80));
-            log.debug(Formatter.displayLine(columns.toString(), 80));
-            log.debug(Formatter.displayLine(table.toString(), 80));
-            log.debug(Formatter.displayLine(whereClause.toString(), 80));
+            Collection lines = Formatter.split(sql, 80);
+            for (Iterator i=lines.iterator(); i.hasNext(); ) {
+                String line = (String)i.next();
+                log.debug(Formatter.displayLine(line, 80));
+            }
             log.debug(Formatter.displaySeparator(80));
 
             ps = con.prepareStatement(sql);
@@ -841,13 +841,14 @@ public class JDBCAdapter extends Adapter {
 
         StringBuffer resultHeader = new StringBuffer();
         resultHeader.append("| ");
-        resultHeader.append(Formatter.rightPad("#", 10));
+        resultHeader.append(Formatter.rightPad("#", 5));
         resultHeader.append(" | ");
         resultHeader.append(Formatter.rightPad("time", 19));
         resultHeader.append(" | ");
         resultHeader.append(Formatter.rightPad("action", 10));
+        resultHeader.append(" | ");
+        resultHeader.append(Formatter.rightPad("user", 10));
         resultHeader.append(" |");
-
 
         Collection fields = sourceDefinition.getPrimaryKeyFieldDefinitions();
         for (Iterator j=fields.iterator(); j.hasNext(); ) {
@@ -916,11 +917,13 @@ public class JDBCAdapter extends Adapter {
     public void printChanges(SourceDefinition sourceDefinition, Row row) throws Exception {
         StringBuffer resultFields = new StringBuffer();
         resultFields.append("| ");
-        resultFields.append(Formatter.rightPad(row.get("changeNumber").toString(), 10));
+        resultFields.append(Formatter.rightPad(row.get("changeNumber").toString(), 5));
         resultFields.append(" | ");
         resultFields.append(Formatter.rightPad(row.get("changeTime").toString(), 19));
         resultFields.append(" | ");
         resultFields.append(Formatter.rightPad(row.get("changeAction").toString(), 10));
+        resultFields.append(" | ");
+        resultFields.append(Formatter.rightPad(row.get("changeUser").toString(), 10));
         resultFields.append(" |");
 
         Collection fields = sourceDefinition.getPrimaryKeyFieldDefinitions();

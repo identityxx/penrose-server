@@ -158,6 +158,23 @@ public class Penrose implements
 
         addConfig(config);
 
+        File partitions = new File((homeDirectory == null ? "" : homeDirectory+File.separator)+"partitions");
+
+        if (partitions.exists()) {
+            File files[] = partitions.listFiles();
+            for (int i=0; i<files.length; i++) {
+                File partition = files[i];
+
+                try {
+                    config = configReader.read(partition.getAbsolutePath());
+                    addConfig(config);
+
+                } catch (Exception e) {
+                    log.error(e.getMessage(), e);
+                }
+            }
+        }
+
 		return LDAPException.SUCCESS;
 	}
 

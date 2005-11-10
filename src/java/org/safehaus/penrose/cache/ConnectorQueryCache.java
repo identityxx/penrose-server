@@ -26,22 +26,15 @@ import java.util.*;
 /**
  * @author Endi S. Dewata
  */
-public class ConnectorQueryCache {
+public abstract class ConnectorQueryCache {
 
     Logger log = Logger.getLogger(getClass());
-
-    public Map dataMap = new TreeMap();
-    public Map expirationMap = new LinkedHashMap();
 
     private CacheConfig cacheConfig;
     private SourceDefinition sourceDefinition;
 
     private int size;
     private int expiration; // minutes
-
-    public void setSourceDefinition(SourceDefinition sourceDefinition) {
-        this.sourceDefinition = sourceDefinition;
-    }
 
     public void init(CacheConfig cacheConfig) throws Exception {
         this.cacheConfig = cacheConfig;
@@ -63,47 +56,11 @@ public class ConnectorQueryCache {
         if (s != null) expiration = Integer.parseInt(s);
     }
 
-    public Collection get(Filter filter) throws Exception {
+    public abstract Collection get(Filter filter) throws Exception;
 
-        String key = filter == null ? "" : filter.toString();
+    public abstract void put(Filter filter, Collection pks) throws Exception;
 
-        Collection pks = (Collection)dataMap.get(key);
-        Date date = (Date)expirationMap.get(key);
-
-        if (date == null || date.getTime() <= System.currentTimeMillis()) {
-            dataMap.remove(key);
-            expirationMap.remove(key);
-            pks = null;
-        }
-
-        //log.debug("Getting source filter cache: ["+key+"] => "+pks);
-
-        return pks;
-    }
-
-    public void put(Filter filter, Collection pks) throws Exception {
-        if (size == 0) return;
-        
-        String key = filter == null ? "" : filter.toString();
-
-        Object object = dataMap.get(key);
-
-        while (object == null && dataMap.size() >= size) {
-            //log.debug("Trimming source filter cache ("+dataMap.size()+").");
-            Object k = dataMap.keySet().iterator().next();
-            dataMap.remove(k);
-            expirationMap.remove(k);
-        }
-
-        //log.debug("Storing source filter cache: ["+key+"] => "+pks);
-        dataMap.put(key, pks);
-        expirationMap.put(key, new Date(System.currentTimeMillis() + expiration * 60 * 1000));
-    }
-
-    public void invalidate() throws Exception {
-        dataMap.clear();
-        expirationMap.clear();
-    }
+    public abstract void invalidate() throws Exception;
 
     public int getSize() {
         return size;
@@ -123,5 +80,17 @@ public class ConnectorQueryCache {
 
     public SourceDefinition getSourceDefinition() {
         return sourceDefinition;
+    }
+
+    public void setSourceDefinition(SourceDefinition sourceDefinition) {
+        this.sourceDefinition = sourceDefinition;
+    }
+
+    public int getExpiration() {
+        return expiration;
+    }
+
+    public void setExpiration(int expiration) {
+        this.expiration = expiration;
     }
 }

@@ -120,6 +120,9 @@ public class SchemaGenerator {
         if (file.isDirectory()) return;
 
         String path = file.getPath().substring(prefix.length()+1);
+        path = path.replace('\\', '/');
+        if (path.endsWith(".java")) return;
+
         //System.out.println("Adding "+path);
 
         FileInputStream is = new FileInputStream(file);
@@ -168,8 +171,9 @@ public class SchemaGenerator {
         }
 
         File file = new File(args[0]);
+        file = file.getAbsoluteFile();
 
-        System.out.print("Generating schema classes for "+file.getAbsolutePath()+"...");
+        System.out.print("Generating schema classes for "+file.getPath()+"...");
         System.out.flush();
 
         SchemaGenerator sg = new SchemaGenerator(file);

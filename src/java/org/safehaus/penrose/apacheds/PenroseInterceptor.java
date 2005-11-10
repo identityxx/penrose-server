@@ -62,33 +62,8 @@ public class PenroseInterceptor extends BaseInterceptor {
 
     public void init(DirectoryServiceConfiguration factoryCfg, InterceptorConfiguration cfg) throws NamingException
     {
-        log.debug("===============================================================================");
-        log.debug("init");
         super.init(factoryCfg, cfg);
         this.factoryCfg = factoryCfg;
-
-        File partitions = new File(penrose.getHomeDirectory()+File.separator+"partitions");
-        if (!partitions.exists()) return;
-
-        File files[] = partitions.listFiles();
-        for (int i=0; i<files.length; i++) {
-            File partition = files[i];
-            String name = partition.getName();
-
-            log.debug("-------------------------------------------------------------------------------");
-            log.debug("Initializing "+name+" partition ...");
-
-            try {
-                ConfigReader reader = new ConfigReader();
-                Config config = reader.read(partition.getAbsolutePath());
-                //log.debug(config.toString());
-
-                penrose.addConfig(config);
-
-            } catch (Exception e) {
-                log.error(e.getMessage(), e);
-            }
-        }
     }
 
     public void add(

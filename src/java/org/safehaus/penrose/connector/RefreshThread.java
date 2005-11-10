@@ -32,9 +32,16 @@ public class RefreshThread implements Runnable {
     Logger log = Logger.getLogger(getClass());
 
 	private Connector connector;
-	
+    private ConnectorConfig connectorConfig;
+
+    int refreshInterval;
+
 	public RefreshThread(Connector connector) {
 		this.connector = connector;
+        this.connectorConfig = connector.getConnectorConfig();
+
+        String s = connectorConfig.getParameter(ConnectorConfig.REFRESH_INTERVAL);
+        refreshInterval = s == null ? ConnectorConfig.DEFAULT_REFRESH_INTERVAL : Integer.parseInt(s);
 	}
 
 	public void run() {
@@ -43,8 +50,7 @@ public class RefreshThread implements Runnable {
 		while (!connector.isStopping()) {
 
 			try {
-                //Thread.sleep(2 * 60 * 1000); // sleep 2 minutes
-				Thread.sleep(30 * 1000);
+				Thread.sleep(refreshInterval * 1000);
 
                 Collection configs = new ArrayList();
                 configs.addAll(connector.getConfigs());
