@@ -20,9 +20,14 @@ package org.safehaus.penrose.config;
 import org.apache.commons.digester.Digester;
 import org.apache.commons.digester.xmlrules.DigesterLoader;
 import org.apache.log4j.Logger;
+import org.safehaus.penrose.connector.ConnectorConfig;
+import org.safehaus.penrose.engine.EngineConfig;
+import org.safehaus.penrose.cache.CacheConfig;
+import org.safehaus.penrose.interpreter.InterpreterConfig;
 
 import java.io.File;
 import java.net.URL;
+import java.util.Iterator;
 
 /**
  * @author Endi S. Dewata
@@ -62,5 +67,67 @@ public class ServerConfigReader {
         digester.setClassLoader(cl);
 		digester.push(serverConfig);
 		digester.parse(file);
+
+        if (serverConfig.getInterpreterConfigs().isEmpty()) {
+            InterpreterConfig interpreterConfig = new InterpreterConfig();
+            serverConfig.addInterpreterConfig(interpreterConfig);
+        }
+
+        if (serverConfig.getConnectorConfigs().isEmpty()) {
+            ConnectorConfig connectorConfig = new ConnectorConfig();
+            serverConfig.addConnectorConfig(connectorConfig);
+        }
+
+        for (Iterator i=serverConfig.getConnectorConfigs().iterator(); i.hasNext(); ) {
+            ConnectorConfig connectorConfig = (ConnectorConfig)i.next();
+
+            CacheConfig filterCacheConfig = connectorConfig.getCacheConfig(ConnectorConfig.QUERY_CACHE);
+
+            if (filterCacheConfig == null) {
+                filterCacheConfig = new CacheConfig();
+                filterCacheConfig.setCacheName(ConnectorConfig.QUERY_CACHE);
+                filterCacheConfig.setCacheClass(CacheConfig.DEFAULT_CONNECTOR_QUERY_CACHE);
+                connectorConfig.addCacheConfig(filterCacheConfig);
+            }
+
+            CacheConfig dataCacheConfig = connectorConfig.getCacheConfig(ConnectorConfig.DATA_CACHE);
+
+            if (dataCacheConfig == null) {
+                dataCacheConfig = new CacheConfig();
+                dataCacheConfig.setCacheName(ConnectorConfig.DATA_CACHE);
+                dataCacheConfig.setCacheClass(CacheConfig.DEFAULT_CONNECTOR_DATA_CACHE);
+                connectorConfig.addCacheConfig(dataCacheConfig);
+            }
+
+        }
+
+        if (serverConfig.getEngineConfigs().isEmpty()) {
+            EngineConfig engineConfig = new EngineConfig();
+            serverConfig.addEngineConfig(engineConfig);
+        }
+
+        for (Iterator i=serverConfig.getEngineConfigs().iterator(); i.hasNext(); ) {
+            EngineConfig engineConfig = (EngineConfig)i.next();
+
+            CacheConfig filterCacheConfig = engineConfig.getCacheConfig(EngineConfig.QUERY_CACHE);
+
+            if (filterCacheConfig == null) {
+                filterCacheConfig = new CacheConfig();
+                filterCacheConfig.setCacheName(EngineConfig.QUERY_CACHE);
+                filterCacheConfig.setCacheClass(CacheConfig.DEFAULT_ENGINE_QUERY_CACHE);
+                engineConfig.addCacheConfig(filterCacheConfig);
+            }
+
+            CacheConfig dataCacheConfig = engineConfig.getCacheConfig(EngineConfig.DATA_CACHE);
+
+            if (dataCacheConfig == null) {
+                dataCacheConfig = new CacheConfig();
+                dataCacheConfig.setCacheName(EngineConfig.DATA_CACHE);
+                dataCacheConfig.setCacheClass(CacheConfig.DEFAULT_ENGINE_DATA_CACHE);
+                engineConfig.addCacheConfig(dataCacheConfig);
+            }
+
+        }
+
 	}
 }

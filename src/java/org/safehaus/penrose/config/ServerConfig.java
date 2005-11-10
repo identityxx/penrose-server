@@ -180,8 +180,27 @@ public class ServerConfig implements Serializable {
         engineConfigs.put(engineConfig.getEngineName(), engineConfig);
     }
 
+    public EngineConfig getEngineConfig(String engineName) {
+        return (EngineConfig)engineConfigs.get(engineName);
+    }
+
     public Collection getEngineConfigs() {
         return engineConfigs.values();
+    }
+
+    public EngineConfig removeEngineConfig(String engineName) {
+        return (EngineConfig)engineConfigs.remove(engineName);
+    }
+
+    public void renameEngineConfig(String oldEngineName, String newEngineName) {
+        EngineConfig engineConfig = removeEngineConfig(oldEngineName);
+        engineConfig.setEngineName(newEngineName);
+        addEngineConfig(engineConfig);
+    }
+
+    public void modifyEngineConfig(String engineName, EngineConfig newEngineConfig) {
+        EngineConfig engineConfig = getEngineConfig(engineName);
+        engineConfig.copy(newEngineConfig);
     }
 
     public void addInterpreterConfig(InterpreterConfig interpreterConfig) {
@@ -230,5 +249,16 @@ public class ServerConfig implements Serializable {
 
     public void setConnectorConfigs(Map connectorConfigs) {
         this.connectorConfigs = connectorConfigs;
+    }
+
+    public void renameConnectorConfig(String oldConnectorName, String newConnectorName) {
+        ConnectorConfig connectorConfig = removeConnectorConfig(oldConnectorName);
+        connectorConfig.setConnectorName(newConnectorName);
+        addConnectorConfig(connectorConfig);
+    }
+
+    public void modifyConnectorConfig(String connectorName, ConnectorConfig newConnectorConfig) {
+        ConnectorConfig connectorConfig = getConnectorConfig(connectorName);
+        connectorConfig.copy(newConnectorConfig);
     }
 }

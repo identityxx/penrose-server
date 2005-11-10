@@ -85,12 +85,6 @@ public class ServerConfigWriter {
             element.add(toElement(engineConfig));
         }
 
-		// caches
-        for (Iterator iter = serverConfig.getCacheConfigs().iterator(); iter.hasNext();) {
-            CacheConfig cacheConfig = (CacheConfig)iter.next();
-            element.add(toElement(cacheConfig));
-        }
-
         // connectors
         for (Iterator iter = serverConfig.getConnectorConfigs().iterator(); iter.hasNext();) {
             ConnectorConfig connectorConfig = (ConnectorConfig)iter.next();
@@ -233,6 +227,11 @@ public class ServerConfigWriter {
             element.add(parameter);
         }
 
+        for (Iterator iter = engineConfig.getCacheConfigs().iterator(); iter.hasNext();) {
+            CacheConfig cacheConfig = (CacheConfig)iter.next();
+            element.add(toElement(cacheConfig));
+        }
+
         return element;
     }
 
@@ -309,6 +308,11 @@ public class ServerConfigWriter {
             parameter.add(paramValue);
 
             element.add(parameter);
+        }
+
+        for (Iterator iter = connectorConfig.getCacheConfigs().iterator(); iter.hasNext();) {
+            CacheConfig cacheConfig = (CacheConfig)iter.next();
+            element.add(toElement(cacheConfig));
         }
 
     	return element;

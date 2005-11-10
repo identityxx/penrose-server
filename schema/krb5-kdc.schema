@@ -1,5 +1,4 @@
 # $OpenLDAP: pkg/ldap/servers/slapd/schema/krb5-kdc.schema,v 1.1.2.1 2000/09/05 18:28:34 kurt Exp $
-# $Id: krb5-kdc.schema 2370 2004-08-24 19:14:47Z adison $
 # Definitions for a Kerberos V KDC schema
 
 # OID Base is iso(1) org(3) dod(6) internet(1) private(4) enterprise(1) padl(5322) kdcSchema(10)

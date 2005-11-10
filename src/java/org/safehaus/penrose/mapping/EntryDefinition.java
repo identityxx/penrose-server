@@ -32,21 +32,18 @@ import java.io.Serializable;
  */
 public class EntryDefinition implements Cloneable, Serializable {
 
-    public final static String FILTER_CACHE_SIZE       = "filterCacheSize";
-    public final static String FILTER_CACHE_EXPIRATION = "filterCacheExpiration";
+    public final static String QUERY_CACHE_SIZE        = "queryCacheSize";
+    public final static String QUERY_CACHE_EXPIRATION  = "queryCacheExpiration";
 
     public final static String DATA_CACHE_SIZE         = "dataCacheSize";
     public final static String DATA_CACHE_EXPIRATION   = "dataCacheExpiration";
-
-    public final static String SOURCE_CACHE_SIZE       = "sourceCacheSize";
-    public final static String SOURCE_CACHE_EXPIRATION = "sourceCacheExpiration";
 
     public final static String BATCH_SIZE              = "batchSize";
 
     public final static String CACHE                   = "cache";
 
-    public final static int    DEFAULT_FILTER_CACHE_SIZE       = 100;
-    public final static int    DEFAULT_FILTER_CACHE_EXPIRATION = 5;
+    public final static int    DEFAULT_QUERY_CACHE_SIZE        = 100;
+    public final static int    DEFAULT_QUERY_CACHE_EXPIRATION  = 5;
 
     public final static int    DEFAULT_DATA_CACHE_SIZE         = 100;
     public final static int    DEFAULT_DATA_CACHE_EXPIRATION   = 5;
@@ -488,60 +485,6 @@ public class EntryDefinition implements Cloneable, Serializable {
         if (!equals(parameters, entryDefinition.parameters)) return false;
 
         return true;
-    }
-
-    public String toString() {
-    	StringBuffer sb = new StringBuffer();
-    	Iterator iter = null;
-
-    	sb.append("dn="+rdn);
-        if (parentDn != null) {
-            sb.append(","+parentDn);
-        }
-        sb.append(",");
-
-    	sb.append("objectClasses=[");
-    	iter = objectClasses.iterator();
-    	while (iter.hasNext()) {
-    		Object next = (Object) iter.next();
-    		sb.append(next.toString()+", ");
-    	}
-    	sb.append("], ");
-
-    	sb.append("objectClasses=[");
-    	iter = objectClasses.iterator();
-    	while (iter.hasNext()) {
-    		Object next = (Object) iter.next();
-    		sb.append(next.toString()+", ");
-    	}
-    	sb.append("], ");
-
-    	sb.append("attributes=[");
-    	iter = attributeDefinitions.keySet().iterator();
-    	while (iter.hasNext()) {
-    		Object next = (Object) iter.next();
-    		Object val  = (Object) attributeDefinitions.get(next);
-    		sb.append(next.toString()+"="+val+", ");
-    	}
-    	sb.append("], ");
-
-    	sb.append("sources=[");
-    	iter = sources.iterator();
-    	while (iter.hasNext()) {
-    		Object next = (Object) iter.next();
-    		sb.append(next.toString()+", ");
-    	}
-    	sb.append("], ");
-
-    	sb.append("relationships=[");
-    	iter = relationships.iterator();
-    	while (iter.hasNext()) {
-    		Object next = (Object) iter.next();
-    		sb.append(next.toString()+", ");
-    	}
-    	sb.append("], ");
-
-    	return sb.toString();
     }
 
 }

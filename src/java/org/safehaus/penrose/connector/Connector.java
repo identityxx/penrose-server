@@ -18,9 +18,9 @@
 package org.safehaus.penrose.connector;
 
 import org.safehaus.penrose.SearchResults;
-import org.safehaus.penrose.cache.SourceFilterCache;
+import org.safehaus.penrose.cache.ConnectorQueryCache;
 import org.safehaus.penrose.cache.CacheConfig;
-import org.safehaus.penrose.cache.SourceDataCache;
+import org.safehaus.penrose.cache.ConnectorDataCache;
 import org.safehaus.penrose.engine.TransformEngine;
 import org.safehaus.penrose.util.Formatter;
 import org.safehaus.penrose.config.Config;
@@ -124,36 +124,27 @@ public class Connector {
 
                 String key = connectionConfig.getConnectionName()+"."+sourceDefinition.getName();
 
-                String cacheName = sourceDefinition.getParameter(SourceDefinition.CACHE);
-                cacheName = cacheName == null ? SourceDefinition.DEFAULT_CACHE : cacheName;
-                CacheConfig cacheConfig = connectorConfig.getCacheConfig(cacheName);
+                CacheConfig fiterCacheConfig = connectorConfig.getCacheConfig(ConnectorConfig.QUERY_CACHE);
+                String filterCacheClass = fiterCacheConfig.getCacheClass();
+                filterCacheClass = filterCacheClass == null ? CacheConfig.DEFAULT_CONNECTOR_QUERY_CACHE : filterCacheClass;
 
-                if (cacheConfig == null) {
-                    cacheConfig = new CacheConfig();
-                    cacheConfig.setCacheName("DEFAULT");
-                    cacheConfig.setCacheClass(CacheConfig.DEFAULT_SOURCE_DATA_CACHE);
-                    connectorConfig.addCacheConfig(cacheConfig);
-                }
+                clazz = Class.forName(filterCacheClass);
+                ConnectorQueryCache connectorQueryCache = (ConnectorQueryCache)clazz.newInstance();
+                connectorQueryCache.setSourceDefinition(sourceDefinition);
+                connectorQueryCache.init(fiterCacheConfig);
 
-                String cacheClass = null; // cacheConfig.getCacheClass();
-                cacheClass = cacheClass == null ? CacheConfig.DEFAULT_SOURCE_FILTER_CACHE : cacheClass;
+                sourceFilterCaches.put(key, connectorQueryCache);
 
-                clazz = Class.forName(cacheClass);
-                SourceFilterCache sourceFilterCache = (SourceFilterCache)clazz.newInstance();
-                sourceFilterCache.setSourceDefinition(sourceDefinition);
-                sourceFilterCache.init(cacheConfig);
+                CacheConfig dataCacheConfig = connectorConfig.getCacheConfig(ConnectorConfig.DATA_CACHE);
+                String dataCacheClass = dataCacheConfig.getCacheClass();
+                dataCacheClass = dataCacheClass == null ? CacheConfig.DEFAULT_CONNECTOR_DATA_CACHE : dataCacheClass;
 
-                sourceFilterCaches.put(key, sourceFilterCache);
+                clazz = Class.forName(dataCacheClass);
+                ConnectorDataCache connectorDataCache = (ConnectorDataCache)clazz.newInstance();
+                connectorDataCache.setSourceDefinition(sourceDefinition);
+                connectorDataCache.init(dataCacheConfig);
 
-                cacheClass = cacheConfig.getCacheClass();
-                cacheClass = cacheClass == null ? CacheConfig.DEFAULT_SOURCE_DATA_CACHE : cacheClass;
-
-                clazz = Class.forName(cacheClass);
-                SourceDataCache sourceDataCache = (SourceDataCache)clazz.newInstance();
-                sourceDataCache.setSourceDefinition(sourceDefinition);
-                sourceDataCache.init(cacheConfig);
-
-                sourceDataCaches.put(key, sourceDataCache);
+                sourceDataCaches.put(key, connectorDataCache);
             }
         }
     }
@@ -892,17 +883,17 @@ public class Connector {
         this.connectorConfig = connectorConfig;
     }
 
-    public SourceFilterCache getSourceFilterCache(ConnectionConfig connectionConfig, SourceDefinition sourceDefinition) throws Exception {
+    public ConnectorQueryCache getSourceFilterCache(ConnectionConfig connectionConfig, SourceDefinition sourceDefinition) throws Exception {
         String key = connectionConfig.getConnectionName()+"."+sourceDefinition.getName();
-        return (SourceFilterCache)sourceFilterCaches.get(key);
+        return (ConnectorQueryCache)sourceFilterCaches.get(key);
     }
 
-    public SourceDataCache getSourceDataCache(ConnectionConfig connectionConfig, SourceDefinition sourceDefinition) throws Exception {
+    public ConnectorDataCache getSourceDataCache(ConnectionConfig connectionConfig, SourceDefinition sourceDefinition) throws Exception {
         String key = connectionConfig.getConnectionName()+"."+sourceDefinition.getName();
-        return (SourceDataCache)sourceDataCaches.get(key);
+        return (ConnectorDataCache)sourceDataCaches.get(key);
     }
 
-    public static void load(Adapter adapter, SourceDataCache cache, SourceDefinition srcDef) throws Exception {
+    public static void load(Adapter adapter, ConnectorDataCache cache, SourceDefinition srcDef) throws Exception {
         String s = srcDef.getParameter(SourceDefinition.AUTO_REFRESH);
         boolean autoRefresh = s == null ? SourceDefinition.DEFAULT_AUTO_REFRESH : new Boolean(s).booleanValue();
 
@@ -986,16 +977,16 @@ public class Connector {
                 for (Iterator k=sourceDefinitions.iterator(); k.hasNext(); ) {
                     SourceDefinition srcDef = (SourceDefinition)k.next();
 
-                    SourceDataCache sourceDataCache = connector.getSourceDataCache(conCfg, srcDef);
+                    ConnectorDataCache connectorDataCache = connector.getSourceDataCache(conCfg, srcDef);
 
                     if ("create".equals(command)) {
-                        sourceDataCache.create();
+                        connectorDataCache.create();
 
                     } else if ("load".equals(command)) {
-                        load(adapter, sourceDataCache, srcDef);
+                        load(adapter, connectorDataCache, srcDef);
 
                     } else if ("clean".equals(command)) {
-                        sourceDataCache.clean();
+                        connectorDataCache.clean();
                     }
                 }
             }

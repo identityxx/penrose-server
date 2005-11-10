@@ -24,7 +24,7 @@ import java.util.*;
 /**
  * @author Endi S. Dewata
  */
-public class JDBCSourceDataCache extends SourceDataCache {
+public class JDBCConnectorDataCache extends ConnectorDataCache {
 
     JDBCCache cache;
 

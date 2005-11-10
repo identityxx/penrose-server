@@ -23,7 +23,7 @@ import org.safehaus.penrose.mapping.Entry;
 /**
  * @author Endi S. Dewata
  */
-public abstract class EntryDataCache extends Cache {
+public abstract class EngineDataCache extends Cache {
 
     String parentDn;
     EntryDefinition entryDefinition;
@@ -36,7 +36,6 @@ public abstract class EntryDataCache extends Cache {
 
         s = entryDefinition.getParameter(EntryDefinition.DATA_CACHE_EXPIRATION);
         if (s != null) expiration = Integer.parseInt(s);
-        expiration = 0;
     }
 
     public EntryDefinition getEntryDefinition() {

@@ -21,10 +21,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.io.Serializable;
 
-/**
- * @author Endi S. Dewata
- * @author Adison Wongkar
- */
 public class AttributeType implements Serializable {
 
 	public final static String USER_APPLICATIONS     = "userApplications";

@@ -33,8 +33,8 @@ public class SourceDefinition implements Cloneable {
     public final static String LOAD_ON_STARTUP         = "loadOnStartup";
     public final static String LOAD_UPON_EXPIRATION    = "loadUponExpiration";
 
-    public final static String FILTER_CACHE_SIZE       = "filterCacheSize";
-    public final static String FILTER_CACHE_EXPIRATION = "filterCacheExpiration";
+    public final static String QUERY_CACHE_SIZE        = "queryCacheSize";
+    public final static String QUERY_CACHE_EXPIRATION  = "queryCacheExpiration";
 
     public final static String DATA_CACHE_SIZE         = "dataCacheSize";
     public final static String DATA_CACHE_EXPIRATION   = "dataCacheExpiration";
@@ -50,8 +50,8 @@ public class SourceDefinition implements Cloneable {
     public final static boolean DEFAULT_AUTO_REFRESH           = false;
     public final static String DEFAULT_REFRESH_METHOD          = RELOAD_EXPIRED;
 
-    public final static int    DEFAULT_FILTER_CACHE_SIZE       = 100;
-    public final static int    DEFAULT_FILTER_CACHE_EXPIRATION = 5;
+    public final static int    DEFAULT_QUERY_CACHE_SIZE        = 100;
+    public final static int    DEFAULT_QUERY_CACHE_EXPIRATION  = 5;
 
     public final static int    DEFAULT_DATA_CACHE_SIZE         = 100;
     public final static int    DEFAULT_DATA_CACHE_EXPIRATION   = 5;

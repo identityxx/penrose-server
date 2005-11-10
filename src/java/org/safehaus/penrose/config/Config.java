@@ -25,11 +25,6 @@ import org.safehaus.penrose.module.ModuleMapping;
 import org.safehaus.penrose.module.ModuleConfig;
 import org.safehaus.penrose.mapping.*;
 
-
-/**
- * @author Endi S. Dewata
- * @author Adison Wongkar 
- */
 public class Config implements Serializable {
 
     Logger log = Logger.getLogger(getClass());

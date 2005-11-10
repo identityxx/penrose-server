@@ -26,7 +26,7 @@ import java.util.*;
 /**
  * @author Endi S. Dewata
  */
-public class EntryFilterCache {
+public class EngineQueryCache {
 
     Logger log = Logger.getLogger(getClass());
 
@@ -54,10 +54,10 @@ public class EntryFilterCache {
     }
 
     public void init() throws Exception {
-        String s = entryDefinition.getParameter(EntryDefinition.FILTER_CACHE_SIZE);
+        String s = entryDefinition.getParameter(EntryDefinition.QUERY_CACHE_SIZE);
         if (s != null) size = Integer.parseInt(s);
 
-        s = entryDefinition.getParameter(EntryDefinition.FILTER_CACHE_EXPIRATION);
+        s = entryDefinition.getParameter(EntryDefinition.QUERY_CACHE_EXPIRATION);
         if (s != null) expiration = Integer.parseInt(s);
     }
 

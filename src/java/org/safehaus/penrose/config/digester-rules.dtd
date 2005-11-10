@@ -17,14 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  
-        "Digester" component of the Jakarta Commons Subproject
-        DTD for the definition of Digester rules in XML.
-        $Id: digester-rules.dtd 2290 2004-08-12 04:46:31Z adison $
 -->
-
-<!-- This document type defines an XML format for defining Digester rules.
-     Digester is a framework for pattern-matching-based parsing of XML into
-     Java objects. See http://jakarta.apache.org/commons/digester.html.  -->
 
 <!ENTITY % rule-elements "bean-property-setter-rule | call-method-rule | call-param-rule |
                    factory-create-rule | object-create-rule |

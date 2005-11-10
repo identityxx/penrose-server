@@ -21,10 +21,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.io.Serializable;
 
-/**
- * @author Endi S. Dewata
- * @author Adison Wongkar
- */
 public class ObjectClass implements Serializable {
 	
 	public final static String ABSTRACT   = "ABSTRACT";

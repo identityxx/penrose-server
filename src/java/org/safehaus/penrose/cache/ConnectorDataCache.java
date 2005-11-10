@@ -24,7 +24,7 @@ import java.util.*;
 /**
  * @author Endi S. Dewata
  */
-public abstract class SourceDataCache extends Cache {
+public abstract class ConnectorDataCache extends Cache {
 
     SourceDefinition sourceDefinition;
 

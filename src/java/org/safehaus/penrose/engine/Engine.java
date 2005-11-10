@@ -18,9 +18,9 @@
 package org.safehaus.penrose.engine;
 
 import org.safehaus.penrose.SearchResults;
-import org.safehaus.penrose.cache.EntryFilterCache;
+import org.safehaus.penrose.cache.EngineQueryCache;
 import org.safehaus.penrose.cache.CacheConfig;
-import org.safehaus.penrose.cache.EntryDataCache;
+import org.safehaus.penrose.cache.EngineDataCache;
 import org.safehaus.penrose.util.Formatter;
 import org.safehaus.penrose.config.Config;
 import org.safehaus.penrose.filter.*;
@@ -578,10 +578,10 @@ public class Engine {
 
         final SearchResults entries = new SearchResults();
 
-        if (true) {
-            searchEngine.search(path, entryDefinition, filter, entries);
+        String s = engineConfig.getParameter(EngineConfig.ALLOW_CONCURRENCY);
+        boolean allowConcurrency = s == null ? true : new Boolean(s).booleanValue();
 
-        } else {
+        if (allowConcurrency) {
             execute(new Runnable() {
                 public void run() {
                     try {
@@ -593,6 +593,8 @@ public class Engine {
                     }
                 }
             });
+        } else {
+            searchEngine.search(path, entryDefinition, filter, entries);
         }
 
         SearchResults results = new SearchResults();
@@ -627,10 +629,10 @@ public class Engine {
 
         final SearchResults batches = new SearchResults();
 
-        if (true) {
-            createBatches(entryDefinition, entries, results, batches);
+        String s = engineConfig.getParameter(EngineConfig.ALLOW_CONCURRENCY);
+        boolean allowConcurrency = s == null ? true : new Boolean(s).booleanValue();
 
-        } else {
+        if (allowConcurrency) {
             execute(new Runnable() {
                 public void run() {
                     try {
@@ -642,14 +644,13 @@ public class Engine {
                     }
                 }
             });
+        } else {
+            createBatches(entryDefinition, entries, results, batches);
         }
 
         final SearchResults loadedBatches = new SearchResults();
 
-        if (true) {
-            loadEngine.load(entryDefinition, batches, loadedBatches);
-
-        } else {
+        if (allowConcurrency) {
             execute(new Runnable() {
                 public void run() {
                     try {
@@ -661,12 +662,11 @@ public class Engine {
                     }
                 }
             });
+        } else {
+            loadEngine.load(entryDefinition, batches, loadedBatches);
         }
 
-        if (true) {
-            mergeEngine.merge(entryDefinition, loadedBatches, results);
-
-        } else {
+        if (allowConcurrency) {
             execute(new Runnable() {
                 public void run() {
                     try {
@@ -678,6 +678,8 @@ public class Engine {
                     }
                 }
             });
+        } else {
+            mergeEngine.merge(entryDefinition, loadedBatches, results);
         }
     }
 
@@ -705,7 +707,7 @@ public class Engine {
                 Row normalizedRdn = getEngineContext().getSchema().normalize(rdn);
                 String parentDn = Entry.getParentDn(dn);
 
-                log.debug("Checking "+rdn+" in entry data cache for "+parentDn);
+                log.debug("Checking "+normalizedRdn+" in entry data cache for "+parentDn);
                 Entry entry = (Entry)getEntryDataCache(parentDn, entryDefinition).get(normalizedRdn);
 
                 if (entry != null) {
@@ -1084,28 +1086,22 @@ public class Engine {
         this.engineConfig = engineConfig;
     }
 
-    public EntryFilterCache getEntryFilterCache(String parentDn, EntryDefinition entryDefinition) throws Exception {
+    public EngineQueryCache getEntryFilterCache(String parentDn, EntryDefinition entryDefinition) throws Exception {
         String cacheName = entryDefinition.getParameter(EntryDefinition.CACHE);
         cacheName = cacheName == null ? EntryDefinition.DEFAULT_CACHE : cacheName;
-        CacheConfig cacheConfig = engineConfig.getCacheConfig("EntryFilterCache");
+        CacheConfig cacheConfig = engineConfig.getCacheConfig(EngineConfig.QUERY_CACHE);
 
         String key = entryDefinition.getRdn()+","+parentDn;
 
-        EntryFilterCache cache = (EntryFilterCache)entryFilterCaches.get(key);
+        EngineQueryCache cache = (EngineQueryCache)entryFilterCaches.get(key);
 
         if (cache == null) {
-            if (cacheConfig == null) {
-                cacheConfig = new CacheConfig();
-                cacheConfig.setCacheName("EntryFilterCache");
-                cacheConfig.setCacheClass(CacheConfig.DEFAULT_ENTRY_FILTER_CACHE);
-                engineConfig.addCacheConfig(cacheConfig);
-            }
 
             String cacheClass = cacheConfig.getCacheClass();
-            cacheClass = cacheClass == null ? CacheConfig.DEFAULT_ENTRY_FILTER_CACHE : cacheClass;
+            cacheClass = cacheClass == null ? CacheConfig.DEFAULT_ENGINE_QUERY_CACHE : cacheClass;
 
             Class clazz = Class.forName(cacheClass);
-            cache = (EntryFilterCache)clazz.newInstance();
+            cache = (EngineQueryCache)clazz.newInstance();
 
             cache.setParentDn(parentDn);
             cache.setEntryDefinition(entryDefinition);
@@ -1117,28 +1113,22 @@ public class Engine {
         return cache;
     }
 
-    public EntryDataCache getEntryDataCache(String parentDn, EntryDefinition entryDefinition) throws Exception {
+    public EngineDataCache getEntryDataCache(String parentDn, EntryDefinition entryDefinition) throws Exception {
         String cacheName = entryDefinition.getParameter(EntryDefinition.CACHE);
         cacheName = cacheName == null ? EntryDefinition.DEFAULT_CACHE : cacheName;
-        CacheConfig cacheConfig = engineConfig.getCacheConfig("EntryDataCache");
+        CacheConfig cacheConfig = engineConfig.getCacheConfig(EngineConfig.DATA_CACHE);
 
         String key = entryDefinition.getRdn()+","+parentDn;
 
-        EntryDataCache cache = (EntryDataCache)entryDataCaches.get(key);
+        EngineDataCache cache = (EngineDataCache)entryDataCaches.get(key);
 
         if (cache == null) {
-            if (cacheConfig == null) {
-                cacheConfig = new CacheConfig();
-                cacheConfig.setCacheName("EntryDataCache");
-                cacheConfig.setCacheClass(CacheConfig.DEFAULT_ENTRY_DATA_CACHE);
-                engineConfig.addCacheConfig(cacheConfig);
-            }
 
             String cacheClass = cacheConfig.getCacheClass();
-            cacheClass = cacheClass == null ? CacheConfig.DEFAULT_ENTRY_DATA_CACHE : cacheClass;
+            cacheClass = cacheClass == null ? CacheConfig.DEFAULT_ENGINE_DATA_CACHE : cacheClass;
 
             Class clazz = Class.forName(cacheClass);
-            cache = (EntryDataCache)clazz.newInstance();
+            cache = (EngineDataCache)clazz.newInstance();
 
             cache.setParentDn(parentDn);
             cache.setEntryDefinition(entryDefinition);

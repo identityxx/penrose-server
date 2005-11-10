@@ -26,7 +26,7 @@ import java.util.*;
 /**
  * @author Endi S. Dewata
  */
-public class SourceFilterCache {
+public class ConnectorQueryCache {
 
     Logger log = Logger.getLogger(getClass());
 
@@ -56,10 +56,10 @@ public class SourceFilterCache {
     }
 
     public void init() throws Exception {
-        String s = sourceDefinition.getParameter(SourceDefinition.FILTER_CACHE_SIZE);
+        String s = sourceDefinition.getParameter(SourceDefinition.QUERY_CACHE_SIZE);
         if (s != null) size = Integer.parseInt(s);
 
-        s = sourceDefinition.getParameter(SourceDefinition.FILTER_CACHE_EXPIRATION);
+        s = sourceDefinition.getParameter(SourceDefinition.QUERY_CACHE_EXPIRATION);
         if (s != null) expiration = Integer.parseInt(s);
     }
 

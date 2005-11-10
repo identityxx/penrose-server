@@ -25,8 +25,8 @@ import java.util.Collection;
  */
 public class InterpreterConfig {
 
-    private String interpreterName;
-    private String interpreterClass;
+    private String interpreterName = "DEFAULT";
+    private String interpreterClass = DefaultInterpreter.class.getName();
     private String description;
 
     private Properties parameters = new Properties();

@@ -23,7 +23,7 @@ import java.util.*;
 /**
  * @author Endi S. Dewata
  */
-public class InMemoryEntryDataCache extends EntryDataCache {
+public class InMemoryEngineDataCache extends EngineDataCache {
 
     Map dataMap = new TreeMap();
     Map expirationMap = new LinkedHashMap();

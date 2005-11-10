@@ -24,7 +24,7 @@ import java.util.*;
 /**
  * @author Endi S. Dewata
  */
-public class InMemorySourceDataCache extends SourceDataCache {
+public class InMemoryConnectorDataCache extends ConnectorDataCache {
 
     int lastChangeNumber;
     Map dataMap = new TreeMap();

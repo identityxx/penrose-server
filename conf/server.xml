@@ -8,10 +8,26 @@
   <engine>
     <engine-name>DEFAULT</engine-name>
     <engine-class>org.safehaus.penrose.engine.Engine</engine-class>
+    <cache>
+      <cache-name>Data Cache</cache-name>
+      <cache-class>org.safehaus.penrose.cache.DefaultEngineDataCache</cache-class>
+    </cache>
+    <cache>
+      <cache-name>Query Cache</cache-name>
+      <cache-class>org.safehaus.penrose.cache.DefaultEngineQueryCache</cache-class>
+    </cache>
   </engine>
   <connector>
     <connector-name>DEFAULT</connector-name>
     <connector-class>org.safehaus.penrose.connector.Connector</connector-class>
+    <cache>
+      <cache-name>Data Cache</cache-name>
+      <cache-class>org.safehaus.penrose.cache.DefaultConnectorDataCache</cache-class>
+    </cache>
+    <cache>
+      <cache-name>Query Cache</cache-name>
+      <cache-class>org.safehaus.penrose.cache.DefaultConnectorQueryCache</cache-class>
+    </cache>
   </connector>
   <adapter>
     <adapter-name>JDBC</adapter-name>
