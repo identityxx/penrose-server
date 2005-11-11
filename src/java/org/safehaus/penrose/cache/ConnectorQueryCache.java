@@ -56,7 +56,7 @@ public abstract class ConnectorQueryCache {
         if (s != null) expiration = Integer.parseInt(s);
     }
 
-    public abstract Collection get(Filter filter) throws Exception;
+    public abstract Collection search(Filter filter) throws Exception;
 
     public abstract void put(Filter filter, Collection pks) throws Exception;
 

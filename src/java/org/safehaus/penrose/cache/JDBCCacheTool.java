@@ -33,22 +33,23 @@ public class JDBCCacheTool {
             Collection parameters)
             throws Exception {
 
+        String tableName = getTableName(sourceDefinition);
+
         Collection tables = new TreeSet();
+        StringBuffer columns = new StringBuffer();
         StringBuffer whereClause = new StringBuffer();
+
         boolean valid = convert(sourceDefinition, filter, parameters, whereClause, tables);
 
-        String tableName = getTableName(sourceDefinition);
         Collection pkFields = sourceDefinition.getPrimaryKeyFieldDefinitions();
-
-        StringBuffer fields = new StringBuffer();
         for (Iterator j=pkFields.iterator(); j.hasNext(); ) {
             FieldDefinition fieldDefinition = (FieldDefinition)j.next();
             String fieldName = fieldDefinition.getName();
 
-            if (fields.length() > 0) fields.append(", ");
-            fields.append(tableName);
-            fields.append(".");
-            fields.append(fieldName);
+            if (columns.length() > 0) columns.append(", ");
+            columns.append(tableName);
+            columns.append(".");
+            columns.append(fieldName);
         }
 
         StringBuffer join = new StringBuffer();
@@ -81,7 +82,7 @@ public class JDBCCacheTool {
 
         StringBuffer sb = new StringBuffer();
         sb.append("select ");
-        sb.append(fields);
+        sb.append(columns);
         sb.append(" from ");
         sb.append(join);
 

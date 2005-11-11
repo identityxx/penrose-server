@@ -19,6 +19,7 @@ package org.safehaus.penrose.cache;
 
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.util.Formatter;
+import org.safehaus.penrose.filter.Filter;
 import org.apache.log4j.Logger;
 
 import java.sql.*;
@@ -30,6 +31,8 @@ import java.util.*;
 public class JDBCCache {
 
     static Logger log = Logger.getLogger(JDBCCache.class);
+
+    JDBCCacheTool tool = new JDBCCacheTool();
 
     CacheConfig cacheConfig;
     SourceDefinition sourceDefinition;
@@ -377,12 +380,12 @@ public class JDBCCache {
         return (AttributeValues)values.get(pk);
     }
 
-    public Map search(Collection keys, Collection missingKeys) throws Exception {
+    public Map load(Collection keys, Collection missingKeys) throws Exception {
 
         Map values = new TreeMap();
         if (keys.isEmpty()) return values;
 
-        Collection pks = findPks(keys, missingKeys);
+        Collection pks = searchPrimaryKeys(keys, missingKeys);
 
         Collection fields = sourceDefinition.getNonPrimaryKeyFieldDefinitions();
         for (Iterator i=fields.iterator(); i.hasNext(); ) {
@@ -393,57 +396,58 @@ public class JDBCCache {
         return values;
     }
 
-    public Collection findPks(Collection keys, Collection missingKeys) throws Exception {
+    public String createSearchQuery(Collection keys, Collection parameters) throws Exception {
 
-        log.debug("Searching for keys:");
-
-        for (Iterator i=keys.iterator(); i.hasNext(); ) {
-            Row pk = (Row)i.next();
-            for (Iterator j=pk.getNames().iterator(); j.hasNext(); ) {
-                String name = (String)j.next();
-                Object value = pk.get(name);
-                log.debug(" - "+name+": "+value+" ("+value.getClass().getName()+")");
-            }
-            missingKeys.add(pk);
-        }
+        Collection tables = new LinkedHashSet();
+        String tableName = getTableName();
 
         StringBuffer columns = new StringBuffer();
-
         Collection pkFields = sourceDefinition.getPrimaryKeyFieldDefinitions();
         for (Iterator i=pkFields.iterator(); i.hasNext(); ) {
             FieldDefinition fieldDefinition = (FieldDefinition)i.next();
+            String fieldName = fieldDefinition.getName();
 
             if (columns.length() > 0) columns.append(", ");
-            columns.append(getTableName());
+            columns.append(tableName);
             columns.append(".");
-            columns.append(fieldDefinition.getName());
+            columns.append(fieldName);
         }
 
-        Collection tables = new LinkedHashSet();
+        Collection uniqueFields = sourceDefinition.getUniqueFieldDefinitions();
+        for (Iterator i=uniqueFields.iterator(); i.hasNext(); ) {
+            FieldDefinition fieldDefinition = (FieldDefinition)i.next();
+            String fieldName = fieldDefinition.getName();
 
-        StringBuffer where = new StringBuffer();
-        Collection parameters = new ArrayList();
+            String t = getTableName()+"_"+fieldName;
+            tables.add(t);
 
+            if (columns.length() > 0) columns.append(", ");
+            columns.append(t);
+            columns.append(".");
+            columns.append(fieldName);
+        }
+
+        StringBuffer filter = new StringBuffer();
         for (Iterator i=keys.iterator(); i.hasNext(); ) {
-            Row filter = (Row)i.next();
+            Row key = (Row)i.next();
 
             StringBuffer sb = new StringBuffer();
-            for (Iterator j=filter.getNames().iterator(); j.hasNext(); ) {
+            for (Iterator j=key.getNames().iterator(); j.hasNext(); ) {
                 String name = (String)j.next();
-                Object value = filter.get(name);
+                Object value = key.get(name);
 
                 FieldDefinition fieldDefinition = sourceDefinition.getFieldDefinition(name);
+                String t;
 
-                String tableName;
                 if (fieldDefinition.isPrimaryKey()) {
-                    tableName = getTableName();
+                    t = getTableName();
                 } else {
-                    tableName = getTableName()+"_"+name;
-                    tables.add(tableName);
+                    t = getTableName()+"_"+name;
+                    tables.add(t);
                 }
 
                 if (sb.length() > 0) sb.append(" and ");
-                sb.append(tableName);
+                sb.append(t);
                 sb.append(".");
                 sb.append(name);
                 sb.append(" = ?");
@@ -451,57 +455,79 @@ public class JDBCCache {
                 parameters.add(value);
             }
 
-            if (where.length() > 0) where.append(" or ");
-            where.append("(");
-            where.append(sb);
-            where.append(")");
+            if (filter.length() > 0) filter.append(" or ");
+            filter.append("(");
+            filter.append(sb);
+            filter.append(")");
         }
 
-        StringBuffer tableNames = new StringBuffer();
-        tableNames.append(getTableName());
+        StringBuffer whereClause = new StringBuffer();
+
+        if (filter.length() > 0) {
+            whereClause.append("(");
+            whereClause.append(filter);
+            whereClause.append(")");
+        }
+
+        String s = sourceDefinition.getParameter(SourceDefinition.REFRESH_METHOD);
+        String refreshMethod = s == null ? SourceDefinition.DEFAULT_REFRESH_METHOD : s;
+
+        if (!SourceDefinition.POLL_CHANGES.equals(refreshMethod)) {
+            if (whereClause.length() > 0) whereClause.append(" and ");
+            whereClause.append(tableName);
+            whereClause.append(".expiration >= ?");
+
+            parameters.add(new Timestamp(System.currentTimeMillis()));
+        }
+
+        StringBuffer join = new StringBuffer();
+        join.append(tableName);
 
         for (Iterator i=tables.iterator(); i.hasNext(); ) {
-            String tableName = (String)i.next();
-            tableNames.append(" left join ");
-            tableNames.append(tableName);
-            tableNames.append(" on ");
+            String t = (String)i.next();
 
             StringBuffer sb = new StringBuffer();
             for (Iterator j=pkFields.iterator(); j.hasNext(); ) {
                 FieldDefinition fieldDefinition = (FieldDefinition)j.next();
+                String fieldName = fieldDefinition.getName();
 
-                if (columns.length() > 0) columns.append(" and ");
-                sb.append(getTableName());
-                sb.append(".");
-                sb.append(fieldDefinition.getName());
-                sb.append("=");
+                if (sb.length() > 0) sb.append(" and ");
+
                 sb.append(tableName);
                 sb.append(".");
-                sb.append(fieldDefinition.getName());
+                sb.append(fieldName);
+                sb.append("=");
+                sb.append(t);
+                sb.append(".");
+                sb.append(fieldName);
             }
 
-            tableNames.append(sb);
+            join.append(" join ");
+            join.append(t);
+            join.append(" on ");
+            join.append(sb);
         }
 
         StringBuffer sb = new StringBuffer();
         sb.append("select ");
         sb.append(columns);
         sb.append(" from ");
-        sb.append(tableNames);
-        sb.append(" where ");
+        sb.append(join);
 
-        if (where.length() > 0) {
-            sb.append("(");
-            sb.append(where);
-            sb.append(") and ");
+        if (whereClause.length() > 0) {
+            sb.append(" where ");
+            sb.append(whereClause);
         }
 
-        sb.append(getTableName());
-        sb.append(".expiration >= ?");
+        return sb.toString();
+    }
 
-        parameters.add(new Timestamp(System.currentTimeMillis()));
+    public Collection searchPrimaryKeys(Collection keys, Collection missingKeys) throws Exception {
 
-        String sql = sb.toString();
+        missingKeys.addAll(keys);
+
+        Collection parameters = new ArrayList();
+        String sql = createSearchQuery(keys, parameters);
 
         Connection con = null;
         PreparedStatement ps = null;
@@ -512,44 +538,51 @@ public class JDBCCache {
         try {
             con = getConnection();
 
-            log.debug("Executing "+sql);
+            log.debug(Formatter.displaySeparator(80));
+            Collection lines = Formatter.split(sql, 80);
+            for (Iterator i=lines.iterator(); i.hasNext(); ) {
+                String line = (String)i.next();
+                log.debug(Formatter.displayLine(line, 80));
+            }
+            log.debug(Formatter.displaySeparator(80));
+
             ps = con.prepareStatement(sql);
+
+            log.debug(Formatter.displayLine("Parameters:", 80));
 
             int counter = 1;
             for (Iterator i=parameters.iterator(); i.hasNext(); counter++) {
-                Object v = i.next();
-                ps.setObject(counter, v);
-                log.debug(" "+counter+" = "+v);
+                Object param = i.next();
+                ps.setObject(counter, param);
+                log.debug(Formatter.displayLine(" - "+counter+" = "+param, 80));
             }
+
+            log.debug(Formatter.displaySeparator(80));
 
             rs = ps.executeQuery();
 
+            int width = 0;
+            boolean first = true;
+
             log.debug("Results:");
             while (rs.next()) {
-
-                counter = 1;
-                sb = new StringBuffer();
-
-                Row pk = new Row();
-                for (Iterator i=pkFields.iterator(); i.hasNext(); ) {
-                    FieldDefinition field = (FieldDefinition)i.next();
-
-                    Object value = rs.getObject(counter);
-
-                    if (sb.length() > 0) sb.append(", ");
-                    sb.append(field.getName());
-                    sb.append("=");
-                    sb.append(value+" ("+value.getClass().getName()+")");
-
-                    pk.set(field.getName(), value);
-                    counter++;
-                }
-
-                log.debug(" - "+sb);
+                Row pk = getPrimaryKey(rs);
 
                 pks.add(pk);
                 missingKeys.remove(pk);
+
+                Collection uniqueKeys = getUniqueKeys(rs);
+                missingKeys.removeAll(uniqueKeys);
+
+                if (first) {
+                    width = printPrimaryKeyHeader();
+                    first = false;
+                }
+
+                printPrimaryKey(pk);
             }
+
+            if (width > 0) printFooter(width);
 
         } catch (Exception e) {
             log.error(e.getMessage(), e);
@@ -563,14 +596,41 @@ public class JDBCCache {
         return pks;
     }
 
-    public Map getColumnValues(FieldDefinition fieldDefinition, Collection pks, Map values) throws Exception {
+    public Row getPrimaryKey(ResultSet rs) throws Exception {
+        Row pk = new Row();
 
-        if (pks.isEmpty()) return values;
+        Collection pkFields = sourceDefinition.getPrimaryKeyFieldDefinitions();
+        for (Iterator i=pkFields.iterator(); i.hasNext(); ) {
+            FieldDefinition fieldDefinition = (FieldDefinition)i.next();
+            Object value = rs.getObject(fieldDefinition.getName());
 
+            pk.set(fieldDefinition.getName(), value);
+        }
+
+        return pk;
+    }
+
+    public Collection getUniqueKeys(ResultSet rs) throws Exception {
+        Collection uniqueKeys = new ArrayList();
+
+        Collection uniqueFields = sourceDefinition.getUniqueFieldDefinitions();
+        for (Iterator i=uniqueFields.iterator(); i.hasNext(); ) {
+            FieldDefinition fieldDefinition = (FieldDefinition)i.next();
+            Object value = rs.getObject(fieldDefinition.getName());
+
+            Row key = new Row();
+            key.set(fieldDefinition.getName(), value);
+            uniqueKeys.add(key);
+        }
+
+        return uniqueKeys;
+    }
+
+    public String createLoadQuery(FieldDefinition fieldDefinition, Collection pks, Collection parameters) throws Exception {
         StringBuffer columns = new StringBuffer();
 
-        Collection fields = sourceDefinition.getPrimaryKeyFieldDefinitions();
-        for (Iterator i=fields.iterator(); i.hasNext(); ) {
+        Collection pkFields = sourceDefinition.getPrimaryKeyFieldDefinitions();
+        for (Iterator i=pkFields.iterator(); i.hasNext(); ) {
             FieldDefinition field = (FieldDefinition)i.next();
 
             if (columns.length() > 0) columns.append(", ");
@@ -581,7 +641,6 @@ public class JDBCCache {
         columns.append(fieldDefinition.getName());
 
         StringBuffer where = new StringBuffer();
-        Collection parameters = new ArrayList();
 
         for (Iterator i=pks.iterator(); i.hasNext(); ) {
             Row pk = (Row)i.next();
@@ -617,7 +676,15 @@ public class JDBCCache {
             sb.append(where);
         }
 
-        String sql = sb.toString();
+        return sb.toString();
+    }
+
+    public Map getColumnValues(FieldDefinition fieldDefinition, Collection pks, Map values) throws Exception {
+
+        if (pks.isEmpty()) return values;
+
+        Collection parameters = new ArrayList();
+        String sql = createLoadQuery(fieldDefinition, pks, parameters);
 
         Connection con = null;
         PreparedStatement ps = null;
@@ -626,44 +693,37 @@ public class JDBCCache {
         try {
             con = getConnection();
 
-            log.debug("Executing "+sql);
+            log.debug(Formatter.displaySeparator(80));
+            Collection lines = Formatter.split(sql, 80);
+            for (Iterator i=lines.iterator(); i.hasNext(); ) {
+                String line = (String)i.next();
+                log.debug(Formatter.displayLine(line, 80));
+            }
+            log.debug(Formatter.displaySeparator(80));
+
             ps = con.prepareStatement(sql);
+
+            log.debug(Formatter.displayLine("Parameters:", 80));
 
             int counter = 1;
             for (Iterator i=parameters.iterator(); i.hasNext(); counter++) {
-                Object v = i.next();
-                ps.setObject(counter, v);
-                log.debug(" "+counter+" = "+v);
+                Object param = i.next();
+                ps.setObject(counter, param);
+                log.debug(Formatter.displayLine(" - "+counter+" = "+param, 80));
             }
+
+            log.debug(Formatter.displaySeparator(80));
 
             rs = ps.executeQuery();
 
+            int width = 0;
+            boolean first = true;
+
             log.debug("Results:");
             while (rs.next()) {
+                Row pk = getPrimaryKey(rs);
 
-                counter = 1;
-                sb = new StringBuffer();
-
-                Row pk = new Row();
-                for (Iterator i=fields.iterator(); i.hasNext(); ) {
-                    FieldDefinition field = (FieldDefinition)i.next();
-
-                    Object value = rs.getObject(counter);
-                    sb.append(field.getName());
-                    sb.append("=");
-                    sb.append(value);
-                    sb.append(", ");
-
-                    pk.set(field.getName(), value);
-                    counter++;
-                }
-
-                Object value = rs.getObject(counter);
-                sb.append(fieldDefinition.getName());
-                sb.append("=");
-                sb.append(value);
-
-                log.debug(" - "+sb);
+                Object value = rs.getObject(fieldDefinition.getName());
 
                 AttributeValues av = (AttributeValues)values.get(pk);
                 if (av == null) {
@@ -673,7 +733,16 @@ public class JDBCCache {
                 }
 
                 av.add(fieldDefinition.getName(), value);
+
+                if (first) {
+                    width = printPrimaryKeyHeader();
+                    first = false;
+                }
+
+                printPrimaryKey(pk);
             }
+
+            if (width > 0) printFooter(width);
 
         } catch (Exception e) {
             log.error(e.getMessage(), e);
@@ -746,7 +815,14 @@ public class JDBCCache {
         try {
             con = getConnection();
 
-            log.debug("Executing "+sql);
+            log.debug(Formatter.displaySeparator(80));
+            Collection lines = Formatter.split(sql, 80);
+            for (Iterator i=lines.iterator(); i.hasNext(); ) {
+                String line = (String)i.next();
+                log.debug(Formatter.displayLine(line, 80));
+            }
+            log.debug(Formatter.displaySeparator(80));
+
             ps = con.prepareStatement(sql);
 
             int counter = 1;
@@ -813,7 +889,14 @@ public class JDBCCache {
         try {
             con = getConnection();
 
-            log.debug("Executing "+sql);
+            log.debug(Formatter.displaySeparator(80));
+            Collection lines = Formatter.split(sql, 80);
+            for (Iterator i=lines.iterator(); i.hasNext(); ) {
+                String line = (String)i.next();
+                log.debug(Formatter.displayLine(line, 80));
+            }
+            log.debug(Formatter.displaySeparator(80));
+
             ps = con.prepareStatement(sql);
 
             int counter = 1;
@@ -875,7 +958,14 @@ public class JDBCCache {
         try {
             con = getConnection();
 
-            log.debug("Executing "+sql);
+            log.debug(Formatter.displaySeparator(80));
+            Collection lines = Formatter.split(sql, 80);
+            for (Iterator i=lines.iterator(); i.hasNext(); ) {
+                String line = (String)i.next();
+                log.debug(Formatter.displayLine(line, 80));
+            }
+            log.debug(Formatter.displaySeparator(80));
+
             ps = con.prepareStatement(sql);
 
             int counter = 1;
@@ -929,7 +1019,14 @@ public class JDBCCache {
         try {
             con = getConnection();
 
-            log.debug("Executing "+sql);
+            log.debug(Formatter.displaySeparator(80));
+            Collection lines = Formatter.split(sql, 80);
+            for (Iterator i=lines.iterator(); i.hasNext(); ) {
+                String line = (String)i.next();
+                log.debug(Formatter.displayLine(line, 80));
+            }
+            log.debug(Formatter.displaySeparator(80));
+
             ps = con.prepareStatement(sql);
 
             int counter = 1;
@@ -965,7 +1062,14 @@ public class JDBCCache {
         try {
             con = getConnection();
 
-            log.debug("Executing "+sql);
+            log.debug(Formatter.displaySeparator(80));
+            Collection lines = Formatter.split(sql, 80);
+            for (Iterator i=lines.iterator(); i.hasNext(); ) {
+                String line = (String)i.next();
+                log.debug(Formatter.displayLine(line, 80));
+            }
+            log.debug(Formatter.displaySeparator(80));
+
             ps = con.prepareStatement(sql);
 
             rs = ps.executeQuery();
@@ -1001,7 +1105,14 @@ public class JDBCCache {
         try {
             con = getConnection();
 
-            log.debug("Executing "+sql);
+            log.debug(Formatter.displaySeparator(80));
+            Collection lines = Formatter.split(sql, 80);
+            for (Iterator i=lines.iterator(); i.hasNext(); ) {
+                String line = (String)i.next();
+                log.debug(Formatter.displayLine(line, 80));
+            }
+            log.debug(Formatter.displaySeparator(80));
+
             ps = con.prepareStatement(sql);
 
             int counter = 1;
@@ -1095,5 +1206,118 @@ public class JDBCCache {
 
     public void setExpiration(int expiration) {
         this.expiration = expiration;
+    }
+
+    public Collection search(Filter filter) throws Exception {
+
+        Collection parameters = new ArrayList();
+        String sql = tool.convert(sourceDefinition, filter, parameters);
+
+        java.sql.Connection con = null;
+        PreparedStatement ps = null;
+        ResultSet rs = null;
+
+        Collection pks = new ArrayList();
+
+        try {
+            con = getConnection();
+
+            log.debug(Formatter.displaySeparator(80));
+            Collection lines = Formatter.split(sql, 80);
+            for (Iterator i=lines.iterator(); i.hasNext(); ) {
+                String line = (String)i.next();
+                log.debug(Formatter.displayLine(line, 80));
+            }
+            log.debug(Formatter.displaySeparator(80));
+
+            ps = con.prepareStatement(sql);
+
+            log.debug(Formatter.displayLine("Parameters:", 80));
+
+            int counter = 0;
+            for (Iterator i=parameters.iterator(); i.hasNext(); ) {
+                Object param = i.next();
+                ps.setObject(++counter, param);
+                log.debug(Formatter.displayLine(" - "+counter+" = "+param, 80));
+            }
+
+            log.debug(Formatter.displaySeparator(80));
+
+            rs = ps.executeQuery();
+
+            int width = 0;
+            boolean first = true;
+
+            log.debug("Results:");
+            for (int i=0; rs.next(); i++) {
+                Row pk = getPrimaryKey(rs);
+                pks.add(pk);
+
+                if (first) {
+                    width = printPrimaryKeyHeader();
+                    first = false;
+                }
+
+                printPrimaryKey(pk);
+            }
+
+            if (width > 0) printFooter(width);
+
+        } finally {
+            if (rs != null) try { rs.close(); } catch (Exception e) {}
+            if (ps != null) try { ps.close(); } catch (Exception e) {}
+            if (con != null) try { con.close(); } catch (Exception e) {}
+        }
+
+        return pks;
+    }
+
+    public int printPrimaryKeyHeader() throws Exception {
+
+        StringBuffer resultHeader = new StringBuffer();
+        resultHeader.append("|");
+
+        Collection pkFields = sourceDefinition.getPrimaryKeyFieldDefinitions();
+        for (Iterator j=pkFields.iterator(); j.hasNext(); ) {
+            FieldDefinition fieldDefinition = (FieldDefinition)j.next();
+
+            String name = fieldDefinition.getName();
+            int length = fieldDefinition.getLength() > 15 ? 15 : fieldDefinition.getLength();
+
+            resultHeader.append(" ");
+            resultHeader.append(Formatter.rightPad(name, length));
+            resultHeader.append(" |");
+        }
+
+        int width = resultHeader.length();
+
+        log.debug(Formatter.displaySeparator(width));
+        log.debug(resultHeader.toString());
+        log.debug(Formatter.displaySeparator(width));
+
+        return width;
+    }
+
+    public void printPrimaryKey(Row row) throws Exception {
+        StringBuffer resultFields = new StringBuffer();
+        resultFields.append("|");
+
+        Collection fields = sourceDefinition.getPrimaryKeyFieldDefinitions();
+        for (Iterator j=fields.iterator(); j.hasNext(); ) {
+            FieldDefinition fieldDefinition = (FieldDefinition)j.next();
+
+            Object value = row.get(fieldDefinition.getName());
+            int length = fieldDefinition.getLength() > 15 ? 15 : fieldDefinition.getLength();
+
+            resultFields.append(" ");
+            resultFields.append(Formatter.rightPad(value == null ? "null" : value.toString(), length));
+            resultFields.append(" |");
+        }
+
+        log.debug(resultFields.toString());
+    }
+
+    public void printFooter(int width) throws Exception {
+        log.debug(Formatter.displaySeparator(width));
     }
 }

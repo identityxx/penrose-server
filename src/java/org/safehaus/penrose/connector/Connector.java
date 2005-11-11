@@ -226,6 +226,9 @@ public class Connector {
         SearchResults sr = connection.getChanges(sourceDefinition, lastChangeNumber);
         if (!sr.hasNext()) return;
 
+        CacheConfig dataCacheConfig = connectorConfig.getCacheConfig(ConnectorConfig.DATA_CACHE);
+        String user = dataCacheConfig.getParameter("user");
+
         Collection pks = new HashSet();
 
         log.debug("Synchronizing changes:");
@@ -240,7 +243,9 @@ public class Connector {
 
             log.debug(" - "+key+": "+changeAction);
 
-            getDataCache(connectionConfig, sourceDefinition).remove(key);
+            lastChangeNumber = changeNumber.intValue();
+
+            if (user != null && user.equals(changeUser)) continue;
 
             if ("DELETE".equals(changeAction)) {
                 pks.remove(pk);
@@ -248,12 +253,12 @@ public class Connector {
                 pks.add(pk);
             }
 
-            lastChangeNumber = changeNumber.intValue();
+            getDataCache(connectionConfig, sourceDefinition).remove(key);
         }
 
         getDataCache(connectionConfig, sourceDefinition).setLastChangeNumber(lastChangeNumber);
 
-        load(sourceDefinition, pks);
+        retrieve(connectionConfig, sourceDefinition, pks);
     }
 
     public void reloadExpired(ConnectionConfig connectionConfig, SourceDefinition sourceDefinition) throws Exception {
@@ -268,10 +273,7 @@ public class Connector {
             log.debug(" - "+pk+": "+av);
         }
 
-        Filter f = FilterTool.createFilter(map.keySet());
-        if (f == null) return;
-
-        load(sourceDefinition, map.keySet());
+        retrieve(connectionConfig, sourceDefinition, map.keySet());
     }
 
     public synchronized MRSWLock getLock(SourceDefinition sourceDefinition) {
@@ -332,7 +334,8 @@ public class Connector {
                 if (rc != LDAPException.SUCCESS) return rc;
             }
 
-            getQueryCache(connectionConfig, sourceDefinition).invalidate();
+            retrieve(connectionConfig, sourceDefinition, pks);
+            //getQueryCache(connectionConfig, sourceDefinition).invalidate();
 
         } finally {
         	lock.releaseWriteLock(ConnectorConfig.DEFAULT_TIMEOUT);
@@ -360,7 +363,7 @@ public class Connector {
                 Row key = normalize((Row)pk);
                 AttributeValues oldEntry = (AttributeValues)sourceValues.clone();
                 oldEntry.set(pk);
-                //log.debug("DELETE ROW: " + oldEntry);
+                log.debug("DELETE ROW: " + oldEntry);
 
                 // Delete row from source table in the source database/directory
                 Connection connection = getConnection(sourceDefinition.getConnectionName());
@@ -372,7 +375,7 @@ public class Connector {
                 getDataCache(connectionConfig, sourceDefinition).remove(key);
             }
 
-            getQueryCache(connectionConfig, sourceDefinition).invalidate();
+            //getQueryCache(connectionConfig, sourceDefinition).invalidate();
 
         } finally {
             lock.releaseWriteLock(ConnectorConfig.DEFAULT_TIMEOUT);
@@ -415,6 +418,8 @@ public class Connector {
             replaceRows.retainAll(newPKs);
             log.debug("PKs to replace: " + replaceRows);
 
+            Collection pks = new ArrayList();
+
             // Add rows
             for (Iterator i = addRows.iterator(); i.hasNext();) {
                 Row pk = (Row) i.next();
@@ -426,6 +431,8 @@ public class Connector {
                 Connection connection = getConnection(sourceDefinition.getConnectionName());
                 int rc = connection.add(sourceDefinition, newEntry);
                 if (rc != LDAPException.SUCCESS) return rc;
+
+                pks.add(pk);
             }
 
             // Remove rows
@@ -463,9 +470,12 @@ public class Connector {
 
                 // Modify row from source table in the cache
                 getDataCache(connectionConfig, sourceDefinition).remove(key);
+                pks.add(pk);
             }
 
-            getQueryCache(connectionConfig, sourceDefinition).invalidate();
+            retrieve(connectionConfig, sourceDefinition, pks);
+
+            //getQueryCache(connectionConfig, sourceDefinition).invalidate();
 
         } finally {
             lock.releaseWriteLock(ConnectorConfig.DEFAULT_TIMEOUT);
@@ -499,8 +509,10 @@ public class Connector {
 
             while (i.hasNext() && j.hasNext()) {
                 Row oldPk = (Row)i.next();
-                Row key = normalize((Row)oldPk);
                 Row newPk = (Row)j.next();
+
+                Row oldKey = normalize((Row)oldPk);
+                Row newKey = normalize((Row)newPk);
 
                 // Rename row from source table in the source database/directory
                 Connection connection = getConnection(sourceDefinition.getConnectionName());
@@ -514,10 +526,12 @@ public class Connector {
 
                 if (rc != LDAPException.SUCCESS) return rc;
 
-                getDataCache(connectionConfig, sourceDefinition).remove(key);
+                getDataCache(connectionConfig, sourceDefinition).remove(oldKey);
             }
 
-            getQueryCache(connectionConfig, sourceDefinition).invalidate();
+            retrieve(connectionConfig, sourceDefinition, newPKs);
+
+            //getQueryCache(connectionConfig, sourceDefinition).invalidate();
 
         } finally {
             lock.releaseWriteLock(ConnectorConfig.DEFAULT_TIMEOUT);
@@ -526,272 +540,176 @@ public class Connector {
         return LDAPException.SUCCESS;
     }
 
+    /**
+     * Search the data sources.
+     */
     public Collection search(
             SourceDefinition sourceDefinition,
             Filter filter)
             throws Exception {
 
-        // log.debug("Searching source "+source.getName()+" with filter "+filter);
-
-        Collection results = new ArrayList();
-
         Config config = getConfig(sourceDefinition);
         ConnectionConfig connectionConfig = config.getConnectionConfig(sourceDefinition.getConnectionName());
 
-        Collection uniqueFieldDefinitions = sourceDefinition.getUniqueFieldDefinitions();
-
-        log.debug("Checking source filter cache for "+filter);
-        Collection pks = getQueryCache(connectionConfig, sourceDefinition).get(filter);
-
-        if (pks != null) {
-            log.debug("Source filter cache found: "+pks);
-            //log.debug("Loading source "+source.getName()+" with pks "+pks);
-            results.addAll(load(sourceDefinition, pks));
-            return results;
-        }
-
-        log.debug("Source filter cache not found.");
-
         String method = sourceDefinition.getParameter(SourceDefinition.LOADING_METHOD);
-        //log.debug("Loading method: "+method);
+        if (SourceDefinition.SEARCH_AND_LOAD.equals(method)) { // search for PKs first then load full record
 
-        if (SourceDefinition.SEARCH_AND_LOAD.equals(method)) {
             log.debug("Searching source "+sourceDefinition.getName()+" with filter "+filter);
-            SearchResults sr = searchEntries(sourceDefinition, filter);
-            pks = new ArrayList();
-            pks.addAll(sr.getAll());
+            Collection pks = search(connectionConfig, sourceDefinition, filter);
 
             log.debug("Loading source "+sourceDefinition.getName()+" with pks "+pks);
-            results.addAll(load(sourceDefinition, pks));
+            return load(connectionConfig, sourceDefinition, pks);
 
-        } else {
+        } else { // load full record immediately
+
             log.debug("Loading source "+sourceDefinition.getName()+" with filter "+filter);
-            Map map = loadEntries(sourceDefinition, filter);
-            pks = new TreeSet();
-            pks.addAll(map.keySet());
-            results.addAll(map.values());
-
-            Collection uniqueKeys = new TreeSet();
-
-            for (Iterator i=map.keySet().iterator(); i.hasNext(); ) {
-                Row pk = (Row)i.next();
-                Row npk = normalize(pk);
-                AttributeValues values = (AttributeValues)map.get(pk);
-                getDataCache(connectionConfig, sourceDefinition).put(npk, values);
-
-                Filter f = FilterTool.createFilter(npk);
-                Collection list = new TreeSet();
-                list.add(npk);
-
-                log.debug("Storing source filter cache "+f+": "+list);
-                getQueryCache(connectionConfig, sourceDefinition).put(f, list);
-
-                //log.debug("Unique fields:");
-                for (Iterator j=uniqueFieldDefinitions.iterator(); j.hasNext(); ) {
-                    FieldDefinition fieldDefinition = (FieldDefinition)j.next();
-                    Object value = values.getOne(fieldDefinition.getName());
-
-                    Row uniqueKey = new Row();
-                    uniqueKey.set(fieldDefinition.getName(), value);
-
-                    //f = connectorContext.getFilterTool().createFilter(uniqueKey);
-                    //list = new TreeSet();
-                    //list.add(npk);
-
-                    //log.debug(" - "+f+" => "+list);
-                    //connectorContext.getSourceFilterCache(connectionConfig, sourceDefinition).put(f, list);
-
-                    uniqueKeys.add(uniqueKey);
-                }
-/*
-                log.debug("Indexed fields:");
-                for (Iterator j=indexedFieldDefinitions.iterator(); j.hasNext(); ) {
-                    FieldDefinition fieldDefinition = (FieldDefinition)j.next();
-                    Collection v = values.get(fieldDefinition.getName());
-
-                    for (Iterator k=v.iterator(); k.hasNext(); ) {
-                        Object value = k.next();
-
-                        Row indexKey = new Row();
-                        indexKey.set(fieldDefinition.getName(), value);
-
-                        f = connectorContextntextntext.getFilterTool().createFilter(indexKey);
-
-                        list = connectorContextntextntext.getSourceFilterCache(connectionConfig, sourceDefinition).get(f);
-                        if (list == null) list = new TreeSet();
-                        list.add(npk);
-
-                        log.debug("Storing source filter cache "+f+": "+list);
-                        connectorContextntextntext.getSourceFilterCache(connectionConfig, sourceDefinition).put(f, list);
-                    }
-                }
-*/
-            }
-
-            if (!uniqueKeys.isEmpty()) {
-                Filter f = FilterTool.createFilter(uniqueKeys);
-                log.debug("Storing source filter cache "+f+": "+pks);
-                getQueryCache(connectionConfig, sourceDefinition).put(f, pks);
-            }
+            return load(connectionConfig, sourceDefinition, filter);
         }
+    }
 
-        log.debug("Storing source filter cache "+filter+": "+pks);
+    /**
+     * Check query cache, peroform search, store results in query cache.
+     */
+    public Collection search(
+            ConnectionConfig connectionConfig,
+            SourceDefinition sourceDefinition,
+            Filter filter)
+            throws Exception {
+
+        log.debug("Checking query cache for "+filter);
+        Collection pks = getQueryCache(connectionConfig, sourceDefinition).search(filter);
+
+        log.debug("Cached results: "+pks);
+        if (pks != null) return pks;
+
+        log.debug("Searching source "+sourceDefinition.getName()+" with filter "+filter);
+        pks = performSearch(sourceDefinition, filter);
+
+        log.debug("Storing query cache for "+filter);
         getQueryCache(connectionConfig, sourceDefinition).put(filter, pks);
 
-        Filter newFilter = FilterTool.createFilter(pks);
-        if (newFilter != null) {
-            log.debug("Storing source filter cache "+newFilter+": "+pks);
-            getQueryCache(connectionConfig, sourceDefinition).put(newFilter, pks);
+        return pks;
+    }
+
+    /**
+     * Check data cache then load.
+     */
+    public Collection load(
+            ConnectionConfig connectionConfig,
+            SourceDefinition sourceDefinition,
+            Collection pks)
+            throws Exception {
+
+        Collection results = new ArrayList();
+        if (pks.isEmpty()) return results;
+
+        Collection normalizedPks = new ArrayList();
+        for (Iterator i=pks.iterator(); i.hasNext(); ) {
+            Row pk = (Row)i.next();
+            Row npk = normalize(pk);
+            normalizedPks.add(npk);
         }
 
-/*
-        log.debug("Checking source cache for pks "+pks);
-        Map loadedRows = connectorContextntextntextntext.getDataCache(connectionConfig, sourceDefinition).search(pks);
-        log.debug("Loaded rows: "+loadedRows.keySet());
-        results.putAll(loadedRows);
+        log.debug("Checking data cache for "+normalizedPks);
+        Collection missingPks = new ArrayList();
+        Map loadedRows = getDataCache(connectionConfig, sourceDefinition).load(normalizedPks, missingPks);
 
-        Collection pksToLoad = new HashSet();
-        pksToLoad.addAll(pks);
-        pksToLoad.removeAll(results.keySet());
-        pksToLoad.removeAll(loadedRows.keySet());
+        log.debug("Cached values: "+loadedRows.keySet());
+        results.addAll(loadedRows.values());
 
-        log.debug("PKs to load: "+pksToLoad);
-        if (!pksToLoad.isEmpty()) {
-            Filter newFilter = connectorContextntextntextntext.getFilterTool().createFilter(pksToLoad);
-            Map map = loadEntries(source, newFilter);
-            results.putAll(map);
+        log.debug("Loading missing keys: "+missingPks);
+        Collection list = retrieve(connectionConfig, sourceDefinition, missingPks);
+        results.addAll(list);
 
-            for (Iterator i=map.keySet().iterator(); i.hasNext(); ) {
-                Row pk = (Row)i.next();
-                AttributeValues values = (AttributeValues)map.get(pk);
-                connectorContextntextntextntext.getDataCache(connectionConfig, sourceDefinition).put(pk, values);
-            }
-
-            connectorContextntextntextntext.getSourceFilterCache(connectionConfig, sourceDefinition).put(newFilter, map.keySet());
-        }
-*/
         return results;
     }
 
-    public Collection load(
-            SourceDefinition sourceDefinition,
-            Collection keys)
-            throws Exception {
+    /**
+     * Load then store in data cache.
+     */
+    public Collection load(ConnectionConfig connectionConfig, SourceDefinition sourceDefinition, Filter filter) throws Exception {
 
-        //log.debug("Loading source "+source.getName()+" with keys "+keys);
+        Collection pks = getQueryCache(connectionConfig, sourceDefinition).search(filter);
 
-        Map results = new TreeMap();
-
-        if (keys.isEmpty()) return results.values();
-
-        Config config = getConfig(sourceDefinition);
-        ConnectionConfig connectionConfig = config.getConnectionConfig(sourceDefinition.getConnectionName());
-
-        Collection uniqueFieldDefinitions = sourceDefinition.getUniqueFieldDefinitions();
-        Collection missingKeys = new ArrayList();
-
-        Collection normalizedKeys = new ArrayList();
-        for (Iterator i=keys.iterator(); i.hasNext(); ) {
-            Row key = (Row)i.next();
-            Row normalizedKey = normalize(key);
-            normalizedKeys.add(normalizedKey);
+        if (pks != null) {
+            return load(connectionConfig, sourceDefinition, pks);
         }
 
-        log.debug("Searching source data cache for "+normalizedKeys);
-        Map loadedRows = getDataCache(connectionConfig, sourceDefinition).search(normalizedKeys, missingKeys);
-        results.putAll(loadedRows);
+        Collection values = performLoad(sourceDefinition, filter);
+        store(connectionConfig, sourceDefinition, values);
 
-        log.debug("Loaded rows: "+loadedRows.keySet());
-        log.debug("Missing keys: "+missingKeys);
-
-        Collection keysToLoad = new TreeSet();
-        keysToLoad.addAll(missingKeys);
-        //keysToLoad.removeAll(results.keySet());
-        //keysToLoad.removeAll(loadedRows.keySet());
-
-        log.debug("PKs to load: "+keysToLoad);
-        if (!keysToLoad.isEmpty()) {
-            Filter newFilter = FilterTool.createFilter(keysToLoad);
-            Map map = loadEntries(sourceDefinition, newFilter);
-            results.putAll(map);
-
-            Collection uniqueKeys = new TreeSet();
-
-            for (Iterator i=map.keySet().iterator(); i.hasNext(); ) {
-                Row pk = (Row)i.next();
-                Row npk = normalize(pk);
-                AttributeValues values = (AttributeValues)map.get(pk);
-
-                getDataCache(connectionConfig, sourceDefinition).put(npk, values);
-
-                Filter f = FilterTool.createFilter(npk);
-                Collection list = new TreeSet();
-                list.add(npk);
-
-                log.debug("Storing source filter cache "+f+": "+list);
-                getQueryCache(connectionConfig, sourceDefinition).put(f, list);
-
-                //log.debug("Unique fields:");
-                for (Iterator j=uniqueFieldDefinitions.iterator(); j.hasNext(); ) {
-                    FieldDefinition fieldDefinition = (FieldDefinition)j.next();
-                    Object value = values.getOne(fieldDefinition.getName());
-
-                    Row uniqueKey = new Row();
-                    uniqueKey.set(fieldDefinition.getName(), value);
-
-                    //f = connectorContext.getFilterTool().createFilter(normalizedUniqueKey);
-                    //list = new TreeSet();
-                    //list.add(npk);
-
-                    //log.debug(" - "+f+" => "+list);
-                    //connectorContext.getSourceFilterCache(connectionConfig, sourceDefinition).put(f, list);
-
-                    uniqueKeys.add(uniqueKey);
-                }
-/*
-                log.debug("Indexed fields:");
-                for (Iterator j=indexedFieldDefinitions.iterator(); j.hasNext(); ) {
-                    FieldDefinition fieldDefinition = (FieldDefinition)j.next();
-                    Collection v = values.get(fieldDefinition.getName());
-
-                    for (Iterator k=v.iterator(); k.hasNext(); ) {
-                        Object value = k.next();
-
-                        Row indexKey = new Row();
-                        indexKey.set(fieldDefinition.getName(), value);
-                        Row normalizedIndexKey = connectorContextntextntextntext.getSchema().normalize(indexKey);
-
-                        f = connectorContextntextntextntext.getFilterTool().createFilter(normalizedIndexKey);
-
-                        list = connectorContextntextntextntext.getSourceFilterCache(connectionConfig, sourceDefinition).get(f);
-                        if (list == null) list = new TreeSet();
-                        list.add(npk);
-
-                        log.debug("Storing source filter cache "+f+": "+list);
-                        connectorContextntextntextntext.getSourceFilterCache(connectionConfig, sourceDefinition).put(f, list);
-                    }
-                }
-*/
-            }
-
-            if (!uniqueKeys.isEmpty()) {
-                Filter f = FilterTool.createFilter(uniqueKeys);
-                log.debug("Storing source filter cache "+f+": "+keys);
-                getQueryCache(connectionConfig, sourceDefinition).put(f, keys);
-            }
-
-            Collection list = new TreeSet();
-            list.addAll(map.keySet());
-            log.debug("Storing source filter cache "+newFilter+": "+list);
-            getQueryCache(connectionConfig, sourceDefinition).put(newFilter, list);
-        }
-
-        return results.values();
+        return values;
     }
 
-    public SearchResults searchEntries(SourceDefinition sourceDefinition, Filter filter) throws Exception {
+    /**
+     * Load then store in data cache.
+     */
+    public Collection retrieve(ConnectionConfig connectionConfig, SourceDefinition sourceDefinition, Collection keys) throws Exception {
 
-        SearchResults results = new SearchResults();
+        if (keys.isEmpty()) return new ArrayList();
+
+        Filter filter = FilterTool.createFilter(keys);
+        Collection values = performLoad(sourceDefinition, filter);
+
+        store(connectionConfig, sourceDefinition, values);
+
+        return values;
+    }
+
+    public void store(ConnectionConfig connectionConfig, SourceDefinition sourceDefinition, Collection values) throws Exception {
+
+        Collection pks = new TreeSet();
+
+        Collection uniqueFieldDefinitions = sourceDefinition.getUniqueFieldDefinitions();
+        Collection uniqueKeys = new TreeSet();
+
+        for (Iterator i=values.iterator(); i.hasNext(); ) {
+            AttributeValues sourceValues = (AttributeValues)i.next();
+            Row pk = sourceDefinition.getPrimaryKeyValues(sourceValues);
+            Row npk = normalize(pk);
+
+            pks.add(npk);
+
+            log.debug("Storing data cache: "+npk);
+            getDataCache(connectionConfig, sourceDefinition).put(npk, sourceValues);
+
+            Filter f = FilterTool.createFilter(npk);
+            Collection c = new TreeSet();
+            c.add(npk);
+
+            log.debug("Storing query cache "+f+": "+c);
+            getQueryCache(connectionConfig, sourceDefinition).put(f, c);
+
+            for (Iterator j=uniqueFieldDefinitions.iterator(); j.hasNext(); ) {
+                FieldDefinition fieldDefinition = (FieldDefinition)j.next();
+                String fieldName = fieldDefinition.getName();
+
+                Object value = sourceValues.getOne(fieldName);
+
+                Row uniqueKey = new Row();
+                uniqueKey.set(fieldName, value);
+
+                uniqueKeys.add(uniqueKey);
+            }
+        }
+
+        if (!uniqueKeys.isEmpty()) {
+            Filter f = FilterTool.createFilter(uniqueKeys);
+            log.debug("Storing query cache "+f+": "+pks);
+            getQueryCache(connectionConfig, sourceDefinition).put(f, pks);
+        }
+
+        Filter filter = FilterTool.createFilter(pks);
+        log.debug("Storing query cache "+filter+": "+pks);
+        getQueryCache(connectionConfig, sourceDefinition).put(filter, pks);
+    }
+
+    /**
+     * Perform the search operation.
+     */
+    public Collection performSearch(SourceDefinition sourceDefinition, Filter filter) throws Exception {
+
+        Collection results = new ArrayList();
 
         String s = sourceDefinition.getParameter(SourceDefinition.SIZE_LIMIT);
         int sizeLimit = s == null ? SourceDefinition.DEFAULT_SIZE_LIMIT : Integer.parseInt(s);
@@ -803,47 +721,24 @@ public class Connector {
 
         } catch (Exception e) {
             e.printStackTrace();
-            results.close();
             return results;
         }
 
-        //log.debug("Search results:");
-
         for (Iterator i=sr.iterator(); i.hasNext();) {
             Row pk = (Row)i.next();
-
             Row npk = normalize(pk);
-            //log.debug(" - PK: "+npk);
-
             results.add(npk);
         }
-
-        results.setReturnCode(sr.getReturnCode());
-        results.close();
 
         return results;
     }
 
-    public void load(SourceDefinition sourceDefinition) throws Exception {
+    /**
+     * Perform the load operation.
+     */
+    public Collection performLoad(SourceDefinition sourceDefinition, Filter filter) throws Exception {
 
-        String s = sourceDefinition.getParameter(SourceDefinition.SIZE_LIMIT);
-        int sizeLimit = s == null ? SourceDefinition.DEFAULT_SIZE_LIMIT : Integer.parseInt(s);
-
-        Connection connection = getConnection(sourceDefinition.getConnectionName());
-
-        SearchResults sr;
-        try {
-            sr = connection.load(sourceDefinition, null, sizeLimit);
-        } catch (Exception e) {
-            e.printStackTrace();
-            return;
-        }
-
-    }
-
-    public Map loadEntries(SourceDefinition sourceDefinition, Filter filter) throws Exception {
-
-        Map results = new TreeMap();
+        Collection results = new ArrayList();
 
         String s = sourceDefinition.getParameter(SourceDefinition.SIZE_LIMIT);
         int sizeLimit = s == null ? SourceDefinition.DEFAULT_SIZE_LIMIT : Integer.parseInt(s);
@@ -857,18 +752,9 @@ public class Connector {
             return results;
         }
 
-        //log.debug("Load results:");
-
         for (Iterator i=sr.iterator(); i.hasNext();) {
             AttributeValues sourceValues = (AttributeValues)i.next();
-
-            Row pk = sourceDefinition.getPrimaryKeyValues(sourceValues);
-            if (pk == null) continue;
-
-            Row npk = normalize(pk);
-            //log.debug(" - PK: "+npk);
-
-            results.put(npk, sourceValues);
+            results.add(sourceValues);
         }
 
         return results;
@@ -882,9 +768,9 @@ public class Connector {
         this.connectorConfig = connectorConfig;
     }
 
-    public ConnectorQueryCache getQueryCache(ConnectionConfig connectionConfig, SourceDefinition sourceDefinition) throws Exception {
+    public ConnectorDataCache getQueryCache(ConnectionConfig connectionConfig, SourceDefinition sourceDefinition) throws Exception {
         String key = connectionConfig.getConnectionName()+"."+sourceDefinition.getName();
-        return (ConnectorQueryCache)sourceFilterCaches.get(key);
+        return (ConnectorDataCache)sourceDataCaches.get(key);
     }
 
     public ConnectorDataCache getDataCache(ConnectionConfig connectionConfig, SourceDefinition sourceDefinition) throws Exception {

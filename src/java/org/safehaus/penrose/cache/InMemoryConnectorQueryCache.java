@@ -17,9 +17,7 @@
  */
 package org.safehaus.penrose.cache;
 
-import org.apache.log4j.Logger;
 import org.safehaus.penrose.filter.Filter;
-import org.safehaus.penrose.mapping.SourceDefinition;
 
 import java.util.*;
 
@@ -28,19 +26,19 @@ import java.util.*;
  */
 public class InMemoryConnectorQueryCache extends ConnectorQueryCache {
 
-    public Map dataMap = new TreeMap();
-    public Map expirationMap = new LinkedHashMap();
+    public Map queryMap = new TreeMap();
+    public Map queryExpirationMap = new LinkedHashMap();
 
-    public Collection get(Filter filter) throws Exception {
+    public Collection search(Filter filter) throws Exception {
 
         String key = filter == null ? "" : filter.toString();
 
-        Collection pks = (Collection)dataMap.get(key);
-        Date date = (Date)expirationMap.get(key);
+        Collection pks = (Collection)queryMap.get(key);
+        Date date = (Date)queryExpirationMap.get(key);
 
         if (date == null || date.getTime() <= System.currentTimeMillis()) {
-            dataMap.remove(key);
-            expirationMap.remove(key);
+            queryMap.remove(key);
+            queryExpirationMap.remove(key);
             pks = null;
         }
 
@@ -54,22 +52,22 @@ public class InMemoryConnectorQueryCache extends ConnectorQueryCache {
         
         String key = filter == null ? "" : filter.toString();
 
-        Object object = dataMap.get(key);
+        Object object = queryMap.get(key);
 
-        while (object == null && dataMap.size() >= getSize()) {
+        while (object == null && queryMap.size() >= getSize()) {
             //log.debug("Trimming source filter cache ("+dataMap.size()+").");
-            Object k = dataMap.keySet().iterator().next();
-            dataMap.remove(k);
-            expirationMap.remove(k);
+            Object k = queryMap.keySet().iterator().next();
+            queryMap.remove(k);
+            queryExpirationMap.remove(k);
         }
 
         //log.debug("Storing source filter cache: ["+key+"] => "+pks);
-        dataMap.put(key, pks);
-        expirationMap.put(key, new Date(System.currentTimeMillis() + getExpiration() * 60 * 1000));
+        queryMap.put(key, pks);
+        queryExpirationMap.put(key, new Date(System.currentTimeMillis() + getExpiration() * 60 * 1000));
     }
 
     public void invalidate() throws Exception {
-        dataMap.clear();
-        expirationMap.clear();
+        queryMap.clear();
+        queryExpirationMap.clear();
     }
 }

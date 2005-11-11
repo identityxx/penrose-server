@@ -18,6 +18,7 @@
 package org.safehaus.penrose.cache;
 
 import org.safehaus.penrose.mapping.*;
+import org.safehaus.penrose.filter.Filter;
 
 import java.util.*;
 
@@ -56,8 +57,12 @@ public class JDBCConnectorDataCache extends ConnectorDataCache {
         return results;
     }
     
-    public Map search(Collection keys, Collection missingKeys) throws Exception {
-        return cache.search(keys, missingKeys);
+    public Map load(Collection keys, Collection missingKeys) throws Exception {
+        return cache.load(keys, missingKeys);
+    }
+
+    public Collection search(Filter filter) throws Exception {
+        return cache.search(filter);
     }
 
     public void put(Object key, Object object) throws Exception {
@@ -79,5 +84,11 @@ public class JDBCConnectorDataCache extends ConnectorDataCache {
 
     public void setLastChangeNumber(int lastChangeNumber) throws Exception {
         cache.setLastChangeNumber(lastChangeNumber);
+    }
+
+    public void put(Filter filter, Collection pks) throws Exception {
+    }
+
+    public void invalidate() throws Exception {
     }
 }

@@ -18,6 +18,7 @@
 package org.safehaus.penrose.cache;
 
 import org.safehaus.penrose.mapping.*;
+import org.safehaus.penrose.filter.Filter;
 
 import java.util.*;
 
@@ -27,16 +28,20 @@ import java.util.*;
 public class InMemoryConnectorDataCache extends ConnectorDataCache {
 
     int lastChangeNumber;
+
+    public Map queryMap = new TreeMap();
+    public Map queryExpirationMap = new LinkedHashMap();
+
     Map dataMap = new TreeMap();
-    Map uniqueKeys = new TreeMap();
-    Map expirationMap = new LinkedHashMap();
+    Map uniqueKeyMap = new TreeMap();
+    Map dataExpirationMap = new LinkedHashMap();
 
     public Object get(Object key) throws Exception {
 
         AttributeValues attributeValues = (AttributeValues)dataMap.get(key);
         if (attributeValues == null) return null;
 
-        Date date = (Date)expirationMap.get(key);
+        Date date = (Date)dataExpirationMap.get(key);
         if (date == null || date.getTime() <= System.currentTimeMillis()) return null;
 
         return attributeValues;
@@ -49,7 +54,7 @@ public class InMemoryConnectorDataCache extends ConnectorDataCache {
             Row pk = (Row)j.next();
             AttributeValues attributeValues = (AttributeValues)dataMap.get(pk);
 
-            Date date = (Date)expirationMap.get(pk);
+            Date date = (Date)dataExpirationMap.get(pk);
             if (date != null && date.getTime() > System.currentTimeMillis()) continue;
 
             results.put(pk, attributeValues);
@@ -78,7 +83,7 @@ public class InMemoryConnectorDataCache extends ConnectorDataCache {
         return newRow;
     }
 
-    public boolean partialMatch(AttributeValues av, Row row) throws Exception {
+    public boolean isValid(AttributeValues av, Row row) throws Exception {
 
         for (Iterator i=row.getNames().iterator(); i.hasNext(); ) {
             String name = (String)i.next();
@@ -105,7 +110,7 @@ public class InMemoryConnectorDataCache extends ConnectorDataCache {
         return true;
     }
 
-    public Map search(Collection keys, Collection missingKeys) throws Exception {
+    public Map load(Collection keys, Collection missingKeys) throws Exception {
 
         Map results = new TreeMap();
 
@@ -114,8 +119,13 @@ public class InMemoryConnectorDataCache extends ConnectorDataCache {
 
             AttributeValues attributeValues = (AttributeValues)get(key);
 
-            if (attributeValues == null) {
-                attributeValues = (AttributeValues)uniqueKeys.get(key);
+            Collection uniqueKeys = (Collection)uniqueKeyMap.get(key);
+            if (uniqueKeys != null) {
+                for (Iterator j=uniqueKeys.iterator(); j.hasNext(); ) {
+                    Row uniqueKey = (Row)j.next();
+                    attributeValues = (AttributeValues)get(uniqueKey);
+                    if (attributeValues != null) break;
+                }
             }
 
             if (attributeValues == null) {
@@ -128,10 +138,10 @@ public class InMemoryConnectorDataCache extends ConnectorDataCache {
                 Row pk = (Row)j.next();
                 attributeValues = (AttributeValues)dataMap.get(pk);
 
-                Date date = (Date)expirationMap.get(pk);
+                Date date = (Date)dataExpirationMap.get(pk);
                 if (date == null || date.getTime() <= System.currentTimeMillis()) continue;
 
-                boolean f = partialMatch(attributeValues, key);
+                boolean f = isValid(attributeValues, key);
                 if (!f) continue;
 
                 results.put(pk, attributeValues);
@@ -153,33 +163,40 @@ public class InMemoryConnectorDataCache extends ConnectorDataCache {
 
         while (dataMap.get(key) == null && dataMap.size() >= size) {
             //log.debug("Trimming source data cache ("+dataMap.size()+").");
-            Object k = expirationMap.keySet().iterator().next();
+            Object k = dataExpirationMap.keySet().iterator().next();
             dataMap.remove(k);
-            expirationMap.remove(k);
+            dataExpirationMap.remove(k);
         }
 
         //log.debug("Storing source data cache ("+dataMap.size()+"): "+key);
         dataMap.put(key, values);
-        expirationMap.put(key, new Date(System.currentTimeMillis() + expiration * 60 * 1000));
+        dataExpirationMap.put(key, new Date(System.currentTimeMillis() + expiration * 60 * 1000));
 
+        Collection uniqueKeys = new ArrayList();
         for (Iterator j=sourceDefinition.getFieldDefinitions().iterator(); j.hasNext(); ) {
             FieldDefinition fieldDefinition = (FieldDefinition)j.next();
             if (!fieldDefinition.isUnique()) continue;
 
-            Object value = values.getOne(fieldDefinition.getName());
+            String fieldName = fieldDefinition.getName();
+            Object value = values.getOne(fieldName);
 
             Row uniqueKey = new Row();
-            uniqueKey.set(fieldDefinition.getName(), value);
+            uniqueKey.set(fieldName, value);
+
             Row normalizedUniqueKey = normalize(uniqueKey);
-            uniqueKeys.put(normalizedUniqueKey, values);
+            dataMap.put(normalizedUniqueKey, values);
+
+            uniqueKeys.add(normalizedUniqueKey);
         }
+
+        uniqueKeyMap.put(key, uniqueKeys);
     }
 
     public void remove(Object key) throws Exception {
 
         //log.debug("Removing source data cache ("+dataMap.size()+"): "+key);
         dataMap.remove(key);
-        expirationMap.remove(key);
+        dataExpirationMap.remove(key);
 
     }
 
@@ -189,5 +206,47 @@ public class InMemoryConnectorDataCache extends ConnectorDataCache {
 
     public void setLastChangeNumber(int lastChangeNumber) {
         this.lastChangeNumber = lastChangeNumber;
+    }
+
+    public Collection search(Filter filter) throws Exception {
+
+        String key = filter == null ? "" : filter.toString();
+
+        Collection pks = (Collection)queryMap.get(key);
+        Date date = (Date)queryExpirationMap.get(key);
+
+        if (date == null || date.getTime() <= System.currentTimeMillis()) {
+            queryMap.remove(key);
+            queryExpirationMap.remove(key);
+            pks = null;
+        }
+
+        //log.debug("Getting source filter cache: ["+key+"] => "+pks);
+
+        return pks;
+    }
+
+    public void put(Filter filter, Collection pks) throws Exception {
+        if (getSize() == 0) return;
+
+        String key = filter == null ? "" : filter.toString();
+
+        Object object = queryMap.get(key);
+
+        while (object == null && queryMap.size() >= getSize()) {
+            //log.debug("Trimming source filter cache ("+dataMap.size()+").");
+            Object k = queryMap.keySet().iterator().next();
+            queryMap.remove(k);
+            queryExpirationMap.remove(k);
+        }
+
+        //log.debug("Storing source filter cache: ["+key+"] => "+pks);
+        queryMap.put(key, pks);
+        queryExpirationMap.put(key, new Date(System.currentTimeMillis() + getExpiration() * 60 * 1000));
+    }
+
+    public void invalidate() throws Exception {
+        queryMap.clear();
+        queryExpirationMap.clear();
     }
 }

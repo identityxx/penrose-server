@@ -59,24 +59,20 @@ public class JDBCConnectorQueryCache extends ConnectorQueryCache {
     }
 
     public Row getPrimaryKey(ResultSet rs) throws Exception {
+        Row pk = new Row();
 
-        Row row = new Row();
-        int c = 1;
-
-        Collection fields = getSourceDefinition().getPrimaryKeyFieldDefinitions();
-        for (Iterator i=fields.iterator(); i.hasNext(); c++) {
+        Collection pkFields = getSourceDefinition().getPrimaryKeyFieldDefinitions();
+        for (Iterator i=pkFields.iterator(); i.hasNext(); ) {
             FieldDefinition fieldDefinition = (FieldDefinition)i.next();
+            Object value = rs.getObject(fieldDefinition.getName());
 
-            Object value = rs.getObject(c);
-            if (value == null) continue;
-
-            row.set(fieldDefinition.getName(), value);
+            pk.set(fieldDefinition.getName(), value);
         }
 
-        return row;
+        return pk;
     }
 
-    public Collection get(Filter filter) throws Exception {
+    public Collection search(Filter filter) throws Exception {
 
         Collection parameters = new ArrayList();
         String sql = tool.convert(getSourceDefinition(), filter, parameters);
