@@ -185,9 +185,10 @@ public class TransformEngine {
     }
 
     public static Collection getPrimaryKeys(SourceDefinition sourceDefinition, AttributeValues sourceValues) throws Exception {
-        Collection pkFields = sourceDefinition.getPrimaryKeyFieldDefinitions();
 
         AttributeValues pkValues = new AttributeValues();
+
+        Collection pkFields = sourceDefinition.getPrimaryKeyFieldDefinitions();
         for (Iterator j=pkFields.iterator(); j.hasNext(); ) {
             FieldDefinition fieldDefinition = (FieldDefinition)j.next();
 

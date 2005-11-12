@@ -90,10 +90,6 @@ public class ModRdnGraphVisitor extends GraphVisitor {
             return;
         }
 
-        Config config = engine.getConfig(source);
-        ConnectionConfig connectionConfig = config.getConnectionConfig(source.getConnectionName());
-        SourceDefinition sourceDefinition = connectionConfig.getSourceDefinition(source.getSourceName());
-
         log.debug("Old values:");
         AttributeValues oldValues = new AttributeValues();
         for (Iterator i=oldSourceValues.getNames().iterator(); i.hasNext(); ) {
@@ -120,10 +116,54 @@ public class ModRdnGraphVisitor extends GraphVisitor {
             newValues.set(name, values);
         }
 
-        returnCode = engineContext.getConnector().modrdn(sourceDefinition, oldValues, newValues);
+        Config config = engine.getConfig(source);
+        ConnectionConfig connectionConfig = config.getConnectionConfig(source.getConnectionName());
+        SourceDefinition sourceDefinition = connectionConfig.getSourceDefinition(source.getSourceName());
+
+        returnCode = engineContext.getConnector().modify(sourceDefinition, oldValues, newValues);
         if (returnCode != LDAPException.SUCCESS) return;
 
         graphIterator.traverseEdges(node);
+    }
+
+    public void visitEdge(GraphIterator graphIterator, Object node1, Object node2, Object object) throws Exception {
+
+        Source fromSource = (Source)node1;
+        Source toSource = (Source)node2;
+        Collection relationships = (Collection)object;
+
+        log.debug(Formatter.displaySeparator(60));
+        for (Iterator i=relationships.iterator(); i.hasNext(); ) {
+            Relationship relationship = (Relationship)i.next();
+            log.debug(Formatter.displayLine(relationship.toString(), 60));
+        }
+        log.debug(Formatter.displaySeparator(60));
+
+        if (entryDefinition.getSource(toSource.getName()) == null) {
+            log.debug("Source "+toSource.getName()+" is not defined in entry.");
+            return;
+        }
+
+
+        for (Iterator i=relationships.iterator(); i.hasNext(); ) {
+            Relationship relationship = (Relationship)i.next();
+
+            String lhs = relationship.getLhs();
+            String rhs = relationship.getRhs();
+
+            if (lhs.startsWith(toSource.getName())) {
+                String tmp = lhs;
+                lhs = rhs;
+                rhs = tmp;
+            }
+
+            Collection values = newSourceValues.get(lhs);
+            newSourceValues.set(rhs, values);
+
+            log.debug(lhs+" ==> "+rhs+": "+values);
+        }
+
+        graphIterator.traverse(node2);
     }
 
     public int getReturnCode() {

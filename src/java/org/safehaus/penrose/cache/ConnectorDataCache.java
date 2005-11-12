@@ -57,6 +57,9 @@ public abstract class ConnectorDataCache extends Cache {
     public void clean() throws Exception {
     }
 
+    public void drop() throws Exception {
+    }
+
     public Collection search(Filter filter) throws Exception {
         return null;
     }

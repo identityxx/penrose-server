@@ -38,10 +38,12 @@ public class InMemoryConnectorDataCache extends ConnectorDataCache {
 
     public Object get(Object key) throws Exception {
 
-        AttributeValues attributeValues = (AttributeValues)dataMap.get(key);
+        Row pk = normalize((Row)key);
+
+        AttributeValues attributeValues = (AttributeValues)dataMap.get(pk);
         if (attributeValues == null) return null;
 
-        Date date = (Date)dataExpirationMap.get(key);
+        Date date = (Date)dataExpirationMap.get(pk);
         if (date == null || date.getTime() <= System.currentTimeMillis()) return null;
 
         return attributeValues;
@@ -159,9 +161,10 @@ public class InMemoryConnectorDataCache extends ConnectorDataCache {
     public void put(Object key, Object object) throws Exception {
         if (size == 0) return;
 
+        Row pk = normalize((Row)key);
         AttributeValues values = (AttributeValues)object;
 
-        while (dataMap.get(key) == null && dataMap.size() >= size) {
+        while (dataMap.get(pk) == null && dataMap.size() >= size) {
             //log.debug("Trimming source data cache ("+dataMap.size()+").");
             Object k = dataExpirationMap.keySet().iterator().next();
             dataMap.remove(k);
@@ -169,8 +172,8 @@ public class InMemoryConnectorDataCache extends ConnectorDataCache {
         }
 
         //log.debug("Storing source data cache ("+dataMap.size()+"): "+key);
-        dataMap.put(key, values);
-        dataExpirationMap.put(key, new Date(System.currentTimeMillis() + expiration * 60 * 1000));
+        dataMap.put(pk, values);
+        dataExpirationMap.put(pk, new Date(System.currentTimeMillis() + expiration * 60 * 1000));
 
         Collection uniqueKeys = new ArrayList();
         for (Iterator j=sourceDefinition.getFieldDefinitions().iterator(); j.hasNext(); ) {
@@ -189,14 +192,15 @@ public class InMemoryConnectorDataCache extends ConnectorDataCache {
             uniqueKeys.add(normalizedUniqueKey);
         }
 
-        uniqueKeyMap.put(key, uniqueKeys);
+        uniqueKeyMap.put(pk, uniqueKeys);
     }
 
     public void remove(Object key) throws Exception {
+        Row pk = normalize((Row)key);
 
         //log.debug("Removing source data cache ("+dataMap.size()+"): "+key);
-        dataMap.remove(key);
-        dataExpirationMap.remove(key);
+        dataMap.remove(pk);
+        dataExpirationMap.remove(pk);
 
     }
 

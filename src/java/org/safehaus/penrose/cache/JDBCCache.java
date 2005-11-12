@@ -120,6 +120,20 @@ public class JDBCCache {
         createChangesTable();
     }
 
+    public void clean() throws Exception {
+        log.info("Cleaning cache tables for "+sourceDefinition.getName()+" ...");
+
+        cleanMainTable();
+
+        Collection fields = sourceDefinition.getNonPrimaryKeyFieldDefinitions();
+        for (Iterator i=fields.iterator(); i.hasNext(); ) {
+            FieldDefinition fieldDefinition = (FieldDefinition)i.next();
+            cleanFieldTable(fieldDefinition);
+        }
+
+        cleanChangesTable();
+    }
+
     public void drop() throws Exception {
         log.info("Dropping cache tables for "+sourceDefinition.getName()+" ...");
 
@@ -140,6 +154,95 @@ public class JDBCCache {
         sb.append(getTableName());
         sb.append("_");
         sb.append(fieldDefinition.getName());
+
+        String sql = sb.toString();
+
+        Connection con = null;
+        PreparedStatement ps = null;
+
+        try {
+            con = getConnection();
+
+            log.debug(Formatter.displaySeparator(80));
+            log.debug(Formatter.displayLine(sql, 80));
+            log.debug(Formatter.displaySeparator(80));
+
+            ps = con.prepareStatement(sql);
+            ps.execute();
+
+        } catch (Exception e) {
+            log.error(e.getMessage());
+
+        } finally {
+            if (ps != null) try { ps.close(); } catch (Exception e) {}
+            if (con != null) try { con.close(); } catch (Exception e) {}
+        }
+    }
+
+    public void cleanMainTable() throws Exception {
+        StringBuffer sb = new StringBuffer();
+        sb.append("delete from ");
+        sb.append(getTableName());
+
+        String sql = sb.toString();
+
+        Connection con = null;
+        PreparedStatement ps = null;
+
+        try {
+            con = getConnection();
+
+            log.debug(Formatter.displaySeparator(80));
+            log.debug(Formatter.displayLine(sql, 80));
+            log.debug(Formatter.displaySeparator(80));
+
+            ps = con.prepareStatement(sql);
+            ps.execute();
+
+        } catch (Exception e) {
+            log.error(e.getMessage());
+
+        } finally {
+            if (ps != null) try { ps.close(); } catch (Exception e) {}
+            if (con != null) try { con.close(); } catch (Exception e) {}
+        }
+    }
+
+    public void cleanFieldTable(FieldDefinition fieldDefinition) throws Exception {
+        StringBuffer sb = new StringBuffer();
+        sb.append("delete from ");
+        sb.append(getTableName());
+        sb.append("_");
+        sb.append(fieldDefinition.getName());
+
+        String sql = sb.toString();
+
+        Connection con = null;
+        PreparedStatement ps = null;
+
+        try {
+            con = getConnection();
+
+            log.debug(Formatter.displaySeparator(80));
+            log.debug(Formatter.displayLine(sql, 80));
+            log.debug(Formatter.displaySeparator(80));
+
+            ps = con.prepareStatement(sql);
+            ps.execute();
+
+        } catch (Exception e) {
+            log.error(e.getMessage());
+
+        } finally {
+            if (ps != null) try { ps.close(); } catch (Exception e) {}
+            if (con != null) try { con.close(); } catch (Exception e) {}
+        }
+    }
+
+    public void cleanChangesTable() throws Exception {
+        StringBuffer sb = new StringBuffer();
+        sb.append("delete from ");
+        sb.append(getTableName()+"_changes");
 
         String sql = sb.toString();
 
@@ -757,12 +860,13 @@ public class JDBCCache {
     }
 
     public void put(Row pk, AttributeValues sourceValues) throws Exception {
-        remove(pk);
-        insertEntry(pk);
+        if (!insertEntry(pk)) updateEntry(pk);
 
         Collection fields = sourceDefinition.getNonPrimaryKeyFieldDefinitions();
         for (Iterator i=fields.iterator(); i.hasNext(); ) {
             FieldDefinition fieldDefinition = (FieldDefinition)i.next();
+
+            deleteColumnValue(fieldDefinition, pk);
 
             Collection values = sourceValues.get(fieldDefinition.getName());
             if (values == null) continue;
@@ -774,7 +878,7 @@ public class JDBCCache {
         }
     }
 
-    public void insertEntry(Row pk) throws Exception {
+    public boolean insertEntry(Row pk) throws Exception {
 
         StringBuffer columns = new StringBuffer();
         StringBuffer questionMarks = new StringBuffer();
@@ -806,6 +910,69 @@ public class JDBCCache {
         sb.append(") values (");
         sb.append(questionMarks);
         sb.append(")");
+
+        String sql = sb.toString();
+
+        Connection con = null;
+        PreparedStatement ps = null;
+
+        try {
+            con = getConnection();
+
+            log.debug(Formatter.displaySeparator(80));
+            Collection lines = Formatter.split(sql, 80);
+            for (Iterator i=lines.iterator(); i.hasNext(); ) {
+                String line = (String)i.next();
+                log.debug(Formatter.displayLine(line, 80));
+            }
+            log.debug(Formatter.displaySeparator(80));
+
+            ps = con.prepareStatement(sql);
+
+            int counter = 1;
+            for (Iterator i=parameters.iterator(); i.hasNext(); counter++) {
+                Object v = i.next();
+                ps.setObject(counter, v);
+                log.debug(" "+counter+" = "+v+" ("+(v == null ? null : v.getClass().getName())+")");
+            }
+
+            ps.execute();
+            return true;
+
+        } catch (Exception e) {
+            return false;
+            //log.error(e.getMessage(), e);
+
+        } finally {
+            if (ps != null) try { ps.close(); } catch (Exception e) {}
+            if (con != null) try { con.close(); } catch (Exception e) {}
+        }
+    }
+
+    public void updateEntry(Row pk) throws Exception {
+
+        Collection parameters = new ArrayList();
+        parameters.add(new Timestamp(System.currentTimeMillis() + expiration * 60 * 1000));
+
+        StringBuffer whereClause = new StringBuffer();
+        Collection pkFields = sourceDefinition.getPrimaryKeyFieldDefinitions();
+        for (Iterator i=pkFields.iterator(); i.hasNext(); ) {
+            FieldDefinition field = (FieldDefinition)i.next();
+
+            if (whereClause.length() > 0) whereClause.append(" and ");
+
+            whereClause.append(field.getName());
+            whereClause.append(" = ?");
+
+            Object value = pk.get(field.getName());
+            parameters.add(value);
+        }
+
+        StringBuffer sb = new StringBuffer();
+        sb.append("update ");
+        sb.append(getTableName());
+        sb.append(" set expiration = ? where ");
+        sb.append(whereClause);
 
         String sql = sb.toString();
 
@@ -1074,11 +1241,16 @@ public class JDBCCache {
 
             rs = ps.executeQuery();
 
-            log.debug("Results:");
-            if (rs.next()) {
-                Integer value = (Integer)rs.getObject(1);
-                return value.intValue();
-            }
+            if (!rs.next()) return 0;
+
+            Integer value = (Integer)rs.getObject(1);
+
+            log.debug(Formatter.displaySeparator(80));
+            log.debug(Formatter.displayLine("Results:", 80));
+            log.debug(Formatter.displayLine(" - "+value, 80));
+            log.debug(Formatter.displaySeparator(80));
+
+            return value.intValue();
 
         } catch (Exception e) {
             log.error(e.getMessage(), e);
@@ -1139,7 +1311,14 @@ public class JDBCCache {
         try {
             con = getConnection();
 
-            log.debug("Executing "+sql);
+            log.debug(Formatter.displaySeparator(80));
+            Collection lines = Formatter.split(sql, 80);
+            for (Iterator i=lines.iterator(); i.hasNext(); ) {
+                String line = (String)i.next();
+                log.debug(Formatter.displayLine(line, 80));
+            }
+            log.debug(Formatter.displaySeparator(80));
+
             ps = con.prepareStatement(sql);
 
             int counter = 1;

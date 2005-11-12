@@ -20,6 +20,7 @@ package org.safehaus.penrose.engine;
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.graph.GraphVisitor;
 import org.safehaus.penrose.graph.GraphIterator;
+import org.safehaus.penrose.graph.Graph;
 import org.safehaus.penrose.util.Formatter;
 import org.safehaus.penrose.config.Config;
 import org.apache.log4j.Logger;
@@ -38,8 +39,11 @@ public class ModifyGraphVisitor extends GraphVisitor {
     public EngineContext engineContext;
     public EntryDefinition entryDefinition;
 
-    public AttributeValues oldValues;
-    public AttributeValues newValues;
+    public Graph graph;
+    public Source primarySource;
+
+    public AttributeValues oldSourceValues;
+    public AttributeValues newSourceValues;
 
     private int returnCode = LDAPException.SUCCESS;
 
@@ -47,16 +51,23 @@ public class ModifyGraphVisitor extends GraphVisitor {
             Engine engine,
             EngineContext engineContext,
             EntryDefinition entryDefinition,
-            AttributeValues oldValues,
-            AttributeValues newValues
+            AttributeValues oldSourceValues,
+            AttributeValues newSourceValues
             ) throws Exception {
 
         this.engine = engine;
         this.engineContext = engineContext;
         this.entryDefinition = entryDefinition;
 
-        this.oldValues = oldValues;
-        this.newValues = newValues;
+        this.oldSourceValues = oldSourceValues;
+        this.newSourceValues = newSourceValues;
+
+        graph = engine.getGraph(entryDefinition);
+        primarySource = engine.getPrimarySource(entryDefinition);
+    }
+
+    public void run() throws Exception {
+        graph.traverse(this, primarySource);
     }
 
     public void visitNode(GraphIterator graphIterator, Object node) throws Exception {
@@ -80,36 +91,36 @@ public class ModifyGraphVisitor extends GraphVisitor {
         }
 
         log.debug("Old values:");
-        AttributeValues oldSourceValues = new AttributeValues();
-        for (Iterator i=oldValues.getNames().iterator(); i.hasNext(); ) {
+        AttributeValues oldValues = new AttributeValues();
+        for (Iterator i=oldSourceValues.getNames().iterator(); i.hasNext(); ) {
             String name = (String)i.next();
             if (!name.startsWith(source.getName()+".")) continue;
 
-            Collection values = oldValues.get(name);
+            Collection values = oldSourceValues.get(name);
             log.debug(" - "+name+": "+values);
 
             name = name.substring(source.getName().length()+1);
-            oldSourceValues.set(name, values);
+            oldValues.set(name, values);
         }
 
         log.debug("New values:");
-        AttributeValues newSourceValues = new AttributeValues();
-        for (Iterator i=newValues.getNames().iterator(); i.hasNext(); ) {
+        AttributeValues newValues = new AttributeValues();
+        for (Iterator i=newSourceValues.getNames().iterator(); i.hasNext(); ) {
             String name = (String)i.next();
             if (!name.startsWith(source.getName()+".")) continue;
 
-            Collection values = newValues.get(name);
+            Collection values = newSourceValues.get(name);
             log.debug(" - "+name+": "+values);
 
             name = name.substring(source.getName().length()+1);
-            newSourceValues.set(name, values);
+            newValues.set(name, values);
         }
 
         Config config = engine.getConfig(source);
         ConnectionConfig connectionConfig = config.getConnectionConfig(source.getConnectionName());
         SourceDefinition sourceDefinition = connectionConfig.getSourceDefinition(source.getSourceName());
 
-        returnCode = engineContext.getConnector().modify(sourceDefinition, oldSourceValues, newSourceValues);
+        returnCode = engineContext.getConnector().modify(sourceDefinition, oldValues, newValues);
         if (returnCode != LDAPException.SUCCESS) return;
 
         graphIterator.traverseEdges(node);

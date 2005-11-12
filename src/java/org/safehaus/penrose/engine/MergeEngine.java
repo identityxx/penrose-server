@@ -164,7 +164,7 @@ public class MergeEngine {
         Entry entry = new Entry(dn, entryDefinition, sourceValues, attributeValues);
         log.debug("\n"+entry);
 
-        Row rdn = getEngineContext().getSchema().normalize((Row)entry.getRdn());
+        Row rdn = entry.getRdn();
 
         log.debug("Storing "+rdn+" in entry data cache for "+entry.getParentDn());
         engine.getEntryDataCache(entry.getParentDn(), entryDefinition).put(rdn, entry);

@@ -43,6 +43,10 @@ public class JDBCConnectorDataCache extends ConnectorDataCache {
     }
 
     public void clean() throws Exception {
+        cache.clean();
+    }
+
+    public void drop() throws Exception {
         cache.drop();
     }
 

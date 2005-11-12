@@ -32,6 +32,7 @@ import javax.sql.DataSource;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
+import java.sql.DatabaseMetaData;
 import java.util.*;
 
 /**
@@ -104,16 +105,15 @@ public class JDBCAdapter extends Adapter {
         return sb.toString();
     }
 
-    public String getPkFieldNames(SourceDefinition sourceDefinition) throws Exception {
+    public String getOringialPrimaryKeyFieldNamesAsString(SourceDefinition sourceDefinition) throws Exception {
         StringBuffer sb = new StringBuffer();
 
-        Collection fields = sourceDefinition.getFieldDefinitions();
+        Collection fields = sourceDefinition.getOriginalPrimaryKeyNames();
         for (Iterator i=fields.iterator(); i.hasNext(); ) {
-            FieldDefinition fieldDefinition = (FieldDefinition)i.next();
-            if (!fieldDefinition.isPrimaryKey()) continue;
+            String name = (String)i.next();
 
             if (sb.length() > 0) sb.append(", ");
-            sb.append(fieldDefinition.getOriginalName());
+            sb.append(name);
         }
 
         return sb.toString();
@@ -132,7 +132,7 @@ public class JDBCAdapter extends Adapter {
 
         StringBuffer sb = new StringBuffer();
         sb.append("select ");
-        sb.append(getPkFieldNames(sourceDefinition));
+        sb.append(getOringialPrimaryKeyFieldNamesAsString(sourceDefinition));
         sb.append(" from ");
         sb.append(tableName);
 
@@ -153,7 +153,7 @@ public class JDBCAdapter extends Adapter {
         }
 
         sb.append(" order by ");
-        sb.append(getPkFieldNames(sourceDefinition));
+        sb.append(getOringialPrimaryKeyFieldNamesAsString(sourceDefinition));
 
         String sql = sb.toString();
 
@@ -257,7 +257,7 @@ public class JDBCAdapter extends Adapter {
 
         StringBuffer orderBy = new StringBuffer();
         orderBy.append("order by ");
-        orderBy.append(getPkFieldNames(sourceDefinition));
+        orderBy.append(getOringialPrimaryKeyFieldNamesAsString(sourceDefinition));
         sb.append(" ");
         sb.append(orderBy);
 
@@ -355,21 +355,19 @@ public class JDBCAdapter extends Adapter {
     public Row getChanges(SourceDefinition sourceDefinition, ResultSet rs) throws Exception {
 
         Row row = new Row();
-        int c = 1;
 
-        row.set("changeNumber", rs.getObject(c++));
-        row.set("changeTime", rs.getObject(c++));
-        row.set("changeAction", rs.getObject(c++));
-        row.set("changeUser", rs.getObject(c++));
+        row.set("changeNumber", rs.getObject("changeNumber"));
+        row.set("changeTime", rs.getObject("changeTime"));
+        row.set("changeAction", rs.getObject("changeAction"));
+        row.set("changeUser", rs.getObject("changeUser"));
 
-        Collection fields = sourceDefinition.getPrimaryKeyFieldDefinitions();
-        for (Iterator i=fields.iterator(); i.hasNext(); c++) {
-            FieldDefinition fieldDefinition = (FieldDefinition)i.next();
+        for (Iterator i=sourceDefinition.getPrimaryKeyNames().iterator(); i.hasNext(); ) {
+            String name = (String)i.next();
 
-            Object value = rs.getObject(c);
+            Object value = rs.getObject(name);
             if (value == null) continue;
 
-            row.set(fieldDefinition.getName(), value);
+            row.set(name, value);
         }
 
         return row;
@@ -577,9 +575,11 @@ public class JDBCAdapter extends Adapter {
             String sql = "update "+tableName+" set "+columns+" where "+whereClause;
 
             log.debug(Formatter.displaySeparator(80));
-            log.debug(Formatter.displayLine("update "+tableName, 80));
-            log.debug(Formatter.displayLine("set "+columns, 80));
-            log.debug(Formatter.displayLine("where "+whereClause, 80));
+            Collection lines = Formatter.split(sql, 80);
+            for (Iterator i=lines.iterator(); i.hasNext(); ) {
+                String line = (String)i.next();
+                log.debug(Formatter.displayLine(line, 80));
+            }
             log.debug(Formatter.displaySeparator(80));
 
             ps = con.prepareStatement(sql);
@@ -656,9 +656,11 @@ public class JDBCAdapter extends Adapter {
             String sql = "update "+tableName+" set "+columns+" where "+whereClause;
 
             log.debug(Formatter.displaySeparator(80));
-            log.debug(Formatter.displayLine("update "+tableName, 80));
-            log.debug(Formatter.displayLine("set "+columns, 80));
-            log.debug(Formatter.displayLine("where "+whereClause, 80));
+            Collection lines = Formatter.split(sql, 80);
+            for (Iterator i=lines.iterator(); i.hasNext(); ) {
+                String line = (String)i.next();
+                log.debug(Formatter.displayLine(line, 80));
+            }
             log.debug(Formatter.displaySeparator(80));
 
             ps = con.prepareStatement(sql);
@@ -722,6 +724,32 @@ public class JDBCAdapter extends Adapter {
         }
     }
 
+    public Collection getOriginalPrimaryKeyNames(String catalog, String schema, String tableName) throws Exception {
+
+        Collection primaryKeyNames = new TreeSet();
+
+        java.sql.Connection con = null;
+        ResultSet rs = null;
+
+        try {
+            con = ds.getConnection();
+
+            DatabaseMetaData dmd = con.getMetaData();
+            rs = dmd.getPrimaryKeys(catalog, schema, tableName);
+
+            while (rs.next()) {
+                String name = rs.getString(4);
+                primaryKeyNames.add(name);
+            }
+
+        } finally {
+            if (rs != null) try { rs.close(); } catch (Exception e) {}
+            if (con != null) try { con.close(); } catch (Exception e) {}
+        }
+
+        return primaryKeyNames;
+    }
+
     public SearchResults getChanges(SourceDefinition sourceDefinition, int lastChangeNumber) throws Exception {
 
         log.debug("Searching JDBC source "+sourceDefinition.getConnectionName()+"/"+sourceDefinition.getName());
@@ -732,15 +760,58 @@ public class JDBCAdapter extends Adapter {
         int sizeLimit = 100;
 
         StringBuffer columns = new StringBuffer();
-        columns.append("select changeNumber, changeTime, changeAction, changeUser, ");
-        columns.append(getPkFieldNames(sourceDefinition));
+        columns.append("select c.changeNumber, c.changeTime, c.changeAction, c.changeUser");
 
         StringBuffer table = new StringBuffer();
         table.append("from ");
-        table.append(tableName+"_changes");
+        table.append(tableName);
+        table.append("_changes c");
+
+        Collection originalPrimaryKeyNames = sourceDefinition.getOriginalPrimaryKeyNames();
+        Collection dbPrimaryKeyNames = getOriginalPrimaryKeyNames(null, null, tableName);
+
+        if (originalPrimaryKeyNames.equals(dbPrimaryKeyNames)) {
+
+            for (Iterator i=sourceDefinition.getPrimaryKeyFieldDefinitions().iterator(); i.hasNext(); ) {
+                FieldDefinition fieldDefinition = (FieldDefinition)i.next();
+
+                columns.append(", c.");
+                columns.append(fieldDefinition.getOriginalName());
+                columns.append(" ");
+                columns.append(fieldDefinition.getName());
+            }
+
+        } else {
+
+            for (Iterator i=sourceDefinition.getPrimaryKeyFieldDefinitions().iterator(); i.hasNext(); ) {
+                FieldDefinition fieldDefinition = (FieldDefinition)i.next();
+
+                columns.append(", t.");
+                columns.append(fieldDefinition.getOriginalName());
+                columns.append(" ");
+                columns.append(fieldDefinition.getName());
+            }
+
+            StringBuffer join = new StringBuffer();
+            for (Iterator i=dbPrimaryKeyNames.iterator(); i.hasNext(); ) {
+                String name = (String)i.next();
+
+                if (join.length() > 0) join.append(" and ");
+
+                join.append("c.");
+                join.append(name);
+                join.append("=t.");
+                join.append(name);
+            }
+
+            table.append(" join ");
+            table.append(tableName);
+            table.append(" t on ");
+            table.append(join);
+        }
 
         StringBuffer whereClause = new StringBuffer();
-        whereClause.append("where changeNumber > ? order by changeNumber");
+        whereClause.append("where c.changeNumber > ? order by c.changeNumber");
 
         List parameters = new ArrayList();
         parameters.add(new Integer(lastChangeNumber));

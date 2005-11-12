@@ -140,7 +140,14 @@ public class JDBCCacheTool {
         FieldDefinition fieldDefinition = sourceDefinition.getFieldDefinition(name);
         String fieldName = fieldDefinition.getName();
 
-        String tableName = getTableName(sourceDefinition)+"_"+fieldName;
+        String tableName;
+
+        if (fieldDefinition.isPrimaryKey()) {
+            tableName = getTableName(sourceDefinition);
+        } else {
+            tableName = getTableName(sourceDefinition)+"_"+fieldName;
+            tables.add(tableName);
+        }
 
         if ("VARCHAR".equals(fieldDefinition.getType())) {
             sb.append("lower(");
@@ -161,7 +168,6 @@ public class JDBCCacheTool {
         }
 
         parameters.add(value);
-        tables.add(tableName);
 
         return true;
     }

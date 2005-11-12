@@ -95,6 +95,26 @@ public class SourceDefinition implements Cloneable {
         return (FieldDefinition)fields.get(name);
     }
 
+    public Collection getPrimaryKeyNames() {
+        Collection results = new TreeSet();
+        for (Iterator i=fields.values().iterator(); i.hasNext(); ) {
+            FieldDefinition fieldDefinition = (FieldDefinition)i.next();
+            if (!fieldDefinition.isPrimaryKey()) continue;
+            results.add(fieldDefinition.getName());
+        }
+        return results;
+    }
+
+    public Collection getOriginalPrimaryKeyNames() {
+        Collection results = new TreeSet();
+        for (Iterator i=fields.values().iterator(); i.hasNext(); ) {
+            FieldDefinition fieldDefinition = (FieldDefinition)i.next();
+            if (!fieldDefinition.isPrimaryKey()) continue;
+            results.add(fieldDefinition.getOriginalName());
+        }
+        return results;
+    }
+
     public Collection getPrimaryKeyFieldDefinitions() {
         Collection results = new ArrayList();
         for (Iterator i=fields.values().iterator(); i.hasNext(); ) {

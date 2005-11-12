@@ -528,11 +528,8 @@ public class Engine {
 
         log.debug(Formatter.displaySeparator(80));
 
-        Graph graph = getGraph(entryDefinition);
-        Source primarySource = getPrimarySource(entryDefinition);
-
         ModifyGraphVisitor visitor = new ModifyGraphVisitor(this, engineContext, entryDefinition, oldSourceValues, newSourceValues);
-        graph.traverse(visitor, primarySource);
+        visitor.run();
 
         if (visitor.getReturnCode() != LDAPException.SUCCESS) return visitor.getReturnCode();
 
