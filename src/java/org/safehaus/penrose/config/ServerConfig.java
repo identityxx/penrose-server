@@ -215,6 +215,10 @@ public class ServerConfig implements Serializable {
         return interpreterConfigs.values();
     }
 
+    public InterpreterConfig getInterpreterConfig() {
+        return getInterpreterConfig("DEFAULT");
+    }
+    
     public InterpreterConfig getInterpreterConfig(String name) {
         return (InterpreterConfig)interpreterConfigs.get(name);
     }

@@ -332,10 +332,12 @@ public class ModifyHandler {
 		AttributeDefinition attributeDefinition = entry.getAttributeDefinition(name);
 		if (attributeDefinition == null) return;
 
-		Interpreter interpreter = handlerContext.newInterpreter();
+		Interpreter interpreter = handler.getInterpreterFactory().newInstance();
 
 		String attrValue = (String)interpreter.eval(attributeDefinition);
 		if (attrValue.equals(value)) entry.removeAttributeDefinition(name);
+
+        interpreter.clear();
 	}
 
     public Handler getHandler() {

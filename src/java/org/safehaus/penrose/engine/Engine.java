@@ -199,8 +199,6 @@ public class Engine {
                 return source;
             }
 
-            Interpreter interpreter = interpreterFactory.newInstance();
-
             Expression expression = rdnAttribute.getExpression();
             String foreach = expression.getForeach();
             if (foreach != null) {
@@ -210,6 +208,8 @@ public class Engine {
                 return source;
             }
 
+            Interpreter interpreter = interpreterFactory.newInstance();
+
             Collection variables = interpreter.parseVariables(expression.getScript());
 
             for (Iterator i=variables.iterator(); i.hasNext(); ) {
@@ -217,6 +217,8 @@ public class Engine {
                 Source source = entryDefinition.getSource(sourceName);
                 if (source != null) return source;
             }
+
+            interpreter.clear();
         }
 
         Collection sources = entryDefinition.getSources();
@@ -672,6 +674,7 @@ public class Engine {
             final SearchResults results)
             throws Exception {
 
+        final Interpreter batchInterpreter = interpreterFactory.newInstance();
         final SearchResults batches = new SearchResults();
 
         String s = engineConfig.getParameter(EngineConfig.ALLOW_CONCURRENCY);
@@ -681,7 +684,7 @@ public class Engine {
             execute(new Runnable() {
                 public void run() {
                     try {
-                        createBatches(entryDefinition, entries, results, batches);
+                        createBatches(batchInterpreter, entryDefinition, entries, results, batches);
 
                     } catch (Throwable e) {
                         e.printStackTrace(System.out);
@@ -690,7 +693,7 @@ public class Engine {
                 }
             });
         } else {
-            createBatches(entryDefinition, entries, results, batches);
+            createBatches(batchInterpreter, entryDefinition, entries, results, batches);
         }
 
         final SearchResults loadedBatches = new SearchResults();
@@ -711,11 +714,13 @@ public class Engine {
             loadEngine.load(entryDefinition, batches, loadedBatches);
         }
 
+        final Interpreter mergeInterpreter = interpreterFactory.newInstance();
+
         if (allowConcurrency) {
             execute(new Runnable() {
                 public void run() {
                     try {
-                        mergeEngine.merge(entryDefinition, loadedBatches, results);
+                        mergeEngine.merge(entryDefinition, loadedBatches, mergeInterpreter, results);
 
                     } catch (Throwable e) {
                         e.printStackTrace(System.out);
@@ -724,11 +729,12 @@ public class Engine {
                 }
             });
         } else {
-            mergeEngine.merge(entryDefinition, loadedBatches, results);
+            mergeEngine.merge(entryDefinition, loadedBatches, mergeInterpreter, results);
         }
     }
 
     public void createBatches(
+            Interpreter interpreter,
             EntryDefinition entryDefinition,
             SearchResults entries,
             SearchResults results,
@@ -760,7 +766,7 @@ public class Engine {
                     continue;
                 }
 
-                Row filter = createFilter(primarySource, entryDefinition, rdn);
+                Row filter = createFilter(interpreter, primarySource, entryDefinition, rdn);
                 if (filter == null) continue;
 
                 //if (filter.isEmpty()) filter.add(rdn);
@@ -908,7 +914,11 @@ public class Engine {
         return filter;
     }
 
-    public Row createFilter(Source source, EntryDefinition entryDefinition, Row rdn) throws Exception {
+    public Row createFilter(
+            Interpreter interpreter,
+            Source source,
+            EntryDefinition entryDefinition,
+            Row rdn) throws Exception {
 
         if (source == null) {
             return new Row();
@@ -917,7 +927,6 @@ public class Engine {
         Config config = getConfig(entryDefinition.getDn());
         Collection fields = config.getSearchableFields(source);
 
-        Interpreter interpreter = interpreterFactory.newInstance();
         interpreter.set(rdn);
 
         Row filter = new Row();
@@ -934,6 +943,8 @@ public class Engine {
         }
 
         //if (filter.isEmpty()) return null;
+
+        interpreter.clear();
 
         return filter;
     }
@@ -1030,30 +1041,32 @@ public class Engine {
     }
 
     public Collection computeDns(
+            Interpreter interpreter,
             EntryDefinition entryDefinition,
             AttributeValues sourceValues)
             throws Exception {
 
-        Interpreter interpreter = interpreterFactory.newInstance();
         interpreter.set(sourceValues);
 
         Collection results = new ArrayList();
 
-        results.add(computeDns(entryDefinition, interpreter));
+        results.add(computeDns(interpreter, entryDefinition));
+
+        interpreter.clear();
 
         return results;
     }
 
-    public String computeDns(EntryDefinition entryDefinition, Interpreter interpreter) throws Exception {
+    public String computeDns(Interpreter interpreter, EntryDefinition entryDefinition) throws Exception {
 
-        Row rdn = computeRdn(entryDefinition, interpreter);
+        Row rdn = computeRdn(interpreter, entryDefinition);
 
         Config config = getConfig(entryDefinition.getDn());
         EntryDefinition parentDefinition = config.getParent(entryDefinition);
 
         String parentDn;
         if (parentDefinition != null) {
-            parentDn = computeDns(parentDefinition, interpreter);
+            parentDn = computeDns(interpreter, parentDefinition);
         } else {
             parentDn = entryDefinition.getParentDn();
         }
@@ -1062,9 +1075,9 @@ public class Engine {
     }
 
     public Row computeRdn(
-            EntryDefinition entryDefinition,
-            Interpreter interpreter)
-            throws Exception {
+            Interpreter interpreter,
+            EntryDefinition entryDefinition
+            ) throws Exception {
 
         Row rdn = new Row();
 
@@ -1084,12 +1097,12 @@ public class Engine {
 
     public AttributeValues computeAttributeValues(
             EntryDefinition entryDefinition,
-            AttributeValues sourceValues)
-            throws Exception {
+            AttributeValues sourceValues,
+            Interpreter interpreter
+            ) throws Exception {
 
         AttributeValues attributeValues = new AttributeValues();
 
-        Interpreter interpreter = interpreterFactory.newInstance();
         interpreter.set(sourceValues);
 
         Collection attributeDefinitions = entryDefinition.getAttributeDefinitions();
@@ -1102,6 +1115,8 @@ public class Engine {
             String name = attributeDefinition.getName();
             attributeValues.add(name, value);
         }
+
+        interpreter.clear();
 
         return attributeValues;
     }
@@ -1186,7 +1201,7 @@ public class Engine {
         ServerConfigReader serverConfigReader = new ServerConfigReader();
         ServerConfig serverCfg = serverConfigReader.read((homeDirectory == null ? "" : homeDirectory+File.separator)+"conf"+File.separator+"server.xml");
 
-        InterpreterConfig interpreterConfig = serverCfg.getInterpreterConfig("DEFAULT");
+        InterpreterConfig interpreterConfig = serverCfg.getInterpreterConfig();
         InterpreterFactory intFactory = new InterpreterFactory(interpreterConfig);
 
         Schema schm = createSchema(homeDirectory);

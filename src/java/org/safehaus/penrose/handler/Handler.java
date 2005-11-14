@@ -19,6 +19,7 @@ package org.safehaus.penrose.handler;
 
 import org.safehaus.penrose.SearchResults;
 import org.safehaus.penrose.*;
+import org.safehaus.penrose.interpreter.InterpreterFactory;
 import org.safehaus.penrose.module.Module;
 import org.safehaus.penrose.event.*;
 import org.apache.log4j.Logger;
@@ -44,7 +45,9 @@ public class Handler {
 
     private HandlerContext handlerContext;
 
-    public Handler() {        
+    private InterpreterFactory interpreterFactory;
+
+    public Handler() {
     }
 
     /**
@@ -255,6 +258,14 @@ public class Handler {
 
             }
         }
+    }
+
+    public InterpreterFactory getInterpreterFactory() {
+        return interpreterFactory;
+    }
+
+    public void setInterpreterFactory(InterpreterFactory interpreterFactory) {
+        this.interpreterFactory = interpreterFactory;
     }
 }
 

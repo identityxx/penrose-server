@@ -94,6 +94,8 @@ public class EngineFilterTool {
             newFilter = FilterTool.appendAndFilter(newFilter, f);
         }
 
+        interpreter.clear();
+
         return newFilter;
     }
 

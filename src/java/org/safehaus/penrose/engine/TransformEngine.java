@@ -181,6 +181,8 @@ public class TransformEngine {
             output.add(name, newValues);
         }
 
+        interpreter.clear();
+
         return pk;
     }
 

@@ -19,6 +19,7 @@ package org.safehaus.penrose.engine;
 
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.SearchResults;
+import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.filter.FilterTool;
 import org.safehaus.penrose.util.Formatter;
@@ -44,6 +45,7 @@ public class MergeEngine {
     public void merge(
             EntryDefinition entryDefinition,
             SearchResults loadedBatches,
+            Interpreter interpreter,
             SearchResults results
             ) throws Exception {
 
@@ -99,7 +101,7 @@ public class MergeEngine {
 
                 log.debug(Formatter.displaySeparator(80));
 
-                mergeEntries(dn, entryDefinition, primarySourceValues, loadedSourceValues, filter, results);
+                mergeEntries(dn, entryDefinition, primarySourceValues, loadedSourceValues, interpreter, filter, results);
             }
 
         } finally {
@@ -113,6 +115,7 @@ public class MergeEngine {
             EntryDefinition entryDefinition,
             AttributeValues primarySourceValues,
             AttributeValues loadedSourceValues,
+            Interpreter interpreter,
             Row pk,
             SearchResults results)
             throws Exception {
@@ -156,7 +159,7 @@ public class MergeEngine {
         log.debug("Entry:");
         log.debug(" - source values: "+sourceValues);
 
-        AttributeValues attributeValues = engine.computeAttributeValues(entryDefinition, sourceValues);
+        AttributeValues attributeValues = engine.computeAttributeValues(entryDefinition, sourceValues, interpreter);
         log.debug(" - attribute values: "+attributeValues);
 
         Entry entry = new Entry(dn, entryDefinition, sourceValues, attributeValues);
@@ -170,36 +173,6 @@ public class MergeEngine {
         results.add(entry);
 
         return results;
-    }
-
-    public void mergeEntries(
-            String dn,
-            EntryDefinition entryDefinition,
-            AttributeValues sourceValues,
-            Map entries)
-            throws Exception {
-
-        AttributeValues attributeValues = engine.computeAttributeValues(entryDefinition, sourceValues);
-        //Collection dns = engine.computeDns(entryDefinition, sourceValues);
-
-        //for (Iterator i = dns.iterator(); i.hasNext(); ) {
-            //String dn = (String)i.next();
-            //log.debug("Merging entry "+dn);
-
-            Entry entry = (Entry)entries.get(dn);
-            if (entry == null) {
-                entry = new Entry(dn, entryDefinition, sourceValues, attributeValues);
-                entries.put(dn, entry);
-                //continue;
-            }
-/*
-            AttributeValues sv = entry.getSourceValues();
-            sv.add(sourceValues);
-
-            AttributeValues av = entry.getAttributeValues();
-            av.add(attributeValues);
-*/
-        //}
     }
 
     public Engine getEngine() {

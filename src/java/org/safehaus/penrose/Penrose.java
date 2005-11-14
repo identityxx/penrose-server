@@ -30,12 +30,10 @@ import org.safehaus.penrose.module.Module;
 import org.safehaus.penrose.module.ModuleMapping;
 import org.safehaus.penrose.module.ModuleConfig;
 import org.safehaus.penrose.schema.*;
-import org.safehaus.penrose.engine.TransformEngine;
 import org.safehaus.penrose.engine.EngineConfig;
 import org.safehaus.penrose.engine.Engine;
 import org.safehaus.penrose.handler.Handler;
 import org.safehaus.penrose.handler.HandlerContext;
-import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.interpreter.InterpreterConfig;
 import org.safehaus.penrose.interpreter.InterpreterFactory;
 import org.safehaus.penrose.mapping.*;
@@ -194,7 +192,10 @@ public class Penrose implements
     }
 
     public void initServer() throws Exception {
+
         handler = new Handler(this);
+        handler.setInterpreterFactory(interpreterFactory);
+
         aclEngine = new ACLEngine(this);
         filterTool = new FilterTool(this);
 
@@ -587,12 +588,6 @@ public class Penrose implements
         FileOutputStream out = new FileOutputStream(file);
         out.write(content);
         out.close();
-    }
-
-    public Interpreter newInterpreter() throws Exception {
-        InterpreterConfig interpreterConfig = serverConfig.getInterpreterConfig("DEFAULT");
-        Class clazz = Class.forName(interpreterConfig.getInterpreterClass());
-        return (Interpreter)clazz.newInstance();
     }
 
     public Schema getSchema() {

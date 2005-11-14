@@ -149,6 +149,8 @@ public class SearchEngine {
         AttributeValues sourceValues = new AttributeValues();
         String prefix = null;
 
+        Interpreter interpreter = engine.getInterpreterFactory().newInstance();
+
         for (Iterator iterator = path.iterator(); iterator.hasNext(); ) {
             Entry entry = (Entry)iterator.next();
 
@@ -164,7 +166,6 @@ public class SearchEngine {
             prefix = prefix == null ? "parent." : "parent."+prefix;
 
             if (entry == null) {
-                Interpreter interpreter = engine.getInterpreterFactory().newInstance();
                 AttributeValues av = parentDefinition.getAttributeValues(interpreter);
                 for (Iterator j=av.getNames().iterator(); j.hasNext(); ) {
                     String name = (String)j.next();
@@ -173,6 +174,7 @@ public class SearchEngine {
                     log.debug(Formatter.displayLine("   - "+name+": "+values, 80));
                     sourceValues.add(name, values);
                 }
+                interpreter.clear();
 
             } else {
                 AttributeValues av = entry.getAttributeValues();
@@ -228,7 +230,7 @@ public class SearchEngine {
                 AttributeValues sv = (AttributeValues)i.next();
                 //log.debug(" - "+sv);
 
-                Collection list = engine.computeDns(entryDefinition, sv);
+                Collection list = engine.computeDns(interpreter, entryDefinition, sv);
                 for (Iterator j=list.iterator(); j.hasNext(); ) {
                     String dn = (String)j.next();
                     //log.debug("   - "+dn);

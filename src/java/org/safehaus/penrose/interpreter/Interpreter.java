@@ -18,6 +18,7 @@
 package org.safehaus.penrose.interpreter;
 
 import org.safehaus.penrose.mapping.*;
+import org.apache.log4j.Logger;
 
 import java.util.Iterator;
 import java.util.Collection;
@@ -28,6 +29,8 @@ import java.util.HashSet;
  * @author Endi S. Dewata
  */
 public abstract class Interpreter {
+
+    Logger log = Logger.getLogger(getClass());
 
     public void set(Row row) throws Exception {
         for (Iterator i=row.getNames().iterator(); i.hasNext(); ) {
@@ -61,6 +64,8 @@ public abstract class Interpreter {
     public abstract Object get(String name) throws Exception;
 
     public abstract Object eval(String script) throws Exception;
+
+    public abstract void clear() throws Exception;
 
     public Object eval(AttributeDefinition attributeDefinition) throws Exception {
         if (attributeDefinition.getConstant() != null) {

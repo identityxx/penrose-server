@@ -20,18 +20,15 @@ package org.safehaus.penrose.interpreter;
 import bsh.Interpreter;
 import bsh.Parser;
 import bsh.ParserConstants;
+import bsh.NameSpace;
 
 import java.io.StringReader;
 import java.util.*;
-
-import org.apache.log4j.Logger;
 
 /**
  * @author Endi S. Dewata
  */
 public class DefaultInterpreter extends org.safehaus.penrose.interpreter.Interpreter {
-
-    Logger log = Logger.getLogger(getClass());
 
     public Map variables = new HashMap();
     public Interpreter interpreter;
@@ -115,12 +112,17 @@ public class DefaultInterpreter extends org.safehaus.penrose.interpreter.Interpr
         try {
             if (script == null) return null;
             if (interpreter == null) {
+                log.debug("###################################################################");
+                log.debug("# NEW INTERPRETER");
+
                 interpreter = new Interpreter();
                 for (Iterator i=variables.keySet().iterator(); i.hasNext(); ) {
                     String name = (String)i.next();
                     Object value = variables.get(name);
                     interpreter.set(name, value);
+                    log.debug("# - "+name+": "+value);
                 }
+                log.debug("###################################################################");
             }
             return interpreter.eval(script);
 
@@ -129,5 +131,40 @@ public class DefaultInterpreter extends org.safehaus.penrose.interpreter.Interpr
             throw e;
             //return null;
         }
+    }
+
+    public void clear() throws Exception {
+        log.debug("Clearing interpreter:");
+        if (interpreter != null) {
+            NameSpace ns = interpreter.getNameSpace();
+/*
+            log.debug("BeanShell names:");
+            String names[] = ns.getAllNames();
+            for (int i=0; i<names.length; i++) {
+                log.debug(" - "+names[i]);
+            }
+*/
+            log.debug("BeanShell methods:");
+            String methodNames[] = ns.getMethodNames();
+            for (int i=0; i<methodNames.length; i++) {
+                log.debug(" - "+methodNames[i]);
+                interpreter.unset(methodNames[i]);
+            }
+
+            log.debug("BeanShell variables:");
+            String variableNames[] = ns.getVariableNames();
+            for (int i=0; i<variableNames.length; i++) {
+                log.debug(" - "+variableNames[i]+": "+interpreter.get(variableNames[i]));
+                interpreter.unset(variableNames[i]);
+            }
+        }
+/*
+        log.debug("Variables:");
+        for (Iterator i=variables.keySet().iterator(); i.hasNext(); ) {
+            String name = (String)i.next();
+            log.debug(" - "+name);
+        }
+*/
+        variables.clear();
     }
 }
