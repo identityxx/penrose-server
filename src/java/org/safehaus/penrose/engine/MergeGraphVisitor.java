@@ -39,7 +39,6 @@ public class MergeGraphVisitor extends GraphVisitor {
     private Config config;
     private Graph graph;
     private Engine engine;
-    private EngineContext engineContext;
     private EntryDefinition entryDefinition;
     private AttributeValues primarySourceValues;
     private AttributeValues loadedSourceValues;
@@ -58,7 +57,6 @@ public class MergeGraphVisitor extends GraphVisitor {
             Filter filter) throws Exception {
 
         this.engine = engine;
-        this.engineContext = engine.getEngineContext();
         this.entryDefinition = entryDefinition;
         this.primarySourceValues = primarySourceValues;
         this.loadedSourceValues = loadedSourceValues;
@@ -101,7 +99,7 @@ public class MergeGraphVisitor extends GraphVisitor {
 
         String s = source.getParameter(Source.FILTER);
         if (s != null) {
-            Filter sourceFilter = engineContext.getFilterTool().parseFilter(s);
+            Filter sourceFilter = FilterTool.parseFilter(s);
             filter = FilterTool.appendAndFilter(filter, sourceFilter);
         }
 
@@ -115,7 +113,7 @@ public class MergeGraphVisitor extends GraphVisitor {
                 //log.debug(" - "+av);
 
                 if (relationships == null) {
-                    if (!engineContext.getFilterTool().isValidEntry(av, filter)) continue;
+                    if (!FilterTool.isValid(av, filter)) continue;
 
                 } else {
                     if (!engine.getJoinEngine().evaluate(relationships, sourceValues, av)) continue;

@@ -33,12 +33,11 @@ import org.safehaus.penrose.schema.*;
 import org.safehaus.penrose.engine.TransformEngine;
 import org.safehaus.penrose.engine.EngineConfig;
 import org.safehaus.penrose.engine.Engine;
-import org.safehaus.penrose.engine.EngineContext;
 import org.safehaus.penrose.handler.Handler;
 import org.safehaus.penrose.handler.HandlerContext;
 import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.interpreter.InterpreterConfig;
-import org.safehaus.penrose.connection.*;
+import org.safehaus.penrose.interpreter.InterpreterFactory;
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.filter.FilterTool;
 import org.safehaus.penrose.filter.FilterContext;
@@ -51,7 +50,6 @@ import org.safehaus.penrose.connector.*;
  */
 public class Penrose implements
         AdapterContext,
-        EngineContext,
         FilterContext,
         HandlerContext,
         ModuleContext,
@@ -100,8 +98,6 @@ public class Penrose implements
 	private ACLEngine aclEngine;
 	private FilterTool filterTool;
 
-	private TransformEngine transformEngine;
-
     private Map connectors = new LinkedHashMap();
 	private Map engines = new LinkedHashMap();
 
@@ -109,6 +105,8 @@ public class Penrose implements
 
     private ServerConfig serverConfig;
     private Map configs = new TreeMap();
+
+    InterpreterFactory interpreterFactory;
     private Schema schema;
 
     private Logger log = Logger.getLogger(getClass());
@@ -146,8 +144,8 @@ public class Penrose implements
 
 	public int init() throws Exception {
 
-        loadSchema();
         loadServerConfig();
+        loadSchema();
         initServer();
 
         initConnectors();
@@ -190,13 +188,15 @@ public class Penrose implements
         if (serverConfig.getRootDn() != null) rootDn = serverConfig.getRootDn();
         if (serverConfig.getRootPassword() != null) rootPassword = serverConfig.getRootPassword();
         //log.debug(serverConfig.toString());
+
+        InterpreterConfig interpreterConfig = serverConfig.getInterpreterConfig("DEFAULT");
+        interpreterFactory = new InterpreterFactory(interpreterConfig);
     }
 
     public void initServer() throws Exception {
         handler = new Handler(this);
         aclEngine = new ACLEngine(this);
         filterTool = new FilterTool(this);
-        transformEngine = new TransformEngine(this);
 
         configValidator = new ConfigValidator();
         configValidator.setServerConfig(serverConfig);
@@ -224,7 +224,10 @@ public class Penrose implements
 
             Class clazz = Class.forName(engineConfig.getEngineClass());
             Engine engine = (Engine)clazz.newInstance();
-            engine.init(engineConfig, this);
+            engine.setSchema(getSchema());
+            engine.setInterpreterFactory(interpreterFactory);
+            engine.setConnector(getConnector());
+            engine.init(engineConfig);
             engine.start();
 
             engines.put(engineConfig.getEngineName(), engine);
@@ -259,8 +262,8 @@ public class Penrose implements
         }
 
         initModules(config);
-        getEngine().addConfig(config);
         getConnector().addConfig(config);
+        getEngine().addConfig(config);
 	}
 
     public void initModules(Config config) throws Exception {
@@ -556,12 +559,6 @@ public class Penrose implements
     }
     public void setSuffixes(List suffixes) {
         this.suffixes = suffixes;
-    }
-    public TransformEngine getTransformEngine() {
-        return transformEngine;
-    }
-    public void setTransformEngine(TransformEngine transformEngine) {
-        this.transformEngine = transformEngine;
     }
     public String getTrustedKeyStore() {
         return trustedKeyStore;

@@ -149,7 +149,7 @@ public class SearchHandler {
 
             while (sr.hasNext()) {
                 Entry child = (Entry)sr.next();
-                if (handlerContext.getFilterTool().isValidEntry(child, filter)) {
+                if (handlerContext.getFilterTool().isValid(child, filter)) {
                     path.add(0, child);
                     return path;
                 }
@@ -277,7 +277,7 @@ public class SearchHandler {
             return LDAPException.SUCCESS;
         }
 
-		Filter f = handlerContext.getFilterTool().parseFilter(filter);
+		Filter f = FilterTool.parseFilter(filter);
 		log.debug("Parsed filter: "+f+" ("+f.getClass().getName()+")");
 
 		List path = findPath(connection, nbase);
@@ -295,7 +295,7 @@ public class SearchHandler {
         if (rc != LDAPException.SUCCESS) return rc;
 
 		if (scope == LDAPConnection.SCOPE_BASE || scope == LDAPConnection.SCOPE_SUB) { // base or subtree
-			if (handlerContext.getFilterTool().isValidEntry(baseEntry, f)) {
+			if (handlerContext.getFilterTool().isValid(baseEntry, f)) {
 
                 rc = handlerContext.getACLEngine().checkRead(connection, baseEntry);
                 if (rc == LDAPException.SUCCESS) {
@@ -334,7 +334,7 @@ public class SearchHandler {
             EntryDefinition childDefinition = (EntryDefinition) i.next();
             //log.debug("Checking children: " + childDefinition.getDn());
 
-            if (handlerContext.getFilterTool().isValidEntry(childDefinition, filter)) {
+            if (handlerContext.getFilterTool().isValid(childDefinition, filter)) {
 
                 SearchResults sr = handlerContext.getEngine().search(
                         path,
@@ -349,7 +349,7 @@ public class SearchHandler {
                     int rc = handlerContext.getACLEngine().checkSearch(connection, child);
                     if (rc != LDAPException.SUCCESS) continue;
 
-                    if (!handlerContext.getFilterTool().isValidEntry(child, filter)) continue;
+                    if (!handlerContext.getFilterTool().isValid(child, filter)) continue;
 
                     rc = handlerContext.getACLEngine().checkRead(connection, child);
                     if (rc != LDAPException.SUCCESS) continue;

@@ -39,7 +39,6 @@ public class SearchLocalRunner extends GraphVisitor {
     private Config config;
     private Graph graph;
     private Engine engine;
-    private EngineContext engineContext;
     private EntryDefinition entryDefinition;
     private AttributeValues sourceValues;
     private Map filters;
@@ -58,7 +57,6 @@ public class SearchLocalRunner extends GraphVisitor {
             Collection relationships) throws Exception {
 
         this.engine = engine;
-        this.engineContext = engine.getEngineContext();
         this.entryDefinition = entryDefinition;
         this.filters = planner.getFilters();
         this.startingSource = startingSource;
@@ -97,7 +95,7 @@ public class SearchLocalRunner extends GraphVisitor {
 
         String s = source.getParameter(Source.FILTER);
         if (s != null) {
-            Filter sourceFilter = engineContext.getFilterTool().parseFilter(s);
+            Filter sourceFilter = FilterTool.parseFilter(s);
             filter = FilterTool.appendAndFilter(filter, sourceFilter);
         }
 
@@ -106,7 +104,7 @@ public class SearchLocalRunner extends GraphVisitor {
         ConnectionConfig connectionConfig = config.getConnectionConfig(source.getConnectionName());
         SourceDefinition sourceDefinition = connectionConfig.getSourceDefinition(source.getSourceName());
 
-        Collection tmp = engineContext.getConnector().search(sourceDefinition, filter);
+        Collection tmp = engine.getConnector().search(sourceDefinition, filter);
 
         Collection list = new ArrayList();
         for (Iterator i=tmp.iterator(); i.hasNext(); ) {

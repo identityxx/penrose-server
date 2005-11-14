@@ -81,21 +81,12 @@ public class ServerConfigReader {
         for (Iterator i=serverConfig.getConnectorConfigs().iterator(); i.hasNext(); ) {
             ConnectorConfig connectorConfig = (ConnectorConfig)i.next();
 
-            CacheConfig filterCacheConfig = connectorConfig.getCacheConfig(ConnectorConfig.QUERY_CACHE);
-
-            if (filterCacheConfig == null) {
-                filterCacheConfig = new CacheConfig();
-                filterCacheConfig.setCacheName(ConnectorConfig.QUERY_CACHE);
-                filterCacheConfig.setCacheClass(CacheConfig.DEFAULT_CONNECTOR_QUERY_CACHE);
-                connectorConfig.addCacheConfig(filterCacheConfig);
-            }
-
-            CacheConfig dataCacheConfig = connectorConfig.getCacheConfig(ConnectorConfig.DATA_CACHE);
+            CacheConfig dataCacheConfig = connectorConfig.getCacheConfig(ConnectorConfig.CACHE);
 
             if (dataCacheConfig == null) {
                 dataCacheConfig = new CacheConfig();
-                dataCacheConfig.setCacheName(ConnectorConfig.DATA_CACHE);
-                dataCacheConfig.setCacheClass(CacheConfig.DEFAULT_CONNECTOR_DATA_CACHE);
+                dataCacheConfig.setCacheName(ConnectorConfig.CACHE);
+                dataCacheConfig.setCacheClass(CacheConfig.DEFAULT_CONNECTOR_CACHE);
                 connectorConfig.addCacheConfig(dataCacheConfig);
             }
 
@@ -109,22 +100,13 @@ public class ServerConfigReader {
         for (Iterator i=serverConfig.getEngineConfigs().iterator(); i.hasNext(); ) {
             EngineConfig engineConfig = (EngineConfig)i.next();
 
-            CacheConfig filterCacheConfig = engineConfig.getCacheConfig(EngineConfig.QUERY_CACHE);
+            CacheConfig cacheconfig = engineConfig.getCacheConfig(EngineConfig.DATA_CACHE);
 
-            if (filterCacheConfig == null) {
-                filterCacheConfig = new CacheConfig();
-                filterCacheConfig.setCacheName(EngineConfig.QUERY_CACHE);
-                filterCacheConfig.setCacheClass(CacheConfig.DEFAULT_ENGINE_QUERY_CACHE);
-                engineConfig.addCacheConfig(filterCacheConfig);
-            }
-
-            CacheConfig dataCacheConfig = engineConfig.getCacheConfig(EngineConfig.DATA_CACHE);
-
-            if (dataCacheConfig == null) {
-                dataCacheConfig = new CacheConfig();
-                dataCacheConfig.setCacheName(EngineConfig.DATA_CACHE);
-                dataCacheConfig.setCacheClass(CacheConfig.DEFAULT_ENGINE_DATA_CACHE);
-                engineConfig.addCacheConfig(dataCacheConfig);
+            if (cacheconfig == null) {
+                cacheconfig = new CacheConfig();
+                cacheconfig.setCacheName(EngineConfig.DATA_CACHE);
+                cacheconfig.setCacheClass(CacheConfig.DEFAULT_ENGINE_CACHE);
+                engineConfig.addCacheConfig(cacheconfig);
             }
 
         }

@@ -26,11 +26,12 @@ import org.dom4j.io.OutputFormat;
 import org.dom4j.io.XMLWriter;
 import org.dom4j.tree.DefaultElement;
 import org.dom4j.tree.DefaultText;
-import org.safehaus.penrose.connection.AdapterConfig;
+import org.safehaus.penrose.connector.AdapterConfig;
 import org.safehaus.penrose.cache.CacheConfig;
 import org.safehaus.penrose.interpreter.InterpreterConfig;
 import org.safehaus.penrose.engine.EngineConfig;
 import org.safehaus.penrose.connector.ConnectorConfig;
+import org.safehaus.penrose.connector.AdapterConfig;
 
 /**
  * @author Endi S. Dewata

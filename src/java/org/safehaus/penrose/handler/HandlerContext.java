@@ -44,6 +44,5 @@ public interface HandlerContext {
     public Interpreter newInterpreter() throws Exception;
     public Config getConfig(String dn) throws Exception;
     public Collection getConfigs() throws Exception;
-    public TransformEngine getTransformEngine() throws Exception;
     public Connector getConnector() throws Exception;
 }

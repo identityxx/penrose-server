@@ -37,7 +37,6 @@ public class ModRdnGraphVisitor extends GraphVisitor {
     Logger log = Logger.getLogger(getClass());
 
     public Engine engine;
-    public EngineContext engineContext;
     public EntryDefinition entryDefinition;
 
     public Graph graph;
@@ -56,7 +55,6 @@ public class ModRdnGraphVisitor extends GraphVisitor {
             ) throws Exception {
 
         this.engine = engine;
-        this.engineContext = engine.getEngineContext();
         this.entryDefinition = entryDefinition;
 
         this.oldSourceValues = oldSourceValues;
@@ -120,7 +118,7 @@ public class ModRdnGraphVisitor extends GraphVisitor {
         ConnectionConfig connectionConfig = config.getConnectionConfig(source.getConnectionName());
         SourceDefinition sourceDefinition = connectionConfig.getSourceDefinition(source.getSourceName());
 
-        returnCode = engineContext.getConnector().modify(sourceDefinition, oldValues, newValues);
+        returnCode = engine.getConnector().modify(sourceDefinition, oldValues, newValues);
         if (returnCode != LDAPException.SUCCESS) return;
 
         graphIterator.traverseEdges(node);

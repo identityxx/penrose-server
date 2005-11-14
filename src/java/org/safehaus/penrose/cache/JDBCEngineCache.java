@@ -25,7 +25,7 @@ import java.sql.*;
 /**
  * @author Endi S. Dewata
  */
-public class JDBCEngineDataCache extends EngineDataCache {
+public class JDBCEngineCache extends EngineCache {
 
     private String driver;
     private String url;

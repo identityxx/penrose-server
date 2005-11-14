@@ -35,7 +35,6 @@ public class AddGraphVisitor extends GraphVisitor {
     Logger log = Logger.getLogger(getClass());
 
     public Engine engine;
-    public EngineContext engineContext;
     public EntryDefinition entryDefinition;
     public AttributeValues sourceValues;
 
@@ -43,13 +42,11 @@ public class AddGraphVisitor extends GraphVisitor {
 
     public AddGraphVisitor(
             Engine engine,
-            EngineContext engineContext,
             EntryDefinition entryDefinition,
             AttributeValues sourceValues
             ) throws Exception {
 
         this.engine = engine;
-        this.engineContext = engineContext;
         this.entryDefinition = entryDefinition;
         this.sourceValues = sourceValues;
     }
@@ -91,7 +88,7 @@ public class AddGraphVisitor extends GraphVisitor {
         ConnectionConfig connectionConfig = config.getConnectionConfig(source.getConnectionName());
         SourceDefinition sourceDefinition = connectionConfig.getSourceDefinition(source.getSourceName());
 
-        returnCode = engineContext.getConnector().add(sourceDefinition, newSourceValues);
+        returnCode = engine.getConnector().add(sourceDefinition, newSourceValues);
         if (returnCode != LDAPException.SUCCESS) return;
 
         graphIterator.traverseEdges(node);

@@ -18,13 +18,25 @@
 package org.safehaus.penrose.engine;
 
 import org.safehaus.penrose.SearchResults;
-import org.safehaus.penrose.cache.EngineQueryCache;
+import org.safehaus.penrose.schema.SchemaReader;
+import org.safehaus.penrose.schema.Schema;
+import org.safehaus.penrose.connector.Connector;
+import org.safehaus.penrose.connector.ConnectorConfig;
+import org.safehaus.penrose.connector.Connection;
+import org.safehaus.penrose.connector.Adapter;
 import org.safehaus.penrose.cache.CacheConfig;
-import org.safehaus.penrose.cache.EngineDataCache;
+import org.safehaus.penrose.cache.EngineCache;
+import org.safehaus.penrose.cache.ConnectorCache;
 import org.safehaus.penrose.util.Formatter;
+import org.safehaus.penrose.util.PasswordUtil;
 import org.safehaus.penrose.config.Config;
+import org.safehaus.penrose.config.ServerConfigReader;
+import org.safehaus.penrose.config.ServerConfig;
+import org.safehaus.penrose.config.ConfigReader;
 import org.safehaus.penrose.filter.*;
 import org.safehaus.penrose.interpreter.Interpreter;
+import org.safehaus.penrose.interpreter.InterpreterFactory;
+import org.safehaus.penrose.interpreter.InterpreterConfig;
 import org.safehaus.penrose.graph.Graph;
 import org.safehaus.penrose.graph.GraphEdge;
 import org.safehaus.penrose.thread.ThreadPool;
@@ -35,16 +47,16 @@ import org.apache.log4j.Logger;
 import org.ietf.ldap.LDAPException;
 
 import java.util.*;
+import java.io.File;
 
 /**
  * @author Endi S. Dewata
  */
 public class Engine {
 
-    Logger log = Logger.getLogger(getClass());
+    static Logger log = Logger.getLogger(Engine.class);
 
     private EngineConfig engineConfig;
-    private EngineContext engineContext;
 
     private Map graphs = new HashMap();
     private Map primarySources = new HashMap();
@@ -56,36 +68,38 @@ public class Engine {
 
     private boolean stopping = false;
 
+    private InterpreterFactory interpreterFactory;
+    private Schema schema;
+    private Connector connector;
+
     private EngineFilterTool filterTool;
     private SearchEngine searchEngine;
     private LoadEngine loadEngine;
     private MergeEngine mergeEngine;
     private JoinEngine joinEngine;
+    private TransformEngine transformEngine;
 
     private Map configs = new TreeMap();
-
-    private Map entryFilterCaches = new TreeMap();
-    private Map entryDataCaches = new TreeMap();
+    private Map caches = new TreeMap();
 
     /**
      * Initialize the engine with a Penrose instance
      *
-     * @param engineContext
      * @throws Exception
      */
-    public void init(EngineConfig engineConfig, EngineContext engineContext) throws Exception {
+    public void init(EngineConfig engineConfig) throws Exception {
         this.engineConfig = engineConfig;
-        this.engineContext = engineContext;
 
         log.debug("-------------------------------------------------");
         log.debug("Initializing "+engineConfig.getEngineName()+" engine ...");
 
-        filterTool = new EngineFilterTool(engineContext);
+        filterTool = new EngineFilterTool(this);
 
         searchEngine = new SearchEngine(this);
         loadEngine = new LoadEngine(this);
         mergeEngine = new MergeEngine(this);
         joinEngine = new JoinEngine(this);
+        transformEngine = new TransformEngine(this);
     }
 
     public void start() throws Exception {
@@ -101,7 +115,7 @@ public class Engine {
         for (Iterator i=config.getRootEntryDefinitions().iterator(); i.hasNext(); ) {
             EntryDefinition entryDefinition = (EntryDefinition)i.next();
 
-            String ndn = engineContext.getSchema().normalize(entryDefinition.getDn());
+            String ndn = schema.normalize(entryDefinition.getDn());
             configs.put(ndn, config);
 
             analyze(entryDefinition);
@@ -118,11 +132,17 @@ public class Engine {
     }
 
     public Config getConfig(String dn) throws Exception {
-        String ndn = engineContext.getSchema().normalize(dn);
+        String ndn = schema.normalize(dn);
+        for (Iterator i=configs.values().iterator(); i.hasNext(); ) {
+            Config config = (Config)i.next();
+            if (config.getEntryDefinition(dn) != null) return config;
+        }
+/*
         for (Iterator i=configs.keySet().iterator(); i.hasNext(); ) {
             String suffix = (String)i.next();
             if (ndn.endsWith(suffix)) return (Config)configs.get(suffix);
         }
+*/
         return null;
     }
 
@@ -179,7 +199,7 @@ public class Engine {
                 return source;
             }
 
-            Interpreter interpreter = engineContext.newInterpreter();
+            Interpreter interpreter = interpreterFactory.newInstance();
 
             Expression expression = rdnAttribute.getExpression();
             String foreach = expression.getForeach();
@@ -321,12 +341,46 @@ public class Engine {
         this.threadPool = threadPool;
     }
 
-    public EngineContext getEngineContext() {
-        return engineContext;
-    }
+    public int bind(Entry entry, String password) throws Exception {
 
-    public void setEngineContext(EngineContext engineContext) {
-        this.engineContext = engineContext;
+        log.debug("Bind as user "+entry.getDn());
+
+        EntryDefinition entryDefinition = entry.getEntryDefinition();
+        AttributeValues attributeValues = entry.getAttributeValues();
+
+        Collection set = attributeValues.get("userPassword");
+
+        if (set != null) {
+            for (Iterator i = set.iterator(); i.hasNext(); ) {
+                String userPassword = (String)i.next();
+                log.debug("userPassword: "+userPassword);
+                if (PasswordUtil.comparePassword(password, userPassword)) return LDAPException.SUCCESS;
+            }
+        }
+
+        Collection sources = entryDefinition.getSources();
+        Config config = getConfig(entryDefinition.getDn());
+
+        for (Iterator i=sources.iterator(); i.hasNext(); ) {
+            Source source = (Source)i.next();
+
+            ConnectionConfig connectionConfig = config.getConnectionConfig(source.getConnectionName());
+            SourceDefinition sourceDefinition = connectionConfig.getSourceDefinition(source.getSourceName());
+
+            Map entries = transformEngine.split(source, attributeValues);
+
+            for (Iterator j=entries.keySet().iterator(); j.hasNext(); ) {
+                Row pk = (Row)j.next();
+                AttributeValues sourceValues = (AttributeValues)entries.get(pk);
+
+                log.debug("Bind to "+source.getName()+" as "+pk+": "+sourceValues);
+
+                int rc = connector.bind(sourceDefinition, entryDefinition, sourceValues, password);
+                if (rc == LDAPException.SUCCESS) return rc;
+            }
+        }
+
+        return LDAPException.INVALID_CREDENTIALS;
     }
 
     public int add(
@@ -342,7 +396,7 @@ public class Engine {
             Source source = (Source)i.next();
 
             AttributeValues output = new AttributeValues();
-            Row pk = engineContext.getTransformEngine().translate(source, attributeValues, output);
+            Row pk = transformEngine.translate(source, attributeValues, output);
             if (pk == null) continue;
 
             log.debug(" - "+pk+": "+output);
@@ -388,12 +442,12 @@ public class Engine {
             }
         }
 
-        AddGraphVisitor visitor = new AddGraphVisitor(this, engineContext, entryDefinition, sourceValues);
+        AddGraphVisitor visitor = new AddGraphVisitor(this, entryDefinition, sourceValues);
         graph.traverse(visitor, primarySource);
 
         if (visitor.getReturnCode() != LDAPException.SUCCESS) return visitor.getReturnCode();
 
-        getEntryFilterCache(parent == null ? null : parent.getDn(), entryDefinition).invalidate();
+        getCache(parent == null ? null : parent.getDn(), entryDefinition).invalidate();
 
         return LDAPException.SUCCESS;
     }
@@ -410,15 +464,13 @@ public class Engine {
 
         log.debug("Deleting entry "+entry.getDn()+" ["+sourceValues+"]");
 
-        DeleteGraphVisitor visitor = new DeleteGraphVisitor(this, engineContext, entryDefinition, sourceValues);
+        DeleteGraphVisitor visitor = new DeleteGraphVisitor(this, entryDefinition, sourceValues);
         graph.traverse(visitor, primarySource);
 
         if (visitor.getReturnCode() != LDAPException.SUCCESS) return visitor.getReturnCode();
 
-        Row key = getEngineContext().getSchema().normalize((Row)entry.getRdn());
-
-        getEntryDataCache(entry.getParentDn(), entryDefinition).remove(key);
-        getEntryFilterCache(entry.getParentDn(), entryDefinition).invalidate();
+        getCache(entry.getParentDn(), entryDefinition).remove(entry.getRdn());
+        getCache(entry.getParentDn(), entryDefinition).invalidate();
 
         return LDAPException.SUCCESS;
     }
@@ -448,7 +500,7 @@ public class Engine {
             Source source = (Source)i.next();
 
             AttributeValues output = new AttributeValues();
-            engineContext.getTransformEngine().translate(source, newAttributeValues, output);
+            transformEngine.translate(source, newAttributeValues, output);
             newSourceValues.set(source.getName(), output);
         }
 
@@ -485,10 +537,8 @@ public class Engine {
 
         if (visitor.getReturnCode() != LDAPException.SUCCESS) return visitor.getReturnCode();
 
-        Row key = getEngineContext().getSchema().normalize((Row)entry.getRdn());
-
-        getEntryDataCache(entry.getParentDn(), entryDefinition).remove(key);
-        getEntryFilterCache(entry.getParentDn(), entryDefinition).invalidate();
+        getCache(entry.getParentDn(), entryDefinition).remove(entry.getRdn());
+        getCache(entry.getParentDn(), entryDefinition).invalidate();
 
         return LDAPException.SUCCESS;
     }
@@ -504,7 +554,7 @@ public class Engine {
             Source source = (Source)i.next();
 
             AttributeValues output = new AttributeValues();
-            engineContext.getTransformEngine().translate(source, newValues, output);
+            transformEngine.translate(source, newValues, output);
             newSourceValues.set(source.getName(), output);
         }
 
@@ -528,15 +578,13 @@ public class Engine {
 
         log.debug(Formatter.displaySeparator(80));
 
-        ModifyGraphVisitor visitor = new ModifyGraphVisitor(this, engineContext, entryDefinition, oldSourceValues, newSourceValues);
+        ModifyGraphVisitor visitor = new ModifyGraphVisitor(this, entryDefinition, oldSourceValues, newSourceValues);
         visitor.run();
 
         if (visitor.getReturnCode() != LDAPException.SUCCESS) return visitor.getReturnCode();
 
-        Row key = getEngineContext().getSchema().normalize((Row)entry.getRdn());
-
-        getEntryDataCache(entry.getParentDn(), entryDefinition).remove(key);
-        getEntryFilterCache(entry.getParentDn(), entryDefinition).invalidate();
+        getCache(entry.getParentDn(), entryDefinition).remove(entry.getRdn());
+        getCache(entry.getParentDn(), entryDefinition).invalidate();
 
         return LDAPException.SUCCESS;
     }
@@ -701,11 +749,10 @@ public class Engine {
                 AttributeValues sv = e.getSourceValues();
 
                 Row rdn = Entry.getRdn(dn);
-                Row normalizedRdn = getEngineContext().getSchema().normalize(rdn);
                 String parentDn = Entry.getParentDn(dn);
 
-                log.debug("Checking "+normalizedRdn+" in entry data cache for "+parentDn);
-                Entry entry = (Entry)getEntryDataCache(parentDn, entryDefinition).get(normalizedRdn);
+                log.debug("Checking "+rdn+" in entry data cache for "+parentDn);
+                Entry entry = (Entry)getCache(parentDn, entryDefinition).get(rdn);
 
                 if (entry != null) {
                     log.debug(" - "+rdn+" has been loaded");
@@ -848,7 +895,7 @@ public class Engine {
 
                 if (f.isEmpty()) continue;
 
-                Row normalizedFilter = engineContext.getSchema().normalize(f);
+                Row normalizedFilter = schema.normalize(f);
                 normalizedFilters.add(normalizedFilter);
             }
         }
@@ -870,7 +917,7 @@ public class Engine {
         Config config = getConfig(entryDefinition.getDn());
         Collection fields = config.getSearchableFields(source);
 
-        Interpreter interpreter = engineContext.newInterpreter();
+        Interpreter interpreter = interpreterFactory.newInstance();
         interpreter.set(rdn);
 
         Row filter = new Row();
@@ -987,7 +1034,7 @@ public class Engine {
             AttributeValues sourceValues)
             throws Exception {
 
-        Interpreter interpreter = engineContext.newInterpreter();
+        Interpreter interpreter = interpreterFactory.newInstance();
         interpreter.set(sourceValues);
 
         Collection results = new ArrayList();
@@ -1042,7 +1089,7 @@ public class Engine {
 
         AttributeValues attributeValues = new AttributeValues();
 
-        Interpreter interpreter = engineContext.newInterpreter();
+        Interpreter interpreter = interpreterFactory.newInstance();
         interpreter.set(sourceValues);
 
         Collection attributeDefinitions = entryDefinition.getAttributeDefinitions();
@@ -1083,59 +1130,276 @@ public class Engine {
         this.engineConfig = engineConfig;
     }
 
-    public EngineQueryCache getEntryFilterCache(String parentDn, EntryDefinition entryDefinition) throws Exception {
-        String cacheName = entryDefinition.getParameter(EntryDefinition.CACHE);
-        cacheName = cacheName == null ? EntryDefinition.DEFAULT_CACHE : cacheName;
-        CacheConfig cacheConfig = engineConfig.getCacheConfig(EngineConfig.QUERY_CACHE);
-
-        String key = entryDefinition.getRdn()+","+parentDn;
-
-        EngineQueryCache cache = (EngineQueryCache)entryFilterCaches.get(key);
-
-        if (cache == null) {
-
-            String cacheClass = cacheConfig.getCacheClass();
-            cacheClass = cacheClass == null ? CacheConfig.DEFAULT_ENGINE_QUERY_CACHE : cacheClass;
-
-            Class clazz = Class.forName(cacheClass);
-            cache = (EngineQueryCache)clazz.newInstance();
-
-            cache.setParentDn(parentDn);
-            cache.setEntryDefinition(entryDefinition);
-            cache.init(cacheConfig);
-
-            entryFilterCaches.put(key, cache);
-        }
-
-        return cache;
-    }
-
-    public EngineDataCache getEntryDataCache(String parentDn, EntryDefinition entryDefinition) throws Exception {
+    public EngineCache getCache(String parentDn, EntryDefinition entryDefinition) throws Exception {
         String cacheName = entryDefinition.getParameter(EntryDefinition.CACHE);
         cacheName = cacheName == null ? EntryDefinition.DEFAULT_CACHE : cacheName;
         CacheConfig cacheConfig = engineConfig.getCacheConfig(EngineConfig.DATA_CACHE);
 
         String key = entryDefinition.getRdn()+","+parentDn;
 
-        EngineDataCache cache = (EngineDataCache)entryDataCaches.get(key);
+        EngineCache cache = (EngineCache)caches.get(key);
 
         if (cache == null) {
 
             String cacheClass = cacheConfig.getCacheClass();
-            cacheClass = cacheClass == null ? CacheConfig.DEFAULT_ENGINE_DATA_CACHE : cacheClass;
+            cacheClass = cacheClass == null ? CacheConfig.DEFAULT_ENGINE_CACHE : cacheClass;
 
             Class clazz = Class.forName(cacheClass);
-            cache = (EngineDataCache)clazz.newInstance();
+            cache = (EngineCache)clazz.newInstance();
 
             cache.setParentDn(parentDn);
             cache.setEntryDefinition(entryDefinition);
             cache.init(cacheConfig);
 
-            entryDataCaches.put(key, cache);
+            caches.put(key, cache);
         }
 
         return cache;
     }
 
+    public Connector getConnector() {
+        return connector;
+    }
+
+    public void setConnector(Connector connector) {
+        this.connector = connector;
+    }
+
+    public static void main(String args[]) throws Exception {
+
+        if (args.length == 0) {
+            System.out.println("Usage: org.safehaus.penrose.engine.Engine [command]");
+            System.out.println();
+            System.out.println("Commands:");
+            System.out.println("    create - create cache tables");
+            System.out.println("    load   - load data into cache tables");
+            System.out.println("    clean  - clean data from cache tables");
+            System.out.println("    drop   - drop cache tables");
+            System.exit(0);
+        }
+
+        String homeDirectory = System.getProperty("penrose.home");
+        log.debug("PENROSE_HOME: "+homeDirectory);
+
+        String command = args[0];
+
+        ServerConfigReader serverConfigReader = new ServerConfigReader();
+        ServerConfig serverCfg = serverConfigReader.read((homeDirectory == null ? "" : homeDirectory+File.separator)+"conf"+File.separator+"server.xml");
+
+        InterpreterConfig interpreterConfig = serverCfg.getInterpreterConfig("DEFAULT");
+        InterpreterFactory intFactory = new InterpreterFactory(interpreterConfig);
+
+        Schema schm = createSchema(homeDirectory);
+        Collection cfgs = getConfigs(homeDirectory);
+        Connector cntr = createConnector(serverCfg, cfgs, command);
+        Engine engine = createEngine(serverCfg, intFactory, schm, cntr, cfgs, command);
+    }
+
+    public static Schema createSchema(String homeDirectory) throws Exception {
+        SchemaReader reader = new SchemaReader();
+        reader.readDirectory((homeDirectory == null ? "" : homeDirectory+File.separator)+"schema");
+        reader.readDirectory((homeDirectory == null ? "" : homeDirectory+File.separator)+"schema"+File.separator+"ext");
+        return reader.getSchema();
+    }
+
+    public static Collection getConfigs(String homeDirectory) throws Exception {
+        Collection cfgs = new ArrayList();
+
+        ConfigReader configReader = new ConfigReader();
+        Config config = configReader.read((homeDirectory == null ? "" : homeDirectory+File.separator)+"conf");
+
+        cfgs.add(config);
+
+        File partitions = new File(homeDirectory+File.separator+"partitions");
+        if (partitions.exists()) {
+            File files[] = partitions.listFiles();
+            for (int i=0; i<files.length; i++) {
+                File partition = files[i];
+                String name = partition.getName();
+
+                config = configReader.read(partition.getAbsolutePath());
+                cfgs.add(config);
+            }
+        }
+
+        return cfgs;
+    }
+
+    public static Connector createConnector(
+            ServerConfig serverCfg,
+            Collection cfgs,
+            String command) throws Exception {
+
+        ConnectorConfig connectorCfg = serverCfg.getConnectorConfig();
+
+        Connector cntr = new Connector();
+        cntr.init(serverCfg, connectorCfg);
+
+        for (Iterator i=cfgs.iterator(); i.hasNext(); ) {
+            Config config = (Config)i.next();
+            cntr.addConfig(config);
+        }
+
+        if ("create".equals(command)) {
+            cntr.create();
+
+        } else if ("load".equals(command)) {
+            cntr.load();
+
+        } else if ("clean".equals(command)) {
+            cntr.clean();
+
+        } else if ("drop".equals(command)) {
+            cntr.drop();
+
+        } else if ("run".equals(command)) {
+            cntr.start();
+        }
+
+        return cntr;
+    }
+
+    public static Engine createEngine(
+            ServerConfig serverCfg,
+            InterpreterFactory intFactory,
+            Schema schm,
+            Connector cntr,
+            Collection cfgs,
+            String command) throws Exception {
+
+        EngineConfig engineCfg = serverCfg.getEngineConfig();
+        Engine engine = new Engine();
+        engine.setInterpreterFactory(intFactory);
+        engine.setSchema(schm);
+        engine.setConnector(cntr);
+        engine.init(engineCfg);
+
+        for (Iterator i=cfgs.iterator(); i.hasNext(); ) {
+            Config config = (Config)i.next();
+            engine.addConfig(config);
+        }
+
+        if ("create".equals(command)) {
+            engine.create();
+
+        } else if ("load".equals(command)) {
+            engine.load();
+
+        } else if ("clean".equals(command)) {
+            engine.clean();
+
+        } else if ("drop".equals(command)) {
+            engine.drop();
+
+        } else if ("run".equals(command)) {
+            engine.start();
+        }
+
+        return engine;
+    }
+
+    public void create() throws Exception {
+        for (Iterator i=configs.values().iterator(); i.hasNext(); ) {
+            Config config = (Config)i.next();
+            Collection entryDefinitions = config.getRootEntryDefinitions();
+            create(config, entryDefinitions);
+        }
+    }
+
+    public void create(Config config, Collection entryDefinitions) throws Exception {
+        if (entryDefinitions == null) return;
+        for (Iterator i=entryDefinitions.iterator(); i.hasNext(); ) {
+            EntryDefinition entryDefinition = (EntryDefinition)i.next();
+            if (entryDefinition.isDynamic()) continue;
+            log.debug("Creating tables for "+entryDefinition.getDn());
+
+            Collection children = config.getChildren(entryDefinition);
+            create(config, children);
+        }
+    }
+
+    public void load() throws Exception {
+        for (Iterator i=configs.values().iterator(); i.hasNext(); ) {
+            Config config = (Config)i.next();
+            Collection entryDefinitions = config.getRootEntryDefinitions();
+            load(config, entryDefinitions);
+        }
+    }
+
+    public void load(Config config, Collection entryDefinitions) throws Exception {
+        if (entryDefinitions == null) return;
+        for (Iterator i=entryDefinitions.iterator(); i.hasNext(); ) {
+            EntryDefinition entryDefinition = (EntryDefinition)i.next();
+            if (entryDefinition.isDynamic()) continue;
+            log.debug("Loading tables for "+entryDefinition.getDn());
+
+            Collection children = config.getChildren(entryDefinition);
+            load(config, children);
+        }
+    }
+
+    public void clean() throws Exception {
+        for (Iterator i=configs.values().iterator(); i.hasNext(); ) {
+            Config config = (Config)i.next();
+            Collection entryDefinitions = config.getRootEntryDefinitions();
+            clean(config, entryDefinitions);
+        }
+    }
+
+    public void clean(Config config, Collection entryDefinitions) throws Exception {
+        if (entryDefinitions == null) return;
+        for (Iterator i=entryDefinitions.iterator(); i.hasNext(); ) {
+            EntryDefinition entryDefinition = (EntryDefinition)i.next();
+            if (entryDefinition.isDynamic()) continue;
+            log.debug("Cleaning tables for "+entryDefinition.getDn());
+
+            Collection children = config.getChildren(entryDefinition);
+            clean(config, children);
+        }
+    }
+
+    public void drop() throws Exception {
+        for (Iterator i=configs.values().iterator(); i.hasNext(); ) {
+            Config config = (Config)i.next();
+            Collection entryDefinitions = config.getRootEntryDefinitions();
+            drop(config, entryDefinitions);
+        }
+    }
+
+    public void drop(Config config, Collection entryDefinitions) throws Exception {
+        if (entryDefinitions == null) return;
+        for (Iterator i=entryDefinitions.iterator(); i.hasNext(); ) {
+            EntryDefinition entryDefinition = (EntryDefinition)i.next();
+            if (entryDefinition.isDynamic()) continue;
+            log.debug("Dropping tables for "+entryDefinition.getDn());
+
+            Collection children = config.getChildren(entryDefinition);
+            drop(config, children);
+        }
+    }
+
+    public Schema getSchema() {
+        return schema;
+    }
+
+    public void setSchema(Schema schema) {
+        this.schema = schema;
+    }
+
+    public InterpreterFactory getInterpreterFactory() {
+        return interpreterFactory;
+    }
+
+    public void setInterpreterFactory(InterpreterFactory interpreterFactory) {
+        this.interpreterFactory = interpreterFactory;
+    }
+
+    public TransformEngine getTransformEngine() {
+        return transformEngine;
+    }
+
+    public void setTransformEngine(TransformEngine transformEngine) {
+        this.transformEngine = transformEngine;
+    }
 }
 

@@ -37,11 +37,9 @@ public class SearchEngine {
     Logger log = Logger.getLogger(getClass());
 
     private Engine engine;
-    private EngineContext engineContext;
 
     public SearchEngine(Engine engine) {
         this.engine = engine;
-        this.engineContext = engine.getEngineContext();
     }
 
     /**
@@ -166,7 +164,8 @@ public class SearchEngine {
             prefix = prefix == null ? "parent." : "parent."+prefix;
 
             if (entry == null) {
-                AttributeValues av = parentDefinition.getAttributeValues(engineContext.newInterpreter());
+                Interpreter interpreter = engine.getInterpreterFactory().newInstance();
+                AttributeValues av = parentDefinition.getAttributeValues(interpreter);
                 for (Iterator j=av.getNames().iterator(); j.hasNext(); ) {
                     String name = (String)j.next();
                     Collection values = av.get(name);
@@ -208,7 +207,7 @@ public class SearchEngine {
                 String parentDn = parent.getDn();
 
                 log.debug("Checking "+filter+" in entry filter cache for "+parentDn);
-                Collection list = engine.getEntryFilterCache(parentDn, entryDefinition).get(filter);
+                Collection list = engine.getCache(parentDn, entryDefinition).get(filter);
                 if (list != null) dns.addAll(list);
             }
         }
@@ -237,7 +236,7 @@ public class SearchEngine {
                     dns.add(dn);
 
                     Row rdn = Entry.getRdn(dn);
-                    Row normalizedRdn = getEngineContext().getSchema().normalize(rdn);
+                    Row normalizedRdn = getEngine().getSchema().normalize(rdn);
                     String parentDn = Entry.getParentDn(dn);
 
                     AttributeValues av = (AttributeValues)results.get(dn);
@@ -267,7 +266,7 @@ public class SearchEngine {
                     log.debug("   - "+dn);
                 }
 
-                engine.getEntryFilterCache(parentDn, entryDefinition).put(filter, c);
+                engine.getCache(parentDn, entryDefinition).put(filter, c);
 
             }
             //filter = engineContext.getFilterTool().createFilter(rdns);
@@ -289,7 +288,7 @@ public class SearchEngine {
                 String parentDn = Entry.getParentDn(dn);
 
                 log.debug("Getting "+rdn+" from entry source cache for "+parentDn);
-                Entry entry = (Entry)engineContext.getEntryDataCache(parentDn, entryDefinition).get(normalizedRdn);
+                Entry entry = (Entry)engineContext.getCache(parentDn, entryDefinition).get(normalizedRdn);
                 AttributeValues sv = entry.getSourceValues(); //(AttributeValues)engineContext.getEntrySourceCache(parentDn, entryDefinition).get(normalizedRdn));
                 //log.debug("Entry source cache: "+sv);
 
@@ -321,7 +320,7 @@ public class SearchEngine {
             Row normalizedRdn = getEngineContext().getSchema().normalize(rdn);
             String parentDn = Entry.getParentDn(dn);
 
-            Entry entry = (Entry)engineContext.getEntryDataCache(parentDn, entryDefinition).get(normalizedRdn);
+            Entry entry = (Entry)engineContext.getCache(parentDn, entryDefinition).get(normalizedRdn);
             if (entry == null) {
                 entry = new Entry(dn, entryDefinition, sv, new AttributeValues());
             }
@@ -647,13 +646,5 @@ public class SearchEngine {
 
     public void setEngine(Engine engine) {
         this.engine = engine;
-    }
-
-    public EngineContext getEngineContext() {
-        return engineContext;
-    }
-
-    public void setEngineContext(EngineContext engineContext) {
-        this.engineContext = engineContext;
     }
 }

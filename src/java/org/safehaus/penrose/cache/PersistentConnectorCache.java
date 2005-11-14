@@ -25,43 +25,69 @@ import java.util.*;
 /**
  * @author Endi S. Dewata
  */
-public abstract class ConnectorDataCache extends Cache {
+public class PersistentConnectorCache extends ConnectorCache {
 
-    SourceDefinition sourceDefinition;
-
-    public abstract int getLastChangeNumber() throws Exception;
-    public abstract void setLastChangeNumber(int lastChangeNumber) throws Exception;
-    public abstract Map load(Collection filters, Collection missingKeys) throws Exception;
-
-    public SourceDefinition getSourceDefinition() {
-        return sourceDefinition;
-    }
-
-    public void setSourceDefinition(SourceDefinition sourceDefinition) {
-        this.sourceDefinition = sourceDefinition;
-    }
+    JDBCCache cache;
 
     public void init() throws Exception {
         super.init();
 
-        String s = sourceDefinition.getParameter(SourceDefinition.DATA_CACHE_SIZE);
-        if (s != null) size = Integer.parseInt(s);
-
-        s = sourceDefinition.getParameter(SourceDefinition.DATA_CACHE_EXPIRATION);
-        if (s != null) expiration = Integer.parseInt(s);
+        cache = new JDBCCache(cacheConfig, sourceDefinition);
+        cache.setSize(size);
+        cache.setExpiration(expiration);
+        cache.init();
     }
 
     public void create() throws Exception {
+        cache.create();
     }
 
     public void clean() throws Exception {
+        cache.clean();
     }
 
     public void drop() throws Exception {
+        cache.drop();
+    }
+
+    public Object get(Object key) throws Exception {
+        Row pk = (Row)key;
+
+        return cache.get(pk);
+    }
+
+    public Map getExpired() throws Exception {
+        Map results = new TreeMap();
+        return results;
+    }
+    
+    public Map load(Collection keys, Collection missingKeys) throws Exception {
+        return cache.load(keys, missingKeys);
     }
 
     public Collection search(Filter filter) throws Exception {
-        return null;
+        return cache.search(filter);
+    }
+
+    public void put(Object key, Object object) throws Exception {
+        Row pk = (Row)key;
+        AttributeValues sourceValues = (AttributeValues)object;
+
+        cache.put(pk, sourceValues);
+    }
+
+    public void remove(Object key) throws Exception {
+        Row pk = (Row)key;
+
+        cache.remove(pk);
+    }
+
+    public int getLastChangeNumber() throws Exception {
+        return cache.getLastChangeNumber();
+    }
+
+    public void setLastChangeNumber(int lastChangeNumber) throws Exception {
+        cache.setLastChangeNumber(lastChangeNumber);
     }
 
     public void put(Filter filter, Collection pks) throws Exception {

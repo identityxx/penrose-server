@@ -104,7 +104,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 
 		<!-- adapter -->
 		<pattern value="adapter">
-			<object-create-rule classname="org.safehaus.penrose.connection.AdapterConfig" />
+			<object-create-rule classname="org.safehaus.penrose.connector.AdapterConfig" />
 			<set-properties-rule/>
             <call-method-rule pattern="adapter-name" methodname="setAdapterName" paramcount="0" />
             <call-method-rule pattern="adapter-class" methodname="setAdapterClass" paramcount="0" />

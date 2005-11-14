@@ -39,11 +39,9 @@ public class LoadEngine {
     Logger log = Logger.getLogger(getClass());
 
     private Engine engine;
-    private EngineContext engineContext;
 
     public LoadEngine(Engine engine) {
         this.engine = engine;
-        this.engineContext = engine.getEngineContext();
     }
 
     public void load(
@@ -194,13 +192,5 @@ public class LoadEngine {
 
     public void setEngine(Engine engine) {
         this.engine = engine;
-    }
-
-    public EngineContext getEngineContext() {
-        return engineContext;
-    }
-
-    public void setEngineContext(EngineContext engineContext) {
-        this.engineContext = engineContext;
     }
 }

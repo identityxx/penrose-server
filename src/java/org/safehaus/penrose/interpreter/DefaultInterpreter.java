@@ -22,9 +22,7 @@ import bsh.Parser;
 import bsh.ParserConstants;
 
 import java.io.StringReader;
-import java.util.Collection;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 import org.apache.log4j.Logger;
 
@@ -35,10 +33,10 @@ public class DefaultInterpreter extends org.safehaus.penrose.interpreter.Interpr
 
     Logger log = Logger.getLogger(getClass());
 
+    public Map variables = new HashMap();
     public Interpreter interpreter;
 
     public DefaultInterpreter() {
-        interpreter = new Interpreter();
     }
 
     public Collection parse(String script) throws Exception {
@@ -95,21 +93,35 @@ public class DefaultInterpreter extends org.safehaus.penrose.interpreter.Interpr
     }
 
     public void set(String name, Object value) throws Exception {
-        interpreter.set(name, value);
+        if (interpreter != null) {
+            interpreter.set(name, value);
+        }
+        variables.put(name, value);
     }
 
     public Object get(String name) throws Exception {
-        int i = name.indexOf(".");
-        if (i >= 0) {
-            String object = name.substring(0, i);
-            if (interpreter.get(object) == null) return null;
+        if (interpreter != null) {
+            int i = name.indexOf(".");
+            if (i >= 0) {
+                String object = name.substring(0, i);
+                if (interpreter.get(object) == null) return null;
+            }
+            return interpreter.get(name);
         }
-        return interpreter.get(name);
+        return variables.get(name);
     }
 
     public Object eval(String script) throws Exception {
         try {
             if (script == null) return null;
+            if (interpreter == null) {
+                interpreter = new Interpreter();
+                for (Iterator i=variables.keySet().iterator(); i.hasNext(); ) {
+                    String name = (String)i.next();
+                    Object value = variables.get(name);
+                    interpreter.set(name, value);
+                }
+            }
             return interpreter.eval(script);
 
         } catch (Exception e) {

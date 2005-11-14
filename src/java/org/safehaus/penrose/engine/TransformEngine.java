@@ -33,13 +33,13 @@ public class TransformEngine {
 
     static Logger log = Logger.getLogger(TransformEngine.class);
 
-    public Penrose penrose;
+    public Engine engine;
 
     public int joinDebug = 0;
     public static int crossProductDebug = 0;
 
-    public TransformEngine(Penrose penrose) {
-        this.penrose = penrose;
+    public TransformEngine(Engine engine) {
+        this.engine = engine;
     }
 
     /**
@@ -122,11 +122,11 @@ public class TransformEngine {
 
     public Row translate(Source source, AttributeValues input, AttributeValues output) throws Exception {
 
-        Config config = penrose.getConfig(source);
+        Config config = engine.getConfig(source);
         ConnectionConfig connectionConfig = config.getConnectionConfig(source.getConnectionName());
         SourceDefinition sourceDefinition = connectionConfig.getSourceDefinition(source.getSourceName());
 
-        Interpreter interpreter = penrose.newInterpreter();
+        Interpreter interpreter = engine.getInterpreterFactory().newInstance();
         interpreter.set(input);
 
         Row pk = new Row();
@@ -205,7 +205,7 @@ public class TransformEngine {
 
     public Map split(Source source, AttributeValues entry) throws Exception {
 
-        Config config = penrose.getConfig(source);
+        Config config = engine.getConfig(source);
         ConnectionConfig connectionConfig = config.getConnectionConfig(source.getConnectionName());
         SourceDefinition sourceDefinition = connectionConfig.getSourceDefinition(source.getSourceName());
 

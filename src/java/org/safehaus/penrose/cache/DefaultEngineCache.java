@@ -20,5 +20,5 @@ package org.safehaus.penrose.cache;
 /**
  * @author Endi S. Dewata
  */
-public class DefaultConnectorQueryCache extends InMemoryConnectorQueryCache {
+public class DefaultEngineCache extends InMemoryEngineCache {
 }

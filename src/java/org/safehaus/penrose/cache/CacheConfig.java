@@ -28,22 +28,19 @@ import java.io.Serializable;
  */
 public class CacheConfig implements Cloneable, Serializable {
 	
-    public final static String DEFAULT_ENGINE_QUERY_CACHE    = DefaultEngineQueryCache.class.getName();
-    public final static String DEFAULT_ENGINE_DATA_CACHE     = DefaultEngineDataCache.class.getName();
+    public final static String DEFAULT_ENGINE_CACHE    = DefaultEngineCache.class.getName();
+    public final static String DEFAULT_CONNECTOR_CACHE = DefaultConnectorCache.class.getName();
 
-    public final static String DEFAULT_CONNECTOR_QUERY_CACHE = DefaultConnectorQueryCache.class.getName();
-    public final static String DEFAULT_CONNECTOR_DATA_CACHE  = DefaultConnectorDataCache.class.getName();
+    public final static String DRIVER                  = "driver";
+    public final static String URL                     = "url";
+    public final static String USER                    = "user";
+    public final static String PASSWORD                = "password";
 
-    public final static String DRIVER                        = "driver";
-    public final static String URL                           = "url";
-    public final static String USER                          = "user";
-    public final static String PASSWORD                      = "password";
+    public final static String CACHE_SIZE              = "cacheSize";
+    public final static String CACHE_EXPIRATION        = "cacheExpiration";
 
-    public final static String CACHE_SIZE                    = "cacheSize";
-    public final static String CACHE_EXPIRATION              = "cacheExpiration";
-
-    public final static int DEFAULT_CACHE_SIZE               = 100;
-    public final static int DEFAULT_CACHE_EXPIRATION         = 5;
+    public final static int DEFAULT_CACHE_SIZE         = 100;
+    public final static int DEFAULT_CACHE_EXPIRATION   = 5;
 
     private String cacheName;
     private String cacheClass;

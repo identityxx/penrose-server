@@ -24,8 +24,8 @@ import org.apache.log4j.Logger;
 import org.safehaus.penrose.cache.CacheConfig;
 import org.safehaus.penrose.engine.EngineConfig;
 import org.safehaus.penrose.interpreter.InterpreterConfig;
-import org.safehaus.penrose.connection.*;
 import org.safehaus.penrose.connector.ConnectorConfig;
+import org.safehaus.penrose.connector.AdapterConfig;
 
 
 /**
@@ -178,6 +178,10 @@ public class ServerConfig implements Serializable {
 
     public void addEngineConfig(EngineConfig engineConfig) {
         engineConfigs.put(engineConfig.getEngineName(), engineConfig);
+    }
+
+    public EngineConfig getEngineConfig() {
+        return getEngineConfig("DEFAULT");
     }
 
     public EngineConfig getEngineConfig(String engineName) {

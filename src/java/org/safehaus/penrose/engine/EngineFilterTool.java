@@ -32,10 +32,10 @@ public class EngineFilterTool {
 
     Logger log = Logger.getLogger(getClass());
 
-    public EngineContext engineContext;
+    public Engine engine;
 
-    public EngineFilterTool(EngineContext engineContext) {
-        this.engineContext = engineContext;
+    public EngineFilterTool(Engine engine) {
+        this.engine = engine;
     }
 
     public Filter toSourceFilter(AttributeValues parentValues, EntryDefinition entry, Source source, Filter filter) throws Exception {
@@ -72,7 +72,7 @@ public class EngineFilterTool {
                 return null;
         }
 
-        Interpreter interpreter = engineContext.newInterpreter();
+        Interpreter interpreter = engine.getInterpreterFactory().newInstance();
         interpreter.set(attributeName, attributeValue);
 
         if (parentValues != null) {

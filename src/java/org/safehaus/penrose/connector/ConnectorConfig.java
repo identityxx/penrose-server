@@ -30,8 +30,7 @@ public class ConnectorConfig implements Cloneable, Serializable {
     public final static String REFRESH_INTERVAL = "refreshInterval";
     public final static String THREAD_POOL_SIZE = "threadPoolSize";
 
-    public final static String QUERY_CACHE      = "Query Cache";
-    public final static String DATA_CACHE       = "Data Cache";
+    public final static String CACHE            = "DEFAULT";
 
     public final static int DEFAULT_REFRESH_INTERVAL = 60; // seconds
     public final static int DEFAULT_THREAD_POOL_SIZE = 20;

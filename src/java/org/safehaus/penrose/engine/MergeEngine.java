@@ -36,11 +36,9 @@ public class MergeEngine {
     Logger log = Logger.getLogger(getClass());
 
     private Engine engine;
-    private EngineContext engineContext;
 
     public MergeEngine(Engine engine) {
         this.engine = engine;
-        this.engineContext = engine.getEngineContext();
     }
 
     public void merge(
@@ -167,7 +165,7 @@ public class MergeEngine {
         Row rdn = entry.getRdn();
 
         log.debug("Storing "+rdn+" in entry data cache for "+entry.getParentDn());
-        engine.getEntryDataCache(entry.getParentDn(), entryDefinition).put(rdn, entry);
+        engine.getCache(entry.getParentDn(), entryDefinition).put(rdn, entry);
 
         results.add(entry);
 
@@ -210,13 +208,5 @@ public class MergeEngine {
 
     public void setEngine(Engine engine) {
         this.engine = engine;
-    }
-
-    public EngineContext getEngineContext() {
-        return engineContext;
-    }
-
-    public void setEngineContext(EngineContext engineContext) {
-        this.engineContext = engineContext;
     }
 }

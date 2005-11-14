@@ -25,16 +25,36 @@ import java.util.*;
 /**
  * @author Endi S. Dewata
  */
-public class InMemoryConnectorDataCache extends ConnectorDataCache {
+public class InMemoryConnectorCache extends ConnectorCache {
 
     int lastChangeNumber;
 
-    public Map queryMap = new TreeMap();
-    public Map queryExpirationMap = new LinkedHashMap();
+    Map queryMap = new TreeMap();
+    Map queryExpirationMap = new LinkedHashMap();
 
     Map dataMap = new TreeMap();
     Map uniqueKeyMap = new TreeMap();
     Map dataExpirationMap = new LinkedHashMap();
+
+    public Row normalize(Row row) throws Exception {
+
+        Row newRow = new Row();
+
+        for (Iterator i=row.getNames().iterator(); i.hasNext(); ) {
+            String name = (String)i.next();
+            Object value = row.get(name);
+
+            if (value == null) continue;
+
+            if (value instanceof String) {
+                value = ((String)value).toLowerCase();
+            }
+
+            newRow.set(name, value);
+        }
+
+        return newRow;
+    }
 
     public Object get(Object key) throws Exception {
 
@@ -63,26 +83,6 @@ public class InMemoryConnectorDataCache extends ConnectorDataCache {
         }
 
         return results;
-    }
-
-    public Row normalize(Row row) throws Exception {
-
-        Row newRow = new Row();
-
-        for (Iterator i=row.getNames().iterator(); i.hasNext(); ) {
-            String name = (String)i.next();
-            Object value = row.get(name);
-
-            if (value == null) continue;
-
-            if (value instanceof String) {
-                value = ((String)value).toLowerCase();
-            }
-
-            newRow.set(name, value);
-        }
-
-        return newRow;
     }
 
     public boolean isValid(AttributeValues av, Row row) throws Exception {

@@ -18,9 +18,8 @@
 package org.safehaus.penrose.connector;
 
 import org.safehaus.penrose.SearchResults;
-import org.safehaus.penrose.cache.ConnectorQueryCache;
 import org.safehaus.penrose.cache.CacheConfig;
-import org.safehaus.penrose.cache.ConnectorDataCache;
+import org.safehaus.penrose.cache.ConnectorCache;
 import org.safehaus.penrose.engine.TransformEngine;
 import org.safehaus.penrose.util.Formatter;
 import org.safehaus.penrose.config.Config;
@@ -30,9 +29,6 @@ import org.safehaus.penrose.config.ConfigReader;
 import org.safehaus.penrose.thread.MRSWLock;
 import org.safehaus.penrose.thread.Queue;
 import org.safehaus.penrose.thread.ThreadPool;
-import org.safehaus.penrose.connection.Connection;
-import org.safehaus.penrose.connection.Adapter;
-import org.safehaus.penrose.connection.AdapterConfig;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.filter.FilterTool;
 import org.safehaus.penrose.mapping.*;
@@ -61,8 +57,7 @@ public class Connector {
     private Map connections = new LinkedHashMap();
     public Collection configs = new ArrayList();
 
-    private Map sourceFilterCaches = new TreeMap();
-    private Map sourceDataCaches = new TreeMap();
+    private Map caches = new TreeMap();
 
     public void init(ServerConfig serverConfig, ConnectorConfig connectorConfig) throws Exception {
         this.serverConfig = serverConfig;
@@ -122,27 +117,17 @@ public class Connector {
 
                 String key = connectionConfig.getConnectionName()+"."+sourceDefinition.getName();
 
-                CacheConfig fiterCacheConfig = connectorConfig.getCacheConfig(ConnectorConfig.QUERY_CACHE);
-                String filterCacheClass = fiterCacheConfig.getCacheClass();
-                filterCacheClass = filterCacheClass == null ? CacheConfig.DEFAULT_CONNECTOR_QUERY_CACHE : filterCacheClass;
-
-                clazz = Class.forName(filterCacheClass);
-                ConnectorQueryCache connectorQueryCache = (ConnectorQueryCache)clazz.newInstance();
-                connectorQueryCache.setSourceDefinition(sourceDefinition);
-                connectorQueryCache.init(fiterCacheConfig);
-
-                sourceFilterCaches.put(key, connectorQueryCache);
-
-                CacheConfig dataCacheConfig = connectorConfig.getCacheConfig(ConnectorConfig.DATA_CACHE);
+                CacheConfig dataCacheConfig = connectorConfig.getCacheConfig(ConnectorConfig.CACHE);
                 String dataCacheClass = dataCacheConfig.getCacheClass();
-                dataCacheClass = dataCacheClass == null ? CacheConfig.DEFAULT_CONNECTOR_DATA_CACHE : dataCacheClass;
+                dataCacheClass = dataCacheClass == null ? CacheConfig.DEFAULT_CONNECTOR_CACHE : dataCacheClass;
 
                 clazz = Class.forName(dataCacheClass);
-                ConnectorDataCache connectorDataCache = (ConnectorDataCache)clazz.newInstance();
-                connectorDataCache.setSourceDefinition(sourceDefinition);
-                connectorDataCache.init(dataCacheConfig);
+                ConnectorCache connectorCache = (ConnectorCache)clazz.newInstance();
+                connectorCache.setConnector(this);
+                connectorCache.setSourceDefinition(sourceDefinition);
+                connectorCache.init(dataCacheConfig);
 
-                sourceDataCaches.put(key, connectorDataCache);
+                caches.put(key, connectorCache);
             }
         }
     }
@@ -226,7 +211,7 @@ public class Connector {
         SearchResults sr = connection.getChanges(sourceDefinition, lastChangeNumber);
         if (!sr.hasNext()) return;
 
-        CacheConfig dataCacheConfig = connectorConfig.getCacheConfig(ConnectorConfig.DATA_CACHE);
+        CacheConfig dataCacheConfig = connectorConfig.getCacheConfig(ConnectorConfig.CACHE);
         String user = dataCacheConfig.getParameter("user");
 
         Collection pks = new HashSet();
@@ -273,6 +258,34 @@ public class Connector {
         }
 
         retrieve(sourceDefinition, map.keySet());
+    }
+
+    public void create() throws Exception {
+        for (Iterator i=caches.values().iterator(); i.hasNext(); ) {
+            ConnectorCache connectorCache = (ConnectorCache)i.next();
+            connectorCache.create();
+        }
+    }
+
+    public void load() throws Exception {
+        for (Iterator i=caches.values().iterator(); i.hasNext(); ) {
+            ConnectorCache connectorCache = (ConnectorCache)i.next();
+            connectorCache.load();
+        }
+    }
+
+    public void clean() throws Exception {
+        for (Iterator i=caches.values().iterator(); i.hasNext(); ) {
+            ConnectorCache connectorCache = (ConnectorCache)i.next();
+            connectorCache.clean();
+        }
+    }
+
+    public void drop() throws Exception {
+        for (Iterator i=caches.values().iterator(); i.hasNext(); ) {
+            ConnectorCache connectorCache = (ConnectorCache)i.next();
+            connectorCache.drop();
+        }
     }
 
     public synchronized MRSWLock getLock(SourceDefinition sourceDefinition) {
@@ -694,34 +707,13 @@ public class Connector {
         this.connectorConfig = connectorConfig;
     }
 
-    public ConnectorDataCache getCache(SourceDefinition sourceDefinition) throws Exception {
+    public ConnectorCache getCache(SourceDefinition sourceDefinition) throws Exception {
 
         Config config = getConfig(sourceDefinition);
         ConnectionConfig connectionConfig = config.getConnectionConfig(sourceDefinition.getConnectionName());
 
         String key = connectionConfig.getConnectionName()+"."+sourceDefinition.getName();
-        return (ConnectorDataCache)sourceDataCaches.get(key);
-    }
-
-    public static void load(Adapter adapter, ConnectorDataCache cache, SourceDefinition srcDef) throws Exception {
-        String s = srcDef.getParameter(SourceDefinition.AUTO_REFRESH);
-        boolean autoRefresh = s == null ? SourceDefinition.DEFAULT_AUTO_REFRESH : new Boolean(s).booleanValue();
-
-        if (!autoRefresh) return;
-
-        SearchResults sr = adapter.load(srcDef, null, 100);
-
-        //log.debug("Results:");
-        while (sr.hasNext()) {
-            AttributeValues sourceValues = (AttributeValues)sr.next();
-            Row pk = srcDef.getPrimaryKeyValues(sourceValues);
-            //log.debug(" - "+pk+": "+sourceValues);
-
-            cache.put(pk, sourceValues);
-        }
-
-        int lastChangeNumber = adapter.getLastChangeNumber(srcDef);
-        cache.setLastChangeNumber(lastChangeNumber);
+        return (ConnectorCache)caches.get(key);
     }
 
     public static void main(String args[]) throws Exception {
@@ -745,15 +737,17 @@ public class Connector {
         ServerConfigReader serverConfigReader = new ServerConfigReader();
         ServerConfig serverCfg = serverConfigReader.read((homeDirectory == null ? "" : homeDirectory+File.separator)+"conf"+File.separator+"server.xml");
 
-        ConnectorConfig connectorCfg = serverCfg.getConnectorConfig();
+        Collection cfgs = getConfigs(homeDirectory);
+        createConnector(serverCfg, cfgs, command);
+    }
 
-        Connector connector = new Connector();
-        connector.init(serverCfg, connectorCfg);
+    public static Collection getConfigs(String homeDirectory) throws Exception {
+        Collection cfgs = new ArrayList();
 
         ConfigReader configReader = new ConfigReader();
         Config config = configReader.read((homeDirectory == null ? "" : homeDirectory+File.separator)+"conf");
 
-        addConfig(connector, config, command);
+        cfgs.add(config);
 
         File partitions = new File(homeDirectory+File.separator+"partitions");
         if (partitions.exists()) {
@@ -763,49 +757,44 @@ public class Connector {
                 String name = partition.getName();
 
                 config = configReader.read(partition.getAbsolutePath());
-                addConfig(connector, config, command);
+                cfgs.add(config);
             }
         }
 
-        if ("run".equals(command)) {
+        return cfgs;
+    }
+
+    public static Connector createConnector(
+            ServerConfig serverCfg,
+            Collection cfgs,
+            String command) throws Exception {
+
+        ConnectorConfig connectorCfg = serverCfg.getConnectorConfig();
+
+        Connector connector = new Connector();
+        connector.init(serverCfg, connectorCfg);
+
+        for (Iterator i=cfgs.iterator(); i.hasNext(); ) {
+            Config config = (Config)i.next();
+            connector.addConfig(config);
+        }
+
+        if ("create".equals(command)) {
+            connector.create();
+
+        } else if ("load".equals(command)) {
+            connector.load();
+
+        } else if ("clean".equals(command)) {
+            connector.clean();
+
+        } else if ("drop".equals(command)) {
+            connector.drop();
+
+        } else if ("run".equals(command)) {
             connector.start();
         }
 
-    }
-
-    public static void addConfig(Connector connector, Config config, String command) throws Exception {
-        try {
-            connector.addConfig(config);
-
-            Collection connectionConfigs = config.getConnectionConfigs();
-            for (Iterator j=connectionConfigs.iterator(); j.hasNext(); ) {
-                ConnectionConfig conCfg = (ConnectionConfig)j.next();
-
-                Connection connection = connector.getConnection(conCfg.getConnectionName());
-                Adapter adapter = connection.getAdapter();
-
-                Collection sourceDefinitions = conCfg.getSourceDefinitions();
-                for (Iterator k=sourceDefinitions.iterator(); k.hasNext(); ) {
-                    SourceDefinition srcDef = (SourceDefinition)k.next();
-
-                    ConnectorDataCache connectorDataCache = connector.getCache(srcDef);
-
-                    if ("create".equals(command)) {
-                        connectorDataCache.create();
-
-                    } else if ("load".equals(command)) {
-                        load(adapter, connectorDataCache, srcDef);
-
-                    } else if ("clean".equals(command)) {
-                        connectorDataCache.clean();
-
-                    } else if ("drop".equals(command)) {
-                        connectorDataCache.drop();
-                    }
-                }
-            }
-        } catch (Exception e) {
-            log.error(e.getMessage(), e);
-        }
+        return connector;
     }
 }

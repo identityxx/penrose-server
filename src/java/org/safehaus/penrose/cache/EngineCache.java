@@ -19,11 +19,14 @@ package org.safehaus.penrose.cache;
 
 import org.safehaus.penrose.mapping.EntryDefinition;
 import org.safehaus.penrose.mapping.Entry;
+import org.safehaus.penrose.filter.Filter;
+
+import java.util.Collection;
 
 /**
  * @author Endi S. Dewata
  */
-public abstract class EngineDataCache extends Cache {
+public abstract class EngineCache extends Cache {
 
     String parentDn;
     EntryDefinition entryDefinition;
@@ -53,4 +56,14 @@ public abstract class EngineDataCache extends Cache {
     public void setParentDn(String parentDn) {
         this.parentDn = parentDn;
     }
+
+    public Collection get(Filter filter) throws Exception {
+        return null;
+    }
+
+    public void put(Filter filter, Collection rdns) throws Exception {
+    }
+
+    public void invalidate() throws Exception {
+    }    
 }

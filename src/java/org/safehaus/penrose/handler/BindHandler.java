@@ -116,69 +116,22 @@ public class BindHandler {
 
         log.debug("Found "+entry.getDn());
 
-        return bindAsUser(connection, entry, password);
+        return handlerContext.getEngine().bind(entry, password);
     }
 
-    public int bindAsUser(PenroseConnection connection, Entry sr, String password) throws Exception {
-
-        log.debug("Bind as user "+sr.getDn());
-
-        EntryDefinition entry = sr.getEntryDefinition();
-        AttributeValues attributeValues = sr.getAttributeValues();
-
-        return bind(entry, attributeValues, password);
-    }
-
-    public int bind(EntryDefinition entry, AttributeValues attributeValues, String password) throws Exception {
-
-        Collection set = attributeValues.get("userPassword");
-
-        if (set != null) {
-            for (Iterator i = set.iterator(); i.hasNext(); ) {
-                String userPassword = (String)i.next();
-                log.debug("userPassword: "+userPassword);
-                if (PasswordUtil.comparePassword(password, userPassword)) return LDAPException.SUCCESS;
-            }
-        }
-
-        Collection sources = entry.getSources();
-        Config config = handlerContext.getConfig(entry.getDn());
-
-        for (Iterator i=sources.iterator(); i.hasNext(); ) {
-            Source source = (Source)i.next();
-
-            ConnectionConfig connectionConfig = config.getConnectionConfig(source.getConnectionName());
-            SourceDefinition sourceDefinition = connectionConfig.getSourceDefinition(source.getSourceName());
-
-            Map entries = handlerContext.getTransformEngine().split(source, attributeValues);
-
-            for (Iterator j=entries.keySet().iterator(); j.hasNext(); ) {
-                Row pk = (Row)j.next();
-                AttributeValues sourceValues = (AttributeValues)entries.get(pk);
-
-                log.debug("Bind to "+source.getName()+" as "+pk+": "+sourceValues);
-
-                int rc = getEngineContext().getConnector().bind(sourceDefinition, entry, sourceValues, password);
-                if (rc == LDAPException.SUCCESS) return rc;
-            }
-        }
-
-        return LDAPException.INVALID_CREDENTIALS;
-    }
-
-    public Handler getEngine() {
+    public Handler getHandler() {
         return handler;
     }
 
-    public void setEngine(Handler handler) {
+    public void setHandler(Handler handler) {
         this.handler = handler;
     }
 
-    public HandlerContext getEngineContext() {
+    public HandlerContext getHandlerContext() {
         return handlerContext;
     }
 
-    public void setEngineContext(HandlerContext handlerContext) {
+    public void setHandlerContext(HandlerContext handlerContext) {
         this.handlerContext = handlerContext;
     }
 }

@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
-package org.safehaus.penrose.connection;
+package org.safehaus.penrose.connector;
 
 
 import javax.naming.directory.*;
@@ -30,6 +30,7 @@ import org.safehaus.penrose.util.Formatter;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.SearchResults;
+import org.safehaus.penrose.connector.Adapter;
 import org.safehaus.penrose.config.Config;
 
 /**

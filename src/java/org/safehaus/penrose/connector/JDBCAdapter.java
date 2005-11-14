@@ -15,12 +15,13 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
-package org.safehaus.penrose.connection;
+package org.safehaus.penrose.connector;
 
 import org.apache.commons.dbcp.*;
 import org.apache.commons.pool.impl.GenericObjectPool;
 import org.ietf.ldap.LDAPException;
 import org.safehaus.penrose.SearchResults;
+import org.safehaus.penrose.connector.Adapter;
 import org.safehaus.penrose.engine.TransformEngine;
 import org.safehaus.penrose.util.Formatter;
 import org.safehaus.penrose.util.Formatter;
@@ -724,32 +725,6 @@ public class JDBCAdapter extends Adapter {
         }
     }
 
-    public Collection getOriginalPrimaryKeyNames(String catalog, String schema, String tableName) throws Exception {
-
-        Collection primaryKeyNames = new TreeSet();
-
-        java.sql.Connection con = null;
-        ResultSet rs = null;
-
-        try {
-            con = ds.getConnection();
-
-            DatabaseMetaData dmd = con.getMetaData();
-            rs = dmd.getPrimaryKeys(catalog, schema, tableName);
-
-            while (rs.next()) {
-                String name = rs.getString(4);
-                primaryKeyNames.add(name);
-            }
-
-        } finally {
-            if (rs != null) try { rs.close(); } catch (Exception e) {}
-            if (con != null) try { con.close(); } catch (Exception e) {}
-        }
-
-        return primaryKeyNames;
-    }
-
     public SearchResults getChanges(SourceDefinition sourceDefinition, int lastChangeNumber) throws Exception {
 
         log.debug("Searching JDBC source "+sourceDefinition.getConnectionName()+"/"+sourceDefinition.getName());
@@ -760,58 +735,24 @@ public class JDBCAdapter extends Adapter {
         int sizeLimit = 100;
 
         StringBuffer columns = new StringBuffer();
-        columns.append("select c.changeNumber, c.changeTime, c.changeAction, c.changeUser");
+        columns.append("select changeNumber, changeTime, changeAction, changeUser");
 
         StringBuffer table = new StringBuffer();
         table.append("from ");
         table.append(tableName);
-        table.append("_changes c");
+        table.append("_changes");
 
-        Collection originalPrimaryKeyNames = sourceDefinition.getOriginalPrimaryKeyNames();
-        Collection dbPrimaryKeyNames = getOriginalPrimaryKeyNames(null, null, tableName);
+        for (Iterator i=sourceDefinition.getPrimaryKeyFieldDefinitions().iterator(); i.hasNext(); ) {
+            FieldDefinition fieldDefinition = (FieldDefinition)i.next();
 
-        if (originalPrimaryKeyNames.equals(dbPrimaryKeyNames)) {
-
-            for (Iterator i=sourceDefinition.getPrimaryKeyFieldDefinitions().iterator(); i.hasNext(); ) {
-                FieldDefinition fieldDefinition = (FieldDefinition)i.next();
-
-                columns.append(", c.");
-                columns.append(fieldDefinition.getOriginalName());
-                columns.append(" ");
-                columns.append(fieldDefinition.getName());
-            }
-
-        } else {
-
-            for (Iterator i=sourceDefinition.getPrimaryKeyFieldDefinitions().iterator(); i.hasNext(); ) {
-                FieldDefinition fieldDefinition = (FieldDefinition)i.next();
-
-                columns.append(", t.");
-                columns.append(fieldDefinition.getOriginalName());
-                columns.append(" ");
-                columns.append(fieldDefinition.getName());
-            }
-
-            StringBuffer join = new StringBuffer();
-            for (Iterator i=dbPrimaryKeyNames.iterator(); i.hasNext(); ) {
-                String name = (String)i.next();
-
-                if (join.length() > 0) join.append(" and ");
-
-                join.append("c.");
-                join.append(name);
-                join.append("=t.");
-                join.append(name);
-            }
-
-            table.append(" join ");
-            table.append(tableName);
-            table.append(" t on ");
-            table.append(join);
+            columns.append(", ");
+            columns.append(fieldDefinition.getOriginalName());
+            columns.append(" ");
+            columns.append(fieldDefinition.getName());
         }
 
         StringBuffer whereClause = new StringBuffer();
-        whereClause.append("where c.changeNumber > ? order by c.changeNumber");
+        whereClause.append("where changeNumber > ? order by changeNumber");
 
         List parameters = new ArrayList();
         parameters.add(new Integer(lastChangeNumber));

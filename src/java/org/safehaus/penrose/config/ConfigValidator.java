@@ -19,7 +19,7 @@ package org.safehaus.penrose.config;
 
 import org.safehaus.penrose.module.ModuleConfig;
 import org.safehaus.penrose.mapping.*;
-import org.safehaus.penrose.connection.AdapterConfig;
+import org.safehaus.penrose.connector.AdapterConfig;
 import org.safehaus.penrose.schema.Schema;
 import org.safehaus.penrose.schema.ObjectClass;
 import org.safehaus.penrose.schema.AttributeType;

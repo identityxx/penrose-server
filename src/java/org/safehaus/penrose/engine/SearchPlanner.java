@@ -38,7 +38,6 @@ public class SearchPlanner extends GraphVisitor {
     private Config config;
     private Graph graph;
     private Engine engine;
-    private EngineContext engineContext;
     private EntryDefinition entryDefinition;
     private Filter searchFilter;
     private Source primarySource;
@@ -60,7 +59,6 @@ public class SearchPlanner extends GraphVisitor {
             AttributeValues sourceValues) throws Exception {
 
         this.engine = engine;
-        this.engineContext = engine.getEngineContext();
         this.entryDefinition = entryDefinition;
         this.searchFilter = filter;
         this.sourceValues = sourceValues;

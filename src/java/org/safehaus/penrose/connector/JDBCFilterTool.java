@@ -1,4 +1,4 @@
-package org.safehaus.penrose.connection;
+package org.safehaus.penrose.connector;
 
 import org.safehaus.penrose.filter.*;
 import org.safehaus.penrose.mapping.*;
