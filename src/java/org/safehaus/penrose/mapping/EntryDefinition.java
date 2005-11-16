@@ -17,8 +17,6 @@
  */
 package org.safehaus.penrose.mapping;
 
-
-import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.acl.ACI;
 import org.ietf.ldap.LDAPEntry;
 import org.ietf.ldap.LDAPAttributeSet;
@@ -272,6 +270,8 @@ public class EntryDefinition implements Cloneable, Serializable {
     }
 
     public Collection getAttributeDefinitions(Collection names) {
+        if (names == null) return attributeDefinitions.values();
+
         Collection results = new ArrayList();
         for (Iterator i=names.iterator(); i.hasNext(); ) {
             String name = (String)i.next();
@@ -313,7 +313,7 @@ public class EntryDefinition implements Cloneable, Serializable {
 
             set.add(attribute);
         }
-
+/*
         LDAPAttribute attribute = new LDAPAttribute("objectClass");
 
         for (Iterator i=objectClasses.iterator(); i.hasNext(); ) {
@@ -322,32 +322,12 @@ public class EntryDefinition implements Cloneable, Serializable {
         }
 
         set.add(attribute);
-
+*/
         return set;
     }
 
     public LDAPEntry toLDAPEntry(String dn, AttributeValues attributeValues) {
         return new LDAPEntry(dn, getAttributeSet(attributeValues));
-    }
-
-    public AttributeValues getAttributeValues(Interpreter interpreter) throws Exception {
-
-        AttributeValues values = new AttributeValues();
-
-        for (Iterator i=attributeDefinitions.values().iterator(); i.hasNext(); ) {
-            AttributeDefinition attributeDefinition = (AttributeDefinition)i.next();
-
-            String name = attributeDefinition.getName();
-            Object value = interpreter.eval(attributeDefinition);
-            if (value == null) continue;
-            
-            Collection set = values.get(name);
-            if (set == null) set = new HashSet();
-            set.add(value);
-            values.set(name, set);
-        }
-
-        return values;
     }
 
     public String getScript() {

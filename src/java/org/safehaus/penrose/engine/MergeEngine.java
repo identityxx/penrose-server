@@ -76,27 +76,12 @@ public class MergeEngine {
                 }
 
                 log.debug(Formatter.displayLine("Loaded source values:", 80));
-                for (Iterator i=loadedSourceValues.getNames().iterator(); i.hasNext(); ) {
-                    String sourceName = (String)i.next();
-                    Collection values = loadedSourceValues.get(sourceName);
-
-                    for (Iterator j=values.iterator(); j.hasNext(); ) {
-                        Object object = j.next();
-                        log.debug(Formatter.displayLine(" - "+sourceName+": "+object.getClass().getName(), 80));
-
-                        if (object instanceof AttributeValues) {
-                            AttributeValues av = (AttributeValues)object;
-
-                            for (Iterator k=av.getNames().iterator(); k.hasNext(); ) {
-                                String name = (String)k.next();
-                                Collection list = av.get(name);
-                                log.debug(Formatter.displayLine("   - "+name+": "+list, 80));
-                            }
-
-                        } else {
-                            log.debug(Formatter.displayLine("   - "+sourceName+": "+object, 80));
-                        }
-                    }
+                if (loadedSourceValues != null) {
+                    for (Iterator i=loadedSourceValues.getNames().iterator(); i.hasNext(); ) {
+                        String sourceName = (String)i.next();
+                        Collection values = loadedSourceValues.get(sourceName);
+                        log.debug(Formatter.displayLine(" - "+sourceName+": "+values, 80));
+                   }
                 }
 
                 log.debug(Formatter.displaySeparator(80));
@@ -123,7 +108,7 @@ public class MergeEngine {
         AttributeValues sourceValues;
         Source primarySource = engine.getPrimarySource(entryDefinition);
 
-        if (primarySource != null) {
+        if (primarySource != null && loadedSourceValues != null) {
 
             Row key = new Row();
             key.add(primarySource.getName(), pk);
@@ -153,7 +138,7 @@ public class MergeEngine {
             }
 */
         } else {
-            sourceValues = new AttributeValues();
+            sourceValues = primarySourceValues;
         }
 
         log.debug("Entry:");

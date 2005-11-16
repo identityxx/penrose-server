@@ -19,6 +19,8 @@ package org.safehaus.penrose.handler;
 
 import org.safehaus.penrose.SearchResults;
 import org.safehaus.penrose.*;
+import org.safehaus.penrose.schema.Schema;
+import org.safehaus.penrose.engine.Engine;
 import org.safehaus.penrose.interpreter.InterpreterFactory;
 import org.safehaus.penrose.module.Module;
 import org.safehaus.penrose.event.*;
@@ -43,6 +45,8 @@ public class Handler {
     private ModRdnHandler modRdnHandler;
     private SearchHandler searchHandler;
 
+    private Schema schema;
+    private Engine engine;
     private HandlerContext handlerContext;
 
     private InterpreterFactory interpreterFactory;
@@ -111,7 +115,7 @@ public class Handler {
 
         //getSearchHandler().search(connection, base, scope, deref, filter, attributeNames, results);
 
-        handlerContext.getEngine().execute(new Runnable() {
+        engine.execute(new Runnable() {
             public void run() {
                 try {
                     getSearchHandler().search(connection, base, scope, deref, filter, attributeNames, results);
@@ -266,6 +270,22 @@ public class Handler {
 
     public void setInterpreterFactory(InterpreterFactory interpreterFactory) {
         this.interpreterFactory = interpreterFactory;
+    }
+
+    public Engine getEngine() {
+        return engine;
+    }
+
+    public void setEngine(Engine engine) {
+        this.engine = engine;
+    }
+
+    public Schema getSchema() {
+        return schema;
+    }
+
+    public void setSchema(Schema schema) {
+        this.schema = schema;
     }
 }
 

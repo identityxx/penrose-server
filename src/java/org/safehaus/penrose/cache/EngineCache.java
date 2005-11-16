@@ -20,6 +20,8 @@ package org.safehaus.penrose.cache;
 import org.safehaus.penrose.mapping.EntryDefinition;
 import org.safehaus.penrose.mapping.Entry;
 import org.safehaus.penrose.filter.Filter;
+import org.safehaus.penrose.interpreter.InterpreterFactory;
+import org.safehaus.penrose.engine.Engine;
 
 import java.util.Collection;
 
@@ -30,6 +32,8 @@ public abstract class EngineCache extends Cache {
 
     String parentDn;
     EntryDefinition entryDefinition;
+
+    Engine engine;
 
     public void init() throws Exception {
         super.init();
@@ -65,5 +69,19 @@ public abstract class EngineCache extends Cache {
     }
 
     public void invalidate() throws Exception {
-    }    
+    }
+
+    public void create() throws Exception {
+    }
+
+    public void load() throws Exception {
+    }
+
+    public Engine getEngine() {
+        return engine;
+    }
+
+    public void setEngine(Engine engine) {
+        this.engine = engine;
+    }
 }

@@ -18,7 +18,14 @@
 package org.safehaus.penrose.cache;
 
 import org.safehaus.penrose.mapping.*;
+import org.safehaus.penrose.util.PasswordUtil;
+import org.safehaus.penrose.interpreter.Interpreter;
+import org.safehaus.penrose.SearchResults;
+import org.ietf.ldap.LDAPEntry;
 
+import javax.naming.Context;
+import javax.naming.NameAlreadyBoundException;
+import javax.naming.directory.*;
 import java.util.*;
 import java.sql.*;
 
@@ -32,6 +39,8 @@ public class JDBCEngineCache extends EngineCache {
     private String user;
     private String password;
 
+    Hashtable env;
+
     public void init() throws Exception {
         super.init();
 
@@ -40,11 +49,16 @@ public class JDBCEngineCache extends EngineCache {
         user = cacheConfig.getParameter("user");
         password = cacheConfig.getParameter("password");
 
-        initDatabase();
+    }
+
+    public void create() throws Exception {
+    }
+
+    public void load() throws Exception {
     }
 
     public void initDatabase() throws Exception {
-        Class.forName(driver);
+        //Class.forName(driver);
 
         dropMainTable();
         createMainTable();
@@ -59,7 +73,7 @@ public class JDBCEngineCache extends EngineCache {
     }
 
     public Connection getConnection() throws Exception {
-        return DriverManager.getConnection(url, user, password);
+        return null;//DriverManager.getConnection(url, user, password);
     }
 
     public String getTableName() {
@@ -581,10 +595,11 @@ public class JDBCEngineCache extends EngineCache {
         return values;
     }
 
-    public void put(Object pk, Object object) throws Exception {
+    public void put(Object key, Object object) throws Exception {
+
         AttributeValues sourceValues = (AttributeValues)object;
 
-        remove(pk);
+        remove(key);
 
         insertEntry(sourceValues);
 
@@ -865,20 +880,20 @@ public class JDBCEngineCache extends EngineCache {
         }
     }
 
-    public String getDriver() {
-        return driver;
-    }
-
-    public void setDriver(String driver) {
-        this.driver = driver;
-    }
-
     public String getUrl() {
         return url;
     }
 
     public void setUrl(String url) {
         this.url = url;
+    }
+/*
+    public String getDriver() {
+        return driver;
+    }
+
+    public void setDriver(String driver) {
+        this.driver = driver;
     }
 
     public String getUser() {
@@ -896,4 +911,5 @@ public class JDBCEngineCache extends EngineCache {
     public void setPassword(String password) {
         this.password = password;
     }
+*/
 }

@@ -36,6 +36,7 @@ public class InMemoryEngineCache extends EngineCache {
     public Row normalize(Row row) throws Exception {
 
         Row newRow = new Row();
+        if (row == null) return newRow;
 
         for (Iterator i=row.getNames().iterator(); i.hasNext(); ) {
             String name = (String)i.next();

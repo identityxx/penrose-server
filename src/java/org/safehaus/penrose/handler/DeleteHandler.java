@@ -78,7 +78,7 @@ public class DeleteHandler {
 
         EntryDefinition entryDefinition = entry.getEntryDefinition();
         if (entryDefinition.isDynamic()) {
-	        return handlerContext.getEngine().delete(entry);
+	        return handler.getEngine().delete(entry);
 
         } else {
             return deleteStaticEntry(entryDefinition);

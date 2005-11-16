@@ -116,7 +116,7 @@ public class BindHandler {
 
         log.debug("Found "+entry.getDn());
 
-        return handlerContext.getEngine().bind(entry, password);
+        return handler.getEngine().bind(entry, password);
     }
 
     public Handler getHandler() {

@@ -192,6 +192,7 @@ public class Config implements Serializable {
     }
 
     public EntryDefinition getParent(EntryDefinition entryDefinition) {
+        if (entryDefinition == null) return null;
         String parentDn = entryDefinition.getParentDn();
         return getEntryDefinition(parentDn);
     }

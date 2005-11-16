@@ -171,7 +171,7 @@ public class ModifyHandler {
 		log.debug("--- perform modification:");
 		AttributeValues newValues = new AttributeValues(oldValues);
 
-        Schema schema = handlerContext.getSchema();
+        Schema schema = handler.getSchema();
 		Collection objectClasses = schema.getObjectClasses(entryDefinition);
 		//log.debug("Object Classes: " + objectClasses);
 
@@ -253,7 +253,7 @@ public class ModifyHandler {
 		log.debug("New entry:");
 		log.debug("\n"+newEntry.toString());
 
-        return handlerContext.getEngine().modify(entry, oldValues, newValues);
+        return handler.getEngine().modify(entry, oldValues, newValues);
 	}
 
 

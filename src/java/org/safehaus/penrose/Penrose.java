@@ -104,7 +104,7 @@ public class Penrose implements
     private ServerConfig serverConfig;
     private Map configs = new TreeMap();
 
-    InterpreterFactory interpreterFactory;
+    private InterpreterFactory interpreterFactory;
     private Schema schema;
 
     private Logger log = Logger.getLogger(getClass());
@@ -148,6 +148,7 @@ public class Penrose implements
 
         initConnectors();
         initEngines();
+        initHandler();
 
         ConfigReader configReader = new ConfigReader();
         Config config = configReader.read((homeDirectory == null ? "" : homeDirectory+File.separator)+"conf");
@@ -193,9 +194,6 @@ public class Penrose implements
 
     public void initServer() throws Exception {
 
-        handler = new Handler(this);
-        handler.setInterpreterFactory(interpreterFactory);
-
         aclEngine = new ACLEngine(this);
         filterTool = new FilterTool(this);
 
@@ -226,13 +224,20 @@ public class Penrose implements
             Class clazz = Class.forName(engineConfig.getEngineClass());
             Engine engine = (Engine)clazz.newInstance();
             engine.setSchema(getSchema());
-            engine.setInterpreterFactory(interpreterFactory);
+            engine.setInterpreterFactory(getInterpreterFactory());
             engine.setConnector(getConnector());
             engine.init(engineConfig);
             engine.start();
 
             engines.put(engineConfig.getEngineName(), engine);
         }
+    }
+
+    public void initHandler() throws Exception {
+        handler = new Handler(this);
+        handler.setSchema(getSchema());
+        handler.setInterpreterFactory(getInterpreterFactory());
+        handler.setEngine(getEngine());
     }
 
 	public void addConfig(Config config) throws Exception {
@@ -620,5 +625,13 @@ public class Penrose implements
 
     public void setConfigValidator(ConfigValidator configValidator) {
         this.configValidator = configValidator;
+    }
+
+    public InterpreterFactory getInterpreterFactory() {
+        return interpreterFactory;
+    }
+
+    public void setInterpreterFactory(InterpreterFactory interpreterFactory) {
+        this.interpreterFactory = interpreterFactory;
     }
 }

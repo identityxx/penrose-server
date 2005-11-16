@@ -19,9 +19,6 @@ package org.safehaus.penrose.handler;
 
 import org.safehaus.penrose.config.Config;
 import org.safehaus.penrose.filter.FilterTool;
-import org.safehaus.penrose.schema.Schema;
-import org.safehaus.penrose.connector.Connector;
-import org.safehaus.penrose.engine.Engine;
 import org.safehaus.penrose.acl.ACLEngine;
 
 import java.util.Collection;
@@ -36,10 +33,7 @@ public interface HandlerContext {
 
     public Collection getModules(String dn) throws Exception;
     public ACLEngine getACLEngine() throws Exception;
-    public Engine getEngine() throws Exception;
-    public Schema getSchema() throws Exception;
     public FilterTool getFilterTool() throws Exception;
     public Config getConfig(String dn) throws Exception;
     public Collection getConfigs() throws Exception;
-    public Connector getConnector() throws Exception;
 }

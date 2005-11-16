@@ -94,23 +94,7 @@ public class LoadEngine {
                 for (Iterator i=loadedSourceValues.getNames().iterator(); i.hasNext(); ) {
                     String sourceName = (String)i.next();
                     Collection values = loadedSourceValues.get(sourceName);
-
-                    for (Iterator j=values.iterator(); j.hasNext(); c++) {
-                        Object object = j.next();
-                        log.debug(Formatter.displayLine(" - "+sourceName+": "+object.getClass().getName(), 80));
-
-                        if (object instanceof AttributeValues) {
-                            AttributeValues avs = (AttributeValues)object;
-                            for (Iterator k=avs.getNames().iterator(); k.hasNext(); ) {
-                                String name = (String)k.next();
-                                Collection list = avs.get(name);
-                                log.debug(Formatter.displayLine("   - "+name+": "+list, 80));
-                            }
-
-                        } else {
-                            log.debug(Formatter.displayLine("   - "+sourceName+": "+object, 80));
-                        }
-                    }
+                    log.debug(Formatter.displayLine("   - "+sourceName+": "+values, 80));
                 }
 
                 log.debug(Formatter.displaySeparator(80));

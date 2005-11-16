@@ -100,6 +100,6 @@ public class ModRdnHandler {
 			String newRdn)
             throws Exception {
 
-        return handlerContext.getEngine().modrdn(entry, newRdn);
+        return handler.getEngine().modrdn(entry, newRdn);
     }
 }

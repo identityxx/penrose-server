@@ -62,7 +62,7 @@ public class CompareHandler {
         AttributeValues attributeValues = entry.getAttributeValues();
         Collection values = attributeValues.get(attributeName);
 
-        AttributeType attributeType = handlerContext.getSchema().getAttributeType(attributeName);
+        AttributeType attributeType = handler.getSchema().getAttributeType(attributeName);
 
         String equality = attributeType == null ? null : attributeType.getEquality();
         EqualityMatchingRule equalityMatchingRule = EqualityMatchingRule.getInstance(equality);

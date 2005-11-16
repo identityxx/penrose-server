@@ -100,11 +100,11 @@ public class ServerConfigReader {
         for (Iterator i=serverConfig.getEngineConfigs().iterator(); i.hasNext(); ) {
             EngineConfig engineConfig = (EngineConfig)i.next();
 
-            CacheConfig cacheconfig = engineConfig.getCacheConfig(EngineConfig.DATA_CACHE);
+            CacheConfig cacheconfig = engineConfig.getCacheConfig(EngineConfig.CACHE);
 
             if (cacheconfig == null) {
                 cacheconfig = new CacheConfig();
-                cacheconfig.setCacheName(EngineConfig.DATA_CACHE);
+                cacheconfig.setCacheName(EngineConfig.CACHE);
                 cacheconfig.setCacheClass(CacheConfig.DEFAULT_ENGINE_CACHE);
                 engineConfig.addCacheConfig(cacheconfig);
             }

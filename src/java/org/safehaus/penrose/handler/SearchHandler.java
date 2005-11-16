@@ -19,6 +19,9 @@ package org.safehaus.penrose.handler;
 
 import org.safehaus.penrose.SearchResults;
 import org.safehaus.penrose.PenroseConnection;
+import org.safehaus.penrose.interpreter.Interpreter;
+import org.safehaus.penrose.engine.Engine;
+import org.safehaus.penrose.util.Formatter;
 import org.safehaus.penrose.event.SearchEvent;
 import org.safehaus.penrose.config.Config;
 import org.safehaus.penrose.filter.Filter;
@@ -86,7 +89,8 @@ public class SearchHandler {
             path = new ArrayList();
             parent = null;
         } else {
-            parent = (Entry)path.iterator().next();
+            Map map = (Map)path.iterator().next();
+            parent = (Entry)map.get("entry");
         }
 
 		log.debug("Find entry: ["+rdn+"] ["+parentDn+"]");
@@ -100,7 +104,7 @@ public class SearchHandler {
         if (entryDefinition != null) {
             log.debug("Found static entry: " + dn);
 
-            Entry entry = handlerContext.getEngine().find(path, entryDefinition);
+            Entry entry = handler.getEngine().find(path, entryDefinition);
 /*
             //AttributeValues values = entryDefinition.getAttributeValues(handlerContext.newInterpreter());
             //Entry entry = new Entry(dn, entryDefinition, values);
@@ -110,7 +114,13 @@ public class SearchHandler {
             log.debug(" - attributeValues: "+entry.getAttributeValues());
             log.debug("\n"+entry);
 */
-            path.add(0, entry);
+            log.debug("Adding "+entry.getDn()+" into path");
+            Map map = new HashMap();
+            map.put("dn", entry.getDn());
+            map.put("entry", entry);
+            map.put("entryDefinition", entry.getEntryDefinition());
+            path.add(0, map);
+
             return path;
         }
 
@@ -140,8 +150,13 @@ public class SearchHandler {
 
             if (!rdn.getNames().equals(childRdn.getNames())) continue;
 
-            SearchResults sr = handlerContext.getEngine().search(
+            Engine engine = handler.getEngine();
+            AttributeValues parentSourceValues = new AttributeValues();
+            String prefix = engine.getParentSourceValues(path, childDefinition, parentSourceValues);
+
+            SearchResults sr = handler.getEngine().search(
                     path,
+                    parentSourceValues,
                     childDefinition,
                     filter,
                     new ArrayList()
@@ -150,7 +165,12 @@ public class SearchHandler {
             while (sr.hasNext()) {
                 Entry child = (Entry)sr.next();
                 if (handlerContext.getFilterTool().isValid(child, filter)) {
-                    path.add(0, child);
+                    log.debug("Adding "+child.getDn()+" into path");
+                    Map map = new HashMap();
+                    map.put("dn", child.getDn());
+                    map.put("entry", child);
+                    map.put("entryDefinition", child.getEntryDefinition());
+                    path.add(0, map);
                     return path;
                 }
             }
@@ -288,8 +308,15 @@ public class SearchHandler {
 			return LDAPException.NO_SUCH_OBJECT;
 		}
 
-        Entry baseEntry = (Entry)path.iterator().next();
+        Map map = (Map)path.iterator().next();
+        String baseDn = (String)map.get("dn");
+        Entry baseEntry = (Entry)map.get("entry");
         log.debug("Found base entry: " + baseEntry.getDn());
+        EntryDefinition entryDefinition = baseEntry.getEntryDefinition();
+
+        Engine engine = handler.getEngine();
+        AttributeValues parentSourceValues = new AttributeValues();
+        String prefix = engine.getParentSourceValues(path, entryDefinition, parentSourceValues);
 
         int rc = handlerContext.getACLEngine().checkSearch(connection, baseEntry);
         if (rc != LDAPException.SUCCESS) return rc;
@@ -307,7 +334,7 @@ public class SearchHandler {
 		}
 
 		if (scope == LDAPConnection.SCOPE_ONE || scope == LDAPConnection.SCOPE_SUB) { // one level or subtree
-            searchChildren(connection, path, baseEntry.getEntryDefinition(), scope, f, normalizedAttributeNames, results, true);
+            searchChildren(connection, path, prefix, entryDefinition, parentSourceValues, scope, f, normalizedAttributeNames, results, true);
 		}
 
 		results.setReturnCode(LDAPException.SUCCESS);
@@ -317,7 +344,9 @@ public class SearchHandler {
     public void searchChildren(
             PenroseConnection connection,
             Collection path,
+            String prefix,
             EntryDefinition entryDefinition,
+            AttributeValues parentSourceValues,
             int scope,
             Filter filter,
             Collection attributeNames,
@@ -330,14 +359,16 @@ public class SearchHandler {
             return;
         }
 
+        prefix = prefix == null ? "parent" : "parent."+prefix;
+
         for (Iterator i = children.iterator(); i.hasNext();) {
             EntryDefinition childDefinition = (EntryDefinition) i.next();
-            //log.debug("Checking children: " + childDefinition.getDn());
 
             if (handlerContext.getFilterTool().isValid(childDefinition, filter)) {
 
-                SearchResults sr = handlerContext.getEngine().search(
+                SearchResults sr = handler.getEngine().search(
                         path,
+                        parentSourceValues,
                         childDefinition,
                         filter,
                         attributeNames
@@ -363,11 +394,41 @@ public class SearchHandler {
             }
 
             if (scope == LDAPConnection.SCOPE_SUB) {
+                log.debug("Searching children of " + childDefinition.getDn());
+
+                AttributeValues newParentSourceValues = new AttributeValues();
+                newParentSourceValues.add("parent", parentSourceValues);
+
+                Engine engine = handler.getEngine();
+                Interpreter interpreter = engine.getInterpreterFactory().newInstance();
+
+                AttributeValues av = engine.computeAttributeValues(childDefinition, interpreter);
+                for (Iterator j=av.getNames().iterator(); j.hasNext(); ) {
+                    String name = (String)j.next();
+                    Collection values = av.get(name);
+
+                    name = "parent."+name;
+                    newParentSourceValues.add(name, values);
+                }
+
+                interpreter.clear();
+
+                for (Iterator j=newParentSourceValues.getNames().iterator(); j.hasNext(); ) {
+                    String name = (String)j.next();
+                    Collection values = newParentSourceValues.get(name);
+                    log.debug(" - "+name+": "+values);
+                }
+
+                Map map = new HashMap();
+                map.put("dn", childDefinition.getDn());
+                map.put("entry", null);
+                map.put("entryDefinition", childDefinition);
+
                 Collection newPath = new ArrayList();
-                newPath.add(null);
+                newPath.add(map);
                 newPath.addAll(path);
 
-                searchChildren(connection, newPath, childDefinition, scope, filter, attributeNames, results, false);
+                searchChildren(connection, newPath, prefix, childDefinition, newParentSourceValues, scope, filter, attributeNames, results, false);
             }
         }
     }

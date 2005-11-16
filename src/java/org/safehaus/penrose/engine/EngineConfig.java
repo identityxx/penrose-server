@@ -29,10 +29,9 @@ public class EngineConfig implements Cloneable, Serializable {
 
     public final static String ALLOW_CONCURRENCY = "allowConcurrency";
 
-    public final static String THREAD_POOL_SIZE = "threadPoolSize";
+    public final static String THREAD_POOL_SIZE  = "threadPoolSize";
 
-    public final static String QUERY_CACHE = "Query Cache";
-    public final static String DATA_CACHE = "Data Cache";
+    public final static String CACHE             = "DEFAULT";
 
     public final static int DEFAULT_THREAD_POOL_SIZE = 20;
 

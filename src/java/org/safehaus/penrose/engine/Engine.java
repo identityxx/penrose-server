@@ -100,13 +100,14 @@ public class Engine {
         mergeEngine = new MergeEngine(this);
         joinEngine = new JoinEngine(this);
         transformEngine = new TransformEngine(this);
-    }
 
-    public void start() throws Exception {
         String s = engineConfig.getParameter(EngineConfig.THREAD_POOL_SIZE);
         int threadPoolSize = s == null ? EngineConfig.DEFAULT_THREAD_POOL_SIZE : Integer.parseInt(s);
 
         threadPool = new ThreadPool(threadPoolSize);
+    }
+
+    public void start() throws Exception {
         execute(new RefreshThread(this));
     }
 
@@ -174,6 +175,8 @@ public class Engine {
 
     public Source getPrimarySource(EntryDefinition entryDefinition) throws Exception {
         Source source = (Source)primarySources.get(entryDefinition);
+        return source;
+/*
         if (source != null) return source;
 
         Config config = getConfig(entryDefinition.getDn());
@@ -181,6 +184,7 @@ public class Engine {
         if (entryDefinition == null) return null;
 
         return getPrimarySource(entryDefinition);
+*/
     }
 
     Source computePrimarySource(EntryDefinition entryDefinition) throws Exception {
@@ -591,127 +595,352 @@ public class Engine {
         return LDAPException.SUCCESS;
     }
 
+    public String getParentSourceValues(Collection path, EntryDefinition entryDefinition, AttributeValues parentSourceValues) throws Exception {
+        Config config = getConfig(entryDefinition.getDn());
+        EntryDefinition parentDefinition = config.getParent(entryDefinition);
+
+        String prefix = null;
+        Interpreter interpreter = interpreterFactory.newInstance();
+
+        //log.debug("Parents' source values:");
+        for (Iterator iterator = path.iterator(); iterator.hasNext(); ) {
+            Map map = (Map)iterator.next();
+            String dn = (String)map.get("dn");
+            Entry entry = (Entry)map.get("entry");
+            //log.debug(" - "+dn);
+
+            prefix = prefix == null ? "parent" : "parent."+prefix;
+
+            if (entry == null) {
+                AttributeValues av = computeAttributeValues(parentDefinition, interpreter);
+                for (Iterator j=av.getNames().iterator(); j.hasNext(); ) {
+                    String name = (String)j.next();
+                    Collection values = av.get(name);
+                    name = prefix+"."+name;
+                    //log.debug("   - "+name+": "+values);
+                    parentSourceValues.add(name, values);
+                }
+                interpreter.clear();
+
+            } else {
+                AttributeValues av = entry.getAttributeValues();
+                for (Iterator j=av.getNames().iterator(); j.hasNext(); ) {
+                    String name = (String)j.next();
+                    Collection values = av.get(name);
+                    name = prefix+"."+name;
+                    //log.debug("   - "+name+": "+values);
+                    parentSourceValues.add(name, values);
+                }
+
+                AttributeValues sv = entry.getSourceValues();
+                for (Iterator j=sv.getNames().iterator(); j.hasNext(); ) {
+                    String name = (String)j.next();
+                    Collection values = sv.get(name);
+                    if (name.startsWith("parent.")) name = prefix+"."+name;
+                    //log.debug("   - "+name+": "+values);
+                    parentSourceValues.add(name, values);
+                }
+            }
+
+            parentDefinition = config.getParent(parentDefinition);
+        }
+
+        return prefix;
+    }
+
+    /**
+     * Check whether all rdn attributes are either constant or unique variable, or use all primary keys from one source.
+     */
+    public boolean isUnique(EntryDefinition entryDefinition) throws Exception {
+
+        Collection sources = new TreeSet();
+        Collection fields = new TreeSet();
+
+        Collection attributeDefinitions = entryDefinition.getRdnAttributes();
+        for (Iterator i=attributeDefinitions.iterator(); i.hasNext(); ) {
+            AttributeDefinition attributeDefinition = (AttributeDefinition)i.next();
+
+            if (attributeDefinition.getConstant() != null) continue;
+
+            String variable = attributeDefinition.getVariable();
+
+            if (variable != null) { // get the source and field name
+                int j = variable.indexOf(".");
+                String sourceAlias = variable.substring(0, j);
+                String fieldName = variable.substring(j+1);
+
+                sources.add(sourceAlias);
+                fields.add(fieldName);
+
+                continue;
+            }
+
+            // attribute is an expression
+            return false;
+        }
+
+        //log.debug("RDN sources: "+sources);
+
+        // rdn is constant
+        if (sources.isEmpty()) return true;
+
+        // rdn uses more than one source
+        if (sources.size() > 1) return false;
+
+        String sourceAlias = (String)sources.iterator().next();
+        Source source = entryDefinition.getSource(sourceAlias);
+
+        Config config = getConfig(entryDefinition.getDn());
+        ConnectionConfig connectionConfig = config.getConnectionConfig(source.getConnectionName());
+        SourceDefinition sourceDefinition = connectionConfig.getSourceDefinition(source.getSourceName());
+
+        Collection uniqueFields = new TreeSet();
+        Collection pkFields = new TreeSet();
+
+        for (Iterator i=fields.iterator(); i.hasNext(); ) {
+            String fieldName = (String)i.next();
+            FieldDefinition fieldDefinition = sourceDefinition.getFieldDefinition(fieldName);
+
+            if (fieldDefinition.isUnique()) {
+                uniqueFields.add(fieldName);
+                continue;
+            }
+
+            if (fieldDefinition.isPrimaryKey()) {
+                pkFields.add(fieldName);
+                continue;
+            }
+
+            return false;
+        }
+
+        //log.debug("RDN unique fields: "+uniqueFields);
+        //log.debug("RDN PK fields: "+pkFields);
+
+        // rdn uses unique fields
+        if (pkFields.isEmpty() && !uniqueFields.isEmpty()) return true;
+
+        Collection list = sourceDefinition.getPrimaryKeyNames();
+        //log.debug("Source PK fields: "+list);
+
+        // rdn uses primary key fields
+        boolean result = pkFields.equals(list);
+
+        EntryDefinition parentDefinition = config.getParent(entryDefinition);
+        if (parentDefinition == null) return result;
+
+        return isUnique(parentDefinition);
+    }
 
     public Entry find(
             Collection path,
             EntryDefinition entryDefinition
             ) throws Exception {
-/*
-        AttributeValues attributeValues = entryDefinition.getAttributeValues(engineContext.newInterpreter());
-        Entry entry = new Entry(entryDefinition.getDn(), entryDefinition, attributeValues);
+
+        log.debug(Formatter.displaySeparator(80));
+        log.debug(Formatter.displayLine("FIND", 80));
+        log.debug(Formatter.displayLine("Entry: "+entryDefinition.getDn(), 80));
+        log.debug(Formatter.displayLine("Parents:", 80));
+
+        for (Iterator i=path.iterator(); i.hasNext(); ) {
+            Map map = (Map)i.next();
+            String dn = (String)map.get("dn");
+            log.debug(Formatter.displayLine(" - "+dn, 80));
+        }
+
+        log.debug(Formatter.displaySeparator(80));
 
         SearchResults entries = new SearchResults();
-        entries.add(entry);
-        entries.close();
-*/
-        SearchResults entries = new SearchResults();
 
-        searchEngine.search(path, entryDefinition, null, entries);
+        AttributeValues parentSourceValues = new AttributeValues();
+        String prefix = getParentSourceValues(path, entryDefinition, parentSourceValues);
 
-        SearchResults results = new SearchResults();
-
-        load(entryDefinition, entries, results);
+        SearchResults results = search(path, parentSourceValues, entryDefinition, null, null);
 
         if (results.size() == 0) return null;
 
-        return (Entry)results.next();
+        Entry entry = (Entry)results.next();
+
+        log.debug(Formatter.displaySeparator(80));
+        log.debug(Formatter.displayLine("FIND RESULT", 80));
+        log.debug(Formatter.displayLine("dn: "+entry.getDn(), 80));
+        log.debug(Formatter.displaySeparator(80));
+
+        return entry;
     }
-    
+
     public SearchResults search(
             final Collection path,
+            final AttributeValues parentSourceValues,
             final EntryDefinition entryDefinition,
             final Filter filter,
             Collection attributeNames) throws Exception {
 
-        final SearchResults entries = new SearchResults();
+        Collection attributeDefinitions = entryDefinition.getAttributeDefinitions(attributeNames);
+        //log.debug("Attribute definitions: "+attributeDefinitions);
+
+        // check if client only requests the dn to be returned
+        final boolean dnOnly = attributeNames != null && attributeNames.contains("dn")
+                && attributeDefinitions.isEmpty()
+                && "(objectclass=*)".equals(filter.toString().toLowerCase());
+
+        log.debug(Formatter.displaySeparator(80));
+        log.debug(Formatter.displayLine("SEARCH", 80));
+        log.debug(Formatter.displayLine("Entry: "+entryDefinition.getDn(), 80));
+        log.debug(Formatter.displayLine("Filter: "+filter, 80));
+        log.debug(Formatter.displayLine("Parents:", 80));
+
+        if (parentSourceValues != null) {
+            for (Iterator i = parentSourceValues.getNames().iterator(); i.hasNext(); ) {
+                String name = (String)i.next();
+                Collection values = parentSourceValues.get(name);
+                log.debug(Formatter.displayLine(" - "+name+": "+values, 80));
+            }
+        }
+
+        log.debug(Formatter.displaySeparator(80));
+
+        final SearchResults dns = new SearchResults();
+        final SearchResults results = new SearchResults();
+
+        Interpreter interpreter = getInterpreterFactory().newInstance();
 
         String s = engineConfig.getParameter(EngineConfig.ALLOW_CONCURRENCY);
         boolean allowConcurrency = s == null ? true : new Boolean(s).booleanValue();
 
-        if (allowConcurrency) {
-            execute(new Runnable() {
-                public void run() {
-                    try {
-                        searchEngine.search(path, entryDefinition, filter, entries);
+        Config config = getConfig(entryDefinition.getDn());
+        Collection sources = entryDefinition.getSources();
+        log.debug("Sources: "+sources);
+        Collection effectiveSources = config.getEffectiveSources(entryDefinition);
+        log.debug("Effective Sources: "+effectiveSources);
 
-                    } catch (Throwable e) {
-                        e.printStackTrace(System.out);
-                        entries.setReturnCode(LDAPException.OPERATIONS_ERROR);
+        if (sources.size() == 0 && effectiveSources.size() == 0) {
+
+            Collection list = computeDns(interpreter, entryDefinition, parentSourceValues);
+            for (Iterator j=list.iterator(); j.hasNext(); ) {
+                String dn = (String)j.next();
+                log.debug(" - "+dn);
+
+                Map map = new HashMap();
+                map.put("dn", entryDefinition.getDn());
+                map.put("sourceValues", parentSourceValues);
+                dns.add(map);
+            }
+            dns.close();
+
+        } else if (sources.size() == 1 && effectiveSources.size() == 1) {
+            if (allowConcurrency) {
+                execute(new Runnable() {
+                    public void run() {
+                        try {
+                            searchEngine.simpleSearch(parentSourceValues, entryDefinition, filter, dns);
+
+                        } catch (Throwable e) {
+                            e.printStackTrace(System.out);
+                            dns.setReturnCode(LDAPException.OPERATIONS_ERROR);
+                        }
                     }
-                }
-            });
-        } else {
-            searchEngine.search(path, entryDefinition, filter, entries);
-        }
-
-        SearchResults results = new SearchResults();
-
-        Collection attributeDefinitions = entryDefinition.getAttributeDefinitions(attributeNames);
-        log.debug("Attribute definitions: "+attributeDefinitions);
-
-        // check if client only requests the dn to be returned
-        if (attributeNames.contains("dn")
-                && attributeDefinitions.isEmpty()
-                && "(objectclass=*)".equals(filter.toString().toLowerCase())) {
-
-            for (Iterator i=entries.iterator(); i.hasNext(); ) {
-                Entry entry = (Entry)i.next();
-                results.add(entry);
+                });
+            } else {
+                searchEngine.simpleSearch(parentSourceValues, entryDefinition, filter, dns);
             }
 
-            results.close();
-            return results;
+        } else {
+
+            if (allowConcurrency) {
+                execute(new Runnable() {
+                    public void run() {
+                        try {
+                            searchEngine.search(path, parentSourceValues, entryDefinition, filter, dns);
+
+                        } catch (Throwable e) {
+                            e.printStackTrace(System.out);
+                            dns.setReturnCode(LDAPException.OPERATIONS_ERROR);
+                        }
+                    }
+                });
+            } else {
+                searchEngine.search(path, parentSourceValues, entryDefinition, filter, dns);
+            }
         }
 
-        load(entryDefinition, entries, results);
+        if (dnOnly) {
+           for (Iterator i=dns.iterator(); i.hasNext(); ) {
+               Map map = (Map)i.next();
+               String dn = (String)map.get("dn");
+               AttributeValues sv = (AttributeValues)map.get("sourceValues");
 
-        return results;
-    }
+               AttributeValues attributeValues = computeAttributeValues(entryDefinition, sv, interpreter);
+               Entry entry = new Entry(dn, entryDefinition, sv, attributeValues);
 
-    public void load(
-            final EntryDefinition entryDefinition,
-            final SearchResults entries,
-            final SearchResults results)
-            throws Exception {
+               results.add(entry);
+           }
+           return results;
+        }
 
         final Interpreter batchInterpreter = interpreterFactory.newInstance();
         final SearchResults batches = new SearchResults();
-
-        String s = engineConfig.getParameter(EngineConfig.ALLOW_CONCURRENCY);
-        boolean allowConcurrency = s == null ? true : new Boolean(s).booleanValue();
-
-        if (allowConcurrency) {
-            execute(new Runnable() {
-                public void run() {
-                    try {
-                        createBatches(batchInterpreter, entryDefinition, entries, results, batches);
-
-                    } catch (Throwable e) {
-                        e.printStackTrace(System.out);
-                        batches.setReturnCode(LDAPException.OPERATIONS_ERROR);
-                    }
-                }
-            });
-        } else {
-            createBatches(batchInterpreter, entryDefinition, entries, results, batches);
-        }
-
         final SearchResults loadedBatches = new SearchResults();
 
-        if (allowConcurrency) {
-            execute(new Runnable() {
-                public void run() {
-                    try {
-                        loadEngine.load(entryDefinition, batches, loadedBatches);
+        if (sources.size() == 0 && effectiveSources.size() == 0 || sources.size() == 1 && effectiveSources.size() == 1) {
 
-                    } catch (Throwable e) {
-                        e.printStackTrace(System.out);
-                        loadedBatches.setReturnCode(LDAPException.OPERATIONS_ERROR);
+            if (allowConcurrency) {
+                execute(new Runnable() {
+                    public void run() {
+                        try {
+                            for (Iterator i=dns.iterator(); i.hasNext(); ) {
+                                Map map = (Map)i.next();
+                                loadedBatches.add(map);
+                            }
+                            loadedBatches.close();
+
+                        } catch (Throwable e) {
+                            e.printStackTrace(System.out);
+                            batches.setReturnCode(LDAPException.OPERATIONS_ERROR);
+                        }
                     }
+                });
+            } else {
+                for (Iterator i=dns.iterator(); i.hasNext(); ) {
+                    Map map = (Map)i.next();
+                    loadedBatches.add(map);
                 }
-            });
+                loadedBatches.close();
+            }
+
         } else {
-            loadEngine.load(entryDefinition, batches, loadedBatches);
+            if (allowConcurrency) {
+                execute(new Runnable() {
+                    public void run() {
+                        try {
+                            createBatches(batchInterpreter, entryDefinition, dns, results, batches);
+
+                        } catch (Throwable e) {
+                            e.printStackTrace(System.out);
+                            batches.setReturnCode(LDAPException.OPERATIONS_ERROR);
+                        }
+                    }
+                });
+            } else {
+                createBatches(batchInterpreter, entryDefinition, dns, results, batches);
+            }
+
+            if (allowConcurrency) {
+                execute(new Runnable() {
+                    public void run() {
+                        try {
+                            loadEngine.load(entryDefinition, batches, loadedBatches);
+
+                        } catch (Throwable e) {
+                            e.printStackTrace(System.out);
+                            loadedBatches.setReturnCode(LDAPException.OPERATIONS_ERROR);
+                        }
+                    }
+                });
+            } else {
+                loadEngine.load(entryDefinition, batches, loadedBatches);
+            }
+
         }
 
         final Interpreter mergeInterpreter = interpreterFactory.newInstance();
@@ -731,6 +960,8 @@ public class Engine {
         } else {
             mergeEngine.merge(entryDefinition, loadedBatches, mergeInterpreter, results);
         }
+
+        return results;
     }
 
     public void createBatches(
@@ -742,6 +973,7 @@ public class Engine {
             ) throws Exception {
 
         try {
+            Config config = getConfig(entryDefinition.getDn());
             Source primarySource = getPrimarySource(entryDefinition);
 
             Collection batch = new ArrayList();
@@ -750,20 +982,23 @@ public class Engine {
             int batchSize = s == null ? EntryDefinition.DEFAULT_BATCH_SIZE : Integer.parseInt(s);
 
             for (Iterator i=entries.iterator(); i.hasNext(); ) {
-                Entry e = (Entry)i.next();
-                String dn = e.getDn();
-                AttributeValues sv = e.getSourceValues();
+                Map map = (Map)i.next();
+                String dn = (String)map.get("dn");
+                AttributeValues sv = (AttributeValues)map.get("sourceValues");
 
                 Row rdn = Entry.getRdn(dn);
-                String parentDn = Entry.getParentDn(dn);
 
-                log.debug("Checking "+rdn+" in entry data cache for "+parentDn);
-                Entry entry = (Entry)getCache(parentDn, entryDefinition).get(rdn);
+                if (config.getParent(entryDefinition) != null) {
+                    String parentDn = Entry.getParentDn(dn);
 
-                if (entry != null) {
-                    log.debug(" - "+rdn+" has been loaded");
-                    results.add(entry);
-                    continue;
+                    log.debug("Checking "+rdn+" in entry data cache for "+parentDn);
+                    Entry entry = (Entry)getCache(parentDn, entryDefinition).get(rdn);
+
+                    if (entry != null) {
+                        log.debug(" - "+rdn+" has been loaded");
+                        results.add(entry);
+                        continue;
+                    }
                 }
 
                 Row filter = createFilter(interpreter, primarySource, entryDefinition, rdn);
@@ -772,11 +1007,8 @@ public class Engine {
                 //if (filter.isEmpty()) filter.add(rdn);
 
                 log.debug("- "+rdn+" has not been loaded, loading with key "+filter);
-                Map m = new HashMap();
-                m.put("dn", dn);
-                m.put("sourceValues", sv);
-                m.put("filter", filter);
-                batch.add(m);
+                map.put("filter", filter);
+                batch.add(map);
 
                 if (batch.size() < batchSize) continue;
 
@@ -1097,13 +1329,21 @@ public class Engine {
 
     public AttributeValues computeAttributeValues(
             EntryDefinition entryDefinition,
+            Interpreter interpreter
+            ) throws Exception {
+
+        return computeAttributeValues(entryDefinition, null, interpreter);
+    }
+
+    public AttributeValues computeAttributeValues(
+            EntryDefinition entryDefinition,
             AttributeValues sourceValues,
             Interpreter interpreter
             ) throws Exception {
 
         AttributeValues attributeValues = new AttributeValues();
 
-        interpreter.set(sourceValues);
+        if (sourceValues != null) interpreter.set(sourceValues);
 
         Collection attributeDefinitions = entryDefinition.getAttributeDefinitions();
         for (Iterator j=attributeDefinitions.iterator(); j.hasNext(); ) {
@@ -1117,6 +1357,12 @@ public class Engine {
         }
 
         interpreter.clear();
+
+        Collection objectClasses = entryDefinition.getObjectClasses();
+        for (Iterator i=objectClasses.iterator(); i.hasNext(); ) {
+            String objectClass = (String)i.next();
+            attributeValues.add("objectClass", objectClass);
+        }
 
         return attributeValues;
     }
@@ -1148,7 +1394,7 @@ public class Engine {
     public EngineCache getCache(String parentDn, EntryDefinition entryDefinition) throws Exception {
         String cacheName = entryDefinition.getParameter(EntryDefinition.CACHE);
         cacheName = cacheName == null ? EntryDefinition.DEFAULT_CACHE : cacheName;
-        CacheConfig cacheConfig = engineConfig.getCacheConfig(EngineConfig.DATA_CACHE);
+        CacheConfig cacheConfig = engineConfig.getCacheConfig(EngineConfig.CACHE);
 
         String key = entryDefinition.getRdn()+","+parentDn;
 
@@ -1164,6 +1410,7 @@ public class Engine {
 
             cache.setParentDn(parentDn);
             cache.setEntryDefinition(entryDefinition);
+            cache.setEngine(this);
             cache.init(cacheConfig);
 
             caches.put(key, cache);
@@ -1208,6 +1455,25 @@ public class Engine {
         Collection cfgs = getConfigs(homeDirectory);
         Connector cntr = createConnector(serverCfg, cfgs, command);
         Engine engine = createEngine(serverCfg, intFactory, schm, cntr, cfgs, command);
+        //engine.start();
+
+        if ("create".equals(command)) {
+            engine.create();
+
+        } else if ("load".equals(command)) {
+            engine.load();
+
+        } else if ("clean".equals(command)) {
+            engine.clean();
+
+        } else if ("drop".equals(command)) {
+            engine.drop();
+
+        } else if ("run".equals(command)) {
+            engine.start();
+        }
+
+        engine.stop();
     }
 
     public static Schema createSchema(String homeDirectory) throws Exception {
@@ -1294,22 +1560,6 @@ public class Engine {
             engine.addConfig(config);
         }
 
-        if ("create".equals(command)) {
-            engine.create();
-
-        } else if ("load".equals(command)) {
-            engine.load();
-
-        } else if ("clean".equals(command)) {
-            engine.clean();
-
-        } else if ("drop".equals(command)) {
-            engine.drop();
-
-        } else if ("run".equals(command)) {
-            engine.start();
-        }
-
         return engine;
     }
 
@@ -1317,19 +1567,22 @@ public class Engine {
         for (Iterator i=configs.values().iterator(); i.hasNext(); ) {
             Config config = (Config)i.next();
             Collection entryDefinitions = config.getRootEntryDefinitions();
-            create(config, entryDefinitions);
+            create(config, null, entryDefinitions);
         }
     }
 
-    public void create(Config config, Collection entryDefinitions) throws Exception {
+    public void create(Config config, String parentDn, Collection entryDefinitions) throws Exception {
         if (entryDefinitions == null) return;
         for (Iterator i=entryDefinitions.iterator(); i.hasNext(); ) {
             EntryDefinition entryDefinition = (EntryDefinition)i.next();
             if (entryDefinition.isDynamic()) continue;
             log.debug("Creating tables for "+entryDefinition.getDn());
 
+            EngineCache cache = getCache(parentDn, entryDefinition);
+            cache.create();
+
             Collection children = config.getChildren(entryDefinition);
-            create(config, children);
+            create(config, entryDefinition.getDn(), children);
         }
     }
 
@@ -1337,19 +1590,22 @@ public class Engine {
         for (Iterator i=configs.values().iterator(); i.hasNext(); ) {
             Config config = (Config)i.next();
             Collection entryDefinitions = config.getRootEntryDefinitions();
-            load(config, entryDefinitions);
+            load(config, null, entryDefinitions);
         }
     }
 
-    public void load(Config config, Collection entryDefinitions) throws Exception {
+    public void load(Config config, String parentDn, Collection entryDefinitions) throws Exception {
         if (entryDefinitions == null) return;
         for (Iterator i=entryDefinitions.iterator(); i.hasNext(); ) {
             EntryDefinition entryDefinition = (EntryDefinition)i.next();
             if (entryDefinition.isDynamic()) continue;
             log.debug("Loading tables for "+entryDefinition.getDn());
 
+            EngineCache cache = getCache(parentDn, entryDefinition);
+            cache.load();
+
             Collection children = config.getChildren(entryDefinition);
-            load(config, children);
+            load(config, parentDn, children);
         }
     }
 

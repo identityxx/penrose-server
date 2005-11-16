@@ -488,9 +488,9 @@ public class Connector {
     /**
      * Search the data sources.
      */
-    public Collection search(
-            SourceDefinition sourceDefinition,
-            Filter filter)
+    public SearchResults search(
+            final SourceDefinition sourceDefinition,
+            final Filter filter)
             throws Exception {
 
         String method = sourceDefinition.getParameter(SourceDefinition.LOADING_METHOD);
@@ -509,19 +509,24 @@ public class Connector {
     /**
      * Check query cache, peroform search, store results in query cache.
      */
-    public Collection searchAndLoad(
+    public SearchResults searchAndLoad(
             SourceDefinition sourceDefinition,
             Filter filter)
             throws Exception {
 
         log.debug("Checking query cache for "+filter);
-        Collection pks = getCache(sourceDefinition).search(filter);
+        Collection results = getCache(sourceDefinition).search(filter);
 
-        log.debug("Cached results: "+pks);
-        if (pks != null) return pks;
+        log.debug("Cached results: "+results);
+        if (results != null) {
+            SearchResults sr = new SearchResults();
+            sr.addAll(results);
+            sr.close();
+            return sr;
+        }
 
         log.debug("Searching source "+sourceDefinition.getName()+" with filter "+filter);
-        pks = performSearch(sourceDefinition, filter);
+        Collection pks = performSearch(sourceDefinition, filter);
 
         log.debug("Storing query cache for "+filter);
         getCache(sourceDefinition).put(filter, pks);
@@ -534,48 +539,64 @@ public class Connector {
     /**
      * Load then store in data cache.
      */
-    public Collection fullLoad(SourceDefinition sourceDefinition, Filter filter) throws Exception {
+    public SearchResults fullLoad(SourceDefinition sourceDefinition, Filter filter) throws Exception {
+
+        Collection values = new ArrayList();
 
         Collection pks = getCache(sourceDefinition).search(filter);
 
         if (pks != null) {
             return load(sourceDefinition, pks);
+
+        } else {
+            return performLoad(sourceDefinition, filter);
+            //store(sourceDefinition, values);
         }
-
-        Collection values = performLoad(sourceDefinition, filter);
-        store(sourceDefinition, values);
-
-        return values;
     }
 
     /**
      * Check data cache then load.
      */
-    public Collection load(
-            SourceDefinition sourceDefinition,
-            Collection pks)
+    public SearchResults load(
+            final SourceDefinition sourceDefinition,
+            final Collection pks)
             throws Exception {
 
-        Collection results = new ArrayList();
-        if (pks.isEmpty()) return results;
+        final SearchResults results = new SearchResults();
 
-        Collection normalizedPks = new ArrayList();
-        for (Iterator i=pks.iterator(); i.hasNext(); ) {
-            Row pk = (Row)i.next();
-            Row npk = normalize(pk);
-            normalizedPks.add(npk);
+        if (pks.isEmpty()) {
+            results.close();
+            return results;
         }
 
-        log.debug("Checking data cache for "+normalizedPks);
-        Collection missingPks = new ArrayList();
-        Map loadedRows = getCache(sourceDefinition).load(normalizedPks, missingPks);
+        execute(new Runnable() {
+            public void run() {
+                try {
+                    Collection normalizedPks = new ArrayList();
+                    for (Iterator i=pks.iterator(); i.hasNext(); ) {
+                        Row pk = (Row)i.next();
+                        Row npk = normalize(pk);
+                        normalizedPks.add(npk);
+                    }
 
-        log.debug("Cached values: "+loadedRows.keySet());
-        results.addAll(loadedRows.values());
+                    log.debug("Checking data cache for "+normalizedPks);
+                    Collection missingPks = new ArrayList();
+                    Map loadedRows = getCache(sourceDefinition).load(normalizedPks, missingPks);
 
-        log.debug("Loading missing keys: "+missingPks);
-        Collection list = retrieve(sourceDefinition, missingPks);
-        results.addAll(list);
+                    log.debug("Cached values: "+loadedRows.keySet());
+                    results.addAll(loadedRows.values());
+
+                    log.debug("Loading missing keys: "+missingPks);
+                    Collection list = retrieve(sourceDefinition, missingPks);
+                    results.addAll(list);
+
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+
+                results.close();
+            }
+        });
 
         return results;
     }
@@ -588,11 +609,32 @@ public class Connector {
         if (keys.isEmpty()) return new ArrayList();
 
         Filter filter = FilterTool.createFilter(keys);
-        Collection values = performLoad(sourceDefinition, filter);
 
-        store(sourceDefinition, values);
+        SearchResults sr = performLoad(sourceDefinition, filter);
+
+        Collection values = new ArrayList();
+        values.addAll(sr.getAll());
+
+        //store(sourceDefinition, values);
 
         return values;
+    }
+
+    public Row store(SourceDefinition sourceDefinition, AttributeValues sourceValues) throws Exception {
+        Row pk = sourceDefinition.getPrimaryKeyValues(sourceValues);
+        Row npk = normalize(pk);
+
+        log.debug("Storing data cache: "+pk);
+        getCache(sourceDefinition).put(pk, sourceValues);
+
+        Filter f = FilterTool.createFilter(npk);
+        Collection c = new TreeSet();
+        c.add(npk);
+
+        log.debug("Storing query cache "+f+": "+c);
+        getCache(sourceDefinition).put(f, c);
+
+        return npk;
     }
 
     public void store(SourceDefinition sourceDefinition, Collection values) throws Exception {
@@ -604,20 +646,8 @@ public class Connector {
 
         for (Iterator i=values.iterator(); i.hasNext(); ) {
             AttributeValues sourceValues = (AttributeValues)i.next();
-            Row pk = sourceDefinition.getPrimaryKeyValues(sourceValues);
-            Row npk = normalize(pk);
-
+            Row npk = store(sourceDefinition, sourceValues);
             pks.add(npk);
-
-            log.debug("Storing data cache: "+pk);
-            getCache(sourceDefinition).put(pk, sourceValues);
-
-            Filter f = FilterTool.createFilter(npk);
-            Collection c = new TreeSet();
-            c.add(npk);
-
-            log.debug("Storing query cache "+f+": "+c);
-            getCache(sourceDefinition).put(f, c);
 
             for (Iterator j=uniqueFieldDefinitions.iterator(); j.hasNext(); ) {
                 FieldDefinition fieldDefinition = (FieldDefinition)j.next();
@@ -638,9 +668,11 @@ public class Connector {
             getCache(sourceDefinition).put(f, pks);
         }
 
-        Filter filter = FilterTool.createFilter(pks);
-        log.debug("Storing query cache "+filter+": "+pks);
-        getCache(sourceDefinition).put(filter, pks);
+        if (pks.size() <= 10) {
+            Filter filter = FilterTool.createFilter(pks);
+            log.debug("Storing query cache "+filter+": "+pks);
+            getCache(sourceDefinition).put(filter, pks);
+        }
     }
 
     /**
@@ -675,26 +707,32 @@ public class Connector {
     /**
      * Perform the load operation.
      */
-    public Collection performLoad(SourceDefinition sourceDefinition, Filter filter) throws Exception {
+    public SearchResults performLoad(final SourceDefinition sourceDefinition, final Filter filter) throws Exception {
 
-        Collection results = new ArrayList();
+        final SearchResults results = new SearchResults();
 
-        String s = sourceDefinition.getParameter(SourceDefinition.SIZE_LIMIT);
-        int sizeLimit = s == null ? SourceDefinition.DEFAULT_SIZE_LIMIT : Integer.parseInt(s);
+        execute(new Runnable() {
+            public void run() {
+                String s = sourceDefinition.getParameter(SourceDefinition.SIZE_LIMIT);
+                int sizeLimit = s == null ? SourceDefinition.DEFAULT_SIZE_LIMIT : Integer.parseInt(s);
 
-        Connection connection = getConnection(sourceDefinition.getConnectionName());
-        SearchResults sr;
-        try {
-            sr = connection.load(sourceDefinition, filter, sizeLimit);
-        } catch (Exception e) {
-            e.printStackTrace();
-            return results;
-        }
+                Connection connection = getConnection(sourceDefinition.getConnectionName());
+                SearchResults sr;
+                try {
+                    sr = connection.load(sourceDefinition, filter, sizeLimit);
 
-        for (Iterator i=sr.iterator(); i.hasNext();) {
-            AttributeValues sourceValues = (AttributeValues)i.next();
-            results.add(sourceValues);
-        }
+                    for (Iterator i=sr.iterator(); i.hasNext();) {
+                        AttributeValues sourceValues = (AttributeValues)i.next();
+                        store(sourceDefinition, sourceValues);
+                        results.add(sourceValues);
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+
+                results.close();
+            }
+        });
 
         return results;
     }

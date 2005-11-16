@@ -119,7 +119,7 @@ public class AddHandler {
                 EntryDefinition entryDefinition = (EntryDefinition)iterator.next();
                 if (!entryDefinition.isDynamic()) continue;
 
-                return handlerContext.getEngine().add(parent, entryDefinition, values);
+                return handler.getEngine().add(parent, entryDefinition, values);
             }
         }
 

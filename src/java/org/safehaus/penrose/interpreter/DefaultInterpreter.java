@@ -134,7 +134,7 @@ public class DefaultInterpreter extends org.safehaus.penrose.interpreter.Interpr
     }
 
     public void clear() throws Exception {
-        log.debug("Clearing interpreter:");
+        //log.debug("Clearing interpreter:");
         if (interpreter != null) {
             NameSpace ns = interpreter.getNameSpace();
 /*
@@ -144,17 +144,17 @@ public class DefaultInterpreter extends org.safehaus.penrose.interpreter.Interpr
                 log.debug(" - "+names[i]);
             }
 */
-            log.debug("BeanShell methods:");
+            //log.debug("BeanShell methods:");
             String methodNames[] = ns.getMethodNames();
             for (int i=0; i<methodNames.length; i++) {
-                log.debug(" - "+methodNames[i]);
+                //log.debug(" - "+methodNames[i]);
                 interpreter.unset(methodNames[i]);
             }
 
-            log.debug("BeanShell variables:");
+            //log.debug("BeanShell variables:");
             String variableNames[] = ns.getVariableNames();
             for (int i=0; i<variableNames.length; i++) {
-                log.debug(" - "+variableNames[i]+": "+interpreter.get(variableNames[i]));
+                //log.debug(" - "+variableNames[i]+": "+interpreter.get(variableNames[i]));
                 interpreter.unset(variableNames[i]);
             }
         }
