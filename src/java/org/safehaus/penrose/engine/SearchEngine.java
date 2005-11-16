@@ -90,13 +90,14 @@ public class SearchEngine {
                 log.debug(" - "+dn);
                 results.put(dn, sv);
 
-                if (unique) {
-                    Map map = new HashMap();
-                    map.put("dn", dn);
-                    map.put("sourceValues", sv);
-                    entries.add(map);
-                }
+                Map map = new HashMap();
+                map.put("dn", dn);
+                map.put("sourceValues", sv);
+                entries.add(map);
             }
+
+            entries.close();
+            return;
         }
         
         log.debug("Filter cache does not contain filter "+filter);
@@ -145,14 +146,14 @@ public class SearchEngine {
                     results.put(dn, av);
                 }
                 av.add(sv);
-
+/*
                 if (unique) {
                     Map map = new HashMap();
                     map.put("dn", dn);
                     map.put("sourceValues", sv);
                     entries.add(map);
                 }
-
+*/
                 Collection c = (Collection)childDns.get(parentDn);
                 if (c == null) {
                     c = new TreeSet();
@@ -162,7 +163,7 @@ public class SearchEngine {
             }
         }
 
-        if (!unique) {
+        //if (!unique) {
             if (parentDefinition != null) {
                 log.debug("Storing "+filter+" in entry filter cache:");
                 for (Iterator i=childDns.keySet().iterator(); i.hasNext(); ) {
@@ -179,7 +180,7 @@ public class SearchEngine {
 
                 }
             }
-        }
+        //}
         //filter = engineContext.getFilterTool().createFilter(rdns);
         //log.debug("Storing "+filter+" in entry filter cache for "+parentDn+" => "+rdns);
         //engineContext.getEntryFilterCache(parentDn, entryDefinition).put(filter, rdns);
@@ -222,7 +223,7 @@ public class SearchEngine {
 
         }
 */
-        if (!unique) {
+        //if (!unique) {
             for (Iterator i=results.keySet().iterator(); i.hasNext(); ) {
                 String dn = (String)i.next();
                 AttributeValues sv = (AttributeValues)results.get(dn);
@@ -232,7 +233,7 @@ public class SearchEngine {
                 map.put("sourceValues", sv);
                 entries.add(map);
             }
-        }
+        //}
 
         entries.close();
     }
@@ -274,7 +275,7 @@ public class SearchEngine {
 
         Interpreter interpreter = engine.getInterpreterFactory().newInstance();
 
-        log.debug("Search Results:");
+        //log.debug("Search Results:");
         for (Iterator i=sr.iterator(); i.hasNext(); ) {
             AttributeValues av = (AttributeValues)i.next();
 
@@ -285,7 +286,7 @@ public class SearchEngine {
             Collection list = engine.computeDns(interpreter, entryDefinition, sv);
             for (Iterator j=list.iterator(); j.hasNext(); ) {
                 String dn = (String)j.next();
-                log.debug(" - "+dn);
+                //log.debug(" - "+dn);
 
                 Map map = new HashMap();
                 map.put("dn", dn);

@@ -61,6 +61,7 @@ public class MergeEngine {
                 Row filter = (Row)map.get("filter");
                 AttributeValues loadedSourceValues = (AttributeValues)map.get("loadedSourceValues");
 
+/*
                 log.debug(Formatter.displaySeparator(80));
                 log.debug(Formatter.displayLine("MERGE", 80));
                 log.debug(Formatter.displayLine("Entry: "+dn, 80));
@@ -85,7 +86,7 @@ public class MergeEngine {
                 }
 
                 log.debug(Formatter.displaySeparator(80));
-
+*/
                 mergeEntries(dn, entryDefinition, primarySourceValues, loadedSourceValues, interpreter, filter, results);
             }
 
@@ -141,18 +142,18 @@ public class MergeEngine {
             sourceValues = primarySourceValues;
         }
 
-        log.debug("Entry:");
-        log.debug(" - source values: "+sourceValues);
+        log.debug("Entry: "+dn);
+        //log.debug(" - source values: "+sourceValues);
 
         AttributeValues attributeValues = engine.computeAttributeValues(entryDefinition, sourceValues, interpreter);
-        log.debug(" - attribute values: "+attributeValues);
+        //log.debug(" - attribute values: "+attributeValues);
 
         Entry entry = new Entry(dn, entryDefinition, sourceValues, attributeValues);
-        log.debug("\n"+entry);
+        //log.debug("\n"+entry);
 
         Row rdn = entry.getRdn();
 
-        log.debug("Storing "+rdn+" in entry data cache for "+entry.getParentDn());
+        //log.debug("Storing "+rdn+" in entry data cache for "+entry.getParentDn());
         engine.getCache(entry.getParentDn(), entryDefinition).put(rdn, entry);
 
         results.add(entry);

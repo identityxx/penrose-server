@@ -808,13 +808,18 @@ public class Engine {
         String s = engineConfig.getParameter(EngineConfig.ALLOW_CONCURRENCY);
         boolean allowConcurrency = s == null ? true : new Boolean(s).booleanValue();
 
+        boolean unique = isUnique(entryDefinition);
+        log.debug("Entry "+entryDefinition.getDn()+" "+(unique ? "is" : "is not")+" unique.");
+
         Config config = getConfig(entryDefinition.getDn());
+
         Collection sources = entryDefinition.getSources();
         log.debug("Sources: "+sources);
+
         Collection effectiveSources = config.getEffectiveSources(entryDefinition);
         log.debug("Effective Sources: "+effectiveSources);
 
-        if (sources.size() == 0 && effectiveSources.size() == 0) {
+        if (unique && sources.size() == 0 && effectiveSources.size() == 0) {
 
             Collection list = computeDns(interpreter, entryDefinition, parentSourceValues);
             for (Iterator j=list.iterator(); j.hasNext(); ) {
@@ -828,7 +833,7 @@ public class Engine {
             }
             dns.close();
 
-        } else if (sources.size() == 1 && effectiveSources.size() == 1) {
+        } else if (unique && sources.size() == 1 && effectiveSources.size() == 1) {
             if (allowConcurrency) {
                 execute(new Runnable() {
                     public void run() {

@@ -624,14 +624,14 @@ public class Connector {
         Row pk = sourceDefinition.getPrimaryKeyValues(sourceValues);
         Row npk = normalize(pk);
 
-        log.debug("Storing data cache: "+pk);
+        //log.debug("Storing connector cache: "+pk);
         getCache(sourceDefinition).put(pk, sourceValues);
 
         Filter f = FilterTool.createFilter(npk);
         Collection c = new TreeSet();
         c.add(npk);
 
-        log.debug("Storing query cache "+f+": "+c);
+        //log.debug("Storing query cache "+f+": "+c);
         getCache(sourceDefinition).put(f, c);
 
         return npk;
