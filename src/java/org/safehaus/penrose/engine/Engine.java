@@ -1287,36 +1287,47 @@ public class Engine {
 
         Collection results = new ArrayList();
 
-        results.add(computeDns(interpreter, entryDefinition));
+        results.addAll(computeDns(interpreter, entryDefinition));
 
         interpreter.clear();
 
         return results;
     }
 
-    public String computeDns(Interpreter interpreter, EntryDefinition entryDefinition) throws Exception {
-
-        Row rdn = computeRdn(interpreter, entryDefinition);
+    public Collection computeDns(Interpreter interpreter, EntryDefinition entryDefinition) throws Exception {
 
         Config config = getConfig(entryDefinition.getDn());
         EntryDefinition parentDefinition = config.getParent(entryDefinition);
 
-        String parentDn;
+        Collection parentDns;
         if (parentDefinition != null) {
-            parentDn = computeDns(interpreter, parentDefinition);
+            parentDns = computeDns(interpreter, parentDefinition);
         } else {
-            parentDn = entryDefinition.getParentDn();
+            parentDns = new ArrayList();
+            parentDns.add(entryDefinition.getParentDn());
         }
 
-        return rdn +(parentDn == null ? "" : ","+parentDn);
+        Collection rdns = computeRdn(interpreter, entryDefinition);
+        Collection dns = new ArrayList();
+
+        for (Iterator i=parentDns.iterator(); i.hasNext(); ) {
+            String parentDn = (String)i.next();
+            for (Iterator j=rdns.iterator(); j.hasNext(); ) {
+                Row rdn = (Row)j.next();
+                String dn = rdn +(parentDn == null ? "" : ","+parentDn);
+                dns.add(dn);
+            }
+        }
+
+        return dns;
     }
 
-    public Row computeRdn(
+    public Collection computeRdn(
             Interpreter interpreter,
             EntryDefinition entryDefinition
             ) throws Exception {
 
-        Row rdn = new Row();
+        AttributeValues rdns = new AttributeValues();
 
         Collection rdnAttributes = entryDefinition.getRdnAttributes();
         for (Iterator i=rdnAttributes.iterator(); i.hasNext(); ) {
@@ -1324,12 +1335,12 @@ public class Engine {
             String name = attributeDefinition.getName();
 
             Object value = interpreter.eval(attributeDefinition);
-            if (value == null) return null;
+            if (value == null) continue;
 
-            rdn.set(name, value);
+            rdns.add(name, value);
         }
 
-        return rdn;
+        return TransformEngine.convert(rdns);
     }
 
     public AttributeValues computeAttributeValues(

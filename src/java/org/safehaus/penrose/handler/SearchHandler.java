@@ -334,7 +334,7 @@ public class SearchHandler {
 		}
 
 		if (scope == LDAPConnection.SCOPE_ONE || scope == LDAPConnection.SCOPE_SUB) { // one level or subtree
-            searchChildren(connection, path, prefix, entryDefinition, parentSourceValues, scope, f, normalizedAttributeNames, results, true);
+            searchChildren(connection, path, entryDefinition, parentSourceValues, scope, f, normalizedAttributeNames, results, true);
 		}
 
 		results.setReturnCode(LDAPException.SUCCESS);
@@ -344,7 +344,6 @@ public class SearchHandler {
     public void searchChildren(
             PenroseConnection connection,
             Collection path,
-            String prefix,
             EntryDefinition entryDefinition,
             AttributeValues parentSourceValues,
             int scope,
@@ -358,8 +357,6 @@ public class SearchHandler {
         if (children == null) {
             return;
         }
-
-        prefix = prefix == null ? "parent" : "parent."+prefix;
 
         for (Iterator i = children.iterator(); i.hasNext();) {
             EntryDefinition childDefinition = (EntryDefinition) i.next();
@@ -397,7 +394,14 @@ public class SearchHandler {
                 log.debug("Searching children of " + childDefinition.getDn());
 
                 AttributeValues newParentSourceValues = new AttributeValues();
-                newParentSourceValues.add("parent", parentSourceValues);
+                for (Iterator j=parentSourceValues.getNames().iterator(); j.hasNext(); ) {
+                    String name = (String)j.next();
+                    Collection values = parentSourceValues.get(name);
+
+                    if (name.startsWith("parent.")) name = "parent."+name;
+
+                    newParentSourceValues.add(name, values);
+                }
 
                 Engine engine = handler.getEngine();
                 Interpreter interpreter = engine.getInterpreterFactory().newInstance();
@@ -428,7 +432,7 @@ public class SearchHandler {
                 newPath.add(map);
                 newPath.addAll(path);
 
-                searchChildren(connection, newPath, prefix, childDefinition, newParentSourceValues, scope, filter, attributeNames, results, false);
+                searchChildren(connection, newPath, childDefinition, newParentSourceValues, scope, filter, attributeNames, results, false);
             }
         }
     }

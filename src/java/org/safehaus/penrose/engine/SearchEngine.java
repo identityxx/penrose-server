@@ -127,12 +127,12 @@ public class SearchEngine {
         log.debug("Search results:");
         for (Iterator i=values.iterator(); i.hasNext(); ) {
             AttributeValues sv = (AttributeValues)i.next();
-            //log.debug(" - "+sv);
+            log.debug("==> "+sv);
 
             Collection list = engine.computeDns(interpreter, entryDefinition, sv);
             for (Iterator j=list.iterator(); j.hasNext(); ) {
                 String dn = (String)j.next();
-                log.debug(" - "+dn);
+                log.debug("    - "+dn);
 
                 dns.add(dn);
 
@@ -331,12 +331,6 @@ public class SearchEngine {
             results.addAll(parentResults);
             results.close();
             return;
-            /*
-            log.debug("Entry "+entryDefinition.getDn()+" doesn't have any sources.");
-            Collection parentSourceValues = new ArrayList();
-            parentSourceValues.add(sourceValues);
-            return parentSourceValues;
-            */
         }
 
         Collection localResults = searchLocal(
@@ -358,7 +352,7 @@ public class SearchEngine {
                 connectingSources
         );
 
-        results.addAll(localResults);
+        results.addAll(parentResults);
         results.close();
         return;
     }

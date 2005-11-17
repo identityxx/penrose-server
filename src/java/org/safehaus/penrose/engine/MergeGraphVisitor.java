@@ -122,14 +122,14 @@ public class MergeGraphVisitor extends GraphVisitor {
                 sourceValues.add(av);
             }
         }
-
+/*
         log.debug("Source values:");
         for (Iterator i=sourceValues.getNames().iterator(); i.hasNext(); ) {
             String name = (String)i.next();
             Collection values = sourceValues.get(name);
             log.debug(" - "+name+": "+values);
         }
-
+*/
         graphIterator.traverseEdges(node);
     }
 
