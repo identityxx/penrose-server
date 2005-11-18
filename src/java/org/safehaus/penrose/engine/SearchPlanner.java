@@ -84,11 +84,10 @@ public class SearchPlanner extends GraphVisitor {
 
         log.debug("Connecting sources:");
         for (Iterator i=connectingRelationships.iterator(); i.hasNext(); ) {
-            Relationship relationship = (Relationship)i.next();
-            log.debug(" - "+relationship);
+            Collection relationships = (Collection)i.next();
 
-            Collection relationships = new ArrayList();
-            relationships.add(relationship);
+            Relationship relationship = (Relationship)relationships.iterator().next();
+            log.debug(" - "+relationship);
 
             String lhs = relationship.getLhs();
             int lindex = lhs.indexOf(".");
@@ -160,7 +159,7 @@ public class SearchPlanner extends GraphVisitor {
 
         if (entryDefinition.getSource(toSource.getName()) == null) {
             log.debug("Source "+toSource.getName()+" is not defined in entry "+entryDefinition.getDn());
-            connectingRelationships.addAll(relationships);
+            connectingRelationships.add(relationships);
             
             return;
         }

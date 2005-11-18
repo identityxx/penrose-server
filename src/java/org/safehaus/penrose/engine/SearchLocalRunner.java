@@ -123,9 +123,9 @@ public class SearchLocalRunner extends GraphVisitor {
         } else {
             Collection temp;
             if (source.isRequired()) {
-                temp = engine.getJoinEngine().join(results, list, relationships);
+                temp = engine.getJoinEngine().join(results, list, entryDefinition, relationships);
             } else {
-                temp = engine.getJoinEngine().leftJoin(results, list, relationships);
+                temp = engine.getJoinEngine().leftJoin(results, list, entryDefinition, relationships);
             }
 
             results.clear();

@@ -116,7 +116,7 @@ public class MergeGraphVisitor extends GraphVisitor {
                     if (!FilterTool.isValid(av, filter)) continue;
 
                 } else {
-                    if (!engine.getJoinEngine().evaluate(relationships, sourceValues, av)) continue;
+                    if (!engine.getJoinEngine().evaluate(entryDefinition, relationships, sourceValues, av)) continue;
                 }
 
                 sourceValues.add(av);

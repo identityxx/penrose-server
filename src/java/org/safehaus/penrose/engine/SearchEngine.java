@@ -127,7 +127,7 @@ public class SearchEngine {
         log.debug("Search results:");
         for (Iterator i=values.iterator(); i.hasNext(); ) {
             AttributeValues sv = (AttributeValues)i.next();
-            log.debug("==> "+sv);
+            //log.debug("==> "+sv);
 
             Collection list = engine.computeDns(interpreter, entryDefinition, sv);
             for (Iterator j=list.iterator(); j.hasNext(); ) {
@@ -486,26 +486,29 @@ public class SearchEngine {
             Collection localResults,
             Collection startingSources) throws Exception {
 
-        Collection results = new ArrayList();
-
         log.debug(Formatter.displaySeparator(80));
         log.debug(Formatter.displayLine("SEARCH PARENT", 80));
 
-        //log.debug(Formatter.displayLine("Local source values:", 80));
+        log.debug(Formatter.displayLine("Local source values:", 80));
 
         AttributeValues sourceValues = new AttributeValues();
-        for (Iterator i=localResults.iterator(); i.hasNext(); ) {
+        int counter = 1;
+        for (Iterator i=localResults.iterator(); i.hasNext(); counter++) {
             AttributeValues sv = (AttributeValues)i.next();
             sourceValues.add(sv);
 
+            log.debug(Formatter.displayLine("Record #"+counter, 80));
             for (Iterator j=sv.getNames().iterator(); j.hasNext(); ) {
                 String name = (String)j.next();
                 Collection values = sv.get(name);
-                //log.debug(Formatter.displayLine(" - "+name+": "+values, 80));
+                log.debug(Formatter.displayLine(" - "+name+": "+values, 80));
             }
         }
 
         log.debug(Formatter.displaySeparator(80));
+
+        Collection results = new ArrayList();
+        results.addAll(localResults);
 
         Map filters = planner.getFilters();
         
@@ -572,21 +575,19 @@ public class SearchEngine {
             SearchParentRunner runner = new SearchParentRunner(
                     engine,
                     entryDefinition,
-                    localResults,
+                    results,
                     sourceValues,
                     planner,
                     fromSource,
                     relationships);
 
             runner.run();
-
-            results.addAll(runner.getResults());
         }
 
         log.debug(Formatter.displaySeparator(80));
         log.debug(Formatter.displayLine("SEARCH PARENT RESULTS", 80));
 
-        int counter = 1;
+        counter = 1;
         for (Iterator j=results.iterator(); j.hasNext(); counter++) {
             AttributeValues av = (AttributeValues)j.next();
             log.debug(Formatter.displayLine("Result #"+counter, 80));

@@ -104,53 +104,70 @@ public class SearchParentRunner extends GraphVisitor {
         }
 
         if (sourceValues.contains(source.getName())) {
+
             log.debug("Source "+source.getName()+" has already been searched");
 
-            graphIterator.traverseEdges(node);
-            return;
+            Collection list = new ArrayList();
+            for (Iterator i=results.iterator(); i.hasNext(); ) {
+                AttributeValues av = (AttributeValues)i.next();
+
+                if (relationships == null) {
+                    if (!FilterTool.isValid(av, filter)) continue;
+
+                } else {
+                    if (!engine.getJoinEngine().evaluate(entryDefinition, relationships, av, av)) continue;
+                }
+
+                list.add(av);
+            }
+
+            results.clear();
+            results.addAll(list);
+
+        } else {
+
+            log.debug("Searching source "+source.getName()+" with filter "+filter);
+
+            ConnectionConfig connectionConfig = config.getConnectionConfig(source.getConnectionName());
+            SourceDefinition sourceDefinition = connectionConfig.getSourceDefinition(source.getSourceName());
+
+            SearchResults tmp = engine.getConnector().search(sourceDefinition, filter);
+
+            Collection list = new ArrayList();
+            for (Iterator i=tmp.iterator(); i.hasNext(); ) {
+                AttributeValues av = (AttributeValues)i.next();
+
+                AttributeValues sv = new AttributeValues();
+                sv.add(source.getName(), av);
+                list.add(sv);
+            }
+
+            if (results.isEmpty()) {
+                results.addAll(list);
+
+            } else {
+                Collection temp;
+                if (source.isRequired()) {
+                    temp = engine.getJoinEngine().join(results, list, entryDefinition, relationships);
+                } else {
+                    temp = engine.getJoinEngine().leftJoin(results, list, entryDefinition, relationships);
+                }
+                results.clear();
+                results.addAll(temp);
+            }
         }
 
-        log.debug("Searching source "+source.getName()+" with filter "+filter);
-
-        ConnectionConfig connectionConfig = config.getConnectionConfig(source.getConnectionName());
-        SourceDefinition sourceDefinition = connectionConfig.getSourceDefinition(source.getSourceName());
-
-        SearchResults tmp = engine.getConnector().search(sourceDefinition, filter);
-
-        Collection list = new ArrayList();
-        for (Iterator i=tmp.iterator(); i.hasNext(); ) {
-            AttributeValues av = (AttributeValues)i.next();
-
-            AttributeValues sv = new AttributeValues();
-            sv.add(source.getName(), av);
-            list.add(sv);
-        }
-/*
-        log.debug("Search results:");
+        log.debug("Search Results:");
 
         int counter = 1;
-        for (Iterator j=list.iterator(); j.hasNext(); counter++) {
-            AttributeValues sv = (AttributeValues)j.next();
-            log.debug("Result #"+counter);
+        for (Iterator i=results.iterator(); i.hasNext(); counter++) {
+            AttributeValues sv = (AttributeValues)i.next();
+            log.debug("Record #"+counter+":");
             for (Iterator k=sv.getNames().iterator(); k.hasNext(); ) {
                 String name = (String)k.next();
                 Collection values = sv.get(name);
                 log.debug(" - "+name+": "+values);
             }
-        }
-*/
-        if (results.isEmpty()) {
-            results.addAll(list);
-
-        } else {
-            Collection temp;
-            if (source.isRequired()) {
-                temp = engine.getJoinEngine().join(results, list, relationships);
-            } else {
-                temp = engine.getJoinEngine().leftJoin(results, list, relationships);
-            }
-            results.clear();
-            results.addAll(temp);
         }
 
         graphIterator.traverseEdges(node);
