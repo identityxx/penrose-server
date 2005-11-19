@@ -86,9 +86,11 @@ public class SearchParentRunner extends GraphVisitor {
 
         Source source = (Source)node;
 
-        log.debug(Formatter.displaySeparator(60));
-        log.debug(Formatter.displayLine("Visiting "+source.getName(), 60));
-        log.debug(Formatter.displaySeparator(60));
+        if (log.isDebugEnabled()) {
+            log.debug(Formatter.displaySeparator(60));
+            log.debug(Formatter.displayLine("Visiting "+source.getName(), 60));
+            log.debug(Formatter.displaySeparator(60));
+        }
 
         Map map = (Map)stack.peek();
         Filter filter = (Filter)map.get("filter");
@@ -156,7 +158,7 @@ public class SearchParentRunner extends GraphVisitor {
                 results.addAll(temp);
             }
         }
-
+/*
         log.debug("Search Results:");
 
         int counter = 1;
@@ -169,7 +171,7 @@ public class SearchParentRunner extends GraphVisitor {
                 log.debug(" - "+name+": "+values);
             }
         }
-
+*/
         graphIterator.traverseEdges(node);
     }
 
@@ -179,12 +181,14 @@ public class SearchParentRunner extends GraphVisitor {
         Source toSource = (Source)node2;
         Collection relationships = (Collection)object;
 
-        log.debug(Formatter.displaySeparator(60));
-        for (Iterator i=relationships.iterator(); i.hasNext(); ) {
-            Relationship relationship = (Relationship)i.next();
-            log.debug(Formatter.displayLine(relationship.toString(), 60));
+        if (log.isDebugEnabled()) {
+            log.debug(Formatter.displaySeparator(60));
+            for (Iterator i=relationships.iterator(); i.hasNext(); ) {
+                Relationship relationship = (Relationship)i.next();
+                log.debug(Formatter.displayLine(relationship.toString(), 60));
+            }
+            log.debug(Formatter.displaySeparator(60));
         }
-        log.debug(Formatter.displaySeparator(60));
 
         if (entryDefinition.getSource(toSource.getName()) != null) {
             log.debug("Source "+toSource.getName()+" is not defined in parent entry.");
@@ -193,12 +197,12 @@ public class SearchParentRunner extends GraphVisitor {
 
         Filter filter = null;
 
-        log.debug("Generating filters:");
+        //log.debug("Generating filters:");
         for (Iterator i=results.iterator(); i.hasNext(); ) {
             AttributeValues av = (AttributeValues)i.next();
 
             Filter f = engine.generateFilter(toSource, relationships, av);
-            log.debug(" - "+f);
+            //log.debug(" - "+f);
 
             filter = FilterTool.appendOrFilter(filter, f);
         }

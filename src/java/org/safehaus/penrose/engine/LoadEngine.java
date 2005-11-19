@@ -45,6 +45,148 @@ public class LoadEngine {
     }
 
     public void load(
+            final EntryDefinition entryDefinition,
+            final SearchResults entries,
+            final SearchResults loadedEntries,
+            final SearchResults results
+            ) throws Exception {
+
+        String s = engine.getEngineConfig().getParameter(EngineConfig.ALLOW_CONCURRENCY);
+        boolean allowConcurrency = s == null ? true : new Boolean(s).booleanValue();
+
+        Config config = engine.getConfig(entryDefinition.getDn());
+
+        Collection sources = entryDefinition.getSources();
+        log.debug("Sources: "+sources);
+
+        Collection effectiveSources = config.getEffectiveSources(entryDefinition);
+        log.debug("Effective Sources: "+effectiveSources);
+
+        if (sources.size() == 0 && effectiveSources.size() == 0 || sources.size() == 1 && effectiveSources.size() == 1) {
+
+            if (allowConcurrency) {
+                engine.execute(new Runnable() {
+                    public void run() {
+                        try {
+                            for (Iterator i=entries.iterator(); i.hasNext(); ) {
+                                Map map = (Map)i.next();
+                                loadedEntries.add(map);
+                            }
+                            loadedEntries.close();
+
+                        } catch (Throwable e) {
+                            e.printStackTrace(System.out);
+                            loadedEntries.setReturnCode(org.ietf.ldap.LDAPException.OPERATIONS_ERROR);
+                        }
+                    }
+                });
+            } else {
+                for (Iterator i=entries.iterator(); i.hasNext(); ) {
+                    Map map = (Map)i.next();
+                    loadedEntries.add(map);
+                }
+                loadedEntries.close();
+            }
+
+            return;
+        }
+
+        final Interpreter interpreter = engine.getInterpreterFactory().newInstance();
+        final SearchResults batches = new SearchResults();
+
+        if (allowConcurrency) {
+            engine.execute(new Runnable() {
+                public void run() {
+                    try {
+                        createBatches(interpreter, entryDefinition, entries, results, batches);
+
+                    } catch (Throwable e) {
+                        e.printStackTrace(System.out);
+                        batches.setReturnCode(org.ietf.ldap.LDAPException.OPERATIONS_ERROR);
+                    }
+                }
+            });
+        } else {
+            createBatches(interpreter, entryDefinition, entries, results, batches);
+        }
+
+        if (allowConcurrency) {
+            engine.execute(new Runnable() {
+                public void run() {
+                    try {
+                        loadBackground(entryDefinition, batches, loadedEntries);
+
+                    } catch (Throwable e) {
+                        e.printStackTrace(System.out);
+                        loadedEntries.setReturnCode(org.ietf.ldap.LDAPException.OPERATIONS_ERROR);
+                    }
+                }
+            });
+        } else {
+            loadBackground(entryDefinition, batches, loadedEntries);
+        }
+    }
+
+    public void createBatches(
+            Interpreter interpreter,
+            EntryDefinition entryDefinition,
+            SearchResults entries,
+            SearchResults results,
+            SearchResults batches
+            ) throws Exception {
+
+        try {
+            Config config = engine.getConfig(entryDefinition.getDn());
+            Source primarySource = engine.getPrimarySource(entryDefinition);
+
+            Collection batch = new ArrayList();
+
+            String s = entryDefinition.getParameter(EntryDefinition.BATCH_SIZE);
+            int batchSize = s == null ? EntryDefinition.DEFAULT_BATCH_SIZE : Integer.parseInt(s);
+
+            for (Iterator i=entries.iterator(); i.hasNext(); ) {
+                Map map = (Map)i.next();
+                String dn = (String)map.get("dn");
+                AttributeValues sv = (AttributeValues)map.get("sourceValues");
+
+                Row rdn = Entry.getRdn(dn);
+
+                if (config.getParent(entryDefinition) != null) {
+                    String parentDn = Entry.getParentDn(dn);
+
+                    log.debug("Checking "+rdn+" in entry data cache for "+parentDn);
+                    Entry entry = (Entry)engine.getCache(parentDn, entryDefinition).get(rdn);
+
+                    if (entry != null) {
+                        log.debug(" - "+rdn+" has been loaded");
+                        results.add(entry);
+                        continue;
+                    }
+                }
+
+                Row filter = engine.createFilter(interpreter, primarySource, entryDefinition, rdn);
+                if (filter == null) continue;
+
+                //if (filter.isEmpty()) filter.add(rdn);
+
+                log.debug("- "+rdn+" has not been loaded, loading with key "+filter);
+                map.put("filter", filter);
+                batch.add(map);
+
+                if (batch.size() < batchSize) continue;
+
+                batches.add(batch);
+                batch = new ArrayList();
+            }
+
+            if (!batch.isEmpty()) batches.add(batch);
+
+        } finally {
+            batches.close();
+        }
+    }
+
+    public void loadBackground(
             EntryDefinition entryDefinition,
             SearchResults batches,
             SearchResults loadedBatches
@@ -55,14 +197,14 @@ public class LoadEngine {
 
         try {
             while (batches.hasNext()) {
-                Collection keys = (Collection)batches.next();
+                Collection entries = (Collection)batches.next();
 
                 log.debug(Formatter.displaySeparator(80));
                 log.debug(Formatter.displayLine("LOAD", 80));
                 log.debug(Formatter.displayLine("Entry: "+entryDefinition.getDn(), 80));
 
                 AttributeValues sourceValues = new AttributeValues();
-                for (Iterator i=keys.iterator(); i.hasNext(); ) {
+                for (Iterator i=entries.iterator(); i.hasNext(); ) {
                     Map map = (Map)i.next();
                     String dn = (String)map.get("dn");
                     AttributeValues sv = (AttributeValues)map.get("sourceValues");
@@ -84,22 +226,30 @@ public class LoadEngine {
 
                 log.debug(Formatter.displaySeparator(80));
 
-                AttributeValues loadedSourceValues = loadEntries(sourceValues, entryDefinition, keys);
+                AttributeValues loadedSourceValues = loadEntries(sourceValues, entryDefinition, entries);
 
-                log.debug(Formatter.displaySeparator(80));
-                log.debug(Formatter.displayLine("LOAD RESULT", 80));
+                if (log.isDebugEnabled()) {
+                    log.debug(Formatter.displaySeparator(80));
+                    log.debug(Formatter.displayLine("LOAD RESULT", 80));
 
-                int c = 1;
+                    for (Iterator i=loadedSourceValues.getNames().iterator(); i.hasNext(); ) {
+                        String sourceName = (String)i.next();
+                        log.debug(Formatter.displayLine(" - "+sourceName+":", 80));
+                        Collection avs = loadedSourceValues.get(sourceName);
+                        for (Iterator j=avs.iterator(); j.hasNext(); ) {
+                            AttributeValues av = (AttributeValues)j.next();
+                            for (Iterator k=av.getNames().iterator(); k.hasNext(); ) {
+                                String name = (String)k.next();
+                                Collection values = av.get(name);
+                                log.debug(Formatter.displayLine("   - "+name+": "+values, 80));
+                            }
+                        }
+                    }
 
-                for (Iterator i=loadedSourceValues.getNames().iterator(); i.hasNext(); ) {
-                    String sourceName = (String)i.next();
-                    Collection values = loadedSourceValues.get(sourceName);
-                    log.debug(Formatter.displayLine("   - "+sourceName+": "+values, 80));
+                    log.debug(Formatter.displaySeparator(80));
                 }
 
-                log.debug(Formatter.displaySeparator(80));
-
-                for (Iterator i=keys.iterator(); i.hasNext(); ) {
+                for (Iterator i=entries.iterator(); i.hasNext(); ) {
                     Map map = (Map)i.next();
 
                     map.put("loadedSourceValues", loadedSourceValues);
@@ -133,6 +283,7 @@ public class LoadEngine {
             }
 
             AttributeValues newSourceValues = new AttributeValues();
+/*
             for (Iterator i=sourceNames.iterator(); i.hasNext(); ) {
                 String sourceName = (String)i.next();
                 if ("parent".equals(sourceName)) continue;
@@ -140,9 +291,9 @@ public class LoadEngine {
                 AttributeValues sv = new AttributeValues(sourceValues);
                 sv.retain(sourceName);
 
-                newSourceValues.add(sourceName, sv);
+                newSourceValues.add(sv);
             }
-
+*/
             return newSourceValues;
         }
 

@@ -24,7 +24,6 @@ import org.safehaus.penrose.SearchResults;
 import org.safehaus.penrose.connector.Adapter;
 import org.safehaus.penrose.engine.TransformEngine;
 import org.safehaus.penrose.util.Formatter;
-import org.safehaus.penrose.util.Formatter;
 import org.safehaus.penrose.config.Config;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.mapping.*;
@@ -165,9 +164,11 @@ public class JDBCAdapter extends Adapter {
         try {
             con = ds.getConnection();
 
-            log.debug(Formatter.displaySeparator(80));
-            log.debug(Formatter.displayLine(sql, 80));
-            log.debug(Formatter.displaySeparator(80));
+            if (log.isDebugEnabled()) {
+                log.debug(Formatter.displaySeparator(80));
+                log.debug(Formatter.displayLine(sql, 80));
+                log.debug(Formatter.displaySeparator(80));
+            }
 
             ps = con.prepareStatement(sql);
 
@@ -271,13 +272,15 @@ public class JDBCAdapter extends Adapter {
         try {
             con = ds.getConnection();
 
-            log.debug(Formatter.displaySeparator(80));
-            Collection lines = Formatter.split(sql, 80);
-            for (Iterator i=lines.iterator(); i.hasNext(); ) {
-                String line = (String)i.next();
-                log.debug(Formatter.displayLine(line, 80));
+            if (log.isDebugEnabled()) {
+                log.debug(Formatter.displaySeparator(80));
+                Collection lines = Formatter.split(sql, 80);
+                for (Iterator i=lines.iterator(); i.hasNext(); ) {
+                    String line = (String)i.next();
+                    log.debug(Formatter.displayLine(line, 80));
+                }
+                log.debug(Formatter.displaySeparator(80));
             }
-            log.debug(Formatter.displaySeparator(80));
 
             ps = con.prepareStatement(sql);
 
@@ -439,9 +442,11 @@ public class JDBCAdapter extends Adapter {
 
             String sql = "insert into "+tableName+" ("+sb+") values ("+sb2+")";
 
-            log.debug(Formatter.displaySeparator(80));
-            log.debug(Formatter.displayLine(sql, 80));
-            log.debug(Formatter.displaySeparator(80));
+            if (log.isDebugEnabled()) {
+                log.debug(Formatter.displaySeparator(80));
+                log.debug(Formatter.displayLine(sql, 80));
+                log.debug(Formatter.displaySeparator(80));
+            }
 
             ps = con.prepareStatement(sql);
 
@@ -495,9 +500,11 @@ public class JDBCAdapter extends Adapter {
 
             String sql = "delete from "+tableName+" where "+sb;
 
-            log.debug(Formatter.displaySeparator(80));
-            log.debug(Formatter.displayLine(sql, 80));
-            log.debug(Formatter.displaySeparator(80));
+            if (log.isDebugEnabled()) {
+                log.debug(Formatter.displaySeparator(80));
+                log.debug(Formatter.displayLine(sql, 80));
+                log.debug(Formatter.displaySeparator(80));
+            }
 
             ps = con.prepareStatement(sql);
 
@@ -575,13 +582,15 @@ public class JDBCAdapter extends Adapter {
 
             String sql = "update "+tableName+" set "+columns+" where "+whereClause;
 
-            log.debug(Formatter.displaySeparator(80));
-            Collection lines = Formatter.split(sql, 80);
-            for (Iterator i=lines.iterator(); i.hasNext(); ) {
-                String line = (String)i.next();
-                log.debug(Formatter.displayLine(line, 80));
+            if (log.isDebugEnabled()) {
+                log.debug(Formatter.displaySeparator(80));
+                Collection lines = Formatter.split(sql, 80);
+                for (Iterator i=lines.iterator(); i.hasNext(); ) {
+                    String line = (String)i.next();
+                    log.debug(Formatter.displayLine(line, 80));
+                }
+                log.debug(Formatter.displaySeparator(80));
             }
-            log.debug(Formatter.displaySeparator(80));
 
             ps = con.prepareStatement(sql);
 
@@ -656,13 +665,15 @@ public class JDBCAdapter extends Adapter {
 
             String sql = "update "+tableName+" set "+columns+" where "+whereClause;
 
-            log.debug(Formatter.displaySeparator(80));
-            Collection lines = Formatter.split(sql, 80);
-            for (Iterator i=lines.iterator(); i.hasNext(); ) {
-                String line = (String)i.next();
-                log.debug(Formatter.displayLine(line, 80));
+            if (log.isDebugEnabled()) {
+                log.debug(Formatter.displaySeparator(80));
+                Collection lines = Formatter.split(sql, 80);
+                for (Iterator i=lines.iterator(); i.hasNext(); ) {
+                    String line = (String)i.next();
+                    log.debug(Formatter.displayLine(line, 80));
+                }
+                log.debug(Formatter.displaySeparator(80));
             }
-            log.debug(Formatter.displaySeparator(80));
 
             ps = con.prepareStatement(sql);
 
@@ -699,9 +710,11 @@ public class JDBCAdapter extends Adapter {
         try {
             con = ds.getConnection();
 
-            log.debug(Formatter.displaySeparator(80));
-            log.debug(Formatter.displayLine(sql, 80));
-            log.debug(Formatter.displaySeparator(80));
+            if (log.isDebugEnabled()) {
+                log.debug(Formatter.displaySeparator(80));
+                log.debug(Formatter.displayLine(sql, 80));
+                log.debug(Formatter.displaySeparator(80));
+            }
 
             ps = con.prepareStatement(sql);
             rs = ps.executeQuery();
@@ -766,13 +779,15 @@ public class JDBCAdapter extends Adapter {
         try {
             con = ds.getConnection();
 
-            log.debug(Formatter.displaySeparator(80));
-            Collection lines = Formatter.split(sql, 80);
-            for (Iterator i=lines.iterator(); i.hasNext(); ) {
-                String line = (String)i.next();
-                log.debug(Formatter.displayLine(line, 80));
+            if (log.isDebugEnabled()) {
+                log.debug(Formatter.displaySeparator(80));
+                Collection lines = Formatter.split(sql, 80);
+                for (Iterator i=lines.iterator(); i.hasNext(); ) {
+                    String line = (String)i.next();
+                    log.debug(Formatter.displayLine(line, 80));
+                }
+                log.debug(Formatter.displaySeparator(80));
             }
-            log.debug(Formatter.displaySeparator(80));
 
             ps = con.prepareStatement(sql);
 

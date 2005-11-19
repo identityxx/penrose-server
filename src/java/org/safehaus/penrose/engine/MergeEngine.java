@@ -43,8 +43,36 @@ public class MergeEngine {
     }
 
     public void merge(
+            final EntryDefinition entryDefinition,
+            final SearchResults loadedBatches,
+            final SearchResults results
+            ) throws Exception {
+
+        String s = engine.getEngineConfig().getParameter(EngineConfig.ALLOW_CONCURRENCY);
+        boolean allowConcurrency = s == null ? true : new Boolean(s).booleanValue();
+
+        final Interpreter interpreter = engine.getInterpreterFactory().newInstance();
+
+        if (allowConcurrency) {
+            engine.execute(new Runnable() {
+                public void run() {
+                    try {
+                        mergeBackground(entryDefinition, loadedBatches, interpreter, results);
+
+                    } catch (Throwable e) {
+                        e.printStackTrace(System.out);
+                        results.setReturnCode(org.ietf.ldap.LDAPException.OPERATIONS_ERROR);
+                    }
+                }
+            });
+        } else {
+            mergeBackground(entryDefinition, loadedBatches, interpreter, results);
+        }
+    }
+
+    public void mergeBackground(
             EntryDefinition entryDefinition,
-            SearchResults loadedBatches,
+            SearchResults entries,
             Interpreter interpreter,
             SearchResults results
             ) throws Exception {
@@ -53,40 +81,49 @@ public class MergeEngine {
         //lock.getWriteLock(Penrose.WAIT_TIMEOUT);
 
         try {
-            while (loadedBatches.hasNext()) {
-                Map map = (Map)loadedBatches.next();
+            while (entries.hasNext()) {
+                Map map = (Map)entries.next();
 
                 String dn = (String)map.get("dn");
                 AttributeValues primarySourceValues = (AttributeValues)map.get("sourceValues");
                 Row filter = (Row)map.get("filter");
                 AttributeValues loadedSourceValues = (AttributeValues)map.get("loadedSourceValues");
 
-/*
-                log.debug(Formatter.displaySeparator(80));
-                log.debug(Formatter.displayLine("MERGE", 80));
-                log.debug(Formatter.displayLine("Entry: "+dn, 80));
-                log.debug(Formatter.displayLine("Filter: "+filter, 80));
+                if (log.isDebugEnabled()) {
+                    log.debug(Formatter.displaySeparator(80));
+                    log.debug(Formatter.displayLine("MERGE", 80));
+                    log.debug(Formatter.displayLine("Entry: "+dn, 80));
+                    log.debug(Formatter.displayLine("Filter: "+filter, 80));
 
-                if (primarySourceValues != null) {
-                    log.debug(Formatter.displayLine("Primary source values:", 80));
-                    for (Iterator j=primarySourceValues.getNames().iterator(); j.hasNext(); ) {
-                        String name = (String)j.next();
-                        Collection v = primarySourceValues.get(name);
-                        log.debug(Formatter.displayLine(" - "+name+": "+v, 80));
+                    if (primarySourceValues != null) {
+                        log.debug(Formatter.displayLine("Primary source values:", 80));
+                        for (Iterator j=primarySourceValues.getNames().iterator(); j.hasNext(); ) {
+                            String name = (String)j.next();
+                            Collection v = primarySourceValues.get(name);
+                            log.debug(Formatter.displayLine(" - "+name+": "+v, 80));
+                        }
                     }
+
+                    log.debug(Formatter.displayLine("Loaded source values:", 80));
+                    if (loadedSourceValues != null) {
+                        for (Iterator i=loadedSourceValues.getNames().iterator(); i.hasNext(); ) {
+                            String sourceName = (String)i.next();
+                            log.debug(Formatter.displayLine(" - "+sourceName+":", 80));
+                            Collection avs = loadedSourceValues.get(sourceName);
+                            for (Iterator j=avs.iterator(); j.hasNext(); ) {
+                                AttributeValues av = (AttributeValues)j.next();
+                                for (Iterator k=av.getNames().iterator(); k.hasNext(); ) {
+                                    String name = (String)k.next();
+                                    Collection values = av.get(name);
+                                    log.debug(Formatter.displayLine("   - "+name+": "+values, 80));
+                                }
+                            }
+                       }
+                    }
+
+                    log.debug(Formatter.displaySeparator(80));
                 }
 
-                log.debug(Formatter.displayLine("Loaded source values:", 80));
-                if (loadedSourceValues != null) {
-                    for (Iterator i=loadedSourceValues.getNames().iterator(); i.hasNext(); ) {
-                        String sourceName = (String)i.next();
-                        Collection values = loadedSourceValues.get(sourceName);
-                        log.debug(Formatter.displayLine(" - "+sourceName+": "+values, 80));
-                   }
-                }
-
-                log.debug(Formatter.displaySeparator(80));
-*/
                 mergeEntries(dn, entryDefinition, primarySourceValues, loadedSourceValues, interpreter, filter, results);
             }
 

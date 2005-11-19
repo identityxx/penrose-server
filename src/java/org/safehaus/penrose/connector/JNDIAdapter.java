@@ -101,12 +101,14 @@ public class JNDIAdapter extends Adapter {
             ldapFilter = "(&"+ldapFilter+filter+")";
         }
 
-        log.debug(Formatter.displaySeparator(80));
-        log.debug(Formatter.displayLine("JNDI Search "+sourceDefinition.getConnectionName()+"/"+sourceDefinition.getName(), 80));
-        log.debug(Formatter.displayLine(" - Base DN: "+ldapBase, 80));
-        log.debug(Formatter.displayLine(" - Scope: "+ldapScope, 80));
-        log.debug(Formatter.displayLine(" - Filter: "+ldapFilter, 80));
-        log.debug(Formatter.displaySeparator(80));
+        if (log.isDebugEnabled()) {
+            log.debug(Formatter.displaySeparator(80));
+            log.debug(Formatter.displayLine("JNDI Search "+sourceDefinition.getConnectionName()+"/"+sourceDefinition.getName(), 80));
+            log.debug(Formatter.displayLine(" - Base DN: "+ldapBase, 80));
+            log.debug(Formatter.displayLine(" - Scope: "+ldapScope, 80));
+            log.debug(Formatter.displayLine(" - Filter: "+ldapFilter, 80));
+            log.debug(Formatter.displaySeparator(80));
+        }
 
         SearchControls ctls = new SearchControls();
         ctls.setReturningAttributes(new String[] { "dn" });
@@ -156,12 +158,14 @@ public class JNDIAdapter extends Adapter {
             ldapFilter = "(&"+ldapFilter+filter+")";
         }
 
-        log.debug(Formatter.displaySeparator(80));
-        log.debug(Formatter.displayLine("JNDI Search "+sourceDefinition.getConnectionName()+"/"+sourceDefinition.getName(), 80));
-        log.debug(Formatter.displayLine(" - Base DN: "+ldapBase, 80));
-        log.debug(Formatter.displayLine(" - Scope: "+ldapScope, 80));
-        log.debug(Formatter.displayLine(" - Filter: "+ldapFilter, 80));
-        log.debug(Formatter.displaySeparator(80));
+        if (log.isDebugEnabled()) {
+            log.debug(Formatter.displaySeparator(80));
+            log.debug(Formatter.displayLine("JNDI Search "+sourceDefinition.getConnectionName()+"/"+sourceDefinition.getName(), 80));
+            log.debug(Formatter.displayLine(" - Base DN: "+ldapBase, 80));
+            log.debug(Formatter.displayLine(" - Scope: "+ldapScope, 80));
+            log.debug(Formatter.displayLine(" - Filter: "+ldapFilter, 80));
+            log.debug(Formatter.displaySeparator(80));
+        }
 
         SearchControls ctls = new SearchControls();
         if ("OBJECT".equals(ldapScope)) {
@@ -259,10 +263,12 @@ public class JNDIAdapter extends Adapter {
 
         String dn = getDn(sourceDefinition, sourceValues);
 
-        log.debug(Formatter.displaySeparator(80));
-        log.debug(Formatter.displayLine("JNDI Bind", 80));
-        log.debug(Formatter.displayLine(" - Bind DN: "+dn, 80));
-        log.debug(Formatter.displaySeparator(80));
+        if (log.isDebugEnabled()) {
+            log.debug(Formatter.displaySeparator(80));
+            log.debug(Formatter.displayLine("JNDI Bind", 80));
+            log.debug(Formatter.displayLine(" - Bind DN: "+dn, 80));
+            log.debug(Formatter.displaySeparator(80));
+        }
 
         Hashtable env = new Hashtable();
         env.put(Context.INITIAL_CONTEXT_FACTORY, getParameter(Context.INITIAL_CONTEXT_FACTORY));
@@ -285,10 +291,12 @@ public class JNDIAdapter extends Adapter {
 
         String dn = getDn(sourceDefinition, entry);
 
-        log.debug(Formatter.displaySeparator(80));
-        log.debug(Formatter.displayLine("JNDI Add "+sourceDefinition.getConnectionName()+"/"+sourceDefinition.getName(), 80));
-        log.debug(Formatter.displayLine(" - DN: "+dn, 80));
-        log.debug(Formatter.displaySeparator(80));
+        if (log.isDebugEnabled()) {
+            log.debug(Formatter.displaySeparator(80));
+            log.debug(Formatter.displayLine("JNDI Add "+sourceDefinition.getConnectionName()+"/"+sourceDefinition.getName(), 80));
+            log.debug(Formatter.displayLine(" - DN: "+dn, 80));
+            log.debug(Formatter.displaySeparator(80));
+        }
 
         Attributes attrs = new BasicAttributes();
 
@@ -370,10 +378,12 @@ public class JNDIAdapter extends Adapter {
 
         String dn = getDn(sourceDefinition, entry);
 
-        log.debug(Formatter.displaySeparator(80));
-        log.debug(Formatter.displayLine("JNDI Delete "+sourceDefinition.getConnectionName()+"/"+sourceDefinition.getName(), 80));
-        log.debug(Formatter.displayLine(" - DN: "+dn, 80));
-        log.debug(Formatter.displaySeparator(80));
+        if (log.isDebugEnabled()) {
+            log.debug(Formatter.displaySeparator(80));
+            log.debug(Formatter.displayLine("JNDI Delete "+sourceDefinition.getConnectionName()+"/"+sourceDefinition.getName(), 80));
+            log.debug(Formatter.displayLine(" - DN: "+dn, 80));
+            log.debug(Formatter.displaySeparator(80));
+        }
 
         try {
             DirContext ctx = new InitialDirContext(parameters);
@@ -390,10 +400,12 @@ public class JNDIAdapter extends Adapter {
 
         String dn = getDn(sourceDefinition, newEntry);
 
-        log.debug(Formatter.displaySeparator(80));
-        log.debug(Formatter.displayLine("JNDI Modify "+sourceDefinition.getConnectionName()+"/"+sourceDefinition.getName(), 80));
-        log.debug(Formatter.displayLine(" - DN: "+dn, 80));
-        log.debug(Formatter.displaySeparator(80));
+        if (log.isDebugEnabled()) {
+            log.debug(Formatter.displaySeparator(80));
+            log.debug(Formatter.displayLine("JNDI Modify "+sourceDefinition.getConnectionName()+"/"+sourceDefinition.getName(), 80));
+            log.debug(Formatter.displayLine(" - DN: "+dn, 80));
+            log.debug(Formatter.displaySeparator(80));
+        }
 
         List list = new ArrayList();
         Collection fields = sourceDefinition.getFieldDefinitions();
@@ -515,11 +527,13 @@ public class JNDIAdapter extends Adapter {
         String dn = getDn(sourceDefinition, oldEntry);
         String newRdn = newEntry.toString();
 
-        log.debug(Formatter.displaySeparator(80));
-        log.debug(Formatter.displayLine("JNDI ModRDN "+sourceDefinition.getConnectionName()+"/"+sourceDefinition.getName(), 80));
-        log.debug(Formatter.displayLine(" - DN: "+dn, 80));
-        log.debug(Formatter.displayLine(" - New RDN: "+newRdn, 80));
-        log.debug(Formatter.displaySeparator(80));
+        if (log.isDebugEnabled()) {
+            log.debug(Formatter.displaySeparator(80));
+            log.debug(Formatter.displayLine("JNDI ModRDN "+sourceDefinition.getConnectionName()+"/"+sourceDefinition.getName(), 80));
+            log.debug(Formatter.displayLine(" - DN: "+dn, 80));
+            log.debug(Formatter.displayLine(" - New RDN: "+newRdn, 80));
+            log.debug(Formatter.displaySeparator(80));
+        }
 
         DirContext ctx = new InitialDirContext(parameters);
         ctx.rename(dn, newRdn);
@@ -626,11 +640,13 @@ public class JNDIAdapter extends Adapter {
         String ldapBase = "cn=changelog";
         String ldapFilter = "(&(changeNumber>="+lastChangeNumber+")(!(changeNumber="+lastChangeNumber+")))";
 
-        log.debug(Formatter.displaySeparator(80));
-        log.debug(Formatter.displayLine("JNDI Search "+sourceDefinition.getConnectionName()+"/"+sourceDefinition.getName(), 80));
-        log.debug(Formatter.displayLine(" - Base DN: "+ldapBase, 80));
-        log.debug(Formatter.displayLine(" - Filter: "+ldapFilter, 80));
-        log.debug(Formatter.displaySeparator(80));
+        if (log.isDebugEnabled()) {
+            log.debug(Formatter.displaySeparator(80));
+            log.debug(Formatter.displayLine("JNDI Search "+sourceDefinition.getConnectionName()+"/"+sourceDefinition.getName(), 80));
+            log.debug(Formatter.displayLine(" - Base DN: "+ldapBase, 80));
+            log.debug(Formatter.displayLine(" - Filter: "+ldapFilter, 80));
+            log.debug(Formatter.displaySeparator(80));
+        }
 
         SearchControls ctls = new SearchControls();
         ctls.setSearchScope(SearchControls.ONELEVEL_SCOPE);

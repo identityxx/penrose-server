@@ -510,33 +510,35 @@ public class Engine {
             newSourceValues.set(source.getName(), output);
         }
 
-        log.debug(Formatter.displaySeparator(80));
-        log.debug(Formatter.displayLine("MODRDN", 80));
-        log.debug(Formatter.displayLine("Entry: "+entry.getDn(), 80));
-        log.debug(Formatter.displayLine("New RDN: "+newRdn, 80));
+        if (log.isDebugEnabled()) {
+            log.debug(Formatter.displaySeparator(80));
+            log.debug(Formatter.displayLine("MODRDN", 80));
+            log.debug(Formatter.displayLine("Entry: "+entry.getDn(), 80));
+            log.debug(Formatter.displayLine("New RDN: "+newRdn, 80));
 
-        log.debug(Formatter.displayLine("Attribute values:", 80));
-        for (Iterator iterator = newAttributeValues.getNames().iterator(); iterator.hasNext(); ) {
-            String name = (String)iterator.next();
-            Collection values = newAttributeValues.get(name);
-            log.debug(Formatter.displayLine(" - "+name+": "+values, 80));
+            log.debug(Formatter.displayLine("Attribute values:", 80));
+            for (Iterator iterator = newAttributeValues.getNames().iterator(); iterator.hasNext(); ) {
+                String name = (String)iterator.next();
+                Collection values = newAttributeValues.get(name);
+                log.debug(Formatter.displayLine(" - "+name+": "+values, 80));
+            }
+
+            log.debug(Formatter.displayLine("Old source values:", 80));
+            for (Iterator iterator = oldSourceValues.getNames().iterator(); iterator.hasNext(); ) {
+                String name = (String)iterator.next();
+                Collection values = oldSourceValues.get(name);
+                log.debug(Formatter.displayLine(" - "+name+": "+values, 80));
+            }
+
+            log.debug(Formatter.displayLine("New source values:", 80));
+            for (Iterator iterator = newSourceValues.getNames().iterator(); iterator.hasNext(); ) {
+                String name = (String)iterator.next();
+                Collection values = newSourceValues.get(name);
+                log.debug(Formatter.displayLine(" - "+name+": "+values, 80));
+            }
+
+            log.debug(Formatter.displaySeparator(80));
         }
-
-        log.debug(Formatter.displayLine("Old source values:", 80));
-        for (Iterator iterator = oldSourceValues.getNames().iterator(); iterator.hasNext(); ) {
-            String name = (String)iterator.next();
-            Collection values = oldSourceValues.get(name);
-            log.debug(Formatter.displayLine(" - "+name+": "+values, 80));
-        }
-
-        log.debug(Formatter.displayLine("New source values:", 80));
-        for (Iterator iterator = newSourceValues.getNames().iterator(); iterator.hasNext(); ) {
-            String name = (String)iterator.next();
-            Collection values = newSourceValues.get(name);
-            log.debug(Formatter.displayLine(" - "+name+": "+values, 80));
-        }
-
-        log.debug(Formatter.displaySeparator(80));
 
         ModRdnGraphVisitor visitor = new ModRdnGraphVisitor(this, entryDefinition, oldSourceValues, newSourceValues);
         visitor.run();
@@ -564,25 +566,27 @@ public class Engine {
             newSourceValues.set(source.getName(), output);
         }
 
-        log.debug(Formatter.displaySeparator(80));
-        log.debug(Formatter.displayLine("MODIFY", 80));
-        log.debug(Formatter.displayLine("Entry: "+entry.getDn(), 80));
+        if (log.isDebugEnabled()) {
+            log.debug(Formatter.displaySeparator(80));
+            log.debug(Formatter.displayLine("MODIFY", 80));
+            log.debug(Formatter.displayLine("Entry: "+entry.getDn(), 80));
 
-        log.debug(Formatter.displayLine("Old source values:", 80));
-        for (Iterator iterator = oldSourceValues.getNames().iterator(); iterator.hasNext(); ) {
-            String name = (String)iterator.next();
-            Collection values = oldSourceValues.get(name);
-            log.debug(Formatter.displayLine(" - "+name+": "+values, 80));
+            log.debug(Formatter.displayLine("Old source values:", 80));
+            for (Iterator iterator = oldSourceValues.getNames().iterator(); iterator.hasNext(); ) {
+                String name = (String)iterator.next();
+                Collection values = oldSourceValues.get(name);
+                log.debug(Formatter.displayLine(" - "+name+": "+values, 80));
+            }
+
+            log.debug(Formatter.displayLine("New source values:", 80));
+            for (Iterator iterator = newSourceValues.getNames().iterator(); iterator.hasNext(); ) {
+                String name = (String)iterator.next();
+                Collection values = newSourceValues.get(name);
+                log.debug(Formatter.displayLine(" - "+name+": "+values, 80));
+            }
+
+            log.debug(Formatter.displaySeparator(80));
         }
-
-        log.debug(Formatter.displayLine("New source values:", 80));
-        for (Iterator iterator = newSourceValues.getNames().iterator(); iterator.hasNext(); ) {
-            String name = (String)iterator.next();
-            Collection values = newSourceValues.get(name);
-            log.debug(Formatter.displayLine(" - "+name+": "+values, 80));
-        }
-
-        log.debug(Formatter.displaySeparator(80));
 
         ModifyGraphVisitor visitor = new ModifyGraphVisitor(this, entryDefinition, oldSourceValues, newSourceValues);
         visitor.run();
@@ -649,15 +653,35 @@ public class Engine {
     }
 
     /**
-     * Check whether all rdn attributes are either constant or unique variable, or use all primary keys from one source.
+     * Check whether the entry uses no sources and all attributes are constants.
+     */
+    public boolean isStatic(EntryDefinition entryDefinition) throws Exception {
+        Config config = getConfig(entryDefinition.getDn());
+        Collection effectiveSources = config.getEffectiveSources(entryDefinition);
+        if (effectiveSources.size() > 0) return false;
+
+        Collection attributeDefinitions = entryDefinition.getAttributeDefinitions();
+        for (Iterator i=attributeDefinitions.iterator(); i.hasNext(); ) {
+            AttributeDefinition attributeDefinition = (AttributeDefinition)i.next();
+            if (attributeDefinition.getConstant() == null) return false;
+        }
+
+        EntryDefinition parentDefinition = config.getParent(entryDefinition);
+        if (parentDefinition == null) return true;
+
+        return isStatic(parentDefinition);
+    }
+
+    /**
+     * Check whether each rdn value corresponds to one row from the source.
      */
     public boolean isUnique(EntryDefinition entryDefinition) throws Exception {
 
-        Collection sources = new TreeSet();
-        Collection fields = new TreeSet();
+        Collection rdnSources = new TreeSet();
+        Collection rdnFields = new TreeSet();
 
-        Collection attributeDefinitions = entryDefinition.getRdnAttributes();
-        for (Iterator i=attributeDefinitions.iterator(); i.hasNext(); ) {
+        Collection rdnAttributes = entryDefinition.getRdnAttributes();
+        for (Iterator i=rdnAttributes.iterator(); i.hasNext(); ) {
             AttributeDefinition attributeDefinition = (AttributeDefinition)i.next();
 
             if (attributeDefinition.getConstant() != null) continue;
@@ -669,8 +693,8 @@ public class Engine {
                 String sourceAlias = variable.substring(0, j);
                 String fieldName = variable.substring(j+1);
 
-                sources.add(sourceAlias);
-                fields.add(fieldName);
+                rdnSources.add(sourceAlias);
+                rdnFields.add(fieldName);
 
                 continue;
             }
@@ -679,15 +703,15 @@ public class Engine {
             return false;
         }
 
-        //log.debug("RDN sources: "+sources);
+        //log.debug("RDN sources: "+rdnSources);
 
         // rdn is constant
-        if (sources.isEmpty()) return true;
+        if (rdnSources.isEmpty()) return false;
 
         // rdn uses more than one source
-        if (sources.size() > 1) return false;
+        if (rdnSources.size() > 1) return false;
 
-        String sourceAlias = (String)sources.iterator().next();
+        String sourceAlias = (String)rdnSources.iterator().next();
         Source source = entryDefinition.getSource(sourceAlias);
 
         Config config = getConfig(entryDefinition.getDn());
@@ -697,7 +721,7 @@ public class Engine {
         Collection uniqueFields = new TreeSet();
         Collection pkFields = new TreeSet();
 
-        for (Iterator i=fields.iterator(); i.hasNext(); ) {
+        for (Iterator i=rdnFields.iterator(); i.hasNext(); ) {
             String fieldName = (String)i.next();
             FieldDefinition fieldDefinition = sourceDefinition.getFieldDefinition(fieldName);
 
@@ -737,23 +761,22 @@ public class Engine {
             EntryDefinition entryDefinition
             ) throws Exception {
 
-        log.debug(Formatter.displaySeparator(80));
-        log.debug(Formatter.displayLine("FIND", 80));
-        log.debug(Formatter.displayLine("Entry: "+entryDefinition.getDn(), 80));
-        log.debug(Formatter.displayLine("Parents:", 80));
+        if (log.isDebugEnabled()) {
+            log.debug(Formatter.displaySeparator(80));
+            log.debug(Formatter.displayLine("FIND", 80));
+            log.debug(Formatter.displayLine("Entry: "+entryDefinition.getDn(), 80));
+            log.debug(Formatter.displayLine("Parents:", 80));
 
-        for (Iterator i=path.iterator(); i.hasNext(); ) {
-            Map map = (Map)i.next();
-            String dn = (String)map.get("dn");
-            log.debug(Formatter.displayLine(" - "+dn, 80));
+            for (Iterator i=path.iterator(); i.hasNext(); ) {
+                Map map = (Map)i.next();
+                String dn = (String)map.get("dn");
+                log.debug(Formatter.displayLine(" - "+dn, 80));
+            }
+
+            log.debug(Formatter.displaySeparator(80));
         }
 
-        log.debug(Formatter.displaySeparator(80));
-
-        SearchResults entries = new SearchResults();
-
         AttributeValues parentSourceValues = new AttributeValues();
-        String prefix = getParentSourceValues(path, entryDefinition, parentSourceValues);
 
         SearchResults results = search(path, parentSourceValues, entryDefinition, null, null);
 
@@ -761,12 +784,20 @@ public class Engine {
 
         Entry entry = (Entry)results.next();
 
-        log.debug(Formatter.displaySeparator(80));
-        log.debug(Formatter.displayLine("FIND RESULT", 80));
-        log.debug(Formatter.displayLine("dn: "+entry.getDn(), 80));
-        log.debug(Formatter.displaySeparator(80));
+        if (log.isDebugEnabled()) {
+            log.debug(Formatter.displaySeparator(80));
+            log.debug(Formatter.displayLine("FIND RESULT", 80));
+            log.debug(Formatter.displayLine("dn: "+entry.getDn(), 80));
+            log.debug(Formatter.displaySeparator(80));
+        }
 
         return entry;
+    }
+
+    public void searchStatic(
+            SearchResults results
+            ) throws Exception {
+
     }
 
     public SearchResults search(
@@ -776,6 +807,29 @@ public class Engine {
             final Filter filter,
             Collection attributeNames) throws Exception {
 
+        if (log.isDebugEnabled()) {
+            log.debug(Formatter.displaySeparator(80));
+            log.debug(Formatter.displayLine("SEARCH", 80));
+            log.debug(Formatter.displayLine("Entry: "+entryDefinition.getDn(), 80));
+            log.debug(Formatter.displayLine("Filter: "+filter, 80));
+            log.debug(Formatter.displayLine("Parents:", 80));
+
+            if (parentSourceValues != null) {
+                for (Iterator i = parentSourceValues.getNames().iterator(); i.hasNext(); ) {
+                    String name = (String)i.next();
+                    Collection values = parentSourceValues.get(name);
+                    log.debug(Formatter.displayLine(" - "+name+": "+values, 80));
+                }
+            }
+
+            log.debug(Formatter.displaySeparator(80));
+        }
+
+        final SearchResults entries = new SearchResults();
+        final SearchResults results = new SearchResults();
+
+        searchEngine.search(path, parentSourceValues, entryDefinition, filter, entries);
+
         Collection attributeDefinitions = entryDefinition.getAttributeDefinitions(attributeNames);
         //log.debug("Attribute definitions: "+attributeDefinitions);
 
@@ -784,93 +838,10 @@ public class Engine {
                 && attributeDefinitions.isEmpty()
                 && "(objectclass=*)".equals(filter.toString().toLowerCase());
 
-        log.debug(Formatter.displaySeparator(80));
-        log.debug(Formatter.displayLine("SEARCH", 80));
-        log.debug(Formatter.displayLine("Entry: "+entryDefinition.getDn(), 80));
-        log.debug(Formatter.displayLine("Filter: "+filter, 80));
-        log.debug(Formatter.displayLine("Parents:", 80));
-
-        if (parentSourceValues != null) {
-            for (Iterator i = parentSourceValues.getNames().iterator(); i.hasNext(); ) {
-                String name = (String)i.next();
-                Collection values = parentSourceValues.get(name);
-                log.debug(Formatter.displayLine(" - "+name+": "+values, 80));
-            }
-        }
-
-        log.debug(Formatter.displaySeparator(80));
-
-        final SearchResults dns = new SearchResults();
-        final SearchResults results = new SearchResults();
-
-        Interpreter interpreter = getInterpreterFactory().newInstance();
-
-        String s = engineConfig.getParameter(EngineConfig.ALLOW_CONCURRENCY);
-        boolean allowConcurrency = s == null ? true : new Boolean(s).booleanValue();
-
-        boolean unique = isUnique(entryDefinition);
-        log.debug("Entry "+entryDefinition.getDn()+" "+(unique ? "is" : "is not")+" unique.");
-
-        Config config = getConfig(entryDefinition.getDn());
-
-        Collection sources = entryDefinition.getSources();
-        log.debug("Sources: "+sources);
-
-        Collection effectiveSources = config.getEffectiveSources(entryDefinition);
-        log.debug("Effective Sources: "+effectiveSources);
-
-        if (unique && sources.size() == 0 && effectiveSources.size() == 0) {
-
-            Collection list = computeDns(interpreter, entryDefinition, parentSourceValues);
-            for (Iterator j=list.iterator(); j.hasNext(); ) {
-                String dn = (String)j.next();
-                log.debug(" - "+dn);
-
-                Map map = new HashMap();
-                map.put("dn", entryDefinition.getDn());
-                map.put("sourceValues", parentSourceValues);
-                dns.add(map);
-            }
-            dns.close();
-
-        } else if (unique && sources.size() == 1 && effectiveSources.size() == 1) {
-            if (allowConcurrency) {
-                execute(new Runnable() {
-                    public void run() {
-                        try {
-                            searchEngine.simpleSearch(parentSourceValues, entryDefinition, filter, dns);
-
-                        } catch (Throwable e) {
-                            e.printStackTrace(System.out);
-                            dns.setReturnCode(LDAPException.OPERATIONS_ERROR);
-                        }
-                    }
-                });
-            } else {
-                searchEngine.simpleSearch(parentSourceValues, entryDefinition, filter, dns);
-            }
-
-        } else {
-
-            if (allowConcurrency) {
-                execute(new Runnable() {
-                    public void run() {
-                        try {
-                            searchEngine.search(path, parentSourceValues, entryDefinition, filter, dns);
-
-                        } catch (Throwable e) {
-                            e.printStackTrace(System.out);
-                            dns.setReturnCode(LDAPException.OPERATIONS_ERROR);
-                        }
-                    }
-                });
-            } else {
-                searchEngine.search(path, parentSourceValues, entryDefinition, filter, dns);
-            }
-        }
-
         if (dnOnly) {
-           for (Iterator i=dns.iterator(); i.hasNext(); ) {
+            Interpreter interpreter = getInterpreterFactory().newInstance();
+
+           for (Iterator i=entries.iterator(); i.hasNext(); ) {
                Map map = (Map)i.next();
                String dn = (String)map.get("dn");
                AttributeValues sv = (AttributeValues)map.get("sourceValues");
@@ -883,149 +854,12 @@ public class Engine {
            return results;
         }
 
-        final Interpreter batchInterpreter = interpreterFactory.newInstance();
-        final SearchResults batches = new SearchResults();
-        final SearchResults loadedBatches = new SearchResults();
+        SearchResults loadedEntries = new SearchResults();
+        loadEngine.load(entryDefinition, entries, loadedEntries, results);
 
-        if (sources.size() == 0 && effectiveSources.size() == 0 || sources.size() == 1 && effectiveSources.size() == 1) {
-
-            if (allowConcurrency) {
-                execute(new Runnable() {
-                    public void run() {
-                        try {
-                            for (Iterator i=dns.iterator(); i.hasNext(); ) {
-                                Map map = (Map)i.next();
-                                loadedBatches.add(map);
-                            }
-                            loadedBatches.close();
-
-                        } catch (Throwable e) {
-                            e.printStackTrace(System.out);
-                            batches.setReturnCode(LDAPException.OPERATIONS_ERROR);
-                        }
-                    }
-                });
-            } else {
-                for (Iterator i=dns.iterator(); i.hasNext(); ) {
-                    Map map = (Map)i.next();
-                    loadedBatches.add(map);
-                }
-                loadedBatches.close();
-            }
-
-        } else {
-            if (allowConcurrency) {
-                execute(new Runnable() {
-                    public void run() {
-                        try {
-                            createBatches(batchInterpreter, entryDefinition, dns, results, batches);
-
-                        } catch (Throwable e) {
-                            e.printStackTrace(System.out);
-                            batches.setReturnCode(LDAPException.OPERATIONS_ERROR);
-                        }
-                    }
-                });
-            } else {
-                createBatches(batchInterpreter, entryDefinition, dns, results, batches);
-            }
-
-            if (allowConcurrency) {
-                execute(new Runnable() {
-                    public void run() {
-                        try {
-                            loadEngine.load(entryDefinition, batches, loadedBatches);
-
-                        } catch (Throwable e) {
-                            e.printStackTrace(System.out);
-                            loadedBatches.setReturnCode(LDAPException.OPERATIONS_ERROR);
-                        }
-                    }
-                });
-            } else {
-                loadEngine.load(entryDefinition, batches, loadedBatches);
-            }
-
-        }
-
-        final Interpreter mergeInterpreter = interpreterFactory.newInstance();
-
-        if (allowConcurrency) {
-            execute(new Runnable() {
-                public void run() {
-                    try {
-                        mergeEngine.merge(entryDefinition, loadedBatches, mergeInterpreter, results);
-
-                    } catch (Throwable e) {
-                        e.printStackTrace(System.out);
-                        results.setReturnCode(LDAPException.OPERATIONS_ERROR);
-                    }
-                }
-            });
-        } else {
-            mergeEngine.merge(entryDefinition, loadedBatches, mergeInterpreter, results);
-        }
+        mergeEngine.merge(entryDefinition, loadedEntries, results);
 
         return results;
-    }
-
-    public void createBatches(
-            Interpreter interpreter,
-            EntryDefinition entryDefinition,
-            SearchResults entries,
-            SearchResults results,
-            SearchResults batches
-            ) throws Exception {
-
-        try {
-            Config config = getConfig(entryDefinition.getDn());
-            Source primarySource = getPrimarySource(entryDefinition);
-
-            Collection batch = new ArrayList();
-
-            String s = entryDefinition.getParameter(EntryDefinition.BATCH_SIZE);
-            int batchSize = s == null ? EntryDefinition.DEFAULT_BATCH_SIZE : Integer.parseInt(s);
-
-            for (Iterator i=entries.iterator(); i.hasNext(); ) {
-                Map map = (Map)i.next();
-                String dn = (String)map.get("dn");
-                AttributeValues sv = (AttributeValues)map.get("sourceValues");
-
-                Row rdn = Entry.getRdn(dn);
-
-                if (config.getParent(entryDefinition) != null) {
-                    String parentDn = Entry.getParentDn(dn);
-
-                    log.debug("Checking "+rdn+" in entry data cache for "+parentDn);
-                    Entry entry = (Entry)getCache(parentDn, entryDefinition).get(rdn);
-
-                    if (entry != null) {
-                        log.debug(" - "+rdn+" has been loaded");
-                        results.add(entry);
-                        continue;
-                    }
-                }
-
-                Row filter = createFilter(interpreter, primarySource, entryDefinition, rdn);
-                if (filter == null) continue;
-
-                //if (filter.isEmpty()) filter.add(rdn);
-
-                log.debug("- "+rdn+" has not been loaded, loading with key "+filter);
-                map.put("filter", filter);
-                batch.add(map);
-
-                if (batch.size() < batchSize) continue;
-
-                batches.add(batch);
-                batch = new ArrayList();
-            }
-
-            if (!batch.isEmpty()) batches.add(batch);
-
-        } finally {
-            batches.close();
-        }
     }
 
     public String getStartingSourceName(EntryDefinition entryDefinition) throws Exception {
@@ -1258,7 +1092,7 @@ public class Engine {
             //log.debug("   converting "+rhs+" ==> ("+lname+" "+operator+" ?)");
 
             Collection v = av.get(rhs);
-            log.debug("   - found "+v);
+            //log.debug("   - found "+v);
             if (v == null) continue;
 
             Filter orFilter = null;
@@ -1270,6 +1104,7 @@ public class Engine {
 
                 orFilter = FilterTool.appendOrFilter(orFilter, sf);
             }
+            log.debug("   - "+orFilter);
 
             filter = FilterTool.appendAndFilter(filter, orFilter);
         }

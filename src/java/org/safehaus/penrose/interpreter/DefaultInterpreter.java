@@ -112,17 +112,17 @@ public class DefaultInterpreter extends org.safehaus.penrose.interpreter.Interpr
         try {
             if (script == null) return null;
             if (interpreter == null) {
-                log.debug("###################################################################");
-                log.debug("# NEW INTERPRETER");
+                //log.debug("###################################################################");
+                //log.debug("# NEW INTERPRETER");
 
                 interpreter = new Interpreter();
                 for (Iterator i=variables.keySet().iterator(); i.hasNext(); ) {
                     String name = (String)i.next();
                     Object value = variables.get(name);
                     interpreter.set(name, value);
-                    log.debug("# - "+name+": "+value);
+                    //log.debug("# - "+name+": "+value);
                 }
-                log.debug("###################################################################");
+                //log.debug("###################################################################");
             }
             return interpreter.eval(script);
 

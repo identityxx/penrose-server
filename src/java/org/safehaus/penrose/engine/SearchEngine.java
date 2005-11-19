@@ -21,11 +21,11 @@ import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.filter.FilterTool;
 import org.safehaus.penrose.config.Config;
-import org.safehaus.penrose.graph.Graph;
 import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.util.Formatter;
 import org.safehaus.penrose.SearchResults;
 import org.apache.log4j.Logger;
+import org.ietf.ldap.LDAPException;
 
 import java.util.*;
 
@@ -43,6 +43,90 @@ public class SearchEngine {
     }
 
     public void search(
+            final Collection path,
+            final AttributeValues parentSourceValues,
+            final EntryDefinition entryDefinition,
+            final Filter filter,
+            final SearchResults entries
+            ) throws Exception {
+
+        boolean staticEntry = engine.isStatic(entryDefinition);
+        if (staticEntry) {
+            searchStatic(path, parentSourceValues, entryDefinition, filter, entries);
+            return;
+        }
+
+        boolean unique = engine.isUnique(entryDefinition);
+        log.debug("Entry "+entryDefinition.getDn()+" "+(unique ? "is" : "is not")+" unique.");
+
+        Config config = engine.getConfig(entryDefinition.getDn());
+
+        Collection sources = entryDefinition.getSources();
+        log.debug("Sources: "+sources);
+
+        Collection effectiveSources = config.getEffectiveSources(entryDefinition);
+        log.debug("Effective Sources: "+effectiveSources);
+
+        if (unique && sources.size() == 1 && effectiveSources.size() == 1) {
+            simpleSearch(parentSourceValues, entryDefinition, filter, entries);
+            return;
+        }
+
+        searchDynamic(path, parentSourceValues, entryDefinition, filter, entries);
+    }
+
+    public void searchStatic(
+            final Collection path,
+            final AttributeValues parentSourceValues,
+            final EntryDefinition entryDefinition,
+            final Filter filter,
+            final SearchResults entries
+            ) throws Exception {
+
+        Interpreter interpreter = engine.getInterpreterFactory().newInstance();
+
+        Collection list = engine.computeDns(interpreter, entryDefinition, parentSourceValues);
+        for (Iterator j=list.iterator(); j.hasNext(); ) {
+            String dn = (String)j.next();
+            log.debug(" - "+dn);
+
+            Map map = new HashMap();
+            map.put("dn", entryDefinition.getDn());
+            map.put("sourceValues", parentSourceValues);
+            entries.add(map);
+        }
+        entries.close();
+    }
+
+    public void searchDynamic(
+            final Collection path,
+            final AttributeValues parentSourceValues,
+            final EntryDefinition entryDefinition,
+            final Filter filter,
+            final SearchResults entries
+            ) throws Exception {
+
+        String s = engine.getEngineConfig().getParameter(EngineConfig.ALLOW_CONCURRENCY);
+        boolean allowConcurrency = s == null ? true : new Boolean(s).booleanValue();
+
+        if (allowConcurrency) {
+            engine.execute(new Runnable() {
+                public void run() {
+                    try {
+                        searchDynamicBackground(path, parentSourceValues, entryDefinition, filter, entries);
+
+                    } catch (Throwable e) {
+                        e.printStackTrace(System.out);
+                        entries.setReturnCode(LDAPException.OPERATIONS_ERROR);
+                    }
+                }
+            });
+        } else {
+            searchDynamicBackground(path, parentSourceValues, entryDefinition, filter, entries);
+        }
+    }
+
+    public void searchDynamicBackground(
             Collection path,
             final AttributeValues parentSourceValues,
             final EntryDefinition entryDefinition,
@@ -50,8 +134,8 @@ public class SearchEngine {
             SearchResults entries)
             throws Exception {
 
-        boolean unique = engine.isUnique(entryDefinition);
-        log.debug("Entry "+entryDefinition.getDn()+" "+(unique ? "is" : "is not")+" unique.");
+        //boolean unique = engine.isUnique(entryDefinition);
+        //log.debug("Entry "+entryDefinition.getDn()+" "+(unique ? "is" : "is not")+" unique.");
 
         Config config = engine.getConfig(entryDefinition.getDn());
         EntryDefinition parentDefinition = config.getParent(entryDefinition);
@@ -239,6 +323,32 @@ public class SearchEngine {
     }
 
     public void simpleSearch(
+            final AttributeValues parentSourceValues,
+            final EntryDefinition entryDefinition,
+            final Filter filter,
+            final SearchResults results) throws Exception {
+
+        String s = engine.getEngineConfig().getParameter(EngineConfig.ALLOW_CONCURRENCY);
+        boolean allowConcurrency = s == null ? true : new Boolean(s).booleanValue();
+
+        if (allowConcurrency) {
+            engine.execute(new Runnable() {
+                public void run() {
+                    try {
+                        simpleSearchBackground(parentSourceValues, entryDefinition, filter, results);
+
+                    } catch (Throwable e) {
+                        e.printStackTrace(System.out);
+                        results.setReturnCode(LDAPException.OPERATIONS_ERROR);
+                    }
+                }
+            });
+        } else {
+            simpleSearchBackground(parentSourceValues, entryDefinition, filter, results);
+        }
+    }
+
+    public void simpleSearchBackground(
             AttributeValues parentSourceValues,
             EntryDefinition entryDefinition,
             Filter filter,
@@ -254,9 +364,11 @@ public class SearchEngine {
 
         Source source = engine.getPrimarySource(entryDefinition);
 
-        log.debug(Formatter.displaySeparator(80));
-        log.debug(Formatter.displayLine("SIMPLE SEARCH", 80));
-        log.debug(Formatter.displaySeparator(80));
+        if (log.isDebugEnabled()) {
+            log.debug(Formatter.displaySeparator(80));
+            log.debug(Formatter.displayLine("SIMPLE SEARCH", 80));
+            log.debug(Formatter.displaySeparator(80));
+        }
 
         Map filters = planner.getFilters();
         Filter newFilter = (Filter)filters.get(source);
@@ -416,25 +528,27 @@ public class SearchEngine {
         Source startingSource = (Source)map.get("toSource");
         Collection relationships = (Collection)map.get("relationships");
 
-        log.debug(Formatter.displaySeparator(80));
-        log.debug(Formatter.displayLine("SEARCH LOCAL", 80));
-        log.debug(Formatter.displayLine("Parent source values:", 80));
+        if (log.isDebugEnabled()) {
+            log.debug(Formatter.displaySeparator(80));
+            log.debug(Formatter.displayLine("SEARCH LOCAL", 80));
+            log.debug(Formatter.displayLine("Parent source values:", 80));
 
-        for (Iterator j=sourceValues.getNames().iterator(); j.hasNext(); ) {
-            String name = (String)j.next();
-            Collection v = sourceValues.get(name);
-            log.debug(Formatter.displayLine(" - "+name+": "+v, 80));
+            for (Iterator j=sourceValues.getNames().iterator(); j.hasNext(); ) {
+                String name = (String)j.next();
+                Collection v = sourceValues.get(name);
+                log.debug(Formatter.displayLine(" - "+name+": "+v, 80));
+            }
+
+            log.debug(Formatter.displayLine("Starting source: "+startingSource.getName(), 80));
+            log.debug(Formatter.displayLine("Relationships:", 80));
+
+            for (Iterator j=relationships.iterator(); j.hasNext(); ) {
+                Relationship relationship = (Relationship)j.next();
+                log.debug(Formatter.displayLine(" - "+relationship, 80));
+            }
+
+            log.debug(Formatter.displaySeparator(80));
         }
-
-        log.debug(Formatter.displayLine("Starting source: "+startingSource.getName(), 80));
-        log.debug(Formatter.displayLine("Relationships:", 80));
-
-        for (Iterator j=relationships.iterator(); j.hasNext(); ) {
-            Relationship relationship = (Relationship)j.next();
-            log.debug(Formatter.displayLine(" - "+relationship, 80));
-        }
-
-        log.debug(Formatter.displaySeparator(80));
 
         SearchLocalRunner runner = new SearchLocalRunner(
                 engine,
@@ -584,21 +698,23 @@ public class SearchEngine {
             runner.run();
         }
 
-        log.debug(Formatter.displaySeparator(80));
-        log.debug(Formatter.displayLine("SEARCH PARENT RESULTS", 80));
+        if (log.isDebugEnabled()) {
+            log.debug(Formatter.displaySeparator(80));
+            log.debug(Formatter.displayLine("SEARCH PARENT RESULTS", 80));
 
-        counter = 1;
-        for (Iterator j=results.iterator(); j.hasNext(); counter++) {
-            AttributeValues av = (AttributeValues)j.next();
-            log.debug(Formatter.displayLine("Result #"+counter, 80));
-            for (Iterator k=av.getNames().iterator(); k.hasNext(); ) {
-                String name = (String)k.next();
-                Collection values = av.get(name);
-                log.debug(Formatter.displayLine(" - "+name+": "+values, 80));
+            counter = 1;
+            for (Iterator j=results.iterator(); j.hasNext(); counter++) {
+                AttributeValues av = (AttributeValues)j.next();
+                log.debug(Formatter.displayLine("Result #"+counter, 80));
+                for (Iterator k=av.getNames().iterator(); k.hasNext(); ) {
+                    String name = (String)k.next();
+                    Collection values = av.get(name);
+                    log.debug(Formatter.displayLine(" - "+name+": "+values, 80));
+                }
             }
-        }
 
-        log.debug(Formatter.displaySeparator(80));
+            log.debug(Formatter.displaySeparator(80));
+        }
 
         return results;
     }

@@ -21,7 +21,6 @@ import org.safehaus.penrose.SearchResults;
 import org.safehaus.penrose.PenroseConnection;
 import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.engine.Engine;
-import org.safehaus.penrose.util.Formatter;
 import org.safehaus.penrose.event.SearchEvent;
 import org.safehaus.penrose.config.Config;
 import org.safehaus.penrose.filter.Filter;

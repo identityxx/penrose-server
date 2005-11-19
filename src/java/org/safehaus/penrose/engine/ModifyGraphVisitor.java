@@ -71,9 +71,11 @@ public class ModifyGraphVisitor extends GraphVisitor {
 
         Source source = (Source)node;
 
-        log.debug(Formatter.displaySeparator(40));
-        log.debug(Formatter.displayLine("Visiting "+source.getName(), 40));
-        log.debug(Formatter.displaySeparator(40));
+        if (log.isDebugEnabled()) {
+            log.debug(Formatter.displaySeparator(40));
+            log.debug(Formatter.displayLine("Visiting "+source.getName(), 40));
+            log.debug(Formatter.displaySeparator(40));
+        }
 
         if (!source.isIncludeOnModify()) {
             log.debug("Source "+source.getName()+" is not included on modify");

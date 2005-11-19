@@ -166,9 +166,11 @@ public class Connector {
 
                 if (!autoRefresh) continue;
 
-                log.debug(Formatter.displaySeparator(80));
-                log.debug(Formatter.displayLine("Refreshing source caches for "+sourceDefinition.getConnectionName()+"/"+sourceDefinition.getName(), 80));
-                log.debug(Formatter.displaySeparator(80));
+                if (log.isDebugEnabled()) {
+                    log.debug(Formatter.displaySeparator(80));
+                    log.debug(Formatter.displayLine("Refreshing source caches for "+sourceDefinition.getConnectionName()+"/"+sourceDefinition.getName(), 80));
+                    log.debug(Formatter.displaySeparator(80));
+                }
 
                 s = sourceDefinition.getParameter(SourceDefinition.REFRESH_METHOD);
                 String refreshMethod = s == null ? SourceDefinition.DEFAULT_REFRESH_METHOD : s;

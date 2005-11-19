@@ -130,12 +130,14 @@ public class ModRdnGraphVisitor extends GraphVisitor {
         Source toSource = (Source)node2;
         Collection relationships = (Collection)object;
 
-        log.debug(Formatter.displaySeparator(60));
-        for (Iterator i=relationships.iterator(); i.hasNext(); ) {
-            Relationship relationship = (Relationship)i.next();
-            log.debug(Formatter.displayLine(relationship.toString(), 60));
+        if (log.isDebugEnabled()) {
+            log.debug(Formatter.displaySeparator(60));
+            for (Iterator i=relationships.iterator(); i.hasNext(); ) {
+                Relationship relationship = (Relationship)i.next();
+                log.debug(Formatter.displayLine(relationship.toString(), 60));
+            }
+            log.debug(Formatter.displaySeparator(60));
         }
-        log.debug(Formatter.displaySeparator(60));
 
         if (entryDefinition.getSource(toSource.getName()) == null) {
             log.debug("Source "+toSource.getName()+" is not defined in entry.");

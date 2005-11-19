@@ -163,9 +163,11 @@ public class JDBCCache {
         try {
             con = getConnection();
 
-            log.debug(Formatter.displaySeparator(80));
-            log.debug(Formatter.displayLine(sql, 80));
-            log.debug(Formatter.displaySeparator(80));
+            if (log.isDebugEnabled()) {
+                log.debug(Formatter.displaySeparator(80));
+                log.debug(Formatter.displayLine(sql, 80));
+                log.debug(Formatter.displaySeparator(80));
+            }
 
             ps = con.prepareStatement(sql);
             ps.execute();
@@ -192,9 +194,11 @@ public class JDBCCache {
         try {
             con = getConnection();
 
-            log.debug(Formatter.displaySeparator(80));
-            log.debug(Formatter.displayLine(sql, 80));
-            log.debug(Formatter.displaySeparator(80));
+            if (log.isDebugEnabled()) {
+                log.debug(Formatter.displaySeparator(80));
+                log.debug(Formatter.displayLine(sql, 80));
+                log.debug(Formatter.displaySeparator(80));
+            }
 
             ps = con.prepareStatement(sql);
             ps.execute();
@@ -223,9 +227,11 @@ public class JDBCCache {
         try {
             con = getConnection();
 
-            log.debug(Formatter.displaySeparator(80));
-            log.debug(Formatter.displayLine(sql, 80));
-            log.debug(Formatter.displaySeparator(80));
+            if (log.isDebugEnabled()) {
+                log.debug(Formatter.displaySeparator(80));
+                log.debug(Formatter.displayLine(sql, 80));
+                log.debug(Formatter.displaySeparator(80));
+            }
 
             ps = con.prepareStatement(sql);
             ps.execute();
@@ -252,9 +258,11 @@ public class JDBCCache {
         try {
             con = getConnection();
 
-            log.debug(Formatter.displaySeparator(80));
-            log.debug(Formatter.displayLine(sql, 80));
-            log.debug(Formatter.displaySeparator(80));
+            if (log.isDebugEnabled()) {
+                log.debug(Formatter.displaySeparator(80));
+                log.debug(Formatter.displayLine(sql, 80));
+                log.debug(Formatter.displaySeparator(80));
+            }
 
             ps = con.prepareStatement(sql);
             ps.execute();
@@ -281,9 +289,11 @@ public class JDBCCache {
         try {
             con = getConnection();
 
-            log.debug(Formatter.displaySeparator(80));
-            log.debug(Formatter.displayLine(sql, 80));
-            log.debug(Formatter.displaySeparator(80));
+            if (log.isDebugEnabled()) {
+                log.debug(Formatter.displaySeparator(80));
+                log.debug(Formatter.displayLine(sql, 80));
+                log.debug(Formatter.displaySeparator(80));
+            }
 
             ps = con.prepareStatement(sql);
             ps.execute();
@@ -310,9 +320,11 @@ public class JDBCCache {
         try {
             con = getConnection();
 
-            log.debug(Formatter.displaySeparator(80));
-            log.debug(Formatter.displayLine(sql, 80));
-            log.debug(Formatter.displaySeparator(80));
+            if (log.isDebugEnabled()) {
+                log.debug(Formatter.displaySeparator(80));
+                log.debug(Formatter.displayLine(sql, 80));
+                log.debug(Formatter.displaySeparator(80));
+            }
 
             ps = con.prepareStatement(sql);
             ps.execute();
@@ -342,11 +354,13 @@ public class JDBCCache {
         try {
             con = getConnection();
 
-            log.debug(Formatter.displaySeparator(80));
-            log.debug(Formatter.displayLine(create+" (", 80));
-            log.debug(Formatter.displayLine("    "+columns.toString(), 80));
-            log.debug(Formatter.displayLine(")", 80));
-            log.debug(Formatter.displaySeparator(80));
+            if (log.isDebugEnabled()) {
+                log.debug(Formatter.displaySeparator(80));
+                log.debug(Formatter.displayLine(create+" (", 80));
+                log.debug(Formatter.displayLine("    "+columns.toString(), 80));
+                log.debug(Formatter.displayLine(")", 80));
+                log.debug(Formatter.displaySeparator(80));
+            }
 
             ps = con.prepareStatement(sql);
             ps.execute();
@@ -393,11 +407,13 @@ public class JDBCCache {
         try {
             con = getConnection();
 
-            log.debug(Formatter.displaySeparator(80));
-            log.debug(Formatter.displayLine(create+" (", 80));
-            log.debug(Formatter.displayLine("    "+columns.toString(), 80));
-            log.debug(Formatter.displayLine(")", 80));
-            log.debug(Formatter.displaySeparator(80));
+            if (log.isDebugEnabled()) {
+                log.debug(Formatter.displaySeparator(80));
+                log.debug(Formatter.displayLine(create+" (", 80));
+                log.debug(Formatter.displayLine("    "+columns.toString(), 80));
+                log.debug(Formatter.displayLine(")", 80));
+                log.debug(Formatter.displaySeparator(80));
+            }
 
             ps = con.prepareStatement(sql);
             ps.execute();
@@ -450,11 +466,13 @@ public class JDBCCache {
         try {
             con = getConnection();
 
-            log.debug(Formatter.displaySeparator(80));
-            log.debug(Formatter.displayLine(create+" (", 80));
-            log.debug(Formatter.displayLine("    "+columns.toString(), 80));
-            log.debug(Formatter.displayLine(")", 80));
-            log.debug(Formatter.displaySeparator(80));
+            if (log.isDebugEnabled()) {
+                log.debug(Formatter.displaySeparator(80));
+                log.debug(Formatter.displayLine(create+" (", 80));
+                log.debug(Formatter.displayLine("    "+columns.toString(), 80));
+                log.debug(Formatter.displayLine(")", 80));
+                log.debug(Formatter.displaySeparator(80));
+            }
 
             ps = con.prepareStatement(sql);
             ps.execute();
@@ -641,26 +659,33 @@ public class JDBCCache {
         try {
             con = getConnection();
 
-            log.debug(Formatter.displaySeparator(80));
-            Collection lines = Formatter.split(sql, 80);
-            for (Iterator i=lines.iterator(); i.hasNext(); ) {
-                String line = (String)i.next();
-                log.debug(Formatter.displayLine(line, 80));
+            if (log.isDebugEnabled()) {
+                log.debug(Formatter.displaySeparator(80));
+                Collection lines = Formatter.split(sql, 80);
+                for (Iterator i=lines.iterator(); i.hasNext(); ) {
+                    String line = (String)i.next();
+                    log.debug(Formatter.displayLine(line, 80));
+                }
+                log.debug(Formatter.displaySeparator(80));
             }
-            log.debug(Formatter.displaySeparator(80));
 
             ps = con.prepareStatement(sql);
-
-            log.debug(Formatter.displayLine("Parameters:", 80));
 
             int counter = 1;
             for (Iterator i=parameters.iterator(); i.hasNext(); counter++) {
                 Object param = i.next();
                 ps.setObject(counter, param);
-                log.debug(Formatter.displayLine(" - "+counter+" = "+param, 80));
             }
 
-            log.debug(Formatter.displaySeparator(80));
+            if (log.isDebugEnabled()) {
+                log.debug(Formatter.displayLine("Parameters:", 80));
+                counter = 1;
+                for (Iterator i=parameters.iterator(); i.hasNext(); counter++) {
+                    Object param = i.next();
+                    log.debug(Formatter.displayLine(" - "+counter+" = "+param, 80));
+                }
+                log.debug(Formatter.displaySeparator(80));
+            }
 
             rs = ps.executeQuery();
 
@@ -677,15 +702,19 @@ public class JDBCCache {
                 Collection uniqueKeys = getUniqueKeys(rs);
                 missingKeys.removeAll(uniqueKeys);
 
-                if (first) {
-                    width = printPrimaryKeyHeader();
-                    first = false;
-                }
+                if (log.isDebugEnabled()) {
+                    if (first) {
+                        width = printPrimaryKeyHeader();
+                        first = false;
+                    }
 
-                printPrimaryKey(pk);
+                    printPrimaryKey(pk);
+                }
             }
 
-            if (width > 0) printFooter(width);
+            if (log.isDebugEnabled()) {
+                if (width > 0) printFooter(width);
+            }
 
         } catch (Exception e) {
             log.error(e.getMessage(), e);
@@ -796,26 +825,33 @@ public class JDBCCache {
         try {
             con = getConnection();
 
-            log.debug(Formatter.displaySeparator(80));
-            Collection lines = Formatter.split(sql, 80);
-            for (Iterator i=lines.iterator(); i.hasNext(); ) {
-                String line = (String)i.next();
-                log.debug(Formatter.displayLine(line, 80));
+            if (log.isDebugEnabled()) {
+                log.debug(Formatter.displaySeparator(80));
+                Collection lines = Formatter.split(sql, 80);
+                for (Iterator i=lines.iterator(); i.hasNext(); ) {
+                    String line = (String)i.next();
+                    log.debug(Formatter.displayLine(line, 80));
+                }
+                log.debug(Formatter.displaySeparator(80));
             }
-            log.debug(Formatter.displaySeparator(80));
 
             ps = con.prepareStatement(sql);
-
-            log.debug(Formatter.displayLine("Parameters:", 80));
 
             int counter = 1;
             for (Iterator i=parameters.iterator(); i.hasNext(); counter++) {
                 Object param = i.next();
                 ps.setObject(counter, param);
-                log.debug(Formatter.displayLine(" - "+counter+" = "+param, 80));
             }
 
-            log.debug(Formatter.displaySeparator(80));
+            if (log.isDebugEnabled()) {
+                log.debug(Formatter.displayLine("Parameters:", 80));
+                counter = 1;
+                for (Iterator i=parameters.iterator(); i.hasNext(); counter++) {
+                    Object param = i.next();
+                    log.debug(Formatter.displayLine(" - "+counter+" = "+param, 80));
+                }
+                log.debug(Formatter.displaySeparator(80));
+            }
 
             rs = ps.executeQuery();
 
@@ -919,13 +955,15 @@ public class JDBCCache {
         try {
             con = getConnection();
 
-            log.debug(Formatter.displaySeparator(80));
-            Collection lines = Formatter.split(sql, 80);
-            for (Iterator i=lines.iterator(); i.hasNext(); ) {
-                String line = (String)i.next();
-                log.debug(Formatter.displayLine(line, 80));
+            if (log.isDebugEnabled()) {
+                log.debug(Formatter.displaySeparator(80));
+                Collection lines = Formatter.split(sql, 80);
+                for (Iterator i=lines.iterator(); i.hasNext(); ) {
+                    String line = (String)i.next();
+                    log.debug(Formatter.displayLine(line, 80));
+                }
+                log.debug(Formatter.displaySeparator(80));
             }
-            log.debug(Formatter.displaySeparator(80));
 
             ps = con.prepareStatement(sql);
 
@@ -982,13 +1020,15 @@ public class JDBCCache {
         try {
             con = getConnection();
 
-            log.debug(Formatter.displaySeparator(80));
-            Collection lines = Formatter.split(sql, 80);
-            for (Iterator i=lines.iterator(); i.hasNext(); ) {
-                String line = (String)i.next();
-                log.debug(Formatter.displayLine(line, 80));
+            if (log.isDebugEnabled()) {
+                log.debug(Formatter.displaySeparator(80));
+                Collection lines = Formatter.split(sql, 80);
+                for (Iterator i=lines.iterator(); i.hasNext(); ) {
+                    String line = (String)i.next();
+                    log.debug(Formatter.displayLine(line, 80));
+                }
+                log.debug(Formatter.displaySeparator(80));
             }
-            log.debug(Formatter.displaySeparator(80));
 
             ps = con.prepareStatement(sql);
 
@@ -1056,13 +1096,15 @@ public class JDBCCache {
         try {
             con = getConnection();
 
-            log.debug(Formatter.displaySeparator(80));
-            Collection lines = Formatter.split(sql, 80);
-            for (Iterator i=lines.iterator(); i.hasNext(); ) {
-                String line = (String)i.next();
-                log.debug(Formatter.displayLine(line, 80));
+            if (log.isDebugEnabled()) {
+                log.debug(Formatter.displaySeparator(80));
+                Collection lines = Formatter.split(sql, 80);
+                for (Iterator i=lines.iterator(); i.hasNext(); ) {
+                    String line = (String)i.next();
+                    log.debug(Formatter.displayLine(line, 80));
+                }
+                log.debug(Formatter.displaySeparator(80));
             }
-            log.debug(Formatter.displaySeparator(80));
 
             ps = con.prepareStatement(sql);
 
@@ -1125,13 +1167,15 @@ public class JDBCCache {
         try {
             con = getConnection();
 
-            log.debug(Formatter.displaySeparator(80));
-            Collection lines = Formatter.split(sql, 80);
-            for (Iterator i=lines.iterator(); i.hasNext(); ) {
-                String line = (String)i.next();
-                log.debug(Formatter.displayLine(line, 80));
+            if (log.isDebugEnabled()) {
+                log.debug(Formatter.displaySeparator(80));
+                Collection lines = Formatter.split(sql, 80);
+                for (Iterator i=lines.iterator(); i.hasNext(); ) {
+                    String line = (String)i.next();
+                    log.debug(Formatter.displayLine(line, 80));
+                }
+                log.debug(Formatter.displaySeparator(80));
             }
-            log.debug(Formatter.displaySeparator(80));
 
             ps = con.prepareStatement(sql);
 
@@ -1186,13 +1230,15 @@ public class JDBCCache {
         try {
             con = getConnection();
 
-            log.debug(Formatter.displaySeparator(80));
-            Collection lines = Formatter.split(sql, 80);
-            for (Iterator i=lines.iterator(); i.hasNext(); ) {
-                String line = (String)i.next();
-                log.debug(Formatter.displayLine(line, 80));
+            if (log.isDebugEnabled()) {
+                log.debug(Formatter.displaySeparator(80));
+                Collection lines = Formatter.split(sql, 80);
+                for (Iterator i=lines.iterator(); i.hasNext(); ) {
+                    String line = (String)i.next();
+                    log.debug(Formatter.displayLine(line, 80));
+                }
+                log.debug(Formatter.displaySeparator(80));
             }
-            log.debug(Formatter.displaySeparator(80));
 
             ps = con.prepareStatement(sql);
 
@@ -1229,13 +1275,15 @@ public class JDBCCache {
         try {
             con = getConnection();
 
-            log.debug(Formatter.displaySeparator(80));
-            Collection lines = Formatter.split(sql, 80);
-            for (Iterator i=lines.iterator(); i.hasNext(); ) {
-                String line = (String)i.next();
-                log.debug(Formatter.displayLine(line, 80));
+            if (log.isDebugEnabled()) {
+                log.debug(Formatter.displaySeparator(80));
+                Collection lines = Formatter.split(sql, 80);
+                for (Iterator i=lines.iterator(); i.hasNext(); ) {
+                    String line = (String)i.next();
+                    log.debug(Formatter.displayLine(line, 80));
+                }
+                log.debug(Formatter.displaySeparator(80));
             }
-            log.debug(Formatter.displaySeparator(80));
 
             ps = con.prepareStatement(sql);
 
@@ -1245,10 +1293,12 @@ public class JDBCCache {
 
             Integer value = (Integer)rs.getObject(1);
 
-            log.debug(Formatter.displaySeparator(80));
-            log.debug(Formatter.displayLine("Results:", 80));
-            log.debug(Formatter.displayLine(" - "+value, 80));
-            log.debug(Formatter.displaySeparator(80));
+            if (log.isDebugEnabled()) {
+                log.debug(Formatter.displaySeparator(80));
+                log.debug(Formatter.displayLine("Results:", 80));
+                log.debug(Formatter.displayLine(" - "+value, 80));
+                log.debug(Formatter.displaySeparator(80));
+            }
 
             return value.intValue();
 
@@ -1277,13 +1327,15 @@ public class JDBCCache {
         try {
             con = getConnection();
 
-            log.debug(Formatter.displaySeparator(80));
-            Collection lines = Formatter.split(sql, 80);
-            for (Iterator i=lines.iterator(); i.hasNext(); ) {
-                String line = (String)i.next();
-                log.debug(Formatter.displayLine(line, 80));
+            if (log.isDebugEnabled()) {
+                log.debug(Formatter.displaySeparator(80));
+                Collection lines = Formatter.split(sql, 80);
+                for (Iterator i=lines.iterator(); i.hasNext(); ) {
+                    String line = (String)i.next();
+                    log.debug(Formatter.displayLine(line, 80));
+                }
+                log.debug(Formatter.displaySeparator(80));
             }
-            log.debug(Formatter.displaySeparator(80));
 
             ps = con.prepareStatement(sql);
 
@@ -1311,13 +1363,15 @@ public class JDBCCache {
         try {
             con = getConnection();
 
-            log.debug(Formatter.displaySeparator(80));
-            Collection lines = Formatter.split(sql, 80);
-            for (Iterator i=lines.iterator(); i.hasNext(); ) {
-                String line = (String)i.next();
-                log.debug(Formatter.displayLine(line, 80));
+            if (log.isDebugEnabled()) {
+                log.debug(Formatter.displaySeparator(80));
+                Collection lines = Formatter.split(sql, 80);
+                for (Iterator i=lines.iterator(); i.hasNext(); ) {
+                    String line = (String)i.next();
+                    log.debug(Formatter.displayLine(line, 80));
+                }
+                log.debug(Formatter.displaySeparator(80));
             }
-            log.debug(Formatter.displaySeparator(80));
 
             ps = con.prepareStatement(sql);
 
@@ -1411,16 +1465,21 @@ public class JDBCCache {
 
             ps = con.prepareStatement(sql);
 
-            log.debug(Formatter.displayLine("Parameters:", 80));
-
-            int counter = 0;
-            for (Iterator i=parameters.iterator(); i.hasNext(); ) {
+            int counter = 1;
+            for (Iterator i=parameters.iterator(); i.hasNext(); counter++) {
                 Object param = i.next();
-                ps.setObject(++counter, param);
-                log.debug(Formatter.displayLine(" - "+counter+" = "+param, 80));
+                ps.setObject(counter, param);
             }
 
-            log.debug(Formatter.displaySeparator(80));
+            if (log.isDebugEnabled()) {
+                log.debug(Formatter.displayLine("Parameters:", 80));
+                counter = 1;
+                for (Iterator i=parameters.iterator(); i.hasNext(); counter++) {
+                    Object param = i.next();
+                    log.debug(Formatter.displayLine(" - "+counter+" = "+param, 80));
+                }
+                log.debug(Formatter.displaySeparator(80));
+            }
 
             rs = ps.executeQuery();
 
@@ -1432,15 +1491,19 @@ public class JDBCCache {
                 Row pk = getPrimaryKey(rs);
                 pks.add(pk);
 
-                if (first) {
-                    width = printPrimaryKeyHeader();
-                    first = false;
-                }
+                if (log.isDebugEnabled()) {
+                    if (first) {
+                        width = printPrimaryKeyHeader();
+                        first = false;
+                    }
 
-                printPrimaryKey(pk);
+                    printPrimaryKey(pk);
+                }
             }
 
-            if (width > 0) printFooter(width);
+            if (log.isDebugEnabled()) {
+                if (width > 0) printFooter(width);
+            }
 
         } finally {
             if (rs != null) try { rs.close(); } catch (Exception e) {}
