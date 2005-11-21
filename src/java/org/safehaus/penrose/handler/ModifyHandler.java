@@ -253,7 +253,7 @@ public class ModifyHandler {
 		log.debug("New entry:");
 		log.debug("\n"+newEntry.toString());
 
-        return handler.getEngine().modify(entry, oldValues, newValues);
+        return handler.getEngine().modify(entry, newValues);
 	}
 
 

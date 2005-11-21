@@ -128,6 +128,10 @@ public class AttributeValues implements Cloneable, Comparable {
         return false;
     }
 
+    public void clear() {
+        values.clear();
+    }
+
     public void remove(String name) {
         Collection list = new ArrayList();
         list.addAll(values.keySet());

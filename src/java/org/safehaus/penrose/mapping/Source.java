@@ -59,6 +59,7 @@ public class Source implements Cloneable, Serializable {
     private Properties parameters = new Properties();
 
     private boolean required = true;
+    private boolean readOnly = false;
 
     private boolean includeOnAdd = true;
     private boolean includeOnModify = true;
@@ -175,6 +176,7 @@ public class Source implements Cloneable, Serializable {
                 (fields == null ? 0 : fields.hashCode()) +
                 (parameters == null ? 0 : parameters.hashCode()) +
                 (required ? 0 : 1) +
+                (readOnly ? 0 : 1) +
                 (includeOnAdd ? 0 : 1) +
                 (includeOnModify? 0 : 1) +
                 (includeOnModRdn? 0 : 1) +
@@ -198,6 +200,7 @@ public class Source implements Cloneable, Serializable {
         if (!equals(fields, source.fields)) return false;
         if (!equals(parameters, source.parameters)) return false;
         if (required != source.required) return false;
+        if (readOnly != source.readOnly) return false;
         if (includeOnAdd != source.includeOnAdd) return false;
         if (includeOnModify != source.includeOnModify) return false;
         if (includeOnModRdn != source.includeOnModRdn) return false;
@@ -220,6 +223,7 @@ public class Source implements Cloneable, Serializable {
         source.parameters.putAll(source.parameters);
 
         source.required = required;
+        source.readOnly = readOnly;
         source.includeOnAdd = includeOnAdd;
         source.includeOnModify = includeOnModify;
         source.includeOnModRdn = includeOnModRdn;
@@ -230,5 +234,13 @@ public class Source implements Cloneable, Serializable {
 
     public String toString() {
         return name+" "+sourceName;
+    }
+
+    public boolean isReadOnly() {
+        return readOnly;
+    }
+
+    public void setReadOnly(boolean readOnly) {
+        this.readOnly = readOnly;
     }
 }

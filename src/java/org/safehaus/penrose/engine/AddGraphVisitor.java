@@ -20,6 +20,7 @@ package org.safehaus.penrose.engine;
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.graph.GraphVisitor;
 import org.safehaus.penrose.graph.GraphIterator;
+import org.safehaus.penrose.graph.Graph;
 import org.safehaus.penrose.util.Formatter;
 import org.safehaus.penrose.config.Config;
 import org.apache.log4j.Logger;
@@ -37,6 +38,10 @@ public class AddGraphVisitor extends GraphVisitor {
     public Engine engine;
     public EntryDefinition entryDefinition;
     public AttributeValues sourceValues;
+    private AttributeValues addedSourceValues = new AttributeValues();
+
+    public Graph graph;
+    public Source primarySource;
 
     private int returnCode = LDAPException.SUCCESS;
 
@@ -49,6 +54,15 @@ public class AddGraphVisitor extends GraphVisitor {
         this.engine = engine;
         this.entryDefinition = entryDefinition;
         this.sourceValues = sourceValues;
+
+        addedSourceValues.add(sourceValues);
+
+        this.graph = engine.getGraph(entryDefinition);
+        this.primarySource = engine.getPrimarySource(entryDefinition);
+    }
+
+    public void run() throws Exception {
+        graph.traverse(this, primarySource);
     }
 
     public void visitNode(GraphIterator graphIterator, Object node) throws Exception {
@@ -61,7 +75,7 @@ public class AddGraphVisitor extends GraphVisitor {
             log.debug(Formatter.displaySeparator(40));
         }
 
-        if (!source.isIncludeOnAdd()) {
+        if (source.isReadOnly() || !source.isIncludeOnAdd()) {
             log.debug("Source "+source.getName()+" is not included on add");
             graphIterator.traverseEdges(node);
             return;
@@ -93,6 +107,9 @@ public class AddGraphVisitor extends GraphVisitor {
         returnCode = engine.getConnector().add(sourceDefinition, newSourceValues);
         if (returnCode != LDAPException.SUCCESS) return;
 
+        addedSourceValues.remove(source.getName());
+        addedSourceValues.set(source.getName(), newSourceValues);
+
         graphIterator.traverseEdges(node);
     }
 
@@ -102,5 +119,13 @@ public class AddGraphVisitor extends GraphVisitor {
 
     public void setReturnCode(int returnCode) {
         this.returnCode = returnCode;
+    }
+
+    public AttributeValues getAddedSourceValues() {
+        return addedSourceValues;
+    }
+
+    public void setAddedSourceValues(AttributeValues addedSourceValues) {
+        this.addedSourceValues = addedSourceValues;
     }
 }

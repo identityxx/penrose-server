@@ -43,6 +43,7 @@ public class ModifyGraphVisitor extends GraphVisitor {
 
     public AttributeValues oldSourceValues;
     public AttributeValues newSourceValues;
+    private AttributeValues modifiedSourceValues = new AttributeValues();
 
     private int returnCode = LDAPException.SUCCESS;
 
@@ -58,6 +59,8 @@ public class ModifyGraphVisitor extends GraphVisitor {
 
         this.oldSourceValues = oldSourceValues;
         this.newSourceValues = newSourceValues;
+
+        modifiedSourceValues.add(newSourceValues);
 
         graph = engine.getGraph(entryDefinition);
         primarySource = engine.getPrimarySource(entryDefinition);
@@ -77,7 +80,7 @@ public class ModifyGraphVisitor extends GraphVisitor {
             log.debug(Formatter.displaySeparator(40));
         }
 
-        if (!source.isIncludeOnModify()) {
+        if (source.isReadOnly() || !source.isIncludeOnModify()) {
             log.debug("Source "+source.getName()+" is not included on modify");
             graphIterator.traverseEdges(node);
             return;
@@ -122,6 +125,9 @@ public class ModifyGraphVisitor extends GraphVisitor {
         returnCode = engine.getConnector().modify(sourceDefinition, oldValues, newValues);
         if (returnCode != LDAPException.SUCCESS) return;
 
+        modifiedSourceValues.remove(source.getName());
+        modifiedSourceValues.set(source.getName(), newValues);
+
         graphIterator.traverseEdges(node);
     }
 
@@ -131,5 +137,13 @@ public class ModifyGraphVisitor extends GraphVisitor {
 
     public void setReturnCode(int returnCode) {
         this.returnCode = returnCode;
+    }
+
+    public AttributeValues getModifiedSourceValues() {
+        return modifiedSourceValues;
+    }
+
+    public void setModifiedSourceValues(AttributeValues modifiedSourceValues) {
+        this.modifiedSourceValues = modifiedSourceValues;
     }
 }

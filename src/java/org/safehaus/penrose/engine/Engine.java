@@ -73,6 +73,12 @@ public class Engine {
     private Connector connector;
 
     private EngineFilterTool filterTool;
+
+    private AddEngine addEngine;
+    private DeleteEngine deleteEngine;
+    private ModifyEngine modifyEngine;
+    private ModRdnEngine modrdnEngine;
+
     private SearchEngine searchEngine;
     private LoadEngine loadEngine;
     private MergeEngine mergeEngine;
@@ -95,6 +101,10 @@ public class Engine {
 
         filterTool = new EngineFilterTool(this);
 
+        addEngine = new AddEngine(this);
+        deleteEngine = new DeleteEngine(this);
+        modifyEngine = new ModifyEngine(this);
+        modrdnEngine = new ModRdnEngine(this);
         searchEngine = new SearchEngine(this);
         loadEngine = new LoadEngine(this);
         mergeEngine = new MergeEngine(this);
@@ -395,208 +405,75 @@ public class Engine {
             AttributeValues attributeValues)
             throws Exception {
 
-        AttributeValues sourceValues = parent.getSourceValues();
+        if (log.isDebugEnabled()) {
+            log.debug(Formatter.displaySeparator(80));
+            log.debug(Formatter.displayLine("ADD", 80));
+            log.debug(Formatter.displayLine("DN: "+entryDefinition.getDn(), 80));
 
-        Collection sources = entryDefinition.getSources();
-        for (Iterator i=sources.iterator(); i.hasNext(); ) {
-            Source source = (Source)i.next();
-
-            AttributeValues output = new AttributeValues();
-            Row pk = transformEngine.translate(source, attributeValues, output);
-            if (pk == null) continue;
-
-            log.debug(" - "+pk+": "+output);
-            for (Iterator j=output.getNames().iterator(); j.hasNext(); ) {
-                String name = (String)j.next();
-                Collection values = output.get(name);
-                sourceValues.add(source.getName()+"."+name, values);
+            log.debug(Formatter.displayLine("Attribute values:", 80));
+            for (Iterator i = attributeValues.getNames().iterator(); i.hasNext(); ) {
+                String name = (String)i.next();
+                Collection values = attributeValues.get(name);
+                log.debug(Formatter.displayLine(" - "+name+": "+values, 80));
             }
+
+            log.debug(Formatter.displaySeparator(80));
         }
 
-        log.debug("Adding entry "+entryDefinition.getRdn()+","+parent.getDn()+" with values: "+sourceValues);
-
-        Config config = getConfig(entryDefinition.getDn());
-
-        Graph graph = getGraph(entryDefinition);
-        Source primarySource = getPrimarySource(entryDefinition);
-        String startingSourceName = getStartingSourceName(entryDefinition);
-        if (startingSourceName == null) return LDAPException.SUCCESS;
-
-        Source startingSource = config.getEffectiveSource(entryDefinition, startingSourceName);
-        log.debug("Starting from source: "+startingSourceName);
-
-        Collection relationships = graph.getEdgeObjects(startingSource);
-        for (Iterator i=relationships.iterator(); i.hasNext(); ) {
-            Collection list = (Collection)i.next();
-
-            for (Iterator j=list.iterator(); j.hasNext(); ) {
-                Relationship relationship = (Relationship)j.next();
-                log.debug("Relationship "+relationship);
-
-                String lhs = relationship.getLhs();
-                String rhs = relationship.getRhs();
-
-                if (rhs.startsWith(startingSourceName+".")) {
-                    String exp = lhs;
-                    lhs = rhs;
-                    rhs = exp;
-                }
-
-                Collection lhsValues = sourceValues.get(lhs);
-                log.debug(" - "+lhs+" -> "+rhs+": "+lhsValues);
-                sourceValues.set(rhs, lhsValues);
-            }
-        }
-
-        AddGraphVisitor visitor = new AddGraphVisitor(this, entryDefinition, sourceValues);
-        graph.traverse(visitor, primarySource);
-
-        if (visitor.getReturnCode() != LDAPException.SUCCESS) return visitor.getReturnCode();
-
-        getCache(parent == null ? null : parent.getDn(), entryDefinition).invalidate();
-
-        return LDAPException.SUCCESS;
+        return addEngine.add(parent, entryDefinition, attributeValues);
     }
 
     public int delete(Entry entry) throws Exception {
 
-        EntryDefinition entryDefinition = entry.getEntryDefinition();
+        if (log.isDebugEnabled()) {
+            log.debug(Formatter.displaySeparator(80));
+            log.debug(Formatter.displayLine("DELETE", 80));
+            log.debug(Formatter.displayLine("DN: "+entry.getDn(), 80));
 
-        AttributeValues sourceValues = entry.getSourceValues();
-        //getFieldValues(entry.getDn(), sourceValues);
+            log.debug(Formatter.displaySeparator(80));
+        }
 
-        Graph graph = getGraph(entryDefinition);
-        Source primarySource = getPrimarySource(entryDefinition);
-
-        log.debug("Deleting entry "+entry.getDn()+" ["+sourceValues+"]");
-
-        DeleteGraphVisitor visitor = new DeleteGraphVisitor(this, entryDefinition, sourceValues);
-        graph.traverse(visitor, primarySource);
-
-        if (visitor.getReturnCode() != LDAPException.SUCCESS) return visitor.getReturnCode();
-
-        getCache(entry.getParentDn(), entryDefinition).remove(entry.getRdn());
-        getCache(entry.getParentDn(), entryDefinition).invalidate();
-
-        return LDAPException.SUCCESS;
+        return deleteEngine.delete(entry);
     }
 
     public int modrdn(Entry entry, String newRdn) throws Exception {
 
-        EntryDefinition entryDefinition = entry.getEntryDefinition();
-        AttributeValues oldAttributeValues = entry.getAttributeValues();
-        AttributeValues oldSourceValues = entry.getSourceValues();
-
-        Row rdn = Entry.getRdn(newRdn);
-
-        AttributeValues newAttributeValues = new AttributeValues(oldAttributeValues);
-        Collection rdnAttributes = entryDefinition.getRdnAttributes();
-        for (Iterator i=rdnAttributes.iterator(); i.hasNext(); ) {
-            AttributeDefinition attributeDefinition = (AttributeDefinition)i.next();
-            String name = attributeDefinition.getName();
-            String newValue = (String)rdn.get(name);
-
-            newAttributeValues.remove(name);
-            newAttributeValues.add(name, newValue);
-        }
-
-        AttributeValues newSourceValues = new AttributeValues(oldSourceValues);
-        Collection sources = entryDefinition.getSources();
-        for (Iterator i=sources.iterator(); i.hasNext(); ) {
-            Source source = (Source)i.next();
-
-            AttributeValues output = new AttributeValues();
-            transformEngine.translate(source, newAttributeValues, output);
-            newSourceValues.set(source.getName(), output);
-        }
-
         if (log.isDebugEnabled()) {
             log.debug(Formatter.displaySeparator(80));
             log.debug(Formatter.displayLine("MODRDN", 80));
-            log.debug(Formatter.displayLine("Entry: "+entry.getDn(), 80));
+            log.debug(Formatter.displayLine("DN: "+entry.getDn(), 80));
             log.debug(Formatter.displayLine("New RDN: "+newRdn, 80));
-
-            log.debug(Formatter.displayLine("Attribute values:", 80));
-            for (Iterator iterator = newAttributeValues.getNames().iterator(); iterator.hasNext(); ) {
-                String name = (String)iterator.next();
-                Collection values = newAttributeValues.get(name);
-                log.debug(Formatter.displayLine(" - "+name+": "+values, 80));
-            }
-
-            log.debug(Formatter.displayLine("Old source values:", 80));
-            for (Iterator iterator = oldSourceValues.getNames().iterator(); iterator.hasNext(); ) {
-                String name = (String)iterator.next();
-                Collection values = oldSourceValues.get(name);
-                log.debug(Formatter.displayLine(" - "+name+": "+values, 80));
-            }
-
-            log.debug(Formatter.displayLine("New source values:", 80));
-            for (Iterator iterator = newSourceValues.getNames().iterator(); iterator.hasNext(); ) {
-                String name = (String)iterator.next();
-                Collection values = newSourceValues.get(name);
-                log.debug(Formatter.displayLine(" - "+name+": "+values, 80));
-            }
-
-            log.debug(Formatter.displaySeparator(80));
         }
 
-        ModRdnGraphVisitor visitor = new ModRdnGraphVisitor(this, entryDefinition, oldSourceValues, newSourceValues);
-        visitor.run();
-
-        if (visitor.getReturnCode() != LDAPException.SUCCESS) return visitor.getReturnCode();
-
-        getCache(entry.getParentDn(), entryDefinition).remove(entry.getRdn());
-        getCache(entry.getParentDn(), entryDefinition).invalidate();
-
-        return LDAPException.SUCCESS;
+        return modrdnEngine.modrdn(entry, newRdn);
     }
 
-    public int modify(Entry entry, AttributeValues oldValues, AttributeValues newValues) throws Exception {
-
-        EntryDefinition entryDefinition = entry.getEntryDefinition();
-        AttributeValues oldSourceValues = entry.getSourceValues();
-
-        AttributeValues newSourceValues = (AttributeValues)oldSourceValues.clone();
-        Collection sources = entryDefinition.getSources();
-        for (Iterator i=sources.iterator(); i.hasNext(); ) {
-            Source source = (Source)i.next();
-
-            AttributeValues output = new AttributeValues();
-            transformEngine.translate(source, newValues, output);
-            newSourceValues.set(source.getName(), output);
-        }
+    public int modify(Entry entry, AttributeValues newValues) throws Exception {
 
         if (log.isDebugEnabled()) {
             log.debug(Formatter.displaySeparator(80));
             log.debug(Formatter.displayLine("MODIFY", 80));
-            log.debug(Formatter.displayLine("Entry: "+entry.getDn(), 80));
+            log.debug(Formatter.displayLine("DN: "+entry.getDn(), 80));
 
-            log.debug(Formatter.displayLine("Old source values:", 80));
-            for (Iterator iterator = oldSourceValues.getNames().iterator(); iterator.hasNext(); ) {
+            log.debug(Formatter.displayLine("Old attribute values:", 80));
+            AttributeValues oldValues = entry.getAttributeValues();
+            for (Iterator iterator = oldValues.getNames().iterator(); iterator.hasNext(); ) {
                 String name = (String)iterator.next();
-                Collection values = oldSourceValues.get(name);
+                Collection values = oldValues.get(name);
                 log.debug(Formatter.displayLine(" - "+name+": "+values, 80));
             }
 
-            log.debug(Formatter.displayLine("New source values:", 80));
-            for (Iterator iterator = newSourceValues.getNames().iterator(); iterator.hasNext(); ) {
+            log.debug(Formatter.displayLine("New attribute values:", 80));
+            for (Iterator iterator = newValues.getNames().iterator(); iterator.hasNext(); ) {
                 String name = (String)iterator.next();
-                Collection values = newSourceValues.get(name);
+                Collection values = newValues.get(name);
                 log.debug(Formatter.displayLine(" - "+name+": "+values, 80));
             }
 
             log.debug(Formatter.displaySeparator(80));
         }
 
-        ModifyGraphVisitor visitor = new ModifyGraphVisitor(this, entryDefinition, oldSourceValues, newSourceValues);
-        visitor.run();
-
-        if (visitor.getReturnCode() != LDAPException.SUCCESS) return visitor.getReturnCode();
-
-        getCache(entry.getParentDn(), entryDefinition).remove(entry.getRdn());
-        getCache(entry.getParentDn(), entryDefinition).invalidate();
-
-        return LDAPException.SUCCESS;
+        return modifyEngine.modify(entry, newValues);
     }
 
     public String getParentSourceValues(Collection path, EntryDefinition entryDefinition, AttributeValues parentSourceValues) throws Exception {
@@ -792,12 +669,6 @@ public class Engine {
         }
 
         return entry;
-    }
-
-    public void searchStatic(
-            SearchResults results
-            ) throws Exception {
-
     }
 
     public SearchResults search(

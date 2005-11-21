@@ -333,6 +333,7 @@ public class ConfigWriter {
 
         element.add(new DefaultAttribute("name", source.getName()));
         if (!source.isRequired()) element.add(new DefaultAttribute("required", "false"));
+        if (source.isReadOnly()) element.add(new DefaultAttribute("readOnly", "true"));
         if (!source.isIncludeOnAdd()) element.add(new DefaultAttribute("includeOnAdd", "false"));
         if (!source.isIncludeOnModify()) element.add(new DefaultAttribute("includeOnModify", "false"));
         if (!source.isIncludeOnModRdn()) element.add(new DefaultAttribute("includeOnModRdn", "false"));

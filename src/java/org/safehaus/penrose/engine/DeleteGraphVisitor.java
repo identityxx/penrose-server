@@ -61,7 +61,7 @@ public class DeleteGraphVisitor extends GraphVisitor {
             log.debug(Formatter.displaySeparator(40));
         }
 
-        if (!source.isIncludeOnDelete()) {
+        if (source.isReadOnly() || !source.isIncludeOnDelete()) {
             log.debug("Source "+source.getName()+" is not included on delete");
             graphIterator.traverseEdges(node);
             return;

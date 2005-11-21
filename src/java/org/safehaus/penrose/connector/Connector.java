@@ -345,7 +345,14 @@ public class Connector {
                 if (rc != LDAPException.SUCCESS) return rc;
             }
 
-            retrieve(sourceDefinition, pks);
+            sourceValues.clear();
+            Collection list = retrieve(sourceDefinition, pks);
+            log.debug("Added rows:");
+            for (Iterator i=list.iterator(); i.hasNext(); ) {
+                AttributeValues sv = (AttributeValues)i.next();
+                sourceValues.add(sv);
+                log.debug(" - "+sv);
+            }
             //getQueryCache(connectionConfig, sourceDefinition).invalidate();
 
         } finally {
@@ -476,7 +483,13 @@ public class Connector {
                 pks.add(pk);
             }
 
-            retrieve(sourceDefinition, pks);
+            newSourceValues.clear();
+
+            Collection list = retrieve(sourceDefinition, pks);
+            for (Iterator i=list.iterator(); i.hasNext(); ) {
+                AttributeValues sv = (AttributeValues)i.next();
+                newSourceValues.add(sv);
+            }
 
             //getQueryCache(connectionConfig, sourceDefinition).invalidate();
 

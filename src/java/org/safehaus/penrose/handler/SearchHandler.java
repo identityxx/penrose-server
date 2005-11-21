@@ -69,7 +69,8 @@ public class SearchHandler {
         if (path == null) return null;
         if (path.size() == 0) return null;
 
-        return (Entry)path.get(0);
+        Map map = (Map)path.get(0);
+        return (Entry)map.get("entry");
     }
 
     public List findPath(

@@ -91,6 +91,8 @@ public class InMemoryEngineCache extends EngineCache {
         //log.debug("Storing entry cache ("+dataMap.size()+"): "+rdn);
         dataMap.put(rdn, object);
         dataExpirationMap.put(rdn, new Date(System.currentTimeMillis() + expiration * 60 * 1000));
+
+        invalidate();
     }
 
     public void remove(Object key) throws Exception {
@@ -99,6 +101,8 @@ public class InMemoryEngineCache extends EngineCache {
         //log.debug("Removing entry cache ("+dataMap.size()+"): "+rdn);
         dataMap.remove(rdn);
         dataExpirationMap.remove(rdn);
+
+        invalidate();
     }
 
     public Collection get(Filter filter) throws Exception {

@@ -20,15 +20,12 @@ package org.safehaus.penrose.cache;
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.util.PasswordUtil;
 import org.safehaus.penrose.interpreter.Interpreter;
-import org.safehaus.penrose.SearchResults;
 import org.safehaus.penrose.config.Config;
-import org.ietf.ldap.LDAPEntry;
 
 import javax.naming.Context;
-import javax.naming.NameAlreadyBoundException;
+import javax.naming.NamingException;
 import javax.naming.directory.*;
 import java.util.*;
-import java.sql.*;
 
 /**
  * @author Endi S. Dewata
@@ -158,13 +155,20 @@ public class PersistentEngineCache extends EngineCache {
         try {
             DirContext ctx = new InitialDirContext(env);
             ctx.createSubcontext(dn, attrs);
-        } catch (NameAlreadyBoundException e) {
+        } catch (NamingException e) {
             log.debug("Error: "+e.getMessage());
-            //return LDAPException.ENTRY_ALREADY_EXISTS;
         }
     }
 
-    public void remove(Object pk) throws Exception {
+    public void remove(Object key) throws Exception {
+        Row rdn = (Row)key;
+        String dn = rdn+","+getParentDn();
+        try {
+            DirContext ctx = new InitialDirContext(env);
+            ctx.destroySubcontext(dn);
+        } catch (NamingException e) {
+            log.debug("Error: "+e.getMessage());
+        }
     }
 
     public String getUrl() {
