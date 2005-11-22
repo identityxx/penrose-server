@@ -140,7 +140,7 @@ if $cygwin; then
 fi
 
 if [ -n "$CYGHOME" ] ; then
-  exec "$JAVACMD" $PENROSE_DEBUG_OPTS $PENROSE_OPTS -classpath "$LOCALCLASSPATH" -Dpenrose.home="$PENROSE_HOME" -Dcygwin.user.home="$CYGHOME" org.safehaus.penrose.connector.Connector $PENROSE_ARGS "$@"
+  exec "$JAVACMD" $PENROSE_DEBUG_OPTS $PENROSE_OPTS -classpath "$LOCALCLASSPATH" -Dpenrose.home="$PENROSE_HOME" -Dcygwin.user.home="$CYGHOME" org.safehaus.penrose.cache.CacheManager $PENROSE_ARGS "$@"
 else
-  exec "$JAVACMD" $PENROSE_DEBUG_OPTS $PENROSE_OPTS -classpath "$LOCALCLASSPATH" -Dpenrose.home="$PENROSE_HOME" org.safehaus.penrose.connector.Connector $PENROSE_ARGS "$@"
+  exec "$JAVACMD" $PENROSE_DEBUG_OPTS $PENROSE_OPTS -classpath "$LOCALCLASSPATH" -Dpenrose.home="$PENROSE_HOME" org.safehaus.penrose.cache.CacheManager $PENROSE_ARGS "$@"
 fi

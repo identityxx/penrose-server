@@ -77,6 +77,9 @@ public abstract class EngineCache extends Cache {
     public void load() throws Exception {
     }
 
+    public void clean() throws Exception {
+    }
+
     public Engine getEngine() {
         return engine;
     }

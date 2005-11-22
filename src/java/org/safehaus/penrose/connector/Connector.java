@@ -77,7 +77,11 @@ public class Connector {
     }
 
     public void execute(Runnable runnable) throws Exception {
-        threadPool.execute(runnable);
+        if (threadPool == null) {
+            runnable.run();
+        } else {
+            threadPool.execute(runnable);
+        }
     }
 
     public void stop() throws Exception {
@@ -85,7 +89,7 @@ public class Connector {
         stopping = true;
 
         // wait for all the worker threads to finish
-        threadPool.stopRequestAllWorkers();
+        if (threadPool != null) threadPool.stopRequestAllWorkers();
     }
 
     public void addConfig(Config config) throws Exception {

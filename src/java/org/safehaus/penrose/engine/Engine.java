@@ -110,14 +110,13 @@ public class Engine {
         mergeEngine = new MergeEngine(this);
         joinEngine = new JoinEngine(this);
         transformEngine = new TransformEngine(this);
+    }
 
+    public void start() throws Exception {
         String s = engineConfig.getParameter(EngineConfig.THREAD_POOL_SIZE);
         int threadPoolSize = s == null ? EngineConfig.DEFAULT_THREAD_POOL_SIZE : Integer.parseInt(s);
 
         threadPool = new ThreadPool(threadPoolSize);
-    }
-
-    public void start() throws Exception {
         execute(new RefreshThread(this));
     }
 
@@ -324,7 +323,11 @@ public class Engine {
     }
 
     public void execute(Runnable runnable) throws Exception {
-        threadPool.execute(runnable);
+        if (threadPool == null) {
+            runnable.run();
+        } else {
+            threadPool.execute(runnable);
+        }
     }
 
     public void stop() throws Exception {
@@ -332,7 +335,7 @@ public class Engine {
         stopping = true;
 
         // wait for all the worker threads to finish
-        threadPool.stopRequestAllWorkers();
+        if (threadPool != null) threadPool.stopRequestAllWorkers();
     }
 
     public boolean isStopping() {
@@ -1147,228 +1150,6 @@ public class Engine {
 
     public void setConnector(Connector connector) {
         this.connector = connector;
-    }
-
-    public static void main(String args[]) throws Exception {
-
-        if (args.length == 0) {
-            System.out.println("Usage: org.safehaus.penrose.engine.Engine [command]");
-            System.out.println();
-            System.out.println("Commands:");
-            System.out.println("    create - create cache tables");
-            System.out.println("    load   - load data into cache tables");
-            System.out.println("    clean  - clean data from cache tables");
-            System.out.println("    drop   - drop cache tables");
-            System.exit(0);
-        }
-
-        String homeDirectory = System.getProperty("penrose.home");
-        log.debug("PENROSE_HOME: "+homeDirectory);
-
-        String command = args[0];
-
-        ServerConfigReader serverConfigReader = new ServerConfigReader();
-        ServerConfig serverCfg = serverConfigReader.read((homeDirectory == null ? "" : homeDirectory+File.separator)+"conf"+File.separator+"server.xml");
-
-        InterpreterConfig interpreterConfig = serverCfg.getInterpreterConfig();
-        InterpreterFactory intFactory = new InterpreterFactory(interpreterConfig);
-
-        Schema schm = createSchema(homeDirectory);
-        Collection cfgs = getConfigs(homeDirectory);
-        Connector cntr = createConnector(serverCfg, cfgs, command);
-        Engine engine = createEngine(serverCfg, intFactory, schm, cntr, cfgs, command);
-        //engine.start();
-
-        if ("create".equals(command)) {
-            engine.create();
-
-        } else if ("load".equals(command)) {
-            engine.load();
-
-        } else if ("clean".equals(command)) {
-            engine.clean();
-
-        } else if ("drop".equals(command)) {
-            engine.drop();
-
-        } else if ("run".equals(command)) {
-            engine.start();
-        }
-
-        engine.stop();
-    }
-
-    public static Schema createSchema(String homeDirectory) throws Exception {
-        SchemaReader reader = new SchemaReader();
-        reader.readDirectory((homeDirectory == null ? "" : homeDirectory+File.separator)+"schema");
-        reader.readDirectory((homeDirectory == null ? "" : homeDirectory+File.separator)+"schema"+File.separator+"ext");
-        return reader.getSchema();
-    }
-
-    public static Collection getConfigs(String homeDirectory) throws Exception {
-        Collection cfgs = new ArrayList();
-
-        ConfigReader configReader = new ConfigReader();
-        Config config = configReader.read((homeDirectory == null ? "" : homeDirectory+File.separator)+"conf");
-
-        cfgs.add(config);
-
-        File partitions = new File(homeDirectory+File.separator+"partitions");
-        if (partitions.exists()) {
-            File files[] = partitions.listFiles();
-            for (int i=0; i<files.length; i++) {
-                File partition = files[i];
-                String name = partition.getName();
-
-                config = configReader.read(partition.getAbsolutePath());
-                cfgs.add(config);
-            }
-        }
-
-        return cfgs;
-    }
-
-    public static Connector createConnector(
-            ServerConfig serverCfg,
-            Collection cfgs,
-            String command) throws Exception {
-
-        ConnectorConfig connectorCfg = serverCfg.getConnectorConfig();
-
-        Connector cntr = new Connector();
-        cntr.init(serverCfg, connectorCfg);
-
-        for (Iterator i=cfgs.iterator(); i.hasNext(); ) {
-            Config config = (Config)i.next();
-            cntr.addConfig(config);
-        }
-
-        if ("create".equals(command)) {
-            cntr.create();
-
-        } else if ("load".equals(command)) {
-            cntr.load();
-
-        } else if ("clean".equals(command)) {
-            cntr.clean();
-
-        } else if ("drop".equals(command)) {
-            cntr.drop();
-
-        } else if ("run".equals(command)) {
-            cntr.start();
-        }
-
-        return cntr;
-    }
-
-    public static Engine createEngine(
-            ServerConfig serverCfg,
-            InterpreterFactory intFactory,
-            Schema schm,
-            Connector cntr,
-            Collection cfgs,
-            String command) throws Exception {
-
-        EngineConfig engineCfg = serverCfg.getEngineConfig();
-        Engine engine = new Engine();
-        engine.setInterpreterFactory(intFactory);
-        engine.setSchema(schm);
-        engine.setConnector(cntr);
-        engine.init(engineCfg);
-
-        for (Iterator i=cfgs.iterator(); i.hasNext(); ) {
-            Config config = (Config)i.next();
-            engine.addConfig(config);
-        }
-
-        return engine;
-    }
-
-    public void create() throws Exception {
-        for (Iterator i=configs.values().iterator(); i.hasNext(); ) {
-            Config config = (Config)i.next();
-            Collection entryDefinitions = config.getRootEntryDefinitions();
-            create(config, null, entryDefinitions);
-        }
-    }
-
-    public void create(Config config, String parentDn, Collection entryDefinitions) throws Exception {
-        if (entryDefinitions == null) return;
-        for (Iterator i=entryDefinitions.iterator(); i.hasNext(); ) {
-            EntryDefinition entryDefinition = (EntryDefinition)i.next();
-            if (entryDefinition.isDynamic()) continue;
-            log.debug("Creating tables for "+entryDefinition.getDn());
-
-            EngineCache cache = getCache(parentDn, entryDefinition);
-            cache.create();
-
-            Collection children = config.getChildren(entryDefinition);
-            create(config, entryDefinition.getDn(), children);
-        }
-    }
-
-    public void load() throws Exception {
-        for (Iterator i=configs.values().iterator(); i.hasNext(); ) {
-            Config config = (Config)i.next();
-            Collection entryDefinitions = config.getRootEntryDefinitions();
-            load(config, null, entryDefinitions);
-        }
-    }
-
-    public void load(Config config, String parentDn, Collection entryDefinitions) throws Exception {
-        if (entryDefinitions == null) return;
-        for (Iterator i=entryDefinitions.iterator(); i.hasNext(); ) {
-            EntryDefinition entryDefinition = (EntryDefinition)i.next();
-            if (entryDefinition.isDynamic()) continue;
-            log.debug("Loading tables for "+entryDefinition.getDn());
-
-            EngineCache cache = getCache(parentDn, entryDefinition);
-            cache.load();
-
-            Collection children = config.getChildren(entryDefinition);
-            load(config, parentDn, children);
-        }
-    }
-
-    public void clean() throws Exception {
-        for (Iterator i=configs.values().iterator(); i.hasNext(); ) {
-            Config config = (Config)i.next();
-            Collection entryDefinitions = config.getRootEntryDefinitions();
-            clean(config, entryDefinitions);
-        }
-    }
-
-    public void clean(Config config, Collection entryDefinitions) throws Exception {
-        if (entryDefinitions == null) return;
-        for (Iterator i=entryDefinitions.iterator(); i.hasNext(); ) {
-            EntryDefinition entryDefinition = (EntryDefinition)i.next();
-            if (entryDefinition.isDynamic()) continue;
-            log.debug("Cleaning tables for "+entryDefinition.getDn());
-
-            Collection children = config.getChildren(entryDefinition);
-            clean(config, children);
-        }
-    }
-
-    public void drop() throws Exception {
-        for (Iterator i=configs.values().iterator(); i.hasNext(); ) {
-            Config config = (Config)i.next();
-            Collection entryDefinitions = config.getRootEntryDefinitions();
-            drop(config, entryDefinitions);
-        }
-    }
-
-    public void drop(Config config, Collection entryDefinitions) throws Exception {
-        if (entryDefinitions == null) return;
-        for (Iterator i=entryDefinitions.iterator(); i.hasNext(); ) {
-            EntryDefinition entryDefinition = (EntryDefinition)i.next();
-            if (entryDefinition.isDynamic()) continue;
-            log.debug("Dropping tables for "+entryDefinition.getDn());
-
-            Collection children = config.getChildren(entryDefinition);
-            drop(config, children);
-        }
     }
 
     public Schema getSchema() {

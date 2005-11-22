@@ -223,13 +223,13 @@
         <mkdir dir="target"/>
         <tar destfile="target/${project.name}-${project.version}.tar">
             <tarfileset dir="target/dist" prefix="${project.name}-${project.version}" mode="755">
-                <include name="bin/connector.sh"/>
+                <include name="bin/cache.sh"/>
                 <include name="bin/penrose.sh"/>
                 <include name="bin/schema.sh"/>
             </tarfileset>
             <tarfileset dir="target/dist" prefix="${project.name}-${project.version}">
                 <include name="**/*"/>
-                <exclude name="bin/connector.sh"/>
+                <exclude name="bin/cache.sh"/>
                 <exclude name="bin/penrose.sh"/>
                 <exclude name="bin/schema.sh"/>
             </tarfileset>

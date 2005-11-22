@@ -42,14 +42,14 @@ public class PersistentEngineCache extends EngineCache {
     public void init() throws Exception {
         super.init();
 
-        log.debug("-------------------------------------------------------------------------------");
-        log.debug("Initializing PersistentEngineCache:");
+        //log.debug("-------------------------------------------------------------------------------");
+        //log.debug("Initializing PersistentEngineCache:");
 
         env = new Hashtable();
         for (Iterator i=getParameterNames().iterator(); i.hasNext(); ) {
             String param = (String)i.next();
             String value = getParameter(param);
-            log.debug(" - "+param+": "+value);
+            //log.debug(" - "+param+": "+value);
 
             if (param.equals(Context.PROVIDER_URL)) {
 
@@ -75,7 +75,7 @@ public class PersistentEngineCache extends EngineCache {
     public void create() throws Exception {
 
         String dn = entryDefinition.getDn();
-        log.debug("Adding "+dn);
+        //log.debug("Adding "+dn);
 
         Interpreter interpreter = engine.getInterpreterFactory().newInstance();
         AttributeValues attributeValues = engine.computeAttributeValues(entryDefinition, interpreter);
@@ -85,6 +85,14 @@ public class PersistentEngineCache extends EngineCache {
         Row rdn = entry.getRdn();
 
         put(rdn, entry);
+    }
+
+    public void clean() throws Exception {
+        String dn = entryDefinition.getDn();
+        //log.debug("Deleting "+dn);
+
+        Row rdn = Entry.getRdn(dn);
+        remove(rdn);
     }
 
     public void load() throws Exception {
@@ -225,9 +233,9 @@ public class PersistentEngineCache extends EngineCache {
 
     public void remove(Object key) throws Exception {
         Row rdn = (Row)key;
-        String dn = rdn+","+getParentDn();
+        String dn = parentDn == null ? entryDefinition.getDn() : rdn+","+parentDn;
         try {
-            log.debug("Deleting "+dn);
+            log.debug("Removing "+dn);
             SearchControls sc = new SearchControls();
             sc.setSearchScope(SearchControls.SUBTREE_SCOPE);
             sc.setReturningAttributes(new String[] { "dn" });
@@ -245,7 +253,7 @@ public class PersistentEngineCache extends EngineCache {
 
             for (Iterator i=dns.iterator(); i.hasNext(); ) {
                 String dn2 = (String)i.next();
-                log.debug(" -  "+dn2);
+                log.debug(" - "+dn2);
 
                 ctx.destroySubcontext(dn2);
             }
