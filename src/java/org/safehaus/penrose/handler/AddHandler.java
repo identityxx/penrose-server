@@ -18,13 +18,11 @@
 package org.safehaus.penrose.handler;
 
 import org.safehaus.penrose.PenroseConnection;
+import org.safehaus.penrose.SearchResults;
 import org.safehaus.penrose.event.AddEvent;
 import org.safehaus.penrose.config.Config;
 import org.safehaus.penrose.mapping.*;
-import org.ietf.ldap.LDAPEntry;
-import org.ietf.ldap.LDAPDN;
-import org.ietf.ldap.LDAPException;
-import org.ietf.ldap.LDAPAttribute;
+import org.ietf.ldap.*;
 import org.apache.log4j.Logger;
 
 import java.util.*;
@@ -67,6 +65,16 @@ public class AddHandler {
         handler.postEvent(entry.getDN(), beforeModifyEvent);
 
         int rc = performAdd(connection, entry);
+
+        handler.getSearchHandler().search(
+                connection,
+                entry.getDN(),
+                LDAPConnection.SCOPE_SUB,
+                LDAPSearchConstraints.DEREF_NEVER,
+                "(objectClass=*)",
+                new ArrayList(),
+                new SearchResults()
+        );
 
         AddEvent afterModifyEvent = new AddEvent(this, AddEvent.AFTER_ADD, connection, entry);
         afterModifyEvent.setReturnCode(rc);

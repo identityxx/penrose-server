@@ -21,9 +21,11 @@ import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.util.PasswordUtil;
 import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.config.Config;
+import org.safehaus.penrose.filter.Filter;
 
 import javax.naming.Context;
 import javax.naming.NamingException;
+import javax.naming.NamingEnumeration;
 import javax.naming.directory.*;
 import java.util.*;
 
@@ -107,7 +109,68 @@ public class PersistentEngineCache extends EngineCache {
     }
 
     public Object get(Object pk) throws Exception {
+        Row rdn = (Row)pk;
+        String dn = rdn+","+parentDn;
+        try {
+            log.debug("Getting "+dn);
+            SearchControls sc = new SearchControls();
+            sc.setSearchScope(SearchControls.OBJECT_SCOPE);
+
+            DirContext ctx = new InitialDirContext(env);
+            NamingEnumeration ne = ctx.search(dn, "(objectClass=*)", sc);
+
+            if (!ne.hasMore()) return null;
+
+            SearchResult sr = (SearchResult)ne.next();
+            log.debug("Found:");
+
+            Attributes attributes = sr.getAttributes();
+            AttributeValues attributeValues = new AttributeValues();
+            for (NamingEnumeration ne2 = attributes.getAll(); ne2.hasMore(); ) {
+                Attribute attribute = (Attribute)ne2.next();
+                String name = attribute.getID();
+
+                for (NamingEnumeration ne3 = attribute.getAll(); ne3.hasMore(); ) {
+                    Object value = ne3.next();
+                    log.debug(" - "+name+": "+value);
+                    attributeValues.add(name, value);
+                }
+            }
+
+            Entry entry = new Entry(dn, entryDefinition, attributeValues);
+            return entry;
+
+        } catch (NamingException e) {
+            log.debug("Error: "+e.getMessage());
+        }
         return null;
+    }
+
+    public Collection get(Filter filter) throws Exception {
+        Collection results = new ArrayList();
+        try {
+            log.debug("Searching "+filter);
+            SearchControls sc = new SearchControls();
+            sc.setSearchScope(SearchControls.ONELEVEL_SCOPE);
+            sc.setReturningAttributes(new String[] { "dn" });
+
+            DirContext ctx = new InitialDirContext(env);
+            NamingEnumeration ne = ctx.search(parentDn, filter.toString(), sc);
+
+            while (ne.hasMore()) {
+                SearchResult sr = (SearchResult)ne.next();
+                String dn = sr.getName()+","+parentDn;
+                Attributes attributes = sr.getAttributes();
+
+                log.debug(" - "+dn);
+                results.add(dn);
+            }
+
+        } catch (NamingException e) {
+            log.debug("Error: "+e.getMessage());
+        }
+
+        return results;
     }
 
     public Map getExpired() throws Exception {
@@ -164,8 +227,29 @@ public class PersistentEngineCache extends EngineCache {
         Row rdn = (Row)key;
         String dn = rdn+","+getParentDn();
         try {
+            log.debug("Deleting "+dn);
+            SearchControls sc = new SearchControls();
+            sc.setSearchScope(SearchControls.SUBTREE_SCOPE);
+            sc.setReturningAttributes(new String[] { "dn" });
+
             DirContext ctx = new InitialDirContext(env);
-            ctx.destroySubcontext(dn);
+            NamingEnumeration ne = ctx.search(dn, "(objectClass=*)", sc);
+
+            ArrayList dns = new ArrayList();
+            while (ne.hasMore()) {
+                SearchResult sr = (SearchResult)ne.next();
+                String rdn2 = sr.getName();
+                String dn2 = "".equals(rdn2) ? dn : rdn2+","+dn;
+                dns.add(0, dn2);
+            }
+
+            for (Iterator i=dns.iterator(); i.hasNext(); ) {
+                String dn2 = (String)i.next();
+                log.debug(" -  "+dn2);
+
+                ctx.destroySubcontext(dn2);
+            }
+
         } catch (NamingException e) {
             log.debug("Error: "+e.getMessage());
         }

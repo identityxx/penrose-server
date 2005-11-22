@@ -121,7 +121,7 @@ public class AddEngine {
         visitor.run();
 
         if (visitor.getReturnCode() != LDAPException.SUCCESS) return visitor.getReturnCode();
-
+/*
         Interpreter interpreter = engine.getInterpreterFactory().newInstance();
 
         AttributeValues newSourceValues = visitor.getAddedSourceValues();
@@ -132,7 +132,7 @@ public class AddEngine {
         Entry entry = new Entry(dn, entryDefinition, newSourceValues, newAttributeValues);
 
         engine.getCache(parent.getDn(), entryDefinition).put(rdn, entry);
-
+*/
         return LDAPException.SUCCESS;
     }
 }

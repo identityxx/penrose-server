@@ -107,8 +107,8 @@ public class AddGraphVisitor extends GraphVisitor {
         returnCode = engine.getConnector().add(sourceDefinition, newSourceValues);
         if (returnCode != LDAPException.SUCCESS) return;
 
-        addedSourceValues.remove(source.getName());
-        addedSourceValues.set(source.getName(), newSourceValues);
+        //addedSourceValues.remove(source.getName());
+        //addedSourceValues.set(source.getName(), newSourceValues);
 
         graphIterator.traverseEdges(node);
     }

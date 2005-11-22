@@ -344,7 +344,7 @@ public class Connector {
                 int rc = connection.add(sourceDefinition, newEntry);
                 if (rc != LDAPException.SUCCESS) return rc;
             }
-
+/*
             sourceValues.clear();
             Collection list = retrieve(sourceDefinition, pks);
             log.debug("Added rows:");
@@ -353,6 +353,7 @@ public class Connector {
                 sourceValues.add(sv);
                 log.debug(" - "+sv);
             }
+*/
             //getQueryCache(connectionConfig, sourceDefinition).invalidate();
 
         } finally {
