@@ -41,6 +41,7 @@ public class ConfigReader {
 
     public Config read(String directory) throws Exception {
         Config config = new Config();
+        loadConnectionsConfig(directory+File.separator+"connections.xml", config);
         loadSourcesConfig(directory+File.separator+"sources.xml", config);
         loadMappingConfig(directory+File.separator+"mapping.xml", config);
         loadModulesConfig(directory+File.separator+"modules.xml", config);
@@ -69,6 +70,7 @@ public class ConfigReader {
      */
     public void loadMappingConfig(File dir, String baseDn, MappingRule mappingRule, Config config) throws Exception {
         File file = new File(dir, mappingRule.getFile());
+        if (!file.exists()) return;
         //log.debug("Loading mapping rule from: "+file.getAbsolutePath());
 
         ClassLoader cl = getClass().getClassLoader();
@@ -206,8 +208,8 @@ public class ConfigReader {
      * @throws Exception
      */
     public void loadModulesConfig(String filename, Config config) throws Exception {
-        if (filename == null) return;
         File file = new File(filename);
+        if (!file.exists()) return;
         loadModulesConfig(file, config);
     }
 
@@ -229,6 +231,35 @@ public class ConfigReader {
 	}
 
     /**
+     * Load connections configuration from a file
+     *
+     * @param filename the configuration file (ie. connections.xml)
+     * @throws Exception
+     */
+    public void loadConnectionsConfig(String filename, Config config) throws Exception {
+        File file = new File(filename);
+        if (!file.exists()) return;
+        loadConnectionsConfig(file, config);
+    }
+
+	/**
+	 * Load sources configuration from a file
+	 *
+	 * @param file the configuration file (ie. sources.xml)
+	 * @throws Exception
+	 */
+	public void loadConnectionsConfig(File file, Config config) throws Exception {
+		//log.debug("Loading source configuration from: "+file.getAbsolutePath());
+        ClassLoader cl = getClass().getClassLoader();
+        URL url = cl.getResource("org/safehaus/penrose/config/connections-digester-rules.xml");
+		Digester digester = DigesterLoader.createDigester(url);
+        digester.setValidating(false);
+        digester.setClassLoader(cl);
+        digester.push(config);
+        digester.parse(file);
+	}
+
+    /**
      * Load sources configuration from a file
      *
      * @param filename the configuration file (ie. sources.xml)
@@ -236,6 +267,7 @@ public class ConfigReader {
      */
     public void loadSourcesConfig(String filename, Config config) throws Exception {
         File file = new File(filename);
+        if (!file.exists()) return;
         loadSourcesConfig(file, config);
     }
 

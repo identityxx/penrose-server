@@ -76,17 +76,7 @@ public class ModifyEngine {
 
         if (visitor.getReturnCode() != LDAPException.SUCCESS) return visitor.getReturnCode();
 
-        Interpreter interpreter = engine.getInterpreterFactory().newInstance();
-
-        AttributeValues sourceValues = visitor.getModifiedSourceValues();
-        AttributeValues attributeValues = engine.computeAttributeValues(entryDefinition, sourceValues, interpreter);
-        Row rdn = entryDefinition.getRdn(attributeValues);
-        String dn = rdn+","+entry.getParentDn();
-
-        Entry newEntry = new Entry(dn, entryDefinition, sourceValues, attributeValues);
-
         engine.getCache(entry.getParentDn(), entryDefinition).remove(entry.getRdn());
-        engine.getCache(entry.getParentDn(), entryDefinition).put(rdn, newEntry);
 
         return LDAPException.SUCCESS;
     }

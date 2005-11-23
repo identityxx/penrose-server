@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
-package org.safehaus.penrose.mapping;
+package org.safehaus.penrose.connector;
 
 import org.safehaus.penrose.mapping.SourceDefinition;
 
@@ -36,7 +36,7 @@ public class ConnectionConfig implements Serializable, Cloneable {
 	/**
 	 * Type.
 	 */
-	public String adapterName;
+	public String connectionType;
 
 	/**
 	 * Connection pool size.
@@ -69,7 +69,7 @@ public class ConnectionConfig implements Serializable, Cloneable {
     public Object clone() {
         ConnectionConfig connectionConfig = new ConnectionConfig();
         connectionConfig.connectionName = connectionName;
-        connectionConfig.adapterName = adapterName;
+        connectionConfig.connectionType = connectionType;
         connectionConfig.poolSize = poolSize;
         connectionConfig.testQuery = testQuery;
         connectionConfig.description = description;
@@ -98,7 +98,7 @@ public class ConnectionConfig implements Serializable, Cloneable {
 	 */
 	public ConnectionConfig(String name, String type) {
 		this.connectionName = name;
-		this.adapterName = type;
+		this.connectionType = type;
 	}
 
 	public String getConnectionName() {
@@ -109,12 +109,12 @@ public class ConnectionConfig implements Serializable, Cloneable {
 		this.connectionName = connectionName;
 	}
 
-	public String getAdapterName() {
-		return adapterName;
+	public String getConnectionType() {
+		return connectionType;
 	}
 
-	public void setAdapterName(String adapterName) {
-		this.adapterName = adapterName;
+	public void setConnectionType(String connectionType) {
+		this.connectionType = connectionType;
 	}
 
     public Collection getParameterNames() {

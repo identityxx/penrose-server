@@ -18,25 +18,16 @@
 package org.safehaus.penrose.engine;
 
 import org.safehaus.penrose.SearchResults;
-import org.safehaus.penrose.schema.SchemaReader;
 import org.safehaus.penrose.schema.Schema;
-import org.safehaus.penrose.connector.Connector;
-import org.safehaus.penrose.connector.ConnectorConfig;
-import org.safehaus.penrose.connector.Connection;
-import org.safehaus.penrose.connector.Adapter;
+import org.safehaus.penrose.connector.*;
 import org.safehaus.penrose.cache.CacheConfig;
 import org.safehaus.penrose.cache.EngineCache;
-import org.safehaus.penrose.cache.ConnectorCache;
 import org.safehaus.penrose.util.Formatter;
 import org.safehaus.penrose.util.PasswordUtil;
 import org.safehaus.penrose.config.Config;
-import org.safehaus.penrose.config.ServerConfigReader;
-import org.safehaus.penrose.config.ServerConfig;
-import org.safehaus.penrose.config.ConfigReader;
 import org.safehaus.penrose.filter.*;
 import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.interpreter.InterpreterFactory;
-import org.safehaus.penrose.interpreter.InterpreterConfig;
 import org.safehaus.penrose.graph.Graph;
 import org.safehaus.penrose.graph.GraphEdge;
 import org.safehaus.penrose.thread.ThreadPool;
@@ -47,7 +38,6 @@ import org.apache.log4j.Logger;
 import org.ietf.ldap.LDAPException;
 
 import java.util.*;
-import java.io.File;
 
 /**
  * @author Endi S. Dewata
@@ -71,6 +61,7 @@ public class Engine {
     private InterpreterFactory interpreterFactory;
     private Schema schema;
     private Connector connector;
+    private ConnectionManager connectionManager;
 
     private EngineFilterTool filterTool;
 
@@ -96,8 +87,8 @@ public class Engine {
     public void init(EngineConfig engineConfig) throws Exception {
         this.engineConfig = engineConfig;
 
-        log.debug("-------------------------------------------------");
-        log.debug("Initializing "+engineConfig.getEngineName()+" engine ...");
+        //log.debug("-------------------------------------------------");
+        //log.debug("Initializing "+engineConfig.getEngineName()+" engine ...");
 
         filterTool = new EngineFilterTool(this);
 
@@ -1174,6 +1165,14 @@ public class Engine {
 
     public void setTransformEngine(TransformEngine transformEngine) {
         this.transformEngine = transformEngine;
+    }
+
+    public ConnectionManager getConnectionManager() {
+        return connectionManager;
+    }
+
+    public void setConnectionManager(ConnectionManager connectionManager) {
+        this.connectionManager = connectionManager;
     }
 }
 

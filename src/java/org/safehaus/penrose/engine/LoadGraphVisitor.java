@@ -26,6 +26,7 @@ import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.filter.FilterTool;
 import org.safehaus.penrose.util.Formatter;
 import org.safehaus.penrose.SearchResults;
+import org.safehaus.penrose.connector.ConnectionConfig;
 import org.apache.log4j.Logger;
 
 import java.util.*;

@@ -24,6 +24,7 @@ import org.apache.log4j.Logger;
 import org.safehaus.penrose.module.ModuleMapping;
 import org.safehaus.penrose.module.ModuleConfig;
 import org.safehaus.penrose.mapping.*;
+import org.safehaus.penrose.connector.ConnectionConfig;
 
 public class Config implements Serializable {
 
@@ -404,7 +405,7 @@ public class Config implements Serializable {
 		for (Iterator i = connectionConfigs.keySet().iterator(); i.hasNext();) {
 			String connectionName = (String) i.next();
 			ConnectionConfig connection = (ConnectionConfig) connectionConfigs.get(connectionName);
-			sb.append(connectionName + " (" + connection.getAdapterName() + ")" + nl);
+			sb.append(connectionName + " (" + connection.getConnectionType() + ")" + nl);
 			sb.append("Parameters:" + nl);
 			for (Iterator j = connection.getParameterNames().iterator(); j.hasNext();) {
 				String name = (String) j.next();

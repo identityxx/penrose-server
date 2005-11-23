@@ -25,6 +25,7 @@ import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.config.Config;
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.Penrose;
+import org.safehaus.penrose.connector.ConnectionConfig;
 
 /**
  * @author Endi S. Dewata

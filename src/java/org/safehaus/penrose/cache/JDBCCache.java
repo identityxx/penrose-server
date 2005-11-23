@@ -20,6 +20,7 @@ package org.safehaus.penrose.cache;
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.util.Formatter;
 import org.safehaus.penrose.filter.Filter;
+import org.safehaus.penrose.connector.ConnectionManager;
 import org.apache.log4j.Logger;
 
 import java.sql.*;
@@ -34,13 +35,10 @@ public class JDBCCache {
 
     JDBCCacheTool tool = new JDBCCacheTool();
 
+    private ConnectionManager connectionManager;
+    private String connectionName;
     CacheConfig cacheConfig;
     SourceDefinition sourceDefinition;
-
-    private String driver;
-    private String url;
-    private String user;
-    private String password;
 
     private int size;
     private int expiration;
@@ -55,36 +53,10 @@ public class JDBCCache {
 
     public void init() throws Exception {
 
-        //log.debug("Cache parameters:");
-        for (Iterator i=cacheConfig.getParameterNames().iterator(); i.hasNext(); ) {
-            String name = (String)i.next();
-            String value = cacheConfig.getParameter(name);
-            //log.debug(" - "+name+": "+value);
-        }
-
-        driver = cacheConfig.getParameter("driver");
-        url = cacheConfig.getParameter("url");
-        user = cacheConfig.getParameter("user");
-        password = cacheConfig.getParameter("password");
-
-        //log.debug("Source parameters:");
-        for (Iterator i=sourceDefinition.getParameterNames().iterator(); i.hasNext(); ) {
-            String name = (String)i.next();
-            String value = sourceDefinition.getParameter(name);
-            //log.debug(" - "+name+": "+value);
-        }
-
-        String s = sourceDefinition.getParameter(SourceDefinition.DATA_CACHE_SIZE);
-        if (s != null) size = Integer.parseInt(s);
-
-        s = sourceDefinition.getParameter(SourceDefinition.DATA_CACHE_EXPIRATION);
-        if (s != null) expiration = Integer.parseInt(s);
-
-        Class.forName(driver);
     }
 
     public Connection getConnection() throws Exception {
-        return DriverManager.getConnection(url, user, password);
+        return (Connection)connectionManager.getConnection(connectionName);
     }
 
     public String getTableName() {
@@ -366,7 +338,7 @@ public class JDBCCache {
             ps.execute();
 
         } catch (Exception e) {
-            log.error(e.getMessage(), e);
+            log.error(e.getMessage());
 
         } finally {
             if (ps != null) try { ps.close(); } catch (Exception e) {}
@@ -419,7 +391,7 @@ public class JDBCCache {
             ps.execute();
 
         } catch (Exception e) {
-            log.error(e.getMessage(), e);
+            log.error(e.getMessage());
 
         } finally {
             if (ps != null) try { ps.close(); } catch (Exception e) {}
@@ -478,7 +450,7 @@ public class JDBCCache {
             ps.execute();
 
         } catch (Exception e) {
-            log.error(e.getMessage(), e);
+            log.error(e.getMessage());
 
         } finally {
             if (ps != null) try { ps.close(); } catch (Exception e) {}
@@ -717,7 +689,7 @@ public class JDBCCache {
             }
 
         } catch (Exception e) {
-            log.error(e.getMessage(), e);
+            log.error(e.getMessage());
 
         } finally {
             if (rs != null) try { rs.close(); } catch (Exception e) {}
@@ -884,7 +856,7 @@ public class JDBCCache {
             if (width > 0) printFooter(width);
 
         } catch (Exception e) {
-            log.error(e.getMessage(), e);
+            log.error(e.getMessage());
 
         } finally {
             if (rs != null) try { rs.close(); } catch (Exception e) {}
@@ -979,7 +951,7 @@ public class JDBCCache {
 
         } catch (Exception e) {
             return false;
-            //log.error(e.getMessage(), e);
+            //log.error(e.getMessage());
 
         } finally {
             if (ps != null) try { ps.close(); } catch (Exception e) {}
@@ -1042,7 +1014,7 @@ public class JDBCCache {
             ps.execute();
 
         } catch (Exception e) {
-            //log.error(e.getMessage(), e);
+            //log.error(e.getMessage());
 
         } finally {
             if (ps != null) try { ps.close(); } catch (Exception e) {}
@@ -1118,7 +1090,7 @@ public class JDBCCache {
             ps.execute();
 
         } catch (Exception e) {
-            //log.error(e.getMessage(), e);
+            //log.error(e.getMessage());
 
         } finally {
             if (ps != null) try { ps.close(); } catch (Exception e) {}
@@ -1189,7 +1161,7 @@ public class JDBCCache {
             ps.execute();
 
         } catch (Exception e) {
-            log.error(e.getMessage(), e);
+            log.error(e.getMessage());
 
         } finally {
             if (ps != null) try { ps.close(); } catch (Exception e) {}
@@ -1252,7 +1224,7 @@ public class JDBCCache {
             ps.execute();
 
         } catch (Exception e) {
-            log.error(e.getMessage(), e);
+            log.error(e.getMessage());
 
         } finally {
             if (ps != null) try { ps.close(); } catch (Exception e) {}
@@ -1303,7 +1275,7 @@ public class JDBCCache {
             return value.intValue();
 
         } catch (Exception e) {
-            log.error(e.getMessage(), e);
+            log.error(e.getMessage());
 
         } finally {
             if (rs != null) try { rs.close(); } catch (Exception e) {}
@@ -1351,7 +1323,7 @@ public class JDBCCache {
             if (count > 0) return;
 
         } catch (Exception e) {
-            //log.error(e.getMessage(), e);
+            //log.error(e.getMessage());
 
         } finally {
             if (ps != null) try { ps.close(); } catch (Exception e) {}
@@ -1385,44 +1357,12 @@ public class JDBCCache {
             ps.execute();
 
         } catch (Exception e) {
-            //log.error(e.getMessage(), e);
+            //log.error(e.getMessage());
 
         } finally {
             if (ps != null) try { ps.close(); } catch (Exception e) {}
             if (con != null) try { con.close(); } catch (Exception e) {}
         }
-    }
-
-    public String getDriver() {
-        return driver;
-    }
-
-    public void setDriver(String driver) {
-        this.driver = driver;
-    }
-
-    public String getUrl() {
-        return url;
-    }
-
-    public void setUrl(String url) {
-        this.url = url;
-    }
-
-    public String getUser() {
-        return user;
-    }
-
-    public void setUser(String user) {
-        this.user = user;
-    }
-
-    public String getPassword() {
-        return password;
-    }
-
-    public void setPassword(String password) {
-        this.password = password;
     }
 
     public int getSize() {
@@ -1561,5 +1501,21 @@ public class JDBCCache {
 
     public void printFooter(int width) throws Exception {
         log.debug(Formatter.displaySeparator(width));
+    }
+
+    public ConnectionManager getConnectionManager() {
+        return connectionManager;
+    }
+
+    public void setConnectionManager(ConnectionManager connectionManager) {
+        this.connectionManager = connectionManager;
+    }
+
+    public String getConnectionName() {
+        return connectionName;
+    }
+
+    public void setConnectionName(String connectionName) {
+        this.connectionName = connectionName;
     }
 }

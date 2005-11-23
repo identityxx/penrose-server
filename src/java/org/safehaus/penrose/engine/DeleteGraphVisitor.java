@@ -22,6 +22,7 @@ import org.safehaus.penrose.graph.GraphVisitor;
 import org.safehaus.penrose.graph.GraphIterator;
 import org.safehaus.penrose.util.Formatter;
 import org.safehaus.penrose.config.Config;
+import org.safehaus.penrose.connector.ConnectionConfig;
 import org.apache.log4j.Logger;
 import org.ietf.ldap.LDAPException;
 

@@ -32,7 +32,6 @@ public interface PenroseMBean {
 	// Functional Methods
 	// ------------------------------------------------
 	public int init() throws Exception;
-	public void addConfig(Config config) throws Exception;
 	public void stop();
 
 	/*

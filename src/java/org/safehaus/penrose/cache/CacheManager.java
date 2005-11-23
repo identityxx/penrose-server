@@ -27,15 +27,21 @@ import org.safehaus.penrose.schema.Schema;
 import org.safehaus.penrose.schema.SchemaReader;
 import org.safehaus.penrose.connector.Connector;
 import org.safehaus.penrose.connector.ConnectorConfig;
+import org.safehaus.penrose.connector.ConnectionManager;
+import org.safehaus.penrose.connector.ConnectionConfig;
 import org.safehaus.penrose.engine.Engine;
 import org.safehaus.penrose.engine.EngineConfig;
 import org.safehaus.penrose.mapping.EntryDefinition;
+import org.safehaus.penrose.util.Formatter;
 import org.apache.log4j.Logger;
 
 import java.io.File;
 import java.util.Collection;
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.DriverManager;
 
 /**
  * @author Endi S. Dewata
@@ -51,6 +57,9 @@ public class CacheManager {
     public Schema schema;
     public Collection configs = new ArrayList();
 
+    public ConnectionManager connectionManager;
+    public String jdbcConnectionName;
+
     public Connector connector;
     public Engine engine;
 
@@ -62,13 +71,22 @@ public class CacheManager {
         homeDirectory = System.getProperty("penrose.home");
         log.debug("PENROSE_HOME: "+homeDirectory);
 
-        ServerConfigReader serverConfigReader = new ServerConfigReader();
-        serverConfig = serverConfigReader.read((homeDirectory == null ? "" : homeDirectory+File.separator)+"conf"+File.separator+"server.xml");
-
+        loadServerConfig();
         loadSchema();
         loadConfigs();
+
+        initConnections();
         initConnector();
         initEngine();
+
+        EngineConfig engineConfig = serverConfig.getEngineConfig();
+        CacheConfig cacheConfig = engineConfig.getCacheConfig();
+        jdbcConnectionName = cacheConfig.getParameter("jdbcConnection");
+    }
+
+    public void loadServerConfig() throws Exception {
+        ServerConfigReader serverConfigReader = new ServerConfigReader();
+        serverConfig = serverConfigReader.read((homeDirectory == null ? "" : homeDirectory+File.separator)+"conf"+File.separator+"server.xml");
     }
 
     public void loadSchema() throws Exception {
@@ -97,12 +115,30 @@ public class CacheManager {
         }
     }
 
+    public void initConnections() throws Exception {
+        connectionManager = new ConnectionManager();
+
+        for (Iterator i=configs.iterator(); i.hasNext(); ) {
+            Config config = (Config)i.next();
+
+            Collection connectionConfigs = config.getConnectionConfigs();
+            for (Iterator j=connectionConfigs.iterator(); j.hasNext(); ) {
+                ConnectionConfig connectionConfig = (ConnectionConfig)j.next();
+                connectionManager.addConnectionConfig(connectionConfig);
+            }
+        }
+
+        connectionManager.init();
+    }
+
     public void initConnector() throws Exception {
 
         ConnectorConfig connectorCfg = serverConfig.getConnectorConfig();
 
         connector = new Connector();
-        connector.init(serverConfig, connectorCfg);
+        connector.setServerConfig(serverConfig);
+        connector.setConnectionManager(connectionManager);
+        connector.init(connectorCfg);
 
         for (Iterator i=configs.iterator(); i.hasNext(); ) {
             Config config = (Config)i.next();
@@ -120,6 +156,7 @@ public class CacheManager {
         engine.setInterpreterFactory(intFactory);
         engine.setSchema(schema);
         engine.setConnector(connector);
+        engine.setConnectionManager(connectionManager);
         engine.init(engineCfg);
 
         for (Iterator i=configs.iterator(); i.hasNext(); ) {
@@ -131,6 +168,8 @@ public class CacheManager {
     public void create() throws Exception {
         connector.create();
 
+        createMappingsTable();
+
         for (Iterator i=configs.iterator(); i.hasNext(); ) {
             Config config = (Config)i.next();
             Collection entryDefinitions = config.getRootEntryDefinitions();
@@ -138,13 +177,47 @@ public class CacheManager {
         }
     }
 
+    public void createMappingsTable() throws Exception {
+        String sql = "create table penrose_mappings (id integer auto_increment, dn varchar(255) unique, primary key (id))";
+
+        Connection con = null;
+        PreparedStatement ps = null;
+
+        try {
+            con = getConnection();
+
+            if (log.isDebugEnabled()) {
+                log.debug(Formatter.displaySeparator(80));
+                Collection lines = Formatter.split(sql, 80);
+                for (Iterator i=lines.iterator(); i.hasNext(); ) {
+                    String line = (String)i.next();
+                    log.debug(Formatter.displayLine(line, 80));
+                }
+                log.debug(Formatter.displaySeparator(80));
+            }
+
+            ps = con.prepareStatement(sql);
+            ps.execute();
+
+        } catch (Exception e) {
+            //log.error(e.getMessage(), e);
+
+        } finally {
+            if (ps != null) try { ps.close(); } catch (Exception e) {}
+            if (con != null) try { con.close(); } catch (Exception e) {}
+        }
+    }
+
+    public Connection getConnection() throws Exception {
+        return (Connection)connectionManager.getConnection(jdbcConnectionName);
+    }
+
     public void create(Config config, String parentDn, Collection entryDefinitions) throws Exception {
         if (entryDefinitions == null) return;
         for (Iterator i=entryDefinitions.iterator(); i.hasNext(); ) {
             EntryDefinition entryDefinition = (EntryDefinition)i.next();
-            if (entryDefinition.isDynamic()) continue;
-            log.debug("Creating tables for "+entryDefinition.getDn());
 
+            log.debug("Creating tables for "+entryDefinition.getDn());
             EngineCache cache = engine.getCache(parentDn, entryDefinition);
             cache.create();
 
@@ -168,14 +241,10 @@ public class CacheManager {
         for (Iterator i=entryDefinitions.iterator(); i.hasNext(); ) {
             EntryDefinition entryDefinition = (EntryDefinition)i.next();
             if (entryDefinition.isDynamic()) continue;
-            log.debug("Loading tables for "+entryDefinition.getDn());
 
+            log.debug("Loading entries under "+entryDefinition.getDn());
             EngineCache cache = engine.getCache(parentDn, entryDefinition);
             cache.load();
-/*
-            Collection children = config.getChildren(entryDefinition);
-            load(config, parentDn, children);
-*/
         }
     }
 
@@ -195,35 +264,67 @@ public class CacheManager {
             EntryDefinition entryDefinition = (EntryDefinition)i.next();
             if (entryDefinition.isDynamic()) continue;
 
-            Collection children = config.getChildren(entryDefinition);
-            clean(config, entryDefinition.getDn(), children);
-
             log.debug("Cleaning tables for "+entryDefinition.getDn());
-
             EngineCache cache = engine.getCache(parentDn, entryDefinition);
             cache.clean();
         }
     }
 
     public void drop() throws Exception {
-        connector.drop();
 
         for (Iterator i=configs.iterator(); i.hasNext(); ) {
             Config config = (Config)i.next();
             Collection entryDefinitions = config.getRootEntryDefinitions();
-            drop(config, entryDefinitions);
+            drop(config, null, entryDefinitions);
         }
+
+        dropMappingsTable();
+
+        connector.drop();
     }
 
-    public void drop(Config config, Collection entryDefinitions) throws Exception {
+    public void drop(Config config, String parentDn, Collection entryDefinitions) throws Exception {
         if (entryDefinitions == null) return;
         for (Iterator i=entryDefinitions.iterator(); i.hasNext(); ) {
             EntryDefinition entryDefinition = (EntryDefinition)i.next();
-            if (entryDefinition.isDynamic()) continue;
-            log.debug("Dropping tables for "+entryDefinition.getDn());
+
+            log.debug("Deleting entries under "+entryDefinition.getDn());
+            EngineCache cache = engine.getCache(parentDn, entryDefinition);
+            cache.drop();
 
             Collection children = config.getChildren(entryDefinition);
-            drop(config, children);
+            drop(config, entryDefinition.getDn(), children);
+        }
+    }
+
+    public void dropMappingsTable() throws Exception {
+        String sql = "drop table penrose_mappings";
+
+        Connection con = null;
+        PreparedStatement ps = null;
+
+        try {
+            con = getConnection();
+
+            if (log.isDebugEnabled()) {
+                log.debug(Formatter.displaySeparator(80));
+                Collection lines = Formatter.split(sql, 80);
+                for (Iterator i=lines.iterator(); i.hasNext(); ) {
+                    String line = (String)i.next();
+                    log.debug(Formatter.displayLine(line, 80));
+                }
+                log.debug(Formatter.displaySeparator(80));
+            }
+
+            ps = con.prepareStatement(sql);
+            ps.execute();
+
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+
+        } finally {
+            if (ps != null) try { ps.close(); } catch (Exception e) {}
+            if (con != null) try { con.close(); } catch (Exception e) {}
         }
     }
 

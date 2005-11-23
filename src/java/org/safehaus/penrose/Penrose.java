@@ -103,6 +103,7 @@ public class Penrose implements
 
     private ServerConfig serverConfig;
     private Map configs = new TreeMap();
+    public ConnectionManager connectionManager;
 
     private InterpreterFactory interpreterFactory;
     private Schema schema;
@@ -144,33 +145,13 @@ public class Penrose implements
 
         loadServerConfig();
         loadSchema();
-        initServer();
+        loadConfigs();
 
+        initServer();
+        initConnections();
         initConnectors();
         initEngines();
         initHandler();
-
-        ConfigReader configReader = new ConfigReader();
-        Config config = configReader.read((homeDirectory == null ? "" : homeDirectory+File.separator)+"conf");
-
-        addConfig(config);
-
-        File partitions = new File((homeDirectory == null ? "" : homeDirectory+File.separator)+"partitions");
-
-        if (partitions.exists()) {
-            File files[] = partitions.listFiles();
-            for (int i=0; i<files.length; i++) {
-                File partition = files[i];
-
-                try {
-                    config = configReader.read(partition.getAbsolutePath());
-                    addConfig(config);
-
-                } catch (Exception e) {
-                    log.error(e.getMessage(), e);
-                }
-            }
-        }
 
 		return LDAPException.SUCCESS;
 	}
@@ -192,6 +173,58 @@ public class Penrose implements
         interpreterFactory = new InterpreterFactory(interpreterConfig);
     }
 
+    public void loadConfigs() throws Exception {
+        ConfigReader configReader = new ConfigReader();
+        Config config = configReader.read((homeDirectory == null ? "" : homeDirectory+File.separator)+"conf");
+
+        Collection results = configValidator.validate(config);
+        for (Iterator i=results.iterator(); i.hasNext(); ) {
+            ConfigValidationResult result = (ConfigValidationResult)i.next();
+
+            if (result.getType().equals(ConfigValidationResult.ERROR)) {
+                log.error("ERROR: "+result.getMessage()+" ["+result.getSource()+"]");
+            } else {
+                log.warn("WARNING: "+result.getMessage()+" ["+result.getSource()+"]");
+            }
+        }
+
+        for (Iterator i=config.getRootEntryDefinitions().iterator(); i.hasNext(); ) {
+            EntryDefinition entryDefinition = (EntryDefinition)i.next();
+            String ndn = schema.normalize(entryDefinition.getDn());
+            configs.put(ndn, config);
+        }
+
+        initModules(config);
+        File partitions = new File((homeDirectory == null ? "" : homeDirectory+File.separator)+"partitions");
+        if (partitions.exists()) {
+            File files[] = partitions.listFiles();
+            for (int i=0; i<files.length; i++) {
+                File partition = files[i];
+                String name = partition.getName();
+
+                config = configReader.read(partition.getAbsolutePath());
+
+                results = configValidator.validate(config);
+                for (Iterator j=results.iterator(); j.hasNext(); ) {
+                    ConfigValidationResult result = (ConfigValidationResult)j.next();
+
+                    if (result.getType().equals(ConfigValidationResult.ERROR)) {
+                        log.error("ERROR: "+result.getMessage()+" ["+result.getSource()+"]");
+                    } else {
+                        log.warn("WARNING: "+result.getMessage()+" ["+result.getSource()+"]");
+                    }
+                }
+
+                initModules(config);
+                for (Iterator j=config.getRootEntryDefinitions().iterator(); j.hasNext(); ) {
+                    EntryDefinition entryDefinition = (EntryDefinition)j.next();
+                    String ndn = schema.normalize(entryDefinition.getDn());
+                    configs.put(ndn, config);
+                }
+            }
+        }
+    }
+
     public void initServer() throws Exception {
 
         aclEngine = new ACLEngine(this);
@@ -202,6 +235,22 @@ public class Penrose implements
         configValidator.setSchema(schema);
     }
 
+    public void initConnections() throws Exception {
+        connectionManager = new ConnectionManager();
+
+        for (Iterator i=configs.values().iterator(); i.hasNext(); ) {
+            Config config = (Config)i.next();
+
+            Collection connectionConfigs = config.getConnectionConfigs();
+            for (Iterator j=connectionConfigs.iterator(); j.hasNext(); ) {
+                ConnectionConfig connectionConfig = (ConnectionConfig)j.next();
+                connectionManager.addConnectionConfig(connectionConfig);
+            }
+        }
+
+        connectionManager.init();
+    }
+
     public void initConnectors() throws Exception {
 
         for (Iterator i=serverConfig.getConnectorConfigs().iterator(); i.hasNext(); ) {
@@ -209,7 +258,15 @@ public class Penrose implements
 
             Class clazz = Class.forName(connectorConfig.getConnectorClass());
             Connector connector = (Connector)clazz.newInstance();
-            connector.init(serverConfig, connectorConfig);
+            connector.setServerConfig(serverConfig);
+            connector.setConnectionManager(connectionManager);
+            connector.init(connectorConfig);
+
+            for (Iterator j=configs.values().iterator(); j.hasNext(); ) {
+                Config config = (Config)j.next();
+                connector.addConfig(config);
+            }
+
             connector.start();
 
             connectors.put(connectorConfig.getConnectorName(), connector);
@@ -226,7 +283,14 @@ public class Penrose implements
             engine.setSchema(getSchema());
             engine.setInterpreterFactory(getInterpreterFactory());
             engine.setConnector(getConnector());
+            engine.setConnectionManager(connectionManager);
             engine.init(engineConfig);
+
+            for (Iterator j=configs.values().iterator(); j.hasNext(); ) {
+                Config config = (Config)j.next();
+                engine.addConfig(config);
+            }
+
             engine.start();
 
             engines.put(engineConfig.getEngineName(), engine);
@@ -239,38 +303,6 @@ public class Penrose implements
         handler.setInterpreterFactory(getInterpreterFactory());
         handler.setEngine(getEngine());
     }
-
-	public void addConfig(Config config) throws Exception {
-
-        log.debug("-------------------------------------------------------------------------------");
-        log.debug("Validating config...");
-
-        Collection results = configValidator.validate(config);
-        for (Iterator i=results.iterator(); i.hasNext(); ) {
-            ConfigValidationResult result = (ConfigValidationResult)i.next();
-
-            if (result.getType().equals(ConfigValidationResult.ERROR)) {
-                log.error("ERROR: "+result.getMessage()+" ["+result.getSource()+"]");
-            } else {
-                log.warn("WARNING: "+result.getMessage()+" ["+result.getSource()+"]");
-            }
-        }
-
-        log.debug("-------------------------------------------------------------------------------");
-        log.debug("Penrose.addConfig(config)");
-
-        log.debug("Registering suffixes:");
-        for (Iterator i=config.getRootEntryDefinitions().iterator(); i.hasNext(); ) {
-            EntryDefinition entryDefinition = (EntryDefinition)i.next();
-            String ndn = schema.normalize(entryDefinition.getDn());
-            log.debug(" - "+ndn);
-            configs.put(ndn, config);
-        }
-
-        initModules(config);
-        getConnector().addConfig(config);
-        getEngine().addConfig(config);
-	}
 
     public void initModules(Config config) throws Exception {
 

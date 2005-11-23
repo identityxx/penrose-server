@@ -22,6 +22,7 @@ import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.connector.Connector;
 import org.safehaus.penrose.connector.Connection;
 import org.safehaus.penrose.connector.Adapter;
+import org.safehaus.penrose.connector.ConnectionConfig;
 import org.safehaus.penrose.config.Config;
 import org.safehaus.penrose.SearchResults;
 

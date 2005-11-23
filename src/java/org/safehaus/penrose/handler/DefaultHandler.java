@@ -128,7 +128,7 @@ public class DefaultHandler extends Handler {
 		postCacheEvent(sourceConfig, beforeEvent);
 
 		ConnectionConfig connection = (ConnectionConfig)config.connections.get(sourceConfig.getConnectionName());
-		Adapter adapter = (Adapter) penrose.getAdapterConfigs().get(connection.getAdapterName());
+		Adapter adapter = (Adapter) penrose.getAdapterConfigs().get(connection.getConnectionType());
 
 		SearchResults results = adapter.search(sourceConfig, null);
 

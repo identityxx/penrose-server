@@ -80,6 +80,9 @@ public abstract class EngineCache extends Cache {
     public void clean() throws Exception {
     }
 
+    public void drop() throws Exception {
+    }
+
     public Engine getEngine() {
         return engine;
     }

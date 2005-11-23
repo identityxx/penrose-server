@@ -19,6 +19,7 @@ package org.safehaus.penrose.cache;
 
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.filter.Filter;
+import org.safehaus.penrose.connector.ConnectionManager;
 
 import java.util.*;
 
@@ -27,12 +28,20 @@ import java.util.*;
  */
 public class PersistentConnectorCache extends ConnectorCache {
 
+    ConnectionManager connectionManager;
+    String connectionName;
+
     JDBCCache cache;
 
     public void init() throws Exception {
         super.init();
 
+        connectionManager = connector.getConnectionManager();
+        connectionName = getParameter("connection");
+
         cache = new JDBCCache(cacheConfig, sourceDefinition);
+        cache.setConnectionManager(connectionManager);
+        cache.setConnectionName(connectionName);
         cache.setSize(size);
         cache.setExpiration(expiration);
         cache.init();

@@ -50,14 +50,14 @@ public class JNDIAdapter extends Adapter {
     public void init() throws Exception {
         String name = getConnectionName();
 
-    	log.debug("-------------------------------------------------------------------------------");
-    	log.debug("Initializing JNDI connection "+name+":");
+    	//log.debug("-------------------------------------------------------------------------------");
+    	//log.debug("Initializing JNDI connection "+name+":");
 
         parameters = new Hashtable();
         for (Iterator i=getParameterNames().iterator(); i.hasNext(); ) {
             String param = (String)i.next();
             String value = getParameter(param);
-            log.debug(" - "+param+": "+value);
+            //log.debug(" - "+param+": "+value);
 
             if (param.equals(Context.PROVIDER_URL)) {
 

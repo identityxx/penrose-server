@@ -19,6 +19,7 @@ package org.safehaus.penrose.engine;
 
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.config.Config;
+import org.safehaus.penrose.connector.ConnectionConfig;
 import org.apache.log4j.Logger;
 
 import java.util.Collection;

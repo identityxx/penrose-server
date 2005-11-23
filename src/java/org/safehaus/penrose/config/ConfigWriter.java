@@ -36,6 +36,7 @@ import org.safehaus.penrose.schema.ObjectClass;
 import org.safehaus.penrose.module.ModuleConfig;
 import org.safehaus.penrose.module.ModuleMapping;
 import org.safehaus.penrose.acl.ACI;
+import org.safehaus.penrose.connector.ConnectionConfig;
 
 /**
  * @author Endi S. Dewata
@@ -174,7 +175,7 @@ public class ConfigWriter {
         element.add(new DefaultAttribute("name", connection.getConnectionName()));
 
         Element adapterName = new DefaultElement("adapter-name");
-        adapterName.add(new DefaultText(connection.getAdapterName()));
+        adapterName.add(new DefaultText(connection.getConnectionType()));
         element.add(adapterName);
 
 		// parameters

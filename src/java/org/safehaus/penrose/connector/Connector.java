@@ -47,6 +47,7 @@ public class Connector {
 
     private ServerConfig serverConfig;
     private ConnectorConfig connectorConfig;
+    private ConnectionManager connectionManager;
 
     private ThreadPool threadPool;
     private boolean stopping = false;
@@ -59,8 +60,7 @@ public class Connector {
 
     private Map caches = new TreeMap();
 
-    public void init(ServerConfig serverConfig, ConnectorConfig connectorConfig) throws Exception {
-        this.serverConfig = serverConfig;
+    public void init(ConnectorConfig connectorConfig) throws Exception {
         this.connectorConfig = connectorConfig;
     }
 
@@ -98,7 +98,7 @@ public class Connector {
         for (Iterator i = config.getConnectionConfigs().iterator(); i.hasNext();) {
             ConnectionConfig connectionConfig = (ConnectionConfig)i.next();
 
-            String adapterName = connectionConfig.getAdapterName();
+            String adapterName = connectionConfig.getConnectionType();
             if (adapterName == null) throw new Exception("Missing adapter name");
 
             AdapterConfig adapterConfig = serverConfig.getAdapterConfig(adapterName);
@@ -421,34 +421,19 @@ public class Connector {
             log.debug("Old PKs: " + oldPKs);
             log.debug("New PKs: " + newPKs);
 
-            Set addRows = new HashSet(newPKs);
-            addRows.removeAll(oldPKs);
-            log.debug("PKs to add: " + addRows);
-
             Set removeRows = new HashSet(oldPKs);
             removeRows.removeAll(newPKs);
             log.debug("PKs to remove: " + removeRows);
+
+            Set addRows = new HashSet(newPKs);
+            addRows.removeAll(oldPKs);
+            log.debug("PKs to add: " + addRows);
 
             Set replaceRows = new HashSet(oldPKs);
             replaceRows.retainAll(newPKs);
             log.debug("PKs to replace: " + replaceRows);
 
             Collection pks = new ArrayList();
-
-            // Add rows
-            for (Iterator i = addRows.iterator(); i.hasNext();) {
-                Row pk = (Row) i.next();
-                AttributeValues newEntry = (AttributeValues)newSourceValues.clone();
-                newEntry.set(pk);
-                //log.debug("ADDING ROW: " + newEntry);
-
-                // Add row to source table in the source database/directory
-                Connection connection = getConnection(sourceDefinition.getConnectionName());
-                int rc = connection.add(sourceDefinition, newEntry);
-                if (rc != LDAPException.SUCCESS) return rc;
-
-                pks.add(pk);
-            }
 
             // Remove rows
             for (Iterator i = removeRows.iterator(); i.hasNext();) {
@@ -466,6 +451,21 @@ public class Connector {
 
                 // Delete row from source table in the cache
                 getCache(sourceDefinition).remove(key);
+            }
+
+            // Add rows
+            for (Iterator i = addRows.iterator(); i.hasNext();) {
+                Row pk = (Row) i.next();
+                AttributeValues newEntry = (AttributeValues)newSourceValues.clone();
+                newEntry.set(pk);
+                //log.debug("ADDING ROW: " + newEntry);
+
+                // Add row to source table in the source database/directory
+                Connection connection = getConnection(sourceDefinition.getConnectionName());
+                int rc = connection.add(sourceDefinition, newEntry);
+                if (rc != LDAPException.SUCCESS) return rc;
+
+                pks.add(pk);
             }
 
             // Replace rows
@@ -774,85 +774,19 @@ public class Connector {
         return (ConnectorCache)caches.get(key);
     }
 
-    public static void main(String args[]) throws Exception {
-
-        if (args.length == 0) {
-            System.out.println("Usage: org.safehaus.penrose.connector.Connector [command]");
-            System.out.println();
-            System.out.println("Commands:");
-            System.out.println("    create - create cache tables");
-            System.out.println("    load   - load data into cache tables");
-            System.out.println("    clean  - clean data from cache tables");
-            System.out.println("    drop   - drop cache tables");
-            System.exit(0);
-        }
-
-        String homeDirectory = System.getProperty("penrose.home");
-        log.debug("PENROSE_HOME: "+homeDirectory);
-
-        String command = args[0];
-
-        ServerConfigReader serverConfigReader = new ServerConfigReader();
-        ServerConfig serverCfg = serverConfigReader.read((homeDirectory == null ? "" : homeDirectory+File.separator)+"conf"+File.separator+"server.xml");
-
-        Collection cfgs = getConfigs(homeDirectory);
-        createConnector(serverCfg, cfgs, command);
+    public ConnectionManager getConnectionManager() {
+        return connectionManager;
     }
 
-    public static Collection getConfigs(String homeDirectory) throws Exception {
-        Collection cfgs = new ArrayList();
-
-        ConfigReader configReader = new ConfigReader();
-        Config config = configReader.read((homeDirectory == null ? "" : homeDirectory+File.separator)+"conf");
-
-        cfgs.add(config);
-
-        File partitions = new File(homeDirectory+File.separator+"partitions");
-        if (partitions.exists()) {
-            File files[] = partitions.listFiles();
-            for (int i=0; i<files.length; i++) {
-                File partition = files[i];
-                String name = partition.getName();
-
-                config = configReader.read(partition.getAbsolutePath());
-                cfgs.add(config);
-            }
-        }
-
-        return cfgs;
+    public void setConnectionManager(ConnectionManager connectionManager) {
+        this.connectionManager = connectionManager;
     }
 
-    public static Connector createConnector(
-            ServerConfig serverCfg,
-            Collection cfgs,
-            String command) throws Exception {
+    public ServerConfig getServerConfig() {
+        return serverConfig;
+    }
 
-        ConnectorConfig connectorCfg = serverCfg.getConnectorConfig();
-
-        Connector connector = new Connector();
-        connector.init(serverCfg, connectorCfg);
-
-        for (Iterator i=cfgs.iterator(); i.hasNext(); ) {
-            Config config = (Config)i.next();
-            connector.addConfig(config);
-        }
-
-        if ("create".equals(command)) {
-            connector.create();
-
-        } else if ("load".equals(command)) {
-            connector.load();
-
-        } else if ("clean".equals(command)) {
-            connector.clean();
-
-        } else if ("drop".equals(command)) {
-            connector.drop();
-
-        } else if ("run".equals(command)) {
-            connector.start();
-        }
-
-        return connector;
+    public void setServerConfig(ServerConfig serverConfig) {
+        this.serverConfig = serverConfig;
     }
 }

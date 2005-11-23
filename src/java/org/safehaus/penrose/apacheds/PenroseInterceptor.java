@@ -29,13 +29,11 @@ import org.safehaus.penrose.SearchResults;
 import org.safehaus.penrose.util.ExceptionUtil;
 import org.safehaus.penrose.mapping.EntryDefinition;
 import org.safehaus.penrose.config.Config;
-import org.safehaus.penrose.config.ConfigReader;
 import org.ietf.ldap.*;
 
 import javax.naming.*;
 import javax.naming.directory.*;
 import java.util.*;
-import java.io.File;
 
 /**
  * @author Endi S. Dewata

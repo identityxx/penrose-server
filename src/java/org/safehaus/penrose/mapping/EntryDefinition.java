@@ -155,6 +155,16 @@ public class EntryDefinition implements Cloneable, Serializable {
         return results;
     }
 
+    public Collection getNonRdnAttributes() {
+        Collection results = new ArrayList();
+        for (Iterator i=attributeDefinitions.values().iterator(); i.hasNext(); ) {
+            AttributeDefinition attributeDefinition = (AttributeDefinition)i.next();
+            if (attributeDefinition.isRdn()) continue;
+            results.add(attributeDefinition);
+        }
+        return results;
+    }
+
     public String getDn() {
         if (rdn == null) return null;
         if (parentDn == null) return rdn;

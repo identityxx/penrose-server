@@ -20,6 +20,7 @@ package org.safehaus.penrose.config;
 import org.safehaus.penrose.module.ModuleConfig;
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.connector.AdapterConfig;
+import org.safehaus.penrose.connector.ConnectionConfig;
 import org.safehaus.penrose.schema.Schema;
 import org.safehaus.penrose.schema.ObjectClass;
 import org.safehaus.penrose.schema.AttributeType;
@@ -67,7 +68,7 @@ public class ConfigValidator {
                 continue;
             }
 
-            String adapterName = connectionConfig.getAdapterName();
+            String adapterName = connectionConfig.getConnectionType();
             if (adapterName == null || "".equals(adapterName)) {
                 results.add(new ConfigValidationResult(ConfigValidationResult.ERROR, "Missing adapter name.", connectionName, connectionConfig));
 

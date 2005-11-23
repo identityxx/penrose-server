@@ -66,7 +66,7 @@ public class PenrosePartition extends AbstractDirectoryPartition {
             Config config = reader.read(dir.getAbsolutePath());
             //log.debug(config.toString());
 
-            penrose.addConfig(config);
+            //penrose.addConfig(config);
 
         } catch (Exception e) {
             log.error(e.getMessage(), e);
