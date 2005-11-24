@@ -26,6 +26,7 @@ import org.apache.log4j.Logger;
 import org.ietf.ldap.LDAPException;
 import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.PenroseConnection;
+import org.safehaus.penrose.config.ServerConfig;
 
 import javax.naming.Context;
 import javax.naming.NamingException;
@@ -57,8 +58,9 @@ public class PenroseAuthenticator extends AbstractAuthenticator {
         Object credentials = ctx.getEnvironment().get( Context.SECURITY_CREDENTIALS );
         String password = new String((byte[])credentials);
 
-        String rootDn = penrose.getRootDn();
-        String rootPassword = penrose.getRootPassword();
+        ServerConfig serverConfig = penrose.getServerConfig();
+        String rootDn = serverConfig.getRootDn();
+        String rootPassword = serverConfig.getRootPassword();
 
         if (rootDn != null && rootPassword != null &&
                 rootDn.equals(dn) && rootPassword.equals(password)) {

@@ -74,31 +74,37 @@ public class ServerConfigWriter {
 	public Element toElement() {
 		Element element = new DefaultElement("server");
 
-        // interpreters
-        for (Iterator iter = serverConfig.getInterpreterConfigs().iterator(); iter.hasNext();) {
-            InterpreterConfig interpreterConfig = (InterpreterConfig)iter.next();
-            element.add(toElement(interpreterConfig));
+        if (serverConfig.getInterpreterConfig() != null) {
+            element.add(toElement(serverConfig.getInterpreterConfig()));
         }
 
-        // engines
-        for (Iterator iter = serverConfig.getEngineConfigs().iterator(); iter.hasNext();) {
-            EngineConfig engineConfig = (EngineConfig)iter.next();
+        if (serverConfig.getEntryCacheConfig() != null) {
+            Element entryCache = new DefaultElement("entry-cache");
+            addElements(entryCache, serverConfig.getEntryCacheConfig());
+            element.add(entryCache);
+        }
+
+        if (serverConfig.getSourceCacheConfig() != null) {
+            Element sourceCache = new DefaultElement("source-cache");
+            addElements(sourceCache, serverConfig.getSourceCacheConfig());
+            element.add(sourceCache);
+        }
+
+        if (serverConfig.getEngineConfig() != null) {
+            EngineConfig engineConfig = serverConfig.getEngineConfig();
             element.add(toElement(engineConfig));
         }
 
-        // connectors
-        for (Iterator iter = serverConfig.getConnectorConfigs().iterator(); iter.hasNext();) {
-            ConnectorConfig connectorConfig = (ConnectorConfig)iter.next();
+        if (serverConfig.getConnectorConfig() != null) {
+            ConnectorConfig connectorConfig = serverConfig.getConnectorConfig();
             element.add(toElement(connectorConfig));
         }
 
-        // adapters
         for (Iterator iter = serverConfig.getAdapterConfigs().iterator(); iter.hasNext();) {
             AdapterConfig adapterConfig = (AdapterConfig)iter.next();
             element.add(toElement(adapterConfig));
         }
 
-		// root
         if (serverConfig.getRootDn() != null || serverConfig.getRootPassword() != null) {
             Element rootElement = new DefaultElement("root");
 
@@ -228,21 +234,15 @@ public class ServerConfigWriter {
             element.add(parameter);
         }
 
-        for (Iterator iter = engineConfig.getCacheConfigs().iterator(); iter.hasNext();) {
-            CacheConfig cacheConfig = (CacheConfig)iter.next();
-            element.add(toElement(cacheConfig));
-        }
-
         return element;
     }
 
-    public Element toElement(CacheConfig cacheConfig) {
-    	Element element = new DefaultElement("cache");
-
+    public void addElements(Element element, CacheConfig cacheConfig) {
+/*
         Element cacheName = new DefaultElement("cache-name");
         cacheName.add(new DefaultText(cacheConfig.getCacheName()));
         element.add(cacheName);
-
+*/
         if (cacheConfig.getCacheClass() != null && !"".equals(cacheConfig.getCacheClass())) {
             Element cacheClass = new DefaultElement("cache-class");
             cacheClass.add(new DefaultText(cacheConfig.getCacheClass()));
@@ -271,8 +271,6 @@ public class ServerConfigWriter {
 
             element.add(parameter);
         }
-
-    	return element;
     }
 
     public Element toElement(ConnectorConfig connectorConfig) {
@@ -309,11 +307,6 @@ public class ServerConfigWriter {
             parameter.add(paramValue);
 
             element.add(parameter);
-        }
-
-        for (Iterator iter = connectorConfig.getCacheConfigs().iterator(); iter.hasNext();) {
-            CacheConfig cacheConfig = (CacheConfig)iter.next();
-            element.add(toElement(cacheConfig));
         }
 
     	return element;

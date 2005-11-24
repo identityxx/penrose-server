@@ -42,11 +42,9 @@ public class DeleteHandler {
     Logger log = Logger.getLogger(getClass());
 
     private Handler handler;
-    private HandlerContext handlerContext;
 
     public DeleteHandler(Handler handler) throws Exception {
         this.handler = handler;
-        this.handlerContext = handler.getHandlerContext();
     }
 
     public int delete(PenroseConnection connection, String dn) throws Exception {
@@ -76,13 +74,15 @@ public class DeleteHandler {
         Entry entry = getHandler().getSearchHandler().find(connection, dn);
         if (entry == null) return LDAPException.NO_SUCH_OBJECT;
 
-        int rc = handlerContext.getACLEngine().checkDelete(connection, entry);
+        int rc = handler.getACLEngine().checkDelete(connection, entry);
         if (rc != LDAPException.SUCCESS) return rc;
 
         log.debug("Deleting entry "+dn);
 
         EntryDefinition entryDefinition = entry.getEntryDefinition();
-        if (entryDefinition.isDynamic()) {
+        Config config = handler.getConfig(entryDefinition.getDn());
+
+        if (config.isDynamic(entryDefinition)) {
 	        return handler.getEngine().delete(entry);
 
         } else {
@@ -93,7 +93,7 @@ public class DeleteHandler {
 
     public int deleteStaticEntry(EntryDefinition entry) throws Exception {
 
-        Config config = getHandlerContext().getConfig(entry.getDn());
+        Config config = handler.getConfig(entry.getDn());
         if (config == null) return LDAPException.NO_SUCH_OBJECT;
 
         // can't delete no leaf
@@ -111,13 +111,5 @@ public class DeleteHandler {
 
     public void getHandler(Handler handler) {
         this.handler = handler;
-    }
-
-    public HandlerContext getHandlerContext() {
-        return handlerContext;
-    }
-
-    public void setHandlerContext(HandlerContext handlerContext) {
-        this.handlerContext = handlerContext;
     }
 }

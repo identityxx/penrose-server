@@ -40,19 +40,9 @@ public class SearchHandler {
     Logger log = Logger.getLogger(getClass());
 
     private Handler handler;
-    private HandlerContext handlerContext;
 
     public SearchHandler(Handler handler) throws Exception {
         this.handler = handler;
-        this.handlerContext = handler.getHandlerContext();
-    }
-
-    public HandlerContext getHandlerContext() {
-        return handlerContext;
-    }
-
-    public void setHandlerContext(HandlerContext handlerContext) {
-        this.handlerContext = handlerContext;
     }
 
     /**
@@ -82,6 +72,8 @@ public class SearchHandler {
         String parentDn = Entry.getParentDn(dn);
         Row rdn = Entry.getRdn(dn);
 
+        log.debug("Find entry: ["+rdn+"] ["+parentDn+"]");
+
         List path = findPath(connection, parentDn);
         Entry parent;
 
@@ -93,10 +85,13 @@ public class SearchHandler {
             parent = (Entry)map.get("entry");
         }
 
-		log.debug("Find entry: ["+rdn+"] ["+parentDn+"]");
+        log.debug("Found parent: "+(parent == null ? null : parent.getDn()));
 
-        Config config = getHandlerContext().getConfig(dn);
-        if (config == null) return null;
+        Config config = handler.getConfig(dn);
+        if (config == null) {
+            log.error("Missing config for "+dn);
+            return null;
+        }
 
         // search the entry directly
         EntryDefinition entryDefinition = config.getEntryDefinition(dn);
@@ -124,13 +119,20 @@ public class SearchHandler {
             return path;
         }
 
-        if (parent == null) return null;
+        log.debug("Searching dynamic entry: "+dn);
+
+        if (parent == null) {
+            log.error("Missing parent: "+parentDn);
+            return null;
+        }
 
         EntryDefinition parentDefinition = parent.getEntryDefinition();
 
-		//log.debug("Found parent entry: " + parentDn);
 		Collection children = config.getChildren(parentDefinition);
-        if (children == null) return null;
+        if (children == null) {
+            log.debug("Entry "+parentDn+" has no children.");
+            return null;
+        }
 
         Filter filter = null;
         for (Iterator iterator=rdn.getNames().iterator(); iterator.hasNext(); ) {
@@ -141,12 +143,13 @@ public class SearchHandler {
             filter = FilterTool.appendAndFilter(filter, sf);
         }
 
-        // Find in each dynamic children
+        log.debug("Searching children with filter "+filter);
+
 		for (Iterator iterator = children.iterator(); iterator.hasNext(); ) {
 			EntryDefinition childDefinition = (EntryDefinition) iterator.next();
 
             Row childRdn = Entry.getRdn(childDefinition.getRdn());
-            log.debug("Finding entry in "+childDefinition.getDn()+" with "+filter);
+            log.debug("Finding entry in "+childDefinition.getDn());
 
             if (!rdn.getNames().equals(childRdn.getNames())) continue;
 
@@ -164,7 +167,7 @@ public class SearchHandler {
 
             while (sr.hasNext()) {
                 Entry child = (Entry)sr.next();
-                if (handlerContext.getFilterTool().isValid(child, filter)) {
+                if (handler.getFilterTool().isValid(child, filter)) {
                     log.debug("Adding "+child.getDn()+" into path");
                     Map map = new HashMap();
                     map.put("dn", child.getDn());
@@ -280,7 +283,7 @@ public class SearchHandler {
             set.add(new LDAPAttribute("vendorVersion", new String[] { "Penrose Virtual Directory Server 0.9.8" }));
 
             LDAPAttribute namingContexts = new LDAPAttribute("namingContexts");
-            for (Iterator i=handlerContext.getConfigs().iterator(); i.hasNext(); ) {
+            for (Iterator i=handler.getConfigs().iterator(); i.hasNext(); ) {
                 Config config = (Config)i.next();
                 for (Iterator j=config.getRootEntryDefinitions().iterator(); j.hasNext(); ) {
                     EntryDefinition entry = (EntryDefinition)j.next();
@@ -318,13 +321,13 @@ public class SearchHandler {
         AttributeValues parentSourceValues = new AttributeValues();
         String prefix = engine.getParentSourceValues(path, entryDefinition, parentSourceValues);
 
-        int rc = handlerContext.getACLEngine().checkSearch(connection, baseEntry);
+        int rc = handler.getACLEngine().checkSearch(connection, baseEntry);
         if (rc != LDAPException.SUCCESS) return rc;
 
 		if (scope == LDAPConnection.SCOPE_BASE || scope == LDAPConnection.SCOPE_SUB) { // base or subtree
-			if (handlerContext.getFilterTool().isValid(baseEntry, f)) {
+			if (handler.getFilterTool().isValid(baseEntry, f)) {
 
-                rc = handlerContext.getACLEngine().checkRead(connection, baseEntry);
+                rc = handler.getACLEngine().checkRead(connection, baseEntry);
                 if (rc == LDAPException.SUCCESS) {
                     LDAPEntry ldapEntry = baseEntry.toLDAPEntry();
                     Entry.filterAttributes(ldapEntry, normalizedAttributeNames);
@@ -352,7 +355,7 @@ public class SearchHandler {
             SearchResults results,
             boolean first) throws Exception {
 
-        Config config = handlerContext.getConfig(entryDefinition.getDn());
+        Config config = handler.getConfig(entryDefinition.getDn());
         Collection children = config.getChildren(entryDefinition);
         if (children == null) {
             return;
@@ -361,7 +364,7 @@ public class SearchHandler {
         for (Iterator i = children.iterator(); i.hasNext();) {
             EntryDefinition childDefinition = (EntryDefinition) i.next();
 
-            if (handlerContext.getFilterTool().isValid(childDefinition, filter)) {
+            if (handler.getFilterTool().isValid(childDefinition, filter)) {
 
                 SearchResults sr = handler.getEngine().search(
                         path,
@@ -374,12 +377,12 @@ public class SearchHandler {
                 while (sr.hasNext()) {
                     Entry child = (Entry)sr.next();
 
-                    int rc = handlerContext.getACLEngine().checkSearch(connection, child);
+                    int rc = handler.getACLEngine().checkSearch(connection, child);
                     if (rc != LDAPException.SUCCESS) continue;
 
-                    if (!handlerContext.getFilterTool().isValid(child, filter)) continue;
+                    if (!handler.getFilterTool().isValid(child, filter)) continue;
 
-                    rc = handlerContext.getACLEngine().checkRead(connection, child);
+                    rc = handler.getACLEngine().checkRead(connection, child);
                     if (rc != LDAPException.SUCCESS) continue;
 
                     //newParents.add(child);

@@ -21,7 +21,9 @@ import org.apache.commons.digester.Digester;
 import org.apache.commons.digester.xmlrules.DigesterLoader;
 import org.apache.log4j.Logger;
 import org.safehaus.penrose.connector.ConnectorConfig;
+import org.safehaus.penrose.connector.Connector;
 import org.safehaus.penrose.engine.EngineConfig;
+import org.safehaus.penrose.engine.Engine;
 import org.safehaus.penrose.cache.CacheConfig;
 import org.safehaus.penrose.interpreter.InterpreterConfig;
 
@@ -68,47 +70,35 @@ public class ServerConfigReader {
 		digester.push(serverConfig);
 		digester.parse(file);
 
-        if (serverConfig.getInterpreterConfigs().isEmpty()) {
+        if (serverConfig.getInterpreterConfig() == null) {
             InterpreterConfig interpreterConfig = new InterpreterConfig();
-            serverConfig.addInterpreterConfig(interpreterConfig);
+            serverConfig.setInterpreterConfig(interpreterConfig);
         }
 
-        if (serverConfig.getConnectorConfigs().isEmpty()) {
+        CacheConfig sourceCacheConfig = serverConfig.getSourceCacheConfig();
+        if (sourceCacheConfig == null) {
+            sourceCacheConfig = new CacheConfig();
+            sourceCacheConfig.setCacheClass(ConnectorConfig.DEFAULT_CACHE_CLASS);
+            serverConfig.setSourceCacheConfig(sourceCacheConfig);
+        }
+        sourceCacheConfig.setCacheName(ConnectorConfig.DEFAULT_CACHE_NAME);
+
+        CacheConfig entryCacheConfig = serverConfig.getEntryCacheConfig();
+        if (serverConfig.getEntryCacheConfig() == null) {
+            entryCacheConfig = new CacheConfig();
+            entryCacheConfig.setCacheClass(EngineConfig.DEFAULT_CACHE_CLASS);
+            serverConfig.setEntryCacheConfig(entryCacheConfig);
+        }
+        entryCacheConfig.setCacheName(EngineConfig.DEFAULT_CACHE_NAME);
+
+        if (serverConfig.getConnectorConfig() == null) {
             ConnectorConfig connectorConfig = new ConnectorConfig();
-            serverConfig.addConnectorConfig(connectorConfig);
+            serverConfig.setConnectorConfig(connectorConfig);
         }
 
-        for (Iterator i=serverConfig.getConnectorConfigs().iterator(); i.hasNext(); ) {
-            ConnectorConfig connectorConfig = (ConnectorConfig)i.next();
-
-            CacheConfig dataCacheConfig = connectorConfig.getCacheConfig(ConnectorConfig.CACHE);
-
-            if (dataCacheConfig == null) {
-                dataCacheConfig = new CacheConfig();
-                dataCacheConfig.setCacheName(ConnectorConfig.CACHE);
-                dataCacheConfig.setCacheClass(CacheConfig.DEFAULT_CONNECTOR_CACHE);
-                connectorConfig.addCacheConfig(dataCacheConfig);
-            }
-
-        }
-
-        if (serverConfig.getEngineConfigs().isEmpty()) {
+        if (serverConfig.getEngineConfig() == null) {
             EngineConfig engineConfig = new EngineConfig();
-            serverConfig.addEngineConfig(engineConfig);
-        }
-
-        for (Iterator i=serverConfig.getEngineConfigs().iterator(); i.hasNext(); ) {
-            EngineConfig engineConfig = (EngineConfig)i.next();
-
-            CacheConfig cacheconfig = engineConfig.getCacheConfig(EngineConfig.CACHE);
-
-            if (cacheconfig == null) {
-                cacheconfig = new CacheConfig();
-                cacheconfig.setCacheName(EngineConfig.CACHE);
-                cacheconfig.setCacheClass(CacheConfig.DEFAULT_ENGINE_CACHE);
-                engineConfig.addCacheConfig(cacheconfig);
-            }
-
+            serverConfig.setEngineConfig(engineConfig);
         }
 
 	}

@@ -21,10 +21,12 @@ import org.safehaus.penrose.SearchResults;
 import org.safehaus.penrose.schema.Schema;
 import org.safehaus.penrose.connector.*;
 import org.safehaus.penrose.cache.CacheConfig;
-import org.safehaus.penrose.cache.EngineCache;
+import org.safehaus.penrose.cache.EntryCache;
+import org.safehaus.penrose.cache.DefaultEntryCache;
 import org.safehaus.penrose.util.Formatter;
 import org.safehaus.penrose.util.PasswordUtil;
 import org.safehaus.penrose.config.Config;
+import org.safehaus.penrose.config.ServerConfig;
 import org.safehaus.penrose.filter.*;
 import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.interpreter.InterpreterFactory;
@@ -46,6 +48,7 @@ public class Engine {
 
     static Logger log = Logger.getLogger(Engine.class);
 
+    private ServerConfig serverConfig;
     private EngineConfig engineConfig;
 
     private Map graphs = new HashMap();
@@ -138,12 +141,6 @@ public class Engine {
             Config config = (Config)i.next();
             if (config.getEntryDefinition(dn) != null) return config;
         }
-/*
-        for (Iterator i=configs.keySet().iterator(); i.hasNext(); ) {
-            String suffix = (String)i.next();
-            if (ndn.endsWith(suffix)) return (Config)configs.get(suffix);
-        }
-*/
         return null;
     }
 
@@ -1107,22 +1104,22 @@ public class Engine {
         this.engineConfig = engineConfig;
     }
 
-    public EngineCache getCache(String parentDn, EntryDefinition entryDefinition) throws Exception {
+    public EntryCache getCache(String parentDn, EntryDefinition entryDefinition) throws Exception {
         String cacheName = entryDefinition.getParameter(EntryDefinition.CACHE);
         cacheName = cacheName == null ? EntryDefinition.DEFAULT_CACHE : cacheName;
-        CacheConfig cacheConfig = engineConfig.getCacheConfig(EngineConfig.CACHE);
+        CacheConfig cacheConfig = serverConfig.getEntryCacheConfig();
 
         String key = entryDefinition.getRdn()+","+parentDn;
 
-        EngineCache cache = (EngineCache)caches.get(key);
+        EntryCache cache = (EntryCache)caches.get(key);
 
         if (cache == null) {
 
             String cacheClass = cacheConfig.getCacheClass();
-            cacheClass = cacheClass == null ? CacheConfig.DEFAULT_ENGINE_CACHE : cacheClass;
+            cacheClass = cacheClass == null ? EngineConfig.DEFAULT_CACHE_CLASS : cacheClass;
 
             Class clazz = Class.forName(cacheClass);
-            cache = (EngineCache)clazz.newInstance();
+            cache = (EntryCache)clazz.newInstance();
 
             cache.setParentDn(parentDn);
             cache.setEntryDefinition(entryDefinition);
@@ -1173,6 +1170,14 @@ public class Engine {
 
     public void setConnectionManager(ConnectionManager connectionManager) {
         this.connectionManager = connectionManager;
+    }
+
+    public ServerConfig getServerConfig() {
+        return serverConfig;
+    }
+
+    public void setServerConfig(ServerConfig serverConfig) {
+        this.serverConfig = serverConfig;
     }
 }
 

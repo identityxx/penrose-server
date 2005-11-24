@@ -21,7 +21,7 @@ import org.safehaus.penrose.mapping.Row;
 import org.safehaus.penrose.mapping.Entry;
 import org.safehaus.penrose.mapping.AttributeValues;
 import org.safehaus.penrose.mapping.EntryDefinition;
-import org.safehaus.penrose.cache.EngineCache;
+import org.safehaus.penrose.cache.EntryCache;
 import org.apache.ldap.server.interceptor.NextInterceptor;
 import org.apache.ldap.server.invocation.InvocationStack;
 import org.apache.ldap.server.invocation.Invocation;
@@ -41,7 +41,7 @@ import java.util.*;
 /**
  * @author Endi S. Dewata
  */
-public class ApacheDSEngineCache extends EngineCache {
+public class ApacheDSEntryCache extends EntryCache {
 
     Logger log = Logger.getLogger(getClass());
 

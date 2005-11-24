@@ -26,7 +26,7 @@ import java.util.*;
 /**
  * @author Endi S. Dewata
  */
-public class PersistentConnectorCache extends ConnectorCache {
+public class PersistentSourceCache extends SourceCache {
 
     ConnectionManager connectionManager;
     String connectionName;

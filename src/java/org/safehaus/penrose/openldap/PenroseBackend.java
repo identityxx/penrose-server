@@ -28,6 +28,7 @@ import org.safehaus.penrose.openldap.config.SlapdConfig;
 import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.PenroseConnection;
 import org.safehaus.penrose.SearchResults;
+import org.safehaus.penrose.config.ServerConfig;
 import org.apache.log4j.Logger;
 import org.openldap.backend.Backend;
 import org.openldap.backend.Result;
@@ -39,10 +40,6 @@ public class PenroseBackend implements Backend {
 
     public String slapdConfig;
     public Properties properties;
-
-    public String trustedKeyStore;
-    public String serverConfig;
-    public String mappingConfigs[];
 
     public String suffixes[];
     public String schemaDn;
@@ -71,24 +68,6 @@ public class PenroseBackend implements Backend {
         return LDAPException.SUCCESS;
     }
 
-    public int setTrustedKeyStore(String trustedKeyStore) throws Exception {
-        this.trustedKeyStore = trustedKeyStore;
-
-        return LDAPException.SUCCESS;
-    }
-
-    public int setServerConfig(String serverConfig) throws Exception {
-        this.serverConfig = serverConfig;
-
-        return LDAPException.SUCCESS;
-    }
-
-    public int setMappingConfigs(String mappingConfigs[]) throws Exception {
-        this.mappingConfigs = mappingConfigs;
-
-        return LDAPException.SUCCESS;
-    }
-
     /**
      * Initialize Penrose engine.
      *
@@ -113,9 +92,11 @@ public class PenroseBackend implements Backend {
         log.debug("PenroseBackend.init();");
 
         penrose = new Penrose();
-        penrose.setRootDn(rootDn);
-        penrose.setRootPassword(rootPassword);
-        penrose.init();
+        penrose.start();
+
+        ServerConfig serverConfig = penrose.getServerConfig();
+        serverConfig.setRootDn(rootDn);
+        serverConfig.setRootPassword(rootPassword);
 
         return LDAPException.SUCCESS;
     }

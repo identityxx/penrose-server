@@ -25,7 +25,7 @@ import java.util.*;
 /**
  * @author Endi S. Dewata
  */
-public class InMemoryConnectorCache extends ConnectorCache {
+public class InMemorySourceCache extends SourceCache {
 
     int lastChangeNumber;
 

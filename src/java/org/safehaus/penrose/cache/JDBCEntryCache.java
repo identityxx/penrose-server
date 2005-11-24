@@ -32,7 +32,7 @@ import java.sql.*;
 /**
  * @author Endi S. Dewata
  */
-public class JDBCEngineCache extends EngineCache {
+public class JDBCEntryCache extends EntryCache {
 
     private String driver;
     private String url;

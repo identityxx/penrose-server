@@ -31,7 +31,7 @@ import java.util.*;
 /**
  * @author Endi S. Dewata
  */
-public abstract class ConnectorCache extends Cache {
+public abstract class SourceCache extends Cache {
 
     Connector connector;
     SourceDefinition sourceDefinition;

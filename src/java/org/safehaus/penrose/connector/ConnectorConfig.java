@@ -18,6 +18,7 @@
 package org.safehaus.penrose.connector;
 
 import org.safehaus.penrose.cache.CacheConfig;
+import org.safehaus.penrose.cache.DefaultSourceCache;
 
 import java.io.Serializable;
 import java.util.*;
@@ -30,7 +31,9 @@ public class ConnectorConfig implements Cloneable, Serializable {
     public final static String REFRESH_INTERVAL = "refreshInterval";
     public final static String THREAD_POOL_SIZE = "threadPoolSize";
 
-    public final static String CACHE            = "DEFAULT";
+    public final static String DEFAULT_CACHE_NAME  = "Source Cache";
+    public final static String DEFAULT_CACHE_CLASS = DefaultSourceCache.class.getName();
+
 
     public final static int DEFAULT_REFRESH_INTERVAL = 60; // seconds
     public final static int DEFAULT_THREAD_POOL_SIZE = 20;
@@ -42,8 +45,6 @@ public class ConnectorConfig implements Cloneable, Serializable {
     private String description;
 
     private Properties parameters = new Properties();
-
-    private Map cacheConfigs = new TreeMap();
 
     public String getConnectorClass() {
         return connectorClass;
@@ -85,32 +86,11 @@ public class ConnectorConfig implements Cloneable, Serializable {
         this.description = description;
     }
 
-    public void addCacheConfig(CacheConfig cacheConfig) {
-    	cacheConfigs.put(cacheConfig.getCacheName(), cacheConfig);
-    }
-
-    public CacheConfig removeCacheConfig(String name) {
-        return (CacheConfig)cacheConfigs.remove(name);
-    }
-
-    public CacheConfig getCacheConfig() {
-        return (CacheConfig)cacheConfigs.get("DEFAULT");
-    }
-
-    public CacheConfig getCacheConfig(String name) {
-        return (CacheConfig)cacheConfigs.get(name);
-    }
-
-    public Collection getCacheConfigs() {
-    	return cacheConfigs.values();
-    }
-
     public int hashCode() {
         return (connectorName == null ? 0 : connectorName.hashCode()) +
                 (connectorClass == null ? 0 : connectorClass.hashCode()) +
                 (description == null ? 0 : description.hashCode()) +
-                (parameters == null ? 0 : parameters.hashCode()) +
-                (cacheConfigs == null ? 0 : cacheConfigs.hashCode());
+                (parameters == null ? 0 : parameters.hashCode());
     }
 
     boolean equals(Object o1, Object o2) {
@@ -128,7 +108,6 @@ public class ConnectorConfig implements Cloneable, Serializable {
         if (!equals(connectorClass, connectorConfig.connectorClass)) return false;
         if (!equals(description, connectorConfig.description)) return false;
         if (!equals(parameters, connectorConfig.parameters)) return false;
-        if (!equals(cacheConfigs, connectorConfig.cacheConfigs)) return false;
 
         return true;
     }
@@ -146,12 +125,6 @@ public class ConnectorConfig implements Cloneable, Serializable {
 
         parameters.clear();
         parameters.putAll(connectorConfig.parameters);
-
-        cacheConfigs.clear();
-        for (Iterator i=connectorConfig.cacheConfigs.values().iterator(); i.hasNext(); ) {
-            CacheConfig cacheConfig = (CacheConfig)i.next();
-            addCacheConfig((CacheConfig)cacheConfig.clone());
-        }
     }
 
 }

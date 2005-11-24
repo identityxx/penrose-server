@@ -40,7 +40,7 @@ public class PenroseService implements PenroseServiceMBean {
         log.debug("Starting Penrose Service...");
 
         PenroseServer server = new PenroseServer(home);
-        server.run();
+        server.start();
 
         log.debug("Penrose Service started.");
     }

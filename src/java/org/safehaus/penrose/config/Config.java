@@ -359,7 +359,7 @@ public class Config implements Serializable {
 
                 if (!rdn.getNames().equals(childRdn.getNames())) continue;
 
-                if (childDefinition.isDynamic()) {
+                if (childDefinition.isRdnDynamic()) {
                     result = childDefinition;
                     return result;
                 }
@@ -556,5 +556,14 @@ public class Config implements Serializable {
         }
 
         return results;
+    }
+
+    public boolean isDynamic(EntryDefinition entryDefinition) {
+        if (!entryDefinition.isDynamic()) return false;
+
+        EntryDefinition parentDefinition = getParent(entryDefinition);
+        if (parentDefinition == null) return true;
+
+        return isDynamic(parentDefinition);
     }
 }

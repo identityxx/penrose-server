@@ -33,7 +33,10 @@ import org.safehaus.penrose.engine.Engine;
 import org.safehaus.penrose.engine.EngineConfig;
 import org.safehaus.penrose.mapping.EntryDefinition;
 import org.safehaus.penrose.util.Formatter;
+import org.safehaus.penrose.handler.Handler;
 import org.apache.log4j.Logger;
+import org.ietf.ldap.LDAPConnection;
+import org.ietf.ldap.LDAPSearchConstraints;
 
 import java.io.File;
 import java.util.Collection;
@@ -41,7 +44,6 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
-import java.sql.DriverManager;
 
 /**
  * @author Endi S. Dewata
@@ -56,12 +58,14 @@ public class CacheManager {
 
     public Schema schema;
     public Collection configs = new ArrayList();
+    public InterpreterFactory interpreterFactory;
 
     public ConnectionManager connectionManager;
     public String jdbcConnectionName;
 
     public Connector connector;
     public Engine engine;
+    public Handler handler;
 
     public CacheManager() throws Exception {
     }
@@ -69,18 +73,19 @@ public class CacheManager {
     public void init() throws Exception {
 
         homeDirectory = System.getProperty("penrose.home");
-        log.debug("PENROSE_HOME: "+homeDirectory);
+        log.debug("Home: "+homeDirectory);
 
         loadServerConfig();
         loadSchema();
         loadConfigs();
 
+        initInterpreter();
         initConnections();
         initConnector();
         initEngine();
+        initHandler();
 
-        EngineConfig engineConfig = serverConfig.getEngineConfig();
-        CacheConfig cacheConfig = engineConfig.getCacheConfig();
+        CacheConfig cacheConfig = serverConfig.getEntryCacheConfig();
         jdbcConnectionName = cacheConfig.getParameter("jdbcConnection");
     }
 
@@ -115,6 +120,11 @@ public class CacheManager {
         }
     }
 
+    public void initInterpreter() throws Exception {
+        InterpreterConfig interpreterConfig = serverConfig.getInterpreterConfig();
+        interpreterFactory = new InterpreterFactory(interpreterConfig);
+    }
+
     public void initConnections() throws Exception {
         connectionManager = new ConnectionManager();
 
@@ -133,12 +143,12 @@ public class CacheManager {
 
     public void initConnector() throws Exception {
 
-        ConnectorConfig connectorCfg = serverConfig.getConnectorConfig();
+        ConnectorConfig connectorConfig = serverConfig.getConnectorConfig();
 
         connector = new Connector();
         connector.setServerConfig(serverConfig);
         connector.setConnectionManager(connectionManager);
-        connector.init(connectorCfg);
+        connector.init(connectorConfig);
 
         for (Iterator i=configs.iterator(); i.hasNext(); ) {
             Config config = (Config)i.next();
@@ -148,21 +158,33 @@ public class CacheManager {
 
     public void initEngine() throws Exception {
 
-        InterpreterConfig interpreterConfig = serverConfig.getInterpreterConfig();
-        InterpreterFactory intFactory = new InterpreterFactory(interpreterConfig);
-
-        EngineConfig engineCfg = serverConfig.getEngineConfig();
+        EngineConfig engineconfig = serverConfig.getEngineConfig();
         engine = new Engine();
-        engine.setInterpreterFactory(intFactory);
+        engine.setServerConfig(serverConfig);
+        engine.setInterpreterFactory(interpreterFactory);
         engine.setSchema(schema);
         engine.setConnector(connector);
         engine.setConnectionManager(connectionManager);
-        engine.init(engineCfg);
+        engine.init(engineconfig);
 
         for (Iterator i=configs.iterator(); i.hasNext(); ) {
             Config config = (Config)i.next();
             engine.addConfig(config);
         }
+    }
+
+    public void initHandler() throws Exception {
+        handler = new Handler();
+        handler.setSchema(schema);
+        handler.setInterpreterFactory(interpreterFactory);
+        handler.setEngine(engine);
+
+        for (Iterator j=configs.iterator(); j.hasNext(); ) {
+            Config config = (Config)j.next();
+            handler.addConfig(config);
+        }
+
+        handler.init();
     }
 
     public void create() throws Exception {
@@ -218,7 +240,7 @@ public class CacheManager {
             EntryDefinition entryDefinition = (EntryDefinition)i.next();
 
             log.debug("Creating tables for "+entryDefinition.getDn());
-            EngineCache cache = engine.getCache(parentDn, entryDefinition);
+            EntryCache cache = engine.getCache(parentDn, entryDefinition);
             cache.create();
 
             Collection children = config.getChildren(entryDefinition);
@@ -240,11 +262,24 @@ public class CacheManager {
         if (entryDefinitions == null) return;
         for (Iterator i=entryDefinitions.iterator(); i.hasNext(); ) {
             EntryDefinition entryDefinition = (EntryDefinition)i.next();
-            if (entryDefinition.isDynamic()) continue;
 
             log.debug("Loading entries under "+entryDefinition.getDn());
-            EngineCache cache = engine.getCache(parentDn, entryDefinition);
+
+            handler.search(
+                    null,
+                    entryDefinition.getDn(),
+                    LDAPConnection.SCOPE_SUB,
+                    LDAPSearchConstraints.DEREF_NEVER,
+                    "(objectClass=*)",
+                    new ArrayList()
+            );
+/*
+            EntryCache cache = engine.getCache(parentDn, entryDefinition);
             cache.load();
+
+            Collection children = config.getChildren(entryDefinition);
+            load(config, entryDefinition.getDn(), children);
+*/
         }
     }
 
@@ -262,10 +297,12 @@ public class CacheManager {
         if (entryDefinitions == null) return;
         for (Iterator i=entryDefinitions.iterator(); i.hasNext(); ) {
             EntryDefinition entryDefinition = (EntryDefinition)i.next();
-            if (entryDefinition.isDynamic()) continue;
+
+            Collection children = config.getChildren(entryDefinition);
+            clean(config, entryDefinition.getDn(), children);
 
             log.debug("Cleaning tables for "+entryDefinition.getDn());
-            EngineCache cache = engine.getCache(parentDn, entryDefinition);
+            EntryCache cache = engine.getCache(parentDn, entryDefinition);
             cache.clean();
         }
     }
@@ -288,12 +325,12 @@ public class CacheManager {
         for (Iterator i=entryDefinitions.iterator(); i.hasNext(); ) {
             EntryDefinition entryDefinition = (EntryDefinition)i.next();
 
-            log.debug("Deleting entries under "+entryDefinition.getDn());
-            EngineCache cache = engine.getCache(parentDn, entryDefinition);
-            cache.drop();
-
             Collection children = config.getChildren(entryDefinition);
             drop(config, entryDefinition.getDn(), children);
+
+            log.debug("Deleting entries under "+entryDefinition.getDn());
+            EntryCache cache = engine.getCache(parentDn, entryDefinition);
+            cache.drop();
         }
     }
 
@@ -320,7 +357,7 @@ public class CacheManager {
             ps.execute();
 
         } catch (Exception e) {
-            log.error(e.getMessage(), e);
+            log.error(e.getMessage());
 
         } finally {
             if (ps != null) try { ps.close(); } catch (Exception e) {}

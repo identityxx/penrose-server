@@ -52,14 +52,14 @@ public class SchemaReader {
         });
 
         for (int i=0; i<filenames.length; i++) {
-            read(directory+"/"+filenames[i]);
+            read(directory+File.separator+filenames[i]);
         }
 
     }
 
     public void read(String filename) throws Exception {
 
-        log.debug("Loading schema from "+filename);
+        log.debug("Loading schema "+filename+".");
 
         FileReader in = new FileReader(filename);
         SchemaParser parser = new SchemaParser(in);

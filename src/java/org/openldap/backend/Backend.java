@@ -35,9 +35,6 @@ public interface Backend {
     public int init() throws Exception;
 
     public int setHomeDirectory(String configHomeDirectory, String realHomeDirectory);
-    public int setTrustedKeyStore(String trustedKeyStore) throws Exception;
-    public int setServerConfig(String serverConfig) throws Exception;
-    public int setMappingConfigs(String mappingConfigs[]) throws Exception;
 
 
     /**

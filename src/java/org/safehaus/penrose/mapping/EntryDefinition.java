@@ -131,20 +131,23 @@ public class EntryDefinition implements Cloneable, Serializable {
         return parentDn;
     }
 
+    public boolean isRdnDynamic() {
+        for (Iterator i=attributeDefinitions.values().iterator(); i.hasNext(); ) {
+            AttributeDefinition attributeDefinition = (AttributeDefinition)i.next();
+            if (!attributeDefinition.isRdn()) continue;
+            if (attributeDefinition.getConstant() == null) return true;
+        }
+        return false;
+    }
+
     public boolean isDynamic() {
-        return rdn.indexOf("...") >= 0;
+        for (Iterator i=attributeDefinitions.values().iterator(); i.hasNext(); ) {
+            AttributeDefinition attributeDefinition = (AttributeDefinition)i.next();
+            if (attributeDefinition.getConstant() == null) return true;
+        }
+        return false;
     }
     
-    public void setDynamic(boolean mapping) {
-    	if (mapping && !isDynamic()) {
-    		int j = rdn.indexOf("=")+1;
-    		rdn = rdn.substring(0, j) + "...";
-
-    	} else if (!mapping && isDynamic()) {
-    		rdn = rdn.replaceAll("\\.\\.\\.", "value");
-    	}
-    }
-
     public Collection getRdnAttributes() {
         Collection results = new ArrayList();
         for (Iterator i=attributeDefinitions.values().iterator(); i.hasNext(); ) {

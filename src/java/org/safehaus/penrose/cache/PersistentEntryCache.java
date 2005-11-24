@@ -24,6 +24,7 @@ import org.safehaus.penrose.config.Config;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.connector.ConnectionConfig;
 import org.safehaus.penrose.connector.ConnectionManager;
+import org.safehaus.penrose.interpreter.Interpreter;
 
 import javax.naming.NamingException;
 import javax.naming.NamingEnumeration;
@@ -36,7 +37,7 @@ import java.sql.ResultSet;
 /**
  * @author Endi S. Dewata
  */
-public class PersistentEngineCache extends EngineCache {
+public class PersistentEntryCache extends EntryCache {
 
     Config config;
     int entryId;
@@ -98,7 +99,6 @@ public class PersistentEngineCache extends EngineCache {
             }
         }
 
-/*
         if (!entryDefinition.isDynamic()) {
             Interpreter interpreter = engine.getInterpreterFactory().newInstance();
             AttributeValues attributeValues = engine.computeAttributeValues(entryDefinition, interpreter);
@@ -109,7 +109,7 @@ public class PersistentEngineCache extends EngineCache {
 
             put(rdn, entry);
         }
-*/
+
     }
 
     public int getEntryId() throws Exception {
@@ -348,15 +348,21 @@ public class PersistentEngineCache extends EngineCache {
     }
 
     public void clean() throws Exception {
+        if (!entryDefinition.isDynamic()) return;
+
         String dn = entryDefinition.getDn();
-        //log.debug("Deleting "+dn);
-/*
         Row rdn = Entry.getRdn(dn);
         remove(rdn);
-*/
+
     }
 
     public void drop() throws Exception {
+        if (!entryDefinition.isDynamic()) {
+            String dn = entryDefinition.getDn();
+            Row rdn = Entry.getRdn(dn);
+            remove(rdn);
+        }
+
         Collection sources = config.getEffectiveSources(entryDefinition);
 
         for (Iterator i=sources.iterator(); i.hasNext(); ) {
@@ -453,6 +459,8 @@ public class PersistentEngineCache extends EngineCache {
 
     public void load() throws Exception {
 
+        if (!entryDefinition.isDynamic()) return;
+
         Collection entries = config.getChildren(entryDefinition);
         load(entries);
     }
@@ -466,8 +474,8 @@ public class PersistentEngineCache extends EngineCache {
 
             engine.search(null, new AttributeValues(), ed, null, null);
 
-            Collection children = config.getChildren(ed);
-            load(children);
+            //Collection children = config.getChildren(ed);
+            //load(children);
         }
     }
 
@@ -639,10 +647,12 @@ public class PersistentEngineCache extends EngineCache {
             Collection fields = sourceDefinition.getFieldDefinitions();
             for (Iterator j=fields.iterator(); j.hasNext(); ) {
                 FieldDefinition fieldDefinition = (FieldDefinition)j.next();
-                Collection values = sourceValues.get(source.getName()+"."+fieldDefinition.getName());
 
                 deleteField(source, fieldDefinition, rdn);
 
+                Collection values = sourceValues.get(source.getName()+"."+fieldDefinition.getName());
+                if (values == null) continue;
+                
                 for (Iterator k=values.iterator(); k.hasNext(); ) {
                     Object value = k.next();
                     insertField(source, fieldDefinition, rdn, value);

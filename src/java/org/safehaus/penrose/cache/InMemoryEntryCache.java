@@ -25,7 +25,7 @@ import java.util.*;
 /**
  * @author Endi S. Dewata
  */
-public class InMemoryEngineCache extends EngineCache {
+public class InMemoryEntryCache extends EntryCache {
 
     Map queryMap = new TreeMap();
     Map queryExpirationMap = new LinkedHashMap();

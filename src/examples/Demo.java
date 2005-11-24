@@ -43,7 +43,7 @@ public class Demo extends TestCase {
 
 	public void setUp() throws Exception {
 		penrose = new Penrose();
-		penrose.init();
+		penrose.start();
 
         connection = penrose.openConnection();
 	}

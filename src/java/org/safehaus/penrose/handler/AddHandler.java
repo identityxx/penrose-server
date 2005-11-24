@@ -35,11 +35,9 @@ public class AddHandler {
     Logger log = Logger.getLogger(getClass());
 
     private Handler handler;
-    private HandlerContext handlerContext;
 
     public AddHandler(Handler handler) throws Exception {
         this.handler = handler;
-        this.handlerContext = handler.getHandlerContext();
     }
 
     /**
@@ -99,13 +97,13 @@ public class AddHandler {
         Entry parent = getHandler().getSearchHandler().find(connection, parentDn);
         if (parent == null) return LDAPException.NO_SUCH_OBJECT;
 
-        int rc = handlerContext.getACLEngine().checkAdd(connection, parent);
+        int rc = handler.getACLEngine().checkAdd(connection, parent);
         if (rc != LDAPException.SUCCESS) return rc;
 
         log.debug("Adding entry under "+parent.getDn());
 
         EntryDefinition parentDefinition = parent.getEntryDefinition();
-        Config config = handlerContext.getConfig(parentDefinition.getDn());
+        Config config = handler.getConfig(parentDefinition.getDn());
         Collection children = config.getChildren(parentDefinition);
 
         AttributeValues values = new AttributeValues();
@@ -125,7 +123,7 @@ public class AddHandler {
         if (children != null) {
             for (Iterator iterator = children.iterator(); iterator.hasNext(); ) {
                 EntryDefinition entryDefinition = (EntryDefinition)iterator.next();
-                if (!entryDefinition.isDynamic()) continue;
+                if (!config.isDynamic(entryDefinition)) continue;
 
                 return handler.getEngine().add(parent, entryDefinition, values);
             }
@@ -142,14 +140,6 @@ public class AddHandler {
         this.handler = handler;
     }
 
-    public HandlerContext getHandlerContext() {
-        return handlerContext;
-    }
-
-    public void setHandlerContext(HandlerContext handlerContext) {
-        this.handlerContext = handlerContext;
-    }
-
     public int addStaticEntry(EntryDefinition parent, AttributeValues values, String dn) throws Exception {
         log.debug("Adding regular entry "+dn);
 
@@ -164,7 +154,7 @@ public class AddHandler {
             newEntry = new EntryDefinition(rdn.toString(), parent);
         }
 
-        Config config = getHandlerContext().getConfig(dn);
+        Config config = handler.getConfig(dn);
         if (config == null) return LDAPException.NO_SUCH_OBJECT;
 
         config.addEntryDefinition(newEntry);

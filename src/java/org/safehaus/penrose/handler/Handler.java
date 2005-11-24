@@ -19,10 +19,16 @@ package org.safehaus.penrose.handler;
 
 import org.safehaus.penrose.SearchResults;
 import org.safehaus.penrose.*;
+import org.safehaus.penrose.acl.ACLEngine;
+import org.safehaus.penrose.filter.FilterTool;
+import org.safehaus.penrose.mapping.EntryDefinition;
+import org.safehaus.penrose.config.Config;
 import org.safehaus.penrose.schema.Schema;
 import org.safehaus.penrose.engine.Engine;
 import org.safehaus.penrose.interpreter.InterpreterFactory;
 import org.safehaus.penrose.module.Module;
+import org.safehaus.penrose.module.ModuleMapping;
+import org.safehaus.penrose.module.ModuleConfig;
 import org.safehaus.penrose.event.*;
 import org.apache.log4j.Logger;
 import org.ietf.ldap.LDAPEntry;
@@ -47,21 +53,27 @@ public class Handler {
 
     private Schema schema;
     private Engine engine;
-    private HandlerContext handlerContext;
+
+    private Map configs = new TreeMap();
+    private Map modules = new LinkedHashMap();
+
+    private String rootDn;
+    private String rootPassword;
 
     private InterpreterFactory interpreterFactory;
+    private ACLEngine aclEngine;
+    private FilterTool filterTool;
 
-    public Handler() {
+    public Handler() throws Exception {
+
     }
 
-    /**
-     * Initialize the engine with a Penrose instance
-     *
-     * @param handlerContext
-     * @throws Exception
-     */
-    public Handler(HandlerContext handlerContext) throws Exception {
-        this.handlerContext = handlerContext;
+    public void init() throws Exception {
+
+        aclEngine = new ACLEngine(this);
+
+        filterTool = new FilterTool();
+        filterTool.setSchema(schema);
 
         addHandler = new AddHandler(this);
         bindHandler = new BindHandler(this);
@@ -70,6 +82,20 @@ public class Handler {
         modifyHandler = new ModifyHandler(this);
         modRdnHandler = new ModRdnHandler(this);
         searchHandler = new SearchHandler(this);
+
+        for (Iterator i=configs.values().iterator(); i.hasNext(); ) {
+            Config config = (Config)i.next();
+
+            for (Iterator j=config.getModuleConfigs().iterator(); j.hasNext(); ) {
+                ModuleConfig moduleConfig = (ModuleConfig)j.next();
+
+                Class clazz = Class.forName(moduleConfig.getModuleClass());
+                Module module = (Module)clazz.newInstance();
+                module.init(moduleConfig);
+
+                modules.put(moduleConfig.getModuleName(), module);
+            }
+        }
     }
 
     public int add(PenroseConnection connection, LDAPEntry entry) throws Exception {
@@ -187,16 +213,8 @@ public class Handler {
         this.modRdnHandler = modRdnHandler;
     }
 
-    public HandlerContext getHandlerContext() {
-        return handlerContext;
-    }
-
-    public void setHandlerContext(HandlerContext handlerContext) {
-        this.handlerContext = handlerContext;
-    }
-
     public void postEvent(String dn, Event event) throws Exception {
-        Collection c = handlerContext.getModules(dn);
+        Collection c = getModules(dn);
 
         for (Iterator i=c.iterator(); i.hasNext(); ) {
             Module module = (Module)i.next();
@@ -286,6 +304,88 @@ public class Handler {
 
     public void setSchema(Schema schema) {
         this.schema = schema;
+    }
+
+    public Collection getModules(String dn) throws Exception {
+        log.debug("Find matching module mapping for "+dn);
+
+        Collection list = new ArrayList();
+
+        Config config = engine.getConfig(dn);
+        if (config == null) return list;
+
+        for (Iterator i = config.getModuleMappings().iterator(); i.hasNext(); ) {
+            Collection c = (Collection)i.next();
+
+            for (Iterator j=c.iterator(); j.hasNext(); ) {
+                ModuleMapping moduleMapping = (ModuleMapping)j.next();
+
+                String moduleName = moduleMapping.getModuleName();
+                Module module = (Module)modules.get(moduleName);
+
+                if (moduleMapping.match(dn)) {
+                    log.debug(" - "+moduleName);
+                    list.add(module);
+                }
+            }
+        }
+
+        return list;
+    }
+
+    public String getRootDn() {
+        return rootDn;
+    }
+
+    public void setRootDn(String rootDn) {
+        this.rootDn = rootDn;
+    }
+
+    public String getRootPassword() {
+        return rootPassword;
+    }
+
+    public void setRootPassword(String rootPassword) {
+        this.rootPassword = rootPassword;
+    }
+
+    public void addConfig(Config config) throws Exception {
+
+        for (Iterator i=config.getRootEntryDefinitions().iterator(); i.hasNext(); ) {
+            EntryDefinition entryDefinition = (EntryDefinition)i.next();
+
+            String ndn = schema.normalize(entryDefinition.getDn());
+            configs.put(ndn, config);
+        }
+    }
+
+    public Collection getConfigs() throws Exception {
+        return configs.values();
+    }
+
+    public Config getConfig(String dn) throws Exception {
+        String ndn = schema.normalize(dn);
+        for (Iterator i=configs.keySet().iterator(); i.hasNext(); ) {
+            String suffix = (String)i.next();
+            if (ndn.endsWith(suffix)) return (Config)configs.get(suffix);
+        }
+        return null;
+    }
+
+    public FilterTool getFilterTool() {
+        return filterTool;
+    }
+
+    public void setFilterTool(FilterTool filterTool) {
+        this.filterTool = filterTool;
+    }
+
+    public ACLEngine getACLEngine() {
+        return aclEngine;
+    }
+
+    public void setACLEngine(ACLEngine aclEngine) {
+        this.aclEngine = aclEngine;
     }
 }
 

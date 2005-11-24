@@ -19,7 +19,8 @@ package org.safehaus.penrose.connector;
 
 import org.safehaus.penrose.SearchResults;
 import org.safehaus.penrose.cache.CacheConfig;
-import org.safehaus.penrose.cache.ConnectorCache;
+import org.safehaus.penrose.cache.SourceCache;
+import org.safehaus.penrose.cache.DefaultSourceCache;
 import org.safehaus.penrose.engine.TransformEngine;
 import org.safehaus.penrose.util.Formatter;
 import org.safehaus.penrose.config.Config;
@@ -121,17 +122,17 @@ public class Connector {
 
                 String key = connectionConfig.getConnectionName()+"."+sourceDefinition.getName();
 
-                CacheConfig dataCacheConfig = connectorConfig.getCacheConfig(ConnectorConfig.CACHE);
+                CacheConfig dataCacheConfig = serverConfig.getSourceCacheConfig();
                 String dataCacheClass = dataCacheConfig.getCacheClass();
-                dataCacheClass = dataCacheClass == null ? CacheConfig.DEFAULT_CONNECTOR_CACHE : dataCacheClass;
+                dataCacheClass = dataCacheClass == null ? ConnectorConfig.DEFAULT_CACHE_CLASS : dataCacheClass;
 
                 clazz = Class.forName(dataCacheClass);
-                ConnectorCache connectorCache = (ConnectorCache)clazz.newInstance();
-                connectorCache.setConnector(this);
-                connectorCache.setSourceDefinition(sourceDefinition);
-                connectorCache.init(dataCacheConfig);
+                SourceCache sourceCache = (SourceCache)clazz.newInstance();
+                sourceCache.setConnector(this);
+                sourceCache.setSourceDefinition(sourceDefinition);
+                sourceCache.init(dataCacheConfig);
 
-                caches.put(key, connectorCache);
+                caches.put(key, sourceCache);
             }
         }
     }
@@ -217,8 +218,8 @@ public class Connector {
         SearchResults sr = connection.getChanges(sourceDefinition, lastChangeNumber);
         if (!sr.hasNext()) return;
 
-        CacheConfig dataCacheConfig = connectorConfig.getCacheConfig(ConnectorConfig.CACHE);
-        String user = dataCacheConfig.getParameter("user");
+        CacheConfig cacheConfig = serverConfig.getSourceCacheConfig();
+        String user = cacheConfig.getParameter("user");
 
         Collection pks = new HashSet();
 
@@ -268,29 +269,29 @@ public class Connector {
 
     public void create() throws Exception {
         for (Iterator i=caches.values().iterator(); i.hasNext(); ) {
-            ConnectorCache connectorCache = (ConnectorCache)i.next();
-            connectorCache.create();
+            SourceCache sourceCache = (SourceCache)i.next();
+            sourceCache.create();
         }
     }
 
     public void load() throws Exception {
         for (Iterator i=caches.values().iterator(); i.hasNext(); ) {
-            ConnectorCache connectorCache = (ConnectorCache)i.next();
-            connectorCache.load();
+            SourceCache sourceCache = (SourceCache)i.next();
+            sourceCache.load();
         }
     }
 
     public void clean() throws Exception {
         for (Iterator i=caches.values().iterator(); i.hasNext(); ) {
-            ConnectorCache connectorCache = (ConnectorCache)i.next();
-            connectorCache.clean();
+            SourceCache sourceCache = (SourceCache)i.next();
+            sourceCache.clean();
         }
     }
 
     public void drop() throws Exception {
         for (Iterator i=caches.values().iterator(); i.hasNext(); ) {
-            ConnectorCache connectorCache = (ConnectorCache)i.next();
-            connectorCache.drop();
+            SourceCache sourceCache = (SourceCache)i.next();
+            sourceCache.drop();
         }
     }
 
@@ -765,13 +766,13 @@ public class Connector {
         this.connectorConfig = connectorConfig;
     }
 
-    public ConnectorCache getCache(SourceDefinition sourceDefinition) throws Exception {
+    public SourceCache getCache(SourceDefinition sourceDefinition) throws Exception {
 
         Config config = getConfig(sourceDefinition);
         ConnectionConfig connectionConfig = config.getConnectionConfig(sourceDefinition.getConnectionName());
 
         String key = connectionConfig.getConnectionName()+"."+sourceDefinition.getName();
-        return (ConnectorCache)caches.get(key);
+        return (SourceCache)caches.get(key);
     }
 
     public ConnectionManager getConnectionManager() {

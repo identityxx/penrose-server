@@ -1,16 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <server>
-  <interpreter>
-    <interpreter-name>DEFAULT</interpreter-name>
-    <interpreter-class>org.safehaus.penrose.interpreter.DefaultInterpreter</interpreter-class>
-  </interpreter>
   <engine>
     <engine-name>DEFAULT</engine-name>
     <engine-class>org.safehaus.penrose.engine.Engine</engine-class>
     <cache>
       <cache-name>DEFAULT</cache-name>
-      <cache-class>org.safehaus.penrose.cache.DefaultEngineCache</cache-class>
+      <cache-class>org.safehaus.penrose.cache.DefaultEntryCache</cache-class>
     </cache>
   </engine>
   <connector>
@@ -18,7 +14,7 @@
     <connector-class>org.safehaus.penrose.connector.Connector</connector-class>
     <cache>
       <cache-name>DEFAULT</cache-name>
-      <cache-class>org.safehaus.penrose.cache.DefaultConnectorCache</cache-class>
+      <cache-class>org.safehaus.penrose.cache.DefaultSourceCache</cache-class>
     </cache>
   </connector>
   <adapter>
@@ -29,4 +25,8 @@
     <adapter-name>JNDI</adapter-name>
     <adapter-class>org.safehaus.penrose.connector.JNDIAdapter</adapter-class>
   </adapter>
+  <root>
+    <root-dn>uid=admin,ou=system</root-dn>
+    <root-password>secret</root-password>
+  </root>
 </server>

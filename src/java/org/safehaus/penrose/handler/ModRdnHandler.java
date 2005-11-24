@@ -37,11 +37,9 @@ public class ModRdnHandler {
     Logger log = Logger.getLogger(getClass());
 
     public Handler handler;
-    private HandlerContext handlerContext;
 
 	public ModRdnHandler(Handler handler) throws Exception {
         this.handler = handler;
-        this.handlerContext = handler.getHandlerContext();
 	}
 
 	public int modrdn(PenroseConnection connection, String dn, String newRdn)
@@ -71,11 +69,12 @@ public class ModRdnHandler {
         Entry entry = handler.getSearchHandler().find(connection, ndn);
         if (entry == null) return LDAPException.NO_SUCH_OBJECT;
 
-        int rc = handlerContext.getACLEngine().checkModify(connection, entry);
+        int rc = handler.getACLEngine().checkModify(connection, entry);
         if (rc != LDAPException.SUCCESS) return rc;
 
         EntryDefinition entryDefinition = entry.getEntryDefinition();
-        if (entryDefinition.isDynamic()) {
+        Config config = handler.getConfig(entryDefinition.getDn());
+        if (config.isDynamic(entryDefinition)) {
             return modRdnVirtualEntry(connection, entry, newRdn);
 
         } else {
@@ -88,7 +87,7 @@ public class ModRdnHandler {
             String newRdn)
 			throws Exception {
 
-        Config config = handlerContext.getConfig(entry.getDn());
+        Config config = handler.getConfig(entry.getDn());
         config.renameEntryDefinition(entry, newRdn);
 
         return LDAPException.SUCCESS;

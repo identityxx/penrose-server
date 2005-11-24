@@ -43,7 +43,7 @@ public class PenroseInterceptor extends BaseInterceptor {
     public Logger log = Logger.getLogger(getClass());
 
     Penrose penrose;
-    ApacheDSEngineCache entryCache;
+    ApacheDSEntryCache entryCache;
 
     DirectoryServiceConfiguration factoryCfg;
 
@@ -52,7 +52,7 @@ public class PenroseInterceptor extends BaseInterceptor {
 /*
         Cache cache = penrose.getCache();
 
-        entryCache = new ApacheDSEngineCache();
+        entryCache = new ApacheDSEntryCache();
         entryCache.init(cache);
         cache.setEntryDataCache(entryCache);
 */

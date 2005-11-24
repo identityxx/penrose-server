@@ -36,11 +36,9 @@ public class CompareHandler {
     Logger log = Logger.getLogger(getClass());
 
     private Handler handler;
-    private HandlerContext handlerContext;
 
     public CompareHandler(Handler handler) throws Exception {
         this.handler = handler;
-        this.handlerContext = handler.getHandlerContext();
     }
     
     public int compare(PenroseConnection connection, String dn, String attributeName,

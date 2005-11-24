@@ -17,33 +17,14 @@
  */
 package org.safehaus.penrose;
 
-
 import java.util.*;
 import java.io.File;
-import java.io.Reader;
-import java.io.BufferedReader;
-import java.io.FileReader;
 
-import javax.naming.Context;
-import javax.naming.directory.InitialDirContext;
-import javax.management.MBeanServer;
-import javax.management.MBeanServerFactory;
-import javax.management.ObjectName;
-
-import org.apache.ldap.server.configuration.SyncConfiguration;
-import org.apache.ldap.server.configuration.MutableServerStartupConfiguration;
-import org.apache.ldap.server.configuration.MutableAuthenticatorConfiguration;
-import org.apache.ldap.server.configuration.MutableInterceptorConfiguration;
-import org.apache.ldap.server.jndi.ServerContextFactory;
 import org.apache.log4j.PropertyConfigurator;
-import org.springframework.context.ApplicationContext;
-import org.springframework.context.support.FileSystemXmlApplicationContext;
 import org.apache.log4j.Logger;
-import org.safehaus.penrose.management.PenroseClient;
-import org.safehaus.penrose.apacheds.PenroseAuthenticator;
-import org.safehaus.penrose.apacheds.PenroseInterceptor;
-import mx4j.log.Log4JLogger;
-import mx4j.tools.config.ConfigurationLoader;
+import org.safehaus.penrose.management.PenroseJMXService;
+import org.safehaus.penrose.config.ServerConfig;
+import org.safehaus.penrose.ldap.PenroseLDAPService;
 import sun.misc.Signal;
 import sun.misc.SignalHandler;
 
@@ -58,129 +39,60 @@ public class PenroseServer implements SignalHandler {
     Properties env;
 
     String homeDirectory;
+    ServerConfig serverConfig;
+
     Penrose penrose;
+
+    PenroseJMXService jmxService;
+    PenroseLDAPService ldapService;
 
     public PenroseServer(String homeDirectory) throws Exception {
         this.homeDirectory = homeDirectory;
     }
 
-    public void run() throws Exception {
+    public void start() throws Exception {
+        startPenroseService();
+        startJmxService();
+        startLdapService();
+    }
 
-        String config = (homeDirectory == null ? "" : homeDirectory+File.separator)+"conf"+File.separator+"apacheds.xml";
-        String workingDirectory = (homeDirectory == null ? "" : homeDirectory+File.separator)+"var"+File.separator+"data";
+    public void stop() throws Exception {
+        stopLdapService();
+        stopJmxService();
+        stopPenroseService();
+    }
 
-        File file = new File(config);
-
-        ApplicationContext factory = new FileSystemXmlApplicationContext("file:///"+file.getAbsolutePath());
-        env = (Properties)factory.getBean("environment");
-
-        MutableServerStartupConfiguration cfg = (MutableServerStartupConfiguration)factory.getBean("configuration");
-        cfg.setWorkingDirectory(new File(workingDirectory));
-
+    public void startPenroseService() throws Exception {
         penrose = new Penrose();
         penrose.setHomeDirectory(homeDirectory);
-        penrose.setRootDn(env.getProperty(Context.SECURITY_PRINCIPAL));
-        penrose.setRootPassword(env.getProperty(Context.SECURITY_CREDENTIALS));
-        penrose.init();
+        penrose.start();
 
-        PenroseAuthenticator authenticator = new PenroseAuthenticator();
-        authenticator.setPenrose(penrose);
-
-        MutableAuthenticatorConfiguration authenticatorConfig = new MutableAuthenticatorConfiguration();
-        authenticatorConfig.setName("penrose");
-        authenticatorConfig.setAuthenticator(authenticator);
-
-        Set authenticators = cfg.getAuthenticatorConfigurations();
-        authenticators.add(authenticatorConfig);
-        cfg.setAuthenticatorConfigurations(authenticators);
-
-        PenroseInterceptor interceptor = new PenroseInterceptor();
-        interceptor.setPenrose(penrose);
-
-        MutableInterceptorConfiguration interceptorConfig = new MutableInterceptorConfiguration();
-        interceptorConfig.setName("penroseService");
-        interceptorConfig.setInterceptor(interceptor);
-
-        List interceptors = new ArrayList();
-        interceptors.add(interceptorConfig);
-        interceptors.addAll(cfg.getInterceptorConfigurations());
-        cfg.setInterceptorConfigurations(interceptors);
-
-        env.setProperty(Context.PROVIDER_URL, "ou=system");
-        env.setProperty(Context.INITIAL_CONTEXT_FACTORY, ServerContextFactory.class.getName() );
-        env.putAll(cfg.toJndiEnvironment());
-
-        new InitialDirContext(env);
+        serverConfig = penrose.getServerConfig();
     }
 
-    public void loop() throws Exception {
-        while (true) {
-            try {
-                Thread.sleep( 20000 );
-            } catch ( InterruptedException e ) {
-                // ignore
-            }
-
-            env.putAll(new SyncConfiguration().toJndiEnvironment());
-            new InitialDirContext(env);
-        }
+    public void stopPenroseService() throws Exception {
+        penrose.stop();
     }
 
-    public void runJmx() {
+    public void startLdapService() throws Exception {
+        ldapService = new PenroseLDAPService();
+        ldapService.setHomeDirectory(homeDirectory);
+        ldapService.setPenrose(penrose);
+        ldapService.start();
+    }
 
-        File file = new File((homeDirectory == null ? "" : homeDirectory+File.separator)+"conf"+File.separator+"mx4j.xml");
-        if (!file.exists()) return;
+    public void stopLdapService() throws Exception {
+        ldapService.stop();
+    }
 
-        // Register JMX
-        MBeanServer server = null;
-        try {
-            ArrayList servers = MBeanServerFactory.findMBeanServer(null);
-            server = (MBeanServer) servers.get(0);
+    public void startJmxService() throws Exception {
+        jmxService = new PenroseJMXService();
+        jmxService.setPenrose(penrose);
+        jmxService.start();
+    }
 
-        } catch (Exception ex) {
-            //log.debug("Default MBeanServer has not been created yet.");
-        }
-
-        if (server == null) {
-            try {
-                log.debug("Creating MBeanServer.");
-
-                // MX4J's logging redirection to Apache's Commons Logging
-                mx4j.log.Log.redirectTo(new Log4JLogger());
-
-                // Create the MBeanServer
-                server = MBeanServerFactory.createMBeanServer();
-
-                // Create the ConfigurationLoader
-                ConfigurationLoader loader = new ConfigurationLoader();
-
-                // Register the configuration loader into the MBeanServer
-                ObjectName name = ObjectName.getInstance(":service=configuration");
-                server.registerMBean(loader, name);
-
-                // Tell the configuration loader the XML configuration file
-                Reader reader = new BufferedReader(new FileReader(file));
-                loader.startup(reader);
-                reader.close();
-
-                //log.debug("Done creating MBeanServer.");
-
-            } catch (Exception ex) {
-                log.error(ex.toString(), ex);
-            }
-        }
-
-        if (server != null) {
-            try {
-                server.registerMBean(penrose, ObjectName.getInstance(PenroseClient.MBEAN_NAME));
-                //server.registerMBean(engine, ObjectName.getInstance("Penrose:type=Engine"));
-                //server.registerMBean(connectionPool, ObjectName.getInstance("Penrose:type=PenroseConnectionPool"));
-                //server.registerMBean(threadPool, ObjectName.getInstance("Penrose:type=ThreadPool"));
-            } catch (Exception ex) {
-                log.error(ex.toString(), ex);
-            }
-        }
-
+    public void stopJmxService() throws Exception {
+        jmxService.stop();
     }
 
     /**
@@ -252,8 +164,10 @@ public class PenroseServer implements SignalHandler {
     public static void main( String[] args ) throws Exception {
 
         try {
+            log.info("Starting Penrose Server 0.9.8.");
+
             String home = System.getProperty("penrose.home");
-            log.debug("PENROSE_HOME: "+home);
+            //log.debug("Home: "+home);
 
             File log4jProperties = new File((home == null ? "" : home+File.separator)+"conf"+File.separator+"log4j.properties");
             if (log4jProperties.exists()) {
@@ -262,12 +176,9 @@ public class PenroseServer implements SignalHandler {
             }
 
             PenroseServer server = new PenroseServer(home);
-            server.run();
-            server.runJmx();
+            server.start();
 
-            log.info("Penrose Server 0.9.8 is ready.");
-
-            server.loop();
+            log.info("Penrose Server is ready.");
 
         } catch (Exception e) {
             String name = e.getClass().getName();

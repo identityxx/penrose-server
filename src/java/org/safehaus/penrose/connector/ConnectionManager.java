@@ -60,7 +60,7 @@ public class ConnectionManager {
         for (Iterator i=connectionConfigs.values().iterator(); i.hasNext(); ) {
             ConnectionConfig connectionConfig = (ConnectionConfig)i.next();
             String connectionName = connectionConfig.getConnectionName();
-            log.debug("Initializing connection "+connectionName);
+            log.debug("Initializing connection "+connectionName+".");
 
             if ("JDBC".equals(connectionConfig.getConnectionType())) {
 

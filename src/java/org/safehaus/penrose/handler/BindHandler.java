@@ -36,11 +36,9 @@ public class BindHandler {
     Logger log = Logger.getLogger(getClass());
 
     private Handler handler;
-    private HandlerContext handlerContext;
 
     public BindHandler(Handler handler) throws Exception {
         this.handler = handler;
-        this.handlerContext = handler.getHandlerContext();
     }
 
     public int bind(PenroseConnection connection, String dn, String password) throws Exception {
@@ -65,7 +63,7 @@ public class BindHandler {
 
         String ndn = LDAPDN.normalize(dn);
 
-        if (handlerContext.getRootDn() != null && ndn.equals(LDAPDN.normalize(handlerContext.getRootDn()))) { // bind as root
+        if (handler.getRootDn() != null && ndn.equals(LDAPDN.normalize(handler.getRootDn()))) { // bind as root
 
             int rc = bindAsRoot(password);
             if (rc != LDAPException.SUCCESS) return rc;
@@ -97,7 +95,7 @@ public class BindHandler {
     public int bindAsRoot(String password) throws Exception {
         log.debug("Comparing root's password");
 
-        if (!PasswordUtil.comparePassword(password, handlerContext.getRootPassword())) {
+        if (!PasswordUtil.comparePassword(password, handler.getRootPassword())) {
             log.debug("Password doesn't match => BIND FAILED");
             return LDAPException.INVALID_CREDENTIALS;
         }
@@ -125,13 +123,5 @@ public class BindHandler {
 
     public void setHandler(Handler handler) {
         this.handler = handler;
-    }
-
-    public HandlerContext getHandlerContext() {
-        return handlerContext;
-    }
-
-    public void setHandlerContext(HandlerContext handlerContext) {
-        this.handlerContext = handlerContext;
     }
 }

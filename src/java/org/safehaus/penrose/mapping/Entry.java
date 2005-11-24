@@ -174,10 +174,6 @@ public class Entry {
         attributeSet.retainAll(list);
     }
 
-    public boolean isDynamic() {
-        return entryDefinition.isDynamic();
-    }
-
     public Collection getACL() {
         return entryDefinition.getACL();
     }

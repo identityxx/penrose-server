@@ -37,13 +37,22 @@ public class ServerConfig implements Serializable {
 
     private Collection schemaFiles = new ArrayList();
 
+    private int port = 10389;
+    private int securePort = 10639;
+
+    private int jmxRmiPort = 1099;
+    private int jmxHttpPort = 8112;
+
     private String rootDn;
     private String rootPassword;
 	
-    private Map interpreterConfigs = new LinkedHashMap();
-    private Map cacheConfigs = new LinkedHashMap();
-    private Map engineConfigs = new LinkedHashMap();
-    private Map connectorConfigs = new LinkedHashMap();
+    private InterpreterConfig interpreterConfig;
+    private CacheConfig entryCacheConfig;
+    private CacheConfig sourceCacheConfig;
+
+    private ConnectorConfig connectorConfig;
+    private EngineConfig engineConfig;
+
     private Map adapterConfigs = new LinkedHashMap();
 
     public ServerConfig() {
@@ -76,70 +85,6 @@ public class ServerConfig implements Serializable {
 		this.rootPassword = rootPassword;
 	}
 
-	public String toString() {
-
-		String nl = System.getProperty("line.separator");
-		StringBuffer sb = new StringBuffer();
-		
-        sb.append(nl);
-        sb.append(nl);
-
-        sb.append("ENGINE:");
-        sb.append(nl);
-        sb.append(nl);
-
-        for (Iterator i = engineConfigs.keySet().iterator(); i.hasNext();) {
-            String engineName = (String) i.next();
-            EngineConfig engineConfig = (EngineConfig)engineConfigs.get(engineName);
-            sb.append(" - "+engineName + " (" + engineConfig.getEngineClass() + ")" + nl);
-            sb.append("   Parameters:" + nl);
-            for (Iterator j = engineConfig.getParameterNames().iterator(); j.hasNext();) {
-                String name = (String) j.next();
-                String value = engineConfig.getParameter(name);
-                sb.append("   - " + name + ": " + value + nl);
-            }
-            sb.append(nl);
-        }
-
-        sb.append(nl);
-
-        sb.append("CACHE:");
-        sb.append(nl);
-        sb.append(nl);
-
-        for (Iterator i = cacheConfigs.keySet().iterator(); i.hasNext();) {
-            String cacheName = (String) i.next();
-            CacheConfig sourceCache = (CacheConfig) cacheConfigs.get(cacheName);
-            sb.append(" - "+ cacheName + " (" + sourceCache.getCacheClass() + ")" + nl);
-            sb.append("   Parameters:" + nl);
-            for (Iterator j = sourceCache.getParameterNames().iterator(); j.hasNext();) {
-                String name = (String) j.next();
-                String value = sourceCache.getParameter(name);
-                sb.append("   - " + name + ": " + value + nl);
-            }
-            sb.append(nl);
-        }
-
-        sb.append("ADAPTERS:");
-        sb.append(nl);
-        sb.append(nl);
-
-        for (Iterator i = adapterConfigs.keySet().iterator(); i.hasNext();) {
-            String adapterName = (String) i.next();
-            AdapterConfig adapterClass = (AdapterConfig) adapterConfigs.get(adapterName);
-            sb.append(" - "+ adapterName + " (" + adapterClass.getAdapterClass() + ")" + nl);
-            sb.append("   Parameters:" + nl);
-            for (Iterator j = adapterClass.getParameterNames().iterator(); j.hasNext();) {
-                String name = (String) j.next();
-                String value = adapterClass.getParameter(name);
-                sb.append("   - " + name + ": " + value + nl);
-            }
-            sb.append(nl);
-        }
-
-		return sb.toString();
-	}
-
     public Collection getAdapterConfigs() {
         return adapterConfigs.values();
     }
@@ -156,71 +101,20 @@ public class ServerConfig implements Serializable {
         this.schemaFiles = schemaFiles;
     }
     
-    public void addCacheConfig(CacheConfig cacheConfig) {
-    	cacheConfigs.put(cacheConfig.getCacheName(), cacheConfig);
-    }
-
-    public CacheConfig removeCacheConfig(String name) {
-        return (CacheConfig)cacheConfigs.remove(name);
-    }
-
-    public CacheConfig getCacheConfig() {
-        return (CacheConfig)cacheConfigs.get("DEFAULT");
-    }
-
-    public CacheConfig getCacheConfig(String name) {
-        return (CacheConfig)cacheConfigs.get(name);
-    }
-
-    public Collection getCacheConfigs() {
-    	return cacheConfigs.values();
-    }
-
-    public void addEngineConfig(EngineConfig engineConfig) {
-        engineConfigs.put(engineConfig.getEngineName(), engineConfig);
+    public void setEngineConfig(EngineConfig engineConfig) {
+        this.engineConfig = engineConfig;
     }
 
     public EngineConfig getEngineConfig() {
-        return getEngineConfig("DEFAULT");
+        return engineConfig;
     }
 
-    public EngineConfig getEngineConfig(String engineName) {
-        return (EngineConfig)engineConfigs.get(engineName);
-    }
-
-    public Collection getEngineConfigs() {
-        return engineConfigs.values();
-    }
-
-    public EngineConfig removeEngineConfig(String engineName) {
-        return (EngineConfig)engineConfigs.remove(engineName);
-    }
-
-    public void renameEngineConfig(String oldEngineName, String newEngineName) {
-        EngineConfig engineConfig = removeEngineConfig(oldEngineName);
-        engineConfig.setEngineName(newEngineName);
-        addEngineConfig(engineConfig);
-    }
-
-    public void modifyEngineConfig(String engineName, EngineConfig newEngineConfig) {
-        EngineConfig engineConfig = getEngineConfig(engineName);
-        engineConfig.copy(newEngineConfig);
-    }
-
-    public void addInterpreterConfig(InterpreterConfig interpreterConfig) {
-        interpreterConfigs.put(interpreterConfig.getInterpreterName(), interpreterConfig);
-    }
-
-    public Collection getInterpreterConfigs() {
-        return interpreterConfigs.values();
+    public void setInterpreterConfig(InterpreterConfig interpreterConfig) {
+        this.interpreterConfig = interpreterConfig;
     }
 
     public InterpreterConfig getInterpreterConfig() {
-        return getInterpreterConfig("DEFAULT");
-    }
-    
-    public InterpreterConfig getInterpreterConfig(String name) {
-        return (InterpreterConfig)interpreterConfigs.get(name);
+        return interpreterConfig;
     }
 
     public void setAdapterConfigs(Map adapterConfigs) {
@@ -231,42 +125,59 @@ public class ServerConfig implements Serializable {
         adapterConfigs.put(adapter.getAdapterName(), adapter);
     }
 
-    public void setInterpreterConfigs(Map interpreterConfigs) {
-        this.interpreterConfigs = interpreterConfigs;
-    }
-
-    public void addConnectorConfig(ConnectorConfig connectorConfig) {
-        connectorConfigs.put(connectorConfig.getConnectorName(), connectorConfig);
+    public void setConnectorConfig(ConnectorConfig connectorConfig) {
+        this.connectorConfig = connectorConfig;
     }
 
     public ConnectorConfig getConnectorConfig() {
-        return getConnectorConfig("DEFAULT");
+        return connectorConfig;
     }
     
-    public ConnectorConfig getConnectorConfig(String connectorName) {
-        return (ConnectorConfig)connectorConfigs.get(connectorName);
+    public int getPort() {
+        return port;
     }
 
-    public Collection getConnectorConfigs() {
-        return connectorConfigs.values();
+    public void setPort(int port) {
+        this.port = port;
     }
 
-    public ConnectorConfig removeConnectorConfig(String connectorName) {
-        return (ConnectorConfig)connectorConfigs.remove(connectorName);
+    public int getSecurePort() {
+        return securePort;
     }
 
-    public void setConnectorConfigs(Map connectorConfigs) {
-        this.connectorConfigs = connectorConfigs;
+    public void setSecurePort(int securePort) {
+        this.securePort = securePort;
     }
 
-    public void renameConnectorConfig(String oldConnectorName, String newConnectorName) {
-        ConnectorConfig connectorConfig = removeConnectorConfig(oldConnectorName);
-        connectorConfig.setConnectorName(newConnectorName);
-        addConnectorConfig(connectorConfig);
+    public int getJmxRmiPort() {
+        return jmxRmiPort;
     }
 
-    public void modifyConnectorConfig(String connectorName, ConnectorConfig newConnectorConfig) {
-        ConnectorConfig connectorConfig = getConnectorConfig(connectorName);
-        connectorConfig.copy(newConnectorConfig);
+    public void setJmxRmiPort(int jmxRmiPort) {
+        this.jmxRmiPort = jmxRmiPort;
+    }
+
+    public int getJmxHttpPort() {
+        return jmxHttpPort;
+    }
+
+    public void setJmxHttpPort(int jmxHttpPort) {
+        this.jmxHttpPort = jmxHttpPort;
+    }
+
+    public CacheConfig getEntryCacheConfig() {
+        return entryCacheConfig;
+    }
+
+    public void setEntryCacheConfig(CacheConfig entryCacheConfig) {
+        this.entryCacheConfig = entryCacheConfig;
+    }
+
+    public CacheConfig getSourceCacheConfig() {
+        return sourceCacheConfig;
+    }
+
+    public void setSourceCacheConfig(CacheConfig sourceCacheConfig) {
+        this.sourceCacheConfig = sourceCacheConfig;
     }
 }

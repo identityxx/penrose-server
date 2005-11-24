@@ -19,8 +19,8 @@ package org.safehaus.penrose.acl;
 
 import org.safehaus.penrose.mapping.Entry;
 import org.safehaus.penrose.mapping.EntryDefinition;
-import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.PenroseConnection;
+import org.safehaus.penrose.handler.Handler;
 import org.safehaus.penrose.config.Config;
 import org.ietf.ldap.LDAPException;
 import org.ietf.ldap.LDAPEntry;
@@ -37,10 +37,10 @@ public class ACLEngine {
 
     public Logger log = Logger.getLogger(getClass());
 
-    public Penrose penrose;
+    public Handler handler;
 
-    public ACLEngine(Penrose penrose) {
-        this.penrose = penrose;
+    public ACLEngine(Handler penrose) {
+        this.handler = penrose;
     }
 
     public void addPermission(Set set, String permission) {
@@ -75,7 +75,7 @@ public class ACLEngine {
             if (aci.getPermission().indexOf(permission) < 0) continue;
 
             //log.debug("   - "+aci);
-            String subject = penrose.getSchema().normalize(aci.getSubject());
+            String subject = handler.getSchema().normalize(aci.getSubject());
 
             if (subject.equals(ACI.SUBJECT_USER) && aci.getDn().equals(bindDn)) {
                 return aci.getAction().equals(ACI.ACTION_GRANT);
@@ -95,7 +95,7 @@ public class ACLEngine {
             }
         }
 
-        Config config = penrose.getConfig(entry.getDn());
+        Config config = handler.getConfig(entry.getDn());
         if (config == null) return false;
 
         entry = config.getParent(entry);
@@ -119,13 +119,13 @@ public class ACLEngine {
                 return rc;
             }
 
-            String rootDn = penrose.getSchema().normalize(penrose.getRootDn());
-            String bindDn = penrose.getSchema().normalize(connection.getBindDn());
+            String rootDn = handler.getSchema().normalize(handler.getRootDn());
+            String bindDn = handler.getSchema().normalize(connection.getBindDn());
             if (rootDn != null && rootDn.equals(bindDn)) {
                 return rc;
             }
 
-            String targetDn = penrose.getSchema().normalize(entry.getDn());
+            String targetDn = handler.getSchema().normalize(entry.getDn());
             boolean result = getObjectPermission(bindDn, targetDn, entry, ACI.SCOPE_OBJECT, permission);
             //log.debug("Result: "+result);
 
@@ -198,7 +198,7 @@ public class ACLEngine {
             if (aci.getPermission().indexOf(ACI.PERMISSION_READ) < 0) continue;
 
             //log.debug("   - "+aci);
-            String subject = penrose.getSchema().normalize(aci.getSubject());
+            String subject = handler.getSchema().normalize(aci.getSubject());
 
             if (subject.equals(bindDn)) {
                 addAttributes(aci, grants, denies);
@@ -218,7 +218,7 @@ public class ACLEngine {
             }
         }
 
-        Config config = penrose.getConfig(entry.getDn());
+        Config config = handler.getConfig(entry.getDn());
         if (config == null) return;
 
         entry = config.getParent(entry);
@@ -234,13 +234,13 @@ public class ACLEngine {
             Set denies
             ) throws Exception {
 
-        String rootDn = penrose.getSchema().normalize(penrose.getRootDn());
+        String rootDn = handler.getSchema().normalize(handler.getRootDn());
     	if (rootDn.equals(bindDn)) {
             grants.add("*");
             return;
         }
 
-        String targetDn = penrose.getSchema().normalize(entry.getDn());
+        String targetDn = handler.getSchema().normalize(entry.getDn());
 
         getReadableAttributes(bindDn, targetDn, entry.getEntryDefinition(), null, grants, denies);
 
@@ -260,7 +260,7 @@ public class ACLEngine {
             LDAPEntry ldapEntry)
             throws Exception {
 
-        String bindDn = penrose.getSchema().normalize(connection.getBindDn());
+        String bindDn = handler.getSchema().normalize(connection.getBindDn());
 
         Set grants = new HashSet();
         Set denies = new HashSet();

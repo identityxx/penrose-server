@@ -18,9 +18,7 @@
 package org.safehaus.penrose.cache;
 
 import org.safehaus.penrose.mapping.EntryDefinition;
-import org.safehaus.penrose.mapping.Entry;
 import org.safehaus.penrose.filter.Filter;
-import org.safehaus.penrose.interpreter.InterpreterFactory;
 import org.safehaus.penrose.engine.Engine;
 
 import java.util.Collection;
@@ -28,7 +26,7 @@ import java.util.Collection;
 /**
  * @author Endi S. Dewata
  */
-public abstract class EngineCache extends Cache {
+public abstract class EntryCache extends Cache {
 
     String parentDn;
     EntryDefinition entryDefinition;

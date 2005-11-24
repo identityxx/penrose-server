@@ -18,6 +18,7 @@
 package org.safehaus.penrose.engine;
 
 import org.safehaus.penrose.cache.CacheConfig;
+import org.safehaus.penrose.cache.DefaultEntryCache;
 
 import java.io.Serializable;
 import java.util.*;
@@ -31,7 +32,9 @@ public class EngineConfig implements Cloneable, Serializable {
 
     public final static String THREAD_POOL_SIZE  = "threadPoolSize";
 
-    public final static String CACHE             = "DEFAULT";
+    public final static String DEFAULT_CACHE_NAME  = "Entry Cache";
+    public final static String DEFAULT_CACHE_CLASS = DefaultEntryCache.class.getName();
+
 
     public final static int DEFAULT_THREAD_POOL_SIZE = 20;
 
@@ -40,8 +43,6 @@ public class EngineConfig implements Cloneable, Serializable {
     private String description;
 
     private Properties parameters = new Properties();
-
-    private Map cacheConfigs = new TreeMap();
 
     public String getEngineClass() {
         return engineClass;
@@ -83,32 +84,11 @@ public class EngineConfig implements Cloneable, Serializable {
         this.description = description;
     }
 
-    public void addCacheConfig(CacheConfig cacheConfig) {
-    	cacheConfigs.put(cacheConfig.getCacheName(), cacheConfig);
-    }
-
-    public CacheConfig removeCacheConfig(String name) {
-        return (CacheConfig)cacheConfigs.remove(name);
-    }
-
-    public CacheConfig getCacheConfig() {
-        return (CacheConfig)cacheConfigs.get("DEFAULT");
-    }
-
-    public CacheConfig getCacheConfig(String name) {
-        return (CacheConfig)cacheConfigs.get(name);
-    }
-
-    public Collection getCacheConfigs() {
-    	return cacheConfigs.values();
-    }
-
     public int hashCode() {
         return (engineName == null ? 0 : engineName.hashCode()) +
                 (engineClass == null ? 0 : engineClass.hashCode()) +
                 (description == null ? 0 : description.hashCode()) +
-                (parameters == null ? 0 : parameters.hashCode()) +
-                (cacheConfigs == null ? 0 : cacheConfigs.hashCode());
+                (parameters == null ? 0 : parameters.hashCode());
     }
 
     boolean equals(Object o1, Object o2) {
@@ -126,7 +106,6 @@ public class EngineConfig implements Cloneable, Serializable {
         if (!equals(engineClass, engineConfig.engineClass)) return false;
         if (!equals(description, engineConfig.description)) return false;
         if (!equals(parameters, engineConfig.parameters)) return false;
-        if (!equals(cacheConfigs, engineConfig.cacheConfigs)) return false;
 
         return true;
     }
@@ -144,11 +123,5 @@ public class EngineConfig implements Cloneable, Serializable {
 
         parameters.clear();
         parameters.putAll(engineConfig.parameters);
-
-        cacheConfigs.clear();
-        for (Iterator i=engineConfig.cacheConfigs.values().iterator(); i.hasNext(); ) {
-            CacheConfig cacheConfig = (CacheConfig)i.next();
-            addCacheConfig((CacheConfig)cacheConfig.clone());
-        }
     }
 }

@@ -36,14 +36,11 @@ public class FilterTool {
 
     static Logger log = Logger.getLogger(FilterTool.class);
 
-    public FilterContext filterContext;
-    public Schema schema;
+    private Schema schema;
 
     public int debug = 0;
 
-    public FilterTool(FilterContext filterContext) throws Exception {
-        this.filterContext = filterContext;
-        schema = filterContext.getSchema();
+    public FilterTool() throws Exception {
     }
 
     public static Filter parseFilter(String filter) throws Exception {
@@ -542,5 +539,13 @@ public class FilterTool {
             if (result) return true;
         }
         return false;
+    }
+
+    public Schema getSchema() {
+        return schema;
+    }
+
+    public void setSchema(Schema schema) {
+        this.schema = schema;
     }
 }

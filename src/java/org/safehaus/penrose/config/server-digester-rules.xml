@@ -24,6 +24,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 <digester-rules>
 
 	<pattern value="server">
+        <set-properties-rule/>
 
 		<!-- interpreter -->
 		<pattern value="interpreter">
@@ -37,8 +38,38 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 				<call-param-rule pattern="param-name" paramnumber="0"/>
 				<call-param-rule pattern="param-value" paramnumber="1"/>
 			</pattern>
-			<set-next-rule methodname="addInterpreterConfig" />
+			<set-next-rule methodname="setInterpreterConfig" />
 		</pattern>
+
+        <!-- entry cache -->
+        <pattern value="entry-cache">
+            <object-create-rule classname="org.safehaus.penrose.cache.CacheConfig" />
+            <set-properties-rule/>
+            <call-method-rule pattern="cache-name" methodname="setCacheName" paramcount="0" />
+            <call-method-rule pattern="cache-class" methodname="setCacheClass" paramcount="0" />
+            <call-method-rule pattern="description" methodname="setDescription" paramcount="0" />
+            <pattern value="parameter">
+                <call-method-rule methodname="setParameter" paramcount="2" />
+                <call-param-rule pattern="param-name" paramnumber="0"/>
+                <call-param-rule pattern="param-value" paramnumber="1"/>
+            </pattern>
+            <set-next-rule methodname="setEntryCacheConfig" />
+        </pattern>
+
+        <!-- source cache -->
+        <pattern value="source-cache">
+            <object-create-rule classname="org.safehaus.penrose.cache.CacheConfig" />
+            <set-properties-rule/>
+            <call-method-rule pattern="cache-name" methodname="setCacheName" paramcount="0" />
+            <call-method-rule pattern="cache-class" methodname="setCacheClass" paramcount="0" />
+            <call-method-rule pattern="description" methodname="setDescription" paramcount="0" />
+            <pattern value="parameter">
+                <call-method-rule methodname="setParameter" paramcount="2" />
+                <call-param-rule pattern="param-name" paramnumber="0"/>
+                <call-param-rule pattern="param-value" paramnumber="1"/>
+            </pattern>
+            <set-next-rule methodname="setSourceCacheConfig" />
+        </pattern>
 
 		<!-- engine -->
 		<pattern value="engine">
@@ -52,23 +83,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 				<call-param-rule pattern="param-name" paramnumber="0"/>
 				<call-param-rule pattern="param-value" paramnumber="1"/>
 			</pattern>
-
-            <!-- cache -->
-            <pattern value="cache">
-                <object-create-rule classname="org.safehaus.penrose.cache.CacheConfig" />
-                <set-properties-rule/>
-                <call-method-rule pattern="cache-name" methodname="setCacheName" paramcount="0" />
-                <call-method-rule pattern="cache-class" methodname="setCacheClass" paramcount="0" />
-                <call-method-rule pattern="description" methodname="setDescription" paramcount="0" />
-                <pattern value="parameter">
-                    <call-method-rule methodname="setParameter" paramcount="2" />
-                    <call-param-rule pattern="param-name" paramnumber="0"/>
-                    <call-param-rule pattern="param-value" paramnumber="1"/>
-                </pattern>
-                <set-next-rule methodname="addCacheConfig" />
-            </pattern>
-
-			<set-next-rule methodname="addEngineConfig" />
+			<set-next-rule methodname="setEngineConfig" />
 		</pattern>
 
         <!-- connector -->
@@ -83,23 +98,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
                 <call-param-rule pattern="param-name" paramnumber="0"/>
                 <call-param-rule pattern="param-value" paramnumber="1"/>
             </pattern>
-
-            <!-- cache -->
-            <pattern value="cache">
-                <object-create-rule classname="org.safehaus.penrose.cache.CacheConfig" />
-                <set-properties-rule/>
-                <call-method-rule pattern="cache-name" methodname="setCacheName" paramcount="0" />
-                <call-method-rule pattern="cache-class" methodname="setCacheClass" paramcount="0" />
-                <call-method-rule pattern="description" methodname="setDescription" paramcount="0" />
-                <pattern value="parameter">
-                    <call-method-rule methodname="setParameter" paramcount="2" />
-                    <call-param-rule pattern="param-name" paramnumber="0"/>
-                    <call-param-rule pattern="param-value" paramnumber="1"/>
-                </pattern>
-                <set-next-rule methodname="addCacheConfig" />
-            </pattern>
-
-            <set-next-rule methodname="addConnectorConfig" />
+            <set-next-rule methodname="setConnectorConfig" />
         </pattern>
 
 		<!-- adapter -->

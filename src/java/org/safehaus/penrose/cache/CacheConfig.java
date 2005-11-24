@@ -28,9 +28,6 @@ import java.io.Serializable;
  */
 public class CacheConfig implements Cloneable, Serializable {
 	
-    public final static String DEFAULT_ENGINE_CACHE    = DefaultEngineCache.class.getName();
-    public final static String DEFAULT_CONNECTOR_CACHE = DefaultConnectorCache.class.getName();
-
     public final static String DRIVER                  = "driver";
     public final static String URL                     = "url";
     public final static String USER                    = "user";

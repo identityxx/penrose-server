@@ -26,20 +26,13 @@ import org.ietf.ldap.*;
 import org.safehaus.penrose.config.*;
 import org.safehaus.penrose.event.*;
 import org.safehaus.penrose.module.ModuleContext;
-import org.safehaus.penrose.module.Module;
-import org.safehaus.penrose.module.ModuleMapping;
-import org.safehaus.penrose.module.ModuleConfig;
 import org.safehaus.penrose.schema.*;
 import org.safehaus.penrose.engine.EngineConfig;
 import org.safehaus.penrose.engine.Engine;
 import org.safehaus.penrose.handler.Handler;
-import org.safehaus.penrose.handler.HandlerContext;
 import org.safehaus.penrose.interpreter.InterpreterConfig;
 import org.safehaus.penrose.interpreter.InterpreterFactory;
 import org.safehaus.penrose.mapping.*;
-import org.safehaus.penrose.filter.FilterTool;
-import org.safehaus.penrose.filter.FilterContext;
-import org.safehaus.penrose.acl.ACLEngine;
 import org.safehaus.penrose.connector.Connector;
 import org.safehaus.penrose.connector.*;
 
@@ -48,11 +41,11 @@ import org.safehaus.penrose.connector.*;
  */
 public class Penrose implements
         AdapterContext,
-        FilterContext,
-        HandlerContext,
         ModuleContext,
         PenroseMBean {
 	
+    Logger log = Logger.getLogger(Penrose.class);
+
 	// ------------------------------------------------
 	// Constants
 	// ------------------------------------------------
@@ -81,34 +74,21 @@ public class Penrose implements
 	public final static boolean SEARCH_IN_BACKGROUND = true;
 	public final static int WAIT_TIMEOUT = 10000; // wait timeout is 10 seconds
 
-	private List suffixes = new ArrayList();
-	private List normalizedSuffixes = new ArrayList();
-
 	private String trustedKeyStore;
 
     private String homeDirectory;
 
-	private String rootDn;
-	private String rootPassword;
-
-    private ConfigValidator configValidator;
+    private Connector connector;
+	private Engine engine;
     private Handler handler;
-	private ACLEngine aclEngine;
-	private FilterTool filterTool;
-
-    private Map connectors = new LinkedHashMap();
-	private Map engines = new LinkedHashMap();
-
-    private Map modules = new LinkedHashMap();
 
     private ServerConfig serverConfig;
+    private Schema schema;
+
     private Map configs = new TreeMap();
     public ConnectionManager connectionManager;
 
     private InterpreterFactory interpreterFactory;
-    private Schema schema;
-
-    private Logger log = Logger.getLogger(getClass());
 
 	private boolean stopRequested = false;
 
@@ -121,33 +101,13 @@ public class Penrose implements
 		return configs.values();
 	}
 
-	/**
-	 * Initialize server with a set of suffixes.
-	 * 
-	 * @param suffixes
-	 */
-	public void setSuffix(String suffixes[]) {
-		log.debug("-------------------------------------------------------------------------------");
-		log.debug("Penrose.setSuffix(suffixArray);");
-
-		for (int i = 0; i < suffixes.length; i++) {
-			log.debug(" suffix            : " + suffixes[i]);
-			this.suffixes.add(suffixes[i]);
-		}
-
-		for (int i = 0; i < suffixes.length; i++) {
-			this.normalizedSuffixes.add(LDAPDN.normalize(suffixes[i]));
-		}
-
-	}
-
-	public int init() throws Exception {
+	public int start() throws Exception {
 
         loadServerConfig();
         loadSchema();
         loadConfigs();
 
-        initServer();
+        initInterpreter();
         initConnections();
         initConnectors();
         initEngines();
@@ -157,36 +117,30 @@ public class Penrose implements
 	}
 
     public void loadServerConfig() throws Exception {
-        log.debug("-------------------------------------------------------------------------------");
-        log.debug("Loading server configurration ...");
+        //log.debug("-------------------------------------------------------------------------------");
+        //log.debug("Loading server configurration ...");
 
         if (trustedKeyStore != null) System.setProperty("javax.net.ssl.trustStore", trustedKeyStore);
 
         ServerConfigReader reader = new ServerConfigReader();
         serverConfig = reader.read((homeDirectory == null ? "" : homeDirectory+File.separator)+"conf"+File.separator+"server.xml");
+    }
 
-        if (serverConfig.getRootDn() != null) rootDn = serverConfig.getRootDn();
-        if (serverConfig.getRootPassword() != null) rootPassword = serverConfig.getRootPassword();
-        //log.debug(serverConfig.toString());
-
-        InterpreterConfig interpreterConfig = serverConfig.getInterpreterConfig("DEFAULT");
-        interpreterFactory = new InterpreterFactory(interpreterConfig);
+    public void loadSchema() throws Exception {
+        SchemaReader reader = new SchemaReader();
+        reader.readDirectory((homeDirectory == null ? "" : homeDirectory+File.separator)+"schema");
+        reader.readDirectory((homeDirectory == null ? "" : homeDirectory+File.separator)+"schema"+File.separator+"ext");
+        schema = reader.getSchema();
     }
 
     public void loadConfigs() throws Exception {
+
+        ConfigValidator configValidator = new ConfigValidator();
+        configValidator.setServerConfig(serverConfig);
+        configValidator.setSchema(schema);
+
         ConfigReader configReader = new ConfigReader();
         Config config = configReader.read((homeDirectory == null ? "" : homeDirectory+File.separator)+"conf");
-
-        Collection results = configValidator.validate(config);
-        for (Iterator i=results.iterator(); i.hasNext(); ) {
-            ConfigValidationResult result = (ConfigValidationResult)i.next();
-
-            if (result.getType().equals(ConfigValidationResult.ERROR)) {
-                log.error("ERROR: "+result.getMessage()+" ["+result.getSource()+"]");
-            } else {
-                log.warn("WARNING: "+result.getMessage()+" ["+result.getSource()+"]");
-            }
-        }
 
         for (Iterator i=config.getRootEntryDefinitions().iterator(); i.hasNext(); ) {
             EntryDefinition entryDefinition = (EntryDefinition)i.next();
@@ -194,28 +148,14 @@ public class Penrose implements
             configs.put(ndn, config);
         }
 
-        initModules(config);
         File partitions = new File((homeDirectory == null ? "" : homeDirectory+File.separator)+"partitions");
         if (partitions.exists()) {
             File files[] = partitions.listFiles();
             for (int i=0; i<files.length; i++) {
                 File partition = files[i];
-                String name = partition.getName();
 
                 config = configReader.read(partition.getAbsolutePath());
 
-                results = configValidator.validate(config);
-                for (Iterator j=results.iterator(); j.hasNext(); ) {
-                    ConfigValidationResult result = (ConfigValidationResult)j.next();
-
-                    if (result.getType().equals(ConfigValidationResult.ERROR)) {
-                        log.error("ERROR: "+result.getMessage()+" ["+result.getSource()+"]");
-                    } else {
-                        log.warn("WARNING: "+result.getMessage()+" ["+result.getSource()+"]");
-                    }
-                }
-
-                initModules(config);
                 for (Iterator j=config.getRootEntryDefinitions().iterator(); j.hasNext(); ) {
                     EntryDefinition entryDefinition = (EntryDefinition)j.next();
                     String ndn = schema.normalize(entryDefinition.getDn());
@@ -223,16 +163,28 @@ public class Penrose implements
                 }
             }
         }
+
+        for (Iterator i=configs.values().iterator(); i.hasNext(); ) {
+            config = (Config)i.next();
+
+            Collection results = configValidator.validate(config);
+
+            for (Iterator j=results.iterator(); j.hasNext(); ) {
+                ConfigValidationResult result = (ConfigValidationResult)j.next();
+
+                if (result.getType().equals(ConfigValidationResult.ERROR)) {
+                    log.error("ERROR: "+result.getMessage()+" ["+result.getSource()+"]");
+                } else {
+                    log.warn("WARNING: "+result.getMessage()+" ["+result.getSource()+"]");
+                }
+            }
+
+        }
     }
 
-    public void initServer() throws Exception {
-
-        aclEngine = new ACLEngine(this);
-        filterTool = new FilterTool(this);
-
-        configValidator = new ConfigValidator();
-        configValidator.setServerConfig(serverConfig);
-        configValidator.setSchema(schema);
+    public void initInterpreter() throws Exception {
+        InterpreterConfig interpreterConfig = serverConfig.getInterpreterConfig();
+        interpreterFactory = new InterpreterFactory(interpreterConfig);
     }
 
     public void initConnections() throws Exception {
@@ -253,75 +205,59 @@ public class Penrose implements
 
     public void initConnectors() throws Exception {
 
-        for (Iterator i=serverConfig.getConnectorConfigs().iterator(); i.hasNext(); ) {
-            ConnectorConfig connectorConfig = (ConnectorConfig)i.next();
+        ConnectorConfig connectorConfig = serverConfig.getConnectorConfig();
 
-            Class clazz = Class.forName(connectorConfig.getConnectorClass());
-            Connector connector = (Connector)clazz.newInstance();
-            connector.setServerConfig(serverConfig);
-            connector.setConnectionManager(connectionManager);
-            connector.init(connectorConfig);
+        Class clazz = Class.forName(connectorConfig.getConnectorClass());
+        connector = (Connector)clazz.newInstance();
 
-            for (Iterator j=configs.values().iterator(); j.hasNext(); ) {
-                Config config = (Config)j.next();
-                connector.addConfig(config);
-            }
+        connector.setServerConfig(serverConfig);
+        connector.setConnectionManager(connectionManager);
+        connector.init(connectorConfig);
 
-            connector.start();
-
-            connectors.put(connectorConfig.getConnectorName(), connector);
+        for (Iterator j=configs.values().iterator(); j.hasNext(); ) {
+            Config config = (Config)j.next();
+            connector.addConfig(config);
         }
+
+        connector.start();
     }
 
     public void initEngines() throws Exception {
 
-        for (Iterator i=serverConfig.getEngineConfigs().iterator(); i.hasNext(); ) {
-            EngineConfig engineConfig = (EngineConfig)i.next();
+        EngineConfig engineConfig = serverConfig.getEngineConfig();
 
-            Class clazz = Class.forName(engineConfig.getEngineClass());
-            Engine engine = (Engine)clazz.newInstance();
-            engine.setSchema(getSchema());
-            engine.setInterpreterFactory(getInterpreterFactory());
-            engine.setConnector(getConnector());
-            engine.setConnectionManager(connectionManager);
-            engine.init(engineConfig);
+        Class clazz = Class.forName(engineConfig.getEngineClass());
+        engine = (Engine)clazz.newInstance();
 
-            for (Iterator j=configs.values().iterator(); j.hasNext(); ) {
-                Config config = (Config)j.next();
-                engine.addConfig(config);
-            }
+        engine.setServerConfig(serverConfig);
+        engine.setSchema(schema);
+        engine.setInterpreterFactory(interpreterFactory);
+        engine.setConnector(getConnector());
+        engine.setConnectionManager(connectionManager);
+        engine.init(engineConfig);
 
-            engine.start();
-
-            engines.put(engineConfig.getEngineName(), engine);
+        for (Iterator j=configs.values().iterator(); j.hasNext(); ) {
+            Config config = (Config)j.next();
+            engine.addConfig(config);
         }
+
+        engine.start();
     }
 
     public void initHandler() throws Exception {
-        handler = new Handler(this);
-        handler.setSchema(getSchema());
-        handler.setInterpreterFactory(getInterpreterFactory());
+        handler = new Handler();
+        handler.setSchema(schema);
+        handler.setInterpreterFactory(interpreterFactory);
         handler.setEngine(getEngine());
-    }
+        handler.setRootDn(serverConfig.getRootDn());
+        handler.setRootPassword(serverConfig.getRootPassword());
 
-    public void initModules(Config config) throws Exception {
-
-        for (Iterator i=config.getModuleConfigs().iterator(); i.hasNext(); ) {
-            ModuleConfig moduleConfig = (ModuleConfig)i.next();
-
-            Class clazz = Class.forName(moduleConfig.getModuleClass());
-            Module module = (Module)clazz.newInstance();
-            module.init(moduleConfig);
-
-            modules.put(moduleConfig.getModuleName(), module);
+        for (Iterator i=configs.values().iterator(); i.hasNext(); ) {
+            Config config = (Config)i.next();
+            handler.addConfig(config);
         }
-    }
 
-    public void loadSchema() throws Exception {
-        SchemaReader reader = new SchemaReader();
-        reader.readDirectory((homeDirectory == null ? "" : homeDirectory+File.separator)+"schema");
-        reader.readDirectory((homeDirectory == null ? "" : homeDirectory+File.separator)+"schema"+File.separator+"ext");
-        schema = reader.getSchema();
+        handler.init();
     }
 
     public Collection listFiles(String directory) throws Exception {
@@ -353,19 +289,11 @@ public class Penrose implements
     }
 
     public Engine getEngine() {
-        return getEngine("DEFAULT");
-    }
-
-    public Engine getEngine(String name) {
-        return (Engine)engines.get(name);
+        return engine;
     }
 
     public Connector getConnector() {
-        return getConnector("DEFAULT");
-    }
-
-    public Connector getConnector(String name) {
-        return (Connector)connectors.get(name);
+        return connector;
     }
 
     public Handler getHandler() {
@@ -388,33 +316,6 @@ public class Penrose implements
             if (ndn.endsWith(suffix)) return (Config)configs.get(suffix);
         }
         return null;
-    }
-
-    public Collection getModules(String dn) throws Exception {
-        log.debug("Find matching module mapping for "+dn);
-
-        Collection list = new ArrayList();
-
-        Config config = getConfig(dn);
-        if (config == null) return list;
-        
-        for (Iterator i = config.getModuleMappings().iterator(); i.hasNext(); ) {
-            Collection c = (Collection)i.next();
-
-            for (Iterator j=c.iterator(); j.hasNext(); ) {
-                ModuleMapping moduleMapping = (ModuleMapping)j.next();
-
-                String moduleName = moduleMapping.getModuleName();
-                Module module = (Module)modules.get(moduleName);
-
-                if (moduleMapping.match(dn)) {
-                    log.debug(" - "+moduleName);
-                    list.add(module);
-                }
-            }
-        }
-
-        return list;
     }
 
     public SearchResults search(String base, int scope,
@@ -467,11 +368,8 @@ public class Penrose implements
             log.debug("Stop requested...");
             stopRequested = true;
 
-            Engine engine = getEngine();
-            if (engine != null) engine.stop();
-
-            Connector connector = getConnector();
-            if (connector != null) connector.stop();
+            engine.stop();
+            connector.stop();
 
             // close all the pools, including all the connections
             //connectionPool.closeAll();
@@ -540,63 +438,17 @@ public class Penrose implements
     public void removeModifyListener(ModifyListener l) {
     }
 
-    // ------------------------------------------------
-    // Getters and Setters
-    // ------------------------------------------------
-	
-    public ACLEngine getACLEngine() {
-        return aclEngine;
-    }
-
-    public void setACLEngine(ACLEngine aclEngine) {
-        this.aclEngine = aclEngine;
-    }
-
-    public Collection getEngines() {
-        return engines.values();
-    }
     public PenroseConnectionPool getConnectionPool() {
         return connectionPool;
     }
     public void setConnectionPool(PenroseConnectionPool connectionPool) {
         this.connectionPool = connectionPool;
     }
-
-    public FilterTool getFilterTool() {
-        return filterTool;
-    }
-    public void setFilterTool(FilterTool filterTool) {
-        this.filterTool = filterTool;
-    }
-    public List getNormalizedSuffixes() {
-        return normalizedSuffixes;
-    }
-    public void setNormalizedSuffixes(List normalizedSuffixes) {
-        this.normalizedSuffixes = normalizedSuffixes;
-    }
-    public String getRootDn() {
-        return rootDn;
-    }
-    public void setRootDn(String rootDn) {
-        this.rootDn = rootDn;
-    }
-    public String getRootPassword() {
-        return rootPassword;
-    }
-    public void setRootPassword(String rootPassword) {
-        this.rootPassword = rootPassword;
-    }
     public boolean isStopRequested() {
         return stopRequested;
     }
     public void setStopRequested(boolean stopRequested) {
         this.stopRequested = stopRequested;
-    }
-    public List getSuffixes() {
-        return suffixes;
-    }
-    public void setSuffixes(List suffixes) {
-        this.suffixes = suffixes;
     }
     public String getTrustedKeyStore() {
         return trustedKeyStore;
@@ -649,14 +501,6 @@ public class Penrose implements
 
     public void setHomeDirectory(String homeDirectory) {
         this.homeDirectory = homeDirectory;
-    }
-
-    public ConfigValidator getConfigValidator() {
-        return configValidator;
-    }
-
-    public void setConfigValidator(ConfigValidator configValidator) {
-        this.configValidator = configValidator;
     }
 
     public InterpreterFactory getInterpreterFactory() {

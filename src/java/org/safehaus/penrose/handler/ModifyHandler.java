@@ -39,11 +39,9 @@ public class ModifyHandler {
     Logger log = Logger.getLogger(getClass());
 
     private Handler handler;
-    private HandlerContext handlerContext;
 
     public ModifyHandler(Handler handler) throws Exception {
         this.handler = handler;
-        this.handlerContext = handler.getHandlerContext();
     }
 
     public int modify(PenroseConnection connection, String dn, List modifications)
@@ -115,11 +113,12 @@ public class ModifyHandler {
         Entry entry = handler.getSearchHandler().find(connection, ndn);
         if (entry == null) return LDAPException.NO_SUCH_OBJECT;
 
-        int rc = handlerContext.getACLEngine().checkModify(connection, entry);
+        int rc = handler.getACLEngine().checkModify(connection, entry);
         if (rc != LDAPException.SUCCESS) return rc;
 
         EntryDefinition entryDefinition = entry.getEntryDefinition();
-        if (entryDefinition.isDynamic()) {
+        Config config = handler.getConfig(entryDefinition.getDn());
+        if (config.isDynamic(entryDefinition)) {
             return modifyVirtualEntry(connection, entry, modifications);
 
         } else {
@@ -354,13 +353,5 @@ public class ModifyHandler {
 
     public void setHandler(Handler handler) {
         this.handler = handler;
-    }
-
-    public HandlerContext getHandlerContext() {
-        return handlerContext;
-    }
-
-    public void setHandlerContext(HandlerContext handlerContext) {
-        this.handlerContext = handlerContext;
     }
 }
