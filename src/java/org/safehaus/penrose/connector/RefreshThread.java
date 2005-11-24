@@ -45,7 +45,14 @@ public class RefreshThread implements Runnable {
 	}
 
 	public void run() {
-        //log.debug("RefreshThread has been started");
+
+        try {
+            // sleep 5 minutes first, to allow server initialization
+            Thread.sleep(5*60000);
+
+        } catch (InterruptedException ex) {
+            // ignore
+        }
 
 		while (!connector.isStopping()) {
 
@@ -53,7 +60,7 @@ public class RefreshThread implements Runnable {
 				Thread.sleep(refreshInterval * 1000);
 
                 Collection configs = new ArrayList();
-                configs.addAll(connector.getConfigs());
+                configs.addAll(connector.getConfigManager().getConfigs());
 
                 for (Iterator i=configs.iterator(); i.hasNext(); ) {
                     Config config = (Config)i.next();
@@ -61,7 +68,7 @@ public class RefreshThread implements Runnable {
                 }
 
 			} catch (Exception ex) {
-				log.error(ex.getMessage(), ex);
+                // ignore
 			}
 		}
 		

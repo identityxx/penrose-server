@@ -36,8 +36,6 @@ public class PenroseServer implements SignalHandler {
 
     public static Logger log = Logger.getLogger(PenroseServer.class);
 
-    Properties env;
-
     String homeDirectory;
     ServerConfig serverConfig;
 
@@ -112,7 +110,12 @@ public class PenroseServer implements SignalHandler {
         //code to be executed goes here
         log.info("Interrupt Signal (Ctrl-C) caught! Initiating shutdown...");
         listAllThreads();
-        penrose.stop();
+        
+        try {
+            stop();
+        } catch (Exception e) {
+            log.error(e.getMessage());
+        }
     }
 
     public void listAllThreads() {
@@ -164,7 +167,7 @@ public class PenroseServer implements SignalHandler {
     public static void main( String[] args ) throws Exception {
 
         try {
-            log.info("Starting Penrose Server 0.9.8.");
+            log.warn("Starting Penrose Server 0.9.8.");
 
             String home = System.getProperty("penrose.home");
             //log.debug("Home: "+home);
@@ -178,7 +181,7 @@ public class PenroseServer implements SignalHandler {
             PenroseServer server = new PenroseServer(home);
             server.start();
 
-            log.info("Penrose Server is ready.");
+            log.warn("Penrose Server is ready.");
 
         } catch (Exception e) {
             String name = e.getClass().getName();

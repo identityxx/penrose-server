@@ -20,13 +20,12 @@ package org.safehaus.penrose.cache;
 import java.util.Collection;
 import java.util.Map;
 import java.util.TreeMap;
-import java.io.Serializable;
 
 
 /**
  * @author Administrator
  */
-public class CacheConfig implements Cloneable, Serializable {
+public class CacheConfig implements Cloneable {
 	
     public final static String DRIVER                  = "driver";
     public final static String URL                     = "url";

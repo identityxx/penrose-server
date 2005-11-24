@@ -27,6 +27,7 @@ import org.safehaus.penrose.util.Formatter;
 import org.safehaus.penrose.util.PasswordUtil;
 import org.safehaus.penrose.config.Config;
 import org.safehaus.penrose.config.ServerConfig;
+import org.safehaus.penrose.config.ConfigManager;
 import org.safehaus.penrose.filter.*;
 import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.interpreter.InterpreterFactory;
@@ -79,7 +80,7 @@ public class Engine {
     private JoinEngine joinEngine;
     private TransformEngine transformEngine;
 
-    private Map configs = new TreeMap();
+    private ConfigManager configManager;
     private Map caches = new TreeMap();
 
     /**
@@ -114,34 +115,21 @@ public class Engine {
         execute(new RefreshThread(this));
     }
 
-    public void addConfig(Config config) throws Exception {
-
-        for (Iterator i=config.getRootEntryDefinitions().iterator(); i.hasNext(); ) {
-            EntryDefinition entryDefinition = (EntryDefinition)i.next();
-
-            String ndn = schema.normalize(entryDefinition.getDn());
-            configs.put(ndn, config);
-
-            analyze(entryDefinition);
-        }
+    public ConfigManager getConfigManager() {
+        return configManager;
     }
 
-    public Config getConfig(Source source) throws Exception {
-        String connectionName = source.getConnectionName();
-        for (Iterator i=configs.values().iterator(); i.hasNext(); ) {
-            Config config = (Config)i.next();
-            if (config.getConnectionConfig(connectionName) != null) return config;
-        }
-        return null;
-    }
+    public void setConfigManager(ConfigManager configManager) throws Exception {
+        this.configManager = configManager;
 
-    public Config getConfig(String dn) throws Exception {
-        String ndn = schema.normalize(dn);
-        for (Iterator i=configs.values().iterator(); i.hasNext(); ) {
+        for (Iterator i=configManager.getConfigs().iterator(); i.hasNext(); ) {
             Config config = (Config)i.next();
-            if (config.getEntryDefinition(dn) != null) return config;
+
+            for (Iterator j=config.getRootEntryDefinitions().iterator(); j.hasNext(); ) {
+                EntryDefinition entryDefinition = (EntryDefinition)j.next();
+                analyze(entryDefinition);
+            }
         }
-        return null;
     }
 
     public void analyze(EntryDefinition entryDefinition) throws Exception {
@@ -160,7 +148,7 @@ public class Engine {
             //log.debug(" - graph: "+graph);
         }
 
-        Config config = getConfig(entryDefinition.getDn());
+        Config config = configManager.getConfig(entryDefinition);
         Collection children = config.getChildren(entryDefinition);
         if (children != null) {
             for (Iterator i=children.iterator(); i.hasNext(); ) {
@@ -257,7 +245,7 @@ public class Engine {
 
         Graph graph = new Graph();
 
-        Config config = getConfig(entryDefinition.getDn());
+        Config config = configManager.getConfig(entryDefinition);
         Collection sources = config.getEffectiveSources(entryDefinition);
         //if (sources.size() == 0) return null;
 
@@ -366,7 +354,7 @@ public class Engine {
         }
 
         Collection sources = entryDefinition.getSources();
-        Config config = getConfig(entryDefinition.getDn());
+        Config config = configManager.getConfig(entryDefinition);
 
         for (Iterator i=sources.iterator(); i.hasNext(); ) {
             Source source = (Source)i.next();
@@ -468,7 +456,7 @@ public class Engine {
     }
 
     public String getParentSourceValues(Collection path, EntryDefinition entryDefinition, AttributeValues parentSourceValues) throws Exception {
-        Config config = getConfig(entryDefinition.getDn());
+        Config config = configManager.getConfig(entryDefinition);
         EntryDefinition parentDefinition = config.getParent(entryDefinition);
 
         String prefix = null;
@@ -524,7 +512,7 @@ public class Engine {
      * Check whether the entry uses no sources and all attributes are constants.
      */
     public boolean isStatic(EntryDefinition entryDefinition) throws Exception {
-        Config config = getConfig(entryDefinition.getDn());
+        Config config = configManager.getConfig(entryDefinition);
         Collection effectiveSources = config.getEffectiveSources(entryDefinition);
         if (effectiveSources.size() > 0) return false;
 
@@ -582,7 +570,7 @@ public class Engine {
         String sourceAlias = (String)rdnSources.iterator().next();
         Source source = entryDefinition.getSource(sourceAlias);
 
-        Config config = getConfig(entryDefinition.getDn());
+        Config config = configManager.getConfig(entryDefinition);
         ConnectionConfig connectionConfig = config.getConnectionConfig(source.getConnectionName());
         SourceDefinition sourceDefinition = connectionConfig.getSourceDefinition(source.getSourceName());
 
@@ -728,7 +716,7 @@ public class Engine {
 
         log.debug("Searching the starting source for "+entryDefinition.getDn());
 
-        Config config = getConfig(entryDefinition.getDn());
+        Config config = configManager.getConfig(entryDefinition);
 
         Collection relationships = entryDefinition.getRelationships();
         for (Iterator i=relationships.iterator(); i.hasNext(); ) {
@@ -764,7 +752,7 @@ public class Engine {
 
         // log.debug("Searching the connecting relationship for "+entryDefinition.getDn());
 
-        Config config = getConfig(entryDefinition.getDn());
+        Config config = configManager.getConfig(entryDefinition);
 
         Collection relationships = config.getEffectiveRelationships(entryDefinition);
 
@@ -857,7 +845,7 @@ public class Engine {
             return new Row();
         }
 
-        Config config = getConfig(entryDefinition.getDn());
+        Config config = configManager.getConfig(entryDefinition);
         Collection fields = config.getSearchableFields(source);
 
         interpreter.set(rdn);
@@ -993,7 +981,7 @@ public class Engine {
 
     public Collection computeDns(Interpreter interpreter, EntryDefinition entryDefinition) throws Exception {
 
-        Config config = getConfig(entryDefinition.getDn());
+        Config config = configManager.getConfig(entryDefinition);
         EntryDefinition parentDefinition = config.getParent(entryDefinition);
 
         Collection parentDns;

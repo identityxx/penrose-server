@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
-package org.safehaus.penrose.apacheds;
+package org.safehaus.penrose.ldap;
 
 import org.apache.ldap.server.partition.AbstractDirectoryPartition;
 import org.apache.ldap.common.filter.ExprNode;
@@ -24,8 +24,6 @@ import org.ietf.ldap.*;
 import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.SearchResults;
 import org.safehaus.penrose.PenroseConnection;
-import org.safehaus.penrose.config.ConfigReader;
-import org.safehaus.penrose.config.Config;
 
 import javax.naming.Name;
 import javax.naming.NamingException;
@@ -62,8 +60,8 @@ public class PenrosePartition extends AbstractDirectoryPartition {
         log.debug("Initializing "+name+" partition ...");
 
         try {
-            ConfigReader reader = new ConfigReader();
-            Config config = reader.read(dir.getAbsolutePath());
+            //ConfigReader reader = new ConfigReader();
+            //Config config = reader.read(dir.getAbsolutePath());
             //log.debug(config.toString());
 
             //penrose.addConfig(config);
@@ -255,7 +253,7 @@ public class PenrosePartition extends AbstractDirectoryPartition {
                 throw new NamingException("RC: "+rc);
             }
 */
-            return new ApacheDSEnumeration(results);
+            return new PenroseEnumeration(results);
 
         } catch (Exception e) {
             log.error(e.getMessage(), e);
@@ -298,7 +296,7 @@ public class PenrosePartition extends AbstractDirectoryPartition {
             if (rc != LDAPException.SUCCESS) return null;
             //throwNamingException(rc, baseDn);
 */
-            return new ApacheDSEnumeration(results);
+            return new PenroseEnumeration(results);
 
         } catch (Exception e) {
             log.error(e.getMessage(), e);

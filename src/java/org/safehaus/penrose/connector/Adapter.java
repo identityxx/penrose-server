@@ -24,7 +24,6 @@ import org.safehaus.penrose.SearchResults;
 import org.apache.log4j.Logger;
 
 import java.util.Collection;
-import java.util.Iterator;
 
 /**
  * @author Endi S. Dewata 

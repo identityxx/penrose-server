@@ -16,9 +16,14 @@ public class Connection {
     private ConnectionConfig connectionConfig;
     private Adapter adapter;
 
-    public void init(ConnectionConfig connectionConfig, Adapter adapter) {
+    public void init(ConnectionConfig connectionConfig, AdapterConfig adapterConfig) throws Exception {
         this.connectionConfig = connectionConfig;
-        this.adapter = adapter;
+
+        String adapterClass = adapterConfig.getAdapterClass();
+        Class clazz = Class.forName(adapterClass);
+        adapter = (Adapter)clazz.newInstance();
+        
+        adapter.init(adapterConfig, this);
     }
 
     public ConnectionConfig getConnectionConfig() {
@@ -71,6 +76,10 @@ public class Connection {
 
     public int delete(SourceDefinition sourceDefinition, AttributeValues values) throws Exception {
         return adapter.delete(sourceDefinition, values);
+    }
+
+    public int getLastChangeNumber(SourceDefinition sourceDefinition) throws Exception {
+        return adapter.getLastChangeNumber(sourceDefinition);
     }
 
     public SearchResults getChanges(SourceDefinition sourceDefinition, int lastChangeNumber) throws Exception {

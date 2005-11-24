@@ -123,7 +123,7 @@ public class TransformEngine {
 
     public Row translate(Source source, AttributeValues input, AttributeValues output) throws Exception {
 
-        Config config = engine.getConfig(source);
+        Config config = engine.getConfigManager().getConfig(source);
         ConnectionConfig connectionConfig = config.getConnectionConfig(source.getConnectionName());
         SourceDefinition sourceDefinition = connectionConfig.getSourceDefinition(source.getSourceName());
 
@@ -208,7 +208,7 @@ public class TransformEngine {
 
     public Map split(Source source, AttributeValues entry) throws Exception {
 
-        Config config = engine.getConfig(source);
+        Config config = engine.getConfigManager().getConfig(source);
         ConnectionConfig connectionConfig = config.getConnectionConfig(source.getConnectionName());
         SourceDefinition sourceDefinition = connectionConfig.getSourceDefinition(source.getSourceName());
 

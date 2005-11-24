@@ -17,7 +17,6 @@
  */
 package org.safehaus.penrose.config;
 
-import java.io.Serializable;
 import java.util.*;
 
 import org.apache.log4j.Logger;
@@ -26,7 +25,7 @@ import org.safehaus.penrose.module.ModuleConfig;
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.connector.ConnectionConfig;
 
-public class Config implements Serializable {
+public class Config {
 
     Logger log = Logger.getLogger(getClass());
 

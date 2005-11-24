@@ -57,7 +57,7 @@ public class SearchCleaner extends GraphVisitor {
         this.depths = planner.getDepths();
         this.primarySource = primarySource;
 
-        config = engine.getConfig(entryDefinition.getDn());
+        config = engine.getConfigManager().getConfig(entryDefinition);
         graph = engine.getGraph(entryDefinition);
 
         needCleaning.put(primarySource, new Boolean(false));

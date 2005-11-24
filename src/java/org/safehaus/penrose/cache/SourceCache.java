@@ -21,7 +21,6 @@ import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.connector.Connector;
 import org.safehaus.penrose.connector.Connection;
-import org.safehaus.penrose.connector.Adapter;
 import org.safehaus.penrose.connector.ConnectionConfig;
 import org.safehaus.penrose.config.Config;
 import org.safehaus.penrose.SearchResults;
@@ -91,12 +90,11 @@ public abstract class SourceCache extends Cache {
 
         if (!autoRefresh) return;
 
-        Config config = connector.getConfig(sourceDefinition);
+        Config config = connector.getConfigManager().getConfig(sourceDefinition);
         ConnectionConfig conCfg = config.getConnectionConfig(sourceDefinition.getConnectionName());
         Connection connection = connector.getConnection(conCfg.getConnectionName());
-        Adapter adapter = connection.getAdapter();
 
-        SearchResults sr = adapter.load(sourceDefinition, null, 100);
+        SearchResults sr = connection.load(sourceDefinition, null, 100);
 
         //log.debug("Results:");
         while (sr.hasNext()) {
@@ -107,7 +105,7 @@ public abstract class SourceCache extends Cache {
             put(pk, sourceValues);
         }
 
-        int lastChangeNumber = adapter.getLastChangeNumber(sourceDefinition);
+        int lastChangeNumber = connection.getLastChangeNumber(sourceDefinition);
         setLastChangeNumber(lastChangeNumber);
     }
 }

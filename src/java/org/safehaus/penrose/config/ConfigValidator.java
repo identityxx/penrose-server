@@ -23,7 +23,6 @@ import org.safehaus.penrose.connector.AdapterConfig;
 import org.safehaus.penrose.connector.ConnectionConfig;
 import org.safehaus.penrose.schema.Schema;
 import org.safehaus.penrose.schema.ObjectClass;
-import org.safehaus.penrose.schema.AttributeType;
 import org.ietf.ldap.LDAPDN;
 import org.apache.log4j.Logger;
 

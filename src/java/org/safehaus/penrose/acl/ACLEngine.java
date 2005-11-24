@@ -95,7 +95,7 @@ public class ACLEngine {
             }
         }
 
-        Config config = handler.getConfig(entry.getDn());
+        Config config = handler.getConfigManager().getConfig(entry.getDn());
         if (config == null) return false;
 
         entry = config.getParent(entry);
@@ -218,7 +218,7 @@ public class ACLEngine {
             }
         }
 
-        Config config = handler.getConfig(entry.getDn());
+        Config config = handler.getConfigManager().getConfig(entry.getDn());
         if (config == null) return;
 
         entry = config.getParent(entry);

@@ -23,10 +23,7 @@ import org.safehaus.penrose.cache.SourceCache;
 import org.safehaus.penrose.cache.DefaultSourceCache;
 import org.safehaus.penrose.engine.TransformEngine;
 import org.safehaus.penrose.util.Formatter;
-import org.safehaus.penrose.config.Config;
-import org.safehaus.penrose.config.ServerConfig;
-import org.safehaus.penrose.config.ServerConfigReader;
-import org.safehaus.penrose.config.ConfigReader;
+import org.safehaus.penrose.config.*;
 import org.safehaus.penrose.thread.MRSWLock;
 import org.safehaus.penrose.thread.Queue;
 import org.safehaus.penrose.thread.ThreadPool;
@@ -57,7 +54,7 @@ public class Connector {
     private Queue queue = new Queue();
 
     private Map connections = new LinkedHashMap();
-    public Collection configs = new ArrayList();
+    private ConfigManager configManager;
 
     private Map caches = new TreeMap();
 
@@ -93,8 +90,21 @@ public class Connector {
         if (threadPool != null) threadPool.stopRequestAllWorkers();
     }
 
+
+    public ConfigManager getConfigManager() {
+        return configManager;
+    }
+
+    public void setConfigManager(ConfigManager configManager) throws Exception {
+        this.configManager = configManager;
+
+        for (Iterator i=configManager.getConfigs().iterator(); i.hasNext(); ) {
+            Config config = (Config)i.next();
+            addConfig(config);
+        }
+    }
+
     public void addConfig(Config config) throws Exception {
-        configs.add(config);
 
         for (Iterator i = config.getConnectionConfigs().iterator(); i.hasNext();) {
             ConnectionConfig connectionConfig = (ConnectionConfig)i.next();
@@ -105,14 +115,8 @@ public class Connector {
             AdapterConfig adapterConfig = serverConfig.getAdapterConfig(adapterName);
             if (adapterConfig == null) throw new Exception("Undefined adapter "+adapterName);
 
-            String adapterClass = adapterConfig.getAdapterClass();
-            Class clazz = Class.forName(adapterClass);
-            Adapter adapter = (Adapter)clazz.newInstance();
-
             Connection connection = new Connection();
-            connection.init(connectionConfig, adapter);
-
-            adapter.init(adapterConfig, connection);
+            connection.init(connectionConfig, adapterConfig);
 
             connections.put(connectionConfig.getConnectionName(), connection);
 
@@ -126,7 +130,7 @@ public class Connector {
                 String dataCacheClass = dataCacheConfig.getCacheClass();
                 dataCacheClass = dataCacheClass == null ? ConnectorConfig.DEFAULT_CACHE_CLASS : dataCacheClass;
 
-                clazz = Class.forName(dataCacheClass);
+                Class clazz = Class.forName(dataCacheClass);
                 SourceCache sourceCache = (SourceCache)clazz.newInstance();
                 sourceCache.setConnector(this);
                 sourceCache.setSourceDefinition(sourceDefinition);
@@ -139,19 +143,6 @@ public class Connector {
 
     public Connection getConnection(String name) {
         return (Connection)connections.get(name);
-    }
-
-    public Config getConfig(SourceDefinition sourceDefinition) throws Exception {
-        String connectionName = sourceDefinition.getConnectionName();
-        for (Iterator i=configs.iterator(); i.hasNext(); ) {
-            Config config = (Config)i.next();
-            if (config.getConnectionConfig(connectionName) != null) return config;
-        }
-        return null;
-    }
-
-    public Collection getConfigs() {
-        return configs;
     }
 
     public void refresh(Config config) throws Exception {
@@ -768,7 +759,7 @@ public class Connector {
 
     public SourceCache getCache(SourceDefinition sourceDefinition) throws Exception {
 
-        Config config = getConfig(sourceDefinition);
+        Config config = configManager.getConfig(sourceDefinition);
         ConnectionConfig connectionConfig = config.getConnectionConfig(sourceDefinition.getConnectionName());
 
         String key = connectionConfig.getConnectionName()+"."+sourceDefinition.getName();

@@ -21,15 +21,12 @@ import org.apache.commons.digester.Digester;
 import org.apache.commons.digester.xmlrules.DigesterLoader;
 import org.apache.log4j.Logger;
 import org.safehaus.penrose.connector.ConnectorConfig;
-import org.safehaus.penrose.connector.Connector;
 import org.safehaus.penrose.engine.EngineConfig;
-import org.safehaus.penrose.engine.Engine;
 import org.safehaus.penrose.cache.CacheConfig;
 import org.safehaus.penrose.interpreter.InterpreterConfig;
 
 import java.io.File;
 import java.net.URL;
-import java.util.Iterator;
 
 /**
  * @author Endi S. Dewata

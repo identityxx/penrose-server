@@ -119,7 +119,7 @@ public class ModifyGraphVisitor extends GraphVisitor {
             newValues.set(name, values);
         }
 
-        Config config = engine.getConfig(source);
+        Config config = engine.getConfigManager().getConfig(source);
         ConnectionConfig connectionConfig = config.getConnectionConfig(source.getConnectionName());
         SourceDefinition sourceDefinition = connectionConfig.getSourceDefinition(source.getSourceName());
 

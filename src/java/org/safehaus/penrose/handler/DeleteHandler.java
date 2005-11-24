@@ -80,7 +80,7 @@ public class DeleteHandler {
         log.debug("Deleting entry "+dn);
 
         EntryDefinition entryDefinition = entry.getEntryDefinition();
-        Config config = handler.getConfig(entryDefinition.getDn());
+        Config config = handler.getConfigManager().getConfig(entryDefinition);
 
         if (config.isDynamic(entryDefinition)) {
 	        return handler.getEngine().delete(entry);
@@ -93,7 +93,7 @@ public class DeleteHandler {
 
     public int deleteStaticEntry(EntryDefinition entry) throws Exception {
 
-        Config config = handler.getConfig(entry.getDn());
+        Config config = handler.getConfigManager().getConfig(entry.getDn());
         if (config == null) return LDAPException.NO_SUCH_OBJECT;
 
         // can't delete no leaf

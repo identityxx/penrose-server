@@ -73,7 +73,7 @@ public class ModRdnHandler {
         if (rc != LDAPException.SUCCESS) return rc;
 
         EntryDefinition entryDefinition = entry.getEntryDefinition();
-        Config config = handler.getConfig(entryDefinition.getDn());
+        Config config = handler.getConfigManager().getConfig(entryDefinition);
         if (config.isDynamic(entryDefinition)) {
             return modRdnVirtualEntry(connection, entry, newRdn);
 
@@ -87,7 +87,7 @@ public class ModRdnHandler {
             String newRdn)
 			throws Exception {
 
-        Config config = handler.getConfig(entry.getDn());
+        Config config = handler.getConfigManager().getConfig(entry.getDn());
         config.renameEntryDefinition(entry, newRdn);
 
         return LDAPException.SUCCESS;

@@ -23,12 +23,14 @@ import org.safehaus.penrose.acl.ACLEngine;
 import org.safehaus.penrose.filter.FilterTool;
 import org.safehaus.penrose.mapping.EntryDefinition;
 import org.safehaus.penrose.config.Config;
+import org.safehaus.penrose.config.ConfigManager;
 import org.safehaus.penrose.schema.Schema;
 import org.safehaus.penrose.engine.Engine;
 import org.safehaus.penrose.interpreter.InterpreterFactory;
 import org.safehaus.penrose.module.Module;
 import org.safehaus.penrose.module.ModuleMapping;
 import org.safehaus.penrose.module.ModuleConfig;
+import org.safehaus.penrose.module.ModuleContext;
 import org.safehaus.penrose.event.*;
 import org.apache.log4j.Logger;
 import org.ietf.ldap.LDAPEntry;
@@ -39,7 +41,7 @@ import java.util.*;
 /**
  * @author Endi S. Dewata
  */
-public class Handler {
+public class Handler implements ModuleContext {
 
     Logger log = Logger.getLogger(getClass());
 
@@ -54,7 +56,7 @@ public class Handler {
     private Schema schema;
     private Engine engine;
 
-    private Map configs = new TreeMap();
+    private ConfigManager configManager;
     private Map modules = new LinkedHashMap();
 
     private String rootDn;
@@ -83,7 +85,7 @@ public class Handler {
         modRdnHandler = new ModRdnHandler(this);
         searchHandler = new SearchHandler(this);
 
-        for (Iterator i=configs.values().iterator(); i.hasNext(); ) {
+        for (Iterator i=configManager.getConfigs().iterator(); i.hasNext(); ) {
             Config config = (Config)i.next();
 
             for (Iterator j=config.getModuleConfigs().iterator(); j.hasNext(); ) {
@@ -311,7 +313,7 @@ public class Handler {
 
         Collection list = new ArrayList();
 
-        Config config = engine.getConfig(dn);
+        Config config = engine.getConfigManager().getConfig(dn);
         if (config == null) return list;
 
         for (Iterator i = config.getModuleMappings().iterator(); i.hasNext(); ) {
@@ -349,27 +351,12 @@ public class Handler {
         this.rootPassword = rootPassword;
     }
 
-    public void addConfig(Config config) throws Exception {
-
-        for (Iterator i=config.getRootEntryDefinitions().iterator(); i.hasNext(); ) {
-            EntryDefinition entryDefinition = (EntryDefinition)i.next();
-
-            String ndn = schema.normalize(entryDefinition.getDn());
-            configs.put(ndn, config);
-        }
+    public ConfigManager getConfigManager() {
+        return configManager;
     }
 
-    public Collection getConfigs() throws Exception {
-        return configs.values();
-    }
-
-    public Config getConfig(String dn) throws Exception {
-        String ndn = schema.normalize(dn);
-        for (Iterator i=configs.keySet().iterator(); i.hasNext(); ) {
-            String suffix = (String)i.next();
-            if (ndn.endsWith(suffix)) return (Config)configs.get(suffix);
-        }
-        return null;
+    public void setConfigManager(ConfigManager configManager) {
+        this.configManager = configManager;
     }
 
     public FilterTool getFilterTool() {
@@ -386,6 +373,52 @@ public class Handler {
 
     public void setACLEngine(ACLEngine aclEngine) {
         this.aclEngine = aclEngine;
+    }
+
+    // ------------------------------------------------
+    // Listeners
+    // ------------------------------------------------
+
+    public void addConnectionListener(ConnectionListener l) {
+    }
+
+    public void removeConnectionListener(ConnectionListener l) {
+    }
+
+    public void addBindListener(BindListener l) {
+    }
+
+    public void removeBindListener(BindListener l) {
+    }
+
+    public void addSearchListener(SearchListener l) {
+    }
+
+    public void removeSearchListener(SearchListener l) {
+    }
+
+    public void addCompareListener(CompareListener l) {
+    }
+
+    public void removeCompareListener(CompareListener l) {
+    }
+
+    public void addAddListener(AddListener l) {
+    }
+
+    public void removeAddListener(AddListener l) {
+    }
+
+    public void addDeleteListener(DeleteListener l) {
+    }
+
+    public void removeDeleteListener(DeleteListener l) {
+    }
+
+    public void addModifyListener(ModifyListener l) {
+    }
+
+    public void removeModifyListener(ModifyListener l) {
     }
 }
 

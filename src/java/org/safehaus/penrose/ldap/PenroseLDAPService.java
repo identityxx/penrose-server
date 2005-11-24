@@ -18,8 +18,6 @@
 package org.safehaus.penrose.ldap;
 
 import org.safehaus.penrose.Penrose;
-import org.safehaus.penrose.apacheds.PenroseAuthenticator;
-import org.safehaus.penrose.apacheds.PenroseInterceptor;
 import org.safehaus.penrose.config.ServerConfig;
 import org.apache.ldap.server.configuration.MutableServerStartupConfiguration;
 import org.apache.ldap.server.configuration.MutableAuthenticatorConfiguration;
@@ -128,7 +126,7 @@ public class PenroseLDAPService {
 
         new InitialDirContext(env);
 
-        log.info("Listening to port "+serverConfig.getPort()+".");
+        log.warn("Listening to port "+serverConfig.getPort()+".");
 
         // Start ApacheDS synchronization thread
         Thread thread = new Thread() {

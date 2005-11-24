@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
-package org.safehaus.penrose;
+package org.safehaus.penrose.client;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -23,8 +23,10 @@ import java.util.List;
 import java.util.TreeMap;
 
 import org.apache.log4j.Logger;
+import org.safehaus.penrose.Penrose;
+import org.safehaus.penrose.PenroseConnection;
 
-public class PenroseConnectionPool implements PenroseConnectionPoolMBean {
+public class ClientManager {
 	
 	public Logger log = Logger.getLogger(getClass());
 
@@ -33,11 +35,11 @@ public class PenroseConnectionPool implements PenroseConnectionPoolMBean {
 
     private Penrose penrose;
 
-	public PenroseConnectionPool(Penrose penrose) {
+	public ClientManager(Penrose penrose) {
 		this(penrose, 20);
 	}
 
-	public PenroseConnectionPool(Penrose penrose, int size) {
+	public ClientManager(Penrose penrose, int size) {
 
         this.penrose = penrose;
 

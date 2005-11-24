@@ -17,7 +17,6 @@
  */
 package org.safehaus.penrose.config;
 
-import java.io.Serializable;
 import java.util.*;
 
 import org.apache.log4j.Logger;
@@ -31,7 +30,7 @@ import org.safehaus.penrose.connector.AdapterConfig;
 /**
  * @author Endi S. Dewata
  */
-public class ServerConfig implements Serializable {
+public class ServerConfig {
 
     Logger log = Logger.getLogger(getClass());
 
@@ -53,7 +52,8 @@ public class ServerConfig implements Serializable {
     private ConnectorConfig connectorConfig;
     private EngineConfig engineConfig;
 
-    private Map adapterConfigs = new LinkedHashMap();
+    private Map adapterConfigs = new TreeMap();
+    private Map systemProperties = new TreeMap();
 
     public ServerConfig() {
     }
@@ -85,14 +85,6 @@ public class ServerConfig implements Serializable {
 		this.rootPassword = rootPassword;
 	}
 
-    public Collection getAdapterConfigs() {
-        return adapterConfigs.values();
-    }
-
-    public AdapterConfig getAdapterConfig(String name) {
-        return (AdapterConfig)adapterConfigs.get(name);
-    }
-
     public Collection getSchemaFiles() {
         return schemaFiles;
     }
@@ -117,12 +109,36 @@ public class ServerConfig implements Serializable {
         return interpreterConfig;
     }
 
+    public Collection getAdapterConfigs() {
+        return adapterConfigs.values();
+    }
+
+    public AdapterConfig getAdapterConfig(String name) {
+        return (AdapterConfig)adapterConfigs.get(name);
+    }
+
     public void setAdapterConfigs(Map adapterConfigs) {
         this.adapterConfigs = adapterConfigs;
     }
 
     public void addAdapterConfig(AdapterConfig adapter) {
         adapterConfigs.put(adapter.getAdapterName(), adapter);
+    }
+
+    public String getSystemProperty(String name) {
+        return (String)systemProperties.get(name);
+    }
+
+    public Collection getSystemPropertyNames() {
+        return systemProperties.keySet();
+    }
+    
+    public void setSystemProperty(String name, String value) {
+        systemProperties.put(name, value);
+    }
+
+    public String removeSystemProperty(String name) {
+        return (String)systemProperties.remove(name);
     }
 
     public void setConnectorConfig(ConnectorConfig connectorConfig) {

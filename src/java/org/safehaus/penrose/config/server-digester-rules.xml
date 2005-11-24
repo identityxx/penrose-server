@@ -26,6 +26,13 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 	<pattern value="server">
         <set-properties-rule/>
 
+        <!-- system property -->
+        <pattern value="system-property">
+            <call-method-rule methodname="setSystemProperty" paramcount="2" />
+            <call-param-rule pattern="property-name" paramnumber="0"/>
+            <call-param-rule pattern="property-value" paramnumber="1"/>
+        </pattern>
+
 		<!-- interpreter -->
 		<pattern value="interpreter">
 			<object-create-rule classname="org.safehaus.penrose.interpreter.InterpreterConfig" />

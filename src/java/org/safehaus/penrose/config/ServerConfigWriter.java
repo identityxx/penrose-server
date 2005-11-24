@@ -31,7 +31,6 @@ import org.safehaus.penrose.cache.CacheConfig;
 import org.safehaus.penrose.interpreter.InterpreterConfig;
 import org.safehaus.penrose.engine.EngineConfig;
 import org.safehaus.penrose.connector.ConnectorConfig;
-import org.safehaus.penrose.connector.AdapterConfig;
 
 /**
  * @author Endi S. Dewata
@@ -74,6 +73,23 @@ public class ServerConfigWriter {
 	public Element toElement() {
 		Element element = new DefaultElement("server");
 
+        for (Iterator i = serverConfig.getSystemPropertyNames().iterator(); i.hasNext();) {
+            String name = (String)i.next();
+            String value = serverConfig.getSystemProperty(name);
+
+            Element parameter = new DefaultElement("system-property");
+
+            Element paramName = new DefaultElement("property-name");
+            paramName.add(new DefaultText(name));
+            parameter.add(paramName);
+
+            Element paramValue = new DefaultElement("property-value");
+            paramValue.add(new DefaultText(value));
+            parameter.add(paramValue);
+
+            element.add(parameter);
+        }
+
         if (serverConfig.getInterpreterConfig() != null) {
             element.add(toElement(serverConfig.getInterpreterConfig()));
         }
@@ -100,8 +116,8 @@ public class ServerConfigWriter {
             element.add(toElement(connectorConfig));
         }
 
-        for (Iterator iter = serverConfig.getAdapterConfigs().iterator(); iter.hasNext();) {
-            AdapterConfig adapterConfig = (AdapterConfig)iter.next();
+        for (Iterator i = serverConfig.getAdapterConfigs().iterator(); i.hasNext();) {
+            AdapterConfig adapterConfig = (AdapterConfig)i.next();
             element.add(toElement(adapterConfig));
         }
 

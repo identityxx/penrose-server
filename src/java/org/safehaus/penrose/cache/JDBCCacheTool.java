@@ -2,7 +2,6 @@ package org.safehaus.penrose.cache;
 
 import org.safehaus.penrose.filter.*;
 import org.safehaus.penrose.mapping.*;
-import org.safehaus.penrose.config.Config;
 import org.apache.log4j.Logger;
 
 import java.util.Iterator;
@@ -39,7 +38,7 @@ public class JDBCCacheTool {
         StringBuffer columns = new StringBuffer();
         StringBuffer whereClause = new StringBuffer();
 
-        boolean valid = convert(sourceDefinition, filter, parameters, whereClause, tables);
+        convert(sourceDefinition, filter, parameters, whereClause, tables);
 
         Collection pkFields = sourceDefinition.getPrimaryKeyFieldDefinitions();
         for (Iterator j=pkFields.iterator(); j.hasNext(); ) {

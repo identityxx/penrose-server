@@ -17,9 +17,7 @@
  */
 package org.safehaus.penrose.config;
 
-import java.util.HashMap;
 import java.util.Iterator;
-import java.util.Map;
 import java.util.Collection;
 import java.io.File;
 import java.io.FileWriter;

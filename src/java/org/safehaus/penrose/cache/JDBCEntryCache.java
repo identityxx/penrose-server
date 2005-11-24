@@ -18,14 +18,7 @@
 package org.safehaus.penrose.cache;
 
 import org.safehaus.penrose.mapping.*;
-import org.safehaus.penrose.util.PasswordUtil;
-import org.safehaus.penrose.interpreter.Interpreter;
-import org.safehaus.penrose.SearchResults;
-import org.ietf.ldap.LDAPEntry;
 
-import javax.naming.Context;
-import javax.naming.NameAlreadyBoundException;
-import javax.naming.directory.*;
 import java.util.*;
 import java.sql.*;
 

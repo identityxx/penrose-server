@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
-package org.safehaus.penrose.apacheds;
+package org.safehaus.penrose.ldap;
 
 import org.apache.ldap.server.interceptor.BaseInterceptor;
 import org.apache.ldap.server.interceptor.NextInterceptor;
@@ -29,6 +29,7 @@ import org.safehaus.penrose.SearchResults;
 import org.safehaus.penrose.util.ExceptionUtil;
 import org.safehaus.penrose.mapping.EntryDefinition;
 import org.safehaus.penrose.config.Config;
+import org.safehaus.penrose.config.ConfigManager;
 import org.ietf.ldap.*;
 
 import javax.naming.*;
@@ -43,19 +44,13 @@ public class PenroseInterceptor extends BaseInterceptor {
     public Logger log = Logger.getLogger(getClass());
 
     Penrose penrose;
-    ApacheDSEntryCache entryCache;
+    ConfigManager configManager;
 
     DirectoryServiceConfiguration factoryCfg;
 
     public void setPenrose(Penrose penrose) throws Exception {
         this.penrose = penrose;
-/*
-        Cache cache = penrose.getCache();
-
-        entryCache = new ApacheDSEntryCache();
-        entryCache.init(cache);
-        cache.setEntryDataCache(entryCache);
-*/
+        this.configManager = penrose.getConfigManager();
     }
 
     public void init(DirectoryServiceConfiguration factoryCfg, InterceptorConfiguration cfg) throws NamingException
@@ -79,7 +74,7 @@ public class PenroseInterceptor extends BaseInterceptor {
             log.debug("===============================================================================");
             log.debug("add(\""+dn+"\") as "+principalDn);
 
-            Config config = penrose.getConfig(dn);
+            Config config = configManager.getConfig(dn);
             if (config == null) {
                 log.debug(dn+" is a static entry");
                 next.add(upName, normName, attributes);
@@ -152,7 +147,7 @@ public class PenroseInterceptor extends BaseInterceptor {
             log.debug("===============================================================================");
             log.debug("compare(\""+dn+"\")");
 
-            Config config = penrose.getConfig(dn);
+            Config config = configManager.getConfig(dn);
             if (config == null) {
                 log.debug(dn+" is a static entry");
                 return next.compare(name, attributeName, value);
@@ -199,7 +194,7 @@ public class PenroseInterceptor extends BaseInterceptor {
             log.debug("===============================================================================");
             log.debug("delete(\""+dn+"\")");
 
-            Config config = penrose.getConfig(dn);
+            Config config = configManager.getConfig(dn);
             if (config == null) {
                 log.debug(dn+" is a static entry");
                 next.delete(name);
@@ -282,7 +277,7 @@ public class PenroseInterceptor extends BaseInterceptor {
             log.debug("list(\""+dn+"\")");
 
 
-            Config config = penrose.getConfig(dn);
+            Config config = configManager.getConfig(dn);
             if (config == null) {
                 log.debug(dn+" is a static entry");
                 return next.list(name);
@@ -312,7 +307,7 @@ public class PenroseInterceptor extends BaseInterceptor {
                 ExceptionUtil.throwNamingException(rc);
             }
 */
-            return new ApacheDSEnumeration(results);
+            return new PenroseEnumeration(results);
 
         } catch (NamingException e) {
             throw e;
@@ -333,7 +328,7 @@ public class PenroseInterceptor extends BaseInterceptor {
         try {
             String dn = name.toString();
 
-            Config config = penrose.getConfig(dn);
+            Config config = configManager.getConfig(dn);
             if (config == null) {
                 //log.debug(dn+" is a static entry");
                 return next.hasEntry(name);
@@ -389,7 +384,7 @@ public class PenroseInterceptor extends BaseInterceptor {
             log.debug("===============================================================================");
             log.debug("lookup(\""+dn+"\", "+attrIds+")");
 
-            Config config = penrose.getConfig(dn);
+            Config config = configManager.getConfig(dn);
             if (config == null) {
                 log.debug(dn+" is a static entry");
                 return next.lookup(name, attrIds);
@@ -464,7 +459,7 @@ public class PenroseInterceptor extends BaseInterceptor {
             log.debug("===============================================================================");
             log.debug("lookup(\""+dn+"\")");
 
-            Config config = penrose.getConfig(dn);
+            Config config = configManager.getConfig(dn);
             if (config == null) {
                 log.debug(dn+" is a static entry");
                 return next.lookup(name);
@@ -550,84 +545,52 @@ public class PenroseInterceptor extends BaseInterceptor {
                     SearchResult sr = (SearchResult)ne.next();
                     Attributes attributes = sr.getAttributes();
 
-                    if (requestedAttrs.contains("*") || requestedAttrs.contains("vendorName")) {
-                        Attribute attr = attributes.get("vendorName");
-                        if (attr == null) {
-                            attr = new BasicAttribute("vendorName");
-                            attributes.put(attr);
-                        } else {
-                            attr.clear();
-                        }
-                        attr.add("Identyx Corporation");
-                    }
+                    PenroseConnection connection = penrose.openConnection();
+                    connection.setBindDn(principalDn.toString());
 
-                    if (requestedAttrs.contains("*") || requestedAttrs.contains("vendorVersion")) {
-                        Attribute attr = attributes.get("vendorVersion");
-                        if (attr == null) {
-                            attr = new BasicAttribute("vendorVersion");
-                            attributes.put(attr);
-                        } else {
-                            attr.clear();
-                        }
-                        attr.add("Penrose Virtual Directory Server 0.9.8");
-                    }
+                    SearchResults results = connection.search(
+                            baseDn,
+                            LDAPConnection.SCOPE_BASE,
+                            LDAPSearchConstraints.DEREF_ALWAYS,
+                            "(objectClass=*)",
+                            requestedAttrs);
 
-                    if (requestedAttrs.contains("*") || requestedAttrs.contains("namingContexts")) {
-                        Attribute attr = attributes.get("namingContexts");
-                        if (attr == null) {
-                            attr = new BasicAttribute("namingContexts");
-                            attributes.put(attr);
+                    LDAPEntry entry = (LDAPEntry)results.next();
+                    LDAPAttributeSet set = entry.getAttributeSet();
+
+                    for (NamingEnumeration ne2=attributes.getAll(); ne2.hasMore(); ) {
+                        Attribute attribute = (Attribute)ne2.next();
+                        String name = attribute.getID();
+                        if (name.equals("vendorName") || name.equals("vendorVersion")) continue;
+
+                        LDAPAttribute ldapAttribute = set.getAttribute(name);
+                        if (ldapAttribute == null) {
+                            ldapAttribute = new LDAPAttribute(name);
+                            set.add(ldapAttribute);
                         }
-                        Collection configs = penrose.getConfigs();
-                        for (Iterator i=configs.iterator(); i.hasNext(); ) {
-                            Config config = (Config)i.next();
-                            Collection roots = config.getRootEntryDefinitions();
-                            for (Iterator j=roots.iterator(); j.hasNext(); ) {
-                                EntryDefinition ed = (EntryDefinition)j.next();
-                                if (attr.contains(ed.getDn())) continue;
-                                attr.add(ed.getDn());
-                            }
+
+                        for (NamingEnumeration ne3=attribute.getAll(); ne3.hasMore(); ) {
+                            Object value = ne3.next();
+                            ldapAttribute.addValue(value.toString());
                         }
                     }
 
-                    List list = new ArrayList();
-                    list.add(sr);
+                    connection.close();
 
-                    return new PenroseEnumeration(list.iterator());
+                    SearchResults results2 = new SearchResults();
+                    results2.add(entry);
+                    results2.close();
+
+                    return new PenroseEnumeration(results2);
                 }
             }
 
-            Config config = penrose.getConfig(baseDn);
+            Config config = configManager.getConfig(baseDn);
             if (config == null) {
                 log.debug(baseDn+" is a static entry");
                 return next.search(base, env, filter, searchControls);
             }
-/*
-            EntryDefinition ed = config.findEntryDefinition(baseDn);
-            if (ed == null) {
-                log.debug(baseDn+" is a static entry");
-                return next.search(base, env, filter, searchControls);
-            }
 
-            if (!ed.isDynamic()) {
-                log.debug(baseDn+" is a static entry");
-                NamingEnumeration ne = next.search(base, env, filter, searchControls);
-
-                while (ne.hasMore()) {
-                    SearchResult sr = (SearchResult)ne.next();
-                    log.debug("dn: "+sr.getName());
-
-                    Attributes attributes = sr.getAttributes();
-                    for (NamingEnumeration ne2 = attributes.getAll(); ne2.hasMore(); ) {
-                        Attribute attribute = (Attribute)ne2.next();
-                        String name = attribute.getID();
-                        log.debug(name+": "+attribute.get());
-                    }
-                }
-
-                return ne;
-            }
-*/
             String deref = (String)env.get("java.naming.ldap.derefAliases");
             int scope = searchControls.getSearchScope();
             String returningAttributes[] = searchControls.getReturningAttributes();
@@ -652,16 +615,8 @@ public class PenroseInterceptor extends BaseInterceptor {
                     LDAPSearchConstraints.DEREF_ALWAYS,
                     newFilter,
                     attributeNames);
-/*
-            int rc = results.getReturnCode();
-            connection.close();
 
-            if (rc != LDAPException.SUCCESS) {
-                ExceptionUtil.throwNamingException(rc);
-            }
-*/
-
-            return new ApacheDSEnumeration(results);
+            return new PenroseEnumeration(results);
 
         } catch (NamingException e) {
             throw e;
@@ -687,7 +642,7 @@ public class PenroseInterceptor extends BaseInterceptor {
             log.debug("===============================================================================");
             log.debug("modify(\""+dn+"\")");
 
-            Config config = penrose.getConfig(dn);
+            Config config = configManager.getConfig(dn);
             if (config == null) {
                 log.debug(dn+" is a static entry");
                 next.modify(name, modOp, attributes);
@@ -757,7 +712,7 @@ public class PenroseInterceptor extends BaseInterceptor {
             log.debug("===============================================================================");
             log.debug("modify(\""+dn+"\")");
 
-            Config config = penrose.getConfig(dn);
+            Config config = configManager.getConfig(dn);
             if (config == null) {
                 log.debug(dn+" is a static entry");
                 next.modify(name, modificationItems);
@@ -842,7 +797,7 @@ public class PenroseInterceptor extends BaseInterceptor {
             log.debug("===============================================================================");
             log.debug("modifyRn(\""+dn+"\")");
 
-            Config config = penrose.getConfig(dn);
+            Config config = configManager.getConfig(dn);
             if (config == null) {
                 log.debug(dn+" is a static entry");
                 next.modifyRn(name, newRn, deleteOldRn);

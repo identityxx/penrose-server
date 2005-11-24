@@ -103,7 +103,7 @@ public class AddHandler {
         log.debug("Adding entry under "+parent.getDn());
 
         EntryDefinition parentDefinition = parent.getEntryDefinition();
-        Config config = handler.getConfig(parentDefinition.getDn());
+        Config config = handler.getConfigManager().getConfig(parentDefinition);
         Collection children = config.getChildren(parentDefinition);
 
         AttributeValues values = new AttributeValues();
@@ -154,7 +154,7 @@ public class AddHandler {
             newEntry = new EntryDefinition(rdn.toString(), parent);
         }
 
-        Config config = handler.getConfig(dn);
+        Config config = handler.getConfigManager().getConfig(dn);
         if (config == null) return LDAPException.NO_SUCH_OBJECT;
 
         config.addEntryDefinition(newEntry);

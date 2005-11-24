@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
-package org.safehaus.penrose.apacheds;
+package org.safehaus.penrose.ldap;
 
 import org.safehaus.penrose.SearchResults;
 import org.ietf.ldap.LDAPEntry;
@@ -32,13 +32,13 @@ import java.util.Enumeration;
 /**
  * @author Endi S. Dewata
  */
-public class ApacheDSEnumeration implements NamingEnumeration {
+public class PenroseEnumeration implements NamingEnumeration {
 
     Logger log = Logger.getLogger(getClass());
 
     public SearchResults searchResults;
 
-    public ApacheDSEnumeration(SearchResults searchResults) {
+    public PenroseEnumeration(SearchResults searchResults) {
         this.searchResults = searchResults;
     }
 

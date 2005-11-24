@@ -114,7 +114,7 @@ public class JoinEngine {
 
         if (relationships == null) return true;
 
-        Config config = engine.getConfig(entryDefinition.getDn());
+        Config config = engine.getConfigManager().getConfig(entryDefinition);
 
         for (Iterator i=relationships.iterator(); i.hasNext(); ) {
             Relationship relationship = (Relationship)i.next();

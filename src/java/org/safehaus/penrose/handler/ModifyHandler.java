@@ -117,7 +117,7 @@ public class ModifyHandler {
         if (rc != LDAPException.SUCCESS) return rc;
 
         EntryDefinition entryDefinition = entry.getEntryDefinition();
-        Config config = handler.getConfig(entryDefinition.getDn());
+        Config config = handler.getConfigManager().getConfig(entryDefinition);
         if (config.isDynamic(entryDefinition)) {
             return modifyVirtualEntry(connection, entry, modifications);
 

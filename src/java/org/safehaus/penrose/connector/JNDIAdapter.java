@@ -30,8 +30,6 @@ import org.safehaus.penrose.util.Formatter;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.SearchResults;
-import org.safehaus.penrose.connector.Adapter;
-import org.safehaus.penrose.config.Config;
 
 /**
  * @author Endi S. Dewata

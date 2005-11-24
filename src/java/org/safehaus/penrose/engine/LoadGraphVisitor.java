@@ -60,7 +60,7 @@ public class LoadGraphVisitor extends GraphVisitor {
         this.entryDefinition = entryDefinition;
         this.sourceValues = sourceValues;
 
-        config = engine.getConfig(entryDefinition.getDn());
+        config = engine.getConfigManager().getConfig(entryDefinition);
         graph = engine.getGraph(entryDefinition);
         primarySource = engine.getPrimarySource(entryDefinition);
 

@@ -54,7 +54,7 @@ public class LoadEngine {
         String s = engine.getEngineConfig().getParameter(EngineConfig.ALLOW_CONCURRENCY);
         boolean allowConcurrency = s == null ? true : new Boolean(s).booleanValue();
 
-        Config config = engine.getConfig(entryDefinition.getDn());
+        Config config = engine.getConfigManager().getConfig(entryDefinition);
 
         Collection sources = entryDefinition.getSources();
         log.debug("Sources: "+sources);
@@ -136,7 +136,7 @@ public class LoadEngine {
             ) throws Exception {
 
         try {
-            Config config = engine.getConfig(entryDefinition.getDn());
+            Config config = engine.getConfigManager().getConfig(entryDefinition);
             Source primarySource = engine.getPrimarySource(entryDefinition);
 
             Collection batch = new ArrayList();

@@ -56,7 +56,7 @@ public class PersistentEntryCache extends EntryCache {
         jdbcConnectionName = getParameter("jdbcConnection");
         jndiConnectionName = getParameter("jndiConnection");
 
-        config = engine.getConfig(entryDefinition.getDn());
+        config = engine.getConfigManager().getConfig(entryDefinition);
 
         entryId = getEntryId();
         if (entryId == 0) {
@@ -352,7 +352,7 @@ public class PersistentEntryCache extends EntryCache {
 
         String dn = entryDefinition.getDn();
         Row rdn = Entry.getRdn(dn);
-        remove(rdn);
+        remove(null);
 
     }
 
@@ -470,7 +470,6 @@ public class PersistentEntryCache extends EntryCache {
 
         for (Iterator i = entries.iterator(); i.hasNext();) {
             EntryDefinition ed = (EntryDefinition) i.next();
-            String dn = ed.getDn();
 
             engine.search(null, new AttributeValues(), ed, null, null);
 
@@ -560,7 +559,6 @@ public class PersistentEntryCache extends EntryCache {
             while (ne.hasMore()) {
                 SearchResult sr = (SearchResult)ne.next();
                 String dn = sr.getName()+","+parentDn;
-                Attributes attributes = sr.getAttributes();
 
                 log.debug(" - "+dn);
                 results.add(dn);
@@ -820,30 +818,38 @@ public class PersistentEntryCache extends EntryCache {
 
     public void remove(Object key) throws Exception {
         Row rdn = (Row)key;
-        String dn = parentDn == null ? entryDefinition.getDn() : rdn+","+parentDn;
+
+        String baseDn;
+        if (rdn == null && parentDn != null) {
+            baseDn = parentDn;
+        } else {
+            baseDn = parentDn == null ? entryDefinition.getDn() : rdn+","+parentDn;
+        }
+
         DirContext ctx = null;
         try {
-            log.debug("Removing "+dn);
+            log.debug("Removing "+baseDn);
             SearchControls sc = new SearchControls();
             sc.setSearchScope(SearchControls.SUBTREE_SCOPE);
             sc.setReturningAttributes(new String[] { "dn" });
 
             ctx = getJNDIConnection();
-            NamingEnumeration ne = ctx.search(dn, "(objectClass=*)", sc);
+            NamingEnumeration ne = ctx.search(baseDn, "(objectClass=*)", sc);
 
             ArrayList dns = new ArrayList();
             while (ne.hasMore()) {
                 SearchResult sr = (SearchResult)ne.next();
-                String rdn2 = sr.getName();
-                String dn2 = "".equals(rdn2) ? dn : rdn2+","+dn;
-                dns.add(0, dn2);
+                String name = sr.getName();
+                if (rdn == null && "".equals(name)) continue;
+                String dn = "".equals(name) ? baseDn : name+","+baseDn;
+                dns.add(0, dn);
             }
 
             for (Iterator i=dns.iterator(); i.hasNext(); ) {
-                String dn2 = (String)i.next();
-                log.debug(" - "+dn2);
+                String dn = (String)i.next();
+                log.debug(" - "+dn);
 
-                ctx.destroySubcontext(dn2);
+                ctx.destroySubcontext(dn);
             }
 
         } catch (NamingException e) {
@@ -879,23 +885,28 @@ public class PersistentEntryCache extends EntryCache {
         StringBuffer whereClause = new StringBuffer();
         Collection parameters = new ArrayList();
 
-        Collection rdns = entryDefinition.getRdnAttributes();
-        for (Iterator i=rdns.iterator(); i.hasNext(); ) {
-            AttributeDefinition attributeDefinition = (AttributeDefinition)i.next();
-            Object attributeValue = rdn.get(attributeDefinition.getName());
+        if (rdn != null) {
+            Collection rdns = entryDefinition.getRdnAttributes();
+            for (Iterator i=rdns.iterator(); i.hasNext(); ) {
+                AttributeDefinition attributeDefinition = (AttributeDefinition)i.next();
+                Object attributeValue = rdn.get(attributeDefinition.getName());
 
-            if (whereClause.length() > 0) whereClause.append(" and ");
-            whereClause.append(attributeDefinition.getName());
-            whereClause.append("=?");
+                if (whereClause.length() > 0) whereClause.append(" and ");
+                whereClause.append(attributeDefinition.getName());
+                whereClause.append("=?");
 
-            parameters.add(attributeValue);
+                parameters.add(attributeValue);
+            }
         }
 
         StringBuffer sb = new StringBuffer();
         sb.append("delete from ");
         sb.append(tableName);
-        sb.append(" where ");
-        sb.append(whereClause);
+
+        if (whereClause.length() > 0) {
+            sb.append(" where ");
+            sb.append(whereClause);
+        }
 
         String sql = sb.toString();
 

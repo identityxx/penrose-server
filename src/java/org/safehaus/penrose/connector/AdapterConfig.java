@@ -17,14 +17,13 @@
  */
 package org.safehaus.penrose.connector;
 
-import java.io.Serializable;
 import java.util.Properties;
 import java.util.Collection;
 
 /**
  * @author Endi S. Dewata
  */
-public class AdapterConfig implements Serializable {
+public class AdapterConfig {
 
     private String adapterName;
     private String adapterClass;

@@ -85,7 +85,7 @@ public class AddEngine {
 
         sourceValues.add(parentSourceValues);
 
-        Config config = engine.getConfig(entryDefinition.getDn());
+        Config config = engine.getConfigManager().getConfig(entryDefinition);
 
         Graph graph = engine.getGraph(entryDefinition);
         String startingSourceName = engine.getStartingSourceName(entryDefinition);

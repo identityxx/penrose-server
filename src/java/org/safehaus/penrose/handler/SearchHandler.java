@@ -87,7 +87,7 @@ public class SearchHandler {
 
         log.debug("Found parent: "+(parent == null ? null : parent.getDn()));
 
-        Config config = handler.getConfig(dn);
+        Config config = handler.getConfigManager().getConfig(dn);
         if (config == null) {
             log.error("Missing config for "+dn);
             return null;
@@ -262,14 +262,6 @@ public class SearchHandler {
             Collection attributeNames,
             SearchResults results) throws Exception {
 
-		String nbase;
-		try {
-			nbase = LDAPDN.normalize(base);
-		} catch (IllegalArgumentException e) {
-			results.setReturnCode(LDAPException.INVALID_DN_SYNTAX);
-			return LDAPException.INVALID_DN_SYNTAX;
-		}
-
         Collection normalizedAttributeNames = new HashSet();
         for (Iterator i=attributeNames.iterator(); i.hasNext(); ) {
             String attributeName = (String)i.next();
@@ -283,7 +275,7 @@ public class SearchHandler {
             set.add(new LDAPAttribute("vendorVersion", new String[] { "Penrose Virtual Directory Server 0.9.8" }));
 
             LDAPAttribute namingContexts = new LDAPAttribute("namingContexts");
-            for (Iterator i=handler.getConfigs().iterator(); i.hasNext(); ) {
+            for (Iterator i=handler.getConfigManager().getConfigs().iterator(); i.hasNext(); ) {
                 Config config = (Config)i.next();
                 for (Iterator j=config.getRootEntryDefinitions().iterator(); j.hasNext(); ) {
                     EntryDefinition entry = (EntryDefinition)j.next();
@@ -298,6 +290,14 @@ public class SearchHandler {
 
             results.setReturnCode(LDAPException.SUCCESS);
             return LDAPException.SUCCESS;
+        }
+
+        String nbase;
+        try {
+            nbase = LDAPDN.normalize(base);
+        } catch (IllegalArgumentException e) {
+            results.setReturnCode(LDAPException.INVALID_DN_SYNTAX);
+            return LDAPException.INVALID_DN_SYNTAX;
         }
 
 		Filter f = FilterTool.parseFilter(filter);
@@ -355,7 +355,7 @@ public class SearchHandler {
             SearchResults results,
             boolean first) throws Exception {
 
-        Config config = handler.getConfig(entryDefinition.getDn());
+        Config config = handler.getConfigManager().getConfig(entryDefinition);
         Collection children = config.getChildren(entryDefinition);
         if (children == null) {
             return;

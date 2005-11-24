@@ -15,39 +15,16 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
-package org.safehaus.penrose.apacheds;
+package org.safehaus.penrose.management;
 
-import javax.naming.NamingEnumeration;
-import javax.naming.NamingException;
-import java.util.Iterator;
+import java.io.IOException;
+import java.util.*;
 
-/**
- * @author Endi S. Dewata
- */
-public class PenroseEnumeration implements NamingEnumeration {
+public interface PenroseAdminMBean {
+	
+	public byte[] download(String filename) throws IOException;
+	public void upload(String filename, byte content[]) throws IOException;
+    public Collection listFiles(String directory) throws Exception;
+    public Collection getLoggerNames(String path) throws Exception;
 
-    public Iterator iterator;
-
-    public PenroseEnumeration(Iterator iterator) {
-        this.iterator = iterator;
-    }
-
-    public void close() throws NamingException {
-    }
-
-    public boolean hasMore() throws NamingException {
-        return iterator.hasNext();
-    }
-
-    public Object next() throws NamingException {
-        return iterator.next();
-    }
-
-    public boolean hasMoreElements() {
-        return iterator.hasNext();
-    }
-
-    public Object nextElement() {
-        return iterator.next();
-    }
 }

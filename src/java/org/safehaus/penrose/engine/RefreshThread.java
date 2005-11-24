@@ -49,7 +49,7 @@ public class RefreshThread implements Runnable {
 				Thread.sleep(2*60000); // sleep 2 minutes
 
 			} catch (Exception ex) {
-				log.error(ex.getMessage(), ex);
+				// ignore
 			}
 		}
 		

@@ -17,12 +17,6 @@
  */
 package org.safehaus.penrose.mapping;
 
-import org.safehaus.penrose.SearchResults;
-import org.safehaus.penrose.filter.Filter;
-import org.safehaus.penrose.connector.Adapter;
-import org.safehaus.penrose.connector.Connection;
-import org.safehaus.penrose.connector.AdapterConfig;
-
 import java.util.*;
 import java.io.Serializable;
 

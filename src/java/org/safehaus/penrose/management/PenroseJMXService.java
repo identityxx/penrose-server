@@ -32,7 +32,6 @@ import java.util.HashMap;
 
 import org.safehaus.penrose.config.ServerConfig;
 import org.safehaus.penrose.Penrose;
-import org.safehaus.penrose.cache.CacheManager;
 import org.apache.log4j.Logger;
 
 /**
@@ -42,7 +41,8 @@ public class PenroseJMXService {
 
     public Logger log = Logger.getLogger(PenroseJMXService.class);
 
-    private Penrose penrose;
+    Penrose penrose;
+    PenroseAdmin penroseAdmin;
 
     PenroseJMXAuthenticator jmxAuthenticator;
 
@@ -70,6 +70,11 @@ public class PenroseJMXService {
 
         mbeanServer = MBeanServerFactory.createMBeanServer();
 
+        penroseAdmin = new PenroseAdmin();
+        penroseAdmin.setPenrose(penrose);
+
+        mbeanServer.registerMBean(penroseAdmin, ObjectName.getInstance(PenroseClient.MBEAN_NAME));
+
         registry = new NamingService(serverConfig.getJmxRmiPort());
         mbeanServer.registerMBean(registry, registryName);
         registry.start();
@@ -84,7 +89,7 @@ public class PenroseJMXService {
         mbeanServer.registerMBean(rmiConnector, rmiConnectorName);
         rmiConnector.start();
 
-        log.info("Listening to port "+serverConfig.getJmxRmiPort()+".");
+        log.warn("Listening to port "+serverConfig.getJmxRmiPort()+".");
 
         xsltProcessor = new XSLTProcessor();
         mbeanServer.registerMBean(xsltProcessor, xsltProcessorName);
@@ -94,9 +99,7 @@ public class PenroseJMXService {
         mbeanServer.registerMBean(httpConnector, httpConnectorName);
         httpConnector.start();
 
-        log.info("Listening to port "+serverConfig.getJmxHttpPort()+".");
-
-        mbeanServer.registerMBean(penrose, ObjectName.getInstance(PenroseClient.MBEAN_NAME));
+        log.warn("Listening to port "+serverConfig.getJmxHttpPort()+".");
     }
 
     public void stop() throws Exception {

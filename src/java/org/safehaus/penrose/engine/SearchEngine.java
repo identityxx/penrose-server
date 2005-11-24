@@ -60,7 +60,7 @@ public class SearchEngine {
         boolean unique = engine.isUnique(entryDefinition);
         log.debug("Entry "+entryDefinition.getDn()+" "+(unique ? "is" : "is not")+" unique.");
 
-        Config config = engine.getConfig(entryDefinition.getDn());
+        Config config = engine.getConfigManager().getConfig(entryDefinition);
 
         Collection sources = entryDefinition.getSources();
         log.debug("Sources: "+sources);
@@ -138,7 +138,7 @@ public class SearchEngine {
         //boolean unique = engine.isUnique(entryDefinition);
         //log.debug("Entry "+entryDefinition.getDn()+" "+(unique ? "is" : "is not")+" unique.");
 
-        Config config = engine.getConfig(entryDefinition.getDn());
+        Config config = engine.getConfigManager().getConfig(entryDefinition);
         EntryDefinition parentDefinition = config.getParent(entryDefinition);
 
         Interpreter interpreter = engine.getInterpreterFactory().newInstance();
@@ -380,7 +380,7 @@ public class SearchEngine {
             newFilter = FilterTool.appendAndFilter(newFilter, sourceFilter);
         }
 
-        Config config = engine.getConfig(entryDefinition.getDn());
+        Config config = engine.getConfigManager().getConfig(entryDefinition);
         ConnectionConfig connectionConfig = config.getConnectionConfig(source.getConnectionName());
         SourceDefinition sourceDefinition = connectionConfig.getSourceDefinition(source.getSourceName());
 
@@ -388,7 +388,7 @@ public class SearchEngine {
 
         Interpreter interpreter = engine.getInterpreterFactory().newInstance();
 
-        //log.debug("Search Results:");
+        log.debug("Search Results:");
         for (Iterator i=sr.iterator(); i.hasNext(); ) {
             AttributeValues av = (AttributeValues)i.next();
 
@@ -399,7 +399,7 @@ public class SearchEngine {
             Collection list = engine.computeDns(interpreter, entryDefinition, sv);
             for (Iterator j=list.iterator(); j.hasNext(); ) {
                 String dn = (String)j.next();
-                //log.debug(" - "+dn);
+                log.debug(" - "+dn);
 
                 Map map = new HashMap();
                 map.put("dn", dn);
@@ -643,7 +643,7 @@ public class SearchEngine {
         }
 
         if (startingSources.isEmpty()) {
-            Config config = engine.getConfig(entryDefinition.getDn());
+            Config config = engine.getConfigManager().getConfig(entryDefinition);
             EntryDefinition parentDefinition = config.getParent(entryDefinition);
 
             while (parentDefinition != null) {

@@ -18,20 +18,21 @@
 package org.safehaus.penrose;
 
 import org.ietf.ldap.LDAPEntry;
+import org.safehaus.penrose.handler.Handler;
 
 import java.util.Date;
 import java.util.List;
 import java.util.Collection;
-import java.io.Serializable;
 
 /**
  * Represent an LDAP Connection made by each client
  * 
  * @author Endi S. Dewata
  */
-public class PenroseConnection implements Serializable {
+public class PenroseConnection {
 
     private Penrose penrose;
+    private Handler handler;
 
     /**
      * Bind DN
@@ -45,6 +46,7 @@ public class PenroseConnection implements Serializable {
 
     public PenroseConnection(Penrose penrose) {
         this.penrose = penrose;
+        this.handler = penrose.getHandler();
     }
 
     public String getBindDn() {
@@ -72,27 +74,27 @@ public class PenroseConnection implements Serializable {
     }
 
     public int add(LDAPEntry entry) throws Exception {
-        return penrose.getHandler().add(this, entry);
+        return handler.add(this, entry);
     }
 
     public int bind(String dn, String password) throws Exception {
-        return penrose.getHandler().bind(this, dn, password);
+        return handler.bind(this, dn, password);
     }
 
     public int compare(String dn, String attributeName, String attributeValue) throws Exception {
-        return penrose.getHandler().compare(this, dn, attributeName, attributeValue);
+        return handler.compare(this, dn, attributeName, attributeValue);
      }
 
     public int delete(String dn) throws Exception {
-        return penrose.getHandler().delete(this, dn);
+        return handler.delete(this, dn);
     }
 
     public int modify(String dn, List modifications) throws Exception {
-        return penrose.getHandler().modify(this, dn, modifications);
+        return handler.modify(this, dn, modifications);
     }
 
     public int modrdn(String dn, String newRdn) throws Exception {
-        return penrose.getHandler().modrdn(this, dn, newRdn);
+        return handler.modrdn(this, dn, newRdn);
     }
 
     public SearchResults search(
@@ -103,11 +105,11 @@ public class PenroseConnection implements Serializable {
             Collection attributeNames)
             throws Exception {
 
-        return penrose.getHandler().search(this, base, scope, deref, filter, attributeNames);
+        return handler.search(this, base, scope, deref, filter, attributeNames);
     }
 
     public int unbind() throws Exception {
-        return penrose.getHandler().unbind(this);
+        return handler.unbind(this);
     }
 
     public void close() throws Exception {
