@@ -32,7 +32,7 @@ import junit.framework.TestCase;
  */
 public class Demo extends TestCase {
 	
-	public final static String SUFFIX = "dc=example,dc=com";
+	public final static String SUFFIX = "dc=Example,dc=com";
 
 	public Penrose penrose;
     public PenroseConnection connection;
@@ -50,6 +50,7 @@ public class Demo extends TestCase {
 
     public void tearDown() throws Exception {
         connection.close();
+        penrose.stop();
     }
 
     public void testBind() throws Throwable {
@@ -80,39 +81,7 @@ public class Demo extends TestCase {
                 SUFFIX,
                 LDAPConnection.SCOPE_SUB,
                 LDAPSearchConstraints.DEREF_ALWAYS,
-                "(cn=James Bond)",
-                attributeNames);
-
-        for (Iterator i = results.iterator(); i.hasNext();) {
-            LDAPEntry entry = (LDAPEntry) i.next();
-            System.out.println(toString(entry));
-        }
-    }
-
-    public void testSearchWithSnInFilter() throws Throwable {
-        ArrayList attributeNames = new ArrayList();
-
-        SearchResults results = connection.search(
-                SUFFIX,
-                LDAPConnection.SCOPE_SUB,
-                LDAPSearchConstraints.DEREF_ALWAYS,
-                "(sn=Bond)",
-                attributeNames);
-
-        for (Iterator i = results.iterator(); i.hasNext();) {
-            LDAPEntry entry = (LDAPEntry) i.next();
-            System.out.println(toString(entry));
-        }
-    }
-
-    public void testSearchWithUniqueMemberInFilter() throws Throwable {
-        ArrayList attributeNames = new ArrayList();
-
-        SearchResults results = connection.search(
-                SUFFIX,
-                LDAPConnection.SCOPE_SUB,
-                LDAPSearchConstraints.DEREF_ALWAYS,
-                "(uniqueMember=uid=jbond,ou=users,dc=example,dc=com)",
+                "(cn=Wine)",
                 attributeNames);
 
         for (Iterator i = results.iterator(); i.hasNext();) {

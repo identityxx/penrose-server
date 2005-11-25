@@ -20,8 +20,7 @@ package org.safehaus.penrose;
 import java.util.*;
 import java.io.File;
 
-import org.apache.log4j.PropertyConfigurator;
-import org.apache.log4j.Logger;
+import org.apache.log4j.*;
 import org.safehaus.penrose.management.PenroseJMXService;
 import org.safehaus.penrose.config.ServerConfig;
 import org.safehaus.penrose.ldap.PenroseLDAPService;
@@ -167,27 +166,62 @@ public class PenroseServer implements SignalHandler {
     public static void main( String[] args ) throws Exception {
 
         try {
-            log.warn("Starting Penrose Server 0.9.8.");
+            Collection parameters = Arrays.asList(args);
+
+            if (parameters.contains("-?") || parameters.contains("--help")) {
+                System.out.println("Usage: org.safehaus.penrose.PenroseServer [OPTION]...");
+                System.out.println("  -?, --help     display this help and exit");
+                System.out.println("  -d             run in debug mode");
+                System.out.println("  -v             run in verbose mode");
+                System.out.println("      --version  output version information and exit");
+                System.exit(0);
+            }
+
+            if (parameters.contains("--version")) {
+                System.out.println(Penrose.PRODUCT_NAME);
+                System.out.println(Penrose.PRODUCT_COPYRIGHT);
+                System.exit(0);
+            }
 
             String home = System.getProperty("penrose.home");
-            //log.debug("Home: "+home);
 
+            Logger rootLogger = Logger.getRootLogger();
+            rootLogger.setLevel(Level.toLevel("OFF"));
+
+            Logger logger = Logger.getLogger("org.safehaus.penrose");
             File log4jProperties = new File((home == null ? "" : home+File.separator)+"conf"+File.separator+"log4j.properties");
+
             if (log4jProperties.exists()) {
-                log.debug("Loading "+log4jProperties.getPath());
                 PropertyConfigurator.configure(log4jProperties.getAbsolutePath());
+
+            } else if (parameters.contains("-d")) {
+                logger.setLevel(Level.toLevel("DEBUG"));
+                ConsoleAppender appender = new ConsoleAppender(new PatternLayout("%-20C{1} [%4L] %m%n"));
+                BasicConfigurator.configure(appender);
+
+            } else if (parameters.contains("-v")) {
+                logger.setLevel(Level.toLevel("INFO"));
+                ConsoleAppender appender = new ConsoleAppender(new PatternLayout("[%d{MM/dd/yyyy HH:mm:ss}] %m%n"));
+                BasicConfigurator.configure(appender);
+
+            } else {
+                logger.setLevel(Level.toLevel("WARN"));
+                ConsoleAppender appender = new ConsoleAppender(new PatternLayout("[%d{MM/dd/yyyy HH:mm:ss}] %m%n"));
+                BasicConfigurator.configure(appender);
             }
+
+            log.warn("Starting "+Penrose.PRODUCT_NAME+".");
 
             PenroseServer server = new PenroseServer(home);
             server.start();
 
-            log.warn("Penrose Server is ready.");
+            log.warn("Server is ready.");
 
         } catch (Exception e) {
             String name = e.getClass().getName();
             name = name.substring(name.lastIndexOf(".")+1);
             log.debug(name, e);
-            log.error("Penrose Server failed to start: "+name+": "+e.getMessage());
+            log.error("Server failed to start: "+name+": "+e.getMessage());
             System.exit(1);
         }
     }

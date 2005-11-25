@@ -92,6 +92,7 @@ public class PenroseBackend implements Backend {
         log.debug("PenroseBackend.init();");
 
         penrose = new Penrose();
+        penrose.setHomeDirectory(realHomeDirectory);
         penrose.start();
 
         ServerConfig serverConfig = penrose.getServerConfig();

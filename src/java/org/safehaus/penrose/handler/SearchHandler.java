@@ -19,6 +19,7 @@ package org.safehaus.penrose.handler;
 
 import org.safehaus.penrose.SearchResults;
 import org.safehaus.penrose.PenroseConnection;
+import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.engine.Engine;
 import org.safehaus.penrose.event.SearchEvent;
@@ -271,8 +272,8 @@ public class SearchHandler {
         if ("".equals(base) && scope == LDAPConnection.SCOPE_BASE) { // finding root DSE
             LDAPAttributeSet set = new LDAPAttributeSet();
             set.add(new LDAPAttribute("objectClass", new String[] { "top", "extensibleObject" }));
-            set.add(new LDAPAttribute("vendorName", new String[] { "Identyx Corporation" }));
-            set.add(new LDAPAttribute("vendorVersion", new String[] { "Penrose Virtual Directory Server 0.9.8" }));
+            set.add(new LDAPAttribute("vendorName", new String[] { Penrose.VENDOR_NAME }));
+            set.add(new LDAPAttribute("vendorVersion", new String[] { Penrose.PRODUCT_NAME }));
 
             LDAPAttribute namingContexts = new LDAPAttribute("namingContexts");
             for (Iterator i=handler.getConfigManager().getConfigs().iterator(); i.hasNext(); ) {
