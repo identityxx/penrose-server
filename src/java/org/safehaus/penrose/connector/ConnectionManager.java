@@ -66,8 +66,8 @@ public class ConnectionManager {
 
                 String driver = connectionConfig.getParameter("driver");
                 String url = connectionConfig.getParameter("url");
-                String user = connectionConfig.getParameter("user");
-                String password = connectionConfig.getParameter("password");
+                //String user = connectionConfig.getParameter("user");
+                //String password = connectionConfig.getParameter("password");
 
                 Class.forName(driver);
 
@@ -81,7 +81,7 @@ public class ConnectionManager {
                 GenericObjectPool connectionPool = new GenericObjectPool(null);
                 ConnectionFactory connectionFactory = new DriverManagerConnectionFactory(url, properties);
 
-                PoolableConnectionFactory poolableConnectionFactory =
+                //PoolableConnectionFactory poolableConnectionFactory =
                         new PoolableConnectionFactory(
                                 connectionFactory,
                                 connectionPool,
@@ -105,13 +105,13 @@ public class ConnectionManager {
 
                         int index = value.indexOf("://");
                         index = value.indexOf("/", index+3);
-                        String suffix;
+                        //String suffix;
                         String ldapUrl;
                         if (index >= 0) { // extract suffix from url
-                            suffix = value.substring(index+1);
+                            //suffix = value.substring(index+1);
                             ldapUrl = value.substring(0, index);
                         } else {
-                            suffix = "";
+                            //suffix = "";
                             ldapUrl = value;
                         }
                         env.put(param, ldapUrl);

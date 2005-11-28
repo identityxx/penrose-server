@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
-package org.safehaus.penrose.config;
+package org.safehaus.penrose.partition;
 
 import java.util.Iterator;
 import java.util.Collection;
@@ -35,16 +35,17 @@ import org.safehaus.penrose.module.ModuleConfig;
 import org.safehaus.penrose.module.ModuleMapping;
 import org.safehaus.penrose.acl.ACI;
 import org.safehaus.penrose.connector.ConnectionConfig;
+import org.safehaus.penrose.partition.PartitionConfig;
 
 /**
  * @author Endi S. Dewata
  */
-public class ConfigWriter {
+public class PartitionConfigWriter {
 
-    private Config config;
+    private PartitionConfig partitionConfig;
 
-	public ConfigWriter(Config config) {
-        this.config = config;
+	public PartitionConfigWriter(PartitionConfig partitionConfig) {
+        this.partitionConfig = partitionConfig;
 	}
 
     public void storeMappingConfig(String filename) throws Exception {
@@ -103,8 +104,8 @@ public class ConfigWriter {
 	public Element toMappingXmlElement() {
 		Element mappingElement = new DefaultElement("mapping");
 		// entries
-		for (Iterator iter = config.getRootEntryDefinitions().iterator(); iter.hasNext();) {
-			EntryDefinition entry = (EntryDefinition)iter.next();
+		for (Iterator iter = partitionConfig.getRootEntryMappings().iterator(); iter.hasNext();) {
+			EntryMapping entry = (EntryMapping)iter.next();
 
             toElement(entry, mappingElement);
 		}
@@ -115,7 +116,7 @@ public class ConfigWriter {
 		Element sourcesElement = new DefaultElement("sources");
 
         // connections
-		for (Iterator i = config.getConnectionConfigs().iterator(); i.hasNext();) {
+		for (Iterator i = partitionConfig.getConnectionConfigs().iterator(); i.hasNext();) {
 			ConnectionConfig connection = (ConnectionConfig)i.next();
 			sourcesElement.add(toElement(connection));
 		}
@@ -126,13 +127,13 @@ public class ConfigWriter {
 	public Element toModulesXmlElement() {
 		Element modulesElement = new DefaultElement("modules");
 		// module
-		for (Iterator iter = config.getModuleConfigs().iterator(); iter.hasNext();) {
+		for (Iterator iter = partitionConfig.getModuleConfigs().iterator(); iter.hasNext();) {
 			ModuleConfig module = (ModuleConfig)iter.next();
             Element moduleElement = toElement(module);
 			modulesElement.add(moduleElement);
 		}
 		// module-mapping
-		for (Iterator i = config.getModuleMappings().iterator(); i.hasNext();) {
+		for (Iterator i = partitionConfig.getModuleMappings().iterator(); i.hasNext();) {
             Collection c = (Collection)i.next();
 
             for (Iterator j = c.iterator(); j.hasNext(); ) {
@@ -144,22 +145,22 @@ public class ConfigWriter {
 		return modulesElement;
 	}
 
-	public Element toElement(Field field) {
+	public Element toElement(FieldMapping fieldMapping) {
 		Element element = new DefaultElement("field");
-		element.add(new DefaultAttribute("name", field.getName()));
+		element.add(new DefaultAttribute("name", fieldMapping.getName()));
 
-        if (field.getConstant() != null) {
+        if (fieldMapping.getConstant() != null) {
             Element scriptElement = new DefaultElement("constant");
-            scriptElement.setText(field.getConstant());
+            scriptElement.setText(fieldMapping.getConstant());
             element.add(scriptElement);
 
-        } else if (field.getVariable() != null) {
+        } else if (fieldMapping.getVariable() != null) {
             Element scriptElement = new DefaultElement("variable");
-            scriptElement.setText(field.getVariable());
+            scriptElement.setText(fieldMapping.getVariable());
             element.add(scriptElement);
 
-        } else if (field.getExpression() != null) {
-            element.add(toElement(field.getExpression()));
+        } else if (fieldMapping.getExpression() != null) {
+            element.add(toElement(fieldMapping.getExpression()));
 
         } else {
             return null;
@@ -226,7 +227,7 @@ public class ConfigWriter {
     	return element;
     }
 
-	public Element toElement(EntryDefinition entry, Element configElement) {
+	public Element toElement(EntryMapping entry, Element configElement) {
 
         Element entryElement = new DefaultElement("entry");
         entryElement.add(new DefaultAttribute("dn", entry.getDn()));
@@ -239,9 +240,9 @@ public class ConfigWriter {
 			entryElement.add(objectClassElement);
 		}
 
-		Collection attributes = entry.getAttributeDefinitions();
+		Collection attributes = entry.getAttributeMappings();
 		for (Iterator i = attributes.iterator(); i.hasNext(); ) {
-			AttributeDefinition attribute = (AttributeDefinition)i.next();
+			AttributeMapping attribute = (AttributeMapping)i.next();
 
             Element child = toElement(attribute);
             if (child == null) continue;
@@ -249,9 +250,9 @@ public class ConfigWriter {
             entryElement.add(child);
 		}
 
-		for (Iterator i = entry.getSources().iterator(); i.hasNext(); ) {
-			Source source = (Source)i.next();
-            entryElement.add(toElement(source));
+		for (Iterator i = entry.getSourceMappings().iterator(); i.hasNext(); ) {
+			SourceMapping sourceMapping = (SourceMapping)i.next();
+            entryElement.add(toElement(sourceMapping));
 		}
 
 		for (Iterator i = entry.getRelationships().iterator(); i.hasNext(); ) {
@@ -273,10 +274,10 @@ public class ConfigWriter {
             entryElement.add(parameterElement);
         }
 
-        Collection children = config.getChildren(entry);
+        Collection children = partitionConfig.getChildren(entry);
         if (children != null) {
             for (Iterator i = children.iterator(); i.hasNext(); ) {
-                EntryDefinition child = (EntryDefinition)i.next();
+                EntryMapping child = (EntryMapping)i.next();
                 toElement(child, configElement);
             }
         }
@@ -284,32 +285,32 @@ public class ConfigWriter {
 		return entryElement;
 	}
 
-    public Element toElement(AttributeDefinition attributeDefinition) {
+    public Element toElement(AttributeMapping attributeMapping) {
     	Element element = new DefaultElement("at");
-    	element.add(new DefaultAttribute("name", attributeDefinition.getName()));
-    	if (attributeDefinition.isRdn()) element.add(new DefaultAttribute("rdn", "true"));
-        if (!AttributeDefinition.DEFAULT_TYPE.equals(attributeDefinition.getType())) element.addAttribute("type", attributeDefinition.getType());
-        if (attributeDefinition.getLength() != AttributeDefinition.DEFAULT_LENGTH) element.addAttribute("length", ""+attributeDefinition.getLength());
-        if (attributeDefinition.getPrecision() != AttributeDefinition.DEFAULT_PRECISION) element.addAttribute("precision", ""+attributeDefinition.getPrecision());
+    	element.add(new DefaultAttribute("name", attributeMapping.getName()));
+    	if (attributeMapping.isRdn()) element.add(new DefaultAttribute("rdn", "true"));
+        if (!AttributeMapping.DEFAULT_TYPE.equals(attributeMapping.getType())) element.addAttribute("type", attributeMapping.getType());
+        if (attributeMapping.getLength() != AttributeMapping.DEFAULT_LENGTH) element.addAttribute("length", ""+attributeMapping.getLength());
+        if (attributeMapping.getPrecision() != AttributeMapping.DEFAULT_PRECISION) element.addAttribute("precision", ""+attributeMapping.getPrecision());
 
-        if (attributeDefinition.getScript() != null) {
+        if (attributeMapping.getScript() != null) {
             Element scriptElement = new DefaultElement("script");
-            scriptElement.setText(attributeDefinition.getScript());
+            scriptElement.setText(attributeMapping.getScript());
             element.add(scriptElement);
         }
 
-        if (attributeDefinition.getConstant() != null) {
+        if (attributeMapping.getConstant() != null) {
             Element scriptElement = new DefaultElement("constant");
-            scriptElement.setText(attributeDefinition.getConstant());
+            scriptElement.setText(attributeMapping.getConstant());
             element.add(scriptElement);
 
-        } else if (attributeDefinition.getVariable() != null) {
+        } else if (attributeMapping.getVariable() != null) {
             Element scriptElement = new DefaultElement("variable");
-            scriptElement.setText(attributeDefinition.getVariable());
+            scriptElement.setText(attributeMapping.getVariable());
             element.add(scriptElement);
 
-        } else if (attributeDefinition.getExpression() != null) {
-            element.add(toElement(attributeDefinition.getExpression()));
+        } else if (attributeMapping.getExpression() != null) {
+            element.add(toElement(attributeMapping.getExpression()));
 
         } else {
             return null;
@@ -327,39 +328,39 @@ public class ConfigWriter {
         return element;
     }
 
-    public Element toElement(Source source) {
+    public Element toElement(SourceMapping sourceMapping) {
 		Element element = new DefaultElement("source");
 
-        element.add(new DefaultAttribute("name", source.getName()));
-        if (!source.isRequired()) element.add(new DefaultAttribute("required", "false"));
-        if (source.isReadOnly()) element.add(new DefaultAttribute("readOnly", "true"));
-        if (!source.isIncludeOnAdd()) element.add(new DefaultAttribute("includeOnAdd", "false"));
-        if (!source.isIncludeOnModify()) element.add(new DefaultAttribute("includeOnModify", "false"));
-        if (!source.isIncludeOnModRdn()) element.add(new DefaultAttribute("includeOnModRdn", "false"));
-        if (!source.isIncludeOnDelete()) element.add(new DefaultAttribute("includeOnDelete", "false"));
+        element.add(new DefaultAttribute("name", sourceMapping.getName()));
+        if (!sourceMapping.isRequired()) element.add(new DefaultAttribute("required", "false"));
+        if (sourceMapping.isReadOnly()) element.add(new DefaultAttribute("readOnly", "true"));
+        if (!sourceMapping.isIncludeOnAdd()) element.add(new DefaultAttribute("includeOnAdd", "false"));
+        if (!sourceMapping.isIncludeOnModify()) element.add(new DefaultAttribute("includeOnModify", "false"));
+        if (!sourceMapping.isIncludeOnModRdn()) element.add(new DefaultAttribute("includeOnModRdn", "false"));
+        if (!sourceMapping.isIncludeOnDelete()) element.add(new DefaultAttribute("includeOnDelete", "false"));
 
         Element sourceName = new DefaultElement("source-name");
-        sourceName.add(new DefaultText(source.getSourceName()));
+        sourceName.add(new DefaultText(sourceMapping.getSourceName()));
         element.add(sourceName);
 
         Element connectionName = new DefaultElement("connection-name");
-        connectionName.add(new DefaultText(source.getConnectionName()));
+        connectionName.add(new DefaultText(sourceMapping.getConnectionName()));
         element.add(connectionName);
 
 		// fields
-		for (Iterator i=source.getFields().iterator(); i.hasNext(); ) {
-			Field field = (Field)i.next();
+		for (Iterator i=sourceMapping.getFieldMappings().iterator(); i.hasNext(); ) {
+			FieldMapping fieldMapping = (FieldMapping)i.next();
 
-            Element child = toElement(field);
+            Element child = toElement(fieldMapping);
             if (child == null) continue;
 
             element.add(child);
 		}
 
     	// parameters
-        for (Iterator i = source.getParameterNames().iterator(); i.hasNext(); ) {
+        for (Iterator i = sourceMapping.getParameterNames().iterator(); i.hasNext(); ) {
             String name = (String)i.next();
-            String value = source.getParameter(name);
+            String value = sourceMapping.getParameter(name);
             if ("".equals(value)) continue;
 
             Element parameterElement = new DefaultElement("parameter");
@@ -624,11 +625,11 @@ public class ConfigWriter {
     	return element;
     }
 
-    public Config getConfig() {
-        return config;
+    public PartitionConfig getConfig() {
+        return partitionConfig;
     }
 
-    public void setConfig(Config config) {
-        this.config = config;
+    public void setConfig(PartitionConfig partitionConfig) {
+        this.partitionConfig = partitionConfig;
     }
 }

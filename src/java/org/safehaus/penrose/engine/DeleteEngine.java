@@ -46,22 +46,22 @@ public class DeleteEngine {
             log.debug(Formatter.displaySeparator(80));
         }
 
-        EntryDefinition entryDefinition = entry.getEntryDefinition();
+        EntryMapping entryMapping = entry.getEntryMapping();
 
         AttributeValues sourceValues = entry.getSourceValues();
         //getFieldValues(entry.getDn(), sourceValues);
 
-        Graph graph = engine.getGraph(entryDefinition);
-        Source primarySource = engine.getPrimarySource(entryDefinition);
+        Graph graph = engine.getGraph(entryMapping);
+        SourceMapping primarySourceMapping = engine.getPrimarySource(entryMapping);
 
         log.debug("Deleting entry "+entry.getDn()+" ["+sourceValues+"]");
 
-        DeleteGraphVisitor visitor = new DeleteGraphVisitor(engine, entryDefinition, sourceValues);
-        graph.traverse(visitor, primarySource);
+        DeleteGraphVisitor visitor = new DeleteGraphVisitor(engine, entryMapping, sourceValues);
+        graph.traverse(visitor, primarySourceMapping);
 
         if (visitor.getReturnCode() != LDAPException.SUCCESS) return visitor.getReturnCode();
 
-        engine.getCache(entry.getParentDn(), entryDefinition).remove(entry.getRdn());
+        engine.getCache(entry.getParentDn(), entryMapping).remove(entry.getRdn());
 
         return LDAPException.SUCCESS;
     }

@@ -2,7 +2,6 @@ package org.safehaus.penrose.connector;
 
 import org.safehaus.penrose.filter.*;
 import org.safehaus.penrose.mapping.*;
-import org.safehaus.penrose.config.Config;
 import org.apache.log4j.Logger;
 
 import java.util.Iterator;

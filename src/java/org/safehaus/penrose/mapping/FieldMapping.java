@@ -20,7 +20,7 @@ package org.safehaus.penrose.mapping;
 /**
  * @author Endi S. Dewata
  */
-public class Field implements Cloneable {
+public class FieldMapping implements Cloneable {
 
 	/**
 	 * Name.
@@ -40,10 +40,10 @@ public class Field implements Cloneable {
 	private Expression expression;
 
 
-    public Field() {
+    public FieldMapping() {
     }
     
-    public Field(String name) {
+    public FieldMapping(String name) {
         this.name = name;
     }
 
@@ -89,24 +89,24 @@ public class Field implements Cloneable {
         if (this == object) return true;
         if((object == null) || (object.getClass() != this.getClass())) return false;
 
-        Field field = (Field)object;
-        if (!equals(name, field.name)) return false;
-        if (!equals(script, field.script)) return false;
-        if (!equals(constant, field.constant)) return false;
-        if (!equals(variable, field.variable)) return false;
-        if (!equals(expression, field.expression)) return false;
+        FieldMapping fieldMapping = (FieldMapping)object;
+        if (!equals(name, fieldMapping.name)) return false;
+        if (!equals(script, fieldMapping.script)) return false;
+        if (!equals(constant, fieldMapping.constant)) return false;
+        if (!equals(variable, fieldMapping.variable)) return false;
+        if (!equals(expression, fieldMapping.expression)) return false;
 
         return true;
     }
 
     public Object clone() {
-        Field field = new Field();
-        field.name = name;
-        field.script = script;
-        field.constant = constant;
-        field.variable = variable;
-        field.expression = expression == null ? null : (Expression)expression.clone();
-        return field;
+        FieldMapping fieldMapping = new FieldMapping();
+        fieldMapping.name = name;
+        fieldMapping.script = script;
+        fieldMapping.constant = constant;
+        fieldMapping.variable = variable;
+        fieldMapping.expression = expression == null ? null : (Expression)expression.clone();
+        return fieldMapping;
     }
 
     public String toString() {

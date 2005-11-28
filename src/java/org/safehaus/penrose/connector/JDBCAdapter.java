@@ -50,7 +50,7 @@ public class JDBCAdapter extends Adapter {
     public JDBCFilterTool filterTool;
 
     public void init() throws Exception {
-        String name = getConnectionName();
+        //String name = getConnectionName();
 
     	//log.debug("-------------------------------------------------------------------------------");
     	//log.debug("Initializing JDBC connection "+name+":");
@@ -73,7 +73,7 @@ public class JDBCAdapter extends Adapter {
 
         ConnectionFactory connectionFactory = new DriverManagerConnectionFactory(url, properties);
 
-        PoolableConnectionFactory poolableConnectionFactory =
+        //PoolableConnectionFactory poolableConnectionFactory =
                 new PoolableConnectionFactory(
                         connectionFactory,
                         connectionPool,

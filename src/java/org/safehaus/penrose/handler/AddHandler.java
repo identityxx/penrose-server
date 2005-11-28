@@ -20,7 +20,7 @@ package org.safehaus.penrose.handler;
 import org.safehaus.penrose.PenroseConnection;
 import org.safehaus.penrose.SearchResults;
 import org.safehaus.penrose.event.AddEvent;
-import org.safehaus.penrose.config.Config;
+import org.safehaus.penrose.partition.PartitionConfig;
 import org.safehaus.penrose.mapping.*;
 import org.ietf.ldap.*;
 import org.apache.log4j.Logger;
@@ -102,9 +102,9 @@ public class AddHandler {
 
         log.debug("Adding entry under "+parent.getDn());
 
-        EntryDefinition parentDefinition = parent.getEntryDefinition();
-        Config config = handler.getConfigManager().getConfig(parentDefinition);
-        Collection children = config.getChildren(parentDefinition);
+        EntryMapping parentMapping = parent.getEntryMapping();
+        PartitionConfig partitionConfig = handler.getConfigManager().getConfig(parentMapping);
+        Collection children = partitionConfig.getChildren(parentMapping);
 
         AttributeValues values = new AttributeValues();
 
@@ -122,14 +122,14 @@ public class AddHandler {
         // add into the first matching child
         if (children != null) {
             for (Iterator iterator = children.iterator(); iterator.hasNext(); ) {
-                EntryDefinition entryDefinition = (EntryDefinition)iterator.next();
-                if (!config.isDynamic(entryDefinition)) continue;
+                EntryMapping entryMapping = (EntryMapping)iterator.next();
+                if (!partitionConfig.isDynamic(entryMapping)) continue;
 
-                return handler.getEngine().add(parent, entryDefinition, values);
+                return handler.getEngine().add(parent, entryMapping, values);
             }
         }
 
-        return addStaticEntry(parentDefinition, values, dn);
+        return addStaticEntry(parentMapping, values, dn);
     }
 
     public Handler getHandler() {
@@ -140,27 +140,27 @@ public class AddHandler {
         this.handler = handler;
     }
 
-    public int addStaticEntry(EntryDefinition parent, AttributeValues values, String dn) throws Exception {
+    public int addStaticEntry(EntryMapping parent, AttributeValues values, String dn) throws Exception {
         log.debug("Adding regular entry "+dn);
 
-        EntryDefinition newEntry;
+        EntryMapping newEntry;
 
         Row rdn = Entry.getRdn(dn);
 
         if (parent == null) {
-            newEntry = new EntryDefinition(dn);
+            newEntry = new EntryMapping(dn);
 
         } else {
-            newEntry = new EntryDefinition(rdn.toString(), parent);
+            newEntry = new EntryMapping(rdn.toString(), parent);
         }
 
-        Config config = handler.getConfigManager().getConfig(dn);
-        if (config == null) return LDAPException.NO_SUCH_OBJECT;
+        PartitionConfig partitionConfig = handler.getConfigManager().getConfig(dn);
+        if (partitionConfig == null) return LDAPException.NO_SUCH_OBJECT;
 
-        config.addEntryDefinition(newEntry);
+        partitionConfig.addEntryMapping(newEntry);
 
         Collection objectClasses = newEntry.getObjectClasses();
-        Collection attributes = newEntry.getAttributeDefinitions();
+        //Collection attributes = newEntry.getAttributeMappings();
 
         for (Iterator iterator=values.getNames().iterator(); iterator.hasNext(); ) {
             String name = (String)iterator.next();
@@ -181,13 +181,13 @@ public class AddHandler {
             for (Iterator j=set.iterator(); j.hasNext(); ) {
                 String value = (String)j.next();
 
-                AttributeDefinition newAttribute = new AttributeDefinition();
+                AttributeMapping newAttribute = new AttributeMapping();
                 newAttribute.setName(name);
                 newAttribute.setConstant(value);
                 newAttribute.setRdn(rdn.contains(name));
 
                 log.debug("Add attribute "+name+": "+value);
-                newEntry.addAttributeDefinition(newAttribute);
+                newEntry.addAttributeMapping(newAttribute);
             }
         }
 

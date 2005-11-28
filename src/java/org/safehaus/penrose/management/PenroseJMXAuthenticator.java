@@ -18,7 +18,6 @@
 package org.safehaus.penrose.management;
 
 import org.apache.log4j.Logger;
-import org.safehaus.penrose.Penrose;
 
 import javax.management.remote.JMXAuthenticator;
 import javax.security.auth.Subject;

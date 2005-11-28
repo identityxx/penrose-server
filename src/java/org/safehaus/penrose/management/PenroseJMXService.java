@@ -30,7 +30,7 @@ import javax.management.remote.JMXServiceURL;
 import javax.management.remote.JMXConnectorServerFactory;
 import java.util.HashMap;
 
-import org.safehaus.penrose.config.ServerConfig;
+import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.Penrose;
 import org.apache.log4j.Logger;
 
@@ -66,7 +66,7 @@ public class PenroseJMXService {
 
     public void start() throws Exception {
 
-        ServerConfig serverConfig = penrose.getServerConfig();
+        PenroseConfig penroseConfig = penrose.getConfig();
 
         mbeanServer = MBeanServerFactory.createMBeanServer();
 
@@ -75,12 +75,12 @@ public class PenroseJMXService {
 
         mbeanServer.registerMBean(penroseAdmin, ObjectName.getInstance(PenroseClient.MBEAN_NAME));
 
-        registry = new NamingService(serverConfig.getJmxRmiPort());
+        registry = new NamingService(penroseConfig.getJmxRmiPort());
         mbeanServer.registerMBean(registry, registryName);
         registry.start();
 
-        JMXServiceURL url = new JMXServiceURL("service:jmx:rmi://localhost/jndi/rmi://localhost:"+serverConfig.getJmxRmiPort()+"/jmx");
-        jmxAuthenticator = new PenroseJMXAuthenticator("ldap://localhost:"+serverConfig.getPort(), "uid={0},ou=system");
+        JMXServiceURL url = new JMXServiceURL("service:jmx:rmi://localhost/jndi/rmi://localhost:"+penroseConfig.getJmxRmiPort()+"/jmx");
+        jmxAuthenticator = new PenroseJMXAuthenticator("ldap://localhost:"+penroseConfig.getPort(), "uid={0},ou=system");
 
         HashMap environment = new HashMap();
         environment.put("jmx.remote.authenticator", jmxAuthenticator);
@@ -89,7 +89,7 @@ public class PenroseJMXService {
         mbeanServer.registerMBean(rmiConnector, rmiConnectorName);
         rmiConnector.start();
 
-        log.warn("Listening to port "+serverConfig.getJmxRmiPort()+".");
+        log.warn("Listening to port "+penroseConfig.getJmxRmiPort()+".");
 
         xsltProcessor = new XSLTProcessor();
         mbeanServer.registerMBean(xsltProcessor, xsltProcessorName);
@@ -99,7 +99,7 @@ public class PenroseJMXService {
         mbeanServer.registerMBean(httpConnector, httpConnectorName);
         httpConnector.start();
 
-        log.warn("Listening to port "+serverConfig.getJmxHttpPort()+".");
+        log.warn("Listening to port "+penroseConfig.getJmxHttpPort()+".");
     }
 
     public void stop() throws Exception {

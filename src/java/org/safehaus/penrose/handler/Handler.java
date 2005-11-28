@@ -19,11 +19,10 @@ package org.safehaus.penrose.handler;
 
 import org.safehaus.penrose.SearchResults;
 import org.safehaus.penrose.*;
+import org.safehaus.penrose.partition.PartitionConfig;
 import org.safehaus.penrose.acl.ACLEngine;
 import org.safehaus.penrose.filter.FilterTool;
-import org.safehaus.penrose.mapping.EntryDefinition;
-import org.safehaus.penrose.config.Config;
-import org.safehaus.penrose.config.ConfigManager;
+import org.safehaus.penrose.partition.PartitionManager;
 import org.safehaus.penrose.schema.Schema;
 import org.safehaus.penrose.engine.Engine;
 import org.safehaus.penrose.interpreter.InterpreterFactory;
@@ -56,7 +55,7 @@ public class Handler implements ModuleContext {
     private Schema schema;
     private Engine engine;
 
-    private ConfigManager configManager;
+    private PartitionManager partitionManager;
     private Map modules = new LinkedHashMap();
 
     private String rootDn;
@@ -85,10 +84,10 @@ public class Handler implements ModuleContext {
         modRdnHandler = new ModRdnHandler(this);
         searchHandler = new SearchHandler(this);
 
-        for (Iterator i=configManager.getConfigs().iterator(); i.hasNext(); ) {
-            Config config = (Config)i.next();
+        for (Iterator i=partitionManager.getConfigs().iterator(); i.hasNext(); ) {
+            PartitionConfig partitionConfig = (PartitionConfig)i.next();
 
-            for (Iterator j=config.getModuleConfigs().iterator(); j.hasNext(); ) {
+            for (Iterator j=partitionConfig.getModuleConfigs().iterator(); j.hasNext(); ) {
                 ModuleConfig moduleConfig = (ModuleConfig)j.next();
 
                 Class clazz = Class.forName(moduleConfig.getModuleClass());
@@ -313,10 +312,10 @@ public class Handler implements ModuleContext {
 
         Collection list = new ArrayList();
 
-        Config config = engine.getConfigManager().getConfig(dn);
-        if (config == null) return list;
+        PartitionConfig partitionConfig = engine.getConfigManager().getConfig(dn);
+        if (partitionConfig == null) return list;
 
-        for (Iterator i = config.getModuleMappings().iterator(); i.hasNext(); ) {
+        for (Iterator i = partitionConfig.getModuleMappings().iterator(); i.hasNext(); ) {
             Collection c = (Collection)i.next();
 
             for (Iterator j=c.iterator(); j.hasNext(); ) {
@@ -351,12 +350,12 @@ public class Handler implements ModuleContext {
         this.rootPassword = rootPassword;
     }
 
-    public ConfigManager getConfigManager() {
-        return configManager;
+    public PartitionManager getConfigManager() {
+        return partitionManager;
     }
 
-    public void setConfigManager(ConfigManager configManager) {
-        this.configManager = configManager;
+    public void setConfigManager(PartitionManager partitionManager) {
+        this.partitionManager = partitionManager;
     }
 
     public FilterTool getFilterTool() {

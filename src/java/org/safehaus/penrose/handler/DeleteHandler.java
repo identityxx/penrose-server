@@ -18,21 +18,15 @@
 package org.safehaus.penrose.handler;
 
 import org.safehaus.penrose.PenroseConnection;
-import org.safehaus.penrose.SearchResults;
+import org.safehaus.penrose.partition.PartitionConfig;
 import org.safehaus.penrose.event.DeleteEvent;
-import org.safehaus.penrose.config.Config;
-import org.safehaus.penrose.mapping.EntryDefinition;
+import org.safehaus.penrose.mapping.EntryMapping;
 import org.safehaus.penrose.mapping.Entry;
 import org.ietf.ldap.LDAPDN;
 import org.ietf.ldap.LDAPException;
-import org.ietf.ldap.LDAPConnection;
-import org.ietf.ldap.LDAPSearchConstraints;
 import org.apache.log4j.Logger;
 
 import java.util.Collection;
-import java.util.List;
-import java.util.ArrayList;
-import java.util.Iterator;
 
 /**
  * @author Endi S. Dewata
@@ -79,28 +73,28 @@ public class DeleteHandler {
 
         log.debug("Deleting entry "+dn);
 
-        EntryDefinition entryDefinition = entry.getEntryDefinition();
-        Config config = handler.getConfigManager().getConfig(entryDefinition);
+        EntryMapping entryMapping = entry.getEntryMapping();
+        PartitionConfig partitionConfig = handler.getConfigManager().getConfig(entryMapping);
 
-        if (config.isDynamic(entryDefinition)) {
+        if (partitionConfig.isDynamic(entryMapping)) {
 	        return handler.getEngine().delete(entry);
 
         } else {
-            return deleteStaticEntry(entryDefinition);
+            return deleteStaticEntry(entryMapping);
 
         }
     }
 
-    public int deleteStaticEntry(EntryDefinition entry) throws Exception {
+    public int deleteStaticEntry(EntryMapping entry) throws Exception {
 
-        Config config = handler.getConfigManager().getConfig(entry.getDn());
-        if (config == null) return LDAPException.NO_SUCH_OBJECT;
+        PartitionConfig partitionConfig = handler.getConfigManager().getConfig(entry.getDn());
+        if (partitionConfig == null) return LDAPException.NO_SUCH_OBJECT;
 
         // can't delete no leaf
-        Collection children = config.getChildren(entry);
+        Collection children = partitionConfig.getChildren(entry);
         if (children != null && !children.isEmpty()) return LDAPException.NOT_ALLOWED_ON_NONLEAF;
 
-        config.removeEntryDefinition(entry);
+        partitionConfig.removeEntryMapping(entry);
 
         return LDAPException.SUCCESS;
     }

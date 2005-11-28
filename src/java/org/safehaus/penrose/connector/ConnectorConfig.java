@@ -17,16 +17,14 @@
  */
 package org.safehaus.penrose.connector;
 
-import org.safehaus.penrose.cache.CacheConfig;
 import org.safehaus.penrose.cache.DefaultSourceCache;
 
-import java.io.Serializable;
 import java.util.*;
 
 /**
  * @author Endi S. Dewata
  */
-public class ConnectorConfig implements Cloneable, Serializable {
+public class ConnectorConfig implements Cloneable {
 
     public final static String REFRESH_INTERVAL = "refreshInterval";
     public final static String THREAD_POOL_SIZE = "threadPoolSize";

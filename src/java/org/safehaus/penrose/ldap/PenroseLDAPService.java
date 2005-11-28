@@ -18,7 +18,7 @@
 package org.safehaus.penrose.ldap;
 
 import org.safehaus.penrose.Penrose;
-import org.safehaus.penrose.config.ServerConfig;
+import org.safehaus.penrose.config.PenroseConfig;
 import org.apache.ldap.server.configuration.MutableServerStartupConfiguration;
 import org.apache.ldap.server.configuration.MutableAuthenticatorConfiguration;
 import org.apache.ldap.server.configuration.MutableInterceptorConfiguration;
@@ -52,13 +52,13 @@ public class PenroseLDAPService {
 
     public void start() throws Exception {
 
-        ServerConfig serverConfig = penrose.getServerConfig();
+        PenroseConfig penroseConfig = penrose.getConfig();
 
         MutableServerStartupConfiguration configuration =  new MutableServerStartupConfiguration();
 
         // Configure LDAP ports
-        configuration.setLdapPort(serverConfig.getPort());
-        configuration.setLdapsPort(serverConfig.getSecurePort());
+        configuration.setLdapPort(penroseConfig.getPort());
+        configuration.setLdapsPort(penroseConfig.getSecurePort());
 
         // Configure working directory
         String workingDirectory = (homeDirectory == null ? "" : homeDirectory+File.separator)+"var"+File.separator+"data";
@@ -109,8 +109,8 @@ public class PenroseLDAPService {
         final Properties env = new Properties();
         env.setProperty(Context.PROVIDER_URL, "ou=system");
         env.setProperty(Context.INITIAL_CONTEXT_FACTORY, ServerContextFactory.class.getName() );
-        env.setProperty(Context.SECURITY_PRINCIPAL, serverConfig.getRootDn());
-        env.setProperty(Context.SECURITY_CREDENTIALS, serverConfig.getRootPassword());
+        env.setProperty(Context.SECURITY_PRINCIPAL, penroseConfig.getRootDn());
+        env.setProperty(Context.SECURITY_CREDENTIALS, penroseConfig.getRootPassword());
         env.setProperty(Context.SECURITY_AUTHENTICATION, "simple");
 
         env.setProperty("asn.1.berlib.provider", "org.apache.ldap.common.berlib.asn1.SnickersProvider");
@@ -126,7 +126,7 @@ public class PenroseLDAPService {
 
         new InitialDirContext(env);
 
-        log.warn("Listening to port "+serverConfig.getPort()+".");
+        log.warn("Listening to port "+penroseConfig.getPort()+".");
 
         // Start ApacheDS synchronization thread
         Thread thread = new Thread() {

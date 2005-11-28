@@ -19,8 +19,6 @@ package org.safehaus.penrose.engine;
 
 import org.apache.log4j.Logger;
 import org.safehaus.penrose.mapping.*;
-import org.safehaus.penrose.util.Formatter;
-import org.safehaus.penrose.graph.Graph;
 import org.safehaus.penrose.interpreter.Interpreter;
 import org.ietf.ldap.LDAPException;
 
@@ -42,17 +40,17 @@ public class ModRdnEngine {
 
     public int modrdn(Entry entry, String newRdn) throws Exception {
 
-        EntryDefinition entryDefinition = entry.getEntryDefinition();
+        EntryMapping entryMapping = entry.getEntryMapping();
         AttributeValues oldAttributeValues = entry.getAttributeValues();
         AttributeValues oldSourceValues = entry.getSourceValues();
 
         Row rdn = Entry.getRdn(newRdn);
 
         AttributeValues newAttributeValues = new AttributeValues(oldAttributeValues);
-        Collection rdnAttributes = entryDefinition.getRdnAttributes();
+        Collection rdnAttributes = entryMapping.getRdnAttributes();
         for (Iterator i=rdnAttributes.iterator(); i.hasNext(); ) {
-            AttributeDefinition attributeDefinition = (AttributeDefinition)i.next();
-            String name = attributeDefinition.getName();
+            AttributeMapping attributeMapping = (AttributeMapping)i.next();
+            String name = attributeMapping.getName();
             String newValue = (String)rdn.get(name);
 
             newAttributeValues.remove(name);
@@ -60,13 +58,13 @@ public class ModRdnEngine {
         }
 
         AttributeValues newSourceValues = new AttributeValues(oldSourceValues);
-        Collection sources = entryDefinition.getSources();
+        Collection sources = entryMapping.getSourceMappings();
         for (Iterator i=sources.iterator(); i.hasNext(); ) {
-            Source source = (Source)i.next();
+            SourceMapping sourceMapping = (SourceMapping)i.next();
 
             AttributeValues output = new AttributeValues();
-            engine.getTransformEngine().translate(source, newAttributeValues, output);
-            newSourceValues.set(source.getName(), output);
+            engine.getTransformEngine().translate(sourceMapping, newAttributeValues, output);
+            newSourceValues.set(sourceMapping.getName(), output);
         }
 
         if (log.isDebugEnabled()) {
@@ -92,23 +90,23 @@ public class ModRdnEngine {
             }
         }
 
-        ModRdnGraphVisitor visitor = new ModRdnGraphVisitor(engine, entryDefinition, oldSourceValues, newSourceValues);
+        ModRdnGraphVisitor visitor = new ModRdnGraphVisitor(engine, entryMapping, oldSourceValues, newSourceValues);
         visitor.run();
 
         if (visitor.getReturnCode() != LDAPException.SUCCESS) return visitor.getReturnCode();
 
-        engine.getCache(entry.getParentDn(), entryDefinition).remove(entry.getRdn());
+        engine.getCache(entry.getParentDn(), entryMapping).remove(entry.getRdn());
 
         Interpreter interpreter = engine.getInterpreterFactory().newInstance();
 
         AttributeValues sourceValues = visitor.getModifiedSourceValues();
-        AttributeValues attributeValues = engine.computeAttributeValues(entryDefinition, sourceValues, interpreter);
-        Row newRdn2 = entryDefinition.getRdn(attributeValues);
+        AttributeValues attributeValues = engine.computeAttributeValues(entryMapping, sourceValues, interpreter);
+        Row newRdn2 = entryMapping.getRdn(attributeValues);
         String dn = newRdn2+","+entry.getParentDn();
 
-        Entry newEntry = new Entry(dn, entryDefinition, sourceValues, attributeValues);
+        Entry newEntry = new Entry(dn, entryMapping, sourceValues, attributeValues);
 
-        engine.getCache(entry.getParentDn(), entryDefinition).put(newRdn2, newEntry);
+        engine.getCache(entry.getParentDn(), entryMapping).put(newRdn2, newEntry);
 
         return LDAPException.SUCCESS;
     }

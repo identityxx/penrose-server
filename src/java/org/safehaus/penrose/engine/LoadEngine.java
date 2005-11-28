@@ -18,18 +18,15 @@
 package org.safehaus.penrose.engine;
 
 import org.safehaus.penrose.mapping.*;
-import org.safehaus.penrose.graph.Graph;
 import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.SearchResults;
 import org.safehaus.penrose.util.Formatter;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.filter.FilterTool;
-import org.safehaus.penrose.config.Config;
+import org.safehaus.penrose.partition.PartitionConfig;
 import org.apache.log4j.Logger;
 
 import java.util.*;
-
-import com.novell.ldap.LDAPException;
 
 /**
  * @author Endi S. Dewata
@@ -45,7 +42,7 @@ public class LoadEngine {
     }
 
     public void load(
-            final EntryDefinition entryDefinition,
+            final EntryMapping entryMapping,
             final SearchResults entries,
             final SearchResults loadedEntries,
             final SearchResults results
@@ -54,12 +51,12 @@ public class LoadEngine {
         String s = engine.getEngineConfig().getParameter(EngineConfig.ALLOW_CONCURRENCY);
         boolean allowConcurrency = s == null ? true : new Boolean(s).booleanValue();
 
-        Config config = engine.getConfigManager().getConfig(entryDefinition);
+        PartitionConfig partitionConfig = engine.getConfigManager().getConfig(entryMapping);
 
-        Collection sources = entryDefinition.getSources();
+        Collection sources = entryMapping.getSourceMappings();
         log.debug("Sources: "+sources);
 
-        Collection effectiveSources = config.getEffectiveSources(entryDefinition);
+        Collection effectiveSources = partitionConfig.getEffectiveSources(entryMapping);
         log.debug("Effective Sources: "+effectiveSources);
 
         if (sources.size() == 0 && effectiveSources.size() == 0 || sources.size() == 1 && effectiveSources.size() == 1) {
@@ -98,7 +95,7 @@ public class LoadEngine {
             engine.execute(new Runnable() {
                 public void run() {
                     try {
-                        createBatches(interpreter, entryDefinition, entries, results, batches);
+                        createBatches(interpreter, entryMapping, entries, results, batches);
 
                     } catch (Throwable e) {
                         e.printStackTrace(System.out);
@@ -107,14 +104,14 @@ public class LoadEngine {
                 }
             });
         } else {
-            createBatches(interpreter, entryDefinition, entries, results, batches);
+            createBatches(interpreter, entryMapping, entries, results, batches);
         }
 
         if (allowConcurrency) {
             engine.execute(new Runnable() {
                 public void run() {
                     try {
-                        loadBackground(entryDefinition, batches, loadedEntries);
+                        loadBackground(entryMapping, batches, loadedEntries);
 
                     } catch (Throwable e) {
                         e.printStackTrace(System.out);
@@ -123,39 +120,39 @@ public class LoadEngine {
                 }
             });
         } else {
-            loadBackground(entryDefinition, batches, loadedEntries);
+            loadBackground(entryMapping, batches, loadedEntries);
         }
     }
 
     public void createBatches(
             Interpreter interpreter,
-            EntryDefinition entryDefinition,
+            EntryMapping entryMapping,
             SearchResults entries,
             SearchResults results,
             SearchResults batches
             ) throws Exception {
 
         try {
-            Config config = engine.getConfigManager().getConfig(entryDefinition);
-            Source primarySource = engine.getPrimarySource(entryDefinition);
+            PartitionConfig partitionConfig = engine.getConfigManager().getConfig(entryMapping);
+            SourceMapping primarySourceMapping = engine.getPrimarySource(entryMapping);
 
             Collection batch = new ArrayList();
 
-            String s = entryDefinition.getParameter(EntryDefinition.BATCH_SIZE);
-            int batchSize = s == null ? EntryDefinition.DEFAULT_BATCH_SIZE : Integer.parseInt(s);
+            String s = entryMapping.getParameter(EntryMapping.BATCH_SIZE);
+            int batchSize = s == null ? EntryMapping.DEFAULT_BATCH_SIZE : Integer.parseInt(s);
 
             for (Iterator i=entries.iterator(); i.hasNext(); ) {
                 Map map = (Map)i.next();
                 String dn = (String)map.get("dn");
-                AttributeValues sv = (AttributeValues)map.get("sourceValues");
+                //AttributeValues sv = (AttributeValues)map.get("sourceValues");
 
                 Row rdn = Entry.getRdn(dn);
 
-                if (config.getParent(entryDefinition) != null) {
+                if (partitionConfig.getParent(entryMapping) != null) {
                     String parentDn = Entry.getParentDn(dn);
 
                     log.debug("Checking "+rdn+" in entry data cache for "+parentDn);
-                    Entry entry = (Entry)engine.getCache(parentDn, entryDefinition).get(rdn);
+                    Entry entry = (Entry)engine.getCache(parentDn, entryMapping).get(rdn);
 
                     if (entry != null) {
                         log.debug(" - "+rdn+" has been loaded");
@@ -164,7 +161,7 @@ public class LoadEngine {
                     }
                 }
 
-                Row filter = engine.createFilter(interpreter, primarySource, entryDefinition, rdn);
+                Row filter = engine.createFilter(interpreter, primarySourceMapping, entryMapping, rdn);
                 if (filter == null) continue;
 
                 //if (filter.isEmpty()) filter.add(rdn);
@@ -187,12 +184,12 @@ public class LoadEngine {
     }
 
     public void loadBackground(
-            EntryDefinition entryDefinition,
+            EntryMapping entryMapping,
             SearchResults batches,
             SearchResults loadedBatches
             ) throws Exception {
 
-        //MRSWLock lock = getLock(entryDefinition.getDn());
+        //MRSWLock lock = getLock(entryMapping;
         //lock.getWriteLock(Penrose.WAIT_TIMEOUT);
 
         try {
@@ -201,7 +198,7 @@ public class LoadEngine {
 
                 log.debug(Formatter.displaySeparator(80));
                 log.debug(Formatter.displayLine("LOAD", 80));
-                log.debug(Formatter.displayLine("Entry: "+entryDefinition.getDn(), 80));
+                log.debug(Formatter.displayLine("Entry: "+entryMapping.getDn(), 80));
 
                 AttributeValues sourceValues = new AttributeValues();
                 for (Iterator i=entries.iterator(); i.hasNext(); ) {
@@ -226,7 +223,7 @@ public class LoadEngine {
 
                 log.debug(Formatter.displaySeparator(80));
 
-                AttributeValues loadedSourceValues = loadEntries(sourceValues, entryDefinition, entries);
+                AttributeValues loadedSourceValues = loadEntries(sourceValues, entryMapping, entries);
 
                 if (log.isDebugEnabled()) {
                     log.debug(Formatter.displaySeparator(80));
@@ -266,14 +263,14 @@ public class LoadEngine {
 
     public AttributeValues loadEntries(
             AttributeValues sourceValues,
-            EntryDefinition entryDefinition,
+            EntryMapping entryMapping,
             Collection maps)
             throws Exception {
 
-        Source primarySource = engine.getPrimarySource(entryDefinition);
-        log.debug("Primary source: "+(primarySource == null ? null : primarySource.getName()));
+        SourceMapping primarySourceMapping = engine.getPrimarySource(entryMapping);
+        log.debug("Primary source: "+(primarySourceMapping == null ? null : primarySourceMapping.getName()));
 
-        if (primarySource == null) {
+        if (primarySourceMapping == null) {
             Collection sourceNames = new TreeSet();
             for (Iterator i=sourceValues.getNames().iterator(); i.hasNext(); ) {
                 String name = (String)i.next();
@@ -300,8 +297,8 @@ public class LoadEngine {
         Collection pks = new TreeSet();
         for (Iterator i=maps.iterator(); i.hasNext(); ) {
             Map m = (Map)i.next();
-            String dn = (String)m.get("dn");
-            AttributeValues sv = (AttributeValues)m.get("sourceValues");
+            //String dn = (String)m.get("dn");
+            //AttributeValues sv = (AttributeValues)m.get("sourceValues");
             Row pk = (Row)m.get("filter");
             pks.add(pk);
         }
@@ -315,7 +312,7 @@ public class LoadEngine {
         Collection filters = new ArrayList();
         filters.add(map);
 
-        LoadGraphVisitor loadVisitor = new LoadGraphVisitor(engine, entryDefinition, sourceValues, filter);
+        LoadGraphVisitor loadVisitor = new LoadGraphVisitor(engine, entryMapping, sourceValues, filter);
         loadVisitor.run();
 
         return loadVisitor.getLoadedSourceValues();

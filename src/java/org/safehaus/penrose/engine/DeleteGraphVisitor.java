@@ -21,7 +21,7 @@ import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.graph.GraphVisitor;
 import org.safehaus.penrose.graph.GraphIterator;
 import org.safehaus.penrose.util.Formatter;
-import org.safehaus.penrose.config.Config;
+import org.safehaus.penrose.partition.PartitionConfig;
 import org.safehaus.penrose.connector.ConnectionConfig;
 import org.apache.log4j.Logger;
 import org.ietf.ldap.LDAPException;
@@ -36,40 +36,40 @@ public class DeleteGraphVisitor extends GraphVisitor {
     Logger log = Logger.getLogger(getClass());
 
     public Engine engine;
-    public EntryDefinition entryDefinition;
+    public EntryMapping entryMapping;
     public AttributeValues sourceValues;
 
     private int returnCode = LDAPException.SUCCESS;
 
     public DeleteGraphVisitor(
             Engine engine,
-            EntryDefinition entryDefinition,
+            EntryMapping entryMapping,
             AttributeValues sourceValues
             ) throws Exception {
 
         this.engine = engine;
-        this.entryDefinition = entryDefinition;
+        this.entryMapping = entryMapping;
         this.sourceValues = sourceValues;
     }
 
     public void visitNode(GraphIterator graphIterator, Object node) throws Exception {
 
-        Source source = (Source)node;
+        SourceMapping sourceMapping = (SourceMapping)node;
 
         if (log.isDebugEnabled()) {
             log.debug(Formatter.displaySeparator(40));
-            log.debug(Formatter.displayLine("Visiting "+source.getName(), 40));
+            log.debug(Formatter.displayLine("Visiting "+sourceMapping.getName(), 40));
             log.debug(Formatter.displaySeparator(40));
         }
 
-        if (source.isReadOnly() || !source.isIncludeOnDelete()) {
-            log.debug("Source "+source.getName()+" is not included on delete");
+        if (sourceMapping.isReadOnly() || !sourceMapping.isIncludeOnDelete()) {
+            log.debug("Source "+sourceMapping.getName()+" is not included on delete");
             graphIterator.traverseEdges(node);
             return;
         }
 
-        if (entryDefinition.getSource(source.getName()) == null) {
-            log.debug("Source "+source.getName()+" is not defined in entry "+entryDefinition.getDn());
+        if (entryMapping.getSourceMapping(sourceMapping.getName()) == null) {
+            log.debug("Source "+sourceMapping.getName()+" is not defined in entry "+entryMapping.getDn());
             graphIterator.traverseEdges(node);
             return;
         }
@@ -78,18 +78,18 @@ public class DeleteGraphVisitor extends GraphVisitor {
         AttributeValues newSourceValues = new AttributeValues();
         for (Iterator i=sourceValues.getNames().iterator(); i.hasNext(); ) {
             String name = (String)i.next();
-            if (!name.startsWith(source.getName()+".")) continue;
+            if (!name.startsWith(sourceMapping.getName()+".")) continue;
 
             Collection values = sourceValues.get(name);
             log.debug(" - "+name+": "+values);
 
-            name = name.substring(source.getName().length()+1);
+            name = name.substring(sourceMapping.getName().length()+1);
             newSourceValues.set(name, values);
         }
 
-        Config config = engine.getConfigManager().getConfig(source);
-        ConnectionConfig connectionConfig = config.getConnectionConfig(source.getConnectionName());
-        SourceDefinition sourceDefinition = connectionConfig.getSourceDefinition(source.getSourceName());
+        PartitionConfig partitionConfig = engine.getConfigManager().getConfig(sourceMapping);
+        ConnectionConfig connectionConfig = partitionConfig.getConnectionConfig(sourceMapping.getConnectionName());
+        SourceDefinition sourceDefinition = connectionConfig.getSourceDefinition(sourceMapping.getSourceName());
 
         returnCode = engine.getConnector().delete(sourceDefinition, newSourceValues);
         if (returnCode != LDAPException.SUCCESS) return;

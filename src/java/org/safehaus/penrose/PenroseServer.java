@@ -22,7 +22,7 @@ import java.io.File;
 
 import org.apache.log4j.*;
 import org.safehaus.penrose.management.PenroseJMXService;
-import org.safehaus.penrose.config.ServerConfig;
+import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.ldap.PenroseLDAPService;
 import sun.misc.Signal;
 import sun.misc.SignalHandler;
@@ -35,8 +35,8 @@ public class PenroseServer implements SignalHandler {
 
     public static Logger log = Logger.getLogger(PenroseServer.class);
 
-    String homeDirectory;
-    ServerConfig serverConfig;
+    String home;
+    PenroseConfig penroseConfig;
 
     Penrose penrose;
 
@@ -44,7 +44,7 @@ public class PenroseServer implements SignalHandler {
     PenroseLDAPService ldapService;
 
     public PenroseServer(String homeDirectory) throws Exception {
-        this.homeDirectory = homeDirectory;
+        this.home = homeDirectory;
     }
 
     public void start() throws Exception {
@@ -61,10 +61,10 @@ public class PenroseServer implements SignalHandler {
 
     public void startPenroseService() throws Exception {
         penrose = new Penrose();
-        penrose.setHomeDirectory(homeDirectory);
+        penrose.setHome(home);
         penrose.start();
 
-        serverConfig = penrose.getServerConfig();
+        penroseConfig = penrose.getConfig();
     }
 
     public void stopPenroseService() throws Exception {
@@ -73,7 +73,7 @@ public class PenroseServer implements SignalHandler {
 
     public void startLdapService() throws Exception {
         ldapService = new PenroseLDAPService();
-        ldapService.setHomeDirectory(homeDirectory);
+        ldapService.setHomeDirectory(home);
         ldapService.setPenrose(penrose);
         ldapService.start();
     }
@@ -183,13 +183,13 @@ public class PenroseServer implements SignalHandler {
                 System.exit(0);
             }
 
-            String home = System.getProperty("penrose.home");
+            String homeDirectory = System.getProperty("penrose.home");
 
             Logger rootLogger = Logger.getRootLogger();
             rootLogger.setLevel(Level.toLevel("OFF"));
 
             Logger logger = Logger.getLogger("org.safehaus.penrose");
-            File log4jProperties = new File((home == null ? "" : home+File.separator)+"conf"+File.separator+"log4j.properties");
+            File log4jProperties = new File((homeDirectory == null ? "" : homeDirectory+File.separator)+"conf"+File.separator+"log4j.properties");
 
             if (log4jProperties.exists()) {
                 PropertyConfigurator.configure(log4jProperties.getAbsolutePath());
@@ -212,7 +212,7 @@ public class PenroseServer implements SignalHandler {
 
             log.warn("Starting "+Penrose.PRODUCT_NAME+".");
 
-            PenroseServer server = new PenroseServer(home);
+            PenroseServer server = new PenroseServer(homeDirectory);
             server.start();
 
             log.warn("Server is ready.");

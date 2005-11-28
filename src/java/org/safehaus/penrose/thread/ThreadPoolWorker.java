@@ -73,7 +73,7 @@ public class ThreadPoolWorker extends Object {
 	private void runWork() {
 		while (noStopRequested) {
 			try {
-				String threadName = Thread.currentThread().getName();
+				//String threadName = Thread.currentThread().getName();
 				//log.debug("workerID="+workerID+" (threadName="+threadName+"), ready for work");
 				// Worker is ready for work. 
 				// This will never block because the idleWorker FIFO queue 

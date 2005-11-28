@@ -18,12 +18,11 @@
 package org.safehaus.penrose.engine;
 
 import org.safehaus.penrose.mapping.*;
-import org.safehaus.penrose.filter.Filter;
-import org.safehaus.penrose.config.Config;
 import org.safehaus.penrose.graph.GraphVisitor;
 import org.safehaus.penrose.graph.Graph;
 import org.safehaus.penrose.graph.GraphIterator;
 import org.safehaus.penrose.util.Formatter;
+import org.safehaus.penrose.partition.PartitionConfig;
 import org.apache.log4j.Logger;
 
 import java.util.*;
@@ -35,36 +34,36 @@ public class SearchCleaner extends GraphVisitor {
 
     Logger log = Logger.getLogger(getClass());
 
-    private Config config;
+    private PartitionConfig partitionConfig;
     private Graph graph;
     private Engine engine;
-    private EntryDefinition entryDefinition;
+    private EntryMapping entryMapping;
     private Map filters;
     private Map depths;
-    private Source primarySource;
+    private SourceMapping primarySourceMapping;
 
     private Map needCleaning = new HashMap();
 
     public SearchCleaner(
             Engine engine,
-            EntryDefinition entryDefinition,
+            EntryMapping entryMapping,
             SearchPlanner planner,
-            Source primarySource) throws Exception {
+            SourceMapping primarySourceMapping) throws Exception {
 
         this.engine = engine;
-        this.entryDefinition = entryDefinition;
+        this.entryMapping = entryMapping;
         this.filters = planner.getFilters();
         this.depths = planner.getDepths();
-        this.primarySource = primarySource;
+        this.primarySourceMapping = primarySourceMapping;
 
-        config = engine.getConfigManager().getConfig(entryDefinition);
-        graph = engine.getGraph(entryDefinition);
+        partitionConfig = engine.getConfigManager().getConfig(entryMapping);
+        graph = engine.getGraph(entryMapping);
 
-        needCleaning.put(primarySource, new Boolean(false));
+        needCleaning.put(primarySourceMapping, new Boolean(false));
     }
 
-    public void run(Source source) throws Exception {
-        graph.traverse(this, source);
+    public void run(SourceMapping sourceMapping) throws Exception {
+        graph.traverse(this, sourceMapping);
     }
 
     public void clean(Collection list) throws Exception {
@@ -73,34 +72,34 @@ public class SearchCleaner extends GraphVisitor {
             AttributeValues av = (AttributeValues)i.next();
             //log.debug(" - "+av);
 
-            for (Iterator j=entryDefinition.getSources().iterator(); j.hasNext(); ) {
-                Source source = (Source)j.next();
-                if (needCleaning.get(source) != null) continue;
+            for (Iterator j=entryMapping.getSourceMappings().iterator(); j.hasNext(); ) {
+                SourceMapping sourceMapping = (SourceMapping)j.next();
+                if (needCleaning.get(sourceMapping) != null) continue;
 
-                av.remove(source.getName());
+                av.remove(sourceMapping.getName());
             }
         }
     }
 
     public void visitNode(GraphIterator graphIterator, Object node) throws Exception {
 
-        Source source = (Source)node;
+        SourceMapping sourceMapping = (SourceMapping)node;
 
         if (log.isDebugEnabled()) {
             log.debug(Formatter.displaySeparator(60));
-            log.debug(Formatter.displayLine("Visiting "+source.getName(), 60));
+            log.debug(Formatter.displayLine("Visiting "+sourceMapping.getName(), 60));
             log.debug(Formatter.displaySeparator(60));
         }
 
-        needCleaning.put(source, new Boolean(false));
+        needCleaning.put(sourceMapping, new Boolean(false));
 
         graphIterator.traverseEdges(node);
     }
 
     public void visitEdge(GraphIterator graphIterator, Object node1, Object node2, Object object) throws Exception {
 
-        Source fromSource = (Source)node1;
-        Source toSource = (Source)node2;
+        SourceMapping fromSourceMapping = (SourceMapping)node1;
+        SourceMapping toSourceMapping = (SourceMapping)node2;
         Collection relationships = (Collection)object;
 
         if (log.isDebugEnabled()) {
@@ -112,16 +111,16 @@ public class SearchCleaner extends GraphVisitor {
             log.debug(Formatter.displaySeparator(60));
         }
 
-        Integer depth1 = (Integer)depths.get(fromSource);
-        Integer depth2 = (Integer)depths.get(toSource);
+        Integer depth1 = (Integer)depths.get(fromSourceMapping);
+        Integer depth2 = (Integer)depths.get(toSourceMapping);
 
-        if (entryDefinition.getSource(toSource.getName()) == null) {
-            log.debug("Source "+toSource.getName()+" is not defined in entry.");
+        if (entryMapping.getSourceMapping(toSourceMapping.getName()) == null) {
+            log.debug("Source "+toSourceMapping.getName()+" is not defined in entry.");
             return;
         }
 
         if (depth2.intValue() >= depth1.intValue()) {
-            log.debug("Source "+toSource.getName()+" is further away from primary source.");
+            log.debug("Source "+toSourceMapping.getName()+" is further away from primary source.");
             return;
         }
 

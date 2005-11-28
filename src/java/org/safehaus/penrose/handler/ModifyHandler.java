@@ -20,7 +20,7 @@ package org.safehaus.penrose.handler;
 import org.safehaus.penrose.PenroseConnection;
 import org.safehaus.penrose.SearchResults;
 import org.safehaus.penrose.event.ModifyEvent;
-import org.safehaus.penrose.config.Config;
+import org.safehaus.penrose.partition.PartitionConfig;
 import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.schema.Schema;
 import org.safehaus.penrose.schema.ObjectClass;
@@ -116,13 +116,13 @@ public class ModifyHandler {
         int rc = handler.getACLEngine().checkModify(connection, entry);
         if (rc != LDAPException.SUCCESS) return rc;
 
-        EntryDefinition entryDefinition = entry.getEntryDefinition();
-        Config config = handler.getConfigManager().getConfig(entryDefinition);
-        if (config.isDynamic(entryDefinition)) {
+        EntryMapping entryMapping = entry.getEntryMapping();
+        PartitionConfig partitionConfig = handler.getConfigManager().getConfig(entryMapping);
+        if (partitionConfig.isDynamic(entryMapping)) {
             return modifyVirtualEntry(connection, entry, modifications);
 
         } else {
-            return modifyStaticEntry(entryDefinition, modifications);
+            return modifyStaticEntry(entryMapping, modifications);
         }
 	}
 
@@ -132,7 +132,7 @@ public class ModifyHandler {
      * @param modifications
      * @throws Exception
      */
-	public void convertValues(EntryDefinition entry, Collection modifications)
+	public void convertValues(EntryMapping entry, Collection modifications)
 			throws Exception {
 
 		for (Iterator i = modifications.iterator(); i.hasNext();) {
@@ -142,7 +142,7 @@ public class ModifyHandler {
 			String attributeName = attribute.getName();
 			String values[] = attribute.getStringValueArray();
 
-			AttributeDefinition attr = entry.getAttributeDefinition(attributeName);
+			AttributeMapping attr = entry.getAttributeMapping(attributeName);
 			if (attr == null) continue;
 
 			String encryption = attr.getEncryption();
@@ -167,10 +167,10 @@ public class ModifyHandler {
 			Collection modifications)
             throws Exception {
 
-		EntryDefinition entryDefinition = entry.getEntryDefinition();
+		EntryMapping entryMapping = entry.getEntryMapping();
         AttributeValues oldValues = entry.getAttributeValues();
 
-		convertValues(entryDefinition, modifications);
+		convertValues(entryMapping, modifications);
 
 		log.debug("Old entry:");
 		log.debug("\n"+entry.toString());
@@ -179,7 +179,7 @@ public class ModifyHandler {
 		AttributeValues newValues = new AttributeValues(oldValues);
 
         Schema schema = handler.getSchema();
-		Collection objectClasses = schema.getObjectClasses(entryDefinition);
+		Collection objectClasses = schema.getObjectClasses(entryMapping);
 		//log.debug("Object Classes: " + objectClasses);
 
 		for (Iterator i = modifications.iterator(); i.hasNext();) {
@@ -255,7 +255,7 @@ public class ModifyHandler {
 					+ newValues.get(attributeName));
 		}
 
-        Entry newEntry = new Entry(entry.getDn(), entryDefinition, entry.getSourceValues(), newValues);
+        Entry newEntry = new Entry(entry.getDn(), entryMapping, entry.getSourceValues(), newValues);
 
 		log.debug("New entry:");
 		log.debug("\n"+newEntry.toString());
@@ -264,7 +264,7 @@ public class ModifyHandler {
 	}
 
 
-        public int modifyStaticEntry(EntryDefinition entry, Collection modifications)
+        public int modifyStaticEntry(EntryMapping entry, Collection modifications)
                 throws Exception {
 
             convertValues(entry, modifications);
@@ -308,41 +308,41 @@ public class ModifyHandler {
             }
 
 		/*
-		 * for (Iterator i = attributes.iterator(); i.hasNext(); ) { AttributeDefinition
-		 * attribute = (AttributeDefinition)i.next(); log.debug(attribute.getName()+":
+		 * for (Iterator i = attributes.iterator(); i.hasNext(); ) { AttributeMapping
+		 * attribute = (AttributeMapping)i.next(); log.debug(attribute.getName()+":
 		 * "+attribute.getExpression()); }
 		 */
 		return LDAPException.SUCCESS;
 	}
 
-    public void addAttribute(EntryDefinition entry, String name, String value)
+    public void addAttribute(EntryMapping entry, String name, String value)
 			throws Exception {
 
-		AttributeDefinition attribute = entry.getAttributeDefinition(name);
+		AttributeMapping attribute = entry.getAttributeMapping(name);
 
 		if (attribute == null) {
-			attribute = new AttributeDefinition(name, value);
-			entry.addAttributeDefinition(attribute);
+			attribute = new AttributeMapping(name, value);
+			entry.addAttributeMapping(attribute);
 
 		} else {
 			attribute.setConstant(value);
 		}
 	}
 
-    public void deleteAttribute(EntryDefinition entry, String name) throws Exception {
-		entry.removeAttributeDefinition(name);
+    public void deleteAttribute(EntryMapping entry, String name) throws Exception {
+		entry.removeAttributeMapping(name);
 	}
 
-    public void deleteAttribute(EntryDefinition entry, String name, String value)
+    public void deleteAttribute(EntryMapping entry, String name, String value)
 			throws Exception {
 
-		AttributeDefinition attributeDefinition = entry.getAttributeDefinition(name);
-		if (attributeDefinition == null) return;
+		AttributeMapping attributeMapping = entry.getAttributeMapping(name);
+		if (attributeMapping == null) return;
 
 		Interpreter interpreter = handler.getInterpreterFactory().newInstance();
 
-		String attrValue = (String)interpreter.eval(attributeDefinition);
-		if (attrValue.equals(value)) entry.removeAttributeDefinition(name);
+		String attrValue = (String)interpreter.eval(attributeMapping);
+		if (attrValue.equals(value)) entry.removeAttributeMapping(name);
 
         interpreter.clear();
 	}

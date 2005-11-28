@@ -17,12 +17,10 @@
  */
 package org.safehaus.penrose.mapping;
 
-import java.io.Serializable;
-
 /**
  * @author Endi S. Dewata
  */
-public class AttributeDefinition implements Cloneable, Serializable {
+public class AttributeMapping implements Cloneable {
 
     public final static String DEFAULT_TYPE   = "VARCHAR";
     public final static int DEFAULT_LENGTH    = 50;
@@ -64,24 +62,24 @@ public class AttributeDefinition implements Cloneable, Serializable {
     private int length    = DEFAULT_LENGTH;
     private int precision = DEFAULT_PRECISION;
 
-    public AttributeDefinition() {
+    public AttributeMapping() {
     }
 
-    public AttributeDefinition(String name, String expression) {
+    public AttributeMapping(String name, String expression) {
         this(name, expression, false);
     }
 
-    public AttributeDefinition(String name, Expression expression) {
+    public AttributeMapping(String name, Expression expression) {
         this(name, expression, false);
     }
 
-    public AttributeDefinition(String name, String value, boolean rdn) {
+    public AttributeMapping(String name, String value, boolean rdn) {
         this.name = name;
         this.expression = new Expression(value);
         this.rdn = rdn;
     }
 
-    public AttributeDefinition(String name, Expression expression, boolean rdn) {
+    public AttributeMapping(String name, Expression expression, boolean rdn) {
         this.name = name;
         this.expression = expression;
         this.rdn = rdn;
@@ -203,41 +201,41 @@ public class AttributeDefinition implements Cloneable, Serializable {
         if (this == object) return true;
         if((object == null) || (object.getClass() != this.getClass())) return false;
 
-        AttributeDefinition attributeDefinition = (AttributeDefinition)object;
-        if (!equals(name, attributeDefinition.name)) return false;
-        if (!equals(script, attributeDefinition.script)) return false;
-        if (!equals(constant, attributeDefinition.constant)) return false;
-        if (!equals(variable, attributeDefinition.variable)) return false;
-        if (!equals(expression, attributeDefinition.expression)) return false;
-        if (rdn != attributeDefinition.rdn) return false;
-        if (!equals(encryption, attributeDefinition.encryption)) return false;
-        if (!equals(encoding, attributeDefinition.encoding)) return false;
-        if (!equals(type, attributeDefinition.type)) return false;
-        if (length != attributeDefinition.length) return false;
-        if (precision != attributeDefinition.precision) return false;
+        AttributeMapping attributeMapping = (AttributeMapping)object;
+        if (!equals(name, attributeMapping.name)) return false;
+        if (!equals(script, attributeMapping.script)) return false;
+        if (!equals(constant, attributeMapping.constant)) return false;
+        if (!equals(variable, attributeMapping.variable)) return false;
+        if (!equals(expression, attributeMapping.expression)) return false;
+        if (rdn != attributeMapping.rdn) return false;
+        if (!equals(encryption, attributeMapping.encryption)) return false;
+        if (!equals(encoding, attributeMapping.encoding)) return false;
+        if (!equals(type, attributeMapping.type)) return false;
+        if (length != attributeMapping.length) return false;
+        if (precision != attributeMapping.precision) return false;
 
         return true;
     }
 
-    public Object copy(AttributeDefinition attributeDefinition) {
-        name = attributeDefinition.name;
-        script = attributeDefinition.script;
-        constant = attributeDefinition.constant;
-        variable = attributeDefinition.variable;
-        expression = attributeDefinition.expression == null ? null : (Expression)attributeDefinition.expression.clone();
-        rdn = attributeDefinition.rdn;
-        encryption = attributeDefinition.encryption;
-        encoding = attributeDefinition.encoding;
-        type = attributeDefinition.type;
-        length = attributeDefinition.length;
-        precision = attributeDefinition.precision;
-        return attributeDefinition;
+    public Object copy(AttributeMapping attributeMapping) {
+        name = attributeMapping.name;
+        script = attributeMapping.script;
+        constant = attributeMapping.constant;
+        variable = attributeMapping.variable;
+        expression = attributeMapping.expression == null ? null : (Expression)attributeMapping.expression.clone();
+        rdn = attributeMapping.rdn;
+        encryption = attributeMapping.encryption;
+        encoding = attributeMapping.encoding;
+        type = attributeMapping.type;
+        length = attributeMapping.length;
+        precision = attributeMapping.precision;
+        return attributeMapping;
     }
 
     public Object clone() {
-        AttributeDefinition attributeDefinition = new AttributeDefinition();
-        attributeDefinition.copy(this);
-        return attributeDefinition;
+        AttributeMapping attributeMapping = new AttributeMapping();
+        attributeMapping.copy(this);
+        return attributeMapping;
     }
 
     public String toString() {

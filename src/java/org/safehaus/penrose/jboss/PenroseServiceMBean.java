@@ -18,7 +18,6 @@
 package org.safehaus.penrose.jboss;
 
 import org.jboss.system.Service;
-import org.jboss.system.ServiceMBean;
 
 /**
  * @author Endi S. Dewata

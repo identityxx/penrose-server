@@ -28,7 +28,7 @@ import org.safehaus.penrose.connector.ConnectionManager;
 import org.safehaus.penrose.connector.ConnectionConfig;
 import org.safehaus.penrose.engine.Engine;
 import org.safehaus.penrose.engine.EngineConfig;
-import org.safehaus.penrose.mapping.EntryDefinition;
+import org.safehaus.penrose.mapping.EntryMapping;
 import org.safehaus.penrose.util.Formatter;
 import org.safehaus.penrose.handler.Handler;
 import org.safehaus.penrose.SearchResults;
@@ -52,7 +52,7 @@ public class CacheManager {
 
     public String homeDirectory;
 
-    public ServerConfig serverConfig;
+    public PenroseConfig penroseConfig;
     public ConnectionManager connectionManager;
     public String jdbcConnectionName;
 
@@ -64,7 +64,7 @@ public class CacheManager {
         homeDirectory = System.getProperty("penrose.home");
         log.debug("Home: "+homeDirectory);
 
-        CacheConfig cacheConfig = serverConfig.getEntryCacheConfig();
+        CacheConfig cacheConfig = penroseConfig.getEntryCacheConfig();
         jdbcConnectionName = cacheConfig.getParameter("jdbcConnection");
     }
 

@@ -17,7 +17,7 @@
  */
 package org.safehaus.penrose.cache;
 
-import org.safehaus.penrose.mapping.EntryDefinition;
+import org.safehaus.penrose.mapping.EntryMapping;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.engine.Engine;
 
@@ -29,26 +29,26 @@ import java.util.Collection;
 public abstract class EntryCache extends Cache {
 
     String parentDn;
-    EntryDefinition entryDefinition;
+    EntryMapping entryMapping;
 
     Engine engine;
 
     public void init() throws Exception {
         super.init();
 
-        String s = entryDefinition.getParameter(EntryDefinition.DATA_CACHE_SIZE);
+        String s = entryMapping.getParameter(EntryMapping.DATA_CACHE_SIZE);
         if (s != null) size = Integer.parseInt(s);
 
-        s = entryDefinition.getParameter(EntryDefinition.DATA_CACHE_EXPIRATION);
+        s = entryMapping.getParameter(EntryMapping.DATA_CACHE_EXPIRATION);
         if (s != null) expiration = Integer.parseInt(s);
     }
 
-    public EntryDefinition getEntryDefinition() {
-        return entryDefinition;
+    public EntryMapping getEntryMapping() {
+        return entryMapping;
     }
 
-    public void setEntryDefinition(EntryDefinition entryDefinition) {
-        this.entryDefinition = entryDefinition;
+    public void setEntryMapping(EntryMapping entryMapping) {
+        this.entryMapping = entryMapping;
     }
 
     public String getParentDn() {

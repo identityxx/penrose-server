@@ -35,7 +35,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 
         <pattern value="entry">
 
-            <object-create-rule classname="org.safehaus.penrose.mapping.EntryDefinition" />
+            <object-create-rule classname="org.safehaus.penrose.mapping.EntryMapping" />
             <set-properties-rule />
 
             <call-method-rule pattern="script" methodname="setScript" paramcount="0" />
@@ -44,7 +44,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 
             <pattern value="at">
 
-                <object-create-rule classname="org.safehaus.penrose.mapping.AttributeDefinition" />
+                <object-create-rule classname="org.safehaus.penrose.mapping.AttributeMapping" />
                 <set-properties-rule />
 
                 <call-method-rule pattern="script" methodname="setScript" paramcount="0" />
@@ -62,19 +62,19 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
                     <set-next-rule methodname="setExpression" />
                 </pattern>
 
-                <set-next-rule methodname="addAttributeDefinition" />
+                <set-next-rule methodname="addAttributeMapping" />
 
             </pattern>
 
             <pattern value="source">
 
-                <object-create-rule classname="org.safehaus.penrose.mapping.Source" />
+                <object-create-rule classname="org.safehaus.penrose.mapping.SourceMapping" />
                 <set-properties-rule />
                 <call-method-rule pattern="source-name" methodname="setSourceName" paramcount="0" />
                 <call-method-rule pattern="connection-name" methodname="setConnectionName" paramcount="0" />
 
                 <pattern value="field">
-                    <object-create-rule classname="org.safehaus.penrose.mapping.Field" />
+                    <object-create-rule classname="org.safehaus.penrose.mapping.FieldMapping" />
                     <set-properties-rule />
 
                     <call-method-rule pattern="script" methodname="setScript" paramcount="0" />
@@ -92,7 +92,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
                         <set-next-rule methodname="setExpression" />
                     </pattern>
 
-                    <set-next-rule methodname="addField" />
+                    <set-next-rule methodname="addFieldMapping" />
                 </pattern>
 
                 <pattern value="parameter">
@@ -101,7 +101,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
                     <call-param-rule pattern="param-value" paramnumber="1"/>
                 </pattern>
 
-                <set-next-rule methodname="addSource" />
+                <set-next-rule methodname="addSourceMapping" />
             </pattern>
 
             <pattern value="relationship">
@@ -135,7 +135,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
             <pattern value="include">
                 <object-create-rule classname="org.safehaus.penrose.mapping.MappingRule" />
                 <set-properties-rule />
-                <set-next-rule methodname="addChildDefinition" />
+                <set-next-rule methodname="addChildMapping" />
             </pattern>
 
             <set-next-rule methodname="addContent" />

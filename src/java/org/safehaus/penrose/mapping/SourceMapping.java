@@ -18,12 +18,11 @@
 package org.safehaus.penrose.mapping;
 
 import java.util.*;
-import java.io.Serializable;
 
 /**
  * @author Endi S. Dewata
  */
-public class Source implements Cloneable, Serializable {
+public class SourceMapping implements Cloneable {
 
     public final static String FILTER     = "filter";
 
@@ -45,7 +44,7 @@ public class Source implements Cloneable, Serializable {
 	/**
 	 * Fields. Each element is of type org.safehaus.penrose.mapping.Field.
 	 */
-	private Map fields = new TreeMap();
+	private Map fieldMappings = new TreeMap();
 
     /**
      * Parameters.
@@ -60,7 +59,7 @@ public class Source implements Cloneable, Serializable {
     private boolean includeOnModRdn = true;
     private boolean includeOnDelete = true;
 
-	public Source() {
+	public SourceMapping() {
 	}
 
 	public String getName() {
@@ -71,24 +70,24 @@ public class Source implements Cloneable, Serializable {
 		this.name = name;
 	}
 
-    public Field getField(String name) {
-        return (Field)fields.get(name);
+    public FieldMapping getFieldMapping(String name) {
+        return (FieldMapping)fieldMappings.get(name);
     }
 
-	public Collection getFields() {
-		return fields.values();
+	public Collection getFieldMappings() {
+		return fieldMappings.values();
 	}
 
-	public void addField(Field field) {
-		fields.put(field.getName(), field);
+	public void addFieldMapping(FieldMapping fieldMapping) {
+		fieldMappings.put(fieldMapping.getName(), fieldMapping);
 	}
 
-    public Field removeField(String name) {
-        return (Field)fields.remove(name);
+    public FieldMapping removeFieldMapping(String name) {
+        return (FieldMapping)fieldMappings.remove(name);
     }
 
-    public void removeFields() {
-        fields.clear();
+    public void removeFieldMappings() {
+        fieldMappings.clear();
     }
     
     public String getSourceName() {
@@ -167,7 +166,7 @@ public class Source implements Cloneable, Serializable {
         return (name == null ? 0 : name.hashCode()) +
                 (sourceName == null ? 0 : sourceName.hashCode()) +
                 (connectionName == null ? 0 : connectionName.hashCode()) +
-                (fields == null ? 0 : fields.hashCode()) +
+                (fieldMappings == null ? 0 : fieldMappings.hashCode()) +
                 (parameters == null ? 0 : parameters.hashCode()) +
                 (required ? 0 : 1) +
                 (readOnly ? 0 : 1) +
@@ -187,43 +186,43 @@ public class Source implements Cloneable, Serializable {
         if (this == object) return true;
         if((object == null) || (object.getClass() != this.getClass())) return false;
 
-        Source source = (Source)object;
-        if (!equals(name, source.name)) return false;
-        if (!equals(sourceName, source.sourceName)) return false;
-        if (!equals(connectionName, source.connectionName)) return false;
-        if (!equals(fields, source.fields)) return false;
-        if (!equals(parameters, source.parameters)) return false;
-        if (required != source.required) return false;
-        if (readOnly != source.readOnly) return false;
-        if (includeOnAdd != source.includeOnAdd) return false;
-        if (includeOnModify != source.includeOnModify) return false;
-        if (includeOnModRdn != source.includeOnModRdn) return false;
-        if (includeOnDelete != source.includeOnDelete) return false;
+        SourceMapping sourceMapping = (SourceMapping)object;
+        if (!equals(name, sourceMapping.name)) return false;
+        if (!equals(sourceName, sourceMapping.sourceName)) return false;
+        if (!equals(connectionName, sourceMapping.connectionName)) return false;
+        if (!equals(fieldMappings, sourceMapping.fieldMappings)) return false;
+        if (!equals(parameters, sourceMapping.parameters)) return false;
+        if (required != sourceMapping.required) return false;
+        if (readOnly != sourceMapping.readOnly) return false;
+        if (includeOnAdd != sourceMapping.includeOnAdd) return false;
+        if (includeOnModify != sourceMapping.includeOnModify) return false;
+        if (includeOnModRdn != sourceMapping.includeOnModRdn) return false;
+        if (includeOnDelete != sourceMapping.includeOnDelete) return false;
 
         return true;
     }
 
     public Object clone() {
-        Source source = new Source();
-        source.name = name;
-        source.sourceName = sourceName;
-        source.connectionName = connectionName;
+        SourceMapping sourceMapping = new SourceMapping();
+        sourceMapping.name = name;
+        sourceMapping.sourceName = sourceName;
+        sourceMapping.connectionName = connectionName;
 
-        for (Iterator i=fields.values().iterator(); i.hasNext(); ) {
-            Field field = (Field)i.next();
-            source.addField((Field)field.clone());
+        for (Iterator i=fieldMappings.values().iterator(); i.hasNext(); ) {
+            FieldMapping fieldMapping = (FieldMapping)i.next();
+            sourceMapping.addFieldMapping((FieldMapping)fieldMapping.clone());
         }
 
-        source.parameters.putAll(source.parameters);
+        sourceMapping.parameters.putAll(sourceMapping.parameters);
 
-        source.required = required;
-        source.readOnly = readOnly;
-        source.includeOnAdd = includeOnAdd;
-        source.includeOnModify = includeOnModify;
-        source.includeOnModRdn = includeOnModRdn;
-        source.includeOnDelete = includeOnDelete;
+        sourceMapping.required = required;
+        sourceMapping.readOnly = readOnly;
+        sourceMapping.includeOnAdd = includeOnAdd;
+        sourceMapping.includeOnModify = includeOnModify;
+        sourceMapping.includeOnModRdn = includeOnModRdn;
+        sourceMapping.includeOnDelete = includeOnDelete;
 
-        return source;
+        return sourceMapping;
     }
 
     public String toString() {

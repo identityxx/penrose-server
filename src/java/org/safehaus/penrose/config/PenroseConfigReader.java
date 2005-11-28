@@ -31,11 +31,11 @@ import java.net.URL;
 /**
  * @author Endi S. Dewata
  */
-public class ServerConfigReader {
+public class PenroseConfigReader {
 
     Logger log = Logger.getLogger(getClass());
 
-    public ServerConfigReader() {
+    public PenroseConfigReader() {
     }
 
     /**
@@ -44,11 +44,11 @@ public class ServerConfigReader {
      * @param filename the configuration file (ie. server.xml)
      * @throws Exception
      */
-    public ServerConfig read(String filename) throws Exception {
-        ServerConfig serverConfig = new ServerConfig();
+    public PenroseConfig read(String filename) throws Exception {
+        PenroseConfig penroseConfig = new PenroseConfig();
         File file = new File(filename);
-        read(file, serverConfig);
-        return serverConfig;
+        read(file, penroseConfig);
+        return penroseConfig;
     }
 
 	/**
@@ -57,45 +57,45 @@ public class ServerConfigReader {
 	 * @param file the configuration file (ie. server.xml)
 	 * @throws Exception
 	 */
-	public void read(File file, ServerConfig serverConfig) throws Exception {
+	public void read(File file, PenroseConfig penroseConfig) throws Exception {
 		//log.debug("Loading server configuration file from: "+file.getAbsolutePath());
         ClassLoader cl = getClass().getClassLoader();
         URL url = cl.getResource("org/safehaus/penrose/config/server-digester-rules.xml");
 		Digester digester = DigesterLoader.createDigester(url);
 		digester.setValidating(false);
         digester.setClassLoader(cl);
-		digester.push(serverConfig);
+		digester.push(penroseConfig);
 		digester.parse(file);
 
-        if (serverConfig.getInterpreterConfig() == null) {
+        if (penroseConfig.getInterpreterConfig() == null) {
             InterpreterConfig interpreterConfig = new InterpreterConfig();
-            serverConfig.setInterpreterConfig(interpreterConfig);
+            penroseConfig.setInterpreterConfig(interpreterConfig);
         }
 
-        CacheConfig sourceCacheConfig = serverConfig.getSourceCacheConfig();
+        CacheConfig sourceCacheConfig = penroseConfig.getSourceCacheConfig();
         if (sourceCacheConfig == null) {
             sourceCacheConfig = new CacheConfig();
             sourceCacheConfig.setCacheClass(ConnectorConfig.DEFAULT_CACHE_CLASS);
-            serverConfig.setSourceCacheConfig(sourceCacheConfig);
+            penroseConfig.setSourceCacheConfig(sourceCacheConfig);
         }
         sourceCacheConfig.setCacheName(ConnectorConfig.DEFAULT_CACHE_NAME);
 
-        CacheConfig entryCacheConfig = serverConfig.getEntryCacheConfig();
-        if (serverConfig.getEntryCacheConfig() == null) {
+        CacheConfig entryCacheConfig = penroseConfig.getEntryCacheConfig();
+        if (penroseConfig.getEntryCacheConfig() == null) {
             entryCacheConfig = new CacheConfig();
             entryCacheConfig.setCacheClass(EngineConfig.DEFAULT_CACHE_CLASS);
-            serverConfig.setEntryCacheConfig(entryCacheConfig);
+            penroseConfig.setEntryCacheConfig(entryCacheConfig);
         }
         entryCacheConfig.setCacheName(EngineConfig.DEFAULT_CACHE_NAME);
 
-        if (serverConfig.getConnectorConfig() == null) {
+        if (penroseConfig.getConnectorConfig() == null) {
             ConnectorConfig connectorConfig = new ConnectorConfig();
-            serverConfig.setConnectorConfig(connectorConfig);
+            penroseConfig.setConnectorConfig(connectorConfig);
         }
 
-        if (serverConfig.getEngineConfig() == null) {
+        if (penroseConfig.getEngineConfig() == null) {
             EngineConfig engineConfig = new EngineConfig();
-            serverConfig.setEngineConfig(engineConfig);
+            penroseConfig.setEngineConfig(engineConfig);
         }
 
 	}

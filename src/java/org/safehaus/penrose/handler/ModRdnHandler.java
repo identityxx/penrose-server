@@ -18,16 +18,12 @@
 package org.safehaus.penrose.handler;
 
 import org.safehaus.penrose.PenroseConnection;
-import org.safehaus.penrose.config.Config;
+import org.safehaus.penrose.partition.PartitionConfig;
 import org.safehaus.penrose.mapping.Entry;
-import org.safehaus.penrose.mapping.EntryDefinition;
-import org.safehaus.penrose.mapping.AttributeValues;
+import org.safehaus.penrose.mapping.EntryMapping;
 import org.apache.log4j.Logger;
 import org.ietf.ldap.LDAPException;
 import org.ietf.ldap.LDAPDN;
-
-import java.util.List;
-import java.util.Collection;
 
 /**
  * @author Endi S. Dewata
@@ -72,23 +68,23 @@ public class ModRdnHandler {
         int rc = handler.getACLEngine().checkModify(connection, entry);
         if (rc != LDAPException.SUCCESS) return rc;
 
-        EntryDefinition entryDefinition = entry.getEntryDefinition();
-        Config config = handler.getConfigManager().getConfig(entryDefinition);
-        if (config.isDynamic(entryDefinition)) {
+        EntryMapping entryMapping = entry.getEntryMapping();
+        PartitionConfig partitionConfig = handler.getConfigManager().getConfig(entryMapping);
+        if (partitionConfig.isDynamic(entryMapping)) {
             return modRdnVirtualEntry(connection, entry, newRdn);
 
         } else {
-            return modRdnStaticEntry(entryDefinition, newRdn);
+            return modRdnStaticEntry(entryMapping, newRdn);
         }
 	}
 
     public int modRdnStaticEntry(
-            EntryDefinition entry,
+            EntryMapping entry,
             String newRdn)
 			throws Exception {
 
-        Config config = handler.getConfigManager().getConfig(entry.getDn());
-        config.renameEntryDefinition(entry, newRdn);
+        PartitionConfig partitionConfig = handler.getConfigManager().getConfig(entry.getDn());
+        partitionConfig.renameEntryMapping(entry, newRdn);
 
         return LDAPException.SUCCESS;
     }

@@ -18,10 +18,10 @@
 package org.safehaus.penrose.acl;
 
 import org.safehaus.penrose.mapping.Entry;
-import org.safehaus.penrose.mapping.EntryDefinition;
+import org.safehaus.penrose.mapping.EntryMapping;
 import org.safehaus.penrose.PenroseConnection;
+import org.safehaus.penrose.partition.PartitionConfig;
 import org.safehaus.penrose.handler.Handler;
-import org.safehaus.penrose.config.Config;
 import org.ietf.ldap.LDAPException;
 import org.ietf.ldap.LDAPEntry;
 import org.ietf.ldap.LDAPAttributeSet;
@@ -61,7 +61,7 @@ public class ACLEngine {
     public boolean getObjectPermission(
             String bindDn,
             String targetDn,
-            EntryDefinition entry,
+            EntryMapping entry,
             String scope,
             String permission) throws Exception {
 
@@ -95,10 +95,10 @@ public class ACLEngine {
             }
         }
 
-        Config config = handler.getConfigManager().getConfig(entry.getDn());
-        if (config == null) return false;
+        PartitionConfig partitionConfig = handler.getConfigManager().getConfig(entry.getDn());
+        if (partitionConfig == null) return false;
 
-        entry = config.getParent(entry);
+        entry = partitionConfig.getParent(entry);
         if (entry == null) return false;
 
         return getObjectPermission(bindDn, targetDn, entry, ACI.SCOPE_SUBTREE, permission);
@@ -106,7 +106,7 @@ public class ACLEngine {
 
     public boolean getObjectPermission(String bindDn, String targetDn, Entry entry, String target, String permission) throws Exception {
 
-        return getObjectPermission(bindDn, targetDn, entry.getEntryDefinition(), null, permission);
+        return getObjectPermission(bindDn, targetDn, entry.getEntryMapping(), null, permission);
     }
 
     public int checkPermission(PenroseConnection connection, Entry entry, String permission) throws Exception {
@@ -183,7 +183,7 @@ public class ACLEngine {
     public void getReadableAttributes(
             String bindDn,
             String targetDn,
-            EntryDefinition entry,
+            EntryMapping entry,
             String scope,
             Set grants,
             Set denies) throws Exception {
@@ -218,10 +218,10 @@ public class ACLEngine {
             }
         }
 
-        Config config = handler.getConfigManager().getConfig(entry.getDn());
-        if (config == null) return;
+        PartitionConfig partitionConfig = handler.getConfigManager().getConfig(entry.getDn());
+        if (partitionConfig == null) return;
 
-        entry = config.getParent(entry);
+        entry = partitionConfig.getParent(entry);
         if (entry == null) return;
 
         getReadableAttributes(bindDn, targetDn, entry, ACI.SCOPE_SUBTREE, grants, denies);
@@ -242,7 +242,7 @@ public class ACLEngine {
 
         String targetDn = handler.getSchema().normalize(entry.getDn());
 
-        getReadableAttributes(bindDn, targetDn, entry.getEntryDefinition(), null, grants, denies);
+        getReadableAttributes(bindDn, targetDn, entry.getEntryMapping(), null, grants, denies);
 
         grants.removeAll(denies);
         denies.removeAll(grants);

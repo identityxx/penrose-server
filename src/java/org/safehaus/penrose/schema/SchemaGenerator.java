@@ -93,7 +93,7 @@ public class SchemaGenerator {
         if (file.isDirectory()) return;
         if (!file.getName().endsWith(".java")) return;
 
-        String path = file.getPath().substring(prefix.length()+1);
+        //String path = file.getPath().substring(prefix.length()+1);
         //System.out.println("Compiling "+path);
 
         Main.compile(new String[] { file.getAbsolutePath() });
@@ -155,7 +155,7 @@ public class SchemaGenerator {
             }
         }
 
-        String path = file.getPath();
+        //String path = file.getPath();
         //System.out.println("Deleting "+path);
 
         file.delete();

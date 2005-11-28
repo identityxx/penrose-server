@@ -21,14 +21,13 @@ import Zql.ZqlParser;
 import Zql.ZExpression;
 import Zql.ZExp;
 
-import java.io.Serializable;
 import java.io.ByteArrayInputStream;
 import java.util.*;
 
 /**
  * @author Endi S. Dewata
  */
-public class Relationship implements Cloneable, Serializable {
+public class Relationship implements Cloneable {
 
     private String operator = "=";
     private List operands = new ArrayList();

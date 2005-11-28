@@ -18,15 +18,12 @@
 package org.safehaus.penrose.handler;
 
 import org.safehaus.penrose.PenroseConnection;
-import org.safehaus.penrose.config.Config;
 import org.safehaus.penrose.event.BindEvent;
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.util.PasswordUtil;
 import org.ietf.ldap.LDAPDN;
 import org.ietf.ldap.LDAPException;
 import org.apache.log4j.Logger;
-
-import java.util.*;
 
 /**
  * @author Endi S. Dewata

@@ -124,7 +124,7 @@ public class FilterTool {
         String attributeValue = filter.getValue();
 
         if (attributeName.equalsIgnoreCase("objectclass")) {
-            return entry.getEntryDefinition().containsObjectClass(attributeValue);
+            return entry.getEntryMapping().containsObjectClass(attributeValue);
         }
 
         AttributeValues values = entry.getAttributeValues();
@@ -325,28 +325,28 @@ public class FilterTool {
         return filter;
     }
 
-    public boolean isValid(EntryDefinition entryDefinition, Filter filter) throws Exception {
+    public boolean isValid(EntryMapping entryMapping, Filter filter) throws Exception {
         log.debug("Checking filter "+filter);
 
         boolean result = false;
 
         if (filter instanceof NotFilter) {
-            result = isValid(entryDefinition, (NotFilter)filter);
+            result = isValid(entryMapping, (NotFilter)filter);
 
         } else if (filter instanceof AndFilter) {
-            result = isValid(entryDefinition, (AndFilter)filter);
+            result = isValid(entryMapping, (AndFilter)filter);
 
         } else if (filter instanceof OrFilter) {
-            result = isValid(entryDefinition, (OrFilter)filter);
+            result = isValid(entryMapping, (OrFilter)filter);
 
         } else if (filter instanceof SimpleFilter) {
-            result = isValid(entryDefinition, (SimpleFilter)filter);
+            result = isValid(entryMapping, (SimpleFilter)filter);
 
         } else if (filter instanceof PresentFilter) {
-            result = isValid(entryDefinition, (PresentFilter)filter);
+            result = isValid(entryMapping, (PresentFilter)filter);
 
         } else if (filter instanceof SubstringFilter) {
-            result = isValid(entryDefinition, (SubstringFilter)filter);
+            result = isValid(entryMapping, (SubstringFilter)filter);
         }
 
         // log.debug("=> "+filter+" ("+filter.getClass().getName()+"): "+result);
@@ -354,17 +354,17 @@ public class FilterTool {
         return result;
     }
 
-    public boolean isValid(EntryDefinition entryDefinition, SimpleFilter filter) throws Exception {
+    public boolean isValid(EntryMapping entryMapping, SimpleFilter filter) throws Exception {
         String attributeName = filter.getAttribute();
         String operator = filter.getOperator();
         String attributeValue = filter.getValue();
 
-        if (attributeName.equalsIgnoreCase("objectclass") && entryDefinition.containsObjectClass(attributeValue)) return true;
+        if (attributeName.equalsIgnoreCase("objectclass") && entryMapping.containsObjectClass(attributeValue)) return true;
 
-        AttributeDefinition attributeDefinition = entryDefinition.getAttributeDefinition(attributeName);
-        if (attributeDefinition == null) return false;
+        AttributeMapping attributeMapping = entryMapping.getAttributeMapping(attributeName);
+        if (attributeMapping == null) return false;
 
-        String value = attributeDefinition.getConstant();
+        String value = attributeMapping.getConstant();
         if (value == null) return true;
 
         AttributeType attributeType = schema.getAttributeType(attributeName);
@@ -395,22 +395,22 @@ public class FilterTool {
         return true;
     }
 
-    public boolean isValid(EntryDefinition entryDefinition, PresentFilter filter) throws Exception {
+    public boolean isValid(EntryMapping entryMapping, PresentFilter filter) throws Exception {
         String attributeName = filter.getAttribute();
 
         if (attributeName.equalsIgnoreCase("objectclass")) return true;
 
-        return entryDefinition.getAttributeDefinition(attributeName) != null;
+        return entryMapping.getAttributeMapping(attributeName) != null;
     }
 
-    public boolean isValid(EntryDefinition entryDefinition, SubstringFilter filter) throws Exception {
+    public boolean isValid(EntryMapping entryMapping, SubstringFilter filter) throws Exception {
         String attributeName = filter.getAttribute();
         Collection substrings = filter.getSubstrings();
 
-        AttributeDefinition attributeDefinition = entryDefinition.getAttributeDefinition(attributeName);
-        if (attributeDefinition == null) return false;
+        AttributeMapping attributeMapping = entryMapping.getAttributeMapping(attributeName);
+        if (attributeMapping == null) return false;
 
-        String value = attributeDefinition.getConstant();
+        String value = attributeMapping.getConstant();
         if (value == null) return true;
 
         AttributeType attributeType = schema.getAttributeType(attributeName);
@@ -424,25 +424,25 @@ public class FilterTool {
         return b;
     }
 
-    public boolean isValid(EntryDefinition entryDefinition, NotFilter filter) throws Exception {
+    public boolean isValid(EntryMapping entryMapping, NotFilter filter) throws Exception {
         Filter f = filter.getFilter();
-        boolean result = isValid(entryDefinition, f);
+        boolean result = isValid(entryMapping, f);
         return result;
     }
 
-    public boolean isValid(EntryDefinition entryDefinition, AndFilter filter) throws Exception {
+    public boolean isValid(EntryMapping entryMapping, AndFilter filter) throws Exception {
         for (Iterator i=filter.getFilters().iterator(); i.hasNext(); ) {
             Filter f = (Filter)i.next();
-            boolean result = isValid(entryDefinition, f);
+            boolean result = isValid(entryMapping, f);
             if (!result) return false;
         }
         return true;
     }
 
-    public boolean isValid(EntryDefinition entryDefinition, OrFilter filter) throws Exception {
+    public boolean isValid(EntryMapping entryMapping, OrFilter filter) throws Exception {
         for (Iterator i=filter.getFilters().iterator(); i.hasNext(); ) {
             Filter f = (Filter)i.next();
-            boolean result = isValid(entryDefinition, f);
+            boolean result = isValid(entryMapping, f);
             if (result) return true;
         }
         return false;

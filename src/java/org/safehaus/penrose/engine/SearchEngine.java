@@ -20,10 +20,10 @@ package org.safehaus.penrose.engine;
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.filter.FilterTool;
-import org.safehaus.penrose.config.Config;
 import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.util.Formatter;
 import org.safehaus.penrose.SearchResults;
+import org.safehaus.penrose.partition.PartitionConfig;
 import org.safehaus.penrose.connector.ConnectionConfig;
 import org.apache.log4j.Logger;
 import org.ietf.ldap.LDAPException;
@@ -46,53 +46,53 @@ public class SearchEngine {
     public void search(
             final Collection path,
             final AttributeValues parentSourceValues,
-            final EntryDefinition entryDefinition,
+            final EntryMapping entryMapping,
             final Filter filter,
             final SearchResults entries
             ) throws Exception {
 
-        boolean staticEntry = engine.isStatic(entryDefinition);
+        boolean staticEntry = engine.isStatic(entryMapping);
         if (staticEntry) {
-            searchStatic(path, parentSourceValues, entryDefinition, filter, entries);
+            searchStatic(path, parentSourceValues, entryMapping, filter, entries);
             return;
         }
 
-        boolean unique = engine.isUnique(entryDefinition);
-        log.debug("Entry "+entryDefinition.getDn()+" "+(unique ? "is" : "is not")+" unique.");
+        boolean unique = engine.isUnique(entryMapping);
+        log.debug("Entry "+entryMapping.getDn()+" "+(unique ? "is" : "is not")+" unique.");
 
-        Config config = engine.getConfigManager().getConfig(entryDefinition);
+        PartitionConfig partitionConfig = engine.getConfigManager().getConfig(entryMapping);
 
-        Collection sources = entryDefinition.getSources();
+        Collection sources = entryMapping.getSourceMappings();
         log.debug("Sources: "+sources);
 
-        Collection effectiveSources = config.getEffectiveSources(entryDefinition);
+        Collection effectiveSources = partitionConfig.getEffectiveSources(entryMapping);
         log.debug("Effective Sources: "+effectiveSources);
 
         if (unique && sources.size() == 1 && effectiveSources.size() == 1) {
-            simpleSearch(parentSourceValues, entryDefinition, filter, entries);
+            simpleSearch(parentSourceValues, entryMapping, filter, entries);
             return;
         }
 
-        searchDynamic(path, parentSourceValues, entryDefinition, filter, entries);
+        searchDynamic(path, parentSourceValues, entryMapping, filter, entries);
     }
 
     public void searchStatic(
             final Collection path,
             final AttributeValues parentSourceValues,
-            final EntryDefinition entryDefinition,
+            final EntryMapping entryMapping,
             final Filter filter,
             final SearchResults entries
             ) throws Exception {
 
         Interpreter interpreter = engine.getInterpreterFactory().newInstance();
 
-        Collection list = engine.computeDns(interpreter, entryDefinition, parentSourceValues);
+        Collection list = engine.computeDns(interpreter, entryMapping, parentSourceValues);
         for (Iterator j=list.iterator(); j.hasNext(); ) {
             String dn = (String)j.next();
             log.debug(" - "+dn);
 
             Map map = new HashMap();
-            map.put("dn", entryDefinition.getDn());
+            map.put("dn", entryMapping.getDn());
             map.put("sourceValues", parentSourceValues);
             entries.add(map);
         }
@@ -102,7 +102,7 @@ public class SearchEngine {
     public void searchDynamic(
             final Collection path,
             final AttributeValues parentSourceValues,
-            final EntryDefinition entryDefinition,
+            final EntryMapping entryMapping,
             final Filter filter,
             final SearchResults entries
             ) throws Exception {
@@ -114,7 +114,7 @@ public class SearchEngine {
             engine.execute(new Runnable() {
                 public void run() {
                     try {
-                        searchDynamicBackground(path, parentSourceValues, entryDefinition, filter, entries);
+                        searchDynamicBackground(path, parentSourceValues, entryMapping, filter, entries);
 
                     } catch (Throwable e) {
                         e.printStackTrace(System.out);
@@ -123,23 +123,22 @@ public class SearchEngine {
                 }
             });
         } else {
-            searchDynamicBackground(path, parentSourceValues, entryDefinition, filter, entries);
+            searchDynamicBackground(path, parentSourceValues, entryMapping, filter, entries);
         }
     }
 
     public void searchDynamicBackground(
             Collection path,
             final AttributeValues parentSourceValues,
-            final EntryDefinition entryDefinition,
+            final EntryMapping entryMapping,
             final Filter filter,
             SearchResults entries)
             throws Exception {
 
-        //boolean unique = engine.isUnique(entryDefinition);
-        //log.debug("Entry "+entryDefinition.getDn()+" "+(unique ? "is" : "is not")+" unique.");
+        //boolean unique = engine.isUnique(entryMapping  //log.debug("Entry "+entryMapping" "+(unique ? "is" : "is not")+" unique.");
 
-        Config config = engine.getConfigManager().getConfig(entryDefinition);
-        EntryDefinition parentDefinition = config.getParent(entryDefinition);
+        PartitionConfig partitionConfig = engine.getConfigManager().getConfig(entryMapping);
+        EntryMapping parentMapping = partitionConfig.getParent(entryMapping);
 
         Interpreter interpreter = engine.getInterpreterFactory().newInstance();
 
@@ -154,7 +153,7 @@ public class SearchEngine {
             if (parent != null) {
                 String parentDn = parent.getDn();
 
-                Collection list = engine.getCache(parentDn, entryDefinition).get(filter);
+                Collection list = engine.getCache(parentDn, entryMapping).get(filter);
                 if (list != null) dns.addAll(list);
             }
         } else {
@@ -196,7 +195,7 @@ public class SearchEngine {
             engine.execute(new Runnable() {
                 public void run() {
                     try {
-                        searchSources(parentSourceValues, entryDefinition, filter, values);
+                        searchSources(parentSourceValues, entryMapping, filter, values);
 
                     } catch (Throwable e) {
                         e.printStackTrace(System.out);
@@ -204,7 +203,7 @@ public class SearchEngine {
                 }
             });
         } else {
-            searchSources(parentSourceValues, entryDefinition, filter, values);
+            searchSources(parentSourceValues, entryMapping, filter, values);
         }
 
         Map childDns = new HashMap();
@@ -214,7 +213,7 @@ public class SearchEngine {
             AttributeValues sv = (AttributeValues)i.next();
             //log.debug("==> "+sv);
 
-            Collection list = engine.computeDns(interpreter, entryDefinition, sv);
+            Collection list = engine.computeDns(interpreter, entryMapping, sv);
             for (Iterator j=list.iterator(); j.hasNext(); ) {
                 String dn = (String)j.next();
                 log.debug("    - "+dn);
@@ -249,7 +248,7 @@ public class SearchEngine {
         }
 
         //if (!unique) {
-            if (parentDefinition != null) {
+            if (parentMapping != null) {
                 log.debug("Storing "+filter+" in entry filter cache:");
                 for (Iterator i=childDns.keySet().iterator(); i.hasNext(); ) {
                     String parentDn = (String)i.next();
@@ -261,14 +260,14 @@ public class SearchEngine {
                         log.debug("   - DN: "+dn);
                     }
 
-                    engine.getCache(parentDn, entryDefinition).put(filter, c);
+                    engine.getCache(parentDn, entryMapping).put(filter, c);
 
                 }
             }
         //}
         //filter = engineContext.getFilterTool().createFilter(rdns);
         //log.debug("Storing "+filter+" in entry filter cache for "+parentDn+" => "+rdns);
-        //engineContext.getEntryFilterCache(parentDn, entryDefinition).put(filter, rdns);
+        //engineContext.getEntryFilterCache(parentDn, entryMappingter, rdns);
 /*
         log.debug("Getting source values:");
 
@@ -283,26 +282,14 @@ public class SearchEngine {
             Row normalizedRdn = getEngineContext().getSchema().normalize(rdn);
             String parentDn = Entry.getParentDn(dn);
 
-            Entry entry = (Entry)engineContext.getCache(parentDn, entryDefinition).get(normalizedRdn);
-            if (entry == null) {
-                entry = new Entry(dn, entryDefinition, sv, new AttributeValues());
-            }
-
-            AttributeValues oldSv = entry.getSourceValues(); //(AttributeValues)engineContext.getEntrySourceCache(parentDn, entryDefinition).get(normalizedRdn);
-
-            if (oldSv == null) {
-                //log.debug("   Storing "+rdn+" in entry source cache.");
-                engineContext.getEntrySourceCache(parentDn, entryDefinition).put(normalizedRdn, sv);
-            } else {
-                //log.debug("   Adding "+rdn+" in entry source cache.");
+            Entry entry = (Entry)engineContext.getCache(parentDn, entryMapping  entry = new Entry(dn, entryMappingues oldSv = entry.getSourceValues(); //(AttributeValues)engineContext.getEntrySourceCache(parentDn, entryMapping   //log.debug("   Storing "+rdn+" in entry source cache.");
+                engineContext.getEntrySourceCache(parentDn, entryMappingdebug("   Adding "+rdn+" in entry source cache.");
                 oldSv.add(sv);
             }
             //log.debug("   source values1: "+oldSv);
 
             if (unique && !dns.contains(dn)) {
-                //Entry entry = new Entry(dn, entryDefinition, sv, new AttributeValues());
-                entries.add(entry);
-                dns.add(dn);
+                //Entry entry = new Entry(dn, entryMapping             dns.add(dn);
             }
             //log.debug("   source values2: "+av);
 
@@ -325,7 +312,7 @@ public class SearchEngine {
 
     public void simpleSearch(
             final AttributeValues parentSourceValues,
-            final EntryDefinition entryDefinition,
+            final EntryMapping entryMapping,
             final Filter filter,
             final SearchResults results) throws Exception {
 
@@ -336,7 +323,7 @@ public class SearchEngine {
             engine.execute(new Runnable() {
                 public void run() {
                     try {
-                        simpleSearchBackground(parentSourceValues, entryDefinition, filter, results);
+                        simpleSearchBackground(parentSourceValues, entryMapping, filter, results);
 
                     } catch (Throwable e) {
                         e.printStackTrace(System.out);
@@ -345,25 +332,25 @@ public class SearchEngine {
                 }
             });
         } else {
-            simpleSearchBackground(parentSourceValues, entryDefinition, filter, results);
+            simpleSearchBackground(parentSourceValues, entryMapping, filter, results);
         }
     }
 
     public void simpleSearchBackground(
             AttributeValues parentSourceValues,
-            EntryDefinition entryDefinition,
+            EntryMapping entryMapping,
             Filter filter,
             SearchResults results) throws Exception {
 
         SearchPlanner planner = new SearchPlanner(
                 engine,
-                entryDefinition,
+                entryMapping,
                 filter,
                 parentSourceValues);
 
         planner.run();
 
-        Source source = engine.getPrimarySource(entryDefinition);
+        SourceMapping sourceMapping = engine.getPrimarySource(entryMapping);
 
         if (log.isDebugEnabled()) {
             log.debug(Formatter.displaySeparator(80));
@@ -372,17 +359,17 @@ public class SearchEngine {
         }
 
         Map filters = planner.getFilters();
-        Filter newFilter = (Filter)filters.get(source);
+        Filter newFilter = (Filter)filters.get(sourceMapping);
 
-        String s = source.getParameter(Source.FILTER);
+        String s = sourceMapping.getParameter(SourceMapping.FILTER);
         if (s != null) {
             Filter sourceFilter = FilterTool.parseFilter(s);
             newFilter = FilterTool.appendAndFilter(newFilter, sourceFilter);
         }
 
-        Config config = engine.getConfigManager().getConfig(entryDefinition);
-        ConnectionConfig connectionConfig = config.getConnectionConfig(source.getConnectionName());
-        SourceDefinition sourceDefinition = connectionConfig.getSourceDefinition(source.getSourceName());
+        PartitionConfig partitionConfig = engine.getConfigManager().getConfig(entryMapping);
+        ConnectionConfig connectionConfig = partitionConfig.getConnectionConfig(sourceMapping.getConnectionName());
+        SourceDefinition sourceDefinition = connectionConfig.getSourceDefinition(sourceMapping.getSourceName());
 
         SearchResults sr = engine.getConnector().search(sourceDefinition, newFilter);
 
@@ -394,9 +381,9 @@ public class SearchEngine {
 
             AttributeValues sv = new AttributeValues();
             sv.add(parentSourceValues);
-            sv.add(source.getName(), av);
+            sv.add(sourceMapping.getName(), av);
 
-            Collection list = engine.computeDns(interpreter, entryDefinition, sv);
+            Collection list = engine.computeDns(interpreter, entryMapping, sv);
             for (Iterator j=list.iterator(); j.hasNext(); ) {
                 String dn = (String)j.next();
                 log.debug(" - "+dn);
@@ -413,14 +400,14 @@ public class SearchEngine {
 
     public void searchSources(
             AttributeValues sourceValues,
-            EntryDefinition entryDefinition,
+            EntryMapping entryMapping,
             Filter filter,
             SearchResults results)
             throws Exception {
 
         SearchPlanner planner = new SearchPlanner(
                 engine,
-                entryDefinition,
+                entryMapping,
                 filter,
                 sourceValues);
 
@@ -428,14 +415,14 @@ public class SearchEngine {
 
         Collection connectingSources = planner.getConnectingSources();
 
-        Source primarySource = engine.getPrimarySource(entryDefinition);
+        SourceMapping primarySourceMapping = engine.getPrimarySource(entryMapping);
 
-        if (primarySource == null || entryDefinition.getSource(primarySource.getName()) == null) {
+        if (primarySourceMapping == null || entryMapping.getSourceMapping(primarySourceMapping.getName()) == null) {
             Collection localResults = new ArrayList();
             localResults.add(sourceValues);
 
             Collection parentResults = searchParent(
-                    entryDefinition,
+                    entryMapping,
                     planner,
                     localResults,
                     connectingSources
@@ -447,7 +434,7 @@ public class SearchEngine {
         }
 
         Collection localResults = searchLocal(
-                entryDefinition,
+                entryMapping,
                 sourceValues,
                 planner,
                 connectingSources
@@ -459,7 +446,7 @@ public class SearchEngine {
         }
 
         Collection parentResults = searchParent(
-                entryDefinition,
+                entryMapping,
                 planner,
                 localResults,
                 connectingSources
@@ -471,14 +458,14 @@ public class SearchEngine {
     }
 
     public Collection searchLocal(
-            EntryDefinition entryDefinition,
+            EntryMapping entryMapping,
             AttributeValues sourceValues,
             SearchPlanner planner,
             Collection connectingSources) throws Exception {
 
         Collection results = new ArrayList();
 
-        Source primarySource = engine.getPrimarySource(entryDefinition);
+        SourceMapping primarySourceMapping = engine.getPrimarySource(entryMapping);
 
         Map filters = planner.getFilters();
 
@@ -486,16 +473,16 @@ public class SearchEngine {
         for (Iterator i=connectingSources.iterator(); i.hasNext(); ) {
             Map m = (Map)i.next();
 
-            Source fromSource = (Source)m.get("fromSource");
-            Source toSource = (Source)m.get("toSource");
+            SourceMapping fromSourceMapping = (SourceMapping)m.get("fromSource");
+            SourceMapping toSourceMapping = (SourceMapping)m.get("toSource");
             Collection relationships = (Collection)m.get("relationships");
 
-            Filter toFilter = (Filter)filters.get(toSource);
-            Filter tf = engine.generateFilter(toSource, relationships, sourceValues);
+            Filter toFilter = (Filter)filters.get(toSourceMapping);
+            Filter tf = engine.generateFilter(toSourceMapping, relationships, sourceValues);
             toFilter = FilterTool.appendAndFilter(toFilter, tf);
-            filters.put(toSource, toFilter);
+            filters.put(toSourceMapping, toFilter);
 
-            log.debug("Filter for "+toSource.getName()+": "+toFilter);
+            log.debug("Filter for "+toSourceMapping.getName()+": "+toFilter);
 
             if (toFilter == null && map == null) continue;
 
@@ -506,13 +493,13 @@ public class SearchEngine {
             // if there's no parent source that can be used as filters
             // start from any local source that has a filter
 
-            for (Iterator i=entryDefinition.getSources().iterator(); i.hasNext(); ) {
-                Source source = (Source)i.next();
-                Filter f = (Filter)filters.get(source);
+            for (Iterator i=entryMapping.getSourceMappings().iterator(); i.hasNext(); ) {
+                SourceMapping sourceMapping = (SourceMapping)i.next();
+                Filter f = (Filter)filters.get(sourceMapping);
                 if (f == null) continue;
 
                 map = new HashMap();
-                map.put("toSource", source);
+                map.put("toSource", sourceMapping);
                 map.put("relationships", new ArrayList());
 
                 break;
@@ -522,11 +509,11 @@ public class SearchEngine {
         // start from the primary source
         if (map == null) {
             map = new HashMap();
-            map.put("toSource", primarySource);
+            map.put("toSource", primarySourceMapping);
             map.put("relationships", new ArrayList());
         }
 
-        Source startingSource = (Source)map.get("toSource");
+        SourceMapping startingSourceMapping = (SourceMapping)map.get("toSource");
         Collection relationships = (Collection)map.get("relationships");
 
         if (log.isDebugEnabled()) {
@@ -540,7 +527,7 @@ public class SearchEngine {
                 log.debug(Formatter.displayLine(" - "+name+": "+v, 80));
             }
 
-            log.debug(Formatter.displayLine("Starting source: "+startingSource.getName(), 80));
+            log.debug(Formatter.displayLine("Starting source: "+startingSourceMapping.getName(), 80));
             log.debug(Formatter.displayLine("Relationships:", 80));
 
             for (Iterator j=relationships.iterator(); j.hasNext(); ) {
@@ -553,10 +540,10 @@ public class SearchEngine {
 
         SearchLocalRunner runner = new SearchLocalRunner(
                 engine,
-                entryDefinition,
+                entryMapping,
                 sourceValues,
                 planner,
-                startingSource,
+                startingSourceMapping,
                 relationships);
 
         runner.run();
@@ -565,14 +552,14 @@ public class SearchEngine {
 
         SearchCleaner cleaner = new SearchCleaner(
                 engine,
-                entryDefinition,
+                entryMapping,
                 planner,
-                primarySource);
+                primarySourceMapping);
 
         for (Iterator i=connectingSources.iterator(); i.hasNext(); ) {
             Map m = (Map)i.next();
-            Source source = (Source)m.get("toSource");
-            cleaner.run(source);
+            SourceMapping sourceMapping = (SourceMapping)m.get("toSource");
+            cleaner.run(sourceMapping);
         }
 
         cleaner.clean(list);
@@ -596,7 +583,7 @@ public class SearchEngine {
     }
 
     public Collection searchParent(
-            EntryDefinition entryDefinition,
+            EntryMapping entryMapping,
             SearchPlanner planner,
             Collection localResults,
             Collection startingSources) throws Exception {
@@ -630,41 +617,41 @@ public class SearchEngine {
         for (Iterator i=startingSources.iterator(); i.hasNext(); ) {
             Map m = (Map)i.next();
 
-            Source fromSource = (Source)m.get("fromSource");
-            Source toSource = (Source)m.get("toSource");
+            SourceMapping fromSourceMapping = (SourceMapping)m.get("fromSource");
+            SourceMapping toSourceMapping = (SourceMapping)m.get("toSource");
             Collection relationships = (Collection)m.get("relationships");
 
-            Filter fromFilter = (Filter)filters.get(fromSource);
-            Filter tf = engine.generateFilter(fromSource, relationships, sourceValues);
+            Filter fromFilter = (Filter)filters.get(fromSourceMapping);
+            Filter tf = engine.generateFilter(fromSourceMapping, relationships, sourceValues);
             fromFilter = FilterTool.appendAndFilter(fromFilter, tf);
-            filters.put(fromSource, fromFilter);
+            filters.put(fromSourceMapping, fromFilter);
 
-            log.debug("Filter for "+fromSource.getName()+": "+fromFilter);
+            log.debug("Filter for "+fromSourceMapping.getName()+": "+fromFilter);
         }
 
         if (startingSources.isEmpty()) {
-            Config config = engine.getConfigManager().getConfig(entryDefinition);
-            EntryDefinition parentDefinition = config.getParent(entryDefinition);
+            PartitionConfig partitionConfig = engine.getConfigManager().getConfig(entryMapping);
+            EntryMapping parentMapping = partitionConfig.getParent(entryMapping);
 
-            while (parentDefinition != null) {
-                log.debug("Checking: "+parentDefinition.getDn());
+            while (parentMapping != null) {
+                log.debug("Checking: "+parentMapping.getDn());
 
-                Source source = engine.getPrimarySource(parentDefinition);
-                log.debug("Primary source: "+source);
+                SourceMapping sourceMapping = engine.getPrimarySource(parentMapping);
+                log.debug("Primary source: "+sourceMapping);
 
-                if (source != null) {
+                if (sourceMapping != null) {
                     Map map = new HashMap();
-                    map.put("fromSource", source);
+                    map.put("fromSource", sourceMapping);
                     map.put("relationships", new ArrayList());
 
                     startingSources.add(map);
                     break;
                 }
 
-                parentDefinition = config.getParent(parentDefinition);
+                parentMapping = partitionConfig.getParent(parentMapping);
             }
 
-            if (parentDefinition == null) {
+            if (parentMapping == null) {
                 results.add(new AttributeValues());
             }
         }
@@ -672,11 +659,11 @@ public class SearchEngine {
         for (Iterator i=startingSources.iterator(); i.hasNext(); ) {
             Map m = (Map)i.next();
 
-            Source fromSource = (Source)m.get("fromSource");
-            Source toSource = (Source)m.get("toSource");
+            SourceMapping fromSourceMapping = (SourceMapping)m.get("fromSource");
+            SourceMapping toSourceMapping = (SourceMapping)m.get("toSource");
             Collection relationships = (Collection)m.get("relationships");
 
-            log.debug("Starting source: "+fromSource.getName());
+            log.debug("Starting source: "+fromSourceMapping.getName());
             log.debug("Relationships:");
 
             for (Iterator j=relationships.iterator(); j.hasNext(); ) {
@@ -684,16 +671,16 @@ public class SearchEngine {
                 log.debug(" - "+relationship);
             }
 
-            Filter filter = (Filter)filters.get(fromSource);
+            Filter filter = (Filter)filters.get(fromSourceMapping);
             log.debug("Filter: "+filter);
 
             SearchParentRunner runner = new SearchParentRunner(
                     engine,
-                    entryDefinition,
+                    entryMapping,
                     results,
                     sourceValues,
                     planner,
-                    fromSource,
+                    fromSourceMapping,
                     relationships);
 
             runner.run();

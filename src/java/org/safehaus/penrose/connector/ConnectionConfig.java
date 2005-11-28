@@ -20,13 +20,12 @@ package org.safehaus.penrose.connector;
 import org.safehaus.penrose.mapping.SourceDefinition;
 
 import java.util.*;
-import java.io.Serializable;
 
 
 /**
  * @author Endi S. Dewata
  */
-public class ConnectionConfig implements Serializable, Cloneable {
+public class ConnectionConfig implements Cloneable {
 
 	/**
 	 * Name.

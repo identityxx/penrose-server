@@ -19,7 +19,6 @@ package org.safehaus.penrose.openldap;
 
 import java.util.*;
 import java.io.FileReader;
-import java.io.File;
 
 import org.ietf.ldap.*;
 import org.safehaus.penrose.openldap.config.ConfigurationItem;
@@ -28,7 +27,7 @@ import org.safehaus.penrose.openldap.config.SlapdConfig;
 import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.PenroseConnection;
 import org.safehaus.penrose.SearchResults;
-import org.safehaus.penrose.config.ServerConfig;
+import org.safehaus.penrose.config.PenroseConfig;
 import org.apache.log4j.Logger;
 import org.openldap.backend.Backend;
 import org.openldap.backend.Result;
@@ -55,7 +54,7 @@ public class PenroseBackend implements Backend {
     public Map connections = new HashMap();
 
     public PenroseBackend() {
-        File f = new File("conf/log4j.properties");
+        //File f = new File("conf/log4j.properties");
         //if (f.exists()) PropertyConfigurator.configure(f.getAbsolutePath());
     }
 
@@ -92,12 +91,12 @@ public class PenroseBackend implements Backend {
         log.debug("PenroseBackend.init();");
 
         penrose = new Penrose();
-        penrose.setHomeDirectory(realHomeDirectory);
+        penrose.setHome(realHomeDirectory);
         penrose.start();
 
-        ServerConfig serverConfig = penrose.getServerConfig();
-        serverConfig.setRootDn(rootDn);
-        serverConfig.setRootPassword(rootPassword);
+        PenroseConfig penroseConfig = penrose.getConfig();
+        penroseConfig.setRootDn(rootDn);
+        penroseConfig.setRootPassword(rootPassword);
 
         return LDAPException.SUCCESS;
     }

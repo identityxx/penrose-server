@@ -20,8 +20,6 @@ package org.safehaus.penrose.jboss;
 import org.safehaus.penrose.PenroseServer;
 import org.apache.log4j.Logger;
 
-import java.lang.reflect.Method;
-
 /**
  * @author Endi S. Dewata
  */

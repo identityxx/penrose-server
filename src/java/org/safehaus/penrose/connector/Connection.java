@@ -6,7 +6,6 @@ import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.filter.Filter;
 
 import java.util.Collection;
-import java.util.ArrayList;
 
 /**
  * @author Endi S. Dewata

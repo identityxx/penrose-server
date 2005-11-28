@@ -35,12 +35,12 @@ import org.safehaus.penrose.connector.ConnectorConfig;
 /**
  * @author Endi S. Dewata
  */
-public class ServerConfigWriter {
+public class PenroseConfigWriter {
 
-    private ServerConfig serverConfig;
+    private PenroseConfig penroseConfig;
 
-    public ServerConfigWriter(ServerConfig serverConfig) {
-        this.serverConfig = serverConfig;
+    public PenroseConfigWriter(PenroseConfig penroseConfig) {
+        this.penroseConfig = penroseConfig;
     }
 
     public void write(String filename) throws Exception {
@@ -73,9 +73,9 @@ public class ServerConfigWriter {
 	public Element toElement() {
 		Element element = new DefaultElement("server");
 
-        for (Iterator i = serverConfig.getSystemPropertyNames().iterator(); i.hasNext();) {
+        for (Iterator i = penroseConfig.getSystemPropertyNames().iterator(); i.hasNext();) {
             String name = (String)i.next();
-            String value = serverConfig.getSystemProperty(name);
+            String value = penroseConfig.getSystemProperty(name);
 
             Element parameter = new DefaultElement("system-property");
 
@@ -90,49 +90,49 @@ public class ServerConfigWriter {
             element.add(parameter);
         }
 
-        if (serverConfig.getInterpreterConfig() != null) {
-            element.add(toElement(serverConfig.getInterpreterConfig()));
+        if (penroseConfig.getInterpreterConfig() != null) {
+            element.add(toElement(penroseConfig.getInterpreterConfig()));
         }
 
-        if (serverConfig.getEntryCacheConfig() != null) {
+        if (penroseConfig.getEntryCacheConfig() != null) {
             Element entryCache = new DefaultElement("entry-cache");
-            addElements(entryCache, serverConfig.getEntryCacheConfig());
+            addElements(entryCache, penroseConfig.getEntryCacheConfig());
             element.add(entryCache);
         }
 
-        if (serverConfig.getSourceCacheConfig() != null) {
+        if (penroseConfig.getSourceCacheConfig() != null) {
             Element sourceCache = new DefaultElement("source-cache");
-            addElements(sourceCache, serverConfig.getSourceCacheConfig());
+            addElements(sourceCache, penroseConfig.getSourceCacheConfig());
             element.add(sourceCache);
         }
 
-        if (serverConfig.getEngineConfig() != null) {
-            EngineConfig engineConfig = serverConfig.getEngineConfig();
+        if (penroseConfig.getEngineConfig() != null) {
+            EngineConfig engineConfig = penroseConfig.getEngineConfig();
             element.add(toElement(engineConfig));
         }
 
-        if (serverConfig.getConnectorConfig() != null) {
-            ConnectorConfig connectorConfig = serverConfig.getConnectorConfig();
+        if (penroseConfig.getConnectorConfig() != null) {
+            ConnectorConfig connectorConfig = penroseConfig.getConnectorConfig();
             element.add(toElement(connectorConfig));
         }
 
-        for (Iterator i = serverConfig.getAdapterConfigs().iterator(); i.hasNext();) {
+        for (Iterator i = penroseConfig.getAdapterConfigs().iterator(); i.hasNext();) {
             AdapterConfig adapterConfig = (AdapterConfig)i.next();
             element.add(toElement(adapterConfig));
         }
 
-        if (serverConfig.getRootDn() != null || serverConfig.getRootPassword() != null) {
+        if (penroseConfig.getRootDn() != null || penroseConfig.getRootPassword() != null) {
             Element rootElement = new DefaultElement("root");
 
-            if (serverConfig.getRootDn() != null) {
+            if (penroseConfig.getRootDn() != null) {
                 Element rootDn = new DefaultElement("root-dn");
-                rootDn.add(new DefaultText(serverConfig.getRootDn()));
+                rootDn.add(new DefaultText(penroseConfig.getRootDn()));
                 rootElement.add(rootDn);
             }
 
-            if (serverConfig.getRootPassword() != null) {
+            if (penroseConfig.getRootPassword() != null) {
                 Element rootPassword = new DefaultElement("root-password");
-                rootPassword.add(new DefaultText(serverConfig.getRootPassword()));
+                rootPassword.add(new DefaultText(penroseConfig.getRootPassword()));
                 rootElement.add(rootPassword);
             }
 
@@ -328,11 +328,11 @@ public class ServerConfigWriter {
     	return element;
     }
 
-    public ServerConfig getServerConfig() {
-        return serverConfig;
+    public PenroseConfig getServerConfig() {
+        return penroseConfig;
     }
 
-    public void setServerConfig(ServerConfig serverConfig) {
-        this.serverConfig = serverConfig;
+    public void setServerConfig(PenroseConfig penroseConfig) {
+        this.penroseConfig = penroseConfig;
     }
 }

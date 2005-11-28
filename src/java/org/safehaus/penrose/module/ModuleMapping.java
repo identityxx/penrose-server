@@ -18,7 +18,6 @@
 package org.safehaus.penrose.module;
 
 import org.apache.log4j.Logger;
-import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.mapping.Entry;
 import org.safehaus.penrose.mapping.Row;
 

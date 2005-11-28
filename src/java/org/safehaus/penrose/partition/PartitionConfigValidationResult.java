@@ -15,12 +15,12 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
-package org.safehaus.penrose.config;
+package org.safehaus.penrose.partition;
 
 /**
  * @author Endi S. Dewata
  */
-public class ConfigValidationResult {
+public class PartitionConfigValidationResult {
 
     public final static String WARNING = "WARNING";
     public final static String ERROR   = "ERROR";
@@ -30,7 +30,7 @@ public class ConfigValidationResult {
     private String source;
     private Object object;
 
-    public ConfigValidationResult(String type, String message, String source, Object object) {
+    public PartitionConfigValidationResult(String type, String message, String source, Object object) {
         this.type = type;
         this.message = message;
         this.source = source;

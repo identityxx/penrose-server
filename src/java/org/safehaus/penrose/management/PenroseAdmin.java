@@ -44,7 +44,7 @@ public class PenroseAdmin implements PenroseAdminMBean {
     }
 
     public Collection listFiles(String directory) throws Exception {
-        String homeDirectory = penrose.getHomeDirectory();
+        String homeDirectory = penrose.getHome();
         File file = new File((homeDirectory == null ? "" : homeDirectory+File.separator)+directory);
         File children[] = file.listFiles();
         Collection result = new ArrayList();
@@ -73,7 +73,7 @@ public class PenroseAdmin implements PenroseAdminMBean {
     }
 
     public byte[] download(String filename) throws IOException {
-        String homeDirectory = penrose.getHomeDirectory();
+        String homeDirectory = penrose.getHome();
         File file = new File((homeDirectory == null ? "" : homeDirectory+File.separator)+filename);
         log.debug("Downloading "+file.getAbsolutePath());
 
@@ -88,7 +88,7 @@ public class PenroseAdmin implements PenroseAdminMBean {
     }
 
     public void upload(String filename, byte content[]) throws IOException {
-        String homeDirectory = penrose.getHomeDirectory();
+        String homeDirectory = penrose.getHome();
         File file = new File((homeDirectory == null ? "" : homeDirectory+File.separator)+filename);
         log.debug("Uploading "+file.getAbsolutePath());
         FileOutputStream out = new FileOutputStream(file);

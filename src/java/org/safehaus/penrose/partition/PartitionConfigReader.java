@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
-package org.safehaus.penrose.config;
+package org.safehaus.penrose.partition;
 
 import org.apache.commons.digester.Digester;
 import org.apache.commons.digester.xmlrules.DigesterLoader;
@@ -23,6 +23,7 @@ import org.apache.log4j.Logger;
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.interpreter.DefaultInterpreter;
 import org.safehaus.penrose.interpreter.Token;
+import org.safehaus.penrose.partition.PartitionConfig;
 
 import java.io.File;
 import java.net.URL;
@@ -32,20 +33,20 @@ import java.util.Iterator;
 /**
  * @author Endi S. Dewata
  */
-public class ConfigReader {
+public class PartitionConfigReader {
 
     Logger log = Logger.getLogger(getClass());
 
-    public ConfigReader() {
+    public PartitionConfigReader() {
     }
 
-    public Config read(String directory) throws Exception {
-        Config config = new Config();
-        loadConnectionsConfig(directory+File.separator+"connections.xml", config);
-        loadSourcesConfig(directory+File.separator+"sources.xml", config);
-        loadMappingConfig(directory+File.separator+"mapping.xml", config);
-        loadModulesConfig(directory+File.separator+"modules.xml", config);
-        return config;
+    public PartitionConfig read(String directory) throws Exception {
+        PartitionConfig partitionConfig = new PartitionConfig();
+        loadConnectionsConfig(directory+File.separator+"connections.xml", partitionConfig);
+        loadSourcesConfig(directory+File.separator+"sources.xml", partitionConfig);
+        loadMappingConfig(directory+File.separator+"mapping.xml", partitionConfig);
+        loadModulesConfig(directory+File.separator+"modules.xml", partitionConfig);
+        return partitionConfig;
     }
 
     /**
@@ -54,10 +55,10 @@ public class ConfigReader {
      * @param filename the configuration file (ie. mapping.xml)
      * @throws Exception
      */
-    public void loadMappingConfig(String filename, Config config) throws Exception {
+    public void loadMappingConfig(String filename, PartitionConfig partitionConfig) throws Exception {
         MappingRule mappingRule = new MappingRule();
         mappingRule.setFile(filename);
-        loadMappingConfig(null, null, mappingRule, config);
+        loadMappingConfig(null, null, mappingRule, partitionConfig);
     }
 
     /**
@@ -68,13 +69,13 @@ public class ConfigReader {
      * @param mappingRule
      * @throws Exception
      */
-    public void loadMappingConfig(File dir, String baseDn, MappingRule mappingRule, Config config) throws Exception {
+    public void loadMappingConfig(File dir, String baseDn, MappingRule mappingRule, PartitionConfig partitionConfig) throws Exception {
         File file = new File(dir, mappingRule.getFile());
         if (!file.exists()) return;
         //log.debug("Loading mapping rule from: "+file.getAbsolutePath());
 
         ClassLoader cl = getClass().getClassLoader();
-        URL url = cl.getResource("org/safehaus/penrose/config/mapping-digester-rules.xml");
+        URL url = cl.getResource("org/safehaus/penrose/partition/mapping-digester-rules.xml");
 		Digester digester = DigesterLoader.createDigester(url);
 		digester.setValidating(false);
         digester.setClassLoader(cl);
@@ -92,11 +93,11 @@ public class ConfigReader {
             if (object instanceof MappingRule) {
 
                 MappingRule mr = (MappingRule)object;
-                loadMappingConfig(file.getParentFile(), baseDn, mr, config);
+                loadMappingConfig(file.getParentFile(), baseDn, mr, partitionConfig);
 
-            } else if (object instanceof EntryDefinition) {
+            } else if (object instanceof EntryMapping) {
 
-                EntryDefinition ed = (EntryDefinition)object;
+                EntryMapping ed = (EntryMapping)object;
                 if (ed.getDn() == null) {
                     ed.setDn(baseDn);
 
@@ -107,22 +108,22 @@ public class ConfigReader {
 
                 convert(ed);
 
-                config.addEntryDefinition(ed);
+                partitionConfig.addEntryMapping(ed);
 
-                Collection childDefinitions = ed.getChildDefinitions();
+                Collection childDefinitions = ed.getChildMappings();
                 for (Iterator j=childDefinitions.iterator(); j.hasNext(); ) {
                     MappingRule mr = (MappingRule)j.next();
-                    loadMappingConfig(file.getParentFile(), ed.getDn(), mr, config);
+                    loadMappingConfig(file.getParentFile(), ed.getDn(), mr, partitionConfig);
                 }
             }
         }
     }
 
-    public void convert(EntryDefinition ed) throws Exception {
+    public void convert(EntryMapping ed) throws Exception {
         DefaultInterpreter interpreter = new DefaultInterpreter();
 
-        for (Iterator i=ed.getAttributeDefinitions().iterator(); i.hasNext(); ) {
-            AttributeDefinition ad = (AttributeDefinition)i.next();
+        for (Iterator i=ed.getAttributeMappings().iterator(); i.hasNext(); ) {
+            AttributeMapping ad = (AttributeMapping)i.next();
 
             if (ad.getConstant() != null) continue;
             if (ad.getVariable() != null) continue;
@@ -164,15 +165,15 @@ public class ConfigReader {
             }
         }
 
-        for (Iterator i=ed.getSources().iterator(); i.hasNext(); ) {
-            Source source = (Source)i.next();
-            for (Iterator j=source.getFields().iterator(); j.hasNext(); ) {
-                Field field = (Field)j.next();
+        for (Iterator i=ed.getSourceMappings().iterator(); i.hasNext(); ) {
+            SourceMapping sourceMapping = (SourceMapping)i.next();
+            for (Iterator j=sourceMapping.getFieldMappings().iterator(); j.hasNext(); ) {
+                FieldMapping fieldMapping = (FieldMapping)j.next();
 
-                if (field.getConstant() != null) continue;
-                if (field.getVariable() != null) continue;
+                if (fieldMapping.getConstant() != null) continue;
+                if (fieldMapping.getVariable() != null) continue;
 
-                Expression expression = field.getExpression();
+                Expression expression = fieldMapping.getExpression();
                 if (expression.getForeach() != null) continue;
                 if (expression.getVar() != null) continue;
 
@@ -185,15 +186,15 @@ public class ConfigReader {
                 if (token.getType() == Token.STRING_LITERAL) {
                     String constant = token.getImage();
                     constant = constant.substring(1, constant.length()-1);
-                    field.setConstant(constant);
-                    field.setExpression(null);
+                    fieldMapping.setConstant(constant);
+                    fieldMapping.setExpression(null);
 
                     //log.debug("Converting "+script+" into constant.");
 
                 } else if (token.getType() == Token.IDENTIFIER) {
                     String variable = token.getImage();
-                    field.setVariable(variable);
-                    field.setExpression(null);
+                    fieldMapping.setVariable(variable);
+                    fieldMapping.setExpression(null);
 
                     //log.debug("Converting "+script+" into variable.");
                 }
@@ -207,10 +208,10 @@ public class ConfigReader {
      * @param filename the configuration file (ie. modules.xml)
      * @throws Exception
      */
-    public void loadModulesConfig(String filename, Config config) throws Exception {
+    public void loadModulesConfig(String filename, PartitionConfig partitionConfig) throws Exception {
         File file = new File(filename);
         if (!file.exists()) return;
-        loadModulesConfig(file, config);
+        loadModulesConfig(file, partitionConfig);
     }
 
     /**
@@ -219,14 +220,14 @@ public class ConfigReader {
      * @param file the configuration file (ie. modules.xml)
      * @throws Exception
      */
-	public void loadModulesConfig(File file, Config config) throws Exception {
+	public void loadModulesConfig(File file, PartitionConfig partitionConfig) throws Exception {
         //log.debug("Loading modules configuration from: "+file.getAbsolutePath());
         ClassLoader cl = getClass().getClassLoader();
-        URL url = cl.getResource("org/safehaus/penrose/config/modules-digester-rules.xml");
+        URL url = cl.getResource("org/safehaus/penrose/partition/modules-digester-rules.xml");
 		Digester digester = DigesterLoader.createDigester(url);
 		digester.setValidating(false);
         digester.setClassLoader(cl);
-		digester.push(config);
+		digester.push(partitionConfig);
 		digester.parse(file);
 	}
 
@@ -236,10 +237,10 @@ public class ConfigReader {
      * @param filename the configuration file (ie. connections.xml)
      * @throws Exception
      */
-    public void loadConnectionsConfig(String filename, Config config) throws Exception {
+    public void loadConnectionsConfig(String filename, PartitionConfig partitionConfig) throws Exception {
         File file = new File(filename);
         if (!file.exists()) return;
-        loadConnectionsConfig(file, config);
+        loadConnectionsConfig(file, partitionConfig);
     }
 
 	/**
@@ -248,14 +249,14 @@ public class ConfigReader {
 	 * @param file the configuration file (ie. sources.xml)
 	 * @throws Exception
 	 */
-	public void loadConnectionsConfig(File file, Config config) throws Exception {
+	public void loadConnectionsConfig(File file, PartitionConfig partitionConfig) throws Exception {
 		//log.debug("Loading source configuration from: "+file.getAbsolutePath());
         ClassLoader cl = getClass().getClassLoader();
-        URL url = cl.getResource("org/safehaus/penrose/config/connections-digester-rules.xml");
+        URL url = cl.getResource("org/safehaus/penrose/partition/connections-digester-rules.xml");
 		Digester digester = DigesterLoader.createDigester(url);
         digester.setValidating(false);
         digester.setClassLoader(cl);
-        digester.push(config);
+        digester.push(partitionConfig);
         digester.parse(file);
 	}
 
@@ -265,10 +266,10 @@ public class ConfigReader {
      * @param filename the configuration file (ie. sources.xml)
      * @throws Exception
      */
-    public void loadSourcesConfig(String filename, Config config) throws Exception {
+    public void loadSourcesConfig(String filename, PartitionConfig partitionConfig) throws Exception {
         File file = new File(filename);
         if (!file.exists()) return;
-        loadSourcesConfig(file, config);
+        loadSourcesConfig(file, partitionConfig);
     }
 
 	/**
@@ -277,14 +278,14 @@ public class ConfigReader {
 	 * @param file the configuration file (ie. sources.xml)
 	 * @throws Exception
 	 */
-	public void loadSourcesConfig(File file, Config config) throws Exception {
+	public void loadSourcesConfig(File file, PartitionConfig partitionConfig) throws Exception {
 		//log.debug("Loading source configuration from: "+file.getAbsolutePath());
         ClassLoader cl = getClass().getClassLoader();
-        URL url = cl.getResource("org/safehaus/penrose/config/sources-digester-rules.xml");
+        URL url = cl.getResource("org/safehaus/penrose/partition/sources-digester-rules.xml");
 		Digester digester = DigesterLoader.createDigester(url);
         digester.setValidating(false);
         digester.setClassLoader(cl);
-        digester.push(config);
+        digester.push(partitionConfig);
         digester.parse(file);
 	}
 }

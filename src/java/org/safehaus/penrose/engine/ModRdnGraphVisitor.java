@@ -22,8 +22,7 @@ import org.safehaus.penrose.graph.GraphVisitor;
 import org.safehaus.penrose.graph.GraphIterator;
 import org.safehaus.penrose.graph.Graph;
 import org.safehaus.penrose.util.Formatter;
-import org.safehaus.penrose.config.Config;
-import org.safehaus.penrose.filter.Filter;
+import org.safehaus.penrose.partition.PartitionConfig;
 import org.safehaus.penrose.connector.ConnectionConfig;
 import org.apache.log4j.Logger;
 import org.ietf.ldap.LDAPException;
@@ -38,10 +37,10 @@ public class ModRdnGraphVisitor extends GraphVisitor {
     Logger log = Logger.getLogger(getClass());
 
     public Engine engine;
-    public EntryDefinition entryDefinition;
+    public EntryMapping entryMapping;
 
     public Graph graph;
-    public Source primarySource;
+    public SourceMapping primarySourceMapping;
 
     public AttributeValues oldSourceValues;
     public AttributeValues newSourceValues;
@@ -51,43 +50,43 @@ public class ModRdnGraphVisitor extends GraphVisitor {
 
     public ModRdnGraphVisitor(
             Engine engine,
-            EntryDefinition entryDefinition,
+            EntryMapping entryMapping,
             AttributeValues oldSourceValues,
             AttributeValues newSourceValues
             ) throws Exception {
 
         this.engine = engine;
-        this.entryDefinition = entryDefinition;
+        this.entryMapping = entryMapping;
 
         this.oldSourceValues = oldSourceValues;
         this.newSourceValues = newSourceValues;
 
         modifiedSourceValues.add(newSourceValues);
 
-        graph = engine.getGraph(entryDefinition);
-        primarySource = engine.getPrimarySource(entryDefinition);
+        graph = engine.getGraph(entryMapping);
+        primarySourceMapping = engine.getPrimarySource(entryMapping);
     }
 
     public void run() throws Exception {
-        graph.traverse(this, primarySource);
+        graph.traverse(this, primarySourceMapping);
     }
 
     public void visitNode(GraphIterator graphIterator, Object node) throws Exception {
 
-        Source source = (Source)node;
+        SourceMapping sourceMapping = (SourceMapping)node;
 
         log.debug(Formatter.displaySeparator(40));
-        log.debug(Formatter.displayLine("Visiting "+source.getName(), 40));
+        log.debug(Formatter.displayLine("Visiting "+sourceMapping.getName(), 40));
         log.debug(Formatter.displaySeparator(40));
 
-        if (source.isReadOnly() || !source.isIncludeOnModRdn()) {
-            log.debug("Source "+source.getName()+" is not included on modify");
+        if (sourceMapping.isReadOnly() || !sourceMapping.isIncludeOnModRdn()) {
+            log.debug("Source "+sourceMapping.getName()+" is not included on modify");
             graphIterator.traverseEdges(node);
             return;
         }
 
-        if (entryDefinition.getSource(source.getName()) == null) {
-            log.debug("Source "+source.getName()+" is not defined in entry "+entryDefinition.getDn());
+        if (entryMapping.getSourceMapping(sourceMapping.getName()) == null) {
+            log.debug("Source "+sourceMapping.getName()+" is not defined in entry "+entryMapping.getDn());
             graphIterator.traverseEdges(node);
             return;
         }
@@ -96,12 +95,12 @@ public class ModRdnGraphVisitor extends GraphVisitor {
         AttributeValues oldValues = new AttributeValues();
         for (Iterator i=oldSourceValues.getNames().iterator(); i.hasNext(); ) {
             String name = (String)i.next();
-            if (!name.startsWith(source.getName()+".")) continue;
+            if (!name.startsWith(sourceMapping.getName()+".")) continue;
 
             Collection values = oldSourceValues.get(name);
             log.debug(" - "+name+": "+values);
 
-            name = name.substring(source.getName().length()+1);
+            name = name.substring(sourceMapping.getName().length()+1);
             oldValues.set(name, values);
         }
 
@@ -109,32 +108,32 @@ public class ModRdnGraphVisitor extends GraphVisitor {
         AttributeValues newValues = new AttributeValues(oldValues);
         for (Iterator i=newSourceValues.getNames().iterator(); i.hasNext(); ) {
             String name = (String)i.next();
-            if (!name.startsWith(source.getName()+".")) continue;
+            if (!name.startsWith(sourceMapping.getName()+".")) continue;
 
             Collection values = newSourceValues.get(name);
             log.debug(" - "+name+": "+values);
 
-            name = name.substring(source.getName().length()+1);
+            name = name.substring(sourceMapping.getName().length()+1);
             newValues.set(name, values);
         }
 
-        Config config = engine.getConfigManager().getConfig(source);
-        ConnectionConfig connectionConfig = config.getConnectionConfig(source.getConnectionName());
-        SourceDefinition sourceDefinition = connectionConfig.getSourceDefinition(source.getSourceName());
+        PartitionConfig partitionConfig = engine.getConfigManager().getConfig(sourceMapping);
+        ConnectionConfig connectionConfig = partitionConfig.getConnectionConfig(sourceMapping.getConnectionName());
+        SourceDefinition sourceDefinition = connectionConfig.getSourceDefinition(sourceMapping.getSourceName());
 
         returnCode = engine.getConnector().modify(sourceDefinition, oldValues, newValues);
         if (returnCode != LDAPException.SUCCESS) return;
 
-        modifiedSourceValues.remove(source.getName());
-        modifiedSourceValues.set(source.getName(), newValues);
+        modifiedSourceValues.remove(sourceMapping.getName());
+        modifiedSourceValues.set(sourceMapping.getName(), newValues);
 
         graphIterator.traverseEdges(node);
     }
 
     public void visitEdge(GraphIterator graphIterator, Object node1, Object node2, Object object) throws Exception {
 
-        Source fromSource = (Source)node1;
-        Source toSource = (Source)node2;
+        SourceMapping fromSourceMapping = (SourceMapping)node1;
+        SourceMapping toSourceMapping = (SourceMapping)node2;
         Collection relationships = (Collection)object;
 
         if (log.isDebugEnabled()) {
@@ -146,8 +145,8 @@ public class ModRdnGraphVisitor extends GraphVisitor {
             log.debug(Formatter.displaySeparator(60));
         }
 
-        if (entryDefinition.getSource(toSource.getName()) == null) {
-            log.debug("Source "+toSource.getName()+" is not defined in entry.");
+        if (entryMapping.getSourceMapping(toSourceMapping.getName()) == null) {
+            log.debug("Source "+toSourceMapping.getName()+" is not defined in entry.");
             return;
         }
 
@@ -158,7 +157,7 @@ public class ModRdnGraphVisitor extends GraphVisitor {
             String lhs = relationship.getLhs();
             String rhs = relationship.getRhs();
 
-            if (lhs.startsWith(toSource.getName())) {
+            if (lhs.startsWith(toSourceMapping.getName())) {
                 String tmp = lhs;
                 lhs = rhs;
                 rhs = tmp;

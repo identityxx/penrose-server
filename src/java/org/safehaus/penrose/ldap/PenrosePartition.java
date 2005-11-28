@@ -58,17 +58,6 @@ public class PenrosePartition extends AbstractDirectoryPartition {
         Logger log = Logger.getLogger(getClass());
         log.debug("-------------------------------------------------------------------------------");
         log.debug("Initializing "+name+" partition ...");
-
-        try {
-            //ConfigReader reader = new ConfigReader();
-            //Config config = reader.read(dir.getAbsolutePath());
-            //log.debug(config.toString());
-
-            //penrose.addConfig(config);
-
-        } catch (Exception e) {
-            log.error(e.getMessage(), e);
-        }
     }
 
     public void delete(Name dn) throws NamingException {

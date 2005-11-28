@@ -20,9 +20,8 @@ package org.safehaus.penrose.engine;
 import org.apache.log4j.Logger;
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.util.Formatter;
-import org.safehaus.penrose.config.Config;
 import org.safehaus.penrose.graph.Graph;
-import org.safehaus.penrose.interpreter.Interpreter;
+import org.safehaus.penrose.partition.PartitionConfig;
 import org.ietf.ldap.LDAPException;
 
 import java.util.Collection;
@@ -43,25 +42,25 @@ public class AddEngine {
 
     public int add(
             Entry parent,
-            EntryDefinition entryDefinition,
+            EntryMapping entryMapping,
             AttributeValues attributeValues)
             throws Exception {
 
         AttributeValues parentSourceValues = parent.getSourceValues();
         AttributeValues sourceValues = new AttributeValues();
 
-        Collection sources = entryDefinition.getSources();
+        Collection sources = entryMapping.getSourceMappings();
         for (Iterator i=sources.iterator(); i.hasNext(); ) {
-            Source source = (Source)i.next();
+            SourceMapping sourceMapping = (SourceMapping)i.next();
 
             AttributeValues output = new AttributeValues();
-            Row pk = engine.getTransformEngine().translate(source, attributeValues, output);
+            Row pk = engine.getTransformEngine().translate(sourceMapping, attributeValues, output);
             if (pk == null) continue;
 
             for (Iterator j=output.getNames().iterator(); j.hasNext(); ) {
                 String name = (String)j.next();
                 Collection values = output.get(name);
-                sourceValues.add(source.getName()+"."+name, values);
+                sourceValues.add(sourceMapping.getName()+"."+name, values);
             }
         }
 
@@ -85,16 +84,16 @@ public class AddEngine {
 
         sourceValues.add(parentSourceValues);
 
-        Config config = engine.getConfigManager().getConfig(entryDefinition);
+        PartitionConfig partitionConfig = engine.getConfigManager().getConfig(entryMapping);
 
-        Graph graph = engine.getGraph(entryDefinition);
-        String startingSourceName = engine.getStartingSourceName(entryDefinition);
+        Graph graph = engine.getGraph(entryMapping);
+        String startingSourceName = engine.getStartingSourceName(entryMapping);
         if (startingSourceName == null) return LDAPException.SUCCESS;
 
-        Source startingSource = config.getEffectiveSource(entryDefinition, startingSourceName);
+        SourceMapping startingSourceMapping = partitionConfig.getEffectiveSource(entryMapping, startingSourceName);
         log.debug("Starting from source: "+startingSourceName);
 
-        Collection relationships = graph.getEdgeObjects(startingSource);
+        Collection relationships = graph.getEdgeObjects(startingSourceMapping);
         for (Iterator i=relationships.iterator(); i.hasNext(); ) {
             Collection list = (Collection)i.next();
 
@@ -117,7 +116,7 @@ public class AddEngine {
             }
         }
 
-        AddGraphVisitor visitor = new AddGraphVisitor(engine, entryDefinition, sourceValues);
+        AddGraphVisitor visitor = new AddGraphVisitor(engine, entryMapping, sourceValues);
         visitor.run();
 
         if (visitor.getReturnCode() != LDAPException.SUCCESS) return visitor.getReturnCode();

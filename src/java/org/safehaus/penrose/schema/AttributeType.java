@@ -19,9 +19,8 @@ package org.safehaus.penrose.schema;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.io.Serializable;
 
-public class AttributeType implements Serializable {
+public class AttributeType {
 
 	public final static String USER_APPLICATIONS     = "userApplications";
 	public final static String DIRECTORY_OPERATION   = "directoryOperation";

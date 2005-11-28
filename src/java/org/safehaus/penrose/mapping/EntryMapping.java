@@ -23,12 +23,11 @@ import org.ietf.ldap.LDAPAttributeSet;
 import org.ietf.ldap.LDAPAttribute;
 
 import java.util.*;
-import java.io.Serializable;
 
 /**
  * @author Endi S. Dewata
  */
-public class EntryDefinition implements Cloneable, Serializable {
+public class EntryMapping implements Cloneable {
 
     public final static String QUERY_CACHE_SIZE        = "queryCacheSize";
     public final static String QUERY_CACHE_EXPIRATION  = "queryCacheExpiration";
@@ -58,9 +57,9 @@ public class EntryDefinition implements Cloneable, Serializable {
     private String parentDn;
 
 	/**
-	 * Children. Each element is of type org.safehaus.penrose.mapping.EntryDefinition.
+	 * Children. Each element is of type org.safehaus.penrose.mapping.EntryMapping.
 	 */
-    private Collection childDefinitions = new ArrayList();
+    private Collection childMappings = new ArrayList();
 
     /**
      * Object classes. Each element is of type String.
@@ -70,14 +69,14 @@ public class EntryDefinition implements Cloneable, Serializable {
     private String script;
 
     /**
-     * Attributes. The keys are the attribute names (java.lang.String). Each value is of type org.safehaus.penrose.mapping.AttributeDefinition.
+     * Attributes. The keys are the attribute names (java.lang.String). Each value is of type org.safehaus.penrose.mapping.AttributeMapping.
      */
-    private Map attributeDefinitions = new TreeMap();
+    private Map attributeMappings = new TreeMap();
 
     /**
      * Sources. Each element is of type org.safehaus.penrose.mapping.Source.
      */
-    private List sources = new ArrayList();
+    private List sourceMappings = new ArrayList();
     
     /**
      * Relationship. Each element is of type org.safehaus.penrose.mapping.Relationship.
@@ -91,10 +90,10 @@ public class EntryDefinition implements Cloneable, Serializable {
 
     private Map parameters = new TreeMap();
 
-	public EntryDefinition() {
+	public EntryMapping() {
 	}
 
-	public EntryDefinition(String dn) {
+	public EntryMapping(String dn) {
         int i = dn.indexOf(",");
         if (i < 0) {
             rdn = dn;
@@ -104,7 +103,7 @@ public class EntryDefinition implements Cloneable, Serializable {
         parentDn = Entry.getParentDn(dn);
     }
 
-    public EntryDefinition(String rdn, EntryDefinition parent) {
+    public EntryMapping(String rdn, EntryMapping parent) {
         this.rdn = rdn;
         this.parentDn = parent.getDn();
     }
@@ -118,7 +117,7 @@ public class EntryDefinition implements Cloneable, Serializable {
         Row row = new Row();
 
         for (Iterator i=rdnAttributes.iterator(); i.hasNext(); ) {
-            AttributeDefinition rdnAttribute = (AttributeDefinition)i.next();
+            AttributeMapping rdnAttribute = (AttributeMapping)i.next();
             String name = rdnAttribute.getName();
             Object value = attributeValues.getOne(name);
             row.set(name, value);
@@ -132,38 +131,38 @@ public class EntryDefinition implements Cloneable, Serializable {
     }
 
     public boolean isRdnDynamic() {
-        for (Iterator i=attributeDefinitions.values().iterator(); i.hasNext(); ) {
-            AttributeDefinition attributeDefinition = (AttributeDefinition)i.next();
-            if (!attributeDefinition.isRdn()) continue;
-            if (attributeDefinition.getConstant() == null) return true;
+        for (Iterator i=attributeMappings.values().iterator(); i.hasNext(); ) {
+            AttributeMapping attributeMapping = (AttributeMapping)i.next();
+            if (!attributeMapping.isRdn()) continue;
+            if (attributeMapping.getConstant() == null) return true;
         }
         return false;
     }
 
     public boolean isDynamic() {
-        for (Iterator i=attributeDefinitions.values().iterator(); i.hasNext(); ) {
-            AttributeDefinition attributeDefinition = (AttributeDefinition)i.next();
-            if (attributeDefinition.getConstant() == null) return true;
+        for (Iterator i=attributeMappings.values().iterator(); i.hasNext(); ) {
+            AttributeMapping attributeMapping = (AttributeMapping)i.next();
+            if (attributeMapping.getConstant() == null) return true;
         }
         return false;
     }
     
     public Collection getRdnAttributes() {
         Collection results = new ArrayList();
-        for (Iterator i=attributeDefinitions.values().iterator(); i.hasNext(); ) {
-            AttributeDefinition attributeDefinition = (AttributeDefinition)i.next();
-            if (!attributeDefinition.isRdn()) continue;
-            results.add(attributeDefinition);
+        for (Iterator i=attributeMappings.values().iterator(); i.hasNext(); ) {
+            AttributeMapping attributeMapping = (AttributeMapping)i.next();
+            if (!attributeMapping.isRdn()) continue;
+            results.add(attributeMapping);
         }
         return results;
     }
 
     public Collection getNonRdnAttributes() {
         Collection results = new ArrayList();
-        for (Iterator i=attributeDefinitions.values().iterator(); i.hasNext(); ) {
-            AttributeDefinition attributeDefinition = (AttributeDefinition)i.next();
-            if (attributeDefinition.isRdn()) continue;
-            results.add(attributeDefinition);
+        for (Iterator i=attributeMappings.values().iterator(); i.hasNext(); ) {
+            AttributeMapping attributeMapping = (AttributeMapping)i.next();
+            if (attributeMapping.isRdn()) continue;
+            results.add(attributeMapping);
         }
         return results;
     }
@@ -185,28 +184,20 @@ public class EntryDefinition implements Cloneable, Serializable {
         }
     }
 
-    public Collection getAttributeDefinitions() {
-        return attributeDefinitions.values();
+    public Collection getAttributeMappings() {
+        return attributeMappings.values();
     }
 
-    public void setAttributeDefinitions(Map attributeDefinitions) {
-        this.attributeDefinitions = attributeDefinitions;
-    }
-
-    public void removeAttributeDefinitions() {
-        attributeDefinitions.clear();
+    public void removeAttributeMappings() {
+        attributeMappings.clear();
     }
 
     public Collection getRelationships() {
         return relationships;
     }
 
-    public void setRelationships(Collection relationships) {
-        this.relationships = relationships;
-    }
-
-    public Collection getSources() {
-        return sources;
+    public Collection getSourceMappings() {
+        return sourceMappings;
     }
 
     public Collection getObjectClasses() {
@@ -221,10 +212,6 @@ public class EntryDefinition implements Cloneable, Serializable {
         return false;
     }
 
-    public void setObjectClasses(Collection objectClasses) {
-        this.objectClasses = objectClasses;
-    }
-
 	public void addObjectClass(String oc) {
 		objectClasses.add(oc);
 	}
@@ -237,66 +224,66 @@ public class EntryDefinition implements Cloneable, Serializable {
         objectClasses.clear();
     }
 
-    public void addChildDefinition(MappingRule mappingRule) {
-        childDefinitions.add(mappingRule);
+    public void addChildMapping(MappingRule mappingRule) {
+        childMappings.add(mappingRule);
     }
     
-    public void addSource(Source source) {
-        sources.add(source);
+    public void addSourceMapping(SourceMapping sourceMapping) {
+        sourceMappings.add(sourceMapping);
     }
 
-    public int getSourceIndex(Source source) {
-        return sources.indexOf(source);
+    public int getSourceMappingIndex(SourceMapping sourceMapping) {
+        return sourceMappings.indexOf(sourceMapping);
     }
 
-    public void setSourceIndex(Source source, int index) {
-        sources.remove(source);
-        sources.add(index, source);
+    public void setSourceIndex(SourceMapping sourceMapping, int index) {
+        sourceMappings.remove(sourceMapping);
+        sourceMappings.add(index, sourceMapping);
     }
 
-    public void removeSources() {
-        sources.clear();
+    public void removeSourceMappings() {
+        sourceMappings.clear();
     }
 
-    public Source getSource(String name) {
-        for (Iterator i=sources.iterator(); i.hasNext(); ) {
-            Source source = (Source)i.next();
-            if (name.equals(source.getName())) return source;
+    public SourceMapping getSourceMapping(String name) {
+        for (Iterator i=sourceMappings.iterator(); i.hasNext(); ) {
+            SourceMapping sourceMapping = (SourceMapping)i.next();
+            if (name.equals(sourceMapping.getName())) return sourceMapping;
         }
         return null;
     }
 
-    public Source removeSource(String name) {
-        Source source = getSource(name);
-        if (source != null) {
-            sources.remove(source);
+    public SourceMapping removeSourceMapping(String name) {
+        SourceMapping sourceMapping = getSourceMapping(name);
+        if (sourceMapping != null) {
+            sourceMappings.remove(sourceMapping);
         }
-        return source;
+        return sourceMapping;
     }
 
-	public void addAttributeDefinition(AttributeDefinition attribute) {
-		attributeDefinitions.put(attribute.getName(), attribute);
+	public void addAttributeMapping(AttributeMapping attribute) {
+		attributeMappings.put(attribute.getName(), attribute);
 	}
 
-    public AttributeDefinition getAttributeDefinition(String name) {
-        return (AttributeDefinition)attributeDefinitions.get(name);
+    public AttributeMapping getAttributeMapping(String name) {
+        return (AttributeMapping)attributeMappings.get(name);
     }
 
-    public Collection getAttributeDefinitions(Collection names) {
-        if (names == null) return attributeDefinitions.values();
+    public Collection getAttributeMappings(Collection names) {
+        if (names == null) return attributeMappings.values();
 
         Collection results = new ArrayList();
         for (Iterator i=names.iterator(); i.hasNext(); ) {
             String name = (String)i.next();
-            AttributeDefinition attributeDefinition = (AttributeDefinition)attributeDefinitions.get(name);
-            if (attributeDefinition == null) continue;
-            results.add(attributeDefinition);
+            AttributeMapping attributeMapping = (AttributeMapping)attributeMappings.get(name);
+            if (attributeMapping == null) continue;
+            results.add(attributeMapping);
         }
         return results;
     }
 
-    public AttributeDefinition removeAttributeDefinition(String name) {
-        return (AttributeDefinition)attributeDefinitions.remove(name);
+    public AttributeMapping removeAttributeMapping(String name) {
+        return (AttributeMapping)attributeMappings.remove(name);
     }
 
 	public void addRelationship(Relationship relationship) {
@@ -359,12 +346,12 @@ public class EntryDefinition implements Cloneable, Serializable {
         this.parentDn = parentDn;
     }
 
-    public Collection getChildDefinitions() {
-        return childDefinitions;
+    public Collection getChildMappings() {
+        return childMappings;
     }
 
-    public void setChildDefinitions(List childDefinitions) {
-        this.childDefinitions = childDefinitions;
+    public void setChildMappings(List childMappings) {
+        this.childMappings = childMappings;
     }
 
     public void addACI(ACI aci) {
@@ -383,7 +370,7 @@ public class EntryDefinition implements Cloneable, Serializable {
         acl.clear();
     }
 
-    public void copy(EntryDefinition entry) {
+    public void copy(EntryMapping entry) {
         rdn = entry.rdn;
         parentDn = entry.parentDn;
         script = entry.script;
@@ -394,16 +381,16 @@ public class EntryDefinition implements Cloneable, Serializable {
             addObjectClass(objectClass);
         }
 
-        removeAttributeDefinitions();
-        for (Iterator i=entry.attributeDefinitions.values().iterator(); i.hasNext(); ) {
-            AttributeDefinition attribute = (AttributeDefinition)i.next();
-            addAttributeDefinition((AttributeDefinition)attribute.clone());
+        removeAttributeMappings();
+        for (Iterator i=entry.attributeMappings.values().iterator(); i.hasNext(); ) {
+            AttributeMapping attribute = (AttributeMapping)i.next();
+            addAttributeMapping((AttributeMapping)attribute.clone());
         }
 
-        removeSources();
-        for (Iterator i=entry.sources.iterator(); i.hasNext(); ) {
-            Source source = (Source)i.next();
-            addSource((Source)source.clone());
+        removeSourceMappings();
+        for (Iterator i=entry.sourceMappings.iterator(); i.hasNext(); ) {
+            SourceMapping sourceMapping = (SourceMapping)i.next();
+            addSourceMapping((SourceMapping)sourceMapping.clone());
         }
 
         removeRelationships();
@@ -439,7 +426,7 @@ public class EntryDefinition implements Cloneable, Serializable {
     }
 
     public Object clone() {
-        EntryDefinition entry = new EntryDefinition();
+        EntryMapping entry = new EntryMapping();
         entry.copy(this);
         return entry;
     }
@@ -449,8 +436,8 @@ public class EntryDefinition implements Cloneable, Serializable {
                 (parentDn == null ? 0 : parentDn.hashCode()) +
                 (objectClasses == null ? 0 : objectClasses.hashCode()) +
                 (script == null ? 0 : script.hashCode()) +
-                (attributeDefinitions == null ? 0 : attributeDefinitions.hashCode()) +
-                (sources == null ? 0 : sources.hashCode()) +
+                (attributeMappings == null ? 0 : attributeMappings.hashCode()) +
+                (sourceMappings == null ? 0 : sourceMappings.hashCode()) +
                 (relationships == null ? 0 : relationships.hashCode()) +
                 (acl == null ? 0 : acl.hashCode()) +
                 (parameters == null ? 0 : parameters.hashCode());
@@ -466,16 +453,16 @@ public class EntryDefinition implements Cloneable, Serializable {
         if (this == object) return true;
         if((object == null) || (object.getClass() != this.getClass())) return false;
 
-        EntryDefinition entryDefinition = (EntryDefinition)object;
-        if (!equals(rdn, entryDefinition.rdn)) return false;
-        if (!equals(parentDn, entryDefinition.parentDn)) return false;
-        if (!equals(objectClasses, entryDefinition.objectClasses)) return false;
-        if (!equals(script, entryDefinition.script)) return false;
-        if (!equals(attributeDefinitions, entryDefinition.attributeDefinitions)) return false;
-        if (!equals(sources, entryDefinition.sources)) return false;
-        if (!equals(relationships, entryDefinition.relationships)) return false;
-        if (!equals(acl, entryDefinition.acl)) return false;
-        if (!equals(parameters, entryDefinition.parameters)) return false;
+        EntryMapping entryMapping = (EntryMapping)object;
+        if (!equals(rdn, entryMapping.rdn)) return false;
+        if (!equals(parentDn, entryMapping.parentDn)) return false;
+        if (!equals(objectClasses, entryMapping.objectClasses)) return false;
+        if (!equals(script, entryMapping.script)) return false;
+        if (!equals(attributeMappings, entryMapping.attributeMappings)) return false;
+        if (!equals(sourceMappings, entryMapping.sourceMappings)) return false;
+        if (!equals(relationships, entryMapping.relationships)) return false;
+        if (!equals(acl, entryMapping.acl)) return false;
+        if (!equals(parameters, entryMapping.parameters)) return false;
 
         return true;
     }

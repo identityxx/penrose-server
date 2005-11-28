@@ -46,7 +46,7 @@ public class JNDIAdapter extends Adapter {
     public String suffix;
 
     public void init() throws Exception {
-        String name = getConnectionName();
+        //String name = getConnectionName();
 
     	//log.debug("-------------------------------------------------------------------------------");
     	//log.debug("Initializing JNDI connection "+name+":");
@@ -209,11 +209,11 @@ public class JNDIAdapter extends Adapter {
             javax.naming.directory.Attribute attr = attrs.get(fieldDefinition.getOriginalName());
             if (attr == null) continue;
 
-            boolean binary = false;
+            //boolean binary = false;
             try {
                 attr.getAttributeSyntaxDefinition();
             } catch (Exception e) {
-                binary = "SyntaxDefinition/1.3.6.1.4.1.1466.115.121.1.40".equals(e.getMessage());
+                //binary = "SyntaxDefinition/1.3.6.1.4.1.1466.115.121.1.40".equals(e.getMessage());
             }
 
             NamingEnumeration attributeValues = attr.getAll();
@@ -240,11 +240,11 @@ public class JNDIAdapter extends Adapter {
             javax.naming.directory.Attribute attr = attrs.get(fieldDefinition.getOriginalName());
             if (attr == null) continue;
 
-            boolean binary = false;
+            //boolean binary = false;
             try {
                 attr.getAttributeSyntaxDefinition();
             } catch (Exception e) {
-                binary = "SyntaxDefinition/1.3.6.1.4.1.1466.115.121.1.40".equals(e.getMessage());
+                //binary = "SyntaxDefinition/1.3.6.1.4.1.1466.115.121.1.40".equals(e.getMessage());
             }
 
             NamingEnumeration attributeValues = attr.getAll();
@@ -633,7 +633,7 @@ public class JNDIAdapter extends Adapter {
 
         SearchResults results = new SearchResults();
 
-        int sizeLimit = 100;
+        //int sizeLimit = 100;
 
         String ldapBase = "cn=changelog";
         String ldapFilter = "(&(changeNumber>="+lastChangeNumber+")(!(changeNumber="+lastChangeNumber+")))";

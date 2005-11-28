@@ -22,9 +22,8 @@ import java.util.*;
 
 import org.apache.log4j.Logger;
 import org.safehaus.penrose.interpreter.Interpreter;
-import org.safehaus.penrose.config.Config;
+import org.safehaus.penrose.partition.PartitionConfig;
 import org.safehaus.penrose.mapping.*;
-import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.connector.ConnectionConfig;
 
 /**
@@ -121,27 +120,27 @@ public class TransformEngine {
         }
     }
 
-    public Row translate(Source source, AttributeValues input, AttributeValues output) throws Exception {
+    public Row translate(SourceMapping sourceMapping, AttributeValues input, AttributeValues output) throws Exception {
 
-        Config config = engine.getConfigManager().getConfig(source);
-        ConnectionConfig connectionConfig = config.getConnectionConfig(source.getConnectionName());
-        SourceDefinition sourceDefinition = connectionConfig.getSourceDefinition(source.getSourceName());
+        PartitionConfig partitionConfig = engine.getConfigManager().getConfig(sourceMapping);
+        ConnectionConfig connectionConfig = partitionConfig.getConnectionConfig(sourceMapping.getConnectionName());
+        SourceDefinition sourceDefinition = connectionConfig.getSourceDefinition(sourceMapping.getSourceName());
 
         Interpreter interpreter = engine.getInterpreterFactory().newInstance();
         interpreter.set(input);
 
         Row pk = new Row();
-        Collection fields = source.getFields();
+        Collection fields = sourceMapping.getFieldMappings();
 
-        //log.debug("Translating for source "+source.getName()+":");
+        //log.debug("Translating for sourceMapping "+sourceMapping.getName()+":");
         for (Iterator j=fields.iterator(); j.hasNext(); ) {
-            Field field = (Field)j.next();
-            FieldDefinition fieldDefinition = sourceDefinition.getFieldDefinition(field.getName());
+            FieldMapping fieldMapping = (FieldMapping)j.next();
+            FieldDefinition fieldDefinition = sourceDefinition.getFieldDefinition(fieldMapping.getName());
 
-            String name = field.getName();
+            String name = fieldMapping.getName();
             //log.debug(" - "+name);
 
-            Object newValues = interpreter.eval(field);
+            Object newValues = interpreter.eval(fieldMapping);
 
             if (newValues == null) {
                 if (fieldDefinition.isPrimaryKey()) pk = null;
@@ -206,16 +205,16 @@ public class TransformEngine {
         return convert(pkValues);
     }
 
-    public Map split(Source source, AttributeValues entry) throws Exception {
+    public Map split(SourceMapping sourceMapping, AttributeValues entry) throws Exception {
 
-        Config config = engine.getConfigManager().getConfig(source);
-        ConnectionConfig connectionConfig = config.getConnectionConfig(source.getConnectionName());
-        SourceDefinition sourceDefinition = connectionConfig.getSourceDefinition(source.getSourceName());
+        PartitionConfig partitionConfig = engine.getConfigManager().getConfig(sourceMapping);
+        ConnectionConfig connectionConfig = partitionConfig.getConnectionConfig(sourceMapping.getConnectionName());
+        SourceDefinition sourceDefinition = connectionConfig.getSourceDefinition(sourceMapping.getSourceName());
 
         Collection fields = sourceDefinition.getPrimaryKeyFieldDefinitions();
 
         AttributeValues output = new AttributeValues();
-        Row m = translate(source, entry, output);
+        Row m = translate(sourceMapping, entry, output);
         log.debug("PKs: "+m);
         log.debug("Output: "+output);
 

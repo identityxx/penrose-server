@@ -19,9 +19,8 @@ package org.safehaus.penrose.schema;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.io.Serializable;
 
-public class ObjectClass implements Serializable {
+public class ObjectClass {
 	
 	public final static String ABSTRACT   = "ABSTRACT";
 	public final static String STRUCTURAL = "STRUCTURAL";

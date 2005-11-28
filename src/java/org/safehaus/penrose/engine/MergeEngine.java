@@ -27,8 +27,6 @@ import org.apache.log4j.Logger;
 
 import java.util.*;
 
-import com.novell.ldap.LDAPException;
-
 /**
  * @author Endi S. Dewata
  */
@@ -43,7 +41,7 @@ public class MergeEngine {
     }
 
     public void merge(
-            final EntryDefinition entryDefinition,
+            final EntryMapping entryMapping,
             final SearchResults loadedBatches,
             final SearchResults results
             ) throws Exception {
@@ -57,7 +55,7 @@ public class MergeEngine {
             engine.execute(new Runnable() {
                 public void run() {
                     try {
-                        mergeBackground(entryDefinition, loadedBatches, interpreter, results);
+                        mergeBackground(entryMapping, loadedBatches, interpreter, results);
 
                     } catch (Throwable e) {
                         e.printStackTrace(System.out);
@@ -66,18 +64,18 @@ public class MergeEngine {
                 }
             });
         } else {
-            mergeBackground(entryDefinition, loadedBatches, interpreter, results);
+            mergeBackground(entryMapping, loadedBatches, interpreter, results);
         }
     }
 
     public void mergeBackground(
-            EntryDefinition entryDefinition,
+            EntryMapping entryMapping,
             SearchResults entries,
             Interpreter interpreter,
             SearchResults results
             ) throws Exception {
 
-        //MRSWLock lock = getLock(entryDefinition.getDn());
+        //MRSWLock lock = getLock(entryMapping;
         //lock.getWriteLock(Penrose.WAIT_TIMEOUT);
 
         try {
@@ -124,7 +122,7 @@ public class MergeEngine {
                     log.debug(Formatter.displaySeparator(80));
                 }
 
-                mergeEntries(dn, entryDefinition, primarySourceValues, loadedSourceValues, interpreter, filter, results);
+                mergeEntries(dn, entryMapping, primarySourceValues, loadedSourceValues, interpreter, filter, results);
             }
 
         } finally {
@@ -135,7 +133,7 @@ public class MergeEngine {
 
     public SearchResults mergeEntries(
             String dn,
-            EntryDefinition entryDefinition,
+            EntryMapping entryMapping,
             AttributeValues primarySourceValues,
             AttributeValues loadedSourceValues,
             Interpreter interpreter,
@@ -144,21 +142,21 @@ public class MergeEngine {
             throws Exception {
 
         AttributeValues sourceValues;
-        Source primarySource = engine.getPrimarySource(entryDefinition);
+        SourceMapping primarySourceMapping = engine.getPrimarySource(entryMapping);
 
-        if (primarySource != null && loadedSourceValues != null) {
+        if (primarySourceMapping != null && loadedSourceValues != null) {
 
             Row key = new Row();
-            key.add(primarySource.getName(), pk);
+            key.add(primarySourceMapping.getName(), pk);
 
             Filter filter  = FilterTool.createFilter(key, true);
 
             MergeGraphVisitor merger = new MergeGraphVisitor(
                     engine,
-                    entryDefinition,
+                    entryMapping,
                     primarySourceValues,
                     loadedSourceValues,
-                    primarySource,
+                    primarySourceMapping,
                     filter
             );
 
@@ -182,16 +180,16 @@ public class MergeEngine {
         log.debug("Entry: "+dn);
         //log.debug(" - source values: "+sourceValues);
 
-        AttributeValues attributeValues = engine.computeAttributeValues(entryDefinition, sourceValues, interpreter);
+        AttributeValues attributeValues = engine.computeAttributeValues(entryMapping, sourceValues, interpreter);
         //log.debug(" - attribute values: "+attributeValues);
 
-        Entry entry = new Entry(dn, entryDefinition, sourceValues, attributeValues);
+        Entry entry = new Entry(dn, entryMapping, sourceValues, attributeValues);
         //log.debug("\n"+entry);
 
         Row rdn = entry.getRdn();
 
         //log.debug("Storing "+rdn+" in entry data cache for "+entry.getParentDn());
-        engine.getCache(entry.getParentDn(), entryDefinition).put(rdn, entry);
+        engine.getCache(entry.getParentDn(), entryMapping).put(rdn, entry);
 
         results.add(entry);
 

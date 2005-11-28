@@ -23,7 +23,7 @@ import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.engine.Engine;
 import org.safehaus.penrose.event.SearchEvent;
-import org.safehaus.penrose.config.Config;
+import org.safehaus.penrose.partition.PartitionConfig;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.filter.SimpleFilter;
 import org.safehaus.penrose.filter.FilterTool;
@@ -88,19 +88,19 @@ public class SearchHandler {
 
         log.debug("Found parent: "+(parent == null ? null : parent.getDn()));
 
-        Config config = handler.getConfigManager().getConfig(dn);
-        if (config == null) {
+        PartitionConfig partitionConfig = handler.getConfigManager().getConfig(dn);
+        if (partitionConfig == null) {
             log.error("Missing config for "+dn);
             return null;
         }
 
         // search the entry directly
-        EntryDefinition entryDefinition = config.getEntryDefinition(dn);
+        EntryMapping entryMapping = partitionConfig.getEntryMapping(dn);
 
-        if (entryDefinition != null) {
+        if (entryMapping != null) {
             log.debug("Found static entry: " + dn);
 
-            Entry entry = handler.getEngine().find(path, entryDefinition);
+            Entry entry = handler.getEngine().find(path, entryMapping);
 /*
             //AttributeValues values = entryDefinition.getAttributeValues(handlerContext.newInterpreter());
             //Entry entry = new Entry(dn, entryDefinition, values);
@@ -114,7 +114,7 @@ public class SearchHandler {
             Map map = new HashMap();
             map.put("dn", entry.getDn());
             map.put("entry", entry);
-            map.put("entryDefinition", entry.getEntryDefinition());
+            map.put("entryDefinition", entry.getEntryMapping());
             path.add(0, map);
 
             return path;
@@ -127,9 +127,9 @@ public class SearchHandler {
             return null;
         }
 
-        EntryDefinition parentDefinition = parent.getEntryDefinition();
+        EntryMapping parentMapping = parent.getEntryMapping();
 
-		Collection children = config.getChildren(parentDefinition);
+		Collection children = partitionConfig.getChildren(parentMapping);
         if (children == null) {
             log.debug("Entry "+parentDn+" has no children.");
             return null;
@@ -147,21 +147,21 @@ public class SearchHandler {
         log.debug("Searching children with filter "+filter);
 
 		for (Iterator iterator = children.iterator(); iterator.hasNext(); ) {
-			EntryDefinition childDefinition = (EntryDefinition) iterator.next();
+			EntryMapping childMapping = (EntryMapping) iterator.next();
 
-            Row childRdn = Entry.getRdn(childDefinition.getRdn());
-            log.debug("Finding entry in "+childDefinition.getDn());
+            Row childRdn = Entry.getRdn(childMapping.getRdn());
+            log.debug("Finding entry in "+childMapping.getDn());
 
             if (!rdn.getNames().equals(childRdn.getNames())) continue;
 
             Engine engine = handler.getEngine();
             AttributeValues parentSourceValues = new AttributeValues();
-            String prefix = engine.getParentSourceValues(path, childDefinition, parentSourceValues);
+            engine.getParentSourceValues(path, childMapping, parentSourceValues);
 
             SearchResults sr = handler.getEngine().search(
                     path,
                     parentSourceValues,
-                    childDefinition,
+                    childMapping,
                     filter,
                     new ArrayList()
             );
@@ -173,7 +173,7 @@ public class SearchHandler {
                     Map map = new HashMap();
                     map.put("dn", child.getDn());
                     map.put("entry", child);
-                    map.put("entryDefinition", child.getEntryDefinition());
+                    map.put("entryDefinition", child.getEntryMapping());
                     path.add(0, map);
                     return path;
                 }
@@ -277,9 +277,9 @@ public class SearchHandler {
 
             LDAPAttribute namingContexts = new LDAPAttribute("namingContexts");
             for (Iterator i=handler.getConfigManager().getConfigs().iterator(); i.hasNext(); ) {
-                Config config = (Config)i.next();
-                for (Iterator j=config.getRootEntryDefinitions().iterator(); j.hasNext(); ) {
-                    EntryDefinition entry = (EntryDefinition)j.next();
+                PartitionConfig partitionConfig = (PartitionConfig)i.next();
+                for (Iterator j=partitionConfig.getRootEntryMappings().iterator(); j.hasNext(); ) {
+                    EntryMapping entry = (EntryMapping)j.next();
                     namingContexts.addValue(entry.getDn());
                 }
             }
@@ -313,14 +313,14 @@ public class SearchHandler {
 		}
 
         Map map = (Map)path.iterator().next();
-        String baseDn = (String)map.get("dn");
+        //String baseDn = (String)map.get("dn");
         Entry baseEntry = (Entry)map.get("entry");
         log.debug("Found base entry: " + baseEntry.getDn());
-        EntryDefinition entryDefinition = baseEntry.getEntryDefinition();
+        EntryMapping entryMapping = baseEntry.getEntryMapping();
 
         Engine engine = handler.getEngine();
         AttributeValues parentSourceValues = new AttributeValues();
-        String prefix = engine.getParentSourceValues(path, entryDefinition, parentSourceValues);
+        engine.getParentSourceValues(path, entryMapping, parentSourceValues);
 
         int rc = handler.getACLEngine().checkSearch(connection, baseEntry);
         if (rc != LDAPException.SUCCESS) return rc;
@@ -338,7 +338,7 @@ public class SearchHandler {
 		}
 
 		if (scope == LDAPConnection.SCOPE_ONE || scope == LDAPConnection.SCOPE_SUB) { // one level or subtree
-            searchChildren(connection, path, entryDefinition, parentSourceValues, scope, f, normalizedAttributeNames, results, true);
+            searchChildren(connection, path, entryMapping, parentSourceValues, scope, f, normalizedAttributeNames, results, true);
 		}
 
 		results.setReturnCode(LDAPException.SUCCESS);
@@ -348,7 +348,7 @@ public class SearchHandler {
     public void searchChildren(
             PenroseConnection connection,
             Collection path,
-            EntryDefinition entryDefinition,
+            EntryMapping entryMapping,
             AttributeValues parentSourceValues,
             int scope,
             Filter filter,
@@ -356,21 +356,21 @@ public class SearchHandler {
             SearchResults results,
             boolean first) throws Exception {
 
-        Config config = handler.getConfigManager().getConfig(entryDefinition);
-        Collection children = config.getChildren(entryDefinition);
+        PartitionConfig partitionConfig = handler.getConfigManager().getConfig(entryMapping);
+        Collection children = partitionConfig.getChildren(entryMapping);
         if (children == null) {
             return;
         }
 
         for (Iterator i = children.iterator(); i.hasNext();) {
-            EntryDefinition childDefinition = (EntryDefinition) i.next();
+            EntryMapping childMapping = (EntryMapping) i.next();
 
-            if (handler.getFilterTool().isValid(childDefinition, filter)) {
+            if (handler.getFilterTool().isValid(childMapping, filter)) {
 
                 SearchResults sr = handler.getEngine().search(
                         path,
                         parentSourceValues,
-                        childDefinition,
+                        childMapping,
                         filter,
                         attributeNames
                 );
@@ -395,7 +395,7 @@ public class SearchHandler {
             }
 
             if (scope == LDAPConnection.SCOPE_SUB) {
-                log.debug("Searching children of " + childDefinition.getDn());
+                log.debug("Searching children of " + childMapping.getDn());
 
                 AttributeValues newParentSourceValues = new AttributeValues();
                 for (Iterator j=parentSourceValues.getNames().iterator(); j.hasNext(); ) {
@@ -410,7 +410,7 @@ public class SearchHandler {
                 Engine engine = handler.getEngine();
                 Interpreter interpreter = engine.getInterpreterFactory().newInstance();
 
-                AttributeValues av = engine.computeAttributeValues(childDefinition, interpreter);
+                AttributeValues av = engine.computeAttributeValues(childMapping, interpreter);
                 for (Iterator j=av.getNames().iterator(); j.hasNext(); ) {
                     String name = (String)j.next();
                     Collection values = av.get(name);
@@ -428,15 +428,15 @@ public class SearchHandler {
                 }
 
                 Map map = new HashMap();
-                map.put("dn", childDefinition.getDn());
+                map.put("dn", childMapping.getDn());
                 map.put("entry", null);
-                map.put("entryDefinition", childDefinition);
+                map.put("entryDefinition", childMapping);
 
                 Collection newPath = new ArrayList();
                 newPath.add(map);
                 newPath.addAll(path);
 
-                searchChildren(connection, newPath, childDefinition, newParentSourceValues, scope, filter, attributeNames, results, false);
+                searchChildren(connection, newPath, childMapping, newParentSourceValues, scope, filter, attributeNames, results, false);
             }
         }
     }

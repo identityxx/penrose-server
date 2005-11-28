@@ -58,10 +58,10 @@ public class JDBCEntryCache extends EntryCache {
 
         Collection attributes = getNonPrimaryColumns();
         for (Iterator i=attributes.iterator(); i.hasNext(); ) {
-            AttributeDefinition attributeDefinition = (AttributeDefinition)i.next();
+            AttributeMapping attributeMapping = (AttributeMapping)i.next();
 
-            dropFieldTable(attributeDefinition);
-            createFieldTable(attributeDefinition);
+            dropFieldTable(attributeMapping);
+            createFieldTable(attributeMapping);
         }
     }
 
@@ -70,7 +70,7 @@ public class JDBCEntryCache extends EntryCache {
     }
 
     public String getTableName() {
-        String key = entryDefinition.getRdn()+","+parentDn;
+        String key = entryMapping.getRdn()+","+parentDn;
         key = key.replace('=', '_');
         key = key.replace(',', '_');
         key = key.replace('.', '_');
@@ -79,40 +79,40 @@ public class JDBCEntryCache extends EntryCache {
     }
 
     public Collection getPrimaryColumns() {
-        Collection attributes = entryDefinition.getAttributeDefinitions();
+        Collection attributes = entryMapping.getAttributeMappings();
         Collection results = new ArrayList();
 
         for (Iterator i=attributes.iterator(); i.hasNext(); ) {
-            AttributeDefinition attributeDefinition = (AttributeDefinition)i.next();
-            if (!attributeDefinition.isRdn()) continue;
-            results.add(attributeDefinition);
+            AttributeMapping attributeMapping = (AttributeMapping)i.next();
+            if (!attributeMapping.isRdn()) continue;
+            results.add(attributeMapping);
         }
 
         return results;
     }
 
     public Collection getNonPrimaryColumns() {
-        Collection attributes = entryDefinition.getAttributeDefinitions();
+        Collection attributes = entryMapping.getAttributeMappings();
         Collection results = new ArrayList();
 
         for (Iterator i=attributes.iterator(); i.hasNext(); ) {
-            AttributeDefinition attributeDefinition = (AttributeDefinition)i.next();
-            if (attributeDefinition.isRdn()) continue;
-            results.add(attributeDefinition);
+            AttributeMapping attributeMapping = (AttributeMapping)i.next();
+            if (attributeMapping.isRdn()) continue;
+            results.add(attributeMapping);
         }
 
         return results;
     }
 
-    public String getColumnDeclaration(AttributeDefinition attributeDefinition) {
+    public String getColumnDeclaration(AttributeMapping attributeMapping) {
         StringBuffer sb = new StringBuffer();
-        sb.append(attributeDefinition.getName());
+        sb.append(attributeMapping.getName());
         sb.append(" ");
-        sb.append(attributeDefinition.getType());
+        sb.append(attributeMapping.getType());
 
-        if ("VARCHAR".equals(attributeDefinition.getType()) && attributeDefinition.getLength() > 0) {
+        if ("VARCHAR".equals(attributeMapping.getType()) && attributeMapping.getLength() > 0) {
             sb.append("(");
-            sb.append(attributeDefinition.getLength());
+            sb.append(attributeMapping.getLength());
             sb.append(")");
         }
 
@@ -151,13 +151,13 @@ public class JDBCEntryCache extends EntryCache {
 
         Collection fields = getPrimaryColumns();
         for (Iterator i=fields.iterator(); i.hasNext(); ) {
-            AttributeDefinition attributeDefinition = (AttributeDefinition)i.next();
+            AttributeMapping attributeMapping = (AttributeMapping)i.next();
 
             if (columns.length() > 0) columns.append(", ");
-            columns.append(getColumnDeclaration(attributeDefinition));
+            columns.append(getColumnDeclaration(attributeMapping));
 
             if (primaryKeys.length() > 0) primaryKeys.append(", ");
-            primaryKeys.append(attributeDefinition.getName());
+            primaryKeys.append(attributeMapping.getName());
         }
 
         columns.append(", expiration DATETIME");
@@ -192,12 +192,12 @@ public class JDBCEntryCache extends EntryCache {
         }
     }
 
-    public void dropFieldTable(AttributeDefinition attributeDefinition) throws Exception {
+    public void dropFieldTable(AttributeMapping attributeMapping) throws Exception {
         StringBuffer sb = new StringBuffer();
         sb.append("drop table ");
         sb.append(getTableName());
         sb.append("_");
-        sb.append(attributeDefinition.getName());
+        sb.append(attributeMapping.getName());
 
         String sql = sb.toString();
 
@@ -220,13 +220,13 @@ public class JDBCEntryCache extends EntryCache {
         }
     }
 
-    public void createFieldTable(AttributeDefinition attributeDefinition) throws Exception {
+    public void createFieldTable(AttributeMapping attributeMapping) throws Exception {
         StringBuffer columns = new StringBuffer();
         StringBuffer primaryKeys = new StringBuffer();
 
         Collection attributes = getPrimaryColumns();
         for (Iterator i=attributes.iterator(); i.hasNext(); ) {
-            AttributeDefinition attribute = (AttributeDefinition)i.next();
+            AttributeMapping attribute = (AttributeMapping)i.next();
 
             if (columns.length() > 0) columns.append(", ");
             columns.append(getColumnDeclaration(attribute));
@@ -236,16 +236,16 @@ public class JDBCEntryCache extends EntryCache {
         }
 
         columns.append(", ");
-        columns.append(getColumnDeclaration(attributeDefinition));
+        columns.append(getColumnDeclaration(attributeMapping));
 
         primaryKeys.append(", ");
-        primaryKeys.append(attributeDefinition.getName());
+        primaryKeys.append(attributeMapping.getName());
 
         StringBuffer sb = new StringBuffer();
         sb.append("create table ");
         sb.append(getTableName());
         sb.append("_");
-        sb.append(attributeDefinition.getName());
+        sb.append(attributeMapping.getName());
         sb.append(" (");
         sb.append(columns);
         sb.append(", primary key (");
@@ -281,8 +281,8 @@ public class JDBCEntryCache extends EntryCache {
 
         Collection fields = getNonPrimaryColumns();
         for (Iterator i=fields.iterator(); i.hasNext(); ) {
-            AttributeDefinition attributeDefinition = (AttributeDefinition)i.next();
-            getColumnValues(attributeDefinition, pks, values);
+            AttributeMapping attributeMapping = (AttributeMapping)i.next();
+            getColumnValues(attributeMapping, pks, values);
         }
 
         AttributeValues av = (AttributeValues)values.get(pk);
@@ -302,8 +302,8 @@ public class JDBCEntryCache extends EntryCache {
 
         Collection fields = getNonPrimaryColumns();
         for (Iterator i=fields.iterator(); i.hasNext(); ) {
-            AttributeDefinition attributeDefinition = (AttributeDefinition)i.next();
-            getColumnValues(attributeDefinition, pks, values);
+            AttributeMapping attributeMapping = (AttributeMapping)i.next();
+            getColumnValues(attributeMapping, pks, values);
         }
 
         return values;
@@ -315,12 +315,12 @@ public class JDBCEntryCache extends EntryCache {
 
         Collection primaryColumns = getPrimaryColumns();
         for (Iterator i=primaryColumns.iterator(); i.hasNext(); ) {
-            AttributeDefinition attributeDefinition = (AttributeDefinition)i.next();
+            AttributeMapping attributeMapping = (AttributeMapping)i.next();
 
             if (columns.length() > 0) columns.append(", ");
             columns.append(getTableName());
             columns.append(".");
-            columns.append(attributeDefinition.getName());
+            columns.append(attributeMapping.getName());
         }
 
         Collection tables = new LinkedHashSet();
@@ -336,10 +336,10 @@ public class JDBCEntryCache extends EntryCache {
                 String name = (String)j.next();
                 Object value = filter.get(name);
 
-                AttributeDefinition attributeDefinition = entryDefinition.getAttributeDefinition(name);
+                AttributeMapping attributeMapping = entryMapping.getAttributeMapping(name);
 
                 String tableName;
-                if (attributeDefinition.isRdn()) {
+                if (attributeMapping.isRdn()) {
                     tableName = getTableName();
                 } else {
                     tableName = getTableName()+"_"+name;
@@ -372,16 +372,16 @@ public class JDBCEntryCache extends EntryCache {
 
             StringBuffer sb = new StringBuffer();
             for (Iterator j=primaryColumns.iterator(); j.hasNext(); ) {
-                AttributeDefinition attributeDefinition = (AttributeDefinition)j.next();
+                AttributeMapping attributeMapping = (AttributeMapping)j.next();
 
                 if (columns.length() > 0) columns.append(" and ");
                 sb.append(getTableName());
                 sb.append(".");
-                sb.append(attributeDefinition.getName());
+                sb.append(attributeMapping.getName());
                 sb.append("=");
                 sb.append(tableName);
                 sb.append(".");
-                sb.append(attributeDefinition.getName());
+                sb.append(attributeMapping.getName());
             }
 
             tableNames.append(sb);
@@ -436,16 +436,16 @@ public class JDBCEntryCache extends EntryCache {
 
                 Row pk = new Row();
                 for (Iterator i=primaryColumns.iterator(); i.hasNext(); ) {
-                    AttributeDefinition attributeDefinition = (AttributeDefinition)i.next();
+                    AttributeMapping attributeMapping = (AttributeMapping)i.next();
 
                     Object value = rs.getObject(counter);
 
                     if (sb.length() > 0) sb.append(", ");
-                    sb.append(attributeDefinition.getName());
+                    sb.append(attributeMapping.getName());
                     sb.append("=");
                     sb.append(value);
 
-                    pk.set(attributeDefinition.getName(), value);
+                    pk.set(attributeMapping.getName(), value);
                     counter++;
                 }
 
@@ -466,20 +466,20 @@ public class JDBCEntryCache extends EntryCache {
         return pks;
     }
 
-    public Map getColumnValues(AttributeDefinition attributeDefinition, Collection pks, Map values) throws Exception {
+    public Map getColumnValues(AttributeMapping attributeMapping, Collection pks, Map values) throws Exception {
 
         StringBuffer columns = new StringBuffer();
 
         Collection fields = getPrimaryColumns();
         for (Iterator i=fields.iterator(); i.hasNext(); ) {
-            AttributeDefinition field = (AttributeDefinition)i.next();
+            AttributeMapping field = (AttributeMapping)i.next();
 
             if (columns.length() > 0) columns.append(", ");
             columns.append(field.getName());
         }
 
         columns.append(", ");
-        columns.append(attributeDefinition.getName());
+        columns.append(attributeMapping.getName());
 
         StringBuffer where = new StringBuffer();
         Collection parameters = new ArrayList();
@@ -511,7 +511,7 @@ public class JDBCEntryCache extends EntryCache {
         sb.append(" from ");
         sb.append(getTableName());
         sb.append("_");
-        sb.append(attributeDefinition.getName());
+        sb.append(attributeMapping.getName());
 
         if (where.length() > 0) {
             sb.append(" where ");
@@ -547,7 +547,7 @@ public class JDBCEntryCache extends EntryCache {
 
                 Row pk = new Row();
                 for (Iterator i=fields.iterator(); i.hasNext(); ) {
-                    AttributeDefinition field = (AttributeDefinition)i.next();
+                    AttributeMapping field = (AttributeMapping)i.next();
 
                     Object value = rs.getObject(counter);
                     sb.append(field.getName());
@@ -560,7 +560,7 @@ public class JDBCEntryCache extends EntryCache {
                 }
 
                 Object value = rs.getObject(counter);
-                sb.append(attributeDefinition.getName());
+                sb.append(attributeMapping.getName());
                 sb.append("=");
                 sb.append(value);
 
@@ -573,7 +573,7 @@ public class JDBCEntryCache extends EntryCache {
                     values.put(pk, av);
                 }
 
-                av.add(attributeDefinition.getName(), value);
+                av.add(attributeMapping.getName(), value);
             }
 
         } catch (Exception e) {
@@ -598,9 +598,9 @@ public class JDBCEntryCache extends EntryCache {
 
         Collection fields = getNonPrimaryColumns();
         for (Iterator i=fields.iterator(); i.hasNext(); ) {
-            AttributeDefinition attributeDefinition = (AttributeDefinition)i.next();
+            AttributeMapping attributeMapping = (AttributeMapping)i.next();
 
-            Collection values = sourceValues.get(attributeDefinition.getName());
+            Collection values = sourceValues.get(attributeMapping.getName());
             if (values == null) continue;
 
             Iterator iterator = values.iterator();
@@ -609,7 +609,7 @@ public class JDBCEntryCache extends EntryCache {
             Object value = iterator.next();
             if (value == null) continue;
 
-            insertColumnValue(attributeDefinition, sourceValues, value);
+            insertColumnValue(attributeMapping, sourceValues, value);
         }
     }
 
@@ -621,7 +621,7 @@ public class JDBCEntryCache extends EntryCache {
 
         Collection fields = getPrimaryColumns();
         for (Iterator i=fields.iterator(); i.hasNext(); ) {
-            AttributeDefinition field = (AttributeDefinition)i.next();
+            AttributeMapping field = (AttributeMapping)i.next();
 
             Collection values = sourceValues.get(field.getName());
             if (values == null) continue;
@@ -682,7 +682,7 @@ public class JDBCEntryCache extends EntryCache {
         }
     }
 
-    public void insertColumnValue(AttributeDefinition attributeDefinition, AttributeValues sourceValues, Object value) throws Exception {
+    public void insertColumnValue(AttributeMapping attributeMapping, AttributeValues sourceValues, Object value) throws Exception {
 
         StringBuffer columns = new StringBuffer();
         StringBuffer questionMarks = new StringBuffer();
@@ -690,7 +690,7 @@ public class JDBCEntryCache extends EntryCache {
 
         Collection fields = getPrimaryColumns();
         for (Iterator i=fields.iterator(); i.hasNext(); ) {
-            AttributeDefinition attribute = (AttributeDefinition)i.next();
+            AttributeMapping attribute = (AttributeMapping)i.next();
 
             Collection values = sourceValues.get(attribute.getName());
             if (values == null) continue;
@@ -710,7 +710,7 @@ public class JDBCEntryCache extends EntryCache {
         }
 
         columns.append(", ");
-        columns.append(attributeDefinition.getName());
+        columns.append(attributeMapping.getName());
 
         questionMarks.append(", ?");
 
@@ -720,7 +720,7 @@ public class JDBCEntryCache extends EntryCache {
         sb.append("insert into ");
         sb.append(getTableName());
         sb.append("_");
-        sb.append(attributeDefinition.getName());
+        sb.append(attributeMapping.getName());
         sb.append(" (");
         sb.append(columns);
         sb.append(") values (");
@@ -762,8 +762,8 @@ public class JDBCEntryCache extends EntryCache {
 
         Collection fields = getNonPrimaryColumns();
         for (Iterator i=fields.iterator(); i.hasNext(); ) {
-            AttributeDefinition attributeDefinition = (AttributeDefinition)i.next();
-            deleteColumnValue(attributeDefinition, pk);
+            AttributeMapping attributeMapping = (AttributeMapping)i.next();
+            deleteColumnValue(attributeMapping, pk);
         }
     }
 
@@ -819,7 +819,7 @@ public class JDBCEntryCache extends EntryCache {
         }
     }
 
-    public void deleteColumnValue(AttributeDefinition attributeDefinition, Object key) throws Exception {
+    public void deleteColumnValue(AttributeMapping attributeMapping, Object key) throws Exception {
         Row pk = (Row)key;
 
         StringBuffer where = new StringBuffer();
@@ -840,7 +840,7 @@ public class JDBCEntryCache extends EntryCache {
         sb.append("delete from ");
         sb.append(getTableName());
         sb.append("_");
-        sb.append(attributeDefinition.getName());
+        sb.append(attributeMapping.getName());
         sb.append(" where ");
         sb.append(where);
 

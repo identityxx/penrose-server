@@ -31,31 +31,31 @@ public class Entry {
 
     private String dn;
     private String parentDn;
-    private EntryDefinition entryDefinition;
+    private EntryMapping entryMapping;
 
     private AttributeValues sourceValues;
     private AttributeValues attributeValues;
 
-    public Entry(String dn, EntryDefinition entryDefinition) {
+    public Entry(String dn, EntryMapping entryMapping) {
         this.dn = dn;
         this.parentDn = getParentDn(dn);
-        this.entryDefinition = entryDefinition;
+        this.entryMapping = entryMapping;
         this.sourceValues = new AttributeValues();
         this.attributeValues = new AttributeValues();
     }
 
-    public Entry(String dn, EntryDefinition entryDefinition, AttributeValues attributes) {
+    public Entry(String dn, EntryMapping entryMapping, AttributeValues attributes) {
         this.dn = dn;
         this.parentDn = getParentDn(dn);
-        this.entryDefinition = entryDefinition;
+        this.entryMapping = entryMapping;
         this.sourceValues = new AttributeValues();
         this.attributeValues = attributes;
     }
 
-    public Entry(String dn, EntryDefinition entryDefinition, AttributeValues sourceValues, AttributeValues attributeValues) {
+    public Entry(String dn, EntryMapping entryMapping, AttributeValues sourceValues, AttributeValues attributeValues) {
         this.dn = dn;
         this.parentDn = getParentDn(dn);
-        this.entryDefinition = entryDefinition;
+        this.entryMapping = entryMapping;
         this.sourceValues = sourceValues;
         this.attributeValues = attributeValues;
     }
@@ -68,12 +68,12 @@ public class Entry {
 
         Row rdn = new Row();
 
-        Collection rdnAttributes = entryDefinition.getRdnAttributes();
+        Collection rdnAttributes = entryMapping.getRdnAttributes();
 
         for (Iterator i = rdnAttributes.iterator(); i.hasNext();) {
-            AttributeDefinition attributeDefinition = (AttributeDefinition) i.next();
+            AttributeMapping attributeMapping = (AttributeMapping) i.next();
 
-            String name = attributeDefinition.getName();
+            String name = attributeMapping.getName();
             Collection values = attributeValues.get(name);
             if (values == null) return null;
 
@@ -88,35 +88,35 @@ public class Entry {
         return attributeValues;
     }
 
-    public EntryDefinition getEntryDefinition() {
-        return entryDefinition;
+    public EntryMapping getEntryMapping() {
+        return entryMapping;
     }
 
     public Collection getSources() {
-        return entryDefinition.getSources();
+        return entryMapping.getSourceMappings();
     }
 
     public Collection getRelationships() {
-        return entryDefinition.getRelationships();
+        return entryMapping.getRelationships();
     }
 
-    public void setEntryDefinition(EntryDefinition entryDefinition) {
-        this.entryDefinition = entryDefinition;
+    public void setEntryMapping(EntryMapping entryMapping) {
+        this.entryMapping = entryMapping;
     }
 
     public Collection getObjectClasses() {
-        return entryDefinition.getObjectClasses();
+        return entryMapping.getObjectClasses();
     }
 
     public LDAPEntry toLDAPEntry() {
-        return entryDefinition.toLDAPEntry(getDn(), attributeValues);
+        return entryMapping.toLDAPEntry(getDn(), attributeValues);
     }
 
     public String toString() {
         StringBuffer sb = new StringBuffer();
         sb.append("dn: "+getDn()+"\n");
 /*
-        for (Iterator i = entryDefinition.getObjectClasses().iterator(); i.hasNext(); ) {
+        for (Iterator i = entryMappingtClasses().iterator(); i.hasNext(); ) {
             String oc = (String)i.next();
             sb.append("objectClass: "+oc+"\n");
         }
@@ -175,7 +175,7 @@ public class Entry {
     }
 
     public Collection getACL() {
-        return entryDefinition.getACL();
+        return entryMapping.getACL();
     }
 
     public AttributeValues getSourceValues() {

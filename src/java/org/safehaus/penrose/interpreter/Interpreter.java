@@ -67,30 +67,30 @@ public abstract class Interpreter {
 
     public abstract void clear() throws Exception;
 
-    public Object eval(AttributeDefinition attributeDefinition) throws Exception {
-        if (attributeDefinition.getConstant() != null) {
-            return attributeDefinition.getConstant();
+    public Object eval(AttributeMapping attributeMapping) throws Exception {
+        if (attributeMapping.getConstant() != null) {
+            return attributeMapping.getConstant();
 
-        } else if (attributeDefinition.getVariable() != null) {
-            return get(attributeDefinition.getVariable());
+        } else if (attributeMapping.getVariable() != null) {
+            return get(attributeMapping.getVariable());
 
-        } else if (attributeDefinition.getExpression() != null) {
-            return eval(attributeDefinition.getExpression());
+        } else if (attributeMapping.getExpression() != null) {
+            return eval(attributeMapping.getExpression());
 
         } else {
             return null;
         }
     }
 
-    public Object eval(Field field) throws Exception {
-        if (field.getConstant() != null) {
-            return field.getConstant();
+    public Object eval(FieldMapping fieldMapping) throws Exception {
+        if (fieldMapping.getConstant() != null) {
+            return fieldMapping.getConstant();
 
-        } else if (field.getVariable() != null) {
-            return get(field.getVariable());
+        } else if (fieldMapping.getVariable() != null) {
+            return get(fieldMapping.getVariable());
 
-        } else if (field.getExpression() != null) {
-            return eval(field.getExpression());
+        } else if (fieldMapping.getExpression() != null) {
+            return eval(fieldMapping.getExpression());
 
         } else {
             return null;

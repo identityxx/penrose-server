@@ -19,9 +19,6 @@ package org.safehaus.penrose.engine;
 
 import org.apache.log4j.Logger;
 import org.safehaus.penrose.mapping.*;
-import org.safehaus.penrose.util.Formatter;
-import org.safehaus.penrose.graph.Graph;
-import org.safehaus.penrose.interpreter.Interpreter;
 import org.ietf.ldap.LDAPException;
 
 import java.util.Collection;
@@ -42,17 +39,17 @@ public class ModifyEngine {
 
     public int modify(Entry entry, AttributeValues newValues) throws Exception {
 
-        EntryDefinition entryDefinition = entry.getEntryDefinition();
+        EntryMapping entryMapping = entry.getEntryMapping();
         AttributeValues oldSourceValues = entry.getSourceValues();
 
         AttributeValues newSourceValues = (AttributeValues)oldSourceValues.clone();
-        Collection sources = entryDefinition.getSources();
+        Collection sources = entryMapping.getSourceMappings();
         for (Iterator i=sources.iterator(); i.hasNext(); ) {
-            Source source = (Source)i.next();
+            SourceMapping sourceMapping = (SourceMapping)i.next();
 
             AttributeValues output = new AttributeValues();
-            engine.getTransformEngine().translate(source, newValues, output);
-            newSourceValues.set(source.getName(), output);
+            engine.getTransformEngine().translate(sourceMapping, newValues, output);
+            newSourceValues.set(sourceMapping.getName(), output);
         }
 
         if (log.isDebugEnabled()) {
@@ -71,12 +68,12 @@ public class ModifyEngine {
             }
         }
 
-        ModifyGraphVisitor visitor = new ModifyGraphVisitor(engine, entryDefinition, oldSourceValues, newSourceValues);
+        ModifyGraphVisitor visitor = new ModifyGraphVisitor(engine, entryMapping, oldSourceValues, newSourceValues);
         visitor.run();
 
         if (visitor.getReturnCode() != LDAPException.SUCCESS) return visitor.getReturnCode();
 
-        engine.getCache(entry.getParentDn(), entryDefinition).remove(entry.getRdn());
+        engine.getCache(entry.getParentDn(), entryMapping).remove(entry.getRdn());
 
         return LDAPException.SUCCESS;
     }

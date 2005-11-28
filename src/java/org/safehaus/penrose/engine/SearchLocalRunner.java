@@ -20,7 +20,7 @@ package org.safehaus.penrose.engine;
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.filter.FilterTool;
-import org.safehaus.penrose.config.Config;
+import org.safehaus.penrose.partition.PartitionConfig;
 import org.safehaus.penrose.graph.GraphVisitor;
 import org.safehaus.penrose.graph.Graph;
 import org.safehaus.penrose.graph.GraphIterator;
@@ -38,13 +38,13 @@ public class SearchLocalRunner extends GraphVisitor {
 
     Logger log = Logger.getLogger(getClass());
 
-    private Config config;
+    private PartitionConfig partitionConfig;
     private Graph graph;
     private Engine engine;
-    private EntryDefinition entryDefinition;
+    private EntryMapping entryMapping;
     private AttributeValues sourceValues;
     private Map filters;
-    private Source startingSource;
+    private SourceMapping startingSourceMapping;
 
     private Stack filterStack = new Stack();
 
@@ -52,22 +52,22 @@ public class SearchLocalRunner extends GraphVisitor {
 
     public SearchLocalRunner(
             Engine engine,
-            EntryDefinition entryDefinition,
+            EntryMapping entryMapping,
             AttributeValues sourceValues,
             SearchPlanner planner,
-            Source startingSource,
+            SourceMapping startingSourceMapping,
             Collection relationships) throws Exception {
 
         this.engine = engine;
-        this.entryDefinition = entryDefinition;
+        this.entryMapping = entryMapping;
         this.filters = planner.getFilters();
-        this.startingSource = startingSource;
+        this.startingSourceMapping = startingSourceMapping;
         this.sourceValues = sourceValues;
 
-        config = engine.getConfigManager().getConfig(entryDefinition);
-        graph = engine.getGraph(entryDefinition);
+        partitionConfig = engine.getConfigManager().getConfig(entryMapping);
+        graph = engine.getGraph(entryMapping);
 
-        Filter filter = (Filter)filters.get(startingSource);
+        Filter filter = (Filter)filters.get(startingSourceMapping);
 
         Map map = new HashMap();
         map.put("filter", filter);
@@ -77,16 +77,16 @@ public class SearchLocalRunner extends GraphVisitor {
     }
 
     public void run() throws Exception {
-        graph.traverse(this, startingSource);
+        graph.traverse(this, startingSourceMapping);
     }
 
     public void visitNode(GraphIterator graphIterator, Object node) throws Exception {
 
-        Source source = (Source)node;
+        SourceMapping sourceMapping = (SourceMapping)node;
 
         if (log.isDebugEnabled()) {
             log.debug(Formatter.displaySeparator(60));
-            log.debug(Formatter.displayLine("Visiting "+source.getName(), 60));
+            log.debug(Formatter.displayLine("Visiting "+sourceMapping.getName(), 60));
             log.debug(Formatter.displaySeparator(60));
         }
 
@@ -97,16 +97,16 @@ public class SearchLocalRunner extends GraphVisitor {
         log.debug("Filter: "+filter);
         log.debug("Relationships: "+relationships);
 
-        String s = source.getParameter(Source.FILTER);
+        String s = sourceMapping.getParameter(SourceMapping.FILTER);
         if (s != null) {
             Filter sourceFilter = FilterTool.parseFilter(s);
             filter = FilterTool.appendAndFilter(filter, sourceFilter);
         }
 
-        log.debug("Searching source "+source.getName()+" with filter "+filter);
+        log.debug("Searching source "+sourceMapping.getName()+" with filter "+filter);
 
-        ConnectionConfig connectionConfig = config.getConnectionConfig(source.getConnectionName());
-        SourceDefinition sourceDefinition = connectionConfig.getSourceDefinition(source.getSourceName());
+        ConnectionConfig connectionConfig = partitionConfig.getConnectionConfig(sourceMapping.getConnectionName());
+        SourceDefinition sourceDefinition = connectionConfig.getSourceDefinition(sourceMapping.getSourceName());
 
         SearchResults tmp = engine.getConnector().search(sourceDefinition, filter);
 
@@ -116,7 +116,7 @@ public class SearchLocalRunner extends GraphVisitor {
 
             AttributeValues sv = new AttributeValues();
             sv.add(sourceValues);
-            sv.add(source.getName(), av);
+            sv.add(sourceMapping.getName(), av);
             list.add(sv);
         }
 
@@ -125,10 +125,10 @@ public class SearchLocalRunner extends GraphVisitor {
 
         } else {
             Collection temp;
-            if (source.isRequired()) {
-                temp = engine.getJoinEngine().join(results, list, entryDefinition, relationships);
+            if (sourceMapping.isRequired()) {
+                temp = engine.getJoinEngine().join(results, list, entryMapping, relationships);
             } else {
-                temp = engine.getJoinEngine().leftJoin(results, list, entryDefinition, relationships);
+                temp = engine.getJoinEngine().leftJoin(results, list, entryMapping, relationships);
             }
 
             results.clear();
@@ -153,8 +153,8 @@ public class SearchLocalRunner extends GraphVisitor {
 
     public void visitEdge(GraphIterator graphIterator, Object node1, Object node2, Object object) throws Exception {
 
-        Source fromSource = (Source)node1;
-        Source toSource = (Source)node2;
+        SourceMapping fromSourceMapping = (SourceMapping)node1;
+        SourceMapping toSourceMapping = (SourceMapping)node2;
         Collection relationships = (Collection)object;
 
         if (log.isDebugEnabled()) {
@@ -166,8 +166,8 @@ public class SearchLocalRunner extends GraphVisitor {
             log.debug(Formatter.displaySeparator(60));
         }
 
-        if (entryDefinition.getSource(toSource.getName()) == null) {
-            log.debug("Source "+toSource.getName()+" is not defined in entry.");
+        if (entryMapping.getSourceMapping(toSourceMapping.getName()) == null) {
+            log.debug("Source "+toSourceMapping.getName()+" is not defined in entry.");
             return;
         }
 
@@ -177,13 +177,13 @@ public class SearchLocalRunner extends GraphVisitor {
         for (Iterator i=results.iterator(); i.hasNext(); ) {
             AttributeValues av = (AttributeValues)i.next();
 
-            Filter f = engine.generateFilter(toSource, relationships, av);
+            Filter f = engine.generateFilter(toSourceMapping, relationships, av);
             log.debug(" - "+f);
 
             filter = FilterTool.appendOrFilter(filter, f);
         }
 
-        Filter sourceFilter = (Filter)filters.get(toSource);
+        Filter sourceFilter = (Filter)filters.get(toSourceMapping);
         filter = FilterTool.appendAndFilter(filter, sourceFilter);
 
         if (filter == null) return;

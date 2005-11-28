@@ -17,7 +17,7 @@
  */
 package org.safehaus.penrose.schema;
 
-import org.safehaus.penrose.mapping.EntryDefinition;
+import org.safehaus.penrose.mapping.EntryMapping;
 import org.safehaus.penrose.mapping.Row;
 import org.safehaus.penrose.mapping.AttributeValues;
 import org.apache.log4j.Logger;
@@ -94,7 +94,7 @@ public class Schema {
         this.objectClasses = objectClasses;
     }
 
-    public Set getRequiredAttributeNames(EntryDefinition entry) {
+    public Set getRequiredAttributeNames(EntryMapping entry) {
         Set set = new HashSet();
         for (Iterator i=entry.getObjectClasses().iterator(); i.hasNext(); ) {
             String ocName = (String)i.next();
@@ -107,7 +107,7 @@ public class Schema {
         return set;
     }
 
-    public Collection getAllObjectClassNames(EntryDefinition entry) {
+    public Collection getAllObjectClassNames(EntryMapping entry) {
         Collection list = new ArrayList();
 
         for (Iterator i=entry.getObjectClasses().iterator(); i.hasNext(); ) {
@@ -160,7 +160,7 @@ public class Schema {
         return false;
     }
 
-    public Collection getObjectClasses(EntryDefinition entry) {
+    public Collection getObjectClasses(EntryMapping entry) {
         Map map = new HashMap();
         for (Iterator i=entry.getObjectClasses().iterator(); i.hasNext(); ) {
             String ocName = (String)i.next();

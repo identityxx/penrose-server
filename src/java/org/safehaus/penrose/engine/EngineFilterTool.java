@@ -38,29 +38,29 @@ public class EngineFilterTool {
         this.engine = engine;
     }
 
-    public Filter toSourceFilter(AttributeValues parentValues, EntryDefinition entry, Source source, Filter filter) throws Exception {
-        log.debug("Converting filter "+filter+" for "+source.getName());
+    public Filter toSourceFilter(AttributeValues parentValues, EntryMapping entry, SourceMapping sourceMapping, Filter filter) throws Exception {
+        log.debug("Converting filter "+filter+" for "+sourceMapping.getName());
 
         if (filter instanceof NotFilter) {
-            return toSourceFilter(parentValues, entry, source, (NotFilter) filter);
+            return toSourceFilter(parentValues, entry, sourceMapping, (NotFilter) filter);
 
         } else if (filter instanceof AndFilter) {
-            return toSourceFilter(parentValues, entry, source, (AndFilter) filter);
+            return toSourceFilter(parentValues, entry, sourceMapping, (AndFilter) filter);
 
         } else if (filter instanceof OrFilter) {
-            return toSourceFilter(parentValues, entry, source, (OrFilter) filter);
+            return toSourceFilter(parentValues, entry, sourceMapping, (OrFilter) filter);
 
         } else if (filter instanceof SimpleFilter) {
-            return toSourceFilter(parentValues, entry, source, (SimpleFilter) filter);
+            return toSourceFilter(parentValues, entry, sourceMapping, (SimpleFilter) filter);
 
         } else if (filter instanceof SubstringFilter) {
-            return toSourceFilter(parentValues, entry, source, (SubstringFilter) filter);
+            return toSourceFilter(parentValues, entry, sourceMapping, (SubstringFilter) filter);
         }
 
         return null;
     }
 
-    public Filter toSourceFilter(AttributeValues parentValues, EntryDefinition entry, Source source, SimpleFilter filter)
+    public Filter toSourceFilter(AttributeValues parentValues, EntryMapping entry, SourceMapping sourceMapping, SimpleFilter filter)
             throws Exception {
 
         String attributeName = filter.getAttribute();
@@ -79,17 +79,17 @@ public class EngineFilterTool {
             interpreter.set(parentValues);
         }
 
-        Collection fields = source.getFields();
+        Collection fields = sourceMapping.getFieldMappings();
         Filter newFilter = null;
 
         for (Iterator i=fields.iterator(); i.hasNext(); ) {
-            Field field = (Field)i.next();
+            FieldMapping fieldMapping = (FieldMapping)i.next();
 
-            String v = (String)interpreter.eval(field);
+            String v = (String)interpreter.eval(fieldMapping);
             if (v == null) continue;
 
             //System.out.println("Adding filter "+field.getName()+"="+v);
-            SimpleFilter f = new SimpleFilter(field.getName(), operator, v);
+            SimpleFilter f = new SimpleFilter(fieldMapping.getName(), operator, v);
 
             newFilter = FilterTool.appendAndFilter(newFilter, f);
         }
@@ -99,14 +99,14 @@ public class EngineFilterTool {
         return newFilter;
     }
 
-    public Filter toSourceFilter(AttributeValues parentValues, EntryDefinition entry, Source source, SubstringFilter filter)
+    public Filter toSourceFilter(AttributeValues parentValues, EntryMapping entry, SourceMapping sourceMapping, SubstringFilter filter)
             throws Exception {
 
         String attributeName = filter.getAttribute();
         Collection substrings = filter.getSubstrings();
 
-        AttributeDefinition attributeDefinition = entry.getAttributeDefinition(attributeName);
-        String variable = attributeDefinition.getVariable();
+        AttributeMapping attributeMapping = entry.getAttributeMapping(attributeName);
+        String variable = attributeMapping.getVariable();
         log.debug("variable: "+variable);
 
         if (variable == null) return null;
@@ -117,9 +117,9 @@ public class EngineFilterTool {
         log.debug("sourceName: "+sourceName);
         log.debug("fieldName: "+fieldName);
 
-        if (!sourceName.equals(source.getName())) return null;
+        if (!sourceName.equals(sourceMapping.getName())) return null;
 
-        Field field = source.getField(fieldName);
+        FieldMapping fieldMapping = sourceMapping.getFieldMapping(fieldName);
 
         StringBuffer sb = new StringBuffer();
         for (Iterator i=substrings.iterator(); i.hasNext(); ) {
@@ -131,20 +131,20 @@ public class EngineFilterTool {
             }
         }
 
-        return new SimpleFilter(field.getName(), "like", sb.toString());
+        return new SimpleFilter(fieldMapping.getName(), "like", sb.toString());
     }
 
-    public Filter toSourceFilter(AttributeValues parentValues, EntryDefinition entry, Source source, NotFilter filter)
+    public Filter toSourceFilter(AttributeValues parentValues, EntryMapping entry, SourceMapping sourceMapping, NotFilter filter)
             throws Exception {
 
         Filter f = filter.getFilter();
 
-        Filter newFilter = toSourceFilter(parentValues, entry, source, f);
+        Filter newFilter = toSourceFilter(parentValues, entry, sourceMapping, f);
 
         return new NotFilter(newFilter);
     }
 
-    public Filter toSourceFilter(AttributeValues parentValues, EntryDefinition entry, Source source, AndFilter filter)
+    public Filter toSourceFilter(AttributeValues parentValues, EntryMapping entry, SourceMapping sourceMapping, AndFilter filter)
             throws Exception {
 
         Collection filters = filter.getFilters();
@@ -153,7 +153,7 @@ public class EngineFilterTool {
         for (Iterator i=filters.iterator(); i.hasNext(); ) {
             Filter f = (Filter)i.next();
 
-            Filter nf = toSourceFilter(parentValues, entry, source, f);
+            Filter nf = toSourceFilter(parentValues, entry, sourceMapping, f);
             if (nf == null) continue;
 
             af.addFilter(nf);
@@ -164,7 +164,7 @@ public class EngineFilterTool {
         return af;
     }
 
-    public Filter toSourceFilter(AttributeValues parentValues, EntryDefinition entry, Source source, OrFilter filter)
+    public Filter toSourceFilter(AttributeValues parentValues, EntryMapping entry, SourceMapping sourceMapping, OrFilter filter)
             throws Exception {
 
         Collection filters = filter.getFilters();
@@ -173,7 +173,7 @@ public class EngineFilterTool {
         for (Iterator i=filters.iterator(); i.hasNext(); ) {
             Filter f = (Filter)i.next();
 
-            Filter nf = toSourceFilter(parentValues, entry, source, f);
+            Filter nf = toSourceFilter(parentValues, entry, sourceMapping, f);
             if (nf == null) continue;
 
             of.addFilter(nf);

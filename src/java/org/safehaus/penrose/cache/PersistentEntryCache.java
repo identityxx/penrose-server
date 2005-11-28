@@ -20,7 +20,7 @@ package org.safehaus.penrose.cache;
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.util.PasswordUtil;
 import org.safehaus.penrose.util.Formatter;
-import org.safehaus.penrose.config.Config;
+import org.safehaus.penrose.partition.PartitionConfig;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.connector.ConnectionConfig;
 import org.safehaus.penrose.connector.ConnectionManager;
@@ -39,7 +39,7 @@ import java.sql.ResultSet;
  */
 public class PersistentEntryCache extends EntryCache {
 
-    Config config;
+    PartitionConfig partitionConfig;
     int entryId;
 
     ConnectionManager connectionManager;
@@ -56,7 +56,7 @@ public class PersistentEntryCache extends EntryCache {
         jdbcConnectionName = getParameter("jdbcConnection");
         jndiConnectionName = getParameter("jndiConnection");
 
-        config = engine.getConfigManager().getConfig(entryDefinition);
+        partitionConfig = engine.getConfigManager().getConfig(entryMapping);
 
         entryId = getEntryId();
         if (entryId == 0) {
@@ -75,36 +75,36 @@ public class PersistentEntryCache extends EntryCache {
 
     public void create() throws Exception {
 
-        String dn = entryDefinition.getDn();
+        String dn = entryMapping.getDn();
         log.debug("Entry "+dn+" ("+entryId+")");
 
-        Collection attributeDefinitions = entryDefinition.getNonRdnAttributes();
+        Collection attributeDefinitions = entryMapping.getNonRdnAttributes();
         for (Iterator i=attributeDefinitions.iterator(); i.hasNext(); ) {
-            AttributeDefinition attributeDefinition = (AttributeDefinition)i.next();
-            createAttributeTable(attributeDefinition);
+            AttributeMapping attributeMapping = (AttributeMapping)i.next();
+            createAttributeTable(attributeMapping);
         }
 
-        Collection sources = config.getEffectiveSources(entryDefinition);
+        Collection sources = partitionConfig.getEffectiveSources(entryMapping);
 
         for (Iterator i=sources.iterator(); i.hasNext(); ) {
-            Source source = (Source)i.next();
+            SourceMapping sourceMapping = (SourceMapping)i.next();
 
-            ConnectionConfig connectionConfig = config.getConnectionConfig(source.getConnectionName());
-            SourceDefinition sourceDefinition = connectionConfig.getSourceDefinition(source.getSourceName());
+            ConnectionConfig connectionConfig = partitionConfig.getConnectionConfig(sourceMapping.getConnectionName());
+            SourceDefinition sourceDefinition = connectionConfig.getSourceDefinition(sourceMapping.getSourceName());
 
             Collection fields = sourceDefinition.getFieldDefinitions();
             for (Iterator j=fields.iterator(); j.hasNext(); ) {
                 FieldDefinition fieldDefinition = (FieldDefinition)j.next();
-                createFieldTable(source, fieldDefinition);
+                createFieldTable(sourceMapping, fieldDefinition);
             }
         }
 
-        if (!entryDefinition.isDynamic()) {
+        if (!entryMapping.isDynamic()) {
             Interpreter interpreter = engine.getInterpreterFactory().newInstance();
-            AttributeValues attributeValues = engine.computeAttributeValues(entryDefinition, interpreter);
+            AttributeValues attributeValues = engine.computeAttributeValues(entryMapping, interpreter);
             interpreter.clear();
 
-            Entry entry = new Entry(dn, entryDefinition, attributeValues);
+            Entry entry = new Entry(dn, entryMapping, attributeValues);
             Row rdn = entry.getRdn();
 
             put(rdn, entry);
@@ -113,7 +113,7 @@ public class PersistentEntryCache extends EntryCache {
     }
 
     public int getEntryId() throws Exception {
-        String dn = entryDefinition.getDn();
+        String dn = entryMapping.getDn();
 
         Connection con = null;
         PreparedStatement ps = null;
@@ -156,7 +156,7 @@ public class PersistentEntryCache extends EntryCache {
     }
 
     public void registerEntry() throws Exception {
-        String dn = entryDefinition.getDn();
+        String dn = entryMapping.getDn();
 
         Connection con = null;
         PreparedStatement ps = null;
@@ -189,16 +189,16 @@ public class PersistentEntryCache extends EntryCache {
         }
     }
 
-    public void createAttributeTable(AttributeDefinition attributeDefinition) throws Exception {
+    public void createAttributeTable(AttributeMapping attributeMapping) throws Exception {
 
-        String tableName = "penrose_"+entryId+"_attribute_"+attributeDefinition.getName();
+        String tableName = "penrose_"+entryId+"_attribute_"+attributeMapping.getName();
 
         StringBuffer columns = new StringBuffer();
         StringBuffer primaryKeys = new StringBuffer();
 
-        Collection rdns = entryDefinition.getRdnAttributes();
+        Collection rdns = entryMapping.getRdnAttributes();
         for (Iterator i=rdns.iterator(); i.hasNext(); ) {
-            AttributeDefinition ad = (AttributeDefinition)i.next();
+            AttributeMapping ad = (AttributeMapping)i.next();
 
             if (columns.length() > 0) columns.append(", ");
             columns.append(ad.getName());
@@ -210,12 +210,12 @@ public class PersistentEntryCache extends EntryCache {
         }
 
         columns.append(", ");
-        columns.append(attributeDefinition.getName());
+        columns.append(attributeMapping.getName());
         columns.append(" ");
-        columns.append(getColumnTypeDeclaration(attributeDefinition));
+        columns.append(getColumnTypeDeclaration(attributeMapping));
 
         primaryKeys.append(", ");
-        primaryKeys.append(attributeDefinition.getName());
+        primaryKeys.append(attributeMapping.getName());
 
         columns.append(", primary key (");
         columns.append(primaryKeys);
@@ -255,13 +255,13 @@ public class PersistentEntryCache extends EntryCache {
         }
     }
 
-    public String getColumnTypeDeclaration(AttributeDefinition attributeDefinition) {
+    public String getColumnTypeDeclaration(AttributeMapping attributeMapping) {
         StringBuffer sb = new StringBuffer();
-        sb.append(attributeDefinition.getType());
+        sb.append(attributeMapping.getType());
 
-        if ("VARCHAR".equals(attributeDefinition.getType()) && attributeDefinition.getLength() > 0) {
+        if ("VARCHAR".equals(attributeMapping.getType()) && attributeMapping.getLength() > 0) {
             sb.append("(");
-            sb.append(attributeDefinition.getLength());
+            sb.append(attributeMapping.getLength());
             sb.append(")");
         }
 
@@ -281,24 +281,24 @@ public class PersistentEntryCache extends EntryCache {
         return sb.toString();
     }
 
-    public void createFieldTable(Source source, FieldDefinition fieldDefinition) throws Exception {
+    public void createFieldTable(SourceMapping sourceMapping, FieldDefinition fieldDefinition) throws Exception {
 
-        String tableName = "penrose_"+entryId+"_field_"+source.getName()+"_"+fieldDefinition.getName();
+        String tableName = "penrose_"+entryId+"_field_"+sourceMapping.getName()+"_"+fieldDefinition.getName();
 
         StringBuffer columns = new StringBuffer();
         StringBuffer primaryKeys = new StringBuffer();
 
-        Collection rdns = entryDefinition.getRdnAttributes();
+        Collection rdns = entryMapping.getRdnAttributes();
         for (Iterator i=rdns.iterator(); i.hasNext(); ) {
-            AttributeDefinition attributeDefinition = (AttributeDefinition)i.next();
+            AttributeMapping attributeMapping = (AttributeMapping)i.next();
 
             if (columns.length() > 0) columns.append(", ");
-            columns.append(attributeDefinition.getName());
+            columns.append(attributeMapping.getName());
             columns.append(" ");
-            columns.append(getColumnTypeDeclaration(attributeDefinition));
+            columns.append(getColumnTypeDeclaration(attributeMapping));
 
             if (primaryKeys.length() > 0) primaryKeys.append(", ");
-            primaryKeys.append(attributeDefinition.getName());
+            primaryKeys.append(attributeMapping.getName());
         }
 
         columns.append(", value ");
@@ -348,50 +348,50 @@ public class PersistentEntryCache extends EntryCache {
     }
 
     public void clean() throws Exception {
-        if (!entryDefinition.isDynamic()) return;
+        if (!entryMapping.isDynamic()) return;
 
-        String dn = entryDefinition.getDn();
+        String dn = entryMapping.getDn();
         Row rdn = Entry.getRdn(dn);
         remove(null);
 
     }
 
     public void drop() throws Exception {
-        if (!entryDefinition.isDynamic()) {
-            String dn = entryDefinition.getDn();
+        if (!entryMapping.isDynamic()) {
+            String dn = entryMapping.getDn();
             Row rdn = Entry.getRdn(dn);
             remove(rdn);
         }
 
-        Collection sources = config.getEffectiveSources(entryDefinition);
+        Collection sources = partitionConfig.getEffectiveSources(entryMapping);
 
         for (Iterator i=sources.iterator(); i.hasNext(); ) {
-            Source source = (Source)i.next();
-            dropEntrySourceTable(source);
+            SourceMapping sourceMapping = (SourceMapping)i.next();
+            dropEntrySourceTable(sourceMapping);
         }
 
-        Collection attributeDefinitions = entryDefinition.getNonRdnAttributes();
+        Collection attributeDefinitions = entryMapping.getNonRdnAttributes();
         for (Iterator i=attributeDefinitions.iterator(); i.hasNext(); ) {
-            AttributeDefinition attributeDefinition = (AttributeDefinition)i.next();
-            dropAttributeTable(attributeDefinition);
+            AttributeMapping attributeMapping = (AttributeMapping)i.next();
+            dropAttributeTable(attributeMapping);
         }
     }
 
-    public void dropEntrySourceTable(Source source) throws Exception {
+    public void dropEntrySourceTable(SourceMapping sourceMapping) throws Exception {
 
-        ConnectionConfig connectionConfig = config.getConnectionConfig(source.getConnectionName());
-        SourceDefinition sourceDefinition = connectionConfig.getSourceDefinition(source.getSourceName());
+        ConnectionConfig connectionConfig = partitionConfig.getConnectionConfig(sourceMapping.getConnectionName());
+        SourceDefinition sourceDefinition = connectionConfig.getSourceDefinition(sourceMapping.getSourceName());
 
         Collection fields = sourceDefinition.getFieldDefinitions();
         for (Iterator i=fields.iterator(); i.hasNext(); ) {
             FieldDefinition fieldDefinition = (FieldDefinition)i.next();
-            dropFieldTable(source, sourceDefinition, fieldDefinition);
+            dropFieldTable(sourceMapping, sourceDefinition, fieldDefinition);
         }
     }
 
-    public void dropFieldTable(Source source, SourceDefinition sourceDefinition, FieldDefinition fieldDefinition) throws Exception {
+    public void dropFieldTable(SourceMapping sourceMapping, SourceDefinition sourceDefinition, FieldDefinition fieldDefinition) throws Exception {
 
-        String tableName = "penrose_"+entryId+"_field_"+source.getName()+"_"+fieldDefinition.getName();
+        String tableName = "penrose_"+entryId+"_field_"+sourceMapping.getName()+"_"+fieldDefinition.getName();
 
         String sql = "drop table "+tableName;
 
@@ -423,9 +423,9 @@ public class PersistentEntryCache extends EntryCache {
         }
     }
 
-    public void dropAttributeTable(AttributeDefinition attributeDefinition) throws Exception {
+    public void dropAttributeTable(AttributeMapping attributeMapping) throws Exception {
 
-        String tableName = "penrose_"+entryId+"_attribute_"+attributeDefinition.getName();
+        String tableName = "penrose_"+entryId+"_attribute_"+attributeMapping.getName();
 
         String sql = "drop table "+tableName;
 
@@ -459,9 +459,9 @@ public class PersistentEntryCache extends EntryCache {
 
     public void load() throws Exception {
 
-        if (!entryDefinition.isDynamic()) return;
+        if (!entryMapping.isDynamic()) return;
 
-        Collection entries = config.getChildren(entryDefinition);
+        Collection entries = partitionConfig.getChildren(entryMapping);
         load(entries);
     }
 
@@ -469,7 +469,7 @@ public class PersistentEntryCache extends EntryCache {
         if (entries == null) return;
 
         for (Iterator i = entries.iterator(); i.hasNext();) {
-            EntryDefinition ed = (EntryDefinition) i.next();
+            EntryMapping ed = (EntryMapping) i.next();
 
             engine.search(null, new AttributeValues(), ed, null, null);
 
@@ -511,25 +511,25 @@ public class PersistentEntryCache extends EntryCache {
                 }
             }
 
-            entry = new Entry(dn, entryDefinition, attributeValues);
+            entry = new Entry(dn, entryMapping, attributeValues);
 
             AttributeValues sourceValues = entry.getSourceValues();
-            Collection sources = config.getEffectiveSources(entryDefinition);
+            Collection sources = partitionConfig.getEffectiveSources(entryMapping);
 
             for (Iterator i=sources.iterator(); i.hasNext(); ) {
-                Source source = (Source)i.next();
+                SourceMapping sourceMapping = (SourceMapping)i.next();
 
-                ConnectionConfig connectionConfig = config.getConnectionConfig(source.getConnectionName());
-                SourceDefinition sourceDefinition = connectionConfig.getSourceDefinition(source.getSourceName());
+                ConnectionConfig connectionConfig = partitionConfig.getConnectionConfig(sourceMapping.getConnectionName());
+                SourceDefinition sourceDefinition = connectionConfig.getSourceDefinition(sourceMapping.getSourceName());
 
                 Collection fields = sourceDefinition.getFieldDefinitions();
                 for (Iterator j=fields.iterator(); j.hasNext(); ) {
                     FieldDefinition fieldDefinition = (FieldDefinition)j.next();
 
-                    Collection values = getField(source, fieldDefinition, rdn);
-                    log.debug(" - "+source.getName()+"."+fieldDefinition.getName()+": "+values);
+                    Collection values = getField(sourceMapping, fieldDefinition, rdn);
+                    log.debug(" - "+sourceMapping.getName()+"."+fieldDefinition.getName()+": "+values);
 
-                    sourceValues.set(source.getName()+"."+fieldDefinition.getName(), values);
+                    sourceValues.set(sourceMapping.getName()+"."+fieldDefinition.getName(), values);
                 }
             }
 
@@ -627,54 +627,54 @@ public class PersistentEntryCache extends EntryCache {
             if (ctx != null) try { ctx.close(); } catch (Exception e) {}
         }
 /*
-        Collection attributeDefinitions = entryDefinition.getNonRdnAttributes();
+        Collection attributeDefinitions = entryMappingnAttributes();
         for (Iterator i=attributeDefinitions.iterator(); i.hasNext(); ) {
-            AttributeDefinition attributeDefinition = (AttributeDefinition)i.next();
+            AttributeMapping attributeDefinition = (AttributeMapping)i.next();
             insertAttribute(attributeDefinition);
         }
 */
         AttributeValues sourceValues = entry.getSourceValues();
-        Collection sources = config.getEffectiveSources(entryDefinition);
+        Collection sources = partitionConfig.getEffectiveSources(entryMapping);
 
         for (Iterator i=sources.iterator(); i.hasNext(); ) {
-            Source source = (Source)i.next();
+            SourceMapping sourceMapping = (SourceMapping)i.next();
 
-            ConnectionConfig connectionConfig = config.getConnectionConfig(source.getConnectionName());
-            SourceDefinition sourceDefinition = connectionConfig.getSourceDefinition(source.getSourceName());
+            ConnectionConfig connectionConfig = partitionConfig.getConnectionConfig(sourceMapping.getConnectionName());
+            SourceDefinition sourceDefinition = connectionConfig.getSourceDefinition(sourceMapping.getSourceName());
 
             Collection fields = sourceDefinition.getFieldDefinitions();
             for (Iterator j=fields.iterator(); j.hasNext(); ) {
                 FieldDefinition fieldDefinition = (FieldDefinition)j.next();
 
-                deleteField(source, fieldDefinition, rdn);
+                deleteField(sourceMapping, fieldDefinition, rdn);
 
-                Collection values = sourceValues.get(source.getName()+"."+fieldDefinition.getName());
+                Collection values = sourceValues.get(sourceMapping.getName()+"."+fieldDefinition.getName());
                 if (values == null) continue;
                 
                 for (Iterator k=values.iterator(); k.hasNext(); ) {
                     Object value = k.next();
-                    insertField(source, fieldDefinition, rdn, value);
+                    insertField(sourceMapping, fieldDefinition, rdn, value);
                 }
             }
         }
     }
 
     public void insertField(
-            Source source,
+            SourceMapping sourceMapping,
             FieldDefinition fieldDefinition,
             Row rdn,
             Object value
             ) throws Exception {
 
-        String tableName = "penrose_"+entryId+"_field_"+source.getName()+"_"+fieldDefinition.getName();
+        String tableName = "penrose_"+entryId+"_field_"+sourceMapping.getName()+"_"+fieldDefinition.getName();
 
         StringBuffer columns = new StringBuffer();
         Collection parameters = new ArrayList();
 
-        Collection rdns = entryDefinition.getRdnAttributes();
+        Collection rdns = entryMapping.getRdnAttributes();
         for (Iterator i=rdns.iterator(); i.hasNext(); ) {
-            AttributeDefinition attributeDefinition = (AttributeDefinition)i.next();
-            Object attributeValue = rdn.get(attributeDefinition.getName());
+            AttributeMapping attributeMapping = (AttributeMapping)i.next();
+            Object attributeValue = rdn.get(attributeMapping.getName());
 
             if (columns.length() > 0) columns.append(", ");
             columns.append("?");
@@ -730,20 +730,20 @@ public class PersistentEntryCache extends EntryCache {
         }
     }
 
-    public Collection getField(Source source, FieldDefinition fieldDefinition, Row rdn) throws Exception {
+    public Collection getField(SourceMapping sourceMapping, FieldDefinition fieldDefinition, Row rdn) throws Exception {
 
-        String tableName = "penrose_"+entryId+"_field_"+source.getName()+"_"+fieldDefinition.getName();
+        String tableName = "penrose_"+entryId+"_field_"+sourceMapping.getName()+"_"+fieldDefinition.getName();
 
         StringBuffer whereClause = new StringBuffer();
         Collection parameters = new ArrayList();
 
-        Collection rdns = entryDefinition.getRdnAttributes();
+        Collection rdns = entryMapping.getRdnAttributes();
         for (Iterator i=rdns.iterator(); i.hasNext(); ) {
-            AttributeDefinition attributeDefinition = (AttributeDefinition)i.next();
-            Object attributeValue = rdn.get(attributeDefinition.getName());
+            AttributeMapping attributeMapping = (AttributeMapping)i.next();
+            Object attributeValue = rdn.get(attributeMapping.getName());
 
             if (whereClause.length() > 0) whereClause.append(" and ");
-            whereClause.append(attributeDefinition.getName());
+            whereClause.append(attributeMapping.getName());
             whereClause.append("=?");
 
             parameters.add(attributeValue);
@@ -823,7 +823,7 @@ public class PersistentEntryCache extends EntryCache {
         if (rdn == null && parentDn != null) {
             baseDn = parentDn;
         } else {
-            baseDn = parentDn == null ? entryDefinition.getDn() : rdn+","+parentDn;
+            baseDn = parentDn == null ? entryMapping.getDn() : rdn+","+parentDn;
         }
 
         DirContext ctx = null;
@@ -859,40 +859,40 @@ public class PersistentEntryCache extends EntryCache {
             if (ctx != null) try { ctx.close(); } catch (Exception e) {}
         }
 
-        Collection sources = config.getEffectiveSources(entryDefinition);
+        Collection sources = partitionConfig.getEffectiveSources(entryMapping);
 
         for (Iterator i=sources.iterator(); i.hasNext(); ) {
-            Source source = (Source)i.next();
+            SourceMapping sourceMapping = (SourceMapping)i.next();
 
-            ConnectionConfig connectionConfig = config.getConnectionConfig(source.getConnectionName());
-            SourceDefinition sourceDefinition = connectionConfig.getSourceDefinition(source.getSourceName());
+            ConnectionConfig connectionConfig = partitionConfig.getConnectionConfig(sourceMapping.getConnectionName());
+            SourceDefinition sourceDefinition = connectionConfig.getSourceDefinition(sourceMapping.getSourceName());
 
             Collection fields = sourceDefinition.getFieldDefinitions();
             for (Iterator j=fields.iterator(); j.hasNext(); ) {
                 FieldDefinition fieldDefinition = (FieldDefinition)j.next();
-                deleteField(source, fieldDefinition, rdn);
+                deleteField(sourceMapping, fieldDefinition, rdn);
             }
         }
     }
 
     public void deleteField(
-            Source source,
+            SourceMapping sourceMapping,
             FieldDefinition fieldDefinition,
             Row rdn) throws Exception {
 
-        String tableName = "penrose_"+entryId+"_field_"+source.getName()+"_"+fieldDefinition.getName();
+        String tableName = "penrose_"+entryId+"_field_"+sourceMapping.getName()+"_"+fieldDefinition.getName();
 
         StringBuffer whereClause = new StringBuffer();
         Collection parameters = new ArrayList();
 
         if (rdn != null) {
-            Collection rdns = entryDefinition.getRdnAttributes();
+            Collection rdns = entryMapping.getRdnAttributes();
             for (Iterator i=rdns.iterator(); i.hasNext(); ) {
-                AttributeDefinition attributeDefinition = (AttributeDefinition)i.next();
-                Object attributeValue = rdn.get(attributeDefinition.getName());
+                AttributeMapping attributeMapping = (AttributeMapping)i.next();
+                Object attributeValue = rdn.get(attributeMapping.getName());
 
                 if (whereClause.length() > 0) whereClause.append(" and ");
-                whereClause.append(attributeDefinition.getName());
+                whereClause.append(attributeMapping.getName());
                 whereClause.append("=?");
 
                 parameters.add(attributeValue);

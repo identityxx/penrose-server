@@ -30,7 +30,7 @@ import org.safehaus.penrose.connector.AdapterConfig;
 /**
  * @author Endi S. Dewata
  */
-public class ServerConfig {
+public class PenroseConfig {
 
     Logger log = Logger.getLogger(getClass());
 
@@ -41,6 +41,8 @@ public class ServerConfig {
 
     private int jmxRmiPort = 1099;
     private int jmxHttpPort = 8112;
+
+    private String home;
 
     private String rootDn;
     private String rootPassword;
@@ -55,7 +57,7 @@ public class ServerConfig {
     private Map adapterConfigs = new TreeMap();
     private Map systemProperties = new TreeMap();
 
-    public ServerConfig() {
+    public PenroseConfig() {
     }
 
 	/**
@@ -195,5 +197,13 @@ public class ServerConfig {
 
     public void setSourceCacheConfig(CacheConfig sourceCacheConfig) {
         this.sourceCacheConfig = sourceCacheConfig;
+    }
+
+    public String getHome() {
+        return home;
+    }
+
+    public void setHome(String home) {
+        this.home = home;
     }
 }

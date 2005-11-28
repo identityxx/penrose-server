@@ -21,11 +21,11 @@ import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.graph.GraphVisitor;
 import org.safehaus.penrose.graph.Graph;
 import org.safehaus.penrose.graph.GraphIterator;
-import org.safehaus.penrose.config.Config;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.filter.FilterTool;
 import org.safehaus.penrose.util.Formatter;
 import org.safehaus.penrose.SearchResults;
+import org.safehaus.penrose.partition.PartitionConfig;
 import org.safehaus.penrose.connector.ConnectionConfig;
 import org.apache.log4j.Logger;
 
@@ -38,12 +38,12 @@ public class LoadGraphVisitor extends GraphVisitor {
 
     Logger log = Logger.getLogger(getClass());
 
-    private Config config;
+    private PartitionConfig partitionConfig;
     private Graph graph;
     private Engine engine;
-    private EntryDefinition entryDefinition;
+    private EntryMapping entryMapping;
     private AttributeValues sourceValues;
-    private Source primarySource;
+    private SourceMapping primarySourceMapping;
 
     private Stack stack = new Stack();
 
@@ -52,17 +52,17 @@ public class LoadGraphVisitor extends GraphVisitor {
 
     public LoadGraphVisitor(
             Engine engine,
-            EntryDefinition entryDefinition,
+            EntryMapping entryMapping,
             AttributeValues sourceValues,
             Filter filter) throws Exception {
 
         this.engine = engine;
-        this.entryDefinition = entryDefinition;
+        this.entryMapping = entryMapping;
         this.sourceValues = sourceValues;
 
-        config = engine.getConfigManager().getConfig(entryDefinition);
-        graph = engine.getGraph(entryDefinition);
-        primarySource = engine.getPrimarySource(entryDefinition);
+        partitionConfig = engine.getConfigManager().getConfig(entryMapping);
+        graph = engine.getGraph(entryMapping);
+        primarySourceMapping = engine.getPrimarySource(entryMapping);
 
         Map map = new HashMap();
         map.put("filter", filter);
@@ -72,15 +72,15 @@ public class LoadGraphVisitor extends GraphVisitor {
     }
 
     public void run() throws Exception {
-        graph.traverse(this, primarySource);
+        graph.traverse(this, primarySourceMapping);
     }
 
     public void visitNode(GraphIterator graphIterator, Object node) throws Exception {
 
-        Source source = (Source)node;
+        SourceMapping sourceMapping = (SourceMapping)node;
 
         log.debug(Formatter.displaySeparator(60));
-        log.debug(Formatter.displayLine("Visiting "+source.getName(), 60));
+        log.debug(Formatter.displayLine("Visiting "+sourceMapping.getName(), 60));
         log.debug(Formatter.displaySeparator(60));
 /*
         if (source == primarySource) {
@@ -95,22 +95,22 @@ public class LoadGraphVisitor extends GraphVisitor {
         log.debug("Filter: "+filter);
         log.debug("Relationships: "+relationships);
 
-        String s = source.getParameter(Source.FILTER);
+        String s = sourceMapping.getParameter(SourceMapping.FILTER);
         if (s != null) {
             Filter sourceFilter = FilterTool.parseFilter(s);
             filter = FilterTool.appendAndFilter(filter, sourceFilter);
         }
 
-        if (sourceValues.contains(source.getName())) {
-            log.debug("Source "+source.getName()+" has been loaded.");
+        if (sourceValues.contains(sourceMapping.getName())) {
+            log.debug("Source "+sourceMapping.getName()+" has been loaded.");
             graphIterator.traverseEdges(node);
             return;
         }
 
-        log.debug("Loading source "+source.getName()+" with filter "+filter);
+        log.debug("Loading source "+sourceMapping.getName()+" with filter "+filter);
 
-        ConnectionConfig connectionConfig = config.getConnectionConfig(source.getConnectionName());
-        SourceDefinition sourceDefinition = connectionConfig.getSourceDefinition(source.getSourceName());
+        ConnectionConfig connectionConfig = partitionConfig.getConnectionConfig(sourceMapping.getConnectionName());
+        SourceDefinition sourceDefinition = connectionConfig.getSourceDefinition(sourceMapping.getSourceName());
 
         SearchResults tmp = engine.getConnector().search(sourceDefinition, filter);
 
@@ -119,21 +119,21 @@ public class LoadGraphVisitor extends GraphVisitor {
             AttributeValues av = (AttributeValues)i.next();
 
             AttributeValues sv = new AttributeValues();
-            sv.add(source.getName(), av);
+            sv.add(sourceMapping.getName(), av);
             list.add(sv);
 
             //sourceValues.add(sv);
         }
 
-        loadedSourceValues.set(source.getName(), list);
+        loadedSourceValues.set(sourceMapping.getName(), list);
 
         graphIterator.traverseEdges(node);
     }
 
     public void visitEdge(GraphIterator graphIterator, Object node1, Object node2, Object object) throws Exception {
 
-        Source fromSource = (Source)node1;
-        Source toSource = (Source)node2;
+        //SourceMapping fromSourceMapping = (SourceMapping)node1;
+        SourceMapping toSourceMapping = (SourceMapping)node2;
         Collection relationships = (Collection)object;
 
         log.debug(Formatter.displaySeparator(60));
@@ -143,8 +143,8 @@ public class LoadGraphVisitor extends GraphVisitor {
         }
         log.debug(Formatter.displaySeparator(60));
 
-        if (entryDefinition.getSource(toSource.getName()) == null) {
-            log.debug("Source "+toSource.getName()+" is not defined in entry "+entryDefinition.getDn());
+        if (entryMapping.getSourceMapping(toSourceMapping.getName()) == null) {
+            log.debug("Source "+toSourceMapping.getName()+" is not defined in entry "+entryMapping.getDn());
             return;
         }
 
@@ -161,7 +161,7 @@ public class LoadGraphVisitor extends GraphVisitor {
             filter = engineContext.getFilterTool().appendOrFilter(filter, f);
         }
 */
-        Filter filter = engine.generateFilter(toSource, relationships, sourceValues);
+        Filter filter = engine.generateFilter(toSourceMapping, relationships, sourceValues);
 
         Map map = new HashMap();
         map.put("filter", filter);

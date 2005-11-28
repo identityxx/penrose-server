@@ -19,7 +19,7 @@ package org.safehaus.penrose.engine;
 
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.filter.Filter;
-import org.safehaus.penrose.config.Config;
+import org.safehaus.penrose.partition.PartitionConfig;
 import org.safehaus.penrose.graph.GraphVisitor;
 import org.safehaus.penrose.graph.Graph;
 import org.safehaus.penrose.graph.GraphIterator;
@@ -35,12 +35,12 @@ public class SearchPlanner extends GraphVisitor {
 
     Logger log = Logger.getLogger(getClass());
 
-    private Config config;
+    private PartitionConfig partitionConfig;
     private Graph graph;
     private Engine engine;
-    private EntryDefinition entryDefinition;
+    private EntryMapping entryMapping;
     private Filter searchFilter;
-    private Source primarySource;
+    private SourceMapping primarySourceMapping;
     private AttributeValues sourceValues;
 
     private Stack depthStack = new Stack();
@@ -54,32 +54,32 @@ public class SearchPlanner extends GraphVisitor {
 
     public SearchPlanner(
             Engine engine,
-            EntryDefinition entryDefinition,
+            EntryMapping entryMapping,
             Filter filter,
             AttributeValues sourceValues) throws Exception {
 
         this.engine = engine;
-        this.entryDefinition = entryDefinition;
+        this.entryMapping = entryMapping;
         this.searchFilter = filter;
         this.sourceValues = sourceValues;
 
-        config = engine.getConfigManager().getConfig(entryDefinition);
-        graph = engine.getGraph(entryDefinition);
-        primarySource = engine.getPrimarySource(entryDefinition);                          
+        partitionConfig = engine.getConfigManager().getConfig(entryMapping);
+        graph = engine.getGraph(entryMapping);
+        primarySourceMapping = engine.getPrimarySource(entryMapping);
     }
 
     public void run() throws Exception {
 
         depthStack.push(new Integer(0));
 
-        if (primarySource != null) graph.traverse(this, primarySource);
+        if (primarySourceMapping != null) graph.traverse(this, primarySourceMapping);
 
         log.debug("Source depths and filters:");
-        for (Iterator i=entryDefinition.getSources().iterator(); i.hasNext(); ) {
-            Source source = (Source)i.next();
-            Integer depth = (Integer)depths.get(source);
-            Filter filter = (Filter)filters.get(source);
-            log.debug(" - "+source.getName()+": "+filter+" ("+depth+")");
+        for (Iterator i=entryMapping.getSourceMappings().iterator(); i.hasNext(); ) {
+            SourceMapping sourceMapping = (SourceMapping)i.next();
+            Integer depth = (Integer)depths.get(sourceMapping);
+            Filter filter = (Filter)filters.get(sourceMapping);
+            log.debug(" - "+sourceMapping.getName()+": "+filter+" ("+depth+")");
         }
 
         log.debug("Connecting sources:");
@@ -97,21 +97,21 @@ public class SearchPlanner extends GraphVisitor {
             int rindex = rhs.indexOf(".");
             String rsourceName = rhs.substring(0, rindex);
 
-            Source fromSource;
-            Source toSource;
+            SourceMapping fromSourceMapping;
+            SourceMapping toSourceMapping;
 
-            if (entryDefinition.getSource(lsourceName) == null) {
-                fromSource = config.getEffectiveSource(entryDefinition, lsourceName);
-                toSource = entryDefinition.getSource(rsourceName);
+            if (entryMapping.getSourceMapping(lsourceName) == null) {
+                fromSourceMapping = partitionConfig.getEffectiveSource(entryMapping, lsourceName);
+                toSourceMapping = entryMapping.getSourceMapping(rsourceName);
 
             } else {
-                fromSource = config.getEffectiveSource(entryDefinition, rsourceName);
-                toSource = entryDefinition.getSource(lsourceName);
+                fromSourceMapping = partitionConfig.getEffectiveSource(entryMapping, rsourceName);
+                toSourceMapping = entryMapping.getSourceMapping(lsourceName);
             }
 
             Map map = new HashMap();
-            map.put("fromSource", fromSource);
-            map.put("toSource", toSource);
+            map.put("fromSource", fromSourceMapping);
+            map.put("toSource", toSourceMapping);
             map.put("relationships", relationships);
 
             connectingSources.add(map);
@@ -120,25 +120,25 @@ public class SearchPlanner extends GraphVisitor {
 
     public void visitNode(GraphIterator graphIterator, Object node) throws Exception {
 
-        Source source = (Source)node;
+        SourceMapping sourceMapping = (SourceMapping)node;
 
         if (log.isDebugEnabled()) {
             log.debug(Formatter.displaySeparator(60));
-            log.debug(Formatter.displayLine("Visiting "+source.getName(), 60));
+            log.debug(Formatter.displayLine("Visiting "+sourceMapping.getName(), 60));
             log.debug(Formatter.displaySeparator(60));
         }
 
         Integer depth = (Integer)depthStack.peek();
 
-        Filter sourceFilter = engine.getFilterTool().toSourceFilter(null, entryDefinition, source, searchFilter);
+        Filter sourceFilter = engine.getFilterTool().toSourceFilter(null, entryMapping, sourceMapping, searchFilter);
         log.debug("Filter: "+sourceFilter+" ("+(sourceFilter == null ? "null" : "not null")+")");
         log.debug("Depth: "+depth);
 
-        filters.put(source, sourceFilter);
-        depths.put(source, depth);
+        filters.put(sourceMapping, sourceFilter);
+        depths.put(sourceMapping, depth);
 
         depthStack.push(new Integer(depth.intValue()+1));
-        sourceStack.push(source);
+        sourceStack.push(sourceMapping);
 
         graphIterator.traverseEdges(node);
 
@@ -148,8 +148,8 @@ public class SearchPlanner extends GraphVisitor {
 
     public void visitEdge(GraphIterator graphIterator, Object node1, Object node2, Object object) throws Exception {
 
-        Source fromSource = (Source)node1;
-        Source toSource = (Source)node2;
+        SourceMapping fromSourceMapping = (SourceMapping)node1;
+        SourceMapping toSourceMapping = (SourceMapping)node2;
         Collection relationships = (Collection)object;
 
         if (log.isDebugEnabled()) {
@@ -161,8 +161,8 @@ public class SearchPlanner extends GraphVisitor {
             log.debug(Formatter.displaySeparator(60));
         }
         
-        if (entryDefinition.getSource(toSource.getName()) == null) {
-            log.debug("Source "+toSource.getName()+" is not defined in entry "+entryDefinition.getDn());
+        if (entryMapping.getSourceMapping(toSourceMapping.getName()) == null) {
+            log.debug("Source "+toSourceMapping.getName()+" is not defined in entry "+entryMapping.getDn());
             connectingRelationships.add(relationships);
             
             return;
@@ -179,12 +179,12 @@ public class SearchPlanner extends GraphVisitor {
         return filters;
     }
 
-    public Source getFirstSource() {
-        Source source = null;
+    public SourceMapping getFirstSource() {
+        SourceMapping sourceMapping = null;
         int maxDepth = -1;
 
-        for (Iterator i=entryDefinition.getSources().iterator(); i.hasNext(); ) {
-            Source s = (Source)i.next();
+        for (Iterator i=entryMapping.getSourceMappings().iterator(); i.hasNext(); ) {
+            SourceMapping s = (SourceMapping)i.next();
 
             Integer depth = (Integer)depths.get(s);
             if (depth == null) continue;
@@ -194,14 +194,14 @@ public class SearchPlanner extends GraphVisitor {
 
             //log.debug("Comparing with "+s.getName()+": "+f+" ("+d+")");
 
-            if (source == null || (d > maxDepth && f != null)) {
-                source = s;
+            if (sourceMapping == null || (d > maxDepth && f != null)) {
+                sourceMapping = s;
                 maxDepth = d;
                 //log.debug("Selecting "+s.getName()+": "+f+" ("+d+")");
             }
         }
 
-        return source;
+        return sourceMapping;
     }
 
     public Collection getConnectingRelationships() {
