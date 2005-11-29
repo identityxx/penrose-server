@@ -26,8 +26,7 @@ import java.io.FileInputStream;
 import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
 import java.util.jar.JarEntry;
-
-import com.sun.tools.javac.Main;
+import java.lang.reflect.Method;
 
 /**
  * @author Endi S. Dewata
@@ -96,7 +95,13 @@ public class SchemaGenerator {
         //String path = file.getPath().substring(prefix.length()+1);
         //System.out.println("Compiling "+path);
 
-        Main.compile(new String[] { file.getAbsolutePath() });
+        String paths[] = new String[] { file.getAbsolutePath() };
+        //Main.compile(paths);
+
+        Class clazz = Class.forName("com.sun.tools.javac.Main");
+        Method method = clazz.getMethod("compile", new Class[] { Class.forName("[Ljava.lang.String;") });
+
+        method.invoke(null, new Object[] { paths });
     }
 
     public void createJar() throws Exception {

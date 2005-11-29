@@ -13,6 +13,7 @@
     <property name="prefix" value=""/>
     <property name="penrose.home" value="${prefix}/usr/local/penrose"/>
     <property name="iscc.path" value="ISCC.exe"/>
+    <property name="docs.target" value="${project.dist}/javadoc"/>
 
     <path id="lib.path">
         <fileset dir="lib">
@@ -82,6 +83,14 @@
             destdir="target/javadoc"
             classpathref="lib.path">
         </javadoc>
+    </target>
+
+    <target name="docs-publish" depends="docs">
+        <delete dir="${docs.target}"/>
+        <mkdir dir="${docs.target}"/>
+        <copy todir="${docs.target}" overwrite="true">
+            <fileset dir="target/javadoc" includes="**/*"/>
+        </copy>
     </target>
 
     <target name="install">
