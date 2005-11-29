@@ -195,7 +195,7 @@ public interface Backend {
     public int modify(
     		int connectionId,
 			String dn,
-			List modifications)
+			Collection modifications)
     throws Exception;
 
     /**

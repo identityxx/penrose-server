@@ -45,7 +45,7 @@ public class ModifyHandler {
         this.handler = handler;
     }
 
-    public int modify(PenroseSession session, String dn, List modifications)
+    public int modify(PenroseSession session, String dn, Collection modifications)
 			throws Exception {
 
         log.info("-------------------------------------------------");
@@ -106,7 +106,7 @@ public class ModifyHandler {
         return rc;
     }
 
-    public int performModify(PenroseSession session, String dn, List modifications)
+    public int performModify(PenroseSession session, String dn, Collection modifications)
 			throws Exception {
 
 		String ndn = LDAPDN.normalize(dn);

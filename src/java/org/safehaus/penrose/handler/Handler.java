@@ -123,7 +123,7 @@ public class Handler implements ModuleContext {
         return getDeleteHandler().delete(session, dn);
     }
 
-    public int modify(PenroseSession session, String dn, List modifications) throws Exception {
+    public int modify(PenroseSession session, String dn, Collection modifications) throws Exception {
         return getModifyHandler().modify(session, dn, modifications);
     }
 

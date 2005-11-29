@@ -472,7 +472,7 @@ public class PenroseBackend implements Backend {
     public int modify(
             int connectionId,
             String dn,
-            List modifications)
+            Collection modifications)
     throws Exception {
 
         Logger log = Logger.getLogger(getClass());

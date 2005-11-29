@@ -91,7 +91,7 @@ public class PenroseSession {
         return handler.delete(this, dn);
     }
 
-    public int modify(String dn, List modifications) throws Exception {
+    public int modify(String dn, Collection modifications) throws Exception {
         return handler.modify(this, dn, modifications);
     }
 

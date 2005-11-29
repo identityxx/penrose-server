@@ -127,7 +127,7 @@ public class PenrosePartition extends AbstractDirectoryPartition {
         log.debug("changetype: modify");
 
         try {
-            List modifications = new ArrayList();
+            Collection modifications = new ArrayList();
 
             for (Enumeration e=attributes.getAll(); e.hasMoreElements(); ) {
                 Attribute attribute = (Attribute)e.nextElement();
@@ -170,7 +170,7 @@ public class PenrosePartition extends AbstractDirectoryPartition {
         log.debug("changetype: modify");
 
         try {
-            List modifications = new ArrayList();
+            Collection modifications = new ArrayList();
 
             for (int i=0; i<modificationItems.length; i++) {
                 ModificationItem mi = modificationItems[i];
