@@ -31,7 +31,7 @@ import org.safehaus.penrose.engine.EngineConfig;
 import org.safehaus.penrose.mapping.EntryMapping;
 import org.safehaus.penrose.util.Formatter;
 import org.safehaus.penrose.handler.Handler;
-import org.safehaus.penrose.SearchResults;
+import org.safehaus.penrose.session.PenroseSearchResults;
 import org.apache.log4j.Logger;
 import org.ietf.ldap.LDAPConnection;
 import org.ietf.ldap.LDAPSearchConstraints;

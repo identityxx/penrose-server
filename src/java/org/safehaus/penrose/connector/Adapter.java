@@ -20,7 +20,8 @@ package org.safehaus.penrose.connector;
 
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.filter.Filter;
-import org.safehaus.penrose.SearchResults;
+import org.safehaus.penrose.session.PenroseSearchResults;
+import org.safehaus.penrose.session.PenroseSearchResults;
 import org.apache.log4j.Logger;
 
 import java.util.Collection;
@@ -61,14 +62,14 @@ public abstract class Adapter {
      *
      * @throws Exception
      */
-    public abstract SearchResults search(SourceDefinition sourceDefinition, Filter filter, long sizeLimit) throws Exception;
+    public abstract PenroseSearchResults search(SourceDefinition sourceDefinition, Filter filter, long sizeLimit) throws Exception;
 
     /**
      * Load.
      *
      * @throws Exception
      */
-    public abstract SearchResults load(SourceDefinition sourceDefinition, Filter filter, long sizeLimit) throws Exception;
+    public abstract PenroseSearchResults load(SourceDefinition sourceDefinition, Filter filter, long sizeLimit) throws Exception;
 
     /**
      * Add.
@@ -93,7 +94,7 @@ public abstract class Adapter {
 
     public abstract int getLastChangeNumber(SourceDefinition sourceDefinition) throws Exception;
 
-    public abstract SearchResults getChanges(SourceDefinition sourceDefinition, int lastChangeNumber) throws Exception;
+    public abstract PenroseSearchResults getChanges(SourceDefinition sourceDefinition, int lastChangeNumber) throws Exception;
 
     public AdapterConfig getAdapterConfig() {
         return adapterConfig;

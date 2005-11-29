@@ -25,8 +25,9 @@ import org.apache.ldap.common.filter.ExprNode;
 import org.apache.log4j.Logger;
 import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.session.PenroseSession;
-import org.safehaus.penrose.SearchResults;
+import org.safehaus.penrose.session.PenroseSearchResults;
 import org.safehaus.penrose.session.PenroseSession;
+import org.safehaus.penrose.session.PenroseSearchControls;
 import org.safehaus.penrose.util.ExceptionUtil;
 import org.safehaus.penrose.mapping.EntryMapping;
 import org.safehaus.penrose.partition.Partition;
@@ -293,13 +294,15 @@ public class PenroseInterceptor extends BaseInterceptor {
             PenroseSession session = penrose.newSession();
             session.setBindDn(principalDn.toString());
 
+            PenroseSearchControls sc = new PenroseSearchControls();
+            sc.setScope(PenroseSearchControls.SCOPE_ONE);
+            sc.setDereference(PenroseSearchControls.DEREF_ALWAYS);
+
             String baseDn = dn.toString();
-            SearchResults results = session.search(
+            PenroseSearchResults results = session.search(
                     baseDn,
-                    LDAPConnection.SCOPE_ONE,
-                    LDAPSearchConstraints.DEREF_ALWAYS,
                     "(objectClass=*)",
-                    new ArrayList());
+                    sc);
 /*
             int rc = results.getReturnCode();
             connection.close();
@@ -349,12 +352,15 @@ public class PenroseInterceptor extends BaseInterceptor {
             PenroseSession session = penrose.newSession();
             session.setBindDn(principalDn.toString());
 
+            PenroseSearchControls sc = new PenroseSearchControls();
+            sc.setScope(PenroseSearchControls.SCOPE_BASE);
+            sc.setDereference(PenroseSearchControls.DEREF_ALWAYS);
+
             String base = name.toString();
-            SearchResults results = session.search(
+            PenroseSearchResults results = session.search(
                     base,
-                    LDAPConnection.SCOPE_BASE,
-                    LDAPSearchConstraints.DEREF_ALWAYS,
-                    "(objectClass=*)", new ArrayList());
+                    "(objectClass=*)",
+                    sc);
 
             boolean result = results.getReturnCode() == LDAPException.SUCCESS && results.size() == 1;
 
@@ -404,13 +410,15 @@ public class PenroseInterceptor extends BaseInterceptor {
             PenroseSession session = penrose.newSession();
             session.setBindDn(principalDn.toString());
 
+            PenroseSearchControls sc = new PenroseSearchControls();
+            sc.setScope(PenroseSearchControls.SCOPE_BASE);
+            sc.setDereference(PenroseSearchControls.DEREF_ALWAYS);
+
             String baseDn = dn.toString();
-            SearchResults results = session.search(
+            PenroseSearchResults results = session.search(
                     baseDn,
-                    LDAPConnection.SCOPE_BASE,
-                    LDAPSearchConstraints.DEREF_ALWAYS,
                     "(objectClass=*)",
-                    new ArrayList());
+                    sc);
 
             int rc = results.getReturnCode();
             session.close();
@@ -475,13 +483,15 @@ public class PenroseInterceptor extends BaseInterceptor {
             PenroseSession session = penrose.newSession();
             session.setBindDn(principalDn.toString());
 
+            PenroseSearchControls sc = new PenroseSearchControls();
+            sc.setScope(PenroseSearchControls.SCOPE_BASE);
+            sc.setDereference(PenroseSearchControls.DEREF_ALWAYS);
+
             String baseDn = dn.toString();
-            SearchResults results = session.search(
+            PenroseSearchResults results = session.search(
                     baseDn,
-                    LDAPConnection.SCOPE_BASE,
-                    LDAPSearchConstraints.DEREF_ALWAYS,
                     "(objectClass=*)",
-                    new ArrayList());
+                    sc);
 
             int rc = results.getReturnCode();
             session.close();
@@ -538,7 +548,6 @@ public class PenroseInterceptor extends BaseInterceptor {
             log.debug("search(\""+baseDn+"\") as "+principalDn);
 
             if (searchControls != null && searchControls.getReturningAttributes() != null) {
-                Collection requestedAttrs = Arrays.asList(searchControls.getReturningAttributes());
 
                 if ("".equals(baseDn) && searchControls.getSearchScope() == SearchControls.OBJECT_SCOPE) {
 
@@ -549,12 +558,15 @@ public class PenroseInterceptor extends BaseInterceptor {
                     PenroseSession session = penrose.newSession();
                     session.setBindDn(principalDn.toString());
 
-                    SearchResults results = session.search(
+                    PenroseSearchControls sc = new PenroseSearchControls();
+                    sc.setScope(PenroseSearchControls.SCOPE_BASE);
+                    sc.setDereference(PenroseSearchControls.DEREF_ALWAYS);
+                    sc.setAttributes(searchControls.getReturningAttributes());
+
+                    PenroseSearchResults results = session.search(
                             baseDn,
-                            LDAPConnection.SCOPE_BASE,
-                            LDAPSearchConstraints.DEREF_ALWAYS,
                             "(objectClass=*)",
-                            requestedAttrs);
+                            sc);
 
                     LDAPEntry entry = (LDAPEntry)results.next();
                     LDAPAttributeSet set = entry.getAttributeSet();
@@ -578,7 +590,7 @@ public class PenroseInterceptor extends BaseInterceptor {
 
                     session.close();
 
-                    SearchResults results2 = new SearchResults();
+                    PenroseSearchResults results2 = new PenroseSearchResults();
                     results2.add(entry);
                     results2.close();
 
@@ -610,12 +622,15 @@ public class PenroseInterceptor extends BaseInterceptor {
             PenroseSession session = penrose.newSession();
             session.setBindDn(principalDn.toString());
 
-            SearchResults results = session.search(
+            PenroseSearchControls sc = new PenroseSearchControls();
+            sc.setScope(searchControls.getSearchScope());
+            sc.setDereference(PenroseSearchControls.DEREF_ALWAYS);
+            sc.setAttributes(searchControls.getReturningAttributes());
+
+            PenroseSearchResults results = session.search(
                     baseDn,
-                    scope,
-                    LDAPSearchConstraints.DEREF_ALWAYS,
                     newFilter,
-                    attributeNames);
+                    sc);
 
             return new PenroseEnumeration(results);
 

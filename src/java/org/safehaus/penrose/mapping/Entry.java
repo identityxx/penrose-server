@@ -159,7 +159,7 @@ public class Entry {
             Collection attributeNames)
             throws Exception {
 
-        if (attributeNames == null || attributeNames.size() == 0 || attributeNames.contains("*")) return;
+        if (attributeNames == null || attributeNames.contains("*")) return;
 
         LDAPAttributeSet attributeSet = ldapEntry.getAttributeSet();
         Collection list = new ArrayList();

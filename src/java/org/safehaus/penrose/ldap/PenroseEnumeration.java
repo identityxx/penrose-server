@@ -17,7 +17,8 @@
  */
 package org.safehaus.penrose.ldap;
 
-import org.safehaus.penrose.SearchResults;
+import org.safehaus.penrose.session.PenroseSearchResults;
+import org.safehaus.penrose.session.PenroseSearchResults;
 import org.ietf.ldap.LDAPEntry;
 import org.ietf.ldap.LDAPAttributeSet;
 import org.ietf.ldap.LDAPAttribute;
@@ -36,9 +37,9 @@ public class PenroseEnumeration implements NamingEnumeration {
 
     Logger log = Logger.getLogger(getClass());
 
-    public SearchResults searchResults;
+    public PenroseSearchResults searchResults;
 
-    public PenroseEnumeration(SearchResults searchResults) {
+    public PenroseEnumeration(PenroseSearchResults searchResults) {
         this.searchResults = searchResults;
     }
 

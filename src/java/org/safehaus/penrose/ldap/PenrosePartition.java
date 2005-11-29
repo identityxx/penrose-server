@@ -22,8 +22,10 @@ import org.apache.ldap.common.filter.ExprNode;
 import org.apache.log4j.Logger;
 import org.ietf.ldap.*;
 import org.safehaus.penrose.Penrose;
-import org.safehaus.penrose.SearchResults;
+import org.safehaus.penrose.session.PenroseSearchResults;
 import org.safehaus.penrose.session.PenroseSession;
+import org.safehaus.penrose.session.PenroseSearchResults;
+import org.safehaus.penrose.session.PenroseSearchControls;
 
 import javax.naming.Name;
 import javax.naming.NamingException;
@@ -227,13 +229,15 @@ public class PenrosePartition extends AbstractDirectoryPartition {
         try {
             PenroseSession session = penrose.newSession();
 
+            PenroseSearchControls sc = new PenroseSearchControls();
+            sc.setScope(PenroseSearchControls.SCOPE_ONE);
+            sc.setDereference(PenroseSearchControls.DEREF_ALWAYS);
+
             String baseDn = dn.toString();
-            SearchResults results = session.search(
+            PenroseSearchResults results = session.search(
                     baseDn,
-                    LDAPConnection.SCOPE_ONE,
-                    LDAPSearchConstraints.DEREF_ALWAYS,
                     "(objectClass=*)",
-                    new ArrayList());
+                    sc);
 /*
             int rc = results.getReturnCode();
             connection.close();
@@ -271,13 +275,16 @@ public class PenrosePartition extends AbstractDirectoryPartition {
         try {
             PenroseSession session = penrose.newSession();
 
+            PenroseSearchControls sc = new PenroseSearchControls();
+            sc.setScope(searchControls.getSearchScope());
+            sc.setDereference(PenroseSearchControls.DEREF_ALWAYS);
+            sc.setAttributes(searchControls.getReturningAttributes());
+
             String baseDn = base.toString();
-            SearchResults results = session.search(
+            PenroseSearchResults results = session.search(
                     baseDn,
-                    scope,
-                    LDAPSearchConstraints.DEREF_ALWAYS,
                     newFilter,
-                    attributeNames);
+                    sc);
 /*
             int rc = results.getReturnCode();
             connection.close();
@@ -313,13 +320,15 @@ public class PenrosePartition extends AbstractDirectoryPartition {
         try {
             PenroseSession session = penrose.newSession();
 
+            PenroseSearchControls sc = new PenroseSearchControls();
+            sc.setScope(PenroseSearchControls.SCOPE_BASE);
+            sc.setDereference(PenroseSearchControls.DEREF_ALWAYS);
+
             String baseDn = dn.toString();
-            SearchResults results = session.search(
+            PenroseSearchResults results = session.search(
                     baseDn,
-                    LDAPConnection.SCOPE_BASE,
-                    LDAPSearchConstraints.DEREF_ALWAYS,
                     "(objectClass=*)",
-                    new ArrayList());
+                    sc);
 
             int rc = results.getReturnCode();
             session.close();
@@ -374,12 +383,15 @@ public class PenrosePartition extends AbstractDirectoryPartition {
         try {
             PenroseSession session = penrose.newSession();
 
+            PenroseSearchControls sc = new PenroseSearchControls();
+            sc.setScope(PenroseSearchControls.SCOPE_BASE);
+            sc.setDereference(PenroseSearchControls.DEREF_ALWAYS);
+
             String base = name.toString();
-            SearchResults results = session.search(
+            PenroseSearchResults results = session.search(
                     base,
-                    LDAPConnection.SCOPE_BASE,
-                    LDAPSearchConstraints.DEREF_ALWAYS,
-                    "(objectClass=*)", new ArrayList());
+                    "(objectClass=*)",
+                    sc);
 
             boolean result = results.getReturnCode() == LDAPException.SUCCESS && results.size() == 1;
 

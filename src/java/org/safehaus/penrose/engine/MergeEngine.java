@@ -18,7 +18,8 @@
 package org.safehaus.penrose.engine;
 
 import org.safehaus.penrose.mapping.*;
-import org.safehaus.penrose.SearchResults;
+import org.safehaus.penrose.session.PenroseSearchResults;
+import org.safehaus.penrose.session.PenroseSearchResults;
 import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.filter.FilterTool;
@@ -42,8 +43,8 @@ public class MergeEngine {
 
     public void merge(
             final EntryMapping entryMapping,
-            final SearchResults loadedBatches,
-            final SearchResults results
+            final PenroseSearchResults loadedBatches,
+            final PenroseSearchResults results
             ) throws Exception {
 
         String s = engine.getEngineConfig().getParameter(EngineConfig.ALLOW_CONCURRENCY);
@@ -70,9 +71,9 @@ public class MergeEngine {
 
     public void mergeBackground(
             EntryMapping entryMapping,
-            SearchResults entries,
+            PenroseSearchResults entries,
             Interpreter interpreter,
-            SearchResults results
+            PenroseSearchResults results
             ) throws Exception {
 
         //MRSWLock lock = getLock(entryMapping;
@@ -131,14 +132,14 @@ public class MergeEngine {
         }
     }
 
-    public SearchResults mergeEntries(
+    public PenroseSearchResults mergeEntries(
             String dn,
             EntryMapping entryMapping,
             AttributeValues primarySourceValues,
             AttributeValues loadedSourceValues,
             Interpreter interpreter,
             Row pk,
-            SearchResults results)
+            PenroseSearchResults results)
             throws Exception {
 
         AttributeValues sourceValues;

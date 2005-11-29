@@ -17,9 +17,10 @@
  */
 package org.safehaus.penrose.handler;
 
-import org.safehaus.penrose.SearchResults;
+import org.safehaus.penrose.session.PenroseSearchResults;
 import org.safehaus.penrose.*;
 import org.safehaus.penrose.session.PenroseSession;
+import org.safehaus.penrose.session.PenroseSearchResults;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.acl.ACLEngine;
 import org.safehaus.penrose.filter.FilterTool;
@@ -130,7 +131,7 @@ public class Handler implements ModuleContext {
         return getModRdnHandler().modrdn(session, dn, newRdn);
     }
 
-    public SearchResults search(
+    public PenroseSearchResults search(
             final PenroseSession session,
             final String base,
             final int scope,
@@ -139,7 +140,7 @@ public class Handler implements ModuleContext {
             final Collection attributeNames)
             throws Exception {
 
-        final SearchResults results = new SearchResults();
+        final PenroseSearchResults results = new PenroseSearchResults();
 
         //getSearchHandler().search(connection, base, scope, deref, filter, attributeNames, results);
 

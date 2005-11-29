@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
-package org.safehaus.penrose;
+package org.safehaus.penrose.session;
 
 import org.ietf.ldap.LDAPException;
 import org.apache.log4j.Logger;
@@ -28,7 +28,7 @@ import java.util.Iterator;
 /**
  * @author Endi S. Dewata
  */
-public class SearchResults implements Iterator {
+public class PenroseSearchResults implements Iterator {
 
     public Logger log = Logger.getLogger(getClass());
 

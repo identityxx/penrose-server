@@ -22,7 +22,8 @@ import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.filter.FilterTool;
 import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.util.Formatter;
-import org.safehaus.penrose.SearchResults;
+import org.safehaus.penrose.session.PenroseSearchResults;
+import org.safehaus.penrose.session.PenroseSearchResults;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.connector.ConnectionConfig;
 import org.apache.log4j.Logger;
@@ -48,7 +49,7 @@ public class SearchEngine {
             final AttributeValues parentSourceValues,
             final EntryMapping entryMapping,
             final Filter filter,
-            final SearchResults entries
+            final PenroseSearchResults entries
             ) throws Exception {
 
         boolean staticEntry = engine.isStatic(entryMapping);
@@ -81,7 +82,7 @@ public class SearchEngine {
             final AttributeValues parentSourceValues,
             final EntryMapping entryMapping,
             final Filter filter,
-            final SearchResults entries
+            final PenroseSearchResults entries
             ) throws Exception {
 
         Interpreter interpreter = engine.getInterpreterFactory().newInstance();
@@ -104,7 +105,7 @@ public class SearchEngine {
             final AttributeValues parentSourceValues,
             final EntryMapping entryMapping,
             final Filter filter,
-            final SearchResults entries
+            final PenroseSearchResults entries
             ) throws Exception {
 
         String s = engine.getEngineConfig().getParameter(EngineConfig.ALLOW_CONCURRENCY);
@@ -132,7 +133,7 @@ public class SearchEngine {
             final AttributeValues parentSourceValues,
             final EntryMapping entryMapping,
             final Filter filter,
-            SearchResults entries)
+            PenroseSearchResults entries)
             throws Exception {
 
         //boolean unique = engine.isUnique(entryMapping  //log.debug("Entry "+entryMapping" "+(unique ? "is" : "is not")+" unique.");
@@ -186,7 +187,7 @@ public class SearchEngine {
         
         log.debug("Filter cache does not contain filter "+filter);
 
-        final SearchResults values = new SearchResults();
+        final PenroseSearchResults values = new PenroseSearchResults();
 
         String s = engine.getEngineConfig().getParameter(EngineConfig.ALLOW_CONCURRENCY);
         boolean allowConcurrency = s == null ? true : new Boolean(s).booleanValue();
@@ -314,7 +315,7 @@ public class SearchEngine {
             final AttributeValues parentSourceValues,
             final EntryMapping entryMapping,
             final Filter filter,
-            final SearchResults results) throws Exception {
+            final PenroseSearchResults results) throws Exception {
 
         String s = engine.getEngineConfig().getParameter(EngineConfig.ALLOW_CONCURRENCY);
         boolean allowConcurrency = s == null ? true : new Boolean(s).booleanValue();
@@ -340,7 +341,7 @@ public class SearchEngine {
             AttributeValues parentSourceValues,
             EntryMapping entryMapping,
             Filter filter,
-            SearchResults results) throws Exception {
+            PenroseSearchResults results) throws Exception {
 
         SearchPlanner planner = new SearchPlanner(
                 engine,
@@ -371,7 +372,7 @@ public class SearchEngine {
         ConnectionConfig connectionConfig = partition.getConnectionConfig(sourceMapping.getConnectionName());
         SourceDefinition sourceDefinition = connectionConfig.getSourceDefinition(sourceMapping.getSourceName());
 
-        SearchResults sr = engine.getConnector().search(sourceDefinition, newFilter);
+        PenroseSearchResults sr = engine.getConnector().search(sourceDefinition, newFilter);
 
         Interpreter interpreter = engine.getInterpreterFactory().newInstance();
 
@@ -402,7 +403,7 @@ public class SearchEngine {
             AttributeValues sourceValues,
             EntryMapping entryMapping,
             Filter filter,
-            SearchResults results)
+            PenroseSearchResults results)
             throws Exception {
 
         SearchPlanner planner = new SearchPlanner(

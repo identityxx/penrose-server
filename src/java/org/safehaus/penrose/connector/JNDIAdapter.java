@@ -29,7 +29,7 @@ import org.safehaus.penrose.util.PasswordUtil;
 import org.safehaus.penrose.util.Formatter;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.mapping.*;
-import org.safehaus.penrose.SearchResults;
+import org.safehaus.penrose.session.PenroseSearchResults;
 
 /**
  * @author Endi S. Dewata
@@ -81,9 +81,9 @@ public class JNDIAdapter extends Adapter {
         //log.debug("Suffix: "+suffix);
     }
 
-    public SearchResults search(SourceDefinition sourceDefinition, Filter filter, long sizeLimit) throws Exception {
+    public PenroseSearchResults search(SourceDefinition sourceDefinition, Filter filter, long sizeLimit) throws Exception {
 
-        SearchResults results = new SearchResults();
+        PenroseSearchResults results = new PenroseSearchResults();
 
         String ldapBase = sourceDefinition.getParameter(BASE_DN);
         if ("".equals(ldapBase)) {
@@ -138,9 +138,9 @@ public class JNDIAdapter extends Adapter {
         return results;
     }
 
-    public SearchResults load(SourceDefinition sourceDefinition, Filter filter, long sizeLimit) throws Exception {
+    public PenroseSearchResults load(SourceDefinition sourceDefinition, Filter filter, long sizeLimit) throws Exception {
 
-        SearchResults results = new SearchResults();
+        PenroseSearchResults results = new PenroseSearchResults();
 
         String ldapBase = sourceDefinition.getParameter(BASE_DN);
         if ("".equals(ldapBase)) {
@@ -629,9 +629,9 @@ public class JNDIAdapter extends Adapter {
         return 0;
     }
     
-    public SearchResults getChanges(SourceDefinition sourceDefinition, int lastChangeNumber) throws Exception {
+    public PenroseSearchResults getChanges(SourceDefinition sourceDefinition, int lastChangeNumber) throws Exception {
 
-        SearchResults results = new SearchResults();
+        PenroseSearchResults results = new PenroseSearchResults();
 
         //int sizeLimit = 100;
 

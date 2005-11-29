@@ -18,7 +18,7 @@
 package org.safehaus.penrose.openldap;
 
 import org.openldap.backend.Result;
-import org.safehaus.penrose.SearchResults;
+import org.safehaus.penrose.session.PenroseSearchResults;
 
 import java.util.Collection;
 import java.util.Iterator;
@@ -28,9 +28,9 @@ import java.util.Iterator;
  */
 public class PenroseResult implements Result {
 
-    private SearchResults results;
+    private PenroseSearchResults results;
 
-    public PenroseResult(SearchResults results) {
+    public PenroseResult(PenroseSearchResults results) {
         this.results = results;
     }
 

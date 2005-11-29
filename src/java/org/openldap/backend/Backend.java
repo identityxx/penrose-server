@@ -133,7 +133,7 @@ public interface Backend {
 			String baseDn,
 			int scope,
 			String filter,
-			Collection attributeNames)
+			String[] attributeNames)
     throws Exception;
 
     /**
@@ -154,7 +154,7 @@ public interface Backend {
 			int scope,
 			int deref,
 			String filter,
-			Collection attributeNames)
+			String[] attributeNames)
     throws Exception;
 
     /**

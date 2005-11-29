@@ -19,7 +19,8 @@ package org.safehaus.penrose.engine;
 
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.interpreter.Interpreter;
-import org.safehaus.penrose.SearchResults;
+import org.safehaus.penrose.session.PenroseSearchResults;
+import org.safehaus.penrose.session.PenroseSearchResults;
 import org.safehaus.penrose.util.Formatter;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.filter.FilterTool;
@@ -43,9 +44,9 @@ public class LoadEngine {
 
     public void load(
             final EntryMapping entryMapping,
-            final SearchResults entries,
-            final SearchResults loadedEntries,
-            final SearchResults results
+            final PenroseSearchResults entries,
+            final PenroseSearchResults loadedEntries,
+            final PenroseSearchResults results
             ) throws Exception {
 
         String s = engine.getEngineConfig().getParameter(EngineConfig.ALLOW_CONCURRENCY);
@@ -89,7 +90,7 @@ public class LoadEngine {
         }
 
         final Interpreter interpreter = engine.getInterpreterFactory().newInstance();
-        final SearchResults batches = new SearchResults();
+        final PenroseSearchResults batches = new PenroseSearchResults();
 
         if (allowConcurrency) {
             engine.execute(new Runnable() {
@@ -127,9 +128,9 @@ public class LoadEngine {
     public void createBatches(
             Interpreter interpreter,
             EntryMapping entryMapping,
-            SearchResults entries,
-            SearchResults results,
-            SearchResults batches
+            PenroseSearchResults entries,
+            PenroseSearchResults results,
+            PenroseSearchResults batches
             ) throws Exception {
 
         try {
@@ -185,8 +186,8 @@ public class LoadEngine {
 
     public void loadBackground(
             EntryMapping entryMapping,
-            SearchResults batches,
-            SearchResults loadedBatches
+            PenroseSearchResults batches,
+            PenroseSearchResults loadedBatches
             ) throws Exception {
 
         //MRSWLock lock = getLock(entryMapping;

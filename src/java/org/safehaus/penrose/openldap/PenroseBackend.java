@@ -26,8 +26,8 @@ import org.safehaus.penrose.openldap.config.NameValueItem;
 import org.safehaus.penrose.openldap.config.SlapdConfig;
 import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.session.PenroseSession;
-import org.safehaus.penrose.SearchResults;
-import org.safehaus.penrose.session.PenroseSession;
+import org.safehaus.penrose.session.PenroseSearchResults;
+import org.safehaus.penrose.session.*;
 import org.safehaus.penrose.config.PenroseConfig;
 import org.apache.log4j.Logger;
 import org.openldap.backend.Backend;
@@ -322,7 +322,7 @@ public class PenroseBackend implements Backend {
             String base,
             int scope,
             String filter,
-            Collection attributeNames)
+            String[] attributeNames)
     throws Exception {
 
         Logger log = Logger.getLogger(getClass());
@@ -332,15 +332,20 @@ public class PenroseBackend implements Backend {
             session = getConnection(connectionId);
         }
 
-        SearchResults results;
+        PenroseSearchResults results;
 
         try {
-            results = session.search(base, scope, LDAPSearchConstraints.DEREF_ALWAYS, filter, attributeNames);
+            PenroseSearchControls sc = new PenroseSearchControls();
+            sc.setScope(scope);
+            sc.setDereference(PenroseSearchControls.DEREF_ALWAYS);
+            sc.setAttributes(attributeNames);
+
+            results = session.search(base, filter, sc);
 
         } catch (Throwable e) {
             log.error(e.getMessage(), e);
 
-            results = new SearchResults();
+            results = new PenroseSearchResults();
             results.setReturnCode(LDAPException.OPERATIONS_ERROR);
             results.close();
         }
@@ -366,7 +371,7 @@ public class PenroseBackend implements Backend {
             int scope,
             int deref,
             String filter,
-            Collection attributeNames)
+            String[] attributeNames)
     throws Exception {
 
         Logger log = Logger.getLogger(getClass());
@@ -376,15 +381,20 @@ public class PenroseBackend implements Backend {
             session = getConnection(connectionId);
         }
 
-        SearchResults results;
+        PenroseSearchResults results;
 
         try {
-            results = session.search(base, scope, deref, filter, attributeNames);
+            PenroseSearchControls sc = new PenroseSearchControls();
+            sc.setScope(scope);
+            sc.setDereference(PenroseSearchControls.DEREF_ALWAYS);
+            sc.setAttributes(attributeNames);
+
+            results = session.search(base, filter, sc);
 
         } catch (Throwable e) {
             log.error(e.getMessage(), e);
 
-            results = new SearchResults();
+            results = new PenroseSearchResults();
             results.setReturnCode(LDAPException.OPERATIONS_ERROR);
             results.close();
         }

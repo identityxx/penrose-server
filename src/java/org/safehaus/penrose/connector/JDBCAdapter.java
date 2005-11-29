@@ -20,7 +20,8 @@ package org.safehaus.penrose.connector;
 import org.apache.commons.dbcp.*;
 import org.apache.commons.pool.impl.GenericObjectPool;
 import org.ietf.ldap.LDAPException;
-import org.safehaus.penrose.SearchResults;
+import org.safehaus.penrose.session.PenroseSearchResults;
+import org.safehaus.penrose.session.PenroseSearchResults;
 import org.safehaus.penrose.engine.TransformEngine;
 import org.safehaus.penrose.util.Formatter;
 import org.safehaus.penrose.filter.Filter;
@@ -116,11 +117,11 @@ public class JDBCAdapter extends Adapter {
         return sb.toString();
     }
 
-    public SearchResults search(SourceDefinition sourceDefinition, Filter filter, long sizeLimit) throws Exception {
+    public PenroseSearchResults search(SourceDefinition sourceDefinition, Filter filter, long sizeLimit) throws Exception {
 
         log.debug("Searching JDBC source "+sourceDefinition.getConnectionName()+"/"+sourceDefinition.getName());
 
-        SearchResults results = new SearchResults();
+        PenroseSearchResults results = new PenroseSearchResults();
 
         String tableName = sourceDefinition.getParameter(TABLE_NAME);
         String sqlFilter = sourceDefinition.getParameter(FILTER);
@@ -215,11 +216,11 @@ public class JDBCAdapter extends Adapter {
         return results;
     }
 
-    public SearchResults load(SourceDefinition sourceDefinition, Filter filter, long sizeLimit) throws Exception {
+    public PenroseSearchResults load(SourceDefinition sourceDefinition, Filter filter, long sizeLimit) throws Exception {
 
         log.debug("Loading JDBC source "+sourceDefinition.getConnectionName()+"/"+sourceDefinition.getName());
 
-        SearchResults results = new SearchResults();
+        PenroseSearchResults results = new PenroseSearchResults();
 
         String tableName = sourceDefinition.getParameter(TABLE_NAME);
         String s = sourceDefinition.getParameter(FILTER);
@@ -735,11 +736,11 @@ public class JDBCAdapter extends Adapter {
         }
     }
 
-    public SearchResults getChanges(SourceDefinition sourceDefinition, int lastChangeNumber) throws Exception {
+    public PenroseSearchResults getChanges(SourceDefinition sourceDefinition, int lastChangeNumber) throws Exception {
 
         log.debug("Searching JDBC source "+sourceDefinition.getConnectionName()+"/"+sourceDefinition.getName());
 
-        SearchResults results = new SearchResults();
+        PenroseSearchResults results = new PenroseSearchResults();
 
         String tableName = sourceDefinition.getParameter(TABLE_NAME);
         int sizeLimit = 100;

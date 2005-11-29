@@ -41,6 +41,7 @@ import org.safehaus.penrose.partition.PartitionManager;
 import org.safehaus.penrose.partition.PartitionConfig;
 import org.safehaus.penrose.session.PenroseSessionManager;
 import org.safehaus.penrose.session.PenroseSession;
+import org.safehaus.penrose.session.PenroseSearchResults;
 import org.ietf.ldap.LDAPSearchConstraints;
 import org.ietf.ldap.LDAPConnection;
 
@@ -361,7 +362,7 @@ public class Penrose {
 
             log.debug("Loading entries under "+entryMapping.getDn());
 
-            SearchResults sr = handler.search(
+            PenroseSearchResults sr = handler.search(
                     null,
                     entryMapping.getDn(),
                     LDAPConnection.SCOPE_SUB,

@@ -17,7 +17,8 @@
  */
 package org.safehaus.penrose.engine;
 
-import org.safehaus.penrose.SearchResults;
+import org.safehaus.penrose.session.PenroseSearchResults;
+import org.safehaus.penrose.session.PenroseSearchResults;
 import org.safehaus.penrose.schema.Schema;
 import org.safehaus.penrose.connector.*;
 import org.safehaus.penrose.cache.CacheConfig;
@@ -633,7 +634,7 @@ public class Engine {
 
         AttributeValues parentSourceValues = new AttributeValues();
 
-        SearchResults results = search(path, parentSourceValues, entryMapping, null, null);
+        PenroseSearchResults results = search(path, parentSourceValues, entryMapping, null, null);
 
         if (results.size() == 0) return null;
 
@@ -649,7 +650,7 @@ public class Engine {
         return entry;
     }
 
-    public SearchResults search(
+    public PenroseSearchResults search(
             final Collection path,
             final AttributeValues parentSourceValues,
             final EntryMapping entryMapping,
@@ -674,8 +675,8 @@ public class Engine {
             log.debug(Formatter.displaySeparator(80));
         }
 
-        final SearchResults entries = new SearchResults();
-        final SearchResults results = new SearchResults();
+        final PenroseSearchResults entries = new PenroseSearchResults();
+        final PenroseSearchResults results = new PenroseSearchResults();
 
         searchEngine.search(path, parentSourceValues, entryMapping, filter, entries);
 
@@ -703,7 +704,7 @@ public class Engine {
            return results;
         }
 
-        SearchResults loadedEntries = new SearchResults();
+        PenroseSearchResults loadedEntries = new PenroseSearchResults();
         loadEngine.load(entryMapping, entries, loadedEntries, results);
 
         mergeEngine.merge(entryMapping, loadedEntries, results);

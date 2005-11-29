@@ -1,7 +1,7 @@
 package org.safehaus.penrose.connector;
 
 import org.safehaus.penrose.connector.Adapter;
-import org.safehaus.penrose.SearchResults;
+import org.safehaus.penrose.session.PenroseSearchResults;
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.filter.Filter;
 
@@ -57,11 +57,11 @@ public class Connection {
         return adapter.bind(sourceDefinition, values, password);
     }
 
-    public SearchResults search(SourceDefinition sourceDefinition, Filter filter, long sizeLimit) throws Exception {
+    public PenroseSearchResults search(SourceDefinition sourceDefinition, Filter filter, long sizeLimit) throws Exception {
         return adapter.search(sourceDefinition, filter, sizeLimit);
     }
 
-    public SearchResults load(SourceDefinition sourceDefinition, Filter filter, long sizeLimit) throws Exception {
+    public PenroseSearchResults load(SourceDefinition sourceDefinition, Filter filter, long sizeLimit) throws Exception {
         return adapter.load(sourceDefinition, filter, sizeLimit);
     }
 
@@ -81,7 +81,7 @@ public class Connection {
         return adapter.getLastChangeNumber(sourceDefinition);
     }
 
-    public SearchResults getChanges(SourceDefinition sourceDefinition, int lastChangeNumber) throws Exception {
+    public PenroseSearchResults getChanges(SourceDefinition sourceDefinition, int lastChangeNumber) throws Exception {
         return adapter.getChanges(sourceDefinition, lastChangeNumber);
     }
 }

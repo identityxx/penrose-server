@@ -20,7 +20,8 @@ import java.util.ArrayList;
 
 import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.session.PenroseSession;
-import org.safehaus.penrose.SearchResults;
+import org.safehaus.penrose.session.PenroseSearchResults;
+import org.safehaus.penrose.session.PenroseSearchControls;
 import org.safehaus.penrose.schema.SchemaConfig;
 import org.safehaus.penrose.partition.PartitionConfig;
 import org.safehaus.penrose.config.PenroseConfig;
@@ -54,20 +55,19 @@ public class Demo {
         PartitionConfig partitionConfig = new PartitionConfig("example", "samples/conf");
         penroseConfig.addPartitionConfig(partitionConfig);
 
-		Penrose penrose = new Penrose(penroseConfig);
-		penrose.start();
+        Penrose penrose = new Penrose(penroseConfig);
+        penrose.start();
 
         PenroseSession session = penrose.newSession();
         session.bind("uid=admin,ou=system", "secret");
 
-        ArrayList attributeNames = new ArrayList();
+        PenroseSearchControls sc = new PenroseSearchControls();
+        sc.setScope(PenroseSearchControls.SCOPE_ONE);
 
-        SearchResults results = session.search(
+        PenroseSearchResults results = session.search(
                 "ou=Categories,"+SUFFIX,
-                LDAPConnection.SCOPE_ONE,
-                LDAPSearchConstraints.DEREF_ALWAYS,
                 "(objectClass=*)",
-                attributeNames);
+                sc);
 
         for (Iterator i = results.iterator(); i.hasNext();) {
             LDAPEntry entry = (LDAPEntry) i.next();

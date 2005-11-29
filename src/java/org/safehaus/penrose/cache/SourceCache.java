@@ -23,7 +23,7 @@ import org.safehaus.penrose.connector.Connector;
 import org.safehaus.penrose.connector.Connection;
 import org.safehaus.penrose.connector.ConnectionConfig;
 import org.safehaus.penrose.partition.Partition;
-import org.safehaus.penrose.SearchResults;
+import org.safehaus.penrose.session.PenroseSearchResults;
 
 import java.util.*;
 
@@ -94,7 +94,7 @@ public abstract class SourceCache extends Cache {
         ConnectionConfig conCfg = partition.getConnectionConfig(sourceDefinition.getConnectionName());
         Connection connection = connector.getConnection(conCfg.getConnectionName());
 
-        SearchResults sr = connection.load(sourceDefinition, null, 100);
+        PenroseSearchResults sr = connection.load(sourceDefinition, null, 100);
 
         //log.debug("Results:");
         while (sr.hasNext()) {

@@ -17,7 +17,8 @@
  */
 package org.safehaus.penrose.connector;
 
-import org.safehaus.penrose.SearchResults;
+import org.safehaus.penrose.session.PenroseSearchResults;
+import org.safehaus.penrose.session.PenroseSearchResults;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.PartitionManager;
 import org.safehaus.penrose.cache.CacheConfig;
@@ -206,7 +207,7 @@ public class Connector {
         int lastChangeNumber = getCache(sourceDefinition).getLastChangeNumber();
 
         Connection connection = getConnection(sourceDefinition.getConnectionName());
-        SearchResults sr = connection.getChanges(sourceDefinition, lastChangeNumber);
+        PenroseSearchResults sr = connection.getChanges(sourceDefinition, lastChangeNumber);
         if (!sr.hasNext()) return;
 
         CacheConfig cacheConfig = penroseConfig.getSourceCacheConfig();
@@ -500,7 +501,7 @@ public class Connector {
     /**
      * Search the data sources.
      */
-    public SearchResults search(
+    public PenroseSearchResults search(
             final SourceDefinition sourceDefinition,
             final Filter filter)
             throws Exception {
@@ -521,7 +522,7 @@ public class Connector {
     /**
      * Check query cache, peroform search, store results in query cache.
      */
-    public SearchResults searchAndLoad(
+    public PenroseSearchResults searchAndLoad(
             SourceDefinition sourceDefinition,
             Filter filter)
             throws Exception {
@@ -531,7 +532,7 @@ public class Connector {
 
         log.debug("Cached results: "+results);
         if (results != null) {
-            SearchResults sr = new SearchResults();
+            PenroseSearchResults sr = new PenroseSearchResults();
             sr.addAll(results);
             sr.close();
             return sr;
@@ -551,7 +552,7 @@ public class Connector {
     /**
      * Load then store in data cache.
      */
-    public SearchResults fullLoad(SourceDefinition sourceDefinition, Filter filter) throws Exception {
+    public PenroseSearchResults fullLoad(SourceDefinition sourceDefinition, Filter filter) throws Exception {
 
         Collection pks = getCache(sourceDefinition).search(filter);
 
@@ -567,12 +568,12 @@ public class Connector {
     /**
      * Check data cache then load.
      */
-    public SearchResults load(
+    public PenroseSearchResults load(
             final SourceDefinition sourceDefinition,
             final Collection pks)
             throws Exception {
 
-        final SearchResults results = new SearchResults();
+        final PenroseSearchResults results = new PenroseSearchResults();
 
         if (pks.isEmpty()) {
             results.close();
@@ -620,7 +621,7 @@ public class Connector {
 
         Filter filter = FilterTool.createFilter(keys);
 
-        SearchResults sr = performLoad(sourceDefinition, filter);
+        PenroseSearchResults sr = performLoad(sourceDefinition, filter);
 
         Collection values = new ArrayList();
         values.addAll(sr.getAll());
@@ -696,7 +697,7 @@ public class Connector {
         int sizeLimit = s == null ? SourceDefinition.DEFAULT_SIZE_LIMIT : Integer.parseInt(s);
 
         Connection connection = getConnection(sourceDefinition.getConnectionName());
-        SearchResults sr;
+        PenroseSearchResults sr;
         try {
             sr = connection.search(sourceDefinition, filter, sizeLimit);
 
@@ -717,9 +718,9 @@ public class Connector {
     /**
      * Perform the load operation.
      */
-    public SearchResults performLoad(final SourceDefinition sourceDefinition, final Filter filter) throws Exception {
+    public PenroseSearchResults performLoad(final SourceDefinition sourceDefinition, final Filter filter) throws Exception {
 
-        final SearchResults results = new SearchResults();
+        final PenroseSearchResults results = new PenroseSearchResults();
 
         execute(new Runnable() {
             public void run() {
@@ -727,7 +728,7 @@ public class Connector {
                 int sizeLimit = s == null ? SourceDefinition.DEFAULT_SIZE_LIMIT : Integer.parseInt(s);
 
                 Connection connection = getConnection(sourceDefinition.getConnectionName());
-                SearchResults sr;
+                PenroseSearchResults sr;
                 try {
                     sr = connection.load(sourceDefinition, filter, sizeLimit);
 

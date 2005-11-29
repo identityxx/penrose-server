@@ -18,8 +18,9 @@
 package org.safehaus.penrose.handler;
 
 import org.safehaus.penrose.session.PenroseSession;
-import org.safehaus.penrose.SearchResults;
+import org.safehaus.penrose.session.PenroseSearchResults;
 import org.safehaus.penrose.session.PenroseSession;
+import org.safehaus.penrose.session.PenroseSearchResults;
 import org.safehaus.penrose.event.AddEvent;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.mapping.*;
@@ -72,7 +73,7 @@ public class AddHandler {
                 LDAPSearchConstraints.DEREF_NEVER,
                 "(objectClass=*)",
                 new ArrayList(),
-                new SearchResults()
+                new PenroseSearchResults()
         );
 
         AddEvent afterModifyEvent = new AddEvent(this, AddEvent.AFTER_ADD, session, entry);

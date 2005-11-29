@@ -20,11 +20,11 @@ package org.safehaus.penrose.session;
 import org.ietf.ldap.LDAPEntry;
 import org.safehaus.penrose.handler.Handler;
 import org.safehaus.penrose.Penrose;
-import org.safehaus.penrose.SearchResults;
 
 import java.util.Date;
 import java.util.List;
 import java.util.Collection;
+import java.util.Arrays;
 
 /**
  * Represent an LDAP Connection made by each client
@@ -99,15 +99,17 @@ public class PenroseSession {
         return handler.modrdn(this, dn, newRdn);
     }
 
-    public SearchResults search(
+    public PenroseSearchResults search(
             String base,
-            int scope,
-            int deref,
             String filter,
-            Collection attributeNames)
+            PenroseSearchControls sc)
             throws Exception {
 
-        return handler.search(this, base, scope, deref, filter, attributeNames);
+        int scope = sc.getScope();
+        int deref = sc.getDereference();
+        Collection attributes = sc.getAttributes() == null ? null : Arrays.asList(sc.getAttributes());
+
+        return handler.search(this, base, scope, deref, filter, attributes);
     }
 
     public int unbind() throws Exception {

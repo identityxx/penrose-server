@@ -17,10 +17,11 @@
  */
 package org.safehaus.penrose.handler;
 
-import org.safehaus.penrose.SearchResults;
+import org.safehaus.penrose.session.PenroseSearchResults;
 import org.safehaus.penrose.session.PenroseSession;
 import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.session.PenroseSession;
+import org.safehaus.penrose.session.PenroseSearchResults;
 import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.engine.Engine;
 import org.safehaus.penrose.event.SearchEvent;
@@ -159,7 +160,7 @@ public class SearchHandler {
             AttributeValues parentSourceValues = new AttributeValues();
             engine.getParentSourceValues(path, childMapping, parentSourceValues);
 
-            SearchResults sr = handler.getEngine().search(
+            PenroseSearchResults sr = handler.getEngine().search(
                     path,
                     parentSourceValues,
                     childMapping,
@@ -191,7 +192,7 @@ public class SearchHandler {
             int deref,
             String filter,
             Collection attributeNames,
-            SearchResults results) throws Exception {
+            PenroseSearchResults results) throws Exception {
 
         String s = null;
         switch (scope) {
@@ -262,12 +263,15 @@ public class SearchHandler {
             int deref,
             String filter,
             Collection attributeNames,
-            SearchResults results) throws Exception {
+            PenroseSearchResults results) throws Exception {
 
-        Collection normalizedAttributeNames = new HashSet();
-        for (Iterator i=attributeNames.iterator(); i.hasNext(); ) {
-            String attributeName = (String)i.next();
-            normalizedAttributeNames.add(attributeName.toLowerCase());
+        Collection normalizedAttributeNames = null;
+        if (attributeNames != null) {
+            normalizedAttributeNames = new HashSet();
+            for (Iterator i=attributeNames.iterator(); i.hasNext(); ) {
+                String attributeName = (String)i.next();
+                normalizedAttributeNames.add(attributeName.toLowerCase());
+            }
         }
 
         if ("".equals(base) && scope == LDAPConnection.SCOPE_BASE) { // finding root DSE
@@ -354,7 +358,7 @@ public class SearchHandler {
             int scope,
             Filter filter,
             Collection attributeNames,
-            SearchResults results,
+            PenroseSearchResults results,
             boolean first) throws Exception {
 
         Partition partition = handler.getConfigManager().getConfig(entryMapping);
@@ -368,7 +372,7 @@ public class SearchHandler {
 
             if (handler.getFilterTool().isValid(childMapping, filter)) {
 
-                SearchResults sr = handler.getEngine().search(
+                PenroseSearchResults sr = handler.getEngine().search(
                         path,
                         parentSourceValues,
                         childMapping,

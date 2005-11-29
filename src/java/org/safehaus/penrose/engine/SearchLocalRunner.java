@@ -25,7 +25,7 @@ import org.safehaus.penrose.graph.GraphVisitor;
 import org.safehaus.penrose.graph.Graph;
 import org.safehaus.penrose.graph.GraphIterator;
 import org.safehaus.penrose.util.Formatter;
-import org.safehaus.penrose.SearchResults;
+import org.safehaus.penrose.session.PenroseSearchResults;
 import org.safehaus.penrose.connector.ConnectionConfig;
 import org.apache.log4j.Logger;
 
@@ -108,7 +108,7 @@ public class SearchLocalRunner extends GraphVisitor {
         ConnectionConfig connectionConfig = partition.getConnectionConfig(sourceMapping.getConnectionName());
         SourceDefinition sourceDefinition = connectionConfig.getSourceDefinition(sourceMapping.getSourceName());
 
-        SearchResults tmp = engine.getConnector().search(sourceDefinition, filter);
+        PenroseSearchResults tmp = engine.getConnector().search(sourceDefinition, filter);
 
         Collection list = new ArrayList();
         for (Iterator i=tmp.iterator(); i.hasNext(); ) {
