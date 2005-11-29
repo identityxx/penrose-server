@@ -20,7 +20,7 @@ package org.safehaus.penrose.handler;
 import org.safehaus.penrose.PenroseConnection;
 import org.safehaus.penrose.SearchResults;
 import org.safehaus.penrose.event.AddEvent;
-import org.safehaus.penrose.partition.PartitionConfig;
+import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.mapping.*;
 import org.ietf.ldap.*;
 import org.apache.log4j.Logger;
@@ -103,8 +103,8 @@ public class AddHandler {
         log.debug("Adding entry under "+parent.getDn());
 
         EntryMapping parentMapping = parent.getEntryMapping();
-        PartitionConfig partitionConfig = handler.getConfigManager().getConfig(parentMapping);
-        Collection children = partitionConfig.getChildren(parentMapping);
+        Partition partition = handler.getConfigManager().getConfig(parentMapping);
+        Collection children = partition.getChildren(parentMapping);
 
         AttributeValues values = new AttributeValues();
 
@@ -123,7 +123,7 @@ public class AddHandler {
         if (children != null) {
             for (Iterator iterator = children.iterator(); iterator.hasNext(); ) {
                 EntryMapping entryMapping = (EntryMapping)iterator.next();
-                if (!partitionConfig.isDynamic(entryMapping)) continue;
+                if (!partition.isDynamic(entryMapping)) continue;
 
                 return handler.getEngine().add(parent, entryMapping, values);
             }
@@ -154,10 +154,10 @@ public class AddHandler {
             newEntry = new EntryMapping(rdn.toString(), parent);
         }
 
-        PartitionConfig partitionConfig = handler.getConfigManager().getConfig(dn);
-        if (partitionConfig == null) return LDAPException.NO_SUCH_OBJECT;
+        Partition partition = handler.getConfigManager().getConfig(dn);
+        if (partition == null) return LDAPException.NO_SUCH_OBJECT;
 
-        partitionConfig.addEntryMapping(newEntry);
+        partition.addEntryMapping(newEntry);
 
         Collection objectClasses = newEntry.getObjectClasses();
         //Collection attributes = newEntry.getAttributeMappings();

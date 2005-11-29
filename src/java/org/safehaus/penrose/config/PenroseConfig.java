@@ -25,6 +25,8 @@ import org.safehaus.penrose.engine.EngineConfig;
 import org.safehaus.penrose.interpreter.InterpreterConfig;
 import org.safehaus.penrose.connector.ConnectorConfig;
 import org.safehaus.penrose.connector.AdapterConfig;
+import org.safehaus.penrose.partition.PartitionConfig;
+import org.safehaus.penrose.schema.SchemaConfig;
 
 
 /**
@@ -33,8 +35,6 @@ import org.safehaus.penrose.connector.AdapterConfig;
 public class PenroseConfig {
 
     Logger log = Logger.getLogger(getClass());
-
-    private Collection schemaFiles = new ArrayList();
 
     private int port = 10389;
     private int securePort = 10639;
@@ -47,17 +47,35 @@ public class PenroseConfig {
     private String rootDn;
     private String rootPassword;
 	
+    private Map systemProperties = new LinkedHashMap();
+    private Map schemaConfigs    = new LinkedHashMap();
+    private Map adapterConfigs   = new LinkedHashMap();
+
     private InterpreterConfig interpreterConfig;
+
     private CacheConfig entryCacheConfig;
     private CacheConfig sourceCacheConfig;
 
     private ConnectorConfig connectorConfig;
     private EngineConfig engineConfig;
 
-    private Map adapterConfigs = new TreeMap();
-    private Map systemProperties = new TreeMap();
+    private Map partitionConfigs = new LinkedHashMap();
 
     public PenroseConfig() {
+
+        interpreterConfig = new InterpreterConfig();
+
+        sourceCacheConfig = new CacheConfig();
+        sourceCacheConfig.setCacheName(ConnectorConfig.DEFAULT_CACHE_NAME);
+        sourceCacheConfig.setCacheClass(ConnectorConfig.DEFAULT_CACHE_CLASS);
+
+        entryCacheConfig = new CacheConfig();
+        entryCacheConfig.setCacheName(EngineConfig.DEFAULT_CACHE_NAME);
+        entryCacheConfig.setCacheClass(EngineConfig.DEFAULT_CACHE_CLASS);
+
+        connectorConfig = new ConnectorConfig();
+
+        engineConfig = new EngineConfig();
     }
 
 	/**
@@ -87,14 +105,6 @@ public class PenroseConfig {
 		this.rootPassword = rootPassword;
 	}
 
-    public Collection getSchemaFiles() {
-        return schemaFiles;
-    }
-
-    public void setSchemaFiles(List schemaFiles) {
-        this.schemaFiles = schemaFiles;
-    }
-    
     public void setEngineConfig(EngineConfig engineConfig) {
         this.engineConfig = engineConfig;
     }
@@ -205,5 +215,37 @@ public class PenroseConfig {
 
     public void setHome(String home) {
         this.home = home;
+    }
+
+    public void addSchemaConfig(SchemaConfig schemaConfig) {
+        schemaConfigs.put(schemaConfig.getName(), schemaConfig);
+    }
+
+    public SchemaConfig getSchemaConfig(String name) {
+        return (SchemaConfig)schemaConfigs.get(name);
+    }
+
+    public Collection getSchemaConfigs() {
+        return schemaConfigs.values();
+    }
+
+    public SchemaConfig removeSchemaConfig(String name) {
+        return (SchemaConfig)schemaConfigs.remove(name);
+    }
+
+    public void addPartitionConfig(PartitionConfig partitionConfig) {
+        partitionConfigs.put(partitionConfig.getName(), partitionConfig);
+    }
+
+    public PartitionConfig getPartitionConfig(String name) {
+        return (PartitionConfig)partitionConfigs.get(name);
+    }
+
+    public Collection getPartitionConfigs() {
+        return partitionConfigs.values();
+    }
+
+    public PartitionConfig removePartitionConfig(String name) {
+        return (PartitionConfig)partitionConfigs.remove(name);
     }
 }

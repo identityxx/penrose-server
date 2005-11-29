@@ -31,6 +31,14 @@ public class AdapterConfig {
 
     private Properties parameters = new Properties();
 
+    public AdapterConfig() {
+    }
+
+    public AdapterConfig(String adapterName, String adapterClass) {
+        this.adapterName = adapterName;
+        this.adapterClass = adapterClass;
+    }
+
     public String getAdapterClass() {
         return adapterClass;
     }

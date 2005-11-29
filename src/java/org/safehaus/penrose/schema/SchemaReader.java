@@ -31,7 +31,7 @@ import java.io.FilenameFilter;
  */
 public class SchemaReader {
 
-    private Logger log = Logger.getLogger(getClass());
+    Logger log = Logger.getLogger(getClass());
 
     private Schema schema;
 
@@ -42,8 +42,9 @@ public class SchemaReader {
     public SchemaReader(Schema schema) {
         this.schema = schema;
     }
-
+/*
     public void readDirectory(String directory) throws Exception {
+        //log.debug("Loading schema files in "+directory+".");
         File schemaDir = new File(directory);
         String filenames[] = schemaDir.list(new FilenameFilter() {
             public boolean accept(File dir, String fname) {
@@ -51,12 +52,14 @@ public class SchemaReader {
             }
         });
 
+        if (filenames == null) return;
+
         for (int i=0; i<filenames.length; i++) {
             read(directory+File.separator+filenames[i]);
         }
 
     }
-
+*/
     public void read(String filename) throws Exception {
 
         log.debug("Loading schema "+filename+".");

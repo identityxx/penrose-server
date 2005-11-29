@@ -20,7 +20,7 @@ package org.safehaus.penrose.handler;
 import org.safehaus.penrose.PenroseConnection;
 import org.safehaus.penrose.SearchResults;
 import org.safehaus.penrose.event.ModifyEvent;
-import org.safehaus.penrose.partition.PartitionConfig;
+import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.schema.Schema;
 import org.safehaus.penrose.schema.ObjectClass;
@@ -117,8 +117,8 @@ public class ModifyHandler {
         if (rc != LDAPException.SUCCESS) return rc;
 
         EntryMapping entryMapping = entry.getEntryMapping();
-        PartitionConfig partitionConfig = handler.getConfigManager().getConfig(entryMapping);
-        if (partitionConfig.isDynamic(entryMapping)) {
+        Partition partition = handler.getConfigManager().getConfig(entryMapping);
+        if (partition.isDynamic(entryMapping)) {
             return modifyVirtualEntry(connection, entry, modifications);
 
         } else {

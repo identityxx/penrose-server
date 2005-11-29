@@ -1,32 +1,42 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <server>
-  <engine>
-    <engine-name>DEFAULT</engine-name>
-    <engine-class>org.safehaus.penrose.engine.Engine</engine-class>
-    <cache>
-      <cache-name>DEFAULT</cache-name>
-      <cache-class>org.safehaus.penrose.cache.DefaultEntryCache</cache-class>
-    </cache>
-  </engine>
-  <connector>
-    <connector-name>DEFAULT</connector-name>
-    <connector-class>org.safehaus.penrose.connector.Connector</connector-class>
-    <cache>
-      <cache-name>DEFAULT</cache-name>
-      <cache-class>org.safehaus.penrose.cache.DefaultSourceCache</cache-class>
-    </cache>
-  </connector>
-  <adapter>
-    <adapter-name>JDBC</adapter-name>
+
+  <schema path="schema/autofs.schema"/>
+  <schema path="schema/corba.schema"/>
+  <schema path="schema/core.schema"/>
+  <schema path="schema/cosine.schema"/>
+  <schema path="schema/apache.schema"/>
+  <schema path="schema/collective.schema"/>
+  <schema path="schema/inetorgperson.schema"/>
+  <schema path="schema/java.schema"/>
+  <schema path="schema/krb5kdc.schema"/>
+  <schema path="schema/nis.schema"/>
+  <schema path="schema/system.schema"/>
+  <schema path="schema/apachedns.schema"/>
+  <schema path="samples/schema/example.schema"/>
+
+  <entry-cache/>
+
+  <source-cache/>
+
+  <engine/>
+
+  <connector/>
+
+  <adapter name="JDBC">
     <adapter-class>org.safehaus.penrose.connector.JDBCAdapter</adapter-class>
   </adapter>
-  <adapter>
-    <adapter-name>JNDI</adapter-name>
+
+  <adapter name="JNDI">
     <adapter-class>org.safehaus.penrose.connector.JNDIAdapter</adapter-class>
   </adapter>
+
+  <partition name="default" path="conf"/>
+
   <root>
     <root-dn>uid=admin,ou=system</root-dn>
     <root-password>secret</root-password>
   </root>
+
 </server>

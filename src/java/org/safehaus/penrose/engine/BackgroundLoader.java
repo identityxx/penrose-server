@@ -93,7 +93,7 @@ public class BackgroundLoader extends NormalThread implements Runnable {
      */
 /*
     public void getLockForUpdate(Source source) {
-        SourceDefinition sourceConfig = (SourceDefinition)penrose.getConfig().getSources().get(source.getName());
+        SourceDefinition sourceConfig = (SourceDefinition)penrose.getPenroseConfig().getSources().get(source.getName());
     	String tableName = penrose.getSourceCache().getEntryTableName(sourceConfig, false);
     	Boolean locked = (Boolean)tableStatus.get(tableName);
     	String threadId = Thread.currentThread().toString();
@@ -112,7 +112,7 @@ public class BackgroundLoader extends NormalThread implements Runnable {
      */
 /*
     public void releaseLockForUpdate(Source source) {
-        SourceDefinition sourceConfig = (SourceDefinition)penrose.getConfig().getSources().get(source.getName());
+        SourceDefinition sourceConfig = (SourceDefinition)penrose.getPenroseConfig().getSources().get(source.getName());
     	String tableName = penrose.getSourceCache().getEntryTableName(sourceConfig, false);
     	String threadId = Thread.currentThread().toString();
     	if (threadId.equals((String)updaterQueue.get(0))) {

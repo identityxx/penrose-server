@@ -20,7 +20,7 @@ package org.safehaus.penrose.cache;
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.util.PasswordUtil;
 import org.safehaus.penrose.util.Formatter;
-import org.safehaus.penrose.partition.PartitionConfig;
+import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.connector.ConnectionConfig;
 import org.safehaus.penrose.connector.ConnectionManager;
@@ -39,7 +39,7 @@ import java.sql.ResultSet;
  */
 public class PersistentEntryCache extends EntryCache {
 
-    PartitionConfig partitionConfig;
+    Partition partition;
     int entryId;
 
     ConnectionManager connectionManager;
@@ -56,7 +56,7 @@ public class PersistentEntryCache extends EntryCache {
         jdbcConnectionName = getParameter("jdbcConnection");
         jndiConnectionName = getParameter("jndiConnection");
 
-        partitionConfig = engine.getConfigManager().getConfig(entryMapping);
+        partition = engine.getPartitionManager().getConfig(entryMapping);
 
         entryId = getEntryId();
         if (entryId == 0) {
@@ -84,12 +84,12 @@ public class PersistentEntryCache extends EntryCache {
             createAttributeTable(attributeMapping);
         }
 
-        Collection sources = partitionConfig.getEffectiveSources(entryMapping);
+        Collection sources = partition.getEffectiveSources(entryMapping);
 
         for (Iterator i=sources.iterator(); i.hasNext(); ) {
             SourceMapping sourceMapping = (SourceMapping)i.next();
 
-            ConnectionConfig connectionConfig = partitionConfig.getConnectionConfig(sourceMapping.getConnectionName());
+            ConnectionConfig connectionConfig = partition.getConnectionConfig(sourceMapping.getConnectionName());
             SourceDefinition sourceDefinition = connectionConfig.getSourceDefinition(sourceMapping.getSourceName());
 
             Collection fields = sourceDefinition.getFieldDefinitions();
@@ -363,7 +363,7 @@ public class PersistentEntryCache extends EntryCache {
             remove(rdn);
         }
 
-        Collection sources = partitionConfig.getEffectiveSources(entryMapping);
+        Collection sources = partition.getEffectiveSources(entryMapping);
 
         for (Iterator i=sources.iterator(); i.hasNext(); ) {
             SourceMapping sourceMapping = (SourceMapping)i.next();
@@ -379,7 +379,7 @@ public class PersistentEntryCache extends EntryCache {
 
     public void dropEntrySourceTable(SourceMapping sourceMapping) throws Exception {
 
-        ConnectionConfig connectionConfig = partitionConfig.getConnectionConfig(sourceMapping.getConnectionName());
+        ConnectionConfig connectionConfig = partition.getConnectionConfig(sourceMapping.getConnectionName());
         SourceDefinition sourceDefinition = connectionConfig.getSourceDefinition(sourceMapping.getSourceName());
 
         Collection fields = sourceDefinition.getFieldDefinitions();
@@ -461,7 +461,7 @@ public class PersistentEntryCache extends EntryCache {
 
         if (!entryMapping.isDynamic()) return;
 
-        Collection entries = partitionConfig.getChildren(entryMapping);
+        Collection entries = partition.getChildren(entryMapping);
         load(entries);
     }
 
@@ -514,12 +514,12 @@ public class PersistentEntryCache extends EntryCache {
             entry = new Entry(dn, entryMapping, attributeValues);
 
             AttributeValues sourceValues = entry.getSourceValues();
-            Collection sources = partitionConfig.getEffectiveSources(entryMapping);
+            Collection sources = partition.getEffectiveSources(entryMapping);
 
             for (Iterator i=sources.iterator(); i.hasNext(); ) {
                 SourceMapping sourceMapping = (SourceMapping)i.next();
 
-                ConnectionConfig connectionConfig = partitionConfig.getConnectionConfig(sourceMapping.getConnectionName());
+                ConnectionConfig connectionConfig = partition.getConnectionConfig(sourceMapping.getConnectionName());
                 SourceDefinition sourceDefinition = connectionConfig.getSourceDefinition(sourceMapping.getSourceName());
 
                 Collection fields = sourceDefinition.getFieldDefinitions();
@@ -634,12 +634,12 @@ public class PersistentEntryCache extends EntryCache {
         }
 */
         AttributeValues sourceValues = entry.getSourceValues();
-        Collection sources = partitionConfig.getEffectiveSources(entryMapping);
+        Collection sources = partition.getEffectiveSources(entryMapping);
 
         for (Iterator i=sources.iterator(); i.hasNext(); ) {
             SourceMapping sourceMapping = (SourceMapping)i.next();
 
-            ConnectionConfig connectionConfig = partitionConfig.getConnectionConfig(sourceMapping.getConnectionName());
+            ConnectionConfig connectionConfig = partition.getConnectionConfig(sourceMapping.getConnectionName());
             SourceDefinition sourceDefinition = connectionConfig.getSourceDefinition(sourceMapping.getSourceName());
 
             Collection fields = sourceDefinition.getFieldDefinitions();
@@ -859,12 +859,12 @@ public class PersistentEntryCache extends EntryCache {
             if (ctx != null) try { ctx.close(); } catch (Exception e) {}
         }
 
-        Collection sources = partitionConfig.getEffectiveSources(entryMapping);
+        Collection sources = partition.getEffectiveSources(entryMapping);
 
         for (Iterator i=sources.iterator(); i.hasNext(); ) {
             SourceMapping sourceMapping = (SourceMapping)i.next();
 
-            ConnectionConfig connectionConfig = partitionConfig.getConnectionConfig(sourceMapping.getConnectionName());
+            ConnectionConfig connectionConfig = partition.getConnectionConfig(sourceMapping.getConnectionName());
             SourceDefinition sourceDefinition = connectionConfig.getSourceDefinition(sourceMapping.getSourceName());
 
             Collection fields = sourceDefinition.getFieldDefinitions();

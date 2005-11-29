@@ -18,7 +18,7 @@
 package org.safehaus.penrose.connector;
 
 import org.apache.log4j.Logger;
-import org.safehaus.penrose.partition.PartitionConfig;
+import org.safehaus.penrose.partition.Partition;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -60,11 +60,11 @@ public class RefreshThread implements Runnable {
 				Thread.sleep(refreshInterval * 1000);
 
                 Collection configs = new ArrayList();
-                configs.addAll(connector.getConfigManager().getConfigs());
+                configs.addAll(connector.getPartitionManager().getPartitions());
 
                 for (Iterator i=configs.iterator(); i.hasNext(); ) {
-                    PartitionConfig partitionConfig = (PartitionConfig)i.next();
-                    connector.refresh(partitionConfig);
+                    Partition partition = (Partition)i.next();
+                    connector.refresh(partition);
                 }
 
 			} catch (Exception ex) {

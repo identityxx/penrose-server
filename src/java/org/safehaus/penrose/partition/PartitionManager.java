@@ -21,10 +21,10 @@ import org.safehaus.penrose.mapping.EntryMapping;
 import org.safehaus.penrose.mapping.SourceMapping;
 import org.safehaus.penrose.mapping.SourceDefinition;
 import org.safehaus.penrose.schema.Schema;
-import org.safehaus.penrose.partition.PartitionConfig;
-import org.safehaus.penrose.partition.PartitionConfigReader;
-import org.safehaus.penrose.partition.PartitionConfigValidationResult;
-import org.safehaus.penrose.partition.PartitionConfigValidator;
+import org.safehaus.penrose.partition.Partition;
+import org.safehaus.penrose.partition.PartitionReader;
+import org.safehaus.penrose.partition.PartitionValidationResult;
+import org.safehaus.penrose.partition.PartitionValidator;
 import org.safehaus.penrose.config.PenroseConfig;
 import org.apache.log4j.Logger;
 
@@ -43,44 +43,44 @@ public class PartitionManager {
     private PenroseConfig penroseConfig;
     private Schema schema;
 
-    PartitionConfigValidator partitionConfigValidator;
-    PartitionConfigReader partitionConfigReader;
+    PartitionValidator partitionValidator;
 
-    private Map configs = new TreeMap();
+    private Map partitions = new TreeMap();
 
     public PartitionManager() {
     }
 
     public void init() {
-        partitionConfigValidator = new PartitionConfigValidator();
-        partitionConfigValidator.setServerConfig(penroseConfig);
-        partitionConfigValidator.setSchema(schema);
-
-        partitionConfigReader = new PartitionConfigReader();
+        partitionValidator = new PartitionValidator();
+        partitionValidator.setServerConfig(penroseConfig);
+        partitionValidator.setSchema(schema);
     }
 
-    public void load(String path) throws Exception {
+    public Partition load(String path) throws Exception {
 
-        PartitionConfig partitionConfig = partitionConfigReader.read(path);
+        log.debug("Loading partition "+path+".");
+        PartitionReader partitionReader = new PartitionReader(path);
+        Partition partition = partitionReader.read();
 
-        Collection results = partitionConfigValidator.validate(partitionConfig);
+        Collection results = partitionValidator.validate(partition);
 
         for (Iterator j=results.iterator(); j.hasNext(); ) {
-            PartitionConfigValidationResult resultPartition = (PartitionConfigValidationResult)j.next();
+            PartitionValidationResult resultPartition = (PartitionValidationResult)j.next();
 
-            if (resultPartition.getType().equals(PartitionConfigValidationResult.ERROR)) {
+            if (resultPartition.getType().equals(PartitionValidationResult.ERROR)) {
                 log.error("ERROR: "+resultPartition.getMessage()+" ["+resultPartition.getSource()+"]");
             } else {
                 log.warn("WARNING: "+resultPartition.getMessage()+" ["+resultPartition.getSource()+"]");
             }
         }
 
-        for (Iterator i=partitionConfig.getRootEntryMappings().iterator(); i.hasNext(); ) {
+        for (Iterator i=partition.getRootEntryMappings().iterator(); i.hasNext(); ) {
             EntryMapping entryMapping = (EntryMapping)i.next();
             String ndn = schema.normalize(entryMapping.getDn());
-            configs.put(ndn, partitionConfig);
+            partitions.put(ndn, partition);
         }
 
+        return partition;
     }
 
     public PenroseConfig getServerConfig() {
@@ -99,39 +99,39 @@ public class PartitionManager {
         this.schema = schema;
     }
 
-    public PartitionConfig getConfig(SourceMapping sourceMapping) throws Exception {
+    public Partition getPartition(SourceMapping sourceMapping) throws Exception {
         String connectionName = sourceMapping.getConnectionName();
-        for (Iterator i=configs.values().iterator(); i.hasNext(); ) {
-            PartitionConfig partitionConfig = (PartitionConfig)i.next();
-            if (partitionConfig.getConnectionConfig(connectionName) != null) return partitionConfig;
+        for (Iterator i=partitions.values().iterator(); i.hasNext(); ) {
+            Partition partition = (Partition)i.next();
+            if (partition.getConnectionConfig(connectionName) != null) return partition;
         }
         return null;
     }
 
-    public PartitionConfig getConfig(SourceDefinition sourceDefinition) throws Exception {
+    public Partition getPartition(SourceDefinition sourceDefinition) throws Exception {
         String connectionName = sourceDefinition.getConnectionName();
-        for (Iterator i=configs.values().iterator(); i.hasNext(); ) {
-            PartitionConfig partitionConfig = (PartitionConfig)i.next();
-            if (partitionConfig.getConnectionConfig(connectionName) != null) return partitionConfig;
+        for (Iterator i=partitions.values().iterator(); i.hasNext(); ) {
+            Partition partition = (Partition)i.next();
+            if (partition.getConnectionConfig(connectionName) != null) return partition;
         }
         return null;
     }
 
-    public PartitionConfig getConfig(EntryMapping entryMapping) throws Exception {
+    public Partition getConfig(EntryMapping entryMapping) throws Exception {
         return getConfig(entryMapping.getDn());
     }
 
-    public PartitionConfig getConfig(String dn) throws Exception {
+    public Partition getConfig(String dn) throws Exception {
         String ndn = schema.normalize(dn);
-        for (Iterator i=configs.keySet().iterator(); i.hasNext(); ) {
+        for (Iterator i=partitions.keySet().iterator(); i.hasNext(); ) {
             String suffix = (String)i.next();
-            if (ndn.endsWith(suffix)) return (PartitionConfig)configs.get(suffix);
+            if (ndn.endsWith(suffix)) return (Partition)partitions.get(suffix);
         }
         return null;
     }
 
-    public Collection getConfigs() {
-        return configs.values();
+    public Collection getPartitions() {
+        return partitions.values();
     }
 
 }

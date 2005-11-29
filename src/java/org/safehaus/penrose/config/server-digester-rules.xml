@@ -33,6 +33,13 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
             <call-param-rule pattern="property-value" paramnumber="1"/>
         </pattern>
 
+        <!-- partition -->
+        <pattern value="schema">
+            <object-create-rule classname="org.safehaus.penrose.schema.SchemaConfig" />
+            <set-properties-rule/>
+            <set-next-rule methodname="addSchemaConfig" />
+        </pattern>
+
 		<!-- interpreter -->
 		<pattern value="interpreter">
 			<object-create-rule classname="org.safehaus.penrose.interpreter.InterpreterConfig" />
@@ -111,12 +118,22 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 		<!-- adapter -->
 		<pattern value="adapter">
 			<object-create-rule classname="org.safehaus.penrose.connector.AdapterConfig" />
-			<set-properties-rule/>
+            <set-properties-rule>
+                <alias attr-name="name" prop-name="adapterName" />
+                <alias attr-name="class" prop-name="adapterClass" />
+            </set-properties-rule>
             <call-method-rule pattern="adapter-name" methodname="setAdapterName" paramcount="0" />
             <call-method-rule pattern="adapter-class" methodname="setAdapterClass" paramcount="0" />
 			<call-method-rule pattern="description" methodname="setDescription" paramcount="0" />
 			<set-next-rule methodname="addAdapterConfig" />
 		</pattern>
+
+        <!-- partition -->
+        <pattern value="partition">
+            <object-create-rule classname="org.safehaus.penrose.partition.PartitionConfig" />
+            <set-properties-rule/>
+            <set-next-rule methodname="addPartitionConfig" />
+        </pattern>
 
 		<!-- root -->
 		<pattern value="root">
@@ -124,7 +141,6 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
             <call-method-rule pattern="root-dn" methodname="setRootDn" paramcount="0" />
             <call-method-rule pattern="root-password" methodname="setRootPassword" paramcount="0" />
 		</pattern>
-
 	</pattern>
 
 </digester-rules>

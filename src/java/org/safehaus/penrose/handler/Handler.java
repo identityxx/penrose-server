@@ -19,7 +19,7 @@ package org.safehaus.penrose.handler;
 
 import org.safehaus.penrose.SearchResults;
 import org.safehaus.penrose.*;
-import org.safehaus.penrose.partition.PartitionConfig;
+import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.acl.ACLEngine;
 import org.safehaus.penrose.filter.FilterTool;
 import org.safehaus.penrose.partition.PartitionManager;
@@ -84,10 +84,10 @@ public class Handler implements ModuleContext {
         modRdnHandler = new ModRdnHandler(this);
         searchHandler = new SearchHandler(this);
 
-        for (Iterator i=partitionManager.getConfigs().iterator(); i.hasNext(); ) {
-            PartitionConfig partitionConfig = (PartitionConfig)i.next();
+        for (Iterator i=partitionManager.getPartitions().iterator(); i.hasNext(); ) {
+            Partition partition = (Partition)i.next();
 
-            for (Iterator j=partitionConfig.getModuleConfigs().iterator(); j.hasNext(); ) {
+            for (Iterator j=partition.getModuleConfigs().iterator(); j.hasNext(); ) {
                 ModuleConfig moduleConfig = (ModuleConfig)j.next();
 
                 Class clazz = Class.forName(moduleConfig.getModuleClass());
@@ -312,10 +312,10 @@ public class Handler implements ModuleContext {
 
         Collection list = new ArrayList();
 
-        PartitionConfig partitionConfig = engine.getConfigManager().getConfig(dn);
-        if (partitionConfig == null) return list;
+        Partition partition = engine.getPartitionManager().getConfig(dn);
+        if (partition == null) return list;
 
-        for (Iterator i = partitionConfig.getModuleMappings().iterator(); i.hasNext(); ) {
+        for (Iterator i = partition.getModuleMappings().iterator(); i.hasNext(); ) {
             Collection c = (Collection)i.next();
 
             for (Iterator j=c.iterator(); j.hasNext(); ) {

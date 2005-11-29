@@ -35,17 +35,17 @@ import org.safehaus.penrose.module.ModuleConfig;
 import org.safehaus.penrose.module.ModuleMapping;
 import org.safehaus.penrose.acl.ACI;
 import org.safehaus.penrose.connector.ConnectionConfig;
-import org.safehaus.penrose.partition.PartitionConfig;
+import org.safehaus.penrose.partition.Partition;
 
 /**
  * @author Endi S. Dewata
  */
-public class PartitionConfigWriter {
+public class PartitionWriter {
 
-    private PartitionConfig partitionConfig;
+    private Partition partition;
 
-	public PartitionConfigWriter(PartitionConfig partitionConfig) {
-        this.partitionConfig = partitionConfig;
+	public PartitionWriter(Partition partition) {
+        this.partition = partition;
 	}
 
     public void storeMappingConfig(String filename) throws Exception {
@@ -104,7 +104,7 @@ public class PartitionConfigWriter {
 	public Element toMappingXmlElement() {
 		Element mappingElement = new DefaultElement("mapping");
 		// entries
-		for (Iterator iter = partitionConfig.getRootEntryMappings().iterator(); iter.hasNext();) {
+		for (Iterator iter = partition.getRootEntryMappings().iterator(); iter.hasNext();) {
 			EntryMapping entry = (EntryMapping)iter.next();
 
             toElement(entry, mappingElement);
@@ -116,7 +116,7 @@ public class PartitionConfigWriter {
 		Element sourcesElement = new DefaultElement("sources");
 
         // connections
-		for (Iterator i = partitionConfig.getConnectionConfigs().iterator(); i.hasNext();) {
+		for (Iterator i = partition.getConnectionConfigs().iterator(); i.hasNext();) {
 			ConnectionConfig connection = (ConnectionConfig)i.next();
 			sourcesElement.add(toElement(connection));
 		}
@@ -127,13 +127,13 @@ public class PartitionConfigWriter {
 	public Element toModulesXmlElement() {
 		Element modulesElement = new DefaultElement("modules");
 		// module
-		for (Iterator iter = partitionConfig.getModuleConfigs().iterator(); iter.hasNext();) {
+		for (Iterator iter = partition.getModuleConfigs().iterator(); iter.hasNext();) {
 			ModuleConfig module = (ModuleConfig)iter.next();
             Element moduleElement = toElement(module);
 			modulesElement.add(moduleElement);
 		}
 		// module-mapping
-		for (Iterator i = partitionConfig.getModuleMappings().iterator(); i.hasNext();) {
+		for (Iterator i = partition.getModuleMappings().iterator(); i.hasNext();) {
             Collection c = (Collection)i.next();
 
             for (Iterator j = c.iterator(); j.hasNext(); ) {
@@ -274,7 +274,7 @@ public class PartitionConfigWriter {
             entryElement.add(parameterElement);
         }
 
-        Collection children = partitionConfig.getChildren(entry);
+        Collection children = partition.getChildren(entry);
         if (children != null) {
             for (Iterator i = children.iterator(); i.hasNext(); ) {
                 EntryMapping child = (EntryMapping)i.next();
@@ -625,11 +625,11 @@ public class PartitionConfigWriter {
     	return element;
     }
 
-    public PartitionConfig getConfig() {
-        return partitionConfig;
+    public Partition getConfig() {
+        return partition;
     }
 
-    public void setConfig(PartitionConfig partitionConfig) {
-        this.partitionConfig = partitionConfig;
+    public void setConfig(Partition partition) {
+        this.partition = partition;
     }
 }

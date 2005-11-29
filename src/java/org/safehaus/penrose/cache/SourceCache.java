@@ -22,7 +22,7 @@ import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.connector.Connector;
 import org.safehaus.penrose.connector.Connection;
 import org.safehaus.penrose.connector.ConnectionConfig;
-import org.safehaus.penrose.partition.PartitionConfig;
+import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.SearchResults;
 
 import java.util.*;
@@ -90,8 +90,8 @@ public abstract class SourceCache extends Cache {
 
         if (!autoRefresh) return;
 
-        PartitionConfig partitionConfig = connector.getConfigManager().getConfig(sourceDefinition);
-        ConnectionConfig conCfg = partitionConfig.getConnectionConfig(sourceDefinition.getConnectionName());
+        Partition partition = connector.getPartitionManager().getPartition(sourceDefinition);
+        ConnectionConfig conCfg = partition.getConnectionConfig(sourceDefinition.getConnectionName());
         Connection connection = connector.getConnection(conCfg.getConnectionName());
 
         SearchResults sr = connection.load(sourceDefinition, null, 100);

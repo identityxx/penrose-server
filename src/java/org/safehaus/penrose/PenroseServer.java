@@ -60,11 +60,10 @@ public class PenroseServer implements SignalHandler {
     }
 
     public void startPenroseService() throws Exception {
-        penrose = new Penrose();
-        penrose.setHome(home);
+        penrose = new Penrose(home);
         penrose.start();
 
-        penroseConfig = penrose.getConfig();
+        penroseConfig = penrose.getPenroseConfig();
     }
 
     public void stopPenroseService() throws Exception {

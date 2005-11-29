@@ -90,11 +90,10 @@ public class PenroseBackend implements Backend {
         log.debug("-------------------------------------------------------------------------------");
         log.debug("PenroseBackend.init();");
 
-        penrose = new Penrose();
-        penrose.setHome(realHomeDirectory);
+        penrose = new Penrose(realHomeDirectory);
         penrose.start();
 
-        PenroseConfig penroseConfig = penrose.getConfig();
+        PenroseConfig penroseConfig = penrose.getPenroseConfig();
         penroseConfig.setRootDn(rootDn);
         penroseConfig.setRootPassword(rootPassword);
 

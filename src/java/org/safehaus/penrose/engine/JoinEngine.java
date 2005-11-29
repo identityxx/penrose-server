@@ -19,7 +19,7 @@ package org.safehaus.penrose.engine;
 
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.connector.ConnectionConfig;
-import org.safehaus.penrose.partition.PartitionConfig;
+import org.safehaus.penrose.partition.Partition;
 import org.apache.log4j.Logger;
 
 import java.util.Collection;
@@ -114,7 +114,7 @@ public class JoinEngine {
 
         if (relationships == null) return true;
 
-        PartitionConfig partitionConfig = engine.getConfigManager().getConfig(entryMapping);
+        Partition partition = engine.getPartitionManager().getConfig(entryMapping);
 
         for (Iterator i=relationships.iterator(); i.hasNext(); ) {
             Relationship relationship = (Relationship)i.next();
@@ -125,8 +125,8 @@ public class JoinEngine {
             int lindex = lhs.indexOf(".");
             String lsourceName = lhs.substring(0, lindex);
             String lfieldName = lhs.substring(lindex+1);
-            SourceMapping lsource = partitionConfig.getEffectiveSource(entryMapping, lsourceName);
-            ConnectionConfig lconnectionConfig = partitionConfig.getConnectionConfig(lsource.getConnectionName());
+            SourceMapping lsource = partition.getEffectiveSource(entryMapping, lsourceName);
+            ConnectionConfig lconnectionConfig = partition.getConnectionConfig(lsource.getConnectionName());
             SourceDefinition lsourceDefinition = lconnectionConfig.getSourceDefinition(lsource.getSourceName());
             FieldDefinition lfieldDefinition = lsourceDefinition.getFieldDefinition(lfieldName);
 
@@ -134,8 +134,8 @@ public class JoinEngine {
             int rindex = rhs.indexOf(".");
             String rsourceName = rhs.substring(0, rindex);
             String rfieldName = rhs.substring(rindex+1);
-            SourceMapping rsource = partitionConfig.getEffectiveSource(entryMapping, rsourceName);
-            ConnectionConfig rconnectionConfig = partitionConfig.getConnectionConfig(rsource.getConnectionName());
+            SourceMapping rsource = partition.getEffectiveSource(entryMapping, rsourceName);
+            ConnectionConfig rconnectionConfig = partition.getConnectionConfig(rsource.getConnectionName());
             SourceDefinition rsourceDefinition = rconnectionConfig.getSourceDefinition(rsource.getSourceName());
             FieldDefinition rfieldDefinition = rsourceDefinition.getFieldDefinition(rfieldName);
 

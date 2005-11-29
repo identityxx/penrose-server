@@ -18,7 +18,7 @@
 package org.safehaus.penrose.connector;
 
 import org.safehaus.penrose.SearchResults;
-import org.safehaus.penrose.partition.PartitionConfig;
+import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.PartitionManager;
 import org.safehaus.penrose.cache.CacheConfig;
 import org.safehaus.penrose.cache.SourceCache;
@@ -91,22 +91,22 @@ public class Connector {
     }
 
 
-    public PartitionManager getConfigManager() {
+    public PartitionManager getPartitionManager() {
         return partitionManager;
     }
 
-    public void setConfigManager(PartitionManager partitionManager) throws Exception {
+    public void setPartitionManager(PartitionManager partitionManager) throws Exception {
         this.partitionManager = partitionManager;
 
-        for (Iterator i=partitionManager.getConfigs().iterator(); i.hasNext(); ) {
-            PartitionConfig partitionConfig = (PartitionConfig)i.next();
-            addConfig(partitionConfig);
+        for (Iterator i=partitionManager.getPartitions().iterator(); i.hasNext(); ) {
+            Partition partition = (Partition)i.next();
+            addPartition(partition);
         }
     }
 
-    public void addConfig(PartitionConfig partitionConfig) throws Exception {
+    public void addPartition(Partition partition) throws Exception {
 
-        for (Iterator i = partitionConfig.getConnectionConfigs().iterator(); i.hasNext();) {
+        for (Iterator i = partition.getConnectionConfigs().iterator(); i.hasNext();) {
             ConnectionConfig connectionConfig = (ConnectionConfig)i.next();
 
             String adapterName = connectionConfig.getConnectionType();
@@ -145,11 +145,11 @@ public class Connector {
         return (Connection)connections.get(name);
     }
 
-    public void refresh(PartitionConfig partitionConfig) throws Exception {
+    public void refresh(Partition partition) throws Exception {
 
         //log.debug("Refreshing cache ...");
 
-        Collection connectionConfigs = partitionConfig.getConnectionConfigs();
+        Collection connectionConfigs = partition.getConnectionConfigs();
         for (Iterator j=connectionConfigs.iterator(); j.hasNext(); ) {
             ConnectionConfig connectionConfig = (ConnectionConfig)j.next();
 
@@ -757,8 +757,8 @@ public class Connector {
 
     public SourceCache getCache(SourceDefinition sourceDefinition) throws Exception {
 
-        PartitionConfig partitionConfig = partitionManager.getConfig(sourceDefinition);
-        ConnectionConfig connectionConfig = partitionConfig.getConnectionConfig(sourceDefinition.getConnectionName());
+        Partition partition = partitionManager.getPartition(sourceDefinition);
+        ConnectionConfig connectionConfig = partition.getConnectionConfig(sourceDefinition.getConnectionName());
 
         String key = connectionConfig.getConnectionName()+"."+sourceDefinition.getName();
         return (SourceCache)caches.get(key);

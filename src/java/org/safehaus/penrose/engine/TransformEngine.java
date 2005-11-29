@@ -22,7 +22,7 @@ import java.util.*;
 
 import org.apache.log4j.Logger;
 import org.safehaus.penrose.interpreter.Interpreter;
-import org.safehaus.penrose.partition.PartitionConfig;
+import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.connector.ConnectionConfig;
 
@@ -122,8 +122,8 @@ public class TransformEngine {
 
     public Row translate(SourceMapping sourceMapping, AttributeValues input, AttributeValues output) throws Exception {
 
-        PartitionConfig partitionConfig = engine.getConfigManager().getConfig(sourceMapping);
-        ConnectionConfig connectionConfig = partitionConfig.getConnectionConfig(sourceMapping.getConnectionName());
+        Partition partition = engine.getPartitionManager().getPartition(sourceMapping);
+        ConnectionConfig connectionConfig = partition.getConnectionConfig(sourceMapping.getConnectionName());
         SourceDefinition sourceDefinition = connectionConfig.getSourceDefinition(sourceMapping.getSourceName());
 
         Interpreter interpreter = engine.getInterpreterFactory().newInstance();
@@ -207,8 +207,8 @@ public class TransformEngine {
 
     public Map split(SourceMapping sourceMapping, AttributeValues entry) throws Exception {
 
-        PartitionConfig partitionConfig = engine.getConfigManager().getConfig(sourceMapping);
-        ConnectionConfig connectionConfig = partitionConfig.getConnectionConfig(sourceMapping.getConnectionName());
+        Partition partition = engine.getPartitionManager().getPartition(sourceMapping);
+        ConnectionConfig connectionConfig = partition.getConnectionConfig(sourceMapping.getConnectionName());
         SourceDefinition sourceDefinition = connectionConfig.getSourceDefinition(sourceMapping.getSourceName());
 
         Collection fields = sourceDefinition.getPrimaryKeyFieldDefinitions();

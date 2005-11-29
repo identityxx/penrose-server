@@ -34,11 +34,14 @@
     <at name="description">
       <variable>cat.name</variable>
     </at>
-    <at name="info">
-      <constant>All Products</constant>
-    </at>
     <at name="price">
       <variable>products.price</variable>
+    </at>
+    <at name="productId">
+      <variable>products.id</variable>
+    </at>
+    <at name="categoryId">
+      <variable>products.categoryId</variable>
     </at>
     <source name="products">
       <source-name>products</source-name>
@@ -49,8 +52,14 @@
       <field name="price">
         <variable>price</variable>
       </field>
+      <field name="id">
+        <variable>productId</variable>
+      </field>
+      <field name="categoryId">
+        <variable>categoryId</variable>
+      </field>
     </source>
-    <source name="cat">
+    <source name="cat" readOnly="true">
       <source-name>categories</source-name>
       <connection-name>MySQL</connection-name>
       <field name="name">
@@ -98,14 +107,13 @@
   <entry dn="price=...,ou=Prices,ou=Products,dc=Example,dc=com">
     <oc>product</oc>
     <at name="price" rdn="true">
-      <expression>"$"+products.price</expression>
+      <variable>products.price</variable>
     </at>
     <source name="products">
       <source-name>products</source-name>
       <connection-name>MySQL</connection-name>
       <field name="price">
-        <expression>if (price == void || price == null) return null;
-return price.substring(1);</expression>
+        <variable>price</variable>
       </field>
     </source>
   </entry>
@@ -137,7 +145,7 @@ return price.substring(1);</expression>
   <entry dn="price=...,ou=Price Ranges,ou=Products,dc=Example,dc=com">
     <oc>product</oc>
     <at name="price" rdn="true">
-      <expression foreach="products.price" var="x">"$"+x+" or under"</expression>
+      <expression foreach="products.price" var="x">x+" or under"</expression>
     </at>
     <source name="products">
       <source-name>products</source-name>
@@ -145,7 +153,7 @@ return price.substring(1);</expression>
       <field name="price">
         <expression>if (price == void || price == null) return;
 int i = price.indexOf(" ");
-return price.substring(1, i);</expression>
+return price.substring(0, i);</expression>
       </field>
     </source>
   </entry>
@@ -179,9 +187,6 @@ return price.substring(1, i);</expression>
     <at name="cn" rdn="true">
       <variable>products.name</variable>
     </at>
-    <at name="info">
-      <constant>Expensive Products</constant>
-    </at>
     <at name="price">
       <variable>products.price</variable>
     </at>
@@ -208,6 +213,9 @@ return price.substring(1, i);</expression>
     <at name="cn" rdn="true">
       <variable>categories.name</variable>
     </at>
+    <at name="categoryId">
+      <variable>categories.id</variable>
+    </at>
     <at name="description">
       <variable>categories.description</variable>
     </at>
@@ -216,6 +224,9 @@ return price.substring(1, i);</expression>
       <connection-name>MySQL</connection-name>
       <field name="description">
         <variable>description</variable>
+      </field>
+      <field name="id">
+        <variable>categoryId</variable>
       </field>
       <field name="name">
         <variable>cn</variable>
@@ -300,7 +311,12 @@ return price.substring(1, i);</expression>
   <entry dn="cn=...,ou=Customers,cn=...,ou=All Products,cn=...,ou=Categories,dc=Example,dc=com">
     <oc>customer</oc>
     <at name="cn" rdn="true">
-      <expression>customers.firstName+" "+customers.lastName</expression>
+      <expression>
+if (customers == void || customers == null) return null;
+if (customers.firstName == void || customers.firstName == null) return null;
+if (customers.lastName == void || customers.lastName == null) return null;
+return customers.firstName+" "+customers.lastName;
+    </expression>
     </at>
     <at name="sn">
       <variable>customers.lastName</variable>
@@ -383,7 +399,12 @@ return cn.substring(i+1);</expression>
   <entry dn="cn=...+uid=...,ou=All Customers,ou=Customers,dc=Example,dc=com">
     <oc>customer</oc>
     <at name="cn" rdn="true">
-      <expression>customers.firstName+" "+customers.lastName</expression>
+      <expression>
+if (customers == void || customers == null) return null;
+if (customers.firstName == void || customers.firstName == null) return null;
+if (customers.lastName == void || customers.lastName == null) return null;
+return customers.firstName+" "+customers.lastName;
+    </expression>
     </at>
     <at name="email">
       <variable>customer_emails.email</variable>
@@ -397,6 +418,7 @@ return cn.substring(i+1);</expression>
     <at name="userPassword">
       <expression>import org.safehaus.penrose.util.*;
 
+if (customers == void || customers == null) return null;
 if (customers.encPassword == void || customers.encPassword == null) return null;
 
 byte[] bytes = PasswordUtil.decode("BigInteger", customers.encPassword);
@@ -643,9 +665,12 @@ return cn.substring(i+1);</expression>
     </at>
   </entry>
   <entry dn="sn=...,ou=Families,ou=Customers,dc=Example,dc=com">
-    <oc>groupOfUniqueNames</oc>
+    <oc>family</oc>
     <at name="description">
-      <expression>if (customers.firstName instanceof Collection) {
+      <expression>
+if (customers == void || customers == null || customers.firstName == void || customers.firstName == null) {
+    return "no members";
+} else if (customers.firstName instanceof Collection) {
     return customers.firstName.size()+" members";
 } else {
     return "1 member";
@@ -679,7 +704,12 @@ return x.substring(i+1, j);</expression>
   <entry dn="cn=...,ou=Members,sn=...,ou=Families,ou=Customers,dc=Example,dc=com">
     <oc>customer</oc>
     <at name="cn" rdn="true">
-      <expression>customers2.firstName+" "+customers2.lastName</expression>
+      <expression>
+if (customers2 == void || customers2 == void) return null;
+if (customers2.firstName == void || customers2.firstName == void) return null;
+if (customers2.lastName == void || customers2.lastName == void) return null;
+return customers2.firstName+" "+customers2.lastName;
+      </expression>
     </at>
     <at name="sn">
       <variable>customers2.lastName</variable>
@@ -929,6 +959,10 @@ return cn.substring(i+1);</expression>
     <at name="ou" rdn="true">
       <constant>Employees</constant>
     </at>
+    <aci>
+      <action>deny</action>
+      <permission>rs</permission>
+    </aci>
   </entry>
   <entry dn="ou=All Employees,ou=Employees,dc=Example,dc=com">
     <oc>organizationalUnit</oc>
@@ -939,7 +973,12 @@ return cn.substring(i+1);</expression>
   <entry dn="uid=...,ou=All Employees,ou=Employees,dc=Example,dc=com">
     <oc>customer</oc>
     <at name="cn">
-      <expression>employees.firstName+" "+employees.lastName</expression>
+      <expression>
+if (employees == void || employees == null) return null;
+if (employees.firstName == void || employees.firstName == null) return null;
+if (employees.lastName == void || employees.lastName == null) return null;
+return employees.firstName+" "+employees.lastName;
+    </expression>
     </at>
     <at name="sn">
       <variable>employees.lastName</variable>
@@ -950,6 +989,7 @@ return cn.substring(i+1);</expression>
     <at name="userPassword">
       <expression>import org.safehaus.penrose.util.*;
 
+if (employees == void || employees == null) return null;
 if (employees.encPassword == void || employees.encPassword == null) return null;
 
 byte[] bytes = PasswordUtil.decode("BigInteger", employees.encPassword);
@@ -994,6 +1034,51 @@ return cn.substring(i+1);</expression>
       </field>
       <field name="username">
         <variable>uid</variable>
+      </field>
+    </source>
+    <aci subject="self">
+      <permission>rsw</permission>
+    </aci>
+  </entry>
+  <entry dn="ou=Groups,dc=Example,dc=com">
+    <oc>organizationalUnit</oc>
+    <at name="ou" rdn="true">
+      <constant>Groups</constant>
+    </at>
+  </entry>
+  <entry dn="cn=Employees,ou=Groups,dc=Example,dc=com">
+    <oc>groupOfUniqueNames</oc>
+    <at name="cn" rdn="true">
+      <constant>Employees</constant>
+    </at>
+    <at name="uniqueMember">
+      <expression foreach="employees.username" var="username">"uid="+username+",ou=All Employees,ou=Employees,dc=Example,dc=com"</expression>
+    </at>
+    <source name="employees">
+      <source-name>employees</source-name>
+      <connection-name>MySQL</connection-name>
+      <field name="username">
+        <expression foreach="uniqueMember" var="x">int i = x.indexOf("=");
+int j = x.indexOf(",");
+return x.substring(i+1, j);</expression>
+      </field>
+    </source>
+  </entry>
+  <entry dn="cn=Customers,ou=Groups,dc=Example,dc=com">
+    <oc>groupOfUniqueNames</oc>
+    <at name="cn" rdn="true">
+      <constant>Customers</constant>
+    </at>
+    <at name="uniqueMember">
+      <expression foreach="customers.username" var="username">"uid="+username+",ou=All Customers,ou=Customers,dc=Example,dc=com"</expression>
+    </at>
+    <source name="customers">
+      <source-name>customers</source-name>
+      <connection-name>MySQL</connection-name>
+      <field name="username">
+        <expression foreach="uniqueMember" var="x">int i = x.indexOf("=");
+int j = x.indexOf(",");
+return x.substring(i+1, j);</expression>
       </field>
     </source>
   </entry>

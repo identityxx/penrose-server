@@ -21,7 +21,7 @@ import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.graph.GraphVisitor;
 import org.safehaus.penrose.graph.GraphIterator;
 import org.safehaus.penrose.util.Formatter;
-import org.safehaus.penrose.partition.PartitionConfig;
+import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.connector.ConnectionConfig;
 import org.apache.log4j.Logger;
 import org.ietf.ldap.LDAPException;
@@ -87,8 +87,8 @@ public class DeleteGraphVisitor extends GraphVisitor {
             newSourceValues.set(name, values);
         }
 
-        PartitionConfig partitionConfig = engine.getConfigManager().getConfig(sourceMapping);
-        ConnectionConfig connectionConfig = partitionConfig.getConnectionConfig(sourceMapping.getConnectionName());
+        Partition partition = engine.getPartitionManager().getPartition(sourceMapping);
+        ConnectionConfig connectionConfig = partition.getConnectionConfig(sourceMapping.getConnectionName());
         SourceDefinition sourceDefinition = connectionConfig.getSourceDefinition(sourceMapping.getSourceName());
 
         returnCode = engine.getConnector().delete(sourceDefinition, newSourceValues);

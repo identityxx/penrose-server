@@ -22,7 +22,7 @@ import org.safehaus.penrose.graph.GraphVisitor;
 import org.safehaus.penrose.graph.GraphIterator;
 import org.safehaus.penrose.graph.Graph;
 import org.safehaus.penrose.util.Formatter;
-import org.safehaus.penrose.partition.PartitionConfig;
+import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.connector.ConnectionConfig;
 import org.apache.log4j.Logger;
 import org.ietf.ldap.LDAPException;
@@ -117,8 +117,8 @@ public class ModRdnGraphVisitor extends GraphVisitor {
             newValues.set(name, values);
         }
 
-        PartitionConfig partitionConfig = engine.getConfigManager().getConfig(sourceMapping);
-        ConnectionConfig connectionConfig = partitionConfig.getConnectionConfig(sourceMapping.getConnectionName());
+        Partition partition = engine.getPartitionManager().getPartition(sourceMapping);
+        ConnectionConfig connectionConfig = partition.getConnectionConfig(sourceMapping.getConnectionName());
         SourceDefinition sourceDefinition = connectionConfig.getSourceDefinition(sourceMapping.getSourceName());
 
         returnCode = engine.getConnector().modify(sourceDefinition, oldValues, newValues);

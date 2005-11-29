@@ -18,8 +18,8 @@
 package org.safehaus.penrose.config;
 
 import java.util.Iterator;
-import java.io.File;
 import java.io.FileWriter;
+import java.io.Writer;
 
 import org.dom4j.Element;
 import org.dom4j.io.OutputFormat;
@@ -31,46 +31,42 @@ import org.safehaus.penrose.cache.CacheConfig;
 import org.safehaus.penrose.interpreter.InterpreterConfig;
 import org.safehaus.penrose.engine.EngineConfig;
 import org.safehaus.penrose.connector.ConnectorConfig;
+import org.apache.log4j.Logger;
 
 /**
  * @author Endi S. Dewata
  */
 public class PenroseConfigWriter {
 
-    private PenroseConfig penroseConfig;
+    Logger log = Logger.getLogger(getClass());
 
-    public PenroseConfigWriter(PenroseConfig penroseConfig) {
-        this.penroseConfig = penroseConfig;
-    }
+    Writer writer;
 
-    public void write(String filename) throws Exception {
-        File file = new File(filename);
-        write(file);
+    public PenroseConfigWriter(String filename) throws Exception {
+        writer = new FileWriter(filename);
     }
 
 	/**
 	 * Store configuration into xml file.
 	 *
-	 * @param file
 	 * @throws Exception
 	 */
-	public void write(File file) throws Exception {
-		FileWriter fw = new FileWriter(file);
+	public void write(PenroseConfig penroseConfig) throws Exception {
 		OutputFormat format = OutputFormat.createPrettyPrint();
         format.setTrimText(false);
 
-		XMLWriter writer = new XMLWriter(fw, format);
-		writer.startDocument();
+		XMLWriter xmlWriter = new XMLWriter(writer, format);
+		xmlWriter.startDocument();
 		/*
 		writer.startDTD("server",
 				"-//Penrose/Penrose Server Configuration DTD 1.0//EN",
 				"http://penrose.safehaus.org/dtd/penrose-server-config-1.0.dtd");
 				*/
-		writer.write(toElement());
-		writer.close();
+		xmlWriter.write(toElement(penroseConfig));
+		xmlWriter.close();
 	}
 
-	public Element toElement() {
+	public Element toElement(PenroseConfig penroseConfig) {
 		Element element = new DefaultElement("server");
 
         for (Iterator i = penroseConfig.getSystemPropertyNames().iterator(); i.hasNext();) {
@@ -328,11 +324,4 @@ public class PenroseConfigWriter {
     	return element;
     }
 
-    public PenroseConfig getServerConfig() {
-        return penroseConfig;
-    }
-
-    public void setServerConfig(PenroseConfig penroseConfig) {
-        this.penroseConfig = penroseConfig;
-    }
 }

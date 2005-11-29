@@ -23,7 +23,7 @@ import org.apache.log4j.Logger;
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.interpreter.DefaultInterpreter;
 import org.safehaus.penrose.interpreter.Token;
-import org.safehaus.penrose.partition.PartitionConfig;
+import org.safehaus.penrose.partition.Partition;
 
 import java.io.File;
 import java.net.URL;
@@ -33,20 +33,23 @@ import java.util.Iterator;
 /**
  * @author Endi S. Dewata
  */
-public class PartitionConfigReader {
+public class PartitionReader {
 
     Logger log = Logger.getLogger(getClass());
 
-    public PartitionConfigReader() {
+    String directory;
+
+    public PartitionReader(String directory) {
+        this.directory = directory;
     }
 
-    public PartitionConfig read(String directory) throws Exception {
-        PartitionConfig partitionConfig = new PartitionConfig();
-        loadConnectionsConfig(directory+File.separator+"connections.xml", partitionConfig);
-        loadSourcesConfig(directory+File.separator+"sources.xml", partitionConfig);
-        loadMappingConfig(directory+File.separator+"mapping.xml", partitionConfig);
-        loadModulesConfig(directory+File.separator+"modules.xml", partitionConfig);
-        return partitionConfig;
+    public Partition read() throws Exception {
+        Partition partition = new Partition();
+        loadConnectionsConfig(directory+File.separator+"connections.xml", partition);
+        loadSourcesConfig(directory+File.separator+"sources.xml", partition);
+        loadMappingConfig(directory+File.separator+"mapping.xml", partition);
+        loadModulesConfig(directory+File.separator+"modules.xml", partition);
+        return partition;
     }
 
     /**
@@ -55,10 +58,10 @@ public class PartitionConfigReader {
      * @param filename the configuration file (ie. mapping.xml)
      * @throws Exception
      */
-    public void loadMappingConfig(String filename, PartitionConfig partitionConfig) throws Exception {
+    public void loadMappingConfig(String filename, Partition partition) throws Exception {
         MappingRule mappingRule = new MappingRule();
         mappingRule.setFile(filename);
-        loadMappingConfig(null, null, mappingRule, partitionConfig);
+        loadMappingConfig(null, null, mappingRule, partition);
     }
 
     /**
@@ -69,7 +72,7 @@ public class PartitionConfigReader {
      * @param mappingRule
      * @throws Exception
      */
-    public void loadMappingConfig(File dir, String baseDn, MappingRule mappingRule, PartitionConfig partitionConfig) throws Exception {
+    public void loadMappingConfig(File dir, String baseDn, MappingRule mappingRule, Partition partition) throws Exception {
         File file = new File(dir, mappingRule.getFile());
         if (!file.exists()) return;
         //log.debug("Loading mapping rule from: "+file.getAbsolutePath());
@@ -93,7 +96,7 @@ public class PartitionConfigReader {
             if (object instanceof MappingRule) {
 
                 MappingRule mr = (MappingRule)object;
-                loadMappingConfig(file.getParentFile(), baseDn, mr, partitionConfig);
+                loadMappingConfig(file.getParentFile(), baseDn, mr, partition);
 
             } else if (object instanceof EntryMapping) {
 
@@ -108,12 +111,12 @@ public class PartitionConfigReader {
 
                 convert(ed);
 
-                partitionConfig.addEntryMapping(ed);
+                partition.addEntryMapping(ed);
 
                 Collection childDefinitions = ed.getChildMappings();
                 for (Iterator j=childDefinitions.iterator(); j.hasNext(); ) {
                     MappingRule mr = (MappingRule)j.next();
-                    loadMappingConfig(file.getParentFile(), ed.getDn(), mr, partitionConfig);
+                    loadMappingConfig(file.getParentFile(), ed.getDn(), mr, partition);
                 }
             }
         }
@@ -208,10 +211,10 @@ public class PartitionConfigReader {
      * @param filename the configuration file (ie. modules.xml)
      * @throws Exception
      */
-    public void loadModulesConfig(String filename, PartitionConfig partitionConfig) throws Exception {
+    public void loadModulesConfig(String filename, Partition partition) throws Exception {
         File file = new File(filename);
         if (!file.exists()) return;
-        loadModulesConfig(file, partitionConfig);
+        loadModulesConfig(file, partition);
     }
 
     /**
@@ -220,14 +223,14 @@ public class PartitionConfigReader {
      * @param file the configuration file (ie. modules.xml)
      * @throws Exception
      */
-	public void loadModulesConfig(File file, PartitionConfig partitionConfig) throws Exception {
+	public void loadModulesConfig(File file, Partition partition) throws Exception {
         //log.debug("Loading modules configuration from: "+file.getAbsolutePath());
         ClassLoader cl = getClass().getClassLoader();
         URL url = cl.getResource("org/safehaus/penrose/partition/modules-digester-rules.xml");
 		Digester digester = DigesterLoader.createDigester(url);
 		digester.setValidating(false);
         digester.setClassLoader(cl);
-		digester.push(partitionConfig);
+		digester.push(partition);
 		digester.parse(file);
 	}
 
@@ -237,10 +240,10 @@ public class PartitionConfigReader {
      * @param filename the configuration file (ie. connections.xml)
      * @throws Exception
      */
-    public void loadConnectionsConfig(String filename, PartitionConfig partitionConfig) throws Exception {
+    public void loadConnectionsConfig(String filename, Partition partition) throws Exception {
         File file = new File(filename);
         if (!file.exists()) return;
-        loadConnectionsConfig(file, partitionConfig);
+        loadConnectionsConfig(file, partition);
     }
 
 	/**
@@ -249,14 +252,14 @@ public class PartitionConfigReader {
 	 * @param file the configuration file (ie. sources.xml)
 	 * @throws Exception
 	 */
-	public void loadConnectionsConfig(File file, PartitionConfig partitionConfig) throws Exception {
+	public void loadConnectionsConfig(File file, Partition partition) throws Exception {
 		//log.debug("Loading source configuration from: "+file.getAbsolutePath());
         ClassLoader cl = getClass().getClassLoader();
         URL url = cl.getResource("org/safehaus/penrose/partition/connections-digester-rules.xml");
 		Digester digester = DigesterLoader.createDigester(url);
         digester.setValidating(false);
         digester.setClassLoader(cl);
-        digester.push(partitionConfig);
+        digester.push(partition);
         digester.parse(file);
 	}
 
@@ -266,10 +269,10 @@ public class PartitionConfigReader {
      * @param filename the configuration file (ie. sources.xml)
      * @throws Exception
      */
-    public void loadSourcesConfig(String filename, PartitionConfig partitionConfig) throws Exception {
+    public void loadSourcesConfig(String filename, Partition partition) throws Exception {
         File file = new File(filename);
         if (!file.exists()) return;
-        loadSourcesConfig(file, partitionConfig);
+        loadSourcesConfig(file, partition);
     }
 
 	/**
@@ -278,14 +281,14 @@ public class PartitionConfigReader {
 	 * @param file the configuration file (ie. sources.xml)
 	 * @throws Exception
 	 */
-	public void loadSourcesConfig(File file, PartitionConfig partitionConfig) throws Exception {
+	public void loadSourcesConfig(File file, Partition partition) throws Exception {
 		//log.debug("Loading source configuration from: "+file.getAbsolutePath());
         ClassLoader cl = getClass().getClassLoader();
         URL url = cl.getResource("org/safehaus/penrose/partition/sources-digester-rules.xml");
 		Digester digester = DigesterLoader.createDigester(url);
         digester.setValidating(false);
         digester.setClassLoader(cl);
-        digester.push(partitionConfig);
+        digester.push(partition);
         digester.parse(file);
 	}
 }

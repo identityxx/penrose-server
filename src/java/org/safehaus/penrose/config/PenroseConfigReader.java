@@ -25,7 +25,8 @@ import org.safehaus.penrose.engine.EngineConfig;
 import org.safehaus.penrose.cache.CacheConfig;
 import org.safehaus.penrose.interpreter.InterpreterConfig;
 
-import java.io.File;
+import java.io.Reader;
+import java.io.FileReader;
 import java.net.URL;
 
 /**
@@ -35,38 +36,32 @@ public class PenroseConfigReader {
 
     Logger log = Logger.getLogger(getClass());
 
-    public PenroseConfigReader() {
+    Reader reader;
+
+    public PenroseConfigReader(String filename) throws Exception {
+        reader = new FileReader(filename);
+    }
+
+    public PenroseConfigReader(Reader reader) {
+        this.reader = reader;
     }
 
     /**
      * Load server configuration from a file
      *
-     * @param filename the configuration file (ie. server.xml)
      * @throws Exception
      */
-    public PenroseConfig read(String filename) throws Exception {
+    public PenroseConfig read() throws Exception {
         PenroseConfig penroseConfig = new PenroseConfig();
-        File file = new File(filename);
-        read(file, penroseConfig);
-        return penroseConfig;
-    }
 
-	/**
-	 * Load server configuration from a file
-	 *
-	 * @param file the configuration file (ie. server.xml)
-	 * @throws Exception
-	 */
-	public void read(File file, PenroseConfig penroseConfig) throws Exception {
-		//log.debug("Loading server configuration file from: "+file.getAbsolutePath());
         ClassLoader cl = getClass().getClassLoader();
         URL url = cl.getResource("org/safehaus/penrose/config/server-digester-rules.xml");
 		Digester digester = DigesterLoader.createDigester(url);
 		digester.setValidating(false);
         digester.setClassLoader(cl);
 		digester.push(penroseConfig);
-		digester.parse(file);
-
+		digester.parse(reader);
+/*
         if (penroseConfig.getInterpreterConfig() == null) {
             InterpreterConfig interpreterConfig = new InterpreterConfig();
             penroseConfig.setInterpreterConfig(interpreterConfig);
@@ -97,6 +92,7 @@ public class PenroseConfigReader {
             EngineConfig engineConfig = new EngineConfig();
             penroseConfig.setEngineConfig(engineConfig);
         }
-
+*/
+        return penroseConfig;
 	}
 }

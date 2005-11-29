@@ -22,7 +22,7 @@ import org.safehaus.penrose.graph.GraphVisitor;
 import org.safehaus.penrose.graph.Graph;
 import org.safehaus.penrose.graph.GraphIterator;
 import org.safehaus.penrose.util.Formatter;
-import org.safehaus.penrose.partition.PartitionConfig;
+import org.safehaus.penrose.partition.Partition;
 import org.apache.log4j.Logger;
 
 import java.util.*;
@@ -34,7 +34,7 @@ public class SearchCleaner extends GraphVisitor {
 
     Logger log = Logger.getLogger(getClass());
 
-    private PartitionConfig partitionConfig;
+    private Partition partition;
     private Graph graph;
     private Engine engine;
     private EntryMapping entryMapping;
@@ -56,7 +56,7 @@ public class SearchCleaner extends GraphVisitor {
         this.depths = planner.getDepths();
         this.primarySourceMapping = primarySourceMapping;
 
-        partitionConfig = engine.getConfigManager().getConfig(entryMapping);
+        partition = engine.getPartitionManager().getConfig(entryMapping);
         graph = engine.getGraph(entryMapping);
 
         needCleaning.put(primarySourceMapping, new Boolean(false));

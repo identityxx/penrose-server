@@ -23,7 +23,7 @@ import org.safehaus.penrose.SearchResults;
 import org.safehaus.penrose.util.Formatter;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.filter.FilterTool;
-import org.safehaus.penrose.partition.PartitionConfig;
+import org.safehaus.penrose.partition.Partition;
 import org.apache.log4j.Logger;
 
 import java.util.*;
@@ -51,12 +51,12 @@ public class LoadEngine {
         String s = engine.getEngineConfig().getParameter(EngineConfig.ALLOW_CONCURRENCY);
         boolean allowConcurrency = s == null ? true : new Boolean(s).booleanValue();
 
-        PartitionConfig partitionConfig = engine.getConfigManager().getConfig(entryMapping);
+        Partition partition = engine.getPartitionManager().getConfig(entryMapping);
 
         Collection sources = entryMapping.getSourceMappings();
         log.debug("Sources: "+sources);
 
-        Collection effectiveSources = partitionConfig.getEffectiveSources(entryMapping);
+        Collection effectiveSources = partition.getEffectiveSources(entryMapping);
         log.debug("Effective Sources: "+effectiveSources);
 
         if (sources.size() == 0 && effectiveSources.size() == 0 || sources.size() == 1 && effectiveSources.size() == 1) {
@@ -133,7 +133,7 @@ public class LoadEngine {
             ) throws Exception {
 
         try {
-            PartitionConfig partitionConfig = engine.getConfigManager().getConfig(entryMapping);
+            Partition partition = engine.getPartitionManager().getConfig(entryMapping);
             SourceMapping primarySourceMapping = engine.getPrimarySource(entryMapping);
 
             Collection batch = new ArrayList();
@@ -148,7 +148,7 @@ public class LoadEngine {
 
                 Row rdn = Entry.getRdn(dn);
 
-                if (partitionConfig.getParent(entryMapping) != null) {
+                if (partition.getParent(entryMapping) != null) {
                     String parentDn = Entry.getParentDn(dn);
 
                     log.debug("Checking "+rdn+" in entry data cache for "+parentDn);

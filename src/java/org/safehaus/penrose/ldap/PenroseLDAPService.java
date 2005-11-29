@@ -52,7 +52,7 @@ public class PenroseLDAPService {
 
     public void start() throws Exception {
 
-        PenroseConfig penroseConfig = penrose.getConfig();
+        PenroseConfig penroseConfig = penrose.getPenroseConfig();
 
         MutableServerStartupConfiguration configuration =  new MutableServerStartupConfiguration();
 

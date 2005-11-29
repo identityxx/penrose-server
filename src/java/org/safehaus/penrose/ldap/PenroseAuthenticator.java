@@ -58,7 +58,7 @@ public class PenroseAuthenticator extends AbstractAuthenticator {
         Object credentials = ctx.getEnvironment().get( Context.SECURITY_CREDENTIALS );
         String password = new String((byte[])credentials);
 
-        PenroseConfig penroseConfig = penrose.getConfig();
+        PenroseConfig penroseConfig = penrose.getPenroseConfig();
         String rootDn = penroseConfig.getRootDn();
         String rootPassword = penroseConfig.getRootPassword();
 

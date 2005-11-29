@@ -21,7 +21,7 @@ import org.apache.log4j.Logger;
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.util.Formatter;
 import org.safehaus.penrose.graph.Graph;
-import org.safehaus.penrose.partition.PartitionConfig;
+import org.safehaus.penrose.partition.Partition;
 import org.ietf.ldap.LDAPException;
 
 import java.util.Collection;
@@ -84,13 +84,13 @@ public class AddEngine {
 
         sourceValues.add(parentSourceValues);
 
-        PartitionConfig partitionConfig = engine.getConfigManager().getConfig(entryMapping);
+        Partition partition = engine.getPartitionManager().getConfig(entryMapping);
 
         Graph graph = engine.getGraph(entryMapping);
         String startingSourceName = engine.getStartingSourceName(entryMapping);
         if (startingSourceName == null) return LDAPException.SUCCESS;
 
-        SourceMapping startingSourceMapping = partitionConfig.getEffectiveSource(entryMapping, startingSourceName);
+        SourceMapping startingSourceMapping = partition.getEffectiveSource(entryMapping, startingSourceName);
         log.debug("Starting from source: "+startingSourceName);
 
         Collection relationships = graph.getEdgeObjects(startingSourceMapping);

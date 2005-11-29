@@ -20,7 +20,7 @@ package org.safehaus.penrose.partition;
 /**
  * @author Endi S. Dewata
  */
-public class PartitionConfigValidationResult {
+public class PartitionValidationResult {
 
     public final static String WARNING = "WARNING";
     public final static String ERROR   = "ERROR";
@@ -30,7 +30,7 @@ public class PartitionConfigValidationResult {
     private String source;
     private Object object;
 
-    public PartitionConfigValidationResult(String type, String message, String source, Object object) {
+    public PartitionValidationResult(String type, String message, String source, Object object) {
         this.type = type;
         this.message = message;
         this.source = source;

@@ -20,7 +20,7 @@ package org.safehaus.penrose.acl;
 import org.safehaus.penrose.mapping.Entry;
 import org.safehaus.penrose.mapping.EntryMapping;
 import org.safehaus.penrose.PenroseConnection;
-import org.safehaus.penrose.partition.PartitionConfig;
+import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.handler.Handler;
 import org.ietf.ldap.LDAPException;
 import org.ietf.ldap.LDAPEntry;
@@ -95,10 +95,10 @@ public class ACLEngine {
             }
         }
 
-        PartitionConfig partitionConfig = handler.getConfigManager().getConfig(entry.getDn());
-        if (partitionConfig == null) return false;
+        Partition partition = handler.getConfigManager().getConfig(entry.getDn());
+        if (partition == null) return false;
 
-        entry = partitionConfig.getParent(entry);
+        entry = partition.getParent(entry);
         if (entry == null) return false;
 
         return getObjectPermission(bindDn, targetDn, entry, ACI.SCOPE_SUBTREE, permission);
@@ -218,10 +218,10 @@ public class ACLEngine {
             }
         }
 
-        PartitionConfig partitionConfig = handler.getConfigManager().getConfig(entry.getDn());
-        if (partitionConfig == null) return;
+        Partition partition = handler.getConfigManager().getConfig(entry.getDn());
+        if (partition == null) return;
 
-        entry = partitionConfig.getParent(entry);
+        entry = partition.getParent(entry);
         if (entry == null) return;
 
         getReadableAttributes(bindDn, targetDn, entry, ACI.SCOPE_SUBTREE, grants, denies);

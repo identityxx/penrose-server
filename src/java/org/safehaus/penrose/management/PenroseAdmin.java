@@ -44,7 +44,7 @@ public class PenroseAdmin implements PenroseAdminMBean {
     }
 
     public Collection listFiles(String directory) throws Exception {
-        String homeDirectory = penrose.getHome();
+        String homeDirectory = penrose.getPenroseConfig().getHome();
         File file = new File((homeDirectory == null ? "" : homeDirectory+File.separator)+directory);
         File children[] = file.listFiles();
         Collection result = new ArrayList();
@@ -59,13 +59,13 @@ public class PenroseAdmin implements PenroseAdminMBean {
     }
 
     public Collection getLoggerNames(String path) throws Exception {
-        log.debug("Loggers under "+path);
+        //log.debug("Loggers under "+path);
         Collection loggerNames = new TreeSet();
 
         Enumeration e = LogManager.getCurrentLoggers();
         while (e.hasMoreElements()) {
     		Logger logger = (Logger)e.nextElement();
-    		log.debug(" - "+logger.getName()+": "+logger.getEffectiveLevel());
+    		//log.debug(" - "+logger.getName()+": "+logger.getEffectiveLevel());
             loggerNames.add(logger.getName());
     	}
 
@@ -73,7 +73,7 @@ public class PenroseAdmin implements PenroseAdminMBean {
     }
 
     public byte[] download(String filename) throws IOException {
-        String homeDirectory = penrose.getHome();
+        String homeDirectory = penrose.getPenroseConfig().getHome();
         File file = new File((homeDirectory == null ? "" : homeDirectory+File.separator)+filename);
         log.debug("Downloading "+file.getAbsolutePath());
 
@@ -88,7 +88,7 @@ public class PenroseAdmin implements PenroseAdminMBean {
     }
 
     public void upload(String filename, byte content[]) throws IOException {
-        String homeDirectory = penrose.getHome();
+        String homeDirectory = penrose.getPenroseConfig().getHome();
         File file = new File((homeDirectory == null ? "" : homeDirectory+File.separator)+filename);
         log.debug("Uploading "+file.getAbsolutePath());
         FileOutputStream out = new FileOutputStream(file);

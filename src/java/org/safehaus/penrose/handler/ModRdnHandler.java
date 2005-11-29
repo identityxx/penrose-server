@@ -18,7 +18,7 @@
 package org.safehaus.penrose.handler;
 
 import org.safehaus.penrose.PenroseConnection;
-import org.safehaus.penrose.partition.PartitionConfig;
+import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.mapping.Entry;
 import org.safehaus.penrose.mapping.EntryMapping;
 import org.apache.log4j.Logger;
@@ -69,8 +69,8 @@ public class ModRdnHandler {
         if (rc != LDAPException.SUCCESS) return rc;
 
         EntryMapping entryMapping = entry.getEntryMapping();
-        PartitionConfig partitionConfig = handler.getConfigManager().getConfig(entryMapping);
-        if (partitionConfig.isDynamic(entryMapping)) {
+        Partition partition = handler.getConfigManager().getConfig(entryMapping);
+        if (partition.isDynamic(entryMapping)) {
             return modRdnVirtualEntry(connection, entry, newRdn);
 
         } else {
@@ -83,8 +83,8 @@ public class ModRdnHandler {
             String newRdn)
 			throws Exception {
 
-        PartitionConfig partitionConfig = handler.getConfigManager().getConfig(entry.getDn());
-        partitionConfig.renameEntryMapping(entry, newRdn);
+        Partition partition = handler.getConfigManager().getConfig(entry.getDn());
+        partition.renameEntryMapping(entry, newRdn);
 
         return LDAPException.SUCCESS;
     }

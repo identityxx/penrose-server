@@ -15,22 +15,23 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
-package org.safehaus.penrose.partition;
+package org.safehaus.penrose.schema;
+
+import java.io.File;
 
 /**
  * @author Endi S. Dewata
  */
-public class PartitionConfig {
+public class SchemaConfig {
 
     private String name;
     private String path;
 
-    public PartitionConfig() {
+    public SchemaConfig() {
     }
 
-    public PartitionConfig(String name, String path) {
-        this.name = name;
-        this.path = path;
+    public SchemaConfig(String path) {
+        setPath(path);
     }
 
     public String getName() {
@@ -47,5 +48,11 @@ public class PartitionConfig {
 
     public void setPath(String path) {
         this.path = path;
+
+        File file = new File(path);
+        String filename = file.getName();
+        int i = filename.indexOf(".");
+
+        this.name = filename.substring(0, i);
     }
 }

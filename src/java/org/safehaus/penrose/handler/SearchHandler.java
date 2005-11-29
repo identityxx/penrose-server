@@ -23,7 +23,7 @@ import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.engine.Engine;
 import org.safehaus.penrose.event.SearchEvent;
-import org.safehaus.penrose.partition.PartitionConfig;
+import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.filter.SimpleFilter;
 import org.safehaus.penrose.filter.FilterTool;
@@ -88,14 +88,14 @@ public class SearchHandler {
 
         log.debug("Found parent: "+(parent == null ? null : parent.getDn()));
 
-        PartitionConfig partitionConfig = handler.getConfigManager().getConfig(dn);
-        if (partitionConfig == null) {
-            log.error("Missing config for "+dn);
+        Partition partition = handler.getConfigManager().getConfig(dn);
+        if (partition == null) {
+            //log.error("Missing config for "+dn);
             return null;
         }
 
         // search the entry directly
-        EntryMapping entryMapping = partitionConfig.getEntryMapping(dn);
+        EntryMapping entryMapping = partition.getEntryMapping(dn);
 
         if (entryMapping != null) {
             log.debug("Found static entry: " + dn);
@@ -129,7 +129,7 @@ public class SearchHandler {
 
         EntryMapping parentMapping = parent.getEntryMapping();
 
-		Collection children = partitionConfig.getChildren(parentMapping);
+		Collection children = partition.getChildren(parentMapping);
         if (children == null) {
             log.debug("Entry "+parentDn+" has no children.");
             return null;
@@ -276,9 +276,9 @@ public class SearchHandler {
             set.add(new LDAPAttribute("vendorVersion", new String[] { Penrose.PRODUCT_NAME }));
 
             LDAPAttribute namingContexts = new LDAPAttribute("namingContexts");
-            for (Iterator i=handler.getConfigManager().getConfigs().iterator(); i.hasNext(); ) {
-                PartitionConfig partitionConfig = (PartitionConfig)i.next();
-                for (Iterator j=partitionConfig.getRootEntryMappings().iterator(); j.hasNext(); ) {
+            for (Iterator i=handler.getConfigManager().getPartitions().iterator(); i.hasNext(); ) {
+                Partition partition = (Partition)i.next();
+                for (Iterator j=partition.getRootEntryMappings().iterator(); j.hasNext(); ) {
                     EntryMapping entry = (EntryMapping)j.next();
                     namingContexts.addValue(entry.getDn());
                 }
@@ -356,8 +356,8 @@ public class SearchHandler {
             SearchResults results,
             boolean first) throws Exception {
 
-        PartitionConfig partitionConfig = handler.getConfigManager().getConfig(entryMapping);
-        Collection children = partitionConfig.getChildren(entryMapping);
+        Partition partition = handler.getConfigManager().getConfig(entryMapping);
+        Collection children = partition.getChildren(entryMapping);
         if (children == null) {
             return;
         }

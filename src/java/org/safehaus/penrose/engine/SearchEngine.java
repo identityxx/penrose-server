@@ -23,7 +23,7 @@ import org.safehaus.penrose.filter.FilterTool;
 import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.util.Formatter;
 import org.safehaus.penrose.SearchResults;
-import org.safehaus.penrose.partition.PartitionConfig;
+import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.connector.ConnectionConfig;
 import org.apache.log4j.Logger;
 import org.ietf.ldap.LDAPException;
@@ -60,12 +60,12 @@ public class SearchEngine {
         boolean unique = engine.isUnique(entryMapping);
         log.debug("Entry "+entryMapping.getDn()+" "+(unique ? "is" : "is not")+" unique.");
 
-        PartitionConfig partitionConfig = engine.getConfigManager().getConfig(entryMapping);
+        Partition partition = engine.getPartitionManager().getConfig(entryMapping);
 
         Collection sources = entryMapping.getSourceMappings();
         log.debug("Sources: "+sources);
 
-        Collection effectiveSources = partitionConfig.getEffectiveSources(entryMapping);
+        Collection effectiveSources = partition.getEffectiveSources(entryMapping);
         log.debug("Effective Sources: "+effectiveSources);
 
         if (unique && sources.size() == 1 && effectiveSources.size() == 1) {
@@ -137,8 +137,8 @@ public class SearchEngine {
 
         //boolean unique = engine.isUnique(entryMapping  //log.debug("Entry "+entryMapping" "+(unique ? "is" : "is not")+" unique.");
 
-        PartitionConfig partitionConfig = engine.getConfigManager().getConfig(entryMapping);
-        EntryMapping parentMapping = partitionConfig.getParent(entryMapping);
+        Partition partition = engine.getPartitionManager().getConfig(entryMapping);
+        EntryMapping parentMapping = partition.getParent(entryMapping);
 
         Interpreter interpreter = engine.getInterpreterFactory().newInstance();
 
@@ -367,8 +367,8 @@ public class SearchEngine {
             newFilter = FilterTool.appendAndFilter(newFilter, sourceFilter);
         }
 
-        PartitionConfig partitionConfig = engine.getConfigManager().getConfig(entryMapping);
-        ConnectionConfig connectionConfig = partitionConfig.getConnectionConfig(sourceMapping.getConnectionName());
+        Partition partition = engine.getPartitionManager().getConfig(entryMapping);
+        ConnectionConfig connectionConfig = partition.getConnectionConfig(sourceMapping.getConnectionName());
         SourceDefinition sourceDefinition = connectionConfig.getSourceDefinition(sourceMapping.getSourceName());
 
         SearchResults sr = engine.getConnector().search(sourceDefinition, newFilter);
@@ -630,8 +630,8 @@ public class SearchEngine {
         }
 
         if (startingSources.isEmpty()) {
-            PartitionConfig partitionConfig = engine.getConfigManager().getConfig(entryMapping);
-            EntryMapping parentMapping = partitionConfig.getParent(entryMapping);
+            Partition partition = engine.getPartitionManager().getConfig(entryMapping);
+            EntryMapping parentMapping = partition.getParent(entryMapping);
 
             while (parentMapping != null) {
                 log.debug("Checking: "+parentMapping.getDn());
@@ -648,7 +648,7 @@ public class SearchEngine {
                     break;
                 }
 
-                parentMapping = partitionConfig.getParent(parentMapping);
+                parentMapping = partition.getParent(parentMapping);
             }
 
             if (parentMapping == null) {

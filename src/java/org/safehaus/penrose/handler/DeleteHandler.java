@@ -18,7 +18,7 @@
 package org.safehaus.penrose.handler;
 
 import org.safehaus.penrose.PenroseConnection;
-import org.safehaus.penrose.partition.PartitionConfig;
+import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.event.DeleteEvent;
 import org.safehaus.penrose.mapping.EntryMapping;
 import org.safehaus.penrose.mapping.Entry;
@@ -74,9 +74,9 @@ public class DeleteHandler {
         log.debug("Deleting entry "+dn);
 
         EntryMapping entryMapping = entry.getEntryMapping();
-        PartitionConfig partitionConfig = handler.getConfigManager().getConfig(entryMapping);
+        Partition partition = handler.getConfigManager().getConfig(entryMapping);
 
-        if (partitionConfig.isDynamic(entryMapping)) {
+        if (partition.isDynamic(entryMapping)) {
 	        return handler.getEngine().delete(entry);
 
         } else {
@@ -87,14 +87,14 @@ public class DeleteHandler {
 
     public int deleteStaticEntry(EntryMapping entry) throws Exception {
 
-        PartitionConfig partitionConfig = handler.getConfigManager().getConfig(entry.getDn());
-        if (partitionConfig == null) return LDAPException.NO_SUCH_OBJECT;
+        Partition partition = handler.getConfigManager().getConfig(entry.getDn());
+        if (partition == null) return LDAPException.NO_SUCH_OBJECT;
 
         // can't delete no leaf
-        Collection children = partitionConfig.getChildren(entry);
+        Collection children = partition.getChildren(entry);
         if (children != null && !children.isEmpty()) return LDAPException.NOT_ALLOWED_ON_NONLEAF;
 
-        partitionConfig.removeEntryMapping(entry);
+        partition.removeEntryMapping(entry);
 
         return LDAPException.SUCCESS;
     }

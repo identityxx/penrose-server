@@ -20,7 +20,7 @@ package org.safehaus.penrose.engine;
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.filter.FilterTool;
-import org.safehaus.penrose.partition.PartitionConfig;
+import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.graph.GraphVisitor;
 import org.safehaus.penrose.graph.Graph;
 import org.safehaus.penrose.graph.GraphIterator;
@@ -38,7 +38,7 @@ public class SearchParentRunner extends GraphVisitor {
 
     Logger log = Logger.getLogger(getClass());
 
-    private PartitionConfig partitionConfig;
+    private Partition partition;
     private Graph graph;
     private Engine engine;
     private EntryMapping entryMapping;
@@ -66,7 +66,7 @@ public class SearchParentRunner extends GraphVisitor {
         this.results = results;
         this.sourceValues = sourceValues;
 
-        partitionConfig = engine.getConfigManager().getConfig(entryMapping);
+        partition = engine.getPartitionManager().getConfig(entryMapping);
         graph = engine.getGraph(entryMapping);
 
         Filter filter = (Filter)filters.get(startingSourceMapping);
@@ -131,7 +131,7 @@ public class SearchParentRunner extends GraphVisitor {
 
             log.debug("Searching source "+sourceMapping.getName()+" with filter "+filter);
 
-            ConnectionConfig connectionConfig = partitionConfig.getConnectionConfig(sourceMapping.getConnectionName());
+            ConnectionConfig connectionConfig = partition.getConnectionConfig(sourceMapping.getConnectionName());
             SourceDefinition sourceDefinition = connectionConfig.getSourceDefinition(sourceMapping.getSourceName());
 
             SearchResults tmp = engine.getConnector().search(sourceDefinition, filter);

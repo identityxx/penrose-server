@@ -66,7 +66,7 @@ public class PenroseJMXService {
 
     public void start() throws Exception {
 
-        PenroseConfig penroseConfig = penrose.getConfig();
+        PenroseConfig penroseConfig = penrose.getPenroseConfig();
 
         mbeanServer = MBeanServerFactory.createMBeanServer();
 

@@ -28,7 +28,7 @@ import org.safehaus.penrose.PenroseConnection;
 import org.safehaus.penrose.SearchResults;
 import org.safehaus.penrose.util.ExceptionUtil;
 import org.safehaus.penrose.mapping.EntryMapping;
-import org.safehaus.penrose.partition.PartitionConfig;
+import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.PartitionManager;
 import org.ietf.ldap.*;
 
@@ -74,8 +74,8 @@ public class PenroseInterceptor extends BaseInterceptor {
             log.debug("===============================================================================");
             log.debug("add(\""+dn+"\") as "+principalDn);
 
-            PartitionConfig partitionConfig = partitionManager.getConfig(dn);
-            if (partitionConfig == null) {
+            Partition partition = partitionManager.getConfig(dn);
+            if (partition == null) {
                 log.debug(dn+" is a static entry");
                 next.add(upName, normName, attributes);
                 return;
@@ -147,13 +147,13 @@ public class PenroseInterceptor extends BaseInterceptor {
             log.debug("===============================================================================");
             log.debug("compare(\""+dn+"\")");
 
-            PartitionConfig partitionConfig = partitionManager.getConfig(dn);
-            if (partitionConfig == null) {
+            Partition partition = partitionManager.getConfig(dn);
+            if (partition == null) {
                 log.debug(dn+" is a static entry");
                 return next.compare(name, attributeName, value);
             }
 
-            EntryMapping ed = partitionConfig.findEntryMapping(dn);
+            EntryMapping ed = partition.findEntryMapping(dn);
             if (ed == null) {
                 log.debug(dn+" is a static entry");
                 return next.compare(name, attributeName, value);
@@ -194,14 +194,14 @@ public class PenroseInterceptor extends BaseInterceptor {
             log.debug("===============================================================================");
             log.debug("delete(\""+dn+"\")");
 
-            PartitionConfig partitionConfig = partitionManager.getConfig(dn);
-            if (partitionConfig == null) {
+            Partition partition = partitionManager.getConfig(dn);
+            if (partition == null) {
                 log.debug(dn+" is a static entry");
                 next.delete(name);
                 return;
             }
 
-            EntryMapping ed = partitionConfig.findEntryMapping(dn);
+            EntryMapping ed = partition.findEntryMapping(dn);
             if (ed == null) {
                 log.debug(dn+" is a static entry");
                 next.delete(name);
@@ -277,13 +277,13 @@ public class PenroseInterceptor extends BaseInterceptor {
             log.debug("list(\""+dn+"\")");
 
 
-            PartitionConfig partitionConfig = partitionManager.getConfig(dn);
-            if (partitionConfig == null) {
+            Partition partition = partitionManager.getConfig(dn);
+            if (partition == null) {
                 log.debug(dn+" is a static entry");
                 return next.list(name);
             }
 
-            EntryMapping ed = partitionConfig.findEntryMapping(dn);
+            EntryMapping ed = partition.findEntryMapping(dn);
             if (ed == null) {
                 log.debug(dn+" is a static entry");
                 return next.list(name);
@@ -328,8 +328,8 @@ public class PenroseInterceptor extends BaseInterceptor {
         try {
             String dn = name.toString();
 
-            PartitionConfig partitionConfig = partitionManager.getConfig(dn);
-            if (partitionConfig == null) {
+            Partition partition = partitionManager.getConfig(dn);
+            if (partition == null) {
                 //log.debug(dn+" is a static entry");
                 return next.hasEntry(name);
             }
@@ -337,7 +337,7 @@ public class PenroseInterceptor extends BaseInterceptor {
             log.debug("===============================================================================");
             log.debug("hasEntry(\""+dn+"\") as "+principalDn);
 
-            EntryMapping ed = partitionConfig.findEntryMapping(dn);
+            EntryMapping ed = partition.findEntryMapping(dn);
             if (ed == null) {
                 log.debug(dn+" is a static entry");
                 return next.hasEntry(name);
@@ -384,13 +384,13 @@ public class PenroseInterceptor extends BaseInterceptor {
             log.debug("===============================================================================");
             log.debug("lookup(\""+dn+"\", "+attrIds+")");
 
-            PartitionConfig partitionConfig = partitionManager.getConfig(dn);
-            if (partitionConfig == null) {
+            Partition partition = partitionManager.getConfig(dn);
+            if (partition == null) {
                 log.debug(dn+" is a static entry");
                 return next.lookup(name, attrIds);
             }
 
-            EntryMapping ed = partitionConfig.findEntryMapping(dn);
+            EntryMapping ed = partition.findEntryMapping(dn);
             if (ed == null) {
                 log.debug(dn+" is a static entry");
                 return next.lookup(name, attrIds);
@@ -459,13 +459,13 @@ public class PenroseInterceptor extends BaseInterceptor {
             log.debug("===============================================================================");
             log.debug("lookup(\""+dn+"\")");
 
-            PartitionConfig partitionConfig = partitionManager.getConfig(dn);
-            if (partitionConfig == null) {
+            Partition partition = partitionManager.getConfig(dn);
+            if (partition == null) {
                 log.debug(dn+" is a static entry");
                 return next.lookup(name);
             }
 
-            EntryMapping ed = partitionConfig.findEntryMapping(dn);
+            EntryMapping ed = partition.findEntryMapping(dn);
             if (ed == null) {
                 log.debug(dn+" is a static entry");
                 return next.lookup(name);
@@ -585,8 +585,8 @@ public class PenroseInterceptor extends BaseInterceptor {
                 }
             }
 
-            PartitionConfig partitionConfig = partitionManager.getConfig(baseDn);
-            if (partitionConfig == null) {
+            Partition partition = partitionManager.getConfig(baseDn);
+            if (partition == null) {
                 log.debug(baseDn+" is a static entry");
                 return next.search(base, env, filter, searchControls);
             }
@@ -642,14 +642,14 @@ public class PenroseInterceptor extends BaseInterceptor {
             log.debug("===============================================================================");
             log.debug("modify(\""+dn+"\")");
 
-            PartitionConfig partitionConfig = partitionManager.getConfig(dn);
-            if (partitionConfig == null) {
+            Partition partition = partitionManager.getConfig(dn);
+            if (partition == null) {
                 log.debug(dn+" is a static entry");
                 next.modify(name, modOp, attributes);
                 return;
             }
 
-            EntryMapping ed = partitionConfig.findEntryMapping(dn);
+            EntryMapping ed = partition.findEntryMapping(dn);
             if (ed == null) {
                 log.debug(dn+" is a static entry");
                 next.modify(name, modOp, attributes);
@@ -712,14 +712,14 @@ public class PenroseInterceptor extends BaseInterceptor {
             log.debug("===============================================================================");
             log.debug("modify(\""+dn+"\")");
 
-            PartitionConfig partitionConfig = partitionManager.getConfig(dn);
-            if (partitionConfig == null) {
+            Partition partition = partitionManager.getConfig(dn);
+            if (partition == null) {
                 log.debug(dn+" is a static entry");
                 next.modify(name, modificationItems);
                 return;
             }
 
-            EntryMapping ed = partitionConfig.findEntryMapping(dn);
+            EntryMapping ed = partition.findEntryMapping(dn);
             if (ed == null) {
                 log.debug(dn+" is a static entry");
                 next.modify(name, modificationItems);
@@ -797,14 +797,14 @@ public class PenroseInterceptor extends BaseInterceptor {
             log.debug("===============================================================================");
             log.debug("modifyRn(\""+dn+"\")");
 
-            PartitionConfig partitionConfig = partitionManager.getConfig(dn);
-            if (partitionConfig == null) {
+            Partition partition = partitionManager.getConfig(dn);
+            if (partition == null) {
                 log.debug(dn+" is a static entry");
                 next.modifyRn(name, newRn, deleteOldRn);
                 return;
             }
 
-            EntryMapping ed = partitionConfig.findEntryMapping(dn);
+            EntryMapping ed = partition.findEntryMapping(dn);
             if (ed == null) {
                 log.debug(dn+" is a static entry");
                 next.modifyRn(name, newRn, deleteOldRn);
