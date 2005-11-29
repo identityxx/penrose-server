@@ -17,8 +17,9 @@
  */
 package org.safehaus.penrose.handler;
 
-import org.safehaus.penrose.PenroseConnection;
+import org.safehaus.penrose.session.PenroseSession;
 import org.safehaus.penrose.SearchResults;
+import org.safehaus.penrose.session.PenroseSession;
 import org.safehaus.penrose.event.ModifyEvent;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.interpreter.Interpreter;
@@ -44,12 +45,12 @@ public class ModifyHandler {
         this.handler = handler;
     }
 
-    public int modify(PenroseConnection connection, String dn, List modifications)
+    public int modify(PenroseSession session, String dn, List modifications)
 			throws Exception {
 
         log.info("-------------------------------------------------");
 		log.info("MODIFY:");
-		if (connection.getBindDn() != null) log.info(" - Bind DN: " + connection.getBindDn());
+		if (session.getBindDn() != null) log.info(" - Bind DN: " + session.getBindDn());
         log.info(" - DN: " + dn);
         log.debug("-------------------------------------------------");
 		log.debug("changetype: modify");
@@ -83,13 +84,13 @@ public class ModifyHandler {
 
         log.info("");
 
-        ModifyEvent beforeModifyEvent = new ModifyEvent(this, ModifyEvent.BEFORE_MODIFY, connection, dn, modifications);
+        ModifyEvent beforeModifyEvent = new ModifyEvent(this, ModifyEvent.BEFORE_MODIFY, session, dn, modifications);
         handler.postEvent(dn, beforeModifyEvent);
 
-        int rc = performModify(connection, dn, modifications);
+        int rc = performModify(session, dn, modifications);
 
         handler.getSearchHandler().search(
-                connection,
+                session,
                 dn,
                 LDAPConnection.SCOPE_SUB,
                 LDAPSearchConstraints.DEREF_NEVER,
@@ -98,28 +99,28 @@ public class ModifyHandler {
                 new SearchResults()
         );
 
-        ModifyEvent afterModifyEvent = new ModifyEvent(this, ModifyEvent.AFTER_MODIFY, connection, dn, modifications);
+        ModifyEvent afterModifyEvent = new ModifyEvent(this, ModifyEvent.AFTER_MODIFY, session, dn, modifications);
         afterModifyEvent.setReturnCode(rc);
         handler.postEvent(dn, afterModifyEvent);
 
         return rc;
     }
 
-    public int performModify(PenroseConnection connection, String dn, List modifications)
+    public int performModify(PenroseSession session, String dn, List modifications)
 			throws Exception {
 
 		String ndn = LDAPDN.normalize(dn);
 
-        Entry entry = handler.getSearchHandler().find(connection, ndn);
+        Entry entry = handler.getSearchHandler().find(session, ndn);
         if (entry == null) return LDAPException.NO_SUCH_OBJECT;
 
-        int rc = handler.getACLEngine().checkModify(connection, entry);
+        int rc = handler.getACLEngine().checkModify(session, entry);
         if (rc != LDAPException.SUCCESS) return rc;
 
         EntryMapping entryMapping = entry.getEntryMapping();
         Partition partition = handler.getConfigManager().getConfig(entryMapping);
         if (partition.isDynamic(entryMapping)) {
-            return modifyVirtualEntry(connection, entry, modifications);
+            return modifyVirtualEntry(session, entry, modifications);
 
         } else {
             return modifyStaticEntry(entryMapping, modifications);
@@ -162,7 +163,7 @@ public class ModifyHandler {
 	}
 
     public int modifyVirtualEntry(
-            PenroseConnection connection,
+            PenroseSession session,
             Entry entry,
 			Collection modifications)
             throws Exception {

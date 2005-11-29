@@ -17,7 +17,8 @@
  */
 package org.safehaus.penrose.handler;
 
-import org.safehaus.penrose.PenroseConnection;
+import org.safehaus.penrose.session.PenroseSession;
+import org.safehaus.penrose.session.PenroseSession;
 import org.safehaus.penrose.event.BindEvent;
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.util.PasswordUtil;
@@ -38,25 +39,25 @@ public class BindHandler {
         this.handler = handler;
     }
 
-    public int bind(PenroseConnection connection, String dn, String password) throws Exception {
+    public int bind(PenroseSession session, String dn, String password) throws Exception {
 
         log.info("-------------------------------------------------");
         log.info("BIND:");
         log.info(" - DN      : "+dn);
 
-        BindEvent beforeBindEvent = new BindEvent(this, BindEvent.BEFORE_BIND, connection, dn, password);
+        BindEvent beforeBindEvent = new BindEvent(this, BindEvent.BEFORE_BIND, session, dn, password);
         handler.postEvent(dn, beforeBindEvent);
 
-        int rc = performBind(connection, dn, password);
+        int rc = performBind(session, dn, password);
 
-        BindEvent afterBindEvent = new BindEvent(this, BindEvent.AFTER_BIND, connection, dn, password);
+        BindEvent afterBindEvent = new BindEvent(this, BindEvent.AFTER_BIND, session, dn, password);
         afterBindEvent.setReturnCode(rc);
         handler.postEvent(dn, afterBindEvent);
 
         return rc;
     }
 
-    public int performBind(PenroseConnection connection, String dn, String password) throws Exception {
+    public int performBind(PenroseSession session, String dn, String password) throws Exception {
 
         String ndn = LDAPDN.normalize(dn);
 
@@ -67,24 +68,24 @@ public class BindHandler {
 
         } else {
 
-            int rc = bindAsUser(connection, ndn, password);
+            int rc = bindAsUser(session, ndn, password);
             if (rc != LDAPException.SUCCESS) return rc;
         }
 
-        connection.setBindDn(dn);
+        session.setBindDn(dn);
         return LDAPException.SUCCESS; // LDAP_SUCCESS
     }
 
-    public int unbind(PenroseConnection connection) throws Exception {
+    public int unbind(PenroseSession session) throws Exception {
 
         log.debug("-------------------------------------------------------------------------------");
         log.debug("UNBIND:");
 
-        if (connection == null) return 0;
+        if (session == null) return 0;
 
-        connection.setBindDn(null);
+        session.setBindDn(null);
 
-        log.debug("  dn: " + connection.getBindDn());
+        log.debug("  dn: " + session.getBindDn());
 
         return 0;
     }
@@ -100,10 +101,10 @@ public class BindHandler {
         return LDAPException.SUCCESS;
     }
 
-    public int bindAsUser(PenroseConnection connection, String dn, String password) throws Exception {
+    public int bindAsUser(PenroseSession session, String dn, String password) throws Exception {
         log.debug("Searching for "+dn);
 
-        Entry entry = handler.getSearchHandler().find(connection, dn);
+        Entry entry = handler.getSearchHandler().find(session, dn);
         if (entry == null) {
             log.debug("Entry "+dn+" not found => BIND FAILED");
             return LDAPException.INVALID_CREDENTIALS;

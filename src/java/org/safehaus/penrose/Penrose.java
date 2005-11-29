@@ -33,12 +33,14 @@ import org.safehaus.penrose.interpreter.InterpreterConfig;
 import org.safehaus.penrose.interpreter.InterpreterFactory;
 import org.safehaus.penrose.connector.Connector;
 import org.safehaus.penrose.connector.*;
-import org.safehaus.penrose.client.ClientManager;
+import org.safehaus.penrose.session.PenroseSessionManager;
 import org.safehaus.penrose.mapping.EntryMapping;
 import org.safehaus.penrose.cache.EntryCache;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.PartitionManager;
 import org.safehaus.penrose.partition.PartitionConfig;
+import org.safehaus.penrose.session.PenroseSessionManager;
+import org.safehaus.penrose.session.PenroseSession;
 import org.ietf.ldap.LDAPSearchConstraints;
 import org.ietf.ldap.LDAPConnection;
 
@@ -65,7 +67,7 @@ public class Penrose {
 	private Engine engine;
     private Handler handler;
 
-	private ClientManager clientManager;
+	private PenroseSessionManager sessionManager;
 
     private boolean stopRequested = false;
 
@@ -135,7 +137,7 @@ public class Penrose {
         initConnectors();
         initEngines();
         initHandler();
-        initClientManager();
+        initSessionManager();
 	}
 
     public void loadPartitions() throws Exception {
@@ -229,8 +231,8 @@ public class Penrose {
         handler.init();
     }
 
-    public void initClientManager() throws Exception {
-        clientManager = new ClientManager(this);
+    public void initSessionManager() throws Exception {
+        sessionManager = new PenroseSessionManager(this);
     }
 
 	public void stop() {
@@ -253,12 +255,12 @@ public class Penrose {
         }
 	}
 
-    public PenroseConnection openConnection() throws Exception {
-        return clientManager.createConnection();
+    public PenroseSession newSession() throws Exception {
+        return sessionManager.createConnection();
     }
 
-    public void removeConnection(PenroseConnection connection) {
-        clientManager.removeConnection(connection);
+    public void removeSession(PenroseSession session) {
+        sessionManager.removeConnection(session);
     }
 
     public boolean isStopRequested() {

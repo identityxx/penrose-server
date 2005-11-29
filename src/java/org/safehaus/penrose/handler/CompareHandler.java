@@ -17,7 +17,7 @@
  */
 package org.safehaus.penrose.handler;
 
-import org.safehaus.penrose.PenroseConnection;
+import org.safehaus.penrose.session.PenroseSession;
 import org.safehaus.penrose.schema.AttributeType;
 import org.safehaus.penrose.schema.matchingRule.EqualityMatchingRule;
 import org.safehaus.penrose.mapping.Entry;
@@ -40,12 +40,12 @@ public class CompareHandler {
         this.handler = handler;
     }
     
-    public int compare(PenroseConnection connection, String dn, String attributeName,
+    public int compare(PenroseSession session, String dn, String attributeName,
             String attributeValue) throws Exception {
 
         log.debug("-------------------------------------------------------------------------------");
         log.debug("COMPARE:");
-        if (connection.getBindDn() != null) log.info(" - Bind DN: " + connection.getBindDn());
+        if (session.getBindDn() != null) log.info(" - Bind DN: " + session.getBindDn());
         log.debug(" - DN: " + dn);
         log.debug(" - Attribute Name: " + attributeName);
         log.debug(" - Attribute Value: " + attributeValue);
@@ -54,7 +54,7 @@ public class CompareHandler {
         List attributeNames = new ArrayList();
         attributeNames.add(attributeName);
 
-        Entry entry = handler.getSearchHandler().find(connection, dn);
+        Entry entry = handler.getSearchHandler().find(session, dn);
 
         AttributeValues attributeValues = entry.getAttributeValues();
         Collection values = attributeValues.get(attributeName);

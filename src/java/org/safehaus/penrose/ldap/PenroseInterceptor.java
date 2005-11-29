@@ -24,8 +24,9 @@ import org.apache.ldap.server.DirectoryServiceConfiguration;
 import org.apache.ldap.common.filter.ExprNode;
 import org.apache.log4j.Logger;
 import org.safehaus.penrose.Penrose;
-import org.safehaus.penrose.PenroseConnection;
+import org.safehaus.penrose.session.PenroseSession;
 import org.safehaus.penrose.SearchResults;
+import org.safehaus.penrose.session.PenroseSession;
 import org.safehaus.penrose.util.ExceptionUtil;
 import org.safehaus.penrose.mapping.EntryMapping;
 import org.safehaus.penrose.partition.Partition;
@@ -112,12 +113,12 @@ public class PenroseInterceptor extends BaseInterceptor {
 
             LDAPEntry ldapEntry = new LDAPEntry(upName, attributeSet);
 
-            PenroseConnection connection = penrose.openConnection();
-            connection.setBindDn(principalDn.toString());
+            PenroseSession session = penrose.newSession();
+            session.setBindDn(principalDn.toString());
 
-            int rc = connection.add(ldapEntry);
+            int rc = session.add(ldapEntry);
 
-            connection.close();
+            session.close();
 
             if (rc != LDAPException.SUCCESS) {
                 ExceptionUtil.throwNamingException(rc);
@@ -159,12 +160,12 @@ public class PenroseInterceptor extends BaseInterceptor {
                 return next.compare(name, attributeName, value);
             }
 
-            PenroseConnection connection = penrose.openConnection();
-            connection.setBindDn(principalDn.toString());
+            PenroseSession session = penrose.newSession();
+            session.setBindDn(principalDn.toString());
 
-            int rc = connection.compare(dn, attributeName, value.toString());
+            int rc = session.compare(dn, attributeName, value.toString());
 
-            connection.close();
+            session.close();
 
             if (rc != LDAPException.COMPARE_TRUE && rc != LDAPException.COMPARE_FALSE) {
                 ExceptionUtil.throwNamingException(rc);
@@ -208,12 +209,12 @@ public class PenroseInterceptor extends BaseInterceptor {
                 return;
             }
 
-            PenroseConnection connection = penrose.openConnection();
-            connection.setBindDn(principalDn.toString());
+            PenroseSession session = penrose.newSession();
+            session.setBindDn(principalDn.toString());
 
-            int rc = connection.delete(dn);
+            int rc = session.delete(dn);
 
-            connection.close();
+            session.close();
 
             if (rc != LDAPException.SUCCESS) {
                 ExceptionUtil.throwNamingException(rc);
@@ -289,11 +290,11 @@ public class PenroseInterceptor extends BaseInterceptor {
                 return next.list(name);
             }
 
-            PenroseConnection connection = penrose.openConnection();
-            connection.setBindDn(principalDn.toString());
+            PenroseSession session = penrose.newSession();
+            session.setBindDn(principalDn.toString());
 
             String baseDn = dn.toString();
-            SearchResults results = connection.search(
+            SearchResults results = session.search(
                     baseDn,
                     LDAPConnection.SCOPE_ONE,
                     LDAPSearchConstraints.DEREF_ALWAYS,
@@ -345,11 +346,11 @@ public class PenroseInterceptor extends BaseInterceptor {
 
             log.debug("searching \""+dn+"\"");
 
-            PenroseConnection connection = penrose.openConnection();
-            connection.setBindDn(principalDn.toString());
+            PenroseSession session = penrose.newSession();
+            session.setBindDn(principalDn.toString());
 
             String base = name.toString();
-            SearchResults results = connection.search(
+            SearchResults results = session.search(
                     base,
                     LDAPConnection.SCOPE_BASE,
                     LDAPSearchConstraints.DEREF_ALWAYS,
@@ -357,7 +358,7 @@ public class PenroseInterceptor extends BaseInterceptor {
 
             boolean result = results.getReturnCode() == LDAPException.SUCCESS && results.size() == 1;
 
-            connection.close();
+            session.close();
 
             return result;
 
@@ -400,11 +401,11 @@ public class PenroseInterceptor extends BaseInterceptor {
                 log.debug("- "+attrIds[i]);
             }
 
-            PenroseConnection connection = penrose.openConnection();
-            connection.setBindDn(principalDn.toString());
+            PenroseSession session = penrose.newSession();
+            session.setBindDn(principalDn.toString());
 
             String baseDn = dn.toString();
-            SearchResults results = connection.search(
+            SearchResults results = session.search(
                     baseDn,
                     LDAPConnection.SCOPE_BASE,
                     LDAPSearchConstraints.DEREF_ALWAYS,
@@ -412,7 +413,7 @@ public class PenroseInterceptor extends BaseInterceptor {
                     new ArrayList());
 
             int rc = results.getReturnCode();
-            connection.close();
+            session.close();
 
             if (rc != LDAPException.SUCCESS) {
                 ExceptionUtil.throwNamingException(rc);
@@ -471,11 +472,11 @@ public class PenroseInterceptor extends BaseInterceptor {
                 return next.lookup(name);
             }
 
-            PenroseConnection connection = penrose.openConnection();
-            connection.setBindDn(principalDn.toString());
+            PenroseSession session = penrose.newSession();
+            session.setBindDn(principalDn.toString());
 
             String baseDn = dn.toString();
-            SearchResults results = connection.search(
+            SearchResults results = session.search(
                     baseDn,
                     LDAPConnection.SCOPE_BASE,
                     LDAPSearchConstraints.DEREF_ALWAYS,
@@ -483,7 +484,7 @@ public class PenroseInterceptor extends BaseInterceptor {
                     new ArrayList());
 
             int rc = results.getReturnCode();
-            connection.close();
+            session.close();
 
             if (rc != LDAPException.SUCCESS) {
                 ExceptionUtil.throwNamingException(rc);
@@ -545,10 +546,10 @@ public class PenroseInterceptor extends BaseInterceptor {
                     SearchResult sr = (SearchResult)ne.next();
                     Attributes attributes = sr.getAttributes();
 
-                    PenroseConnection connection = penrose.openConnection();
-                    connection.setBindDn(principalDn.toString());
+                    PenroseSession session = penrose.newSession();
+                    session.setBindDn(principalDn.toString());
 
-                    SearchResults results = connection.search(
+                    SearchResults results = session.search(
                             baseDn,
                             LDAPConnection.SCOPE_BASE,
                             LDAPSearchConstraints.DEREF_ALWAYS,
@@ -575,7 +576,7 @@ public class PenroseInterceptor extends BaseInterceptor {
                         }
                     }
 
-                    connection.close();
+                    session.close();
 
                     SearchResults results2 = new SearchResults();
                     results2.add(entry);
@@ -606,10 +607,10 @@ public class PenroseInterceptor extends BaseInterceptor {
             log.debug(" - filter: "+newFilter+" ("+filter.getClass().getName()+")");
             log.debug(" - attributeNames: "+attributeNames);
 
-            PenroseConnection connection = penrose.openConnection();
-            connection.setBindDn(principalDn.toString());
+            PenroseSession session = penrose.newSession();
+            session.setBindDn(principalDn.toString());
 
-            SearchResults results = connection.search(
+            SearchResults results = session.search(
                     baseDn,
                     scope,
                     LDAPSearchConstraints.DEREF_ALWAYS,
@@ -677,12 +678,12 @@ public class PenroseInterceptor extends BaseInterceptor {
                 modifications.add(modification);
             }
 
-            PenroseConnection connection = penrose.openConnection();
-            connection.setBindDn(principalDn.toString());
+            PenroseSession session = penrose.newSession();
+            session.setBindDn(principalDn.toString());
 
-            int rc = connection.modify(dn.toString(), modifications);
+            int rc = session.modify(dn.toString(), modifications);
 
-            connection.close();
+            session.close();
 
             if (rc != LDAPException.SUCCESS) {
                 ExceptionUtil.throwNamingException(rc);
@@ -762,12 +763,12 @@ public class PenroseInterceptor extends BaseInterceptor {
                 modifications.add(modification);
             }
 
-            PenroseConnection connection = penrose.openConnection();
-            connection.setBindDn(principalDn.toString());
+            PenroseSession session = penrose.newSession();
+            session.setBindDn(principalDn.toString());
 
-            int rc = connection.modify(dn.toString(), modifications);
+            int rc = session.modify(dn.toString(), modifications);
 
-            connection.close();
+            session.close();
 
             if (rc != LDAPException.SUCCESS) {
                 ExceptionUtil.throwNamingException(rc);
@@ -811,12 +812,12 @@ public class PenroseInterceptor extends BaseInterceptor {
                 return;
             }
 
-            PenroseConnection connection = penrose.openConnection();
-            connection.setBindDn(principalDn.toString());
+            PenroseSession session = penrose.newSession();
+            session.setBindDn(principalDn.toString());
 
-            int rc = connection.modrdn(dn.toString(), newRn);
+            int rc = session.modrdn(dn.toString(), newRn);
 
-            connection.close();
+            session.close();
 
             if (rc != LDAPException.SUCCESS) {
                 ExceptionUtil.throwNamingException(rc);

@@ -17,7 +17,8 @@
  */
 package org.safehaus.penrose.event;
 
-import org.safehaus.penrose.PenroseConnection;
+import org.safehaus.penrose.session.PenroseSession;
+import org.safehaus.penrose.session.PenroseSession;
 
 /**
  * @author Endi S. Dewata
@@ -27,22 +28,22 @@ public class SearchEvent extends Event {
     public final static int BEFORE_SEARCH = 0;
     public final static int AFTER_SEARCH  = 1;
 
-    private PenroseConnection connection;
+    private PenroseSession session;
     private String base;
     private int returnCode;
 
-    public SearchEvent(Object source, int type, PenroseConnection connection, String base) {
+    public SearchEvent(Object source, int type, PenroseSession session, String base) {
         super(source, type);
-        this.connection = connection;
+        this.session = session;
         this.base = base;
     }
 
-    public PenroseConnection getConnection() {
-        return connection;
+    public PenroseSession getConnection() {
+        return session;
     }
 
-    public void setConnection(PenroseConnection connection) {
-        this.connection = connection;
+    public void setConnection(PenroseSession session) {
+        this.session = session;
     }
 
     public String getBase() {

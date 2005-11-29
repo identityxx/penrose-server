@@ -20,7 +20,8 @@ package org.safehaus.penrose.event;
 
 import java.util.Collection;
 
-import org.safehaus.penrose.PenroseConnection;
+import org.safehaus.penrose.session.PenroseSession;
+import org.safehaus.penrose.session.PenroseSession;
 
 /**
  * @author Endi S. Dewata
@@ -30,15 +31,15 @@ public class ModifyEvent extends Event {
     public final static int BEFORE_MODIFY = 0;
     public final static int AFTER_MODIFY  = 1;
 
-    private PenroseConnection connection;
+    private PenroseSession session;
     private String dn;
     private int returnCode;
 
     private Collection modifications;
 
-    public ModifyEvent(Object source, int type, PenroseConnection connection, String dn, Collection modifications) {
+    public ModifyEvent(Object source, int type, PenroseSession session, String dn, Collection modifications) {
         super(source, type);
-        this.connection = connection;
+        this.session = session;
         this.dn = dn;
         this.modifications = modifications;
     }
@@ -67,11 +68,11 @@ public class ModifyEvent extends Event {
         this.returnCode = returnCode;
     }
 
-    public PenroseConnection getConnection() {
-        return connection;
+    public PenroseSession getConnection() {
+        return session;
     }
 
-    public void setConnection(PenroseConnection connection) {
-        this.connection = connection;
+    public void setConnection(PenroseSession session) {
+        this.session = session;
     }
 }

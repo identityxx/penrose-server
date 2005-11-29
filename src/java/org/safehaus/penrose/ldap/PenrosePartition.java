@@ -23,7 +23,7 @@ import org.apache.log4j.Logger;
 import org.ietf.ldap.*;
 import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.SearchResults;
-import org.safehaus.penrose.PenroseConnection;
+import org.safehaus.penrose.session.PenroseSession;
 
 import javax.naming.Name;
 import javax.naming.NamingException;
@@ -65,11 +65,11 @@ public class PenrosePartition extends AbstractDirectoryPartition {
         log.info("Deleting \""+dn+"\"");
 
         try {
-            PenroseConnection connection = penrose.openConnection();
+            PenroseSession session = penrose.newSession();
 
-            int rc = connection.delete(dn.toString());
+            int rc = session.delete(dn.toString());
 
-            connection.close();
+            session.close();
 
             if (rc != LDAPException.SUCCESS) {
                 throw new NamingException("RC: "+rc);
@@ -103,11 +103,11 @@ public class PenrosePartition extends AbstractDirectoryPartition {
 
             LDAPEntry ldapEntry = new LDAPEntry(upName, attributeSet);
 
-            PenroseConnection connection = penrose.openConnection();
+            PenroseSession session = penrose.newSession();
 
-            int rc = connection.add(ldapEntry);
+            int rc = session.add(ldapEntry);
 
-            connection.close();
+            session.close();
 
             if (rc != LDAPException.SUCCESS) {
                 throw new NamingException("RC: "+rc);
@@ -146,11 +146,11 @@ public class PenrosePartition extends AbstractDirectoryPartition {
                 modifications.add(modification);
             }
 
-            PenroseConnection connection = penrose.openConnection();
+            PenroseSession session = penrose.newSession();
 
-            int rc = connection.modify(dn.toString(), modifications);
+            int rc = session.modify(dn.toString(), modifications);
 
-            connection.close();
+            session.close();
 
             if (rc != LDAPException.SUCCESS) {
                 throw new NamingException("RC: "+rc);
@@ -204,11 +204,11 @@ public class PenrosePartition extends AbstractDirectoryPartition {
                 modifications.add(modification);
             }
 
-            PenroseConnection connection = penrose.openConnection();
+            PenroseSession session = penrose.newSession();
 
-            int rc = connection.modify(dn.toString(), modifications);
+            int rc = session.modify(dn.toString(), modifications);
 
-            connection.close();
+            session.close();
 
             if (rc != LDAPException.SUCCESS) {
                 throw new NamingException("RC: "+rc);
@@ -225,10 +225,10 @@ public class PenrosePartition extends AbstractDirectoryPartition {
         log.info("Listing \""+dn+"\"");
 
         try {
-            PenroseConnection connection = penrose.openConnection();
+            PenroseSession session = penrose.newSession();
 
             String baseDn = dn.toString();
-            SearchResults results = connection.search(
+            SearchResults results = session.search(
                     baseDn,
                     LDAPConnection.SCOPE_ONE,
                     LDAPSearchConstraints.DEREF_ALWAYS,
@@ -269,10 +269,10 @@ public class PenrosePartition extends AbstractDirectoryPartition {
         log.debug(" - attributeNames: "+attributeNames);
 
         try {
-            PenroseConnection connection = penrose.openConnection();
+            PenroseSession session = penrose.newSession();
 
             String baseDn = base.toString();
-            SearchResults results = connection.search(
+            SearchResults results = session.search(
                     baseDn,
                     scope,
                     LDAPSearchConstraints.DEREF_ALWAYS,
@@ -311,10 +311,10 @@ public class PenrosePartition extends AbstractDirectoryPartition {
         log.debug("Looking up \""+dn+"\"");
 
         try {
-            PenroseConnection connection = penrose.openConnection();
+            PenroseSession session = penrose.newSession();
 
             String baseDn = dn.toString();
-            SearchResults results = connection.search(
+            SearchResults results = session.search(
                     baseDn,
                     LDAPConnection.SCOPE_BASE,
                     LDAPSearchConstraints.DEREF_ALWAYS,
@@ -322,7 +322,7 @@ public class PenrosePartition extends AbstractDirectoryPartition {
                     new ArrayList());
 
             int rc = results.getReturnCode();
-            connection.close();
+            session.close();
 
             if (rc != LDAPException.SUCCESS) return null;
             //throwNamingException(rc, baseDn);
@@ -372,10 +372,10 @@ public class PenrosePartition extends AbstractDirectoryPartition {
         log.info("Checking \""+name+"\"");
 
         try {
-            PenroseConnection connection = penrose.openConnection();
+            PenroseSession session = penrose.newSession();
 
             String base = name.toString();
-            SearchResults results = connection.search(
+            SearchResults results = session.search(
                     base,
                     LDAPConnection.SCOPE_BASE,
                     LDAPSearchConstraints.DEREF_ALWAYS,
@@ -383,7 +383,7 @@ public class PenrosePartition extends AbstractDirectoryPartition {
 
             boolean result = results.getReturnCode() == LDAPException.SUCCESS && results.size() == 1;
 
-            connection.close();
+            session.close();
 
             return result;
 

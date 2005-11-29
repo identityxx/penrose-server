@@ -25,8 +25,9 @@ import org.safehaus.penrose.openldap.config.ConfigurationItem;
 import org.safehaus.penrose.openldap.config.NameValueItem;
 import org.safehaus.penrose.openldap.config.SlapdConfig;
 import org.safehaus.penrose.Penrose;
-import org.safehaus.penrose.PenroseConnection;
+import org.safehaus.penrose.session.PenroseSession;
 import org.safehaus.penrose.SearchResults;
+import org.safehaus.penrose.session.PenroseSession;
 import org.safehaus.penrose.config.PenroseConfig;
 import org.apache.log4j.Logger;
 import org.openldap.backend.Backend;
@@ -181,8 +182,8 @@ public class PenroseBackend implements Backend {
      * @param connectionId
      * @return connection
      */
-    public PenroseConnection getConnection(int connectionId) throws Exception {
-        return (PenroseConnection)connections.remove(new Integer(connectionId));
+    public PenroseSession getConnection(int connectionId) throws Exception {
+        return (PenroseSession)connections.remove(new Integer(connectionId));
     }
 
     /**
@@ -191,8 +192,8 @@ public class PenroseBackend implements Backend {
      * @param connectionId
      */
     public void createConnection(int connectionId) throws Exception {
-        PenroseConnection connection = penrose.openConnection();
-        connections.put(new Integer(connectionId), connection);
+        PenroseSession session = penrose.newSession();
+        connections.put(new Integer(connectionId), session);
     }
 
     /**
@@ -201,8 +202,8 @@ public class PenroseBackend implements Backend {
      * @param connectionId
      */
     public void removeConnection(int connectionId) throws Exception {
-        PenroseConnection connection = (PenroseConnection)connections.remove(new Integer(connectionId));
-        connection.close();
+        PenroseSession session = (PenroseSession)connections.remove(new Integer(connectionId));
+        session.close();
     }
     
     /**
@@ -265,14 +266,14 @@ public class PenroseBackend implements Backend {
     public int bind(int connectionId, String dn, String password) throws Exception {
 
         Logger log = Logger.getLogger(getClass());
-        PenroseConnection connection = getConnection(connectionId);
-        if (connection == null) {
+        PenroseSession session = getConnection(connectionId);
+        if (session == null) {
             createConnection(connectionId);
-            connection = getConnection(connectionId);
+            session = getConnection(connectionId);
         }
 
         try {
-            return connection.bind(dn, password);
+            return session.bind(dn, password);
 
         } catch (Throwable e) {
             log.error(e.getMessage(), e);
@@ -290,14 +291,14 @@ public class PenroseBackend implements Backend {
     public int unbind(int connectionId) throws Exception {
 
         Logger log = Logger.getLogger(getClass());
-        PenroseConnection connection = getConnection(connectionId);
-        if (connection == null) {
+        PenroseSession session = getConnection(connectionId);
+        if (session == null) {
             createConnection(connectionId);
-            connection = getConnection(connectionId);
+            session = getConnection(connectionId);
         }
 
         try {
-            return connection.unbind();
+            return session.unbind();
 
         } catch (Throwable e) {
             log.error(e.getMessage(), e);
@@ -325,16 +326,16 @@ public class PenroseBackend implements Backend {
     throws Exception {
 
         Logger log = Logger.getLogger(getClass());
-        PenroseConnection connection = getConnection(connectionId);
-        if (connection == null) {
+        PenroseSession session = getConnection(connectionId);
+        if (session == null) {
             createConnection(connectionId);
-            connection = getConnection(connectionId);
+            session = getConnection(connectionId);
         }
 
         SearchResults results;
 
         try {
-            results = connection.search(base, scope, LDAPSearchConstraints.DEREF_ALWAYS, filter, attributeNames);
+            results = session.search(base, scope, LDAPSearchConstraints.DEREF_ALWAYS, filter, attributeNames);
 
         } catch (Throwable e) {
             log.error(e.getMessage(), e);
@@ -369,16 +370,16 @@ public class PenroseBackend implements Backend {
     throws Exception {
 
         Logger log = Logger.getLogger(getClass());
-        PenroseConnection connection = getConnection(connectionId);
-        if (connection == null) {
+        PenroseSession session = getConnection(connectionId);
+        if (session == null) {
             createConnection(connectionId);
-            connection = getConnection(connectionId);
+            session = getConnection(connectionId);
         }
 
         SearchResults results;
 
         try {
-            results = connection.search(base, scope, deref, filter, attributeNames);
+            results = session.search(base, scope, deref, filter, attributeNames);
 
         } catch (Throwable e) {
             log.error(e.getMessage(), e);
@@ -405,14 +406,14 @@ public class PenroseBackend implements Backend {
     throws Exception {
 
         Logger log = Logger.getLogger(getClass());
-        PenroseConnection connection = getConnection(connectionId);
-        if (connection == null) {
+        PenroseSession session = getConnection(connectionId);
+        if (session == null) {
             createConnection(connectionId);
-            connection = getConnection(connectionId);
+            session = getConnection(connectionId);
         }
 
         try {
-            return connection.add(entry);
+            return session.add(entry);
 
         } catch (Throwable e) {
             log.error(e.getMessage(), e);
@@ -434,14 +435,14 @@ public class PenroseBackend implements Backend {
     throws Exception {
 
         Logger log = Logger.getLogger(getClass());
-        PenroseConnection connection = getConnection(connectionId);
-        if (connection == null) {
+        PenroseSession session = getConnection(connectionId);
+        if (session == null) {
             createConnection(connectionId);
-            connection = getConnection(connectionId);
+            session = getConnection(connectionId);
         }
 
         try {
-            return connection.delete(dn);
+            return session.delete(dn);
 
         } catch (Throwable e) {
             log.error(e.getMessage(), e);
@@ -465,14 +466,14 @@ public class PenroseBackend implements Backend {
     throws Exception {
 
         Logger log = Logger.getLogger(getClass());
-        PenroseConnection connection = getConnection(connectionId);
-        if (connection == null) {
+        PenroseSession session = getConnection(connectionId);
+        if (session == null) {
             createConnection(connectionId);
-            connection = getConnection(connectionId);
+            session = getConnection(connectionId);
         }
 
         try {
-            return connection.modify(dn, modifications);
+            return session.modify(dn, modifications);
 
         } catch (Throwable e) {
             log.error(e.getMessage(), e);
@@ -498,14 +499,14 @@ public class PenroseBackend implements Backend {
     throws Exception {
 
         Logger log = Logger.getLogger(getClass());
-        PenroseConnection connection = getConnection(connectionId);
-        if (connection == null) {
+        PenroseSession session = getConnection(connectionId);
+        if (session == null) {
             createConnection(connectionId);
-            connection = getConnection(connectionId);
+            session = getConnection(connectionId);
         }
 
         try {
-            return connection.compare(dn, attributeName, attributeValue);
+            return session.compare(dn, attributeName, attributeValue);
 
         } catch (Throwable e) {
             log.error(e.getMessage(), e);

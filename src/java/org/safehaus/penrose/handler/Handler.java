@@ -19,6 +19,7 @@ package org.safehaus.penrose.handler;
 
 import org.safehaus.penrose.SearchResults;
 import org.safehaus.penrose.*;
+import org.safehaus.penrose.session.PenroseSession;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.acl.ACLEngine;
 import org.safehaus.penrose.filter.FilterTool;
@@ -99,38 +100,38 @@ public class Handler implements ModuleContext {
         }
     }
 
-    public int add(PenroseConnection connection, LDAPEntry entry) throws Exception {
-        return getAddHandler().add(connection, entry);
+    public int add(PenroseSession session, LDAPEntry entry) throws Exception {
+        return getAddHandler().add(session, entry);
     }
 
-    public int bind(PenroseConnection connection, String dn, String password) throws Exception {
-        return getBindHandler().bind(connection, dn, password);
+    public int bind(PenroseSession session, String dn, String password) throws Exception {
+        return getBindHandler().bind(session, dn, password);
     }
 
-    public int compare(PenroseConnection connection, String dn, String attributeName,
+    public int compare(PenroseSession session, String dn, String attributeName,
             String attributeValue) throws Exception {
 
-        return getCompareHandler().compare(connection, dn, attributeName, attributeValue);
+        return getCompareHandler().compare(session, dn, attributeName, attributeValue);
     }
 
-    public int unbind(PenroseConnection connection) throws Exception {
-        return getBindHandler().unbind(connection);
+    public int unbind(PenroseSession session) throws Exception {
+        return getBindHandler().unbind(session);
     }
 
-    public int delete(PenroseConnection connection, String dn) throws Exception {
-        return getDeleteHandler().delete(connection, dn);
+    public int delete(PenroseSession session, String dn) throws Exception {
+        return getDeleteHandler().delete(session, dn);
     }
 
-    public int modify(PenroseConnection connection, String dn, List modifications) throws Exception {
-        return getModifyHandler().modify(connection, dn, modifications);
+    public int modify(PenroseSession session, String dn, List modifications) throws Exception {
+        return getModifyHandler().modify(session, dn, modifications);
     }
 
-    public int modrdn(PenroseConnection connection, String dn, String newRdn) throws Exception {
-        return getModRdnHandler().modrdn(connection, dn, newRdn);
+    public int modrdn(PenroseSession session, String dn, String newRdn) throws Exception {
+        return getModRdnHandler().modrdn(session, dn, newRdn);
     }
 
     public SearchResults search(
-            final PenroseConnection connection,
+            final PenroseSession session,
             final String base,
             final int scope,
             final int deref,
@@ -145,7 +146,7 @@ public class Handler implements ModuleContext {
         engine.execute(new Runnable() {
             public void run() {
                 try {
-                    getSearchHandler().search(connection, base, scope, deref, filter, attributeNames, results);
+                    getSearchHandler().search(session, base, scope, deref, filter, attributeNames, results);
 
                 } catch (Throwable e) {
                     e.printStackTrace(System.out);

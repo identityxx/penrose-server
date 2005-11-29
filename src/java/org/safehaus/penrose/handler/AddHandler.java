@@ -17,8 +17,9 @@
  */
 package org.safehaus.penrose.handler;
 
-import org.safehaus.penrose.PenroseConnection;
+import org.safehaus.penrose.session.PenroseSession;
 import org.safehaus.penrose.SearchResults;
+import org.safehaus.penrose.session.PenroseSession;
 import org.safehaus.penrose.event.AddEvent;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.mapping.*;
@@ -43,29 +44,29 @@ public class AddHandler {
     /**
      * The interface function called to add an LDAP entry
      *
-     * @param connection the connection
+     * @param session the connection
      * @param entry the entry to be added
      * @return return code (see LDAPException)
      * @throws Exception
      */
     public int add(
-            PenroseConnection connection,
+            PenroseSession session,
             LDAPEntry entry)
     throws Exception {
 
         log.info("-------------------------------------------------");
         log.info("ADD:");
-        if (connection.getBindDn() != null) log.info(" - Bind DN: "+connection.getBindDn());
+        if (session.getBindDn() != null) log.info(" - Bind DN: "+session.getBindDn());
         log.info(" - Entry:\n"+Entry.toString(entry));
         log.info("");
 
-        AddEvent beforeModifyEvent = new AddEvent(this, AddEvent.BEFORE_ADD, connection, entry);
+        AddEvent beforeModifyEvent = new AddEvent(this, AddEvent.BEFORE_ADD, session, entry);
         handler.postEvent(entry.getDN(), beforeModifyEvent);
 
-        int rc = performAdd(connection, entry);
+        int rc = performAdd(session, entry);
 
         handler.getSearchHandler().search(
-                connection,
+                session,
                 entry.getDN(),
                 LDAPConnection.SCOPE_SUB,
                 LDAPSearchConstraints.DEREF_NEVER,
@@ -74,7 +75,7 @@ public class AddHandler {
                 new SearchResults()
         );
 
-        AddEvent afterModifyEvent = new AddEvent(this, AddEvent.AFTER_ADD, connection, entry);
+        AddEvent afterModifyEvent = new AddEvent(this, AddEvent.AFTER_ADD, session, entry);
         afterModifyEvent.setReturnCode(rc);
         handler.postEvent(entry.getDN(), afterModifyEvent);
 
@@ -82,22 +83,22 @@ public class AddHandler {
     }
 
     public int performAdd(
-            PenroseConnection connection,
+            PenroseSession session,
             LDAPEntry ldapEntry)
     throws Exception {
 
         String dn = LDAPDN.normalize(ldapEntry.getDN());
 
         // find existing entry
-        Entry entry = getHandler().getSearchHandler().find(connection, dn);
+        Entry entry = getHandler().getSearchHandler().find(session, dn);
         if (entry != null) return LDAPException.ENTRY_ALREADY_EXISTS;
 
         // find parent entry
         String parentDn = Entry.getParentDn(dn);
-        Entry parent = getHandler().getSearchHandler().find(connection, parentDn);
+        Entry parent = getHandler().getSearchHandler().find(session, parentDn);
         if (parent == null) return LDAPException.NO_SUCH_OBJECT;
 
-        int rc = handler.getACLEngine().checkAdd(connection, parent);
+        int rc = handler.getACLEngine().checkAdd(session, parent);
         if (rc != LDAPException.SUCCESS) return rc;
 
         log.debug("Adding entry under "+parent.getDn());

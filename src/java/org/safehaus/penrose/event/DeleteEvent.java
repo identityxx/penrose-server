@@ -17,7 +17,7 @@
  */
 package org.safehaus.penrose.event;
 
-import org.safehaus.penrose.PenroseConnection;
+import org.safehaus.penrose.session.PenroseSession;
 
 /**
  * @author Endi S. Dewata
@@ -27,23 +27,23 @@ public class DeleteEvent extends Event {
     public final static int BEFORE_DELETE = 0;
     public final static int AFTER_DELETE  = 1;
 
-    private PenroseConnection connection;
+    private PenroseSession session;
     private int returnCode;
 
     private String dn;
 
-    public DeleteEvent(Object source, int type, PenroseConnection connection, String dn) {
+    public DeleteEvent(Object source, int type, PenroseSession session, String dn) {
         super(source, type);
-        this.connection = connection;
+        this.session = session;
         this.dn = dn;
     }
 
-    public PenroseConnection getConnection() {
-        return connection;
+    public PenroseSession getConnection() {
+        return session;
     }
 
-    public void setConnection(PenroseConnection connection) {
-        this.connection = connection;
+    public void setConnection(PenroseSession session) {
+        this.session = session;
     }
 
     public int getReturnCode() {

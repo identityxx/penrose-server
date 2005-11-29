@@ -17,7 +17,8 @@
  */
 package org.safehaus.penrose.handler;
 
-import org.safehaus.penrose.PenroseConnection;
+import org.safehaus.penrose.session.PenroseSession;
+import org.safehaus.penrose.session.PenroseSession;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.mapping.Entry;
 import org.safehaus.penrose.mapping.EntryMapping;
@@ -38,40 +39,40 @@ public class ModRdnHandler {
         this.handler = handler;
 	}
 
-	public int modrdn(PenroseConnection connection, String dn, String newRdn)
+	public int modrdn(PenroseSession session, String dn, String newRdn)
 			throws Exception {
 
         log.debug("-------------------------------------------------------------------------------");
         log.debug("MODRDN:");
-        if (connection.getBindDn() != null) log.info(" - Bind DN: " + connection.getBindDn());
+        if (session.getBindDn() != null) log.info(" - Bind DN: " + session.getBindDn());
         log.debug(" - DN: " + dn);
         log.debug(" - New RDN: " + newRdn);
 
         //return LDAPException.LDAP_NOT_SUPPORTED;
 
-        int rc = performModRdn(connection, dn, newRdn);
+        int rc = performModRdn(session, dn, newRdn);
 
         return rc;
 	}
 
     public int performModRdn(
-            PenroseConnection connection,
+            PenroseSession session,
             String dn,
             String newRdn)
 			throws Exception {
 
 		String ndn = LDAPDN.normalize(dn);
 
-        Entry entry = handler.getSearchHandler().find(connection, ndn);
+        Entry entry = handler.getSearchHandler().find(session, ndn);
         if (entry == null) return LDAPException.NO_SUCH_OBJECT;
 
-        int rc = handler.getACLEngine().checkModify(connection, entry);
+        int rc = handler.getACLEngine().checkModify(session, entry);
         if (rc != LDAPException.SUCCESS) return rc;
 
         EntryMapping entryMapping = entry.getEntryMapping();
         Partition partition = handler.getConfigManager().getConfig(entryMapping);
         if (partition.isDynamic(entryMapping)) {
-            return modRdnVirtualEntry(connection, entry, newRdn);
+            return modRdnVirtualEntry(session, entry, newRdn);
 
         } else {
             return modRdnStaticEntry(entryMapping, newRdn);
@@ -90,7 +91,7 @@ public class ModRdnHandler {
     }
 
     public int modRdnVirtualEntry(
-            PenroseConnection connection,
+            PenroseSession session,
             Entry entry,
 			String newRdn)
             throws Exception {

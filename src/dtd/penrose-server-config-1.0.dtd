@@ -42,24 +42,4 @@ for Penrose server instance.
 
 <!-- Connection -->
 <!ELEMENT connection (description?, pool-size?, test-query?, parameter*)>
- <!ATTLIST connection name CDATA #REQUIRED>
- <!ATTLIST connection type CDATA #REQUIRED>
-
-<!-- Connection Parameter -->
-<!ELEMENT parameter (param-name, param-value)>
-<!ELEMENT param-name (#PCDATA)>
-<!ELEMENT param-value (#PCDATA)>
-
-<!-- Root -->
-<!ELEMENT root EMPTY>
- <!ATTLIST root dn CDATA #REQUIRED>
- <!ATTLIST root password CDATA #REQUIRED>
-
-<!-- Description -->
-<!ELEMENT description (#PCDATA)>
-
-<!-- Pool Size -->
-<!ELEMENT pool-size (#PCDATA)>
-
-<!-- Test Query -->
-<!ELEMENT test-query (#PCDATA)>
+ <!ATTLIST session

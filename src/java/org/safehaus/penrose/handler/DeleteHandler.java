@@ -17,7 +17,7 @@
  */
 package org.safehaus.penrose.handler;
 
-import org.safehaus.penrose.PenroseConnection;
+import org.safehaus.penrose.session.PenroseSession;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.event.DeleteEvent;
 import org.safehaus.penrose.mapping.EntryMapping;
@@ -41,34 +41,34 @@ public class DeleteHandler {
         this.handler = handler;
     }
 
-    public int delete(PenroseConnection connection, String dn) throws Exception {
+    public int delete(PenroseSession session, String dn) throws Exception {
 
         log.info("-------------------------------------------------");
         log.info("DELETE:");
-        if (connection.getBindDn() != null) log.info(" - Bind DN: "+connection.getBindDn());
+        if (session.getBindDn() != null) log.info(" - Bind DN: "+session.getBindDn());
         log.info(" - DN: "+dn);
         log.info("");
 
-        DeleteEvent beforeDeleteEvent = new DeleteEvent(this, DeleteEvent.BEFORE_DELETE, connection, dn);
+        DeleteEvent beforeDeleteEvent = new DeleteEvent(this, DeleteEvent.BEFORE_DELETE, session, dn);
         handler.postEvent(dn, beforeDeleteEvent);
 
-        int rc = performDelete(connection, dn);
+        int rc = performDelete(session, dn);
 
-        DeleteEvent afterDeleteEvent = new DeleteEvent(this, DeleteEvent.AFTER_DELETE, connection, dn);
+        DeleteEvent afterDeleteEvent = new DeleteEvent(this, DeleteEvent.AFTER_DELETE, session, dn);
         afterDeleteEvent.setReturnCode(rc);
         handler.postEvent(dn, afterDeleteEvent);
 
         return rc;
     }
 
-    public int performDelete(PenroseConnection connection, String dn) throws Exception {
+    public int performDelete(PenroseSession session, String dn) throws Exception {
 
         dn = LDAPDN.normalize(dn);
 
-        Entry entry = getHandler().getSearchHandler().find(connection, dn);
+        Entry entry = getHandler().getSearchHandler().find(session, dn);
         if (entry == null) return LDAPException.NO_SUCH_OBJECT;
 
-        int rc = handler.getACLEngine().checkDelete(connection, entry);
+        int rc = handler.getACLEngine().checkDelete(session, entry);
         if (rc != LDAPException.SUCCESS) return rc;
 
         log.debug("Deleting entry "+dn);

@@ -15,10 +15,12 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
-package org.safehaus.penrose;
+package org.safehaus.penrose.session;
 
 import org.ietf.ldap.LDAPEntry;
 import org.safehaus.penrose.handler.Handler;
+import org.safehaus.penrose.Penrose;
+import org.safehaus.penrose.SearchResults;
 
 import java.util.Date;
 import java.util.List;
@@ -29,7 +31,7 @@ import java.util.Collection;
  * 
  * @author Endi S. Dewata
  */
-public class PenroseConnection {
+public class PenroseSession {
 
     private Penrose penrose;
     private Handler handler;
@@ -44,7 +46,7 @@ public class PenroseConnection {
      */
     private Date date;
 
-    public PenroseConnection(Penrose penrose) {
+    public PenroseSession(Penrose penrose) {
         this.penrose = penrose;
         this.handler = penrose.getHandler();
     }
@@ -113,6 +115,6 @@ public class PenroseConnection {
     }
 
     public void close() throws Exception {
-        penrose.removeConnection(this);
+        penrose.removeSession(this);
     }
 }

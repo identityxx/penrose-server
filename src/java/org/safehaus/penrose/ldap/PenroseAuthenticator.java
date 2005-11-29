@@ -25,7 +25,7 @@ import org.apache.ldap.common.aci.AuthenticationLevel;
 import org.apache.log4j.Logger;
 import org.ietf.ldap.LDAPException;
 import org.safehaus.penrose.Penrose;
-import org.safehaus.penrose.PenroseConnection;
+import org.safehaus.penrose.session.PenroseSession;
 import org.safehaus.penrose.config.PenroseConfig;
 
 import javax.naming.Context;
@@ -74,9 +74,9 @@ public class PenroseAuthenticator extends AbstractAuthenticator {
         log.info("Login "+dn);
 
         try {
-            PenroseConnection connection = penrose.openConnection();
-            int rc = connection.bind(dn.toString(), password);
-            connection.close();
+            PenroseSession session = penrose.newSession();
+            int rc = session.bind(dn.toString(), password);
+            session.close();
 
             if (rc != LDAPException.SUCCESS) {
                 throw new LdapAuthenticationException();

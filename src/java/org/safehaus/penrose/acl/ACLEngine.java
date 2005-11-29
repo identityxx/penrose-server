@@ -19,7 +19,8 @@ package org.safehaus.penrose.acl;
 
 import org.safehaus.penrose.mapping.Entry;
 import org.safehaus.penrose.mapping.EntryMapping;
-import org.safehaus.penrose.PenroseConnection;
+import org.safehaus.penrose.session.PenroseSession;
+import org.safehaus.penrose.session.PenroseSession;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.handler.Handler;
 import org.ietf.ldap.LDAPException;
@@ -109,18 +110,18 @@ public class ACLEngine {
         return getObjectPermission(bindDn, targetDn, entry.getEntryMapping(), null, permission);
     }
 
-    public int checkPermission(PenroseConnection connection, Entry entry, String permission) throws Exception {
+    public int checkPermission(PenroseSession session, Entry entry, String permission) throws Exception {
     	
         //log.debug("Evaluating object \""+permission+"\" permission for "+entry.getDn()+(connection == null ? null : " as "+connection.getBindDn()));
 
         int rc = LDAPException.SUCCESS;
         try {
-            if (connection == null) {
+            if (session == null) {
                 return rc;
             }
 
             String rootDn = handler.getSchema().normalize(handler.getRootDn());
-            String bindDn = handler.getSchema().normalize(connection.getBindDn());
+            String bindDn = handler.getSchema().normalize(session.getBindDn());
             if (rootDn != null && rootDn.equals(bindDn)) {
                 return rc;
             }
@@ -141,24 +142,24 @@ public class ACLEngine {
         }
     }
 
-    public int checkRead(PenroseConnection connection, Entry entry) throws Exception {
-    	return checkPermission(connection, entry, ACI.PERMISSION_READ);
+    public int checkRead(PenroseSession session, Entry entry) throws Exception {
+    	return checkPermission(session, entry, ACI.PERMISSION_READ);
     }
 
-    public int checkSearch(PenroseConnection connection, Entry entry) throws Exception {
-    	return checkPermission(connection, entry, ACI.PERMISSION_SEARCH);
+    public int checkSearch(PenroseSession session, Entry entry) throws Exception {
+    	return checkPermission(session, entry, ACI.PERMISSION_SEARCH);
     }
 
-    public int checkAdd(PenroseConnection connection, Entry entry) throws Exception {
-    	return checkPermission(connection, entry, ACI.PERMISSION_ADD);
+    public int checkAdd(PenroseSession session, Entry entry) throws Exception {
+    	return checkPermission(session, entry, ACI.PERMISSION_ADD);
     }
 
-    public int checkDelete(PenroseConnection connection, Entry entry) throws Exception {
-    	return checkPermission(connection, entry, ACI.PERMISSION_DELETE);
+    public int checkDelete(PenroseSession session, Entry entry) throws Exception {
+    	return checkPermission(session, entry, ACI.PERMISSION_DELETE);
     }
 
-    public int checkModify(PenroseConnection connection, Entry entry) throws Exception {
-    	return checkPermission(connection, entry, ACI.PERMISSION_WRITE);
+    public int checkModify(PenroseSession session, Entry entry) throws Exception {
+    	return checkPermission(session, entry, ACI.PERMISSION_WRITE);
     }
 
     public void addAttributes(Set set, String attributes) {
@@ -255,12 +256,12 @@ public class ACLEngine {
     }
 
     public LDAPEntry filterAttributes(
-            PenroseConnection connection,
+            PenroseSession session,
             Entry entry,
             LDAPEntry ldapEntry)
             throws Exception {
 
-        String bindDn = handler.getSchema().normalize(connection.getBindDn());
+        String bindDn = handler.getSchema().normalize(session.getBindDn());
 
         Set grants = new HashSet();
         Set denies = new HashSet();

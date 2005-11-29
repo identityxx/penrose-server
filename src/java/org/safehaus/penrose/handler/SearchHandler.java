@@ -18,8 +18,9 @@
 package org.safehaus.penrose.handler;
 
 import org.safehaus.penrose.SearchResults;
-import org.safehaus.penrose.PenroseConnection;
+import org.safehaus.penrose.session.PenroseSession;
 import org.safehaus.penrose.Penrose;
+import org.safehaus.penrose.session.PenroseSession;
 import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.engine.Engine;
 import org.safehaus.penrose.event.SearchEvent;
@@ -53,10 +54,10 @@ public class SearchHandler {
 	 * @return path from the entry to the root entry
 	 */
     public Entry find(
-            PenroseConnection connection,
+            PenroseSession session,
             String dn) throws Exception {
 
-        List path = findPath(connection, dn);
+        List path = findPath(session, dn);
         if (path == null) return null;
         if (path.size() == 0) return null;
 
@@ -65,7 +66,7 @@ public class SearchHandler {
     }
 
     public List findPath(
-            PenroseConnection connection,
+            PenroseSession session,
             String dn) throws Exception {
 
         if (dn == null) return null;
@@ -75,7 +76,7 @@ public class SearchHandler {
 
         log.debug("Find entry: ["+rdn+"] ["+parentDn+"]");
 
-        List path = findPath(connection, parentDn);
+        List path = findPath(session, parentDn);
         Entry parent;
 
         if (path == null) {
@@ -184,7 +185,7 @@ public class SearchHandler {
 	}
 
     public int search(
-            PenroseConnection connection,
+            PenroseSession session,
             String base,
             int scope,
             int deref,
@@ -223,7 +224,7 @@ public class SearchHandler {
 
         log.debug("----------------------------------------------------------------------------------");
         log.info("SEARCH:");
-        if (connection != null && connection.getBindDn() != null) log.info(" - Bind DN: " + connection.getBindDn());
+        if (session != null && session.getBindDn() != null) log.info(" - Bind DN: " + session.getBindDn());
         log.info(" - Base DN: " + base);
         log.info(" - Scope: " + s);
         log.info(" - Filter: "+filter);
@@ -231,13 +232,13 @@ public class SearchHandler {
         log.debug(" - Attribute Names: " + attributeNames);
         log.info("");
 
-        SearchEvent beforeSearchEvent = new SearchEvent(this, SearchEvent.BEFORE_SEARCH, connection, base);
+        SearchEvent beforeSearchEvent = new SearchEvent(this, SearchEvent.BEFORE_SEARCH, session, base);
         handler.postEvent(base, beforeSearchEvent);
 
         int rc;
 
         try {
-            rc = performSearch(connection, base, scope, deref, filter, attributeNames, results);
+            rc = performSearch(session, base, scope, deref, filter, attributeNames, results);
 
         } catch (Exception e) {
             log.error(e.getMessage(), e);
@@ -247,7 +248,7 @@ public class SearchHandler {
             results.close();
         }
 
-        SearchEvent afterSearchEvent = new SearchEvent(this, SearchEvent.AFTER_SEARCH, connection, base);
+        SearchEvent afterSearchEvent = new SearchEvent(this, SearchEvent.AFTER_SEARCH, session, base);
         afterSearchEvent.setReturnCode(rc);
         handler.postEvent(base, afterSearchEvent);
 
@@ -255,7 +256,7 @@ public class SearchHandler {
     }
 
     public int performSearch(
-            PenroseConnection connection,
+            PenroseSession session,
             String base,
             int scope,
             int deref,
@@ -304,7 +305,7 @@ public class SearchHandler {
 		Filter f = FilterTool.parseFilter(filter);
 		log.debug("Parsed filter: "+f+" ("+f.getClass().getName()+")");
 
-		List path = findPath(connection, nbase);
+		List path = findPath(session, nbase);
 
 		if (path == null) {
 			log.debug("Can't find " + nbase);
@@ -322,13 +323,13 @@ public class SearchHandler {
         AttributeValues parentSourceValues = new AttributeValues();
         engine.getParentSourceValues(path, entryMapping, parentSourceValues);
 
-        int rc = handler.getACLEngine().checkSearch(connection, baseEntry);
+        int rc = handler.getACLEngine().checkSearch(session, baseEntry);
         if (rc != LDAPException.SUCCESS) return rc;
 
 		if (scope == LDAPConnection.SCOPE_BASE || scope == LDAPConnection.SCOPE_SUB) { // base or subtree
 			if (handler.getFilterTool().isValid(baseEntry, f)) {
 
-                rc = handler.getACLEngine().checkRead(connection, baseEntry);
+                rc = handler.getACLEngine().checkRead(session, baseEntry);
                 if (rc == LDAPException.SUCCESS) {
                     LDAPEntry ldapEntry = baseEntry.toLDAPEntry();
                     Entry.filterAttributes(ldapEntry, normalizedAttributeNames);
@@ -338,7 +339,7 @@ public class SearchHandler {
 		}
 
 		if (scope == LDAPConnection.SCOPE_ONE || scope == LDAPConnection.SCOPE_SUB) { // one level or subtree
-            searchChildren(connection, path, entryMapping, parentSourceValues, scope, f, normalizedAttributeNames, results, true);
+            searchChildren(session, path, entryMapping, parentSourceValues, scope, f, normalizedAttributeNames, results, true);
 		}
 
 		results.setReturnCode(LDAPException.SUCCESS);
@@ -346,7 +347,7 @@ public class SearchHandler {
 	}
 
     public void searchChildren(
-            PenroseConnection connection,
+            PenroseSession session,
             Collection path,
             EntryMapping entryMapping,
             AttributeValues parentSourceValues,
@@ -378,12 +379,12 @@ public class SearchHandler {
                 while (sr.hasNext()) {
                     Entry child = (Entry)sr.next();
 
-                    int rc = handler.getACLEngine().checkSearch(connection, child);
+                    int rc = handler.getACLEngine().checkSearch(session, child);
                     if (rc != LDAPException.SUCCESS) continue;
 
                     if (!handler.getFilterTool().isValid(child, filter)) continue;
 
-                    rc = handler.getACLEngine().checkRead(connection, child);
+                    rc = handler.getACLEngine().checkRead(session, child);
                     if (rc != LDAPException.SUCCESS) continue;
 
                     //newParents.add(child);
@@ -436,7 +437,7 @@ public class SearchHandler {
                 newPath.add(map);
                 newPath.addAll(path);
 
-                searchChildren(connection, newPath, childMapping, newParentSourceValues, scope, filter, attributeNames, results, false);
+                searchChildren(session, newPath, childMapping, newParentSourceValues, scope, filter, attributeNames, results, false);
             }
         }
     }

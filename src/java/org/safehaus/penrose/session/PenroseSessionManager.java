@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
-package org.safehaus.penrose.client;
+package org.safehaus.penrose.session;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -24,9 +24,8 @@ import java.util.TreeMap;
 
 import org.apache.log4j.Logger;
 import org.safehaus.penrose.Penrose;
-import org.safehaus.penrose.PenroseConnection;
 
-public class ClientManager {
+public class PenroseSessionManager {
 	
 	public Logger log = Logger.getLogger(getClass());
 
@@ -35,45 +34,45 @@ public class ClientManager {
 
     private Penrose penrose;
 
-	public ClientManager(Penrose penrose) {
+	public PenroseSessionManager(Penrose penrose) {
 		this(penrose, 20);
 	}
 
-	public ClientManager(Penrose penrose, int size) {
+	public PenroseSessionManager(Penrose penrose, int size) {
 
         this.penrose = penrose;
 
 		for (int i = 0; i < size; i++) {
-			connectionPool.add(new PenroseConnection(penrose));
+			connectionPool.add(new PenroseSession(penrose));
 		}
 	}
 
-    public synchronized PenroseConnection createConnection() {
+    public synchronized PenroseSession createConnection() {
         //log.debug("Creating connection ...");
-        PenroseConnection connection;
+        PenroseSession session;
 
         if (connectionPool.size() > 0) {
             //log.debug("Got connection from pool.");
-            connection = (PenroseConnection)connectionPool.remove(0);
+            session = (PenroseSession)connectionPool.remove(0);
 
         } else {
             //log.debug("Reuse oldest connection.");
             Date date = (Date)activeConnections.firstKey();
-            connection = (PenroseConnection)activeConnections.remove(date);
+            session = (PenroseSession)activeConnections.remove(date);
         }
 
-        connection.setBindDn(null);
-        connection.setDate(new Date());
+        session.setBindDn(null);
+        session.setDate(new Date());
 
-        activeConnections.put(connection.getDate(), connection);
+        activeConnections.put(session.getDate(), session);
 
-        return connection;
+        return session;
     }
 
-    public synchronized void removeConnection(PenroseConnection connection) {
+    public synchronized void removeConnection(PenroseSession session) {
         //log.debug("Returned connection to pool.");
-        activeConnections.remove(connection.getDate());
-        connectionPool.add(connection);
+        activeConnections.remove(session.getDate());
+        connectionPool.add(session);
     }
 
 	public int getSize() {

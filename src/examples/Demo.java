@@ -19,75 +19,65 @@ import java.util.Iterator;
 import java.util.ArrayList;
 
 import org.safehaus.penrose.Penrose;
-import org.safehaus.penrose.PenroseConnection;
+import org.safehaus.penrose.session.PenroseSession;
 import org.safehaus.penrose.SearchResults;
+import org.safehaus.penrose.schema.SchemaConfig;
+import org.safehaus.penrose.partition.PartitionConfig;
+import org.safehaus.penrose.config.PenroseConfig;
+import org.safehaus.penrose.config.DefaultPenroseConfig;
 import org.ietf.ldap.*;
-
-import junit.textui.TestRunner;
-import junit.framework.TestSuite;
-import junit.framework.TestCase;
+import org.apache.log4j.*;
 
 /**
  * @author Endi S. Dewata
  */
-public class Demo extends TestCase {
+public class Demo {
 	
 	public final static String SUFFIX = "dc=Example,dc=com";
 
-	public Penrose penrose;
-    public PenroseConnection connection;
+	public void run () throws Exception {
 
-    public Demo(String s) throws Exception {
-        super(s);
-    }
+        ConsoleAppender appender = new ConsoleAppender(new PatternLayout("[%d{MM/dd/yyyy HH:mm:ss}] %m%n"));
+        BasicConfigurator.configure(appender);
 
-	public void setUp() throws Exception {
-		penrose = new Penrose();
+        Logger rootLogger = Logger.getRootLogger();
+        rootLogger.setLevel(Level.toLevel("OFF"));
+
+        Logger logger = Logger.getLogger("org.safehaus.penrose");
+        logger.setLevel(Level.toLevel("INFO"));
+
+        PenroseConfig penroseConfig = new DefaultPenroseConfig();
+
+        SchemaConfig schemaConfig = new SchemaConfig("samples/schema/example.schema");
+        penroseConfig.addSchemaConfig(schemaConfig);
+
+        PartitionConfig partitionConfig = new PartitionConfig("example", "samples/conf");
+        penroseConfig.addPartitionConfig(partitionConfig);
+
+		Penrose penrose = new Penrose(penroseConfig);
 		penrose.start();
 
-        connection = penrose.openConnection();
-	}
+        PenroseSession session = penrose.newSession();
+        session.bind("uid=admin,ou=system", "secret");
 
-    public void tearDown() throws Exception {
-        connection.close();
-        penrose.stop();
-    }
+        ArrayList attributeNames = new ArrayList();
 
-    public void testBind() throws Throwable {
-        connection.bind("uid=admin,ou=system", "secret");
-        connection.unbind();
-    }
-
-	public void testSearchAll() throws Throwable {
-		ArrayList attributeNames = new ArrayList();
-
-        SearchResults results = connection.search(
-                SUFFIX,
-                LDAPConnection.SCOPE_SUB,
+        SearchResults results = session.search(
+                "ou=Categories,"+SUFFIX,
+                LDAPConnection.SCOPE_ONE,
                 LDAPSearchConstraints.DEREF_ALWAYS,
                 "(objectClass=*)",
                 attributeNames);
 
         for (Iterator i = results.iterator(); i.hasNext();) {
             LDAPEntry entry = (LDAPEntry) i.next();
-			System.out.println(toString(entry));
-		}
-	}
-
-    public void testSearchWithCnInFilter() throws Throwable {
-        ArrayList attributeNames = new ArrayList();
-
-        SearchResults results = connection.search(
-                SUFFIX,
-                LDAPConnection.SCOPE_SUB,
-                LDAPSearchConstraints.DEREF_ALWAYS,
-                "(cn=Wine)",
-                attributeNames);
-
-        for (Iterator i = results.iterator(); i.hasNext();) {
-            LDAPEntry entry = (LDAPEntry) i.next();
             System.out.println(toString(entry));
         }
+
+        session.unbind();
+
+        session.close();
+        penrose.stop();
     }
 
     public String toString(LDAPEntry entry) throws Exception {
@@ -111,17 +101,8 @@ public class Demo extends TestCase {
         return sb.toString();
     }
 
-    public static void main(String args[]) throws Throwable {
-        if (args.length == 0) {
-            TestSuite suite = new TestSuite(Demo.class);
-            TestRunner.run(suite);
-
-        } else {
-            TestSuite suite = new TestSuite();
-            for (int i = 0; i < args.length; i++) {
-                suite.addTest(new Demo(args[i]));
-            }
-            TestRunner.run(suite);
-        }
+    public static void main(String args[]) throws Exception {
+        Demo demo = new Demo();
+        demo.run();
     }
 }
