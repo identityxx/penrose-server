@@ -85,7 +85,7 @@
         </javadoc>
     </target>
 
-    <target name="docs-publish" depends="docs">
+    <target name="docs-publish">
         <delete dir="${docs.target}"/>
         <mkdir dir="${docs.target}"/>
         <copy todir="${docs.target}" overwrite="true">
