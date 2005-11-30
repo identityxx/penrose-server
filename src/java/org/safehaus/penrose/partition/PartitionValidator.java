@@ -327,11 +327,11 @@ public class PartitionValidator {
         return results;
     }
 
-    public PenroseConfig getServerConfig() {
+    public PenroseConfig getPenroseConfig() {
         return penroseConfig;
     }
 
-    public void setServerConfig(PenroseConfig penroseConfig) {
+    public void setPenroseConfig(PenroseConfig penroseConfig) {
         this.penroseConfig = penroseConfig;
     }
 

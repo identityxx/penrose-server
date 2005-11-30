@@ -105,7 +105,7 @@ public class AddHandler {
         log.debug("Adding entry under "+parent.getDn());
 
         EntryMapping parentMapping = parent.getEntryMapping();
-        Partition partition = handler.getConfigManager().getConfig(parentMapping);
+        Partition partition = handler.getPartitionManager().getPartition(parentMapping);
         Collection children = partition.getChildren(parentMapping);
 
         AttributeValues values = new AttributeValues();
@@ -156,7 +156,7 @@ public class AddHandler {
             newEntry = new EntryMapping(rdn.toString(), parent);
         }
 
-        Partition partition = handler.getConfigManager().getConfig(dn);
+        Partition partition = handler.getPartitionManager().getPartitionByDn(dn);
         if (partition == null) return LDAPException.NO_SUCH_OBJECT;
 
         partition.addEntryMapping(newEntry);

@@ -96,7 +96,7 @@ public class ACLEngine {
             }
         }
 
-        Partition partition = handler.getConfigManager().getConfig(entry.getDn());
+        Partition partition = handler.getPartitionManager().getPartitionByDn(entry.getDn());
         if (partition == null) return false;
 
         entry = partition.getParent(entry);
@@ -219,7 +219,7 @@ public class ACLEngine {
             }
         }
 
-        Partition partition = handler.getConfigManager().getConfig(entry.getDn());
+        Partition partition = handler.getPartitionManager().getPartitionByDn(entry.getDn());
         if (partition == null) return;
 
         entry = partition.getParent(entry);

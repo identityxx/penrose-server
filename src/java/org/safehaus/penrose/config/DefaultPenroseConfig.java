@@ -57,7 +57,7 @@ public class DefaultPenroseConfig extends PenroseConfig {
         AdapterConfig jndiAdapterConfig = new AdapterConfig("JNDI", JNDIAdapter.class.getName());
         addAdapterConfig(jndiAdapterConfig);
 
-        PartitionConfig partitionConfig = new PartitionConfig("default", "conf");
+        PartitionConfig partitionConfig = new PartitionConfig("DEFAULT", "conf");
         addPartitionConfig(partitionConfig);
     }
 }

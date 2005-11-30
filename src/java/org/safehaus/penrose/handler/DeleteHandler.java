@@ -74,7 +74,7 @@ public class DeleteHandler {
         log.debug("Deleting entry "+dn);
 
         EntryMapping entryMapping = entry.getEntryMapping();
-        Partition partition = handler.getConfigManager().getConfig(entryMapping);
+        Partition partition = handler.getPartitionManager().getPartition(entryMapping);
 
         if (partition.isDynamic(entryMapping)) {
 	        return handler.getEngine().delete(entry);
@@ -87,7 +87,7 @@ public class DeleteHandler {
 
     public int deleteStaticEntry(EntryMapping entry) throws Exception {
 
-        Partition partition = handler.getConfigManager().getConfig(entry.getDn());
+        Partition partition = handler.getPartitionManager().getPartitionByDn(entry.getDn());
         if (partition == null) return LDAPException.NO_SUCH_OBJECT;
 
         // can't delete no leaf

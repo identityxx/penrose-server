@@ -63,7 +63,7 @@ public class SearchPlanner extends GraphVisitor {
         this.searchFilter = filter;
         this.sourceValues = sourceValues;
 
-        partition = engine.getPartitionManager().getConfig(entryMapping);
+        partition = engine.getPartitionManager().getPartition(entryMapping);
         graph = engine.getGraph(entryMapping);
         primarySourceMapping = engine.getPrimarySource(entryMapping);
     }

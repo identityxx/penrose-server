@@ -56,7 +56,7 @@ public class PersistentEntryCache extends EntryCache {
         jdbcConnectionName = getParameter("jdbcConnection");
         jndiConnectionName = getParameter("jndiConnection");
 
-        partition = engine.getPartitionManager().getConfig(entryMapping);
+        partition = engine.getPartitionManager().getPartition(entryMapping);
 
         entryId = getEntryId();
         if (entryId == 0) {

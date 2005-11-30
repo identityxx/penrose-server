@@ -56,7 +56,7 @@ public class SearchCleaner extends GraphVisitor {
         this.depths = planner.getDepths();
         this.primarySourceMapping = primarySourceMapping;
 
-        partition = engine.getPartitionManager().getConfig(entryMapping);
+        partition = engine.getPartitionManager().getPartition(entryMapping);
         graph = engine.getGraph(entryMapping);
 
         needCleaning.put(primarySourceMapping, new Boolean(false));

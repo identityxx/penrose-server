@@ -52,7 +52,7 @@ public class LoadEngine {
         String s = engine.getEngineConfig().getParameter(EngineConfig.ALLOW_CONCURRENCY);
         boolean allowConcurrency = s == null ? true : new Boolean(s).booleanValue();
 
-        Partition partition = engine.getPartitionManager().getConfig(entryMapping);
+        Partition partition = engine.getPartitionManager().getPartition(entryMapping);
 
         Collection sources = entryMapping.getSourceMappings();
         log.debug("Sources: "+sources);
@@ -134,7 +134,7 @@ public class LoadEngine {
             ) throws Exception {
 
         try {
-            Partition partition = engine.getPartitionManager().getConfig(entryMapping);
+            Partition partition = engine.getPartitionManager().getPartition(entryMapping);
             SourceMapping primarySourceMapping = engine.getPrimarySource(entryMapping);
 
             Collection batch = new ArrayList();

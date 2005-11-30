@@ -90,7 +90,7 @@ public class SearchHandler {
 
         log.debug("Found parent: "+(parent == null ? null : parent.getDn()));
 
-        Partition partition = handler.getConfigManager().getConfig(dn);
+        Partition partition = handler.getPartitionManager().getPartitionByDn(dn);
         if (partition == null) {
             //log.error("Missing config for "+dn);
             return null;
@@ -281,7 +281,7 @@ public class SearchHandler {
             set.add(new LDAPAttribute("vendorVersion", new String[] { Penrose.PRODUCT_NAME }));
 
             LDAPAttribute namingContexts = new LDAPAttribute("namingContexts");
-            for (Iterator i=handler.getConfigManager().getPartitions().iterator(); i.hasNext(); ) {
+            for (Iterator i=handler.getPartitionManager().getPartitions().iterator(); i.hasNext(); ) {
                 Partition partition = (Partition)i.next();
                 for (Iterator j=partition.getRootEntryMappings().iterator(); j.hasNext(); ) {
                     EntryMapping entry = (EntryMapping)j.next();
@@ -361,7 +361,7 @@ public class SearchHandler {
             PenroseSearchResults results,
             boolean first) throws Exception {
 
-        Partition partition = handler.getConfigManager().getConfig(entryMapping);
+        Partition partition = handler.getPartitionManager().getPartition(entryMapping);
         Collection children = partition.getChildren(entryMapping);
         if (children == null) {
             return;

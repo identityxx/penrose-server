@@ -122,7 +122,8 @@ public class Penrose {
 
     public void initPartitionManager() throws Exception {
         partitionManager = new PartitionManager();
-        partitionManager.setServerConfig(penroseConfig);
+        partitionManager.setHome(penroseConfig.getHome());
+        partitionManager.setPenroseConfig(penroseConfig);
         partitionManager.setSchema(schema);
         partitionManager.init();
     }
@@ -147,22 +148,32 @@ public class Penrose {
 
         for (Iterator i=penroseConfig.getPartitionConfigs().iterator(); i.hasNext(); ) {
             PartitionConfig partitionConfig = (PartitionConfig)i.next();
-            //String name = partitionConfig.getName();
-            String path = (home == null ? "" : home+File.separator)+partitionConfig.getPath();
-
-            partitionManager.load(path);
+            partitionManager.load(partitionConfig);
         }
-
+/*
         File partitions = new File((home == null ? "" : home+File.separator)+"partitions");
         if (partitions.exists()) {
             File files[] = partitions.listFiles();
             for (int i=0; i<files.length; i++) {
                 File partition = files[i];
-                //String name = partition.getName();
-                String path = partition.getAbsolutePath();
 
-                partitionManager.load(path);
+                String name = partition.getName();
+                String path = "partitions"+File.separator+name;
+
+                PartitionConfig partitionConfig = new PartitionConfig(name, path);
+
+                partitionManager.load(partitionConfig);
             }
+        }
+*/
+    }
+
+    public void storePartitions() throws Exception {
+
+        for (Iterator i=partitionManager.getPartitionConfigs().iterator(); i.hasNext(); ) {
+            PartitionConfig partitionConfig = (PartitionConfig)i.next();
+
+            partitionManager.store(partitionConfig);
         }
     }
 
@@ -227,7 +238,7 @@ public class Penrose {
         handler.setEngine(engine);
         handler.setRootDn(penroseConfig.getRootDn());
         handler.setRootPassword(penroseConfig.getRootPassword());
-        handler.setConfigManager(partitionManager);
+        handler.setPartitionManager(partitionManager);
 
         handler.init();
     }

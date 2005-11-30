@@ -148,7 +148,7 @@ public class Engine {
             //log.debug(" - graph: "+graph);
         }
 
-        Partition partition = partitionManager.getConfig(entryMapping);
+        Partition partition = partitionManager.getPartition(entryMapping);
         Collection children = partition.getChildren(entryMapping);
         if (children != null) {
             for (Iterator i=children.iterator(); i.hasNext(); ) {
@@ -245,7 +245,7 @@ public class Engine {
 
         Graph graph = new Graph();
 
-        Partition partition = partitionManager.getConfig(entryMapping);
+        Partition partition = partitionManager.getPartition(entryMapping);
         Collection sources = partition.getEffectiveSources(entryMapping);
         //if (sources.size() == 0) return null;
 
@@ -354,7 +354,7 @@ public class Engine {
         }
 
         Collection sources = entryMapping.getSourceMappings();
-        Partition partition = partitionManager.getConfig(entryMapping);
+        Partition partition = partitionManager.getPartition(entryMapping);
 
         for (Iterator i=sources.iterator(); i.hasNext(); ) {
             SourceMapping source = (SourceMapping)i.next();
@@ -456,7 +456,7 @@ public class Engine {
     }
 
     public String getParentSourceValues(Collection path, EntryMapping entryMapping, AttributeValues parentSourceValues) throws Exception {
-        Partition partition = partitionManager.getConfig(entryMapping);
+        Partition partition = partitionManager.getPartition(entryMapping);
         EntryMapping parentMapping = partition.getParent(entryMapping);
 
         String prefix = null;
@@ -512,7 +512,7 @@ public class Engine {
      * Check whether the entry uses no sources and all attributes are constants.
      */
     public boolean isStatic(EntryMapping entryMapping) throws Exception {
-        Partition partition = partitionManager.getConfig(entryMapping);
+        Partition partition = partitionManager.getPartition(entryMapping);
         Collection effectiveSources = partition.getEffectiveSources(entryMapping);
         if (effectiveSources.size() > 0) return false;
 
@@ -570,7 +570,7 @@ public class Engine {
         String sourceAlias = (String)rdnSources.iterator().next();
         SourceMapping sourceMapping = entryMapping.getSourceMapping(sourceAlias);
 
-        Partition partition = partitionManager.getConfig(entryMapping);
+        Partition partition = partitionManager.getPartition(entryMapping);
         ConnectionConfig connectionConfig = partition.getConnectionConfig(sourceMapping.getConnectionName());
         SourceDefinition sourceDefinition = connectionConfig.getSourceDefinition(sourceMapping.getSourceName());
 
@@ -716,7 +716,7 @@ public class Engine {
 
         log.debug("Searching the starting sourceMapping for "+entryMapping.getDn());
 
-        Partition partition = partitionManager.getConfig(entryMapping);
+        Partition partition = partitionManager.getPartition(entryMapping);
 
         Collection relationships = entryMapping.getRelationships();
         for (Iterator i=relationships.iterator(); i.hasNext(); ) {
@@ -752,7 +752,7 @@ public class Engine {
 
         // log.debug("Searching the connecting relationship for "+entryMapping;
 
-        Partition partition = partitionManager.getConfig(entryMapping);
+        Partition partition = partitionManager.getPartition(entryMapping);
 
         Collection relationships = partition.getEffectiveRelationships(entryMapping);
 
@@ -845,7 +845,7 @@ public class Engine {
             return new Row();
         }
 
-        Partition partition = partitionManager.getConfig(entryMapping);
+        Partition partition = partitionManager.getPartition(entryMapping);
         Collection fields = partition.getSearchableFields(sourceMapping);
 
         interpreter.set(rdn);
@@ -981,7 +981,7 @@ public class Engine {
 
     public Collection computeDns(Interpreter interpreter, EntryMapping entryMapping) throws Exception {
 
-        Partition partition = partitionManager.getConfig(entryMapping);
+        Partition partition = partitionManager.getPartition(entryMapping);
         EntryMapping parentMapping = partition.getParent(entryMapping);
 
         Collection parentDns;

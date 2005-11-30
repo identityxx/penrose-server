@@ -118,7 +118,7 @@ public class ModifyHandler {
         if (rc != LDAPException.SUCCESS) return rc;
 
         EntryMapping entryMapping = entry.getEntryMapping();
-        Partition partition = handler.getConfigManager().getConfig(entryMapping);
+        Partition partition = handler.getPartitionManager().getPartition(entryMapping);
         if (partition.isDynamic(entryMapping)) {
             return modifyVirtualEntry(session, entry, modifications);
 

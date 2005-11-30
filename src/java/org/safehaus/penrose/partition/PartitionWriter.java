@@ -36,24 +36,29 @@ import org.safehaus.penrose.module.ModuleMapping;
 import org.safehaus.penrose.acl.ACI;
 import org.safehaus.penrose.connector.ConnectionConfig;
 import org.safehaus.penrose.partition.Partition;
+import org.apache.log4j.Logger;
 
 /**
  * @author Endi S. Dewata
  */
 public class PartitionWriter {
 
-    private Partition partition;
+    Logger log = Logger.getLogger(getClass());
 
-	public PartitionWriter(Partition partition) {
-        this.partition = partition;
+    String directory;
+
+	public PartitionWriter(String directory) {
+        this.directory = directory;
 	}
 
-    public void storeMappingConfig(String filename) throws Exception {
-        File file = new File(filename);
-        storeMappingConfig(file);
+    public void write(Partition partition) throws Exception {
+        storeMappingConfig(partition, new File(directory, "mapping.xml"));
+        storeConnectionsConfig(partition, new File(directory, "connections.xml"));
+        storeSourcesConfig(partition, new File(directory, "sources.xml"));
+        storeModulesConfig(partition, new File(directory, "modules.xml"));
     }
 
-	public void storeMappingConfig(File file) throws Exception {
+	public void storeMappingConfig(Partition partition, File file) throws Exception {
 		FileWriter fw = new FileWriter(file);
 		OutputFormat format = OutputFormat.createPrettyPrint();
         format.setTrimText(false);
@@ -65,11 +70,11 @@ public class PartitionWriter {
 				"-//Penrose/Penrose Server Configuration DTD 1.0//EN",
 				"http://penrose.safehaus.org/dtd/penrose-mapping-config-1.0.dtd");
 				*/
-		writer.write(toMappingXmlElement());
+		writer.write(toMappingXmlElement(partition));
 		writer.close();
 	}
 
-    public void storeSourcesConfig(File file) throws Exception {
+    public void storeConnectionsConfig(Partition partition, File file) throws Exception {
 		FileWriter fw = new FileWriter(file);
 		OutputFormat format = OutputFormat.createPrettyPrint();
         format.setTrimText(false);
@@ -81,11 +86,11 @@ public class PartitionWriter {
 				"-//Penrose/Penrose Server Configuration DTD 1.0//EN",
 				"http://penrose.safehaus.org/dtd/penrose-mapping-config-1.0.dtd");
 				*/
-		writer.write(toSourcesXmlElement());
+		writer.write(toConnectionsXmlElement(partition));
 		writer.close();
     }
 
-    public void storeModulesConfig(File file) throws Exception {
+    public void storeSourcesConfig(Partition partition, File file) throws Exception {
 		FileWriter fw = new FileWriter(file);
 		OutputFormat format = OutputFormat.createPrettyPrint();
         format.setTrimText(false);
@@ -97,22 +102,50 @@ public class PartitionWriter {
 				"-//Penrose/Penrose Server Configuration DTD 1.0//EN",
 				"http://penrose.safehaus.org/dtd/penrose-mapping-config-1.0.dtd");
 				*/
-		writer.write(toModulesXmlElement());
+		writer.write(toSourcesXmlElement(partition));
 		writer.close();
     }
 
-	public Element toMappingXmlElement() {
+    public void storeModulesConfig(Partition partition, File file) throws Exception {
+		FileWriter fw = new FileWriter(file);
+		OutputFormat format = OutputFormat.createPrettyPrint();
+        format.setTrimText(false);
+
+		XMLWriter writer = new XMLWriter(fw, format);
+		writer.startDocument();
+		/*
+		writer.startDTD("mapping",
+				"-//Penrose/Penrose Server Configuration DTD 1.0//EN",
+				"http://penrose.safehaus.org/dtd/penrose-mapping-config-1.0.dtd");
+				*/
+		writer.write(toModulesXmlElement(partition));
+		writer.close();
+    }
+
+	public Element toMappingXmlElement(Partition partition) {
 		Element mappingElement = new DefaultElement("mapping");
 		// entries
 		for (Iterator iter = partition.getRootEntryMappings().iterator(); iter.hasNext();) {
 			EntryMapping entry = (EntryMapping)iter.next();
 
-            toElement(entry, mappingElement);
+            toElement(partition, entry, mappingElement);
 		}
 		return mappingElement;
 	}
-	
-	public Element toSourcesXmlElement() {
+
+    public Element toConnectionsXmlElement(Partition partition) {
+        Element sourcesElement = new DefaultElement("connections");
+
+        // connections
+        for (Iterator i = partition.getConnectionConfigs().iterator(); i.hasNext();) {
+            ConnectionConfig connection = (ConnectionConfig)i.next();
+            sourcesElement.add(toElement(connection));
+        }
+
+        return sourcesElement;
+    }
+
+	public Element toSourcesXmlElement(Partition partition) {
 		Element sourcesElement = new DefaultElement("sources");
 
         // connections
@@ -124,7 +157,7 @@ public class PartitionWriter {
 		return sourcesElement;
 	}
 
-	public Element toModulesXmlElement() {
+	public Element toModulesXmlElement(Partition partition) {
 		Element modulesElement = new DefaultElement("modules");
 		// module
 		for (Iterator iter = partition.getModuleConfigs().iterator(); iter.hasNext();) {
@@ -227,7 +260,7 @@ public class PartitionWriter {
     	return element;
     }
 
-	public Element toElement(EntryMapping entry, Element configElement) {
+	public Element toElement(Partition partition, EntryMapping entry, Element configElement) {
 
         Element entryElement = new DefaultElement("entry");
         entryElement.add(new DefaultAttribute("dn", entry.getDn()));
@@ -278,7 +311,7 @@ public class PartitionWriter {
         if (children != null) {
             for (Iterator i = children.iterator(); i.hasNext(); ) {
                 EntryMapping child = (EntryMapping)i.next();
-                toElement(child, configElement);
+                toElement(partition, child, configElement);
             }
         }
 
@@ -623,13 +656,5 @@ public class PartitionWriter {
     	element.add(value);
 
     	return element;
-    }
-
-    public Partition getConfig() {
-        return partition;
-    }
-
-    public void setConfig(Partition partition) {
-        this.partition = partition;
     }
 }

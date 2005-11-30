@@ -70,7 +70,7 @@ public class ModRdnHandler {
         if (rc != LDAPException.SUCCESS) return rc;
 
         EntryMapping entryMapping = entry.getEntryMapping();
-        Partition partition = handler.getConfigManager().getConfig(entryMapping);
+        Partition partition = handler.getPartitionManager().getPartition(entryMapping);
         if (partition.isDynamic(entryMapping)) {
             return modRdnVirtualEntry(session, entry, newRdn);
 
@@ -84,7 +84,7 @@ public class ModRdnHandler {
             String newRdn)
 			throws Exception {
 
-        Partition partition = handler.getConfigManager().getConfig(entry.getDn());
+        Partition partition = handler.getPartitionManager().getPartitionByDn(entry.getDn());
         partition.renameEntryMapping(entry, newRdn);
 
         return LDAPException.SUCCESS;

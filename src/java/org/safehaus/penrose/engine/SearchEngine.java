@@ -61,7 +61,7 @@ public class SearchEngine {
         boolean unique = engine.isUnique(entryMapping);
         log.debug("Entry "+entryMapping.getDn()+" "+(unique ? "is" : "is not")+" unique.");
 
-        Partition partition = engine.getPartitionManager().getConfig(entryMapping);
+        Partition partition = engine.getPartitionManager().getPartition(entryMapping);
 
         Collection sources = entryMapping.getSourceMappings();
         log.debug("Sources: "+sources);
@@ -138,7 +138,7 @@ public class SearchEngine {
 
         //boolean unique = engine.isUnique(entryMapping  //log.debug("Entry "+entryMapping" "+(unique ? "is" : "is not")+" unique.");
 
-        Partition partition = engine.getPartitionManager().getConfig(entryMapping);
+        Partition partition = engine.getPartitionManager().getPartition(entryMapping);
         EntryMapping parentMapping = partition.getParent(entryMapping);
 
         Interpreter interpreter = engine.getInterpreterFactory().newInstance();
@@ -368,7 +368,7 @@ public class SearchEngine {
             newFilter = FilterTool.appendAndFilter(newFilter, sourceFilter);
         }
 
-        Partition partition = engine.getPartitionManager().getConfig(entryMapping);
+        Partition partition = engine.getPartitionManager().getPartition(entryMapping);
         ConnectionConfig connectionConfig = partition.getConnectionConfig(sourceMapping.getConnectionName());
         SourceDefinition sourceDefinition = connectionConfig.getSourceDefinition(sourceMapping.getSourceName());
 
@@ -631,7 +631,7 @@ public class SearchEngine {
         }
 
         if (startingSources.isEmpty()) {
-            Partition partition = engine.getPartitionManager().getConfig(entryMapping);
+            Partition partition = engine.getPartitionManager().getPartition(entryMapping);
             EntryMapping parentMapping = partition.getParent(entryMapping);
 
             while (parentMapping != null) {

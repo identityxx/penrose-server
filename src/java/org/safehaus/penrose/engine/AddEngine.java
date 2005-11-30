@@ -84,7 +84,7 @@ public class AddEngine {
 
         sourceValues.add(parentSourceValues);
 
-        Partition partition = engine.getPartitionManager().getConfig(entryMapping);
+        Partition partition = engine.getPartitionManager().getPartition(entryMapping);
 
         Graph graph = engine.getGraph(entryMapping);
         String startingSourceName = engine.getStartingSourceName(entryMapping);

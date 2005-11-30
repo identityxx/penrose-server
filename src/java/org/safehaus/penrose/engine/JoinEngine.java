@@ -114,7 +114,7 @@ public class JoinEngine {
 
         if (relationships == null) return true;
 
-        Partition partition = engine.getPartitionManager().getConfig(entryMapping);
+        Partition partition = engine.getPartitionManager().getPartition(entryMapping);
 
         for (Iterator i=relationships.iterator(); i.hasNext(); ) {
             Relationship relationship = (Relationship)i.next();

@@ -314,7 +314,7 @@ public class Handler implements ModuleContext {
 
         Collection list = new ArrayList();
 
-        Partition partition = engine.getPartitionManager().getConfig(dn);
+        Partition partition = engine.getPartitionManager().getPartitionByDn(dn);
         if (partition == null) return list;
 
         for (Iterator i = partition.getModuleMappings().iterator(); i.hasNext(); ) {
@@ -352,11 +352,11 @@ public class Handler implements ModuleContext {
         this.rootPassword = rootPassword;
     }
 
-    public PartitionManager getConfigManager() {
+    public PartitionManager getPartitionManager() {
         return partitionManager;
     }
 
-    public void setConfigManager(PartitionManager partitionManager) {
+    public void setPartitionManager(PartitionManager partitionManager) {
         this.partitionManager = partitionManager;
     }
 

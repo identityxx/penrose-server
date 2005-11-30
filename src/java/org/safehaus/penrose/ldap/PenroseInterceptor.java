@@ -76,7 +76,7 @@ public class PenroseInterceptor extends BaseInterceptor {
             log.debug("===============================================================================");
             log.debug("add(\""+dn+"\") as "+principalDn);
 
-            Partition partition = partitionManager.getConfig(dn);
+            Partition partition = partitionManager.getPartitionByDn(dn);
             if (partition == null) {
                 log.debug(dn+" is a static entry");
                 next.add(upName, normName, attributes);
@@ -149,7 +149,7 @@ public class PenroseInterceptor extends BaseInterceptor {
             log.debug("===============================================================================");
             log.debug("compare(\""+dn+"\")");
 
-            Partition partition = partitionManager.getConfig(dn);
+            Partition partition = partitionManager.getPartitionByDn(dn);
             if (partition == null) {
                 log.debug(dn+" is a static entry");
                 return next.compare(name, attributeName, value);
@@ -196,7 +196,7 @@ public class PenroseInterceptor extends BaseInterceptor {
             log.debug("===============================================================================");
             log.debug("delete(\""+dn+"\")");
 
-            Partition partition = partitionManager.getConfig(dn);
+            Partition partition = partitionManager.getPartitionByDn(dn);
             if (partition == null) {
                 log.debug(dn+" is a static entry");
                 next.delete(name);
@@ -279,7 +279,7 @@ public class PenroseInterceptor extends BaseInterceptor {
             log.debug("list(\""+dn+"\")");
 
 
-            Partition partition = partitionManager.getConfig(dn);
+            Partition partition = partitionManager.getPartitionByDn(dn);
             if (partition == null) {
                 log.debug(dn+" is a static entry");
                 return next.list(name);
@@ -332,7 +332,7 @@ public class PenroseInterceptor extends BaseInterceptor {
         try {
             String dn = name.toString();
 
-            Partition partition = partitionManager.getConfig(dn);
+            Partition partition = partitionManager.getPartitionByDn(dn);
             if (partition == null) {
                 //log.debug(dn+" is a static entry");
                 return next.hasEntry(name);
@@ -391,7 +391,7 @@ public class PenroseInterceptor extends BaseInterceptor {
             log.debug("===============================================================================");
             log.debug("lookup(\""+dn+"\", "+attrIds+")");
 
-            Partition partition = partitionManager.getConfig(dn);
+            Partition partition = partitionManager.getPartitionByDn(dn);
             if (partition == null) {
                 log.debug(dn+" is a static entry");
                 return next.lookup(name, attrIds);
@@ -468,7 +468,7 @@ public class PenroseInterceptor extends BaseInterceptor {
             log.debug("===============================================================================");
             log.debug("lookup(\""+dn+"\")");
 
-            Partition partition = partitionManager.getConfig(dn);
+            Partition partition = partitionManager.getPartitionByDn(dn);
             if (partition == null) {
                 log.debug(dn+" is a static entry");
                 return next.lookup(name);
@@ -598,7 +598,7 @@ public class PenroseInterceptor extends BaseInterceptor {
                 }
             }
 
-            Partition partition = partitionManager.getConfig(baseDn);
+            Partition partition = partitionManager.getPartitionByDn(baseDn);
             if (partition == null) {
                 log.debug(baseDn+" is a static entry");
                 return next.search(base, env, filter, searchControls);
@@ -658,7 +658,7 @@ public class PenroseInterceptor extends BaseInterceptor {
             log.debug("===============================================================================");
             log.debug("modify(\""+dn+"\")");
 
-            Partition partition = partitionManager.getConfig(dn);
+            Partition partition = partitionManager.getPartitionByDn(dn);
             if (partition == null) {
                 log.debug(dn+" is a static entry");
                 next.modify(name, modOp, attributes);
@@ -728,7 +728,7 @@ public class PenroseInterceptor extends BaseInterceptor {
             log.debug("===============================================================================");
             log.debug("modify(\""+dn+"\")");
 
-            Partition partition = partitionManager.getConfig(dn);
+            Partition partition = partitionManager.getPartitionByDn(dn);
             if (partition == null) {
                 log.debug(dn+" is a static entry");
                 next.modify(name, modificationItems);
@@ -801,8 +801,8 @@ public class PenroseInterceptor extends BaseInterceptor {
     public void modifyRn(
             NextInterceptor next,
             Name name,
-            String newRn,
-            boolean deleteOldRn
+            String newDn,
+            boolean deleteOldDn
             ) throws NamingException {
 
         Name principalDn = getPrincipal() == null ? null : getPrincipal().getJndiName();
@@ -811,26 +811,26 @@ public class PenroseInterceptor extends BaseInterceptor {
             String dn = name.toString();
 
             log.debug("===============================================================================");
-            log.debug("modifyRn(\""+dn+"\")");
+            log.debug("modifyDn(\""+dn+"\")");
 
-            Partition partition = partitionManager.getConfig(dn);
+            Partition partition = partitionManager.getPartitionByDn(dn);
             if (partition == null) {
                 log.debug(dn+" is a static entry");
-                next.modifyRn(name, newRn, deleteOldRn);
+                next.modifyRn(name, newDn, deleteOldDn);
                 return;
             }
 
             EntryMapping ed = partition.findEntryMapping(dn);
             if (ed == null) {
                 log.debug(dn+" is a static entry");
-                next.modifyRn(name, newRn, deleteOldRn);
+                next.modifyRn(name, newDn, deleteOldDn);
                 return;
             }
 
             PenroseSession session = penrose.newSession();
             session.setBindDn(principalDn.toString());
 
-            int rc = session.modrdn(dn.toString(), newRn);
+            int rc = session.modrdn(dn.toString(), newDn);
 
             session.close();
 

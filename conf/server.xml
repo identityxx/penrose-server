@@ -14,7 +14,6 @@
   <schema path="schema/nis.schema"/>
   <schema path="schema/system.schema"/>
   <schema path="schema/apachedns.schema"/>
-  <schema path="samples/schema/example.schema"/>
 
   <entry-cache/>
 
@@ -32,7 +31,7 @@
     <adapter-class>org.safehaus.penrose.connector.JNDIAdapter</adapter-class>
   </adapter>
 
-  <partition name="default" path="conf"/>
+  <partition name="DEFAULT" path="conf"/>
 
   <root>
     <root-dn>uid=admin,ou=system</root-dn>
