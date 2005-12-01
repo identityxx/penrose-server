@@ -21,8 +21,9 @@ import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.util.PasswordUtil;
 import org.safehaus.penrose.util.Formatter;
 import org.safehaus.penrose.partition.Partition;
+import org.safehaus.penrose.partition.FieldConfig;
+import org.safehaus.penrose.partition.SourceConfig;
 import org.safehaus.penrose.filter.Filter;
-import org.safehaus.penrose.connector.ConnectionConfig;
 import org.safehaus.penrose.connector.ConnectionManager;
 import org.safehaus.penrose.interpreter.Interpreter;
 
@@ -89,13 +90,12 @@ public class PersistentEntryCache extends EntryCache {
         for (Iterator i=sources.iterator(); i.hasNext(); ) {
             SourceMapping sourceMapping = (SourceMapping)i.next();
 
-            ConnectionConfig connectionConfig = partition.getConnectionConfig(sourceMapping.getConnectionName());
-            SourceDefinition sourceDefinition = connectionConfig.getSourceDefinition(sourceMapping.getSourceName());
+            SourceConfig sourceConfig = partition.getSourceConfig(sourceMapping.getSourceName());
 
-            Collection fields = sourceDefinition.getFieldDefinitions();
+            Collection fields = sourceConfig.getFieldConfigs();
             for (Iterator j=fields.iterator(); j.hasNext(); ) {
-                FieldDefinition fieldDefinition = (FieldDefinition)j.next();
-                createFieldTable(sourceMapping, fieldDefinition);
+                FieldConfig fieldConfig = (FieldConfig)j.next();
+                createFieldTable(sourceMapping, fieldConfig);
             }
         }
 
@@ -268,22 +268,22 @@ public class PersistentEntryCache extends EntryCache {
         return sb.toString();
     }
 
-    public String getColumnTypeDeclaration(FieldDefinition fieldDefinition) {
+    public String getColumnTypeDeclaration(FieldConfig fieldConfig) {
         StringBuffer sb = new StringBuffer();
-        sb.append(fieldDefinition.getType());
+        sb.append(fieldConfig.getType());
 
-        if ("VARCHAR".equals(fieldDefinition.getType()) && fieldDefinition.getLength() > 0) {
+        if ("VARCHAR".equals(fieldConfig.getType()) && fieldConfig.getLength() > 0) {
             sb.append("(");
-            sb.append(fieldDefinition.getLength());
+            sb.append(fieldConfig.getLength());
             sb.append(")");
         }
 
         return sb.toString();
     }
 
-    public void createFieldTable(SourceMapping sourceMapping, FieldDefinition fieldDefinition) throws Exception {
+    public void createFieldTable(SourceMapping sourceMapping, FieldConfig fieldConfig) throws Exception {
 
-        String tableName = "penrose_"+entryId+"_field_"+sourceMapping.getName()+"_"+fieldDefinition.getName();
+        String tableName = "penrose_"+entryId+"_field_"+sourceMapping.getName()+"_"+fieldConfig.getName();
 
         StringBuffer columns = new StringBuffer();
         StringBuffer primaryKeys = new StringBuffer();
@@ -302,7 +302,7 @@ public class PersistentEntryCache extends EntryCache {
         }
 
         columns.append(", value ");
-        columns.append(getColumnTypeDeclaration(fieldDefinition));
+        columns.append(getColumnTypeDeclaration(fieldConfig));
 
         primaryKeys.append(", value");
 
@@ -379,19 +379,18 @@ public class PersistentEntryCache extends EntryCache {
 
     public void dropEntrySourceTable(SourceMapping sourceMapping) throws Exception {
 
-        ConnectionConfig connectionConfig = partition.getConnectionConfig(sourceMapping.getConnectionName());
-        SourceDefinition sourceDefinition = connectionConfig.getSourceDefinition(sourceMapping.getSourceName());
+        SourceConfig sourceConfig = partition.getSourceConfig(sourceMapping.getSourceName());
 
-        Collection fields = sourceDefinition.getFieldDefinitions();
+        Collection fields = sourceConfig.getFieldConfigs();
         for (Iterator i=fields.iterator(); i.hasNext(); ) {
-            FieldDefinition fieldDefinition = (FieldDefinition)i.next();
-            dropFieldTable(sourceMapping, sourceDefinition, fieldDefinition);
+            FieldConfig fieldConfig = (FieldConfig)i.next();
+            dropFieldTable(sourceMapping, sourceConfig, fieldConfig);
         }
     }
 
-    public void dropFieldTable(SourceMapping sourceMapping, SourceDefinition sourceDefinition, FieldDefinition fieldDefinition) throws Exception {
+    public void dropFieldTable(SourceMapping sourceMapping, SourceConfig sourceConfig, FieldConfig fieldConfig) throws Exception {
 
-        String tableName = "penrose_"+entryId+"_field_"+sourceMapping.getName()+"_"+fieldDefinition.getName();
+        String tableName = "penrose_"+entryId+"_field_"+sourceMapping.getName()+"_"+fieldConfig.getName();
 
         String sql = "drop table "+tableName;
 
@@ -519,17 +518,16 @@ public class PersistentEntryCache extends EntryCache {
             for (Iterator i=sources.iterator(); i.hasNext(); ) {
                 SourceMapping sourceMapping = (SourceMapping)i.next();
 
-                ConnectionConfig connectionConfig = partition.getConnectionConfig(sourceMapping.getConnectionName());
-                SourceDefinition sourceDefinition = connectionConfig.getSourceDefinition(sourceMapping.getSourceName());
+                SourceConfig sourceConfig = partition.getSourceConfig(sourceMapping.getSourceName());
 
-                Collection fields = sourceDefinition.getFieldDefinitions();
+                Collection fields = sourceConfig.getFieldConfigs();
                 for (Iterator j=fields.iterator(); j.hasNext(); ) {
-                    FieldDefinition fieldDefinition = (FieldDefinition)j.next();
+                    FieldConfig fieldConfig = (FieldConfig)j.next();
 
-                    Collection values = getField(sourceMapping, fieldDefinition, rdn);
-                    log.debug(" - "+sourceMapping.getName()+"."+fieldDefinition.getName()+": "+values);
+                    Collection values = getField(sourceMapping, fieldConfig, rdn);
+                    log.debug(" - "+sourceMapping.getName()+"."+fieldConfig.getName()+": "+values);
 
-                    sourceValues.set(sourceMapping.getName()+"."+fieldDefinition.getName(), values);
+                    sourceValues.set(sourceMapping.getName()+"."+fieldConfig.getName(), values);
                 }
             }
 
@@ -639,21 +637,20 @@ public class PersistentEntryCache extends EntryCache {
         for (Iterator i=sources.iterator(); i.hasNext(); ) {
             SourceMapping sourceMapping = (SourceMapping)i.next();
 
-            ConnectionConfig connectionConfig = partition.getConnectionConfig(sourceMapping.getConnectionName());
-            SourceDefinition sourceDefinition = connectionConfig.getSourceDefinition(sourceMapping.getSourceName());
+            SourceConfig sourceConfig = partition.getSourceConfig(sourceMapping.getSourceName());
 
-            Collection fields = sourceDefinition.getFieldDefinitions();
+            Collection fields = sourceConfig.getFieldConfigs();
             for (Iterator j=fields.iterator(); j.hasNext(); ) {
-                FieldDefinition fieldDefinition = (FieldDefinition)j.next();
+                FieldConfig fieldConfig = (FieldConfig)j.next();
 
-                deleteField(sourceMapping, fieldDefinition, rdn);
+                deleteField(sourceMapping, fieldConfig, rdn);
 
-                Collection values = sourceValues.get(sourceMapping.getName()+"."+fieldDefinition.getName());
+                Collection values = sourceValues.get(sourceMapping.getName()+"."+fieldConfig.getName());
                 if (values == null) continue;
                 
                 for (Iterator k=values.iterator(); k.hasNext(); ) {
                     Object value = k.next();
-                    insertField(sourceMapping, fieldDefinition, rdn, value);
+                    insertField(sourceMapping, fieldConfig, rdn, value);
                 }
             }
         }
@@ -661,12 +658,12 @@ public class PersistentEntryCache extends EntryCache {
 
     public void insertField(
             SourceMapping sourceMapping,
-            FieldDefinition fieldDefinition,
+            FieldConfig fieldConfig,
             Row rdn,
             Object value
             ) throws Exception {
 
-        String tableName = "penrose_"+entryId+"_field_"+sourceMapping.getName()+"_"+fieldDefinition.getName();
+        String tableName = "penrose_"+entryId+"_field_"+sourceMapping.getName()+"_"+fieldConfig.getName();
 
         StringBuffer columns = new StringBuffer();
         Collection parameters = new ArrayList();
@@ -730,9 +727,9 @@ public class PersistentEntryCache extends EntryCache {
         }
     }
 
-    public Collection getField(SourceMapping sourceMapping, FieldDefinition fieldDefinition, Row rdn) throws Exception {
+    public Collection getField(SourceMapping sourceMapping, FieldConfig fieldConfig, Row rdn) throws Exception {
 
-        String tableName = "penrose_"+entryId+"_field_"+sourceMapping.getName()+"_"+fieldDefinition.getName();
+        String tableName = "penrose_"+entryId+"_field_"+sourceMapping.getName()+"_"+fieldConfig.getName();
 
         StringBuffer whereClause = new StringBuffer();
         Collection parameters = new ArrayList();
@@ -864,23 +861,22 @@ public class PersistentEntryCache extends EntryCache {
         for (Iterator i=sources.iterator(); i.hasNext(); ) {
             SourceMapping sourceMapping = (SourceMapping)i.next();
 
-            ConnectionConfig connectionConfig = partition.getConnectionConfig(sourceMapping.getConnectionName());
-            SourceDefinition sourceDefinition = connectionConfig.getSourceDefinition(sourceMapping.getSourceName());
+            SourceConfig sourceConfig = partition.getSourceConfig(sourceMapping.getSourceName());
 
-            Collection fields = sourceDefinition.getFieldDefinitions();
+            Collection fields = sourceConfig.getFieldConfigs();
             for (Iterator j=fields.iterator(); j.hasNext(); ) {
-                FieldDefinition fieldDefinition = (FieldDefinition)j.next();
-                deleteField(sourceMapping, fieldDefinition, rdn);
+                FieldConfig fieldConfig = (FieldConfig)j.next();
+                deleteField(sourceMapping, fieldConfig, rdn);
             }
         }
     }
 
     public void deleteField(
             SourceMapping sourceMapping,
-            FieldDefinition fieldDefinition,
+            FieldConfig fieldConfig,
             Row rdn) throws Exception {
 
-        String tableName = "penrose_"+entryId+"_field_"+sourceMapping.getName()+"_"+fieldDefinition.getName();
+        String tableName = "penrose_"+entryId+"_field_"+sourceMapping.getName()+"_"+fieldConfig.getName();
 
         StringBuffer whereClause = new StringBuffer();
         Collection parameters = new ArrayList();

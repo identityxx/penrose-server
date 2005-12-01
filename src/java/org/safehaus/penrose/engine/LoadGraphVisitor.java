@@ -26,7 +26,7 @@ import org.safehaus.penrose.filter.FilterTool;
 import org.safehaus.penrose.util.Formatter;
 import org.safehaus.penrose.session.PenroseSearchResults;
 import org.safehaus.penrose.partition.Partition;
-import org.safehaus.penrose.connector.ConnectionConfig;
+import org.safehaus.penrose.partition.SourceConfig;
 import org.apache.log4j.Logger;
 
 import java.util.*;
@@ -109,10 +109,9 @@ public class LoadGraphVisitor extends GraphVisitor {
 
         log.debug("Loading source "+sourceMapping.getName()+" with filter "+filter);
 
-        ConnectionConfig connectionConfig = partition.getConnectionConfig(sourceMapping.getConnectionName());
-        SourceDefinition sourceDefinition = connectionConfig.getSourceDefinition(sourceMapping.getSourceName());
+        SourceConfig sourceConfig = partition.getSourceConfig(sourceMapping.getSourceName());
 
-        PenroseSearchResults tmp = engine.getConnector().search(sourceDefinition, filter);
+        PenroseSearchResults tmp = engine.getConnector().search(sourceConfig, filter);
 
         Collection list = new ArrayList();
         for (Iterator i=tmp.iterator(); i.hasNext(); ) {

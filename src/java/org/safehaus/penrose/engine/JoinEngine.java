@@ -18,8 +18,9 @@
 package org.safehaus.penrose.engine;
 
 import org.safehaus.penrose.mapping.*;
-import org.safehaus.penrose.connector.ConnectionConfig;
 import org.safehaus.penrose.partition.Partition;
+import org.safehaus.penrose.partition.FieldConfig;
+import org.safehaus.penrose.partition.SourceConfig;
 import org.apache.log4j.Logger;
 
 import java.util.Collection;
@@ -126,18 +127,16 @@ public class JoinEngine {
             String lsourceName = lhs.substring(0, lindex);
             String lfieldName = lhs.substring(lindex+1);
             SourceMapping lsource = partition.getEffectiveSource(entryMapping, lsourceName);
-            ConnectionConfig lconnectionConfig = partition.getConnectionConfig(lsource.getConnectionName());
-            SourceDefinition lsourceDefinition = lconnectionConfig.getSourceDefinition(lsource.getSourceName());
-            FieldDefinition lfieldDefinition = lsourceDefinition.getFieldDefinition(lfieldName);
+            SourceConfig lsourceConfig = partition.getSourceConfig(lsource.getSourceName());
+            FieldConfig lfieldConfig = lsourceConfig.getFieldConfig(lfieldName);
 
             String rhs = relationship.getRhs();
             int rindex = rhs.indexOf(".");
             String rsourceName = rhs.substring(0, rindex);
             String rfieldName = rhs.substring(rindex+1);
             SourceMapping rsource = partition.getEffectiveSource(entryMapping, rsourceName);
-            ConnectionConfig rconnectionConfig = partition.getConnectionConfig(rsource.getConnectionName());
-            SourceDefinition rsourceDefinition = rconnectionConfig.getSourceDefinition(rsource.getSourceName());
-            FieldDefinition rfieldDefinition = rsourceDefinition.getFieldDefinition(rfieldName);
+            SourceConfig rsourceConfig = partition.getSourceConfig(rsource.getSourceName());
+            FieldConfig rfieldConfig = rsourceConfig.getFieldConfig(rfieldName);
 
             Collection values1 = sv1.get(lhs);
             Collection values2 = sv2.get(rhs);
@@ -152,10 +151,10 @@ public class JoinEngine {
             boolean result = false;
 
             for (Iterator j=values1.iterator(); !result && j.hasNext(); ) {
-                Object object1 = convert(j.next(), lfieldDefinition.getType());
+                Object object1 = convert(j.next(), lfieldConfig.getType());
 
                 for (Iterator k=values2.iterator(); !result && k.hasNext(); ) {
-                    Object object2 = convert(k.next(), rfieldDefinition.getType());
+                    Object object2 = convert(k.next(), rfieldConfig.getType());
 
                     if (compare(operator, object1, object2)) {
                         result = true;
@@ -167,8 +166,8 @@ public class JoinEngine {
             if (!result) return false;
 /*
             log.debug("Comparing "+relationship+":");
-            log.debug(" - "+lhs+": "+values1+" ("+lfieldDefinition.getType()+")");
-            log.debug(" - "+rhs+": "+values2+" ("+rfieldDefinition.getType()+")");
+            log.debug(" - "+lhs+": "+values1+" ("+lfieldConfig.getType()+")");
+            log.debug(" - "+rhs+": "+values2+" ("+rfieldConfig.getType()+")");
             log.debug("Result: "+result);
 */
         }

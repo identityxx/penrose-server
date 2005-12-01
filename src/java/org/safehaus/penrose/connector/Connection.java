@@ -4,6 +4,8 @@ import org.safehaus.penrose.connector.Adapter;
 import org.safehaus.penrose.session.PenroseSearchResults;
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.filter.Filter;
+import org.safehaus.penrose.partition.SourceConfig;
+import org.safehaus.penrose.partition.ConnectionConfig;
 
 import java.util.Collection;
 
@@ -50,38 +52,38 @@ public class Connection {
     }
 
     public String getConnectionName() {
-        return connectionConfig.getConnectionName();
+        return connectionConfig.getName();
     }
 
-    public int bind(SourceDefinition sourceDefinition, AttributeValues values, String password) throws Exception {
-        return adapter.bind(sourceDefinition, values, password);
+    public int bind(SourceConfig sourceConfig, AttributeValues values, String password) throws Exception {
+        return adapter.bind(sourceConfig, values, password);
     }
 
-    public PenroseSearchResults search(SourceDefinition sourceDefinition, Filter filter, long sizeLimit) throws Exception {
-        return adapter.search(sourceDefinition, filter, sizeLimit);
+    public PenroseSearchResults search(SourceConfig sourceConfig, Filter filter, long sizeLimit) throws Exception {
+        return adapter.search(sourceConfig, filter, sizeLimit);
     }
 
-    public PenroseSearchResults load(SourceDefinition sourceDefinition, Filter filter, long sizeLimit) throws Exception {
-        return adapter.load(sourceDefinition, filter, sizeLimit);
+    public PenroseSearchResults load(SourceConfig sourceConfig, Filter filter, long sizeLimit) throws Exception {
+        return adapter.load(sourceConfig, filter, sizeLimit);
     }
 
-    public int add(SourceDefinition sourceDefinition, AttributeValues values) throws Exception {
-        return adapter.add(sourceDefinition, values);
+    public int add(SourceConfig sourceConfig, AttributeValues values) throws Exception {
+        return adapter.add(sourceConfig, values);
     }
 
-    public int modify(SourceDefinition sourceDefinition, AttributeValues oldValues, AttributeValues newValues) throws Exception {
-        return adapter.modify(sourceDefinition, oldValues, newValues);
+    public int modify(SourceConfig sourceConfig, AttributeValues oldValues, AttributeValues newValues) throws Exception {
+        return adapter.modify(sourceConfig, oldValues, newValues);
     }
 
-    public int delete(SourceDefinition sourceDefinition, AttributeValues values) throws Exception {
-        return adapter.delete(sourceDefinition, values);
+    public int delete(SourceConfig sourceConfig, AttributeValues values) throws Exception {
+        return adapter.delete(sourceConfig, values);
     }
 
-    public int getLastChangeNumber(SourceDefinition sourceDefinition) throws Exception {
-        return adapter.getLastChangeNumber(sourceDefinition);
+    public int getLastChangeNumber(SourceConfig sourceConfig) throws Exception {
+        return adapter.getLastChangeNumber(sourceConfig);
     }
 
-    public PenroseSearchResults getChanges(SourceDefinition sourceDefinition, int lastChangeNumber) throws Exception {
-        return adapter.getChanges(sourceDefinition, lastChangeNumber);
+    public PenroseSearchResults getChanges(SourceConfig sourceConfig, int lastChangeNumber) throws Exception {
+        return adapter.getChanges(sourceConfig, lastChangeNumber);
     }
 }

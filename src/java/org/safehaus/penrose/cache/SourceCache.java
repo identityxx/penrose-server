@@ -21,8 +21,9 @@ import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.connector.Connector;
 import org.safehaus.penrose.connector.Connection;
-import org.safehaus.penrose.connector.ConnectionConfig;
 import org.safehaus.penrose.partition.Partition;
+import org.safehaus.penrose.partition.SourceConfig;
+import org.safehaus.penrose.partition.ConnectionConfig;
 import org.safehaus.penrose.session.PenroseSearchResults;
 
 import java.util.*;
@@ -33,27 +34,27 @@ import java.util.*;
 public abstract class SourceCache extends Cache {
 
     Connector connector;
-    SourceDefinition sourceDefinition;
+    SourceConfig sourceConfig;
 
     public abstract int getLastChangeNumber() throws Exception;
     public abstract void setLastChangeNumber(int lastChangeNumber) throws Exception;
     public abstract Map load(Collection filters, Collection missingKeys) throws Exception;
 
-    public SourceDefinition getSourceDefinition() {
-        return sourceDefinition;
+    public SourceConfig getSourceDefinition() {
+        return sourceConfig;
     }
 
-    public void setSourceDefinition(SourceDefinition sourceDefinition) {
-        this.sourceDefinition = sourceDefinition;
+    public void setSourceDefinition(SourceConfig sourceConfig) {
+        this.sourceConfig = sourceConfig;
     }
 
     public void init() throws Exception {
         super.init();
 
-        String s = sourceDefinition.getParameter(SourceDefinition.DATA_CACHE_SIZE);
+        String s = sourceConfig.getParameter(SourceConfig.DATA_CACHE_SIZE);
         if (s != null) size = Integer.parseInt(s);
 
-        s = sourceDefinition.getParameter(SourceDefinition.DATA_CACHE_EXPIRATION);
+        s = sourceConfig.getParameter(SourceConfig.DATA_CACHE_EXPIRATION);
         if (s != null) expiration = Integer.parseInt(s);
     }
 
@@ -85,27 +86,27 @@ public abstract class SourceCache extends Cache {
     }
 
     public void load() throws Exception {
-        String s = sourceDefinition.getParameter(SourceDefinition.AUTO_REFRESH);
-        boolean autoRefresh = s == null ? SourceDefinition.DEFAULT_AUTO_REFRESH : new Boolean(s).booleanValue();
+        String s = sourceConfig.getParameter(SourceConfig.AUTO_REFRESH);
+        boolean autoRefresh = s == null ? SourceConfig.DEFAULT_AUTO_REFRESH : new Boolean(s).booleanValue();
 
         if (!autoRefresh) return;
 
-        Partition partition = connector.getPartitionManager().getPartition(sourceDefinition);
-        ConnectionConfig conCfg = partition.getConnectionConfig(sourceDefinition.getConnectionName());
-        Connection connection = connector.getConnection(conCfg.getConnectionName());
+        Partition partition = connector.getPartitionManager().getPartition(sourceConfig);
+        ConnectionConfig conCfg = partition.getConnectionConfig(sourceConfig.getConnectionName());
+        Connection connection = connector.getConnection(conCfg.getName());
 
-        PenroseSearchResults sr = connection.load(sourceDefinition, null, 100);
+        PenroseSearchResults sr = connection.load(sourceConfig, null, 100);
 
         //log.debug("Results:");
         while (sr.hasNext()) {
             AttributeValues sourceValues = (AttributeValues)sr.next();
-            Row pk = sourceDefinition.getPrimaryKeyValues(sourceValues);
+            Row pk = sourceConfig.getPrimaryKeyValues(sourceValues);
             //log.debug(" - "+pk+": "+sourceValues);
 
             put(pk, sourceValues);
         }
 
-        int lastChangeNumber = connection.getLastChangeNumber(sourceDefinition);
+        int lastChangeNumber = connection.getLastChangeNumber(sourceConfig);
         setLastChangeNumber(lastChangeNumber);
     }
 }

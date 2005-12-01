@@ -19,8 +19,7 @@ package org.safehaus.penrose.connector;
 
 import org.safehaus.penrose.session.PenroseSearchResults;
 import org.safehaus.penrose.session.PenroseSearchResults;
-import org.safehaus.penrose.partition.Partition;
-import org.safehaus.penrose.partition.PartitionManager;
+import org.safehaus.penrose.partition.*;
 import org.safehaus.penrose.cache.CacheConfig;
 import org.safehaus.penrose.cache.SourceCache;
 import org.safehaus.penrose.engine.TransformEngine;
@@ -110,7 +109,7 @@ public class Connector {
         for (Iterator i = partition.getConnectionConfigs().iterator(); i.hasNext();) {
             ConnectionConfig connectionConfig = (ConnectionConfig)i.next();
 
-            String adapterName = connectionConfig.getConnectionType();
+            String adapterName = connectionConfig.getAdapterName();
             if (adapterName == null) throw new Exception("Missing adapter name");
 
             AdapterConfig adapterConfig = penroseConfig.getAdapterConfig(adapterName);
@@ -119,26 +118,24 @@ public class Connector {
             Connection connection = new Connection();
             connection.init(connectionConfig, adapterConfig);
 
-            connections.put(connectionConfig.getConnectionName(), connection);
+            connections.put(connectionConfig.getName(), connection);
+        }
 
-            Collection sourceDefinitions = connectionConfig.getSourceDefinitions();
-            for (Iterator k=sourceDefinitions.iterator(); k.hasNext(); ) {
-                SourceDefinition sourceDefinition = (SourceDefinition)k.next();
+        Collection sourceConfigs = partition.getSourceConfigs();
+        for (Iterator i=sourceConfigs.iterator(); i.hasNext(); ) {
+            SourceConfig sourceConfig = (SourceConfig)i.next();
 
-                String key = connectionConfig.getConnectionName()+"."+sourceDefinition.getName();
+            CacheConfig dataCacheConfig = penroseConfig.getSourceCacheConfig();
+            String dataCacheClass = dataCacheConfig.getCacheClass();
+            dataCacheClass = dataCacheClass == null ? ConnectorConfig.DEFAULT_CACHE_CLASS : dataCacheClass;
 
-                CacheConfig dataCacheConfig = penroseConfig.getSourceCacheConfig();
-                String dataCacheClass = dataCacheConfig.getCacheClass();
-                dataCacheClass = dataCacheClass == null ? ConnectorConfig.DEFAULT_CACHE_CLASS : dataCacheClass;
+            Class clazz = Class.forName(dataCacheClass);
+            SourceCache sourceCache = (SourceCache)clazz.newInstance();
+            sourceCache.setConnector(this);
+            sourceCache.setSourceDefinition(sourceConfig);
+            sourceCache.init(dataCacheConfig);
 
-                Class clazz = Class.forName(dataCacheClass);
-                SourceCache sourceCache = (SourceCache)clazz.newInstance();
-                sourceCache.setConnector(this);
-                sourceCache.setSourceDefinition(sourceDefinition);
-                sourceCache.init(dataCacheConfig);
-
-                caches.put(key, sourceCache);
-            }
+            caches.put(sourceConfig.getName(), sourceCache);
         }
     }
 
@@ -150,34 +147,29 @@ public class Connector {
 
         //log.debug("Refreshing cache ...");
 
-        Collection connectionConfigs = partition.getConnectionConfigs();
-        for (Iterator j=connectionConfigs.iterator(); j.hasNext(); ) {
-            ConnectionConfig connectionConfig = (ConnectionConfig)j.next();
+        Collection sourceDefinitions = partition.getSourceConfigs();
+        for (Iterator i=sourceDefinitions.iterator(); i.hasNext(); ) {
+            SourceConfig sourceConfig = (SourceConfig)i.next();
 
-            Collection sourceDefinitions = connectionConfig.getSourceDefinitions();
-            for (Iterator k=sourceDefinitions.iterator(); k.hasNext(); ) {
-                SourceDefinition sourceDefinition = (SourceDefinition)k.next();
+            String s = sourceConfig.getParameter(SourceConfig.AUTO_REFRESH);
+            boolean autoRefresh = s == null ? SourceConfig.DEFAULT_AUTO_REFRESH : new Boolean(s).booleanValue();
 
-                String s = sourceDefinition.getParameter(SourceDefinition.AUTO_REFRESH);
-                boolean autoRefresh = s == null ? SourceDefinition.DEFAULT_AUTO_REFRESH : new Boolean(s).booleanValue();
+            if (!autoRefresh) continue;
 
-                if (!autoRefresh) continue;
+            if (log.isDebugEnabled()) {
+                log.debug(Formatter.displaySeparator(80));
+                log.debug(Formatter.displayLine("Refreshing source caches for "+sourceConfig.getConnectionName()+"/"+sourceConfig.getName(), 80));
+                log.debug(Formatter.displaySeparator(80));
+            }
 
-                if (log.isDebugEnabled()) {
-                    log.debug(Formatter.displaySeparator(80));
-                    log.debug(Formatter.displayLine("Refreshing source caches for "+sourceDefinition.getConnectionName()+"/"+sourceDefinition.getName(), 80));
-                    log.debug(Formatter.displaySeparator(80));
-                }
+            s = sourceConfig.getParameter(SourceConfig.REFRESH_METHOD);
+            String refreshMethod = s == null ? SourceConfig.DEFAULT_REFRESH_METHOD : s;
 
-                s = sourceDefinition.getParameter(SourceDefinition.REFRESH_METHOD);
-                String refreshMethod = s == null ? SourceDefinition.DEFAULT_REFRESH_METHOD : s;
+            if (SourceConfig.POLL_CHANGES.equals(refreshMethod)) {
+                pollChanges(sourceConfig);
 
-                if (SourceDefinition.POLL_CHANGES.equals(refreshMethod)) {
-                    pollChanges(sourceDefinition);
-
-                } else { // if (SourceDefinition.RELOAD_EXPIRED.equals(refreshMethod)) {
-                    reloadExpired(sourceDefinition);
-                }
+            } else { // if (SourceConfig.RELOAD_EXPIRED.equals(refreshMethod)) {
+                reloadExpired(sourceConfig);
             }
         }
     }
@@ -202,12 +194,12 @@ public class Connector {
         return newRow;
     }
 
-    public void pollChanges(SourceDefinition sourceDefinition) throws Exception {
+    public void pollChanges(SourceConfig sourceConfig) throws Exception {
 
-        int lastChangeNumber = getCache(sourceDefinition).getLastChangeNumber();
+        int lastChangeNumber = getCache(sourceConfig).getLastChangeNumber();
 
-        Connection connection = getConnection(sourceDefinition.getConnectionName());
-        PenroseSearchResults sr = connection.getChanges(sourceDefinition, lastChangeNumber);
+        Connection connection = getConnection(sourceConfig.getConnectionName());
+        PenroseSearchResults sr = connection.getChanges(sourceConfig, lastChangeNumber);
         if (!sr.hasNext()) return;
 
         CacheConfig cacheConfig = penroseConfig.getSourceCacheConfig();
@@ -236,17 +228,17 @@ public class Connector {
                 pks.add(pk);
             }
 
-            getCache(sourceDefinition).remove(pk);
+            getCache(sourceConfig).remove(pk);
         }
 
-        getCache(sourceDefinition).setLastChangeNumber(lastChangeNumber);
+        getCache(sourceConfig).setLastChangeNumber(lastChangeNumber);
 
-        retrieve(sourceDefinition, pks);
+        retrieve(sourceConfig, pks);
     }
 
-    public void reloadExpired(SourceDefinition sourceDefinition) throws Exception {
+    public void reloadExpired(SourceConfig sourceConfig) throws Exception {
 
-        Map map = getCache(sourceDefinition).getExpired();
+        Map map = getCache(sourceConfig).getExpired();
 
         log.debug("Reloading expired caches...");
 
@@ -256,7 +248,7 @@ public class Connector {
             log.debug(" - "+pk+": "+av);
         }
 
-        retrieve(sourceDefinition, map.keySet());
+        retrieve(sourceConfig, map.keySet());
     }
 
     public void create() throws Exception {
@@ -287,8 +279,8 @@ public class Connector {
         }
     }
 
-    public synchronized MRSWLock getLock(SourceDefinition sourceDefinition) {
-		String name = sourceDefinition.getConnectionName() + "." + sourceDefinition.getName();
+    public synchronized MRSWLock getLock(SourceConfig sourceConfig) {
+		String name = sourceConfig.getConnectionName() + "." + sourceConfig.getName();
 
 		MRSWLock lock = (MRSWLock)locks.get(name);
 
@@ -298,17 +290,17 @@ public class Connector {
 		return lock;
 	}
 
-    public int bind(SourceDefinition sourceDefinition, EntryMapping entry, AttributeValues sourceValues, String password) throws Exception {
+    public int bind(SourceConfig sourceConfig, EntryMapping entry, AttributeValues sourceValues, String password) throws Exception {
 
         log.debug("----------------------------------------------------------------");
-        log.debug("Binding as entry in "+sourceDefinition.getName());
+        log.debug("Binding as entry in "+sourceConfig.getName());
 
-        MRSWLock lock = getLock(sourceDefinition);
+        MRSWLock lock = getLock(sourceConfig);
         lock.getReadLock(ConnectorConfig.DEFAULT_TIMEOUT);
 
         try {
-            Connection connection = getConnection(sourceDefinition.getConnectionName());
-            int rc = connection.bind(sourceDefinition, sourceValues, password);
+            Connection connection = getConnection(sourceConfig.getConnectionName());
+            int rc = connection.bind(sourceConfig, sourceValues, password);
 
             return rc;
 
@@ -317,17 +309,17 @@ public class Connector {
         }
     }
 
-    public int add(SourceDefinition sourceDefinition, AttributeValues sourceValues) throws Exception {
+    public int add(SourceConfig sourceConfig, AttributeValues sourceValues) throws Exception {
 
         log.debug("----------------------------------------------------------------");
-        log.debug("Adding entry into "+sourceDefinition.getName());
+        log.debug("Adding entry into "+sourceConfig.getName());
         log.debug("Values: "+sourceValues);
 
-        MRSWLock lock = getLock(sourceDefinition);
+        MRSWLock lock = getLock(sourceConfig);
         lock.getWriteLock(ConnectorConfig.DEFAULT_TIMEOUT);
 
         try {
-            Collection pks = TransformEngine.getPrimaryKeys(sourceDefinition, sourceValues);
+            Collection pks = TransformEngine.getPrimaryKeys(sourceConfig, sourceValues);
 
             // Add rows
             for (Iterator i = pks.iterator(); i.hasNext();) {
@@ -337,13 +329,13 @@ public class Connector {
                 log.debug("ADDING ROW: " + newEntry);
 
                 // Add row to source table in the source database/directory
-                Connection connection = getConnection(sourceDefinition.getConnectionName());
-                int rc = connection.add(sourceDefinition, newEntry);
+                Connection connection = getConnection(sourceConfig.getConnectionName());
+                int rc = connection.add(sourceConfig, newEntry);
                 if (rc != LDAPException.SUCCESS) return rc;
             }
 /*
             sourceValues.clear();
-            Collection list = retrieve(sourceDefinition, pks);
+            Collection list = retrieve(sourceConfig, pks);
             log.debug("Added rows:");
             for (Iterator i=list.iterator(); i.hasNext(); ) {
                 AttributeValues sv = (AttributeValues)i.next();
@@ -351,7 +343,7 @@ public class Connector {
                 log.debug(" - "+sv);
             }
 */
-            //getQueryCache(connectionConfig, sourceDefinition).invalidate();
+            //getQueryCache(connectionConfig, sourceConfig).invalidate();
 
         } finally {
         	lock.releaseWriteLock(ConnectorConfig.DEFAULT_TIMEOUT);
@@ -360,15 +352,15 @@ public class Connector {
         return LDAPException.SUCCESS;
     }
 
-    public int delete(SourceDefinition sourceDefinition, AttributeValues sourceValues) throws Exception {
+    public int delete(SourceConfig sourceConfig, AttributeValues sourceValues) throws Exception {
 
-        log.debug("Deleting entry in "+sourceDefinition.getName());
+        log.debug("Deleting entry in "+sourceConfig.getName());
 
-        MRSWLock lock = getLock(sourceDefinition);
+        MRSWLock lock = getLock(sourceConfig);
         lock.getWriteLock(ConnectorConfig.DEFAULT_TIMEOUT);
 
         try {
-            Collection pks = TransformEngine.getPrimaryKeys(sourceDefinition, sourceValues);
+            Collection pks = TransformEngine.getPrimaryKeys(sourceConfig, sourceValues);
 
             // Remove rows
             for (Iterator i = pks.iterator(); i.hasNext();) {
@@ -379,16 +371,16 @@ public class Connector {
                 log.debug("DELETE ROW: " + oldEntry);
 
                 // Delete row from source table in the source database/directory
-                Connection connection = getConnection(sourceDefinition.getConnectionName());
-                int rc = connection.delete(sourceDefinition, oldEntry);
+                Connection connection = getConnection(sourceConfig.getConnectionName());
+                int rc = connection.delete(sourceConfig, oldEntry);
                 if (rc != LDAPException.SUCCESS)
                     return rc;
 
                 // Delete row from source table in the cache
-                getCache(sourceDefinition).remove(key);
+                getCache(sourceConfig).remove(key);
             }
 
-            //getQueryCache(connectionConfig, sourceDefinition).invalidate();
+            //getQueryCache(connectionConfig, sourceConfig).invalidate();
 
         } finally {
             lock.releaseWriteLock(ConnectorConfig.DEFAULT_TIMEOUT);
@@ -398,18 +390,18 @@ public class Connector {
     }
 
     public int modify(
-            SourceDefinition sourceDefinition,
+            SourceConfig sourceConfig,
             AttributeValues oldSourceValues,
             AttributeValues newSourceValues) throws Exception {
 
-        log.debug("Modifying entry in " + sourceDefinition.getName());
+        log.debug("Modifying entry in " + sourceConfig.getName());
 
-        MRSWLock lock = getLock(sourceDefinition);
+        MRSWLock lock = getLock(sourceConfig);
         lock.getWriteLock(ConnectorConfig.DEFAULT_TIMEOUT);
 
         try {
-            Collection oldPKs = TransformEngine.getPrimaryKeys(sourceDefinition, oldSourceValues);
-            Collection newPKs = TransformEngine.getPrimaryKeys(sourceDefinition, newSourceValues);
+            Collection oldPKs = TransformEngine.getPrimaryKeys(sourceConfig, oldSourceValues);
+            Collection newPKs = TransformEngine.getPrimaryKeys(sourceConfig, newSourceValues);
 
             log.debug("Old PKs: " + oldPKs);
             log.debug("New PKs: " + newPKs);
@@ -437,13 +429,13 @@ public class Connector {
                 //log.debug("DELETE ROW: " + oldEntry);
 
                 // Delete row from source table in the source database/directory
-                Connection connection = getConnection(sourceDefinition.getConnectionName());
-                int rc = connection.delete(sourceDefinition, oldEntry);
+                Connection connection = getConnection(sourceConfig.getConnectionName());
+                int rc = connection.delete(sourceConfig, oldEntry);
                 if (rc != LDAPException.SUCCESS)
                     return rc;
 
                 // Delete row from source table in the cache
-                getCache(sourceDefinition).remove(key);
+                getCache(sourceConfig).remove(key);
             }
 
             // Add rows
@@ -454,8 +446,8 @@ public class Connector {
                 //log.debug("ADDING ROW: " + newEntry);
 
                 // Add row to source table in the source database/directory
-                Connection connection = getConnection(sourceDefinition.getConnectionName());
-                int rc = connection.add(sourceDefinition, newEntry);
+                Connection connection = getConnection(sourceConfig.getConnectionName());
+                int rc = connection.add(sourceConfig, newEntry);
                 if (rc != LDAPException.SUCCESS) return rc;
 
                 pks.add(pk);
@@ -472,24 +464,24 @@ public class Connector {
                 //log.debug("REPLACE ROW: " + oldEntry+" with "+newEntry);
 
                 // Modify row from source table in the source database/directory
-                Connection connection = getConnection(sourceDefinition.getConnectionName());
-                int rc = connection.modify(sourceDefinition, oldEntry, newEntry);
+                Connection connection = getConnection(sourceConfig.getConnectionName());
+                int rc = connection.modify(sourceConfig, oldEntry, newEntry);
                 if (rc != LDAPException.SUCCESS) return rc;
 
                 // Modify row from source table in the cache
-                getCache(sourceDefinition).remove(key);
+                getCache(sourceConfig).remove(key);
                 pks.add(pk);
             }
 
             newSourceValues.clear();
 
-            Collection list = retrieve(sourceDefinition, pks);
+            Collection list = retrieve(sourceConfig, pks);
             for (Iterator i=list.iterator(); i.hasNext(); ) {
                 AttributeValues sv = (AttributeValues)i.next();
                 newSourceValues.add(sv);
             }
 
-            //getQueryCache(connectionConfig, sourceDefinition).invalidate();
+            //getQueryCache(connectionConfig, sourceConfig).invalidate();
 
         } finally {
             lock.releaseWriteLock(ConnectorConfig.DEFAULT_TIMEOUT);
@@ -502,20 +494,20 @@ public class Connector {
      * Search the data sources.
      */
     public PenroseSearchResults search(
-            final SourceDefinition sourceDefinition,
+            final SourceConfig sourceConfig,
             final Filter filter)
             throws Exception {
 
-        String method = sourceDefinition.getParameter(SourceDefinition.LOADING_METHOD);
-        if (SourceDefinition.SEARCH_AND_LOAD.equals(method)) { // search for PKs first then load full record
+        String method = sourceConfig.getParameter(SourceConfig.LOADING_METHOD);
+        if (SourceConfig.SEARCH_AND_LOAD.equals(method)) { // search for PKs first then load full record
 
-            log.debug("Searching source "+sourceDefinition.getName()+" with filter "+filter);
-            return searchAndLoad(sourceDefinition, filter);
+            log.debug("Searching source "+sourceConfig.getName()+" with filter "+filter);
+            return searchAndLoad(sourceConfig, filter);
 
         } else { // load full record immediately
 
-            log.debug("Loading source "+sourceDefinition.getName()+" with filter "+filter);
-            return fullLoad(sourceDefinition, filter);
+            log.debug("Loading source "+sourceConfig.getName()+" with filter "+filter);
+            return fullLoad(sourceConfig, filter);
         }
     }
 
@@ -523,12 +515,12 @@ public class Connector {
      * Check query cache, peroform search, store results in query cache.
      */
     public PenroseSearchResults searchAndLoad(
-            SourceDefinition sourceDefinition,
+            SourceConfig sourceConfig,
             Filter filter)
             throws Exception {
 
         log.debug("Checking query cache for "+filter);
-        Collection results = getCache(sourceDefinition).search(filter);
+        Collection results = getCache(sourceConfig).search(filter);
 
         log.debug("Cached results: "+results);
         if (results != null) {
@@ -538,30 +530,30 @@ public class Connector {
             return sr;
         }
 
-        log.debug("Searching source "+sourceDefinition.getName()+" with filter "+filter);
-        Collection pks = performSearch(sourceDefinition, filter);
+        log.debug("Searching source "+sourceConfig.getName()+" with filter "+filter);
+        Collection pks = performSearch(sourceConfig, filter);
 
         log.debug("Storing query cache for "+filter);
-        getCache(sourceDefinition).put(filter, pks);
+        getCache(sourceConfig).put(filter, pks);
 
-        log.debug("Loading source "+sourceDefinition.getName()+" with pks "+pks);
-        return load(sourceDefinition, pks);
+        log.debug("Loading source "+sourceConfig.getName()+" with pks "+pks);
+        return load(sourceConfig, pks);
 
     }
 
     /**
      * Load then store in data cache.
      */
-    public PenroseSearchResults fullLoad(SourceDefinition sourceDefinition, Filter filter) throws Exception {
+    public PenroseSearchResults fullLoad(SourceConfig sourceConfig, Filter filter) throws Exception {
 
-        Collection pks = getCache(sourceDefinition).search(filter);
+        Collection pks = getCache(sourceConfig).search(filter);
 
         if (pks != null) {
-            return load(sourceDefinition, pks);
+            return load(sourceConfig, pks);
 
         } else {
-            return performLoad(sourceDefinition, filter);
-            //store(sourceDefinition, values);
+            return performLoad(sourceConfig, filter);
+            //store(sourceConfig, values);
         }
     }
 
@@ -569,7 +561,7 @@ public class Connector {
      * Check data cache then load.
      */
     public PenroseSearchResults load(
-            final SourceDefinition sourceDefinition,
+            final SourceConfig sourceConfig,
             final Collection pks)
             throws Exception {
 
@@ -592,13 +584,13 @@ public class Connector {
 
                     log.debug("Checking data cache for "+normalizedPks);
                     Collection missingPks = new ArrayList();
-                    Map loadedRows = getCache(sourceDefinition).load(normalizedPks, missingPks);
+                    Map loadedRows = getCache(sourceConfig).load(normalizedPks, missingPks);
 
                     log.debug("Cached values: "+loadedRows.keySet());
                     results.addAll(loadedRows.values());
 
                     log.debug("Loading missing keys: "+missingPks);
-                    Collection list = retrieve(sourceDefinition, missingPks);
+                    Collection list = retrieve(sourceConfig, missingPks);
                     results.addAll(list);
 
                 } catch (Exception e) {
@@ -615,54 +607,54 @@ public class Connector {
     /**
      * Load then store in data cache.
      */
-    public Collection retrieve(SourceDefinition sourceDefinition, Collection keys) throws Exception {
+    public Collection retrieve(SourceConfig sourceConfig, Collection keys) throws Exception {
 
         if (keys.isEmpty()) return new ArrayList();
 
         Filter filter = FilterTool.createFilter(keys);
 
-        PenroseSearchResults sr = performLoad(sourceDefinition, filter);
+        PenroseSearchResults sr = performLoad(sourceConfig, filter);
 
         Collection values = new ArrayList();
         values.addAll(sr.getAll());
 
-        //store(sourceDefinition, values);
+        //store(sourceConfig, values);
 
         return values;
     }
 
-    public Row store(SourceDefinition sourceDefinition, AttributeValues sourceValues) throws Exception {
-        Row pk = sourceDefinition.getPrimaryKeyValues(sourceValues);
+    public Row store(SourceConfig sourceConfig, AttributeValues sourceValues) throws Exception {
+        Row pk = sourceConfig.getPrimaryKeyValues(sourceValues);
         Row npk = normalize(pk);
 
         //log.debug("Storing connector cache: "+pk);
-        getCache(sourceDefinition).put(pk, sourceValues);
+        getCache(sourceConfig).put(pk, sourceValues);
 
         Filter f = FilterTool.createFilter(npk);
         Collection c = new TreeSet();
         c.add(npk);
 
         //log.debug("Storing query cache "+f+": "+c);
-        getCache(sourceDefinition).put(f, c);
+        getCache(sourceConfig).put(f, c);
 
         return npk;
     }
 
-    public void store(SourceDefinition sourceDefinition, Collection values) throws Exception {
+    public void store(SourceConfig sourceConfig, Collection values) throws Exception {
 
         Collection pks = new TreeSet();
 
-        Collection uniqueFieldDefinitions = sourceDefinition.getUniqueFieldDefinitions();
+        Collection uniqueFieldDefinitions = sourceConfig.getUniqueFieldConfigs();
         Collection uniqueKeys = new TreeSet();
 
         for (Iterator i=values.iterator(); i.hasNext(); ) {
             AttributeValues sourceValues = (AttributeValues)i.next();
-            Row npk = store(sourceDefinition, sourceValues);
+            Row npk = store(sourceConfig, sourceValues);
             pks.add(npk);
 
             for (Iterator j=uniqueFieldDefinitions.iterator(); j.hasNext(); ) {
-                FieldDefinition fieldDefinition = (FieldDefinition)j.next();
-                String fieldName = fieldDefinition.getName();
+                FieldConfig fieldConfig = (FieldConfig)j.next();
+                String fieldName = fieldConfig.getName();
 
                 Object value = sourceValues.getOne(fieldName);
 
@@ -676,30 +668,30 @@ public class Connector {
         if (!uniqueKeys.isEmpty()) {
             Filter f = FilterTool.createFilter(uniqueKeys);
             log.debug("Storing query cache "+f+": "+pks);
-            getCache(sourceDefinition).put(f, pks);
+            getCache(sourceConfig).put(f, pks);
         }
 
         if (pks.size() <= 10) {
             Filter filter = FilterTool.createFilter(pks);
             log.debug("Storing query cache "+filter+": "+pks);
-            getCache(sourceDefinition).put(filter, pks);
+            getCache(sourceConfig).put(filter, pks);
         }
     }
 
     /**
      * Perform the search operation.
      */
-    public Collection performSearch(SourceDefinition sourceDefinition, Filter filter) throws Exception {
+    public Collection performSearch(SourceConfig sourceConfig, Filter filter) throws Exception {
 
         Collection results = new ArrayList();
 
-        String s = sourceDefinition.getParameter(SourceDefinition.SIZE_LIMIT);
-        int sizeLimit = s == null ? SourceDefinition.DEFAULT_SIZE_LIMIT : Integer.parseInt(s);
+        String s = sourceConfig.getParameter(SourceConfig.SIZE_LIMIT);
+        int sizeLimit = s == null ? SourceConfig.DEFAULT_SIZE_LIMIT : Integer.parseInt(s);
 
-        Connection connection = getConnection(sourceDefinition.getConnectionName());
+        Connection connection = getConnection(sourceConfig.getConnectionName());
         PenroseSearchResults sr;
         try {
-            sr = connection.search(sourceDefinition, filter, sizeLimit);
+            sr = connection.search(sourceConfig, filter, sizeLimit);
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -718,23 +710,23 @@ public class Connector {
     /**
      * Perform the load operation.
      */
-    public PenroseSearchResults performLoad(final SourceDefinition sourceDefinition, final Filter filter) throws Exception {
+    public PenroseSearchResults performLoad(final SourceConfig sourceConfig, final Filter filter) throws Exception {
 
         final PenroseSearchResults results = new PenroseSearchResults();
 
         execute(new Runnable() {
             public void run() {
-                String s = sourceDefinition.getParameter(SourceDefinition.SIZE_LIMIT);
-                int sizeLimit = s == null ? SourceDefinition.DEFAULT_SIZE_LIMIT : Integer.parseInt(s);
+                String s = sourceConfig.getParameter(SourceConfig.SIZE_LIMIT);
+                int sizeLimit = s == null ? SourceConfig.DEFAULT_SIZE_LIMIT : Integer.parseInt(s);
 
-                Connection connection = getConnection(sourceDefinition.getConnectionName());
+                Connection connection = getConnection(sourceConfig.getConnectionName());
                 PenroseSearchResults sr;
                 try {
-                    sr = connection.load(sourceDefinition, filter, sizeLimit);
+                    sr = connection.load(sourceConfig, filter, sizeLimit);
 
                     for (Iterator i=sr.iterator(); i.hasNext();) {
                         AttributeValues sourceValues = (AttributeValues)i.next();
-                        store(sourceDefinition, sourceValues);
+                        store(sourceConfig, sourceValues);
                         results.add(sourceValues);
                     }
                 } catch (Exception e) {
@@ -756,13 +748,8 @@ public class Connector {
         this.connectorConfig = connectorConfig;
     }
 
-    public SourceCache getCache(SourceDefinition sourceDefinition) throws Exception {
-
-        Partition partition = partitionManager.getPartition(sourceDefinition);
-        ConnectionConfig connectionConfig = partition.getConnectionConfig(sourceDefinition.getConnectionName());
-
-        String key = connectionConfig.getConnectionName()+"."+sourceDefinition.getName();
-        return (SourceCache)caches.get(key);
+    public SourceCache getCache(SourceConfig sourceConfig) throws Exception {
+        return (SourceCache)caches.get(sourceConfig.getName());
     }
 
     public ConnectionManager getConnectionManager() {

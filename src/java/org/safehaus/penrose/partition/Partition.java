@@ -23,7 +23,6 @@ import org.apache.log4j.Logger;
 import org.safehaus.penrose.module.ModuleMapping;
 import org.safehaus.penrose.module.ModuleConfig;
 import org.safehaus.penrose.mapping.*;
-import org.safehaus.penrose.connector.ConnectionConfig;
 
 public class Partition {
 
@@ -33,12 +32,18 @@ public class Partition {
     private Collection rootEntryMappings = new ArrayList();
     private Map childrenMap = new TreeMap();
 
-    private Map connectionConfigs = new LinkedHashMap();
+    private Map connectionConfigs = new TreeMap();
+    private Map sourceConfigs = new TreeMap();
 
     private Map moduleConfigs = new LinkedHashMap();
     private Map moduleMappings = new LinkedHashMap();
 
     public Partition() {
+    }
+
+    public EntryMapping getEntryMapping(String dn) {
+        if (dn == null) return null;
+        return (EntryMapping)entryMappings.get(dn);
     }
 
 	public void addEntryMapping(EntryMapping entry) throws Exception {
@@ -67,40 +72,16 @@ public class Partition {
         if (parent == null) {
         	rootEntryMappings.add(entry);
         }
-/*
-        for (Iterator j=entry.getSourceMappings().iterator(); j.hasNext(); ) {
-            Source source = (Source)j.next();
-
-            String sourceName = source.getSourceName();
-            String connectionName = source.getConnectionName();
-
-            ConnectionConfig connection = getConnectionConfig(connectionName);
-            if (connection == null) throw new Exception("Connection "+connectionName+" undefined.");
-
-            SourceDefinition sourceDefinition = connection.getSourceDefinition(sourceName);
-            if (sourceDefinition == null) throw new Exception("Source "+sourceName+" undefined.");
-
-            Collection fieldConfigs = sourceDefinition.getFieldDefinitions();
-
-            for (Iterator k=fieldConfigs.iterator(); k.hasNext(); ) {
-                FieldDefinition fieldConfig = (FieldDefinition)k.next();
-                String fieldName = fieldConfig.getName();
-
-                // define any missing fields
-                Field field = (Field)source.getFieldMapping(fieldName);
-                if (field != null) continue;
-
-                field = new Field();
-                field.setName(fieldName);
-                source.addFieldMapping(field);
-            }
-        }
-*/
     }
 
     public void modifyEntryMapping(String dn, EntryMapping newEntry) {
         EntryMapping entry = getEntryMapping(dn);
         entry.copy(newEntry);
+    }
+
+    public EntryMapping removeEntryMapping(String dn) {
+        EntryMapping entryMapping = getEntryMapping(dn);
+        return removeEntryMapping(entryMapping);
     }
 
     public EntryMapping removeEntryMapping(EntryMapping entry) {
@@ -280,13 +261,8 @@ public class Partition {
         mapping.setModuleConfig(moduleConfig);
     }
 
-	/**
-	 * Add connection object to this configuration
-	 * 
-	 * @param connectionConfig
-	 */
-	public void addConnectionConfig(ConnectionConfig connectionConfig) throws Exception {
-		connectionConfigs.put(connectionConfig.getConnectionName(), connectionConfig);
+	public void addConnectionConfig(ConnectionConfig connectionConfig) {
+		connectionConfigs.put(connectionConfig.getName(), connectionConfig);
 	}
 	
 	public ConnectionConfig removeConnectionConfig(String connectionName) {
@@ -297,25 +273,38 @@ public class Partition {
         return (ConnectionConfig)connectionConfigs.get(name);
     }
 
-	/**
-	 * @return Returns the root.
-	 */
+    public void addSourceConfig(SourceConfig sourceConfig) {
+        sourceConfigs.put(sourceConfig.getName(), sourceConfig);
+    }
+
+    public SourceConfig removeSourceConfig(String name) {
+        return (SourceConfig)sourceConfigs.remove(name);
+    }
+
+    public SourceConfig getSourceConfig(String name) {
+        return (SourceConfig)sourceConfigs.get(name);
+    }
+
+    public Collection getSourceConfigs() {
+        return sourceConfigs.values();
+    }
+
+    public void renameSourceConfig(SourceConfig sourceConfig, String newName) {
+        if (sourceConfig == null) return;
+        if (sourceConfig.getName().equals(newName)) return;
+
+        sourceConfigs.remove(sourceConfig.getName());
+        sourceConfigs.put(newName, sourceConfig);
+    }
+
+    public void modifySourceConfig(String name, SourceConfig newSourceConfig) {
+        SourceConfig sourceConfig = (SourceConfig)sourceConfigs.get(name);
+        sourceConfig.copy(newSourceConfig);
+    }
+
 	public Collection getEntryMappings() {
 		return entryMappings.values();
 	}
-
-	/**
-	 * @param root
-	 *            The root to set.
-	 */
-	public void setEntryMappings(Map root) {
-		this.entryMappings = root;
-	}
-
-    public EntryMapping getEntryMapping(String dn) {
-        if (dn == null) return null;
-        return (EntryMapping)entryMappings.get(dn);
-    }
 
     public EntryMapping findEntryMapping(String dn) throws Exception {
 
@@ -387,81 +376,6 @@ public class Partition {
 	 */
 	public void setConnectionConfigs(Map connectionConfigs) {
 		this.connectionConfigs = connectionConfigs;
-	}
-
-	public String toString() {
-
-		String nl = System.getProperty("line.separator");
-		StringBuffer sb = new StringBuffer();
-		
-        sb.append(nl);
-        sb.append(nl);
-
-        sb.append("CONNECTIONS:");
-        sb.append(nl);
-        sb.append(nl);
-
-		for (Iterator i = connectionConfigs.keySet().iterator(); i.hasNext();) {
-			String connectionName = (String) i.next();
-			ConnectionConfig connection = (ConnectionConfig) connectionConfigs.get(connectionName);
-			sb.append(connectionName + " (" + connection.getConnectionType() + ")" + nl);
-			sb.append("Parameters:" + nl);
-			for (Iterator j = connection.getParameterNames().iterator(); j.hasNext();) {
-				String name = (String) j.next();
-				String value = connection.getParameter(name);
-				sb.append("- " + name + ": " + value + nl);
-			}
-			sb.append(nl);
-
-            for (Iterator j = connection.getSourceDefinitions().iterator(); j.hasNext();) {
-                SourceDefinition sourceConfig = (SourceDefinition)j.next();
-                sb.append("Source "+sourceConfig.getName()+nl);
-                for (Iterator k = sourceConfig.getFieldDefinitions().iterator(); k.hasNext(); ) {
-                    FieldDefinition field = (FieldDefinition)k.next();
-                    sb.append("- field: "+field.getName()+" "+(field.isPrimaryKey() ? "(primary key)" : "") + nl);
-                }
-                for (Iterator k = sourceConfig.getParameterNames().iterator(); k.hasNext(); ) {
-                    String name = (String)k.next();
-                    sb.append("- "+name+": "+sourceConfig.getParameter(name) + nl);
-                }
-                sb.append(nl);
-            }
-        }
-
-		sb.append("ENTRIES:");
-        sb.append(nl);
-        sb.append(nl);
-
-		for (Iterator i = rootEntryMappings.iterator(); i.hasNext();) {
-			EntryMapping entry = (EntryMapping)i.next();
-			sb.append(toString(entry));
-		}
-
-        sb.append("MODULES:");
-        sb.append(nl);
-        sb.append(nl);
-        for (Iterator i = moduleConfigs.values().iterator(); i.hasNext(); ) {
-            ModuleConfig moduleConfig = (ModuleConfig)i.next();
-            sb.append(moduleConfig.getModuleName()+" ("+moduleConfig.getModuleClass() + ")" + nl);
-            for (Iterator j = moduleConfig.getParameterNames().iterator(); j.hasNext(); ) {
-                String name = (String)j.next();
-                sb.append("- "+name+": "+moduleConfig.getParameter(name) + nl);
-            }
-            sb.append(nl);
-        }
-
-        sb.append("MODULE MAPPINGS:");
-        sb.append(nl);
-        sb.append(nl);
-        for (Iterator i = moduleMappings.values().iterator(); i.hasNext(); ) {
-            Collection c = (Collection)i.next();
-            for (Iterator j = c.iterator(); j.hasNext(); ) {
-                ModuleMapping moduleMapping = (ModuleMapping)j.next();
-                sb.append(moduleMapping.getModuleName()+" -> "+ moduleMapping.getBaseDn() + nl);
-            }
-        }
-
-		return sb.toString();
 	}
 
 	public String toString(EntryMapping entry) {
@@ -543,14 +457,13 @@ public class Partition {
     }
 
     public Collection getSearchableFields(SourceMapping sourceMapping) {
-        ConnectionConfig connectionConfig = getConnectionConfig(sourceMapping.getConnectionName());
-        SourceDefinition sourceDefinition = connectionConfig.getSourceDefinition(sourceMapping.getSourceName());
+        SourceConfig sourceConfig = getSourceConfig(sourceMapping.getSourceName());
 
         Collection results = new ArrayList();
         for (Iterator i=sourceMapping.getFieldMappings().iterator(); i.hasNext(); ) {
             FieldMapping fieldMapping = (FieldMapping)i.next();
-            FieldDefinition fieldDefinition = sourceDefinition.getFieldDefinition(fieldMapping.getName());
-            if (!fieldDefinition.isSearchable()) continue;
+            FieldConfig fieldConfig = sourceConfig.getFieldConfig(fieldMapping.getName());
+            if (!fieldConfig.isSearchable()) continue;
             results.add(fieldMapping);
         }
 

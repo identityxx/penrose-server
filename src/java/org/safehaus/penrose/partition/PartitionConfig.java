@@ -20,7 +20,7 @@ package org.safehaus.penrose.partition;
 /**
  * @author Endi S. Dewata
  */
-public class PartitionConfig {
+public class PartitionConfig implements Cloneable {
 
     private String name;
     private String path;
@@ -47,5 +47,39 @@ public class PartitionConfig {
 
     public void setPath(String path) {
         this.path = path;
+    }
+
+    public int hashCode() {
+        return (name == null ? 0 : name.hashCode()) +
+                (path == null ? 0 : path.hashCode());
+    }
+
+    boolean equals(Object o1, Object o2) {
+        if (o1 == null && o2 == null) return true;
+        if (o1 != null) return o1.equals(o2);
+        return o2.equals(o1);
+    }
+
+    public boolean equals(Object object) {
+        if (this == object) return true;
+        if((object == null) || (object.getClass() != this.getClass())) return false;
+
+        PartitionConfig partitionConfig = (PartitionConfig)object;
+        if (!equals(name, partitionConfig.name)) return false;
+        if (!equals(path, partitionConfig.path)) return false;
+
+        return true;
+    }
+
+    public void copy(PartitionConfig partitionConfig) {
+        name = partitionConfig.name;
+        path = partitionConfig.path;
+    }
+
+    public Object clone() {
+        PartitionConfig partitionConfig = new PartitionConfig();
+        partitionConfig.copy(this);
+
+        return partitionConfig;
     }
 }

@@ -20,20 +20,27 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 <!DOCTYPE digester-rules PUBLIC
   "-//Jakarta Apache //DTD digester-rules XML V1.0//EN"
   "digester-rules.dtd">
+
 -->
 <digester-rules>
 
 	<pattern value="sources">
 
-        <pattern value="connection">
+        <pattern value="source">
 
-            <object-create-rule classname="org.safehaus.penrose.connector.ConnectionConfig" />
-            <set-properties-rule>
-                <alias attr-name="name" prop-name="connectionName" />
-            </set-properties-rule>
+            <object-create-rule classname="org.safehaus.penrose.partition.SourceConfig" />
+            <set-properties-rule />
 
-            <call-method-rule pattern="adapter-name" methodname="setConnectionType" paramcount="0" />
+            <call-method-rule pattern="connection-name" methodname="setConnectionName" paramcount="0" />
             <call-method-rule pattern="description" methodname="setDescription" paramcount="0" />
+
+            <pattern value="field">
+
+                <object-create-rule classname="org.safehaus.penrose.partition.FieldConfig" />
+                <set-properties-rule />
+                <set-next-rule methodname="addFieldConfig" />
+
+            </pattern>
 
             <pattern value="parameter">
                 <call-method-rule methodname="setParameter" paramcount="2" />
@@ -41,32 +48,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
                 <call-param-rule pattern="param-value" paramnumber="1"/>
             </pattern>
 
-            <pattern value="source">
-
-                <object-create-rule classname="org.safehaus.penrose.mapping.SourceDefinition" />
-                <set-properties-rule />
-
-                <call-method-rule pattern="description" methodname="setDescription" paramcount="0" />
-
-                <pattern value="field">
-
-                    <object-create-rule classname="org.safehaus.penrose.mapping.FieldDefinition" />
-                    <set-properties-rule />
-                    <set-next-rule methodname="addFieldDefinition" />
-
-                </pattern>
-
-                <pattern value="parameter">
-                    <call-method-rule methodname="setParameter" paramcount="2" />
-                    <call-param-rule pattern="param-name" paramnumber="0"/>
-                    <call-param-rule pattern="param-value" paramnumber="1"/>
-                </pattern>
-
-                <set-next-rule methodname="addSourceDefinition" />
-
-            </pattern>
-
-            <set-next-rule methodname="addConnectionConfig" />
+            <set-next-rule methodname="addSourceConfig" />
 
         </pattern>
 

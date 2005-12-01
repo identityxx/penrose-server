@@ -17,7 +17,6 @@
  */
 package org.safehaus.penrose.connector;
 
-
 import javax.naming.directory.*;
 import javax.naming.directory.Attribute;
 import javax.naming.directory.Attributes;
@@ -30,6 +29,8 @@ import org.safehaus.penrose.util.Formatter;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.session.PenroseSearchResults;
+import org.safehaus.penrose.partition.FieldConfig;
+import org.safehaus.penrose.partition.SourceConfig;
 
 /**
  * @author Endi S. Dewata
@@ -81,19 +82,19 @@ public class JNDIAdapter extends Adapter {
         //log.debug("Suffix: "+suffix);
     }
 
-    public PenroseSearchResults search(SourceDefinition sourceDefinition, Filter filter, long sizeLimit) throws Exception {
+    public PenroseSearchResults search(SourceConfig sourceConfig, Filter filter, long sizeLimit) throws Exception {
 
         PenroseSearchResults results = new PenroseSearchResults();
 
-        String ldapBase = sourceDefinition.getParameter(BASE_DN);
+        String ldapBase = sourceConfig.getParameter(BASE_DN);
         if ("".equals(ldapBase)) {
             ldapBase = suffix;
         } else {
             ldapBase = ldapBase+","+suffix;
         }
 
-        String ldapScope = sourceDefinition.getParameter(SCOPE);
-        String ldapFilter = sourceDefinition.getParameter(FILTER);
+        String ldapScope = sourceConfig.getParameter(SCOPE);
+        String ldapFilter = sourceConfig.getParameter(FILTER);
 
         if (filter != null) {
             ldapFilter = "(&"+ldapFilter+filter+")";
@@ -101,7 +102,7 @@ public class JNDIAdapter extends Adapter {
 
         if (log.isDebugEnabled()) {
             log.debug(Formatter.displaySeparator(80));
-            log.debug(Formatter.displayLine("JNDI Search "+sourceDefinition.getConnectionName()+"/"+sourceDefinition.getName(), 80));
+            log.debug(Formatter.displayLine("JNDI Search "+sourceConfig.getConnectionName()+"/"+sourceConfig.getName(), 80));
             log.debug(Formatter.displayLine(" - Base DN: "+ldapBase, 80));
             log.debug(Formatter.displayLine(" - Scope: "+ldapScope, 80));
             log.debug(Formatter.displayLine(" - Filter: "+ldapFilter, 80));
@@ -129,7 +130,7 @@ public class JNDIAdapter extends Adapter {
             javax.naming.directory.SearchResult sr = (javax.naming.directory.SearchResult)ne.next();
             log.debug(" - "+sr.getName()+","+ldapBase);
 
-            Row row = getPkValues(sourceDefinition, sr);
+            Row row = getPkValues(sourceConfig, sr);
             results.add(row);
         }
 
@@ -138,19 +139,19 @@ public class JNDIAdapter extends Adapter {
         return results;
     }
 
-    public PenroseSearchResults load(SourceDefinition sourceDefinition, Filter filter, long sizeLimit) throws Exception {
+    public PenroseSearchResults load(SourceConfig sourceConfig, Filter filter, long sizeLimit) throws Exception {
 
         PenroseSearchResults results = new PenroseSearchResults();
 
-        String ldapBase = sourceDefinition.getParameter(BASE_DN);
+        String ldapBase = sourceConfig.getParameter(BASE_DN);
         if ("".equals(ldapBase)) {
             ldapBase = suffix;
         } else {
             ldapBase = ldapBase+","+suffix;
         }
 
-        String ldapScope = sourceDefinition.getParameter(SCOPE);
-        String ldapFilter = sourceDefinition.getParameter(FILTER);
+        String ldapScope = sourceConfig.getParameter(SCOPE);
+        String ldapFilter = sourceConfig.getParameter(FILTER);
 
         if (filter != null) {
             ldapFilter = "(&"+ldapFilter+filter+")";
@@ -158,7 +159,7 @@ public class JNDIAdapter extends Adapter {
 
         if (log.isDebugEnabled()) {
             log.debug(Formatter.displaySeparator(80));
-            log.debug(Formatter.displayLine("JNDI Search "+sourceDefinition.getConnectionName()+"/"+sourceDefinition.getName(), 80));
+            log.debug(Formatter.displayLine("JNDI Search "+sourceConfig.getConnectionName()+"/"+sourceConfig.getName(), 80));
             log.debug(Formatter.displayLine(" - Base DN: "+ldapBase, 80));
             log.debug(Formatter.displayLine(" - Scope: "+ldapScope, 80));
             log.debug(Formatter.displayLine(" - Filter: "+ldapFilter, 80));
@@ -185,7 +186,7 @@ public class JNDIAdapter extends Adapter {
             javax.naming.directory.SearchResult sr = (javax.naming.directory.SearchResult)ne.next();
             log.debug(" - "+sr.getName()+","+ldapBase);
 
-            AttributeValues av = getValues(sourceDefinition, sr);
+            AttributeValues av = getValues(sourceConfig, sr);
             results.add(av);
         }
 
@@ -194,19 +195,19 @@ public class JNDIAdapter extends Adapter {
         return results;
     }
 
-    public Row getPkValues(SourceDefinition sourceDefinition, javax.naming.directory.SearchResult sr) throws Exception {
+    public Row getPkValues(SourceConfig sourceConfig, javax.naming.directory.SearchResult sr) throws Exception {
 
         Row row = new Row();
 
         Attributes attrs = sr.getAttributes();
-        Collection fields = sourceDefinition.getPrimaryKeyFieldDefinitions();
+        Collection fields = sourceConfig.getPrimaryKeyFieldConfigs();
         for (Iterator i=fields.iterator(); i.hasNext(); ) {
-            FieldDefinition fieldDefinition = (FieldDefinition)i.next();
+            FieldConfig fieldConfig = (FieldConfig)i.next();
 
-            String name = fieldDefinition.getName();
+            String name = fieldConfig.getName();
             if (name.equals("objectClass")) continue;
 
-            javax.naming.directory.Attribute attr = attrs.get(fieldDefinition.getOriginalName());
+            javax.naming.directory.Attribute attr = attrs.get(fieldConfig.getOriginalName());
             if (attr == null) continue;
 
             //boolean binary = false;
@@ -226,18 +227,18 @@ public class JNDIAdapter extends Adapter {
         return row;
     }
 
-    public AttributeValues getValues(SourceDefinition sourceDefinition, javax.naming.directory.SearchResult sr) throws Exception {
+    public AttributeValues getValues(SourceConfig sourceConfig, javax.naming.directory.SearchResult sr) throws Exception {
 
         AttributeValues av = new AttributeValues();
 
         Attributes attrs = sr.getAttributes();
-        Collection fields = sourceDefinition.getFieldDefinitions();
+        Collection fields = sourceConfig.getFieldConfigs();
         for (Iterator i=fields.iterator(); i.hasNext(); ) {
-            FieldDefinition fieldDefinition = (FieldDefinition)i.next();
-            String name = fieldDefinition.getName();
+            FieldConfig fieldConfig = (FieldConfig)i.next();
+            String name = fieldConfig.getName();
             if (name.equals("objectClass")) continue;
 
-            javax.naming.directory.Attribute attr = attrs.get(fieldDefinition.getOriginalName());
+            javax.naming.directory.Attribute attr = attrs.get(fieldConfig.getOriginalName());
             if (attr == null) continue;
 
             //boolean binary = false;
@@ -257,9 +258,9 @@ public class JNDIAdapter extends Adapter {
         return av;
     }
 
-    public int bind(SourceDefinition sourceDefinition, AttributeValues sourceValues, String password) throws Exception {
+    public int bind(SourceConfig sourceConfig, AttributeValues sourceValues, String password) throws Exception {
 
-        String dn = getDn(sourceDefinition, sourceValues);
+        String dn = getDn(sourceConfig, sourceValues);
 
         if (log.isDebugEnabled()) {
             log.debug(Formatter.displaySeparator(80));
@@ -285,13 +286,13 @@ public class JNDIAdapter extends Adapter {
         return LDAPException.SUCCESS;
     }
 
-    public int add(SourceDefinition sourceDefinition, AttributeValues entry) throws Exception {
+    public int add(SourceConfig sourceConfig, AttributeValues entry) throws Exception {
 
-        String dn = getDn(sourceDefinition, entry);
+        String dn = getDn(sourceConfig, entry);
 
         if (log.isDebugEnabled()) {
             log.debug(Formatter.displaySeparator(80));
-            log.debug(Formatter.displayLine("JNDI Add "+sourceDefinition.getConnectionName()+"/"+sourceDefinition.getName(), 80));
+            log.debug(Formatter.displayLine("JNDI Add "+sourceConfig.getConnectionName()+"/"+sourceConfig.getName(), 80));
             log.debug(Formatter.displayLine(" - DN: "+dn, 80));
             log.debug(Formatter.displaySeparator(80));
         }
@@ -322,7 +323,7 @@ public class JNDIAdapter extends Adapter {
             DirContext ctx = new InitialDirContext(parameters);
             ctx.createSubcontext(dn, attrs);
         } catch (NameAlreadyBoundException e) {
-            return modifyAdd(sourceDefinition, entry);
+            return modifyAdd(sourceConfig, entry);
             //log.debug("Error: "+e.getMessage());
             //return LDAPException.ENTRY_ALREADY_EXISTS;
         }
@@ -330,24 +331,24 @@ public class JNDIAdapter extends Adapter {
         return LDAPException.SUCCESS;
     }
 
-    public int modifyDelete(SourceDefinition sourceDefinition, AttributeValues entry) throws Exception {
+    public int modifyDelete(SourceConfig sourceConfig, AttributeValues entry) throws Exception {
 
         log.debug("JNDI Modify Delete:");
 
-        String dn = getDn(sourceDefinition, entry);
+        String dn = getDn(sourceConfig, entry);
         log.debug("Deleting attributes in "+dn);
 
         List list = new ArrayList();
-        Collection fields = sourceDefinition.getFieldDefinitions();
+        Collection fields = sourceConfig.getFieldConfigs();
 
         for (Iterator i=entry.getNames().iterator(); i.hasNext(); ) {
             String name = (String)i.next();
 
             boolean primaryKey = false;
             for (Iterator j=fields.iterator(); j.hasNext(); ) {
-                FieldDefinition fieldDefinition = (FieldDefinition)j.next();
-                if (!fieldDefinition.isPrimaryKey()) continue;
-                if (!fieldDefinition.getName().equals(name)) continue;
+                FieldConfig fieldConfig = (FieldConfig)j.next();
+                if (!fieldConfig.isPrimaryKey()) continue;
+                if (!fieldConfig.getName().equals(name)) continue;
                 primaryKey = true;
                 break;
             }
@@ -372,13 +373,13 @@ public class JNDIAdapter extends Adapter {
         return LDAPException.SUCCESS;
     }
 
-    public int delete(SourceDefinition sourceDefinition, AttributeValues entry) throws Exception {
+    public int delete(SourceConfig sourceConfig, AttributeValues entry) throws Exception {
 
-        String dn = getDn(sourceDefinition, entry);
+        String dn = getDn(sourceConfig, entry);
 
         if (log.isDebugEnabled()) {
             log.debug(Formatter.displaySeparator(80));
-            log.debug(Formatter.displayLine("JNDI Delete "+sourceDefinition.getConnectionName()+"/"+sourceDefinition.getName(), 80));
+            log.debug(Formatter.displayLine("JNDI Delete "+sourceConfig.getConnectionName()+"/"+sourceConfig.getName(), 80));
             log.debug(Formatter.displayLine(" - DN: "+dn, 80));
             log.debug(Formatter.displaySeparator(80));
         }
@@ -394,19 +395,19 @@ public class JNDIAdapter extends Adapter {
         return LDAPException.SUCCESS;
     }
 
-    public int modify(SourceDefinition sourceDefinition, AttributeValues oldEntry, AttributeValues newEntry) throws Exception {
+    public int modify(SourceConfig sourceConfig, AttributeValues oldEntry, AttributeValues newEntry) throws Exception {
 
-        String dn = getDn(sourceDefinition, newEntry);
+        String dn = getDn(sourceConfig, newEntry);
 
         if (log.isDebugEnabled()) {
             log.debug(Formatter.displaySeparator(80));
-            log.debug(Formatter.displayLine("JNDI Modify "+sourceDefinition.getConnectionName()+"/"+sourceDefinition.getName(), 80));
+            log.debug(Formatter.displayLine("JNDI Modify "+sourceConfig.getConnectionName()+"/"+sourceConfig.getName(), 80));
             log.debug(Formatter.displayLine(" - DN: "+dn, 80));
             log.debug(Formatter.displaySeparator(80));
         }
 
         List list = new ArrayList();
-        Collection fields = sourceDefinition.getFieldDefinitions();
+        Collection fields = sourceConfig.getFieldConfigs();
 
         Set addAttributes = new HashSet(newEntry.getNames());
         addAttributes.removeAll(oldEntry.getNames());
@@ -426,9 +427,9 @@ public class JNDIAdapter extends Adapter {
 
             boolean primaryKey = false;
             for (Iterator j=fields.iterator(); j.hasNext(); ) {
-                FieldDefinition fieldDefinition = (FieldDefinition)j.next();
-                if (!fieldDefinition.isPrimaryKey()) continue;
-                if (!fieldDefinition.getName().equals(name)) continue;
+                FieldConfig fieldConfig = (FieldConfig)j.next();
+                if (!fieldConfig.isPrimaryKey()) continue;
+                if (!fieldConfig.getName().equals(name)) continue;
                 primaryKey = true;
                 break;
             }
@@ -459,9 +460,9 @@ public class JNDIAdapter extends Adapter {
 
             boolean primaryKey = false;
             for (Iterator j=fields.iterator(); j.hasNext(); ) {
-                FieldDefinition fieldDefinition = (FieldDefinition)j.next();
-                if (!fieldDefinition.isPrimaryKey()) continue;
-                if (!fieldDefinition.getName().equals(name)) continue;
+                FieldConfig fieldConfig = (FieldConfig)j.next();
+                if (!fieldConfig.isPrimaryKey()) continue;
+                if (!fieldConfig.getName().equals(name)) continue;
                 primaryKey = true;
                 break;
             }
@@ -486,9 +487,9 @@ public class JNDIAdapter extends Adapter {
 
             boolean primaryKey = false;
             for (Iterator j=fields.iterator(); j.hasNext(); ) {
-                FieldDefinition fieldDefinition = (FieldDefinition)j.next();
-                if (!fieldDefinition.isPrimaryKey()) continue;
-                if (!fieldDefinition.getName().equals(name)) continue;
+                FieldConfig fieldConfig = (FieldConfig)j.next();
+                if (!fieldConfig.isPrimaryKey()) continue;
+                if (!fieldConfig.getName().equals(name)) continue;
                 primaryKey = true;
                 break;
             }
@@ -520,14 +521,14 @@ public class JNDIAdapter extends Adapter {
         return LDAPException.SUCCESS;
     }
 
-    public int modrdn(SourceDefinition sourceDefinition, Row oldEntry, Row newEntry) throws Exception {
+    public int modrdn(SourceConfig sourceConfig, Row oldEntry, Row newEntry) throws Exception {
 
-        String dn = getDn(sourceDefinition, oldEntry);
+        String dn = getDn(sourceConfig, oldEntry);
         String newRdn = newEntry.toString();
 
         if (log.isDebugEnabled()) {
             log.debug(Formatter.displaySeparator(80));
-            log.debug(Formatter.displayLine("JNDI ModRDN "+sourceDefinition.getConnectionName()+"/"+sourceDefinition.getName(), 80));
+            log.debug(Formatter.displayLine("JNDI ModRDN "+sourceConfig.getConnectionName()+"/"+sourceConfig.getName(), 80));
             log.debug(Formatter.displayLine(" - DN: "+dn, 80));
             log.debug(Formatter.displayLine(" - New RDN: "+newRdn, 80));
             log.debug(Formatter.displaySeparator(80));
@@ -539,13 +540,13 @@ public class JNDIAdapter extends Adapter {
         return LDAPException.SUCCESS;
     }
 
-    public int modifyAdd(SourceDefinition sourceDefinition, AttributeValues entry) throws Exception {
+    public int modifyAdd(SourceConfig sourceConfig, AttributeValues entry) throws Exception {
         log.debug("JNDI Modify Add:");
 
-        String dn = getDn(sourceDefinition, entry);
+        String dn = getDn(sourceConfig, entry);
         log.debug("Replacing attributes "+dn);
 
-        Collection fields = sourceDefinition.getFieldDefinitions();
+        Collection fields = sourceConfig.getFieldConfigs();
         List list = new ArrayList();
 
         for (Iterator i=entry.getNames().iterator(); i.hasNext(); ) {
@@ -555,9 +556,9 @@ public class JNDIAdapter extends Adapter {
 
             boolean primaryKey = false;
             for (Iterator j=fields.iterator(); j.hasNext(); ) {
-                FieldDefinition fieldDefinition = (FieldDefinition)j.next();
-                if (!fieldDefinition.isPrimaryKey()) continue;
-                if (!fieldDefinition.getName().equals(name)) continue;
+                FieldConfig fieldConfig = (FieldConfig)j.next();
+                if (!fieldConfig.isPrimaryKey()) continue;
+                if (!fieldConfig.getName().equals(name)) continue;
                 primaryKey = true;
                 break;
             }
@@ -586,12 +587,12 @@ public class JNDIAdapter extends Adapter {
         return LDAPException.SUCCESS;
     }
 
-    public String getDn(SourceDefinition sourceDefinition, AttributeValues sourceValues) throws Exception {
+    public String getDn(SourceConfig sourceConfig, AttributeValues sourceValues) throws Exception {
         //log.debug("Computing DN for "+source.getName()+" with "+sourceValues);
 
-        Row pk = sourceDefinition.getPrimaryKeyValues(sourceValues);
+        Row pk = sourceConfig.getPrimaryKeyValues(sourceValues);
 
-        String baseDn = sourceDefinition.getParameter(BASE_DN);
+        String baseDn = sourceConfig.getParameter(BASE_DN);
         //log.debug("Base DN: "+baseDn);
 
         String dn = append(pk.toString(), baseDn);
@@ -602,8 +603,8 @@ public class JNDIAdapter extends Adapter {
         return dn;
     }
 
-    public String getDn(SourceDefinition sourceDefinition, Row rdn) throws Exception {
-        String baseDn = sourceDefinition.getParameter(BASE_DN);
+    public String getDn(SourceConfig sourceConfig, Row rdn) throws Exception {
+        String baseDn = sourceConfig.getParameter(BASE_DN);
         //log.debug("Base DN: "+baseDn);
 
         String dn = append(rdn.toString(), baseDn);
@@ -625,11 +626,11 @@ public class JNDIAdapter extends Adapter {
         return sb.toString();
     }
 
-    public int getLastChangeNumber(SourceDefinition sourceDefinition) throws Exception {
+    public int getLastChangeNumber(SourceConfig sourceConfig) throws Exception {
         return 0;
     }
     
-    public PenroseSearchResults getChanges(SourceDefinition sourceDefinition, int lastChangeNumber) throws Exception {
+    public PenroseSearchResults getChanges(SourceConfig sourceConfig, int lastChangeNumber) throws Exception {
 
         PenroseSearchResults results = new PenroseSearchResults();
 
@@ -640,7 +641,7 @@ public class JNDIAdapter extends Adapter {
 
         if (log.isDebugEnabled()) {
             log.debug(Formatter.displaySeparator(80));
-            log.debug(Formatter.displayLine("JNDI Search "+sourceDefinition.getConnectionName()+"/"+sourceDefinition.getName(), 80));
+            log.debug(Formatter.displayLine("JNDI Search "+sourceConfig.getConnectionName()+"/"+sourceConfig.getName(), 80));
             log.debug(Formatter.displayLine(" - Base DN: "+ldapBase, 80));
             log.debug(Formatter.displayLine(" - Filter: "+ldapFilter, 80));
             log.debug(Formatter.displaySeparator(80));
@@ -658,7 +659,7 @@ public class JNDIAdapter extends Adapter {
             javax.naming.directory.SearchResult sr = (javax.naming.directory.SearchResult)ne.next();
             log.debug(" - "+sr.getName()+","+ldapBase);
 
-            Row row = getPkValues(sourceDefinition, sr);
+            Row row = getPkValues(sourceConfig, sr);
             results.add(row);
         }
 

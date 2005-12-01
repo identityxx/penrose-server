@@ -15,14 +15,18 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
-package org.safehaus.penrose.mapping;
+package org.safehaus.penrose.partition;
+
+import org.safehaus.penrose.partition.FieldConfig;
+import org.safehaus.penrose.mapping.Row;
+import org.safehaus.penrose.mapping.AttributeValues;
 
 import java.util.*;
 
 /**
  * @author Endi S. Dewata
  */
-public class SourceDefinition implements Cloneable {
+public class SourceConfig implements Cloneable {
 
     public final static String AUTO_REFRESH            = "autoRefresh";
 
@@ -71,16 +75,16 @@ public class SourceDefinition implements Cloneable {
     private String description;
 
 	/**
-	 * Fields. Each element is of type org.safehaus.penrose.mapping.FieldDefinition.
+	 * Fields. Each element is of type org.safehaus.penrose.partition.FieldConfig.
 	 */
-	private Map fields = new TreeMap();
+	private Map fieldConfigs = new TreeMap();
 
     /**
      * Parameters.
      */
     private Properties parameters = new Properties();
 
-	public SourceDefinition() {
+	public SourceConfig() {
 	}
 	
 	public String getName() {
@@ -91,95 +95,95 @@ public class SourceDefinition implements Cloneable {
 		this.name = name;
 	}
 
-    public FieldDefinition getFieldDefinition(String name) {
-        return (FieldDefinition)fields.get(name);
+    public FieldConfig getFieldConfig(String name) {
+        return (FieldConfig)fieldConfigs.get(name);
     }
 
     public Collection getPrimaryKeyNames() {
         Collection results = new TreeSet();
-        for (Iterator i=fields.values().iterator(); i.hasNext(); ) {
-            FieldDefinition fieldDefinition = (FieldDefinition)i.next();
-            if (!fieldDefinition.isPrimaryKey()) continue;
-            results.add(fieldDefinition.getName());
+        for (Iterator i=fieldConfigs.values().iterator(); i.hasNext(); ) {
+            FieldConfig fieldConfig = (FieldConfig)i.next();
+            if (!fieldConfig.isPrimaryKey()) continue;
+            results.add(fieldConfig.getName());
         }
         return results;
     }
 
     public Collection getOriginalPrimaryKeyNames() {
         Collection results = new TreeSet();
-        for (Iterator i=fields.values().iterator(); i.hasNext(); ) {
-            FieldDefinition fieldDefinition = (FieldDefinition)i.next();
-            if (!fieldDefinition.isPrimaryKey()) continue;
-            results.add(fieldDefinition.getOriginalName());
+        for (Iterator i=fieldConfigs.values().iterator(); i.hasNext(); ) {
+            FieldConfig fieldConfig = (FieldConfig)i.next();
+            if (!fieldConfig.isPrimaryKey()) continue;
+            results.add(fieldConfig.getOriginalName());
         }
         return results;
     }
 
-    public Collection getPrimaryKeyFieldDefinitions() {
+    public Collection getPrimaryKeyFieldConfigs() {
         Collection results = new ArrayList();
-        for (Iterator i=fields.values().iterator(); i.hasNext(); ) {
-            FieldDefinition fieldDefinition = (FieldDefinition)i.next();
-            if (!fieldDefinition.isPrimaryKey()) continue;
-            results.add(fieldDefinition);
+        for (Iterator i=fieldConfigs.values().iterator(); i.hasNext(); ) {
+            FieldConfig fieldConfig = (FieldConfig)i.next();
+            if (!fieldConfig.isPrimaryKey()) continue;
+            results.add(fieldConfig);
         }
         return results;
     }
 
-    public Collection getNonPrimaryKeyFieldDefinitions() {
+    public Collection getNonPrimaryKeyFieldConfigs() {
         Collection results = new ArrayList();
-        for (Iterator i=fields.values().iterator(); i.hasNext(); ) {
-            FieldDefinition fieldDefinition = (FieldDefinition)i.next();
-            if (fieldDefinition.isPrimaryKey()) continue;
-            results.add(fieldDefinition);
+        for (Iterator i=fieldConfigs.values().iterator(); i.hasNext(); ) {
+            FieldConfig fieldConfig = (FieldConfig)i.next();
+            if (fieldConfig.isPrimaryKey()) continue;
+            results.add(fieldConfig);
         }
         return results;
     }
 
-    public Collection getUniqueFieldDefinitions() {
+    public Collection getUniqueFieldConfigs() {
         Collection results = new ArrayList();
-        for (Iterator i=fields.values().iterator(); i.hasNext(); ) {
-            FieldDefinition fieldDefinition = (FieldDefinition)i.next();
-            if (!fieldDefinition.isUnique()) continue;
-            results.add(fieldDefinition);
+        for (Iterator i=fieldConfigs.values().iterator(); i.hasNext(); ) {
+            FieldConfig fieldConfig = (FieldConfig)i.next();
+            if (!fieldConfig.isUnique()) continue;
+            results.add(fieldConfig);
         }
         return results;
     }
 
-    public Collection getIndexedFieldDefinitions() {
+    public Collection getIndexedFieldConfigs() {
         Collection results = new ArrayList();
-        for (Iterator i=fields.values().iterator(); i.hasNext(); ) {
-            FieldDefinition fieldDefinition = (FieldDefinition)i.next();
-            if (!fieldDefinition.isPrimaryKey() && !fieldDefinition.isUnique() && !fieldDefinition.isIndex()) continue;
-            results.add(fieldDefinition);
+        for (Iterator i=fieldConfigs.values().iterator(); i.hasNext(); ) {
+            FieldConfig fieldConfig = (FieldConfig)i.next();
+            if (!fieldConfig.isPrimaryKey() && !fieldConfig.isUnique() && !fieldConfig.isIndex()) continue;
+            results.add(fieldConfig);
         }
         return results;
     }
 
-	public Collection getFieldDefinitions() {
-		return fields.values();
+	public Collection getFieldConfigs() {
+		return fieldConfigs.values();
 	}
 
-	public void addFieldDefinition(FieldDefinition fieldDefinition) {
-		fields.put(fieldDefinition.getName(), fieldDefinition);
+	public void addFieldConfig(FieldConfig fieldConfig) {
+		fieldConfigs.put(fieldConfig.getName(), fieldConfig);
 	}
 
-    public void renameFieldDefinition(String oldName, String newName) {
+    public void renameFieldConfig(String oldName, String newName) {
         if (oldName.equals(newName)) return;
 
-        FieldDefinition fieldDefinition = (FieldDefinition)fields.get(oldName);
-        if (fieldDefinition == null) return;
+        FieldConfig fieldConfig = (FieldConfig)fieldConfigs.get(oldName);
+        if (fieldConfig == null) return;
 
-        fields.remove(oldName);
-        fields.put(newName, fieldDefinition);
+        fieldConfigs.remove(oldName);
+        fieldConfigs.put(newName, fieldConfig);
     }
 
-    public void modifySourceDefinition(String name, FieldDefinition newFieldDefinition) {
-        FieldDefinition fieldDefinition = (FieldDefinition)fields.get(name);
-        fieldDefinition.copy(newFieldDefinition);
+    public void modifySourceConfig(String name, FieldConfig newFieldConfig) {
+        FieldConfig fieldConfig = (FieldConfig)fieldConfigs.get(name);
+        fieldConfig.copy(newFieldConfig);
     }
 
-    public void removeFieldDefinition(FieldDefinition fieldDefinition) {
-        fields.remove(fieldDefinition.getName());
+    public void removeFieldConfig(FieldConfig fieldConfig) {
+        fieldConfigs.remove(fieldConfig.getName());
     }
 
     public String getParameter(String name) {
@@ -219,11 +223,11 @@ public class SourceDefinition implements Cloneable {
 
         Row pk = new Row();
 
-        for (Iterator i=fields.values().iterator(); i.hasNext(); ) {
-            FieldDefinition fieldDefinition = (FieldDefinition)i.next();
-            if (!fieldDefinition.isPrimaryKey()) continue;
+        for (Iterator i=fieldConfigs.values().iterator(); i.hasNext(); ) {
+            FieldConfig fieldConfig = (FieldConfig)i.next();
+            if (!fieldConfig.isPrimaryKey()) continue;
 
-            String fieldName = fieldDefinition.getName();
+            String fieldName = fieldConfig.getName();
 
             Collection values = sourceValues.get(fieldName);
             if (values == null) return null;
@@ -243,7 +247,7 @@ public class SourceDefinition implements Cloneable {
         return (name == null ? 0 : name.hashCode()) +
                 (connectionName == null ? 0 : connectionName.hashCode()) +
                 (description == null ? 0 : description.hashCode()) +
-                (fields == null ? 0 : fields.hashCode()) +
+                (fieldConfigs == null ? 0 : fieldConfigs.hashCode()) +
                 (parameters == null ? 0 : parameters.hashCode());
     }
 
@@ -257,34 +261,34 @@ public class SourceDefinition implements Cloneable {
         if (this == object) return true;
         if((object == null) || (object.getClass() != this.getClass())) return false;
 
-        SourceDefinition sourceDefinition = (SourceDefinition)object;
-        if (!equals(name, sourceDefinition.name)) return false;
-        if (!equals(connectionName, sourceDefinition.connectionName)) return false;
-        if (!equals(description, sourceDefinition.description)) return false;
-        if (!equals(fields, sourceDefinition.fields)) return false;
-        if (!equals(parameters, sourceDefinition.parameters)) return false;
+        SourceConfig sourceConfig = (SourceConfig)object;
+        if (!equals(name, sourceConfig.name)) return false;
+        if (!equals(connectionName, sourceConfig.connectionName)) return false;
+        if (!equals(description, sourceConfig.description)) return false;
+        if (!equals(fieldConfigs, sourceConfig.fieldConfigs)) return false;
+        if (!equals(parameters, sourceConfig.parameters)) return false;
 
         return true;
     }
 
-    public void copy(SourceDefinition sourceDefinition) {
-        name = sourceDefinition.name;
-        connectionName = sourceDefinition.connectionName;
-        description = sourceDefinition.description;
+    public void copy(SourceConfig sourceConfig) {
+        name = sourceConfig.name;
+        connectionName = sourceConfig.connectionName;
+        description = sourceConfig.description;
 
-        fields.clear();
-        for (Iterator i = sourceDefinition.fields.values().iterator(); i.hasNext(); ) {
-            FieldDefinition fieldDefinition = (FieldDefinition)((FieldDefinition)i.next()).clone();
-            addFieldDefinition((FieldDefinition)fieldDefinition.clone());
+        fieldConfigs.clear();
+        for (Iterator i = sourceConfig.fieldConfigs.values().iterator(); i.hasNext(); ) {
+            FieldConfig fieldConfig = (FieldConfig)((FieldConfig)i.next()).clone();
+            addFieldConfig((FieldConfig)fieldConfig.clone());
         }
 
         parameters.clear();
-        parameters.putAll(sourceDefinition.parameters);
+        parameters.putAll(sourceConfig.parameters);
     }
 
     public Object clone() {
-        SourceDefinition sourceDefinition = new SourceDefinition();
-        sourceDefinition.copy(this);
-        return sourceDefinition;
+        SourceConfig sourceConfig = new SourceConfig();
+        sourceConfig.copy(this);
+        return sourceConfig;
     }
 }

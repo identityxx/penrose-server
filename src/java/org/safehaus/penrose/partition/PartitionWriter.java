@@ -34,7 +34,6 @@ import org.safehaus.penrose.schema.ObjectClass;
 import org.safehaus.penrose.module.ModuleConfig;
 import org.safehaus.penrose.module.ModuleMapping;
 import org.safehaus.penrose.acl.ACI;
-import org.safehaus.penrose.connector.ConnectionConfig;
 import org.safehaus.penrose.partition.Partition;
 import org.apache.log4j.Logger;
 
@@ -124,37 +123,35 @@ public class PartitionWriter {
 
 	public Element toMappingXmlElement(Partition partition) {
 		Element mappingElement = new DefaultElement("mapping");
-		// entries
+
 		for (Iterator iter = partition.getRootEntryMappings().iterator(); iter.hasNext();) {
 			EntryMapping entry = (EntryMapping)iter.next();
-
             toElement(partition, entry, mappingElement);
 		}
+
 		return mappingElement;
 	}
 
     public Element toConnectionsXmlElement(Partition partition) {
-        Element sourcesElement = new DefaultElement("connections");
+        Element element = new DefaultElement("connections");
 
-        // connections
         for (Iterator i = partition.getConnectionConfigs().iterator(); i.hasNext();) {
             ConnectionConfig connection = (ConnectionConfig)i.next();
-            sourcesElement.add(toElement(connection));
+            element.add(toElement(connection));
         }
 
-        return sourcesElement;
+        return element;
     }
 
 	public Element toSourcesXmlElement(Partition partition) {
-		Element sourcesElement = new DefaultElement("sources");
+		Element element = new DefaultElement("sources");
 
-        // connections
-		for (Iterator i = partition.getConnectionConfigs().iterator(); i.hasNext();) {
-			ConnectionConfig connection = (ConnectionConfig)i.next();
-			sourcesElement.add(toElement(connection));
-		}
+        for (Iterator i = partition.getSourceConfigs().iterator(); i.hasNext(); ) {
+            SourceConfig sourceConfig = (SourceConfig)i.next();
+            element.add(toElement(sourceConfig));
+        }
 
-		return sourcesElement;
+		return element;
 	}
 
 	public Element toModulesXmlElement(Partition partition) {
@@ -204,10 +201,10 @@ public class PartitionWriter {
 
     public Element toElement(ConnectionConfig connection) {
 		Element element = new DefaultElement("connection");
-        element.add(new DefaultAttribute("name", connection.getConnectionName()));
+        element.add(new DefaultAttribute("name", connection.getName()));
 
         Element adapterName = new DefaultElement("adapter-name");
-        adapterName.add(new DefaultText(connection.getConnectionType()));
+        adapterName.add(new DefaultText(connection.getAdapterName()));
         element.add(adapterName);
 
 		// parameters
@@ -228,22 +225,15 @@ public class PartitionWriter {
 			element.add(parameter);
 		}
 
-        Collection sourceDefinitions = connection.getSourceDefinitions();
-        for (Iterator i = sourceDefinitions.iterator(); i.hasNext(); ) {
-            SourceDefinition sourceDefinition = (SourceDefinition)i.next();
-            Element sourceElement = toElement(sourceDefinition);
-            element.add(sourceElement);
-        }
-
 		return element;
 	}
 
-    public Element toElement(SourceDefinition source) {
+    public Element toElement(SourceConfig source) {
     	Element element = new DefaultElement("source");
     	element.addAttribute("name", source.getName());
 
-    	for (Iterator i = source.getFieldDefinitions().iterator(); i.hasNext(); ) {
-    		FieldDefinition field = (FieldDefinition)i.next();
+    	for (Iterator i = source.getFieldConfigs().iterator(); i.hasNext(); ) {
+    		FieldConfig field = (FieldConfig)i.next();
     		Element fieldElement = toElement(field);
     		element.add(fieldElement);
     	}
@@ -375,10 +365,6 @@ public class PartitionWriter {
         Element sourceName = new DefaultElement("source-name");
         sourceName.add(new DefaultText(sourceMapping.getSourceName()));
         element.add(sourceName);
-
-        Element connectionName = new DefaultElement("connection-name");
-        connectionName.add(new DefaultText(sourceMapping.getConnectionName()));
-        element.add(connectionName);
 
 		// fields
 		for (Iterator i=sourceMapping.getFieldMappings().iterator(); i.hasNext(); ) {
@@ -629,7 +615,7 @@ public class PartitionWriter {
         return element;
     }
     
-    public Element toElement(FieldDefinition field) {
+    public Element toElement(FieldConfig field) {
     	Element element = new DefaultElement("field");
     	element.addAttribute("name", field.getName());
         if (!field.getName().equals(field.getOriginalName())) element.addAttribute("originalName", field.getOriginalName());
@@ -637,9 +623,9 @@ public class PartitionWriter {
         if (!field.isSearchable()) element.addAttribute("searchable", "false");
         if (field.isUnique()) element.addAttribute("unique", "true");
         if (field.isIndex()) element.addAttribute("index", "true");
-        if (!FieldDefinition.DEFAULT_TYPE.equals(field.getType())) element.addAttribute("type", field.getType());
-        if (field.getLength() != FieldDefinition.DEFAULT_LENGTH) element.addAttribute("length", ""+field.getLength());
-        if (field.getPrecision() != FieldDefinition.DEFAULT_PRECISION) element.addAttribute("precision", ""+field.getPrecision());
+        if (!FieldConfig.DEFAULT_TYPE.equals(field.getType())) element.addAttribute("type", field.getType());
+        if (field.getLength() != FieldConfig.DEFAULT_LENGTH) element.addAttribute("length", ""+field.getLength());
+        if (field.getPrecision() != FieldConfig.DEFAULT_PRECISION) element.addAttribute("precision", ""+field.getPrecision());
     	return element;
     }
     

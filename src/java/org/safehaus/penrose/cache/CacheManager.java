@@ -18,27 +18,11 @@
 package org.safehaus.penrose.cache;
 
 import org.safehaus.penrose.config.*;
-import org.safehaus.penrose.interpreter.InterpreterConfig;
-import org.safehaus.penrose.interpreter.InterpreterFactory;
-import org.safehaus.penrose.schema.Schema;
-import org.safehaus.penrose.schema.SchemaReader;
-import org.safehaus.penrose.connector.Connector;
-import org.safehaus.penrose.connector.ConnectorConfig;
 import org.safehaus.penrose.connector.ConnectionManager;
-import org.safehaus.penrose.connector.ConnectionConfig;
-import org.safehaus.penrose.engine.Engine;
-import org.safehaus.penrose.engine.EngineConfig;
-import org.safehaus.penrose.mapping.EntryMapping;
 import org.safehaus.penrose.util.Formatter;
-import org.safehaus.penrose.handler.Handler;
-import org.safehaus.penrose.session.PenroseSearchResults;
 import org.apache.log4j.Logger;
-import org.ietf.ldap.LDAPConnection;
-import org.ietf.ldap.LDAPSearchConstraints;
 
-import java.io.File;
 import java.util.Collection;
-import java.util.ArrayList;
 import java.util.Iterator;
 import java.sql.Connection;
 import java.sql.PreparedStatement;

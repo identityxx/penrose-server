@@ -23,8 +23,9 @@ import java.util.*;
 import org.apache.log4j.Logger;
 import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.partition.Partition;
+import org.safehaus.penrose.partition.FieldConfig;
+import org.safehaus.penrose.partition.SourceConfig;
 import org.safehaus.penrose.mapping.*;
-import org.safehaus.penrose.connector.ConnectionConfig;
 
 /**
  * @author Endi S. Dewata
@@ -123,8 +124,7 @@ public class TransformEngine {
     public Row translate(SourceMapping sourceMapping, AttributeValues input, AttributeValues output) throws Exception {
 
         Partition partition = engine.getPartitionManager().getPartition(sourceMapping);
-        ConnectionConfig connectionConfig = partition.getConnectionConfig(sourceMapping.getConnectionName());
-        SourceDefinition sourceDefinition = connectionConfig.getSourceDefinition(sourceMapping.getSourceName());
+        SourceConfig sourceConfig = partition.getSourceConfig(sourceMapping.getSourceName());
 
         Interpreter interpreter = engine.getInterpreterFactory().newInstance();
         interpreter.set(input);
@@ -135,7 +135,7 @@ public class TransformEngine {
         //log.debug("Translating for sourceMapping "+sourceMapping.getName()+":");
         for (Iterator j=fields.iterator(); j.hasNext(); ) {
             FieldMapping fieldMapping = (FieldMapping)j.next();
-            FieldDefinition fieldDefinition = sourceDefinition.getFieldDefinition(fieldMapping.getName());
+            FieldConfig fieldConfig = sourceConfig.getFieldConfig(fieldMapping.getName());
 
             String name = fieldMapping.getName();
             //log.debug(" - "+name);
@@ -143,7 +143,7 @@ public class TransformEngine {
             Object newValues = interpreter.eval(fieldMapping);
 
             if (newValues == null) {
-                if (fieldDefinition.isPrimaryKey()) pk = null;
+                if (fieldConfig.isPrimaryKey()) pk = null;
                 continue;
             }
 /*
@@ -174,7 +174,7 @@ public class TransformEngine {
 
             //log.debug("   => "+newValues);
 
-            if (fieldDefinition.isPrimaryKey()) {
+            if (fieldConfig.isPrimaryKey()) {
                 if (pk != null) pk.set(name, newValues);
             }
 
@@ -186,20 +186,20 @@ public class TransformEngine {
         return pk;
     }
 
-    public static Collection getPrimaryKeys(SourceDefinition sourceDefinition, AttributeValues sourceValues) throws Exception {
+    public static Collection getPrimaryKeys(SourceConfig sourceConfig, AttributeValues sourceValues) throws Exception {
 
         AttributeValues pkValues = new AttributeValues();
 
-        Collection pkFields = sourceDefinition.getPrimaryKeyFieldDefinitions();
+        Collection pkFields = sourceConfig.getPrimaryKeyFieldConfigs();
         for (Iterator j=pkFields.iterator(); j.hasNext(); ) {
-            FieldDefinition fieldDefinition = (FieldDefinition)j.next();
+            FieldConfig fieldConfig = (FieldConfig)j.next();
 
-            Collection values = sourceValues.get(fieldDefinition.getName());
+            Collection values = sourceValues.get(fieldConfig.getName());
             if (values == null) {
                 return new ArrayList();
             }
 
-            pkValues.set(fieldDefinition.getName(), values);
+            pkValues.set(fieldConfig.getName(), values);
         }
 
         return convert(pkValues);
@@ -208,10 +208,9 @@ public class TransformEngine {
     public Map split(SourceMapping sourceMapping, AttributeValues entry) throws Exception {
 
         Partition partition = engine.getPartitionManager().getPartition(sourceMapping);
-        ConnectionConfig connectionConfig = partition.getConnectionConfig(sourceMapping.getConnectionName());
-        SourceDefinition sourceDefinition = connectionConfig.getSourceDefinition(sourceMapping.getSourceName());
+        SourceConfig sourceConfig = partition.getSourceConfig(sourceMapping.getSourceName());
 
-        Collection fields = sourceDefinition.getPrimaryKeyFieldDefinitions();
+        Collection fields = sourceConfig.getPrimaryKeyFieldConfigs();
 
         AttributeValues output = new AttributeValues();
         Row m = translate(sourceMapping, entry, output);
@@ -230,8 +229,8 @@ public class TransformEngine {
 
             Row pk = new Row();
             for (Iterator j=fields.iterator(); j.hasNext(); ) {
-                FieldDefinition fieldDefinition = (FieldDefinition)j.next();
-                pk.set(fieldDefinition.getName(), row.get(fieldDefinition.getName()));
+                FieldConfig fieldConfig = (FieldConfig)j.next();
+                pk.set(fieldConfig.getName(), row.get(fieldConfig.getName()));
             }
 
             map.put(pk, av);

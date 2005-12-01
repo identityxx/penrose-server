@@ -23,6 +23,7 @@ import org.apache.commons.dbcp.DriverManagerConnectionFactory;
 import org.apache.commons.dbcp.PoolableConnectionFactory;
 import org.apache.commons.dbcp.PoolingDataSource;
 import org.apache.log4j.Logger;
+import org.safehaus.penrose.partition.ConnectionConfig;
 
 import javax.naming.Context;
 import javax.naming.directory.InitialDirContext;
@@ -40,7 +41,7 @@ public class ConnectionManager {
     public Map connections = new TreeMap();
 
     public void addConnectionConfig(ConnectionConfig connectionConfig) {
-        connectionConfigs.put(connectionConfig.getConnectionName(), connectionConfig);
+        connectionConfigs.put(connectionConfig.getName(), connectionConfig);
     }
 
     public ConnectionConfig getConnectionConfig(String connectionName) {
@@ -59,10 +60,10 @@ public class ConnectionManager {
 
         for (Iterator i=connectionConfigs.values().iterator(); i.hasNext(); ) {
             ConnectionConfig connectionConfig = (ConnectionConfig)i.next();
-            String connectionName = connectionConfig.getConnectionName();
+            String connectionName = connectionConfig.getName();
             log.debug("Initializing connection "+connectionName+".");
 
-            if ("JDBC".equals(connectionConfig.getConnectionType())) {
+            if ("JDBC".equals(connectionConfig.getAdapterName())) {
 
                 String driver = connectionConfig.getParameter("driver");
                 String url = connectionConfig.getParameter("url");
@@ -94,7 +95,7 @@ public class ConnectionManager {
                 DataSource ds = new PoolingDataSource(connectionPool);
                 connections.put(connectionName, ds);
 
-            } else if ("JNDI".equals(connectionConfig.getConnectionType())) {
+            } else if ("JNDI".equals(connectionConfig.getAdapterName())) {
 
                 Properties env = new Properties();
                 for (Iterator j=connectionConfig.getParameterNames().iterator(); j.hasNext(); ) {
@@ -132,11 +133,11 @@ public class ConnectionManager {
         ConnectionConfig connectionConfig = (ConnectionConfig)connectionConfigs.get(connectionName);
 
         Object object = connections.get(connectionName);
-        if ("JDBC".equals(connectionConfig.getConnectionType())) {
+        if ("JDBC".equals(connectionConfig.getAdapterName())) {
             DataSource ds = (DataSource)object;
             return ds.getConnection();
 
-        } else if ("JNDI".equals(connectionConfig.getConnectionType())) {
+        } else if ("JNDI".equals(connectionConfig.getAdapterName())) {
             Properties env = (Properties)object;
             return new InitialDirContext(env);
         }

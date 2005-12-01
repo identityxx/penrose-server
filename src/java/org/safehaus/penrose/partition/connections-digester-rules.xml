@@ -20,6 +20,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 <!DOCTYPE digester-rules PUBLIC
   "-//Jakarta Apache //DTD digester-rules XML V1.0//EN"
   "digester-rules.dtd">
+  
 -->
 <digester-rules>
 
@@ -27,12 +28,10 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 
         <pattern value="connection">
 
-            <object-create-rule classname="org.safehaus.penrose.connector.ConnectionConfig" />
-            <set-properties-rule>
-                <alias attr-name="name" prop-name="connectionName" />
-            </set-properties-rule>
+            <object-create-rule classname="org.safehaus.penrose.partition.ConnectionConfig" />
+            <set-properties-rule/>
 
-            <call-method-rule pattern="connection-type" methodname="setConnectionType" paramcount="0" />
+            <call-method-rule pattern="adapter-name" methodname="setAdapterName" paramcount="0" />
             <call-method-rule pattern="description" methodname="setDescription" paramcount="0" />
 
             <pattern value="parameter">

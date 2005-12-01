@@ -23,9 +23,8 @@ import org.safehaus.penrose.filter.FilterTool;
 import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.util.Formatter;
 import org.safehaus.penrose.session.PenroseSearchResults;
-import org.safehaus.penrose.session.PenroseSearchResults;
 import org.safehaus.penrose.partition.Partition;
-import org.safehaus.penrose.connector.ConnectionConfig;
+import org.safehaus.penrose.partition.SourceConfig;
 import org.apache.log4j.Logger;
 import org.ietf.ldap.LDAPException;
 
@@ -369,10 +368,9 @@ public class SearchEngine {
         }
 
         Partition partition = engine.getPartitionManager().getPartition(entryMapping);
-        ConnectionConfig connectionConfig = partition.getConnectionConfig(sourceMapping.getConnectionName());
-        SourceDefinition sourceDefinition = connectionConfig.getSourceDefinition(sourceMapping.getSourceName());
+        SourceConfig sourceConfig = partition.getSourceConfig(sourceMapping.getSourceName());
 
-        PenroseSearchResults sr = engine.getConnector().search(sourceDefinition, newFilter);
+        PenroseSearchResults sr = engine.getConnector().search(sourceConfig, newFilter);
 
         Interpreter interpreter = engine.getInterpreterFactory().newInstance();
 

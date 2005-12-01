@@ -19,7 +19,6 @@ package org.safehaus.penrose.partition;
 
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.connector.AdapterConfig;
-import org.safehaus.penrose.connector.ConnectionConfig;
 import org.safehaus.penrose.schema.Schema;
 import org.safehaus.penrose.schema.ObjectClass;
 import org.safehaus.penrose.config.PenroseConfig;
@@ -48,6 +47,7 @@ public class PartitionValidator {
     public Collection validate(Partition partition) throws Exception {
         Collection results = new ArrayList();
 
+        results.addAll(validateConnections(partition));
         results.addAll(validateSources(partition));
         results.addAll(validateEntries(partition));
         results.addAll(validateModules(partition));
@@ -55,20 +55,20 @@ public class PartitionValidator {
         return results;
     }
 
-    public Collection validateSources(Partition partition) throws Exception {
+    public Collection validateConnections(Partition partition) throws Exception {
         Collection results = new ArrayList();
 
         for (Iterator i=partition.getConnectionConfigs().iterator(); i.hasNext(); ) {
             ConnectionConfig connectionConfig = (ConnectionConfig)i.next();
-            //log.debug("Validating connection "+connectionConfig.getConnectionName());
+            //log.debug("Validating connection "+connectionConfig.getName());
 
-            String connectionName = connectionConfig.getConnectionName();
+            String connectionName = connectionConfig.getName();
             if (connectionName == null || "".equals(connectionName)) {
                 results.add(new PartitionValidationResult(PartitionValidationResult.ERROR, "Missing connection name.", null, connectionConfig));
                 continue;
             }
 
-            String adapterName = connectionConfig.getConnectionType();
+            String adapterName = connectionConfig.getAdapterName();
             if (adapterName == null || "".equals(adapterName)) {
                 results.add(new PartitionValidationResult(PartitionValidationResult.ERROR, "Missing adapter name.", connectionName, connectionConfig));
 
@@ -78,42 +78,51 @@ public class PartitionValidator {
                     results.add(new PartitionValidationResult(PartitionValidationResult.ERROR, "Invalid adapter name: "+adapterName, connectionName, connectionConfig));
                 }
             }
+        }
 
-            for (Iterator j=connectionConfig.getSourceDefinitions().iterator(); j.hasNext(); ) {
-                SourceDefinition sourceDefinition = (SourceDefinition)j.next();
-                //log.debug("Validating source "+connectionConfig.getConnectionName()+"/"+sourceDefinition.getName());
+        return results;
+    }
 
-                String sourceName = sourceDefinition.getName();
-                if (sourceName == null || "".equals(sourceName)) {
-                    results.add(new PartitionValidationResult(PartitionValidationResult.ERROR, "Missing source name.", connectionName, connectionConfig));
-                    continue;
+    public Collection validateSources(Partition partition) throws Exception {
+        Collection results = new ArrayList();
+
+        for (Iterator i=partition.getSourceConfigs().iterator(); i.hasNext(); ) {
+            SourceConfig sourceConfig = (SourceConfig)i.next();
+            //log.debug("Validating source "+connectionConfig.getName()+"/"+sourceConfig.getName());
+
+            String sourceName = sourceConfig.getName();
+            if (sourceName == null || "".equals(sourceName)) {
+                results.add(new PartitionValidationResult(PartitionValidationResult.ERROR, "Missing source name.", null, sourceConfig));
+                continue;
+            }
+
+            String connectionName = sourceConfig.getConnectionName();
+            if (connectionName == null || "".equals(connectionName)) {
+                results.add(new PartitionValidationResult(PartitionValidationResult.ERROR, "Missing connection name.", sourceName, sourceConfig));
+                continue;
+            }
+
+            ConnectionConfig connectionConfig = partition.getConnectionConfig(connectionName);
+            if (connectionConfig == null) {
+                results.add(new PartitionValidationResult(PartitionValidationResult.ERROR, "Invalid connection name: "+connectionName, sourceName, sourceConfig));
+            }
+
+            boolean hasPrimaryKey = false;
+
+            for (Iterator k=sourceConfig.getFieldConfigs().iterator(); k.hasNext(); ) {
+                FieldConfig fieldConfig = (FieldConfig)k.next();
+                //log.debug("Validating field "+connectionConfig.getName()+"/"+sourceConfig.getName()+"."+fieldConfig.getName());
+
+                String fieldName = fieldConfig.getName();
+                if (fieldName == null || "".equals(fieldName)) {
+                    results.add(new PartitionValidationResult(PartitionValidationResult.ERROR, "Missing field name.", connectionName+"/"+sourceName, sourceConfig));
                 }
 
-                String conName = sourceDefinition.getConnectionName();
-                if (conName == null || "".equals(conName)) {
-                    results.add(new PartitionValidationResult(PartitionValidationResult.ERROR, "Missing connection name.", connectionName+"/"+sourceName, sourceDefinition));
+                hasPrimaryKey |= fieldConfig.isPrimaryKey();
+            }
 
-                } else if (!conName.equals(connectionName)) {
-                    results.add(new PartitionValidationResult(PartitionValidationResult.ERROR, "Invalid connection name: "+conName, connectionName+"/"+sourceName, sourceDefinition));
-                }
-
-                boolean hasPrimaryKey = false;
-
-                for (Iterator k=sourceDefinition.getFieldDefinitions().iterator(); k.hasNext(); ) {
-                    FieldDefinition fieldDefinition = (FieldDefinition)k.next();
-                    //log.debug("Validating field "+connectionConfig.getConnectionName()+"/"+sourceDefinition.getName()+"."+fieldDefinition.getName());
-
-                    String fieldName = fieldDefinition.getName();
-                    if (fieldName == null || "".equals(fieldName)) {
-                        results.add(new PartitionValidationResult(PartitionValidationResult.ERROR, "Missing field name.", connectionName+"/"+sourceName, sourceDefinition));
-                    }
-
-                    hasPrimaryKey |= fieldDefinition.isPrimaryKey();
-                }
-
-                if (!hasPrimaryKey) {
-                    results.add(new PartitionValidationResult(PartitionValidationResult.ERROR, "Missing primary key.", connectionName+"/"+sourceName, sourceDefinition));
-                }
+            if (!hasPrimaryKey) {
+                results.add(new PartitionValidationResult(PartitionValidationResult.ERROR, "Missing primary key.", connectionName+"/"+sourceName, sourceConfig));
             }
         }
 
@@ -252,47 +261,35 @@ public class PartitionValidator {
                 results.add(new PartitionValidationResult(PartitionValidationResult.ERROR, "Missing source name.", entryMapping.getDn()+"/"+alias, entryMapping));
             }
 
-            String connectionName = sourceMapping.getConnectionName();
-            if (connectionName == null || "".equals(connectionName)) {
-                results.add(new PartitionValidationResult(PartitionValidationResult.ERROR, "Missing connection name.", entryMapping.getDn()+"/"+alias, entryMapping));
+            SourceConfig sourceConfig = partition.getSourceConfig(sourceName);
+            if (sourceConfig == null) {
+                results.add(new PartitionValidationResult(PartitionValidationResult.ERROR, "Invalid source name: "+sourceName, entryMapping.getDn()+"/"+alias, entryMapping));
+                continue;
 
-            } else {
-                ConnectionConfig connectionConfig = partition.getConnectionConfig(connectionName);
-                if (connectionConfig == null) {
-                    results.add(new PartitionValidationResult(PartitionValidationResult.ERROR, "Invalid connection name: "+connectionConfig, entryMapping.getDn()+"/"+alias, entryMapping));
+            }
 
-                } else if (sourceName != null && !"".equals(sourceName)) {
-                    SourceDefinition sourceDefinition = connectionConfig.getSourceDefinition(sourceName);
+            for (Iterator j=sourceMapping.getFieldMappings().iterator(); j.hasNext(); ) {
+                FieldMapping fieldMapping = (FieldMapping)j.next();
+                //log.debug("Validating entry "+entryMapping"'s fieldMapping "+source.getName()+"."+fieldMapping.getName());
 
-                    if (sourceDefinition == null) {
-                        results.add(new PartitionValidationResult(PartitionValidationResult.ERROR, "Invalid source name: "+sourceName, entryMapping.getDn()+"/"+alias, entryMapping));
+                String fieldName = fieldMapping.getName();
+                if (fieldName == null || "".equals(fieldName)) {
+                    results.add(new PartitionValidationResult(PartitionValidationResult.ERROR, "Missing field name.", entryMapping.getDn()+"/"+alias, entryMapping));
+                    continue;
+                }
 
-                    } else {
-                        for (Iterator j=sourceMapping.getFieldMappings().iterator(); j.hasNext(); ) {
-                            FieldMapping fieldMapping = (FieldMapping)j.next();
-                            //log.debug("Validating entry "+entryMapping"'s fieldMapping "+source.getName()+"."+fieldMapping.getName());
-
-                            String fieldName = fieldMapping.getName();
-                            if (fieldName == null || "".equals(fieldName)) {
-                                results.add(new PartitionValidationResult(PartitionValidationResult.ERROR, "Missing field name.", entryMapping.getDn()+"/"+alias, entryMapping));
-                                continue;
-                            }
-
-                            Expression expression = fieldMapping.getExpression();
-                            if (expression != null) {
-                                String foreach = expression.getForeach();
-                                String var = expression.getVar();
-                                if (foreach != null && (var == null || "".equals(var))) {
-                                    results.add(new PartitionValidationResult(PartitionValidationResult.ERROR, "Missing variable name.", entryMapping.getDn()+"/"+alias+"."+fieldName, entryMapping));
-                                }
-                            }
-
-                            FieldDefinition fieldDefinition = sourceDefinition.getFieldDefinition(fieldName);
-                            if (fieldDefinition == null) {
-                                results.add(new PartitionValidationResult(PartitionValidationResult.ERROR, "Invalid field name: "+fieldName, entryMapping.getDn()+"/"+alias+"."+fieldName, entryMapping));
-                            }
-                        }
+                Expression expression = fieldMapping.getExpression();
+                if (expression != null) {
+                    String foreach = expression.getForeach();
+                    String var = expression.getVar();
+                    if (foreach != null && (var == null || "".equals(var))) {
+                        results.add(new PartitionValidationResult(PartitionValidationResult.ERROR, "Missing variable name.", entryMapping.getDn()+"/"+alias+"."+fieldName, entryMapping));
                     }
+                }
+
+                FieldConfig fieldConfig = sourceConfig.getFieldConfig(fieldName);
+                if (fieldConfig == null) {
+                    results.add(new PartitionValidationResult(PartitionValidationResult.ERROR, "Invalid field name: "+fieldName, entryMapping.getDn()+"/"+alias+"."+fieldName, entryMapping));
                 }
             }
         }

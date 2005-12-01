@@ -2,6 +2,8 @@ package org.safehaus.penrose.cache;
 
 import org.safehaus.penrose.filter.*;
 import org.safehaus.penrose.mapping.*;
+import org.safehaus.penrose.partition.FieldConfig;
+import org.safehaus.penrose.partition.SourceConfig;
 import org.apache.log4j.Logger;
 
 import java.util.Iterator;
@@ -15,8 +17,8 @@ public class JDBCCacheTool {
 
     Logger log = Logger.getLogger(getClass());
 
-    public String getTableName(SourceDefinition sourceDefinition) {
-        return sourceDefinition.getConnectionName()+"_"+sourceDefinition.getName();
+    public String getTableName(SourceConfig sourceConfig) {
+        return sourceConfig.getConnectionName()+"_"+sourceConfig.getName();
     }
 
     /**
@@ -27,23 +29,23 @@ public class JDBCCacheTool {
      * @throws Exception
      */
     public String convert(
-            SourceDefinition sourceDefinition,
+            SourceConfig sourceConfig,
             Filter filter,
             Collection parameters)
             throws Exception {
 
-        String tableName = getTableName(sourceDefinition);
+        String tableName = getTableName(sourceConfig);
 
         Collection tables = new TreeSet();
         StringBuffer columns = new StringBuffer();
         StringBuffer whereClause = new StringBuffer();
 
-        convert(sourceDefinition, filter, parameters, whereClause, tables);
+        convert(sourceConfig, filter, parameters, whereClause, tables);
 
-        Collection pkFields = sourceDefinition.getPrimaryKeyFieldDefinitions();
+        Collection pkFields = sourceConfig.getPrimaryKeyFieldConfigs();
         for (Iterator j=pkFields.iterator(); j.hasNext(); ) {
-            FieldDefinition fieldDefinition = (FieldDefinition)j.next();
-            String fieldName = fieldDefinition.getName();
+            FieldConfig fieldConfig = (FieldConfig)j.next();
+            String fieldName = fieldConfig.getName();
 
             if (columns.length() > 0) columns.append(", ");
             columns.append(tableName);
@@ -59,8 +61,8 @@ public class JDBCCacheTool {
 
             StringBuffer sb = new StringBuffer();
             for (Iterator j=pkFields.iterator(); j.hasNext(); ) {
-                FieldDefinition fieldDefinition = (FieldDefinition)j.next();
-                String fieldName = fieldDefinition.getName();
+                FieldConfig fieldConfig = (FieldConfig)j.next();
+                String fieldName = fieldConfig.getName();
 
                 if (sb.length() > 0) sb.append(" and ");
 
@@ -94,7 +96,7 @@ public class JDBCCacheTool {
     }
 
     boolean convert(
-            SourceDefinition sourceDefinition,
+            SourceConfig sourceConfig,
             Filter filter,
             Collection parameters,
             StringBuffer sb,
@@ -102,23 +104,23 @@ public class JDBCCacheTool {
             throws Exception {
 
         if (filter instanceof NotFilter) {
-            return convert(sourceDefinition, (NotFilter) filter, parameters, sb, tables);
+            return convert(sourceConfig, (NotFilter) filter, parameters, sb, tables);
 
         } else if (filter instanceof AndFilter) {
-            return convert(sourceDefinition, (AndFilter) filter, parameters, sb, tables);
+            return convert(sourceConfig, (AndFilter) filter, parameters, sb, tables);
 
         } else if (filter instanceof OrFilter) {
-            return convert(sourceDefinition, (OrFilter) filter, parameters, sb, tables);
+            return convert(sourceConfig, (OrFilter) filter, parameters, sb, tables);
 
         } else if (filter instanceof SimpleFilter) {
-            return convert(sourceDefinition, (SimpleFilter) filter, parameters, sb, tables);
+            return convert(sourceConfig, (SimpleFilter) filter, parameters, sb, tables);
         }
 
         return true;
     }
 
     boolean convert(
-            SourceDefinition sourceDefinition,
+            SourceConfig sourceConfig,
             SimpleFilter filter,
             Collection parameters,
             StringBuffer sb,
@@ -136,19 +138,19 @@ public class JDBCCacheTool {
             value = value.substring(1, value.length()-1);
         }
 
-        FieldDefinition fieldDefinition = sourceDefinition.getFieldDefinition(name);
-        String fieldName = fieldDefinition.getName();
+        FieldConfig fieldConfig = sourceConfig.getFieldConfig(name);
+        String fieldName = fieldConfig.getName();
 
         String tableName;
 
-        if (fieldDefinition.isPrimaryKey()) {
-            tableName = getTableName(sourceDefinition);
+        if (fieldConfig.isPrimaryKey()) {
+            tableName = getTableName(sourceConfig);
         } else {
-            tableName = getTableName(sourceDefinition)+"_"+fieldName;
+            tableName = getTableName(sourceConfig)+"_"+fieldName;
             tables.add(tableName);
         }
 
-        if ("VARCHAR".equals(fieldDefinition.getType())) {
+        if ("VARCHAR".equals(fieldConfig.getType())) {
             sb.append("lower(");
             sb.append(tableName);
             sb.append(".");
@@ -172,7 +174,7 @@ public class JDBCCacheTool {
     }
 
     boolean convert(
-            SourceDefinition sourceDefinition,
+            SourceConfig sourceConfig,
             NotFilter filter,
             Collection parameters,
             StringBuffer sb,
@@ -182,7 +184,7 @@ public class JDBCCacheTool {
         StringBuffer sb2 = new StringBuffer();
 
         Filter f = filter.getFilter();
-        convert(sourceDefinition, f, parameters, sb2, tables);
+        convert(sourceConfig, f, parameters, sb2, tables);
 
         sb.append("not (");
         sb.append(sb2);
@@ -192,7 +194,7 @@ public class JDBCCacheTool {
     }
 
     boolean convert(
-            SourceDefinition sourceDefinition,
+            SourceConfig sourceConfig,
             AndFilter filter,
             Collection parameters,
             StringBuffer sb,
@@ -204,7 +206,7 @@ public class JDBCCacheTool {
             Filter f = (Filter) i.next();
 
             StringBuffer sb3 = new StringBuffer();
-            convert(sourceDefinition, f, parameters, sb3, tables);
+            convert(sourceConfig, f, parameters, sb3, tables);
 
             if (sb2.length() > 0 && sb3.length() > 0) {
                 sb2.append(" and ");
@@ -224,7 +226,7 @@ public class JDBCCacheTool {
     }
 
     boolean convert(
-            SourceDefinition sourceDefinition,
+            SourceConfig sourceConfig,
             OrFilter filter,
             Collection parameters,
             StringBuffer sb,
@@ -236,7 +238,7 @@ public class JDBCCacheTool {
             Filter f = (Filter) i.next();
 
             StringBuffer sb3 = new StringBuffer();
-            convert(sourceDefinition, f, parameters, sb3, tables);
+            convert(sourceConfig, f, parameters, sb3, tables);
 
             if (sb2.length() > 0 && sb3.length() > 0) {
                 sb2.append(" or ");

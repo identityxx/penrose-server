@@ -28,6 +28,8 @@ import org.safehaus.penrose.util.PasswordUtil;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.partition.PartitionManager;
+import org.safehaus.penrose.partition.FieldConfig;
+import org.safehaus.penrose.partition.SourceConfig;
 import org.safehaus.penrose.filter.*;
 import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.interpreter.InterpreterFactory;
@@ -359,8 +361,7 @@ public class Engine {
         for (Iterator i=sources.iterator(); i.hasNext(); ) {
             SourceMapping source = (SourceMapping)i.next();
 
-            ConnectionConfig connectionConfig = partition.getConnectionConfig(source.getConnectionName());
-            SourceDefinition sourceDefinition = connectionConfig.getSourceDefinition(source.getSourceName());
+            SourceConfig sourceConfig = partition.getSourceConfig(source.getSourceName());
 
             Map entries = transformEngine.split(source, attributeValues);
 
@@ -370,7 +371,7 @@ public class Engine {
 
                 log.debug("Bind to "+source.getName()+" as "+pk+": "+sourceValues);
 
-                int rc = connector.bind(sourceDefinition, entryMapping, sourceValues, password);
+                int rc = connector.bind(sourceConfig, entryMapping, sourceValues, password);
                 if (rc == LDAPException.SUCCESS) return rc;
             }
         }
@@ -571,22 +572,21 @@ public class Engine {
         SourceMapping sourceMapping = entryMapping.getSourceMapping(sourceAlias);
 
         Partition partition = partitionManager.getPartition(entryMapping);
-        ConnectionConfig connectionConfig = partition.getConnectionConfig(sourceMapping.getConnectionName());
-        SourceDefinition sourceDefinition = connectionConfig.getSourceDefinition(sourceMapping.getSourceName());
+        SourceConfig sourceConfig = partition.getSourceConfig(sourceMapping.getSourceName());
 
         Collection uniqueFields = new TreeSet();
         Collection pkFields = new TreeSet();
 
         for (Iterator i=rdnFields.iterator(); i.hasNext(); ) {
             String fieldName = (String)i.next();
-            FieldDefinition fieldDefinition = sourceDefinition.getFieldDefinition(fieldName);
+            FieldConfig fieldConfig = sourceConfig.getFieldConfig(fieldName);
 
-            if (fieldDefinition.isUnique()) {
+            if (fieldConfig.isUnique()) {
                 uniqueFields.add(fieldName);
                 continue;
             }
 
-            if (fieldDefinition.isPrimaryKey()) {
+            if (fieldConfig.isPrimaryKey()) {
                 pkFields.add(fieldName);
                 continue;
             }
@@ -600,7 +600,7 @@ public class Engine {
         // rdn uses unique fields
         if (pkFields.isEmpty() && !uniqueFields.isEmpty()) return true;
 
-        Collection list = sourceDefinition.getPrimaryKeyNames();
+        Collection list = sourceConfig.getPrimaryKeyNames();
         //log.debug("Source PK fields: "+list);
 
         // rdn uses primary key fields

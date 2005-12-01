@@ -36,11 +36,6 @@ public class SourceMapping implements Cloneable {
      */
     private String sourceName;
 
-    /**
-     * Connection name.
-     */
-    private String connectionName;
-
 	/**
 	 * Fields. Each element is of type org.safehaus.penrose.mapping.Field.
 	 */
@@ -96,14 +91,6 @@ public class SourceMapping implements Cloneable {
 
     public void setSourceName(String sourceName) {
         this.sourceName = sourceName;
-    }
-
-    public String getConnectionName() {
-        return connectionName;
-    }
-
-    public void setConnectionName(String connectionName) {
-        this.connectionName = connectionName;
     }
 
     public String getParameter(String name) {
@@ -165,7 +152,6 @@ public class SourceMapping implements Cloneable {
     public int hashCode() {
         return (name == null ? 0 : name.hashCode()) +
                 (sourceName == null ? 0 : sourceName.hashCode()) +
-                (connectionName == null ? 0 : connectionName.hashCode()) +
                 (fieldMappings == null ? 0 : fieldMappings.hashCode()) +
                 (parameters == null ? 0 : parameters.hashCode()) +
                 (required ? 0 : 1) +
@@ -189,7 +175,6 @@ public class SourceMapping implements Cloneable {
         SourceMapping sourceMapping = (SourceMapping)object;
         if (!equals(name, sourceMapping.name)) return false;
         if (!equals(sourceName, sourceMapping.sourceName)) return false;
-        if (!equals(connectionName, sourceMapping.connectionName)) return false;
         if (!equals(fieldMappings, sourceMapping.fieldMappings)) return false;
         if (!equals(parameters, sourceMapping.parameters)) return false;
         if (required != sourceMapping.required) return false;
@@ -206,7 +191,6 @@ public class SourceMapping implements Cloneable {
         SourceMapping sourceMapping = new SourceMapping();
         sourceMapping.name = name;
         sourceMapping.sourceName = sourceName;
-        sourceMapping.connectionName = connectionName;
 
         for (Iterator i=fieldMappings.values().iterator(); i.hasNext(); ) {
             FieldMapping fieldMapping = (FieldMapping)i.next();

@@ -39,6 +39,7 @@ import org.safehaus.penrose.cache.EntryCache;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.PartitionManager;
 import org.safehaus.penrose.partition.PartitionConfig;
+import org.safehaus.penrose.partition.ConnectionConfig;
 import org.safehaus.penrose.session.PenroseSessionManager;
 import org.safehaus.penrose.session.PenroseSession;
 import org.safehaus.penrose.session.PenroseSearchResults;
@@ -144,35 +145,16 @@ public class Penrose {
 
     public void loadPartitions() throws Exception {
 
-        String home = penroseConfig.getHome();
-
         for (Iterator i=penroseConfig.getPartitionConfigs().iterator(); i.hasNext(); ) {
             PartitionConfig partitionConfig = (PartitionConfig)i.next();
             partitionManager.load(partitionConfig);
         }
-/*
-        File partitions = new File((home == null ? "" : home+File.separator)+"partitions");
-        if (partitions.exists()) {
-            File files[] = partitions.listFiles();
-            for (int i=0; i<files.length; i++) {
-                File partition = files[i];
-
-                String name = partition.getName();
-                String path = "partitions"+File.separator+name;
-
-                PartitionConfig partitionConfig = new PartitionConfig(name, path);
-
-                partitionManager.load(partitionConfig);
-            }
-        }
-*/
     }
 
     public void storePartitions() throws Exception {
 
         for (Iterator i=partitionManager.getPartitionConfigs().iterator(); i.hasNext(); ) {
             PartitionConfig partitionConfig = (PartitionConfig)i.next();
-
             partitionManager.store(partitionConfig);
         }
     }

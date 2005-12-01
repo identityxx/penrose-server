@@ -19,14 +19,12 @@ package org.safehaus.penrose.partition;
 
 import org.safehaus.penrose.mapping.EntryMapping;
 import org.safehaus.penrose.mapping.SourceMapping;
-import org.safehaus.penrose.mapping.SourceDefinition;
 import org.safehaus.penrose.schema.Schema;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.PartitionReader;
 import org.safehaus.penrose.partition.PartitionValidationResult;
 import org.safehaus.penrose.partition.PartitionValidator;
 import org.safehaus.penrose.config.PenroseConfig;
-import org.safehaus.penrose.connector.ConnectionConfig;
 import org.apache.log4j.Logger;
 
 import java.util.Iterator;
@@ -124,16 +122,16 @@ public class PartitionManager {
     }
 
     public Partition getPartition(SourceMapping sourceMapping) throws Exception {
-        String connectionName = sourceMapping.getConnectionName();
+        String sourceName = sourceMapping.getSourceName();
         for (Iterator i=partitions.values().iterator(); i.hasNext(); ) {
             Partition partition = (Partition)i.next();
-            if (partition.getConnectionConfig(connectionName) != null) return partition;
+            if (partition.getSourceConfig(sourceName) != null) return partition;
         }
         return null;
     }
 
-    public Partition getPartition(SourceDefinition sourceDefinition) throws Exception {
-        String connectionName = sourceDefinition.getConnectionName();
+    public Partition getPartition(SourceConfig sourceConfig) throws Exception {
+        String connectionName = sourceConfig.getConnectionName();
         for (Iterator i=partitions.values().iterator(); i.hasNext(); ) {
             Partition partition = (Partition)i.next();
             if (partition.getConnectionConfig(connectionName) != null) return partition;
@@ -142,7 +140,7 @@ public class PartitionManager {
     }
 
     public Partition getPartition(ConnectionConfig connectionConfig) throws Exception {
-        String connectionName = connectionConfig.getConnectionName();
+        String connectionName = connectionConfig.getName();
         for (Iterator i=partitions.values().iterator(); i.hasNext(); ) {
             Partition partition = (Partition)i.next();
             if (partition.getConnectionConfig(connectionName) != null) return partition;

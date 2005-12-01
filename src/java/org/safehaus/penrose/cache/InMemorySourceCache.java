@@ -19,6 +19,7 @@ package org.safehaus.penrose.cache;
 
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.filter.Filter;
+import org.safehaus.penrose.partition.FieldConfig;
 
 import java.util.*;
 
@@ -176,11 +177,11 @@ public class InMemorySourceCache extends SourceCache {
         dataExpirationMap.put(pk, new Date(System.currentTimeMillis() + expiration * 60 * 1000));
 
         Collection uniqueKeys = new ArrayList();
-        for (Iterator j=sourceDefinition.getFieldDefinitions().iterator(); j.hasNext(); ) {
-            FieldDefinition fieldDefinition = (FieldDefinition)j.next();
-            if (!fieldDefinition.isUnique()) continue;
+        for (Iterator j=sourceConfig.getFieldConfigs().iterator(); j.hasNext(); ) {
+            FieldConfig fieldConfig = (FieldConfig)j.next();
+            if (!fieldConfig.isUnique()) continue;
 
-            String fieldName = fieldDefinition.getName();
+            String fieldName = fieldConfig.getName();
             Object value = values.getOne(fieldName);
 
             Row uniqueKey = new Row();

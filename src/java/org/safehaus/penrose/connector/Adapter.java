@@ -22,6 +22,7 @@ import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.session.PenroseSearchResults;
 import org.safehaus.penrose.session.PenroseSearchResults;
+import org.safehaus.penrose.partition.SourceConfig;
 import org.apache.log4j.Logger;
 
 import java.util.Collection;
@@ -55,46 +56,46 @@ public abstract class Adapter {
 	 * 
 	 * @throws Exception
 	 */
-    public abstract int bind(SourceDefinition sourceDefinition, AttributeValues values, String password) throws Exception;
+    public abstract int bind(SourceConfig sourceConfig, AttributeValues values, String password) throws Exception;
     
     /**
      * Search.
      *
      * @throws Exception
      */
-    public abstract PenroseSearchResults search(SourceDefinition sourceDefinition, Filter filter, long sizeLimit) throws Exception;
+    public abstract PenroseSearchResults search(SourceConfig sourceConfig, Filter filter, long sizeLimit) throws Exception;
 
     /**
      * Load.
      *
      * @throws Exception
      */
-    public abstract PenroseSearchResults load(SourceDefinition sourceDefinition, Filter filter, long sizeLimit) throws Exception;
+    public abstract PenroseSearchResults load(SourceConfig sourceConfig, Filter filter, long sizeLimit) throws Exception;
 
     /**
      * Add.
      * 
      * @throws Exception
      */
-    public abstract int add(SourceDefinition sourceDefinition, AttributeValues values) throws Exception;
+    public abstract int add(SourceConfig sourceConfig, AttributeValues values) throws Exception;
     
     /**
      * Modify.
      * 
      * @throws Exception
      */
-    public abstract int modify(SourceDefinition sourceDefinition, AttributeValues oldValues, AttributeValues newValues) throws Exception;
+    public abstract int modify(SourceConfig sourceConfig, AttributeValues oldValues, AttributeValues newValues) throws Exception;
 
     /**
      * Delete.
      * 
      * @throws Exception
      */
-    public abstract int delete(SourceDefinition sourceDefinition, AttributeValues values) throws Exception;
+    public abstract int delete(SourceConfig sourceConfig, AttributeValues values) throws Exception;
 
-    public abstract int getLastChangeNumber(SourceDefinition sourceDefinition) throws Exception;
+    public abstract int getLastChangeNumber(SourceConfig sourceConfig) throws Exception;
 
-    public abstract PenroseSearchResults getChanges(SourceDefinition sourceDefinition, int lastChangeNumber) throws Exception;
+    public abstract PenroseSearchResults getChanges(SourceConfig sourceConfig, int lastChangeNumber) throws Exception;
 
     public AdapterConfig getAdapterConfig() {
         return adapterConfig;

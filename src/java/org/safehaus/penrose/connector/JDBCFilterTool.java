@@ -2,6 +2,8 @@ package org.safehaus.penrose.connector;
 
 import org.safehaus.penrose.filter.*;
 import org.safehaus.penrose.mapping.*;
+import org.safehaus.penrose.partition.FieldConfig;
+import org.safehaus.penrose.partition.SourceConfig;
 import org.apache.log4j.Logger;
 
 import java.util.Iterator;
@@ -22,13 +24,13 @@ public class JDBCFilterTool {
      * @throws Exception
      */
     public String convert(
-            SourceDefinition sourceDefinition,
+            SourceConfig sourceConfig,
             Filter filter,
             Collection parameters)
             throws Exception {
 
         StringBuffer sb = new StringBuffer();
-        boolean valid = convert(sourceDefinition, filter, parameters, sb);
+        boolean valid = convert(sourceConfig, filter, parameters, sb);
 
         if (valid && sb.length() > 0) return sb.toString();
 
@@ -36,30 +38,30 @@ public class JDBCFilterTool {
     }
 
     boolean convert(
-            SourceDefinition sourceDefinition,
+            SourceConfig sourceConfig,
             Filter filter,
             Collection parameters,
             StringBuffer sb)
             throws Exception {
 
         if (filter instanceof NotFilter) {
-            return convert(sourceDefinition, (NotFilter) filter, parameters, sb);
+            return convert(sourceConfig, (NotFilter) filter, parameters, sb);
 
         } else if (filter instanceof AndFilter) {
-            return convert(sourceDefinition, (AndFilter) filter, parameters, sb);
+            return convert(sourceConfig, (AndFilter) filter, parameters, sb);
 
         } else if (filter instanceof OrFilter) {
-            return convert(sourceDefinition, (OrFilter) filter, parameters, sb);
+            return convert(sourceConfig, (OrFilter) filter, parameters, sb);
 
         } else if (filter instanceof SimpleFilter) {
-            return convert(sourceDefinition, (SimpleFilter) filter, parameters, sb);
+            return convert(sourceConfig, (SimpleFilter) filter, parameters, sb);
         }
 
         return true;
     }
 
     boolean convert(
-            SourceDefinition sourceDefinition,
+            SourceConfig sourceConfig,
             SimpleFilter filter,
             Collection parameters,
             StringBuffer sb)
@@ -83,17 +85,17 @@ public class JDBCFilterTool {
             value = value.substring(1, value.length()-1);
         }
 
-        FieldDefinition fieldDefinition = sourceDefinition.getFieldDefinition(name);
+        FieldConfig fieldConfig = sourceConfig.getFieldConfig(name);
 
-        if ("VARCHAR".equals(fieldDefinition.getType())) {
+        if ("VARCHAR".equals(fieldConfig.getType())) {
             sb.append("lower(");
-            sb.append(fieldDefinition.getOriginalName());
+            sb.append(fieldConfig.getOriginalName());
             sb.append(") ");
             sb.append(operator);
             sb.append(" lower(?)");
 
         } else {
-            sb.append(fieldDefinition.getOriginalName());
+            sb.append(fieldConfig.getOriginalName());
             sb.append(" ");
             sb.append(operator);
             sb.append(" ?");
@@ -105,7 +107,7 @@ public class JDBCFilterTool {
     }
 
     boolean convert(
-            SourceDefinition sourceDefinition,
+            SourceConfig sourceConfig,
             NotFilter filter,
             Collection parameters,
             StringBuffer sb)
@@ -114,7 +116,7 @@ public class JDBCFilterTool {
         StringBuffer sb2 = new StringBuffer();
 
         Filter f = filter.getFilter();
-        convert(sourceDefinition, f, parameters, sb2);
+        convert(sourceConfig, f, parameters, sb2);
 
         sb.append("not (");
         sb.append(sb2);
@@ -124,7 +126,7 @@ public class JDBCFilterTool {
     }
 
     boolean convert(
-            SourceDefinition sourceDefinition,
+            SourceConfig sourceConfig,
             AndFilter filter,
             Collection parameters,
             StringBuffer sb)
@@ -135,7 +137,7 @@ public class JDBCFilterTool {
             Filter f = (Filter) i.next();
 
             StringBuffer sb3 = new StringBuffer();
-            convert(sourceDefinition, f, parameters, sb3);
+            convert(sourceConfig, f, parameters, sb3);
 
             if (sb2.length() > 0 && sb3.length() > 0) {
                 sb2.append(" and ");
@@ -155,7 +157,7 @@ public class JDBCFilterTool {
     }
 
     boolean convert(
-            SourceDefinition sourceDefinition,
+            SourceConfig sourceConfig,
             OrFilter filter,
             Collection parameters,
             StringBuffer sb)
@@ -166,7 +168,7 @@ public class JDBCFilterTool {
             Filter f = (Filter) i.next();
 
             StringBuffer sb3 = new StringBuffer();
-            convert(sourceDefinition, f, parameters, sb3);
+            convert(sourceConfig, f, parameters, sb3);
 
             if (sb2.length() > 0 && sb3.length() > 0) {
                 sb2.append(" or ");

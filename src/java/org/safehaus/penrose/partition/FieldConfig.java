@@ -15,12 +15,12 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
-package org.safehaus.penrose.mapping;
+package org.safehaus.penrose.partition;
 
 /**
  * @author Endi S. Dewata
  */
-public class FieldDefinition implements Comparable, Cloneable {
+public class FieldConfig implements Comparable, Cloneable {
 
     public final static String DEFAULT_TYPE   = "VARCHAR";
     public final static int DEFAULT_LENGTH    = 50;
@@ -52,10 +52,10 @@ public class FieldDefinition implements Comparable, Cloneable {
      */
     private String encoding;
 
-	public FieldDefinition() {
+	public FieldConfig() {
 	}
 
-    public FieldDefinition(String name) {
+    public FieldConfig(String name) {
         this.name = name;
     }
 
@@ -153,50 +153,50 @@ public class FieldDefinition implements Comparable, Cloneable {
 
     public boolean equals(Object object) {
         if (object == null) return false;
-        if (!(object instanceof FieldDefinition)) return false;
+        if (!(object instanceof FieldConfig)) return false;
 
-        FieldDefinition fieldDefinition = (FieldDefinition)object;
-        if (!equals(name, fieldDefinition.name)) return false;
-        if (!equals(originalName, fieldDefinition.originalName)) return false;
-        if (primaryKey != fieldDefinition.primaryKey) return false;
-        if (searchable != fieldDefinition.searchable) return false;
-        if (unique != fieldDefinition.unique) return false;
-        if (index != fieldDefinition.index) return false;
-        if (!equals(encryption, fieldDefinition.encryption)) return false;
-        if (!equals(encoding, fieldDefinition.encoding)) return false;
-        if (!equals(type, fieldDefinition.type)) return false;
-        if (length != fieldDefinition.length) return false;
-        if (precision != fieldDefinition.precision) return false;
+        FieldConfig fieldConfig = (FieldConfig)object;
+        if (!equals(name, fieldConfig.name)) return false;
+        if (!equals(originalName, fieldConfig.originalName)) return false;
+        if (primaryKey != fieldConfig.primaryKey) return false;
+        if (searchable != fieldConfig.searchable) return false;
+        if (unique != fieldConfig.unique) return false;
+        if (index != fieldConfig.index) return false;
+        if (!equals(encryption, fieldConfig.encryption)) return false;
+        if (!equals(encoding, fieldConfig.encoding)) return false;
+        if (!equals(type, fieldConfig.type)) return false;
+        if (length != fieldConfig.length) return false;
+        if (precision != fieldConfig.precision) return false;
 
         return true;
     }
 
     public int compareTo(Object object) {
         if (object == null) return 0;
-        if (!(object instanceof FieldDefinition)) return 0;
+        if (!(object instanceof FieldConfig)) return 0;
 
-        FieldDefinition fd = (FieldDefinition)object;
+        FieldConfig fd = (FieldConfig)object;
         return name.compareTo(fd.name);
     }
 
-    public void copy(FieldDefinition fieldDefinition) {
-        name = fieldDefinition.name;
-        originalName = fieldDefinition.originalName;
-        primaryKey = fieldDefinition.primaryKey;
-        searchable = fieldDefinition.searchable;
-        unique = fieldDefinition.unique;
-        index = fieldDefinition.index;
-        encryption = fieldDefinition.encryption;
-        encoding = fieldDefinition.encoding;
-        type = fieldDefinition.type;
-        length = fieldDefinition.length;
-        precision = fieldDefinition.precision;
+    public void copy(FieldConfig fieldConfig) {
+        name = fieldConfig.name;
+        originalName = fieldConfig.originalName;
+        primaryKey = fieldConfig.primaryKey;
+        searchable = fieldConfig.searchable;
+        unique = fieldConfig.unique;
+        index = fieldConfig.index;
+        encryption = fieldConfig.encryption;
+        encoding = fieldConfig.encoding;
+        type = fieldConfig.type;
+        length = fieldConfig.length;
+        precision = fieldConfig.precision;
     }
 
     public Object clone() {
-        FieldDefinition fieldDefinition = new FieldDefinition();
-        fieldDefinition.copy(this);
-        return fieldDefinition;
+        FieldConfig fieldConfig = new FieldConfig();
+        fieldConfig.copy(this);
+        return fieldConfig;
     }
 
     public boolean isUnique() {

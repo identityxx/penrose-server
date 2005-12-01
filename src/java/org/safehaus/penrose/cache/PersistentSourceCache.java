@@ -39,7 +39,7 @@ public class PersistentSourceCache extends SourceCache {
         connectionManager = connector.getConnectionManager();
         connectionName = getParameter("connection");
 
-        cache = new JDBCCache(cacheConfig, sourceDefinition);
+        cache = new JDBCCache(cacheConfig, sourceConfig);
         cache.setConnectionManager(connectionManager);
         cache.setConnectionName(connectionName);
         cache.setSize(size);

@@ -21,6 +21,8 @@ import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.util.Formatter;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.connector.ConnectionManager;
+import org.safehaus.penrose.partition.FieldConfig;
+import org.safehaus.penrose.partition.SourceConfig;
 import org.apache.log4j.Logger;
 
 import java.sql.*;
@@ -38,17 +40,17 @@ public class JDBCCache {
     private ConnectionManager connectionManager;
     private String connectionName;
     CacheConfig cacheConfig;
-    SourceDefinition sourceDefinition;
+    SourceConfig sourceConfig;
 
     private int size;
     private int expiration;
 
     public JDBCCache(
             CacheConfig cacheConfig,
-            SourceDefinition sourceDefinition) {
+            SourceConfig sourceConfig) {
 
         this.cacheConfig = cacheConfig;
-        this.sourceDefinition = sourceDefinition;
+        this.sourceConfig = sourceConfig;
     }
 
     public void init() throws Exception {
@@ -60,18 +62,18 @@ public class JDBCCache {
     }
 
     public String getTableName() {
-        return sourceDefinition.getConnectionName()+"_"+sourceDefinition.getName();
+        return sourceConfig.getConnectionName()+"_"+sourceConfig.getName();
     }
 
-    public String getColumnDeclaration(FieldDefinition fieldDefinition) {
+    public String getColumnDeclaration(FieldConfig fieldConfig) {
         StringBuffer sb = new StringBuffer();
-        sb.append(fieldDefinition.getName());
+        sb.append(fieldConfig.getName());
         sb.append(" ");
-        sb.append(fieldDefinition.getType());
+        sb.append(fieldConfig.getType());
 
-        if ("VARCHAR".equals(fieldDefinition.getType()) && fieldDefinition.getLength() > 0) {
+        if ("VARCHAR".equals(fieldConfig.getType()) && fieldConfig.getLength() > 0) {
             sb.append("(");
-            sb.append(fieldDefinition.getLength());
+            sb.append(fieldConfig.getLength());
             sb.append(")");
         }
 
@@ -79,53 +81,53 @@ public class JDBCCache {
     }
 
     public void create() throws Exception {
-        log.info("Creating cache tables for "+sourceDefinition.getName()+" ...");
+        log.info("Creating cache tables for "+sourceConfig.getName()+" ...");
 
         createMainTable();
 
-        Collection fields = sourceDefinition.getNonPrimaryKeyFieldDefinitions();
+        Collection fields = sourceConfig.getNonPrimaryKeyFieldConfigs();
         for (Iterator i=fields.iterator(); i.hasNext(); ) {
-            FieldDefinition fieldDefinition = (FieldDefinition)i.next();
-            createFieldTable(fieldDefinition);
+            FieldConfig fieldConfig = (FieldConfig)i.next();
+            createFieldTable(fieldConfig);
         }
 
         createChangesTable();
     }
 
     public void clean() throws Exception {
-        log.info("Cleaning cache tables for "+sourceDefinition.getName()+" ...");
+        log.info("Cleaning cache tables for "+sourceConfig.getName()+" ...");
 
         cleanMainTable();
 
-        Collection fields = sourceDefinition.getNonPrimaryKeyFieldDefinitions();
+        Collection fields = sourceConfig.getNonPrimaryKeyFieldConfigs();
         for (Iterator i=fields.iterator(); i.hasNext(); ) {
-            FieldDefinition fieldDefinition = (FieldDefinition)i.next();
-            cleanFieldTable(fieldDefinition);
+            FieldConfig fieldConfig = (FieldConfig)i.next();
+            cleanFieldTable(fieldConfig);
         }
 
         cleanChangesTable();
     }
 
     public void drop() throws Exception {
-        log.info("Dropping cache tables for "+sourceDefinition.getName()+" ...");
+        log.info("Dropping cache tables for "+sourceConfig.getName()+" ...");
 
         dropMainTable();
 
-        Collection fields = sourceDefinition.getNonPrimaryKeyFieldDefinitions();
+        Collection fields = sourceConfig.getNonPrimaryKeyFieldConfigs();
         for (Iterator i=fields.iterator(); i.hasNext(); ) {
-            FieldDefinition fieldDefinition = (FieldDefinition)i.next();
-            dropFieldTable(fieldDefinition);
+            FieldConfig fieldConfig = (FieldConfig)i.next();
+            dropFieldTable(fieldConfig);
         }
 
         dropChangesTable();
     }
 
-    public void dropFieldTable(FieldDefinition fieldDefinition) throws Exception {
+    public void dropFieldTable(FieldConfig fieldConfig) throws Exception {
         StringBuffer sb = new StringBuffer();
         sb.append("drop table ");
         sb.append(getTableName());
         sb.append("_");
-        sb.append(fieldDefinition.getName());
+        sb.append(fieldConfig.getName());
 
         String sql = sb.toString();
 
@@ -184,12 +186,12 @@ public class JDBCCache {
         }
     }
 
-    public void cleanFieldTable(FieldDefinition fieldDefinition) throws Exception {
+    public void cleanFieldTable(FieldConfig fieldConfig) throws Exception {
         StringBuffer sb = new StringBuffer();
         sb.append("delete from ");
         sb.append(getTableName());
         sb.append("_");
-        sb.append(fieldDefinition.getName());
+        sb.append(fieldConfig.getName());
 
         String sql = sb.toString();
 
@@ -350,15 +352,15 @@ public class JDBCCache {
         StringBuffer columns = new StringBuffer();
         StringBuffer primaryKeys = new StringBuffer();
 
-        Collection fields = sourceDefinition.getPrimaryKeyFieldDefinitions();
+        Collection fields = sourceConfig.getPrimaryKeyFieldConfigs();
         for (Iterator i=fields.iterator(); i.hasNext(); ) {
-            FieldDefinition fieldDefinition = (FieldDefinition)i.next();
+            FieldConfig fieldConfig = (FieldConfig)i.next();
 
             if (columns.length() > 0) columns.append(", ");
-            columns.append(getColumnDeclaration(fieldDefinition));
+            columns.append(getColumnDeclaration(fieldConfig));
 
             if (primaryKeys.length() > 0) primaryKeys.append(", ");
-            primaryKeys.append(fieldDefinition.getName());
+            primaryKeys.append(fieldConfig.getName());
         }
 
         columns.append(", expiration DATETIME");
@@ -399,13 +401,13 @@ public class JDBCCache {
         }
     }
 
-    public void createFieldTable(FieldDefinition fieldDefinition) throws Exception {
+    public void createFieldTable(FieldConfig fieldConfig) throws Exception {
         StringBuffer columns = new StringBuffer();
         StringBuffer primaryKeys = new StringBuffer();
 
-        Collection fields = sourceDefinition.getPrimaryKeyFieldDefinitions();
+        Collection fields = sourceConfig.getPrimaryKeyFieldConfigs();
         for (Iterator i=fields.iterator(); i.hasNext(); ) {
-            FieldDefinition field = (FieldDefinition)i.next();
+            FieldConfig field = (FieldConfig)i.next();
 
             if (columns.length() > 0) columns.append(", ");
             columns.append(getColumnDeclaration(field));
@@ -415,10 +417,10 @@ public class JDBCCache {
         }
 
         columns.append(", ");
-        columns.append(getColumnDeclaration(fieldDefinition));
+        columns.append(getColumnDeclaration(fieldConfig));
 
         primaryKeys.append(", ");
-        primaryKeys.append(fieldDefinition.getName());
+        primaryKeys.append(fieldConfig.getName());
 
         columns.append(", primary key (");
         columns.append(primaryKeys);
@@ -428,7 +430,7 @@ public class JDBCCache {
         create.append("create table ");
         create.append(getTableName());
         create.append("_");
-        create.append(fieldDefinition.getName());
+        create.append(fieldConfig.getName());
 
         String sql = create+" ("+columns+")";
 
@@ -464,10 +466,10 @@ public class JDBCCache {
 
         Map values = new TreeMap();
 
-        Collection fields = sourceDefinition.getNonPrimaryKeyFieldDefinitions();
+        Collection fields = sourceConfig.getNonPrimaryKeyFieldConfigs();
         for (Iterator i=fields.iterator(); i.hasNext(); ) {
-            FieldDefinition fieldDefinition = (FieldDefinition)i.next();
-            getColumnValues(fieldDefinition, pks, values);
+            FieldConfig fieldConfig = (FieldConfig)i.next();
+            getColumnValues(fieldConfig, pks, values);
         }
 
         return (AttributeValues)values.get(pk);
@@ -480,10 +482,10 @@ public class JDBCCache {
 
         Collection pks = searchPrimaryKeys(keys, missingKeys);
 
-        Collection fields = sourceDefinition.getNonPrimaryKeyFieldDefinitions();
+        Collection fields = sourceConfig.getNonPrimaryKeyFieldConfigs();
         for (Iterator i=fields.iterator(); i.hasNext(); ) {
-            FieldDefinition fieldDefinition = (FieldDefinition)i.next();
-            getColumnValues(fieldDefinition, pks, values);
+            FieldConfig fieldConfig = (FieldConfig)i.next();
+            getColumnValues(fieldConfig, pks, values);
         }
 
         return values;
@@ -495,10 +497,10 @@ public class JDBCCache {
         String tableName = getTableName();
 
         StringBuffer columns = new StringBuffer();
-        Collection pkFields = sourceDefinition.getPrimaryKeyFieldDefinitions();
+        Collection pkFields = sourceConfig.getPrimaryKeyFieldConfigs();
         for (Iterator i=pkFields.iterator(); i.hasNext(); ) {
-            FieldDefinition fieldDefinition = (FieldDefinition)i.next();
-            String fieldName = fieldDefinition.getName();
+            FieldConfig fieldConfig = (FieldConfig)i.next();
+            String fieldName = fieldConfig.getName();
 
             if (columns.length() > 0) columns.append(", ");
             columns.append(tableName);
@@ -506,10 +508,10 @@ public class JDBCCache {
             columns.append(fieldName);
         }
 
-        Collection uniqueFields = sourceDefinition.getUniqueFieldDefinitions();
+        Collection uniqueFields = sourceConfig.getUniqueFieldConfigs();
         for (Iterator i=uniqueFields.iterator(); i.hasNext(); ) {
-            FieldDefinition fieldDefinition = (FieldDefinition)i.next();
-            String fieldName = fieldDefinition.getName();
+            FieldConfig fieldConfig = (FieldConfig)i.next();
+            String fieldName = fieldConfig.getName();
 
             String t = getTableName()+"_"+fieldName;
             tables.add(t);
@@ -529,10 +531,10 @@ public class JDBCCache {
                 String name = (String)j.next();
                 Object value = key.get(name);
 
-                FieldDefinition fieldDefinition = sourceDefinition.getFieldDefinition(name);
+                FieldConfig fieldConfig = sourceConfig.getFieldConfig(name);
                 String t;
 
-                if (fieldDefinition.isPrimaryKey()) {
+                if (fieldConfig.isPrimaryKey()) {
                     t = getTableName();
                 } else {
                     t = getTableName()+"_"+name;
@@ -562,10 +564,10 @@ public class JDBCCache {
             whereClause.append(")");
         }
 
-        String s = sourceDefinition.getParameter(SourceDefinition.REFRESH_METHOD);
-        String refreshMethod = s == null ? SourceDefinition.DEFAULT_REFRESH_METHOD : s;
+        String s = sourceConfig.getParameter(SourceConfig.REFRESH_METHOD);
+        String refreshMethod = s == null ? SourceConfig.DEFAULT_REFRESH_METHOD : s;
 
-        if (!SourceDefinition.POLL_CHANGES.equals(refreshMethod)) {
+        if (!SourceConfig.POLL_CHANGES.equals(refreshMethod)) {
             if (whereClause.length() > 0) whereClause.append(" and ");
             whereClause.append(tableName);
             whereClause.append(".expiration >= ?");
@@ -581,8 +583,8 @@ public class JDBCCache {
 
             StringBuffer sb = new StringBuffer();
             for (Iterator j=pkFields.iterator(); j.hasNext(); ) {
-                FieldDefinition fieldDefinition = (FieldDefinition)j.next();
-                String fieldName = fieldDefinition.getName();
+                FieldConfig fieldConfig = (FieldConfig)j.next();
+                String fieldName = fieldConfig.getName();
 
                 if (sb.length() > 0) sb.append(" and ");
 
@@ -703,12 +705,12 @@ public class JDBCCache {
     public Row getPrimaryKey(ResultSet rs) throws Exception {
         Row pk = new Row();
 
-        Collection pkFields = sourceDefinition.getPrimaryKeyFieldDefinitions();
+        Collection pkFields = sourceConfig.getPrimaryKeyFieldConfigs();
         for (Iterator i=pkFields.iterator(); i.hasNext(); ) {
-            FieldDefinition fieldDefinition = (FieldDefinition)i.next();
-            Object value = rs.getObject(fieldDefinition.getName());
+            FieldConfig fieldConfig = (FieldConfig)i.next();
+            Object value = rs.getObject(fieldConfig.getName());
 
-            pk.set(fieldDefinition.getName(), value);
+            pk.set(fieldConfig.getName(), value);
         }
 
         return pk;
@@ -717,32 +719,32 @@ public class JDBCCache {
     public Collection getUniqueKeys(ResultSet rs) throws Exception {
         Collection uniqueKeys = new ArrayList();
 
-        Collection uniqueFields = sourceDefinition.getUniqueFieldDefinitions();
+        Collection uniqueFields = sourceConfig.getUniqueFieldConfigs();
         for (Iterator i=uniqueFields.iterator(); i.hasNext(); ) {
-            FieldDefinition fieldDefinition = (FieldDefinition)i.next();
-            Object value = rs.getObject(fieldDefinition.getName());
+            FieldConfig fieldConfig = (FieldConfig)i.next();
+            Object value = rs.getObject(fieldConfig.getName());
 
             Row key = new Row();
-            key.set(fieldDefinition.getName(), value);
+            key.set(fieldConfig.getName(), value);
             uniqueKeys.add(key);
         }
 
         return uniqueKeys;
     }
 
-    public String createLoadQuery(FieldDefinition fieldDefinition, Collection pks, Collection parameters) throws Exception {
+    public String createLoadQuery(FieldConfig fieldConfig, Collection pks, Collection parameters) throws Exception {
         StringBuffer columns = new StringBuffer();
 
-        Collection pkFields = sourceDefinition.getPrimaryKeyFieldDefinitions();
+        Collection pkFields = sourceConfig.getPrimaryKeyFieldConfigs();
         for (Iterator i=pkFields.iterator(); i.hasNext(); ) {
-            FieldDefinition field = (FieldDefinition)i.next();
+            FieldConfig field = (FieldConfig)i.next();
 
             if (columns.length() > 0) columns.append(", ");
             columns.append(field.getName());
         }
 
         columns.append(", ");
-        columns.append(fieldDefinition.getName());
+        columns.append(fieldConfig.getName());
 
         StringBuffer where = new StringBuffer();
 
@@ -773,7 +775,7 @@ public class JDBCCache {
         sb.append(" from ");
         sb.append(getTableName());
         sb.append("_");
-        sb.append(fieldDefinition.getName());
+        sb.append(fieldConfig.getName());
 
         if (where.length() > 0) {
             sb.append(" where ");
@@ -783,12 +785,12 @@ public class JDBCCache {
         return sb.toString();
     }
 
-    public Map getColumnValues(FieldDefinition fieldDefinition, Collection pks, Map values) throws Exception {
+    public Map getColumnValues(FieldConfig fieldConfig, Collection pks, Map values) throws Exception {
 
         if (pks.isEmpty()) return values;
 
         Collection parameters = new ArrayList();
-        String sql = createLoadQuery(fieldDefinition, pks, parameters);
+        String sql = createLoadQuery(fieldConfig, pks, parameters);
 
         Connection con = null;
         PreparedStatement ps = null;
@@ -834,7 +836,7 @@ public class JDBCCache {
             while (rs.next()) {
                 Row pk = getPrimaryKey(rs);
 
-                Object value = rs.getObject(fieldDefinition.getName());
+                Object value = rs.getObject(fieldConfig.getName());
 
                 AttributeValues av = (AttributeValues)values.get(pk);
                 if (av == null) {
@@ -843,7 +845,7 @@ public class JDBCCache {
                     values.put(pk, av);
                 }
 
-                av.add(fieldDefinition.getName(), value);
+                av.add(fieldConfig.getName(), value);
 
                 if (first) {
                     width = printPrimaryKeyHeader();
@@ -870,18 +872,18 @@ public class JDBCCache {
     public void put(Row pk, AttributeValues sourceValues) throws Exception {
         if (!insertEntry(pk)) updateEntry(pk);
 
-        Collection fields = sourceDefinition.getNonPrimaryKeyFieldDefinitions();
+        Collection fields = sourceConfig.getNonPrimaryKeyFieldConfigs();
         for (Iterator i=fields.iterator(); i.hasNext(); ) {
-            FieldDefinition fieldDefinition = (FieldDefinition)i.next();
+            FieldConfig fieldConfig = (FieldConfig)i.next();
 
-            deleteColumnValue(fieldDefinition, pk);
+            deleteColumnValue(fieldConfig, pk);
 
-            Collection values = sourceValues.get(fieldDefinition.getName());
+            Collection values = sourceValues.get(fieldConfig.getName());
             if (values == null) continue;
 
             for (Iterator iterator = values.iterator(); iterator.hasNext(); ) {
                 Object value = iterator.next();
-                insertColumnValue(pk, fieldDefinition, value);
+                insertColumnValue(pk, fieldConfig, value);
             }
         }
     }
@@ -892,9 +894,9 @@ public class JDBCCache {
         StringBuffer questionMarks = new StringBuffer();
         Collection parameters = new ArrayList();
 
-        Collection fields = sourceDefinition.getPrimaryKeyFieldDefinitions();
+        Collection fields = sourceConfig.getPrimaryKeyFieldConfigs();
         for (Iterator i=fields.iterator(); i.hasNext(); ) {
-            FieldDefinition field = (FieldDefinition)i.next();
+            FieldConfig field = (FieldConfig)i.next();
 
             if (columns.length() > 0) columns.append(", ");
             columns.append(field.getName());
@@ -965,9 +967,9 @@ public class JDBCCache {
         parameters.add(new Timestamp(System.currentTimeMillis() + expiration * 60 * 1000));
 
         StringBuffer whereClause = new StringBuffer();
-        Collection pkFields = sourceDefinition.getPrimaryKeyFieldDefinitions();
+        Collection pkFields = sourceConfig.getPrimaryKeyFieldConfigs();
         for (Iterator i=pkFields.iterator(); i.hasNext(); ) {
-            FieldDefinition field = (FieldDefinition)i.next();
+            FieldConfig field = (FieldConfig)i.next();
 
             if (whereClause.length() > 0) whereClause.append(" and ");
 
@@ -1022,15 +1024,15 @@ public class JDBCCache {
         }
     }
 
-    public void insertColumnValue(Row pk, FieldDefinition fieldDefinition, Object value) throws Exception {
+    public void insertColumnValue(Row pk, FieldConfig fieldConfig, Object value) throws Exception {
 
         StringBuffer columns = new StringBuffer();
         StringBuffer questionMarks = new StringBuffer();
         Collection parameters = new ArrayList();
 
-        Collection fields = sourceDefinition.getPrimaryKeyFieldDefinitions();
+        Collection fields = sourceConfig.getPrimaryKeyFieldConfigs();
         for (Iterator i=fields.iterator(); i.hasNext(); ) {
-            FieldDefinition field = (FieldDefinition)i.next();
+            FieldConfig field = (FieldConfig)i.next();
 
             if (columns.length() > 0) columns.append(", ");
             columns.append(field.getName());
@@ -1043,7 +1045,7 @@ public class JDBCCache {
         }
 
         columns.append(", ");
-        columns.append(fieldDefinition.getName());
+        columns.append(fieldConfig.getName());
 
         questionMarks.append(", ?");
 
@@ -1053,7 +1055,7 @@ public class JDBCCache {
         sb.append("insert into ");
         sb.append(getTableName());
         sb.append("_");
-        sb.append(fieldDefinition.getName());
+        sb.append(fieldConfig.getName());
         sb.append(" (");
         sb.append(columns);
         sb.append(") values (");
@@ -1101,10 +1103,10 @@ public class JDBCCache {
     public void remove(Row pk) throws Exception {
         deleteEntry(pk);
 
-        Collection fields = sourceDefinition.getNonPrimaryKeyFieldDefinitions();
+        Collection fields = sourceConfig.getNonPrimaryKeyFieldConfigs();
         for (Iterator i=fields.iterator(); i.hasNext(); ) {
-            FieldDefinition fieldDefinition = (FieldDefinition)i.next();
-            deleteColumnValue(fieldDefinition, pk);
+            FieldConfig fieldConfig = (FieldConfig)i.next();
+            deleteColumnValue(fieldConfig, pk);
         }
     }
 
@@ -1169,7 +1171,7 @@ public class JDBCCache {
         }
     }
 
-    public void deleteColumnValue(FieldDefinition fieldDefinition, Object key) throws Exception {
+    public void deleteColumnValue(FieldConfig fieldConfig, Object key) throws Exception {
         Row pk = (Row)key;
 
         StringBuffer where = new StringBuffer();
@@ -1190,7 +1192,7 @@ public class JDBCCache {
         sb.append("delete from ");
         sb.append(getTableName());
         sb.append("_");
-        sb.append(fieldDefinition.getName());
+        sb.append(fieldConfig.getName());
         sb.append(" where ");
         sb.append(where);
 
@@ -1384,7 +1386,7 @@ public class JDBCCache {
     public Collection search(Filter filter) throws Exception {
 
         Collection parameters = new ArrayList();
-        String sql = tool.convert(sourceDefinition, filter, parameters);
+        String sql = tool.convert(sourceConfig, filter, parameters);
 
         java.sql.Connection con = null;
         PreparedStatement ps = null;
@@ -1459,12 +1461,12 @@ public class JDBCCache {
         StringBuffer resultHeader = new StringBuffer();
         resultHeader.append("|");
 
-        Collection pkFields = sourceDefinition.getPrimaryKeyFieldDefinitions();
+        Collection pkFields = sourceConfig.getPrimaryKeyFieldConfigs();
         for (Iterator j=pkFields.iterator(); j.hasNext(); ) {
-            FieldDefinition fieldDefinition = (FieldDefinition)j.next();
+            FieldConfig fieldConfig = (FieldConfig)j.next();
 
-            String name = fieldDefinition.getName();
-            int length = fieldDefinition.getLength() > 15 ? 15 : fieldDefinition.getLength();
+            String name = fieldConfig.getName();
+            int length = fieldConfig.getLength() > 15 ? 15 : fieldConfig.getLength();
 
             resultHeader.append(" ");
             resultHeader.append(Formatter.rightPad(name, length));
@@ -1484,12 +1486,12 @@ public class JDBCCache {
         StringBuffer resultFields = new StringBuffer();
         resultFields.append("|");
 
-        Collection fields = sourceDefinition.getPrimaryKeyFieldDefinitions();
+        Collection fields = sourceConfig.getPrimaryKeyFieldConfigs();
         for (Iterator j=fields.iterator(); j.hasNext(); ) {
-            FieldDefinition fieldDefinition = (FieldDefinition)j.next();
+            FieldConfig fieldConfig = (FieldConfig)j.next();
 
-            Object value = row.get(fieldDefinition.getName());
-            int length = fieldDefinition.getLength() > 15 ? 15 : fieldDefinition.getLength();
+            Object value = row.get(fieldConfig.getName());
+            int length = fieldConfig.getLength() > 15 ? 15 : fieldConfig.getLength();
 
             resultFields.append(" ");
             resultFields.append(Formatter.rightPad(value == null ? "null" : value.toString(), length));

@@ -20,6 +20,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 <!DOCTYPE digester-rules PUBLIC
   "-//Jakarta Apache //DTD digester-rules XML V1.0//EN"
   "digester-rules.dtd">
+  
 -->
 <digester-rules>
 
