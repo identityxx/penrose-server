@@ -75,21 +75,23 @@ public class PenroseJMXService {
 
         mbeanServer.registerMBean(penroseAdmin, ObjectName.getInstance(PenroseClient.MBEAN_NAME));
 
-        registry = new NamingService(penroseConfig.getJmxRmiPort());
-        mbeanServer.registerMBean(registry, registryName);
-        registry.start();
+        if (penroseConfig.getJmxRmiPort() >= 0) {
+            registry = new NamingService(penroseConfig.getJmxRmiPort());
+            mbeanServer.registerMBean(registry, registryName);
+            registry.start();
 
-        JMXServiceURL url = new JMXServiceURL("service:jmx:rmi://localhost/jndi/rmi://localhost:"+penroseConfig.getJmxRmiPort()+"/jmx");
-        jmxAuthenticator = new PenroseJMXAuthenticator("ldap://localhost:"+penroseConfig.getPort(), "uid={0},ou=system");
+            JMXServiceURL url = new JMXServiceURL("service:jmx:rmi://localhost/jndi/rmi://localhost:"+penroseConfig.getJmxRmiPort()+"/jmx");
+            jmxAuthenticator = new PenroseJMXAuthenticator("ldap://localhost:"+penroseConfig.getPort(), "uid={0},ou=system");
 
-        HashMap environment = new HashMap();
-        environment.put("jmx.remote.authenticator", jmxAuthenticator);
+            HashMap environment = new HashMap();
+            environment.put("jmx.remote.authenticator", jmxAuthenticator);
 
-        rmiConnector = JMXConnectorServerFactory.newJMXConnectorServer(url, environment, null);
-        mbeanServer.registerMBean(rmiConnector, rmiConnectorName);
-        rmiConnector.start();
+            rmiConnector = JMXConnectorServerFactory.newJMXConnectorServer(url, environment, null);
+            mbeanServer.registerMBean(rmiConnector, rmiConnectorName);
+            rmiConnector.start();
 
-        log.warn("Listening to port "+penroseConfig.getJmxRmiPort()+".");
+            log.warn("Listening to port "+penroseConfig.getJmxRmiPort()+".");
+        }
 /*
         xsltProcessor = new XSLTProcessor();
         mbeanServer.registerMBean(xsltProcessor, xsltProcessorName);
@@ -104,16 +106,20 @@ public class PenroseJMXService {
     }
 
     public void stop() throws Exception {
+
+        PenroseConfig penroseConfig = penrose.getPenroseConfig();
 /*
         httpConnector.stop();
         mbeanServer.unregisterMBean(httpConnectorName);
         mbeanServer.unregisterMBean(xsltProcessorName);
 */
-        rmiConnector.stop();
-        mbeanServer.unregisterMBean(rmiConnectorName);
+        if (penroseConfig.getJmxRmiPort() >= 0) {
+            rmiConnector.stop();
+            mbeanServer.unregisterMBean(rmiConnectorName);
 
-        registry.stop();
-        mbeanServer.unregisterMBean(registryName);
+            registry.stop();
+            mbeanServer.unregisterMBean(registryName);
+        }
 
         log.warn("JMX service has been shutdown.");
     }

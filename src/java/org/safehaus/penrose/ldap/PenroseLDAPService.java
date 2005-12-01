@@ -50,6 +50,8 @@ public class PenroseLDAPService {
     public void start() throws Exception {
 
         PenroseConfig penroseConfig = penrose.getPenroseConfig();
+        if (penroseConfig.getPort() < 0) return;
+
         String home = penroseConfig.getHome();
 
         MutableServerStartupConfiguration configuration =  new MutableServerStartupConfiguration();
@@ -154,6 +156,7 @@ public class PenroseLDAPService {
     public void stop() throws Exception {
 
         PenroseConfig penroseConfig = penrose.getPenroseConfig();
+        if (penroseConfig.getPort() < 0) return;
 
         Hashtable env = new ShutdownConfiguration().toJndiEnvironment();
         env.put(Context.INITIAL_CONTEXT_FACTORY, CoreContextFactory.class.getName());

@@ -42,55 +42,44 @@ public class PenroseServer implements SignalHandler {
     private PenroseJMXService jmxService;
     private PenroseLDAPService ldapService;
 
+    public PenroseServer() throws Exception {
+        this((String)null);
+    }
+
     public PenroseServer(String home) throws Exception {
         PenroseConfigReader reader = new PenroseConfigReader((home == null ? "" : home+File.separator)+"conf"+File.separator+"server.xml");
         penroseConfig = reader.read();
         penroseConfig.setHome(home);
+
+        init();
     }
 
     public PenroseServer(PenroseConfig penroseConfig) throws Exception {
         this.penroseConfig = penroseConfig;
+
+        init();
+    }
+
+    public void init() throws Exception {
+        penrose = new Penrose(penroseConfig);
+
+        ldapService = new PenroseLDAPService();
+        ldapService.setPenrose(penrose);
+
+        jmxService = new PenroseJMXService();
+        jmxService.setPenrose(penrose);
     }
 
     public void start() throws Exception {
-        startPenroseService();
-        startJmxService();
-        startLdapService();
-    }
-
-    public void stop() throws Exception {
-        stopLdapService();
-        stopJmxService();
-        stopPenroseService();
-    }
-
-    public void startPenroseService() throws Exception {
-        penrose = new Penrose(penroseConfig);
         penrose.start();
-    }
-
-    public void stopPenroseService() throws Exception {
-        penrose.stop();
-    }
-
-    public void startLdapService() throws Exception {
-        ldapService = new PenroseLDAPService();
-        ldapService.setPenrose(penrose);
+        jmxService.start();
         ldapService.start();
     }
 
-    public void stopLdapService() throws Exception {
+    public void stop() throws Exception {
         ldapService.stop();
-    }
-
-    public void startJmxService() throws Exception {
-        jmxService = new PenroseJMXService();
-        jmxService.setPenrose(penrose);
-        jmxService.start();
-    }
-
-    public void stopJmxService() throws Exception {
         jmxService.stop();
+        penrose.stop();
     }
 
     /**
