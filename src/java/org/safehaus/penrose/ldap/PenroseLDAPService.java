@@ -20,11 +20,9 @@ package org.safehaus.penrose.ldap;
 import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.schema.SchemaConfig;
 import org.safehaus.penrose.config.PenroseConfig;
-import org.apache.ldap.server.configuration.MutableServerStartupConfiguration;
-import org.apache.ldap.server.configuration.MutableAuthenticatorConfiguration;
-import org.apache.ldap.server.configuration.MutableInterceptorConfiguration;
-import org.apache.ldap.server.configuration.SyncConfiguration;
+import org.apache.ldap.server.configuration.*;
 import org.apache.ldap.server.jndi.ServerContextFactory;
+import org.apache.ldap.server.jndi.CoreContextFactory;
 import org.apache.log4j.Logger;
 
 import javax.naming.Context;
@@ -39,7 +37,6 @@ public class PenroseLDAPService {
 
     public Logger log = Logger.getLogger(PenroseLDAPService.class);
 
-    private String homeDirectory;
     private Penrose penrose;
 
     public Penrose getPenrose() {
@@ -53,6 +50,7 @@ public class PenroseLDAPService {
     public void start() throws Exception {
 
         PenroseConfig penroseConfig = penrose.getPenroseConfig();
+        String home = penroseConfig.getHome();
 
         MutableServerStartupConfiguration configuration =  new MutableServerStartupConfiguration();
 
@@ -61,13 +59,14 @@ public class PenroseLDAPService {
         configuration.setLdapsPort(penroseConfig.getSecurePort());
 
         // Configure working directory
-        String workingDirectory = (homeDirectory == null ? "" : homeDirectory+File.separator)+"var"+File.separator+"data";
+        String workingDirectory = (home == null ? "" : home+File.separator)+"var"+File.separator+"data";
         configuration.setWorkingDirectory(new File(workingDirectory));
 
         // Configure bootstrap schemas
         Set bootstrapSchemas = new HashSet();
         for (Iterator i=penroseConfig.getSchemaConfigs().iterator(); i.hasNext(); ) {
             SchemaConfig schemaConfig = (SchemaConfig)i.next();
+
             String name = schemaConfig.getName();
             String className = "org.apache.ldap.server.schema.bootstrap."+
                     name.substring(0, 1).toUpperCase()+name.substring(1)+
@@ -154,13 +153,17 @@ public class PenroseLDAPService {
 
     public void stop() throws Exception {
 
-    }
+        PenroseConfig penroseConfig = penrose.getPenroseConfig();
 
-    public String getHomeDirectory() {
-        return homeDirectory;
-    }
+        Hashtable env = new ShutdownConfiguration().toJndiEnvironment();
+        env.put(Context.INITIAL_CONTEXT_FACTORY, CoreContextFactory.class.getName());
+        env.put(Context.PROVIDER_URL, "ou=system");
+        env.put(Context.SECURITY_PRINCIPAL, penroseConfig.getRootDn());
+        env.put(Context.SECURITY_CREDENTIALS, penroseConfig.getRootPassword());
+        env.put(Context.SECURITY_AUTHENTICATION, "simple");
 
-    public void setHomeDirectory(String homeDirectory) {
-        this.homeDirectory = homeDirectory;
+        new InitialDirContext(env);
+
+        log.warn("LDAP service has been shutdown.");
     }
 }

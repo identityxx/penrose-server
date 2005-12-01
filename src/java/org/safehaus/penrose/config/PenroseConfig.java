@@ -44,8 +44,8 @@ public class PenroseConfig {
 
     private String home;
 
-    private String rootDn;
-    private String rootPassword;
+    private String rootDn = "uid=admin,ou=system";
+    private String rootPassword = "secret";
 	
     private Map systemProperties = new LinkedHashMap();
     private Map schemaConfigs    = new LinkedHashMap();

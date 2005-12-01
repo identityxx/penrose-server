@@ -23,6 +23,7 @@ import java.io.File;
 import org.apache.log4j.*;
 import org.safehaus.penrose.management.PenroseJMXService;
 import org.safehaus.penrose.config.PenroseConfig;
+import org.safehaus.penrose.config.PenroseConfigReader;
 import org.safehaus.penrose.ldap.PenroseLDAPService;
 import sun.misc.Signal;
 import sun.misc.SignalHandler;
@@ -35,16 +36,20 @@ public class PenroseServer implements SignalHandler {
 
     public static Logger log = Logger.getLogger(PenroseServer.class);
 
-    String home;
-    PenroseConfig penroseConfig;
+    private PenroseConfig penroseConfig;
+    private Penrose penrose;
 
-    Penrose penrose;
+    private PenroseJMXService jmxService;
+    private PenroseLDAPService ldapService;
 
-    PenroseJMXService jmxService;
-    PenroseLDAPService ldapService;
+    public PenroseServer(String home) throws Exception {
+        PenroseConfigReader reader = new PenroseConfigReader((home == null ? "" : home+File.separator)+"conf"+File.separator+"server.xml");
+        penroseConfig = reader.read();
+        penroseConfig.setHome(home);
+    }
 
-    public PenroseServer(String homeDirectory) throws Exception {
-        this.home = homeDirectory;
+    public PenroseServer(PenroseConfig penroseConfig) throws Exception {
+        this.penroseConfig = penroseConfig;
     }
 
     public void start() throws Exception {
@@ -60,10 +65,8 @@ public class PenroseServer implements SignalHandler {
     }
 
     public void startPenroseService() throws Exception {
-        penrose = new Penrose(home);
+        penrose = new Penrose(penroseConfig);
         penrose.start();
-
-        penroseConfig = penrose.getPenroseConfig();
     }
 
     public void stopPenroseService() throws Exception {
@@ -72,7 +75,6 @@ public class PenroseServer implements SignalHandler {
 
     public void startLdapService() throws Exception {
         ldapService = new PenroseLDAPService();
-        ldapService.setHomeDirectory(home);
         ldapService.setPenrose(penrose);
         ldapService.start();
     }
@@ -160,6 +162,38 @@ public class PenroseServer implements SignalHandler {
         for (int i = 0; i < numGroups; i++) {
             visit(groups[i], level + 1);
         }
+    }
+
+    public PenroseConfig getPenroseConfig() {
+        return penroseConfig;
+    }
+
+    public void setPenroseConfig(PenroseConfig penroseConfig) {
+        this.penroseConfig = penroseConfig;
+    }
+
+    public Penrose getPenrose() {
+        return penrose;
+    }
+
+    public void setPenrose(Penrose penrose) {
+        this.penrose = penrose;
+    }
+
+    public PenroseJMXService getJmxService() {
+        return jmxService;
+    }
+
+    public void setJmxService(PenroseJMXService jmxService) {
+        this.jmxService = jmxService;
+    }
+
+    public PenroseLDAPService getLdapService() {
+        return ldapService;
+    }
+
+    public void setLdapService(PenroseLDAPService ldapService) {
+        this.ldapService = ldapService;
     }
 
     public static void main( String[] args ) throws Exception {

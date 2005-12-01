@@ -1,106 +1,95 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <sources>
-  <connection name="MySQL">
-    <adapter-name>JDBC</adapter-name>
+  <source name="categories">
+    <connection-name>MySQL</connection-name>
+    <field name="description" length="100"/>
+    <field name="id" primaryKey="true" type="INTEGER" length="5"/>
+    <field name="name" unique="true"/>
     <parameter>
-      <param-name>driver</param-name>
-      <param-value>com.mysql.jdbc.Driver</param-value>
+      <param-name>tableName</param-name>
+      <param-value>categories</param-value>
+    </parameter>
+  </source>
+  <source name="customer_emails">
+    <connection-name>MySQL</connection-name>
+    <field name="email" primaryKey="true"/>
+    <field name="username" index="true"/>
+    <parameter>
+      <param-name>tableName</param-name>
+      <param-value>customer_emails</param-value>
+    </parameter>
+  </source>
+  <source name="customers">
+    <connection-name>MySQL</connection-name>
+    <field name="encPassword" length="255"/>
+    <field name="firstName" primaryKey="true"/>
+    <field name="lastName" primaryKey="true"/>
+    <field name="password" length="10"/>
+    <field name="username" unique="true" length="10"/>
+    <parameter>
+      <param-name>tableName</param-name>
+      <param-value>customers</param-value>
+    </parameter>
+  </source>
+  <source name="employees">
+    <connection-name>MySQL</connection-name>
+    <field name="encPassword" length="255"/>
+    <field name="firstName" primaryKey="true"/>
+    <field name="lastName" primaryKey="true"/>
+    <field name="password" length="10"/>
+    <field name="username" unique="true" length="10"/>
+    <parameter>
+      <param-name>tableName</param-name>
+      <param-value>employees</param-value>
+    </parameter>
+  </source>
+  <source name="order_details">
+    <connection-name>MySQL</connection-name>
+    <field name="orderId" primaryKey="true" type="INTEGER" length="5"/>
+    <field name="price" type="DOUBLE" length="8"/>
+    <field name="productId" primaryKey="true" type="INTEGER" length="5"/>
+    <field name="quantity" type="INTEGER" length="5"/>
+    <parameter>
+      <param-name>tableName</param-name>
+      <param-value>order_details</param-value>
+    </parameter>
+  </source>
+  <source name="order_histories">
+    <connection-name>MySQL</connection-name>
+    <field name="description"/>
+    <field name="historyDate" primaryKey="true" type="TIMESTAMP"/>
+    <field name="orderId" primaryKey="true" type="INTEGER"/>
+    <field name="productId" primaryKey="true" type="INTEGER"/>
+    <parameter>
+      <param-name>tableName</param-name>
+      <param-value>order_histories</param-value>
+    </parameter>
+  </source>
+  <source name="orders">
+    <connection-name>MySQL</connection-name>
+    <field name="customer" length="10"/>
+    <field name="employee" length="10"/>
+    <field name="id" primaryKey="true" type="INTEGER"/>
+    <field name="orderDate" type="TIMESTAMP"/>
+    <parameter>
+      <param-name>tableName</param-name>
+      <param-value>orders</param-value>
+    </parameter>
+  </source>
+  <source name="products">
+    <connection-name>MySQL</connection-name>
+    <field name="categoryId" type="INTEGER" length="5"/>
+    <field name="id" primaryKey="true" type="INTEGER" length="5"/>
+    <field name="name" unique="true"/>
+    <field name="price" type="DOUBLE" length="8"/>
+    <parameter>
+      <param-name>tableName</param-name>
+      <param-value>products</param-value>
     </parameter>
     <parameter>
-      <param-name>password</param-name>
-      <param-value>penrose</param-value>
+      <param-name>autoReload</param-name>
+      <param-value>true</param-value>
     </parameter>
-    <parameter>
-      <param-name>url</param-name>
-      <param-value>jdbc:mysql://localhost/example?autoReconnect=true</param-value>
-    </parameter>
-    <parameter>
-      <param-name>user</param-name>
-      <param-value>penrose</param-value>
-    </parameter>
-    <source name="categories">
-      <field name="description" length="100"/>
-      <field name="id" primaryKey="true" type="INTEGER" length="5"/>
-      <field name="name" unique="true"/>
-      <parameter>
-        <param-name>tableName</param-name>
-        <param-value>categories</param-value>
-      </parameter>
-    </source>
-    <source name="customer_emails">
-      <field name="email" primaryKey="true"/>
-      <field name="username" index="true"/>
-      <parameter>
-        <param-name>tableName</param-name>
-        <param-value>customer_emails</param-value>
-      </parameter>
-    </source>
-    <source name="customers">
-      <field name="encPassword" length="255"/>
-      <field name="firstName" primaryKey="true"/>
-      <field name="lastName" primaryKey="true"/>
-      <field name="password" length="10"/>
-      <field name="username" unique="true" length="10"/>
-      <parameter>
-        <param-name>tableName</param-name>
-        <param-value>customers</param-value>
-      </parameter>
-    </source>
-    <source name="employees">
-      <field name="encPassword" length="255"/>
-      <field name="firstName" primaryKey="true"/>
-      <field name="lastName" primaryKey="true"/>
-      <field name="password" length="10"/>
-      <field name="username" unique="true" length="10"/>
-      <parameter>
-        <param-name>tableName</param-name>
-        <param-value>employees</param-value>
-      </parameter>
-    </source>
-    <source name="order_details">
-      <field name="orderId" primaryKey="true" type="INTEGER" length="5"/>
-      <field name="price" type="DOUBLE" length="8"/>
-      <field name="productId" primaryKey="true" type="INTEGER" length="5"/>
-      <field name="quantity" type="INTEGER" length="5"/>
-      <parameter>
-        <param-name>tableName</param-name>
-        <param-value>order_details</param-value>
-      </parameter>
-    </source>
-    <source name="order_histories">
-      <field name="description"/>
-      <field name="historyDate" primaryKey="true" type="TIMESTAMP"/>
-      <field name="orderId" primaryKey="true" type="INTEGER"/>
-      <field name="productId" primaryKey="true" type="INTEGER"/>
-      <parameter>
-        <param-name>tableName</param-name>
-        <param-value>order_histories</param-value>
-      </parameter>
-    </source>
-    <source name="orders">
-      <field name="customer" length="10"/>
-      <field name="employee" length="10"/>
-      <field name="id" primaryKey="true" type="INTEGER"/>
-      <field name="orderDate" type="TIMESTAMP"/>
-      <parameter>
-        <param-name>tableName</param-name>
-        <param-value>orders</param-value>
-      </parameter>
-    </source>
-    <source name="products">
-      <field name="categoryId" type="INTEGER" length="5"/>
-      <field name="id" primaryKey="true" type="INTEGER" length="5"/>
-      <field name="name" unique="true"/>
-      <field name="price" type="DOUBLE" length="8"/>
-      <parameter>
-        <param-name>tableName</param-name>
-        <param-value>products</param-value>
-      </parameter>
-      <parameter>
-        <param-name>autoReload</param-name>
-        <param-value>true</param-value>
-      </parameter>
-    </source>
-  </connection>
+  </source>
 </sources>

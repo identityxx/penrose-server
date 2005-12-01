@@ -15,28 +15,39 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
-import java.util.Iterator;
-import java.util.ArrayList;
+package org.safehaus.penrose.server;
 
-import org.safehaus.penrose.Penrose;
-import org.safehaus.penrose.session.PenroseSession;
-import org.safehaus.penrose.session.PenroseSearchResults;
-import org.safehaus.penrose.session.PenroseSearchControls;
-import org.safehaus.penrose.schema.SchemaConfig;
-import org.safehaus.penrose.partition.PartitionConfig;
+import junit.framework.TestCase;
+import org.apache.log4j.*;
 import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.config.DefaultPenroseConfig;
-import org.ietf.ldap.*;
-import org.apache.log4j.*;
+import org.safehaus.penrose.schema.SchemaConfig;
+import org.safehaus.penrose.partition.PartitionConfig;
+import org.safehaus.penrose.PenroseServer;
+import org.safehaus.penrose.Penrose;
+import org.safehaus.penrose.session.PenroseSession;
+import org.safehaus.penrose.session.PenroseSearchControls;
+import org.safehaus.penrose.session.PenroseSearchResults;
+import org.ietf.ldap.LDAPEntry;
+
+import javax.naming.directory.DirContext;
+import javax.naming.directory.InitialDirContext;
+import javax.naming.directory.SearchControls;
+import javax.naming.directory.SearchResult;
+import javax.naming.NamingEnumeration;
+import javax.naming.Context;
+import java.util.Hashtable;
+import java.util.Iterator;
 
 /**
  * @author Endi S. Dewata
  */
-public class Demo {
-	
-	public final static String SUFFIX = "dc=Example,dc=com";
+public class PenroseServiceTest extends TestCase {
 
-	public void run () throws Exception {
+    PenroseConfig penroseConfig;
+    Penrose penrose;
+
+    public void setUp() throws Exception {
 
         ConsoleAppender appender = new ConsoleAppender(new PatternLayout("[%d{MM/dd/yyyy HH:mm:ss}] %m%n"));
         BasicConfigurator.configure(appender);
@@ -47,7 +58,7 @@ public class Demo {
         Logger logger = Logger.getLogger("org.safehaus.penrose");
         logger.setLevel(Level.toLevel("INFO"));
 
-        PenroseConfig penroseConfig = new DefaultPenroseConfig();
+        penroseConfig = new DefaultPenroseConfig();
 
         SchemaConfig schemaConfig = new SchemaConfig("samples/schema/example.schema");
         penroseConfig.addSchemaConfig(schemaConfig);
@@ -55,55 +66,35 @@ public class Demo {
         PartitionConfig partitionConfig = new PartitionConfig("example", "samples/conf");
         penroseConfig.addPartitionConfig(partitionConfig);
 
-        Penrose penrose = new Penrose(penroseConfig);
+        penrose = new Penrose(penroseConfig);
         penrose.start();
 
+    }
+
+    public void tearDown() throws Exception {
+        penrose.stop();
+    }
+
+    public void testPenroseService() throws Exception {
+
         PenroseSession session = penrose.newSession();
-        session.bind("uid=admin,ou=system", "secret");
+        session.bind(penroseConfig.getRootDn(), penroseConfig.getRootPassword());
 
         PenroseSearchControls sc = new PenroseSearchControls();
         sc.setScope(PenroseSearchControls.SCOPE_ONE);
 
-        PenroseSearchResults results = session.search(
-                "ou=Categories,"+SUFFIX,
-                "(objectClass=*)",
-                sc);
+        String baseDn = "ou=Categories,dc=Example,dc=com";
+
+        System.out.println("Searching "+baseDn+":");
+        PenroseSearchResults results = session.search(baseDn, "(objectClass=*)", sc);
 
         for (Iterator i = results.iterator(); i.hasNext();) {
             LDAPEntry entry = (LDAPEntry) i.next();
-            System.out.println(toString(entry));
+            System.out.println("dn: "+entry.getDN());
         }
 
         session.unbind();
 
         session.close();
-        
-        penrose.stop();
-    }
-
-    public String toString(LDAPEntry entry) throws Exception {
-
-        StringBuffer sb = new StringBuffer();
-        sb.append("dn: "+entry.getDN()+"\n");
-
-        LDAPAttributeSet attributeSet = entry.getAttributeSet();
-        for (Iterator i=attributeSet.iterator(); i.hasNext(); ) {
-            LDAPAttribute attribute = (LDAPAttribute)i.next();
-
-            String name = attribute.getName();
-
-            String values[] = attribute.getStringValueArray();
-
-            for (int j=0; j<values.length; j++) {
-                sb.append(name+": "+values[j]+"\n");
-            }
-        }
-
-        return sb.toString();
-    }
-
-    public static void main(String args[]) throws Exception {
-        Demo demo = new Demo();
-        demo.run();
     }
 }

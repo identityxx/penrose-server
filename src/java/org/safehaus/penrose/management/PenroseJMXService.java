@@ -90,7 +90,7 @@ public class PenroseJMXService {
         rmiConnector.start();
 
         log.warn("Listening to port "+penroseConfig.getJmxRmiPort()+".");
-
+/*
         xsltProcessor = new XSLTProcessor();
         mbeanServer.registerMBean(xsltProcessor, xsltProcessorName);
 
@@ -100,17 +100,22 @@ public class PenroseJMXService {
         httpConnector.start();
 
         log.warn("Listening to port "+penroseConfig.getJmxHttpPort()+".");
+*/
     }
 
     public void stop() throws Exception {
+/*
         httpConnector.stop();
-        rmiConnector.stop();
-        registry.stop();
-
         mbeanServer.unregisterMBean(httpConnectorName);
         mbeanServer.unregisterMBean(xsltProcessorName);
+*/
+        rmiConnector.stop();
         mbeanServer.unregisterMBean(rmiConnectorName);
+
+        registry.stop();
         mbeanServer.unregisterMBean(registryName);
+
+        log.warn("JMX service has been shutdown.");
     }
 
     public Penrose getPenrose() {

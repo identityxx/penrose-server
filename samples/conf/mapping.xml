@@ -45,7 +45,6 @@
     </at>
     <source name="products">
       <source-name>products</source-name>
-      <connection-name>MySQL</connection-name>
       <field name="name">
         <variable>cn</variable>
       </field>
@@ -61,7 +60,6 @@
     </source>
     <source name="cat" readOnly="true">
       <source-name>categories</source-name>
-      <connection-name>MySQL</connection-name>
       <field name="name">
         <variable>description</variable>
       </field>
@@ -86,7 +84,6 @@
     </at>
     <source name="categories">
       <source-name>categories</source-name>
-      <connection-name>MySQL</connection-name>
       <field name="description">
         <variable>description</variable>
       </field>
@@ -111,7 +108,6 @@
     </at>
     <source name="products">
       <source-name>products</source-name>
-      <connection-name>MySQL</connection-name>
       <field name="price">
         <variable>price</variable>
       </field>
@@ -127,7 +123,6 @@
     </at>
     <source name="products2">
       <source-name>products</source-name>
-      <connection-name>MySQL</connection-name>
       <field name="name">
         <variable>cn</variable>
       </field>
@@ -149,7 +144,6 @@
     </at>
     <source name="products">
       <source-name>products</source-name>
-      <connection-name>MySQL</connection-name>
       <field name="price">
         <expression>if (price == void || price == null) return;
 int i = price.indexOf(" ");
@@ -167,7 +161,6 @@ return price.substring(0, i);</expression>
     </at>
     <source name="products2">
       <source-name>products</source-name>
-      <connection-name>MySQL</connection-name>
       <field name="name">
         <variable>cn</variable>
       </field>
@@ -192,7 +185,6 @@ return price.substring(0, i);</expression>
     </at>
     <source name="products">
       <source-name>products</source-name>
-      <connection-name>MySQL</connection-name>
       <field name="name">
         <variable>cn</variable>
       </field>
@@ -221,7 +213,6 @@ return price.substring(0, i);</expression>
     </at>
     <source name="categories">
       <source-name>categories</source-name>
-      <connection-name>MySQL</connection-name>
       <field name="description">
         <variable>description</variable>
       </field>
@@ -252,7 +243,6 @@ return price.substring(0, i);</expression>
     </at>
     <source name="products">
       <source-name>products</source-name>
-      <connection-name>MySQL</connection-name>
       <field name="name">
         <variable>cn</variable>
       </field>
@@ -280,11 +270,9 @@ return price.substring(0, i);</expression>
     </at>
     <source name="order_details">
       <source-name>order_details</source-name>
-      <connection-name>MySQL</connection-name>
     </source>
     <source name="orders">
       <source-name>orders</source-name>
-      <connection-name>MySQL</connection-name>
       <field name="customer">
         <variable>uid</variable>
       </field>
@@ -323,7 +311,6 @@ return customers.firstName+" "+customers.lastName;
     </at>
     <source name="customers">
       <source-name>customers</source-name>
-      <connection-name>MySQL</connection-name>
       <field name="firstName">
         <expression>if (cn == void || cn == null) return null;
 int i = cn.indexOf(" ");
@@ -339,11 +326,9 @@ return cn.substring(i+1);</expression>
     </source>
     <source name="order_details">
       <source-name>order_details</source-name>
-      <connection-name>MySQL</connection-name>
     </source>
     <source name="orders">
       <source-name>orders</source-name>
-      <connection-name>MySQL</connection-name>
     </source>
     <relationship>
       <expression>products.id = order_details.productId</expression>
@@ -371,7 +356,6 @@ return cn.substring(i+1);</expression>
     </at>
     <source name="products">
       <source-name>products</source-name>
-      <connection-name>MySQL</connection-name>
       <field name="name">
         <variable>cn</variable>
       </field>
@@ -426,7 +410,6 @@ return "{SHA}"+PasswordUtil.encode("Base64", bytes);</expression>
     </at>
     <source name="customers">
       <source-name>customers</source-name>
-      <connection-name>MySQL</connection-name>
       <field name="encPassword">
         <expression>import org.safehaus.penrose.util.*;
 
@@ -467,7 +450,6 @@ return cn.substring(i+1);</expression>
     </source>
     <source name="customer_emails" required="false">
       <source-name>customer_emails</source-name>
-      <connection-name>MySQL</connection-name>
       <field name="email">
         <variable>email</variable>
       </field>
@@ -492,7 +474,6 @@ return cn.substring(i+1);</expression>
     </at>
     <source name="orders">
       <source-name>orders</source-name>
-      <connection-name>MySQL</connection-name>
       <field name="id">
         <variable>orderId</variable>
       </field>
@@ -520,11 +501,9 @@ return cn.substring(i+1);</expression>
     </at>
     <source name="order_details">
       <source-name>order_details</source-name>
-      <connection-name>MySQL</connection-name>
     </source>
     <source name="products">
       <source-name>products</source-name>
-      <connection-name>MySQL</connection-name>
       <field name="name">
         <variable>cn</variable>
       </field>
@@ -555,7 +534,6 @@ return cn.substring(i+1);</expression>
     </at>
     <source name="categories">
       <source-name>categories</source-name>
-      <connection-name>MySQL</connection-name>
       <field name="description">
         <variable>description</variable>
       </field>
@@ -583,15 +561,12 @@ return cn.substring(i+1);</expression>
     </at>
     <source name="order_details">
       <source-name>order_details</source-name>
-      <connection-name>MySQL</connection-name>
     </source>
     <source name="orders">
       <source-name>orders</source-name>
-      <connection-name>MySQL</connection-name>
     </source>
     <source name="products">
       <source-name>products</source-name>
-      <connection-name>MySQL</connection-name>
       <field name="name">
         <variable>cn</variable>
       </field>
@@ -625,7 +600,6 @@ return cn.substring(i+1);</expression>
     </at>
     <source name="categories">
       <source-name>categories</source-name>
-      <connection-name>MySQL</connection-name>
       <field name="description">
         <variable>description</variable>
       </field>
@@ -635,15 +609,12 @@ return cn.substring(i+1);</expression>
     </source>
     <source name="order_details">
       <source-name>order_details</source-name>
-      <connection-name>MySQL</connection-name>
     </source>
     <source name="orders">
       <source-name>orders</source-name>
-      <connection-name>MySQL</connection-name>
     </source>
     <source name="products">
       <source-name>products</source-name>
-      <connection-name>MySQL</connection-name>
     </source>
     <relationship>
       <expression>orders.id = order_details.orderId</expression>
@@ -684,7 +655,6 @@ if (customers == void || customers == null || customers.firstName == void || cus
     </at>
     <source name="customers">
       <source-name>customers</source-name>
-      <connection-name>MySQL</connection-name>
       <field name="firstName">
         <expression foreach="uniqueMember" var="x">int i = x.indexOf("=");
 int j = x.indexOf(",");
@@ -722,7 +692,6 @@ return customers2.firstName+" "+customers2.lastName;
     </at>
     <source name="customers2">
       <source-name>customers</source-name>
-      <connection-name>MySQL</connection-name>
       <field name="firstName">
         <expression>if (cn == void || cn == null) return null;
 int i = cn.indexOf(" ");
@@ -766,11 +735,9 @@ return cn.substring(i+1);</expression>
     </at>
     <source name="customers2">
       <source-name>customers</source-name>
-      <connection-name>MySQL</connection-name>
     </source>
     <source name="orders">
       <source-name>orders</source-name>
-      <connection-name>MySQL</connection-name>
       <field name="customer">
         <variable>uid</variable>
       </field>
@@ -814,7 +781,6 @@ return cn.substring(i+1);</expression>
     </at>
     <source name="orders">
       <source-name>orders</source-name>
-      <connection-name>MySQL</connection-name>
       <field name="id">
         <variable>orderId</variable>
       </field>
@@ -839,18 +805,15 @@ return cn.substring(i+1);</expression>
     </at>
     <source name="products">
       <source-name>products</source-name>
-      <connection-name>MySQL</connection-name>
       <field name="name">
         <variable>cn</variable>
       </field>
     </source>
     <source name="order_details">
       <source-name>order_details</source-name>
-      <connection-name>MySQL</connection-name>
     </source>
     <source name="categories">
       <source-name>categories</source-name>
-      <connection-name>MySQL</connection-name>
     </source>
     <relationship>
       <expression>orders.id = order_details.orderId</expression>
@@ -884,7 +847,6 @@ return cn.substring(i+1);</expression>
     </at>
     <source name="order_histories">
       <source-name>order_histories</source-name>
-      <connection-name>MySQL</connection-name>
     </source>
     <relationship>
       <expression>order_details.orderId = order_histories.orderId</expression>
@@ -909,11 +871,9 @@ return cn.substring(i+1);</expression>
     </at>
     <source name="order_details">
       <source-name>order_details</source-name>
-      <connection-name>MySQL</connection-name>
     </source>
     <source name="order_histories">
       <source-name>order_histories</source-name>
-      <connection-name>MySQL</connection-name>
     </source>
     <relationship>
       <expression>orders.id = order_details.orderId</expression>
@@ -941,7 +901,6 @@ return cn.substring(i+1);</expression>
     </at>
     <source name="orders">
       <source-name>orders</source-name>
-      <connection-name>MySQL</connection-name>
       <field name="id">
         <variable>orderId</variable>
       </field>
@@ -997,7 +956,6 @@ return "{SHA}"+PasswordUtil.encode("Base64", bytes);</expression>
     </at>
     <source name="employees">
       <source-name>employees</source-name>
-      <connection-name>MySQL</connection-name>
       <field name="encPassword">
         <expression>import org.safehaus.penrose.util.*;
 
@@ -1056,7 +1014,6 @@ return cn.substring(i+1);</expression>
     </at>
     <source name="employees">
       <source-name>employees</source-name>
-      <connection-name>MySQL</connection-name>
       <field name="username">
         <expression foreach="uniqueMember" var="x">int i = x.indexOf("=");
 int j = x.indexOf(",");
@@ -1074,7 +1031,6 @@ return x.substring(i+1, j);</expression>
     </at>
     <source name="customers">
       <source-name>customers</source-name>
-      <connection-name>MySQL</connection-name>
       <field name="username">
         <expression foreach="uniqueMember" var="x">int i = x.indexOf("=");
 int j = x.indexOf(",");

@@ -2,7 +2,7 @@
 
 <connections>
   <connection name="MySQL">
-    <connection-type>JDBC</connection-type>
+    <adapter-name>JDBC</adapter-name>
     <parameter>
       <param-name>driver</param-name>
       <param-value>com.mysql.jdbc.Driver</param-value>
