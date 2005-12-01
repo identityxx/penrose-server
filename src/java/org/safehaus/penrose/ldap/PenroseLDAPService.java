@@ -18,13 +18,13 @@
 package org.safehaus.penrose.ldap;
 
 import org.safehaus.penrose.Penrose;
+import org.safehaus.penrose.schema.SchemaConfig;
 import org.safehaus.penrose.config.PenroseConfig;
 import org.apache.ldap.server.configuration.MutableServerStartupConfiguration;
 import org.apache.ldap.server.configuration.MutableAuthenticatorConfiguration;
 import org.apache.ldap.server.configuration.MutableInterceptorConfiguration;
 import org.apache.ldap.server.configuration.SyncConfiguration;
 import org.apache.ldap.server.jndi.ServerContextFactory;
-import org.apache.ldap.server.schema.bootstrap.*;
 import org.apache.log4j.Logger;
 
 import javax.naming.Context;
@@ -66,18 +66,19 @@ public class PenroseLDAPService {
 
         // Configure bootstrap schemas
         Set bootstrapSchemas = new HashSet();
-        bootstrapSchemas.add(new AutofsSchema());
-        bootstrapSchemas.add(new CorbaSchema());
-        bootstrapSchemas.add(new CoreSchema());
-        bootstrapSchemas.add(new CosineSchema());
-        bootstrapSchemas.add(new ApacheSchema());
-        bootstrapSchemas.add(new CollectiveSchema());
-        bootstrapSchemas.add(new InetorgpersonSchema());
-        bootstrapSchemas.add(new JavaSchema());
-        bootstrapSchemas.add(new Krb5kdcSchema());
-        bootstrapSchemas.add(new NisSchema());
-        bootstrapSchemas.add(new SystemSchema());
-        bootstrapSchemas.add(new ApachednsSchema());
+        for (Iterator i=penroseConfig.getSchemaConfigs().iterator(); i.hasNext(); ) {
+            SchemaConfig schemaConfig = (SchemaConfig)i.next();
+            String name = schemaConfig.getName();
+            String className = "org.apache.ldap.server.schema.bootstrap."+
+                    name.substring(0, 1).toUpperCase()+name.substring(1)+
+                    "Schema";
+
+            log.debug("Loading "+className+".");
+            Class clazz = Class.forName(className);
+            Object object = clazz.newInstance();
+            bootstrapSchemas.add(object);
+        }
+
         configuration.setBootstrapSchemas(bootstrapSchemas);
 
         // Register Penrose authenticator

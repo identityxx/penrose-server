@@ -86,7 +86,12 @@ public class SourceConfig implements Cloneable {
 
 	public SourceConfig() {
 	}
-	
+
+    public SourceConfig(String name, String connectionName) {
+        this.name = name;
+        this.connectionName = connectionName;
+    }
+    
 	public String getName() {
 		return name;
 	}
