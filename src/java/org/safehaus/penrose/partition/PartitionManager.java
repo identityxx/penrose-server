@@ -46,7 +46,6 @@ public class PartitionManager {
 
     PartitionValidator partitionValidator;
 
-    private Map partitionConfigs = new TreeMap();
     private Map partitions = new TreeMap();
 
     public PartitionManager() {
@@ -79,8 +78,7 @@ public class PartitionManager {
             }
         }
 
-        partitionConfigs.put(partitionConfig.getName(), partitionConfig);
-        partitions.put(partitionConfig.getName(), partition);
+        addPartition(partitionConfig.getName(), partition);
 
         return partition;
     }
@@ -112,8 +110,11 @@ public class PartitionManager {
         this.schema = schema;
     }
 
+    public void addPartition(String name, Partition partition) {
+        partitions.put(name, partition);
+    }
+
     public Partition removePartition(String name) throws Exception {
-        partitionConfigs.remove(name);
         return (Partition)partitions.remove(name);
     }
 
@@ -169,10 +170,6 @@ public class PartitionManager {
 
     public Collection getPartitions() {
         return partitions.values();
-    }
-
-    public Collection getPartitionConfigs() {
-        return partitionConfigs.values();
     }
 
     public String getHome() {

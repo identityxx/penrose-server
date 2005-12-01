@@ -153,7 +153,7 @@ public class Penrose {
 
     public void storePartitions() throws Exception {
 
-        for (Iterator i=partitionManager.getPartitionConfigs().iterator(); i.hasNext(); ) {
+        for (Iterator i=penroseConfig.getPartitionConfigs().iterator(); i.hasNext(); ) {
             PartitionConfig partitionConfig = (PartitionConfig)i.next();
             partitionManager.store(partitionConfig);
         }
