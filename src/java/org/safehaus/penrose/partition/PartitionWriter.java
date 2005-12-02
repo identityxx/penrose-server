@@ -44,20 +44,24 @@ public class PartitionWriter {
 
     Logger log = Logger.getLogger(getClass());
 
-    String directory;
+    File directory;
 
 	public PartitionWriter(String directory) {
-        this.directory = directory;
+        this.directory = new File(directory);
 	}
 
     public void write(Partition partition) throws Exception {
-        storeMappingConfig(partition, new File(directory, "mapping.xml"));
-        storeConnectionsConfig(partition, new File(directory, "connections.xml"));
-        storeSourcesConfig(partition, new File(directory, "sources.xml"));
-        storeModulesConfig(partition, new File(directory, "modules.xml"));
+        directory.mkdirs();
+
+        storeMappingConfig(partition);
+        storeConnectionsConfig(partition);
+        storeSourcesConfig(partition);
+        storeModulesConfig(partition);
     }
 
-	public void storeMappingConfig(Partition partition, File file) throws Exception {
+	public void storeMappingConfig(Partition partition) throws Exception {
+        File file = new File(directory, "mapping.xml");
+
 		FileWriter fw = new FileWriter(file);
 		OutputFormat format = OutputFormat.createPrettyPrint();
         format.setTrimText(false);
@@ -73,7 +77,9 @@ public class PartitionWriter {
 		writer.close();
 	}
 
-    public void storeConnectionsConfig(Partition partition, File file) throws Exception {
+    public void storeConnectionsConfig(Partition partition) throws Exception {
+        File file = new File(directory, "connections.xml");
+
 		FileWriter fw = new FileWriter(file);
 		OutputFormat format = OutputFormat.createPrettyPrint();
         format.setTrimText(false);
@@ -89,7 +95,9 @@ public class PartitionWriter {
 		writer.close();
     }
 
-    public void storeSourcesConfig(Partition partition, File file) throws Exception {
+    public void storeSourcesConfig(Partition partition) throws Exception {
+        File file = new File(directory, "sources.xml");
+
 		FileWriter fw = new FileWriter(file);
 		OutputFormat format = OutputFormat.createPrettyPrint();
         format.setTrimText(false);
@@ -105,7 +113,9 @@ public class PartitionWriter {
 		writer.close();
     }
 
-    public void storeModulesConfig(Partition partition, File file) throws Exception {
+    public void storeModulesConfig(Partition partition) throws Exception {
+        File file = new File(directory, "modules.xml");
+
 		FileWriter fw = new FileWriter(file);
 		OutputFormat format = OutputFormat.createPrettyPrint();
         format.setTrimText(false);
@@ -231,6 +241,10 @@ public class PartitionWriter {
     public Element toElement(SourceConfig source) {
     	Element element = new DefaultElement("source");
     	element.addAttribute("name", source.getName());
+
+        Element adapterName = new DefaultElement("connection-name");
+        adapterName.add(new DefaultText(source.getConnectionName()));
+        element.add(adapterName);
 
     	for (Iterator i = source.getFieldConfigs().iterator(); i.hasNext(); ) {
     		FieldConfig field = (FieldConfig)i.next();

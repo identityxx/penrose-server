@@ -75,13 +75,12 @@ public class PenroseAdmin implements PenroseAdminMBean {
     public byte[] download(String filename) throws IOException {
         String homeDirectory = penrose.getPenroseConfig().getHome();
         File file = new File((homeDirectory == null ? "" : homeDirectory+File.separator)+filename);
+
         log.debug("Downloading "+file.getAbsolutePath());
 
         FileInputStream in = new FileInputStream(file);
-
         byte content[] = new byte[(int)file.length()];
         in.read(content);
-
         in.close();
 
         return content;
@@ -90,7 +89,10 @@ public class PenroseAdmin implements PenroseAdminMBean {
     public void upload(String filename, byte content[]) throws IOException {
         String homeDirectory = penrose.getPenroseConfig().getHome();
         File file = new File((homeDirectory == null ? "" : homeDirectory+File.separator)+filename);
+        file.getParentFile().mkdirs();
+
         log.debug("Uploading "+file.getAbsolutePath());
+
         FileOutputStream out = new FileOutputStream(file);
         out.write(content);
         out.close();
