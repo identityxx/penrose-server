@@ -44,18 +44,21 @@ public class PenroseAdmin implements PenroseAdminMBean {
     }
 
     public Collection listFiles(String directory) throws Exception {
+        Collection results = new ArrayList();
+
         String homeDirectory = penrose.getPenroseConfig().getHome();
         File file = new File((homeDirectory == null ? "" : homeDirectory+File.separator)+directory);
+        if (!file.exists()) return results;
+
         File children[] = file.listFiles();
-        Collection result = new ArrayList();
         for (int i=0; i<children.length; i++) {
             if (children[i].isDirectory()) {
-                result.addAll(listFiles(directory+File.separator+children[i].getName()));
+                results.addAll(listFiles(directory+File.separator+children[i].getName()));
             } else {
-                result.add(directory+File.separator+children[i].getName());
+                results.add(directory+File.separator+children[i].getName());
             }
         }
-        return result;
+        return results;
     }
 
     public Collection getLoggerNames(String path) throws Exception {
@@ -75,6 +78,7 @@ public class PenroseAdmin implements PenroseAdminMBean {
     public byte[] download(String filename) throws IOException {
         String homeDirectory = penrose.getPenroseConfig().getHome();
         File file = new File((homeDirectory == null ? "" : homeDirectory+File.separator)+filename);
+        if (!file.exists()) return null;
 
         log.debug("Downloading "+file.getAbsolutePath());
 

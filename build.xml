@@ -173,6 +173,7 @@
         <copy todir="target/dist/samples">
             <fileset dir="samples"/>
         </copy>
+        <mkdir dir="target/dist/partitions"/>
         <mkdir dir="target/dist/var"/>
     </target>
 
