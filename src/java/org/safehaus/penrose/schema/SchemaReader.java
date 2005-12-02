@@ -22,6 +22,7 @@ import org.apache.log4j.Logger;
 import java.util.Collection;
 import java.util.Iterator;
 import java.io.FileReader;
+import java.io.File;
 
 /**
  * @author Endi S. Dewata
@@ -42,7 +43,11 @@ public class SchemaReader {
 
         Schema schema = new Schema();
 
-        FileReader in = new FileReader(filename);
+        File file = new File(filename);
+        if (!file.exists()) return schema;
+
+        FileReader in = new FileReader(file);
+        
         SchemaParser parser = new SchemaParser(in);
         Collection c = parser.parse();
 
