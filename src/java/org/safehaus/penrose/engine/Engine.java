@@ -18,8 +18,7 @@
 package org.safehaus.penrose.engine;
 
 import org.safehaus.penrose.session.PenroseSearchResults;
-import org.safehaus.penrose.session.PenroseSearchResults;
-import org.safehaus.penrose.schema.Schema;
+import org.safehaus.penrose.schema.SchemaManager;
 import org.safehaus.penrose.connector.*;
 import org.safehaus.penrose.cache.CacheConfig;
 import org.safehaus.penrose.cache.EntryCache;
@@ -65,7 +64,7 @@ public class Engine {
     private boolean stopping = false;
 
     private InterpreterFactory interpreterFactory;
-    private Schema schema;
+    private SchemaManager schemaManager;
     private Connector connector;
     private ConnectionManager connectionManager;
 
@@ -822,7 +821,7 @@ public class Engine {
 
                 if (f.isEmpty()) continue;
 
-                Row normalizedFilter = schema.normalize(f);
+                Row normalizedFilter = schemaManager.normalize(f);
                 normalizedFilters.add(normalizedFilter);
             }
         }
@@ -1128,14 +1127,6 @@ public class Engine {
         this.connector = connector;
     }
 
-    public Schema getSchema() {
-        return schema;
-    }
-
-    public void setSchema(Schema schema) {
-        this.schema = schema;
-    }
-
     public InterpreterFactory getInterpreterFactory() {
         return interpreterFactory;
     }
@@ -1166,6 +1157,14 @@ public class Engine {
 
     public void setServerConfig(PenroseConfig penroseConfig) {
         this.penroseConfig = penroseConfig;
+    }
+
+    public SchemaManager getSchemaManager() {
+        return schemaManager;
+    }
+
+    public void setSchemaManager(SchemaManager schemaManager) {
+        this.schemaManager = schemaManager;
     }
 }
 

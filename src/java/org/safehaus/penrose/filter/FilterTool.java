@@ -22,8 +22,8 @@ import java.util.*;
 import java.io.StringReader;
 
 import org.apache.log4j.Logger;
-import org.safehaus.penrose.schema.Schema;
 import org.safehaus.penrose.schema.AttributeType;
+import org.safehaus.penrose.schema.SchemaManager;
 import org.safehaus.penrose.schema.matchingRule.EqualityMatchingRule;
 import org.safehaus.penrose.schema.matchingRule.OrderingMatchingRule;
 import org.safehaus.penrose.schema.matchingRule.SubstringsMatchingRule;
@@ -36,7 +36,7 @@ public class FilterTool {
 
     static Logger log = Logger.getLogger(FilterTool.class);
 
-    private Schema schema;
+    private SchemaManager schemaManager;
 
     public int debug = 0;
 
@@ -90,7 +90,7 @@ public class FilterTool {
         Collection set = values.get(attributeName);
         if (set == null) return false;
 
-        AttributeType attributeType = schema.getAttributeType(attributeName);
+        AttributeType attributeType = schemaManager.getAttributeType(attributeName);
 
         String substring = attributeType == null ? null : attributeType.getSubstring();
         SubstringsMatchingRule substringsMatchingRule = SubstringsMatchingRule.getInstance(substring);
@@ -131,7 +131,7 @@ public class FilterTool {
         Collection set = values.get(attributeName);
         if (set == null) return false;
 
-        AttributeType attributeType = schema.getAttributeType(attributeName);
+        AttributeType attributeType = schemaManager.getAttributeType(attributeName);
 
         if ("=".equals(operator)) {
             String equality = attributeType == null ? null : attributeType.getEquality();
@@ -367,7 +367,7 @@ public class FilterTool {
         String value = attributeMapping.getConstant();
         if (value == null) return true;
 
-        AttributeType attributeType = schema.getAttributeType(attributeName);
+        AttributeType attributeType = schemaManager.getAttributeType(attributeName);
 
         if ("=".equals(operator)) {
             String equality = attributeType == null ? null : attributeType.getEquality();
@@ -413,7 +413,7 @@ public class FilterTool {
         String value = attributeMapping.getConstant();
         if (value == null) return true;
 
-        AttributeType attributeType = schema.getAttributeType(attributeName);
+        AttributeType attributeType = schemaManager.getAttributeType(attributeName);
 
         String substring = attributeType == null ? null : attributeType.getSubstring();
         SubstringsMatchingRule substringsMatchingRule = SubstringsMatchingRule.getInstance(substring);
@@ -541,11 +541,11 @@ public class FilterTool {
         return false;
     }
 
-    public Schema getSchema() {
-        return schema;
+    public SchemaManager getSchemaManager() {
+        return schemaManager;
     }
 
-    public void setSchema(Schema schema) {
-        this.schema = schema;
+    public void setSchemaManager(SchemaManager schemaManager) {
+        this.schemaManager = schemaManager;
     }
 }

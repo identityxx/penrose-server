@@ -200,6 +200,11 @@ public class Schema {
         }
     }
 
+    public void add(Schema schema) {
+        attributeTypes.putAll(schema.attributeTypes);
+        objectClasses.putAll(schema.objectClasses);
+    }
+
     /**
      * Check if pk2 is a subset of pk1.
      */

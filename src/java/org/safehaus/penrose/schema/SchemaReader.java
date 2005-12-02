@@ -21,10 +21,7 @@ import org.apache.log4j.Logger;
 
 import java.util.Collection;
 import java.util.Iterator;
-import java.util.Map;
-import java.io.File;
 import java.io.FileReader;
-import java.io.FilenameFilter;
 
 /**
  * @author Endi S. Dewata
@@ -33,36 +30,17 @@ public class SchemaReader {
 
     Logger log = Logger.getLogger(getClass());
 
-    private Schema schema;
+    private String filename;
 
-    public SchemaReader() {
-        schema = new Schema();
+    public SchemaReader(String filename) {
+        this.filename = filename;
     }
 
-    public SchemaReader(Schema schema) {
-        this.schema = schema;
-    }
-/*
-    public void readDirectory(String directory) throws Exception {
-        //log.debug("Loading schema files in "+directory+".");
-        File schemaDir = new File(directory);
-        String filenames[] = schemaDir.list(new FilenameFilter() {
-            public boolean accept(File dir, String fname) {
-                return fname.endsWith(".schema");
-            }
-        });
-
-        if (filenames == null) return;
-
-        for (int i=0; i<filenames.length; i++) {
-            read(directory+File.separator+filenames[i]);
-        }
-
-    }
-*/
-    public void read(String filename) throws Exception {
+    public Schema read() throws Exception {
 
         log.debug("Loading schema "+filename+".");
+
+        Schema schema = new Schema();
 
         FileReader in = new FileReader(filename);
         SchemaParser parser = new SchemaParser(in);
@@ -82,13 +60,7 @@ public class SchemaReader {
                 //log.debug(" - ERROR");
             }
         }
-    }
 
-    public Schema getSchema() {
         return schema;
-    }
-
-    public void setSchema(Schema schema) {
-        this.schema = schema;
     }
 }

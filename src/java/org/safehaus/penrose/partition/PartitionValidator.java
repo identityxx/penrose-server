@@ -19,8 +19,8 @@ package org.safehaus.penrose.partition;
 
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.connector.AdapterConfig;
-import org.safehaus.penrose.schema.Schema;
 import org.safehaus.penrose.schema.ObjectClass;
+import org.safehaus.penrose.schema.SchemaManager;
 import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.module.ModuleConfig;
 import org.ietf.ldap.LDAPDN;
@@ -39,7 +39,7 @@ public class PartitionValidator {
     Logger log = Logger.getLogger(getClass());
 
     private PenroseConfig penroseConfig;
-    private Schema schema;
+    private SchemaManager schemaManager;
 
     public PartitionValidator() {
     }
@@ -160,8 +160,6 @@ public class PartitionValidator {
     public Collection validateEntryObjectClasses(Partition partition, EntryMapping entryMapping) {
         Collection results = new ArrayList();
 
-        if (schema == null) return results;
-
         //log.debug("Validating entry "+entryMapping"'s object classes");
 
         Collection missingObjectClasses = new TreeSet();
@@ -172,12 +170,12 @@ public class PartitionValidator {
         for (Iterator i=objectClasses.iterator(); i.hasNext(); ) {
             String ocName = (String)i.next();
 
-            ObjectClass objectClass = schema.getObjectClass(ocName);
+            ObjectClass objectClass = schemaManager.getObjectClass(ocName);
             if (objectClass == null) {
                 results.add(new PartitionValidationResult(PartitionValidationResult.WARNING, "Object class "+ocName+" is not defined in the schema.", entryMapping.getDn(), entryMapping));
             }
 
-            Collection scNames = schema.getAllObjectClassNames(ocName);
+            Collection scNames = schemaManager.getAllObjectClassNames(ocName);
             for (Iterator j=scNames.iterator(); j.hasNext(); ) {
                 String scName = (String)j.next();
                 if ("top".equals(scName)) continue;
@@ -199,8 +197,6 @@ public class PartitionValidator {
 
     public Collection validateEntryAttributeTypes(Partition partition, EntryMapping entryMapping) {
         Collection results = new ArrayList();
-
-        if (schema == null) return results;
 
         //log.debug("Validating entry "+entryMapping"'s attributes");
 
@@ -226,7 +222,7 @@ public class PartitionValidator {
 */
         }
 
-        Collection objectClasses = schema.getObjectClasses(entryMapping);
+        Collection objectClasses = schemaManager.getObjectClasses(entryMapping);
         for (Iterator i=objectClasses.iterator(); i.hasNext(); ) {
             ObjectClass objectClass = (ObjectClass)i.next();
 
@@ -332,11 +328,11 @@ public class PartitionValidator {
         this.penroseConfig = penroseConfig;
     }
 
-    public Schema getSchema() {
-        return schema;
+    public SchemaManager getSchemaManager() {
+        return schemaManager;
     }
 
-    public void setSchema(Schema schema) {
-        this.schema = schema;
+    public void setSchemaManager(SchemaManager schemaManager) {
+        this.schemaManager = schemaManager;
     }
 }

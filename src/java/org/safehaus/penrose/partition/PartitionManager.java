@@ -19,11 +19,7 @@ package org.safehaus.penrose.partition;
 
 import org.safehaus.penrose.mapping.EntryMapping;
 import org.safehaus.penrose.mapping.SourceMapping;
-import org.safehaus.penrose.schema.Schema;
-import org.safehaus.penrose.partition.Partition;
-import org.safehaus.penrose.partition.PartitionReader;
-import org.safehaus.penrose.partition.PartitionValidationResult;
-import org.safehaus.penrose.partition.PartitionValidator;
+import org.safehaus.penrose.schema.SchemaManager;
 import org.safehaus.penrose.config.PenroseConfig;
 import org.apache.log4j.Logger;
 
@@ -42,7 +38,7 @@ public class PartitionManager {
 
     private String home;
     private PenroseConfig penroseConfig;
-    private Schema schema;
+    private SchemaManager schemaManager;
 
     PartitionValidator partitionValidator;
 
@@ -54,7 +50,7 @@ public class PartitionManager {
     public void init() {
         partitionValidator = new PartitionValidator();
         partitionValidator.setPenroseConfig(penroseConfig);
-        partitionValidator.setSchema(schema);
+        partitionValidator.setSchemaManager(schemaManager);
     }
 
     public Partition load(PartitionConfig partitionConfig) throws Exception {
@@ -102,14 +98,6 @@ public class PartitionManager {
         this.penroseConfig = penroseConfig;
     }
 
-    public Schema getSchema() {
-        return schema;
-    }
-
-    public void setSchema(Schema schema) {
-        this.schema = schema;
-    }
-
     public void addPartition(String name, Partition partition) {
         partitions.put(name, partition);
     }
@@ -154,13 +142,13 @@ public class PartitionManager {
     }
 
     public Partition getPartitionByDn(String dn) throws Exception {
-        String ndn = schema.normalize(dn);
+        String ndn = schemaManager.normalize(dn);
 
         for (Iterator i=partitions.values().iterator(); i.hasNext(); ) {
             Partition partition = (Partition)i.next();
             for (Iterator j=partition.getRootEntryMappings().iterator(); j.hasNext(); ) {
                 EntryMapping entryMapping = (EntryMapping)j.next();
-                String suffix = schema.normalize(entryMapping.getDn());
+                String suffix = schemaManager.normalize(entryMapping.getDn());
                 if (ndn.endsWith(suffix)) return partition;
             }
         }
@@ -178,5 +166,13 @@ public class PartitionManager {
 
     public void setHome(String home) {
         this.home = home;
+    }
+
+    public SchemaManager getSchemaManager() {
+        return schemaManager;
+    }
+
+    public void setSchemaManager(SchemaManager schemaManager) {
+        this.schemaManager = schemaManager;
     }
 }

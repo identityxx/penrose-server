@@ -20,12 +20,11 @@ package org.safehaus.penrose.handler;
 import org.safehaus.penrose.session.PenroseSearchResults;
 import org.safehaus.penrose.*;
 import org.safehaus.penrose.session.PenroseSession;
-import org.safehaus.penrose.session.PenroseSearchResults;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.acl.ACLEngine;
 import org.safehaus.penrose.filter.FilterTool;
 import org.safehaus.penrose.partition.PartitionManager;
-import org.safehaus.penrose.schema.Schema;
+import org.safehaus.penrose.schema.SchemaManager;
 import org.safehaus.penrose.engine.Engine;
 import org.safehaus.penrose.interpreter.InterpreterFactory;
 import org.safehaus.penrose.module.Module;
@@ -54,7 +53,7 @@ public class Handler implements ModuleContext {
     private ModRdnHandler modRdnHandler;
     private SearchHandler searchHandler;
 
-    private Schema schema;
+    private SchemaManager schemaManager;
     private Engine engine;
 
     private PartitionManager partitionManager;
@@ -76,7 +75,7 @@ public class Handler implements ModuleContext {
         aclEngine = new ACLEngine(this);
 
         filterTool = new FilterTool();
-        filterTool.setSchema(schema);
+        filterTool.setSchemaManager(schemaManager);
 
         addHandler = new AddHandler(this);
         bindHandler = new BindHandler(this);
@@ -301,14 +300,6 @@ public class Handler implements ModuleContext {
         this.engine = engine;
     }
 
-    public Schema getSchema() {
-        return schema;
-    }
-
-    public void setSchema(Schema schema) {
-        this.schema = schema;
-    }
-
     public Collection getModules(String dn) throws Exception {
         log.debug("Find matching module mapping for "+dn);
 
@@ -420,6 +411,14 @@ public class Handler implements ModuleContext {
     }
 
     public void removeModifyListener(ModifyListener l) {
+    }
+
+    public SchemaManager getSchemaManager() {
+        return schemaManager;
+    }
+
+    public void setSchemaManager(SchemaManager schemaManager) {
+        this.schemaManager = schemaManager;
     }
 }
 

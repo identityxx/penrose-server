@@ -59,8 +59,7 @@ public class Penrose {
 
     private PenroseConfig penroseConfig;
 
-    private Schema schema;
-
+    private SchemaManager schemaManager;
     private PartitionManager partitionManager;
     private ConnectionManager connectionManager;
 
@@ -95,7 +94,7 @@ public class Penrose {
     void init() throws Exception {
 
         initSystemProperties();
-        initSchema();
+        initSchemaManager();
         initPartitionManager();
 	}
 
@@ -108,24 +107,23 @@ public class Penrose {
         }
     }
 
-    public void initSchema() throws Exception {
-        String home = penroseConfig.getHome();
+    public void initSchemaManager() throws Exception {
 
-        SchemaReader reader = new SchemaReader();
+        schemaManager = new SchemaManager();
+        schemaManager.setHome(penroseConfig.getHome());
+
         for (Iterator i=penroseConfig.getSchemaConfigs().iterator(); i.hasNext(); ) {
             SchemaConfig schemaConfig = (SchemaConfig)i.next();
-            String path = (home == null ? "" : home+File.separator)+schemaConfig.getPath();
-            reader.read(path);
-        }
 
-        schema = reader.getSchema();
+            schemaManager.load(schemaConfig);
+        }
     }
 
     public void initPartitionManager() throws Exception {
         partitionManager = new PartitionManager();
         partitionManager.setHome(penroseConfig.getHome());
         partitionManager.setPenroseConfig(penroseConfig);
-        partitionManager.setSchema(schema);
+        partitionManager.setSchemaManager(schemaManager);
         partitionManager.init();
     }
 
@@ -203,7 +201,7 @@ public class Penrose {
         engine = (Engine)clazz.newInstance();
 
         engine.setServerConfig(penroseConfig);
-        engine.setSchema(schema);
+        engine.setSchemaManager(schemaManager);
         engine.setInterpreterFactory(interpreterFactory);
         engine.setConnector(connector);
         engine.setConnectionManager(connectionManager);
@@ -215,7 +213,7 @@ public class Penrose {
 
     public void initHandler() throws Exception {
         handler = new Handler();
-        handler.setSchema(schema);
+        handler.setSchemaManager(schemaManager);
         handler.setInterpreterFactory(interpreterFactory);
         handler.setEngine(engine);
         handler.setRootDn(penroseConfig.getRootDn());
@@ -263,14 +261,6 @@ public class Penrose {
 
     public void setStopRequested(boolean stopRequested) {
         this.stopRequested = stopRequested;
-    }
-
-    public Schema getSchema() {
-        return schema;
-    }
-
-    public void setSchema(Schema schema) {
-        this.schema = schema;
     }
 
     public PenroseConfig getPenroseConfig() {
@@ -457,5 +447,13 @@ public class Penrose {
         }
 
         penrose.stop();
+    }
+
+    public SchemaManager getSchemaManager() {
+        return schemaManager;
+    }
+
+    public void setSchemaManager(SchemaManager schemaManager) {
+        this.schemaManager = schemaManager;
     }
 }

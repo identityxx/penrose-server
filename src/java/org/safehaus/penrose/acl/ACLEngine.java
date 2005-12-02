@@ -76,7 +76,7 @@ public class ACLEngine {
             if (aci.getPermission().indexOf(permission) < 0) continue;
 
             //log.debug("   - "+aci);
-            String subject = handler.getSchema().normalize(aci.getSubject());
+            String subject = handler.getSchemaManager().normalize(aci.getSubject());
 
             if (subject.equals(ACI.SUBJECT_USER) && aci.getDn().equals(bindDn)) {
                 return aci.getAction().equals(ACI.ACTION_GRANT);
@@ -120,13 +120,13 @@ public class ACLEngine {
                 return rc;
             }
 
-            String rootDn = handler.getSchema().normalize(handler.getRootDn());
-            String bindDn = handler.getSchema().normalize(session.getBindDn());
+            String rootDn = handler.getSchemaManager().normalize(handler.getRootDn());
+            String bindDn = handler.getSchemaManager().normalize(session.getBindDn());
             if (rootDn != null && rootDn.equals(bindDn)) {
                 return rc;
             }
 
-            String targetDn = handler.getSchema().normalize(entry.getDn());
+            String targetDn = handler.getSchemaManager().normalize(entry.getDn());
             boolean result = getObjectPermission(bindDn, targetDn, entry, ACI.SCOPE_OBJECT, permission);
             //log.debug("Result: "+result);
 
@@ -199,7 +199,7 @@ public class ACLEngine {
             if (aci.getPermission().indexOf(ACI.PERMISSION_READ) < 0) continue;
 
             //log.debug("   - "+aci);
-            String subject = handler.getSchema().normalize(aci.getSubject());
+            String subject = handler.getSchemaManager().normalize(aci.getSubject());
 
             if (subject.equals(bindDn)) {
                 addAttributes(aci, grants, denies);
@@ -235,13 +235,13 @@ public class ACLEngine {
             Set denies
             ) throws Exception {
 
-        String rootDn = handler.getSchema().normalize(handler.getRootDn());
+        String rootDn = handler.getSchemaManager().normalize(handler.getRootDn());
     	if (rootDn.equals(bindDn)) {
             grants.add("*");
             return;
         }
 
-        String targetDn = handler.getSchema().normalize(entry.getDn());
+        String targetDn = handler.getSchemaManager().normalize(entry.getDn());
 
         getReadableAttributes(bindDn, targetDn, entry.getEntryMapping(), null, grants, denies);
 
@@ -261,7 +261,7 @@ public class ACLEngine {
             LDAPEntry ldapEntry)
             throws Exception {
 
-        String bindDn = handler.getSchema().normalize(session.getBindDn());
+        String bindDn = handler.getSchemaManager().normalize(session.getBindDn());
 
         Set grants = new HashSet();
         Set denies = new HashSet();

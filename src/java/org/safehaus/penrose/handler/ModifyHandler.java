@@ -19,11 +19,9 @@ package org.safehaus.penrose.handler;
 
 import org.safehaus.penrose.session.PenroseSession;
 import org.safehaus.penrose.session.PenroseSearchResults;
-import org.safehaus.penrose.session.PenroseSession;
 import org.safehaus.penrose.event.ModifyEvent;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.interpreter.Interpreter;
-import org.safehaus.penrose.schema.Schema;
 import org.safehaus.penrose.schema.ObjectClass;
 import org.safehaus.penrose.util.PasswordUtil;
 import org.safehaus.penrose.mapping.*;
@@ -179,8 +177,7 @@ public class ModifyHandler {
 		log.debug("--- perform modification:");
 		AttributeValues newValues = new AttributeValues(oldValues);
 
-        Schema schema = handler.getSchema();
-		Collection objectClasses = schema.getObjectClasses(entryMapping);
+		Collection objectClasses = handler.getSchemaManager().getObjectClasses(entryMapping);
 		//log.debug("Object Classes: " + objectClasses);
 
 		for (Iterator i = modifications.iterator(); i.hasNext();) {

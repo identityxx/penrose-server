@@ -221,7 +221,7 @@ public class SearchEngine {
                 dns.add(dn);
 
                 Row rdn = Entry.getRdn(dn);
-                Row normalizedRdn = getEngine().getSchema().normalize(rdn);
+                Row normalizedRdn = getEngine().getSchemaManager().normalize(rdn);
                 String parentDn = Entry.getParentDn(dn);
 
                 AttributeValues av = (AttributeValues)results.get(dn);
