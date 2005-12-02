@@ -36,10 +36,7 @@ import org.safehaus.penrose.connector.*;
 import org.safehaus.penrose.session.PenroseSessionManager;
 import org.safehaus.penrose.mapping.EntryMapping;
 import org.safehaus.penrose.cache.EntryCache;
-import org.safehaus.penrose.partition.Partition;
-import org.safehaus.penrose.partition.PartitionManager;
-import org.safehaus.penrose.partition.PartitionConfig;
-import org.safehaus.penrose.partition.ConnectionConfig;
+import org.safehaus.penrose.partition.*;
 import org.safehaus.penrose.session.PenroseSessionManager;
 import org.safehaus.penrose.session.PenroseSession;
 import org.safehaus.penrose.session.PenroseSearchResults;
@@ -61,6 +58,7 @@ public class Penrose {
 
     private SchemaManager schemaManager;
     private PartitionManager partitionManager;
+    private PartitionValidator partitionValidator;
     private ConnectionManager connectionManager;
 
     private InterpreterFactory interpreterFactory;
@@ -122,9 +120,12 @@ public class Penrose {
     public void initPartitionManager() throws Exception {
         partitionManager = new PartitionManager();
         partitionManager.setHome(penroseConfig.getHome());
-        partitionManager.setPenroseConfig(penroseConfig);
         partitionManager.setSchemaManager(schemaManager);
-        partitionManager.init();
+
+        partitionValidator = new PartitionValidator();
+        partitionValidator.setPenroseConfig(penroseConfig);
+        partitionValidator.setSchemaManager(schemaManager);
+
     }
 
 	public void start() throws Exception {
@@ -145,7 +146,19 @@ public class Penrose {
 
         for (Iterator i=penroseConfig.getPartitionConfigs().iterator(); i.hasNext(); ) {
             PartitionConfig partitionConfig = (PartitionConfig)i.next();
-            partitionManager.load(partitionConfig);
+            Partition partition = partitionManager.load(partitionConfig);
+
+            Collection results = partitionValidator.validate(partition);
+
+            for (Iterator j=results.iterator(); j.hasNext(); ) {
+                PartitionValidationResult resultPartition = (PartitionValidationResult)j.next();
+
+                if (resultPartition.getType().equals(PartitionValidationResult.ERROR)) {
+                    log.error("ERROR: "+resultPartition.getMessage()+" ["+resultPartition.getSource()+"]");
+                } else {
+                    log.warn("WARNING: "+resultPartition.getMessage()+" ["+resultPartition.getSource()+"]");
+                }
+            }
         }
     }
 

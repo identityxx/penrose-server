@@ -37,20 +37,11 @@ public class PartitionManager {
     Logger log = Logger.getLogger(PartitionManager.class);
 
     private String home;
-    private PenroseConfig penroseConfig;
     private SchemaManager schemaManager;
-
-    PartitionValidator partitionValidator;
 
     private Map partitions = new TreeMap();
 
     public PartitionManager() {
-    }
-
-    public void init() {
-        partitionValidator = new PartitionValidator();
-        partitionValidator.setPenroseConfig(penroseConfig);
-        partitionValidator.setSchemaManager(schemaManager);
     }
 
     public Partition load(PartitionConfig partitionConfig) throws Exception {
@@ -61,18 +52,6 @@ public class PartitionManager {
 
         PartitionReader partitionReader = new PartitionReader(path);
         Partition partition = partitionReader.read();
-
-        Collection results = partitionValidator.validate(partition);
-
-        for (Iterator j=results.iterator(); j.hasNext(); ) {
-            PartitionValidationResult resultPartition = (PartitionValidationResult)j.next();
-
-            if (resultPartition.getType().equals(PartitionValidationResult.ERROR)) {
-                log.error("ERROR: "+resultPartition.getMessage()+" ["+resultPartition.getSource()+"]");
-            } else {
-                log.warn("WARNING: "+resultPartition.getMessage()+" ["+resultPartition.getSource()+"]");
-            }
-        }
 
         addPartition(partitionConfig.getName(), partition);
 
@@ -88,14 +67,6 @@ public class PartitionManager {
 
         PartitionWriter partitionWriter = new PartitionWriter(path);
         partitionWriter.write(partition);
-    }
-
-    public PenroseConfig getPenroseConfig() {
-        return penroseConfig;
-    }
-
-    public void setPenroseConfig(PenroseConfig penroseConfig) {
-        this.penroseConfig = penroseConfig;
     }
 
     public void addPartition(String name, Partition partition) {

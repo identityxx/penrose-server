@@ -81,7 +81,7 @@ public class PenroseJMXService {
             registry.start();
 
             JMXServiceURL url = new JMXServiceURL("service:jmx:rmi://localhost/jndi/rmi://localhost:"+penroseConfig.getJmxRmiPort()+"/jmx");
-            jmxAuthenticator = new PenroseJMXAuthenticator("ldap://localhost:"+penroseConfig.getPort(), "uid={0},ou=system");
+            jmxAuthenticator = new PenroseJMXAuthenticator(penrose, "uid={0},ou=system");
 
             HashMap environment = new HashMap();
             environment.put("jmx.remote.authenticator", jmxAuthenticator);

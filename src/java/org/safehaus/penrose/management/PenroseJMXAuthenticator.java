@@ -18,14 +18,13 @@
 package org.safehaus.penrose.management;
 
 import org.apache.log4j.Logger;
+import org.safehaus.penrose.Penrose;
+import org.safehaus.penrose.session.PenroseSession;
+import org.ietf.ldap.LDAPException;
 
 import javax.management.remote.JMXAuthenticator;
 import javax.security.auth.Subject;
-import javax.naming.InitialContext;
-import javax.naming.Context;
-import javax.naming.directory.InitialDirContext;
 import java.security.Principal;
-import java.util.Properties;
 
 /**
  * @author Endi S. Dewata
@@ -34,59 +33,66 @@ public class PenroseJMXAuthenticator implements JMXAuthenticator {
 
     Logger log = Logger.getLogger(getClass());
 
-    public String url;
+    private Penrose penrose;
     public String pattern;
 
-    public PenroseJMXAuthenticator(String url, String pattern) {
-        this.url = url;
+    public PenroseJMXAuthenticator(Penrose penrose, String pattern) {
+        this.penrose = penrose;
         this.pattern = pattern;
-        //log.debug("Initializing PenroseJMXAuthenticator.");
     }
 
     public Subject authenticate(Object o) throws SecurityException {
 
-        if (o instanceof String[]) {
-            String s[] = (String[])o;
+        if (!(o instanceof String[])) {
+            throw new SecurityException("Invalid object: "+o+" ("+(o == null ? null : o.getClass())+")");
+        }
 
-            //log.debug("Authenticating:");
-            //for (int i=0; i<s.length; i++) {
-                //log.debug(" - "+s[i]);
-            //}
+        String s[] = (String[])o;
 
-            final String username = s[0];
-            final String password = s[1];
+        //log.debug("Authenticating:");
+        //for (int i=0; i<s.length; i++) {
+            //log.debug(" - "+s[i]);
+        //}
 
-            String bindDn = pattern.replaceFirst("\\{0\\}", username);
-            log.debug("Connecting to "+url+" as "+bindDn);
+        final String username = s[0];
+        final String password = s[1];
 
-            Properties env = new Properties();
-            env.put(InitialContext.INITIAL_CONTEXT_FACTORY, "com.sun.jndi.ldap.LdapCtxFactory");
-            env.put(InitialContext.PROVIDER_URL, url);
-            env.put(InitialContext.SECURITY_PRINCIPAL, bindDn);
-            env.put(InitialContext.SECURITY_CREDENTIALS, password);
+        String bindDn = pattern.replaceFirst("\\{0\\}", username);
+        log.debug("Authenticating "+bindDn);
 
+        try {
+            PenroseSession session = null;
+            int rc = LDAPException.SUCCESS;
             try {
-                Context ctx = new InitialDirContext(env);
-                ctx.close();
-
-                Subject subject = new Subject();
-                Principal principal = new Principal() {
-                    public String getName() {
-                        return username;
-                    }
-                };
-
-                subject.getPrincipals().add(principal);
-
-                return subject;
-
-            } catch (Exception e) {
-                throw new SecurityException("Authentication failed");
+                session = penrose.newSession();
+                rc = session.bind(bindDn, password);
+            } finally {
+                session.close();
             }
 
-        } else {
-            log.debug("Authenticating "+o+" ("+(o == null ? null : o.getClass())+")");
-            throw new SecurityException();
+            if (rc != LDAPException.SUCCESS) throw new SecurityException("Authentication failed");
+
+            Subject subject = new Subject();
+            Principal principal = new Principal() {
+                public String getName() {
+                    return username;
+                }
+            };
+
+            subject.getPrincipals().add(principal);
+
+            return subject;
+
+        } catch (Exception e) {
+            throw new SecurityException("An error has occured: "+e.getMessage());
         }
+    }
+
+    public Penrose getPenrose() {
+        return penrose;
+    }
+
+    public void setPenrose(Penrose penrose) {
+        this.penrose = penrose;
     }
 }
