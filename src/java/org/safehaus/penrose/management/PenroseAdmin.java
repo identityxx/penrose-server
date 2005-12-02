@@ -43,6 +43,20 @@ public class PenroseAdmin implements PenroseAdminMBean {
     public PenroseAdmin() {
     }
 
+    public String getProductName() {
+        return Penrose.PRODUCT_NAME;
+    }
+
+    public void setProductName(String name) {
+    }
+
+    public String getProductVersion() {
+        return Penrose.PRODUCT_VERSION;
+    }
+
+    public void setProductVersion(String version) {
+    }
+
     public Collection listFiles(String directory) throws Exception {
         Collection results = new ArrayList();
 
@@ -75,7 +89,7 @@ public class PenroseAdmin implements PenroseAdminMBean {
         return loggerNames;
     }
 
-    public byte[] download(String filename) throws IOException {
+    public byte[] download(String filename) throws Exception {
         String homeDirectory = penrose.getPenroseConfig().getHome();
         File file = new File((homeDirectory == null ? "" : homeDirectory+File.separator)+filename);
         if (!file.exists()) return null;
@@ -90,7 +104,7 @@ public class PenroseAdmin implements PenroseAdminMBean {
         return content;
     }
 
-    public void upload(String filename, byte content[]) throws IOException {
+    public void upload(String filename, byte content[]) throws Exception {
         String homeDirectory = penrose.getPenroseConfig().getHome();
         File file = new File((homeDirectory == null ? "" : homeDirectory+File.separator)+filename);
         file.getParentFile().mkdirs();

@@ -278,7 +278,7 @@ public class SearchHandler {
             LDAPAttributeSet set = new LDAPAttributeSet();
             set.add(new LDAPAttribute("objectClass", new String[] { "top", "extensibleObject" }));
             set.add(new LDAPAttribute("vendorName", new String[] { Penrose.VENDOR_NAME }));
-            set.add(new LDAPAttribute("vendorVersion", new String[] { Penrose.PRODUCT_NAME }));
+            set.add(new LDAPAttribute("vendorVersion", new String[] { Penrose.PRODUCT_NAME+" "+Penrose.PRODUCT_VERSION }));
 
             LDAPAttribute namingContexts = new LDAPAttribute("namingContexts");
             for (Iterator i=handler.getPartitionManager().getPartitions().iterator(); i.hasNext(); ) {

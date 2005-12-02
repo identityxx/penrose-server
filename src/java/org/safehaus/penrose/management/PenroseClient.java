@@ -80,6 +80,22 @@ public class PenroseClient {
 		return connection.invoke(name, method, paramValues, paramClassNames);
 	}
 
+    public String getProductName() throws Exception {
+        return (String)connection.getAttribute(name, "ProductName");
+        //return (String)invoke("getProductName",
+        //        new Object[] { },
+        //        new String[] { }
+        //);
+    }
+
+    public String getProductVersion() throws Exception {
+        return (String)connection.getAttribute(name, "ProductVersion");
+        //return (String)invoke("getProductVersion",
+        //        new Object[] { },
+        //        new String[] { }
+        //);
+    }
+
     public Collection listFiles(String directory) throws Exception {
         return (Collection)invoke("listFiles",
                 new Object[] { directory },

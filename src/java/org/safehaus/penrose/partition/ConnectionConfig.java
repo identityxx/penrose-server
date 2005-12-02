@@ -35,16 +35,6 @@ public class ConnectionConfig implements Cloneable {
 	public String adapterName;
 
 	/**
-	 * Connection pool size.
-	 */
-	public int poolSize;
-
-	/**
-	 * Connection pool test query.
-	 */
-	public String testQuery;
-
-	/**
 	 * Description
 	 */
 	public String description;
@@ -103,37 +93,6 @@ public class ConnectionConfig implements Cloneable {
     }
 
 	/**
-	 * @return Returns the poolSize.
-	 */
-	public int getPoolSize() {
-		return poolSize;
-	}
-	/**
-	 * @param poolSize
-	 *            The poolSize to set.
-	 */
-	public void setPoolSize(int poolSize) {
-		this.poolSize = poolSize;
-	}
-
-	public void setPoolSize(String poolSize) {
-		this.poolSize = Integer.parseInt(poolSize);
-	}
-	/**
-	 * @return Returns the testQuery.
-	 */
-	public String getTestQuery() {
-		return testQuery;
-	}
-	/**
-	 * @param testQuery
-	 *            The testQuery to set.
-	 */
-	public void setTestQuery(String testQuery) {
-		this.testQuery = testQuery;
-	}
-
-	/**
 	 * @return the description
 	 */
 	public String getDescription() {
@@ -151,8 +110,6 @@ public class ConnectionConfig implements Cloneable {
     public int hashCode() {
         return (name == null ? 0 : name.hashCode()) +
                 (adapterName == null ? 0 : adapterName.hashCode()) +
-                (poolSize) +
-                (testQuery == null ? 0 : testQuery.hashCode()) +
                 (description == null ? 0 : description.hashCode()) +
                 (parameters == null ? 0 : parameters.hashCode());
     }
@@ -170,8 +127,6 @@ public class ConnectionConfig implements Cloneable {
         ConnectionConfig connectionConfig = (ConnectionConfig)object;
         if (!equals(name, connectionConfig.name)) return false;
         if (!equals(adapterName, connectionConfig.adapterName)) return false;
-        if (poolSize != connectionConfig.poolSize) return false;
-        if (!equals(testQuery, connectionConfig.testQuery)) return false;
         if (!equals(description, connectionConfig.description)) return false;
         if (!equals(parameters, connectionConfig.parameters)) return false;
 
@@ -185,8 +140,6 @@ public class ConnectionConfig implements Cloneable {
     public void copy(ConnectionConfig connectionConfig) {
         name = connectionConfig.name;
         adapterName = connectionConfig.adapterName;
-        poolSize = connectionConfig.poolSize;
-        testQuery = connectionConfig.testQuery;
         description = connectionConfig.description;
         parameters.putAll(connectionConfig.parameters);
     }

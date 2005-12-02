@@ -42,11 +42,13 @@ public class PenroseJMXService {
     public Logger log = Logger.getLogger(PenroseJMXService.class);
 
     Penrose penrose;
-    PenroseAdmin penroseAdmin;
 
     PenroseJMXAuthenticator jmxAuthenticator;
 
     MBeanServer mbeanServer;
+
+    ObjectName penroseAdminName = ObjectName.getInstance(PenroseClient.MBEAN_NAME);
+    PenroseAdmin penroseAdmin;
 
     ObjectName registryName = ObjectName.getInstance("naming:type=rmiregistry");
     NamingService registry;
@@ -60,7 +62,13 @@ public class PenroseJMXService {
     ObjectName xsltProcessorName = ObjectName.getInstance("connectors:type=http,processor=xslt");
     XSLTProcessor xsltProcessor;
 
+    static {
+        System.setProperty("jmx.invoke.getters", "true");
+        System.setProperty("javax.management.builder.initial", "mx4j.server.MX4JMBeanServerBuilder");
+    }
+
     public PenroseJMXService() throws Exception {
+
         mx4j.log.Log.redirectTo(new Log4JLogger());
     }
 
@@ -73,7 +81,7 @@ public class PenroseJMXService {
         penroseAdmin = new PenroseAdmin();
         penroseAdmin.setPenrose(penrose);
 
-        mbeanServer.registerMBean(penroseAdmin, ObjectName.getInstance(PenroseClient.MBEAN_NAME));
+        mbeanServer.registerMBean(penroseAdmin, penroseAdminName);
 
         if (penroseConfig.getJmxRmiPort() >= 0) {
             registry = new NamingService(penroseConfig.getJmxRmiPort());
@@ -120,6 +128,8 @@ public class PenroseJMXService {
             registry.stop();
             mbeanServer.unregisterMBean(registryName);
         }
+
+        mbeanServer.unregisterMBean(penroseAdminName);
 
         log.warn("JMX service has been shutdown.");
     }

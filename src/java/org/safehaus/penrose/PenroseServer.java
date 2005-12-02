@@ -61,6 +61,7 @@ public class PenroseServer implements SignalHandler {
     }
 
     public void init() throws Exception {
+
         penrose = new Penrose(penroseConfig);
 
         ldapService = new PenroseLDAPService();
@@ -72,13 +73,14 @@ public class PenroseServer implements SignalHandler {
 
     public void start() throws Exception {
         penrose.start();
-        jmxService.start();
-        ldapService.start();
+
+        if (penroseConfig.getJmxRmiPort() >= 0) jmxService.start();
+        if (penroseConfig.getPort() >= 0) ldapService.start();
     }
 
     public void stop() throws Exception {
-        ldapService.stop();
-        jmxService.stop();
+        if (penroseConfig.getPort() >= 0) ldapService.stop();
+        if (penroseConfig.getJmxRmiPort() >= 0) jmxService.stop();
         penrose.stop();
     }
 
@@ -200,7 +202,7 @@ public class PenroseServer implements SignalHandler {
             }
 
             if (parameters.contains("--version")) {
-                System.out.println(Penrose.PRODUCT_NAME);
+                System.out.println(Penrose.PRODUCT_NAME+" "+Penrose.PRODUCT_VERSION);
                 System.out.println(Penrose.PRODUCT_COPYRIGHT);
                 System.exit(0);
             }
@@ -232,7 +234,7 @@ public class PenroseServer implements SignalHandler {
                 BasicConfigurator.configure(appender);
             }
 
-            log.warn("Starting "+Penrose.PRODUCT_NAME+".");
+            log.warn("Starting "+Penrose.PRODUCT_NAME+" "+Penrose.PRODUCT_VERSION+".");
 
             PenroseServer server = new PenroseServer(homeDirectory);
             server.start();

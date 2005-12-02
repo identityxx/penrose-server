@@ -41,7 +41,6 @@ public class BindHandler {
 
     public int bind(PenroseSession session, String dn, String password) throws Exception {
 
-        log.info("-------------------------------------------------");
         log.info("BIND:");
         log.info(" - DN      : "+dn);
 

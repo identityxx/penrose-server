@@ -21,9 +21,15 @@ import java.io.IOException;
 import java.util.*;
 
 public interface PenroseAdminMBean {
-	
-	public byte[] download(String filename) throws IOException;
-	public void upload(String filename, byte content[]) throws IOException;
+
+    public String getProductName() throws Exception;
+    public void setProductName(String name) throws Exception;
+
+    public String getProductVersion() throws Exception;
+	public void setProductVersion(String version) throws Exception;
+    
+    public byte[] download(String filename) throws Exception;
+	public void upload(String filename, byte content[]) throws Exception;
     public Collection listFiles(String directory) throws Exception;
     public Collection getLoggerNames(String path) throws Exception;
 

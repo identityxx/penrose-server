@@ -24,19 +24,12 @@ import org.safehaus.penrose.config.DefaultPenroseConfig;
 import org.safehaus.penrose.schema.SchemaConfig;
 import org.safehaus.penrose.partition.PartitionConfig;
 import org.safehaus.penrose.PenroseServer;
-
-import javax.naming.directory.DirContext;
-import javax.naming.directory.InitialDirContext;
-import javax.naming.directory.SearchControls;
-import javax.naming.directory.SearchResult;
-import javax.naming.NamingEnumeration;
-import javax.naming.Context;
-import java.util.Hashtable;
+import org.safehaus.penrose.management.PenroseClient;
 
 /**
  * @author Endi S. Dewata
  */
-public class PenroseServerTest extends TestCase {
+public class JMXServiceTest extends TestCase {
 
     PenroseConfig penroseConfig;
     PenroseServer penroseServer;
@@ -53,6 +46,7 @@ public class PenroseServerTest extends TestCase {
         logger.setLevel(Level.toLevel("INFO"));
 
         penroseConfig = new DefaultPenroseConfig();
+        penroseConfig.setPort(-1);
 
         SchemaConfig schemaConfig = new SchemaConfig("samples/schema/example.schema");
         penroseConfig.addSchemaConfig(schemaConfig);
@@ -62,55 +56,78 @@ public class PenroseServerTest extends TestCase {
 
         penroseServer = new PenroseServer(penroseConfig);
         penroseServer.start();
-
     }
 
     public void tearDown() throws Exception {
         penroseServer.stop();
     }
 
-    public void testLDAPService() throws Exception {
-        performSearch();
+    public void testJMXService() throws Exception {
+        int port = penroseConfig.getJmxRmiPort();
+        connect(port);
     }
 
-    public void testLDAPServiceOnDifferentPort() throws Exception {
-        penroseServer.stop();
-        penroseConfig.setPort(penroseConfig.getPort()+1);
-        penroseServer.start();
+    public void testChangingJMXPort() throws Exception {
 
-        performSearch();
+        int port = penroseConfig.getJmxRmiPort();
 
-        penroseServer.stop();
-        penroseConfig.setPort(penroseConfig.getPort()-1);
-        penroseServer.start();
-
-        performSearch();
-    }
-
-    public void performSearch() throws Exception {
-
-        Hashtable env = new Hashtable();
-        env.put(Context.INITIAL_CONTEXT_FACTORY, "com.sun.jndi.ldap.LdapCtxFactory");
-        env.put(Context.PROVIDER_URL, "ldap://localhost:"+penroseConfig.getPort());
-        env.put(Context.SECURITY_PRINCIPAL, penroseConfig.getRootDn());
-        env.put(Context.SECURITY_CREDENTIALS, penroseConfig.getRootPassword());
-
-        DirContext ctx = new InitialDirContext(env);
-
-        SearchControls ctls = new SearchControls();
-        ctls.setSearchScope(SearchControls.ONELEVEL_SCOPE);
-
-        String baseDn = "ou=Categories,dc=Example,dc=com";
-
-        System.out.println("Searching "+baseDn+" at port "+penroseConfig.getPort());
-        NamingEnumeration ne = ctx.search(baseDn, "(objectClass=*)", ctls);
-
-        while (ne.hasMore()) {
-            SearchResult sr = (SearchResult)ne.next();
-            String dn = "".equals(sr.getName()) ? baseDn : sr.getName()+","+baseDn;
-            System.out.println("dn: "+dn);
+        // testing the old port
+        try {
+            connect(port);
+            System.out.println("Connecting at the old port succeeded as expected.");
+        } catch (Exception e) {
+            fail("Connecting at the old port should have succeeded.");
         }
 
-        ctx.close();
+        // switching to the new port
+        penroseServer.stop();
+        penroseConfig.setJmxRmiPort(port+1);
+        penroseServer.start();
+
+        try {
+            connect(port);
+            fail("Connecting at the old port should have failed.");
+        } catch (Exception e) {
+            System.out.println("Connecting at the old port failed as expected.");
+        }
+
+        try {
+            connect(port+1);
+            System.out.println("Connecting at the new port succeeded as expected.");
+        } catch (Exception e) {
+            fail("Connecting at the new port should have succeeded.");
+        }
+
+        // switching back to the old port
+        penroseServer.stop();
+        penroseConfig.setJmxRmiPort(port);
+        penroseServer.start();
+
+        try {
+            connect(port);
+            System.out.println("Connecting at the old port succeeded.");
+        } catch (Exception e) {
+            fail("Connecting at the old port should have succeeded as expected.");
+        }
+
+        try {
+            connect(port+1);
+            fail("Connecting at the new port should have failed.");
+        } catch (Exception e) {
+            System.out.println("Connecting at the old port failed as expected.");
+        }
+    }
+
+    public void connect(int port) throws Exception {
+        System.out.println("Connecting to port "+port);
+
+
+        PenroseClient client = new PenroseClient("localhost", port, "admin", "secret");
+        client.connect();
+        String name = client.getProductName();
+        String version = client.getProductVersion();
+        client.close();
+
+        System.out.println("Connected to "+name+" "+version);
     }
 }
