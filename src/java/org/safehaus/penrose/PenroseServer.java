@@ -68,6 +68,7 @@ public class PenroseServer implements SignalHandler {
         ldapService.setPenrose(penrose);
 
         jmxService = new PenroseJMXService();
+        jmxService.setPenroseServer(this);
         jmxService.setPenrose(penrose);
     }
 
@@ -78,10 +79,28 @@ public class PenroseServer implements SignalHandler {
         if (penroseConfig.getPort() >= 0) ldapService.start();
     }
 
+    public void start(String serviceName) throws Exception {
+        if ("ldap".equals(serviceName)) {
+            ldapService.start();
+
+        } else if ("jmx".equals(serviceName)) {
+            jmxService.start();
+        }
+    }
+
     public void stop() throws Exception {
         if (penroseConfig.getPort() >= 0) ldapService.stop();
         if (penroseConfig.getJmxRmiPort() >= 0) jmxService.stop();
         penrose.stop();
+    }
+
+    public void stop(String serviceName) throws Exception {
+        if ("ldap".equals(serviceName)) {
+            ldapService.stop();
+
+        } else if ("jmx".equals(serviceName)) {
+            jmxService.stop();
+        }
     }
 
     /**
@@ -194,6 +213,7 @@ public class PenroseServer implements SignalHandler {
 
             if (parameters.contains("-?") || parameters.contains("--help")) {
                 System.out.println("Usage: org.safehaus.penrose.PenroseServer [OPTION]...");
+                System.out.println();
                 System.out.println("  -?, --help     display this help and exit");
                 System.out.println("  -d             run in debug mode");
                 System.out.println("  -v             run in verbose mode");

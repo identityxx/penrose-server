@@ -18,6 +18,7 @@
 package org.safehaus.penrose.ldap;
 
 import org.safehaus.penrose.Penrose;
+import org.safehaus.penrose.service.Service;
 import org.safehaus.penrose.schema.SchemaConfig;
 import org.safehaus.penrose.config.PenroseConfig;
 import org.apache.ldap.server.configuration.*;
@@ -33,7 +34,7 @@ import java.util.*;
 /**
  * @author Endi S. Dewata
  */
-public class PenroseLDAPService {
+public class PenroseLDAPService extends Service {
 
     public Logger log = Logger.getLogger(PenroseLDAPService.class);
 

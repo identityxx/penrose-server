@@ -103,11 +103,11 @@ public class CacheConfig implements Cloneable {
     public boolean equals(Object object) {
         if((object == null) || (object.getClass() != getClass())) return false;
 
-        CacheConfig fieldDefinition = (CacheConfig)object;
-        if (!equals(name, fieldDefinition.name)) return false;
-        if (!equals(cacheClass, fieldDefinition.cacheClass)) return false;
-        if (!equals(description, fieldDefinition.description)) return false;
-        if (!equals(parameters, fieldDefinition.parameters)) return false;
+        CacheConfig cacheConfig = (CacheConfig)object;
+        if (!equals(name, cacheConfig.name)) return false;
+        if (!equals(cacheClass, cacheConfig.cacheClass)) return false;
+        if (!equals(description, cacheConfig.description)) return false;
+        if (!equals(parameters, cacheConfig.parameters)) return false;
 
         return true;
     }

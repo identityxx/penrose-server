@@ -34,11 +34,9 @@ public class PenroseJMXAuthenticator implements JMXAuthenticator {
     Logger log = Logger.getLogger(getClass());
 
     private Penrose penrose;
-    public String pattern;
 
-    public PenroseJMXAuthenticator(Penrose penrose, String pattern) {
+    public PenroseJMXAuthenticator(Penrose penrose) {
         this.penrose = penrose;
-        this.pattern = pattern;
     }
 
     public Subject authenticate(Object o) throws SecurityException {
@@ -54,10 +52,9 @@ public class PenroseJMXAuthenticator implements JMXAuthenticator {
             //log.debug(" - "+s[i]);
         //}
 
-        final String username = s[0];
-        final String password = s[1];
+        final String bindDn = s[0];
+        final String bindPassword = s[1];
 
-        String bindDn = pattern.replaceFirst("\\{0\\}", username);
         log.debug("Authenticating "+bindDn);
 
         try {
@@ -65,7 +62,7 @@ public class PenroseJMXAuthenticator implements JMXAuthenticator {
             int rc = LDAPException.SUCCESS;
             try {
                 session = penrose.newSession();
-                rc = session.bind(bindDn, password);
+                rc = session.bind(bindDn, bindPassword);
             } finally {
                 session.close();
             }
@@ -75,7 +72,7 @@ public class PenroseJMXAuthenticator implements JMXAuthenticator {
             Subject subject = new Subject();
             Principal principal = new Principal() {
                 public String getName() {
-                    return username;
+                    return bindDn;
                 }
             };
 

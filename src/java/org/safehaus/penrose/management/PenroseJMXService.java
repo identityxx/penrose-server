@@ -31,17 +31,20 @@ import javax.management.remote.JMXConnectorServerFactory;
 import java.util.HashMap;
 
 import org.safehaus.penrose.config.PenroseConfig;
+import org.safehaus.penrose.PenroseServer;
 import org.safehaus.penrose.Penrose;
+import org.safehaus.penrose.service.Service;
 import org.apache.log4j.Logger;
 
 /**
  * @author Endi S. Dewata
  */
-public class PenroseJMXService {
+public class PenroseJMXService extends Service {
 
     public Logger log = Logger.getLogger(PenroseJMXService.class);
 
-    Penrose penrose;
+    private PenroseServer penroseServer;
+    private Penrose penrose;
 
     PenroseJMXAuthenticator jmxAuthenticator;
 
@@ -78,10 +81,12 @@ public class PenroseJMXService {
 
         mbeanServer = MBeanServerFactory.createMBeanServer();
 
-        penroseAdmin = new PenroseAdmin();
-        penroseAdmin.setPenrose(penrose);
+        if (penroseServer != null) {
+            penroseAdmin = new PenroseAdmin();
+            penroseAdmin.setPenroseServer(penroseServer);
 
-        mbeanServer.registerMBean(penroseAdmin, penroseAdminName);
+            mbeanServer.registerMBean(penroseAdmin, penroseAdminName);
+        }
 
         if (penroseConfig.getJmxRmiPort() >= 0) {
             registry = new NamingService(penroseConfig.getJmxRmiPort());
@@ -89,7 +94,7 @@ public class PenroseJMXService {
             registry.start();
 
             JMXServiceURL url = new JMXServiceURL("service:jmx:rmi://localhost/jndi/rmi://localhost:"+penroseConfig.getJmxRmiPort()+"/jmx");
-            jmxAuthenticator = new PenroseJMXAuthenticator(penrose, "uid={0},ou=system");
+            jmxAuthenticator = new PenroseJMXAuthenticator(penrose);
 
             HashMap environment = new HashMap();
             environment.put("jmx.remote.authenticator", jmxAuthenticator);
@@ -132,6 +137,14 @@ public class PenroseJMXService {
         mbeanServer.unregisterMBean(penroseAdminName);
 
         log.warn("JMX service has been shutdown.");
+    }
+
+    public PenroseServer getPenroseServer() {
+        return penroseServer;
+    }
+
+    public void setPenroseServer(PenroseServer penroseServer) {
+        this.penroseServer = penroseServer;
     }
 
     public Penrose getPenrose() {

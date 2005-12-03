@@ -15,25 +15,38 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
-package org.safehaus.penrose.management;
+package org.safehaus.penrose.service;
 
-import java.io.IOException;
-import java.util.*;
+/**
+ * @author Endi S. Dewata
+ */
+public class Service {
 
-public interface PenroseAdminMBean {
+    private ServiceConfig serviceConfig;
+    private ServiceContext serviceContext;
 
-    public String getProductName() throws Exception;
-    //public void setProductName(String name) throws Exception;
+    public void init() throws Exception {
+    }
 
-    public String getProductVersion() throws Exception;
-	//public void setProductVersion(String version) throws Exception;
+    public void start() throws Exception {
+    }
 
-    public void start(String serviceName) throws Exception;
-    public void stop(String serviceName) throws Exception;
+    public void stop() throws Exception {
+    }
 
-    public byte[] download(String filename) throws Exception;
-	public void upload(String filename, byte content[]) throws Exception;
-    public Collection listFiles(String directory) throws Exception;
-    public Collection getLoggerNames(String path) throws Exception;
+    public ServiceConfig getServiceConfig() {
+        return serviceConfig;
+    }
 
+    public void setServiceConfig(ServiceConfig serviceConfig) {
+        this.serviceConfig = serviceConfig;
+    }
+
+    public ServiceContext getServiceContext() {
+        return serviceContext;
+    }
+
+    public void setServiceContext(ServiceContext serviceContext) {
+        this.serviceContext = serviceContext;
+    }
 }

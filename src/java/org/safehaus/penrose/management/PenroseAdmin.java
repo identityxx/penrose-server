@@ -20,13 +20,13 @@ package org.safehaus.penrose.management;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import org.safehaus.penrose.Penrose;
+import org.safehaus.penrose.PenroseServer;
 
 import java.util.Collection;
 import java.util.ArrayList;
 import java.util.TreeSet;
 import java.util.Enumeration;
 import java.io.File;
-import java.io.IOException;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 
@@ -38,7 +38,7 @@ public class PenroseAdmin implements PenroseAdminMBean {
 
     Logger log = Logger.getLogger(PenroseAdmin.class);
 
-    private Penrose penrose;
+    private PenroseServer penroseServer;
 
     public PenroseAdmin() {
     }
@@ -47,20 +47,22 @@ public class PenroseAdmin implements PenroseAdminMBean {
         return Penrose.PRODUCT_NAME;
     }
 
-    public void setProductName(String name) {
-    }
-
     public String getProductVersion() {
         return Penrose.PRODUCT_VERSION;
     }
 
-    public void setProductVersion(String version) {
+    public void start(String serviceName) throws Exception {
+        penroseServer.start(serviceName);
+    }
+
+    public void stop(String serviceName) throws Exception {
+        penroseServer.stop(serviceName);
     }
 
     public Collection listFiles(String directory) throws Exception {
         Collection results = new ArrayList();
 
-        String homeDirectory = penrose.getPenroseConfig().getHome();
+        String homeDirectory = penroseServer.getPenroseConfig().getHome();
         File file = new File((homeDirectory == null ? "" : homeDirectory+File.separator)+directory);
         if (!file.exists()) return results;
 
@@ -90,7 +92,7 @@ public class PenroseAdmin implements PenroseAdminMBean {
     }
 
     public byte[] download(String filename) throws Exception {
-        String homeDirectory = penrose.getPenroseConfig().getHome();
+        String homeDirectory = penroseServer.getPenroseConfig().getHome();
         File file = new File((homeDirectory == null ? "" : homeDirectory+File.separator)+filename);
         if (!file.exists()) return null;
 
@@ -105,7 +107,7 @@ public class PenroseAdmin implements PenroseAdminMBean {
     }
 
     public void upload(String filename, byte content[]) throws Exception {
-        String homeDirectory = penrose.getPenroseConfig().getHome();
+        String homeDirectory = penroseServer.getPenroseConfig().getHome();
         File file = new File((homeDirectory == null ? "" : homeDirectory+File.separator)+filename);
         file.getParentFile().mkdirs();
 
@@ -116,11 +118,11 @@ public class PenroseAdmin implements PenroseAdminMBean {
         out.close();
     }
 
-    public Penrose getPenrose() {
-        return penrose;
+    public PenroseServer getPenroseServer() {
+        return penroseServer;
     }
 
-    public void setPenrose(Penrose penrose) {
-        this.penrose = penrose;
+    public void setPenroseServer(PenroseServer penroseServer) {
+        this.penroseServer = penroseServer;
     }
 }
