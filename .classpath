@@ -27,5 +27,6 @@
 	<classpathentry kind="var" path="JAVA_HOME/lib/tools.jar"/>
 	<classpathentry kind="lib" path="lib/zql.jar"/>
 	<classpathentry kind="lib" path="lib/maven-directory-plugin-0.9.4-SNAPSHOT.jar"/>
+	<classpathentry kind="lib" path="lib/java-getopt-1.0.12.jar"/>
 	<classpathentry kind="output" path="target/classes"/>
 </classpath>
