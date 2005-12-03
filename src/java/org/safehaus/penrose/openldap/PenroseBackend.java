@@ -25,6 +25,7 @@ import org.safehaus.penrose.openldap.config.ConfigurationItem;
 import org.safehaus.penrose.openldap.config.NameValueItem;
 import org.safehaus.penrose.openldap.config.SlapdConfig;
 import org.safehaus.penrose.Penrose;
+import org.safehaus.penrose.user.UserConfig;
 import org.safehaus.penrose.session.PenroseSession;
 import org.safehaus.penrose.session.PenroseSearchResults;
 import org.safehaus.penrose.session.*;
@@ -95,8 +96,9 @@ public class PenroseBackend implements Backend {
         penrose.start();
 
         PenroseConfig penroseConfig = penrose.getPenroseConfig();
-        penroseConfig.setRootDn(rootDn);
-        penroseConfig.setRootPassword(rootPassword);
+        UserConfig rootUserConfig = penroseConfig.getRootUserConfig();
+        rootUserConfig.setDn(rootDn);
+        rootUserConfig.setPassword(rootPassword);
 
         return LDAPException.SUCCESS;
     }

@@ -33,6 +33,7 @@ import org.safehaus.penrose.engine.EngineConfig;
 import org.safehaus.penrose.connector.ConnectorConfig;
 import org.safehaus.penrose.schema.SchemaConfig;
 import org.safehaus.penrose.partition.PartitionConfig;
+import org.safehaus.penrose.user.UserConfig;
 import org.apache.log4j.Logger;
 
 /**
@@ -139,18 +140,19 @@ public class PenroseConfigWriter {
             element.add(partition);
         }
 
-        if (penroseConfig.getRootDn() != null || penroseConfig.getRootPassword() != null) {
+        UserConfig rootUserConfig = penroseConfig.getRootUserConfig();
+        if (rootUserConfig != null ) {
             Element rootElement = new DefaultElement("root");
 
-            if (penroseConfig.getRootDn() != null) {
+            if (rootUserConfig.getDn() != null) {
                 Element rootDn = new DefaultElement("root-dn");
-                rootDn.add(new DefaultText(penroseConfig.getRootDn()));
+                rootDn.add(new DefaultText(rootUserConfig.getDn()));
                 rootElement.add(rootDn);
             }
 
-            if (penroseConfig.getRootPassword() != null) {
+            if (rootUserConfig.getPassword() != null) {
                 Element rootPassword = new DefaultElement("root-password");
-                rootPassword.add(new DefaultText(penroseConfig.getRootPassword()));
+                rootPassword.add(new DefaultText(rootUserConfig.getPassword()));
                 rootElement.add(rootPassword);
             }
 
@@ -162,10 +164,10 @@ public class PenroseConfigWriter {
 
     public Element toElement(AdapterConfig adapterConfig) {
         Element element = new DefaultElement("adapter");
-        element.addAttribute("name", adapterConfig.getAdapterName());
+        element.addAttribute("name", adapterConfig.getName());
 /*
         Element adapterName = new DefaultElement("adapter-name");
-        adapterName.add(new DefaultText(adapterConfig.getAdapterName()));
+        adapterName.add(new DefaultText(adapterConfig.getName()));
         element.add(adapterName);
 */
         Element adapterClass = new DefaultElement("adapter-class");
@@ -202,7 +204,7 @@ public class PenroseConfigWriter {
     	Element element = new DefaultElement("interpreter");
 /*
         Element interpreterName = new DefaultElement("interpreter-name");
-        interpreterName.add(new DefaultText(interpreterConfig.getInterpreterName()));
+        interpreterName.add(new DefaultText(interpreterConfig.getName()));
         element.add(interpreterName);
 */
         Element interpreterClass = new DefaultElement("interpreter-class");
@@ -239,7 +241,7 @@ public class PenroseConfigWriter {
     	Element element = new DefaultElement("engine");
 /*
         Element engineName = new DefaultElement("engine-name");
-        engineName.add(new DefaultText(engineConfig.getEngineName()));
+        engineName.add(new DefaultText(engineConfig.getName()));
         element.add(engineName);
 
         Element engineClass = new DefaultElement("engine-class");
@@ -275,7 +277,7 @@ public class PenroseConfigWriter {
     public void addElements(Element element, CacheConfig cacheConfig) {
 /*
         Element cacheName = new DefaultElement("cache-name");
-        cacheName.add(new DefaultText(cacheConfig.getCacheName()));
+        cacheName.add(new DefaultText(cacheConfig.getName()));
         element.add(cacheName);
 */
         if (cacheConfig.getCacheClass() != null && !"".equals(cacheConfig.getCacheClass())) {
@@ -312,7 +314,7 @@ public class PenroseConfigWriter {
     	Element element = new DefaultElement("connector");
 /*
         Element cacheName = new DefaultElement("connector-name");
-        cacheName.add(new DefaultText(connectorConfig.getConnectorName()));
+        cacheName.add(new DefaultText(connectorConfig.getName()));
         element.add(cacheName);
 
         if (connectorConfig.getConnectorClass() != null && !"".equals(connectorConfig.getConnectorClass())) {

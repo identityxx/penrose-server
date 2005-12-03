@@ -74,15 +74,15 @@ public class SourceConfig implements Cloneable {
 
     private String description;
 
-	/**
-	 * Fields. Each element is of type org.safehaus.penrose.partition.FieldConfig.
-	 */
-	private Map fieldConfigs = new TreeMap();
-
     /**
      * Parameters.
      */
     private Properties parameters = new Properties();
+
+    /**
+     * Fields. Each element is of type org.safehaus.penrose.partition.FieldConfig.
+     */
+    private Map fieldConfigs = new TreeMap();
 
 	public SourceConfig() {
 	}

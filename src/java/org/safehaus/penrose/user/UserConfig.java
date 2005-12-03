@@ -15,43 +15,45 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
-package org.safehaus.penrose.partition;
+package org.safehaus.penrose.user;
+
+import org.safehaus.penrose.partition.ConnectionConfig;
 
 /**
  * @author Endi S. Dewata
  */
-public class PartitionConfig implements Cloneable {
+public class UserConfig implements Cloneable {
 
-    private String name;
-    private String path;
+    private String dn;
+    private String password;
 
-    public PartitionConfig() {
+    public UserConfig() {
     }
 
-    public PartitionConfig(String name, String path) {
-        this.name = name;
-        this.path = path;
+    public UserConfig(String dn, String password) {
+        this.dn = dn;
+        this.password = password;
     }
 
-    public String getName() {
-        return name;
+    public String getDn() {
+        return dn;
     }
 
-    public void setName(String name) {
-        this.name = name;
+    public void setDn(String dn) {
+        this.dn = dn;
     }
 
-    public String getPath() {
-        return path;
+    public String getPassword() {
+        return password;
     }
 
-    public void setPath(String path) {
-        this.path = path;
+    public void setPassword(String password) {
+        this.password = password;
     }
 
     public int hashCode() {
-        return (name == null ? 0 : name.hashCode()) +
-                (path == null ? 0 : path.hashCode());
+        return (dn == null ? 0 : dn.hashCode()) +
+                (password == null ? 0 : password.hashCode());
     }
 
     boolean equals(Object o1, Object o2) {
@@ -63,22 +65,22 @@ public class PartitionConfig implements Cloneable {
     public boolean equals(Object object) {
         if((object == null) || (object.getClass() != getClass())) return false;
 
-        PartitionConfig partitionConfig = (PartitionConfig)object;
-        if (!equals(name, partitionConfig.name)) return false;
-        if (!equals(path, partitionConfig.path)) return false;
+        UserConfig userConfig = (UserConfig)object;
+        if (!equals(dn, userConfig.dn)) return false;
+        if (!equals(password, userConfig.password)) return false;
 
         return true;
     }
 
-    public void copy(PartitionConfig partitionConfig) {
-        name = partitionConfig.name;
-        path = partitionConfig.path;
+    public void copy(UserConfig userConfig) {
+        dn = userConfig.dn;
+        password = userConfig.password;
     }
 
     public Object clone() {
-        PartitionConfig partitionConfig = new PartitionConfig();
-        partitionConfig.copy(this);
+        UserConfig userConfig = new UserConfig();
+        userConfig.copy(this);
 
-        return partitionConfig;
+        return userConfig;
     }
 }

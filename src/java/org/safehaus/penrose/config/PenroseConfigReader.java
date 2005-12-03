@@ -73,7 +73,7 @@ public class PenroseConfigReader {
             sourceCacheConfig.setCacheClass(ConnectorConfig.DEFAULT_CACHE_CLASS);
             penroseConfig.setSourceCacheConfig(sourceCacheConfig);
         }
-        sourceCacheConfig.setCacheName(ConnectorConfig.DEFAULT_CACHE_NAME);
+        sourceCacheConfig.setName(ConnectorConfig.DEFAULT_CACHE_NAME);
 
         CacheConfig entryCacheConfig = penroseConfig.getEntryCacheConfig();
         if (penroseConfig.getEntryCacheConfig() == null) {
@@ -81,7 +81,7 @@ public class PenroseConfigReader {
             entryCacheConfig.setCacheClass(EngineConfig.DEFAULT_CACHE_CLASS);
             penroseConfig.setEntryCacheConfig(entryCacheConfig);
         }
-        entryCacheConfig.setCacheName(EngineConfig.DEFAULT_CACHE_NAME);
+        entryCacheConfig.setName(EngineConfig.DEFAULT_CACHE_NAME);
 
         if (penroseConfig.getConnectorConfig() == null) {
             ConnectorConfig connectorConfig = new ConnectorConfig();

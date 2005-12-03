@@ -59,16 +59,19 @@ public class PenroseAuthenticator extends AbstractAuthenticator {
         String password = new String((byte[])credentials);
 
         PenroseConfig penroseConfig = penrose.getPenroseConfig();
-        String rootDn = penroseConfig.getRootDn();
-        String rootPassword = penroseConfig.getRootPassword();
+        String rootDn = penroseConfig.getRootUserConfig().getDn();
+        String rootPassword = penroseConfig.getRootUserConfig().getPassword();
 
-        if (rootDn != null && rootPassword != null &&
-                rootDn.equals(dn) && rootPassword.equals(password)) {
-            return createLdapPrincipal( dn, AuthenticationLevel.SIMPLE );
+        if (rootDn != null &&
+                rootPassword != null &&
+                rootDn.equals(dn) &&
+                rootPassword.equals(password)) {
+
+            return createLdapPrincipal(dn, AuthenticationLevel.SIMPLE);
         }
 
         if ("".equals(dn)) {
-            return createLdapPrincipal( dn, AuthenticationLevel.SIMPLE );
+            return createLdapPrincipal(dn, AuthenticationLevel.SIMPLE);
         }
         
         log.info("Login "+dn);

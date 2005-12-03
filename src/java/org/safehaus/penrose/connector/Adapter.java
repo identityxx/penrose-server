@@ -122,7 +122,7 @@ public abstract class Adapter {
     }
 
     public String getAdapterName() {
-        return adapterConfig.getAdapterName();
+        return adapterConfig.getName();
     }
 
     public String getConnectionName() {

@@ -36,7 +36,7 @@ public class EngineConfig implements Cloneable {
 
     public final static int DEFAULT_THREAD_POOL_SIZE = 20;
 
-    private String engineName = "DEFAULT";
+    private String name = "DEFAULT";
     private String engineClass = Engine.class.getName();
     private String description;
 
@@ -66,12 +66,12 @@ public class EngineConfig implements Cloneable {
         return parameters.getProperty(name);
     }
 
-    public String getEngineName() {
-        return engineName;
+    public String getName() {
+        return name;
     }
 
-    public void setEngineName(String engineName) {
-        this.engineName = engineName;
+    public void setName(String name) {
+        this.name = name;
     }
 
     public String getDescription() {
@@ -83,7 +83,7 @@ public class EngineConfig implements Cloneable {
     }
 
     public int hashCode() {
-        return (engineName == null ? 0 : engineName.hashCode()) +
+        return (name == null ? 0 : name.hashCode()) +
                 (engineClass == null ? 0 : engineClass.hashCode()) +
                 (description == null ? 0 : description.hashCode()) +
                 (parameters == null ? 0 : parameters.hashCode());
@@ -96,11 +96,10 @@ public class EngineConfig implements Cloneable {
     }
 
     public boolean equals(Object object) {
-        if (this == object) return true;
-        if((object == null) || (object.getClass() != this.getClass())) return false;
+        if((object == null) || (object.getClass() != getClass())) return false;
 
         EngineConfig engineConfig = (EngineConfig)object;
-        if (!equals(engineName, engineConfig.engineName)) return false;
+        if (!equals(name, engineConfig.name)) return false;
         if (!equals(engineClass, engineConfig.engineClass)) return false;
         if (!equals(description, engineConfig.description)) return false;
         if (!equals(parameters, engineConfig.parameters)) return false;
@@ -115,7 +114,7 @@ public class EngineConfig implements Cloneable {
     }
 
     public void copy(EngineConfig engineConfig) {
-        engineName = engineConfig.engineName;
+        name = engineConfig.name;
         engineClass = engineConfig.engineClass;
         description = engineConfig.description;
 

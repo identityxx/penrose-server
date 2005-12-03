@@ -86,8 +86,7 @@ public class FieldMapping implements Cloneable {
     }
 
     public boolean equals(Object object) {
-        if (this == object) return true;
-        if((object == null) || (object.getClass() != this.getClass())) return false;
+        if((object == null) || (object.getClass() != getClass())) return false;
 
         FieldMapping fieldMapping = (FieldMapping)object;
         if (!equals(name, fieldMapping.name)) return false;

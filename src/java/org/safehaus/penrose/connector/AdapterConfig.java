@@ -23,9 +23,9 @@ import java.util.Collection;
 /**
  * @author Endi S. Dewata
  */
-public class AdapterConfig {
+public class AdapterConfig implements Cloneable {
 
-    private String adapterName;
+    private String name;
     private String adapterClass;
     private String description;
 
@@ -35,7 +35,7 @@ public class AdapterConfig {
     }
 
     public AdapterConfig(String adapterName, String adapterClass) {
-        this.adapterName = adapterName;
+        this.name = adapterName;
         this.adapterClass = adapterClass;
     }
 
@@ -47,12 +47,12 @@ public class AdapterConfig {
         this.adapterClass = adapterClass;
     }
 
-    public String getAdapterName() {
-        return adapterName;
+    public String getName() {
+        return name;
     }
 
-    public void setAdapterName(String adapterName) {
-        this.adapterName = adapterName;
+    public void setName(String name) {
+        this.name = name;
     }
 
     public String getDescription() {
@@ -79,4 +79,43 @@ public class AdapterConfig {
         return parameters.getProperty(name);
     }
 
+    public int hashCode() {
+        return (name == null ? 0 : name.hashCode()) +
+                (adapterClass == null ? 0 : adapterClass.hashCode()) +
+                (description == null ? 0 : description.hashCode()) +
+                (parameters == null ? 0 : parameters.hashCode());
+    }
+
+    boolean equals(Object o1, Object o2) {
+        if (o1 == null && o2 == null) return true;
+        if (o1 != null) return o1.equals(o2);
+        return o2.equals(o1);
+    }
+
+    public boolean equals(Object object) {
+        if((object == null) || (object.getClass() != getClass())) return false;
+
+        AdapterConfig adapterConfig = (AdapterConfig)object;
+        if (!equals(name, adapterConfig.name)) return false;
+        if (!equals(adapterClass, adapterConfig.adapterClass)) return false;
+        if (!equals(description, adapterConfig.description)) return false;
+        if (!equals(parameters, adapterConfig.parameters)) return false;
+
+        return true;
+    }
+
+    public void copy(AdapterConfig adapterConfig) {
+        name = adapterConfig.name;
+        adapterClass = adapterConfig.adapterClass;
+        description = adapterConfig.description;
+
+        parameters.clear();
+        parameters.putAll(adapterConfig.parameters);
+    }
+
+    public Object clone() {
+        AdapterConfig adapterConfig = new AdapterConfig();
+        adapterConfig.copy(this);
+        return adapterConfig;
+    }
 }

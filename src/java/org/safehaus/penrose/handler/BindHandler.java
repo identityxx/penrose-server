@@ -60,7 +60,7 @@ public class BindHandler {
 
         String ndn = LDAPDN.normalize(dn);
 
-        if (handler.getRootDn() != null && ndn.equals(LDAPDN.normalize(handler.getRootDn()))) { // bind as root
+        if (handler.getRootUserConfig().getDn() != null && ndn.equals(LDAPDN.normalize(handler.getRootUserConfig().getDn()))) { // bind as root
 
             int rc = bindAsRoot(password);
             if (rc != LDAPException.SUCCESS) return rc;
@@ -92,7 +92,7 @@ public class BindHandler {
     public int bindAsRoot(String password) throws Exception {
         log.debug("Comparing root's password");
 
-        if (!PasswordUtil.comparePassword(password, handler.getRootPassword())) {
+        if (!PasswordUtil.comparePassword(password, handler.getRootUserConfig().getPassword())) {
             log.debug("Password doesn't match => BIND FAILED");
             return LDAPException.INVALID_CREDENTIALS;
         }

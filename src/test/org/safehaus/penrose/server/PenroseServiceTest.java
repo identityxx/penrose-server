@@ -78,7 +78,7 @@ public class PenroseServiceTest extends TestCase {
     public void testPenroseService() throws Exception {
 
         PenroseSession session = penrose.newSession();
-        session.bind(penroseConfig.getRootDn(), penroseConfig.getRootPassword());
+        session.bind(penroseConfig.getRootUserConfig().getDn(), penroseConfig.getRootUserConfig().getPassword());
 
         PenroseSearchControls sc = new PenroseSearchControls();
         sc.setScope(PenroseSearchControls.SCOPE_ONE);

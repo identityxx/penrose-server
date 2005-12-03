@@ -22,7 +22,7 @@ import java.io.File;
 /**
  * @author Endi S. Dewata
  */
-public class SchemaConfig {
+public class SchemaConfig implements Cloneable {
 
     private String name;
     private String path;
@@ -54,5 +54,39 @@ public class SchemaConfig {
         int i = filename.indexOf(".");
 
         this.name = filename.substring(0, i);
+    }
+
+    public int hashCode() {
+        return (name == null ? 0 : name.hashCode()) +
+                (path == null ? 0 : path.hashCode());
+    }
+
+    boolean equals(Object o1, Object o2) {
+        if (o1 == null && o2 == null) return true;
+        if (o1 != null) return o1.equals(o2);
+        return o2.equals(o1);
+    }
+
+    public boolean equals(Object object) {
+        if (this == object) return true;
+        if((object == null) || (object.getClass() != this.getClass())) return false;
+
+        SchemaConfig schemaConfig = (SchemaConfig)object;
+        if (!equals(name, schemaConfig.name)) return false;
+        if (!equals(path, schemaConfig.path)) return false;
+
+        return true;
+    }
+
+    public void copy(SchemaConfig schemaConfig) {
+        name = schemaConfig.name;
+        path = schemaConfig.path;
+    }
+
+    public Object clone() {
+        SchemaConfig schemaConfig = new SchemaConfig();
+        schemaConfig.copy(this);
+
+        return schemaConfig;
     }
 }

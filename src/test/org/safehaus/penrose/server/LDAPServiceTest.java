@@ -133,8 +133,8 @@ public class LDAPServiceTest extends TestCase {
         Hashtable env = new Hashtable();
         env.put(Context.INITIAL_CONTEXT_FACTORY, "com.sun.jndi.ldap.LdapCtxFactory");
         env.put(Context.PROVIDER_URL, "ldap://localhost:"+port);
-        env.put(Context.SECURITY_PRINCIPAL, penroseConfig.getRootDn());
-        env.put(Context.SECURITY_CREDENTIALS, penroseConfig.getRootPassword());
+        env.put(Context.SECURITY_PRINCIPAL, penroseConfig.getRootUserConfig().getDn());
+        env.put(Context.SECURITY_CREDENTIALS, penroseConfig.getRootUserConfig().getPassword());
 
         DirContext ctx = new InitialDirContext(env);
 

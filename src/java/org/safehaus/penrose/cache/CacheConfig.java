@@ -38,7 +38,7 @@ public class CacheConfig implements Cloneable {
     public final static int DEFAULT_CACHE_SIZE         = 100;
     public final static int DEFAULT_CACHE_EXPIRATION   = 5;
 
-    private String cacheName;
+    private String name;
     private String cacheClass;
     private String description;
 
@@ -79,16 +79,16 @@ public class CacheConfig implements Cloneable {
         this.description = description;
     }
 
-    public String getCacheName() {
-        return cacheName;
+    public String getName() {
+        return name;
     }
 
-    public void setCacheName(String cacheName) {
-        this.cacheName = cacheName;
+    public void setName(String name) {
+        this.name = name;
     }
 
     public int hashCode() {
-        return (cacheName == null ? 0 : cacheName.hashCode()) +
+        return (name == null ? 0 : name.hashCode()) +
                 (cacheClass == null ? 0 : cacheClass.hashCode()) +
                 (description == null ? 0 : description.hashCode()) +
                 (parameters == null ? 0 : parameters.hashCode());
@@ -101,11 +101,10 @@ public class CacheConfig implements Cloneable {
     }
 
     public boolean equals(Object object) {
-        if (object == null) return false;
-        if (!(object instanceof CacheConfig)) return false;
+        if((object == null) || (object.getClass() != getClass())) return false;
 
         CacheConfig fieldDefinition = (CacheConfig)object;
-        if (!equals(cacheName, fieldDefinition.cacheName)) return false;
+        if (!equals(name, fieldDefinition.name)) return false;
         if (!equals(cacheClass, fieldDefinition.cacheClass)) return false;
         if (!equals(description, fieldDefinition.description)) return false;
         if (!equals(parameters, fieldDefinition.parameters)) return false;
@@ -114,7 +113,7 @@ public class CacheConfig implements Cloneable {
     }
 
     public void copy(CacheConfig cacheConfig) {
-        cacheName = cacheConfig.cacheName;
+        name = cacheConfig.name;
         cacheClass = cacheConfig.cacheClass;
         description = cacheConfig.description;
 

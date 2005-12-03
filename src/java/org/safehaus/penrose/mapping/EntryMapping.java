@@ -370,6 +370,57 @@ public class EntryMapping implements Cloneable {
         acl.clear();
     }
 
+    public String getParameter(String name) {
+        return (String)parameters.get(name);
+    }
+
+    public void setParameter(String name, String value) {
+        parameters.put(name, value);
+    }
+
+    public void removeParameter(String name) {
+        parameters.remove(name);
+    }
+
+    public Collection getParameterNames() {
+        return parameters.keySet();
+    }
+
+    public int hashCode() {
+        return (rdn == null ? 0 : rdn.hashCode()) +
+                (parentDn == null ? 0 : parentDn.hashCode()) +
+                (objectClasses == null ? 0 : objectClasses.hashCode()) +
+                (script == null ? 0 : script.hashCode()) +
+                (attributeMappings == null ? 0 : attributeMappings.hashCode()) +
+                (sourceMappings == null ? 0 : sourceMappings.hashCode()) +
+                (relationships == null ? 0 : relationships.hashCode()) +
+                (acl == null ? 0 : acl.hashCode()) +
+                (parameters == null ? 0 : parameters.hashCode());
+    }
+
+    boolean equals(Object o1, Object o2) {
+        if (o1 == null && o2 == null) return true;
+        if (o1 != null) return o1.equals(o2);
+        return o2.equals(o1);
+    }
+
+    public boolean equals(Object object) {
+        if((object == null) || (object.getClass() != getClass())) return false;
+
+        EntryMapping entryMapping = (EntryMapping)object;
+        if (!equals(rdn, entryMapping.rdn)) return false;
+        if (!equals(parentDn, entryMapping.parentDn)) return false;
+        if (!equals(objectClasses, entryMapping.objectClasses)) return false;
+        if (!equals(script, entryMapping.script)) return false;
+        if (!equals(attributeMappings, entryMapping.attributeMappings)) return false;
+        if (!equals(sourceMappings, entryMapping.sourceMappings)) return false;
+        if (!equals(relationships, entryMapping.relationships)) return false;
+        if (!equals(acl, entryMapping.acl)) return false;
+        if (!equals(parameters, entryMapping.parameters)) return false;
+
+        return true;
+    }
+
     public void copy(EntryMapping entry) {
         rdn = entry.rdn;
         parentDn = entry.parentDn;
@@ -409,62 +460,10 @@ public class EntryMapping implements Cloneable {
         parameters.putAll(entry.parameters);
     }
 
-    public String getParameter(String name) {
-        return (String)parameters.get(name);
-    }
-
-    public void setParameter(String name, String value) {
-        parameters.put(name, value);
-    }
-
-    public void removeParameter(String name) {
-        parameters.remove(name);
-    }
-
-    public Collection getParameterNames() {
-        return parameters.keySet();
-    }
-
     public Object clone() {
         EntryMapping entry = new EntryMapping();
         entry.copy(this);
         return entry;
-    }
-
-    public int hashCode() {
-        return (rdn == null ? 0 : rdn.hashCode()) +
-                (parentDn == null ? 0 : parentDn.hashCode()) +
-                (objectClasses == null ? 0 : objectClasses.hashCode()) +
-                (script == null ? 0 : script.hashCode()) +
-                (attributeMappings == null ? 0 : attributeMappings.hashCode()) +
-                (sourceMappings == null ? 0 : sourceMappings.hashCode()) +
-                (relationships == null ? 0 : relationships.hashCode()) +
-                (acl == null ? 0 : acl.hashCode()) +
-                (parameters == null ? 0 : parameters.hashCode());
-    }
-
-    boolean equals(Object o1, Object o2) {
-        if (o1 == null && o2 == null) return true;
-        if (o1 != null) return o1.equals(o2);
-        return o2.equals(o1);
-    }
-
-    public boolean equals(Object object) {
-        if (this == object) return true;
-        if((object == null) || (object.getClass() != this.getClass())) return false;
-
-        EntryMapping entryMapping = (EntryMapping)object;
-        if (!equals(rdn, entryMapping.rdn)) return false;
-        if (!equals(parentDn, entryMapping.parentDn)) return false;
-        if (!equals(objectClasses, entryMapping.objectClasses)) return false;
-        if (!equals(script, entryMapping.script)) return false;
-        if (!equals(attributeMappings, entryMapping.attributeMappings)) return false;
-        if (!equals(sourceMappings, entryMapping.sourceMappings)) return false;
-        if (!equals(relationships, entryMapping.relationships)) return false;
-        if (!equals(acl, entryMapping.acl)) return false;
-        if (!equals(parameters, entryMapping.parameters)) return false;
-
-        return true;
     }
 
 }

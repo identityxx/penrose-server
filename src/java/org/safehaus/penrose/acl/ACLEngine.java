@@ -120,7 +120,7 @@ public class ACLEngine {
                 return rc;
             }
 
-            String rootDn = handler.getSchemaManager().normalize(handler.getRootDn());
+            String rootDn = handler.getSchemaManager().normalize(handler.getRootUserConfig().getDn());
             String bindDn = handler.getSchemaManager().normalize(session.getBindDn());
             if (rootDn != null && rootDn.equals(bindDn)) {
                 return rc;
@@ -235,7 +235,7 @@ public class ACLEngine {
             Set denies
             ) throws Exception {
 
-        String rootDn = handler.getSchemaManager().normalize(handler.getRootDn());
+        String rootDn = handler.getSchemaManager().normalize(handler.getRootUserConfig().getDn());
     	if (rootDn.equals(bindDn)) {
             grants.add("*");
             return;

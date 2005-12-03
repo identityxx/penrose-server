@@ -111,8 +111,8 @@ public class PenroseLDAPService {
         final Properties env = new Properties();
         env.setProperty(Context.PROVIDER_URL, "ou=system");
         env.setProperty(Context.INITIAL_CONTEXT_FACTORY, ServerContextFactory.class.getName() );
-        env.setProperty(Context.SECURITY_PRINCIPAL, penroseConfig.getRootDn());
-        env.setProperty(Context.SECURITY_CREDENTIALS, penroseConfig.getRootPassword());
+        env.setProperty(Context.SECURITY_PRINCIPAL, penroseConfig.getRootUserConfig().getDn());
+        env.setProperty(Context.SECURITY_CREDENTIALS, penroseConfig.getRootUserConfig().getPassword());
         env.setProperty(Context.SECURITY_AUTHENTICATION, "simple");
 
         env.setProperty("asn.1.berlib.provider", "org.apache.ldap.common.berlib.asn1.SnickersProvider");
@@ -161,8 +161,8 @@ public class PenroseLDAPService {
         Hashtable env = new ShutdownConfiguration().toJndiEnvironment();
         env.put(Context.INITIAL_CONTEXT_FACTORY, CoreContextFactory.class.getName());
         env.put(Context.PROVIDER_URL, "ou=system");
-        env.put(Context.SECURITY_PRINCIPAL, penroseConfig.getRootDn());
-        env.put(Context.SECURITY_CREDENTIALS, penroseConfig.getRootPassword());
+        env.put(Context.SECURITY_PRINCIPAL, penroseConfig.getRootUserConfig().getDn());
+        env.put(Context.SECURITY_CREDENTIALS, penroseConfig.getRootUserConfig().getPassword());
         env.put(Context.SECURITY_AUTHENTICATION, "simple");
 
         new InitialDirContext(env);

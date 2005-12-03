@@ -93,7 +93,7 @@ public class Engine {
         this.engineConfig = engineConfig;
 
         //log.debug("-------------------------------------------------");
-        //log.debug("Initializing "+engineConfig.getEngineName()+" engine ...");
+        //log.debug("Initializing "+engineConfig.getName()+" engine ...");
 
         filterTool = new EngineFilterTool(this);
 

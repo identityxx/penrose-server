@@ -27,14 +27,17 @@ import org.safehaus.penrose.connector.ConnectorConfig;
 import org.safehaus.penrose.connector.AdapterConfig;
 import org.safehaus.penrose.partition.PartitionConfig;
 import org.safehaus.penrose.schema.SchemaConfig;
+import org.safehaus.penrose.user.UserConfig;
 
 
 /**
  * @author Endi S. Dewata
  */
-public class PenroseConfig {
+public class PenroseConfig implements Cloneable {
 
     Logger log = Logger.getLogger(getClass());
+
+    private String home;
 
     private int port = 10389;
     private int securePort = 10639;
@@ -42,68 +45,39 @@ public class PenroseConfig {
     private int jmxRmiPort = 1099;
     private int jmxHttpPort = 8112;
 
-    private String home;
-
-    private String rootDn = "uid=admin,ou=system";
-    private String rootPassword = "secret";
-	
     private Map systemProperties = new LinkedHashMap();
     private Map schemaConfigs    = new LinkedHashMap();
     private Map adapterConfigs   = new LinkedHashMap();
+    private Map partitionConfigs = new LinkedHashMap();
 
     private InterpreterConfig interpreterConfig;
 
     private CacheConfig entryCacheConfig;
     private CacheConfig sourceCacheConfig;
 
-    private ConnectorConfig connectorConfig;
     private EngineConfig engineConfig;
+    private ConnectorConfig connectorConfig;
 
-    private Map partitionConfigs = new LinkedHashMap();
+    private UserConfig rootUserConfig;
 
     public PenroseConfig() {
 
         interpreterConfig = new InterpreterConfig();
 
         sourceCacheConfig = new CacheConfig();
-        sourceCacheConfig.setCacheName(ConnectorConfig.DEFAULT_CACHE_NAME);
+        sourceCacheConfig.setName(ConnectorConfig.DEFAULT_CACHE_NAME);
         sourceCacheConfig.setCacheClass(ConnectorConfig.DEFAULT_CACHE_CLASS);
 
         entryCacheConfig = new CacheConfig();
-        entryCacheConfig.setCacheName(EngineConfig.DEFAULT_CACHE_NAME);
+        entryCacheConfig.setName(EngineConfig.DEFAULT_CACHE_NAME);
         entryCacheConfig.setCacheClass(EngineConfig.DEFAULT_CACHE_CLASS);
 
         connectorConfig = new ConnectorConfig();
 
         engineConfig = new EngineConfig();
-    }
 
-	/**
-	 * @return Returns the rootDn.
-	 */
-	public String getRootDn() {
-		return rootDn;
-	}
-	/**
-	 * @param rootDn
-	 *            The rootDn to set.
-	 */
-	public void setRootDn(String rootDn) {
-		this.rootDn = rootDn;
-	}
-	/**
-	 * @return Returns the rootPassword.
-	 */
-	public String getRootPassword() {
-		return rootPassword;
-	}
-	/**
-	 * @param rootPassword
-	 *            The rootPassword to set.
-	 */
-	public void setRootPassword(String rootPassword) {
-		this.rootPassword = rootPassword;
-	}
+        rootUserConfig = new UserConfig("uid=admin,ou=system", "secret");
+    }
 
     public void setEngineConfig(EngineConfig engineConfig) {
         this.engineConfig = engineConfig;
@@ -134,7 +108,7 @@ public class PenroseConfig {
     }
 
     public void addAdapterConfig(AdapterConfig adapter) {
-        adapterConfigs.put(adapter.getAdapterName(), adapter);
+        adapterConfigs.put(adapter.getName(), adapter);
     }
 
     public String getSystemProperty(String name) {
@@ -247,5 +221,113 @@ public class PenroseConfig {
 
     public PartitionConfig removePartitionConfig(String name) {
         return (PartitionConfig)partitionConfigs.remove(name);
+    }
+
+    public UserConfig getRootUserConfig() {
+        return rootUserConfig;
+    }
+
+    public void setRootUserConfig(UserConfig rootUserConfig) {
+        this.rootUserConfig = rootUserConfig;
+    }
+
+    public int hashCode() {
+        return (home == null ? 0 : home.hashCode()) +
+                (port) +
+                (securePort) +
+                (jmxRmiPort) +
+                (jmxHttpPort) +
+                (systemProperties == null ? 0 : systemProperties.hashCode()) +
+                (schemaConfigs == null ? 0 : schemaConfigs.hashCode()) +
+                (adapterConfigs == null ? 0 : adapterConfigs.hashCode()) +
+                (partitionConfigs == null ? 0 : partitionConfigs.hashCode()) +
+                (interpreterConfig == null ? 0 : interpreterConfig.hashCode()) +
+                (entryCacheConfig == null ? 0 : entryCacheConfig.hashCode()) +
+                (sourceCacheConfig == null ? 0 : sourceCacheConfig.hashCode()) +
+                (engineConfig == null ? 0 : engineConfig.hashCode()) +
+                (connectorConfig == null ? 0 : connectorConfig.hashCode()) +
+                (rootUserConfig == null ? 0 : rootUserConfig.hashCode());
+    }
+
+    boolean equals(Object o1, Object o2) {
+        if (o1 == null && o2 == null) return true;
+        if (o1 != null) return o1.equals(o2);
+        return o2.equals(o1);
+    }
+
+    public boolean equals(Object object) {
+        if (this == object) return true;
+        if((object == null) || (object.getClass() != this.getClass())) return false;
+
+        PenroseConfig penroseConfig = (PenroseConfig)object;
+
+        if (!equals(home, penroseConfig.home)) return false;
+        if (port != penroseConfig.port) return false;
+        if (securePort != penroseConfig.securePort) return false;
+        if (jmxRmiPort != penroseConfig.jmxRmiPort) return false;
+        if (jmxHttpPort != penroseConfig.jmxHttpPort) return false;
+
+        if (!equals(systemProperties, penroseConfig.systemProperties)) return false;
+        if (!equals(schemaConfigs, penroseConfig.schemaConfigs)) return false;
+        if (!equals(adapterConfigs, penroseConfig.adapterConfigs)) return false;
+        if (!equals(partitionConfigs, penroseConfig.partitionConfigs)) return false;
+
+        if (!equals(interpreterConfig, penroseConfig.interpreterConfig)) return false;
+
+        if (!equals(entryCacheConfig, penroseConfig.entryCacheConfig)) return false;
+        if (!equals(sourceCacheConfig, penroseConfig.sourceCacheConfig)) return false;
+
+        if (!equals(engineConfig, penroseConfig.engineConfig)) return false;
+        if (!equals(connectorConfig, penroseConfig.connectorConfig)) return false;
+
+        if (!equals(rootUserConfig, penroseConfig.rootUserConfig)) return false;
+
+        return true;
+    }
+
+    public void copy(PenroseConfig penroseConfig) {
+        home = penroseConfig.home;
+        port = penroseConfig.port;
+        securePort = penroseConfig.securePort;
+        jmxRmiPort = penroseConfig.jmxRmiPort;
+        jmxHttpPort = penroseConfig.jmxHttpPort;
+
+        systemProperties.clear();
+        systemProperties.putAll(penroseConfig.systemProperties);
+
+        schemaConfigs.clear();
+        for (Iterator i=penroseConfig.schemaConfigs.values().iterator(); i.hasNext(); ) {
+            SchemaConfig schemaConfig = (SchemaConfig)i.next();
+            addSchemaConfig((SchemaConfig)schemaConfig.clone());
+        }
+
+        adapterConfigs.clear();
+        for (Iterator i=penroseConfig.adapterConfigs.values().iterator(); i.hasNext(); ) {
+            AdapterConfig adapterConfig = (AdapterConfig)i.next();
+            addAdapterConfig((AdapterConfig)adapterConfig.clone());
+        }
+
+        partitionConfigs.clear();
+        for (Iterator i=penroseConfig.partitionConfigs.values().iterator(); i.hasNext(); ) {
+            PartitionConfig partitionConfig = (PartitionConfig)i.next();
+            addPartitionConfig((PartitionConfig)partitionConfig.clone());
+        }
+
+        interpreterConfig.copy(interpreterConfig);
+
+        entryCacheConfig.copy(entryCacheConfig);
+        sourceCacheConfig.copy(sourceCacheConfig);
+
+        engineConfig.copy(engineConfig);
+        connectorConfig.copy(connectorConfig);
+
+        rootUserConfig.copy(rootUserConfig);
+    }
+
+    public Object clone() {
+        PenroseConfig penroseConfig = new PenroseConfig();
+        penroseConfig.copy(this);
+
+        return penroseConfig;
     }
 }

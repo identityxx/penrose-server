@@ -107,6 +107,10 @@ public class ConnectionConfig implements Cloneable {
 		this.description = description;
 	}
 
+    public String toString() {
+        return "ConnectionConfig("+name+")";
+    }
+
     public int hashCode() {
         return (name == null ? 0 : name.hashCode()) +
                 (adapterName == null ? 0 : adapterName.hashCode()) +
@@ -131,10 +135,6 @@ public class ConnectionConfig implements Cloneable {
         if (!equals(parameters, connectionConfig.parameters)) return false;
 
         return true;
-    }
-
-    public String toString() {
-        return "ConnectionConfig("+name+")";
     }
 
     public void copy(ConnectionConfig connectionConfig) {

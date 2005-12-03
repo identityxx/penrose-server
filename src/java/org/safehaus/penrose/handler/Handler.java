@@ -19,6 +19,7 @@ package org.safehaus.penrose.handler;
 
 import org.safehaus.penrose.session.PenroseSearchResults;
 import org.safehaus.penrose.*;
+import org.safehaus.penrose.user.UserConfig;
 import org.safehaus.penrose.session.PenroseSession;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.acl.ACLEngine;
@@ -59,8 +60,7 @@ public class Handler implements ModuleContext {
     private PartitionManager partitionManager;
     private Map modules = new LinkedHashMap();
 
-    private String rootDn;
-    private String rootPassword;
+    private UserConfig rootUserConfig;
 
     private InterpreterFactory interpreterFactory;
     private ACLEngine aclEngine;
@@ -327,22 +327,6 @@ public class Handler implements ModuleContext {
         return list;
     }
 
-    public String getRootDn() {
-        return rootDn;
-    }
-
-    public void setRootDn(String rootDn) {
-        this.rootDn = rootDn;
-    }
-
-    public String getRootPassword() {
-        return rootPassword;
-    }
-
-    public void setRootPassword(String rootPassword) {
-        this.rootPassword = rootPassword;
-    }
-
     public PartitionManager getPartitionManager() {
         return partitionManager;
     }
@@ -419,6 +403,14 @@ public class Handler implements ModuleContext {
 
     public void setSchemaManager(SchemaManager schemaManager) {
         this.schemaManager = schemaManager;
+    }
+
+    public UserConfig getRootUserConfig() {
+        return rootUserConfig;
+    }
+
+    public void setRootUserConfig(UserConfig rootUserConfig) {
+        this.rootUserConfig = rootUserConfig;
     }
 }
 

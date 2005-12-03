@@ -230,8 +230,7 @@ public class Penrose {
         handler.setSchemaManager(schemaManager);
         handler.setInterpreterFactory(interpreterFactory);
         handler.setEngine(engine);
-        handler.setRootDn(penroseConfig.getRootDn());
-        handler.setRootPassword(penroseConfig.getRootPassword());
+        handler.setRootUserConfig(penroseConfig.getRootUserConfig());
         handler.setPartitionManager(partitionManager);
 
         handler.init();

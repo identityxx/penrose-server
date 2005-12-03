@@ -38,7 +38,7 @@ public class ConnectorConfig implements Cloneable {
 
     public final static int DEFAULT_TIMEOUT          = 10000; // wait timeout is 10 seconds
 
-    private String connectorName = "DEFAULT";
+    private String name = "DEFAULT";
     private String connectorClass = Connector.class.getName();
     private String description;
 
@@ -68,12 +68,12 @@ public class ConnectorConfig implements Cloneable {
         return parameters.getProperty(name);
     }
 
-    public String getConnectorName() {
-        return connectorName;
+    public String getName() {
+        return name;
     }
 
-    public void setConnectorName(String connectorName) {
-        this.connectorName = connectorName;
+    public void setName(String name) {
+        this.name = name;
     }
 
     public String getDescription() {
@@ -85,7 +85,7 @@ public class ConnectorConfig implements Cloneable {
     }
 
     public int hashCode() {
-        return (connectorName == null ? 0 : connectorName.hashCode()) +
+        return (name == null ? 0 : name.hashCode()) +
                 (connectorClass == null ? 0 : connectorClass.hashCode()) +
                 (description == null ? 0 : description.hashCode()) +
                 (parameters == null ? 0 : parameters.hashCode());
@@ -102,7 +102,7 @@ public class ConnectorConfig implements Cloneable {
         if((object == null) || (object.getClass() != this.getClass())) return false;
 
         ConnectorConfig connectorConfig = (ConnectorConfig)object;
-        if (!equals(connectorName, connectorConfig.connectorName)) return false;
+        if (!equals(name, connectorConfig.name)) return false;
         if (!equals(connectorClass, connectorConfig.connectorClass)) return false;
         if (!equals(description, connectorConfig.description)) return false;
         if (!equals(parameters, connectorConfig.parameters)) return false;
@@ -117,7 +117,7 @@ public class ConnectorConfig implements Cloneable {
     }
 
     public void copy(ConnectorConfig connectorConfig) {
-        connectorName = connectorConfig.connectorName;
+        name = connectorConfig.name;
         connectorClass = connectorConfig.connectorClass;
         description = connectorConfig.description;
 
