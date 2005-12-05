@@ -233,15 +233,11 @@
         <mkdir dir="target"/>
         <tar destfile="target/${project.name}-${project.version}.tar">
             <tarfileset dir="target/dist" prefix="${project.name}-${project.version}" mode="755">
-                <include name="bin/cache.sh"/>
-                <include name="bin/penrose.sh"/>
-                <include name="bin/schema.sh"/>
+                <include name="bin/*.sh"/>
             </tarfileset>
             <tarfileset dir="target/dist" prefix="${project.name}-${project.version}">
                 <include name="**/*"/>
-                <exclude name="bin/cache.sh"/>
-                <exclude name="bin/penrose.sh"/>
-                <exclude name="bin/schema.sh"/>
+                <exclude name="bin/*.sh"/>
             </tarfileset>
         </tar>
         <gzip destfile="${project.dist}/${project.name}-${project.version}.tar.gz"
