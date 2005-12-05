@@ -23,20 +23,12 @@ import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.config.DefaultPenroseConfig;
 import org.safehaus.penrose.schema.SchemaConfig;
 import org.safehaus.penrose.partition.PartitionConfig;
-import org.safehaus.penrose.PenroseServer;
 import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.session.PenroseSession;
 import org.safehaus.penrose.session.PenroseSearchControls;
 import org.safehaus.penrose.session.PenroseSearchResults;
 import org.ietf.ldap.LDAPEntry;
 
-import javax.naming.directory.DirContext;
-import javax.naming.directory.InitialDirContext;
-import javax.naming.directory.SearchControls;
-import javax.naming.directory.SearchResult;
-import javax.naming.NamingEnumeration;
-import javax.naming.Context;
-import java.util.Hashtable;
 import java.util.Iterator;
 
 /**
@@ -76,6 +68,10 @@ public class PenroseServiceTest extends TestCase {
     }
 
     public void testPenroseService() throws Exception {
+        search();
+    }
+
+    public void search() throws Exception {
 
         PenroseSession session = penrose.newSession();
         session.bind(penroseConfig.getRootUserConfig().getDn(), penroseConfig.getRootUserConfig().getPassword());

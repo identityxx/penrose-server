@@ -295,11 +295,11 @@ public class Penrose {
         this.interpreterFactory = interpreterFactory;
     }
 
-    public PartitionManager getConfigManager() {
+    public PartitionManager getPartitionManager() {
         return partitionManager;
     }
 
-    public void setConfigManager(PartitionManager partitionManager) {
+    public void setPartitionManager(PartitionManager partitionManager) {
         this.partitionManager = partitionManager;
     }
 

@@ -52,7 +52,7 @@ public class PenroseInterceptor extends BaseInterceptor {
 
     public void setPenrose(Penrose penrose) throws Exception {
         this.penrose = penrose;
-        this.partitionManager = penrose.getConfigManager();
+        this.partitionManager = penrose.getPartitionManager();
     }
 
     public void init(DirectoryServiceConfiguration factoryCfg, InterceptorConfiguration cfg) throws NamingException
