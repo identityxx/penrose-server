@@ -89,6 +89,7 @@ public class PenroseJMXService extends Service {
         }
 
         if (penroseConfig.getJmxRmiPort() >= 0) {
+
             registry = new NamingService(penroseConfig.getJmxRmiPort());
             mbeanServer.registerMBean(registry, registryName);
             registry.start();
@@ -134,7 +135,9 @@ public class PenroseJMXService extends Service {
             mbeanServer.unregisterMBean(registryName);
         }
 
+
         mbeanServer.unregisterMBean(penroseAdminName);
+        MBeanServerFactory.releaseMBeanServer(mbeanServer);
 
         log.warn("JMX service has been shutdown.");
     }

@@ -77,6 +77,10 @@ public class PartitionManager {
         return (Partition)partitions.remove(name);
     }
 
+    public void clear() throws Exception {
+        partitions.clear();
+    }
+
     public Partition getPartition(String name) throws Exception {
         return (Partition)partitions.get(name);
     }

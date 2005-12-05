@@ -147,8 +147,15 @@ public class Penrose {
 
         for (Iterator i=penroseConfig.getPartitionConfigs().iterator(); i.hasNext(); ) {
             PartitionConfig partitionConfig = (PartitionConfig)i.next();
-            Partition partition = partitionManager.load(partitionConfig);
+            if (partitionManager.getPartition(partitionConfig.getName()) != null) continue;
 
+            partitionManager.load(partitionConfig);
+        }
+
+        for (Iterator i=penroseConfig.getPartitionConfigs().iterator(); i.hasNext(); ) {
+            PartitionConfig partitionConfig = (PartitionConfig)i.next();
+
+            Partition partition = partitionManager.getPartition(partitionConfig.getName());
             Collection results = partitionValidator.validate(partition);
 
             for (Iterator j=results.iterator(); j.hasNext(); ) {
