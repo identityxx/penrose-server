@@ -164,6 +164,14 @@ public class PenroseServer implements SignalHandler {
         this.penrose = penrose;
     }
 
+    public ServiceManager getServiceManager() {
+        return serviceManager;
+    }
+
+    public void setServiceManager(ServiceManager serviceManager) {
+        this.serviceManager = serviceManager;
+    }
+
     public static void main( String[] args ) throws Exception {
 
         try {
@@ -226,13 +234,5 @@ public class PenroseServer implements SignalHandler {
             log.error("Server failed to start: "+name+": "+e.getMessage());
             System.exit(1);
         }
-    }
-
-    public ServiceManager getServiceManager() {
-        return serviceManager;
-    }
-
-    public void setServiceManager(ServiceManager serviceManager) {
-        this.serviceManager = serviceManager;
     }
 }

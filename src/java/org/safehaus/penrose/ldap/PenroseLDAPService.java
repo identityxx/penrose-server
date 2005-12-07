@@ -65,7 +65,7 @@ public class PenroseLDAPService extends Service {
         PenroseConfig penroseConfig = getPenroseServer().getPenroseConfig();
         String home = penroseConfig.getHome();
 
-        MutableServerStartupConfiguration configuration =  new MutableServerStartupConfiguration();
+        MutableServerStartupConfiguration configuration = new MutableServerStartupConfiguration();
 
         // Configure LDAP ports
         configuration.setLdapPort(ldapPort);

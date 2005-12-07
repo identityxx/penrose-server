@@ -36,7 +36,7 @@ public class PartitionManager {
 
     Logger log = Logger.getLogger(PartitionManager.class);
 
-    private String home;
+    private PenroseConfig penroseConfig;
     private SchemaManager schemaManager;
 
     private Map partitions = new TreeMap();
@@ -44,21 +44,41 @@ public class PartitionManager {
     public PartitionManager() {
     }
 
+    public void load() throws Exception {
+        for (Iterator i=penroseConfig.getPartitionConfigs().iterator(); i.hasNext(); ) {
+            PartitionConfig partitionConfig = (PartitionConfig)i.next();
+            load(partitionConfig);
+        }
+    }
+
     public Partition load(PartitionConfig partitionConfig) throws Exception {
 
+        Partition partition = getPartition(partitionConfig.getName());
+        if (partition != null) return partition;
+
+        String home = penroseConfig.getHome();
         String path = (home == null ? "" : home+File.separator)+partitionConfig.getPath();
 
         log.debug("Loading "+partitionConfig.getName()+" partition from "+path+".");
 
         PartitionReader partitionReader = new PartitionReader(path);
-        Partition partition = partitionReader.read();
+        partition = partitionReader.read();
 
         addPartition(partitionConfig.getName(), partition);
 
         return partition;
     }
 
+    public void store() throws Exception {
+        for (Iterator i=penroseConfig.getPartitionConfigs().iterator(); i.hasNext(); ) {
+            PartitionConfig partitionConfig = (PartitionConfig)i.next();
+            store(partitionConfig);
+        }
+    }
+
     public void store(PartitionConfig partitionConfig) throws Exception {
+
+        String home = penroseConfig.getHome();
         String path = (home == null ? "" : home+File.separator)+partitionConfig.getPath();
 
         log.debug("Storing "+partitionConfig.getName()+" partition into "+path+".");
@@ -135,19 +155,19 @@ public class PartitionManager {
         return partitions.values();
     }
 
-    public String getHome() {
-        return home;
-    }
-
-    public void setHome(String home) {
-        this.home = home;
-    }
-
     public SchemaManager getSchemaManager() {
         return schemaManager;
     }
 
     public void setSchemaManager(SchemaManager schemaManager) {
         this.schemaManager = schemaManager;
+    }
+
+    public PenroseConfig getPenroseConfig() {
+        return penroseConfig;
+    }
+
+    public void setPenroseConfig(PenroseConfig penroseConfig) {
+        this.penroseConfig = penroseConfig;
     }
 }

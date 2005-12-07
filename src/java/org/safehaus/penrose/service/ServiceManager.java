@@ -47,8 +47,11 @@ public class ServiceManager {
 
     public void init(ServiceConfig serviceConfig) throws Exception {
 
+        Service service = getService(serviceConfig.getName());
+        if (service != null) return;
+        
         Class clazz = Class.forName(serviceConfig.getServiceClass());
-        Service service = (Service)clazz.newInstance();
+        service = (Service)clazz.newInstance();
 
         service.setPenroseServer(penroseServer);
         service.setServiceConfig(serviceConfig);

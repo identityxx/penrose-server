@@ -120,7 +120,7 @@ public class Penrose {
 
     public void initPartitionManager() throws Exception {
         partitionManager = new PartitionManager();
-        partitionManager.setHome(penroseConfig.getHome());
+        partitionManager.setPenroseConfig(penroseConfig);
         partitionManager.setSchemaManager(schemaManager);
 
         partitionValidator = new PartitionValidator();
@@ -145,12 +145,7 @@ public class Penrose {
 
     public void loadPartitions() throws Exception {
 
-        for (Iterator i=penroseConfig.getPartitionConfigs().iterator(); i.hasNext(); ) {
-            PartitionConfig partitionConfig = (PartitionConfig)i.next();
-            if (partitionManager.getPartition(partitionConfig.getName()) != null) continue;
-
-            partitionManager.load(partitionConfig);
-        }
+        partitionManager.load();
 
         for (Iterator i=penroseConfig.getPartitionConfigs().iterator(); i.hasNext(); ) {
             PartitionConfig partitionConfig = (PartitionConfig)i.next();
@@ -171,11 +166,7 @@ public class Penrose {
     }
 
     public void storePartitions() throws Exception {
-
-        for (Iterator i=penroseConfig.getPartitionConfigs().iterator(); i.hasNext(); ) {
-            PartitionConfig partitionConfig = (PartitionConfig)i.next();
-            partitionManager.store(partitionConfig);
-        }
+        partitionManager.store();
     }
 
     public void initInterpreter() throws Exception {
