@@ -17,19 +17,17 @@
  */
 package org.safehaus.penrose.management;
 
-import java.io.IOException;
 import java.util.*;
 
 public interface PenroseAdminMBean {
 
     public String getProductName() throws Exception;
-    //public void setProductName(String name) throws Exception;
-
     public String getProductVersion() throws Exception;
-	//public void setProductVersion(String version) throws Exception;
 
+    public Collection getServiceNames() throws Exception;
     public void start(String serviceName) throws Exception;
     public void stop(String serviceName) throws Exception;
+    public String getStatus(String serviceName) throws Exception;
 
     public byte[] download(String filename) throws Exception;
 	public void upload(String filename, byte content[]) throws Exception;

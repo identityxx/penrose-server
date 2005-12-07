@@ -29,6 +29,9 @@ import org.safehaus.penrose.connector.JDBCAdapter;
 import org.safehaus.penrose.connector.JNDIAdapter;
 import org.safehaus.penrose.partition.PartitionConfig;
 import org.safehaus.penrose.schema.SchemaConfig;
+import org.safehaus.penrose.service.ServiceConfig;
+import org.safehaus.penrose.ldap.PenroseLDAPService;
+import org.safehaus.penrose.management.PenroseJMXService;
 
 
 /**
@@ -37,6 +40,9 @@ import org.safehaus.penrose.schema.SchemaConfig;
 public class DefaultPenroseConfig extends PenroseConfig {
 
     public DefaultPenroseConfig() {
+
+        addServiceConfig(new ServiceConfig("JMX Service", PenroseJMXService.class.getName()));
+        addServiceConfig(new ServiceConfig("LDAP Service", PenroseLDAPService.class.getName()));
 
         addSchemaConfig(new SchemaConfig("schema/autofs.schema"));
         addSchemaConfig(new SchemaConfig("schema/corba.schema"));
@@ -51,13 +57,9 @@ public class DefaultPenroseConfig extends PenroseConfig {
         addSchemaConfig(new SchemaConfig("schema/system.schema"));
         addSchemaConfig(new SchemaConfig("schema/apachedns.schema"));
 
-        AdapterConfig jdbcAdapterConfig = new AdapterConfig("JDBC", JDBCAdapter.class.getName());
-        addAdapterConfig(jdbcAdapterConfig);
+        addAdapterConfig(new AdapterConfig("JDBC", JDBCAdapter.class.getName()));
+        addAdapterConfig(new AdapterConfig("JNDI", JNDIAdapter.class.getName()));
 
-        AdapterConfig jndiAdapterConfig = new AdapterConfig("JNDI", JNDIAdapter.class.getName());
-        addAdapterConfig(jndiAdapterConfig);
-
-        PartitionConfig partitionConfig = new PartitionConfig("DEFAULT", "conf");
-        addPartitionConfig(partitionConfig);
+        addPartitionConfig(new PartitionConfig("DEFAULT", "conf"));
     }
 }

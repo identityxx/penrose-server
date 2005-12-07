@@ -21,10 +21,9 @@ import java.util.*;
 import java.io.File;
 
 import org.apache.log4j.*;
-import org.safehaus.penrose.management.PenroseJMXService;
 import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.config.PenroseConfigReader;
-import org.safehaus.penrose.ldap.PenroseLDAPService;
+import org.safehaus.penrose.service.ServiceManager;
 import sun.misc.Signal;
 import sun.misc.SignalHandler;
 
@@ -39,8 +38,7 @@ public class PenroseServer implements SignalHandler {
     private PenroseConfig penroseConfig;
     private Penrose penrose;
 
-    private PenroseJMXService jmxService;
-    private PenroseLDAPService ldapService;
+    private ServiceManager serviceManager;
 
     public PenroseServer() throws Exception {
         this((String)null);
@@ -64,43 +62,19 @@ public class PenroseServer implements SignalHandler {
 
         penrose = new Penrose(penroseConfig);
 
-        ldapService = new PenroseLDAPService();
-        ldapService.setPenrose(penrose);
-
-        jmxService = new PenroseJMXService();
-        jmxService.setPenroseServer(this);
-        jmxService.setPenrose(penrose);
+        serviceManager = new ServiceManager();
+        serviceManager.setPenroseServer(this);
+        serviceManager.init();
     }
 
     public void start() throws Exception {
         penrose.start();
-
-        if (penroseConfig.getJmxRmiPort() >= 0) jmxService.start();
-        if (penroseConfig.getPort() >= 0) ldapService.start();
-    }
-
-    public void start(String serviceName) throws Exception {
-        if ("ldap".equals(serviceName)) {
-            ldapService.start();
-
-        } else if ("jmx".equals(serviceName)) {
-            jmxService.start();
-        }
+        serviceManager.start();
     }
 
     public void stop() throws Exception {
-        if (penroseConfig.getPort() >= 0) ldapService.stop();
-        if (penroseConfig.getJmxRmiPort() >= 0) jmxService.stop();
+        serviceManager.stop();
         penrose.stop();
-    }
-
-    public void stop(String serviceName) throws Exception {
-        if ("ldap".equals(serviceName)) {
-            ldapService.stop();
-
-        } else if ("jmx".equals(serviceName)) {
-            jmxService.stop();
-        }
     }
 
     /**
@@ -190,22 +164,6 @@ public class PenroseServer implements SignalHandler {
         this.penrose = penrose;
     }
 
-    public PenroseJMXService getJmxService() {
-        return jmxService;
-    }
-
-    public void setJmxService(PenroseJMXService jmxService) {
-        this.jmxService = jmxService;
-    }
-
-    public PenroseLDAPService getLdapService() {
-        return ldapService;
-    }
-
-    public void setLdapService(PenroseLDAPService ldapService) {
-        this.ldapService = ldapService;
-    }
-
     public static void main( String[] args ) throws Exception {
 
         try {
@@ -268,5 +226,13 @@ public class PenroseServer implements SignalHandler {
             log.error("Server failed to start: "+name+": "+e.getMessage());
             System.exit(1);
         }
+    }
+
+    public ServiceManager getServiceManager() {
+        return serviceManager;
+    }
+
+    public void setServiceManager(ServiceManager serviceManager) {
+        this.serviceManager = serviceManager;
     }
 }

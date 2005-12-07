@@ -19,6 +19,7 @@ package org.safehaus.penrose.ldap;
 
 import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.service.Service;
+import org.safehaus.penrose.service.ServiceConfig;
 import org.safehaus.penrose.schema.SchemaConfig;
 import org.safehaus.penrose.config.PenroseConfig;
 import org.apache.ldap.server.configuration.*;
@@ -36,30 +37,39 @@ import java.util.*;
  */
 public class PenroseLDAPService extends Service {
 
-    public Logger log = Logger.getLogger(PenroseLDAPService.class);
+    public final static String LDAP_PORT       = "ldapPort";
+    public final static int DEFAULT_LDAP_PORT  = 10389;
 
-    private Penrose penrose;
+    public final static String LDAPS_PORT      = "ldapsPort";
+    public final static int DEFAULT_LDAPS_PORT = 10639;
 
-    public Penrose getPenrose() {
-        return penrose;
-    }
+    private int ldapPort;
+    private int ldapsPort;
 
-    public void setPenrose(Penrose penrose) {
-        this.penrose = penrose;
+    public void init() throws Exception {
+        ServiceConfig serviceConfig = getServiceConfig();
+
+        String s = serviceConfig.getParameter(LDAP_PORT);
+        ldapPort = s == null ? DEFAULT_LDAP_PORT : Integer.parseInt(s);
+
+        s = serviceConfig.getParameter(LDAPS_PORT);
+        ldapsPort = s == null ? DEFAULT_LDAPS_PORT : Integer.parseInt(s);
     }
 
     public void start() throws Exception {
 
-        PenroseConfig penroseConfig = penrose.getPenroseConfig();
-        if (penroseConfig.getPort() < 0) return;
+        log.warn("Starting LDAP Service.");
 
+        if (ldapPort < 0) return;
+
+        PenroseConfig penroseConfig = getPenroseServer().getPenroseConfig();
         String home = penroseConfig.getHome();
 
         MutableServerStartupConfiguration configuration =  new MutableServerStartupConfiguration();
 
         // Configure LDAP ports
-        configuration.setLdapPort(penroseConfig.getPort());
-        configuration.setLdapsPort(penroseConfig.getSecurePort());
+        configuration.setLdapPort(ldapPort);
+        configuration.setLdapsPort(ldapsPort);
 
         // Configure working directory
         String workingDirectory = (home == null ? "" : home+File.separator)+"var"+File.separator+"data";
@@ -85,7 +95,7 @@ public class PenroseLDAPService extends Service {
 
         // Register Penrose authenticator
         PenroseAuthenticator authenticator = new PenroseAuthenticator();
-        authenticator.setPenrose(penrose);
+        authenticator.setPenrose(getPenroseServer().getPenrose());
 
         MutableAuthenticatorConfiguration authenticatorConfig = new MutableAuthenticatorConfiguration();
         authenticatorConfig.setName("penrose");
@@ -97,7 +107,7 @@ public class PenroseLDAPService extends Service {
 
         // Register Penrose interceptor
         PenroseInterceptor interceptor = new PenroseInterceptor();
-        interceptor.setPenrose(penrose);
+        interceptor.setPenrose(getPenroseServer().getPenrose());
 
         MutableInterceptorConfiguration interceptorConfig = new MutableInterceptorConfiguration();
         interceptorConfig.setName("penroseService");
@@ -129,7 +139,7 @@ public class PenroseLDAPService extends Service {
 
         new InitialDirContext(env);
 
-        log.warn("Listening to port "+penroseConfig.getPort()+".");
+        log.warn("Listening to port "+ldapPort+".");
 
         // Start ApacheDS synchronization thread
         Thread thread = new Thread() {
@@ -152,12 +162,15 @@ public class PenroseLDAPService extends Service {
         };
 
         thread.start();
+
+        setStatus(STARTED);
     }
 
     public void stop() throws Exception {
 
-        PenroseConfig penroseConfig = penrose.getPenroseConfig();
-        if (penroseConfig.getPort() < 0) return;
+        if (ldapPort < 0) return;
+
+        PenroseConfig penroseConfig = getPenroseServer().getPenroseConfig();
 
         Hashtable env = new ShutdownConfiguration().toJndiEnvironment();
         env.put(Context.INITIAL_CONTEXT_FACTORY, CoreContextFactory.class.getName());
@@ -168,6 +181,24 @@ public class PenroseLDAPService extends Service {
 
         new InitialDirContext(env);
 
-        log.warn("LDAP service has been shutdown.");
+        setStatus(STOPPED);
+
+        log.warn("LDAP Service has been shutdown.");
+    }
+
+    public int getLdapPort() {
+        return ldapPort;
+    }
+
+    public void setLdapPort(int ldapPort) {
+        this.ldapPort = ldapPort;
+    }
+
+    public int getLdapsPort() {
+        return ldapsPort;
+    }
+
+    public void setLdapsPort(int ldapsPort) {
+        this.ldapsPort = ldapsPort;
     }
 }

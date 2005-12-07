@@ -34,6 +34,7 @@ import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.PenroseServer;
 import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.service.Service;
+import org.safehaus.penrose.service.ServiceConfig;
 import org.apache.log4j.Logger;
 
 /**
@@ -41,10 +42,11 @@ import org.apache.log4j.Logger;
  */
 public class PenroseJMXService extends Service {
 
-    public Logger log = Logger.getLogger(PenroseJMXService.class);
+    public final static String RMI_PORT       = "rmiPort";
+    public final static int DEFAULT_RMI_PORT  = 1099;
 
-    private PenroseServer penroseServer;
-    private Penrose penrose;
+    public final static String HTTP_PORT      = "httpPort";
+    public final static int DEFAULT_HTTP_PORT = 8112;
 
     PenroseJMXAuthenticator jmxAuthenticator;
 
@@ -65,37 +67,47 @@ public class PenroseJMXService extends Service {
     ObjectName xsltProcessorName = ObjectName.getInstance("connectors:type=http,processor=xslt");
     XSLTProcessor xsltProcessor;
 
+    private int rmiPort;
+    private int httpPort;
+
     static {
         System.setProperty("jmx.invoke.getters", "true");
         System.setProperty("javax.management.builder.initial", "mx4j.server.MX4JMBeanServerBuilder");
     }
 
     public PenroseJMXService() throws Exception {
-
         mx4j.log.Log.redirectTo(new Log4JLogger());
+    }
+
+    public void init() throws Exception {
+        ServiceConfig serviceConfig = getServiceConfig();
+
+        String s = serviceConfig.getParameter(RMI_PORT);
+        rmiPort = s == null ? DEFAULT_RMI_PORT : Integer.parseInt(s);
+
+        s = serviceConfig.getParameter(HTTP_PORT);
+        httpPort = s == null ? DEFAULT_HTTP_PORT : Integer.parseInt(s);
     }
 
     public void start() throws Exception {
 
-        PenroseConfig penroseConfig = penrose.getPenroseConfig();
+        log.warn("Starting JMX Service.");
 
         mbeanServer = MBeanServerFactory.createMBeanServer();
 
-        if (penroseServer != null) {
-            penroseAdmin = new PenroseAdmin();
-            penroseAdmin.setPenroseServer(penroseServer);
+        penroseAdmin = new PenroseAdmin();
+        penroseAdmin.setPenroseServer(getPenroseServer());
 
-            mbeanServer.registerMBean(penroseAdmin, penroseAdminName);
-        }
+        mbeanServer.registerMBean(penroseAdmin, penroseAdminName);
 
-        if (penroseConfig.getJmxRmiPort() >= 0) {
+        if (rmiPort > 0) {
 
-            registry = new NamingService(penroseConfig.getJmxRmiPort());
+            registry = new NamingService(rmiPort);
             mbeanServer.registerMBean(registry, registryName);
             registry.start();
 
-            JMXServiceURL url = new JMXServiceURL("service:jmx:rmi://localhost/jndi/rmi://localhost:"+penroseConfig.getJmxRmiPort()+"/jmx");
-            jmxAuthenticator = new PenroseJMXAuthenticator(penrose);
+            JMXServiceURL url = new JMXServiceURL("service:jmx:rmi://localhost/jndi/rmi://localhost:"+rmiPort+"/jmx");
+            jmxAuthenticator = new PenroseJMXAuthenticator(getPenroseServer().getPenrose());
 
             HashMap environment = new HashMap();
             environment.put("jmx.remote.authenticator", jmxAuthenticator);
@@ -104,30 +116,33 @@ public class PenroseJMXService extends Service {
             mbeanServer.registerMBean(rmiConnector, rmiConnectorName);
             rmiConnector.start();
 
-            log.warn("Listening to port "+penroseConfig.getJmxRmiPort()+".");
+            log.warn("Listening to port "+rmiPort+".");
         }
-/*
-        xsltProcessor = new XSLTProcessor();
-        mbeanServer.registerMBean(xsltProcessor, xsltProcessorName);
 
-        httpConnector = new HttpAdaptor(8112, "localhost");
-        httpConnector.setProcessorName(xsltProcessorName);
-        mbeanServer.registerMBean(httpConnector, httpConnectorName);
-        httpConnector.start();
+        if (httpPort > 0) {
+            xsltProcessor = new XSLTProcessor();
+            mbeanServer.registerMBean(xsltProcessor, xsltProcessorName);
 
-        log.warn("Listening to port "+penroseConfig.getJmxHttpPort()+".");
-*/
+            httpConnector = new HttpAdaptor(8112, "localhost");
+            httpConnector.setProcessorName(xsltProcessorName);
+            mbeanServer.registerMBean(httpConnector, httpConnectorName);
+            httpConnector.start();
+
+            log.warn("Listening to port "+httpPort+".");
+        }
+
+        setStatus(STARTED);
     }
 
     public void stop() throws Exception {
 
-        PenroseConfig penroseConfig = penrose.getPenroseConfig();
-/*
-        httpConnector.stop();
-        mbeanServer.unregisterMBean(httpConnectorName);
-        mbeanServer.unregisterMBean(xsltProcessorName);
-*/
-        if (penroseConfig.getJmxRmiPort() >= 0) {
+        if (httpPort > 0) {
+            httpConnector.stop();
+            mbeanServer.unregisterMBean(httpConnectorName);
+            mbeanServer.unregisterMBean(xsltProcessorName);
+        }
+
+        if (rmiPort > 0) {
             rmiConnector.stop();
             mbeanServer.unregisterMBean(rmiConnectorName);
 
@@ -135,26 +150,27 @@ public class PenroseJMXService extends Service {
             mbeanServer.unregisterMBean(registryName);
         }
 
-
         mbeanServer.unregisterMBean(penroseAdminName);
         MBeanServerFactory.releaseMBeanServer(mbeanServer);
 
-        log.warn("JMX service has been shutdown.");
+        setStatus(STOPPED);
+
+        log.warn("JMX Service has been shutdown.");
     }
 
-    public PenroseServer getPenroseServer() {
-        return penroseServer;
+    public int getRmiPort() {
+        return rmiPort;
     }
 
-    public void setPenroseServer(PenroseServer penroseServer) {
-        this.penroseServer = penroseServer;
+    public void setRmiPort(int rmiPort) {
+        this.rmiPort = rmiPort;
     }
 
-    public Penrose getPenrose() {
-        return penrose;
+    public int getHttpPort() {
+        return httpPort;
     }
 
-    public void setPenrose(Penrose penrose) {
-        this.penrose = penrose;
+    public void setHttpPort(int httpPort) {
+        this.httpPort = httpPort;
     }
 }

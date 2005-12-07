@@ -17,13 +17,23 @@
  */
 package org.safehaus.penrose.service;
 
+import org.safehaus.penrose.PenroseServer;
+import org.apache.log4j.Logger;
+
 /**
  * @author Endi S. Dewata
  */
 public class Service {
 
+    public Logger log = Logger.getLogger(Service.class);
+
+    public final static String STOPPED = "STOPPED";
+    public final static String STARTED = "STARTED";
+
+    private PenroseServer penroseServer;
     private ServiceConfig serviceConfig;
-    private ServiceContext serviceContext;
+
+    private String status = STOPPED;
 
     public void init() throws Exception {
     }
@@ -42,11 +52,19 @@ public class Service {
         this.serviceConfig = serviceConfig;
     }
 
-    public ServiceContext getServiceContext() {
-        return serviceContext;
+    public PenroseServer getPenroseServer() {
+        return penroseServer;
     }
 
-    public void setServiceContext(ServiceContext serviceContext) {
-        this.serviceContext = serviceContext;
+    public void setPenroseServer(PenroseServer penroseServer) {
+        this.penroseServer = penroseServer;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
     }
 }

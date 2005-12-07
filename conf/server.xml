@@ -2,6 +2,14 @@
 
 <server>
 
+  <service name="LDAP Service">
+    <service-class>org.safehaus.penrose.ldap.PenroseLDAPService</service-class>
+  </service>
+
+  <service name="JMX Service">
+    <service-class>org.safehaus.penrose.management.PenroseJMXService</service-class>
+  </service>
+
   <schema path="schema/autofs.schema"/>
   <schema path="schema/corba.schema"/>
   <schema path="schema/core.schema"/>

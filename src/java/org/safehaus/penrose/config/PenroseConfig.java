@@ -40,12 +40,6 @@ public class PenroseConfig implements Cloneable {
 
     private String home;
 
-    private int port = 10389;
-    private int securePort = 10639;
-
-    private int jmxRmiPort = 1099;
-    private int jmxHttpPort = 8112;
-
     private Map systemProperties = new LinkedHashMap();
     private Map schemaConfigs    = new LinkedHashMap();
     private Map adapterConfigs   = new LinkedHashMap();
@@ -137,38 +131,6 @@ public class PenroseConfig implements Cloneable {
         return connectorConfig;
     }
     
-    public int getPort() {
-        return port;
-    }
-
-    public void setPort(int port) {
-        this.port = port;
-    }
-
-    public int getSecurePort() {
-        return securePort;
-    }
-
-    public void setSecurePort(int securePort) {
-        this.securePort = securePort;
-    }
-
-    public int getJmxRmiPort() {
-        return jmxRmiPort;
-    }
-
-    public void setJmxRmiPort(int jmxRmiPort) {
-        this.jmxRmiPort = jmxRmiPort;
-    }
-
-    public int getJmxHttpPort() {
-        return jmxHttpPort;
-    }
-
-    public void setJmxHttpPort(int jmxHttpPort) {
-        this.jmxHttpPort = jmxHttpPort;
-    }
-
     public CacheConfig getEntryCacheConfig() {
         return entryCacheConfig;
     }
@@ -251,14 +213,11 @@ public class PenroseConfig implements Cloneable {
 
     public int hashCode() {
         return (home == null ? 0 : home.hashCode()) +
-                (port) +
-                (securePort) +
-                (jmxRmiPort) +
-                (jmxHttpPort) +
                 (systemProperties == null ? 0 : systemProperties.hashCode()) +
                 (schemaConfigs == null ? 0 : schemaConfigs.hashCode()) +
                 (adapterConfigs == null ? 0 : adapterConfigs.hashCode()) +
                 (partitionConfigs == null ? 0 : partitionConfigs.hashCode()) +
+                (serviceConfigs == null ? 0 : serviceConfigs.hashCode()) +
                 (interpreterConfig == null ? 0 : interpreterConfig.hashCode()) +
                 (entryCacheConfig == null ? 0 : entryCacheConfig.hashCode()) +
                 (sourceCacheConfig == null ? 0 : sourceCacheConfig.hashCode()) +
@@ -280,15 +239,12 @@ public class PenroseConfig implements Cloneable {
         PenroseConfig penroseConfig = (PenroseConfig)object;
 
         if (!equals(home, penroseConfig.home)) return false;
-        if (port != penroseConfig.port) return false;
-        if (securePort != penroseConfig.securePort) return false;
-        if (jmxRmiPort != penroseConfig.jmxRmiPort) return false;
-        if (jmxHttpPort != penroseConfig.jmxHttpPort) return false;
 
         if (!equals(systemProperties, penroseConfig.systemProperties)) return false;
         if (!equals(schemaConfigs, penroseConfig.schemaConfigs)) return false;
         if (!equals(adapterConfigs, penroseConfig.adapterConfigs)) return false;
         if (!equals(partitionConfigs, penroseConfig.partitionConfigs)) return false;
+        if (!equals(serviceConfigs, penroseConfig.serviceConfigs)) return false;
 
         if (!equals(interpreterConfig, penroseConfig.interpreterConfig)) return false;
 
@@ -305,10 +261,6 @@ public class PenroseConfig implements Cloneable {
 
     public void copy(PenroseConfig penroseConfig) {
         home = penroseConfig.home;
-        port = penroseConfig.port;
-        securePort = penroseConfig.securePort;
-        jmxRmiPort = penroseConfig.jmxRmiPort;
-        jmxHttpPort = penroseConfig.jmxHttpPort;
 
         systemProperties.clear();
         systemProperties.putAll(penroseConfig.systemProperties);
@@ -329,6 +281,12 @@ public class PenroseConfig implements Cloneable {
         for (Iterator i=penroseConfig.partitionConfigs.values().iterator(); i.hasNext(); ) {
             PartitionConfig partitionConfig = (PartitionConfig)i.next();
             addPartitionConfig((PartitionConfig)partitionConfig.clone());
+        }
+
+        serviceConfigs.clear();
+        for (Iterator i=penroseConfig.serviceConfigs.values().iterator(); i.hasNext(); ) {
+            ServiceConfig serviceConfig = (ServiceConfig)i.next();
+            addServiceConfig((ServiceConfig)serviceConfig.clone());
         }
 
         interpreterConfig.copy(interpreterConfig);

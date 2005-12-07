@@ -94,6 +94,10 @@ public class PenroseClient {
         return (String)connection.getAttribute(name, "ProductVersion");
     }
 
+    public Collection getServiceNames() throws Exception {
+        return (Collection)connection.getAttribute(name, "ServiceNames");
+    }
+
     public void start(String serviceName) throws Exception {
         invoke("start",
                 new Object[] { serviceName },
@@ -103,6 +107,13 @@ public class PenroseClient {
 
     public void stop(String serviceName) throws Exception {
         invoke("stop",
+                new Object[] { serviceName },
+                new String[] { String.class.getName() }
+        );
+    }
+
+    public String getStatus(String serviceName) throws Exception {
+        return (String)invoke("getStatus",
                 new Object[] { serviceName },
                 new String[] { String.class.getName() }
         );
@@ -143,6 +154,7 @@ public class PenroseClient {
         System.out.println("  version            get server version");
         System.out.println("  start <service>    start service");
         System.out.println("  stop <service>     stop service");
+        System.out.println("  list               display service status");
         System.out.println();
         System.out.println("Options:");
         System.out.println("  -?, --help         display this help and exit");
@@ -249,6 +261,18 @@ public class PenroseClient {
         } else if ("stop".equals(command)) {
             String serviceName = (String)iterator.next();
             client.stop(serviceName);
+
+        } else if ("list".equals(command)) {
+            Collection serviceNames = client.getServiceNames();
+            for (Iterator i=serviceNames.iterator(); i.hasNext(); ) {
+                String serviceName = (String)i.next();
+                String status = client.getStatus(serviceName);
+
+                StringBuffer padding = new StringBuffer();
+                for (int j=0; j<20-serviceName.length(); j++) padding.append(" ");
+
+                System.out.println(serviceName+padding+"["+status+"]");
+            }
         }
 
         client.close();

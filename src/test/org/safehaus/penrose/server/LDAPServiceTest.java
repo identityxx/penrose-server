@@ -24,6 +24,8 @@ import org.safehaus.penrose.config.DefaultPenroseConfig;
 import org.safehaus.penrose.schema.SchemaConfig;
 import org.safehaus.penrose.partition.PartitionConfig;
 import org.safehaus.penrose.PenroseServer;
+import org.safehaus.penrose.ldap.PenroseLDAPService;
+import org.safehaus.penrose.service.ServiceManager;
 
 import javax.naming.directory.DirContext;
 import javax.naming.directory.InitialDirContext;
@@ -53,7 +55,7 @@ public class LDAPServiceTest extends TestCase {
         logger.setLevel(Level.INFO);
 
         penroseConfig = new DefaultPenroseConfig();
-        penroseConfig.setJmxRmiPort(-1);
+        penroseConfig.removeServiceConfig("JMX Service");
 
         SchemaConfig schemaConfig = new SchemaConfig("samples/schema/example.schema");
         penroseConfig.addSchemaConfig(schemaConfig);
@@ -71,13 +73,17 @@ public class LDAPServiceTest extends TestCase {
     }
 
     public void testBasicSearch() throws Exception {
-        int port = penroseConfig.getPort();
+        ServiceManager serviceManager = penroseServer.getServiceManager();
+        PenroseLDAPService service = (PenroseLDAPService)serviceManager.getService("LDAP Service");
+        int port = service.getLdapPort();
         search(port);
     }
 
     public void testChangingLDAPPort() throws Exception {
 
-        int port = penroseConfig.getPort();
+        ServiceManager serviceManager = penroseServer.getServiceManager();
+        PenroseLDAPService service = (PenroseLDAPService)serviceManager.getService("LDAP Service");
+        int port = service.getLdapPort();
 
         // testing the old port
         try {
@@ -89,7 +95,9 @@ public class LDAPServiceTest extends TestCase {
 
         // switching to the new port
         penroseServer.stop();
-        penroseConfig.setPort(port+1);
+
+        service.setLdapPort(port+1);
+
         penroseServer.start();
 
         try {
@@ -108,7 +116,9 @@ public class LDAPServiceTest extends TestCase {
 
         // switching back to the old port
         penroseServer.stop();
-        penroseConfig.setPort(port);
+
+        service.setLdapPort(port);
+
         penroseServer.start();
 
         try {

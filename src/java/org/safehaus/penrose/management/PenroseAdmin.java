@@ -21,6 +21,7 @@ import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.PenroseServer;
+import org.safehaus.penrose.service.ServiceManager;
 
 import java.util.Collection;
 import java.util.ArrayList;
@@ -51,12 +52,26 @@ public class PenroseAdmin implements PenroseAdminMBean {
         return Penrose.PRODUCT_VERSION;
     }
 
+    public Collection getServiceNames() throws Exception {
+        Collection serviceNames = new ArrayList();
+        ServiceManager serviceManager = penroseServer.getServiceManager();
+        serviceNames.addAll(serviceManager.getServiceNames());
+        return serviceNames;
+    }
+
     public void start(String serviceName) throws Exception {
-        penroseServer.start(serviceName);
+        ServiceManager serviceManager = penroseServer.getServiceManager();
+        serviceManager.start(serviceName);
     }
 
     public void stop(String serviceName) throws Exception {
-        penroseServer.stop(serviceName);
+        ServiceManager serviceManager = penroseServer.getServiceManager();
+        serviceManager.stop(serviceName);
+    }
+
+    public String getStatus(String serviceName) throws Exception {
+        ServiceManager serviceManager = penroseServer.getServiceManager();
+        return serviceManager.getStatus(serviceName);
     }
 
     public Collection listFiles(String directory) throws Exception {

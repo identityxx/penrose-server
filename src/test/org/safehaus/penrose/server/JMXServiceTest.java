@@ -24,7 +24,9 @@ import org.safehaus.penrose.config.DefaultPenroseConfig;
 import org.safehaus.penrose.schema.SchemaConfig;
 import org.safehaus.penrose.partition.PartitionConfig;
 import org.safehaus.penrose.PenroseServer;
+import org.safehaus.penrose.service.ServiceManager;
 import org.safehaus.penrose.management.PenroseClient;
+import org.safehaus.penrose.management.PenroseJMXService;
 
 /**
  * @author Endi S. Dewata
@@ -46,7 +48,7 @@ public class JMXServiceTest extends TestCase {
         logger.setLevel(Level.INFO);
 
         penroseConfig = new DefaultPenroseConfig();
-        penroseConfig.setPort(-1);
+        penroseConfig.removeServiceConfig("LDAP Service");
 
         SchemaConfig schemaConfig = new SchemaConfig("samples/schema/example.schema");
         penroseConfig.addSchemaConfig(schemaConfig);
@@ -63,13 +65,17 @@ public class JMXServiceTest extends TestCase {
     }
 
     public void testJMXService() throws Exception {
-        int port = penroseConfig.getJmxRmiPort();
+        ServiceManager serviceManager = penroseServer.getServiceManager();
+        PenroseJMXService service = (PenroseJMXService)serviceManager.getService("JMX Service");
+        int port = service.getRmiPort();
         connect(port);
     }
 
     public void testChangingJMXPort() throws Exception {
 
-        int port = penroseConfig.getJmxRmiPort();
+        ServiceManager serviceManager = penroseServer.getServiceManager();
+        PenroseJMXService service = (PenroseJMXService)serviceManager.getService("JMX Service");
+        int port = service.getRmiPort();
 
         // testing the old port
         try {
@@ -81,7 +87,9 @@ public class JMXServiceTest extends TestCase {
 
         // switching to the new port
         penroseServer.stop();
-        penroseConfig.setJmxRmiPort(port+1);
+
+        service.setRmiPort(port+1);
+
         penroseServer.start();
 
         try {
@@ -100,7 +108,9 @@ public class JMXServiceTest extends TestCase {
 
         // switching back to the old port
         penroseServer.stop();
-        penroseConfig.setJmxRmiPort(port);
+
+        service.setRmiPort(port);
+
         penroseServer.start();
 
         try {
