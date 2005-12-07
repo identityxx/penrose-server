@@ -40,10 +40,10 @@ public class JMXServiceTest extends TestCase {
         BasicConfigurator.configure(appender);
 
         Logger rootLogger = Logger.getRootLogger();
-        rootLogger.setLevel(Level.toLevel("OFF"));
+        rootLogger.setLevel(Level.OFF);
 
         Logger logger = Logger.getLogger("org.safehaus.penrose");
-        logger.setLevel(Level.toLevel("INFO"));
+        logger.setLevel(Level.INFO);
 
         penroseConfig = new DefaultPenroseConfig();
         penroseConfig.setPort(-1);

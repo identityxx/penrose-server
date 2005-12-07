@@ -230,7 +230,7 @@ public class PenroseServer implements SignalHandler {
             String homeDirectory = System.getProperty("penrose.home");
 
             Logger rootLogger = Logger.getRootLogger();
-            rootLogger.setLevel(Level.toLevel("OFF"));
+            rootLogger.setLevel(Level.OFF);
 
             Logger logger = Logger.getLogger("org.safehaus.penrose");
             File log4jProperties = new File((homeDirectory == null ? "" : homeDirectory+File.separator)+"conf"+File.separator+"log4j.properties");
@@ -239,17 +239,17 @@ public class PenroseServer implements SignalHandler {
                 PropertyConfigurator.configure(log4jProperties.getAbsolutePath());
 
             } else if (parameters.contains("-d")) {
-                logger.setLevel(Level.toLevel("DEBUG"));
+                logger.setLevel(Level.DEBUG);
                 ConsoleAppender appender = new ConsoleAppender(new PatternLayout("%-20C{1} [%4L] %m%n"));
                 BasicConfigurator.configure(appender);
 
             } else if (parameters.contains("-v")) {
-                logger.setLevel(Level.toLevel("INFO"));
+                logger.setLevel(Level.INFO);
                 ConsoleAppender appender = new ConsoleAppender(new PatternLayout("[%d{MM/dd/yyyy HH:mm:ss}] %m%n"));
                 BasicConfigurator.configure(appender);
 
             } else {
-                logger.setLevel(Level.toLevel("WARN"));
+                logger.setLevel(Level.WARN);
                 ConsoleAppender appender = new ConsoleAppender(new PatternLayout("[%d{MM/dd/yyyy HH:mm:ss}] %m%n"));
                 BasicConfigurator.configure(appender);
             }

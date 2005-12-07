@@ -28,6 +28,7 @@ import org.safehaus.penrose.connector.AdapterConfig;
 import org.safehaus.penrose.partition.PartitionConfig;
 import org.safehaus.penrose.schema.SchemaConfig;
 import org.safehaus.penrose.user.UserConfig;
+import org.safehaus.penrose.service.ServiceConfig;
 
 
 /**
@@ -49,6 +50,7 @@ public class PenroseConfig implements Cloneable {
     private Map schemaConfigs    = new LinkedHashMap();
     private Map adapterConfigs   = new LinkedHashMap();
     private Map partitionConfigs = new LinkedHashMap();
+    private Map serviceConfigs   = new LinkedHashMap();
 
     private InterpreterConfig interpreterConfig;
 
@@ -221,6 +223,22 @@ public class PenroseConfig implements Cloneable {
 
     public PartitionConfig removePartitionConfig(String name) {
         return (PartitionConfig)partitionConfigs.remove(name);
+    }
+
+    public void addServiceConfig(ServiceConfig serviceConfig) {
+        serviceConfigs.put(serviceConfig.getName(), serviceConfig);
+    }
+
+    public ServiceConfig getServiceConfig(String name) {
+        return (ServiceConfig)serviceConfigs.get(name);
+    }
+
+    public Collection getServiceConfigs() {
+        return serviceConfigs.values();
+    }
+
+    public ServiceConfig removeServiceConfig(String name) {
+        return (ServiceConfig)serviceConfigs.remove(name);
     }
 
     public UserConfig getRootUserConfig() {

@@ -32,6 +32,14 @@ public class ServiceConfig implements Cloneable {
 
     private Map parameters = new TreeMap();
 
+    public ServiceConfig() {
+    }
+
+    public ServiceConfig(String name, String serviceClass) {
+        this.name = name;
+        this.serviceClass = serviceClass;
+    }
+    
     public String getName() {
         return name;
     }
