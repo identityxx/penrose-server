@@ -58,7 +58,7 @@ public class JDBCCache {
     }
 
     public Connection getConnection() throws Exception {
-        return (Connection)connectionManager.getConnection(connectionName);
+        return (Connection)connectionManager.openConnection(connectionName);
     }
 
     public String getTableName() {

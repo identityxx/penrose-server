@@ -312,11 +312,9 @@ public class PartitionWriter {
         }
 
         Collection children = partition.getChildren(entry);
-        if (children != null) {
-            for (Iterator i = children.iterator(); i.hasNext(); ) {
-                EntryMapping child = (EntryMapping)i.next();
-                toElement(partition, child, configElement);
-            }
+        for (Iterator i = children.iterator(); i.hasNext(); ) {
+            EntryMapping child = (EntryMapping)i.next();
+            toElement(partition, child, configElement);
         }
 
 		return entryElement;

@@ -24,6 +24,7 @@ import org.apache.commons.dbcp.PoolableConnectionFactory;
 import org.apache.commons.dbcp.PoolingDataSource;
 import org.apache.log4j.Logger;
 import org.safehaus.penrose.partition.ConnectionConfig;
+import org.safehaus.penrose.config.PenroseConfig;
 
 import javax.naming.Context;
 import javax.naming.directory.InitialDirContext;
@@ -37,11 +38,27 @@ public class ConnectionManager {
 
     public Logger log = Logger.getLogger(ConnectionManager.class);
 
+    private PenroseConfig penroseConfig;
     public Map connectionConfigs = new TreeMap();
     public Map connections = new TreeMap();
 
-    public void addConnectionConfig(ConnectionConfig connectionConfig) {
-        connectionConfigs.put(connectionConfig.getName(), connectionConfig);
+    public void addConnectionConfig(ConnectionConfig connectionConfig) throws Exception {
+
+        String name = connectionConfig.getName();
+        if (connectionConfigs.get(name) != null) throw new Exception("Duplication connection "+name);
+
+        connectionConfigs.put(name, connectionConfig);
+
+        String adapterName = connectionConfig.getAdapterName();
+        if (adapterName == null) throw new Exception("Missing adapter name");
+
+        AdapterConfig adapterConfig = penroseConfig.getAdapterConfig(adapterName);
+        if (adapterConfig == null) throw new Exception("Undefined adapter "+adapterName);
+
+        Connection connection = new Connection();
+        connection.init(connectionConfig, adapterConfig);
+
+        connections.put(connectionConfig.getName(), connection);
     }
 
     public ConnectionConfig getConnectionConfig(String connectionName) {
@@ -57,7 +74,7 @@ public class ConnectionManager {
     }
 
     public void init() throws Exception {
-
+/*
         for (Iterator i=connectionConfigs.values().iterator(); i.hasNext(); ) {
             ConnectionConfig connectionConfig = (ConnectionConfig)i.next();
             String connectionName = connectionConfig.getName();
@@ -127,21 +144,23 @@ public class ConnectionManager {
                 connections.put(connectionName, env);
             }
         }
+*/
     }
 
-    public Object getConnection(String connectionName) throws Exception {
-        ConnectionConfig connectionConfig = (ConnectionConfig)connectionConfigs.get(connectionName);
+    public Connection getConnection(String connectionName) throws Exception {
+        return (Connection)connections.get(connectionName);
+    }
 
-        Object object = connections.get(connectionName);
-        if ("JDBC".equals(connectionConfig.getAdapterName())) {
-            DataSource ds = (DataSource)object;
-            return ds.getConnection();
+    public Object openConnection(String connectionName) throws Exception {
+        Connection connection = getConnection(connectionName);
+        return connection.openConnection();
+    }
 
-        } else if ("JNDI".equals(connectionConfig.getAdapterName())) {
-            Properties env = (Properties)object;
-            return new InitialDirContext(env);
-        }
+    public PenroseConfig getPenroseConfig() {
+        return penroseConfig;
+    }
 
-        return null;
+    public void setPenroseConfig(PenroseConfig penroseConfig) {
+        this.penroseConfig = penroseConfig;
     }
 }

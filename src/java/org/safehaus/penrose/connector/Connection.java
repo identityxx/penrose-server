@@ -86,4 +86,8 @@ public class Connection {
     public PenroseSearchResults getChanges(SourceConfig sourceConfig, int lastChangeNumber) throws Exception {
         return adapter.getChanges(sourceConfig, lastChangeNumber);
     }
+
+    public Object openConnection() throws Exception {
+        return adapter.openConnection();
+    }
 }

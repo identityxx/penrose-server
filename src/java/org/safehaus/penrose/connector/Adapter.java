@@ -97,16 +97,14 @@ public abstract class Adapter {
 
     public abstract PenroseSearchResults getChanges(SourceConfig sourceConfig, int lastChangeNumber) throws Exception;
 
+    public abstract Object openConnection() throws Exception;
+
     public AdapterConfig getAdapterConfig() {
         return adapterConfig;
     }
 
     public void setAdapterConfig(AdapterConfig adapterConfig) {
         this.adapterConfig = adapterConfig;
-    }
-
-    public Connection getConnection() {
-        return connection;
     }
 
     public void setConnection(Connection connection) {

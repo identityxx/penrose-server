@@ -22,6 +22,7 @@ import org.safehaus.penrose.schema.SchemaManager;
 import org.safehaus.penrose.connector.*;
 import org.safehaus.penrose.cache.CacheConfig;
 import org.safehaus.penrose.cache.EntryCache;
+import org.safehaus.penrose.cache.EntryCacheManager;
 import org.safehaus.penrose.util.Formatter;
 import org.safehaus.penrose.util.PasswordUtil;
 import org.safehaus.penrose.partition.Partition;
@@ -67,6 +68,8 @@ public class Engine {
     private SchemaManager schemaManager;
     private Connector connector;
     private ConnectionManager connectionManager;
+    private PartitionManager partitionManager;
+    private EntryCacheManager entryCacheManager;
 
     private EngineFilterTool filterTool;
 
@@ -81,8 +84,6 @@ public class Engine {
     private JoinEngine joinEngine;
     private TransformEngine transformEngine;
 
-    private PartitionManager partitionManager;
-    private Map caches = new TreeMap();
 
     /**
      * Initialize the engine with a Penrose instance
@@ -106,22 +107,11 @@ public class Engine {
         mergeEngine = new MergeEngine(this);
         joinEngine = new JoinEngine(this);
         transformEngine = new TransformEngine(this);
-    }
 
-    public void start() throws Exception {
-        String s = engineConfig.getParameter(EngineConfig.THREAD_POOL_SIZE);
-        int threadPoolSize = s == null ? EngineConfig.DEFAULT_THREAD_POOL_SIZE : Integer.parseInt(s);
-
-        threadPool = new ThreadPool(threadPoolSize);
-        execute(new RefreshThread(this));
-    }
-
-    public PartitionManager getPartitionManager() {
-        return partitionManager;
-    }
-
-    public void setPartitionManager(PartitionManager partitionManager) throws Exception {
-        this.partitionManager = partitionManager;
+        entryCacheManager = new EntryCacheManager();
+        entryCacheManager.setPenroseConfig(penroseConfig);
+        entryCacheManager.setPartitionManager(partitionManager);
+        entryCacheManager.setEngine(this);
 
         for (Iterator i=partitionManager.getPartitions().iterator(); i.hasNext(); ) {
             Partition partition = (Partition)i.next();
@@ -133,9 +123,25 @@ public class Engine {
         }
     }
 
+    public void start() throws Exception {
+        String s = engineConfig.getParameter(EngineConfig.THREAD_POOL_SIZE);
+        int threadPoolSize = s == null ? EngineConfig.DEFAULT_THREAD_POOL_SIZE : Integer.parseInt(s);
+
+        threadPool = new ThreadPool(threadPoolSize);
+        threadPool.execute(new RefreshThread(this));
+    }
+
+    public PartitionManager getPartitionManager() {
+        return partitionManager;
+    }
+
+    public void setPartitionManager(PartitionManager partitionManager) throws Exception {
+        this.partitionManager = partitionManager;
+    }
+
     public void analyze(EntryMapping entryMapping) throws Exception {
 
-        //log.debug("Entry "+entryMapping":");
+        log.debug("Analyzing entry "+entryMapping.getDn()+".");
 
         SourceMapping sourceMapping = computePrimarySource(entryMapping);
         if (sourceMapping != null) {
@@ -150,12 +156,11 @@ public class Engine {
         }
 
         Partition partition = partitionManager.getPartition(entryMapping);
+
         Collection children = partition.getChildren(entryMapping);
-        if (children != null) {
-            for (Iterator i=children.iterator(); i.hasNext(); ) {
-                EntryMapping childMapping = (EntryMapping)i.next();
-                analyze(childMapping);
-            }
+        for (Iterator i=children.iterator(); i.hasNext(); ) {
+            EntryMapping childMapping = (EntryMapping)i.next();
+            analyze(childMapping);
         }
 	}
 
@@ -300,8 +305,12 @@ public class Engine {
     }
 
     public void execute(Runnable runnable) throws Exception {
-        if (threadPool == null) {
+        String s = engineConfig.getParameter(EngineConfig.ALLOW_CONCURRENCY);
+        boolean allowConcurrency = s == null ? true : new Boolean(s).booleanValue();
+
+        if (threadPool == null || !allowConcurrency || log.isDebugEnabled()) {
             runnable.run();
+
         } else {
             threadPool.execute(runnable);
         }
@@ -688,19 +697,21 @@ public class Engine {
                 && "(objectclass=*)".equals(filter.toString().toLowerCase());
 
         if (dnOnly) {
+            log.debug("Returning DNs only:");
             Interpreter interpreter = getInterpreterFactory().newInstance();
 
-           for (Iterator i=entries.iterator(); i.hasNext(); ) {
-               Map map = (Map)i.next();
-               String dn = (String)map.get("dn");
-               AttributeValues sv = (AttributeValues)map.get("sourceValues");
+            for (Iterator i=entries.iterator(); i.hasNext(); ) {
+                Map map = (Map)i.next();
+                String dn = (String)map.get("dn");
+                AttributeValues sv = (AttributeValues)map.get("sourceValues");
 
-               AttributeValues attributeValues = computeAttributeValues(entryMapping, sv, interpreter);
-               Entry entry = new Entry(dn, entryMapping, sv, attributeValues);
+                AttributeValues attributeValues = computeAttributeValues(entryMapping, sv, interpreter);
+                Entry entry = new Entry(dn, entryMapping, sv, attributeValues);
 
-               results.add(entry);
-           }
-           return results;
+                results.add(entry);
+            }
+
+            return results;
         }
 
         PenroseSearchResults loadedEntries = new PenroseSearchResults();
@@ -1091,34 +1102,6 @@ public class Engine {
         this.engineConfig = engineConfig;
     }
 
-    public EntryCache getCache(String parentDn, EntryMapping entryMapping) throws Exception {
-        String cacheName = entryMapping.getParameter(EntryMapping.CACHE);
-        cacheName = cacheName == null ? EntryMapping.DEFAULT_CACHE : cacheName;
-        CacheConfig cacheConfig = penroseConfig.getEntryCacheConfig();
-
-        String key = entryMapping.getRdn()+","+parentDn;
-
-        EntryCache cache = (EntryCache)caches.get(key);
-
-        if (cache == null) {
-
-            String cacheClass = cacheConfig.getCacheClass();
-            cacheClass = cacheClass == null ? EngineConfig.DEFAULT_CACHE_CLASS : cacheClass;
-
-            Class clazz = Class.forName(cacheClass);
-            cache = (EntryCache)clazz.newInstance();
-
-            cache.setParentDn(parentDn);
-            cache.setEntryMapping(entryMapping);
-            cache.setEngine(this);
-            cache.init(cacheConfig);
-
-            caches.put(key, cache);
-        }
-
-        return cache;
-    }
-
     public Connector getConnector() {
         return connector;
     }
@@ -1155,7 +1138,7 @@ public class Engine {
         return penroseConfig;
     }
 
-    public void setServerConfig(PenroseConfig penroseConfig) {
+    public void setPenroseConfig(PenroseConfig penroseConfig) {
         this.penroseConfig = penroseConfig;
     }
 
@@ -1165,6 +1148,14 @@ public class Engine {
 
     public void setSchemaManager(SchemaManager schemaManager) {
         this.schemaManager = schemaManager;
+    }
+
+    public EntryCacheManager getEntryCacheManager() {
+        return entryCacheManager;
+    }
+
+    public void setEntryCacheManager(EntryCacheManager entryCacheManager) {
+        this.entryCacheManager = entryCacheManager;
     }
 }
 

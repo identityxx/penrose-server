@@ -20,27 +20,78 @@ package org.safehaus.penrose.cache;
 import org.safehaus.penrose.mapping.EntryMapping;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.engine.Engine;
+import org.apache.log4j.Logger;
 
 import java.util.Collection;
+import java.util.Map;
 
 /**
  * @author Endi S. Dewata
  */
-public abstract class EntryCache extends Cache {
+public abstract class EntryCache {
+
+    Logger log = Logger.getLogger(getClass());
 
     String parentDn;
     EntryMapping entryMapping;
 
+    CacheConfig cacheConfig;
     Engine engine;
 
+    int size;
+    int expiration; // minutes
+
+    public CacheConfig getCacheConfig() {
+        return cacheConfig;
+    }
+
+    public void setCacheConfig(CacheConfig cacheConfig) {
+        this.cacheConfig = cacheConfig;
+    }
+
+    public Collection getParameterNames() {
+        return cacheConfig.getParameterNames();
+    }
+
+    public String getParameter(String name) {
+        return cacheConfig.getParameter(name);
+    }
+
+    public void init(CacheConfig cacheConfig) throws Exception {
+        this.cacheConfig = cacheConfig;
+
+        String s = cacheConfig.getParameter(CacheConfig.CACHE_SIZE);
+        size = s == null ? CacheConfig.DEFAULT_CACHE_SIZE : Integer.parseInt(s);
+
+        s = cacheConfig.getParameter(CacheConfig.CACHE_EXPIRATION);
+        expiration = s == null ? CacheConfig.DEFAULT_CACHE_EXPIRATION : Integer.parseInt(s);
+
+        init();
+    }
+
     public void init() throws Exception {
-        super.init();
 
         String s = entryMapping.getParameter(EntryMapping.DATA_CACHE_SIZE);
         if (s != null) size = Integer.parseInt(s);
 
         s = entryMapping.getParameter(EntryMapping.DATA_CACHE_EXPIRATION);
         if (s != null) expiration = Integer.parseInt(s);
+    }
+
+    public int getSize() {
+        return size;
+    }
+
+    public void setSize(int size) {
+        this.size = size;
+    }
+
+    public int getExpiration() {
+        return expiration;
+    }
+
+    public void setExpiration(int expiration) {
+        this.expiration = expiration;
     }
 
     public EntryMapping getEntryMapping() {
@@ -59,7 +110,7 @@ public abstract class EntryCache extends Cache {
         this.parentDn = parentDn;
     }
 
-    public Collection get(Filter filter) throws Exception {
+    public Collection search(Filter filter) throws Exception {
         return null;
     }
 
@@ -88,4 +139,12 @@ public abstract class EntryCache extends Cache {
     public void setEngine(Engine engine) {
         this.engine = engine;
     }
+
+    public abstract Object get(Object key) throws Exception;
+
+    public abstract Map getExpired() throws Exception;
+
+    public abstract void put(Object key, Object object) throws Exception;
+
+    public abstract void remove(Object key) throws Exception;
 }

@@ -20,10 +20,7 @@ package org.safehaus.penrose;
 import java.util.*;
 import java.io.*;
 
-import org.apache.log4j.Logger;
-import org.apache.log4j.Appender;
-import org.apache.log4j.BasicConfigurator;
-import org.apache.log4j.Level;
+import org.apache.log4j.*;
 import org.safehaus.penrose.config.*;
 import org.safehaus.penrose.schema.*;
 import org.safehaus.penrose.engine.EngineConfig;
@@ -31,17 +28,10 @@ import org.safehaus.penrose.engine.Engine;
 import org.safehaus.penrose.handler.Handler;
 import org.safehaus.penrose.interpreter.InterpreterConfig;
 import org.safehaus.penrose.interpreter.InterpreterFactory;
-import org.safehaus.penrose.connector.Connector;
 import org.safehaus.penrose.connector.*;
-import org.safehaus.penrose.session.PenroseSessionManager;
-import org.safehaus.penrose.mapping.EntryMapping;
-import org.safehaus.penrose.cache.EntryCache;
 import org.safehaus.penrose.partition.*;
-import org.safehaus.penrose.session.PenroseSessionManager;
 import org.safehaus.penrose.session.PenroseSession;
-import org.safehaus.penrose.session.PenroseSearchResults;
-import org.ietf.ldap.LDAPSearchConstraints;
-import org.ietf.ldap.LDAPConnection;
+import org.safehaus.penrose.session.PenroseSessionManager;
 
 /**
  * @author Endi S. Dewata
@@ -176,7 +166,8 @@ public class Penrose {
 
     public void initConnections() throws Exception {
         connectionManager = new ConnectionManager();
-
+        connectionManager.setPenroseConfig(penroseConfig);
+/*
         for (Iterator i=partitionManager.getPartitions().iterator(); i.hasNext(); ) {
             Partition partition = (Partition)i.next();
 
@@ -188,6 +179,7 @@ public class Penrose {
         }
 
         connectionManager.init();
+*/
     }
 
     public void initConnectors() throws Exception {
@@ -212,13 +204,13 @@ public class Penrose {
         Class clazz = Class.forName(engineConfig.getEngineClass());
         engine = (Engine)clazz.newInstance();
 
-        engine.setServerConfig(penroseConfig);
+        engine.setPenroseConfig(penroseConfig);
         engine.setSchemaManager(schemaManager);
         engine.setInterpreterFactory(interpreterFactory);
         engine.setConnector(connector);
         engine.setConnectionManager(connectionManager);
-        engine.init(engineConfig);
         engine.setPartitionManager(partitionManager);
+        engine.init(engineConfig);
 
         engine.start();
     }
@@ -312,152 +304,6 @@ public class Penrose {
 
     public Handler getHandler() {
         return handler;
-    }
-
-    public void create() throws Exception {
-        connector.create();
-
-        //createMappingsTable();
-
-        for (Iterator i=partitionManager.getPartitions().iterator(); i.hasNext(); ) {
-            Partition partition = (Partition)i.next();
-            Collection entryDefinitions = partition.getRootEntryMappings();
-            create(partition, null, entryDefinitions);
-        }
-    }
-
-    public void create(Partition partition, String parentDn, Collection entryDefinitions) throws Exception {
-        if (entryDefinitions == null) return;
-        for (Iterator i=entryDefinitions.iterator(); i.hasNext(); ) {
-            EntryMapping entryMapping = (EntryMapping)i.next();
-
-            log.debug("Creating tables for "+entryMapping.getDn());
-            EntryCache cache = engine.getCache(parentDn, entryMapping);
-            cache.create();
-
-            Collection children = partition.getChildren(entryMapping);
-            create(partition, entryMapping.getDn(), children);
-        }
-    }
-
-    public void load() throws Exception {
-        connector.load();
-
-        for (Iterator i=partitionManager.getPartitions().iterator(); i.hasNext(); ) {
-            Partition partition = (Partition)i.next();
-            load(partition);
-        }
-    }
-
-    public void load(Partition partition) throws Exception {
-        Collection entryDefinitions = partition.getRootEntryMappings();
-        for (Iterator i=entryDefinitions.iterator(); i.hasNext(); ) {
-            EntryMapping entryMapping = (EntryMapping)i.next();
-
-            log.debug("Loading entries under "+entryMapping.getDn());
-
-            PenroseSearchResults sr = handler.search(
-                    null,
-                    entryMapping.getDn(),
-                    LDAPConnection.SCOPE_SUB,
-                    LDAPSearchConstraints.DEREF_NEVER,
-                    "(objectClass=*)",
-                    new ArrayList()
-            );
-
-            while (sr.hasNext()) sr.next();
-        }
-    }
-
-    public void clean() throws Exception {
-
-        for (Iterator i=partitionManager.getPartitions().iterator(); i.hasNext(); ) {
-            Partition partition = (Partition)i.next();
-            Collection entryDefinitions = partition.getRootEntryMappings();
-            clean(partition, null, entryDefinitions);
-        }
-
-        connector.clean();
-    }
-
-    public void clean(Partition partition, String parentDn, Collection entryDefinitions) throws Exception {
-        if (entryDefinitions == null) return;
-        for (Iterator i=entryDefinitions.iterator(); i.hasNext(); ) {
-            EntryMapping entryMapping = (EntryMapping)i.next();
-
-            Collection children = partition.getChildren(entryMapping);
-            clean(partition, entryMapping.getDn(), children);
-
-            log.debug("Cleaning tables for "+entryMapping.getDn());
-            EntryCache cache = engine.getCache(parentDn, entryMapping);
-            cache.clean();
-        }
-    }
-
-    public void drop() throws Exception {
-
-        for (Iterator i=partitionManager.getPartitions().iterator(); i.hasNext(); ) {
-            Partition partition = (Partition)i.next();
-            Collection entryDefinitions = partition.getRootEntryMappings();
-            drop(partition, null, entryDefinitions);
-        }
-
-        //dropMappingsTable();
-
-        connector.drop();
-    }
-
-    public void drop(Partition partition, String parentDn, Collection entryDefinitions) throws Exception {
-        if (entryDefinitions == null) return;
-        for (Iterator i=entryDefinitions.iterator(); i.hasNext(); ) {
-            EntryMapping entryMapping = (EntryMapping)i.next();
-
-            Collection children = partition.getChildren(entryMapping);
-            drop(partition, entryMapping.getDn(), children);
-
-            log.debug("Deleting entries under "+entryMapping.getDn());
-            EntryCache cache = engine.getCache(parentDn, entryMapping);
-            cache.drop();
-        }
-    }
-
-    public static void main(String args[]) throws Exception {
-
-        if (args.length == 0) {
-            System.out.println("Usage: org.safehaus.penrose.Penrose [command]");
-            System.out.println();
-            System.out.println("Commands:");
-            System.out.println("    create - create cache tables");
-            System.out.println("    load   - load data into cache tables");
-            System.out.println("    clean  - clean data from cache tables");
-            System.out.println("    drop   - drop cache tables");
-            System.exit(0);
-        }
-
-        String homeDirectory = System.getProperty("penrose.home");
-
-        String command = args[0];
-
-        Penrose penrose = new Penrose(homeDirectory);
-        penrose.start();
-
-        if ("create".equals(command)) {
-            penrose.create();
-
-        } else if ("load".equals(command)) {
-            penrose.load();
-
-        } else if ("clean".equals(command)) {
-            penrose.clean();
-
-        } else if ("drop".equals(command)) {
-            penrose.drop();
-
-        } else if ("run".equals(command)) {
-            //penrose.start();
-        }
-
-        penrose.stop();
     }
 
     public SchemaManager getSchemaManager() {

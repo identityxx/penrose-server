@@ -26,6 +26,7 @@ import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.filter.FilterTool;
 import org.safehaus.penrose.partition.Partition;
 import org.apache.log4j.Logger;
+import org.ietf.ldap.LDAPException;
 
 import java.util.*;
 
@@ -49,9 +50,6 @@ public class LoadEngine {
             final PenroseSearchResults results
             ) throws Exception {
 
-        String s = engine.getEngineConfig().getParameter(EngineConfig.ALLOW_CONCURRENCY);
-        boolean allowConcurrency = s == null ? true : new Boolean(s).booleanValue();
-
         Partition partition = engine.getPartitionManager().getPartition(entryMapping);
 
         Collection sources = entryMapping.getSourceMappings();
@@ -62,71 +60,77 @@ public class LoadEngine {
 
         if (sources.size() == 0 && effectiveSources.size() == 0 || sources.size() == 1 && effectiveSources.size() == 1) {
 
-            if (allowConcurrency) {
-                engine.execute(new Runnable() {
-                    public void run() {
-                        try {
-                            for (Iterator i=entries.iterator(); i.hasNext(); ) {
-                                Map map = (Map)i.next();
-                                loadedEntries.add(map);
-                            }
-                            loadedEntries.close();
+            log.debug("All sources have been loaded.");
 
-                        } catch (Throwable e) {
-                            e.printStackTrace(System.out);
-                            loadedEntries.setReturnCode(org.ietf.ldap.LDAPException.OPERATIONS_ERROR);
-                        }
+            engine.execute(new Runnable() {
+                public void run() {
+                    try {
+                        checkCache(entryMapping, entries, loadedEntries, results);
+                    } catch (Throwable e) {
+                        e.printStackTrace();
+                        loadedEntries.setReturnCode(LDAPException.OPERATIONS_ERROR);
                     }
-                });
-            } else {
-                for (Iterator i=entries.iterator(); i.hasNext(); ) {
-                    Map map = (Map)i.next();
-                    loadedEntries.add(map);
                 }
-                loadedEntries.close();
-            }
+            });
 
             return;
         }
 
-        final Interpreter interpreter = engine.getInterpreterFactory().newInstance();
+        log.debug("Creating batches of entries.");
+
         final PenroseSearchResults batches = new PenroseSearchResults();
 
-        if (allowConcurrency) {
-            engine.execute(new Runnable() {
-                public void run() {
-                    try {
-                        createBatches(interpreter, entryMapping, entries, results, batches);
+        engine.execute(new Runnable() {
+            public void run() {
+                try {
+                    createBatches(entryMapping, entries, results, batches);
 
-                    } catch (Throwable e) {
-                        e.printStackTrace(System.out);
-                        batches.setReturnCode(org.ietf.ldap.LDAPException.OPERATIONS_ERROR);
-                    }
+                } catch (Throwable e) {
+                    e.printStackTrace(System.out);
+                    batches.setReturnCode(org.ietf.ldap.LDAPException.OPERATIONS_ERROR);
                 }
-            });
-        } else {
-            createBatches(interpreter, entryMapping, entries, results, batches);
-        }
+            }
+        });
 
-        if (allowConcurrency) {
-            engine.execute(new Runnable() {
-                public void run() {
-                    try {
-                        loadBackground(entryMapping, batches, loadedEntries);
+        log.debug("Loading batches.");
 
-                    } catch (Throwable e) {
-                        e.printStackTrace(System.out);
-                        loadedEntries.setReturnCode(org.ietf.ldap.LDAPException.OPERATIONS_ERROR);
-                    }
+        engine.execute(new Runnable() {
+            public void run() {
+                try {
+                    loadBackground(entryMapping, batches, loadedEntries);
+
+                } catch (Throwable e) {
+                    e.printStackTrace(System.out);
+                    loadedEntries.setReturnCode(org.ietf.ldap.LDAPException.OPERATIONS_ERROR);
                 }
-            });
-        } else {
-            loadBackground(entryMapping, batches, loadedEntries);
+            }
+        });
+    }
+
+    public void checkCache(EntryMapping entryMapping, PenroseSearchResults entries, PenroseSearchResults loadedEntries, PenroseSearchResults results) throws Exception {
+        for (Iterator i=entries.iterator(); i.hasNext(); ) {
+            Map map = (Map)i.next();
+            String dn = (String)map.get("dn");
+
+            String parentDn = Entry.getParentDn(dn);
+            Row rdn = Entry.getRdn(dn);
+
+            log.debug("Checking "+rdn+" in entry data cache for "+parentDn);
+            Entry entry = (Entry)engine.getEntryCacheManager().getCache(parentDn, entryMapping).get(rdn);
+
+            if (entry != null) {
+                log.debug("Entry "+rdn+" has been loaded");
+                results.add(entry);
+                continue;
+            }
+
+            loadedEntries.add(map);
         }
+        loadedEntries.close();
+
     }
 
     public void createBatches(
-            Interpreter interpreter,
             EntryMapping entryMapping,
             PenroseSearchResults entries,
             PenroseSearchResults results,
@@ -134,6 +138,8 @@ public class LoadEngine {
             ) throws Exception {
 
         try {
+            final Interpreter interpreter = engine.getInterpreterFactory().newInstance();
+
             Partition partition = engine.getPartitionManager().getPartition(entryMapping);
             SourceMapping primarySourceMapping = engine.getPrimarySource(entryMapping);
 
@@ -153,7 +159,7 @@ public class LoadEngine {
                     String parentDn = Entry.getParentDn(dn);
 
                     log.debug("Checking "+rdn+" in entry data cache for "+parentDn);
-                    Entry entry = (Entry)engine.getCache(parentDn, entryMapping).get(rdn);
+                    Entry entry = (Entry)engine.getEntryCacheManager().getCache(parentDn, entryMapping).get(rdn);
 
                     if (entry != null) {
                         log.debug(" - "+rdn+" has been loaded");

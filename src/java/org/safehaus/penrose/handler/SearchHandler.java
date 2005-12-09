@@ -132,10 +132,6 @@ public class SearchHandler {
         EntryMapping parentMapping = parent.getEntryMapping();
 
 		Collection children = partition.getChildren(parentMapping);
-        if (children == null) {
-            log.debug("Entry "+parentDn+" has no children.");
-            return null;
-        }
 
         Filter filter = null;
         for (Iterator iterator=rdn.getNames().iterator(); iterator.hasNext(); ) {
@@ -363,9 +359,6 @@ public class SearchHandler {
 
         Partition partition = handler.getPartitionManager().getPartition(entryMapping);
         Collection children = partition.getChildren(entryMapping);
-        if (children == null) {
-            return;
-        }
 
         for (Iterator i = children.iterator(); i.hasNext();) {
             EntryMapping childMapping = (EntryMapping) i.next();

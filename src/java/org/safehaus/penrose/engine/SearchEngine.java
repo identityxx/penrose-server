@@ -48,12 +48,13 @@ public class SearchEngine {
             final AttributeValues parentSourceValues,
             final EntryMapping entryMapping,
             final Filter filter,
-            final PenroseSearchResults entries
+            final PenroseSearchResults results
             ) throws Exception {
 
         boolean staticEntry = engine.isStatic(entryMapping);
         if (staticEntry) {
-            searchStatic(path, parentSourceValues, entryMapping, filter, entries);
+            log.debug("Returning static entries.");
+            searchStatic(path, parentSourceValues, entryMapping, filter, results);
             return;
         }
 
@@ -69,11 +70,31 @@ public class SearchEngine {
         log.debug("Effective Sources: "+effectiveSources);
 
         if (unique && sources.size() == 1 && effectiveSources.size() == 1) {
-            simpleSearch(parentSourceValues, entryMapping, filter, entries);
+            engine.execute(new Runnable() {
+                public void run() {
+                    try {
+                        simpleSearch(parentSourceValues, entryMapping, filter, results);
+
+                    } catch (Throwable e) {
+                        e.printStackTrace(System.out);
+                        results.setReturnCode(LDAPException.OPERATIONS_ERROR);
+                    }
+                }
+            });
             return;
         }
 
-        searchDynamic(path, parentSourceValues, entryMapping, filter, entries);
+        engine.execute(new Runnable() {
+            public void run() {
+                try {
+                    searchDynamic(path, parentSourceValues, entryMapping, filter, results);
+
+                } catch (Throwable e) {
+                    e.printStackTrace(System.out);
+                    results.setReturnCode(LDAPException.OPERATIONS_ERROR);
+                }
+            }
+        });
     }
 
     public void searchStatic(
@@ -89,7 +110,7 @@ public class SearchEngine {
         Collection list = engine.computeDns(interpreter, entryMapping, parentSourceValues);
         for (Iterator j=list.iterator(); j.hasNext(); ) {
             String dn = (String)j.next();
-            log.debug(" - "+dn);
+            log.debug("Static entry "+dn);
 
             Map map = new HashMap();
             map.put("dn", entryMapping.getDn());
@@ -100,34 +121,6 @@ public class SearchEngine {
     }
 
     public void searchDynamic(
-            final Collection path,
-            final AttributeValues parentSourceValues,
-            final EntryMapping entryMapping,
-            final Filter filter,
-            final PenroseSearchResults entries
-            ) throws Exception {
-
-        String s = engine.getEngineConfig().getParameter(EngineConfig.ALLOW_CONCURRENCY);
-        boolean allowConcurrency = s == null ? true : new Boolean(s).booleanValue();
-
-        if (allowConcurrency) {
-            engine.execute(new Runnable() {
-                public void run() {
-                    try {
-                        searchDynamicBackground(path, parentSourceValues, entryMapping, filter, entries);
-
-                    } catch (Throwable e) {
-                        e.printStackTrace(System.out);
-                        entries.setReturnCode(LDAPException.OPERATIONS_ERROR);
-                    }
-                }
-            });
-        } else {
-            searchDynamicBackground(path, parentSourceValues, entryMapping, filter, entries);
-        }
-    }
-
-    public void searchDynamicBackground(
             Collection path,
             final AttributeValues parentSourceValues,
             final EntryMapping entryMapping,
@@ -153,7 +146,7 @@ public class SearchEngine {
             if (parent != null) {
                 String parentDn = parent.getDn();
 
-                Collection list = engine.getCache(parentDn, entryMapping).get(filter);
+                Collection list = engine.getEntryCacheManager().getCache(parentDn, entryMapping).search(filter);
                 if (list != null) dns.addAll(list);
             }
         } else {
@@ -188,23 +181,16 @@ public class SearchEngine {
 
         final PenroseSearchResults values = new PenroseSearchResults();
 
-        String s = engine.getEngineConfig().getParameter(EngineConfig.ALLOW_CONCURRENCY);
-        boolean allowConcurrency = s == null ? true : new Boolean(s).booleanValue();
+        engine.execute(new Runnable() {
+            public void run() {
+                try {
+                    searchSources(parentSourceValues, entryMapping, filter, values);
 
-        if (allowConcurrency) {
-            engine.execute(new Runnable() {
-                public void run() {
-                    try {
-                        searchSources(parentSourceValues, entryMapping, filter, values);
-
-                    } catch (Throwable e) {
-                        e.printStackTrace(System.out);
-                    }
+                } catch (Throwable e) {
+                    e.printStackTrace(System.out);
                 }
-            });
-        } else {
-            searchSources(parentSourceValues, entryMapping, filter, values);
-        }
+            }
+        });
 
         Map childDns = new HashMap();
 
@@ -260,7 +246,7 @@ public class SearchEngine {
                         log.debug("   - DN: "+dn);
                     }
 
-                    engine.getCache(parentDn, entryMapping).put(filter, c);
+                    engine.getEntryCacheManager().getCache(parentDn, entryMapping).put(filter, c);
 
                 }
             }
@@ -311,32 +297,6 @@ public class SearchEngine {
     }
 
     public void simpleSearch(
-            final AttributeValues parentSourceValues,
-            final EntryMapping entryMapping,
-            final Filter filter,
-            final PenroseSearchResults results) throws Exception {
-
-        String s = engine.getEngineConfig().getParameter(EngineConfig.ALLOW_CONCURRENCY);
-        boolean allowConcurrency = s == null ? true : new Boolean(s).booleanValue();
-
-        if (allowConcurrency) {
-            engine.execute(new Runnable() {
-                public void run() {
-                    try {
-                        simpleSearchBackground(parentSourceValues, entryMapping, filter, results);
-
-                    } catch (Throwable e) {
-                        e.printStackTrace(System.out);
-                        results.setReturnCode(LDAPException.OPERATIONS_ERROR);
-                    }
-                }
-            });
-        } else {
-            simpleSearchBackground(parentSourceValues, entryMapping, filter, results);
-        }
-    }
-
-    public void simpleSearchBackground(
             AttributeValues parentSourceValues,
             EntryMapping entryMapping,
             Filter filter,

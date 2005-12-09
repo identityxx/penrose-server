@@ -26,8 +26,10 @@ import java.util.*;
  */
 public class ConnectorConfig implements Cloneable {
 
-    public final static String REFRESH_INTERVAL = "refreshInterval";
-    public final static String THREAD_POOL_SIZE = "threadPoolSize";
+    public final static String ALLOW_CONCURRENCY   = "allowConcurrency";
+
+    public final static String REFRESH_INTERVAL    = "refreshInterval";
+    public final static String THREAD_POOL_SIZE    = "threadPoolSize";
 
     public final static String DEFAULT_CACHE_NAME  = "Source Cache";
     public final static String DEFAULT_CACHE_CLASS = DefaultSourceCache.class.getName();

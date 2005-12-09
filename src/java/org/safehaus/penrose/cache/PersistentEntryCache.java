@@ -41,7 +41,7 @@ import java.sql.ResultSet;
 public class PersistentEntryCache extends EntryCache {
 
     Partition partition;
-    int entryId;
+    int mappingId;
 
     ConnectionManager connectionManager;
     String jdbcConnectionName;
@@ -59,28 +59,34 @@ public class PersistentEntryCache extends EntryCache {
 
         partition = engine.getPartitionManager().getPartition(entryMapping);
 
-        entryId = getEntryId();
-        if (entryId == 0) {
-            registerEntry();
-            entryId = getEntryId();
+        mappingId = getMappingId();
+        if (mappingId == -1) {
+            createMappingsTable();
+            mappingId = getMappingId();
+        }
+        if (mappingId == 0) {
+            addMapping();
+            mappingId = getMappingId();
         }
     }
 
     public Connection getJDBCConnection() throws Exception {
-        return (Connection)connectionManager.getConnection(jdbcConnectionName);
+        return (Connection)connectionManager.openConnection(jdbcConnectionName);
     }
 
     public DirContext getJNDIConnection() throws Exception {
-        return (DirContext)connectionManager.getConnection(jndiConnectionName);
+        return (DirContext)connectionManager.openConnection(jndiConnectionName);
     }
 
     public void create() throws Exception {
 
         String dn = entryMapping.getDn();
-        log.debug("Entry "+dn+" ("+entryId+")");
+        log.debug("Entry "+dn+" ("+mappingId+")");
 
-        Collection attributeDefinitions = entryMapping.getNonRdnAttributes();
-        for (Iterator i=attributeDefinitions.iterator(); i.hasNext(); ) {
+        createEntriesTable();
+
+        Collection attributeMappings = entryMapping.getAttributeMappings();
+        for (Iterator i=attributeMappings.iterator(); i.hasNext(); ) {
             AttributeMapping attributeMapping = (AttributeMapping)i.next();
             createAttributeTable(attributeMapping);
         }
@@ -99,7 +105,7 @@ public class PersistentEntryCache extends EntryCache {
             }
         }
 
-        if (!entryMapping.isDynamic()) {
+        if (!partition.isDynamic(entryMapping)) {
             Interpreter interpreter = engine.getInterpreterFactory().newInstance();
             AttributeValues attributeValues = engine.computeAttributeValues(entryMapping, interpreter);
             interpreter.clear();
@@ -112,7 +118,38 @@ public class PersistentEntryCache extends EntryCache {
 
     }
 
-    public int getEntryId() throws Exception {
+    public void createMappingsTable() throws Exception {
+        String sql = "create table penrose_mappings (id integer auto_increment, dn varchar(255) unique, primary key (id))";
+
+        Connection con = null;
+        PreparedStatement ps = null;
+
+        try {
+            con = getJDBCConnection();
+
+            if (log.isDebugEnabled()) {
+                log.debug(Formatter.displaySeparator(80));
+                Collection lines = Formatter.split(sql, 80);
+                for (Iterator i=lines.iterator(); i.hasNext(); ) {
+                    String line = (String)i.next();
+                    log.debug(Formatter.displayLine(line, 80));
+                }
+                log.debug(Formatter.displaySeparator(80));
+            }
+
+            ps = con.prepareStatement(sql);
+            ps.execute();
+
+        } catch (Exception e) {
+            log.error(e.getMessage());
+
+        } finally {
+            if (ps != null) try { ps.close(); } catch (Exception e) {}
+            if (con != null) try { con.close(); } catch (Exception e) {}
+        }
+    }
+
+    public int getMappingId() throws Exception {
         String dn = entryMapping.getDn();
 
         Connection con = null;
@@ -133,6 +170,8 @@ public class PersistentEntryCache extends EntryCache {
                     log.debug(Formatter.displayLine(line, 80));
                 }
                 log.debug(Formatter.displaySeparator(80));
+                log.debug(Formatter.displayLine("Parameters: dn = "+dn, 80));
+                log.debug(Formatter.displaySeparator(80));
             }
 
             ps = con.prepareStatement(sql);
@@ -143,19 +182,20 @@ public class PersistentEntryCache extends EntryCache {
                 id = rs.getInt(1);
             }
 
+            return id;
+
         } catch (Exception e) {
             log.error(e.getMessage());
+            return -1;
 
         } finally {
             if (rs != null) try { rs.close(); } catch (Exception e) {}
             if (ps != null) try { ps.close(); } catch (Exception e) {}
             if (con != null) try { con.close(); } catch (Exception e) {}
         }
-
-        return id;
     }
 
-    public void registerEntry() throws Exception {
+    public void addMapping() throws Exception {
         String dn = entryMapping.getDn();
 
         Connection con = null;
@@ -189,43 +229,177 @@ public class PersistentEntryCache extends EntryCache {
         }
     }
 
+    public int getEntryId(String dn) throws Exception {
+
+        Connection con = null;
+        PreparedStatement ps = null;
+        ResultSet rs = null;
+
+        int id = 0;
+
+        try {
+            String sql = "select id from penrose_"+mappingId+"_entries where dn=?";
+            con = getJDBCConnection();
+
+            if (log.isDebugEnabled()) {
+                log.debug(Formatter.displaySeparator(80));
+                Collection lines = Formatter.split(sql, 80);
+                for (Iterator i=lines.iterator(); i.hasNext(); ) {
+                    String line = (String)i.next();
+                    log.debug(Formatter.displayLine(line, 80));
+                }
+                log.debug(Formatter.displaySeparator(80));
+                log.debug(Formatter.displayLine("Parameters: dn = "+dn, 80));
+                log.debug(Formatter.displaySeparator(80));
+            }
+
+            ps = con.prepareStatement(sql);
+            ps.setObject(1, dn);
+
+            rs = ps.executeQuery();
+            if (rs.next()) {
+                id = rs.getInt(1);
+            }
+
+            if (log.isDebugEnabled()) {
+                log.debug(Formatter.displayLine("Results: id = "+id, 80));
+                log.debug(Formatter.displaySeparator(80));
+            }
+
+            return id;
+
+        } catch (Exception e) {
+            log.error(e.getMessage());
+            return -1;
+
+        } finally {
+            if (rs != null) try { rs.close(); } catch (Exception e) {}
+            if (ps != null) try { ps.close(); } catch (Exception e) {}
+            if (con != null) try { con.close(); } catch (Exception e) {}
+        }
+    }
+
+    public void addEntry(String dn) throws Exception {
+
+        Connection con = null;
+        PreparedStatement ps = null;
+
+        try {
+            String sql = "insert into penrose_"+mappingId+"_entries values (null, ?)";
+            con = getJDBCConnection();
+
+            if (log.isDebugEnabled()) {
+                log.debug(Formatter.displaySeparator(80));
+                Collection lines = Formatter.split(sql, 80);
+                for (Iterator i=lines.iterator(); i.hasNext(); ) {
+                    String line = (String)i.next();
+                    log.debug(Formatter.displayLine(line, 80));
+                }
+                log.debug(Formatter.displaySeparator(80));
+            }
+
+            ps = con.prepareStatement(sql);
+            ps.setObject(1, dn);
+
+            ps.execute();
+
+        } catch (Exception e) {
+            log.error(e.getMessage());
+
+        } finally {
+            if (ps != null) try { ps.close(); } catch (Exception e) {}
+            if (con != null) try { con.close(); } catch (Exception e) {}
+        }
+    }
+
+    public void removeEntry(int entryId) throws Exception {
+
+        Connection con = null;
+        PreparedStatement ps = null;
+
+        try {
+            String sql = "delete from penrose_"+mappingId+"_entries where id=?";
+            con = getJDBCConnection();
+
+            if (log.isDebugEnabled()) {
+                log.debug(Formatter.displaySeparator(80));
+                Collection lines = Formatter.split(sql, 80);
+                for (Iterator i=lines.iterator(); i.hasNext(); ) {
+                    String line = (String)i.next();
+                    log.debug(Formatter.displayLine(line, 80));
+                }
+                log.debug(Formatter.displaySeparator(80));
+            }
+
+            ps = con.prepareStatement(sql);
+            ps.setInt(1, entryId);
+
+            ps.execute();
+
+        } catch (Exception e) {
+            log.error(e.getMessage());
+
+        } finally {
+            if (ps != null) try { ps.close(); } catch (Exception e) {}
+            if (con != null) try { con.close(); } catch (Exception e) {}
+        }
+    }
+
+    public void createEntriesTable() throws Exception {
+
+        String tableName = "penrose_"+mappingId+"_entries";
+
+        StringBuffer sb = new StringBuffer();
+        sb.append("create table ");
+        sb.append(tableName);
+        sb.append(" (id integer auto_increment, dn varchar(255) unique, primary key (id))");
+
+        String sql = sb.toString();
+
+        Connection con = null;
+        PreparedStatement ps = null;
+
+        try {
+            con = getJDBCConnection();
+
+            if (log.isDebugEnabled()) {
+                log.debug(Formatter.displaySeparator(80));
+                Collection lines = Formatter.split(sql, 80);
+                for (Iterator i=lines.iterator(); i.hasNext(); ) {
+                    String line = (String)i.next();
+                    log.debug(Formatter.displayLine(line, 80));
+                }
+                log.debug(Formatter.displaySeparator(80));
+            }
+
+            ps = con.prepareStatement(sql);
+            ps.execute();
+
+        } catch (Exception e) {
+            log.error(e.getMessage());
+
+        } finally {
+            if (ps != null) try { ps.close(); } catch (Exception e) {}
+            if (con != null) try { con.close(); } catch (Exception e) {}
+        }
+    }
+
     public void createAttributeTable(AttributeMapping attributeMapping) throws Exception {
 
-        String tableName = "penrose_"+entryId+"_attribute_"+attributeMapping.getName();
+        String tableName = "penrose_"+mappingId+"_attribute_"+attributeMapping.getName();
 
-        StringBuffer columns = new StringBuffer();
-        StringBuffer primaryKeys = new StringBuffer();
+        StringBuffer sb = new StringBuffer();
+        sb.append("create table ");
+        sb.append(tableName);
+        sb.append(" (id integer, ");
+        sb.append(attributeMapping.getName());
+        sb.append(" ");
+        sb.append(getColumnTypeDeclaration(attributeMapping));
+        sb.append(", primary key (id, ");
+        sb.append(attributeMapping.getName());
+        sb.append("))");
 
-        Collection rdns = entryMapping.getRdnAttributes();
-        for (Iterator i=rdns.iterator(); i.hasNext(); ) {
-            AttributeMapping ad = (AttributeMapping)i.next();
-
-            if (columns.length() > 0) columns.append(", ");
-            columns.append(ad.getName());
-            columns.append(" ");
-            columns.append(getColumnTypeDeclaration(ad));
-
-            if (primaryKeys.length() > 0) primaryKeys.append(", ");
-            primaryKeys.append(ad.getName());
-        }
-
-        columns.append(", ");
-        columns.append(attributeMapping.getName());
-        columns.append(" ");
-        columns.append(getColumnTypeDeclaration(attributeMapping));
-
-        primaryKeys.append(", ");
-        primaryKeys.append(attributeMapping.getName());
-
-        columns.append(", primary key (");
-        columns.append(primaryKeys);
-        columns.append(")");
-
-        StringBuffer create = new StringBuffer();
-        create.append("create table ");
-        create.append(tableName);
-
-        String sql = create+" ("+columns+")";
+        String sql = sb.toString();
 
         Connection con = null;
         PreparedStatement ps = null;
@@ -283,39 +457,14 @@ public class PersistentEntryCache extends EntryCache {
 
     public void createFieldTable(SourceMapping sourceMapping, FieldConfig fieldConfig) throws Exception {
 
-        String tableName = "penrose_"+entryId+"_field_"+sourceMapping.getName()+"_"+fieldConfig.getName();
-
-        StringBuffer columns = new StringBuffer();
-        StringBuffer primaryKeys = new StringBuffer();
-
-        Collection rdns = entryMapping.getRdnAttributes();
-        for (Iterator i=rdns.iterator(); i.hasNext(); ) {
-            AttributeMapping attributeMapping = (AttributeMapping)i.next();
-
-            if (columns.length() > 0) columns.append(", ");
-            columns.append(attributeMapping.getName());
-            columns.append(" ");
-            columns.append(getColumnTypeDeclaration(attributeMapping));
-
-            if (primaryKeys.length() > 0) primaryKeys.append(", ");
-            primaryKeys.append(attributeMapping.getName());
-        }
-
-        columns.append(", value ");
-        columns.append(getColumnTypeDeclaration(fieldConfig));
-
-        primaryKeys.append(", value");
-
-        columns.append(", primary key (");
-        columns.append(primaryKeys);
-        columns.append(")");
+        String tableName = "penrose_"+mappingId+"_field_"+sourceMapping.getName()+"_"+fieldConfig.getName();
 
         StringBuffer sb = new StringBuffer();
         sb.append("create table ");
         sb.append(tableName);
-        sb.append(" (");
-        sb.append(columns);
-        sb.append(")");
+        sb.append(" (id integer, value ");
+        sb.append(getColumnTypeDeclaration(fieldConfig));
+        sb.append(", primary key (id, value))");
 
         String sql = sb.toString();
 
@@ -348,7 +497,7 @@ public class PersistentEntryCache extends EntryCache {
     }
 
     public void clean() throws Exception {
-        if (!entryMapping.isDynamic()) return;
+        if (!partition.isDynamic(entryMapping)) return;
 
         String dn = entryMapping.getDn();
         Row rdn = Entry.getRdn(dn);
@@ -357,7 +506,7 @@ public class PersistentEntryCache extends EntryCache {
     }
 
     public void drop() throws Exception {
-        if (!entryMapping.isDynamic()) {
+        if (!partition.isDynamic(entryMapping)) {
             String dn = entryMapping.getDn();
             Row rdn = Entry.getRdn(dn);
             remove(rdn);
@@ -370,11 +519,13 @@ public class PersistentEntryCache extends EntryCache {
             dropEntrySourceTable(sourceMapping);
         }
 
-        Collection attributeDefinitions = entryMapping.getNonRdnAttributes();
+        Collection attributeDefinitions = entryMapping.getAttributeMappings();
         for (Iterator i=attributeDefinitions.iterator(); i.hasNext(); ) {
             AttributeMapping attributeMapping = (AttributeMapping)i.next();
             dropAttributeTable(attributeMapping);
         }
+
+        dropEntriesTable();
     }
 
     public void dropEntrySourceTable(SourceMapping sourceMapping) throws Exception {
@@ -390,7 +541,41 @@ public class PersistentEntryCache extends EntryCache {
 
     public void dropFieldTable(SourceMapping sourceMapping, SourceConfig sourceConfig, FieldConfig fieldConfig) throws Exception {
 
-        String tableName = "penrose_"+entryId+"_field_"+sourceMapping.getName()+"_"+fieldConfig.getName();
+        String tableName = "penrose_"+mappingId+"_field_"+sourceMapping.getName()+"_"+fieldConfig.getName();
+
+        String sql = "drop table "+tableName;
+
+        Connection con = null;
+        PreparedStatement ps = null;
+
+        try {
+            con = getJDBCConnection();
+
+            if (log.isDebugEnabled()) {
+                log.debug(Formatter.displaySeparator(80));
+                Collection lines = Formatter.split(sql, 80);
+                for (Iterator i=lines.iterator(); i.hasNext(); ) {
+                    String line = (String)i.next();
+                    log.debug(Formatter.displayLine(line, 80));
+                }
+                log.debug(Formatter.displaySeparator(80));
+            }
+
+            ps = con.prepareStatement(sql);
+            ps.execute();
+
+        } catch (Exception e) {
+            log.error(e.getMessage());
+
+        } finally {
+            if (ps != null) try { ps.close(); } catch (Exception e) {}
+            if (con != null) try { con.close(); } catch (Exception e) {}
+        }
+    }
+
+    public void dropEntriesTable() throws Exception {
+
+        String tableName = "penrose_"+mappingId+"_entries";
 
         String sql = "drop table "+tableName;
 
@@ -424,7 +609,7 @@ public class PersistentEntryCache extends EntryCache {
 
     public void dropAttributeTable(AttributeMapping attributeMapping) throws Exception {
 
-        String tableName = "penrose_"+entryId+"_attribute_"+attributeMapping.getName();
+        String tableName = "penrose_"+mappingId+"_attribute_"+attributeMapping.getName();
 
         String sql = "drop table "+tableName;
 
@@ -458,15 +643,13 @@ public class PersistentEntryCache extends EntryCache {
 
     public void load() throws Exception {
 
-        if (!entryMapping.isDynamic()) return;
+        if (!partition.isDynamic(entryMapping)) return;
 
         Collection entries = partition.getChildren(entryMapping);
         load(entries);
     }
 
     public void load(Collection entries) throws Exception {
-        if (entries == null) return;
-
         for (Iterator i = entries.iterator(); i.hasNext();) {
             EntryMapping ed = (EntryMapping) i.next();
 
@@ -512,6 +695,8 @@ public class PersistentEntryCache extends EntryCache {
 
             entry = new Entry(dn, entryMapping, attributeValues);
 
+            int entryId = getEntryId(dn);
+
             AttributeValues sourceValues = entry.getSourceValues();
             Collection sources = partition.getEffectiveSources(entryMapping);
 
@@ -524,7 +709,7 @@ public class PersistentEntryCache extends EntryCache {
                 for (Iterator j=fields.iterator(); j.hasNext(); ) {
                     FieldConfig fieldConfig = (FieldConfig)j.next();
 
-                    Collection values = getField(sourceMapping, fieldConfig, rdn);
+                    Collection values = getField(sourceMapping, fieldConfig, entryId);
                     log.debug(" - "+sourceMapping.getName()+"."+fieldConfig.getName()+": "+values);
 
                     sourceValues.set(sourceMapping.getName()+"."+fieldConfig.getName(), values);
@@ -541,18 +726,19 @@ public class PersistentEntryCache extends EntryCache {
         return entry;
     }
 
-    public Collection get(Filter filter) throws Exception {
+    public Collection search(Filter filter) throws Exception {
         Collection results = new ArrayList();
         DirContext ctx = null;
 
         try {
-            log.debug("Searching "+filter);
+            log.debug("Searching "+parentDn+" with filter "+filter);
             SearchControls sc = new SearchControls();
             sc.setSearchScope(SearchControls.ONELEVEL_SCOPE);
             sc.setReturningAttributes(new String[] { "dn" });
 
             ctx = getJNDIConnection();
-            NamingEnumeration ne = ctx.search(parentDn, filter.toString(), sc);
+            String ldapFilter = filter == null ? "(objectClass=*)" : filter.toString();
+            NamingEnumeration ne = ctx.search(parentDn, ldapFilter, sc);
 
             while (ne.hasMore()) {
                 SearchResult sr = (SearchResult)ne.next();
@@ -624,13 +810,26 @@ public class PersistentEntryCache extends EntryCache {
         } finally {
             if (ctx != null) try { ctx.close(); } catch (Exception e) {}
         }
-/*
-        Collection attributeDefinitions = entryMappingnAttributes();
+
+        int entryId = getEntryId(dn);
+        if (entryId == 0) {
+            addEntry(dn);
+            entryId = getEntryId(dn);
+        }
+
+        Collection attributeDefinitions = entryMapping.getAttributeMappings();
         for (Iterator i=attributeDefinitions.iterator(); i.hasNext(); ) {
             AttributeMapping attributeDefinition = (AttributeMapping)i.next();
-            insertAttribute(attributeDefinition);
+
+            deleteAttribute(attributeDefinition, entryId);
+
+            Collection values = attributeValues.get(attributeDefinition.getName());
+            for (Iterator j=values.iterator(); j.hasNext(); ) {
+                Object value = j.next();
+                insertAttribute(attributeDefinition, entryId, value);
+            }
         }
-*/
+
         AttributeValues sourceValues = entry.getSourceValues();
         Collection sources = partition.getEffectiveSources(entryMapping);
 
@@ -643,53 +842,102 @@ public class PersistentEntryCache extends EntryCache {
             for (Iterator j=fields.iterator(); j.hasNext(); ) {
                 FieldConfig fieldConfig = (FieldConfig)j.next();
 
-                deleteField(sourceMapping, fieldConfig, rdn);
+                deleteField(sourceMapping, fieldConfig, entryId);
 
                 Collection values = sourceValues.get(sourceMapping.getName()+"."+fieldConfig.getName());
                 if (values == null) continue;
                 
                 for (Iterator k=values.iterator(); k.hasNext(); ) {
                     Object value = k.next();
-                    insertField(sourceMapping, fieldConfig, rdn, value);
+                    insertField(sourceMapping, fieldConfig, entryId, value);
                 }
             }
+        }
+    }
+
+    public void insertAttribute(
+            AttributeMapping attributeMapping,
+            int entryId,
+            Object value
+            ) throws Exception {
+
+        String tableName = "penrose_"+mappingId+"_attribute_"+attributeMapping.getName();
+
+        StringBuffer sb = new StringBuffer();
+        sb.append("insert into ");
+        sb.append(tableName);
+        sb.append(" values (?, ?)");
+
+        String sql = sb.toString();
+
+        Collection parameters = new ArrayList();
+        parameters.add(new Integer(entryId));
+        parameters.add(value);
+
+        Connection con = null;
+        PreparedStatement ps = null;
+
+        try {
+            con = getJDBCConnection();
+
+            if (log.isDebugEnabled()) {
+                log.debug(Formatter.displaySeparator(80));
+                Collection lines = Formatter.split(sql, 80);
+                for (Iterator i=lines.iterator(); i.hasNext(); ) {
+                    String line = (String)i.next();
+                    log.debug(Formatter.displayLine(line, 80));
+                }
+                log.debug(Formatter.displaySeparator(80));
+            }
+
+            ps = con.prepareStatement(sql);
+
+            int counter = 1;
+            for (Iterator i=parameters.iterator(); i.hasNext(); counter++) {
+                Object v = i.next();
+                ps.setObject(counter, v);
+            }
+
+            if (log.isDebugEnabled()) {
+                log.debug(Formatter.displayLine("Parameters:", 80));
+                counter = 1;
+                for (Iterator i=parameters.iterator(); i.hasNext(); counter++) {
+                    Object v = i.next();
+                    log.debug(Formatter.displayLine(" - "+counter+" = "+v, 80));
+                }
+                log.debug(Formatter.displaySeparator(80));
+            }
+
+            ps.execute();
+
+        } catch (Exception e) {
+            log.error(e.getMessage());
+
+        } finally {
+            if (ps != null) try { ps.close(); } catch (Exception e) {}
+            if (con != null) try { con.close(); } catch (Exception e) {}
         }
     }
 
     public void insertField(
             SourceMapping sourceMapping,
             FieldConfig fieldConfig,
-            Row rdn,
+            int entryId,
             Object value
             ) throws Exception {
 
-        String tableName = "penrose_"+entryId+"_field_"+sourceMapping.getName()+"_"+fieldConfig.getName();
-
-        StringBuffer columns = new StringBuffer();
-        Collection parameters = new ArrayList();
-
-        Collection rdns = entryMapping.getRdnAttributes();
-        for (Iterator i=rdns.iterator(); i.hasNext(); ) {
-            AttributeMapping attributeMapping = (AttributeMapping)i.next();
-            Object attributeValue = rdn.get(attributeMapping.getName());
-
-            if (columns.length() > 0) columns.append(", ");
-            columns.append("?");
-
-            parameters.add(attributeValue);
-        }
-
-        columns.append(", ?");
-        parameters.add(value);
+        String tableName = "penrose_"+mappingId+"_field_"+sourceMapping.getName()+"_"+fieldConfig.getName();
 
         StringBuffer sb = new StringBuffer();
         sb.append("insert into ");
         sb.append(tableName);
-        sb.append(" values (");
-        sb.append(columns);
-        sb.append(")");
+        sb.append(" values (?, ?)");
 
         String sql = sb.toString();
+
+        Collection parameters = new ArrayList();
+        parameters.add(new Integer(entryId));
+        parameters.add(value);
 
         Connection con = null;
         PreparedStatement ps = null;
@@ -727,32 +975,19 @@ public class PersistentEntryCache extends EntryCache {
         }
     }
 
-    public Collection getField(SourceMapping sourceMapping, FieldConfig fieldConfig, Row rdn) throws Exception {
+    public Collection getField(SourceMapping sourceMapping, FieldConfig fieldConfig, int entryId) throws Exception {
 
-        String tableName = "penrose_"+entryId+"_field_"+sourceMapping.getName()+"_"+fieldConfig.getName();
-
-        StringBuffer whereClause = new StringBuffer();
-        Collection parameters = new ArrayList();
-
-        Collection rdns = entryMapping.getRdnAttributes();
-        for (Iterator i=rdns.iterator(); i.hasNext(); ) {
-            AttributeMapping attributeMapping = (AttributeMapping)i.next();
-            Object attributeValue = rdn.get(attributeMapping.getName());
-
-            if (whereClause.length() > 0) whereClause.append(" and ");
-            whereClause.append(attributeMapping.getName());
-            whereClause.append("=?");
-
-            parameters.add(attributeValue);
-        }
+        String tableName = "penrose_"+mappingId+"_field_"+sourceMapping.getName()+"_"+fieldConfig.getName();
 
         StringBuffer sb = new StringBuffer();
         sb.append("select value from ");
         sb.append(tableName);
-        sb.append(" where ");
-        sb.append(whereClause);
+        sb.append(" where id=?");
 
         String sql = sb.toString();
+
+        Collection parameters = new ArrayList();
+        parameters.add(new Integer(entryId));
 
         Connection con = null;
         PreparedStatement ps = null;
@@ -782,23 +1017,20 @@ public class PersistentEntryCache extends EntryCache {
             }
 
             if (log.isDebugEnabled()) {
-                log.debug(Formatter.displayLine("Parameters:", 80));
-                counter = 1;
-                for (Iterator i=parameters.iterator(); i.hasNext(); counter++) {
-                    Object param = i.next();
-                    log.debug(Formatter.displayLine(" - "+counter+" = "+param, 80));
-                }
+                log.debug(Formatter.displayLine("Parameters: id = "+entryId, 80));
                 log.debug(Formatter.displaySeparator(80));
             }
 
             rs = ps.executeQuery();
 
-            log.debug("Results:");
             while (rs.next()) {
                 Object value = rs.getObject(1);
                 values.add(value);
+            }
 
-                log.debug(" - "+value);
+            if (log.isDebugEnabled()) {
+                log.debug(Formatter.displayLine("Results: value = "+values, 80));
+                log.debug(Formatter.displaySeparator(80));
             }
 
         } catch (Exception e) {
@@ -816,37 +1048,37 @@ public class PersistentEntryCache extends EntryCache {
     public void remove(Object key) throws Exception {
         Row rdn = (Row)key;
 
-        String baseDn;
+        String dn;
         if (rdn == null && parentDn != null) {
-            baseDn = parentDn;
+            dn = parentDn;
         } else {
-            baseDn = parentDn == null ? entryMapping.getDn() : rdn+","+parentDn;
+            dn = parentDn == null ? entryMapping.getDn() : rdn+","+parentDn;
         }
 
         DirContext ctx = null;
         try {
-            log.debug("Removing "+baseDn);
+            log.debug("Removing "+dn);
             SearchControls sc = new SearchControls();
             sc.setSearchScope(SearchControls.SUBTREE_SCOPE);
             sc.setReturningAttributes(new String[] { "dn" });
 
             ctx = getJNDIConnection();
-            NamingEnumeration ne = ctx.search(baseDn, "(objectClass=*)", sc);
+            NamingEnumeration ne = ctx.search(dn, "(objectClass=*)", sc);
 
             ArrayList dns = new ArrayList();
             while (ne.hasMore()) {
                 SearchResult sr = (SearchResult)ne.next();
                 String name = sr.getName();
                 if (rdn == null && "".equals(name)) continue;
-                String dn = "".equals(name) ? baseDn : name+","+baseDn;
-                dns.add(0, dn);
+                String childDn = "".equals(name) ? dn : name+","+dn;
+                dns.add(0, childDn);
             }
 
             for (Iterator i=dns.iterator(); i.hasNext(); ) {
-                String dn = (String)i.next();
-                log.debug(" - "+dn);
+                String childDn = (String)i.next();
+                log.debug(" - "+childDn);
 
-                ctx.destroySubcontext(dn);
+                ctx.destroySubcontext(childDn);
             }
 
         } catch (NamingException e) {
@@ -858,6 +1090,15 @@ public class PersistentEntryCache extends EntryCache {
 
         Collection sources = partition.getEffectiveSources(entryMapping);
 
+        int entryId = getEntryId(dn);
+
+        Collection attributeDefinitions = entryMapping.getAttributeMappings();
+        for (Iterator i=attributeDefinitions.iterator(); i.hasNext(); ) {
+            AttributeMapping attributeDefinition = (AttributeMapping)i.next();
+
+            deleteAttribute(attributeDefinition, entryId);
+        }
+
         for (Iterator i=sources.iterator(); i.hasNext(); ) {
             SourceMapping sourceMapping = (SourceMapping)i.next();
 
@@ -866,42 +1107,28 @@ public class PersistentEntryCache extends EntryCache {
             Collection fields = sourceConfig.getFieldConfigs();
             for (Iterator j=fields.iterator(); j.hasNext(); ) {
                 FieldConfig fieldConfig = (FieldConfig)j.next();
-                deleteField(sourceMapping, fieldConfig, rdn);
+                deleteField(sourceMapping, fieldConfig, entryId);
             }
         }
+
+        removeEntry(entryId);
     }
 
-    public void deleteField(
-            SourceMapping sourceMapping,
-            FieldConfig fieldConfig,
-            Row rdn) throws Exception {
+    public void deleteAttribute(
+            AttributeMapping attributeMapping,
+            int entryId) throws Exception {
 
-        String tableName = "penrose_"+entryId+"_field_"+sourceMapping.getName()+"_"+fieldConfig.getName();
+        String tableName = "penrose_"+mappingId+"_attribute_"+attributeMapping.getName();
 
-        StringBuffer whereClause = new StringBuffer();
         Collection parameters = new ArrayList();
-
-        if (rdn != null) {
-            Collection rdns = entryMapping.getRdnAttributes();
-            for (Iterator i=rdns.iterator(); i.hasNext(); ) {
-                AttributeMapping attributeMapping = (AttributeMapping)i.next();
-                Object attributeValue = rdn.get(attributeMapping.getName());
-
-                if (whereClause.length() > 0) whereClause.append(" and ");
-                whereClause.append(attributeMapping.getName());
-                whereClause.append("=?");
-
-                parameters.add(attributeValue);
-            }
-        }
 
         StringBuffer sb = new StringBuffer();
         sb.append("delete from ");
         sb.append(tableName);
 
-        if (whereClause.length() > 0) {
-            sb.append(" where ");
-            sb.append(whereClause);
+        if (entryId > 0) {
+            sb.append(" where id=?");
+            parameters.add(new Integer(entryId));
         }
 
         String sql = sb.toString();
@@ -928,7 +1155,71 @@ public class PersistentEntryCache extends EntryCache {
             for (Iterator i=parameters.iterator(); i.hasNext(); counter++) {
                 Object v = i.next();
                 ps.setObject(counter, v);
-                log.debug(" "+counter+" = "+v);
+            }
+
+            if (log.isDebugEnabled()) {
+                log.debug(Formatter.displayLine("Parameters: id = "+entryId, 80));
+                log.debug(Formatter.displaySeparator(80));
+            }
+
+            ps.execute();
+
+        } catch (Exception e) {
+            log.error(e.getMessage());
+
+        } finally {
+            if (ps != null) try { ps.close(); } catch (Exception e) {}
+            if (con != null) try { con.close(); } catch (Exception e) {}
+        }
+    }
+
+    public void deleteField(
+            SourceMapping sourceMapping,
+            FieldConfig fieldConfig,
+            int entryId) throws Exception {
+
+        String tableName = "penrose_"+mappingId+"_field_"+sourceMapping.getName()+"_"+fieldConfig.getName();
+
+        Collection parameters = new ArrayList();
+
+        StringBuffer sb = new StringBuffer();
+        sb.append("delete from ");
+        sb.append(tableName);
+
+        if (entryId > 0) {
+            sb.append(" where id=?");
+            parameters.add(new Integer(entryId));
+        }
+
+        String sql = sb.toString();
+
+        Connection con = null;
+        PreparedStatement ps = null;
+
+        try {
+            con = getJDBCConnection();
+
+            if (log.isDebugEnabled()) {
+                log.debug(Formatter.displaySeparator(80));
+                Collection lines = Formatter.split(sql, 80);
+                for (Iterator i=lines.iterator(); i.hasNext(); ) {
+                    String line = (String)i.next();
+                    log.debug(Formatter.displayLine(line, 80));
+                }
+                log.debug(Formatter.displaySeparator(80));
+            }
+
+            ps = con.prepareStatement(sql);
+
+            int counter = 1;
+            for (Iterator i=parameters.iterator(); i.hasNext(); counter++) {
+                Object v = i.next();
+                ps.setObject(counter, v);
+            }
+
+            if (log.isDebugEnabled()) {
+                log.debug(Formatter.displayLine("Parameters: id = "+entryId, 80));
+                log.debug(Formatter.displaySeparator(80));
             }
 
             ps.execute();

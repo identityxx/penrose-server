@@ -47,10 +47,10 @@ public class JNDIAdapter extends Adapter {
     public String suffix;
 
     public void init() throws Exception {
-        //String name = getConnectionName();
 
     	//log.debug("-------------------------------------------------------------------------------");
-    	//log.debug("Initializing JNDI connection "+name+":");
+        String name = getConnectionName();
+    	log.debug("Initializing JNDI connection "+name+".");
 
         parameters = new Hashtable();
         for (Iterator i=getParameterNames().iterator(); i.hasNext(); ) {
@@ -80,6 +80,10 @@ public class JNDIAdapter extends Adapter {
 
         //log.debug("URL: "+url);
         //log.debug("Suffix: "+suffix);
+    }
+
+    public Object openConnection() throws Exception {
+        return new InitialDirContext(parameters);
     }
 
     public PenroseSearchResults search(SourceConfig sourceConfig, Filter filter, long sizeLimit) throws Exception {
@@ -121,21 +125,26 @@ public class JNDIAdapter extends Adapter {
         	ctls.setSearchScope(SearchControls.SUBTREE_SCOPE);
         }
 
-        DirContext ctx = new InitialDirContext(parameters);
-        NamingEnumeration ne = ctx.search(ldapBase, ldapFilter, ctls);
+        DirContext ctx = null;
+        try {
+            ctx = (DirContext)openConnection();
+            NamingEnumeration ne = ctx.search(ldapBase, ldapFilter, ctls);
 
-        log.debug("Result:");
+            log.debug("Result:");
 
-        while (ne.hasMore()) {
-            javax.naming.directory.SearchResult sr = (javax.naming.directory.SearchResult)ne.next();
-            log.debug(" - "+sr.getName()+","+ldapBase);
+            while (ne.hasMore()) {
+                javax.naming.directory.SearchResult sr = (javax.naming.directory.SearchResult)ne.next();
+                log.debug(" - "+sr.getName()+","+ldapBase);
 
-            Row row = getPkValues(sourceConfig, sr);
-            results.add(row);
+                Row row = getPkValues(sourceConfig, sr);
+                results.add(row);
+            }
+
+        } finally {
+            results.close();
+            if (ctx != null) try { ctx.close(); } catch (Exception e) {}
         }
 
-        results.close();
-        
         return results;
     }
 
@@ -177,20 +186,25 @@ public class JNDIAdapter extends Adapter {
         	ctls.setSearchScope(SearchControls.SUBTREE_SCOPE);
         }
 
-        DirContext ctx = new InitialDirContext(parameters);
-        NamingEnumeration ne = ctx.search(ldapBase, ldapFilter, ctls);
+        DirContext ctx = null;
+        try {
+            ctx = (DirContext)openConnection();
+            NamingEnumeration ne = ctx.search(ldapBase, ldapFilter, ctls);
 
-        log.debug("Result:");
+            log.debug("Result:");
 
-        while (ne.hasMore()) {
-            javax.naming.directory.SearchResult sr = (javax.naming.directory.SearchResult)ne.next();
-            log.debug(" - "+sr.getName()+","+ldapBase);
+            while (ne.hasMore()) {
+                javax.naming.directory.SearchResult sr = (javax.naming.directory.SearchResult)ne.next();
+                log.debug(" - "+sr.getName()+","+ldapBase);
 
-            AttributeValues av = getValues(sourceConfig, sr);
-            results.add(av);
+                AttributeValues av = getValues(sourceConfig, sr);
+                results.add(av);
+            }
+
+        } finally {
+            results.close();
+            if (ctx != null) try { ctx.close(); } catch (Exception e) {}
         }
-
-        results.close();
 
         return results;
     }
@@ -319,13 +333,17 @@ public class JNDIAdapter extends Adapter {
         }
 
         log.debug("Adding "+dn);
+        DirContext ctx = null;
         try {
-            DirContext ctx = new InitialDirContext(parameters);
+            ctx = (DirContext)openConnection();
             ctx.createSubcontext(dn, attrs);
+
         } catch (NameAlreadyBoundException e) {
             return modifyAdd(sourceConfig, entry);
             //log.debug("Error: "+e.getMessage());
             //return LDAPException.ENTRY_ALREADY_EXISTS;
+        } finally {
+            if (ctx != null) try { ctx.close(); } catch (Exception e) {}
         }
 
         return LDAPException.SUCCESS;
@@ -367,8 +385,13 @@ public class JNDIAdapter extends Adapter {
 
         ModificationItem mods[] = (ModificationItem[])list.toArray(new ModificationItem[list.size()]);
 
-        DirContext ctx = new InitialDirContext(parameters);
-        ctx.modifyAttributes(dn, mods);
+        DirContext ctx = null;
+        try {
+            ctx = (DirContext)openConnection();
+            ctx.modifyAttributes(dn, mods);
+        } finally {
+            if (ctx != null) try { ctx.close(); } catch (Exception e) {}
+        }
 
         return LDAPException.SUCCESS;
     }
@@ -384,12 +407,15 @@ public class JNDIAdapter extends Adapter {
             log.debug(Formatter.displaySeparator(80));
         }
 
+        DirContext ctx = null;
         try {
-            DirContext ctx = new InitialDirContext(parameters);
+            ctx = (DirContext)openConnection();
             ctx.destroySubcontext(dn);
-            
+
         } catch (NameNotFoundException e) {
             return LDAPException.NO_SUCH_OBJECT;
+        } finally {
+            if (ctx != null) try { ctx.close(); } catch (Exception e) {}
         }
 
         return LDAPException.SUCCESS;
@@ -515,8 +541,13 @@ public class JNDIAdapter extends Adapter {
 
         ModificationItem mods[] = (ModificationItem[])list.toArray(new ModificationItem[list.size()]);
 
-        DirContext ctx = new InitialDirContext(parameters);
-        ctx.modifyAttributes(dn, mods);
+        DirContext ctx = null;
+        try {
+            ctx = (DirContext)openConnection();
+            ctx.modifyAttributes(dn, mods);
+        } finally {
+            if (ctx != null) try { ctx.close(); } catch (Exception e) {}
+        }
 
         return LDAPException.SUCCESS;
     }
@@ -534,8 +565,13 @@ public class JNDIAdapter extends Adapter {
             log.debug(Formatter.displaySeparator(80));
         }
 
-        DirContext ctx = new InitialDirContext(parameters);
-        ctx.rename(dn, newRdn);
+        DirContext ctx = null;
+        try {
+            ctx = (DirContext)openConnection();
+            ctx.rename(dn, newRdn);
+        } finally {
+            if (ctx != null) try { ctx.close(); } catch (Exception e) {}
+        }
 
         return LDAPException.SUCCESS;
     }
@@ -581,8 +617,14 @@ public class JNDIAdapter extends Adapter {
         log.debug("Updating "+dn);
 
         ModificationItem mods[] = (ModificationItem[])list.toArray(new ModificationItem[list.size()]);
-        DirContext ctx = new InitialDirContext(parameters);
-        ctx.modifyAttributes(dn, mods);
+
+        DirContext ctx = null;
+        try {
+            ctx = (DirContext)openConnection();
+            ctx.modifyAttributes(dn, mods);
+        } finally {
+            if (ctx != null) try { ctx.close(); } catch (Exception e) {}
+        }
 
         return LDAPException.SUCCESS;
     }
@@ -650,20 +692,25 @@ public class JNDIAdapter extends Adapter {
         SearchControls ctls = new SearchControls();
         ctls.setSearchScope(SearchControls.ONELEVEL_SCOPE);
 
-        DirContext ctx = new InitialDirContext(parameters);
-        NamingEnumeration ne = ctx.search(ldapBase, ldapFilter, ctls);
+        DirContext ctx = null;
+        try {
+            ctx = (DirContext)openConnection();
+            NamingEnumeration ne = ctx.search(ldapBase, ldapFilter, ctls);
 
-        log.debug("Result:");
+            log.debug("Result:");
 
-        while (ne.hasMore()) {
-            javax.naming.directory.SearchResult sr = (javax.naming.directory.SearchResult)ne.next();
-            log.debug(" - "+sr.getName()+","+ldapBase);
+            while (ne.hasMore()) {
+                javax.naming.directory.SearchResult sr = (javax.naming.directory.SearchResult)ne.next();
+                log.debug(" - "+sr.getName()+","+ldapBase);
 
-            Row row = getPkValues(sourceConfig, sr);
-            results.add(row);
+                Row row = getPkValues(sourceConfig, sr);
+                results.add(row);
+            }
+
+        } finally {
+            results.close();
+            if (ctx != null) try { ctx.close(); } catch (Exception e) {}
         }
-
-        results.close();
 
         return results;
     }

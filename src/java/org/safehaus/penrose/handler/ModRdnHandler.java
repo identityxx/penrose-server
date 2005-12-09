@@ -19,12 +19,17 @@ package org.safehaus.penrose.handler;
 
 import org.safehaus.penrose.session.PenroseSession;
 import org.safehaus.penrose.session.PenroseSession;
+import org.safehaus.penrose.session.PenroseSearchResults;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.mapping.Entry;
 import org.safehaus.penrose.mapping.EntryMapping;
 import org.apache.log4j.Logger;
 import org.ietf.ldap.LDAPException;
 import org.ietf.ldap.LDAPDN;
+import org.ietf.ldap.LDAPConnection;
+import org.ietf.ldap.LDAPSearchConstraints;
+
+import java.util.ArrayList;
 
 /**
  * @author Endi S. Dewata
@@ -51,6 +56,19 @@ public class ModRdnHandler {
         //return LDAPException.LDAP_NOT_SUPPORTED;
 
         int rc = performModRdn(session, dn, newRdn);
+
+        String parentDn = Entry.getParentDn(dn);
+        String newDn = newRdn+","+parentDn;
+
+        handler.getSearchHandler().search(
+                session,
+                newDn,
+                LDAPConnection.SCOPE_SUB,
+                LDAPSearchConstraints.DEREF_NEVER,
+                "(objectClass=*)",
+                new ArrayList(),
+                new PenroseSearchResults()
+        );
 
         return rc;
 	}

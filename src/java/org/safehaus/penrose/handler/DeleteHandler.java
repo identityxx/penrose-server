@@ -43,7 +43,6 @@ public class DeleteHandler {
 
     public int delete(PenroseSession session, String dn) throws Exception {
 
-        log.info("-------------------------------------------------");
         log.info("DELETE:");
         if (session.getBindDn() != null) log.info(" - Bind DN: "+session.getBindDn());
         log.info(" - DN: "+dn);
@@ -85,16 +84,18 @@ public class DeleteHandler {
         }
     }
 
-    public int deleteStaticEntry(EntryMapping entry) throws Exception {
+    public int deleteStaticEntry(EntryMapping entryMapping) throws Exception {
 
-        Partition partition = handler.getPartitionManager().getPartitionByDn(entry.getDn());
+        log.debug("Deleting static entry "+entryMapping.getDn());
+
+        Partition partition = handler.getPartitionManager().getPartitionByDn(entryMapping.getDn());
         if (partition == null) return LDAPException.NO_SUCH_OBJECT;
 
         // can't delete no leaf
-        Collection children = partition.getChildren(entry);
-        if (children != null && !children.isEmpty()) return LDAPException.NOT_ALLOWED_ON_NONLEAF;
+        Collection children = partition.getChildren(entryMapping);
+        if (!children.isEmpty()) return LDAPException.NOT_ALLOWED_ON_NONLEAF;
 
-        partition.removeEntryMapping(entry);
+        partition.removeEntryMapping(entryMapping);
 
         return LDAPException.SUCCESS;
     }

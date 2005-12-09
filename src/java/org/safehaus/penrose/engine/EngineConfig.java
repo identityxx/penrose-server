@@ -26,9 +26,9 @@ import java.util.*;
  */
 public class EngineConfig implements Cloneable {
 
-    public final static String ALLOW_CONCURRENCY = "allowConcurrency";
+    public final static String ALLOW_CONCURRENCY   = "allowConcurrency";
 
-    public final static String THREAD_POOL_SIZE  = "threadPoolSize";
+    public final static String THREAD_POOL_SIZE    = "threadPoolSize";
 
     public final static String DEFAULT_CACHE_NAME  = "Entry Cache";
     public final static String DEFAULT_CACHE_CLASS = DefaultEntryCache.class.getName();

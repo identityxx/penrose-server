@@ -53,10 +53,10 @@ public class JDBCAdapter extends Adapter {
     public JDBCFilterTool filterTool;
 
     public void init() throws Exception {
-        //String name = getConnectionName();
 
     	//log.debug("-------------------------------------------------------------------------------");
-    	//log.debug("Initializing JDBC connection "+name+":");
+        String name = getConnectionName();
+    	log.debug("Initializing JDBC connection "+name+".");
 
         String driver = getParameter(DRIVER);
         String url = getParameter(URL);
@@ -89,6 +89,10 @@ public class JDBCAdapter extends Adapter {
         ds = new PoolingDataSource(connectionPool);
 
         filterTool = new JDBCFilterTool();
+    }
+
+    public Object openConnection() throws Exception {
+        return ds.getConnection();
     }
 
     public String getFieldNames(SourceConfig sourceConfig) throws Exception {
@@ -162,7 +166,7 @@ public class JDBCAdapter extends Adapter {
         ResultSet rs = null;
 
         try {
-            con = ds.getConnection();
+            con = (java.sql.Connection)openConnection();
 
             if (log.isDebugEnabled()) {
                 log.debug(Formatter.displaySeparator(80));
@@ -270,7 +274,7 @@ public class JDBCAdapter extends Adapter {
         ResultSet rs = null;
 
         try {
-            con = ds.getConnection();
+            con = (java.sql.Connection)openConnection();
 
             if (log.isDebugEnabled()) {
                 log.debug(Formatter.displaySeparator(80));
@@ -418,7 +422,7 @@ public class JDBCAdapter extends Adapter {
         PreparedStatement ps = null;
 
         try {
-            con = ds.getConnection();
+            con = (java.sql.Connection)openConnection();
 
             StringBuffer sb = new StringBuffer();
             StringBuffer sb2 = new StringBuffer();
@@ -486,7 +490,7 @@ public class JDBCAdapter extends Adapter {
         PreparedStatement ps = null;
 
         try {
-            con = ds.getConnection();
+            con = (java.sql.Connection)openConnection();
 
             StringBuffer sb = new StringBuffer();
             for (Iterator i=pk.getNames().iterator(); i.hasNext(); ) {
@@ -548,7 +552,7 @@ public class JDBCAdapter extends Adapter {
         PreparedStatement ps = null;
 
         try {
-            con = ds.getConnection();
+            con = (java.sql.Connection)openConnection();
 
             StringBuffer columns = new StringBuffer();
             StringBuffer whereClause = new StringBuffer();
@@ -630,7 +634,7 @@ public class JDBCAdapter extends Adapter {
         PreparedStatement ps = null;
 
         try {
-            con = ds.getConnection();
+            con = (java.sql.Connection)openConnection();
 
             StringBuffer columns = new StringBuffer();
             StringBuffer whereClause = new StringBuffer();
@@ -708,7 +712,7 @@ public class JDBCAdapter extends Adapter {
         ResultSet rs = null;
 
         try {
-            con = ds.getConnection();
+            con = (java.sql.Connection)openConnection();
 
             if (log.isDebugEnabled()) {
                 log.debug(Formatter.displaySeparator(80));
@@ -777,7 +781,7 @@ public class JDBCAdapter extends Adapter {
         ResultSet rs = null;
 
         try {
-            con = ds.getConnection();
+            con = (java.sql.Connection)openConnection();
 
             if (log.isDebugEnabled()) {
                 log.debug(Formatter.displaySeparator(80));

@@ -47,26 +47,19 @@ public class MergeEngine {
             final PenroseSearchResults results
             ) throws Exception {
 
-        String s = engine.getEngineConfig().getParameter(EngineConfig.ALLOW_CONCURRENCY);
-        boolean allowConcurrency = s == null ? true : new Boolean(s).booleanValue();
-
         final Interpreter interpreter = engine.getInterpreterFactory().newInstance();
 
-        if (allowConcurrency) {
-            engine.execute(new Runnable() {
-                public void run() {
-                    try {
-                        mergeBackground(entryMapping, loadedBatches, interpreter, results);
+        engine.execute(new Runnable() {
+            public void run() {
+                try {
+                    mergeBackground(entryMapping, loadedBatches, interpreter, results);
 
-                    } catch (Throwable e) {
-                        e.printStackTrace(System.out);
-                        results.setReturnCode(org.ietf.ldap.LDAPException.OPERATIONS_ERROR);
-                    }
+                } catch (Throwable e) {
+                    e.printStackTrace(System.out);
+                    results.setReturnCode(org.ietf.ldap.LDAPException.OPERATIONS_ERROR);
                 }
-            });
-        } else {
-            mergeBackground(entryMapping, loadedBatches, interpreter, results);
-        }
+            }
+        });
     }
 
     public void mergeBackground(
@@ -189,8 +182,8 @@ public class MergeEngine {
 
         Row rdn = entry.getRdn();
 
-        //log.debug("Storing "+rdn+" in entry data cache for "+entry.getParentDn());
-        engine.getCache(entry.getParentDn(), entryMapping).put(rdn, entry);
+        log.debug("Storing "+rdn+" in entry data cache for "+entry.getParentDn());
+        engine.getEntryCacheManager().getCache(entry.getParentDn(), entryMapping).put(rdn, entry);
 
         results.add(entry);
 

@@ -58,13 +58,7 @@ public class Partition {
 
         if (parent != null) { // parent found
             //System.out.println("Found parent "+parentDn+".");
-
-            Collection children = getChildren(parent);
-            if (children == null) {
-                children = new ArrayList();
-                setChildren(parent, children);
-            }
-            children.add(entry);
+            addChildren(parent, entry);
         }
 
         entryMappings.put(dn, entry);
@@ -110,18 +104,13 @@ public class Partition {
         EntryMapping newParent = getParent(entry);
 
         if (newParent != null) {
-            Collection newSiblings = getChildren(newParent);
-            if (newSiblings == null) {
-                newSiblings = new ArrayList();
-                setChildren(newParent, newSiblings);
-            }
-            newSiblings.add(entry);
+            addChildren(newParent, entry);
         }
 
         Collection children = getChildren(oldDn);
 
         if (children != null) {
-            setChildren(newDn, children);
+            addChildren(newDn, children);
 
             for (Iterator i=children.iterator(); i.hasNext(); ) {
                 EntryMapping child = (EntryMapping)i.next();
@@ -156,7 +145,7 @@ public class Partition {
         Collection children = getChildren(oldDn);
 
         if (children != null) {
-            setChildren(newDn, children);
+            addChildren(newDn, children);
 
             for (Iterator i=children.iterator(); i.hasNext(); ) {
                 EntryMapping child = (EntryMapping)i.next();
@@ -183,15 +172,31 @@ public class Partition {
     }
 
     public Collection getChildren(String dn) {
-        return (Collection)childrenMap.get(dn);
+        Collection children = (Collection)childrenMap.get(dn);
+        if (children == null) return new ArrayList();
+        return children;
     }
 
-    public void setChildren(EntryMapping entryMapping, Collection children) {
-        setChildren(entryMapping.getDn(), children);
+    public void addChildren(EntryMapping entryMapping,EntryMapping childMapping) {
+        addChildren(entryMapping.getDn(), childMapping);
     }
 
-    public void setChildren(String dn, Collection children) {
-        childrenMap.put(dn, children);
+    public void addChildren(String dn, Collection newChildren) {
+        Collection children = (Collection)childrenMap.get(dn);
+        if (children == null) {
+            children = new ArrayList();
+            childrenMap.put(dn, children);
+        }
+        children.addAll(newChildren);
+    }
+
+    public void addChildren(String dn, EntryMapping entryMapping) {
+        Collection children = (Collection)childrenMap.get(dn);
+        if (children == null) {
+            children = new ArrayList();
+            childrenMap.put(dn, children);
+        }
+        children.add(entryMapping);
     }
 
     public Collection removeChildren(EntryMapping entry) {
@@ -338,7 +343,6 @@ public class Partition {
                 }
 
                 list = getChildren(parentMapping);
-                if (list == null) return result;
             }
 
             for (Iterator iterator = list.iterator(); iterator.hasNext(); ) {
@@ -407,11 +411,9 @@ public class Partition {
         sb.append(nl);
 
         Collection children = getChildren(entry);
-        if (children != null) {
-            for (Iterator i = children.iterator(); i.hasNext();) {
-                EntryMapping child = (EntryMapping) i.next();
-                sb.append(toString(child));
-            }
+        for (Iterator i = children.iterator(); i.hasNext();) {
+            EntryMapping child = (EntryMapping) i.next();
+            sb.append(toString(child));
         }
 
 		return sb.toString();
@@ -471,10 +473,14 @@ public class Partition {
     }
 
     public boolean isDynamic(EntryMapping entryMapping) {
-        if (!entryMapping.isDynamic()) return false;
+
+        boolean dynamic = entryMapping.isDynamic();
+
+        //log.debug("Mapping "+entryMapping.getDn()+" is "+(dynamic ? "dynamic" : "not dynamic"));
+        if (dynamic) return true;
 
         EntryMapping parentMapping = getParent(entryMapping);
-        if (parentMapping == null) return true;
+        if (parentMapping == null) return false;
 
         return isDynamic(parentMapping);
     }

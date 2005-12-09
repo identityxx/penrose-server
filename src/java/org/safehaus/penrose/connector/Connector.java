@@ -46,15 +46,13 @@ public class Connector {
     private PenroseConfig penroseConfig;
     private ConnectorConfig connectorConfig;
     private ConnectionManager connectionManager;
+    private PartitionManager partitionManager;
 
     private ThreadPool threadPool;
     private boolean stopping = false;
 
     private Map locks = new HashMap();
     private Queue queue = new Queue();
-
-    private Map connections = new LinkedHashMap();
-    private PartitionManager partitionManager;
 
     private Map caches = new TreeMap();
 
@@ -67,7 +65,7 @@ public class Connector {
         int threadPoolSize = s == null ? ConnectorConfig.DEFAULT_THREAD_POOL_SIZE : Integer.parseInt(s);
 
         threadPool = new ThreadPool(threadPoolSize);
-        execute(new RefreshThread(this));
+        threadPool.execute(new RefreshThread(this));
     }
 
     public boolean isStopping() {
@@ -75,8 +73,12 @@ public class Connector {
     }
 
     public void execute(Runnable runnable) throws Exception {
-        if (threadPool == null) {
+        String s = connectorConfig.getParameter(ConnectorConfig.ALLOW_CONCURRENCY);
+        boolean allowConcurrency = s == null ? true : new Boolean(s).booleanValue();
+
+        if (threadPool == null || !allowConcurrency || log.isDebugEnabled()) {
             runnable.run();
+            
         } else {
             threadPool.execute(runnable);
         }
@@ -106,19 +108,11 @@ public class Connector {
 
     public void addPartition(Partition partition) throws Exception {
 
-        for (Iterator i = partition.getConnectionConfigs().iterator(); i.hasNext();) {
+        Collection connectionConfigs = partition.getConnectionConfigs();
+        for (Iterator i = connectionConfigs.iterator(); i.hasNext();) {
             ConnectionConfig connectionConfig = (ConnectionConfig)i.next();
 
-            String adapterName = connectionConfig.getAdapterName();
-            if (adapterName == null) throw new Exception("Missing adapter name");
-
-            AdapterConfig adapterConfig = penroseConfig.getAdapterConfig(adapterName);
-            if (adapterConfig == null) throw new Exception("Undefined adapter "+adapterName);
-
-            Connection connection = new Connection();
-            connection.init(connectionConfig, adapterConfig);
-
-            connections.put(connectionConfig.getName(), connection);
+            connectionManager.addConnectionConfig(connectionConfig);
         }
 
         Collection sourceConfigs = partition.getSourceConfigs();
@@ -139,8 +133,8 @@ public class Connector {
         }
     }
 
-    public Connection getConnection(String name) {
-        return (Connection)connections.get(name);
+    public Connection getConnection(String name) throws Exception {
+        return (Connection)connectionManager.getConnection(name);
     }
 
     public void refresh(Partition partition) throws Exception {
@@ -716,24 +710,30 @@ public class Connector {
 
         execute(new Runnable() {
             public void run() {
-                String s = sourceConfig.getParameter(SourceConfig.SIZE_LIMIT);
-                int sizeLimit = s == null ? SourceConfig.DEFAULT_SIZE_LIMIT : Integer.parseInt(s);
-
-                Connection connection = getConnection(sourceConfig.getConnectionName());
-                PenroseSearchResults sr;
                 try {
-                    sr = connection.load(sourceConfig, filter, sizeLimit);
+                    String s = sourceConfig.getParameter(SourceConfig.SIZE_LIMIT);
+                    int sizeLimit = s == null ? SourceConfig.DEFAULT_SIZE_LIMIT : Integer.parseInt(s);
 
-                    for (Iterator i=sr.iterator(); i.hasNext();) {
-                        AttributeValues sourceValues = (AttributeValues)i.next();
-                        store(sourceConfig, sourceValues);
-                        results.add(sourceValues);
+                    Connection connection = getConnection(sourceConfig.getConnectionName());
+                    PenroseSearchResults sr;
+                    try {
+                        sr = connection.load(sourceConfig, filter, sizeLimit);
+
+                        for (Iterator i=sr.iterator(); i.hasNext();) {
+                            AttributeValues sourceValues = (AttributeValues)i.next();
+                            store(sourceConfig, sourceValues);
+                            results.add(sourceValues);
+                        }
+                    } catch (Exception e) {
+                        e.printStackTrace();
                     }
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
 
-                results.close();
+                } catch (Exception e) {
+                    log.debug(e.getMessage(), e);
+
+                } finally {
+                    results.close();
+                }
             }
         });
 

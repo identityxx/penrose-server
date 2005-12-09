@@ -95,7 +95,7 @@ public class ModRdnEngine {
 
         if (visitor.getReturnCode() != LDAPException.SUCCESS) return visitor.getReturnCode();
 
-        engine.getCache(entry.getParentDn(), entryMapping).remove(entry.getRdn());
+        engine.getEntryCacheManager().remove(entry);
 
         Interpreter interpreter = engine.getInterpreterFactory().newInstance();
 
@@ -106,7 +106,7 @@ public class ModRdnEngine {
 
         Entry newEntry = new Entry(dn, entryMapping, sourceValues, attributeValues);
 
-        engine.getCache(entry.getParentDn(), entryMapping).put(newRdn2, newEntry);
+        engine.getEntryCacheManager().getCache(entry.getParentDn(), entryMapping).put(newRdn2, newEntry);
 
         return LDAPException.SUCCESS;
     }

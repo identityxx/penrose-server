@@ -105,7 +105,7 @@ public class InMemoryEntryCache extends EntryCache {
         invalidate();
     }
 
-    public Collection get(Filter filter) throws Exception {
+    public Collection search(Filter filter) throws Exception {
 
         String key = filter == null ? "" : filter.toString();
         //log.debug("Getting entry filter cache ("+queryMap.size()+"): "+key);

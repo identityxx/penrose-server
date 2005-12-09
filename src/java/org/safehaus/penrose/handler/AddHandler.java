@@ -122,13 +122,14 @@ public class AddHandler {
         }
 
         // add into the first matching child
-        if (children != null) {
-            for (Iterator iterator = children.iterator(); iterator.hasNext(); ) {
-                EntryMapping entryMapping = (EntryMapping)iterator.next();
-                if (!partition.isDynamic(entryMapping)) continue;
+        for (Iterator iterator = children.iterator(); iterator.hasNext(); ) {
+            EntryMapping entryMapping = (EntryMapping)iterator.next();
+            boolean dynamic = partition.isDynamic(entryMapping);
 
-                return handler.getEngine().add(parent, entryMapping, values);
-            }
+            //log.debug("Checking mapping "+entryMapping.getDn()+": "+dynamic);
+            if (!dynamic) continue;
+
+            return handler.getEngine().add(parent, entryMapping, values);
         }
 
         return addStaticEntry(parentMapping, values, dn);
@@ -143,7 +144,7 @@ public class AddHandler {
     }
 
     public int addStaticEntry(EntryMapping parent, AttributeValues values, String dn) throws Exception {
-        log.debug("Adding regular entry "+dn);
+        log.debug("Adding static entry "+dn);
 
         EntryMapping newEntry;
 
