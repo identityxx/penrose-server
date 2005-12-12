@@ -106,7 +106,8 @@ public class ModRdnEngine {
 
         Entry newEntry = new Entry(dn, entryMapping, sourceValues, attributeValues);
 
-        engine.getEntryCacheManager().getCache(entry.getParentDn(), entryMapping).put(newRdn2, newEntry);
+        log.debug("Storing "+newRdn2+" in entry data cache for "+entry.getParentDn());
+        engine.getEntryCacheManager().put(newEntry);
 
         return LDAPException.SUCCESS;
     }

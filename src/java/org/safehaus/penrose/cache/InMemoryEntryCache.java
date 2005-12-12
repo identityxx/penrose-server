@@ -54,12 +54,12 @@ public class InMemoryEntryCache extends EntryCache {
         return newRow;
     }
 
-    public Object get(Object key) throws Exception {
+    public Entry get(Object key) throws Exception {
 
         Row rdn = normalize((Row)key);
         //log.debug("Getting entry cache ("+dataMap.size()+"): "+rdn);
 
-        Object object = dataMap.get(rdn);
+        Entry entry = (Entry)dataMap.get(rdn);
         Date date = (Date)dataExpirationMap.get(rdn);
 
         if (date == null || date.getTime() <= System.currentTimeMillis()) {
@@ -68,7 +68,7 @@ public class InMemoryEntryCache extends EntryCache {
             return null;
         }
 
-        return object;
+        return entry;
     }
 
     public Map getExpired() throws Exception {
@@ -77,11 +77,11 @@ public class InMemoryEntryCache extends EntryCache {
     }
 
     public void put(Object key, Object object) throws Exception {
-        if (size == 0) return;
+        if (getSize() == 0) return;
 
         Row rdn = normalize((Row)key);
 
-        while (dataMap.get(rdn) == null && dataMap.size() >= size) {
+        while (dataMap.get(rdn) == null && dataMap.size() >= getSize()) {
             //log.debug("Trimming entry cache ("+dataMap.size()+").");
             Object k = dataExpirationMap.keySet().iterator().next();
             dataMap.remove(k);
@@ -90,7 +90,7 @@ public class InMemoryEntryCache extends EntryCache {
 
         //log.debug("Storing entry cache ("+dataMap.size()+"): "+rdn);
         dataMap.put(rdn, object);
-        dataExpirationMap.put(rdn, new Date(System.currentTimeMillis() + expiration * 60 * 1000));
+        dataExpirationMap.put(rdn, new Date(System.currentTimeMillis() + getExpiration() * 60 * 1000));
 
         invalidate();
     }
@@ -123,13 +123,13 @@ public class InMemoryEntryCache extends EntryCache {
     }
 
     public void put(Filter filter, Collection rdns) throws Exception {
-        if (size == 0) return;
+        if (getSize() == 0) return;
 
         String key = filter == null ? "" : filter.toString();
 
         Object object = (Collection)queryMap.remove(key);
 
-        while (object == null && queryMap.size() >= size) {
+        while (object == null && queryMap.size() >= getSize()) {
             //log.debug("Trimming entry filter cache ("+queryMap.size()+").");
             Object k = queryExpirationMap.keySet().iterator().next();
             queryMap.remove(k);
@@ -138,7 +138,7 @@ public class InMemoryEntryCache extends EntryCache {
 
         //log.debug("Storing entry filter cache ("+queryMap.size()+"): "+key);
         queryMap.put(key, rdns);
-        queryExpirationMap.put(key, new Date(System.currentTimeMillis() + expiration * 60 * 1000));
+        queryExpirationMap.put(key, new Date(System.currentTimeMillis() + getExpiration() * 60 * 1000));
     }
 
     public void invalidate() throws Exception {

@@ -146,7 +146,7 @@ public class SearchEngine {
             if (parent != null) {
                 String parentDn = parent.getDn();
 
-                Collection list = engine.getEntryCacheManager().getCache(parentDn, entryMapping).search(filter);
+                Collection list = engine.getEntryCacheManager().search(entryMapping, parentDn, filter);
                 if (list != null) dns.addAll(list);
             }
         } else {
@@ -246,7 +246,7 @@ public class SearchEngine {
                         log.debug("   - DN: "+dn);
                     }
 
-                    engine.getEntryCacheManager().getCache(parentDn, entryMapping).put(filter, c);
+                    engine.getEntryCacheManager().put(entryMapping, parentDn, filter, c);
 
                 }
             }

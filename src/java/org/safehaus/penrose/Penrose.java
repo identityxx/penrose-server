@@ -167,19 +167,6 @@ public class Penrose {
     public void initConnections() throws Exception {
         connectionManager = new ConnectionManager();
         connectionManager.setPenroseConfig(penroseConfig);
-/*
-        for (Iterator i=partitionManager.getPartitions().iterator(); i.hasNext(); ) {
-            Partition partition = (Partition)i.next();
-
-            Collection connectionConfigs = partition.getConnectionConfigs();
-            for (Iterator j=connectionConfigs.iterator(); j.hasNext(); ) {
-                ConnectionConfig connectionConfig = (ConnectionConfig)j.next();
-                connectionManager.addConnectionConfig(connectionConfig);
-            }
-        }
-
-        connectionManager.init();
-*/
     }
 
     public void initConnectors() throws Exception {

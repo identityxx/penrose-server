@@ -183,7 +183,7 @@ public class MergeEngine {
         Row rdn = entry.getRdn();
 
         log.debug("Storing "+rdn+" in entry data cache for "+entry.getParentDn());
-        engine.getEntryCacheManager().getCache(entry.getParentDn(), entryMapping).put(rdn, entry);
+        engine.getEntryCacheManager().put(entry);
 
         results.add(entry);
 

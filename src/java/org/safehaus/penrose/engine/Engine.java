@@ -20,8 +20,6 @@ package org.safehaus.penrose.engine;
 import org.safehaus.penrose.session.PenroseSearchResults;
 import org.safehaus.penrose.schema.SchemaManager;
 import org.safehaus.penrose.connector.*;
-import org.safehaus.penrose.cache.CacheConfig;
-import org.safehaus.penrose.cache.EntryCache;
 import org.safehaus.penrose.cache.EntryCacheManager;
 import org.safehaus.penrose.util.Formatter;
 import org.safehaus.penrose.util.PasswordUtil;
@@ -54,7 +52,7 @@ public class Engine {
     private PenroseConfig penroseConfig;
     private EngineConfig engineConfig;
 
-    private Map graphs = new HashMap();
+    private Map graphs         = new HashMap();
     private Map primarySources = new HashMap();
 
     private Map locks = new HashMap();
@@ -66,8 +64,8 @@ public class Engine {
 
     private InterpreterFactory interpreterFactory;
     private SchemaManager schemaManager;
-    private Connector connector;
     private ConnectionManager connectionManager;
+    private Connector connector;
     private PartitionManager partitionManager;
     private EntryCacheManager entryCacheManager;
 
@@ -96,22 +94,22 @@ public class Engine {
         //log.debug("-------------------------------------------------");
         //log.debug("Initializing "+engineConfig.getName()+" engine ...");
 
-        filterTool = new EngineFilterTool(this);
-
-        addEngine = new AddEngine(this);
-        deleteEngine = new DeleteEngine(this);
-        modifyEngine = new ModifyEngine(this);
-        modrdnEngine = new ModRdnEngine(this);
-        searchEngine = new SearchEngine(this);
-        loadEngine = new LoadEngine(this);
-        mergeEngine = new MergeEngine(this);
-        joinEngine = new JoinEngine(this);
+        filterTool      = new EngineFilterTool(this);
+        addEngine       = new AddEngine(this);
+        deleteEngine    = new DeleteEngine(this);
+        modifyEngine    = new ModifyEngine(this);
+        modrdnEngine    = new ModRdnEngine(this);
+        searchEngine    = new SearchEngine(this);
+        loadEngine      = new LoadEngine(this);
+        mergeEngine     = new MergeEngine(this);
+        joinEngine      = new JoinEngine(this);
         transformEngine = new TransformEngine(this);
 
         entryCacheManager = new EntryCacheManager();
         entryCacheManager.setPenroseConfig(penroseConfig);
+        entryCacheManager.setConnectionManager(connectionManager);
         entryCacheManager.setPartitionManager(partitionManager);
-        entryCacheManager.setEngine(this);
+        entryCacheManager.init();
 
         for (Iterator i=partitionManager.getPartitions().iterator(); i.hasNext(); ) {
             Partition partition = (Partition)i.next();
@@ -167,15 +165,6 @@ public class Engine {
     public SourceMapping getPrimarySource(EntryMapping entryMapping) throws Exception {
         SourceMapping sourceMapping = (SourceMapping)primarySources.get(entryMapping);
         return sourceMapping;
-/*
-        if (source != null) return source;
-
-        Config config = getConfig(entryDefinition.getDn());
-        entryDefinition = config.getParent(entryDefinition);
-        if (entryDefinition == null) return null;
-
-        return getPrimarySource(entryDefinition);
-*/
     }
 
     SourceMapping computePrimarySource(EntryMapping entryMapping) throws Exception {
@@ -220,14 +209,6 @@ public class Engine {
         if (sources.isEmpty()) return null;
 
         return (SourceMapping)sources.iterator().next();
-    }
-
-    public Map getGraphs() {
-        return graphs;
-    }
-
-    public void setGraphs(Map graphs) {
-        this.graphs = graphs;
     }
 
     public Map getPrimarySources() {

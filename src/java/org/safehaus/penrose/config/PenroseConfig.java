@@ -21,6 +21,7 @@ import java.util.*;
 
 import org.apache.log4j.Logger;
 import org.safehaus.penrose.cache.CacheConfig;
+import org.safehaus.penrose.cache.EntryCacheManager;
 import org.safehaus.penrose.engine.EngineConfig;
 import org.safehaus.penrose.interpreter.InterpreterConfig;
 import org.safehaus.penrose.connector.ConnectorConfig;
@@ -65,8 +66,8 @@ public class PenroseConfig implements Cloneable {
         sourceCacheConfig.setCacheClass(ConnectorConfig.DEFAULT_CACHE_CLASS);
 
         entryCacheConfig = new CacheConfig();
-        entryCacheConfig.setName(EngineConfig.DEFAULT_CACHE_NAME);
-        entryCacheConfig.setCacheClass(EngineConfig.DEFAULT_CACHE_CLASS);
+        entryCacheConfig.setName(EntryCacheManager.DEFAULT_CACHE_NAME);
+        entryCacheConfig.setCacheClass(EntryCacheManager.DEFAULT_CACHE_CLASS);
 
         connectorConfig = new ConnectorConfig();
 

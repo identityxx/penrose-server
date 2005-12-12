@@ -20,12 +20,12 @@ package org.safehaus.penrose.cache;
 import org.safehaus.penrose.mapping.EntryMapping;
 import org.safehaus.penrose.mapping.Entry;
 import org.safehaus.penrose.mapping.Row;
-import org.safehaus.penrose.engine.EngineConfig;
-import org.safehaus.penrose.engine.Engine;
 import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.PartitionManager;
 import org.safehaus.penrose.Penrose;
+import org.safehaus.penrose.connector.ConnectionManager;
+import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.session.PenroseSearchResults;
 import org.safehaus.penrose.handler.Handler;
 import org.apache.log4j.Logger;
@@ -41,32 +41,41 @@ public class EntryCacheManager {
 
     Logger log = Logger.getLogger(getClass());
 
+    public final static String DEFAULT_CACHE_NAME  = "Entry Cache";
+    public final static String DEFAULT_CACHE_CLASS = DefaultEntryCache.class.getName();
+
+    private ConnectionManager connectionManager;
     private PenroseConfig penroseConfig;
     private PartitionManager partitionManager;
-    private Engine engine;
 
+    private CacheConfig cacheConfig;
+
+    private String cacheClass;
     private Map caches = new TreeMap();
 
+    public void init() throws Exception {
+        cacheConfig = penroseConfig.getEntryCacheConfig();
+
+        cacheClass = cacheConfig.getCacheClass() == null ? DEFAULT_CACHE_CLASS : cacheConfig.getCacheClass();
+    }
+
     public EntryCache getCache(String parentDn, EntryMapping entryMapping) throws Exception {
-        String cacheName = entryMapping.getParameter(EntryMapping.CACHE);
-        cacheName = cacheName == null ? EntryMapping.DEFAULT_CACHE : cacheName;
-        CacheConfig cacheConfig = penroseConfig.getEntryCacheConfig();
-
+        
         String key = entryMapping.getRdn()+","+parentDn;
-
         EntryCache cache = (EntryCache)caches.get(key);
 
         if (cache == null) {
 
-            String cacheClass = cacheConfig.getCacheClass();
-            cacheClass = cacheClass == null ? EngineConfig.DEFAULT_CACHE_CLASS : cacheClass;
-
             Class clazz = Class.forName(cacheClass);
             cache = (EntryCache)clazz.newInstance();
 
-            cache.setParentDn(parentDn);
+            cache.setConnectionManager(connectionManager);
+
+            Partition partition = partitionManager.getPartition(entryMapping);
+            cache.setPartition(partition);
             cache.setEntryMapping(entryMapping);
-            cache.setEngine(engine);
+
+            cache.setParentDn(parentDn);
             cache.init(cacheConfig);
 
             caches.put(key, cache);
@@ -75,25 +84,48 @@ public class EntryCacheManager {
         return cache;
     }
 
+    public void put(EntryMapping entryMapping, String parentDn, Filter filter, Collection dns) throws Exception {
+        getCache(parentDn, entryMapping).put(filter, dns);
+    }
+
+    public Collection search(EntryMapping entryMapping, String parentDn, Filter filter) throws Exception {
+        return getCache(parentDn, entryMapping).search(filter);
+    }
+
+    public void put(Entry entry) throws Exception {
+        getCache(entry.getParentDn(), entry.getEntryMapping()).put(entry.getRdn(), entry);
+    }
+
+    public Entry get(String dn) throws Exception {
+        EntryMapping entryMapping = partitionManager.findEntryMapping(dn);
+        String parentDn = Entry.getParentDn(dn);
+        Row rdn = Entry.getRdn(dn);
+        return getCache(parentDn, entryMapping).get(rdn);
+    }
+
+    public Entry get(EntryMapping entryMapping, String parentDn, Row rdn) throws Exception {
+        return getCache(parentDn, entryMapping).get(rdn);
+    }
+
     public void remove(Entry entry) throws Exception {
         EntryMapping entryMapping = entry.getEntryMapping();
         Partition partition = partitionManager.getPartition(entryMapping);
-        remove(partition, entry.getParentDn(), entryMapping, entry.getRdn());
+        remove(partition, entryMapping, entry.getParentDn(), entry.getRdn());
     }
 
-    public void remove(Partition partition, String parentDn, EntryMapping entryMapping, Row rdn) throws Exception {
+    public void remove(Partition partition, EntryMapping entryMapping, String parentDn, Row rdn) throws Exception {
         String dn = rdn+","+parentDn;
 
         Collection children = partition.getChildren(entryMapping);
         for (Iterator i=children.iterator(); i.hasNext(); ) {
             EntryMapping childMapping = (EntryMapping)i.next();
 
-            Collection childDns = getCache(dn, childMapping).search(null);
+            Collection childDns = search(childMapping, dn, null);
             for (Iterator j=childDns.iterator(); j.hasNext(); ) {
                 String childDn = (String)j.next();
 
                 Row childRdn = Entry.getRdn(childDn);
-                remove(partition, dn, childMapping, childRdn);
+                remove(partition, childMapping, dn, childRdn);
             }
         }
 
@@ -107,14 +139,6 @@ public class EntryCacheManager {
 
     public void setPenroseConfig(PenroseConfig penroseConfig) {
         this.penroseConfig = penroseConfig;
-    }
-
-    public Engine getEngine() {
-        return engine;
-    }
-
-    public void setEngine(Engine engine) {
-        this.engine = engine;
     }
 
     public PartitionManager getPartitionManager() {
@@ -138,8 +162,7 @@ public class EntryCacheManager {
             EntryMapping entryMapping = (EntryMapping)i.next();
 
             log.debug("Creating tables for "+entryMapping.getDn());
-            EntryCache cache = getCache(parentDn, entryMapping);
-            cache.create();
+            getCache(parentDn, entryMapping).create();
 
             Collection children = partition.getChildren(entryMapping);
             create(partition, entryMapping.getDn(), children);
@@ -190,8 +213,7 @@ public class EntryCacheManager {
             clean(partition, entryMapping.getDn(), children);
 
             log.debug("Cleaning tables for "+entryMapping.getDn());
-            EntryCache cache = getCache(parentDn, entryMapping);
-            cache.clean();
+            getCache(parentDn, entryMapping).clean();
         }
     }
 
@@ -211,8 +233,15 @@ public class EntryCacheManager {
             drop(partition, entryMapping.getDn(), children);
 
             log.debug("Deleting entries under "+entryMapping.getDn());
-            EntryCache cache = getCache(parentDn, entryMapping);
-            cache.drop();
+            getCache(parentDn, entryMapping).drop();
         }
+    }
+
+    public ConnectionManager getConnectionManager() {
+        return connectionManager;
+    }
+
+    public void setConnectionManager(ConnectionManager connectionManager) {
+        this.connectionManager = connectionManager;
     }
 }

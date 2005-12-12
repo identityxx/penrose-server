@@ -37,10 +37,10 @@ public class JDBCEntryCache extends EntryCache {
     public void init() throws Exception {
         super.init();
 
-        driver = cacheConfig.getParameter("driver");
-        url = cacheConfig.getParameter("url");
-        user = cacheConfig.getParameter("user");
-        password = cacheConfig.getParameter("password");
+        driver = getCacheConfig().getParameter("driver");
+        url = getCacheConfig().getParameter("url");
+        user = getCacheConfig().getParameter("user");
+        password = getCacheConfig().getParameter("password");
 
     }
 
@@ -70,7 +70,7 @@ public class JDBCEntryCache extends EntryCache {
     }
 
     public String getTableName() {
-        String key = entryMapping.getRdn()+","+parentDn;
+        String key = getEntryMapping().getRdn()+","+getParentDn();
         key = key.replace('=', '_');
         key = key.replace(',', '_');
         key = key.replace('.', '_');
@@ -79,7 +79,7 @@ public class JDBCEntryCache extends EntryCache {
     }
 
     public Collection getPrimaryColumns() {
-        Collection attributes = entryMapping.getAttributeMappings();
+        Collection attributes = getEntryMapping().getAttributeMappings();
         Collection results = new ArrayList();
 
         for (Iterator i=attributes.iterator(); i.hasNext(); ) {
@@ -92,7 +92,7 @@ public class JDBCEntryCache extends EntryCache {
     }
 
     public Collection getNonPrimaryColumns() {
-        Collection attributes = entryMapping.getAttributeMappings();
+        Collection attributes = getEntryMapping().getAttributeMappings();
         Collection results = new ArrayList();
 
         for (Iterator i=attributes.iterator(); i.hasNext(); ) {
@@ -273,7 +273,7 @@ public class JDBCEntryCache extends EntryCache {
         }
     }
 
-    public Object get(Object pk) throws Exception {
+    public Entry get(Object pk) throws Exception {
         Collection pks = new ArrayList();
         pks.add(pk);
 
@@ -287,7 +287,7 @@ public class JDBCEntryCache extends EntryCache {
 
         AttributeValues av = (AttributeValues)values.get(pk);
 
-        return av;
+        return null;
     }
 
     public Map getExpired() throws Exception {
@@ -336,7 +336,7 @@ public class JDBCEntryCache extends EntryCache {
                 String name = (String)j.next();
                 Object value = filter.get(name);
 
-                AttributeMapping attributeMapping = entryMapping.getAttributeMapping(name);
+                AttributeMapping attributeMapping = getEntryMapping().getAttributeMapping(name);
 
                 String tableName;
                 if (attributeMapping.isRdn()) {
@@ -642,7 +642,7 @@ public class JDBCEntryCache extends EntryCache {
 
         columns.append(", expiration");
         questionMarks.append(", ?");
-        parameters.add(new Timestamp(System.currentTimeMillis() + expiration * 60 * 1000));
+        parameters.add(new Timestamp(System.currentTimeMillis() + getExpiration() * 60 * 1000));
 
         StringBuffer sb = new StringBuffer();
         sb.append("insert into ");

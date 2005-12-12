@@ -20,23 +20,14 @@ package org.safehaus.penrose.cache;
 import org.safehaus.penrose.config.*;
 import org.safehaus.penrose.connector.ConnectionManager;
 import org.safehaus.penrose.connector.Connector;
-import org.safehaus.penrose.util.Formatter;
 import org.safehaus.penrose.Penrose;
-import org.safehaus.penrose.handler.Handler;
-import org.safehaus.penrose.session.PenroseSearchResults;
 import org.safehaus.penrose.engine.Engine;
-import org.safehaus.penrose.mapping.EntryMapping;
-import org.safehaus.penrose.partition.Partition;
-import org.safehaus.penrose.partition.PartitionManager;
 import org.apache.log4j.*;
-import org.ietf.ldap.LDAPConnection;
-import org.ietf.ldap.LDAPSearchConstraints;
 
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.ArrayList;
 import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.io.File;
 
 import gnu.getopt.LongOpt;
@@ -49,57 +40,7 @@ public class CacheManager {
 
     public static Logger log = Logger.getLogger(CacheManager.class);
 
-    public String home;
-
-    public PenroseConfig penroseConfig;
-    public ConnectionManager connectionManager;
-    public String jdbcConnectionName;
-
     public CacheManager() throws Exception {
-    }
-
-    public void init() throws Exception {
-
-        home = System.getProperty("penrose.home");
-        log.debug("Home: "+home);
-
-        CacheConfig cacheConfig = penroseConfig.getEntryCacheConfig();
-        jdbcConnectionName = cacheConfig.getParameter("jdbcConnection");
-    }
-
-    public Connection getConnection() throws Exception {
-        return (Connection)connectionManager.openConnection(jdbcConnectionName);
-    }
-
-    public void dropMappingsTable() throws Exception {
-        String sql = "drop table penrose_mappings";
-
-        Connection con = null;
-        PreparedStatement ps = null;
-
-        try {
-            con = getConnection();
-
-            if (log.isDebugEnabled()) {
-                log.debug(Formatter.displaySeparator(80));
-                Collection lines = Formatter.split(sql, 80);
-                for (Iterator i=lines.iterator(); i.hasNext(); ) {
-                    String line = (String)i.next();
-                    log.debug(Formatter.displayLine(line, 80));
-                }
-                log.debug(Formatter.displaySeparator(80));
-            }
-
-            ps = con.prepareStatement(sql);
-            ps.execute();
-
-        } catch (Exception e) {
-            log.error(e.getMessage());
-
-        } finally {
-            if (ps != null) try { ps.close(); } catch (Exception e) {}
-            if (con != null) try { con.close(); } catch (Exception e) {}
-        }
     }
 
     public static void showUsage() {

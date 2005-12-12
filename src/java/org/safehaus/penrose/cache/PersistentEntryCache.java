@@ -40,10 +40,8 @@ import java.sql.ResultSet;
  */
 public class PersistentEntryCache extends EntryCache {
 
-    Partition partition;
     int mappingId;
 
-    ConnectionManager connectionManager;
     String jdbcConnectionName;
     String jndiConnectionName;
 
@@ -53,11 +51,8 @@ public class PersistentEntryCache extends EntryCache {
         //log.debug("-------------------------------------------------------------------------------");
         //log.debug("Initializing PersistentEngineCache:");
 
-        connectionManager = engine.getConnectionManager();
         jdbcConnectionName = getParameter("jdbcConnection");
         jndiConnectionName = getParameter("jndiConnection");
-
-        partition = engine.getPartitionManager().getPartition(entryMapping);
 
         mappingId = getMappingId();
         if (mappingId == -1) {
@@ -71,32 +66,31 @@ public class PersistentEntryCache extends EntryCache {
     }
 
     public Connection getJDBCConnection() throws Exception {
-        return (Connection)connectionManager.openConnection(jdbcConnectionName);
+        return (Connection)getConnectionManager().openConnection(jdbcConnectionName);
     }
 
     public DirContext getJNDIConnection() throws Exception {
-        return (DirContext)connectionManager.openConnection(jndiConnectionName);
+        return (DirContext)getConnectionManager().openConnection(jndiConnectionName);
     }
 
     public void create() throws Exception {
 
-        String dn = entryMapping.getDn();
-        log.debug("Entry "+dn+" ("+mappingId+")");
+        String dn = getEntryMapping().getDn();
+        log.debug("Creating cache tables for mapping "+dn+" ("+mappingId+")");
 
         createEntriesTable();
 
-        Collection attributeMappings = entryMapping.getAttributeMappings();
+        Collection attributeMappings = getEntryMapping().getAttributeMappings();
         for (Iterator i=attributeMappings.iterator(); i.hasNext(); ) {
             AttributeMapping attributeMapping = (AttributeMapping)i.next();
             createAttributeTable(attributeMapping);
         }
 
-        Collection sources = partition.getEffectiveSources(entryMapping);
+        Collection sources = getPartition().getEffectiveSources(getEntryMapping());
 
         for (Iterator i=sources.iterator(); i.hasNext(); ) {
             SourceMapping sourceMapping = (SourceMapping)i.next();
-
-            SourceConfig sourceConfig = partition.getSourceConfig(sourceMapping.getSourceName());
+            SourceConfig sourceConfig = getPartition().getSourceConfig(sourceMapping.getSourceName());
 
             Collection fields = sourceConfig.getFieldConfigs();
             for (Iterator j=fields.iterator(); j.hasNext(); ) {
@@ -104,7 +98,7 @@ public class PersistentEntryCache extends EntryCache {
                 createFieldTable(sourceMapping, fieldConfig);
             }
         }
-
+/*
         if (!partition.isDynamic(entryMapping)) {
             Interpreter interpreter = engine.getInterpreterFactory().newInstance();
             AttributeValues attributeValues = engine.computeAttributeValues(entryMapping, interpreter);
@@ -115,7 +109,7 @@ public class PersistentEntryCache extends EntryCache {
 
             put(rdn, entry);
         }
-
+*/
     }
 
     public void createMappingsTable() throws Exception {
@@ -150,7 +144,7 @@ public class PersistentEntryCache extends EntryCache {
     }
 
     public int getMappingId() throws Exception {
-        String dn = entryMapping.getDn();
+        String dn = getEntryMapping().getDn();
 
         Connection con = null;
         PreparedStatement ps = null;
@@ -196,7 +190,7 @@ public class PersistentEntryCache extends EntryCache {
     }
 
     public void addMapping() throws Exception {
-        String dn = entryMapping.getDn();
+        String dn = getEntryMapping().getDn();
 
         Connection con = null;
         PreparedStatement ps = null;
@@ -218,6 +212,37 @@ public class PersistentEntryCache extends EntryCache {
             ps = con.prepareStatement(sql);
             ps.setObject(1, dn);
 
+            ps.execute();
+
+        } catch (Exception e) {
+            log.error(e.getMessage());
+
+        } finally {
+            if (ps != null) try { ps.close(); } catch (Exception e) {}
+            if (con != null) try { con.close(); } catch (Exception e) {}
+        }
+    }
+
+    public void dropMappingsTable() throws Exception {
+        String sql = "drop table penrose_mappings";
+
+        Connection con = null;
+        PreparedStatement ps = null;
+
+        try {
+            con = getJDBCConnection();
+
+            if (log.isDebugEnabled()) {
+                log.debug(Formatter.displaySeparator(80));
+                Collection lines = Formatter.split(sql, 80);
+                for (Iterator i=lines.iterator(); i.hasNext(); ) {
+                    String line = (String)i.next();
+                    log.debug(Formatter.displayLine(line, 80));
+                }
+                log.debug(Formatter.displaySeparator(80));
+            }
+
+            ps = con.prepareStatement(sql);
             ps.execute();
 
         } catch (Exception e) {
@@ -497,29 +522,29 @@ public class PersistentEntryCache extends EntryCache {
     }
 
     public void clean() throws Exception {
-        if (!partition.isDynamic(entryMapping)) return;
+        if (!getPartition().isDynamic(getEntryMapping())) return;
 
-        String dn = entryMapping.getDn();
+        String dn = getEntryMapping().getDn();
         Row rdn = Entry.getRdn(dn);
         remove(null);
 
     }
 
     public void drop() throws Exception {
-        if (!partition.isDynamic(entryMapping)) {
-            String dn = entryMapping.getDn();
+        if (!getPartition().isDynamic(getEntryMapping())) {
+            String dn = getEntryMapping().getDn();
             Row rdn = Entry.getRdn(dn);
             remove(rdn);
         }
 
-        Collection sources = partition.getEffectiveSources(entryMapping);
+        Collection sources = getPartition().getEffectiveSources(getEntryMapping());
 
         for (Iterator i=sources.iterator(); i.hasNext(); ) {
             SourceMapping sourceMapping = (SourceMapping)i.next();
             dropEntrySourceTable(sourceMapping);
         }
 
-        Collection attributeDefinitions = entryMapping.getAttributeMappings();
+        Collection attributeDefinitions = getEntryMapping().getAttributeMappings();
         for (Iterator i=attributeDefinitions.iterator(); i.hasNext(); ) {
             AttributeMapping attributeMapping = (AttributeMapping)i.next();
             dropAttributeTable(attributeMapping);
@@ -530,7 +555,7 @@ public class PersistentEntryCache extends EntryCache {
 
     public void dropEntrySourceTable(SourceMapping sourceMapping) throws Exception {
 
-        SourceConfig sourceConfig = partition.getSourceConfig(sourceMapping.getSourceName());
+        SourceConfig sourceConfig = getPartition().getSourceConfig(sourceMapping.getSourceName());
 
         Collection fields = sourceConfig.getFieldConfigs();
         for (Iterator i=fields.iterator(); i.hasNext(); ) {
@@ -641,28 +666,9 @@ public class PersistentEntryCache extends EntryCache {
         }
     }
 
-    public void load() throws Exception {
-
-        if (!partition.isDynamic(entryMapping)) return;
-
-        Collection entries = partition.getChildren(entryMapping);
-        load(entries);
-    }
-
-    public void load(Collection entries) throws Exception {
-        for (Iterator i = entries.iterator(); i.hasNext();) {
-            EntryMapping ed = (EntryMapping) i.next();
-
-            engine.search(null, new AttributeValues(), ed, null, null);
-
-            //Collection children = config.getChildren(ed);
-            //load(children);
-        }
-    }
-
-    public Object get(Object pk) throws Exception {
+    public Entry get(Object pk) throws Exception {
         Row rdn = (Row)pk;
-        String dn = rdn+","+parentDn;
+        String dn = rdn+","+getParentDn();
         Entry entry = null;
 
         DirContext ctx = null;
@@ -693,17 +699,17 @@ public class PersistentEntryCache extends EntryCache {
                 }
             }
 
-            entry = new Entry(dn, entryMapping, attributeValues);
+            entry = new Entry(dn, getEntryMapping(), attributeValues);
 
             int entryId = getEntryId(dn);
 
             AttributeValues sourceValues = entry.getSourceValues();
-            Collection sources = partition.getEffectiveSources(entryMapping);
+            Collection sources = getPartition().getEffectiveSources(getEntryMapping());
 
             for (Iterator i=sources.iterator(); i.hasNext(); ) {
                 SourceMapping sourceMapping = (SourceMapping)i.next();
 
-                SourceConfig sourceConfig = partition.getSourceConfig(sourceMapping.getSourceName());
+                SourceConfig sourceConfig = getPartition().getSourceConfig(sourceMapping.getSourceName());
 
                 Collection fields = sourceConfig.getFieldConfigs();
                 for (Iterator j=fields.iterator(); j.hasNext(); ) {
@@ -731,18 +737,18 @@ public class PersistentEntryCache extends EntryCache {
         DirContext ctx = null;
 
         try {
-            log.debug("Searching "+parentDn+" with filter "+filter);
+            log.debug("Searching "+getParentDn()+" with filter "+filter);
             SearchControls sc = new SearchControls();
             sc.setSearchScope(SearchControls.ONELEVEL_SCOPE);
             sc.setReturningAttributes(new String[] { "dn" });
 
             ctx = getJNDIConnection();
             String ldapFilter = filter == null ? "(objectClass=*)" : filter.toString();
-            NamingEnumeration ne = ctx.search(parentDn, ldapFilter, sc);
+            NamingEnumeration ne = ctx.search(getParentDn(), ldapFilter, sc);
 
             while (ne.hasMore()) {
                 SearchResult sr = (SearchResult)ne.next();
-                String dn = sr.getName()+","+parentDn;
+                String dn = sr.getName()+","+getParentDn();
 
                 log.debug(" - "+dn);
                 results.add(dn);
@@ -817,7 +823,7 @@ public class PersistentEntryCache extends EntryCache {
             entryId = getEntryId(dn);
         }
 
-        Collection attributeDefinitions = entryMapping.getAttributeMappings();
+        Collection attributeDefinitions = getEntryMapping().getAttributeMappings();
         for (Iterator i=attributeDefinitions.iterator(); i.hasNext(); ) {
             AttributeMapping attributeDefinition = (AttributeMapping)i.next();
 
@@ -831,12 +837,12 @@ public class PersistentEntryCache extends EntryCache {
         }
 
         AttributeValues sourceValues = entry.getSourceValues();
-        Collection sources = partition.getEffectiveSources(entryMapping);
+        Collection sources = getPartition().getEffectiveSources(getEntryMapping());
 
         for (Iterator i=sources.iterator(); i.hasNext(); ) {
             SourceMapping sourceMapping = (SourceMapping)i.next();
 
-            SourceConfig sourceConfig = partition.getSourceConfig(sourceMapping.getSourceName());
+            SourceConfig sourceConfig = getPartition().getSourceConfig(sourceMapping.getSourceName());
 
             Collection fields = sourceConfig.getFieldConfigs();
             for (Iterator j=fields.iterator(); j.hasNext(); ) {
@@ -1049,10 +1055,10 @@ public class PersistentEntryCache extends EntryCache {
         Row rdn = (Row)key;
 
         String dn;
-        if (rdn == null && parentDn != null) {
-            dn = parentDn;
+        if (rdn == null && getParentDn() != null) {
+            dn = getParentDn();
         } else {
-            dn = parentDn == null ? entryMapping.getDn() : rdn+","+parentDn;
+            dn = getParentDn() == null ? getEntryMapping().getDn() : rdn+","+getParentDn();
         }
 
         DirContext ctx = null;
@@ -1088,11 +1094,11 @@ public class PersistentEntryCache extends EntryCache {
             if (ctx != null) try { ctx.close(); } catch (Exception e) {}
         }
 
-        Collection sources = partition.getEffectiveSources(entryMapping);
+        Collection sources = getPartition().getEffectiveSources(getEntryMapping());
 
         int entryId = getEntryId(dn);
 
-        Collection attributeDefinitions = entryMapping.getAttributeMappings();
+        Collection attributeDefinitions = getEntryMapping().getAttributeMappings();
         for (Iterator i=attributeDefinitions.iterator(); i.hasNext(); ) {
             AttributeMapping attributeDefinition = (AttributeMapping)i.next();
 
@@ -1102,7 +1108,7 @@ public class PersistentEntryCache extends EntryCache {
         for (Iterator i=sources.iterator(); i.hasNext(); ) {
             SourceMapping sourceMapping = (SourceMapping)i.next();
 
-            SourceConfig sourceConfig = partition.getSourceConfig(sourceMapping.getSourceName());
+            SourceConfig sourceConfig = getPartition().getSourceConfig(sourceMapping.getSourceName());
 
             Collection fields = sourceConfig.getFieldConfigs();
             for (Iterator j=fields.iterator(); j.hasNext(); ) {

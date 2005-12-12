@@ -101,6 +101,23 @@ public class PartitionManager {
         partitions.clear();
     }
 
+    public EntryMapping findEntryMapping(String dn) throws Exception {
+        for (Iterator i=partitions.values().iterator(); i.hasNext(); ) {
+            Partition partition = (Partition)i.next();
+            EntryMapping entryMapping = partition.findEntryMapping(dn);
+            if (entryMapping != null) return entryMapping;
+        }
+        return null;
+    }
+
+    public Partition findPartition(String dn) throws Exception {
+        for (Iterator i=partitions.values().iterator(); i.hasNext(); ) {
+            Partition partition = (Partition)i.next();
+            if (partition.findEntryMapping(dn) != null) return partition;
+        }
+        return null;
+    }
+
     public Partition getPartition(String name) throws Exception {
         return (Partition)partitions.get(name);
     }

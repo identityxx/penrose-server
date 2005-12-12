@@ -18,8 +18,11 @@
 package org.safehaus.penrose.cache;
 
 import org.safehaus.penrose.mapping.EntryMapping;
+import org.safehaus.penrose.mapping.Entry;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.engine.Engine;
+import org.safehaus.penrose.partition.Partition;
+import org.safehaus.penrose.connector.ConnectionManager;
 import org.apache.log4j.Logger;
 
 import java.util.Collection;
@@ -32,14 +35,16 @@ public abstract class EntryCache {
 
     Logger log = Logger.getLogger(getClass());
 
-    String parentDn;
-    EntryMapping entryMapping;
+    private ConnectionManager connectionManager;
+    private Partition partition;
+    private EntryMapping entryMapping;
 
-    CacheConfig cacheConfig;
-    Engine engine;
+    private String parentDn;
 
-    int size;
-    int expiration; // minutes
+    private CacheConfig cacheConfig;
+
+    private int size;
+    private int expiration; // minutes
 
     public CacheConfig getCacheConfig() {
         return cacheConfig;
@@ -70,7 +75,6 @@ public abstract class EntryCache {
     }
 
     public void init() throws Exception {
-
         String s = entryMapping.getParameter(EntryMapping.DATA_CACHE_SIZE);
         if (s != null) size = Integer.parseInt(s);
 
@@ -110,6 +114,22 @@ public abstract class EntryCache {
         this.parentDn = parentDn;
     }
 
+    public Partition getPartition() {
+        return partition;
+    }
+
+    public void setPartition(Partition partition) {
+        this.partition = partition;
+    }
+
+    public ConnectionManager getConnectionManager() {
+        return connectionManager;
+    }
+
+    public void setConnectionManager(ConnectionManager connectionManager) {
+        this.connectionManager = connectionManager;
+    }
+
     public Collection search(Filter filter) throws Exception {
         return null;
     }
@@ -123,24 +143,13 @@ public abstract class EntryCache {
     public void create() throws Exception {
     }
 
-    public void load() throws Exception {
-    }
-
     public void clean() throws Exception {
     }
 
     public void drop() throws Exception {
     }
 
-    public Engine getEngine() {
-        return engine;
-    }
-
-    public void setEngine(Engine engine) {
-        this.engine = engine;
-    }
-
-    public abstract Object get(Object key) throws Exception;
+    public abstract Entry get(Object key) throws Exception;
 
     public abstract Map getExpired() throws Exception;
 
