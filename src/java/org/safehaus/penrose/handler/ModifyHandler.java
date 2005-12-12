@@ -48,7 +48,7 @@ public class ModifyHandler {
 
         log.info("-------------------------------------------------");
 		log.info("MODIFY:");
-		if (session.getBindDn() != null) log.info(" - Bind DN: " + session.getBindDn());
+		if (session != null && session.getBindDn() != null) log.info(" - Bind DN: " + session.getBindDn());
         log.info(" - DN: " + dn);
         log.debug("-------------------------------------------------");
 		log.debug("changetype: modify");

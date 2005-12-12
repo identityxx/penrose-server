@@ -48,21 +48,10 @@ public class PersistentEntryCache extends EntryCache {
     public void init() throws Exception {
         super.init();
 
-        //log.debug("-------------------------------------------------------------------------------");
-        //log.debug("Initializing PersistentEngineCache:");
-
         jdbcConnectionName = getParameter("jdbcConnection");
         jndiConnectionName = getParameter("jndiConnection");
 
         mappingId = getMappingId();
-        if (mappingId == -1) {
-            createMappingsTable();
-            mappingId = getMappingId();
-        }
-        if (mappingId == 0) {
-            addMapping();
-            mappingId = getMappingId();
-        }
     }
 
     public Connection getJDBCConnection() throws Exception {
@@ -73,7 +62,14 @@ public class PersistentEntryCache extends EntryCache {
         return (DirContext)getConnectionManager().openConnection(jndiConnectionName);
     }
 
+    public void globalCreate() throws Exception {
+        createMappingsTable();
+    }
+
     public void create() throws Exception {
+
+        addMapping();
+        mappingId = getMappingId();
 
         String dn = getEntryMapping().getDn();
         log.debug("Creating cache tables for mapping "+dn+" ("+mappingId+")");
@@ -98,18 +94,6 @@ public class PersistentEntryCache extends EntryCache {
                 createFieldTable(sourceMapping, fieldConfig);
             }
         }
-/*
-        if (!partition.isDynamic(entryMapping)) {
-            Interpreter interpreter = engine.getInterpreterFactory().newInstance();
-            AttributeValues attributeValues = engine.computeAttributeValues(entryMapping, interpreter);
-            interpreter.clear();
-
-            Entry entry = new Entry(dn, entryMapping, attributeValues);
-            Row rdn = entry.getRdn();
-
-            put(rdn, entry);
-        }
-*/
     }
 
     public void createMappingsTable() throws Exception {
@@ -174,6 +158,11 @@ public class PersistentEntryCache extends EntryCache {
             rs = ps.executeQuery();
             if (rs.next()) {
                 id = rs.getInt(1);
+            }
+
+            if (log.isDebugEnabled()) {
+                log.debug(Formatter.displayLine("Results: id = "+id, 80));
+                log.debug(Formatter.displaySeparator(80));
             }
 
             return id;
@@ -256,6 +245,21 @@ public class PersistentEntryCache extends EntryCache {
 
     public int getEntryId(String dn) throws Exception {
 
+        String tableName = "penrose_"+mappingId+"_entries";
+
+        StringBuffer sb = new StringBuffer();
+        Collection parameters = new ArrayList();
+
+        sb.append("select id from ");
+        sb.append(tableName);
+        sb.append(" where rdn=? and parentDn=?");
+
+        Row rdn = Entry.getRdn(dn);
+        parameters.add(rdn.toString());
+        parameters.add(getParentDn());
+
+        String sql = sb.toString();
+
         Connection con = null;
         PreparedStatement ps = null;
         ResultSet rs = null;
@@ -263,7 +267,6 @@ public class PersistentEntryCache extends EntryCache {
         int id = 0;
 
         try {
-            String sql = "select id from penrose_"+mappingId+"_entries where dn=?";
             con = getJDBCConnection();
 
             if (log.isDebugEnabled()) {
@@ -274,12 +277,25 @@ public class PersistentEntryCache extends EntryCache {
                     log.debug(Formatter.displayLine(line, 80));
                 }
                 log.debug(Formatter.displaySeparator(80));
-                log.debug(Formatter.displayLine("Parameters: dn = "+dn, 80));
-                log.debug(Formatter.displaySeparator(80));
             }
 
             ps = con.prepareStatement(sql);
-            ps.setObject(1, dn);
+
+            int counter = 1;
+            for (Iterator i=parameters.iterator(); i.hasNext(); counter++) {
+                Object value = i.next();
+                ps.setObject(counter, value);
+            }
+
+            if (log.isDebugEnabled()) {
+                log.debug(Formatter.displayLine("Parameters:", 80));
+                counter = 1;
+                for (Iterator i=parameters.iterator(); i.hasNext(); counter++) {
+                    Object value = i.next();
+                    log.debug(Formatter.displayLine(" - "+counter+" = "+value, 80));
+                }
+                log.debug(Formatter.displaySeparator(80));
+            }
 
             rs = ps.executeQuery();
             if (rs.next()) {
@@ -306,11 +322,25 @@ public class PersistentEntryCache extends EntryCache {
 
     public void addEntry(String dn) throws Exception {
 
+        String tableName = "penrose_"+mappingId+"_entries";
+
+        StringBuffer sb = new StringBuffer();
+        Collection parameters = new ArrayList();
+
+        sb.append("insert into ");
+        sb.append(tableName);
+        sb.append(" values (null, ?, ?)");
+
+        Row rdn = Entry.getRdn(dn);
+        parameters.add(rdn.toString());
+        parameters.add(getParentDn());
+
+        String sql = sb.toString();
+
         Connection con = null;
         PreparedStatement ps = null;
 
         try {
-            String sql = "insert into penrose_"+mappingId+"_entries values (null, ?)";
             con = getJDBCConnection();
 
             if (log.isDebugEnabled()) {
@@ -324,7 +354,22 @@ public class PersistentEntryCache extends EntryCache {
             }
 
             ps = con.prepareStatement(sql);
-            ps.setObject(1, dn);
+
+            int counter = 1;
+            for (Iterator i=parameters.iterator(); i.hasNext(); counter++) {
+                Object value = i.next();
+                ps.setObject(counter, value);
+            }
+
+            if (log.isDebugEnabled()) {
+                log.debug(Formatter.displayLine("Parameters:", 80));
+                counter = 1;
+                for (Iterator i=parameters.iterator(); i.hasNext(); counter++) {
+                    Object value = i.next();
+                    log.debug(Formatter.displayLine(" - "+counter+" = "+value, 80));
+                }
+                log.debug(Formatter.displaySeparator(80));
+            }
 
             ps.execute();
 
@@ -339,11 +384,25 @@ public class PersistentEntryCache extends EntryCache {
 
     public void removeEntry(int entryId) throws Exception {
 
+        String tableName = "penrose_"+mappingId+"_entries";
+
+        StringBuffer sb = new StringBuffer();
+        Collection parameters = new ArrayList();
+
+        sb.append("delete from ");
+        sb.append(tableName);
+
+        if (entryId > 0) {
+            sb.append(" where id=?");
+            parameters.add(new Integer(entryId));
+        }
+
+        String sql = sb.toString();
+
         Connection con = null;
         PreparedStatement ps = null;
 
         try {
-            String sql = "delete from penrose_"+mappingId+"_entries where id=?";
             con = getJDBCConnection();
 
             if (log.isDebugEnabled()) {
@@ -357,7 +416,17 @@ public class PersistentEntryCache extends EntryCache {
             }
 
             ps = con.prepareStatement(sql);
-            ps.setInt(1, entryId);
+
+            int counter = 1;
+            for (Iterator i=parameters.iterator(); i.hasNext(); counter++) {
+                Object v = i.next();
+                ps.setObject(counter, v);
+            }
+
+            if (log.isDebugEnabled() && parameters.size() > 0) {
+                log.debug(Formatter.displayLine("Parameter: id = "+entryId, 80));
+                log.debug(Formatter.displaySeparator(80));
+            }
 
             ps.execute();
 
@@ -377,7 +446,7 @@ public class PersistentEntryCache extends EntryCache {
         StringBuffer sb = new StringBuffer();
         sb.append("create table ");
         sb.append(tableName);
-        sb.append(" (id integer auto_increment, dn varchar(255) unique, primary key (id))");
+        sb.append(" (id integer auto_increment, rdn varchar(255), parentDn varchar(255), primary key (id))");
 
         String sql = sb.toString();
 
@@ -521,15 +590,6 @@ public class PersistentEntryCache extends EntryCache {
         }
     }
 
-    public void clean() throws Exception {
-        if (!getPartition().isDynamic(getEntryMapping())) return;
-
-        String dn = getEntryMapping().getDn();
-        Row rdn = Entry.getRdn(dn);
-        remove(null);
-
-    }
-
     public void drop() throws Exception {
         if (!getPartition().isDynamic(getEntryMapping())) {
             String dn = getEntryMapping().getDn();
@@ -551,6 +611,10 @@ public class PersistentEntryCache extends EntryCache {
         }
 
         dropEntriesTable();
+    }
+
+    public void globalDrop() throws Exception {
+        dropMappingsTable();
     }
 
     public void dropEntrySourceTable(SourceMapping sourceMapping) throws Exception {
@@ -737,20 +801,35 @@ public class PersistentEntryCache extends EntryCache {
         DirContext ctx = null;
 
         try {
-            log.debug("Searching "+getParentDn()+" with filter "+filter);
-            SearchControls sc = new SearchControls();
-            sc.setSearchScope(SearchControls.ONELEVEL_SCOPE);
-            sc.setReturningAttributes(new String[] { "dn" });
 
             ctx = getJNDIConnection();
-            String ldapFilter = filter == null ? "(objectClass=*)" : filter.toString();
-            NamingEnumeration ne = ctx.search(getParentDn(), ldapFilter, sc);
 
-            while (ne.hasMore()) {
-                SearchResult sr = (SearchResult)ne.next();
-                String dn = sr.getName()+","+getParentDn();
+            if (getEntryMapping().isRdnDynamic()) {
 
-                log.debug(" - "+dn);
+                String baseDn = getParentDn();
+                log.debug("Searching persistent cache "+getEntryMapping().getRdn()+","+baseDn+" with filter "+filter);
+
+                SearchControls sc = new SearchControls();
+                sc.setReturningAttributes(new String[] { "dn" });
+                sc.setSearchScope(SearchControls.ONELEVEL_SCOPE);
+
+                String ldapFilter = filter == null ? "(objectClass=*)" : filter.toString();
+
+                NamingEnumeration ne = ctx.search(baseDn, ldapFilter, sc);
+
+                while (ne.hasMore()) {
+                    SearchResult sr = (SearchResult)ne.next();
+                    String dn = sr.getName()+","+getParentDn();
+
+                    log.debug(" - "+dn);
+                    results.add(dn);
+                }
+
+            } else {
+                String dn = getEntryMapping().getRdn()+","+(parentDn == null ? getEntryMapping().getParentDn() : parentDn);
+
+                log.debug("Searching persistent cache "+dn);
+
                 results.add(dn);
             }
 
@@ -767,13 +846,6 @@ public class PersistentEntryCache extends EntryCache {
     public Map getExpired() throws Exception {
         Map results = new TreeMap();
         return results;
-    }
-
-    public Map search(Collection filters) throws Exception {
-
-        Map values = new TreeMap();
-
-        return values;
     }
 
     public void put(Object key, Object object) throws Exception {
@@ -811,7 +883,7 @@ public class PersistentEntryCache extends EntryCache {
             ctx = getJNDIConnection();
             ctx.createSubcontext(dn, attrs);
         } catch (NamingException e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
 
         } finally {
             if (ctx != null) try { ctx.close(); } catch (Exception e) {}
@@ -1075,7 +1147,7 @@ public class PersistentEntryCache extends EntryCache {
             while (ne.hasMore()) {
                 SearchResult sr = (SearchResult)ne.next();
                 String name = sr.getName();
-                if (rdn == null && "".equals(name)) continue;
+                //if (rdn == null && "".equals(name)) continue;
                 String childDn = "".equals(name) ? dn : name+","+dn;
                 dns.add(0, childDn);
             }

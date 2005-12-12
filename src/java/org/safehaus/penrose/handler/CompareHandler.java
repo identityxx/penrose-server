@@ -45,7 +45,7 @@ public class CompareHandler {
 
         log.debug("-------------------------------------------------------------------------------");
         log.debug("COMPARE:");
-        if (session.getBindDn() != null) log.info(" - Bind DN: " + session.getBindDn());
+        if (session != null && session.getBindDn() != null) log.info(" - Bind DN: " + session.getBindDn());
         log.debug(" - DN: " + dn);
         log.debug(" - Attribute Name: " + attributeName);
         log.debug(" - Attribute Value: " + attributeValue);

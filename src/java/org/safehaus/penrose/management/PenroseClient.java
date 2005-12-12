@@ -160,8 +160,8 @@ public class PenroseClient {
         System.out.println("  -?, --help         display this help and exit");
         System.out.println("  -h host            Penrose server");
         System.out.println("  -p port            Penrose JMX port");
-        System.out.println("  -D binddn          bind DN");
-        System.out.println("  -w password        bind password");
+        System.out.println("  -D username        username");
+        System.out.println("  -w password        password");
         System.out.println("  -d                 run in debug mode");
         System.out.println("  -v                 run in verbose mode");
     }

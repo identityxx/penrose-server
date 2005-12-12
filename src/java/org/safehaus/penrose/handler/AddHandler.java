@@ -57,7 +57,7 @@ public class AddHandler {
 
         log.info("-------------------------------------------------");
         log.info("ADD:");
-        if (session.getBindDn() != null) log.info(" - Bind DN: "+session.getBindDn());
+        if (session != null && session.getBindDn() != null) log.info(" - Bind DN: "+session.getBindDn());
         log.info(" - Entry:\n"+Entry.toString(entry));
         log.info("");
 

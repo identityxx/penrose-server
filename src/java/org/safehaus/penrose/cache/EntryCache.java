@@ -35,16 +35,16 @@ public abstract class EntryCache {
 
     Logger log = Logger.getLogger(getClass());
 
-    private ConnectionManager connectionManager;
-    private Partition partition;
-    private EntryMapping entryMapping;
+    ConnectionManager connectionManager;
+    Partition partition;
+    EntryMapping entryMapping;
 
-    private String parentDn;
+    String parentDn;
 
-    private CacheConfig cacheConfig;
+    CacheConfig cacheConfig;
 
-    private int size;
-    private int expiration; // minutes
+    int size;
+    int expiration; // minutes
 
     public CacheConfig getCacheConfig() {
         return cacheConfig;
@@ -62,21 +62,15 @@ public abstract class EntryCache {
         return cacheConfig.getParameter(name);
     }
 
-    public void init(CacheConfig cacheConfig) throws Exception {
-        this.cacheConfig = cacheConfig;
-
+    public void init() throws Exception {
         String s = cacheConfig.getParameter(CacheConfig.CACHE_SIZE);
         size = s == null ? CacheConfig.DEFAULT_CACHE_SIZE : Integer.parseInt(s);
 
+        s = entryMapping.getParameter(EntryMapping.DATA_CACHE_SIZE);
+        if (s != null) size = Integer.parseInt(s);
+
         s = cacheConfig.getParameter(CacheConfig.CACHE_EXPIRATION);
         expiration = s == null ? CacheConfig.DEFAULT_CACHE_EXPIRATION : Integer.parseInt(s);
-
-        init();
-    }
-
-    public void init() throws Exception {
-        String s = entryMapping.getParameter(EntryMapping.DATA_CACHE_SIZE);
-        if (s != null) size = Integer.parseInt(s);
 
         s = entryMapping.getParameter(EntryMapping.DATA_CACHE_EXPIRATION);
         if (s != null) expiration = Integer.parseInt(s);
@@ -143,9 +137,6 @@ public abstract class EntryCache {
     public void create() throws Exception {
     }
 
-    public void clean() throws Exception {
-    }
-
     public void drop() throws Exception {
     }
 
@@ -156,4 +147,10 @@ public abstract class EntryCache {
     public abstract void put(Object key, Object object) throws Exception;
 
     public abstract void remove(Object key) throws Exception;
+
+    public void globalCreate() throws Exception {
+    }
+
+    public void globalDrop() throws Exception {
+    }
 }

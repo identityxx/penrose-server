@@ -130,6 +130,17 @@ public class Handler implements ModuleContext {
         return getModRdnHandler().modrdn(session, dn, newRdn);
     }
 
+    /**
+     *
+     * @param session
+     * @param base
+     * @param scope
+     * @param deref
+     * @param filter
+     * @param attributeNames
+     * @return LDAPEntry
+     * @throws Exception
+     */
     public PenroseSearchResults search(
             final PenroseSession session,
             final String base,
