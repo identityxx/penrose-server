@@ -49,10 +49,10 @@ public class Partition {
 	public void addEntryMapping(EntryMapping entry) throws Exception {
 
         String dn = entry.getDn();
+        //log.debug("Adding "+dn+".");
 
         if (entryMappings.get(dn) != null) throw new Exception("Entry "+dn+" already exists.");
 
-        //System.out.println("Adding "+dn+".");
 
         EntryMapping parent = getParent(entry);
 

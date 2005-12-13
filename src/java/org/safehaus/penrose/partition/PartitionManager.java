@@ -36,6 +36,7 @@ public class PartitionManager {
 
     Logger log = Logger.getLogger(PartitionManager.class);
 
+    private String home;
     private PenroseConfig penroseConfig;
     private SchemaManager schemaManager;
 
@@ -56,7 +57,6 @@ public class PartitionManager {
         Partition partition = getPartition(partitionConfig.getName());
         if (partition != null) return partition;
 
-        String home = penroseConfig.getHome();
         String path = (home == null ? "" : home+File.separator)+partitionConfig.getPath();
 
         log.debug("Loading "+partitionConfig.getName()+" partition from "+path+".");
@@ -78,7 +78,6 @@ public class PartitionManager {
 
     public void store(PartitionConfig partitionConfig) throws Exception {
 
-        String home = penroseConfig.getHome();
         String path = (home == null ? "" : home+File.separator)+partitionConfig.getPath();
 
         log.debug("Storing "+partitionConfig.getName()+" partition into "+path+".");
@@ -186,5 +185,13 @@ public class PartitionManager {
 
     public void setPenroseConfig(PenroseConfig penroseConfig) {
         this.penroseConfig = penroseConfig;
+    }
+
+    public String getHome() {
+        return home;
+    }
+
+    public void setHome(String home) {
+        this.home = home;
     }
 }

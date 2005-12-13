@@ -110,6 +110,7 @@ public class Penrose {
 
     public void initPartitionManager() throws Exception {
         partitionManager = new PartitionManager();
+        partitionManager.setHome(penroseConfig.getHome());
         partitionManager.setPenroseConfig(penroseConfig);
         partitionManager.setSchemaManager(schemaManager);
 

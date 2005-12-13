@@ -58,8 +58,11 @@ public class PartitionReader {
      * @throws Exception
      */
     public void loadMappingConfig(Partition partition) throws Exception {
+        String filename = directory+File.separator+"mapping.xml";
+        log.debug("Loading "+filename);
+
         MappingRule mappingRule = new MappingRule();
-        mappingRule.setFile(directory+File.separator+"mapping.xml");
+        mappingRule.setFile(filename);
         loadMappingConfig(null, null, mappingRule, partition);
     }
 
@@ -74,7 +77,6 @@ public class PartitionReader {
     public void loadMappingConfig(File dir, String baseDn, MappingRule mappingRule, Partition partition) throws Exception {
         File file = new File(dir, mappingRule.getFile());
         if (!file.exists()) return;
-        //log.debug("Loading mapping rule from: "+file.getAbsolutePath());
 
         ClassLoader cl = getClass().getClassLoader();
         URL url = cl.getResource("org/safehaus/penrose/partition/mapping-digester-rules.xml");
@@ -210,7 +212,11 @@ public class PartitionReader {
      * @throws Exception
      */
     public void loadModulesConfig(Partition partition) throws Exception {
-        File file = new File(directory, "modules.xml");
+
+        String filename = directory+File.separator+"modules.xml";
+        log.debug("Loading "+filename);
+
+        File file = new File(filename);
         if (!file.exists()) return;
 
         //log.debug("Loading modules configuration from: "+file.getAbsolutePath());
@@ -230,7 +236,10 @@ public class PartitionReader {
      * @throws Exception
      */
     public void loadConnectionsConfig(Partition partition) throws Exception {
-        File file = new File(directory, "connections.xml");
+        String filename = directory+File.separator+"connections.xml";
+        log.debug("Loading "+filename);
+
+        File file = new File(filename);
         if (!file.exists()) return;
 
 		//log.debug("Loading source configuration from: "+file.getAbsolutePath());
@@ -250,7 +259,10 @@ public class PartitionReader {
      * @throws Exception
      */
     public void loadSourcesConfig(Partition partition) throws Exception {
-        File file = new File(directory, "sources.xml");
+        String filename = directory+File.separator+"sources.xml";
+        log.debug("Loading "+filename);
+
+        File file = new File(filename);
         if (!file.exists()) return;
 
 		//log.debug("Loading source configuration from: "+file.getAbsolutePath());
