@@ -280,7 +280,7 @@ public class PenroseConfigWriter {
     }
 
     public Element toElement(SessionHandlerConfig sessionHandlerConfig) {
-    	Element element = new DefaultElement("session-sessionHandler");
+    	Element element = new DefaultElement("session-handler");
 
         if (sessionHandlerConfig.getDescription() != null && !"".equals(sessionHandlerConfig.getDescription())) {
             Element description = new DefaultElement("description");
