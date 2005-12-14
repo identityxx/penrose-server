@@ -115,6 +115,8 @@ public class PenroseInterceptor extends BaseInterceptor {
             LDAPEntry ldapEntry = new LDAPEntry(upName, attributeSet);
 
             PenroseSession session = penrose.newSession();
+            if (session == null) throw new ServiceUnavailableException();
+
             session.setBindDn(principalDn.toString());
 
             int rc = session.add(ldapEntry);
@@ -162,6 +164,8 @@ public class PenroseInterceptor extends BaseInterceptor {
             }
 
             PenroseSession session = penrose.newSession();
+            if (session == null) throw new ServiceUnavailableException();
+
             session.setBindDn(principalDn.toString());
 
             int rc = session.compare(dn, attributeName, value.toString());
@@ -211,6 +215,8 @@ public class PenroseInterceptor extends BaseInterceptor {
             }
 
             PenroseSession session = penrose.newSession();
+            if (session == null) throw new ServiceUnavailableException();
+
             session.setBindDn(principalDn.toString());
 
             int rc = session.delete(dn);
@@ -292,6 +298,8 @@ public class PenroseInterceptor extends BaseInterceptor {
             }
 
             PenroseSession session = penrose.newSession();
+            if (session == null) throw new ServiceUnavailableException();
+
             session.setBindDn(principalDn.toString());
 
             PenroseSearchControls sc = new PenroseSearchControls();
@@ -350,6 +358,8 @@ public class PenroseInterceptor extends BaseInterceptor {
             log.debug("searching \""+dn+"\"");
 
             PenroseSession session = penrose.newSession();
+            if (session == null) throw new ServiceUnavailableException();
+
             session.setBindDn(principalDn.toString());
 
             PenroseSearchControls sc = new PenroseSearchControls();
@@ -408,6 +418,8 @@ public class PenroseInterceptor extends BaseInterceptor {
             }
 
             PenroseSession session = penrose.newSession();
+            if (session == null) throw new ServiceUnavailableException();
+
             session.setBindDn(principalDn.toString());
 
             PenroseSearchControls sc = new PenroseSearchControls();
@@ -481,6 +493,8 @@ public class PenroseInterceptor extends BaseInterceptor {
             }
 
             PenroseSession session = penrose.newSession();
+            if (session == null) throw new ServiceUnavailableException();
+
             session.setBindDn(principalDn.toString());
 
             PenroseSearchControls sc = new PenroseSearchControls();
@@ -556,6 +570,8 @@ public class PenroseInterceptor extends BaseInterceptor {
                     Attributes attributes = sr.getAttributes();
 
                     PenroseSession session = penrose.newSession();
+                    if (session == null) throw new ServiceUnavailableException();
+
                     session.setBindDn(principalDn.toString());
 
                     PenroseSearchControls sc = new PenroseSearchControls();
@@ -620,6 +636,8 @@ public class PenroseInterceptor extends BaseInterceptor {
             log.debug(" - attributeNames: "+attributeNames);
 
             PenroseSession session = penrose.newSession();
+            if (session == null) throw new ServiceUnavailableException();
+
             session.setBindDn(principalDn.toString());
 
             PenroseSearchControls sc = new PenroseSearchControls();
@@ -694,6 +712,8 @@ public class PenroseInterceptor extends BaseInterceptor {
             }
 
             PenroseSession session = penrose.newSession();
+            if (session == null) throw new ServiceUnavailableException();
+
             session.setBindDn(principalDn.toString());
 
             int rc = session.modify(dn.toString(), modifications);
@@ -779,6 +799,8 @@ public class PenroseInterceptor extends BaseInterceptor {
             }
 
             PenroseSession session = penrose.newSession();
+            if (session == null) throw new ServiceUnavailableException();
+
             session.setBindDn(principalDn.toString());
 
             int rc = session.modify(dn.toString(), modifications);
@@ -828,6 +850,8 @@ public class PenroseInterceptor extends BaseInterceptor {
             }
 
             PenroseSession session = penrose.newSession();
+            if (session == null) throw new ServiceUnavailableException();
+
             session.setBindDn(principalDn.toString());
 
             int rc = session.modrdn(dn.toString(), newDn);

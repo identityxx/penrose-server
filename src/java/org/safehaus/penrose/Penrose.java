@@ -25,13 +25,14 @@ import org.safehaus.penrose.config.*;
 import org.safehaus.penrose.schema.*;
 import org.safehaus.penrose.engine.EngineConfig;
 import org.safehaus.penrose.engine.Engine;
-import org.safehaus.penrose.handler.Handler;
+import org.safehaus.penrose.handler.SessionHandler;
+import org.safehaus.penrose.handler.SessionHandlerConfig;
 import org.safehaus.penrose.interpreter.InterpreterConfig;
 import org.safehaus.penrose.interpreter.InterpreterFactory;
 import org.safehaus.penrose.connector.*;
 import org.safehaus.penrose.partition.*;
 import org.safehaus.penrose.session.PenroseSession;
-import org.safehaus.penrose.session.PenroseSessionManager;
+import org.safehaus.penrose.session.SessionManager;
 
 /**
  * @author Endi S. Dewata
@@ -55,9 +56,7 @@ public class Penrose {
     private InterpreterFactory interpreterFactory;
     private Connector connector;
 	private Engine engine;
-    private Handler handler;
-
-	private PenroseSessionManager sessionManager;
+    private SessionHandler sessionHandler;
 
     private boolean stopRequested = false;
 
@@ -128,10 +127,10 @@ public class Penrose {
 
         initInterpreter();
         initConnections();
+
         initConnectors();
         initEngines();
         initHandler();
-        initSessionManager();
 	}
 
     public void loadPartitions() throws Exception {
@@ -204,18 +203,17 @@ public class Penrose {
     }
 
     public void initHandler() throws Exception {
-        handler = new Handler();
-        handler.setSchemaManager(schemaManager);
-        handler.setInterpreterFactory(interpreterFactory);
-        handler.setEngine(engine);
-        handler.setRootUserConfig(penroseConfig.getRootUserConfig());
-        handler.setPartitionManager(partitionManager);
 
-        handler.init();
-    }
+        SessionHandlerConfig sessionHandlerConfig = penroseConfig.getSessionHandlerConfig();
 
-    public void initSessionManager() throws Exception {
-        sessionManager = new PenroseSessionManager(this);
+        sessionHandler = new SessionHandler();
+        sessionHandler.setSchemaManager(schemaManager);
+        sessionHandler.setInterpreterFactory(interpreterFactory);
+        sessionHandler.setEngine(engine);
+        sessionHandler.setRootUserConfig(penroseConfig.getRootUserConfig());
+        sessionHandler.setPartitionManager(partitionManager);
+
+        sessionHandler.init(sessionHandlerConfig);
     }
 
 	public void stop() {
@@ -239,11 +237,11 @@ public class Penrose {
 	}
 
     public PenroseSession newSession() throws Exception {
-        return sessionManager.createConnection();
+        return sessionHandler.newSession();
     }
 
-    public void removeSession(PenroseSession session) {
-        sessionManager.removeConnection(session);
+    public void closeSession(PenroseSession session) {
+        sessionHandler.closeSession(session);
     }
 
     public boolean isStopRequested() {
@@ -290,8 +288,8 @@ public class Penrose {
         return connector;
     }
 
-    public Handler getHandler() {
-        return handler;
+    public SessionHandler getSessionHandler() {
+        return sessionHandler;
     }
 
     public SchemaManager getSchemaManager() {

@@ -30,6 +30,8 @@ import org.safehaus.penrose.config.PenroseConfig;
 
 import javax.naming.Context;
 import javax.naming.NamingException;
+import javax.naming.InsufficientResourcesException;
+import javax.naming.ServiceUnavailableException;
 
 /**
  * @author Endi S. Dewata
@@ -78,6 +80,8 @@ public class PenroseAuthenticator extends AbstractAuthenticator {
 
         try {
             PenroseSession session = penrose.newSession();
+            if (session == null) throw new ServiceUnavailableException();
+
             int rc = session.bind(dn.toString(), password);
             session.close();
 

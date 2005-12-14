@@ -18,9 +18,10 @@
 package org.safehaus.penrose.handler;
 
 import org.safehaus.penrose.session.PenroseSearchResults;
-import org.safehaus.penrose.*;
+import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.user.UserConfig;
 import org.safehaus.penrose.session.PenroseSession;
+import org.safehaus.penrose.session.SessionManager;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.acl.ACLEngine;
 import org.safehaus.penrose.filter.FilterTool;
@@ -42,7 +43,7 @@ import java.util.*;
 /**
  * @author Endi S. Dewata
  */
-public class Handler implements ModuleContext {
+public class SessionHandler implements ModuleContext {
 
     Logger log = Logger.getLogger(getClass());
 
@@ -54,9 +55,12 @@ public class Handler implements ModuleContext {
     private ModRdnHandler modRdnHandler;
     private SearchHandler searchHandler;
 
+    private SessionHandlerConfig sessionHandlerConfig;
+
     private SchemaManager schemaManager;
     private Engine engine;
 
+    private SessionManager sessionManager;
     private PartitionManager partitionManager;
     private Map modules = new LinkedHashMap();
 
@@ -66,11 +70,11 @@ public class Handler implements ModuleContext {
     private ACLEngine aclEngine;
     private FilterTool filterTool;
 
-    public Handler() throws Exception {
-
+    public SessionHandler() throws Exception {
     }
 
-    public void init() throws Exception {
+    public void init(SessionHandlerConfig sessionHandlerConfig) throws Exception {
+        this.sessionHandlerConfig = sessionHandlerConfig;
 
         aclEngine = new ACLEngine(this);
 
@@ -84,6 +88,18 @@ public class Handler implements ModuleContext {
         modifyHandler = new ModifyHandler(this);
         modRdnHandler = new ModRdnHandler(this);
         searchHandler = new SearchHandler(this);
+
+        initSessionManager();
+        initModules();
+    }
+
+    public void initSessionManager() throws Exception {
+        sessionManager = new SessionManager();
+        sessionManager.setHandler(this);
+        sessionManager.init();
+    }
+
+    public void initModules() throws Exception {
 
         for (Iterator i=partitionManager.getPartitions().iterator(); i.hasNext(); ) {
             Partition partition = (Partition)i.next();
@@ -101,32 +117,39 @@ public class Handler implements ModuleContext {
     }
 
     public int add(PenroseSession session, LDAPEntry entry) throws Exception {
+        if (!sessionManager.isValid(session)) throw new Exception("Invalid session.");
         return getAddHandler().add(session, entry);
     }
 
     public int bind(PenroseSession session, String dn, String password) throws Exception {
+        if (!sessionManager.isValid(session)) throw new Exception("Invalid session.");
         return getBindHandler().bind(session, dn, password);
     }
 
     public int compare(PenroseSession session, String dn, String attributeName,
             String attributeValue) throws Exception {
 
+        if (!sessionManager.isValid(session)) throw new Exception("Invalid session.");
         return getCompareHandler().compare(session, dn, attributeName, attributeValue);
     }
 
     public int unbind(PenroseSession session) throws Exception {
+        if (!sessionManager.isValid(session)) throw new Exception("Invalid session.");
         return getBindHandler().unbind(session);
     }
 
     public int delete(PenroseSession session, String dn) throws Exception {
+        if (!sessionManager.isValid(session)) throw new Exception("Invalid session.");
         return getDeleteHandler().delete(session, dn);
     }
 
     public int modify(PenroseSession session, String dn, Collection modifications) throws Exception {
+        if (!sessionManager.isValid(session)) throw new Exception("Invalid session.");
         return getModifyHandler().modify(session, dn, modifications);
     }
 
     public int modrdn(PenroseSession session, String dn, String newRdn) throws Exception {
+        if (!sessionManager.isValid(session)) throw new Exception("Invalid session.");
         return getModRdnHandler().modrdn(session, dn, newRdn);
     }
 
@@ -150,6 +173,7 @@ public class Handler implements ModuleContext {
             final Collection attributeNames)
             throws Exception {
 
+        if (!sessionManager.isValid(session)) throw new Exception("Invalid session.");
         final PenroseSearchResults results = new PenroseSearchResults();
 
         //getSearchHandler().search(connection, base, scope, deref, filter, attributeNames, results);
@@ -422,6 +446,30 @@ public class Handler implements ModuleContext {
 
     public void setRootUserConfig(UserConfig rootUserConfig) {
         this.rootUserConfig = rootUserConfig;
+    }
+
+    public SessionManager getSessionManager() {
+        return sessionManager;
+    }
+
+    public void setSessionManager(SessionManager sessionManager) {
+        this.sessionManager = sessionManager;
+    }
+
+    public PenroseSession newSession() throws Exception {
+        return sessionManager.newSession();
+    }
+
+    public void closeSession(PenroseSession session) {
+        sessionManager.closeSession(session);
+    }
+
+    public SessionHandlerConfig getHandlerConfig() {
+        return sessionHandlerConfig;
+    }
+
+    public void setHandlerConfig(SessionHandlerConfig sessionHandlerConfig) {
+        this.sessionHandlerConfig = sessionHandlerConfig;
     }
 }
 

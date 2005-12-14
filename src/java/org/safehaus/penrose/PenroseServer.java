@@ -78,7 +78,7 @@ public class PenroseServer implements SignalHandler {
     }
 
     /**
-     * Ctrl-C (Interrupt Signal) handler
+     * Ctrl-C (Interrupt Signal) sessionHandler
      *
      * The obvious drawback with this is that it relies on undocumented classes from
      * Sun. There are other solutions, including one given at

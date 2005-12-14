@@ -195,6 +195,7 @@ public class PenroseBackend implements Backend {
      */
     public void createConnection(int connectionId) throws Exception {
         PenroseSession session = penrose.newSession();
+        if (session == null) throw new Exception("Unable to create session.");
         connections.put(new Integer(connectionId), session);
     }
 

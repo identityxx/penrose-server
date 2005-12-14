@@ -18,11 +18,9 @@
 package org.safehaus.penrose.session;
 
 import org.ietf.ldap.LDAPEntry;
-import org.safehaus.penrose.handler.Handler;
-import org.safehaus.penrose.Penrose;
+import org.safehaus.penrose.handler.SessionHandler;
 
 import java.util.Date;
-import java.util.List;
 import java.util.Collection;
 import java.util.Arrays;
 
@@ -33,22 +31,18 @@ import java.util.Arrays;
  */
 public class PenroseSession {
 
-    private Penrose penrose;
-    private Handler handler;
+    private SessionHandler sessionHandler;
 
-    /**
-     * Bind DN
-     */
+    private String sessionId;
+
     private String bindDn;
     
-    /**
-     * The time and date when the connection was made
-     */
-    private Date date;
+    private Date createDate;
+    private Date lastActivityDate;
 
-    public PenroseSession(Penrose penrose) {
-        this.penrose = penrose;
-        this.handler = penrose.getHandler();
+    public PenroseSession() {
+        createDate = new Date();
+        lastActivityDate = (Date)createDate.clone();
     }
 
     public String getBindDn() {
@@ -59,44 +53,46 @@ public class PenroseSession {
         this.bindDn = bindDn;
     }
 
-    public Date getDate() {
-        return date;
+    public Date getLastActivityDate() {
+        return lastActivityDate;
     }
 
-    public void setDate(Date date) {
-        this.date = date;
+    public void setLastActivityDate(Date lastActivityDate) {
+        this.lastActivityDate = lastActivityDate;
     }
 
-    public Penrose getPenrose() {
-        return penrose;
-    }
-
-    public void setPenrose(Penrose penrose) {
-        this.penrose = penrose;
+    public void setHandler(SessionHandler sessionHandler) {
+        this.sessionHandler = sessionHandler;
     }
 
     public int add(LDAPEntry entry) throws Exception {
-        return handler.add(this, entry);
+        lastActivityDate.setTime(System.currentTimeMillis());
+        return sessionHandler.add(this, entry);
     }
 
     public int bind(String dn, String password) throws Exception {
-        return handler.bind(this, dn, password);
+        lastActivityDate.setTime(System.currentTimeMillis());
+        return sessionHandler.bind(this, dn, password);
     }
 
     public int compare(String dn, String attributeName, String attributeValue) throws Exception {
-        return handler.compare(this, dn, attributeName, attributeValue);
+        lastActivityDate.setTime(System.currentTimeMillis());
+        return sessionHandler.compare(this, dn, attributeName, attributeValue);
      }
 
     public int delete(String dn) throws Exception {
-        return handler.delete(this, dn);
+        lastActivityDate.setTime(System.currentTimeMillis());
+        return sessionHandler.delete(this, dn);
     }
 
     public int modify(String dn, Collection modifications) throws Exception {
-        return handler.modify(this, dn, modifications);
+        lastActivityDate.setTime(System.currentTimeMillis());
+        return sessionHandler.modify(this, dn, modifications);
     }
 
     public int modrdn(String dn, String newRdn) throws Exception {
-        return handler.modrdn(this, dn, newRdn);
+        lastActivityDate.setTime(System.currentTimeMillis());
+        return sessionHandler.modrdn(this, dn, newRdn);
     }
 
     public PenroseSearchResults search(
@@ -105,18 +101,37 @@ public class PenroseSession {
             PenroseSearchControls sc)
             throws Exception {
 
+        lastActivityDate.setTime(System.currentTimeMillis());
+
         int scope = sc.getScope();
         int deref = sc.getDereference();
         Collection attributes = sc.getAttributes() == null ? null : Arrays.asList(sc.getAttributes());
 
-        return handler.search(this, base, scope, deref, filter, attributes);
+        return sessionHandler.search(this, base, scope, deref, filter, attributes);
     }
 
     public int unbind() throws Exception {
-        return handler.unbind(this);
+        lastActivityDate.setTime(System.currentTimeMillis());
+        return sessionHandler.unbind(this);
     }
 
     public void close() throws Exception {
-        penrose.removeSession(this);
+        sessionHandler.closeSession(this);
+    }
+
+    public String getSessionId() {
+        return sessionId;
+    }
+
+    public void setSessionId(String sessionId) {
+        this.sessionId = sessionId;
+    }
+
+    public Date getCreateDate() {
+        return createDate;
+    }
+
+    public void setCreateDate(Date createDate) {
+        this.createDate = createDate;
     }
 }

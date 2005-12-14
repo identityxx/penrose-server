@@ -42,10 +42,10 @@ public class SearchHandler {
 
     Logger log = Logger.getLogger(getClass());
 
-    private Handler handler;
+    private SessionHandler sessionHandler;
 
-    public SearchHandler(Handler handler) throws Exception {
-        this.handler = handler;
+    public SearchHandler(SessionHandler sessionHandler) throws Exception {
+        this.sessionHandler = sessionHandler;
     }
 
     /**
@@ -90,7 +90,7 @@ public class SearchHandler {
 
         log.debug("Found parent: "+(parent == null ? null : parent.getDn()));
 
-        Partition partition = handler.getPartitionManager().getPartitionByDn(dn);
+        Partition partition = sessionHandler.getPartitionManager().getPartitionByDn(dn);
         if (partition == null) {
             //log.error("Missing config for "+dn);
             return null;
@@ -102,7 +102,7 @@ public class SearchHandler {
         if (entryMapping != null) {
             log.debug("Found static entry: " + dn);
 
-            Entry entry = handler.getEngine().find(path, entryMapping);
+            Entry entry = sessionHandler.getEngine().find(path, entryMapping);
 /*
             //AttributeValues values = entryDefinition.getAttributeValues(handlerContext.newInterpreter());
             //Entry entry = new Entry(dn, entryDefinition, values);
@@ -152,11 +152,11 @@ public class SearchHandler {
 
             if (!rdn.getNames().equals(childRdn.getNames())) continue;
 
-            Engine engine = handler.getEngine();
+            Engine engine = sessionHandler.getEngine();
             AttributeValues parentSourceValues = new AttributeValues();
             engine.getParentSourceValues(path, childMapping, parentSourceValues);
 
-            PenroseSearchResults sr = handler.getEngine().search(
+            PenroseSearchResults sr = sessionHandler.getEngine().search(
                     path,
                     parentSourceValues,
                     childMapping,
@@ -166,7 +166,7 @@ public class SearchHandler {
 
             while (sr.hasNext()) {
                 Entry child = (Entry)sr.next();
-                if (handler.getFilterTool().isValid(child, filter)) {
+                if (sessionHandler.getFilterTool().isValid(child, filter)) {
                     log.debug("Adding "+child.getDn()+" into path");
                     Map map = new HashMap();
                     map.put("dn", child.getDn());
@@ -230,7 +230,7 @@ public class SearchHandler {
         log.info("");
 
         SearchEvent beforeSearchEvent = new SearchEvent(this, SearchEvent.BEFORE_SEARCH, session, base);
-        handler.postEvent(base, beforeSearchEvent);
+        sessionHandler.postEvent(base, beforeSearchEvent);
 
         int rc;
 
@@ -247,7 +247,7 @@ public class SearchHandler {
 
         SearchEvent afterSearchEvent = new SearchEvent(this, SearchEvent.AFTER_SEARCH, session, base);
         afterSearchEvent.setReturnCode(rc);
-        handler.postEvent(base, afterSearchEvent);
+        sessionHandler.postEvent(base, afterSearchEvent);
 
         return rc;
     }
@@ -277,7 +277,7 @@ public class SearchHandler {
             set.add(new LDAPAttribute("vendorVersion", new String[] { Penrose.PRODUCT_NAME+" "+Penrose.PRODUCT_VERSION }));
 
             LDAPAttribute namingContexts = new LDAPAttribute("namingContexts");
-            for (Iterator i=handler.getPartitionManager().getPartitions().iterator(); i.hasNext(); ) {
+            for (Iterator i=sessionHandler.getPartitionManager().getPartitions().iterator(); i.hasNext(); ) {
                 Partition partition = (Partition)i.next();
                 for (Iterator j=partition.getRootEntryMappings().iterator(); j.hasNext(); ) {
                     EntryMapping entry = (EntryMapping)j.next();
@@ -319,17 +319,17 @@ public class SearchHandler {
         log.debug("Found base entry: " + baseEntry.getDn());
         EntryMapping entryMapping = baseEntry.getEntryMapping();
 
-        Engine engine = handler.getEngine();
+        Engine engine = sessionHandler.getEngine();
         AttributeValues parentSourceValues = new AttributeValues();
         engine.getParentSourceValues(path, entryMapping, parentSourceValues);
 
-        int rc = handler.getACLEngine().checkSearch(session, baseEntry);
+        int rc = sessionHandler.getACLEngine().checkSearch(session, baseEntry);
         if (rc != LDAPException.SUCCESS) return rc;
 
 		if (scope == LDAPConnection.SCOPE_BASE || scope == LDAPConnection.SCOPE_SUB) { // base or subtree
-			if (handler.getFilterTool().isValid(baseEntry, f)) {
+			if (sessionHandler.getFilterTool().isValid(baseEntry, f)) {
 
-                rc = handler.getACLEngine().checkRead(session, baseEntry);
+                rc = sessionHandler.getACLEngine().checkRead(session, baseEntry);
                 if (rc == LDAPException.SUCCESS) {
                     LDAPEntry ldapEntry = baseEntry.toLDAPEntry();
                     Entry.filterAttributes(ldapEntry, normalizedAttributeNames);
@@ -357,15 +357,15 @@ public class SearchHandler {
             PenroseSearchResults results,
             boolean first) throws Exception {
 
-        Partition partition = handler.getPartitionManager().getPartition(entryMapping);
+        Partition partition = sessionHandler.getPartitionManager().getPartition(entryMapping);
         Collection children = partition.getChildren(entryMapping);
 
         for (Iterator i = children.iterator(); i.hasNext();) {
             EntryMapping childMapping = (EntryMapping) i.next();
 
-            if (handler.getFilterTool().isValid(childMapping, filter)) {
+            if (sessionHandler.getFilterTool().isValid(childMapping, filter)) {
 
-                PenroseSearchResults sr = handler.getEngine().search(
+                PenroseSearchResults sr = sessionHandler.getEngine().search(
                         path,
                         parentSourceValues,
                         childMapping,
@@ -376,12 +376,12 @@ public class SearchHandler {
                 while (sr.hasNext()) {
                     Entry child = (Entry)sr.next();
 
-                    int rc = handler.getACLEngine().checkSearch(session, child);
+                    int rc = sessionHandler.getACLEngine().checkSearch(session, child);
                     if (rc != LDAPException.SUCCESS) continue;
 
-                    if (!handler.getFilterTool().isValid(child, filter)) continue;
+                    if (!sessionHandler.getFilterTool().isValid(child, filter)) continue;
 
-                    rc = handler.getACLEngine().checkRead(session, child);
+                    rc = sessionHandler.getACLEngine().checkRead(session, child);
                     if (rc != LDAPException.SUCCESS) continue;
 
                     //newParents.add(child);
@@ -405,7 +405,7 @@ public class SearchHandler {
                     newParentSourceValues.add(name, values);
                 }
 
-                Engine engine = handler.getEngine();
+                Engine engine = sessionHandler.getEngine();
                 Interpreter interpreter = engine.getInterpreterFactory().newInstance();
 
                 AttributeValues av = engine.computeAttributeValues(childMapping, interpreter);

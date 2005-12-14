@@ -25,6 +25,8 @@ import org.safehaus.penrose.session.PenroseSearchResults;
 import org.safehaus.penrose.engine.TransformEngine;
 import org.safehaus.penrose.util.Formatter;
 import org.safehaus.penrose.filter.Filter;
+import org.safehaus.penrose.filter.SubstringFilter;
+import org.safehaus.penrose.filter.SimpleFilter;
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.partition.FieldConfig;
 import org.safehaus.penrose.partition.SourceConfig;
@@ -976,4 +978,30 @@ public class JDBCAdapter extends Adapter {
         log.debug(Formatter.displaySeparator(width));
     }
 
+    public Filter convert(EntryMapping entryMapping, SubstringFilter filter) throws Exception {
+
+        String attributeName = filter.getAttribute();
+        Collection substrings = filter.getSubstrings();
+
+        AttributeMapping attributeMapping = entryMapping.getAttributeMapping(attributeName);
+        String variable = attributeMapping.getVariable();
+
+        if (variable == null) return null;
+
+        int index = variable.indexOf(".");
+        String sourceName = variable.substring(0, index);
+        String fieldName = variable.substring(index+1);
+
+        StringBuffer sb = new StringBuffer();
+        for (Iterator i=substrings.iterator(); i.hasNext(); ) {
+            String substring = (String)i.next();
+            if ("*".equals(substring)) {
+                sb.append("%");
+            } else {
+                sb.append(substring);
+            }
+        }
+
+        return new SimpleFilter(fieldName, "like", sb.toString());
+    }
 }

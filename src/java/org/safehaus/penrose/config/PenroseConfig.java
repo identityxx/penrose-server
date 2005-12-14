@@ -30,6 +30,7 @@ import org.safehaus.penrose.partition.PartitionConfig;
 import org.safehaus.penrose.schema.SchemaConfig;
 import org.safehaus.penrose.user.UserConfig;
 import org.safehaus.penrose.service.ServiceConfig;
+import org.safehaus.penrose.handler.SessionHandlerConfig;
 
 
 /**
@@ -52,6 +53,7 @@ public class PenroseConfig implements Cloneable {
     private CacheConfig entryCacheConfig;
     private CacheConfig sourceCacheConfig;
 
+    private SessionHandlerConfig sessionHandlerConfig;
     private EngineConfig engineConfig;
     private ConnectorConfig connectorConfig;
 
@@ -70,8 +72,8 @@ public class PenroseConfig implements Cloneable {
         entryCacheConfig.setCacheClass(EntryCacheManager.DEFAULT_CACHE_CLASS);
 
         connectorConfig = new ConnectorConfig();
-
         engineConfig = new EngineConfig();
+        sessionHandlerConfig = new SessionHandlerConfig();
 
         rootUserConfig = new UserConfig("uid=admin,ou=system", "secret");
     }
@@ -222,6 +224,7 @@ public class PenroseConfig implements Cloneable {
                 (interpreterConfig == null ? 0 : interpreterConfig.hashCode()) +
                 (entryCacheConfig == null ? 0 : entryCacheConfig.hashCode()) +
                 (sourceCacheConfig == null ? 0 : sourceCacheConfig.hashCode()) +
+                (sessionHandlerConfig == null ? 0 : sessionHandlerConfig.hashCode()) +
                 (engineConfig == null ? 0 : engineConfig.hashCode()) +
                 (connectorConfig == null ? 0 : connectorConfig.hashCode()) +
                 (rootUserConfig == null ? 0 : rootUserConfig.hashCode());
@@ -252,6 +255,7 @@ public class PenroseConfig implements Cloneable {
         if (!equals(entryCacheConfig, penroseConfig.entryCacheConfig)) return false;
         if (!equals(sourceCacheConfig, penroseConfig.sourceCacheConfig)) return false;
 
+        if (!equals(sessionHandlerConfig, penroseConfig.sessionHandlerConfig)) return false;
         if (!equals(engineConfig, penroseConfig.engineConfig)) return false;
         if (!equals(connectorConfig, penroseConfig.connectorConfig)) return false;
 
@@ -295,6 +299,7 @@ public class PenroseConfig implements Cloneable {
         entryCacheConfig.copy(entryCacheConfig);
         sourceCacheConfig.copy(sourceCacheConfig);
 
+        sessionHandlerConfig.copy(sessionHandlerConfig);
         engineConfig.copy(engineConfig);
         connectorConfig.copy(connectorConfig);
 
@@ -306,5 +311,13 @@ public class PenroseConfig implements Cloneable {
         penroseConfig.copy(this);
 
         return penroseConfig;
+    }
+
+    public SessionHandlerConfig getSessionHandlerConfig() {
+        return sessionHandlerConfig;
+    }
+
+    public void setSessionHandlerConfig(SessionHandlerConfig sessionHandlerConfig) {
+        this.sessionHandlerConfig = sessionHandlerConfig;
     }
 }

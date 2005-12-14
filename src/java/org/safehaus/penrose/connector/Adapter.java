@@ -20,6 +20,7 @@ package org.safehaus.penrose.connector;
 
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.filter.Filter;
+import org.safehaus.penrose.filter.SubstringFilter;
 import org.safehaus.penrose.session.PenroseSearchResults;
 import org.safehaus.penrose.session.PenroseSearchResults;
 import org.safehaus.penrose.partition.SourceConfig;
@@ -125,5 +126,18 @@ public abstract class Adapter {
 
     public String getConnectionName() {
         return connection.getConnectionName();
+    }
+
+    public Filter convert(EntryMapping entryMapping, Filter filter) throws Exception {
+
+        if (filter instanceof SubstringFilter) {
+            return convert(entryMapping, (SubstringFilter)filter);
+        } else {
+            return filter;
+        }
+    }
+
+    public Filter convert(EntryMapping entryMapping, SubstringFilter filter) throws Exception {
+        return filter;
     }
 }

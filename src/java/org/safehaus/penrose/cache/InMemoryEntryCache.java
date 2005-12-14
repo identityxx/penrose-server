@@ -107,10 +107,15 @@ public class InMemoryEntryCache extends EntryCache {
 
     public Collection search(Filter filter) throws Exception {
 
+        Collection results = new ArrayList();
+
         String key = filter == null ? "" : filter.toString();
         //log.debug("Getting entry filter cache ("+queryMap.size()+"): "+key);
 
         Collection rdns = (Collection)queryMap.get(key);
+        if (rdns == null) return results;
+
+        results.addAll(rdns);
         Date date = (Date)queryExpirationMap.get(key);
 
         if (date == null || date.getTime() <= System.currentTimeMillis()) {
@@ -119,7 +124,7 @@ public class InMemoryEntryCache extends EntryCache {
             return null;
         }
 
-        return rdns;
+        return results;
     }
 
     public void put(Filter filter, Collection rdns) throws Exception {

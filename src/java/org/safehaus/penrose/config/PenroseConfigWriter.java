@@ -35,6 +35,7 @@ import org.safehaus.penrose.schema.SchemaConfig;
 import org.safehaus.penrose.partition.PartitionConfig;
 import org.safehaus.penrose.user.UserConfig;
 import org.safehaus.penrose.service.ServiceConfig;
+import org.safehaus.penrose.handler.SessionHandlerConfig;
 import org.apache.log4j.Logger;
 
 /**
@@ -119,6 +120,11 @@ public class PenroseConfigWriter {
             Element sourceCache = new DefaultElement("source-cache");
             addElements(sourceCache, penroseConfig.getSourceCacheConfig());
             element.add(sourceCache);
+        }
+
+        if (penroseConfig.getSessionHandlerConfig() != null) {
+            SessionHandlerConfig sessionHandlerConfig = penroseConfig.getSessionHandlerConfig();
+            element.add(toElement(sessionHandlerConfig));
         }
 
         if (penroseConfig.getEngineConfig() != null) {
@@ -271,6 +277,35 @@ public class PenroseConfigWriter {
         }
 
     	return element;
+    }
+
+    public Element toElement(SessionHandlerConfig sessionHandlerConfig) {
+    	Element element = new DefaultElement("session-sessionHandler");
+
+        if (sessionHandlerConfig.getDescription() != null && !"".equals(sessionHandlerConfig.getDescription())) {
+            Element description = new DefaultElement("description");
+            description.add(new DefaultText(sessionHandlerConfig.getDescription()));
+            element.add(description);
+        }
+
+        for (Iterator i = sessionHandlerConfig.getParameterNames().iterator(); i.hasNext();) {
+            String name = (String)i.next();
+            String value = (String)sessionHandlerConfig.getParameter(name);
+
+            Element parameter = new DefaultElement("parameter");
+
+            Element paramName = new DefaultElement("param-name");
+            paramName.add(new DefaultText(name));
+            parameter.add(paramName);
+
+            Element paramValue = new DefaultElement("param-value");
+            paramValue.add(new DefaultText(value));
+            parameter.add(paramValue);
+
+            element.add(parameter);
+        }
+
+        return element;
     }
 
     public Element toElement(EngineConfig engineConfig) {

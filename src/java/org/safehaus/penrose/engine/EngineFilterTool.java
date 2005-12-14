@@ -20,6 +20,12 @@ package org.safehaus.penrose.engine;
 import org.safehaus.penrose.filter.*;
 import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.mapping.*;
+import org.safehaus.penrose.connector.ConnectionManager;
+import org.safehaus.penrose.connector.Connection;
+import org.safehaus.penrose.connector.Adapter;
+import org.safehaus.penrose.partition.PartitionManager;
+import org.safehaus.penrose.partition.Partition;
+import org.safehaus.penrose.partition.SourceConfig;
 import org.apache.log4j.Logger;
 
 import java.util.Iterator;
@@ -99,13 +105,13 @@ public class EngineFilterTool {
         return newFilter;
     }
 
-    public Filter toSourceFilter(AttributeValues parentValues, EntryMapping entry, SourceMapping sourceMapping, SubstringFilter filter)
+    public Filter toSourceFilter(AttributeValues parentValues, EntryMapping entryMapping, SourceMapping sourceMapping, SubstringFilter filter)
             throws Exception {
 
         String attributeName = filter.getAttribute();
         Collection substrings = filter.getSubstrings();
 
-        AttributeMapping attributeMapping = entry.getAttributeMapping(attributeName);
+        AttributeMapping attributeMapping = entryMapping.getAttributeMapping(attributeName);
         String variable = attributeMapping.getVariable();
         log.debug("variable: "+variable);
 
@@ -121,6 +127,19 @@ public class EngineFilterTool {
 
         FieldMapping fieldMapping = sourceMapping.getFieldMapping(fieldName);
 
+        PartitionManager partitionManager = engine.getPartitionManager();
+        Partition partition = partitionManager.getPartition(sourceMapping);
+
+        SourceConfig sourceConfig = partition.getSourceConfig(sourceName);
+
+        ConnectionManager connectionManager = engine.getConnectionManager();
+        Connection connection = connectionManager.getConnection(sourceConfig.getConnectionName());
+
+        Adapter adapter = connection.getAdapter();
+        Filter newFilter = adapter.convert(entryMapping, filter);
+
+        return newFilter;
+/*
         StringBuffer sb = new StringBuffer();
         for (Iterator i=substrings.iterator(); i.hasNext(); ) {
             String substring = (String)i.next();
@@ -132,6 +151,7 @@ public class EngineFilterTool {
         }
 
         return new SimpleFilter(fieldMapping.getName(), "like", sb.toString());
+*/
     }
 
     public Filter toSourceFilter(AttributeValues parentValues, EntryMapping entry, SourceMapping sourceMapping, NotFilter filter)

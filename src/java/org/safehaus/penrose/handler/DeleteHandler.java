@@ -35,10 +35,10 @@ public class DeleteHandler {
 
     Logger log = Logger.getLogger(getClass());
 
-    private Handler handler;
+    private SessionHandler sessionHandler;
 
-    public DeleteHandler(Handler handler) throws Exception {
-        this.handler = handler;
+    public DeleteHandler(SessionHandler sessionHandler) throws Exception {
+        this.sessionHandler = sessionHandler;
     }
 
     public int delete(PenroseSession session, String dn) throws Exception {
@@ -49,13 +49,13 @@ public class DeleteHandler {
         log.info("");
 
         DeleteEvent beforeDeleteEvent = new DeleteEvent(this, DeleteEvent.BEFORE_DELETE, session, dn);
-        handler.postEvent(dn, beforeDeleteEvent);
+        sessionHandler.postEvent(dn, beforeDeleteEvent);
 
         int rc = performDelete(session, dn);
 
         DeleteEvent afterDeleteEvent = new DeleteEvent(this, DeleteEvent.AFTER_DELETE, session, dn);
         afterDeleteEvent.setReturnCode(rc);
-        handler.postEvent(dn, afterDeleteEvent);
+        sessionHandler.postEvent(dn, afterDeleteEvent);
 
         return rc;
     }
@@ -67,16 +67,16 @@ public class DeleteHandler {
         Entry entry = getHandler().getSearchHandler().find(session, dn);
         if (entry == null) return LDAPException.NO_SUCH_OBJECT;
 
-        int rc = handler.getACLEngine().checkDelete(session, entry);
+        int rc = sessionHandler.getACLEngine().checkDelete(session, entry);
         if (rc != LDAPException.SUCCESS) return rc;
 
         log.debug("Deleting entry "+dn);
 
         EntryMapping entryMapping = entry.getEntryMapping();
-        Partition partition = handler.getPartitionManager().getPartition(entryMapping);
+        Partition partition = sessionHandler.getPartitionManager().getPartition(entryMapping);
 
         if (partition.isDynamic(entryMapping)) {
-	        return handler.getEngine().delete(entry);
+	        return sessionHandler.getEngine().delete(entry);
 
         } else {
             return deleteStaticEntry(entryMapping);
@@ -88,7 +88,7 @@ public class DeleteHandler {
 
         log.debug("Deleting static entry "+entryMapping.getDn());
 
-        Partition partition = handler.getPartitionManager().getPartitionByDn(entryMapping.getDn());
+        Partition partition = sessionHandler.getPartitionManager().getPartitionByDn(entryMapping.getDn());
         if (partition == null) return LDAPException.NO_SUCH_OBJECT;
 
         // can't delete no leaf
@@ -100,11 +100,11 @@ public class DeleteHandler {
         return LDAPException.SUCCESS;
     }
 
-    public Handler getHandler() {
-        return handler;
+    public SessionHandler getHandler() {
+        return sessionHandler;
     }
 
-    public void getHandler(Handler handler) {
-        this.handler = handler;
+    public void getHandler(SessionHandler sessionHandler) {
+        this.sessionHandler = sessionHandler;
     }
 }

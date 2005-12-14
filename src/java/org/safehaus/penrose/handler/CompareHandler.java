@@ -34,10 +34,10 @@ public class CompareHandler {
 
     Logger log = Logger.getLogger(getClass());
 
-    private Handler handler;
+    private SessionHandler sessionHandler;
 
-    public CompareHandler(Handler handler) throws Exception {
-        this.handler = handler;
+    public CompareHandler(SessionHandler sessionHandler) throws Exception {
+        this.sessionHandler = sessionHandler;
     }
     
     public int compare(PenroseSession session, String dn, String attributeName,
@@ -54,12 +54,12 @@ public class CompareHandler {
         List attributeNames = new ArrayList();
         attributeNames.add(attributeName);
 
-        Entry entry = handler.getSearchHandler().find(session, dn);
+        Entry entry = sessionHandler.getSearchHandler().find(session, dn);
 
         AttributeValues attributeValues = entry.getAttributeValues();
         Collection values = attributeValues.get(attributeName);
 
-        AttributeType attributeType = handler.getSchemaManager().getAttributeType(attributeName);
+        AttributeType attributeType = sessionHandler.getSchemaManager().getAttributeType(attributeName);
 
         String equality = attributeType == null ? null : attributeType.getEquality();
         EqualityMatchingRule equalityMatchingRule = EqualityMatchingRule.getInstance(equality);
@@ -77,11 +77,11 @@ public class CompareHandler {
         return LDAPException.COMPARE_FALSE;
     }
 
-    public Handler getEngine() {
-        return handler;
+    public SessionHandler getEngine() {
+        return sessionHandler;
     }
 
-    public void setEngine(Handler handler) {
-        this.handler = handler;
+    public void setEngine(SessionHandler sessionHandler) {
+        this.sessionHandler = sessionHandler;
     }
 }

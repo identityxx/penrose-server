@@ -38,10 +38,10 @@ public class ModRdnHandler {
 
     Logger log = Logger.getLogger(getClass());
 
-    public Handler handler;
+    public SessionHandler sessionHandler;
 
-	public ModRdnHandler(Handler handler) throws Exception {
-        this.handler = handler;
+	public ModRdnHandler(SessionHandler sessionHandler) throws Exception {
+        this.sessionHandler = sessionHandler;
 	}
 
 	public int modrdn(PenroseSession session, String dn, String newRdn)
@@ -60,7 +60,7 @@ public class ModRdnHandler {
         String parentDn = Entry.getParentDn(dn);
         String newDn = newRdn+","+parentDn;
 
-        handler.getSearchHandler().search(
+        sessionHandler.getSearchHandler().search(
                 session,
                 newDn,
                 LDAPConnection.SCOPE_SUB,
@@ -81,14 +81,14 @@ public class ModRdnHandler {
 
 		String ndn = LDAPDN.normalize(dn);
 
-        Entry entry = handler.getSearchHandler().find(session, ndn);
+        Entry entry = sessionHandler.getSearchHandler().find(session, ndn);
         if (entry == null) return LDAPException.NO_SUCH_OBJECT;
 
-        int rc = handler.getACLEngine().checkModify(session, entry);
+        int rc = sessionHandler.getACLEngine().checkModify(session, entry);
         if (rc != LDAPException.SUCCESS) return rc;
 
         EntryMapping entryMapping = entry.getEntryMapping();
-        Partition partition = handler.getPartitionManager().getPartition(entryMapping);
+        Partition partition = sessionHandler.getPartitionManager().getPartition(entryMapping);
         if (partition.isDynamic(entryMapping)) {
             return modRdnVirtualEntry(session, entry, newRdn);
 
@@ -102,7 +102,7 @@ public class ModRdnHandler {
             String newRdn)
 			throws Exception {
 
-        Partition partition = handler.getPartitionManager().getPartitionByDn(entry.getDn());
+        Partition partition = sessionHandler.getPartitionManager().getPartitionByDn(entry.getDn());
         partition.renameEntryMapping(entry, newRdn);
 
         return LDAPException.SUCCESS;
@@ -114,6 +114,6 @@ public class ModRdnHandler {
 			String newRdn)
             throws Exception {
 
-        return handler.getEngine().modrdn(entry, newRdn);
+        return sessionHandler.getEngine().modrdn(entry, newRdn);
     }
 }

@@ -36,10 +36,10 @@ public class AddHandler {
 
     Logger log = Logger.getLogger(getClass());
 
-    private Handler handler;
+    private SessionHandler sessionHandler;
 
-    public AddHandler(Handler handler) throws Exception {
-        this.handler = handler;
+    public AddHandler(SessionHandler sessionHandler) throws Exception {
+        this.sessionHandler = sessionHandler;
     }
 
     /**
@@ -62,11 +62,11 @@ public class AddHandler {
         log.info("");
 
         AddEvent beforeModifyEvent = new AddEvent(this, AddEvent.BEFORE_ADD, session, entry);
-        handler.postEvent(entry.getDN(), beforeModifyEvent);
+        sessionHandler.postEvent(entry.getDN(), beforeModifyEvent);
 
         int rc = performAdd(session, entry);
 
-        handler.getSearchHandler().search(
+        sessionHandler.getSearchHandler().search(
                 session,
                 entry.getDN(),
                 LDAPConnection.SCOPE_SUB,
@@ -78,7 +78,7 @@ public class AddHandler {
 
         AddEvent afterModifyEvent = new AddEvent(this, AddEvent.AFTER_ADD, session, entry);
         afterModifyEvent.setReturnCode(rc);
-        handler.postEvent(entry.getDN(), afterModifyEvent);
+        sessionHandler.postEvent(entry.getDN(), afterModifyEvent);
 
         return rc;
     }
@@ -99,13 +99,13 @@ public class AddHandler {
         Entry parent = getHandler().getSearchHandler().find(session, parentDn);
         if (parent == null) return LDAPException.NO_SUCH_OBJECT;
 
-        int rc = handler.getACLEngine().checkAdd(session, parent);
+        int rc = sessionHandler.getACLEngine().checkAdd(session, parent);
         if (rc != LDAPException.SUCCESS) return rc;
 
         log.debug("Adding entry under "+parent.getDn());
 
         EntryMapping parentMapping = parent.getEntryMapping();
-        Partition partition = handler.getPartitionManager().getPartition(parentMapping);
+        Partition partition = sessionHandler.getPartitionManager().getPartition(parentMapping);
         Collection children = partition.getChildren(parentMapping);
 
         AttributeValues values = new AttributeValues();
@@ -129,18 +129,18 @@ public class AddHandler {
             //log.debug("Checking mapping "+entryMapping.getDn()+": "+dynamic);
             if (!dynamic) continue;
 
-            return handler.getEngine().add(parent, entryMapping, values);
+            return sessionHandler.getEngine().add(parent, entryMapping, values);
         }
 
         return addStaticEntry(parentMapping, values, dn);
     }
 
-    public Handler getHandler() {
-        return handler;
+    public SessionHandler getHandler() {
+        return sessionHandler;
     }
 
-    public void setHandler(Handler handler) {
-        this.handler = handler;
+    public void setHandler(SessionHandler sessionHandler) {
+        this.sessionHandler = sessionHandler;
     }
 
     public int addStaticEntry(EntryMapping parent, AttributeValues values, String dn) throws Exception {
@@ -157,7 +157,7 @@ public class AddHandler {
             newEntry = new EntryMapping(rdn.toString(), parent);
         }
 
-        Partition partition = handler.getPartitionManager().getPartitionByDn(dn);
+        Partition partition = sessionHandler.getPartitionManager().getPartitionByDn(dn);
         if (partition == null) return LDAPException.NO_SUCH_OBJECT;
 
         partition.addEntryMapping(newEntry);

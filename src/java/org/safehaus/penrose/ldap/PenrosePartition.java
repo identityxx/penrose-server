@@ -27,10 +27,7 @@ import org.safehaus.penrose.session.PenroseSession;
 import org.safehaus.penrose.session.PenroseSearchResults;
 import org.safehaus.penrose.session.PenroseSearchControls;
 
-import javax.naming.Name;
-import javax.naming.NamingException;
-import javax.naming.NamingEnumeration;
-import javax.naming.NameNotFoundException;
+import javax.naming.*;
 import javax.naming.directory.*;
 import java.util.*;
 import java.io.File;
@@ -68,6 +65,7 @@ public class PenrosePartition extends AbstractDirectoryPartition {
 
         try {
             PenroseSession session = penrose.newSession();
+            if (session == null) throw new ServiceUnavailableException();
 
             int rc = session.delete(dn.toString());
 
@@ -106,6 +104,7 @@ public class PenrosePartition extends AbstractDirectoryPartition {
             LDAPEntry ldapEntry = new LDAPEntry(upName, attributeSet);
 
             PenroseSession session = penrose.newSession();
+            if (session == null) throw new ServiceUnavailableException();
 
             int rc = session.add(ldapEntry);
 
@@ -149,6 +148,7 @@ public class PenrosePartition extends AbstractDirectoryPartition {
             }
 
             PenroseSession session = penrose.newSession();
+            if (session == null) throw new ServiceUnavailableException();
 
             int rc = session.modify(dn.toString(), modifications);
 
@@ -207,6 +207,7 @@ public class PenrosePartition extends AbstractDirectoryPartition {
             }
 
             PenroseSession session = penrose.newSession();
+            if (session == null) throw new ServiceUnavailableException();
 
             int rc = session.modify(dn.toString(), modifications);
 
@@ -228,6 +229,7 @@ public class PenrosePartition extends AbstractDirectoryPartition {
 
         try {
             PenroseSession session = penrose.newSession();
+            if (session == null) throw new ServiceUnavailableException();
 
             PenroseSearchControls sc = new PenroseSearchControls();
             sc.setScope(PenroseSearchControls.SCOPE_ONE);
@@ -274,6 +276,7 @@ public class PenrosePartition extends AbstractDirectoryPartition {
 
         try {
             PenroseSession session = penrose.newSession();
+            if (session == null) throw new ServiceUnavailableException();
 
             PenroseSearchControls sc = new PenroseSearchControls();
             sc.setScope(searchControls.getSearchScope());
@@ -319,6 +322,7 @@ public class PenrosePartition extends AbstractDirectoryPartition {
 
         try {
             PenroseSession session = penrose.newSession();
+            if (session == null) throw new ServiceUnavailableException();
 
             PenroseSearchControls sc = new PenroseSearchControls();
             sc.setScope(PenroseSearchControls.SCOPE_BASE);
@@ -382,6 +386,7 @@ public class PenrosePartition extends AbstractDirectoryPartition {
 
         try {
             PenroseSession session = penrose.newSession();
+            if (session == null) throw new ServiceUnavailableException();
 
             PenroseSearchControls sc = new PenroseSearchControls();
             sc.setScope(PenroseSearchControls.SCOPE_BASE);

@@ -22,7 +22,7 @@ import org.safehaus.penrose.mapping.EntryMapping;
 import org.safehaus.penrose.session.PenroseSession;
 import org.safehaus.penrose.session.PenroseSession;
 import org.safehaus.penrose.partition.Partition;
-import org.safehaus.penrose.handler.Handler;
+import org.safehaus.penrose.handler.SessionHandler;
 import org.ietf.ldap.LDAPException;
 import org.ietf.ldap.LDAPEntry;
 import org.ietf.ldap.LDAPAttributeSet;
@@ -38,10 +38,10 @@ public class ACLEngine {
 
     public Logger log = Logger.getLogger(getClass());
 
-    public Handler handler;
+    public SessionHandler sessionHandler;
 
-    public ACLEngine(Handler penrose) {
-        this.handler = penrose;
+    public ACLEngine(SessionHandler sessionHandler) {
+        this.sessionHandler = sessionHandler;
     }
 
     public void addPermission(Set set, String permission) {
@@ -76,7 +76,7 @@ public class ACLEngine {
             if (aci.getPermission().indexOf(permission) < 0) continue;
 
             //log.debug("   - "+aci);
-            String subject = handler.getSchemaManager().normalize(aci.getSubject());
+            String subject = sessionHandler.getSchemaManager().normalize(aci.getSubject());
 
             if (subject.equals(ACI.SUBJECT_USER) && aci.getDn().equals(bindDn)) {
                 return aci.getAction().equals(ACI.ACTION_GRANT);
@@ -96,7 +96,7 @@ public class ACLEngine {
             }
         }
 
-        Partition partition = handler.getPartitionManager().getPartitionByDn(entry.getDn());
+        Partition partition = sessionHandler.getPartitionManager().getPartitionByDn(entry.getDn());
         if (partition == null) return false;
 
         entry = partition.getParent(entry);
@@ -120,13 +120,13 @@ public class ACLEngine {
                 return rc;
             }
 
-            String rootDn = handler.getSchemaManager().normalize(handler.getRootUserConfig().getDn());
-            String bindDn = handler.getSchemaManager().normalize(session.getBindDn());
+            String rootDn = sessionHandler.getSchemaManager().normalize(sessionHandler.getRootUserConfig().getDn());
+            String bindDn = sessionHandler.getSchemaManager().normalize(session.getBindDn());
             if (rootDn != null && rootDn.equals(bindDn)) {
                 return rc;
             }
 
-            String targetDn = handler.getSchemaManager().normalize(entry.getDn());
+            String targetDn = sessionHandler.getSchemaManager().normalize(entry.getDn());
             boolean result = getObjectPermission(bindDn, targetDn, entry, ACI.SCOPE_OBJECT, permission);
             //log.debug("Result: "+result);
 
@@ -199,7 +199,7 @@ public class ACLEngine {
             if (aci.getPermission().indexOf(ACI.PERMISSION_READ) < 0) continue;
 
             //log.debug("   - "+aci);
-            String subject = handler.getSchemaManager().normalize(aci.getSubject());
+            String subject = sessionHandler.getSchemaManager().normalize(aci.getSubject());
 
             if (subject.equals(bindDn)) {
                 addAttributes(aci, grants, denies);
@@ -219,7 +219,7 @@ public class ACLEngine {
             }
         }
 
-        Partition partition = handler.getPartitionManager().getPartitionByDn(entry.getDn());
+        Partition partition = sessionHandler.getPartitionManager().getPartitionByDn(entry.getDn());
         if (partition == null) return;
 
         entry = partition.getParent(entry);
@@ -235,13 +235,13 @@ public class ACLEngine {
             Set denies
             ) throws Exception {
 
-        String rootDn = handler.getSchemaManager().normalize(handler.getRootUserConfig().getDn());
+        String rootDn = sessionHandler.getSchemaManager().normalize(sessionHandler.getRootUserConfig().getDn());
     	if (rootDn.equals(bindDn)) {
             grants.add("*");
             return;
         }
 
-        String targetDn = handler.getSchemaManager().normalize(entry.getDn());
+        String targetDn = sessionHandler.getSchemaManager().normalize(entry.getDn());
 
         getReadableAttributes(bindDn, targetDn, entry.getEntryMapping(), null, grants, denies);
 
@@ -261,7 +261,7 @@ public class ACLEngine {
             LDAPEntry ldapEntry)
             throws Exception {
 
-        String bindDn = handler.getSchemaManager().normalize(session.getBindDn());
+        String bindDn = sessionHandler.getSchemaManager().normalize(session.getBindDn());
 
         Set grants = new HashSet();
         Set denies = new HashSet();

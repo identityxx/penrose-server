@@ -37,10 +37,10 @@ public class ModifyHandler {
 
     Logger log = Logger.getLogger(getClass());
 
-    private Handler handler;
+    private SessionHandler sessionHandler;
 
-    public ModifyHandler(Handler handler) throws Exception {
-        this.handler = handler;
+    public ModifyHandler(SessionHandler sessionHandler) throws Exception {
+        this.sessionHandler = sessionHandler;
     }
 
     public int modify(PenroseSession session, String dn, Collection modifications)
@@ -83,11 +83,11 @@ public class ModifyHandler {
         log.info("");
 
         ModifyEvent beforeModifyEvent = new ModifyEvent(this, ModifyEvent.BEFORE_MODIFY, session, dn, modifications);
-        handler.postEvent(dn, beforeModifyEvent);
+        sessionHandler.postEvent(dn, beforeModifyEvent);
 
         int rc = performModify(session, dn, modifications);
 
-        handler.getSearchHandler().search(
+        sessionHandler.getSearchHandler().search(
                 session,
                 dn,
                 LDAPConnection.SCOPE_SUB,
@@ -99,7 +99,7 @@ public class ModifyHandler {
 
         ModifyEvent afterModifyEvent = new ModifyEvent(this, ModifyEvent.AFTER_MODIFY, session, dn, modifications);
         afterModifyEvent.setReturnCode(rc);
-        handler.postEvent(dn, afterModifyEvent);
+        sessionHandler.postEvent(dn, afterModifyEvent);
 
         return rc;
     }
@@ -109,14 +109,14 @@ public class ModifyHandler {
 
 		String ndn = LDAPDN.normalize(dn);
 
-        Entry entry = handler.getSearchHandler().find(session, ndn);
+        Entry entry = sessionHandler.getSearchHandler().find(session, ndn);
         if (entry == null) return LDAPException.NO_SUCH_OBJECT;
 
-        int rc = handler.getACLEngine().checkModify(session, entry);
+        int rc = sessionHandler.getACLEngine().checkModify(session, entry);
         if (rc != LDAPException.SUCCESS) return rc;
 
         EntryMapping entryMapping = entry.getEntryMapping();
-        Partition partition = handler.getPartitionManager().getPartition(entryMapping);
+        Partition partition = sessionHandler.getPartitionManager().getPartition(entryMapping);
         if (partition.isDynamic(entryMapping)) {
             return modifyVirtualEntry(session, entry, modifications);
 
@@ -177,7 +177,7 @@ public class ModifyHandler {
 		log.debug("--- perform modification:");
 		AttributeValues newValues = new AttributeValues(oldValues);
 
-		Collection objectClasses = handler.getSchemaManager().getObjectClasses(entryMapping);
+		Collection objectClasses = sessionHandler.getSchemaManager().getObjectClasses(entryMapping);
 		//log.debug("Object Classes: " + objectClasses);
 
 		for (Iterator i = modifications.iterator(); i.hasNext();) {
@@ -258,7 +258,7 @@ public class ModifyHandler {
 		log.debug("New entry:");
 		log.debug("\n"+newEntry.toString());
 
-        return handler.getEngine().modify(entry, newValues);
+        return sessionHandler.getEngine().modify(entry, newValues);
 	}
 
 
@@ -337,7 +337,7 @@ public class ModifyHandler {
 		AttributeMapping attributeMapping = entry.getAttributeMapping(name);
 		if (attributeMapping == null) return;
 
-		Interpreter interpreter = handler.getInterpreterFactory().newInstance();
+		Interpreter interpreter = sessionHandler.getInterpreterFactory().newInstance();
 
 		String attrValue = (String)interpreter.eval(attributeMapping);
 		if (attrValue.equals(value)) entry.removeAttributeMapping(name);
@@ -345,11 +345,11 @@ public class ModifyHandler {
         interpreter.clear();
 	}
 
-    public Handler getHandler() {
-        return handler;
+    public SessionHandler getHandler() {
+        return sessionHandler;
     }
 
-    public void setHandler(Handler handler) {
-        this.handler = handler;
+    public void setHandler(SessionHandler sessionHandler) {
+        this.sessionHandler = sessionHandler;
     }
 }

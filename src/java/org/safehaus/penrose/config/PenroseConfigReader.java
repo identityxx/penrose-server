@@ -61,38 +61,7 @@ public class PenroseConfigReader {
         digester.setClassLoader(cl);
 		digester.push(penroseConfig);
 		digester.parse(reader);
-/*
-        if (penroseConfig.getInterpreterConfig() == null) {
-            InterpreterConfig interpreterConfig = new InterpreterConfig();
-            penroseConfig.setInterpreterConfig(interpreterConfig);
-        }
 
-        CacheConfig sourceCacheConfig = penroseConfig.getSourceCacheConfig();
-        if (sourceCacheConfig == null) {
-            sourceCacheConfig = new CacheConfig();
-            sourceCacheConfig.setCacheClass(ConnectorConfig.DEFAULT_CACHE_CLASS);
-            penroseConfig.setSourceCacheConfig(sourceCacheConfig);
-        }
-        sourceCacheConfig.setName(ConnectorConfig.DEFAULT_CACHE_NAME);
-
-        CacheConfig entryCacheConfig = penroseConfig.getEntryCacheConfig();
-        if (penroseConfig.getEntryCacheConfig() == null) {
-            entryCacheConfig = new CacheConfig();
-            entryCacheConfig.setCacheClass(EngineConfig.DEFAULT_CACHE_CLASS);
-            penroseConfig.setEntryCacheConfig(entryCacheConfig);
-        }
-        entryCacheConfig.setName(EngineConfig.DEFAULT_CACHE_NAME);
-
-        if (penroseConfig.getConnectorConfig() == null) {
-            ConnectorConfig connectorConfig = new ConnectorConfig();
-            penroseConfig.setConnectorConfig(connectorConfig);
-        }
-
-        if (penroseConfig.getEngineConfig() == null) {
-            EngineConfig engineConfig = new EngineConfig();
-            penroseConfig.setEngineConfig(engineConfig);
-        }
-*/
         return penroseConfig;
 	}
 }

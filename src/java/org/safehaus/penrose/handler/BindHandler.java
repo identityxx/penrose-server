@@ -33,10 +33,10 @@ public class BindHandler {
 
     Logger log = Logger.getLogger(getClass());
 
-    private Handler handler;
+    private SessionHandler sessionHandler;
 
-    public BindHandler(Handler handler) throws Exception {
-        this.handler = handler;
+    public BindHandler(SessionHandler sessionHandler) throws Exception {
+        this.sessionHandler = sessionHandler;
     }
 
     public int bind(PenroseSession session, String dn, String password) throws Exception {
@@ -45,13 +45,13 @@ public class BindHandler {
         log.info(" - DN      : "+dn);
 
         BindEvent beforeBindEvent = new BindEvent(this, BindEvent.BEFORE_BIND, session, dn, password);
-        handler.postEvent(dn, beforeBindEvent);
+        sessionHandler.postEvent(dn, beforeBindEvent);
 
         int rc = performBind(session, dn, password);
 
         BindEvent afterBindEvent = new BindEvent(this, BindEvent.AFTER_BIND, session, dn, password);
         afterBindEvent.setReturnCode(rc);
-        handler.postEvent(dn, afterBindEvent);
+        sessionHandler.postEvent(dn, afterBindEvent);
 
         return rc;
     }
@@ -60,7 +60,7 @@ public class BindHandler {
 
         String ndn = LDAPDN.normalize(dn);
 
-        if (handler.getRootUserConfig().getDn() != null && ndn.equals(LDAPDN.normalize(handler.getRootUserConfig().getDn()))) { // bind as root
+        if (sessionHandler.getRootUserConfig().getDn() != null && ndn.equals(LDAPDN.normalize(sessionHandler.getRootUserConfig().getDn()))) { // bind as root
 
             int rc = bindAsRoot(password);
             if (rc != LDAPException.SUCCESS) return rc;
@@ -92,7 +92,7 @@ public class BindHandler {
     public int bindAsRoot(String password) throws Exception {
         log.debug("Comparing root's password");
 
-        if (!PasswordUtil.comparePassword(password, handler.getRootUserConfig().getPassword())) {
+        if (!PasswordUtil.comparePassword(password, sessionHandler.getRootUserConfig().getPassword())) {
             log.debug("Password doesn't match => BIND FAILED");
             return LDAPException.INVALID_CREDENTIALS;
         }
@@ -103,7 +103,7 @@ public class BindHandler {
     public int bindAsUser(PenroseSession session, String dn, String password) throws Exception {
         log.debug("Searching for "+dn);
 
-        Entry entry = handler.getSearchHandler().find(session, dn);
+        Entry entry = sessionHandler.getSearchHandler().find(session, dn);
         if (entry == null) {
             log.debug("Entry "+dn+" not found => BIND FAILED");
             return LDAPException.INVALID_CREDENTIALS;
@@ -111,14 +111,14 @@ public class BindHandler {
 
         log.debug("Found "+entry.getDn());
 
-        return handler.getEngine().bind(entry, password);
+        return sessionHandler.getEngine().bind(entry, password);
     }
 
-    public Handler getHandler() {
-        return handler;
+    public SessionHandler getHandler() {
+        return sessionHandler;
     }
 
-    public void setHandler(Handler handler) {
-        this.handler = handler;
+    public void setHandler(SessionHandler sessionHandler) {
+        this.sessionHandler = sessionHandler;
     }
 }

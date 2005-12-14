@@ -28,7 +28,7 @@ import org.safehaus.penrose.engine.Engine;
 import org.safehaus.penrose.connector.ConnectionManager;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.session.PenroseSearchResults;
-import org.safehaus.penrose.handler.Handler;
+import org.safehaus.penrose.handler.SessionHandler;
 import org.apache.log4j.Logger;
 import org.ietf.ldap.LDAPConnection;
 import org.ietf.ldap.LDAPSearchConstraints;
@@ -190,7 +190,7 @@ public class EntryCacheManager {
 
     public void load(Penrose penrose, Partition partition) throws Exception {
 
-        Handler handler = penrose.getHandler();
+        SessionHandler sessionHandler = penrose.getSessionHandler();
         Collection entryDefinitions = partition.getRootEntryMappings();
 
         for (Iterator i=entryDefinitions.iterator(); i.hasNext(); ) {
@@ -198,7 +198,7 @@ public class EntryCacheManager {
 
             log.debug("Loading entries under "+entryMapping.getDn());
 
-            PenroseSearchResults sr = handler.search(
+            PenroseSearchResults sr = sessionHandler.search(
                     null,
                     entryMapping.getDn(),
                     LDAPConnection.SCOPE_SUB,

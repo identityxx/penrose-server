@@ -27,6 +27,8 @@ import org.ietf.ldap.LDAPException;
 import org.safehaus.penrose.util.PasswordUtil;
 import org.safehaus.penrose.util.Formatter;
 import org.safehaus.penrose.filter.Filter;
+import org.safehaus.penrose.filter.SubstringFilter;
+import org.safehaus.penrose.filter.SimpleFilter;
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.session.PenroseSearchResults;
 import org.safehaus.penrose.partition.FieldConfig;
@@ -155,7 +157,7 @@ public class JNDIAdapter extends Adapter {
         String ldapBase = sourceConfig.getParameter(BASE_DN);
         if ("".equals(ldapBase)) {
             ldapBase = suffix;
-        } else {
+        } else if (!"".equals(suffix)) {
             ldapBase = ldapBase+","+suffix;
         }
 
@@ -545,6 +547,11 @@ public class JNDIAdapter extends Adapter {
         try {
             ctx = (DirContext)openConnection();
             ctx.modifyAttributes(dn, mods);
+
+        } catch (Exception e) {
+            log.debug(e.getMessage(), e);
+            throw e;
+
         } finally {
             if (ctx != null) try { ctx.close(); } catch (Exception e) {}
         }
@@ -713,6 +720,23 @@ public class JNDIAdapter extends Adapter {
         }
 
         return results;
+    }
+
+    public Filter convert(EntryMapping entryMapping, SubstringFilter filter) throws Exception {
+
+        String attributeName = filter.getAttribute();
+        Collection substrings = filter.getSubstrings();
+
+        AttributeMapping attributeMapping = entryMapping.getAttributeMapping(attributeName);
+        String variable = attributeMapping.getVariable();
+
+        if (variable == null) return null;
+
+        int index = variable.indexOf(".");
+        String sourceName = variable.substring(0, index);
+        String fieldName = variable.substring(index+1);
+
+        return new SubstringFilter(fieldName, substrings);
     }
 
 }
