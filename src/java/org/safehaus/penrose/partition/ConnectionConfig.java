@@ -88,8 +88,8 @@ public class ConnectionConfig implements Cloneable {
         parameters.put(name, value);
     }
 
-    public void removeParameter(String name) {
-        parameters.remove(name);
+    public String removeParameter(String name) {
+        return (String)parameters.remove(name);
     }
 
 	/**

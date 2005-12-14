@@ -51,6 +51,10 @@ public class Connection {
         return connectionConfig.getParameterNames();
     }
 
+    public String removeParameter(String name) {
+        return connectionConfig.removeParameter(name);
+    }
+
     public String getConnectionName() {
         return connectionConfig.getName();
     }

@@ -78,7 +78,7 @@ public class JNDIAdapter extends Adapter {
             }
         }
 
-        parameters.put("com.sun.jndi.ldap.connect.pool", "true");
+        //parameters.put("com.sun.jndi.ldap.connect.pool", "true");
 
         //log.debug("URL: "+url);
         //log.debug("Suffix: "+suffix);

@@ -21,7 +21,6 @@ import org.apache.commons.dbcp.*;
 import org.apache.commons.pool.impl.GenericObjectPool;
 import org.ietf.ldap.LDAPException;
 import org.safehaus.penrose.session.PenroseSearchResults;
-import org.safehaus.penrose.session.PenroseSearchResults;
 import org.safehaus.penrose.engine.TransformEngine;
 import org.safehaus.penrose.util.Formatter;
 import org.safehaus.penrose.filter.Filter;
@@ -50,6 +49,22 @@ public class JDBCAdapter extends Adapter {
     public final static String TABLE_NAME = "tableName";
     public final static String FILTER     = "filter";
 
+    public final static String MAX_ACTIVE                           = "maxActive";
+    public final static String MAX_IDLE                             = "maxIdle";
+    public final static String MIN_IDLE                             = "minIdle";
+    public final static String MAX_WAIT                             = "maxWait";
+
+    public final static String VALIDATION_QUERY                     = "validationQuery";
+    public final static String TEST_ON_BORROW                       = "testOnBorrow";
+    public final static String TEST_ON_RETURN                       = "testOnReturn";
+    public final static String TEST_WHILE_IDLE                      = "testWhileIdle";
+    public final static String TIME_BETWEEN_EVICTION_RUNS_MILLIS    = "timeBetweenEvictionRunsMillis";
+    public final static String NUM_TESTS_PER_EVICTION_RUN           = "numTestsPerEvictionRun";
+    public final static String MIN_EVICTABLE_IDLE_TIME_MILLIS       = "minEvictableIdleTimeMillis";
+
+    public final static String SOFT_MIN_EVICTABLE_IDLE_TIME_MILLIS  = "softMinEvictableIdleTimeMillis";
+    public final static String WHEN_EXHAUSTED_ACTION                = "whenExhaustedAction";
+
     public DataSource ds;
 
     public JDBCFilterTool filterTool;
@@ -60,21 +75,59 @@ public class JDBCAdapter extends Adapter {
         String name = getConnectionName();
     	log.debug("Initializing JDBC connection "+name+".");
 
-        String driver = getParameter(DRIVER);
-        String url = getParameter(URL);
-
-        Class.forName(driver);
-
         Properties properties = new Properties();
         for (Iterator i=getParameterNames().iterator(); i.hasNext(); ) {
             String param = (String)i.next();
             String value = getParameter(param);
-            //log.debug(" - "+param+": "+value);
             properties.setProperty(param, value);
         }
 
-        GenericObjectPool connectionPool = new GenericObjectPool(null);
-        //connectionPool.setMaxActive(0);
+        String driver = (String)properties.remove(DRIVER);
+        String url = (String)properties.remove(URL);
+
+        Class.forName(driver);
+
+        GenericObjectPool.Config config = new GenericObjectPool.Config();
+
+        String s = (String)properties.remove(MAX_ACTIVE);
+        if (s != null) config.maxActive = Integer.parseInt(s);
+
+        s = (String)properties.remove(MAX_IDLE);
+        if (s != null) config.maxIdle = Integer.parseInt(s);
+
+        s = (String)properties.remove(MAX_WAIT);
+        if (s != null) config.maxWait = Integer.parseInt(s);
+
+        s = (String)properties.remove(MIN_EVICTABLE_IDLE_TIME_MILLIS);
+        if (s != null) config.minEvictableIdleTimeMillis = Integer.parseInt(s);
+
+        s = (String)properties.remove(MIN_IDLE);
+        if (s != null) config.minIdle = Integer.parseInt(s);
+
+        s = (String)properties.remove(NUM_TESTS_PER_EVICTION_RUN);
+        if (s != null) config.numTestsPerEvictionRun = Integer.parseInt(s);
+
+        s = (String)properties.remove(TEST_ON_BORROW);
+        if (s != null) config.testOnBorrow = new Boolean(s).booleanValue();
+
+        s = (String)properties.remove(TEST_ON_RETURN);
+        if (s != null) config.testOnReturn = new Boolean(s).booleanValue();
+
+        s = (String)properties.remove(TEST_WHILE_IDLE);
+        if (s != null) config.testWhileIdle = new Boolean(s).booleanValue();
+
+        s = (String)properties.remove(TIME_BETWEEN_EVICTION_RUNS_MILLIS);
+        if (s != null) config.timeBetweenEvictionRunsMillis = Integer.parseInt(s);
+
+        //s = (String)properties.remove(SOFT_MIN_EVICTABLE_IDLE_TIME_MILLIS);
+        //if (s != null) config.softMinEvictableIdleTimeMillis = Integer.parseInt(s);
+
+        //s = (String)properties.remove(WHEN_EXHAUSTED_ACTION);
+        //if (s != null) config.whenExhaustedAction = Byte.parseByte(s);
+
+        GenericObjectPool connectionPool = new GenericObjectPool(null, config);
+
+        String validationQuery = (String)properties.remove(VALIDATION_QUERY);
 
         ConnectionFactory connectionFactory = new DriverManagerConnectionFactory(url, properties);
 
@@ -83,7 +136,7 @@ public class JDBCAdapter extends Adapter {
                         connectionFactory,
                         connectionPool,
                         null, // statement pool factory
-                        null, // test query
+                        validationQuery, // test query
                         false, // read only
                         true // auto commit
                 );

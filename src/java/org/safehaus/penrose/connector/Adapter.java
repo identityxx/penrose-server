@@ -120,6 +120,10 @@ public abstract class Adapter {
         return connection.getParameterNames();
     }
 
+    public String removeParameter(String name) {
+        return connection.removeParameter(name);
+    }
+
     public String getAdapterName() {
         return adapterConfig.getName();
     }
