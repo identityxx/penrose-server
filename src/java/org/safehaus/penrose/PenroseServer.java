@@ -77,6 +77,9 @@ public class PenroseServer implements SignalHandler {
         penrose.stop();
     }
 
+    public String getStatus() {
+        return penrose.getStatus();
+    }
     /**
      * Ctrl-C (Interrupt Signal) sessionHandler
      *

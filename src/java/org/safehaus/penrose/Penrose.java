@@ -46,6 +46,11 @@ public class Penrose {
     public final static String PRODUCT_COPYRIGHT = "Copyright (c) 2000-2005, Identyx Corporation.";
     public final static String VENDOR_NAME       = "Identyx Corporation";
 
+    public final static String STOPPED  = "STOPPED";
+    public final static String STARTING = "STARTING";
+    public final static String STARTED  = "STARTED";
+    public final static String STOPPING = "STOPPING";
+
     private PenroseConfig penroseConfig;
 
     private SchemaManager schemaManager;
@@ -58,7 +63,7 @@ public class Penrose {
 	private Engine engine;
     private SessionHandler sessionHandler;
 
-    private boolean stopRequested = false;
+    private String status = STOPPED;
 
 	public Penrose() throws Exception {
         this((String)null);
@@ -121,16 +126,28 @@ public class Penrose {
 
 	public void start() throws Exception {
 
-        stopRequested = false;
 
-        loadPartitions();
+        if (status != STOPPED) return;
 
-        initInterpreter();
-        initConnections();
+        try {
+            status = STARTING;
 
-        initConnectors();
-        initEngines();
-        initHandler();
+            loadPartitions();
+
+            initInterpreter();
+
+            initConnections();
+            initConnector();
+            initEngine();
+            initSessionHandler();
+
+            status = STARTED;
+
+        } catch (Exception e) {
+            status = STOPPED;
+            log.debug(e.getMessage(), e);
+            throw e;
+        }
 	}
 
     public void loadPartitions() throws Exception {
@@ -167,73 +184,86 @@ public class Penrose {
     public void initConnections() throws Exception {
         connectionManager = new ConnectionManager();
         connectionManager.setPenroseConfig(penroseConfig);
+
+        for (Iterator i=partitionManager.getPartitions().iterator(); i.hasNext(); ) {
+            Partition partition = (Partition)i.next();
+
+            Collection connectionConfigs = partition.getConnectionConfigs();
+            for (Iterator j = connectionConfigs.iterator(); j.hasNext();) {
+                ConnectionConfig connectionConfig = (ConnectionConfig)j.next();
+
+                connectionManager.addConnectionConfig(connectionConfig);
+            }
+        }
+
+        connectionManager.start();
     }
 
-    public void initConnectors() throws Exception {
+    public void initConnector() throws Exception {
 
         ConnectorConfig connectorConfig = penroseConfig.getConnectorConfig();
 
         Class clazz = Class.forName(connectorConfig.getConnectorClass());
         connector = (Connector)clazz.newInstance();
 
-        connector.setServerConfig(penroseConfig);
+        connector.setConnectorConfig(connectorConfig);
+        connector.setPenroseConfig(penroseConfig);
         connector.setConnectionManager(connectionManager);
-        connector.init(connectorConfig);
         connector.setPartitionManager(partitionManager);
 
         connector.start();
     }
 
-    public void initEngines() throws Exception {
+    public void initEngine() throws Exception {
 
         EngineConfig engineConfig = penroseConfig.getEngineConfig();
 
         Class clazz = Class.forName(engineConfig.getEngineClass());
         engine = (Engine)clazz.newInstance();
 
+        engine.setEngineConfig(engineConfig);
         engine.setPenroseConfig(penroseConfig);
         engine.setSchemaManager(schemaManager);
         engine.setInterpreterFactory(interpreterFactory);
         engine.setConnector(connector);
         engine.setConnectionManager(connectionManager);
         engine.setPartitionManager(partitionManager);
-        engine.init(engineConfig);
 
         engine.start();
     }
 
-    public void initHandler() throws Exception {
+    public void initSessionHandler() throws Exception {
 
         SessionHandlerConfig sessionHandlerConfig = penroseConfig.getSessionHandlerConfig();
 
         sessionHandler = new SessionHandler();
+        sessionHandler.setSessionHandlerConfig(sessionHandlerConfig);
         sessionHandler.setSchemaManager(schemaManager);
         sessionHandler.setInterpreterFactory(interpreterFactory);
         sessionHandler.setEngine(engine);
         sessionHandler.setRootUserConfig(penroseConfig.getRootUserConfig());
         sessionHandler.setPartitionManager(partitionManager);
 
-        sessionHandler.init(sessionHandlerConfig);
+        sessionHandler.start();
     }
 
 	public void stop() {
         
-        if (stopRequested) return;
+        if (status != STARTED) return;
 
         try {
-            //log.debug("Stop requested...");
-            stopRequested = true;
+            status = STOPPING;
 
+            sessionHandler.stop();
             engine.stop();
             connector.stop();
-
-            //connectionManager.stop();
-
-            //log.warn("Penrose has been shutdown.");
+            connectionManager.stop();
 
         } catch (Exception e) {
-            e.printStackTrace();
+            log.debug(e.getMessage(), e);
         }
+
+        status = STOPPED;
 	}
 
     public PenroseSession newSession() throws Exception {
@@ -242,14 +272,6 @@ public class Penrose {
 
     public void closeSession(PenroseSession session) {
         sessionHandler.closeSession(session);
-    }
-
-    public boolean isStopRequested() {
-        return stopRequested;
-    }
-
-    public void setStopRequested(boolean stopRequested) {
-        this.stopRequested = stopRequested;
     }
 
     public PenroseConfig getPenroseConfig() {
@@ -298,5 +320,9 @@ public class Penrose {
 
     public void setSchemaManager(SchemaManager schemaManager) {
         this.schemaManager = schemaManager;
+    }
+
+    public String getStatus() {
+        return status;
     }
 }

@@ -15,18 +15,25 @@ import java.util.Collection;
 public class Connection {
 
     private ConnectionConfig connectionConfig;
+    private AdapterConfig adapterConfig;
     private Adapter adapter;
 
-    public void init(ConnectionConfig connectionConfig, AdapterConfig adapterConfig) throws Exception {
-        this.connectionConfig = connectionConfig;
+    public void init() throws Exception {
 
         String adapterClass = adapterConfig.getAdapterClass();
         Class clazz = Class.forName(adapterClass);
         adapter = (Adapter)clazz.newInstance();
-        
-        adapter.init(adapterConfig, this);
+
+        adapter.setAdapterConfig(adapterConfig);
+        adapter.setConnection(this);
+
+        adapter.init();
     }
 
+    public void close() throws Exception {
+        adapter.dispose();
+    }
+    
     public ConnectionConfig getConnectionConfig() {
         return connectionConfig;
     }
@@ -93,5 +100,13 @@ public class Connection {
 
     public Object openConnection() throws Exception {
         return adapter.openConnection();
+    }
+
+    public AdapterConfig getAdapterConfig() {
+        return adapterConfig;
+    }
+
+    public void setAdapterConfig(AdapterConfig adapterConfig) {
+        this.adapterConfig = adapterConfig;
     }
 }

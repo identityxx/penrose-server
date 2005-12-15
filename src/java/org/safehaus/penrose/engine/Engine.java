@@ -82,14 +82,7 @@ public class Engine {
     private JoinEngine joinEngine;
     private TransformEngine transformEngine;
 
-
-    /**
-     * Initialize the engine with a Penrose instance
-     *
-     * @throws Exception
-     */
-    public void init(EngineConfig engineConfig) throws Exception {
-        this.engineConfig = engineConfig;
+    public void start() throws Exception {
 
         //log.debug("-------------------------------------------------");
         //log.debug("Initializing "+engineConfig.getName()+" engine ...");
@@ -119,9 +112,7 @@ public class Engine {
                 analyze(entryMapping);
             }
         }
-    }
 
-    public void start() throws Exception {
         String s = engineConfig.getParameter(EngineConfig.THREAD_POOL_SIZE);
         int threadPoolSize = s == null ? EngineConfig.DEFAULT_THREAD_POOL_SIZE : Integer.parseInt(s);
 

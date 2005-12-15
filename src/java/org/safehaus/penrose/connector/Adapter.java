@@ -38,19 +38,16 @@ public abstract class Adapter {
     private AdapterConfig adapterConfig;
     private Connection connection;
 
-    public void init(AdapterConfig adapterConfig, Connection connection) throws Exception {
-        this.adapterConfig = adapterConfig;
-        this.connection = connection;
-
-        init();
-    }
-
     /**
      * Initialize.
      *
      * @throws Exception
      */
-    public abstract void init() throws Exception;
+    public void init() throws Exception {
+    }
+
+    public void dispose() throws Exception {
+    }
 
 	/**
 	 * Bind.

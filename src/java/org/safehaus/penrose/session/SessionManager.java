@@ -39,7 +39,7 @@ public class SessionManager {
 	public SessionManager() {
 	}
 
-	public void init() {
+	public void start() throws Exception {
         SessionHandlerConfig sessionHandlerConfig = sessionHandler.getHandlerConfig();
 
         String s = sessionHandlerConfig.getParameter(SessionHandlerConfig.MAX_SESSIONS);
@@ -48,6 +48,11 @@ public class SessionManager {
         s = sessionHandlerConfig.getParameter(SessionHandlerConfig.MAX_IDLE_TIME);
         maxIdleTime = s == null ? SessionHandlerConfig.DEFAULT_MAX_IDLE_TIME : Integer.parseInt(s);
 	}
+
+    public void stop() throws Exception {
+        log.info("Removing all sessions");
+        sessions.clear();
+    }
 
     public synchronized PenroseSession newSession() {
 
@@ -60,6 +65,7 @@ public class SessionManager {
             sessionId = createSessionId();
         }
 
+        log.info("Creating session "+sessionId);
         PenroseSession session = new PenroseSession();
         session.setSessionId(sessionId);
         session.setHandler(sessionHandler);
@@ -88,7 +94,7 @@ public class SessionManager {
 
         for (Iterator i=expiredSessions.iterator(); i.hasNext(); ) {
             String sessionId = (String)i.next();
-            //log.debug("Removing expired session: "+sessionId);
+            log.info("Removing session "+sessionId);
             sessions.remove(sessionId);
         }
     }
@@ -109,6 +115,7 @@ public class SessionManager {
     }
 
     public synchronized void closeSession(PenroseSession session) {
+        log.info("Removing session "+session.getSessionId());
         sessions.remove(session.getSessionId());
     }
 
@@ -117,11 +124,11 @@ public class SessionManager {
         return sessions.values();
     }
 
-    public SessionHandler getHandler() {
+    public SessionHandler getSessionHandler() {
         return sessionHandler;
     }
 
-    public void setHandler(SessionHandler sessionHandler) {
+    public void setSessionHandler(SessionHandler sessionHandler) {
         this.sessionHandler = sessionHandler;
     }
 

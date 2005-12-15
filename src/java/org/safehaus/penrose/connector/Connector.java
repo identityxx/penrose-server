@@ -108,13 +108,6 @@ public class Connector {
 
     public void addPartition(Partition partition) throws Exception {
 
-        Collection connectionConfigs = partition.getConnectionConfigs();
-        for (Iterator i = connectionConfigs.iterator(); i.hasNext();) {
-            ConnectionConfig connectionConfig = (ConnectionConfig)i.next();
-
-            connectionManager.addConnectionConfig(connectionConfig);
-        }
-
         Collection sourceConfigs = partition.getSourceConfigs();
         for (Iterator i=sourceConfigs.iterator(); i.hasNext(); ) {
             SourceConfig sourceConfig = (SourceConfig)i.next();
@@ -764,7 +757,7 @@ public class Connector {
         return penroseConfig;
     }
 
-    public void setServerConfig(PenroseConfig penroseConfig) {
+    public void setPenroseConfig(PenroseConfig penroseConfig) {
         this.penroseConfig = penroseConfig;
     }
 }

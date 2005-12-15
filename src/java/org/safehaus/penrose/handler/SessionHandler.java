@@ -47,6 +47,11 @@ public class SessionHandler implements ModuleContext {
 
     Logger log = Logger.getLogger(getClass());
 
+    public final static String STOPPED  = "STOPPED";
+    public final static String STARTING = "STARTING";
+    public final static String STARTED  = "STARTED";
+    public final static String STOPPING = "STOPPING";
+
     private AddHandler addHandler;
     private BindHandler bindHandler;
     private CompareHandler compareHandler;
@@ -70,16 +75,9 @@ public class SessionHandler implements ModuleContext {
     private ACLEngine aclEngine;
     private FilterTool filterTool;
 
+    private String status = STOPPED;
+
     public SessionHandler() throws Exception {
-    }
-
-    public void init(SessionHandlerConfig sessionHandlerConfig) throws Exception {
-        this.sessionHandlerConfig = sessionHandlerConfig;
-
-        aclEngine = new ACLEngine(this);
-
-        filterTool = new FilterTool();
-        filterTool.setSchemaManager(schemaManager);
 
         addHandler = new AddHandler(this);
         bindHandler = new BindHandler(this);
@@ -89,14 +87,35 @@ public class SessionHandler implements ModuleContext {
         modRdnHandler = new ModRdnHandler(this);
         searchHandler = new SearchHandler(this);
 
-        initSessionManager();
-        initModules();
+        aclEngine = new ACLEngine(this);
+    }
+
+    public void start() throws Exception {
+
+        if (status != STOPPED) return;
+
+        try {
+            status = STARTING;
+
+            filterTool = new FilterTool();
+            filterTool.setSchemaManager(schemaManager);
+
+            initSessionManager();
+            initModules();
+
+            status = STARTED;
+
+        } catch (Exception e) {
+            status = STOPPED;
+            log.debug(e.getMessage(), e);
+            throw e;
+        }
     }
 
     public void initSessionManager() throws Exception {
         sessionManager = new SessionManager();
-        sessionManager.setHandler(this);
-        sessionManager.init();
+        sessionManager.setSessionHandler(this);
+        sessionManager.start();
     }
 
     public void initModules() throws Exception {
@@ -114,6 +133,22 @@ public class SessionHandler implements ModuleContext {
                 modules.put(moduleConfig.getModuleName(), module);
             }
         }
+    }
+
+    public void stop() throws Exception {
+
+        if (status != STARTED) return;
+
+        try {
+            status = STOPPING;
+
+            sessionManager.stop();
+
+        } catch (Exception e) {
+            log.debug(e.getMessage(), e);
+        }
+
+        status = STOPPED;
     }
 
     public int add(PenroseSession session, LDAPEntry entry) throws Exception {
@@ -457,6 +492,7 @@ public class SessionHandler implements ModuleContext {
     }
 
     public PenroseSession newSession() throws Exception {
+        if (status != STARTED) return null;
         return sessionManager.newSession();
     }
 
@@ -470,6 +506,22 @@ public class SessionHandler implements ModuleContext {
 
     public void setHandlerConfig(SessionHandlerConfig sessionHandlerConfig) {
         this.sessionHandlerConfig = sessionHandlerConfig;
+    }
+
+    public SessionHandlerConfig getSessionHandlerConfig() {
+        return sessionHandlerConfig;
+    }
+
+    public void setSessionHandlerConfig(SessionHandlerConfig sessionHandlerConfig) {
+        this.sessionHandlerConfig = sessionHandlerConfig;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
     }
 }
 

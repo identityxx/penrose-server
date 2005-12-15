@@ -569,48 +569,54 @@ public class PenroseInterceptor extends BaseInterceptor {
                     SearchResult sr = (SearchResult)ne.next();
                     Attributes attributes = sr.getAttributes();
 
-                    PenroseSession session = penrose.newSession();
-                    if (session == null) throw new ServiceUnavailableException();
+                    PenroseSession session = null;
+                    try {
+                        session = penrose.newSession();
+                        if (session == null) throw new ServiceUnavailableException();
 
-                    session.setBindDn(principalDn.toString());
+                        session.setBindDn(principalDn.toString());
 
-                    PenroseSearchControls sc = new PenroseSearchControls();
-                    sc.setScope(PenroseSearchControls.SCOPE_BASE);
-                    sc.setDereference(PenroseSearchControls.DEREF_ALWAYS);
-                    sc.setAttributes(searchControls.getReturningAttributes());
+                        PenroseSearchControls sc = new PenroseSearchControls();
+                        sc.setScope(PenroseSearchControls.SCOPE_BASE);
+                        sc.setDereference(PenroseSearchControls.DEREF_ALWAYS);
+                        sc.setAttributes(searchControls.getReturningAttributes());
 
-                    PenroseSearchResults results = session.search(
-                            baseDn,
-                            "(objectClass=*)",
-                            sc);
+                        PenroseSearchResults results = session.search(
+                                baseDn,
+                                "(objectClass=*)",
+                                sc);
 
-                    LDAPEntry entry = (LDAPEntry)results.next();
-                    LDAPAttributeSet set = entry.getAttributeSet();
+                        LDAPEntry entry = (LDAPEntry)results.next();
+                        LDAPAttributeSet set = entry.getAttributeSet();
 
-                    for (NamingEnumeration ne2=attributes.getAll(); ne2.hasMore(); ) {
-                        Attribute attribute = (Attribute)ne2.next();
-                        String name = attribute.getID();
-                        if (name.equals("vendorName") || name.equals("vendorVersion")) continue;
+                        for (NamingEnumeration ne2=attributes.getAll(); ne2.hasMore(); ) {
+                            Attribute attribute = (Attribute)ne2.next();
+                            String name = attribute.getID();
+                            if (name.equals("vendorName") || name.equals("vendorVersion")) continue;
 
-                        LDAPAttribute ldapAttribute = set.getAttribute(name);
-                        if (ldapAttribute == null) {
-                            ldapAttribute = new LDAPAttribute(name);
-                            set.add(ldapAttribute);
+                            LDAPAttribute ldapAttribute = set.getAttribute(name);
+                            if (ldapAttribute == null) {
+                                ldapAttribute = new LDAPAttribute(name);
+                                set.add(ldapAttribute);
+                            }
+
+                            for (NamingEnumeration ne3=attribute.getAll(); ne3.hasMore(); ) {
+                                Object value = ne3.next();
+                                ldapAttribute.addValue(value.toString());
+                            }
                         }
 
-                        for (NamingEnumeration ne3=attribute.getAll(); ne3.hasMore(); ) {
-                            Object value = ne3.next();
-                            ldapAttribute.addValue(value.toString());
-                        }
+                        session.close();
+
+                        PenroseSearchResults results2 = new PenroseSearchResults();
+                        results2.add(entry);
+                        results2.close();
+
+                        return new PenroseEnumeration(results2);
+
+                    } finally {
+                        if (session != null) try { session.close(); } catch (Exception e) {}
                     }
-
-                    session.close();
-
-                    PenroseSearchResults results2 = new PenroseSearchResults();
-                    results2.add(entry);
-                    results2.close();
-
-                    return new PenroseEnumeration(results2);
                 }
             }
 
@@ -635,22 +641,28 @@ public class PenroseInterceptor extends BaseInterceptor {
             log.debug(" - filter: "+newFilter+" ("+filter.getClass().getName()+")");
             log.debug(" - attributeNames: "+attributeNames);
 
-            PenroseSession session = penrose.newSession();
-            if (session == null) throw new ServiceUnavailableException();
+            PenroseSession session = null;
+            try {
+                session = penrose.newSession();
+                if (session == null) throw new ServiceUnavailableException();
 
-            session.setBindDn(principalDn.toString());
+                session.setBindDn(principalDn.toString());
 
-            PenroseSearchControls sc = new PenroseSearchControls();
-            sc.setScope(searchControls.getSearchScope());
-            sc.setDereference(PenroseSearchControls.DEREF_ALWAYS);
-            sc.setAttributes(searchControls.getReturningAttributes());
+                PenroseSearchControls sc = new PenroseSearchControls();
+                sc.setScope(searchControls.getSearchScope());
+                sc.setDereference(PenroseSearchControls.DEREF_ALWAYS);
+                sc.setAttributes(searchControls.getReturningAttributes());
 
-            PenroseSearchResults results = session.search(
-                    baseDn,
-                    newFilter,
-                    sc);
+                PenroseSearchResults results = session.search(
+                        baseDn,
+                        newFilter,
+                        sc);
 
-            return new PenroseEnumeration(results);
+                return new PenroseEnumeration(results);
+
+            } finally {
+                if (session != null) try { session.close(); } catch (Exception e) {}
+            }
 
         } catch (NamingException e) {
             throw e;

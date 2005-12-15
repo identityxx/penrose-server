@@ -15,26 +15,24 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
-package org.safehaus.penrose.server;
+package org.safehaus.penrose.ldap;
 
 import junit.framework.TestCase;
 import org.apache.log4j.*;
 import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.config.DefaultPenroseConfig;
-import org.safehaus.penrose.schema.SchemaConfig;
-import org.safehaus.penrose.partition.PartitionConfig;
 import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.session.PenroseSession;
 import org.safehaus.penrose.session.PenroseSearchControls;
 import org.safehaus.penrose.session.PenroseSearchResults;
-import org.ietf.ldap.LDAPEntry;
+import org.ietf.ldap.LDAPException;
 
 import java.util.Iterator;
 
 /**
  * @author Endi S. Dewata
  */
-public class PenroseServiceTest extends TestCase {
+public class BuiltInEntriesTest extends TestCase {
 
     PenroseConfig penroseConfig;
     Penrose penrose;
@@ -52,12 +50,6 @@ public class PenroseServiceTest extends TestCase {
 
         penroseConfig = new DefaultPenroseConfig();
 
-        SchemaConfig schemaConfig = new SchemaConfig("samples/schema/example.schema");
-        penroseConfig.addSchemaConfig(schemaConfig);
-
-        PartitionConfig partitionConfig = new PartitionConfig("example", "samples/conf");
-        penroseConfig.addPartitionConfig(partitionConfig);
-
         penrose = new Penrose(penroseConfig);
         penrose.start();
 
@@ -67,51 +59,7 @@ public class PenroseServiceTest extends TestCase {
         penrose.stop();
     }
 
-    public void testStartingAndStopping() throws Exception {
-
-        PenroseSession session = penrose.newSession();
-        session.bind(penroseConfig.getRootUserConfig().getDn(), penroseConfig.getRootUserConfig().getPassword());
-
-        assertEquals(Penrose.STARTED, penrose.getStatus());
-
-        System.out.println("Stopping Penrose");
-
-        penrose.stop();
-
-        assertEquals(Penrose.STOPPED, penrose.getStatus());
-
-        try {
-            session.bind(penroseConfig.getRootUserConfig().getDn(), penroseConfig.getRootUserConfig().getPassword());
-            fail();
-        } catch (Exception e) {
-            System.out.println("Bind failed as expected");
-        }
-
-        PenroseSession session2 = penrose.newSession();
-        assertNull(session2);
-
-        System.out.println("Starting Penrose");
-
-        penrose.start();
-
-        assertEquals(Penrose.STARTED, penrose.getStatus());
-
-        try {
-            session.bind(penroseConfig.getRootUserConfig().getDn(), penroseConfig.getRootUserConfig().getPassword());
-            fail();
-        } catch (Exception e) {
-            System.out.println("Bind failed as expected");
-        }
-
-        PenroseSession session3 = penrose.newSession();
-        session3.bind(penroseConfig.getRootUserConfig().getDn(), penroseConfig.getRootUserConfig().getPassword());
-    }
-
-    public void testPenroseService() throws Exception {
-        search();
-    }
-
-    public void search() throws Exception {
+    public void testSearch() throws Exception {
 
         PenroseSession session = penrose.newSession();
         session.bind(penroseConfig.getRootUserConfig().getDn(), penroseConfig.getRootUserConfig().getPassword());
@@ -119,15 +67,13 @@ public class PenroseServiceTest extends TestCase {
         PenroseSearchControls sc = new PenroseSearchControls();
         sc.setScope(PenroseSearchControls.SCOPE_ONE);
 
-        String baseDn = "ou=Categories,dc=Example,dc=com";
+        String baseDn = "ou=system";
 
         System.out.println("Searching "+baseDn+":");
         PenroseSearchResults results = session.search(baseDn, "(objectClass=*)", sc);
 
-        for (Iterator i = results.iterator(); i.hasNext();) {
-            LDAPEntry entry = (LDAPEntry) i.next();
-            System.out.println("dn: "+entry.getDN());
-        }
+        assertEquals(0, results.size());
+        assertEquals(LDAPException.NO_SUCH_OBJECT, results.getReturnCode());
 
         session.unbind();
 

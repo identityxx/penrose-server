@@ -56,7 +56,8 @@ public class ConnectionManager {
         if (adapterConfig == null) throw new Exception("Undefined adapter "+adapterName);
 
         Connection connection = new Connection();
-        connection.init(connectionConfig, adapterConfig);
+        connection.setConnectionConfig(connectionConfig);
+        connection.setAdapterConfig(adapterConfig);
 
         connections.put(connectionConfig.getName(), connection);
     }
@@ -73,78 +74,18 @@ public class ConnectionManager {
         return (ConnectionConfig)connectionConfigs.remove(connectionName);
     }
 
-    public void init() throws Exception {
-/*
-        for (Iterator i=connectionConfigs.values().iterator(); i.hasNext(); ) {
-            ConnectionConfig connectionConfig = (ConnectionConfig)i.next();
-            String connectionName = connectionConfig.getName();
-            log.debug("Initializing connection "+connectionName+".");
-
-            if ("JDBC".equals(connectionConfig.getAdapterName())) {
-
-                String driver = connectionConfig.getParameter("driver");
-                String url = connectionConfig.getParameter("url");
-                //String user = connectionConfig.getParameter("user");
-                //String password = connectionConfig.getParameter("password");
-
-                Class.forName(driver);
-
-                Properties properties = new Properties();
-                for (Iterator j=connectionConfig.getParameterNames().iterator(); j.hasNext(); ) {
-                    String param = (String)j.next();
-                    String value = connectionConfig.getParameter(param);
-                    properties.setProperty(param, value);
-                }
-
-                GenericObjectPool connectionPool = new GenericObjectPool(null);
-                ConnectionFactory connectionFactory = new DriverManagerConnectionFactory(url, properties);
-
-                //PoolableConnectionFactory poolableConnectionFactory =
-                        new PoolableConnectionFactory(
-                                connectionFactory,
-                                connectionPool,
-                                null, // statement pool factory
-                                null, // test query
-                                false, // read only
-                                true // auto commit
-                        );
-
-                DataSource ds = new PoolingDataSource(connectionPool);
-                connections.put(connectionName, ds);
-
-            } else if ("JNDI".equals(connectionConfig.getAdapterName())) {
-
-                Properties env = new Properties();
-                for (Iterator j=connectionConfig.getParameterNames().iterator(); j.hasNext(); ) {
-                    String param = (String)j.next();
-                    String value = connectionConfig.getParameter(param);
-
-                    if (param.equals(Context.PROVIDER_URL)) {
-
-                        int index = value.indexOf("://");
-                        index = value.indexOf("/", index+3);
-                        //String suffix;
-                        String ldapUrl;
-                        if (index >= 0) { // extract suffix from url
-                            //suffix = value.substring(index+1);
-                            ldapUrl = value.substring(0, index);
-                        } else {
-                            //suffix = "";
-                            ldapUrl = value;
-                        }
-                        env.put(param, ldapUrl);
-
-                    } else {
-                        env.put(param, value);
-                    }
-                }
-
-                env.put("com.sun.jndi.ldap.connect.pool", "true");
-
-                connections.put(connectionName, env);
-            }
+    public void start() throws Exception {
+        for (Iterator i=connections.values().iterator(); i.hasNext(); ) {
+            Connection connection = (Connection)i.next();
+            connection.init();
         }
-*/
+    }
+
+    public void stop() throws Exception {
+        for (Iterator i=connections.values().iterator(); i.hasNext(); ) {
+            Connection connection = (Connection)i.next();
+            connection.close();
+        }
     }
 
     public Connection getConnection(String connectionName) throws Exception {

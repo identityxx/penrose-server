@@ -65,6 +65,7 @@ public class JDBCAdapter extends Adapter {
     public final static String SOFT_MIN_EVICTABLE_IDLE_TIME_MILLIS  = "softMinEvictableIdleTimeMillis";
     public final static String WHEN_EXHAUSTED_ACTION                = "whenExhaustedAction";
 
+    GenericObjectPool connectionPool;
     public DataSource ds;
 
     public JDBCFilterTool filterTool;
@@ -125,7 +126,7 @@ public class JDBCAdapter extends Adapter {
         //s = (String)properties.remove(WHEN_EXHAUSTED_ACTION);
         //if (s != null) config.whenExhaustedAction = Byte.parseByte(s);
 
-        GenericObjectPool connectionPool = new GenericObjectPool(null, config);
+        connectionPool = new GenericObjectPool(null, config);
 
         String validationQuery = (String)properties.remove(VALIDATION_QUERY);
 
@@ -144,6 +145,10 @@ public class JDBCAdapter extends Adapter {
         ds = new PoolingDataSource(connectionPool);
 
         filterTool = new JDBCFilterTool();
+    }
+
+    public void dispose() throws Exception {
+        connectionPool.close();
     }
 
     public Object openConnection() throws Exception {
