@@ -6,7 +6,6 @@
 
     <description>Penrose</description>
 
-    <property name="build.compiler" value="jikes"/>
     <property name="project.name" value="penrose"/>
     <property name="project.version" value="0.9.8"/>
     <property name="project.dist" value="dist"/>
