@@ -178,6 +178,14 @@ elif [ "$1" = "stop" ] ; then
     exit 1
   fi
 
+elif [ "$1" = "status" ] ; then
+
+  if [ -f "$PENROSE_PID" ] ; then
+    echo Penrose Server is running
+  else
+    echo Penrose Server is not running
+  fi
+
 else
 
   exec "$JAVACMD" $PENROSE_DEBUG_OPTS $PENROSE_OPTS \

@@ -24,7 +24,6 @@
 	<classpathentry kind="lib" path="lib/apacheds-main-0.9.3-SNAPSHOT.jar"/>
 	<classpathentry kind="lib" path="lib/bsh-2.0b4.jar"/>
 	<classpathentry kind="lib" path="lib/nlog4j-1.2.17.jar"/>
-	<classpathentry kind="var" path="JAVA_HOME/lib/tools.jar"/>
 	<classpathentry kind="lib" path="lib/zql.jar"/>
 	<classpathentry kind="lib" path="lib/maven-directory-plugin-0.9.4-SNAPSHOT.jar"/>
 	<classpathentry kind="lib" path="lib/java-getopt-1.0.12.jar"/>
