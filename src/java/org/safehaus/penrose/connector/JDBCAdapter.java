@@ -804,7 +804,7 @@ public class JDBCAdapter extends Adapter {
 
     public PenroseSearchResults getChanges(SourceConfig sourceConfig, int lastChangeNumber) throws Exception {
 
-        log.debug("Searching JDBC source "+sourceConfig.getConnectionName()+"/"+sourceConfig.getName());
+        //log.debug("Searching JDBC source "+sourceConfig.getConnectionName()+"/"+sourceConfig.getName());
 
         PenroseSearchResults results = new PenroseSearchResults();
 

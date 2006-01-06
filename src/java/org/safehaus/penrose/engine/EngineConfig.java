@@ -17,8 +17,6 @@
  */
 package org.safehaus.penrose.engine;
 
-import org.safehaus.penrose.cache.DefaultEntryCache;
-
 import java.util.*;
 
 /**

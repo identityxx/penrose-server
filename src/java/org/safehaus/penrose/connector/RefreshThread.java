@@ -45,7 +45,7 @@ public class RefreshThread implements Runnable {
 	}
 
 	public void run() {
-
+/*
         try {
             // sleep 5 minutes first, to allow server initialization
             Thread.sleep(5*60000);
@@ -53,7 +53,7 @@ public class RefreshThread implements Runnable {
         } catch (InterruptedException ex) {
             // ignore
         }
-
+*/
 		while (!connector.isStopping()) {
 
 			try {

@@ -500,14 +500,6 @@ public class SessionHandler implements ModuleContext {
         sessionManager.closeSession(session);
     }
 
-    public SessionHandlerConfig getHandlerConfig() {
-        return sessionHandlerConfig;
-    }
-
-    public void setHandlerConfig(SessionHandlerConfig sessionHandlerConfig) {
-        this.sessionHandlerConfig = sessionHandlerConfig;
-    }
-
     public SessionHandlerConfig getSessionHandlerConfig() {
         return sessionHandlerConfig;
     }

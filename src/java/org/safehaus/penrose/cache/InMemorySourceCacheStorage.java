@@ -26,7 +26,7 @@ import java.util.*;
 /**
  * @author Endi S. Dewata
  */
-public class InMemorySourceCache extends SourceCache {
+public class InMemorySourceCacheStorage extends SourceCacheStorage {
 
     int lastChangeNumber;
 

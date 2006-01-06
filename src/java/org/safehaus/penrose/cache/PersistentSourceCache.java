@@ -17,91 +17,35 @@
  */
 package org.safehaus.penrose.cache;
 
-import org.safehaus.penrose.mapping.*;
-import org.safehaus.penrose.filter.Filter;
-import org.safehaus.penrose.connector.ConnectionManager;
+import org.safehaus.penrose.mapping.EntryMapping;
+import org.safehaus.penrose.partition.Partition;
+import org.safehaus.penrose.partition.SourceConfig;
+import org.safehaus.penrose.Penrose;
+import org.safehaus.penrose.connector.ConnectorConfig;
+import org.safehaus.penrose.session.PenroseSearchResults;
+import org.safehaus.penrose.handler.SessionHandler;
+import org.ietf.ldap.LDAPConnection;
+import org.ietf.ldap.LDAPSearchConstraints;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.ArrayList;
 
 /**
  * @author Endi S. Dewata
  */
 public class PersistentSourceCache extends SourceCache {
 
-    ConnectionManager connectionManager;
-    String connectionName;
+    public SourceCacheStorage createCacheStorage(SourceConfig sourceConfig) throws Exception {
 
-    JDBCCache cache;
+        Partition partition = partitionManager.getPartition(sourceConfig);
 
-    public void init() throws Exception {
-        super.init();
+        SourceCacheStorage sourceCacheStorage = new PersistentSourceCacheStorage();
+        sourceCacheStorage.setSourceDefinition(sourceConfig);
+        sourceCacheStorage.setPartition(partition);
+        sourceCacheStorage.setConnector(connector);
+        sourceCacheStorage.init(cacheConfig);
 
-        connectionManager = connector.getConnectionManager();
-        connectionName = getParameter("connection");
-
-        cache = new JDBCCache(cacheConfig, sourceConfig);
-        cache.setConnectionManager(connectionManager);
-        cache.setConnectionName(connectionName);
-        cache.setSize(size);
-        cache.setExpiration(expiration);
-        cache.init();
-    }
-
-    public void create() throws Exception {
-        cache.create();
-    }
-
-    public void clean() throws Exception {
-        cache.clean();
-    }
-
-    public void drop() throws Exception {
-        cache.drop();
-    }
-
-    public Object get(Object key) throws Exception {
-        Row pk = (Row)key;
-
-        return cache.get(pk);
-    }
-
-    public Map getExpired() throws Exception {
-        Map results = new TreeMap();
-        return results;
-    }
-    
-    public Map load(Collection keys, Collection missingKeys) throws Exception {
-        return cache.load(keys, missingKeys);
-    }
-
-    public Collection search(Filter filter) throws Exception {
-        return cache.search(filter);
-    }
-
-    public void put(Object key, Object object) throws Exception {
-        Row pk = (Row)key;
-        AttributeValues sourceValues = (AttributeValues)object;
-
-        cache.put(pk, sourceValues);
-    }
-
-    public void remove(Object key) throws Exception {
-        Row pk = (Row)key;
-
-        cache.remove(pk);
-    }
-
-    public int getLastChangeNumber() throws Exception {
-        return cache.getLastChangeNumber();
-    }
-
-    public void setLastChangeNumber(int lastChangeNumber) throws Exception {
-        cache.setLastChangeNumber(lastChangeNumber);
-    }
-
-    public void put(Filter filter, Collection pks) throws Exception {
-    }
-
-    public void invalidate() throws Exception {
+        return sourceCacheStorage;
     }
 }

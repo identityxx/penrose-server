@@ -42,13 +42,17 @@ public class JDBCCache {
     CacheConfig cacheConfig;
     SourceConfig sourceConfig;
 
+    private String tableName;
+
     private int size;
     private int expiration;
 
     public JDBCCache(
+            String tableName,
             CacheConfig cacheConfig,
             SourceConfig sourceConfig) {
 
+        this.tableName = tableName;
         this.cacheConfig = cacheConfig;
         this.sourceConfig = sourceConfig;
     }
@@ -62,7 +66,7 @@ public class JDBCCache {
     }
 
     public String getTableName() {
-        return sourceConfig.getConnectionName()+"_"+sourceConfig.getName();
+        return tableName;
     }
 
     public String getColumnDeclaration(FieldConfig fieldConfig) {
@@ -125,7 +129,7 @@ public class JDBCCache {
     public void dropFieldTable(FieldConfig fieldConfig) throws Exception {
         StringBuffer sb = new StringBuffer();
         sb.append("drop table ");
-        sb.append(getTableName());
+        sb.append(tableName);
         sb.append("_");
         sb.append(fieldConfig.getName());
 
@@ -158,7 +162,7 @@ public class JDBCCache {
     public void cleanMainTable() throws Exception {
         StringBuffer sb = new StringBuffer();
         sb.append("delete from ");
-        sb.append(getTableName());
+        sb.append(tableName);
 
         String sql = sb.toString();
 
@@ -189,7 +193,7 @@ public class JDBCCache {
     public void cleanFieldTable(FieldConfig fieldConfig) throws Exception {
         StringBuffer sb = new StringBuffer();
         sb.append("delete from ");
-        sb.append(getTableName());
+        sb.append(tableName);
         sb.append("_");
         sb.append(fieldConfig.getName());
 
@@ -222,7 +226,7 @@ public class JDBCCache {
     public void cleanChangesTable() throws Exception {
         StringBuffer sb = new StringBuffer();
         sb.append("delete from ");
-        sb.append(getTableName()+"_changes");
+        sb.append(tableName+"_changes");
 
         String sql = sb.toString();
 
@@ -253,7 +257,7 @@ public class JDBCCache {
     public void dropMainTable() throws Exception {
         StringBuffer sb = new StringBuffer();
         sb.append("drop table ");
-        sb.append(getTableName());
+        sb.append(tableName);
 
         String sql = sb.toString();
 
@@ -284,7 +288,7 @@ public class JDBCCache {
     public void dropChangesTable() throws Exception {
         StringBuffer sb = new StringBuffer();
         sb.append("drop table ");
-        sb.append(getTableName()+"_changes");
+        sb.append(tableName+"_changes");
 
         String sql = sb.toString();
 
@@ -315,7 +319,7 @@ public class JDBCCache {
     public void createChangesTable() throws Exception {
         StringBuffer create = new StringBuffer();
         create.append("create table ");
-        create.append(getTableName()+"_changes");
+        create.append(tableName+"_changes");
 
         StringBuffer columns = new StringBuffer();
         columns.append("lastChangeNumber INTEGER");
@@ -371,7 +375,7 @@ public class JDBCCache {
 
         StringBuffer create = new StringBuffer();
         create.append("create table ");
-        create.append(getTableName());
+        create.append(tableName);
 
         String sql = create+" ("+columns+")";
 
@@ -428,7 +432,7 @@ public class JDBCCache {
 
         StringBuffer create = new StringBuffer();
         create.append("create table ");
-        create.append(getTableName());
+        create.append(tableName);
         create.append("_");
         create.append(fieldConfig.getName());
 
@@ -494,7 +498,6 @@ public class JDBCCache {
     public String createSearchQuery(Collection keys, Collection parameters) throws Exception {
 
         Collection tables = new LinkedHashSet();
-        String tableName = getTableName();
 
         StringBuffer columns = new StringBuffer();
         Collection pkFields = sourceConfig.getPrimaryKeyFieldConfigs();
@@ -513,7 +516,7 @@ public class JDBCCache {
             FieldConfig fieldConfig = (FieldConfig)i.next();
             String fieldName = fieldConfig.getName();
 
-            String t = getTableName()+"_"+fieldName;
+            String t = tableName+"_"+fieldName;
             tables.add(t);
 
             if (columns.length() > 0) columns.append(", ");
@@ -535,9 +538,9 @@ public class JDBCCache {
                 String t;
 
                 if (fieldConfig.isPrimaryKey()) {
-                    t = getTableName();
+                    t = tableName;
                 } else {
-                    t = getTableName()+"_"+name;
+                    t = tableName+"_"+name;
                     tables.add(t);
                 }
 
@@ -773,7 +776,7 @@ public class JDBCCache {
         sb.append("select ");
         sb.append(columns);
         sb.append(" from ");
-        sb.append(getTableName());
+        sb.append(tableName);
         sb.append("_");
         sb.append(fieldConfig.getName());
 
@@ -832,6 +835,10 @@ public class JDBCCache {
             int width = 0;
             boolean first = true;
 
+            Collection fieldNames = new ArrayList();
+            fieldNames.addAll(sourceConfig.getPrimaryKeyNames());
+            fieldNames.add(fieldConfig.getName());
+
             log.debug("Results:");
             while (rs.next()) {
                 Row pk = getPrimaryKey(rs);
@@ -848,11 +855,14 @@ public class JDBCCache {
                 av.add(fieldConfig.getName(), value);
 
                 if (first) {
-                    width = printPrimaryKeyHeader();
+                    width = printHeader(fieldNames);
                     first = false;
                 }
 
-                printPrimaryKey(pk);
+                Row row = new Row(pk);
+                row.set(fieldConfig.getName(), value);
+
+                printValues(fieldNames, row);
             }
 
             if (width > 0) printFooter(width);
@@ -914,7 +924,7 @@ public class JDBCCache {
 
         StringBuffer sb = new StringBuffer();
         sb.append("insert into ");
-        sb.append(getTableName());
+        sb.append(tableName);
         sb.append(" (");
         sb.append(columns);
         sb.append(") values (");
@@ -982,7 +992,7 @@ public class JDBCCache {
 
         StringBuffer sb = new StringBuffer();
         sb.append("update ");
-        sb.append(getTableName());
+        sb.append(tableName);
         sb.append(" set expiration = ? where ");
         sb.append(whereClause);
 
@@ -1053,7 +1063,7 @@ public class JDBCCache {
 
         StringBuffer sb = new StringBuffer();
         sb.append("insert into ");
-        sb.append(getTableName());
+        sb.append(tableName);
         sb.append("_");
         sb.append(fieldConfig.getName());
         sb.append(" (");
@@ -1129,7 +1139,7 @@ public class JDBCCache {
 
         StringBuffer sb = new StringBuffer();
         sb.append("delete from ");
-        sb.append(getTableName());
+        sb.append(tableName);
         sb.append(" where ");
         sb.append(where);
 
@@ -1190,7 +1200,7 @@ public class JDBCCache {
 
         StringBuffer sb = new StringBuffer();
         sb.append("delete from ");
-        sb.append(getTableName());
+        sb.append(tableName);
         sb.append("_");
         sb.append(fieldConfig.getName());
         sb.append(" where ");
@@ -1238,7 +1248,7 @@ public class JDBCCache {
 
         StringBuffer sb = new StringBuffer();
         sb.append("select lastChangeNumber from ");
-        sb.append(getTableName()+"_changes");
+        sb.append(tableName+"_changes");
 
         String sql = sb.toString();
 
@@ -1256,7 +1266,6 @@ public class JDBCCache {
                     String line = (String)i.next();
                     log.debug(Formatter.displayLine(line, 80));
                 }
-                log.debug(Formatter.displaySeparator(80));
             }
 
             ps = con.prepareStatement(sql);
@@ -1290,7 +1299,7 @@ public class JDBCCache {
 
     public void setLastChangeNumber(int lastChangeNumber) throws Exception {
 
-        String sql = "update "+getTableName()+"_changes"+" set lastChangeNumber = ?";
+        String sql = "update "+tableName+"_changes"+" set lastChangeNumber = ?";
 
         Collection parameters = new ArrayList();
         parameters.add(new Integer(lastChangeNumber));
@@ -1332,7 +1341,7 @@ public class JDBCCache {
             if (con != null) try { con.close(); } catch (Exception e) {}
         }
 
-        sql = "insert into "+getTableName()+"_changes"+" values (?)";
+        sql = "insert into "+tableName+"_changes"+" values (?)";
 
         try {
             con = getConnection();
@@ -1383,10 +1392,75 @@ public class JDBCCache {
         this.expiration = expiration;
     }
 
+    public String createSearchQuery(
+            SourceConfig sourceConfig,
+            Filter filter,
+            Collection parameters)
+            throws Exception {
+
+        Collection tables = new TreeSet();
+        StringBuffer columns = new StringBuffer();
+        StringBuffer whereClause = new StringBuffer();
+
+        tool.convert(tableName, sourceConfig, filter, parameters, whereClause, tables);
+
+        Collection pkFields = sourceConfig.getPrimaryKeyFieldConfigs();
+        for (Iterator j=pkFields.iterator(); j.hasNext(); ) {
+            FieldConfig fieldConfig = (FieldConfig)j.next();
+            String fieldName = fieldConfig.getName();
+
+            if (columns.length() > 0) columns.append(", ");
+            columns.append(tableName);
+            columns.append(".");
+            columns.append(fieldName);
+        }
+
+        StringBuffer join = new StringBuffer();
+        join.append(tableName);
+
+        for (Iterator i=tables.iterator(); i.hasNext(); ) {
+            String t = (String)i.next();
+
+            StringBuffer sb = new StringBuffer();
+            for (Iterator j=pkFields.iterator(); j.hasNext(); ) {
+                FieldConfig fieldConfig = (FieldConfig)j.next();
+                String fieldName = fieldConfig.getName();
+
+                if (sb.length() > 0) sb.append(" and ");
+
+                sb.append(tableName);
+                sb.append(".");
+                sb.append(fieldName);
+                sb.append(" = ");
+                sb.append(t);
+                sb.append(".");
+                sb.append(fieldName);
+            }
+
+            join.append(" join ");
+            join.append(t);
+            join.append(" on ");
+            join.append(sb);
+        }
+
+        StringBuffer sb = new StringBuffer();
+        sb.append("select ");
+        sb.append(columns);
+        sb.append(" from ");
+        sb.append(join);
+
+        if (whereClause.length() > 0) {
+            sb.append(" where ");
+            sb.append(whereClause);
+        }
+
+        return sb.toString();
+    }
+
     public Collection search(Filter filter) throws Exception {
 
         Collection parameters = new ArrayList();
-        String sql = tool.convert(sourceConfig, filter, parameters);
+        String sql = createSearchQuery(sourceConfig, filter, parameters);
 
         java.sql.Connection con = null;
         PreparedStatement ps = null;
@@ -1456,20 +1530,23 @@ public class JDBCCache {
         return pks;
     }
 
-    public int printPrimaryKeyHeader() throws Exception {
+    public int printHeader(String fieldNames[]) throws Exception {
+        return printHeader(Arrays.asList(fieldNames));
+    }
+
+    public int printHeader(Collection fieldNames) throws Exception {
 
         StringBuffer resultHeader = new StringBuffer();
         resultHeader.append("|");
 
-        Collection pkFields = sourceConfig.getPrimaryKeyFieldConfigs();
-        for (Iterator j=pkFields.iterator(); j.hasNext(); ) {
-            FieldConfig fieldConfig = (FieldConfig)j.next();
+        for (Iterator i=fieldNames.iterator(); i.hasNext(); ) {
+            String fieldName = (String)i.next();
+            FieldConfig fieldConfig = sourceConfig.getFieldConfig(fieldName);
 
-            String name = fieldConfig.getName();
             int length = fieldConfig.getLength() > 15 ? 15 : fieldConfig.getLength();
 
             resultHeader.append(" ");
-            resultHeader.append(Formatter.rightPad(name, length));
+            resultHeader.append(Formatter.rightPad(fieldName, length));
             resultHeader.append(" |");
         }
 
@@ -1482,15 +1559,20 @@ public class JDBCCache {
         return width;
     }
 
-    public void printPrimaryKey(Row row) throws Exception {
+    public int printPrimaryKeyHeader() throws Exception {
+        Collection pkFieldNames = sourceConfig.getPrimaryKeyNames();
+        return printHeader(pkFieldNames);
+    }
+
+    public void printValues(Collection fieldNames, Row row) throws Exception {
         StringBuffer resultFields = new StringBuffer();
         resultFields.append("|");
 
-        Collection fields = sourceConfig.getPrimaryKeyFieldConfigs();
-        for (Iterator j=fields.iterator(); j.hasNext(); ) {
-            FieldConfig fieldConfig = (FieldConfig)j.next();
+        for (Iterator i=fieldNames.iterator(); i.hasNext(); ) {
+            String fieldName = (String)i.next();
+            FieldConfig fieldConfig = sourceConfig.getFieldConfig(fieldName);
 
-            Object value = row.get(fieldConfig.getName());
+            Object value = row.get(fieldName);
             int length = fieldConfig.getLength() > 15 ? 15 : fieldConfig.getLength();
 
             resultFields.append(" ");
@@ -1499,6 +1581,11 @@ public class JDBCCache {
         }
 
         log.debug(resultFields.toString());
+    }
+
+    public void printPrimaryKey(Row row) throws Exception {
+        Collection fieldNames = sourceConfig.getPrimaryKeyNames();
+        printValues(fieldNames, row);
     }
 
     public void printFooter(int width) throws Exception {
@@ -1519,5 +1606,9 @@ public class JDBCCache {
 
     public void setConnectionName(String connectionName) {
         this.connectionName = connectionName;
+    }
+
+    public void setTableName(String tableName) {
+        this.tableName = tableName;
     }
 }

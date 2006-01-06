@@ -17,8 +17,6 @@
  */
 package org.safehaus.penrose.cache;
 
-import org.safehaus.penrose.config.*;
-import org.safehaus.penrose.connector.ConnectionManager;
 import org.safehaus.penrose.connector.Connector;
 import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.engine.Engine;
@@ -27,7 +25,6 @@ import org.apache.log4j.*;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.ArrayList;
-import java.sql.Connection;
 import java.io.File;
 
 import gnu.getopt.LongOpt;
@@ -144,40 +141,44 @@ public class CacheManager {
 
     public static void create(Penrose penrose) throws Exception {
         Connector connector = penrose.getConnector();
-        connector.create();
+        SourceCache sourceCache = connector.getSourceCache();
+        sourceCache.create();
 
         Engine engine = penrose.getEngine();
-        EntryCacheManager entryCacheManager = engine.getEntryCacheManager();
-        entryCacheManager.create();
+        EntryCache entryCache = engine.getEntryCache();
+        entryCache.create();
     }
 
     public static void load(Penrose penrose) throws Exception {
         Connector connector = penrose.getConnector();
-        connector.load();
+        SourceCache sourceCache = connector.getSourceCache();
+        sourceCache.load();
 
         Engine engine = penrose.getEngine();
-        EntryCacheManager entryCacheManager = engine.getEntryCacheManager();
-        entryCacheManager.load(penrose);
+        EntryCache entryCache = engine.getEntryCache();
+        entryCache.load(penrose);
     }
 
     public static void clean(Penrose penrose) throws Exception {
 
         Engine engine = penrose.getEngine();
-        EntryCacheManager entryCacheManager = engine.getEntryCacheManager();
-        entryCacheManager.clean();
+        EntryCache entryCache = engine.getEntryCache();
+        entryCache.clean();
 
         Connector connector = penrose.getConnector();
-        connector.clean();
+        SourceCache sourceCache = connector.getSourceCache();
+        sourceCache.clean();
     }
 
     public static void drop(Penrose penrose) throws Exception {
 
         Engine engine = penrose.getEngine();
-        EntryCacheManager entryCacheManager = engine.getEntryCacheManager();
-        entryCacheManager.drop();
+        EntryCache entryCache = engine.getEntryCache();
+        entryCache.drop();
 
         Connector connector = penrose.getConnector();
-        connector.drop();
+        SourceCache sourceCache = connector.getSourceCache();
+        sourceCache.drop();
     }
 
 }

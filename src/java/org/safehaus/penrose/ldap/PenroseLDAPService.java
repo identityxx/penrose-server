@@ -62,6 +62,8 @@ public class PenroseLDAPService extends Service {
 
         if (ldapPort < 0) return;
 
+        setStatus(STARTING);
+
         PenroseConfig penroseConfig = getPenroseServer().getPenroseConfig();
         String home = penroseConfig.getHome();
 

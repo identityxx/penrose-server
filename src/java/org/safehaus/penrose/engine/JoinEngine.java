@@ -126,7 +126,7 @@ public class JoinEngine {
             int lindex = lhs.indexOf(".");
             String lsourceName = lhs.substring(0, lindex);
             String lfieldName = lhs.substring(lindex+1);
-            SourceMapping lsource = partition.getEffectiveSource(entryMapping, lsourceName);
+            SourceMapping lsource = partition.getEffectiveSourceMapping(entryMapping, lsourceName);
             SourceConfig lsourceConfig = partition.getSourceConfig(lsource.getSourceName());
             FieldConfig lfieldConfig = lsourceConfig.getFieldConfig(lfieldName);
 
@@ -134,7 +134,7 @@ public class JoinEngine {
             int rindex = rhs.indexOf(".");
             String rsourceName = rhs.substring(0, rindex);
             String rfieldName = rhs.substring(rindex+1);
-            SourceMapping rsource = partition.getEffectiveSource(entryMapping, rsourceName);
+            SourceMapping rsource = partition.getEffectiveSourceMapping(entryMapping, rsourceName);
             SourceConfig rsourceConfig = partition.getSourceConfig(rsource.getSourceName());
             FieldConfig rfieldConfig = rsourceConfig.getFieldConfig(rfieldName);
 

@@ -141,6 +141,10 @@ public class Penrose {
             initEngine();
             initSessionHandler();
 
+            connector.start();
+            engine.start();
+            sessionHandler.start();
+
             status = STARTED;
 
         } catch (Exception e) {
@@ -210,8 +214,7 @@ public class Penrose {
         connector.setPenroseConfig(penroseConfig);
         connector.setConnectionManager(connectionManager);
         connector.setPartitionManager(partitionManager);
-
-        connector.start();
+        connector.init();
     }
 
     public void initEngine() throws Exception {
@@ -228,8 +231,9 @@ public class Penrose {
         engine.setConnector(connector);
         engine.setConnectionManager(connectionManager);
         engine.setPartitionManager(partitionManager);
+        engine.init();
 
-        engine.start();
+        connector.setEngine(engine);
     }
 
     public void initSessionHandler() throws Exception {
@@ -244,7 +248,7 @@ public class Penrose {
         sessionHandler.setRootUserConfig(penroseConfig.getRootUserConfig());
         sessionHandler.setPartitionManager(partitionManager);
 
-        sessionHandler.start();
+        connector.setSessionHandler(sessionHandler);
     }
 
 	public void stop() {

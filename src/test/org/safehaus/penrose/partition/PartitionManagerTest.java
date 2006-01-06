@@ -75,8 +75,8 @@ public class PartitionManagerTest extends TestCase {
         PartitionConfig partitionConfig = new PartitionConfig("example", "samples/conf");
         penroseConfig.addPartitionConfig(partitionConfig);
 
-        PartitionReader partitionReader = new PartitionReader(partitionConfig.getPath());
-        Partition partition = partitionReader.read();
+        PartitionReader partitionReader = new PartitionReader();
+        Partition partition = partitionReader.read(partitionConfig);
 
         PartitionManager partitionManager = penrose.getPartitionManager();
         partitionManager.addPartition(partitionConfig.getName(), partition);

@@ -20,7 +20,8 @@ package org.safehaus.penrose.engine;
 import org.safehaus.penrose.session.PenroseSearchResults;
 import org.safehaus.penrose.schema.SchemaManager;
 import org.safehaus.penrose.connector.*;
-import org.safehaus.penrose.cache.EntryCacheManager;
+import org.safehaus.penrose.cache.EntryCache;
+import org.safehaus.penrose.cache.CacheConfig;
 import org.safehaus.penrose.util.Formatter;
 import org.safehaus.penrose.util.PasswordUtil;
 import org.safehaus.penrose.partition.Partition;
@@ -49,6 +50,8 @@ public class Engine {
 
     static Logger log = Logger.getLogger(Engine.class);
 
+    public final static String DEFAULT_CACHE_CLASS = EntryCache.class.getName();
+
     private PenroseConfig penroseConfig;
     private EngineConfig engineConfig;
 
@@ -67,7 +70,7 @@ public class Engine {
     private ConnectionManager connectionManager;
     private Connector connector;
     private PartitionManager partitionManager;
-    private EntryCacheManager entryCacheManager;
+    private EntryCache entryCache;
 
     private EngineFilterTool filterTool;
 
@@ -82,10 +85,7 @@ public class Engine {
     private JoinEngine joinEngine;
     private TransformEngine transformEngine;
 
-    public void start() throws Exception {
-
-        //log.debug("-------------------------------------------------");
-        //log.debug("Initializing "+engineConfig.getName()+" engine ...");
+    public void init() throws Exception {
 
         filterTool      = new EngineFilterTool(this);
         addEngine       = new AddEngine(this);
@@ -98,11 +98,25 @@ public class Engine {
         joinEngine      = new JoinEngine(this);
         transformEngine = new TransformEngine(this);
 
-        entryCacheManager = new EntryCacheManager();
-        entryCacheManager.setPenroseConfig(penroseConfig);
-        entryCacheManager.setConnectionManager(connectionManager);
-        entryCacheManager.setPartitionManager(partitionManager);
-        entryCacheManager.init();
+        CacheConfig cacheConfig = penroseConfig.getEntryCacheConfig();
+        String cacheClass = cacheConfig.getCacheClass() == null ? DEFAULT_CACHE_CLASS : cacheConfig.getCacheClass();
+
+        log.debug("Initializing entry cache "+cacheClass);
+        Class clazz = Class.forName(cacheClass);
+        entryCache = (EntryCache)clazz.newInstance();
+
+        entryCache.setCacheConfig(cacheConfig);
+        entryCache.setPenroseConfig(penroseConfig);
+        entryCache.setConnectionManager(connectionManager);
+        entryCache.setPartitionManager(partitionManager);
+
+        String s = engineConfig.getParameter(EngineConfig.THREAD_POOL_SIZE);
+        int threadPoolSize = s == null ? EngineConfig.DEFAULT_THREAD_POOL_SIZE : Integer.parseInt(s);
+
+        threadPool = new ThreadPool(threadPoolSize);
+    }
+
+    public void start() throws Exception {
 
         for (Iterator i=partitionManager.getPartitions().iterator(); i.hasNext(); ) {
             Partition partition = (Partition)i.next();
@@ -113,10 +127,6 @@ public class Engine {
             }
         }
 
-        String s = engineConfig.getParameter(EngineConfig.THREAD_POOL_SIZE);
-        int threadPoolSize = s == null ? EngineConfig.DEFAULT_THREAD_POOL_SIZE : Integer.parseInt(s);
-
-        threadPool = new ThreadPool(threadPoolSize);
         threadPool.execute(new RefreshThread(this));
     }
 
@@ -224,7 +234,7 @@ public class Engine {
         Graph graph = new Graph();
 
         Partition partition = partitionManager.getPartition(entryMapping);
-        Collection sources = partition.getEffectiveSources(entryMapping);
+        Collection sources = partition.getEffectiveSourceMappings(entryMapping);
         //if (sources.size() == 0) return null;
 
         for (Iterator i=sources.iterator(); i.hasNext(); ) {
@@ -242,7 +252,7 @@ public class Engine {
             if (lindex < 0) continue;
 
             String lsourceName = lhs.substring(0, lindex);
-            SourceMapping lsource = partition.getEffectiveSource(entryMapping, lsourceName);
+            SourceMapping lsource = partition.getEffectiveSourceMapping(entryMapping, lsourceName);
             if (lsource == null) continue;
 
             String rhs = relationship.getRhs();
@@ -250,7 +260,7 @@ public class Engine {
             if (rindex < 0) continue;
 
             String rsourceName = rhs.substring(0, rindex);
-            SourceMapping rsource = partition.getEffectiveSource(entryMapping, rsourceName);
+            SourceMapping rsource = partition.getEffectiveSourceMapping(entryMapping, rsourceName);
             if (rsource == null) continue;
 
             Set nodes = new HashSet();
@@ -494,7 +504,7 @@ public class Engine {
      */
     public boolean isStatic(EntryMapping entryMapping) throws Exception {
         Partition partition = partitionManager.getPartition(entryMapping);
-        Collection effectiveSources = partition.getEffectiveSources(entryMapping);
+        Collection effectiveSources = partition.getEffectiveSourceMappings(entryMapping);
         if (effectiveSources.size() > 0) return false;
 
         Collection attributeDefinitions = entryMapping.getAttributeMappings();
@@ -712,7 +722,7 @@ public class Engine {
 
                 String sourceName = operand.substring(0, index);
                 SourceMapping sourceMapping = entryMapping.getSourceMapping(sourceName);
-                SourceMapping effectiveSourceMapping = partition.getEffectiveSource(entryMapping, sourceName);
+                SourceMapping effectiveSourceMapping = partition.getEffectiveSourceMapping(entryMapping, sourceName);
 
                 if (sourceMapping == null && effectiveSourceMapping != null) {
                     log.debug("Source "+sourceName+" is defined in parent entry");
@@ -1122,12 +1132,12 @@ public class Engine {
         this.schemaManager = schemaManager;
     }
 
-    public EntryCacheManager getEntryCacheManager() {
-        return entryCacheManager;
+    public EntryCache getEntryCache() {
+        return entryCache;
     }
 
-    public void setEntryCacheManager(EntryCacheManager entryCacheManager) {
-        this.entryCacheManager = entryCacheManager;
+    public void setEntryCache(EntryCache entryCache) {
+        this.entryCache = entryCache;
     }
 }
 

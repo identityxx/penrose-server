@@ -27,8 +27,10 @@ public class Service {
 
     public Logger log = Logger.getLogger(Service.class);
 
-    public final static String STOPPED = "STOPPED";
-    public final static String STARTED = "STARTED";
+    public final static String STOPPING = "STOPPING";
+    public final static String STOPPED  = "STOPPED";
+    public final static String STARTING = "STARTING";
+    public final static String STARTED  = "STARTED";
 
     private PenroseServer penroseServer;
     private ServiceConfig serviceConfig;

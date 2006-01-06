@@ -20,5 +20,5 @@ package org.safehaus.penrose.cache;
 /**
  * @author Endi S. Dewata
  */
-public class DefaultSourceCache extends InMemorySourceCache {
+public class DefaultSourceCache extends SourceCache {
 }

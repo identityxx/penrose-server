@@ -93,6 +93,8 @@ public class PenroseJMXService extends Service {
 
         log.warn("Starting JMX Service.");
 
+        setStatus(STARTING);
+
         mbeanServer = MBeanServerFactory.createMBeanServer();
 
         penroseAdmin = new PenroseAdmin();

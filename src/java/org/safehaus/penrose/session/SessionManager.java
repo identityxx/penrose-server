@@ -40,7 +40,7 @@ public class SessionManager {
 	}
 
 	public void start() throws Exception {
-        SessionHandlerConfig sessionHandlerConfig = sessionHandler.getHandlerConfig();
+        SessionHandlerConfig sessionHandlerConfig = sessionHandler.getSessionHandlerConfig();
 
         String s = sessionHandlerConfig.getParameter(SessionHandlerConfig.MAX_SESSIONS);
         maxSessions = s == null ? SessionHandlerConfig.DEFAULT_MAX_SESSIONS : Integer.parseInt(s);
@@ -101,6 +101,8 @@ public class SessionManager {
 
     public synchronized boolean isValid(PenroseSession session) {
         purge();
+        if (session == null) return true;
+
         //log.debug("Valid sessions: "+sessions.keySet());
         return sessions.get(session.getSessionId()) != null;
     }

@@ -37,18 +37,31 @@ public class PartitionReader {
 
     Logger log = Logger.getLogger(getClass());
 
-    String directory;
+    String home;
 
-    public PartitionReader(String directory) {
-        this.directory = directory;
+    public PartitionReader() {
+    }
+
+    public PartitionReader(String home) {
+        this.home = home;
     }
 
     public Partition read() throws Exception {
+        return read((String)null);
+    }
+
+    public Partition read(PartitionConfig partitionConfig) throws Exception {
+        Partition partition = read(partitionConfig.getPath());
+        partition.setPartitionConfig(partitionConfig);
+        return partition;
+    }
+
+    public Partition read(String path) throws Exception {
         Partition partition = new Partition();
-        loadConnectionsConfig(partition);
-        loadSourcesConfig(partition);
-        loadMappingConfig(partition);
-        loadModulesConfig(partition);
+        loadConnectionsConfig(path, partition);
+        loadSourcesConfig(path, partition);
+        loadMappingConfig(path, partition);
+        loadModulesConfig(path, partition);
         return partition;
     }
 
@@ -57,8 +70,13 @@ public class PartitionReader {
      *
      * @throws Exception
      */
-    public void loadMappingConfig(Partition partition) throws Exception {
-        String filename = directory+File.separator+"mapping.xml";
+    public void loadMappingConfig(String path, Partition partition) throws Exception {
+        if (path == null) {
+            path = home;
+        } else if (home != null) {
+            path = home+File.separator+path;
+        }
+        String filename = (path == null ? "" : path+File.separator)+File.separator+"mapping.xml";
         log.debug("Loading "+filename);
 
         MappingRule mappingRule = new MappingRule();
@@ -211,9 +229,13 @@ public class PartitionReader {
      *
      * @throws Exception
      */
-    public void loadModulesConfig(Partition partition) throws Exception {
-
-        String filename = directory+File.separator+"modules.xml";
+    public void loadModulesConfig(String path, Partition partition) throws Exception {
+        if (path == null) {
+            path = home;
+        } else if (home != null) {
+            path = home+File.separator+path;
+        }
+        String filename = (path == null ? "" : path+File.separator)+File.separator+"modules.xml";
         log.debug("Loading "+filename);
 
         File file = new File(filename);
@@ -235,8 +257,13 @@ public class PartitionReader {
      *
      * @throws Exception
      */
-    public void loadConnectionsConfig(Partition partition) throws Exception {
-        String filename = directory+File.separator+"connections.xml";
+    public void loadConnectionsConfig(String path, Partition partition) throws Exception {
+        if (path == null) {
+            path = home;
+        } else if (home != null) {
+            path = home+File.separator+path;
+        }
+        String filename = (path == null ? "" : path+File.separator)+File.separator+"connections.xml";
         log.debug("Loading "+filename);
 
         File file = new File(filename);
@@ -258,8 +285,13 @@ public class PartitionReader {
      *
      * @throws Exception
      */
-    public void loadSourcesConfig(Partition partition) throws Exception {
-        String filename = directory+File.separator+"sources.xml";
+    public void loadSourcesConfig(String path, Partition partition) throws Exception {
+        if (path == null) {
+            path = home;
+        } else if (home != null) {
+            path = home+File.separator+path;
+        }
+        String filename = (path == null ? "" : path+File.separator)+File.separator+"sources.xml";
         log.debug("Loading "+filename);
 
         File file = new File(filename);

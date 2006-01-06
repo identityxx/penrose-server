@@ -18,11 +18,13 @@
 package org.safehaus.penrose.connector;
 
 import org.safehaus.penrose.session.PenroseSearchResults;
-import org.safehaus.penrose.session.PenroseSearchResults;
 import org.safehaus.penrose.partition.*;
 import org.safehaus.penrose.cache.CacheConfig;
+import org.safehaus.penrose.cache.SourceCacheStorage;
 import org.safehaus.penrose.cache.SourceCache;
+import org.safehaus.penrose.cache.EntryCache;
 import org.safehaus.penrose.engine.TransformEngine;
+import org.safehaus.penrose.engine.Engine;
 import org.safehaus.penrose.util.Formatter;
 import org.safehaus.penrose.config.*;
 import org.safehaus.penrose.thread.MRSWLock;
@@ -31,8 +33,12 @@ import org.safehaus.penrose.thread.ThreadPool;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.filter.FilterTool;
 import org.safehaus.penrose.mapping.*;
+import org.safehaus.penrose.interpreter.Interpreter;
+import org.safehaus.penrose.handler.SessionHandler;
 import org.apache.log4j.Logger;
 import org.ietf.ldap.LDAPException;
+import org.ietf.ldap.LDAPConnection;
+import org.ietf.ldap.LDAPSearchConstraints;
 
 import java.util.*;
 
@@ -43,10 +49,15 @@ public class Connector {
 
     static Logger log = Logger.getLogger(Connector.class);
 
+    public final static String DEFAULT_CACHE_CLASS = SourceCache.class.getName();
+
     private PenroseConfig penroseConfig;
     private ConnectorConfig connectorConfig;
     private ConnectionManager connectionManager;
     private PartitionManager partitionManager;
+    private SourceCache sourceCache;
+    private Engine engine;
+    private SessionHandler sessionHandler;
 
     private ThreadPool threadPool;
     private boolean stopping = false;
@@ -54,17 +65,33 @@ public class Connector {
     private Map locks = new HashMap();
     private Queue queue = new Queue();
 
-    private Map caches = new TreeMap();
+    public void init() throws Exception {
+        CacheConfig cacheConfig = penroseConfig.getSourceCacheConfig();
+        String cacheClass = cacheConfig.getCacheClass() == null ? DEFAULT_CACHE_CLASS : cacheConfig.getCacheClass();
 
-    public void init(ConnectorConfig connectorConfig) throws Exception {
-        this.connectorConfig = connectorConfig;
-    }
+        log.debug("Initializing source cache "+cacheClass);
+        Class clazz = Class.forName(cacheClass);
+        sourceCache = (SourceCache)clazz.newInstance();
 
-    public void start() throws Exception {
+        sourceCache.setCacheConfig(cacheConfig);
+        sourceCache.setConnector(this);
+        sourceCache.setPenroseConfig(penroseConfig);
+        sourceCache.setConnectionManager(connectionManager);
+        sourceCache.setPartitionManager(partitionManager);
+
         String s = connectorConfig.getParameter(ConnectorConfig.THREAD_POOL_SIZE);
         int threadPoolSize = s == null ? ConnectorConfig.DEFAULT_THREAD_POOL_SIZE : Integer.parseInt(s);
 
         threadPool = new ThreadPool(threadPoolSize);
+    }
+
+    public void start() throws Exception {
+
+        for (Iterator i=partitionManager.getPartitions().iterator(); i.hasNext(); ) {
+            Partition partition = (Partition)i.next();
+            addPartition(partition);
+        }
+
         threadPool.execute(new RefreshThread(this));
     }
 
@@ -99,11 +126,6 @@ public class Connector {
 
     public void setPartitionManager(PartitionManager partitionManager) throws Exception {
         this.partitionManager = partitionManager;
-
-        for (Iterator i=partitionManager.getPartitions().iterator(); i.hasNext(); ) {
-            Partition partition = (Partition)i.next();
-            addPartition(partition);
-        }
     }
 
     public void addPartition(Partition partition) throws Exception {
@@ -111,18 +133,7 @@ public class Connector {
         Collection sourceConfigs = partition.getSourceConfigs();
         for (Iterator i=sourceConfigs.iterator(); i.hasNext(); ) {
             SourceConfig sourceConfig = (SourceConfig)i.next();
-
-            CacheConfig dataCacheConfig = penroseConfig.getSourceCacheConfig();
-            String dataCacheClass = dataCacheConfig.getCacheClass();
-            dataCacheClass = dataCacheClass == null ? ConnectorConfig.DEFAULT_CACHE_CLASS : dataCacheClass;
-
-            Class clazz = Class.forName(dataCacheClass);
-            SourceCache sourceCache = (SourceCache)clazz.newInstance();
-            sourceCache.setConnector(this);
-            sourceCache.setSourceDefinition(sourceConfig);
-            sourceCache.init(dataCacheConfig);
-
-            caches.put(sourceConfig.getName(), sourceCache);
+            sourceCache.create(sourceConfig);
         }
     }
 
@@ -144,9 +155,7 @@ public class Connector {
             if (!autoRefresh) continue;
 
             if (log.isDebugEnabled()) {
-                log.debug(Formatter.displaySeparator(80));
-                log.debug(Formatter.displayLine("Refreshing source caches for "+sourceConfig.getConnectionName()+"/"+sourceConfig.getName(), 80));
-                log.debug(Formatter.displaySeparator(80));
+                log.debug("Refreshing source caches for "+sourceConfig.getConnectionName()+"/"+sourceConfig.getName());
             }
 
             s = sourceConfig.getParameter(SourceConfig.REFRESH_METHOD);
@@ -192,18 +201,21 @@ public class Connector {
         CacheConfig cacheConfig = penroseConfig.getSourceCacheConfig();
         String user = cacheConfig.getParameter("user");
 
+        Partition partition = partitionManager.getPartition(sourceConfig);
+        Collection entryMappings = partition.getEntryMappings(sourceConfig);
+
         Collection pks = new HashSet();
 
-        log.debug("Synchronizing changes:");
+        log.debug("Synchronizing changes in "+sourceConfig.getName()+":");
         while (sr.hasNext()) {
             Row pk = (Row)sr.next();
 
             Integer changeNumber = (Integer)pk.remove("changeNumber");
-            //Object changeTime = pk.remove("changeTime");
+            Object changeTime = pk.remove("changeTime");
             String changeAction = (String)pk.remove("changeAction");
             String changeUser = (String)pk.remove("changeUser");
 
-            log.debug(" - "+pk+": "+changeAction);
+            log.debug(" - "+pk+": "+changeAction+" ("+changeTime+")");
 
             lastChangeNumber = changeNumber.intValue();
 
@@ -216,11 +228,107 @@ public class Connector {
             }
 
             getCache(sourceConfig).remove(pk);
+
+            if (engine != null) {
+
+                for (Iterator i=entryMappings.iterator(); i.hasNext(); ) {
+                    EntryMapping entryMapping = (EntryMapping)i.next();
+                    remove(partition, entryMapping, sourceConfig, pk);
+                }
+            }
         }
 
         getCache(sourceConfig).setLastChangeNumber(lastChangeNumber);
 
         retrieve(sourceConfig, pks);
+
+        if (engine != null) {
+
+            for (Iterator i=pks.iterator(); i.hasNext(); ) {
+                Row pk = (Row)i.next();
+
+                for (Iterator j=entryMappings.iterator(); j.hasNext(); ) {
+                    EntryMapping entryMapping = (EntryMapping)j.next();
+                    add(entryMapping, sourceConfig, pk);
+                }
+            }
+        }
+    }
+
+    public void add(EntryMapping entryMapping, SourceConfig sourceConfig, Row pk) throws Exception {
+
+        log.debug("Adding entry cache for "+entryMapping.getDn());
+
+        SourceMapping sourceMapping = engine.getPrimarySource(entryMapping);
+        log.debug("Primary source: "+sourceMapping.getName()+" ("+sourceMapping.getSourceName()+")");
+
+        AttributeValues sv = (AttributeValues)getCache(sourceConfig).get(pk);
+
+        AttributeValues sourceValues = new AttributeValues();
+        sourceValues.set(sourceMapping.getName(), sv);
+
+        log.debug("Source values:");
+        for (Iterator i=sourceValues.getNames().iterator(); i.hasNext(); ) {
+            String name = (String)i.next();
+            Collection values = sourceValues.get(name);
+            log.debug(" - "+name+": "+values);
+        }
+
+        Interpreter interpreter = engine.getInterpreterFactory().newInstance();
+        AttributeValues attributeValues = engine.computeAttributeValues(entryMapping, sourceValues, interpreter);
+
+        log.debug("Attribute values:");
+        for (Iterator i=attributeValues.getNames().iterator(); i.hasNext(); ) {
+            String name = (String)i.next();
+            Collection values = attributeValues.get(name);
+            log.debug(" - "+name+": "+values);
+        }
+
+        Row rdn = entryMapping.getRdn(attributeValues);
+        String dn = rdn+","+entryMapping.getParentDn();
+
+        log.debug("Adding "+dn);
+
+        PenroseSearchResults sr = sessionHandler.search(
+                null,
+                dn,
+                LDAPConnection.SCOPE_SUB,
+                LDAPSearchConstraints.DEREF_NEVER,
+                "(objectClass=*)",
+                new ArrayList()
+        );
+    }
+
+    public void remove(Partition partition, EntryMapping entryMapping, SourceConfig sourceConfig, Row pk) throws Exception {
+
+        log.debug("Removing entry cache for "+entryMapping.getDn());
+
+        Collection sourceMappings = entryMapping.getSourceMappings();
+
+        SourceMapping sourceMapping = null;
+        for (Iterator i=sourceMappings.iterator(); i.hasNext(); ) {
+            SourceMapping sm = (SourceMapping)i.next();
+            if (!sm.getSourceName().equals(sourceConfig.getName())) continue;
+            sourceMapping = sm;
+            break;
+        }
+
+        EntryCache entryCache = engine.getEntryCache();
+
+        Collection dns = entryCache.search(entryMapping, entryMapping.getParentDn(), null);
+        for (Iterator i=dns.iterator(); i.hasNext(); ) {
+            String dn = (String)i.next();
+
+            Entry entry = entryCache.get(dn);
+            AttributeValues sv = entry.getSourceValues();
+
+            boolean b = sv.contains(sourceMapping.getName(), pk);
+            log.debug(" - "+dn+" contains "+pk+": "+b);
+            
+            if (!b) continue;
+
+            entryCache.remove(partition, entryMapping, entry.getParentDn(), entry.getRdn());
+        }
     }
 
     public void reloadExpired(SourceConfig sourceConfig) throws Exception {
@@ -236,34 +344,6 @@ public class Connector {
         }
 
         retrieve(sourceConfig, map.keySet());
-    }
-
-    public void create() throws Exception {
-        for (Iterator i=caches.values().iterator(); i.hasNext(); ) {
-            SourceCache sourceCache = (SourceCache)i.next();
-            sourceCache.create();
-        }
-    }
-
-    public void load() throws Exception {
-        for (Iterator i=caches.values().iterator(); i.hasNext(); ) {
-            SourceCache sourceCache = (SourceCache)i.next();
-            sourceCache.load();
-        }
-    }
-
-    public void clean() throws Exception {
-        for (Iterator i=caches.values().iterator(); i.hasNext(); ) {
-            SourceCache sourceCache = (SourceCache)i.next();
-            sourceCache.clean();
-        }
-    }
-
-    public void drop() throws Exception {
-        for (Iterator i=caches.values().iterator(); i.hasNext(); ) {
-            SourceCache sourceCache = (SourceCache)i.next();
-            sourceCache.drop();
-        }
     }
 
     public synchronized MRSWLock getLock(SourceConfig sourceConfig) {
@@ -741,8 +821,8 @@ public class Connector {
         this.connectorConfig = connectorConfig;
     }
 
-    public SourceCache getCache(SourceConfig sourceConfig) throws Exception {
-        return (SourceCache)caches.get(sourceConfig.getName());
+    public SourceCacheStorage getCache(SourceConfig sourceConfig) throws Exception {
+        return sourceCache.getCacheStorage(sourceConfig);
     }
 
     public ConnectionManager getConnectionManager() {
@@ -759,5 +839,29 @@ public class Connector {
 
     public void setPenroseConfig(PenroseConfig penroseConfig) {
         this.penroseConfig = penroseConfig;
+    }
+
+    public SourceCache getSourceCache() {
+        return sourceCache;
+    }
+
+    public void setSourceCache(SourceCache sourceCache) {
+        this.sourceCache = sourceCache;
+    }
+
+    public Engine getEngine() {
+        return engine;
+    }
+
+    public void setEngine(Engine engine) {
+        this.engine = engine;
+    }
+
+    public SessionHandler getSessionHandler() {
+        return sessionHandler;
+    }
+
+    public void setSessionHandler(SessionHandler sessionHandler) {
+        this.sessionHandler = sessionHandler;
     }
 }

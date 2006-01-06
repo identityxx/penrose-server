@@ -55,7 +55,7 @@ public class LoadEngine {
         Collection sources = entryMapping.getSourceMappings();
         log.debug("Sources: "+sources);
 
-        Collection effectiveSources = partition.getEffectiveSources(entryMapping);
+        Collection effectiveSources = partition.getEffectiveSourceMappings(entryMapping);
         log.debug("Effective Sources: "+effectiveSources);
 
         if (sources.size() == 0 && effectiveSources.size() == 0 || sources.size() == 1 && effectiveSources.size() == 1) {
@@ -116,7 +116,7 @@ public class LoadEngine {
             Row rdn = Entry.getRdn(dn);
 
             log.debug("Checking "+rdn+" in entry data cache for "+parentDn);
-            Entry entry = (Entry)engine.getEntryCacheManager().get(entryMapping, parentDn, rdn);
+            Entry entry = (Entry)engine.getEntryCache().get(entryMapping, parentDn, rdn);
 
             if (entry != null) {
                 log.debug("Entry "+rdn+" has been loaded");
@@ -159,7 +159,7 @@ public class LoadEngine {
                     String parentDn = Entry.getParentDn(dn);
 
                     log.debug("Checking "+rdn+" in entry data cache for "+parentDn);
-                    Entry entry = (Entry)engine.getEntryCacheManager().get(entryMapping, parentDn, rdn);
+                    Entry entry = (Entry)engine.getEntryCache().get(entryMapping, parentDn, rdn);
 
                     if (entry != null) {
                         log.debug(" - "+rdn+" has been loaded");

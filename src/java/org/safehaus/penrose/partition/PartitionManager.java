@@ -57,12 +57,10 @@ public class PartitionManager {
         Partition partition = getPartition(partitionConfig.getName());
         if (partition != null) return partition;
 
-        String path = (home == null ? "" : home+File.separator)+partitionConfig.getPath();
+        log.debug("Loading "+partitionConfig.getName()+" partition from "+home+".");
 
-        log.debug("Loading "+partitionConfig.getName()+" partition from "+path+".");
-
-        PartitionReader partitionReader = new PartitionReader(path);
-        partition = partitionReader.read();
+        PartitionReader partitionReader = new PartitionReader(home);
+        partition = partitionReader.read(partitionConfig);
 
         addPartition(partitionConfig.getName(), partition);
 

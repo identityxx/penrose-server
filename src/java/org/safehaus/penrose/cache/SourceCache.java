@@ -1,80 +1,45 @@
-/**
- * Copyright (c) 2000-2005, Identyx Corporation.
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
- */
 package org.safehaus.penrose.cache;
 
-import org.safehaus.penrose.mapping.*;
-import org.safehaus.penrose.filter.Filter;
+import org.apache.log4j.Logger;
+import org.safehaus.penrose.connector.ConnectorConfig;
 import org.safehaus.penrose.connector.Connector;
-import org.safehaus.penrose.connector.Connection;
-import org.safehaus.penrose.partition.Partition;
+import org.safehaus.penrose.connector.ConnectionManager;
 import org.safehaus.penrose.partition.SourceConfig;
-import org.safehaus.penrose.partition.ConnectionConfig;
-import org.safehaus.penrose.session.PenroseSearchResults;
+import org.safehaus.penrose.partition.Partition;
+import org.safehaus.penrose.partition.PartitionManager;
+import org.safehaus.penrose.partition.PartitionConfig;
+import org.safehaus.penrose.config.PenroseConfig;
 
-import java.util.*;
+import java.util.Map;
+import java.util.TreeMap;
+import java.util.Iterator;
 
 /**
  * @author Endi S. Dewata
  */
-public abstract class SourceCache extends Cache {
+public class SourceCache {
 
+    Logger log = Logger.getLogger(getClass());
+
+    CacheConfig cacheConfig;
     Connector connector;
-    SourceConfig sourceConfig;
+    PenroseConfig penroseConfig;
+    ConnectionManager connectionManager;
+    PartitionManager partitionManager;
 
-    public abstract int getLastChangeNumber() throws Exception;
-    public abstract void setLastChangeNumber(int lastChangeNumber) throws Exception;
-    public abstract Map load(Collection filters, Collection missingKeys) throws Exception;
+    private Map caches = new TreeMap();
 
-    public SourceConfig getSourceDefinition() {
-        return sourceConfig;
-    }
+    public SourceCacheStorage createCacheStorage(SourceConfig sourceConfig) throws Exception {
 
-    public void setSourceDefinition(SourceConfig sourceConfig) {
-        this.sourceConfig = sourceConfig;
-    }
+        Partition partition = partitionManager.getPartition(sourceConfig);
 
-    public void init() throws Exception {
-        super.init();
+        SourceCacheStorage sourceCacheStorage = new InMemorySourceCacheStorage();
+        sourceCacheStorage.setSourceDefinition(sourceConfig);
+        sourceCacheStorage.setPartition(partition);
+        sourceCacheStorage.setConnector(connector);
+        sourceCacheStorage.init(cacheConfig);
 
-        String s = sourceConfig.getParameter(SourceConfig.DATA_CACHE_SIZE);
-        if (s != null) size = Integer.parseInt(s);
-
-        s = sourceConfig.getParameter(SourceConfig.DATA_CACHE_EXPIRATION);
-        if (s != null) expiration = Integer.parseInt(s);
-    }
-
-    public void create() throws Exception {
-    }
-
-    public void clean() throws Exception {
-    }
-
-    public void drop() throws Exception {
-    }
-
-    public Collection search(Filter filter) throws Exception {
-        return null;
-    }
-
-    public void put(Filter filter, Collection pks) throws Exception {
-    }
-
-    public void invalidate() throws Exception {
+        return sourceCacheStorage;
     }
 
     public Connector getConnector() {
@@ -85,28 +50,79 @@ public abstract class SourceCache extends Cache {
         this.connector = connector;
     }
 
-    public void load() throws Exception {
-        String s = sourceConfig.getParameter(SourceConfig.AUTO_REFRESH);
-        boolean autoRefresh = s == null ? SourceConfig.DEFAULT_AUTO_REFRESH : new Boolean(s).booleanValue();
+    public CacheConfig getCacheConfig() {
+        return cacheConfig;
+    }
 
-        if (!autoRefresh) return;
+    public void setCacheConfig(CacheConfig cacheConfig) {
+        this.cacheConfig = cacheConfig;
+    }
 
-        Partition partition = connector.getPartitionManager().getPartition(sourceConfig);
-        ConnectionConfig conCfg = partition.getConnectionConfig(sourceConfig.getConnectionName());
-        Connection connection = connector.getConnection(conCfg.getName());
+    public SourceCacheStorage getCacheStorage(SourceConfig sourceConfig) throws Exception {
+        Partition partition = partitionManager.getPartition(sourceConfig);
+        PartitionConfig partitionConfig = partition.getPartitionConfig();
 
-        PenroseSearchResults sr = connection.load(sourceConfig, null, 100);
+        return (SourceCacheStorage)caches.get(partitionConfig.getName()+"."+sourceConfig.getName());
+    }
 
-        //log.debug("Results:");
-        while (sr.hasNext()) {
-            AttributeValues sourceValues = (AttributeValues)sr.next();
-            Row pk = sourceConfig.getPrimaryKeyValues(sourceValues);
-            //log.debug(" - "+pk+": "+sourceValues);
-
-            put(pk, sourceValues);
+    public void create() throws Exception {
+        for (Iterator i=caches.values().iterator(); i.hasNext(); ) {
+            SourceCacheStorage sourceCacheStorage = (SourceCacheStorage)i.next();
+            sourceCacheStorage.create();
         }
+    }
 
-        int lastChangeNumber = connection.getLastChangeNumber(sourceConfig);
-        setLastChangeNumber(lastChangeNumber);
+    public void create(SourceConfig sourceConfig) throws Exception {
+
+        Partition partition = partitionManager.getPartition(sourceConfig);
+        PartitionConfig partitionConfig = partition.getPartitionConfig();
+
+        SourceCacheStorage sourceCacheStorage = createCacheStorage(sourceConfig);
+        caches.put(partitionConfig.getName()+"."+sourceConfig.getName(), sourceCacheStorage);
+    }
+
+    public void load() throws Exception {
+        for (Iterator i=caches.values().iterator(); i.hasNext(); ) {
+            SourceCacheStorage sourceCacheStorage = (SourceCacheStorage)i.next();
+            sourceCacheStorage.load();
+        }
+    }
+
+    public void clean() throws Exception {
+        for (Iterator i=caches.values().iterator(); i.hasNext(); ) {
+            SourceCacheStorage sourceCacheStorage = (SourceCacheStorage)i.next();
+            sourceCacheStorage.clean();
+        }
+    }
+
+    public void drop() throws Exception {
+        for (Iterator i=caches.values().iterator(); i.hasNext(); ) {
+            SourceCacheStorage sourceCacheStorage = (SourceCacheStorage)i.next();
+            sourceCacheStorage.drop();
+        }
+    }
+
+    public PartitionManager getPartitionManager() {
+        return partitionManager;
+    }
+
+    public void setPartitionManager(PartitionManager partitionManager) {
+        this.partitionManager = partitionManager;
+    }
+
+    public PenroseConfig getPenroseConfig() {
+        return penroseConfig;
+    }
+
+    public void setPenroseConfig(PenroseConfig penroseConfig) {
+        this.penroseConfig = penroseConfig;
+    }
+
+    public ConnectionManager getConnectionManager() {
+        return connectionManager;
+    }
+
+    public void setConnectionManager(ConnectionManager connectionManager) {
+        this.connectionManager = connectionManager;
     }
 }

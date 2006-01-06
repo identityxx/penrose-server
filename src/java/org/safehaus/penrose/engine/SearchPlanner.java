@@ -101,11 +101,11 @@ public class SearchPlanner extends GraphVisitor {
             SourceMapping toSourceMapping;
 
             if (entryMapping.getSourceMapping(lsourceName) == null) {
-                fromSourceMapping = partition.getEffectiveSource(entryMapping, lsourceName);
+                fromSourceMapping = partition.getEffectiveSourceMapping(entryMapping, lsourceName);
                 toSourceMapping = entryMapping.getSourceMapping(rsourceName);
 
             } else {
-                fromSourceMapping = partition.getEffectiveSource(entryMapping, rsourceName);
+                fromSourceMapping = partition.getEffectiveSourceMapping(entryMapping, rsourceName);
                 toSourceMapping = entryMapping.getSourceMapping(lsourceName);
             }
 

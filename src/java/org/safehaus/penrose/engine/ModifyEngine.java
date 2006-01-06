@@ -73,7 +73,7 @@ public class ModifyEngine {
 
         if (visitor.getReturnCode() != LDAPException.SUCCESS) return visitor.getReturnCode();
 
-        engine.getEntryCacheManager().remove(entry);
+        engine.getEntryCache().remove(entry);
 
         return LDAPException.SUCCESS;
     }

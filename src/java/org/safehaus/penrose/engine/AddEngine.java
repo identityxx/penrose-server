@@ -90,7 +90,7 @@ public class AddEngine {
         String startingSourceName = engine.getStartingSourceName(entryMapping);
         if (startingSourceName == null) return LDAPException.SUCCESS;
 
-        SourceMapping startingSourceMapping = partition.getEffectiveSource(entryMapping, startingSourceName);
+        SourceMapping startingSourceMapping = partition.getEffectiveSourceMapping(entryMapping, startingSourceName);
         log.debug("Starting from source: "+startingSourceName);
 
         Collection relationships = graph.getEdgeObjects(startingSourceMapping);
@@ -130,7 +130,7 @@ public class AddEngine {
 
         Entry entry = new Entry(dn, entryDefinition, newSourceValues, newAttributeValues);
 
-        engine.getCache(parent.getDn(), entryDefinition).put(rdn, entry);
+        engine.getCacheStorage(parent.getDn(), entryDefinition).put(rdn, entry);
 */
         return LDAPException.SUCCESS;
     }

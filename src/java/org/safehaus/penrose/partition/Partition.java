@@ -28,6 +28,8 @@ public class Partition {
 
     Logger log = Logger.getLogger(getClass());
 
+    private PartitionConfig partitionConfig;
+
     private Map entryMappings = new TreeMap();
     private Collection rootEntryMappings = new ArrayList();
     private Map childrenMap = new TreeMap();
@@ -44,6 +46,37 @@ public class Partition {
     public EntryMapping getEntryMapping(String dn) {
         if (dn == null) return null;
         return (EntryMapping)entryMappings.get(dn);
+    }
+
+    public Collection getEntryMappings(SourceConfig sourceConfig) {
+        Collection list = new ArrayList();
+
+        for (Iterator i=rootEntryMappings.iterator(); i.hasNext(); ) {
+            EntryMapping entryMapping = (EntryMapping)i.next();
+            getEntryMappings(entryMapping, sourceConfig, list);
+        }
+
+        return list;
+    }
+
+    public void getEntryMappings(EntryMapping entryMapping, SourceConfig sourceConfig, Collection list) {
+
+        //log.debug("Checking "+entryMapping.getDn());
+
+        Collection sourceMappings = entryMapping.getSourceMappings();
+        for (Iterator i=sourceMappings.iterator(); i.hasNext(); ) {
+            SourceMapping sourceMapping = (SourceMapping)i.next();
+            if (sourceMapping.getSourceName().equals(sourceConfig.getName())) {
+                list.add(entryMapping);
+                return;
+            }
+        }
+
+        Collection children = getChildren(entryMapping);
+        for (Iterator i=children.iterator(); i.hasNext(); ) {
+            EntryMapping childMapping = (EntryMapping)i.next();
+            getEntryMappings(childMapping, sourceConfig, list);
+        }
     }
 
 	public void addEntryMapping(EntryMapping entry) throws Exception {
@@ -207,22 +240,22 @@ public class Partition {
         return (Collection)childrenMap.remove(dn);
     }
 
-    public Collection getEffectiveSources(EntryMapping entry) {
+    public Collection getEffectiveSourceMappings(EntryMapping entry) {
         Collection list = new ArrayList();
         list.addAll(entry.getSourceMappings());
 
         EntryMapping parent = getParent(entry);
-        if (parent != null) list.addAll(getEffectiveSources(parent));
+        if (parent != null) list.addAll(getEffectiveSourceMappings(parent));
 
         return list;
     }
 
-    public SourceMapping getEffectiveSource(EntryMapping entryMapping, String name) {
+    public SourceMapping getEffectiveSourceMapping(EntryMapping entryMapping, String name) {
         SourceMapping sourceMapping = (SourceMapping)entryMapping.getSourceMapping(name);
         if (sourceMapping != null) return sourceMapping;
 
         EntryMapping parent = getParent(entryMapping);
-        if (parent != null) return getEffectiveSource(parent, name);
+        if (parent != null) return getEffectiveSourceMapping(parent, name);
 
         return null;
     }
@@ -483,5 +516,13 @@ public class Partition {
         if (parentMapping == null) return false;
 
         return isDynamic(parentMapping);
+    }
+
+    public PartitionConfig getPartitionConfig() {
+        return partitionConfig;
+    }
+
+    public void setPartitionConfig(PartitionConfig partitionConfig) {
+        this.partitionConfig = partitionConfig;
     }
 }

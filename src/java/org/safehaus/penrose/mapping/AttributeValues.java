@@ -1,5 +1,8 @@
 package org.safehaus.penrose.mapping;
 
+import org.apache.log4j.Logger;
+import org.safehaus.penrose.connector.Connector;
+
 import java.util.*;
 
 /**
@@ -8,6 +11,8 @@ import java.util.*;
  * @author Endi S. Dewata
  */
 public class AttributeValues implements Cloneable, Comparable {
+
+    Logger log = Logger.getLogger(getClass());
 
     public Map values = new TreeMap();
 
@@ -38,6 +43,10 @@ public class AttributeValues implements Cloneable, Comparable {
     }
 
     public void add(Row row) {
+        add(null, row);
+    }
+
+    public void add(String prefix, Row row) {
         for (Iterator i = row.getNames().iterator(); i.hasNext(); ) {
             String name = (String)i.next();
             Object value = row.get(name);
@@ -45,18 +54,22 @@ public class AttributeValues implements Cloneable, Comparable {
             Collection c = get(name);
             if (c == null) c = new HashSet();
             c.add(value);
-            set(name, c);
+            set(prefix == null ? name : prefix+"."+name, c);
         }
     }
 
     public void set(Row row) {
+        set(null, row);
+    }
+
+    public void set(String prefix, Row row) {
         for (Iterator i = row.getNames().iterator(); i.hasNext(); ) {
             String name = (String)i.next();
             Object value = row.get(name);
 
             Collection c = new HashSet();
             c.add(value);
-            set(name, c);
+            set(prefix == null ? name : prefix+"."+name, c);
         }
     }
 
@@ -126,6 +139,22 @@ public class AttributeValues implements Cloneable, Comparable {
         }
 
         return false;
+    }
+
+    public boolean contains(String prefix, Row row) {
+        
+        for (Iterator i=row.getNames().iterator(); i.hasNext(); ) {
+            String name = (String)i.next();
+            String fullName = prefix+"."+name;
+
+            Object value = row.get(name);
+            Collection list = get(fullName);
+
+            if (value == null || list == null) return false;
+            if (!list.contains(value)) return false;
+        }
+
+        return true;
     }
 
     public void clear() {

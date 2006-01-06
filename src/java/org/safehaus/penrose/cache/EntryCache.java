@@ -19,101 +19,224 @@ package org.safehaus.penrose.cache;
 
 import org.safehaus.penrose.mapping.EntryMapping;
 import org.safehaus.penrose.mapping.Entry;
-import org.safehaus.penrose.filter.Filter;
-import org.safehaus.penrose.engine.Engine;
+import org.safehaus.penrose.mapping.Row;
+import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.partition.Partition;
+import org.safehaus.penrose.partition.PartitionManager;
+import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.connector.ConnectionManager;
+import org.safehaus.penrose.filter.Filter;
 import org.apache.log4j.Logger;
 
-import java.util.Collection;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author Endi S. Dewata
  */
-public abstract class EntryCache {
+public class EntryCache {
 
     Logger log = Logger.getLogger(getClass());
 
+    public final static String DEFAULT_CACHE_NAME  = "Entry Cache";
+    public final static String DEFAULT_CACHE_CLASS = DefaultEntryCache.class.getName();
+
+    private CacheConfig cacheConfig;
     ConnectionManager connectionManager;
-    Partition partition;
-    EntryMapping entryMapping;
+    PenroseConfig penroseConfig;
+    PartitionManager partitionManager;
 
-    String parentDn;
+    private Map caches = new TreeMap();
 
-    CacheConfig cacheConfig;
+    boolean first = true;
 
-    int size;
-    int expiration; // minutes
+    public EntryCacheStorage createCacheStorage(String parentDn, EntryMapping entryMapping) throws Exception {
 
-    public CacheConfig getCacheConfig() {
-        return cacheConfig;
+        Partition partition = partitionManager.getPartition(entryMapping);
+
+        EntryCacheStorage cacheStorage = new InMemoryEntryCacheStorage();
+        cacheStorage.setCacheConfig(cacheConfig);
+        cacheStorage.setConnectionManager(connectionManager);
+        cacheStorage.setPartition(partition);
+        cacheStorage.setEntryMapping(entryMapping);
+        cacheStorage.setParentDn(parentDn);
+
+        cacheStorage.init();
+
+        return cacheStorage;
     }
 
-    public void setCacheConfig(CacheConfig cacheConfig) {
-        this.cacheConfig = cacheConfig;
+    public EntryCacheStorage getCacheStorage(String parentDn, EntryMapping entryMapping) throws Exception {
+
+        String key = entryMapping.getRdn()+","+parentDn;
+        EntryCacheStorage cacheStorage = (EntryCacheStorage)caches.get(key);
+
+        if (cacheStorage == null) {
+            cacheStorage = createCacheStorage(parentDn, entryMapping);
+            caches.put(key, cacheStorage);
+        }
+
+        return cacheStorage;
     }
 
-    public Collection getParameterNames() {
-        return cacheConfig.getParameterNames();
+    public void put(EntryMapping entryMapping, String parentDn, Filter filter, Collection dns) throws Exception {
+        getCacheStorage(parentDn, entryMapping).put(filter, dns);
     }
 
-    public String getParameter(String name) {
-        return cacheConfig.getParameter(name);
+    public Collection search(EntryMapping entryMapping, String parentDn, Filter filter) throws Exception {
+        return getCacheStorage(parentDn, entryMapping).search(filter);
     }
 
-    public void init() throws Exception {
-        String s = cacheConfig.getParameter(CacheConfig.CACHE_SIZE);
-        size = s == null ? CacheConfig.DEFAULT_CACHE_SIZE : Integer.parseInt(s);
-
-        s = entryMapping.getParameter(EntryMapping.DATA_CACHE_SIZE);
-        if (s != null) size = Integer.parseInt(s);
-
-        s = cacheConfig.getParameter(CacheConfig.CACHE_EXPIRATION);
-        expiration = s == null ? CacheConfig.DEFAULT_CACHE_EXPIRATION : Integer.parseInt(s);
-
-        s = entryMapping.getParameter(EntryMapping.DATA_CACHE_EXPIRATION);
-        if (s != null) expiration = Integer.parseInt(s);
+    public void put(Entry entry) throws Exception {
+        getCacheStorage(entry.getParentDn(), entry.getEntryMapping()).put(entry.getRdn(), entry);
     }
 
-    public int getSize() {
-        return size;
+    public Entry get(String dn) throws Exception {
+        EntryMapping entryMapping = partitionManager.findEntryMapping(dn);
+        String parentDn = Entry.getParentDn(dn);
+        Row rdn = Entry.getRdn(dn);
+        return getCacheStorage(parentDn, entryMapping).get(rdn);
     }
 
-    public void setSize(int size) {
-        this.size = size;
+    public Entry get(EntryMapping entryMapping, String parentDn, Row rdn) throws Exception {
+        return getCacheStorage(parentDn, entryMapping).get(rdn);
     }
 
-    public int getExpiration() {
-        return expiration;
+    public void remove(Entry entry) throws Exception {
+        EntryMapping entryMapping = entry.getEntryMapping();
+        Partition partition = partitionManager.getPartition(entryMapping);
+        remove(partition, entryMapping, entry.getParentDn(), entry.getRdn());
     }
 
-    public void setExpiration(int expiration) {
-        this.expiration = expiration;
+    public void remove(Partition partition, EntryMapping entryMapping, String parentDn, Row rdn) throws Exception {
+        String dn = rdn+","+parentDn;
+
+        Collection children = partition.getChildren(entryMapping);
+        for (Iterator i=children.iterator(); i.hasNext(); ) {
+            EntryMapping childMapping = (EntryMapping)i.next();
+
+            Collection childDns = search(childMapping, dn, null);
+            for (Iterator j=childDns.iterator(); j.hasNext(); ) {
+                String childDn = (String)j.next();
+
+                Row childRdn = Entry.getRdn(childDn);
+                remove(partition, childMapping, dn, childRdn);
+            }
+        }
+
+        log.debug("Remove cache "+dn);
+        getCacheStorage(parentDn, entryMapping).remove(rdn);
     }
 
-    public EntryMapping getEntryMapping() {
-        return entryMapping;
+    public PenroseConfig getPenroseConfig() {
+        return penroseConfig;
     }
 
-    public void setEntryMapping(EntryMapping entryMapping) {
-        this.entryMapping = entryMapping;
+    public void setPenroseConfig(PenroseConfig penroseConfig) {
+        this.penroseConfig = penroseConfig;
     }
 
-    public String getParentDn() {
-        return parentDn;
+    public PartitionManager getPartitionManager() {
+        return partitionManager;
     }
 
-    public void setParentDn(String parentDn) {
-        this.parentDn = parentDn;
+    public void setPartitionManager(PartitionManager partitionManager) {
+        this.partitionManager = partitionManager;
     }
 
-    public Partition getPartition() {
-        return partition;
+    public void create() throws Exception {
+        for (Iterator i=partitionManager.getPartitions().iterator(); i.hasNext(); ) {
+            Partition partition = (Partition)i.next();
+            Collection entryMappings = partition.getRootEntryMappings();
+            create(partition, null, entryMappings);
+        }
     }
 
-    public void setPartition(Partition partition) {
-        this.partition = partition;
+    public  void create(Partition partition, String parentDn, Collection entryDefinitions) throws Exception {
+
+        for (Iterator i=entryDefinitions.iterator(); i.hasNext(); ) {
+            EntryMapping entryMapping = (EntryMapping)i.next();
+
+            EntryCacheStorage cacheStorage = getCacheStorage(parentDn, entryMapping);
+
+            if (first) {
+                cacheStorage.globalCreate();
+                first = false;
+            }
+
+            log.debug("Creating tables for "+entryMapping.getDn());
+            cacheStorage.create();
+
+            Collection children = partition.getChildren(entryMapping);
+            create(partition, entryMapping.getDn(), children);
+        }
+    }
+
+    public void load(Penrose penrose) throws Exception {
+        for (Iterator i=partitionManager.getPartitions().iterator(); i.hasNext(); ) {
+            Partition partition = (Partition)i.next();
+            load(penrose, partition);
+        }
+    }
+
+    public void load(Penrose penrose, Partition partition) throws Exception {
+    }
+
+    public void clean() throws Exception {
+        for (Iterator i=partitionManager.getPartitions().iterator(); i.hasNext(); ) {
+            Partition partition = (Partition)i.next();
+            Collection entryMappings = partition.getRootEntryMappings();
+            clean(partition, null, entryMappings);
+        }
+    }
+
+    public void clean(Partition partition, String parentDn, Collection entryDefinitions) throws Exception {
+
+        for (Iterator i=entryDefinitions.iterator(); i.hasNext(); ) {
+            EntryMapping entryMapping = (EntryMapping)i.next();
+
+            EntryCacheStorage entryCacheStorage = getCacheStorage(parentDn, entryMapping);
+            Collection dns = entryCacheStorage.search(null);
+
+            Collection children = partition.getChildren(entryMapping);
+            for (Iterator j=dns.iterator(); j.hasNext(); ) {
+                String dn = (String)j.next();
+                clean(partition, dn, children);
+
+                Row rdn = Entry.getRdn(dn);
+                entryCacheStorage.remove(rdn);
+            }
+        }
+    }
+
+    public void drop() throws Exception {
+
+        EntryCacheStorage cacheStorage = null;
+
+        for (Iterator i=partitionManager.getPartitions().iterator(); i.hasNext(); ) {
+            Partition partition = (Partition)i.next();
+            Collection entryMappings = partition.getRootEntryMappings();
+            cacheStorage = drop(partition, null, entryMappings);
+        }
+
+        cacheStorage.globalDrop();
+    }
+
+    public EntryCacheStorage drop(Partition partition, String parentDn, Collection entryDefinitions) throws Exception {
+
+        EntryCacheStorage cacheStorage = null;
+
+        for (Iterator i=entryDefinitions.iterator(); i.hasNext(); ) {
+            EntryMapping entryMapping = (EntryMapping)i.next();
+
+            Collection children = partition.getChildren(entryMapping);
+            drop(partition, entryMapping.getDn(), children);
+
+            cacheStorage = getCacheStorage(parentDn, entryMapping);
+            log.debug("Dropping tables for "+entryMapping.getDn());
+            cacheStorage.drop();
+        }
+
+        return cacheStorage;
     }
 
     public ConnectionManager getConnectionManager() {
@@ -124,33 +247,11 @@ public abstract class EntryCache {
         this.connectionManager = connectionManager;
     }
 
-    public Collection search(Filter filter) throws Exception {
-        return null;
+    public CacheConfig getCacheConfig() {
+        return cacheConfig;
     }
 
-    public void put(Filter filter, Collection rdns) throws Exception {
-    }
-
-    public void invalidate() throws Exception {
-    }
-
-    public void create() throws Exception {
-    }
-
-    public void drop() throws Exception {
-    }
-
-    public abstract Entry get(Object key) throws Exception;
-
-    public abstract Map getExpired() throws Exception;
-
-    public abstract void put(Object key, Object object) throws Exception;
-
-    public abstract void remove(Object key) throws Exception;
-
-    public void globalCreate() throws Exception {
-    }
-
-    public void globalDrop() throws Exception {
+    public void setCacheConfig(CacheConfig cacheConfig) {
+        this.cacheConfig = cacheConfig;
     }
 }

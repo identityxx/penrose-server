@@ -17,85 +17,8 @@ public class JDBCCacheTool {
 
     Logger log = Logger.getLogger(getClass());
 
-    public String getTableName(SourceConfig sourceConfig) {
-        return sourceConfig.getConnectionName()+"_"+sourceConfig.getName();
-    }
-
-    /**
-     * Convert parsed SQL filter into string to be used in SQL queries.
-     *
-     * @param filter
-     * @return string SQL filter
-     * @throws Exception
-     */
-    public String convert(
-            SourceConfig sourceConfig,
-            Filter filter,
-            Collection parameters)
-            throws Exception {
-
-        String tableName = getTableName(sourceConfig);
-
-        Collection tables = new TreeSet();
-        StringBuffer columns = new StringBuffer();
-        StringBuffer whereClause = new StringBuffer();
-
-        convert(sourceConfig, filter, parameters, whereClause, tables);
-
-        Collection pkFields = sourceConfig.getPrimaryKeyFieldConfigs();
-        for (Iterator j=pkFields.iterator(); j.hasNext(); ) {
-            FieldConfig fieldConfig = (FieldConfig)j.next();
-            String fieldName = fieldConfig.getName();
-
-            if (columns.length() > 0) columns.append(", ");
-            columns.append(tableName);
-            columns.append(".");
-            columns.append(fieldName);
-        }
-
-        StringBuffer join = new StringBuffer();
-        join.append(tableName);
-
-        for (Iterator i=tables.iterator(); i.hasNext(); ) {
-            String t = (String)i.next();
-
-            StringBuffer sb = new StringBuffer();
-            for (Iterator j=pkFields.iterator(); j.hasNext(); ) {
-                FieldConfig fieldConfig = (FieldConfig)j.next();
-                String fieldName = fieldConfig.getName();
-
-                if (sb.length() > 0) sb.append(" and ");
-
-                sb.append(tableName);
-                sb.append(".");
-                sb.append(fieldName);
-                sb.append(" = ");
-                sb.append(t);
-                sb.append(".");
-                sb.append(fieldName);
-            }
-
-            join.append(" join ");
-            join.append(t);
-            join.append(" on ");
-            join.append(sb);
-        }
-
-        StringBuffer sb = new StringBuffer();
-        sb.append("select ");
-        sb.append(columns);
-        sb.append(" from ");
-        sb.append(join);
-
-        if (whereClause.length() > 0) {
-            sb.append(" where ");
-            sb.append(whereClause);
-        }
-
-        return sb.toString();
-    }
-
     boolean convert(
+            String tableName,
             SourceConfig sourceConfig,
             Filter filter,
             Collection parameters,
@@ -104,22 +27,23 @@ public class JDBCCacheTool {
             throws Exception {
 
         if (filter instanceof NotFilter) {
-            return convert(sourceConfig, (NotFilter) filter, parameters, sb, tables);
+            return convert(tableName, sourceConfig, (NotFilter) filter, parameters, sb, tables);
 
         } else if (filter instanceof AndFilter) {
-            return convert(sourceConfig, (AndFilter) filter, parameters, sb, tables);
+            return convert(tableName, sourceConfig, (AndFilter) filter, parameters, sb, tables);
 
         } else if (filter instanceof OrFilter) {
-            return convert(sourceConfig, (OrFilter) filter, parameters, sb, tables);
+            return convert(tableName, sourceConfig, (OrFilter) filter, parameters, sb, tables);
 
         } else if (filter instanceof SimpleFilter) {
-            return convert(sourceConfig, (SimpleFilter) filter, parameters, sb, tables);
+            return convert(tableName, sourceConfig, (SimpleFilter) filter, parameters, sb, tables);
         }
 
         return true;
     }
 
     boolean convert(
+            String tableName,
             SourceConfig sourceConfig,
             SimpleFilter filter,
             Collection parameters,
@@ -141,18 +65,18 @@ public class JDBCCacheTool {
         FieldConfig fieldConfig = sourceConfig.getFieldConfig(name);
         String fieldName = fieldConfig.getName();
 
-        String tableName;
+        String t;
 
         if (fieldConfig.isPrimaryKey()) {
-            tableName = getTableName(sourceConfig);
+            t = tableName;
         } else {
-            tableName = getTableName(sourceConfig)+"_"+fieldName;
-            tables.add(tableName);
+            t = tableName+"_"+fieldName;
+            tables.add(t);
         }
 
         if ("VARCHAR".equals(fieldConfig.getType())) {
             sb.append("lower(");
-            sb.append(tableName);
+            sb.append(t);
             sb.append(".");
             sb.append(fieldName);
             sb.append(") ");
@@ -160,7 +84,7 @@ public class JDBCCacheTool {
             sb.append(" lower(?)");
 
         } else {
-            sb.append(tableName);
+            sb.append(t);
             sb.append(".");
             sb.append(fieldName);
             sb.append(" ");
@@ -174,6 +98,7 @@ public class JDBCCacheTool {
     }
 
     boolean convert(
+            String tableName,
             SourceConfig sourceConfig,
             NotFilter filter,
             Collection parameters,
@@ -184,7 +109,7 @@ public class JDBCCacheTool {
         StringBuffer sb2 = new StringBuffer();
 
         Filter f = filter.getFilter();
-        convert(sourceConfig, f, parameters, sb2, tables);
+        convert(tableName, sourceConfig, f, parameters, sb2, tables);
 
         sb.append("not (");
         sb.append(sb2);
@@ -194,6 +119,7 @@ public class JDBCCacheTool {
     }
 
     boolean convert(
+            String tableName,
             SourceConfig sourceConfig,
             AndFilter filter,
             Collection parameters,
@@ -206,7 +132,7 @@ public class JDBCCacheTool {
             Filter f = (Filter) i.next();
 
             StringBuffer sb3 = new StringBuffer();
-            convert(sourceConfig, f, parameters, sb3, tables);
+            convert(tableName, sourceConfig, f, parameters, sb3, tables);
 
             if (sb2.length() > 0 && sb3.length() > 0) {
                 sb2.append(" and ");
@@ -226,6 +152,7 @@ public class JDBCCacheTool {
     }
 
     boolean convert(
+            String tableName,
             SourceConfig sourceConfig,
             OrFilter filter,
             Collection parameters,
@@ -238,7 +165,7 @@ public class JDBCCacheTool {
             Filter f = (Filter) i.next();
 
             StringBuffer sb3 = new StringBuffer();
-            convert(sourceConfig, f, parameters, sb3, tables);
+            convert(tableName, sourceConfig, f, parameters, sb3, tables);
 
             if (sb2.length() > 0 && sb3.length() > 0) {
                 sb2.append(" or ");

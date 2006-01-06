@@ -66,7 +66,7 @@ public class SearchEngine {
         Collection sources = entryMapping.getSourceMappings();
         log.debug("Sources: "+sources);
 
-        Collection effectiveSources = partition.getEffectiveSources(entryMapping);
+        Collection effectiveSources = partition.getEffectiveSourceMappings(entryMapping);
         log.debug("Effective Sources: "+effectiveSources);
 
         if (unique && sources.size() == 1 && effectiveSources.size() == 1) {
@@ -146,7 +146,7 @@ public class SearchEngine {
             if (parent != null) {
                 String parentDn = parent.getDn();
 
-                Collection list = engine.getEntryCacheManager().search(entryMapping, parentDn, filter);
+                Collection list = engine.getEntryCache().search(entryMapping, parentDn, filter);
                 if (list != null) dns.addAll(list);
             }
         } else {
@@ -246,7 +246,7 @@ public class SearchEngine {
                         log.debug("   - DN: "+dn);
                     }
 
-                    engine.getEntryCacheManager().put(entryMapping, parentDn, filter, c);
+                    engine.getEntryCache().put(entryMapping, parentDn, filter, c);
 
                 }
             }
@@ -268,7 +268,7 @@ public class SearchEngine {
             Row normalizedRdn = getEngineContext().getSchema().normalize(rdn);
             String parentDn = Entry.getParentDn(dn);
 
-            Entry entry = (Entry)engineContext.getCache(parentDn, entryMapping  entry = new Entry(dn, entryMappingues oldSv = entry.getSourceValues(); //(AttributeValues)engineContext.getEntrySourceCache(parentDn, entryMapping   //log.debug("   Storing "+rdn+" in entry source cache.");
+            Entry entry = (Entry)engineContext.getCacheStorage(parentDn, entryMapping  entry = new Entry(dn, entryMappingues oldSv = entry.getSourceValues(); //(AttributeValues)engineContext.getEntrySourceCache(parentDn, entryMapping   //log.debug("   Storing "+rdn+" in entry source cache.");
                 engineContext.getEntrySourceCache(parentDn, entryMappingdebug("   Adding "+rdn+" in entry source cache.");
                 oldSv.add(sv);
             }
