@@ -67,8 +67,11 @@ public class RefreshThread implements Runnable {
                     connector.refresh(partition);
                 }
 
-			} catch (Exception ex) {
+            } catch (InterruptedException e) {
                 // ignore
+                
+			} catch (Exception e) {
+                log.error(e.getMessage(), e);
 			}
 		}
 		

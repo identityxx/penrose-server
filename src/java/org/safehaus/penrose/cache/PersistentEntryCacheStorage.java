@@ -883,7 +883,7 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
             ctx = getJNDIConnection();
             ctx.createSubcontext(dn, attrs);
         } catch (NamingException e) {
-            log.error(e.getMessage(), e);
+            log.error(e.getMessage());
 
         } finally {
             if (ctx != null) try { ctx.close(); } catch (Exception e) {}

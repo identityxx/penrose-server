@@ -152,11 +152,9 @@ public class Connector {
             String s = sourceConfig.getParameter(SourceConfig.AUTO_REFRESH);
             boolean autoRefresh = s == null ? SourceConfig.DEFAULT_AUTO_REFRESH : new Boolean(s).booleanValue();
 
-            if (!autoRefresh) continue;
+            log.debug("Auto refresh source caches for "+partition.getPartitionConfig().getName()+"/"+sourceConfig.getName()+": "+autoRefresh);
 
-            if (log.isDebugEnabled()) {
-                log.debug("Refreshing source caches for "+sourceConfig.getConnectionName()+"/"+sourceConfig.getName());
-            }
+            if (!autoRefresh) continue;
 
             s = sourceConfig.getParameter(SourceConfig.REFRESH_METHOD);
             String refreshMethod = s == null ? SourceConfig.DEFAULT_REFRESH_METHOD : s;
@@ -249,13 +247,13 @@ public class Connector {
 
                 for (Iterator j=entryMappings.iterator(); j.hasNext(); ) {
                     EntryMapping entryMapping = (EntryMapping)j.next();
-                    add(entryMapping, sourceConfig, pk);
+                    add(partition, entryMapping, sourceConfig, pk);
                 }
             }
         }
     }
 
-    public void add(EntryMapping entryMapping, SourceConfig sourceConfig, Row pk) throws Exception {
+    public void add(Partition partition, EntryMapping entryMapping, SourceConfig sourceConfig, Row pk) throws Exception {
 
         log.debug("Adding entry cache for "+entryMapping.getDn());
 
@@ -285,18 +283,26 @@ public class Connector {
         }
 
         Row rdn = entryMapping.getRdn(attributeValues);
-        String dn = rdn+","+entryMapping.getParentDn();
+        EntryMapping parentMapping = partition.getParent(entryMapping);
 
-        log.debug("Adding "+dn);
+        EntryCache entryCache = engine.getEntryCache();
 
-        PenroseSearchResults sr = sessionHandler.search(
-                null,
-                dn,
-                LDAPConnection.SCOPE_SUB,
-                LDAPSearchConstraints.DEREF_NEVER,
-                "(objectClass=*)",
-                new ArrayList()
-        );
+        Collection parentDns = entryCache.search(partition, parentMapping);
+        for (Iterator i=parentDns.iterator(); i.hasNext(); ) {
+            String parentDn = (String)i.next();
+            String dn = rdn+","+parentDn;
+
+            log.debug("Adding "+dn);
+
+            PenroseSearchResults sr = sessionHandler.search(
+                    null,
+                    dn,
+                    LDAPConnection.SCOPE_SUB,
+                    LDAPSearchConstraints.DEREF_NEVER,
+                    "(objectClass=*)",
+                    new ArrayList()
+            );
+        }
     }
 
     public void remove(Partition partition, EntryMapping entryMapping, SourceConfig sourceConfig, Row pk) throws Exception {
@@ -315,7 +321,7 @@ public class Connector {
 
         EntryCache entryCache = engine.getEntryCache();
 
-        Collection dns = entryCache.search(entryMapping, entryMapping.getParentDn(), null);
+        Collection dns = entryCache.search(partition, entryMapping);
         for (Iterator i=dns.iterator(); i.hasNext(); ) {
             String dn = (String)i.next();
 
@@ -323,7 +329,7 @@ public class Connector {
             AttributeValues sv = entry.getSourceValues();
 
             boolean b = sv.contains(sourceMapping.getName(), pk);
-            log.debug(" - "+dn+" contains "+pk+": "+b);
+            log.debug("Checking "+dn+" contains "+pk+" => "+b);
             
             if (!b) continue;
 
