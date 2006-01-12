@@ -20,7 +20,6 @@ package org.safehaus.penrose.engine;
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.session.PenroseSearchResults;
-import org.safehaus.penrose.session.PenroseSearchResults;
 import org.safehaus.penrose.util.Formatter;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.filter.FilterTool;
@@ -46,8 +45,7 @@ public class LoadEngine {
     public void load(
             final EntryMapping entryMapping,
             final PenroseSearchResults entries,
-            final PenroseSearchResults loadedEntries,
-            final PenroseSearchResults results
+            final PenroseSearchResults loadedEntries
             ) throws Exception {
 
         Partition partition = engine.getPartitionManager().getPartition(entryMapping);
@@ -65,7 +63,7 @@ public class LoadEngine {
             engine.execute(new Runnable() {
                 public void run() {
                     try {
-                        checkCache(entryMapping, entries, loadedEntries, results);
+                        checkCache(entryMapping, entries, loadedEntries);
                     } catch (Throwable e) {
                         e.printStackTrace();
                         loadedEntries.setReturnCode(LDAPException.OPERATIONS_ERROR);
@@ -83,7 +81,7 @@ public class LoadEngine {
         engine.execute(new Runnable() {
             public void run() {
                 try {
-                    createBatches(entryMapping, entries, results, batches);
+                    createBatches(entryMapping, entries, batches);
 
                 } catch (Throwable e) {
                     e.printStackTrace(System.out);
@@ -107,9 +105,10 @@ public class LoadEngine {
         });
     }
 
-    public void checkCache(EntryMapping entryMapping, PenroseSearchResults entries, PenroseSearchResults loadedEntries, PenroseSearchResults results) throws Exception {
+    public void checkCache(EntryMapping entryMapping, PenroseSearchResults entries, PenroseSearchResults loadedEntries) throws Exception {
         for (Iterator i=entries.iterator(); i.hasNext(); ) {
             Map map = (Map)i.next();
+/*
             String dn = (String)map.get("dn");
 
             String parentDn = Entry.getParentDn(dn);
@@ -123,7 +122,7 @@ public class LoadEngine {
                 results.add(entry);
                 continue;
             }
-
+*/
             loadedEntries.add(map);
         }
         loadedEntries.close();
@@ -133,7 +132,6 @@ public class LoadEngine {
     public void createBatches(
             EntryMapping entryMapping,
             PenroseSearchResults entries,
-            PenroseSearchResults results,
             PenroseSearchResults batches
             ) throws Exception {
 
@@ -154,7 +152,7 @@ public class LoadEngine {
                 //AttributeValues sv = (AttributeValues)map.get("sourceValues");
 
                 Row rdn = Entry.getRdn(dn);
-
+/*
                 if (partition.getParent(entryMapping) != null) {
                     String parentDn = Entry.getParentDn(dn);
 
@@ -167,7 +165,7 @@ public class LoadEngine {
                         continue;
                     }
                 }
-
+*/
                 Row filter = engine.createFilter(interpreter, primarySourceMapping, entryMapping, rdn);
                 if (filter == null) continue;
 

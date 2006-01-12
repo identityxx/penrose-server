@@ -17,18 +17,17 @@
  */
 package org.safehaus.penrose.thread;
 
-import java.util.Vector;
+import java.util.List;
+import java.util.ArrayList;
 
 import org.apache.log4j.Logger;
 
-/**
- * @author Administrator
- */
 public class Queue {
 	
-	protected Vector queue = new Vector();
-    Logger log = Logger.getLogger(getClass());
-	
+    public Logger log = Logger.getLogger(getClass());
+
+	protected List queue = new ArrayList();
+
 	public synchronized boolean isEmpty() {
 		return queue.size() == 0;
 	}
@@ -91,7 +90,7 @@ public class Queue {
 	public String toString() {
 		StringBuffer sb = new StringBuffer("Queue content: ");
 		for (int i=0; i<queue.size(); i++) {
-			sb.append(queue.elementAt(i)+";");
+			sb.append(queue.get(i)+";");
 		}
 		return sb.toString();
 	}

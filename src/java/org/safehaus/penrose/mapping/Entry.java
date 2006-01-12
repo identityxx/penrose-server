@@ -109,7 +109,26 @@ public class Entry {
     }
 
     public LDAPEntry toLDAPEntry() {
-        return entryMapping.toLDAPEntry(getDn(), attributeValues);
+        return new LDAPEntry(dn, getAttributeSet(attributeValues));
+    }
+
+    public static LDAPAttributeSet getAttributeSet(AttributeValues attributeValues) {
+        LDAPAttributeSet set = new LDAPAttributeSet();
+
+        for (Iterator i=attributeValues.getNames().iterator(); i.hasNext(); ) {
+            String name = (String)i.next();
+            Collection values = attributeValues.get(name);
+
+            LDAPAttribute attribute = new LDAPAttribute(name);
+            for (Iterator j=values.iterator(); j.hasNext(); ) {
+                Object value = j.next();
+                attribute.addValue(value.toString());
+            }
+
+            set.add(attribute);
+        }
+
+        return set;
     }
 
     public String toString() {

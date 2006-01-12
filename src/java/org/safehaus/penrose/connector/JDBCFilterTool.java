@@ -1,7 +1,6 @@
 package org.safehaus.penrose.connector;
 
 import org.safehaus.penrose.filter.*;
-import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.partition.FieldConfig;
 import org.safehaus.penrose.partition.SourceConfig;
 import org.apache.log4j.Logger;

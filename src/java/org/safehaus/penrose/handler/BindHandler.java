@@ -18,7 +18,6 @@
 package org.safehaus.penrose.handler;
 
 import org.safehaus.penrose.session.PenroseSession;
-import org.safehaus.penrose.session.PenroseSession;
 import org.safehaus.penrose.event.BindEvent;
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.util.PasswordUtil;

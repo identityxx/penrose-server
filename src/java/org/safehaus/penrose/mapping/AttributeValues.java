@@ -1,7 +1,6 @@
 package org.safehaus.penrose.mapping;
 
 import org.apache.log4j.Logger;
-import org.safehaus.penrose.connector.Connector;
 
 import java.util.*;
 
@@ -73,34 +72,6 @@ public class AttributeValues implements Cloneable, Comparable {
         }
     }
 
-    public void add(String name, Object value) {
-        if (value instanceof Collection) {
-            add(name, (Collection)value);
-            return;
-        }
-        
-        if (value == null) return;
-
-        Collection c = (Collection)this.values.get(name);
-        if (c == null) {
-            //c = new TreeSet();
-            c = new HashSet();
-            this.values.put(name, c);
-        }
-        c.add(value);
-    }
-
-    public void add(String name, Collection values) {
-        if (values == null) return;
-        Collection c = (Collection)this.values.get(name);
-        if (c == null) {
-            //c = new TreeSet();
-            c = new HashSet();
-            this.values.put(name, c);
-        }
-        c.addAll(values);
-    }
-
     public void set(String prefix, AttributeValues attributeValues) {
         for (Iterator i=attributeValues.getNames().iterator(); i.hasNext(); ) {
             String name = (String)i.next();
@@ -113,6 +84,53 @@ public class AttributeValues implements Cloneable, Comparable {
         Collection c = new HashSet();
         c.addAll(values);
         this.values.put(name, c);
+    }
+
+    public void set(String name, Object value) {
+
+        if (value == null) return;
+
+        if (value instanceof Collection) {
+            set(name, (Collection)value);
+            return;
+        }
+
+        Collection c = new HashSet();
+        c.add(value);
+        this.values.put(name, c);
+    }
+
+    public void add(String name, Object value) {
+
+        if (value == null) return;
+
+        if (value instanceof Collection) {
+            add(name, (Collection)value);
+            return;
+        }
+        
+        Collection c = (Collection)this.values.get(name);
+        if (c == null) {
+            //c = new TreeSet();
+            c = new HashSet();
+            this.values.put(name, c);
+        }
+        c.add(value);
+    }
+
+    public void add(String name, Object objects[]) {
+        add(name, Arrays.asList(objects));
+    }
+
+    public void add(String name, Collection values) {
+        if (values == null) return;
+        Collection c = (Collection)this.values.get(name);
+        if (c == null) {
+            //c = new TreeSet();
+            c = new HashSet();
+            this.values.put(name, c);
+        }
+        c.addAll(values);
     }
 
     public Collection get(String name) {

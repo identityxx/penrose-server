@@ -20,8 +20,9 @@ package org.safehaus.penrose.handler;
 import org.safehaus.penrose.session.PenroseSearchResults;
 import org.safehaus.penrose.session.PenroseSession;
 import org.safehaus.penrose.Penrose;
-import org.safehaus.penrose.session.PenroseSession;
-import org.safehaus.penrose.session.PenroseSearchResults;
+import org.safehaus.penrose.pipeline.PipelineAdapter;
+import org.safehaus.penrose.pipeline.PipelineEvent;
+import org.safehaus.penrose.util.*;
 import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.engine.Engine;
 import org.safehaus.penrose.event.SearchEvent;
@@ -34,6 +35,7 @@ import org.apache.log4j.Logger;
 import org.ietf.ldap.*;
 
 import java.util.*;
+import java.util.Formatter;
 
 /**
  * @author Endi S. Dewata
@@ -62,10 +64,18 @@ public class SearchHandler {
         if (path == null) return null;
         if (path.size() == 0) return null;
 
-        Map map = (Map)path.get(0);
-        return (Entry)map.get("entry");
+        //Map map = (Map)path.get(0);
+        //return (Entry)map.get("entry");
+        return (Entry)path.get(0);
     }
 
+    /**
+     *
+     * @param session
+     * @param dn
+     * @return path (List of Entries).
+     * @throws Exception
+     */
     public List findPath(
             PenroseSession session,
             String dn) throws Exception {
@@ -84,8 +94,9 @@ public class SearchHandler {
             path = new ArrayList();
             parent = null;
         } else {
-            Map map = (Map)path.iterator().next();
-            parent = (Entry)map.get("entry");
+            parent = (Entry)path.iterator().next();
+            //Map map = (Map)path.iterator().next();
+            //parent = (Entry)map.get("entry");
         }
 
         log.debug("Found parent: "+(parent == null ? null : parent.getDn()));
@@ -102,7 +113,7 @@ public class SearchHandler {
         if (entryMapping != null) {
             log.debug("Found static entry: " + dn);
 
-            Entry entry = sessionHandler.getEngine().find(path, entryMapping);
+            Entry entry = find(path, entryMapping);
 /*
             //AttributeValues values = entryDefinition.getAttributeValues(handlerContext.newInterpreter());
             //Entry entry = new Entry(dn, entryDefinition, values);
@@ -113,11 +124,12 @@ public class SearchHandler {
             log.debug("\n"+entry);
 */
             log.debug("Adding "+entry.getDn()+" into path");
-            Map map = new HashMap();
-            map.put("dn", entry.getDn());
-            map.put("entry", entry);
-            map.put("entryDefinition", entry.getEntryMapping());
-            path.add(0, map);
+            //Map map = new HashMap();
+            //map.put("dn", entry.getDn());
+            //map.put("entry", entry);
+            //map.put("entryDefinition", entry.getEntryMapping());
+            //path.add(0, map);
+            path.add(0, entry);
 
             return path;
         }
@@ -156,7 +168,7 @@ public class SearchHandler {
             AttributeValues parentSourceValues = new AttributeValues();
             engine.getParentSourceValues(path, childMapping, parentSourceValues);
 
-            PenroseSearchResults sr = sessionHandler.getEngine().search(
+            PenroseSearchResults sr = search(
                     path,
                     parentSourceValues,
                     childMapping,
@@ -168,11 +180,12 @@ public class SearchHandler {
                 Entry child = (Entry)sr.next();
                 if (sessionHandler.getFilterTool().isValid(child, filter)) {
                     log.debug("Adding "+child.getDn()+" into path");
-                    Map map = new HashMap();
-                    map.put("dn", child.getDn());
-                    map.put("entry", child);
-                    map.put("entryDefinition", child.getEntryMapping());
-                    path.add(0, map);
+                    //Map map = new HashMap();
+                    //map.put("dn", child.getDn());
+                    //map.put("entry", child);
+                    //map.put("entryDefinition", child.getEntryMapping());
+                    //path.add(0, map);
+                    path.add(0, child);
                     return path;
                 }
             }
@@ -181,6 +194,57 @@ public class SearchHandler {
 		return null;
 	}
 
+    public Entry find(
+            Collection path,
+            EntryMapping entryMapping
+            ) throws Exception {
+
+        if (log.isDebugEnabled()) {
+            log.debug(org.safehaus.penrose.util.Formatter.displaySeparator(80));
+            log.debug(org.safehaus.penrose.util.Formatter.displayLine("FIND", 80));
+            log.debug(org.safehaus.penrose.util.Formatter.displayLine("Entry: "+entryMapping.getDn(), 80));
+            log.debug(org.safehaus.penrose.util.Formatter.displayLine("Parents:", 80));
+
+            for (Iterator i=path.iterator(); i.hasNext(); ) {
+                Entry entry = (Entry)i.next();
+                String dn = entry.getDn();
+                //Map map = (Map)i.next();
+                //String dn = (String)map.get("dn");
+                log.debug(org.safehaus.penrose.util.Formatter.displayLine(" - "+dn, 80));
+            }
+
+            log.debug(org.safehaus.penrose.util.Formatter.displaySeparator(80));
+        }
+
+        AttributeValues parentSourceValues = new AttributeValues();
+
+        PenroseSearchResults results = search(path, parentSourceValues, entryMapping, null, null);
+
+        if (results.size() == 0) return null;
+
+        Entry entry = (Entry)results.next();
+
+        if (log.isDebugEnabled()) {
+            log.debug(org.safehaus.penrose.util.Formatter.displaySeparator(80));
+            log.debug(org.safehaus.penrose.util.Formatter.displayLine("FIND RESULT", 80));
+            log.debug(org.safehaus.penrose.util.Formatter.displayLine("dn: "+entry.getDn(), 80));
+            log.debug(org.safehaus.penrose.util.Formatter.displaySeparator(80));
+        }
+
+        return entry;
+    }
+
+    /**
+     * @param session
+     * @param base
+     * @param scope
+     * @param deref
+     * @param filter
+     * @param attributeNames
+     * @param results
+     * @return Entry
+     * @throws Exception
+     */
     public int search(
             PenroseSession session,
             String base,
@@ -252,6 +316,17 @@ public class SearchHandler {
         return rc;
     }
 
+    /**
+     * @param session
+     * @param base
+     * @param scope
+     * @param deref
+     * @param filter
+     * @param attributeNames
+     * @param results
+     * @return Entry
+     * @throws Exception
+     */
     public int performSearch(
             PenroseSession session,
             String base,
@@ -261,16 +336,24 @@ public class SearchHandler {
             Collection attributeNames,
             PenroseSearchResults results) throws Exception {
 
-        Collection normalizedAttributeNames = null;
-        if (attributeNames != null) {
-            normalizedAttributeNames = new HashSet();
-            for (Iterator i=attributeNames.iterator(); i.hasNext(); ) {
-                String attributeName = (String)i.next();
-                normalizedAttributeNames.add(attributeName.toLowerCase());
-            }
-        }
-
         if ("".equals(base) && scope == LDAPConnection.SCOPE_BASE) { // finding root DSE
+            Entry entry = new Entry("", null);
+            AttributeValues attributeValues = entry.getAttributeValues();
+            attributeValues.set("objectClass", "top");
+            attributeValues.add("objectClass", "extensibleObject");
+            attributeValues.set("vendorName", Penrose.VENDOR_NAME);
+            attributeValues.set("vendorVersion", Penrose.PRODUCT_NAME+" "+Penrose.PRODUCT_VERSION);
+
+            for (Iterator i=sessionHandler.getPartitionManager().getPartitions().iterator(); i.hasNext(); ) {
+                Partition partition = (Partition)i.next();
+                for (Iterator j=partition.getRootEntryMappings().iterator(); j.hasNext(); ) {
+                    EntryMapping entryMapping = (EntryMapping)j.next();
+                    attributeValues.add("namingContexts", entryMapping.getDn());
+                }
+            }
+
+            results.add(entry);
+/*
             LDAPAttributeSet set = new LDAPAttributeSet();
             set.add(new LDAPAttribute("objectClass", new String[] { "top", "extensibleObject" }));
             set.add(new LDAPAttribute("vendorName", new String[] { Penrose.VENDOR_NAME }));
@@ -280,8 +363,8 @@ public class SearchHandler {
             for (Iterator i=sessionHandler.getPartitionManager().getPartitions().iterator(); i.hasNext(); ) {
                 Partition partition = (Partition)i.next();
                 for (Iterator j=partition.getRootEntryMappings().iterator(); j.hasNext(); ) {
-                    EntryMapping entry = (EntryMapping)j.next();
-                    namingContexts.addValue(entry.getDn());
+                    EntryMapping entryMapping = (EntryMapping)j.next();
+                    namingContexts.addValue(entryMapping.getDn());
                 }
             }
             set.add(namingContexts);
@@ -289,7 +372,7 @@ public class SearchHandler {
             LDAPEntry ldapEntry = new LDAPEntry("", set);
             Entry.filterAttributes(ldapEntry, normalizedAttributeNames);
             results.add(ldapEntry);
-
+*/
             results.setReturnCode(LDAPException.SUCCESS);
             return LDAPException.SUCCESS;
         }
@@ -313,9 +396,10 @@ public class SearchHandler {
 			return LDAPException.NO_SUCH_OBJECT;
 		}
 
-        Map map = (Map)path.iterator().next();
-        //String baseDn = (String)map.get("dn");
-        Entry baseEntry = (Entry)map.get("entry");
+        //Map map = (Map)path.iterator().next();
+        //Entry baseEntry = (Entry)map.get("entry");
+        Entry baseEntry = (Entry)path.iterator().next();
+
         log.debug("Found base entry: " + baseEntry.getDn());
         EntryMapping entryMapping = baseEntry.getEntryMapping();
 
@@ -331,15 +415,13 @@ public class SearchHandler {
 
                 rc = sessionHandler.getACLEngine().checkRead(session, baseEntry);
                 if (rc == LDAPException.SUCCESS) {
-                    LDAPEntry ldapEntry = baseEntry.toLDAPEntry();
-                    Entry.filterAttributes(ldapEntry, normalizedAttributeNames);
-                    results.add(ldapEntry);
+                    results.add(baseEntry);
                 }
 			}
 		}
 
 		if (scope == LDAPConnection.SCOPE_ONE || scope == LDAPConnection.SCOPE_SUB) { // one level or subtree
-            searchChildren(session, path, entryMapping, parentSourceValues, scope, f, normalizedAttributeNames, results, true);
+            searchChildren(session, path, entryMapping, parentSourceValues, scope, f, attributeNames, results, true);
 		}
 
 		results.setReturnCode(LDAPException.SUCCESS);
@@ -365,7 +447,7 @@ public class SearchHandler {
 
             if (sessionHandler.getFilterTool().isValid(childMapping, filter)) {
 
-                PenroseSearchResults sr = sessionHandler.getEngine().search(
+                PenroseSearchResults sr = search(
                         path,
                         parentSourceValues,
                         childMapping,
@@ -384,11 +466,7 @@ public class SearchHandler {
                     rc = sessionHandler.getACLEngine().checkRead(session, child);
                     if (rc != LDAPException.SUCCESS) continue;
 
-                    //newParents.add(child);
-
-                    LDAPEntry en = child.toLDAPEntry();
-                    Entry.filterAttributes(en, attributeNames);
-                    results.add(en);
+                    results.add(child);
                 }
             }
 
@@ -425,18 +503,169 @@ public class SearchHandler {
                     log.debug(" - "+name+": "+values);
                 }
 
-                Map map = new HashMap();
-                map.put("dn", childMapping.getDn());
-                map.put("entry", null);
-                map.put("entryDefinition", childMapping);
+                //Map map = new HashMap();
+                //map.put("dn", childMapping.getDn());
+                //map.put("entry", null);
+                //map.put("entryDefinition", childMapping);
 
                 Collection newPath = new ArrayList();
-                newPath.add(map);
+                newPath.add(null);
                 newPath.addAll(path);
 
                 searchChildren(session, newPath, childMapping, newParentSourceValues, scope, filter, attributeNames, results, false);
             }
         }
+    }
+
+    public PenroseSearchResults search(
+            final Collection path,
+            final AttributeValues parentSourceValues,
+            final EntryMapping entryMapping,
+            final Filter filter,
+            Collection attributeNames) throws Exception {
+
+        if (log.isDebugEnabled()) {
+            log.debug(org.safehaus.penrose.util.Formatter.displaySeparator(80));
+            log.debug(org.safehaus.penrose.util.Formatter.displayLine("SEARCH", 80));
+            log.debug(org.safehaus.penrose.util.Formatter.displayLine("Entry: "+entryMapping.getDn(), 80));
+            log.debug(org.safehaus.penrose.util.Formatter.displayLine("Filter: "+filter, 80));
+            log.debug(org.safehaus.penrose.util.Formatter.displayLine("Parents:", 80));
+
+            if (parentSourceValues != null) {
+                for (Iterator i = parentSourceValues.getNames().iterator(); i.hasNext(); ) {
+                    String name = (String)i.next();
+                    Collection values = parentSourceValues.get(name);
+                    log.debug(org.safehaus.penrose.util.Formatter.displayLine(" - "+name+": "+values, 80));
+                }
+            }
+
+            log.debug(org.safehaus.penrose.util.Formatter.displaySeparator(80));
+        }
+
+        final PenroseSearchResults results = new PenroseSearchResults();
+        final PenroseSearchResults dns = new PenroseSearchResults();
+        final PenroseSearchResults entriesToLoad = new PenroseSearchResults();
+        final PenroseSearchResults loadedEntries = new PenroseSearchResults();
+        final PenroseSearchResults newEntries = new PenroseSearchResults();
+
+        Collection attributeDefinitions = entryMapping.getAttributeMappings(attributeNames);
+
+        // check if client only requests the dn to be returned
+        final boolean dnOnly = attributeNames != null && attributeNames.contains("dn")
+                && attributeDefinitions.isEmpty()
+                && "(objectclass=*)".equals(filter.toString().toLowerCase());
+
+        final Interpreter interpreter = sessionHandler.getEngine().getInterpreterFactory().newInstance();
+
+        dns.addListener(new PipelineAdapter() {
+            public void objectAdded(PipelineEvent event) {
+                try {
+                    Map map = (Map)event.getObject();
+                    String dn = (String)map.get("dn");
+
+                    Entry entry = (Entry)sessionHandler.getEngine().getEntryCache().get(dn);
+
+                    if (entry == null) {
+
+                        if (dnOnly) {
+                            AttributeValues sv = (AttributeValues)map.get("sourceValues");
+                            AttributeValues attributeValues = sessionHandler.getEngine().computeAttributeValues(entryMapping, sv, interpreter);
+                            entry = new Entry(dn, entryMapping, sv, attributeValues);
+
+                            results.add(entry);
+
+                        } else {
+                            entriesToLoad.add(map);
+                        }
+
+                    } else {
+                        results.add(entry);
+                    }
+
+                } catch (Exception e) {
+                    log.error(e.getMessage(), e);
+                }
+            }
+
+            public void pipelineClosed(PipelineEvent event) {
+                if (dnOnly) {
+                    results.close();
+                } else {
+                    entriesToLoad.close();
+                }
+            }
+        });
+
+        Entry parent = null;
+        if (path != null && path.size() > 0) {
+            parent = (Entry)path.iterator().next();
+        }
+
+        Collection list = null;
+        if (parent != null) {
+            String parentDn = parent.getDn();
+            list = sessionHandler.getEngine().getEntryCache().search(entryMapping, parentDn, filter);
+        }
+
+        if (list == null) {
+            log.debug("Filter cache for "+filter+" not found.");
+            sessionHandler.getEngine().search(parent, parentSourceValues, entryMapping, filter, dns);
+
+            dns.addListener(new PipelineAdapter() {
+                public void objectAdded(PipelineEvent event) {
+                    try {
+                        Map map = (Map)event.getObject();
+                        String dn = (String)map.get("dn");
+                        String parentDn = Entry.getParentDn(dn);
+                        Row rdn = Entry.getRdn(dn);
+
+                        sessionHandler.getEngine().getEntryCache().add(entryMapping, parentDn, filter, rdn);
+
+                    } catch (Exception e) {
+                        log.error(e.getMessage(), e);
+                    }
+                }
+            });
+
+        } else {
+            log.debug("Filter cache for "+filter+" found.");
+            for (Iterator i=list.iterator(); i.hasNext(); ) {
+                String dn = (String)i.next();
+                log.debug(" - "+dn);
+
+                Map map = new HashMap();
+                map.put("dn", dn);
+                map.put("sourceValues", new AttributeValues());
+                dns.add(map);
+            }
+
+            dns.close();
+        }
+
+        if (dnOnly) return results;
+
+        sessionHandler.getEngine().load(entryMapping, entriesToLoad, loadedEntries);
+
+        newEntries.addListener(new PipelineAdapter() {
+            public void objectAdded(PipelineEvent event) {
+                try {
+                    Entry entry = (Entry)event.getObject();
+                    sessionHandler.getEngine().getEntryCache().put(entry);
+                    results.add(entry);
+
+                } catch (Exception e) {
+                    log.error(e.getMessage(), e);
+                }
+            }
+
+            public void pipelineClosed(PipelineEvent event) {
+                results.close();
+            }
+        });
+
+        sessionHandler.getEngine().merge(entryMapping, loadedEntries, newEntries);
+
+        return results;
     }
 
 }

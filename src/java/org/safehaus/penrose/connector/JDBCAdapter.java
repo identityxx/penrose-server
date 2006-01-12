@@ -855,13 +855,13 @@ public class JDBCAdapter extends Adapter {
 
             ps = con.prepareStatement(sql);
 
-            log.debug(Formatter.displayLine("Parameters:", 80));
+            log.debug(Formatter.displayLine("Parameters: changeNumber = "+lastChangeNumber, 80));
 
             int counter = 0;
             for (Iterator i=parameters.iterator(); i.hasNext(); ) {
                 Object param = i.next();
                 ps.setObject(++counter, param);
-                log.debug(Formatter.displayLine(" - "+counter+" = "+param, 80));
+                //log.debug(Formatter.displayLine(" - "+counter+" = "+param, 80));
             }
 
             log.debug(Formatter.displaySeparator(80));

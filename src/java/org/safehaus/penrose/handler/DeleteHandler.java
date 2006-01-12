@@ -51,7 +51,14 @@ public class DeleteHandler {
         DeleteEvent beforeDeleteEvent = new DeleteEvent(this, DeleteEvent.BEFORE_DELETE, session, dn);
         sessionHandler.postEvent(dn, beforeDeleteEvent);
 
-        int rc = performDelete(session, dn);
+        String ndn = LDAPDN.normalize(dn);
+
+        Entry entry = getHandler().getSearchHandler().find(session, ndn);
+        if (entry == null) return LDAPException.NO_SUCH_OBJECT;
+
+        int rc = performDelete(session, entry);
+
+        sessionHandler.getEngine().getEntryCache().remove(entry);
 
         DeleteEvent afterDeleteEvent = new DeleteEvent(this, DeleteEvent.AFTER_DELETE, session, dn);
         afterDeleteEvent.setReturnCode(rc);
@@ -60,17 +67,10 @@ public class DeleteHandler {
         return rc;
     }
 
-    public int performDelete(PenroseSession session, String dn) throws Exception {
-
-        dn = LDAPDN.normalize(dn);
-
-        Entry entry = getHandler().getSearchHandler().find(session, dn);
-        if (entry == null) return LDAPException.NO_SUCH_OBJECT;
+    public int performDelete(PenroseSession session, Entry entry) throws Exception {
 
         int rc = sessionHandler.getACLEngine().checkDelete(session, entry);
         if (rc != LDAPException.SUCCESS) return rc;
-
-        log.debug("Deleting entry "+dn);
 
         EntryMapping entryMapping = entry.getEntryMapping();
         Partition partition = sessionHandler.getPartitionManager().getPartition(entryMapping);

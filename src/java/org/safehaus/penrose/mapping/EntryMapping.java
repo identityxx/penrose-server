@@ -298,38 +298,6 @@ public class EntryMapping implements Cloneable {
         relationships.clear();
     }
     
-    public LDAPAttributeSet getAttributeSet(AttributeValues attributeValues) {
-        LDAPAttributeSet set = new LDAPAttributeSet();
-
-        for (Iterator i=attributeValues.getNames().iterator(); i.hasNext(); ) {
-            String name = (String)i.next();
-            Collection values = attributeValues.get(name);
-
-            LDAPAttribute attribute = new LDAPAttribute(name);
-            for (Iterator j=values.iterator(); j.hasNext(); ) {
-                Object value = j.next();
-                attribute.addValue(value.toString());
-            }
-
-            set.add(attribute);
-        }
-/*
-        LDAPAttribute attribute = new LDAPAttribute("objectClass");
-
-        for (Iterator i=objectClasses.iterator(); i.hasNext(); ) {
-            String objectClass = (String)i.next();
-            attribute.addValue(objectClass);
-        }
-
-        set.add(attribute);
-*/
-        return set;
-    }
-
-    public LDAPEntry toLDAPEntry(String dn, AttributeValues attributeValues) {
-        return new LDAPEntry(dn, getAttributeSet(attributeValues));
-    }
-
     public String getScript() {
         return script;
     }

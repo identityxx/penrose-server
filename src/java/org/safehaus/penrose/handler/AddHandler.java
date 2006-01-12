@@ -19,11 +19,10 @@ package org.safehaus.penrose.handler;
 
 import org.safehaus.penrose.session.PenroseSession;
 import org.safehaus.penrose.session.PenroseSearchResults;
-import org.safehaus.penrose.session.PenroseSession;
-import org.safehaus.penrose.session.PenroseSearchResults;
 import org.safehaus.penrose.event.AddEvent;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.mapping.*;
+import org.safehaus.penrose.cache.EntryCache;
 import org.ietf.ldap.*;
 import org.apache.log4j.Logger;
 
@@ -46,39 +45,47 @@ public class AddHandler {
      * The interface function called to add an LDAP entry
      *
      * @param session the connection
-     * @param entry the entry to be added
+     * @param ldapEntry the entry to be added
      * @return return code (see LDAPException)
      * @throws Exception
      */
     public int add(
             PenroseSession session,
-            LDAPEntry entry)
+            LDAPEntry ldapEntry)
     throws Exception {
 
         log.info("-------------------------------------------------");
         log.info("ADD:");
         if (session != null && session.getBindDn() != null) log.info(" - Bind DN: "+session.getBindDn());
-        log.info(" - Entry:\n"+Entry.toString(entry));
+        log.info(" - Entry:\n"+Entry.toString(ldapEntry));
         log.info("");
 
-        AddEvent beforeModifyEvent = new AddEvent(this, AddEvent.BEFORE_ADD, session, entry);
-        sessionHandler.postEvent(entry.getDN(), beforeModifyEvent);
+        AddEvent beforeModifyEvent = new AddEvent(this, AddEvent.BEFORE_ADD, session, ldapEntry);
+        sessionHandler.postEvent(ldapEntry.getDN(), beforeModifyEvent);
 
-        int rc = performAdd(session, entry);
+        int rc = performAdd(session, ldapEntry);
+
+        PenroseSearchResults results = new PenroseSearchResults();
 
         sessionHandler.getSearchHandler().search(
                 session,
-                entry.getDN(),
+                ldapEntry.getDN(),
                 LDAPConnection.SCOPE_SUB,
                 LDAPSearchConstraints.DEREF_NEVER,
                 "(objectClass=*)",
                 new ArrayList(),
-                new PenroseSearchResults()
+                results
         );
 
-        AddEvent afterModifyEvent = new AddEvent(this, AddEvent.AFTER_ADD, session, entry);
+        EntryCache entryCache = sessionHandler.getEngine().getEntryCache();
+        for (Iterator i=results.iterator(); i.hasNext(); ) {
+            Entry entry = (Entry)i.next();
+            entryCache.put(entry);
+        }
+
+        AddEvent afterModifyEvent = new AddEvent(this, AddEvent.AFTER_ADD, session, ldapEntry);
         afterModifyEvent.setReturnCode(rc);
-        sessionHandler.postEvent(entry.getDN(), afterModifyEvent);
+        sessionHandler.postEvent(ldapEntry.getDN(), afterModifyEvent);
 
         return rc;
     }

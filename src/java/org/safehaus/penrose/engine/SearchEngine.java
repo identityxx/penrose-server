@@ -44,7 +44,7 @@ public class SearchEngine {
     }
 
     public void search(
-            final Collection path,
+            final Entry parent,
             final AttributeValues parentSourceValues,
             final EntryMapping entryMapping,
             final Filter filter,
@@ -54,7 +54,7 @@ public class SearchEngine {
         boolean staticEntry = engine.isStatic(entryMapping);
         if (staticEntry) {
             log.debug("Returning static entries.");
-            searchStatic(path, parentSourceValues, entryMapping, filter, results);
+            searchStatic(parentSourceValues, entryMapping, filter, results);
             return;
         }
 
@@ -87,7 +87,7 @@ public class SearchEngine {
         engine.execute(new Runnable() {
             public void run() {
                 try {
-                    searchDynamic(path, parentSourceValues, entryMapping, filter, results);
+                    searchDynamic(parent, parentSourceValues, entryMapping, filter, results);
 
                 } catch (Throwable e) {
                     e.printStackTrace(System.out);
@@ -98,7 +98,6 @@ public class SearchEngine {
     }
 
     public void searchStatic(
-            final Collection path,
             final AttributeValues parentSourceValues,
             final EntryMapping entryMapping,
             final Filter filter,
@@ -121,7 +120,7 @@ public class SearchEngine {
     }
 
     public void searchDynamic(
-            Collection path,
+            Entry parent,
             final AttributeValues parentSourceValues,
             final EntryMapping entryMapping,
             final Filter filter,
@@ -135,49 +134,7 @@ public class SearchEngine {
 
         Interpreter interpreter = engine.getInterpreterFactory().newInstance();
 
-        Collection dns = new TreeSet();
-
-        if (path != null && path.size() > 0) {
-            Map map = (Map)path.iterator().next();
-            String dn = (String)map.get("dn");
-            Entry parent = (Entry)map.get("entry");
-            log.debug("Checking "+filter+" in entry filter cache for "+dn);
-
-            if (parent != null) {
-                String parentDn = parent.getDn();
-
-                Collection list = engine.getEntryCache().search(entryMapping, parentDn, filter);
-                if (list != null) dns.addAll(list);
-            }
-        } else {
-            log.debug("Entry has no parent");
-        }
-
-        //log.debug("DNs: "+dns);
-
         Map results = new TreeMap();
-
-        if (!dns.isEmpty()) {
-            log.debug("Filter cache found:");
-
-            for (Iterator i=dns.iterator(); i.hasNext(); ) {
-                String dn = (String)i.next();
-                AttributeValues sv = new AttributeValues();
-
-                log.debug(" - "+dn);
-                results.put(dn, sv);
-
-                Map map = new HashMap();
-                map.put("dn", dn);
-                map.put("sourceValues", sv);
-                entries.add(map);
-            }
-
-            entries.close();
-            return;
-        }
-        
-        log.debug("Filter cache does not contain filter "+filter);
 
         final PenroseSearchResults values = new PenroseSearchResults();
 
@@ -187,11 +144,12 @@ public class SearchEngine {
                     searchSources(parentSourceValues, entryMapping, filter, values);
 
                 } catch (Throwable e) {
-                    e.printStackTrace(System.out);
+                    log.error(e.getMessage(), e);
                 }
             }
         });
 
+        Collection dns = new TreeSet();
         Map childDns = new HashMap();
 
         log.debug("Search results:");
@@ -245,8 +203,6 @@ public class SearchEngine {
                         String dn = (String)j.next();
                         log.debug("   - DN: "+dn);
                     }
-
-                    engine.getEntryCache().put(entryMapping, parentDn, filter, c);
 
                 }
             }

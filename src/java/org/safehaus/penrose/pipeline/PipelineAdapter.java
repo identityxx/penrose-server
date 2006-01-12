@@ -15,31 +15,15 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
-package org.safehaus.penrose.event;
-
-import org.safehaus.penrose.partition.SourceConfig;
-
+package org.safehaus.penrose.pipeline;
 
 /**
  * @author Endi S. Dewata
  */
-public class CacheEvent extends Event {
+public class PipelineAdapter implements PipelineListener {
 
-    public final static int BEFORE_LOAD_ENTRIES = 0;
-    public final static int AFTER_LOAD_ENTRIES = 1;
-
-    private SourceConfig sourceConfig;
-
-    public CacheEvent(Object source, SourceConfig sourceConfig, int type) {
-        super(source, type);
-        this.sourceConfig = sourceConfig;
-    }
-
-    public SourceConfig getSourceConfig() {
-        return sourceConfig;
-    }
-
-    public void setSourceConfig(SourceConfig sourceConfig) {
-        this.sourceConfig = sourceConfig;
-    }
+    public void objectAdded(PipelineEvent event) {}
+    public void objectRemoved(PipelineEvent event) {}
+    public void pipelineClosed(PipelineEvent event) {}
+    
 }

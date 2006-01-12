@@ -18,11 +18,11 @@
 package org.safehaus.penrose.handler;
 
 import org.safehaus.penrose.session.PenroseSession;
-import org.safehaus.penrose.session.PenroseSession;
 import org.safehaus.penrose.session.PenroseSearchResults;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.mapping.Entry;
 import org.safehaus.penrose.mapping.EntryMapping;
+import org.safehaus.penrose.cache.EntryCache;
 import org.apache.log4j.Logger;
 import org.ietf.ldap.LDAPException;
 import org.ietf.ldap.LDAPDN;
@@ -30,6 +30,7 @@ import org.ietf.ldap.LDAPConnection;
 import org.ietf.ldap.LDAPSearchConstraints;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 
 /**
  * @author Endi S. Dewata
@@ -53,12 +54,17 @@ public class ModRdnHandler {
         log.debug(" - DN: " + dn);
         log.debug(" - New RDN: " + newRdn);
 
-        //return LDAPException.LDAP_NOT_SUPPORTED;
+        String ndn = LDAPDN.normalize(dn);
 
-        int rc = performModRdn(session, dn, newRdn);
+        Entry entry = sessionHandler.getSearchHandler().find(session, ndn);
+        if (entry == null) return LDAPException.NO_SUCH_OBJECT;
+
+        int rc = performModRdn(session, entry, newRdn);
 
         String parentDn = Entry.getParentDn(dn);
         String newDn = newRdn+","+parentDn;
+
+        PenroseSearchResults results = new PenroseSearchResults();
 
         sessionHandler.getSearchHandler().search(
                 session,
@@ -67,22 +73,25 @@ public class ModRdnHandler {
                 LDAPSearchConstraints.DEREF_NEVER,
                 "(objectClass=*)",
                 new ArrayList(),
-                new PenroseSearchResults()
+                results
         );
+
+        EntryCache entryCache = sessionHandler.getEngine().getEntryCache();
+        for (Iterator i=results.iterator(); i.hasNext(); ) {
+            Entry e = (Entry)i.next();
+            entryCache.put(e);
+        }
+
+        sessionHandler.getEngine().getEntryCache().remove(entry);
 
         return rc;
 	}
 
     public int performModRdn(
             PenroseSession session,
-            String dn,
+            Entry entry,
             String newRdn)
 			throws Exception {
-
-		String ndn = LDAPDN.normalize(dn);
-
-        Entry entry = sessionHandler.getSearchHandler().find(session, ndn);
-        if (entry == null) return LDAPException.NO_SUCH_OBJECT;
 
         int rc = sessionHandler.getACLEngine().checkModify(session, entry);
         if (rc != LDAPException.SUCCESS) return rc;

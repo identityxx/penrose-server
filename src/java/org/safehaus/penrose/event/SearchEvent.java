@@ -18,7 +18,6 @@
 package org.safehaus.penrose.event;
 
 import org.safehaus.penrose.session.PenroseSession;
-import org.safehaus.penrose.session.PenroseSession;
 
 /**
  * @author Endi S. Dewata

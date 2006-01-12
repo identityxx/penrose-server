@@ -20,12 +20,9 @@ package org.safehaus.penrose.cache;
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.util.PasswordUtil;
 import org.safehaus.penrose.util.Formatter;
-import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.FieldConfig;
 import org.safehaus.penrose.partition.SourceConfig;
 import org.safehaus.penrose.filter.Filter;
-import org.safehaus.penrose.connector.ConnectionManager;
-import org.safehaus.penrose.interpreter.Interpreter;
 
 import javax.naming.NamingException;
 import javax.naming.NamingEnumeration;
@@ -748,7 +745,6 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
             if (!ne.hasMore()) return null;
 
             SearchResult sr = (SearchResult)ne.next();
-            log.debug("Found:");
 
             Attributes attributes = sr.getAttributes();
             AttributeValues attributeValues = new AttributeValues();
@@ -758,9 +754,25 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
 
                 for (NamingEnumeration ne3 = attribute.getAll(); ne3.hasMore(); ) {
                     Object value = ne3.next();
-                    log.debug(" - "+name+": "+value);
                     attributeValues.add(name, value);
                 }
+            }
+
+            if (log.isDebugEnabled()) {
+                log.debug(Formatter.displaySeparator(80));
+                log.debug(Formatter.displayLine("dn: "+dn, 80));
+
+                for (Iterator i=attributeValues.getNames().iterator(); i.hasNext(); ) {
+                    String name = (String)i.next();
+                    Collection values = attributeValues.get(name);
+
+                    for (Iterator j=values.iterator(); j.hasNext(); ) {
+                        Object value = j.next();
+                        log.debug(Formatter.displayLine(name+": "+value, 80));
+                    }
+                }
+
+                log.debug(Formatter.displaySeparator(80));
             }
 
             entry = new Entry(dn, getEntryMapping(), attributeValues);
@@ -780,7 +792,7 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
                     FieldConfig fieldConfig = (FieldConfig)j.next();
 
                     Collection values = getField(sourceMapping, fieldConfig, entryId);
-                    log.debug(" - "+sourceMapping.getName()+"."+fieldConfig.getName()+": "+values);
+                    //log.debug(" - "+sourceMapping.getName()+"."+fieldConfig.getName()+": "+values);
 
                     sourceValues.set(sourceMapping.getName()+"."+fieldConfig.getName(), values);
                 }
@@ -880,6 +892,7 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
 
         DirContext ctx = null;
         try {
+            log.debug("Creating LDAP entry "+dn);
             ctx = getJNDIConnection();
             ctx.createSubcontext(dn, attrs);
         } catch (NamingException e) {

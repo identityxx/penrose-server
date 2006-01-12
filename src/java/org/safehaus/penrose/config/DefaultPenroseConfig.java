@@ -17,13 +17,6 @@
  */
 package org.safehaus.penrose.config;
 
-import java.util.*;
-
-import org.apache.log4j.Logger;
-import org.safehaus.penrose.cache.CacheConfig;
-import org.safehaus.penrose.engine.EngineConfig;
-import org.safehaus.penrose.interpreter.InterpreterConfig;
-import org.safehaus.penrose.connector.ConnectorConfig;
 import org.safehaus.penrose.connector.AdapterConfig;
 import org.safehaus.penrose.connector.JDBCAdapter;
 import org.safehaus.penrose.connector.JNDIAdapter;

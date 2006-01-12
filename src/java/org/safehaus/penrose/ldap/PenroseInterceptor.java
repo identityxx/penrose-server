@@ -26,7 +26,6 @@ import org.apache.log4j.Logger;
 import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.session.PenroseSession;
 import org.safehaus.penrose.session.PenroseSearchResults;
-import org.safehaus.penrose.session.PenroseSession;
 import org.safehaus.penrose.session.PenroseSearchControls;
 import org.safehaus.penrose.util.ExceptionUtil;
 import org.safehaus.penrose.mapping.EntryMapping;
@@ -561,6 +560,14 @@ public class PenroseInterceptor extends BaseInterceptor {
             log.debug("===============================================================================");
             log.debug("search(\""+baseDn+"\") as "+principalDn);
 
+            if (!"".equals(baseDn)) {
+                Partition partition = partitionManager.getPartitionByDn(baseDn);
+                if (partition == null) {
+                    log.debug(baseDn+" is a static entry");
+                    return next.search(base, env, filter, searchControls);
+                }
+            }
+
             if (searchControls != null && searchControls.getReturningAttributes() != null) {
 
                 if ("".equals(baseDn) && searchControls.getSearchScope() == SearchControls.OBJECT_SCOPE) {
@@ -618,12 +625,6 @@ public class PenroseInterceptor extends BaseInterceptor {
                         if (session != null) try { session.close(); } catch (Exception e) {}
                     }
                 }
-            }
-
-            Partition partition = partitionManager.getPartitionByDn(baseDn);
-            if (partition == null) {
-                log.debug(baseDn+" is a static entry");
-                return next.search(base, env, filter, searchControls);
             }
 
             String deref = (String)env.get("java.naming.ldap.derefAliases");

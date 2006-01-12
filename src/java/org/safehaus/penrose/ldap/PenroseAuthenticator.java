@@ -30,7 +30,6 @@ import org.safehaus.penrose.config.PenroseConfig;
 
 import javax.naming.Context;
 import javax.naming.NamingException;
-import javax.naming.InsufficientResourcesException;
 import javax.naming.ServiceUnavailableException;
 
 /**

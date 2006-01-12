@@ -17,8 +17,6 @@
  */
 package org.safehaus.penrose.interpreter;
 
-import org.safehaus.penrose.user.UserConfig;
-
 import java.util.Properties;
 import java.util.Collection;
 

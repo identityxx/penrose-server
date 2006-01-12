@@ -20,7 +20,6 @@ package org.safehaus.penrose.acl;
 import org.safehaus.penrose.mapping.Entry;
 import org.safehaus.penrose.mapping.EntryMapping;
 import org.safehaus.penrose.session.PenroseSession;
-import org.safehaus.penrose.session.PenroseSession;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.handler.SessionHandler;
 import org.ietf.ldap.LDAPException;

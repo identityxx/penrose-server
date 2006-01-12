@@ -30,12 +30,8 @@ import javax.management.remote.JMXServiceURL;
 import javax.management.remote.JMXConnectorServerFactory;
 import java.util.HashMap;
 
-import org.safehaus.penrose.config.PenroseConfig;
-import org.safehaus.penrose.PenroseServer;
-import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.service.Service;
 import org.safehaus.penrose.service.ServiceConfig;
-import org.apache.log4j.Logger;
 
 /**
  * @author Endi S. Dewata

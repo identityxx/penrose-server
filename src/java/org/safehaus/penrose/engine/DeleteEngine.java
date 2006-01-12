@@ -61,8 +61,6 @@ public class DeleteEngine {
 
         if (visitor.getReturnCode() != LDAPException.SUCCESS) return visitor.getReturnCode();
 
-        engine.getEntryCache().remove(entry);
-
         return LDAPException.SUCCESS;
     }
 }

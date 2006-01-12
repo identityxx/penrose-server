@@ -32,7 +32,6 @@ import org.safehaus.penrose.interpreter.InterpreterFactory;
 import org.safehaus.penrose.connector.*;
 import org.safehaus.penrose.partition.*;
 import org.safehaus.penrose.session.PenroseSession;
-import org.safehaus.penrose.session.SessionManager;
 
 /**
  * @author Endi S. Dewata
@@ -42,7 +41,7 @@ public class Penrose {
     Logger log = Logger.getLogger(Penrose.class);
 
     public final static String PRODUCT_NAME      = "Penrose Virtual Directory Server";
-    public final static String PRODUCT_VERSION   = "0.9.8";
+    public final static String PRODUCT_VERSION   = "0.9.9";
     public final static String PRODUCT_COPYRIGHT = "Copyright (c) 2000-2005, Identyx Corporation.";
     public final static String VENDOR_NAME       = "Identyx Corporation";
 

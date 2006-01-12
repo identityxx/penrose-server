@@ -18,7 +18,6 @@
 package org.safehaus.penrose.handler;
 
 import org.safehaus.penrose.session.PenroseSearchResults;
-import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.user.UserConfig;
 import org.safehaus.penrose.session.PenroseSession;
 import org.safehaus.penrose.session.SessionManager;
@@ -34,6 +33,10 @@ import org.safehaus.penrose.module.ModuleMapping;
 import org.safehaus.penrose.module.ModuleConfig;
 import org.safehaus.penrose.module.ModuleContext;
 import org.safehaus.penrose.event.*;
+import org.safehaus.penrose.pipeline.PipelineListener;
+import org.safehaus.penrose.pipeline.PipelineAdapter;
+import org.safehaus.penrose.pipeline.PipelineEvent;
+import org.safehaus.penrose.mapping.Entry;
 import org.apache.log4j.Logger;
 import org.ietf.ldap.LDAPEntry;
 import org.ietf.ldap.LDAPException;
@@ -211,12 +214,42 @@ public class SessionHandler implements ModuleContext {
         if (!sessionManager.isValid(session)) throw new Exception("Invalid session.");
         final PenroseSearchResults results = new PenroseSearchResults();
 
+        final Collection normalizedAttributeNames = attributeNames == null ? null : new HashSet();
+        if (attributeNames != null) {
+            for (Iterator i=attributeNames.iterator(); i.hasNext(); ) {
+                String attributeName = (String)i.next();
+                normalizedAttributeNames.add(attributeName.toLowerCase());
+            }
+        }
+
         //getSearchHandler().search(connection, base, scope, deref, filter, attributeNames, results);
 
         engine.execute(new Runnable() {
             public void run() {
                 try {
-                    getSearchHandler().search(session, base, scope, deref, filter, attributeNames, results);
+                    PenroseSearchResults sr = new PenroseSearchResults();
+
+                    sr.addListener(new PipelineAdapter() {
+                        public void objectAdded(PipelineEvent event) {
+                            try {
+                                Entry entry = (Entry)event.getObject();
+
+                                LDAPEntry ldapEntry = entry.toLDAPEntry();
+                                Entry.filterAttributes(ldapEntry, normalizedAttributeNames);
+
+                                results.add(ldapEntry);
+
+                            } catch (Exception e) {
+                                log.error(e.getMessage(), e);
+                            }
+                        }
+
+                        public void pipelineClosed(PipelineEvent event) {
+                            results.close();
+                        }
+                    });
+
+                    getSearchHandler().search(session, base, scope, deref, filter, normalizedAttributeNames, sr);
 
                 } catch (Throwable e) {
                     e.printStackTrace(System.out);

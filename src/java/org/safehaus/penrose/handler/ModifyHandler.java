@@ -25,6 +25,7 @@ import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.schema.ObjectClass;
 import org.safehaus.penrose.util.PasswordUtil;
 import org.safehaus.penrose.mapping.*;
+import org.safehaus.penrose.cache.EntryCache;
 import org.ietf.ldap.*;
 import org.apache.log4j.Logger;
 
@@ -85,7 +86,14 @@ public class ModifyHandler {
         ModifyEvent beforeModifyEvent = new ModifyEvent(this, ModifyEvent.BEFORE_MODIFY, session, dn, modifications);
         sessionHandler.postEvent(dn, beforeModifyEvent);
 
-        int rc = performModify(session, dn, modifications);
+        String ndn = LDAPDN.normalize(dn);
+
+        Entry entry = sessionHandler.getSearchHandler().find(session, ndn);
+        if (entry == null) return LDAPException.NO_SUCH_OBJECT;
+
+        int rc = performModify(session, entry, modifications);
+
+        PenroseSearchResults results = new PenroseSearchResults();
 
         sessionHandler.getSearchHandler().search(
                 session,
@@ -94,8 +102,16 @@ public class ModifyHandler {
                 LDAPSearchConstraints.DEREF_NEVER,
                 "(objectClass=*)",
                 new ArrayList(),
-                new PenroseSearchResults()
+                results
         );
+
+        EntryCache entryCache = sessionHandler.getEngine().getEntryCache();
+        for (Iterator i=results.iterator(); i.hasNext(); ) {
+            Entry e = (Entry)i.next();
+            entryCache.put(e);
+        }
+
+        sessionHandler.getEngine().getEntryCache().remove(entry);
 
         ModifyEvent afterModifyEvent = new ModifyEvent(this, ModifyEvent.AFTER_MODIFY, session, dn, modifications);
         afterModifyEvent.setReturnCode(rc);
@@ -104,13 +120,8 @@ public class ModifyHandler {
         return rc;
     }
 
-    public int performModify(PenroseSession session, String dn, Collection modifications)
+    public int performModify(PenroseSession session, Entry entry, Collection modifications)
 			throws Exception {
-
-		String ndn = LDAPDN.normalize(dn);
-
-        Entry entry = sessionHandler.getSearchHandler().find(session, ndn);
-        if (entry == null) return LDAPException.NO_SUCH_OBJECT;
 
         int rc = sessionHandler.getACLEngine().checkModify(session, entry);
         if (rc != LDAPException.SUCCESS) return rc;

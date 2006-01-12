@@ -38,6 +38,8 @@ import org.safehaus.penrose.thread.ThreadPool;
 import org.safehaus.penrose.thread.Queue;
 import org.safehaus.penrose.thread.MRSWLock;
 import org.safehaus.penrose.mapping.*;
+import org.safehaus.penrose.pipeline.PipelineAdapter;
+import org.safehaus.penrose.pipeline.PipelineEvent;
 import org.apache.log4j.Logger;
 import org.ietf.ldap.LDAPException;
 
@@ -403,7 +405,9 @@ public class Engine {
             log.debug(Formatter.displaySeparator(80));
         }
 
-        return deleteEngine.delete(entry);
+        int rc = deleteEngine.delete(entry);
+
+        return rc;
     }
 
     public int modrdn(Entry entry, String newRdn) throws Exception {
@@ -415,7 +419,9 @@ public class Engine {
             log.debug(Formatter.displayLine("New RDN: "+newRdn, 80));
         }
 
-        return modrdnEngine.modrdn(entry, newRdn);
+        int rc = modrdnEngine.modrdn(entry, newRdn);
+
+        return rc;
     }
 
     public int modify(Entry entry, AttributeValues newValues) throws Exception {
@@ -443,7 +449,9 @@ public class Engine {
             log.debug(Formatter.displaySeparator(80));
         }
 
-        return modifyEngine.modify(entry, newValues);
+        int rc = modifyEngine.modify(entry, newValues);
+
+        return rc;
     }
 
     public String getParentSourceValues(Collection path, EntryMapping entryMapping, AttributeValues parentSourceValues) throws Exception {
@@ -455,9 +463,9 @@ public class Engine {
 
         //log.debug("Parents' source values:");
         for (Iterator iterator = path.iterator(); iterator.hasNext(); ) {
-            Map map = (Map)iterator.next();
-            //String dn = (String)map.get("dn");
-            Entry entry = (Entry)map.get("entry");
+            //Map map = (Map)iterator.next();
+            //Entry entry = (Entry)map.get("entry");
+            Entry entry = (Entry)iterator.next();
             //log.debug(" - "+dn);
 
             prefix = prefix == null ? "parent" : "parent."+prefix;
@@ -602,106 +610,30 @@ public class Engine {
         return isUnique(parentMapping);
     }
 
-    public Entry find(
-            Collection path,
-            EntryMapping entryMapping
-            ) throws Exception {
-
-        if (log.isDebugEnabled()) {
-            log.debug(Formatter.displaySeparator(80));
-            log.debug(Formatter.displayLine("FIND", 80));
-            log.debug(Formatter.displayLine("Entry: "+entryMapping.getDn(), 80));
-            log.debug(Formatter.displayLine("Parents:", 80));
-
-            for (Iterator i=path.iterator(); i.hasNext(); ) {
-                Map map = (Map)i.next();
-                String dn = (String)map.get("dn");
-                log.debug(Formatter.displayLine(" - "+dn, 80));
-            }
-
-            log.debug(Formatter.displaySeparator(80));
-        }
-
-        AttributeValues parentSourceValues = new AttributeValues();
-
-        PenroseSearchResults results = search(path, parentSourceValues, entryMapping, null, null);
-
-        if (results.size() == 0) return null;
-
-        Entry entry = (Entry)results.next();
-
-        if (log.isDebugEnabled()) {
-            log.debug(Formatter.displaySeparator(80));
-            log.debug(Formatter.displayLine("FIND RESULT", 80));
-            log.debug(Formatter.displayLine("dn: "+entry.getDn(), 80));
-            log.debug(Formatter.displaySeparator(80));
-        }
-
-        return entry;
+    public void search(
+            Entry parent,
+            AttributeValues parentSourceValues,
+            EntryMapping entryMapping,
+            Filter filter,
+            PenroseSearchResults dns)
+            throws Exception {
+        searchEngine.search(parent, parentSourceValues, entryMapping, filter, dns);
     }
 
-    public PenroseSearchResults search(
-            final Collection path,
-            final AttributeValues parentSourceValues,
-            final EntryMapping entryMapping,
-            final Filter filter,
-            Collection attributeNames) throws Exception {
+    public void load(
+            EntryMapping entryMapping,
+            PenroseSearchResults entriesToLoad,
+            PenroseSearchResults loadedEntries)
+            throws Exception {
+        loadEngine.load(entryMapping, entriesToLoad, loadedEntries);
+    }
 
-        if (log.isDebugEnabled()) {
-            log.debug(Formatter.displaySeparator(80));
-            log.debug(Formatter.displayLine("SEARCH", 80));
-            log.debug(Formatter.displayLine("Entry: "+entryMapping.getDn(), 80));
-            log.debug(Formatter.displayLine("Filter: "+filter, 80));
-            log.debug(Formatter.displayLine("Parents:", 80));
-
-            if (parentSourceValues != null) {
-                for (Iterator i = parentSourceValues.getNames().iterator(); i.hasNext(); ) {
-                    String name = (String)i.next();
-                    Collection values = parentSourceValues.get(name);
-                    log.debug(Formatter.displayLine(" - "+name+": "+values, 80));
-                }
-            }
-
-            log.debug(Formatter.displaySeparator(80));
-        }
-
-        final PenroseSearchResults entries = new PenroseSearchResults();
-        final PenroseSearchResults results = new PenroseSearchResults();
-
-        searchEngine.search(path, parentSourceValues, entryMapping, filter, entries);
-
-        Collection attributeDefinitions = entryMapping.getAttributeMappings(attributeNames);
-        //log.debug("Attribute definitions: "+attributeDefinitions);
-
-        // check if client only requests the dn to be returned
-        final boolean dnOnly = attributeNames != null && attributeNames.contains("dn")
-                && attributeDefinitions.isEmpty()
-                && "(objectclass=*)".equals(filter.toString().toLowerCase());
-
-        if (dnOnly) {
-            log.debug("Returning DNs only:");
-            Interpreter interpreter = getInterpreterFactory().newInstance();
-
-            for (Iterator i=entries.iterator(); i.hasNext(); ) {
-                Map map = (Map)i.next();
-                String dn = (String)map.get("dn");
-                AttributeValues sv = (AttributeValues)map.get("sourceValues");
-
-                AttributeValues attributeValues = computeAttributeValues(entryMapping, sv, interpreter);
-                Entry entry = new Entry(dn, entryMapping, sv, attributeValues);
-
-                results.add(entry);
-            }
-
-            return results;
-        }
-
-        PenroseSearchResults loadedEntries = new PenroseSearchResults();
-        loadEngine.load(entryMapping, entries, loadedEntries, results);
-
-        mergeEngine.merge(entryMapping, loadedEntries, results);
-
-        return results;
+    public void merge(
+            EntryMapping entryMapping,
+            PenroseSearchResults loadedEntries,
+            PenroseSearchResults newEntries)
+            throws Exception {
+        mergeEngine.merge(entryMapping, loadedEntries, newEntries);
     }
 
     public String getStartingSourceName(EntryMapping entryMapping) throws Exception {

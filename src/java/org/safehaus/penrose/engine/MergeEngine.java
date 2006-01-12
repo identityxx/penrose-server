@@ -19,7 +19,6 @@ package org.safehaus.penrose.engine;
 
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.session.PenroseSearchResults;
-import org.safehaus.penrose.session.PenroseSearchResults;
 import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.filter.FilterTool;
@@ -182,8 +181,8 @@ public class MergeEngine {
 
         Row rdn = entry.getRdn();
 
-        log.debug("Storing "+rdn+" in entry data cache for "+entry.getParentDn());
-        engine.getEntryCache().put(entry);
+        //log.debug("Storing "+rdn+" in entry data cache for "+entry.getParentDn());
+        //engine.getEntryCache().put(entry);
 
         results.add(entry);
 

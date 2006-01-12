@@ -127,6 +127,27 @@ public class InMemoryEntryCacheStorage extends EntryCacheStorage {
         return results;
     }
 
+    public void add(Filter filter, Row rdn) throws Exception {
+        String key = filter == null ? "" : filter.toString();
+
+        Collection rdns = (Collection)queryMap.remove(key);
+
+        while (rdns == null && queryMap.size() >= getSize()) {
+            //log.debug("Trimming entry filter cache ("+queryMap.size()+").");
+            Object k = queryExpirationMap.keySet().iterator().next();
+            queryMap.remove(k);
+            queryExpirationMap.remove(k);
+        }
+
+        if (rdns == null) {
+            rdns = new TreeSet();
+            queryMap.put(key, rdns);
+        }
+        //log.debug("Storing entry filter cache ("+queryMap.size()+"): "+key);
+        rdns.add(rdn);
+        queryExpirationMap.put(key, new Date(System.currentTimeMillis() + getExpiration() * 60 * 1000));
+    }
+
     public void put(Filter filter, Collection rdns) throws Exception {
         if (getSize() == 0) return;
 

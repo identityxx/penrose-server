@@ -25,7 +25,7 @@ import org.apache.log4j.Logger;
  */
 public class Service {
 
-    public Logger log = Logger.getLogger(Service.class);
+    public Logger log = Logger.getLogger(getClass());
 
     public final static String STOPPING = "STOPPING";
     public final static String STOPPED  = "STOPPED";
@@ -41,9 +41,11 @@ public class Service {
     }
 
     public void start() throws Exception {
+        setStatus(STARTED);
     }
 
     public void stop() throws Exception {
+        setStatus(STOPPED);
     }
 
     public ServiceConfig getServiceConfig() {

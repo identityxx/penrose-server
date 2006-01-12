@@ -94,9 +94,7 @@ public class ModRdnEngine {
         visitor.run();
 
         if (visitor.getReturnCode() != LDAPException.SUCCESS) return visitor.getReturnCode();
-
-        engine.getEntryCache().remove(entry);
-
+/*
         Interpreter interpreter = engine.getInterpreterFactory().newInstance();
 
         AttributeValues sourceValues = visitor.getModifiedSourceValues();
@@ -107,8 +105,9 @@ public class ModRdnEngine {
         Entry newEntry = new Entry(dn, entryMapping, sourceValues, attributeValues);
 
         log.debug("Storing "+newRdn2+" in entry data cache for "+entry.getParentDn());
-        engine.getEntryCache().put(newEntry);
 
+        engine.getEntryCache().put(newEntry);
+*/
         return LDAPException.SUCCESS;
     }
 }

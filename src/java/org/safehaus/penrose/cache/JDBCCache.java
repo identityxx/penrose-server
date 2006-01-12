@@ -1278,8 +1278,7 @@ public class JDBCCache {
 
             if (log.isDebugEnabled()) {
                 log.debug(Formatter.displaySeparator(80));
-                log.debug(Formatter.displayLine("Results:", 80));
-                log.debug(Formatter.displayLine(" - "+value, 80));
+                log.debug(Formatter.displayLine("Results: lastChangeNumber = "+value, 80));
                 log.debug(Formatter.displaySeparator(80));
             }
 

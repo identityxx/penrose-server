@@ -17,19 +17,8 @@
  */
 package org.safehaus.penrose.cache;
 
-import org.safehaus.penrose.mapping.EntryMapping;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.SourceConfig;
-import org.safehaus.penrose.Penrose;
-import org.safehaus.penrose.connector.ConnectorConfig;
-import org.safehaus.penrose.session.PenroseSearchResults;
-import org.safehaus.penrose.handler.SessionHandler;
-import org.ietf.ldap.LDAPConnection;
-import org.ietf.ldap.LDAPSearchConstraints;
-
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.ArrayList;
 
 /**
  * @author Endi S. Dewata

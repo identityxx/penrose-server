@@ -78,6 +78,10 @@ public class EntryCache {
         return cacheStorage;
     }
 
+    public void add(EntryMapping entryMapping, String parentDn, Filter filter, Row rdn) throws Exception {
+        getCacheStorage(parentDn, entryMapping).add(filter, rdn);
+    }
+    
     public void put(EntryMapping entryMapping, String parentDn, Filter filter, Collection dns) throws Exception {
         getCacheStorage(parentDn, entryMapping).put(filter, dns);
     }
@@ -140,7 +144,10 @@ public class EntryCache {
     }
 
     public void put(Entry entry) throws Exception {
-        getCacheStorage(entry.getParentDn(), entry.getEntryMapping()).put(entry.getRdn(), entry);
+        EntryMapping entryMapping = entry.getEntryMapping();
+        String parentDn = entry.getParentDn();
+        Row rdn = entry.getRdn();
+        getCacheStorage(parentDn, entryMapping).put(rdn, entry);
     }
 
     public Entry get(String dn) throws Exception {
