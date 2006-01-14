@@ -47,7 +47,16 @@ public class EntryCache {
 
     private Map caches = new TreeMap();
 
-    boolean first = true;
+    public Collection getParameterNames() {
+        return cacheConfig.getParameterNames();
+    }
+
+    public String getParameter(String name) {
+        return cacheConfig.getParameter(name);
+    }
+
+    public void init() throws Exception {
+    }
 
     public EntryCacheStorage createCacheStorage(String parentDn, EntryMapping entryMapping) throws Exception {
 
@@ -67,7 +76,8 @@ public class EntryCache {
 
     public EntryCacheStorage getCacheStorage(String parentDn, EntryMapping entryMapping) throws Exception {
 
-        String key = entryMapping.getRdn()+","+(parentDn == null ? entryMapping.getParentDn() : parentDn);
+        parentDn = (parentDn == null ? entryMapping.getParentDn() : parentDn);
+        String key = entryMapping.getRdn()+","+parentDn;
         EntryCacheStorage cacheStorage = (EntryCacheStorage)caches.get(key);
 
         if (cacheStorage == null) {
@@ -218,11 +228,6 @@ public class EntryCache {
 
             EntryCacheStorage cacheStorage = getCacheStorage(parentDn, entryMapping);
 
-            if (first) {
-                cacheStorage.globalCreate();
-                first = false;
-            }
-
             log.debug("Creating tables for "+entryMapping.getDn());
             cacheStorage.create();
 
@@ -270,15 +275,11 @@ public class EntryCache {
 
     public void drop() throws Exception {
 
-        EntryCacheStorage cacheStorage = null;
-
         for (Iterator i=partitionManager.getPartitions().iterator(); i.hasNext(); ) {
             Partition partition = (Partition)i.next();
             Collection entryMappings = partition.getRootEntryMappings();
-            cacheStorage = drop(partition, null, entryMappings);
+            drop(partition, null, entryMappings);
         }
-
-        cacheStorage.globalDrop();
     }
 
     public EntryCacheStorage drop(Partition partition, String parentDn, Collection entryDefinitions) throws Exception {

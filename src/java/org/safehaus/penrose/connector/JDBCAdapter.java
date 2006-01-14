@@ -190,9 +190,7 @@ public class JDBCAdapter extends Adapter {
         PenroseSearchResults results = new PenroseSearchResults();
 
         String tableName = sourceConfig.getParameter(TABLE_NAME);
-        String sqlFilter = sourceConfig.getParameter(FILTER);
-        log.debug("tableName: "+tableName);
-        log.debug("filter: "+sqlFilter);
+        String s = sourceConfig.getParameter(FILTER);
 
         StringBuffer sb = new StringBuffer();
         sb.append("select ");
@@ -200,20 +198,18 @@ public class JDBCAdapter extends Adapter {
         sb.append(" from ");
         sb.append(tableName);
 
-        StringBuffer sb2 = new StringBuffer();
-        if (sqlFilter != null) {
-            sb2.append(sqlFilter);
-        }
+        StringBuffer sqlFilter = new StringBuffer();
+        if (s != null) sqlFilter.append(s);
 
         List parameters = new ArrayList();
         if (filter != null) {
-            if (sb2.length() > 0) sb2.append(" and ");
-            sb2.append(filterTool.convert(sourceConfig, filter, parameters));
+            if (sqlFilter.length() > 0) sqlFilter.append(" and ");
+            sqlFilter.append(filterTool.convert(sourceConfig, filter, parameters));
         }
 
-        if (sb2.length() > 0) {
+        if (sqlFilter.length() > 0) {
             sb.append(" where ");
-            sb.append(sb2);
+            sb.append(sqlFilter);
         }
 
         sb.append(" order by ");
@@ -230,7 +226,11 @@ public class JDBCAdapter extends Adapter {
 
             if (log.isDebugEnabled()) {
                 log.debug(Formatter.displaySeparator(80));
-                log.debug(Formatter.displayLine(sql, 80));
+                Collection lines = Formatter.split(sql, 80);
+                for (Iterator i=lines.iterator(); i.hasNext(); ) {
+                    String line = (String)i.next();
+                    log.debug(Formatter.displayLine(line, 80));
+                }
                 log.debug(Formatter.displaySeparator(80));
             }
 
@@ -291,21 +291,15 @@ public class JDBCAdapter extends Adapter {
         String tableName = sourceConfig.getParameter(TABLE_NAME);
         String s = sourceConfig.getParameter(FILTER);
 
+        StringBuffer sb = new StringBuffer();
+        sb.append("select ");
+        sb.append(getFieldNames(sourceConfig));
+        sb.append(" from ");
+        sb.append(tableName);
+        sb.append(" ");
+
         StringBuffer sqlFilter = new StringBuffer();
         if (s != null) sqlFilter.append(s);
-
-        StringBuffer sb = new StringBuffer();
-
-        StringBuffer select = new StringBuffer();
-        select.append("select ");
-        select.append(getFieldNames(sourceConfig));
-        sb.append(select);
-
-        StringBuffer from = new StringBuffer();
-        from.append("from ");
-        from.append(tableName);
-        sb.append(" ");
-        sb.append(from);
 
         List parameters = new ArrayList();
         if (filter != null) {
@@ -313,19 +307,13 @@ public class JDBCAdapter extends Adapter {
             sqlFilter.append(filterTool.convert(sourceConfig, filter, parameters));
         }
 
-        StringBuffer whereClause = new StringBuffer();
         if (sqlFilter.length() > 0) {
-            whereClause.append("where ");
-            whereClause.append(sqlFilter);
-            sb.append(" ");
-            sb.append(whereClause);
+            sb.append(" where ");
+            sb.append(sqlFilter);
         }
 
-        StringBuffer orderBy = new StringBuffer();
-        orderBy.append("order by ");
-        orderBy.append(getOringialPrimaryKeyFieldNamesAsString(sourceConfig));
-        sb.append(" ");
-        sb.append(orderBy);
+        sb.append(" order by ");
+        sb.append(getOringialPrimaryKeyFieldNamesAsString(sourceConfig));
 
         String sql = sb.toString();
 
@@ -394,6 +382,95 @@ public class JDBCAdapter extends Adapter {
         results.close();
 
         return results;
+    }
+
+    public AttributeValues get(SourceConfig sourceConfig, Row pk) throws Exception {
+
+        //log.debug("Getting entry "+pk);
+
+        String tableName = sourceConfig.getParameter(TABLE_NAME);
+        String s = sourceConfig.getParameter(FILTER);
+
+        StringBuffer sb = new StringBuffer();
+        sb.append("select ");
+        sb.append(getFieldNames(sourceConfig));
+        sb.append(" from ");
+        sb.append(tableName);
+        sb.append(" ");
+
+        StringBuffer sqlFilter = new StringBuffer();
+        if (s != null) sqlFilter.append(s);
+
+        List parameters = new ArrayList();
+        for (Iterator i=pk.getNames().iterator(); i.hasNext(); ) {
+            String name = (String)i.next();
+            Object value = pk.get(name);
+
+            if (sqlFilter.length() > 0) sb.append(" and ");
+
+            sqlFilter.append(name);
+            sqlFilter.append("=?");
+            parameters.add(value);
+        }
+
+        if (sqlFilter.length() > 0) {
+            sb.append(" where ");
+            sb.append(sqlFilter);
+        }
+
+        sb.append(" order by ");
+        sb.append(getOringialPrimaryKeyFieldNamesAsString(sourceConfig));
+
+        String sql = sb.toString();
+
+        java.sql.Connection con = null;
+        PreparedStatement ps = null;
+        ResultSet rs = null;
+
+        try {
+            con = (java.sql.Connection)openConnection();
+
+            if (log.isDebugEnabled()) {
+                log.debug(Formatter.displaySeparator(80));
+                Collection lines = Formatter.split(sql, 80);
+                for (Iterator i=lines.iterator(); i.hasNext(); ) {
+                    String line = (String)i.next();
+                    log.debug(Formatter.displayLine(line, 80));
+                }
+                log.debug(Formatter.displaySeparator(80));
+            }
+
+            ps = con.prepareStatement(sql);
+
+            if (parameters.size() > 0) {
+                log.debug(Formatter.displayLine("Parameters:", 80));
+
+                int counter = 0;
+                for (Iterator i=parameters.iterator(); i.hasNext(); ) {
+                    Object param = i.next();
+                    ps.setObject(++counter, param);
+                    log.debug(Formatter.displayLine(" - "+counter+" = "+param, 80));
+                }
+
+                log.debug(Formatter.displaySeparator(80));
+            }
+
+            rs = ps.executeQuery();
+
+            if (!rs.next()) return null;
+
+            AttributeValues av = getValues(sourceConfig, rs);
+
+            int width = printHeader(sourceConfig);
+            printValues(sourceConfig, av);
+            printFooter(width);
+
+            return av;
+
+        } finally {
+            if (ps != null) try { ps.close(); } catch (Exception e) {}
+            if (con != null) try { con.close(); } catch (Exception e) {}
+        }
     }
 
     public Row getPkValues(SourceConfig sourceConfig, ResultSet rs) throws Exception {

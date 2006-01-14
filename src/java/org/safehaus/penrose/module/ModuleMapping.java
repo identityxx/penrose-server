@@ -19,7 +19,7 @@ package org.safehaus.penrose.module;
 
 import org.apache.log4j.Logger;
 import org.safehaus.penrose.mapping.Entry;
-import org.safehaus.penrose.util.DnUtil;
+import org.safehaus.penrose.util.EntryUtil;
 
 /**
  * @author Endi S. Dewata
@@ -74,13 +74,13 @@ public class ModuleMapping implements Cloneable {
         if ("OBJECT".equals(scope)) {
 
             //log.debug("Matching object ["+baseDn+"] with ["+dn+"]");
-            if (DnUtil.match(baseDn, dn)) return true;
+            if (EntryUtil.match(baseDn, dn)) return true;
 
         } else if ("ONELEVEL".equals(scope)) {
 
             //log.debug("Matching onelevel ["+baseDn+"] with ["+dn+"]");
             String parent = Entry.getParentDn(dn);
-            if (DnUtil.match(baseDn, parent)) return true;
+            if (EntryUtil.match(baseDn, parent)) return true;
 
         } else if ("SUBTREE".equals(scope)) {
 
@@ -98,7 +98,7 @@ public class ModuleMapping implements Cloneable {
                 String c = a.substring(i+1);
                 String d = b.substring(j+1);
 
-                if (!DnUtil.match(c, d)) return false;
+                if (!EntryUtil.match(c, d)) return false;
 
                 if (i >= 0) a = a.substring(0, i);
                 if (j >= 0) b = b.substring(0, j);

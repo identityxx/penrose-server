@@ -67,7 +67,7 @@ public class ModRdnHandler {
         PenroseSearchResults results = new PenroseSearchResults();
 
         sessionHandler.getSearchHandler().search(
-                session,
+                null,
                 newDn,
                 LDAPConnection.SCOPE_SUB,
                 LDAPSearchConstraints.DEREF_NEVER,

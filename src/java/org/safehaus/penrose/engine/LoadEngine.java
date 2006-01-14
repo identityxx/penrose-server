@@ -55,7 +55,7 @@ public class LoadEngine {
 
         Collection effectiveSources = partition.getEffectiveSourceMappings(entryMapping);
         log.debug("Effective Sources: "+effectiveSources);
-
+/*
         if (sources.size() == 0 && effectiveSources.size() == 0 || sources.size() == 1 && effectiveSources.size() == 1) {
 
             log.debug("All sources have been loaded.");
@@ -73,7 +73,7 @@ public class LoadEngine {
 
             return;
         }
-
+*/
         log.debug("Creating batches of entries.");
 
         final PenroseSearchResults batches = new PenroseSearchResults();

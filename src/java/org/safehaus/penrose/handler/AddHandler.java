@@ -68,7 +68,7 @@ public class AddHandler {
         PenroseSearchResults results = new PenroseSearchResults();
 
         sessionHandler.getSearchHandler().search(
-                session,
+                null,
                 ldapEntry.getDN(),
                 LDAPConnection.SCOPE_SUB,
                 LDAPSearchConstraints.DEREF_NEVER,
@@ -76,13 +76,13 @@ public class AddHandler {
                 new ArrayList(),
                 results
         );
-
+/*
         EntryCache entryCache = sessionHandler.getEngine().getEntryCache();
         for (Iterator i=results.iterator(); i.hasNext(); ) {
             Entry entry = (Entry)i.next();
             entryCache.put(entry);
         }
-
+*/
         AddEvent afterModifyEvent = new AddEvent(this, AddEvent.AFTER_ADD, session, ldapEntry);
         afterModifyEvent.setReturnCode(rc);
         sessionHandler.postEvent(ldapEntry.getDN(), afterModifyEvent);
@@ -98,8 +98,8 @@ public class AddHandler {
         String dn = LDAPDN.normalize(ldapEntry.getDN());
 
         // find existing entry
-        Entry entry = getHandler().getSearchHandler().find(session, dn);
-        if (entry != null) return LDAPException.ENTRY_ALREADY_EXISTS;
+        //Entry entry = getHandler().getSearchHandler().find(session, dn);
+        //if (entry != null) return LDAPException.ENTRY_ALREADY_EXISTS;
 
         // find parent entry
         String parentDn = Entry.getParentDn(dn);

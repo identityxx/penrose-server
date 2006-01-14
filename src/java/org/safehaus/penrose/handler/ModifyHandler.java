@@ -93,10 +93,12 @@ public class ModifyHandler {
 
         int rc = performModify(session, entry, modifications);
 
+        sessionHandler.getEngine().getEntryCache().remove(entry);
+
         PenroseSearchResults results = new PenroseSearchResults();
 
         sessionHandler.getSearchHandler().search(
-                session,
+                null,
                 dn,
                 LDAPConnection.SCOPE_SUB,
                 LDAPSearchConstraints.DEREF_NEVER,
@@ -105,13 +107,13 @@ public class ModifyHandler {
                 results
         );
 
+/*
         EntryCache entryCache = sessionHandler.getEngine().getEntryCache();
         for (Iterator i=results.iterator(); i.hasNext(); ) {
             Entry e = (Entry)i.next();
             entryCache.put(e);
         }
-
-        sessionHandler.getEngine().getEntryCache().remove(entry);
+*/
 
         ModifyEvent afterModifyEvent = new ModifyEvent(this, ModifyEvent.AFTER_MODIFY, session, dn, modifications);
         afterModifyEvent.setReturnCode(rc);

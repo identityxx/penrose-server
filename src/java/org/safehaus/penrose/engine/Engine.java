@@ -38,8 +38,6 @@ import org.safehaus.penrose.thread.ThreadPool;
 import org.safehaus.penrose.thread.Queue;
 import org.safehaus.penrose.thread.MRSWLock;
 import org.safehaus.penrose.mapping.*;
-import org.safehaus.penrose.pipeline.PipelineAdapter;
-import org.safehaus.penrose.pipeline.PipelineEvent;
 import org.apache.log4j.Logger;
 import org.ietf.ldap.LDAPException;
 
@@ -111,6 +109,7 @@ public class Engine {
         entryCache.setPenroseConfig(penroseConfig);
         entryCache.setConnectionManager(connectionManager);
         entryCache.setPartitionManager(partitionManager);
+        entryCache.init();
 
         String s = engineConfig.getParameter(EngineConfig.THREAD_POOL_SIZE);
         int threadPoolSize = s == null ? EngineConfig.DEFAULT_THREAD_POOL_SIZE : Integer.parseInt(s);
@@ -617,6 +616,7 @@ public class Engine {
             Filter filter,
             PenroseSearchResults dns)
             throws Exception {
+
         searchEngine.search(parent, parentSourceValues, entryMapping, filter, dns);
     }
 
@@ -625,6 +625,7 @@ public class Engine {
             PenroseSearchResults entriesToLoad,
             PenroseSearchResults loadedEntries)
             throws Exception {
+
         loadEngine.load(entryMapping, entriesToLoad, loadedEntries);
     }
 
@@ -633,6 +634,7 @@ public class Engine {
             PenroseSearchResults loadedEntries,
             PenroseSearchResults newEntries)
             throws Exception {
+
         mergeEngine.merge(entryMapping, loadedEntries, newEntries);
     }
 

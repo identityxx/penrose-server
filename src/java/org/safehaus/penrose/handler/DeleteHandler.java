@@ -43,6 +43,7 @@ public class DeleteHandler {
 
     public int delete(PenroseSession session, String dn) throws Exception {
 
+        log.info("-------------------------------------------------");
         log.info("DELETE:");
         if (session != null && session.getBindDn() != null) log.info(" - Bind DN: "+session.getBindDn());
         log.info(" - DN: "+dn);

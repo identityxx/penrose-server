@@ -25,21 +25,57 @@ import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.SourceConfig;
 import org.safehaus.penrose.partition.ConnectionConfig;
 import org.safehaus.penrose.session.PenroseSearchResults;
+import org.apache.log4j.Logger;
 
 import java.util.*;
 
 /**
  * @author Endi S. Dewata
  */
-public abstract class SourceCacheStorage extends Cache {
+public abstract class SourceCacheStorage {
+
+    Logger log = Logger.getLogger(getClass());
 
     Partition partition;
     Connector connector;
     SourceConfig sourceConfig;
 
-    public abstract int getLastChangeNumber() throws Exception;
-    public abstract void setLastChangeNumber(int lastChangeNumber) throws Exception;
-    public abstract Map load(Collection filters, Collection missingKeys) throws Exception;
+    CacheConfig cacheConfig;
+
+    int size;
+    int expiration; // minutes
+
+    public CacheConfig getCacheConfig() {
+        return cacheConfig;
+    }
+
+    public void setCacheConfig(CacheConfig cacheConfig) {
+        this.cacheConfig = cacheConfig;
+    }
+
+    public Collection getParameterNames() {
+        return cacheConfig.getParameterNames();
+    }
+
+    public String getParameter(String name) {
+        return cacheConfig.getParameter(name);
+    }
+
+    public int getSize() {
+        return size;
+    }
+
+    public void setSize(int size) {
+        this.size = size;
+    }
+
+    public int getExpiration() {
+        return expiration;
+    }
+
+    public void setExpiration(int expiration) {
+        this.expiration = expiration;
+    }
 
     public SourceConfig getSourceDefinition() {
         return sourceConfig;
@@ -49,8 +85,19 @@ public abstract class SourceCacheStorage extends Cache {
         this.sourceConfig = sourceConfig;
     }
 
+    public void init(CacheConfig cacheConfig) throws Exception {
+        this.cacheConfig = cacheConfig;
+
+        String s = cacheConfig.getParameter(CacheConfig.CACHE_SIZE);
+        size = s == null ? CacheConfig.DEFAULT_CACHE_SIZE : Integer.parseInt(s);
+
+        s = cacheConfig.getParameter(CacheConfig.CACHE_EXPIRATION);
+        expiration = s == null ? CacheConfig.DEFAULT_CACHE_EXPIRATION : Integer.parseInt(s);
+
+        init();
+    }
+
     public void init() throws Exception {
-        super.init();
 
         String s = sourceConfig.getParameter(SourceConfig.DATA_CACHE_SIZE);
         if (s != null) size = Integer.parseInt(s);
@@ -58,6 +105,10 @@ public abstract class SourceCacheStorage extends Cache {
         s = sourceConfig.getParameter(SourceConfig.DATA_CACHE_EXPIRATION);
         if (s != null) expiration = Integer.parseInt(s);
     }
+
+    public abstract int getLastChangeNumber() throws Exception;
+    public abstract void setLastChangeNumber(int lastChangeNumber) throws Exception;
+    public abstract Map load(Collection filters, Collection missingKeys) throws Exception;
 
     public void create() throws Exception {
     }
@@ -72,10 +123,24 @@ public abstract class SourceCacheStorage extends Cache {
         return null;
     }
 
+    public Object get(Object key) throws Exception {
+        return null;
+    }
+
+    public void put(Object key, Object object) throws Exception {
+    }
+
     public void put(Filter filter, Collection pks) throws Exception {
     }
 
     public void invalidate() throws Exception {
+    }
+
+    public void remove(Object key) throws Exception {
+    }
+
+    public Map getExpired() throws Exception {
+        return null;
     }
 
     public Connector getConnector() {

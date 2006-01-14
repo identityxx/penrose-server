@@ -82,6 +82,10 @@ public class Connection {
         return adapter.add(sourceConfig, values);
     }
 
+    public AttributeValues get(SourceConfig sourceConfig, Row pk) throws Exception {
+        return adapter.get(sourceConfig, pk);
+    }
+
     public int modify(SourceConfig sourceConfig, AttributeValues oldValues, AttributeValues newValues) throws Exception {
         return adapter.modify(sourceConfig, oldValues, newValues);
     }

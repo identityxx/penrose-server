@@ -59,10 +59,6 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
         return (DirContext)getConnectionManager().openConnection(jndiConnectionName);
     }
 
-    public void globalCreate() throws Exception {
-        createMappingsTable();
-    }
-
     public void create() throws Exception {
 
         addMapping();
@@ -90,37 +86,6 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
                 FieldConfig fieldConfig = (FieldConfig)j.next();
                 createFieldTable(sourceMapping, fieldConfig);
             }
-        }
-    }
-
-    public void createMappingsTable() throws Exception {
-        String sql = "create table penrose_mappings (id integer auto_increment, dn varchar(255) unique, primary key (id))";
-
-        Connection con = null;
-        PreparedStatement ps = null;
-
-        try {
-            con = getJDBCConnection();
-
-            if (log.isDebugEnabled()) {
-                log.debug(Formatter.displaySeparator(80));
-                Collection lines = Formatter.split(sql, 80);
-                for (Iterator i=lines.iterator(); i.hasNext(); ) {
-                    String line = (String)i.next();
-                    log.debug(Formatter.displayLine(line, 80));
-                }
-                log.debug(Formatter.displaySeparator(80));
-            }
-
-            ps = con.prepareStatement(sql);
-            ps.execute();
-
-        } catch (Exception e) {
-            log.error(e.getMessage());
-
-        } finally {
-            if (ps != null) try { ps.close(); } catch (Exception e) {}
-            if (con != null) try { con.close(); } catch (Exception e) {}
         }
     }
 
@@ -198,37 +163,6 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
             ps = con.prepareStatement(sql);
             ps.setObject(1, dn);
 
-            ps.execute();
-
-        } catch (Exception e) {
-            log.error(e.getMessage());
-
-        } finally {
-            if (ps != null) try { ps.close(); } catch (Exception e) {}
-            if (con != null) try { con.close(); } catch (Exception e) {}
-        }
-    }
-
-    public void dropMappingsTable() throws Exception {
-        String sql = "drop table penrose_mappings";
-
-        Connection con = null;
-        PreparedStatement ps = null;
-
-        try {
-            con = getJDBCConnection();
-
-            if (log.isDebugEnabled()) {
-                log.debug(Formatter.displaySeparator(80));
-                Collection lines = Formatter.split(sql, 80);
-                for (Iterator i=lines.iterator(); i.hasNext(); ) {
-                    String line = (String)i.next();
-                    log.debug(Formatter.displayLine(line, 80));
-                }
-                log.debug(Formatter.displaySeparator(80));
-            }
-
-            ps = con.prepareStatement(sql);
             ps.execute();
 
         } catch (Exception e) {
@@ -610,10 +544,6 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
         dropEntriesTable();
     }
 
-    public void globalDrop() throws Exception {
-        dropMappingsTable();
-    }
-
     public void dropEntrySourceTable(SourceMapping sourceMapping) throws Exception {
 
         SourceConfig sourceConfig = getPartition().getSourceConfig(sourceMapping.getSourceName());
@@ -778,6 +708,7 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
             entry = new Entry(dn, getEntryMapping(), attributeValues);
 
             int entryId = getEntryId(dn);
+            if (entryId == 0) return null;
 
             AttributeValues sourceValues = entry.getSourceValues();
             Collection sources = getPartition().getEffectiveSourceMappings(getEntryMapping());
@@ -915,6 +846,8 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
             deleteAttribute(attributeDefinition, entryId);
 
             Collection values = attributeValues.get(attributeDefinition.getName());
+            if (values == null) continue;
+            
             for (Iterator j=values.iterator(); j.hasNext(); ) {
                 Object value = j.next();
                 insertAttribute(attributeDefinition, entryId, value);

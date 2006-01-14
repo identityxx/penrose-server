@@ -28,6 +28,7 @@ import org.safehaus.penrose.session.PenroseSession;
 import org.safehaus.penrose.session.PenroseSearchResults;
 import org.safehaus.penrose.session.PenroseSearchControls;
 import org.safehaus.penrose.util.ExceptionUtil;
+import org.safehaus.penrose.util.EntryUtil;
 import org.safehaus.penrose.mapping.EntryMapping;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.PartitionManager;
@@ -97,7 +98,7 @@ public class PenroseInterceptor extends BaseInterceptor {
 */
             //log.debug("suffix: "+getSuffix(next, normName, true));
             //if (getSuffix(next, normName, true).equals(normName)) return;
-
+/*
             LDAPAttributeSet attributeSet = new LDAPAttributeSet();
             for (Enumeration e = attributes.getAll(); e.hasMoreElements(); ) {
                 Attribute attribute = (Attribute)e.nextElement();
@@ -112,6 +113,9 @@ public class PenroseInterceptor extends BaseInterceptor {
             }
 
             LDAPEntry ldapEntry = new LDAPEntry(upName, attributeSet);
+*/
+            
+            LDAPEntry ldapEntry = EntryUtil.convert(upName, attributes);
 
             PenroseSession session = penrose.newSession();
             if (session == null) throw new ServiceUnavailableException();

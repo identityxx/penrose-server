@@ -20,12 +20,10 @@ package org.safehaus.penrose.connector;
 import org.safehaus.penrose.session.PenroseSearchResults;
 import org.safehaus.penrose.partition.*;
 import org.safehaus.penrose.cache.CacheConfig;
-import org.safehaus.penrose.cache.SourceCacheStorage;
 import org.safehaus.penrose.cache.SourceCache;
 import org.safehaus.penrose.cache.EntryCache;
 import org.safehaus.penrose.engine.TransformEngine;
 import org.safehaus.penrose.engine.Engine;
-import org.safehaus.penrose.util.Formatter;
 import org.safehaus.penrose.config.*;
 import org.safehaus.penrose.thread.MRSWLock;
 import org.safehaus.penrose.thread.Queue;
@@ -190,14 +188,17 @@ public class Connector {
 
     public void pollChanges(SourceConfig sourceConfig) throws Exception {
 
-        int lastChangeNumber = getCache(sourceConfig).getLastChangeNumber();
+        int lastChangeNumber = getSourceCache().getLastChangeNumber(sourceConfig);
 
         Connection connection = getConnection(sourceConfig.getConnectionName());
         PenroseSearchResults sr = connection.getChanges(sourceConfig, lastChangeNumber);
         if (!sr.hasNext()) return;
 
-        CacheConfig cacheConfig = penroseConfig.getSourceCacheConfig();
-        String user = cacheConfig.getParameter("user");
+        ConnectionConfig connectionConfig = connection.getConnectionConfig();
+        String user = connectionConfig.getParameter("user");
+
+        //CacheConfig cacheConfig = penroseConfig.getSourceCacheConfig();
+        //String user = cacheConfig.getParameter("user");
 
         Partition partition = partitionManager.getPartition(sourceConfig);
         Collection entryMappings = partition.getEntryMappings(sourceConfig);
@@ -217,7 +218,10 @@ public class Connector {
 
             lastChangeNumber = changeNumber.intValue();
 
-            if (user != null && user.equals(changeUser)) continue;
+            if (user != null && user.equals(changeUser)) {
+                log.debug("Skip changes made by "+user);
+                continue;
+            }
 
             if ("DELETE".equals(changeAction)) {
                 pks.remove(pk);
@@ -225,7 +229,7 @@ public class Connector {
                 pks.add(pk);
             }
 
-            getCache(sourceConfig).remove(pk);
+            getSourceCache().remove(sourceConfig, pk);
 
             if (engine != null) {
 
@@ -236,7 +240,7 @@ public class Connector {
             }
         }
 
-        getCache(sourceConfig).setLastChangeNumber(lastChangeNumber);
+        getSourceCache().setLastChangeNumber(sourceConfig, lastChangeNumber);
 
         retrieve(sourceConfig, pks);
 
@@ -260,7 +264,7 @@ public class Connector {
         SourceMapping sourceMapping = engine.getPrimarySource(entryMapping);
         log.debug("Primary source: "+sourceMapping.getName()+" ("+sourceMapping.getSourceName()+")");
 
-        AttributeValues sv = (AttributeValues)getCache(sourceConfig).get(pk);
+        AttributeValues sv = (AttributeValues)getSourceCache().get(sourceConfig, pk);
 
         AttributeValues sourceValues = new AttributeValues();
         sourceValues.set(sourceMapping.getName(), sv);
@@ -300,8 +304,10 @@ public class Connector {
                     LDAPConnection.SCOPE_SUB,
                     LDAPSearchConstraints.DEREF_NEVER,
                     "(objectClass=*)",
-                    new ArrayList()
+                    null
             );
+
+            while (sr.hasNext()) sr.next();
         }
     }
 
@@ -339,7 +345,7 @@ public class Connector {
 
     public void reloadExpired(SourceConfig sourceConfig) throws Exception {
 
-        Map map = getCache(sourceConfig).getExpired();
+        Map map = getSourceCache().getExpired(sourceConfig);
 
         log.debug("Reloading expired caches...");
 
@@ -405,6 +411,9 @@ public class Connector {
                 Connection connection = getConnection(sourceConfig.getConnectionName());
                 int rc = connection.add(sourceConfig, newEntry);
                 if (rc != LDAPException.SUCCESS) return rc;
+
+                AttributeValues sv = connection.get(sourceConfig, pk);
+                getSourceCache().put(sourceConfig, pk, sv);
             }
 /*
             sourceValues.clear();
@@ -450,7 +459,7 @@ public class Connector {
                     return rc;
 
                 // Delete row from source table in the cache
-                getCache(sourceConfig).remove(key);
+                getSourceCache().remove(sourceConfig, pk);
             }
 
             //getQueryCache(connectionConfig, sourceConfig).invalidate();
@@ -508,7 +517,7 @@ public class Connector {
                     return rc;
 
                 // Delete row from source table in the cache
-                getCache(sourceConfig).remove(key);
+                getSourceCache().remove(sourceConfig, pk);
             }
 
             // Add rows
@@ -522,6 +531,9 @@ public class Connector {
                 Connection connection = getConnection(sourceConfig.getConnectionName());
                 int rc = connection.add(sourceConfig, newEntry);
                 if (rc != LDAPException.SUCCESS) return rc;
+
+                AttributeValues sv = connection.get(sourceConfig, pk);
+                getSourceCache().put(sourceConfig, pk, sv);
 
                 pks.add(pk);
             }
@@ -542,7 +554,10 @@ public class Connector {
                 if (rc != LDAPException.SUCCESS) return rc;
 
                 // Modify row from source table in the cache
-                getCache(sourceConfig).remove(key);
+                AttributeValues sv = connection.get(sourceConfig, pk);
+                getSourceCache().remove(sourceConfig, pk);
+                getSourceCache().put(sourceConfig, pk, sv);
+
                 pks.add(pk);
             }
 
@@ -593,7 +608,7 @@ public class Connector {
             throws Exception {
 
         log.debug("Checking query cache for "+filter);
-        Collection results = getCache(sourceConfig).search(filter);
+        Collection results = getSourceCache().search(sourceConfig, filter);
 
         log.debug("Cached results: "+results);
         if (results != null) {
@@ -607,7 +622,7 @@ public class Connector {
         Collection pks = performSearch(sourceConfig, filter);
 
         log.debug("Storing query cache for "+filter);
-        getCache(sourceConfig).put(filter, pks);
+        getSourceCache().put(sourceConfig, filter, pks);
 
         log.debug("Loading source "+sourceConfig.getName()+" with pks "+pks);
         return load(sourceConfig, pks);
@@ -619,7 +634,7 @@ public class Connector {
      */
     public PenroseSearchResults fullLoad(SourceConfig sourceConfig, Filter filter) throws Exception {
 
-        Collection pks = getCache(sourceConfig).search(filter);
+        Collection pks = getSourceCache().search(sourceConfig, filter);
 
         if (pks != null) {
             return load(sourceConfig, pks);
@@ -657,7 +672,7 @@ public class Connector {
 
                     log.debug("Checking data cache for "+normalizedPks);
                     Collection missingPks = new ArrayList();
-                    Map loadedRows = getCache(sourceConfig).load(normalizedPks, missingPks);
+                    Map loadedRows = getSourceCache().load(sourceConfig, normalizedPks, missingPks);
 
                     log.debug("Cached values: "+loadedRows.keySet());
                     results.addAll(loadedRows.values());
@@ -701,14 +716,14 @@ public class Connector {
         Row npk = normalize(pk);
 
         //log.debug("Storing connector cache: "+pk);
-        getCache(sourceConfig).put(pk, sourceValues);
+        getSourceCache().put(sourceConfig, pk, sourceValues);
 
         Filter f = FilterTool.createFilter(npk);
         Collection c = new TreeSet();
         c.add(npk);
 
         //log.debug("Storing query cache "+f+": "+c);
-        getCache(sourceConfig).put(f, c);
+        getSourceCache().put(sourceConfig, f, c);
 
         return npk;
     }
@@ -741,13 +756,13 @@ public class Connector {
         if (!uniqueKeys.isEmpty()) {
             Filter f = FilterTool.createFilter(uniqueKeys);
             log.debug("Storing query cache "+f+": "+pks);
-            getCache(sourceConfig).put(f, pks);
+            getSourceCache().put(sourceConfig, f, pks);
         }
 
         if (pks.size() <= 10) {
             Filter filter = FilterTool.createFilter(pks);
             log.debug("Storing query cache "+filter+": "+pks);
-            getCache(sourceConfig).put(filter, pks);
+            getSourceCache().put(sourceConfig, filter, pks);
         }
     }
 
@@ -825,10 +840,6 @@ public class Connector {
 
     public void setConnectorConfig(ConnectorConfig connectorConfig) {
         this.connectorConfig = connectorConfig;
-    }
-
-    public SourceCacheStorage getCache(SourceConfig sourceConfig) throws Exception {
-        return sourceCache.getCacheStorage(sourceConfig);
     }
 
     public ConnectionManager getConnectionManager() {

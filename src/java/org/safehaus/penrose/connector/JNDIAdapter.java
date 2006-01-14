@@ -210,6 +210,44 @@ public class JNDIAdapter extends Adapter {
         return results;
     }
 
+    public AttributeValues get(SourceConfig sourceConfig, Row pk) throws Exception {
+
+        String ldapBase = sourceConfig.getParameter(BASE_DN);
+        String dn = append(pk.toString(), ldapBase);
+        dn = append(dn, suffix);
+
+        String ldapFilter = sourceConfig.getParameter(FILTER);
+
+        if (log.isDebugEnabled()) {
+            log.debug(Formatter.displaySeparator(80));
+            log.debug(Formatter.displayLine("JNDI Search "+sourceConfig.getConnectionName()+"/"+sourceConfig.getName(), 80));
+            log.debug(Formatter.displayLine(" - Base DN: "+ldapBase, 80));
+            log.debug(Formatter.displayLine(" - Filter: "+ldapFilter, 80));
+            log.debug(Formatter.displaySeparator(80));
+        }
+
+        SearchControls ctls = new SearchControls();
+        ctls.setSearchScope(SearchControls.OBJECT_SCOPE);
+
+        DirContext ctx = null;
+        try {
+            ctx = (DirContext)openConnection();
+            NamingEnumeration ne = ctx.search(ldapBase, ldapFilter, ctls);
+
+            if (!ne.hasMore()) return null;
+
+            javax.naming.directory.SearchResult sr = (javax.naming.directory.SearchResult)ne.next();
+            log.debug("Result: "+ldapBase);
+
+            AttributeValues av = getValues(sourceConfig, sr);
+            return av;
+
+        } finally {
+            if (ctx != null) try { ctx.close(); } catch (Exception e) {}
+        }
+
+    }
+
     public Row getPkValues(SourceConfig sourceConfig, javax.naming.directory.SearchResult sr) throws Exception {
 
         Row row = new Row();

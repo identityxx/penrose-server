@@ -172,6 +172,7 @@ public class SearchHandler {
                     path,
                     parentSourceValues,
                     childMapping,
+                    true,
                     filter,
                     new ArrayList()
             );
@@ -218,7 +219,14 @@ public class SearchHandler {
 
         AttributeValues parentSourceValues = new AttributeValues();
 
-        PenroseSearchResults results = search(path, parentSourceValues, entryMapping, null, null);
+        PenroseSearchResults results = search(
+                path,
+                parentSourceValues,
+                entryMapping,
+                true,
+                null,
+                null
+        );
 
         if (results.size() == 0) return null;
 
@@ -391,7 +399,7 @@ public class SearchHandler {
 		List path = findPath(session, nbase);
 
 		if (path == null) {
-			log.debug("Can't find " + nbase);
+			log.debug("Can't find base entry " + nbase);
 			results.setReturnCode(LDAPException.NO_SUCH_OBJECT);
 			return LDAPException.NO_SUCH_OBJECT;
 		}
@@ -451,6 +459,7 @@ public class SearchHandler {
                         path,
                         parentSourceValues,
                         childMapping,
+                        false,
                         filter,
                         attributeNames
                 );
@@ -521,6 +530,7 @@ public class SearchHandler {
             final Collection path,
             final AttributeValues parentSourceValues,
             final EntryMapping entryMapping,
+            boolean single,
             final Filter filter,
             Collection attributeNames) throws Exception {
 
@@ -564,6 +574,7 @@ public class SearchHandler {
                     String dn = (String)map.get("dn");
 
                     Entry entry = (Entry)sessionHandler.getEngine().getEntryCache().get(dn);
+                    log.debug("Entry cache for "+dn+": "+(entry == null ? "not found" : "found"));
 
                     if (entry == null) {
 
@@ -607,7 +618,8 @@ public class SearchHandler {
             list = sessionHandler.getEngine().getEntryCache().search(entryMapping, parentDn, filter);
         }
 
-        if (list == null) {
+        if (list == null || list != null && list.size() == 0 && single) {
+
             log.debug("Filter cache for "+filter+" not found.");
             sessionHandler.getEngine().search(parent, parentSourceValues, entryMapping, filter, dns);
 
@@ -616,8 +628,11 @@ public class SearchHandler {
                     try {
                         Map map = (Map)event.getObject();
                         String dn = (String)map.get("dn");
+
                         String parentDn = Entry.getParentDn(dn);
                         Row rdn = Entry.getRdn(dn);
+
+                        log.debug("Adding "+rdn+" into filter cache for "+filter+" in "+parentDn);
 
                         sessionHandler.getEngine().getEntryCache().add(entryMapping, parentDn, filter, rdn);
 

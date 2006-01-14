@@ -128,32 +128,25 @@ public abstract class EntryCacheStorage {
         return null;
     }
 
-    public void add(Filter filter, Row rdn) throws Exception {
+    public void add(Filter filter, Row rdn) throws Exception { }
+
+    public void put(Filter filter, Collection rdns) throws Exception { }
+
+    public void invalidate() throws Exception { }
+
+    public void create() throws Exception { }
+
+    public void drop() throws Exception { }
+
+    public Entry get(Object key) throws Exception {
+        return null;
     }
 
-    public void put(Filter filter, Collection rdns) throws Exception {
+    public Map getExpired() throws Exception {
+        return null;
     }
 
-    public void invalidate() throws Exception {
-    }
+    public void put(Object key, Object object) throws Exception { }
 
-    public void create() throws Exception {
-    }
-
-    public void drop() throws Exception {
-    }
-
-    public abstract Entry get(Object key) throws Exception;
-
-    public abstract Map getExpired() throws Exception;
-
-    public abstract void put(Object key, Object object) throws Exception;
-
-    public abstract void remove(Object key) throws Exception;
-
-    public void globalCreate() throws Exception {
-    }
-
-    public void globalDrop() throws Exception {
-    }
+    public void remove(Object key) throws Exception { }
 }

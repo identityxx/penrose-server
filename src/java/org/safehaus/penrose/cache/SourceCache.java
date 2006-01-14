@@ -18,7 +18,6 @@
 package org.safehaus.penrose.cache;
 
 import org.apache.log4j.Logger;
-import org.safehaus.penrose.connector.ConnectorConfig;
 import org.safehaus.penrose.connector.Connector;
 import org.safehaus.penrose.connector.ConnectionManager;
 import org.safehaus.penrose.partition.SourceConfig;
@@ -26,10 +25,12 @@ import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.PartitionManager;
 import org.safehaus.penrose.partition.PartitionConfig;
 import org.safehaus.penrose.config.PenroseConfig;
+import org.safehaus.penrose.filter.Filter;
 
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.Iterator;
+import java.util.Collection;
 
 /**
  * @author Endi S. Dewata
@@ -141,5 +142,37 @@ public class SourceCache {
 
     public void setConnectionManager(ConnectionManager connectionManager) {
         this.connectionManager = connectionManager;
+    }
+
+    public void remove(SourceConfig sourceConfig, Object key) throws Exception {
+        getCacheStorage(sourceConfig).remove(key);
+    }
+
+    public Object get(SourceConfig sourceConfig, Object key) throws Exception {
+        return getCacheStorage(sourceConfig).get(key);
+    }
+
+    public void put(SourceConfig sourceConfig, Object pk, Object sourceValues) throws Exception {
+        getCacheStorage(sourceConfig).put(pk, sourceValues);
+    }
+
+    public Collection search(SourceConfig sourceConfig, Filter filter) throws Exception {
+        return getCacheStorage(sourceConfig).search(filter);
+    }
+
+    public Map load(SourceConfig sourceConfig, Collection filters, Collection missingKeys) throws Exception {
+        return getCacheStorage(sourceConfig).load(filters, missingKeys);
+    }
+
+    public Map getExpired(SourceConfig sourceConfig) throws Exception {
+        return getCacheStorage(sourceConfig).getExpired();
+    }
+
+    public int getLastChangeNumber(SourceConfig sourceConfig) throws Exception {
+        return getCacheStorage(sourceConfig).getLastChangeNumber();
+    }
+
+    public void setLastChangeNumber(SourceConfig sourceConfig, int lastChangeNumber) throws Exception {
+        getCacheStorage(sourceConfig).setLastChangeNumber(lastChangeNumber);
     }
 }

@@ -38,14 +38,6 @@ public class DeleteEngine {
 
     public int delete(Entry entry) throws Exception {
 
-        if (log.isDebugEnabled()) {
-            log.debug(Formatter.displaySeparator(80));
-            log.debug(Formatter.displayLine("DELETE", 80));
-            log.debug(Formatter.displayLine("DN: "+entry.getDn(), 80));
-
-            log.debug(Formatter.displaySeparator(80));
-        }
-
         EntryMapping entryMapping = entry.getEntryMapping();
 
         AttributeValues sourceValues = entry.getSourceValues();

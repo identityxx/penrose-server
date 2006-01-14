@@ -59,6 +59,7 @@ public abstract class Adapter {
     /**
      * Search.
      *
+     * @return Collection of Rows
      * @throws Exception
      */
     public abstract PenroseSearchResults search(SourceConfig sourceConfig, Filter filter, long sizeLimit) throws Exception;
@@ -66,9 +67,16 @@ public abstract class Adapter {
     /**
      * Load.
      *
+     * @return Collection of AttributeValues
      * @throws Exception
      */
     public abstract PenroseSearchResults load(SourceConfig sourceConfig, Filter filter, long sizeLimit) throws Exception;
+
+    /**
+     * Get.
+     * @throws Exception
+     */
+    public abstract AttributeValues get(SourceConfig sourceConfig, Row pk) throws Exception;
 
     /**
      * Add.
