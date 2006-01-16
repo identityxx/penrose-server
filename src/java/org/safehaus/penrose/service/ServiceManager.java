@@ -68,8 +68,14 @@ public class ServiceManager {
     }
 
     public void start(String name) throws Exception {
+
         Service service = getService(name);
         if (service == null) throw new Exception(name+" not found.");
+
+        ServiceConfig serviceConfig = service.getServiceConfig();
+        if (!serviceConfig.isEnabled()) return;
+
+        log.debug("Starting "+name+".");
         service.start();
     }
 
@@ -84,8 +90,14 @@ public class ServiceManager {
     }
 
     public void stop(String name) throws Exception {
+
         Service service = getService(name);
         if (service == null) throw new Exception(name+" not found.");
+
+        ServiceConfig serviceConfig = service.getServiceConfig();
+        if (!serviceConfig.isEnabled()) return;
+
+        log.debug("Stopping "+name+".");
         service.stop();
     }
 

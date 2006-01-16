@@ -56,7 +56,7 @@ public class PenroseLDAPService extends Service {
 
     public void start() throws Exception {
 
-        log.warn("Starting LDAP Service.");
+        //log.warn("Starting LDAP Service.");
 
         if (ldapPort < 0) return;
 

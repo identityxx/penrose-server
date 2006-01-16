@@ -21,9 +21,7 @@ import org.safehaus.penrose.session.PenroseSearchResults;
 import org.safehaus.penrose.partition.*;
 import org.safehaus.penrose.cache.CacheConfig;
 import org.safehaus.penrose.cache.SourceCache;
-import org.safehaus.penrose.cache.EntryCache;
 import org.safehaus.penrose.engine.TransformEngine;
-import org.safehaus.penrose.engine.Engine;
 import org.safehaus.penrose.config.*;
 import org.safehaus.penrose.thread.MRSWLock;
 import org.safehaus.penrose.thread.Queue;
@@ -31,12 +29,8 @@ import org.safehaus.penrose.thread.ThreadPool;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.filter.FilterTool;
 import org.safehaus.penrose.mapping.*;
-import org.safehaus.penrose.interpreter.Interpreter;
-import org.safehaus.penrose.handler.SessionHandler;
 import org.apache.log4j.Logger;
 import org.ietf.ldap.LDAPException;
-import org.ietf.ldap.LDAPConnection;
-import org.ietf.ldap.LDAPSearchConstraints;
 
 import java.util.*;
 
@@ -54,8 +48,6 @@ public class Connector {
     private ConnectionManager connectionManager;
     private PartitionManager partitionManager;
     private SourceCache sourceCache;
-    private Engine engine;
-    private SessionHandler sessionHandler;
 
     private ThreadPool threadPool;
     private boolean stopping = false;
@@ -89,8 +81,6 @@ public class Connector {
             Partition partition = (Partition)i.next();
             addPartition(partition);
         }
-
-        threadPool.execute(new RefreshThread(this));
     }
 
     public boolean isStopping() {
@@ -139,33 +129,6 @@ public class Connector {
         return (Connection)connectionManager.getConnection(name);
     }
 
-    public void refresh(Partition partition) throws Exception {
-
-        //log.debug("Refreshing cache ...");
-
-        Collection sourceDefinitions = partition.getSourceConfigs();
-        for (Iterator i=sourceDefinitions.iterator(); i.hasNext(); ) {
-            SourceConfig sourceConfig = (SourceConfig)i.next();
-
-            String s = sourceConfig.getParameter(SourceConfig.AUTO_REFRESH);
-            boolean autoRefresh = s == null ? SourceConfig.DEFAULT_AUTO_REFRESH : new Boolean(s).booleanValue();
-
-            log.debug("Auto refresh source caches for "+partition.getPartitionConfig().getName()+"/"+sourceConfig.getName()+": "+autoRefresh);
-
-            if (!autoRefresh) continue;
-
-            s = sourceConfig.getParameter(SourceConfig.REFRESH_METHOD);
-            String refreshMethod = s == null ? SourceConfig.DEFAULT_REFRESH_METHOD : s;
-
-            if (SourceConfig.POLL_CHANGES.equals(refreshMethod)) {
-                pollChanges(sourceConfig);
-
-            } else { // if (SourceConfig.RELOAD_EXPIRED.equals(refreshMethod)) {
-                reloadExpired(sourceConfig);
-            }
-        }
-    }
-
     public Row normalize(Row row) throws Exception {
 
         Row newRow = new Row();
@@ -184,178 +147,6 @@ public class Connector {
         }
 
         return newRow;
-    }
-
-    public void pollChanges(SourceConfig sourceConfig) throws Exception {
-
-        int lastChangeNumber = getSourceCache().getLastChangeNumber(sourceConfig);
-
-        Connection connection = getConnection(sourceConfig.getConnectionName());
-        PenroseSearchResults sr = connection.getChanges(sourceConfig, lastChangeNumber);
-        if (!sr.hasNext()) return;
-
-        ConnectionConfig connectionConfig = connection.getConnectionConfig();
-        String user = connectionConfig.getParameter("user");
-
-        //CacheConfig cacheConfig = penroseConfig.getSourceCacheConfig();
-        //String user = cacheConfig.getParameter("user");
-
-        Partition partition = partitionManager.getPartition(sourceConfig);
-        Collection entryMappings = partition.getEntryMappings(sourceConfig);
-
-        Collection pks = new HashSet();
-
-        log.debug("Synchronizing changes in "+sourceConfig.getName()+":");
-        while (sr.hasNext()) {
-            Row pk = (Row)sr.next();
-
-            Integer changeNumber = (Integer)pk.remove("changeNumber");
-            Object changeTime = pk.remove("changeTime");
-            String changeAction = (String)pk.remove("changeAction");
-            String changeUser = (String)pk.remove("changeUser");
-
-            log.debug(" - "+pk+": "+changeAction+" ("+changeTime+")");
-
-            lastChangeNumber = changeNumber.intValue();
-
-            if (user != null && user.equals(changeUser)) {
-                log.debug("Skip changes made by "+user);
-                continue;
-            }
-
-            if ("DELETE".equals(changeAction)) {
-                pks.remove(pk);
-            } else {
-                pks.add(pk);
-            }
-
-            getSourceCache().remove(sourceConfig, pk);
-
-            if (engine != null) {
-
-                for (Iterator i=entryMappings.iterator(); i.hasNext(); ) {
-                    EntryMapping entryMapping = (EntryMapping)i.next();
-                    remove(partition, entryMapping, sourceConfig, pk);
-                }
-            }
-        }
-
-        getSourceCache().setLastChangeNumber(sourceConfig, lastChangeNumber);
-
-        retrieve(sourceConfig, pks);
-
-        if (engine != null) {
-
-            for (Iterator i=pks.iterator(); i.hasNext(); ) {
-                Row pk = (Row)i.next();
-
-                for (Iterator j=entryMappings.iterator(); j.hasNext(); ) {
-                    EntryMapping entryMapping = (EntryMapping)j.next();
-                    add(partition, entryMapping, sourceConfig, pk);
-                }
-            }
-        }
-    }
-
-    public void add(Partition partition, EntryMapping entryMapping, SourceConfig sourceConfig, Row pk) throws Exception {
-
-        log.debug("Adding entry cache for "+entryMapping.getDn());
-
-        SourceMapping sourceMapping = engine.getPrimarySource(entryMapping);
-        log.debug("Primary source: "+sourceMapping.getName()+" ("+sourceMapping.getSourceName()+")");
-
-        AttributeValues sv = (AttributeValues)getSourceCache().get(sourceConfig, pk);
-
-        AttributeValues sourceValues = new AttributeValues();
-        sourceValues.set(sourceMapping.getName(), sv);
-
-        log.debug("Source values:");
-        for (Iterator i=sourceValues.getNames().iterator(); i.hasNext(); ) {
-            String name = (String)i.next();
-            Collection values = sourceValues.get(name);
-            log.debug(" - "+name+": "+values);
-        }
-
-        Interpreter interpreter = engine.getInterpreterFactory().newInstance();
-        AttributeValues attributeValues = engine.computeAttributeValues(entryMapping, sourceValues, interpreter);
-
-        log.debug("Attribute values:");
-        for (Iterator i=attributeValues.getNames().iterator(); i.hasNext(); ) {
-            String name = (String)i.next();
-            Collection values = attributeValues.get(name);
-            log.debug(" - "+name+": "+values);
-        }
-
-        Row rdn = entryMapping.getRdn(attributeValues);
-        EntryMapping parentMapping = partition.getParent(entryMapping);
-
-        EntryCache entryCache = engine.getEntryCache();
-
-        Collection parentDns = entryCache.search(partition, parentMapping);
-        for (Iterator i=parentDns.iterator(); i.hasNext(); ) {
-            String parentDn = (String)i.next();
-            String dn = rdn+","+parentDn;
-
-            log.debug("Adding "+dn);
-
-            PenroseSearchResults sr = sessionHandler.search(
-                    null,
-                    dn,
-                    LDAPConnection.SCOPE_SUB,
-                    LDAPSearchConstraints.DEREF_NEVER,
-                    "(objectClass=*)",
-                    null
-            );
-
-            while (sr.hasNext()) sr.next();
-        }
-    }
-
-    public void remove(Partition partition, EntryMapping entryMapping, SourceConfig sourceConfig, Row pk) throws Exception {
-
-        log.debug("Removing entry cache for "+entryMapping.getDn());
-
-        Collection sourceMappings = entryMapping.getSourceMappings();
-
-        SourceMapping sourceMapping = null;
-        for (Iterator i=sourceMappings.iterator(); i.hasNext(); ) {
-            SourceMapping sm = (SourceMapping)i.next();
-            if (!sm.getSourceName().equals(sourceConfig.getName())) continue;
-            sourceMapping = sm;
-            break;
-        }
-
-        EntryCache entryCache = engine.getEntryCache();
-
-        Collection dns = entryCache.search(partition, entryMapping);
-        for (Iterator i=dns.iterator(); i.hasNext(); ) {
-            String dn = (String)i.next();
-
-            Entry entry = entryCache.get(dn);
-            AttributeValues sv = entry.getSourceValues();
-
-            boolean b = sv.contains(sourceMapping.getName(), pk);
-            log.debug("Checking "+dn+" contains "+pk+" => "+b);
-            
-            if (!b) continue;
-
-            entryCache.remove(partition, entryMapping, entry.getParentDn(), entry.getRdn());
-        }
-    }
-
-    public void reloadExpired(SourceConfig sourceConfig) throws Exception {
-
-        Map map = getSourceCache().getExpired(sourceConfig);
-
-        log.debug("Reloading expired caches...");
-
-        for (Iterator i=map.keySet().iterator(); i.hasNext(); ) {
-            Row pk = (Row)i.next();
-            AttributeValues av = (AttributeValues)map.get(pk);
-            log.debug(" - "+pk+": "+av);
-        }
-
-        retrieve(sourceConfig, map.keySet());
     }
 
     public synchronized MRSWLock getLock(SourceConfig sourceConfig) {
@@ -864,21 +655,5 @@ public class Connector {
 
     public void setSourceCache(SourceCache sourceCache) {
         this.sourceCache = sourceCache;
-    }
-
-    public Engine getEngine() {
-        return engine;
-    }
-
-    public void setEngine(Engine engine) {
-        this.engine = engine;
-    }
-
-    public SessionHandler getSessionHandler() {
-        return sessionHandler;
-    }
-
-    public void setSessionHandler(SessionHandler sessionHandler) {
-        this.sessionHandler = sessionHandler;
     }
 }

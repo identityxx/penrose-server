@@ -152,11 +152,12 @@ public abstract class SourceCacheStorage {
     }
 
     public void load() throws Exception {
+/*
         String s = sourceConfig.getParameter(SourceConfig.AUTO_REFRESH);
         boolean autoRefresh = s == null ? SourceConfig.DEFAULT_AUTO_REFRESH : new Boolean(s).booleanValue();
 
         if (!autoRefresh) return;
-
+*/
         log.debug("Loading cache for "+sourceConfig.getName());
 
         ConnectionConfig conCfg = partition.getConnectionConfig(sourceConfig.getConnectionName());

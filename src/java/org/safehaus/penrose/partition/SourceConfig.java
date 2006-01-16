@@ -28,7 +28,7 @@ import java.util.*;
  */
 public class SourceConfig implements Cloneable {
 
-    public final static String AUTO_REFRESH            = "autoRefresh";
+    //public final static String AUTO_REFRESH            = "autoRefresh";
 
     public final static String REFRESH_METHOD          = "refreshMethod";
     public final static String RELOAD_EXPIRED          = "reloadExpired";

@@ -87,7 +87,7 @@ public class PenroseJMXService extends Service {
 
     public void start() throws Exception {
 
-        log.warn("Starting JMX Service.");
+        //log.warn("Starting JMX Service.");
 
         setStatus(STARTING);
 

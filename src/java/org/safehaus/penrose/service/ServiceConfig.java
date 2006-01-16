@@ -27,6 +27,7 @@ import java.util.Collection;
 public class ServiceConfig implements Cloneable {
 
     private String name;
+    private boolean enabled = true;
     private String serviceClass;
     private String description;
 
@@ -46,6 +47,14 @@ public class ServiceConfig implements Cloneable {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public boolean isEnabled() {
+        return enabled;
+    }
+
+    public void setEnabled(boolean enabled) {
+        this.enabled = enabled;
     }
 
     public String getServiceClass() {
@@ -82,6 +91,7 @@ public class ServiceConfig implements Cloneable {
 
     public int hashCode() {
         return (name == null ? 0 : name.hashCode()) +
+                (enabled ? 0 : 1) +
                 (serviceClass == null ? 0 : serviceClass.hashCode()) +
                 (description == null ? 0 : description.hashCode()) +
                 (parameters == null ? 0 : parameters.hashCode());
@@ -98,6 +108,7 @@ public class ServiceConfig implements Cloneable {
 
         ServiceConfig serviceConfig = (ServiceConfig)object;
         if (!equals(name, serviceConfig.name)) return false;
+        if (enabled != serviceConfig.enabled) return false;
         if (!equals(serviceClass, serviceConfig.serviceClass)) return false;
         if (!equals(description, serviceConfig.description)) return false;
         if (!equals(parameters, serviceConfig.parameters)) return false;
@@ -107,6 +118,7 @@ public class ServiceConfig implements Cloneable {
 
     public void copy(ServiceConfig serviceConfig) {
         name = serviceConfig.name;
+        enabled = serviceConfig.enabled;
         serviceClass = serviceConfig.serviceClass;
         description = serviceConfig.description;
 
