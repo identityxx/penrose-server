@@ -296,7 +296,6 @@ public class JDBCAdapter extends Adapter {
         sb.append(getFieldNames(sourceConfig));
         sb.append(" from ");
         sb.append(tableName);
-        sb.append(" ");
 
         StringBuffer sqlFilter = new StringBuffer();
         if (s != null) sqlFilter.append(s);

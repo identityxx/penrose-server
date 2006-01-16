@@ -156,6 +156,10 @@ public class SourceCache {
         getCacheStorage(sourceConfig).put(pk, sourceValues);
     }
 
+    public void put(SourceConfig sourceConfig, Filter filter, Collection pks) throws Exception {
+        getCacheStorage(sourceConfig).put(filter, pks);
+    }
+
     public Collection search(SourceConfig sourceConfig, Filter filter) throws Exception {
         return getCacheStorage(sourceConfig).search(filter);
     }

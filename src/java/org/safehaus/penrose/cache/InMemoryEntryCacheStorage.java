@@ -113,7 +113,7 @@ public class InMemoryEntryCacheStorage extends EntryCacheStorage {
         //log.debug("Getting entry filter cache ("+queryMap.size()+"): "+key);
 
         Collection rdns = (Collection)queryMap.get(key);
-        if (rdns == null) return results;
+        if (rdns == null) return null;
 
         results.addAll(rdns);
         Date date = (Date)queryExpirationMap.get(key);

@@ -1325,12 +1325,16 @@ public class JDBCCache {
 
             ps = con.prepareStatement(sql);
 
+            log.debug(Formatter.displayLine("Parameters:", 80));
+
             int counter = 1;
             for (Iterator i=parameters.iterator(); i.hasNext(); counter++) {
                 Object v = i.next();
                 ps.setObject(counter, v);
-                log.debug(" "+counter+" = "+v);
+                log.debug(Formatter.displayLine(" - "+counter+" = "+v, 80));
             }
+
+            log.debug(Formatter.displaySeparator(80));
 
             int count = ps.executeUpdate();
 

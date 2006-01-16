@@ -73,6 +73,11 @@ public class AttributeValues implements Cloneable, Comparable {
     }
 
     public void set(String prefix, AttributeValues attributeValues) {
+        if (attributeValues == null) {
+            remove(prefix);
+            return;
+        }
+
         for (Iterator i=attributeValues.getNames().iterator(); i.hasNext(); ) {
             String name = (String)i.next();
             Collection c = attributeValues.get(name);

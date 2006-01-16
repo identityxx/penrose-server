@@ -115,6 +115,8 @@ public class EntryCache {
             EntryCacheStorage parentCacheStorage = (EntryCacheStorage)i.next();
 
             Collection parentDns = parentCacheStorage.search(null);
+            if (parentDns == null) continue;
+            
             for (Iterator j=parentDns.iterator(); j.hasNext(); ) {
                 String parentDn = (String)j.next();
 
