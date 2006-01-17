@@ -416,13 +416,9 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
         StringBuffer sb = new StringBuffer();
         sb.append("create table ");
         sb.append(tableName);
-        sb.append(" (id integer, ");
-        sb.append(attributeMapping.getName());
-        sb.append(" ");
+        sb.append(" (id integer, value ");
         sb.append(getColumnTypeDeclaration(attributeMapping));
-        sb.append(", primary key (id, ");
-        sb.append(attributeMapping.getName());
-        sb.append("))");
+        sb.append(", primary key (id, value))");
 
         String sql = sb.toString();
 
@@ -666,6 +662,7 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
 
         try {
             log.debug("Getting "+dn);
+/*
             SearchControls sc = new SearchControls();
             sc.setSearchScope(SearchControls.OBJECT_SCOPE);
 
@@ -688,6 +685,22 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
                 }
             }
 
+            entry = new Entry(dn, getEntryMapping(), attributeValues);
+*/
+            int entryId = getEntryId(dn);
+            if (entryId == 0) return null;
+
+            AttributeValues attributeValues = new AttributeValues();
+
+            Collection attributeMappings = entryMapping.getAttributeMappings();
+            for (Iterator i=attributeMappings.iterator(); i.hasNext(); ) {
+                AttributeMapping attributeMapping = (AttributeMapping)i.next();
+                Collection values = getAttribute(attributeMapping, entryId);
+                attributeValues.set(attributeMapping.getName(), values);
+            }
+
+            entry = new Entry(dn, entryMapping, attributeValues);
+
             if (log.isDebugEnabled()) {
                 log.debug(Formatter.displaySeparator(80));
                 log.debug(Formatter.displayLine("dn: "+dn, 80));
@@ -705,13 +718,8 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
                 log.debug(Formatter.displaySeparator(80));
             }
 
-            entry = new Entry(dn, getEntryMapping(), attributeValues);
-
-            int entryId = getEntryId(dn);
-            if (entryId == 0) return null;
-
             AttributeValues sourceValues = entry.getSourceValues();
-            Collection sources = getPartition().getEffectiveSourceMappings(getEntryMapping());
+            Collection sources = getPartition().getEffectiveSourceMappings(entryMapping);
 
             for (Iterator i=sources.iterator(); i.hasNext(); ) {
                 SourceMapping sourceMapping = (SourceMapping)i.next();
@@ -943,6 +951,76 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
         }
     }
 
+    public Collection getAttribute(AttributeMapping attributeMapping, int entryId) throws Exception {
+
+        String tableName = "penrose_"+mappingId+"_attribute_"+attributeMapping.getName();
+
+        StringBuffer sb = new StringBuffer();
+        sb.append("select value from ");
+        sb.append(tableName);
+        sb.append(" where id=?");
+
+        String sql = sb.toString();
+
+        Collection parameters = new ArrayList();
+        parameters.add(new Integer(entryId));
+
+        Connection con = null;
+        PreparedStatement ps = null;
+        ResultSet rs = null;
+
+        Collection values = new ArrayList();
+
+        try {
+            con = getJDBCConnection();
+
+            if (log.isDebugEnabled()) {
+                log.debug(Formatter.displaySeparator(80));
+                Collection lines = Formatter.split(sql, 80);
+                for (Iterator i=lines.iterator(); i.hasNext(); ) {
+                    String line = (String)i.next();
+                    log.debug(Formatter.displayLine(line, 80));
+                }
+                log.debug(Formatter.displaySeparator(80));
+            }
+
+            ps = con.prepareStatement(sql);
+
+            int counter = 1;
+            for (Iterator i=parameters.iterator(); i.hasNext(); counter++) {
+                Object param = i.next();
+                ps.setObject(counter, param);
+            }
+
+            if (log.isDebugEnabled()) {
+                log.debug(Formatter.displayLine("Parameters: id = "+entryId, 80));
+                log.debug(Formatter.displaySeparator(80));
+            }
+
+            rs = ps.executeQuery();
+
+            while (rs.next()) {
+                Object value = rs.getObject(1);
+                values.add(value);
+            }
+
+            if (log.isDebugEnabled()) {
+                log.debug(Formatter.displayLine("Results: value = "+values, 80));
+                log.debug(Formatter.displaySeparator(80));
+            }
+
+        } catch (Exception e) {
+            log.error(e.getMessage());
+
+        } finally {
+            if (rs != null) try { rs.close(); } catch (Exception e) {}
+            if (ps != null) try { ps.close(); } catch (Exception e) {}
+            if (con != null) try { con.close(); } catch (Exception e) {}
+        }
+
+        return values;
+    }
+
     public void insertField(
             SourceMapping sourceMapping,
             FieldConfig fieldConfig,
@@ -981,12 +1059,16 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
 
             ps = con.prepareStatement(sql);
 
+            log.debug(Formatter.displayLine("Parameters:", 80));
+
             int counter = 1;
             for (Iterator i=parameters.iterator(); i.hasNext(); counter++) {
                 Object v = i.next();
                 ps.setObject(counter, v);
-                log.debug(" "+counter+" = "+v);
+                log.debug(Formatter.displayLine(" - "+counter+" = "+v, 80));
             }
+
+            log.debug(Formatter.displaySeparator(80));
 
             ps.execute();
 

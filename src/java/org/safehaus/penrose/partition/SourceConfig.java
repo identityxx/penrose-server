@@ -52,7 +52,7 @@ public class SourceConfig implements Cloneable {
     public final static String CACHE                   = "cache";
 
     public final static boolean DEFAULT_AUTO_REFRESH           = false;
-    public final static String DEFAULT_REFRESH_METHOD          = RELOAD_EXPIRED;
+    public final static String DEFAULT_REFRESH_METHOD          = POLL_CHANGES;
 
     public final static int    DEFAULT_QUERY_CACHE_SIZE        = 100;
     public final static int    DEFAULT_QUERY_CACHE_EXPIRATION  = 5;

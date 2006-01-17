@@ -161,13 +161,13 @@ public class ModifyHandler {
 			String encoding = attr.getEncoding();
 
 			for (int j = 0; j < values.length; j++) {
-				log.debug("old " + attributeName + ": " + values[j]);
+				//log.debug("old " + attributeName + ": " + values[j]);
 				attribute.removeValue(values[j]);
 
                 byte[] bytes = PasswordUtil.encrypt(encryption, values[j]);
                 values[j] = PasswordUtil.encode(encoding, bytes);
 
-				log.debug("new " + attributeName + ": " + values[j]);
+				//log.debug("new " + attributeName + ": " + values[j]);
 				attribute.addValue(values[j]);
 			}
 		}
