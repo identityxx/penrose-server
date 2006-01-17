@@ -794,6 +794,104 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
         return results;
     }
 
+    public Collection search(SourceConfig sourceConfig, Row filter) throws Exception {
+
+        StringBuffer tableNames = new StringBuffer();
+        tableNames.append("penrose_"+mappingId+"_entries t");
+
+        StringBuffer whereClause = new StringBuffer();
+
+        Collection parameters = new ArrayList();
+
+        int c = 1;
+        for (Iterator i=filter.getNames().iterator(); i.hasNext(); c++) {
+            String name = (String)i.next();
+            Object value = filter.get(name);
+
+            String tableName = "penrose_"+mappingId+"_field_"+sourceConfig.getName()+"_"+name;
+
+            tableNames.append(", ");
+            tableNames.append(tableName);
+            tableNames.append(" t");
+            tableNames.append(c);
+
+            if (whereClause.length() > 0) whereClause.append(" and ");
+
+            whereClause.append("t.id=t");
+            whereClause.append(c);
+            whereClause.append(".id and t");
+            whereClause.append(c);
+            whereClause.append(".value=?");
+
+            parameters.add(value);
+        }
+
+        StringBuffer sb = new StringBuffer();
+        sb.append("select t.rdn, t.parentDn from ");
+        sb.append(tableNames);
+        sb.append(" where ");
+        sb.append(whereClause);
+
+        String sql = sb.toString();
+
+        Connection con = null;
+        PreparedStatement ps = null;
+        ResultSet rs = null;
+
+        Collection values = new ArrayList();
+
+        try {
+            con = getJDBCConnection();
+
+            if (log.isDebugEnabled()) {
+                log.debug(Formatter.displaySeparator(80));
+                Collection lines = Formatter.split(sql, 80);
+                for (Iterator i=lines.iterator(); i.hasNext(); ) {
+                    String line = (String)i.next();
+                    log.debug(Formatter.displayLine(line, 80));
+                }
+                log.debug(Formatter.displaySeparator(80));
+            }
+
+            ps = con.prepareStatement(sql);
+
+            log.debug(Formatter.displayLine("Parameters:", 80));
+
+            int counter = 1;
+            for (Iterator i=parameters.iterator(); i.hasNext(); counter++) {
+                Object param = i.next();
+                ps.setObject(counter, param);
+                log.debug(Formatter.displayLine(" - "+counter+" = "+param, 80));
+            }
+
+            log.debug(Formatter.displaySeparator(80));
+
+            rs = ps.executeQuery();
+
+            while (rs.next()) {
+                String rdn = (String)rs.getObject(1);
+                String parentDn = (String)rs.getObject(2);
+                String dn = rdn+","+parentDn;
+                values.add(dn);
+            }
+
+            if (log.isDebugEnabled()) {
+                log.debug(Formatter.displayLine("Results: value = "+values, 80));
+                log.debug(Formatter.displaySeparator(80));
+            }
+
+        } catch (Exception e) {
+            log.error(e.getMessage());
+
+        } finally {
+            if (rs != null) try { rs.close(); } catch (Exception e) {}
+            if (ps != null) try { ps.close(); } catch (Exception e) {}
+            if (con != null) try { con.close(); } catch (Exception e) {}
+        }
+
+        return values;
+    }
+
     public Map getExpired() throws Exception {
         Map results = new TreeMap();
         return results;

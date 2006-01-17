@@ -111,6 +111,21 @@ public class PollingConnectorService extends Service {
         }
     }
 
+    public void reloadExpired(SourceConfig sourceConfig) throws Exception {
+
+        Map map = sourceCache.getExpired(sourceConfig);
+
+        log.debug("Reloading expired caches...");
+
+        for (Iterator i=map.keySet().iterator(); i.hasNext(); ) {
+            Row pk = (Row)i.next();
+            AttributeValues av = (AttributeValues)map.get(pk);
+            log.debug(" - "+pk+": "+av);
+        }
+
+        connector.retrieve(sourceConfig, map.keySet());
+    }
+
     public void pollChanges(SourceConfig sourceConfig) throws Exception {
 
         int lastChangeNumber = sourceCache.getLastChangeNumber(sourceConfig);
@@ -166,32 +181,14 @@ public class PollingConnectorService extends Service {
 
         connector.retrieve(sourceConfig, pks);
 
-        if (engine != null) {
+        for (Iterator i=pks.iterator(); i.hasNext(); ) {
+            Row pk = (Row)i.next();
 
-            for (Iterator i=pks.iterator(); i.hasNext(); ) {
-                Row pk = (Row)i.next();
-
-                for (Iterator j=entryMappings.iterator(); j.hasNext(); ) {
-                    EntryMapping entryMapping = (EntryMapping)j.next();
-                    add(partition, entryMapping, sourceConfig, pk);
-                }
+            for (Iterator j=entryMappings.iterator(); j.hasNext(); ) {
+                EntryMapping entryMapping = (EntryMapping)j.next();
+                add(partition, entryMapping, sourceConfig, pk);
             }
         }
-    }
-
-    public void reloadExpired(SourceConfig sourceConfig) throws Exception {
-
-        Map map = sourceCache.getExpired(sourceConfig);
-
-        log.debug("Reloading expired caches...");
-
-        for (Iterator i=map.keySet().iterator(); i.hasNext(); ) {
-            Row pk = (Row)i.next();
-            AttributeValues av = (AttributeValues)map.get(pk);
-            log.debug(" - "+pk+": "+av);
-        }
-
-        connector.retrieve(sourceConfig, map.keySet());
     }
 
     public void add(Partition partition, EntryMapping entryMapping, SourceConfig sourceConfig, Row pk) throws Exception {
@@ -252,31 +249,13 @@ public class PollingConnectorService extends Service {
 
         log.debug("Removing entry cache for "+entryMapping.getDn());
 
-        Collection sourceMappings = entryMapping.getSourceMappings();
-
-        SourceMapping sourceMapping = null;
-        for (Iterator i=sourceMappings.iterator(); i.hasNext(); ) {
-            SourceMapping sm = (SourceMapping)i.next();
-            if (!sm.getSourceName().equals(sourceConfig.getName())) continue;
-            sourceMapping = sm;
-            break;
-        }
-
         EntryCache entryCache = engine.getEntryCache();
 
-        Collection dns = entryCache.search(partition, entryMapping);
+        Collection dns = entryCache.search(partition, entryMapping, sourceConfig, pk);
         for (Iterator i=dns.iterator(); i.hasNext(); ) {
             String dn = (String)i.next();
 
-            Entry entry = entryCache.get(dn);
-            AttributeValues sv = entry.getSourceValues();
-
-            boolean b = sv.contains(sourceMapping.getName(), pk);
-            log.debug("Checking "+dn+" contains "+pk+" => "+b);
-
-            if (!b) continue;
-
-            entryCache.remove(partition, entryMapping, entry.getParentDn(), entry.getRdn());
+            entryCache.remove(partition, entryMapping, dn);
         }
     }
 

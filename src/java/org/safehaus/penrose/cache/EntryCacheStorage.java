@@ -22,6 +22,7 @@ import org.safehaus.penrose.mapping.Entry;
 import org.safehaus.penrose.mapping.Row;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.partition.Partition;
+import org.safehaus.penrose.partition.SourceConfig;
 import org.safehaus.penrose.connector.ConnectionManager;
 import org.apache.log4j.Logger;
 
@@ -125,6 +126,10 @@ public abstract class EntryCacheStorage {
     }
 
     public Collection search(Filter filter) throws Exception {
+        return null;
+    }
+
+    public Collection search(SourceConfig sourceConfig, Row filter) throws Exception {
         return null;
     }
 

@@ -23,6 +23,7 @@ import org.safehaus.penrose.mapping.Row;
 import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.PartitionManager;
+import org.safehaus.penrose.partition.SourceConfig;
 import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.connector.ConnectionManager;
 import org.safehaus.penrose.filter.Filter;
@@ -114,9 +115,9 @@ public class EntryCache {
         for (Iterator i=parentCacheStorages.iterator(); i.hasNext(); ) {
             EntryCacheStorage parentCacheStorage = (EntryCacheStorage)i.next();
 
-            Collection parentDns = parentCacheStorage.search(null);
+            Collection parentDns = parentCacheStorage.search((Filter)null);
             if (parentDns == null) continue;
-            
+
             for (Iterator j=parentDns.iterator(); j.hasNext(); ) {
                 String parentDn = (String)j.next();
 
@@ -140,7 +141,28 @@ public class EntryCache {
             EntryCacheStorage cacheStorage = (EntryCacheStorage)i.next();
 
             log.debug("Entries under "+entryMapping.getRdn()+","+cacheStorage.getParentDn()+":");
-            Collection dns = cacheStorage.search(null);
+            Collection dns = cacheStorage.search((Filter)null);
+            for (Iterator j=dns.iterator(); j.hasNext(); ) {
+                String dn = (String)j.next();
+                log.debug(" - "+dn);
+                list.add(dn);
+            }
+        }
+
+        return list;
+    }
+
+    public Collection search(Partition partition, EntryMapping entryMapping, SourceConfig sourceConfig, Row filter) throws Exception {
+
+        log.debug("Searching entries under "+entryMapping.getDn());
+        Collection list = new ArrayList();
+
+        Collection cacheStorages = getCacheStorages(partition, entryMapping);
+        for (Iterator i=cacheStorages.iterator(); i.hasNext(); ) {
+            EntryCacheStorage cacheStorage = (EntryCacheStorage)i.next();
+
+            log.debug("Entries under "+entryMapping.getRdn()+","+cacheStorage.getParentDn()+":");
+            Collection dns = cacheStorage.search(sourceConfig, filter);
             for (Iterator j=dns.iterator(); j.hasNext(); ) {
                 String dn = (String)j.next();
                 log.debug(" - "+dn);
@@ -176,11 +198,10 @@ public class EntryCache {
     public void remove(Entry entry) throws Exception {
         EntryMapping entryMapping = entry.getEntryMapping();
         Partition partition = partitionManager.getPartition(entryMapping);
-        remove(partition, entryMapping, entry.getParentDn(), entry.getRdn());
+        remove(partition, entryMapping, entry.getDn());
     }
 
-    public void remove(Partition partition, EntryMapping entryMapping, String parentDn, Row rdn) throws Exception {
-        String dn = rdn+","+parentDn;
+    public void remove(Partition partition, EntryMapping entryMapping, String dn) throws Exception {
 
         Collection children = partition.getChildren(entryMapping);
         for (Iterator i=children.iterator(); i.hasNext(); ) {
@@ -190,12 +211,15 @@ public class EntryCache {
             for (Iterator j=childDns.iterator(); j.hasNext(); ) {
                 String childDn = (String)j.next();
 
-                Row childRdn = Entry.getRdn(childDn);
-                remove(partition, childMapping, dn, childRdn);
+                remove(partition, childMapping, childDn);
             }
         }
 
         log.debug("Remove cache "+dn);
+
+        String parentDn = Entry.getParentDn(dn);
+        Row rdn = Entry.getRdn(dn);
+
         getCacheStorage(parentDn, entryMapping).remove(rdn);
     }
 
@@ -262,7 +286,7 @@ public class EntryCache {
             EntryMapping entryMapping = (EntryMapping)i.next();
 
             EntryCacheStorage entryCacheStorage = getCacheStorage(parentDn, entryMapping);
-            Collection dns = entryCacheStorage.search(null);
+            Collection dns = entryCacheStorage.search((Filter)null);
 
             Collection children = partition.getChildren(entryMapping);
             for (Iterator j=dns.iterator(); j.hasNext(); ) {
