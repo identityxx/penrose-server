@@ -43,6 +43,10 @@ public class Partition {
     public Partition() {
     }
 
+    public boolean containsEntryMapping(EntryMapping entryMapping) {
+        return entryMappings.containsKey(entryMapping.getDn());
+    }
+    
     public EntryMapping getEntryMapping(String dn) {
         if (dn == null) return null;
         return (EntryMapping)entryMappings.get(dn);
@@ -271,7 +275,7 @@ public class Partition {
     }
 
     public void addModuleConfig(ModuleConfig moduleConfig) throws Exception {
-        moduleConfigs.put(moduleConfig.getModuleName(), moduleConfig);
+        moduleConfigs.put(moduleConfig.getName(), moduleConfig);
     }
 
     public ModuleConfig getModuleConfig(String name) {

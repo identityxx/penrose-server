@@ -32,6 +32,7 @@ import org.safehaus.penrose.interpreter.InterpreterFactory;
 import org.safehaus.penrose.connector.*;
 import org.safehaus.penrose.partition.*;
 import org.safehaus.penrose.session.PenroseSession;
+import org.safehaus.penrose.module.ModuleManager;
 
 /**
  * @author Endi S. Dewata
@@ -56,6 +57,7 @@ public class Penrose {
     private PartitionManager partitionManager;
     private PartitionValidator partitionValidator;
     private ConnectionManager connectionManager;
+    private ModuleManager moduleManager;
 
     private InterpreterFactory interpreterFactory;
     private Connector connector;
@@ -90,6 +92,7 @@ public class Penrose {
         initInterpreter();
         initSchemaManager();
         initPartitionManager();
+        initModuleManager();
 
         initConnections();
         initConnector();
@@ -130,6 +133,16 @@ public class Penrose {
 
     }
 
+    public void initModuleManager() throws Exception {
+        moduleManager = new ModuleManager();
+        moduleManager.setPenrose(this);
+    }
+
+    public void startModules() throws Exception {
+        moduleManager.init();
+        moduleManager.start();
+    }
+
 	public void start() throws Exception {
 
 
@@ -144,6 +157,7 @@ public class Penrose {
             connector.start();
             engine.start();
             sessionHandler.start();
+            startModules();
 
             status = STARTED;
 
@@ -248,6 +262,7 @@ public class Penrose {
         sessionHandler.setEngine(engine);
         sessionHandler.setRootUserConfig(penroseConfig.getRootUserConfig());
         sessionHandler.setPartitionManager(partitionManager);
+        sessionHandler.setModuleManager(moduleManager);
     }
 
 	public void stop() {
@@ -257,6 +272,7 @@ public class Penrose {
         try {
             status = STOPPING;
 
+            moduleManager.stop();
             sessionHandler.stop();
             engine.stop();
             connector.stop();
@@ -327,5 +343,13 @@ public class Penrose {
 
     public String getStatus() {
         return status;
+    }
+
+    public ModuleManager getModuleManager() {
+        return moduleManager;
+    }
+
+    public void setModuleManager(ModuleManager moduleManager) {
+        this.moduleManager = moduleManager;
     }
 }

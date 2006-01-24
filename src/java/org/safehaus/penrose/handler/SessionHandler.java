@@ -31,9 +31,8 @@ import org.safehaus.penrose.interpreter.InterpreterFactory;
 import org.safehaus.penrose.module.Module;
 import org.safehaus.penrose.module.ModuleMapping;
 import org.safehaus.penrose.module.ModuleConfig;
-import org.safehaus.penrose.module.ModuleContext;
+import org.safehaus.penrose.module.ModuleManager;
 import org.safehaus.penrose.event.*;
-import org.safehaus.penrose.pipeline.PipelineListener;
 import org.safehaus.penrose.pipeline.PipelineAdapter;
 import org.safehaus.penrose.pipeline.PipelineEvent;
 import org.safehaus.penrose.mapping.Entry;
@@ -46,7 +45,7 @@ import java.util.*;
 /**
  * @author Endi S. Dewata
  */
-public class SessionHandler implements ModuleContext {
+public class SessionHandler {
 
     Logger log = Logger.getLogger(getClass());
 
@@ -70,7 +69,7 @@ public class SessionHandler implements ModuleContext {
 
     private SessionManager sessionManager;
     private PartitionManager partitionManager;
-    private Map modules = new LinkedHashMap();
+    private ModuleManager moduleManager;
 
     private UserConfig rootUserConfig;
 
@@ -104,7 +103,6 @@ public class SessionHandler implements ModuleContext {
             filterTool.setSchemaManager(schemaManager);
 
             initSessionManager();
-            initModules();
 
             status = STARTED;
 
@@ -119,23 +117,6 @@ public class SessionHandler implements ModuleContext {
         sessionManager = new SessionManager();
         sessionManager.setSessionHandler(this);
         sessionManager.start();
-    }
-
-    public void initModules() throws Exception {
-
-        for (Iterator i=partitionManager.getPartitions().iterator(); i.hasNext(); ) {
-            Partition partition = (Partition)i.next();
-
-            for (Iterator j=partition.getModuleConfigs().iterator(); j.hasNext(); ) {
-                ModuleConfig moduleConfig = (ModuleConfig)j.next();
-
-                Class clazz = Class.forName(moduleConfig.getModuleClass());
-                Module module = (Module)clazz.newInstance();
-                module.init(moduleConfig);
-
-                modules.put(moduleConfig.getModuleName(), module);
-            }
-        }
     }
 
     public void stop() throws Exception {
@@ -319,7 +300,8 @@ public class SessionHandler implements ModuleContext {
     }
 
     public void postEvent(String dn, Event event) throws Exception {
-        Collection c = getModules(dn);
+
+        Collection c = moduleManager.getModules(dn);
 
         for (Iterator i=c.iterator(); i.hasNext(); ) {
             Module module = (Module)i.next();
@@ -401,33 +383,6 @@ public class SessionHandler implements ModuleContext {
 
     public void setEngine(Engine engine) {
         this.engine = engine;
-    }
-
-    public Collection getModules(String dn) throws Exception {
-        log.debug("Find matching module mapping for "+dn);
-
-        Collection list = new ArrayList();
-
-        Partition partition = engine.getPartitionManager().getPartitionByDn(dn);
-        if (partition == null) return list;
-
-        for (Iterator i = partition.getModuleMappings().iterator(); i.hasNext(); ) {
-            Collection c = (Collection)i.next();
-
-            for (Iterator j=c.iterator(); j.hasNext(); ) {
-                ModuleMapping moduleMapping = (ModuleMapping)j.next();
-
-                String moduleName = moduleMapping.getModuleName();
-                Module module = (Module)modules.get(moduleName);
-
-                if (moduleMapping.match(dn)) {
-                    log.debug(" - "+moduleName);
-                    list.add(module);
-                }
-            }
-        }
-
-        return list;
     }
 
     public PartitionManager getPartitionManager() {
@@ -547,6 +502,14 @@ public class SessionHandler implements ModuleContext {
 
     public void setStatus(String status) {
         this.status = status;
+    }
+
+    public ModuleManager getModuleManager() {
+        return moduleManager;
+    }
+
+    public void setModuleManager(ModuleManager moduleManager) {
+        this.moduleManager = moduleManager;
     }
 }
 

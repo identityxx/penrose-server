@@ -47,6 +47,15 @@ public class EntryCache {
     PartitionManager partitionManager;
 
     private Map caches = new TreeMap();
+    public Collection listeners = new ArrayList();
+
+    public void addListener(EntryCacheListener listener) {
+        listeners.add(listener);
+    }
+
+    public void removeListener(EntryCacheListener listener) {
+        listeners.remove(listener);
+    }
 
     public Collection getParameterNames() {
         return cacheConfig.getParameterNames();
@@ -89,14 +98,13 @@ public class EntryCache {
         return cacheStorage;
     }
 
-    public void add(EntryMapping entryMapping, String parentDn, Filter filter, Row rdn) throws Exception {
+    public void add(EntryMapping entryMapping, Filter filter, String dn) throws Exception {
+        String parentDn = Entry.getParentDn(dn);
+        Row rdn = Entry.getRdn(dn);
+
         getCacheStorage(parentDn, entryMapping).add(filter, rdn);
     }
     
-    public void put(EntryMapping entryMapping, String parentDn, Filter filter, Collection dns) throws Exception {
-        getCacheStorage(parentDn, entryMapping).put(filter, dns);
-    }
-
     public Collection getCacheStorages(Partition partition, EntryMapping entryMapping) throws Exception {
 
         Collection list = new ArrayList();
@@ -181,7 +189,35 @@ public class EntryCache {
         EntryMapping entryMapping = entry.getEntryMapping();
         String parentDn = entry.getParentDn();
         Row rdn = entry.getRdn();
+
         getCacheStorage(parentDn, entryMapping).put(rdn, entry);
+
+        EntryCacheEvent event = new EntryCacheEvent(entry, EntryCacheEvent.CACHE_ADDED);
+        postEvent(event);
+    }
+
+    public void postEvent(EntryCacheEvent event) throws Exception {
+
+        for (Iterator i=listeners.iterator(); i.hasNext(); ) {
+            EntryCacheListener listener = (EntryCacheListener)i.next();
+
+            try {
+                switch (event.getType()) {
+                    case EntryCacheEvent.CACHE_ADDED:
+                        listener.cacheAdded(event);
+                        break;
+                    case EntryCacheEvent.CACHE_REMOVED:
+                        listener.cacheRemoved(event);
+                        break;
+                }
+            } catch (Exception e) {
+                log.debug(e.getMessage(), e);
+            }
+        }
+    }
+
+    public void put(EntryMapping entryMapping, String parentDn, Filter filter, Collection dns) throws Exception {
+        getCacheStorage(parentDn, entryMapping).put(filter, dns);
     }
 
     public Entry get(String dn) throws Exception {
@@ -191,12 +227,10 @@ public class EntryCache {
         return getCacheStorage(parentDn, entryMapping).get(rdn);
     }
 
-    public Entry get(EntryMapping entryMapping, String parentDn, Row rdn) throws Exception {
-        return getCacheStorage(parentDn, entryMapping).get(rdn);
-    }
-
     public void remove(Entry entry) throws Exception {
+
         EntryMapping entryMapping = entry.getEntryMapping();
+
         Partition partition = partitionManager.getPartition(entryMapping);
         remove(partition, entryMapping, entry.getDn());
     }
@@ -221,6 +255,9 @@ public class EntryCache {
         Row rdn = Entry.getRdn(dn);
 
         getCacheStorage(parentDn, entryMapping).remove(rdn);
+
+        EntryCacheEvent event = new EntryCacheEvent(dn, EntryCacheEvent.CACHE_REMOVED);
+        postEvent(event);
     }
 
     public PenroseConfig getPenroseConfig() {
@@ -287,14 +324,17 @@ public class EntryCache {
 
             EntryCacheStorage entryCacheStorage = getCacheStorage(parentDn, entryMapping);
             Collection dns = entryCacheStorage.search((Filter)null);
+            if (dns == null) continue;
 
             Collection children = partition.getChildren(entryMapping);
+
             for (Iterator j=dns.iterator(); j.hasNext(); ) {
                 String dn = (String)j.next();
                 clean(partition, dn, children);
 
-                Row rdn = Entry.getRdn(dn);
-                entryCacheStorage.remove(rdn);
+                //Row rdn = Entry.getRdn(dn);
+                //entryCacheStorage.remove(rdn);
+                remove(partition, entryMapping, dn);
             }
         }
     }

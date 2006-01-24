@@ -399,21 +399,17 @@ public class Connector {
             throws Exception {
 
         log.debug("Checking query cache for "+filter);
-        Collection results = getSourceCache().search(sourceConfig, filter);
+        Collection pks = getSourceCache().search(sourceConfig, filter);
 
-        log.debug("Cached results: "+results);
-        if (results != null) {
-            PenroseSearchResults sr = new PenroseSearchResults();
-            sr.addAll(results);
-            sr.close();
-            return sr;
+        log.debug("Cached results: "+pks);
+
+        if (pks != null) {
+            log.debug("Searching source "+sourceConfig.getName()+" with filter "+filter);
+            pks = performSearch(sourceConfig, filter);
+
+            log.debug("Storing query cache for "+filter);
+            getSourceCache().put(sourceConfig, filter, pks);
         }
-
-        log.debug("Searching source "+sourceConfig.getName()+" with filter "+filter);
-        Collection pks = performSearch(sourceConfig, filter);
-
-        log.debug("Storing query cache for "+filter);
-        getSourceCache().put(sourceConfig, filter, pks);
 
         log.debug("Loading source "+sourceConfig.getName()+" with pks "+pks);
         return load(sourceConfig, pks);

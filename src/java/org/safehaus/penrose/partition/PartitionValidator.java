@@ -298,9 +298,9 @@ public class PartitionValidator {
 
         for (Iterator i=partition.getModuleConfigs().iterator(); i.hasNext(); ) {
             ModuleConfig moduleConfig = (ModuleConfig)i.next();
-            //log.debug("Validating module "+moduleConfig.getModuleName());
+            //log.debug("Validating module "+moduleConfig.getName());
 
-            String moduleName = moduleConfig.getModuleName();
+            String moduleName = moduleConfig.getName();
             if (moduleName == null || "".equals(moduleName)) {
                 results.add(new PartitionValidationResult(PartitionValidationResult.ERROR, "Missing module name.", null, moduleConfig));
             }

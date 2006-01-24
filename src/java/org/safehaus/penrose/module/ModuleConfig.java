@@ -17,24 +17,28 @@
  */
 package org.safehaus.penrose.module;
 
-import java.util.LinkedHashMap;
 import java.util.Collection;
+import java.util.Map;
+import java.util.TreeMap;
 
 /**
  * @author Endi S. Dewata
  */
 public class ModuleConfig implements Cloneable {
 
-    public String moduleName;
-    public String moduleClass;
-    public LinkedHashMap parameters = new LinkedHashMap();
+    private String name;
+    private boolean enabled = true;
+    private String moduleClass;
+    private String description;
 
-    public String getModuleName() {
-        return moduleName;
+    public Map parameters = new TreeMap();
+
+    public String getName() {
+        return name;
     }
 
-    public void setModuleName(String moduleName) {
-        this.moduleName = moduleName;
+    public void setName(String name) {
+        this.name = name;
     }
 
     public void clearParameters() {
@@ -65,51 +69,67 @@ public class ModuleConfig implements Cloneable {
         this.moduleClass = moduleClass;
     }
 
+    public String toString() {
+        return "ModuleConfig("+name+")";
+    }
+
+    public boolean isEnabled() {
+        return enabled;
+    }
+
+    public void setEnabled(boolean enabled) {
+        this.enabled = enabled;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
     public int hashCode() {
-        return moduleName.hashCode() + moduleClass.hashCode() + parameters.hashCode();
+        return (name == null ? 0 : name.hashCode()) +
+                (enabled ? 0 : 1) +
+                (moduleClass == null ? 0 : moduleClass.hashCode()) +
+                (description == null ? 0 : description.hashCode()) +
+                (parameters == null ? 0 : parameters.hashCode());
+    }
+
+    boolean equals(Object o1, Object o2) {
+        if (o1 == null && o2 == null) return true;
+        if (o1 != null) return o1.equals(o2);
+        return o2.equals(o1);
     }
 
     public boolean equals(Object object) {
-        boolean value = false;
-        try {
-            if (this == object) {
-                value = true;
-                return value;
-            }
+        if (this == object) return true;
+        if (object == null || object.getClass() != getClass()) return false;
 
-            if((object == null) || (object.getClass() != this.getClass())) {
-                value = false;
-                return value;
-            }
+        ModuleConfig moduleConfig = (ModuleConfig)object;
+        if (!equals(name, moduleConfig.name)) return false;
+        if (enabled != moduleConfig.enabled) return false;
+        if (!equals(moduleClass, moduleConfig.moduleClass)) return false;
+        if (!equals(description, moduleConfig.description)) return false;
+        if (!equals(parameters, moduleConfig.parameters)) return false;
 
-            ModuleConfig moduleConfig = (ModuleConfig)object;
-            if (!moduleName.equals(moduleConfig.getModuleName())) {
-                value = false;
-                return value;
-            }
+        return true;
+    }
 
-            if (!moduleClass.equals(moduleConfig.getModuleClass())) {
-                value = false;
-                return value;
-            }
+    public void copy(ModuleConfig moduleConfig) {
+        name = moduleConfig.name;
+        enabled = moduleConfig.enabled;
+        moduleClass = moduleConfig.moduleClass;
+        description = moduleConfig.description;
 
-            value = true;
-            return value;
-
-        } finally {
-            //System.out.println("["+this+"] equals("+object+") => "+value);
-        }
+        parameters.clear();
+        parameters.putAll(moduleConfig.parameters);
     }
 
     public Object clone() {
-        ModuleConfig config = new ModuleConfig();
-        config.moduleName = moduleName;
-        config.moduleClass = moduleClass;
-        config.parameters.putAll(parameters);
-        return config;
-    }
-
-    public String toString() {
-        return "ModuleConfig("+moduleName+")";
+        ModuleConfig moduleConfig = new ModuleConfig();
+        moduleConfig.copy(this);
+        return moduleConfig;
     }
 }

@@ -15,43 +15,21 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
-package org.safehaus.penrose.connector;
+package org.safehaus.penrose.cache;
 
-import org.apache.log4j.Logger;
+import org.safehaus.penrose.partition.SourceConfig;
+import org.safehaus.penrose.event.Event;
+
 
 /**
  * @author Endi S. Dewata
  */
-public class PollingConnectorRunnable implements Runnable {
+public class EntryCacheEvent extends Event {
 
-    Logger log = Logger.getLogger(getClass());
+    public final static int CACHE_REMOVED = 0;
+    public final static int CACHE_ADDED   = 1;
 
-	private PollingConnectorModule module;
-
-    boolean running = true;
-
-	public PollingConnectorRunnable(PollingConnectorModule module) {
-		this.module = module;
-	}
-
-    public void run() {
-        try {
-            runImpl();
-        } catch (Exception e) {
-            log.error(e.getMessage(), e);
-        }
-    }
-
-	public void runImpl() throws Exception {
-
-		while (running) {
-            Thread.sleep(module.interval * 1000);
-            module.process();
-		}
-		
-	}
-
-    public void stop() {
-        running = false;
+    public EntryCacheEvent(Object source, int type) {
+        super(source, type);
     }
 }

@@ -28,7 +28,7 @@ import java.util.StringTokenizer;
 /**
  * @author Endi S. Dewata
  */
-public class EncryptionModule extends GenericModule {
+public class EncryptionModule extends Module {
 
     public boolean verbose;
 

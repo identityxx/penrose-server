@@ -20,6 +20,8 @@ package org.safehaus.penrose.service;
 import org.safehaus.penrose.PenroseServer;
 import org.apache.log4j.Logger;
 
+import java.util.Collection;
+
 /**
  * @author Endi S. Dewata
  */
@@ -36,6 +38,15 @@ public class Service {
     private ServiceConfig serviceConfig;
 
     private String status = STOPPED;
+
+    public String getParameter(String name) {
+        return serviceConfig.getParameter(name);
+    }
+
+    public Collection getParameterNames() {
+        return serviceConfig.getParameterNames();
+    }
+
 
     public void init() throws Exception {
     }

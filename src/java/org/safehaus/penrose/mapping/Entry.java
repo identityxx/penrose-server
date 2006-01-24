@@ -21,7 +21,12 @@ package org.safehaus.penrose.mapping;
 import org.ietf.ldap.LDAPAttributeSet;
 import org.ietf.ldap.LDAPAttribute;
 import org.ietf.ldap.LDAPEntry;
+import org.safehaus.penrose.util.PasswordUtil;
 
+import javax.naming.directory.Attributes;
+import javax.naming.directory.BasicAttributes;
+import javax.naming.directory.Attribute;
+import javax.naming.directory.BasicAttribute;
 import java.util.*;
 
 /**
@@ -109,10 +114,10 @@ public class Entry {
     }
 
     public LDAPEntry toLDAPEntry() {
-        return new LDAPEntry(dn, getAttributeSet(attributeValues));
+        return new LDAPEntry(dn, getAttributeSet());
     }
 
-    public static LDAPAttributeSet getAttributeSet(AttributeValues attributeValues) {
+    public LDAPAttributeSet getAttributeSet() {
         LDAPAttributeSet set = new LDAPAttributeSet();
 
         for (Iterator i=attributeValues.getNames().iterator(); i.hasNext(); ) {
@@ -128,7 +133,58 @@ public class Entry {
             set.add(attribute);
         }
 
+        if (entryMapping != null) {
+            Collection objectClasses = entryMapping.getObjectClasses();
+
+            LDAPAttribute objectClass = new LDAPAttribute("objectClass");
+            for (Iterator i=objectClasses.iterator(); i.hasNext(); ) {
+                String oc = (String)i.next();
+                objectClass.addValue(oc);
+            }
+
+            set.add(objectClass);
+        }
+
         return set;
+    }
+
+    public Attributes getAttributes() throws Exception {
+
+        Attributes attributes = new BasicAttributes();
+
+        for (Iterator i=attributeValues.getNames().iterator(); i.hasNext(); ) {
+            String name = (String)i.next();
+            Collection values = attributeValues.get(name);
+
+            Attribute attribute = new BasicAttribute(name);
+            for (Iterator j=values.iterator(); j.hasNext(); ) {
+                Object value = j.next();
+                attribute.add(value.toString());
+/*
+                if ("unicodePwd".equals(name)) {
+                    attribute.add(PasswordUtil.toUnicodePassword(value.toString()));
+                } else {
+                    attribute.add(value.toString());
+                }
+*/
+            }
+
+            attributes.put(attribute);
+        }
+
+        if (entryMapping != null) {
+            Collection objectClasses = entryMapping.getObjectClasses();
+
+            Attribute objectClass = new BasicAttribute("objectClass");
+            for (Iterator i=objectClasses.iterator(); i.hasNext(); ) {
+                String oc = (String)i.next();
+                objectClass.add(oc);
+            }
+
+            attributes.put(objectClass);
+        }
+
+        return attributes;
     }
 
     public String toString() {

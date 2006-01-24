@@ -175,6 +175,7 @@ public class PenroseConfigWriter {
 	}
 
     public Element toElement(ServiceConfig serviceConfig) {
+
         Element element = new DefaultElement("service");
         element.addAttribute("name", serviceConfig.getName());
         if (!serviceConfig.isEnabled()) element.addAttribute("enabled", "false");

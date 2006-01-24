@@ -612,13 +612,15 @@ public class SearchHandler {
             parent = (Entry)path.iterator().next();
         }
 
+        log.debug("Parent: "+(parent == null ? null : parent.getDn()));
+
         Collection list = null;
         if (parent != null) {
             String parentDn = parent.getDn();
             list = sessionHandler.getEngine().getEntryCache().search(entryMapping, parentDn, filter);
         }
 
-        if (list == null || list != null && list.size() == 0 && single) {
+        if (list == null || list.size() == 0) {
 
             log.debug("Filter cache for "+filter+" not found.");
             sessionHandler.getEngine().search(parent, parentSourceValues, entryMapping, filter, dns);
@@ -629,12 +631,9 @@ public class SearchHandler {
                         Map map = (Map)event.getObject();
                         String dn = (String)map.get("dn");
 
-                        String parentDn = Entry.getParentDn(dn);
-                        Row rdn = Entry.getRdn(dn);
+                        log.debug("Adding "+dn+" into filter cache for "+filter+" in "+entryMapping.getDn());
 
-                        log.debug("Adding "+rdn+" into filter cache for "+filter+" in "+parentDn);
-
-                        sessionHandler.getEngine().getEntryCache().add(entryMapping, parentDn, filter, rdn);
+                        sessionHandler.getEngine().getEntryCache().add(entryMapping, filter, dn);
 
                     } catch (Exception e) {
                         log.error(e.getMessage(), e);

@@ -22,10 +22,13 @@ import org.safehaus.penrose.util.PasswordUtil;
 import org.safehaus.penrose.util.Formatter;
 import org.safehaus.penrose.partition.FieldConfig;
 import org.safehaus.penrose.partition.SourceConfig;
-import org.safehaus.penrose.filter.Filter;
+import org.safehaus.penrose.filter.*;
+import org.safehaus.penrose.schema.AttributeType;
+import org.safehaus.penrose.schema.matchingRule.SubstringsMatchingRule;
 
 import javax.naming.NamingException;
 import javax.naming.NamingEnumeration;
+import javax.naming.NameNotFoundException;
 import javax.naming.directory.*;
 import java.util.*;
 import java.sql.Connection;
@@ -39,24 +42,18 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
 
     int mappingId;
 
-    String jdbcConnectionName;
-    String jndiConnectionName;
+    String connectionName;
 
     public void init() throws Exception {
         super.init();
 
-        jdbcConnectionName = getParameter("jdbcConnection");
-        jndiConnectionName = getParameter("jndiConnection");
+        connectionName = getParameter(PersistentEntryCache.CONNECTION);
 
         mappingId = getMappingId();
     }
 
-    public Connection getJDBCConnection() throws Exception {
-        return (Connection)getConnectionManager().openConnection(jdbcConnectionName);
-    }
-
-    public DirContext getJNDIConnection() throws Exception {
-        return (DirContext)getConnectionManager().openConnection(jndiConnectionName);
+    public Connection getConnection() throws Exception {
+        return (Connection)getConnectionManager().openConnection(connectionName);
     }
 
     public void create() throws Exception {
@@ -100,7 +97,7 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
 
         try {
             String sql = "select id from penrose_mappings where dn=?";
-            con = getJDBCConnection();
+            con = getConnection();
 
             if (log.isDebugEnabled()) {
                 log.debug(Formatter.displaySeparator(80));
@@ -148,7 +145,7 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
 
         try {
             String sql = "insert into penrose_mappings values (null, ?)";
-            con = getJDBCConnection();
+            con = getConnection();
 
             if (log.isDebugEnabled()) {
                 log.debug(Formatter.displaySeparator(80));
@@ -198,7 +195,7 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
         int id = 0;
 
         try {
-            con = getJDBCConnection();
+            con = getConnection();
 
             if (log.isDebugEnabled()) {
                 log.debug(Formatter.displaySeparator(80));
@@ -272,7 +269,7 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
         PreparedStatement ps = null;
 
         try {
-            con = getJDBCConnection();
+            con = getConnection();
 
             if (log.isDebugEnabled()) {
                 log.debug(Formatter.displaySeparator(80));
@@ -334,7 +331,7 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
         PreparedStatement ps = null;
 
         try {
-            con = getJDBCConnection();
+            con = getConnection();
 
             if (log.isDebugEnabled()) {
                 log.debug(Formatter.displaySeparator(80));
@@ -385,7 +382,7 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
         PreparedStatement ps = null;
 
         try {
-            con = getJDBCConnection();
+            con = getConnection();
 
             if (log.isDebugEnabled()) {
                 log.debug(Formatter.displaySeparator(80));
@@ -426,7 +423,7 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
         PreparedStatement ps = null;
 
         try {
-            con = getJDBCConnection();
+            con = getConnection();
 
             if (log.isDebugEnabled()) {
                 log.debug(Formatter.displaySeparator(80));
@@ -493,7 +490,7 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
         PreparedStatement ps = null;
 
         try {
-            con = getJDBCConnection();
+            con = getConnection();
 
             if (log.isDebugEnabled()) {
                 log.debug(Formatter.displaySeparator(80));
@@ -561,7 +558,7 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
         PreparedStatement ps = null;
 
         try {
-            con = getJDBCConnection();
+            con = getConnection();
 
             if (log.isDebugEnabled()) {
                 log.debug(Formatter.displaySeparator(80));
@@ -595,7 +592,7 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
         PreparedStatement ps = null;
 
         try {
-            con = getJDBCConnection();
+            con = getConnection();
 
             if (log.isDebugEnabled()) {
                 log.debug(Formatter.displaySeparator(80));
@@ -629,7 +626,7 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
         PreparedStatement ps = null;
 
         try {
-            con = getJDBCConnection();
+            con = getConnection();
 
             if (log.isDebugEnabled()) {
                 log.debug(Formatter.displaySeparator(80));
@@ -747,12 +744,153 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
         return entry;
     }
 
+    public boolean convert(Filter filter, Map tables, Collection parameters, StringBuffer sb) throws Exception {
+        if (filter instanceof NotFilter) {
+            return convert((NotFilter) filter, tables, parameters, sb);
+
+        } else if (filter instanceof AndFilter) {
+            return convert((AndFilter) filter, tables, parameters, sb);
+
+        } else if (filter instanceof OrFilter) {
+            return convert((OrFilter) filter, tables, parameters, sb);
+
+        } else if (filter instanceof SimpleFilter) {
+            return convert((SimpleFilter) filter, tables, parameters, sb);
+        }
+
+        return true;
+    }
+
+    public boolean convert(
+            SimpleFilter filter,
+            Map tables,
+            Collection parameters,
+            StringBuffer sb)
+            throws Exception {
+
+        String name = filter.getAttribute();
+        String operator = filter.getOperator();
+        String value = filter.getValue();
+
+        log.debug("Converting "+name+" "+operator+" "+value);
+
+        if (name.equals("objectClass")) {
+            if (value.equals("*")) return true;
+        }
+
+        String tableName = "penrose_"+mappingId+"_attribute_"+name;
+
+        String alias = (String)tables.get(tableName);
+        if (alias == null) {
+            alias = "t"+(tables.size()+1);
+            tables.put(tableName, alias);
+        }
+
+        sb.append("lower(");
+        sb.append(alias);
+        sb.append(".value) ");
+        sb.append(operator);
+        sb.append(" lower(?)");
+
+        parameters.add(value);
+
+        return true;
+    }
+
+    public boolean convert(
+            NotFilter filter,
+            Map tables,
+            Collection parameters,
+            StringBuffer sb)
+            throws Exception {
+
+        StringBuffer sb2 = new StringBuffer();
+
+        Filter f = filter.getFilter();
+        boolean b = convert(f, tables, parameters, sb2);
+        if (!b) return false;
+
+        sb.append("not (");
+        sb.append(sb2);
+        sb.append(")");
+
+        return true;
+    }
+
+    public boolean convert(
+            AndFilter filter,
+            Map tables,
+            Collection parameters,
+            StringBuffer sb)
+            throws Exception {
+
+        StringBuffer sb2 = new StringBuffer();
+        for (Iterator i = filter.getFilters().iterator(); i.hasNext();) {
+            Filter f = (Filter) i.next();
+
+            StringBuffer sb3 = new StringBuffer();
+            boolean b = convert(f, tables, parameters, sb3);
+            if (!b) return false;
+
+            if (sb2.length() > 0 && sb3.length() > 0) {
+                sb2.append(" and ");
+            }
+
+            sb2.append(sb3);
+        }
+
+        if (sb2.length() == 0) return true;
+
+        sb.append("(");
+        sb.append(sb2);
+        sb.append(")");
+
+        return true;
+    }
+
+    public boolean convert(
+            OrFilter filter,
+            Map tables,
+            Collection parameters,
+            StringBuffer sb)
+            throws Exception {
+
+        StringBuffer sb2 = new StringBuffer();
+        for (Iterator i = filter.getFilters().iterator(); i.hasNext();) {
+            Filter f = (Filter) i.next();
+
+            StringBuffer sb3 = new StringBuffer();
+            boolean b = convert(f, tables, parameters, sb3);
+            if (!b) return false;
+
+            if (sb2.length() > 0 && sb3.length() > 0) {
+                sb2.append(" or ");
+            }
+
+            sb2.append(sb3);
+        }
+
+        if (sb2.length() == 0) return true;
+
+        sb.append("(");
+        sb.append(sb2);
+        sb.append(")");
+
+        return true;
+    }
+
     public Collection search(Filter filter) throws Exception {
+
+        log.debug(Formatter.displaySeparator(80));
+        log.debug(Formatter.displayLine("Searching entry cache for "+entryMapping.getDn(), 80));
+        log.debug(Formatter.displayLine("Filter "+filter, 80));
+        log.debug(Formatter.displaySeparator(80));
+
         Collection results = new ArrayList();
+/*
         DirContext ctx = null;
 
         try {
-
             ctx = getJNDIConnection();
 
             if (getEntryMapping().isRdnDynamic()) {
@@ -784,11 +922,106 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
                 results.add(dn);
             }
 
+        } catch (NameNotFoundException e) {
+            return null;
+
         } catch (NamingException e) {
             log.error(e.getMessage());
 
         } finally {
             if (ctx != null) try { ctx.close(); } catch (Exception e) {}
+        }
+*/
+
+        String tableName = "penrose_"+mappingId+"_entries";
+
+        Map tables = new LinkedHashMap();
+
+        Collection parameters = new ArrayList();
+        StringBuffer whereClause = new StringBuffer();
+
+        boolean b = convert(filter, tables, parameters, whereClause);
+        if (!b) return null;
+
+        StringBuffer selectClause = new StringBuffer();
+        selectClause.append("t.rdn, t.parentDn");
+
+        StringBuffer fromClause = new StringBuffer();
+        fromClause.append(tableName);
+        fromClause.append(" t");
+
+        for (Iterator i=tables.keySet().iterator(); i.hasNext(); ) {
+            String tbName = (String)i.next();
+            String alias = (String)tables.get(tbName);
+
+            fromClause.append(", ");
+            fromClause.append(tbName);
+            fromClause.append(" ");
+            fromClause.append(alias);
+
+            if (whereClause.length() > 0) whereClause.append(" and ");
+
+            whereClause.append("(");
+            whereClause.append(alias);
+            whereClause.append(".id = t.id)");
+        }
+
+        String sql = "select "+selectClause+" from "+fromClause;
+        if (whereClause.length() > 0) {
+            sql = sql+" where "+whereClause;
+        }
+
+        Connection con = null;
+        PreparedStatement ps = null;
+        ResultSet rs = null;
+
+        try {
+            con = getConnection();
+
+            if (log.isDebugEnabled()) {
+                log.debug(Formatter.displaySeparator(80));
+                Collection lines = Formatter.split(sql, 80);
+                for (Iterator i=lines.iterator(); i.hasNext(); ) {
+                    String line = (String)i.next();
+                    log.debug(Formatter.displayLine(line, 80));
+                }
+                log.debug(Formatter.displaySeparator(80));
+            }
+
+            ps = con.prepareStatement(sql);
+
+            log.debug(Formatter.displayLine("Parameters:", 80));
+
+            int counter = 1;
+            for (Iterator i=parameters.iterator(); i.hasNext(); counter++) {
+                Object param = i.next();
+                ps.setObject(counter, param);
+                log.debug(Formatter.displayLine(" - "+counter+" = "+param, 80));
+            }
+
+            log.debug(Formatter.displaySeparator(80));
+
+            rs = ps.executeQuery();
+
+            log.debug(Formatter.displayLine("Results:", 80));
+
+            while (rs.next()) {
+                String rdn = (String)rs.getObject(1);
+                String parentDn = (String)rs.getObject(2);
+                String dn = rdn+","+parentDn;
+                log.debug(Formatter.displayLine(" - "+dn, 80));
+                results.add(dn);
+            }
+
+            log.debug(Formatter.displaySeparator(80));
+
+        } catch (Exception e) {
+            log.error(e.getMessage());
+
+        } finally {
+            if (rs != null) try { rs.close(); } catch (Exception e) {}
+            if (ps != null) try { ps.close(); } catch (Exception e) {}
+            if (con != null) try { con.close(); } catch (Exception e) {}
         }
 
         return results;
@@ -841,7 +1074,7 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
         Collection values = new ArrayList();
 
         try {
-            con = getJDBCConnection();
+            con = getConnection();
 
             if (log.isDebugEnabled()) {
                 log.debug(Formatter.displaySeparator(80));
@@ -902,10 +1135,10 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
         Entry entry = (Entry)object;
         Row rdn = entry.getRdn();
         String dn = entry.getDn();
+        AttributeValues attributeValues = entry.getAttributeValues();
 
         log.debug("Storing "+dn);
-
-        AttributeValues attributeValues = entry.getAttributeValues();
+/*
         Attributes attrs = new BasicAttributes();
 
         for (Iterator i=attributeValues.getNames().iterator(); i.hasNext(); ) {
@@ -938,7 +1171,7 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
         } finally {
             if (ctx != null) try { ctx.close(); } catch (Exception e) {}
         }
-
+*/
         int entryId = getEntryId(dn);
         if (entryId == 0) {
             addEntry(dn);
@@ -1008,7 +1241,7 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
         PreparedStatement ps = null;
 
         try {
-            con = getJDBCConnection();
+            con = getConnection();
 
             if (log.isDebugEnabled()) {
                 log.debug(Formatter.displaySeparator(80));
@@ -1070,7 +1303,7 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
         Collection values = new ArrayList();
 
         try {
-            con = getJDBCConnection();
+            con = getConnection();
 
             if (log.isDebugEnabled()) {
                 log.debug(Formatter.displaySeparator(80));
@@ -1143,7 +1376,7 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
         PreparedStatement ps = null;
 
         try {
-            con = getJDBCConnection();
+            con = getConnection();
 
             if (log.isDebugEnabled()) {
                 log.debug(Formatter.displaySeparator(80));
@@ -1200,7 +1433,7 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
         Collection values = new ArrayList();
 
         try {
-            con = getJDBCConnection();
+            con = getConnection();
 
             if (log.isDebugEnabled()) {
                 log.debug(Formatter.displaySeparator(80));
@@ -1258,7 +1491,7 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
         } else {
             dn = getParentDn() == null ? getEntryMapping().getDn() : rdn+","+getParentDn();
         }
-
+/*
         DirContext ctx = null;
         try {
             log.debug("Removing "+dn);
@@ -1291,7 +1524,7 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
         } finally {
             if (ctx != null) try { ctx.close(); } catch (Exception e) {}
         }
-
+*/
         Collection sources = getPartition().getEffectiveSourceMappings(getEntryMapping());
 
         int entryId = getEntryId(dn);
@@ -1341,7 +1574,7 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
         PreparedStatement ps = null;
 
         try {
-            con = getJDBCConnection();
+            con = getConnection();
 
             if (log.isDebugEnabled()) {
                 log.debug(Formatter.displaySeparator(80));
@@ -1401,7 +1634,7 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
         PreparedStatement ps = null;
 
         try {
-            con = getJDBCConnection();
+            con = getConnection();
 
             if (log.isDebugEnabled()) {
                 log.debug(Formatter.displaySeparator(80));

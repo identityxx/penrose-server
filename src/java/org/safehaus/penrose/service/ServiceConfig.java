@@ -17,9 +17,9 @@
  */
 package org.safehaus.penrose.service;
 
+import java.util.Collection;
 import java.util.Map;
 import java.util.TreeMap;
-import java.util.Collection;
 
 /**
  * @author Endi S. Dewata
@@ -104,7 +104,8 @@ public class ServiceConfig implements Cloneable {
     }
 
     public boolean equals(Object object) {
-        if((object == null) || (object.getClass() != getClass())) return false;
+        if (this == object) return true;
+        if (object == null || object.getClass() != getClass()) return false;
 
         ServiceConfig serviceConfig = (ServiceConfig)object;
         if (!equals(name, serviceConfig.name)) return false;

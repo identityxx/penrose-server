@@ -61,6 +61,7 @@ public class ServiceManager {
     }
 
     public void start() throws Exception {
+        log.debug("Starting services...");
         for (Iterator i=getServiceNames().iterator(); i.hasNext(); ) {
             String name = (String)i.next();
             start(name);

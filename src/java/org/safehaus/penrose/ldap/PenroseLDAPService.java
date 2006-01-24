@@ -170,6 +170,8 @@ public class PenroseLDAPService extends Service {
 
         if (ldapPort < 0) return;
 
+        setStatus(STOPPING);
+        
         PenroseConfig penroseConfig = getPenroseServer().getPenroseConfig();
 
         Hashtable env = new ShutdownConfiguration().toJndiEnvironment();

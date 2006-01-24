@@ -24,9 +24,7 @@ import org.ietf.ldap.LDAPEntry;
 import org.ietf.ldap.LDAPAttributeSet;
 import org.ietf.ldap.LDAPAttribute;
 
-import javax.naming.directory.Attributes;
-import javax.naming.directory.SearchResult;
-import javax.naming.directory.Attribute;
+import javax.naming.directory.*;
 import javax.naming.NamingEnumeration;
 import java.util.Iterator;
 import java.util.Enumeration;
@@ -92,5 +90,27 @@ public class EntryUtil {
         }
 
         return new LDAPEntry(dn, attributeSet);
+    }
+
+    public static Attributes convert(LDAPEntry entry) throws Exception {
+        Attributes attributes = new BasicAttributes();
+
+        LDAPAttributeSet attributeSet = entry.getAttributeSet();
+        for (Iterator j=attributeSet.iterator(); j.hasNext(); ) {
+            LDAPAttribute attribute = (LDAPAttribute)j.next();
+            String name = attribute.getName();
+
+            String values[] = attribute.getStringValueArray();
+            if (values == null || values.length == 0) continue;
+
+            Attribute attr = new BasicAttribute(name);
+            for (int k = 0; k<values.length; k++) {
+                String value = values[k];
+                attr.add(value.toString());
+            }
+            attributes.put(attr);
+        }
+
+        return attributes;
     }
 }

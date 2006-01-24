@@ -166,12 +166,14 @@ public class PartitionWriter {
 
 	public Element toModulesXmlElement(Partition partition) {
 		Element modulesElement = new DefaultElement("modules");
+
 		// module
 		for (Iterator iter = partition.getModuleConfigs().iterator(); iter.hasNext();) {
 			ModuleConfig module = (ModuleConfig)iter.next();
             Element moduleElement = toElement(module);
 			modulesElement.add(moduleElement);
 		}
+
 		// module-mapping
 		for (Iterator i = partition.getModuleMappings().iterator(); i.hasNext();) {
             Collection c = (Collection)i.next();
@@ -585,23 +587,30 @@ public class PartitionWriter {
     	return element;
     }
 
-    public Element toElement(ModuleConfig module) {
+    public Element toElement(ModuleConfig moduleConfig) {
+
         Element element = new DefaultElement("module");
-        Element moduleName = new DefaultElement("module-name");
-        moduleName.add(new DefaultText(module.getModuleName()));
-        element.add(moduleName);
+        element.addAttribute("name", moduleConfig.getName());
+        if (!moduleConfig.isEnabled()) element.addAttribute("enabled", "false");
+
         Element moduleClass = new DefaultElement("module-class");
-        moduleClass.add(new DefaultText(module.getModuleClass()));
+        moduleClass.add(new DefaultText(moduleConfig.getModuleClass()));
         element.add(moduleClass);
         
-        if (!module.getParameterNames().isEmpty()) {
-        	Object[] paramNames = module.getParameterNames().toArray();
-        	for (int i=0; i<paramNames.length; i++) {
-        		String paramValue = module.getParameter(paramNames[i].toString());
-        		Element parameterElement = createParameterElement(paramNames[i].toString(), paramValue);
-        		element.add(parameterElement);
-        	}
+        if (moduleConfig.getDescription() != null && !"".equals(moduleConfig.getDescription())) {
+            Element description = new DefaultElement("description");
+            description.add(new DefaultText(moduleConfig.getDescription()));
+            element.add(description);
         }
+
+        for (Iterator i = moduleConfig.getParameterNames().iterator(); i.hasNext();) {
+            String name = (String)i.next();
+            String value = (String)moduleConfig.getParameter(name);
+
+            Element parameterElement = createParameterElement(name, value);
+            element.add(parameterElement);
+        }
+        
         return element;
     }
 
