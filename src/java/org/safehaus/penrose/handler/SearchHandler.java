@@ -22,7 +22,6 @@ import org.safehaus.penrose.session.PenroseSession;
 import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.pipeline.PipelineAdapter;
 import org.safehaus.penrose.pipeline.PipelineEvent;
-import org.safehaus.penrose.util.*;
 import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.engine.Engine;
 import org.safehaus.penrose.event.SearchEvent;
@@ -35,7 +34,6 @@ import org.apache.log4j.Logger;
 import org.ietf.ldap.*;
 
 import java.util.*;
-import java.util.Formatter;
 
 /**
  * @author Endi S. Dewata

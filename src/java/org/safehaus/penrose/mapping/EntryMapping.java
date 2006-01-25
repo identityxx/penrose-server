@@ -56,7 +56,7 @@ public class EntryMapping implements Cloneable {
 
     private String parentDn;
 
-    private boolean enabled;
+    private boolean enabled = true;
 
 	/**
 	 * Children. Each element is of type org.safehaus.penrose.mapping.EntryMapping.
