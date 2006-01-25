@@ -72,10 +72,6 @@ public class JDBCAdapter extends Adapter {
 
     public void init() throws Exception {
 
-    	//log.debug("-------------------------------------------------------------------------------");
-        String name = getConnectionName();
-    	log.debug("Initializing JDBC connection "+name+".");
-
         Properties properties = new Properties();
         for (Iterator i=getParameterNames().iterator(); i.hasNext(); ) {
             String param = (String)i.next();

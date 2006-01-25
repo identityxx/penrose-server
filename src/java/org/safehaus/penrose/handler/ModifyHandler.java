@@ -191,7 +191,7 @@ public class ModifyHandler {
 		AttributeValues newValues = new AttributeValues(oldValues);
 
 		Collection objectClasses = sessionHandler.getSchemaManager().getObjectClasses(entryMapping);
-		//log.debug("Object Classes: " + objectClasses);
+		log.debug("Object classes: " + objectClasses);
 
 		for (Iterator i = modifications.iterator(); i.hasNext();) {
 			LDAPModification modification = (LDAPModification) i.next();
@@ -227,7 +227,7 @@ public class ModifyHandler {
 
 			if (!found) {
 				log.debug("Can't find attribute " + attributeName
-						+ " in object classes");
+						+ " in object classes "+objectClasses);
 				return LDAPException.OBJECT_CLASS_VIOLATION;
 			}
 

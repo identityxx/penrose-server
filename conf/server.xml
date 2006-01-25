@@ -2,11 +2,11 @@
 
 <server>
 
-  <service name="JMX Service">
+  <service name="JMX">
     <service-class>org.safehaus.penrose.management.PenroseJMXService</service-class>
   </service>
 
-  <service name="LDAP Service">
+  <service name="LDAP">
     <service-class>org.safehaus.penrose.ldap.PenroseLDAPService</service-class>
   </service>
 

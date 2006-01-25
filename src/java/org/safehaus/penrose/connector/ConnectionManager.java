@@ -69,6 +69,7 @@ public class ConnectionManager {
     public void start() throws Exception {
         for (Iterator i=connections.values().iterator(); i.hasNext(); ) {
             Connection connection = (Connection)i.next();
+            log.debug("Initializing "+connection.getConnectionName()+" connection.");
             connection.init();
         }
     }
@@ -76,6 +77,7 @@ public class ConnectionManager {
     public void stop() throws Exception {
         for (Iterator i=connections.values().iterator(); i.hasNext(); ) {
             Connection connection = (Connection)i.next();
+            log.debug("Closing "+connection.getConnectionName()+" connection.");
             connection.close();
         }
     }

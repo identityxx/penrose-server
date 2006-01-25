@@ -2,7 +2,7 @@
 
 <sources>
   <source name="categories">
-    <connection-name>MySQL</connection-name>
+    <connection-name>Example</connection-name>
     <field name="description" length="100"/>
     <field name="id" primaryKey="true" type="INTEGER" length="5"/>
     <field name="name" unique="true"/>
@@ -12,7 +12,7 @@
     </parameter>
   </source>
   <source name="customer_emails">
-    <connection-name>MySQL</connection-name>
+    <connection-name>Example</connection-name>
     <field name="email" primaryKey="true"/>
     <field name="username" index="true"/>
     <parameter>
@@ -21,7 +21,7 @@
     </parameter>
   </source>
   <source name="customers">
-    <connection-name>MySQL</connection-name>
+    <connection-name>Example</connection-name>
     <field name="encPassword" length="255"/>
     <field name="firstName" primaryKey="true"/>
     <field name="lastName" primaryKey="true"/>
@@ -33,7 +33,7 @@
     </parameter>
   </source>
   <source name="employees">
-    <connection-name>MySQL</connection-name>
+    <connection-name>Example</connection-name>
     <field name="encPassword" length="255"/>
     <field name="firstName" primaryKey="true"/>
     <field name="lastName" primaryKey="true"/>
@@ -45,7 +45,7 @@
     </parameter>
   </source>
   <source name="order_details">
-    <connection-name>MySQL</connection-name>
+    <connection-name>Example</connection-name>
     <field name="orderId" primaryKey="true" type="INTEGER" length="5"/>
     <field name="price" type="DOUBLE" length="8"/>
     <field name="productId" primaryKey="true" type="INTEGER" length="5"/>
@@ -56,7 +56,7 @@
     </parameter>
   </source>
   <source name="order_histories">
-    <connection-name>MySQL</connection-name>
+    <connection-name>Example</connection-name>
     <field name="description"/>
     <field name="historyDate" primaryKey="true" type="TIMESTAMP"/>
     <field name="orderId" primaryKey="true" type="INTEGER"/>
@@ -67,7 +67,7 @@
     </parameter>
   </source>
   <source name="orders">
-    <connection-name>MySQL</connection-name>
+    <connection-name>Example</connection-name>
     <field name="customer" length="10"/>
     <field name="employee" length="10"/>
     <field name="id" primaryKey="true" type="INTEGER"/>
@@ -78,7 +78,7 @@
     </parameter>
   </source>
   <source name="products">
-    <connection-name>MySQL</connection-name>
+    <connection-name>Example</connection-name>
     <field name="categoryId" type="INTEGER" length="5"/>
     <field name="id" primaryKey="true" type="INTEGER" length="5"/>
     <field name="name" unique="true"/>
@@ -86,10 +86,6 @@
     <parameter>
       <param-name>tableName</param-name>
       <param-value>products</param-value>
-    </parameter>
-    <parameter>
-      <param-name>autoReload</param-name>
-      <param-value>true</param-value>
     </parameter>
   </source>
 </sources>

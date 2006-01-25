@@ -887,51 +887,6 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
         log.debug(Formatter.displaySeparator(80));
 
         Collection results = new ArrayList();
-/*
-        DirContext ctx = null;
-
-        try {
-            ctx = getJNDIConnection();
-
-            if (getEntryMapping().isRdnDynamic()) {
-
-                String baseDn = getParentDn();
-                log.debug("Searching persistent cache "+getEntryMapping().getRdn()+","+baseDn+" with filter "+filter);
-
-                SearchControls sc = new SearchControls();
-                sc.setReturningAttributes(new String[] { "dn" });
-                sc.setSearchScope(SearchControls.ONELEVEL_SCOPE);
-
-                String ldapFilter = filter == null ? "(objectClass=*)" : filter.toString();
-
-                NamingEnumeration ne = ctx.search(baseDn, ldapFilter, sc);
-
-                while (ne.hasMore()) {
-                    SearchResult sr = (SearchResult)ne.next();
-                    String dn = sr.getName()+","+getParentDn();
-
-                    log.debug(" - "+dn);
-                    results.add(dn);
-                }
-
-            } else {
-                String dn = getEntryMapping().getRdn()+","+(parentDn == null ? getEntryMapping().getParentDn() : parentDn);
-
-                log.debug("Searching persistent cache "+dn);
-
-                results.add(dn);
-            }
-
-        } catch (NameNotFoundException e) {
-            return null;
-
-        } catch (NamingException e) {
-            log.error(e.getMessage());
-
-        } finally {
-            if (ctx != null) try { ctx.close(); } catch (Exception e) {}
-        }
-*/
 
         String tableName = "penrose_"+mappingId+"_entries";
 
@@ -966,10 +921,12 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
             whereClause.append(".id = t.id)");
         }
 
-        String sql = "select "+selectClause+" from "+fromClause;
-        if (whereClause.length() > 0) {
-            sql = sql+" where "+whereClause;
-        }
+        if (whereClause.length() > 0) whereClause.append(" and ");
+
+        whereClause.append("(t.parentDn = ?)");
+        parameters.add(parentDn);
+
+        String sql = "select "+selectClause+" from "+fromClause+" where "+whereClause;
 
         Connection con = null;
         PreparedStatement ps = null;

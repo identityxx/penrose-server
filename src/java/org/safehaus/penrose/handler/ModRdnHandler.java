@@ -50,7 +50,7 @@ public class ModRdnHandler {
 
         log.debug("-------------------------------------------------------------------------------");
         log.debug("MODRDN:");
-        if (session.getBindDn() != null) log.info(" - Bind DN: " + session.getBindDn());
+        if (session != null && session.getBindDn() != null) log.info(" - Bind DN: " + session.getBindDn());
         log.debug(" - DN: " + dn);
         log.debug(" - New RDN: " + newRdn);
 

@@ -46,7 +46,7 @@ public class PollingConnectorRunnable implements Runnable {
 
 		while (running) {
             Thread.sleep(module.interval * 1000);
-            module.process();
+            if (running) module.process();
 		}
 		
 	}

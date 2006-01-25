@@ -56,6 +56,8 @@ public class EntryMapping implements Cloneable {
 
     private String parentDn;
 
+    private boolean enabled;
+
 	/**
 	 * Children. Each element is of type org.safehaus.penrose.mapping.EntryMapping.
 	 */
@@ -182,6 +184,14 @@ public class EntryMapping implements Cloneable {
             rdn = dn.substring(0, i);
             parentDn = dn.substring(i+1);
         }
+    }
+
+    public boolean isEnabled() {
+        return enabled;
+    }
+
+    public void setEnabled(boolean enabled) {
+        this.enabled = enabled;
     }
 
     public Collection getAttributeMappings() {
@@ -357,6 +367,7 @@ public class EntryMapping implements Cloneable {
     public int hashCode() {
         return (rdn == null ? 0 : rdn.hashCode()) +
                 (parentDn == null ? 0 : parentDn.hashCode()) +
+                (enabled ? 0 : 1) +
                 (objectClasses == null ? 0 : objectClasses.hashCode()) +
                 (script == null ? 0 : script.hashCode()) +
                 (attributeMappings == null ? 0 : attributeMappings.hashCode()) +
@@ -378,6 +389,7 @@ public class EntryMapping implements Cloneable {
         EntryMapping entryMapping = (EntryMapping)object;
         if (!equals(rdn, entryMapping.rdn)) return false;
         if (!equals(parentDn, entryMapping.parentDn)) return false;
+        if (enabled != entryMapping.enabled) return false;
         if (!equals(objectClasses, entryMapping.objectClasses)) return false;
         if (!equals(script, entryMapping.script)) return false;
         if (!equals(attributeMappings, entryMapping.attributeMappings)) return false;
@@ -392,6 +404,7 @@ public class EntryMapping implements Cloneable {
     public void copy(EntryMapping entry) {
         rdn = entry.rdn;
         parentDn = entry.parentDn;
+        enabled = entry.enabled;
         script = entry.script;
 
         removeObjectClasses();
@@ -433,5 +446,4 @@ public class EntryMapping implements Cloneable {
         entry.copy(this);
         return entry;
     }
-
 }

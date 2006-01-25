@@ -33,7 +33,7 @@ public class ModuleManager {
 
     private Penrose penrose;
 
-    private Map modules = new TreeMap();
+    private Map modules = new LinkedHashMap();
 
     public void init() throws Exception {
         PartitionManager partitionManager = penrose.getPartitionManager();
@@ -77,7 +77,7 @@ public class ModuleManager {
         ModuleConfig moduleConfig = module.getModuleConfig();
         if (!moduleConfig.isEnabled()) return;
 
-        log.debug("Starting "+name+".");
+        log.debug("Starting "+name+" module.");
         module.start();
     }
 
@@ -99,7 +99,7 @@ public class ModuleManager {
         ModuleConfig moduleConfig = module.getModuleConfig();
         if (!moduleConfig.isEnabled()) return;
 
-        log.debug("Stopping "+name+".");
+        log.debug("Stopping "+name+" module.");
         module.stop();
     }
 

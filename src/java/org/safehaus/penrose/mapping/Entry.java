@@ -190,12 +190,12 @@ public class Entry {
     public String toString() {
         StringBuffer sb = new StringBuffer();
         sb.append("dn: "+getDn()+"\n");
-/*
-        for (Iterator i = entryMappingtClasses().iterator(); i.hasNext(); ) {
+
+        for (Iterator i = entryMapping.getObjectClasses().iterator(); i.hasNext(); ) {
             String oc = (String)i.next();
             sb.append("objectClass: "+oc+"\n");
         }
-*/
+
         for (Iterator i = attributeValues.getNames().iterator(); i.hasNext(); ) {
             String name = (String)i.next();
             Collection values = attributeValues.get(name);

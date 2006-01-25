@@ -266,20 +266,21 @@ public class PartitionWriter {
     	return element;
     }
 
-	public Element toElement(Partition partition, EntryMapping entry, Element configElement) {
+	public Element toElement(Partition partition, EntryMapping entryMapping, Element configElement) {
 
         Element entryElement = new DefaultElement("entry");
-        entryElement.add(new DefaultAttribute("dn", entry.getDn()));
+        entryElement.add(new DefaultAttribute("dn", entryMapping.getDn()));
+        if (!entryMapping.isEnabled()) entryElement.add(new DefaultAttribute("enabled", "false"));
         configElement.add(entryElement);
 
-		for (Iterator i=entry.getObjectClasses().iterator(); i.hasNext(); ) {
+		for (Iterator i=entryMapping.getObjectClasses().iterator(); i.hasNext(); ) {
 			String objectClass = (String)i.next();
 			Element objectClassElement = new DefaultElement("oc");
 			objectClassElement.setText(objectClass);
 			entryElement.add(objectClassElement);
 		}
 
-		Collection attributes = entry.getAttributeMappings();
+		Collection attributes = entryMapping.getAttributeMappings();
 		for (Iterator i = attributes.iterator(); i.hasNext(); ) {
 			AttributeMapping attribute = (AttributeMapping)i.next();
 
@@ -289,31 +290,31 @@ public class PartitionWriter {
             entryElement.add(child);
 		}
 
-		for (Iterator i = entry.getSourceMappings().iterator(); i.hasNext(); ) {
+		for (Iterator i = entryMapping.getSourceMappings().iterator(); i.hasNext(); ) {
 			SourceMapping sourceMapping = (SourceMapping)i.next();
             entryElement.add(toElement(sourceMapping));
 		}
 
-		for (Iterator i = entry.getRelationships().iterator(); i.hasNext(); ) {
+		for (Iterator i = entryMapping.getRelationships().iterator(); i.hasNext(); ) {
 			Relationship relationship = (Relationship)i.next();
 			entryElement.add(toElement(relationship));
 		}
 
-        for (Iterator i = entry.getACL().iterator(); i.hasNext(); ) {
+        for (Iterator i = entryMapping.getACL().iterator(); i.hasNext(); ) {
             ACI aci = (ACI)i.next();
             entryElement.add(toElement(aci));
         }
 
-        for (Iterator i = entry.getParameterNames().iterator(); i.hasNext(); ) {
+        for (Iterator i = entryMapping.getParameterNames().iterator(); i.hasNext(); ) {
             String name = (String)i.next();
-            String value = entry.getParameter(name);
+            String value = entryMapping.getParameter(name);
             if ("".equals(value)) continue;
 
             Element parameterElement = createParameterElement(name, value);
             entryElement.add(parameterElement);
         }
 
-        Collection children = partition.getChildren(entry);
+        Collection children = partition.getChildren(entryMapping);
         for (Iterator i = children.iterator(); i.hasNext(); ) {
             EntryMapping child = (EntryMapping)i.next();
             toElement(partition, child, configElement);

@@ -19,6 +19,7 @@ package org.safehaus.penrose.ldap;
 
 import org.safehaus.penrose.module.Module;
 import org.safehaus.penrose.mapping.Entry;
+import org.safehaus.penrose.mapping.EntryMapping;
 import org.safehaus.penrose.cache.EntryCache;
 import org.safehaus.penrose.cache.EntryCacheListener;
 import org.safehaus.penrose.cache.EntryCacheEvent;
@@ -66,7 +67,9 @@ public class LDAPSyncModule extends Module implements EntryCacheListener {
     public void cacheAdded(EntryCacheEvent event) throws Exception {
 
         Entry entry = (Entry)event.getSource();
-        if (!partition.containsEntryMapping(entry.getEntryMapping())) return;
+        EntryMapping entryMapping = entry.getEntryMapping();
+
+        if (!partition.containsEntryMapping(entryMapping)) return;
 
         DirContext ctx = null;
 
@@ -113,7 +116,9 @@ public class LDAPSyncModule extends Module implements EntryCacheListener {
     public void cacheRemoved(EntryCacheEvent event) throws Exception {
 
         String baseDn = (String)event.getSource();
-        if (partition.findEntryMapping(baseDn) == null) return;
+        EntryMapping entryMapping = partition.findEntryMapping(baseDn);
+        
+        if (entryMapping == null) return;
 
         DirContext ctx = null;
 

@@ -140,69 +140,24 @@ public class PersistentEntryCache extends EntryCache {
 
     public void load(Penrose penrose, Partition partition) throws Exception {
 
-        //DirContext ctx = null;
-        try {
-            //ctx = getJNDIConnection();
+        SessionHandler sessionHandler = penrose.getSessionHandler();
+        Collection entryMappings = partition.getRootEntryMappings();
 
-            SessionHandler sessionHandler = penrose.getSessionHandler();
-            Collection entryMappings = partition.getRootEntryMappings();
+        for (Iterator i=entryMappings.iterator(); i.hasNext(); ) {
+            EntryMapping entryMapping = (EntryMapping)i.next();
 
-            for (Iterator i=entryMappings.iterator(); i.hasNext(); ) {
-                EntryMapping entryMapping = (EntryMapping)i.next();
+            log.debug("Loading entries under "+entryMapping.getDn());
 
-                log.debug("Loading entries under "+entryMapping.getDn());
+            PenroseSearchResults sr = sessionHandler.search(
+                    null,
+                    entryMapping.getDn(),
+                    LDAPConnection.SCOPE_SUB,
+                    LDAPSearchConstraints.DEREF_NEVER,
+                    "(objectClass=*)",
+                    null
+            );
 
-                PenroseSearchResults sr = sessionHandler.search(
-                        null,
-                        entryMapping.getDn(),
-                        LDAPConnection.SCOPE_SUB,
-                        LDAPSearchConstraints.DEREF_NEVER,
-                        "(objectClass=*)",
-                        null
-                );
-
-                while (sr.hasNext()) {
-                    LDAPEntry entry = (LDAPEntry)sr.next();
-/*
-                    String dn = entry.getDN();
-                    log.debug("Creating LDAP entry "+dn);
-
-                    LDAPAttributeSet attributeSet = entry.getAttributeSet();
-                    Attributes attrs = new BasicAttributes();
-
-                    for (Iterator j=attributeSet.iterator(); j.hasNext(); ) {
-                        LDAPAttribute attribute = (LDAPAttribute)j.next();
-                        String name = attribute.getName();
-
-                        String values[] = attribute.getStringValueArray();
-                        if (values == null || values.length == 0) continue;
-
-                        Attribute attr = new BasicAttribute(name);
-                        for (int k = 0; k<values.length; k++) {
-                            String value = values[k];
-                            log.debug(" - "+name+": "+value);
-
-                            if ("unicodePwd".equals(name)) {
-                                attr.add(PasswordUtil.toUnicodePassword(value.toString()));
-                            } else {
-                                attr.add(value.toString());
-                            }
-                        }
-                        attrs.put(attr);
-                    }
-
-                    try {
-                        ctx.createSubcontext(dn, attrs);
-
-                    } catch (Exception e) {
-                        log.error(e.getMessage());
-                    }
-                */
-                }
-            }
-
-        } finally {
-            //if (ctx != null) try { ctx.close(); } catch (Exception e) {}
+            while (sr.hasNext()) sr.next();
         }
     }
 }

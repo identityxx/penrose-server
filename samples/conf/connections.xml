@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <connections>
-  <connection name="MySQL">
+  <connection name="Example">
     <adapter-name>JDBC</adapter-name>
     <parameter>
       <param-name>driver</param-name>
