@@ -66,6 +66,8 @@
             classpathref="lib.path"
             debug="on"
             debuglevel="lines,vars,source"
+            source="1.4"
+            target="1.4"
         />
         <copy todir="target/classes">
             <fileset dir="src/java" includes="**/*.xml"/>

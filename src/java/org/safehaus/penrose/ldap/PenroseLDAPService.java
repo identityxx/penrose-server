@@ -41,8 +41,13 @@ public class PenroseLDAPService extends Service {
     public final static String LDAPS_PORT      = "ldapsPort";
     public final static int DEFAULT_LDAPS_PORT = 10639;
 
+    public final static String ALLOW_ANONYMOUS_ACCESS          = "allowAnonymousAccess";
+    public final static boolean DEFAULT_ALLOW_ANONYMOUS_ACCESS = true;
+
     private int ldapPort;
     private int ldapsPort;
+
+    private boolean allowAnonymousAccess;
 
     public void init() throws Exception {
         ServiceConfig serviceConfig = getServiceConfig();
@@ -52,6 +57,9 @@ public class PenroseLDAPService extends Service {
 
         s = serviceConfig.getParameter(LDAPS_PORT);
         ldapsPort = s == null ? DEFAULT_LDAPS_PORT : Integer.parseInt(s);
+
+        s = serviceConfig.getParameter(ALLOW_ANONYMOUS_ACCESS);
+        allowAnonymousAccess = s == null ? DEFAULT_ALLOW_ANONYMOUS_ACCESS : Boolean.valueOf(s).booleanValue();
     }
 
     public void start() throws Exception {
@@ -92,6 +100,8 @@ public class PenroseLDAPService extends Service {
         }
 
         configuration.setBootstrapSchemas(bootstrapSchemas);
+
+        configuration.setAllowAnonymousAccess(allowAnonymousAccess);
 
         // Register Penrose authenticator
         PenroseAuthenticator authenticator = new PenroseAuthenticator();
@@ -202,5 +212,13 @@ public class PenroseLDAPService extends Service {
 
     public void setLdapsPort(int ldapsPort) {
         this.ldapsPort = ldapsPort;
+    }
+
+    public boolean isAllowAnonymousAccess() {
+        return allowAnonymousAccess;
+    }
+
+    public void setAllowAnonymousAccess(boolean allowAnonymousAccess) {
+        this.allowAnonymousAccess = allowAnonymousAccess;
     }
 }

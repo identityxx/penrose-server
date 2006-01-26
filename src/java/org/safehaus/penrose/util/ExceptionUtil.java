@@ -18,6 +18,8 @@
 package org.safehaus.penrose.util;
 
 import org.ietf.ldap.LDAPException;
+import org.apache.ldap.common.exception.LdapNamingException;
+import org.apache.ldap.common.message.ResultCodeEnum;
 
 import javax.naming.NamingException;
 import javax.naming.NoPermissionException;
@@ -34,18 +36,7 @@ public class ExceptionUtil {
     }
 
     public static void throwNamingException(int rc, String message) throws NamingException {
-        switch (rc) {
-            case LDAPException.ENTRY_ALREADY_EXISTS:
-                throw new NameAlreadyBoundException(message);
-
-            case LDAPException.NO_SUCH_OBJECT:
-                throw new NameNotFoundException(message);
-
-            case LDAPException.INSUFFICIENT_ACCESS_RIGHTS:
-                throw new NoPermissionException(message);
-
-            default:
-                throw new NamingException(message);
-        }
+        ResultCodeEnum rce = ResultCodeEnum.getResultCodeEnum(rc);
+        throw new LdapNamingException(message, rce);
     }
 }

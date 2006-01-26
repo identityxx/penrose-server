@@ -178,6 +178,9 @@ public class SearchHandler {
             while (sr.hasNext()) {
                 Entry child = (Entry)sr.next();
                 if (sessionHandler.getFilterTool().isValid(child, filter)) {
+
+                    if (sr.getReturnCode() != LDAPException.SUCCESS) return null;
+
                     log.debug("Adding "+child.getDn()+" into path");
                     //Map map = new HashMap();
                     //map.put("dn", child.getDn());
@@ -227,6 +230,7 @@ public class SearchHandler {
         );
 
         if (results.size() == 0) return null;
+        if (results.getReturnCode() != LDAPException.SUCCESS) return null;
 
         Entry entry = (Entry)results.next();
 
@@ -310,6 +314,7 @@ public class SearchHandler {
         } catch (Exception e) {
             log.error(e.getMessage(), e);
             rc = LDAPException.OPERATIONS_ERROR;
+            results.setReturnCode(rc);
 
         } finally {
             results.close();
@@ -379,7 +384,7 @@ public class SearchHandler {
             Entry.filterAttributes(ldapEntry, normalizedAttributeNames);
             results.add(ldapEntry);
 */
-            results.setReturnCode(LDAPException.SUCCESS);
+            //results.setReturnCode(LDAPException.SUCCESS);
             return LDAPException.SUCCESS;
         }
 
@@ -430,7 +435,7 @@ public class SearchHandler {
             searchChildren(session, path, entryMapping, parentSourceValues, scope, f, attributeNames, results, true);
 		}
 
-		results.setReturnCode(LDAPException.SUCCESS);
+		//results.setReturnCode(LDAPException.SUCCESS);
 		return LDAPException.SUCCESS;
 	}
 
@@ -474,6 +479,14 @@ public class SearchHandler {
                     if (rc != LDAPException.SUCCESS) continue;
 
                     results.add(child);
+                }
+
+                int rc = sr.getReturnCode();
+
+                if (rc != LDAPException.SUCCESS) {
+                    log.debug("RC: "+rc);
+                    results.setReturnCode(rc);
+                    continue;
                 }
             }
 
@@ -597,9 +610,14 @@ public class SearchHandler {
             }
 
             public void pipelineClosed(PipelineEvent event) {
+                int rc = dns.getReturnCode();
+                //log.debug("RC: "+rc);
+
                 if (dnOnly) {
+                    results.setReturnCode(rc);
                     results.close();
                 } else {
+                    entriesToLoad.setReturnCode(rc);
                     entriesToLoad.close();
                 }
             }
@@ -621,7 +639,6 @@ public class SearchHandler {
         if (list == null || list.size() == 0) {
 
             log.debug("Filter cache for "+filter+" not found.");
-            sessionHandler.getEngine().search(parent, parentSourceValues, entryMapping, filter, dns);
 
             dns.addListener(new PipelineAdapter() {
                 public void objectAdded(PipelineEvent event) {
@@ -638,6 +655,8 @@ public class SearchHandler {
                     }
                 }
             });
+
+            sessionHandler.getEngine().search(parent, parentSourceValues, entryMapping, filter, dns);
 
         } else {
             log.debug("Filter cache for "+filter+" found.");
@@ -671,6 +690,10 @@ public class SearchHandler {
             }
 
             public void pipelineClosed(PipelineEvent event) {
+                int rc = newEntries.getReturnCode();
+                //log.debug("RC: "+rc);
+
+                results.setReturnCode(rc);
                 results.close();
             }
         });

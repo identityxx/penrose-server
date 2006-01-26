@@ -60,7 +60,8 @@ public class ModRdnHandler {
         if (entry == null) return LDAPException.NO_SUCH_OBJECT;
 
         int rc = performModRdn(session, entry, newRdn);
-
+        if (rc != LDAPException.SUCCESS) return rc;
+        
         String parentDn = Entry.getParentDn(dn);
         String newDn = newRdn+","+parentDn;
 

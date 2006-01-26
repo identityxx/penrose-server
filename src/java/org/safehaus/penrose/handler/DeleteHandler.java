@@ -58,7 +58,8 @@ public class DeleteHandler {
         if (entry == null) return LDAPException.NO_SUCH_OBJECT;
 
         int rc = performDelete(session, entry);
-
+        if (rc != LDAPException.SUCCESS) return rc;
+        
         sessionHandler.getEngine().getEntryCache().remove(entry);
 
         DeleteEvent afterDeleteEvent = new DeleteEvent(this, DeleteEvent.AFTER_DELETE, session, dn);

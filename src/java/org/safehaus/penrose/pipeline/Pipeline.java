@@ -137,6 +137,18 @@ public class Pipeline implements Iterator {
         return list;
     }
 
+    public synchronized boolean isEmpty() {
+        while (!done) {
+            try {
+                wait();
+            } catch (Exception e) {
+                log.error(e.getMessage(), e);
+            }
+        }
+
+        return list.isEmpty();
+    }
+
     public synchronized int size() {
         while (!done) {
             try {

@@ -391,7 +391,15 @@ public class Engine {
             log.debug(Formatter.displaySeparator(80));
         }
 
-        return addEngine.add(parent, entryMapping, attributeValues);
+        int rc = addEngine.add(parent, entryMapping, attributeValues);
+
+        if (log.isDebugEnabled()) {
+            log.debug(Formatter.displaySeparator(80));
+            log.debug(Formatter.displayLine("ADD RC:"+rc, 80));
+            log.debug(Formatter.displaySeparator(80));
+        }
+
+        return rc;
     }
 
     public int delete(Entry entry) throws Exception {

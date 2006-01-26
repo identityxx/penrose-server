@@ -122,7 +122,7 @@ public class PersistentEntryCache extends EntryCache {
         }
     }
 
-    public EntryCacheStorage createCacheStorage(String parentDn, EntryMapping entryMapping) throws Exception {
+    public EntryCacheStorage createCacheStorage(EntryMapping entryMapping) throws Exception {
 
         Partition partition = partitionManager.getPartition(entryMapping);
 
@@ -131,7 +131,6 @@ public class PersistentEntryCache extends EntryCache {
         cacheStorage.setConnectionManager(connectionManager);
         cacheStorage.setPartition(partition);
         cacheStorage.setEntryMapping(entryMapping);
-        cacheStorage.setParentDn(parentDn);
 
         cacheStorage.init();
 

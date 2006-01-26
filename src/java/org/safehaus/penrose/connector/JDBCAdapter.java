@@ -601,7 +601,7 @@ public class JDBCAdapter extends Adapter {
 
         } catch (Exception e) {
             log.debug("Add failed: ("+e.getClass().getName()+") "+e.getMessage());
-            return LDAPException.ENTRY_ALREADY_EXISTS;
+            return LDAPException.OPERATIONS_ERROR;
 
         } finally {
             if (ps != null) try { ps.close(); } catch (Exception e) {}

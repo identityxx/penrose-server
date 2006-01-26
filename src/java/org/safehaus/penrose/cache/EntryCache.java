@@ -68,7 +68,7 @@ public class EntryCache {
     public void init() throws Exception {
     }
 
-    public EntryCacheStorage createCacheStorage(String parentDn, EntryMapping entryMapping) throws Exception {
+    public EntryCacheStorage createCacheStorage(EntryMapping entryMapping) throws Exception {
 
         Partition partition = partitionManager.getPartition(entryMapping);
 
@@ -77,21 +77,19 @@ public class EntryCache {
         cacheStorage.setConnectionManager(connectionManager);
         cacheStorage.setPartition(partition);
         cacheStorage.setEntryMapping(entryMapping);
-        cacheStorage.setParentDn(parentDn);
 
         cacheStorage.init();
 
         return cacheStorage;
     }
 
-    public EntryCacheStorage getCacheStorage(String parentDn, EntryMapping entryMapping) throws Exception {
+    public EntryCacheStorage getCacheStorage(EntryMapping entryMapping) throws Exception {
 
-        parentDn = (parentDn == null ? entryMapping.getParentDn() : parentDn);
-        String key = entryMapping.getRdn()+","+parentDn;
+        String key = entryMapping.getDn();
         EntryCacheStorage cacheStorage = (EntryCacheStorage)caches.get(key);
 
         if (cacheStorage == null) {
-            cacheStorage = createCacheStorage(parentDn, entryMapping);
+            cacheStorage = createCacheStorage(entryMapping);
             caches.put(key, cacheStorage);
         }
 
@@ -99,10 +97,7 @@ public class EntryCache {
     }
 
     public void add(EntryMapping entryMapping, Filter filter, String dn) throws Exception {
-        String parentDn = Entry.getParentDn(dn);
-        Row rdn = Entry.getRdn(dn);
-
-        getCacheStorage(parentDn, entryMapping).add(filter, rdn);
+        getCacheStorage(entryMapping).add(filter, dn);
     }
     
     public Collection getCacheStorages(Partition partition, EntryMapping entryMapping) throws Exception {
@@ -113,7 +108,7 @@ public class EntryCache {
 
         if (parentMapping == null) {
             //log.debug("Entry "+entryMapping.getDn()+" has no parent mapping");
-            EntryCacheStorage cacheStorage = getCacheStorage(null, entryMapping);
+            EntryCacheStorage cacheStorage = getCacheStorage(entryMapping);
             list.add(cacheStorage);
             return list;
         }
@@ -123,7 +118,7 @@ public class EntryCache {
         for (Iterator i=parentCacheStorages.iterator(); i.hasNext(); ) {
             EntryCacheStorage parentCacheStorage = (EntryCacheStorage)i.next();
 
-            Collection parentDns = parentCacheStorage.search((Filter)null);
+            Collection parentDns = parentCacheStorage.search((Filter)null, null);
             if (parentDns == null) continue;
 
             for (Iterator j=parentDns.iterator(); j.hasNext(); ) {
@@ -131,7 +126,7 @@ public class EntryCache {
 
                 //log.debug("Returning cache storage "+entryMapping.getRdn()+","+parentDn);
 
-                EntryCacheStorage cacheStorage = getCacheStorage(parentDn, entryMapping);
+                EntryCacheStorage cacheStorage = getCacheStorage(entryMapping);
                 list.add(cacheStorage);
             }
         }
@@ -139,58 +134,21 @@ public class EntryCache {
         return list;
     }
 
-    public Collection search(Partition partition, EntryMapping entryMapping) throws Exception {
-
-        log.debug("Searching entries under "+entryMapping.getDn());
-        Collection list = new ArrayList();
-
-        Collection cacheStorages = getCacheStorages(partition, entryMapping);
-        for (Iterator i=cacheStorages.iterator(); i.hasNext(); ) {
-            EntryCacheStorage cacheStorage = (EntryCacheStorage)i.next();
-
-            log.debug("Entries under "+entryMapping.getRdn()+","+cacheStorage.getParentDn()+":");
-            Collection dns = cacheStorage.search((Filter)null);
-            for (Iterator j=dns.iterator(); j.hasNext(); ) {
-                String dn = (String)j.next();
-                log.debug(" - "+dn);
-                list.add(dn);
-            }
-        }
-
-        return list;
+    public Collection search(EntryMapping entryMapping) throws Exception {
+        return getCacheStorage(entryMapping).search((Filter)null, null);
     }
 
-    public Collection search(Partition partition, EntryMapping entryMapping, SourceConfig sourceConfig, Row filter) throws Exception {
-
-        log.debug("Searching entries under "+entryMapping.getDn());
-        Collection list = new ArrayList();
-
-        Collection cacheStorages = getCacheStorages(partition, entryMapping);
-        for (Iterator i=cacheStorages.iterator(); i.hasNext(); ) {
-            EntryCacheStorage cacheStorage = (EntryCacheStorage)i.next();
-
-            log.debug("Entries under "+entryMapping.getRdn()+","+cacheStorage.getParentDn()+":");
-            Collection dns = cacheStorage.search(sourceConfig, filter);
-            for (Iterator j=dns.iterator(); j.hasNext(); ) {
-                String dn = (String)j.next();
-                log.debug(" - "+dn);
-                list.add(dn);
-            }
-        }
-
-        return list;
+    public Collection search(EntryMapping entryMapping, SourceConfig sourceConfig, Row filter) throws Exception {
+        return getCacheStorage(entryMapping).search(sourceConfig, filter);
     }
 
     public Collection search(EntryMapping entryMapping, String parentDn, Filter filter) throws Exception {
-        return getCacheStorage(parentDn, entryMapping).search(filter);
+        return getCacheStorage(entryMapping).search(filter, parentDn);
     }
 
     public void put(Entry entry) throws Exception {
         EntryMapping entryMapping = entry.getEntryMapping();
-        String parentDn = entry.getParentDn();
-        Row rdn = entry.getRdn();
-
-        getCacheStorage(parentDn, entryMapping).put(rdn, entry);
+        getCacheStorage(entryMapping).put(entry.getDn(), entry);
 
         EntryCacheEvent event = new EntryCacheEvent(entry, EntryCacheEvent.CACHE_ADDED);
         postEvent(event);
@@ -216,15 +174,13 @@ public class EntryCache {
         }
     }
 
-    public void put(EntryMapping entryMapping, String parentDn, Filter filter, Collection dns) throws Exception {
-        getCacheStorage(parentDn, entryMapping).put(filter, dns);
+    public void put(EntryMapping entryMapping, Filter filter, Collection dns) throws Exception {
+        getCacheStorage(entryMapping).put(filter, dns);
     }
 
     public Entry get(String dn) throws Exception {
         EntryMapping entryMapping = partitionManager.findEntryMapping(dn);
-        String parentDn = Entry.getParentDn(dn);
-        Row rdn = Entry.getRdn(dn);
-        return getCacheStorage(parentDn, entryMapping).get(rdn);
+        return getCacheStorage(entryMapping).get(dn);
     }
 
     public void remove(Entry entry) throws Exception {
@@ -251,10 +207,7 @@ public class EntryCache {
 
         log.debug("Remove cache "+dn);
 
-        String parentDn = Entry.getParentDn(dn);
-        Row rdn = Entry.getRdn(dn);
-
-        getCacheStorage(parentDn, entryMapping).remove(rdn);
+        getCacheStorage(entryMapping).remove(dn);
 
         EntryCacheEvent event = new EntryCacheEvent(dn, EntryCacheEvent.CACHE_REMOVED);
         postEvent(event);
@@ -280,22 +233,22 @@ public class EntryCache {
         for (Iterator i=partitionManager.getPartitions().iterator(); i.hasNext(); ) {
             Partition partition = (Partition)i.next();
             Collection entryMappings = partition.getRootEntryMappings();
-            create(partition, null, entryMappings);
+            create(partition, entryMappings);
         }
     }
 
-    public  void create(Partition partition, String parentDn, Collection entryDefinitions) throws Exception {
+    public  void create(Partition partition, Collection entryDefinitions) throws Exception {
 
         for (Iterator i=entryDefinitions.iterator(); i.hasNext(); ) {
             EntryMapping entryMapping = (EntryMapping)i.next();
 
-            EntryCacheStorage cacheStorage = getCacheStorage(parentDn, entryMapping);
+            EntryCacheStorage cacheStorage = getCacheStorage(entryMapping);
 
             log.debug("Creating tables for "+entryMapping.getDn());
             cacheStorage.create();
 
             Collection children = partition.getChildren(entryMapping);
-            create(partition, entryMapping.getDn(), children);
+            create(partition, children);
         }
     }
 
@@ -313,27 +266,24 @@ public class EntryCache {
         for (Iterator i=partitionManager.getPartitions().iterator(); i.hasNext(); ) {
             Partition partition = (Partition)i.next();
             Collection entryMappings = partition.getRootEntryMappings();
-            clean(partition, null, entryMappings);
+            clean(partition, entryMappings);
         }
     }
 
-    public void clean(Partition partition, String parentDn, Collection entryDefinitions) throws Exception {
+    public void clean(Partition partition, Collection entryDefinitions) throws Exception {
 
         for (Iterator i=entryDefinitions.iterator(); i.hasNext(); ) {
             EntryMapping entryMapping = (EntryMapping)i.next();
 
-            EntryCacheStorage entryCacheStorage = getCacheStorage(parentDn, entryMapping);
-            Collection dns = entryCacheStorage.search((Filter)null);
+            EntryCacheStorage entryCacheStorage = getCacheStorage(entryMapping);
+            Collection dns = entryCacheStorage.search((Filter)null, null);
             if (dns == null) continue;
 
             Collection children = partition.getChildren(entryMapping);
+            clean(partition, children);
 
             for (Iterator j=dns.iterator(); j.hasNext(); ) {
                 String dn = (String)j.next();
-                clean(partition, dn, children);
-
-                //Row rdn = Entry.getRdn(dn);
-                //entryCacheStorage.remove(rdn);
                 remove(partition, entryMapping, dn);
             }
         }
@@ -344,11 +294,11 @@ public class EntryCache {
         for (Iterator i=partitionManager.getPartitions().iterator(); i.hasNext(); ) {
             Partition partition = (Partition)i.next();
             Collection entryMappings = partition.getRootEntryMappings();
-            drop(partition, null, entryMappings);
+            drop(partition, entryMappings);
         }
     }
 
-    public EntryCacheStorage drop(Partition partition, String parentDn, Collection entryDefinitions) throws Exception {
+    public EntryCacheStorage drop(Partition partition, Collection entryDefinitions) throws Exception {
 
         EntryCacheStorage cacheStorage = null;
 
@@ -356,9 +306,9 @@ public class EntryCache {
             EntryMapping entryMapping = (EntryMapping)i.next();
 
             Collection children = partition.getChildren(entryMapping);
-            drop(partition, entryMapping.getDn(), children);
+            drop(partition, children);
 
-            cacheStorage = getCacheStorage(parentDn, entryMapping);
+            cacheStorage = getCacheStorage(entryMapping);
             log.debug("Dropping tables for "+entryMapping.getDn());
             cacheStorage.drop();
         }

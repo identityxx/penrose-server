@@ -354,7 +354,7 @@ public class Connector {
 
             newSourceValues.clear();
 
-            Collection list = retrieve(sourceConfig, pks);
+            PenroseSearchResults list = retrieve(sourceConfig, pks);
             for (Iterator i=list.iterator(); i.hasNext(); ) {
                 AttributeValues sv = (AttributeValues)i.next();
                 newSourceValues.add(sv);
@@ -465,11 +465,16 @@ public class Connector {
                     results.addAll(loadedRows.values());
 
                     log.debug("Loading missing keys: "+missingPks);
-                    Collection list = retrieve(sourceConfig, missingPks);
-                    results.addAll(list);
+                    PenroseSearchResults list = retrieve(sourceConfig, missingPks);
+                    results.addAll(list.getAll());
+
+                    int rc = list.getReturnCode();
+                    log.debug("RC: "+rc);
+                    results.setReturnCode(rc);
 
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    log.debug(e.getMessage(), e);
+                    results.setReturnCode(LDAPException.OPERATIONS_ERROR);
                 }
 
                 results.close();
@@ -482,20 +487,24 @@ public class Connector {
     /**
      * Load then store in data cache.
      */
-    public Collection retrieve(SourceConfig sourceConfig, Collection keys) throws Exception {
+    public PenroseSearchResults retrieve(SourceConfig sourceConfig, Collection keys) throws Exception {
 
-        if (keys.isEmpty()) return new ArrayList();
+        if (keys.isEmpty()) {
+            PenroseSearchResults sr = new PenroseSearchResults();
+            sr.close();
+            return sr;
+        }
 
         Filter filter = FilterTool.createFilter(keys);
 
         PenroseSearchResults sr = performLoad(sourceConfig, filter);
 
-        Collection values = new ArrayList();
-        values.addAll(sr.getAll());
+        //Collection values = new ArrayList();
+        //values.addAll(sr.getAll());
 
         //store(sourceConfig, values);
 
-        return values;
+        return sr;
     }
 
     public Row store(SourceConfig sourceConfig, AttributeValues sourceValues) throws Exception {
@@ -596,21 +605,17 @@ public class Connector {
                     int sizeLimit = s == null ? SourceConfig.DEFAULT_SIZE_LIMIT : Integer.parseInt(s);
 
                     Connection connection = getConnection(sourceConfig.getConnectionName());
-                    PenroseSearchResults sr;
-                    try {
-                        sr = connection.load(sourceConfig, filter, sizeLimit);
+                    PenroseSearchResults sr = connection.load(sourceConfig, filter, sizeLimit);
 
-                        for (Iterator i=sr.iterator(); i.hasNext();) {
-                            AttributeValues sourceValues = (AttributeValues)i.next();
-                            store(sourceConfig, sourceValues);
-                            results.add(sourceValues);
-                        }
-                    } catch (Exception e) {
-                        e.printStackTrace();
+                    for (Iterator i=sr.iterator(); i.hasNext();) {
+                        AttributeValues sourceValues = (AttributeValues)i.next();
+                        store(sourceConfig, sourceValues);
+                        results.add(sourceValues);
                     }
 
                 } catch (Exception e) {
                     log.debug(e.getMessage(), e);
+                    results.setReturnCode(LDAPException.OPERATIONS_ERROR);
 
                 } finally {
                     results.close();

@@ -76,7 +76,7 @@ public class SearchEngine {
                         simpleSearch(parentSourceValues, entryMapping, filter, results);
 
                     } catch (Throwable e) {
-                        e.printStackTrace(System.out);
+                        log.debug(e.getMessage(), e);
                         results.setReturnCode(LDAPException.OPERATIONS_ERROR);
                     }
                 }
@@ -90,7 +90,7 @@ public class SearchEngine {
                     searchDynamic(parent, parentSourceValues, entryMapping, filter, results);
 
                 } catch (Throwable e) {
-                    e.printStackTrace(System.out);
+                    log.debug(e.getMessage(), e);
                     results.setReturnCode(LDAPException.OPERATIONS_ERROR);
                 }
             }
@@ -124,7 +124,7 @@ public class SearchEngine {
             final AttributeValues parentSourceValues,
             final EntryMapping entryMapping,
             final Filter filter,
-            PenroseSearchResults entries)
+            final PenroseSearchResults results)
             throws Exception {
 
         //boolean unique = engine.isUnique(entryMapping  //log.debug("Entry "+entryMapping" "+(unique ? "is" : "is not")+" unique.");
@@ -134,7 +134,7 @@ public class SearchEngine {
 
         Interpreter interpreter = engine.getInterpreterFactory().newInstance();
 
-        Map results = new TreeMap();
+        Map sourceValues = new TreeMap();
 
         final PenroseSearchResults values = new PenroseSearchResults();
 
@@ -145,6 +145,7 @@ public class SearchEngine {
 
                 } catch (Throwable e) {
                     log.error(e.getMessage(), e);
+                    results.setReturnCode(LDAPException.OPERATIONS_ERROR);
                 }
             }
         });
@@ -165,23 +166,15 @@ public class SearchEngine {
                 dns.add(dn);
 
                 Row rdn = Entry.getRdn(dn);
-                Row normalizedRdn = getEngine().getSchemaManager().normalize(rdn);
                 String parentDn = Entry.getParentDn(dn);
 
-                AttributeValues av = (AttributeValues)results.get(dn);
+                AttributeValues av = (AttributeValues)sourceValues.get(dn);
                 if (av == null) {
                     av = new AttributeValues();
-                    results.put(dn, av);
+                    sourceValues.put(dn, av);
                 }
                 av.add(sv);
-/*
-                if (unique) {
-                    Map map = new HashMap();
-                    map.put("dn", dn);
-                    map.put("sourceValues", sv);
-                    entries.add(map);
-                }
-*/
+
                 Collection c = (Collection)childDns.get(parentDn);
                 if (c == null) {
                     c = new TreeSet();
@@ -191,65 +184,39 @@ public class SearchEngine {
             }
         }
 
-        //if (!unique) {
-            if (parentMapping != null) {
-                log.debug("Storing "+filter+" in entry filter cache:");
-                for (Iterator i=childDns.keySet().iterator(); i.hasNext(); ) {
-                    String parentDn = (String)i.next();
-                    Collection c = (Collection)childDns.get(parentDn);
+        if (parentMapping != null) {
+            log.debug("Storing "+filter+" in entry filter cache:");
+            for (Iterator i=childDns.keySet().iterator(); i.hasNext(); ) {
+                String parentDn = (String)i.next();
+                Collection c = (Collection)childDns.get(parentDn);
 
-                    log.debug(" - "+parentDn+":");
-                    for (Iterator j=c.iterator(); j.hasNext(); ) {
-                        String dn = (String)j.next();
-                        log.debug("   - DN: "+dn);
-                    }
-
+                log.debug(" - "+parentDn+":");
+                for (Iterator j=c.iterator(); j.hasNext(); ) {
+                    String dn = (String)j.next();
+                    log.debug("   - DN: "+dn);
                 }
+
             }
-        //}
-        //filter = engineContext.getFilterTool().createFilter(rdns);
-        //log.debug("Storing "+filter+" in entry filter cache for "+parentDn+" => "+rdns);
-        //engineContext.getEntryFilterCache(parentDn, entryMappingter, rdns);
-/*
-        log.debug("Getting source values:");
-
-        for (Iterator i=results.keySet().iterator(); i.hasNext(); ) {
-            String dn = (String)i.next();
-            log.debug(" - "+dn);
-
-            AttributeValues sv = (AttributeValues)results.get(dn);
-            if (sv != null) continue;
-
-            Row rdn = Entry.getRdn(dn);
-            Row normalizedRdn = getEngineContext().getSchema().normalize(rdn);
-            String parentDn = Entry.getParentDn(dn);
-
-            Entry entry = (Entry)engineContext.getCacheStorage(parentDn, entryMapping  entry = new Entry(dn, entryMappingues oldSv = entry.getSourceValues(); //(AttributeValues)engineContext.getEntrySourceCache(parentDn, entryMapping   //log.debug("   Storing "+rdn+" in entry source cache.");
-                engineContext.getEntrySourceCache(parentDn, entryMappingdebug("   Adding "+rdn+" in entry source cache.");
-                oldSv.add(sv);
-            }
-            //log.debug("   source values1: "+oldSv);
-
-            if (unique && !dns.contains(dn)) {
-                //Entry entry = new Entry(dn, entryMapping             dns.add(dn);
-            }
-            //log.debug("   source values2: "+av);
-
         }
-*/
-        //if (!unique) {
-            for (Iterator i=results.keySet().iterator(); i.hasNext(); ) {
-                String dn = (String)i.next();
-                AttributeValues sv = (AttributeValues)results.get(dn);
 
-                Map map = new HashMap();
-                map.put("dn", dn);
-                map.put("sourceValues", sv);
-                entries.add(map);
-            }
-        //}
+        for (Iterator i=sourceValues.keySet().iterator(); i.hasNext(); ) {
+            String dn = (String)i.next();
+            AttributeValues sv = (AttributeValues)sourceValues.get(dn);
 
-        entries.close();
+            Map map = new HashMap();
+            map.put("dn", dn);
+            map.put("sourceValues", sv);
+            results.add(map);
+        }
+
+        int rc = values.getReturnCode();
+
+        if (rc != LDAPException.SUCCESS) {
+            log.debug("RC: "+rc);
+            results.setReturnCode(rc);
+        }
+
+        results.close();
     }
 
     public void simpleSearch(
@@ -310,6 +277,7 @@ public class SearchEngine {
             }
         }
 
+        results.setReturnCode(sr.getReturnCode());
         results.close();
     }
 
@@ -333,8 +301,9 @@ public class SearchEngine {
         SourceMapping primarySourceMapping = engine.getPrimarySource(entryMapping);
 
         if (primarySourceMapping == null || entryMapping.getSourceMapping(primarySourceMapping.getName()) == null) {
-            Collection localResults = new ArrayList();
+            PenroseSearchResults localResults = new PenroseSearchResults();
             localResults.add(sourceValues);
+            localResults.close();
 
             Collection parentResults = searchParent(
                     entryMapping,
@@ -348,12 +317,23 @@ public class SearchEngine {
             return;
         }
 
-        Collection localResults = searchLocal(
+        PenroseSearchResults localResults = searchLocal(
                 entryMapping,
                 sourceValues,
                 planner,
                 connectingSources
         );
+
+        int rc = localResults.getReturnCode();
+
+        if (rc != LDAPException.SUCCESS) {
+            log.debug("RC: "+rc);
+            results.setReturnCode(rc);
+            results.close();
+            return;
+        }
+
+        //log.debug("Size: "+localResults.size());
 
         if (localResults.isEmpty()) {
             results.close();
@@ -372,13 +352,11 @@ public class SearchEngine {
         return;
     }
 
-    public Collection searchLocal(
+    public PenroseSearchResults searchLocal(
             EntryMapping entryMapping,
             AttributeValues sourceValues,
             SearchPlanner planner,
             Collection connectingSources) throws Exception {
-
-        Collection results = new ArrayList();
 
         SourceMapping primarySourceMapping = engine.getPrimarySource(entryMapping);
 
@@ -465,6 +443,16 @@ public class SearchEngine {
 
         Collection list = runner.getResults();
 
+        int rc = runner.getReturnCode();
+
+        if (rc != LDAPException.SUCCESS) {
+            log.debug("RC: "+rc);
+            PenroseSearchResults results = new PenroseSearchResults();
+            results.setReturnCode(rc);
+            results.close();
+            return results;
+        }
+
         SearchCleaner cleaner = new SearchCleaner(
                 engine,
                 entryMapping,
@@ -478,13 +466,11 @@ public class SearchEngine {
         }
 
         cleaner.clean(list);
-
-        results.addAll(list);
 /*
         log.debug("Search local results:");
 
         int counter = 1;
-        for (Iterator i=results.iterator(); i.hasNext(); counter++) {
+        for (Iterator i=list.iterator(); i.hasNext(); counter++) {
             AttributeValues av = (AttributeValues)i.next();
             log.debug("Result #"+counter);
             for (Iterator j=av.getNames().iterator(); j.hasNext(); ) {
@@ -494,14 +480,21 @@ public class SearchEngine {
             }
         }
 */
+        PenroseSearchResults results = new PenroseSearchResults();
+        results.addAll(list);
+        results.close();
+
         return results;
     }
 
     public Collection searchParent(
             EntryMapping entryMapping,
             SearchPlanner planner,
-            Collection localResults,
+            PenroseSearchResults localResults,
             Collection startingSources) throws Exception {
+
+        Collection results = new ArrayList();
+        results.addAll(localResults.getAll());
 
         log.debug(Formatter.displaySeparator(80));
         log.debug(Formatter.displayLine("SEARCH PARENT", 80));
@@ -510,7 +503,7 @@ public class SearchEngine {
 
         AttributeValues sourceValues = new AttributeValues();
         int counter = 1;
-        for (Iterator i=localResults.iterator(); i.hasNext(); counter++) {
+        for (Iterator i=results.iterator(); i.hasNext(); counter++) {
             AttributeValues sv = (AttributeValues)i.next();
             sourceValues.add(sv);
 
@@ -523,9 +516,6 @@ public class SearchEngine {
         }
 
         log.debug(Formatter.displaySeparator(80));
-
-        Collection results = new ArrayList();
-        results.addAll(localResults);
 
         Map filters = planner.getFilters();
         
@@ -545,6 +535,8 @@ public class SearchEngine {
         }
 
         if (startingSources.isEmpty()) {
+            log.debug("No connecting sources");
+
             Partition partition = engine.getPartitionManager().getPartition(entryMapping);
             EntryMapping parentMapping = partition.getParent(entryMapping);
 

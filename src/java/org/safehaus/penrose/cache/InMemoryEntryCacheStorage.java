@@ -19,6 +19,7 @@ package org.safehaus.penrose.cache;
 
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.filter.Filter;
+import org.safehaus.penrose.partition.SourceConfig;
 
 import java.util.*;
 
@@ -33,38 +34,16 @@ public class InMemoryEntryCacheStorage extends EntryCacheStorage {
     Map dataMap = new TreeMap();
     Map dataExpirationMap = new LinkedHashMap();
 
-    public Row normalize(Row row) throws Exception {
+    public Entry get(String dn) throws Exception {
 
-        Row newRow = new Row();
-        if (row == null) return newRow;
-
-        for (Iterator i=row.getNames().iterator(); i.hasNext(); ) {
-            String name = (String)i.next();
-            Object value = row.get(name);
-
-            if (value == null) continue;
-
-            if (value instanceof String) {
-                value = ((String)value).toLowerCase();
-            }
-
-            newRow.set(name, value);
-        }
-
-        return newRow;
-    }
-
-    public Entry get(Object key) throws Exception {
-
-        Row rdn = normalize((Row)key);
         //log.debug("Getting entry cache ("+dataMap.size()+"): "+rdn);
 
-        Entry entry = (Entry)dataMap.get(rdn);
-        Date date = (Date)dataExpirationMap.get(rdn);
+        Entry entry = (Entry)dataMap.get(dn);
+        Date date = (Date)dataExpirationMap.get(dn);
 
         if (date == null || date.getTime() <= System.currentTimeMillis()) {
-            dataMap.remove(rdn);
-            dataExpirationMap.remove(rdn);
+            dataMap.remove(dn);
+            dataExpirationMap.remove(dn);
             return null;
         }
 
@@ -76,12 +55,10 @@ public class InMemoryEntryCacheStorage extends EntryCacheStorage {
         return results;
     }
 
-    public void put(Object key, Object object) throws Exception {
+    public void put(String dn, Entry entry) throws Exception {
         if (getSize() == 0) return;
 
-        Row rdn = normalize((Row)key);
-
-        while (dataMap.get(rdn) == null && dataMap.size() >= getSize()) {
+        while (dataMap.get(dn) == null && dataMap.size() >= getSize()) {
             //log.debug("Trimming entry cache ("+dataMap.size()+").");
             Object k = dataExpirationMap.keySet().iterator().next();
             dataMap.remove(k);
@@ -89,33 +66,44 @@ public class InMemoryEntryCacheStorage extends EntryCacheStorage {
         }
 
         //log.debug("Storing entry cache ("+dataMap.size()+"): "+rdn);
-        dataMap.put(rdn, object);
-        dataExpirationMap.put(rdn, new Date(System.currentTimeMillis() + getExpiration() * 60 * 1000));
+        dataMap.put(dn, entry);
+        dataExpirationMap.put(dn, new Date(System.currentTimeMillis() + getExpiration() * 60 * 1000));
 
         invalidate();
     }
 
-    public void remove(Object key) throws Exception {
-        Row rdn = normalize((Row)key);
+    public void remove(String dn) throws Exception {
 
         //log.debug("Removing entry cache ("+dataMap.size()+"): "+rdn);
-        dataMap.remove(rdn);
-        dataExpirationMap.remove(rdn);
+        dataMap.remove(dn);
+        dataExpirationMap.remove(dn);
 
         invalidate();
     }
 
-    public Collection search(Filter filter) throws Exception {
+    /**
+     * @return DNs (Collection of String)
+     */
+    public Collection search(Filter filter, String parentDn) throws Exception {
 
         Collection results = new ArrayList();
 
         String key = filter == null ? "" : filter.toString();
         //log.debug("Getting entry filter cache ("+queryMap.size()+"): "+key);
 
-        Collection rdns = (Collection)queryMap.get(key);
-        if (rdns == null) return null;
+        Collection dns = (Collection)queryMap.get(key);
+        if (dns == null) return null;
 
-        results.addAll(rdns);
+        if (parentDn == null) {
+            results.addAll(dns);
+        } else {
+            for (Iterator i=dns.iterator(); i.hasNext(); ) {
+                String dn = (String)i.next();
+                String pdn = Entry.getParentDn(dn);
+                if (parentDn.equals(pdn)) results.add(dn);
+            }
+        }
+
         Date date = (Date)queryExpirationMap.get(key);
 
         if (date == null || date.getTime() <= System.currentTimeMillis()) {
@@ -127,28 +115,51 @@ public class InMemoryEntryCacheStorage extends EntryCacheStorage {
         return results;
     }
 
-    public void add(Filter filter, Row rdn) throws Exception {
+    /**
+     * @return DNs (Collection of Strings)
+     */
+    public Collection search(SourceConfig sourceConfig, Row filter) throws Exception {
+
+        Collection results = new ArrayList();
+
+        for (Iterator i=dataMap.keySet().iterator(); i.hasNext(); ) {
+            String dn = (String)i.next();
+
+            Date date = (Date)dataExpirationMap.get(dn);
+            if (date == null || date.getTime() <= System.currentTimeMillis()) continue;
+
+            Entry entry = (Entry)dataMap.get(dn);
+            AttributeValues sv = entry.getSourceValues();
+            if (!sv.contains(filter)) continue;
+
+            results.add(dn);
+        }
+
+        return results;
+    }
+
+    public void add(Filter filter, String dn) throws Exception {
         String key = filter == null ? "" : filter.toString();
 
-        Collection rdns = (Collection)queryMap.remove(key);
+        Collection dns = (Collection)queryMap.remove(key);
 
-        while (rdns == null && queryMap.size() >= getSize()) {
+        while (dns == null && queryMap.size() >= getSize()) {
             //log.debug("Trimming entry filter cache ("+queryMap.size()+").");
             Object k = queryExpirationMap.keySet().iterator().next();
             queryMap.remove(k);
             queryExpirationMap.remove(k);
         }
 
-        if (rdns == null) {
-            rdns = new TreeSet();
-            queryMap.put(key, rdns);
+        if (dns == null) {
+            dns = new TreeSet();
+            queryMap.put(key, dns);
         }
         //log.debug("Storing entry filter cache ("+queryMap.size()+"): "+key);
-        rdns.add(rdn);
+        dns.add(dn);
         queryExpirationMap.put(key, new Date(System.currentTimeMillis() + getExpiration() * 60 * 1000));
     }
 
-    public void put(Filter filter, Collection rdns) throws Exception {
+    public void put(Filter filter, Collection dns) throws Exception {
         if (getSize() == 0) return;
 
         String key = filter == null ? "" : filter.toString();
@@ -163,7 +174,7 @@ public class InMemoryEntryCacheStorage extends EntryCacheStorage {
         }
 
         //log.debug("Storing entry filter cache ("+queryMap.size()+"): "+key);
-        queryMap.put(key, rdns);
+        queryMap.put(key, dns);
         queryExpirationMap.put(key, new Date(System.currentTimeMillis() + getExpiration() * 60 * 1000));
     }
 

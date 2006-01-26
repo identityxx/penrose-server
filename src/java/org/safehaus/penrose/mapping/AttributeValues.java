@@ -164,11 +164,15 @@ public class AttributeValues implements Cloneable, Comparable {
         return false;
     }
 
+    public boolean contains(Row row) {
+        return contains(null, row);
+    }
+    
     public boolean contains(String prefix, Row row) {
         
         for (Iterator i=row.getNames().iterator(); i.hasNext(); ) {
             String name = (String)i.next();
-            String fullName = prefix+"."+name;
+            String fullName = (prefix == null ? name : prefix+"."+name);
 
             Object value = row.get(name);
             Collection list = get(fullName);

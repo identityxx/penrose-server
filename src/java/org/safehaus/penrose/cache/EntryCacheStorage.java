@@ -40,8 +40,6 @@ public abstract class EntryCacheStorage {
     Partition partition;
     EntryMapping entryMapping;
 
-    String parentDn;
-
     CacheConfig cacheConfig;
 
     int size;
@@ -101,14 +99,6 @@ public abstract class EntryCacheStorage {
         this.entryMapping = entryMapping;
     }
 
-    public String getParentDn() {
-        return parentDn;
-    }
-
-    public void setParentDn(String parentDn) {
-        this.parentDn = parentDn;
-    }
-
     public Partition getPartition() {
         return partition;
     }
@@ -125,15 +115,21 @@ public abstract class EntryCacheStorage {
         this.connectionManager = connectionManager;
     }
 
-    public Collection search(Filter filter) throws Exception {
+    /**
+     * @return DNs (Collection of String)
+     */
+    public Collection search(Filter filter, String parentDn) throws Exception {
         return null;
     }
 
+    /**
+     * @return DNs (Collection of Strings)
+     */
     public Collection search(SourceConfig sourceConfig, Row filter) throws Exception {
         return null;
     }
 
-    public void add(Filter filter, Row rdn) throws Exception { }
+    public void add(Filter filter, String dn) throws Exception { }
 
     public void put(Filter filter, Collection rdns) throws Exception { }
 
@@ -143,7 +139,7 @@ public abstract class EntryCacheStorage {
 
     public void drop() throws Exception { }
 
-    public Entry get(Object key) throws Exception {
+    public Entry get(String dn) throws Exception {
         return null;
     }
 
@@ -151,7 +147,7 @@ public abstract class EntryCacheStorage {
         return null;
     }
 
-    public void put(Object key, Object object) throws Exception { }
+    public void put(String dn, Entry entry) throws Exception { }
 
-    public void remove(Object key) throws Exception { }
+    public void remove(String dn) throws Exception { }
 }

@@ -84,7 +84,7 @@ public class LoadEngine {
                     createBatches(entryMapping, entries, batches);
 
                 } catch (Throwable e) {
-                    e.printStackTrace(System.out);
+                    log.debug(e.getMessage(), e);
                     batches.setReturnCode(org.ietf.ldap.LDAPException.OPERATIONS_ERROR);
                 }
             }
@@ -98,7 +98,7 @@ public class LoadEngine {
                     loadBackground(entryMapping, batches, loadedEntries);
 
                 } catch (Throwable e) {
-                    e.printStackTrace(System.out);
+                    log.debug(e.getMessage(), e);
                     loadedEntries.setReturnCode(org.ietf.ldap.LDAPException.OPERATIONS_ERROR);
                 }
             }
@@ -125,6 +125,7 @@ public class LoadEngine {
 */
             loadedEntries.add(map);
         }
+        loadedEntries.setReturnCode(entries.getReturnCode());
         loadedEntries.close();
 
     }
@@ -184,6 +185,7 @@ public class LoadEngine {
             if (!batch.isEmpty()) batches.add(batch);
 
         } finally {
+            batches.setReturnCode(entries.getReturnCode());
             batches.close();
         }
     }
@@ -262,6 +264,7 @@ public class LoadEngine {
 
         } finally {
             //lock.releaseWriteLock(Penrose.WAIT_TIMEOUT);
+            loadedBatches.setReturnCode(batches.getReturnCode());
             loadedBatches.close();
         }
     }

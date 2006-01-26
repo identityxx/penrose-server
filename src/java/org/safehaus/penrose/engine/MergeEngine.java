@@ -54,7 +54,7 @@ public class MergeEngine {
                     mergeBackground(entryMapping, loadedBatches, interpreter, results);
 
                 } catch (Throwable e) {
-                    e.printStackTrace(System.out);
+                    log.debug(e.getMessage(), e);
                     results.setReturnCode(org.ietf.ldap.LDAPException.OPERATIONS_ERROR);
                 }
             }
@@ -120,6 +120,11 @@ public class MergeEngine {
 
         } finally {
             //lock.releaseWriteLock(Penrose.WAIT_TIMEOUT);
+
+            int rc = entries.getReturnCode();
+            //log.debug("RC: "+rc);
+
+            results.setReturnCode(rc);
             results.close();
         }
     }

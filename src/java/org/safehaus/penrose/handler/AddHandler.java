@@ -64,7 +64,8 @@ public class AddHandler {
         sessionHandler.postEvent(ldapEntry.getDN(), beforeModifyEvent);
 
         int rc = performAdd(session, ldapEntry);
-
+        if (rc != LDAPException.SUCCESS) return rc;
+        
         PenroseSearchResults results = new PenroseSearchResults();
 
         sessionHandler.getSearchHandler().search(

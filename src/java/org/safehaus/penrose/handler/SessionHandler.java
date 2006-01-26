@@ -208,7 +208,7 @@ public class SessionHandler {
         engine.execute(new Runnable() {
             public void run() {
                 try {
-                    PenroseSearchResults sr = new PenroseSearchResults();
+                    final PenroseSearchResults sr = new PenroseSearchResults();
 
                     sr.addListener(new PipelineAdapter() {
                         public void objectAdded(PipelineEvent event) {
@@ -226,6 +226,7 @@ public class SessionHandler {
                         }
 
                         public void pipelineClosed(PipelineEvent event) {
+                            results.setReturnCode(sr.getReturnCode());
                             results.close();
                         }
                     });
@@ -233,7 +234,7 @@ public class SessionHandler {
                     getSearchHandler().search(session, base, scope, deref, filter, normalizedAttributeNames, sr);
 
                 } catch (Throwable e) {
-                    e.printStackTrace(System.out);
+                    log.debug(e.getMessage(), e);
                     results.setReturnCode(LDAPException.OPERATIONS_ERROR);
                     results.close();
                 }

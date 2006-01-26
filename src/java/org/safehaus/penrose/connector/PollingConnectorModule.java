@@ -216,7 +216,7 @@ public class PollingConnectorModule extends Module {
 
         EntryCache entryCache = engine.getEntryCache();
 
-        Collection parentDns = entryCache.search(partition, parentMapping);
+        Collection parentDns = entryCache.search(parentMapping);
         for (Iterator i=parentDns.iterator(); i.hasNext(); ) {
             String parentDn = (String)i.next();
             String dn = rdn+","+parentDn;
@@ -242,7 +242,7 @@ public class PollingConnectorModule extends Module {
 
         EntryCache entryCache = engine.getEntryCache();
 
-        Collection dns = entryCache.search(partition, entryMapping, sourceConfig, pk);
+        Collection dns = entryCache.search(entryMapping, sourceConfig, pk);
         for (Iterator i=dns.iterator(); i.hasNext(); ) {
             String dn = (String)i.next();
 

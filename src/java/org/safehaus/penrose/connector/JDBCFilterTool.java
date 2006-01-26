@@ -85,6 +85,7 @@ public class JDBCFilterTool {
         }
 
         FieldConfig fieldConfig = sourceConfig.getFieldConfig(name);
+        if (fieldConfig == null) return false;
 
         if ("VARCHAR".equals(fieldConfig.getType())) {
             sb.append("lower(");

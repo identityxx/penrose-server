@@ -92,7 +92,8 @@ public class ModifyHandler {
         if (entry == null) return LDAPException.NO_SUCH_OBJECT;
 
         int rc = performModify(session, entry, modifications);
-
+        if (rc != LDAPException.SUCCESS) return rc;
+        
         sessionHandler.getEngine().getEntryCache().remove(entry);
 
         PenroseSearchResults results = new PenroseSearchResults();

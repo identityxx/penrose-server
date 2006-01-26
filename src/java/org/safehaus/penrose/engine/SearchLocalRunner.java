@@ -28,6 +28,7 @@ import org.safehaus.penrose.graph.GraphIterator;
 import org.safehaus.penrose.util.Formatter;
 import org.safehaus.penrose.session.PenroseSearchResults;
 import org.apache.log4j.Logger;
+import org.ietf.ldap.LDAPException;
 
 import java.util.*;
 
@@ -49,6 +50,7 @@ public class SearchLocalRunner extends GraphVisitor {
     private Stack filterStack = new Stack();
 
     private Collection results = new TreeSet();
+    private int returnCode;
 
     public SearchLocalRunner(
             Engine engine,
@@ -118,6 +120,11 @@ public class SearchLocalRunner extends GraphVisitor {
             sv.add(sourceMapping.getName(), av);
             list.add(sv);
         }
+
+        returnCode = tmp.getReturnCode();
+        //log.debug("RC: "+returnCode);
+        
+        if (returnCode != LDAPException.SUCCESS) return;
 
         if (results.isEmpty()) {
             results.addAll(list);
@@ -200,5 +207,13 @@ public class SearchLocalRunner extends GraphVisitor {
 
     public Collection getResults() {
         return results;
+    }
+
+    public int getReturnCode() {
+        return returnCode;
+    }
+
+    public void setReturnCode(int returnCode) {
+        this.returnCode = returnCode;
     }
 }

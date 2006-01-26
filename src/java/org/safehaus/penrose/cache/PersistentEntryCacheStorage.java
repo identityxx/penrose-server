@@ -182,9 +182,11 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
         sb.append(tableName);
         sb.append(" where rdn=? and parentDn=?");
 
+        String parentDn = Entry.getParentDn(dn);
         Row rdn = Entry.getRdn(dn);
+
         parameters.add(rdn.toString());
-        parameters.add(getParentDn());
+        parameters.add(parentDn);
 
         String sql = sb.toString();
 
@@ -259,9 +261,11 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
         sb.append(tableName);
         sb.append(" values (null, ?, ?)");
 
+        String parentDn = Entry.getParentDn(dn);
         Row rdn = Entry.getRdn(dn);
+
         parameters.add(rdn.toString());
-        parameters.add(getParentDn());
+        parameters.add(parentDn);
 
         String sql = sb.toString();
 
@@ -518,7 +522,7 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
         if (!getPartition().isDynamic(getEntryMapping())) {
             String dn = getEntryMapping().getDn();
             Row rdn = Entry.getRdn(dn);
-            remove(rdn);
+            remove(getEntryMapping().getDn());
         }
 
         Collection sources = getPartition().getEffectiveSourceMappings(getEntryMapping());
@@ -650,40 +654,12 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
         }
     }
 
-    public Entry get(Object pk) throws Exception {
-        Row rdn = (Row)pk;
-        String dn = rdn+","+getParentDn();
+    public Entry get(String dn) throws Exception {
         Entry entry = null;
-
-        DirContext ctx = null;
 
         try {
             log.debug("Getting "+dn);
-/*
-            SearchControls sc = new SearchControls();
-            sc.setSearchScope(SearchControls.OBJECT_SCOPE);
 
-            ctx = getJNDIConnection();
-            NamingEnumeration ne = ctx.search(dn, "(objectClass=*)", sc);
-
-            if (!ne.hasMore()) return null;
-
-            SearchResult sr = (SearchResult)ne.next();
-
-            Attributes attributes = sr.getAttributes();
-            AttributeValues attributeValues = new AttributeValues();
-            for (NamingEnumeration ne2 = attributes.getAll(); ne2.hasMore(); ) {
-                Attribute attribute = (Attribute)ne2.next();
-                String name = attribute.getID();
-
-                for (NamingEnumeration ne3 = attribute.getAll(); ne3.hasMore(); ) {
-                    Object value = ne3.next();
-                    attributeValues.add(name, value);
-                }
-            }
-
-            entry = new Entry(dn, getEntryMapping(), attributeValues);
-*/
             int entryId = getEntryId(dn);
             if (entryId == 0) return null;
 
@@ -736,9 +712,6 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
 
         } catch (NamingException e) {
             log.error(e.getMessage());
-
-        } finally {
-            if (ctx != null) try { ctx.close(); } catch (Exception e) {}
         }
 
         return entry;
@@ -879,11 +852,15 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
         return true;
     }
 
-    public Collection search(Filter filter) throws Exception {
+    /**
+     * @return DNs (Collection of Strings)
+     */
+    public Collection search(Filter filter, String parentDn) throws Exception {
 
         log.debug(Formatter.displaySeparator(80));
         log.debug(Formatter.displayLine("Searching entry cache for "+entryMapping.getDn(), 80));
-        log.debug(Formatter.displayLine("Filter "+filter, 80));
+        log.debug(Formatter.displayLine("Filter: "+filter, 80));
+        log.debug(Formatter.displayLine("Parent DN: "+parentDn, 80));
         log.debug(Formatter.displaySeparator(80));
 
         Collection results = new ArrayList();
@@ -921,12 +898,17 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
             whereClause.append(".id = t.id)");
         }
 
-        if (whereClause.length() > 0) whereClause.append(" and ");
+        if (parentDn != null) {
+            if (whereClause.length() > 0) whereClause.append(" and ");
 
-        whereClause.append("(t.parentDn = ?)");
-        parameters.add(parentDn);
+            whereClause.append("(t.parentDn = ?)");
+            parameters.add(parentDn);
+        }
 
-        String sql = "select "+selectClause+" from "+fromClause+" where "+whereClause;
+        String sql = "select "+selectClause+" from "+fromClause;
+        if (whereClause.length() > 0) {
+            sql = sql+" where "+whereClause;
+        }
 
         Connection con = null;
         PreparedStatement ps = null;
@@ -964,8 +946,8 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
 
             while (rs.next()) {
                 String rdn = (String)rs.getObject(1);
-                String parentDn = (String)rs.getObject(2);
-                String dn = rdn+","+parentDn;
+                String pdn = (String)rs.getObject(2);
+                String dn = rdn+","+pdn;
                 log.debug(Formatter.displayLine(" - "+dn, 80));
                 results.add(dn);
             }
@@ -984,6 +966,9 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
         return results;
     }
 
+    /**
+     * @return DNs (Collection of Strings)
+     */
     public Collection search(SourceConfig sourceConfig, Row filter) throws Exception {
 
         StringBuffer tableNames = new StringBuffer();
@@ -1028,7 +1013,7 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
         PreparedStatement ps = null;
         ResultSet rs = null;
 
-        Collection values = new ArrayList();
+        Collection results = new ArrayList();
 
         try {
             con = getConnection();
@@ -1062,11 +1047,11 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
                 String rdn = (String)rs.getObject(1);
                 String parentDn = (String)rs.getObject(2);
                 String dn = rdn+","+parentDn;
-                values.add(dn);
+                results.add(dn);
             }
 
             if (log.isDebugEnabled()) {
-                log.debug(Formatter.displayLine("Results: value = "+values, 80));
+                log.debug(Formatter.displayLine("Results: value = "+results, 80));
                 log.debug(Formatter.displaySeparator(80));
             }
 
@@ -1079,7 +1064,7 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
             if (con != null) try { con.close(); } catch (Exception e) {}
         }
 
-        return values;
+        return results;
     }
 
     public Map getExpired() throws Exception {
@@ -1087,48 +1072,12 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
         return results;
     }
 
-    public void put(Object key, Object object) throws Exception {
+    public void put(String dn, Entry entry) throws Exception {
 
-        Entry entry = (Entry)object;
-        Row rdn = entry.getRdn();
-        String dn = entry.getDn();
         AttributeValues attributeValues = entry.getAttributeValues();
 
         log.debug("Storing "+dn);
-/*
-        Attributes attrs = new BasicAttributes();
 
-        for (Iterator i=attributeValues.getNames().iterator(); i.hasNext(); ) {
-            String name = (String)i.next();
-            Collection values = attributeValues.get(name);
-            if (values.isEmpty()) continue;
-
-            Attribute attr = new BasicAttribute(name);
-            for (Iterator j=values.iterator(); j.hasNext(); ) {
-                Object value = j.next();
-                log.debug(" - "+name+": "+value);
-
-                if ("unicodePwd".equals(name)) {
-                    attr.add(PasswordUtil.toUnicodePassword(value.toString()));
-                } else {
-                    attr.add(value.toString());
-                }
-            }
-            attrs.put(attr);
-        }
-
-        DirContext ctx = null;
-        try {
-            log.debug("Creating LDAP entry "+dn);
-            ctx = getJNDIConnection();
-            ctx.createSubcontext(dn, attrs);
-        } catch (NamingException e) {
-            log.error(e.getMessage());
-
-        } finally {
-            if (ctx != null) try { ctx.close(); } catch (Exception e) {}
-        }
-*/
         int entryId = getEntryId(dn);
         if (entryId == 0) {
             addEntry(dn);
@@ -1439,49 +1388,8 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
         return values;
     }
 
-    public void remove(Object key) throws Exception {
-        Row rdn = (Row)key;
+    public void remove(String dn) throws Exception {
 
-        String dn;
-        if (rdn == null && getParentDn() != null) {
-            dn = getParentDn();
-        } else {
-            dn = getParentDn() == null ? getEntryMapping().getDn() : rdn+","+getParentDn();
-        }
-/*
-        DirContext ctx = null;
-        try {
-            log.debug("Removing "+dn);
-            SearchControls sc = new SearchControls();
-            sc.setSearchScope(SearchControls.SUBTREE_SCOPE);
-            sc.setReturningAttributes(new String[] { "dn" });
-
-            ctx = getJNDIConnection();
-            NamingEnumeration ne = ctx.search(dn, "(objectClass=*)", sc);
-
-            ArrayList dns = new ArrayList();
-            while (ne.hasMore()) {
-                SearchResult sr = (SearchResult)ne.next();
-                String name = sr.getName();
-                //if (rdn == null && "".equals(name)) continue;
-                String childDn = "".equals(name) ? dn : name+","+dn;
-                dns.add(0, childDn);
-            }
-
-            for (Iterator i=dns.iterator(); i.hasNext(); ) {
-                String childDn = (String)i.next();
-                log.debug(" - "+childDn);
-
-                ctx.destroySubcontext(childDn);
-            }
-
-        } catch (NamingException e) {
-            log.error(e.getMessage());
-
-        } finally {
-            if (ctx != null) try { ctx.close(); } catch (Exception e) {}
-        }
-*/
         Collection sources = getPartition().getEffectiveSourceMappings(getEntryMapping());
 
         int entryId = getEntryId(dn);
