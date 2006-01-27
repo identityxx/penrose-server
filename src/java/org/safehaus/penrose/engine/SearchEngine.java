@@ -558,7 +558,7 @@ public class SearchEngine {
                 parentMapping = partition.getParent(parentMapping);
             }
 
-            if (parentMapping == null) {
+            if (parentMapping == null && results.size() == 0) {
                 results.add(new AttributeValues());
             }
         }
