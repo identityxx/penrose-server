@@ -114,7 +114,13 @@ public class PenroseLDAPService extends Service {
         Set authenticators = configuration.getAuthenticatorConfigurations();
         authenticators.add(authenticatorConfig);
         configuration.setAuthenticatorConfigurations(authenticators);
-
+/*
+        log.debug("Authenticators:");
+        for (Iterator i=authenticators.iterator(); i.hasNext(); ) {
+            AuthenticatorConfiguration ac = (AuthenticatorConfiguration)i.next();
+            log.debug(" - "+ac.getName());
+        }
+*/
         // Register Penrose interceptor
         PenroseInterceptor interceptor = new PenroseInterceptor();
         interceptor.setPenrose(getPenroseServer().getPenrose());
@@ -158,7 +164,7 @@ public class PenroseLDAPService extends Service {
                     env.putAll(new SyncConfiguration().toJndiEnvironment());
                     while (true) {
                         try {
-                            Thread.sleep( 20000 );
+                            Thread.sleep(20000);
                         } catch ( InterruptedException e ) {
                             // ignore
                         }

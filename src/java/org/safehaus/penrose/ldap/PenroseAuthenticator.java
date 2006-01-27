@@ -20,6 +20,9 @@ package org.safehaus.penrose.ldap;
 import org.apache.ldap.server.authn.AbstractAuthenticator;
 import org.apache.ldap.server.authn.LdapPrincipal;
 import org.apache.ldap.server.jndi.ServerContext;
+import org.apache.ldap.server.invocation.Invocation;
+import org.apache.ldap.server.invocation.InvocationStack;
+import org.apache.ldap.server.partition.DirectoryPartitionNexusProxy;
 import org.apache.ldap.common.exception.LdapAuthenticationException;
 import org.apache.ldap.common.aci.AuthenticationLevel;
 import org.apache.log4j.Logger;
@@ -37,9 +40,11 @@ import javax.naming.ServiceUnavailableException;
  */
 public class PenroseAuthenticator extends AbstractAuthenticator {
 
+    Logger log = Logger.getLogger(getClass());
+
     Penrose penrose;
 
-    public PenroseAuthenticator( )
+    public PenroseAuthenticator()
     {
         super( "simple" );
     }
@@ -52,32 +57,41 @@ public class PenroseAuthenticator extends AbstractAuthenticator {
     }
 
     public LdapPrincipal authenticate( ServerContext ctx ) throws NamingException {
-        Logger log = Logger.getLogger(getClass());
 
-        String dn = ( String ) ctx.getEnvironment().get( Context.SECURITY_PRINCIPAL );
+        String dn = (String)ctx.getEnvironment().get(Context.SECURITY_PRINCIPAL);
 
-        Object credentials = ctx.getEnvironment().get( Context.SECURITY_CREDENTIALS );
+        Object credentials = ctx.getEnvironment().get(Context.SECURITY_CREDENTIALS);
         String password = new String((byte[])credentials);
 
         PenroseConfig penroseConfig = penrose.getPenroseConfig();
         String rootDn = penroseConfig.getRootUserConfig().getDn();
         String rootPassword = penroseConfig.getRootUserConfig().getPassword();
 
+        log.info("Login "+dn);
+
+        if ("uid=admin,ou=system".equals(dn)) {
+            throw new LdapAuthenticationException();
+        }
+
         if (rootDn != null &&
                 rootPassword != null &&
                 rootDn.equals(dn) &&
                 rootPassword.equals(password)) {
 
+/*
+            log.info("Logged in as root.");
             return createLdapPrincipal(dn, AuthenticationLevel.SIMPLE);
+*/
         }
-
+/*
         if ("".equals(dn)) {
             return createLdapPrincipal(dn, AuthenticationLevel.SIMPLE);
         }
-        
-        log.info("Login "+dn);
-
+*/
         try {
+            //Invocation invocation = InvocationStack.getInstance().peek();
+            //DirectoryPartitionNexusProxy proxy = invocation.getProxy();
+
             PenroseSession session = penrose.newSession();
             if (session == null) throw new ServiceUnavailableException();
 
@@ -90,7 +104,7 @@ public class PenroseAuthenticator extends AbstractAuthenticator {
 
             log.info("Login success.");
 
-            return createLdapPrincipal( dn, AuthenticationLevel.SIMPLE );
+            return createLdapPrincipal(dn, AuthenticationLevel.SIMPLE);
 
         } catch (NamingException e) {
             log.info("Login failed.");

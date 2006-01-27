@@ -64,7 +64,7 @@ public class DefaultInterpreter extends org.safehaus.penrose.interpreter.Interpr
             tokens.remove(tokens.size()-1);
 
         } catch (Exception e) {
-            e.printStackTrace();
+            log.debug(e.getMessage(), e);
         }
         return tokens;
     }
@@ -84,7 +84,7 @@ public class DefaultInterpreter extends org.safehaus.penrose.interpreter.Interpr
             }
 
         } catch (Exception e) {
-            e.printStackTrace();
+            log.debug(e.getMessage(), e);
         }
         return tokens;
     }

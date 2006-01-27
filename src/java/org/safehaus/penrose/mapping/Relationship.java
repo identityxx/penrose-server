@@ -24,10 +24,14 @@ import Zql.ZExp;
 import java.io.ByteArrayInputStream;
 import java.util.*;
 
+import org.apache.log4j.Logger;
+
 /**
  * @author Endi S. Dewata
  */
 public class Relationship implements Cloneable {
+
+    Logger log = Logger.getLogger(getClass());
 
     private String operator = "=";
     private List operands = new ArrayList();
@@ -73,7 +77,7 @@ public class Relationship implements Cloneable {
             //System.out.println("Polish: "+exp.toReversePolish());
 
         } catch (Exception e) {
-            e.printStackTrace();
+            log.debug(e.getMessage(), e);
         }
     }
     

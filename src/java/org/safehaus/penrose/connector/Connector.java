@@ -578,7 +578,7 @@ public class Connector {
             sr = connection.search(sourceConfig, filter, sizeLimit);
 
         } catch (Exception e) {
-            e.printStackTrace();
+            log.debug(e.getMessage(), e);
             return results;
         }
 

@@ -82,39 +82,7 @@ public class PenroseInterceptor extends BaseInterceptor {
                 next.add(upName, normName, attributes);
                 return;
             }
-/*
-            EntryMapping ed = config.findEntryMapping(dn);
-            if (ed == null) {
-                log.debug(dn+" is a static entry");
-                next.add(upName, normName, attributes);
-                return;
-            }
 
-            if (!ed.isDynamic()) {
-                log.debug(dn+" is a static entry");
-                next.add(upName, normName, attributes);
-                return;
-            }
-*/
-            //log.debug("suffix: "+getSuffix(next, normName, true));
-            //if (getSuffix(next, normName, true).equals(normName)) return;
-/*
-            LDAPAttributeSet attributeSet = new LDAPAttributeSet();
-            for (Enumeration e = attributes.getAll(); e.hasMoreElements(); ) {
-                Attribute attribute = (Attribute)e.nextElement();
-                LDAPAttribute attr = new LDAPAttribute(attribute.getID());
-
-                for (Enumeration values = attribute.getAll(); values.hasMoreElements(); ) {
-                    Object value = values.nextElement();
-                    attr.addValue(value.toString());
-                }
-
-                attributeSet.add(attr);
-            }
-
-            LDAPEntry ldapEntry = new LDAPEntry(upName, attributeSet);
-*/
-            
             LDAPEntry ldapEntry = EntryUtil.convert(upName, attributes);
 
             PenroseSession session = penrose.newSession();
@@ -363,7 +331,7 @@ public class PenroseInterceptor extends BaseInterceptor {
             PenroseSession session = penrose.newSession();
             if (session == null) throw new ServiceUnavailableException();
 
-            session.setBindDn(principalDn.toString());
+            if (principalDn != null) session.setBindDn(principalDn.toString());
 
             PenroseSearchControls sc = new PenroseSearchControls();
             sc.setScope(PenroseSearchControls.SCOPE_BASE);
@@ -382,7 +350,7 @@ public class PenroseInterceptor extends BaseInterceptor {
             return result;
 
         } catch (NamingException e) {
-            e.printStackTrace();
+            //log.error(e.getMessage(), e);
             throw e;
 
         } catch (Exception e) {
@@ -401,24 +369,20 @@ public class PenroseInterceptor extends BaseInterceptor {
         try {
             String dn = name.toString();
 
-            log.debug("===============================================================================");
-            log.debug("lookup(\""+dn+"\", "+attrIds+")");
-
             Partition partition = partitionManager.getPartitionByDn(dn);
             if (partition == null) {
-                log.debug(dn+" is a static entry");
+                //log.debug(dn+" is a static entry");
                 return next.lookup(name, attrIds);
             }
 
             EntryMapping ed = partition.findEntryMapping(dn);
             if (ed == null) {
-                log.debug(dn+" is a static entry");
+                //log.debug(dn+" is a static entry");
                 return next.lookup(name, attrIds);
             }
 
-            for (int i=0; attrIds != null && i<attrIds.length; i++) {
-                log.debug("- "+attrIds[i]);
-            }
+            //log.debug("===============================================================================");
+            log.debug("lookup(\""+dn+"\", "+Arrays.asList(attrIds)+")");
 
             PenroseSession session = penrose.newSession();
             if (session == null) throw new ServiceUnavailableException();
@@ -480,20 +444,20 @@ public class PenroseInterceptor extends BaseInterceptor {
         try {
             String dn = name.toString();
 
-            log.debug("===============================================================================");
-            log.debug("lookup(\""+dn+"\")");
-
             Partition partition = partitionManager.getPartitionByDn(dn);
             if (partition == null) {
-                log.debug(dn+" is a static entry");
+                //log.debug(dn+" is a static entry");
                 return next.lookup(name);
             }
 
             EntryMapping ed = partition.findEntryMapping(dn);
             if (ed == null) {
-                log.debug(dn+" is a static entry");
+                //log.debug(dn+" is a static entry");
                 return next.lookup(name);
             }
+
+            //log.debug("===============================================================================");
+            log.debug("lookup(\""+dn+"\")");
 
             PenroseSession session = penrose.newSession();
             if (session == null) throw new ServiceUnavailableException();

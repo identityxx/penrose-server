@@ -58,8 +58,9 @@ public class BindHandler {
     public int performBind(PenroseSession session, String dn, String password) throws Exception {
 
         String ndn = LDAPDN.normalize(dn);
+        String rootDn = sessionHandler.getRootUserConfig().getDn();
 
-        if (sessionHandler.getRootUserConfig().getDn() != null && ndn.equals(LDAPDN.normalize(sessionHandler.getRootUserConfig().getDn()))) { // bind as root
+        if (rootDn != null && ndn.equals(LDAPDN.normalize(rootDn))) { // bind as root
 
             int rc = bindAsRoot(password);
             if (rc != LDAPException.SUCCESS) return rc;
