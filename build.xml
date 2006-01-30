@@ -170,6 +170,10 @@
         <copy todir="target/dist/bin">
             <fileset dir="bin"/>
         </copy>
+        <fixcrlf
+            srcdir="target/dist/bin"
+            includes="**/*.sh"
+        />
         <chmod dir="target/dist/bin" perm="ugo+rx" includes="**/*.sh"/>
         <copy todir="target/dist/samples">
             <fileset dir="samples"/>
