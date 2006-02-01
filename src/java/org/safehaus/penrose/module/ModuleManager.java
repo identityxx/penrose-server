@@ -48,6 +48,8 @@ public class ModuleManager {
 
     public void init(Partition partition, ModuleConfig moduleConfig) throws Exception {
 
+        if (!moduleConfig.isEnabled()) return;
+        
         Module module = getModule(moduleConfig.getName());
         if (module != null) return;
         

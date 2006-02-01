@@ -32,7 +32,7 @@ import java.util.Map;
 /**
  * @author Endi S. Dewata
  */
-public abstract class EntryCacheStorage {
+public class EntryCacheStorage {
 
     Logger log = Logger.getLogger(getClass());
 

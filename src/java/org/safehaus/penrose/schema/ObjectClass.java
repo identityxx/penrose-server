@@ -17,11 +17,15 @@
  */
 package org.safehaus.penrose.schema;
 
+import org.apache.log4j.Logger;
+
 import java.util.ArrayList;
 import java.util.Collection;
 
 public class ObjectClass {
-	
+
+    Logger log = Logger.getLogger(getClass());
+
 	public final static String ABSTRACT   = "ABSTRACT";
 	public final static String STRUCTURAL = "STRUCTURAL";
 	public final static String AUXILIARY  = "AUXILIARY";
@@ -170,13 +174,11 @@ public class ObjectClass {
 	}
 	
 	public String toString() {
-		StringBuffer sb = new StringBuffer();
-		sb.append("ObjectClass: name="+getName()+", oid="+oid+", type="+type+", obsolete="+obsolete+", description="+description+
-				", superClasses="+superClasses+", requiredAttributes="+requiredAttributes+", optionalAttributes="+optionalAttributes);
-		return sb.toString();
+		return "ObjectClass<"+getName()+">";
 	}
 
     public int hashCode() {
+        //log.debug("hashCode()");
         return oid.hashCode();
     }
 
@@ -187,6 +189,7 @@ public class ObjectClass {
     }
 
     public boolean equals(Object object) {
+        //log.debug("equals("+object+")");
         if (object == null) return false;
         if (!(object instanceof ObjectClass)) return false;
 

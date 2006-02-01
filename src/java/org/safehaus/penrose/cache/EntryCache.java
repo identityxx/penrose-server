@@ -41,12 +41,12 @@ public class EntryCache {
     public final static String DEFAULT_CACHE_NAME  = "Entry Cache";
     public final static String DEFAULT_CACHE_CLASS = DefaultEntryCache.class.getName();
 
-    private CacheConfig cacheConfig;
+    CacheConfig cacheConfig;
     ConnectionManager connectionManager;
     PenroseConfig penroseConfig;
     PartitionManager partitionManager;
 
-    private Map caches = new TreeMap();
+    public Map caches = new TreeMap();
     public Collection listeners = new ArrayList();
 
     public void addListener(EntryCacheListener listener) {
@@ -72,7 +72,7 @@ public class EntryCache {
 
         Partition partition = partitionManager.getPartition(entryMapping);
 
-        EntryCacheStorage cacheStorage = new InMemoryEntryCacheStorage();
+        EntryCacheStorage cacheStorage = new EntryCacheStorage();
         cacheStorage.setCacheConfig(cacheConfig);
         cacheStorage.setConnectionManager(connectionManager);
         cacheStorage.setPartition(partition);
@@ -100,40 +100,6 @@ public class EntryCache {
         getCacheStorage(entryMapping).add(filter, dn);
     }
     
-    public Collection getCacheStorages(Partition partition, EntryMapping entryMapping) throws Exception {
-
-        Collection list = new ArrayList();
-
-        EntryMapping parentMapping = partition.getParent(entryMapping);
-
-        if (parentMapping == null) {
-            //log.debug("Entry "+entryMapping.getDn()+" has no parent mapping");
-            EntryCacheStorage cacheStorage = getCacheStorage(entryMapping);
-            list.add(cacheStorage);
-            return list;
-        }
-
-        Collection parentCacheStorages = getCacheStorages(partition, parentMapping);
-
-        for (Iterator i=parentCacheStorages.iterator(); i.hasNext(); ) {
-            EntryCacheStorage parentCacheStorage = (EntryCacheStorage)i.next();
-
-            Collection parentDns = parentCacheStorage.search((Filter)null, null);
-            if (parentDns == null) continue;
-
-            for (Iterator j=parentDns.iterator(); j.hasNext(); ) {
-                String parentDn = (String)j.next();
-
-                //log.debug("Returning cache storage "+entryMapping.getRdn()+","+parentDn);
-
-                EntryCacheStorage cacheStorage = getCacheStorage(entryMapping);
-                list.add(cacheStorage);
-            }
-        }
-
-        return list;
-    }
-
     public Collection search(EntryMapping entryMapping) throws Exception {
         return getCacheStorage(entryMapping).search((Filter)null, null);
     }
@@ -152,26 +118,6 @@ public class EntryCache {
 
         EntryCacheEvent event = new EntryCacheEvent(entry, EntryCacheEvent.CACHE_ADDED);
         postEvent(event);
-    }
-
-    public void postEvent(EntryCacheEvent event) throws Exception {
-
-        for (Iterator i=listeners.iterator(); i.hasNext(); ) {
-            EntryCacheListener listener = (EntryCacheListener)i.next();
-
-            try {
-                switch (event.getType()) {
-                    case EntryCacheEvent.CACHE_ADDED:
-                        listener.cacheAdded(event);
-                        break;
-                    case EntryCacheEvent.CACHE_REMOVED:
-                        listener.cacheRemoved(event);
-                        break;
-                }
-            } catch (Exception e) {
-                log.debug(e.getMessage(), e);
-            }
-        }
     }
 
     public void put(EntryMapping entryMapping, Filter filter, Collection dns) throws Exception {
@@ -330,5 +276,25 @@ public class EntryCache {
 
     public void setCacheConfig(CacheConfig cacheConfig) {
         this.cacheConfig = cacheConfig;
+    }
+
+    public void postEvent(EntryCacheEvent event) throws Exception {
+
+        for (Iterator i=listeners.iterator(); i.hasNext(); ) {
+            EntryCacheListener listener = (EntryCacheListener)i.next();
+
+            try {
+                switch (event.getType()) {
+                    case EntryCacheEvent.CACHE_ADDED:
+                        listener.cacheAdded(event);
+                        break;
+                    case EntryCacheEvent.CACHE_REMOVED:
+                        listener.cacheRemoved(event);
+                        break;
+                }
+            } catch (Exception e) {
+                log.debug(e.getMessage(), e);
+            }
+        }
     }
 }
