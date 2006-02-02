@@ -67,7 +67,7 @@ public class PenroseAuthenticator extends AbstractAuthenticator {
         String rootDn = penroseConfig.getRootUserConfig().getDn();
         String rootPassword = penroseConfig.getRootUserConfig().getPassword();
 
-        log.info("Login "+dn);
+        //log.info("Login "+dn);
 
         if ("uid=admin,ou=system".equals(dn)) {
             throw new LdapAuthenticationException();

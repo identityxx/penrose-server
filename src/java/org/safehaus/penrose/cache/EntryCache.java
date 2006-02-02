@@ -86,9 +86,13 @@ public class EntryCache {
     public EntryCacheStorage getCacheStorage(EntryMapping entryMapping) throws Exception {
 
         String key = entryMapping.getDn();
+        //log.debug("Getting cache storage for "+key);
+        //log.debug("entry cache: "+caches.keySet());
+
         EntryCacheStorage cacheStorage = (EntryCacheStorage)caches.get(key);
 
         if (cacheStorage == null) {
+            //log.debug("Creating new cache storage.");
             cacheStorage = createCacheStorage(entryMapping);
             caches.put(key, cacheStorage);
         }
@@ -101,7 +105,7 @@ public class EntryCache {
     }
     
     public Collection search(EntryMapping entryMapping) throws Exception {
-        return getCacheStorage(entryMapping).search((Filter)null, null);
+        return getCacheStorage(entryMapping).search(null, (Filter)null);
     }
 
     public Collection search(EntryMapping entryMapping, SourceConfig sourceConfig, Row filter) throws Exception {
@@ -109,7 +113,7 @@ public class EntryCache {
     }
 
     public Collection search(EntryMapping entryMapping, String parentDn, Filter filter) throws Exception {
-        return getCacheStorage(entryMapping).search(filter, parentDn);
+        return getCacheStorage(entryMapping).search(parentDn, filter);
     }
 
     public void put(Entry entry) throws Exception {
@@ -222,7 +226,7 @@ public class EntryCache {
             EntryMapping entryMapping = (EntryMapping)i.next();
 
             EntryCacheStorage entryCacheStorage = getCacheStorage(entryMapping);
-            Collection dns = entryCacheStorage.search((Filter)null, null);
+            Collection dns = entryCacheStorage.search(null, (Filter)null);
             if (dns == null) continue;
 
             Collection children = partition.getChildren(entryMapping);

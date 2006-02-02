@@ -855,12 +855,12 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
     /**
      * @return DNs (Collection of Strings)
      */
-    public Collection search(Filter filter, String parentDn) throws Exception {
+    public Collection search(String baseDn, Filter filter) throws Exception {
 
         log.debug(Formatter.displaySeparator(80));
         log.debug(Formatter.displayLine("Searching entry cache for "+entryMapping.getDn(), 80));
         log.debug(Formatter.displayLine("Filter: "+filter, 80));
-        log.debug(Formatter.displayLine("Parent DN: "+parentDn, 80));
+        log.debug(Formatter.displayLine("Base DN: "+baseDn, 80));
         log.debug(Formatter.displaySeparator(80));
 
         Collection results = new ArrayList();
@@ -898,11 +898,11 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
             whereClause.append(".id = t.id)");
         }
 
-        if (parentDn != null) {
+        if (baseDn != null) {
             if (whereClause.length() > 0) whereClause.append(" and ");
 
             whereClause.append("(t.parentDn = ?)");
-            parameters.add(parentDn);
+            parameters.add(baseDn);
         }
 
         String sql = "select "+selectClause+" from "+fromClause;

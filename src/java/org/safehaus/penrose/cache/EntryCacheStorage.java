@@ -118,7 +118,7 @@ public class EntryCacheStorage {
     /**
      * @return DNs (Collection of String)
      */
-    public Collection search(Filter filter, String parentDn) throws Exception {
+    public Collection search(String baseDn, Filter filter) throws Exception {
         return null;
     }
 
