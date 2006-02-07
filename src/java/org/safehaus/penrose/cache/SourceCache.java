@@ -51,7 +51,7 @@ public class SourceCache {
 
         Partition partition = partitionManager.getPartition(sourceConfig);
 
-        SourceCacheStorage sourceCacheStorage = new InMemorySourceCacheStorage();
+        SourceCacheStorage sourceCacheStorage = new SourceCacheStorage();
         sourceCacheStorage.setSourceDefinition(sourceConfig);
         sourceCacheStorage.setPartition(partition);
         sourceCacheStorage.setConnector(connector);

@@ -32,7 +32,7 @@ import java.util.*;
 /**
  * @author Endi S. Dewata
  */
-public abstract class SourceCacheStorage {
+public class SourceCacheStorage {
 
     Logger log = Logger.getLogger(getClass());
 
@@ -106,9 +106,16 @@ public abstract class SourceCacheStorage {
         if (s != null) expiration = Integer.parseInt(s);
     }
 
-    public abstract int getLastChangeNumber() throws Exception;
-    public abstract void setLastChangeNumber(int lastChangeNumber) throws Exception;
-    public abstract Map load(Collection filters, Collection missingKeys) throws Exception;
+    public int getLastChangeNumber() throws Exception {
+        return -1;
+    }
+
+    public void setLastChangeNumber(int lastChangeNumber) throws Exception {
+    }
+
+    public Map load(Collection filters, Collection missingKeys) throws Exception {
+        return new HashMap();
+    }
 
     public void create() throws Exception {
     }
