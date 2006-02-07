@@ -20,6 +20,7 @@ package org.safehaus.penrose.handler;
 import org.safehaus.penrose.session.PenroseSearchResults;
 import org.safehaus.penrose.session.PenroseSession;
 import org.safehaus.penrose.Penrose;
+import org.safehaus.penrose.util.Formatter;
 import org.safehaus.penrose.pipeline.PipelineAdapter;
 import org.safehaus.penrose.pipeline.PipelineEvent;
 import org.safehaus.penrose.interpreter.Interpreter;
@@ -202,20 +203,20 @@ public class SearchHandler {
             ) throws Exception {
 
         if (log.isDebugEnabled()) {
-            log.debug(org.safehaus.penrose.util.Formatter.displaySeparator(80));
-            log.debug(org.safehaus.penrose.util.Formatter.displayLine("FIND", 80));
-            log.debug(org.safehaus.penrose.util.Formatter.displayLine("Entry: "+entryMapping.getDn(), 80));
-            log.debug(org.safehaus.penrose.util.Formatter.displayLine("Parents:", 80));
+            log.debug(Formatter.displaySeparator(80));
+            log.debug(Formatter.displayLine("FIND", 80));
+            log.debug(Formatter.displayLine("Entry: "+entryMapping.getDn(), 80));
+            log.debug(Formatter.displayLine("Parents:", 80));
 
             for (Iterator i=path.iterator(); i.hasNext(); ) {
                 Entry entry = (Entry)i.next();
                 String dn = entry.getDn();
                 //Map map = (Map)i.next();
                 //String dn = (String)map.get("dn");
-                log.debug(org.safehaus.penrose.util.Formatter.displayLine(" - "+dn, 80));
+                log.debug(Formatter.displayLine(" - "+dn, 80));
             }
 
-            log.debug(org.safehaus.penrose.util.Formatter.displaySeparator(80));
+            log.debug(Formatter.displaySeparator(80));
         }
 
         AttributeValues parentSourceValues = new AttributeValues();
@@ -235,10 +236,10 @@ public class SearchHandler {
         Entry entry = (Entry)results.next();
 
         if (log.isDebugEnabled()) {
-            log.debug(org.safehaus.penrose.util.Formatter.displaySeparator(80));
-            log.debug(org.safehaus.penrose.util.Formatter.displayLine("FIND RESULT", 80));
-            log.debug(org.safehaus.penrose.util.Formatter.displayLine("dn: "+entry.getDn(), 80));
-            log.debug(org.safehaus.penrose.util.Formatter.displaySeparator(80));
+            log.debug(Formatter.displaySeparator(80));
+            log.debug(Formatter.displayLine("FIND RESULT", 80));
+            log.debug(Formatter.displayLine("dn: "+entry.getDn(), 80));
+            log.debug(Formatter.displaySeparator(80));
         }
 
         return entry;
@@ -546,21 +547,21 @@ public class SearchHandler {
             Collection attributeNames) throws Exception {
 
         if (log.isDebugEnabled()) {
-            log.debug(org.safehaus.penrose.util.Formatter.displaySeparator(80));
-            log.debug(org.safehaus.penrose.util.Formatter.displayLine("SEARCH", 80));
-            log.debug(org.safehaus.penrose.util.Formatter.displayLine("Entry: "+entryMapping.getDn(), 80));
-            log.debug(org.safehaus.penrose.util.Formatter.displayLine("Filter: "+filter, 80));
-            log.debug(org.safehaus.penrose.util.Formatter.displayLine("Parents:", 80));
+            log.debug(Formatter.displaySeparator(80));
+            log.debug(Formatter.displayLine("SEARCH", 80));
+            log.debug(Formatter.displayLine("Entry: "+entryMapping.getDn(), 80));
+            log.debug(Formatter.displayLine("Filter: "+filter, 80));
+            log.debug(Formatter.displayLine("Parents:", 80));
 
             if (parentSourceValues != null) {
                 for (Iterator i = parentSourceValues.getNames().iterator(); i.hasNext(); ) {
                     String name = (String)i.next();
                     Collection values = parentSourceValues.get(name);
-                    log.debug(org.safehaus.penrose.util.Formatter.displayLine(" - "+name+": "+values, 80));
+                    log.debug(Formatter.displayLine(" - "+name+": "+values, 80));
                 }
             }
 
-            log.debug(org.safehaus.penrose.util.Formatter.displaySeparator(80));
+            log.debug(Formatter.displaySeparator(80));
         }
 
         final PenroseSearchResults results = new PenroseSearchResults();

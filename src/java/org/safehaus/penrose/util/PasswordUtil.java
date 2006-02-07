@@ -94,7 +94,15 @@ public class PasswordUtil {
 
         } else if ("BigInteger".equals(encoding)) {
             BigInteger bigInteger = new BigInteger(string, 16);
+            int length = (string.length()+1) / 2;
             bytes = bigInteger.toByteArray();
+            if (bytes.length > length) {
+                byte[] b = new byte[length];
+                for (int i=0; i<length; i++) {
+                    b[i] = bytes[bytes.length-length+i];
+                }
+                bytes = b;
+            }
 
         } else {
             bytes = string.getBytes();

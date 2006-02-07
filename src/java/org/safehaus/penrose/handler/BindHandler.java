@@ -21,6 +21,7 @@ import org.safehaus.penrose.session.PenroseSession;
 import org.safehaus.penrose.event.BindEvent;
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.util.PasswordUtil;
+import org.safehaus.penrose.util.Formatter;
 import org.ietf.ldap.LDAPDN;
 import org.ietf.ldap.LDAPException;
 import org.apache.log4j.Logger;
@@ -40,8 +41,11 @@ public class BindHandler {
 
     public int bind(PenroseSession session, String dn, String password) throws Exception {
 
-        log.info("BIND:");
-        log.info(" - DN      : "+dn);
+        log.debug(Formatter.displaySeparator(80));
+        log.debug(Formatter.displayLine("BIND:", 80));
+        log.debug(Formatter.displayLine(" - DN       : "+dn, 80));
+        log.debug(Formatter.displayLine(" - Password : "+password, 80));
+        log.debug(Formatter.displaySeparator(80));
 
         BindEvent beforeBindEvent = new BindEvent(this, BindEvent.BEFORE_BIND, session, dn, password);
         sessionHandler.postEvent(dn, beforeBindEvent);
