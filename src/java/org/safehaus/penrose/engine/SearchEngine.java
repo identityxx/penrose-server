@@ -153,7 +153,7 @@ public class SearchEngine {
         Collection dns = new TreeSet();
         Map childDns = new HashMap();
 
-        log.debug("Search results:");
+        log.debug("Search results for "+entryMapping.getDn()+":");
         for (Iterator i=values.iterator(); i.hasNext(); ) {
             AttributeValues sv = (AttributeValues)i.next();
             //log.debug("==> "+sv);

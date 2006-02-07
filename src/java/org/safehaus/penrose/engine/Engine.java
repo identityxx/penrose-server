@@ -578,6 +578,7 @@ public class Engine {
 
         Partition partition = partitionManager.getPartition(entryMapping);
         SourceConfig sourceConfig = partition.getSourceConfig(sourceMapping.getSourceName());
+        //log.debug("Source "+sourceMapping.getSourceName()+" in partition "+partition.getPartitionConfig().getName()+": "+sourceConfig);
 
         Collection uniqueFields = new TreeSet();
         Collection pkFields = new TreeSet();
@@ -929,11 +930,14 @@ public class Engine {
         Collection rdns = computeRdn(interpreter, entryMapping);
         Collection dns = new ArrayList();
 
+        //log.debug("Computing DNs for "+entryMapping.getDn());
+
         for (Iterator i=parentDns.iterator(); i.hasNext(); ) {
             String parentDn = (String)i.next();
             for (Iterator j=rdns.iterator(); j.hasNext(); ) {
                 Row rdn = (Row)j.next();
                 String dn = rdn +(parentDn == null ? "" : ","+parentDn);
+                //log.debug(" - "+dn);
                 dns.add(dn);
             }
         }
