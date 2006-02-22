@@ -18,8 +18,8 @@
 package org.safehaus.penrose.util;
 
 import org.ietf.ldap.LDAPException;
-import org.apache.ldap.common.exception.LdapNamingException;
-import org.apache.ldap.common.message.ResultCodeEnum;
+import org.apache.directory.shared.ldap.exception.LdapNamingException;
+import org.apache.directory.shared.ldap.message.ResultCodeEnum;
 
 import javax.naming.NamingException;
 import javax.naming.NoPermissionException;

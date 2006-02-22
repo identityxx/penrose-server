@@ -17,11 +17,11 @@
  */
 package org.safehaus.penrose.ldap;
 
-import org.apache.ldap.server.interceptor.BaseInterceptor;
-import org.apache.ldap.server.interceptor.NextInterceptor;
-import org.apache.ldap.server.configuration.InterceptorConfiguration;
-import org.apache.ldap.server.DirectoryServiceConfiguration;
-import org.apache.ldap.common.filter.ExprNode;
+import org.apache.directory.server.core.interceptor.BaseInterceptor;
+import org.apache.directory.server.core.interceptor.NextInterceptor;
+import org.apache.directory.server.core.configuration.InterceptorConfiguration;
+import org.apache.directory.server.core.DirectoryServiceConfiguration;
+import org.apache.directory.shared.ldap.filter.ExprNode;
 import org.apache.log4j.Logger;
 import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.session.PenroseSession;

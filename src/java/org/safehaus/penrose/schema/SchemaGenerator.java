@@ -17,8 +17,15 @@
  */
 package org.safehaus.penrose.schema;
 
-import org.apache.ldap.server.tools.schema.DirectorySchemaTool;
-import org.apache.ldap.server.schema.bootstrap.AbstractBootstrapSchema;
+import org.apache.directory.server.core.tools.schema.DirectorySchemaToolMojo;
+import org.apache.directory.server.core.schema.bootstrap.AbstractBootstrapSchema;
+import org.apache.maven.embedder.MavenEmbedder;
+import org.apache.maven.embedder.MavenEmbedderConsoleLogger;
+import org.apache.maven.embedder.PlexusLoggerAdapter;
+import org.apache.maven.project.MavenProject;
+import org.apache.maven.monitor.event.EventMonitor;
+import org.apache.maven.monitor.event.DefaultEventMonitor;
+import org.apache.maven.cli.ConsoleDownloadMonitor;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -26,7 +33,9 @@ import java.io.FileInputStream;
 import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
 import java.util.jar.JarEntry;
+import java.util.Collections;
 import java.lang.reflect.Method;
+import java.lang.reflect.Field;
 
 /**
  * @author Endi S. Dewata
@@ -63,17 +72,78 @@ public class SchemaGenerator {
     }
 
     public void generate() throws Exception {
+
         String owner = "uid=admin,ou=system";
-        String pkg = "org.apache.ldap.server.schema.bootstrap";
+        String pkg = "org.apache.directory.server.core.schema.bootstrap";
         String dependencies[] = new String[] { "system", "core" };
 
-        AbstractBootstrapSchema schema = new AbstractBootstrapSchema(owner, name, pkg, dependencies) {};
+        ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
 
-        DirectorySchemaTool tool = new DirectorySchemaTool();
-        tool.setSchema(schema);
-        tool.setSchemaSrcDir(schemaDir.getAbsolutePath());
-        tool.setSchemaTargetDir(sourceDir.getAbsolutePath());
-        tool.generate();
+        MavenEmbedder maven = new MavenEmbedder();
+
+        maven.setClassLoader(classLoader);
+        maven.setLogger(new MavenEmbedderConsoleLogger());
+        maven.start();
+
+        File homeDir = new File(System.getProperty("penrose.home"));
+        File pomFile = new File(homeDir, "pom.xml");
+
+        MavenProject pom = maven.readProjectWithDependencies(pomFile);
+
+        org.apache.directory.server.core.tools.schema.Schema schemas[] = new org.apache.directory.server.core.tools.schema.Schema[1];
+        schemas[0] = new org.apache.directory.server.core.tools.schema.Schema();
+        schemas[0].setName(name);
+        schemas[0].setDependencies(dependencies);
+        schemas[0].setPkg(pkg);
+        schemas[0].setOwner(owner);
+
+        DirectorySchemaToolMojo tool = new DirectorySchemaToolMojo();
+
+        Class clazz = tool.getClass();
+
+        Field schemaField = clazz.getDeclaredField("schemas");
+        schemaField.setAccessible(true);
+        schemaField.set(tool, schemas);
+
+        Field verboseOutputField = clazz.getDeclaredField("verboseOutput");
+        verboseOutputField.setAccessible(true);
+        verboseOutputField.setBoolean(tool, true);
+
+        Field sourceDirectoryField = clazz.getDeclaredField("sourceDirectory");
+        sourceDirectoryField.setAccessible(true);
+        sourceDirectoryField.set(tool, schemaDir);
+
+        Field outputDirectoryField = clazz.getDeclaredField("outputDirectory");
+        outputDirectoryField.setAccessible(true);
+        outputDirectoryField.set(tool, sourceDir);
+
+        Field defaultPackageField = clazz.getDeclaredField("defaultPackage");
+        defaultPackageField.setAccessible(true);
+        defaultPackageField.set(tool, pkg);
+
+        Field defaultOwnerField = clazz.getDeclaredField("defaultOwner");
+        defaultOwnerField.setAccessible(true);
+        defaultOwnerField.set(tool, owner);
+
+        Field projectField = clazz.getDeclaredField("project");
+        projectField.setAccessible(true);
+        projectField.set(tool, pom);
+
+        tool.execute();
+/*
+        EventMonitor eventMonitor = new DefaultEventMonitor(
+                new PlexusLoggerAdapter(new MavenEmbedderConsoleLogger())
+        );
+
+        maven.execute(
+                pom,
+                Collections.singletonList("package"),
+                eventMonitor,
+                new ConsoleDownloadMonitor(),
+                null,
+                targetDirectory
+        );
+*/
     }
 
     public void compile() throws Exception {
@@ -178,12 +248,12 @@ public class SchemaGenerator {
         File file = new File(args[0]);
         file = file.getAbsoluteFile();
 
-        System.out.print("Generating schema classes for "+file.getPath()+"...");
-        System.out.flush();
+        //System.out.print("Generating schema classes for "+file.getPath()+"...");
+        //System.out.flush();
 
         SchemaGenerator sg = new SchemaGenerator(file);
         sg.run();
 
-        System.out.println("done.");
+        //System.out.println("done.");
     }
 }

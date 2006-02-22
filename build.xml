@@ -138,6 +138,7 @@
         <copy todir="target/dist" file="LICENSE.txt"/>
         <copy todir="target/dist" file="COPYING.txt"/>
         <copy todir="target/dist" file="INSTALL-BINARY.txt"/>
+        <copy todir="target/dist" file="pom.xml"/>
         <copy todir="target/dist/etc">
             <fileset dir="etc" includes="**/*"/>
         </copy>

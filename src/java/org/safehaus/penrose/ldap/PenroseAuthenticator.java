@@ -17,14 +17,14 @@
  */
 package org.safehaus.penrose.ldap;
 
-import org.apache.ldap.server.authn.AbstractAuthenticator;
-import org.apache.ldap.server.authn.LdapPrincipal;
-import org.apache.ldap.server.jndi.ServerContext;
-import org.apache.ldap.server.invocation.Invocation;
-import org.apache.ldap.server.invocation.InvocationStack;
-import org.apache.ldap.server.partition.DirectoryPartitionNexusProxy;
-import org.apache.ldap.common.exception.LdapAuthenticationException;
-import org.apache.ldap.common.aci.AuthenticationLevel;
+import org.apache.directory.server.core.authn.AbstractAuthenticator;
+import org.apache.directory.server.core.authn.LdapPrincipal;
+import org.apache.directory.server.core.jndi.ServerContext;
+import org.apache.directory.server.core.invocation.Invocation;
+import org.apache.directory.server.core.invocation.InvocationStack;
+import org.apache.directory.server.core.partition.DirectoryPartitionNexusProxy;
+import org.apache.directory.shared.ldap.exception.LdapAuthenticationException;
+import org.apache.directory.shared.ldap.aci.AuthenticationLevel;
 import org.apache.log4j.Logger;
 import org.ietf.ldap.LDAPException;
 import org.safehaus.penrose.Penrose;

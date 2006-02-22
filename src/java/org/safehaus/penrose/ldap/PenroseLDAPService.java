@@ -21,9 +21,10 @@ import org.safehaus.penrose.service.Service;
 import org.safehaus.penrose.service.ServiceConfig;
 import org.safehaus.penrose.schema.SchemaConfig;
 import org.safehaus.penrose.config.PenroseConfig;
-import org.apache.ldap.server.configuration.*;
-import org.apache.ldap.server.jndi.ServerContextFactory;
-import org.apache.ldap.server.jndi.CoreContextFactory;
+import org.apache.directory.server.core.configuration.*;
+import org.apache.directory.server.jndi.ServerContextFactory;
+import org.apache.directory.server.core.jndi.CoreContextFactory;
+import org.apache.directory.server.configuration.MutableServerStartupConfiguration;
 
 import javax.naming.Context;
 import javax.naming.directory.InitialDirContext;
