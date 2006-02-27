@@ -39,16 +39,21 @@ public class PenroseServiceTest extends TestCase {
     PenroseConfig penroseConfig;
     Penrose penrose;
 
-    public void setUp() throws Exception {
+    public PenroseServiceTest() {
+        //PatternLayout patternLayout = new PatternLayout("[%d{MM/dd/yyyy HH:mm:ss}] %m%n");
+        PatternLayout patternLayout = new PatternLayout("%-20C{1} [%4L] %m%n");
 
-        ConsoleAppender appender = new ConsoleAppender(new PatternLayout("[%d{MM/dd/yyyy HH:mm:ss}] %m%n"));
+        ConsoleAppender appender = new ConsoleAppender(patternLayout);
         BasicConfigurator.configure(appender);
 
         Logger rootLogger = Logger.getRootLogger();
         rootLogger.setLevel(Level.OFF);
 
         Logger logger = Logger.getLogger("org.safehaus.penrose");
-        logger.setLevel(Level.DEBUG);
+        logger.setLevel(Level.INFO);
+    }
+
+    public void setUp() throws Exception {
 
         penroseConfig = new DefaultPenroseConfig();
 

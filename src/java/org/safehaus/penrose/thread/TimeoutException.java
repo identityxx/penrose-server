@@ -17,10 +17,6 @@
  */
 package org.safehaus.penrose.thread;
 
-
-/**
- * @author Administrator
- */
 public class TimeoutException extends Exception {
 	
 	String msg;

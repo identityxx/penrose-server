@@ -55,6 +55,8 @@ public class Entry {
         this.entryMapping = entryMapping;
         this.sourceValues = new AttributeValues();
         this.attributeValues = attributes;
+
+        attributeValues.remove("objectClass");
     }
 
     public Entry(String dn, EntryMapping entryMapping, AttributeValues sourceValues, AttributeValues attributeValues) {
@@ -63,6 +65,8 @@ public class Entry {
         this.entryMapping = entryMapping;
         this.sourceValues = sourceValues;
         this.attributeValues = attributeValues;
+
+        attributeValues.remove("objectClass");
     }
 
     public String getDn() {

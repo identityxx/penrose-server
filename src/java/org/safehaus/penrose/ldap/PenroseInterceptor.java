@@ -21,9 +21,16 @@ import org.apache.directory.server.core.interceptor.BaseInterceptor;
 import org.apache.directory.server.core.interceptor.NextInterceptor;
 import org.apache.directory.server.core.configuration.InterceptorConfiguration;
 import org.apache.directory.server.core.DirectoryServiceConfiguration;
+import org.apache.directory.server.core.authn.AuthenticationService;
+import org.apache.directory.server.core.authn.LdapPrincipal;
+import org.apache.directory.server.core.invocation.InvocationStack;
+import org.apache.directory.server.core.jndi.ServerContext;
+import org.apache.directory.server.core.jndi.LdapJndiProperties;
 import org.apache.directory.shared.ldap.filter.ExprNode;
+import org.apache.directory.shared.ldap.exception.LdapAuthenticationException;
 import org.apache.log4j.Logger;
 import org.safehaus.penrose.Penrose;
+import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.session.PenroseSession;
 import org.safehaus.penrose.session.PenroseSearchResults;
 import org.safehaus.penrose.session.PenroseSearchControls;
@@ -61,6 +68,57 @@ public class PenroseInterceptor extends BaseInterceptor {
         this.factoryCfg = factoryCfg;
     }
 
+/*
+    public void bind(
+            NextInterceptor next,
+            Name bindDn,
+            byte[] credentials,
+            List mechanisms,
+            String saslAuthId) throws NamingException {
+
+        log.debug("Binding as \""+bindDn+"\"");
+        //log.debug(" - mechanisms: "+mechanisms);
+        //log.debug(" - sslAuthId: "+saslAuthId);
+
+        String password = new String((byte[])credentials);
+
+        try {
+            PenroseConfig penroseConfig = penrose.getPenroseConfig();
+            String rootDn = penroseConfig.getRootUserConfig().getDn();
+
+            if (bindDn.equals(rootDn)) {
+                next.bind(bindDn, credentials, mechanisms, saslAuthId);
+
+            } else {
+                PenroseSession session = penrose.newSession();
+                if (session == null) throw new ServiceUnavailableException();
+
+                int rc = session.bind(bindDn.toString(), password);
+                session.close();
+
+                if (rc != LDAPException.SUCCESS) {
+                    throw new LdapAuthenticationException();
+                }
+
+                log.info("Login success.");
+                next.bind(bindDn, credentials, mechanisms, saslAuthId);
+            }
+
+        } catch (NamingException e) {
+            log.info("Login failed.");
+            throw e;
+
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+            throw new NamingException(e.getMessage());
+        }
+    }
+
+    public void unbind(NextInterceptor nextInterceptor, Name bindDn) throws NamingException {
+        log.debug("Unbinding as \""+bindDn+"\"");
+        nextInterceptor.unbind(bindDn);
+    }
+*/
     public void add(
             NextInterceptor next,
             String upName,
@@ -382,7 +440,7 @@ public class PenroseInterceptor extends BaseInterceptor {
             }
 
             //log.debug("===============================================================================");
-            log.debug("lookup(\""+dn+"\", "+Arrays.asList(attrIds)+")");
+            log.debug("Looking up \""+dn+"\" "+Arrays.asList(attrIds)+" as \""+principalDn+"\"");
 
             PenroseSession session = penrose.newSession();
             if (session == null) throw new ServiceUnavailableException();

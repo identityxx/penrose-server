@@ -96,6 +96,8 @@ public class SessionHandler {
 
         if (status != STOPPED) return;
 
+        //log.debug("Starting SessionHandler...");
+
         try {
             status = STARTING;
 
@@ -105,6 +107,8 @@ public class SessionHandler {
             initSessionManager();
 
             status = STARTED;
+
+            //log.debug("SessionHandler started.");
 
         } catch (Exception e) {
             status = STOPPED;

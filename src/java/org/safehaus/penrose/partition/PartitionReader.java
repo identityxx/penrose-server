@@ -46,18 +46,9 @@ public class PartitionReader {
         this.home = home;
     }
 
-    public Partition read() throws Exception {
-        return read((String)null);
-    }
-
     public Partition read(PartitionConfig partitionConfig) throws Exception {
-        Partition partition = read(partitionConfig.getPath());
-        partition.setPartitionConfig(partitionConfig);
-        return partition;
-    }
-
-    public Partition read(String path) throws Exception {
-        Partition partition = new Partition();
+        Partition partition = new Partition(partitionConfig);
+        String path = partitionConfig.getPath();
         loadConnectionsConfig(path, partition);
         loadSourcesConfig(path, partition);
         loadMappingConfig(path, partition);

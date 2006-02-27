@@ -111,7 +111,7 @@ public class LoadGraphVisitor extends GraphVisitor {
 
         SourceConfig sourceConfig = partition.getSourceConfig(sourceMapping.getSourceName());
 
-        PenroseSearchResults tmp = engine.getConnector().search(sourceConfig, filter);
+        PenroseSearchResults tmp = engine.getConnector().search(partition, sourceConfig, filter);
 
         Collection list = new ArrayList();
         for (Iterator i=tmp.iterator(); i.hasNext(); ) {

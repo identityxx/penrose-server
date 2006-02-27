@@ -17,8 +17,7 @@
  */
 package org.safehaus.penrose.management;
 
-import org.apache.log4j.LogManager;
-import org.apache.log4j.Logger;
+import org.apache.log4j.*;
 import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.PenroseServer;
 import org.safehaus.penrose.service.ServiceManager;

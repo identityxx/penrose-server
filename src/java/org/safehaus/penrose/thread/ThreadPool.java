@@ -17,43 +17,46 @@
  */
 package org.safehaus.penrose.thread;
 
-import org.safehaus.penrose.thread.ObjectFIFO;
+import org.apache.log4j.Logger;
 
-/**
- * @author Administrator
- */
-public class ThreadPool implements ThreadPoolMBean {
+import java.util.Collection;
+import java.util.Iterator;
 
-	private ObjectFIFO idleWorkers;
-	private ThreadPoolWorker[] workerList;
+public class ThreadPool {
+
+    Logger log = Logger.getLogger(getClass());
+
+	private Queue idleWorkers;
+	private ThreadWorker[] workers;
 	
 	public ThreadPool(int numberOfThreads) {
+
+        //log.debug("Creating ThreadPool("+numberOfThreads+")");
+
 		// make sure that it is at least one
 		numberOfThreads = Math.max(1, numberOfThreads);
 		
-		idleWorkers = new ObjectFIFO(numberOfThreads);
-		workerList = new ThreadPoolWorker[numberOfThreads];
+		idleWorkers = new Queue();
+		workers = new ThreadWorker[numberOfThreads];
 		
-		for (int i=0; i<workerList.length; i++) {
-			workerList[i] = new ThreadPoolWorker(idleWorkers);
+		for (int i=0; i<workers.length; i++) {
+			workers[i] = new ThreadWorker(idleWorkers);
 		}
 	}
 	
 	public void execute(Runnable target) throws InterruptedException {
 		// block (forever) until a worker is avaiable
-		ThreadPoolWorker worker = (ThreadPoolWorker) idleWorkers.remove();
+        //log.debug("Getting idle worker...("+idleWorkers.size()+")");
+		ThreadWorker worker = (ThreadWorker)idleWorkers.remove();
+        //log.debug("Running worker "+worker.getId());
 		worker.process(target);
 	}
 	
 	public void stopRequestIdleWorkers() {
-		try {
-			Object[] idle = idleWorkers.removeAll();
-			for (int i=0; i<idle.length; i++) {
-				((ThreadPoolWorker) idle[i]).stopRequest();
-			}
-		} catch (InterruptedException ex) {
-			Thread.currentThread().interrupt(); // re-assert
-		}
+        Collection c = idleWorkers.getAll();
+        for (Iterator i=c.iterator(); i.hasNext(); ) {
+            ((ThreadWorker)i.next()).stopRequest();
+        }
 	}
 	
 	public void stopRequestAllWorkers() {
@@ -68,9 +71,9 @@ public class ThreadPool implements ThreadPoolMBean {
 		}
 		
 		// Step through the list of all workers
-		for (int i=0; i<workerList.length; i++) {
-			if (workerList[i].isAlive()) {
-				workerList[i].stopRequest();
+		for (int i=0; i<workers.length; i++) {
+			if (workers[i].isAlive()) {
+				workers[i].stopRequest();
 			}
 		}
 	}
@@ -87,9 +90,9 @@ public class ThreadPool implements ThreadPoolMBean {
 		}
 		
 		// Step through the list of all workers
-		for (int i=0; i<workerList.length; i++) {
-			if (workerList[i].isAlive()) {
-				workerList[i].stopRequest();
+		for (int i=0; i<workers.length; i++) {
+			if (workers[i].isAlive()) {
+				workers[i].stopRequest();
 			}
 		}
 	}

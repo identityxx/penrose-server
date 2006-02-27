@@ -19,6 +19,8 @@ package org.safehaus.penrose.connector;
 
 import org.apache.log4j.Logger;
 import org.safehaus.penrose.partition.ConnectionConfig;
+import org.safehaus.penrose.partition.PartitionManager;
+import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.config.PenroseConfig;
 
 import java.util.*;
@@ -34,11 +36,40 @@ public class ConnectionManager {
     public Map connectionConfigs = new TreeMap();
     public Map connections = new TreeMap();
 
-    public void addConnectionConfig(ConnectionConfig connectionConfig) throws Exception {
+    private PartitionManager partitionManager;
 
-        String name = connectionConfig.getName();
-        if (connectionConfigs.get(name) != null) throw new Exception("Duplication connection "+name);
+    public ConnectionConfig getConnectionConfig(Partition partition, String connectionName) {
+        return (ConnectionConfig)connectionConfigs.get(partition.getName()+"/"+connectionName);
+    }
 
+    public Collection getConnectionConfigs() {
+        return connectionConfigs.values();
+    }
+
+    public ConnectionConfig removeConnectionConfig(Partition partition, String connectionName) {
+        return (ConnectionConfig)connectionConfigs.remove(partition.getName()+"/"+connectionName);
+    }
+
+    public void start() throws Exception {
+        for (Iterator i=partitionManager.getPartitions().iterator(); i.hasNext(); ) {
+            Partition partition = (Partition)i.next();
+
+
+            Collection connectionConfigs = partition.getConnectionConfigs();
+            for (Iterator j = connectionConfigs.iterator(); j.hasNext();) {
+                ConnectionConfig connectionConfig = (ConnectionConfig)j.next();
+
+                init(partition, connectionConfig);
+            }
+        }
+    }
+
+    public void init(Partition partition, ConnectionConfig connectionConfig) throws Exception {
+
+        String name = partition.getName()+"/"+connectionConfig.getName();
+        if (connectionConfigs.get(name) != null) return;
+
+        log.debug("Initializing "+name+" connection.");
         connectionConfigs.put(name, connectionConfig);
 
         String adapterName = connectionConfig.getAdapterName();
@@ -51,27 +82,9 @@ public class ConnectionManager {
         connection.setConnectionConfig(connectionConfig);
         connection.setAdapterConfig(adapterConfig);
 
-        connections.put(connectionConfig.getName(), connection);
-    }
+        connection.init();
 
-    public ConnectionConfig getConnectionConfig(String connectionName) {
-        return (ConnectionConfig)connectionConfigs.get(connectionName);
-    }
-
-    public Collection getConnectionConfigs() {
-        return connectionConfigs.values();
-    }
-
-    public ConnectionConfig removeConnectionConfig(String connectionName) {
-        return (ConnectionConfig)connectionConfigs.remove(connectionName);
-    }
-
-    public void start() throws Exception {
-        for (Iterator i=connections.values().iterator(); i.hasNext(); ) {
-            Connection connection = (Connection)i.next();
-            log.debug("Initializing "+connection.getConnectionName()+" connection.");
-            connection.init();
-        }
+        connections.put(name, connection);
     }
 
     public void stop() throws Exception {
@@ -82,12 +95,17 @@ public class ConnectionManager {
         }
     }
 
-    public Connection getConnection(String connectionName) throws Exception {
-        return (Connection)connections.get(connectionName);
+    public Connection getConnection(Partition partition, String connectionName) throws Exception {
+        String partitionName = partition == null ? "DEFAULT" : partition.getName();
+        return (Connection)connections.get(partitionName+"/"+connectionName);
     }
 
     public Object openConnection(String connectionName) throws Exception {
-        Connection connection = getConnection(connectionName);
+        return openConnection(null, connectionName);
+    }
+
+    public Object openConnection(Partition partition, String connectionName) throws Exception {
+        Connection connection = getConnection(partition, connectionName);
         return connection.openConnection();
     }
 
@@ -97,5 +115,13 @@ public class ConnectionManager {
 
     public void setPenroseConfig(PenroseConfig penroseConfig) {
         this.penroseConfig = penroseConfig;
+    }
+
+    public PartitionManager getPartitionManager() {
+        return partitionManager;
+    }
+
+    public void setPartitionManager(PartitionManager partitionManager) {
+        this.partitionManager = partitionManager;
     }
 }

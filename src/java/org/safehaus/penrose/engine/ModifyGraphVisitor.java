@@ -122,7 +122,7 @@ public class ModifyGraphVisitor extends GraphVisitor {
         Partition partition = engine.getPartitionManager().getPartition(sourceMapping);
         SourceConfig sourceConfig = partition.getSourceConfig(sourceMapping.getSourceName());
 
-        returnCode = engine.getConnector().modify(sourceConfig, oldValues, newValues);
+        returnCode = engine.getConnector().modify(partition, sourceConfig, oldValues, newValues);
         if (returnCode != LDAPException.SUCCESS) return;
 
         modifiedSourceValues.remove(sourceMapping.getName());

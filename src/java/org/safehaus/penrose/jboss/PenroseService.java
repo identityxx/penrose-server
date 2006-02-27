@@ -17,8 +17,12 @@
  */
 package org.safehaus.penrose.jboss;
 
-import org.safehaus.penrose.PenroseServer;
 import org.apache.log4j.Logger;
+import org.safehaus.penrose.PenroseServer;
+import org.safehaus.penrose.service.ServiceConfig;
+import org.safehaus.penrose.config.PenroseConfig;
+
+//import org.safehaus.penrose.PenroseServer;
 
 /**
  * @author Endi S. Dewata
@@ -28,34 +32,55 @@ public class PenroseService implements PenroseServiceMBean {
     Logger log = Logger.getLogger(getClass());
 
     private String home;
-    private int port;
+    PenroseServer server;
 
     public void create() throws Exception {
-        log.debug("Creating Penrose Service");
+        log.info("Creating Penrose Service from "+home);
+
+        server = new PenroseServer(home);
+
+        PenroseConfig config = server.getPenroseConfig();
+        ServiceConfig jmxService = config.getServiceConfig("JMX");
+        jmxService.setEnabled(false);
+/*
+        MutableServerStartupConfiguration configuration = new MutableServerStartupConfiguration();
+        configuration.setLdapPort(10389);
+        configuration.setLdapsPort(10639);
+
+        Set extendedOperationHandlers = new HashSet();
+        extendedOperationHandlers.add(new GracefulShutdownHandler());
+        extendedOperationHandlers.add(new LaunchDiagnosticUiHandler());
+        configuration.setExtendedOperationHandlers(extendedOperationHandlers);
+
+        configuration.setAllowAnonymousAccess(true);
+
+        Properties env = new Properties();
+        env.setProperty(Context.PROVIDER_URL, "ou=system");
+        env.setProperty(Context.INITIAL_CONTEXT_FACTORY, ServerContextFactory.class.getName() );
+        env.setProperty(Context.SECURITY_PRINCIPAL, "uid=admin,ou=system");
+        env.setProperty(Context.SECURITY_CREDENTIALS, "secret");
+        env.setProperty(Context.SECURITY_AUTHENTICATION, "simple");
+
+        env.putAll(configuration.toJndiEnvironment());
+
+        new InitialDirContext(env);
+*/
+        log.info("Penrose Service created.");
     }
 
     public void start() throws Exception {
-        log.debug("Starting Penrose Service...");
+        log.info("Starting Penrose Service...");
 
-        PenroseServer server = new PenroseServer(home);
         server.start();
 
-        log.debug("Penrose Service started.");
+        log.info("Penrose Service started.");
     }
 
     public void stop() {
-        log.debug("Stopping Penrose Service");
+        log.info("Stopping Penrose Service");
     }
 
     public void destroy() {
-    }
-
-    public int getPort() {
-        return port;
-    }
-
-    public void setPort(int port) {
-        this.port = port;
     }
 
     public String getHome() {

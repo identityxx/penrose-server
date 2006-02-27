@@ -21,6 +21,7 @@ import org.apache.log4j.Logger;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Iterator;
 
 public class ObjectClass {
 
@@ -173,6 +174,28 @@ public class ObjectClass {
 		this.type = type;
 	}
 	
+    public boolean containsRequiredAttribute(String name) {
+        name = name.toLowerCase();
+
+        for (Iterator i=requiredAttributes.iterator(); i.hasNext(); ) {
+            String attrName = (String)i.next();
+            if (name.equals(attrName.toLowerCase())) return true;
+        }
+
+        return false;
+    }
+
+    public boolean containsOptionalAttribute(String name) {
+        name = name.toLowerCase();
+
+        for (Iterator i=optionalAttributes.iterator(); i.hasNext(); ) {
+            String attrName = (String)i.next();
+            if (name.equals(attrName.toLowerCase())) return true;
+        }
+
+        return false;
+    }
+
 	public String toString() {
 		return "ObjectClass<"+getName()+">";
 	}

@@ -87,17 +87,6 @@ public class Engine {
 
     public void init() throws Exception {
 
-        filterTool      = new EngineFilterTool(this);
-        addEngine       = new AddEngine(this);
-        deleteEngine    = new DeleteEngine(this);
-        modifyEngine    = new ModifyEngine(this);
-        modrdnEngine    = new ModRdnEngine(this);
-        searchEngine    = new SearchEngine(this);
-        loadEngine      = new LoadEngine(this);
-        mergeEngine     = new MergeEngine(this);
-        joinEngine      = new JoinEngine(this);
-        transformEngine = new TransformEngine(this);
-
         CacheConfig cacheConfig = penroseConfig.getEntryCacheConfig();
         String cacheClass = cacheConfig.getCacheClass() == null ? DEFAULT_CACHE_CLASS : cacheConfig.getCacheClass();
 
@@ -111,13 +100,28 @@ public class Engine {
         entryCache.setPartitionManager(partitionManager);
         entryCache.init();
 
+        log.debug("Initializing engine...");
+
+        filterTool      = new EngineFilterTool(this);
+        addEngine       = new AddEngine(this);
+        deleteEngine    = new DeleteEngine(this);
+        modifyEngine    = new ModifyEngine(this);
+        modrdnEngine    = new ModRdnEngine(this);
+        searchEngine    = new SearchEngine(this);
+        loadEngine      = new LoadEngine(this);
+        mergeEngine     = new MergeEngine(this);
+        joinEngine      = new JoinEngine(this);
+        transformEngine = new TransformEngine(this);
+    }
+
+    public void start() throws Exception {
+
+        //log.debug("Starting Engine...");
+
         String s = engineConfig.getParameter(EngineConfig.THREAD_POOL_SIZE);
         int threadPoolSize = s == null ? EngineConfig.DEFAULT_THREAD_POOL_SIZE : Integer.parseInt(s);
 
         threadPool = new ThreadPool(threadPoolSize);
-    }
-
-    public void start() throws Exception {
 
         for (Iterator i=partitionManager.getPartitions().iterator(); i.hasNext(); ) {
             Partition partition = (Partition)i.next();
@@ -129,6 +133,8 @@ public class Engine {
         }
 
         threadPool.execute(new RefreshThread(this));
+
+        //log.debug("Engine started.");
     }
 
     public PartitionManager getPartitionManager() {
@@ -301,10 +307,13 @@ public class Engine {
 
     public void stop() throws Exception {
         if (stopping) return;
+
+        log.debug("Stopping Engine...");
         stopping = true;
 
         // wait for all the worker threads to finish
         if (threadPool != null) threadPool.stopRequestAllWorkers();
+        log.debug("Engine stopped.");
     }
 
     public boolean isStopping() {
@@ -362,7 +371,7 @@ public class Engine {
 
                 log.debug("Bind to "+source.getName()+" as "+pk+": "+sourceValues);
 
-                int rc = connector.bind(sourceConfig, entryMapping, sourceValues, password);
+                int rc = connector.bind(partition, sourceConfig, entryMapping, sourceValues, password);
                 if (rc == LDAPException.SUCCESS) return rc;
             }
         }

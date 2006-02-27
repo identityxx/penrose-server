@@ -24,9 +24,6 @@ import org.jboss.system.Service;
  */
 public interface PenroseServiceMBean extends Service { //, ServiceMBean {
 
-    public int getPort();
-    public void setPort(int port);
-
     public String getHome();
     public void setHome(String home);
 }

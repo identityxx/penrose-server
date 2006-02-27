@@ -16,7 +16,6 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
 import java.util.Iterator;
-import java.util.ArrayList;
 
 import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.session.PenroseSession;

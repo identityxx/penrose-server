@@ -34,8 +34,8 @@ public class DefaultPenroseConfig extends PenroseConfig {
 
     public DefaultPenroseConfig() {
 
-        addServiceConfig(new ServiceConfig("JMX Service", PenroseJMXService.class.getName()));
-        addServiceConfig(new ServiceConfig("LDAP Service", PenroseLDAPService.class.getName()));
+        addServiceConfig(new ServiceConfig("JMX", PenroseJMXService.class.getName()));
+        addServiceConfig(new ServiceConfig("LDAP", PenroseLDAPService.class.getName()));
 
         addSchemaConfig(new SchemaConfig("schema/autofs.schema"));
         addSchemaConfig(new SchemaConfig("schema/corba.schema"));

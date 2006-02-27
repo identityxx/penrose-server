@@ -104,7 +104,7 @@ public class AddGraphVisitor extends GraphVisitor {
         Partition partition = engine.getPartitionManager().getPartition(sourceMapping);
         SourceConfig sourceConfig = partition.getSourceConfig(sourceMapping.getSourceName());
 
-        returnCode = engine.getConnector().add(sourceConfig, newSourceValues);
+        returnCode = engine.getConnector().add(partition, sourceConfig, newSourceValues);
         if (returnCode != LDAPException.SUCCESS) return;
 
         //addedSourceValues.remove(source.getName());

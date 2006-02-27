@@ -62,7 +62,7 @@ public class PenrosePartition extends AbstractDirectoryPartition {
         log.info(" - sslAuthId: \""+saslAuthId+"\"");
     }
 
-    public void unbind( Name bindDn ) throws NamingException {
+    public void unbind(Name bindDn) throws NamingException {
         log.info("Unbinding as \""+bindDn+"\"");
     }
 

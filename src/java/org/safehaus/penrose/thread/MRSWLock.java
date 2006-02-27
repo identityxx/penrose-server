@@ -22,8 +22,6 @@ import org.apache.log4j.Logger;
 
 /**
  * Multiple-Read-Single-Write lock
- * 
- * @author Administrator
  */
 public class MRSWLock {
 

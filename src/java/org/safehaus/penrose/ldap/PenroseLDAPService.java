@@ -25,6 +25,8 @@ import org.apache.directory.server.core.configuration.*;
 import org.apache.directory.server.jndi.ServerContextFactory;
 import org.apache.directory.server.core.jndi.CoreContextFactory;
 import org.apache.directory.server.configuration.MutableServerStartupConfiguration;
+import org.apache.directory.server.ldap.support.extended.GracefulShutdownHandler;
+import org.apache.directory.server.ldap.support.extended.LaunchDiagnosticUiHandler;
 
 import javax.naming.Context;
 import javax.naming.directory.InitialDirContext;
@@ -90,7 +92,7 @@ public class PenroseLDAPService extends Service {
             SchemaConfig schemaConfig = (SchemaConfig)i.next();
 
             String name = schemaConfig.getName();
-            String className = "org.apache.ldap.server.schema.bootstrap."+
+            String className = "org.apache.directory.server.core.schema.bootstrap."+
                     name.substring(0, 1).toUpperCase()+name.substring(1)+
                     "Schema";
 
@@ -102,9 +104,16 @@ public class PenroseLDAPService extends Service {
 
         configuration.setBootstrapSchemas(bootstrapSchemas);
 
+        // Configure extended operation handlers
+        Set extendedOperationHandlers = new HashSet();
+        extendedOperationHandlers.add(new GracefulShutdownHandler());
+        extendedOperationHandlers.add(new LaunchDiagnosticUiHandler());
+        configuration.setExtendedOperationHandlers(extendedOperationHandlers);
+
         configuration.setAllowAnonymousAccess(allowAnonymousAccess);
 
         // Register Penrose authenticator
+
         PenroseAuthenticator authenticator = new PenroseAuthenticator();
         authenticator.setPenrose(getPenroseServer().getPenrose());
 
@@ -142,7 +151,7 @@ public class PenroseLDAPService extends Service {
         env.setProperty(Context.SECURITY_PRINCIPAL, penroseConfig.getRootUserConfig().getDn());
         env.setProperty(Context.SECURITY_CREDENTIALS, penroseConfig.getRootUserConfig().getPassword());
         env.setProperty(Context.SECURITY_AUTHENTICATION, "simple");
-
+/*
         env.setProperty("asn.1.berlib.provider", "org.apache.ldap.common.berlib.asn1.SnickersProvider");
         //env.setProperty("asn.1.berlib.provider", "org.apache.asn1new.ldap.TwixProvider");
 
@@ -151,7 +160,7 @@ public class PenroseLDAPService extends Service {
                 "userPassword userCertificate cACertificate "+
                 "authorityRevocationList certificateRevocationList crossCertificatePair "+
                 "x500UniqueIdentifier krb5Key");
-
+*/
         env.putAll(configuration.toJndiEnvironment());
 
         new InitialDirContext(env);

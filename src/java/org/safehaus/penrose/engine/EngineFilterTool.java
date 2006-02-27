@@ -133,7 +133,7 @@ public class EngineFilterTool {
         SourceConfig sourceConfig = partition.getSourceConfig(sourceName);
 
         ConnectionManager connectionManager = engine.getConnectionManager();
-        Connection connection = connectionManager.getConnection(sourceConfig.getConnectionName());
+        Connection connection = connectionManager.getConnection(partition, sourceConfig.getConnectionName());
 
         Adapter adapter = connection.getAdapter();
         Filter newFilter = adapter.convert(entryMapping, filter);

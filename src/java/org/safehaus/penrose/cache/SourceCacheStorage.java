@@ -167,8 +167,7 @@ public class SourceCacheStorage {
 */
         log.debug("Loading cache for "+sourceConfig.getName());
 
-        ConnectionConfig conCfg = partition.getConnectionConfig(sourceConfig.getConnectionName());
-        Connection connection = connector.getConnection(conCfg.getName());
+        Connection connection = connector.getConnection(partition, sourceConfig.getConnectionName());
 
         PenroseSearchResults sr = connection.load(sourceConfig, null, 100);
 

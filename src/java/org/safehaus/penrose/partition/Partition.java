@@ -40,9 +40,14 @@ public class Partition {
     private Map moduleConfigs = new LinkedHashMap();
     private Map moduleMappings = new LinkedHashMap();
 
-    public Partition() {
+    public Partition(PartitionConfig partitionConfig) {
+        this.partitionConfig = partitionConfig;
     }
 
+    public String getName() {
+        return partitionConfig.getName();
+    }
+    
     public boolean containsEntryMapping(EntryMapping entryMapping) {
         return entryMappings.containsKey(entryMapping.getDn());
     }

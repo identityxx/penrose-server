@@ -23,6 +23,8 @@ import org.safehaus.penrose.event.ModifyEvent;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.schema.ObjectClass;
+import org.safehaus.penrose.schema.SchemaManager;
+import org.safehaus.penrose.schema.AttributeType;
 import org.safehaus.penrose.util.PasswordUtil;
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.cache.EntryCache;
@@ -54,12 +56,24 @@ public class ModifyHandler {
         log.debug("-------------------------------------------------");
 		log.debug("changetype: modify");
 
+        SchemaManager schemaManager = sessionHandler.getSchemaManager();
+
+        Collection normalizedModifications = new ArrayList();
+
 		for (Iterator i = modifications.iterator(); i.hasNext();) {
 			LDAPModification modification = (LDAPModification) i.next();
 
 			LDAPAttribute attribute = modification.getAttribute();
 			String attributeName = attribute.getName();
-			String values[] = attribute.getStringValueArray();
+            String values[] = attribute.getStringValueArray();
+
+            AttributeType at = schemaManager.getAttributeType(attributeName);
+            attributeName = at.getName();
+            LDAPAttribute normalizedAttribute = new LDAPAttribute(attributeName, values);
+
+            LDAPModification normalizedModification = new LDAPModification(modification.getOp(), normalizedAttribute);
+
+            normalizedModifications.add(normalizedModification);
 
 			switch (modification.getOp()) {
 			case LDAPModification.ADD:
@@ -83,7 +97,7 @@ public class ModifyHandler {
 
         log.info("");
 
-        ModifyEvent beforeModifyEvent = new ModifyEvent(this, ModifyEvent.BEFORE_MODIFY, session, dn, modifications);
+        ModifyEvent beforeModifyEvent = new ModifyEvent(this, ModifyEvent.BEFORE_MODIFY, session, dn, normalizedModifications);
         sessionHandler.postEvent(dn, beforeModifyEvent);
 
         String ndn = LDAPDN.normalize(dn);
@@ -91,7 +105,7 @@ public class ModifyHandler {
         Entry entry = sessionHandler.getSearchHandler().find(session, ndn);
         if (entry == null) return LDAPException.NO_SUCH_OBJECT;
 
-        int rc = performModify(session, entry, modifications);
+        int rc = performModify(session, entry, normalizedModifications);
         if (rc != LDAPException.SUCCESS) return rc;
         
         sessionHandler.getEngine().getEntryCache().remove(entry);
@@ -116,7 +130,7 @@ public class ModifyHandler {
         }
 */
 
-        ModifyEvent afterModifyEvent = new ModifyEvent(this, ModifyEvent.AFTER_MODIFY, session, dn, modifications);
+        ModifyEvent afterModifyEvent = new ModifyEvent(this, ModifyEvent.AFTER_MODIFY, session, dn, normalizedModifications);
         afterModifyEvent.setReturnCode(rc);
         sessionHandler.postEvent(dn, afterModifyEvent);
 
@@ -219,8 +233,7 @@ public class ModifyHandler {
 				//log.debug(" - required: " + oc.getRequiredAttributes());
 				//log.debug(" - optional: " + oc.getOptionalAttributes());
 
-				if (oc.getRequiredAttributes().contains(attributeName)
-						|| oc.getOptionalAttributes().contains(attributeName)) {
+				if (oc.containsRequiredAttribute(attributeName) || oc.containsOptionalAttribute(attributeName)) {
 					found = true;
 					break;
 				}

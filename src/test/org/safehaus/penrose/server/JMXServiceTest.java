@@ -48,7 +48,7 @@ public class JMXServiceTest extends TestCase {
         logger.setLevel(Level.INFO);
 
         penroseConfig = new DefaultPenroseConfig();
-        penroseConfig.removeServiceConfig("LDAP Service");
+        penroseConfig.removeServiceConfig("LDAP");
 
         SchemaConfig schemaConfig = new SchemaConfig("samples/schema/example.schema");
         penroseConfig.addSchemaConfig(schemaConfig);
@@ -66,7 +66,7 @@ public class JMXServiceTest extends TestCase {
 
     public void testJMXService() throws Exception {
         ServiceManager serviceManager = penroseServer.getServiceManager();
-        PenroseJMXService service = (PenroseJMXService)serviceManager.getService("JMX Service");
+        PenroseJMXService service = (PenroseJMXService)serviceManager.getService("JMX");
         int port = service.getRmiPort();
         connect(port);
     }
@@ -74,7 +74,7 @@ public class JMXServiceTest extends TestCase {
     public void testChangingJMXPort() throws Exception {
 
         ServiceManager serviceManager = penroseServer.getServiceManager();
-        PenroseJMXService service = (PenroseJMXService)serviceManager.getService("JMX Service");
+        PenroseJMXService service = (PenroseJMXService)serviceManager.getService("JMX");
         int port = service.getRmiPort();
 
         // testing the old port

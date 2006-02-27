@@ -17,66 +17,106 @@
  */
 package org.safehaus.penrose.thread;
 
-import org.safehaus.penrose.thread.BooleanLock;
+import org.apache.log4j.Logger;
 
-/**
- * @author Administrator
- */
 public class ThreadWorker extends Object {
 
-	protected Thread internalThread;
-	protected volatile boolean stopRequested;
-	protected BooleanLock suspendRequested;
-	protected BooleanLock internalThreadSuspended;
-	protected Runnable runnable;
+    Logger log = Logger.getLogger(getClass());
+
+	private static int nextWorkerID = 0;
 	
-	public ThreadWorker(Runnable runnable) {
-		this.stopRequested = false;
-		this.suspendRequested = new BooleanLock(false);
-		this.internalThreadSuspended = new BooleanLock(false);
-		this.runnable = runnable;
+	private Queue idleWorkers;
+	private Queue pendingJobs;
+
+    private int id;
+
+	private Thread internalThread;
+	private volatile boolean noStopRequested;
+	
+	public ThreadWorker(Queue idleWorkers) {
+		this.idleWorkers = idleWorkers;
+		this.id = getNextWorkerID();
+		this.pendingJobs = new Queue(); // only one slot
 		
-		internalThread = new Thread(runnable);
+		// just before returning, the thread should be created
+		noStopRequested = true;
+		
+		Runnable r = new Runnable() {
+			public void run() {
+				try {
+					runJobs();
+				} catch (Exception ex) {
+					// in case any exception slip through
+					log.error(ex.getMessage(), ex);
+				}
+			}
+		};
+		
+		String threadName = "ThreadWorker-"+id;
+		internalThread = new Thread(r, threadName);
 		internalThread.start();
 	}
 	
-	protected void waitWhileSuspended() throws InterruptedException {
-		
-		// only called by the internal thread - private method
-		
-		synchronized (suspendRequested) {
-			if (suspendRequested.isTrue()) {
-				try {
-					internalThreadSuspended.setValue(true);
-					suspendRequested.waitUntilFalse(0);
-				} finally {
-					internalThreadSuspended.setValue(false);
-				}
-			}
+	public static synchronized int getNextWorkerID() {
+		// notice: synchronized at the class level to ensure uniqueness
+		int id = nextWorkerID;
+		nextWorkerID++;
+		return id;
+	}
+	
+	public void process(Runnable job) throws InterruptedException {
+		pendingJobs.add(job);
+	}
+	
+	private void runJobs() {
+		while (noStopRequested) {
+			//try {
+				//String threadName = Thread.currentThread().getName();
+				//log.debug("workerID="+workerID+" (threadName="+threadName+"), ready for work");
+				// Worker is ready for work. 
+				// This will never block because the idleWorker FIFO queue 
+				// has enough capacity for all the workers
+				idleWorkers.add(this);
+				// wait here until the server adds a request
+				Runnable r = (Runnable)pendingJobs.remove();
+				
+				//log.debug("workerID="+workerID+", starting execution of new Runnable: "+r);
+				runIt(r); // catches all exceptions
+			//} catch (InterruptedException ex) {
+			//	Thread.currentThread().interrupt(); // re-assert
+			//}
 		}
 	}
 	
-	public void suspendRequest() {
-		suspendRequested.setValue(true);
-	}
-	
-	public void resumeRequest() {
-		suspendRequested.setValue(true);
-	}
-	
-	public boolean waitForActualSuspension(long msTimeout)
-	throws InterruptedException {
-		// Returns true if suspended, false if the timeout expired
-		return internalThreadSuspended.waitUntilTrue(msTimeout);
+	private void runIt(Runnable r) {
+		try {
+			r.run();
+		} catch (Exception ex) {
+			// catch any and all exceptions
+			log.error("Uncaught exception fell through from run()", ex);
+		} finally {
+			// Clear the interrupted flag (in case it comes back set)
+			// so that if the loop goes again, the pendingJobs.remove() does not
+			// mistakenly throw an InterruptedException
+			Thread.interrupted();
+		}
 	}
 	
 	public void stopRequest() {
-		stopRequested = true;
+		//log.debug("workerID="+workerID+", stopRequest() received");
+		noStopRequested = false;
 		internalThread.interrupt();
 	}
-	
+
 	public boolean isAlive() {
 		return internalThread.isAlive();
 	}
-	
+
+    public int getId() {
+        return id;
+    }
+
+    public void setId(int id) {
+        this.id = id;
+    }
 }

@@ -45,7 +45,10 @@ public class LDAPServiceTest extends TestCase {
 
     public void setUp() throws Exception {
 
-        ConsoleAppender appender = new ConsoleAppender(new PatternLayout("[%d{MM/dd/yyyy HH:mm:ss}] %m%n"));
+        //PatternLayout patternLayout = new PatternLayout("[%d{MM/dd/yyyy HH:mm:ss}] %m%n");
+        PatternLayout patternLayout = new PatternLayout("%-20C{1} [%4L] %m%n");
+
+        ConsoleAppender appender = new ConsoleAppender(patternLayout);
         BasicConfigurator.configure(appender);
 
         Logger rootLogger = Logger.getRootLogger();
@@ -55,7 +58,7 @@ public class LDAPServiceTest extends TestCase {
         logger.setLevel(Level.INFO);
 
         penroseConfig = new DefaultPenroseConfig();
-        penroseConfig.removeServiceConfig("JMX Service");
+        penroseConfig.removeServiceConfig("JMX");
 
         SchemaConfig schemaConfig = new SchemaConfig("samples/schema/example.schema");
         penroseConfig.addSchemaConfig(schemaConfig);
@@ -74,15 +77,52 @@ public class LDAPServiceTest extends TestCase {
 
     public void testBasicSearch() throws Exception {
         ServiceManager serviceManager = penroseServer.getServiceManager();
-        PenroseLDAPService service = (PenroseLDAPService)serviceManager.getService("LDAP Service");
+        PenroseLDAPService service = (PenroseLDAPService)serviceManager.getService("LDAP");
         int port = service.getLdapPort();
         search(port);
+    }
+
+    public void testRestartingLDAPService() throws Exception {
+
+        ServiceManager serviceManager = penroseServer.getServiceManager();
+        PenroseLDAPService service = (PenroseLDAPService)serviceManager.getService("LDAP");
+        int port = service.getLdapPort();
+
+        try {
+            search(port);
+            System.out.println("Searching at the old port succeeded as expected.");
+        } catch (Exception e) {
+            e.printStackTrace();
+            fail("Searching at the old port should have succeeded.");
+        }
+
+        penroseServer.stop();
+        penroseServer.start();
+
+        try {
+            search(port);
+            System.out.println("Searching at the old port succeeded as expected.");
+        } catch (Exception e) {
+            e.printStackTrace();
+            fail("Searching at the old port should have succeeded.");
+        }
+
+        penroseServer.stop();
+        penroseServer.start();
+
+        try {
+            search(port);
+            System.out.println("Searching at the old port succeeded as expected.");
+        } catch (Exception e) {
+            e.printStackTrace();
+            fail("Searching at the old port should have succeeded.");
+        }
     }
 
     public void testChangingLDAPPort() throws Exception {
 
         ServiceManager serviceManager = penroseServer.getServiceManager();
-        PenroseLDAPService service = (PenroseLDAPService)serviceManager.getService("LDAP Service");
+        PenroseLDAPService service = (PenroseLDAPService)serviceManager.getService("LDAP");
         int port = service.getLdapPort();
 
         // testing the old port
@@ -155,10 +195,14 @@ public class LDAPServiceTest extends TestCase {
 
         NamingEnumeration ne = ctx.search(baseDn, "(objectClass=*)", ctls);
 
-        while (ne.hasMore()) {
-            SearchResult sr = (SearchResult)ne.next();
-            String dn = "".equals(sr.getName()) ? baseDn : sr.getName()+","+baseDn;
-            System.out.println("dn: "+dn);
+        if (ne.hasMore()) {
+            while (ne.hasMore()) {
+                SearchResult sr = (SearchResult)ne.next();
+                String dn = "".equals(sr.getName()) ? baseDn : sr.getName()+","+baseDn;
+                System.out.println("dn: "+dn);
+            }
+        } else {
+            System.out.println("No results found.");
         }
 
         ctx.close();

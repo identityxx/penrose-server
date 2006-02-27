@@ -48,15 +48,15 @@ public class Schema {
     }
 
     public AttributeType getAttributeType(String name) {
-        return (AttributeType)attributeTypes.get(name);
+        return (AttributeType)attributeTypes.get(name.toLowerCase());
     }
 
     public void addAttributeType(AttributeType at) {
-        attributeTypes.put(at.getName(), at);
+        attributeTypes.put(at.getName().toLowerCase(), at);
     }
 
     public AttributeType removeAttributeType(String name) {
-        return (AttributeType)attributeTypes.remove(name);
+        return (AttributeType)attributeTypes.remove(name.toLowerCase());
     }
 
     /**
@@ -75,15 +75,15 @@ public class Schema {
     }
 
     public ObjectClass getObjectClass(String name) {
-        return (ObjectClass)objectClasses.get(name);
+        return (ObjectClass)objectClasses.get(name.toLowerCase());
     }
 
     public void addObjectClass(ObjectClass oc) {
-        objectClasses.put(oc.getName(), oc);
+        objectClasses.put(oc.getName().toLowerCase(), oc);
     }
 
     public ObjectClass removeObjectClass(String name) {
-        return (ObjectClass)objectClasses.remove(name);
+        return (ObjectClass)objectClasses.remove(name.toLowerCase());
     }
 
     /**
@@ -98,7 +98,7 @@ public class Schema {
         Set set = new HashSet();
         for (Iterator i=entry.getObjectClasses().iterator(); i.hasNext(); ) {
             String ocName = (String)i.next();
-            ObjectClass oc = (ObjectClass)objectClasses.get(ocName);
+            ObjectClass oc = getObjectClass(ocName);
             if (oc == null) continue;
 
             set.addAll(oc.getRequiredAttributes());
@@ -128,7 +128,7 @@ public class Schema {
     public void getAllObjectClassNames(Collection list, String ocName) {
     	if (list.contains(ocName)) return;
 
-        ObjectClass oc = (ObjectClass)objectClasses.get(ocName);
+        ObjectClass oc = getObjectClass(ocName);
         if (oc == null) return;
 
     	Collection superClasses = oc.getSuperClasses();
@@ -144,7 +144,7 @@ public class Schema {
     public boolean isSuperClass(String parent, String child) {
         if (parent.equals(child)) return true;
 
-        ObjectClass oc = (ObjectClass)objectClasses.get(child);
+        ObjectClass oc = getObjectClass(child);
         if (oc == null) return false;
 
         Collection superClasses = oc.getSuperClasses();
@@ -182,7 +182,7 @@ public class Schema {
 
         // add itself
         //log.debug("Searching for object class "+objectClassName+" ... ");
-        ObjectClass objectClass = (ObjectClass)objectClasses.get(objectClassName);
+        ObjectClass objectClass = getObjectClass(objectClassName);
         if (objectClass == null) {
             //log.debug("--> NOT FOUND");
             return;

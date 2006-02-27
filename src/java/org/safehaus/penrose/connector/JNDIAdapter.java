@@ -314,7 +314,8 @@ public class JNDIAdapter extends Adapter {
         if (log.isDebugEnabled()) {
             log.debug(Formatter.displaySeparator(80));
             log.debug(Formatter.displayLine("JNDI Bind", 80));
-            log.debug(Formatter.displayLine(" - Bind DN: "+dn, 80));
+            log.debug(Formatter.displayLine(" - Bind DN : "+dn, 80));
+            log.debug(Formatter.displayLine(" - Password: "+password, 80));
             log.debug(Formatter.displaySeparator(80));
         }
 
@@ -511,7 +512,11 @@ public class JNDIAdapter extends Adapter {
 
             }
 
-            list.add(new ModificationItem(DirContext.ADD_ATTRIBUTE, attribute));
+            if ("unicodePwd".equals(name)) {
+                list.add(new ModificationItem(DirContext.REPLACE_ATTRIBUTE, attribute));
+            } else {
+                list.add(new ModificationItem(DirContext.ADD_ATTRIBUTE, attribute));
+            }
         }
 
         for (Iterator i=removeAttributes.iterator(); i.hasNext(); ) {

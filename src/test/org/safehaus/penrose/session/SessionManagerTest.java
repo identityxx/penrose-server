@@ -48,7 +48,7 @@ public class SessionManagerTest extends TestCase {
         rootLogger.setLevel(Level.OFF);
 
         Logger logger = Logger.getLogger("org.safehaus.penrose");
-        logger.setLevel(Level.DEBUG);
+        logger.setLevel(Level.INFO);
 
         penroseConfig = new DefaultPenroseConfig();
 

@@ -41,7 +41,10 @@ public class PartitionManagerTest extends TestCase {
 
     public void setUp() throws Exception {
 
-        ConsoleAppender appender = new ConsoleAppender(new PatternLayout("[%d{MM/dd/yyyy HH:mm:ss}] %m%n"));
+        //PatternLayout patternLayout = new PatternLayout("[%d{MM/dd/yyyy HH:mm:ss}] %m%n");
+        PatternLayout patternLayout = new PatternLayout("%-20C{1} [%4L] %m%n");
+
+        ConsoleAppender appender = new ConsoleAppender(patternLayout);
         BasicConfigurator.configure(appender);
 
         Logger rootLogger = Logger.getRootLogger();

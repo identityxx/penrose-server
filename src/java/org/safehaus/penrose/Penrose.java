@@ -145,7 +145,6 @@ public class Penrose {
 
 	public void start() throws Exception {
 
-
         if (status != STOPPED) return;
 
         try {
@@ -202,20 +201,10 @@ public class Penrose {
     public void initConnections() throws Exception {
         connectionManager = new ConnectionManager();
         connectionManager.setPenroseConfig(penroseConfig);
+        connectionManager.setPartitionManager(partitionManager);
     }
 
     public void startConnections() throws Exception {
-
-        for (Iterator i=partitionManager.getPartitions().iterator(); i.hasNext(); ) {
-            Partition partition = (Partition)i.next();
-
-            Collection connectionConfigs = partition.getConnectionConfigs();
-            for (Iterator j = connectionConfigs.iterator(); j.hasNext();) {
-                ConnectionConfig connectionConfig = (ConnectionConfig)j.next();
-
-                connectionManager.addConnectionConfig(connectionConfig);
-            }
-        }
 
         connectionManager.start();
     }

@@ -65,10 +65,12 @@ public class ModuleManager {
     }
 
     public void start() throws Exception {
+        //log.debug("Starting Modules...");
         for (Iterator i=getServiceNames().iterator(); i.hasNext(); ) {
             String name = (String)i.next();
             start(name);
         }
+        //log.debug("Modules started.");
     }
 
     public void start(String name) throws Exception {
@@ -84,6 +86,7 @@ public class ModuleManager {
     }
 
     public void stop() throws Exception {
+        log.debug("Stopping Modules...");
         Collection list = getServiceNames();
         String names[] = (String[])list.toArray(new String[list.size()]);
 
@@ -91,6 +94,7 @@ public class ModuleManager {
             String name = names[i];
             stop(name);
         }
+        log.debug("Modules stopped.");
     }
 
     public void stop(String name) throws Exception {

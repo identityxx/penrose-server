@@ -253,7 +253,7 @@ public class SearchEngine {
         Partition partition = engine.getPartitionManager().getPartition(entryMapping);
         SourceConfig sourceConfig = partition.getSourceConfig(sourceMapping.getSourceName());
 
-        PenroseSearchResults sr = engine.getConnector().search(sourceConfig, newFilter);
+        PenroseSearchResults sr = engine.getConnector().search(partition, sourceConfig, newFilter);
 
         Interpreter interpreter = engine.getInterpreterFactory().newInstance();
 

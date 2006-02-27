@@ -19,6 +19,7 @@ package org.safehaus.penrose.connector;
 
 import org.safehaus.penrose.partition.SourceConfig;
 import org.safehaus.penrose.partition.ConnectionConfig;
+import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.session.PenroseSearchResults;
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.module.Module;
@@ -103,7 +104,7 @@ public class PollingConnectorModule extends Module {
         }
     }
 
-    public void reloadExpired(SourceConfig sourceConfig) throws Exception {
+    public void reloadExpired(Partition partition, SourceConfig sourceConfig) throws Exception {
 
         Map map = sourceCache.getExpired(sourceConfig);
 
@@ -115,14 +116,14 @@ public class PollingConnectorModule extends Module {
             log.debug(" - "+pk+": "+av);
         }
 
-        connector.retrieve(sourceConfig, map.keySet());
+        connector.retrieve(partition, sourceConfig, map.keySet());
     }
 
     public void pollChanges(SourceConfig sourceConfig) throws Exception {
 
         int lastChangeNumber = sourceCache.getLastChangeNumber(sourceConfig);
 
-        Connection connection = connector.getConnection(sourceConfig.getConnectionName());
+        Connection connection = connector.getConnection(partition, sourceConfig.getConnectionName());
         PenroseSearchResults sr = connection.getChanges(sourceConfig, lastChangeNumber);
         if (!sr.hasNext()) return;
 
@@ -170,7 +171,7 @@ public class PollingConnectorModule extends Module {
 
         sourceCache.setLastChangeNumber(sourceConfig, lastChangeNumber);
 
-        connector.retrieve(sourceConfig, pks);
+        connector.retrieve(partition, sourceConfig, pks);
 
         for (Iterator i=pks.iterator(); i.hasNext(); ) {
             Row pk = (Row)i.next();

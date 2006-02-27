@@ -20,9 +20,6 @@ package org.safehaus.penrose.ldap;
 import org.apache.directory.server.core.authn.AbstractAuthenticator;
 import org.apache.directory.server.core.authn.LdapPrincipal;
 import org.apache.directory.server.core.jndi.ServerContext;
-import org.apache.directory.server.core.invocation.Invocation;
-import org.apache.directory.server.core.invocation.InvocationStack;
-import org.apache.directory.server.core.partition.DirectoryPartitionNexusProxy;
 import org.apache.directory.shared.ldap.exception.LdapAuthenticationException;
 import org.apache.directory.shared.ldap.aci.AuthenticationLevel;
 import org.apache.log4j.Logger;
@@ -46,7 +43,7 @@ public class PenroseAuthenticator extends AbstractAuthenticator {
 
     public PenroseAuthenticator()
     {
-        super( "simple" );
+        super("simple");
     }
 
     public void init() throws NamingException {
@@ -56,7 +53,7 @@ public class PenroseAuthenticator extends AbstractAuthenticator {
         this.penrose = penrose;
     }
 
-    public LdapPrincipal authenticate( ServerContext ctx ) throws NamingException {
+    public LdapPrincipal authenticate(ServerContext ctx) throws NamingException {
 
         String dn = (String)ctx.getEnvironment().get(Context.SECURITY_PRINCIPAL);
 
@@ -69,29 +66,14 @@ public class PenroseAuthenticator extends AbstractAuthenticator {
 
         //log.info("Login "+dn);
 
-        if ("uid=admin,ou=system".equals(dn)) {
+        if (rootDn != null &&
+                rootPassword != null &&
+                rootDn.equals(dn)) {
+
             throw new LdapAuthenticationException();
         }
 
-        if (rootDn != null &&
-                rootPassword != null &&
-                rootDn.equals(dn) &&
-                rootPassword.equals(password)) {
-
-/*
-            log.info("Logged in as root.");
-            return createLdapPrincipal(dn, AuthenticationLevel.SIMPLE);
-*/
-        }
-/*
-        if ("".equals(dn)) {
-            return createLdapPrincipal(dn, AuthenticationLevel.SIMPLE);
-        }
-*/
         try {
-            //Invocation invocation = InvocationStack.getInstance().peek();
-            //DirectoryPartitionNexusProxy proxy = invocation.getProxy();
-
             PenroseSession session = penrose.newSession();
             if (session == null) throw new ServiceUnavailableException();
 

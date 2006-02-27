@@ -19,6 +19,7 @@ package org.safehaus.penrose.thread;
 
 import java.util.List;
 import java.util.ArrayList;
+import java.util.Collection;
 
 import org.apache.log4j.Logger;
 
@@ -28,71 +29,82 @@ public class Queue {
 
 	protected List queue = new ArrayList();
 
+    private int maxSize = 0; // no limit
+
+    public Queue() {
+    }
+
+    public Queue(int maxSize) {
+        this.maxSize = maxSize;
+    }
+
+    public synchronized int size() {
+        return queue.size();
+    }
+
 	public synchronized boolean isEmpty() {
 		return queue.size() == 0;
 	}
 	
-	/**
-	 * Adds an object to the tail of the queue
-	 * 
-	 * @param obj
-	 */
 	public synchronized void add(Object obj) {
-		//logger.debug("Adding: "+obj+" to "+toString());
+
+        if (maxSize > 0) {
+            while (queue.size() == maxSize) {
+                try {
+                    wait();
+                } catch (InterruptedException e) {
+                    // ignore
+                }
+            }
+        }
+
+        //log.debug("Adding object");
 		queue.add(obj);
-	}
-	
-	/**
-	 * Remove an object from the head of the queue
-	 * 
-	 * @return the object
-	 * @throws EmptyQueueException if the queue is empty
-	 */
-	public synchronized Object remove() throws EmptyQueueException {
-		//logger.debug("Removing: "+toString());
-		if (isEmpty()) throw new EmptyQueueException();
-		return queue.remove(0);
-	}
-	
-	/**
-	 * Peek an object from the head of the queue
-	 * 
-	 * @return the object
-	 * @throws EmptyQueueException if the queue is empty
-	 */
-	public synchronized Object peek() throws EmptyQueueException {
-		//logger.debug("Content: "+toString());
-		if (isEmpty()) throw new EmptyQueueException();
-		return queue.get(0);
-	}
-	
-	/**
-	 * Remove the object in the queue if it's the same as the object passed as parameter 
-	 * 
-	 * @param obj 
-	 * @return whether the object in the queue is removed
-	 * @throws EmptyQueueException if the queue is empty
-	 */
-	public synchronized boolean removeIfSame(Object obj) throws EmptyQueueException {
-		//logger.debug(toString());
-		if (isEmpty()) throw new EmptyQueueException();
-		Object obj2 = queue.get(0);
-		if (obj2.equals(obj)) {
-			queue.remove(0);
-			return true;
-		}
-		return false;
-	}
-	
-	/**
-	 * Dump the queue content
-	 */
-	public String toString() {
-		StringBuffer sb = new StringBuffer("Queue content: ");
-		for (int i=0; i<queue.size(); i++) {
-			sb.append(queue.get(i)+";");
-		}
-		return sb.toString();
+        //log.debug("size: "+queue.size());
+        notifyAll();
 	}
 
+    public synchronized Collection getAll() {
+        List c = new ArrayList();
+        c.addAll(queue);
+        return c;
+    }
+
+	public synchronized Object remove() {
+        //log.debug("Removing object");
+        while (queue.size() == 0) {
+            try {
+                wait();
+            } catch (InterruptedException e) {
+                // ignore
+            }
+        }
+
+		Object o = queue.remove(0);
+        //log.debug("size: "+queue.size());
+
+        notifyAll();
+
+        return o;
+	}
+	
+	public synchronized Object peek() {
+        while (queue.size() == 0) {
+            try {
+                wait();
+            } catch (InterruptedException e) {
+                // ignore
+            }
+        }
+
+		return queue.get(0);
+	}
+
+    public int getMaxSize() {
+        return maxSize;
+    }
+
+    public void setMaxSize(int maxSize) {
+        this.maxSize = maxSize;
+    }
 }
