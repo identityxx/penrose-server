@@ -75,7 +75,13 @@ public class PenroseServiceTest extends TestCase {
     public void testStartingAndStopping() throws Exception {
 
         PenroseSession session = penrose.newSession();
-        session.bind(penroseConfig.getRootUserConfig().getDn(), penroseConfig.getRootUserConfig().getPassword());
+
+        try {
+            session.bind(penroseConfig.getRootUserConfig().getDn(), penroseConfig.getRootUserConfig().getPassword());
+            search(session);
+        } catch (Exception e) {
+            fail("Bind & search should not fail");
+        }
 
         assertEquals(Penrose.STARTED, penrose.getStatus());
 
@@ -108,18 +114,25 @@ public class PenroseServiceTest extends TestCase {
             System.out.println("Bind failed as expected");
         }
 
-        PenroseSession session3 = penrose.newSession();
-        session3.bind(penroseConfig.getRootUserConfig().getDn(), penroseConfig.getRootUserConfig().getPassword());
+        try {
+            PenroseSession session3 = penrose.newSession();
+            session3.bind(penroseConfig.getRootUserConfig().getDn(), penroseConfig.getRootUserConfig().getPassword());
+            search(session3);
+        } catch (Exception e) {
+            e.printStackTrace();
+            fail("Bind & search should not fail");
+        }
     }
 
     public void testPenroseService() throws Exception {
-        search();
-    }
-
-    public void search() throws Exception {
-
         PenroseSession session = penrose.newSession();
         session.bind(penroseConfig.getRootUserConfig().getDn(), penroseConfig.getRootUserConfig().getPassword());
+
+        search(session);
+        session.close();
+    }
+
+    public void search(PenroseSession session) throws Exception {
 
         PenroseSearchControls sc = new PenroseSearchControls();
         sc.setScope(PenroseSearchControls.SCOPE_ONE);
@@ -133,9 +146,5 @@ public class PenroseServiceTest extends TestCase {
             LDAPEntry entry = (LDAPEntry) i.next();
             System.out.println("dn: "+entry.getDN());
         }
-
-        session.unbind();
-
-        session.close();
     }
 }

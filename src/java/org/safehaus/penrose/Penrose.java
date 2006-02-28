@@ -42,7 +42,7 @@ public class Penrose {
     Logger log = Logger.getLogger(Penrose.class);
 
     public final static String PRODUCT_NAME      = "Penrose Virtual Directory Server";
-    public final static String PRODUCT_VERSION   = "0.9.9";
+    public final static String PRODUCT_VERSION   = "1.0";
     public final static String PRODUCT_COPYRIGHT = "Copyright (c) 2000-2005, Identyx Corporation.";
     public final static String VENDOR_NAME       = "Identyx Corporation";
 

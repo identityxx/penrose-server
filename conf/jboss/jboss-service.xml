@@ -5,7 +5,6 @@
 
     <mbean code="org.safehaus.penrose.jboss.PenroseService" name="jboss.ldap:service=PenroseService">
         <attribute name="Home">C:\usr\local\penrose</attribute>
-        <attribute name="Port">10389</attribute>
     </mbean>
 
 </server>

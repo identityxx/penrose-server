@@ -67,24 +67,30 @@ public class ConnectionManager {
     public void init(Partition partition, ConnectionConfig connectionConfig) throws Exception {
 
         String name = partition.getName()+"/"+connectionConfig.getName();
-        if (connectionConfigs.get(name) != null) return;
+        Connection connection;
+
+        if (connectionConfigs.get(name) == null) {
+
+            connectionConfigs.put(name, connectionConfig);
+
+            String adapterName = connectionConfig.getAdapterName();
+            if (adapterName == null) throw new Exception("Missing adapter name");
+
+            AdapterConfig adapterConfig = penroseConfig.getAdapterConfig(adapterName);
+            if (adapterConfig == null) throw new Exception("Undefined adapter "+adapterName);
+
+            connection = new Connection();
+            connection.setConnectionConfig(connectionConfig);
+            connection.setAdapterConfig(adapterConfig);
+
+            connections.put(name, connection);
+            
+        } else {
+            connection = (Connection)connections.get(name);
+        }
 
         log.debug("Initializing "+name+" connection.");
-        connectionConfigs.put(name, connectionConfig);
-
-        String adapterName = connectionConfig.getAdapterName();
-        if (adapterName == null) throw new Exception("Missing adapter name");
-
-        AdapterConfig adapterConfig = penroseConfig.getAdapterConfig(adapterName);
-        if (adapterConfig == null) throw new Exception("Undefined adapter "+adapterName);
-
-        Connection connection = new Connection();
-        connection.setConnectionConfig(connectionConfig);
-        connection.setAdapterConfig(adapterConfig);
-
         connection.init();
-
-        connections.put(name, connection);
     }
 
     public void stop() throws Exception {

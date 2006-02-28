@@ -17,14 +17,14 @@
 [Setup]
 
 AppName=Penrose Server
-AppVerName=Penrose Server 0.9.9
+AppVerName=Penrose Server 1.0
 DefaultDirName={pf}\Penrose Server
 DefaultGroupName=Penrose Server
 UninstallDisplayName=Penrose Server
 UninstallDisplayIcon={app}\penrose.ico
 Compression=zip
 SolidCompression=yes
-OutputBaseFilename=penrose-0.9.9
+OutputBaseFilename=penrose-1.0
 OutputDir=dist
 LicenseFile=LICENSE.txt
 
