@@ -33,6 +33,12 @@
 
     <taskdef resource="svntask.properties" classpathref="project.classpath"/>
 
+    <target name="build-ant" description="Compiles the Task">
+        <mkdir dir="target/ant"/>
+        <javac srcdir="src/ant" destdir="target/ant"/>
+        <jar destfile="target/penrose-ant.jar" basedir="target/ant"/>
+    </target>
+
     <target name="build">
         <javacc
             target="src/java/org/safehaus/penrose/schema/LDAPv3Schema.jj"
@@ -132,7 +138,7 @@
         </delete>
     </target>
 
-    <target name="dist" depends="build">
+    <target name="dist" depends="build-ant,build">
         <mkdir dir="target/dist"/>
         <copy todir="target/dist" file="README.txt"/>
         <copy todir="target/dist" file="LICENSE.txt"/>
@@ -159,6 +165,8 @@
         <copy todir="target/dist/conf">
             <fileset dir="conf"/>
         </copy>
+        <taskdef name="wrapper" classname="org.safehaus.penrose.ant.WrapperTask" classpath="target/penrose-ant.jar"/>
+        <wrapper file="target/dist/conf/wrapper.conf" dir="lib"/>
         <copy todir="target/dist/conf/default">
             <fileset dir="conf"/>
         </copy>
