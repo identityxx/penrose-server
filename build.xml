@@ -140,10 +140,18 @@
 
     <target name="dist" depends="build-ant,build">
         <mkdir dir="target/dist"/>
-        <copy todir="target/dist" file="README.txt"/>
+        <copy todir="target/dist" file="README.txt">
+            <filterchain>
+                <expandproperties/>
+            </filterchain>
+        </copy>
         <copy todir="target/dist" file="LICENSE.txt"/>
         <copy todir="target/dist" file="COPYING.txt"/>
-        <copy todir="target/dist" file="INSTALL-BINARY.txt"/>
+        <copy todir="target/dist" file="INSTALL-BINARY.txt">
+            <filterchain>
+                <expandproperties/>
+            </filterchain>
+        </copy>
         <copy todir="target/dist" file="pom.xml"/>
         <copy todir="target/dist/etc">
             <fileset dir="etc" includes="**/*"/>
@@ -262,11 +270,16 @@
     </target>
 
     <target name="dist-rpm" depends="dist-src">
+        <copy todir="target" file="rpm/penrose.spec">
+            <filterchain>
+                <expandproperties/>
+            </filterchain>
+        </copy>
         <copy todir="/usr/src/redhat/SOURCES" overwrite="true"
             file="${project.dist}/${project.name}-${project.version}-src.tar.gz">
         </copy>
         <exec executable="/usr/bin/rpmbuild" os="Linux">
-            <arg line="-ba rpm/penrose.spec"/>
+            <arg line="-ba target/penrose.spec"/>
         </exec>
         <copy todir="${project.dist}" failonerror="false"
             file="/usr/src/redhat/SRPMS/${project.name}-${project.version}-1.src.rpm">
@@ -278,9 +291,14 @@
 
     <target name="dist-win32" depends="docs,dist">
         <echo message="Creating ${project.name}-${project.version}.exe"/>
+        <copy todir="target" file="penrose.iss">
+            <filterchain>
+                <expandproperties/>
+            </filterchain>
+        </copy>
         <mkdir dir="${project.dist}"/>
         <exec executable="${iscc.path}" os="Windows NT,Windows 2000,Windows XP,Windows 2003">
-            <arg line="/Q penrose.iss"/>
+            <arg line="/Q target/penrose.iss"/>
         </exec>
     </target>
 

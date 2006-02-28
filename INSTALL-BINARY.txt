@@ -1,7 +1,7 @@
 Installing Penrose on Windows
 -----------------------------
 
-On Windows platforms, double-click the installer program (penrose-x.x.x.exe).
+On Windows platforms, double-click the installer program (penrose-${project.version}.exe).
 Select an installation directory (e.g. C:\Program Files\Penrose).
 We will refer the installation directory as PENROSE_HOME.
 
@@ -11,7 +11,7 @@ Installing Penrose on Unix
 On Linux and other Unix-like platforms, create an installation directory
 (e.g. /usr/local/penrose), then unzip/untar the distribution file.
 
-  tar xzvf penrose-x.x.x.tar.gz
+  tar xzvf penrose-${project.version}.tar.gz
 
 We will refer the installation directory as PENROSE_HOME.
 
@@ -35,7 +35,7 @@ Use your favorite LDAP browser and enter the following settings:
   Port          : 10389
   Bind DN       : uid=admin,ou=system
   Bind Password : secret
-  Suffix        : dc=penrose,dc=safehaus,dc=org
+  Suffix        : dc=Penrose,dc=Safehaus,dc=org
 
 Demo Setup
 ----------

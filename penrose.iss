@@ -17,27 +17,27 @@
 [Setup]
 
 AppName=Penrose Server
-AppVerName=Penrose Server 1.0
+AppVerName=Penrose Server ${project.version}
 DefaultDirName={pf}\Penrose Server
 DefaultGroupName=Penrose Server
 UninstallDisplayName=Penrose Server
 UninstallDisplayIcon={app}\penrose.ico
 Compression=zip
 SolidCompression=yes
-OutputBaseFilename=penrose-1.0
-OutputDir=dist
-LicenseFile=LICENSE.txt
+OutputBaseFilename=penrose-${project.version}
+OutputDir=..\dist
+LicenseFile=..\LICENSE.txt
 
 [Files]
 
-Source: "target\dist\*"; DestDir: "{app}"; Components: main
-Source: "target\dist\bin\*"; DestDir: "{app}\bin"; Components: main
-Source: "target\dist\conf\*"; DestDir: "{app}\conf"; Flags: onlyifdoesntexist uninsneveruninstall; Components: main
-Source: "target\dist\conf\default\*"; DestDir: "{app}\conf\default"; Flags: recursesubdirs; Components: main
-Source: "target\dist\docs\*"; DestDir: "{app}\docs"; Flags: recursesubdirs; Components: docs
-Source: "target\dist\lib\*"; DestDir: "{app}\lib"; Flags: recursesubdirs; Components: main
-Source: "target\dist\schema\*"; DestDir: "{app}\schema"; Flags: recursesubdirs; Components: main
-Source: "target\dist\samples\*"; DestDir: "{app}\samples"; Flags: recursesubdirs; Components: sample
+Source: "..\target\dist\*"; DestDir: "{app}"; Components: main
+Source: "..\target\dist\bin\*"; DestDir: "{app}\bin"; Components: main
+Source: "..\target\dist\conf\*"; DestDir: "{app}\conf"; Flags: onlyifdoesntexist uninsneveruninstall; Components: main
+Source: "..\target\dist\conf\default\*"; DestDir: "{app}\conf\default"; Flags: recursesubdirs; Components: main
+Source: "..\target\dist\docs\*"; DestDir: "{app}\docs"; Flags: recursesubdirs; Components: docs
+Source: "..\target\dist\lib\*"; DestDir: "{app}\lib"; Flags: recursesubdirs; Components: main
+Source: "..\target\dist\schema\*"; DestDir: "{app}\schema"; Flags: recursesubdirs; Components: main
+Source: "..\target\dist\samples\*"; DestDir: "{app}\samples"; Flags: recursesubdirs; Components: sample
 
 [Dirs]
 
