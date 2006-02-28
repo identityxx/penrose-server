@@ -4,7 +4,7 @@
 <server>
 
     <mbean code="org.safehaus.penrose.jboss.PenroseService" name="jboss.ldap:service=PenroseService">
-        <attribute name="Home">C:\usr\local\penrose</attribute>
+        <attribute name="Home">${basedir}</attribute>
     </mbean>
 
 </server>

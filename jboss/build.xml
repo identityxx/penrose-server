@@ -2,23 +2,25 @@
  Copyright (c) 2000-2005, Identyx Corporation.
  All rights reserved.
 -->
-<project name="penrose" default="build" basedir=".">
-
-    <description>Penrose</description>
-    <property name="penrose.home" value="/usr/local/penrose"/>
-    <property name="jboss.home" value="/usr/local/jboss"/>
+<project name="penrose" default="build" basedir="..">
 
     <target name="build">
-        <jar destfile="penrose.sar">
-            <fileset dir="." includes="META-INF/*"/>
-            <fileset dir="../lib" includes="*.jar" excludes="bsh-2.0b4.jar"/>
-            <fileset dir="../lib/ext" includes="*.jar"/>
-            <fileset dir="../schema/ext" includes="*.jar"/>
+        <copy file="jboss/jboss-service.xml" tofile="jboss/META-INF/jboss-service.xml" overwrite="true">
+            <filterchain>
+                <expandproperties/>
+            </filterchain>
+        </copy>
+        <jar destfile="jboss/penrose.sar">
+            <fileset dir="jboss" includes="META-INF/*"/>
+            <fileset dir="lib" includes="*.jar" excludes="bsh-2.0b4.jar"/>
+            <fileset dir="lib/ext" includes="*.jar"/>
+            <fileset dir="schema/ext" includes="*.jar"/>
         </jar>
     </target>
 
     <target name="clean">
-        <delete file="penrose.sar"/>
+        <delete dir="jboss/META-INF"/>
+        <delete file="jboss/penrose.sar"/>
     </target>
 
 </project>
