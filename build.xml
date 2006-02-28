@@ -33,7 +33,7 @@
 
     <taskdef resource="svntask.properties" classpathref="project.classpath"/>
 
-    <target name="build-ant" description="Compiles the Task">
+    <target name="build-ant">
         <mkdir dir="target/ant"/>
         <javac srcdir="src/ant" destdir="target/ant"/>
         <jar destfile="target/penrose-ant.jar" basedir="target/ant"/>
@@ -162,16 +162,19 @@
             file="target/${project.name}-${project.version}.jar">
         </copy>
         <mkdir dir="target/dist/lib/ext"/>
-        <copy todir="target/dist/conf">
-            <fileset dir="conf"/>
-        </copy>
-        <taskdef name="wrapper" classname="org.safehaus.penrose.ant.WrapperTask" classpath="target/penrose-ant.jar"/>
-        <wrapper file="target/dist/conf/wrapper.conf" dir="lib"/>
         <copy todir="target/dist/conf/default">
             <fileset dir="conf"/>
         </copy>
+        <taskdef name="wrapper" classname="org.safehaus.penrose.ant.WrapperTask" classpath="target/penrose-ant.jar"/>
+        <wrapper file="target/dist/conf/default/wrapper.conf" dir="lib"/>
+        <copy todir="target/dist/conf">
+            <fileset dir="target/dist/conf/default"/>
+        </copy>
         <copy todir="target/dist/schema">
             <fileset dir="schema"/>
+        </copy>
+        <copy todir="target/dist/jboss">
+            <fileset dir="jboss"/>
         </copy>
         <copy todir="target/dist"
             file="images/penrose.ico">
