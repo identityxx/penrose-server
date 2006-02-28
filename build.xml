@@ -193,6 +193,7 @@
         <fixcrlf
             srcdir="target/dist/bin"
             includes="**/*.sh"
+            eol="unix"
         />
         <chmod dir="target/dist/bin" perm="ugo+rx" includes="**/*.sh"/>
         <copy todir="target/dist/samples">
