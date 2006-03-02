@@ -15,24 +15,32 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
-package org.safehaus.penrose.jboss;
+package org.safehaus.penrose.config;
 
-import org.jboss.system.Service;
+import java.util.Collection;
+import java.util.Map;
 
 /**
  * @author Endi S. Dewata
  */
-public interface PenroseServiceMBean extends Service {
+public interface PenroseConfigMBean {
 
     public String getHome() throws Exception;
     public void setHome(String home) throws Exception;
 
-    public String getProductName() throws Exception;
-    public String getProductVersion() throws Exception;
+    public Map getSystemProperties() throws Exception;
+    public String getSystemProperty(String name) throws Exception;
+    public void setSystemProperty(String name, String value) throws Exception;
+    public String removeSystemProperty(String name) throws Exception;
 
-    public void start() throws Exception;
-    public void stop();
+    public Collection getAdapterNames() throws Exception;
+    public Collection getSchemaNames() throws Exception;
+    public Collection getPartitionNames() throws Exception;
+    public Collection getServiceNames() throws Exception;
 
-    public void load() throws Exception;
-    public void store() throws Exception;
+    public String getRootDn() throws Exception;
+    public void setRootDn(String rootDn) throws Exception;
+
+    public String getRootPassword() throws Exception;
+    public void setRootPassword(String rootPassword) throws Exception;
 }

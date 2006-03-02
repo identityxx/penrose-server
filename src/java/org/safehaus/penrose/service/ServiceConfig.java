@@ -24,7 +24,7 @@ import java.util.TreeMap;
 /**
  * @author Endi S. Dewata
  */
-public class ServiceConfig implements Cloneable {
+public class ServiceConfig implements Cloneable, ServiceConfigMBean {
 
     private String name;
     private boolean enabled = true;
@@ -75,6 +75,10 @@ public class ServiceConfig implements Cloneable {
 
     public Collection getParameterNames() {
         return parameters.keySet();
+    }
+
+    public Map getParameters() {
+        return parameters;
     }
 
     public void setParameter(String name, String value) {

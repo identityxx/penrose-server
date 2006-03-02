@@ -26,7 +26,7 @@ import java.util.*;
 /**
  * @author Endi S. Dewata
  */
-public class SourceConfig implements Cloneable {
+public class SourceConfig implements SourceConfigMBean, Cloneable {
 
     //public final static String AUTO_REFRESH            = "autoRefresh";
 
@@ -201,6 +201,10 @@ public class SourceConfig implements Cloneable {
 
     public void removeParameter(String name) {
         parameters.remove(name);
+    }
+
+    public Map getParameters() {
+        return parameters;
     }
     
     public Collection getParameterNames() {

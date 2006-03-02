@@ -35,7 +35,7 @@ import org.safehaus.penrose.schema.SchemaConfig;
 import org.safehaus.penrose.partition.PartitionConfig;
 import org.safehaus.penrose.user.UserConfig;
 import org.safehaus.penrose.service.ServiceConfig;
-import org.safehaus.penrose.handler.SessionHandlerConfig;
+import org.safehaus.penrose.session.SessionConfig;
 import org.apache.log4j.Logger;
 
 /**
@@ -122,9 +122,9 @@ public class PenroseConfigWriter {
             element.add(sourceCache);
         }
 
-        if (penroseConfig.getSessionHandlerConfig() != null) {
-            SessionHandlerConfig sessionHandlerConfig = penroseConfig.getSessionHandlerConfig();
-            element.add(toElement(sessionHandlerConfig));
+        if (penroseConfig.getSessionConfig() != null) {
+            SessionConfig sessionConfig = penroseConfig.getSessionConfig();
+            element.add(toElement(sessionConfig));
         }
 
         if (penroseConfig.getEngineConfig() != null) {
@@ -281,18 +281,18 @@ public class PenroseConfigWriter {
     	return element;
     }
 
-    public Element toElement(SessionHandlerConfig sessionHandlerConfig) {
-    	Element element = new DefaultElement("session-handler");
+    public Element toElement(SessionConfig sessionConfig) {
+    	Element element = new DefaultElement("session");
 
-        if (sessionHandlerConfig.getDescription() != null && !"".equals(sessionHandlerConfig.getDescription())) {
+        if (sessionConfig.getDescription() != null && !"".equals(sessionConfig.getDescription())) {
             Element description = new DefaultElement("description");
-            description.add(new DefaultText(sessionHandlerConfig.getDescription()));
+            description.add(new DefaultText(sessionConfig.getDescription()));
             element.add(description);
         }
 
-        for (Iterator i = sessionHandlerConfig.getParameterNames().iterator(); i.hasNext();) {
+        for (Iterator i = sessionConfig.getParameterNames().iterator(); i.hasNext();) {
             String name = (String)i.next();
-            String value = (String)sessionHandlerConfig.getParameter(name);
+            String value = (String)sessionConfig.getParameter(name);
 
             Element parameter = new DefaultElement("parameter");
 

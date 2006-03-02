@@ -32,11 +32,10 @@ import java.io.File;
 /**
  * @author Endi S. Dewata
  */
-public class PartitionManager {
+public class PartitionManager implements PartitionManagerMBean {
 
     Logger log = Logger.getLogger(PartitionManager.class);
 
-    private String home;
     private PenroseConfig penroseConfig;
     private SchemaManager schemaManager;
 
@@ -57,9 +56,9 @@ public class PartitionManager {
         Partition partition = getPartition(partitionConfig.getName());
         if (partition != null) return partition;
 
-        log.debug("Loading "+partitionConfig.getName()+" partition from "+home+".");
+        log.debug("Loading "+partitionConfig.getName()+" partition from "+penroseConfig.getHome()+".");
 
-        PartitionReader partitionReader = new PartitionReader(home);
+        PartitionReader partitionReader = new PartitionReader(penroseConfig.getHome());
         partition = partitionReader.read(partitionConfig);
 
         addPartition(partitionConfig.getName(), partition);
@@ -76,7 +75,7 @@ public class PartitionManager {
 
     public void store(PartitionConfig partitionConfig) throws Exception {
 
-        String path = (home == null ? "" : home+File.separator)+partitionConfig.getPath();
+        String path = (penroseConfig.getHome() == null ? "" : penroseConfig.getHome()+File.separator)+partitionConfig.getPath();
 
         log.debug("Storing "+partitionConfig.getName()+" partition into "+path+".");
 
@@ -169,6 +168,10 @@ public class PartitionManager {
         return partitions.values();
     }
 
+    public Collection getPartitionNames() {
+        return partitions.keySet();
+    }
+
     public SchemaManager getSchemaManager() {
         return schemaManager;
     }
@@ -183,13 +186,5 @@ public class PartitionManager {
 
     public void setPenroseConfig(PenroseConfig penroseConfig) {
         this.penroseConfig = penroseConfig;
-    }
-
-    public String getHome() {
-        return home;
-    }
-
-    public void setHome(String home) {
-        this.home = home;
     }
 }

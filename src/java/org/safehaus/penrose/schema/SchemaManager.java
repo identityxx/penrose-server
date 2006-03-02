@@ -28,9 +28,7 @@ import java.util.Collection;
 /**
  * @author Endi S. Dewata
  */
-public class SchemaManager {
-
-    private String home;
+public class SchemaManager implements SchemaManagerMBean {
 
     private Map schemas = new TreeMap();
     private Schema schema = new Schema();
@@ -38,7 +36,7 @@ public class SchemaManager {
     public SchemaManager() {
     }
 
-    public void load(SchemaConfig schemaConfig) throws Exception {
+    public void load(String home, SchemaConfig schemaConfig) throws Exception {
 
         String path = (home == null ? "" : home+File.separator)+schemaConfig.getPath();
 
@@ -57,14 +55,6 @@ public class SchemaManager {
         return schema;
     }
 
-    public String getHome() {
-        return home;
-    }
-
-    public void setHome(String home) {
-        this.home = home;
-    }
-
     public String normalize(String dn) throws Exception {
         return schema.normalize(dn);
     }
@@ -75,6 +65,10 @@ public class SchemaManager {
 
     public Collection getObjectClasses() {
         return schema.getObjectClasses();
+    }
+
+    public Collection getObjectClassNames() {
+        return schema.getObjectClassNames();
     }
 
     public ObjectClass getObjectClass(String ocName) {
@@ -97,6 +91,10 @@ public class SchemaManager {
         return schema.getAttributeTypes();
     }
 
+    public Collection getAttributeTypeNames() {
+        return schema.getAttributeTypeNames();
+    }
+    
     public AttributeType getAttributeType(String attributeName) {
         return schema.getAttributeType(attributeName);
     }

@@ -4,6 +4,10 @@
 -->
 <project name="penrose" default="build" basedir="..">
 
+    <property name="jboss.home" value="/usr/local/jboss"/>
+    <property name="jboss.server" value="default"/>
+    <property name="jboss.deploy" value="${jboss.home}/server/${jboss.server}/deploy"/>
+
     <target name="build">
         <copy file="jboss/jboss-service.xml" tofile="jboss/META-INF/jboss-service.xml" overwrite="true">
             <filterchain>
@@ -16,6 +20,14 @@
             <fileset dir="lib/ext" includes="*.jar"/>
             <fileset dir="schema/ext" includes="*.jar"/>
         </jar>
+    </target>
+
+    <target name="deploy" depends="build">
+        <copy file="jboss/penrose.sar" todir="${jboss.deploy}" overwrite="true"/>
+    </target>
+
+    <target name="undeploy">
+        <delete file="${jboss.deploy}/penrose.sar"/>
     </target>
 
     <target name="clean">

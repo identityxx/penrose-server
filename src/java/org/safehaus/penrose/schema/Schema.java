@@ -40,13 +40,14 @@ public class Schema {
      */
     protected Map objectClasses = new TreeMap();
 
-    /**
-     * @return Returns the attributeTypes.
-     */
     public Collection getAttributeTypes() {
         return attributeTypes.values();
     }
 
+    public Collection getAttributeTypeNames() {
+        return attributeTypes.keySet();
+    }
+    
     public AttributeType getAttributeType(String name) {
         return (AttributeType)attributeTypes.get(name.toLowerCase());
     }
@@ -59,19 +60,16 @@ public class Schema {
         return (AttributeType)attributeTypes.remove(name.toLowerCase());
     }
 
-    /**
-     * @param attributeTypes
-     *            The attributes to set.
-     */
     public void setAttributeTypes(Map attributeTypes) {
         this.attributeTypes = attributeTypes;
     }
 
-    /**
-     * @return Returns the objectClassMap.
-     */
     public Collection getObjectClasses() {
         return objectClasses.values();
+    }
+
+    public Collection getObjectClassNames() {
+        return objectClasses.keySet();
     }
 
     public ObjectClass getObjectClass(String name) {
@@ -86,10 +84,6 @@ public class Schema {
         return (ObjectClass)objectClasses.remove(name.toLowerCase());
     }
 
-    /**
-     * @param objectClasses
-     *            The objectClassMap to set.
-     */
     public void setObjectClasses(Map objectClasses) {
         this.objectClasses = objectClasses;
     }

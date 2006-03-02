@@ -3,7 +3,7 @@
 
 <server>
 
-    <mbean code="org.safehaus.penrose.jboss.PenroseService" name="jboss.ldap:service=PenroseService">
+    <mbean code="org.safehaus.penrose.jboss.PenroseService" name="Penrose:service=Penrose">
         <attribute name="Home">${basedir}</attribute>
     </mbean>
 

@@ -15,24 +15,22 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
-package org.safehaus.penrose.jboss;
-
-import org.jboss.system.Service;
+package org.safehaus.penrose.session;
 
 /**
  * @author Endi S. Dewata
  */
-public interface PenroseServiceMBean extends Service {
-
-    public String getHome() throws Exception;
-    public void setHome(String home) throws Exception;
-
-    public String getProductName() throws Exception;
-    public String getProductVersion() throws Exception;
+public interface SessionManagerMBean {
 
     public void start() throws Exception;
-    public void stop();
+    public void stop() throws Exception;
 
-    public void load() throws Exception;
-    public void store() throws Exception;
+    public int getNumberOfSessions() throws Exception;
+    public void purge() throws Exception;
+
+    public void setMaxSessions(int maxSessions) throws Exception;
+    public int getMaxSessions() throws Exception;
+
+    public int getMaxIdleTime() throws Exception;
+    public void setMaxIdleTime(int maxIdleTime) throws Exception;
 }

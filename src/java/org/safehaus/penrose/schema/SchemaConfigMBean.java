@@ -15,24 +15,16 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
-package org.safehaus.penrose.jboss;
-
-import org.jboss.system.Service;
+package org.safehaus.penrose.schema;
 
 /**
  * @author Endi S. Dewata
  */
-public interface PenroseServiceMBean extends Service {
+public interface SchemaConfigMBean {
 
-    public String getHome() throws Exception;
-    public void setHome(String home) throws Exception;
+    public String getName() throws Exception;
+    public void setName(String name) throws Exception;
 
-    public String getProductName() throws Exception;
-    public String getProductVersion() throws Exception;
-
-    public void start() throws Exception;
-    public void stop();
-
-    public void load() throws Exception;
-    public void store() throws Exception;
+    public String getPath() throws Exception;
+    public void setPath(String path) throws Exception;
 }

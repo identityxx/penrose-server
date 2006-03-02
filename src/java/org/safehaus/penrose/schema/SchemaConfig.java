@@ -22,7 +22,7 @@ import java.io.File;
 /**
  * @author Endi S. Dewata
  */
-public class SchemaConfig implements Cloneable {
+public class SchemaConfig implements Cloneable, SchemaConfigMBean {
 
     private String name;
     private String path;

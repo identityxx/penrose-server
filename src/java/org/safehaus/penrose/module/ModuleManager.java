@@ -27,7 +27,7 @@ import java.util.*;
 /**
  * @author Endi S. Dewata
  */
-public class ModuleManager {
+public class ModuleManager implements ModuleManagerMBean {
 
     Logger log = Logger.getLogger(ModuleManager.class);
 
@@ -66,7 +66,7 @@ public class ModuleManager {
 
     public void start() throws Exception {
         //log.debug("Starting Modules...");
-        for (Iterator i=getServiceNames().iterator(); i.hasNext(); ) {
+        for (Iterator i=getModuleNames().iterator(); i.hasNext(); ) {
             String name = (String)i.next();
             start(name);
         }
@@ -87,7 +87,7 @@ public class ModuleManager {
 
     public void stop() throws Exception {
         log.debug("Stopping Modules...");
-        Collection list = getServiceNames();
+        Collection list = getModuleNames();
         String names[] = (String[])list.toArray(new String[list.size()]);
 
         for (int i=names.length-1; i>=0; i--) {
@@ -123,7 +123,7 @@ public class ModuleManager {
         return (Module)modules.get(name);
     }
 
-    public Collection getServiceNames() {
+    public Collection getModuleNames() {
         return modules.keySet();
     }
 

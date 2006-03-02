@@ -15,15 +15,16 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
-package org.safehaus.penrose.handler;
+package org.safehaus.penrose.session;
 
 import java.util.Properties;
 import java.util.Collection;
+import java.util.Map;
 
 /**
  * @author Endi S. Dewata
  */
-public class SessionHandlerConfig implements Cloneable {
+public class SessionConfig implements SessionConfigMBean, Cloneable {
 
     public final static String MAX_SESSIONS       = "maxSessions";
     public final static String MAX_IDLE_TIME      = "maxIdleTime";
@@ -59,6 +60,10 @@ public class SessionHandlerConfig implements Cloneable {
         return parameters.getProperty(name);
     }
 
+    public Map getParameters() {
+        return parameters;
+    }
+
     public int hashCode() {
         return (description == null ? 0 : description.hashCode()) +
                 (parameters == null ? 0 : parameters.hashCode());
@@ -73,23 +78,23 @@ public class SessionHandlerConfig implements Cloneable {
     public boolean equals(Object object) {
         if((object == null) || (object.getClass() != getClass())) return false;
 
-        SessionHandlerConfig sessionHandlerConfig = (SessionHandlerConfig)object;
-        if (!equals(description, sessionHandlerConfig.description)) return false;
-        if (!equals(parameters, sessionHandlerConfig.parameters)) return false;
+        SessionConfig sessionConfig = (SessionConfig)object;
+        if (!equals(description, sessionConfig.description)) return false;
+        if (!equals(parameters, sessionConfig.parameters)) return false;
 
         return true;
     }
 
     public Object clone() {
-        SessionHandlerConfig sessionHandlerConfig = new SessionHandlerConfig();
-        sessionHandlerConfig.copy(this);
-        return sessionHandlerConfig;
+        SessionConfig sessionConfig = new SessionConfig();
+        sessionConfig.copy(this);
+        return sessionConfig;
     }
 
-    public void copy(SessionHandlerConfig sessionHandlerConfig) {
-        description = sessionHandlerConfig.description;
+    public void copy(SessionConfig sessionConfig) {
+        description = sessionConfig.description;
 
         parameters.clear();
-        parameters.putAll(sessionHandlerConfig.parameters);
+        parameters.putAll(sessionConfig.parameters);
     }
 }

@@ -29,7 +29,7 @@ import java.util.Collection;
 /**
  * @author Endi S. Dewata
  */
-public class ServiceManager {
+public class ServiceManager implements ServiceManagerMBean {
 
     Logger log = Logger.getLogger(ServiceManager.class);
 

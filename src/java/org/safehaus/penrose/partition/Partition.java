@@ -24,6 +24,9 @@ import org.safehaus.penrose.module.ModuleMapping;
 import org.safehaus.penrose.module.ModuleConfig;
 import org.safehaus.penrose.mapping.*;
 
+/**
+ * @author Endi S. Dewata
+ */
 public class Partition {
 
     Logger log = Logger.getLogger(getClass());

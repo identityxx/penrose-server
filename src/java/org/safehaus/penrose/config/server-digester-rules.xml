@@ -108,9 +108,9 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
             <set-next-rule methodname="setSourceCacheConfig" />
         </pattern>
 
-        <!-- session handler -->
-        <pattern value="session-handler">
-            <object-create-rule classname="org.safehaus.penrose.handler.SessionHandlerConfig" />
+        <!-- session -->
+        <pattern value="session">
+            <object-create-rule classname="org.safehaus.penrose.session.SessionConfig" />
             <set-properties-rule/>
             <call-method-rule pattern="description" methodname="setDescription" paramcount="0" />
             <pattern value="parameter">
@@ -118,7 +118,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
                 <call-param-rule pattern="param-name" paramnumber="0"/>
                 <call-param-rule pattern="param-value" paramnumber="1"/>
             </pattern>
-            <set-next-rule methodname="setSessionHandlerConfig" />
+            <set-next-rule methodname="setSessionConfig" />
         </pattern>
 
 		<!-- engine -->

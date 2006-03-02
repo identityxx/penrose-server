@@ -20,7 +20,7 @@ package org.safehaus.penrose.partition;
 /**
  * @author Endi S. Dewata
  */
-public class PartitionConfig implements Cloneable {
+public class PartitionConfig implements PartitionConfigMBean, Cloneable {
 
     private String name;
     private String path;

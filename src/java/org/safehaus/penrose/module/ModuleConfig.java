@@ -18,20 +18,20 @@
 package org.safehaus.penrose.module;
 
 import java.util.Collection;
+import java.util.Properties;
 import java.util.Map;
-import java.util.TreeMap;
 
 /**
  * @author Endi S. Dewata
  */
-public class ModuleConfig implements Cloneable {
+public class ModuleConfig implements ModuleConfigMBean, Cloneable {
 
     private String name;
     private boolean enabled = true;
     private String moduleClass;
     private String description;
 
-    public Map parameters = new TreeMap();
+    public Properties parameters = new Properties();
 
     public String getName() {
         return name;
@@ -61,16 +61,16 @@ public class ModuleConfig implements Cloneable {
         return parameters.keySet();
     }
 
+    public Map getParameters() {
+        return parameters;
+    }
+
     public String getModuleClass() {
         return moduleClass;
     }
 
     public void setModuleClass(String moduleClass) {
         this.moduleClass = moduleClass;
-    }
-
-    public String toString() {
-        return "ModuleConfig("+name+")";
     }
 
     public boolean isEnabled() {

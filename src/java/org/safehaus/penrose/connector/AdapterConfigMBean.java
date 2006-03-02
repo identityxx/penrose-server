@@ -15,24 +15,26 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
-package org.safehaus.penrose.jboss;
+package org.safehaus.penrose.connector;
 
-import org.jboss.system.Service;
+import java.util.Map;
 
 /**
  * @author Endi S. Dewata
  */
-public interface PenroseServiceMBean extends Service {
+public interface AdapterConfigMBean {
 
-    public String getHome() throws Exception;
-    public void setHome(String home) throws Exception;
+    public String getAdapterClass() throws Exception;
+    public void setAdapterClass(String adapterClass) throws Exception;
 
-    public String getProductName() throws Exception;
-    public String getProductVersion() throws Exception;
+    public String getName() throws Exception;
+    public void setName(String name) throws Exception;
 
-    public void start() throws Exception;
-    public void stop();
+    public String getDescription() throws Exception;
+    public void setDescription(String description) throws Exception;
 
-    public void load() throws Exception;
-    public void store() throws Exception;
+    public void setParameter(String name, String value) throws Exception;
+    public void removeParameter(String name) throws Exception;
+    public Map getParameters() throws Exception;
+    public String getParameter(String name) throws Exception;
 }

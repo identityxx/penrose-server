@@ -21,6 +21,7 @@ import org.safehaus.penrose.session.PenroseSearchResults;
 import org.safehaus.penrose.user.UserConfig;
 import org.safehaus.penrose.session.PenroseSession;
 import org.safehaus.penrose.session.SessionManager;
+import org.safehaus.penrose.session.SessionConfig;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.acl.ACLEngine;
 import org.safehaus.penrose.filter.FilterTool;
@@ -61,8 +62,6 @@ public class SessionHandler {
     private ModifyHandler modifyHandler;
     private ModRdnHandler modRdnHandler;
     private SearchHandler searchHandler;
-
-    private SessionHandlerConfig sessionHandlerConfig;
 
     private SchemaManager schemaManager;
     private Engine engine;
@@ -118,8 +117,6 @@ public class SessionHandler {
     }
 
     public void initSessionManager() throws Exception {
-        sessionManager = new SessionManager();
-        sessionManager.setSessionHandler(this);
         sessionManager.start();
     }
 
@@ -486,19 +483,13 @@ public class SessionHandler {
 
     public PenroseSession newSession() throws Exception {
         if (status != STARTED) return null;
-        return sessionManager.newSession();
+        PenroseSession session = sessionManager.newSession();
+        session.setHandler(this);
+        return session;
     }
 
     public void closeSession(PenroseSession session) {
         sessionManager.closeSession(session);
-    }
-
-    public SessionHandlerConfig getSessionHandlerConfig() {
-        return sessionHandlerConfig;
-    }
-
-    public void setSessionHandlerConfig(SessionHandlerConfig sessionHandlerConfig) {
-        this.sessionHandlerConfig = sessionHandlerConfig;
     }
 
     public String getStatus() {

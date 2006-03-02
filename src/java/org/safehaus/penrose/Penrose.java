@@ -26,12 +26,13 @@ import org.safehaus.penrose.schema.*;
 import org.safehaus.penrose.engine.EngineConfig;
 import org.safehaus.penrose.engine.Engine;
 import org.safehaus.penrose.handler.SessionHandler;
-import org.safehaus.penrose.handler.SessionHandlerConfig;
+import org.safehaus.penrose.session.SessionConfig;
 import org.safehaus.penrose.interpreter.InterpreterConfig;
 import org.safehaus.penrose.interpreter.InterpreterFactory;
 import org.safehaus.penrose.connector.*;
 import org.safehaus.penrose.partition.*;
 import org.safehaus.penrose.session.PenroseSession;
+import org.safehaus.penrose.session.SessionManager;
 import org.safehaus.penrose.module.ModuleManager;
 
 /**
@@ -58,10 +59,12 @@ public class Penrose {
     private PartitionValidator partitionValidator;
     private ConnectionManager connectionManager;
     private ModuleManager moduleManager;
+    private SessionManager sessionManager;
 
     private InterpreterFactory interpreterFactory;
     private Connector connector;
 	private Engine engine;
+
     private SessionHandler sessionHandler;
 
     private String status = STOPPED;
@@ -71,11 +74,7 @@ public class Penrose {
     }
 
     public Penrose(String home) throws Exception {
-
-        PenroseConfigReader reader = new PenroseConfigReader((home == null ? "" : home+File.separator)+"conf"+File.separator+"server.xml");
-        penroseConfig = reader.read();
-        penroseConfig.setHome(home);
-
+        load(home);
         init();
     }
 
@@ -97,8 +96,27 @@ public class Penrose {
         initConnections();
         initConnector();
         initEngine();
+        initSessionManager();
         initSessionHandler();
 	}
+
+    public void load(String home) throws Exception {
+        String filename = (home == null ? "" : home+File.separator)+"conf"+File.separator+"server.xml";
+        log.debug("Loading Penrose configuration from "+filename);
+        PenroseConfigReader reader = new PenroseConfigReader(filename);
+        penroseConfig = reader.read();
+        penroseConfig.setHome(home);
+    }
+
+    public void store() throws Exception {
+        String home = penroseConfig.getHome();
+        String filename = (home == null ? "" : home+File.separator)+"conf"+File.separator+"server.xml";
+        log.debug("Storing Penrose configuration into "+filename);
+        PenroseConfigWriter serverConfigWriter = new PenroseConfigWriter(filename);
+        serverConfigWriter.write(penroseConfig);
+
+        partitionManager.store();
+    }
 
     public void initSystemProperties() throws Exception {
         for (Iterator i=penroseConfig.getSystemPropertyNames().iterator(); i.hasNext(); ) {
@@ -112,18 +130,16 @@ public class Penrose {
     public void initSchemaManager() throws Exception {
 
         schemaManager = new SchemaManager();
-        schemaManager.setHome(penroseConfig.getHome());
 
         for (Iterator i=penroseConfig.getSchemaConfigs().iterator(); i.hasNext(); ) {
             SchemaConfig schemaConfig = (SchemaConfig)i.next();
 
-            schemaManager.load(schemaConfig);
+            schemaManager.load(penroseConfig.getHome(), schemaConfig);
         }
     }
 
     public void initPartitionManager() throws Exception {
         partitionManager = new PartitionManager();
-        partitionManager.setHome(penroseConfig.getHome());
         partitionManager.setPenroseConfig(penroseConfig);
         partitionManager.setSchemaManager(schemaManager);
 
@@ -240,12 +256,16 @@ public class Penrose {
         engine.init();
     }
 
+    public void initSessionManager() throws Exception {
+
+        SessionConfig sessionConfig = penroseConfig.getSessionConfig();
+        sessionManager = new SessionManager(sessionConfig);
+    }
+
     public void initSessionHandler() throws Exception {
 
-        SessionHandlerConfig sessionHandlerConfig = penroseConfig.getSessionHandlerConfig();
-
         sessionHandler = new SessionHandler();
-        sessionHandler.setSessionHandlerConfig(sessionHandlerConfig);
+        sessionHandler.setSessionManager(sessionManager);
         sessionHandler.setSchemaManager(schemaManager);
         sessionHandler.setInterpreterFactory(interpreterFactory);
         sessionHandler.setEngine(engine);
@@ -340,5 +360,13 @@ public class Penrose {
 
     public void setModuleManager(ModuleManager moduleManager) {
         this.moduleManager = moduleManager;
+    }
+
+    public SessionManager getSessionManager() {
+        return sessionManager;
+    }
+
+    public void setSessionManager(SessionManager sessionManager) {
+        this.sessionManager = sessionManager;
     }
 }

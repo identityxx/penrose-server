@@ -22,39 +22,19 @@ import java.util.*;
 /**
  * @author Endi S. Dewata
  */
-public class ConnectionConfig implements Cloneable {
+public class ConnectionConfig implements ConnectionConfigMBean, Cloneable {
 
-	/**
-	 * Name.
-	 */
 	public String name;
 
-	/**
-	 * Type.
-	 */
 	public String adapterName;
 
-	/**
-	 * Description
-	 */
 	public String description;
 
-	/**
-	 * Parameters.
-	 */
-	public Map parameters = new TreeMap();
+	public Properties parameters = new Properties();
 
 	public ConnectionConfig() {
 	}
 
-	/**
-	 * Constructor w/ name and type
-	 * 
-	 * @param name
-	 *            the name of the connection
-	 * @param type
-	 *            the type of the connection, whether JNDI or LDAP
-	 */
 	public ConnectionConfig(String name, String type) {
 		this.name = name;
 		this.adapterName = type;
@@ -76,40 +56,33 @@ public class ConnectionConfig implements Cloneable {
 		this.adapterName = adapterName;
 	}
 
+    public Map getParameters() {
+        return parameters;
+    }
+
     public Collection getParameterNames() {
         return parameters.keySet();
     }
 
     public String getParameter(String name) {
-        return (String)parameters.get(name);
+        return parameters.getProperty(name);
     }
 
     public void setParameter(String name, String value) {
-        parameters.put(name, value);
+        parameters.setProperty(name, value);
     }
 
     public String removeParameter(String name) {
         return (String)parameters.remove(name);
     }
 
-	/**
-	 * @return the description
-	 */
 	public String getDescription() {
 		return description;
 	}
 
-	/**
-	 * @param description
-	 *            the descripiton to set
-	 */
 	public void setDescription(String description) {
 		this.description = description;
 	}
-
-    public String toString() {
-        return "ConnectionConfig("+name+")";
-    }
 
     public int hashCode() {
         return (name == null ? 0 : name.hashCode()) +

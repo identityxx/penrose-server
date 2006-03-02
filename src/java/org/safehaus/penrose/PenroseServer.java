@@ -175,6 +175,14 @@ public class PenroseServer implements SignalHandler {
         this.serviceManager = serviceManager;
     }
 
+    public void load(String home) throws Exception {
+        penrose.load(home);
+    }
+
+    public void store() throws Exception {
+        penrose.store();
+    }
+    
     public static void main( String[] args ) throws Exception {
 
         try {

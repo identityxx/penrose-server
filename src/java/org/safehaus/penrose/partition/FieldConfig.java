@@ -20,7 +20,7 @@ package org.safehaus.penrose.partition;
 /**
  * @author Endi S. Dewata
  */
-public class FieldConfig implements Comparable, Cloneable {
+public class FieldConfig implements FieldConfigMBean, Comparable, Cloneable {
 
     public final static String DEFAULT_TYPE   = "VARCHAR";
     public final static int DEFAULT_LENGTH    = 50;

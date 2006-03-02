@@ -19,11 +19,12 @@ package org.safehaus.penrose.connector;
 
 import java.util.Properties;
 import java.util.Collection;
+import java.util.Map;
 
 /**
  * @author Endi S. Dewata
  */
-public class AdapterConfig implements Cloneable {
+public class AdapterConfig implements Cloneable, AdapterConfigMBean {
 
     private String name;
     private String adapterClass;
@@ -73,6 +74,10 @@ public class AdapterConfig implements Cloneable {
 
     public Collection getParameterNames() {
         return parameters.keySet();
+    }
+
+    public Map getParameters() {
+        return parameters;
     }
 
     public String getParameter(String name) {

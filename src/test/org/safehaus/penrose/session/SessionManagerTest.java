@@ -23,7 +23,7 @@ import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.config.DefaultPenroseConfig;
 import org.safehaus.penrose.schema.SchemaConfig;
 import org.safehaus.penrose.Penrose;
-import org.safehaus.penrose.handler.SessionHandlerConfig;
+import org.safehaus.penrose.session.SessionConfig;
 import org.safehaus.penrose.user.UserConfig;
 
 import java.util.Iterator;
@@ -52,9 +52,9 @@ public class SessionManagerTest extends TestCase {
 
         penroseConfig = new DefaultPenroseConfig();
 
-        SessionHandlerConfig sessionHandlerConfig = penroseConfig.getSessionHandlerConfig();
-        sessionHandlerConfig.setParameter(SessionHandlerConfig.MAX_SESSIONS, "6");
-        sessionHandlerConfig.setParameter(SessionHandlerConfig.MAX_IDLE_TIME, "1"); // 1 minute
+        SessionConfig sessionConfig = penroseConfig.getSessionConfig();
+        sessionConfig.setParameter(SessionConfig.MAX_SESSIONS, "6");
+        sessionConfig.setParameter(SessionConfig.MAX_IDLE_TIME, "1"); // 1 minute
 
         SchemaConfig schemaConfig = new SchemaConfig("samples/schema/example.schema");
         penroseConfig.addSchemaConfig(schemaConfig);

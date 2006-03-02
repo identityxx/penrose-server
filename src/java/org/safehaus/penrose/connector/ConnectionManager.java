@@ -28,7 +28,7 @@ import java.util.*;
 /**
  * @author Endi S. Dewata
  */
-public class ConnectionManager {
+public class ConnectionManager implements ConnectionManagerMBean {
 
     public Logger log = Logger.getLogger(ConnectionManager.class);
 
@@ -54,7 +54,6 @@ public class ConnectionManager {
         for (Iterator i=partitionManager.getPartitions().iterator(); i.hasNext(); ) {
             Partition partition = (Partition)i.next();
 
-
             Collection connectionConfigs = partition.getConnectionConfigs();
             for (Iterator j = connectionConfigs.iterator(); j.hasNext();) {
                 ConnectionConfig connectionConfig = (ConnectionConfig)j.next();
@@ -79,9 +78,7 @@ public class ConnectionManager {
             AdapterConfig adapterConfig = penroseConfig.getAdapterConfig(adapterName);
             if (adapterConfig == null) throw new Exception("Undefined adapter "+adapterName);
 
-            connection = new Connection();
-            connection.setConnectionConfig(connectionConfig);
-            connection.setAdapterConfig(adapterConfig);
+            connection = new Connection(connectionConfig, adapterConfig);
 
             connections.put(name, connection);
             
@@ -104,6 +101,14 @@ public class ConnectionManager {
     public Connection getConnection(Partition partition, String connectionName) throws Exception {
         String partitionName = partition == null ? "DEFAULT" : partition.getName();
         return (Connection)connections.get(partitionName+"/"+connectionName);
+    }
+
+    public Collection getConnectionNames() {
+        return connectionConfigs.keySet();
+    }
+    
+    public Collection getConnections() {
+        return connections.values();
     }
 
     public Object openConnection(String connectionName) throws Exception {

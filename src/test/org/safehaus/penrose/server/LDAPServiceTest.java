@@ -54,6 +54,9 @@ public class LDAPServiceTest extends TestCase {
         Logger rootLogger = Logger.getRootLogger();
         rootLogger.setLevel(Level.OFF);
 
+        Logger ldapLogger = Logger.getLogger("org.apache");
+        ldapLogger.setLevel(Level.INFO);
+
         Logger logger = Logger.getLogger("org.safehaus.penrose");
         logger.setLevel(Level.INFO);
 
@@ -89,33 +92,56 @@ public class LDAPServiceTest extends TestCase {
         int port = service.getLdapPort();
 
         try {
+            search(port+1);
+            fail("Searching should have failed.");
+        } catch (Exception e) {
+            System.out.println("Searching failed as expected: "+e.getMessage());
+        }
+
+        try {
             search(port);
-            System.out.println("Searching at the old port succeeded as expected.");
+            System.out.println("Searching succeeded as expected.");
         } catch (Exception e) {
             e.printStackTrace();
-            fail("Searching at the old port should have succeeded.");
+            fail("Searching should have succeeded.");
         }
 
         penroseServer.stop();
+
+        try {
+            search(port);
+            fail("Searching should have failed.");
+        } catch (Exception e) {
+            System.out.println("Searching failed as expected: "+e.getMessage());
+        }
+
         penroseServer.start();
 
         try {
             search(port);
-            System.out.println("Searching at the old port succeeded as expected.");
+            System.out.println("Searching succeeded as expected.");
         } catch (Exception e) {
             e.printStackTrace();
-            fail("Searching at the old port should have succeeded.");
+            fail("Searching should have succeeded.");
         }
 
         penroseServer.stop();
+
+        try {
+            search(port);
+            fail("Searching should have failed.");
+        } catch (Exception e) {
+            System.out.println("Searching failed as expected: "+e.getMessage());
+        }
+
         penroseServer.start();
 
         try {
             search(port);
-            System.out.println("Searching at the old port succeeded as expected.");
+            System.out.println("Searching succeeded as expected.");
         } catch (Exception e) {
             e.printStackTrace();
-            fail("Searching at the old port should have succeeded.");
+            fail("Searching should have succeeded.");
         }
     }
 

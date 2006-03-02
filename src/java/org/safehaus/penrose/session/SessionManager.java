@@ -21,32 +21,30 @@ import java.util.*;
 
 import org.apache.log4j.Logger;
 import org.safehaus.penrose.handler.SessionHandler;
-import org.safehaus.penrose.handler.SessionHandlerConfig;
 
-public class SessionManager {
+public class SessionManager implements SessionManagerMBean {
 
 	public Logger log = Logger.getLogger(getClass());
 
     public final static String SESSION_ID_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890";
 
-    private SessionHandler sessionHandler;
+    private SessionConfig sessionConfig;
 
     public Map sessions = new LinkedHashMap();
 
     private int maxSessions;
     private int maxIdleTime; // minutes
 
-	public SessionManager() {
+	public SessionManager(SessionConfig sessionConfig) {
+        this.sessionConfig = sessionConfig;
 	}
 
 	public void start() throws Exception {
-        SessionHandlerConfig sessionHandlerConfig = sessionHandler.getSessionHandlerConfig();
+        String s = sessionConfig.getParameter(SessionConfig.MAX_SESSIONS);
+        maxSessions = s == null ? SessionConfig.DEFAULT_MAX_SESSIONS : Integer.parseInt(s);
 
-        String s = sessionHandlerConfig.getParameter(SessionHandlerConfig.MAX_SESSIONS);
-        maxSessions = s == null ? SessionHandlerConfig.DEFAULT_MAX_SESSIONS : Integer.parseInt(s);
-
-        s = sessionHandlerConfig.getParameter(SessionHandlerConfig.MAX_IDLE_TIME);
-        maxIdleTime = s == null ? SessionHandlerConfig.DEFAULT_MAX_IDLE_TIME : Integer.parseInt(s);
+        s = sessionConfig.getParameter(SessionConfig.MAX_IDLE_TIME);
+        maxIdleTime = s == null ? SessionConfig.DEFAULT_MAX_IDLE_TIME : Integer.parseInt(s);
 	}
 
     public void stop() throws Exception {
@@ -68,7 +66,6 @@ public class SessionManager {
         log.info("Creating session "+sessionId);
         PenroseSession session = new PenroseSession();
         session.setSessionId(sessionId);
-        session.setHandler(sessionHandler);
 
         sessions.put(sessionId, session);
 
@@ -126,12 +123,8 @@ public class SessionManager {
         return sessions.values();
     }
 
-    public SessionHandler getSessionHandler() {
-        return sessionHandler;
-    }
-
-    public void setSessionHandler(SessionHandler sessionHandler) {
-        this.sessionHandler = sessionHandler;
+    public int getNumberOfSessions() {
+        return sessions.size();
     }
 
     public void setMaxSessions(int maxSessions) {
@@ -148,5 +141,13 @@ public class SessionManager {
 
     public void setMaxIdleTime(int maxIdleTime) {
         this.maxIdleTime = maxIdleTime;
+    }
+
+    public SessionConfig getSessionManagerConfig() {
+        return sessionConfig;
+    }
+
+    public void setSessionManagerConfig(SessionConfig sessionConfig) {
+        this.sessionConfig = sessionConfig;
     }
 }
