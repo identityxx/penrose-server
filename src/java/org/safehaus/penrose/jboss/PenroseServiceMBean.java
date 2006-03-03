@@ -19,20 +19,31 @@ package org.safehaus.penrose.jboss;
 
 import org.jboss.system.Service;
 
+import java.util.Collection;
+
 /**
  * @author Endi S. Dewata
  */
 public interface PenroseServiceMBean extends Service {
 
-    public String getHome() throws Exception;
-    public void setHome(String home) throws Exception;
-
     public String getProductName() throws Exception;
     public String getProductVersion() throws Exception;
 
+    public String getHome() throws Exception;
+    public void setHome(String home) throws Exception;
+
     public void start() throws Exception;
     public void stop();
-
     public void reload() throws Exception;
+    public void restart() throws Exception;
     public void store() throws Exception;
+
+    public Collection getServiceNames() throws Exception;
+    public void start(String serviceName) throws Exception;
+    public void stop(String serviceName) throws Exception;
+    public String getStatus(String serviceName) throws Exception;
+
+    public byte[] download(String filename) throws Exception;
+	public void upload(String filename, byte content[]) throws Exception;
+    public Collection listFiles(String directory) throws Exception;
 }

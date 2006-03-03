@@ -20,6 +20,7 @@ package org.safehaus.penrose.management;
 import org.apache.log4j.*;
 import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.PenroseServer;
+import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.service.ServiceManager;
 
 import java.util.Collection;
@@ -34,13 +35,18 @@ import java.io.FileOutputStream;
 /**
  * @author Endi S. Dewata
  */
-public class PenroseAdmin implements PenroseAdminMBean {
+public class PenroseService implements PenroseServiceMBean {
 
-    Logger log = Logger.getLogger(PenroseAdmin.class);
+    Logger log = Logger.getLogger(PenroseService.class);
 
     private PenroseServer penroseServer;
 
-    public PenroseAdmin() {
+    public PenroseService(PenroseServer penroseServer) throws Exception {
+        this.penroseServer = penroseServer;
+    }
+
+    public PenroseService(String home) throws Exception {
+        penroseServer = new PenroseServer(home);
     }
 
     public String getProductName() {
@@ -49,6 +55,16 @@ public class PenroseAdmin implements PenroseAdminMBean {
 
     public String getProductVersion() {
         return Penrose.PRODUCT_VERSION;
+    }
+
+    public String getHome() throws Exception {
+        return penroseServer.getPenroseConfig().getHome();
+    }
+
+    public void setHome(String home) throws Exception {
+        PenroseConfig penroseConfig = penroseServer.getPenroseConfig();
+        penroseConfig.setHome(home);
+        penroseServer.reload();
     }
 
     public void start() throws Exception {
@@ -67,6 +83,10 @@ public class PenroseAdmin implements PenroseAdminMBean {
         penroseServer.stop();
         penroseServer.reload();
         penroseServer.start();
+    }
+
+    public void store() throws Exception {
+        penroseServer.store();
     }
 
     public Collection getServiceNames() throws Exception {
@@ -107,20 +127,6 @@ public class PenroseAdmin implements PenroseAdminMBean {
             }
         }
         return results;
-    }
-
-    public Collection getLoggerNames(String path) throws Exception {
-        //log.debug("Loggers under "+path);
-        Collection loggerNames = new TreeSet();
-
-        Enumeration e = LogManager.getCurrentLoggers();
-        while (e.hasMoreElements()) {
-    		Logger logger = (Logger)e.nextElement();
-    		//log.debug(" - "+logger.getName()+": "+logger.getEffectiveLevel());
-            loggerNames.add(logger.getName());
-    	}
-
-        return loggerNames;
     }
 
     public byte[] download(String filename) throws Exception {

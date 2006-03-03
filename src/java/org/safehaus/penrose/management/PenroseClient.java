@@ -24,6 +24,8 @@ import javax.management.remote.JMXConnector;
 import javax.management.remote.JMXConnectorFactory;
 import javax.management.MBeanServerConnection;
 import javax.management.ObjectName;
+import javax.naming.Context;
+import javax.naming.InitialContext;
 import java.util.*;
 import java.io.File;
 
@@ -34,52 +36,84 @@ public class PenroseClient {
 
     public Logger log = Logger.getLogger(PenroseClient.class);
 
-    public final static String MBEAN_NAME = "Penrose:type=Penrose";
+    public final static String MBEAN_NAME = "Penrose:service=Penrose";
+
+    public final static String PENROSE = "PENROSE";
+    public final static String JBOSS   = "JBOSS";
 
 	public String url;
+    public String type;
+    public String host;
+    public int port;
     public String username;
     public String password;
 
-	public JMXServiceURL address;
-	public Map environment;
+    public Context context;
 	public JMXConnector connector;
+
 	public MBeanServerConnection connection;
 	public String domain;
 	public ObjectName name;
-    public String host;
-    public int port;
 
-	public PenroseClient(String host, int port, String username, String password) throws Exception {
+    public PenroseClient(String host, int port, String username, String password) throws Exception {
+        this(PENROSE, host, port, username, password);
+    }
+
+	public PenroseClient(String type, String host, int port, String username, String password) throws Exception {
+        this.type = type;
         this.host = host;
         this.port = port;
-        this.url = "service:jmx:rmi:///jndi/rmi://"+host+(port == 0 ? "" : ":"+port)+"/jmx";
-        //this.url = "service:jmx:rmi://"+host+(port == 0 ? "" : ":"+port);
+
 		this.username = username;
 		this.password = password;
 	}
 
 	public void connect() throws Exception {
 
-        log.debug("Connecting to "+host+":"+port+" as "+username+" with password "+password);
+        if (JBOSS.equals(type)) {
 
-		address = new JMXServiceURL(url);
+            String url = "jnp://"+host+":"+port;
+            log.debug("Connecting to JBoss server at "+url);
 
-        String[] credentials = new String[2];
-        credentials[0] = username;
-        credentials[1] = password;
+            Hashtable parameters = new Hashtable();
+            parameters.put(Context.INITIAL_CONTEXT_FACTORY, "org.jnp.interfaces.NamingContextFactory");
+            parameters.put(Context.PROVIDER_URL, url);
+            parameters.put(Context.URL_PKG_PREFIXES, "org.jboss.naming:org.jnp.interfaces");
+            parameters.put(Context.SECURITY_PRINCIPAL, username);
+            parameters.put(Context.SECURITY_CREDENTIALS, password);
 
-        environment = new HashMap();
-        environment.put(JMXConnector.CREDENTIALS, credentials);
+            context = new InitialContext(parameters);
+            connection = (MBeanServerConnection)context.lookup("jmx/invoker/RMIAdaptor");
 
-		connector = JMXConnectorFactory.connect(address, environment);
+        } else {
 
-		connection = connector.getMBeanServerConnection();
+            String url = "service:jmx:rmi:///jndi/rmi://"+host+(port == 0 ? "" : ":"+port)+"/jmx";
+            //String url = "service:jmx:rmi://"+host+(port == 0 ? "" : ":"+port);
+            log.debug("Connecting to Penrose server at "+url);
+
+            JMXServiceURL address = new JMXServiceURL(url);
+
+            String[] credentials = new String[2];
+            credentials[0] = username;
+            credentials[1] = password;
+
+            Hashtable parameters = new Hashtable();
+            parameters.put(JMXConnector.CREDENTIALS, credentials);
+
+            connector = JMXConnectorFactory.connect(address, parameters);
+            connection = connector.getMBeanServerConnection();
+        }
+
 		domain = connection.getDefaultDomain();
 		name = new ObjectName(MBEAN_NAME);
 	}
 
     public void close() throws Exception {
-        connector.close();
+        if (JBOSS.equals(type)) {
+            context.close();
+        } else {
+            connector.close();
+        }
     }
 
 	public Object invoke(String method, Object[] paramValues, String[] paramClassNames) throws Exception {
@@ -168,13 +202,6 @@ public class PenroseClient {
         );
     }
 
-    public Collection getLoggerNames(String path) throws Exception {
-        return (Collection)invoke("getLoggerNames",
-                new Object[] { path },
-                new String[] { String.class.getName() }
-        );
-    }
-
     public static void showUsage() {
         System.out.println("Usage: org.safehaus.penrose.management.PenroseClient [OPTION]... <COMMAND>");
         System.out.println();
@@ -197,6 +224,7 @@ public class PenroseClient {
     public static void main(String args[]) throws Exception {
 
         String logLevel = "NORMAL";
+        String serverType = PENROSE;
         String hostname = "localhost";
         int portNumber = 0;
         String bindDn = null;
@@ -205,7 +233,7 @@ public class PenroseClient {
         LongOpt[] longopts = new LongOpt[1];
         longopts[0] = new LongOpt("help", LongOpt.NO_ARGUMENT, null, '?');
 
-        Getopt getopt = new Getopt("PenroseClient", args, "-:?dvh:p:D:w:", longopts);
+        Getopt getopt = new Getopt("PenroseClient", args, "-:?dvt:h:p:D:w:", longopts);
 
         Collection parameters = new ArrayList();
         int c;
@@ -224,6 +252,9 @@ public class PenroseClient {
                     break;
                 case 'v':
                     logLevel = "VERBOSE";
+                    break;
+                case 't':
+                    serverType = getopt.getOptarg();
                     break;
                 case 'h':
                     hostname = getopt.getOptarg();
@@ -271,7 +302,7 @@ public class PenroseClient {
             BasicConfigurator.configure(appender);
         }
 
-        PenroseClient client = new PenroseClient(hostname, portNumber, bindDn, bindPassword);
+        PenroseClient client = new PenroseClient(serverType, hostname, portNumber, bindDn, bindPassword);
         client.connect();
 
         Iterator iterator = parameters.iterator();
@@ -304,5 +335,13 @@ public class PenroseClient {
         }
 
         client.close();
+    }
+
+    public String getType() {
+        return type;
+    }
+
+    public void setType(String type) {
+        this.type = type;
     }
 }
