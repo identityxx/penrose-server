@@ -98,6 +98,34 @@ public class PenroseClient {
         return (Collection)connection.getAttribute(name, "ServiceNames");
     }
 
+    public void start() throws Exception {
+        invoke("start",
+                new Object[] { },
+                new String[] { }
+        );
+    }
+
+    public void stop() throws Exception {
+        invoke("stop",
+                new Object[] { },
+                new String[] { }
+        );
+    }
+
+    public void reload() throws Exception {
+        invoke("reload",
+                new Object[] { },
+                new String[] { }
+        );
+    }
+
+    public void restart() throws Exception {
+        invoke("restart",
+                new Object[] { },
+                new String[] { }
+        );
+    }
+
     public void start(String serviceName) throws Exception {
         invoke("start",
                 new Object[] { serviceName },

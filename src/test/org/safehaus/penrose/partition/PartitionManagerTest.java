@@ -82,7 +82,7 @@ public class PartitionManagerTest extends TestCase {
         Partition partition = partitionReader.read(partitionConfig);
 
         PartitionManager partitionManager = penrose.getPartitionManager();
-        partitionManager.addPartition(partitionConfig.getName(), partition);
+        partitionManager.addPartition(partition);
 
         penrose.start();
 

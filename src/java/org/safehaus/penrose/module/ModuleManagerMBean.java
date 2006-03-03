@@ -24,7 +24,6 @@ import java.util.Collection;
  */
 public interface ModuleManagerMBean {
 
-    public void init() throws Exception;
     public void start() throws Exception;
     public void stop() throws Exception;
 

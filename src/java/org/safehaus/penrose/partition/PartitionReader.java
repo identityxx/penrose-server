@@ -37,7 +37,7 @@ public class PartitionReader {
 
     Logger log = Logger.getLogger(getClass());
 
-    String home;
+    private String home;
 
     public PartitionReader() {
     }
@@ -298,4 +298,12 @@ public class PartitionReader {
         digester.push(partition);
         digester.parse(file);
 	}
+
+    public String getHome() {
+        return home;
+    }
+
+    public void setHome(String home) {
+        this.home = home;
+    }
 }

@@ -31,19 +31,24 @@ public class SchemaReader {
 
     Logger log = Logger.getLogger(getClass());
 
-    private String filename;
+    private String home;
 
-    public SchemaReader(String filename) {
-        this.filename = filename;
+    public SchemaReader() {
     }
 
-    public Schema read() throws Exception {
+    public SchemaReader(String home) {
+        this.home = home;
+    }
 
-        log.debug("Loading schema "+filename+".");
+    public Schema read(SchemaConfig schemaConfig) throws Exception {
 
-        Schema schema = new Schema();
+        String path = (home == null ? "" : home+File.separator)+schemaConfig.getPath();
 
-        File file = new File(filename);
+        log.debug("Loading schema "+path+".");
+
+        Schema schema = new Schema(schemaConfig);
+
+        File file = new File(path);
         if (!file.exists()) return schema;
 
         FileReader in = new FileReader(file);

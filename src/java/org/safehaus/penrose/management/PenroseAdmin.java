@@ -51,6 +51,24 @@ public class PenroseAdmin implements PenroseAdminMBean {
         return Penrose.PRODUCT_VERSION;
     }
 
+    public void start() throws Exception {
+        penroseServer.start();
+    }
+
+    public void stop() throws Exception {
+        penroseServer.stop();
+    }
+
+    public void reload() throws Exception {
+        penroseServer.reload();
+    }
+
+    public void restart() throws Exception {
+        penroseServer.stop();
+        penroseServer.reload();
+        penroseServer.start();
+    }
+
     public Collection getServiceNames() throws Exception {
         Collection serviceNames = new ArrayList();
         ServiceManager serviceManager = penroseServer.getServiceManager();

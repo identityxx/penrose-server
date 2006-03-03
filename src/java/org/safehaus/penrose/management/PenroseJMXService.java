@@ -29,6 +29,7 @@ import javax.management.remote.JMXConnectorServer;
 import javax.management.remote.JMXServiceURL;
 import javax.management.remote.JMXConnectorServerFactory;
 import java.util.HashMap;
+import java.util.Collection;
 
 import org.safehaus.penrose.service.Service;
 import org.safehaus.penrose.service.ServiceConfig;
@@ -47,6 +48,7 @@ public class PenroseJMXService extends Service {
     PenroseJMXAuthenticator jmxAuthenticator;
 
     MBeanServer mbeanServer;
+    boolean createdMBeanServer;
 
     ObjectName penroseAdminName = ObjectName.getInstance(PenroseClient.MBEAN_NAME);
     PenroseAdmin penroseAdmin;
@@ -91,14 +93,20 @@ public class PenroseJMXService extends Service {
 
         setStatus(STARTING);
 
-        mbeanServer = MBeanServerFactory.createMBeanServer();
+        Collection servers = MBeanServerFactory.findMBeanServer(null);
+        if (servers.isEmpty()) {
+            mbeanServer = MBeanServerFactory.createMBeanServer();
+            createdMBeanServer = true;
+        } else {
+            mbeanServer = (MBeanServer)servers.iterator().next();
+        }
 
         penroseAdmin = new PenroseAdmin();
         penroseAdmin.setPenroseServer(getPenroseServer());
 
         mbeanServer.registerMBean(penroseAdmin, penroseAdminName);
 
-        if (rmiPort > 0) {
+        if (rmiPort > 0 && createdMBeanServer) {
 
             registry = new NamingService(rmiPort);
             mbeanServer.registerMBean(registry, registryName);
@@ -121,7 +129,7 @@ public class PenroseJMXService extends Service {
             xsltProcessor = new XSLTProcessor();
             mbeanServer.registerMBean(xsltProcessor, xsltProcessorName);
 
-            httpConnector = new HttpAdaptor(8112, "localhost");
+            httpConnector = new HttpAdaptor(httpPort, "localhost");
             httpConnector.setProcessorName(xsltProcessorName);
             mbeanServer.registerMBean(httpConnector, httpConnectorName);
             httpConnector.start();
@@ -140,7 +148,7 @@ public class PenroseJMXService extends Service {
             mbeanServer.unregisterMBean(xsltProcessorName);
         }
 
-        if (rmiPort > 0) {
+        if (rmiPort > 0 && createdMBeanServer) {
             rmiConnector.stop();
             mbeanServer.unregisterMBean(rmiConnectorName);
 
@@ -149,7 +157,7 @@ public class PenroseJMXService extends Service {
         }
 
         mbeanServer.unregisterMBean(penroseAdminName);
-        MBeanServerFactory.releaseMBeanServer(mbeanServer);
+        if (createdMBeanServer) MBeanServerFactory.releaseMBeanServer(mbeanServer);
 
         setStatus(STOPPED);
 

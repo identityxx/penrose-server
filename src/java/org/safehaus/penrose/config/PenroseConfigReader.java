@@ -42,14 +42,13 @@ public class PenroseConfigReader {
         this.reader = reader;
     }
 
-    /**
-     * Load server configuration from a file
-     *
-     * @throws Exception
-     */
     public PenroseConfig read() throws Exception {
         PenroseConfig penroseConfig = new PenroseConfig();
+        read(penroseConfig);
+        return penroseConfig;
+	}
 
+    public void read(PenroseConfig penroseConfig) throws Exception {
         ClassLoader cl = getClass().getClassLoader();
         URL url = cl.getResource("org/safehaus/penrose/config/server-digester-rules.xml");
 		Digester digester = DigesterLoader.createDigester(url);
@@ -57,7 +56,5 @@ public class PenroseConfigReader {
         digester.setClassLoader(cl);
 		digester.push(penroseConfig);
 		digester.parse(reader);
-
-        return penroseConfig;
-	}
+    }
 }

@@ -308,30 +308,27 @@ public class PenroseConfig implements PenroseConfigMBean, Cloneable {
     }
 
     public void copy(PenroseConfig penroseConfig) {
+        clear();
+
         home = penroseConfig.home;
 
-        systemProperties.clear();
         systemProperties.putAll(penroseConfig.systemProperties);
 
-        schemaConfigs.clear();
         for (Iterator i=penroseConfig.schemaConfigs.values().iterator(); i.hasNext(); ) {
             SchemaConfig schemaConfig = (SchemaConfig)i.next();
             addSchemaConfig((SchemaConfig)schemaConfig.clone());
         }
 
-        adapterConfigs.clear();
         for (Iterator i=penroseConfig.adapterConfigs.values().iterator(); i.hasNext(); ) {
             AdapterConfig adapterConfig = (AdapterConfig)i.next();
             addAdapterConfig((AdapterConfig)adapterConfig.clone());
         }
 
-        partitionConfigs.clear();
         for (Iterator i=penroseConfig.partitionConfigs.values().iterator(); i.hasNext(); ) {
             PartitionConfig partitionConfig = (PartitionConfig)i.next();
             addPartitionConfig((PartitionConfig)partitionConfig.clone());
         }
 
-        serviceConfigs.clear();
         for (Iterator i=penroseConfig.serviceConfigs.values().iterator(); i.hasNext(); ) {
             ServiceConfig serviceConfig = (ServiceConfig)i.next();
             addServiceConfig((ServiceConfig)serviceConfig.clone());
@@ -347,6 +344,14 @@ public class PenroseConfig implements PenroseConfigMBean, Cloneable {
         connectorConfig.copy(connectorConfig);
 
         rootUserConfig.copy(rootUserConfig);
+    }
+
+    public void clear() {
+        systemProperties.clear();
+        schemaConfigs.clear();
+        adapterConfigs.clear();
+        partitionConfigs.clear();
+        serviceConfigs.clear();
     }
 
     public Object clone() {

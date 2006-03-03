@@ -19,83 +19,104 @@ package org.safehaus.penrose.schema;
 
 import org.safehaus.penrose.mapping.EntryMapping;
 import org.safehaus.penrose.mapping.Row;
+import org.apache.log4j.Logger;
 
-import java.io.File;
 import java.util.TreeMap;
 import java.util.Map;
 import java.util.Collection;
+import java.util.Iterator;
 
 /**
  * @author Endi S. Dewata
  */
 public class SchemaManager implements SchemaManagerMBean {
 
+    Logger log = Logger.getLogger(getClass());
+
     private Map schemas = new TreeMap();
-    private Schema schema = new Schema();
+    private Schema allSchema = new Schema();
 
     public SchemaManager() {
     }
 
+    public void load(String home, Collection schemaConfigs) throws Exception {
+
+        for (Iterator i=schemaConfigs.iterator(); i.hasNext(); ) {
+            SchemaConfig schemaConfig = (SchemaConfig)i.next();
+            load(home, schemaConfig);
+        }
+    }
+
     public void load(String home, SchemaConfig schemaConfig) throws Exception {
 
-        String path = (home == null ? "" : home+File.separator)+schemaConfig.getPath();
+        Schema schema = getSchema(schemaConfig.getName());
+        if (schema != null) return;
 
-        SchemaReader reader = new SchemaReader(path);
-        Schema s = reader.read();
+        SchemaReader reader = new SchemaReader(home);
+        schema = reader.read(schemaConfig);
 
-        schemas.put(schemaConfig.getName(), s);
-        schema.add(s);
+        addSchema(schema);
+    }
+
+    public void addSchema(Schema schema) {
+        schemas.put(schema.getName(), schema);
+        allSchema.add(schema);
+    }
+
+    public void clear() {
+        schemas.clear();
+        allSchema.clear();
     }
 
     public Schema getSchema(String name) {
         return (Schema)schemas.get(name);
     }
 
-    public Schema getSchema() {
-        return schema;
+    public Schema getAllSchema() {
+        return allSchema;
     }
 
     public String normalize(String dn) throws Exception {
-        return schema.normalize(dn);
+        return allSchema.normalize(dn);
     }
 
     public Row normalize(Row row) throws Exception {
-        return schema.normalize(row);
+        return allSchema.normalize(row);
     }
 
     public Collection getObjectClasses() {
-        return schema.getObjectClasses();
+        return allSchema.getObjectClasses();
     }
 
     public Collection getObjectClassNames() {
-        return schema.getObjectClassNames();
+        return allSchema.getObjectClassNames();
     }
 
     public ObjectClass getObjectClass(String ocName) {
-        return schema.getObjectClass(ocName);
+        return allSchema.getObjectClass(ocName);
     }
 
     public Collection getAllObjectClasses(String ocName) {
-        return schema.getAllObjectClasses(ocName);
+        return allSchema.getAllObjectClasses(ocName);
     }
     
     public Collection getAllObjectClassNames(String ocName) {
-        return schema.getAllObjectClassNames(ocName);
+        return allSchema.getAllObjectClassNames(ocName);
     }
 
     public Collection getObjectClasses(EntryMapping entryMapping) {
-        return schema.getObjectClasses(entryMapping);
+        return allSchema.getObjectClasses(entryMapping);
     }
 
     public Collection getAttributeTypes() {
-        return schema.getAttributeTypes();
+        return allSchema.getAttributeTypes();
     }
 
     public Collection getAttributeTypeNames() {
-        return schema.getAttributeTypeNames();
+        return allSchema.getAttributeTypeNames();
     }
-    
+
     public AttributeType getAttributeType(String attributeName) {
-        return schema.getAttributeType(attributeName);
+        return allSchema.getAttributeType(attributeName);
     }
 }

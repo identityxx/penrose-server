@@ -61,9 +61,9 @@ public class PenroseService implements PenroseServiceMBean {
 
         penroseServer = new PenroseServer(home);
 
-        PenroseConfig config = penroseServer.getPenroseConfig();
-        ServiceConfig jmxService = config.getServiceConfig("JMX");
-        jmxService.setEnabled(false);
+        //PenroseConfig config = penroseServer.getPenroseConfig();
+        //ServiceConfig jmxService = config.getServiceConfig("JMX");
+        //jmxService.setEnabled(false);
 
         Collection servers = MBeanServerFactory.findMBeanServer(null);
         if (!servers.isEmpty()) {
@@ -380,24 +380,30 @@ public class PenroseService implements PenroseServiceMBean {
     public void destroy() {
     }
 
-    public String getHome() {
+    public String getHome() throws Exception {
         return home;
     }
 
-    public void setHome(String home) {
+    public void setHome(String home) throws Exception {
         this.home = home;
+
+        if (penroseServer != null) {
+            PenroseConfig penroseConfig = penroseServer.getPenroseConfig();
+            penroseConfig.setHome(home);
+            penroseServer.reload();
+        }
     }
 
-    public String getProductName() {
+    public String getProductName() throws Exception {
         return Penrose.PRODUCT_NAME;
     }
 
-    public String getProductVersion() {
+    public String getProductVersion() throws Exception {
         return Penrose.PRODUCT_VERSION;
     }
 
-    public void load() throws Exception {
-        penroseServer.load(home);
+    public void reload() throws Exception {
+        penroseServer.reload();
     }
 
     public void store() throws Exception {

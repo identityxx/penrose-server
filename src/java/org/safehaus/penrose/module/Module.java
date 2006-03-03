@@ -42,6 +42,10 @@ public class Module implements AddListener, BindListener, DeleteListener, Modify
 
     private String status = STOPPED;
 
+    public String getName() {
+        return moduleConfig.getName();
+    }
+    
     public String getParameter(String name) {
         return moduleConfig.getParameter(name);
     }

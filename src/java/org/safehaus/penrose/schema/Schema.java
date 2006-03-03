@@ -30,16 +30,22 @@ import java.util.*;
 public class Schema {
 
     Logger log = Logger.getLogger(getClass());
-    /**
-     * Attribute type definitions.
-     */
-    protected Map attributeTypes = new TreeMap();
 
-    /**
-     * Object class definitions.
-     */
+    public SchemaConfig schemaConfig;
+    protected Map attributeTypes = new TreeMap();
     protected Map objectClasses = new TreeMap();
 
+    public Schema() {
+    }
+
+    public Schema(SchemaConfig schemaConfig) {
+        this.schemaConfig = schemaConfig;
+    }
+
+    public String getName() {
+        return schemaConfig == null ? null : schemaConfig.getName();
+    }
+    
     public Collection getAttributeTypes() {
         return attributeTypes.values();
     }
@@ -47,13 +53,20 @@ public class Schema {
     public Collection getAttributeTypeNames() {
         return attributeTypes.keySet();
     }
-    
+
     public AttributeType getAttributeType(String name) {
         return (AttributeType)attributeTypes.get(name.toLowerCase());
     }
 
     public void addAttributeType(AttributeType at) {
         attributeTypes.put(at.getName().toLowerCase(), at);
+    }
+
+    public void removeAttributeTypes(Collection names) {
+        for (Iterator i=names.iterator(); i.hasNext(); ) {
+            String name = (String)i.next();
+            removeAttributeType(name);
+        }
     }
 
     public AttributeType removeAttributeType(String name) {
@@ -78,6 +91,13 @@ public class Schema {
 
     public void addObjectClass(ObjectClass oc) {
         objectClasses.put(oc.getName().toLowerCase(), oc);
+    }
+
+    public void removeObjectClasses(Collection names) {
+        for (Iterator i=names.iterator(); i.hasNext(); ) {
+            String name = (String)i.next();
+            removeObjectClass(name);
+        }
     }
 
     public ObjectClass removeObjectClass(String name) {
@@ -197,6 +217,11 @@ public class Schema {
     public void add(Schema schema) {
         attributeTypes.putAll(schema.attributeTypes);
         objectClasses.putAll(schema.objectClasses);
+    }
+
+    public void clear() {
+        attributeTypes.clear();
+        objectClasses.clear();
     }
 
     /**

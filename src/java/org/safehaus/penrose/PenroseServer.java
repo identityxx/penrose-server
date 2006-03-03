@@ -64,7 +64,7 @@ public class PenroseServer implements SignalHandler {
 
         serviceManager = new ServiceManager();
         serviceManager.setPenroseServer(this);
-        serviceManager.init();
+        serviceManager.load(penroseConfig.getServiceConfigs());
     }
 
     public void start() throws Exception {
@@ -108,11 +108,11 @@ public class PenroseServer implements SignalHandler {
     public void listAllThreads() {
         // Find the root thread group
         ThreadGroup root = Thread.currentThread().getThreadGroup();
-        log.debug(".. ThreadGroup: "+root.getName());
+        log.debug("ThreadGroup: "+root.getName());
 
         while (root.getParent() != null) {
             root = root.getParent();
-            log.debug(".. ThreadGroup: "+root.getName());
+            log.debug("ThreadGroup: "+root.getName());
         }
 
         // Visit each thread group
@@ -175,8 +175,11 @@ public class PenroseServer implements SignalHandler {
         this.serviceManager = serviceManager;
     }
 
-    public void load(String home) throws Exception {
-        penrose.load(home);
+    public void reload() throws Exception {
+        penrose.reload();
+
+        serviceManager.clear();
+        serviceManager.load(penroseConfig.getServiceConfigs());
     }
 
     public void store() throws Exception {

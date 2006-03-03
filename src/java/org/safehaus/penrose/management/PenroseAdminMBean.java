@@ -24,6 +24,11 @@ public interface PenroseAdminMBean {
     public String getProductName() throws Exception;
     public String getProductVersion() throws Exception;
 
+    public void start() throws Exception;
+    public void stop() throws Exception;
+    public void reload() throws Exception;
+    public void restart() throws Exception;
+
     public Collection getServiceNames() throws Exception;
     public void start(String serviceName) throws Exception;
     public void stop(String serviceName) throws Exception;

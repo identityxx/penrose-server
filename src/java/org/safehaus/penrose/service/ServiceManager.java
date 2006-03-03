@@ -19,7 +19,6 @@ package org.safehaus.penrose.service;
 
 import org.apache.log4j.Logger;
 import org.safehaus.penrose.PenroseServer;
-import org.safehaus.penrose.config.PenroseConfig;
 
 import java.util.Map;
 import java.util.Iterator;
@@ -37,15 +36,14 @@ public class ServiceManager implements ServiceManagerMBean {
 
     private Map services = new LinkedHashMap();
 
-    public void init() throws Exception {
-        PenroseConfig penroseConfig = penroseServer.getPenroseConfig();
-        for (Iterator i=penroseConfig.getServiceConfigs().iterator(); i.hasNext(); ) {
+    public void load(Collection serviceConfigs) throws Exception {
+        for (Iterator i=serviceConfigs.iterator(); i.hasNext(); ) {
             ServiceConfig serviceConfig = (ServiceConfig)i.next();
-            init(serviceConfig);
+            load(serviceConfig);
         }
     }
 
-    public void init(ServiceConfig serviceConfig) throws Exception {
+    public void load(ServiceConfig serviceConfig) throws Exception {
 
         Service service = getService(serviceConfig.getName());
         if (service != null) return;

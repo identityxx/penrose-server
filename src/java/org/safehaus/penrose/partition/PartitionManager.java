@@ -20,13 +20,9 @@ package org.safehaus.penrose.partition;
 import org.safehaus.penrose.mapping.EntryMapping;
 import org.safehaus.penrose.mapping.SourceMapping;
 import org.safehaus.penrose.schema.SchemaManager;
-import org.safehaus.penrose.config.PenroseConfig;
 import org.apache.log4j.Logger;
 
-import java.util.Iterator;
-import java.util.Collection;
-import java.util.Map;
-import java.util.TreeMap;
+import java.util.*;
 import java.io.File;
 
 /**
@@ -34,9 +30,8 @@ import java.io.File;
  */
 public class PartitionManager implements PartitionManagerMBean {
 
-    Logger log = Logger.getLogger(PartitionManager.class);
+    Logger log = Logger.getLogger(getClass());
 
-    private PenroseConfig penroseConfig;
     private SchemaManager schemaManager;
 
     private Map partitions = new TreeMap();
@@ -44,38 +39,47 @@ public class PartitionManager implements PartitionManagerMBean {
     public PartitionManager() {
     }
 
-    public void load() throws Exception {
-        for (Iterator i=penroseConfig.getPartitionConfigs().iterator(); i.hasNext(); ) {
+    public Collection load(String home, Collection partitionConfigs) throws Exception {
+
+        Collection newPartitions = new ArrayList();
+
+        for (Iterator i=partitionConfigs.iterator(); i.hasNext(); ) {
             PartitionConfig partitionConfig = (PartitionConfig)i.next();
-            load(partitionConfig);
+
+            Partition partition = load(home, partitionConfig);
+            if (partition == null) continue;
+
+            newPartitions.add(partition);
         }
+
+        return newPartitions;
     }
 
-    public Partition load(PartitionConfig partitionConfig) throws Exception {
+    public Partition load(String home, PartitionConfig partitionConfig) throws Exception {
 
         Partition partition = getPartition(partitionConfig.getName());
-        if (partition != null) return partition;
+        if (partition != null) return null;
 
-        log.debug("Loading "+partitionConfig.getName()+" partition from "+penroseConfig.getHome()+".");
+        log.debug("Loading "+partitionConfig.getName()+" partition.");
 
-        PartitionReader partitionReader = new PartitionReader(penroseConfig.getHome());
+        PartitionReader partitionReader = new PartitionReader(home);
         partition = partitionReader.read(partitionConfig);
 
-        addPartition(partitionConfig.getName(), partition);
+        addPartition(partition);
 
         return partition;
     }
 
-    public void store() throws Exception {
-        for (Iterator i=penroseConfig.getPartitionConfigs().iterator(); i.hasNext(); ) {
+    public void store(String home, Collection partitionConfigs) throws Exception {
+        for (Iterator i=partitionConfigs.iterator(); i.hasNext(); ) {
             PartitionConfig partitionConfig = (PartitionConfig)i.next();
-            store(partitionConfig);
+            store(home, partitionConfig);
         }
     }
 
-    public void store(PartitionConfig partitionConfig) throws Exception {
+    public void store(String home, PartitionConfig partitionConfig) throws Exception {
 
-        String path = (penroseConfig.getHome() == null ? "" : penroseConfig.getHome()+File.separator)+partitionConfig.getPath();
+        String path = (home == null ? "" : home+File.separator)+partitionConfig.getPath();
 
         log.debug("Storing "+partitionConfig.getName()+" partition into "+path+".");
 
@@ -85,8 +89,8 @@ public class PartitionManager implements PartitionManagerMBean {
         partitionWriter.write(partition);
     }
 
-    public void addPartition(String name, Partition partition) {
-        partitions.put(name, partition);
+    public void addPartition(Partition partition) {
+        partitions.put(partition.getName(), partition);
     }
 
     public Partition removePartition(String name) throws Exception {
@@ -178,13 +182,5 @@ public class PartitionManager implements PartitionManagerMBean {
 
     public void setSchemaManager(SchemaManager schemaManager) {
         this.schemaManager = schemaManager;
-    }
-
-    public PenroseConfig getPenroseConfig() {
-        return penroseConfig;
-    }
-
-    public void setPenroseConfig(PenroseConfig penroseConfig) {
-        this.penroseConfig = penroseConfig;
     }
 }

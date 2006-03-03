@@ -35,24 +35,24 @@ public class ModuleManager implements ModuleManagerMBean {
 
     private Map modules = new LinkedHashMap();
 
-    public void init() throws Exception {
-        PartitionManager partitionManager = penrose.getPartitionManager();
-        for (Iterator i=partitionManager.getPartitions().iterator(); i.hasNext(); ) {
+    public void load(Collection partitions) throws Exception {
+        for (Iterator i=partitions.iterator(); i.hasNext(); ) {
             Partition partition = (Partition)i.next();
+
             for (Iterator j=partition.getModuleConfigs().iterator(); j.hasNext(); ) {
                 ModuleConfig moduleConfig = (ModuleConfig)j.next();
-                init(partition, moduleConfig);
+                load(partition, moduleConfig);
             }
         }
     }
 
-    public void init(Partition partition, ModuleConfig moduleConfig) throws Exception {
+    public void load(Partition partition, ModuleConfig moduleConfig) throws Exception {
 
-        if (!moduleConfig.isEnabled()) return;
-        
         Module module = getModule(moduleConfig.getName());
         if (module != null) return;
         
+        if (!moduleConfig.isEnabled()) return;
+
         Class clazz = Class.forName(moduleConfig.getModuleClass());
         module = (Module)clazz.newInstance();
 
@@ -61,7 +61,7 @@ public class ModuleManager implements ModuleManagerMBean {
         module.setPenrose(penrose);
         module.init();
 
-        addModule(moduleConfig.getName(), module);
+        addModule(module);
     }
 
     public void start() throws Exception {
@@ -115,8 +115,8 @@ public class ModuleManager implements ModuleManagerMBean {
         return module.getStatus();
     }
 
-    public void addModule(String name, Module module) {
-        modules.put(name, module);
+    public void addModule(Module module) {
+        modules.put(module.getName(), module);
     }
 
     public Module getModule(String name) {

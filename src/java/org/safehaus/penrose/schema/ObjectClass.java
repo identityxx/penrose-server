@@ -111,7 +111,7 @@ public class ObjectClass {
     }
 
     public void setSuperClasses(Collection superClasses) {
-        this.superClasses = superClasses;
+        this.superClasses.addAll(superClasses);
     }
 
     public String getDescription() {
@@ -126,16 +126,24 @@ public class ObjectClass {
         return requiredAttributes;
     }
 
+    public void addRequiredAttribute(String requiredAttribute) {
+        requiredAttributes.add(requiredAttribute);
+    }
+    
     public void setRequiredAttributes(Collection requiredAttributes) {
-        this.requiredAttributes = requiredAttributes;
+        this.requiredAttributes.addAll(requiredAttributes);
     }
 
     public Collection getOptionalAttributes() {
         return optionalAttributes;
     }
 
+    public void addOptionalAttribute(String optionalAttribute) {
+        optionalAttributes.add(optionalAttribute);
+    }
+
     public void setOptionalAttributes(Collection optionalAttributes) {
-        this.optionalAttributes = optionalAttributes;
+        this.optionalAttributes.addAll(optionalAttributes);
     }
 	/**
 	 * @return Returns the obsolete.

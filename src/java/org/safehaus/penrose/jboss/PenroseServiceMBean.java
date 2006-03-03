@@ -33,6 +33,6 @@ public interface PenroseServiceMBean extends Service {
     public void start() throws Exception;
     public void stop();
 
-    public void load() throws Exception;
+    public void reload() throws Exception;
     public void store() throws Exception;
 }

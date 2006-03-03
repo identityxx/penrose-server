@@ -24,8 +24,6 @@ import java.util.Collection;
  */
 public interface PartitionManagerMBean {
 
-    public void load() throws Exception;
-    public void store() throws Exception;
     public void clear() throws Exception;
 
     public Collection getPartitionNames() throws Exception;
