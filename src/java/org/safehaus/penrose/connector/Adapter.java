@@ -1,0 +1,157 @@
+/**
+ * Copyright (c) 2000-2005, Identyx Corporation.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ */
+package org.safehaus.penrose.connector;
+
+
+import org.safehaus.penrose.mapping.*;
+import org.safehaus.penrose.filter.Filter;
+import org.safehaus.penrose.filter.SubstringFilter;
+import org.safehaus.penrose.session.PenroseSearchResults;
+import org.safehaus.penrose.session.PenroseSearchResults;
+import org.safehaus.penrose.partition.SourceConfig;
+import org.apache.log4j.Logger;
+
+import java.util.Collection;
+import java.util.Map;
+
+/**
+ * @author Endi S. Dewata 
+ */
+public abstract class Adapter {
+
+    Logger log = Logger.getLogger(getClass());
+
+    private AdapterConfig adapterConfig;
+    private Connection connection;
+
+    /**
+     * Initialize.
+     *
+     * @throws Exception
+     */
+    public void init() throws Exception {
+    }
+
+    public void dispose() throws Exception {
+    }
+
+	/**
+	 * Bind.
+	 * 
+	 * @throws Exception
+	 */
+    public abstract int bind(SourceConfig sourceConfig, AttributeValues values, String password) throws Exception;
+    
+    /**
+     * Search.
+     *
+     * @return Collection of Rows
+     * @throws Exception
+     */
+    public abstract PenroseSearchResults search(SourceConfig sourceConfig, Filter filter, long sizeLimit) throws Exception;
+
+    /**
+     * Load.
+     *
+     * @return Collection of AttributeValues
+     * @throws Exception
+     */
+    public abstract PenroseSearchResults load(SourceConfig sourceConfig, Filter filter, long sizeLimit) throws Exception;
+
+    /**
+     * Get.
+     * @throws Exception
+     */
+    public abstract AttributeValues get(SourceConfig sourceConfig, Row pk) throws Exception;
+
+    /**
+     * Add.
+     * 
+     * @throws Exception
+     */
+    public abstract int add(SourceConfig sourceConfig, AttributeValues values) throws Exception;
+    
+    /**
+     * Modify.
+     * 
+     * @throws Exception
+     */
+    public abstract int modify(SourceConfig sourceConfig, AttributeValues oldValues, AttributeValues newValues) throws Exception;
+
+    /**
+     * Delete.
+     * 
+     * @throws Exception
+     */
+    public abstract int delete(SourceConfig sourceConfig, AttributeValues values) throws Exception;
+
+    public abstract int getLastChangeNumber(SourceConfig sourceConfig) throws Exception;
+
+    public abstract PenroseSearchResults getChanges(SourceConfig sourceConfig, int lastChangeNumber) throws Exception;
+
+    public abstract Object openConnection() throws Exception;
+
+    public AdapterConfig getAdapterConfig() {
+        return adapterConfig;
+    }
+
+    public void setAdapterConfig(AdapterConfig adapterConfig) {
+        this.adapterConfig = adapterConfig;
+    }
+
+    public void setConnection(Connection connection) {
+        this.connection = connection;
+    }
+
+    public String getParameter(String name) {
+        return connection.getParameter(name);
+    }
+
+    public Map getParameters() {
+        return connection.getParameters();
+    }
+
+    public Collection getParameterNames() {
+        return connection.getParameterNames();
+    }
+
+    public String removeParameter(String name) {
+        return connection.removeParameter(name);
+    }
+
+    public String getAdapterName() {
+        return adapterConfig.getName();
+    }
+
+    public String getConnectionName() {
+        return connection.getConnectionName();
+    }
+
+    public Filter convert(EntryMapping entryMapping, Filter filter) throws Exception {
+
+        if (filter instanceof SubstringFilter) {
+            return convert(entryMapping, (SubstringFilter)filter);
+        } else {
+            return filter;
+        }
+    }
+
+    public Filter convert(EntryMapping entryMapping, SubstringFilter filter) throws Exception {
+        return filter;
+    }
+}

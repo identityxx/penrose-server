@@ -1,0 +1,400 @@
+options {
+	LOOKAHEAD           = 5;
+	FORCE_LA_CHECK      = true;
+	SANITY_CHECK        = true;
+	DEBUG_PARSER        = false;
+	DEBUG_TOKEN_MANAGER = false;
+	STATIC              = false;
+}
+
+PARSER_BEGIN(SchemaParser)
+
+/**
+ * Copyright (c) 2000-2005, Identyx Corporation.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ */
+package org.safehaus.penrose.schema;
+
+import java.util.*;
+import org.safehaus.penrose.config.*;
+
+/**
+ * LDAP Schema Parser.
+ *
+ * <h3>Grammar for the LDAP v3 Schema</h3>
+ *
+ * See also: http://www.geocities.com/raoavm/ldapdesign.html
+ *
+ * <pre>
+ *       AttributeTypeDescription = "(" whsp
+ *             numericoid whsp              ; AttributeType identifier
+ *           [ "NAME" qdescrs ]             ; name used in AttributeType
+ *           [ "DESC" qdstring ]            ; description
+ *           [ "OBSOLETE" whsp ]
+ *           [ "SUP" woid ]                 ; derived from this other
+ *                                          ; AttributeType
+ *           [ "EQUALITY" woid              ; Matching Rule name
+ *           [ "ORDERING" woid              ; Matching Rule name
+ *           [ "SUBSTR" woid ]              ; Matching Rule name
+ *           [ "SYNTAX" whsp noidlen whsp ] ; see section 4.3
+ *           [ "SINGLE-VALUE" whsp ]        ; default multi-valued
+ *           [ "COLLECTIVE" whsp ]          ; default not collective
+ *           [ "NO-USER-MODIFICATION" whsp ]; default user modifiable
+ *           [ "USAGE" whsp AttributeUsage ]; default userApplications
+ *           whsp ")"
+ *
+ *       AttributeUsage =
+ *           "userApplications"     /
+ *           "directoryOperation"   /
+ *           "distributedOperation" / ; DSA-shared
+ *           "dSAOperation"          ; DSA-specific, value depends on server
+ * </pre>
+ *
+ * From RFC 2252:
+ *
+ * <pre>
+ *       ObjectClassDescription = "(" whsp
+ *           numericoid whsp      ; ObjectClass identifier
+ *           [ "NAME" qdescrs ]
+ *           [ "DESC" qdstring ]
+ *           [ "OBSOLETE" whsp ]
+ *           [ "SUP" oids ]       ; Superior ObjectClasses
+ *           [ ( "ABSTRACT" / "STRUCTURAL" / "AUXILIARY" ) whsp ]
+ *                                ; default structural
+ *           [ "MUST" oids ]      ; AttributeTypes
+ *           [ "MAY" oids ]       ; AttributeTypes
+ *       whsp ")"
+ * </pre>
+ *
+ *
+ * <h3>Example to use this SchemaParser</h3>
+ *
+ * <pre>
+ * Reader in = ...;
+ * SchemaParser parser = new SchemaParser(in);
+ * List schema = parser.parse();
+ * List errors = parser.getErrors();
+ * </pre>
+ *
+ * Alternatively, you could also call getSchema() to get the List of schema.
+ */
+public class SchemaParser {
+
+  List schema = new ArrayList();
+  List errors = new ArrayList();
+  
+  /**
+   * Start parsing
+   * @return the list of schema
+   */
+  public List parse() throws ParseException {
+    try {
+      Schema();
+    } catch (ParseException ex) {
+    }
+    return this.schema;
+  }
+  
+  /**
+   * Get the list of schema from parsing
+   */
+  public List getSchema() {
+    return this.schema;
+  }
+  
+  /**
+   * Get the list of errors from parsing
+   */
+  public List getErrors() {
+    return this.errors;
+  }
+
+}
+
+PARSER_END(SchemaParser)
+
+SKIP :
+{
+  " "
+| "\t"
+| "\n"
+| "\r"
+}
+
+<DEFAULT> SPECIAL_TOKEN: /* COMMENTS */
+{
+    <TRAILING_COMMENT: "#" (~["\n","\r"])* >
+}
+
+TOKEN : /* SEPARATORS */
+{
+    < LPAREN: "(" > 
+|   < RPAREN: ")" > 
+|   < LBRACE: "{" > 
+|   < RBRACE: "}" > 
+|   < LBRACKET: "[" > 
+|   < RBRACKET: "]" > 
+|   < DOT: "." >
+|   < DOLLAR: "$" >
+|	< QUOTE: "'" > 
+}
+
+TOKEN : /* KEYWORDS */
+{
+    < NAME: "NAME" >
+|   < DESC: "DESC" >
+|   < OBSOLETE: "OBSOLETE" >
+|   < SUP: "SUP" >
+|   < EQUALITY: "EQUALITY" >
+|   < ORDERING: "ORDERING" >
+|   < SUBSTR: "SUBSTR" >
+|   < SYNTAX: "SYNTAX" >
+|   < SINGLE_VALUE: "SINGLE-VALUE" >
+|   < COLLECTIVE: "COLLECTIVE" >
+|   < NO_USER_MODIFICATION: "NO-USER-MODIFICATION" >
+|   < USAGE: "USAGE" >
+|   < OBJECTCLASS: "objectclass" | "objectClass" >
+|   < ATTRIBUTETYPE: "attributetype" | "attributeType" >
+|   < ABSTRACT: "ABSTRACT" >
+|   < STRUCTURAL: "STRUCTURAL" >
+|   < AUXILIARY: "AUXILIARY" >
+|   < MUST: "MUST" >
+|   < MAY: "MAY" >
+|   < X_PARAMETER: "X-" (["A"-"Z","a"-"z","_","-"])* >
+}
+
+TOKEN : /* Attribute Usage */
+{
+	< USER_APPLICATIONS: "userApplications" >
+|	< DIRECTORY_OPERATION: "directoryOperation" >
+|	< DISTRIBUTED_OPERATION: "distributedOperation" >
+|	< DSA_OPERATION: "dSAOperation" >
+|	< DSA_OPERATION2: "dsaOperation" >
+}
+
+TOKEN : /* others */
+{
+	<DIGIT: (["0"-"9"])+ >
+|	<IDENT: (["A"-"Z","a"-"z","_"])(["A"-"Z","a"-"z","_","-","0"-"9"])* >
+|	<QDSTRING: "'" (~["\'"])* "'" >
+}
+
+void Schema() :
+{
+	AttributeType at;
+	ObjectClass oc;
+}
+{
+	(
+		LOOKAHEAD( <ATTRIBUTETYPE> )
+		at = AttributeType() { schema.add(at); }
+	|	LOOKAHEAD( <OBJECTCLASS> )
+		oc = ObjectClass() { schema.add(oc); }
+	)*
+}
+
+AttributeType AttributeType() : 
+{
+	AttributeType at = new AttributeType();
+	/* default values */
+	at.setObsolete(false);
+	at.setSingleValued(false);
+	at.setCollective(false);
+	at.setModifiable(true);
+	/* variables */
+	String oid;
+	List names = new ArrayList();
+	String desc;
+	String sup, equality, ordering, substr;
+	String syntax;
+	String usage;
+}
+{
+	<ATTRIBUTETYPE> <LPAREN>
+	oid = numericoid() { at.setOid(oid); }
+	(
+		<NAME> names = qdescrs() { at.setNames(names); }
+	|	<DESC> desc = qdstring() { at.setDescription(desc); }
+	|	<OBSOLETE> { at.setObsolete(true); }
+	|	<SUP> sup = woid() { at.setSuperClass(sup); }
+	|	<EQUALITY> equality = woid() { at.setEquality(equality); }
+	|	<ORDERING> ordering = woid() { at.setOrdering(ordering); }
+	|	<SUBSTR> substr = woid() { at.setSubstring(substr); }
+	|	<SYNTAX> syntax = noidlen() { at.setSyntax(syntax); }
+	|	<SINGLE_VALUE> { at.setSingleValued(true); }
+	|	<COLLECTIVE> { at.setCollective(true); }
+	|	<NO_USER_MODIFICATION> { at.setModifiable(false); }
+	|	<USAGE> usage = AttributeUsage() { at.setUsage(usage); }
+	|   <X_PARAMETER> qdstring() { }
+	)*
+	<RPAREN> { return at; }
+	|	error_skipto(RPAREN) { return null; }
+	
+}
+
+ObjectClass ObjectClass() :
+{
+	ObjectClass oc = new ObjectClass();
+	/* variables */
+	String oid;
+	List names;
+	String desc;
+	List sup, must, may;
+	String type;
+}
+{
+	<OBJECTCLASS> <LPAREN>
+	oid = numericoid() { oc.setOid(oid); }
+	(
+		<NAME> names = qdescrs() { oc.setNames(names); }
+	|	<DESC> desc = qdstring() { oc.setDescription(desc); }
+	|	<OBSOLETE> { oc.setObsolete(true); }
+	|	<SUP> sup = oids() { oc.setSuperClasses(sup); }
+	|	<ABSTRACT> { oc.setType(ObjectClass.ABSTRACT); }
+	|	<STRUCTURAL> { oc.setType(ObjectClass.STRUCTURAL); }
+	|	<AUXILIARY> { oc.setType(ObjectClass.AUXILIARY); }
+	|	<MUST> must = oids() { oc.setRequiredAttributes(must); }
+	|	<MAY> may = oids() { oc.setOptionalAttributes(may); }
+	|   <X_PARAMETER> qdstring() { }
+	)*
+	<RPAREN> { return oc; }
+	|	error_skipto(RPAREN) { return null; }
+}
+
+String AttributeUsage() :
+{
+}
+{
+	<USER_APPLICATIONS>     { return AttributeType.USER_APPLICATIONS; }
+|	<DIRECTORY_OPERATION>   { return AttributeType.DIRECTORY_OPERATION; }
+|	<DISTRIBUTED_OPERATION> { return AttributeType.DISTRIBUTED_OPERATION; }
+|	<DSA_OPERATION>         { return AttributeType.DSA_OPERATION; }
+|	<DSA_OPERATION2>        { return AttributeType.DSA_OPERATION; }
+}
+
+/**
+ * globally unique OID in dotted-decimal form.
+ */
+String numericoid() : 
+{
+	Token t;
+	StringBuffer sb = new StringBuffer();
+}
+{
+	t = <DIGIT> { sb.append(t.toString()); }
+	( <DOT> t = <DIGIT> { sb.append("." + t.toString()); } )*
+	{ return sb.toString(); }
+}
+
+/**
+ * single quoted string.
+ */
+String qdstring() : 
+{
+	Token t;
+	String s;
+}
+{
+	t = <QDSTRING> { s = t.toString(); s = s.substring(1, s.length()-1); return s; }
+}
+
+/**
+ * single quoted identifier.
+ */
+String qdident() : 
+{
+	Token t;
+	String s;
+}
+{
+	t = <QDSTRING> { s = t.toString(); s = s.substring(1, s.length()-1); return s; }
+|	t = <IDENT> { s = t.toString(); return s; }
+}
+
+/**
+ * one or more names.
+ */
+List qdescrs() : 
+{
+	String s;
+	List l = new ArrayList();
+}
+{
+	s = qdident() { l.add(s); return l; }
+|	<LPAREN>
+		( s = qdident() { l.add(s); } )+
+	<RPAREN> { return l; }
+}
+
+/**
+ * syntax OID.
+ */
+String noidlen() : 
+{
+	String s;
+}
+{
+	s = woid() { return s; }
+}
+
+/**
+ * either the name or OID optionally followed by a length specifier.
+ */
+String woid() : 
+{
+	Token t;
+	String s;
+}
+{
+	s = qdident() { return s; }
+|	s = numericoid() 
+	( <LBRACE> t = <DIGIT> <RBRACE> { s += "{" + t.toString() + "}"; } )?
+	{ return s; }
+|	t = <OBJECTCLASS> { return t.toString(); }
+}
+
+/**
+ * list of OIDs.
+ */
+List oids() : 
+{
+	String s;
+	List oids = new ArrayList();
+}
+{
+	s = woid() { oids.add(s); return oids; }
+|	<LPAREN>
+		s = woid() { oids.add(s); }
+		( <DOLLAR> s = woid() { oids.add(s); } )*
+	<RPAREN> { return oids; }
+}
+
+JAVACODE
+void error_skipto(int token) {
+  ParseException e = generateParseException();  // generate the exception object.
+  // System.out.println(e.getMessage());  // print the error message
+  errors.add(e.getMessage());
+  Token t;
+  do {
+    t = getNextToken();
+  } while (t.kind != token && t.kind != EOF);
+    // The above loop consumes tokens all the way up to a token of
+    // "kind".  We use a do-while loop rather than a while because the
+    // current token is the one immediately before the erroneous token
+    // (in our case the token immediately before what should have been
+    // "if"/"while".
+  if (t.kind == EOF) throw e;
+}
