@@ -90,6 +90,9 @@
             destdir="target/javadoc"
             classpathref="lib.path">
         </javadoc>
+        <jar jarfile="target/${project.name}-docs-${project.version}.jar">
+            <fileset dir="target/javadoc"/>
+        </jar>
     </target>
 
     <target name="docs-publish">
@@ -98,44 +101,6 @@
         <copy todir="${docs.target}" overwrite="true">
             <fileset dir="target/javadoc" includes="**/*"/>
         </copy>
-    </target>
-
-    <target name="install">
-        <tempfile property="temp.dir" destdir="${penrose.home}/conf"/>
-        <mkdir dir="${temp.dir}"/>
-        <!-- save original configuration -->
-        <copy todir="${temp.dir}" overwrite="true" includeEmptyDirs="false" failonerror="true">
-            <fileset dir="${penrose.home}/conf" includes="*"/>
-        </copy>
-        <delete failonerror="true">
-            <fileset dir="${penrose.home}/conf" includes="*"/>
-        </delete>
-        <!-- copy new files -->
-        <copy todir="${penrose.home}" overwrite="true">
-            <fileset dir="target/dist" includes="**/*"/>
-        </copy>
-        <chmod dir="${penrose.home}/bin" perm="ugo+rx" includes="**/*.sh"/>
-        <copy todir="${prefix}/etc/init.d"
-            file="target/dist/etc/init.d/penrose" overwrite="true"/>
-        <chmod file="${prefix}/etc/init.d/penrose" perm="ugo+rx"/>
-        <!-- restore original configuration -->
-        <copy todir="${penrose.home}/conf" overwrite="true" includeEmptyDirs="false" failonerror="true">
-            <fileset dir="${temp.dir}" includes="*"/>
-        </copy>
-        <delete dir="${temp.dir}"/>
-    </target>
-
-    <target name="uninstall">
-        <delete failonerror="false" includeemptydirs="true">
-            <fileset dir="${penrose.home}/bin" includes="**/*"/>
-            <fileset dir="${penrose.home}/conf/default" includes="*"/>
-            <fileset dir="${penrose.home}/docs" includes="**/*"/>
-            <fileset dir="${penrose.home}/lib" includes="*"/>
-            <fileset dir="${penrose.home}/samples" includes="**/*"/>
-            <fileset dir="${penrose.home}/schema" includes="**/*"/>
-            <fileset dir="${penrose.home}" includes="*"/>
-            <fileset dir="${prefix}/etc/init.d" includes="penrose"/>
-        </delete>
     </target>
 
     <target name="dist" depends="build-ant,build">
@@ -308,7 +273,50 @@
             file="target/${project.name}-${project.version}.jar">
         </copy>
     </target>
-    
+
+    <target name="pre-install">
+        <mkdir dir="${penrose.home}"/>
+        <condition property="penrose.conf.missing">
+          <not>
+            <available file="${penrose.home}/conf/server.xml"/>
+          </not>
+        </condition>
+    </target>
+
+    <target name="copy-penrose-conf" if="penrose.conf.missing">
+        <copy todir="${penrose.home}">
+            <fileset dir="target/dist">
+                <include name="conf/**/*"/>
+            </fileset>
+        </copy>
+    </target>
+
+    <target name="install" depends="pre-install,copy-penrose-conf">
+        <copy todir="${penrose.home}">
+            <fileset dir="target/dist">
+                <include name="**/*"/>
+                <exclude name="conf/**/*"/>
+            </fileset>
+        </copy>
+        <chmod dir="${penrose.home}/bin" perm="ugo+rx" includes="**/*.sh"/>
+        <copy todir="${prefix}/etc/init.d"
+            file="target/dist/etc/init.d/penrose"/>
+        <chmod file="${prefix}/etc/init.d/penrose" perm="ugo+rx"/>
+    </target>
+
+    <target name="uninstall">
+        <delete failonerror="false" includeemptydirs="true">
+            <fileset dir="${penrose.home}/bin" includes="**/*"/>
+            <fileset dir="${penrose.home}/conf/default" includes="*"/>
+            <fileset dir="${penrose.home}/docs" includes="**/*"/>
+            <fileset dir="${penrose.home}/lib" includes="*"/>
+            <fileset dir="${penrose.home}/samples" includes="**/*"/>
+            <fileset dir="${penrose.home}/schema" includes="**/*"/>
+            <fileset dir="${penrose.home}" includes="*"/>
+            <fileset dir="${prefix}/etc/init.d" includes="penrose"/>
+        </delete>
+    </target>
+
     <target name="clean">
         <delete dir="dist" failonerror="false"/>
         <delete dir="target" failonerror="false"/>

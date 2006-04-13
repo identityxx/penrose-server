@@ -33,6 +33,12 @@ public class Expression implements Cloneable {
         this.script = script;
     }
 
+    public Expression(String foreach, String var, String script) {
+        this.foreach = foreach;
+        this.var = var;
+        this.script = script;
+    }
+
     public String getScript() {
         return script;
     }

@@ -22,6 +22,8 @@ import org.apache.log4j.Logger;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 
 public class ObjectClass implements Cloneable, Comparable {
 
@@ -144,7 +146,14 @@ public class ObjectClass implements Cloneable, Comparable {
         requiredAttributes.add(requiredAttribute);
     }
     
+    public void addRequiredAttributes(Collection requiredAttributes) {
+        if (requiredAttributes == null) return;
+        this.requiredAttributes.addAll(requiredAttributes);
+    }
+
     public void setRequiredAttributes(Collection requiredAttributes) {
+        this.requiredAttributes.clear();
+        if (requiredAttributes == null) return;
         this.requiredAttributes.addAll(requiredAttributes);
     }
 
@@ -160,7 +169,14 @@ public class ObjectClass implements Cloneable, Comparable {
         optionalAttributes.add(optionalAttribute);
     }
 
+    public void addOptionalAttributes(Collection optionalAttributes) {
+        if (optionalAttributes == null) return;
+        this.optionalAttributes.addAll(optionalAttributes);
+    }
+
     public void setOptionalAttributes(Collection optionalAttributes) {
+        this.optionalAttributes.clear();
+        if (optionalAttributes == null) return;
         this.optionalAttributes.addAll(optionalAttributes);
     }
 
@@ -223,10 +239,6 @@ public class ObjectClass implements Cloneable, Comparable {
 
         return false;
     }
-
-	public String toString() {
-		return "ObjectClass<"+getName()+">";
-	}
 
     public int hashCode() {
         return (oid == null ? 0 : oid.hashCode()) +
@@ -300,5 +312,125 @@ public class ObjectClass implements Cloneable, Comparable {
 
         ObjectClass oc = (ObjectClass)object;
         return oid.compareTo(oc.getOid());
+    }
+
+    public String toString() {
+        return toString(false);
+    }
+
+    public String toString(boolean multiLine) {
+        StringWriter sw = new StringWriter();
+        PrintWriter out = new PrintWriter(sw);
+
+        out.print(oid);
+        if (multiLine) out.println();
+
+        if (names.size() == 1) {
+            if (multiLine) out.print("   ");
+            out.print(" NAME '"+names.iterator().next()+"'");
+            if (multiLine) out.println();
+
+        } else if (names.size() > 1) {
+            if (multiLine) out.print("   ");
+            out.print(" NAME ( ");
+            for (Iterator i=names.iterator(); i.hasNext(); ) {
+                String name = (String)i.next();
+                out.print("'"+name+"' ");
+            }
+            out.print(")");
+            if (multiLine) out.println();
+        }
+
+        if (description != null) {
+            if (multiLine) out.print("   ");
+            out.print(" DESC '"+escape(description)+"'");
+            if (multiLine) out.println();
+        }
+
+        if (obsolete) {
+            if (multiLine) out.print("   ");
+            out.print(" OBSOLETE");
+            if (multiLine) out.println();
+        }
+
+        if (superClasses.size() == 1) {
+            if (multiLine) out.print("   ");
+            out.print(" SUP "+superClasses.iterator().next());
+            if (multiLine) out.println();
+
+        } else if (superClasses.size() > 1) {
+            if (multiLine) out.print("   ");
+            out.print(" SUP ( ");
+            for (Iterator i=superClasses.iterator(); i.hasNext(); ) {
+                String name = (String)i.next();
+                out.print(name);
+                if (i.hasNext()) out.print(" $ ");
+            }
+            out.print(" )");
+            if (multiLine) out.println();
+        }
+
+        if (!STRUCTURAL.equals(type)) {
+            if (multiLine) out.print("   ");
+            out.print(" "+type);
+            if (multiLine) out.println();
+        }
+
+        if (requiredAttributes.size() == 1) {
+            if (multiLine) out.print("   ");
+            out.print(" MUST "+requiredAttributes.iterator().next());
+            if (multiLine) out.println();
+
+        } else if (requiredAttributes.size() > 1) {
+            if (multiLine) out.print("   ");
+            out.print(" MUST ( ");
+            for (Iterator i=requiredAttributes.iterator(); i.hasNext(); ) {
+                String name = (String)i.next();
+                out.print(name);
+                if (i.hasNext()) out.print(" $ ");
+            }
+            out.print(" )");
+            if (multiLine) out.println();
+        }
+
+        if (optionalAttributes.size() == 1) {
+            if (multiLine) out.print("   ");
+            out.print(" MAY "+optionalAttributes.iterator().next());
+            if (multiLine) out.println();
+
+        } else if (optionalAttributes.size() > 1) {
+            if (multiLine) out.print("   ");
+            out.print(" MAY ( ");
+            for (Iterator i=optionalAttributes.iterator(); i.hasNext(); ) {
+                String name = (String)i.next();
+                out.print(name);
+                if (i.hasNext()) out.print(" $ ");
+            }
+            out.print(" )");
+            if (multiLine) out.println();
+        }
+
+        return sw.toString();
+    }
+
+    public static String escape(String s) {
+        StringBuffer sb = new StringBuffer();
+
+        for (int i=0; i<s.length(); i++) {
+            char c = s.charAt(i);
+            if (c == '\'' || c == '\\') {
+                sb.append("\\");
+                sb.append(toHex(c));
+            } else {
+                sb.append(c);
+            }
+        }
+
+        return sb.toString();
+    }
+
+    public static String toHex(char c) {
+        String s = Integer.toHexString(c);
+        return s.length() == 1 ? "0"+s : s;
     }
 }

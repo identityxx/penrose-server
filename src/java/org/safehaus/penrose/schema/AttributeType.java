@@ -19,6 +19,9 @@ package org.safehaus.penrose.schema;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Iterator;
+import java.io.StringWriter;
+import java.io.PrintWriter;
 
 public class AttributeType implements Cloneable, Comparable {
 
@@ -289,5 +292,124 @@ public class AttributeType implements Cloneable, Comparable {
 
         AttributeType at = (AttributeType)object;
         return oid.compareTo(at.getOid());
+    }
+
+    public String toString() {
+        return toString(false);
+    }
+
+    public String toString(boolean multiLine) {
+        StringWriter sw = new StringWriter();
+        PrintWriter out = new PrintWriter(sw);
+
+        out.print(oid);
+        if (multiLine) out.println();
+
+        if (names.size() == 1) {
+            if (multiLine) out.print("   ");
+            out.print(" NAME '"+names.iterator().next()+"'");
+            if (multiLine) out.println();
+
+        } else if (names.size() > 1) {
+            if (multiLine) out.print("   ");
+            out.print(" NAME ( ");
+            for (Iterator i=names.iterator(); i.hasNext(); ) {
+                String name = (String)i.next();
+                out.print("'"+name+"' ");
+            }
+            out.print(")");
+            if (multiLine) out.println();
+        }
+
+        if (description != null) {
+            if (multiLine) out.print("   ");
+            out.print(" DESC '"+escape(description)+"'");
+            if (multiLine) out.println();
+        }
+
+        if (obsolete) {
+            if (multiLine) out.print("   ");
+            out.print(" OBSOLETE");
+            if (multiLine) out.println();
+        }
+
+        if (superClass != null) {
+            if (multiLine) out.print("   ");
+            out.print(" SUP "+superClass);
+            if (multiLine) out.println();
+        }
+
+        if (equality != null) {
+            if (multiLine) out.print("   ");
+            out.print(" EQUALITY "+equality);
+            if (multiLine) out.println();
+        }
+
+        if (ordering != null) {
+            if (multiLine) out.print("   ");
+            out.print(" ORDERING "+ordering);
+            if (multiLine) out.println();
+        }
+
+        if (substring != null) {
+            if (multiLine) out.print("   ");
+            out.print(" SUBSTR "+substring);
+            if (multiLine) out.println();
+        }
+
+        if (syntax != null) {
+            if (multiLine) out.print("   ");
+            out.print(" SYNTAX "+syntax);
+            if (multiLine) out.println();
+        }
+
+        if (singleValued) {
+            if (multiLine) out.print("   ");
+            out.print(" SINGLE-VALUE");
+            if (multiLine) out.println();
+        }
+
+        if (collective) {
+            if (multiLine) out.print("   ");
+            out.print(" COLLECTIVE");
+            if (multiLine) out.println();
+        }
+
+        if (!modifiable) {
+            if (multiLine) out.print("   ");
+            out.print(" NO-USER-MODIFICATION");
+            if (multiLine) out.println();
+        }
+
+        if (usage != null && !USER_APPLICATIONS.equals(usage)) {
+            if (multiLine) out.print("   ");
+            out.print(" USAGE "+usage);
+            if (multiLine) out.println();
+        }
+
+        out.close();
+
+        return sw.toString();
+    }
+
+    public static String escape(String s) {
+        StringBuffer sb = new StringBuffer();
+
+        for (int i=0; i<s.length(); i++) {
+            char c = s.charAt(i);
+            if (c == '\'' || c == '\\') {
+                sb.append("\\");
+                sb.append(toHex(c));
+            } else {
+                sb.append(c);
+            }
+        }
+
+        return sb.toString();
+    }
+
+    public static String toHex(char c) {
+        String s = Integer.toHexString(c);
+        return s.length() == 1 ? "0"+s : s;
     }
 }

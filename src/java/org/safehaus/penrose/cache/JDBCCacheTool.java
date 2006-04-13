@@ -90,13 +90,17 @@ public class JDBCCacheTool {
         }
 
         if ("VARCHAR".equals(fieldConfig.getType())) {
-            sb.append("lower(");
+            if (!fieldConfig.isCaseSensitive()) sb.append("lower(");
             sb.append(t);
             sb.append(".");
             sb.append(fieldName);
-            sb.append(") ");
+            if (!fieldConfig.isCaseSensitive()) sb.append(")");
+            sb.append(" ");
             sb.append(operator);
-            sb.append(" lower(?)");
+            sb.append(" ");
+            if (!fieldConfig.isCaseSensitive()) sb.append("lower(");
+            sb.append("?");
+            if (!fieldConfig.isCaseSensitive()) sb.append(")");
 
         } else {
             sb.append(t);

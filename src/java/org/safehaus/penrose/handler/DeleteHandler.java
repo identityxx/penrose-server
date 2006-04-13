@@ -78,7 +78,10 @@ public class DeleteHandler {
     public int performDelete(PenroseSession session, Entry entry) throws Exception {
 
         int rc = handler.getACLEngine().checkDelete(session, entry);
-        if (rc != LDAPException.SUCCESS) return rc;
+        if (rc != LDAPException.SUCCESS) {
+            log.debug("Not allowed to delete "+entry.getDn());
+            return rc;
+        }
 
         EntryMapping entryMapping = entry.getEntryMapping();
         PartitionManager partitionManager = handler.getPartitionManager();

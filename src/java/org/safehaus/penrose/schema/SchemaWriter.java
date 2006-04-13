@@ -54,6 +54,12 @@ public class SchemaWriter {
     }
 
     public void write(PrintWriter out, AttributeType at) throws Exception {
+        out.print("attributetype ( ");
+        out.print(at.toString(true));
+        out.println(")");
+        out.println();
+
+/*
         out.println("attributetype ( "+at.getOid());
 
         Collection names = at.getNames();
@@ -115,9 +121,16 @@ public class SchemaWriter {
 
         out.println(")");
         out.println();
+*/
     }
 
     public void write(PrintWriter out, ObjectClass oc) throws Exception {
+        out.print("objectclass ( ");
+        out.print(oc.toString(true));
+        out.println(")");
+        out.println();
+
+/*
         out.println("objectclass ( "+oc.getOid());
 
         Collection names = oc.getNames();
@@ -189,6 +202,7 @@ public class SchemaWriter {
 
         out.println(")");
         out.println();
+*/
     }
 
     public static String escape(String s) {

@@ -32,7 +32,7 @@ public abstract class Interpreter {
 
     Logger log = Logger.getLogger(getClass());
 
-    Collection rows = new ArrayList();
+    Collection rows;
 
     public void set(Row row) throws Exception {
         for (Iterator i=row.getNames().iterator(); i.hasNext(); ) {
@@ -60,7 +60,7 @@ public abstract class Interpreter {
 
     public void set(AttributeValues av, Collection rows) throws Exception {
         set(av);
-        if (rows != null) this.rows.addAll(rows);
+        this.rows = rows;
     }
 
     public abstract Collection parseVariables(String script) throws Exception;
@@ -115,16 +115,21 @@ public abstract class Interpreter {
             value = eval(script);
 
         } else {
-            //log.debug("Evaluating expression: "+expression);
+            //log.debug("Foreach: "+foreach);
 
             Object v = get(foreach);
             //log.debug("Values: "+v);
 
-            if (v == null) {
-                Collection newValues = new HashSet();
+            if ((v != null) && (v instanceof Collection) || rows != null) {
 
-                for (Iterator i=rows.iterator(); i.hasNext(); ) {
+                Collection newValues = new HashSet();
+                Collection c = (v != null) && (v instanceof Collection) ? (Collection)v : rows;
+
+                //log.debug("Rows:");
+                for (Iterator i=c.iterator(); i.hasNext(); ) {
                     AttributeValues row = (AttributeValues)i.next();
+                    //log.debug(" - "+row);
+
                     for (Iterator j=row.getNames().iterator(); j.hasNext(); ) {
                         String name = (String)j.next();
                         Collection values = row.get(name);

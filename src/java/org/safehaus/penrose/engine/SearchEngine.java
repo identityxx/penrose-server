@@ -145,15 +145,15 @@ public class SearchEngine {
         Collection dns = new TreeSet();
         Map childDns = new HashMap();
 
-        log.debug("Search results for "+entryMapping.getDn()+":");
+        //log.debug("Search results for "+entryMapping.getDn()+":");
         for (Iterator i=values.iterator(); i.hasNext(); ) {
             AttributeValues sv = (AttributeValues)i.next();
-            log.debug("==> "+sv);
+            //log.debug("==> "+sv);
 
             Collection list = engine.computeDns(interpreter, entryMapping, sv);
             for (Iterator j=list.iterator(); j.hasNext(); ) {
                 String dn = (String)j.next();
-                log.debug("     - "+dn);
+                //log.debug("     - "+dn);
 
                 dns.add(dn);
 
@@ -205,12 +205,12 @@ public class SearchEngine {
             Collection r = (Collection)rows.get(dn);
 
             log.debug(" - "+dn);
-            log.debug("   sources: "+sv);
-            log.debug("   rows:");
+            //log.debug("   sources: "+sv);
+            //log.debug("   rows:");
 
             for (Iterator j=r.iterator(); j.hasNext(); ) {
                 AttributeValues row = (AttributeValues)j.next();
-                log.debug("    - "+row);
+                //log.debug("    - "+row);
             }
 
             EntryData map = new EntryData();
@@ -526,26 +526,32 @@ public class SearchEngine {
         Collection results = new ArrayList();
         results.addAll(localResults.getAll());
 
-        log.debug(Formatter.displaySeparator(80));
-        log.debug(Formatter.displayLine("SEARCH PARENT", 80));
-
-        log.debug(Formatter.displayLine("Local source values:", 80));
-
         AttributeValues sourceValues = new AttributeValues();
-        int counter = 1;
-        for (Iterator i=results.iterator(); i.hasNext(); counter++) {
+        for (Iterator i=results.iterator(); i.hasNext(); ) {
             AttributeValues sv = (AttributeValues)i.next();
             sourceValues.add(sv);
-
-            log.debug(Formatter.displayLine("Record #"+counter, 80));
-            for (Iterator j=sv.getNames().iterator(); j.hasNext(); ) {
-                String name = (String)j.next();
-                Collection values = sv.get(name);
-                log.debug(Formatter.displayLine(" - "+name+": "+values, 80));
-            }
         }
 
-        log.debug(Formatter.displaySeparator(80));
+        if (log.isDebugEnabled()) {
+            log.debug(Formatter.displaySeparator(80));
+            log.debug(Formatter.displayLine("SEARCH PARENT", 80));
+
+            log.debug(Formatter.displayLine("Local source values:", 80));
+
+            int counter = 1;
+            for (Iterator i=results.iterator(); i.hasNext() && counter<=20; counter++) {
+                AttributeValues sv = (AttributeValues)i.next();
+
+                log.debug(Formatter.displayLine("Record #"+counter, 80));
+                for (Iterator j=sv.getNames().iterator(); j.hasNext(); ) {
+                    String name = (String)j.next();
+                    Collection values = sv.get(name);
+                    log.debug(Formatter.displayLine(" - "+name+": "+values, 80));
+                }
+            }
+
+            log.debug(Formatter.displaySeparator(80));
+        }
 
         Map filters = planner.getFilters();
         
@@ -627,8 +633,8 @@ public class SearchEngine {
             log.debug(Formatter.displaySeparator(80));
             log.debug(Formatter.displayLine("SEARCH PARENT RESULTS", 80));
 
-            counter = 1;
-            for (Iterator j=results.iterator(); j.hasNext(); counter++) {
+            int counter = 1;
+            for (Iterator j=results.iterator(); j.hasNext() && counter<=20; counter++) {
                 AttributeValues av = (AttributeValues)j.next();
                 log.debug(Formatter.displayLine("Result #"+counter, 80));
                 for (Iterator k=av.getNames().iterator(); k.hasNext(); ) {

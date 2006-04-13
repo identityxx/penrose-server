@@ -6,7 +6,6 @@
 	<classpathentry kind="src" path="src/test"/>
 	<classpathentry kind="con" path="org.eclipse.pde.core.requiredPlugins"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
-	<classpathentry kind="lib" path="lib/bcprov-jdk14-125.jar"/>
 	<classpathentry kind="lib" path="lib/commons-beanutils-1.6.jar"/>
 	<classpathentry kind="lib" path="lib/commons-dbcp-1.2.jar"/>
 	<classpathentry kind="lib" path="lib/commons-digester-1.5.jar"/>
@@ -61,5 +60,6 @@
 	<classpathentry kind="lib" path="lib/wrapper.jar"/>
 	<classpathentry kind="lib" path="lib/xml-apis-2.0.2.jar"/>
 	<classpathentry kind="lib" path="lib/ant/ant.jar"/>
+	<classpathentry kind="lib" path="lib/bcprov-jdk14-132.jar"/>
 	<classpathentry kind="output" path="target/classes"/>
 </classpath>

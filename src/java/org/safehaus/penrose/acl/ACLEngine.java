@@ -65,41 +65,64 @@ public class ACLEngine {
             String scope,
             String permission) throws Exception {
 
-        //log.debug(" * "+entry.getDn()+":");
+        String dn = entry.getDn();
+        //log.debug(" * "+dn);
 
         for (Iterator i=entry.getACL().iterator(); i.hasNext(); ) {
             ACI aci = (ACI)i.next();
-
-            if (!aci.getTarget().equals(ACI.TARGET_OBJECT)) continue;
-            if (scope != null && !scope.equals(aci.getScope())) continue;
-            if (aci.getPermission().indexOf(permission) < 0) continue;
-
             //log.debug("   - "+aci);
+
+            if (!aci.getTarget().equals(ACI.TARGET_OBJECT)) {
+                //log.debug("   ==> target doesn't match");
+                continue;
+            }
+
+            if (scope != null && !scope.equals(aci.getScope())) {
+                //log.debug("   ==> scope doesn't match");
+                continue;
+            }
+
+            if (aci.getPermission().indexOf(permission) < 0) {
+                //log.debug("   ==> no permission defined");
+                continue;
+            }
+
             String subject = handler.getSchemaManager().normalize(aci.getSubject());
 
             if (subject.equals(ACI.SUBJECT_USER) && aci.getDn().equals(bindDn)) {
+                //log.debug("   ==> matching subject");
                 return aci.getAction().equals(ACI.ACTION_GRANT);
 
             } else if (subject.equals(ACI.SUBJECT_SELF) && targetDn.equals(bindDn)) {
+                //log.debug("   ==> matching self");
                 return aci.getAction().equals(ACI.ACTION_GRANT);
 
             } else if (subject.equals(ACI.SUBJECT_ANONYMOUS) && (bindDn == null || bindDn.equals(""))) {
+                //log.debug("   ==> matching anonymous");
                 return aci.getAction().equals(ACI.ACTION_GRANT);
 
             } else if (subject.equals(ACI.SUBJECT_AUTHENTICATED) && bindDn != null && !bindDn.equals("")) {
+                //log.debug("   ==> matching authenticated");
                 return aci.getAction().equals(ACI.ACTION_GRANT);
 
             } else if (subject.equals(ACI.SUBJECT_ANYBODY)) {
+                //log.debug("   ==> matching anybody");
                 return aci.getAction().equals(ACI.ACTION_GRANT);
 
             }
         }
 
-        Partition partition = handler.getPartitionManager().getPartitionByDn(entry.getDn());
-        if (partition == null) return false;
+        Partition partition = handler.getPartitionManager().getPartitionByDn(dn);
+        if (partition == null) {
+            //log.debug("Partition for "+dn+" not found.");
+            return false;
+        }
 
         entry = partition.getParent(entry);
-        if (entry == null) return false;
+        if (entry == null) {
+            //log.debug("Parent entry for "+dn+" not found.");
+            return false;
+        }
 
         return getObjectPermission(bindDn, targetDn, entry, ACI.SCOPE_SUBTREE, permission);
     }
@@ -111,34 +134,32 @@ public class ACLEngine {
 
     public int checkPermission(PenroseSession session, Entry entry, String permission) throws Exception {
     	
-        //log.debug("Evaluating object \""+permission+"\" permission for "+entry.getDn()+(connection == null ? null : " as "+connection.getBindDn()));
+        //log.debug("Evaluating object \""+permission+"\" permission for "+entry.getDn()+(session == null ? null : " as "+session.getBindDn()));
 
         int rc = LDAPException.SUCCESS;
-        try {
-            if (session == null) {
-                return rc;
-            }
-
-            String rootDn = handler.getSchemaManager().normalize(handler.getRootUserConfig().getDn());
-            String bindDn = handler.getSchemaManager().normalize(session.getBindDn());
-            if (rootDn != null && rootDn.equals(bindDn)) {
-                return rc;
-            }
-
-            String targetDn = handler.getSchemaManager().normalize(entry.getDn());
-            boolean result = getObjectPermission(bindDn, targetDn, entry, ACI.SCOPE_OBJECT, permission);
-            //log.debug("Result: "+result);
-
-            if (result) {
-                return rc;
-            }
-
-            rc = LDAPException.INSUFFICIENT_ACCESS_RIGHTS;
+        if (session == null) {
+            //log.debug("no session => SUCCESS");
             return rc;
-
-        } finally {
-            //log.debug("Result: "+rc);
         }
+
+        String rootDn = handler.getSchemaManager().normalize(handler.getRootUserConfig().getDn());
+        String bindDn = handler.getSchemaManager().normalize(session.getBindDn());
+        if (rootDn != null && rootDn.equals(bindDn)) {
+            //log.debug("root user => SUCCESS");
+            return rc;
+        }
+
+        String targetDn = handler.getSchemaManager().normalize(entry.getDn());
+        boolean result = getObjectPermission(bindDn, targetDn, entry, ACI.SCOPE_OBJECT, permission);
+
+        if (result) {
+            //log.debug("acl evaluation => SUCCESS");
+            return rc;
+        }
+
+        //log.debug("acl evaluation => FAILED");
+        rc = LDAPException.INSUFFICIENT_ACCESS_RIGHTS;
+        return rc;
     }
 
     public int checkRead(PenroseSession session, Entry entry) throws Exception {

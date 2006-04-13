@@ -92,7 +92,7 @@ public class AttributeMapping implements Cloneable {
             this.variable = (String)value;
 
         } else {
-            this.expression = new Expression((String)value);
+            this.expression = (Expression)value;
         }
 
         this.rdn = rdn;

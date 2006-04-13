@@ -41,6 +41,7 @@ public class FieldConfig implements FieldConfigMBean, Comparable, Cloneable {
     private boolean searchable = true;
     private boolean unique;
     private boolean index;
+    private boolean caseSensitive;
 
     /**
      * Encryption method used to encrypt the value
@@ -136,6 +137,30 @@ public class FieldConfig implements FieldConfigMBean, Comparable, Cloneable {
         this.searchable = searchable;
     }
 
+    public boolean isUnique() {
+        return unique;
+    }
+
+    public void setUnique(boolean unique) {
+        this.unique = unique;
+    }
+
+    public boolean isIndex() {
+        return index;
+    }
+
+    public void setIndex(boolean index) {
+        this.index = index;
+    }
+
+    public boolean isCaseSensitive() {
+        return caseSensitive;
+    }
+
+    public void setCaseSensitive(boolean caseSensitive) {
+        this.caseSensitive = caseSensitive;
+    }
+
     public int hashCode() {
         return (name == null ? 0 : name.hashCode()) +
                 (originalName == null ? 0 : originalName.hashCode()) +
@@ -143,6 +168,7 @@ public class FieldConfig implements FieldConfigMBean, Comparable, Cloneable {
                 (searchable ? 0 : 1) +
                 (unique ? 0 : 1) +
                 (index ? 0 : 1) +
+                (caseSensitive ? 0 : 1) +
                 (encryption == null ? 0 : encryption.hashCode()) +
                 (encoding == null ? 0 : encoding.hashCode()) +
                 (type == null ? 0 : type.hashCode()) +
@@ -167,6 +193,7 @@ public class FieldConfig implements FieldConfigMBean, Comparable, Cloneable {
         if (searchable != fieldConfig.searchable) return false;
         if (unique != fieldConfig.unique) return false;
         if (index != fieldConfig.index) return false;
+        if (caseSensitive != fieldConfig.caseSensitive) return false;
         if (!equals(encryption, fieldConfig.encryption)) return false;
         if (!equals(encoding, fieldConfig.encoding)) return false;
         if (!equals(type, fieldConfig.type)) return false;
@@ -191,6 +218,7 @@ public class FieldConfig implements FieldConfigMBean, Comparable, Cloneable {
         searchable = fieldConfig.searchable;
         unique = fieldConfig.unique;
         index = fieldConfig.index;
+        caseSensitive = fieldConfig.caseSensitive;
         encryption = fieldConfig.encryption;
         encoding = fieldConfig.encoding;
         type = fieldConfig.type;
@@ -202,21 +230,5 @@ public class FieldConfig implements FieldConfigMBean, Comparable, Cloneable {
         FieldConfig fieldConfig = new FieldConfig();
         fieldConfig.copy(this);
         return fieldConfig;
-    }
-
-    public boolean isUnique() {
-        return unique;
-    }
-
-    public void setUnique(boolean unique) {
-        this.unique = unique;
-    }
-
-    public boolean isIndex() {
-        return index;
-    }
-
-    public void setIndex(boolean index) {
-        this.index = index;
     }
 }

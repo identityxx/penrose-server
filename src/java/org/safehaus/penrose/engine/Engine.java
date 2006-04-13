@@ -172,17 +172,19 @@ public abstract class Engine {
 
         if (sourceValues != null) interpreter.set(sourceValues, rows);
 
-        log.debug("Attribute values:");
+        //log.debug("Attribute values:");
         Collection attributeDefinitions = entryMapping.getAttributeMappings();
         for (Iterator j=attributeDefinitions.iterator(); j.hasNext(); ) {
             AttributeMapping attributeMapping = (AttributeMapping)j.next();
 
             String name = attributeMapping.getName();
+            //log.debug(" - "+name+":");
+
             Object value = interpreter.eval(attributeMapping);
             if (value == null) continue;
 
             attributeValues.add(name, value);
-            log.debug(" - "+name+": "+value+" ("+value.getClass().getName()+")");
+            //log.debug("   - "+value+" ("+value.getClass().getName()+")");
         }
 
         interpreter.clear();
@@ -771,18 +773,18 @@ public abstract class Engine {
         Collection rdns = computeRdn(interpreter, entryMapping);
         Collection dns = new ArrayList();
 
-        log.debug("Computing DNs for \""+entryMapping.getDn()+"\"");
+        //log.debug("Computing DNs for \""+entryMapping.getDn()+"\"");
 
         if (parentDns.isEmpty()) {
             dns.add(entryMapping.getDn());
         } else {
             for (Iterator i=parentDns.iterator(); i.hasNext(); ) {
                 String parentDn = (String)i.next();
-                log.debug(" - parent DN: "+parentDn);
+                //log.debug(" - parent DN: "+parentDn);
                 for (Iterator j=rdns.iterator(); j.hasNext(); ) {
                     Row rdn = (Row)j.next();
                     String dn = rdn +(parentDn == null ? "" : ","+parentDn);
-                    log.debug("   - "+dn);
+                    //log.debug("   - "+dn);
                     dns.add(dn);
                 }
             }

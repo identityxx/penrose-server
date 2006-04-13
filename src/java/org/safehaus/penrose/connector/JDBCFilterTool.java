@@ -88,11 +88,15 @@ public class JDBCFilterTool {
         if (fieldConfig == null) return false;
 
         if ("VARCHAR".equals(fieldConfig.getType())) {
-            sb.append("lower(");
+            if (!fieldConfig.isCaseSensitive()) sb.append("lower(");
             sb.append(fieldConfig.getOriginalName());
-            sb.append(") ");
+            if (!fieldConfig.isCaseSensitive()) sb.append(")");
+            sb.append(" ");
             sb.append(operator);
-            sb.append(" lower(?)");
+            sb.append(" ");
+            if (!fieldConfig.isCaseSensitive()) sb.append("lower(");
+            sb.append("?");
+            if (!fieldConfig.isCaseSensitive()) sb.append(")");
 
         } else {
             sb.append(fieldConfig.getOriginalName());

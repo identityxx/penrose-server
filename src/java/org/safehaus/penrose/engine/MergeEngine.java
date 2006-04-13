@@ -115,7 +115,8 @@ public class MergeEngine {
 
                     log.debug(Formatter.displayLine("Rows:", 80));
                     if (rows != null) {
-                        for (Iterator j=rows.iterator(); j.hasNext(); ) {
+                        int counter = 0;
+                        for (Iterator j=rows.iterator(); j.hasNext() && counter <= 20; counter++) {
                             AttributeValues row = (AttributeValues)j.next();
                             log.debug(Formatter.displayLine(" - "+row, 80));
                         }
