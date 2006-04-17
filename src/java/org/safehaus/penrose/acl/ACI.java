@@ -161,7 +161,7 @@ public class ACI implements Cloneable {
     }
 
     public String toString() {
-        return "ACI ["+subject+(SUBJECT_USER.equals(subject) || SUBJECT_GROUP.equals(subject) ? dn : "")+"] "
+        return "ACI ["+subject+(SUBJECT_USER.equals(subject) || SUBJECT_GROUP.equals(subject) ? " "+dn : "")+"] "
                 +"["+target+(TARGET_OBJECT.equals(target) ? "" : ":"+attributes)+"] "
                 +scope+" "+action+" "+permission;
     }

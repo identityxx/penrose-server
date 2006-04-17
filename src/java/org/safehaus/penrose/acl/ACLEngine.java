@@ -70,27 +70,28 @@ public class ACLEngine {
 
         for (Iterator i=entryMapping.getACL().iterator(); i.hasNext(); ) {
             ACI aci = (ACI)i.next();
-            //log.debug("   - "+aci);
+            //log.debug(" - "+aci);
 
             if (!aci.getTarget().equals(ACI.TARGET_OBJECT)) {
-                //log.debug("   ==> target doesn't match");
+                //log.debug("   ==> not checking target");
                 continue;
             }
 
-            if (scope != null && !scope.equals(aci.getScope())) {
-                //log.debug("   ==> scope doesn't match");
+            if (scope != null && !scope.equals(aci.getScope()) && !aci.getScope().equals(ACI.SCOPE_SUBTREE)) {
+                //log.debug("   ==> scope "+scope+" doesn't match");
                 continue;
             }
 
             if (aci.getPermission().indexOf(permission) < 0) {
-                //log.debug("   ==> no permission defined");
+                //log.debug("   ==> permission "+permission+" not defined");
                 continue;
             }
 
             String subject = handler.getSchemaManager().normalize(aci.getSubject());
+            //log.debug("   ==> checking subject "+subject);
 
             if (subject.equals(ACI.SUBJECT_USER) && aci.getDn().equals(bindDn)) {
-                //log.debug("   ==> matching subject");
+                //log.debug("   ==> matching user");
                 return aci.getAction().equals(ACI.ACTION_GRANT);
 
             } else if (subject.equals(ACI.SUBJECT_SELF) && targetDn.equals(bindDn)) {
@@ -108,7 +109,6 @@ public class ACLEngine {
             } else if (subject.equals(ACI.SUBJECT_ANYBODY)) {
                 //log.debug("   ==> matching anybody");
                 return aci.getAction().equals(ACI.ACTION_GRANT);
-
             }
         }
 
@@ -129,7 +129,7 @@ public class ACLEngine {
 
     public int checkPermission(PenroseSession session, String dn, EntryMapping entryMapping, String permission) throws Exception {
     	
-        //log.debug("Evaluating object \""+permission+"\" permission for "+entry.getDn()+(session == null ? null : " as "+session.getBindDn()));
+        //log.debug("Evaluating object \""+permission+"\" permission on "+entryMapping.getDn()+" for "+dn+(session == null ? null : " as "+session.getBindDn()));
 
         int rc = LDAPException.SUCCESS;
         if (session == null) {
@@ -148,11 +148,11 @@ public class ACLEngine {
         boolean result = getObjectPermission(bindDn, targetDn, entryMapping, ACI.SCOPE_OBJECT, permission);
 
         if (result) {
-            //log.debug("acl evaluation => SUCCESS");
+            log.debug("acl evaluation => SUCCESS");
             return rc;
         }
 
-        //log.debug("acl evaluation => FAILED");
+        log.debug("acl evaluation => FAILED");
         rc = LDAPException.INSUFFICIENT_ACCESS_RIGHTS;
         return rc;
     }

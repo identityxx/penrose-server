@@ -783,7 +783,7 @@ public abstract class Engine {
                 //log.debug(" - parent DN: "+parentDn);
                 for (Iterator j=rdns.iterator(); j.hasNext(); ) {
                     Row rdn = (Row)j.next();
-                    String dn = rdn +(parentDn == null ? "" : ","+parentDn);
+                    String dn = rdn+(parentDn == null ? "" : ","+parentDn);
                     //log.debug("   - "+dn);
                     dns.add(dn);
                 }
