@@ -64,7 +64,7 @@ public class ModRdnEngine {
             SourceMapping sourceMapping = (SourceMapping)i.next();
 
             AttributeValues output = new AttributeValues();
-            engine.getTransformEngine().translate(sourceMapping, newAttributeValues, output);
+            engine.getTransformEngine().translate(entryMapping, sourceMapping, newAttributeValues, output);
             newSourceValues.set(sourceMapping.getName(), output);
         }
 

@@ -104,7 +104,7 @@ public class DefaultEngine extends Engine {
 
             SourceConfig sourceConfig = partition.getSourceConfig(source.getSourceName());
 
-            Map entries = transformEngine.split(source, attributeValues);
+            Map entries = transformEngine.split(entryMapping, source, attributeValues);
 
             for (Iterator j=entries.keySet().iterator(); j.hasNext(); ) {
                 Row pk = (Row)j.next();

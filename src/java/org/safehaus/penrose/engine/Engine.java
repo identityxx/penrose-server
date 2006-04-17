@@ -180,7 +180,7 @@ public abstract class Engine {
             String name = attributeMapping.getName();
             //log.debug(" - "+name+":");
 
-            Object value = interpreter.eval(attributeMapping);
+            Object value = interpreter.eval(entryMapping, attributeMapping);
             if (value == null) continue;
 
             attributeValues.add(name, value);
@@ -723,7 +723,7 @@ public abstract class Engine {
             FieldMapping fieldMapping = (FieldMapping)j.next();
             String name = fieldMapping.getName();
 
-            Object value = interpreter.eval(fieldMapping);
+            Object value = interpreter.eval(entryMapping, fieldMapping);
             if (value == null) continue;
 
             //log.debug("   ==> "+field.getName()+"="+value);
@@ -805,7 +805,7 @@ public abstract class Engine {
             AttributeMapping attributeMapping = (AttributeMapping)i.next();
             String name = attributeMapping.getName();
 
-            Object value = interpreter.eval(attributeMapping);
+            Object value = interpreter.eval(entryMapping, attributeMapping);
             if (value == null) continue;
 
             rdns.add(name, value);

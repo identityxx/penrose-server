@@ -54,7 +54,7 @@ public class AddEngine {
             SourceMapping sourceMapping = (SourceMapping)i.next();
 
             AttributeValues output = new AttributeValues();
-            Row pk = engine.getTransformEngine().translate(sourceMapping, attributeValues, output);
+            Row pk = engine.getTransformEngine().translate(entryMapping, sourceMapping, attributeValues, output);
             if (pk == null) continue;
 
             for (Iterator j=output.getNames().iterator(); j.hasNext(); ) {

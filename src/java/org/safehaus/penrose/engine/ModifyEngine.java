@@ -48,7 +48,7 @@ public class ModifyEngine {
             SourceMapping sourceMapping = (SourceMapping)i.next();
 
             AttributeValues output = new AttributeValues();
-            engine.getTransformEngine().translate(sourceMapping, newValues, output);
+            engine.getTransformEngine().translate(entryMapping, sourceMapping, newValues, output);
             newSourceValues.set(sourceMapping.getName(), output);
         }
 

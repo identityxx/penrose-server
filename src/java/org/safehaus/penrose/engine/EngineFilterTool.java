@@ -66,7 +66,7 @@ public class EngineFilterTool {
         return null;
     }
 
-    public Filter toSourceFilter(AttributeValues parentValues, EntryMapping entry, SourceMapping sourceMapping, SimpleFilter filter)
+    public Filter toSourceFilter(AttributeValues parentValues, EntryMapping entryMapping, SourceMapping sourceMapping, SimpleFilter filter)
             throws Exception {
 
         String attributeName = filter.getAttribute();
@@ -91,7 +91,7 @@ public class EngineFilterTool {
         for (Iterator i=fields.iterator(); i.hasNext(); ) {
             FieldMapping fieldMapping = (FieldMapping)i.next();
 
-            String v = (String)interpreter.eval(fieldMapping);
+            String v = (String)interpreter.eval(entryMapping, fieldMapping);
             if (v == null) continue;
 
             //System.out.println("Adding filter "+field.getName()+"="+v);

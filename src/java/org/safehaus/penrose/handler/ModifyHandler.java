@@ -345,16 +345,16 @@ public class ModifyHandler {
 		entry.removeAttributeMappings(name);
 	}
 
-    public void deleteAttribute(EntryMapping entry, String name, String value)
+    public void deleteAttribute(EntryMapping entryMapping, String name, String value)
 			throws Exception {
 
-		AttributeMapping attributeMapping = entry.getAttributeMapping(name);
+		AttributeMapping attributeMapping = entryMapping.getAttributeMapping(name);
 		if (attributeMapping == null) return;
 
 		Interpreter interpreter = handler.getInterpreterFactory().newInstance();
 
-		String attrValue = (String)interpreter.eval(attributeMapping);
-		if (attrValue.equals(value)) entry.removeAttributeMapping(attributeMapping);
+		String attrValue = (String)interpreter.eval(entryMapping, attributeMapping);
+		if (attrValue.equals(value)) entryMapping.removeAttributeMapping(attributeMapping);
 
         interpreter.clear();
 	}

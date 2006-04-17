@@ -73,7 +73,7 @@ public abstract class Interpreter {
 
     public abstract void clear() throws Exception;
 
-    public Object eval(AttributeMapping attributeMapping) throws Exception {
+    public Object eval(EntryMapping entryMapping, AttributeMapping attributeMapping) throws Exception {
         if (attributeMapping.getConstant() != null) {
             return attributeMapping.getConstant();
 
@@ -81,14 +81,14 @@ public abstract class Interpreter {
             return get(attributeMapping.getVariable());
 
         } else if (attributeMapping.getExpression() != null) {
-            return eval(attributeMapping.getExpression());
+            return eval(entryMapping, attributeMapping.getExpression());
 
         } else {
             return null;
         }
     }
 
-    public Object eval(FieldMapping fieldMapping) throws Exception {
+    public Object eval(EntryMapping entryMapping, FieldMapping fieldMapping) throws Exception {
         if (fieldMapping.getConstant() != null) {
             return fieldMapping.getConstant();
 
@@ -96,14 +96,14 @@ public abstract class Interpreter {
             return get(fieldMapping.getVariable());
 
         } else if (fieldMapping.getExpression() != null) {
-            return eval(fieldMapping.getExpression());
+            return eval(entryMapping, fieldMapping.getExpression());
 
         } else {
             return null;
         }
     }
 
-    public Object eval(Expression expression) throws Exception {
+    public Object eval(EntryMapping entryMapping, Expression expression) throws Exception {
 
         String foreach = expression.getForeach();
         String var = expression.getVar();
@@ -122,20 +122,7 @@ public abstract class Interpreter {
 
             Collection newValues = new HashSet();
 
-            if (v != null && v instanceof Collection) { // process each value in Collection
-
-                Collection values = (Collection)v;
-                for (Iterator i=values.iterator(); i.hasNext(); ) {
-                    Object o = i.next();
-                    set(var, o);
-                    value = eval(script);
-                    if (value == null) continue;
-
-                    //log.debug(" - "+value);
-                    newValues.add(value);
-                }
-
-            } else if (rows != null) { // process each row in rows
+            if (entryMapping.getSourceMapping(foreach) != null) { // process each row in source
 
                 //log.debug("Rows:");
                 for (Iterator i=rows.iterator(); i.hasNext(); ) {
@@ -171,10 +158,22 @@ public abstract class Interpreter {
                     newValues.add(value);
                 }
 
-            } else {
-                set(var, v);
-                value = eval(script);
-                if (value != null) {
+            } else if (v != null) {
+
+                Collection values;
+                if (v instanceof Collection) {
+                    values = (Collection)v;
+                } else {
+                    values = new ArrayList();
+                    values.add(v);
+                }
+
+                for (Iterator i=values.iterator(); i.hasNext(); ) {
+                    Object o = i.next();
+                    set(var, o);
+                    value = eval(script);
+                    if (value == null) continue;
+
                     //log.debug(" - "+value);
                     newValues.add(value);
                 }

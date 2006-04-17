@@ -121,7 +121,7 @@ public class TransformEngine {
         }
     }
 
-    public Row translate(SourceMapping sourceMapping, AttributeValues input, AttributeValues output) throws Exception {
+    public Row translate(EntryMapping entryMapping, SourceMapping sourceMapping, AttributeValues input, AttributeValues output) throws Exception {
 
         Partition partition = engine.getPartitionManager().getPartition(sourceMapping);
         SourceConfig sourceConfig = partition.getSourceConfig(sourceMapping.getSourceName());
@@ -140,7 +140,7 @@ public class TransformEngine {
             String name = fieldMapping.getName();
             //log.debug(" - "+name);
 
-            Object newValues = interpreter.eval(fieldMapping);
+            Object newValues = interpreter.eval(entryMapping, fieldMapping);
 
             if (newValues == null) {
                 if (fieldConfig.isPrimaryKey()) pk = null;
@@ -205,7 +205,7 @@ public class TransformEngine {
         return convert(pkValues);
     }
 
-    public Map split(SourceMapping sourceMapping, AttributeValues entry) throws Exception {
+    public Map split(EntryMapping entryMapping, SourceMapping sourceMapping, AttributeValues entry) throws Exception {
 
         Partition partition = engine.getPartitionManager().getPartition(sourceMapping);
         SourceConfig sourceConfig = partition.getSourceConfig(sourceMapping.getSourceName());
@@ -213,7 +213,7 @@ public class TransformEngine {
         Collection fields = sourceConfig.getPrimaryKeyFieldConfigs();
 
         AttributeValues output = new AttributeValues();
-        Row m = translate(sourceMapping, entry, output);
+        Row m = translate(entryMapping, sourceMapping, entry, output);
         log.debug("PKs: "+m);
         log.debug("Output: "+output);
 
