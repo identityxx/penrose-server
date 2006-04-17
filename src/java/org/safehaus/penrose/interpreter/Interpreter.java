@@ -120,13 +120,25 @@ public abstract class Interpreter {
             Object v = get(foreach);
             //log.debug("Values: "+v);
 
-            if ((v != null) && (v instanceof Collection) || rows != null) {
+            Collection newValues = new HashSet();
 
-                Collection newValues = new HashSet();
-                Collection c = (v != null) && (v instanceof Collection) ? (Collection)v : rows;
+            if (v != null && v instanceof Collection) { // process each value in Collection
+
+                Collection values = (Collection)v;
+                for (Iterator i=values.iterator(); i.hasNext(); ) {
+                    Object o = i.next();
+                    set(var, o);
+                    value = eval(script);
+                    if (value == null) continue;
+
+                    //log.debug(" - "+value);
+                    newValues.add(value);
+                }
+
+            } else if (rows != null) { // process each row in rows
 
                 //log.debug("Rows:");
-                for (Iterator i=c.iterator(); i.hasNext(); ) {
+                for (Iterator i=rows.iterator(); i.hasNext(); ) {
                     AttributeValues row = (AttributeValues)i.next();
                     //log.debug(" - "+row);
 
@@ -159,39 +171,20 @@ public abstract class Interpreter {
                     newValues.add(value);
                 }
 
-                if (newValues.size() == 1) {
-                    value = newValues.iterator().next();
-
-                } else if (newValues.size() > 1) {
-                    value = newValues;
-                }
-
             } else {
-                Collection values;
-                if (v instanceof Collection) {
-                    values = (Collection)v;
-                } else {
-                    values = new ArrayList();
-                    values.add(v);
-                }
-
-                Collection newValues = new HashSet();
-                for (Iterator i=values.iterator(); i.hasNext(); ) {
-                    Object o = i.next();
-                    set(var, o);
-                    value = eval(script);
-                    if (value == null) continue;
-
+                set(var, v);
+                value = eval(script);
+                if (value != null) {
                     //log.debug(" - "+value);
                     newValues.add(value);
                 }
+            }
 
-                if (newValues.size() == 1) {
-                    value = newValues.iterator().next();
-                    
-                } else if (newValues.size() > 1) {
-                    value = newValues;
-                }
+            if (newValues.size() == 1) {
+                value = newValues.iterator().next();
+
+            } else if (newValues.size() > 1) {
+                value = newValues;
             }
         }
 
