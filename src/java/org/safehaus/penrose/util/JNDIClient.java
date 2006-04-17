@@ -787,7 +787,7 @@ public class JNDIClient {
                     attr.addValue((byte[])value);
                     //log.debug(" - "+name+": (binary)");
                 } else {
-                    attr.addValue((String)value);
+                    attr.addValue(value.toString());
                     //log.debug(" - "+name+": "+value);
                 }
             }

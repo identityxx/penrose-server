@@ -93,8 +93,8 @@ public class EntryUtil {
             for (Enumeration values = attribute.getAll(); values.hasMoreElements(); ) {
                 Object value = values.nextElement();
                 log.debug("   "+value.getClass().getName());
-                if (value instanceof String) {
-                    attr.addValue((String)value);
+                if (value instanceof byte[]) {
+                    attr.addValue((byte[])value);
                 } else {
                     attr.addValue(value.toString());
                 }

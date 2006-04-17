@@ -140,7 +140,7 @@ public class Entry {
                     attribute.addValue((byte[])value);
                     //log.debug(" - "+name+": (binary)");
                 } else {
-                    attribute.addValue((String)value);
+                    attribute.addValue(value.toString());
                     //log.debug(" - "+name+": "+value);
                 }
             }
