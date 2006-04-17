@@ -52,52 +52,62 @@ public class ModRdnHandler {
 	public int modrdn(PenroseSession session, String dn, String newRdn)
 			throws Exception {
 
-        log.debug("-------------------------------------------------------------------------------");
-        log.debug("MODRDN:");
-        if (session != null && session.getBindDn() != null) log.info(" - Bind DN: " + session.getBindDn());
-        log.debug(" - DN: " + dn);
-        log.debug(" - New RDN: " + newRdn);
+        int rc;
+        try {
+            log.debug("-------------------------------------------------------------------------------");
+            log.debug("MODRDN:");
+            if (session != null && session.getBindDn() != null) log.info(" - Bind DN: " + session.getBindDn());
+            log.debug(" - DN: " + dn);
+            log.debug(" - New RDN: " + newRdn);
 
-        if (session != null && session.getBindDn() == null) {
-            PenroseConfig penroseConfig = handler.getPenroseConfig();
-            ServiceConfig serviceConfig = penroseConfig.getServiceConfig("LDAP");
-            String s = serviceConfig == null ? null : serviceConfig.getParameter("allowAnonymousAccess");
-            boolean allowAnonymousAccess = s == null ? true : new Boolean(s).booleanValue();
-            if (!allowAnonymousAccess) {
-                return LDAPException.INSUFFICIENT_ACCESS_RIGHTS;
+            if (session != null && session.getBindDn() == null) {
+                PenroseConfig penroseConfig = handler.getPenroseConfig();
+                ServiceConfig serviceConfig = penroseConfig.getServiceConfig("LDAP");
+                String s = serviceConfig == null ? null : serviceConfig.getParameter("allowAnonymousAccess");
+                boolean allowAnonymousAccess = s == null ? true : new Boolean(s).booleanValue();
+                if (!allowAnonymousAccess) {
+                    return LDAPException.INSUFFICIENT_ACCESS_RIGHTS;
+                }
             }
+
+            String ndn = LDAPDN.normalize(dn);
+
+            Entry entry = handler.getFindHandler().find(session, ndn);
+            if (entry == null) return LDAPException.NO_SUCH_OBJECT;
+
+            rc = performModRdn(session, entry, newRdn);
+            if (rc != LDAPException.SUCCESS) return rc;
+
+            String parentDn = EntryUtil.getParentDn(dn);
+            String newDn = newRdn+","+parentDn;
+
+            PenroseSearchResults results = new PenroseSearchResults();
+
+            handler.getSearchHandler().search(
+                    null,
+                    newDn,
+                    LDAPConnection.SCOPE_SUB,
+                    LDAPSearchConstraints.DEREF_NEVER,
+                    "(objectClass=*)",
+                    new ArrayList(),
+                    results
+            );
+
+            EntryCache entryCache = handler.getEngine().getEntryCache();
+            for (Iterator i=results.iterator(); i.hasNext(); ) {
+                Entry e = (Entry)i.next();
+                entryCache.put(e);
+            }
+
+            handler.getEngine().getEntryCache().remove(entry);
+
+        } catch (LDAPException e) {
+            rc = e.getResultCode();
+
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+            rc = LDAPException.OPERATIONS_ERROR;
         }
-
-        String ndn = LDAPDN.normalize(dn);
-
-        Entry entry = handler.getFindHandler().find(session, ndn);
-        if (entry == null) return LDAPException.NO_SUCH_OBJECT;
-
-        int rc = performModRdn(session, entry, newRdn);
-        if (rc != LDAPException.SUCCESS) return rc;
-        
-        String parentDn = EntryUtil.getParentDn(dn);
-        String newDn = newRdn+","+parentDn;
-
-        PenroseSearchResults results = new PenroseSearchResults();
-
-        handler.getSearchHandler().search(
-                null,
-                newDn,
-                LDAPConnection.SCOPE_SUB,
-                LDAPSearchConstraints.DEREF_NEVER,
-                "(objectClass=*)",
-                new ArrayList(),
-                results
-        );
-
-        EntryCache entryCache = handler.getEngine().getEntryCache();
-        for (Iterator i=results.iterator(); i.hasNext(); ) {
-            Entry e = (Entry)i.next();
-            entryCache.put(e);
-        }
-
-        handler.getEngine().getEntryCache().remove(entry);
 
         return rc;
 	}
@@ -108,7 +118,7 @@ public class ModRdnHandler {
             String newRdn)
 			throws Exception {
 
-        int rc = handler.getACLEngine().checkModify(session, entry);
+        int rc = handler.getACLEngine().checkModify(session, entry.getDn(), entry.getEntryMapping());
         if (rc != LDAPException.SUCCESS) return rc;
 
         EntryMapping entryMapping = entry.getEntryMapping();

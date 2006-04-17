@@ -306,7 +306,6 @@ public class Penrose {
         connectionManager.clear();
         partitionManager.clear();
         schemaManager.clear();
-        penroseConfig.clear();
     }
 
     public void reload() throws Exception {

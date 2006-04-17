@@ -321,6 +321,9 @@ public class PenroseClient {
             String serviceName = (String)iterator.next();
             client.stop(serviceName);
 
+        } else if ("restart".equals(command)) {
+            client.restart();
+
         } else if ("list".equals(command)) {
             Collection serviceNames = client.getServiceNames();
             for (Iterator i=serviceNames.iterator(); i.hasNext(); ) {

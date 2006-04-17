@@ -46,13 +46,14 @@ public class BindHandler {
 
     public int bind(PenroseSession session, String dn, String password) throws Exception {
 
-        log.debug(Formatter.displaySeparator(80));
-        log.debug(Formatter.displayLine("BIND:", 80));
-        log.debug(Formatter.displayLine(" - DN       : "+dn, 80));
-        log.debug(Formatter.displayLine(" - Password : "+password, 80));
-        log.debug(Formatter.displaySeparator(80));
-
+        int rc;
         try {
+            log.debug(Formatter.displaySeparator(80));
+            log.debug(Formatter.displayLine("BIND:", 80));
+            log.debug(Formatter.displayLine(" - DN       : "+dn, 80));
+            log.debug(Formatter.displayLine(" - Password : "+password, 80));
+            log.debug(Formatter.displaySeparator(80));
+
             String ndn = LDAPDN.normalize(dn);
             String rootDn = handler.getRootUserConfig().getDn();
 
@@ -65,27 +66,31 @@ public class BindHandler {
 
             } else if (rootDn != null && ndn != null && ndn.equals(LDAPDN.normalize(rootDn))) { // bind as root
 
-                int rc = bindAsRoot(password);
+                rc = bindAsRoot(password);
                 if (rc != LDAPException.SUCCESS) return rc;
 
             } else {
 
-                int rc = bindAsUser(session, ndn, password);
+                rc = bindAsUser(session, ndn, password);
                 if (rc != LDAPException.SUCCESS) return rc;
             }
 
             session.setBindDn(dn);
             return LDAPException.SUCCESS; // LDAP_SUCCESS
 
+        } catch (LDAPException e) {
+            rc = e.getResultCode();
+
         } catch (AuthenticationException e) {
             log.debug(e.getMessage());
-            return LDAPException.INVALID_CREDENTIALS;
+            rc = LDAPException.INVALID_CREDENTIALS;
 
         } catch (Exception e) {
             log.error(e.getMessage(), e);
-            return LDAPException.OPERATIONS_ERROR;
+            rc = LDAPException.OPERATIONS_ERROR;
         }
 
+        return rc;
     }
 
     public int unbind(PenroseSession session) throws Exception {

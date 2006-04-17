@@ -145,15 +145,6 @@
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/lib/bcprov-jdk14-125.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
-    <orderEntry type="module-library">
-      <library>
-        <CLASSES>
           <root url="jar://$MODULE_DIR$/lib/hibernate3.jar!/" />
         </CLASSES>
         <JAVADOC />
@@ -533,6 +524,15 @@
       <library>
         <CLASSES>
           <root url="jar://$MODULE_DIR$/lib/jbossall-client.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/lib/bcprov-jdk14-132.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />

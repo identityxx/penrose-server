@@ -21,23 +21,20 @@ import org.safehaus.penrose.session.PenroseSearchResults;
 import org.safehaus.penrose.connector.*;
 import org.safehaus.penrose.cache.EntryCache;
 import org.safehaus.penrose.cache.CacheConfig;
-import org.safehaus.penrose.util.*;
 import org.safehaus.penrose.partition.*;
 import org.safehaus.penrose.filter.*;
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.pipeline.PipelineAdapter;
 import org.safehaus.penrose.pipeline.PipelineEvent;
 import org.safehaus.penrose.thread.ThreadPool;
-import org.safehaus.penrose.graph.Graph;
-import org.safehaus.penrose.graph.GraphEdge;
-import org.safehaus.penrose.interpreter.Interpreter;
+import org.safehaus.penrose.util.*;
 import org.ietf.ldap.LDAPException;
 import org.ietf.ldap.LDAPEntry;
 import org.ietf.ldap.LDAPAttribute;
 
-import javax.naming.NamingException;
-import javax.naming.NameNotFoundException;
-import java.util.*;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.Map;
 
 /**
  * @author Endi S. Dewata

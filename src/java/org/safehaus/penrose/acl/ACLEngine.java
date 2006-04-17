@@ -61,14 +61,14 @@ public class ACLEngine {
     public boolean getObjectPermission(
             String bindDn,
             String targetDn,
-            EntryMapping entry,
+            EntryMapping entryMapping,
             String scope,
             String permission) throws Exception {
 
-        String dn = entry.getDn();
-        //log.debug(" * "+dn);
+        targetDn = handler.getSchemaManager().normalize(targetDn);
+        //log.debug(" * "+targetDn);
 
-        for (Iterator i=entry.getACL().iterator(); i.hasNext(); ) {
+        for (Iterator i=entryMapping.getACL().iterator(); i.hasNext(); ) {
             ACI aci = (ACI)i.next();
             //log.debug("   - "+aci);
 
@@ -112,27 +112,22 @@ public class ACLEngine {
             }
         }
 
-        Partition partition = handler.getPartitionManager().getPartitionByDn(dn);
+        Partition partition = handler.getPartitionManager().getPartitionByDn(targetDn);
         if (partition == null) {
             //log.debug("Partition for "+dn+" not found.");
             return false;
         }
 
-        entry = partition.getParent(entry);
-        if (entry == null) {
+        entryMapping = partition.getParent(entryMapping);
+        if (entryMapping == null) {
             //log.debug("Parent entry for "+dn+" not found.");
             return false;
         }
 
-        return getObjectPermission(bindDn, targetDn, entry, ACI.SCOPE_SUBTREE, permission);
+        return getObjectPermission(bindDn, targetDn, entryMapping, ACI.SCOPE_SUBTREE, permission);
     }
 
-    public boolean getObjectPermission(String bindDn, String targetDn, Entry entry, String target, String permission) throws Exception {
-
-        return getObjectPermission(bindDn, targetDn, entry.getEntryMapping(), null, permission);
-    }
-
-    public int checkPermission(PenroseSession session, Entry entry, String permission) throws Exception {
+    public int checkPermission(PenroseSession session, String dn, EntryMapping entryMapping, String permission) throws Exception {
     	
         //log.debug("Evaluating object \""+permission+"\" permission for "+entry.getDn()+(session == null ? null : " as "+session.getBindDn()));
 
@@ -149,8 +144,8 @@ public class ACLEngine {
             return rc;
         }
 
-        String targetDn = handler.getSchemaManager().normalize(entry.getDn());
-        boolean result = getObjectPermission(bindDn, targetDn, entry, ACI.SCOPE_OBJECT, permission);
+        String targetDn = handler.getSchemaManager().normalize(dn);
+        boolean result = getObjectPermission(bindDn, targetDn, entryMapping, ACI.SCOPE_OBJECT, permission);
 
         if (result) {
             //log.debug("acl evaluation => SUCCESS");
@@ -162,24 +157,24 @@ public class ACLEngine {
         return rc;
     }
 
-    public int checkRead(PenroseSession session, Entry entry) throws Exception {
-    	return checkPermission(session, entry, ACI.PERMISSION_READ);
+    public int checkRead(PenroseSession session, String dn, EntryMapping entryMapping) throws Exception {
+    	return checkPermission(session, dn, entryMapping, ACI.PERMISSION_READ);
     }
 
-    public int checkSearch(PenroseSession session, Entry entry) throws Exception {
-    	return checkPermission(session, entry, ACI.PERMISSION_SEARCH);
+    public int checkSearch(PenroseSession session, String dn, EntryMapping entryMapping) throws Exception {
+    	return checkPermission(session, dn, entryMapping, ACI.PERMISSION_SEARCH);
     }
 
-    public int checkAdd(PenroseSession session, Entry entry) throws Exception {
-    	return checkPermission(session, entry, ACI.PERMISSION_ADD);
+    public int checkAdd(PenroseSession session, String dn, EntryMapping entryMapping) throws Exception {
+    	return checkPermission(session, dn, entryMapping, ACI.PERMISSION_ADD);
     }
 
-    public int checkDelete(PenroseSession session, Entry entry) throws Exception {
-    	return checkPermission(session, entry, ACI.PERMISSION_DELETE);
+    public int checkDelete(PenroseSession session, String dn, EntryMapping entryMapping) throws Exception {
+    	return checkPermission(session, dn, entryMapping, ACI.PERMISSION_DELETE);
     }
 
-    public int checkModify(PenroseSession session, Entry entry) throws Exception {
-    	return checkPermission(session, entry, ACI.PERMISSION_WRITE);
+    public int checkModify(PenroseSession session, String dn, EntryMapping entryMapping) throws Exception {
+    	return checkPermission(session, dn, entryMapping, ACI.PERMISSION_WRITE);
     }
 
     public void addAttributes(Set set, String attributes) {

@@ -76,97 +76,6 @@ public class FindHandler {
     /**
      * @return path (List of Entries).
      */
-/*
-    public List findPath(
-            PenroseSession session,
-            String dn) throws Exception {
-
-        if (dn == null) return null;
-
-        dn = dn.toLowerCase();
-        String parentDn = Entry.getParentDn(dn);
-        Row rdn = Entry.getRdn(dn);
-
-        log.debug("Find entry: ["+rdn+"] ["+parentDn+"]");
-
-        List path = findPath(session, parentDn);
-        Entry parent;
-
-        if (path == null) {
-            path = new ArrayList();
-            parent = null;
-        } else {
-            parent = (Entry)path.iterator().next();
-            //Map map = (Map)path.iterator().next();
-            //parent = (Entry)map.get("entry");
-        }
-
-        log.debug("Found parent: "+(parent == null ? null : parent.getDn()));
-
-        Partition partition = handler.getPartitionManager().getPartitionByDn(dn);
-        if (partition == null) {
-            //log.error("Missing config for "+dn);
-            return null;
-        }
-
-        // search the entry directly
-        Collection entryMappings = partition.findEntryMappings(dn);
-
-        Filter filter = null;
-        for (Iterator iterator=rdn.getNames().iterator(); iterator.hasNext(); ) {
-            String name = (String)iterator.next();
-            String value = (String)rdn.get(name);
-
-            SimpleFilter sf = new SimpleFilter(name, "=", value);
-            filter = FilterTool.appendAndFilter(filter, sf);
-        }
-
-        log.debug("Searching children with filter "+filter);
-
-		for (Iterator iterator = entryMappings.iterator(); iterator.hasNext(); ) {
-			EntryMapping childMapping = (EntryMapping) iterator.next();
-
-            String childDn = childMapping.getDn().toLowerCase();
-            Row childRdn = Entry.getRdn(childDn);
-            log.debug("Finding entry in "+childDn);
-
-            if (!rdn.getNames().equals(childRdn.getNames())) continue;
-
-            Engine engine = handler.getEngine();
-            AttributeValues parentSourceValues = new AttributeValues();
-            engine.getParentSourceValues(path, childMapping, parentSourceValues);
-
-            PenroseSearchResults sr = search(
-                    path,
-                    parentSourceValues,
-                    childMapping,
-                    true,
-                    filter,
-                    new ArrayList()
-            );
-
-            while (sr.hasNext()) {
-                Entry child = (Entry)sr.next();
-                if (handler.getFilterTool().isValid(child, filter)) {
-
-                    if (sr.getReturnCode() != LDAPException.SUCCESS) return null;
-
-                    log.debug("Adding "+child.getDn()+" into path");
-                    //Map map = new HashMap();
-                    //map.put("dn", child.getDn());
-                    //map.put("entry", child);
-                    //map.put("entryDefinition", child.getEntryMapping());
-                    //path.add(0, map);
-                    path.add(0, child);
-                    return path;
-                }
-            }
-		}
-
-		return null;
-	}
-*/
-    
     public List findPath(
             PenroseSession session,
             String dn) throws Exception {
@@ -223,6 +132,12 @@ public class FindHandler {
     
                 for (Iterator iterator = entryMappings.iterator(); iterator.hasNext(); ) {
                     EntryMapping entryMapping = (EntryMapping) iterator.next();
+
+                    int rc = handler.getACLEngine().checkSearch(session, dn, entryMapping);
+                    if (rc != LDAPException.SUCCESS) {
+                        log.debug("Checking search permission => FAILED");
+                        throw new LDAPException("Insufficient access rights", LDAPException.INSUFFICIENT_ACCESS_RIGHTS, "Insufficient access rights");
+                    }
 
                     if (partition.isProxy(entryMapping)) {
                         PenroseSearchResults results = new PenroseSearchResults();

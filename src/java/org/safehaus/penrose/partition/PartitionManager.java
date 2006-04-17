@@ -140,6 +140,7 @@ public class PartitionManager implements PartitionManagerMBean {
 
     public Partition getPartitionByDn(String dn) throws Exception {
         String ndn = schemaManager.normalize(dn);
+        ndn = ndn == null ? "" : ndn;
 
         for (Iterator i=partitions.values().iterator(); i.hasNext(); ) {
             Partition partition = (Partition)i.next();

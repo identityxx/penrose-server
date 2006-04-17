@@ -76,48 +76,47 @@ public class SearchHandler {
             Collection attributeNames,
             PenroseSearchResults results) throws Exception {
 
-        String s = null;
-        switch (scope) {
-        case LDAPConnection.SCOPE_BASE:
-            s = "base";
-            break;
-        case LDAPConnection.SCOPE_ONE:
-            s = "one level";
-            break;
-        case LDAPConnection.SCOPE_SUB:
-            s = "subtree";
-            break;
-        }
-
-        String d = null;
-        switch (deref) {
-        case LDAPSearchConstraints.DEREF_NEVER:
-            d = "never";
-            break;
-        case LDAPSearchConstraints.DEREF_SEARCHING:
-            d = "searching";
-            break;
-        case LDAPSearchConstraints.DEREF_FINDING:
-            d = "finding";
-            break;
-        case LDAPSearchConstraints.DEREF_ALWAYS:
-            d = "always";
-            break;
-        }
-
-        log.debug("----------------------------------------------------------------------------------");
-        log.info("SEARCH:");
-        if (session != null && session.getBindDn() != null) log.info(" - Bind DN: " + session.getBindDn());
-        log.info(" - Base DN: " + base);
-        log.info(" - Scope: " + s);
-        log.info(" - Filter: "+filter);
-        log.debug(" - Alias Dereferencing: " + d);
-        log.debug(" - Attribute Names: " + attributeNames);
-        log.info("");
-
         int rc;
-
         try {
+            String s = null;
+            switch (scope) {
+            case LDAPConnection.SCOPE_BASE:
+                s = "base";
+                break;
+            case LDAPConnection.SCOPE_ONE:
+                s = "one level";
+                break;
+            case LDAPConnection.SCOPE_SUB:
+                s = "subtree";
+                break;
+            }
+
+            String d = null;
+            switch (deref) {
+            case LDAPSearchConstraints.DEREF_NEVER:
+                d = "never";
+                break;
+            case LDAPSearchConstraints.DEREF_SEARCHING:
+                d = "searching";
+                break;
+            case LDAPSearchConstraints.DEREF_FINDING:
+                d = "finding";
+                break;
+            case LDAPSearchConstraints.DEREF_ALWAYS:
+                d = "always";
+                break;
+            }
+
+            log.debug("----------------------------------------------------------------------------------");
+            log.info("SEARCH:");
+            if (session != null && session.getBindDn() != null) log.info(" - Bind DN: " + session.getBindDn());
+            log.info(" - Base DN: " + base);
+            log.info(" - Scope: " + s);
+            log.info(" - Filter: "+filter);
+            log.debug(" - Alias Dereferencing: " + d);
+            log.debug(" - Attribute Names: " + attributeNames);
+            log.info("");
+
             if (session != null && session.getBindDn() == null) {
                 PenroseConfig penroseConfig = handler.getPenroseConfig();
                 ServiceConfig serviceConfig = penroseConfig.getServiceConfig("LDAP");
@@ -130,6 +129,10 @@ public class SearchHandler {
             }
 
             rc = performSearch(session, base, scope, deref, filter, attributeNames, results);
+
+        } catch (LDAPException e) {
+            rc = e.getResultCode();
+            results.setReturnCode(rc);
 
         } catch (Exception e) {
             log.error(e.getMessage(), e);
@@ -214,7 +217,7 @@ public class SearchHandler {
         AttributeValues parentSourceValues = new AttributeValues();
         engine.getParentSourceValues(path, entryMapping, parentSourceValues);
 
-        int rc = handler.getACLEngine().checkSearch(session, baseEntry);
+        int rc = handler.getACLEngine().checkSearch(session, baseEntry.getDn(), entryMapping);
         if (rc != LDAPException.SUCCESS) {
             log.debug("Checking search permission => FAILED");
             return rc;
@@ -225,7 +228,7 @@ public class SearchHandler {
 
         if (partition.isProxy(entryMapping)) {
 
-            rc = handler.getACLEngine().checkRead(session, baseEntry);
+            rc = handler.getACLEngine().checkRead(session, baseEntry.getDn(), entryMapping);
             if (rc != LDAPException.SUCCESS) {
                 log.debug("Checking read permission => FAILED");
                 return rc;
@@ -245,7 +248,7 @@ public class SearchHandler {
             if (scope == LDAPConnection.SCOPE_BASE || scope == LDAPConnection.SCOPE_SUB) { // base or subtree
                 if (handler.getFilterTool().isValid(baseEntry, f)) {
 
-                    rc = handler.getACLEngine().checkRead(session, baseEntry);
+                    rc = handler.getACLEngine().checkRead(session, baseEntry.getDn(), entryMapping);
                     if (rc == LDAPException.SUCCESS) {
                         results.add(baseEntry);
                     }
@@ -303,12 +306,12 @@ public class SearchHandler {
                 while (sr.hasNext()) {
                     Entry child = (Entry)sr.next();
 
-                    int rc = handler.getACLEngine().checkSearch(session, child);
+                    int rc = handler.getACLEngine().checkSearch(session, child.getDn(), child.getEntryMapping());
                     if (rc != LDAPException.SUCCESS) continue;
 
                     if (!handler.getFilterTool().isValid(child, filter)) continue;
 
-                    rc = handler.getACLEngine().checkRead(session, child);
+                    rc = handler.getACLEngine().checkRead(session, child.getDn(), child.getEntryMapping());
                     if (rc != LDAPException.SUCCESS) continue;
 
                     results.add(child);

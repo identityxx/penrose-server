@@ -46,52 +46,65 @@ public class CompareHandler {
     public int compare(PenroseSession session, String dn, String attributeName,
             Object attributeValue) throws Exception {
 
-        log.debug("-------------------------------------------------------------------------------");
-        log.debug("COMPARE:");
-        if (session != null && session.getBindDn() != null) log.info(" - Bind DN: " + session.getBindDn());
-        log.debug(" - DN: " + dn);
-        log.debug(" - Attribute Name: " + attributeName);
-        if (attributeValue instanceof byte[]) {
-            log.debug(" - Attribute Value: " + BinaryUtil.encode(BinaryUtil.BIG_INTEGER, (byte[])attributeValue));
-        } else {
-            log.debug(" - Attribute Value: " + attributeValue);
-        }
-        log.debug("-------------------------------------------------------------------------------");
-
-        if (session != null && session.getBindDn() == null) {
-            PenroseConfig penroseConfig = handler.getPenroseConfig();
-            ServiceConfig serviceConfig = penroseConfig.getServiceConfig("LDAP");
-            String s = serviceConfig == null ? null : serviceConfig.getParameter("allowAnonymousAccess");
-            boolean allowAnonymousAccess = s == null ? true : new Boolean(s).booleanValue();
-            if (!allowAnonymousAccess) {
-                return LDAPException.INSUFFICIENT_ACCESS_RIGHTS;
+        int rc;
+        try {
+            log.debug("-------------------------------------------------------------------------------");
+            log.debug("COMPARE:");
+            if (session != null && session.getBindDn() != null) log.info(" - Bind DN: " + session.getBindDn());
+            log.debug(" - DN: " + dn);
+            log.debug(" - Attribute Name: " + attributeName);
+            if (attributeValue instanceof byte[]) {
+                log.debug(" - Attribute Value: " + BinaryUtil.encode(BinaryUtil.BIG_INTEGER, (byte[])attributeValue));
+            } else {
+                log.debug(" - Attribute Value: " + attributeValue);
             }
+            log.debug("-------------------------------------------------------------------------------");
+
+            if (session != null && session.getBindDn() == null) {
+                PenroseConfig penroseConfig = handler.getPenroseConfig();
+                ServiceConfig serviceConfig = penroseConfig.getServiceConfig("LDAP");
+                String s = serviceConfig == null ? null : serviceConfig.getParameter("allowAnonymousAccess");
+                boolean allowAnonymousAccess = s == null ? true : new Boolean(s).booleanValue();
+                if (!allowAnonymousAccess) {
+                    return LDAPException.INSUFFICIENT_ACCESS_RIGHTS;
+                }
+            }
+
+            List attributeNames = new ArrayList();
+            attributeNames.add(attributeName);
+
+            Entry entry = handler.getFindHandler().find(session, dn);
+
+            AttributeValues attributeValues = entry.getAttributeValues();
+            Collection values = attributeValues.get(attributeName);
+
+            AttributeType attributeType = handler.getSchemaManager().getAttributeType(attributeName);
+
+            String equality = attributeType == null ? null : attributeType.getEquality();
+            EqualityMatchingRule equalityMatchingRule = EqualityMatchingRule.getInstance(equality);
+
+            log.debug("Comparing values:");
+            for (Iterator i=values.iterator(); i.hasNext(); ) {
+                Object value = i.next();
+
+                boolean b = equalityMatchingRule.compare(value, attributeValue);
+                log.debug(" - ["+value+"] => "+b);
+
+                if (b) return LDAPException.COMPARE_TRUE;
+
+            }
+
+            return LDAPException.COMPARE_FALSE;
+
+        } catch (LDAPException e) {
+            rc = e.getResultCode();
+
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+            rc = LDAPException.OPERATIONS_ERROR;
         }
 
-        List attributeNames = new ArrayList();
-        attributeNames.add(attributeName);
-
-        Entry entry = handler.getFindHandler().find(session, dn);
-
-        AttributeValues attributeValues = entry.getAttributeValues();
-        Collection values = attributeValues.get(attributeName);
-
-        AttributeType attributeType = handler.getSchemaManager().getAttributeType(attributeName);
-
-        String equality = attributeType == null ? null : attributeType.getEquality();
-        EqualityMatchingRule equalityMatchingRule = EqualityMatchingRule.getInstance(equality);
-
-        log.debug("Comparing values:");
-        for (Iterator i=values.iterator(); i.hasNext(); ) {
-            Object value = i.next();
-
-            boolean b = equalityMatchingRule.compare(value, attributeValue);
-            log.debug(" - ["+value+"] => "+b);
-
-            if (b) return LDAPException.COMPARE_TRUE;
-
-        }
-        return LDAPException.COMPARE_FALSE;
+        return rc;
     }
 
     public Handler getEngine() {

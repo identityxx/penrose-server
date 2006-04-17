@@ -244,6 +244,8 @@ public class Handler {
             String values[] = attribute.getStringValueArray();
 
             AttributeType at = schemaManager.getAttributeType(attributeName);
+            if (at == null) return LDAPException.UNDEFINED_ATTRIBUTE_TYPE;
+
             attributeName = at.getName();
             LDAPAttribute normalizedAttribute = new LDAPAttribute(attributeName, values);
 

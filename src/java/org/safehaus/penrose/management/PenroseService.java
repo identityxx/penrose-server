@@ -58,102 +58,172 @@ public class PenroseService implements PenroseServiceMBean {
     }
 
     public String getHome() throws Exception {
-        return penroseServer.getPenroseConfig().getHome();
+        try {
+            return penroseServer.getPenroseConfig().getHome();
+        } catch (Exception e) {
+            log.debug(e.getMessage(), e);
+            throw e;
+        }
     }
 
     public void setHome(String home) throws Exception {
-        PenroseConfig penroseConfig = penroseServer.getPenroseConfig();
-        penroseConfig.setHome(home);
-        penroseServer.reload();
+        try {
+            PenroseConfig penroseConfig = penroseServer.getPenroseConfig();
+            penroseConfig.setHome(home);
+            penroseServer.reload();
+        } catch (Exception e) {
+            log.debug(e.getMessage(), e);
+            throw e;
+        }
     }
 
     public void start() throws Exception {
-        penroseServer.start();
+        try {
+            penroseServer.start();
+        } catch (Exception e) {
+            log.debug(e.getMessage(), e);
+            throw e;
+        }
     }
 
     public void stop() throws Exception {
-        penroseServer.stop();
+        try {
+            penroseServer.stop();
+        } catch (Exception e) {
+            log.debug(e.getMessage(), e);
+            throw e;
+        }
     }
 
     public void reload() throws Exception {
-        penroseServer.reload();
+        try {
+            penroseServer.reload();
+        } catch (Exception e) {
+            log.debug(e.getMessage(), e);
+            throw e;
+        }
     }
 
     public void restart() throws Exception {
-        penroseServer.stop();
-        penroseServer.reload();
-        penroseServer.start();
+        try {
+            penroseServer.stop();
+            penroseServer.reload();
+            penroseServer.start();
+        } catch (Exception e) {
+            log.debug(e.getMessage(), e);
+            throw e;
+        }
     }
 
     public void store() throws Exception {
-        penroseServer.store();
+        try {
+            penroseServer.store();
+        } catch (Exception e) {
+            log.debug(e.getMessage(), e);
+            throw e;
+        }
     }
 
     public Collection getServiceNames() throws Exception {
-        Collection serviceNames = new ArrayList();
-        ServiceManager serviceManager = penroseServer.getServiceManager();
-        serviceNames.addAll(serviceManager.getServiceNames());
-        return serviceNames;
+        try {
+            Collection serviceNames = new ArrayList();
+            ServiceManager serviceManager = penroseServer.getServiceManager();
+            serviceNames.addAll(serviceManager.getServiceNames());
+            return serviceNames;
+        } catch (Exception e) {
+            log.debug(e.getMessage(), e);
+            throw e;
+        }
     }
 
     public void start(String serviceName) throws Exception {
-        ServiceManager serviceManager = penroseServer.getServiceManager();
-        serviceManager.start(serviceName);
+        try {
+            ServiceManager serviceManager = penroseServer.getServiceManager();
+            serviceManager.start(serviceName);
+        } catch (Exception e) {
+            log.debug(e.getMessage(), e);
+            throw e;
+        }
     }
 
     public void stop(String serviceName) throws Exception {
-        ServiceManager serviceManager = penroseServer.getServiceManager();
-        serviceManager.stop(serviceName);
+        try {
+            ServiceManager serviceManager = penroseServer.getServiceManager();
+            serviceManager.stop(serviceName);
+        } catch (Exception e) {
+            log.debug(e.getMessage(), e);
+            throw e;
+        }
     }
 
     public String getStatus(String serviceName) throws Exception {
-        ServiceManager serviceManager = penroseServer.getServiceManager();
-        return serviceManager.getStatus(serviceName);
+        try {
+            ServiceManager serviceManager = penroseServer.getServiceManager();
+            return serviceManager.getStatus(serviceName);
+        } catch (Exception e) {
+            log.debug(e.getMessage(), e);
+            throw e;
+        }
     }
 
     public Collection listFiles(String directory) throws Exception {
-        Collection results = new ArrayList();
+        try {
+            Collection results = new ArrayList();
 
-        String homeDirectory = penroseServer.getPenroseConfig().getHome();
-        File file = new File((homeDirectory == null ? "" : homeDirectory+File.separator)+directory);
-        if (!file.exists()) return results;
+            String homeDirectory = penroseServer.getPenroseConfig().getHome();
+            File file = new File((homeDirectory == null ? "" : homeDirectory+File.separator)+directory);
+            if (!file.exists()) return results;
 
-        File children[] = file.listFiles();
-        for (int i=0; i<children.length; i++) {
-            if (children[i].isDirectory()) {
-                results.addAll(listFiles(directory+File.separator+children[i].getName()));
-            } else {
-                results.add(directory+File.separator+children[i].getName());
+            File children[] = file.listFiles();
+            for (int i=0; i<children.length; i++) {
+                if (children[i].isDirectory()) {
+                    results.addAll(listFiles(directory+File.separator+children[i].getName()));
+                } else {
+                    results.add(directory+File.separator+children[i].getName());
+                }
             }
+            return results;
+        } catch (Exception e) {
+            log.debug(e.getMessage(), e);
+            throw e;
         }
-        return results;
     }
 
     public byte[] download(String filename) throws Exception {
-        String homeDirectory = penroseServer.getPenroseConfig().getHome();
-        File file = new File((homeDirectory == null ? "" : homeDirectory+File.separator)+filename);
-        if (!file.exists()) return null;
+        try {
+            String homeDirectory = penroseServer.getPenroseConfig().getHome();
+            File file = new File((homeDirectory == null ? "" : homeDirectory+File.separator)+filename);
+            if (!file.exists()) return null;
 
-        log.debug("Downloading "+file.getAbsolutePath());
+            log.debug("Downloading "+file.getAbsolutePath());
 
-        FileInputStream in = new FileInputStream(file);
-        byte content[] = new byte[(int)file.length()];
-        in.read(content);
-        in.close();
+            FileInputStream in = new FileInputStream(file);
+            byte content[] = new byte[(int)file.length()];
+            in.read(content);
+            in.close();
 
-        return content;
+            return content;
+        } catch (Exception e) {
+            log.debug(e.getMessage(), e);
+            throw e;
+        }
     }
 
     public void upload(String filename, byte content[]) throws Exception {
-        String homeDirectory = penroseServer.getPenroseConfig().getHome();
-        File file = new File((homeDirectory == null ? "" : homeDirectory+File.separator)+filename);
-        file.getParentFile().mkdirs();
+        try {
+            String homeDirectory = penroseServer.getPenroseConfig().getHome();
+            File file = new File((homeDirectory == null ? "" : homeDirectory+File.separator)+filename);
+            file.getParentFile().mkdirs();
 
-        log.debug("Uploading "+file.getAbsolutePath());
+            log.debug("Uploading "+file.getAbsolutePath());
 
-        FileOutputStream out = new FileOutputStream(file);
-        out.write(content);
-        out.close();
+            FileOutputStream out = new FileOutputStream(file);
+            out.write(content);
+            out.close();
+        } catch (Exception e) {
+            log.debug(e.getMessage(), e);
+            throw e;
+        }
     }
 
     public PenroseServer getPenroseServer() {

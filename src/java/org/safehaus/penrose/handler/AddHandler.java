@@ -50,43 +50,47 @@ public class AddHandler {
             LDAPEntry entry)
     throws Exception {
 
-        log.info("-------------------------------------------------");
-        log.info("ADD:");
-        if (session != null && session.getBindDn() != null) log.info(" - Bind DN: "+session.getBindDn());
-        log.info(" - Entry:\n"+EntryUtil.toString(entry));
-        log.info("");
+        int rc;
+        try {
+            log.info("-------------------------------------------------");
+            log.info("ADD:");
+            if (session != null && session.getBindDn() != null) log.info(" - Bind DN: "+session.getBindDn());
+            log.info(" - Entry:\n"+EntryUtil.toString(entry));
+            log.info("");
 
-        if (session != null && session.getBindDn() == null) {
-            PenroseConfig penroseConfig = handler.getPenroseConfig();
-            ServiceConfig serviceConfig = penroseConfig.getServiceConfig("LDAP");
-            String s = serviceConfig == null ? null : serviceConfig.getParameter("allowAnonymousAccess");
-            boolean allowAnonymousAccess = s == null ? true : new Boolean(s).booleanValue();
-            if (!allowAnonymousAccess) {
-                return LDAPException.INSUFFICIENT_ACCESS_RIGHTS;
+            if (session != null && session.getBindDn() == null) {
+                PenroseConfig penroseConfig = handler.getPenroseConfig();
+                ServiceConfig serviceConfig = penroseConfig.getServiceConfig("LDAP");
+                String s = serviceConfig == null ? null : serviceConfig.getParameter("allowAnonymousAccess");
+                boolean allowAnonymousAccess = s == null ? true : new Boolean(s).booleanValue();
+                if (!allowAnonymousAccess) {
+                    return LDAPException.INSUFFICIENT_ACCESS_RIGHTS;
+                }
             }
+
+            rc = performAdd(session, entry);
+            if (rc != LDAPException.SUCCESS) return rc;
+
+            PenroseSearchResults results = new PenroseSearchResults();
+
+            handler.getSearchHandler().search(
+                    null,
+                    entry.getDN(),
+                    LDAPConnection.SCOPE_SUB,
+                    LDAPSearchConstraints.DEREF_NEVER,
+                    "(objectClass=*)",
+                    new ArrayList(),
+                    results
+            );
+
+        } catch (LDAPException e) {
+            rc = e.getResultCode();
+
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+            rc = LDAPException.OPERATIONS_ERROR;
         }
 
-        int rc = performAdd(session, entry);
-        if (rc != LDAPException.SUCCESS) return rc;
-        
-        PenroseSearchResults results = new PenroseSearchResults();
-
-        handler.getSearchHandler().search(
-                null,
-                entry.getDN(),
-                LDAPConnection.SCOPE_SUB,
-                LDAPSearchConstraints.DEREF_NEVER,
-                "(objectClass=*)",
-                new ArrayList(),
-                results
-        );
-/*
-        EntryCache entryCache = handleretEntryCache();
-        for (Iterator i=results.iterator(); i.hasNext(); ) {
-            Entry entry = (Entry)i.next();
-            entryCache.put(entry);
-        }
-*/
         return rc;
     }
 
@@ -105,7 +109,7 @@ public class AddHandler {
             return LDAPException.NO_SUCH_OBJECT;
         }
 
-        int rc = handler.getACLEngine().checkAdd(session, parent);
+        int rc = handler.getACLEngine().checkAdd(session, parentDn, parent.getEntryMapping());
         if (rc != LDAPException.SUCCESS) {
             log.debug("Not allowed to add children under "+parentDn);
             return rc;

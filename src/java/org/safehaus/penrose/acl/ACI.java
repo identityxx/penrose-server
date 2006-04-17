@@ -53,6 +53,13 @@ public class ACI implements Cloneable {
     private String action      = ACTION_GRANT;
     private String permission;
 
+    public ACI() {
+    }
+
+    public ACI(String permission) {
+        this.permission = permission;
+    }
+
     public String getScope() {
         return scope;
     }

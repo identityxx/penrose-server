@@ -46,44 +46,55 @@ public class DeleteHandler {
 
     public int delete(PenroseSession session, String dn) throws Exception {
 
-        log.info("-------------------------------------------------");
-        log.info("DELETE:");
-        if (session != null && session.getBindDn() != null) log.info(" - Bind DN: "+session.getBindDn());
-        log.info(" - DN: "+dn);
-        log.info("");
+        int rc;
+        try {
+            log.info("-------------------------------------------------");
+            log.info("DELETE:");
+            if (session != null && session.getBindDn() != null) log.info(" - Bind DN: "+session.getBindDn());
+            log.info(" - DN: "+dn);
+            log.info("");
 
-        if (session != null && session.getBindDn() == null) {
-            PenroseConfig penroseConfig = handler.getPenroseConfig();
-            ServiceConfig serviceConfig = penroseConfig.getServiceConfig("LDAP");
-            String s = serviceConfig == null ? null : serviceConfig.getParameter("allowAnonymousAccess");
-            boolean allowAnonymousAccess = s == null ? true : new Boolean(s).booleanValue();
-            if (!allowAnonymousAccess) {
-                return LDAPException.INSUFFICIENT_ACCESS_RIGHTS;
+            if (session != null && session.getBindDn() == null) {
+                PenroseConfig penroseConfig = handler.getPenroseConfig();
+                ServiceConfig serviceConfig = penroseConfig.getServiceConfig("LDAP");
+                String s = serviceConfig == null ? null : serviceConfig.getParameter("allowAnonymousAccess");
+                boolean allowAnonymousAccess = s == null ? true : new Boolean(s).booleanValue();
+                if (!allowAnonymousAccess) {
+                    return LDAPException.INSUFFICIENT_ACCESS_RIGHTS;
+                }
             }
+
+            String ndn = LDAPDN.normalize(dn);
+
+            Entry entry = getHandler().getFindHandler().find(session, ndn);
+            if (entry == null) return LDAPException.NO_SUCH_OBJECT;
+
+            rc = performDelete(session, entry);
+            if (rc != LDAPException.SUCCESS) return rc;
+
+            handler.getEngine().getEntryCache().remove(entry);
+
+        } catch (LDAPException e) {
+            rc = e.getResultCode();
+
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+            rc = LDAPException.OPERATIONS_ERROR;
         }
-
-        String ndn = LDAPDN.normalize(dn);
-
-        Entry entry = getHandler().getFindHandler().find(session, ndn);
-        if (entry == null) return LDAPException.NO_SUCH_OBJECT;
-
-        int rc = performDelete(session, entry);
-        if (rc != LDAPException.SUCCESS) return rc;
-        
-        handler.getEngine().getEntryCache().remove(entry);
 
         return rc;
     }
 
     public int performDelete(PenroseSession session, Entry entry) throws Exception {
 
-        int rc = handler.getACLEngine().checkDelete(session, entry);
+        EntryMapping entryMapping = entry.getEntryMapping();
+
+        int rc = handler.getACLEngine().checkDelete(session, entry.getDn(), entryMapping);
         if (rc != LDAPException.SUCCESS) {
             log.debug("Not allowed to delete "+entry.getDn());
             return rc;
         }
 
-        EntryMapping entryMapping = entry.getEntryMapping();
         PartitionManager partitionManager = handler.getPartitionManager();
         Partition partition = partitionManager.getPartition(entryMapping);
 

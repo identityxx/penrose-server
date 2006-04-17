@@ -54,56 +54,58 @@ public class ModifyHandler {
     public int modify(PenroseSession session, String dn, Collection modifications)
 			throws Exception {
 
-        log.debug(Formatter.displaySeparator(80));
-		log.debug(Formatter.displayLine("MODIFY:", 80));
-		if (session != null && session.getBindDn() != null) {
-            log.debug(Formatter.displayLine(" - Bind DN: " + session.getBindDn(), 80));
-        }
-        log.debug(Formatter.displayLine(" - DN: " + dn, 80));
-        log.debug(Formatter.displaySeparator(80));
-
-        if (session != null && session.getBindDn() == null) {
-            PenroseConfig penroseConfig = handler.getPenroseConfig();
-            ServiceConfig serviceConfig = penroseConfig.getServiceConfig("LDAP");
-            String s = serviceConfig == null ? null : serviceConfig.getParameter("allowAnonymousAccess");
-            boolean allowAnonymousAccess = s == null ? true : new Boolean(s).booleanValue();
-            if (!allowAnonymousAccess) {
-                return LDAPException.INSUFFICIENT_ACCESS_RIGHTS;
+        int rc;
+        try {
+            log.debug(Formatter.displaySeparator(80));
+            log.debug(Formatter.displayLine("MODIFY:", 80));
+            if (session != null && session.getBindDn() != null) {
+                log.debug(Formatter.displayLine(" - Bind DN: " + session.getBindDn(), 80));
             }
+            log.debug(Formatter.displayLine(" - DN: " + dn, 80));
+            log.debug(Formatter.displaySeparator(80));
+
+            if (session != null && session.getBindDn() == null) {
+                PenroseConfig penroseConfig = handler.getPenroseConfig();
+                ServiceConfig serviceConfig = penroseConfig.getServiceConfig("LDAP");
+                String s = serviceConfig == null ? null : serviceConfig.getParameter("allowAnonymousAccess");
+                boolean allowAnonymousAccess = s == null ? true : new Boolean(s).booleanValue();
+                if (!allowAnonymousAccess) {
+                    return LDAPException.INSUFFICIENT_ACCESS_RIGHTS;
+                }
+            }
+
+            String ndn = LDAPDN.normalize(dn);
+
+            Entry entry = handler.getFindHandler().find(session, ndn);
+            if (entry == null) {
+                log.debug("Entry "+entry.getDn()+" not found");
+                return LDAPException.NO_SUCH_OBJECT;
+            }
+
+            rc = performModify(session, entry, modifications);
+            if (rc != LDAPException.SUCCESS) return rc;
+
+            handler.getEngine().getEntryCache().remove(entry);
+
+            PenroseSearchResults results = new PenroseSearchResults();
+
+            handler.getSearchHandler().search(
+                    null,
+                    dn,
+                    LDAPConnection.SCOPE_SUB,
+                    LDAPSearchConstraints.DEREF_NEVER,
+                    "(objectClass=*)",
+                    new ArrayList(),
+                    results
+            );
+
+        } catch (LDAPException e) {
+            rc = e.getResultCode();
+
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+            rc = LDAPException.OPERATIONS_ERROR;
         }
-
-        String ndn = LDAPDN.normalize(dn);
-
-        Entry entry = handler.getFindHandler().find(session, ndn);
-        if (entry == null) {
-            log.debug("Entry "+entry.getDn()+" not found");
-            return LDAPException.NO_SUCH_OBJECT;
-        }
-
-        int rc = performModify(session, entry, modifications);
-        if (rc != LDAPException.SUCCESS) return rc;
-        
-        handler.getEngine().getEntryCache().remove(entry);
-
-        PenroseSearchResults results = new PenroseSearchResults();
-
-        handler.getSearchHandler().search(
-                null,
-                dn,
-                LDAPConnection.SCOPE_SUB,
-                LDAPSearchConstraints.DEREF_NEVER,
-                "(objectClass=*)",
-                new ArrayList(),
-                results
-        );
-
-/*
-        EntryCache entryCache = handleretEntryCache();
-        for (Iterator i=results.iterator(); i.hasNext(); ) {
-            Entry e = (Entry)i.next();
-            entryCache.put(e);
-        }
-*/
 
         return rc;
     }
@@ -113,7 +115,7 @@ public class ModifyHandler {
 
         log.debug("Modifying "+entry.getDn());
 
-        int rc = handler.getACLEngine().checkModify(session, entry);
+        int rc = handler.getACLEngine().checkModify(session, entry.getDn(), entry.getEntryMapping());
         if (rc != LDAPException.SUCCESS) {
             log.debug("Not authorized to modify "+entry.getDn());
             return rc;
