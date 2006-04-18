@@ -30,6 +30,7 @@ import org.apache.directory.shared.ldap.filter.ExprNode;
 import org.apache.directory.shared.ldap.exception.LdapAuthenticationException;
 import org.apache.log4j.Logger;
 import org.safehaus.penrose.Penrose;
+import org.safehaus.penrose.schema.SchemaManager;
 import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.session.PenroseSession;
 import org.safehaus.penrose.session.PenroseSearchResults;
@@ -144,7 +145,8 @@ public class PenroseInterceptor extends BaseInterceptor {
                 return;
             }
 
-            LDAPEntry ldapEntry = EntryUtil.convert(upName, attributes);
+            SchemaManager schemaManager = penrose.getSchemaManager();
+            LDAPEntry ldapEntry = EntryUtil.convert(schemaManager, upName, attributes);
 
             PenroseSession session = penrose.newSession();
             if (session == null) throw new ServiceUnavailableException();
@@ -838,8 +840,13 @@ public class PenroseInterceptor extends BaseInterceptor {
 
                 for (Enumeration values = attribute.getAll(); values.hasMoreElements(); ) {
                     Object value = values.nextElement();
-                    log.debug(attrName+": "+value);
-                    attr.addValue(value.toString());
+                    if (value instanceof byte[]) {
+                        attr.addValue((byte[])value);
+                        log.debug(attrName+": (binary)");
+                    } else {
+                        attr.addValue(value.toString());
+                        log.debug(attrName+": "+value);
+                    }
                 }
                 log.debug("-");
 

@@ -21,8 +21,11 @@ import javax.crypto.spec.SecretKeySpec;
 import javax.crypto.Cipher;
 
 import org.apache.log4j.Logger;
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
 
 import java.security.MessageDigest;
+import java.security.Security;
+import java.security.Provider;
 import java.math.BigInteger;
 
 
@@ -34,6 +37,28 @@ public class PasswordUtil {
     public static Logger log = Logger.getLogger(PasswordUtil.class);
 
 	protected final static boolean DEBUG = true;
+
+    public static Provider SECURITY_PROVIDER = new BouncyCastleProvider();
+
+    static {
+        try {
+            Provider[] providers = Security.getProviders();
+            //log.debug("Providers:");
+            for (int i=0; i<providers.length; i++) {
+                //log.debug(" - "+providers[i].getName()+" "+providers[i].getVersion());
+            }
+
+            Provider provider = Security.getProvider("BC");
+            //log.debug("BouncyCastle: "+provider);
+            if (provider == null) {
+                provider = SECURITY_PROVIDER;
+                //log.debug("Registering "+provider);
+                Security.addProvider(provider);
+            }
+        } catch (Exception e) {
+            log.debug(e.getMessage(), e);
+        }
+    }
 
     public static String encrypt(String method, String encoding, String password) throws Exception {
         byte[] bytes = encrypt(method, password);

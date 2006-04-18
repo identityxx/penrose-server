@@ -19,9 +19,11 @@ package org.safehaus.penrose.acl;
 
 import org.safehaus.penrose.mapping.Entry;
 import org.safehaus.penrose.mapping.EntryMapping;
+import org.safehaus.penrose.mapping.AttributeMapping;
 import org.safehaus.penrose.session.PenroseSession;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.handler.Handler;
+import org.safehaus.penrose.util.EntryUtil;
 import org.ietf.ldap.LDAPException;
 import org.ietf.ldap.LDAPEntry;
 import org.ietf.ldap.LDAPAttributeSet;
@@ -177,113 +179,244 @@ public class ACLEngine {
     	return checkPermission(session, dn, entryMapping, ACI.PERMISSION_WRITE);
     }
 
-    public void addAttributes(Set set, String attributes) {
+    public Collection getAttributes(String attributes) {
+        Collection list = new ArrayList();
+        addAttributes(list, attributes);
+        return list;
+    }
+
+    public void addAttributes(Collection list, String attributes) {
         //log.debug("Adding attributes: "+attributes);
         StringTokenizer st = new StringTokenizer(attributes, ",");
         while (st.hasMoreTokens()) {
             String attributeName = st.nextToken().trim();
-            set.add(attributeName);
+            list.add(attributeName);
             //log.debug("Adding attribute: "+attributeName);
         }
     }
 
-    public void addAttributes(ACI aci, Set grants, Set denies) {
+    public void addAttributes(ACI aci, Collection grants, Collection denies) {
+        Collection attributes = getAttributes(aci.getAttributes());
+
         if (aci.getAction().equals(ACI.ACTION_GRANT)) {
-            addAttributes(grants, aci.getAttributes());
+            attributes.removeAll(denies);
+            grants.addAll(attributes);
 
         } else if (aci.getAction().equals(ACI.ACTION_DENY)) {
-            addAttributes(denies, aci.getAttributes());
+            attributes.removeAll(grants);
+            denies.addAll(attributes);
         }
+    }
+
+    public boolean checkSubject(String bindDn, String targetDn, ACI aci) throws Exception {
+
+        String subject = handler.getSchemaManager().normalize(aci.getSubject());
+        //log.debug("   ==> checking subject "+subject);
+
+        if (subject.equals(ACI.SUBJECT_USER) && aci.getDn().equals(bindDn)) {
+            //log.debug("   ==> matching user");
+            return true;
+        }
+
+        if (subject.equals(ACI.SUBJECT_SELF) && targetDn.equals(bindDn)) {
+            //log.debug("   ==> matching self");
+            return true;
+        }
+
+        if (subject.equals(ACI.SUBJECT_ANONYMOUS) && (bindDn == null || bindDn.equals(""))) {
+            //log.debug("   ==> matching anonymous");
+            return true;
+        }
+
+        if (subject.equals(ACI.SUBJECT_AUTHENTICATED) && bindDn != null && !bindDn.equals("")) {
+            //log.debug("   ==> matching authenticated");
+            return true;
+        }
+
+        if (subject.equals(ACI.SUBJECT_ANYBODY)) {
+            //log.debug("   ==> matching anybody");
+            return true;
+        }
+
+        return false;
+    }
+
+    public boolean checkAttributeReadPermission(
+            String bindDn,
+            String targetDn,
+            EntryMapping entryMapping,
+            String attributeName) throws Exception {
+
+        //log.debug("Checking read permission for attribute "+attributeName+":");
+        return checkAttributeReadPermission(bindDn, targetDn, entryMapping, null, attributeName);
+    }
+
+    public boolean checkAttributeReadPermission(
+            String bindDn,
+            String targetDn,
+            EntryMapping entryMapping,
+            String scope,
+            String attributeName) throws Exception {
+
+        //log.debug(" * "+entryMapping.getDn()+":");
+
+        for (Iterator i=entryMapping.getACL().iterator(); i.hasNext(); ) {
+            ACI aci = (ACI)i.next();
+            //log.debug("   - "+aci);
+
+            if (!checkSubject(bindDn, targetDn, aci)) {
+                //log.debug("     ==> subject doesn't match");
+                continue;
+            }
+
+            if (scope != null && !scope.equals(aci.getScope())) {
+                //log.debug("     ==> scope doesn't match");
+                continue;
+            }
+
+            if (aci.getPermission().indexOf(ACI.PERMISSION_READ) < 0) {
+                //log.debug("     ==> read permission not defined");
+                continue;
+            }
+
+            if (aci.getTarget().equals(ACI.TARGET_ATTRIBUTES)) {
+                Collection attributes = getAttributes(aci.getAttributes());
+                if (!attributes.contains(attributeName)) {
+                    //log.debug("     ==> attribute doesn't match");
+                    continue;
+                }
+            }
+
+            return aci.getAction().equals(ACI.ACTION_GRANT);
+        }
+
+        Partition partition = handler.getPartitionManager().getPartitionByDn(entryMapping.getDn());
+        if (partition == null) return false;
+
+        entryMapping = partition.getParent(entryMapping);
+        if (entryMapping == null) return false;
+
+        return checkAttributeReadPermission(bindDn, targetDn, entryMapping, ACI.SCOPE_SUBTREE, attributeName);
     }
 
     public void getReadableAttributes(
             String bindDn,
             String targetDn,
-            EntryMapping entry,
+            EntryMapping entryMapping,
             String scope,
-            Set grants,
-            Set denies) throws Exception {
+            Collection attributeNames,
+            Collection grants,
+            Collection denies) throws Exception {
 
-        //log.debug(" * "+entry.getDn()+":");
+        //log.debug(" * "+entryMapping.getDn()+":");
 
-        for (Iterator i=entry.getACL().iterator(); i.hasNext(); ) {
+        for (Iterator i=entryMapping.getACL().iterator(); i.hasNext(); ) {
             ACI aci = (ACI)i.next();
-
-            if (!aci.getTarget().equals(ACI.TARGET_ATTRIBUTES)) continue;
-            if (scope != null && !scope.equals(aci.getScope())) continue;
-            if (aci.getPermission().indexOf(ACI.PERMISSION_READ) < 0) continue;
-
             //log.debug("   - "+aci);
-            String subject = handler.getSchemaManager().normalize(aci.getSubject());
 
-            if (subject.equals(bindDn)) {
-                addAttributes(aci, grants, denies);
+            if (!checkSubject(bindDn, targetDn, aci)) {
+                //log.debug("     ==> subject doesn't match");
+                continue;
+            }
 
-            } else if (subject.equals(ACI.SUBJECT_SELF) && targetDn.equals(bindDn)) {
-                addAttributes(aci, grants, denies);
+            if (scope != null && !scope.equals(aci.getScope())) {
+                //log.debug("     ==> scope doesn't match");
+                continue;
+            }
 
-            } else if (subject.equals(ACI.SUBJECT_ANONYMOUS) && (bindDn == null || bindDn.equals(""))) {
-                addAttributes(aci, grants, denies);
+            if (aci.getPermission().indexOf(ACI.PERMISSION_READ) < 0) {
+                //log.debug("     ==> read permission not defined");
+                continue;
+            }
 
-            } else if (subject.equals(ACI.SUBJECT_AUTHENTICATED) && bindDn != null && !bindDn.equals("")) {
-                addAttributes(aci, grants, denies);
+            if (aci.getTarget().equals(ACI.TARGET_OBJECT)) {
+                if (aci.getAction().equals(ACI.ACTION_GRANT)) {
+                    attributeNames.removeAll(denies);
+                    grants.addAll(attributeNames);
 
-            } else if (subject.equals(ACI.SUBJECT_ANYBODY)) {
-                addAttributes(aci, grants, denies);
+                } else if (aci.getAction().equals(ACI.ACTION_DENY)) {
+                    attributeNames.removeAll(grants);
+                    denies.addAll(attributeNames);
+                }
+                return;
+            }
 
+            // if (aci.getTarget().equals(ACI.TARGET_ATTRIBUTES))
+            Collection attributes = getAttributes(aci.getAttributes());
+
+            if (aci.getAction().equals(ACI.ACTION_GRANT)) {
+                attributes.removeAll(denies);
+                grants.addAll(attributes);
+
+            } else if (aci.getAction().equals(ACI.ACTION_DENY)) {
+                attributes.removeAll(grants);
+                denies.addAll(attributes);
             }
         }
 
-        Partition partition = handler.getPartitionManager().getPartitionByDn(entry.getDn());
+        Partition partition = handler.getPartitionManager().getPartitionByDn(entryMapping.getDn());
         if (partition == null) return;
 
-        entry = partition.getParent(entry);
-        if (entry == null) return;
+        entryMapping = partition.getParent(entryMapping);
+        if (entryMapping == null) return;
 
-        getReadableAttributes(bindDn, targetDn, entry, ACI.SCOPE_SUBTREE, grants, denies);
+        getReadableAttributes(bindDn, targetDn, entryMapping, ACI.SCOPE_SUBTREE, attributeNames, grants, denies);
     }
 
     public void getReadableAttributes(
             String bindDn,
-            Entry entry,
-            Set grants,
-            Set denies
+            String targetDn,
+            EntryMapping entryMapping,
+            Collection attributeNames,
+            Collection grants,
+            Collection denies
             ) throws Exception {
 
         String rootDn = handler.getSchemaManager().normalize(handler.getRootUserConfig().getDn());
     	if (rootDn.equals(bindDn)) {
-            grants.add("*");
+            grants.addAll(attributeNames);
             return;
         }
 
-        String targetDn = handler.getSchemaManager().normalize(entry.getDn());
+        getReadableAttributes(bindDn, targetDn, entryMapping, null, attributeNames, grants, denies);
 
-        getReadableAttributes(bindDn, targetDn, entry.getEntryMapping(), null, grants, denies);
-
+        attributeNames.removeAll(grants);
+        denies.addAll(attributeNames);
+/*
         grants.removeAll(denies);
         denies.removeAll(grants);
-        
+
         if (denies.contains("*")) {
             grants.clear();
             denies.clear();
             denies.add("*");
         }
+*/
     }
 
     public LDAPEntry filterAttributes(
             PenroseSession session,
-            Entry entry,
-            LDAPEntry ldapEntry)
+            Entry entry)
             throws Exception {
 
         String bindDn = handler.getSchemaManager().normalize(session.getBindDn());
 
-        Set grants = new HashSet();
-        Set denies = new HashSet();
+        String targetDn = handler.getSchemaManager().normalize(entry.getDn());
+        EntryMapping entryMapping = entry.getEntryMapping();
+        LDAPEntry ldapEntry = entry.toLDAPEntry();
 
         //log.debug("Evaluating attributes read permission for "+bindDn);
 
-        getReadableAttributes(bindDn, entry, grants, denies);
+        Set grants = new HashSet();
+        Set denies = new HashSet();
+
+        Collection attributeNames = new ArrayList();
+        for (Iterator i=entry.getAttributeSet().iterator(); i.hasNext(); ) {
+            LDAPAttribute attribute = (LDAPAttribute)i.next();
+            attributeNames.add(attribute.getName());
+        }
+
+        getReadableAttributes(bindDn, targetDn, entryMapping, attributeNames, grants, denies);
 
         //log.debug("Readable attributes: "+grants);
         //log.debug("Unreadable attributes: "+denies);
@@ -293,13 +426,13 @@ public class ACLEngine {
         Collection list = new ArrayList();
         for (Iterator i=attributeSet.iterator(); i.hasNext(); ) {
             LDAPAttribute attribute = (LDAPAttribute)i.next();
-            if (denies.contains("*") || denies.contains(attribute.getName())) list.add(attribute);
-            if (grants.contains("*") || grants.contains(attribute.getName())) continue;
+            //if (checkAttributeReadPermission(bindDn, targetDn, entryMapping, attribute.getName())) continue;
+            if (grants.contains(attribute.getName())) continue;
             list.add(attribute);
         }
+
         attributeSet.removeAll(list);
 
         return ldapEntry;
     }
-
 }

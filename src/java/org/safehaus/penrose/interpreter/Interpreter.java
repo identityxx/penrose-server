@@ -74,32 +74,40 @@ public abstract class Interpreter {
     public abstract void clear() throws Exception;
 
     public Object eval(EntryMapping entryMapping, AttributeMapping attributeMapping) throws Exception {
-        if (attributeMapping.getConstant() != null) {
-            return attributeMapping.getConstant();
+        try {
+            if (attributeMapping.getConstant() != null) {
+                return attributeMapping.getConstant();
 
-        } else if (attributeMapping.getVariable() != null) {
-            return get(attributeMapping.getVariable());
+            } else if (attributeMapping.getVariable() != null) {
+                return get(attributeMapping.getVariable());
 
-        } else if (attributeMapping.getExpression() != null) {
-            return eval(entryMapping, attributeMapping.getExpression());
+            } else if (attributeMapping.getExpression() != null) {
+                return eval(entryMapping, attributeMapping.getExpression());
 
-        } else {
-            return null;
+            } else {
+                return null;
+            }
+        } catch (Exception e) {
+            throw new Exception("Error evaluating field "+attributeMapping.getName(), e);
         }
     }
 
     public Object eval(EntryMapping entryMapping, FieldMapping fieldMapping) throws Exception {
-        if (fieldMapping.getConstant() != null) {
-            return fieldMapping.getConstant();
+        try {
+            if (fieldMapping.getConstant() != null) {
+                return fieldMapping.getConstant();
 
-        } else if (fieldMapping.getVariable() != null) {
-            return get(fieldMapping.getVariable());
+            } else if (fieldMapping.getVariable() != null) {
+                return get(fieldMapping.getVariable());
 
-        } else if (fieldMapping.getExpression() != null) {
-            return eval(entryMapping, fieldMapping.getExpression());
+            } else if (fieldMapping.getExpression() != null) {
+                return eval(entryMapping, fieldMapping.getExpression());
 
-        } else {
-            return null;
+            } else {
+                return null;
+            }
+        } catch (Exception e) {
+            throw new Exception("Error evaluating field "+fieldMapping.getName(), e);
         }
     }
 

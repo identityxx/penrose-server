@@ -38,6 +38,7 @@ import org.safehaus.penrose.event.*;
 import org.safehaus.penrose.pipeline.PipelineAdapter;
 import org.safehaus.penrose.pipeline.PipelineEvent;
 import org.safehaus.penrose.mapping.Entry;
+import org.safehaus.penrose.mapping.EntryMapping;
 import org.safehaus.penrose.util.EntryUtil;
 import org.safehaus.penrose.config.PenroseConfig;
 import org.apache.log4j.Logger;
@@ -337,9 +338,12 @@ public class Handler {
                         public void objectAdded(PipelineEvent event) {
                             try {
                                 Entry entry = (Entry)event.getObject();
+                                // String dn = schemaManager.normalize(entry.getDn());
+                                // EntryMapping entryMapping = entry.getEntryMapping();
+                                // LDAPEntry ldapEntry = entry.toLDAPEntry();
 
-                                LDAPEntry ldapEntry = entry.toLDAPEntry();
-                                EntryUtil.filterAttributes(ldapEntry, normalizedAttributeNames);
+                                //EntryUtil.filterAttributes(ldapEntry, normalizedAttributeNames);
+                                LDAPEntry ldapEntry = aclEngine.filterAttributes(session, entry);
 
                                 results.add(ldapEntry);
 

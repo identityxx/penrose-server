@@ -19,6 +19,9 @@ package org.safehaus.penrose.util;
 
 import org.safehaus.penrose.mapping.Row;
 import org.safehaus.penrose.mapping.Entry;
+import org.safehaus.penrose.schema.SchemaManager;
+import org.safehaus.penrose.schema.Schema;
+import org.safehaus.penrose.schema.AttributeType;
 import org.apache.log4j.Logger;
 import org.ietf.ldap.LDAPEntry;
 import org.ietf.ldap.LDAPAttributeSet;
@@ -72,13 +75,15 @@ public class EntryUtil {
         return parentDn1 == null && parentDn2 == null;
     }
 
-    public static LDAPEntry convert(String dn, Attributes attributes) throws Exception {
+    public static LDAPEntry convert(SchemaManager schemaManager, String dn, Attributes attributes) throws Exception {
 
+        Schema schema = schemaManager.getAllSchema();
         LDAPAttributeSet attributeSet = new LDAPAttributeSet();
 
         log.debug("Converting:");
         for (Enumeration en = attributes.getAll(); en.hasMoreElements(); ) {
             Attribute attribute = (Attribute)en.nextElement();
+            AttributeType at = schema.getAttributeType(attribute.getID());
 
             boolean binary = false;
             try {
@@ -88,7 +93,7 @@ public class EntryUtil {
             }
             log.debug(" - "+attribute.getID()+": "+(binary ? "(binary)" : "(not binary)"));
 
-            LDAPAttribute attr = new LDAPAttribute(attribute.getID());
+            LDAPAttribute attr = new LDAPAttribute(at.getName());
 
             for (Enumeration values = attribute.getAll(); values.hasMoreElements(); ) {
                 Object value = values.nextElement();

@@ -132,20 +132,23 @@ public class TransformEngine {
         Row pk = new Row();
         Collection fields = sourceMapping.getFieldMappings();
 
-        //log.debug("Translating for sourceMapping "+sourceMapping.getName()+":");
+        log.debug("Translating for source "+sourceMapping.getName()+":");
         for (Iterator j=fields.iterator(); j.hasNext(); ) {
             FieldMapping fieldMapping = (FieldMapping)j.next();
-            FieldConfig fieldConfig = sourceConfig.getFieldConfig(fieldMapping.getName());
-
             String name = fieldMapping.getName();
+
+            FieldConfig fieldConfig = sourceConfig.getFieldConfig(name);
+
             //log.debug(" - "+name);
 
             Object newValues = interpreter.eval(entryMapping, fieldMapping);
+            log.debug(" - "+name+": "+newValues);
 
             if (newValues == null) {
                 if (fieldConfig.isPrimaryKey()) pk = null;
                 continue;
             }
+
 /*
             if (field.getEncryption() != null) {
                 // if field encryption is enabled

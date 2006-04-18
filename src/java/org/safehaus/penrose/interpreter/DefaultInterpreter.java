@@ -127,7 +127,7 @@ public class DefaultInterpreter extends org.safehaus.penrose.interpreter.Interpr
             return interpreter.eval(script);
 
         } catch (Exception e) {
-            log.debug("BeanShellException: "+e.getMessage(), e);
+            //log.debug("BeanShellException: "+e.getMessage(), e);
             throw e;
             //return null;
         }
