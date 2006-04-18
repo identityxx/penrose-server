@@ -308,6 +308,11 @@ public class ACLEngine {
             Collection grants,
             Collection denies) throws Exception {
 
+        if (entryMapping == null) {
+            grants.addAll(attributeNames);
+            return;
+        }
+
         //log.debug(" * "+entryMapping.getDn()+":");
 
         for (Iterator i=entryMapping.getACL().iterator(); i.hasNext(); ) {
