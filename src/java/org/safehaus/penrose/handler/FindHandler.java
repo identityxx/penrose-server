@@ -102,11 +102,11 @@ public class FindHandler {
         }
 
         if (partition == null) {
-            log.error("Can't find partition for \""+dn+"\"");
+            log.debug("Can't find partition for \""+dn+"\"");
             return null;
         }
 
-        log.error("Found partition "+partition.getName());
+        log.debug("Found partition "+partition.getName());
 
         Engine engine = handler.getEngine();
         List path = new ArrayList();
