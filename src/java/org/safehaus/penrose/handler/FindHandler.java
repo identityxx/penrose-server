@@ -91,7 +91,7 @@ public class FindHandler {
 
         while (secondDn != null) {
 
-            log.error("Searching partition for \""+secondDn+"\"");
+            //log.debug("Searching partition for \""+secondDn+"\"");
             partition = partitionManager.getPartitionByDn(secondDn);
 
             if (partition != null) break;
