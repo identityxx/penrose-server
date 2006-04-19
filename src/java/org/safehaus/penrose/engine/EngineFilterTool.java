@@ -105,7 +105,11 @@ public class EngineFilterTool {
         return newFilter;
     }
 
-    public Filter toSourceFilter(AttributeValues parentValues, EntryMapping entryMapping, SourceMapping sourceMapping, SubstringFilter filter)
+    public Filter toSourceFilter(
+            AttributeValues parentValues,
+            EntryMapping entryMapping,
+            SourceMapping sourceMapping,
+            SubstringFilter filter)
             throws Exception {
 
         String attributeName = filter.getAttribute();
@@ -128,10 +132,12 @@ public class EngineFilterTool {
         PartitionManager partitionManager = engine.getPartitionManager();
         Partition partition = partitionManager.getPartition(sourceMapping);
 
-        SourceConfig sourceConfig = partition.getSourceConfig(sourceName);
+        SourceConfig sourceConfig = partition.getSourceConfig(sourceMapping.getSourceName());
+        if (sourceConfig == null) throw new Exception("Unknown source: "+sourceMapping.getSourceName());
 
         ConnectionManager connectionManager = engine.getConnectionManager();
         Connection connection = connectionManager.getConnection(partition, sourceConfig.getConnectionName());
+        if (connection == null) throw new Exception("Unknown connection: "+sourceConfig.getConnectionName());
 
         Adapter adapter = connection.getAdapter();
         Filter newFilter = adapter.convert(entryMapping, filter);
