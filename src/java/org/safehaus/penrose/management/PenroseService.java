@@ -226,6 +226,28 @@ public class PenroseService implements PenroseServiceMBean {
         }
     }
 
+    public Collection getLoggerNames() throws Exception {
+        Collection loggerNames = new ArrayList();
+        for (Enumeration e = log.getLoggerRepository().getCurrentLoggers(); e.hasMoreElements(); ) {
+            Logger logger = (Logger)e.nextElement();
+            loggerNames.add(logger.getName());
+        }
+        return loggerNames;
+    }
+
+    public String getLoggerLevel(String name) throws Exception {
+        Logger logger = name == null || "".equals(name) ? Logger.getRootLogger() : Logger.getLogger(name);
+        Level level = logger.getLevel();
+        //log.debug("Logger "+name+": "+level);
+        return level == null ? null : level.toString();
+    }
+
+    public void setLoggerLevel(String name, String level) throws Exception {
+        Logger logger = name == null || "".equals(name) ? Logger.getRootLogger() : Logger.getLogger(name);
+        //log.debug("Logger "+name+": "+Level.toLevel(level));
+        logger.setLevel(Level.toLevel(level));
+    }
+
     public PenroseServer getPenroseServer() {
         return penroseServer;
     }

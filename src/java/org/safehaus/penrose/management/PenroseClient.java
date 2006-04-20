@@ -202,6 +202,24 @@ public class PenroseClient {
         );
     }
 
+    public Collection getLoggerNames() throws Exception {
+        return (Collection)connection.getAttribute(name, "LoggerNames");
+    }
+
+    public String getLoggerLevel(String name) throws Exception {
+        return (String)invoke("getLoggerLevel",
+                new Object[] { name },
+                new String[] { String.class.getName() }
+        );
+    }
+
+    public void setLoggerLevel(String name, String level) throws Exception {
+        invoke("setLoggerLevel",
+                new Object[] { name, level },
+                new String[] { String.class.getName(), String.class.getName() }
+        );
+    }
+
     public static void showUsage() {
         System.out.println("Usage: org.safehaus.penrose.management.PenroseClient [OPTION]... <COMMAND>");
         System.out.println();
@@ -334,6 +352,25 @@ public class PenroseClient {
                 for (int j=0; j<20-serviceName.length(); j++) padding.append(" ");
 
                 System.out.println(serviceName+padding+"["+status+"]");
+            }
+
+        } else if ("loggers".equals(command)) {
+            Collection loggerNames = client.getLoggerNames();
+            for (Iterator i=loggerNames.iterator(); i.hasNext(); ) {
+                String loggerName = (String)i.next();
+                String level = client.getLoggerLevel(loggerName);
+
+                System.out.println(loggerName+" ["+level+"]");
+            }
+
+        } else if ("logger".equals(command)) {
+            String loggerName = (String)iterator.next();
+            if (iterator.hasNext()) {
+                String level = (String)iterator.next();
+                client.setLoggerLevel(loggerName, "".equals(level) ? null : level);
+            } else {
+                String level = client.getLoggerLevel(loggerName);
+                System.out.println(level);
             }
         }
 

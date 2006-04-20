@@ -41,4 +41,8 @@ public interface PenroseServiceMBean {
     public byte[] download(String filename) throws Exception;
 	public void upload(String filename, byte content[]) throws Exception;
     public Collection listFiles(String directory) throws Exception;
+
+    public Collection getLoggerNames() throws Exception;
+    public String getLoggerLevel(String name) throws Exception;
+    public void setLoggerLevel(String name, String level) throws Exception;
 }
