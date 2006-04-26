@@ -117,10 +117,13 @@ public class InMemorySourceCacheStorage extends SourceCacheStorage {
 
         Map results = new TreeMap();
 
+        //log.debug("Checking cache:");
         for (Iterator i=keys.iterator(); i.hasNext(); ) {
             Row key = (Row)i.next();
+            log.debug(" - "+key);
 
             AttributeValues attributeValues = (AttributeValues)get(key);
+            //log.debug("   attributeValues: "+attributeValues);
 
             Collection uniqueKeys = (Collection)uniqueKeyMap.get(key);
             if (uniqueKeys != null) {
@@ -130,8 +133,10 @@ public class InMemorySourceCacheStorage extends SourceCacheStorage {
                     if (attributeValues != null) break;
                 }
             }
+            //log.debug("   uniqueKeys: "+uniqueKeys);
 
             if (attributeValues == null) {
+                //log.debug("   ==> "+key+" is missing");
                 missingKeys.add(key);
                 continue;
             }
@@ -152,8 +157,11 @@ public class InMemorySourceCacheStorage extends SourceCacheStorage {
             }
 
             if (!found) {
+                //log.debug("   ==> "+key+" is missing");
                 missingKeys.add(key);
             }
+
+            //log.debug("   ==> "+key+" is found");
         }
 
         return results;

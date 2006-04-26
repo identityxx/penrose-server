@@ -22,7 +22,6 @@ import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.filter.SubstringFilter;
 import org.safehaus.penrose.session.PenroseSearchResults;
-import org.safehaus.penrose.session.PenroseSearchResults;
 import org.safehaus.penrose.partition.SourceConfig;
 import org.apache.log4j.Logger;
 
@@ -60,10 +59,10 @@ public abstract class Adapter {
     /**
      * Search.
      *
-     * @return Collection of Rows
+     * @param results Rows
      * @throws Exception
      */
-    public abstract PenroseSearchResults search(SourceConfig sourceConfig, Filter filter, long sizeLimit) throws Exception;
+    public abstract void search(SourceConfig sourceConfig, Filter filter, long sizeLimit, PenroseSearchResults results) throws Exception;
 
     /**
      * Load.

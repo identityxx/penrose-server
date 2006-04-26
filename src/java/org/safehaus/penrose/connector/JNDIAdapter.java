@@ -53,9 +53,7 @@ public class JNDIAdapter extends Adapter {
         return new JNDIClient(client, getParameters());
     }
 
-    public PenroseSearchResults search(SourceConfig sourceConfig, Filter filter, long sizeLimit) throws Exception {
-
-        PenroseSearchResults results = new PenroseSearchResults();
+    public void search(SourceConfig sourceConfig, Filter filter, long sizeLimit, PenroseSearchResults results) throws Exception {
 
         String ldapBase = sourceConfig.getParameter(BASE_DN);
         if ("".equals(ldapBase)) {
@@ -111,8 +109,6 @@ public class JNDIAdapter extends Adapter {
             results.close();
             if (ctx != null) try { ctx.close(); } catch (Exception e) {}
         }
-
-        return results;
     }
 
     public void load(SourceConfig sourceConfig, Filter filter, long sizeLimit, PenroseSearchResults results) throws Exception {

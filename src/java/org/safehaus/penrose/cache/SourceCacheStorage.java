@@ -114,6 +114,7 @@ public class SourceCacheStorage {
     }
 
     public Map load(Collection filters, Collection missingKeys) throws Exception {
+        missingKeys.addAll(filters);
         return new HashMap();
     }
 

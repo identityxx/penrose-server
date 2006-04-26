@@ -405,21 +405,32 @@ public class Connector {
             Filter filter)
             throws Exception {
 
+        PenroseSearchResults results = new PenroseSearchResults();
+
         log.debug("Checking query cache for "+filter);
         Collection pks = getSourceCache().search(sourceConfig, filter);
 
         log.debug("Cached results: "+pks);
 
-        if (pks != null) {
+        if (pks == null) {
             log.debug("Searching source "+sourceConfig.getName()+" with filter "+filter);
-            pks = performSearch(partition, sourceConfig, filter);
+            PenroseSearchResults sr = performSearch(partition, sourceConfig, filter);
+            pks = sr.getAll();
 
-            log.debug("Storing query cache for "+filter);
+            int rc = sr.getReturnCode();
+            if (rc != 0) {
+                log.debug("RC: "+rc);
+                results.setReturnCode(rc);
+            }
+
+            log.debug("Storing query cache for: "+pks);
             getSourceCache().put(sourceConfig, filter, pks);
         }
 
         log.debug("Loading source "+sourceConfig.getName()+" with pks "+pks);
-        return load(partition, sourceConfig, pks);
+        load(partition, sourceConfig, pks, results);
+
+        return results;
 
     }
 
@@ -431,7 +442,9 @@ public class Connector {
         Collection pks = getSourceCache().search(sourceConfig, filter);
 
         if (pks != null) {
-            return load(partition, sourceConfig, pks);
+            PenroseSearchResults results = new PenroseSearchResults();
+            load(partition, sourceConfig, pks, results);
+            return results;
 
         } else {
             return performLoad(partition, sourceConfig, filter);
@@ -442,17 +455,16 @@ public class Connector {
     /**
      * Check data cache then load.
      */
-    public PenroseSearchResults load(
+    public void load(
             final Partition partition,
             final SourceConfig sourceConfig,
-            final Collection pks)
+            final Collection pks,
+            final PenroseSearchResults results)
             throws Exception {
 
-        final PenroseSearchResults results = new PenroseSearchResults();
-
-        if (pks.isEmpty()) {
+        if (pks == null || pks.isEmpty()) {
             results.close();
-            return results;
+            return;
         }
 
         execute(new Runnable() {
@@ -488,8 +500,6 @@ public class Connector {
                 results.close();
             }
         });
-
-        return results;
     }
 
     /**
@@ -573,27 +583,34 @@ public class Connector {
     /**
      * Perform the search operation.
      */
-    public Collection performSearch(Partition partition, SourceConfig sourceConfig, Filter filter) throws Exception {
+    public PenroseSearchResults performSearch(Partition partition, SourceConfig sourceConfig, Filter filter) throws Exception {
 
-        Collection results = new ArrayList();
+        PenroseSearchResults results = new PenroseSearchResults();
 
         String s = sourceConfig.getParameter(SourceConfig.SIZE_LIMIT);
         int sizeLimit = s == null ? SourceConfig.DEFAULT_SIZE_LIMIT : Integer.parseInt(s);
 
         Connection connection = getConnection(partition, sourceConfig.getConnectionName());
-        PenroseSearchResults sr;
+        PenroseSearchResults sr = new PenroseSearchResults();
         try {
-            sr = connection.search(sourceConfig, filter, sizeLimit);
+            connection.search(sourceConfig, filter, sizeLimit, sr);
 
+            log.debug("Search results:");
+            for (Iterator i=sr.iterator(); i.hasNext();) {
+                Row pk = (Row)i.next();
+                Row npk = normalize(pk);
+                log.debug(" - "+npk);
+                results.add(npk);
+            }
+
+            results.setReturnCode(sr.getReturnCode());
+            
         } catch (Exception e) {
             log.debug(e.getMessage(), e);
-            return results;
-        }
-
-        for (Iterator i=sr.iterator(); i.hasNext();) {
-            Row pk = (Row)i.next();
-            Row npk = normalize(pk);
-            results.add(npk);
+            results.setReturnCode(LDAPException.OPERATIONS_ERROR);
+            
+        } finally {
+            results.close();
         }
 
         return results;
