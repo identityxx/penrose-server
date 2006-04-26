@@ -335,6 +335,7 @@ public class SearchEngine {
         SourceMapping primarySourceMapping = engine.getPrimarySource(entryMapping);
 
         if (primarySourceMapping == null || entryMapping.getSourceMapping(primarySourceMapping.getName()) == null) {
+            log.debug("Primary source is not local");
             PenroseSearchResults localResults = new PenroseSearchResults();
             localResults.add(sourceValues);
             localResults.close();
@@ -359,18 +360,13 @@ public class SearchEngine {
 
         int rc = localResults.getReturnCode();
 
-        if (rc != LDAPException.SUCCESS) {
-            log.debug("RC: "+rc);
-            results.setReturnCode(rc);
-            return;
-        }
-
         //log.debug("Size: "+localResults.size());
-
+/*
         if (localResults.isEmpty()) {
+            log.debug("Result is empty");
             return;
         }
-
+*/
         Collection parentResults = searchParent(
                 entryMapping,
                 planner,
@@ -379,6 +375,12 @@ public class SearchEngine {
         );
 
         results.addAll(parentResults);
+        results.setReturnCode(rc);
+
+        if (rc != LDAPException.SUCCESS) {
+            log.debug("RC: "+rc);
+        }
+
         return;
     }
 
@@ -472,9 +474,10 @@ public class SearchEngine {
         runner.run();
 
         Collection list = runner.getResults();
+        log.debug("Got "+list.size()+" entries");
 
         int rc = runner.getReturnCode();
-
+/*
         if (rc != LDAPException.SUCCESS) {
             log.debug("RC: "+rc);
             PenroseSearchResults results = new PenroseSearchResults();
@@ -482,7 +485,7 @@ public class SearchEngine {
             results.close();
             return results;
         }
-
+*/
         SearchCleaner cleaner = new SearchCleaner(
                 engine,
                 entryMapping,
@@ -512,6 +515,7 @@ public class SearchEngine {
 */
         PenroseSearchResults results = new PenroseSearchResults();
         results.addAll(list);
+        results.setReturnCode(rc);
         results.close();
 
         return results;

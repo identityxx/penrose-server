@@ -169,7 +169,8 @@ public class SourceCacheStorage {
 
         Connection connection = connector.getConnection(partition, sourceConfig.getConnectionName());
 
-        PenroseSearchResults sr = connection.load(sourceConfig, null, 100);
+        PenroseSearchResults sr = new PenroseSearchResults();
+        connection.load(sourceConfig, null, 100, sr);
 
         //log.debug("Results:");
         while (sr.hasNext()) {

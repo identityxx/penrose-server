@@ -124,8 +124,6 @@ public class SearchLocalRunner extends GraphVisitor {
         returnCode = tmp.getReturnCode();
         //log.debug("RC: "+returnCode);
         
-        if (returnCode != LDAPException.SUCCESS) return;
-
         if (results.isEmpty()) {
             results.addAll(list);
 
@@ -140,6 +138,9 @@ public class SearchLocalRunner extends GraphVisitor {
             results.clear();
             results.addAll(temp);
         }
+
+        if (returnCode != LDAPException.SUCCESS) return;
+
 /*
         log.debug("Search results:");
 

@@ -68,10 +68,10 @@ public abstract class Adapter {
     /**
      * Load.
      *
-     * @return Collection of AttributeValues
+     * @param results AttributeValues
      * @throws Exception
      */
-    public abstract PenroseSearchResults load(SourceConfig sourceConfig, Filter filter, long sizeLimit) throws Exception;
+    public abstract void load(SourceConfig sourceConfig, Filter filter, long sizeLimit, PenroseSearchResults results) throws Exception;
 
     /**
      * Get.

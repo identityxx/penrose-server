@@ -105,8 +105,8 @@ public class Connection implements ConnectionMBean {
         return adapter.search(sourceConfig, filter, sizeLimit);
     }
 
-    public PenroseSearchResults load(SourceConfig sourceConfig, Filter filter, long sizeLimit) throws Exception {
-        return adapter.load(sourceConfig, filter, sizeLimit);
+    public void load(SourceConfig sourceConfig, Filter filter, long sizeLimit, PenroseSearchResults results) throws Exception {
+        adapter.load(sourceConfig, filter, sizeLimit, results);
     }
 
     public int add(SourceConfig sourceConfig, AttributeValues values) throws Exception {

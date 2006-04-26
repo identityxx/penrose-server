@@ -278,11 +278,9 @@ public class JDBCAdapter extends Adapter {
         return results;
     }
 
-    public PenroseSearchResults load(SourceConfig sourceConfig, Filter filter, long sizeLimit) throws Exception {
+    public void load(SourceConfig sourceConfig, Filter filter, long sizeLimit, PenroseSearchResults results) throws Exception {
 
         log.debug("Loading JDBC source "+sourceConfig.getConnectionName()+"/"+sourceConfig.getName());
-
-        PenroseSearchResults results = new PenroseSearchResults();
 
         String tableName = sourceConfig.getParameter(TABLE_NAME);
         String s = sourceConfig.getParameter(FILTER);
@@ -368,15 +366,17 @@ public class JDBCAdapter extends Adapter {
                 results.setReturnCode(LDAPException.SIZE_LIMIT_EXCEEDED);
             }
 
+        } catch (Exception e) {
+            log.debug(e.getMessage(), e);
+            results.setReturnCode(LDAPException.OPERATIONS_ERROR);
+            
         } finally {
             if (rs != null) try { rs.close(); } catch (Exception e) {}
             if (ps != null) try { ps.close(); } catch (Exception e) {}
             if (con != null) try { con.close(); } catch (Exception e) {}
+
+            results.close();
         }
-
-        results.close();
-
-        return results;
     }
 
     public AttributeValues get(SourceConfig sourceConfig, Row pk) throws Exception {

@@ -29,6 +29,9 @@ import org.safehaus.penrose.thread.ThreadPool;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.filter.FilterTool;
 import org.safehaus.penrose.mapping.*;
+import org.safehaus.penrose.pipeline.PipelineListener;
+import org.safehaus.penrose.pipeline.PipelineEvent;
+import org.safehaus.penrose.pipeline.PipelineAdapter;
 import org.apache.log4j.Logger;
 import org.ietf.ldap.LDAPException;
 
@@ -606,6 +609,24 @@ public class Connector {
             ) throws Exception {
 
         final PenroseSearchResults results = new PenroseSearchResults();
+        final PenroseSearchResults sr = new PenroseSearchResults();
+
+        sr.addListener(new PipelineAdapter() {
+            public void objectAdded(PipelineEvent event) {
+                try {
+                    AttributeValues sourceValues = (AttributeValues)event.getObject();
+                    store(sourceConfig, sourceValues);
+                    results.add(sourceValues);
+                } catch (Exception e) {
+                    log.debug(e.getMessage(), e);
+                    results.setReturnCode(LDAPException.OPERATIONS_ERROR);
+                }
+            }
+            public void pipelineClosed(PipelineEvent event) {
+                results.setReturnCode(sr.getReturnCode());
+                results.close();
+            }
+        });
 
         execute(new Runnable() {
             public void run() {
@@ -614,20 +635,22 @@ public class Connector {
                     int sizeLimit = s == null ? SourceConfig.DEFAULT_SIZE_LIMIT : Integer.parseInt(s);
 
                     Connection connection = getConnection(partition, sourceConfig.getConnectionName());
-                    PenroseSearchResults sr = connection.load(sourceConfig, filter, sizeLimit);
-
+                    connection.load(sourceConfig, filter, sizeLimit, sr);
+/*
                     for (Iterator i=sr.iterator(); i.hasNext();) {
                         AttributeValues sourceValues = (AttributeValues)i.next();
                         store(sourceConfig, sourceValues);
                         results.add(sourceValues);
                     }
 
+                    results.setReturnCode(sr.getReturnCode());
+*/
                 } catch (Exception e) {
                     log.debug(e.getMessage(), e);
-                    results.setReturnCode(LDAPException.OPERATIONS_ERROR);
+                    //results.setReturnCode(LDAPException.OPERATIONS_ERROR);
 
                 } finally {
-                    results.close();
+                    //results.close();
                 }
             }
         });
