@@ -166,12 +166,15 @@ public class SourceCacheStorage {
 
         if (!autoRefresh) return;
 */
+        String s = sourceConfig.getParameter(SourceConfig.SIZE_LIMIT);
+        int sizeLimit = s == null ? SourceConfig.DEFAULT_SIZE_LIMIT : Integer.parseInt(s);
+
         log.debug("Loading cache for "+sourceConfig.getName());
 
         Connection connection = connector.getConnection(partition, sourceConfig.getConnectionName());
 
         PenroseSearchResults sr = new PenroseSearchResults();
-        connection.load(sourceConfig, null, 100, sr);
+        connection.load(sourceConfig, null, sizeLimit, sr);
 
         //log.debug("Results:");
         while (sr.hasNext()) {

@@ -465,14 +465,11 @@ public class SearchHandler {
         }
 
         log.debug("Parent: "+(parent == null ? null : parent.getDn()));
+        String parentDn = parent == null ? null : parent.getDn();
 
-        Collection list = null;
-        if (parent != null) {
-            String parentDn = parent.getDn();
-            list = handler.getEngine().getEntryCache().search(entryMapping, parentDn, filter);
-        }
+        boolean cacheFilter = handler.getEngine().getEntryCache().contains(entryMapping, parentDn, filter);
 
-        if (list == null || list.size() == 0) {
+        if (!cacheFilter) {
 
             log.debug("Filter cache for "+filter+" not found.");
 
@@ -482,7 +479,7 @@ public class SearchHandler {
                         EntryData map = (EntryData)event.getObject();
                         String dn = map.getDn();
 
-                        log.debug("Adding "+dn+" into filter cache for "+filter+" in "+entryMapping.getDn());
+                        log.info("Cache <= "+dn);
 
                         handler.getEngine().getEntryCache().add(entryMapping, filter, dn);
 
@@ -496,18 +493,32 @@ public class SearchHandler {
 
         } else {
             log.debug("Filter cache for "+filter+" found.");
-            for (Iterator i=list.iterator(); i.hasNext(); ) {
-                String dn = (String)i.next();
-                log.debug(" - "+dn);
 
-                EntryData map = new EntryData();
-                map.setDn(dn);
-                map.setMergedValues(new AttributeValues());
-                map.setRows(new ArrayList());
-                dns.add(map);
-            }
+            PenroseSearchResults list = new PenroseSearchResults();
 
-            dns.close();
+            list.addListener(new PipelineAdapter() {
+                public void objectAdded(PipelineEvent event) {
+                    try {
+                        String dn = (String)event.getObject();
+                        log.info("Cache => "+dn);
+
+                        EntryData map = new EntryData();
+                        map.setDn(dn);
+                        map.setMergedValues(new AttributeValues());
+                        map.setRows(new ArrayList());
+                        dns.add(map);
+
+                    } catch (Exception e) {
+                        log.error(e.getMessage(), e);
+                    }
+                }
+
+                public void pipelineClosed(PipelineEvent event) {
+                    dns.close();
+                }
+            });
+
+            handler.getEngine().getEntryCache().search(entryMapping, parentDn, filter, list);
         }
 
         if (dnOnly) return results;

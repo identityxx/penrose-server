@@ -35,6 +35,8 @@ import org.apache.log4j.Logger;
 import org.openldap.backend.Backend;
 import org.openldap.backend.Result;
 
+import javax.naming.directory.Attributes;
+
 /**
  * @author Endi S. Dewata
  */
@@ -411,13 +413,15 @@ public class PenroseBackend implements Backend {
      * Performs add operation.
      * 
      * @param connectionId
-     * @param entry
+     * @param dn
+     * @param attributes
      * @return return code
      * @throws Exception
      */
     public int add(
             int connectionId,
-            LDAPEntry entry)
+            String dn,
+            Attributes attributes)
     throws Exception {
 
         Logger log = Logger.getLogger(getClass());
@@ -428,7 +432,7 @@ public class PenroseBackend implements Backend {
         }
 
         try {
-            return session.add(entry);
+            return session.add(dn, attributes);
 
         } catch (Throwable e) {
             log.error(e.getMessage(), e);

@@ -141,7 +141,7 @@ public class PollingConnectorModule extends Module {
         while (sr.hasNext()) {
             Row pk = (Row)sr.next();
 
-            Integer changeNumber = (Integer)pk.remove("changeNumber");
+            Number changeNumber = (Number)pk.remove("changeNumber");
             Object changeTime = pk.remove("changeTime");
             String changeAction = (String)pk.remove("changeAction");
             String changeUser = (String)pk.remove("changeUser");
@@ -217,7 +217,9 @@ public class PollingConnectorModule extends Module {
 
         EntryCache entryCache = engine.getEntryCache();
 
-        Collection parentDns = entryCache.search(parentMapping);
+        PenroseSearchResults parentDns = new PenroseSearchResults();
+        entryCache.search(parentMapping, parentDns);
+
         for (Iterator i=parentDns.iterator(); i.hasNext(); ) {
             String parentDn = (String)i.next();
             String dn = rdn+","+parentDn;

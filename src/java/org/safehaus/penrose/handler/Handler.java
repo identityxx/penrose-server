@@ -31,22 +31,17 @@ import org.safehaus.penrose.schema.AttributeType;
 import org.safehaus.penrose.engine.Engine;
 import org.safehaus.penrose.interpreter.InterpreterManager;
 import org.safehaus.penrose.module.Module;
-import org.safehaus.penrose.module.ModuleMapping;
-import org.safehaus.penrose.module.ModuleConfig;
 import org.safehaus.penrose.module.ModuleManager;
 import org.safehaus.penrose.event.*;
 import org.safehaus.penrose.pipeline.PipelineAdapter;
 import org.safehaus.penrose.pipeline.PipelineEvent;
 import org.safehaus.penrose.mapping.Entry;
-import org.safehaus.penrose.mapping.EntryMapping;
-import org.safehaus.penrose.util.EntryUtil;
 import org.safehaus.penrose.config.PenroseConfig;
 import org.apache.log4j.Logger;
-import org.ietf.ldap.LDAPEntry;
 import org.ietf.ldap.LDAPException;
-import org.ietf.ldap.LDAPModification;
-import org.ietf.ldap.LDAPAttribute;
 
+import javax.naming.directory.*;
+import javax.naming.NamingEnumeration;
 import java.util.*;
 
 /**
@@ -175,17 +170,17 @@ public class Handler {
         status = STOPPED;
     }
 
-    public int add(PenroseSession session, LDAPEntry ldapEntry) throws Exception {
+    public int add(PenroseSession session, String dn, Attributes attributes) throws Exception {
         if (!sessionManager.isValid(session)) throw new Exception("Invalid session.");
 
-        AddEvent beforeModifyEvent = new AddEvent(this, AddEvent.BEFORE_ADD, session, ldapEntry);
-        postEvent(ldapEntry.getDN(), beforeModifyEvent);
+        AddEvent beforeModifyEvent = new AddEvent(this, AddEvent.BEFORE_ADD, session, dn, attributes);
+        postEvent(dn, beforeModifyEvent);
 
-        int rc = getAddHandler().add(session, ldapEntry);
+        int rc = getAddHandler().add(session, dn, attributes);
 
-        AddEvent afterModifyEvent = new AddEvent(this, AddEvent.AFTER_ADD, session, ldapEntry);
+        AddEvent afterModifyEvent = new AddEvent(this, AddEvent.AFTER_ADD, session, dn, attributes);
         afterModifyEvent.setReturnCode(rc);
-        postEvent(ldapEntry.getDN(), afterModifyEvent);
+        postEvent(dn, afterModifyEvent);
 
         return rc;
     }
@@ -238,40 +233,39 @@ public class Handler {
         Collection normalizedModifications = new ArrayList();
 
 		for (Iterator i = modifications.iterator(); i.hasNext();) {
-			LDAPModification modification = (LDAPModification) i.next();
+			ModificationItem modification = (ModificationItem) i.next();
 
-			LDAPAttribute attribute = modification.getAttribute();
-			String attributeName = attribute.getName();
-            String values[] = attribute.getStringValueArray();
+			Attribute attribute = modification.getAttribute();
+			String attributeName = attribute.getID();
 
             AttributeType at = schemaManager.getAttributeType(attributeName);
             if (at == null) return LDAPException.UNDEFINED_ATTRIBUTE_TYPE;
 
             attributeName = at.getName();
-            LDAPAttribute normalizedAttribute = new LDAPAttribute(attributeName, values);
 
-            LDAPModification normalizedModification = new LDAPModification(modification.getOp(), normalizedAttribute);
+            switch (modification.getModificationOp()) {
+                case DirContext.ADD_ATTRIBUTE:
+                    log.debug("add: " + attributeName);
+                    break;
+                case DirContext.REMOVE_ATTRIBUTE:
+                    log.debug("delete: " + attributeName);
+                    break;
+                case DirContext.REPLACE_ATTRIBUTE:
+                    log.debug("replace: " + attributeName);
+                    break;
+            }
 
+            Attribute normalizedAttribute = new BasicAttribute(attributeName);
+            for (NamingEnumeration j=attribute.getAll(); j.hasMore(); ) {
+                Object value = j.next();
+                normalizedAttribute.add(value);
+                log.debug(attributeName + ": "+value);
+            }
+
+            log.debug("-");
+
+            ModificationItem normalizedModification = new ModificationItem(modification.getModificationOp(), normalizedAttribute);
             normalizedModifications.add(normalizedModification);
-
-			switch (modification.getOp()) {
-			case LDAPModification.ADD:
-				log.debug("add: " + attributeName);
-				for (int j = 0; j < values.length; j++)
-					log.debug(attributeName + ": " + values[j]);
-				break;
-			case LDAPModification.DELETE:
-				log.debug("delete: " + attributeName);
-				for (int j = 0; j < values.length; j++)
-					log.debug(attributeName + ": " + values[j]);
-				break;
-			case LDAPModification.REPLACE:
-				log.debug("replace: " + attributeName);
-				for (int j = 0; j < values.length; j++)
-					log.debug(attributeName + ": " + values[j]);
-				break;
-			}
-			log.debug("-");
 		}
 
         log.info("");
@@ -343,9 +337,9 @@ public class Handler {
                                 // LDAPEntry ldapEntry = entry.toLDAPEntry();
 
                                 //EntryUtil.filterAttributes(ldapEntry, normalizedAttributeNames);
-                                LDAPEntry ldapEntry = aclEngine.filterAttributes(session, entry);
+                                SearchResult searchResult = aclEngine.filterAttributes(session, entry);
 
-                                results.add(ldapEntry);
+                                results.add(searchResult);
 
                             } catch (Exception e) {
                                 log.error(e.getMessage(), e);

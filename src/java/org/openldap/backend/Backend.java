@@ -19,7 +19,7 @@ package org.openldap.backend;
 
 import java.util.*;
 
-import org.ietf.ldap.LDAPEntry;
+import javax.naming.directory.Attributes;
 
 /**
  * @author Endi S. Dewata
@@ -161,13 +161,15 @@ public interface Backend {
      * Performs add operation.
      * 
      * @param connectionId Connection ID.
-     * @param entry Entry to be added.
+     * @param dn
+     * @param attributes
      * @return return value
      * @throws Exception
      */
     public int add(
     		int connectionId,
-			LDAPEntry entry)
+            String dn,
+			Attributes attributes)
     throws Exception;
 
     /**

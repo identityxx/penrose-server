@@ -139,4 +139,6 @@ if $cygwin; then
   CYGHOME=`cygpath --windows "$HOME"`
 fi
 
+cd "$PENROSE_HOME"
+
 exec "$JAVACMD" $PENROSE_DEBUG_OPTS $PENROSE_OPTS -classpath "$LOCALCLASSPATH" -Dpenrose.home="$PENROSE_HOME" org.safehaus.penrose.cache.CacheManager $PENROSE_ARGS "$@"

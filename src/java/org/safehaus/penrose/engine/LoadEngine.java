@@ -172,7 +172,7 @@ public class LoadEngine {
 
                 //if (filter.isEmpty()) filter.add(rdn);
 
-                log.debug("- "+rdn+" has not been loaded, loading with key "+filter);
+                //log.info("Scheduling "+rdn+" for loading");
                 map.setFilter(filter);
                 batch.add(map);
 
@@ -203,9 +203,9 @@ public class LoadEngine {
             while (batches.hasNext()) {
                 Collection entries = (Collection)batches.next();
 
-                log.debug(Formatter.displaySeparator(80));
-                log.debug(Formatter.displayLine("LOAD", 80));
-                log.debug(Formatter.displayLine("Entry: "+entryMapping.getDn(), 80));
+                log.info(Formatter.displaySeparator(80));
+                log.info(Formatter.displayLine("LOAD", 80));
+                log.info(Formatter.displayLine("Entry: "+entryMapping.getDn(), 80));
 
                 AttributeValues sourceValues = new AttributeValues();
                 for (Iterator i=entries.iterator(); i.hasNext(); ) {
@@ -238,7 +238,7 @@ public class LoadEngine {
                     }
                 }
 
-                log.debug(Formatter.displaySeparator(80));
+                log.info(Formatter.displaySeparator(80));
 
                 AttributeValues loadedSourceValues = loadEntries(sourceValues, entryMapping, entries);
 

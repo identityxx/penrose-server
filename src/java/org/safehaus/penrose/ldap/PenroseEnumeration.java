@@ -19,11 +19,6 @@ package org.safehaus.penrose.ldap;
 
 import org.safehaus.penrose.session.PenroseSearchResults;
 import org.safehaus.penrose.util.ExceptionUtil;
-import org.safehaus.penrose.util.ActiveDirectoryUtil;
-import org.safehaus.penrose.util.BinaryUtil;
-import org.ietf.ldap.LDAPEntry;
-import org.ietf.ldap.LDAPAttributeSet;
-import org.ietf.ldap.LDAPAttribute;
 import org.ietf.ldap.LDAPException;
 import org.apache.log4j.Logger;
 
@@ -84,8 +79,9 @@ public class PenroseEnumeration implements NamingEnumeration {
     }
 
     public Object next() throws NamingException {
-        LDAPEntry result = (LDAPEntry)searchResults.next();
-
+        SearchResult result = (SearchResult)searchResults.next();
+        return result;
+/*
         LDAPAttributeSet attributeSet = result.getAttributeSet();
         Attributes attributes = new BasicAttributes();
 
@@ -120,6 +116,7 @@ public class PenroseEnumeration implements NamingEnumeration {
         );
 
         return sr;
+*/
     }
 
     public boolean hasMoreElements() {

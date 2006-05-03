@@ -24,15 +24,13 @@ import org.safehaus.penrose.config.DefaultPenroseConfig;
 import org.safehaus.penrose.schema.SchemaConfig;
 import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.PenroseFactory;
-import org.safehaus.penrose.mapping.EntryMapping;
 import org.safehaus.penrose.session.PenroseSession;
 import org.safehaus.penrose.session.PenroseSearchControls;
 import org.safehaus.penrose.session.PenroseSearchResults;
-import org.ietf.ldap.LDAPEntry;
 import org.ietf.ldap.LDAPException;
 
+import javax.naming.directory.SearchResult;
 import java.util.Iterator;
-import java.util.Collection;
 
 /**
  * @author Endi S. Dewata
@@ -125,8 +123,8 @@ public class PartitionManagerTest extends TestCase {
         PenroseSearchResults results = session.search(baseDn, "(objectClass=*)", sc);
 
         for (Iterator i = results.iterator(); i.hasNext();) {
-            LDAPEntry entry = (LDAPEntry) i.next();
-            System.out.println("dn: "+entry.getDN());
+            SearchResult entry = (SearchResult)i.next();
+            System.out.println("dn: "+entry.getName());
         }
 
         session.unbind();

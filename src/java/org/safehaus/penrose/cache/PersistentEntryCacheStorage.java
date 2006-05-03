@@ -26,6 +26,9 @@ import org.safehaus.penrose.partition.SourceConfig;
 import org.safehaus.penrose.filter.*;
 import org.safehaus.penrose.schema.AttributeType;
 import org.safehaus.penrose.schema.matchingRule.SubstringsMatchingRule;
+import org.safehaus.penrose.session.PenroseSearchResults;
+import org.safehaus.penrose.thread.ThreadPool;
+import org.ietf.ldap.LDAPException;
 
 import javax.naming.NamingException;
 import javax.naming.NamingEnumeration;
@@ -44,6 +47,7 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
     int mappingId;
 
     String connectionName;
+    ThreadPool threadPool = new ThreadPool(20);
 
     public void init() throws Exception {
         super.init();
@@ -853,18 +857,7 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
         return true;
     }
 
-    /**
-     * @return DNs (Collection of Strings)
-     */
-    public Collection search(String baseDn, Filter filter) throws Exception {
-
-        log.debug(Formatter.displaySeparator(80));
-        log.debug(Formatter.displayLine("Searching entry cache for "+entryMapping.getDn(), 80));
-        log.debug(Formatter.displayLine("Filter: "+filter, 80));
-        log.debug(Formatter.displayLine("Base DN: "+baseDn, 80));
-        log.debug(Formatter.displaySeparator(80));
-
-        Collection results = new ArrayList();
+    public boolean contains(String baseDn, Filter filter) throws Exception {
 
         String tableName = "penrose_"+mappingId+"_entries";
 
@@ -874,7 +867,131 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
         StringBuffer whereClause = new StringBuffer();
 
         boolean b = convert(filter, tables, parameters, whereClause);
-        if (!b) return null;
+        if (!b) return false;
+
+        StringBuffer fromClause = new StringBuffer();
+        fromClause.append(tableName);
+        fromClause.append(" t");
+
+        for (Iterator i=tables.keySet().iterator(); i.hasNext(); ) {
+            String tbName = (String)i.next();
+            String alias = (String)tables.get(tbName);
+
+            fromClause.append(", ");
+            fromClause.append(tbName);
+            fromClause.append(" ");
+            fromClause.append(alias);
+
+            if (whereClause.length() > 0) whereClause.append(" and ");
+
+            whereClause.append("(");
+            whereClause.append(alias);
+            whereClause.append(".id = t.id)");
+        }
+
+        if (baseDn != null) {
+            if (whereClause.length() > 0) whereClause.append(" and ");
+
+            whereClause.append("(t.parentDn = ?)");
+            parameters.add(baseDn);
+        }
+
+        String sql = "select count(*) from "+fromClause;
+        if (whereClause.length() > 0) {
+            sql = sql+" where "+whereClause;
+        }
+
+        Connection con = null;
+        PreparedStatement ps = null;
+        ResultSet rs = null;
+
+        try {
+            con = getConnection();
+
+            if (log.isDebugEnabled()) {
+                log.debug(Formatter.displaySeparator(80));
+                Collection lines = Formatter.split(sql, 80);
+                for (Iterator i=lines.iterator(); i.hasNext(); ) {
+                    String line = (String)i.next();
+                    log.debug(Formatter.displayLine(line, 80));
+                }
+                log.debug(Formatter.displaySeparator(80));
+            }
+
+            ps = con.prepareStatement(sql);
+
+            log.debug(Formatter.displayLine("Parameters:", 80));
+
+            int counter = 1;
+            for (Iterator i=parameters.iterator(); i.hasNext(); counter++) {
+                Object param = i.next();
+                ps.setObject(counter, param);
+                log.debug(Formatter.displayLine(" - "+counter+" = "+param, 80));
+            }
+
+            log.debug(Formatter.displaySeparator(80));
+
+            rs = ps.executeQuery();
+            long count = rs.getLong(1);
+
+            return count > 0;
+
+        } catch (Exception e) {
+            log.error(e.getMessage());
+
+        } finally {
+            if (rs != null) try { rs.close(); } catch (Exception e) {}
+            if (ps != null) try { ps.close(); } catch (Exception e) {}
+            if (con != null) try { con.close(); } catch (Exception e) {}
+        }
+
+        return false;
+    }
+
+    /**
+     * @return DNs (Collection of Strings)
+     */
+    public PenroseSearchResults search(final String baseDn, final Filter filter, final PenroseSearchResults results) throws Exception {
+
+        execute(new Runnable() {
+            public void run() {
+                try {
+                    searchBackground(baseDn, filter, results);
+
+                } catch (Exception e) {
+                    log.error(e.getMessage(), e);
+                    results.setReturnCode(LDAPException.OPERATIONS_ERROR);
+
+                } finally {
+                    results.close();
+                }
+            }
+        });
+
+        return results;
+    }
+
+    public void execute(Runnable runnable) throws Exception {
+        threadPool.execute(runnable);
+    }
+
+    public void searchBackground(String baseDn, Filter filter, PenroseSearchResults results) throws Exception {
+
+        log.debug(Formatter.displaySeparator(80));
+        log.debug(Formatter.displayLine("Searching entry cache for "+entryMapping.getDn(), 80));
+        log.debug(Formatter.displayLine("Filter: "+filter, 80));
+        log.debug(Formatter.displayLine("Base DN: "+baseDn, 80));
+        log.debug(Formatter.displaySeparator(80));
+
+        String tableName = "penrose_"+mappingId+"_entries";
+
+        Map tables = new LinkedHashMap();
+
+        Collection parameters = new ArrayList();
+        StringBuffer whereClause = new StringBuffer();
+
+        boolean b = convert(filter, tables, parameters, whereClause);
+        if (!b) return;
 
         StringBuffer selectClause = new StringBuffer();
         selectClause.append("t.rdn, t.parentDn");
@@ -963,8 +1080,6 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
             if (ps != null) try { ps.close(); } catch (Exception e) {}
             if (con != null) try { con.close(); } catch (Exception e) {}
         }
-
-        return results;
     }
 
     /**
@@ -980,26 +1095,40 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
         Collection parameters = new ArrayList();
 
         int c = 1;
-        for (Iterator i=filter.getNames().iterator(); i.hasNext(); c++) {
+        for (Iterator i=filter.getNames().iterator(); i.hasNext(); ) {
             String name = (String)i.next();
             Object value = filter.get(name);
 
-            String tableName = "penrose_"+mappingId+"_field_"+sourceConfig.getName()+"_"+name;
+            StringBuffer sb = new StringBuffer();
 
-            tableNames.append(", ");
-            tableNames.append(tableName);
-            tableNames.append(" t");
-            tableNames.append(c);
+            Collection sourceMappings = entryMapping.getSourceMappings();
+            for (Iterator j=sourceMappings.iterator(); j.hasNext(); c++) {
+                SourceMapping sourceMapping = (SourceMapping)j.next();
+                if (!sourceMapping.getSourceName().equals(sourceConfig.getName())) continue;
+
+                String tableName = "penrose_"+mappingId+"_field_"+sourceMapping.getName()+"_"+name;
+
+                tableNames.append(", ");
+                tableNames.append(tableName);
+                tableNames.append(" t");
+                tableNames.append(c);
+
+                if (sb.length() > 0) sb.append(" or ");
+
+                sb.append("t.id=t");
+                sb.append(c);
+                sb.append(".id and t");
+                sb.append(c);
+                sb.append(".value=?");
+
+                parameters.add(value);
+            }
 
             if (whereClause.length() > 0) whereClause.append(" and ");
 
-            whereClause.append("t.id=t");
-            whereClause.append(c);
-            whereClause.append(".id and t");
-            whereClause.append(c);
-            whereClause.append(".value=?");
-
-            parameters.add(value);
+            whereClause.append("(");
+            whereClause.append(sb);
+            whereClause.append(")");
         }
 
         StringBuffer sb = new StringBuffer();

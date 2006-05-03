@@ -470,6 +470,10 @@ public class JDBCCache {
 
         Map values = new TreeMap();
 
+        AttributeValues av = new AttributeValues();
+        av.add(pk);
+        values.put(pk, av);
+
         Collection fields = sourceConfig.getNonPrimaryKeyFieldConfigs();
         for (Iterator i=fields.iterator(); i.hasNext(); ) {
             FieldConfig fieldConfig = (FieldConfig)i.next();
@@ -485,12 +489,22 @@ public class JDBCCache {
         if (keys.isEmpty()) return values;
 
         Collection pks = searchPrimaryKeys(keys, missingKeys);
+        log.debug("Loading "+values.keySet());
+
+        for (Iterator i=pks.iterator(); i.hasNext(); ) {
+            Row pk = (Row)i.next();
+            AttributeValues av = new AttributeValues();
+            av.add(pk);
+            values.put(pk, av);
+        }
 
         Collection fields = sourceConfig.getNonPrimaryKeyFieldConfigs();
         for (Iterator i=fields.iterator(); i.hasNext(); ) {
             FieldConfig fieldConfig = (FieldConfig)i.next();
             getColumnValues(fieldConfig, pks, values);
         }
+
+        log.debug("Loaded "+values.keySet());
 
         return values;
     }
@@ -844,14 +858,9 @@ public class JDBCCache {
                 Row pk = getPrimaryKey(rs);
 
                 Object value = rs.getObject(fieldConfig.getName());
+                //log.debug(" - "+pk+": "+value);
 
                 AttributeValues av = (AttributeValues)values.get(pk);
-                if (av == null) {
-                    av = new AttributeValues();
-                    av.add(pk);
-                    values.put(pk, av);
-                }
-
                 av.add(fieldConfig.getName(), value);
 
                 if (first) {
@@ -1412,8 +1421,9 @@ public class JDBCCache {
         tool.convert(tableName, sourceConfig, filter, parameters, whereClause, tables);
 
         Collection pkFields = sourceConfig.getPrimaryKeyFieldConfigs();
-        for (Iterator j=pkFields.iterator(); j.hasNext(); ) {
-            FieldConfig fieldConfig = (FieldConfig)j.next();
+
+        for (Iterator i=pkFields.iterator(); i.hasNext(); ) {
+            FieldConfig fieldConfig = (FieldConfig)i.next();
             String fieldName = fieldConfig.getName();
 
             if (columns.length() > 0) columns.append(", ");

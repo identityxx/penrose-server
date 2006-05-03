@@ -22,9 +22,6 @@ import org.apache.directory.shared.ldap.exception.LdapNamingException;
 import org.apache.directory.shared.ldap.message.ResultCodeEnum;
 
 import javax.naming.NamingException;
-import javax.naming.NoPermissionException;
-import javax.naming.NameNotFoundException;
-import javax.naming.NameAlreadyBoundException;
 
 /**
  * @author Endi S. Dewata

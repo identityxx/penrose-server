@@ -18,7 +18,8 @@
 package org.safehaus.penrose.event;
 
 import org.safehaus.penrose.session.PenroseSession;
-import org.ietf.ldap.LDAPEntry;
+
+import javax.naming.directory.Attributes;
 
 /**
  * @author Endi S. Dewata
@@ -29,13 +30,16 @@ public class AddEvent extends Event {
     public final static int AFTER_ADD  = 1;
 
     private PenroseSession session;
-    private LDAPEntry entry;
     private int returnCode;
 
-    public AddEvent(Object source, int type, PenroseSession session, LDAPEntry entry) {
+    private String dn;
+    private Attributes attributes;
+
+    public AddEvent(Object source, int type, PenroseSession session, String dn, Attributes attributes) {
         super(source, type);
         this.session = session;
-        this.entry = entry;
+        this.dn = dn;
+        this.attributes = attributes;
     }
 
     public int getReturnCode() {
@@ -46,19 +50,27 @@ public class AddEvent extends Event {
         this.returnCode = returnCode;
     }
 
-    public LDAPEntry getEntry() {
-        return entry;
-    }
-
-    public void setEntry(LDAPEntry entry) {
-        this.entry = entry;
-    }
-
     public PenroseSession getConnection() {
         return session;
     }
 
     public void setConnection(PenroseSession session) {
         this.session = session;
+    }
+
+    public String getDn() {
+        return dn;
+    }
+
+    public void setDn(String dn) {
+        this.dn = dn;
+    }
+
+    public Attributes getAttributes() {
+        return attributes;
+    }
+
+    public void setAttributes(Attributes attributes) {
+        this.attributes = attributes;
     }
 }

@@ -20,6 +20,8 @@ package org.safehaus.penrose.cache;
 import org.safehaus.penrose.connector.Connector;
 import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.PenroseFactory;
+import org.safehaus.penrose.partition.*;
+import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.engine.Engine;
 import org.apache.log4j.*;
 
@@ -39,6 +41,189 @@ public class CacheManager {
     public static Logger log = Logger.getLogger(CacheManager.class);
 
     public CacheManager() throws Exception {
+    }
+
+    public static void create(Penrose penrose) throws Exception {
+        Connector connector = penrose.getConnector();
+        SourceCache sourceCache = connector.getSourceCache();
+        sourceCache.create();
+
+        Engine engine = penrose.getEngine();
+        EntryCache entryCache = engine.getEntryCache();
+        entryCache.create();
+    }
+
+    public static void load(Penrose penrose) throws Exception {
+        Connector connector = penrose.getConnector();
+        SourceCache sourceCache = connector.getSourceCache();
+        sourceCache.load();
+
+        Engine engine = penrose.getEngine();
+        EntryCache entryCache = engine.getEntryCache();
+        entryCache.load(penrose);
+    }
+
+    public static void clean(Penrose penrose) throws Exception {
+
+        Engine engine = penrose.getEngine();
+        EntryCache entryCache = engine.getEntryCache();
+        entryCache.clean();
+
+        Connector connector = penrose.getConnector();
+        SourceCache sourceCache = connector.getSourceCache();
+        sourceCache.clean();
+    }
+
+    public static void drop(Penrose penrose) throws Exception {
+
+        Engine engine = penrose.getEngine();
+        EntryCache entryCache = engine.getEntryCache();
+        entryCache.drop();
+
+        Connector connector = penrose.getConnector();
+        SourceCache sourceCache = connector.getSourceCache();
+        sourceCache.drop();
+    }
+
+    public static void changeTable(Penrose penrose) throws Exception {
+
+        PartitionManager partitionManager = penrose.getPartitionManager();
+
+        Collection partitions = partitionManager.getPartitions();
+        for (Iterator i=partitions.iterator(); i.hasNext(); ) {
+            Partition partition = (Partition)i.next();
+
+            Collection sourceConfigs = partition.getSourceConfigs();
+            for (Iterator j=sourceConfigs.iterator(); j.hasNext(); ) {
+                SourceConfig sourceConfig = (SourceConfig)j.next();
+
+                String connectionName = sourceConfig.getConnectionName();
+                ConnectionConfig connectionConfig = partition.getConnectionConfig(connectionName);
+
+                if (!"JDBC".equals(connectionConfig.getAdapterName())) continue;
+
+                String tableName = sourceConfig.getParameter("tableName");
+                Collection primaryKeyFieldConfigs = sourceConfig.getPrimaryKeyFieldConfigs();
+
+                generateCreateTable(tableName, primaryKeyFieldConfigs);
+                generateAddTrigger(tableName, primaryKeyFieldConfigs);
+                generateModifyTrigger(tableName, primaryKeyFieldConfigs);
+                generateDeleteTrigger(tableName, primaryKeyFieldConfigs);
+            }
+        }
+    }
+
+    public static void generateCreateTable(String tableName, Collection primaryKeyFieldConfigs) throws Exception {
+        System.out.println("create table "+tableName+"_changes (");
+        System.out.println("    changeNumber integer auto_increment,");
+        System.out.println("    changeTime datetime,");
+        System.out.println("    changeAction varchar(10),");
+        System.out.println("    changeUser varchar(10),");
+
+        for (Iterator i=primaryKeyFieldConfigs.iterator(); i.hasNext(); ) {
+            FieldConfig fieldConfig = (FieldConfig)i.next();
+            System.out.println("    "+fieldConfig.getName()+" "+fieldConfig.getType()+",");
+        }
+
+        System.out.println("    primary key (changeNumber)");
+        System.out.println(");");
+    }
+
+    public static void generateAddTrigger(String tableName, Collection primaryKeyFieldConfigs) throws Exception {
+        System.out.println("create trigger "+tableName+"_add after insert on "+tableName);
+        System.out.println("for each row insert into "+tableName+"_changes values (");
+        System.out.println("    null,");
+        System.out.println("    now(),");
+        System.out.println("    'ADD',");
+        System.out.println("    substring_index(user(),_utf8'@',1),");
+
+        for (Iterator i=primaryKeyFieldConfigs.iterator(); i.hasNext(); ) {
+            FieldConfig fieldConfig = (FieldConfig)i.next();
+            System.out.print("    new."+fieldConfig.getName());
+            if (i.hasNext()) System.out.print(",");
+            System.out.println();
+        }
+
+        System.out.println(");");
+    }
+
+    public static void generateModifyTrigger(String tableName, Collection primaryKeyFieldConfigs) throws Exception {
+        System.out.println("delimiter |");
+        System.out.println("create trigger "+tableName+"_modify after update on "+tableName);
+        System.out.println("for each row begin");
+
+        System.out.print("    if ");
+        for (Iterator i=primaryKeyFieldConfigs.iterator(); i.hasNext(); ) {
+            FieldConfig fieldConfig = (FieldConfig)i.next();
+            System.out.print("new."+fieldConfig.getName()+" = old."+fieldConfig.getName());
+            if (i.hasNext()) System.out.print(" and ");
+        }
+        System.out.println(" then");
+
+        System.out.println("        insert into "+tableName+"_changes values (");
+        System.out.println("            null,");
+        System.out.println("            now(),");
+        System.out.println("            'MODIFY',");
+        System.out.println("            substring_index(user(),_utf8'@',1),");
+
+        for (Iterator i=primaryKeyFieldConfigs.iterator(); i.hasNext(); ) {
+            FieldConfig fieldConfig = (FieldConfig)i.next();
+            System.out.print("            new."+fieldConfig.getName());
+            if (i.hasNext()) System.out.print(",");
+            System.out.println();
+        }
+
+        System.out.println("        );");
+        System.out.println("    else");
+        System.out.println("        insert into "+tableName+"_changes values (");
+        System.out.println("            null,");
+        System.out.println("            now(),");
+        System.out.println("            'DELETE',");
+        System.out.println("            substring_index(user(),_utf8'@',1),");
+
+        for (Iterator i=primaryKeyFieldConfigs.iterator(); i.hasNext(); ) {
+            FieldConfig fieldConfig = (FieldConfig)i.next();
+            System.out.print("            old."+fieldConfig.getName());
+            if (i.hasNext()) System.out.print(",");
+            System.out.println();
+        }
+
+        System.out.println("        );");
+        System.out.println("        insert into "+tableName+"_changes values (");
+        System.out.println("            null,");
+        System.out.println("            now(),");
+        System.out.println("            'ADD',");
+        System.out.println("            substring_index(user(),_utf8'@',1),");
+
+        for (Iterator i=primaryKeyFieldConfigs.iterator(); i.hasNext(); ) {
+            FieldConfig fieldConfig = (FieldConfig)i.next();
+            System.out.print("            new."+fieldConfig.getName());
+            if (i.hasNext()) System.out.print(",");
+            System.out.println();
+        }
+
+        System.out.println("        );");
+        System.out.println("    end if;");
+        System.out.println("end;|");
+        System.out.println("delimiter ;");
+    }
+
+    public static void generateDeleteTrigger(String tableName, Collection primaryKeyFieldConfigs) throws Exception {
+        System.out.println("create trigger "+tableName+"_delete after delete on "+tableName);
+        System.out.println("for each row insert into "+tableName+"_changes values (");
+        System.out.println("    null,");
+        System.out.println("    now(),");
+        System.out.println("    'DELETE',");
+        System.out.println("    substring_index(user(),_utf8'@',1),");
+
+        for (Iterator i=primaryKeyFieldConfigs.iterator(); i.hasNext(); ) {
+            FieldConfig fieldConfig = (FieldConfig)i.next();
+            System.out.print("    old."+fieldConfig.getName());
+            if (i.hasNext()) System.out.print(",");
+            System.out.println();
+        }
+
+        System.out.println(");");
     }
 
     public static void showUsage() {
@@ -136,51 +321,14 @@ public class CacheManager {
 
         } else if ("drop".equals(command)) {
             drop(penrose);
+
+        } else if ("changeTable".equals(command)) {
+            changeTable(penrose);
         }
 
         penrose.stop();
-    }
 
-    public static void create(Penrose penrose) throws Exception {
-        Connector connector = penrose.getConnector();
-        SourceCache sourceCache = connector.getSourceCache();
-        sourceCache.create();
-
-        Engine engine = penrose.getEngine();
-        EntryCache entryCache = engine.getEntryCache();
-        entryCache.create();
-    }
-
-    public static void load(Penrose penrose) throws Exception {
-        Connector connector = penrose.getConnector();
-        SourceCache sourceCache = connector.getSourceCache();
-        sourceCache.load();
-
-        Engine engine = penrose.getEngine();
-        EntryCache entryCache = engine.getEntryCache();
-        entryCache.load(penrose);
-    }
-
-    public static void clean(Penrose penrose) throws Exception {
-
-        Engine engine = penrose.getEngine();
-        EntryCache entryCache = engine.getEntryCache();
-        entryCache.clean();
-
-        Connector connector = penrose.getConnector();
-        SourceCache sourceCache = connector.getSourceCache();
-        sourceCache.clean();
-    }
-
-    public static void drop(Penrose penrose) throws Exception {
-
-        Engine engine = penrose.getEngine();
-        EntryCache entryCache = engine.getEntryCache();
-        entryCache.drop();
-
-        Connector connector = penrose.getConnector();
-        SourceCache sourceCache = connector.getSourceCache();
-        sourceCache.drop();
+        System.exit(0);
     }
 
 }

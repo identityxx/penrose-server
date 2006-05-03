@@ -186,7 +186,7 @@ public class MergeEngine {
             sourceValues = primarySourceValues;
         }
 
-        log.debug("Entry: "+dn);
+        //log.info("Generating "+dn);
         //log.debug(" - source values: "+sourceValues);
 
         AttributeValues attributeValues = engine.computeAttributeValues(

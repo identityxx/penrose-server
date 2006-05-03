@@ -19,17 +19,18 @@ package org.safehaus.penrose.acl;
 
 import org.safehaus.penrose.mapping.Entry;
 import org.safehaus.penrose.mapping.EntryMapping;
-import org.safehaus.penrose.mapping.AttributeMapping;
 import org.safehaus.penrose.session.PenroseSession;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.handler.Handler;
 import org.safehaus.penrose.util.EntryUtil;
+import org.safehaus.penrose.schema.SchemaManager;
 import org.ietf.ldap.LDAPException;
-import org.ietf.ldap.LDAPEntry;
-import org.ietf.ldap.LDAPAttributeSet;
-import org.ietf.ldap.LDAPAttribute;
 import org.apache.log4j.Logger;
 
+import javax.naming.directory.SearchResult;
+import javax.naming.directory.Attributes;
+import javax.naming.directory.Attribute;
+import javax.naming.NamingEnumeration;
 import java.util.*;
 
 /**
@@ -67,7 +68,9 @@ public class ACLEngine {
             String scope,
             String permission) throws Exception {
 
-        targetDn = handler.getSchemaManager().normalize(targetDn);
+        SchemaManager schemaManager = handler.getSchemaManager();
+
+        targetDn = schemaManager.normalize(targetDn);
         //log.debug(" * "+targetDn);
 
         for (Iterator i=entryMapping.getACL().iterator(); i.hasNext(); ) {
@@ -89,7 +92,7 @@ public class ACLEngine {
                 continue;
             }
 
-            String subject = handler.getSchemaManager().normalize(aci.getSubject());
+            String subject = schemaManager.normalize(aci.getSubject());
             //log.debug("   ==> checking subject "+subject);
 
             if (subject.equals(ACI.SUBJECT_USER) && aci.getDn().equals(bindDn)) {
@@ -139,14 +142,16 @@ public class ACLEngine {
             return rc;
         }
 
-        String rootDn = handler.getSchemaManager().normalize(handler.getRootUserConfig().getDn());
-        String bindDn = handler.getSchemaManager().normalize(session.getBindDn());
+        SchemaManager schemaManager = handler.getSchemaManager();
+
+        String rootDn = schemaManager.normalize(handler.getRootUserConfig().getDn());
+        String bindDn = schemaManager.normalize(session == null ? null : session.getBindDn());
         if (rootDn != null && rootDn.equals(bindDn)) {
             //log.debug("root user => SUCCESS");
             return rc;
         }
 
-        String targetDn = handler.getSchemaManager().normalize(dn);
+        String targetDn = schemaManager.normalize(dn);
         boolean result = getObjectPermission(bindDn, targetDn, entryMapping, ACI.SCOPE_OBJECT, permission);
 
         if (result) {
@@ -210,7 +215,9 @@ public class ACLEngine {
 
     public boolean checkSubject(String bindDn, String targetDn, ACI aci) throws Exception {
 
-        String subject = handler.getSchemaManager().normalize(aci.getSubject());
+        SchemaManager schemaManager = handler.getSchemaManager();
+
+        String subject = schemaManager.normalize(aci.getSubject());
         //log.debug("   ==> checking subject "+subject);
 
         if (subject.equals(ACI.SUBJECT_USER) && aci.getDn().equals(bindDn)) {
@@ -377,7 +384,9 @@ public class ACLEngine {
             Collection denies
             ) throws Exception {
 
-        String rootDn = handler.getSchemaManager().normalize(handler.getRootUserConfig().getDn());
+        SchemaManager schemaManager = handler.getSchemaManager();
+
+        String rootDn = schemaManager.normalize(handler.getRootUserConfig().getDn());
     	if (rootDn.equals(bindDn)) {
             grants.addAll(attributeNames);
             return;
@@ -399,16 +408,21 @@ public class ACLEngine {
 */
     }
 
-    public LDAPEntry filterAttributes(
+    public SearchResult filterAttributes(
             PenroseSession session,
             Entry entry)
             throws Exception {
 
-        String bindDn = handler.getSchemaManager().normalize(session.getBindDn());
+        SchemaManager schemaManager = handler.getSchemaManager();
+        //log.debug("Schema manager: "+schemaManager);
 
-        String targetDn = handler.getSchemaManager().normalize(entry.getDn());
+        String bindDn = schemaManager.normalize(session == null ? null : session.getBindDn());
+        String targetDn = schemaManager.normalize(entry.getDn());
+
         EntryMapping entryMapping = entry.getEntryMapping();
-        LDAPEntry ldapEntry = entry.toLDAPEntry();
+
+        SearchResult sr = EntryUtil.toSearchResult(entry);
+        Attributes attributes = sr.getAttributes();
 
         //log.debug("Evaluating attributes read permission for "+bindDn);
 
@@ -416,9 +430,9 @@ public class ACLEngine {
         Set denies = new HashSet();
 
         Collection attributeNames = new ArrayList();
-        for (Iterator i=entry.getAttributeSet().iterator(); i.hasNext(); ) {
-            LDAPAttribute attribute = (LDAPAttribute)i.next();
-            attributeNames.add(attribute.getName());
+        for (NamingEnumeration i=attributes.getAll(); i.hasMore(); ) {
+            Attribute attribute = (Attribute)i.next();
+            attributeNames.add(attribute.getID());
         }
 
         getReadableAttributes(bindDn, targetDn, entryMapping, attributeNames, grants, denies);
@@ -426,18 +440,19 @@ public class ACLEngine {
         //log.debug("Readable attributes: "+grants);
         //log.debug("Unreadable attributes: "+denies);
 
-        LDAPAttributeSet attributeSet = ldapEntry.getAttributeSet();
-
         Collection list = new ArrayList();
-        for (Iterator i=attributeSet.iterator(); i.hasNext(); ) {
-            LDAPAttribute attribute = (LDAPAttribute)i.next();
+        for (NamingEnumeration i=attributes.getAll(); i.hasMore(); ) {
+            Attribute attribute = (Attribute)i.next();
             //if (checkAttributeReadPermission(bindDn, targetDn, entryMapping, attribute.getName())) continue;
-            if (grants.contains(attribute.getName())) continue;
+            if (grants.contains(attribute.getID())) continue;
             list.add(attribute);
         }
 
-        attributeSet.removeAll(list);
+        for (Iterator i=list.iterator(); i.hasNext(); ) {
+            Attribute attribute = (Attribute)i.next();
+            attributes.remove(attribute.getID());
+        }
 
-        return ldapEntry;
+        return sr;
     }
 }

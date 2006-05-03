@@ -114,7 +114,7 @@ public class JNDIAdapter extends Adapter {
     public void load(SourceConfig sourceConfig, Filter filter, long sizeLimit, PenroseSearchResults results) throws Exception {
 
         String ldapBase = sourceConfig.getParameter(BASE_DN);
-        if ("".equals(ldapBase)) {
+        if (ldapBase == null || "".equals(ldapBase)) {
             ldapBase = client.getSuffix();
         } else if (!"".equals(client.getSuffix())) {
             ldapBase = ldapBase+","+client.getSuffix();

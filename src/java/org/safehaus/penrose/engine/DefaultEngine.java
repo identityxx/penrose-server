@@ -29,9 +29,11 @@ import org.safehaus.penrose.pipeline.PipelineEvent;
 import org.safehaus.penrose.thread.ThreadPool;
 import org.safehaus.penrose.util.*;
 import org.ietf.ldap.LDAPException;
-import org.ietf.ldap.LDAPEntry;
-import org.ietf.ldap.LDAPAttribute;
 
+import javax.naming.directory.Attributes;
+import javax.naming.directory.SearchResult;
+import javax.naming.directory.Attribute;
+import javax.naming.NamingEnumeration;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
@@ -255,10 +257,9 @@ public class DefaultEngine extends Engine {
     public void addProxy(
             final Partition partition,
             final EntryMapping entryMapping,
-            LDAPEntry entry
+            String dn,
+            Attributes attributes
             ) throws Exception {
-
-        String dn = entry.getDN();
 
         SourceMapping sourceMapping = entryMapping.getSourceMapping(0);
         String sourceName = sourceMapping.getSourceName();
@@ -280,7 +281,7 @@ public class DefaultEngine extends Engine {
         log.debug("Modifying via proxy "+sourceName+" as \""+targetDn+"\"");
 
         JNDIClient client = adapter.getClient();
-        client.add(targetDn, entry.getAttributeSet());
+        client.add(targetDn, attributes);
     }
 
     public void modifyProxy(
@@ -413,13 +414,13 @@ public class DefaultEngine extends Engine {
             res.addListener(new PipelineAdapter() {
                 public void objectAdded(PipelineEvent event) {
                     try {
-                        LDAPEntry ldapEntry = (LDAPEntry)event.getObject();
+                        SearchResult ldapEntry = (SearchResult)event.getObject();
                         //log.debug("Subtracting \""+baseDn+"\" from \""+ldapEntry.getDN()+"\"");
 
-                        String dn = ldapEntry.getDN();
+                        String dn = ldapEntry.getName();
 
                         if (baseDn != null) {
-                            dn = dn.substring(0, ldapEntry.getDN().length() - baseDn.length());
+                            dn = dn.substring(0, ldapEntry.getName().length() - baseDn.length());
                             if (dn.endsWith(",")) dn = dn.substring(0, dn.length()-1);
                         }
 
@@ -430,22 +431,14 @@ public class DefaultEngine extends Engine {
                         AttributeValues attributeValues = new AttributeValues();
 
                         //log.debug("Entry "+dn+":");
-                        for (Iterator i=ldapEntry.getAttributeSet().iterator(); i.hasNext(); ) {
-                            LDAPAttribute attribute = (LDAPAttribute)i.next();
-                            String name = attribute.getName();
+                        for (NamingEnumeration i=ldapEntry.getAttributes().getAll(); i.hasMore(); ) {
+                            Attribute attribute = (Attribute)i.next();
+                            String name = attribute.getID();
 
-                            if (client.isBinaryAttribute(name)) {
-                                byte[][] bytes = attribute.getByteValueArray();
-                                for (int j=0; j<bytes.length; j++) {
-                                    attributeValues.add(name, bytes[j]);
-                                    //log.debug(" - "+name+": (binary)");
-                                }
-                            } else {
-                                String[] values = attribute.getStringValueArray();
-                                for (int j=0; j<values.length; j++) {
-                                    attributeValues.add(name, values[j]);
-                                    //log.debug(" - "+name+": "+values[j]);
-                                }
+                            for (NamingEnumeration j=attribute.getAll(); j.hasMore(); ) {
+                                Object value = j.next();
+                                attributeValues.add(name, value);
+                                //log.debug(" - "+name+": "+value);
                             }
                         }
 

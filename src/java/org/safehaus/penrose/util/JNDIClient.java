@@ -50,9 +50,9 @@ public class JNDIClient {
     private String suffix;
     private String url;
 
-    private LdapContext context;
+    //private LdapContext context;
 
-    private LDAPEntry rootDSE;
+    private SearchResult rootDSE;
     private Schema schema;
 
     public JNDIClient(JNDIClient client, Map parameters) throws Exception {
@@ -65,8 +65,8 @@ public class JNDIClient {
     public JNDIClient(Map parameters) throws Exception {
         init(parameters);
 
-        getRootDSE();
-        getSchema();
+        //getRootDSE();
+        //getSchema();
     }
 
     public void init(Map parameters) throws Exception {
@@ -105,11 +105,15 @@ public class JNDIClient {
             }
         }
 
-        context = new InitialLdapContext(this.parameters, null);
+        //context = new InitialLdapContext(this.parameters, null);
+    }
+
+    public LdapContext getContext() throws Exception {
+        return new InitialLdapContext(parameters, null);
     }
 
     public void close() throws Exception {
-        context.close();
+        //context.close();
     }
 
     public DirContext bind(String dn, String password) throws Exception {
@@ -122,7 +126,7 @@ public class JNDIClient {
         return new InitialLdapContext(env, null);
     }
 
-    public int add(String dn, LDAPAttributeSet attributes) throws Exception {
+    public int add(String dn, Attributes attributes) throws Exception {
 
         dn = EntryUtil.append(dn, suffix);
 
@@ -130,30 +134,22 @@ public class JNDIClient {
 
         Attributes attrs = new BasicAttributes();
 
-        for (Iterator i=attributes.iterator(); i.hasNext(); ) {
-            LDAPAttribute attribute = (LDAPAttribute)i.next();
-            String name = attribute.getName();
+        for (NamingEnumeration i=attributes.getAll(); i.hasMore(); ) {
+            Attribute attribute = (Attribute)i.next();
+            String name = attribute.getID();
 
             Attribute attr = new BasicAttribute(name);
 
             if ("unicodePwd".equalsIgnoreCase(name)) { // need to encode unicodePwd
-                String[] values = attribute.getStringValueArray();
-                for (int j=0; j<values.length; j++) {
-                    attr.add(PasswordUtil.toUnicodePassword(values[j]));
-                    log.debug(" - "+name+": (binary)");
-                }
-
-            } else if (isBinaryAttribute(name)) {
-                byte[][] bytes = attribute.getByteValueArray();
-                for (int j=0; j<bytes.length; j++) {
-                    attr.add(bytes[j]);
+                for (NamingEnumeration j=attribute.getAll(); j.hasMore(); ) {
+                    String value = (String)j.next();
+                    attr.add(PasswordUtil.toUnicodePassword(value));
                     log.debug(" - "+name+": (binary)");
                 }
 
             } else {
-                String[] values = attribute.getStringValueArray();
-                for (int j=0; j<values.length; j++) {
-                    String value = values[j];
+                for (NamingEnumeration j=attribute.getAll(); j.hasMore(); ) {
+                    Object value = j.next();
                     attr.add(value);
                     log.debug(" - "+name+": "+value);
                 }
@@ -162,12 +158,17 @@ public class JNDIClient {
             attrs.put(attr);
         }
 
+        LdapContext context = null;
+
         try {
+            context = getContext();
             context.createSubcontext(dn, attrs);
 
         } catch (Exception e) {
             log.debug(e.getMessage(), e);
             throw e;
+        } finally {
+            if (context != null) try { context.close(); } catch (Exception e) {}
         }
 
         return LDAPException.SUCCESS;
@@ -179,12 +180,17 @@ public class JNDIClient {
 
         log.debug("Deleting "+dn);
 
+        LdapContext context = null;
+
         try {
+            context = getContext();
             context.destroySubcontext(dn);
 
         } catch (Exception e) {
             log.debug(e.getMessage(), e);
             throw e;
+        } finally {
+            if (context != null) try { context.close(); } catch (Exception e) {}
         }
 
         return LDAPException.SUCCESS;
@@ -199,46 +205,37 @@ public class JNDIClient {
         Collection list = new ArrayList();
 
         for (Iterator i=modifications.iterator(); i.hasNext(); ) {
-            LDAPModification modification = (LDAPModification)i.next();
+            ModificationItem modification = (ModificationItem)i.next();
 
-            LDAPAttribute attribute = modification.getAttribute();
-            String name = attribute.getName();
+            Attribute attribute = modification.getAttribute();
+            String name = attribute.getID();
 
             Attribute attr = new BasicAttribute(name);
 
-            switch (modification.getOp()) {
-                case LDAPModification.ADD:
-                    log.debug(" - add: "+name);
+            switch (modification.getModificationOp()) {
+                case DirContext.ADD_ATTRIBUTE:
                     list.add(new ModificationItem(DirContext.ADD_ATTRIBUTE, attr));
                     break;
 
-                case LDAPModification.REPLACE:
+                case DirContext.REPLACE_ATTRIBUTE:
                     list.add(new ModificationItem(DirContext.REPLACE_ATTRIBUTE, attr));
                     break;
 
-                case LDAPModification.DELETE:
+                case DirContext.REMOVE_ATTRIBUTE:
                     list.add(new ModificationItem(DirContext.REMOVE_ATTRIBUTE, attr));
                     break;
             }
 
             if ("unicodePwd".equalsIgnoreCase(name)) { // need to encode unicodePwd
-                String[] values = attribute.getStringValueArray();
-                for (int j=0; j<values.length; j++) {
-                    attr.add(PasswordUtil.toUnicodePassword(values[j]));
-                    log.debug(" - "+name+": (binary)");
-                }
-
-            } else if (isBinaryAttribute(name)) {
-                byte[][] bytes = attribute.getByteValueArray();
-                for (int j=0; j<bytes.length; j++) {
-                    attr.add(bytes[j]);
+                for (NamingEnumeration j=attribute.getAll(); j.hasMore(); ) {
+                    String value = (String)j.next();
+                    attr.add(PasswordUtil.toUnicodePassword(value));
                     log.debug(" - "+name+": (binary)");
                 }
 
             } else {
-                String[] values = attribute.getStringValueArray();
-                for (int j=0; j<values.length; j++) {
-                    String value = values[j];
+                for (NamingEnumeration j=attribute.getAll(); j.hasMore(); ) {
+                    Object value = j.next();
                     attr.add(value);
                     log.debug(" - "+name+": "+value);
                 }
@@ -247,12 +244,17 @@ public class JNDIClient {
 
         ModificationItem mods[] = (ModificationItem[])list.toArray(new ModificationItem[list.size()]);
 
+        LdapContext context = null;
+
         try {
+            context = getContext();
             context.modifyAttributes(dn, mods);
 
         } catch (Exception e) {
             log.debug(e.getMessage(), e);
             throw e;
+        } finally {
+            if (context != null) try { context.close(); } catch (Exception e) {}
         }
 
         return LDAPException.SUCCESS;
@@ -262,12 +264,17 @@ public class JNDIClient {
 
         dn = EntryUtil.append(dn, suffix);
 
+        LdapContext context = null;
+
         try {
+            context = getContext();
             context.rename(dn, newRdn);
 
         } catch (Exception e) {
             log.debug(e.getMessage(), e);
             throw e;
+        } finally {
+            if (context != null) try { context.close(); } catch (Exception e) {}
         }
 
         return LDAPException.SUCCESS;
@@ -298,7 +305,7 @@ public class JNDIClient {
         //return binaryAttributes.contains(name.toLowerCase());
     }
 
-    public LDAPEntry getRootDSE() throws Exception {
+    public SearchResult getRootDSE() throws Exception {
 
         if (rootDSE != null) return rootDSE;
 
@@ -308,19 +315,33 @@ public class JNDIClient {
         ctls.setSearchScope(SearchControls.OBJECT_SCOPE);
         ctls.setReturningAttributes(new String[] { "*", "+" });
 
-        NamingEnumeration results = context.search("", "(objectClass=*)", ctls);
-        SearchResult sr = (SearchResult)results.next();
-        results.close();
+        LdapContext context = null;
 
-        rootDSE = createLDAPEntry("", sr);
+        try {
+            context = getContext();
+
+            NamingEnumeration results = context.search("", "(objectClass=*)", ctls);
+            rootDSE = (SearchResult)results.next();
+            results.close();
+
+        } finally {
+            if (context != null) try { context.close(); } catch (Exception e) {}
+        }
 
         return rootDSE;
     }
 
     public Collection getNamingContexts() throws Exception {
         getRootDSE();
-        LDAPAttribute namingContexts = rootDSE.getAttribute("namingContexts");
-        return Arrays.asList(namingContexts.getStringValueArray());
+        Attribute namingContexts = rootDSE.getAttributes().get("namingContexts");
+
+        Collection list = new ArrayList();
+        for (NamingEnumeration i=namingContexts.getAll(); i.hasMore(); ) {
+            String namingContext = (String)i.next();
+            list.add(namingContext);
+        }
+
+        return list;
     }
 
     public Schema getSchema() throws Exception {
@@ -332,18 +353,18 @@ public class JNDIClient {
         log.debug("Searching Schema ...");
 
         try {
-            LDAPAttribute schemaNamingContext = rootDSE.getAttribute("schemaNamingContext");
-            LDAPAttribute subschemaSubentry = rootDSE.getAttribute("subschemaSubentry");
+            Attribute schemaNamingContext = rootDSE.getAttributes().get("schemaNamingContext");
+            Attribute subschemaSubentry = rootDSE.getAttributes().get("subschemaSubentry");
 
             String schemaDn;
 
             if (schemaNamingContext != null) {
-                schemaDn = (String)schemaNamingContext.getStringValues().nextElement();
+                schemaDn = (String)schemaNamingContext.get();
                 log.debug("Active Directory Schema: "+schemaDn);
                 schema = getActiveDirectorySchema(schemaDn);
 
             } else if (subschemaSubentry != null) {
-                schemaDn = (String)subschemaSubentry.getStringValues().nextElement();
+                schemaDn = (String)subschemaSubentry.get();
                 log.debug("Standard LDAP Schema: "+schemaDn);
                 schema = getLDAPSchema(schemaDn);
 
@@ -374,148 +395,163 @@ public class JNDIClient {
 
     public void getActiveDirectoryAttributeTypes(Schema schema, String schemaDn) throws Exception {
 
-        //log.debug("Attribute Types:");
+        LdapContext context = null;
 
-        SearchControls searchControls = new SearchControls();
-        searchControls.setSearchScope(SearchControls.ONELEVEL_SCOPE);
-/*
-        byte[] cookie = null;
+        try {
+            //log.debug("Attribute Types:");
 
-        do {
-            Control[] controls = new Control[]{
-                new PagedResultsControl(100, cookie, Control.CRITICAL)
-            };
+            SearchControls searchControls = new SearchControls();
+            searchControls.setSearchScope(SearchControls.ONELEVEL_SCOPE);
+    /*
+            byte[] cookie = null;
 
-            context.setRequestControls(controls);
-*/
-            NamingEnumeration results = context.search(schemaDn, "(objectClass=attributeSchema)", searchControls);
+            do {
+                Control[] controls = new Control[]{
+                    new PagedResultsControl(100, cookie, Control.CRITICAL)
+                };
 
-            while (results.hasMore()) {
-                SearchResult sr = (SearchResult)results.next();
-                Attributes attributes = sr.getAttributes();
+                context.setRequestControls(controls);
+    */
+                context = getContext();
+                NamingEnumeration results = context.search(schemaDn, "(objectClass=attributeSchema)", searchControls);
 
-                Attribute attribute = attributes.get("lDAPDisplayName");
-                String atName = (String)attribute.get();
-                //log.debug(" - "+atName);
+                while (results.hasMore()) {
+                    SearchResult sr = (SearchResult)results.next();
+                    Attributes attributes = sr.getAttributes();
 
-                AttributeType at = new AttributeType();
-                at.setName(atName);
-                at.setOid((String)attributes.get("attributeID").get());
-                at.setDescription((String)attributes.get("adminDescription").get());
-                at.setSyntax((String)attributes.get("attributeSyntax").get());
-                at.setSingleValued(Boolean.valueOf((String)attributes.get("isSingleValued").get()).booleanValue());
+                    Attribute attribute = attributes.get("lDAPDisplayName");
+                    String atName = (String)attribute.get();
+                    //log.debug(" - "+atName);
 
-                schema.addAttributeType(at);
-            }
-/*
-            controls = context.getResponseControls();
+                    AttributeType at = new AttributeType();
+                    at.setName(atName);
+                    at.setOid((String)attributes.get("attributeID").get());
+                    at.setDescription((String)attributes.get("adminDescription").get());
+                    at.setSyntax((String)attributes.get("attributeSyntax").get());
+                    at.setSingleValued(Boolean.valueOf((String)attributes.get("isSingleValued").get()).booleanValue());
 
-            if (controls != null) {
-                for (int i = 0; i < controls.length; i++) {
-                    if (controls[i] instanceof PagedResultsResponseControl) {
-                        PagedResultsResponseControl prrc =
-                            (PagedResultsResponseControl)controls[i];
-                        cookie = prrc.getCookie();
+                    schema.addAttributeType(at);
+                }
+    /*
+                controls = context.getResponseControls();
+
+                if (controls != null) {
+                    for (int i = 0; i < controls.length; i++) {
+                        if (controls[i] instanceof PagedResultsResponseControl) {
+                            PagedResultsResponseControl prrc =
+                                (PagedResultsResponseControl)controls[i];
+                            cookie = prrc.getCookie();
+                        }
                     }
                 }
-            }
-*/
-            results.close();
-/*
-        } while (cookie != null);
+    */
+                results.close();
+    /*
+            } while (cookie != null);
 
-        context.setRequestControls(null);
-*/
+            context.setRequestControls(null);
+    */
+        } finally {
+            if (context != null) try { context.close(); } catch (Exception e) {}
+        }
     }
 
     public void getActiveDirectoryObjectClasses(Schema schema, String schemaDn) throws Exception {
 
         //log.debug("Object Classes:");
 
-        SearchControls searchControls = new SearchControls();
-        searchControls.setSearchScope(SearchControls.ONELEVEL_SCOPE);
-/*
-        byte[] cookie = null;
+        LdapContext context = null;
 
-        do {
-            Control[] controls = new Control[]{
-                new PagedResultsControl(100, cookie, Control.CRITICAL)
-            };
+        try {
+            SearchControls searchControls = new SearchControls();
+            searchControls.setSearchScope(SearchControls.ONELEVEL_SCOPE);
+    /*
+            byte[] cookie = null;
 
-            context.setRequestControls(controls);
-*/
-            NamingEnumeration results = context.search(schemaDn, "(objectClass=classSchema)", searchControls);
+            do {
+                Control[] controls = new Control[]{
+                    new PagedResultsControl(100, cookie, Control.CRITICAL)
+                };
 
-            while (results.hasMore()) {
-                SearchResult sr = (SearchResult)results.next();
-                Attributes attributes = sr.getAttributes();
+                context.setRequestControls(controls);
+    */
+                context = getContext();
+                NamingEnumeration results = context.search(schemaDn, "(objectClass=classSchema)", searchControls);
 
-                Attribute attribute = attributes.get("lDAPDisplayName");
-                String ocName = (String)attribute.get();
-                //log.debug(" - "+ocName);
+                while (results.hasMore()) {
+                    SearchResult sr = (SearchResult)results.next();
+                    Attributes attributes = sr.getAttributes();
 
-                ObjectClass oc = new ObjectClass();
-                oc.setName(ocName);
-                oc.setOid((String)attributes.get("governsID").get());
-                oc.setDescription((String)attributes.get("adminDescription").get());
+                    Attribute attribute = attributes.get("lDAPDisplayName");
+                    String ocName = (String)attribute.get();
+                    //log.debug(" - "+ocName);
 
-                attribute = attributes.get("mustContain");
-                if (attribute != null) {
-                    NamingEnumeration ne = attribute.getAll();
-                    while (ne.hasMore()) {
-                        String requiredAttribute = (String)ne.next();
-                        oc.addRequiredAttribute(requiredAttribute);
+                    ObjectClass oc = new ObjectClass();
+                    oc.setName(ocName);
+                    oc.setOid((String)attributes.get("governsID").get());
+                    oc.setDescription((String)attributes.get("adminDescription").get());
+
+                    attribute = attributes.get("mustContain");
+                    if (attribute != null) {
+                        NamingEnumeration ne = attribute.getAll();
+                        while (ne.hasMore()) {
+                            String requiredAttribute = (String)ne.next();
+                            oc.addRequiredAttribute(requiredAttribute);
+                        }
+                    }
+
+                    attribute = attributes.get("systemMustContain");
+                    if (attribute != null) {
+                        NamingEnumeration ne = attribute.getAll();
+                        while (ne.hasMore()) {
+                            String requiredAttribute = (String)ne.next();
+                            oc.addRequiredAttribute(requiredAttribute);
+                        }
+                    }
+
+                    attribute = attributes.get("mayContain");
+                    if (attribute != null) {
+                        NamingEnumeration ne = attribute.getAll();
+                        while (ne.hasMore()) {
+                            String optionalAttribute = (String)ne.next();
+                            oc.addOptionalAttribute(optionalAttribute);
+                        }
+                    }
+
+                    attribute = attributes.get("systemMayContain");
+                    if (attribute != null) {
+                        NamingEnumeration ne = attribute.getAll();
+                        while (ne.hasMore()) {
+                            String optionalAttribute = (String)ne.next();
+                            oc.addOptionalAttribute(optionalAttribute);
+                        }
+                    }
+
+                    schema.addObjectClass(oc);
+                }
+    /*
+                controls = context.getResponseControls();
+
+                if (controls != null) {
+                    for (int i = 0; i < controls.length; i++) {
+                        if (controls[i] instanceof PagedResultsResponseControl) {
+                            PagedResultsResponseControl prrc =
+                                (PagedResultsResponseControl)controls[i];
+                            cookie = prrc.getCookie();
+                        }
                     }
                 }
+    */
+                results.close();
+    /*
+            } while (cookie != null);
 
-                attribute = attributes.get("systemMustContain");
-                if (attribute != null) {
-                    NamingEnumeration ne = attribute.getAll();
-                    while (ne.hasMore()) {
-                        String requiredAttribute = (String)ne.next();
-                        oc.addRequiredAttribute(requiredAttribute);
-                    }
-                }
+            context.setRequestControls(null);
+    */
 
-                attribute = attributes.get("mayContain");
-                if (attribute != null) {
-                    NamingEnumeration ne = attribute.getAll();
-                    while (ne.hasMore()) {
-                        String optionalAttribute = (String)ne.next();
-                        oc.addOptionalAttribute(optionalAttribute);
-                    }
-                }
-
-                attribute = attributes.get("systemMayContain");
-                if (attribute != null) {
-                    NamingEnumeration ne = attribute.getAll();
-                    while (ne.hasMore()) {
-                        String optionalAttribute = (String)ne.next();
-                        oc.addOptionalAttribute(optionalAttribute);
-                    }
-                }
-
-                schema.addObjectClass(oc);
-            }
-/*
-            controls = context.getResponseControls();
-
-            if (controls != null) {
-                for (int i = 0; i < controls.length; i++) {
-                    if (controls[i] instanceof PagedResultsResponseControl) {
-                        PagedResultsResponseControl prrc =
-                            (PagedResultsResponseControl)controls[i];
-                        cookie = prrc.getCookie();
-                    }
-                }
-            }
-*/
-            results.close();
-/*
-        } while (cookie != null);
-
-        context.setRequestControls(null);
-*/
+        } finally {
+            if (context != null) try { context.close(); } catch (Exception e) {}
+        }
     }
 
     public Schema getLDAPSchema(String schemaDn) throws Exception {
@@ -524,44 +560,52 @@ public class JNDIClient {
 
         log.debug("Searching "+schemaDn+" ...");
 
-        SearchControls ctls = new SearchControls();
-        ctls.setSearchScope(SearchControls.OBJECT_SCOPE);
-        ctls.setReturningAttributes(new String[] { "attributeTypes", "objectClasses" });
+        LdapContext context = null;
 
-        NamingEnumeration results = context.search(schemaDn, "(objectClass=*)", ctls);
-        SearchResult sr = (SearchResult)results.next();
+        try {
+            SearchControls ctls = new SearchControls();
+            ctls.setSearchScope(SearchControls.OBJECT_SCOPE);
+            ctls.setReturningAttributes(new String[] { "attributeTypes", "objectClasses" });
 
-        Attributes attributes = sr.getAttributes();
+                context = getContext();
+            NamingEnumeration results = context.search(schemaDn, "(objectClass=*)", ctls);
+            SearchResult sr = (SearchResult)results.next();
 
-        //log.debug("Object Classes:");
-        Attribute attribute = attributes.get("objectClasses");
+            Attributes attributes = sr.getAttributes();
 
-        NamingEnumeration values = attribute.getAll();
-        while (values.hasMore()) {
-            String value = (String)values.next();
-            //System.out.println("objectClass "+value);
-            ObjectClass oc = parseObjectClass(value);
-            if (oc == null) continue;
+            //log.debug("Object Classes:");
+            Attribute attribute = attributes.get("objectClasses");
 
-            //log.debug(" - "+oc.getName());
-            schema.addObjectClass(oc);
+            NamingEnumeration values = attribute.getAll();
+            while (values.hasMore()) {
+                String value = (String)values.next();
+                //System.out.println("objectClass "+value);
+                ObjectClass oc = parseObjectClass(value);
+                if (oc == null) continue;
+
+                //log.debug(" - "+oc.getName());
+                schema.addObjectClass(oc);
+            }
+
+            //log.debug("Attribute Types:");
+            attribute = attributes.get("attributeTypes");
+
+            values = attribute.getAll();
+            while (values.hasMore()) {
+                String value = (String)values.next();
+                //System.out.println("attributeTypes "+value);
+                AttributeType at = parseAttributeType(value);
+                if (at == null) continue;
+
+                //log.debug(" - "+at.getName());
+                schema.addAttributeType(at);
+            }
+
+            results.close();
+
+        } finally {
+            if (context != null) try { context.close(); } catch (Exception e) {}
         }
-
-        //log.debug("Attribute Types:");
-        attribute = attributes.get("attributeTypes");
-
-        values = attribute.getAll();
-        while (values.hasMore()) {
-            String value = (String)values.next();
-            //System.out.println("attributeTypes "+value);
-            AttributeType at = parseAttributeType(value);
-            if (at == null) continue;
-
-            //log.debug(" - "+at.getName());
-            schema.addAttributeType(at);
-        }
-
-        results.close();
 
         return schema;
     }
@@ -609,8 +653,10 @@ public class JNDIClient {
         SearchControls ctls = new SearchControls();
         ctls.setSearchScope(scope);
 
-        DirContext ctx = null;
+        LdapContext context = null;
+
         try {
+            context = getContext();
             NamingEnumeration ne = context.search(ldapBase, filter, ctls);
 
             log.debug("Search \""+ldapBase+"\" with "+filter+":");
@@ -623,30 +669,39 @@ public class JNDIClient {
                 //String dn = sr.getName();
                 //log.debug(" - "+dn);
 
-                LDAPEntry entry = createLDAPEntry(dn, sr);
+                sr.setName(dn);
 
-                results.add(entry);
+                results.add(sr);
             }
 
         } finally {
             results.close();
-            if (ctx != null) try { ctx.close(); } catch (Exception e) {}
+            if (context != null) try { context.close(); } catch (Exception e) {}
         }
     }
     
-    public LDAPEntry getEntry(String dn) throws Exception {
+    public SearchResult getEntry(String dn) throws Exception {
 
         String searchBase = EntryUtil.append(dn, suffix);
 
         SearchControls ctls = new SearchControls();
         ctls.setSearchScope(SearchControls.OBJECT_SCOPE);
 
-        NamingEnumeration entries = context.search(searchBase, "(objectClass=*)", ctls);
-        if (!entries.hasMore()) return null;
+        LdapContext context = null;
 
-        SearchResult sr = (SearchResult)entries.next();
+        try {
+            context = getContext();
+            NamingEnumeration entries = context.search(searchBase, "(objectClass=*)", ctls);
+            if (!entries.hasMore()) return null;
 
-        return createLDAPEntry(dn, sr);
+            SearchResult sr = (SearchResult)entries.next();
+            sr.setName(dn);
+
+            return sr;
+
+        } finally {
+            if (context != null) try { context.close(); } catch (Exception e) {}
+        }
     }
 
     /**
@@ -656,60 +711,61 @@ public class JNDIClient {
 
         Collection results = new ArrayList();
 
-        String searchBase = EntryUtil.append(baseDn, suffix);
+        LdapContext context = null;
 
-        if ("".equals(searchBase)) {
-            log.debug("Searching Root DSE:");
+        try {
+            String searchBase = EntryUtil.append(baseDn, suffix);
 
-            SearchControls ctls = new SearchControls();
-            ctls.setSearchScope(SearchControls.OBJECT_SCOPE);
+            if ("".equals(searchBase)) {
+                log.debug("Searching Root DSE:");
 
-            NamingEnumeration entries = context.search(searchBase, "(objectClass=*)", ctls);
-            SearchResult rootDse = (SearchResult)entries.next();
+                SearchControls ctls = new SearchControls();
+                ctls.setSearchScope(SearchControls.OBJECT_SCOPE);
 
-            Attributes attributes = rootDse.getAttributes();
-            Attribute attribute = attributes.get("namingContexts");
+                context = getContext();
+                NamingEnumeration entries = context.search(searchBase, "(objectClass=*)", ctls);
+                SearchResult rootDse = (SearchResult)entries.next();
 
-            NamingEnumeration values = attribute.getAll();
+                Attributes attributes = rootDse.getAttributes();
+                Attribute attribute = attributes.get("namingContexts");
 
-            while (values.hasMore()) {
-                String dn = (String)values.next();
-                log.debug(" - "+dn);
+                NamingEnumeration values = attribute.getAll();
 
-                LDAPEntry entry = getEntry(dn);
-                results.add(entry);
-            }
-
-        } else {
-            log.debug("Searching "+searchBase+":");
-
-            SearchControls ctls = new SearchControls();
-            ctls.setSearchScope(SearchControls.ONELEVEL_SCOPE);
-
-            NamingEnumeration entries = context.search(searchBase, "(objectClass=*)", ctls);
-            try {
-                while (entries.hasMore()) {
-                    SearchResult sr = (SearchResult)entries.next();
-                    String rdn = sr.getName();
-                    String dn = EntryUtil.append(rdn, baseDn);
+                while (values.hasMore()) {
+                    String dn = (String)values.next();
                     log.debug(" - "+dn);
-                    LDAPEntry entry = createLDAPEntry(dn, sr);
+
+                    SearchResult entry = getEntry(dn);
                     results.add(entry);
                 }
-            } catch (Exception e) {
-                log.debug(e.getMessage(), e);
+
+            } else {
+                log.debug("Searching "+searchBase+":");
+
+                SearchControls ctls = new SearchControls();
+                ctls.setSearchScope(SearchControls.ONELEVEL_SCOPE);
+
+                context = getContext();
+                NamingEnumeration entries = context.search(searchBase, "(objectClass=*)", ctls);
+                try {
+                    while (entries.hasMore()) {
+                        SearchResult sr = (SearchResult)entries.next();
+                        String rdn = sr.getName();
+                        String dn = EntryUtil.append(rdn, baseDn);
+                        log.debug(" - "+dn);
+                        sr.setName(dn);
+                        results.add(sr);
+                    }
+                } catch (Exception e) {
+                    log.debug(e.getMessage(), e);
+                }
             }
+
+        } finally {
+            if (context != null) try { context.close(); } catch (Exception e) {}
         }
 
         return results;
-    }
-
-    public DirContext getContext() {
-        return context;
-    }
-
-    public void setContext(LdapContext context) {
-        this.context = context;
     }
 
     public static String[] parseURL(String s) {
@@ -765,39 +821,6 @@ public class JNDIClient {
         this.url = url;
     }
 
-    public LDAPEntry createLDAPEntry(String dn, SearchResult sr) throws Exception {
-        return createLDAPEntry(dn, sr.getAttributes());
-    }
-
-    public LDAPEntry createLDAPEntry(String dn, Attributes attributes) throws Exception {
-
-        LDAPAttributeSet attributeSet = new LDAPAttributeSet();
-
-        //log.debug("Creating "+EntryUtil.append(dn, suffix)+":");
-        for (Enumeration en = attributes.getAll(); en.hasMoreElements(); ) {
-            Attribute attribute = (Attribute)en.nextElement();
-            String name = attribute.getID();
-
-            LDAPAttribute attr = new LDAPAttribute(name);
-
-            Collection values = getAttributeValues(attribute);
-            for (Iterator i = values.iterator(); i.hasNext(); ) {
-                Object value = i.next();
-                if (value instanceof byte[]) {
-                    attr.addValue((byte[])value);
-                    //log.debug(" - "+name+": (binary)");
-                } else {
-                    attr.addValue(value.toString());
-                    //log.debug(" - "+name+": "+value);
-                }
-            }
-
-            attributeSet.add(attr);
-        }
-
-        return new LDAPEntry(dn, attributeSet);
-    }
-
     public Collection getAttributeValues(Attribute attribute) throws Exception {
 
         Collection values = new ArrayList();
@@ -810,7 +833,7 @@ public class JNDIClient {
         return values;
     }
 
-    public void setRootDSE(LDAPEntry rootDSE) {
+    public void setRootDSE(SearchResult rootDSE) {
         this.rootDSE = rootDSE;
     }
 

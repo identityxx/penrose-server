@@ -33,7 +33,6 @@ import org.safehaus.penrose.partition.PartitionManager;
 import org.safehaus.penrose.partition.Partition;
 import org.ietf.ldap.LDAPConnection;
 import org.ietf.ldap.LDAPSearchConstraints;
-import org.ietf.ldap.LDAPEntry;
 
 import javax.naming.directory.*;
 import javax.naming.NamingEnumeration;
@@ -97,12 +96,12 @@ public class LDAPSyncModule extends Module implements EntryCacheListener {
             );
 
             while (sr.hasNext()) {
-                LDAPEntry ldapEntry = (LDAPEntry)sr.next();
+                SearchResult ldapEntry = (SearchResult)sr.next();
 
-                String dn = ldapEntry.getDN();
+                String dn = ldapEntry.getName();
                 log.debug(" - "+dn);
 
-                Attributes attributes = EntryUtil.convert(ldapEntry);
+                Attributes attributes = ldapEntry.getAttributes();
 
                 try {
                     ctx.createSubcontext(dn, attributes);

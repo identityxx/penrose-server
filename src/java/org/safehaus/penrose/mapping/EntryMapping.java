@@ -19,9 +19,6 @@ package org.safehaus.penrose.mapping;
 
 import org.safehaus.penrose.acl.ACI;
 import org.safehaus.penrose.util.EntryUtil;
-import org.ietf.ldap.LDAPEntry;
-import org.ietf.ldap.LDAPAttributeSet;
-import org.ietf.ldap.LDAPAttribute;
 import org.apache.log4j.Logger;
 
 import java.util.*;

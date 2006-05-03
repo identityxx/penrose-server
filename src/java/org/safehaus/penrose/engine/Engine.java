@@ -37,9 +37,9 @@ import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.filter.SimpleFilter;
 import org.safehaus.penrose.filter.FilterTool;
 import org.safehaus.penrose.session.PenroseSearchResults;
-import org.ietf.ldap.LDAPEntry;
 import org.apache.log4j.Logger;
 
+import javax.naming.directory.Attributes;
 import java.util.*;
 
 /**
@@ -473,7 +473,8 @@ public abstract class Engine {
     public abstract void addProxy(
             Partition partition,
             EntryMapping entryMapping,
-            LDAPEntry entry
+            String dn,
+            Attributes attributes
             ) throws Exception;
 
     public abstract void modifyProxy(

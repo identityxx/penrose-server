@@ -84,13 +84,19 @@ public class Penrose {
     }
 
     protected Penrose(String home) throws Exception {
-        penroseConfig = new PenroseConfig();
+
+        PenroseConfigReader reader = new PenroseConfigReader((home == null ? "" : home+File.separator)+"conf"+File.separator+"server.xml");
+        penroseConfig = reader.read();
+        penroseConfig.setHome(home);
+
         init();
         load(home);
     }
 
     protected Penrose() throws Exception {
-        this((String)null);
+        penroseConfig = new PenroseConfig();
+        init();
+        load(null);
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -193,11 +199,12 @@ public class Penrose {
 
         loadPartitions();
         loadConnections();
-        loadModules();
 
         loadConnector();
         loadEngine();
         loadHandler();
+
+        loadModules();
     }
 
     public void loadSystemProperties() throws Exception {

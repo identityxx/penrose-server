@@ -17,9 +17,10 @@
  */
 package org.safehaus.penrose.session;
 
-import org.ietf.ldap.LDAPEntry;
 import org.safehaus.penrose.handler.Handler;
+import org.safehaus.penrose.util.EntryUtil;
 
+import javax.naming.directory.Attributes;
 import java.util.Date;
 import java.util.Collection;
 import java.util.Arrays;
@@ -65,9 +66,9 @@ public class PenroseSession {
         this.handler = handler;
     }
 
-    public int add(LDAPEntry entry) throws Exception {
+    public int add(String dn, Attributes attributes) throws Exception {
         lastActivityDate.setTime(System.currentTimeMillis());
-        return handler.add(this, entry);
+        return handler.add(this, dn, attributes);
     }
 
     public int bind(String dn, String password) throws Exception {

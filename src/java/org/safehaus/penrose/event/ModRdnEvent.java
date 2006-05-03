@@ -19,7 +19,6 @@ package org.safehaus.penrose.event;
 
 
 import org.safehaus.penrose.session.PenroseSession;
-import org.ietf.ldap.LDAPEntry;
 
 /**
  * @author Endi S. Dewata
@@ -30,21 +29,15 @@ public class ModRdnEvent extends Event {
     public final static int AFTER_MODRDN  = 1;
 
     private PenroseSession session;
-    private LDAPEntry entry;
+    private String dn;
+    private String newRdn;
     private int returnCode;
 
-    public ModRdnEvent(Object source, int type, PenroseSession session, LDAPEntry entry) {
+    public ModRdnEvent(Object source, int type, PenroseSession session, String dn, String newRdn) {
         super(source, type);
         this.session = session;
-        this.entry = entry;
-    }
-
-    public LDAPEntry getEntry() {
-        return entry;
-    }
-
-    public void setEntry(LDAPEntry entry) {
-        this.entry = entry;
+        this.dn = dn;
+        this.newRdn = newRdn;
     }
 
     public int getReturnCode() {
@@ -61,5 +54,21 @@ public class ModRdnEvent extends Event {
 
     public void setConnection(PenroseSession session) {
         this.session = session;
+    }
+
+    public String getDn() {
+        return dn;
+    }
+
+    public void setDn(String dn) {
+        this.dn = dn;
+    }
+
+    public String getNewRdn() {
+        return newRdn;
+    }
+
+    public void setNewRdn(String newRdn) {
+        this.newRdn = newRdn;
     }
 }

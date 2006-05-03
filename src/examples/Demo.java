@@ -26,8 +26,12 @@ import org.safehaus.penrose.schema.SchemaConfig;
 import org.safehaus.penrose.partition.PartitionConfig;
 import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.config.DefaultPenroseConfig;
-import org.ietf.ldap.*;
 import org.apache.log4j.*;
+
+import javax.naming.directory.SearchResult;
+import javax.naming.directory.Attributes;
+import javax.naming.directory.Attribute;
+import javax.naming.NamingEnumeration;
 
 /**
  * @author Endi S. Dewata
@@ -71,7 +75,7 @@ public class Demo {
                 sc);
 
         for (Iterator i = results.iterator(); i.hasNext();) {
-            LDAPEntry entry = (LDAPEntry) i.next();
+            SearchResult entry = (SearchResult) i.next();
             System.out.println(toString(entry));
         }
 
@@ -82,21 +86,19 @@ public class Demo {
         penrose.stop();
     }
 
-    public String toString(LDAPEntry entry) throws Exception {
+    public String toString(SearchResult entry) throws Exception {
 
         StringBuffer sb = new StringBuffer();
-        sb.append("dn: "+entry.getDN()+"\n");
+        sb.append("dn: "+entry.getName()+"\n");
 
-        LDAPAttributeSet attributeSet = entry.getAttributeSet();
-        for (Iterator i=attributeSet.iterator(); i.hasNext(); ) {
-            LDAPAttribute attribute = (LDAPAttribute)i.next();
+        Attributes attributes = entry.getAttributes();
+        for (NamingEnumeration i=attributes.getAll(); i.hasMore(); ) {
+            Attribute attribute = (Attribute)i.next();
+            String name = attribute.getID();
 
-            String name = attribute.getName();
-
-            String values[] = attribute.getStringValueArray();
-
-            for (int j=0; j<values.length; j++) {
-                sb.append(name+": "+values[j]+"\n");
+            for (NamingEnumeration j=attribute.getAll(); j.hasMore(); ) {
+                Object value = j.next();
+                sb.append(name+": "+value+"\n");
             }
         }
 

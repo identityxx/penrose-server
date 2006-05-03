@@ -48,7 +48,7 @@ public class SessionManager implements SessionManagerMBean {
 	}
 
     public void stop() throws Exception {
-        log.info("Removing all sessions");
+        log.debug("Removing all sessions");
         sessions.clear();
     }
 
@@ -63,7 +63,7 @@ public class SessionManager implements SessionManagerMBean {
             sessionId = createSessionId();
         }
 
-        log.info("Creating session "+sessionId);
+        log.debug("Creating session "+sessionId);
         PenroseSession session = new PenroseSession();
         session.setSessionId(sessionId);
 
@@ -91,7 +91,7 @@ public class SessionManager implements SessionManagerMBean {
 
         for (Iterator i=expiredSessions.iterator(); i.hasNext(); ) {
             String sessionId = (String)i.next();
-            log.info("Removing session "+sessionId);
+            log.debug("Removing session "+sessionId);
             sessions.remove(sessionId);
         }
     }
@@ -114,7 +114,7 @@ public class SessionManager implements SessionManagerMBean {
     }
 
     public synchronized void closeSession(PenroseSession session) {
-        log.info("Removing session "+session.getSessionId());
+        log.debug("Removing session "+session.getSessionId());
         sessions.remove(session.getSessionId());
     }
 

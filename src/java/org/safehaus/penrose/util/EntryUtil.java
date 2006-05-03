@@ -19,16 +19,11 @@ package org.safehaus.penrose.util;
 
 import org.safehaus.penrose.mapping.Row;
 import org.safehaus.penrose.mapping.Entry;
-import org.safehaus.penrose.schema.SchemaManager;
-import org.safehaus.penrose.schema.Schema;
-import org.safehaus.penrose.schema.AttributeType;
+import org.safehaus.penrose.mapping.AttributeValues;
+import org.safehaus.penrose.mapping.EntryMapping;
 import org.apache.log4j.Logger;
-import org.ietf.ldap.LDAPEntry;
-import org.ietf.ldap.LDAPAttributeSet;
-import org.ietf.ldap.LDAPAttribute;
 
 import javax.naming.directory.*;
-import javax.naming.NamingEnumeration;
 import java.util.*;
 
 /**
@@ -75,65 +70,6 @@ public class EntryUtil {
         return parentDn1 == null && parentDn2 == null;
     }
 
-    public static LDAPEntry convert(SchemaManager schemaManager, String dn, Attributes attributes) throws Exception {
-
-        Schema schema = schemaManager.getAllSchema();
-        LDAPAttributeSet attributeSet = new LDAPAttributeSet();
-
-        log.debug("Converting:");
-        for (Enumeration en = attributes.getAll(); en.hasMoreElements(); ) {
-            Attribute attribute = (Attribute)en.nextElement();
-            AttributeType at = schema.getAttributeType(attribute.getID());
-
-            boolean binary = false;
-            try {
-                DirContext ctx = attribute.getAttributeSyntaxDefinition();
-            } catch (Exception e) {
-                binary = "SyntaxDefinition/1.3.6.1.4.1.1466.115.121.1.40".equals(e.getMessage());
-            }
-            log.debug(" - "+attribute.getID()+": "+(binary ? "(binary)" : "(not binary)"));
-
-            LDAPAttribute attr = new LDAPAttribute(at.getName());
-
-            for (Enumeration values = attribute.getAll(); values.hasMoreElements(); ) {
-                Object value = values.nextElement();
-                log.debug("   "+value.getClass().getName());
-                if (value instanceof byte[]) {
-                    attr.addValue((byte[])value);
-                } else {
-                    attr.addValue(value.toString());
-                }
-            }
-
-            attributeSet.add(attr);
-        }
-
-        return new LDAPEntry(dn, attributeSet);
-    }
-
-    public static Attributes convert(LDAPEntry entry) throws Exception {
-        Attributes attributes = new BasicAttributes();
-        if (entry == null) return attributes;
-        
-        LDAPAttributeSet attributeSet = entry.getAttributeSet();
-        for (Iterator j=attributeSet.iterator(); j.hasNext(); ) {
-            LDAPAttribute attribute = (LDAPAttribute)j.next();
-            String name = attribute.getName();
-
-            String values[] = attribute.getStringValueArray();
-            if (values == null || values.length == 0) continue;
-
-            Attribute attr = new BasicAttribute(name);
-            for (int k = 0; k<values.length; k++) {
-                String value = values[k];
-                attr.add(value.toString());
-            }
-            attributes.put(attr);
-        }
-
-        return attributes;
-    }
-
     public static String append(String dn, String suffix) {
         if (dn == null || "".equals(dn)) return suffix == null ? "" : suffix;
         if (suffix == null || "".equals(suffix)) return dn == null ? "" : dn;
@@ -166,43 +102,43 @@ public class EntryUtil {
         return index < 0 ? null : dn.substring(index+1);
     }
 
-    public static String toString(LDAPEntry entry) throws Exception {
+    public static SearchResult toSearchResult(Entry entry) {
+        return new SearchResult(entry.getDn(), entry, getAttributes(entry));
+    }
 
-        StringBuffer sb = new StringBuffer();
-        sb.append("dn: " + entry.getDN() + "\n");
+    public static Attributes getAttributes(Entry entry) {
 
-        LDAPAttributeSet attributeSet = entry.getAttributeSet();
-        for (Iterator i = attributeSet.iterator(); i.hasNext();) {
-            LDAPAttribute attribute = (LDAPAttribute) i.next();
+        AttributeValues attributeValues = entry.getAttributeValues();
+        Attributes attributes = new BasicAttributes();
 
-            String name = attribute.getName();
-            String values[] = attribute.getStringValueArray();
+        for (Iterator i=attributeValues.getNames().iterator(); i.hasNext(); ) {
+            String name = (String)i.next();
+            Collection values = attributeValues.get(name);
 
-            for (int j = 0; j < values.length; j++) {
-                sb.append(name + ": " + values[j] + "\n");
+            Attribute attribute = new BasicAttribute(name);
+            for (Iterator j=values.iterator(); j.hasNext(); ) {
+                Object value = j.next();
+                attribute.add(value);
+            }
+
+            attributes.put(attribute);
+        }
+
+        EntryMapping entryMapping = entry.getEntryMapping();
+        if (entryMapping != null) {
+            Collection objectClasses = entryMapping.getObjectClasses();
+
+            if (!objectClasses.isEmpty()) {
+                Attribute objectClass = new BasicAttribute("objectClass");
+                for (Iterator i=objectClasses.iterator(); i.hasNext(); ) {
+                    String oc = (String)i.next();
+                    objectClass.add(oc);
+                }
+
+                attributes.put(objectClass);
             }
         }
 
-        return sb.toString();
-    }
-
-    public static void filterAttributes(
-            LDAPEntry ldapEntry,
-            Collection attributeNames)
-            throws Exception {
-
-        if (attributeNames == null || attributeNames.contains("*")) return;
-
-        LDAPAttributeSet attributeSet = ldapEntry.getAttributeSet();
-        Collection list = new ArrayList();
-
-        for (Iterator i=attributeSet.iterator(); i.hasNext(); ) {
-            LDAPAttribute attribute = (LDAPAttribute)i.next();
-            String name = attribute.getName().toLowerCase();
-
-            if (attributeNames.contains(name)) list.add(attribute);
-        }
-
-        attributeSet.retainAll(list);
+        return attributes;
     }
 }

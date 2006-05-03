@@ -28,8 +28,8 @@ import org.safehaus.penrose.PenroseFactory;
 import org.safehaus.penrose.session.PenroseSession;
 import org.safehaus.penrose.session.PenroseSearchControls;
 import org.safehaus.penrose.session.PenroseSearchResults;
-import org.ietf.ldap.LDAPEntry;
 
+import javax.naming.directory.SearchResult;
 import java.util.Iterator;
 
 /**
@@ -145,8 +145,8 @@ public class PenroseServiceTest extends TestCase {
         PenroseSearchResults results = session.search(baseDn, "(objectClass=*)", sc);
 
         for (Iterator i = results.iterator(); i.hasNext();) {
-            LDAPEntry entry = (LDAPEntry) i.next();
-            System.out.println("dn: "+entry.getDN());
+            SearchResult entry = (SearchResult) i.next();
+            System.out.println("dn: "+entry.getName());
         }
     }
 }
