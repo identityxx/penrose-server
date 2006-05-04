@@ -19,11 +19,9 @@ package org.safehaus.penrose.handler;
 
 import org.safehaus.penrose.session.PenroseSession;
 import org.safehaus.penrose.session.PenroseSearchResults;
-import org.safehaus.penrose.event.AddEvent;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.PartitionManager;
 import org.safehaus.penrose.mapping.*;
-import org.safehaus.penrose.cache.EntryCache;
 import org.safehaus.penrose.util.EntryUtil;
 import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.service.ServiceConfig;

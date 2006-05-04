@@ -932,12 +932,15 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
             log.debug(Formatter.displaySeparator(80));
 
             rs = ps.executeQuery();
+
+            if (!rs.next()) return false;
+            
             long count = rs.getLong(1);
 
             return count > 0;
 
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
 
         } finally {
             if (rs != null) try { rs.close(); } catch (Exception e) {}
