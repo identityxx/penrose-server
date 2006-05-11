@@ -30,7 +30,7 @@ import org.safehaus.penrose.partition.FieldConfig;
 import org.safehaus.penrose.cache.EntryCache;
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.graph.Graph;
-import org.safehaus.penrose.thread.ThreadPool;
+import org.safehaus.penrose.thread.ThreadManager;
 import org.safehaus.penrose.thread.MRSWLock;
 import org.safehaus.penrose.thread.Queue;
 import org.safehaus.penrose.filter.Filter;
@@ -60,7 +60,7 @@ public abstract class Engine {
 
     public boolean stopping = false;
 
-    public ThreadPool threadPool;
+    ThreadManager threadManager;
     public EngineFilterTool filterTool;
 
     public Map locks = new HashMap();
@@ -212,14 +212,6 @@ public abstract class Engine {
 
     public abstract void start() throws Exception;
 
-    public ThreadPool getThreadPool() {
-        return threadPool;
-    }
-
-    public void setThreadPool(ThreadPool threadPool) {
-        this.threadPool = threadPool;
-    }
-
     public abstract void stop() throws Exception;
 
     public String getStartingSourceName(EntryMapping entryMapping) throws Exception {
@@ -348,18 +340,6 @@ public abstract class Engine {
         }
 
         return filter;
-    }
-
-    public void execute(Runnable runnable) throws Exception {
-        String s = engineConfig.getParameter(EngineConfig.ALLOW_CONCURRENCY);
-        boolean allowConcurrency = s == null ? true : new Boolean(s).booleanValue();
-
-        if (threadPool == null || !allowConcurrency || log.isDebugEnabled()) {
-            runnable.run();
-
-        } else {
-            threadPool.execute(runnable);
-        }
     }
 
     public MergeEngine getMergeEngine() {
@@ -825,6 +805,14 @@ public abstract class Engine {
 
     public PenroseConfig getServerConfig() {
         return penroseConfig;
+    }
+
+    public ThreadManager getThreadManager() {
+        return threadManager;
+    }
+
+    public void setThreadManager(ThreadManager threadManager) {
+        this.threadManager = threadManager;
     }
 }
 

@@ -25,7 +25,7 @@ import org.safehaus.penrose.engine.TransformEngine;
 import org.safehaus.penrose.config.*;
 import org.safehaus.penrose.thread.MRSWLock;
 import org.safehaus.penrose.thread.Queue;
-import org.safehaus.penrose.thread.ThreadPool;
+import org.safehaus.penrose.thread.ThreadManager;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.filter.FilterTool;
 import org.safehaus.penrose.mapping.*;
@@ -52,11 +52,14 @@ public class Connector {
     private PartitionManager partitionManager;
     private SourceCache sourceCache;
 
-    private ThreadPool threadPool;
+    private ThreadManager threadManager;
     private boolean stopping = false;
 
     private Map locks = new HashMap();
     private Queue queue = new Queue();
+
+    public Connector() {
+    }
 
     public void init() throws Exception {
         CacheConfig cacheConfig = penroseConfig.getSourceCacheConfig();
@@ -71,14 +74,13 @@ public class Connector {
         sourceCache.setPenroseConfig(penroseConfig);
         sourceCache.setConnectionManager(connectionManager);
         sourceCache.setPartitionManager(partitionManager);
+        sourceCache.setThreadManager(threadManager);
     }
 
     public void start() throws Exception {
 
         String s = connectorConfig.getParameter(ConnectorConfig.THREAD_POOL_SIZE);
         int threadPoolSize = s == null ? ConnectorConfig.DEFAULT_THREAD_POOL_SIZE : Integer.parseInt(s);
-
-        threadPool = new ThreadPool(threadPoolSize);
 
         for (Iterator i=partitionManager.getPartitions().iterator(); i.hasNext(); ) {
             Partition partition = (Partition)i.next();
@@ -90,24 +92,9 @@ public class Connector {
         return stopping;
     }
 
-    public void execute(Runnable runnable) throws Exception {
-        String s = connectorConfig.getParameter(ConnectorConfig.ALLOW_CONCURRENCY);
-        boolean allowConcurrency = s == null ? true : new Boolean(s).booleanValue();
-
-        if (threadPool == null || !allowConcurrency || log.isDebugEnabled()) {
-            runnable.run();
-            
-        } else {
-            threadPool.execute(runnable);
-        }
-    }
-
     public void stop() throws Exception {
         if (stopping) return;
         stopping = true;
-
-        // wait for all the worker threads to finish
-        if (threadPool != null) threadPool.stopRequestAllWorkers();
     }
 
 
@@ -467,7 +454,7 @@ public class Connector {
             return;
         }
 
-        execute(new Runnable() {
+        threadManager.execute(new Runnable() {
             public void run() {
                 try {
                     Collection normalizedPks = new ArrayList();
@@ -645,7 +632,7 @@ public class Connector {
             }
         });
 
-        execute(new Runnable() {
+        threadManager.execute(new Runnable() {
             public void run() {
                 try {
                     String s = sourceConfig.getParameter(SourceConfig.SIZE_LIMIT);
@@ -705,5 +692,13 @@ public class Connector {
 
     public void setSourceCache(SourceCache sourceCache) {
         this.sourceCache = sourceCache;
+    }
+
+    public ThreadManager getThreadManager() {
+        return threadManager;
+    }
+
+    public void setThreadManager(ThreadManager threadManager) {
+        this.threadManager = threadManager;
     }
 }

@@ -33,6 +33,8 @@ public class InMemorySourceCache extends SourceCache {
         sourceCacheStorage.setSourceDefinition(sourceConfig);
         sourceCacheStorage.setPartition(partition);
         sourceCacheStorage.setConnector(connector);
+        sourceCacheStorage.setThreadManager(threadManager);
+
         sourceCacheStorage.init(cacheConfig);
 
         return sourceCacheStorage;

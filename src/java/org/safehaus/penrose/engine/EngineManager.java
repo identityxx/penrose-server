@@ -23,6 +23,7 @@ import org.safehaus.penrose.interpreter.InterpreterManager;
 import org.safehaus.penrose.schema.SchemaManager;
 import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.partition.PartitionManager;
+import org.safehaus.penrose.thread.ThreadManager;
 
 import java.util.TreeMap;
 import java.util.Map;
@@ -40,6 +41,7 @@ public class EngineManager {
     private InterpreterManager interpreterManager;
     private ConnectionManager connectionManager;
     private PartitionManager partitionManager;
+    private ThreadManager threadManager;
 
     public EngineManager() {
     }
@@ -57,6 +59,8 @@ public class EngineManager {
         engine.setConnector(connector);
         engine.setConnectionManager(connectionManager);
         engine.setPartitionManager(partitionManager);
+        engine.setThreadManager(threadManager);
+
         engine.init();
 
         engines.put(engineConfig.getName(), engine);
@@ -122,5 +126,13 @@ public class EngineManager {
 
     public void setPartitionManager(PartitionManager partitionManager) {
         this.partitionManager = partitionManager;
+    }
+
+    public ThreadManager getThreadManager() {
+        return threadManager;
+    }
+
+    public void setThreadManager(ThreadManager threadManager) {
+        this.threadManager = threadManager;
     }
 }

@@ -25,6 +25,7 @@ import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.PartitionManager;
 import org.safehaus.penrose.partition.SourceConfig;
 import org.safehaus.penrose.Penrose;
+import org.safehaus.penrose.thread.ThreadManager;
 import org.safehaus.penrose.session.PenroseSearchResults;
 import org.safehaus.penrose.connector.ConnectionManager;
 import org.safehaus.penrose.filter.Filter;
@@ -46,6 +47,7 @@ public class EntryCache {
     ConnectionManager connectionManager;
     PenroseConfig penroseConfig;
     PartitionManager partitionManager;
+    ThreadManager threadManager;
 
     public Map caches = new TreeMap();
     public Collection listeners = new ArrayList();
@@ -318,5 +320,13 @@ public class EntryCache {
                 log.debug(e.getMessage(), e);
             }
         }
+    }
+
+    public ThreadManager getThreadManager() {
+        return threadManager;
+    }
+
+    public void setThreadManager(ThreadManager threadManager) {
+        this.threadManager = threadManager;
     }
 }

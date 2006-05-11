@@ -25,6 +25,7 @@ import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.SourceConfig;
 import org.safehaus.penrose.connector.ConnectionManager;
 import org.safehaus.penrose.session.PenroseSearchResults;
+import org.safehaus.penrose.thread.ThreadManager;
 import org.apache.log4j.Logger;
 
 import java.util.Collection;
@@ -38,6 +39,8 @@ public class EntryCacheStorage {
     Logger log = Logger.getLogger(getClass());
 
     ConnectionManager connectionManager;
+    ThreadManager threadManager;
+
     Partition partition;
     EntryMapping entryMapping;
 
@@ -155,4 +158,12 @@ public class EntryCacheStorage {
     public void put(String dn, Entry entry) throws Exception { }
 
     public void remove(String dn) throws Exception { }
+
+    public ThreadManager getThreadManager() {
+        return threadManager;
+    }
+
+    public void setThreadManager(ThreadManager threadManager) {
+        this.threadManager = threadManager;
+    }
 }

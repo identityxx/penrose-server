@@ -323,7 +323,7 @@ public class Handler {
 
         //getSearchHandler().search(connection, base, scope, deref, filter, attributeNames, results);
 
-        engine.execute(new Runnable() {
+        engine.getThreadManager().execute(new Runnable() {
             public void run() {
                 try {
                     final PenroseSearchResults sr = new PenroseSearchResults();

@@ -23,8 +23,10 @@ import org.safehaus.penrose.connector.Connector;
 import org.safehaus.penrose.connector.Connection;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.SourceConfig;
-import org.safehaus.penrose.partition.ConnectionConfig;
 import org.safehaus.penrose.session.PenroseSearchResults;
+import org.safehaus.penrose.pipeline.PipelineEvent;
+import org.safehaus.penrose.pipeline.PipelineAdapter;
+import org.safehaus.penrose.thread.ThreadManager;
 import org.apache.log4j.Logger;
 
 import java.util.*;
@@ -35,6 +37,8 @@ import java.util.*;
 public class SourceCacheStorage {
 
     Logger log = Logger.getLogger(getClass());
+
+    ThreadManager threadManager;
 
     Partition partition;
     Connector connector;
@@ -167,26 +171,38 @@ public class SourceCacheStorage {
         if (!autoRefresh) return;
 */
         String s = sourceConfig.getParameter(SourceConfig.SIZE_LIMIT);
-        int sizeLimit = s == null ? SourceConfig.DEFAULT_SIZE_LIMIT : Integer.parseInt(s);
+        final int sizeLimit = s == null ? SourceConfig.DEFAULT_SIZE_LIMIT : Integer.parseInt(s);
 
-        log.debug("Loading cache for "+sourceConfig.getName());
+        log.info("Loading cache for "+sourceConfig.getName()+"...");
 
-        Connection connection = connector.getConnection(partition, sourceConfig.getConnectionName());
+        final Connection connection = connector.getConnection(partition, sourceConfig.getConnectionName());
 
-        PenroseSearchResults sr = new PenroseSearchResults();
+        final PenroseSearchResults sr = new PenroseSearchResults();
+
+        sr.addListener(new PipelineAdapter() {
+            public void objectAdded(PipelineEvent event) {
+                try {
+                    AttributeValues sourceValues = (AttributeValues)event.getObject();
+                    Row pk = sourceConfig.getPrimaryKeyValues(sourceValues);
+                    log.info("Source Cache <= "+pk);
+                    put(pk, sourceValues);
+                } catch (Exception e) {
+                    log.debug(e.getMessage(), e);
+                }
+            }
+
+            public void pipelineClosed(PipelineEvent event) {
+                try {
+                    int lastChangeNumber = connection.getLastChangeNumber(sourceConfig);
+                    log.info("Last change number for "+sourceConfig.getName()+": "+lastChangeNumber);
+                    setLastChangeNumber(lastChangeNumber);
+                } catch (Exception e) {
+                    log.debug(e.getMessage(), e);
+                }
+            }
+        });
+
         connection.load(sourceConfig, null, sizeLimit, sr);
-
-        //log.debug("Results:");
-        while (sr.hasNext()) {
-            AttributeValues sourceValues = (AttributeValues)sr.next();
-            Row pk = sourceConfig.getPrimaryKeyValues(sourceValues);
-            //log.debug(" - "+pk+": "+sourceValues);
-
-            put(pk, sourceValues);
-        }
-
-        int lastChangeNumber = connection.getLastChangeNumber(sourceConfig);
-        setLastChangeNumber(lastChangeNumber);
     }
 
     public Partition getPartition() {
@@ -195,5 +211,13 @@ public class SourceCacheStorage {
 
     public void setPartition(Partition partition) {
         this.partition = partition;
+    }
+
+    public ThreadManager getThreadManager() {
+        return threadManager;
+    }
+
+    public void setThreadManager(ThreadManager threadManager) {
+        this.threadManager = threadManager;
     }
 }

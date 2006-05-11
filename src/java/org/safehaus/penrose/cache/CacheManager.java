@@ -328,7 +328,7 @@ public class CacheManager {
 
         penrose.stop();
 
-        System.exit(0);
+        //System.exit(0);
     }
 
 }

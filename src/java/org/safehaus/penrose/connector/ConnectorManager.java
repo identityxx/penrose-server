@@ -19,6 +19,7 @@ package org.safehaus.penrose.connector;
 
 import org.safehaus.penrose.partition.PartitionManager;
 import org.safehaus.penrose.config.PenroseConfig;
+import org.safehaus.penrose.thread.ThreadManager;
 
 import java.util.TreeMap;
 import java.util.Map;
@@ -34,6 +35,7 @@ public class ConnectorManager {
     private PenroseConfig penroseConfig;
     private ConnectionManager connectionManager;
     private PartitionManager partitionManager;
+    private ThreadManager threadManager;
 
     public ConnectorManager() {
     }
@@ -47,6 +49,8 @@ public class ConnectorManager {
         connector.setPenroseConfig(penroseConfig);
         connector.setConnectionManager(connectionManager);
         connector.setPartitionManager(partitionManager);
+        connector.setThreadManager(threadManager);
+        
         connector.init();
 
         connectors.put(connectorConfig.getName(), connector);
@@ -96,5 +100,13 @@ public class ConnectorManager {
 
     public void setPartitionManager(PartitionManager partitionManager) {
         this.partitionManager = partitionManager;
+    }
+
+    public ThreadManager getThreadManager() {
+        return threadManager;
+    }
+
+    public void setThreadManager(ThreadManager threadManager) {
+        this.threadManager = threadManager;
     }
 }

@@ -48,7 +48,7 @@ public class MergeEngine {
 
         final Interpreter interpreter = engine.getInterpreterFactory().newInstance();
 
-        engine.execute(new Runnable() {
+        engine.threadManager.execute(new Runnable() {
             public void run() {
                 try {
                     mergeBackground(entryMapping, loadedBatches, interpreter, results);

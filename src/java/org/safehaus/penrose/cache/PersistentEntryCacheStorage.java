@@ -24,16 +24,10 @@ import org.safehaus.penrose.util.EntryUtil;
 import org.safehaus.penrose.partition.FieldConfig;
 import org.safehaus.penrose.partition.SourceConfig;
 import org.safehaus.penrose.filter.*;
-import org.safehaus.penrose.schema.AttributeType;
-import org.safehaus.penrose.schema.matchingRule.SubstringsMatchingRule;
 import org.safehaus.penrose.session.PenroseSearchResults;
-import org.safehaus.penrose.thread.ThreadPool;
 import org.ietf.ldap.LDAPException;
 
 import javax.naming.NamingException;
-import javax.naming.NamingEnumeration;
-import javax.naming.NameNotFoundException;
-import javax.naming.directory.*;
 import java.util.*;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -47,7 +41,6 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
     int mappingId;
 
     String connectionName;
-    ThreadPool threadPool = new ThreadPool(20);
 
     public void init() throws Exception {
         super.init();
@@ -956,7 +949,7 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
      */
     public PenroseSearchResults search(final String baseDn, final Filter filter, final PenroseSearchResults results) throws Exception {
 
-        execute(new Runnable() {
+        threadManager.execute(new Runnable() {
             public void run() {
                 try {
                     searchBackground(baseDn, filter, results);
@@ -972,10 +965,6 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
         });
 
         return results;
-    }
-
-    public void execute(Runnable runnable) throws Exception {
-        threadPool.execute(runnable);
     }
 
     public void searchBackground(String baseDn, Filter filter, PenroseSearchResults results) throws Exception {

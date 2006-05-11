@@ -26,7 +26,6 @@ import org.safehaus.penrose.filter.*;
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.pipeline.PipelineAdapter;
 import org.safehaus.penrose.pipeline.PipelineEvent;
-import org.safehaus.penrose.thread.ThreadPool;
 import org.safehaus.penrose.util.*;
 import org.ietf.ldap.LDAPException;
 
@@ -65,6 +64,8 @@ public class DefaultEngine extends Engine {
         entryCache.setPenroseConfig(penroseConfig);
         entryCache.setConnectionManager(connectionManager);
         entryCache.setPartitionManager(partitionManager);
+        entryCache.setThreadManager(threadManager);
+
         entryCache.init();
 
         log.debug("Initializing engine...");
@@ -475,11 +476,6 @@ public class DefaultEngine extends Engine {
 
         //log.debug("Starting Engine...");
 
-        String s = engineConfig.getParameter(EngineConfig.THREAD_POOL_SIZE);
-        int threadPoolSize = s == null ? EngineConfig.DEFAULT_THREAD_POOL_SIZE : Integer.parseInt(s);
-
-        threadPool = new ThreadPool(threadPoolSize);
-
         for (Iterator i=partitionManager.getPartitions().iterator(); i.hasNext(); ) {
             Partition partition = (Partition)i.next();
 
@@ -489,7 +485,7 @@ public class DefaultEngine extends Engine {
             }
         }
 
-        threadPool.execute(new RefreshThread(this));
+        threadManager.execute(new RefreshThread(this), false);
 
         //log.debug("Engine started.");
     }
@@ -501,7 +497,7 @@ public class DefaultEngine extends Engine {
         stopping = true;
 
         // wait for all the worker threads to finish
-        if (threadPool != null) threadPool.stopRequestAllWorkers();
+        //if (threadManager != null) threadManager.stopRequestAllWorkers();
         log.debug("Engine stopped.");
     }
 }

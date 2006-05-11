@@ -130,6 +130,7 @@ public class PersistentEntryCache extends EntryCache {
         cacheStorage.setConnectionManager(connectionManager);
         cacheStorage.setPartition(partition);
         cacheStorage.setEntryMapping(entryMapping);
+        cacheStorage.setThreadManager(threadManager);
 
         cacheStorage.init();
 

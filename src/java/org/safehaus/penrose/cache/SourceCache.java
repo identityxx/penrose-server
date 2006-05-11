@@ -26,6 +26,7 @@ import org.safehaus.penrose.partition.PartitionManager;
 import org.safehaus.penrose.partition.PartitionConfig;
 import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.filter.Filter;
+import org.safehaus.penrose.thread.ThreadManager;
 
 import java.util.Map;
 import java.util.TreeMap;
@@ -44,6 +45,7 @@ public class SourceCache {
     PenroseConfig penroseConfig;
     ConnectionManager connectionManager;
     PartitionManager partitionManager;
+    ThreadManager threadManager;
 
     private Map caches = new TreeMap();
 
@@ -55,6 +57,8 @@ public class SourceCache {
         sourceCacheStorage.setSourceDefinition(sourceConfig);
         sourceCacheStorage.setPartition(partition);
         sourceCacheStorage.setConnector(connector);
+        sourceCacheStorage.setThreadManager(threadManager);
+
         sourceCacheStorage.init(cacheConfig);
 
         return sourceCacheStorage;
@@ -178,5 +182,13 @@ public class SourceCache {
 
     public void setLastChangeNumber(SourceConfig sourceConfig, int lastChangeNumber) throws Exception {
         getCacheStorage(sourceConfig).setLastChangeNumber(lastChangeNumber);
+    }
+
+    public ThreadManager getThreadManager() {
+        return threadManager;
+    }
+
+    public void setThreadManager(ThreadManager threadManager) {
+        this.threadManager = threadManager;
     }
 }

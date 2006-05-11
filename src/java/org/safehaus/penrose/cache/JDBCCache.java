@@ -1249,7 +1249,7 @@ public class JDBCCache {
             ps.execute();
 
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
 
         } finally {
             if (ps != null) try { ps.close(); } catch (Exception e) {}

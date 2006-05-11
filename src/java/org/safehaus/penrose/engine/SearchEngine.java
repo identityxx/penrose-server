@@ -71,7 +71,7 @@ public class SearchEngine {
         log.debug("Effective Sources: "+effectiveSources);
 
         if (unique && sources.size() == 1 && effectiveSources.size() == 1) {
-            engine.execute(new Runnable() {
+            engine.threadManager.execute(new Runnable() {
                 public void run() {
                     try {
                         simpleSearch(parentSourceValues, entryMapping, filter, results);
@@ -85,7 +85,7 @@ public class SearchEngine {
             return;
         }
 
-        engine.execute(new Runnable() {
+        engine.threadManager.execute(new Runnable() {
             public void run() {
                 try {
                     searchDynamic(parent, parentSourceValues, entryMapping, filter, results);
@@ -298,7 +298,7 @@ public class SearchEngine {
 
         final PenroseSearchResults results = new PenroseSearchResults();
 
-        engine.execute(new Runnable() {
+        engine.threadManager.execute(new Runnable() {
             public void run() {
                 try {
                     searchSourcesInBackground(sourceValues, entryMapping, filter, results);

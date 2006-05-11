@@ -39,6 +39,7 @@ import org.safehaus.penrose.partition.*;
 import org.safehaus.penrose.session.PenroseSession;
 import org.safehaus.penrose.session.SessionManager;
 import org.safehaus.penrose.module.ModuleManager;
+import org.safehaus.penrose.thread.ThreadManager;
 
 /**
  * @author Endi S. Dewata
@@ -62,6 +63,7 @@ public class Penrose {
 
     private PenroseConfig penroseConfig;
 
+    private ThreadManager threadManager;
     private SchemaManager schemaManager;
     private PartitionManager partitionManager;
     private PartitionValidator partitionValidator;
@@ -104,6 +106,7 @@ public class Penrose {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     void init() throws Exception {
+        initThreadManager();
         initSchemaManager();
         initSessionManager();
 
@@ -116,6 +119,13 @@ public class Penrose {
         initEngineManager();
         initHandlerManager();
 	}
+
+    public void initThreadManager() throws Exception {
+        //String s = engineConfig.getParameter(EngineConfig.THREAD_POOL_SIZE);
+        //int threadPoolSize = s == null ? EngineConfig.DEFAULT_THREAD_POOL_SIZE : Integer.parseInt(s);
+
+        threadManager = new ThreadManager(50);
+    }
 
     public void initSchemaManager() throws Exception {
         schemaManager = new SchemaManager();
@@ -153,6 +163,7 @@ public class Penrose {
         connectorManager.setPenroseConfig(penroseConfig);
         connectorManager.setConnectionManager(connectionManager);
         connectorManager.setPartitionManager(partitionManager);
+        connectorManager.setThreadManager(threadManager);
     }
 
     public void initEngineManager() throws Exception {
@@ -162,6 +173,7 @@ public class Penrose {
         engineManager.setInterpreterFactory(interpreterManager);
         engineManager.setConnectionManager(connectionManager);
         engineManager.setPartitionManager(partitionManager);
+        engineManager.setThreadManager(threadManager);
     }
 
     public void initHandlerManager() throws Exception {
@@ -373,6 +385,8 @@ public class Penrose {
         try {
             status = STOPPING;
 
+            threadManager.stopRequestAllWorkers();
+
             moduleManager.stop();
             handlerManager.stop();
             engineManager.stop();
@@ -475,5 +489,13 @@ public class Penrose {
 
     public void setSessionManager(SessionManager sessionManager) {
         this.sessionManager = sessionManager;
+    }
+
+    public ThreadManager getThreadManager() {
+        return threadManager;
+    }
+
+    public void setThreadManager(ThreadManager threadManager) {
+        this.threadManager = threadManager;
     }
 }

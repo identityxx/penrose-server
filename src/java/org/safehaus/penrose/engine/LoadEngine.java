@@ -79,7 +79,7 @@ public class LoadEngine {
 
         final PenroseSearchResults batches = new PenroseSearchResults();
 
-        engine.execute(new Runnable() {
+        engine.threadManager.execute(new Runnable() {
             public void run() {
                 try {
                     createBatches(entryMapping, entries, batches);
@@ -93,7 +93,7 @@ public class LoadEngine {
 
         log.debug("Loading batches.");
 
-        engine.execute(new Runnable() {
+        engine.threadManager.execute(new Runnable() {
             public void run() {
                 try {
                     loadBackground(entryMapping, batches, loadedEntries);

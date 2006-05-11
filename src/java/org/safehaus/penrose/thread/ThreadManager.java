@@ -22,16 +22,16 @@ import org.apache.log4j.Logger;
 import java.util.Collection;
 import java.util.Iterator;
 
-public class ThreadPool {
+public class ThreadManager {
 
     Logger log = Logger.getLogger(getClass());
 
 	private Queue idleWorkers;
 	private ThreadWorker[] workers;
 	
-	public ThreadPool(int numberOfThreads) {
+	public ThreadManager(int numberOfThreads) {
 
-        //log.debug("Creating ThreadPool("+numberOfThreads+")");
+        //log.debug("Creating ThreadManager("+numberOfThreads+")");
 
 		// make sure that it is at least one
 		numberOfThreads = Math.max(1, numberOfThreads);
@@ -44,12 +44,25 @@ public class ThreadPool {
 		}
 	}
 	
-	public void execute(Runnable target) throws InterruptedException {
-		// block (forever) until a worker is avaiable
-        //log.debug("Getting idle worker...("+idleWorkers.size()+")");
-		ThreadWorker worker = (ThreadWorker)idleWorkers.remove();
-        //log.debug("Running worker "+worker.getId());
-		worker.process(target);
+	public void execute(Runnable runnable) throws InterruptedException {
+        execute(runnable, log.isDebugEnabled());
+    }
+
+    public void execute(Runnable runnable, boolean foreground) throws InterruptedException {
+        //log.info("Executing new thread");
+
+        //String s = engineConfig.getParameter(EngineConfig.ALLOW_CONCURRENCY);
+        //boolean allowConcurrency = s == null ? true : new Boolean(s).booleanValue();
+
+        //if (threadManager == null || !allowConcurrency || log.isDebugEnabled()) {
+
+        if (foreground) {
+            runnable.run();
+
+        } else {
+            ThreadWorker worker = (ThreadWorker)idleWorkers.remove();
+            worker.process(runnable);
+        }
 	}
 	
 	public void stopRequestIdleWorkers() {
