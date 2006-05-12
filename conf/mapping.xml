@@ -11,10 +11,10 @@
     <oc>dcObject</oc>
     <oc>organization</oc>
     <at name="dc" rdn="true">
-      <expression>"Penrose"</expression>
+      <constant>Penrose</constant>
     </at>
     <at name="o">
-      <expression>"Penrose"</expression>
+      <constant>Penrose</constant>
     </at>
     <aci>
       <permission>rs</permission>
@@ -26,27 +26,27 @@
     <oc>organizationalPerson</oc>
     <oc>inetOrgPerson</oc>
     <at name="cn" rdn="true">
-      <expression>"Manager"</expression>
+      <constant>Manager</constant>
     </at>
     <at name="sn">
-      <expression>"Manager"</expression>
+      <constant>Manager</constant>
     </at>
     <at name="userPassword">
-      <expression>"secret"</expression>
+      <constant>secret</constant>
     </at>
   </entry>
 
   <entry dn="ou=Users,dc=Penrose,dc=Safehaus,dc=org">
     <oc>organizationalUnit</oc>
     <at name="ou" rdn="true">
-      <expression>"Users"</expression>
+      <constant>Users</constant>
     </at>
   </entry>
 
   <entry dn="ou=Groups,dc=Penrose,dc=Safehaus,dc=org">
     <oc>organizationalUnit</oc>
     <at name="ou" rdn="true">
-      <expression>"Groups"</expression>
+      <constant>Groups</constant>
     </at>
   </entry>
 

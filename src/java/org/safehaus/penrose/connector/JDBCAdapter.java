@@ -266,7 +266,7 @@ public class JDBCAdapter extends Adapter {
             }
 
         } catch (Exception e) {
-            log.debug(e.getMessage(), e);
+            log.error(e.getMessage(), e);
             results.setReturnCode(LDAPException.OPERATIONS_ERROR);
 
         } finally {
@@ -367,7 +367,7 @@ public class JDBCAdapter extends Adapter {
             }
 
         } catch (Exception e) {
-            log.debug(e.getMessage(), e);
+            log.error(e.getMessage(), e);
             results.setReturnCode(LDAPException.OPERATIONS_ERROR);
 
         } finally {

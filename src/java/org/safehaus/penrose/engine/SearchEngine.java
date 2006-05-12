@@ -77,7 +77,7 @@ public class SearchEngine {
                         simpleSearch(parentSourceValues, entryMapping, filter, results);
 
                     } catch (Throwable e) {
-                        log.debug(e.getMessage(), e);
+                        log.error(e.getMessage(), e);
                         results.setReturnCode(LDAPException.OPERATIONS_ERROR);
                     }
                 }
@@ -91,7 +91,7 @@ public class SearchEngine {
                     searchDynamic(parent, parentSourceValues, entryMapping, filter, results);
 
                 } catch (Throwable e) {
-                    log.debug(e.getMessage(), e);
+                    log.error(e.getMessage(), e);
                     results.setReturnCode(LDAPException.OPERATIONS_ERROR);
                 } finally {
                     results.close();

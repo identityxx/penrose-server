@@ -22,6 +22,9 @@ import org.safehaus.penrose.mapping.Entry;
 import org.safehaus.penrose.mapping.AttributeValues;
 import org.safehaus.penrose.mapping.EntryMapping;
 import org.apache.log4j.Logger;
+import org.ietf.ldap.LDAPEntry;
+import org.ietf.ldap.LDAPAttributeSet;
+import org.ietf.ldap.LDAPAttribute;
 
 import javax.naming.directory.*;
 import java.util.*;
@@ -102,8 +105,36 @@ public class EntryUtil {
         return index < 0 ? null : dn.substring(index+1);
     }
 
+    public static SearchResult toSearchResult(LDAPEntry entry) {
+        return new SearchResult(entry.getDN(), entry, getAttributes(entry));
+    }
+
     public static SearchResult toSearchResult(Entry entry) {
         return new SearchResult(entry.getDn(), entry, getAttributes(entry));
+    }
+
+    public static Attributes getAttributes(LDAPEntry entry) {
+
+        //log.debug("Converting attributes for "+entry.getDN());
+
+        LDAPAttributeSet attributeSet = entry.getAttributeSet();
+        Attributes attributes = new BasicAttributes();
+
+        for (Iterator i=attributeSet.iterator(); i.hasNext(); ) {
+            LDAPAttribute ldapAttribute = (LDAPAttribute)i.next();
+            //log.debug(" - "+ldapAttribute.getName()+": "+Arrays.asList(ldapAttribute.getSubtypes()));
+            Attribute attribute = new BasicAttribute(ldapAttribute.getName());
+
+            for (Enumeration j=ldapAttribute.getStringValues(); j.hasMoreElements(); ) {
+                String value = (String)j.nextElement();
+                //log.debug("   - "+value);
+                attribute.add(value);
+            }
+
+            attributes.put(attribute);
+        }
+
+        return attributes;
     }
 
     public static Attributes getAttributes(Entry entry) {

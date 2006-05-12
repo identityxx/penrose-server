@@ -187,7 +187,7 @@ public class PenroseLDAPService extends Service {
                         new InitialDirContext(env);
                     }
                 } catch (Exception e) {
-                    log.debug(e.getMessage());
+                    log.error(e.getMessage());
                 }
             }
         };

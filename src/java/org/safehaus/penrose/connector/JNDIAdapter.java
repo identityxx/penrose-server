@@ -530,7 +530,7 @@ public class JNDIAdapter extends Adapter {
             ctx.modifyAttributes(dn, mods);
 
         } catch (Exception e) {
-            log.debug(e.getMessage(), e);
+            log.error(e.getMessage(), e);
             throw e;
 
         } finally {

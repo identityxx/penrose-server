@@ -161,12 +161,18 @@ public class ModifyHandler {
 			String encoding = attr.getEncoding();
 
 			for (NamingEnumeration j=attribute.getAll(); j.hasMore(); ) {
-                String value = (String)j.next();
+                Object value = j.next();
 
 				//log.debug("old " + attributeName + ": " + values[j]);
 				attribute.remove(value);
 
-                byte[] bytes = PasswordUtil.encrypt(encryption, value);
+                byte[] bytes;
+                if (value instanceof byte[]) {
+                    bytes = PasswordUtil.encrypt(encryption, (byte[])value);
+                } else {
+                    bytes = PasswordUtil.encrypt(encryption, value.toString());
+                }
+
                 value = BinaryUtil.encode(encoding, bytes);
 
 				//log.debug("new " + attributeName + ": " + values[j]);
@@ -184,7 +190,7 @@ public class ModifyHandler {
 		EntryMapping entryMapping = entry.getEntryMapping();
         AttributeValues oldValues = entry.getAttributeValues();
 
-		convertValues(entryMapping, modifications);
+		//convertValues(entryMapping, modifications);
 
 		log.debug("Old entry:");
 		log.debug("\n"+entry.toString());
@@ -279,7 +285,7 @@ public class ModifyHandler {
     public int modifyStaticEntry(EntryMapping entry, Collection modifications)
             throws Exception {
 
-        convertValues(entry, modifications);
+        //convertValues(entry, modifications);
 
         for (Iterator i = modifications.iterator(); i.hasNext();) {
             ModificationItem modification = (ModificationItem) i.next();

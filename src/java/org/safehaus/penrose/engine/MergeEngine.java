@@ -54,7 +54,7 @@ public class MergeEngine {
                     mergeBackground(entryMapping, loadedBatches, interpreter, results);
 
                 } catch (Throwable e) {
-                    log.debug(e.getMessage(), e);
+                    log.error(e.getMessage(), e);
                     results.setReturnCode(org.ietf.ldap.LDAPException.OPERATIONS_ERROR);
                 }
             }

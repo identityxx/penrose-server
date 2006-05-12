@@ -109,6 +109,7 @@ public class JNDIClient {
     }
 
     public LdapContext getContext() throws Exception {
+        log.debug("Creating InitialLdapContext: "+parameters);
         return new InitialLdapContext(parameters, null);
     }
 
@@ -165,7 +166,7 @@ public class JNDIClient {
             context.createSubcontext(dn, attrs);
 
         } catch (Exception e) {
-            log.debug(e.getMessage(), e);
+            log.error(e.getMessage(), e);
             throw e;
         } finally {
             if (context != null) try { context.close(); } catch (Exception e) {}
@@ -187,7 +188,7 @@ public class JNDIClient {
             context.destroySubcontext(dn);
 
         } catch (Exception e) {
-            log.debug(e.getMessage(), e);
+            log.error(e.getMessage(), e);
             throw e;
         } finally {
             if (context != null) try { context.close(); } catch (Exception e) {}
@@ -251,7 +252,7 @@ public class JNDIClient {
             context.modifyAttributes(dn, mods);
 
         } catch (Exception e) {
-            log.debug(e.getMessage(), e);
+            log.error(e.getMessage(), e);
             throw e;
         } finally {
             if (context != null) try { context.close(); } catch (Exception e) {}
@@ -271,7 +272,7 @@ public class JNDIClient {
             context.rename(dn, newRdn);
 
         } catch (Exception e) {
-            log.debug(e.getMessage(), e);
+            log.error(e.getMessage(), e);
             throw e;
         } finally {
             if (context != null) try { context.close(); } catch (Exception e) {}
@@ -311,21 +312,28 @@ public class JNDIClient {
 
         log.debug("Searching Root DSE ...");
 
-        SearchControls ctls = new SearchControls();
-        ctls.setSearchScope(SearchControls.OBJECT_SCOPE);
-        ctls.setReturningAttributes(new String[] { "*", "+" });
-
-        LdapContext context = null;
+        LDAPConnection connection = null;
 
         try {
-            context = getContext();
+            LDAPUrl ldapUrl = new LDAPUrl(url);
 
-            NamingEnumeration results = context.search("", "(objectClass=*)", ctls);
-            rootDSE = (SearchResult)results.next();
-            results.close();
+            connection = new LDAPConnection();
+            connection.connect(ldapUrl.getHost(), ldapUrl.getPort());
+
+            String bindDn = (String)parameters.get(Context.SECURITY_PRINCIPAL);
+            String password = (String)parameters.get(Context.SECURITY_CREDENTIALS);
+
+            if (bindDn != null && !"".equals(bindDn) && password != null && !"".equals(password)) {
+                connection.bind(3, bindDn, password.getBytes());
+            }
+
+            LDAPSearchResults sr = connection.search("", LDAPConnection.SCOPE_BASE, "(objectClass=*)", new String[] { "*", "+" }, false);
+            LDAPEntry entry = sr.next();
+
+            rootDSE = EntryUtil.toSearchResult(entry);
 
         } finally {
-            if (context != null) try { context.close(); } catch (Exception e) {}
+            if (connection != null) try { connection.disconnect(); } catch (Exception e) {}
         }
 
         return rootDSE;
@@ -375,7 +383,8 @@ public class JNDIClient {
             }
             
         } catch (Exception e) {
-            log.debug(e.getMessage(), e);
+            log.error(e.getMessage(), e);
+            throw e;
         }
 
         return schema;
@@ -567,7 +576,7 @@ public class JNDIClient {
             ctls.setSearchScope(SearchControls.OBJECT_SCOPE);
             ctls.setReturningAttributes(new String[] { "attributeTypes", "objectClasses" });
 
-                context = getContext();
+            context = getContext();
             NamingEnumeration results = context.search(schemaDn, "(objectClass=*)", ctls);
             SearchResult sr = (SearchResult)results.next();
 
@@ -620,7 +629,7 @@ public class JNDIClient {
 
         } catch (Exception e) {
             System.out.println("Error parsing "+line);
-            log.debug(e.getMessage(), e);
+            log.error(e.getMessage(), e);
             return null;
         }
     }
@@ -635,7 +644,7 @@ public class JNDIClient {
 
         } catch (Exception e) {
             System.out.println("Error parsing "+line);
-            log.debug(e.getMessage(), e);
+            log.error(e.getMessage(), e);
             return null;
         }
     }
@@ -757,7 +766,7 @@ public class JNDIClient {
                         results.add(sr);
                     }
                 } catch (Exception e) {
-                    log.debug(e.getMessage(), e);
+                    log.error(e.getMessage(), e);
                 }
             }
 

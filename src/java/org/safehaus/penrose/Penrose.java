@@ -369,7 +369,7 @@ public class Penrose {
 
         } catch (Exception e) {
             status = STOPPED;
-            log.debug(e.getMessage(), e);
+            log.error(e.getMessage(), e);
             throw e;
         }
 	}
@@ -394,7 +394,7 @@ public class Penrose {
             connectionManager.stop();
 
         } catch (Exception e) {
-            log.debug(e.getMessage(), e);
+            log.error(e.getMessage(), e);
         }
 
         status = STOPPED;

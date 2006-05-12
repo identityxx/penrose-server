@@ -447,7 +447,7 @@ public class DefaultEngine extends Engine {
                         results.add(entry);
 
                     } catch (Exception e) {
-                        log.debug(e.getMessage(), e);
+                        log.error(e.getMessage(), e);
                     }
                 }
 
@@ -459,7 +459,7 @@ public class DefaultEngine extends Engine {
             client.search(targetDn, scope, filter, attributeNames, res);
 
         } catch (Exception e) {
-            log.debug(e.getMessage(), e);
+            log.error(e.getMessage(), e);
             results.setReturnCode(ExceptionUtil.getReturnCode(e));
         }
     }

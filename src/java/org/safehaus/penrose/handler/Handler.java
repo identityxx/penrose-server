@@ -145,7 +145,7 @@ public class Handler {
 
         } catch (Exception e) {
             status = STOPPED;
-            log.debug(e.getMessage(), e);
+            log.error(e.getMessage(), e);
             throw e;
         }
     }
@@ -164,7 +164,7 @@ public class Handler {
             sessionManager.stop();
 
         } catch (Exception e) {
-            log.debug(e.getMessage(), e);
+            log.error(e.getMessage(), e);
         }
 
         status = STOPPED;
@@ -363,7 +363,7 @@ public class Handler {
                     getSearchHandler().search(session, base, scope, deref, filter, normalizedAttributeNames, sr);
 
                 } catch (Throwable e) {
-                    log.debug(e.getMessage(), e);
+                    log.error(e.getMessage(), e);
                     results.setReturnCode(LDAPException.OPERATIONS_ERROR);
                     results.close();
                 }

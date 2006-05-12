@@ -82,7 +82,7 @@ public class BindHandler {
             rc = e.getResultCode();
 
         } catch (AuthenticationException e) {
-            log.debug(e.getMessage());
+            log.error(e.getMessage());
             rc = LDAPException.INVALID_CREDENTIALS;
 
         } catch (Exception e) {

@@ -480,7 +480,7 @@ public class Connector {
                     results.setReturnCode(rc);
 
                 } catch (Exception e) {
-                    log.debug(e.getMessage(), e);
+                    log.error(e.getMessage(), e);
                     results.setReturnCode(LDAPException.OPERATIONS_ERROR);
                 }
 
@@ -593,7 +593,7 @@ public class Connector {
             results.setReturnCode(sr.getReturnCode());
             
         } catch (Exception e) {
-            log.debug(e.getMessage(), e);
+            log.error(e.getMessage(), e);
             results.setReturnCode(LDAPException.OPERATIONS_ERROR);
             
         } finally {
@@ -622,7 +622,7 @@ public class Connector {
                     store(sourceConfig, sourceValues);
                     results.add(sourceValues);
                 } catch (Exception e) {
-                    log.debug(e.getMessage(), e);
+                    log.error(e.getMessage(), e);
                     results.setReturnCode(LDAPException.OPERATIONS_ERROR);
                 }
             }
@@ -650,7 +650,7 @@ public class Connector {
                     results.setReturnCode(sr.getReturnCode());
 */
                 } catch (Exception e) {
-                    log.debug(e.getMessage(), e);
+                    log.error(e.getMessage(), e);
                     //results.setReturnCode(LDAPException.OPERATIONS_ERROR);
 
                 } finally {

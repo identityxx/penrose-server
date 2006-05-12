@@ -56,7 +56,7 @@ public class PasswordUtil {
                 Security.addProvider(provider);
             }
         } catch (Exception e) {
-            log.debug(e.getMessage(), e);
+            log.error(e.getMessage(), e);
         }
     }
 
@@ -68,8 +68,12 @@ public class PasswordUtil {
     public static byte[] encrypt(String method, String password) throws Exception {
         if (password == null) return null;
 
-        byte[] bytes = password.getBytes();
-        if (method == null) return password.getBytes();
+        return encrypt(method, password.getBytes());
+    }
+
+    public static byte[] encrypt(String method, byte[] bytes) throws Exception {
+        if (method == null) return bytes;
+        if (bytes == null) return null;
 
         MessageDigest md = MessageDigest.getInstance(method);
         md.update(bytes);
