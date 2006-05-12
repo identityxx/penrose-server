@@ -8,6 +8,10 @@
 
   <service name="LDAP">
     <service-class>org.safehaus.penrose.ldap.PenroseLDAPService</service-class>
+    <parameter> 
+      <param-name>ldapPort</param-name> 
+      <param-value>10389</param-value> 
+    </parameter> 
   </service>
 
   <schema path="schema/autofs.schema"/>
