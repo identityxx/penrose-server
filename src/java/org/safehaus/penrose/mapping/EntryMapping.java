@@ -97,12 +97,8 @@ public class EntryMapping implements Cloneable {
 	}
 
 	public EntryMapping(String dn) {
-        int i = dn.indexOf(",");
-        if (i < 0) {
-            rdn = dn;
-        } else {
-            rdn = dn.substring(0, i);
-        }
+        Row row = EntryUtil.getRdn(dn);
+        rdn = row.toString();
         parentDn = EntryUtil.getParentDn(dn);
     }
 
@@ -195,14 +191,9 @@ public class EntryMapping implements Cloneable {
     }
 
     public void setDn(String dn) {
-        int i = dn.indexOf(",");
-        if (i < 0) {
-            rdn = dn;
-            parentDn = null;
-        } else {
-            rdn = dn.substring(0, i);
-            parentDn = dn.substring(i+1);
-        }
+        Row row = EntryUtil.getRdn(dn);
+        rdn = row.toString();
+        parentDn = EntryUtil.getParentDn(dn);
     }
 
     public boolean isEnabled() {

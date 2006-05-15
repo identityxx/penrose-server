@@ -22,9 +22,11 @@ import org.safehaus.penrose.mapping.Entry;
 import org.safehaus.penrose.mapping.AttributeValues;
 import org.safehaus.penrose.mapping.EntryMapping;
 import org.apache.log4j.Logger;
+import org.apache.directory.shared.ldap.name.LdapName;
 import org.ietf.ldap.LDAPEntry;
 import org.ietf.ldap.LDAPAttributeSet;
 import org.ietf.ldap.LDAPAttribute;
+import org.ietf.ldap.LDAPDN;
 
 import javax.naming.directory.*;
 import java.util.*;
@@ -81,19 +83,28 @@ public class EntryUtil {
     }
 
     public static Row getRdn(String dn) {
-
         Row rdn = new Row();
         if (dn == null || "".equals(dn)) return rdn;
 
-        int index = dn.indexOf(",");
-        String s = index < 0 ? dn : dn.substring(0, index);
+        try {
+            //log.debug("###### Getting RDN from "+dn);
 
-        StringTokenizer st = new StringTokenizer(s, "+");
+            LdapName name = new LdapName(dn);
+            String r = name.getRdn();
 
-        while (st.hasMoreTokens()) {
-            s = st.nextToken();
-            index = s.indexOf("=");
-            rdn.set(s.substring(0, index), s.substring(index+1));
+            StringTokenizer st = new StringTokenizer(r, "+");
+
+            while (st.hasMoreTokens()) {
+                String s = LDAPDN.unescapeRDN(st.nextToken());
+                int index = s.indexOf("=");
+                String attribute = s.substring(0, index);
+                String value =  s.substring(index+1);
+                //log.debug(" - "+attribute+": "+value);
+                rdn.set(attribute, value);
+            }
+
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
         }
 
         return rdn;
@@ -101,8 +112,20 @@ public class EntryUtil {
 
     public static String getParentDn(String dn) {
         if (dn == null || "".equals(dn)) return null;
-        int index = dn.indexOf(",");
-        return index < 0 ? null : dn.substring(index+1);
+
+        try {
+            //log.debug("###### Getting Parent DN from "+dn);
+
+            LdapName name = new LdapName(dn);
+            LdapName parent = (LdapName)name.getSuffix(name.size() - 1);
+
+            //log.debug(" - "+parent);
+            return parent.toString();
+
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+            return null;
+        }
     }
 
     public static SearchResult toSearchResult(LDAPEntry entry) {
