@@ -43,6 +43,7 @@ public class PenroseClient {
 
 	public String url;
     public String type;
+    private String protocol;
     public String host;
     public int port;
     public String username;
@@ -68,6 +69,16 @@ public class PenroseClient {
 		this.password = password;
 	}
 
+    public PenroseClient(String type, String protocol, String host, int port, String username, String password) throws Exception {
+        this.type = type;
+        this.protocol = protocol;
+        this.host = host;
+        this.port = port;
+
+        this.username = username;
+        this.password = password;
+    }
+
 	public void connect() throws Exception {
 
         if (JBOSS.equals(type)) {
@@ -87,8 +98,8 @@ public class PenroseClient {
 
         } else {
 
-            String url = "service:jmx:rmi:///jndi/rmi://"+host+(port == 0 ? "" : ":"+port)+"/jmx";
-            //String url = "service:jmx:rmi://"+host+(port == 0 ? "" : ":"+port);
+            String url = "service:jmx:"+protocol+":///jndi/"+protocol+"://"+host+(port == 0 ? "" : ":"+port)+"/jmx";
+            //String url = "service:jmx:"+protocol+"://"+host+(port == 0 ? "" : ":"+port);
             log.debug("Connecting to Penrose server at "+url);
 
             JMXServiceURL address = new JMXServiceURL(url);
@@ -231,6 +242,7 @@ public class PenroseClient {
         System.out.println();
         System.out.println("Options:");
         System.out.println("  -?, --help         display this help and exit");
+        System.out.println("  -P protocol        Penrose JMX protocol");
         System.out.println("  -h host            Penrose server");
         System.out.println("  -p port            Penrose JMX port");
         System.out.println("  -D username        username");
@@ -243,6 +255,7 @@ public class PenroseClient {
 
         String logLevel = "NORMAL";
         String serverType = PENROSE;
+        String protocol = "rmi";
         String hostname = "localhost";
         int portNumber = 0;
         String bindDn = null;
@@ -251,7 +264,7 @@ public class PenroseClient {
         LongOpt[] longopts = new LongOpt[1];
         longopts[0] = new LongOpt("help", LongOpt.NO_ARGUMENT, null, '?');
 
-        Getopt getopt = new Getopt("PenroseClient", args, "-:?dvt:h:p:D:w:", longopts);
+        Getopt getopt = new Getopt("PenroseClient", args, "-:?dvt:h:p:P:D:w:", longopts);
 
         Collection parameters = new ArrayList();
         int c;
@@ -270,6 +283,9 @@ public class PenroseClient {
                     break;
                 case 'v':
                     logLevel = "VERBOSE";
+                    break;
+                case 'P':
+                    protocol = getopt.getOptarg();
                     break;
                 case 't':
                     serverType = getopt.getOptarg();
@@ -320,7 +336,7 @@ public class PenroseClient {
             BasicConfigurator.configure(appender);
         }
 
-        PenroseClient client = new PenroseClient(serverType, hostname, portNumber, bindDn, bindPassword);
+        PenroseClient client = new PenroseClient(serverType, protocol, hostname, portNumber, bindDn, bindPassword);
         client.connect();
 
         Iterator iterator = parameters.iterator();
@@ -383,5 +399,13 @@ public class PenroseClient {
 
     public void setType(String type) {
         this.type = type;
+    }
+
+    public String getProtocol() {
+        return protocol;
+    }
+
+    public void setProtocol(String protocol) {
+        this.protocol = protocol;
     }
 }
