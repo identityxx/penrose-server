@@ -117,9 +117,11 @@ public class EntryUtil {
             //log.debug("###### Getting Parent DN from "+dn);
 
             LdapName name = new LdapName(dn);
-            LdapName parent = (LdapName)name.getSuffix(name.size() - 1);
+            if (name.size() == 1) return null;
 
+            LdapName parent = (LdapName)name.getSuffix(name.size() - 1);
             //log.debug(" - "+parent);
+            
             return parent.toString();
 
         } catch (Exception e) {
