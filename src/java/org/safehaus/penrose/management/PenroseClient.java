@@ -44,13 +44,14 @@ public class PenroseClient {
     public final static int DEFAULT_RMI_PORT            = 1099;
     public final static int DEFAULT_RMI_TRANSPORT_PORT  = 0;
     public final static int DEFAULT_HTTP_PORT           = 8112;
+    public final static String DEFAULT_PROTOCOL         = "rmi";
 
 	public String url;
     public String type;
-    private String protocol;
+    private String protocol      = DEFAULT_PROTOCOL;
     public String host;
-    public int port;
-    private int rmiTransportPort;
+    public int port              = DEFAULT_RMI_PORT;
+    private int rmiTransportPort = DEFAULT_RMI_TRANSPORT_PORT;
     public String username;
     public String password;
 
@@ -290,11 +291,11 @@ public class PenroseClient {
 
     public static void main(String args[]) throws Exception {
 
-        String logLevel = "NORMAL";
-        String serverType = PENROSE;
-        String protocol = "rmi";
-        String hostname = "localhost";
-        int portNumber = DEFAULT_RMI_PORT;
+        String logLevel      = "NORMAL";
+        String serverType    = PENROSE;
+        String protocol      = DEFAULT_PROTOCOL;
+        String hostname      = "localhost";
+        int portNumber       = DEFAULT_RMI_PORT;
         int rmiTransportPort = DEFAULT_RMI_TRANSPORT_PORT;
 
         String bindDn = null;
