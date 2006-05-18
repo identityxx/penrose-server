@@ -41,11 +41,16 @@ public class PenroseClient {
     public final static String PENROSE = "PENROSE";
     public final static String JBOSS   = "JBOSS";
 
+    public final static int DEFAULT_RMI_PORT            = 1099;
+    public final static int DEFAULT_RMI_TRANSPORT_PORT  = 0;
+    public final static int DEFAULT_HTTP_PORT           = 8112;
+
 	public String url;
     public String type;
     private String protocol;
     public String host;
     public int port;
+    private int rmiTransportPort;
     public String username;
     public String password;
 
@@ -98,11 +103,19 @@ public class PenroseClient {
 
         } else {
 
-            String url = "service:jmx:"+protocol+":///jndi/"+protocol+"://"+host+(port == 0 ? "" : ":"+port)+"/jmx";
+            String url = "service:jmx:"+protocol+"://"+host;
+            if (rmiTransportPort != DEFAULT_RMI_TRANSPORT_PORT) url += ":"+rmiTransportPort;
+
+            url += "/jndi/"+protocol+"://"+host;
+            //if (port != DEFAULT_RMI_PORT)
+            url += ":"+port;
+
+            url += "/jmx";
+
             //String url = "service:jmx:"+protocol+"://"+host+(port == 0 ? "" : ":"+port);
             log.debug("Connecting to Penrose server at "+url);
 
-            JMXServiceURL address = new JMXServiceURL(url);
+            JMXServiceURL serviceURL = new JMXServiceURL(url);
 
             String[] credentials = new String[2];
             credentials[0] = username;
@@ -111,7 +124,7 @@ public class PenroseClient {
             Hashtable parameters = new Hashtable();
             parameters.put(JMXConnector.CREDENTIALS, credentials);
 
-            connector = JMXConnectorFactory.connect(address, parameters);
+            connector = JMXConnectorFactory.connect(serviceURL, parameters);
             connection = connector.getMBeanServerConnection();
         }
 
@@ -125,6 +138,30 @@ public class PenroseClient {
         } else {
             connector.close();
         }
+    }
+
+    public String getType() {
+        return type;
+    }
+
+    public void setType(String type) {
+        this.type = type;
+    }
+
+    public String getProtocol() {
+        return protocol;
+    }
+
+    public void setProtocol(String protocol) {
+        this.protocol = protocol;
+    }
+
+    public int getRmiTransportPort() {
+        return rmiTransportPort;
+    }
+
+    public void setRmiTransportPort(int rmiTransportPort) {
+        this.rmiTransportPort = rmiTransportPort;
     }
 
 	public Object invoke(String method, Object[] paramValues, String[] paramClassNames) throws Exception {
@@ -257,14 +294,16 @@ public class PenroseClient {
         String serverType = PENROSE;
         String protocol = "rmi";
         String hostname = "localhost";
-        int portNumber = 0;
+        int portNumber = DEFAULT_RMI_PORT;
+        int rmiTransportPort = DEFAULT_RMI_TRANSPORT_PORT;
+
         String bindDn = null;
         String bindPassword = null;
 
         LongOpt[] longopts = new LongOpt[1];
         longopts[0] = new LongOpt("help", LongOpt.NO_ARGUMENT, null, '?');
 
-        Getopt getopt = new Getopt("PenroseClient", args, "-:?dvt:h:p:P:D:w:", longopts);
+        Getopt getopt = new Getopt("PenroseClient", args, "-:?dvt:h:p:r:P:D:w:", longopts);
 
         Collection parameters = new ArrayList();
         int c;
@@ -295,6 +334,9 @@ public class PenroseClient {
                     break;
                 case 'p':
                     portNumber = Integer.parseInt(getopt.getOptarg());
+                    break;
+                case 'r':
+                    rmiTransportPort = Integer.parseInt(getopt.getOptarg());
                     break;
                 case 'D':
                     bindDn = getopt.getOptarg();
@@ -337,6 +379,7 @@ public class PenroseClient {
         }
 
         PenroseClient client = new PenroseClient(serverType, protocol, hostname, portNumber, bindDn, bindPassword);
+        client.setRmiTransportPort(rmiTransportPort);
         client.connect();
 
         Iterator iterator = parameters.iterator();
@@ -391,21 +434,5 @@ public class PenroseClient {
         }
 
         client.close();
-    }
-
-    public String getType() {
-        return type;
-    }
-
-    public void setType(String type) {
-        this.type = type;
-    }
-
-    public String getProtocol() {
-        return protocol;
-    }
-
-    public void setProtocol(String protocol) {
-        this.protocol = protocol;
     }
 }

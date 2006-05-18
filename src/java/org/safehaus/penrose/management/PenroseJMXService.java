@@ -46,11 +46,9 @@ import org.safehaus.penrose.config.PenroseConfig;
  */
 public class PenroseJMXService extends Service {
 
-    public final static String RMI_PORT       = "rmiPort";
-    public final static int DEFAULT_RMI_PORT  = 1099;
-
-    public final static String HTTP_PORT      = "httpPort";
-    public final static int DEFAULT_HTTP_PORT = 8112;
+    public final static String RMI_PORT           = "rmiPort";
+    public final static String RMI_TRANSPORT_PORT = "rmiTransportPort";
+    public final static String HTTP_PORT          = "httpPort";
 
     PenroseJMXAuthenticator jmxAuthenticator;
 
@@ -73,6 +71,7 @@ public class PenroseJMXService extends Service {
     XSLTProcessor xsltProcessor;
 
     private int rmiPort;
+    private int rmiTransportPort;
     private int httpPort;
 
     static {
@@ -88,10 +87,13 @@ public class PenroseJMXService extends Service {
         ServiceConfig serviceConfig = getServiceConfig();
 
         String s = serviceConfig.getParameter(RMI_PORT);
-        rmiPort = s == null ? DEFAULT_RMI_PORT : Integer.parseInt(s);
+        rmiPort = s == null ? PenroseClient.DEFAULT_RMI_PORT : Integer.parseInt(s);
+
+        s = serviceConfig.getParameter(RMI_TRANSPORT_PORT);
+        rmiTransportPort = s == null ? PenroseClient.DEFAULT_RMI_TRANSPORT_PORT : Integer.parseInt(s);
 
         s = serviceConfig.getParameter(HTTP_PORT);
-        httpPort = s == null ? DEFAULT_HTTP_PORT : Integer.parseInt(s);
+        httpPort = s == null ? PenroseClient.DEFAULT_HTTP_PORT : Integer.parseInt(s);
     }
 
     public void start() throws Exception {
@@ -121,17 +123,27 @@ public class PenroseJMXService extends Service {
             mbeanServer.registerMBean(registry, registryName);
             registry.start();
 
-            JMXServiceURL url = new JMXServiceURL("service:jmx:rmi://localhost/jndi/rmi://localhost:"+rmiPort+"/jmx");
+            String url = "service:jmx:rmi://localhost";
+            if (rmiTransportPort != PenroseClient.DEFAULT_RMI_TRANSPORT_PORT) url += ":"+rmiTransportPort;
+
+            url += "/jndi/rmi://localhost";
+            //if (rmiPort != PenroseClient.DEFAULT_RMI_PORT)
+            url += ":"+rmiPort;
+
+            url += "/jmx";
+
+            JMXServiceURL serviceURL = new JMXServiceURL(url);
             jmxAuthenticator = new PenroseJMXAuthenticator(getPenroseServer().getPenrose());
 
             HashMap environment = new HashMap();
             environment.put("jmx.remote.authenticator", jmxAuthenticator);
 
-            rmiConnector = JMXConnectorServerFactory.newJMXConnectorServer(url, environment, null);
+            rmiConnector = JMXConnectorServerFactory.newJMXConnectorServer(serviceURL, environment, null);
             mbeanServer.registerMBean(rmiConnector, rmiConnectorName);
             rmiConnector.start();
 
             log.warn("Listening to port "+rmiPort+".");
+            if (rmiTransportPort != PenroseClient.DEFAULT_RMI_TRANSPORT_PORT) log.warn("Listening to port "+rmiTransportPort+".");
         }
 
         if (httpPort > 0) {
@@ -434,5 +446,4 @@ public class PenroseJMXService extends Service {
             unregister(name);
         }
     }
-
 }
