@@ -97,8 +97,8 @@ public class PenroseLDAPService extends Service {
 
         configuration.setEnableLdaps(enableLdaps);
         configuration.setLdapsPort(ldapsPort);
-        configuration.setLdapsCertificateFile(new File(ldapsCertificateFile));
-        configuration.setLdapsCertificatePassword(ldapsCertificatePassword);
+        if (ldapsCertificateFile != null) configuration.setLdapsCertificateFile(new File(ldapsCertificateFile));
+        if (ldapsCertificatePassword != null) configuration.setLdapsCertificatePassword(ldapsCertificatePassword);
 
         //log.debug("Allow anonymous access: "+allowAnonymousAccess);
         configuration.setAllowAnonymousAccess(allowAnonymousAccess);
