@@ -310,7 +310,7 @@ create table order_histories_changes (
     changeUser varchar(10),
     orderId integer,
     productId integer,
-    historyDate datetime,
+    historyDate timestamp,
     primary key (changeNumber)
 );
 
