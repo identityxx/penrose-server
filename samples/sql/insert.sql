@@ -1,12 +1,3 @@
-drop table categories;
-
-create table categories (
-    id integer,
-    name varchar(50),
-    description varchar(255),
-    primary key (id)
-);
-
 insert into categories values (1, 'Bakery', 'Bagels, Biscuits, Rolls, Bread, Buns, Muffins, Desserts, Tortillas');
 insert into categories values (2, 'Beverages', 'Beer, Wine, Coffee, Cocoa, Tea, Soft Drinks, Water');
 insert into categories values (3, 'Deli', 'Cheeses, Meats, Party Trays, Sides, Snacks');
@@ -14,16 +5,6 @@ insert into categories values (4, 'Grocery', 'Breakfast Foods, Canned Food, Ethn
 insert into categories values (5, 'Meat & Poultry', 'Beef, Chicken, Frozen, Lamb, Pork, Turkey');
 insert into categories values (6, 'Produce', 'Fruit, Vegetables');
 insert into categories values (7, 'Seafood', 'Fish, Shellfish');
-
-drop table products;
-
-create table products (
-    id integer,
-    categoryId integer,
-    name varchar(50),
-    price double,
-    primary key (id)
-);
 
 insert into products values (1, 1, 'Bagel', 3);
 insert into products values (2, 1, 'Baguette', 2);
@@ -56,15 +37,26 @@ insert into products values (28, 7, 'Salmon', 5);
 insert into products values (29, 7, 'Crab', 10);
 insert into products values (30, 7, 'Shrimp', 8);
 
-drop table order_details;
-
-create table order_details (
-    orderId integer,
-    productId integer,
-    price double,
-    quantity integer,
-    primary key (orderId, productId)
-);
+insert into orders values (1, 'ewalker', 'swhite', '2004-08-10');
+insert into orders values (2, 'scarter', 'swhite', '2004-12-22');
+insert into orders values (3, 'ewalker', 'pfarmer', '2005-01-02');
+insert into orders values (4, 'scarter', 'jstockton', '2005-01-10');
+insert into orders values (5, 'jcarter', 'jstockton', '2005-02-10');
+insert into orders values (6, 'ewalker', 'lwalker', '2005-02-17');
+insert into orders values (7, 'tmorris', 'pfarmer', '2005-02-25');
+insert into orders values (8, 'tmorris', 'swhite', '2005-03-11');
+insert into orders values (9, 'kjensen', 'pfarmer', '2005-04-09');
+insert into orders values (10, 'jcarter', 'jstockton', '2005-05-07');
+insert into orders values (11, 'tmorris', 'swhite', '2005-05-15');
+insert into orders values (12, 'ewalker', 'swhite', '2005-06-06');
+insert into orders values (13, 'rmills', 'jstockton', '2005-06-27');
+insert into orders values (14, 'mhunter', 'lwalker', '2005-07-14');
+insert into orders values (15, 'rmills', 'swhite', '2005-07-14');
+insert into orders values (16, 'jcarter', 'pfarmer', '2005-07-25');
+insert into orders values (17, 'bhall', 'jstockton', '2005-08-06');
+insert into orders values (18, 'tmorris', 'pfarmer', '2005-08-18');
+insert into orders values (19, 'scarter', 'jstockton', '2005-09-07');
+insert into orders values (20, 'emorris', 'lwalker', '2005-09-12');
 
 insert into order_details values (1, 8, 6, 2);
 insert into order_details values (1, 16, 3, 1);
@@ -96,47 +88,6 @@ insert into order_details values (17, 22, 2, 2);
 insert into order_details values (18, 8, 6, 1);
 insert into order_details values (19, 16, 3, 3);
 insert into order_details values (20, 28, 1, 1);
-
-drop table orders;
-
-create table orders (
-    id integer,
-    customer varchar(10),
-    employee varchar(10),
-    orderDate datetime,
-    primary key (id)
-);
-
-insert into orders values (1, 'ewalker', 'swhite', '2004-08-10');
-insert into orders values (2, 'scarter', 'swhite', '2004-12-22');
-insert into orders values (3, 'ewalker', 'pfarmer', '2005-01-02');
-insert into orders values (4, 'scarter', 'jstockton', '2005-01-10');
-insert into orders values (5, 'jcarter', 'jstockton', '2005-02-10');
-insert into orders values (6, 'ewalker', 'lwalker', '2005-02-17');
-insert into orders values (7, 'tmorris', 'pfarmer', '2005-02-25');
-insert into orders values (8, 'tmorris', 'swhite', '2005-03-11');
-insert into orders values (9, 'kjensen', 'pfarmer', '2005-04-09');
-insert into orders values (10, 'jcarter', 'jstockton', '2005-05-07');
-insert into orders values (11, 'tmorris', 'swhite', '2005-05-15');
-insert into orders values (12, 'ewalker', 'swhite', '2005-06-06');
-insert into orders values (13, 'rmills', 'jstockton', '2005-06-27');
-insert into orders values (14, 'mhunter', 'lwalker', '2005-07-14');
-insert into orders values (15, 'rmills', 'swhite', '2005-07-14');
-insert into orders values (16, 'jcarter', 'pfarmer', '2005-07-25');
-insert into orders values (17, 'bhall', 'jstockton', '2005-08-06');
-insert into orders values (18, 'tmorris', 'pfarmer', '2005-08-18');
-insert into orders values (19, 'scarter', 'jstockton', '2005-09-07');
-insert into orders values (20, 'emorris', 'lwalker', '2005-09-12');
-
-drop table order_histories;
-
-create table order_histories (
-    orderId integer,
-    productId integer,
-    historyDate datetime,
-    description varchar(50),
-    primary key (orderId, productId, historyDate)
-);
 
 insert into order_histories values (1, 8, '2004-08-10', 'PENDING');
 insert into order_histories values (1, 16, '2004-08-10', 'PENDING');
@@ -202,17 +153,6 @@ insert into order_histories values (18, 8, '2005-08-18', 'PENDING');
 insert into order_histories values (19, 16, '2005-09-07', 'PENDING');
 insert into order_histories values (20, 28, '2005-09-12', 'PENDING');
 
-drop table customers;
-
-create table customers (
-    username varchar(10),
-    firstName varchar(50),
-    lastName varchar(50),
-    encPassword varchar(255),
-    password varchar(10),
-    primary key (username)
-);
-
 insert into customers values ('tmorris', 'Ted', 'Morris', '47af3474c807aaea8b876c39e6ce8fb41e7ac637', 'tm0rr1s');
 insert into customers values ('scarter', 'Sam', 'Carter', '73789cc546472c6c629aecf1a04c3648ac040eab', '5c4rt3r');
 insert into customers values ('ewalker', 'Eric', 'Walker', '745aeca50e677d42ddfe39b5571957569369f1b4', '3w4lk3r');
@@ -224,14 +164,6 @@ insert into customers values ('tjensen', 'Ted', 'Jensen', '269cc231e17c496728557
 insert into customers values ('emorris', 'Eric', 'Morris', 'ec3260802722cc08a2b665744120476e3de73fa1', '3m0rr15');
 insert into customers values ('bhall', 'Benjamin', 'Hall', '399fa0b37c78c6d8fc43b304fb7989a2750611c0', 'bh4ll');
 
-drop table customer_emails;
-
-create table customer_emails (
-    email varchar(50),
-    username varchar(10),
-    primary key (email)
-);
-
 insert into customer_emails values ('tmorris@yahoo.com', 'tmorris');
 insert into customer_emails values ('tmorris@hotmail.com', 'tmorris');
 insert into customer_emails values ('ewalker@yahoo.com', 'ewalker');
@@ -240,17 +172,6 @@ insert into customer_emails values ('ewalker@gmail.com', 'ewalker');
 insert into customer_emails values ('kjensen@gmail.com', 'kjensen');
 insert into customer_emails values ('tjensen@hotmail.com', 'tjensen');
 insert into customer_emails values ('jcarter@yahoo.com', 'jcarter');
-
-drop table employees;
-
-create table employees (
-    username varchar(10),
-    firstName varchar(50),
-    lastName varchar(50),
-    encPassword varchar(255),
-    password varchar(10),
-    primary key (username)
-);
 
 insert into employees values ('jstockton', 'Jim', 'Stockton', '29609449ad6a267aac664f9c1d9c267b54aade19', 'j5t0ckt0n');
 insert into employees values ('swhite', 'Scott', 'White', '1c60f10728e0f6878d60f7345225a8c680844d19', 'swh1t3');
