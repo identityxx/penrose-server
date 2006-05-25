@@ -117,7 +117,7 @@ public class PenroseLDAPService extends Service {
                     name.substring(0, 1).toUpperCase()+name.substring(1)+
                     "Schema";
 
-            log.debug("Loading "+className+".");
+            log.debug("Loading "+className);
             Class clazz = Class.forName(className);
             Object object = clazz.newInstance();
             bootstrapSchemas.add(object);
@@ -137,19 +137,22 @@ public class PenroseLDAPService extends Service {
         authenticator.setPenrose(getPenroseServer().getPenrose());
 
         MutableAuthenticatorConfiguration authenticatorConfig = new MutableAuthenticatorConfiguration();
-        authenticatorConfig.setName("penrose");
+        authenticatorConfig.setName("Penrose");
         authenticatorConfig.setAuthenticator(authenticator);
 
-        Set authenticators = configuration.getAuthenticatorConfigurations();
+        Set authenticators = new LinkedHashSet();
         authenticators.add(authenticatorConfig);
+        authenticators.addAll(configuration.getAuthenticatorConfigurations());
+        //Set authenticators = configuration.getAuthenticatorConfigurations();
+        //authenticators.add(authenticatorConfig);
         configuration.setAuthenticatorConfigurations(authenticators);
-/*
+
         log.debug("Authenticators:");
         for (Iterator i=authenticators.iterator(); i.hasNext(); ) {
             AuthenticatorConfiguration ac = (AuthenticatorConfiguration)i.next();
             log.debug(" - "+ac.getName());
         }
-*/
+
         // Register Penrose interceptor
         PenroseInterceptor interceptor = new PenroseInterceptor();
         interceptor.setPenrose(getPenroseServer().getPenrose());
@@ -162,6 +165,12 @@ public class PenroseLDAPService extends Service {
         interceptors.add(interceptorConfig);
         interceptors.addAll(configuration.getInterceptorConfigurations());
         configuration.setInterceptorConfigurations(interceptors);
+
+        log.debug("Interceptors:");
+        for (Iterator i=interceptors.iterator(); i.hasNext(); ) {
+            InterceptorConfiguration ic = (InterceptorConfiguration)i.next();
+            log.debug(" - "+ic.getName());
+        }
 
         // Initialize ApacheDS
         final Properties env = new Properties();

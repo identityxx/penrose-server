@@ -55,6 +55,7 @@ public class ModifyHandler {
 
         int rc;
         try {
+            log.info("Modifying "+dn);
             log.debug(Formatter.displaySeparator(80));
             log.debug(Formatter.displayLine("MODIFY:", 80));
             if (session != null && session.getBindDn() != null) {

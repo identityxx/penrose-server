@@ -52,6 +52,8 @@ public class SearchEngine {
             final PenroseSearchResults results
             ) throws Exception {
 
+        log.info("Searching "+entryMapping.getDn()+" for "+filter);
+
         boolean staticEntry = engine.isStatic(entryMapping);
         if (staticEntry) {
             log.debug("Returning static entries.");

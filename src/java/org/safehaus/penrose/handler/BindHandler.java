@@ -48,6 +48,7 @@ public class BindHandler {
 
         int rc;
         try {
+            log.info("Binding as "+dn);
             log.debug(Formatter.displaySeparator(80));
             log.debug(Formatter.displayLine("BIND:", 80));
             log.debug(Formatter.displayLine(" - DN       : "+dn, 80));

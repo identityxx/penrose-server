@@ -29,6 +29,7 @@ import org.ietf.ldap.LDAPAttribute;
 import org.ietf.ldap.LDAPDN;
 
 import javax.naming.directory.*;
+import javax.naming.NamingEnumeration;
 import java.util.*;
 
 /**
@@ -165,7 +166,9 @@ public class EntryUtil {
     public static Attributes getAttributes(Entry entry) {
 
         AttributeValues attributeValues = entry.getAttributeValues();
+
         Attributes attributes = new BasicAttributes();
+        if (attributeValues == null) return attributes;
 
         for (Iterator i=attributeValues.getNames().iterator(); i.hasNext(); ) {
             String name = (String)i.next();
@@ -174,7 +177,12 @@ public class EntryUtil {
             Attribute attribute = new BasicAttribute(name);
             for (Iterator j=values.iterator(); j.hasNext(); ) {
                 Object value = j.next();
-                attribute.add(value);
+
+                if (value instanceof Number) { // TODO This is ApacheDS's bug
+                    attribute.add(value.toString());
+                } else {
+                    attribute.add(value);
+                }
             }
 
             attributes.put(attribute);
@@ -197,4 +205,28 @@ public class EntryUtil {
 
         return attributes;
     }
+
+    public static String toString(Entry entry) throws Exception {
+        StringBuffer sb = new StringBuffer();
+        sb.append("dn: ");
+        sb.append(entry.getDn());
+        sb.append("\n");
+
+        Attributes attributes = getAttributes(entry);
+        for (NamingEnumeration i = attributes.getAll(); i.hasMore(); ) {
+            Attribute attribute = (Attribute)i.next();
+            String name = attribute.getID();
+
+            for (NamingEnumeration j = attribute.getAll(); j.hasMore(); ) {
+                Object value = j.next();
+                sb.append(name);
+                sb.append(": ");
+                sb.append(value);
+                sb.append("\n");
+            }
+        }
+
+        return sb.toString();
+    }
+
 }

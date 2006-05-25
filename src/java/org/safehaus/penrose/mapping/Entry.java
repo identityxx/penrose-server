@@ -109,28 +109,6 @@ public class Entry {
         return entryMapping.getObjectClasses();
     }
 
-    public String toString() {
-        StringBuffer sb = new StringBuffer();
-        sb.append("dn: "+getDn()+"\n");
-
-        for (Iterator i = entryMapping.getObjectClasses().iterator(); i.hasNext(); ) {
-            String oc = (String)i.next();
-            sb.append("objectClass: "+oc+"\n");
-        }
-
-        for (Iterator i = attributeValues.getNames().iterator(); i.hasNext(); ) {
-            String name = (String)i.next();
-            Collection values = attributeValues.get(name);
-
-            for (Iterator j = values.iterator(); j.hasNext(); ) {
-                Object value = j.next();
-                sb.append(name+": "+value+"\n");
-            }
-        }
-
-        return sb.toString();
-    }
-
     public Collection getACL() {
         return entryMapping.getACL();
     }

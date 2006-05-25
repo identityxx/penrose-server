@@ -80,6 +80,7 @@ public class PenroseEnumeration implements NamingEnumeration {
 
     public Object next() throws NamingException {
         SearchResult result = (SearchResult)searchResults.next();
+        log.info("Returning entry "+result.getName());
         return result;
 /*
         LDAPAttributeSet attributeSet = result.getAttributeSet();

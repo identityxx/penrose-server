@@ -48,11 +48,12 @@ public class DeleteHandler {
 
         int rc;
         try {
-            log.info("-------------------------------------------------");
-            log.info("DELETE:");
-            if (session != null && session.getBindDn() != null) log.info(" - Bind DN: "+session.getBindDn());
-            log.info(" - DN: "+dn);
-            log.info("");
+            log.info("Deleting "+dn);
+            log.debug("-------------------------------------------------");
+            log.debug("DELETE:");
+            if (session != null && session.getBindDn() != null) log.debug(" - Bind DN: "+session.getBindDn());
+            log.debug(" - DN: "+dn);
+            log.debug("");
 
             if (session != null && session.getBindDn() == null) {
                 PenroseConfig penroseConfig = handler.getPenroseConfig();

@@ -54,11 +54,12 @@ public class AddHandler {
 
         int rc;
         try {
-            log.info("-------------------------------------------------");
-            log.info("ADD:");
-            if (session != null && session.getBindDn() != null) log.info(" - Bind DN: "+session.getBindDn());
-            log.info(" - Entry:\n"+dn);
-            log.info("");
+            log.info("Adding "+dn);
+            log.debug("-------------------------------------------------");
+            log.debug("ADD:");
+            if (session != null && session.getBindDn() != null) log.debug(" - Bind DN: "+session.getBindDn());
+            log.debug(" - Entry:\n"+dn);
+            log.debug("");
 
             if (session != null && session.getBindDn() == null) {
                 PenroseConfig penroseConfig = handler.getPenroseConfig();

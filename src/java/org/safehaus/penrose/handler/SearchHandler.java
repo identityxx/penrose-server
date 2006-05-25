@@ -108,14 +108,14 @@ public class SearchHandler {
             }
 
             log.debug("----------------------------------------------------------------------------------");
-            log.info("SEARCH:");
-            if (session != null && session.getBindDn() != null) log.info(" - Bind DN: " + session.getBindDn());
-            log.info(" - Base DN: " + base);
-            log.info(" - Scope: " + s);
-            log.info(" - Filter: "+filter);
+            log.debug("SEARCH:");
+            if (session != null && session.getBindDn() != null) log.debug(" - Bind DN: " + session.getBindDn());
+            log.debug(" - Base DN: " + base);
+            log.debug(" - Scope: " + s);
+            log.debug(" - Filter: "+filter);
             log.debug(" - Alias Dereferencing: " + d);
             log.debug(" - Attribute Names: " + attributeNames);
-            log.info("");
+            log.debug("");
 
             if (session != null && session.getBindDn() == null) {
                 PenroseConfig penroseConfig = handler.getPenroseConfig();
@@ -412,6 +412,8 @@ public class SearchHandler {
                 && attributeDefinitions.isEmpty()
                 && "(objectclass=*)".equals(filter.toString().toLowerCase());
 
+        log.debug("Search DNs only: "+dnOnly);
+
         final Interpreter interpreter = handler.getEngine().getInterpreterFactory().newInstance();
 
         dns.addListener(new PipelineAdapter() {
@@ -427,8 +429,8 @@ public class SearchHandler {
 
                         if (dnOnly) {
                             AttributeValues sv = map.getMergedValues();
-                            AttributeValues attributeValues = handler.getEngine().computeAttributeValues(entryMapping, sv, interpreter);
-                            entry = new Entry(dn, entryMapping, sv, attributeValues);
+                            //AttributeValues attributeValues = handler.getEngine().computeAttributeValues(entryMapping, sv, interpreter);
+                            entry = new Entry(dn, entryMapping, sv, null);
 
                             results.add(entry);
 
@@ -479,7 +481,7 @@ public class SearchHandler {
                         EntryData map = (EntryData)event.getObject();
                         String dn = map.getDn();
 
-                        log.info("Cache <= "+dn);
+                        log.info("Filter cache <= "+dn);
 
                         handler.getEngine().getEntryCache().add(entryMapping, filter, dn);
 
@@ -500,7 +502,7 @@ public class SearchHandler {
                 public void objectAdded(PipelineEvent event) {
                     try {
                         String dn = (String)event.getObject();
-                        log.info("Cache => "+dn);
+                        log.info("Filter cache => "+dn);
 
                         EntryData map = new EntryData();
                         map.setDn(dn);
@@ -529,6 +531,9 @@ public class SearchHandler {
             public void objectAdded(PipelineEvent event) {
                 try {
                     Entry entry = (Entry)event.getObject();
+
+                    log.info("Entry cache <= "+entry.getDn());
+
                     handler.getEngine().getEntryCache().put(entry);
                     results.add(entry);
 

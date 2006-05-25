@@ -99,7 +99,7 @@ public class Pipeline implements Iterator {
         if (list.size() == 0) return null;
 
         Object object = list.remove(0);
-        fireEvent(new PipelineEvent(PipelineEvent.OBJECT_ADDED, object));
+        fireEvent(new PipelineEvent(PipelineEvent.OBJECT_REMOVED, object));
 
         return object;
     }
@@ -116,7 +116,7 @@ public class Pipeline implements Iterator {
         if (list.size() == 0) return;
 
         Object object = list.remove(0);
-        fireEvent(new PipelineEvent(PipelineEvent.OBJECT_ADDED, object));
+        fireEvent(new PipelineEvent(PipelineEvent.OBJECT_REMOVED, object));
     }
 
     public synchronized void close() {
