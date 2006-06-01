@@ -37,7 +37,9 @@ import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.filter.SimpleFilter;
 import org.safehaus.penrose.filter.FilterTool;
 import org.safehaus.penrose.session.PenroseSearchResults;
+import org.safehaus.penrose.util.EntryUtil;
 import org.apache.log4j.Logger;
+import org.ietf.ldap.LDAPDN;
 
 import javax.naming.directory.Attributes;
 import java.util.*;
@@ -754,18 +756,25 @@ public abstract class Engine {
         Collection rdns = computeRdn(interpreter, entryMapping);
         Collection dns = new ArrayList();
 
-        //log.debug("Computing DNs for \""+entryMapping.getDn()+"\"");
+        //log.info("Computing DNs for \""+entryMapping.getDn()+"\"");
 
         if (parentDns.isEmpty()) {
             dns.add(entryMapping.getDn());
         } else {
             for (Iterator i=parentDns.iterator(); i.hasNext(); ) {
                 String parentDn = (String)i.next();
-                //log.debug(" - parent DN: "+parentDn);
+                //log.info(" - parent dn: "+parentDn);
                 for (Iterator j=rdns.iterator(); j.hasNext(); ) {
                     Row rdn = (Row)j.next();
-                    String dn = rdn+(parentDn == null ? "" : ","+parentDn);
-                    //log.debug("   - "+dn);
+                    //log.info("   - rdn: "+rdn);
+
+                    String s = rdn.toString(); //.trim();
+                    //s = LDAPDN.escapeRDN(s);
+                    //log.info("     => rdn: "+rdn);
+
+                    String dn = EntryUtil.append(s, parentDn);
+
+                    //log.info("     => dn: "+dn);
                     dns.add(dn);
                 }
             }

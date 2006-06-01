@@ -202,7 +202,12 @@ public class PenroseLDAPService extends Service {
         log.warn("Listening to port "+ldapPort+".");
 
         if (enableLdaps) {
-            log.warn("Listening to port "+ldapsPort+".");
+            double javaSpecVersion = Double.parseDouble(System.getProperty("java.specification.version"));
+            if (javaSpecVersion < 1.5) {
+                log.warn("SSL is not supported with Java "+javaSpecVersion);
+            } else {
+                log.warn("Listening to port "+ldapsPort+".");
+            }
         }
 
         // Start ApacheDS synchronization thread

@@ -236,6 +236,15 @@ public class PenroseServer implements SignalHandler {
 
             log.warn("Starting "+Penrose.PRODUCT_NAME+" "+Penrose.PRODUCT_VERSION+".");
 
+            String javaVersion = System.getProperty("java.version");
+            log.info("Java version: "+javaVersion);
+
+            String javaVendor = System.getProperty("java.vendor");
+            log.info("Java vendor: "+javaVendor);
+            
+            String javaHome = System.getProperty("java.home");
+            log.info("Java home: "+javaHome);
+
             PenroseServer server = new PenroseServer(homeDirectory);
             server.start();
 

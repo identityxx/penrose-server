@@ -250,7 +250,18 @@ public class SearchHandler {
 
                     rc = handler.getACLEngine().checkRead(session, baseEntry.getDn(), entryMapping);
                     if (rc == LDAPException.SUCCESS) {
-                        results.add(baseEntry);
+
+                        Entry e = baseEntry;
+
+                        if (attributeNames != null && !attributeNames.isEmpty()) {
+                            AttributeValues av = new AttributeValues();
+                            av.add(baseEntry.getAttributeValues());
+                            av.retain(attributeNames);
+
+                            e = new Entry(baseEntry.getDn(), entryMapping, baseEntry.getSourceValues(), av);
+                        }
+
+                        results.add(e);
                     }
                 }
             }
@@ -314,7 +325,17 @@ public class SearchHandler {
                     rc = handler.getACLEngine().checkRead(session, child.getDn(), child.getEntryMapping());
                     if (rc != LDAPException.SUCCESS) continue;
 
-                    results.add(child);
+                    Entry e = child;
+
+                    if (attributeNames != null && !attributeNames.isEmpty()) {
+                        AttributeValues av = new AttributeValues();
+                        av.add(child.getAttributeValues());
+                        av.retain(attributeNames);
+
+                        e = new Entry(child.getDn(), entryMapping, child.getSourceValues(), av);
+                    }
+
+                    results.add(e);
                 }
 
                 int rc = sr.getReturnCode();

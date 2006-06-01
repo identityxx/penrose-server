@@ -194,8 +194,7 @@ public class JNDIAdapter extends Adapter {
             javax.naming.directory.SearchResult sr = (javax.naming.directory.SearchResult)ne.next();
             log.debug("Result: "+ldapBase);
 
-            AttributeValues av = getValues(sourceConfig, sr);
-            return av;
+            return getValues(sourceConfig, sr);
 
         } finally {
             if (ctx != null) try { ctx.close(); } catch (Exception e) {}
