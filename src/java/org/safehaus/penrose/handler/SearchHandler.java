@@ -444,7 +444,7 @@ public class SearchHandler {
                     String dn = map.getDn();
 
                     Entry entry = (Entry)handler.getEngine().getEntryCache().get(dn);
-                    log.debug("Entry cache for "+dn+": "+(entry == null ? "not found" : "found"));
+                    log.debug("Entry cache for "+dn+": "+(entry == null ? "not found." : "found."));
 
                     if (entry == null) {
 
@@ -502,7 +502,7 @@ public class SearchHandler {
                         EntryData map = (EntryData)event.getObject();
                         String dn = map.getDn();
 
-                        log.info("Filter cache <= "+dn);
+                        log.info("Storing "+dn+" in filter cache.");
 
                         handler.getEngine().getEntryCache().add(entryMapping, filter, dn);
 
@@ -523,7 +523,7 @@ public class SearchHandler {
                 public void objectAdded(PipelineEvent event) {
                     try {
                         String dn = (String)event.getObject();
-                        log.info("Filter cache => "+dn);
+                        log.info("Loading "+dn+" from filter cache.");
 
                         EntryData map = new EntryData();
                         map.setDn(dn);
@@ -553,7 +553,7 @@ public class SearchHandler {
                 try {
                     Entry entry = (Entry)event.getObject();
 
-                    log.info("Entry cache <= "+entry.getDn());
+                    log.info("Storing "+entry.getDn()+" in entry cache.");
 
                     handler.getEngine().getEntryCache().put(entry);
                     results.add(entry);

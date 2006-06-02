@@ -199,11 +199,11 @@ public class LoadEngine {
         //MRSWLock lock = getLock(entryMapping;
         //lock.getWriteLock(Penrose.WAIT_TIMEOUT);
 
+        log.info("Loading data for "+entryMapping.getDn()+".");
+
         try {
             while (batches.hasNext()) {
                 Collection entries = (Collection)batches.next();
-
-                log.info("Loading data for "+entryMapping.getDn());
 
                 log.debug(Formatter.displaySeparator(80));
                 log.debug(Formatter.displayLine("LOAD", 80));

@@ -21,6 +21,7 @@ import java.util.*;
 import java.io.File;
 
 import org.apache.log4j.*;
+import org.apache.log4j.xml.DOMConfigurator;
 import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.config.PenroseConfigReader;
 import org.safehaus.penrose.service.ServiceManager;
@@ -209,16 +210,15 @@ public class PenroseServer implements SignalHandler {
 
             String homeDirectory = System.getProperty("penrose.home");
 
-            Logger rootLogger = Logger.getRootLogger();
-            rootLogger.setLevel(Level.OFF);
+            //Logger rootLogger = Logger.getRootLogger();
+            //rootLogger.setLevel(Level.OFF);
 
             Logger logger = Logger.getLogger("org.safehaus.penrose");
+
             File log4jProperties = new File((homeDirectory == null ? "" : homeDirectory+File.separator)+"conf"+File.separator+"log4j.properties");
+            File log4jXml = new File((homeDirectory == null ? "" : homeDirectory+File.separator)+"conf"+File.separator+"log4j.xml");
 
-            if (log4jProperties.exists()) {
-                PropertyConfigurator.configure(log4jProperties.getAbsolutePath());
-
-            } else if (parameters.contains("-d")) {
+            if (parameters.contains("-d")) {
                 logger.setLevel(Level.DEBUG);
                 ConsoleAppender appender = new ConsoleAppender(new PatternLayout("%-20C{1} [%4L] %m%n"));
                 BasicConfigurator.configure(appender);
@@ -227,6 +227,12 @@ public class PenroseServer implements SignalHandler {
                 logger.setLevel(Level.INFO);
                 ConsoleAppender appender = new ConsoleAppender(new PatternLayout("[%d{MM/dd/yyyy HH:mm:ss}] %m%n"));
                 BasicConfigurator.configure(appender);
+
+            } else if (log4jProperties.exists()) {
+                PropertyConfigurator.configure(log4jProperties.getAbsolutePath());
+
+            } else if (log4jXml.exists()) {
+                DOMConfigurator.configure(log4jXml.getAbsolutePath());
 
             } else {
                 logger.setLevel(Level.WARN);

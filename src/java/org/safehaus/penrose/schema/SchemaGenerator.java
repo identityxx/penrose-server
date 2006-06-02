@@ -27,6 +27,7 @@ import org.apache.maven.monitor.event.EventMonitor;
 import org.apache.maven.monitor.event.DefaultEventMonitor;
 import org.apache.maven.cli.ConsoleDownloadMonitor;
 import org.apache.log4j.*;
+import org.apache.log4j.xml.DOMConfigurator;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -303,14 +304,18 @@ public class SchemaGenerator {
 
         String homeDirectory = System.getProperty("penrose.home");
 
-        Logger rootLogger = Logger.getRootLogger();
-        rootLogger.setLevel(Level.OFF);
+        //Logger rootLogger = Logger.getRootLogger();
+        //rootLogger.setLevel(Level.OFF);
 
         Logger logger = Logger.getLogger("org.safehaus.penrose");
         File log4jProperties = new File((homeDirectory == null ? "" : homeDirectory+File.separator)+"conf"+File.separator+"log4j.properties");
+        File log4jXml = new File((homeDirectory == null ? "" : homeDirectory+File.separator)+"conf"+File.separator+"log4j.xml");
 
         if (log4jProperties.exists()) {
             PropertyConfigurator.configure(log4jProperties.getAbsolutePath());
+
+        } else if (log4jXml.exists()) {
+            DOMConfigurator.configure(log4jXml.getAbsolutePath());
 
         } else {
             logger.setLevel(Level.DEBUG);

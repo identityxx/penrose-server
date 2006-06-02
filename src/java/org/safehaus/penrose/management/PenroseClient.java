@@ -18,6 +18,7 @@
 package org.safehaus.penrose.management;
 
 import org.apache.log4j.*;
+import org.apache.log4j.xml.DOMConfigurator;
 
 import javax.management.remote.JMXServiceURL;
 import javax.management.remote.JMXConnector;
@@ -34,7 +35,7 @@ import gnu.getopt.LongOpt;
 
 public class PenroseClient {
 
-    public Logger log = Logger.getLogger(PenroseClient.class);
+    public static Logger log = Logger.getLogger(PenroseClient.class);
 
     public final static String MBEAN_NAME = "Penrose:service=Penrose";
 
@@ -291,7 +292,7 @@ public class PenroseClient {
 
     public static void main(String args[]) throws Exception {
 
-        String logLevel      = "NORMAL";
+        Level level          = Level.WARN;
         String serverType    = PENROSE;
         String protocol      = DEFAULT_PROTOCOL;
         String hostname      = "localhost";
@@ -319,10 +320,10 @@ public class PenroseClient {
                     parameters.add(getopt.getOptarg());
                     break;
                 case 'd':
-                    logLevel = "DEBUG";
+                    level = Level.DEBUG;
                     break;
                 case 'v':
-                    logLevel = "VERBOSE";
+                    level = Level.INFO;
                     break;
                 case 'P':
                     protocol = getopt.getOptarg();
@@ -354,27 +355,31 @@ public class PenroseClient {
 
         String homeDirectory = System.getProperty("penrose.home");
 
-        Logger rootLogger = Logger.getRootLogger();
-        rootLogger.setLevel(Level.toLevel("OFF"));
+        //Logger rootLogger = Logger.getRootLogger();
+        //rootLogger.setLevel(Level.OFF);
 
         Logger logger = Logger.getLogger("org.safehaus.penrose");
         File log4jProperties = new File((homeDirectory == null ? "" : homeDirectory+File.separator)+"conf"+File.separator+"log4j.properties");
+        File log4jXml = new File((homeDirectory == null ? "" : homeDirectory+File.separator)+"conf"+File.separator+"log4j.xml");
 
-        if (log4jProperties.exists()) {
-            PropertyConfigurator.configure(log4jProperties.getAbsolutePath());
-
-        } else if (logLevel.equals("DEBUG")) {
-            logger.setLevel(Level.toLevel("DEBUG"));
+        if (level.equals(Level.DEBUG)) {
+            logger.setLevel(level);
             ConsoleAppender appender = new ConsoleAppender(new PatternLayout("%-20C{1} [%4L] %m%n"));
             BasicConfigurator.configure(appender);
 
-        } else if (logLevel.equals("VERBOSE")) {
-            logger.setLevel(Level.toLevel("INFO"));
+        } else if (level.equals(Level.INFO)) {
+            logger.setLevel(level);
             ConsoleAppender appender = new ConsoleAppender(new PatternLayout("[%d{MM/dd/yyyy HH:mm:ss}] %m%n"));
             BasicConfigurator.configure(appender);
 
+        } else if (log4jProperties.exists()) {
+            PropertyConfigurator.configure(log4jProperties.getAbsolutePath());
+
+        } else if (log4jXml.exists()) {
+            DOMConfigurator.configure(log4jXml.getAbsolutePath());
+
         } else {
-            logger.setLevel(Level.toLevel("WARN"));
+            logger.setLevel(level);
             ConsoleAppender appender = new ConsoleAppender(new PatternLayout("[%d{MM/dd/yyyy HH:mm:ss}] %m%n"));
             BasicConfigurator.configure(appender);
         }
@@ -385,7 +390,7 @@ public class PenroseClient {
 
         Iterator iterator = parameters.iterator();
         String command = (String)iterator.next();
-        logger.debug("Executing "+command);
+        log.debug("Executing "+command);
 
         if ("version".equals(command)) {
             String version = client.getProductName()+" "+client.getProductVersion();
@@ -418,19 +423,19 @@ public class PenroseClient {
             Collection loggerNames = client.getLoggerNames();
             for (Iterator i=loggerNames.iterator(); i.hasNext(); ) {
                 String loggerName = (String)i.next();
-                String level = client.getLoggerLevel(loggerName);
+                String l = client.getLoggerLevel(loggerName);
 
-                System.out.println(loggerName+" ["+level+"]");
+                System.out.println(loggerName+" ["+l +"]");
             }
 
         } else if ("logger".equals(command)) {
             String loggerName = (String)iterator.next();
             if (iterator.hasNext()) {
-                String level = (String)iterator.next();
-                client.setLoggerLevel(loggerName, "".equals(level) ? null : level);
+                String l = (String)iterator.next();
+                client.setLoggerLevel(loggerName, "".equals(l) ? null : l);
             } else {
-                String level = client.getLoggerLevel(loggerName);
-                System.out.println(level);
+                String l = client.getLoggerLevel(loggerName);
+                System.out.println(l);
             }
         }
 

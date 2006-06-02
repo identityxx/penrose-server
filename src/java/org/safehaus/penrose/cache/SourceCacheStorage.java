@@ -184,7 +184,7 @@ public class SourceCacheStorage {
                 try {
                     AttributeValues sourceValues = (AttributeValues)event.getObject();
                     Row pk = sourceConfig.getPrimaryKeyValues(sourceValues);
-                    log.info("Source cache <= "+pk);
+                    log.info("Storing "+pk+" in source cache");
                     put(pk, sourceValues);
                 } catch (Exception e) {
                     log.debug(e.getMessage(), e);
