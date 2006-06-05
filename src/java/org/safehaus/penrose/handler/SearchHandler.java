@@ -435,8 +435,6 @@ public class SearchHandler {
 
         log.debug("Search DNs only: "+dnOnly);
 
-        final Interpreter interpreter = handler.getEngine().getInterpreterFactory().newInstance();
-
         dns.addListener(new PipelineAdapter() {
             public void objectAdded(PipelineEvent event) {
                 try {

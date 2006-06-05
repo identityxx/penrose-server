@@ -318,48 +318,41 @@ public class Handler {
             }
         }
 
+        final PenroseSearchResults sr = new PenroseSearchResults();
+
+        sr.addListener(new PipelineAdapter() {
+            public void objectAdded(PipelineEvent event) {
+                try {
+                    Entry entry = (Entry)event.getObject();
+                    SearchResult searchResult = aclEngine.filterAttributes(session, entry);
+
+                    results.add(searchResult);
+
+                } catch (Exception e) {
+                    log.error(e.getMessage(), e);
+                }
+            }
+
+            public void pipelineClosed(PipelineEvent event) {
+                results.setReturnCode(sr.getReturnCode());
+                results.close();
+
+                try {
+                    SearchEvent afterSearchEvent = new SearchEvent(this, SearchEvent.AFTER_SEARCH, session, base);
+                    afterSearchEvent.setReturnCode(sr.getReturnCode());
+                    postEvent(base, afterSearchEvent);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+
         SearchEvent beforeSearchEvent = new SearchEvent(this, SearchEvent.BEFORE_SEARCH, session, base);
         postEvent(base, beforeSearchEvent);
-
-        //getSearchHandler().search(connection, base, scope, deref, filter, attributeNames, results);
 
         engine.getThreadManager().execute(new Runnable() {
             public void run() {
                 try {
-                    final PenroseSearchResults sr = new PenroseSearchResults();
-
-                    sr.addListener(new PipelineAdapter() {
-                        public void objectAdded(PipelineEvent event) {
-                            try {
-                                Entry entry = (Entry)event.getObject();
-                                // String dn = schemaManager.normalize(entry.getDn());
-                                // EntryMapping entryMapping = entry.getEntryMapping();
-                                // LDAPEntry ldapEntry = entry.toLDAPEntry();
-
-                                //EntryUtil.filterAttributes(ldapEntry, normalizedAttributeNames);
-                                SearchResult searchResult = aclEngine.filterAttributes(session, entry);
-
-                                results.add(searchResult);
-
-                            } catch (Exception e) {
-                                log.error(e.getMessage(), e);
-                            }
-                        }
-
-                        public void pipelineClosed(PipelineEvent event) {
-                            results.setReturnCode(sr.getReturnCode());
-                            results.close();
-
-                            try {
-                                SearchEvent afterSearchEvent = new SearchEvent(this, SearchEvent.AFTER_SEARCH, session, base);
-                                afterSearchEvent.setReturnCode(sr.getReturnCode());
-                                postEvent(base, afterSearchEvent);
-                            } catch (Exception e) {
-                                e.printStackTrace();
-                            }
-                        }
-                    });
-
                     getSearchHandler().search(session, base, scope, deref, filter, normalizedAttributeNames, sr);
 
                 } catch (Throwable e) {

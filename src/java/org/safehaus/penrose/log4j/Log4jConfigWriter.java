@@ -42,6 +42,10 @@ public class Log4jConfigWriter {
         writer.close();
     }
 
+    public void close() throws Exception {
+        out.close();
+    }
+
     public Element createConfigElement(Log4jConfig config) {
 
         Element element = new DefaultElement("log4j:configuration");

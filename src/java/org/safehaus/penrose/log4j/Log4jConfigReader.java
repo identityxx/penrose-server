@@ -30,6 +30,10 @@ public class Log4jConfigReader {
         return createLog4jConfig(document);
     }
 
+    public void close() throws Exception {
+        is.close();
+    }
+    
     public Log4jConfig createLog4jConfig(Document document) {
 
         Log4jConfig config = new Log4jConfig();

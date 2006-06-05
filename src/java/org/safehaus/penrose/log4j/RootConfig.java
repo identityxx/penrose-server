@@ -32,4 +32,9 @@ public class RootConfig {
     public void removeAppender(String appenderName) {
         appenders.remove(appenderName);
     }
+
+    public void setAppenders(Collection appenderNames) {
+        appenders.clear();
+        appenders.addAll(appenderNames);
+    }
 }
