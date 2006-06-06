@@ -54,7 +54,7 @@ public class AddHandler {
 
         int rc;
         try {
-            log.info("Adding "+dn);
+            log.warn("Add entry \""+dn+"\".");
             log.debug("-------------------------------------------------");
             log.debug("ADD:");
             if (session != null && session.getBindDn() != null) log.debug(" - Bind DN: "+session.getBindDn());
@@ -92,6 +92,12 @@ public class AddHandler {
         } catch (Exception e) {
             log.error(e.getMessage(), e);
             rc = LDAPException.OPERATIONS_ERROR;
+        }
+
+        if (rc == LDAPException.SUCCESS) {
+            log.warn("Add operation succeded.");
+        } else {
+            log.warn("Add operation failed. RC="+rc);
         }
 
         return rc;

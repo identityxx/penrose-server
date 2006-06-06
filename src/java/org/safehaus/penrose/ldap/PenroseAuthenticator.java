@@ -85,12 +85,12 @@ public class PenroseAuthenticator extends AbstractAuthenticator {
                 ExceptionUtil.throwNamingException(rc);
             }
 
-            log.info("Login success.");
+            log.warn("Bind operation succeeded.");
 
             return createLdapPrincipal(dn, AuthenticationLevel.SIMPLE);
 
         } catch (NamingException e) {
-            log.info("Login failed.");
+            log.warn("Bind operation failed.");
             throw e;
 
         } catch (Exception e) {

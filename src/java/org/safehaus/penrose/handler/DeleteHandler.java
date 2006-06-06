@@ -48,7 +48,9 @@ public class DeleteHandler {
 
         int rc;
         try {
-            log.info("Deleting "+dn);
+
+            log.warn("Delete entry \""+dn+"\".");
+
             log.debug("-------------------------------------------------");
             log.debug("DELETE:");
             if (session != null && session.getBindDn() != null) log.debug(" - Bind DN: "+session.getBindDn());
@@ -81,6 +83,12 @@ public class DeleteHandler {
         } catch (Exception e) {
             log.error(e.getMessage(), e);
             rc = LDAPException.OPERATIONS_ERROR;
+        }
+
+        if (rc == LDAPException.SUCCESS) {
+            log.warn("Delete operation succeded.");
+        } else {
+            log.warn("Delete operation failed. RC="+rc);
         }
 
         return rc;

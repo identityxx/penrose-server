@@ -5,12 +5,15 @@
 
   <appender name="stdout" class="org.apache.log4j.ConsoleAppender"> 
     <layout class="org.apache.log4j.PatternLayout"> 
-      <param name="ConversionPattern" value="%-20C{1} [%4L] %m%n"/> 
-    </layout> 
+      <param name="ConversionPattern" value="[%d{MM/dd/yyyy HH:mm:ss}] %m%n"/>
+<!--
+      <param name="ConversionPattern" value="%-20C{1} [%4L] %m%n"/>
+-->
+    </layout>
   </appender> 
 
   <logger name="org.safehaus.penrose" additivity="false">
-    <level value="INFO"/> 
+    <level value="WARN"/> 
     <appender-ref ref="stdout"/> 
   </logger> 
 

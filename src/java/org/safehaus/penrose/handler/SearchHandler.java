@@ -107,6 +107,8 @@ public class SearchHandler {
                 break;
             }
 
+            log.warn("Search \""+base+"\" with scope "+s+" and filter \""+filter+"\"");
+
             log.debug("----------------------------------------------------------------------------------");
             log.debug("SEARCH:");
             if (session != null && session.getBindDn() != null) log.debug(" - Bind DN: " + session.getBindDn());
@@ -141,6 +143,12 @@ public class SearchHandler {
 
         } finally {
             results.close();
+        }
+
+        if (rc == LDAPException.SUCCESS) {
+            log.warn("Search operation succeded.");
+        } else {
+            log.warn("Search operation failed. RC="+rc);
         }
 
         return rc;

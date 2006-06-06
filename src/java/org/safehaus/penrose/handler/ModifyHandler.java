@@ -55,7 +55,8 @@ public class ModifyHandler {
 
         int rc;
         try {
-            log.info("Modifying "+dn);
+            log.warn("Modify entry \""+dn+"\".");
+
             log.debug(Formatter.displaySeparator(80));
             log.debug(Formatter.displayLine("MODIFY:", 80));
             if (session != null && session.getBindDn() != null) {
@@ -105,6 +106,12 @@ public class ModifyHandler {
         } catch (Exception e) {
             log.error(e.getMessage(), e);
             rc = LDAPException.OPERATIONS_ERROR;
+        }
+
+        if (rc == LDAPException.SUCCESS) {
+            log.warn("Modify operation succeded.");
+        } else {
+            log.warn("Modify operation failed. RC="+rc);
         }
 
         return rc;

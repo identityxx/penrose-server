@@ -54,7 +54,9 @@ public class ModRdnHandler {
 
         int rc;
         try {
-            log.info("Renaming "+dn+" to "+newRdn);
+
+            log.warn("ModRDN \""+dn+"\" to \""+newRdn+"\".");
+
             log.debug("-------------------------------------------------------------------------------");
             log.debug("MODRDN:");
             if (session != null && session.getBindDn() != null) log.debug(" - Bind DN: " + session.getBindDn());
@@ -108,6 +110,12 @@ public class ModRdnHandler {
         } catch (Exception e) {
             log.error(e.getMessage(), e);
             rc = LDAPException.OPERATIONS_ERROR;
+        }
+
+        if (rc == LDAPException.SUCCESS) {
+            log.warn("ModRDN operation succeded.");
+        } else {
+            log.warn("ModRDN operation failed. RC="+rc);
         }
 
         return rc;

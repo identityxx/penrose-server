@@ -29,6 +29,7 @@ public class Pipeline implements Iterator {
     public Logger log = Logger.getLogger(getClass());
 
     List list = new ArrayList();
+    int totalCount;
     boolean done = false;
 
     Collection listeners = new LinkedHashSet();
@@ -60,6 +61,7 @@ public class Pipeline implements Iterator {
 
     public synchronized void add(Object object) {
         list.add(object);
+        totalCount++;
         fireEvent(new PipelineEvent(PipelineEvent.OBJECT_ADDED, object));
 
         notifyAll();
@@ -69,6 +71,7 @@ public class Pipeline implements Iterator {
         for (Iterator i=collection.iterator(); i.hasNext(); ) {
             Object object = i.next();
             list.add(object);
+            totalCount++;
             fireEvent(new PipelineEvent(PipelineEvent.OBJECT_ADDED, object));
         }
 
@@ -161,6 +164,10 @@ public class Pipeline implements Iterator {
         return list.size();
     }
 
+    public int getTotalCount() {
+        return totalCount;
+    }
+    
     public Iterator iterator() {
         return this;
     }

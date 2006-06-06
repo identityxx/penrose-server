@@ -70,6 +70,8 @@ public class PenroseEnumeration implements NamingEnumeration {
         boolean hasNext = searchResults.hasNext();
         if (hasNext) return true;
 
+        log.warn("Search operation returned "+searchResults.getTotalCount()+" entries.");
+
         int rc = searchResults.getReturnCode();
         if (rc != LDAPException.SUCCESS) {
             ExceptionUtil.throwNamingException(rc, "RC: "+rc);
@@ -80,7 +82,7 @@ public class PenroseEnumeration implements NamingEnumeration {
 
     public Object next() throws NamingException {
         SearchResult result = (SearchResult)searchResults.next();
-        log.info("Returning "+result.getName()+" to client.");
+        log.info("Returning \""+result.getName()+"\" to client.");
         return result;
 /*
         LDAPAttributeSet attributeSet = result.getAttributeSet();
