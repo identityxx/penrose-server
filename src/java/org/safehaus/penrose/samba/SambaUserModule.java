@@ -22,8 +22,8 @@ public class SambaUserModule extends Module {
 
     Logger log = Logger.getLogger(getClass());
 
-    public final static String SSH_CLIENT = "ssh.client";
-    public final static String SSH_SERVER  = "ssh.server";
+    public final static String SSH_CLIENT   = "ssh.client";
+    public final static String SAMBA_SERVER = "samba.server";
 
     public void init() throws Exception {
         log.debug("Initializing SambaUserModule.");
@@ -258,7 +258,7 @@ public class SambaUserModule extends Module {
 
     public Map getServerInfo() throws Exception {
         String ssh = getParameter(SSH_CLIENT);
-        String server = getParameter(SSH_SERVER);
+        String server = getParameter(SAMBA_SERVER);
 
         Runtime rt = Runtime.getRuntime();
         String command = ssh+" root@"+server+" /usr/bin/net getlocalsid";
@@ -292,7 +292,7 @@ public class SambaUserModule extends Module {
 
     public void addUser(String username) throws Exception {
         String client = getParameter(SSH_CLIENT);
-        String server = getParameter(SSH_SERVER);
+        String server = getParameter(SAMBA_SERVER);
 
         Runtime rt = Runtime.getRuntime();
         String command = client+" root@"+server+" /usr/sbin/useradd "+username;
@@ -303,7 +303,7 @@ public class SambaUserModule extends Module {
 
     public Map getUserInfo(String username) throws Exception {
         String client = getParameter(SSH_CLIENT);
-        String server = getParameter(SSH_SERVER);
+        String server = getParameter(SAMBA_SERVER);
 
         Runtime rt = Runtime.getRuntime();
         String command = client+" root@"+server+" /bin/grep "+username+": /etc/passwd";

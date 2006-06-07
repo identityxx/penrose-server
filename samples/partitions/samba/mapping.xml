@@ -10,9 +10,24 @@
     <at name="o">
       <constant>Samba</constant>
     </at>
+    <aci subject="self">
+      <permission>rws</permission>
+    </aci>
+    <aci>
+      <target>ATTRIBUTES</target>
+      <attributes>userPassword,sambaLMPassword,sambaNTPassword</attributes>
+      <action>deny</action>
+      <permission>rs</permission>
+    </aci>
     <aci>
       <permission>rs</permission>
     </aci>
+  </entry>
+  <entry dn="ou=Computers,dc=Samba,dc=Example,dc=com">
+    <oc>organizationalUnit</oc>
+    <at name="ou" rdn="true">
+      <constant>Computers</constant>
+    </at>
   </entry>
   <entry dn="ou=Users,dc=Samba,dc=Example,dc=com">
     <oc>organizationalUnit</oc>
@@ -120,7 +135,7 @@ if (u == void || u == null) return null;
 if (u.encPassword == void || u.encPassword == null) return null;
 
 byte[] bytes = BinaryUtil.decode("BigInteger", u.encPassword);
-return "{SHA-512}"+BinaryUtil.encode("Base64", bytes);
+return "{SHA}"+BinaryUtil.encode("Base64", bytes);
       </expression>
     </at>
     <source name="u">
@@ -219,9 +234,9 @@ String method = PasswordUtil.getEncryptionMethod(userPassword);
 byte[] bytes;
 
 if (method == null) {
-    bytes = PasswordUtil.encrypt("SHA-512", userPassword);
+    bytes = PasswordUtil.encrypt("SHA", userPassword);
 
-} else if ("SHA-512".equals(method)) {
+} else if ("SHA".equals(method)) {
     String password = PasswordUtil.getEncryptedPassword(userPassword);
     bytes = BinaryUtil.decode("Base64", password);
 
@@ -247,7 +262,7 @@ if (method == null) {
 
     return BinaryUtil.encode("BigInteger", bytes).toUpperCase();
 
-} else if ("SHA-512".equals(method)) {
+} else if ("SHA".equals(method)) {
     return sambaLMPassword;
 
 } else {
@@ -270,7 +285,7 @@ if (method == null) {
 
     return BinaryUtil.encode("BigInteger", bytes).toUpperCase();
 
-} else if ("SHA-512".equals(method)) {
+} else if ("SHA".equals(method)) {
     return sambaNTPassword;
 
 } else {
@@ -285,5 +300,51 @@ if (method == null) {
     <at name="ou" rdn="true">
       <constant>Groups</constant>
     </at>
+  </entry>
+  <entry dn="cn=...,ou=Groups,dc=Samba,dc=Example,dc=com">
+    <oc>posixGroup</oc>
+    <oc>sambaGroupMapping</oc>
+    <at name="cn" rdn="true">
+      <variable>g.groupname</variable>
+    </at>
+    <at name="gidNumber">
+      <variable>g.gid</variable>
+    </at>
+    <at name="memberUid">
+      <variable>ug.username</variable>
+    </at>
+    <at name="sambaGroupType">
+      <variable>g.type</variable>
+    </at>
+    <at name="sambaSID">
+      <variable>g.group_sid</variable>
+    </at>
+    <source name="g">
+      <source-name>groups</source-name>
+      <field name="gid">
+        <variable>gidNumber</variable>
+      </field>
+      <field name="group_sid">
+        <variable>sambaSID</variable>
+      </field>
+      <field name="groupname">
+        <variable>cn</variable>
+      </field>
+      <field name="type">
+        <variable>sambaGroupType</variable>
+      </field>
+    </source>
+    <source name="ug">
+      <source-name>usergroups</source-name>
+      <field name="groupname">
+        <variable>cn</variable>
+      </field>
+      <field name="username">
+        <variable>memberUid</variable>
+      </field>
+    </source>
+    <relationship>
+      <expression>g.groupname = ug.groupname</expression>
+    </relationship>
   </entry>
 </mapping>

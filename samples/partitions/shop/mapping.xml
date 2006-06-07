@@ -15,7 +15,7 @@
     </aci>
     <aci>
       <target>ATTRIBUTES</target>
-      <attributes>userPassword,sambaLMPassword,sambaNTPassword</attributes>
+      <attributes>userPassword</attributes>
       <action>deny</action>
       <permission>rs</permission>
     </aci>
