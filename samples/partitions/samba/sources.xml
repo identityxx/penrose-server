@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<sources>
+  <source name="users">
+    <connection-name>Samba</connection-name>
+    <field name="username" primaryKey="true"/>
+    <field name="firstName"/>
+    <field name="lastName"/>
+    <field name="encPassword"/>
+    <field name="uid"/>
+    <field name="user_sid"/>
+    <field name="gid"/>
+    <field name="group_sid"/>
+    <field name="account_flags"/>
+    <field name="lm_password"/>
+    <field name="nt_password"/>
+    <field name="kickoff_time"/>
+    <field name="logon_time"/>
+    <field name="logon_script"/>
+    <field name="logon_hours"/>
+    <field name="logoff_time"/>
+    <field name="password_can_change"/>
+    <field name="password_must_change"/>
+    <field name="password_last_set"/>
+    <field name="password_history"/>
+    <field name="home_path"/>
+    <field name="home_drive"/>
+    <field name="profile_path"/>
+    <field name="user_workstations"/>
+    <field name="domain_name"/>
+    <field name="munged_dial"/>
+    <field name="bad_password_count"/>
+    <field name="bad_password_time"/>
+    <parameter>
+      <param-name>tableName</param-name>
+      <param-value>users</param-value>
+    </parameter>
+  </source>
+  <source name="groups">
+    <connection-name>Samba</connection-name>
+    <field name="groupname" primaryKey="true"/>
+    <field name="type"/>
+    <field name="gid"/>
+    <field name="group_sid"/>
+    <parameter>
+      <param-name>tableName</param-name>
+      <param-value>groups</param-value>
+    </parameter>
+  </source>
+  <source name="usergroups">
+    <connection-name>Samba</connection-name>
+    <field name="groupname" primaryKey="true"/>
+    <field name="username" primaryKey="true"/>
+    <parameter>
+      <param-name>tableName</param-name>
+      <param-value>usergroups</param-value>
+    </parameter>
+  </source>
+</sources>

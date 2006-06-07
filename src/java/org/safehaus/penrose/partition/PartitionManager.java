@@ -142,6 +142,9 @@ public class PartitionManager implements PartitionManagerMBean {
         String ndn = schemaManager.normalize(dn);
         ndn = ndn == null ? "" : ndn;
 
+        Partition selectedPartition = null;
+        String selectedSuffix = null;
+
         for (Iterator i=partitions.values().iterator(); i.hasNext(); ) {
             Partition partition = (Partition)i.next();
 
@@ -151,13 +154,22 @@ public class PartitionManager implements PartitionManagerMBean {
                 String suffix = schemaManager.normalize(entryMapping.getDn());
 
                 //log.debug("Checking "+ndn+" with "+suffix);
-                if (ndn.equals(suffix)) return partition;
+                if (ndn.equals(suffix)) {
+                    selectedPartition = partition;
+                    selectedSuffix = suffix;
+                    continue;
+                }
+
                 if ("".equals(suffix)) continue;
-                if (ndn.endsWith(suffix)) return partition;
+
+                if (ndn.endsWith(suffix) && (selectedSuffix == null || suffix.length() > selectedSuffix.length())) {
+                    selectedPartition = partition;
+                    selectedSuffix = suffix;
+                }
             }
         }
 
-        return null;
+        return selectedPartition;
     }
 
     public Collection getPartitions() {

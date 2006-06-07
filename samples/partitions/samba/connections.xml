@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <connections>
-  <connection name="Example">
+  <connection name="Samba">
     <adapter-name>JDBC</adapter-name>
     <parameter>
       <param-name>driver</param-name>

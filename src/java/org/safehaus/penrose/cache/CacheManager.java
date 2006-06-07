@@ -243,7 +243,7 @@ public class CacheManager {
 
     public static void main(String args[]) throws Exception {
 
-        String logLevel = "NORMAL";
+        Level logLevel = Level.WARN;
 
         LongOpt[] longopts = new LongOpt[1];
         longopts[0] = new LongOpt("help", LongOpt.NO_ARGUMENT, null, '?');
@@ -263,10 +263,10 @@ public class CacheManager {
                     parameters.add(getopt.getOptarg());
                     break;
                 case 'd':
-                    logLevel = "DEBUG";
+                    logLevel = Level.DEBUG;
                     break;
                 case 'v':
-                    logLevel = "VERBOSE";
+                    logLevel = Level.INFO;
                     break;
             }
         }
@@ -279,7 +279,7 @@ public class CacheManager {
         String homeDirectory = System.getProperty("penrose.home");
 
         Logger rootLogger = Logger.getRootLogger();
-        rootLogger.setLevel(Level.toLevel("OFF"));
+        rootLogger.setLevel(Level.OFF);
 
         Logger logger = Logger.getLogger("org.safehaus.penrose");
         File log4jProperties = new File((homeDirectory == null ? "" : homeDirectory+File.separator)+"conf"+File.separator+"log4j.properties");
@@ -287,18 +287,18 @@ public class CacheManager {
         if (log4jProperties.exists()) {
             PropertyConfigurator.configure(log4jProperties.getAbsolutePath());
 
-        } else if (logLevel.equals("DEBUG")) {
-            logger.setLevel(Level.toLevel("DEBUG"));
+        } else if (logLevel.equals(Level.DEBUG)) {
+            logger.setLevel(Level.DEBUG);
             ConsoleAppender appender = new ConsoleAppender(new PatternLayout("%-20C{1} [%4L] %m%n"));
             BasicConfigurator.configure(appender);
 
-        } else if (logLevel.equals("VERBOSE")) {
-            logger.setLevel(Level.toLevel("INFO"));
+        } else if (logLevel.equals(Level.INFO)) {
+            logger.setLevel(Level.INFO);
             ConsoleAppender appender = new ConsoleAppender(new PatternLayout("[%d{MM/dd/yyyy HH:mm:ss}] %m%n"));
             BasicConfigurator.configure(appender);
 
         } else {
-            logger.setLevel(Level.toLevel("WARN"));
+            logger.setLevel(Level.WARN);
             ConsoleAppender appender = new ConsoleAppender(new PatternLayout("[%d{MM/dd/yyyy HH:mm:ss}] %m%n"));
             BasicConfigurator.configure(appender);
         }

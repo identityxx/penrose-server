@@ -7,21 +7,21 @@
 
 <mapping>
 
-  <entry dn="dc=Penrose,dc=Safehaus,dc=org">
+  <entry dn="dc=Example,dc=com">
     <oc>dcObject</oc>
     <oc>organization</oc>
     <at name="dc" rdn="true">
-      <constant>Penrose</constant>
+      <constant>Example</constant>
     </at>
     <at name="o">
-      <constant>Penrose</constant>
+      <constant>Example</constant>
     </at>
     <aci>
       <permission>rs</permission>
     </aci>
   </entry>
 
-  <entry dn="cn=Manager,dc=Penrose,dc=Safehaus,dc=org">
+  <entry dn="cn=Manager,dc=Example,dc=com">
     <oc>person</oc>
     <oc>organizationalPerson</oc>
     <oc>inetOrgPerson</oc>
@@ -36,14 +36,14 @@
     </at>
   </entry>
 
-  <entry dn="ou=Users,dc=Penrose,dc=Safehaus,dc=org">
+  <entry dn="ou=Users,dc=Example,dc=com">
     <oc>organizationalUnit</oc>
     <at name="ou" rdn="true">
       <constant>Users</constant>
     </at>
   </entry>
 
-  <entry dn="ou=Groups,dc=Penrose,dc=Safehaus,dc=org">
+  <entry dn="ou=Groups,dc=Example,dc=com">
     <oc>organizationalUnit</oc>
     <at name="ou" rdn="true">
       <constant>Groups</constant>

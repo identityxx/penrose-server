@@ -210,8 +210,8 @@ public class PenroseServer implements SignalHandler {
 
             String homeDirectory = System.getProperty("penrose.home");
 
-            //Logger rootLogger = Logger.getRootLogger();
-            //rootLogger.setLevel(Level.OFF);
+            Logger rootLogger = Logger.getRootLogger();
+            rootLogger.setLevel(Level.OFF);
 
             Logger logger = Logger.getLogger("org.safehaus.penrose");
 

@@ -304,8 +304,8 @@ public class SchemaGenerator {
 
         String homeDirectory = System.getProperty("penrose.home");
 
-        //Logger rootLogger = Logger.getRootLogger();
-        //rootLogger.setLevel(Level.OFF);
+        Logger rootLogger = Logger.getRootLogger();
+        rootLogger.setLevel(Level.OFF);
 
         Logger logger = Logger.getLogger("org.safehaus.penrose");
         File log4jProperties = new File((homeDirectory == null ? "" : homeDirectory+File.separator)+"conf"+File.separator+"log4j.properties");
