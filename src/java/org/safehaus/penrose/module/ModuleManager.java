@@ -148,29 +148,33 @@ public class ModuleManager implements ModuleManagerMBean {
     }
 
     public Collection getModules(String dn) throws Exception {
-        log.debug("Find matching module mapping for "+dn);
+
+        log.debug("Finding matching modules for \""+dn+"\".");
 
         Collection list = new ArrayList();
 
         PartitionManager partitionManager = penrose.getPartitionManager();
         Partition partition = partitionManager.getPartitionByDn(dn);
-        if (partition == null) return list;
+        
+        if (partition != null) {
+            for (Iterator i = partition.getModuleMappings().iterator(); i.hasNext(); ) {
+                Collection c = (Collection)i.next();
 
-        for (Iterator i = partition.getModuleMappings().iterator(); i.hasNext(); ) {
-            Collection c = (Collection)i.next();
+                for (Iterator j=c.iterator(); j.hasNext(); ) {
+                    ModuleMapping moduleMapping = (ModuleMapping)j.next();
 
-            for (Iterator j=c.iterator(); j.hasNext(); ) {
-                ModuleMapping moduleMapping = (ModuleMapping)j.next();
+                    String moduleName = moduleMapping.getModuleName();
+                    Module module = (Module)modules.get(moduleName);
 
-                String moduleName = moduleMapping.getModuleName();
-                Module module = (Module)modules.get(moduleName);
-
-                if (moduleMapping.match(dn)) {
-                    log.debug(" - "+moduleName);
-                    list.add(module);
+                    if (moduleMapping.match(dn)) {
+                        log.debug(" - "+moduleName);
+                        list.add(module);
+                    }
                 }
             }
         }
+
+        log.debug("Found "+list.size()+" module(s).");
 
         return list;
     }

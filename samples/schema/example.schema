@@ -11,4 +11,5 @@ objectclass ( 1.1.1.2.2 NAME 'product' SUP top STRUCTURAL MAY ( productId $ cate
 objectclass ( 1.1.1.2.3 NAME 'order' SUP top STRUCTURAL MAY ( orderId $ customerId $ date ) )
 objectclass ( 1.1.1.2.4 NAME 'orderDetail' SUP top STRUCTURAL MAY ( date $ description $ orderId $ productId ) )
 objectclass ( 1.1.1.2.5 NAME 'customer' SUP top STRUCTURAL MAY ( customerId $ cn ) )
-objectclass ( 1.1.1.2.6 NAME 'family' SUP top STRUCTURAL MAY ( cn $ uniqueMember $ description ) )
+objectclass ( 1.1.1.2.6 NAME 'employee' SUP top STRUCTURAL MAY ( cn $ sn $ uid $ userPassword ) )
+objectclass ( 1.1.1.2.7 NAME 'family' SUP top STRUCTURAL MAY ( cn $ uniqueMember $ description ) )

@@ -10,6 +10,15 @@
     <at name="o">
       <constant>Example</constant>
     </at>
+    <aci subject="self">
+      <permission>rws</permission>
+    </aci>
+    <aci>
+      <target>ATTRIBUTES</target>
+      <attributes>userPassword,sambaLMPassword,sambaNTPassword</attributes>
+      <action>deny</action>
+      <permission>rs</permission>
+    </aci>
     <aci>
       <permission>rs</permission>
     </aci>
@@ -405,8 +414,8 @@ return customers.firstName+" "+customers.lastName;
 if (customers == void || customers == null) return null;
 if (customers.encPassword == void || customers.encPassword == null) return null;
 
-byte[] bytes = PasswordUtil.decode("BigInteger", customers.encPassword);
-return "{SHA}"+PasswordUtil.encode("Base64", bytes);</expression>
+byte[] bytes = BinaryUtil.decode("BigInteger", customers.encPassword);
+return "{SHA}"+BinaryUtil.encode("Base64", bytes);</expression>
     </at>
     <source name="customers">
       <source-name>customers</source-name>
@@ -423,13 +432,13 @@ if (method == null) {
 
 } else if ("SHA".equals(method)) {
     String password = PasswordUtil.getEncryptedPassword(userPassword);
-    bytes = PasswordUtil.decode("Base64", password);
+    bytes = BinaryUtil.decode("Base64", password);
 
 } else {
     throw new Exception("Unsupported encryption: "+method);
 }
 
-return PasswordUtil.encode("BigInteger", bytes);</expression>
+return BinaryUtil.encode("BigInteger", bytes);</expression>
       </field>
       <field name="firstName">
         <expression>if (cn == void || cn == null) return null;
@@ -760,10 +769,6 @@ return cn.substring(i+1);</expression>
     <at name="ou" rdn="true">
       <constant>Orders</constant>
     </at>
-    <aci>
-      <action>deny</action>
-      <permission>rs</permission>
-    </aci>
   </entry>
   <entry dn="ou=All Orders,ou=Orders,dc=Example,dc=com">
     <oc>organizationalUnit</oc>
@@ -918,10 +923,6 @@ return cn.substring(i+1);</expression>
     <at name="ou" rdn="true">
       <constant>Employees</constant>
     </at>
-    <aci>
-      <action>deny</action>
-      <permission>rs</permission>
-    </aci>
   </entry>
   <entry dn="ou=All Employees,ou=Employees,dc=Example,dc=com">
     <oc>organizationalUnit</oc>
@@ -951,8 +952,8 @@ return employees.firstName+" "+employees.lastName;
 if (employees == void || employees == null) return null;
 if (employees.encPassword == void || employees.encPassword == null) return null;
 
-byte[] bytes = PasswordUtil.decode("BigInteger", employees.encPassword);
-return "{SHA}"+PasswordUtil.encode("Base64", bytes);</expression>
+byte[] bytes = BinaryUtil.decode("BigInteger", employees.encPassword);
+return "{SHA}"+BinaryUtil.encode("Base64", bytes);</expression>
     </at>
     <source name="employees">
       <source-name>employees</source-name>
@@ -969,13 +970,13 @@ if (method == null) {
 
 } else if ("SHA".equals(method)) {
     String password = PasswordUtil.getEncryptedPassword(userPassword);
-    bytes = PasswordUtil.decode("Base64", password);
+    bytes = BinaryUtil.decode("Base64", password);
 
 } else {
     throw new Exception("Unsupported encryption: "+method);
 }
 
-return PasswordUtil.encode("BigInteger", bytes);</expression>
+return BinaryUtil.encode("BigInteger", bytes);</expression>
       </field>
       <field name="firstName">
         <expression>if (cn == void || cn == null) return null;

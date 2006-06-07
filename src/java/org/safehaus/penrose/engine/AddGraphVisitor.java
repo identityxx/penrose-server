@@ -101,7 +101,7 @@ public class AddGraphVisitor extends GraphVisitor {
             newSourceValues.set(name, values);
         }
 
-        Partition partition = engine.getPartitionManager().getPartition(sourceMapping);
+        Partition partition = engine.getPartitionManager().getPartition(entryMapping);
         SourceConfig sourceConfig = partition.getSourceConfig(sourceMapping.getSourceName());
 
         returnCode = engine.getConnector().add(partition, sourceConfig, newSourceValues);

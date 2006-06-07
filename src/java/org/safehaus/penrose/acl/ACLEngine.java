@@ -71,7 +71,7 @@ public class ACLEngine {
         SchemaManager schemaManager = handler.getSchemaManager();
 
         targetDn = schemaManager.normalize(targetDn);
-        //log.debug(" * "+targetDn);
+        //log.debug("Checking ACL on \""+entryMapping.getDn()+"\".");
 
         for (Iterator i=entryMapping.getACL().iterator(); i.hasNext(); ) {
             ACI aci = (ACI)i.next();
@@ -96,36 +96,41 @@ public class ACLEngine {
             //log.debug("   ==> checking subject "+subject);
 
             if (subject.equals(ACI.SUBJECT_USER) && aci.getDn().equals(bindDn)) {
-                //log.debug("   ==> matching user");
-                return aci.getAction().equals(ACI.ACTION_GRANT);
+                boolean b = aci.getAction().equals(ACI.ACTION_GRANT);
+                //log.debug("User access: "+b);
+                return b;
 
             } else if (subject.equals(ACI.SUBJECT_SELF) && targetDn.equals(bindDn)) {
-                //log.debug("   ==> matching self");
-                return aci.getAction().equals(ACI.ACTION_GRANT);
+                boolean b = aci.getAction().equals(ACI.ACTION_GRANT);
+                //log.debug("Self access: "+b);
+                return b;
 
             } else if (subject.equals(ACI.SUBJECT_ANONYMOUS) && (bindDn == null || bindDn.equals(""))) {
-                //log.debug("   ==> matching anonymous");
-                return aci.getAction().equals(ACI.ACTION_GRANT);
+                boolean b = aci.getAction().equals(ACI.ACTION_GRANT);
+                //log.debug("Anonymous access: "+b);
+                return b;
 
             } else if (subject.equals(ACI.SUBJECT_AUTHENTICATED) && bindDn != null && !bindDn.equals("")) {
-                //log.debug("   ==> matching authenticated");
-                return aci.getAction().equals(ACI.ACTION_GRANT);
+                boolean b = aci.getAction().equals(ACI.ACTION_GRANT);
+                //log.debug("Authenticated access: "+b);
+                return b;
 
             } else if (subject.equals(ACI.SUBJECT_ANYBODY)) {
-                //log.debug("   ==> matching anybody");
-                return aci.getAction().equals(ACI.ACTION_GRANT);
+                boolean b = aci.getAction().equals(ACI.ACTION_GRANT);
+                //log.debug("Anybody access: "+b);
+                return b;
             }
         }
 
         Partition partition = handler.getPartitionManager().getPartitionByDn(targetDn);
         if (partition == null) {
-            //log.debug("Partition for "+dn+" not found.");
+            log.debug("Partition for "+targetDn+" not found.");
             return false;
         }
 
         entryMapping = partition.getParent(entryMapping);
         if (entryMapping == null) {
-            //log.debug("Parent entry for "+dn+" not found.");
+            log.debug("Parent entry for "+targetDn+" not found.");
             return false;
         }
 
@@ -159,7 +164,7 @@ public class ACLEngine {
             return rc;
         }
 
-        log.debug("acl evaluation => FAILED");
+        log.debug("ACL evaluation => FAILED");
         rc = LDAPException.INSUFFICIENT_ACCESS_RIGHTS;
         return rc;
     }

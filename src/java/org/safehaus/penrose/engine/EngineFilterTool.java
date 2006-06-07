@@ -130,7 +130,7 @@ public class EngineFilterTool {
         if (!sourceName.equals(sourceMapping.getName())) return null;
 
         PartitionManager partitionManager = engine.getPartitionManager();
-        Partition partition = partitionManager.getPartition(sourceMapping);
+        Partition partition = partitionManager.getPartition(entryMapping);
 
         SourceConfig sourceConfig = partition.getSourceConfig(sourceMapping.getSourceName());
         if (sourceConfig == null) throw new Exception("Unknown source: "+sourceMapping.getSourceName());

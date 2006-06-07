@@ -123,7 +123,7 @@ public class TransformEngine {
 
     public Row translate(EntryMapping entryMapping, SourceMapping sourceMapping, AttributeValues input, AttributeValues output) throws Exception {
 
-        Partition partition = engine.getPartitionManager().getPartition(sourceMapping);
+        Partition partition = engine.getPartitionManager().getPartition(entryMapping);
         SourceConfig sourceConfig = partition.getSourceConfig(sourceMapping.getSourceName());
 
         Interpreter interpreter = engine.getInterpreterFactory().newInstance();
@@ -138,6 +138,9 @@ public class TransformEngine {
             String name = fieldMapping.getName();
 
             FieldConfig fieldConfig = sourceConfig.getFieldConfig(name);
+            if (fieldConfig == null) {
+                throw new Exception("Unknown field "+name+" in source "+sourceMapping.getName()+" in \""+entryMapping.getDn()+"\".");
+            }
 
             //log.debug(" - "+name);
 
@@ -210,7 +213,7 @@ public class TransformEngine {
 
     public Map split(EntryMapping entryMapping, SourceMapping sourceMapping, AttributeValues entry) throws Exception {
 
-        Partition partition = engine.getPartitionManager().getPartition(sourceMapping);
+        Partition partition = engine.getPartitionManager().getPartition(entryMapping);
         SourceConfig sourceConfig = partition.getSourceConfig(sourceMapping.getSourceName());
 
         Collection fields = sourceConfig.getPrimaryKeyFieldConfigs();

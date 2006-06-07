@@ -38,11 +38,11 @@ public class DeleteEvent extends Event {
         this.dn = dn;
     }
 
-    public PenroseSession getConnection() {
+    public PenroseSession getSession() {
         return session;
     }
 
-    public void setConnection(PenroseSession session) {
+    public void setSession(PenroseSession session) {
         this.session = session;
     }
 

@@ -25,6 +25,7 @@ import org.safehaus.penrose.schema.ObjectClass;
 import org.safehaus.penrose.util.PasswordUtil;
 import org.safehaus.penrose.util.BinaryUtil;
 import org.safehaus.penrose.util.Formatter;
+import org.safehaus.penrose.util.EntryUtil;
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.service.ServiceConfig;
@@ -63,6 +64,27 @@ public class ModifyHandler {
                 log.debug(Formatter.displayLine(" - Bind DN: " + session.getBindDn(), 80));
             }
             log.debug(Formatter.displayLine(" - DN: " + dn, 80));
+
+            log.debug(Formatter.displayLine(" - Attributes: " + dn, 80));
+            for (Iterator i=modifications.iterator(); i.hasNext(); ) {
+                ModificationItem mi = (ModificationItem)i.next();
+                Attribute attribute = mi.getAttribute();
+                String op = "replace";
+                switch (mi.getModificationOp()) {
+                    case DirContext.ADD_ATTRIBUTE:
+                        op = "add";
+                        break;
+                    case DirContext.REMOVE_ATTRIBUTE:
+                        op = "delete";
+                        break;
+                    case DirContext.REPLACE_ATTRIBUTE:
+                        op = "replace";
+                        break;
+                }
+
+                log.debug(Formatter.displayLine("   - "+op+": "+attribute.getID()+" => "+attribute.get(), 80));
+            }
+
             log.debug(Formatter.displaySeparator(80));
 
             if (session != null && session.getBindDn() == null) {
@@ -201,13 +223,18 @@ public class ModifyHandler {
 		//convertValues(entryMapping, modifications);
 
 		log.debug("Old entry:");
-		log.debug("\n"+entry.toString());
+		log.debug("\n"+EntryUtil.toString(entry));
 
 		log.debug("--- perform modification:");
 		AttributeValues newValues = new AttributeValues(oldValues);
 
 		Collection objectClasses = handler.getSchemaManager().getObjectClasses(entryMapping);
-		log.debug("Object classes: " + objectClasses);
+        Collection objectClassNames = new ArrayList();
+        for (Iterator i=objectClasses.iterator(); i.hasNext(); ) {
+            ObjectClass oc = (ObjectClass)i.next();
+            objectClassNames.add(oc.getName());
+        }
+        log.debug("Object classes: "+objectClassNames);
 
 		for (Iterator i = modifications.iterator(); i.hasNext();) {
 			ModificationItem modification = (ModificationItem)i.next();
@@ -284,7 +311,7 @@ public class ModifyHandler {
         Entry newEntry = new Entry(entry.getDn(), entryMapping, entry.getSourceValues(), newValues);
 
 		log.debug("New entry:");
-		log.debug("\n"+newEntry.toString());
+		log.debug("\n"+EntryUtil.toString(newEntry));
 
         return handler.getEngine().modify(entry, newValues);
 	}
