@@ -21,8 +21,6 @@ import org.safehaus.penrose.session.PenroseSearchResults;
 import org.safehaus.penrose.user.UserConfig;
 import org.safehaus.penrose.session.PenroseSession;
 import org.safehaus.penrose.session.SessionManager;
-import org.safehaus.penrose.session.SessionConfig;
-import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.acl.ACLEngine;
 import org.safehaus.penrose.filter.FilterTool;
 import org.safehaus.penrose.partition.PartitionManager;
@@ -200,16 +198,37 @@ public class Handler {
         return rc;
     }
 
+    public int unbind(PenroseSession session) throws Exception {
+        if (!sessionManager.isValid(session)) throw new Exception("Invalid session.");
+
+        String dn = session.getBindDn();
+
+        BindEvent beforeUnbindEvent = new BindEvent(this, BindEvent.BEFORE_UNBIND, session, dn);
+        postEvent(dn, beforeUnbindEvent);
+
+        int rc = getBindHandler().unbind(session);
+
+        BindEvent afterUnbindEvent = new BindEvent(this, BindEvent.AFTER_UNBIND, session, dn);
+        postEvent(dn, afterUnbindEvent);
+
+        return rc;
+    }
+
     public int compare(PenroseSession session, String dn, String attributeName,
             Object attributeValue) throws Exception {
 
         if (!sessionManager.isValid(session)) throw new Exception("Invalid session.");
-        return getCompareHandler().compare(session, dn, attributeName, attributeValue);
-    }
 
-    public int unbind(PenroseSession session) throws Exception {
-        if (!sessionManager.isValid(session)) throw new Exception("Invalid session.");
-        return getBindHandler().unbind(session);
+        CompareEvent beforeCompareEvent = new CompareEvent(this, CompareEvent.BEFORE_COMPARE, session, dn, attributeName, attributeValue);
+        postEvent(dn, beforeCompareEvent);
+
+        int rc = getCompareHandler().compare(session, dn, attributeName, attributeValue);
+
+        CompareEvent afterCompareEvent = new CompareEvent(this, CompareEvent.AFTER_COMPARE, session, dn, attributeName, attributeValue);
+        afterCompareEvent.setReturnCode(rc);
+        postEvent(dn, afterCompareEvent);
+
+        return rc;
     }
 
     public int delete(PenroseSession session, String dn) throws Exception {
@@ -284,7 +303,17 @@ public class Handler {
 
     public int modrdn(PenroseSession session, String dn, String newRdn) throws Exception {
         if (!sessionManager.isValid(session)) throw new Exception("Invalid session.");
-        return getModRdnHandler().modrdn(session, dn, newRdn);
+
+        ModRdnEvent beforeModRdnEvent = new ModRdnEvent(this, ModRdnEvent.BEFORE_MODRDN, session, dn, newRdn);
+        postEvent(dn, beforeModRdnEvent);
+
+        int rc = getModRdnHandler().modrdn(session, dn, newRdn);
+
+        ModRdnEvent afterModRdnEvent = new ModRdnEvent(this, ModRdnEvent.AFTER_MODRDN, session, dn, newRdn);
+        afterModRdnEvent.setReturnCode(rc);
+        postEvent(dn, afterModRdnEvent);
+
+        return rc;
     }
 
     /**
@@ -450,6 +479,26 @@ public class Handler {
                     case BindEvent.AFTER_BIND:
                         module.afterBind((BindEvent)event);
                         break;
+
+                    case BindEvent.BEFORE_UNBIND:
+                        module.beforeUnbind((BindEvent)event);
+                        break;
+
+                    case BindEvent.AFTER_UNBIND:
+                        module.afterUnbind((BindEvent)event);
+                        break;
+                }
+
+            } else if (event instanceof CompareEvent) {
+
+                switch (event.getType()) {
+                    case CompareEvent.BEFORE_COMPARE:
+                        module.beforeCompare((CompareEvent)event);
+                        break;
+
+                    case CompareEvent.AFTER_COMPARE:
+                        module.afterCompare((CompareEvent)event);
+                        break;
                 }
 
             } else if (event instanceof DeleteEvent) {
@@ -473,6 +522,18 @@ public class Handler {
 
                 case ModifyEvent.AFTER_MODIFY:
                     module.afterModify((ModifyEvent)event);
+                    break;
+                }
+
+            } else if (event instanceof ModRdnEvent) {
+
+                switch (event.getType()) {
+                case ModRdnEvent.BEFORE_MODRDN:
+                    module.beforeModRdn((ModRdnEvent)event);
+                    break;
+
+                case ModRdnEvent.AFTER_MODRDN:
+                    module.afterModRdn((ModRdnEvent)event);
                     break;
                 }
 

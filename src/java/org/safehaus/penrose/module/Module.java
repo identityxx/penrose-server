@@ -27,7 +27,7 @@ import java.util.Collection;
 /**
  * @author Endi S. Dewata
  */
-public class Module implements AddListener, BindListener, DeleteListener, ModifyListener, SearchListener {
+public class Module implements AddListener, BindListener, CompareListener, DeleteListener, ModifyListener, ModRdnListener, SearchListener {
 
     public Logger log = Logger.getLogger(getClass());
 
@@ -77,6 +77,12 @@ public class Module implements AddListener, BindListener, DeleteListener, Modify
     public void afterUnbind(BindEvent event) throws Exception {
     }
 
+    public void beforeCompare(CompareEvent event) throws Exception {
+    }
+
+    public void afterCompare(CompareEvent event) throws Exception {
+    }
+
     public void beforeAdd(AddEvent event) throws Exception {
     }
 
@@ -87,6 +93,12 @@ public class Module implements AddListener, BindListener, DeleteListener, Modify
     }
 
     public void afterModify(ModifyEvent event) throws Exception {
+    }
+
+    public void beforeModRdn(ModRdnEvent event) throws Exception {
+    }
+
+    public void afterModRdn(ModRdnEvent event) throws Exception {
     }
 
     public void beforeDelete(DeleteEvent event) throws Exception {

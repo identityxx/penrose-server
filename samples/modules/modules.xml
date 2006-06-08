@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<modules>
+
+  <module>
+    <module-name>BindModule</module-name>
+    <module-class>org.safehaus.penrose.example.module.BindModule</module-class>
+  </module>
+
+  <module-mapping>
+    <module-name>BindModule</module-name>
+    <base-dn>ou=Users,dc=Example,dc=com</base-dn>
+    <filter>(objectClass=*)</filter>
+    <scope>ONELEVEL</scope>
+  </module-mapping>
+
+</modules>
