@@ -2,7 +2,7 @@
 
 <connections>
 
-  <connection name="Samba">
+  <connection name="MySQL">
     <adapter-name>JDBC</adapter-name>
     <parameter>
       <param-name>driver</param-name>
@@ -21,5 +21,5 @@
       <param-value>penrose</param-value>
     </parameter>
   </connection>
-    
+
 </connections>

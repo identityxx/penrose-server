@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <mapping>
+
   <entry dn="dc=Samba,dc=Example,dc=com">
     <oc>dcObject</oc>
     <oc>organization</oc>
@@ -23,18 +24,21 @@
       <permission>rs</permission>
     </aci>
   </entry>
+
   <entry dn="ou=Computers,dc=Samba,dc=Example,dc=com">
     <oc>organizationalUnit</oc>
     <at name="ou" rdn="true">
       <constant>Computers</constant>
     </at>
   </entry>
+
   <entry dn="ou=Users,dc=Samba,dc=Example,dc=com">
     <oc>organizationalUnit</oc>
     <at name="ou" rdn="true">
       <constant>Users</constant>
     </at>
   </entry>
+
   <entry dn="uid=...,ou=Users,dc=Samba,dc=Example,dc=com">
     <oc>account</oc>
     <oc>posixAccount</oc>
@@ -295,12 +299,14 @@ if (method == null) {
       </field>
     </source>
   </entry>
+    
   <entry dn="ou=Groups,dc=Samba,dc=Example,dc=com">
     <oc>organizationalUnit</oc>
     <at name="ou" rdn="true">
       <constant>Groups</constant>
     </at>
   </entry>
+
   <entry dn="cn=...,ou=Groups,dc=Samba,dc=Example,dc=com">
     <oc>posixGroup</oc>
     <oc>sambaGroupMapping</oc>
@@ -347,4 +353,5 @@ if (method == null) {
       <expression>g.groupname = ug.groupname</expression>
     </relationship>
   </entry>
+
 </mapping>

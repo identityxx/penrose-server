@@ -2,7 +2,7 @@
  Copyright (c) 2000-2005, Identyx Corporation.
  All rights reserved.
 -->
-<project name="modules" default="build" basedir=".">
+<project name="adapters" default="build" basedir=".">
 
     <path id="lib.path">
         <fileset dir="../../lib">
@@ -18,7 +18,7 @@
             destdir="target/classes"
             classpathref="lib.path"
         />
-        <jar jarfile="target/penrose-example-modules.jar">
+        <jar jarfile="target/penrose-example-adapters.jar">
             <fileset dir="target/classes"/>
         </jar>
     </target>

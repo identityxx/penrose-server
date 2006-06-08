@@ -111,11 +111,11 @@ public class DefaultEngine extends Engine {
 
             for (Iterator j=entries.keySet().iterator(); j.hasNext(); ) {
                 Row pk = (Row)j.next();
-                AttributeValues sourceValues = (AttributeValues)entries.get(pk);
+                //AttributeValues sourceValues = (AttributeValues)entries.get(pk);
 
-                log.debug("Bind to "+source.getName()+" as "+pk+": "+sourceValues);
+                log.debug("Bind to "+source.getName()+" as "+pk+".");
 
-                int rc = connector.bind(partition, sourceConfig, entryMapping, sourceValues, password);
+                int rc = connector.bind(partition, sourceConfig, entryMapping, pk, password);
                 if (rc == LDAPException.SUCCESS) return rc;
             }
         }

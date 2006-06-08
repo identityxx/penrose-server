@@ -54,6 +54,35 @@ public class JNDIAdapter extends Adapter {
         return new JNDIClient(client, getParameters());
     }
 
+    public int bind(SourceConfig sourceConfig, Row pk, String password) throws Exception {
+
+        String dn = getDn(sourceConfig, pk);
+
+        if (log.isDebugEnabled()) {
+            log.debug(Formatter.displaySeparator(80));
+            log.debug(Formatter.displayLine("JNDI Bind", 80));
+            log.debug(Formatter.displayLine(" - Bind DN : "+dn, 80));
+            log.debug(Formatter.displayLine(" - Password: "+password, 80));
+            log.debug(Formatter.displaySeparator(80));
+        }
+
+        Hashtable env = new Hashtable();
+        env.put(Context.INITIAL_CONTEXT_FACTORY, getParameter(Context.INITIAL_CONTEXT_FACTORY));
+        env.put(Context.PROVIDER_URL, client.getUrl());
+        env.put(Context.SECURITY_PRINCIPAL, dn);
+        env.put(Context.SECURITY_CREDENTIALS, password);
+
+        try {
+            DirContext c = new InitialDirContext(env);
+            c.close();
+        } catch (AuthenticationException e) {
+            log.debug("Error: "+e.getMessage());
+            return LDAPException.INVALID_CREDENTIALS;
+        }
+
+        return LDAPException.SUCCESS;
+    }
+
     public void search(SourceConfig sourceConfig, Filter filter, long sizeLimit, PenroseSearchResults results) throws Exception {
 
         String ldapBase = sourceConfig.getParameter(BASE_DN);
@@ -244,35 +273,6 @@ public class JNDIAdapter extends Adapter {
         }
 
         return av;
-    }
-
-    public int bind(SourceConfig sourceConfig, AttributeValues sourceValues, String password) throws Exception {
-
-        String dn = getDn(sourceConfig, sourceValues);
-
-        if (log.isDebugEnabled()) {
-            log.debug(Formatter.displaySeparator(80));
-            log.debug(Formatter.displayLine("JNDI Bind", 80));
-            log.debug(Formatter.displayLine(" - Bind DN : "+dn, 80));
-            log.debug(Formatter.displayLine(" - Password: "+password, 80));
-            log.debug(Formatter.displaySeparator(80));
-        }
-
-        Hashtable env = new Hashtable();
-        env.put(Context.INITIAL_CONTEXT_FACTORY, getParameter(Context.INITIAL_CONTEXT_FACTORY));
-        env.put(Context.PROVIDER_URL, client.getUrl());
-        env.put(Context.SECURITY_PRINCIPAL, dn);
-        env.put(Context.SECURITY_CREDENTIALS, password);
-
-        try {
-            DirContext c = new InitialDirContext(env);
-            c.close();
-        } catch (AuthenticationException e) {
-            log.debug("Error: "+e.getMessage());
-            return LDAPException.INVALID_CREDENTIALS;
-        }
-
-        return LDAPException.SUCCESS;
     }
 
     public int add(SourceConfig sourceConfig, AttributeValues entry) throws Exception {

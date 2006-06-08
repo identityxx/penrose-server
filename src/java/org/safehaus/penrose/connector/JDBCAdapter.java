@@ -179,6 +179,10 @@ public class JDBCAdapter extends Adapter {
         return sb.toString();
     }
 
+    public int bind(SourceConfig sourceConfig, Row pk, String cred) throws Exception {
+        return LDAPException.INVALID_CREDENTIALS;
+    }
+
     public void search(SourceConfig sourceConfig, Filter filter, long sizeLimit, PenroseSearchResults results) throws Exception {
 
         log.debug("Searching JDBC source "+sourceConfig.getConnectionName()+"/"+sourceConfig.getName());
@@ -535,10 +539,6 @@ public class JDBCAdapter extends Adapter {
         //log.debug("=> values: "+row);
 
         return row;
-    }
-
-    public int bind(SourceConfig sourceConfig, AttributeValues values, String cred) throws Exception {
-        return LDAPException.INVALID_CREDENTIALS;
     }
 
     public int add(SourceConfig sourceConfig, AttributeValues sourceValues) throws Exception {

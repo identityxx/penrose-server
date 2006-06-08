@@ -3,7 +3,7 @@
 <sources>
 
   <source name="users">
-    <connection-name>Samba</connection-name>
+    <connection-name>MySQL</connection-name>
     <field name="username" primaryKey="true"/>
     <field name="firstName"/>
     <field name="lastName"/>
@@ -39,7 +39,7 @@
   </source>
 
   <source name="groups">
-    <connection-name>Samba</connection-name>
+    <connection-name>MySQL</connection-name>
     <field name="groupname" primaryKey="true"/>
     <field name="type"/>
     <field name="gid"/>
@@ -51,7 +51,7 @@
   </source>
 
   <source name="usergroups">
-    <connection-name>Samba</connection-name>
+    <connection-name>MySQL</connection-name>
     <field name="groupname" primaryKey="true"/>
     <field name="username" primaryKey="true"/>
     <parameter>
@@ -59,5 +59,5 @@
       <param-value>usergroups</param-value>
     </parameter>
   </source>
-    
+
 </sources>

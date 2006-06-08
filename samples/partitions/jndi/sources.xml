@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<sources>
+
+  <source name="users">
+    <connection-name>SunONE</connection-name>
+    <field name="uid" primaryKey="true"/>
+    <field name="cn"/>
+    <field name="sn"/>
+    <field name="givenName"/>
+    <field name="ou"/>
+    <field name="l"/>
+    <field name="mail"/>
+    <field name="telephoneNumber"/>
+    <field name="facsimileTelephoneNumber"/>
+    <field name="roomNumber"/>
+    <field name="userPassword"/>
+    <parameter>
+      <param-name>baseDn</param-name>
+      <param-value>ou=People</param-value>
+    </parameter>
+    <parameter>
+      <param-name>scope</param-name>
+      <param-value>ONELEVEL</param-value>
+    </parameter>
+    <parameter>
+      <param-name>filter</param-name>
+      <param-value>(objectClass=*)</param-value>
+    </parameter>
+  </source>
+
+  <source name="groups">
+    <connection-name>SunONE</connection-name>
+    <field name="cn" primaryKey="true"/>
+    <field name="ou"/>
+    <field name="uniqueMember"/>
+    <parameter>
+      <param-name>baseDn</param-name>
+      <param-value>ou=Groups</param-value>
+    </parameter>
+    <parameter>
+      <param-name>scope</param-name>
+      <param-value>ONELEVEL</param-value>
+    </parameter>
+    <parameter>
+      <param-name>filter</param-name>
+      <param-value>(objectClass=*)</param-value>
+    </parameter>
+  </source>
+
+</sources>

@@ -97,8 +97,8 @@ public class Connection implements ConnectionMBean {
         return connectionConfig.getName();
     }
 
-    public int bind(SourceConfig sourceConfig, AttributeValues values, String password) throws Exception {
-        return adapter.bind(sourceConfig, values, password);
+    public int bind(SourceConfig sourceConfig, Row pk, String password) throws Exception {
+        return adapter.bind(sourceConfig, pk, password);
     }
 
     public void search(SourceConfig sourceConfig, Filter filter, long sizeLimit, PenroseSearchResults results) throws Exception {

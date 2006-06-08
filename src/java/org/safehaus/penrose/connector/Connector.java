@@ -151,9 +151,8 @@ public class Connector {
 		return lock;
 	}
 
-    public int bind(Partition partition, SourceConfig sourceConfig, EntryMapping entry, AttributeValues sourceValues, String password) throws Exception {
+    public int bind(Partition partition, SourceConfig sourceConfig, EntryMapping entry, Row pk, String password) throws Exception {
 
-        log.debug("----------------------------------------------------------------");
         log.debug("Binding as entry in "+sourceConfig.getName());
 
         MRSWLock lock = getLock(sourceConfig);
@@ -161,7 +160,7 @@ public class Connector {
 
         try {
             Connection connection = getConnection(partition, sourceConfig.getConnectionName());
-            int rc = connection.bind(sourceConfig, sourceValues, password);
+            int rc = connection.bind(sourceConfig, pk, password);
 
             return rc;
 

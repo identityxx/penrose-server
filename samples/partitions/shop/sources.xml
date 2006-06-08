@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <sources>
+
   <source name="categories">
     <connection-name>Shop</connection-name>
     <field name="description" length="100"/>
@@ -11,6 +12,7 @@
       <param-value>categories</param-value>
     </parameter>
   </source>
+
   <source name="customer_emails">
     <connection-name>Shop</connection-name>
     <field name="email" primaryKey="true"/>
@@ -20,6 +22,7 @@
       <param-value>customer_emails</param-value>
     </parameter>
   </source>
+
   <source name="customers">
     <connection-name>Shop</connection-name>
     <field name="encPassword" length="255"/>
@@ -32,6 +35,7 @@
       <param-value>customers</param-value>
     </parameter>
   </source>
+
   <source name="employees">
     <connection-name>Shop</connection-name>
     <field name="encPassword" length="255"/>
@@ -44,6 +48,7 @@
       <param-value>employees</param-value>
     </parameter>
   </source>
+
   <source name="order_details">
     <connection-name>Shop</connection-name>
     <field name="orderId" primaryKey="true" type="INTEGER" length="5"/>
@@ -55,6 +60,7 @@
       <param-value>order_details</param-value>
     </parameter>
   </source>
+
   <source name="order_histories">
     <connection-name>Shop</connection-name>
     <field name="description"/>
@@ -66,6 +72,7 @@
       <param-value>order_histories</param-value>
     </parameter>
   </source>
+
   <source name="orders">
     <connection-name>Shop</connection-name>
     <field name="customer" length="10"/>
@@ -77,6 +84,7 @@
       <param-value>orders</param-value>
     </parameter>
   </source>
+
   <source name="products">
     <connection-name>Shop</connection-name>
     <field name="categoryId" type="INTEGER" length="5"/>
@@ -88,4 +96,5 @@
       <param-value>products</param-value>
     </parameter>
   </source>
+    
 </sources>
