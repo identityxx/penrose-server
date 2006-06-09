@@ -1,1 +1,2 @@
-uid=test,ou=Users,dc=Adapter,dc=Example,dc=com
+uid=test1,ou=Users,dc=Adapter,dc=Example,dc=com
+uid=test2,ou=Users,dc=Adapter,dc=Example,dc=com

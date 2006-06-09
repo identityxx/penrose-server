@@ -550,7 +550,14 @@ public class JDBCAdapter extends Adapter {
         return row;
     }
 
-    public int add(SourceConfig sourceConfig, AttributeValues sourceValues) throws Exception {
+    public int add(SourceConfig sourceConfig, Row pk, AttributeValues sourceValues) throws Exception {
+
+        if (log.isDebugEnabled()) {
+            log.debug(Formatter.displaySeparator(80));
+            log.debug(Formatter.displayLine("JDBC Add "+sourceConfig.getConnectionName()+"/"+sourceConfig.getName(), 80));
+            log.debug(Formatter.displayLine(" - DN: "+pk, 80));
+            log.debug(Formatter.displaySeparator(80));
+        }
 
         // convert sets into single values
         Collection rows = TransformEngine.convert(sourceValues);
@@ -588,7 +595,11 @@ public class JDBCAdapter extends Adapter {
 
             if (log.isDebugEnabled()) {
                 log.debug(Formatter.displaySeparator(80));
-                log.debug(Formatter.displayLine(sql, 80));
+                Collection lines = Formatter.split(sql, 80);
+                for (Iterator i=lines.iterator(); i.hasNext(); ) {
+                    String line = (String)i.next();
+                    log.debug(Formatter.displayLine(line, 80));
+                }
                 log.debug(Formatter.displaySeparator(80));
             }
 

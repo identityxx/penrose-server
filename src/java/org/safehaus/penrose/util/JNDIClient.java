@@ -143,7 +143,7 @@ public class JNDIClient {
 
             if ("unicodePwd".equalsIgnoreCase(name)) { // need to encode unicodePwd
                 for (NamingEnumeration j=attribute.getAll(); j.hasMore(); ) {
-                    String value = (String)j.next();
+                    Object value = j.next();
                     attr.add(PasswordUtil.toUnicodePassword(value));
                     log.debug(" - "+name+": (binary)");
                 }
@@ -229,7 +229,7 @@ public class JNDIClient {
 
             if ("unicodePwd".equalsIgnoreCase(name)) { // need to encode unicodePwd
                 for (NamingEnumeration j=attribute.getAll(); j.hasMore(); ) {
-                    String value = (String)j.next();
+                    Object value = j.next();
                     attr.add(PasswordUtil.toUnicodePassword(value));
                     log.debug(" - "+name+": (binary)");
                 }

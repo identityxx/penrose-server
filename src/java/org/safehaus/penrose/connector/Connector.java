@@ -198,6 +198,8 @@ public class Connector {
                 int rc = connection.add(sourceConfig, pk, newEntry);
                 if (rc != LDAPException.SUCCESS) return rc;
 
+                Filter filter = FilterTool.createFilter(pk);
+
                 AttributeValues sv = connection.get(sourceConfig, pk);
                 getSourceCache().put(sourceConfig, pk, sv);
             }
@@ -319,6 +321,8 @@ public class Connector {
                 int rc = connection.add(sourceConfig, pk, newEntry);
                 if (rc != LDAPException.SUCCESS) return rc;
 
+                Filter filter = FilterTool.createFilter(pk);
+
                 AttributeValues sv = connection.get(sourceConfig, pk);
                 getSourceCache().put(sourceConfig, pk, sv);
 
@@ -342,6 +346,8 @@ public class Connector {
                 if (rc != LDAPException.SUCCESS) return rc;
 
                 // Modify row from source table in the cache
+                Filter filter = FilterTool.createFilter(pk);
+
                 AttributeValues sv = connection.get(sourceConfig, pk);
                 getSourceCache().remove(sourceConfig, pk);
                 getSourceCache().put(sourceConfig, pk, sv);

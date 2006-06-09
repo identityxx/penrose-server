@@ -154,18 +154,9 @@ public class PasswordUtil {
 
         if (digest == null) return false;
 
-        String encryption     = null;
-        String encoding       = null;
-        String storedPassword = null;
-
-        if (digest instanceof byte[]) {
-            storedPassword = new String((byte[])digest);
-
-        } else {
-            encryption     = getEncryptionMethod((String)digest);
-            encoding       = getEncodingMethod((String)digest);
-            storedPassword = getEncryptedPassword((String)digest);
-        }
+        String encryption     = getEncryptionMethod(digest);
+        String encoding       = getEncodingMethod(digest);
+        String storedPassword = getEncryptedPassword(digest);
 
         return comparePassword(credential, encryption, encoding, storedPassword);
     }
@@ -195,8 +186,13 @@ public class PasswordUtil {
      * @return unicode password
      * @throws Exception
      */
-    public static byte[] toUnicodePassword(String password) throws Exception {
-        String newPassword = "\""+password+ "\"";
+    public static byte[] toUnicodePassword(Object password) throws Exception {
+        String newPassword;
+        if (password instanceof byte[]) {
+            newPassword = "\""+new String((byte[])password)+ "\"";
+        } else {
+            newPassword = "\""+password+ "\"";
+        }
         byte unicodeBytes[] = newPassword.getBytes("Unicode");
         byte bytes[]  = new byte[unicodeBytes.length-2];
 
@@ -204,14 +200,18 @@ public class PasswordUtil {
         return bytes;
     }
 
-    public static String getEncryptionMethod(String password) {
+    public static String getEncryptionMethod(Object password) {
 
-        if (password == null || !password.startsWith("{")) return null; // no encryption/encoding
+        if (!(password instanceof String)) return null;
 
-        int i = password.indexOf("}");
+        String s = (String)password;
+
+        if (s == null || !s.startsWith("{")) return null; // no encryption/encoding
+
+        int i = s.indexOf("}");
         if (i < 0) return null; // invalid format, considered as no encryption/encoding
 
-        String s = password.substring(1, i);
+        s = s.substring(1, i);
 
         i = s.indexOf("|");
         if (i < 0) return s; // no encoding
@@ -219,14 +219,18 @@ public class PasswordUtil {
         return s.substring(0, i);
     }
 
-    public static String getEncodingMethod(String password) {
+    public static String getEncodingMethod(Object password) {
 
-        if (password == null || !password.startsWith("{")) return null; // no encryption/encoding
+        if (!(password instanceof String)) return null;
 
-        int i = password.indexOf("}");
+        String s = (String)password;
+
+        if (s == null || !s.startsWith("{")) return null; // no encryption/encoding
+
+        int i = s.indexOf("}");
         if (i < 0) return null; // invalid format, considered as no encryption/encoding
 
-        String s = password.substring(1, i);
+        s = s.substring(1, i);
 
         i = s.indexOf("|");
         if (i < 0) return "Base64"; // no encoding
@@ -234,13 +238,17 @@ public class PasswordUtil {
         return s.substring(i+1);
     }
 
-    public static String getEncryptedPassword(String password) {
+    public static String getEncryptedPassword(Object password) {
 
-        if (password == null || !password.startsWith("{")) return password; // no encryption
+        if (password instanceof byte[]) return new String((byte[])password);
 
-        int i = password.indexOf("}");
-        if (i < 0) return password; // invalid format, considered as no encryption
+        String s = (String)password;
 
-        return password.substring(i+1);
+        if (s == null || !s.startsWith("{")) return s; // no encryption
+
+        int i = s.indexOf("}");
+        if (i < 0) return s; // invalid format, considered as no encryption
+
+        return s.substring(i+1);
     }
 }

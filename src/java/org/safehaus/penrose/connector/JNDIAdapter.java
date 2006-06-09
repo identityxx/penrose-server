@@ -40,9 +40,10 @@ import java.util.*;
  */
 public class JNDIAdapter extends Adapter {
 
-    public final static String BASE_DN = "baseDn";
-    public final static String SCOPE   = "scope";
-    public final static String FILTER  = "filter";
+    public final static String BASE_DN        = "baseDn";
+    public final static String SCOPE          = "scope";
+    public final static String FILTER         = "filter";
+    public final static String OBJECT_CLASSES = "objectClasses";
 
     private JNDIClient client;
 
@@ -277,9 +278,9 @@ public class JNDIAdapter extends Adapter {
         return av;
     }
 
-    public int add(SourceConfig sourceConfig, AttributeValues entry) throws Exception {
+    public int add(SourceConfig sourceConfig, Row pk, AttributeValues sourceValues) throws Exception {
 
-        String dn = getDn(sourceConfig, entry);
+        String dn = getDn(sourceConfig, pk);
 
         if (log.isDebugEnabled()) {
             log.debug(Formatter.displaySeparator(80));
@@ -288,35 +289,44 @@ public class JNDIAdapter extends Adapter {
             log.debug(Formatter.displaySeparator(80));
         }
 
-        Attributes attrs = new BasicAttributes();
+        Attributes attributes = new BasicAttributes();
 
-        for (Iterator i=entry.getNames().iterator(); i.hasNext(); ) {
+        String objectClasses = sourceConfig.getParameter(OBJECT_CLASSES);
+
+        Attribute ocAttribute = new BasicAttribute("objectClass");
+        for (StringTokenizer st = new StringTokenizer(objectClasses, ","); st.hasMoreTokens(); ) {
+            String objectClass = st.nextToken().trim();
+            ocAttribute.add(objectClass);
+        }
+        attributes.put(ocAttribute);
+
+        for (Iterator i=sourceValues.getNames().iterator(); i.hasNext(); ) {
             String name = (String)i.next();
-            Set set = (Set)entry.get(name);
-            if (set.isEmpty()) continue;
+            Collection values = sourceValues.get(name);
+            if (values.isEmpty()) continue;
 
-            Attribute attr = new BasicAttribute(name);
-            for (Iterator j=set.iterator(); j.hasNext(); ) {
-                String v = (String)j.next();
+            Attribute attribute = new BasicAttribute(name);
+            for (Iterator j=values.iterator(); j.hasNext(); ) {
+                Object value = j.next();
 
                 if ("unicodePwd".equals(name)) {
-                    attr.add(PasswordUtil.toUnicodePassword(v));
+                    attribute.add(PasswordUtil.toUnicodePassword(value));
                 } else {
-                    attr.add(v);
+                    attribute.add(value);
                 }
-                log.debug(" - "+name+": "+v);
+                log.debug(" - "+name+": "+value);
             }
-            attrs.put(attr);
+            attributes.put(attribute);
         }
 
         log.debug("Adding "+dn);
         DirContext ctx = null;
         try {
             ctx = ((JNDIClient)openConnection()).getContext();
-            ctx.createSubcontext(dn, attrs);
+            ctx.createSubcontext(dn, attributes);
 
         } catch (NameAlreadyBoundException e) {
-            return modifyAdd(sourceConfig, entry);
+            return modifyAdd(sourceConfig, sourceValues);
             //log.debug("Error: "+e.getMessage());
             //return LDAPException.ENTRY_ALREADY_EXISTS;
         } finally {
@@ -423,7 +433,7 @@ public class JNDIAdapter extends Adapter {
             if ("unicodePwd".equals(name) && mi.getModificationOp() == DirContext.ADD_ATTRIBUTE) { // need to encode unicodePwd
                 Attribute newAttribute = new BasicAttribute(fieldConfig.getOriginalName());
                 for (NamingEnumeration j=attribute.getAll(); j.hasMore(); ) {
-                    String value = (String)j.next();
+                    Object value = j.next();
                     newAttribute.add(PasswordUtil.toUnicodePassword(value));
                 }
 
@@ -619,7 +629,7 @@ public class JNDIAdapter extends Adapter {
 
             Attribute attribute = new BasicAttribute(name);
             for (Iterator j = set.iterator(); j.hasNext(); ) {
-                String v = (String)j.next();
+                Object v = j.next();
                 if ("unicodePwd".equals(name)) {
                     attribute.add(PasswordUtil.toUnicodePassword(v));
                 } else {

@@ -129,6 +129,23 @@ public class DefaultEngine extends Engine {
             AttributeValues attributeValues)
             throws Exception {
 
+        AttributeValues newAttributeValues = new AttributeValues();
+        for (Iterator i = attributeValues.getNames().iterator(); i.hasNext(); ) {
+            String name = (String)i.next();
+            if ("objectClass".equalsIgnoreCase(name)) continue;
+
+            AttributeMapping attributeMapping = entryMapping.getAttributeMapping(name);
+            if (attributeMapping == null) {
+                log.debug("Undefined attribute "+name);
+                return LDAPException.OBJECT_CLASS_VIOLATION;
+            }
+
+            Collection values = attributeValues.get(name);
+            newAttributeValues.set(attributeMapping.getName(), values);
+        }
+
+        attributeValues = newAttributeValues;
+
         if (log.isDebugEnabled()) {
             log.debug(Formatter.displaySeparator(80));
             log.debug(Formatter.displayLine("ADD", 80));

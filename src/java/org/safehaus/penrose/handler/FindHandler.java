@@ -114,7 +114,8 @@ public class FindHandler {
         while (true) {
 
             Row rdn = EntryUtil.getRdn(secondDn);
-            Filter filter = null;
+            Filter filter = FilterTool.createFilter(rdn);
+/*
             for (Iterator iterator=rdn.getNames().iterator(); iterator.hasNext(); ) {
                 String name = (String)iterator.next();
                 String value = (String)rdn.get(name);
@@ -122,7 +123,7 @@ public class FindHandler {
                 SimpleFilter sf = new SimpleFilter(name, "=", value);
                 filter = FilterTool.appendAndFilter(filter, sf);
             }
-
+*/
             log.debug("Searching for \""+secondDn+"\" with filter "+filter);
 
             Collection entryMappings = partition.findEntryMappings(secondDn);

@@ -5,6 +5,7 @@ import org.safehaus.penrose.partition.SourceConfig;
 import org.safehaus.penrose.mapping.AttributeValues;
 import org.safehaus.penrose.mapping.Row;
 import org.safehaus.penrose.filter.Filter;
+import org.safehaus.penrose.filter.FilterTool;
 import org.safehaus.penrose.session.PenroseSearchResults;
 import org.safehaus.penrose.session.PenroseSearchControls;
 import org.safehaus.penrose.util.PasswordUtil;
@@ -25,21 +26,10 @@ import java.util.HashMap;
 
 public class DemoAdapter extends Adapter {
 
-    Map users = new HashMap();
+    Map entries = new HashMap();
 
     public void init() throws Exception {
         System.out.println("Initializing DemoAdapter.");
-
-        Row pk = new Row();
-        pk.set("uid", "test");
-
-        AttributeValues sourceValues = new AttributeValues();
-        sourceValues.set("uid", "test");
-        sourceValues.set("cn", "Test User");
-        sourceValues.set("sn", "User");
-        sourceValues.set("userPassword", "test");
-
-        users.put(pk, sourceValues);
     }
 
     public int bind(SourceConfig sourceConfig, Row pk, String password) throws Exception {
@@ -47,7 +37,7 @@ public class DemoAdapter extends Adapter {
         String sourceName = sourceConfig.getName();
         System.out.println("Binding to "+sourceName+" as "+pk+" with password "+password+".");
 
-        AttributeValues sourceValues = (AttributeValues)users.get(pk);
+        AttributeValues sourceValues = (AttributeValues)entries.get(pk);
         if (sourceValues == null) return LDAPException.INVALID_CREDENTIALS;
 
         Object userPassword = sourceValues.getOne("userPassword");
@@ -58,12 +48,19 @@ public class DemoAdapter extends Adapter {
         return LDAPException.SUCCESS;
     }
 
-    public void search(SourceConfig sourceConfig, Filter filter, long sizeLimit, PenroseSearchResults results) throws Exception {
+    public void search(SourceConfig sourceConfig, Filter filter, PenroseSearchControls sc, PenroseSearchResults results) throws Exception {
 
         String sourceName = sourceConfig.getName();
         System.out.println("Searching primary keys from source "+sourceName+" with filter "+filter+".");
 
-        results.addAll(users.keySet());
+        for (Iterator i=entries.keySet().iterator(); i.hasNext(); ) {
+            Row pk = (Row)i.next();
+            AttributeValues sourceValues = (AttributeValues)entries.get(pk);
+
+            if (!FilterTool.isValid(sourceValues, filter)) continue;
+
+            results.add(pk);
+        }
 
         results.close();
     }
@@ -73,7 +70,14 @@ public class DemoAdapter extends Adapter {
         String sourceName = sourceConfig.getName();
         System.out.println("Loading entries from source "+sourceName+" with filter "+filter+".");
 
-        results.addAll(users.values());
+        for (Iterator i=entries.keySet().iterator(); i.hasNext(); ) {
+            Row pk = (Row)i.next();
+            AttributeValues sourceValues = (AttributeValues)entries.get(pk);
+
+            if (!FilterTool.isValid(sourceValues, filter)) continue;
+
+            results.add(sourceValues);
+        }
 
         results.close();
     }
@@ -83,7 +87,7 @@ public class DemoAdapter extends Adapter {
         String sourceName = sourceConfig.getName();
         System.out.println("Getting entry from source "+sourceName+" with primary key "+pk+".");
 
-        return (AttributeValues)users.get(pk);
+        return (AttributeValues)entries.get(pk);
     }
 
     public int add(SourceConfig sourceConfig, Row pk, AttributeValues sourceValues) throws Exception {
@@ -91,15 +95,15 @@ public class DemoAdapter extends Adapter {
         String sourceName = sourceConfig.getName();
         System.out.println("Adding entry "+pk+" into "+sourceName+":");
 
-        if (users.containsKey(pk)) return LDAPException.ENTRY_ALREADY_EXISTS;
-
         for (Iterator i=sourceValues.getNames().iterator(); i.hasNext(); ) {
             String name = (String)i.next();
             Collection values = sourceValues.get(name);
             System.out.println(" - "+name+": "+values);
         }
 
-        users.put(pk, sourceValues);
+        if (entries.containsKey(pk)) return LDAPException.ENTRY_ALREADY_EXISTS;
+
+        entries.put(pk, sourceValues);
 
         return LDAPException.SUCCESS;
     }
@@ -109,7 +113,7 @@ public class DemoAdapter extends Adapter {
         String sourceName = sourceConfig.getName();
         System.out.println("Modifying entry "+pk+" in "+sourceName+" with:");
 
-        AttributeValues sourceValues = (AttributeValues)users.get(pk);
+        AttributeValues sourceValues = (AttributeValues)entries.get(pk);
         if (sourceValues == null) return LDAPException.NO_SUCH_OBJECT;
 
         for (Iterator i=modifications.iterator(); i.hasNext(); ) {
@@ -159,10 +163,9 @@ public class DemoAdapter extends Adapter {
         String sourceName = sourceConfig.getName();
         System.out.println("Deleting entry "+pk+" from "+sourceName+".");
 
-        AttributeValues sourceValues = (AttributeValues)users.get(pk);
-        if (sourceValues == null) return LDAPException.NO_SUCH_OBJECT;
+        if (!entries.containsKey(pk)) return LDAPException.NO_SUCH_OBJECT;
 
-        users.remove(pk);
+        entries.remove(pk);
 
         return LDAPException.SUCCESS;
     }

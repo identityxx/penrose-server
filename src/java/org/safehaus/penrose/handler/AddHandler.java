@@ -58,7 +58,7 @@ public class AddHandler {
             log.debug("-------------------------------------------------");
             log.debug("ADD:");
             if (session != null && session.getBindDn() != null) log.debug(" - Bind DN: "+session.getBindDn());
-            log.debug(" - Entry:\n"+dn);
+            log.debug(" - Entry: "+dn);
             log.debug("");
 
             if (session != null && session.getBindDn() == null) {

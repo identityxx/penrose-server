@@ -1,8 +1,17 @@
-dn: uid=test,ou=Users,dc=Adapter,dc=Example,dc=com
+dn: uid=test1,ou=Users,dc=Adapter,dc=Example,dc=com
 objectClass: inetOrgPerson
 objectClass: organizationalPerson
 objectClass: person
-uid: test
-userPassword: test
+uid: test1
+userPassword: test1
 sn: User
-cn: Test User
+cn: Test1 User
+
+dn: uid=test2,ou=Users,dc=Adapter,dc=Example,dc=com
+objectClass: inetOrgPerson
+objectClass: organizationalPerson
+objectClass: person
+uid: test2
+userPassword: test2
+sn: User
+cn: Test2 User

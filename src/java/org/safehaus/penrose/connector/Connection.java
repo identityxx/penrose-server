@@ -22,6 +22,7 @@ import org.safehaus.penrose.session.PenroseSearchResults;
 import org.safehaus.penrose.session.PenroseSearchControls;
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.filter.Filter;
+import org.safehaus.penrose.filter.FilterTool;
 import org.safehaus.penrose.partition.SourceConfig;
 import org.safehaus.penrose.partition.ConnectionConfig;
 
@@ -115,7 +116,16 @@ public class Connection implements ConnectionMBean {
     }
 
     public AttributeValues get(SourceConfig sourceConfig, Row pk) throws Exception {
-        return adapter.get(sourceConfig, pk);
+        Filter filter = FilterTool.createFilter(pk);
+        PenroseSearchControls sc = new PenroseSearchControls();
+        PenroseSearchResults sr = new PenroseSearchResults();
+
+        adapter.load(sourceConfig, filter, sc, sr);
+
+        if (!sr.hasNext()) return null;
+        return (AttributeValues)sr.next();
+
+        //return adapter.get(sourceConfig, pk);
     }
 
     public int modify(SourceConfig sourceConfig, Row pk, Collection modifications) throws Exception {
