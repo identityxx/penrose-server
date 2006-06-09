@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<modules>
+
+  <module>
+    <module-name>DemoModule</module-name>
+    <module-class>org.safehaus.penrose.example.module.DemoModule</module-class>
+  </module>
+
+  <module-mapping>
+    <module-name>DemoModule</module-name>
+    <base-dn>ou=Users,dc=Modules,dc=Example,dc=com</base-dn>
+    <filter>(objectClass=*)</filter>
+    <scope>ONELEVEL</scope>
+  </module-mapping>
+
+</modules>

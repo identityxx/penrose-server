@@ -6,10 +6,17 @@ import org.safehaus.penrose.mapping.AttributeValues;
 import org.safehaus.penrose.mapping.Row;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.session.PenroseSearchResults;
+import org.safehaus.penrose.util.PasswordUtil;
 import org.ietf.ldap.LDAPException;
 
+import javax.naming.directory.ModificationItem;
+import javax.naming.directory.Attribute;
+import javax.naming.directory.DirContext;
+import javax.naming.NamingEnumeration;
 import java.util.Iterator;
 import java.util.Collection;
+import java.util.Map;
+import java.util.HashMap;
 
 /**
  * @author Endi S. Dewata
@@ -17,16 +24,35 @@ import java.util.Collection;
 
 public class DemoAdapter extends Adapter {
 
-    public int bind(SourceConfig sourceConfig, AttributeValues sourceValues, String password) throws Exception {
+    Map users = new HashMap();
+
+    public void init() throws Exception {
+        System.out.println("Initializing DemoAdapter.");
+
+        Row pk = new Row();
+        pk.set("uid", "test");
+
+        AttributeValues sourceValues = new AttributeValues();
+        sourceValues.set("uid", "test");
+        sourceValues.set("cn", "Test User");
+        sourceValues.set("sn", "User");
+        sourceValues.set("userPassword", "test");
+
+        users.put(pk, sourceValues);
+    }
+
+    public int bind(SourceConfig sourceConfig, Row pk, String password) throws Exception {
 
         String sourceName = sourceConfig.getName();
-        System.out.println("Binding to "+sourceName+" with password "+password+".");
+        System.out.println("Binding to "+sourceName+" as "+pk+" with password "+password+".");
 
-        for (Iterator i=sourceValues.getNames().iterator(); i.hasNext(); ) {
-            String name = (String)i.next();
-            Collection values = (Collection)i.next();
-            System.out.println(" - "+name+": "+values);
-        }
+        AttributeValues sourceValues = (AttributeValues)users.get(pk);
+        if (sourceValues == null) return LDAPException.INVALID_CREDENTIALS;
+
+        Object userPassword = sourceValues.getOne("userPassword");
+        if (userPassword == null) return LDAPException.INVALID_CREDENTIALS;
+
+        if (!PasswordUtil.comparePassword(password, userPassword)) return LDAPException.INVALID_CREDENTIALS;
 
         return LDAPException.SUCCESS;
     }
@@ -36,6 +62,8 @@ public class DemoAdapter extends Adapter {
         String sourceName = sourceConfig.getName();
         System.out.println("Searching primary keys from source "+sourceName+" with filter "+filter+".");
 
+        results.addAll(users.keySet());
+
         results.close();
     }
 
@@ -43,6 +71,8 @@ public class DemoAdapter extends Adapter {
 
         String sourceName = sourceConfig.getName();
         System.out.println("Loading entries from source "+sourceName+" with filter "+filter+".");
+
+        results.addAll(users.values());
 
         results.close();
     }
@@ -52,55 +82,86 @@ public class DemoAdapter extends Adapter {
         String sourceName = sourceConfig.getName();
         System.out.println("Getting entry from source "+sourceName+" with primary key "+pk+".");
 
-        return null;
+        return (AttributeValues)users.get(pk);
     }
 
-    public int add(SourceConfig sourceConfig, AttributeValues sourceValues) throws Exception {
+    public int add(SourceConfig sourceConfig, Row pk, AttributeValues sourceValues) throws Exception {
 
         String sourceName = sourceConfig.getName();
-        System.out.println("Adding entry into "+sourceName+":");
+        System.out.println("Adding entry "+pk+" into "+sourceName+":");
+
+        if (users.containsKey(pk)) return LDAPException.ENTRY_ALREADY_EXISTS;
 
         for (Iterator i=sourceValues.getNames().iterator(); i.hasNext(); ) {
             String name = (String)i.next();
-            Collection values = (Collection)i.next();
+            Collection values = sourceValues.get(name);
             System.out.println(" - "+name+": "+values);
+        }
+
+        users.put(pk, sourceValues);
+
+        return LDAPException.SUCCESS;
+    }
+
+    public int modify(SourceConfig sourceConfig, Row pk, Collection modifications) throws Exception {
+
+        String sourceName = sourceConfig.getName();
+        System.out.println("Modifying entry "+pk+" in "+sourceName+" with:");
+
+        AttributeValues sourceValues = (AttributeValues)users.get(pk);
+        if (sourceValues == null) return LDAPException.NO_SUCH_OBJECT;
+
+        for (Iterator i=modifications.iterator(); i.hasNext(); ) {
+            ModificationItem mi = (ModificationItem)i.next();
+            Attribute attribute = (Attribute)mi.getAttribute();
+            String name = attribute.getID();
+
+            switch (mi.getModificationOp()) {
+                case DirContext.ADD_ATTRIBUTE:
+                    for (NamingEnumeration j=attribute.getAll(); j.hasMore(); ) {
+                        Object value = j.next();
+                        System.out.println(" - add "+name+": "+value);
+                        sourceValues.add(name, value);
+                    }
+                    break;
+
+                case DirContext.REPLACE_ATTRIBUTE:
+                    sourceValues.remove(name);
+                    for (NamingEnumeration j=attribute.getAll(); j.hasMore(); ) {
+                        Object value = j.next();
+                        System.out.println(" - replace "+name+": "+value);
+                        sourceValues.add(name, value);
+                    }
+                    break;
+
+                case DirContext.REMOVE_ATTRIBUTE:
+                    if (attribute.size() == 0) {
+                        System.out.println(" - remove "+name);
+                        sourceValues.remove(name);
+
+                    } else {
+                        for (NamingEnumeration j=attribute.getAll(); j.hasMore(); ) {
+                            Object value = j.next();
+                            System.out.println(" - remove "+name+": "+value);
+                            sourceValues.remove(name, value);
+                        }
+                    }
+                    break;
+            }
         }
 
         return LDAPException.SUCCESS;
     }
 
-    public int modify(SourceConfig sourceConfig, AttributeValues oldSourceValues, AttributeValues newSourceValues) throws Exception {
+    public int delete(SourceConfig sourceConfig, Row pk) throws Exception {
 
         String sourceName = sourceConfig.getName();
-        System.out.println("Replacing entry in "+sourceName+":");
+        System.out.println("Deleting entry "+pk+" from "+sourceName+".");
 
-        for (Iterator i=oldSourceValues.getNames().iterator(); i.hasNext(); ) {
-            String name = (String)i.next();
-            Collection values = (Collection)i.next();
-            System.out.println(" - "+name+": "+values);
-        }
+        AttributeValues sourceValues = (AttributeValues)users.get(pk);
+        if (sourceValues == null) return LDAPException.NO_SUCH_OBJECT;
 
-        System.out.println("with:");
-
-        for (Iterator i=newSourceValues.getNames().iterator(); i.hasNext(); ) {
-            String name = (String)i.next();
-            Collection values = (Collection)i.next();
-            System.out.println(" - "+name+": "+values);
-        }
-
-        return LDAPException.SUCCESS;
-    }
-
-    public int delete(SourceConfig sourceConfig, AttributeValues sourceValues) throws Exception {
-
-        String sourceName = sourceConfig.getName();
-        System.out.println("Deleting entry from "+sourceName+":");
-
-        for (Iterator i=sourceValues.getNames().iterator(); i.hasNext(); ) {
-            String name = (String)i.next();
-            Collection values = (Collection)i.next();
-            System.out.println(" - "+name+": "+values);
-        }
+        users.remove(pk);
 
         return LDAPException.SUCCESS;
     }

@@ -31,6 +31,9 @@ import org.safehaus.penrose.partition.FieldConfig;
 import org.safehaus.penrose.partition.SourceConfig;
 
 import javax.sql.DataSource;
+import javax.naming.directory.ModificationItem;
+import javax.naming.directory.Attribute;
+import javax.naming.directory.DirContext;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
@@ -610,9 +613,8 @@ public class JDBCAdapter extends Adapter {
         return LDAPException.SUCCESS;
     }
 
-    public int delete(SourceConfig sourceConfig, AttributeValues sourceValues) throws Exception {
+    public int delete(SourceConfig sourceConfig, Row pk) throws Exception {
 
-        Row pk = sourceConfig.getPrimaryKeyValues(sourceValues);
         //log.debug("Deleting entry "+pk);
 
         String tableName = sourceConfig.getParameter(TABLE_NAME);
@@ -666,14 +668,14 @@ public class JDBCAdapter extends Adapter {
         return LDAPException.SUCCESS;
     }
 
-    public int modify(SourceConfig sourceConfig, AttributeValues oldEntry, AttributeValues newEntry) throws Exception {
+    public int modify(SourceConfig sourceConfig, Row pk, Collection modifications) throws Exception {
 
         // convert sets into single values
-        Collection oldRows = TransformEngine.convert(oldEntry);
-        Collection newRows = TransformEngine.convert(newEntry);
+        //Collection oldRows = TransformEngine.convert(oldEntry);
+        //Collection newRows = TransformEngine.convert(sourceValues);
 
-        Row oldRow = (Row)oldRows.iterator().next();
-        Row newRow = (Row)newRows.iterator().next();
+        //Row oldRow = (Row)oldRows.iterator().next();
+        //Row newRow = (Row)newRows.iterator().next();
 
         //log.debug("Modifying source "+source.getName()+": "+oldRow+" with "+newRow);
 
@@ -689,29 +691,68 @@ public class JDBCAdapter extends Adapter {
             StringBuffer whereClause = new StringBuffer();
             Collection parameters = new ArrayList();
 
+            for (Iterator i=modifications.iterator(); i.hasNext(); ) {
+                ModificationItem mi = (ModificationItem)i.next();
+                Attribute attribute = mi.getAttribute();
+                String name = attribute.getID();
+
+                FieldConfig fieldConfig = sourceConfig.getFieldConfig(name);
+                if (fieldConfig.isPrimaryKey()) continue;
+
+                switch (mi.getModificationOp()) {
+                    case DirContext.ADD_ATTRIBUTE:
+                        if (columns.length() > 0) columns.append(", ");
+
+                        columns.append(fieldConfig.getOriginalName());
+                        columns.append("=?");
+
+                        parameters.add(attribute.get());
+                        break;
+
+                    case DirContext.REPLACE_ATTRIBUTE:
+                        if (columns.length() > 0) columns.append(", ");
+
+                        columns.append(fieldConfig.getOriginalName());
+                        columns.append("=?");
+
+                        parameters.add(attribute.get());
+                        break;
+
+                    case DirContext.REMOVE_ATTRIBUTE:
+                        if (columns.length() > 0) columns.append(", ");
+
+                        columns.append(fieldConfig.getOriginalName());
+                        columns.append("=?");
+
+                        parameters.add(null);
+                        break;
+                }
+            }
+/*
             Collection fields = sourceConfig.getFieldConfigs();
             for (Iterator i=fields.iterator(); i.hasNext(); ) {
                 FieldConfig fieldConfig = (FieldConfig)i.next();
+                if (fieldConfig.isPrimaryKey()) continue;
 
                 if (columns.length() > 0) columns.append(", ");
 
                 columns.append(fieldConfig.getOriginalName());
                 columns.append("=?");
 
-                Object value = newRow.get(fieldConfig.getName());
+                Object value = sourceValues.getOne(fieldConfig.getName());
                 parameters.add(value);
             }
-
+*/
+            Collection fields = sourceConfig.getPrimaryKeyFieldConfigs();
             for (Iterator i=fields.iterator(); i.hasNext(); ) {
                 FieldConfig fieldConfig = (FieldConfig)i.next();
-                if (!fieldConfig.isPrimaryKey()) continue;
 
                 if (whereClause.length() > 0) whereClause.append(" and ");
 
                 whereClause.append(fieldConfig.getOriginalName());
                 whereClause.append("=?");
 
-                Object value = oldRow.get(fieldConfig.getName());
+                Object value = pk.get(fieldConfig.getName());
                 parameters.add(value);
             }
 

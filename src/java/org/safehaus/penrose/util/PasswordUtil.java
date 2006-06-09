@@ -150,13 +150,22 @@ public class PasswordUtil {
      * @return true if password matches the digest
      * @throws Exception
      */
-    public static boolean comparePassword(String credential, String digest) throws Exception {
+    public static boolean comparePassword(String credential, Object digest) throws Exception {
 
         if (digest == null) return false;
 
-        String encryption     = getEncryptionMethod(digest);
-        String encoding       = getEncodingMethod(digest);
-        String storedPassword = getEncryptedPassword(digest);
+        String encryption     = null;
+        String encoding       = null;
+        String storedPassword = null;
+
+        if (digest instanceof byte[]) {
+            storedPassword = new String((byte[])digest);
+
+        } else {
+            encryption     = getEncryptionMethod((String)digest);
+            encoding       = getEncodingMethod((String)digest);
+            storedPassword = getEncryptedPassword((String)digest);
+        }
 
         return comparePassword(credential, encryption, encoding, storedPassword);
     }

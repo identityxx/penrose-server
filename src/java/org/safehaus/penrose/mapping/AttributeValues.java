@@ -200,6 +200,26 @@ public class AttributeValues implements Cloneable, Comparable {
         }
     }
 
+    public void remove(String name, Object value) {
+        if (value == null) return;
+
+        Collection c = (Collection)values.get(name);
+        if (c == null) return;
+
+        c.remove(value);
+        if (c.isEmpty()) values.remove(name);
+    }
+
+    public void remove(String name, Collection values) {
+        if (values == null) return;
+
+        Collection c = (Collection)this.values.get(name);
+        if (c == null) return;
+
+        c.removeAll(values);
+        if (c.isEmpty()) this.values.remove(name);
+    }
+
     public void retain(Collection names) {
         Collection lcNames = new ArrayList();
         for (Iterator i=names.iterator(); i.hasNext(); ) {

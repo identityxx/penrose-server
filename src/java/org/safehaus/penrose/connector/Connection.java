@@ -109,20 +109,20 @@ public class Connection implements ConnectionMBean {
         adapter.load(sourceConfig, filter, sizeLimit, results);
     }
 
-    public int add(SourceConfig sourceConfig, AttributeValues values) throws Exception {
-        return adapter.add(sourceConfig, values);
+    public int add(SourceConfig sourceConfig, Row pk, AttributeValues sourceValues) throws Exception {
+        return adapter.add(sourceConfig, pk, sourceValues);
     }
 
     public AttributeValues get(SourceConfig sourceConfig, Row pk) throws Exception {
         return adapter.get(sourceConfig, pk);
     }
 
-    public int modify(SourceConfig sourceConfig, AttributeValues oldValues, AttributeValues newValues) throws Exception {
-        return adapter.modify(sourceConfig, oldValues, newValues);
+    public int modify(SourceConfig sourceConfig, Row pk, Collection modifications) throws Exception {
+        return adapter.modify(sourceConfig, pk, modifications);
     }
 
-    public int delete(SourceConfig sourceConfig, AttributeValues values) throws Exception {
-        return adapter.delete(sourceConfig, values);
+    public int delete(SourceConfig sourceConfig, Row pk) throws Exception {
+        return adapter.delete(sourceConfig, pk);
     }
 
     public int getLastChangeNumber(SourceConfig sourceConfig) throws Exception {

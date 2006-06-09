@@ -7,10 +7,10 @@ import org.ietf.ldap.LDAPException;
 /**
  * @author Endi S. Dewata
  */
-public class BindModule extends Module {
+public class DemoModule extends Module {
 
     public void init() throws Exception {
-        System.out.println("Initializing BindModule.");
+        System.out.println("Initializing DemoModule.");
     }
 
     public void beforeBind(BindEvent event) throws Exception {

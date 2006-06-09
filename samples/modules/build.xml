@@ -4,6 +4,14 @@
 -->
 <project name="modules" default="build" basedir=".">
 
+    <property name="prefix" value=""/>
+    <property name="penrose.home" value="${prefix}/usr/local/penrose"/>
+
+    <property name="test.hostname" value="localhost"/>
+    <property name="test.port" value="10389"/>
+    <property name="test.bindDn" value="uid=admin,ou=system"/>
+    <property name="test.password" value="secret"/>
+
     <path id="lib.path">
         <fileset dir="../../lib">
             <include name="**/*.jar"/>
@@ -21,6 +29,21 @@
         <jar jarfile="target/penrose-example-modules.jar">
             <fileset dir="target/classes"/>
         </jar>
+    </target>
+
+    <target name="install" depends="build">
+        <copy todir="${penrose.home}/lib/ext" file="target/penrose-example-modules.jar"/>
+    </target>
+
+    <target name="test-search">
+        <exec executable="ldapsearch">
+            <arg line="-h ${test.hostname}"/>
+            <arg line="-p ${test.port}"/>
+            <arg line="-D ${test.bindDn}"/>
+            <arg line="-w ${test.password}"/>
+            <arg line="-s sub"/>
+            <arg line="-b dc=Modules,dc=Example,dc=com"/>
+        </exec>
     </target>
 
     <target name="clean">

@@ -93,7 +93,7 @@ public class DefaultEngine extends Engine {
 
         if (set != null) {
             for (Iterator i = set.iterator(); i.hasNext(); ) {
-                String userPassword = (String)i.next();
+                Object userPassword = i.next();
                 log.debug("userPassword: "+userPassword);
                 if (PasswordUtil.comparePassword(password, userPassword)) return LDAPException.SUCCESS;
             }

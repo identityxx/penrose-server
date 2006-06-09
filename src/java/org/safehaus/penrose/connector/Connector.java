@@ -29,12 +29,16 @@ import org.safehaus.penrose.thread.ThreadManager;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.filter.FilterTool;
 import org.safehaus.penrose.mapping.*;
-import org.safehaus.penrose.pipeline.PipelineListener;
 import org.safehaus.penrose.pipeline.PipelineEvent;
 import org.safehaus.penrose.pipeline.PipelineAdapter;
+import org.safehaus.penrose.util.PasswordUtil;
 import org.apache.log4j.Logger;
 import org.ietf.ldap.LDAPException;
 
+import javax.naming.directory.BasicAttribute;
+import javax.naming.directory.Attribute;
+import javax.naming.directory.ModificationItem;
+import javax.naming.directory.DirContext;
 import java.util.*;
 
 /**
@@ -190,7 +194,7 @@ public class Connector {
 
                 // Add row to source table in the source database/directory
                 Connection connection = getConnection(partition, sourceConfig.getConnectionName());
-                int rc = connection.add(sourceConfig, newEntry);
+                int rc = connection.add(sourceConfig, pk, newEntry);
                 if (rc != LDAPException.SUCCESS) return rc;
 
                 AttributeValues sv = connection.get(sourceConfig, pk);
@@ -235,7 +239,7 @@ public class Connector {
 
                 // Delete row from source table in the source database/directory
                 Connection connection = getConnection(partition, sourceConfig.getConnectionName());
-                int rc = connection.delete(sourceConfig, oldEntry);
+                int rc = connection.delete(sourceConfig, pk);
                 if (rc != LDAPException.SUCCESS)
                     return rc;
 
@@ -294,7 +298,7 @@ public class Connector {
 
                 // Delete row from source table in the source database/directory
                 Connection connection = getConnection(partition, sourceConfig.getConnectionName());
-                int rc = connection.delete(sourceConfig, oldEntry);
+                int rc = connection.delete(sourceConfig, pk);
                 if (rc != LDAPException.SUCCESS)
                     return rc;
 
@@ -311,7 +315,7 @@ public class Connector {
 
                 // Add row to source table in the source database/directory
                 Connection connection = getConnection(partition, sourceConfig.getConnectionName());
-                int rc = connection.add(sourceConfig, newEntry);
+                int rc = connection.add(sourceConfig, pk, newEntry);
                 if (rc != LDAPException.SUCCESS) return rc;
 
                 AttributeValues sv = connection.get(sourceConfig, pk);
@@ -332,7 +336,8 @@ public class Connector {
 
                 // Modify row from source table in the source database/directory
                 Connection connection = getConnection(partition, sourceConfig.getConnectionName());
-                int rc = connection.modify(sourceConfig, oldEntry, newEntry);
+                Collection modifications = createModifications(oldEntry, newEntry);
+                int rc = connection.modify(sourceConfig, pk, modifications);
                 if (rc != LDAPException.SUCCESS) return rc;
 
                 // Modify row from source table in the cache
@@ -358,6 +363,68 @@ public class Connector {
         }
 
         return LDAPException.SUCCESS;
+    }
+
+    public Collection createModifications(AttributeValues oldValues, AttributeValues newValues) throws Exception {
+
+        Collection list = new ArrayList();
+
+        Set addAttributes = new HashSet(newValues.getNames());
+        addAttributes.removeAll(oldValues.getNames());
+
+        log.debug("Values to add:");
+        for (Iterator i=addAttributes.iterator(); i.hasNext(); ) {
+            String name = (String)i.next();
+
+            Collection values = newValues.get(name);
+            Attribute attribute = new BasicAttribute(name);
+
+            for (Iterator j = values.iterator(); j.hasNext(); ) {
+                Object value = j.next();
+                log.debug(" - "+name+": "+value);
+                attribute.add(value);
+            }
+
+            list.add(new ModificationItem(DirContext.ADD_ATTRIBUTE, attribute));
+        }
+
+        Set removeAttributes = new HashSet(oldValues.getNames());
+        removeAttributes.removeAll(newValues.getNames());
+
+        log.debug("Values to remove:");
+        for (Iterator i=removeAttributes.iterator(); i.hasNext(); ) {
+            String name = (String)i.next();
+
+            Collection values = newValues.get(name);
+            Attribute attribute = new BasicAttribute(name);
+            for (Iterator j = values.iterator(); j.hasNext(); ) {
+                Object value = j.next();
+            	log.debug(" - "+name+": "+value);
+                attribute.add(value);
+            }
+
+            list.add(new ModificationItem(DirContext.REMOVE_ATTRIBUTE, attribute));
+        }
+
+        Set replaceAttributes = new HashSet(oldValues.getNames());
+        replaceAttributes.retainAll(newValues.getNames());
+
+        log.debug("Values to replace:");
+        for (Iterator i=replaceAttributes.iterator(); i.hasNext(); ) {
+            String name = (String)i.next();
+
+            Set set = (Set)newValues.get(name);
+            Attribute attribute = new BasicAttribute(name);
+            for (Iterator j = set.iterator(); j.hasNext(); ) {
+                Object value = j.next();
+                log.debug(" - "+name+": "+value);
+                attribute.add(value);
+            }
+
+            list.add(new ModificationItem(DirContext.REPLACE_ATTRIBUTE, attribute));
+        }
+
+        return list;
     }
 
     /**

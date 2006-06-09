@@ -92,7 +92,7 @@ public abstract class Adapter {
      * 
      * @throws Exception
      */
-    public int add(SourceConfig sourceConfig, AttributeValues values) throws Exception {
+    public int add(SourceConfig sourceConfig, Row pk, AttributeValues sourceValues) throws Exception {
         return LDAPException.OPERATIONS_ERROR;
     }
     
@@ -101,7 +101,7 @@ public abstract class Adapter {
      * 
      * @throws Exception
      */
-    public int modify(SourceConfig sourceConfig, AttributeValues oldValues, AttributeValues newValues) throws Exception {
+    public int modify(SourceConfig sourceConfig, Row pk, Collection modifications) throws Exception {
         return LDAPException.OPERATIONS_ERROR;
     }
 
@@ -110,7 +110,7 @@ public abstract class Adapter {
      * 
      * @throws Exception
      */
-    public int delete(SourceConfig sourceConfig, AttributeValues values) throws Exception {
+    public int delete(SourceConfig sourceConfig, Row pk) throws Exception {
         return LDAPException.OPERATIONS_ERROR;
     }
 

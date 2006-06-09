@@ -30,7 +30,6 @@ import org.safehaus.penrose.partition.SourceConfig;
 import org.safehaus.penrose.util.JNDIClient;
 import org.safehaus.penrose.util.Formatter;
 import org.safehaus.penrose.util.EntryUtil;
-import org.safehaus.penrose.util.LDAPUtil;
 import org.safehaus.penrose.util.PasswordUtil;
 
 import java.util.*;
@@ -371,9 +370,9 @@ public class JNDIAdapter extends Adapter {
         return LDAPException.SUCCESS;
     }
 
-    public int delete(SourceConfig sourceConfig, AttributeValues entry) throws Exception {
+    public int delete(SourceConfig sourceConfig, Row pk) throws Exception {
 
-        String dn = getDn(sourceConfig, entry);
+        String dn = getDn(sourceConfig, pk);
 
         if (log.isDebugEnabled()) {
             log.debug(Formatter.displaySeparator(80));
@@ -396,9 +395,9 @@ public class JNDIAdapter extends Adapter {
         return LDAPException.SUCCESS;
     }
 
-    public int modify(SourceConfig sourceConfig, AttributeValues oldEntry, AttributeValues newEntry) throws Exception {
+    public int modify(SourceConfig sourceConfig, Row pk, Collection modifications) throws Exception {
 
-        String dn = getDn(sourceConfig, newEntry);
+        String dn = getDn(sourceConfig, pk);
 
         if (log.isDebugEnabled()) {
             log.debug(Formatter.displaySeparator(80));
@@ -408,18 +407,48 @@ public class JNDIAdapter extends Adapter {
         }
 
         List list = new ArrayList();
-        Collection fields = sourceConfig.getFieldConfigs();
 
-        Set addAttributes = new HashSet(newEntry.getNames());
+        for (Iterator i=modifications.iterator(); i.hasNext(); ) {
+            ModificationItem mi = (ModificationItem)i.next();
+
+            Attribute attribute = mi.getAttribute();
+            String name = attribute.getID();
+
+            FieldConfig fieldConfig = sourceConfig.getFieldConfig(name);
+            if (fieldConfig.isPrimaryKey()) continue;
+
+            if ("unicodePwd".equals(name) && mi.getModificationOp() == DirContext.ADD_ATTRIBUTE) { // need to encode unicodePwd
+                Attribute newAttribute = new BasicAttribute(fieldConfig.getOriginalName());
+                for (NamingEnumeration j=attribute.getAll(); j.hasMore(); ) {
+                    String value = (String)j.next();
+                    newAttribute.add(PasswordUtil.toUnicodePassword(value));
+                }
+
+                mi = new ModificationItem(DirContext.REPLACE_ATTRIBUTE, newAttribute);
+
+            } else {
+                Attribute newAttribute = new BasicAttribute(fieldConfig.getOriginalName());
+                for (NamingEnumeration j=attribute.getAll(); j.hasMore(); ) {
+                    Object value = j.next();
+                    newAttribute.add(value);
+                }
+                mi = new ModificationItem(mi.getModificationOp(), attribute);
+            }
+
+            list.add(mi);
+        }
+
+/*
+        Set addAttributes = new HashSet(sourceValues.getNames());
         addAttributes.removeAll(oldEntry.getNames());
         log.debug("Attributes to add: " + addAttributes);
 
         Set removeAttributes = new HashSet(oldEntry.getNames());
-        removeAttributes.removeAll(newEntry.getNames());
+        removeAttributes.removeAll(sourceValues.getNames());
         log.debug("Attributes to remove: " + removeAttributes);
 
         Set replaceAttributes = new HashSet(oldEntry.getNames());
-        replaceAttributes.retainAll(newEntry.getNames());
+        replaceAttributes.retainAll(sourceValues.getNames());
         log.debug("Attributes to replace: " + replaceAttributes);
 
         for (Iterator i=addAttributes.iterator(); i.hasNext(); ) {
@@ -437,7 +466,7 @@ public class JNDIAdapter extends Adapter {
 
             if (primaryKey) continue; // don't add primary key
 
-            Set set = (Set)newEntry.get(name);
+            Set set = (Set)sourceValues.get(name);
             Attribute attribute = new BasicAttribute(name);
             for (Iterator j = set.iterator(); j.hasNext(); ) {
                 String value = (String)j.next();
@@ -474,7 +503,7 @@ public class JNDIAdapter extends Adapter {
 
             if (primaryKey) continue; // don't remove primary key
 
-            Set set = (Set)newEntry.get(name);
+            Set set = (Set)sourceValues.get(name);
             Attribute attribute = new BasicAttribute(name);
             for (Iterator j = set.iterator(); j.hasNext(); ) {
                 String value = (String)j.next();
@@ -501,7 +530,7 @@ public class JNDIAdapter extends Adapter {
 
             if (primaryKey) continue; // don't replace primary key
 
-            Set set = (Set)newEntry.get(name);
+            Set set = (Set)sourceValues.get(name);
             Attribute attribute = new BasicAttribute(name);
             for (Iterator j = set.iterator(); j.hasNext(); ) {
                 String value = (String)j.next();
@@ -517,7 +546,7 @@ public class JNDIAdapter extends Adapter {
 
             list.add(new ModificationItem(DirContext.REPLACE_ATTRIBUTE, attribute));
         }
-
+*/
         ModificationItem mods[] = (ModificationItem[])list.toArray(new ModificationItem[list.size()]);
 
         DirContext ctx = null;
