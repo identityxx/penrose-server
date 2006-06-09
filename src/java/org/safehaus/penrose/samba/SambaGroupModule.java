@@ -24,6 +24,7 @@ public class SambaGroupModule extends Module {
     Logger log = Logger.getLogger(getClass());
 
     public final static String SSH_CLIENT   = "ssh.client";
+    public final static String SAMBA_ADMIN  = "samba.admin";
     public final static String SAMBA_SERVER = "samba.server";
 
     public void init() throws Exception {
@@ -174,10 +175,16 @@ public class SambaGroupModule extends Module {
 
     public Map getServerInfo() throws Exception {
         String client = getParameter(SSH_CLIENT);
+        String admin  = getParameter(SAMBA_ADMIN);
         String server = getParameter(SAMBA_SERVER);
 
         Runtime rt = Runtime.getRuntime();
-        String command = client+" root@"+server+" /usr/bin/net getlocalsid";
+        String command = "/usr/bin/net getlocalsid";
+
+        if (client != null && admin != null && server != null) {
+            command = client+" "+admin +"@"+server+" "+command;
+        }
+
         log.debug(command);
         Process p = rt.exec(command);
 
@@ -208,10 +215,16 @@ public class SambaGroupModule extends Module {
 
     public void addGroup(String groupname) throws Exception {
         String client = getParameter(SSH_CLIENT);
+        String admin  = getParameter(SAMBA_ADMIN);
         String server = getParameter(SAMBA_SERVER);
 
         Runtime rt = Runtime.getRuntime();
-        String command = client+" root@"+server+" /usr/sbin/groupadd "+groupname;
+        String command = "/usr/sbin/groupadd "+groupname;
+
+        if (client != null && admin != null && server != null) {
+            command = client+" "+admin +"@"+server+" "+command;
+        }
+
         log.debug(command);
         Process p = rt.exec(command);
         p.waitFor();
@@ -219,10 +232,16 @@ public class SambaGroupModule extends Module {
 
     public Map getUserInfo(String username) throws Exception {
         String client = getParameter(SSH_CLIENT);
+        String admin  = getParameter(SAMBA_ADMIN);
         String server = getParameter(SAMBA_SERVER);
 
         Runtime rt = Runtime.getRuntime();
-        String command = client+" root@"+server+" /bin/grep "+username+": /etc/group";
+        String command = "/bin/grep "+username+": /etc/group";
+
+        if (client != null && admin != null && server != null) {
+            command = client+" "+admin +"@"+server+" "+command;
+        }
+
         log.debug(command);
         Process p = rt.exec(command);
 

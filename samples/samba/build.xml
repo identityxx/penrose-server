@@ -2,38 +2,12 @@
  Copyright (c) 2000-2005, Identyx Corporation.
  All rights reserved.
 -->
-<project name="adapters" default="build" basedir=".">
-
-    <property name="prefix" value=""/>
-    <property name="penrose.home" value="${prefix}/usr/local/penrose"/>
+<project name="jdbc" basedir=".">
 
     <property name="test.hostname" value="localhost"/>
     <property name="test.port" value="10389"/>
     <property name="test.bindDn" value="uid=admin,ou=system"/>
     <property name="test.password" value="secret"/>
-
-    <path id="lib.path">
-        <fileset dir="../../lib">
-            <include name="**/*.jar"/>
-        </fileset>
-        <pathelement location="../../target/classes"/>
-    </path>
-
-    <target name="build">
-        <mkdir dir="target/classes"/>
-        <javac
-            srcdir="src"
-            destdir="target/classes"
-            classpathref="lib.path"
-        />
-        <jar jarfile="target/penrose-example-adapter.jar">
-            <fileset dir="target/classes"/>
-        </jar>
-    </target>
-
-    <target name="install" depends="build">
-        <copy todir="${penrose.home}/lib/ext" file="target/penrose-example-adapter.jar"/>
-    </target>
 
     <target name="test-search">
         <exec executable="ldapsearch">
@@ -42,7 +16,7 @@
             <arg line="-D ${test.bindDn}"/>
             <arg line="-w ${test.password}"/>
             <arg line="-s sub"/>
-            <arg line="-b dc=Adapter,dc=Example,dc=com"/>
+            <arg line="-b dc=Samba,dc=Example,dc=com"/>
         </exec>
     </target>
 
@@ -74,11 +48,6 @@
             <arg line="-w ${test.password}"/>
             <arg line="-f ldif/add.ldif"/>
         </exec>
-    </target>
-
-    <target name="clean">
-        <delete dir="dist" failonerror="false"/>
-        <delete dir="target" failonerror="false"/>
     </target>
 
 </project>

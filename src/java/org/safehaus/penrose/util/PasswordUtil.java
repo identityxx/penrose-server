@@ -81,10 +81,17 @@ public class PasswordUtil {
         return md.digest();
     }
 
-    public static byte[] encryptNTPassword(String password) throws Exception {
+    public static byte[] encryptNTPassword(Object password) throws Exception {
         if (password == null) return null;
 
-        byte[] bytes = password.getBytes("UTF-16LE");
+        String s;
+        if (password instanceof byte[]) {
+            s = new String((byte[])password);
+        } else {
+            s = password.toString();
+        }
+
+        byte[] bytes = s.getBytes("UTF-16LE");
         MessageDigest md = MessageDigest.getInstance("MD4");
         md.update(bytes);
         return md.digest();
@@ -107,10 +114,18 @@ public class PasswordUtil {
         return key;
     }
 
-    public static byte[] encryptLMPassword(String password) throws Exception {
+    public static byte[] encryptLMPassword(Object password) throws Exception {
         if (password == null) return null;
 
-        byte[] bytes = password.toUpperCase().getBytes("UTF-8");
+        String s;
+        if (password instanceof byte[]) {
+            s = new String((byte[])password);
+        } else {
+            s = password.toString();
+        }
+
+        byte[] bytes = s.toUpperCase().getBytes("UTF-8");
+
         if (bytes.length != 14) {
             byte[] b = new byte[14];
             for (int i=0; i<bytes.length && i<14; i++) b[i] = bytes[i];

@@ -26,13 +26,13 @@
             destdir="target/classes"
             classpathref="lib.path"
         />
-        <jar jarfile="target/penrose-example-modules.jar">
+        <jar jarfile="target/penrose-example-module.jar">
             <fileset dir="target/classes"/>
         </jar>
     </target>
 
     <target name="install" depends="build">
-        <copy todir="${penrose.home}/lib/ext" file="target/penrose-example-modules.jar"/>
+        <copy todir="${penrose.home}/lib/ext" file="target/penrose-example-module.jar"/>
     </target>
 
     <target name="test-search">
@@ -42,7 +42,7 @@
             <arg line="-D ${test.bindDn}"/>
             <arg line="-w ${test.password}"/>
             <arg line="-s sub"/>
-            <arg line="-b dc=Modules,dc=Example,dc=com"/>
+            <arg line="-b dc=Module,dc=Example,dc=com"/>
         </exec>
     </target>
 

@@ -2,7 +2,7 @@
 
 <mapping>
 
-  <entry dn="dc=Modules,dc=Example,dc=com">
+  <entry dn="dc=Module,dc=Example,dc=com">
     <oc>dcObject</oc>
     <oc>organization</oc>
     <at name="dc" rdn="true">
@@ -25,14 +25,14 @@
     </aci>
   </entry>
 
-  <entry dn="ou=Users,dc=Modules,dc=Example,dc=com">
+  <entry dn="ou=Users,dc=Module,dc=Example,dc=com">
     <oc>organizationalUnit</oc>
     <at name="ou" rdn="true">
       <constant>Users</constant>
     </at>
   </entry>
 
-  <entry dn="uid=...,ou=Users,dc=Modules,dc=Example,dc=com">
+  <entry dn="uid=...,ou=Users,dc=Module,dc=Example,dc=com">
     <oc>person</oc>
     <oc>organizationalPerson</oc>
     <oc>inetOrgPerson</oc>
@@ -103,14 +103,14 @@ return BinaryUtil.encode("BigInteger", bytes);
     </source>
   </entry>
 
-  <entry dn="ou=Groups,dc=Modules,dc=Example,dc=com">
+  <entry dn="ou=Groups,dc=Module,dc=Example,dc=com">
     <oc>organizationalUnit</oc>
     <at name="ou" rdn="true">
       <constant>Groups</constant>
     </at>
   </entry>
 
-  <entry dn="cn=...,ou=Groups,dc=Modules,dc=Example,dc=com">
+  <entry dn="cn=...,ou=Groups,dc=Module,dc=Example,dc=com">
     <oc>groupOfUniqueNames</oc>
     <at name="cn" rdn="true">
       <variable>g.groupname</variable>
