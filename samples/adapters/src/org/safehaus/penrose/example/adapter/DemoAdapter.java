@@ -6,6 +6,7 @@ import org.safehaus.penrose.mapping.AttributeValues;
 import org.safehaus.penrose.mapping.Row;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.session.PenroseSearchResults;
+import org.safehaus.penrose.session.PenroseSearchControls;
 import org.safehaus.penrose.util.PasswordUtil;
 import org.ietf.ldap.LDAPException;
 
@@ -67,7 +68,7 @@ public class DemoAdapter extends Adapter {
         results.close();
     }
 
-    public void load(SourceConfig sourceConfig, Filter filter, long sizeLimit, PenroseSearchResults results) throws Exception {
+    public void load(SourceConfig sourceConfig, Filter filter, PenroseSearchControls sc, PenroseSearchResults results) throws Exception {
 
         String sourceName = sourceConfig.getName();
         System.out.println("Loading entries from source "+sourceName+" with filter "+filter+".");

@@ -22,6 +22,7 @@ import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.filter.SubstringFilter;
 import org.safehaus.penrose.session.PenroseSearchResults;
+import org.safehaus.penrose.session.PenroseSearchControls;
 import org.safehaus.penrose.partition.SourceConfig;
 import org.apache.log4j.Logger;
 import org.ietf.ldap.LDAPException;
@@ -65,7 +66,7 @@ public abstract class Adapter {
      * @param results Rows
      * @throws Exception
      */
-    public void search(SourceConfig sourceConfig, Filter filter, long sizeLimit, PenroseSearchResults results) throws Exception {
+    public void search(SourceConfig sourceConfig, Filter filter, PenroseSearchControls sc, PenroseSearchResults results) throws Exception {
         results.close();
     }
 
@@ -75,7 +76,7 @@ public abstract class Adapter {
      * @param results AttributeValues
      * @throws Exception
      */
-    public void load(SourceConfig sourceConfig, Filter filter, long sizeLimit, PenroseSearchResults results) throws Exception {
+    public void load(SourceConfig sourceConfig, Filter filter, PenroseSearchControls sc, PenroseSearchResults results) throws Exception {
         results.close();
     }
 

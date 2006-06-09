@@ -21,6 +21,7 @@ import org.apache.commons.dbcp.*;
 import org.apache.commons.pool.impl.GenericObjectPool;
 import org.ietf.ldap.LDAPException;
 import org.safehaus.penrose.session.PenroseSearchResults;
+import org.safehaus.penrose.session.PenroseSearchControls;
 import org.safehaus.penrose.engine.TransformEngine;
 import org.safehaus.penrose.util.Formatter;
 import org.safehaus.penrose.filter.Filter;
@@ -186,7 +187,7 @@ public class JDBCAdapter extends Adapter {
         return LDAPException.INVALID_CREDENTIALS;
     }
 
-    public void search(SourceConfig sourceConfig, Filter filter, long sizeLimit, PenroseSearchResults results) throws Exception {
+    public void search(SourceConfig sourceConfig, Filter filter, PenroseSearchControls sc, PenroseSearchResults results) throws Exception {
 
         log.debug("Searching JDBC source "+sourceConfig.getConnectionName()+"/"+sourceConfig.getName());
 
@@ -253,7 +254,8 @@ public class JDBCAdapter extends Adapter {
             int width = 0;
             boolean first = true;
 
-            for (int i=0; rs.next() && (sizeLimit == 0 || i<sizeLimit); i++) {
+            int i = 0;
+            while (rs.next() && (sc.getSizeLimit() == 0 || i<sc.getSizeLimit())) {
                 Row row = getPkValues(sourceConfig, rs);
                 results.add(row);
 
@@ -263,11 +265,13 @@ public class JDBCAdapter extends Adapter {
                 }
 
                 printValues(sourceConfig, row);
+
+                i++;
             }
 
             if (width > 0) printFooter(width);
 
-            if (rs.next()) {
+            if (sc.getSizeLimit() != 0 && i >= sc.getSizeLimit()) {
                 log.debug("RC: size limit exceeded.");
                 results.setReturnCode(LDAPException.SIZE_LIMIT_EXCEEDED);
             }
@@ -285,7 +289,7 @@ public class JDBCAdapter extends Adapter {
         }
     }
 
-    public void load(SourceConfig sourceConfig, Filter filter, long sizeLimit, PenroseSearchResults results) throws Exception {
+    public void load(SourceConfig sourceConfig, Filter filter, PenroseSearchControls sc, PenroseSearchResults results) throws Exception {
 
         log.debug("Loading JDBC source "+sourceConfig.getConnectionName()+"/"+sourceConfig.getName());
 
@@ -354,7 +358,8 @@ public class JDBCAdapter extends Adapter {
             int width = 0;
             boolean first = true;
 
-            for (int i=0; rs.next() && (sizeLimit == 0 || i<sizeLimit); i++) {
+            int i = 0;
+            while (rs.next() && (sc.getSizeLimit() == 0 || i<sc.getSizeLimit())) {
                 AttributeValues av = getValues(sourceConfig, rs);
                 results.add(av);
 
@@ -364,11 +369,12 @@ public class JDBCAdapter extends Adapter {
                 }
 
                 printValues(sourceConfig, av);
+                i++;
             }
 
             if (width > 0) printFooter(width);
 
-            if (rs.next()) {
+            if (sc.getSizeLimit() != 0 && i >= sc.getSizeLimit()) {
                 log.debug("RC: size limit exceeded.");
                 results.setReturnCode(LDAPException.SIZE_LIMIT_EXCEEDED);
             }

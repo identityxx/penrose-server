@@ -18,6 +18,7 @@
 package org.safehaus.penrose.connector;
 
 import org.safehaus.penrose.session.PenroseSearchResults;
+import org.safehaus.penrose.session.PenroseSearchControls;
 import org.safehaus.penrose.partition.*;
 import org.safehaus.penrose.cache.CacheConfig;
 import org.safehaus.penrose.cache.SourceCache;
@@ -646,7 +647,10 @@ public class Connector {
         Connection connection = getConnection(partition, sourceConfig.getConnectionName());
         PenroseSearchResults sr = new PenroseSearchResults();
         try {
-            connection.search(sourceConfig, filter, sizeLimit, sr);
+            PenroseSearchControls sc = new PenroseSearchControls();
+            sc.setSizeLimit(sizeLimit);
+
+            connection.search(sourceConfig, filter, sc, sr);
 
             log.debug("Search results:");
             for (Iterator i=sr.iterator(); i.hasNext();) {
@@ -705,7 +709,11 @@ public class Connector {
                     int sizeLimit = s == null ? SourceConfig.DEFAULT_SIZE_LIMIT : Integer.parseInt(s);
 
                     Connection connection = getConnection(partition, sourceConfig.getConnectionName());
-                    connection.load(sourceConfig, filter, sizeLimit, sr);
+
+                    PenroseSearchControls sc = new PenroseSearchControls();
+                    sc.setSizeLimit(sizeLimit);
+
+                    connection.load(sourceConfig, filter, sc, sr);
 /*
                     for (Iterator i=sr.iterator(); i.hasNext();) {
                         AttributeValues sourceValues = (AttributeValues)i.next();

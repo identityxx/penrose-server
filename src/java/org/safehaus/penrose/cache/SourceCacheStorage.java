@@ -24,6 +24,7 @@ import org.safehaus.penrose.connector.Connection;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.SourceConfig;
 import org.safehaus.penrose.session.PenroseSearchResults;
+import org.safehaus.penrose.session.PenroseSearchControls;
 import org.safehaus.penrose.pipeline.PipelineEvent;
 import org.safehaus.penrose.pipeline.PipelineAdapter;
 import org.safehaus.penrose.thread.ThreadManager;
@@ -202,7 +203,10 @@ public class SourceCacheStorage {
             }
         });
 
-        connection.load(sourceConfig, null, sizeLimit, sr);
+        PenroseSearchControls sc = new PenroseSearchControls();
+        sc.setSizeLimit(sizeLimit);
+
+        connection.load(sourceConfig, null, sc, sr);
     }
 
     public Partition getPartition() {

@@ -19,6 +19,7 @@ package org.safehaus.penrose.connector;
 
 import org.safehaus.penrose.connector.Adapter;
 import org.safehaus.penrose.session.PenroseSearchResults;
+import org.safehaus.penrose.session.PenroseSearchControls;
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.partition.SourceConfig;
@@ -101,12 +102,12 @@ public class Connection implements ConnectionMBean {
         return adapter.bind(sourceConfig, pk, password);
     }
 
-    public void search(SourceConfig sourceConfig, Filter filter, long sizeLimit, PenroseSearchResults results) throws Exception {
-        adapter.search(sourceConfig, filter, sizeLimit, results);
+    public void search(SourceConfig sourceConfig, Filter filter, PenroseSearchControls sc, PenroseSearchResults results) throws Exception {
+        adapter.search(sourceConfig, filter, sc, results);
     }
 
-    public void load(SourceConfig sourceConfig, Filter filter, long sizeLimit, PenroseSearchResults results) throws Exception {
-        adapter.load(sourceConfig, filter, sizeLimit, results);
+    public void load(SourceConfig sourceConfig, Filter filter, PenroseSearchControls sc, PenroseSearchResults results) throws Exception {
+        adapter.load(sourceConfig, filter, sc, results);
     }
 
     public int add(SourceConfig sourceConfig, Row pk, AttributeValues sourceValues) throws Exception {

@@ -25,6 +25,7 @@ import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.filter.SubstringFilter;
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.session.PenroseSearchResults;
+import org.safehaus.penrose.session.PenroseSearchControls;
 import org.safehaus.penrose.partition.FieldConfig;
 import org.safehaus.penrose.partition.SourceConfig;
 import org.safehaus.penrose.util.JNDIClient;
@@ -82,7 +83,7 @@ public class JNDIAdapter extends Adapter {
         return LDAPException.SUCCESS;
     }
 
-    public void search(SourceConfig sourceConfig, Filter filter, long sizeLimit, PenroseSearchResults results) throws Exception {
+    public void search(SourceConfig sourceConfig, Filter filter, PenroseSearchControls sc, PenroseSearchResults results) throws Exception {
 
         String ldapBase = sourceConfig.getParameter(BASE_DN);
         if ("".equals(ldapBase)) {
@@ -118,6 +119,7 @@ public class JNDIAdapter extends Adapter {
         } else if ("SUBTREE".equals(ldapScope)) {
         	ctls.setSearchScope(SearchControls.SUBTREE_SCOPE);
         }
+        ctls.setCountLimit(sc.getSizeLimit());
 
         DirContext ctx = null;
         try {
@@ -140,7 +142,7 @@ public class JNDIAdapter extends Adapter {
         }
     }
 
-    public void load(SourceConfig sourceConfig, Filter filter, long sizeLimit, PenroseSearchResults results) throws Exception {
+    public void load(SourceConfig sourceConfig, Filter filter, PenroseSearchControls sc, PenroseSearchResults results) throws Exception {
 
         String ldapBase = sourceConfig.getParameter(BASE_DN);
         ldapBase = EntryUtil.append(ldapBase, client.getSuffix());
@@ -171,6 +173,7 @@ public class JNDIAdapter extends Adapter {
         } else if ("SUBTREE".equals(ldapScope)) {
         	ctls.setSearchScope(SearchControls.SUBTREE_SCOPE);
         }
+        ctls.setCountLimit(sc.getSizeLimit());
 
         DirContext ctx = null;
         try {

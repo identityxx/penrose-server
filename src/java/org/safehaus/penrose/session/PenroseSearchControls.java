@@ -37,6 +37,10 @@ public class PenroseSearchControls {
     private int scope         = SCOPE_SUB;
     private int dereference   = DEREF_ALWAYS;
     private boolean typesOnly = false;
+
+    private long sizeLimit    = 0;
+    private int timeLimit     = 0;
+
     private String[] attributes;
 
     public PenroseSearchControls() {
@@ -72,5 +76,21 @@ public class PenroseSearchControls {
 
     public void setAttributes(String[] attributes) {
         this.attributes = attributes;
+    }
+
+    public long getSizeLimit() {
+        return sizeLimit;
+    }
+
+    public void setSizeLimit(long sizeLimit) {
+        this.sizeLimit = sizeLimit;
+    }
+
+    public int getTimeLimit() {
+        return timeLimit;
+    }
+
+    public void setTimeLimit(int timeLimit) {
+        this.timeLimit = timeLimit;
     }
 }
