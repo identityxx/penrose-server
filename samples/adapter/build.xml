@@ -2,7 +2,7 @@
  Copyright (c) 2000-2005, Identyx Corporation.
  All rights reserved.
 -->
-<project name="adapters" default="build" basedir=".">
+<project name="adapters" default="dist" basedir=".">
 
     <property name="prefix" value=""/>
     <property name="penrose.home" value="${prefix}/usr/local/penrose"/>
@@ -26,12 +26,15 @@
             destdir="target/classes"
             classpathref="lib.path"
         />
+    </target>
+
+    <target name="dist" depends="build">
         <jar jarfile="target/penrose-example-adapter.jar">
             <fileset dir="target/classes"/>
         </jar>
     </target>
 
-    <target name="install" depends="build">
+    <target name="install" depends="dist">
         <copy todir="${penrose.home}/lib/ext" file="target/penrose-example-adapter.jar"/>
     </target>
 
@@ -41,6 +44,7 @@
             <arg line="-p ${test.port}"/>
             <arg line="-D ${test.bindDn}"/>
             <arg line="-w ${test.password}"/>
+            <arg line="-x"/>
             <arg line="-s sub"/>
             <arg line="-b dc=Adapter,dc=Example,dc=com"/>
         </exec>
@@ -52,6 +56,7 @@
             <arg line="-p ${test.port}"/>
             <arg line="-D ${test.bindDn}"/>
             <arg line="-w ${test.password}"/>
+            <arg line="-x"/>
             <arg line="-f ldif/modify.ldif"/>
         </exec>
     </target>
@@ -62,6 +67,7 @@
             <arg line="-p ${test.port}"/>
             <arg line="-D ${test.bindDn}"/>
             <arg line="-w ${test.password}"/>
+            <arg line="-x"/>
             <arg line="-f ldif/delete.ldif"/>
         </exec>
     </target>
@@ -72,6 +78,7 @@
             <arg line="-p ${test.port}"/>
             <arg line="-D ${test.bindDn}"/>
             <arg line="-w ${test.password}"/>
+            <arg line="-x"/>
             <arg line="-f ldif/add.ldif"/>
         </exec>
     </target>

@@ -15,6 +15,7 @@
             <arg line="-p ${test.port}"/>
             <arg line="-D ${test.bindDn}"/>
             <arg line="-w ${test.password}"/>
+            <arg line="-x"/>
             <arg line="-s sub"/>
             <arg line="-b dc=JDBC,dc=Example,dc=com"/>
         </exec>
@@ -26,6 +27,7 @@
             <arg line="-p ${test.port}"/>
             <arg line="-D ${test.bindDn}"/>
             <arg line="-w ${test.password}"/>
+            <arg line="-x"/>
             <arg line="-f ldif/modify.ldif"/>
         </exec>
     </target>
@@ -36,6 +38,7 @@
             <arg line="-p ${test.port}"/>
             <arg line="-D ${test.bindDn}"/>
             <arg line="-w ${test.password}"/>
+            <arg line="-x"/>
             <arg line="-f ldif/delete.ldif"/>
         </exec>
     </target>
@@ -46,6 +49,7 @@
             <arg line="-p ${test.port}"/>
             <arg line="-D ${test.bindDn}"/>
             <arg line="-w ${test.password}"/>
+            <arg line="-x"/>
             <arg line="-f ldif/add.ldif"/>
         </exec>
     </target>
