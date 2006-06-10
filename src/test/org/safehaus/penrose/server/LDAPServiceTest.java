@@ -63,10 +63,10 @@ public class LDAPServiceTest extends TestCase {
         penroseConfig = new DefaultPenroseConfig();
         penroseConfig.removeServiceConfig("JMX");
 
-        SchemaConfig schemaConfig = new SchemaConfig("samples/schema/example.schema");
+        SchemaConfig schemaConfig = new SchemaConfig("samples/shop/schema/example.schema");
         penroseConfig.addSchemaConfig(schemaConfig);
 
-        PartitionConfig partitionConfig = new PartitionConfig("example", "samples/conf");
+        PartitionConfig partitionConfig = new PartitionConfig("example", "samples/shop/partition");
         penroseConfig.addPartitionConfig(partitionConfig);
 
         penroseServer = new PenroseServer(penroseConfig);
@@ -217,7 +217,7 @@ public class LDAPServiceTest extends TestCase {
         SearchControls ctls = new SearchControls();
         ctls.setSearchScope(SearchControls.ONELEVEL_SCOPE);
 
-        String baseDn = "ou=Categories,dc=Example,dc=com";
+        String baseDn = "ou=Categories,dc=Shop,dc=Example,dc=com";
 
         NamingEnumeration ne = ctx.search(baseDn, "(objectClass=*)", ctls);
 

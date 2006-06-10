@@ -103,12 +103,7 @@ public class PenroseSession {
             throws Exception {
 
         lastActivityDate.setTime(System.currentTimeMillis());
-
-        int scope = sc.getScope();
-        int deref = sc.getDereference();
-        Collection attributes = sc.getAttributes() == null ? null : Arrays.asList(sc.getAttributes());
-
-        return handler.search(this, base, scope, deref, filter, attributes);
+        return handler.search(this, base, filter, sc);
     }
 
     public int unbind() throws Exception {

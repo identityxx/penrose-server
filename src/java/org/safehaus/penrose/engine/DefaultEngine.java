@@ -129,6 +129,7 @@ public class DefaultEngine extends Engine {
             AttributeValues attributeValues)
             throws Exception {
 
+        // normalize attribute names
         AttributeValues newAttributeValues = new AttributeValues();
         for (Iterator i = attributeValues.getNames().iterator(); i.hasNext(); ) {
             String name = (String)i.next();

@@ -21,6 +21,7 @@ import org.safehaus.penrose.partition.SourceConfig;
 import org.safehaus.penrose.partition.ConnectionConfig;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.session.PenroseSearchResults;
+import org.safehaus.penrose.session.PenroseSearchControls;
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.module.Module;
 import org.safehaus.penrose.handler.Handler;
@@ -226,13 +227,14 @@ public class PollingConnectorModule extends Module {
 
             log.debug("Adding "+dn);
 
+            PenroseSearchControls sc = new PenroseSearchControls();
+            sc.setScope(PenroseSearchControls.SCOPE_SUB);
+
             PenroseSearchResults sr = handler.search(
                     null,
                     dn,
-                    LDAPConnection.SCOPE_SUB,
-                    LDAPSearchConstraints.DEREF_NEVER,
                     "(objectClass=*)",
-                    null
+                    sc
             );
 
             while (sr.hasNext()) sr.next();

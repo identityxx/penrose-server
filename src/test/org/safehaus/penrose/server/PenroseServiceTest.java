@@ -58,10 +58,10 @@ public class PenroseServiceTest extends TestCase {
 
         penroseConfig = new DefaultPenroseConfig();
 
-        SchemaConfig schemaConfig = new SchemaConfig("samples/schema/example.schema");
+        SchemaConfig schemaConfig = new SchemaConfig("samples/shop/schema/example.schema");
         penroseConfig.addSchemaConfig(schemaConfig);
 
-        PartitionConfig partitionConfig = new PartitionConfig("example", "samples/conf");
+        PartitionConfig partitionConfig = new PartitionConfig("example", "samples/shop/partition");
         penroseConfig.addPartitionConfig(partitionConfig);
 
         PenroseFactory penroseFactory = PenroseFactory.getInstance();
@@ -139,7 +139,7 @@ public class PenroseServiceTest extends TestCase {
         PenroseSearchControls sc = new PenroseSearchControls();
         sc.setScope(PenroseSearchControls.SCOPE_ONE);
 
-        String baseDn = "ou=Categories,dc=Example,dc=com";
+        String baseDn = "ou=Categories,dc=Shop,dc=Example,dc=com";
 
         System.out.println("Searching "+baseDn+":");
         PenroseSearchResults results = session.search(baseDn, "(objectClass=*)", sc);

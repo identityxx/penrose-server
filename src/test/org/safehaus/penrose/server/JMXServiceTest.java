@@ -50,10 +50,10 @@ public class JMXServiceTest extends TestCase {
         penroseConfig = new DefaultPenroseConfig();
         penroseConfig.removeServiceConfig("LDAP");
 
-        SchemaConfig schemaConfig = new SchemaConfig("samples/schema/example.schema");
+        SchemaConfig schemaConfig = new SchemaConfig("samples/shop/schema/example.schema");
         penroseConfig.addSchemaConfig(schemaConfig);
 
-        PartitionConfig partitionConfig = new PartitionConfig("example", "samples/conf");
+        PartitionConfig partitionConfig = new PartitionConfig("example", "samples/shop/partition");
         penroseConfig.addPartitionConfig(partitionConfig);
 
         penroseServer = new PenroseServer(penroseConfig);

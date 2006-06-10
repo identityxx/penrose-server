@@ -27,6 +27,7 @@ import org.safehaus.penrose.engine.Engine;
 import org.safehaus.penrose.connector.ConnectionManager;
 import org.safehaus.penrose.handler.Handler;
 import org.safehaus.penrose.session.PenroseSearchResults;
+import org.safehaus.penrose.session.PenroseSearchControls;
 import org.safehaus.penrose.util.EntryUtil;
 import org.safehaus.penrose.util.JNDIClient;
 import org.safehaus.penrose.partition.PartitionManager;
@@ -86,13 +87,14 @@ public class LDAPSyncModule extends Module implements EntryCacheListener {
 
             Handler handler = penrose.getSessionHandler();
 
+            PenroseSearchControls sc = new PenroseSearchControls();
+            sc.setScope(PenroseSearchControls.SCOPE_SUB);
+
             PenroseSearchResults sr = handler.search(
                     null,
                     baseDn,
-                    LDAPConnection.SCOPE_SUB,
-                    LDAPSearchConstraints.DEREF_NEVER,
                     "(objectClass=*)",
-                    null
+                    sc
             );
 
             while (sr.hasNext()) {

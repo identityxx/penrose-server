@@ -21,6 +21,7 @@ import org.safehaus.penrose.session.PenroseSearchResults;
 import org.safehaus.penrose.user.UserConfig;
 import org.safehaus.penrose.session.PenroseSession;
 import org.safehaus.penrose.session.SessionManager;
+import org.safehaus.penrose.session.PenroseSearchControls;
 import org.safehaus.penrose.acl.ACLEngine;
 import org.safehaus.penrose.filter.FilterTool;
 import org.safehaus.penrose.partition.PartitionManager;
@@ -319,25 +320,24 @@ public class Handler {
     /**
      *
      * @param session
-     * @param base
-     * @param scope
-     * @param deref
+     * @param baseDn
      * @param filter
-     * @param attributeNames
      * @return LDAPEntry
      * @throws Exception
      */
     public PenroseSearchResults search(
             final PenroseSession session,
-            final String base,
-            final int scope,
-            final int deref,
+            final String baseDn,
             final String filter,
-            final Collection attributeNames)
+            final PenroseSearchControls sc)
             throws Exception {
 
         if (!sessionManager.isValid(session)) throw new Exception("Invalid session.");
         final PenroseSearchResults results = new PenroseSearchResults();
+/*
+        final int scope = sc.getScope();
+        final int deref = sc.getDereference();
+        Collection attributeNames = sc.getAttributes() == null ? null : Arrays.asList(sc.getAttributes());
 
         final Collection normalizedAttributeNames = attributeNames == null ? null : new HashSet();
         if (attributeNames != null) {
@@ -346,7 +346,7 @@ public class Handler {
                 normalizedAttributeNames.add(attributeName.toLowerCase());
             }
         }
-
+*/
         final PenroseSearchResults sr = new PenroseSearchResults();
 
         sr.addListener(new PipelineAdapter() {
@@ -367,22 +367,24 @@ public class Handler {
                 results.close();
 
                 try {
-                    SearchEvent afterSearchEvent = new SearchEvent(this, SearchEvent.AFTER_SEARCH, session, base);
+                    SearchEvent afterSearchEvent = new SearchEvent(this, SearchEvent.AFTER_SEARCH, session, baseDn, filter);
                     afterSearchEvent.setReturnCode(sr.getReturnCode());
-                    postEvent(base, afterSearchEvent);
+                    postEvent(baseDn, afterSearchEvent);
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
             }
         });
 
-        SearchEvent beforeSearchEvent = new SearchEvent(this, SearchEvent.BEFORE_SEARCH, session, base);
-        postEvent(base, beforeSearchEvent);
+        log.debug("Firing SearchEvent for "+baseDn);
+
+        SearchEvent beforeSearchEvent = new SearchEvent(this, SearchEvent.BEFORE_SEARCH, session, baseDn, filter);
+        postEvent(baseDn, beforeSearchEvent);
 
         engine.getThreadManager().execute(new Runnable() {
             public void run() {
                 try {
-                    getSearchHandler().search(session, base, scope, deref, filter, normalizedAttributeNames, sr);
+                    getSearchHandler().search(session, baseDn, filter, sc, sr);
 
                 } catch (Throwable e) {
                     log.error(e.getMessage(), e);
@@ -665,7 +667,10 @@ public class Handler {
 
     public PenroseSession newSession() throws Exception {
         if (status != STARTED) return null;
+
         PenroseSession session = sessionManager.newSession();
+        if (session == null) return null;
+
         session.setHandler(this);
         return session;
     }

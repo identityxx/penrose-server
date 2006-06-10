@@ -19,23 +19,20 @@ package org.safehaus.penrose.handler;
 
 import org.safehaus.penrose.session.PenroseSearchResults;
 import org.safehaus.penrose.session.PenroseSession;
+import org.safehaus.penrose.session.PenroseSearchControls;
 import org.safehaus.penrose.Penrose;
+import org.safehaus.penrose.schema.SchemaManager;
+import org.safehaus.penrose.schema.AttributeType;
 import org.safehaus.penrose.service.ServiceConfig;
 import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.util.Formatter;
-import org.safehaus.penrose.util.JNDIClient;
-import org.safehaus.penrose.util.EntryUtil;
 import org.safehaus.penrose.pipeline.PipelineAdapter;
 import org.safehaus.penrose.pipeline.PipelineEvent;
 import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.engine.Engine;
-import org.safehaus.penrose.event.SearchEvent;
 import org.safehaus.penrose.partition.Partition;
-import org.safehaus.penrose.partition.SourceConfig;
-import org.safehaus.penrose.partition.ConnectionConfig;
 import org.safehaus.penrose.partition.PartitionManager;
 import org.safehaus.penrose.filter.Filter;
-import org.safehaus.penrose.filter.SimpleFilter;
 import org.safehaus.penrose.filter.FilterTool;
 import org.safehaus.penrose.mapping.*;
 import org.apache.log4j.Logger;
@@ -59,10 +56,7 @@ public class SearchHandler {
     /**
      * @param session
      * @param base
-     * @param scope
-     * @param deref
      * @param filter
-     * @param attributeNames
      * @param results
      * @return Entry
      * @throws Exception
@@ -70,11 +64,13 @@ public class SearchHandler {
     public int search(
             PenroseSession session,
             String base,
-            int scope,
-            int deref,
             String filter,
-            Collection attributeNames,
+            PenroseSearchControls sc,
             PenroseSearchResults results) throws Exception {
+
+        int scope = sc.getScope();
+        int deref = sc.getDereference();
+        Collection attributeNames = sc.getAttributes() == null ? null : Arrays.asList(sc.getAttributes());
 
         int rc;
         try {
@@ -105,6 +101,25 @@ public class SearchHandler {
             case LDAPSearchConstraints.DEREF_ALWAYS:
                 d = "always";
                 break;
+            }
+
+            SchemaManager schemaManager = handler.getSchemaManager();
+
+            // normalize attribute names
+            Collection newAttributeNames = new ArrayList();
+            if (attributeNames != null) {
+                for (Iterator i = attributeNames.iterator(); i.hasNext(); ) {
+                    String name = (String)i.next();
+
+                    AttributeType attributeType = schemaManager.getAttributeType(name);
+                    if (attributeType == null) {
+                        newAttributeNames.add(name);
+                    } else {
+                        newAttributeNames.add(attributeType.getName());
+                    }
+                }
+
+                attributeNames = newAttributeNames;
             }
 
             log.warn("Search \""+base+"\" with scope "+s+" and filter \""+filter+"\"");

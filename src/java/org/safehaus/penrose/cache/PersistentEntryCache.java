@@ -22,6 +22,7 @@ import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.util.Formatter;
 import org.safehaus.penrose.session.PenroseSearchResults;
+import org.safehaus.penrose.session.PenroseSearchControls;
 import org.safehaus.penrose.handler.Handler;
 import org.ietf.ldap.*;
 
@@ -147,13 +148,14 @@ public class PersistentEntryCache extends EntryCache {
 
             log.debug("Loading entries under "+entryMapping.getDn());
 
+            PenroseSearchControls sc = new PenroseSearchControls();
+            sc.setScope(PenroseSearchControls.SCOPE_SUB);
+
             PenroseSearchResults sr = handler.search(
                     null,
                     entryMapping.getDn(),
-                    LDAPConnection.SCOPE_SUB,
-                    LDAPSearchConstraints.DEREF_NEVER,
                     "(objectClass=*)",
-                    null
+                    sc
             );
 
             while (sr.hasNext()) sr.next();

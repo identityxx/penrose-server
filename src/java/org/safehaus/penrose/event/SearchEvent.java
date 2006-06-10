@@ -29,12 +29,14 @@ public class SearchEvent extends Event {
 
     private PenroseSession session;
     private String base;
+    private String filter;
     private int returnCode;
 
-    public SearchEvent(Object source, int type, PenroseSession session, String base) {
+    public SearchEvent(Object source, int type, PenroseSession session, String base, String filter) {
         super(source, type);
         this.session = session;
         this.base = base;
+        this.filter = filter;
     }
 
     public PenroseSession getSession() {
@@ -59,5 +61,13 @@ public class SearchEvent extends Event {
 
     public void setReturnCode(int returnCode) {
         this.returnCode = returnCode;
+    }
+
+    public String getFilter() {
+        return filter;
+    }
+
+    public void setFilter(String filter) {
+        this.filter = filter;
     }
 }

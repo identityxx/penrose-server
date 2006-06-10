@@ -56,7 +56,7 @@ public class SessionManagerTest extends TestCase {
         sessionConfig.setParameter(SessionConfig.MAX_SESSIONS, "6");
         sessionConfig.setParameter(SessionConfig.MAX_IDLE_TIME, "1"); // 1 minute
 
-        SchemaConfig schemaConfig = new SchemaConfig("samples/schema/example.schema");
+        SchemaConfig schemaConfig = new SchemaConfig("samples/shop/schema/example.schema");
         penroseConfig.addSchemaConfig(schemaConfig);
 
         PenroseFactory penroseFactory = PenroseFactory.getInstance();
@@ -131,6 +131,9 @@ public class SessionManagerTest extends TestCase {
 
             Thread.sleep(10 * 1000); // wait 10 seconds
         }
+
+        System.out.println("Waiting for 10 more seconds...");
+        Thread.sleep(10 * 1000); // wait 10 seconds
 
         int c = 5;
         for (Iterator i=sessions.iterator(); i.hasNext(); c--) {
