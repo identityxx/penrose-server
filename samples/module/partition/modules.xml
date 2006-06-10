@@ -11,7 +11,7 @@
     <module-name>DemoModule</module-name>
     <base-dn>ou=Users,dc=Module,dc=Example,dc=com</base-dn>
     <filter>(objectClass=*)</filter>
-    <scope>ONELEVEL</scope>
+    <scope>SUBTREE</scope>
   </module-mapping>
 
 </modules>

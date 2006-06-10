@@ -367,7 +367,15 @@ public class Handler {
                 results.close();
 
                 try {
-                    SearchEvent afterSearchEvent = new SearchEvent(this, SearchEvent.AFTER_SEARCH, session, baseDn, filter);
+                    SearchEvent afterSearchEvent = new SearchEvent(
+                            this,
+                            SearchEvent.AFTER_SEARCH,
+                            session,
+                            baseDn,
+                            filter,
+                            sc,
+                            results
+                    );
                     afterSearchEvent.setReturnCode(sr.getReturnCode());
                     postEvent(baseDn, afterSearchEvent);
                 } catch (Exception e) {
@@ -376,9 +384,15 @@ public class Handler {
             }
         });
 
-        log.debug("Firing SearchEvent for "+baseDn);
-
-        SearchEvent beforeSearchEvent = new SearchEvent(this, SearchEvent.BEFORE_SEARCH, session, baseDn, filter);
+        SearchEvent beforeSearchEvent = new SearchEvent(
+                this,
+                SearchEvent.BEFORE_SEARCH,
+                session,
+                baseDn,
+                filter,
+                sc,
+                results
+        );
         postEvent(baseDn, beforeSearchEvent);
 
         engine.getThreadManager().execute(new Runnable() {

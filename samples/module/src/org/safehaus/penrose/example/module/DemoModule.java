@@ -2,12 +2,12 @@ package org.safehaus.penrose.example.module;
 
 import org.safehaus.penrose.module.Module;
 import org.safehaus.penrose.event.*;
+import org.safehaus.penrose.session.PenroseSearchResults;
+import org.safehaus.penrose.pipeline.PipelineAdapter;
+import org.safehaus.penrose.pipeline.PipelineEvent;
 import org.ietf.ldap.LDAPException;
 
-import javax.naming.directory.Attributes;
-import javax.naming.directory.Attribute;
-import javax.naming.directory.ModificationItem;
-import javax.naming.directory.DirContext;
+import javax.naming.directory.*;
 import javax.naming.NamingEnumeration;
 import java.util.Collection;
 import java.util.Iterator;
@@ -36,6 +36,17 @@ public class DemoModule extends Module {
 
     public void beforeSearch(SearchEvent event) throws Exception {
         System.out.println("Searching "+event.getBase()+" with filter "+event.getFilter()+".");
+
+        PenroseSearchResults results = event.getSearchResults();
+
+        // register result listener
+        results.addListener(new PipelineAdapter() {
+            public void objectAdded(PipelineEvent event) {
+                SearchResult sr = (SearchResult)event.getObject();
+                String dn = sr.getName();
+                System.out.println("Returning "+dn+".");
+            }
+        });
     }
 
     public void afterSearch(SearchEvent event) throws Exception {
