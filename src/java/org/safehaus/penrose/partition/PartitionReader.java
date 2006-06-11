@@ -47,8 +47,11 @@ public class PartitionReader {
     }
 
     public Partition read(PartitionConfig partitionConfig) throws Exception {
+        return read(partitionConfig, partitionConfig.getPath());
+    }
+
+    public Partition read(PartitionConfig partitionConfig, String path) throws Exception {
         Partition partition = new Partition(partitionConfig);
-        String path = partitionConfig.getPath();
         loadConnectionsConfig(path, partition);
         loadSourcesConfig(path, partition);
         loadMappingConfig(path, partition);
@@ -67,7 +70,7 @@ public class PartitionReader {
         } else if (home != null) {
             path = home+File.separator+path;
         }
-        String filename = (path == null ? "" : path+File.separator)+File.separator+"mapping.xml";
+        String filename = (path == null ? "" : path+File.separator)+"mapping.xml";
         log.debug("Loading "+filename);
 
         MappingRule mappingRule = new MappingRule();
