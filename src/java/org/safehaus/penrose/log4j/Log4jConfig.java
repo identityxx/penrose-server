@@ -10,6 +10,8 @@ import java.io.File;
  */
 public class Log4jConfig {
 
+    boolean debug;
+
     Map appenderConfigs = new LinkedHashMap();
     Map loggerConfigs = new LinkedHashMap();
 
@@ -61,6 +63,14 @@ public class Log4jConfig {
 
     public void setRootConfig(RootConfig rootConfig) {
         this.rootConfig = rootConfig;
+    }
+
+    public boolean isDebug() {
+        return debug;
+    }
+
+    public void setDebug(boolean debug) {
+        this.debug = debug;
     }
 
     public static void main(String args[]) throws Exception {

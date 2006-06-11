@@ -1,17 +1,23 @@
 package org.safehaus.penrose.log4j;
 
 import org.w3c.dom.*;
+import org.apache.commons.digester.Digester;
+import org.apache.commons.digester.xmlrules.DigesterLoader;
+import org.apache.log4j.Logger;
 
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.DocumentBuilder;
 import java.io.File;
 import java.io.InputStream;
 import java.io.FileInputStream;
+import java.net.URL;
 
 /**
  * @author Endi S. Dewata
  */
 public class Log4jConfigReader {
+
+    Logger log = Logger.getLogger(getClass());
 
     InputStream is;
 
@@ -21,6 +27,18 @@ public class Log4jConfigReader {
 
     public Log4jConfig read() throws Exception {
 
+        Log4jConfig config = new Log4jConfig();
+
+        ClassLoader cl = getClass().getClassLoader();
+        URL url = cl.getResource("org/safehaus/penrose/log4j/log4j-digester-rules.xml");
+        Digester digester = DigesterLoader.createDigester(url);
+        digester.setValidating(false);
+        digester.setClassLoader(cl);
+        digester.push(config);
+        digester.parse(is);
+
+        return config;
+/*
         DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
         factory.setValidating(false);
 
@@ -28,12 +46,13 @@ public class Log4jConfigReader {
         Document document = builder.parse(is);
 
         return createLog4jConfig(document);
+*/
     }
 
     public void close() throws Exception {
         is.close();
     }
-    
+
     public Log4jConfig createLog4jConfig(Document document) {
 
         Log4jConfig config = new Log4jConfig();

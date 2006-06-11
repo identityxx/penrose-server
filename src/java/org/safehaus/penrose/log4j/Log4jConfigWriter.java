@@ -35,7 +35,7 @@ public class Log4jConfigWriter {
 
         writer.startDTD(
                 "log4j:configuration",
-                "-//Log4j/Log4j Configuration DTD 1.0//EN",
+                "-//Apache//DTD Log4j 1.2//EN",
                 "http://logging.apache.org/log4j/docs/api/org/apache/log4j/xml/log4j.dtd");
 
         writer.write(createConfigElement(config));
@@ -51,6 +51,7 @@ public class Log4jConfigWriter {
         Element element = new DefaultElement("log4j:configuration");
 
         element.addAttribute("xmlns:log4j", "http://jakarta.apache.org/log4j/");
+        if (config.isDebug()) element.addAttribute("debug", "true");
 
         for (Iterator i=config.getAppenderConfigs().iterator(); i.hasNext(); ) {
             AppenderConfig appenderConfig = (AppenderConfig)i.next();
@@ -96,6 +97,7 @@ public class Log4jConfigWriter {
         for (Iterator i=layoutConfig.getParameterNames().iterator(); i.hasNext(); ) {
             String name = (String)i.next();
             String value = layoutConfig.getParameter(name);
+            
             Element parameterElement = createParameterElement(name, value);
             element.add(parameterElement);
         }

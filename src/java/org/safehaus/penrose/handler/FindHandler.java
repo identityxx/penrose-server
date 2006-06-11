@@ -81,15 +81,16 @@ public class FindHandler {
 
         List path = findPathRecursive(session, dn);
 
-
         if (log.isDebugEnabled()) {
             log.debug(Formatter.displaySeparator(80));
             log.debug(Formatter.displayLine("FIND RESULT", 80));
 
             log.debug(Formatter.displayLine("Path:", 80));
-            for (Iterator i=path.iterator(); i.hasNext(); ) {
-                Entry entry = (Entry)i.next();
-                log.debug(Formatter.displayLine(" - "+entry.getDn(), 80));
+            if (path != null) {
+                for (Iterator i=path.iterator(); i.hasNext(); ) {
+                    Entry entry = (Entry)i.next();
+                    log.debug(Formatter.displayLine(" - "+entry.getDn(), 80));
+                }
             }
 
             log.debug(Formatter.displaySeparator(80));
@@ -218,7 +219,7 @@ public class FindHandler {
                         }
 
                         if (entry != null) break;
-                        
+
                         log.debug("Can't find "+dn+" in "+entryMapping.getDn());
                     }
                 }
