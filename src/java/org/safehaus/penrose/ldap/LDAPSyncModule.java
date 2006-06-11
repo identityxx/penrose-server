@@ -25,15 +25,12 @@ import org.safehaus.penrose.cache.EntryCacheListener;
 import org.safehaus.penrose.cache.EntryCacheEvent;
 import org.safehaus.penrose.engine.Engine;
 import org.safehaus.penrose.connector.ConnectionManager;
-import org.safehaus.penrose.handler.Handler;
 import org.safehaus.penrose.session.PenroseSearchResults;
 import org.safehaus.penrose.session.PenroseSearchControls;
-import org.safehaus.penrose.util.EntryUtil;
+import org.safehaus.penrose.session.PenroseSession;
 import org.safehaus.penrose.util.JNDIClient;
 import org.safehaus.penrose.partition.PartitionManager;
 import org.safehaus.penrose.partition.Partition;
-import org.ietf.ldap.LDAPConnection;
-import org.ietf.ldap.LDAPSearchConstraints;
 
 import javax.naming.directory.*;
 import javax.naming.NamingEnumeration;
@@ -85,16 +82,19 @@ public class LDAPSyncModule extends Module implements EntryCacheListener {
             String baseDn = entry.getDn();
             log.debug("Adding "+baseDn);
 
-            Handler handler = penrose.getSessionHandler();
+            PenroseSession adminSession = penrose.newSession();
+            adminSession.setBindDn(penrose.getPenroseConfig().getRootDn());
+
+            PenroseSearchResults sr = new PenroseSearchResults();
 
             PenroseSearchControls sc = new PenroseSearchControls();
             sc.setScope(PenroseSearchControls.SCOPE_SUB);
 
-            PenroseSearchResults sr = handler.search(
-                    null,
+            adminSession.search(
                     baseDn,
                     "(objectClass=*)",
-                    sc
+                    sc,
+                    sr
             );
 
             while (sr.hasNext()) {
@@ -111,6 +111,8 @@ public class LDAPSyncModule extends Module implements EntryCacheListener {
                     log.error(e.getMessage());
                 }
             }
+
+            adminSession.close();
 
         } catch (Exception e) {
             log.error(e.getMessage());

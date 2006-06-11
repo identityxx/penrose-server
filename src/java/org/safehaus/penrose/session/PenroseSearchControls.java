@@ -20,19 +20,23 @@ package org.safehaus.penrose.session;
 import org.ietf.ldap.LDAPSearchConstraints;
 import org.ietf.ldap.LDAPConnection;
 
+import java.util.Collection;
+import java.util.ArrayList;
+import java.util.Arrays;
+
 /**
  * @author Endi S. Dewata
  */
 public class PenroseSearchControls {
 
-    public static int SCOPE_BASE      = LDAPConnection.SCOPE_BASE;
-    public static int SCOPE_ONE       = LDAPConnection.SCOPE_ONE;
-    public static int SCOPE_SUB       = LDAPConnection.SCOPE_SUB;
+    public final static int SCOPE_BASE      = LDAPConnection.SCOPE_BASE;
+    public final static int SCOPE_ONE       = LDAPConnection.SCOPE_ONE;
+    public final static int SCOPE_SUB       = LDAPConnection.SCOPE_SUB;
 
-    public static int DEREF_ALWAYS    = LDAPSearchConstraints.DEREF_ALWAYS;
-    public static int DEREF_FINDING   = LDAPSearchConstraints.DEREF_FINDING;
-    public static int DEREF_NEVER     = LDAPSearchConstraints.DEREF_NEVER;
-    public static int DEREF_SEARCHING = LDAPSearchConstraints.DEREF_SEARCHING;
+    public final static int DEREF_ALWAYS    = LDAPSearchConstraints.DEREF_ALWAYS;
+    public final static int DEREF_FINDING   = LDAPSearchConstraints.DEREF_FINDING;
+    public final static int DEREF_NEVER     = LDAPSearchConstraints.DEREF_NEVER;
+    public final static int DEREF_SEARCHING = LDAPSearchConstraints.DEREF_SEARCHING;
 
     private int scope         = SCOPE_SUB;
     private int dereference   = DEREF_ALWAYS;
@@ -41,7 +45,7 @@ public class PenroseSearchControls {
     private long sizeLimit    = 0;
     private int timeLimit     = 0;
 
-    private String[] attributes;
+    private Collection attributes = new ArrayList();
 
     public PenroseSearchControls() {
     }
@@ -70,12 +74,19 @@ public class PenroseSearchControls {
         this.scope = scope;
     }
 
-    public String[] getAttributes() {
+    public Collection getAttributes() {
         return attributes;
     }
 
+    public void setAttributes(Collection attributes) {
+        this.attributes.clear();
+        this.attributes.addAll(attributes);
+    }
+
     public void setAttributes(String[] attributes) {
-        this.attributes = attributes;
+        this.attributes.clear();
+        if (attributes == null) return;
+        this.attributes.addAll(Arrays.asList(attributes));
     }
 
     public long getSizeLimit() {

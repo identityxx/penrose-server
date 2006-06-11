@@ -75,18 +75,24 @@ public class AddHandler {
             rc = performAdd(session, dn, attributes);
             if (rc != LDAPException.SUCCESS) return rc;
 
+            // refreshing entry cache
+
+            PenroseSession adminSession = handler.getPenrose().newSession();
+            adminSession.setBindDn(handler.getPenroseConfig().getRootDn());
+
             PenroseSearchResults results = new PenroseSearchResults();
 
             PenroseSearchControls sc = new PenroseSearchControls();
             sc.setScope(PenroseSearchControls.SCOPE_SUB);
 
-            handler.getSearchHandler().search(
-                    null,
+            adminSession.search(
                     dn,
                     "(objectClass=*)",
                     sc,
                     results
             );
+
+            while (results.hasNext()) results.next();
 
         } catch (LDAPException e) {
             rc = e.getResultCode();

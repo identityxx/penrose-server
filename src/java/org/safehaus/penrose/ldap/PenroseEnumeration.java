@@ -19,6 +19,7 @@ package org.safehaus.penrose.ldap;
 
 import org.safehaus.penrose.session.PenroseSearchResults;
 import org.safehaus.penrose.util.ExceptionUtil;
+import org.safehaus.penrose.util.EntryUtil;
 import org.ietf.ldap.LDAPException;
 import org.apache.log4j.Logger;
 
@@ -82,7 +83,23 @@ public class PenroseEnumeration implements NamingEnumeration {
 
     public Object next() throws NamingException {
         SearchResult result = (SearchResult)searchResults.next();
+
         log.info("Returning \""+result.getName()+"\" to client.");
+
+        if (log.isDebugEnabled()) {
+            Attributes attributes = result.getAttributes();
+            
+            for (NamingEnumeration i = attributes.getAll(); i.hasMore(); ) {
+                Attribute attribute = (Attribute)i.next();
+                String name = attribute.getID();
+
+                for (NamingEnumeration j = attribute.getAll(); j.hasMore(); ) {
+                    Object value = j.next();
+                    log.debug(" - "+name+": "+value+" ("+value.getClass()+")");
+                }
+            }
+        }
+
         return result;
 /*
         LDAPAttributeSet attributeSet = result.getAttributeSet();

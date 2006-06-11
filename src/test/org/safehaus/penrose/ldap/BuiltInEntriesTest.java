@@ -64,13 +64,15 @@ public class BuiltInEntriesTest extends TestCase {
         PenroseSession session = penrose.newSession();
         session.bind(penroseConfig.getRootUserConfig().getDn(), penroseConfig.getRootUserConfig().getPassword());
 
+        PenroseSearchResults results = new PenroseSearchResults();
+
         PenroseSearchControls sc = new PenroseSearchControls();
         sc.setScope(PenroseSearchControls.SCOPE_ONE);
 
         String baseDn = "ou=system";
 
         System.out.println("Searching "+baseDn+":");
-        PenroseSearchResults results = session.search(baseDn, "(objectClass=*)", sc);
+        session.search(baseDn, "(objectClass=*)", sc, results);
 
         assertEquals(0, results.size());
         assertEquals(LDAPException.NO_SUCH_OBJECT, results.getReturnCode());

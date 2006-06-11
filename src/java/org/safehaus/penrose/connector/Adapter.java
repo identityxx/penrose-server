@@ -81,14 +81,6 @@ public abstract class Adapter {
     }
 
     /**
-     * Get.
-     * @throws Exception
-     */
-    public AttributeValues get(SourceConfig sourceConfig, Row pk) throws Exception {
-        return null;
-    }
-
-    /**
      * Add.
      * 
      * @throws Exception

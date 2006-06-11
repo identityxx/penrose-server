@@ -66,16 +66,19 @@ public class Demo {
         PenroseSession session = penrose.newSession();
         session.bind("uid=admin,ou=system", "secret");
 
+        PenroseSearchResults results = new PenroseSearchResults();
+
         PenroseSearchControls sc = new PenroseSearchControls();
         sc.setScope(PenroseSearchControls.SCOPE_ONE);
 
-        PenroseSearchResults results = session.search(
+        session.search(
                 "ou=Categories,"+SUFFIX,
                 "(objectClass=*)",
-                sc);
+                sc,
+                results);
 
         for (Iterator i = results.iterator(); i.hasNext();) {
-            SearchResult entry = (SearchResult) i.next();
+            SearchResult entry = (SearchResult)i.next();
             System.out.println(toString(entry));
         }
 

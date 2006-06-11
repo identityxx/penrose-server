@@ -143,7 +143,11 @@ public class EntryCache {
 
     public Entry get(String dn) throws Exception {
         Partition partition = partitionManager.findPartition(dn);
+        if (partition == null) throw new Exception("Can't find partition for "+dn);
+
         EntryMapping entryMapping = partition.findEntryMapping(dn);
+        if (entryMapping == null) throw new Exception("Can't entry mapping for "+dn);
+
         return getCacheStorage(entryMapping).get(dn);
     }
 

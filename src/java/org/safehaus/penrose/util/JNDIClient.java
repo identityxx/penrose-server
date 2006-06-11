@@ -31,6 +31,7 @@ import org.safehaus.penrose.schema.ObjectClass;
 import org.safehaus.penrose.schema.SchemaParser;
 import org.safehaus.penrose.schema.Schema;
 import org.safehaus.penrose.session.PenroseSearchResults;
+import org.safehaus.penrose.session.PenroseSearchControls;
 import org.ietf.ldap.*;
 
 public class JNDIClient {
@@ -651,16 +652,16 @@ public class JNDIClient {
 
     public void search(
             String baseDn,
-            int scope,
             String filter,
-            Collection attributeNames,
+            PenroseSearchControls sc,
             PenroseSearchResults results
             ) throws Exception {
 
         String ldapBase = EntryUtil.append(baseDn, suffix);
 
         SearchControls ctls = new SearchControls();
-        ctls.setSearchScope(scope);
+        ctls.setSearchScope(sc.getScope());
+        ctls.setReturningAttributes(sc.getAttributes().isEmpty() ? null : (String[])sc.getAttributes().toArray(new String[sc.getAttributes().size()]));
 
         LdapContext context = null;
 
@@ -668,7 +669,7 @@ public class JNDIClient {
             context = getContext();
             NamingEnumeration ne = context.search(ldapBase, filter, ctls);
 
-            log.debug("Search \""+ldapBase+"\" with "+filter+":");
+            log.debug("Search \""+ldapBase+"\" with filter="+filter+" scope="+sc.getScope()+" attrs="+sc.getAttributes()+":");
 
             while (ne.hasMore()) {
                 javax.naming.directory.SearchResult sr = (javax.naming.directory.SearchResult)ne.next();

@@ -170,15 +170,18 @@ public class PenrosePartition extends AbstractDirectoryPartition {
             PenroseSession session = penrose.newSession();
             if (session == null) throw new ServiceUnavailableException();
 
+            PenroseSearchResults results = new PenroseSearchResults();
+
             PenroseSearchControls sc = new PenroseSearchControls();
             sc.setScope(PenroseSearchControls.SCOPE_ONE);
             sc.setDereference(PenroseSearchControls.DEREF_ALWAYS);
 
             String baseDn = dn.toString();
-            PenroseSearchResults results = session.search(
+            session.search(
                     baseDn,
                     "(objectClass=*)",
-                    sc);
+                    sc,
+                    results);
 
             return new PenroseEnumeration(results);
 
@@ -209,16 +212,19 @@ public class PenrosePartition extends AbstractDirectoryPartition {
             PenroseSession session = penrose.newSession();
             if (session == null) throw new ServiceUnavailableException();
 
+            PenroseSearchResults results = new PenroseSearchResults();
+
             PenroseSearchControls sc = new PenroseSearchControls();
             sc.setScope(searchControls.getSearchScope());
             sc.setDereference(PenroseSearchControls.DEREF_ALWAYS);
-            sc.setAttributes(searchControls.getReturningAttributes());
+            sc.setAttributes(searchControls == null ? null : searchControls.getReturningAttributes());
 
             String baseDn = base.toString();
-            PenroseSearchResults results = session.search(
+            session.search(
                     baseDn,
                     newFilter,
-                    sc);
+                    sc,
+                    results);
 
             return new PenroseEnumeration(results);
 
@@ -248,15 +254,18 @@ public class PenrosePartition extends AbstractDirectoryPartition {
             PenroseSession session = penrose.newSession();
             if (session == null) throw new ServiceUnavailableException();
 
+            PenroseSearchResults results = new PenroseSearchResults();
+
             PenroseSearchControls sc = new PenroseSearchControls();
             sc.setScope(PenroseSearchControls.SCOPE_BASE);
             sc.setDereference(PenroseSearchControls.DEREF_ALWAYS);
 
             String baseDn = dn.toString();
-            PenroseSearchResults results = session.search(
+            session.search(
                     baseDn,
                     "(objectClass=*)",
-                    sc);
+                    sc,
+                    results);
 
             int rc = results.getReturnCode();
             session.close();
@@ -295,15 +304,18 @@ public class PenrosePartition extends AbstractDirectoryPartition {
             PenroseSession session = penrose.newSession();
             if (session == null) throw new ServiceUnavailableException();
 
+            PenroseSearchResults results = new PenroseSearchResults();
+
             PenroseSearchControls sc = new PenroseSearchControls();
             sc.setScope(PenroseSearchControls.SCOPE_BASE);
             sc.setDereference(PenroseSearchControls.DEREF_ALWAYS);
 
             String base = name.toString();
-            PenroseSearchResults results = session.search(
+            session.search(
                     base,
                     "(objectClass=*)",
-                    sc);
+                    sc,
+                    results);
 
             boolean result = results.getReturnCode() == LDAPException.SUCCESS && results.size() == 1;
 

@@ -23,6 +23,7 @@ import org.safehaus.penrose.session.PenroseSearchControls;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.PartitionManager;
 import org.safehaus.penrose.schema.ObjectClass;
+import org.safehaus.penrose.schema.AttributeType;
 import org.safehaus.penrose.util.PasswordUtil;
 import org.safehaus.penrose.util.BinaryUtil;
 import org.safehaus.penrose.util.Formatter;
@@ -36,6 +37,7 @@ import org.apache.log4j.Logger;
 import javax.naming.directory.DirContext;
 import javax.naming.directory.ModificationItem;
 import javax.naming.directory.Attribute;
+import javax.naming.directory.BasicAttribute;
 import javax.naming.NamingEnumeration;
 import java.util.*;
 
@@ -109,20 +111,26 @@ public class ModifyHandler {
             rc = performModify(session, entry, modifications);
             if (rc != LDAPException.SUCCESS) return rc;
 
+            // refreshing entry cache
+
             handler.getEngine().getEntryCache().remove(entry);
+
+            PenroseSession adminSession = handler.getPenrose().newSession();
+            adminSession.setBindDn(handler.getPenroseConfig().getRootDn());
 
             PenroseSearchResults results = new PenroseSearchResults();
 
             PenroseSearchControls sc = new PenroseSearchControls();
             sc.setScope(PenroseSearchControls.SCOPE_SUB);
 
-            handler.getSearchHandler().search(
-                    null,
+            adminSession.search(
                     dn,
                     "(objectClass=*)",
                     sc,
                     results
             );
+
+            while (results.hasNext()) results.next();
 
         } catch (LDAPException e) {
             rc = e.getResultCode();
@@ -151,6 +159,48 @@ public class ModifyHandler {
             log.debug("Not authorized to modify "+entry.getDn());
             return rc;
         }
+
+        Collection normalizedModifications = new ArrayList();
+
+		for (Iterator i = modifications.iterator(); i.hasNext();) {
+			ModificationItem modification = (ModificationItem) i.next();
+
+			Attribute attribute = modification.getAttribute();
+			String attributeName = attribute.getID();
+
+            AttributeType at = handler.getSchemaManager().getAttributeType(attributeName);
+            if (at == null) return LDAPException.UNDEFINED_ATTRIBUTE_TYPE;
+
+            attributeName = at.getName();
+
+            switch (modification.getModificationOp()) {
+                case DirContext.ADD_ATTRIBUTE:
+                    log.debug("add: " + attributeName);
+                    break;
+                case DirContext.REMOVE_ATTRIBUTE:
+                    log.debug("delete: " + attributeName);
+                    break;
+                case DirContext.REPLACE_ATTRIBUTE:
+                    log.debug("replace: " + attributeName);
+                    break;
+            }
+
+            Attribute normalizedAttribute = new BasicAttribute(attributeName);
+            for (NamingEnumeration j=attribute.getAll(); j.hasMore(); ) {
+                Object value = j.next();
+                normalizedAttribute.add(value);
+                log.debug(attributeName + ": "+value);
+            }
+
+            log.debug("-");
+
+            ModificationItem normalizedModification = new ModificationItem(modification.getModificationOp(), normalizedAttribute);
+            normalizedModifications.add(normalizedModification);
+		}
+
+        modifications = normalizedModifications;
+
+        log.info("");
 
         EntryMapping entryMapping = entry.getEntryMapping();
 

@@ -426,7 +426,7 @@ public class Partition {
         if (c != null) {
             for (Iterator i=c.iterator(); i.hasNext(); ) {
                 EntryMapping entryMapping = (EntryMapping)i.next();
-                log.debug("Found entry \""+entryMapping.getDn()+"\"");
+                //log.debug("Found entry \""+entryMapping.getDn()+"\"");
             }
             return c;
         }
@@ -456,7 +456,7 @@ public class Partition {
             // for each parent mapping found
             for (Iterator i=parentMappings.iterator(); i.hasNext(); ) {
                 EntryMapping parentMapping = (EntryMapping)i.next();
-                log.debug("Found parent "+parentMapping.getDn());
+                //log.debug("Found parent "+parentMapping.getDn());
 
                 if (isProxy(parentMapping)) { // if parent is proxy, include it in results
                     results.add(parentMapping);
@@ -473,12 +473,13 @@ public class Partition {
             EntryMapping childMapping = (EntryMapping) iterator.next();
 
             String childDn = childMapping.getDn().toLowerCase();
-            //log.debug("Checking \""+dn+"\" with \""+childDn+"\"");
+            //log.debug("Checking \""+dn+"\" against \""+childDn+"\"");
 
             Row childRdn = EntryUtil.getRdn(childDn);
             String childParentDn = EntryUtil.getParentDn(childDn);
 
-            // if the parent dn's don't match, skip
+            if (!EntryUtil.match(dn, childDn)) continue;
+/*
             if (parentDn != null && childParentDn != null && !parentDn.equals(childParentDn)) continue;
 
             // if the rdn names don't match, skip
@@ -493,8 +494,8 @@ public class Partition {
 
             // if rdn's don't match, skip
             if (!rdn.equals(childRdn)) continue;
-
-            log.debug("Found "+childDn);
+*/
+            //log.debug("Found "+childDn);
             results.add(childMapping);
         }
 

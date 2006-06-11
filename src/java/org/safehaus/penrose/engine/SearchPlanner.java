@@ -72,7 +72,10 @@ public class SearchPlanner extends GraphVisitor {
 
         depthStack.push(new Integer(0));
 
-        if (primarySourceMapping != null) graph.traverse(this, primarySourceMapping);
+        if (primarySourceMapping != null) {
+            log.debug("Primary source: "+primarySourceMapping.getName());
+            graph.traverse(this, primarySourceMapping);
+        }
 
         log.debug("Source depths and filters:");
         for (Iterator i=entryMapping.getSourceMappings().iterator(); i.hasNext(); ) {

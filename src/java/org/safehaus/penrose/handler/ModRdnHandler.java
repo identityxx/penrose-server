@@ -82,6 +82,8 @@ public class ModRdnHandler {
             rc = performModRdn(session, entry, newRdn);
             if (rc != LDAPException.SUCCESS) return rc;
 
+            // refreshing entry cache
+
             String parentDn = EntryUtil.getParentDn(dn);
             String newDn = newRdn+","+parentDn;
 

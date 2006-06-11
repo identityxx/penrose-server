@@ -37,6 +37,7 @@ import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.filter.SimpleFilter;
 import org.safehaus.penrose.filter.FilterTool;
 import org.safehaus.penrose.session.PenroseSearchResults;
+import org.safehaus.penrose.session.PenroseSearchControls;
 import org.safehaus.penrose.util.EntryUtil;
 import org.apache.log4j.Logger;
 import org.ietf.ldap.LDAPDN;
@@ -479,16 +480,6 @@ public abstract class Engine {
             String dn
             ) throws Exception;
 
-    public abstract void searchProxy(
-            Partition partition,
-            EntryMapping entryMapping,
-            String base,
-            int scope,
-            String filter,
-            Collection attributeNames,
-            PenroseSearchResults results
-            ) throws Exception;
-
     public void load(
             EntryMapping entryMapping,
             PenroseSearchResults entriesToLoad,
@@ -597,12 +588,22 @@ public abstract class Engine {
     public abstract int modify(Entry entry, AttributeValues newValues) throws Exception;
 
     public abstract void search(
-            Entry parent,
-            AttributeValues parentSourceValues,
+            final Collection path,
+            final AttributeValues parentSourceValues,
+            final EntryMapping entryMapping,
+            boolean single,
+            final Filter filter,
+            PenroseSearchControls sc,
+            PenroseSearchResults results) throws Exception;
+
+    public abstract void searchProxy(
+            Partition partition,
             EntryMapping entryMapping,
-            Filter filter,
-            PenroseSearchResults dns)
-            throws Exception;
+            String base,
+            String filter,
+            PenroseSearchControls sc,
+            PenroseSearchResults results
+            ) throws Exception;
 
    public synchronized MRSWLock getLock(String dn) {
 

@@ -178,10 +178,11 @@ public class EntryUtil {
             for (Iterator j=values.iterator(); j.hasNext(); ) {
                 Object value = j.next();
 
-                if (value instanceof Number) { // TODO This is ApacheDS's bug
-                    attribute.add(value.toString());
-                } else {
+                if (value instanceof String) {
                     attribute.add(value);
+                    
+                } else { // TODO This is ApacheDS's bug
+                    attribute.add(value.toString());
                 }
             }
 
@@ -206,13 +207,34 @@ public class EntryUtil {
         return attributes;
     }
 
+    public static String toString(SearchResult searchResult) throws Exception {
+
+        StringBuffer sb = new StringBuffer();
+        sb.append("dn: ");
+        sb.append(searchResult.getName());
+        sb.append("\n");
+
+        sb.append(toString(searchResult.getAttributes()));
+
+        return sb.toString();
+    }
+
     public static String toString(Entry entry) throws Exception {
+
         StringBuffer sb = new StringBuffer();
         sb.append("dn: ");
         sb.append(entry.getDn());
         sb.append("\n");
 
-        Attributes attributes = getAttributes(entry);
+        sb.append(toString(getAttributes(entry)));
+
+        return sb.toString();
+    }
+
+    public static String toString(Attributes attributes) throws Exception {
+
+        StringBuffer sb = new StringBuffer();
+
         for (NamingEnumeration i = attributes.getAll(); i.hasMore(); ) {
             Attribute attribute = (Attribute)i.next();
             String name = attribute.getID();

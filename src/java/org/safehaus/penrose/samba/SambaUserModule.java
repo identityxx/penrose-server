@@ -42,14 +42,17 @@ public class SambaUserModule extends Module {
         String dn = event.getDn();
         log.debug("Checking NT Password and LM Password for "+dn+".");
 
+        PenroseSearchResults results = new PenroseSearchResults();
+
         PenroseSearchControls sc = new PenroseSearchControls();
         sc.setScope(PenroseSearchControls.SCOPE_BASE);
 
         PenroseSession session = event.getSession();
-        PenroseSearchResults results = session.search(
+        session.search(
                 dn,
                 "(objectClass=*)",
-                sc);
+                sc,
+                results);
 
         SearchResult entry = (SearchResult)results.next();
         Attributes attributes = entry.getAttributes();
@@ -166,13 +169,16 @@ public class SambaUserModule extends Module {
 
         PenroseSession session = event.getSession();
 
+        PenroseSearchResults results = new PenroseSearchResults();
+
         PenroseSearchControls sc = new PenroseSearchControls();
         sc.setScope(PenroseSearchControls.SCOPE_BASE);
 
-        PenroseSearchResults results = session.search(
+        session.search(
                 dn,
                 "(objectClass=*)",
-                sc);
+                sc,
+                results);
 
         SearchResult entry = (SearchResult)results.next();
         Attributes attributes = entry.getAttributes();

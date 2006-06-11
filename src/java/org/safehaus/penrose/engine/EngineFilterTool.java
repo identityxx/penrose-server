@@ -143,19 +143,6 @@ public class EngineFilterTool {
         Filter newFilter = adapter.convert(entryMapping, filter);
 
         return newFilter;
-/*
-        StringBuffer sb = new StringBuffer();
-        for (Iterator i=substrings.iterator(); i.hasNext(); ) {
-            String substring = (String)i.next();
-            if ("*".equals(substring)) {
-                sb.append("%");
-            } else {
-                sb.append(substring);
-            }
-        }
-
-        return new SimpleFilter(fieldMapping.getName(), "like", sb.toString());
-*/
     }
 
     public Filter toSourceFilter(AttributeValues parentValues, EntryMapping entry, SourceMapping sourceMapping, NotFilter filter)

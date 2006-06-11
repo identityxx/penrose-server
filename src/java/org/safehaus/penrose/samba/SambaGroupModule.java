@@ -107,13 +107,16 @@ public class SambaGroupModule extends Module {
 
         PenroseSession session = event.getSession();
 
+        PenroseSearchResults results = new PenroseSearchResults();
+
         PenroseSearchControls sc = new PenroseSearchControls();
         sc.setScope(PenroseSearchControls.SCOPE_BASE);
 
-        PenroseSearchResults results = session.search(
+        session.search(
                 dn,
                 "(objectClass=*)",
-                sc);
+                sc,
+                results);
 
         SearchResult entry = (SearchResult)results.next();
         Attributes values = entry.getAttributes();

@@ -20,7 +20,6 @@ package org.safehaus.penrose.session;
 import java.util.*;
 
 import org.apache.log4j.Logger;
-import org.safehaus.penrose.handler.Handler;
 
 public class SessionManager implements SessionManagerMBean {
 
@@ -64,7 +63,7 @@ public class SessionManager implements SessionManagerMBean {
         }
 
         log.debug("Creating session "+sessionId);
-        PenroseSession session = new PenroseSession();
+        PenroseSession session = new PenroseSession(this);
         session.setSessionId(sessionId);
 
         sessions.put(sessionId, session);

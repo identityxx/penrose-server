@@ -40,12 +40,13 @@ import org.safehaus.penrose.session.PenroseSession;
 import org.safehaus.penrose.session.SessionManager;
 import org.safehaus.penrose.module.ModuleManager;
 import org.safehaus.penrose.thread.ThreadManager;
+import org.safehaus.penrose.event.EventManager;
 
 /**
  * @author Endi S. Dewata
  */
 public class Penrose {
-	
+
     Logger log = Logger.getLogger(Penrose.class);
 
     public final static String PRODUCT_NAME      = "Penrose Virtual Directory Server";
@@ -73,6 +74,7 @@ public class Penrose {
 
     private ConnectorManager connectorManager;
     private EngineManager engineManager;
+    private EventManager eventManager;
     private HandlerManager handlerManager;
 
     private InterpreterManager interpreterManager;
@@ -117,8 +119,9 @@ public class Penrose {
         initInterpreterManager();
         initConnectorManager();
         initEngineManager();
+        initEventManager();
         initHandlerManager();
-	}
+    }
 
     public void initThreadManager() throws Exception {
         //String s = engineConfig.getParameter(EngineConfig.THREAD_POOL_SIZE);
@@ -176,6 +179,11 @@ public class Penrose {
         engineManager.setThreadManager(threadManager);
     }
 
+    public void initEventManager() throws Exception {
+        eventManager = new EventManager();
+        eventManager.setModuleManager(moduleManager);
+    }
+
     public void initHandlerManager() throws Exception {
         handlerManager = new HandlerManager();
         handlerManager.setPenroseConfig(penroseConfig);
@@ -184,6 +192,7 @@ public class Penrose {
         handlerManager.setInterpreterFactory(interpreterManager);
         handlerManager.setPartitionManager(partitionManager);
         handlerManager.setModuleManager(moduleManager);
+        handlerManager.setPenrose(this);
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -348,7 +357,7 @@ public class Penrose {
     // Start Penrose
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	public void start() throws Exception {
+    public void start() throws Exception {
 
         if (status != STOPPED) return;
 
@@ -362,6 +371,7 @@ public class Penrose {
             connectionManager.start();
             connectorManager.start();
             engineManager.start();
+            sessionManager.start();
             handlerManager.start();
             moduleManager.start();
 
@@ -372,13 +382,13 @@ public class Penrose {
             log.error(e.getMessage(), e);
             throw e;
         }
-	}
+    }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Stop Penrose
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	public void stop() {
+    public void stop() {
 
         if (status != STARTED) return;
 
@@ -389,6 +399,7 @@ public class Penrose {
 
             moduleManager.stop();
             handlerManager.stop();
+            sessionManager.stop();
             engineManager.stop();
             connectorManager.stop();
             connectionManager.stop();
@@ -398,22 +409,24 @@ public class Penrose {
         }
 
         status = STOPPED;
-	}
+    }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Penrose Sessions
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public PenroseSession newSession() throws Exception {
-        HandlerConfig handlerConfig = penroseConfig.getHandlerConfig();
-        Handler handler = handlerManager.getHandler(handlerConfig.getName());
-        return handler.newSession();
-    }
 
-    public void closeSession(PenroseSession session) {
+        PenroseSession session = sessionManager.newSession();
+        if (session == null) return null;
+
         HandlerConfig handlerConfig = penroseConfig.getHandlerConfig();
         Handler handler = handlerManager.getHandler(handlerConfig.getName());
-        handler.closeSession(session);
+        session.setHandler(handler);
+
+        session.setEventManager(eventManager);
+
+        return session;
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -497,5 +510,13 @@ public class Penrose {
 
     public void setThreadManager(ThreadManager threadManager) {
         this.threadManager = threadManager;
+    }
+
+    public EventManager getEventManager() {
+        return eventManager;
+    }
+
+    public void setEventManager(EventManager eventManager) {
+        this.eventManager = eventManager;
     }
 }

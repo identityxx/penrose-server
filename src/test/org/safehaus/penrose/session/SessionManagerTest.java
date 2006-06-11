@@ -71,7 +71,7 @@ public class SessionManagerTest extends TestCase {
 
     public void testMaxSessions() throws Exception {
 
-        SessionManager sessionManager = penrose.getSessionHandler().getSessionManager();
+        SessionManager sessionManager = penrose.getSessionManager();
         assertEquals(0, sessionManager.getSessions().size());
 
         Collection sessions = new ArrayList();
@@ -107,7 +107,7 @@ public class SessionManagerTest extends TestCase {
 
     public void testMaxIdleTime() throws Exception {
 
-        SessionManager sessionManager = penrose.getSessionHandler().getSessionManager();
+        SessionManager sessionManager = penrose.getSessionManager();
         UserConfig rootUserConfig = penroseConfig.getRootUserConfig();
         String bindDn = rootUserConfig.getDn();
         String password = rootUserConfig.getPassword();

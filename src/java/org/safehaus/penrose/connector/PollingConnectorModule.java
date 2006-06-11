@@ -22,15 +22,13 @@ import org.safehaus.penrose.partition.ConnectionConfig;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.session.PenroseSearchResults;
 import org.safehaus.penrose.session.PenroseSearchControls;
+import org.safehaus.penrose.session.PenroseSession;
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.module.Module;
-import org.safehaus.penrose.handler.Handler;
 import org.safehaus.penrose.cache.EntryCache;
 import org.safehaus.penrose.cache.SourceCache;
 import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.engine.Engine;
-import org.ietf.ldap.LDAPConnection;
-import org.ietf.ldap.LDAPSearchConstraints;
 
 import java.util.Collection;
 import java.util.Iterator;
@@ -51,7 +49,6 @@ public class PollingConnectorModule extends Module {
     public Connector connector;
     public SourceCache sourceCache;
     public Engine engine;
-    public Handler handler;
 
     public PollingConnectorRunnable runnable;
 
@@ -66,7 +63,6 @@ public class PollingConnectorModule extends Module {
         connector = penrose.getConnector();
         sourceCache = connector.getSourceCache();
         engine = penrose.getEngine();
-        handler = penrose.getSessionHandler();
     }
 
     public void start() throws Exception {
@@ -227,17 +223,24 @@ public class PollingConnectorModule extends Module {
 
             log.debug("Adding "+dn);
 
+            PenroseSession adminSession = penrose.newSession();
+            adminSession.setBindDn(penrose.getPenroseConfig().getRootDn());
+
+            PenroseSearchResults sr = new PenroseSearchResults();
+
             PenroseSearchControls sc = new PenroseSearchControls();
             sc.setScope(PenroseSearchControls.SCOPE_SUB);
 
-            PenroseSearchResults sr = handler.search(
-                    null,
+            adminSession.search(
                     dn,
                     "(objectClass=*)",
-                    sc
+                    sc,
+                    sr
             );
 
             while (sr.hasNext()) sr.next();
+
+            adminSession.close();
         }
     }
 

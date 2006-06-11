@@ -24,6 +24,7 @@ import org.safehaus.penrose.schema.SchemaManager;
 import org.safehaus.penrose.session.SessionManager;
 import org.safehaus.penrose.module.ModuleManager;
 import org.safehaus.penrose.partition.PartitionManager;
+import org.safehaus.penrose.Penrose;
 
 import java.util.TreeMap;
 import java.util.Map;
@@ -36,6 +37,7 @@ public class HandlerManager {
 
     Map handlers = new TreeMap();
 
+    private Penrose penrose;
     private SessionManager sessionManager;
     private SchemaManager schemaManager;
     private InterpreterManager interpreterManager;
@@ -54,9 +56,8 @@ public class HandlerManager {
         handler.setSchemaManager(schemaManager);
         handler.setInterpreterFactory(interpreterManager);
         handler.setEngine(engine);
-        handler.setRootUserConfig(penroseConfig.getRootUserConfig());
         handler.setPartitionManager(partitionManager);
-        handler.setModuleManager(moduleManager);
+        handler.setPenrose(penrose);
 
         handlers.put(handlerConfig.getName(), handler);
     }
@@ -129,5 +130,13 @@ public class HandlerManager {
 
     public void setModuleManager(ModuleManager moduleManager) {
         this.moduleManager = moduleManager;
+    }
+
+    public Penrose getPenrose() {
+        return penrose;
+    }
+
+    public void setPenrose(Penrose penrose) {
+        this.penrose = penrose;
     }
 }

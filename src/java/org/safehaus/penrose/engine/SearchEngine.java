@@ -70,7 +70,12 @@ public class SearchEngine {
         log.debug("Sources: "+sources);
 
         Collection effectiveSources = partition.getEffectiveSourceMappings(entryMapping);
-        log.debug("Effective Sources: "+effectiveSources);
+        Collection names = new ArrayList();
+        for (Iterator i=effectiveSources.iterator(); i.hasNext(); ) {
+            SourceMapping sm = (SourceMapping)i.next();
+            names.add(sm.getName());
+        }
+        log.debug("Effective Sources: "+names);
 
         if (unique && sources.size() == 1 && effectiveSources.size() == 1) {
             engine.threadManager.execute(new Runnable() {

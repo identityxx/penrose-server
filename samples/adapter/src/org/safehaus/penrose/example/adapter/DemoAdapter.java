@@ -82,14 +82,6 @@ public class DemoAdapter extends Adapter {
         results.close();
     }
 
-    public AttributeValues get(SourceConfig sourceConfig, Row pk) throws Exception {
-
-        String sourceName = sourceConfig.getName();
-        System.out.println("Getting entry from source "+sourceName+" with primary key "+pk+".");
-
-        return (AttributeValues)entries.get(pk);
-    }
-
     public int add(SourceConfig sourceConfig, Row pk, AttributeValues sourceValues) throws Exception {
 
         String sourceName = sourceConfig.getName();

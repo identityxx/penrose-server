@@ -17,20 +17,14 @@
  */
 package org.safehaus.penrose.acl;
 
-import org.safehaus.penrose.mapping.Entry;
 import org.safehaus.penrose.mapping.EntryMapping;
 import org.safehaus.penrose.session.PenroseSession;
 import org.safehaus.penrose.partition.Partition;
-import org.safehaus.penrose.handler.Handler;
-import org.safehaus.penrose.util.EntryUtil;
+import org.safehaus.penrose.partition.PartitionManager;
 import org.safehaus.penrose.schema.SchemaManager;
+import org.safehaus.penrose.config.PenroseConfig;
 import org.ietf.ldap.LDAPException;
 import org.apache.log4j.Logger;
-
-import javax.naming.directory.SearchResult;
-import javax.naming.directory.Attributes;
-import javax.naming.directory.Attribute;
-import javax.naming.NamingEnumeration;
 import java.util.*;
 
 /**
@@ -40,10 +34,11 @@ public class ACLEngine {
 
     public Logger log = Logger.getLogger(getClass());
 
-    public Handler handler;
+    private PenroseConfig penroseConfig;
+    private SchemaManager schemaManager;
+    private PartitionManager partitionManager;
 
-    public ACLEngine(Handler handler) {
-        this.handler = handler;
+    public ACLEngine() {
     }
 
     public void addPermission(Set set, String permission) {
@@ -67,8 +62,6 @@ public class ACLEngine {
             EntryMapping entryMapping,
             String scope,
             String permission) throws Exception {
-
-        SchemaManager schemaManager = handler.getSchemaManager();
 
         targetDn = schemaManager.normalize(targetDn);
         //log.debug("Checking ACL on \""+entryMapping.getDn()+"\".");
@@ -122,7 +115,7 @@ public class ACLEngine {
             }
         }
 
-        Partition partition = handler.getPartitionManager().getPartitionByDn(targetDn);
+        Partition partition = partitionManager.getPartitionByDn(targetDn);
         if (partition == null) {
             log.debug("Partition for "+targetDn+" not found.");
             return false;
@@ -147,9 +140,7 @@ public class ACLEngine {
             return rc;
         }
 
-        SchemaManager schemaManager = handler.getSchemaManager();
-
-        String rootDn = schemaManager.normalize(handler.getRootUserConfig().getDn());
+        String rootDn = schemaManager.normalize(penroseConfig.getRootDn());
         String bindDn = schemaManager.normalize(session == null ? null : session.getBindDn());
         if (rootDn != null && rootDn.equals(bindDn)) {
             //log.debug("root user => SUCCESS");
@@ -219,8 +210,6 @@ public class ACLEngine {
     }
 
     public boolean checkSubject(String bindDn, String targetDn, ACI aci) throws Exception {
-
-        SchemaManager schemaManager = handler.getSchemaManager();
 
         String subject = schemaManager.normalize(aci.getSubject());
         //log.debug("   ==> checking subject "+subject);
@@ -302,7 +291,7 @@ public class ACLEngine {
             return aci.getAction().equals(ACI.ACTION_GRANT);
         }
 
-        Partition partition = handler.getPartitionManager().getPartitionByDn(entryMapping.getDn());
+        Partition partition = partitionManager.getPartitionByDn(entryMapping.getDn());
         if (partition == null) return false;
 
         entryMapping = partition.getParent(entryMapping);
@@ -371,7 +360,7 @@ public class ACLEngine {
             }
         }
 
-        Partition partition = handler.getPartitionManager().getPartitionByDn(entryMapping.getDn());
+        Partition partition = partitionManager.getPartitionByDn(entryMapping.getDn());
         if (partition == null) return;
 
         entryMapping = partition.getParent(entryMapping);
@@ -389,9 +378,7 @@ public class ACLEngine {
             Collection denies
             ) throws Exception {
 
-        SchemaManager schemaManager = handler.getSchemaManager();
-
-        String rootDn = schemaManager.normalize(handler.getRootUserConfig().getDn());
+        String rootDn = schemaManager.normalize(penroseConfig.getRootDn());
     	if (rootDn.equals(bindDn)) {
             grants.addAll(attributeNames);
             return;
@@ -413,51 +400,27 @@ public class ACLEngine {
 */
     }
 
-    public SearchResult filterAttributes(
-            PenroseSession session,
-            Entry entry)
-            throws Exception {
+    public SchemaManager getSchemaManager() {
+        return schemaManager;
+    }
 
-        SchemaManager schemaManager = handler.getSchemaManager();
-        //log.debug("Schema manager: "+schemaManager);
+    public void setSchemaManager(SchemaManager schemaManager) {
+        this.schemaManager = schemaManager;
+    }
 
-        String bindDn = schemaManager.normalize(session == null ? null : session.getBindDn());
-        String targetDn = schemaManager.normalize(entry.getDn());
+    public PartitionManager getPartitionManager() {
+        return partitionManager;
+    }
 
-        EntryMapping entryMapping = entry.getEntryMapping();
+    public void setPartitionManager(PartitionManager partitionManager) {
+        this.partitionManager = partitionManager;
+    }
 
-        SearchResult sr = EntryUtil.toSearchResult(entry);
-        Attributes attributes = sr.getAttributes();
+    public PenroseConfig getPenroseConfig() {
+        return penroseConfig;
+    }
 
-        //log.debug("Evaluating attributes read permission for "+bindDn);
-
-        Set grants = new HashSet();
-        Set denies = new HashSet();
-
-        Collection attributeNames = new ArrayList();
-        for (NamingEnumeration i=attributes.getAll(); i.hasMore(); ) {
-            Attribute attribute = (Attribute)i.next();
-            attributeNames.add(attribute.getID());
-        }
-
-        getReadableAttributes(bindDn, targetDn, entryMapping, attributeNames, grants, denies);
-
-        //log.debug("Readable attributes: "+grants);
-        //log.debug("Unreadable attributes: "+denies);
-
-        Collection list = new ArrayList();
-        for (NamingEnumeration i=attributes.getAll(); i.hasMore(); ) {
-            Attribute attribute = (Attribute)i.next();
-            //if (checkAttributeReadPermission(bindDn, targetDn, entryMapping, attribute.getName())) continue;
-            if (grants.contains(attribute.getID())) continue;
-            list.add(attribute);
-        }
-
-        for (Iterator i=list.iterator(); i.hasNext(); ) {
-            Attribute attribute = (Attribute)i.next();
-            attributes.remove(attribute.getID());
-        }
-
-        return sr;
+    public void setPenroseConfig(PenroseConfig penroseConfig) {
+        this.penroseConfig = penroseConfig;
     }
 }

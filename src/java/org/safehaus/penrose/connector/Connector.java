@@ -507,7 +507,9 @@ public class Connector {
             return results;
 
         } else {
-            return performLoad(partition, sourceConfig, filter);
+            PenroseSearchResults results = new PenroseSearchResults();
+            performLoad(partition, sourceConfig, filter, results);
+            return results;
             //store(sourceConfig, values);
         }
     }
@@ -575,7 +577,8 @@ public class Connector {
 
         Filter filter = FilterTool.createFilter(keys);
 
-        PenroseSearchResults sr = performLoad(partition, sourceConfig, filter);
+        PenroseSearchResults sr = new PenroseSearchResults();
+        performLoad(partition, sourceConfig, filter, sr);
 
         //Collection values = new ArrayList();
         //values.addAll(sr.getAll());
@@ -682,13 +685,13 @@ public class Connector {
     /**
      * Perform the load operation.
      */
-    public PenroseSearchResults performLoad(
+    public void performLoad(
             final Partition partition,
             final SourceConfig sourceConfig,
-            final Filter filter
+            final Filter filter,
+            final PenroseSearchResults results
             ) throws Exception {
 
-        final PenroseSearchResults results = new PenroseSearchResults();
         final PenroseSearchResults sr = new PenroseSearchResults();
 
         sr.addListener(new PipelineAdapter() {
@@ -738,8 +741,6 @@ public class Connector {
                 }
             }
         });
-
-        return results;
     }
 
     public ConnectorConfig getConnectorConfig() {
