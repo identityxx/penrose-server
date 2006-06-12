@@ -10,7 +10,7 @@
     </parameter>
     <parameter>
       <param-name>rmiTransportPort</param-name>
-      <param-value>0</param-value>
+      <param-value>40888</param-value>
     </parameter>
   </service>
 
