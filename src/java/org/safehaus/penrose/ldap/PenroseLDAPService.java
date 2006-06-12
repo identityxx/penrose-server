@@ -199,14 +199,14 @@ public class PenroseLDAPService extends Service {
 
         new InitialDirContext(env);
 
-        log.warn("Listening to port "+ldapPort+".");
+        log.warn("Listening to port "+ldapPort+" (LDAP).");
 
         if (enableLdaps) {
             double javaSpecVersion = Double.parseDouble(System.getProperty("java.specification.version"));
             if (javaSpecVersion < 1.5) {
                 log.warn("SSL is not supported with Java "+javaSpecVersion);
             } else {
-                log.warn("Listening to port "+ldapsPort+".");
+                log.warn("Listening to port "+ldapsPort+" (Secure LDAP).");
             }
         }
 

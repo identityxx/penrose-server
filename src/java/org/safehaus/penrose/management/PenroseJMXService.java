@@ -142,8 +142,8 @@ public class PenroseJMXService extends Service {
             mbeanServer.registerMBean(rmiConnector, rmiConnectorName);
             rmiConnector.start();
 
-            log.warn("Listening to port "+rmiPort+".");
-            if (rmiTransportPort != PenroseClient.DEFAULT_RMI_TRANSPORT_PORT) log.warn("Listening to port "+rmiTransportPort+".");
+            log.warn("Listening to port "+rmiPort+" (RMI).");
+            if (rmiTransportPort != PenroseClient.DEFAULT_RMI_TRANSPORT_PORT) log.warn("Listening to port "+rmiTransportPort+" (RMI Transport).");
         }
 
         if (httpPort > 0) {
@@ -155,7 +155,7 @@ public class PenroseJMXService extends Service {
             mbeanServer.registerMBean(httpConnector, httpConnectorName);
             httpConnector.start();
 
-            log.warn("Listening to port "+httpPort+".");
+            log.warn("Listening to port "+httpPort+" (HTTP).");
         }
 
         setStatus(STARTED);
