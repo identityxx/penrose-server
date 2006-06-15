@@ -48,6 +48,7 @@ public class BindHandler {
 
         int rc;
         try {
+            log.warn("Bind as "+dn+".");
             log.debug(Formatter.displaySeparator(80));
             log.debug(Formatter.displayLine("BIND:", 80));
             log.debug(Formatter.displayLine(" - DN       : "+dn, 80));
@@ -55,7 +56,7 @@ public class BindHandler {
             log.debug(Formatter.displaySeparator(80));
 
             String ndn = LDAPDN.normalize(dn);
-            String rootDn = handler.getRootUserConfig().getDn();
+            String rootDn = handler.getPenroseConfig().getRootDn();
 
             if (ndn == null || "".equals(dn)) {
                 PenroseConfig penroseConfig = handler.getPenroseConfig();
@@ -82,7 +83,7 @@ public class BindHandler {
             rc = e.getResultCode();
 
         } catch (AuthenticationException e) {
-            log.debug(e.getMessage());
+            log.error(e.getMessage());
             rc = LDAPException.INVALID_CREDENTIALS;
 
         } catch (Exception e) {
@@ -110,7 +111,7 @@ public class BindHandler {
     public int bindAsRoot(String password) throws Exception {
         log.debug("Comparing root's password");
 
-        if (!PasswordUtil.comparePassword(password, handler.getRootUserConfig().getPassword())) {
+        if (!PasswordUtil.comparePassword(password, handler.getPenroseConfig().getRootPassword())) {
             log.debug("Password doesn't match => BIND FAILED");
             return LDAPException.INVALID_CREDENTIALS;
         }

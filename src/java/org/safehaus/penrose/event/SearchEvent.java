@@ -18,6 +18,8 @@
 package org.safehaus.penrose.event;
 
 import org.safehaus.penrose.session.PenroseSession;
+import org.safehaus.penrose.session.PenroseSearchControls;
+import org.safehaus.penrose.session.PenroseSearchResults;
 
 /**
  * @author Endi S. Dewata
@@ -29,19 +31,34 @@ public class SearchEvent extends Event {
 
     private PenroseSession session;
     private String base;
+    private String filter;
+    private PenroseSearchControls searchControls;
+    private PenroseSearchResults searchResults;
+
     private int returnCode;
 
-    public SearchEvent(Object source, int type, PenroseSession session, String base) {
+    public SearchEvent(
+            Object source,
+            int type,
+            PenroseSession session,
+            String base,
+            String filter,
+            PenroseSearchControls searchControls,
+            PenroseSearchResults searchResults
+    ) {
         super(source, type);
         this.session = session;
         this.base = base;
+        this.filter = filter;
+        this.searchControls = searchControls;
+        this.searchResults = searchResults;
     }
 
-    public PenroseSession getConnection() {
+    public PenroseSession getSession() {
         return session;
     }
 
-    public void setConnection(PenroseSession session) {
+    public void setSession(PenroseSession session) {
         this.session = session;
     }
 
@@ -59,5 +76,29 @@ public class SearchEvent extends Event {
 
     public void setReturnCode(int returnCode) {
         this.returnCode = returnCode;
+    }
+
+    public String getFilter() {
+        return filter;
+    }
+
+    public void setFilter(String filter) {
+        this.filter = filter;
+    }
+
+    public PenroseSearchControls getSearchControls() {
+        return searchControls;
+    }
+
+    public void setSearchControls(PenroseSearchControls searchControls) {
+        this.searchControls = searchControls;
+    }
+
+    public PenroseSearchResults getSearchResults() {
+        return searchResults;
+    }
+
+    public void setSearchResults(PenroseSearchResults searchResults) {
+        this.searchResults = searchResults;
     }
 }

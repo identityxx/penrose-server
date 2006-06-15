@@ -145,15 +145,12 @@ public class PenroseInterceptor extends BaseInterceptor {
                 return;
             }
 
-            SchemaManager schemaManager = penrose.getSchemaManager();
-            LDAPEntry ldapEntry = EntryUtil.convert(schemaManager, upName, attributes);
-
             PenroseSession session = penrose.newSession();
             if (session == null) throw new ServiceUnavailableException();
 
             if (principalDn != null) session.setBindDn(principalDn.toString());
 
-            int rc = session.add(ldapEntry);
+            int rc = session.add(upName, attributes);
 
             session.close();
 
@@ -336,15 +333,18 @@ public class PenroseInterceptor extends BaseInterceptor {
 
             if (principalDn != null) session.setBindDn(principalDn.toString());
 
+            PenroseSearchResults results = new PenroseSearchResults();
+
             PenroseSearchControls sc = new PenroseSearchControls();
             sc.setScope(PenroseSearchControls.SCOPE_ONE);
             sc.setDereference(PenroseSearchControls.DEREF_ALWAYS);
 
             String baseDn = dn.toString();
-            PenroseSearchResults results = session.search(
+            session.search(
                     baseDn,
                     "(objectClass=*)",
-                    sc);
+                    sc,
+                    results);
 /*
             int rc = results.getReturnCode();
             connection.close();
@@ -396,15 +396,18 @@ public class PenroseInterceptor extends BaseInterceptor {
 
             if (principalDn != null) session.setBindDn(principalDn.toString());
 
+            PenroseSearchResults results = new PenroseSearchResults();
+
             PenroseSearchControls sc = new PenroseSearchControls();
             sc.setScope(PenroseSearchControls.SCOPE_BASE);
             sc.setDereference(PenroseSearchControls.DEREF_ALWAYS);
 
             String base = name.toString();
-            PenroseSearchResults results = session.search(
+            session.search(
                     base,
                     "(objectClass=*)",
-                    sc);
+                    sc,
+                    results);
 
             boolean result = results.getReturnCode() == LDAPException.SUCCESS && results.size() == 1;
 
@@ -452,15 +455,18 @@ public class PenroseInterceptor extends BaseInterceptor {
 
             if (principalDn != null) session.setBindDn(principalDn.toString());
 
+            PenroseSearchResults results = new PenroseSearchResults();
+
             PenroseSearchControls sc = new PenroseSearchControls();
             sc.setScope(PenroseSearchControls.SCOPE_BASE);
             sc.setDereference(PenroseSearchControls.DEREF_ALWAYS);
 
             String baseDn = dn.toString();
-            PenroseSearchResults results = session.search(
+            session.search(
                     baseDn,
                     "(objectClass=*)",
-                    sc);
+                    sc,
+                    results);
 
             int rc = results.getReturnCode();
             session.close();
@@ -469,28 +475,13 @@ public class PenroseInterceptor extends BaseInterceptor {
                 ExceptionUtil.throwNamingException(rc);
             }
 
-            LDAPEntry result = (LDAPEntry)results.next();
+            SearchResult result = (SearchResult)results.next();
 
             if (result == null) {
                 ExceptionUtil.throwNamingException(LDAPException.NO_SUCH_OBJECT);
             }
 
-            LDAPAttributeSet attributeSet = result.getAttributeSet();
-            Attributes attributes = new BasicAttributes();
-
-            for (Iterator j = attributeSet.iterator(); j.hasNext(); ) {
-                LDAPAttribute attribute = (LDAPAttribute)j.next();
-                Attribute attr = new BasicAttribute(attribute.getName());
-
-                for (Enumeration k=attribute.getStringValues(); k.hasMoreElements(); ) {
-                    String value = (String)k.nextElement();
-                    attr.add(value);
-                }
-
-                attributes.put(attr);
-            }
-
-            return attributes;
+            return result.getAttributes();
 
         } catch (NamingException e) {
             throw e;
@@ -531,15 +522,18 @@ public class PenroseInterceptor extends BaseInterceptor {
 
             if (principalDn != null) session.setBindDn(principalDn.toString());
 
+            PenroseSearchResults results = new PenroseSearchResults();
+
             PenroseSearchControls sc = new PenroseSearchControls();
             sc.setScope(PenroseSearchControls.SCOPE_BASE);
             sc.setDereference(PenroseSearchControls.DEREF_ALWAYS);
 
             String baseDn = dn.toString();
-            PenroseSearchResults results = session.search(
+            session.search(
                     baseDn,
                     "(objectClass=*)",
-                    sc);
+                    sc,
+                    results);
 
             int rc = results.getReturnCode();
             session.close();
@@ -548,26 +542,9 @@ public class PenroseInterceptor extends BaseInterceptor {
                 ExceptionUtil.throwNamingException(rc);
             }
 
-            LDAPEntry result = (LDAPEntry)results.next();
+            SearchResult result = (SearchResult)results.next();
 
-            Attributes attributes = EntryUtil.convert(result);
-/*
-            LDAPAttributeSet attributeSet = result.getAttributeSet();
-            Attributes attributes = new BasicAttributes();
-
-            for (Iterator j = attributeSet.iterator(); j.hasNext(); ) {
-                LDAPAttribute attribute = (LDAPAttribute)j.next();
-                Attribute attr = new BasicAttribute(attribute.getName());
-
-                for (Enumeration k=attribute.getStringValues(); k.hasMoreElements(); ) {
-                    String value = (String)k.nextElement();
-                    attr.add(value);
-                }
-
-                attributes.put(attr);
-            }
-*/
-            return attributes;
+            return result.getAttributes();
 
         } catch (NamingException e) {
             throw e;
@@ -621,33 +598,36 @@ public class PenroseInterceptor extends BaseInterceptor {
 
                         if (principalDn != null) session.setBindDn(principalDn.toString());
 
+                        PenroseSearchResults results = new PenroseSearchResults();
+
                         PenroseSearchControls sc = new PenroseSearchControls();
                         sc.setScope(PenroseSearchControls.SCOPE_BASE);
                         sc.setDereference(PenroseSearchControls.DEREF_ALWAYS);
-                        sc.setAttributes(searchControls.getReturningAttributes());
+                        sc.setAttributes(searchControls == null ? null : searchControls.getReturningAttributes());
 
-                        PenroseSearchResults results = session.search(
+                        session.search(
                                 baseDn,
                                 "(objectClass=*)",
-                                sc);
+                                sc,
+                                results);
 
-                        LDAPEntry entry = (LDAPEntry)results.next();
-                        LDAPAttributeSet set = entry.getAttributeSet();
+                        SearchResult entry = (SearchResult)results.next();
+                        Attributes set = entry.getAttributes();
 
                         for (NamingEnumeration ne2=attributes.getAll(); ne2.hasMore(); ) {
                             Attribute attribute = (Attribute)ne2.next();
                             String name = attribute.getID();
                             if (name.equals("vendorName") || name.equals("vendorVersion")) continue;
 
-                            LDAPAttribute ldapAttribute = set.getAttribute(name);
+                            Attribute ldapAttribute = set.get(name);
                             if (ldapAttribute == null) {
-                                ldapAttribute = new LDAPAttribute(name);
-                                set.add(ldapAttribute);
+                                ldapAttribute = new BasicAttribute(name);
+                                set.put(ldapAttribute);
                             }
 
                             for (NamingEnumeration ne3=attribute.getAll(); ne3.hasMore(); ) {
                                 Object value = ne3.next();
-                                ldapAttribute.addValue(value.toString());
+                                ldapAttribute.add(value);
                             }
                         }
 
@@ -687,15 +667,18 @@ public class PenroseInterceptor extends BaseInterceptor {
 
                 if (principalDn != null) session.setBindDn(principalDn.toString());
 
+                PenroseSearchResults results = new PenroseSearchResults();
+
                 PenroseSearchControls sc = new PenroseSearchControls();
                 sc.setScope(searchControls.getSearchScope());
                 sc.setDereference(PenroseSearchControls.DEREF_ALWAYS);
-                sc.setAttributes(searchControls.getReturningAttributes());
+                sc.setAttributes(searchControls == null ? null : searchControls.getReturningAttributes());
 
-                PenroseSearchResults results = session.search(
+                session.search(
                         baseDn,
                         newFilter,
-                        sc);
+                        sc,
+                        results);
 
                 return new PenroseEnumeration(environment, results);
 
@@ -745,20 +728,8 @@ public class PenroseInterceptor extends BaseInterceptor {
 
             for (Enumeration e=attributes.getAll(); e.hasMoreElements(); ) {
                 Attribute attribute = (Attribute)e.nextElement();
-                String attrName = attribute.getID();
 
-                int op = LDAPModification.REPLACE;
-                LDAPAttribute attr = new LDAPAttribute(attrName);
-
-                log.debug("replace: "+attrName);
-                for (Enumeration values = attribute.getAll(); values.hasMoreElements(); ) {
-                    Object value = values.nextElement();
-                    log.debug(attrName+": "+value);
-                    attr.addValue(value.toString());
-                }
-                log.debug("-");
-
-                LDAPModification modification = new LDAPModification(op, attr);
+                ModificationItem modification = new ModificationItem(modOp, attribute);
                 modifications.add(modification);
             }
 
@@ -813,53 +784,12 @@ public class PenroseInterceptor extends BaseInterceptor {
                 return;
             }
 
-            Collection modifications = new ArrayList();
-
-            for (int i=0; i<modificationItems.length; i++) {
-                ModificationItem mi = modificationItems[i];
-                Attribute attribute = mi.getAttribute();
-                String attrName = attribute.getID();
-
-                int op = LDAPModification.REPLACE;
-                switch (mi.getModificationOp()) {
-                    case DirContext.ADD_ATTRIBUTE:
-                        log.debug("add: "+attrName);
-                        op = LDAPModification.ADD;
-                        break;
-                    case DirContext.REPLACE_ATTRIBUTE:
-                        log.debug("replace: "+attrName);
-                        op = LDAPModification.REPLACE;
-                        break;
-                    case DirContext.REMOVE_ATTRIBUTE:
-                        log.debug("delete: "+attrName);
-                        op = LDAPModification.DELETE;
-                        break;
-                }
-
-                LDAPAttribute attr = new LDAPAttribute(attrName);
-
-                for (Enumeration values = attribute.getAll(); values.hasMoreElements(); ) {
-                    Object value = values.nextElement();
-                    if (value instanceof byte[]) {
-                        attr.addValue((byte[])value);
-                        log.debug(attrName+": (binary)");
-                    } else {
-                        attr.addValue(value.toString());
-                        log.debug(attrName+": "+value);
-                    }
-                }
-                log.debug("-");
-
-                LDAPModification modification = new LDAPModification(op, attr);
-                modifications.add(modification);
-            }
-
             PenroseSession session = penrose.newSession();
             if (session == null) throw new ServiceUnavailableException();
 
             if (principalDn != null) session.setBindDn(principalDn.toString());
 
-            int rc = session.modify(dn.toString(), modifications);
+            int rc = session.modify(dn.toString(), Arrays.asList(modificationItems));
 
             session.close();
 

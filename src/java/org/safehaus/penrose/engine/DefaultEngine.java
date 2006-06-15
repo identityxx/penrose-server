@@ -18,6 +18,7 @@
 package org.safehaus.penrose.engine;
 
 import org.safehaus.penrose.session.PenroseSearchResults;
+import org.safehaus.penrose.session.PenroseSearchControls;
 import org.safehaus.penrose.connector.*;
 import org.safehaus.penrose.cache.EntryCache;
 import org.safehaus.penrose.cache.CacheConfig;
@@ -26,15 +27,17 @@ import org.safehaus.penrose.filter.*;
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.pipeline.PipelineAdapter;
 import org.safehaus.penrose.pipeline.PipelineEvent;
-import org.safehaus.penrose.thread.ThreadPool;
 import org.safehaus.penrose.util.*;
 import org.ietf.ldap.LDAPException;
-import org.ietf.ldap.LDAPEntry;
-import org.ietf.ldap.LDAPAttribute;
 
+import javax.naming.directory.Attributes;
+import javax.naming.directory.SearchResult;
+import javax.naming.directory.Attribute;
+import javax.naming.NamingEnumeration;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.ArrayList;
 
 /**
  * @author Endi S. Dewata
@@ -63,6 +66,8 @@ public class DefaultEngine extends Engine {
         entryCache.setPenroseConfig(penroseConfig);
         entryCache.setConnectionManager(connectionManager);
         entryCache.setPartitionManager(partitionManager);
+        entryCache.setThreadManager(threadManager);
+
         entryCache.init();
 
         log.debug("Initializing engine...");
@@ -90,7 +95,7 @@ public class DefaultEngine extends Engine {
 
         if (set != null) {
             for (Iterator i = set.iterator(); i.hasNext(); ) {
-                String userPassword = (String)i.next();
+                Object userPassword = i.next();
                 log.debug("userPassword: "+userPassword);
                 if (PasswordUtil.comparePassword(password, userPassword)) return LDAPException.SUCCESS;
             }
@@ -108,11 +113,11 @@ public class DefaultEngine extends Engine {
 
             for (Iterator j=entries.keySet().iterator(); j.hasNext(); ) {
                 Row pk = (Row)j.next();
-                AttributeValues sourceValues = (AttributeValues)entries.get(pk);
+                //AttributeValues sourceValues = (AttributeValues)entries.get(pk);
 
-                log.debug("Bind to "+source.getName()+" as "+pk+": "+sourceValues);
+                log.debug("Bind to "+source.getName()+" as "+pk+".");
 
-                int rc = connector.bind(partition, sourceConfig, entryMapping, sourceValues, password);
+                int rc = connector.bind(partition, sourceConfig, entryMapping, pk, password);
                 if (rc == LDAPException.SUCCESS) return rc;
             }
         }
@@ -125,6 +130,24 @@ public class DefaultEngine extends Engine {
             EntryMapping entryMapping,
             AttributeValues attributeValues)
             throws Exception {
+
+        // normalize attribute names
+        AttributeValues newAttributeValues = new AttributeValues();
+        for (Iterator i = attributeValues.getNames().iterator(); i.hasNext(); ) {
+            String name = (String)i.next();
+            if ("objectClass".equalsIgnoreCase(name)) continue;
+
+            AttributeMapping attributeMapping = entryMapping.getAttributeMapping(name);
+            if (attributeMapping == null) {
+                log.debug("Undefined attribute "+name);
+                return LDAPException.OBJECT_CLASS_VIOLATION;
+            }
+
+            Collection values = attributeValues.get(name);
+            newAttributeValues.set(attributeMapping.getName(), values);
+        }
+
+        attributeValues = newAttributeValues;
 
         if (log.isDebugEnabled()) {
             log.debug(Formatter.displaySeparator(80));
@@ -255,10 +278,9 @@ public class DefaultEngine extends Engine {
     public void addProxy(
             final Partition partition,
             final EntryMapping entryMapping,
-            LDAPEntry entry
+            String dn,
+            Attributes attributes
             ) throws Exception {
-
-        String dn = entry.getDN();
 
         SourceMapping sourceMapping = entryMapping.getSourceMapping(0);
         String sourceName = sourceMapping.getSourceName();
@@ -280,7 +302,7 @@ public class DefaultEngine extends Engine {
         log.debug("Modifying via proxy "+sourceName+" as \""+targetDn+"\"");
 
         JNDIClient client = adapter.getClient();
-        client.add(targetDn, entry.getAttributeSet());
+        client.add(targetDn, attributes);
     }
 
     public void modifyProxy(
@@ -380,9 +402,8 @@ public class DefaultEngine extends Engine {
             final Partition partition,
             final EntryMapping entryMapping,
             final String base,
-            final int scope,
             final String filter,
-            final Collection attributeNames,
+            PenroseSearchControls sc,
             final PenroseSearchResults results
             ) throws Exception {
 
@@ -403,7 +424,7 @@ public class DefaultEngine extends Engine {
         final String baseDn = sourceConfig.getParameter("baseDn");
         targetDn = EntryUtil.append(targetDn, baseDn);
 
-        log.debug("Searching proxy "+sourceName+" for \""+targetDn+"\" with "+filter);
+        log.debug("Searching proxy "+sourceName+" for \""+targetDn+"\" with filter="+filter+" attrs="+sc.getAttributes());
 
         final JNDIClient client = adapter.getClient();
 
@@ -413,13 +434,13 @@ public class DefaultEngine extends Engine {
             res.addListener(new PipelineAdapter() {
                 public void objectAdded(PipelineEvent event) {
                     try {
-                        LDAPEntry ldapEntry = (LDAPEntry)event.getObject();
+                        SearchResult ldapEntry = (SearchResult)event.getObject();
                         //log.debug("Subtracting \""+baseDn+"\" from \""+ldapEntry.getDN()+"\"");
 
-                        String dn = ldapEntry.getDN();
+                        String dn = ldapEntry.getName();
 
                         if (baseDn != null) {
-                            dn = dn.substring(0, ldapEntry.getDN().length() - baseDn.length());
+                            dn = dn.substring(0, ldapEntry.getName().length() - baseDn.length());
                             if (dn.endsWith(",")) dn = dn.substring(0, dn.length()-1);
                         }
 
@@ -430,22 +451,14 @@ public class DefaultEngine extends Engine {
                         AttributeValues attributeValues = new AttributeValues();
 
                         //log.debug("Entry "+dn+":");
-                        for (Iterator i=ldapEntry.getAttributeSet().iterator(); i.hasNext(); ) {
-                            LDAPAttribute attribute = (LDAPAttribute)i.next();
-                            String name = attribute.getName();
+                        for (NamingEnumeration i=ldapEntry.getAttributes().getAll(); i.hasMore(); ) {
+                            Attribute attribute = (Attribute)i.next();
+                            String name = attribute.getID();
 
-                            if (client.isBinaryAttribute(name)) {
-                                byte[][] bytes = attribute.getByteValueArray();
-                                for (int j=0; j<bytes.length; j++) {
-                                    attributeValues.add(name, bytes[j]);
-                                    //log.debug(" - "+name+": (binary)");
-                                }
-                            } else {
-                                String[] values = attribute.getStringValueArray();
-                                for (int j=0; j<values.length; j++) {
-                                    attributeValues.add(name, values[j]);
-                                    //log.debug(" - "+name+": "+values[j]);
-                                }
+                            for (NamingEnumeration j=attribute.getAll(); j.hasMore(); ) {
+                                Object value = j.next();
+                                attributeValues.add(name, value);
+                                //log.debug(" - "+name+": "+value);
                             }
                         }
 
@@ -453,7 +466,7 @@ public class DefaultEngine extends Engine {
                         results.add(entry);
 
                     } catch (Exception e) {
-                        log.debug(e.getMessage(), e);
+                        log.error(e.getMessage(), e);
                     }
                 }
 
@@ -462,10 +475,10 @@ public class DefaultEngine extends Engine {
                 }
             });
 
-            client.search(targetDn, scope, filter, attributeNames, res);
+            client.search(targetDn, filter, sc, res);
 
         } catch (Exception e) {
-            log.debug(e.getMessage(), e);
+            log.error(e.getMessage(), e);
             results.setReturnCode(ExceptionUtil.getReturnCode(e));
         }
     }
@@ -482,11 +495,6 @@ public class DefaultEngine extends Engine {
 
         //log.debug("Starting Engine...");
 
-        String s = engineConfig.getParameter(EngineConfig.THREAD_POOL_SIZE);
-        int threadPoolSize = s == null ? EngineConfig.DEFAULT_THREAD_POOL_SIZE : Integer.parseInt(s);
-
-        threadPool = new ThreadPool(threadPoolSize);
-
         for (Iterator i=partitionManager.getPartitions().iterator(); i.hasNext(); ) {
             Partition partition = (Partition)i.next();
 
@@ -496,7 +504,7 @@ public class DefaultEngine extends Engine {
             }
         }
 
-        threadPool.execute(new RefreshThread(this));
+        threadManager.execute(new RefreshThread(this), false);
 
         //log.debug("Engine started.");
     }
@@ -508,8 +516,188 @@ public class DefaultEngine extends Engine {
         stopping = true;
 
         // wait for all the worker threads to finish
-        if (threadPool != null) threadPool.stopRequestAllWorkers();
+        //if (threadManager != null) threadManager.stopRequestAllWorkers();
         log.debug("Engine stopped.");
+    }
+
+    public void search(
+            final Collection path,
+            final AttributeValues parentSourceValues,
+            final EntryMapping entryMapping,
+            boolean single,
+            final Filter filter,
+            PenroseSearchControls sc,
+            final PenroseSearchResults results) throws Exception {
+
+        if (log.isDebugEnabled()) {
+            log.debug(Formatter.displaySeparator(80));
+            log.debug(Formatter.displayLine("SEARCH", 80));
+            log.debug(Formatter.displayLine("Entry: \""+entryMapping.getDn()+"\"", 80));
+            log.debug(Formatter.displayLine("Filter: "+filter, 80));
+            log.debug(Formatter.displayLine("Parent source values:", 80));
+
+            if (parentSourceValues != null) {
+                for (Iterator i = parentSourceValues.getNames().iterator(); i.hasNext(); ) {
+                    String name = (String)i.next();
+                    Collection values = parentSourceValues.get(name);
+                    log.debug(Formatter.displayLine(" - "+name+": "+values, 80));
+                }
+            }
+
+            log.debug(Formatter.displaySeparator(80));
+        }
+
+        final PenroseSearchResults dns = new PenroseSearchResults();
+        final PenroseSearchResults entriesToLoad = new PenroseSearchResults();
+        final PenroseSearchResults loadedEntries = new PenroseSearchResults();
+        final PenroseSearchResults newEntries = new PenroseSearchResults();
+
+        Collection attributeNames = sc.getAttributes();
+        Collection attributeDefinitions = entryMapping.getAttributeMappings(attributeNames);
+
+        // check if client only requests the dn to be returned
+        final boolean dnOnly = attributeNames != null && attributeNames.contains("dn")
+                && attributeDefinitions.isEmpty()
+                && "(objectclass=*)".equals(filter.toString().toLowerCase());
+
+        log.debug("Search DNs only: "+dnOnly);
+
+        dns.addListener(new PipelineAdapter() {
+            public void objectAdded(PipelineEvent event) {
+                try {
+                    EntryData map = (EntryData)event.getObject();
+                    String dn = map.getDn();
+
+                    Entry entry = getEntryCache().get(dn);
+                    log.debug("Entry cache for "+dn+": "+(entry == null ? "not found." : "found."));
+
+                    if (entry == null) {
+
+                        if (dnOnly) {
+                            AttributeValues sv = map.getMergedValues();
+                            //AttributeValues attributeValues = handler.getEngine().computeAttributeValues(entryMapping, sv, interpreter);
+                            entry = new Entry(dn, entryMapping, sv, null);
+
+                            results.add(entry);
+
+                        } else {
+                            entriesToLoad.add(map);
+                        }
+
+                    } else {
+                        results.add(entry);
+                    }
+
+                } catch (Exception e) {
+                    log.error(e.getMessage(), e);
+                }
+            }
+
+            public void pipelineClosed(PipelineEvent event) {
+                int rc = dns.getReturnCode();
+                //log.debug("RC: "+rc);
+
+                if (dnOnly) {
+                    results.setReturnCode(rc);
+                    results.close();
+                } else {
+                    entriesToLoad.setReturnCode(rc);
+                    entriesToLoad.close();
+                }
+            }
+        });
+
+        Entry parent = null;
+        if (path != null && path.size() > 0) {
+            parent = (Entry)path.iterator().next();
+        }
+
+        log.debug("Parent: "+(parent == null ? null : parent.getDn()));
+        String parentDn = parent == null ? null : parent.getDn();
+
+        boolean cacheFilter = getEntryCache().contains(entryMapping, parentDn, filter);
+
+        if (!cacheFilter) {
+
+            log.debug("Filter cache for "+filter+" not found.");
+
+            dns.addListener(new PipelineAdapter() {
+                public void objectAdded(PipelineEvent event) {
+                    try {
+                        EntryData map = (EntryData)event.getObject();
+                        String dn = map.getDn();
+
+                        log.info("Storing "+dn+" in filter cache.");
+
+                        getEntryCache().add(entryMapping, filter, dn);
+
+                    } catch (Exception e) {
+                        log.error(e.getMessage(), e);
+                    }
+                }
+            });
+
+            search(parent, parentSourceValues, entryMapping, filter, dns);
+
+        } else {
+            log.debug("Filter cache for "+filter+" found.");
+
+            PenroseSearchResults list = new PenroseSearchResults();
+
+            list.addListener(new PipelineAdapter() {
+                public void objectAdded(PipelineEvent event) {
+                    try {
+                        String dn = (String)event.getObject();
+                        log.info("Loading "+dn+" from filter cache.");
+
+                        EntryData map = new EntryData();
+                        map.setDn(dn);
+                        map.setMergedValues(new AttributeValues());
+                        map.setRows(new ArrayList());
+                        dns.add(map);
+
+                    } catch (Exception e) {
+                        log.error(e.getMessage(), e);
+                    }
+                }
+
+                public void pipelineClosed(PipelineEvent event) {
+                    dns.close();
+                }
+            });
+
+            getEntryCache().search(entryMapping, parentDn, filter, list);
+        }
+
+        if (dnOnly) return;
+
+        load(entryMapping, entriesToLoad, loadedEntries);
+
+        newEntries.addListener(new PipelineAdapter() {
+            public void objectAdded(PipelineEvent event) {
+                try {
+                    Entry entry = (Entry)event.getObject();
+
+                    log.info("Storing "+entry.getDn()+" in entry cache.");
+
+                    getEntryCache().put(entry);
+                    results.add(entry);
+
+                } catch (Exception e) {
+                    log.error(e.getMessage(), e);
+                }
+            }
+
+            public void pipelineClosed(PipelineEvent event) {
+                int rc = newEntries.getReturnCode();
+                //log.debug("RC: "+rc);
+
+                results.setReturnCode(rc);
+                results.close();
+            }
+        });
+
+        merge(entryMapping, loadedEntries, newEntries);
     }
 }
 

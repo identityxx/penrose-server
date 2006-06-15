@@ -52,6 +52,8 @@ public class SearchEngine {
             final PenroseSearchResults results
             ) throws Exception {
 
+        log.info("Searching "+entryMapping.getDn()+" for "+filter+".");
+
         boolean staticEntry = engine.isStatic(entryMapping);
         if (staticEntry) {
             log.debug("Returning static entries.");
@@ -68,16 +70,21 @@ public class SearchEngine {
         log.debug("Sources: "+sources);
 
         Collection effectiveSources = partition.getEffectiveSourceMappings(entryMapping);
-        log.debug("Effective Sources: "+effectiveSources);
+        Collection names = new ArrayList();
+        for (Iterator i=effectiveSources.iterator(); i.hasNext(); ) {
+            SourceMapping sm = (SourceMapping)i.next();
+            names.add(sm.getName());
+        }
+        log.debug("Effective Sources: "+names);
 
         if (unique && sources.size() == 1 && effectiveSources.size() == 1) {
-            engine.execute(new Runnable() {
+            engine.threadManager.execute(new Runnable() {
                 public void run() {
                     try {
                         simpleSearch(parentSourceValues, entryMapping, filter, results);
 
                     } catch (Throwable e) {
-                        log.debug(e.getMessage(), e);
+                        log.error(e.getMessage(), e);
                         results.setReturnCode(LDAPException.OPERATIONS_ERROR);
                     }
                 }
@@ -85,13 +92,13 @@ public class SearchEngine {
             return;
         }
 
-        engine.execute(new Runnable() {
+        engine.threadManager.execute(new Runnable() {
             public void run() {
                 try {
                     searchDynamic(parent, parentSourceValues, entryMapping, filter, results);
 
                 } catch (Throwable e) {
-                    log.debug(e.getMessage(), e);
+                    log.error(e.getMessage(), e);
                     results.setReturnCode(LDAPException.OPERATIONS_ERROR);
                 } finally {
                     results.close();
@@ -298,7 +305,7 @@ public class SearchEngine {
 
         final PenroseSearchResults results = new PenroseSearchResults();
 
-        engine.execute(new Runnable() {
+        engine.threadManager.execute(new Runnable() {
             public void run() {
                 try {
                     searchSourcesInBackground(sourceValues, entryMapping, filter, results);
@@ -335,6 +342,7 @@ public class SearchEngine {
         SourceMapping primarySourceMapping = engine.getPrimarySource(entryMapping);
 
         if (primarySourceMapping == null || entryMapping.getSourceMapping(primarySourceMapping.getName()) == null) {
+            log.debug("Primary source is not local");
             PenroseSearchResults localResults = new PenroseSearchResults();
             localResults.add(sourceValues);
             localResults.close();
@@ -359,18 +367,13 @@ public class SearchEngine {
 
         int rc = localResults.getReturnCode();
 
-        if (rc != LDAPException.SUCCESS) {
-            log.debug("RC: "+rc);
-            results.setReturnCode(rc);
-            return;
-        }
-
         //log.debug("Size: "+localResults.size());
-
+/*
         if (localResults.isEmpty()) {
+            log.debug("Result is empty");
             return;
         }
-
+*/
         Collection parentResults = searchParent(
                 entryMapping,
                 planner,
@@ -379,6 +382,12 @@ public class SearchEngine {
         );
 
         results.addAll(parentResults);
+        results.setReturnCode(rc);
+
+        if (rc != LDAPException.SUCCESS) {
+            log.debug("RC: "+rc);
+        }
+
         return;
     }
 
@@ -472,9 +481,10 @@ public class SearchEngine {
         runner.run();
 
         Collection list = runner.getResults();
+        log.debug("Got "+list.size()+" entries");
 
         int rc = runner.getReturnCode();
-
+/*
         if (rc != LDAPException.SUCCESS) {
             log.debug("RC: "+rc);
             PenroseSearchResults results = new PenroseSearchResults();
@@ -482,7 +492,7 @@ public class SearchEngine {
             results.close();
             return results;
         }
-
+*/
         SearchCleaner cleaner = new SearchCleaner(
                 engine,
                 entryMapping,
@@ -512,6 +522,7 @@ public class SearchEngine {
 */
         PenroseSearchResults results = new PenroseSearchResults();
         results.addAll(list);
+        results.setReturnCode(rc);
         results.close();
 
         return results;

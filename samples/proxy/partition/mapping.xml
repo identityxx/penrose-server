@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mapping>
+
+  <entry dn="dc=Proxy,dc=Example,dc=com">
+    <oc>dcObject</oc>
+    <oc>organization</oc>
+    <at name="dc" rdn="true">
+      <constant>Proxy</constant>
+    </at>
+    <at name="o">
+      <constant>Proxy</constant>
+    </at>
+    <aci subject="self">
+      <permission>rws</permission>
+    </aci>
+    <aci>
+      <target>ATTRIBUTES</target>
+      <attributes>userPassword</attributes>
+      <action>deny</action>
+      <permission>rs</permission>
+    </aci>
+    <aci>
+      <permission>rs</permission>
+    </aci>
+  </entry>
+
+  <entry dn="ou=People,dc=Proxy,dc=Example,dc=com">
+    <source name="users" proxy="true">
+      <source-name>users</source-name>
+    </source>
+  </entry>
+
+  <entry dn="ou=Groups,dc=Proxy,dc=Example,dc=com">
+    <source name="groups" proxy="true">
+      <source-name>groups</source-name>
+    </source>
+  </entry>
+
+</mapping>

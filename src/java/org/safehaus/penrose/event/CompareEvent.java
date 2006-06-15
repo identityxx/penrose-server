@@ -17,12 +17,69 @@
  */
 package org.safehaus.penrose.event;
 
+import org.safehaus.penrose.session.PenroseSession;
+
 /**
  * @author Endi S. Dewata
  */
 public class CompareEvent extends Event {
 
-    public CompareEvent(Object source, int type, String dn, String attributeType, String attributeValue) {
+    public final static int BEFORE_COMPARE = 0;
+    public final static int AFTER_COMPARE  = 1;
+
+    private PenroseSession session;
+    private String dn;
+    private String attributeName;
+    private Object attributeValue;
+
+    private int returnCode;
+
+    public CompareEvent(Object source, int type, PenroseSession session, String dn, String attributeName, Object attributeValue) {
         super(source, type);
+
+        this.session = session;
+        this.dn = dn;
+        this.attributeName = attributeName;
+        this.attributeValue = attributeValue;
+    }
+
+    public PenroseSession getSession() {
+        return session;
+    }
+
+    public void setSession(PenroseSession session) {
+        this.session = session;
+    }
+
+    public String getDn() {
+        return dn;
+    }
+
+    public void setDn(String dn) {
+        this.dn = dn;
+    }
+
+    public String getAttributeName() {
+        return attributeName;
+    }
+
+    public void setAttributeName(String attributeName) {
+        this.attributeName = attributeName;
+    }
+
+    public Object getAttributeValue() {
+        return attributeValue;
+    }
+
+    public void setAttributeValue(Object attributeValue) {
+        this.attributeValue = attributeValue;
+    }
+
+    public int getReturnCode() {
+        return returnCode;
+    }
+
+    public void setReturnCode(int returnCode) {
+        this.returnCode = returnCode;
     }
 }

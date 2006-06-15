@@ -79,13 +79,13 @@ public class LoadEngine {
 
         final PenroseSearchResults batches = new PenroseSearchResults();
 
-        engine.execute(new Runnable() {
+        engine.threadManager.execute(new Runnable() {
             public void run() {
                 try {
                     createBatches(entryMapping, entries, batches);
 
                 } catch (Throwable e) {
-                    log.debug(e.getMessage(), e);
+                    log.error(e.getMessage(), e);
                     batches.setReturnCode(org.ietf.ldap.LDAPException.OPERATIONS_ERROR);
                 }
             }
@@ -93,13 +93,13 @@ public class LoadEngine {
 
         log.debug("Loading batches.");
 
-        engine.execute(new Runnable() {
+        engine.threadManager.execute(new Runnable() {
             public void run() {
                 try {
                     loadBackground(entryMapping, batches, loadedEntries);
 
                 } catch (Throwable e) {
-                    log.debug(e.getMessage(), e);
+                    log.error(e.getMessage(), e);
                     loadedEntries.setReturnCode(org.ietf.ldap.LDAPException.OPERATIONS_ERROR);
                 }
             }
@@ -172,7 +172,7 @@ public class LoadEngine {
 
                 //if (filter.isEmpty()) filter.add(rdn);
 
-                log.debug("- "+rdn+" has not been loaded, loading with key "+filter);
+                //log.info("Scheduling "+rdn+" for loading");
                 map.setFilter(filter);
                 batch.add(map);
 
@@ -198,6 +198,8 @@ public class LoadEngine {
 
         //MRSWLock lock = getLock(entryMapping;
         //lock.getWriteLock(Penrose.WAIT_TIMEOUT);
+
+        log.info("Loading data for "+entryMapping.getDn()+".");
 
         try {
             while (batches.hasNext()) {

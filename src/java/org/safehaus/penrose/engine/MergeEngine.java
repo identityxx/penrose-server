@@ -23,6 +23,7 @@ import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.filter.FilterTool;
 import org.safehaus.penrose.util.Formatter;
+import org.safehaus.penrose.util.EntryUtil;
 import org.apache.log4j.Logger;
 
 import java.util.*;
@@ -48,13 +49,13 @@ public class MergeEngine {
 
         final Interpreter interpreter = engine.getInterpreterFactory().newInstance();
 
-        engine.execute(new Runnable() {
+        engine.threadManager.execute(new Runnable() {
             public void run() {
                 try {
                     mergeBackground(entryMapping, loadedBatches, interpreter, results);
 
                 } catch (Throwable e) {
-                    log.debug(e.getMessage(), e);
+                    log.error(e.getMessage(), e);
                     results.setReturnCode(org.ietf.ldap.LDAPException.OPERATIONS_ERROR);
                 }
             }
@@ -186,8 +187,17 @@ public class MergeEngine {
             sourceValues = primarySourceValues;
         }
 
-        log.debug("Entry: "+dn);
-        //log.debug(" - source values: "+sourceValues);
+        log.debug("Generating entry "+dn);
+
+        for (Iterator i=sourceValues.getNames().iterator(); i.hasNext(); ) {
+            String name = (String)i.next();
+            for (Iterator j=sourceValues.get(name).iterator(); j.hasNext(); ) {
+                Object value = j.next();
+                String className = value.getClass().getName();
+                className = className.substring(className.lastIndexOf(".")+1);
+                log.debug(" - "+name+" ("+className+"): "+value);
+            }
+        }
 
         AttributeValues attributeValues = engine.computeAttributeValues(
                 entryMapping,
@@ -199,7 +209,7 @@ public class MergeEngine {
         //log.debug(" - attribute values: "+attributeValues);
 
         Entry entry = new Entry(dn, entryMapping, sourceValues, attributeValues);
-        //log.debug("\n"+entry);
+        log.debug(EntryUtil.toString(entry));
 
         //Row rdn = entry.getRdn();
 

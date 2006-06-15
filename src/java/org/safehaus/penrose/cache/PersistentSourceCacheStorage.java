@@ -39,7 +39,7 @@ public class PersistentSourceCacheStorage extends SourceCacheStorage {
         connectionManager = connector.getConnectionManager();
         connectionName = getParameter("connection");
 
-        String tableName = partition.getPartitionConfig().getName()+"_"+sourceConfig.getName();
+        String tableName = getTableName();
 
         cache = new JDBCCache(tableName, cacheConfig, sourceConfig);
         cache.setConnectionManager(connectionManager);
@@ -47,6 +47,12 @@ public class PersistentSourceCacheStorage extends SourceCacheStorage {
         cache.setSize(size);
         cache.setExpiration(expiration);
         cache.init();
+    }
+
+    public String getTableName() {
+        String tableName = partition.getPartitionConfig().getName()+"_"+sourceConfig.getName();
+        tableName = tableName.replace(' ', '_');
+        return tableName;
     }
 
     public void create() throws Exception {

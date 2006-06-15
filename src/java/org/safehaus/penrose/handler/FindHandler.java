@@ -19,21 +19,13 @@ package org.safehaus.penrose.handler;
 
 import org.safehaus.penrose.session.PenroseSearchResults;
 import org.safehaus.penrose.session.PenroseSession;
-import org.safehaus.penrose.Penrose;
+import org.safehaus.penrose.session.PenroseSearchControls;
 import org.safehaus.penrose.util.Formatter;
-import org.safehaus.penrose.util.JNDIClient;
 import org.safehaus.penrose.util.EntryUtil;
-import org.safehaus.penrose.pipeline.PipelineAdapter;
-import org.safehaus.penrose.pipeline.PipelineEvent;
-import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.engine.Engine;
-import org.safehaus.penrose.event.SearchEvent;
 import org.safehaus.penrose.partition.Partition;
-import org.safehaus.penrose.partition.SourceConfig;
-import org.safehaus.penrose.partition.ConnectionConfig;
 import org.safehaus.penrose.partition.PartitionManager;
 import org.safehaus.penrose.filter.Filter;
-import org.safehaus.penrose.filter.SimpleFilter;
 import org.safehaus.penrose.filter.FilterTool;
 import org.safehaus.penrose.mapping.*;
 import org.apache.log4j.Logger;
@@ -80,8 +72,39 @@ public class FindHandler {
             PenroseSession session,
             String dn) throws Exception {
 
+        if (log.isDebugEnabled()) {
+            log.debug(Formatter.displaySeparator(80));
+            log.debug(Formatter.displayLine("FIND", 80));
+            log.debug(Formatter.displayLine("Entry: "+dn, 80));
+            log.debug(Formatter.displaySeparator(80));
+        }
+
+        List path = findPathRecursive(session, dn);
+
+        if (log.isDebugEnabled()) {
+            log.debug(Formatter.displaySeparator(80));
+            log.debug(Formatter.displayLine("FIND RESULT", 80));
+
+            log.debug(Formatter.displayLine("Path:", 80));
+            if (path != null) {
+                for (Iterator i=path.iterator(); i.hasNext(); ) {
+                    Entry entry = (Entry)i.next();
+                    log.debug(Formatter.displayLine(" - "+entry.getDn(), 80));
+                }
+            }
+
+            log.debug(Formatter.displaySeparator(80));
+        }
+
+        return path;
+    }
+
+    public List findPathRecursive(
+            PenroseSession session,
+            String dn) throws Exception {
+
         if (dn == null) return null;
-        dn = dn.toLowerCase();
+        //dn = dn.toLowerCase();
 
         PartitionManager partitionManager = handler.getPartitionManager();
         Partition partition = null;
@@ -114,7 +137,8 @@ public class FindHandler {
         while (true) {
 
             Row rdn = EntryUtil.getRdn(secondDn);
-            Filter filter = null;
+            Filter filter = FilterTool.createFilter(rdn);
+/*
             for (Iterator iterator=rdn.getNames().iterator(); iterator.hasNext(); ) {
                 String name = (String)iterator.next();
                 String value = (String)rdn.get(name);
@@ -122,7 +146,7 @@ public class FindHandler {
                 SimpleFilter sf = new SimpleFilter(name, "=", value);
                 filter = FilterTool.appendAndFilter(filter, sf);
             }
-
+*/
             log.debug("Searching for \""+secondDn+"\" with filter "+filter);
 
             Collection entryMappings = partition.findEntryMappings(secondDn);
@@ -142,13 +166,15 @@ public class FindHandler {
                     if (partition.isProxy(entryMapping)) {
                         PenroseSearchResults results = new PenroseSearchResults();
 
+                        PenroseSearchControls sc = new PenroseSearchControls();
+                        sc.setScope(PenroseSearchControls.SCOPE_BASE);
+
                         engine.searchProxy(
                                 partition,
                                 entryMapping,
                                 dn,
-                                LDAPConnection.SCOPE_BASE,
                                 "(objectClass=*)",
-                                null,
+                                sc,
                                 results
                         );
 
@@ -157,7 +183,7 @@ public class FindHandler {
                         }
 
                     } else {
-                        String entryDn = entryMapping.getDn().toLowerCase();
+                        String entryDn = entryMapping.getDn();
                         log.debug("Searching entry in \""+entryDn+"\"");
 
                         Row entryRdn = EntryUtil.getRdn(entryDn);
@@ -169,34 +195,32 @@ public class FindHandler {
                         AttributeValues parentSourceValues = new AttributeValues();
                         engine.getParentSourceValues(path, entryMapping, parentSourceValues);
 
-                        PenroseSearchResults sr = handler.getSearchHandler().search(
+                        PenroseSearchResults results = new PenroseSearchResults();
+                        PenroseSearchControls sc = new PenroseSearchControls();
+
+                        handler.getEngine().search(
                                 path,
                                 parentSourceValues,
                                 entryMapping,
                                 true,
                                 filter,
-                                new ArrayList()
+                                sc,
+                                results
                         );
 
-                        if (!sr.hasNext()) {
-                            log.debug("Search returned no results");
-                            continue;
+                        while (results.hasNext()) {
+                            Entry en = (Entry)results.next();
+
+                            if (EntryUtil.match(dn, en.getDn())) {
+                                log.debug("Found "+en.getDn()+".");
+                                entry = en;
+                                break;
+                            }
                         }
 
-                        Entry en = (Entry)sr.next();
-                        if (!handler.getFilterTool().isValid(en, filter)) {
-                            log.debug("Entry \""+en.getDn()+"\" doesn't match "+filter);
-                            continue;
-                        }
+                        if (entry != null) break;
 
-                        if (sr.getReturnCode() != LDAPException.SUCCESS) {
-                            log.debug("An error occured: "+sr.getReturnCode());
-                            continue;
-                        }
-
-                        log.debug("Adding "+en.getDn()+" into path");
-                        entry = en;
-                        break;
+                        log.debug("Can't find "+dn+" in "+entryMapping.getDn());
                     }
                 }
 
@@ -234,46 +258,25 @@ public class FindHandler {
             EntryMapping entryMapping
             ) throws Exception {
 
-        if (log.isDebugEnabled()) {
-            log.debug(Formatter.displaySeparator(80));
-            log.debug(Formatter.displayLine("FIND", 80));
-            log.debug(Formatter.displayLine("Entry: "+entryMapping.getDn(), 80));
-            log.debug(Formatter.displayLine("Parents:", 80));
-
-            for (Iterator i=path.iterator(); i.hasNext(); ) {
-                Entry entry = (Entry)i.next();
-                String dn = entry.getDn();
-                //Map map = (Map)i.next();
-                //String dn = (String)map.get("dn");
-                log.debug(Formatter.displayLine(" - "+dn, 80));
-            }
-
-            log.debug(Formatter.displaySeparator(80));
-        }
-
         AttributeValues parentSourceValues = new AttributeValues();
 
-        PenroseSearchResults results = handler.getSearchHandler().search(
+        PenroseSearchResults results = new PenroseSearchResults();
+        PenroseSearchControls sc = new PenroseSearchControls();
+
+        handler.getEngine().search(
                 path,
                 parentSourceValues,
                 entryMapping,
                 true,
                 null,
-                null
+                sc,
+                results
         );
 
         if (results.size() == 0) return null;
         if (results.getReturnCode() != LDAPException.SUCCESS) return null;
 
         Entry entry = (Entry)results.next();
-
-        if (log.isDebugEnabled()) {
-            log.debug(Formatter.displaySeparator(80));
-            log.debug(Formatter.displayLine("FIND RESULT", 80));
-            log.debug(Formatter.displayLine("dn: "+entry.getDn(), 80));
-            log.debug(Formatter.displaySeparator(80));
-        }
-
         return entry;
     }
 }

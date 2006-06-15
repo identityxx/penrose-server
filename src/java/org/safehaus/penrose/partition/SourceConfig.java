@@ -60,7 +60,7 @@ public class SourceConfig implements SourceConfigMBean, Cloneable {
     public final static int    DEFAULT_DATA_CACHE_SIZE         = 100;
     public final static int    DEFAULT_DATA_CACHE_EXPIRATION   = 5;
 
-    public final static int    DEFAULT_SIZE_LIMIT              = 100;
+    public final static int    DEFAULT_SIZE_LIMIT              = 0;
     public final static String DEFAULT_LOADING_METHOD          = LOAD_ALL;
 
     public final static String DEFAULT_CACHE                   = "DEFAULT";

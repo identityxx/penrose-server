@@ -421,16 +421,17 @@ public class Partition {
 
         dn = dn.toLowerCase();
 
+        // search for static mappings
         Collection c = getEntryMappings(dn);
         if (c != null) {
             for (Iterator i=c.iterator(); i.hasNext(); ) {
                 EntryMapping entryMapping = (EntryMapping)i.next();
-                log.debug("Found entry \""+entryMapping.getDn()+"\"");
+                //log.debug("Found entry \""+entryMapping.getDn()+"\"");
             }
             return c;
         }
 
-        //log.debug("Entry mapping for \""+dn+"\" not found");
+        // can't find exact match -> search for parent mappings
 
         Row rdn = EntryUtil.getRdn(dn);
         String parentDn = EntryUtil.getParentDn(dn);
@@ -438,6 +439,7 @@ public class Partition {
         Collection results = new ArrayList();
         Collection list;
 
+        // if dn has no parent, check against root entries
         if (parentDn == null) {
             //log.debug("Check root mappings");
             list = rootEntryMappings;
@@ -445,47 +447,55 @@ public class Partition {
         } else {
             //log.debug("Search parent mappings for \""+parentDn+"\"");
             Collection parentMappings = findEntryMappings(parentDn);
-            if (parentMappings == null || parentMappings.isEmpty()) {
-                return null;
-            }
+
+            // if no parent mappings found, the entry doesn't exist in this partition
+            if (parentMappings == null || parentMappings.isEmpty()) return null;
 
             list = new ArrayList();
+
+            // for each parent mapping found
             for (Iterator i=parentMappings.iterator(); i.hasNext(); ) {
                 EntryMapping parentMapping = (EntryMapping)i.next();
-                log.debug("Found parent "+parentMapping.getDn());
+                //log.debug("Found parent "+parentMapping.getDn());
 
-                if (isProxy(parentMapping)) {
+                if (isProxy(parentMapping)) { // if parent is proxy, include it in results
                     results.add(parentMapping);
-                } else {
+
+                } else { // otherwise check for matching siblings
                     Collection children = getChildren(parentMapping);
                     list.addAll(children);
                 }
             }
         }
 
+        // check against each mapping in the list
         for (Iterator iterator = list.iterator(); iterator.hasNext(); ) {
             EntryMapping childMapping = (EntryMapping) iterator.next();
 
             String childDn = childMapping.getDn().toLowerCase();
-            //log.debug("Checking \""+dn+"\" with \""+childDn+"\"");
+            //log.debug("Checking \""+dn+"\" against \""+childDn+"\"");
 
             Row childRdn = EntryUtil.getRdn(childDn);
             String childParentDn = EntryUtil.getParentDn(childDn);
 
+            if (!EntryUtil.match(dn, childDn)) continue;
+/*
             if (parentDn != null && childParentDn != null && !parentDn.equals(childParentDn)) continue;
+
+            // if the rdn names don't match, skip
             if (!rdn.getNames().equals(childRdn.getNames())) continue;
 
+            // if the rdn is dynamic, the entry could be in this mapping
             if (childMapping.isRdnDynamic()) {
                 log.debug("Found "+childDn);
                 results.add(childMapping);
                 continue;
             }
 
-            if (!rdn.equals(childRdn)) {
-                continue;
-            }
-
-            log.debug("Found "+childDn);
+            // if rdn's don't match, skip
+            if (!rdn.equals(childRdn)) continue;
+*/
+            //log.debug("Found "+childDn);
             results.add(childMapping);
         }
 

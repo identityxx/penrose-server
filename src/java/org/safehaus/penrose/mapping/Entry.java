@@ -18,17 +18,9 @@
 package org.safehaus.penrose.mapping;
 
 
-import org.ietf.ldap.LDAPAttributeSet;
-import org.ietf.ldap.LDAPAttribute;
-import org.ietf.ldap.LDAPEntry;
-import org.safehaus.penrose.util.PasswordUtil;
 import org.safehaus.penrose.util.EntryUtil;
 import org.apache.log4j.Logger;
 
-import javax.naming.directory.Attributes;
-import javax.naming.directory.BasicAttributes;
-import javax.naming.directory.Attribute;
-import javax.naming.directory.BasicAttribute;
 import java.util.*;
 
 /**
@@ -59,8 +51,6 @@ public class Entry {
         this.entryMapping = entryMapping;
         this.sourceValues = new AttributeValues();
         this.attributeValues = attributes;
-
-        //attributeValues.remove("objectClass");
     }
 
     public Entry(String dn, EntryMapping entryMapping, AttributeValues sourceValues, AttributeValues attributeValues) {
@@ -69,8 +59,6 @@ public class Entry {
         this.entryMapping = entryMapping;
         this.sourceValues = sourceValues;
         this.attributeValues = attributeValues;
-
-        //attributeValues.remove("objectClass");
     }
 
     public String getDn() {
@@ -119,111 +107,6 @@ public class Entry {
 
     public Collection getObjectClasses() {
         return entryMapping.getObjectClasses();
-    }
-
-    public LDAPEntry toLDAPEntry() {
-        return new LDAPEntry(dn, getAttributeSet());
-    }
-
-    public LDAPAttributeSet getAttributeSet() {
-        LDAPAttributeSet set = new LDAPAttributeSet();
-
-        //log.debug("Entry "+dn);
-        for (Iterator i=attributeValues.getNames().iterator(); i.hasNext(); ) {
-            String name = (String)i.next();
-            Collection values = attributeValues.get(name);
-
-            LDAPAttribute attribute = new LDAPAttribute(name);
-            for (Iterator j=values.iterator(); j.hasNext(); ) {
-                Object value = j.next();
-                if (value instanceof byte[]) {
-                    attribute.addValue((byte[])value);
-                    //log.debug(" - "+name+": (binary)");
-                } else {
-                    attribute.addValue(value.toString());
-                    //log.debug(" - "+name+": "+value);
-                }
-            }
-
-            set.add(attribute);
-        }
-
-        if (entryMapping != null) {
-            Collection objectClasses = entryMapping.getObjectClasses();
-            if (!objectClasses.isEmpty()) {
-                LDAPAttribute objectClass = new LDAPAttribute("objectClass");
-                for (Iterator i=objectClasses.iterator(); i.hasNext(); ) {
-                    String oc = (String)i.next();
-                    objectClass.addValue(oc);
-                }
-
-                set.add(objectClass);
-                //log.debug(" - objectClass: "+objectClasses);
-            }
-        }
-
-        return set;
-    }
-
-    public Attributes getAttributes() throws Exception {
-
-        Attributes attributes = new BasicAttributes();
-
-        for (Iterator i=attributeValues.getNames().iterator(); i.hasNext(); ) {
-            String name = (String)i.next();
-            Collection values = attributeValues.get(name);
-
-            Attribute attribute = new BasicAttribute(name);
-            for (Iterator j=values.iterator(); j.hasNext(); ) {
-                Object value = j.next();
-                attribute.add(value.toString());
-/*
-                if ("unicodePwd".equals(name)) {
-                    attribute.add(PasswordUtil.toUnicodePassword(value.toString()));
-                } else {
-                    attribute.add(value.toString());
-                }
-*/
-            }
-
-            attributes.put(attribute);
-        }
-
-        if (entryMapping != null) {
-            Collection objectClasses = entryMapping.getObjectClasses();
-
-            Attribute objectClass = new BasicAttribute("objectClass");
-            for (Iterator i=objectClasses.iterator(); i.hasNext(); ) {
-                String oc = (String)i.next();
-                objectClass.add(oc);
-            }
-
-            attributes.put(objectClass);
-        }
-
-        return attributes;
-    }
-
-    public String toString() {
-        StringBuffer sb = new StringBuffer();
-        sb.append("dn: "+getDn()+"\n");
-
-        for (Iterator i = entryMapping.getObjectClasses().iterator(); i.hasNext(); ) {
-            String oc = (String)i.next();
-            sb.append("objectClass: "+oc+"\n");
-        }
-
-        for (Iterator i = attributeValues.getNames().iterator(); i.hasNext(); ) {
-            String name = (String)i.next();
-            Collection values = attributeValues.get(name);
-
-            for (Iterator j = values.iterator(); j.hasNext(); ) {
-                Object value = j.next();
-                sb.append(name+": "+value+"\n");
-            }
-        }
-
-        return sb.toString();
     }
 
     public Collection getACL() {

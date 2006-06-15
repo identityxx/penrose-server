@@ -56,7 +56,7 @@ public class PasswordUtil {
                 Security.addProvider(provider);
             }
         } catch (Exception e) {
-            log.debug(e.getMessage(), e);
+            log.error(e.getMessage(), e);
         }
     }
 
@@ -68,8 +68,12 @@ public class PasswordUtil {
     public static byte[] encrypt(String method, String password) throws Exception {
         if (password == null) return null;
 
-        byte[] bytes = password.getBytes();
-        if (method == null) return password.getBytes();
+        return encrypt(method, password.getBytes());
+    }
+
+    public static byte[] encrypt(String method, byte[] bytes) throws Exception {
+        if (method == null) return bytes;
+        if (bytes == null) return null;
 
         MessageDigest md = MessageDigest.getInstance(method);
         md.update(bytes);
@@ -77,10 +81,17 @@ public class PasswordUtil {
         return md.digest();
     }
 
-    public static byte[] encryptNTPassword(String password) throws Exception {
+    public static byte[] encryptNTPassword(Object password) throws Exception {
         if (password == null) return null;
 
-        byte[] bytes = password.getBytes("UTF-16LE");
+        String s;
+        if (password instanceof byte[]) {
+            s = new String((byte[])password);
+        } else {
+            s = password.toString();
+        }
+
+        byte[] bytes = s.getBytes("UTF-16LE");
         MessageDigest md = MessageDigest.getInstance("MD4");
         md.update(bytes);
         return md.digest();
@@ -103,10 +114,18 @@ public class PasswordUtil {
         return key;
     }
 
-    public static byte[] encryptLMPassword(String password) throws Exception {
+    public static byte[] encryptLMPassword(Object password) throws Exception {
         if (password == null) return null;
 
-        byte[] bytes = password.toUpperCase().getBytes("UTF-8");
+        String s;
+        if (password instanceof byte[]) {
+            s = new String((byte[])password);
+        } else {
+            s = password.toString();
+        }
+
+        byte[] bytes = s.toUpperCase().getBytes("UTF-8");
+
         if (bytes.length != 14) {
             byte[] b = new byte[14];
             for (int i=0; i<bytes.length && i<14; i++) b[i] = bytes[i];
@@ -146,7 +165,7 @@ public class PasswordUtil {
      * @return true if password matches the digest
      * @throws Exception
      */
-    public static boolean comparePassword(String credential, String digest) throws Exception {
+    public static boolean comparePassword(String credential, Object digest) throws Exception {
 
         if (digest == null) return false;
 
@@ -182,8 +201,13 @@ public class PasswordUtil {
      * @return unicode password
      * @throws Exception
      */
-    public static byte[] toUnicodePassword(String password) throws Exception {
-        String newPassword = "\""+password+ "\"";
+    public static byte[] toUnicodePassword(Object password) throws Exception {
+        String newPassword;
+        if (password instanceof byte[]) {
+            newPassword = "\""+new String((byte[])password)+ "\"";
+        } else {
+            newPassword = "\""+password+ "\"";
+        }
         byte unicodeBytes[] = newPassword.getBytes("Unicode");
         byte bytes[]  = new byte[unicodeBytes.length-2];
 
@@ -191,14 +215,18 @@ public class PasswordUtil {
         return bytes;
     }
 
-    public static String getEncryptionMethod(String password) {
+    public static String getEncryptionMethod(Object password) {
 
-        if (password == null || !password.startsWith("{")) return null; // no encryption/encoding
+        if (!(password instanceof String)) return null;
 
-        int i = password.indexOf("}");
+        String s = (String)password;
+
+        if (s == null || !s.startsWith("{")) return null; // no encryption/encoding
+
+        int i = s.indexOf("}");
         if (i < 0) return null; // invalid format, considered as no encryption/encoding
 
-        String s = password.substring(1, i);
+        s = s.substring(1, i);
 
         i = s.indexOf("|");
         if (i < 0) return s; // no encoding
@@ -206,14 +234,18 @@ public class PasswordUtil {
         return s.substring(0, i);
     }
 
-    public static String getEncodingMethod(String password) {
+    public static String getEncodingMethod(Object password) {
 
-        if (password == null || !password.startsWith("{")) return null; // no encryption/encoding
+        if (!(password instanceof String)) return null;
 
-        int i = password.indexOf("}");
+        String s = (String)password;
+
+        if (s == null || !s.startsWith("{")) return null; // no encryption/encoding
+
+        int i = s.indexOf("}");
         if (i < 0) return null; // invalid format, considered as no encryption/encoding
 
-        String s = password.substring(1, i);
+        s = s.substring(1, i);
 
         i = s.indexOf("|");
         if (i < 0) return "Base64"; // no encoding
@@ -221,13 +253,17 @@ public class PasswordUtil {
         return s.substring(i+1);
     }
 
-    public static String getEncryptedPassword(String password) {
+    public static String getEncryptedPassword(Object password) {
 
-        if (password == null || !password.startsWith("{")) return password; // no encryption
+        if (password instanceof byte[]) return new String((byte[])password);
 
-        int i = password.indexOf("}");
-        if (i < 0) return password; // invalid format, considered as no encryption
+        String s = (String)password;
 
-        return password.substring(i+1);
+        if (s == null || !s.startsWith("{")) return s; // no encryption
+
+        int i = s.indexOf("}");
+        if (i < 0) return s; // invalid format, considered as no encryption
+
+        return s.substring(i+1);
     }
 }

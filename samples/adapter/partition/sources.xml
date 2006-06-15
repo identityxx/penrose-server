@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<sources>
+
+  <source name="users">
+    <connection-name>DemoDatabase</connection-name>
+    <field name="uid" primaryKey="true"/>
+    <field name="cn"/>
+    <field name="sn"/>
+    <field name="userPassword"/>
+  </source>
+
+</sources>

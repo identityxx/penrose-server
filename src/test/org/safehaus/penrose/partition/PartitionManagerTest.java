@@ -24,15 +24,13 @@ import org.safehaus.penrose.config.DefaultPenroseConfig;
 import org.safehaus.penrose.schema.SchemaConfig;
 import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.PenroseFactory;
-import org.safehaus.penrose.mapping.EntryMapping;
 import org.safehaus.penrose.session.PenroseSession;
 import org.safehaus.penrose.session.PenroseSearchControls;
 import org.safehaus.penrose.session.PenroseSearchResults;
-import org.ietf.ldap.LDAPEntry;
 import org.ietf.ldap.LDAPException;
 
+import javax.naming.directory.SearchResult;
 import java.util.Iterator;
-import java.util.Collection;
 
 /**
  * @author Endi S. Dewata
@@ -58,7 +56,7 @@ public class PartitionManagerTest extends TestCase {
 
         penroseConfig = new DefaultPenroseConfig();
 
-        SchemaConfig schemaConfig = new SchemaConfig("samples/schema/example.schema");
+        SchemaConfig schemaConfig = new SchemaConfig("samples/shop/schema/example.schema");
         penroseConfig.addSchemaConfig(schemaConfig);
 
         PenroseFactory penroseFactory = PenroseFactory.getInstance();
@@ -79,7 +77,7 @@ public class PartitionManagerTest extends TestCase {
 
         penrose.stop();
 
-        PartitionConfig partitionConfig = new PartitionConfig("example", "samples/conf");
+        PartitionConfig partitionConfig = new PartitionConfig("example", "samples/shop/partition");
         penroseConfig.addPartitionConfig(partitionConfig);
 
         PartitionReader partitionReader = new PartitionReader();
@@ -99,7 +97,7 @@ public class PartitionManagerTest extends TestCase {
 
         penrose.stop();
 
-        PartitionConfig partitionConfig = new PartitionConfig("example", "samples/conf");
+        PartitionConfig partitionConfig = new PartitionConfig("example", "samples/shop/partition");
         penroseConfig.addPartitionConfig(partitionConfig);
 
         PartitionReader partitionReader = new PartitionReader();
@@ -108,7 +106,7 @@ public class PartitionManagerTest extends TestCase {
         PartitionManager partitionManager = penrose.getPartitionManager();
         partitionManager.addPartition(partition);
 
-        partitionManager.findPartition("dc=Example,dc=com");
+        partitionManager.findPartition("dc=Shop,c=Example,dc=com");
     }
 
     public int search() throws Exception {
@@ -116,17 +114,19 @@ public class PartitionManagerTest extends TestCase {
         PenroseSession session = penrose.newSession();
         session.bind(penroseConfig.getRootUserConfig().getDn(), penroseConfig.getRootUserConfig().getPassword());
 
+        PenroseSearchResults results = new PenroseSearchResults();
+
         PenroseSearchControls sc = new PenroseSearchControls();
         sc.setScope(PenroseSearchControls.SCOPE_ONE);
 
-        String baseDn = "ou=Categories,dc=Example,dc=com";
+        String baseDn = "ou=Categories,dc=Shop,dc=Example,dc=com";
 
         System.out.println("Searching "+baseDn+":");
-        PenroseSearchResults results = session.search(baseDn, "(objectClass=*)", sc);
+        session.search(baseDn, "(objectClass=*)", sc, results);
 
         for (Iterator i = results.iterator(); i.hasNext();) {
-            LDAPEntry entry = (LDAPEntry) i.next();
-            System.out.println("dn: "+entry.getDN());
+            SearchResult entry = (SearchResult)i.next();
+            System.out.println("dn: "+entry.getName());
         }
 
         session.unbind();

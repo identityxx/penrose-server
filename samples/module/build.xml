@@ -1,0 +1,92 @@
+<!--
+ Copyright (c) 2000-2005, Identyx Corporation.
+ All rights reserved.
+-->
+<project name="modules" default="dist" basedir=".">
+
+    <property name="prefix" value=""/>
+    <property name="penrose.home" value="${prefix}/usr/local/penrose"/>
+
+    <property name="test.hostname" value="localhost"/>
+    <property name="test.port" value="10389"/>
+    <property name="test.bindDn" value="uid=admin,ou=system"/>
+    <property name="test.password" value="secret"/>
+    <property name="test.baseDn" value="dc=Module,dc=Example,dc=com"/>
+
+    <path id="lib.path">
+        <fileset dir="../../lib">
+            <include name="**/*.jar"/>
+        </fileset>
+        <pathelement location="../../target/classes"/>
+    </path>
+
+    <target name="build">
+        <mkdir dir="target/classes"/>
+        <javac
+            srcdir="src"
+            destdir="target/classes"
+            classpathref="lib.path"
+        />
+    </target>
+
+    <target name="dist" depends="build">
+        <jar jarfile="target/penrose-example-module.jar">
+            <fileset dir="target/classes"/>
+        </jar>
+    </target>
+
+    <target name="install" depends="dist">
+        <copy todir="${penrose.home}/lib/ext" file="target/penrose-example-module.jar"/>
+    </target>
+
+    <target name="test-search">
+        <exec executable="ldapsearch">
+            <arg line="-h ${test.hostname}"/>
+            <arg line="-p ${test.port}"/>
+            <arg line="-D ${test.bindDn}"/>
+            <arg line="-w ${test.password}"/>
+            <arg line="-x"/>
+            <arg line="-s sub"/>
+            <arg line="-b ${test.baseDn}"/>
+        </exec>
+    </target>
+
+    <target name="test-modify">
+        <exec executable="ldapmodify">
+            <arg line="-h ${test.hostname}"/>
+            <arg line="-p ${test.port}"/>
+            <arg line="-D ${test.bindDn}"/>
+            <arg line="-w ${test.password}"/>
+            <arg line="-x"/>
+            <arg line="-f ldif/modify.ldif"/>
+        </exec>
+    </target>
+
+    <target name="test-delete">
+        <exec executable="ldapdelete">
+            <arg line="-h ${test.hostname}"/>
+            <arg line="-p ${test.port}"/>
+            <arg line="-D ${test.bindDn}"/>
+            <arg line="-w ${test.password}"/>
+            <arg line="-x"/>
+            <arg line="-f ldif/delete.ldif"/>
+        </exec>
+    </target>
+
+    <target name="test-add">
+        <exec executable="ldapadd">
+            <arg line="-h ${test.hostname}"/>
+            <arg line="-p ${test.port}"/>
+            <arg line="-D ${test.bindDn}"/>
+            <arg line="-w ${test.password}"/>
+            <arg line="-x"/>
+            <arg line="-f ldif/add.ldif"/>
+        </exec>
+    </target>
+
+    <target name="clean">
+        <delete dir="dist" failonerror="false"/>
+        <delete dir="target" failonerror="false"/>
+    </target>
+
+</project>

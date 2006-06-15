@@ -25,6 +25,7 @@ import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.filter.SubstringFilter;
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.session.PenroseSearchResults;
+import org.safehaus.penrose.session.PenroseSearchControls;
 import org.safehaus.penrose.partition.FieldConfig;
 import org.safehaus.penrose.partition.SourceConfig;
 import org.safehaus.penrose.util.JNDIClient;
@@ -39,9 +40,10 @@ import java.util.*;
  */
 public class JNDIAdapter extends Adapter {
 
-    public final static String BASE_DN = "baseDn";
-    public final static String SCOPE   = "scope";
-    public final static String FILTER  = "filter";
+    public final static String BASE_DN        = "baseDn";
+    public final static String SCOPE          = "scope";
+    public final static String FILTER         = "filter";
+    public final static String OBJECT_CLASSES = "objectClasses";
 
     private JNDIClient client;
 
@@ -53,9 +55,36 @@ public class JNDIAdapter extends Adapter {
         return new JNDIClient(client, getParameters());
     }
 
-    public PenroseSearchResults search(SourceConfig sourceConfig, Filter filter, long sizeLimit) throws Exception {
+    public int bind(SourceConfig sourceConfig, Row pk, String password) throws Exception {
 
-        PenroseSearchResults results = new PenroseSearchResults();
+        String dn = getDn(sourceConfig, pk);
+
+        if (log.isDebugEnabled()) {
+            log.debug(Formatter.displaySeparator(80));
+            log.debug(Formatter.displayLine("JNDI Bind", 80));
+            log.debug(Formatter.displayLine(" - Bind DN : "+dn, 80));
+            log.debug(Formatter.displayLine(" - Password: "+password, 80));
+            log.debug(Formatter.displaySeparator(80));
+        }
+
+        Hashtable env = new Hashtable();
+        env.put(Context.INITIAL_CONTEXT_FACTORY, getParameter(Context.INITIAL_CONTEXT_FACTORY));
+        env.put(Context.PROVIDER_URL, client.getUrl());
+        env.put(Context.SECURITY_PRINCIPAL, dn);
+        env.put(Context.SECURITY_CREDENTIALS, password);
+
+        try {
+            DirContext c = new InitialDirContext(env);
+            c.close();
+        } catch (AuthenticationException e) {
+            log.debug("Error: "+e.getMessage());
+            return LDAPException.INVALID_CREDENTIALS;
+        }
+
+        return LDAPException.SUCCESS;
+    }
+
+    public void search(SourceConfig sourceConfig, Filter filter, PenroseSearchControls sc, PenroseSearchResults results) throws Exception {
 
         String ldapBase = sourceConfig.getParameter(BASE_DN);
         if ("".equals(ldapBase)) {
@@ -91,6 +120,7 @@ public class JNDIAdapter extends Adapter {
         } else if ("SUBTREE".equals(ldapScope)) {
         	ctls.setSearchScope(SearchControls.SUBTREE_SCOPE);
         }
+        ctls.setCountLimit(sc.getSizeLimit());
 
         DirContext ctx = null;
         try {
@@ -111,20 +141,12 @@ public class JNDIAdapter extends Adapter {
             results.close();
             if (ctx != null) try { ctx.close(); } catch (Exception e) {}
         }
-
-        return results;
     }
 
-    public PenroseSearchResults load(SourceConfig sourceConfig, Filter filter, long sizeLimit) throws Exception {
-
-        PenroseSearchResults results = new PenroseSearchResults();
+    public void load(SourceConfig sourceConfig, Filter filter, PenroseSearchControls sc, PenroseSearchResults results) throws Exception {
 
         String ldapBase = sourceConfig.getParameter(BASE_DN);
-        if ("".equals(ldapBase)) {
-            ldapBase = client.getSuffix();
-        } else if (!"".equals(client.getSuffix())) {
-            ldapBase = ldapBase+","+client.getSuffix();
-        }
+        ldapBase = EntryUtil.append(ldapBase, client.getSuffix());
 
         String ldapScope = sourceConfig.getParameter(SCOPE);
         String ldapFilter = sourceConfig.getParameter(FILTER);
@@ -152,6 +174,7 @@ public class JNDIAdapter extends Adapter {
         } else if ("SUBTREE".equals(ldapScope)) {
         	ctls.setSearchScope(SearchControls.SUBTREE_SCOPE);
         }
+        ctls.setCountLimit(sc.getSizeLimit());
 
         DirContext ctx = null;
         try {
@@ -172,46 +195,6 @@ public class JNDIAdapter extends Adapter {
             results.close();
             if (ctx != null) try { ctx.close(); } catch (Exception e) {}
         }
-
-        return results;
-    }
-
-    public AttributeValues get(SourceConfig sourceConfig, Row pk) throws Exception {
-
-        String ldapBase = sourceConfig.getParameter(BASE_DN);
-        String dn = EntryUtil.append(pk.toString(), ldapBase);
-        dn = EntryUtil.append(dn, client.getSuffix());
-
-        String ldapFilter = sourceConfig.getParameter(FILTER);
-
-        if (log.isDebugEnabled()) {
-            log.debug(Formatter.displaySeparator(80));
-            log.debug(Formatter.displayLine("JNDI Search "+sourceConfig.getConnectionName()+"/"+sourceConfig.getName(), 80));
-            log.debug(Formatter.displayLine(" - Base DN: "+ldapBase, 80));
-            log.debug(Formatter.displayLine(" - Filter: "+ldapFilter, 80));
-            log.debug(Formatter.displaySeparator(80));
-        }
-
-        SearchControls ctls = new SearchControls();
-        ctls.setSearchScope(SearchControls.OBJECT_SCOPE);
-
-        DirContext ctx = null;
-        try {
-            ctx = ((JNDIClient)openConnection()).getContext();
-            NamingEnumeration ne = ctx.search(ldapBase, ldapFilter, ctls);
-
-            if (!ne.hasMore()) return null;
-
-            javax.naming.directory.SearchResult sr = (javax.naming.directory.SearchResult)ne.next();
-            log.debug("Result: "+ldapBase);
-
-            AttributeValues av = getValues(sourceConfig, sr);
-            return av;
-
-        } finally {
-            if (ctx != null) try { ctx.close(); } catch (Exception e) {}
-        }
-
     }
 
     public Row getPkValues(SourceConfig sourceConfig, SearchResult sr) throws Exception {
@@ -258,38 +241,9 @@ public class JNDIAdapter extends Adapter {
         return av;
     }
 
-    public int bind(SourceConfig sourceConfig, AttributeValues sourceValues, String password) throws Exception {
+    public int add(SourceConfig sourceConfig, Row pk, AttributeValues sourceValues) throws Exception {
 
-        String dn = getDn(sourceConfig, sourceValues);
-
-        if (log.isDebugEnabled()) {
-            log.debug(Formatter.displaySeparator(80));
-            log.debug(Formatter.displayLine("JNDI Bind", 80));
-            log.debug(Formatter.displayLine(" - Bind DN : "+dn, 80));
-            log.debug(Formatter.displayLine(" - Password: "+password, 80));
-            log.debug(Formatter.displaySeparator(80));
-        }
-
-        Hashtable env = new Hashtable();
-        env.put(Context.INITIAL_CONTEXT_FACTORY, getParameter(Context.INITIAL_CONTEXT_FACTORY));
-        env.put(Context.PROVIDER_URL, client.getUrl());
-        env.put(Context.SECURITY_PRINCIPAL, dn);
-        env.put(Context.SECURITY_CREDENTIALS, password);
-
-        try {
-            DirContext c = new InitialDirContext(env);
-            c.close();
-        } catch (AuthenticationException e) {
-            log.debug("Error: "+e.getMessage());
-            return LDAPException.INVALID_CREDENTIALS;
-        }
-
-        return LDAPException.SUCCESS;
-    }
-
-    public int add(SourceConfig sourceConfig, AttributeValues entry) throws Exception {
-
-        String dn = getDn(sourceConfig, entry);
+        String dn = getDn(sourceConfig, pk);
 
         if (log.isDebugEnabled()) {
             log.debug(Formatter.displaySeparator(80));
@@ -298,35 +252,44 @@ public class JNDIAdapter extends Adapter {
             log.debug(Formatter.displaySeparator(80));
         }
 
-        Attributes attrs = new BasicAttributes();
+        Attributes attributes = new BasicAttributes();
 
-        for (Iterator i=entry.getNames().iterator(); i.hasNext(); ) {
+        String objectClasses = sourceConfig.getParameter(OBJECT_CLASSES);
+
+        Attribute ocAttribute = new BasicAttribute("objectClass");
+        for (StringTokenizer st = new StringTokenizer(objectClasses, ","); st.hasMoreTokens(); ) {
+            String objectClass = st.nextToken().trim();
+            ocAttribute.add(objectClass);
+        }
+        attributes.put(ocAttribute);
+
+        for (Iterator i=sourceValues.getNames().iterator(); i.hasNext(); ) {
             String name = (String)i.next();
-            Set set = (Set)entry.get(name);
-            if (set.isEmpty()) continue;
+            Collection values = sourceValues.get(name);
+            if (values.isEmpty()) continue;
 
-            Attribute attr = new BasicAttribute(name);
-            for (Iterator j=set.iterator(); j.hasNext(); ) {
-                String v = (String)j.next();
+            Attribute attribute = new BasicAttribute(name);
+            for (Iterator j=values.iterator(); j.hasNext(); ) {
+                Object value = j.next();
 
                 if ("unicodePwd".equals(name)) {
-                    attr.add(PasswordUtil.toUnicodePassword(v));
+                    attribute.add(PasswordUtil.toUnicodePassword(value));
                 } else {
-                    attr.add(v);
+                    attribute.add(value);
                 }
-                log.debug(" - "+name+": "+v);
+                log.debug(" - "+name+": "+value);
             }
-            attrs.put(attr);
+            attributes.put(attribute);
         }
 
         log.debug("Adding "+dn);
         DirContext ctx = null;
         try {
             ctx = ((JNDIClient)openConnection()).getContext();
-            ctx.createSubcontext(dn, attrs);
+            ctx.createSubcontext(dn, attributes);
 
         } catch (NameAlreadyBoundException e) {
-            return modifyAdd(sourceConfig, entry);
+            return modifyAdd(sourceConfig, sourceValues);
             //log.debug("Error: "+e.getMessage());
             //return LDAPException.ENTRY_ALREADY_EXISTS;
         } finally {
@@ -383,9 +346,9 @@ public class JNDIAdapter extends Adapter {
         return LDAPException.SUCCESS;
     }
 
-    public int delete(SourceConfig sourceConfig, AttributeValues entry) throws Exception {
+    public int delete(SourceConfig sourceConfig, Row pk) throws Exception {
 
-        String dn = getDn(sourceConfig, entry);
+        String dn = getDn(sourceConfig, pk);
 
         if (log.isDebugEnabled()) {
             log.debug(Formatter.displaySeparator(80));
@@ -408,9 +371,9 @@ public class JNDIAdapter extends Adapter {
         return LDAPException.SUCCESS;
     }
 
-    public int modify(SourceConfig sourceConfig, AttributeValues oldEntry, AttributeValues newEntry) throws Exception {
+    public int modify(SourceConfig sourceConfig, Row pk, Collection modifications) throws Exception {
 
-        String dn = getDn(sourceConfig, newEntry);
+        String dn = getDn(sourceConfig, pk);
 
         if (log.isDebugEnabled()) {
             log.debug(Formatter.displaySeparator(80));
@@ -420,18 +383,48 @@ public class JNDIAdapter extends Adapter {
         }
 
         List list = new ArrayList();
-        Collection fields = sourceConfig.getFieldConfigs();
 
-        Set addAttributes = new HashSet(newEntry.getNames());
+        for (Iterator i=modifications.iterator(); i.hasNext(); ) {
+            ModificationItem mi = (ModificationItem)i.next();
+
+            Attribute attribute = mi.getAttribute();
+            String name = attribute.getID();
+
+            FieldConfig fieldConfig = sourceConfig.getFieldConfig(name);
+            if (fieldConfig.isPrimaryKey()) continue;
+
+            if ("unicodePwd".equals(name) && mi.getModificationOp() == DirContext.ADD_ATTRIBUTE) { // need to encode unicodePwd
+                Attribute newAttribute = new BasicAttribute(fieldConfig.getOriginalName());
+                for (NamingEnumeration j=attribute.getAll(); j.hasMore(); ) {
+                    Object value = j.next();
+                    newAttribute.add(PasswordUtil.toUnicodePassword(value));
+                }
+
+                mi = new ModificationItem(DirContext.REPLACE_ATTRIBUTE, newAttribute);
+
+            } else {
+                Attribute newAttribute = new BasicAttribute(fieldConfig.getOriginalName());
+                for (NamingEnumeration j=attribute.getAll(); j.hasMore(); ) {
+                    Object value = j.next();
+                    newAttribute.add(value);
+                }
+                mi = new ModificationItem(mi.getModificationOp(), attribute);
+            }
+
+            list.add(mi);
+        }
+
+/*
+        Set addAttributes = new HashSet(sourceValues.getNames());
         addAttributes.removeAll(oldEntry.getNames());
         log.debug("Attributes to add: " + addAttributes);
 
         Set removeAttributes = new HashSet(oldEntry.getNames());
-        removeAttributes.removeAll(newEntry.getNames());
+        removeAttributes.removeAll(sourceValues.getNames());
         log.debug("Attributes to remove: " + removeAttributes);
 
         Set replaceAttributes = new HashSet(oldEntry.getNames());
-        replaceAttributes.retainAll(newEntry.getNames());
+        replaceAttributes.retainAll(sourceValues.getNames());
         log.debug("Attributes to replace: " + replaceAttributes);
 
         for (Iterator i=addAttributes.iterator(); i.hasNext(); ) {
@@ -449,7 +442,7 @@ public class JNDIAdapter extends Adapter {
 
             if (primaryKey) continue; // don't add primary key
 
-            Set set = (Set)newEntry.get(name);
+            Set set = (Set)sourceValues.get(name);
             Attribute attribute = new BasicAttribute(name);
             for (Iterator j = set.iterator(); j.hasNext(); ) {
                 String value = (String)j.next();
@@ -486,7 +479,7 @@ public class JNDIAdapter extends Adapter {
 
             if (primaryKey) continue; // don't remove primary key
 
-            Set set = (Set)newEntry.get(name);
+            Set set = (Set)sourceValues.get(name);
             Attribute attribute = new BasicAttribute(name);
             for (Iterator j = set.iterator(); j.hasNext(); ) {
                 String value = (String)j.next();
@@ -513,7 +506,7 @@ public class JNDIAdapter extends Adapter {
 
             if (primaryKey) continue; // don't replace primary key
 
-            Set set = (Set)newEntry.get(name);
+            Set set = (Set)sourceValues.get(name);
             Attribute attribute = new BasicAttribute(name);
             for (Iterator j = set.iterator(); j.hasNext(); ) {
                 String value = (String)j.next();
@@ -529,7 +522,7 @@ public class JNDIAdapter extends Adapter {
 
             list.add(new ModificationItem(DirContext.REPLACE_ATTRIBUTE, attribute));
         }
-
+*/
         ModificationItem mods[] = (ModificationItem[])list.toArray(new ModificationItem[list.size()]);
 
         DirContext ctx = null;
@@ -538,7 +531,7 @@ public class JNDIAdapter extends Adapter {
             ctx.modifyAttributes(dn, mods);
 
         } catch (Exception e) {
-            log.debug(e.getMessage(), e);
+            log.error(e.getMessage(), e);
             throw e;
 
         } finally {
@@ -599,7 +592,7 @@ public class JNDIAdapter extends Adapter {
 
             Attribute attribute = new BasicAttribute(name);
             for (Iterator j = set.iterator(); j.hasNext(); ) {
-                String v = (String)j.next();
+                Object v = j.next();
                 if ("unicodePwd".equals(name)) {
                     attribute.add(PasswordUtil.toUnicodePassword(v));
                 } else {

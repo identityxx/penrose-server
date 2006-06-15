@@ -18,35 +18,26 @@
 package org.safehaus.penrose.handler;
 
 import org.safehaus.penrose.session.PenroseSearchResults;
-import org.safehaus.penrose.user.UserConfig;
 import org.safehaus.penrose.session.PenroseSession;
 import org.safehaus.penrose.session.SessionManager;
-import org.safehaus.penrose.session.SessionConfig;
-import org.safehaus.penrose.partition.Partition;
+import org.safehaus.penrose.session.PenroseSearchControls;
 import org.safehaus.penrose.acl.ACLEngine;
 import org.safehaus.penrose.filter.FilterTool;
 import org.safehaus.penrose.partition.PartitionManager;
 import org.safehaus.penrose.schema.SchemaManager;
-import org.safehaus.penrose.schema.AttributeType;
 import org.safehaus.penrose.engine.Engine;
 import org.safehaus.penrose.interpreter.InterpreterManager;
 import org.safehaus.penrose.module.Module;
-import org.safehaus.penrose.module.ModuleMapping;
-import org.safehaus.penrose.module.ModuleConfig;
 import org.safehaus.penrose.module.ModuleManager;
 import org.safehaus.penrose.event.*;
 import org.safehaus.penrose.pipeline.PipelineAdapter;
 import org.safehaus.penrose.pipeline.PipelineEvent;
 import org.safehaus.penrose.mapping.Entry;
-import org.safehaus.penrose.mapping.EntryMapping;
-import org.safehaus.penrose.util.EntryUtil;
 import org.safehaus.penrose.config.PenroseConfig;
+import org.safehaus.penrose.Penrose;
 import org.apache.log4j.Logger;
-import org.ietf.ldap.LDAPEntry;
-import org.ietf.ldap.LDAPException;
-import org.ietf.ldap.LDAPModification;
-import org.ietf.ldap.LDAPAttribute;
 
+import javax.naming.directory.*;
 import java.util.*;
 
 /**
@@ -63,6 +54,8 @@ public class Handler {
 
     private PenroseConfig penroseConfig;
 
+    private Penrose penrose;
+
     private AddHandler addHandler;
     private BindHandler bindHandler;
     private CompareHandler compareHandler;
@@ -77,17 +70,16 @@ public class Handler {
 
     private SessionManager sessionManager;
     private PartitionManager partitionManager;
-    private ModuleManager moduleManager;
-
-    private UserConfig rootUserConfig;
 
     private InterpreterManager interpreterManager;
-    private ACLEngine aclEngine = new ACLEngine(this);
+    private ACLEngine aclEngine;
     private FilterTool filterTool;
 
     private String status = STOPPED;
 
     public Handler() {
+        aclEngine = new ACLEngine();
+
         addHandler = createAddHandler();
         bindHandler = createBindHandler();
         compareHandler = createCompareHandler();
@@ -142,21 +134,15 @@ public class Handler {
             filterTool = new FilterTool();
             filterTool.setSchemaManager(schemaManager);
 
-            initSessionManager();
-
             status = STARTED;
 
             //log.debug("SessionHandler started.");
 
         } catch (Exception e) {
             status = STOPPED;
-            log.debug(e.getMessage(), e);
+            log.error(e.getMessage(), e);
             throw e;
         }
-    }
-
-    public void initSessionManager() throws Exception {
-        sessionManager.start();
     }
 
     public void stop() throws Exception {
@@ -166,217 +152,84 @@ public class Handler {
         try {
             status = STOPPING;
 
-            sessionManager.stop();
-
         } catch (Exception e) {
-            log.debug(e.getMessage(), e);
+            log.error(e.getMessage(), e);
         }
 
         status = STOPPED;
     }
 
-    public int add(PenroseSession session, LDAPEntry ldapEntry) throws Exception {
-        if (!sessionManager.isValid(session)) throw new Exception("Invalid session.");
-
-        AddEvent beforeModifyEvent = new AddEvent(this, AddEvent.BEFORE_ADD, session, ldapEntry);
-        postEvent(ldapEntry.getDN(), beforeModifyEvent);
-
-        int rc = getAddHandler().add(session, ldapEntry);
-
-        AddEvent afterModifyEvent = new AddEvent(this, AddEvent.AFTER_ADD, session, ldapEntry);
-        afterModifyEvent.setReturnCode(rc);
-        postEvent(ldapEntry.getDN(), afterModifyEvent);
-
-        return rc;
+    public int add(PenroseSession session, String dn, Attributes attributes) throws Exception {
+        return getAddHandler().add(session, dn, attributes);
     }
 
     public int bind(PenroseSession session, String dn, String password) throws Exception {
-        if (!sessionManager.isValid(session)) throw new Exception("Invalid session.");
+        return getBindHandler().bind(session, dn, password);
+    }
 
-        BindEvent beforeBindEvent = new BindEvent(this, BindEvent.BEFORE_BIND, session, dn, password);
-        postEvent(dn, beforeBindEvent);
-
-        int rc = getBindHandler().bind(session, dn, password);
-
-        BindEvent afterBindEvent = new BindEvent(this, BindEvent.AFTER_BIND, session, dn, password);
-        afterBindEvent.setReturnCode(rc);
-        postEvent(dn, afterBindEvent);
-
-        return rc;
+    public int unbind(PenroseSession session) throws Exception {
+        return getBindHandler().unbind(session);
     }
 
     public int compare(PenroseSession session, String dn, String attributeName,
             Object attributeValue) throws Exception {
-
-        if (!sessionManager.isValid(session)) throw new Exception("Invalid session.");
         return getCompareHandler().compare(session, dn, attributeName, attributeValue);
     }
 
-    public int unbind(PenroseSession session) throws Exception {
-        if (!sessionManager.isValid(session)) throw new Exception("Invalid session.");
-        return getBindHandler().unbind(session);
-    }
-
     public int delete(PenroseSession session, String dn) throws Exception {
-        if (!sessionManager.isValid(session)) throw new Exception("Invalid session.");
-
-        DeleteEvent beforeDeleteEvent = new DeleteEvent(this, DeleteEvent.BEFORE_DELETE, session, dn);
-        postEvent(dn, beforeDeleteEvent);
-
-        int rc = getDeleteHandler().delete(session, dn);
-
-        DeleteEvent afterDeleteEvent = new DeleteEvent(this, DeleteEvent.AFTER_DELETE, session, dn);
-        afterDeleteEvent.setReturnCode(rc);
-        postEvent(dn, afterDeleteEvent);
-
-        return rc;
+        return getDeleteHandler().delete(session, dn);
     }
 
     public int modify(PenroseSession session, String dn, Collection modifications) throws Exception {
-        if (!sessionManager.isValid(session)) throw new Exception("Invalid session.");
-
-        Collection normalizedModifications = new ArrayList();
-
-		for (Iterator i = modifications.iterator(); i.hasNext();) {
-			LDAPModification modification = (LDAPModification) i.next();
-
-			LDAPAttribute attribute = modification.getAttribute();
-			String attributeName = attribute.getName();
-            String values[] = attribute.getStringValueArray();
-
-            AttributeType at = schemaManager.getAttributeType(attributeName);
-            if (at == null) return LDAPException.UNDEFINED_ATTRIBUTE_TYPE;
-
-            attributeName = at.getName();
-            LDAPAttribute normalizedAttribute = new LDAPAttribute(attributeName, values);
-
-            LDAPModification normalizedModification = new LDAPModification(modification.getOp(), normalizedAttribute);
-
-            normalizedModifications.add(normalizedModification);
-
-			switch (modification.getOp()) {
-			case LDAPModification.ADD:
-				log.debug("add: " + attributeName);
-				for (int j = 0; j < values.length; j++)
-					log.debug(attributeName + ": " + values[j]);
-				break;
-			case LDAPModification.DELETE:
-				log.debug("delete: " + attributeName);
-				for (int j = 0; j < values.length; j++)
-					log.debug(attributeName + ": " + values[j]);
-				break;
-			case LDAPModification.REPLACE:
-				log.debug("replace: " + attributeName);
-				for (int j = 0; j < values.length; j++)
-					log.debug(attributeName + ": " + values[j]);
-				break;
-			}
-			log.debug("-");
-		}
-
-        log.info("");
-
-        ModifyEvent beforeModifyEvent = new ModifyEvent(this, ModifyEvent.BEFORE_MODIFY, session, dn, normalizedModifications);
-        postEvent(dn, beforeModifyEvent);
-
-        int rc = getModifyHandler().modify(session, dn, normalizedModifications);
-
-        ModifyEvent afterModifyEvent = new ModifyEvent(this, ModifyEvent.AFTER_MODIFY, session, dn, normalizedModifications);
-        afterModifyEvent.setReturnCode(rc);
-        postEvent(dn, afterModifyEvent);
-
-        return rc;
+        return getModifyHandler().modify(session, dn, modifications);
     }
 
     public int modrdn(PenroseSession session, String dn, String newRdn) throws Exception {
-        if (!sessionManager.isValid(session)) throw new Exception("Invalid session.");
         return getModRdnHandler().modrdn(session, dn, newRdn);
     }
 
     /**
-     *
      * @param session
-     * @param base
-     * @param scope
-     * @param deref
+     * @param baseDn
      * @param filter
-     * @param attributeNames
-     * @return LDAPEntry
+     * @param sc
+     * @param results The results will be filled with objects of type SearchResult.
+     * @return
      * @throws Exception
      */
-    public PenroseSearchResults search(
+    public int search(
             final PenroseSession session,
-            final String base,
-            final int scope,
-            final int deref,
+            final String baseDn,
             final String filter,
-            final Collection attributeNames)
+            final PenroseSearchControls sc,
+            final PenroseSearchResults results)
             throws Exception {
 
-        if (!sessionManager.isValid(session)) throw new Exception("Invalid session.");
-        final PenroseSearchResults results = new PenroseSearchResults();
+        final PenroseSearchResults tempResults = new PenroseSearchResults();
 
-        final Collection normalizedAttributeNames = attributeNames == null ? null : new HashSet();
-        if (attributeNames != null) {
-            for (Iterator i=attributeNames.iterator(); i.hasNext(); ) {
-                String attributeName = (String)i.next();
-                normalizedAttributeNames.add(attributeName.toLowerCase());
-            }
-        }
+        tempResults.addListener(new PipelineAdapter() {
 
-        SearchEvent beforeSearchEvent = new SearchEvent(this, SearchEvent.BEFORE_SEARCH, session, base);
-        postEvent(base, beforeSearchEvent);
-
-        //getSearchHandler().search(connection, base, scope, deref, filter, attributeNames, results);
-
-        engine.execute(new Runnable() {
-            public void run() {
+            public void objectAdded(PipelineEvent event) {
                 try {
-                    final PenroseSearchResults sr = new PenroseSearchResults();
+                    Entry entry = (Entry)event.getObject();
 
-                    sr.addListener(new PipelineAdapter() {
-                        public void objectAdded(PipelineEvent event) {
-                            try {
-                                Entry entry = (Entry)event.getObject();
-                                // String dn = schemaManager.normalize(entry.getDn());
-                                // EntryMapping entryMapping = entry.getEntryMapping();
-                                // LDAPEntry ldapEntry = entry.toLDAPEntry();
+                    SearchResult searchResult = getSearchHandler().createSearchResult(session, entry);
+                    if (searchResult == null) return;
 
-                                //EntryUtil.filterAttributes(ldapEntry, normalizedAttributeNames);
-                                LDAPEntry ldapEntry = aclEngine.filterAttributes(session, entry);
+                    results.add(searchResult);
 
-                                results.add(ldapEntry);
-
-                            } catch (Exception e) {
-                                log.error(e.getMessage(), e);
-                            }
-                        }
-
-                        public void pipelineClosed(PipelineEvent event) {
-                            results.setReturnCode(sr.getReturnCode());
-                            results.close();
-
-                            try {
-                                SearchEvent afterSearchEvent = new SearchEvent(this, SearchEvent.AFTER_SEARCH, session, base);
-                                afterSearchEvent.setReturnCode(sr.getReturnCode());
-                                postEvent(base, afterSearchEvent);
-                            } catch (Exception e) {
-                                e.printStackTrace();
-                            }
-                        }
-                    });
-
-                    getSearchHandler().search(session, base, scope, deref, filter, normalizedAttributeNames, sr);
-
-                } catch (Throwable e) {
-                    log.debug(e.getMessage(), e);
-                    results.setReturnCode(LDAPException.OPERATIONS_ERROR);
-                    results.close();
+                } catch (Exception e) {
+                    log.error(e.getMessage(), e);
                 }
+            }
+
+            public void pipelineClosed(PipelineEvent event) {
+                results.setReturnCode(tempResults.getReturnCode());
+                results.close();
             }
         });
 
-        return results;
+        return getSearchHandler().search(session, baseDn, filter, sc, tempResults);
     }
 
     public BindHandler getBindHandler() {
@@ -435,76 +288,6 @@ public class Handler {
         this.modRdnHandler = modRdnHandler;
     }
 
-    public void postEvent(String dn, Event event) throws Exception {
-
-        Collection c = moduleManager.getModules(dn);
-
-        for (Iterator i=c.iterator(); i.hasNext(); ) {
-            Module module = (Module)i.next();
-
-            if (event instanceof AddEvent) {
-                switch (event.getType()) {
-                    case AddEvent.BEFORE_ADD:
-                        module.beforeAdd((AddEvent)event);
-                        break;
-
-                    case AddEvent.AFTER_ADD:
-                        module.afterAdd((AddEvent)event);
-                        break;
-                }
-
-            } else if (event instanceof BindEvent) {
-
-                switch (event.getType()) {
-                    case BindEvent.BEFORE_BIND:
-                        module.beforeBind((BindEvent)event);
-                        break;
-
-                    case BindEvent.AFTER_BIND:
-                        module.afterBind((BindEvent)event);
-                        break;
-                }
-
-            } else if (event instanceof DeleteEvent) {
-
-                switch (event.getType()) {
-                    case DeleteEvent.BEFORE_DELETE:
-                        module.beforeDelete((DeleteEvent)event);
-                        break;
-
-                    case DeleteEvent.AFTER_DELETE:
-                        module.afterDelete((DeleteEvent)event);
-                        break;
-                }
-
-            } else if (event instanceof ModifyEvent) {
-
-                switch (event.getType()) {
-                case ModifyEvent.BEFORE_MODIFY:
-                    module.beforeModify((ModifyEvent)event);
-                    break;
-
-                case ModifyEvent.AFTER_MODIFY:
-                    module.afterModify((ModifyEvent)event);
-                    break;
-                }
-
-            } else if (event instanceof SearchEvent) {
-
-                switch (event.getType()) {
-                    case SearchEvent.BEFORE_SEARCH:
-                        module.beforeSearch((SearchEvent)event);
-                        break;
-
-                    case SearchEvent.AFTER_SEARCH:
-                        module.afterSearch((SearchEvent)event);
-                        break;
-                }
-
-            }
-        }
-    }
-
     public InterpreterManager getInterpreterFactory() {
         return interpreterManager;
     }
@@ -527,6 +310,7 @@ public class Handler {
 
     public void setPartitionManager(PartitionManager partitionManager) {
         this.partitionManager = partitionManager;
+        aclEngine.setPartitionManager(partitionManager);
     }
 
     public FilterTool getFilterTool() {
@@ -597,14 +381,7 @@ public class Handler {
 
     public void setSchemaManager(SchemaManager schemaManager) {
         this.schemaManager = schemaManager;
-    }
-
-    public UserConfig getRootUserConfig() {
-        return rootUserConfig;
-    }
-
-    public void setRootUserConfig(UserConfig rootUserConfig) {
-        this.rootUserConfig = rootUserConfig;
+        aclEngine.setSchemaManager(schemaManager);
     }
 
     public SessionManager getSessionManager() {
@@ -615,31 +392,12 @@ public class Handler {
         this.sessionManager = sessionManager;
     }
 
-    public PenroseSession newSession() throws Exception {
-        if (status != STARTED) return null;
-        PenroseSession session = sessionManager.newSession();
-        session.setHandler(this);
-        return session;
-    }
-
-    public void closeSession(PenroseSession session) {
-        sessionManager.closeSession(session);
-    }
-
     public String getStatus() {
         return status;
     }
 
     public void setStatus(String status) {
         this.status = status;
-    }
-
-    public ModuleManager getModuleManager() {
-        return moduleManager;
-    }
-
-    public void setModuleManager(ModuleManager moduleManager) {
-        this.moduleManager = moduleManager;
     }
 
     public FindHandler getFindHandler() {
@@ -656,6 +414,15 @@ public class Handler {
 
     public void setPenroseConfig(PenroseConfig penroseConfig) {
         this.penroseConfig = penroseConfig;
+        aclEngine.setPenroseConfig(penroseConfig);
+    }
+
+    public Penrose getPenrose() {
+        return penrose;
+    }
+
+    public void setPenrose(Penrose penrose) {
+        this.penrose = penrose;
     }
 }
 

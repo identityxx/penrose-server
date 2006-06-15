@@ -27,6 +27,9 @@ public class PenroseSearchResults extends Pipeline {
 
     int returnCode = LDAPException.SUCCESS;
 
+    public PenroseSearchResults() {
+    }
+
     public synchronized int getReturnCode() {
         while (!isClosed()) {
             try {
@@ -39,7 +42,12 @@ public class PenroseSearchResults extends Pipeline {
         return returnCode;
     }
 
+    public void resetReturnCode() {
+        this.returnCode = LDAPException.SUCCESS;
+    }
+
     public void setReturnCode(int returnCode) {
+        if (this.returnCode != LDAPException.SUCCESS) return;
         this.returnCode = returnCode;
     }
 }

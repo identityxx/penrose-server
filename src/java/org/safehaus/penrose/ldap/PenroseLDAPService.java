@@ -37,17 +37,27 @@ import java.util.*;
  */
 public class PenroseLDAPService extends Service {
 
-    public final static String LDAP_PORT       = "ldapPort";
-    public final static int DEFAULT_LDAP_PORT  = 10389;
+    public final static String LDAP_PORT             = "ldapPort";
+    public final static int DEFAULT_LDAP_PORT        = 10389;
 
-    public final static String LDAPS_PORT      = "ldapsPort";
-    public final static int DEFAULT_LDAPS_PORT = 10639;
+    public final static String ENABLE_LDAPS          = "enableLdaps";
+    public final static boolean DEFAULT_ENABLE_LDAPS = false;
+
+    public final static String LDAPS_PORT            = "ldapsPort";
+    public final static int DEFAULT_LDAPS_PORT       = 10636;
+
+    public final static String LDAPS_CERTIFICATE_FILE     = "ldapsCertificateFile";
+    public final static String LDAPS_CERTIFICATE_PASSWORD = "ldapsCertificatePassword";
 
     public final static String ALLOW_ANONYMOUS_ACCESS          = "allowAnonymousAccess";
     public final static boolean DEFAULT_ALLOW_ANONYMOUS_ACCESS = true;
 
     private int ldapPort;
+
+    private boolean enableLdaps;
     private int ldapsPort;
+    private String ldapsCertificateFile;
+    private String ldapsCertificatePassword;
 
     private boolean allowAnonymousAccess;
 
@@ -56,8 +66,14 @@ public class PenroseLDAPService extends Service {
         String s = getParameter(LDAP_PORT);
         ldapPort = s == null ? DEFAULT_LDAP_PORT : Integer.parseInt(s);
 
+        s = getParameter(ENABLE_LDAPS);
+        enableLdaps = s == null ? DEFAULT_ENABLE_LDAPS : new Boolean(s).booleanValue();
+
         s = getParameter(LDAPS_PORT);
         ldapsPort = s == null ? DEFAULT_LDAPS_PORT : Integer.parseInt(s);
+
+        ldapsCertificateFile = getParameter(LDAPS_CERTIFICATE_FILE);
+        ldapsCertificatePassword = getParameter(LDAPS_CERTIFICATE_PASSWORD);
 
         s = getParameter(ALLOW_ANONYMOUS_ACCESS);
         allowAnonymousAccess = s == null ? DEFAULT_ALLOW_ANONYMOUS_ACCESS : Boolean.valueOf(s).booleanValue();
@@ -78,7 +94,11 @@ public class PenroseLDAPService extends Service {
 
         // Configure LDAP ports
         configuration.setLdapPort(ldapPort);
+
+        configuration.setEnableLdaps(enableLdaps);
         configuration.setLdapsPort(ldapsPort);
+        if (ldapsCertificateFile != null) configuration.setLdapsCertificateFile(new File(ldapsCertificateFile));
+        if (ldapsCertificatePassword != null) configuration.setLdapsCertificatePassword(ldapsCertificatePassword);
 
         //log.debug("Allow anonymous access: "+allowAnonymousAccess);
         configuration.setAllowAnonymousAccess(allowAnonymousAccess);
@@ -97,7 +117,7 @@ public class PenroseLDAPService extends Service {
                     name.substring(0, 1).toUpperCase()+name.substring(1)+
                     "Schema";
 
-            log.debug("Loading "+className+".");
+            log.debug("Loading "+className);
             Class clazz = Class.forName(className);
             Object object = clazz.newInstance();
             bootstrapSchemas.add(object);
@@ -117,19 +137,22 @@ public class PenroseLDAPService extends Service {
         authenticator.setPenrose(getPenroseServer().getPenrose());
 
         MutableAuthenticatorConfiguration authenticatorConfig = new MutableAuthenticatorConfiguration();
-        authenticatorConfig.setName("penrose");
+        authenticatorConfig.setName("Penrose");
         authenticatorConfig.setAuthenticator(authenticator);
 
-        Set authenticators = configuration.getAuthenticatorConfigurations();
+        Set authenticators = new LinkedHashSet();
         authenticators.add(authenticatorConfig);
+        authenticators.addAll(configuration.getAuthenticatorConfigurations());
+        //Set authenticators = configuration.getAuthenticatorConfigurations();
+        //authenticators.add(authenticatorConfig);
         configuration.setAuthenticatorConfigurations(authenticators);
-/*
+
         log.debug("Authenticators:");
         for (Iterator i=authenticators.iterator(); i.hasNext(); ) {
             AuthenticatorConfiguration ac = (AuthenticatorConfiguration)i.next();
             log.debug(" - "+ac.getName());
         }
-*/
+
         // Register Penrose interceptor
         PenroseInterceptor interceptor = new PenroseInterceptor();
         interceptor.setPenrose(getPenroseServer().getPenrose());
@@ -142,6 +165,12 @@ public class PenroseLDAPService extends Service {
         interceptors.add(interceptorConfig);
         interceptors.addAll(configuration.getInterceptorConfigurations());
         configuration.setInterceptorConfigurations(interceptors);
+
+        log.debug("Interceptors:");
+        for (Iterator i=interceptors.iterator(); i.hasNext(); ) {
+            InterceptorConfiguration ic = (InterceptorConfiguration)i.next();
+            log.debug(" - "+ic.getName());
+        }
 
         // Initialize ApacheDS
         final Properties env = new Properties();
@@ -170,7 +199,16 @@ public class PenroseLDAPService extends Service {
 
         new InitialDirContext(env);
 
-        log.warn("Listening to port "+ldapPort+".");
+        log.warn("Listening to port "+ldapPort+" (LDAP).");
+
+        if (enableLdaps) {
+            double javaSpecVersion = Double.parseDouble(System.getProperty("java.specification.version"));
+            if (javaSpecVersion < 1.5) {
+                log.warn("SSL is not supported with Java "+javaSpecVersion);
+            } else {
+                log.warn("Listening to port "+ldapsPort+" (Secure LDAP).");
+            }
+        }
 
         // Start ApacheDS synchronization thread
         Thread thread = new Thread() {
@@ -187,7 +225,7 @@ public class PenroseLDAPService extends Service {
                         new InitialDirContext(env);
                     }
                 } catch (Exception e) {
-                    log.debug(e.getMessage());
+                    log.error(e.getMessage());
                 }
             }
         };
@@ -241,5 +279,29 @@ public class PenroseLDAPService extends Service {
 
     public void setAllowAnonymousAccess(boolean allowAnonymousAccess) {
         this.allowAnonymousAccess = allowAnonymousAccess;
+    }
+
+    public boolean isEnableLdaps() {
+        return enableLdaps;
+    }
+
+    public void setEnableLdaps(boolean enableLdaps) {
+        this.enableLdaps = enableLdaps;
+    }
+
+    public String getLdapsCertificateFile() {
+        return ldapsCertificateFile;
+    }
+
+    public void setLdapsCertificateFile(String ldapsCertificateFile) {
+        this.ldapsCertificateFile = ldapsCertificateFile;
+    }
+
+    public String getLdapsCertificatePassword() {
+        return ldapsCertificatePassword;
+    }
+
+    public void setLdapsCertificatePassword(String ldapsCertificatePassword) {
+        this.ldapsCertificatePassword = ldapsCertificatePassword;
     }
 }

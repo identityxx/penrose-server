@@ -20,6 +20,8 @@ package org.safehaus.penrose.cache;
 import org.safehaus.penrose.connector.Connector;
 import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.PenroseFactory;
+import org.safehaus.penrose.partition.*;
+import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.engine.Engine;
 import org.apache.log4j.*;
 
@@ -39,106 +41,6 @@ public class CacheManager {
     public static Logger log = Logger.getLogger(CacheManager.class);
 
     public CacheManager() throws Exception {
-    }
-
-    public static void showUsage() {
-        System.out.println("Usage: org.safehaus.penrose.cache.CacheManager [OPTION]... <COMMAND>");
-        System.out.println();
-        System.out.println("Commands:");
-        System.out.println("  create             create cache tables");
-        System.out.println("  load               load data into cache tables");
-        System.out.println("  clean              clean data from cache tables");
-        System.out.println("  drop               drop cache tables");
-        System.out.println();
-        System.out.println("Options:");
-        System.out.println("  -?, --help         display this help and exit");
-        System.out.println("  -d                 run in debug mode");
-        System.out.println("  -v                 run in verbose mode");
-    }
-
-    public static void main(String args[]) throws Exception {
-
-        String logLevel = "NORMAL";
-
-        LongOpt[] longopts = new LongOpt[1];
-        longopts[0] = new LongOpt("help", LongOpt.NO_ARGUMENT, null, '?');
-
-        Getopt getopt = new Getopt("CacheManager", args, "-:?dv", longopts);
-
-        Collection parameters = new ArrayList();
-        int c;
-        while ((c = getopt.getopt()) != -1) {
-            switch (c) {
-                case ':':
-                case '?':
-                    showUsage();
-                    System.exit(0);
-                    break;
-                case 1:
-                    parameters.add(getopt.getOptarg());
-                    break;
-                case 'd':
-                    logLevel = "DEBUG";
-                    break;
-                case 'v':
-                    logLevel = "VERBOSE";
-                    break;
-            }
-        }
-
-        if (parameters.size() == 0) {
-            showUsage();
-            System.exit(0);
-        }
-
-        String homeDirectory = System.getProperty("penrose.home");
-
-        Logger rootLogger = Logger.getRootLogger();
-        rootLogger.setLevel(Level.toLevel("OFF"));
-
-        Logger logger = Logger.getLogger("org.safehaus.penrose");
-        File log4jProperties = new File((homeDirectory == null ? "" : homeDirectory+File.separator)+"conf"+File.separator+"log4j.properties");
-
-        if (log4jProperties.exists()) {
-            PropertyConfigurator.configure(log4jProperties.getAbsolutePath());
-
-        } else if (logLevel.equals("DEBUG")) {
-            logger.setLevel(Level.toLevel("DEBUG"));
-            ConsoleAppender appender = new ConsoleAppender(new PatternLayout("%-20C{1} [%4L] %m%n"));
-            BasicConfigurator.configure(appender);
-
-        } else if (logLevel.equals("VERBOSE")) {
-            logger.setLevel(Level.toLevel("INFO"));
-            ConsoleAppender appender = new ConsoleAppender(new PatternLayout("[%d{MM/dd/yyyy HH:mm:ss}] %m%n"));
-            BasicConfigurator.configure(appender);
-
-        } else {
-            logger.setLevel(Level.toLevel("WARN"));
-            ConsoleAppender appender = new ConsoleAppender(new PatternLayout("[%d{MM/dd/yyyy HH:mm:ss}] %m%n"));
-            BasicConfigurator.configure(appender);
-        }
-
-        Iterator iterator = parameters.iterator();
-        String command = (String)iterator.next();
-
-        PenroseFactory penroseFactory = PenroseFactory.getInstance();
-        Penrose penrose = penroseFactory.createPenrose(homeDirectory);
-        penrose.start();
-
-        if ("create".equals(command)) {
-            create(penrose);
-
-        } else if ("load".equals(command)) {
-            load(penrose);
-
-        } else if ("clean".equals(command)) {
-            clean(penrose);
-
-        } else if ("drop".equals(command)) {
-            drop(penrose);
-        }
-
-        penrose.stop();
     }
 
     public static void create(Penrose penrose) throws Exception {
@@ -181,6 +83,252 @@ public class CacheManager {
         Connector connector = penrose.getConnector();
         SourceCache sourceCache = connector.getSourceCache();
         sourceCache.drop();
+    }
+
+    public static void changeTable(Penrose penrose) throws Exception {
+
+        PartitionManager partitionManager = penrose.getPartitionManager();
+
+        Collection partitions = partitionManager.getPartitions();
+        for (Iterator i=partitions.iterator(); i.hasNext(); ) {
+            Partition partition = (Partition)i.next();
+
+            Collection sourceConfigs = partition.getSourceConfigs();
+            for (Iterator j=sourceConfigs.iterator(); j.hasNext(); ) {
+                SourceConfig sourceConfig = (SourceConfig)j.next();
+
+                String connectionName = sourceConfig.getConnectionName();
+                ConnectionConfig connectionConfig = partition.getConnectionConfig(connectionName);
+
+                if (!"JDBC".equals(connectionConfig.getAdapterName())) continue;
+
+                String tableName = sourceConfig.getParameter("tableName");
+                Collection primaryKeyFieldConfigs = sourceConfig.getPrimaryKeyFieldConfigs();
+
+                generateCreateTable(tableName, primaryKeyFieldConfigs);
+                generateAddTrigger(tableName, primaryKeyFieldConfigs);
+                generateModifyTrigger(tableName, primaryKeyFieldConfigs);
+                generateDeleteTrigger(tableName, primaryKeyFieldConfigs);
+            }
+        }
+    }
+
+    public static void generateCreateTable(String tableName, Collection primaryKeyFieldConfigs) throws Exception {
+        System.out.println("create table "+tableName+"_changes (");
+        System.out.println("    changeNumber integer auto_increment,");
+        System.out.println("    changeTime datetime,");
+        System.out.println("    changeAction varchar(10),");
+        System.out.println("    changeUser varchar(10),");
+
+        for (Iterator i=primaryKeyFieldConfigs.iterator(); i.hasNext(); ) {
+            FieldConfig fieldConfig = (FieldConfig)i.next();
+            System.out.println("    "+fieldConfig.getName()+" "+fieldConfig.getType()+",");
+        }
+
+        System.out.println("    primary key (changeNumber)");
+        System.out.println(");");
+    }
+
+    public static void generateAddTrigger(String tableName, Collection primaryKeyFieldConfigs) throws Exception {
+        System.out.println("create trigger "+tableName+"_add after insert on "+tableName);
+        System.out.println("for each row insert into "+tableName+"_changes values (");
+        System.out.println("    null,");
+        System.out.println("    now(),");
+        System.out.println("    'ADD',");
+        System.out.println("    substring_index(user(),_utf8'@',1),");
+
+        for (Iterator i=primaryKeyFieldConfigs.iterator(); i.hasNext(); ) {
+            FieldConfig fieldConfig = (FieldConfig)i.next();
+            System.out.print("    new."+fieldConfig.getName());
+            if (i.hasNext()) System.out.print(",");
+            System.out.println();
+        }
+
+        System.out.println(");");
+    }
+
+    public static void generateModifyTrigger(String tableName, Collection primaryKeyFieldConfigs) throws Exception {
+        System.out.println("delimiter |");
+        System.out.println("create trigger "+tableName+"_modify after update on "+tableName);
+        System.out.println("for each row begin");
+
+        System.out.print("    if ");
+        for (Iterator i=primaryKeyFieldConfigs.iterator(); i.hasNext(); ) {
+            FieldConfig fieldConfig = (FieldConfig)i.next();
+            System.out.print("new."+fieldConfig.getName()+" = old."+fieldConfig.getName());
+            if (i.hasNext()) System.out.print(" and ");
+        }
+        System.out.println(" then");
+
+        System.out.println("        insert into "+tableName+"_changes values (");
+        System.out.println("            null,");
+        System.out.println("            now(),");
+        System.out.println("            'MODIFY',");
+        System.out.println("            substring_index(user(),_utf8'@',1),");
+
+        for (Iterator i=primaryKeyFieldConfigs.iterator(); i.hasNext(); ) {
+            FieldConfig fieldConfig = (FieldConfig)i.next();
+            System.out.print("            new."+fieldConfig.getName());
+            if (i.hasNext()) System.out.print(",");
+            System.out.println();
+        }
+
+        System.out.println("        );");
+        System.out.println("    else");
+        System.out.println("        insert into "+tableName+"_changes values (");
+        System.out.println("            null,");
+        System.out.println("            now(),");
+        System.out.println("            'DELETE',");
+        System.out.println("            substring_index(user(),_utf8'@',1),");
+
+        for (Iterator i=primaryKeyFieldConfigs.iterator(); i.hasNext(); ) {
+            FieldConfig fieldConfig = (FieldConfig)i.next();
+            System.out.print("            old."+fieldConfig.getName());
+            if (i.hasNext()) System.out.print(",");
+            System.out.println();
+        }
+
+        System.out.println("        );");
+        System.out.println("        insert into "+tableName+"_changes values (");
+        System.out.println("            null,");
+        System.out.println("            now(),");
+        System.out.println("            'ADD',");
+        System.out.println("            substring_index(user(),_utf8'@',1),");
+
+        for (Iterator i=primaryKeyFieldConfigs.iterator(); i.hasNext(); ) {
+            FieldConfig fieldConfig = (FieldConfig)i.next();
+            System.out.print("            new."+fieldConfig.getName());
+            if (i.hasNext()) System.out.print(",");
+            System.out.println();
+        }
+
+        System.out.println("        );");
+        System.out.println("    end if;");
+        System.out.println("end;|");
+        System.out.println("delimiter ;");
+    }
+
+    public static void generateDeleteTrigger(String tableName, Collection primaryKeyFieldConfigs) throws Exception {
+        System.out.println("create trigger "+tableName+"_delete after delete on "+tableName);
+        System.out.println("for each row insert into "+tableName+"_changes values (");
+        System.out.println("    null,");
+        System.out.println("    now(),");
+        System.out.println("    'DELETE',");
+        System.out.println("    substring_index(user(),_utf8'@',1),");
+
+        for (Iterator i=primaryKeyFieldConfigs.iterator(); i.hasNext(); ) {
+            FieldConfig fieldConfig = (FieldConfig)i.next();
+            System.out.print("    old."+fieldConfig.getName());
+            if (i.hasNext()) System.out.print(",");
+            System.out.println();
+        }
+
+        System.out.println(");");
+    }
+
+    public static void showUsage() {
+        System.out.println("Usage: org.safehaus.penrose.cache.CacheManager [OPTION]... <COMMAND>");
+        System.out.println();
+        System.out.println("Commands:");
+        System.out.println("  create             create cache tables");
+        System.out.println("  load               load data into cache tables");
+        System.out.println("  clean              clean data from cache tables");
+        System.out.println("  drop               drop cache tables");
+        System.out.println();
+        System.out.println("Options:");
+        System.out.println("  -?, --help         display this help and exit");
+        System.out.println("  -d                 run in debug mode");
+        System.out.println("  -v                 run in verbose mode");
+    }
+
+    public static void main(String args[]) throws Exception {
+
+        Level logLevel = Level.WARN;
+
+        LongOpt[] longopts = new LongOpt[1];
+        longopts[0] = new LongOpt("help", LongOpt.NO_ARGUMENT, null, '?');
+
+        Getopt getopt = new Getopt("CacheManager", args, "-:?dv", longopts);
+
+        Collection parameters = new ArrayList();
+        int c;
+        while ((c = getopt.getopt()) != -1) {
+            switch (c) {
+                case ':':
+                case '?':
+                    showUsage();
+                    System.exit(0);
+                    break;
+                case 1:
+                    parameters.add(getopt.getOptarg());
+                    break;
+                case 'd':
+                    logLevel = Level.DEBUG;
+                    break;
+                case 'v':
+                    logLevel = Level.INFO;
+                    break;
+            }
+        }
+
+        if (parameters.size() == 0) {
+            showUsage();
+            System.exit(0);
+        }
+
+        String homeDirectory = System.getProperty("penrose.home");
+
+        Logger rootLogger = Logger.getRootLogger();
+        rootLogger.setLevel(Level.OFF);
+
+        Logger logger = Logger.getLogger("org.safehaus.penrose");
+        File log4jProperties = new File((homeDirectory == null ? "" : homeDirectory+File.separator)+"conf"+File.separator+"log4j.properties");
+
+        if (log4jProperties.exists()) {
+            PropertyConfigurator.configure(log4jProperties.getAbsolutePath());
+
+        } else if (logLevel.equals(Level.DEBUG)) {
+            logger.setLevel(Level.DEBUG);
+            ConsoleAppender appender = new ConsoleAppender(new PatternLayout("%-20C{1} [%4L] %m%n"));
+            BasicConfigurator.configure(appender);
+
+        } else if (logLevel.equals(Level.INFO)) {
+            logger.setLevel(Level.INFO);
+            ConsoleAppender appender = new ConsoleAppender(new PatternLayout("[%d{MM/dd/yyyy HH:mm:ss}] %m%n"));
+            BasicConfigurator.configure(appender);
+
+        } else {
+            logger.setLevel(Level.WARN);
+            ConsoleAppender appender = new ConsoleAppender(new PatternLayout("[%d{MM/dd/yyyy HH:mm:ss}] %m%n"));
+            BasicConfigurator.configure(appender);
+        }
+
+        Iterator iterator = parameters.iterator();
+        String command = (String)iterator.next();
+
+        PenroseFactory penroseFactory = PenroseFactory.getInstance();
+        Penrose penrose = penroseFactory.createPenrose(homeDirectory);
+        penrose.start();
+
+        if ("create".equals(command)) {
+            create(penrose);
+
+        } else if ("load".equals(command)) {
+            load(penrose);
+
+        } else if ("clean".equals(command)) {
+            clean(penrose);
+
+        } else if ("drop".equals(command)) {
+            drop(penrose);
+
+        } else if ("changeTable".equals(command)) {
+            changeTable(penrose);
+        }
+
+        penrose.stop();
+
+        System.exit(0);
     }
 
 }

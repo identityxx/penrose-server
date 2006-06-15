@@ -253,8 +253,8 @@ public class FilterTool {
 
         Filter f = null;
 
-        for (Iterator j=row.getNames().iterator(); j.hasNext(); ) {
-            String name = (String)j.next();
+        for (Iterator i =row.getNames().iterator(); i.hasNext(); ) {
+            String name = (String)i.next();
             Object value = row.get(name);
             if (value == null) continue;
 
@@ -333,7 +333,10 @@ public class FilterTool {
 
         boolean result = false;
 
-        if (filter instanceof NotFilter) {
+        if (filter == null) {
+            result = true;
+
+        } else if (filter instanceof NotFilter) {
             result = isValid(entryMapping, (NotFilter)filter);
 
         } else if (filter instanceof AndFilter) {
@@ -458,7 +461,10 @@ public class FilterTool {
 
         boolean result = false;
 
-        if (filter instanceof NotFilter) {
+        if (filter == null) {
+            result = true;
+
+        } else if (filter instanceof NotFilter) {
             result = isValid(attributeValues, (NotFilter)filter);
 
         } else if (filter instanceof AndFilter) {
@@ -524,8 +530,7 @@ public class FilterTool {
 
     public static boolean isValid(AttributeValues attributeValues, NotFilter filter) throws Exception {
         Filter f = filter.getFilter();
-        boolean result = isValid(attributeValues, f);
-        return result;
+        return isValid(attributeValues, f);
     }
 
     public static boolean isValid(AttributeValues attributeValues, AndFilter filter) throws Exception {
@@ -553,4 +558,97 @@ public class FilterTool {
     public void setSchemaManager(SchemaManager schemaManager) {
         this.schemaManager = schemaManager;
     }
+
+    public static boolean isValid(Row row, SimpleFilter filter) throws Exception {
+        String attributeName = filter.getAttribute();
+        String operator = filter.getOperator();
+        String attributeValue = filter.getValue();
+
+        Object value = row.get(attributeName);
+        if (value == null) return false;
+
+        int c = attributeValue.toString().compareTo(value.toString());
+
+        if ("=".equals(operator)) {
+            if (c != 0) return false;
+
+        } else if ("<".equals(operator)) {
+            if (c >= 0) return false;
+
+        } else if ("<=".equals(operator)) {
+            if (c > 0) return false;
+
+        } else if (">".equals(operator)) {
+            if (c <= 0) return false;
+
+        } else if (">=".equals(operator)) {
+            if (c < 0) return false;
+
+        } else {
+            throw new Exception("Unsupported operator \""+operator+"\" in \""+filter+"\"");
+        }
+
+        return true;
+    }
+
+    public static boolean isValid(Row row, PresentFilter filter) throws Exception {
+        String attributeName = filter.getAttribute();
+
+        if (attributeName.equalsIgnoreCase("objectclass")) return true;
+
+        return row.contains(attributeName);
+    }
+
+    public static boolean isValid(Row row, AndFilter filter) throws Exception {
+        for (Iterator i=filter.getFilters().iterator(); i.hasNext(); ) {
+            Filter f = (Filter)i.next();
+            boolean result = isValid(row, f);
+            if (!result) return false;
+        }
+        return true;
+    }
+
+    public static boolean isValid(Row row, OrFilter filter) throws Exception {
+        for (Iterator i=filter.getFilters().iterator(); i.hasNext(); ) {
+            Filter f = (Filter)i.next();
+            boolean result = isValid(row, f);
+            if (result) return true;
+        }
+        return false;
+    }
+
+    public static boolean isValid(Row row, NotFilter filter) throws Exception {
+        Filter f = filter.getFilter();
+        return isValid(row, f);
+    }
+
+    public static boolean isValid(Row row, Filter filter) throws Exception {
+        log.debug("Checking filter "+filter);
+
+        boolean result = false;
+
+        if (filter == null) {
+            result = true;
+
+        } else if (filter instanceof NotFilter) {
+            result = isValid(row, (NotFilter)filter);
+
+        } else if (filter instanceof AndFilter) {
+            result = isValid(row, (AndFilter)filter);
+
+        } else if (filter instanceof OrFilter) {
+            result = isValid(row, (OrFilter)filter);
+
+        } else if (filter instanceof SimpleFilter) {
+            result = isValid(row, (SimpleFilter)filter);
+
+        } else if (filter instanceof PresentFilter) {
+            result = isValid(row, (PresentFilter)filter);
+        }
+
+        // log.debug("=> "+filter+" ("+filter.getClass().getName()+"): "+result);
+
+        return result;
+    }
+
 }

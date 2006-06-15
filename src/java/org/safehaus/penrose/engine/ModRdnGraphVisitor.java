@@ -117,7 +117,7 @@ public class ModRdnGraphVisitor extends GraphVisitor {
             newValues.set(name, values);
         }
 
-        Partition partition = engine.getPartitionManager().getPartition(sourceMapping);
+        Partition partition = engine.getPartitionManager().getPartition(entryMapping);
         SourceConfig sourceConfig = partition.getSourceConfig(sourceMapping.getSourceName());
 
         returnCode = engine.getConnector().modify(partition, sourceConfig, oldValues, newValues);

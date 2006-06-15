@@ -130,7 +130,7 @@ public class EngineFilterTool {
         if (!sourceName.equals(sourceMapping.getName())) return null;
 
         PartitionManager partitionManager = engine.getPartitionManager();
-        Partition partition = partitionManager.getPartition(sourceMapping);
+        Partition partition = partitionManager.getPartition(entryMapping);
 
         SourceConfig sourceConfig = partition.getSourceConfig(sourceMapping.getSourceName());
         if (sourceConfig == null) throw new Exception("Unknown source: "+sourceMapping.getSourceName());
@@ -143,19 +143,6 @@ public class EngineFilterTool {
         Filter newFilter = adapter.convert(entryMapping, filter);
 
         return newFilter;
-/*
-        StringBuffer sb = new StringBuffer();
-        for (Iterator i=substrings.iterator(); i.hasNext(); ) {
-            String substring = (String)i.next();
-            if ("*".equals(substring)) {
-                sb.append("%");
-            } else {
-                sb.append(substring);
-            }
-        }
-
-        return new SimpleFilter(fieldMapping.getName(), "like", sb.toString());
-*/
     }
 
     public Filter toSourceFilter(AttributeValues parentValues, EntryMapping entry, SourceMapping sourceMapping, NotFilter filter)

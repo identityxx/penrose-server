@@ -48,9 +48,12 @@ public class CompareHandler {
 
         int rc;
         try {
+
+            log.warn("Compare attribute "+attributeName+" in \""+dn+"\" with \""+attributeValue+"\".");
+
             log.debug("-------------------------------------------------------------------------------");
             log.debug("COMPARE:");
-            if (session != null && session.getBindDn() != null) log.info(" - Bind DN: " + session.getBindDn());
+            if (session != null && session.getBindDn() != null) log.debug(" - Bind DN: " + session.getBindDn());
             log.debug(" - DN: " + dn);
             log.debug(" - Attribute Name: " + attributeName);
             if (attributeValue instanceof byte[]) {
@@ -102,6 +105,12 @@ public class CompareHandler {
         } catch (Exception e) {
             log.error(e.getMessage(), e);
             rc = LDAPException.OPERATIONS_ERROR;
+        }
+
+        if (rc == LDAPException.SUCCESS) {
+            log.warn("Compare operation succeded.");
+        } else {
+            log.warn("Compare operation failed. RC="+rc);
         }
 
         return rc;

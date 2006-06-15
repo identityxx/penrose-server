@@ -18,6 +18,7 @@
 package org.safehaus.penrose.management;
 
 import org.apache.log4j.*;
+import org.apache.log4j.xml.DOMConfigurator;
 
 import javax.management.remote.JMXServiceURL;
 import javax.management.remote.JMXConnector;
@@ -34,17 +35,24 @@ import gnu.getopt.LongOpt;
 
 public class PenroseClient {
 
-    public Logger log = Logger.getLogger(PenroseClient.class);
+    public static Logger log = Logger.getLogger(PenroseClient.class);
 
     public final static String MBEAN_NAME = "Penrose:service=Penrose";
 
     public final static String PENROSE = "PENROSE";
     public final static String JBOSS   = "JBOSS";
 
+    public final static int DEFAULT_RMI_PORT            = 1099;
+    public final static int DEFAULT_RMI_TRANSPORT_PORT  = 0;
+    public final static int DEFAULT_HTTP_PORT           = 8112;
+    public final static String DEFAULT_PROTOCOL         = "rmi";
+
 	public String url;
     public String type;
+    private String protocol      = DEFAULT_PROTOCOL;
     public String host;
-    public int port;
+    public int port              = DEFAULT_RMI_PORT;
+    private int rmiTransportPort = DEFAULT_RMI_TRANSPORT_PORT;
     public String username;
     public String password;
 
@@ -68,6 +76,16 @@ public class PenroseClient {
 		this.password = password;
 	}
 
+    public PenroseClient(String type, String protocol, String host, int port, String username, String password) throws Exception {
+        this.type = type;
+        this.protocol = protocol;
+        this.host = host;
+        this.port = port;
+
+        this.username = username;
+        this.password = password;
+    }
+
 	public void connect() throws Exception {
 
         if (JBOSS.equals(type)) {
@@ -87,11 +105,19 @@ public class PenroseClient {
 
         } else {
 
-            String url = "service:jmx:rmi:///jndi/rmi://"+host+(port == 0 ? "" : ":"+port)+"/jmx";
-            //String url = "service:jmx:rmi://"+host+(port == 0 ? "" : ":"+port);
+            String url = "service:jmx:"+protocol+"://"+host;
+            if (rmiTransportPort != DEFAULT_RMI_TRANSPORT_PORT) url += ":"+rmiTransportPort;
+
+            url += "/jndi/"+protocol+"://"+host;
+            //if (port != DEFAULT_RMI_PORT)
+            url += ":"+port;
+
+            url += "/jmx";
+
+            //String url = "service:jmx:"+protocol+"://"+host+(port == 0 ? "" : ":"+port);
             log.debug("Connecting to Penrose server at "+url);
 
-            JMXServiceURL address = new JMXServiceURL(url);
+            JMXServiceURL serviceURL = new JMXServiceURL(url);
 
             String[] credentials = new String[2];
             credentials[0] = username;
@@ -100,7 +126,7 @@ public class PenroseClient {
             Hashtable parameters = new Hashtable();
             parameters.put(JMXConnector.CREDENTIALS, credentials);
 
-            connector = JMXConnectorFactory.connect(address, parameters);
+            connector = JMXConnectorFactory.connect(serviceURL, parameters);
             connection = connector.getMBeanServerConnection();
         }
 
@@ -114,6 +140,30 @@ public class PenroseClient {
         } else {
             connector.close();
         }
+    }
+
+    public String getType() {
+        return type;
+    }
+
+    public void setType(String type) {
+        this.type = type;
+    }
+
+    public String getProtocol() {
+        return protocol;
+    }
+
+    public void setProtocol(String protocol) {
+        this.protocol = protocol;
+    }
+
+    public int getRmiTransportPort() {
+        return rmiTransportPort;
+    }
+
+    public void setRmiTransportPort(int rmiTransportPort) {
+        this.rmiTransportPort = rmiTransportPort;
     }
 
 	public Object invoke(String method, Object[] paramValues, String[] paramClassNames) throws Exception {
@@ -202,6 +252,24 @@ public class PenroseClient {
         );
     }
 
+    public Collection getLoggerNames() throws Exception {
+        return (Collection)connection.getAttribute(name, "LoggerNames");
+    }
+
+    public String getLoggerLevel(String name) throws Exception {
+        return (String)invoke("getLoggerLevel",
+                new Object[] { name },
+                new String[] { String.class.getName() }
+        );
+    }
+
+    public void setLoggerLevel(String name, String level) throws Exception {
+        invoke("setLoggerLevel",
+                new Object[] { name, level },
+                new String[] { String.class.getName(), String.class.getName() }
+        );
+    }
+
     public static void showUsage() {
         System.out.println("Usage: org.safehaus.penrose.management.PenroseClient [OPTION]... <COMMAND>");
         System.out.println();
@@ -213,6 +281,7 @@ public class PenroseClient {
         System.out.println();
         System.out.println("Options:");
         System.out.println("  -?, --help         display this help and exit");
+        System.out.println("  -P protocol        Penrose JMX protocol");
         System.out.println("  -h host            Penrose server");
         System.out.println("  -p port            Penrose JMX port");
         System.out.println("  -D username        username");
@@ -223,17 +292,20 @@ public class PenroseClient {
 
     public static void main(String args[]) throws Exception {
 
-        String logLevel = "NORMAL";
-        String serverType = PENROSE;
-        String hostname = "localhost";
-        int portNumber = 0;
+        Level level          = Level.WARN;
+        String serverType    = PENROSE;
+        String protocol      = DEFAULT_PROTOCOL;
+        String hostname      = "localhost";
+        int portNumber       = DEFAULT_RMI_PORT;
+        int rmiTransportPort = DEFAULT_RMI_TRANSPORT_PORT;
+
         String bindDn = null;
         String bindPassword = null;
 
         LongOpt[] longopts = new LongOpt[1];
         longopts[0] = new LongOpt("help", LongOpt.NO_ARGUMENT, null, '?');
 
-        Getopt getopt = new Getopt("PenroseClient", args, "-:?dvt:h:p:D:w:", longopts);
+        Getopt getopt = new Getopt("PenroseClient", args, "-:?dvt:h:p:r:P:D:w:", longopts);
 
         Collection parameters = new ArrayList();
         int c;
@@ -248,10 +320,13 @@ public class PenroseClient {
                     parameters.add(getopt.getOptarg());
                     break;
                 case 'd':
-                    logLevel = "DEBUG";
+                    level = Level.DEBUG;
                     break;
                 case 'v':
-                    logLevel = "VERBOSE";
+                    level = Level.INFO;
+                    break;
+                case 'P':
+                    protocol = getopt.getOptarg();
                     break;
                 case 't':
                     serverType = getopt.getOptarg();
@@ -261,6 +336,9 @@ public class PenroseClient {
                     break;
                 case 'p':
                     portNumber = Integer.parseInt(getopt.getOptarg());
+                    break;
+                case 'r':
+                    rmiTransportPort = Integer.parseInt(getopt.getOptarg());
                     break;
                 case 'D':
                     bindDn = getopt.getOptarg();
@@ -277,37 +355,42 @@ public class PenroseClient {
 
         String homeDirectory = System.getProperty("penrose.home");
 
-        Logger rootLogger = Logger.getRootLogger();
-        rootLogger.setLevel(Level.toLevel("OFF"));
+        //Logger rootLogger = Logger.getRootLogger();
+        //rootLogger.setLevel(Level.OFF);
 
         Logger logger = Logger.getLogger("org.safehaus.penrose");
         File log4jProperties = new File((homeDirectory == null ? "" : homeDirectory+File.separator)+"conf"+File.separator+"log4j.properties");
+        File log4jXml = new File((homeDirectory == null ? "" : homeDirectory+File.separator)+"conf"+File.separator+"log4j.xml");
 
-        if (log4jProperties.exists()) {
-            PropertyConfigurator.configure(log4jProperties.getAbsolutePath());
-
-        } else if (logLevel.equals("DEBUG")) {
-            logger.setLevel(Level.toLevel("DEBUG"));
+        if (level.equals(Level.DEBUG)) {
+            logger.setLevel(level);
             ConsoleAppender appender = new ConsoleAppender(new PatternLayout("%-20C{1} [%4L] %m%n"));
             BasicConfigurator.configure(appender);
 
-        } else if (logLevel.equals("VERBOSE")) {
-            logger.setLevel(Level.toLevel("INFO"));
+        } else if (level.equals(Level.INFO)) {
+            logger.setLevel(level);
             ConsoleAppender appender = new ConsoleAppender(new PatternLayout("[%d{MM/dd/yyyy HH:mm:ss}] %m%n"));
             BasicConfigurator.configure(appender);
 
+        } else if (log4jProperties.exists()) {
+            PropertyConfigurator.configure(log4jProperties.getAbsolutePath());
+
+        } else if (log4jXml.exists()) {
+            DOMConfigurator.configure(log4jXml.getAbsolutePath());
+
         } else {
-            logger.setLevel(Level.toLevel("WARN"));
+            logger.setLevel(level);
             ConsoleAppender appender = new ConsoleAppender(new PatternLayout("[%d{MM/dd/yyyy HH:mm:ss}] %m%n"));
             BasicConfigurator.configure(appender);
         }
 
-        PenroseClient client = new PenroseClient(serverType, hostname, portNumber, bindDn, bindPassword);
+        PenroseClient client = new PenroseClient(serverType, protocol, hostname, portNumber, bindDn, bindPassword);
+        client.setRmiTransportPort(rmiTransportPort);
         client.connect();
 
         Iterator iterator = parameters.iterator();
         String command = (String)iterator.next();
-        logger.debug("Executing "+command);
+        log.debug("Executing "+command);
 
         if ("version".equals(command)) {
             String version = client.getProductName()+" "+client.getProductVersion();
@@ -335,16 +418,27 @@ public class PenroseClient {
 
                 System.out.println(serviceName+padding+"["+status+"]");
             }
+
+        } else if ("loggers".equals(command)) {
+            Collection loggerNames = client.getLoggerNames();
+            for (Iterator i=loggerNames.iterator(); i.hasNext(); ) {
+                String loggerName = (String)i.next();
+                String l = client.getLoggerLevel(loggerName);
+
+                System.out.println(loggerName+" ["+l +"]");
+            }
+
+        } else if ("logger".equals(command)) {
+            String loggerName = (String)iterator.next();
+            if (iterator.hasNext()) {
+                String l = (String)iterator.next();
+                client.setLoggerLevel(loggerName, "".equals(l) ? null : l);
+            } else {
+                String l = client.getLoggerLevel(loggerName);
+                System.out.println(l);
+            }
         }
 
         client.close();
-    }
-
-    public String getType() {
-        return type;
-    }
-
-    public void setType(String type) {
-        this.type = type;
     }
 }

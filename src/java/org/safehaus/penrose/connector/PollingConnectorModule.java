@@ -21,15 +21,14 @@ import org.safehaus.penrose.partition.SourceConfig;
 import org.safehaus.penrose.partition.ConnectionConfig;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.session.PenroseSearchResults;
+import org.safehaus.penrose.session.PenroseSearchControls;
+import org.safehaus.penrose.session.PenroseSession;
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.module.Module;
-import org.safehaus.penrose.handler.Handler;
 import org.safehaus.penrose.cache.EntryCache;
 import org.safehaus.penrose.cache.SourceCache;
 import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.engine.Engine;
-import org.ietf.ldap.LDAPConnection;
-import org.ietf.ldap.LDAPSearchConstraints;
 
 import java.util.Collection;
 import java.util.Iterator;
@@ -50,7 +49,6 @@ public class PollingConnectorModule extends Module {
     public Connector connector;
     public SourceCache sourceCache;
     public Engine engine;
-    public Handler handler;
 
     public PollingConnectorRunnable runnable;
 
@@ -65,7 +63,6 @@ public class PollingConnectorModule extends Module {
         connector = penrose.getConnector();
         sourceCache = connector.getSourceCache();
         engine = penrose.getEngine();
-        handler = penrose.getSessionHandler();
     }
 
     public void start() throws Exception {
@@ -141,7 +138,7 @@ public class PollingConnectorModule extends Module {
         while (sr.hasNext()) {
             Row pk = (Row)sr.next();
 
-            Integer changeNumber = (Integer)pk.remove("changeNumber");
+            Number changeNumber = (Number)pk.remove("changeNumber");
             Object changeTime = pk.remove("changeTime");
             String changeAction = (String)pk.remove("changeAction");
             String changeUser = (String)pk.remove("changeUser");
@@ -217,23 +214,33 @@ public class PollingConnectorModule extends Module {
 
         EntryCache entryCache = engine.getEntryCache();
 
-        Collection parentDns = entryCache.search(parentMapping);
+        PenroseSearchResults parentDns = new PenroseSearchResults();
+        entryCache.search(parentMapping, parentDns);
+
         for (Iterator i=parentDns.iterator(); i.hasNext(); ) {
             String parentDn = (String)i.next();
             String dn = rdn+","+parentDn;
 
             log.debug("Adding "+dn);
 
-            PenroseSearchResults sr = handler.search(
-                    null,
+            PenroseSession adminSession = penrose.newSession();
+            adminSession.setBindDn(penrose.getPenroseConfig().getRootDn());
+
+            PenroseSearchResults sr = new PenroseSearchResults();
+
+            PenroseSearchControls sc = new PenroseSearchControls();
+            sc.setScope(PenroseSearchControls.SCOPE_SUB);
+
+            adminSession.search(
                     dn,
-                    LDAPConnection.SCOPE_SUB,
-                    LDAPSearchConstraints.DEREF_NEVER,
                     "(objectClass=*)",
-                    null
+                    sc,
+                    sr
             );
 
             while (sr.hasNext()) sr.next();
+
+            adminSession.close();
         }
     }
 

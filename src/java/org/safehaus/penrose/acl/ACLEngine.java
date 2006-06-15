@@ -17,19 +17,14 @@
  */
 package org.safehaus.penrose.acl;
 
-import org.safehaus.penrose.mapping.Entry;
 import org.safehaus.penrose.mapping.EntryMapping;
-import org.safehaus.penrose.mapping.AttributeMapping;
 import org.safehaus.penrose.session.PenroseSession;
 import org.safehaus.penrose.partition.Partition;
-import org.safehaus.penrose.handler.Handler;
-import org.safehaus.penrose.util.EntryUtil;
+import org.safehaus.penrose.partition.PartitionManager;
+import org.safehaus.penrose.schema.SchemaManager;
+import org.safehaus.penrose.config.PenroseConfig;
 import org.ietf.ldap.LDAPException;
-import org.ietf.ldap.LDAPEntry;
-import org.ietf.ldap.LDAPAttributeSet;
-import org.ietf.ldap.LDAPAttribute;
 import org.apache.log4j.Logger;
-
 import java.util.*;
 
 /**
@@ -39,10 +34,11 @@ public class ACLEngine {
 
     public Logger log = Logger.getLogger(getClass());
 
-    public Handler handler;
+    private PenroseConfig penroseConfig;
+    private SchemaManager schemaManager;
+    private PartitionManager partitionManager;
 
-    public ACLEngine(Handler handler) {
-        this.handler = handler;
+    public ACLEngine() {
     }
 
     public void addPermission(Set set, String permission) {
@@ -67,8 +63,8 @@ public class ACLEngine {
             String scope,
             String permission) throws Exception {
 
-        targetDn = handler.getSchemaManager().normalize(targetDn);
-        //log.debug(" * "+targetDn);
+        targetDn = schemaManager.normalize(targetDn);
+        //log.debug("Checking ACL on \""+entryMapping.getDn()+"\".");
 
         for (Iterator i=entryMapping.getACL().iterator(); i.hasNext(); ) {
             ACI aci = (ACI)i.next();
@@ -89,40 +85,45 @@ public class ACLEngine {
                 continue;
             }
 
-            String subject = handler.getSchemaManager().normalize(aci.getSubject());
+            String subject = schemaManager.normalize(aci.getSubject());
             //log.debug("   ==> checking subject "+subject);
 
             if (subject.equals(ACI.SUBJECT_USER) && aci.getDn().equals(bindDn)) {
-                //log.debug("   ==> matching user");
-                return aci.getAction().equals(ACI.ACTION_GRANT);
+                boolean b = aci.getAction().equals(ACI.ACTION_GRANT);
+                //log.debug("User access: "+b);
+                return b;
 
             } else if (subject.equals(ACI.SUBJECT_SELF) && targetDn.equals(bindDn)) {
-                //log.debug("   ==> matching self");
-                return aci.getAction().equals(ACI.ACTION_GRANT);
+                boolean b = aci.getAction().equals(ACI.ACTION_GRANT);
+                //log.debug("Self access: "+b);
+                return b;
 
             } else if (subject.equals(ACI.SUBJECT_ANONYMOUS) && (bindDn == null || bindDn.equals(""))) {
-                //log.debug("   ==> matching anonymous");
-                return aci.getAction().equals(ACI.ACTION_GRANT);
+                boolean b = aci.getAction().equals(ACI.ACTION_GRANT);
+                //log.debug("Anonymous access: "+b);
+                return b;
 
             } else if (subject.equals(ACI.SUBJECT_AUTHENTICATED) && bindDn != null && !bindDn.equals("")) {
-                //log.debug("   ==> matching authenticated");
-                return aci.getAction().equals(ACI.ACTION_GRANT);
+                boolean b = aci.getAction().equals(ACI.ACTION_GRANT);
+                //log.debug("Authenticated access: "+b);
+                return b;
 
             } else if (subject.equals(ACI.SUBJECT_ANYBODY)) {
-                //log.debug("   ==> matching anybody");
-                return aci.getAction().equals(ACI.ACTION_GRANT);
+                boolean b = aci.getAction().equals(ACI.ACTION_GRANT);
+                //log.debug("Anybody access: "+b);
+                return b;
             }
         }
 
-        Partition partition = handler.getPartitionManager().getPartitionByDn(targetDn);
+        Partition partition = partitionManager.getPartitionByDn(targetDn);
         if (partition == null) {
-            //log.debug("Partition for "+dn+" not found.");
+            log.debug("Partition for "+targetDn+" not found.");
             return false;
         }
 
         entryMapping = partition.getParent(entryMapping);
         if (entryMapping == null) {
-            //log.debug("Parent entry for "+dn+" not found.");
+            log.debug("Parent entry for "+targetDn+" not found.");
             return false;
         }
 
@@ -139,14 +140,14 @@ public class ACLEngine {
             return rc;
         }
 
-        String rootDn = handler.getSchemaManager().normalize(handler.getRootUserConfig().getDn());
-        String bindDn = handler.getSchemaManager().normalize(session.getBindDn());
+        String rootDn = schemaManager.normalize(penroseConfig.getRootDn());
+        String bindDn = schemaManager.normalize(session == null ? null : session.getBindDn());
         if (rootDn != null && rootDn.equals(bindDn)) {
             //log.debug("root user => SUCCESS");
             return rc;
         }
 
-        String targetDn = handler.getSchemaManager().normalize(dn);
+        String targetDn = schemaManager.normalize(dn);
         boolean result = getObjectPermission(bindDn, targetDn, entryMapping, ACI.SCOPE_OBJECT, permission);
 
         if (result) {
@@ -154,7 +155,7 @@ public class ACLEngine {
             return rc;
         }
 
-        log.debug("acl evaluation => FAILED");
+        log.debug("ACL evaluation => FAILED");
         rc = LDAPException.INSUFFICIENT_ACCESS_RIGHTS;
         return rc;
     }
@@ -210,7 +211,7 @@ public class ACLEngine {
 
     public boolean checkSubject(String bindDn, String targetDn, ACI aci) throws Exception {
 
-        String subject = handler.getSchemaManager().normalize(aci.getSubject());
+        String subject = schemaManager.normalize(aci.getSubject());
         //log.debug("   ==> checking subject "+subject);
 
         if (subject.equals(ACI.SUBJECT_USER) && aci.getDn().equals(bindDn)) {
@@ -290,7 +291,7 @@ public class ACLEngine {
             return aci.getAction().equals(ACI.ACTION_GRANT);
         }
 
-        Partition partition = handler.getPartitionManager().getPartitionByDn(entryMapping.getDn());
+        Partition partition = partitionManager.getPartitionByDn(entryMapping.getDn());
         if (partition == null) return false;
 
         entryMapping = partition.getParent(entryMapping);
@@ -359,7 +360,7 @@ public class ACLEngine {
             }
         }
 
-        Partition partition = handler.getPartitionManager().getPartitionByDn(entryMapping.getDn());
+        Partition partition = partitionManager.getPartitionByDn(entryMapping.getDn());
         if (partition == null) return;
 
         entryMapping = partition.getParent(entryMapping);
@@ -377,7 +378,7 @@ public class ACLEngine {
             Collection denies
             ) throws Exception {
 
-        String rootDn = handler.getSchemaManager().normalize(handler.getRootUserConfig().getDn());
+        String rootDn = schemaManager.normalize(penroseConfig.getRootDn());
     	if (rootDn.equals(bindDn)) {
             grants.addAll(attributeNames);
             return;
@@ -399,45 +400,27 @@ public class ACLEngine {
 */
     }
 
-    public LDAPEntry filterAttributes(
-            PenroseSession session,
-            Entry entry)
-            throws Exception {
+    public SchemaManager getSchemaManager() {
+        return schemaManager;
+    }
 
-        String bindDn = handler.getSchemaManager().normalize(session.getBindDn());
+    public void setSchemaManager(SchemaManager schemaManager) {
+        this.schemaManager = schemaManager;
+    }
 
-        String targetDn = handler.getSchemaManager().normalize(entry.getDn());
-        EntryMapping entryMapping = entry.getEntryMapping();
-        LDAPEntry ldapEntry = entry.toLDAPEntry();
+    public PartitionManager getPartitionManager() {
+        return partitionManager;
+    }
 
-        //log.debug("Evaluating attributes read permission for "+bindDn);
+    public void setPartitionManager(PartitionManager partitionManager) {
+        this.partitionManager = partitionManager;
+    }
 
-        Set grants = new HashSet();
-        Set denies = new HashSet();
+    public PenroseConfig getPenroseConfig() {
+        return penroseConfig;
+    }
 
-        Collection attributeNames = new ArrayList();
-        for (Iterator i=entry.getAttributeSet().iterator(); i.hasNext(); ) {
-            LDAPAttribute attribute = (LDAPAttribute)i.next();
-            attributeNames.add(attribute.getName());
-        }
-
-        getReadableAttributes(bindDn, targetDn, entryMapping, attributeNames, grants, denies);
-
-        //log.debug("Readable attributes: "+grants);
-        //log.debug("Unreadable attributes: "+denies);
-
-        LDAPAttributeSet attributeSet = ldapEntry.getAttributeSet();
-
-        Collection list = new ArrayList();
-        for (Iterator i=attributeSet.iterator(); i.hasNext(); ) {
-            LDAPAttribute attribute = (LDAPAttribute)i.next();
-            //if (checkAttributeReadPermission(bindDn, targetDn, entryMapping, attribute.getName())) continue;
-            if (grants.contains(attribute.getName())) continue;
-            list.add(attribute);
-        }
-
-        attributeSet.removeAll(list);
-
-        return ldapEntry;
+    public void setPenroseConfig(PenroseConfig penroseConfig) {
+        this.penroseConfig = penroseConfig;
     }
 }

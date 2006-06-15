@@ -23,8 +23,11 @@ import org.safehaus.penrose.connector.Connector;
 import org.safehaus.penrose.connector.Connection;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.SourceConfig;
-import org.safehaus.penrose.partition.ConnectionConfig;
 import org.safehaus.penrose.session.PenroseSearchResults;
+import org.safehaus.penrose.session.PenroseSearchControls;
+import org.safehaus.penrose.pipeline.PipelineEvent;
+import org.safehaus.penrose.pipeline.PipelineAdapter;
+import org.safehaus.penrose.thread.ThreadManager;
 import org.apache.log4j.Logger;
 
 import java.util.*;
@@ -35,6 +38,8 @@ import java.util.*;
 public class SourceCacheStorage {
 
     Logger log = Logger.getLogger(getClass());
+
+    ThreadManager threadManager;
 
     Partition partition;
     Connector connector;
@@ -114,6 +119,7 @@ public class SourceCacheStorage {
     }
 
     public Map load(Collection filters, Collection missingKeys) throws Exception {
+        missingKeys.addAll(filters);
         return new HashMap();
     }
 
@@ -165,23 +171,42 @@ public class SourceCacheStorage {
 
         if (!autoRefresh) return;
 */
-        log.debug("Loading cache for "+sourceConfig.getName());
+        String s = sourceConfig.getParameter(SourceConfig.SIZE_LIMIT);
+        final int sizeLimit = s == null ? SourceConfig.DEFAULT_SIZE_LIMIT : Integer.parseInt(s);
 
-        Connection connection = connector.getConnection(partition, sourceConfig.getConnectionName());
+        log.info("Loading cache for "+sourceConfig.getName()+"...");
 
-        PenroseSearchResults sr = connection.load(sourceConfig, null, 100);
+        final Connection connection = connector.getConnection(partition, sourceConfig.getConnectionName());
 
-        //log.debug("Results:");
-        while (sr.hasNext()) {
-            AttributeValues sourceValues = (AttributeValues)sr.next();
-            Row pk = sourceConfig.getPrimaryKeyValues(sourceValues);
-            //log.debug(" - "+pk+": "+sourceValues);
+        final PenroseSearchResults sr = new PenroseSearchResults();
 
-            put(pk, sourceValues);
-        }
+        sr.addListener(new PipelineAdapter() {
+            public void objectAdded(PipelineEvent event) {
+                try {
+                    AttributeValues sourceValues = (AttributeValues)event.getObject();
+                    Row pk = sourceConfig.getPrimaryKeyValues(sourceValues);
+                    log.info("Storing "+pk+" in source cache");
+                    put(pk, sourceValues);
+                } catch (Exception e) {
+                    log.debug(e.getMessage(), e);
+                }
+            }
 
-        int lastChangeNumber = connection.getLastChangeNumber(sourceConfig);
-        setLastChangeNumber(lastChangeNumber);
+            public void pipelineClosed(PipelineEvent event) {
+                try {
+                    int lastChangeNumber = connection.getLastChangeNumber(sourceConfig);
+                    log.info("Last change number for "+sourceConfig.getName()+": "+lastChangeNumber);
+                    setLastChangeNumber(lastChangeNumber);
+                } catch (Exception e) {
+                    log.debug(e.getMessage(), e);
+                }
+            }
+        });
+
+        PenroseSearchControls sc = new PenroseSearchControls();
+        sc.setSizeLimit(sizeLimit);
+
+        connection.load(sourceConfig, null, sc, sr);
     }
 
     public Partition getPartition() {
@@ -190,5 +215,13 @@ public class SourceCacheStorage {
 
     public void setPartition(Partition partition) {
         this.partition = partition;
+    }
+
+    public ThreadManager getThreadManager() {
+        return threadManager;
+    }
+
+    public void setThreadManager(ThreadManager threadManager) {
+        this.threadManager = threadManager;
     }
 }

@@ -19,17 +19,19 @@ package org.safehaus.penrose.handler;
 
 import org.safehaus.penrose.session.PenroseSession;
 import org.safehaus.penrose.session.PenroseSearchResults;
-import org.safehaus.penrose.event.AddEvent;
+import org.safehaus.penrose.session.PenroseSearchControls;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.PartitionManager;
 import org.safehaus.penrose.mapping.*;
-import org.safehaus.penrose.cache.EntryCache;
 import org.safehaus.penrose.util.EntryUtil;
 import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.service.ServiceConfig;
 import org.ietf.ldap.*;
 import org.apache.log4j.Logger;
 
+import javax.naming.directory.Attributes;
+import javax.naming.directory.Attribute;
+import javax.naming.NamingEnumeration;
 import java.util.*;
 
 /**
@@ -47,16 +49,18 @@ public class AddHandler {
 
     public int add(
             PenroseSession session,
-            LDAPEntry entry)
+            String dn,
+            Attributes attributes)
     throws Exception {
 
         int rc;
         try {
-            log.info("-------------------------------------------------");
-            log.info("ADD:");
-            if (session != null && session.getBindDn() != null) log.info(" - Bind DN: "+session.getBindDn());
-            log.info(" - Entry:\n"+EntryUtil.toString(entry));
-            log.info("");
+            log.warn("Add entry \""+dn+"\".");
+            log.debug("-------------------------------------------------");
+            log.debug("ADD:");
+            if (session != null && session.getBindDn() != null) log.debug(" - Bind DN: "+session.getBindDn());
+            log.debug(" - Entry: "+dn);
+            log.debug("");
 
             if (session != null && session.getBindDn() == null) {
                 PenroseConfig penroseConfig = handler.getPenroseConfig();
@@ -68,20 +72,27 @@ public class AddHandler {
                 }
             }
 
-            rc = performAdd(session, entry);
+            rc = performAdd(session, dn, attributes);
             if (rc != LDAPException.SUCCESS) return rc;
+
+            // refreshing entry cache
+
+            PenroseSession adminSession = handler.getPenrose().newSession();
+            adminSession.setBindDn(handler.getPenroseConfig().getRootDn());
 
             PenroseSearchResults results = new PenroseSearchResults();
 
-            handler.getSearchHandler().search(
-                    null,
-                    entry.getDN(),
-                    LDAPConnection.SCOPE_SUB,
-                    LDAPSearchConstraints.DEREF_NEVER,
+            PenroseSearchControls sc = new PenroseSearchControls();
+            sc.setScope(PenroseSearchControls.SCOPE_SUB);
+
+            adminSession.search(
+                    dn,
                     "(objectClass=*)",
-                    new ArrayList(),
+                    sc,
                     results
             );
+
+            while (results.hasNext()) results.next();
 
         } catch (LDAPException e) {
             rc = e.getResultCode();
@@ -91,15 +102,22 @@ public class AddHandler {
             rc = LDAPException.OPERATIONS_ERROR;
         }
 
+        if (rc == LDAPException.SUCCESS) {
+            log.warn("Add operation succeded.");
+        } else {
+            log.warn("Add operation failed. RC="+rc);
+        }
+
         return rc;
     }
 
     public int performAdd(
             PenroseSession session,
-            LDAPEntry entry)
+            String dn,
+            Attributes attributes)
     throws Exception {
 
-        String dn = LDAPDN.normalize(entry.getDN());
+        dn = LDAPDN.normalize(dn);
 
         // find parent entry
         String parentDn = EntryUtil.getParentDn(dn);
@@ -123,7 +141,7 @@ public class AddHandler {
 
         if (partition.isProxy(parentMapping)) {
             log.debug("Adding "+dn+" via proxy");
-            handler.getEngine().addProxy(partition, parentMapping, entry);
+            handler.getEngine().addProxy(partition, parentMapping, dn, attributes);
             return LDAPException.SUCCESS;
         }
 
@@ -131,14 +149,15 @@ public class AddHandler {
 
         AttributeValues values = new AttributeValues();
 
-        for (Iterator iterator=entry.getAttributeSet().iterator(); iterator.hasNext(); ) {
-            LDAPAttribute attribute = (LDAPAttribute)iterator.next();
-            String attributeName = attribute.getName();
+        for (NamingEnumeration i=attributes.getAll(); i.hasMore(); ) {
+            Attribute attribute = (Attribute)i.next();
+            String attributeName = attribute.getID();
 
-            String v[] = attribute.getStringValueArray();
-            Set set = (Set)values.get(attributeName);
-            if (set == null) set = new HashSet();
-            set.addAll(Arrays.asList(v));
+            Set set = new HashSet();
+            for (NamingEnumeration j=attribute.getAll(); j.hasMore(); ) {
+                Object value = j.next();
+                set.add(value);
+            }
             values.set(attributeName, set);
         }
 

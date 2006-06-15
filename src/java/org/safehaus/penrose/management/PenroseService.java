@@ -61,7 +61,7 @@ public class PenroseService implements PenroseServiceMBean {
         try {
             return penroseServer.getPenroseConfig().getHome();
         } catch (Exception e) {
-            log.debug(e.getMessage(), e);
+            log.error(e.getMessage(), e);
             throw e;
         }
     }
@@ -72,7 +72,7 @@ public class PenroseService implements PenroseServiceMBean {
             penroseConfig.setHome(home);
             penroseServer.reload();
         } catch (Exception e) {
-            log.debug(e.getMessage(), e);
+            log.error(e.getMessage(), e);
             throw e;
         }
     }
@@ -81,7 +81,7 @@ public class PenroseService implements PenroseServiceMBean {
         try {
             penroseServer.start();
         } catch (Exception e) {
-            log.debug(e.getMessage(), e);
+            log.error(e.getMessage(), e);
             throw e;
         }
     }
@@ -90,7 +90,7 @@ public class PenroseService implements PenroseServiceMBean {
         try {
             penroseServer.stop();
         } catch (Exception e) {
-            log.debug(e.getMessage(), e);
+            log.error(e.getMessage(), e);
             throw e;
         }
     }
@@ -99,7 +99,7 @@ public class PenroseService implements PenroseServiceMBean {
         try {
             penroseServer.reload();
         } catch (Exception e) {
-            log.debug(e.getMessage(), e);
+            log.error(e.getMessage(), e);
             throw e;
         }
     }
@@ -110,7 +110,7 @@ public class PenroseService implements PenroseServiceMBean {
             penroseServer.reload();
             penroseServer.start();
         } catch (Exception e) {
-            log.debug(e.getMessage(), e);
+            log.error(e.getMessage(), e);
             throw e;
         }
     }
@@ -119,7 +119,7 @@ public class PenroseService implements PenroseServiceMBean {
         try {
             penroseServer.store();
         } catch (Exception e) {
-            log.debug(e.getMessage(), e);
+            log.error(e.getMessage(), e);
             throw e;
         }
     }
@@ -131,7 +131,7 @@ public class PenroseService implements PenroseServiceMBean {
             serviceNames.addAll(serviceManager.getServiceNames());
             return serviceNames;
         } catch (Exception e) {
-            log.debug(e.getMessage(), e);
+            log.error(e.getMessage(), e);
             throw e;
         }
     }
@@ -141,7 +141,7 @@ public class PenroseService implements PenroseServiceMBean {
             ServiceManager serviceManager = penroseServer.getServiceManager();
             serviceManager.start(serviceName);
         } catch (Exception e) {
-            log.debug(e.getMessage(), e);
+            log.error(e.getMessage(), e);
             throw e;
         }
     }
@@ -151,7 +151,7 @@ public class PenroseService implements PenroseServiceMBean {
             ServiceManager serviceManager = penroseServer.getServiceManager();
             serviceManager.stop(serviceName);
         } catch (Exception e) {
-            log.debug(e.getMessage(), e);
+            log.error(e.getMessage(), e);
             throw e;
         }
     }
@@ -161,7 +161,7 @@ public class PenroseService implements PenroseServiceMBean {
             ServiceManager serviceManager = penroseServer.getServiceManager();
             return serviceManager.getStatus(serviceName);
         } catch (Exception e) {
-            log.debug(e.getMessage(), e);
+            log.error(e.getMessage(), e);
             throw e;
         }
     }
@@ -184,7 +184,7 @@ public class PenroseService implements PenroseServiceMBean {
             }
             return results;
         } catch (Exception e) {
-            log.debug(e.getMessage(), e);
+            log.error(e.getMessage(), e);
             throw e;
         }
     }
@@ -204,7 +204,7 @@ public class PenroseService implements PenroseServiceMBean {
 
             return content;
         } catch (Exception e) {
-            log.debug(e.getMessage(), e);
+            log.error(e.getMessage(), e);
             throw e;
         }
     }
@@ -221,9 +221,31 @@ public class PenroseService implements PenroseServiceMBean {
             out.write(content);
             out.close();
         } catch (Exception e) {
-            log.debug(e.getMessage(), e);
+            log.error(e.getMessage(), e);
             throw e;
         }
+    }
+
+    public Collection getLoggerNames() throws Exception {
+        Collection loggerNames = new ArrayList();
+        for (Enumeration e = log.getLoggerRepository().getCurrentLoggers(); e.hasMoreElements(); ) {
+            Logger logger = (Logger)e.nextElement();
+            loggerNames.add(logger.getName());
+        }
+        return loggerNames;
+    }
+
+    public String getLoggerLevel(String name) throws Exception {
+        Logger logger = name == null || "".equals(name) ? Logger.getRootLogger() : Logger.getLogger(name);
+        Level level = logger.getLevel();
+        //log.debug("Logger "+name+": "+level);
+        return level == null ? null : level.toString();
+    }
+
+    public void setLoggerLevel(String name, String level) throws Exception {
+        Logger logger = name == null || "".equals(name) ? Logger.getRootLogger() : Logger.getLogger(name);
+        //log.debug("Logger "+name+": "+Level.toLevel(level));
+        logger.setLevel(Level.toLevel(level));
     }
 
     public PenroseServer getPenroseServer() {

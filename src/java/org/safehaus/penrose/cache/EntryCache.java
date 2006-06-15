@@ -25,6 +25,8 @@ import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.PartitionManager;
 import org.safehaus.penrose.partition.SourceConfig;
 import org.safehaus.penrose.Penrose;
+import org.safehaus.penrose.thread.ThreadManager;
+import org.safehaus.penrose.session.PenroseSearchResults;
 import org.safehaus.penrose.connector.ConnectionManager;
 import org.safehaus.penrose.filter.Filter;
 import org.apache.log4j.Logger;
@@ -45,6 +47,7 @@ public class EntryCache {
     ConnectionManager connectionManager;
     PenroseConfig penroseConfig;
     PartitionManager partitionManager;
+    ThreadManager threadManager;
 
     public Map caches = new TreeMap();
     public Collection listeners = new ArrayList();
@@ -104,16 +107,26 @@ public class EntryCache {
         getCacheStorage(entryMapping).add(filter, dn);
     }
     
-    public Collection search(EntryMapping entryMapping) throws Exception {
-        return getCacheStorage(entryMapping).search(null, (Filter)null);
+    public void search(EntryMapping entryMapping, PenroseSearchResults results) throws Exception {
+        getCacheStorage(entryMapping).search(null, (Filter)null, results);
     }
 
     public Collection search(EntryMapping entryMapping, SourceConfig sourceConfig, Row filter) throws Exception {
         return getCacheStorage(entryMapping).search(sourceConfig, filter);
     }
 
-    public Collection search(EntryMapping entryMapping, String parentDn, Filter filter) throws Exception {
-        return getCacheStorage(entryMapping).search(parentDn, filter);
+    public boolean contains(EntryMapping entryMapping, String parentDn, Filter filter) throws Exception {
+        return getCacheStorage(entryMapping).contains(parentDn, filter);
+    }
+
+    public void search(
+            EntryMapping entryMapping,
+            String parentDn,
+            Filter filter,
+            PenroseSearchResults results)
+            throws Exception {
+
+        getCacheStorage(entryMapping).search(parentDn, filter, results);
     }
 
     public void put(Entry entry) throws Exception {
@@ -130,7 +143,11 @@ public class EntryCache {
 
     public Entry get(String dn) throws Exception {
         Partition partition = partitionManager.findPartition(dn);
+        if (partition == null) throw new Exception("Can't find partition for "+dn);
+
         EntryMapping entryMapping = partition.findEntryMapping(dn);
+        if (entryMapping == null) throw new Exception("Can't entry mapping for "+dn);
+
         return getCacheStorage(entryMapping).get(dn);
     }
 
@@ -148,7 +165,9 @@ public class EntryCache {
         for (Iterator i=children.iterator(); i.hasNext(); ) {
             EntryMapping childMapping = (EntryMapping)i.next();
 
-            Collection childDns = search(childMapping, dn, null);
+            PenroseSearchResults childDns = new PenroseSearchResults();
+            search(childMapping, dn, null, childDns);
+
             for (Iterator j=childDns.iterator(); j.hasNext(); ) {
                 String childDn = (String)j.next();
 
@@ -227,7 +246,11 @@ public class EntryCache {
             EntryMapping entryMapping = (EntryMapping)i.next();
 
             EntryCacheStorage entryCacheStorage = getCacheStorage(entryMapping);
-            Collection dns = entryCacheStorage.search(null, (Filter)null);
+            if (!entryCacheStorage.contains(null, (Filter)null)) continue;
+
+            PenroseSearchResults dns = new PenroseSearchResults();
+            dns = entryCacheStorage.search(null, (Filter)null, dns);
+
             if (dns == null) continue;
 
             Collection children = partition.getChildren(entryMapping);
@@ -298,8 +321,16 @@ public class EntryCache {
                         break;
                 }
             } catch (Exception e) {
-                log.debug(e.getMessage(), e);
+                log.error(e.getMessage(), e);
             }
         }
+    }
+
+    public ThreadManager getThreadManager() {
+        return threadManager;
+    }
+
+    public void setThreadManager(ThreadManager threadManager) {
+        this.threadManager = threadManager;
     }
 }

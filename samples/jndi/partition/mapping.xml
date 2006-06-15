@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mapping>
+
+  <entry dn="dc=JNDI,dc=Example,dc=com">
+    <oc>dcObject</oc>
+    <oc>organization</oc>
+    <at name="dc" rdn="true">
+      <constant>JNDI</constant>
+    </at>
+    <at name="o">
+      <constant>JNDI</constant>
+    </at>
+    <aci subject="self">
+      <permission>rws</permission>
+    </aci>
+    <aci>
+      <target>ATTRIBUTES</target>
+      <attributes>userPassword</attributes>
+      <action>deny</action>
+      <permission>rs</permission>
+    </aci>
+    <aci>
+      <permission>rs</permission>
+    </aci>
+  </entry>
+  <entry dn="ou=Users,dc=JNDI,dc=Example,dc=com">
+    <oc>organizationalUnit</oc>
+    <at name="ou" rdn="true">
+      <constant>Users</constant>
+    </at>
+  </entry>
+
+  <entry dn="uid=...,ou=Users,dc=JNDI,dc=Example,dc=com">
+    <oc>person</oc>
+    <oc>organizationalPerson</oc>
+    <oc>inetOrgPerson</oc>
+    <at name="uid" rdn="true">
+      <variable>u.uid</variable>
+    </at>
+    <at name="cn">
+      <variable>u.cn</variable>
+    </at>
+    <at name="sn">
+      <variable>u.sn</variable>
+    </at>
+    <at name="givenName">
+      <variable>u.givenName</variable>
+    </at>
+    <at name="ou">
+      <variable>u.ou</variable>
+    </at>
+    <at name="l">
+      <variable>u.l</variable>
+    </at>
+    <at name="mail">
+      <variable>u.mail</variable>
+    </at>
+    <at name="telephoneNumber">
+      <variable>u.telephoneNumber</variable>
+    </at>
+    <at name="facsimileTelephoneNumber">
+      <variable>u.facsimileTelephoneNumber</variable>
+    </at>
+    <at name="roomNumber">
+      <variable>u.roomNumber</variable>
+    </at>
+    <at name="userPassword">
+      <variable>u.userPassword</variable>
+    </at>
+    <source name="u">
+      <source-name>users</source-name>
+      <field name="uid">
+        <variable>uid</variable>
+      </field>
+      <field name="cn">
+        <variable>cn</variable>
+      </field>
+      <field name="sn">
+        <variable>sn</variable>
+      </field>
+      <field name="givenName">
+        <variable>givenName</variable>
+      </field>
+      <field name="ou">
+        <variable>ou</variable>
+      </field>
+      <field name="l">
+        <variable>l</variable>
+      </field>
+      <field name="mail">
+        <variable>mail</variable>
+      </field>
+      <field name="telephoneNumber">
+        <variable>telephoneNumber</variable>
+      </field>
+      <field name="facsimileTelephoneNumber">
+        <variable>facsimileTelephoneNumber</variable>
+      </field>
+      <field name="roomNumber">
+        <variable>roomNumber</variable>
+      </field>
+      <field name="userPassword">
+        <variable>userPassword</variable>
+      </field>
+    </source>
+  </entry>
+
+  <entry dn="ou=Groups,dc=JNDI,dc=Example,dc=com">
+    <oc>organizationalUnit</oc>
+    <at name="ou" rdn="true">
+      <constant>Groups</constant>
+    </at>
+  </entry>
+
+  <entry dn="cn=...,ou=Groups,dc=JNDI,dc=Example,dc=com">
+    <oc>groupOfUniqueNames</oc>
+    <at name="cn" rdn="true">
+      <variable>g.cn</variable>
+    </at>
+    <at name="ou">
+      <variable>g.ou</variable>
+    </at>
+    <at name="uniqueMember">
+      <expression foreach="g.uniqueMember" var="um">
+int i=um.indexOf("=");
+int j=um.indexOf(",");
+return "uid="+um.substring(i+1, j)+",ou=Users,dc=Example,dc=com";
+      </expression>
+    </at>
+    <source name="g">
+      <source-name>groups</source-name>
+      <field name="cn">
+        <variable>cn</variable>
+      </field>
+      <field name="ou">
+        <variable>ou</variable>
+      </field>
+      <field name="uniqueMember">
+        <expression foreach="uniqueMember" var="um">
+int i=um.indexOf("=");
+int j=um.indexOf(",");
+return "uid="+um.substring(i+1, j)+",ou=People,dc=Example,dc=com";
+        </expression>
+      </field>
+    </source>
+  </entry>
+
+</mapping>

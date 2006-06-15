@@ -30,16 +30,19 @@ import org.safehaus.penrose.partition.FieldConfig;
 import org.safehaus.penrose.cache.EntryCache;
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.graph.Graph;
-import org.safehaus.penrose.thread.ThreadPool;
+import org.safehaus.penrose.thread.ThreadManager;
 import org.safehaus.penrose.thread.MRSWLock;
 import org.safehaus.penrose.thread.Queue;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.filter.SimpleFilter;
 import org.safehaus.penrose.filter.FilterTool;
 import org.safehaus.penrose.session.PenroseSearchResults;
-import org.ietf.ldap.LDAPEntry;
+import org.safehaus.penrose.session.PenroseSearchControls;
+import org.safehaus.penrose.util.EntryUtil;
 import org.apache.log4j.Logger;
+import org.ietf.ldap.LDAPDN;
 
+import javax.naming.directory.Attributes;
 import java.util.*;
 
 /**
@@ -60,7 +63,7 @@ public abstract class Engine {
 
     public boolean stopping = false;
 
-    public ThreadPool threadPool;
+    ThreadManager threadManager;
     public EngineFilterTool filterTool;
 
     public Map locks = new HashMap();
@@ -212,14 +215,6 @@ public abstract class Engine {
 
     public abstract void start() throws Exception;
 
-    public ThreadPool getThreadPool() {
-        return threadPool;
-    }
-
-    public void setThreadPool(ThreadPool threadPool) {
-        this.threadPool = threadPool;
-    }
-
     public abstract void stop() throws Exception;
 
     public String getStartingSourceName(EntryMapping entryMapping) throws Exception {
@@ -350,18 +345,6 @@ public abstract class Engine {
         return filter;
     }
 
-    public void execute(Runnable runnable) throws Exception {
-        String s = engineConfig.getParameter(EngineConfig.ALLOW_CONCURRENCY);
-        boolean allowConcurrency = s == null ? true : new Boolean(s).booleanValue();
-
-        if (threadPool == null || !allowConcurrency || log.isDebugEnabled()) {
-            runnable.run();
-
-        } else {
-            threadPool.execute(runnable);
-        }
-    }
-
     public MergeEngine getMergeEngine() {
         return mergeEngine;
     }
@@ -473,7 +456,8 @@ public abstract class Engine {
     public abstract void addProxy(
             Partition partition,
             EntryMapping entryMapping,
-            LDAPEntry entry
+            String dn,
+            Attributes attributes
             ) throws Exception;
 
     public abstract void modifyProxy(
@@ -494,16 +478,6 @@ public abstract class Engine {
             Partition partition,
             EntryMapping entryMapping,
             String dn
-            ) throws Exception;
-
-    public abstract void searchProxy(
-            Partition partition,
-            EntryMapping entryMapping,
-            String base,
-            int scope,
-            String filter,
-            Collection attributeNames,
-            PenroseSearchResults results
             ) throws Exception;
 
     public void load(
@@ -614,12 +588,22 @@ public abstract class Engine {
     public abstract int modify(Entry entry, AttributeValues newValues) throws Exception;
 
     public abstract void search(
-            Entry parent,
-            AttributeValues parentSourceValues,
+            final Collection path,
+            final AttributeValues parentSourceValues,
+            final EntryMapping entryMapping,
+            boolean single,
+            final Filter filter,
+            PenroseSearchControls sc,
+            PenroseSearchResults results) throws Exception;
+
+    public abstract void searchProxy(
+            Partition partition,
             EntryMapping entryMapping,
-            Filter filter,
-            PenroseSearchResults dns)
-            throws Exception;
+            String base,
+            String filter,
+            PenroseSearchControls sc,
+            PenroseSearchResults results
+            ) throws Exception;
 
    public synchronized MRSWLock getLock(String dn) {
 
@@ -773,18 +757,25 @@ public abstract class Engine {
         Collection rdns = computeRdn(interpreter, entryMapping);
         Collection dns = new ArrayList();
 
-        //log.debug("Computing DNs for \""+entryMapping.getDn()+"\"");
+        //log.info("Computing DNs for \""+entryMapping.getDn()+"\"");
 
         if (parentDns.isEmpty()) {
             dns.add(entryMapping.getDn());
         } else {
             for (Iterator i=parentDns.iterator(); i.hasNext(); ) {
                 String parentDn = (String)i.next();
-                //log.debug(" - parent DN: "+parentDn);
+                //log.info(" - parent dn: "+parentDn);
                 for (Iterator j=rdns.iterator(); j.hasNext(); ) {
                     Row rdn = (Row)j.next();
-                    String dn = rdn+(parentDn == null ? "" : ","+parentDn);
-                    //log.debug("   - "+dn);
+                    //log.info("   - rdn: "+rdn);
+
+                    String s = rdn.toString(); //.trim();
+                    //s = LDAPDN.escapeRDN(s);
+                    //log.info("     => rdn: "+rdn);
+
+                    String dn = EntryUtil.append(s, parentDn);
+
+                    //log.info("     => dn: "+dn);
                     dns.add(dn);
                 }
             }
@@ -824,6 +815,14 @@ public abstract class Engine {
 
     public PenroseConfig getServerConfig() {
         return penroseConfig;
+    }
+
+    public ThreadManager getThreadManager() {
+        return threadManager;
+    }
+
+    public void setThreadManager(ThreadManager threadManager) {
+        this.threadManager = threadManager;
     }
 }
 

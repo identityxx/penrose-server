@@ -1,0 +1,3 @@
+dn: uid=test1,ou=Users,dc=Adapter,dc=Example,dc=com
+userPassword: secret
+cn: Secret User

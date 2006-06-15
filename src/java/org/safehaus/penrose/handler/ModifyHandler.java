@@ -19,23 +19,26 @@ package org.safehaus.penrose.handler;
 
 import org.safehaus.penrose.session.PenroseSession;
 import org.safehaus.penrose.session.PenroseSearchResults;
-import org.safehaus.penrose.event.ModifyEvent;
+import org.safehaus.penrose.session.PenroseSearchControls;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.PartitionManager;
-import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.schema.ObjectClass;
-import org.safehaus.penrose.schema.SchemaManager;
 import org.safehaus.penrose.schema.AttributeType;
 import org.safehaus.penrose.util.PasswordUtil;
 import org.safehaus.penrose.util.BinaryUtil;
 import org.safehaus.penrose.util.Formatter;
+import org.safehaus.penrose.util.EntryUtil;
 import org.safehaus.penrose.mapping.*;
-import org.safehaus.penrose.cache.EntryCache;
 import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.service.ServiceConfig;
 import org.ietf.ldap.*;
 import org.apache.log4j.Logger;
 
+import javax.naming.directory.DirContext;
+import javax.naming.directory.ModificationItem;
+import javax.naming.directory.Attribute;
+import javax.naming.directory.BasicAttribute;
+import javax.naming.NamingEnumeration;
 import java.util.*;
 
 /**
@@ -56,12 +59,35 @@ public class ModifyHandler {
 
         int rc;
         try {
+            log.warn("Modify entry \""+dn+"\".");
+
             log.debug(Formatter.displaySeparator(80));
             log.debug(Formatter.displayLine("MODIFY:", 80));
             if (session != null && session.getBindDn() != null) {
                 log.debug(Formatter.displayLine(" - Bind DN: " + session.getBindDn(), 80));
             }
             log.debug(Formatter.displayLine(" - DN: " + dn, 80));
+
+            log.debug(Formatter.displayLine(" - Attributes: " + dn, 80));
+            for (Iterator i=modifications.iterator(); i.hasNext(); ) {
+                ModificationItem mi = (ModificationItem)i.next();
+                Attribute attribute = mi.getAttribute();
+                String op = "replace";
+                switch (mi.getModificationOp()) {
+                    case DirContext.ADD_ATTRIBUTE:
+                        op = "add";
+                        break;
+                    case DirContext.REMOVE_ATTRIBUTE:
+                        op = "delete";
+                        break;
+                    case DirContext.REPLACE_ATTRIBUTE:
+                        op = "replace";
+                        break;
+                }
+
+                log.debug(Formatter.displayLine("   - "+op+": "+attribute.getID()+" => "+attribute.get(), 80));
+            }
+
             log.debug(Formatter.displaySeparator(80));
 
             if (session != null && session.getBindDn() == null) {
@@ -85,19 +111,26 @@ public class ModifyHandler {
             rc = performModify(session, entry, modifications);
             if (rc != LDAPException.SUCCESS) return rc;
 
+            // refreshing entry cache
+
             handler.getEngine().getEntryCache().remove(entry);
+
+            PenroseSession adminSession = handler.getPenrose().newSession();
+            adminSession.setBindDn(handler.getPenroseConfig().getRootDn());
 
             PenroseSearchResults results = new PenroseSearchResults();
 
-            handler.getSearchHandler().search(
-                    null,
+            PenroseSearchControls sc = new PenroseSearchControls();
+            sc.setScope(PenroseSearchControls.SCOPE_SUB);
+
+            adminSession.search(
                     dn,
-                    LDAPConnection.SCOPE_SUB,
-                    LDAPSearchConstraints.DEREF_NEVER,
                     "(objectClass=*)",
-                    new ArrayList(),
+                    sc,
                     results
             );
+
+            while (results.hasNext()) results.next();
 
         } catch (LDAPException e) {
             rc = e.getResultCode();
@@ -105,6 +138,12 @@ public class ModifyHandler {
         } catch (Exception e) {
             log.error(e.getMessage(), e);
             rc = LDAPException.OPERATIONS_ERROR;
+        }
+
+        if (rc == LDAPException.SUCCESS) {
+            log.warn("Modify operation succeded.");
+        } else {
+            log.warn("Modify operation failed. RC="+rc);
         }
 
         return rc;
@@ -120,6 +159,48 @@ public class ModifyHandler {
             log.debug("Not authorized to modify "+entry.getDn());
             return rc;
         }
+
+        Collection normalizedModifications = new ArrayList();
+
+		for (Iterator i = modifications.iterator(); i.hasNext();) {
+			ModificationItem modification = (ModificationItem) i.next();
+
+			Attribute attribute = modification.getAttribute();
+			String attributeName = attribute.getID();
+
+            AttributeType at = handler.getSchemaManager().getAttributeType(attributeName);
+            if (at == null) return LDAPException.UNDEFINED_ATTRIBUTE_TYPE;
+
+            attributeName = at.getName();
+
+            switch (modification.getModificationOp()) {
+                case DirContext.ADD_ATTRIBUTE:
+                    log.debug("add: " + attributeName);
+                    break;
+                case DirContext.REMOVE_ATTRIBUTE:
+                    log.debug("delete: " + attributeName);
+                    break;
+                case DirContext.REPLACE_ATTRIBUTE:
+                    log.debug("replace: " + attributeName);
+                    break;
+            }
+
+            Attribute normalizedAttribute = new BasicAttribute(attributeName);
+            for (NamingEnumeration j=attribute.getAll(); j.hasMore(); ) {
+                Object value = j.next();
+                normalizedAttribute.add(value);
+                log.debug(attributeName + ": "+value);
+            }
+
+            log.debug("-");
+
+            ModificationItem normalizedModification = new ModificationItem(modification.getModificationOp(), normalizedAttribute);
+            normalizedModifications.add(normalizedModification);
+		}
+
+        modifications = normalizedModifications;
+
+        log.info("");
 
         EntryMapping entryMapping = entry.getEntryMapping();
 
@@ -150,11 +231,10 @@ public class ModifyHandler {
 			throws Exception {
 
 		for (Iterator i = modifications.iterator(); i.hasNext();) {
-			LDAPModification modification = (LDAPModification) i.next();
+			ModificationItem modification = (ModificationItem) i.next();
 
-			LDAPAttribute attribute = modification.getAttribute();
-			String attributeName = attribute.getName();
-			String values[] = attribute.getStringValueArray();
+			Attribute attribute = modification.getAttribute();
+			String attributeName = attribute.getID();
 
 			AttributeMapping attr = entry.getAttributeMapping(attributeName);
 			if (attr == null) continue;
@@ -162,15 +242,23 @@ public class ModifyHandler {
 			String encryption = attr.getEncryption();
 			String encoding = attr.getEncoding();
 
-			for (int j = 0; j < values.length; j++) {
-				//log.debug("old " + attributeName + ": " + values[j]);
-				attribute.removeValue(values[j]);
+			for (NamingEnumeration j=attribute.getAll(); j.hasMore(); ) {
+                Object value = j.next();
 
-                byte[] bytes = PasswordUtil.encrypt(encryption, values[j]);
-                values[j] = BinaryUtil.encode(encoding, bytes);
+				//log.debug("old " + attributeName + ": " + values[j]);
+				attribute.remove(value);
+
+                byte[] bytes;
+                if (value instanceof byte[]) {
+                    bytes = PasswordUtil.encrypt(encryption, (byte[])value);
+                } else {
+                    bytes = PasswordUtil.encrypt(encryption, value.toString());
+                }
+
+                value = BinaryUtil.encode(encoding, bytes);
 
 				//log.debug("new " + attributeName + ": " + values[j]);
-				attribute.addValue(values[j]);
+				attribute.add(value);
 			}
 		}
 	}
@@ -184,22 +272,27 @@ public class ModifyHandler {
 		EntryMapping entryMapping = entry.getEntryMapping();
         AttributeValues oldValues = entry.getAttributeValues();
 
-		convertValues(entryMapping, modifications);
+		//convertValues(entryMapping, modifications);
 
 		log.debug("Old entry:");
-		log.debug("\n"+entry.toString());
+		log.debug("\n"+EntryUtil.toString(entry));
 
 		log.debug("--- perform modification:");
 		AttributeValues newValues = new AttributeValues(oldValues);
 
 		Collection objectClasses = handler.getSchemaManager().getObjectClasses(entryMapping);
-		log.debug("Object classes: " + objectClasses);
+        Collection objectClassNames = new ArrayList();
+        for (Iterator i=objectClasses.iterator(); i.hasNext(); ) {
+            ObjectClass oc = (ObjectClass)i.next();
+            objectClassNames.add(oc.getName());
+        }
+        log.debug("Object classes: "+objectClassNames);
 
 		for (Iterator i = modifications.iterator(); i.hasNext();) {
-			LDAPModification modification = (LDAPModification) i.next();
+			ModificationItem modification = (ModificationItem)i.next();
 
-			LDAPAttribute attribute = modification.getAttribute();
-			String attributeName = attribute.getName();
+			Attribute attribute = modification.getAttribute();
+			String attributeName = attribute.getID();
 
 			if (attributeName.equals("entryCSN"))
 				continue; // ignore
@@ -232,10 +325,10 @@ public class ModifyHandler {
 				return LDAPException.OBJECT_CLASS_VIOLATION;
 			}
 
-			String attributeValues[] = attribute.getStringValueArray();
 			Set newAttrValues = new HashSet();
-			for (int j = 0; j < attributeValues.length; j++) {
-				newAttrValues.add(attributeValues[j]);
+			for (NamingEnumeration j=attribute.getAll(); j.hasMore(); ) {
+                Object value = j.next();
+				newAttrValues.add(value);
 			}
 
 			Collection value = newValues.get(attributeName);
@@ -245,20 +338,20 @@ public class ModifyHandler {
 			Set newValue = new HashSet();
             if (value != null) newValue.addAll(value);
 
-			switch (modification.getOp()) {
-			case LDAPModification.ADD:
-				newValue.addAll(newAttrValues);
-				break;
-			case LDAPModification.DELETE:
-				if (attributeValues.length == 0) {
-					newValue.clear();
-				} else {
-					newValue.removeAll(newAttrValues);
-				}
-				break;
-			case LDAPModification.REPLACE:
-				newValue = newAttrValues;
-				break;
+			switch (modification.getModificationOp()) {
+                case DirContext.ADD_ATTRIBUTE:
+                    newValue.addAll(newAttrValues);
+                    break;
+                case DirContext.REMOVE_ATTRIBUTE:
+                    if (attribute.get() == null) {
+                        newValue.clear();
+                    } else {
+                        newValue.removeAll(newAttrValues);
+                    }
+                    break;
+                case DirContext.REPLACE_ATTRIBUTE:
+                    newValue = newAttrValues;
+                    break;
 			}
 
 			newValues.set(attributeName, newValue);
@@ -270,54 +363,53 @@ public class ModifyHandler {
         Entry newEntry = new Entry(entry.getDn(), entryMapping, entry.getSourceValues(), newValues);
 
 		log.debug("New entry:");
-		log.debug("\n"+newEntry.toString());
+		log.debug("\n"+EntryUtil.toString(newEntry));
 
         return handler.getEngine().modify(entry, newValues);
 	}
 
 
-        public int modifyStaticEntry(EntryMapping entry, Collection modifications)
-                throws Exception {
+    public int modifyStaticEntry(EntryMapping entry, Collection modifications)
+            throws Exception {
 
-            convertValues(entry, modifications);
+        //convertValues(entry, modifications);
 
-            for (Iterator i = modifications.iterator(); i.hasNext();) {
-                LDAPModification modification = (LDAPModification) i.next();
+        for (Iterator i = modifications.iterator(); i.hasNext();) {
+            ModificationItem modification = (ModificationItem) i.next();
 
-                LDAPAttribute attribute = modification.getAttribute();
-                String attributeName = attribute.getName();
+            Attribute attribute = modification.getAttribute();
+            String attributeName = attribute.getID();
 
-                String attributeValues[] = attribute.getStringValueArray();
-
-                switch (modification.getOp()) {
-                case LDAPModification.ADD:
-                    for (int j = 0; j < attributeValues.length; j++) {
-                        String v = "\"" + attributeValues[j] + "\"";
+            switch (modification.getModificationOp()) {
+                case DirContext.ADD_ATTRIBUTE:
+                    for (NamingEnumeration j=attribute.getAll(); j.hasMore(); ) {
+                        Object v = j.next();
                         addAttribute(entry, attributeName, v);
                     }
                     break;
 
-                case LDAPModification.DELETE:
-                    if (attributeValues.length == 0) {
+                case DirContext.REMOVE_ATTRIBUTE:
+                    if (attribute.get() == null) {
                         deleteAttribute(entry, attributeName);
 
                     } else {
-                        for (int j = 0; j < attributeValues.length; j++) {
-                            String v = "\"" + attributeValues[j] + "\"";
+                        for (NamingEnumeration j=attribute.getAll(); j.hasMore(); ) {
+                            Object v = j.next();
                             deleteAttribute(entry, attributeName, v);
                         }
                     }
                     break;
-                case LDAPModification.REPLACE:
+
+                case DirContext.REPLACE_ATTRIBUTE:
                     deleteAttribute(entry, attributeName);
 
-                    for (int j = 0; j < attributeValues.length; j++) {
-                        String v = "\"" + attributeValues[j] + "\"";
+                    for (NamingEnumeration j=attribute.getAll(); j.hasMore(); ) {
+                        Object v = j.next();
                         addAttribute(entry, attributeName, v);
                     }
                     break;
-                }
             }
+        }
 
 		/*
 		 * for (Iterator i = attributes.iterator(); i.hasNext(); ) { AttributeMapping
@@ -327,7 +419,7 @@ public class ModifyHandler {
 		return LDAPException.SUCCESS;
 	}
 
-    public void addAttribute(EntryMapping entry, String name, String value)
+    public void addAttribute(EntryMapping entry, String name, Object value)
 			throws Exception {
 
 		AttributeMapping attribute = entry.getAttributeMapping(name);
@@ -345,18 +437,18 @@ public class ModifyHandler {
 		entry.removeAttributeMappings(name);
 	}
 
-    public void deleteAttribute(EntryMapping entryMapping, String name, String value)
+    public void deleteAttribute(EntryMapping entryMapping, String name, Object value)
 			throws Exception {
 
 		AttributeMapping attributeMapping = entryMapping.getAttributeMapping(name);
 		if (attributeMapping == null) return;
 
-		Interpreter interpreter = handler.getInterpreterFactory().newInstance();
+        if (!AttributeMapping.CONSTANT.equals(attributeMapping.getType())) return;
 
-		String attrValue = (String)interpreter.eval(entryMapping, attributeMapping);
-		if (attrValue.equals(value)) entryMapping.removeAttributeMapping(attributeMapping);
+        Object attrValue = attributeMapping.getConstant();
+		if (!attrValue.equals(value)) return;
 
-        interpreter.clear();
+        entryMapping.removeAttributeMapping(attributeMapping);
 	}
 
     public Handler getHandler() {

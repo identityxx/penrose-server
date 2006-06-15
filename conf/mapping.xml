@@ -1,52 +1,47 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!--
-<!DOCTYPE mapping PUBLIC
-	"-//Penrose/Penrose Server Configuration DTD 1.0//EN"
-	"http://penrose.safehaus.org/dtd/penrose-mapping-config-1.0.dtd">
--->
 
 <mapping>
 
-  <entry dn="dc=Penrose,dc=Safehaus,dc=org">
+  <entry dn="dc=Example,dc=com">
     <oc>dcObject</oc>
     <oc>organization</oc>
     <at name="dc" rdn="true">
-      <expression>"Penrose"</expression>
+      <constant>Example</constant>
     </at>
     <at name="o">
-      <expression>"Penrose"</expression>
+      <constant>Example</constant>
     </at>
     <aci>
       <permission>rs</permission>
     </aci>
   </entry>
 
-  <entry dn="cn=Manager,dc=Penrose,dc=Safehaus,dc=org">
+  <entry dn="cn=Manager,dc=Example,dc=com">
     <oc>person</oc>
     <oc>organizationalPerson</oc>
     <oc>inetOrgPerson</oc>
     <at name="cn" rdn="true">
-      <expression>"Manager"</expression>
+      <constant>Manager</constant>
     </at>
     <at name="sn">
-      <expression>"Manager"</expression>
+      <constant>Manager</constant>
     </at>
     <at name="userPassword">
-      <expression>"secret"</expression>
+      <constant>secret</constant>
     </at>
   </entry>
 
-  <entry dn="ou=Users,dc=Penrose,dc=Safehaus,dc=org">
+  <entry dn="ou=Users,dc=Example,dc=com">
     <oc>organizationalUnit</oc>
     <at name="ou" rdn="true">
-      <expression>"Users"</expression>
+      <constant>Users</constant>
     </at>
   </entry>
 
-  <entry dn="ou=Groups,dc=Penrose,dc=Safehaus,dc=org">
+  <entry dn="ou=Groups,dc=Example,dc=com">
     <oc>organizationalUnit</oc>
     <at name="ou" rdn="true">
-      <expression>"Groups"</expression>
+      <constant>Groups</constant>
     </at>
   </entry>
 

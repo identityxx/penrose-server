@@ -88,7 +88,7 @@ public abstract class Interpreter {
                 return null;
             }
         } catch (Exception e) {
-            throw new Exception("Error evaluating field "+attributeMapping.getName(), e);
+            throw new Exception("Error evaluating attribute "+attributeMapping.getName(), e);
         }
     }
 

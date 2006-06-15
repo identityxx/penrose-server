@@ -75,6 +75,7 @@ public class SearchCleaner extends GraphVisitor {
             for (Iterator j=entryMapping.getSourceMappings().iterator(); j.hasNext(); ) {
                 SourceMapping sourceMapping = (SourceMapping)j.next();
                 if (needCleaning.get(sourceMapping) != null) continue;
+                log.debug("Removing results from source "+sourceMapping.getName());
 
                 av.remove(sourceMapping.getName());
             }

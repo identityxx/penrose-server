@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<sources>
+
+  <source name="users">
+    <connection-name>SunONE</connection-name>
+    <parameter>
+      <param-name>baseDn</param-name>
+      <param-value>ou=People,dc=Example,dc=com</param-value>
+    </parameter>
+    <parameter>
+      <param-name>scope</param-name>
+      <param-value>SUBTREE</param-value>
+    </parameter>
+    <parameter>
+      <param-name>filter</param-name>
+      <param-value>(objectClass=*)</param-value>
+    </parameter>
+  </source>
+
+  <source name="groups">
+    <connection-name>SunONE</connection-name>
+    <parameter>
+      <param-name>baseDn</param-name>
+      <param-value>ou=Groups,dc=Example,dc=com</param-value>
+    </parameter>
+    <parameter>
+      <param-name>scope</param-name>
+      <param-value>SUBTREE</param-value>
+    </parameter>
+    <parameter>
+      <param-name>filter</param-name>
+      <param-value>(objectClass=*)</param-value>
+    </parameter>
+  </source>
+
+</sources>

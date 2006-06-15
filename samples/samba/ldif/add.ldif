@@ -1,0 +1,7 @@
+dn: uid=test,ou=Users,dc=Samba,dc=Example,dc=com
+objectClass: inetOrgPerson
+objectClass: organizationalPerson
+objectClass: person
+uid: test
+userPassword: test
+cn: Test User

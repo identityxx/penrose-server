@@ -19,6 +19,7 @@ package org.safehaus.penrose.handler;
 
 import org.safehaus.penrose.session.PenroseSession;
 import org.safehaus.penrose.session.PenroseSearchResults;
+import org.safehaus.penrose.session.PenroseSearchControls;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.PartitionManager;
 import org.safehaus.penrose.mapping.Entry;
@@ -54,9 +55,12 @@ public class ModRdnHandler {
 
         int rc;
         try {
+
+            log.warn("ModRDN \""+dn+"\" to \""+newRdn+"\".");
+
             log.debug("-------------------------------------------------------------------------------");
             log.debug("MODRDN:");
-            if (session != null && session.getBindDn() != null) log.info(" - Bind DN: " + session.getBindDn());
+            if (session != null && session.getBindDn() != null) log.debug(" - Bind DN: " + session.getBindDn());
             log.debug(" - DN: " + dn);
             log.debug(" - New RDN: " + newRdn);
 
@@ -78,18 +82,21 @@ public class ModRdnHandler {
             rc = performModRdn(session, entry, newRdn);
             if (rc != LDAPException.SUCCESS) return rc;
 
+            // refreshing entry cache
+
             String parentDn = EntryUtil.getParentDn(dn);
             String newDn = newRdn+","+parentDn;
 
             PenroseSearchResults results = new PenroseSearchResults();
 
+            PenroseSearchControls sc = new PenroseSearchControls();
+            sc.setScope(PenroseSearchControls.SCOPE_SUB);
+
             handler.getSearchHandler().search(
                     null,
                     newDn,
-                    LDAPConnection.SCOPE_SUB,
-                    LDAPSearchConstraints.DEREF_NEVER,
                     "(objectClass=*)",
-                    new ArrayList(),
+                    sc,
                     results
             );
 
@@ -107,6 +114,12 @@ public class ModRdnHandler {
         } catch (Exception e) {
             log.error(e.getMessage(), e);
             rc = LDAPException.OPERATIONS_ERROR;
+        }
+
+        if (rc == LDAPException.SUCCESS) {
+            log.warn("ModRDN operation succeded.");
+        } else {
+            log.warn("ModRDN operation failed. RC="+rc);
         }
 
         return rc;

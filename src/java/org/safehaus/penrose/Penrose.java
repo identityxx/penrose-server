@@ -39,12 +39,14 @@ import org.safehaus.penrose.partition.*;
 import org.safehaus.penrose.session.PenroseSession;
 import org.safehaus.penrose.session.SessionManager;
 import org.safehaus.penrose.module.ModuleManager;
+import org.safehaus.penrose.thread.ThreadManager;
+import org.safehaus.penrose.event.EventManager;
 
 /**
  * @author Endi S. Dewata
  */
 public class Penrose {
-	
+
     Logger log = Logger.getLogger(Penrose.class);
 
     public final static String PRODUCT_NAME      = "Penrose Virtual Directory Server";
@@ -62,6 +64,7 @@ public class Penrose {
 
     private PenroseConfig penroseConfig;
 
+    private ThreadManager threadManager;
     private SchemaManager schemaManager;
     private PartitionManager partitionManager;
     private PartitionValidator partitionValidator;
@@ -71,6 +74,7 @@ public class Penrose {
 
     private ConnectorManager connectorManager;
     private EngineManager engineManager;
+    private EventManager eventManager;
     private HandlerManager handlerManager;
 
     private InterpreterManager interpreterManager;
@@ -84,13 +88,19 @@ public class Penrose {
     }
 
     protected Penrose(String home) throws Exception {
-        penroseConfig = new PenroseConfig();
+
+        PenroseConfigReader reader = new PenroseConfigReader((home == null ? "" : home+File.separator)+"conf"+File.separator+"server.xml");
+        penroseConfig = reader.read();
+        penroseConfig.setHome(home);
+
         init();
         load(home);
     }
 
     protected Penrose() throws Exception {
-        this((String)null);
+        penroseConfig = new PenroseConfig();
+        init();
+        load(null);
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -98,6 +108,7 @@ public class Penrose {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     void init() throws Exception {
+        initThreadManager();
         initSchemaManager();
         initSessionManager();
 
@@ -108,8 +119,16 @@ public class Penrose {
         initInterpreterManager();
         initConnectorManager();
         initEngineManager();
+        initEventManager();
         initHandlerManager();
-	}
+    }
+
+    public void initThreadManager() throws Exception {
+        //String s = engineConfig.getParameter(EngineConfig.THREAD_POOL_SIZE);
+        //int threadPoolSize = s == null ? EngineConfig.DEFAULT_THREAD_POOL_SIZE : Integer.parseInt(s);
+
+        threadManager = new ThreadManager(50);
+    }
 
     public void initSchemaManager() throws Exception {
         schemaManager = new SchemaManager();
@@ -147,6 +166,7 @@ public class Penrose {
         connectorManager.setPenroseConfig(penroseConfig);
         connectorManager.setConnectionManager(connectionManager);
         connectorManager.setPartitionManager(partitionManager);
+        connectorManager.setThreadManager(threadManager);
     }
 
     public void initEngineManager() throws Exception {
@@ -156,6 +176,12 @@ public class Penrose {
         engineManager.setInterpreterFactory(interpreterManager);
         engineManager.setConnectionManager(connectionManager);
         engineManager.setPartitionManager(partitionManager);
+        engineManager.setThreadManager(threadManager);
+    }
+
+    public void initEventManager() throws Exception {
+        eventManager = new EventManager();
+        eventManager.setModuleManager(moduleManager);
     }
 
     public void initHandlerManager() throws Exception {
@@ -166,6 +192,7 @@ public class Penrose {
         handlerManager.setInterpreterFactory(interpreterManager);
         handlerManager.setPartitionManager(partitionManager);
         handlerManager.setModuleManager(moduleManager);
+        handlerManager.setPenrose(this);
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -193,11 +220,12 @@ public class Penrose {
 
         loadPartitions();
         loadConnections();
-        loadModules();
 
         loadConnector();
         loadEngine();
         loadHandler();
+
+        loadModules();
     }
 
     public void loadSystemProperties() throws Exception {
@@ -329,7 +357,7 @@ public class Penrose {
     // Start Penrose
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	public void start() throws Exception {
+    public void start() throws Exception {
 
         if (status != STOPPED) return;
 
@@ -343,6 +371,7 @@ public class Penrose {
             connectionManager.start();
             connectorManager.start();
             engineManager.start();
+            sessionManager.start();
             handlerManager.start();
             moduleManager.start();
 
@@ -350,49 +379,54 @@ public class Penrose {
 
         } catch (Exception e) {
             status = STOPPED;
-            log.debug(e.getMessage(), e);
+            log.error(e.getMessage(), e);
             throw e;
         }
-	}
+    }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Stop Penrose
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	public void stop() {
+    public void stop() {
 
         if (status != STARTED) return;
 
         try {
             status = STOPPING;
 
+            threadManager.stopRequestAllWorkers();
+
             moduleManager.stop();
             handlerManager.stop();
+            sessionManager.stop();
             engineManager.stop();
             connectorManager.stop();
             connectionManager.stop();
 
         } catch (Exception e) {
-            log.debug(e.getMessage(), e);
+            log.error(e.getMessage(), e);
         }
 
         status = STOPPED;
-	}
+    }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Penrose Sessions
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public PenroseSession newSession() throws Exception {
-        HandlerConfig handlerConfig = penroseConfig.getHandlerConfig();
-        Handler handler = handlerManager.getHandler(handlerConfig.getName());
-        return handler.newSession();
-    }
 
-    public void closeSession(PenroseSession session) {
+        PenroseSession session = sessionManager.newSession();
+        if (session == null) return null;
+
         HandlerConfig handlerConfig = penroseConfig.getHandlerConfig();
         Handler handler = handlerManager.getHandler(handlerConfig.getName());
-        handler.closeSession(session);
+        session.setHandler(handler);
+
+        session.setEventManager(eventManager);
+
+        return session;
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -468,5 +502,21 @@ public class Penrose {
 
     public void setSessionManager(SessionManager sessionManager) {
         this.sessionManager = sessionManager;
+    }
+
+    public ThreadManager getThreadManager() {
+        return threadManager;
+    }
+
+    public void setThreadManager(ThreadManager threadManager) {
+        this.threadManager = threadManager;
+    }
+
+    public EventManager getEventManager() {
+        return eventManager;
+    }
+
+    public void setEventManager(EventManager eventManager) {
+        this.eventManager = eventManager;
     }
 }

@@ -21,6 +21,7 @@ import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.partition.SourceConfig;
 import org.safehaus.penrose.util.EntryUtil;
+import org.safehaus.penrose.session.PenroseSearchResults;
 
 import java.util.*;
 
@@ -79,15 +80,18 @@ public class InMemoryEntryCacheStorage extends EntryCacheStorage {
         dataExpirationMap.remove(dn);
     }
 
+    public boolean contains(String baseDn, Filter filter) throws Exception {
+        String key = filter == null ? "" : filter.toString();
+        return queryMap.containsKey(key);
+    }
+
     /**
      * @return DNs (Collection of String)
      */
-    public Collection search(String baseDn, Filter filter) throws Exception {
+    public PenroseSearchResults search(String baseDn, Filter filter, PenroseSearchResults results) throws Exception {
 
         //log.debug("Searching entry filter cache for "+filter);
         //log.debug("filter cache: "+queryMap.keySet());
-
-        Collection results = new ArrayList();
 
         String key = filter == null ? "" : filter.toString();
 
@@ -115,6 +119,8 @@ public class InMemoryEntryCacheStorage extends EntryCacheStorage {
             queryExpirationMap.remove(key);
             return null;
         }
+
+        results.close();
 
         //log.debug("Returning "+results.size()+" entry(s).");
 

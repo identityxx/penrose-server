@@ -27,6 +27,9 @@ public class BindEvent extends Event {
     public final static int BEFORE_BIND = 0;
     public final static int AFTER_BIND  = 1;
 
+    public final static int BEFORE_UNBIND = 3;
+    public final static int AFTER_UNBIND  = 4;
+
     private PenroseSession session;
     private String dn;
     private int returnCode;
@@ -38,6 +41,12 @@ public class BindEvent extends Event {
         this.session = session;
         this.dn = dn;
         this.password = password;
+    }
+
+    public BindEvent(Object source, int type, PenroseSession session, String dn) {
+        super(source, type);
+        this.session = session;
+        this.dn = dn;
     }
 
     public int getReturnCode() {
@@ -64,11 +73,11 @@ public class BindEvent extends Event {
         this.password = password;
     }
 
-    public PenroseSession getConnection() {
+    public PenroseSession getSession() {
         return session;
     }
 
-    public void setConnection(PenroseSession session) {
+    public void setSession(PenroseSession session) {
         this.session = session;
     }
 }

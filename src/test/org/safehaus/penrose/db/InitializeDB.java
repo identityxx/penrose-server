@@ -15,7 +15,7 @@ public class InitializeDB {
         Class.forName("org.hsqldb.jdbcDriver");
         Connection c = DriverManager.getConnection("jdbc:hsqldb:file:samples/db/example", "sa", "");
 
-        BufferedReader in = new BufferedReader(new FileReader("samples/sql/example.sql"));
+        BufferedReader in = new BufferedReader(new FileReader("samples/sql/create.sql"));
 
         StringBuffer sb = new StringBuffer();
         String line;

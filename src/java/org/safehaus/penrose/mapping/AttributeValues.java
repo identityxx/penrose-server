@@ -200,6 +200,45 @@ public class AttributeValues implements Cloneable, Comparable {
         }
     }
 
+    public void remove(String name, Object value) {
+        if (value == null) return;
+
+        Collection c = (Collection)values.get(name);
+        if (c == null) return;
+
+        c.remove(value);
+        if (c.isEmpty()) values.remove(name);
+    }
+
+    public void remove(String name, Collection values) {
+        if (values == null) return;
+
+        Collection c = (Collection)this.values.get(name);
+        if (c == null) return;
+
+        c.removeAll(values);
+        if (c.isEmpty()) this.values.remove(name);
+    }
+
+    public void retain(Collection names) {
+        Collection lcNames = new ArrayList();
+        for (Iterator i=names.iterator(); i.hasNext(); ) {
+            String name = (String)i.next();
+            lcNames.add(name.toLowerCase());
+        }
+
+        Collection list = new ArrayList();
+        list.addAll(values.keySet());
+
+        for (Iterator i=list.iterator(); i.hasNext(); ) {
+            String s = (String)i.next();
+
+            int p = s.indexOf(".");
+            String n = p >= 0 ? s.substring(0, p) : s;
+
+            if (!lcNames.contains(n.toLowerCase())) values.remove(s);
+        }
+    }
 
     public void retain(String name) {
         Collection list = new ArrayList();
@@ -207,9 +246,11 @@ public class AttributeValues implements Cloneable, Comparable {
 
         for (Iterator i=list.iterator(); i.hasNext(); ) {
             String s = (String)i.next();
-            if (!s.equals(name) && !s.startsWith(name+".")) {
-                values.remove(s);
-            }
+
+            int p = s.indexOf(".");
+            String n = p >= 0 ? s.substring(0, p) : s;
+
+            if (!name.equalsIgnoreCase(n)) values.remove(s);
         }
     }
     

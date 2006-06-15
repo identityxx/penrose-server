@@ -25,15 +25,12 @@ import org.safehaus.penrose.cache.EntryCacheListener;
 import org.safehaus.penrose.cache.EntryCacheEvent;
 import org.safehaus.penrose.engine.Engine;
 import org.safehaus.penrose.connector.ConnectionManager;
-import org.safehaus.penrose.handler.Handler;
 import org.safehaus.penrose.session.PenroseSearchResults;
-import org.safehaus.penrose.util.EntryUtil;
+import org.safehaus.penrose.session.PenroseSearchControls;
+import org.safehaus.penrose.session.PenroseSession;
 import org.safehaus.penrose.util.JNDIClient;
 import org.safehaus.penrose.partition.PartitionManager;
 import org.safehaus.penrose.partition.Partition;
-import org.ietf.ldap.LDAPConnection;
-import org.ietf.ldap.LDAPSearchConstraints;
-import org.ietf.ldap.LDAPEntry;
 
 import javax.naming.directory.*;
 import javax.naming.NamingEnumeration;
@@ -85,24 +82,28 @@ public class LDAPSyncModule extends Module implements EntryCacheListener {
             String baseDn = entry.getDn();
             log.debug("Adding "+baseDn);
 
-            Handler handler = penrose.getSessionHandler();
+            PenroseSession adminSession = penrose.newSession();
+            adminSession.setBindDn(penrose.getPenroseConfig().getRootDn());
 
-            PenroseSearchResults sr = handler.search(
-                    null,
+            PenroseSearchResults sr = new PenroseSearchResults();
+
+            PenroseSearchControls sc = new PenroseSearchControls();
+            sc.setScope(PenroseSearchControls.SCOPE_SUB);
+
+            adminSession.search(
                     baseDn,
-                    LDAPConnection.SCOPE_SUB,
-                    LDAPSearchConstraints.DEREF_NEVER,
                     "(objectClass=*)",
-                    null
+                    sc,
+                    sr
             );
 
             while (sr.hasNext()) {
-                LDAPEntry ldapEntry = (LDAPEntry)sr.next();
+                SearchResult ldapEntry = (SearchResult)sr.next();
 
-                String dn = ldapEntry.getDN();
+                String dn = ldapEntry.getName();
                 log.debug(" - "+dn);
 
-                Attributes attributes = EntryUtil.convert(ldapEntry);
+                Attributes attributes = ldapEntry.getAttributes();
 
                 try {
                     ctx.createSubcontext(dn, attributes);
@@ -110,6 +111,8 @@ public class LDAPSyncModule extends Module implements EntryCacheListener {
                     log.error(e.getMessage());
                 }
             }
+
+            adminSession.close();
 
         } catch (Exception e) {
             log.error(e.getMessage());

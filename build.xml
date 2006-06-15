@@ -14,6 +14,8 @@
     <property name="iscc.path" value="ISCC.exe"/>
     <property name="docs.target" value="${project.dist}/javadoc"/>
 
+    <tstamp/>
+
     <path id="lib.path">
         <fileset dir="lib">
             <include name="**/*.jar"/>
@@ -42,27 +44,27 @@
     <target name="build">
         <javacc
             target="src/java/org/safehaus/penrose/schema/LDAPv3Schema.jj"
-            javacchome="javacc"
+            javacchome="lib/javacc"
             outputdirectory="src/java/org/safehaus/penrose/schema"
         />
         <javacc
             target="src/java/org/safehaus/penrose/filter/item/ItemParser.jj"
-            javacchome="javacc"
+            javacchome="lib/javacc"
             outputdirectory="src/java/org/safehaus/penrose/filter/item"
         />
         <javacc
             target="src/java/org/safehaus/penrose/filter/FilterParser.jj"
-            javacchome="javacc"
+            javacchome="lib/javacc"
             outputdirectory="src/java/org/safehaus/penrose/filter"
         />
         <javacc
             target="src/java/org/safehaus/penrose/openldap/config/SlapdParser.jj"
-            javacchome="javacc"
+            javacchome="lib/javacc"
             outputdirectory="src/java/org/safehaus/penrose/openldap/config"
         />
         <javacc
             target="src/java/org/safehaus/penrose/sql/SQLParser.jj"
-            javacchome="javacc"
+            javacchome="lib/javacc"
             outputdirectory="src/java/org/safehaus/penrose/sql"
         />
         <mkdir dir="target/classes"/>
@@ -80,6 +82,9 @@
         </copy>
         <jar jarfile="target/${project.name}-${project.version}.jar">
             <fileset dir="target/classes"/>
+            <manifest>
+              <attribute name="Built-Date" value="${DSTAMP}"/>
+            </manifest>
         </jar>
     </target>
 

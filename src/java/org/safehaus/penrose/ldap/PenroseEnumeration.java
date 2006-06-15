@@ -19,11 +19,7 @@ package org.safehaus.penrose.ldap;
 
 import org.safehaus.penrose.session.PenroseSearchResults;
 import org.safehaus.penrose.util.ExceptionUtil;
-import org.safehaus.penrose.util.ActiveDirectoryUtil;
-import org.safehaus.penrose.util.BinaryUtil;
-import org.ietf.ldap.LDAPEntry;
-import org.ietf.ldap.LDAPAttributeSet;
-import org.ietf.ldap.LDAPAttribute;
+import org.safehaus.penrose.util.EntryUtil;
 import org.ietf.ldap.LDAPException;
 import org.apache.log4j.Logger;
 
@@ -75,6 +71,8 @@ public class PenroseEnumeration implements NamingEnumeration {
         boolean hasNext = searchResults.hasNext();
         if (hasNext) return true;
 
+        log.warn("Search operation returned "+searchResults.getTotalCount()+" entries.");
+
         int rc = searchResults.getReturnCode();
         if (rc != LDAPException.SUCCESS) {
             ExceptionUtil.throwNamingException(rc, "RC: "+rc);
@@ -84,8 +82,26 @@ public class PenroseEnumeration implements NamingEnumeration {
     }
 
     public Object next() throws NamingException {
-        LDAPEntry result = (LDAPEntry)searchResults.next();
+        SearchResult result = (SearchResult)searchResults.next();
 
+        log.info("Returning \""+result.getName()+"\" to client.");
+
+        if (log.isDebugEnabled()) {
+            Attributes attributes = result.getAttributes();
+            
+            for (NamingEnumeration i = attributes.getAll(); i.hasMore(); ) {
+                Attribute attribute = (Attribute)i.next();
+                String name = attribute.getID();
+
+                for (NamingEnumeration j = attribute.getAll(); j.hasMore(); ) {
+                    Object value = j.next();
+                    log.debug(" - "+name+": "+value+" ("+value.getClass()+")");
+                }
+            }
+        }
+
+        return result;
+/*
         LDAPAttributeSet attributeSet = result.getAttributeSet();
         Attributes attributes = new BasicAttributes();
 
@@ -120,6 +136,7 @@ public class PenroseEnumeration implements NamingEnumeration {
         );
 
         return sr;
+*/
     }
 
     public boolean hasMoreElements() {

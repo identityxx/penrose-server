@@ -18,6 +18,7 @@
 package org.safehaus.penrose.connector;
 
 import org.safehaus.penrose.session.PenroseSearchResults;
+import org.safehaus.penrose.session.PenroseSearchControls;
 import org.safehaus.penrose.partition.*;
 import org.safehaus.penrose.cache.CacheConfig;
 import org.safehaus.penrose.cache.SourceCache;
@@ -25,13 +26,20 @@ import org.safehaus.penrose.engine.TransformEngine;
 import org.safehaus.penrose.config.*;
 import org.safehaus.penrose.thread.MRSWLock;
 import org.safehaus.penrose.thread.Queue;
-import org.safehaus.penrose.thread.ThreadPool;
+import org.safehaus.penrose.thread.ThreadManager;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.filter.FilterTool;
 import org.safehaus.penrose.mapping.*;
+import org.safehaus.penrose.pipeline.PipelineEvent;
+import org.safehaus.penrose.pipeline.PipelineAdapter;
+import org.safehaus.penrose.util.PasswordUtil;
 import org.apache.log4j.Logger;
 import org.ietf.ldap.LDAPException;
 
+import javax.naming.directory.BasicAttribute;
+import javax.naming.directory.Attribute;
+import javax.naming.directory.ModificationItem;
+import javax.naming.directory.DirContext;
 import java.util.*;
 
 /**
@@ -49,11 +57,14 @@ public class Connector {
     private PartitionManager partitionManager;
     private SourceCache sourceCache;
 
-    private ThreadPool threadPool;
+    private ThreadManager threadManager;
     private boolean stopping = false;
 
     private Map locks = new HashMap();
     private Queue queue = new Queue();
+
+    public Connector() {
+    }
 
     public void init() throws Exception {
         CacheConfig cacheConfig = penroseConfig.getSourceCacheConfig();
@@ -68,14 +79,13 @@ public class Connector {
         sourceCache.setPenroseConfig(penroseConfig);
         sourceCache.setConnectionManager(connectionManager);
         sourceCache.setPartitionManager(partitionManager);
+        sourceCache.setThreadManager(threadManager);
     }
 
     public void start() throws Exception {
 
         String s = connectorConfig.getParameter(ConnectorConfig.THREAD_POOL_SIZE);
         int threadPoolSize = s == null ? ConnectorConfig.DEFAULT_THREAD_POOL_SIZE : Integer.parseInt(s);
-
-        threadPool = new ThreadPool(threadPoolSize);
 
         for (Iterator i=partitionManager.getPartitions().iterator(); i.hasNext(); ) {
             Partition partition = (Partition)i.next();
@@ -87,24 +97,9 @@ public class Connector {
         return stopping;
     }
 
-    public void execute(Runnable runnable) throws Exception {
-        String s = connectorConfig.getParameter(ConnectorConfig.ALLOW_CONCURRENCY);
-        boolean allowConcurrency = s == null ? true : new Boolean(s).booleanValue();
-
-        if (threadPool == null || !allowConcurrency || log.isDebugEnabled()) {
-            runnable.run();
-            
-        } else {
-            threadPool.execute(runnable);
-        }
-    }
-
     public void stop() throws Exception {
         if (stopping) return;
         stopping = true;
-
-        // wait for all the worker threads to finish
-        if (threadPool != null) threadPool.stopRequestAllWorkers();
     }
 
 
@@ -161,9 +156,8 @@ public class Connector {
 		return lock;
 	}
 
-    public int bind(Partition partition, SourceConfig sourceConfig, EntryMapping entry, AttributeValues sourceValues, String password) throws Exception {
+    public int bind(Partition partition, SourceConfig sourceConfig, EntryMapping entry, Row pk, String password) throws Exception {
 
-        log.debug("----------------------------------------------------------------");
         log.debug("Binding as entry in "+sourceConfig.getName());
 
         MRSWLock lock = getLock(sourceConfig);
@@ -171,7 +165,7 @@ public class Connector {
 
         try {
             Connection connection = getConnection(partition, sourceConfig.getConnectionName());
-            int rc = connection.bind(sourceConfig, sourceValues, password);
+            int rc = connection.bind(sourceConfig, pk, password);
 
             return rc;
 
@@ -201,8 +195,10 @@ public class Connector {
 
                 // Add row to source table in the source database/directory
                 Connection connection = getConnection(partition, sourceConfig.getConnectionName());
-                int rc = connection.add(sourceConfig, newEntry);
+                int rc = connection.add(sourceConfig, pk, newEntry);
                 if (rc != LDAPException.SUCCESS) return rc;
+
+                Filter filter = FilterTool.createFilter(pk);
 
                 AttributeValues sv = connection.get(sourceConfig, pk);
                 getSourceCache().put(sourceConfig, pk, sv);
@@ -246,7 +242,7 @@ public class Connector {
 
                 // Delete row from source table in the source database/directory
                 Connection connection = getConnection(partition, sourceConfig.getConnectionName());
-                int rc = connection.delete(sourceConfig, oldEntry);
+                int rc = connection.delete(sourceConfig, pk);
                 if (rc != LDAPException.SUCCESS)
                     return rc;
 
@@ -305,7 +301,7 @@ public class Connector {
 
                 // Delete row from source table in the source database/directory
                 Connection connection = getConnection(partition, sourceConfig.getConnectionName());
-                int rc = connection.delete(sourceConfig, oldEntry);
+                int rc = connection.delete(sourceConfig, pk);
                 if (rc != LDAPException.SUCCESS)
                     return rc;
 
@@ -322,8 +318,10 @@ public class Connector {
 
                 // Add row to source table in the source database/directory
                 Connection connection = getConnection(partition, sourceConfig.getConnectionName());
-                int rc = connection.add(sourceConfig, newEntry);
+                int rc = connection.add(sourceConfig, pk, newEntry);
                 if (rc != LDAPException.SUCCESS) return rc;
+
+                Filter filter = FilterTool.createFilter(pk);
 
                 AttributeValues sv = connection.get(sourceConfig, pk);
                 getSourceCache().put(sourceConfig, pk, sv);
@@ -343,10 +341,13 @@ public class Connector {
 
                 // Modify row from source table in the source database/directory
                 Connection connection = getConnection(partition, sourceConfig.getConnectionName());
-                int rc = connection.modify(sourceConfig, oldEntry, newEntry);
+                Collection modifications = createModifications(oldEntry, newEntry);
+                int rc = connection.modify(sourceConfig, pk, modifications);
                 if (rc != LDAPException.SUCCESS) return rc;
 
                 // Modify row from source table in the cache
+                Filter filter = FilterTool.createFilter(pk);
+
                 AttributeValues sv = connection.get(sourceConfig, pk);
                 getSourceCache().remove(sourceConfig, pk);
                 getSourceCache().put(sourceConfig, pk, sv);
@@ -369,6 +370,68 @@ public class Connector {
         }
 
         return LDAPException.SUCCESS;
+    }
+
+    public Collection createModifications(AttributeValues oldValues, AttributeValues newValues) throws Exception {
+
+        Collection list = new ArrayList();
+
+        Set addAttributes = new HashSet(newValues.getNames());
+        addAttributes.removeAll(oldValues.getNames());
+
+        log.debug("Values to add:");
+        for (Iterator i=addAttributes.iterator(); i.hasNext(); ) {
+            String name = (String)i.next();
+
+            Collection values = newValues.get(name);
+            Attribute attribute = new BasicAttribute(name);
+
+            for (Iterator j = values.iterator(); j.hasNext(); ) {
+                Object value = j.next();
+                log.debug(" - "+name+": "+value);
+                attribute.add(value);
+            }
+
+            list.add(new ModificationItem(DirContext.ADD_ATTRIBUTE, attribute));
+        }
+
+        Set removeAttributes = new HashSet(oldValues.getNames());
+        removeAttributes.removeAll(newValues.getNames());
+
+        log.debug("Values to remove:");
+        for (Iterator i=removeAttributes.iterator(); i.hasNext(); ) {
+            String name = (String)i.next();
+
+            Collection values = newValues.get(name);
+            Attribute attribute = new BasicAttribute(name);
+            for (Iterator j = values.iterator(); j.hasNext(); ) {
+                Object value = j.next();
+            	log.debug(" - "+name+": "+value);
+                attribute.add(value);
+            }
+
+            list.add(new ModificationItem(DirContext.REMOVE_ATTRIBUTE, attribute));
+        }
+
+        Set replaceAttributes = new HashSet(oldValues.getNames());
+        replaceAttributes.retainAll(newValues.getNames());
+
+        log.debug("Values to replace:");
+        for (Iterator i=replaceAttributes.iterator(); i.hasNext(); ) {
+            String name = (String)i.next();
+
+            Set set = (Set)newValues.get(name);
+            Attribute attribute = new BasicAttribute(name);
+            for (Iterator j = set.iterator(); j.hasNext(); ) {
+                Object value = j.next();
+                log.debug(" - "+name+": "+value);
+                attribute.add(value);
+            }
+
+            list.add(new ModificationItem(DirContext.REPLACE_ATTRIBUTE, attribute));
+        }
+
+        return list;
     }
 
     /**
@@ -402,21 +465,32 @@ public class Connector {
             Filter filter)
             throws Exception {
 
+        PenroseSearchResults results = new PenroseSearchResults();
+
         log.debug("Checking query cache for "+filter);
         Collection pks = getSourceCache().search(sourceConfig, filter);
 
         log.debug("Cached results: "+pks);
 
-        if (pks != null) {
+        if (pks == null) {
             log.debug("Searching source "+sourceConfig.getName()+" with filter "+filter);
-            pks = performSearch(partition, sourceConfig, filter);
+            PenroseSearchResults sr = performSearch(partition, sourceConfig, filter);
+            pks = sr.getAll();
 
-            log.debug("Storing query cache for "+filter);
+            int rc = sr.getReturnCode();
+            if (rc != 0) {
+                log.debug("RC: "+rc);
+                results.setReturnCode(rc);
+            }
+
+            log.debug("Storing query cache for: "+pks);
             getSourceCache().put(sourceConfig, filter, pks);
         }
 
         log.debug("Loading source "+sourceConfig.getName()+" with pks "+pks);
-        return load(partition, sourceConfig, pks);
+        load(partition, sourceConfig, pks, results);
+
+        return results;
 
     }
 
@@ -428,10 +502,14 @@ public class Connector {
         Collection pks = getSourceCache().search(sourceConfig, filter);
 
         if (pks != null) {
-            return load(partition, sourceConfig, pks);
+            PenroseSearchResults results = new PenroseSearchResults();
+            load(partition, sourceConfig, pks, results);
+            return results;
 
         } else {
-            return performLoad(partition, sourceConfig, filter);
+            PenroseSearchResults results = new PenroseSearchResults();
+            performLoad(partition, sourceConfig, filter, results);
+            return results;
             //store(sourceConfig, values);
         }
     }
@@ -439,20 +517,19 @@ public class Connector {
     /**
      * Check data cache then load.
      */
-    public PenroseSearchResults load(
+    public void load(
             final Partition partition,
             final SourceConfig sourceConfig,
-            final Collection pks)
+            final Collection pks,
+            final PenroseSearchResults results)
             throws Exception {
 
-        final PenroseSearchResults results = new PenroseSearchResults();
-
-        if (pks.isEmpty()) {
+        if (pks == null || pks.isEmpty()) {
             results.close();
-            return results;
+            return;
         }
 
-        execute(new Runnable() {
+        threadManager.execute(new Runnable() {
             public void run() {
                 try {
                     Collection normalizedPks = new ArrayList();
@@ -478,15 +555,13 @@ public class Connector {
                     results.setReturnCode(rc);
 
                 } catch (Exception e) {
-                    log.debug(e.getMessage(), e);
+                    log.error(e.getMessage(), e);
                     results.setReturnCode(LDAPException.OPERATIONS_ERROR);
                 }
 
                 results.close();
             }
         });
-
-        return results;
     }
 
     /**
@@ -502,7 +577,8 @@ public class Connector {
 
         Filter filter = FilterTool.createFilter(keys);
 
-        PenroseSearchResults sr = performLoad(partition, sourceConfig, filter);
+        PenroseSearchResults sr = new PenroseSearchResults();
+        performLoad(partition, sourceConfig, filter, sr);
 
         //Collection values = new ArrayList();
         //values.addAll(sr.getAll());
@@ -570,27 +646,37 @@ public class Connector {
     /**
      * Perform the search operation.
      */
-    public Collection performSearch(Partition partition, SourceConfig sourceConfig, Filter filter) throws Exception {
+    public PenroseSearchResults performSearch(Partition partition, SourceConfig sourceConfig, Filter filter) throws Exception {
 
-        Collection results = new ArrayList();
+        PenroseSearchResults results = new PenroseSearchResults();
 
         String s = sourceConfig.getParameter(SourceConfig.SIZE_LIMIT);
         int sizeLimit = s == null ? SourceConfig.DEFAULT_SIZE_LIMIT : Integer.parseInt(s);
 
         Connection connection = getConnection(partition, sourceConfig.getConnectionName());
-        PenroseSearchResults sr;
+        PenroseSearchResults sr = new PenroseSearchResults();
         try {
-            sr = connection.search(sourceConfig, filter, sizeLimit);
+            PenroseSearchControls sc = new PenroseSearchControls();
+            sc.setSizeLimit(sizeLimit);
 
+            connection.search(sourceConfig, filter, sc, sr);
+
+            log.debug("Search results:");
+            for (Iterator i=sr.iterator(); i.hasNext();) {
+                Row pk = (Row)i.next();
+                Row npk = normalize(pk);
+                log.debug(" - "+npk);
+                results.add(npk);
+            }
+
+            results.setReturnCode(sr.getReturnCode());
+            
         } catch (Exception e) {
-            log.debug(e.getMessage(), e);
-            return results;
-        }
-
-        for (Iterator i=sr.iterator(); i.hasNext();) {
-            Row pk = (Row)i.next();
-            Row npk = normalize(pk);
-            results.add(npk);
+            log.error(e.getMessage(), e);
+            results.setReturnCode(LDAPException.OPERATIONS_ERROR);
+            
+        } finally {
+            results.close();
         }
 
         return results;
@@ -599,40 +685,62 @@ public class Connector {
     /**
      * Perform the load operation.
      */
-    public PenroseSearchResults performLoad(
+    public void performLoad(
             final Partition partition,
             final SourceConfig sourceConfig,
-            final Filter filter
+            final Filter filter,
+            final PenroseSearchResults results
             ) throws Exception {
 
-        final PenroseSearchResults results = new PenroseSearchResults();
+        final PenroseSearchResults sr = new PenroseSearchResults();
 
-        execute(new Runnable() {
+        sr.addListener(new PipelineAdapter() {
+            public void objectAdded(PipelineEvent event) {
+                try {
+                    AttributeValues sourceValues = (AttributeValues)event.getObject();
+                    store(sourceConfig, sourceValues);
+                    results.add(sourceValues);
+                } catch (Exception e) {
+                    log.error(e.getMessage(), e);
+                    results.setReturnCode(LDAPException.OPERATIONS_ERROR);
+                }
+            }
+            public void pipelineClosed(PipelineEvent event) {
+                results.setReturnCode(sr.getReturnCode());
+                results.close();
+            }
+        });
+
+        threadManager.execute(new Runnable() {
             public void run() {
                 try {
                     String s = sourceConfig.getParameter(SourceConfig.SIZE_LIMIT);
                     int sizeLimit = s == null ? SourceConfig.DEFAULT_SIZE_LIMIT : Integer.parseInt(s);
 
                     Connection connection = getConnection(partition, sourceConfig.getConnectionName());
-                    PenroseSearchResults sr = connection.load(sourceConfig, filter, sizeLimit);
 
+                    PenroseSearchControls sc = new PenroseSearchControls();
+                    sc.setSizeLimit(sizeLimit);
+
+                    connection.load(sourceConfig, filter, sc, sr);
+/*
                     for (Iterator i=sr.iterator(); i.hasNext();) {
                         AttributeValues sourceValues = (AttributeValues)i.next();
                         store(sourceConfig, sourceValues);
                         results.add(sourceValues);
                     }
 
+                    results.setReturnCode(sr.getReturnCode());
+*/
                 } catch (Exception e) {
-                    log.debug(e.getMessage(), e);
-                    results.setReturnCode(LDAPException.OPERATIONS_ERROR);
+                    log.error(e.getMessage(), e);
+                    //results.setReturnCode(LDAPException.OPERATIONS_ERROR);
 
                 } finally {
-                    results.close();
+                    //results.close();
                 }
             }
         });
-
-        return results;
     }
 
     public ConnectorConfig getConnectorConfig() {
@@ -665,5 +773,13 @@ public class Connector {
 
     public void setSourceCache(SourceCache sourceCache) {
         this.sourceCache = sourceCache;
+    }
+
+    public ThreadManager getThreadManager() {
+        return threadManager;
+    }
+
+    public void setThreadManager(ThreadManager threadManager) {
+        this.threadManager = threadManager;
     }
 }

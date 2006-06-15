@@ -22,9 +22,10 @@ import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.filter.SubstringFilter;
 import org.safehaus.penrose.session.PenroseSearchResults;
-import org.safehaus.penrose.session.PenroseSearchResults;
+import org.safehaus.penrose.session.PenroseSearchControls;
 import org.safehaus.penrose.partition.SourceConfig;
 import org.apache.log4j.Logger;
+import org.ietf.ldap.LDAPException;
 
 import java.util.Collection;
 import java.util.Map;
@@ -55,56 +56,68 @@ public abstract class Adapter {
 	 * 
 	 * @throws Exception
 	 */
-    public abstract int bind(SourceConfig sourceConfig, AttributeValues values, String password) throws Exception;
+    public int bind(SourceConfig sourceConfig, Row pk, String password) throws Exception {
+        return LDAPException.INVALID_CREDENTIALS;
+    }
     
     /**
      * Search.
      *
-     * @return Collection of Rows
+     * @param results Rows
      * @throws Exception
      */
-    public abstract PenroseSearchResults search(SourceConfig sourceConfig, Filter filter, long sizeLimit) throws Exception;
+    public void search(SourceConfig sourceConfig, Filter filter, PenroseSearchControls sc, PenroseSearchResults results) throws Exception {
+        results.close();
+    }
 
     /**
      * Load.
      *
-     * @return Collection of AttributeValues
+     * @param results AttributeValues
      * @throws Exception
      */
-    public abstract PenroseSearchResults load(SourceConfig sourceConfig, Filter filter, long sizeLimit) throws Exception;
-
-    /**
-     * Get.
-     * @throws Exception
-     */
-    public abstract AttributeValues get(SourceConfig sourceConfig, Row pk) throws Exception;
+    public void load(SourceConfig sourceConfig, Filter filter, PenroseSearchControls sc, PenroseSearchResults results) throws Exception {
+        results.close();
+    }
 
     /**
      * Add.
      * 
      * @throws Exception
      */
-    public abstract int add(SourceConfig sourceConfig, AttributeValues values) throws Exception;
+    public int add(SourceConfig sourceConfig, Row pk, AttributeValues sourceValues) throws Exception {
+        return LDAPException.OPERATIONS_ERROR;
+    }
     
     /**
      * Modify.
      * 
      * @throws Exception
      */
-    public abstract int modify(SourceConfig sourceConfig, AttributeValues oldValues, AttributeValues newValues) throws Exception;
+    public int modify(SourceConfig sourceConfig, Row pk, Collection modifications) throws Exception {
+        return LDAPException.OPERATIONS_ERROR;
+    }
 
     /**
      * Delete.
      * 
      * @throws Exception
      */
-    public abstract int delete(SourceConfig sourceConfig, AttributeValues values) throws Exception;
+    public int delete(SourceConfig sourceConfig, Row pk) throws Exception {
+        return LDAPException.OPERATIONS_ERROR;
+    }
 
-    public abstract int getLastChangeNumber(SourceConfig sourceConfig) throws Exception;
+    public int getLastChangeNumber(SourceConfig sourceConfig) throws Exception {
+        return 0;
+    }
 
-    public abstract PenroseSearchResults getChanges(SourceConfig sourceConfig, int lastChangeNumber) throws Exception;
+    public PenroseSearchResults getChanges(SourceConfig sourceConfig, int lastChangeNumber) throws Exception {
+        return null;
+    }
 
-    public abstract Object openConnection() throws Exception;
+    public Object openConnection() throws Exception {
+        return null;
+    }
 
     public AdapterConfig getAdapterConfig() {
         return adapterConfig;

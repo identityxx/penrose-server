@@ -48,11 +48,14 @@ public class DeleteHandler {
 
         int rc;
         try {
-            log.info("-------------------------------------------------");
-            log.info("DELETE:");
-            if (session != null && session.getBindDn() != null) log.info(" - Bind DN: "+session.getBindDn());
-            log.info(" - DN: "+dn);
-            log.info("");
+
+            log.warn("Delete entry \""+dn+"\".");
+
+            log.debug("-------------------------------------------------");
+            log.debug("DELETE:");
+            if (session != null && session.getBindDn() != null) log.debug(" - Bind DN: "+session.getBindDn());
+            log.debug(" - DN: "+dn);
+            log.debug("");
 
             if (session != null && session.getBindDn() == null) {
                 PenroseConfig penroseConfig = handler.getPenroseConfig();
@@ -80,6 +83,12 @@ public class DeleteHandler {
         } catch (Exception e) {
             log.error(e.getMessage(), e);
             rc = LDAPException.OPERATIONS_ERROR;
+        }
+
+        if (rc == LDAPException.SUCCESS) {
+            log.warn("Delete operation succeded.");
+        } else {
+            log.warn("Delete operation failed. RC="+rc);
         }
 
         return rc;

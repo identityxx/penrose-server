@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<modules>
+
+  <module name="Samba User">
+    <module-class>org.safehaus.penrose.samba.SambaUserModule</module-class>
+    <parameter>
+      <param-name>ssh.client</param-name>
+      <param-value>C:/Program Files/PuTTY/plink.exe</param-value>
+    </parameter>
+    <parameter>
+      <param-name>samba.admin</param-name>
+      <param-value>root</param-value>
+    </parameter>
+    <parameter>
+      <param-name>samba.server</param-name>
+      <param-value>linux.example.com</param-value>
+    </parameter>
+  </module>
+
+  <module name="Samba Group">
+    <module-class>org.safehaus.penrose.samba.SambaGroupModule</module-class>
+    <parameter>
+      <param-name>ssh.client</param-name>
+      <param-value>C:/Program Files/PuTTY/plink.exe</param-value>
+    </parameter>
+    <parameter>
+      <param-name>samba.admin</param-name>
+      <param-value>root</param-value>
+    </parameter>
+    <parameter>
+      <param-name>samba.server</param-name>
+      <param-value>linux.example.com</param-value>
+    </parameter>
+  </module>
+
+  <module-mapping>
+    <module-name>Samba User</module-name>
+    <base-dn>ou=Users,dc=Samba,dc=Example,dc=com</base-dn>
+    <filter>(objectClass=*)</filter>
+    <scope>ONELEVEL</scope>
+  </module-mapping>
+
+  <module-mapping>
+    <module-name>Samba Group</module-name>
+    <base-dn>ou=Groups,dc=Samba,dc=Example,dc=com</base-dn>
+    <filter>(objectClass=*)</filter>
+    <scope>ONELEVEL</scope>
+  </module-mapping>
+
+</modules>

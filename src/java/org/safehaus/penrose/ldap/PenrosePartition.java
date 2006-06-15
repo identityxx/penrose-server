@@ -93,25 +93,10 @@ public class PenrosePartition extends AbstractDirectoryPartition {
         if (getSuffix(true).equals(normName)) return;
 
         try {
-            LDAPAttributeSet attributeSet = new LDAPAttributeSet();
-            for (Enumeration e = attributes.getAll(); e.hasMoreElements(); ) {
-                Attribute attribute = (Attribute)e.nextElement();
-                LDAPAttribute attr = new LDAPAttribute(attribute.getID());
-
-                for (Enumeration values = attribute.getAll(); values.hasMoreElements(); ) {
-                    Object value = values.nextElement();
-                    attr.addValue(value.toString());
-                }
-
-                attributeSet.add(attr);
-            }
-
-            LDAPEntry ldapEntry = new LDAPEntry(upName, attributeSet);
-
             PenroseSession session = penrose.newSession();
             if (session == null) throw new ServiceUnavailableException();
 
-            int rc = session.add(ldapEntry);
+            int rc = session.add(upName, attributes);
 
             session.close();
 
@@ -125,7 +110,7 @@ public class PenrosePartition extends AbstractDirectoryPartition {
         }
     }
 
-    public void modify(Name dn, int i, Attributes attributes) throws NamingException {
+    public void modify(Name dn, int modOp, Attributes attributes) throws NamingException {
         log.info("Modifying \""+dn+"\"");
         log.debug("changetype: modify");
 
@@ -134,20 +119,8 @@ public class PenrosePartition extends AbstractDirectoryPartition {
 
             for (Enumeration e=attributes.getAll(); e.hasMoreElements(); ) {
                 Attribute attribute = (Attribute)e.nextElement();
-                String attrName = attribute.getID();
 
-                int op = LDAPModification.REPLACE;
-                LDAPAttribute attr = new LDAPAttribute(attrName);
-
-                log.debug("replace: "+attrName);
-                for (Enumeration values = attribute.getAll(); values.hasMoreElements(); ) {
-                    Object value = values.nextElement();
-                    log.debug(attrName+": "+value);
-                    attr.addValue(value.toString());
-                }
-                log.debug("-");
-
-                LDAPModification modification = new LDAPModification(op, attr);
+                ModificationItem modification = new ModificationItem(modOp, attribute);
                 modifications.add(modification);
             }
 
@@ -173,46 +146,10 @@ public class PenrosePartition extends AbstractDirectoryPartition {
         log.debug("changetype: modify");
 
         try {
-            Collection modifications = new ArrayList();
-
-            for (int i=0; i<modificationItems.length; i++) {
-                ModificationItem mi = modificationItems[i];
-                Attribute attribute = mi.getAttribute();
-                String attrName = attribute.getID();
-
-                int op = LDAPModification.REPLACE;
-                switch (mi.getModificationOp()) {
-                    case DirContext.ADD_ATTRIBUTE:
-                        log.debug("add: "+attrName);
-                        op = LDAPModification.ADD;
-                        break;
-                    case DirContext.REPLACE_ATTRIBUTE:
-                        log.debug("replace: "+attrName);
-                        op = LDAPModification.REPLACE;
-                        break;
-                    case DirContext.REMOVE_ATTRIBUTE:
-                        log.debug("delete: "+attrName);
-                        op = LDAPModification.DELETE;
-                        break;
-                }
-
-                LDAPAttribute attr = new LDAPAttribute(attrName);
-
-                for (Enumeration values = attribute.getAll(); values.hasMoreElements(); ) {
-                    Object value = values.nextElement();
-                    log.debug(attrName+": "+value);
-                    attr.addValue(value.toString());
-                }
-                log.debug("-");
-
-                LDAPModification modification = new LDAPModification(op, attr);
-                modifications.add(modification);
-            }
-
             PenroseSession session = penrose.newSession();
             if (session == null) throw new ServiceUnavailableException();
 
-            int rc = session.modify(dn.toString(), modifications);
+            int rc = session.modify(dn.toString(), Arrays.asList(modificationItems));
 
             session.close();
 
@@ -233,23 +170,19 @@ public class PenrosePartition extends AbstractDirectoryPartition {
             PenroseSession session = penrose.newSession();
             if (session == null) throw new ServiceUnavailableException();
 
+            PenroseSearchResults results = new PenroseSearchResults();
+
             PenroseSearchControls sc = new PenroseSearchControls();
             sc.setScope(PenroseSearchControls.SCOPE_ONE);
             sc.setDereference(PenroseSearchControls.DEREF_ALWAYS);
 
             String baseDn = dn.toString();
-            PenroseSearchResults results = session.search(
+            session.search(
                     baseDn,
                     "(objectClass=*)",
-                    sc);
-/*
-            int rc = results.getReturnCode();
-            connection.close();
+                    sc,
+                    results);
 
-            if (rc != LDAPException.SUCCESS) {
-                throw new NamingException("RC: "+rc);
-            }
-*/
             return new PenroseEnumeration(results);
 
         } catch (Exception e) {
@@ -279,23 +212,20 @@ public class PenrosePartition extends AbstractDirectoryPartition {
             PenroseSession session = penrose.newSession();
             if (session == null) throw new ServiceUnavailableException();
 
+            PenroseSearchResults results = new PenroseSearchResults();
+
             PenroseSearchControls sc = new PenroseSearchControls();
             sc.setScope(searchControls.getSearchScope());
             sc.setDereference(PenroseSearchControls.DEREF_ALWAYS);
-            sc.setAttributes(searchControls.getReturningAttributes());
+            sc.setAttributes(searchControls == null ? null : searchControls.getReturningAttributes());
 
             String baseDn = base.toString();
-            PenroseSearchResults results = session.search(
+            session.search(
                     baseDn,
                     newFilter,
-                    sc);
-/*
-            int rc = results.getReturnCode();
-            connection.close();
+                    sc,
+                    results);
 
-            if (rc != LDAPException.SUCCESS) return null;
-            //throwNamingException(rc, baseDn);
-*/
             return new PenroseEnumeration(results);
 
         } catch (Exception e) {
@@ -324,15 +254,18 @@ public class PenrosePartition extends AbstractDirectoryPartition {
             PenroseSession session = penrose.newSession();
             if (session == null) throw new ServiceUnavailableException();
 
+            PenroseSearchResults results = new PenroseSearchResults();
+
             PenroseSearchControls sc = new PenroseSearchControls();
             sc.setScope(PenroseSearchControls.SCOPE_BASE);
             sc.setDereference(PenroseSearchControls.DEREF_ALWAYS);
 
             String baseDn = dn.toString();
-            PenroseSearchResults results = session.search(
+            session.search(
                     baseDn,
                     "(objectClass=*)",
-                    sc);
+                    sc,
+                    results);
 
             int rc = results.getReturnCode();
             session.close();
@@ -344,24 +277,9 @@ public class PenrosePartition extends AbstractDirectoryPartition {
                 throw new NameNotFoundException("No such object.");
             }
 
-            LDAPEntry result = (LDAPEntry)results.next();
+            SearchResult result = (SearchResult)results.next();
 
-            LDAPAttributeSet attributeSet = result.getAttributeSet();
-            Attributes attributes = new BasicAttributes();
-
-            for (Iterator j = attributeSet.iterator(); j.hasNext(); ) {
-                LDAPAttribute attribute = (LDAPAttribute)j.next();
-                Attribute attr = new BasicAttribute(attribute.getName());
-
-                for (Enumeration k=attribute.getStringValues(); k.hasMoreElements(); ) {
-                    String value = (String)k.nextElement();
-                    attr.add(value);
-                }
-
-                attributes.put(attr);
-            }
-
-            return attributes;
+            return result.getAttributes();
 
         } catch (Exception e) {
             log.error(e.getMessage(), e);
@@ -386,15 +304,18 @@ public class PenrosePartition extends AbstractDirectoryPartition {
             PenroseSession session = penrose.newSession();
             if (session == null) throw new ServiceUnavailableException();
 
+            PenroseSearchResults results = new PenroseSearchResults();
+
             PenroseSearchControls sc = new PenroseSearchControls();
             sc.setScope(PenroseSearchControls.SCOPE_BASE);
             sc.setDereference(PenroseSearchControls.DEREF_ALWAYS);
 
             String base = name.toString();
-            PenroseSearchResults results = session.search(
+            session.search(
                     base,
                     "(objectClass=*)",
-                    sc);
+                    sc,
+                    results);
 
             boolean result = results.getReturnCode() == LDAPException.SUCCESS && results.size() == 1;
 
