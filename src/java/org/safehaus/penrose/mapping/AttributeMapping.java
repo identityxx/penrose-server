@@ -111,6 +111,7 @@ public class AttributeMapping implements Cloneable {
     }
 
     public void setExpression(Expression expression) {
+        this.type = EXPRESSION;
         this.expression = expression;
     }
 
@@ -131,10 +132,12 @@ public class AttributeMapping implements Cloneable {
     }
 
     public void setBinary(byte[] bytes) {
+        this.type = CONSTANT;
         constant = bytes;
     }
 
     public void setBinary(String encodedData) throws Exception {
+        this.type = CONSTANT;
         constant = BinaryUtil.decode(BinaryUtil.BASE64, encodedData);
     }
 
@@ -143,6 +146,7 @@ public class AttributeMapping implements Cloneable {
     }
 
     public void setConstant(Object constant) {
+        this.type = CONSTANT;
         this.constant = constant;
     }
 
@@ -151,6 +155,7 @@ public class AttributeMapping implements Cloneable {
     }
 
     public void setVariable(String variable) {
+        this.type = VARIABLE;
         this.variable = variable;
     }
 

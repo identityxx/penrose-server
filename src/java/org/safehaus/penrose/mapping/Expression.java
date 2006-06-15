@@ -55,16 +55,6 @@ public class Expression implements Cloneable {
         this.foreach = foreach;
     }
 
-    public String getConstant() {
-        if (script == null || "".equals(script.trim())) return null;
-        if (script.length() < 2) return null;
-        if (!script.startsWith("\"")) return null;
-        if (!script.endsWith("\"")) return null;
-        String constant = script.substring(1, script.length()-1);
-        if (constant.indexOf("\"") >= 0) return null;
-        return constant;
-    }
-
     public String getVar() {
         return var;
     }

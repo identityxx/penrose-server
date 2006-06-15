@@ -41,7 +41,7 @@
 	<classpathentry kind="lib" path="lib/spring-context-1.2.1.jar"/>
 	<classpathentry kind="lib" path="lib/spring-core-1.2.1.jar"/>
 	<classpathentry kind="lib" path="lib/wrapper.jar"/>
-	<classpathentry kind="lib" path="lib/xml-apis-2.0.2.jar"/>
+	<classpathentry kind="lib" path="C:/svn.safehaus.org/penrose/lib/xml-apis-2.8.0.jar"/>
 	<classpathentry kind="lib" path="lib/ant/ant.jar"/>
 	<classpathentry kind="lib" path="lib/bcprov-jdk14-132.jar"/>
 	<classpathentry kind="lib" path="lib/apacheds-core-1.0-RC3.jar"/>
