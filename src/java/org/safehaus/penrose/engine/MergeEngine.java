@@ -209,7 +209,7 @@ public class MergeEngine {
         //log.debug(" - attribute values: "+attributeValues);
 
         Entry entry = new Entry(dn, entryMapping, sourceValues, attributeValues);
-        log.debug(EntryUtil.toString(entry));
+        log.debug("\n"+EntryUtil.toString(entry));
 
         //Row rdn = entry.getRdn();
 

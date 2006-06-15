@@ -110,7 +110,12 @@ public class JNDIClient {
     }
 
     public LdapContext getContext() throws Exception {
-        log.debug("Creating InitialLdapContext: "+parameters);
+        log.debug("Creating InitialLdapContext:");
+        for (Iterator i=parameters.keySet().iterator(); i.hasNext(); ) {
+            String name = (String)i.next();
+            Object value = parameters.get(name);
+            log.debug(" - "+name+": "+value);
+        }
         return new InitialLdapContext(parameters, null);
     }
 
@@ -118,14 +123,21 @@ public class JNDIClient {
         //context.close();
     }
 
-    public DirContext bind(String dn, String password) throws Exception {
+    public int bind(String dn, String password) throws Exception {
 
         dn = EntryUtil.append(dn, suffix);
 
         Hashtable env = new Hashtable(parameters);
         env.put(Context.SECURITY_PRINCIPAL, dn);
         env.put(Context.SECURITY_CREDENTIALS, password);
-        return new InitialLdapContext(env, null);
+
+        try {
+            new InitialLdapContext(env, null);
+            return LDAPException.SUCCESS;
+
+        } catch (Exception e) {
+            return LDAPException.INVALID_CREDENTIALS;
+        }
     }
 
     public int add(String dn, Attributes attributes) throws Exception {

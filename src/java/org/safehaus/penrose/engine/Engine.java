@@ -40,7 +40,6 @@ import org.safehaus.penrose.session.PenroseSearchResults;
 import org.safehaus.penrose.session.PenroseSearchControls;
 import org.safehaus.penrose.util.EntryUtil;
 import org.apache.log4j.Logger;
-import org.ietf.ldap.LDAPDN;
 
 import javax.naming.directory.Attributes;
 import java.util.*;
@@ -64,7 +63,8 @@ public abstract class Engine {
     public boolean stopping = false;
 
     ThreadManager threadManager;
-    public EngineFilterTool filterTool;
+    public EngineFilterTool engineFilterTool;
+    private FilterTool filterTool;
 
     public Map locks = new HashMap();
     public Queue queue = new Queue();
@@ -164,6 +164,15 @@ public abstract class Engine {
         return computeAttributeValues(entryMapping, sourceValues, null, interpreter);
     }
 
+    /**
+     * Compute attribute values of an entry given the source values or row values
+     * @param entryMapping
+     * @param sourceValues
+     * @param rows
+     * @param interpreter
+     * @return
+     * @throws Exception
+     */
     public AttributeValues computeAttributeValues(
             EntryMapping entryMapping,
             AttributeValues sourceValues,
@@ -176,8 +185,8 @@ public abstract class Engine {
         if (sourceValues != null) interpreter.set(sourceValues, rows);
 
         //log.debug("Attribute values:");
-        Collection attributeDefinitions = entryMapping.getAttributeMappings();
-        for (Iterator j=attributeDefinitions.iterator(); j.hasNext(); ) {
+        Collection attributeMappings = entryMapping.getAttributeMappings();
+        for (Iterator j=attributeMappings.iterator(); j.hasNext(); ) {
             AttributeMapping attributeMapping = (AttributeMapping)j.next();
 
             String name = attributeMapping.getName();
@@ -213,9 +222,15 @@ public abstract class Engine {
         return analyzer.getGraph(entryMapping);
     }
 
-    public abstract void start() throws Exception;
+    public void start() throws Exception {
+        filterTool = new FilterTool();
+        filterTool.setSchemaManager(schemaManager);
 
-    public abstract void stop() throws Exception;
+    }
+
+    public void stop() throws Exception {
+
+    }
 
     public String getStartingSourceName(EntryMapping entryMapping) throws Exception {
 
@@ -385,26 +400,43 @@ public abstract class Engine {
         return isStatic(parentMapping);
     }
 
-    public EngineFilterTool getFilterTool() {
-        return filterTool;
+    public EngineFilterTool getEngineFilterTool() {
+        return engineFilterTool;
     }
 
-    public void setFilterTool(EngineFilterTool filterTool) {
-        this.filterTool = filterTool;
+    public void setEngineFilterTool(EngineFilterTool engineFilterTool) {
+        this.engineFilterTool = engineFilterTool;
     }
 
-    public String getParentSourceValues(Collection path, EntryMapping entryMapping, AttributeValues parentSourceValues) throws Exception {
-        Partition partition = partitionManager.getPartition(entryMapping);
-        EntryMapping parentMapping = partition.getParent(entryMapping);
+    public AttributeValues shiftParentSourceValues(AttributeValues attributeValues) {
+        AttributeValues newSourceValues = new AttributeValues();
+
+        for (Iterator j=attributeValues.getNames().iterator(); j.hasNext(); ) {
+            String name = (String)j.next();
+            Collection values = attributeValues.get(name);
+
+            if (name.startsWith("parent.")) name = "parent."+name;
+            newSourceValues.add(name, values);
+        }
+
+        return newSourceValues;
+    }
+
+    public AttributeValues getParentSourceValues(
+            Partition partition,
+            Collection path
+    ) throws Exception {
+
+        AttributeValues sourceValues = new AttributeValues();
 
         String prefix = null;
         Interpreter interpreter = interpreterManager.newInstance();
 
         //log.debug("Parents' source values:");
         for (Iterator iterator = path.iterator(); iterator.hasNext(); ) {
-            //Map map = (Map)iterator.next();
-            //Entry entry = (Entry)map.get("entry");
             Entry entry = (Entry)iterator.next();
+            EntryMapping parentMapping = entry.getEntryMapping();
+
             //log.debug(" - "+dn);
 
             prefix = prefix == null ? "parent" : "parent."+prefix;
@@ -416,7 +448,7 @@ public abstract class Engine {
                     Collection values = av.get(name);
                     name = prefix+"."+name;
                     //log.debug("   - "+name+": "+values);
-                    parentSourceValues.add(name, values);
+                    sourceValues.add(name, values);
                 }
                 interpreter.clear();
 
@@ -427,7 +459,7 @@ public abstract class Engine {
                     Collection values = av.get(name);
                     name = prefix+"."+name;
                     //log.debug("   - "+name+": "+values);
-                    parentSourceValues.add(name, values);
+                    sourceValues.add(name, values);
                 }
 
                 AttributeValues sv = entry.getSourceValues();
@@ -436,49 +468,15 @@ public abstract class Engine {
                     Collection values = sv.get(name);
                     if (name.startsWith("parent.")) name = prefix+"."+name;
                     //log.debug("   - "+name+": "+values);
-                    parentSourceValues.add(name, values);
+                    sourceValues.add(name, values);
                 }
             }
 
             parentMapping = partition.getParent(parentMapping);
         }
 
-        return prefix;
+        return sourceValues;
     }
-
-    public abstract void bindProxy(
-            Partition partition,
-            EntryMapping entryMapping,
-            String dn,
-            String password
-            ) throws Exception;
-
-    public abstract void addProxy(
-            Partition partition,
-            EntryMapping entryMapping,
-            String dn,
-            Attributes attributes
-            ) throws Exception;
-
-    public abstract void modifyProxy(
-            Partition partition,
-            EntryMapping entryMapping,
-            Entry entry,
-            Collection modifications
-            ) throws Exception;
-
-    public abstract void modrdnProxy(
-            Partition partition,
-            EntryMapping entryMapping,
-            Entry entry,
-            String newRdn
-            ) throws Exception;
-
-    public abstract void deleteProxy(
-            Partition partition,
-            EntryMapping entryMapping,
-            String dn
-            ) throws Exception;
 
     public void load(
             EntryMapping entryMapping,
@@ -573,39 +571,84 @@ public abstract class Engine {
         return isUnique(parentMapping);
     }
 
-    public abstract int bind(Entry entry, String password) throws Exception;
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Bind
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    public abstract int bind(
+            Partition partition,
+            Entry entry,
+            String password
+    ) throws Exception;
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Add
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public abstract int add(
+            Partition partition,
             Entry parent,
             EntryMapping entryMapping,
-            AttributeValues attributeValues)
-            throws Exception;
+            String dn,
+            Attributes attributes
+    ) throws Exception;
 
-    public abstract int delete(Entry entry) throws Exception;
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Delete
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    public abstract int modrdn(Entry entry, String newRdn) throws Exception;
-
-    public abstract int modify(Entry entry, AttributeValues newValues) throws Exception;
-
-    public abstract void search(
-            final Collection path,
-            final AttributeValues parentSourceValues,
-            final EntryMapping entryMapping,
-            boolean single,
-            final Filter filter,
-            PenroseSearchControls sc,
-            PenroseSearchResults results) throws Exception;
-
-    public abstract void searchProxy(
+    public abstract int delete(
             Partition partition,
+            Entry entry
+    ) throws Exception;
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Modify
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    public abstract int modify(
+            Partition partition,
+            Entry entry,
+            Collection modifications
+    ) throws Exception;
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // ModRDN
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    public abstract int modrdn(
+            Partition partition,
+            Entry entry,
+            String newRdn
+    ) throws Exception;
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Search
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    public abstract int search(
+            Partition partition,
+            Collection path,
+            AttributeValues parentSourceValues,
             EntryMapping entryMapping,
-            String base,
-            String filter,
+            String baseDn,
+            Filter filter,
             PenroseSearchControls sc,
             PenroseSearchResults results
-            ) throws Exception;
+    ) throws Exception;
 
-   public synchronized MRSWLock getLock(String dn) {
+    public abstract int expand(
+            Partition partition,
+            Collection path,
+            AttributeValues parentSourceValues,
+            EntryMapping entryMapping,
+            String baseDn,
+            Filter filter,
+            PenroseSearchControls sc,
+            PenroseSearchResults results
+    ) throws Exception;
+
+    public synchronized MRSWLock getLock(String dn) {
 
 		MRSWLock lock = (MRSWLock)locks.get(dn);
 
@@ -823,6 +866,14 @@ public abstract class Engine {
 
     public void setThreadManager(ThreadManager threadManager) {
         this.threadManager = threadManager;
+    }
+
+    public FilterTool getFilterTool() {
+        return filterTool;
+    }
+
+    public void setFilterTool(FilterTool filterTool) {
+        this.filterTool = filterTool;
     }
 }
 

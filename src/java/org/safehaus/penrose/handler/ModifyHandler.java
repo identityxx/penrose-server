@@ -208,16 +208,13 @@ public class ModifyHandler {
         Partition partition = partitionManager.getPartition(entryMapping);
 
         if (partition.isProxy(entryMapping)) {
-            log.debug("Modifying "+entry.getDn()+" via proxy");
-            handler.getEngine().modifyProxy(partition, entryMapping, entry, modifications);
-            return LDAPException.SUCCESS;
-        }
+            return handler.getEngine("PROXY").modify(partition, entry, modifications);
 
-        if (partition.isDynamic(entryMapping)) {
-            return modifyVirtualEntry(session, entry, modifications);
+        } else if (partition.isDynamic(entryMapping)) {
+            return handler.getEngine().modify(partition, entry, modifications);
 
         } else {
-            return modifyStaticEntry(entryMapping, modifications);
+            return modifyStaticEntry(partition, entryMapping, modifications);
         }
 	}
 
@@ -263,113 +260,8 @@ public class ModifyHandler {
 		}
 	}
 
-    public int modifyVirtualEntry(
-            PenroseSession session,
-            Entry entry,
-			Collection modifications)
-            throws Exception {
 
-		EntryMapping entryMapping = entry.getEntryMapping();
-        AttributeValues oldValues = entry.getAttributeValues();
-
-		//convertValues(entryMapping, modifications);
-
-		log.debug("Old entry:");
-		log.debug("\n"+EntryUtil.toString(entry));
-
-		log.debug("--- perform modification:");
-		AttributeValues newValues = new AttributeValues(oldValues);
-
-		Collection objectClasses = handler.getSchemaManager().getObjectClasses(entryMapping);
-        Collection objectClassNames = new ArrayList();
-        for (Iterator i=objectClasses.iterator(); i.hasNext(); ) {
-            ObjectClass oc = (ObjectClass)i.next();
-            objectClassNames.add(oc.getName());
-        }
-        log.debug("Object classes: "+objectClassNames);
-
-		for (Iterator i = modifications.iterator(); i.hasNext();) {
-			ModificationItem modification = (ModificationItem)i.next();
-
-			Attribute attribute = modification.getAttribute();
-			String attributeName = attribute.getID();
-
-			if (attributeName.equals("entryCSN"))
-				continue; // ignore
-			if (attributeName.equals("modifiersName"))
-				continue; // ignore
-			if (attributeName.equals("modifyTimestamp"))
-				continue; // ignore
-
-			if (attributeName.equals("objectClass"))
-				return LDAPException.OBJECT_CLASS_MODS_PROHIBITED;
-
-			// check if the attribute is defined in the object class
-
-			boolean found = false;
-			for (Iterator j = objectClasses.iterator(); j.hasNext();) {
-				ObjectClass oc = (ObjectClass) j.next();
-				//log.debug("Object Class: " + oc.getName());
-				//log.debug(" - required: " + oc.getRequiredAttributes());
-				//log.debug(" - optional: " + oc.getOptionalAttributes());
-
-				if (oc.containsRequiredAttribute(attributeName) || oc.containsOptionalAttribute(attributeName)) {
-					found = true;
-					break;
-				}
-			}
-
-			if (!found) {
-				log.debug("Can't find attribute " + attributeName
-						+ " in object classes "+objectClasses);
-				return LDAPException.OBJECT_CLASS_VIOLATION;
-			}
-
-			Set newAttrValues = new HashSet();
-			for (NamingEnumeration j=attribute.getAll(); j.hasMore(); ) {
-                Object value = j.next();
-				newAttrValues.add(value);
-			}
-
-			Collection value = newValues.get(attributeName);
-			log.debug("old value " + attributeName + ": "
-					+ newValues.get(attributeName));
-
-			Set newValue = new HashSet();
-            if (value != null) newValue.addAll(value);
-
-			switch (modification.getModificationOp()) {
-                case DirContext.ADD_ATTRIBUTE:
-                    newValue.addAll(newAttrValues);
-                    break;
-                case DirContext.REMOVE_ATTRIBUTE:
-                    if (attribute.get() == null) {
-                        newValue.clear();
-                    } else {
-                        newValue.removeAll(newAttrValues);
-                    }
-                    break;
-                case DirContext.REPLACE_ATTRIBUTE:
-                    newValue = newAttrValues;
-                    break;
-			}
-
-			newValues.set(attributeName, newValue);
-
-			log.debug("new value " + attributeName + ": "
-					+ newValues.get(attributeName));
-		}
-
-        Entry newEntry = new Entry(entry.getDn(), entryMapping, entry.getSourceValues(), newValues);
-
-		log.debug("New entry:");
-		log.debug("\n"+EntryUtil.toString(newEntry));
-
-        return handler.getEngine().modify(entry, newValues);
-	}
-
-
-    public int modifyStaticEntry(EntryMapping entry, Collection modifications)
+    public int modifyStaticEntry(Partition partition, EntryMapping entry, Collection modifications)
             throws Exception {
 
         //convertValues(entry, modifications);

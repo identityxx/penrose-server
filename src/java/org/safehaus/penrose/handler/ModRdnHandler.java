@@ -139,36 +139,25 @@ public class ModRdnHandler {
         Partition partition = partitionManager.getPartition(entryMapping);
 
         if (partition.isProxy(entryMapping)) {
-            log.debug("Renaming "+entry.getDn()+" via proxy");
-            handler.getEngine().modrdnProxy(partition, entryMapping, entry, newRdn);
-            return LDAPException.SUCCESS;
-        }
+            return handler.getEngine("PROXY").modrdn(partition, entry, newRdn);
 
-        if (partition.isDynamic(entryMapping)) {
-            return modRdnVirtualEntry(session, entry, newRdn);
+        } else if (partition.isDynamic(entryMapping)) {
+            return handler.getEngine().modrdn(partition, entry, newRdn);
 
         } else {
-            return modRdnStaticEntry(entryMapping, newRdn);
+            return modRdnStaticEntry(partition, entry, newRdn);
         }
 	}
 
     public int modRdnStaticEntry(
-            EntryMapping entry,
+            Partition partition,
+            Entry entry,
             String newRdn)
 			throws Exception {
 
-        Partition partition = handler.getPartitionManager().getPartitionByDn(entry.getDn());
-        partition.renameEntryMapping(entry, newRdn);
+        EntryMapping entryMapping = entry.getEntryMapping();
+        partition.renameEntryMapping(entryMapping, newRdn);
 
         return LDAPException.SUCCESS;
-    }
-
-    public int modRdnVirtualEntry(
-            PenroseSession session,
-            Entry entry,
-			String newRdn)
-            throws Exception {
-
-        return handler.getEngine().modrdn(entry, newRdn);
     }
 }

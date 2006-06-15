@@ -36,6 +36,7 @@ public class DeleteGraphVisitor extends GraphVisitor {
     Logger log = Logger.getLogger(getClass());
 
     public Engine engine;
+    public Partition partition;
     public EntryMapping entryMapping;
     public AttributeValues sourceValues;
 
@@ -43,11 +44,13 @@ public class DeleteGraphVisitor extends GraphVisitor {
 
     public DeleteGraphVisitor(
             Engine engine,
+            Partition partition,
             EntryMapping entryMapping,
             AttributeValues sourceValues
             ) throws Exception {
 
         this.engine = engine;
+        this.partition = partition;
         this.entryMapping = entryMapping;
         this.sourceValues = sourceValues;
     }
@@ -87,7 +90,6 @@ public class DeleteGraphVisitor extends GraphVisitor {
             newSourceValues.set(name, values);
         }
 
-        Partition partition = engine.getPartitionManager().getPartition(entryMapping);
         SourceConfig sourceConfig = partition.getSourceConfig(sourceMapping.getSourceName());
 
         returnCode = engine.getConnector().delete(partition, sourceConfig, newSourceValues);

@@ -17,7 +17,7 @@
  */
 package org.safehaus.penrose.handler;
 
-import org.safehaus.penrose.engine.Engine;
+import org.safehaus.penrose.engine.EngineManager;
 import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.interpreter.InterpreterManager;
 import org.safehaus.penrose.schema.SchemaManager;
@@ -49,13 +49,13 @@ public class HandlerManager {
     public HandlerManager() {
     }
 
-    public void init(HandlerConfig handlerConfig, Engine engine) throws Exception {
+    public void init(HandlerConfig handlerConfig, EngineManager engineManager) throws Exception {
         Handler handler = new Handler();
         handler.setPenroseConfig(penroseConfig);
         handler.setSessionManager(sessionManager);
         handler.setSchemaManager(schemaManager);
         handler.setInterpreterFactory(interpreterManager);
-        handler.setEngine(engine);
+        handler.setEngineManager(engineManager);
         handler.setPartitionManager(partitionManager);
         handler.setPenrose(penrose);
 

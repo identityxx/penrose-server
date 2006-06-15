@@ -45,6 +45,7 @@ public class SearchEngine {
     }
 
     public void search(
+            Partition partition,
             final Entry parent,
             final AttributeValues parentSourceValues,
             final EntryMapping entryMapping,
@@ -64,18 +65,21 @@ public class SearchEngine {
         boolean unique = engine.isUnique(entryMapping);
         log.debug("Entry "+entryMapping.getDn()+" "+(unique ? "is" : "is not")+" unique.");
 
-        Partition partition = engine.getPartitionManager().getPartition(entryMapping);
-
         Collection sources = entryMapping.getSourceMappings();
-        log.debug("Sources: "+sources);
+        Collection sourceNames = new ArrayList();
+        for (Iterator i=sources.iterator(); i.hasNext(); ) {
+            SourceMapping sm = (SourceMapping)i.next();
+            sourceNames.add(sm.getName());
+        }
+        log.debug("Sources: "+sourceNames);
 
         Collection effectiveSources = partition.getEffectiveSourceMappings(entryMapping);
-        Collection names = new ArrayList();
+        Collection effectiveSourceNames = new ArrayList();
         for (Iterator i=effectiveSources.iterator(); i.hasNext(); ) {
             SourceMapping sm = (SourceMapping)i.next();
-            names.add(sm.getName());
+            effectiveSourceNames.add(sm.getName());
         }
-        log.debug("Effective Sources: "+names);
+        log.debug("Effective Sources: "+effectiveSourceNames);
 
         if (unique && sources.size() == 1 && effectiveSources.size() == 1) {
             engine.threadManager.execute(new Runnable() {

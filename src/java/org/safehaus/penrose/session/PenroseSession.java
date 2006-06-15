@@ -290,4 +290,60 @@ public class PenroseSession {
     public void setEventManager(EventManager eventManager) {
         this.eventManager = eventManager;
     }
+
+    public void addAddListener(AddListener listener) {
+        eventManager.addAddListener(listener);
+    }
+
+    public void removeAddListener(AddListener listener) {
+        eventManager.removeAddListener(listener);
+    }
+
+    public void addBindListener(BindListener listener) {
+        eventManager.addBindListener(listener);
+    }
+
+    public void removeBindListener(BindListener listener) {
+        eventManager.removeBindListener(listener);
+    }
+
+    public void addCompareListener(CompareListener listener) {
+        eventManager.addCompareListener(listener);
+    }
+
+    public void removeCompareListener(CompareListener listener) {
+        eventManager.removeCompareListener(listener);
+    }
+
+    public void addDeleteListener(DeleteListener listener) {
+        eventManager.addDeleteListener(listener);
+    }
+
+    public void removeDeleteListener(DeleteListener listener) {
+        eventManager.removeDeleteListener(listener);
+    }
+
+    public void addModifyListener(ModifyListener listener) {
+        eventManager.addModifyListener(listener);
+    }
+
+    public void removeModifyListener(ModifyListener listener) {
+        eventManager.removeModifyListener(listener);
+    }
+
+    public void addModrdnListener(ModRdnListener listener) {
+        eventManager.addModRdnListener(listener);
+    }
+
+    public void removeModrdnListener(ModRdnListener listener) {
+        eventManager.removeModRdnListener(listener);
+    }
+
+    public void addSearchListener(SearchListener listener) {
+        eventManager.addSearchListener(listener);
+    }
+
+    public void removeSearchListener(SearchListener listener) {
+        eventManager.removeSearchListener(listener);
+    }
 }

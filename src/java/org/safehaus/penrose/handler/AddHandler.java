@@ -140,39 +140,19 @@ public class AddHandler {
         Partition partition = partitionManager.getPartition(parentMapping);
 
         if (partition.isProxy(parentMapping)) {
-            log.debug("Adding "+dn+" via proxy");
-            handler.getEngine().addProxy(partition, parentMapping, dn, attributes);
-            return LDAPException.SUCCESS;
+            return handler.getEngine("PROXY").add(partition, parent, parentMapping, dn, attributes);
         }
 
         Collection children = partition.getChildren(parentMapping);
 
-        AttributeValues values = new AttributeValues();
-
-        for (NamingEnumeration i=attributes.getAll(); i.hasMore(); ) {
-            Attribute attribute = (Attribute)i.next();
-            String attributeName = attribute.getID();
-
-            Set set = new HashSet();
-            for (NamingEnumeration j=attribute.getAll(); j.hasMore(); ) {
-                Object value = j.next();
-                set.add(value);
-            }
-            values.set(attributeName, set);
-        }
-
-        // add into the first matching child
         for (Iterator iterator = children.iterator(); iterator.hasNext(); ) {
             EntryMapping entryMapping = (EntryMapping)iterator.next();
-            boolean dynamic = partition.isDynamic(entryMapping);
+            if (!partition.isDynamic(entryMapping)) continue;
 
-            //log.debug("Checking mapping "+entryMapping.getDn()+": "+dynamic);
-            if (!dynamic) continue;
-
-            return handler.getEngine().add(parent, entryMapping, values);
+            return handler.getEngine().add(partition, parent, entryMapping, dn, attributes);
         }
 
-        return addStaticEntry(parentMapping, values, dn);
+        return addStaticEntry(parentMapping, dn, attributes);
     }
 
     public Handler getHandler() {
@@ -183,8 +163,20 @@ public class AddHandler {
         this.handler = handler;
     }
 
-    public int addStaticEntry(EntryMapping parent, AttributeValues values, String dn) throws Exception {
+    public int addStaticEntry(EntryMapping parent, String dn, Attributes attributes) throws Exception {
         log.debug("Adding static entry "+dn);
+
+        AttributeValues values = new AttributeValues();
+
+        for (NamingEnumeration i=attributes.getAll(); i.hasMore(); ) {
+            Attribute attribute = (Attribute)i.next();
+            String attributeName = attribute.getID();
+
+            for (NamingEnumeration j=attribute.getAll(); j.hasMore(); ) {
+                Object value = j.next();
+                values.set(attributeName, value);
+            }
+        }
 
         EntryMapping newEntry;
 

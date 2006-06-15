@@ -25,6 +25,7 @@ import org.safehaus.penrose.schema.SchemaConfig;
 import org.safehaus.penrose.service.ServiceConfig;
 import org.safehaus.penrose.ldap.PenroseLDAPService;
 import org.safehaus.penrose.management.PenroseJMXService;
+import org.safehaus.penrose.engine.EngineConfig;
 
 
 /**
@@ -53,6 +54,8 @@ public class DefaultPenroseConfig extends PenroseConfig {
         addAdapterConfig(new AdapterConfig("JDBC", JDBCAdapter.class.getName()));
         addAdapterConfig(new AdapterConfig("JNDI", JNDIAdapter.class.getName()));
 
+        addEngineConfig(new EngineConfig());
+        
         addPartitionConfig(new PartitionConfig("DEFAULT", "conf"));
     }
 }

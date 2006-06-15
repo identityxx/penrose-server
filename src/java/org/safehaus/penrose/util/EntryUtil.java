@@ -131,6 +131,46 @@ public class EntryUtil {
         }
     }
 
+    public static String getSuffix(String dn) {
+        if (dn == null || "".equals(dn)) return null;
+
+        try {
+            //log.debug("###### Getting suffix from "+dn);
+
+            int i = dn.lastIndexOf(",");
+            if (i<0) return dn;
+
+            String suffix = dn.substring(i+1);
+            //log.debug(" - "+suffix);
+
+            return suffix.toString();
+
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+            return null;
+        }
+    }
+
+    public static String getPrefix(String dn) {
+        if (dn == null || "".equals(dn)) return null;
+
+        try {
+            //log.debug("###### Getting prefix from "+dn);
+
+            int i = dn.lastIndexOf(",");
+            if (i<0) return null;
+
+            String prefix = dn.substring(0, i);
+            //log.debug(" - "+prefix);
+
+            return prefix;
+
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+            return null;
+        }
+    }
+
     public static SearchResult toSearchResult(LDAPEntry entry) {
         return new SearchResult(entry.getDN(), entry, getAttributes(entry));
     }

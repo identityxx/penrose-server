@@ -8,16 +8,17 @@
     <property name="test.port" value="10389"/>
     <property name="test.bindDn" value="uid=admin,ou=system"/>
     <property name="test.password" value="secret"/>
+    <property name="test.baseDn" value="dc=Proxy,dc=Example,dc=com"/>
 
     <target name="test-search">
         <exec executable="ldapsearch">
             <arg line="-h ${test.hostname}"/>
             <arg line="-p ${test.port}"/>
-            <arg line="-D ${test.bindDn}"/>
+            <arg line="-D &quot;${test.bindDn}&quot;"/>
             <arg line="-w ${test.password}"/>
             <arg line="-x"/>
             <arg line="-s sub"/>
-            <arg line="-b dc=Proxy,dc=Example,dc=com"/>
+            <arg line="-b &quot;${test.baseDn}&quot;"/>
         </exec>
     </target>
 

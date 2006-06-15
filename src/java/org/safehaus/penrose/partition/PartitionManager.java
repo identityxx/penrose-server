@@ -138,6 +138,12 @@ public class PartitionManager implements PartitionManagerMBean {
         return getPartitionByDn(entryMapping.getDn());
     }
 
+    /**
+     * Find the closest partition matching the DN
+     * @param dn
+     * @return
+     * @throws Exception
+     */
     public Partition getPartitionByDn(String dn) throws Exception {
         String ndn = schemaManager.normalize(dn);
         ndn = ndn == null ? "" : ndn;
@@ -172,6 +178,20 @@ public class PartitionManager implements PartitionManagerMBean {
         return selectedPartition;
     }
 
+    /**
+     * Find a partition exactly matching the DN.
+     * @param dn
+     * @return
+     * @throws Exception
+     */
+    public Partition findPartition(String dn) throws Exception {
+        for (Iterator i=partitions.values().iterator(); i.hasNext(); ) {
+            Partition partition = (Partition)i.next();
+            if (partition.findEntryMapping(dn) != null) return partition;
+        }
+        return null;
+    }
+
     public Collection getPartitions() {
         return partitions.values();
     }
@@ -186,13 +206,5 @@ public class PartitionManager implements PartitionManagerMBean {
 
     public void setSchemaManager(SchemaManager schemaManager) {
         this.schemaManager = schemaManager;
-    }
-
-    public Partition findPartition(String dn) throws Exception {
-        for (Iterator i=partitions.values().iterator(); i.hasNext(); ) {
-            Partition partition = (Partition)i.next();
-            if (partition.findEntryMapping(dn) != null) return partition;
-        }
-        return null;
     }
 }

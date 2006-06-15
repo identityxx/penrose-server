@@ -1,6 +1,7 @@
 package org.safehaus.penrose.util;
 
 import org.apache.log4j.Logger;
+import org.safehaus.penrose.session.PenroseSearchControls;
 
 import javax.naming.directory.DirContext;
 import javax.naming.directory.Attribute;
@@ -41,5 +42,48 @@ public class LDAPUtil {
         }
 
         return binary;
+    }
+
+    public static String getScope(PenroseSearchControls sc) {
+        return getScope(sc.getScope());
+    }
+
+    public static String getScope(int scope) {
+
+        switch (scope) {
+            case PenroseSearchControls.SCOPE_BASE:
+                return "base";
+
+            case PenroseSearchControls.SCOPE_ONE:
+                return "one level";
+
+            case PenroseSearchControls.SCOPE_SUB:
+                return "subtree";
+        }
+
+        return null;
+    }
+
+    public static String getDereference(PenroseSearchControls sc) {
+        return getDereference(sc.getDereference());
+    }
+
+    public static String getDereference(int deref) {
+
+        switch (deref) {
+            case PenroseSearchControls.DEREF_NEVER:
+                return "never";
+
+            case PenroseSearchControls.DEREF_SEARCHING:
+                return "searching";
+
+            case PenroseSearchControls.DEREF_FINDING:
+                return "finding";
+
+            case PenroseSearchControls.DEREF_ALWAYS:
+                return "always";
+        }
+
+        return null;
     }
 }

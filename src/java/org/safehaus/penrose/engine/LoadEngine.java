@@ -47,16 +47,27 @@ public class LoadEngine {
             final EntryMapping entryMapping,
             final PenroseSearchResults entries,
             final PenroseSearchResults loadedEntries
-            ) throws Exception {
+    ) throws Exception {
 
+/*
         Partition partition = engine.getPartitionManager().getPartition(entryMapping);
 
         Collection sources = entryMapping.getSourceMappings();
-        log.debug("Sources: "+sources);
+        Collection sourceNames = new ArrayList();
+        for (Iterator i=sources.iterator(); i.hasNext(); ) {
+            SourceMapping sm = (SourceMapping)i.next();
+            sourceNames.add(sm.getName());
+        }
+        log.debug("Sources: "+sourceNames);
 
         Collection effectiveSources = partition.getEffectiveSourceMappings(entryMapping);
-        log.debug("Effective Sources: "+effectiveSources);
-/*
+        Collection effectiveSourceNames = new ArrayList();
+        for (Iterator i=effectiveSources.iterator(); i.hasNext(); ) {
+            SourceMapping sm = (SourceMapping)i.next();
+            effectiveSourceNames.add(sm.getName());
+        }
+        log.debug("Effective Sources: "+effectiveSourceNames);
+
         if (sources.size() == 0 && effectiveSources.size() == 0 || sources.size() == 1 && effectiveSources.size() == 1) {
 
             log.debug("All sources have been loaded.");

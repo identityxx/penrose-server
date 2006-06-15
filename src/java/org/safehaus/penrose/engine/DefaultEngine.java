@@ -28,16 +28,14 @@ import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.pipeline.PipelineAdapter;
 import org.safehaus.penrose.pipeline.PipelineEvent;
 import org.safehaus.penrose.util.*;
+import org.safehaus.penrose.schema.ObjectClass;
+import org.safehaus.penrose.interpreter.Interpreter;
 import org.ietf.ldap.LDAPException;
+import org.ietf.ldap.LDAPConnection;
 
-import javax.naming.directory.Attributes;
-import javax.naming.directory.SearchResult;
-import javax.naming.directory.Attribute;
+import javax.naming.directory.*;
 import javax.naming.NamingEnumeration;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.ArrayList;
+import java.util.*;
 
 /**
  * @author Endi S. Dewata
@@ -72,7 +70,7 @@ public class DefaultEngine extends Engine {
 
         log.debug("Initializing engine...");
 
-        filterTool      = new EngineFilterTool(this);
+        engineFilterTool      = new EngineFilterTool(this);
         addEngine       = new AddEngine(this);
         deleteEngine    = new DeleteEngine(this);
         modifyEngine    = new ModifyEngine(this);
@@ -84,7 +82,7 @@ public class DefaultEngine extends Engine {
         transformEngine = new TransformEngine(this);
     }
 
-    public int bind(Entry entry, String password) throws Exception {
+    public int bind(Partition partition, Entry entry, String password) throws Exception {
 
         log.debug("Bind as user "+entry.getDn());
 
@@ -102,7 +100,6 @@ public class DefaultEngine extends Engine {
         }
 
         Collection sources = entryMapping.getSourceMappings();
-        Partition partition = partitionManager.getPartition(entryMapping);
 
         for (Iterator i=sources.iterator(); i.hasNext(); ) {
             SourceMapping source = (SourceMapping)i.next();
@@ -126,15 +123,20 @@ public class DefaultEngine extends Engine {
     }
 
     public int add(
+            Partition partition,
             Entry parent,
             EntryMapping entryMapping,
-            AttributeValues attributeValues)
+            String dn,
+            Attributes attributes)
             throws Exception {
 
         // normalize attribute names
-        AttributeValues newAttributeValues = new AttributeValues();
-        for (Iterator i = attributeValues.getNames().iterator(); i.hasNext(); ) {
-            String name = (String)i.next();
+        AttributeValues attributeValues = new AttributeValues();
+
+        for (NamingEnumeration i=attributes.getAll(); i.hasMore(); ) {
+            Attribute attribute = (Attribute)i.next();
+            String name = attribute.getID();
+
             if ("objectClass".equalsIgnoreCase(name)) continue;
 
             AttributeMapping attributeMapping = entryMapping.getAttributeMapping(name);
@@ -143,11 +145,11 @@ public class DefaultEngine extends Engine {
                 return LDAPException.OBJECT_CLASS_VIOLATION;
             }
 
-            Collection values = attributeValues.get(name);
-            newAttributeValues.set(attributeMapping.getName(), values);
+            for (NamingEnumeration j=attribute.getAll(); j.hasMore(); ) {
+                Object value = j.next();
+                attributeValues.add(name, value);
+            }
         }
-
-        attributeValues = newAttributeValues;
 
         if (log.isDebugEnabled()) {
             log.debug(Formatter.displaySeparator(80));
@@ -164,7 +166,7 @@ public class DefaultEngine extends Engine {
             log.debug(Formatter.displaySeparator(80));
         }
 
-        int rc = addEngine.add(parent, entryMapping, attributeValues);
+        int rc = addEngine.add(partition, parent, entryMapping, attributeValues);
 
         if (log.isDebugEnabled()) {
             log.debug(Formatter.displaySeparator(80));
@@ -175,7 +177,7 @@ public class DefaultEngine extends Engine {
         return rc;
     }
 
-    public int delete(Entry entry) throws Exception {
+    public int delete(Partition partition, Entry entry) throws Exception {
 
         if (log.isDebugEnabled()) {
             log.debug(Formatter.displaySeparator(80));
@@ -185,12 +187,12 @@ public class DefaultEngine extends Engine {
             log.debug(Formatter.displaySeparator(80));
         }
 
-        int rc = deleteEngine.delete(entry);
+        int rc = deleteEngine.delete(partition, entry);
 
         return rc;
     }
 
-    public int modrdn(Entry entry, String newRdn) throws Exception {
+    public int modrdn(Partition partition, Entry entry, String newRdn) throws Exception {
 
         if (log.isDebugEnabled()) {
             log.debug(Formatter.displaySeparator(80));
@@ -199,12 +201,106 @@ public class DefaultEngine extends Engine {
             log.debug(Formatter.displayLine("New RDN: "+newRdn, 80));
         }
 
-        int rc = modrdnEngine.modrdn(entry, newRdn);
+        int rc = modrdnEngine.modrdn(partition, entry, newRdn);
 
         return rc;
     }
 
-    public int modify(Entry entry, AttributeValues newValues) throws Exception {
+    public int modify(Partition partition, Entry entry, Collection modifications) throws Exception {
+
+        EntryMapping entryMapping = entry.getEntryMapping();
+        AttributeValues oldValues = entry.getAttributeValues();
+
+        log.debug("Old entry:");
+        log.debug("\n"+EntryUtil.toString(entry));
+
+        log.debug("--- perform modification:");
+        AttributeValues newValues = new AttributeValues(oldValues);
+
+        Collection objectClasses = getSchemaManager().getObjectClasses(entryMapping);
+        Collection objectClassNames = new ArrayList();
+        for (Iterator i=objectClasses.iterator(); i.hasNext(); ) {
+            ObjectClass oc = (ObjectClass)i.next();
+            objectClassNames.add(oc.getName());
+        }
+        log.debug("Object classes: "+objectClassNames);
+
+        for (Iterator i = modifications.iterator(); i.hasNext();) {
+            ModificationItem modification = (ModificationItem)i.next();
+
+            Attribute attribute = modification.getAttribute();
+            String attributeName = attribute.getID();
+
+            if (attributeName.equals("entryCSN"))
+                continue; // ignore
+            if (attributeName.equals("modifiersName"))
+                continue; // ignore
+            if (attributeName.equals("modifyTimestamp"))
+                continue; // ignore
+
+            if (attributeName.equals("objectClass"))
+                return LDAPException.OBJECT_CLASS_MODS_PROHIBITED;
+
+            // check if the attribute is defined in the object class
+
+            boolean found = false;
+            for (Iterator j = objectClasses.iterator(); j.hasNext();) {
+                ObjectClass oc = (ObjectClass) j.next();
+                //log.debug("Object Class: " + oc.getName());
+                //log.debug(" - required: " + oc.getRequiredAttributes());
+                //log.debug(" - optional: " + oc.getOptionalAttributes());
+
+                if (oc.containsRequiredAttribute(attributeName) || oc.containsOptionalAttribute(attributeName)) {
+                    found = true;
+                    break;
+                }
+            }
+
+            if (!found) {
+                log.debug("Can't find attribute " + attributeName
+                        + " in object classes "+objectClasses);
+                return LDAPException.OBJECT_CLASS_VIOLATION;
+            }
+
+            Set newAttrValues = new HashSet();
+            for (NamingEnumeration j=attribute.getAll(); j.hasMore(); ) {
+                Object value = j.next();
+                newAttrValues.add(value);
+            }
+
+            Collection value = newValues.get(attributeName);
+            log.debug("old value " + attributeName + ": "
+                    + newValues.get(attributeName));
+
+            Set newValue = new HashSet();
+            if (value != null) newValue.addAll(value);
+
+            switch (modification.getModificationOp()) {
+                case DirContext.ADD_ATTRIBUTE:
+                    newValue.addAll(newAttrValues);
+                    break;
+                case DirContext.REMOVE_ATTRIBUTE:
+                    if (attribute.get() == null) {
+                        newValue.clear();
+                    } else {
+                        newValue.removeAll(newAttrValues);
+                    }
+                    break;
+                case DirContext.REPLACE_ATTRIBUTE:
+                    newValue = newAttrValues;
+                    break;
+            }
+
+            newValues.set(attributeName, newValue);
+
+            log.debug("new value " + attributeName + ": "
+                    + newValues.get(attributeName));
+        }
+
+        Entry newEntry = new Entry(entry.getDn(), entryMapping, entry.getSourceValues(), newValues);
+
+        log.debug("New entry:");
+        log.debug("\n"+EntryUtil.toString(newEntry));
 
         if (log.isDebugEnabled()) {
             log.debug(Formatter.displaySeparator(80));
@@ -212,7 +308,6 @@ public class DefaultEngine extends Engine {
             log.debug(Formatter.displayLine("DN: "+entry.getDn(), 80));
 
             log.debug(Formatter.displayLine("Old attribute values:", 80));
-            AttributeValues oldValues = entry.getAttributeValues();
             for (Iterator iterator = oldValues.getNames().iterator(); iterator.hasNext(); ) {
                 String name = (String)iterator.next();
                 Collection values = oldValues.get(name);
@@ -229,258 +324,9 @@ public class DefaultEngine extends Engine {
             log.debug(Formatter.displaySeparator(80));
         }
 
-        int rc = modifyEngine.modify(entry, newValues);
+        int rc = modifyEngine.modify(partition, entry, newValues);
 
         return rc;
-    }
-
-    public void search(
-            Entry parent,
-            AttributeValues parentSourceValues,
-            EntryMapping entryMapping,
-            Filter filter,
-            PenroseSearchResults dns)
-            throws Exception {
-
-        searchEngine.search(parent, parentSourceValues, entryMapping, filter, dns);
-    }
-
-    public void bindProxy(
-            final Partition partition,
-            final EntryMapping entryMapping,
-            String dn,
-            String password
-            ) throws Exception {
-
-        SourceMapping sourceMapping = entryMapping.getSourceMapping(0);
-        String sourceName = sourceMapping.getSourceName();
-
-        SourceConfig sourceConfig = partition.getSourceConfig(sourceName);
-        String connectionName = sourceConfig.getConnectionName();
-
-        Connection connection = connectionManager.getConnection(partition, connectionName);
-        JNDIAdapter adapter = (JNDIAdapter)connection.getAdapter();
-
-        String proxyDn = entryMapping.getDn();
-
-        String targetDn = dn.substring(0, dn.length() - proxyDn.length());
-        if (targetDn.endsWith(",")) targetDn = targetDn.substring(0, targetDn.length()-1);
-
-        String baseDn = sourceConfig.getParameter("baseDn");
-        targetDn = EntryUtil.append(targetDn, baseDn);
-
-        log.debug("Binding via proxy "+sourceName+" as \""+targetDn+"\" with "+password);
-
-        JNDIClient client = adapter.getClient();
-        client.bind(targetDn, password);
-    }
-
-    public void addProxy(
-            final Partition partition,
-            final EntryMapping entryMapping,
-            String dn,
-            Attributes attributes
-            ) throws Exception {
-
-        SourceMapping sourceMapping = entryMapping.getSourceMapping(0);
-        String sourceName = sourceMapping.getSourceName();
-
-        SourceConfig sourceConfig = partition.getSourceConfig(sourceName);
-        String connectionName = sourceConfig.getConnectionName();
-
-        Connection connection = connectionManager.getConnection(partition, connectionName);
-        JNDIAdapter adapter = (JNDIAdapter)connection.getAdapter();
-
-        String proxyDn = entryMapping.getDn();
-
-        String targetDn = dn.substring(0, dn.length() - proxyDn.length());
-        if (targetDn.endsWith(",")) targetDn = targetDn.substring(0, targetDn.length()-1);
-
-        String baseDn = sourceConfig.getParameter("baseDn");
-        targetDn = EntryUtil.append(targetDn, baseDn);
-
-        log.debug("Modifying via proxy "+sourceName+" as \""+targetDn+"\"");
-
-        JNDIClient client = adapter.getClient();
-        client.add(targetDn, attributes);
-    }
-
-    public void modifyProxy(
-            final Partition partition,
-            final EntryMapping entryMapping,
-            Entry entry,
-            Collection modifications
-            ) throws Exception {
-
-        String dn = entry.getDn();
-
-        SourceMapping sourceMapping = entryMapping.getSourceMapping(0);
-        String sourceName = sourceMapping.getSourceName();
-
-        SourceConfig sourceConfig = partition.getSourceConfig(sourceName);
-        String connectionName = sourceConfig.getConnectionName();
-
-        Connection connection = connectionManager.getConnection(partition, connectionName);
-        JNDIAdapter adapter = (JNDIAdapter)connection.getAdapter();
-
-        String proxyDn = entryMapping.getDn();
-
-        String targetDn = dn.substring(0, dn.length() - proxyDn.length());
-        if (targetDn.endsWith(",")) targetDn = targetDn.substring(0, targetDn.length()-1);
-
-        String baseDn = sourceConfig.getParameter("baseDn");
-        targetDn = EntryUtil.append(targetDn, baseDn);
-
-        log.debug("Modifying via proxy "+sourceName+" as \""+targetDn+"\"");
-
-        JNDIClient client = adapter.getClient();
-        client.modify(targetDn, modifications);
-    }
-
-    public void modrdnProxy(
-            final Partition partition,
-            final EntryMapping entryMapping,
-            Entry entry,
-            String newRdn
-            ) throws Exception {
-
-        String dn = entry.getDn();
-
-        SourceMapping sourceMapping = entryMapping.getSourceMapping(0);
-        String sourceName = sourceMapping.getSourceName();
-
-        SourceConfig sourceConfig = partition.getSourceConfig(sourceName);
-        String connectionName = sourceConfig.getConnectionName();
-
-        Connection connection = connectionManager.getConnection(partition, connectionName);
-        JNDIAdapter adapter = (JNDIAdapter)connection.getAdapter();
-
-        String proxyDn = entryMapping.getDn();
-
-        String targetDn = dn.substring(0, dn.length() - proxyDn.length());
-        if (targetDn.endsWith(",")) targetDn = targetDn.substring(0, targetDn.length()-1);
-
-        String baseDn = sourceConfig.getParameter("baseDn");
-        targetDn = EntryUtil.append(targetDn, baseDn);
-
-        log.debug("Renaming via proxy "+sourceName+" as \""+targetDn+"\"");
-
-        JNDIClient client = adapter.getClient();
-        client.modrdn(targetDn, newRdn);
-    }
-
-    public void deleteProxy(
-            final Partition partition,
-            final EntryMapping entryMapping,
-            String dn
-            ) throws Exception {
-
-        SourceMapping sourceMapping = entryMapping.getSourceMapping(0);
-        String sourceName = sourceMapping.getSourceName();
-
-        SourceConfig sourceConfig = partition.getSourceConfig(sourceName);
-        String connectionName = sourceConfig.getConnectionName();
-
-        Connection connection = connectionManager.getConnection(partition, connectionName);
-        JNDIAdapter adapter = (JNDIAdapter)connection.getAdapter();
-
-        String proxyDn = entryMapping.getDn();
-
-        String targetDn = dn.substring(0, dn.length() - proxyDn.length());
-        if (targetDn.endsWith(",")) targetDn = targetDn.substring(0, targetDn.length()-1);
-
-        String baseDn = sourceConfig.getParameter("baseDn");
-        targetDn = EntryUtil.append(targetDn, baseDn);
-
-        log.debug("Modifying via proxy "+sourceName+" as \""+targetDn+"\"");
-
-        JNDIClient client = adapter.getClient();
-        client.delete(targetDn);
-    }
-
-    public void searchProxy(
-            final Partition partition,
-            final EntryMapping entryMapping,
-            final String base,
-            final String filter,
-            PenroseSearchControls sc,
-            final PenroseSearchResults results
-            ) throws Exception {
-
-        SourceMapping sourceMapping = entryMapping.getSourceMapping(0);
-        String sourceName = sourceMapping.getSourceName();
-
-        SourceConfig sourceConfig = partition.getSourceConfig(sourceName);
-        String connectionName = sourceConfig.getConnectionName();
-
-        Connection connection = connectionManager.getConnection(partition, connectionName);
-        JNDIAdapter adapter = (JNDIAdapter)connection.getAdapter();
-
-        final String proxyDn = entryMapping.getDn();
-
-        String targetDn = base.substring(0, base.length() - proxyDn.length());
-        if (targetDn.endsWith(",")) targetDn = targetDn.substring(0, targetDn.length()-1);
-
-        final String baseDn = sourceConfig.getParameter("baseDn");
-        targetDn = EntryUtil.append(targetDn, baseDn);
-
-        log.debug("Searching proxy "+sourceName+" for \""+targetDn+"\" with filter="+filter+" attrs="+sc.getAttributes());
-
-        final JNDIClient client = adapter.getClient();
-
-        try {
-            PenroseSearchResults res = new PenroseSearchResults();
-
-            res.addListener(new PipelineAdapter() {
-                public void objectAdded(PipelineEvent event) {
-                    try {
-                        SearchResult ldapEntry = (SearchResult)event.getObject();
-                        //log.debug("Subtracting \""+baseDn+"\" from \""+ldapEntry.getDN()+"\"");
-
-                        String dn = ldapEntry.getName();
-
-                        if (baseDn != null) {
-                            dn = dn.substring(0, ldapEntry.getName().length() - baseDn.length());
-                            if (dn.endsWith(",")) dn = dn.substring(0, dn.length()-1);
-                        }
-
-                        //dn = "".equals(ldapEntry.getDN()) ? base : ldapEntry.getDN()+","+base;
-                        dn = EntryUtil.append(dn, proxyDn);
-                        //log.debug("=> "+dn);
-
-                        AttributeValues attributeValues = new AttributeValues();
-
-                        //log.debug("Entry "+dn+":");
-                        for (NamingEnumeration i=ldapEntry.getAttributes().getAll(); i.hasMore(); ) {
-                            Attribute attribute = (Attribute)i.next();
-                            String name = attribute.getID();
-
-                            for (NamingEnumeration j=attribute.getAll(); j.hasMore(); ) {
-                                Object value = j.next();
-                                attributeValues.add(name, value);
-                                //log.debug(" - "+name+": "+value);
-                            }
-                        }
-
-                        Entry entry = new Entry(dn, entryMapping, attributeValues);
-                        results.add(entry);
-
-                    } catch (Exception e) {
-                        log.error(e.getMessage(), e);
-                    }
-                }
-
-                public void pipelineClosed(PipelineEvent event) {
-                    results.close();
-                }
-            });
-
-            client.search(targetDn, filter, sc, res);
-
-        } catch (Exception e) {
-            log.error(e.getMessage(), e);
-            results.setReturnCode(ExceptionUtil.getReturnCode(e));
-        }
     }
 
     public SearchEngine getSearchEngine() {
@@ -492,6 +338,7 @@ public class DefaultEngine extends Engine {
     }
 
     public void start() throws Exception {
+        super.start();
 
         //log.debug("Starting Engine...");
 
@@ -518,22 +365,26 @@ public class DefaultEngine extends Engine {
         // wait for all the worker threads to finish
         //if (threadManager != null) threadManager.stopRequestAllWorkers();
         log.debug("Engine stopped.");
+        super.stop();
     }
 
-    public void search(
-            final Collection path,
+    public int expand(
+            final Partition partition,
+            final Collection parentPath,
             final AttributeValues parentSourceValues,
             final EntryMapping entryMapping,
-            boolean single,
+            final String baseDn,
             final Filter filter,
-            PenroseSearchControls sc,
+            final PenroseSearchControls sc,
             final PenroseSearchResults results) throws Exception {
 
         if (log.isDebugEnabled()) {
             log.debug(Formatter.displaySeparator(80));
-            log.debug(Formatter.displayLine("SEARCH", 80));
+            log.debug(Formatter.displayLine("EXPAND MAPPING", 80));
             log.debug(Formatter.displayLine("Entry: \""+entryMapping.getDn()+"\"", 80));
+            log.debug(Formatter.displayLine("Base DN: "+baseDn, 80));
             log.debug(Formatter.displayLine("Filter: "+filter, 80));
+            log.debug(Formatter.displayLine("Scope: "+LDAPUtil.getScope(sc), 80));
             log.debug(Formatter.displayLine("Parent source values:", 80));
 
             if (parentSourceValues != null) {
@@ -545,6 +396,59 @@ public class DefaultEngine extends Engine {
             }
 
             log.debug(Formatter.displaySeparator(80));
+        }
+
+        if (!getFilterTool().isValid(entryMapping, filter)) {
+            results.close();
+            return LDAPException.SUCCESS;
+        }
+
+/*
+Mapping: cn=Managers,ou=Groups,dc=Proxy,dc=Example,dc=org
+ - dc=Proxy,dc=Example,dc=org (base) => false
+ - dc=Proxy,dc=Example,dc=org (one) => false
+ - dc=Proxy,dc=Example,dc=org (sub) => true
+ - ou=Groups,dc=Proxy,dc=Example,dc=org (base) => false
+ - ou=Groups,dc=Proxy,dc=Example,dc=org (one) => true
+ - ou=Groups,dc=Proxy,dc=Example,dc=org (sub) => true
+ - cn=Managers,ou=Groups,dc=Proxy,dc=Example,dc=org (base) => true
+ - cn=Managers,ou=Groups,dc=Proxy,dc=Example,dc=org (one) => false
+ - cn=Managers,ou=Groups,dc=Proxy,dc=Example,dc=org (sub) => true
+ - cn=PD Managers,ou=Groups,dc=Proxy,dc=Example,dc=org (base) => false
+ - cn=PD Managers,ou=Groups,dc=Proxy,dc=Example,dc=org (one) => false
+ - cn=PD Managers,ou=Groups,dc=Proxy,dc=Example,dc=org (sub) => false
+*/
+        if (sc.getScope() == PenroseSearchControls.SCOPE_BASE) {
+            if (!(EntryUtil.match(entryMapping.getDn(), baseDn))) {
+                results.close();
+                return LDAPException.SUCCESS;
+            }
+
+        } else if (sc.getScope() == PenroseSearchControls.SCOPE_ONE) {
+            if (!EntryUtil.match(entryMapping.getParentDn(), baseDn)) {
+                results.close();
+                return LDAPException.SUCCESS;
+            }
+
+        } else { // if (sc.getScope() == PenroseSearchControls.SCOPE_SUB) {
+
+            log.debug("Checking whether "+baseDn+" is an ancestor of "+entryMapping.getDn());
+            String dn = entryMapping.getDn();
+            boolean found = false;
+            while (dn != null) {
+                if (EntryUtil.match(dn, baseDn)) {
+                    found = true;
+                    break;
+                }
+                dn = EntryUtil.getParentDn(dn);
+            }
+
+            log.debug("Result: "+found);
+
+            if (!found) {
+                results.close();
+                return LDAPException.SUCCESS;
+            }
         }
 
         final PenroseSearchResults dns = new PenroseSearchResults();
@@ -608,8 +512,8 @@ public class DefaultEngine extends Engine {
         });
 
         Entry parent = null;
-        if (path != null && path.size() > 0) {
-            parent = (Entry)path.iterator().next();
+        if (parentPath != null && parentPath.size() > 0) {
+            parent = (Entry)parentPath.iterator().next();
         }
 
         log.debug("Parent: "+(parent == null ? null : parent.getDn()));
@@ -637,7 +541,7 @@ public class DefaultEngine extends Engine {
                 }
             });
 
-            search(parent, parentSourceValues, entryMapping, filter, dns);
+            searchEngine.search(partition, parent, parentSourceValues, entryMapping, filter, dns);
 
         } else {
             log.debug("Filter cache for "+filter+" found.");
@@ -669,7 +573,7 @@ public class DefaultEngine extends Engine {
             getEntryCache().search(entryMapping, parentDn, filter, list);
         }
 
-        if (dnOnly) return;
+        if (dnOnly) return LDAPException.SUCCESS;
 
         load(entryMapping, entriesToLoad, loadedEntries);
 
@@ -698,6 +602,45 @@ public class DefaultEngine extends Engine {
         });
 
         merge(entryMapping, loadedEntries, newEntries);
+
+        return LDAPException.SUCCESS;
     }
+
+    public int search(
+            Partition partition,
+            Collection path,
+            AttributeValues parentSourceValues,
+            EntryMapping entryMapping,
+            String baseDn,
+            Filter filter,
+            PenroseSearchControls sc,
+            PenroseSearchResults results
+    ) throws Exception {
+
+        if (sc.getScope() == LDAPConnection.SCOPE_BASE || sc.getScope() == LDAPConnection.SCOPE_SUB) {
+
+            Entry baseEntry = (Entry)path.iterator().next();
+
+            if (getFilterTool().isValid(baseEntry, filter)) {
+
+                Entry e = baseEntry;
+                Collection attributeNames = sc.getAttributes();
+
+                if (!attributeNames.isEmpty() && !attributeNames.contains("*")) {
+                    AttributeValues av = new AttributeValues();
+                    av.add(baseEntry.getAttributeValues());
+                    av.retain(attributeNames);
+                    e = new Entry(baseEntry.getDn(), entryMapping, baseEntry.getSourceValues(), av);
+                }
+
+                results.add(e);
+            }
+        }
+
+        results.close();
+
+        return LDAPException.SUCCESS;
+    }
+
 }
 

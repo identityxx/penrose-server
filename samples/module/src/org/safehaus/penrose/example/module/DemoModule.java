@@ -35,7 +35,7 @@ public class DemoModule extends Module {
     }
 
     public void beforeSearch(SearchEvent event) throws Exception {
-        System.out.println("Searching "+event.getBase()+" with filter "+event.getFilter()+".");
+        System.out.println("Searching "+event.getBaseDn()+" with filter "+event.getFilter()+".");
 
         PenroseSearchResults results = event.getSearchResults();
 

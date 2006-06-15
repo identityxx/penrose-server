@@ -133,7 +133,7 @@ public class SearchPlanner extends GraphVisitor {
 
         Integer depth = (Integer)depthStack.peek();
 
-        Filter sourceFilter = engine.getFilterTool().toSourceFilter(null, entryMapping, sourceMapping, searchFilter);
+        Filter sourceFilter = engine.getEngineFilterTool().toSourceFilter(null, entryMapping, sourceMapping, searchFilter);
         log.debug("Filter: "+sourceFilter+" ("+(sourceFilter == null ? "null" : "not null")+")");
         log.debug("Depth: "+depth);
 
@@ -165,7 +165,7 @@ public class SearchPlanner extends GraphVisitor {
         }
         
         if (entryMapping.getSourceMapping(toSourceMapping.getName()) == null) {
-            log.debug("Source "+toSourceMapping.getName()+" is not defined in entry "+entryMapping.getDn());
+            log.debug("Source "+toSourceMapping.getName()+" is inherited");
             connectingRelationships.add(relationships);
             
             return;

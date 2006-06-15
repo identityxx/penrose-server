@@ -24,6 +24,7 @@ import org.safehaus.penrose.schema.SchemaManager;
 import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.partition.PartitionManager;
 import org.safehaus.penrose.thread.ThreadManager;
+import org.apache.log4j.Logger;
 
 import java.util.TreeMap;
 import java.util.Map;
@@ -34,6 +35,8 @@ import java.util.Iterator;
  */
 public class EngineManager {
 
+    Logger log = Logger.getLogger(getClass());
+    
     Map engines = new TreeMap();
 
     private PenroseConfig penroseConfig;
@@ -47,6 +50,8 @@ public class EngineManager {
     }
 
     public void init(EngineConfig engineConfig, Connector connector) throws Exception {
+
+        log.debug("Initializing engine "+engineConfig.getName()+".");
 
         Class clazz = Class.forName(engineConfig.getEngineClass());
 

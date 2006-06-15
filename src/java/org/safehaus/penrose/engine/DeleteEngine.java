@@ -21,6 +21,7 @@ import org.apache.log4j.Logger;
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.util.Formatter;
 import org.safehaus.penrose.graph.Graph;
+import org.safehaus.penrose.partition.Partition;
 import org.ietf.ldap.LDAPException;
 
 /**
@@ -36,7 +37,7 @@ public class DeleteEngine {
         this.engine = engine;
     }
 
-    public int delete(Entry entry) throws Exception {
+    public int delete(Partition partition, Entry entry) throws Exception {
 
         EntryMapping entryMapping = entry.getEntryMapping();
 
@@ -48,7 +49,7 @@ public class DeleteEngine {
 
         log.debug("Deleting entry "+entry.getDn()+" ["+sourceValues+"]");
 
-        DeleteGraphVisitor visitor = new DeleteGraphVisitor(engine, entryMapping, sourceValues);
+        DeleteGraphVisitor visitor = new DeleteGraphVisitor(engine, partition, entryMapping, sourceValues);
         graph.traverse(visitor, primarySourceMapping);
 
         if (visitor.getReturnCode() != LDAPException.SUCCESS) return visitor.getReturnCode();

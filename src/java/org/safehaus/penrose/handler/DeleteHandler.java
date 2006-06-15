@@ -108,26 +108,19 @@ public class DeleteHandler {
         Partition partition = partitionManager.getPartition(entryMapping);
 
         if (partition.isProxy(entryMapping)) {
-            log.debug("Deleting "+entry.getDn()+" via proxy");
-            handler.getEngine().deleteProxy(partition, entryMapping, entry.getDn());
-            return LDAPException.SUCCESS;
-        }
+            return handler.getEngine("PROXY").delete(partition, entry);
 
-        if (partition.isDynamic(entryMapping)) {
-	        return handler.getEngine().delete(entry);
+        } else if (partition.isDynamic(entryMapping)) {
+	        return handler.getEngine().delete(partition, entry);
 
         } else {
-            return deleteStaticEntry(entryMapping);
-
+            return deleteStaticEntry(partition, entryMapping);
         }
     }
 
-    public int deleteStaticEntry(EntryMapping entryMapping) throws Exception {
+    public int deleteStaticEntry(Partition partition, EntryMapping entryMapping) throws Exception {
 
         log.debug("Deleting static entry "+entryMapping.getDn());
-
-        Partition partition = handler.getPartitionManager().getPartitionByDn(entryMapping.getDn());
-        if (partition == null) return LDAPException.NO_SUCH_OBJECT;
 
         // can't delete no leaf
         Collection children = partition.getChildren(entryMapping);

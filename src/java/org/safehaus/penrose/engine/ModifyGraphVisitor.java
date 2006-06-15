@@ -37,6 +37,7 @@ public class ModifyGraphVisitor extends GraphVisitor {
     Logger log = Logger.getLogger(getClass());
 
     public Engine engine;
+    public Partition partition;
     public EntryMapping entryMapping;
 
     public Graph graph;
@@ -50,12 +51,14 @@ public class ModifyGraphVisitor extends GraphVisitor {
 
     public ModifyGraphVisitor(
             Engine engine,
+            Partition partition,
             EntryMapping entryMapping,
             AttributeValues oldSourceValues,
             AttributeValues newSourceValues
             ) throws Exception {
 
         this.engine = engine;
+        this.partition = partition;
         this.entryMapping = entryMapping;
 
         this.oldSourceValues = oldSourceValues;
@@ -119,7 +122,6 @@ public class ModifyGraphVisitor extends GraphVisitor {
             newValues.set(name, values);
         }
 
-        Partition partition = engine.getPartitionManager().getPartition(entryMapping);
         SourceConfig sourceConfig = partition.getSourceConfig(sourceMapping.getSourceName());
 
         returnCode = engine.getConnector().modify(partition, sourceConfig, oldValues, newValues);

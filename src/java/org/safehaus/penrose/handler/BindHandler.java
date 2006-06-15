@@ -25,6 +25,7 @@ import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.PartitionManager;
 import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.service.ServiceConfig;
+import org.safehaus.penrose.engine.Engine;
 import org.ietf.ldap.LDAPDN;
 import org.ietf.ldap.LDAPException;
 import org.apache.log4j.Logger;
@@ -135,12 +136,10 @@ public class BindHandler {
         PartitionManager partitionManager = handler.getPartitionManager();
         Partition partition = partitionManager.getPartition(entryMapping);
 
-        if (partition.isProxy(entryMapping)) {
-            handler.getEngine().bindProxy(partition, entryMapping, dn, password);
-            return LDAPException.SUCCESS;
-        }
+        Engine engine = handler.getEngine();
+        if (partition.isProxy(entryMapping)) engine = handler.getEngine("PROXY");
 
-        return handler.getEngine().bind(entry, password);
+        return engine.bind(partition, entry, password);
     }
 
     public Handler getHandler() {

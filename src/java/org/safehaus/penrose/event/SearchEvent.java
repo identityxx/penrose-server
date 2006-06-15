@@ -30,7 +30,7 @@ public class SearchEvent extends Event {
     public final static int AFTER_SEARCH  = 1;
 
     private PenroseSession session;
-    private String base;
+    private String baseDn;
     private String filter;
     private PenroseSearchControls searchControls;
     private PenroseSearchResults searchResults;
@@ -41,14 +41,14 @@ public class SearchEvent extends Event {
             Object source,
             int type,
             PenroseSession session,
-            String base,
+            String baseDn,
             String filter,
             PenroseSearchControls searchControls,
             PenroseSearchResults searchResults
     ) {
         super(source, type);
         this.session = session;
-        this.base = base;
+        this.baseDn = baseDn;
         this.filter = filter;
         this.searchControls = searchControls;
         this.searchResults = searchResults;
@@ -62,12 +62,26 @@ public class SearchEvent extends Event {
         this.session = session;
     }
 
+    /**
+     * @deprecated
+     */
     public String getBase() {
-        return base;
+        return baseDn;
     }
 
+    public String getBaseDn() {
+        return baseDn;
+    }
+
+    /**
+     * @deprecated
+     */
     public void setBase(String base) {
-        this.base = base;
+        this.baseDn = base;
+    }
+
+    public void setBaseDn(String baseDn) {
+        this.baseDn = baseDn;
     }
 
     public int getReturnCode() {

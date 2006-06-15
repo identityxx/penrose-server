@@ -1,0 +1,43 @@
+<!--
+ Copyright (c) 2000-2005, Identyx Corporation.
+ All rights reserved.
+-->
+<project name="modules" default="compile" basedir=".">
+
+    <path id="lib.path">
+        <fileset dir="../../lib">
+            <include name="*.jar"/>
+        </fileset>
+        <pathelement location="../../target/classes"/>
+    </path>
+
+    <path id="main.path">
+        <fileset dir="../../lib">
+            <include name="*.jar"/>
+        </fileset>
+        <pathelement location="../../target/classes"/>
+        <pathelement location="target/classes"/>
+    </path>
+
+    <target name="compile">
+        <mkdir dir="target/classes"/>
+        <javac
+            srcdir="src"
+            destdir="target/classes"
+            classpathref="lib.path"
+        />
+    </target>
+
+    <target name="run" depends="compile">
+        <java
+            classname="org.safehaus.penrose.example.listener.DemoListener"
+            classpathref="main.path">
+        </java>
+    </target>
+
+    <target name="clean">
+        <delete dir="dist" failonerror="false"/>
+        <delete dir="target" failonerror="false"/>
+    </target>
+
+</project>

@@ -230,7 +230,7 @@ public class PartitionReader {
         } else if (home != null) {
             path = home+File.separator+path;
         }
-        String filename = (path == null ? "" : path+File.separator)+File.separator+"modules.xml";
+        String filename = (path == null ? "" : path+File.separator)+"modules.xml";
         log.debug("Loading "+filename);
 
         File file = new File(filename);
@@ -258,7 +258,7 @@ public class PartitionReader {
         } else if (home != null) {
             path = home+File.separator+path;
         }
-        String filename = (path == null ? "" : path+File.separator)+File.separator+"connections.xml";
+        String filename = (path == null ? "" : path+File.separator)+"connections.xml";
         log.debug("Loading "+filename);
 
         File file = new File(filename);
@@ -286,7 +286,7 @@ public class PartitionReader {
         } else if (home != null) {
             path = home+File.separator+path;
         }
-        String filename = (path == null ? "" : path+File.separator)+File.separator+"sources.xml";
+        String filename = (path == null ? "" : path+File.separator)+"sources.xml";
         log.debug("Loading "+filename);
 
         File file = new File(filename);

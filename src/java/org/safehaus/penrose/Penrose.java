@@ -301,28 +301,25 @@ public class Penrose {
 
     public void loadEngine() throws Exception {
 
-        EngineConfig engineConfig = penroseConfig.getEngineConfig();
-        Engine engine = engineManager.getEngine(engineConfig.getName());
-
-        if (engine != null) return;
-
         ConnectorConfig connectorConfig = penroseConfig.getConnectorConfig();
         Connector connector = connectorManager.getConnector(connectorConfig.getName());
 
-        engineManager.init(engineConfig, connector);
+        Collection engineConfigs = penroseConfig.getEngineConfigs();
+
+        for (Iterator i=engineConfigs.iterator(); i.hasNext(); ) {
+            EngineConfig engineConfig = (EngineConfig)i.next();
+            if (engineManager.getEngine(engineConfig.getName()) != null) continue;
+
+            engineManager.init(engineConfig, connector);
+        }
     }
 
     public void loadHandler() throws Exception {
 
         HandlerConfig handlerConfig = penroseConfig.getHandlerConfig();
-        Handler handler = handlerManager.getHandler(handlerConfig.getName());
+        if (handlerManager.getHandler(handlerConfig.getName()) != null) return;
 
-        if (handler != null) return;
-
-        EngineConfig engineConfig = penroseConfig.getEngineConfig();
-        Engine engine = engineManager.getEngine(engineConfig.getName());
-
-        handlerManager.init(handlerConfig, engine);
+        handlerManager.init(handlerConfig, engineManager);
     }
 
 

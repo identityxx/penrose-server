@@ -26,6 +26,7 @@ import org.safehaus.penrose.filter.FilterTool;
 import org.safehaus.penrose.partition.PartitionManager;
 import org.safehaus.penrose.schema.SchemaManager;
 import org.safehaus.penrose.engine.Engine;
+import org.safehaus.penrose.engine.EngineManager;
 import org.safehaus.penrose.interpreter.InterpreterManager;
 import org.safehaus.penrose.module.Module;
 import org.safehaus.penrose.module.ModuleManager;
@@ -66,7 +67,7 @@ public class Handler {
     private SearchHandler searchHandler;
 
     private SchemaManager schemaManager;
-    private Engine engine;
+    private EngineManager engineManager;
 
     private SessionManager sessionManager;
     private PartitionManager partitionManager;
@@ -297,11 +298,11 @@ public class Handler {
     }
 
     public Engine getEngine() {
-        return engine;
+        return engineManager.getEngine("DEFAULT");
     }
 
-    public void setEngine(Engine engine) {
-        this.engine = engine;
+    public Engine getEngine(String name) {
+        return engineManager.getEngine(name);
     }
 
     public PartitionManager getPartitionManager() {
@@ -423,6 +424,14 @@ public class Handler {
 
     public void setPenrose(Penrose penrose) {
         this.penrose = penrose;
+    }
+
+    public EngineManager getEngineManager() {
+        return engineManager;
+    }
+
+    public void setEngineManager(EngineManager engineManager) {
+        this.engineManager = engineManager;
     }
 }
 

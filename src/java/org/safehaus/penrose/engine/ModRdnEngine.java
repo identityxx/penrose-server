@@ -21,6 +21,7 @@ import org.apache.log4j.Logger;
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.util.EntryUtil;
+import org.safehaus.penrose.partition.Partition;
 import org.ietf.ldap.LDAPException;
 
 import java.util.Collection;
@@ -39,7 +40,7 @@ public class ModRdnEngine {
         this.engine = engine;
     }
 
-    public int modrdn(Entry entry, String newRdn) throws Exception {
+    public int modrdn(Partition partition, Entry entry, String newRdn) throws Exception {
 
         EntryMapping entryMapping = entry.getEntryMapping();
         AttributeValues oldAttributeValues = entry.getAttributeValues();
@@ -91,7 +92,7 @@ public class ModRdnEngine {
             }
         }
 
-        ModRdnGraphVisitor visitor = new ModRdnGraphVisitor(engine, entryMapping, oldSourceValues, newSourceValues);
+        ModRdnGraphVisitor visitor = new ModRdnGraphVisitor(engine, partition, entryMapping, oldSourceValues, newSourceValues);
         visitor.run();
 
         if (visitor.getReturnCode() != LDAPException.SUCCESS) return visitor.getReturnCode();
