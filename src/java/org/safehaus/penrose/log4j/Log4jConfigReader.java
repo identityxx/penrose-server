@@ -52,7 +52,6 @@ public class Log4jConfigReader implements EntityResolver {
         ClassLoader cl = getClass().getClassLoader();
         URL ruleUrl = cl.getResource("org/safehaus/penrose/log4j/log4j-digester-rules.xml");
 
-
         Digester digester = DigesterLoader.createDigester(ruleUrl);
         digester.setEntityResolver(this);
 /*
