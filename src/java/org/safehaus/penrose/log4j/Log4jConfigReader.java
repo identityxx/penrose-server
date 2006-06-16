@@ -4,18 +4,19 @@ import org.w3c.dom.*;
 import org.apache.commons.digester.Digester;
 import org.apache.commons.digester.xmlrules.DigesterLoader;
 import org.apache.log4j.Logger;
+import org.xml.sax.EntityResolver;
+import org.xml.sax.InputSource;
 
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.DocumentBuilder;
 import java.io.File;
 import java.io.InputStream;
 import java.io.FileInputStream;
+import java.io.IOException;
 import java.net.URL;
 
 /**
  * @author Endi S. Dewata
  */
-public class Log4jConfigReader {
+public class Log4jConfigReader implements EntityResolver {
 
     Logger log = Logger.getLogger(getClass());
 
@@ -25,13 +26,45 @@ public class Log4jConfigReader {
         is = new FileInputStream(file);
     }
 
+    public InputSource resolveEntity(String publicId, String systemId) throws IOException {
+        //log.debug("Resolving "+publicId+" "+systemId);
+
+        int i = systemId.lastIndexOf("/");
+        String file = systemId.substring(i+1);
+        //log.debug("=> "+file);
+
+        if ("log4j.dtd".equals(file)) {
+            ClassLoader cl = getClass().getClassLoader();
+            URL targetUrl = cl.getResource("org/apache/log4j/xml/log4j.dtd");
+            //log.debug("DTD URL: "+targetUrl);
+            return new InputSource(targetUrl.openStream());
+        }
+
+        return null;
+    }
+
     public Log4jConfig read() throws Exception {
 
         Log4jConfig config = new Log4jConfig();
 
         ClassLoader cl = getClass().getClassLoader();
-        URL url = cl.getResource("org/safehaus/penrose/log4j/log4j-digester-rules.xml");
-        Digester digester = DigesterLoader.createDigester(url);
+        URL ruleUrl = cl.getResource("org/safehaus/penrose/log4j/log4j-digester-rules.xml");
+
+
+        Digester digester = DigesterLoader.createDigester(ruleUrl);
+        digester.setEntityResolver(this);
+/*
+        URL dtdUrl = cl.getResource("org/apache/log4j/xml/log4j.dtd");
+        digester.register(
+                "http://logging.apache.org/log4j/docs/api/org/apache/log4j/xml/log4j.dtd",
+                dtdUrl.toString()
+        );
+
+        digester.register(
+                "log4j.dtd",
+                dtdUrl.toString()
+        );
+*/
         digester.setValidating(false);
         digester.setClassLoader(cl);
         digester.push(config);

@@ -33,11 +33,13 @@ public class Log4jConfigWriter {
         XMLWriter writer = new XMLWriter(out, format);
         writer.startDocument();
 
+        writer.startDTD("log4j:configuration", null, "log4j.dtd");
+/*
         writer.startDTD(
                 "log4j:configuration",
                 "-//Apache//DTD Log4j 1.2//EN",
                 "http://logging.apache.org/log4j/docs/api/org/apache/log4j/xml/log4j.dtd");
-
+*/
         writer.write(createConfigElement(config));
         writer.close();
     }
