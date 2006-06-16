@@ -20,6 +20,7 @@ package org.safehaus.penrose.config;
 import java.util.Iterator;
 import java.io.FileWriter;
 import java.io.Writer;
+import java.io.File;
 
 import org.dom4j.Element;
 import org.dom4j.io.OutputFormat;
@@ -45,10 +46,10 @@ public class PenroseConfigWriter {
 
     Logger log = Logger.getLogger(getClass());
 
-    Writer writer;
+    File file;
 
     public PenroseConfigWriter(String filename) throws Exception {
-        writer = new FileWriter(filename);
+        file = new File(filename);
     }
 
 	/**
@@ -57,6 +58,10 @@ public class PenroseConfigWriter {
 	 * @throws Exception
 	 */
 	public void write(PenroseConfig penroseConfig) throws Exception {
+
+        file.getParentFile().mkdirs();
+        Writer writer = new FileWriter(file);
+
 		OutputFormat format = OutputFormat.createPrettyPrint();
         format.setTrimText(false);
 
@@ -69,7 +74,9 @@ public class PenroseConfigWriter {
 				*/
 		xmlWriter.write(toElement(penroseConfig));
 		xmlWriter.close();
-	}
+        
+        writer.close();
+    }
 
 	public Element toElement(PenroseConfig penroseConfig) {
 		Element element = new DefaultElement("server");

@@ -20,24 +20,26 @@ public class Log4jConfigReader implements EntityResolver {
 
     Logger log = Logger.getLogger(getClass());
 
+    URL log4jDtdUrl;
     InputStream is;
 
     public Log4jConfigReader(File file) throws Exception {
         is = new FileInputStream(file);
+
+        ClassLoader cl = getClass().getClassLoader();
+        log4jDtdUrl = cl.getResource("org/apache/log4j/xml/log4j.dtd");
+        log.debug("Log4j DTD URL: "+log4jDtdUrl);
     }
 
     public InputSource resolveEntity(String publicId, String systemId) throws IOException {
-        //log.debug("Resolving "+publicId+" "+systemId);
+        log.debug("Resolving "+publicId+" "+systemId);
 
         int i = systemId.lastIndexOf("/");
         String file = systemId.substring(i+1);
         //log.debug("=> "+file);
 
         if ("log4j.dtd".equals(file)) {
-            ClassLoader cl = getClass().getClassLoader();
-            URL targetUrl = cl.getResource("org/apache/log4j/xml/log4j.dtd");
-            //log.debug("DTD URL: "+targetUrl);
-            return new InputSource(targetUrl.openStream());
+            return new InputSource(log4jDtdUrl.openStream());
         }
 
         return null;
@@ -50,19 +52,17 @@ public class Log4jConfigReader implements EntityResolver {
         ClassLoader cl = getClass().getClassLoader();
         URL ruleUrl = cl.getResource("org/safehaus/penrose/log4j/log4j-digester-rules.xml");
 
-
         Digester digester = DigesterLoader.createDigester(ruleUrl);
         digester.setEntityResolver(this);
 /*
-        URL dtdUrl = cl.getResource("org/apache/log4j/xml/log4j.dtd");
         digester.register(
                 "http://logging.apache.org/log4j/docs/api/org/apache/log4j/xml/log4j.dtd",
-                dtdUrl.toString()
+                log4jDtdUrl.toString()
         );
 
         digester.register(
                 "log4j.dtd",
-                dtdUrl.toString()
+                log4jDtdUrl.toString()
         );
 */
         digester.setValidating(false);
