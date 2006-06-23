@@ -18,13 +18,13 @@
 
 AppName=Penrose Server
 AppVerName=Penrose Server ${project.version}
-DefaultDirName={pf}\Penrose Server
-DefaultGroupName=Penrose Server
-UninstallDisplayName=Penrose Server
+DefaultDirName={pf}\Identyx\Penrose Server ${project.version}
+DefaultGroupName=Identyx\Penrose Server ${project.version}
+UninstallDisplayName=Penrose Server ${project.version}
 UninstallDisplayIcon={app}\penrose.ico
 Compression=zip
 SolidCompression=yes
-OutputBaseFilename=penrose-${project.version}
+OutputBaseFilename=penrose-server-${project.version}
 OutputDir=..\dist
 LicenseFile=..\LICENSE.txt
 

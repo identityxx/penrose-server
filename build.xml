@@ -7,7 +7,7 @@
     <description>Penrose</description>
 
     <property name="project.name" value="penrose"/>
-    <property name="project.version" value="1.0"/>
+    <property name="project.version" value="1.1"/>
     <property name="project.dist" value="dist"/>
     <property name="prefix" value=""/>
     <property name="penrose.home" value="${prefix}/usr/local/penrose"/>
@@ -83,6 +83,10 @@
         <jar jarfile="target/${project.name}-${project.version}.jar">
             <fileset dir="target/classes"/>
             <manifest>
+              <attribute name="Specification-Version"  value="1.0"/>
+              <attribute name="Implementation-Title"   value="Penrose Virtual Directory Server"/>
+              <attribute name="Implementation-Version" value="${project.version}"/>
+              <attribute name="Implementation-Vendor"  value="Identyx Corporation"/>
               <attribute name="Built-Date" value="${DSTAMP}"/>
             </manifest>
         </jar>

@@ -49,13 +49,13 @@ public class Penrose {
 
     Logger log = Logger.getLogger(Penrose.class);
 
-    public final static String PRODUCT_NAME      = "Penrose Virtual Directory Server";
-    public final static String PRODUCT_VERSION   = "1.0";
-    public final static String PRODUCT_COPYRIGHT = "Copyright (c) 2000-2006, Identyx Corporation.";
-    public final static String VENDOR_NAME       = "Identyx Corporation";
+    public static String PRODUCT_NAME;
+    public static String PRODUCT_VERSION;
+    public static String VENDOR_NAME;
+    public static String PRODUCT_COPYRIGHT = "Copyright (c) 2000-2006, Identyx Corporation.";
 
     public final static DateFormat DATE_FORMAT   = new SimpleDateFormat("MM/dd/yyyy");
-    public final static String RELEASE_DATE      = "04/01/2006";
+    public final static String RELEASE_DATE      = "07/01/2006";
 
     public final static String STOPPED  = "STOPPED";
     public final static String STARTING = "STARTING";
@@ -80,6 +80,19 @@ public class Penrose {
     private InterpreterManager interpreterManager;
 
     private String status = STOPPED;
+
+    static {
+        try {
+            Package pkg = Penrose.class.getPackage();
+
+            PRODUCT_NAME    = pkg.getImplementationTitle();
+            PRODUCT_VERSION = pkg.getImplementationVersion();
+            VENDOR_NAME     = pkg.getImplementationVendor();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 
     protected Penrose(PenroseConfig penroseConfig) throws Exception {
         this.penroseConfig = penroseConfig;
