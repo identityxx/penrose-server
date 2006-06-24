@@ -18,13 +18,13 @@
 
 AppName=Penrose Server
 AppVerName=Penrose Server ${project.version}
-DefaultDirName={pf}\Penrose Server
-DefaultGroupName=Penrose Server
-UninstallDisplayName=Penrose Server
+DefaultDirName={pf}\Identyx\Penrose Server ${project.version}
+DefaultGroupName=Identyx\Penrose Server ${project.version}
+UninstallDisplayName=Penrose Server ${project.version}
 UninstallDisplayIcon={app}\penrose.ico
 Compression=zip
 SolidCompression=yes
-OutputBaseFilename=penrose-${project.version}
+OutputBaseFilename=penrose-server-${project.version}
 OutputDir=..\dist
 LicenseFile=..\LICENSE.txt
 
@@ -70,4 +70,4 @@ Name: "{group}\Penrose Service\Start Penrose Service"; Filename: "{sys}\net.exe"
 Name: "{group}\Penrose Service\Stop Penrose Service"; Filename: "{sys}\net.exe"; Parameters: "stop ""Penrose Virtual Directory Server"""; IconFilename: "{app}\penrose.ico"; WorkingDir: "{app}"
 Name: "{group}\Penrose Service\Register Penrose Service"; Filename: "{app}\bin\install-penrose-service.bat"; IconFilename: "{app}\penrose.ico"; WorkingDir: "{app}"
 Name: "{group}\Penrose Service\Unregister Penrose Service"; Filename: "{app}\bin\uninstall-penrose-service.bat"; IconFilename: "{app}\penrose.ico"; WorkingDir: "{app}"
-Name: "{group}\Uninstall Penrose"; Filename: "{uninstallexe}"
+Name: "{group}\Uninstall Penrose Server"; Filename: "{uninstallexe}"
