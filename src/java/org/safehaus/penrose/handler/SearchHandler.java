@@ -456,6 +456,11 @@ public class SearchHandler {
             }
         }
 
+        Collection attributeNames = sc.getAttributes();
+        if (!attributeNames.isEmpty() && !attributeNames.contains("*")) {
+            attributeValues.retain(attributeNames);
+        }
+
         results.add(entry);
         results.close();
 
