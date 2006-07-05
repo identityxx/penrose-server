@@ -279,6 +279,10 @@ public class SearchHandler {
                     }
                 }
 
+                if (!attributeNames.isEmpty() && !attributeNames.contains("*")) {
+                    attributeValues.retain(attributeNames);
+                }
+
                 results.add(entry);
                 results.close();
 
