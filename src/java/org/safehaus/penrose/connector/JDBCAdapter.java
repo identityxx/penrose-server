@@ -214,8 +214,10 @@ public class JDBCAdapter extends Adapter {
             sb.append(sqlFilter);
         }
 
-        sb.append(" order by ");
-        sb.append(getOringialPrimaryKeyFieldNamesAsString(sourceConfig));
+        if (!sourceConfig.getOriginalPrimaryKeyNames().isEmpty()) {
+            sb.append(" order by ");
+            sb.append(getOringialPrimaryKeyFieldNamesAsString(sourceConfig));
+        }
 
         String sql = sb.toString();
 
@@ -316,8 +318,10 @@ public class JDBCAdapter extends Adapter {
             sb.append(sqlFilter);
         }
 
-        sb.append(" order by ");
-        sb.append(getOringialPrimaryKeyFieldNamesAsString(sourceConfig));
+        if (!sourceConfig.getOriginalPrimaryKeyNames().isEmpty()) {
+            sb.append(" order by ");
+            sb.append(getOringialPrimaryKeyFieldNamesAsString(sourceConfig));
+        }
 
         String sql = sb.toString();
 

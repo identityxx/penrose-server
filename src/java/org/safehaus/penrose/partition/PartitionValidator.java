@@ -47,15 +47,15 @@ public class PartitionValidator {
     public Collection validate(Partition partition) throws Exception {
         Collection results = new ArrayList();
 
-        results.addAll(validateConnections(partition));
-        results.addAll(validateSources(partition));
-        results.addAll(validateEntries(partition));
-        results.addAll(validateModules(partition));
+        results.addAll(validateConnectionConfigs(partition));
+        results.addAll(validateSourceConfigs(partition));
+        results.addAll(validateEntryMappings(partition));
+        results.addAll(validateModuleConfigs(partition));
 
         return results;
     }
 
-    public Collection validateConnections(Partition partition) throws Exception {
+    public Collection validateConnectionConfigs(Partition partition) throws Exception {
         Collection results = new ArrayList();
 
         for (Iterator i=partition.getConnectionConfigs().iterator(); i.hasNext(); ) {
@@ -64,18 +64,18 @@ public class PartitionValidator {
 
             String connectionName = connectionConfig.getName();
             if (connectionName == null || "".equals(connectionName)) {
-                results.add(new PartitionValidationResult(PartitionValidationResult.ERROR, "Missing connection name.", null, connectionConfig));
+                results.add(new PartitionValidationResult(PartitionValidationResult.ERROR, "Missing connection name.", partition.getName()+":", connectionConfig));
                 continue;
             }
 
             String adapterName = connectionConfig.getAdapterName();
             if (adapterName == null || "".equals(adapterName)) {
-                results.add(new PartitionValidationResult(PartitionValidationResult.ERROR, "Missing adapter name.", connectionName, connectionConfig));
+                results.add(new PartitionValidationResult(PartitionValidationResult.ERROR, "Missing adapter name.", partition.getName()+": "+connectionName, connectionConfig));
 
             } else if (penroseConfig != null) {
                 AdapterConfig adapterConfig = penroseConfig.getAdapterConfig(adapterName);
                 if (adapterConfig == null) {
-                    results.add(new PartitionValidationResult(PartitionValidationResult.ERROR, "Invalid adapter name: "+adapterName, connectionName, connectionConfig));
+                    results.add(new PartitionValidationResult(PartitionValidationResult.ERROR, "Invalid adapter name: "+adapterName, partition.getName()+": "+connectionName, connectionConfig));
                 }
             }
         }
@@ -83,45 +83,47 @@ public class PartitionValidator {
         return results;
     }
 
-    public Collection validateSources(Partition partition) throws Exception {
+    public Collection validateSourceConfigs(Partition partition) throws Exception {
         Collection results = new ArrayList();
 
         for (Iterator i=partition.getSourceConfigs().iterator(); i.hasNext(); ) {
             SourceConfig sourceConfig = (SourceConfig)i.next();
-            //log.debug("Validating source "+connectionConfig.getName()+"/"+sourceConfig.getName());
 
             String sourceName = sourceConfig.getName();
             if (sourceName == null || "".equals(sourceName)) {
-                results.add(new PartitionValidationResult(PartitionValidationResult.ERROR, "Missing source name.", null, sourceConfig));
+                results.add(new PartitionValidationResult(PartitionValidationResult.ERROR, "Missing source name.", partition.getName()+":", sourceConfig));
                 continue;
             }
 
             String connectionName = sourceConfig.getConnectionName();
             if (connectionName == null || "".equals(connectionName)) {
-                results.add(new PartitionValidationResult(PartitionValidationResult.ERROR, "Missing connection name.", sourceName, sourceConfig));
+                results.add(new PartitionValidationResult(PartitionValidationResult.ERROR, "Missing connection name.", partition.getName()+": "+sourceName, sourceConfig));
                 continue;
             }
 
             ConnectionConfig connectionConfig = partition.getConnectionConfig(connectionName);
             if (connectionConfig == null) {
-                results.add(new PartitionValidationResult(PartitionValidationResult.ERROR, "Invalid connection name: "+connectionName, sourceName, sourceConfig));
+                results.add(new PartitionValidationResult(PartitionValidationResult.ERROR, "Invalid connection name: "+connectionName, partition.getName()+": "+sourceName, sourceConfig));
             }
 
             for (Iterator k=sourceConfig.getFieldConfigs().iterator(); k.hasNext(); ) {
                 FieldConfig fieldConfig = (FieldConfig)k.next();
-                //log.debug("Validating field "+connectionConfig.getName()+"/"+sourceConfig.getName()+"."+fieldConfig.getName());
 
                 String fieldName = fieldConfig.getName();
                 if (fieldName == null || "".equals(fieldName)) {
-                    results.add(new PartitionValidationResult(PartitionValidationResult.ERROR, "Missing field name.", connectionName+"/"+sourceName, sourceConfig));
+                    results.add(new PartitionValidationResult(PartitionValidationResult.ERROR, "Missing field name.", partition.getName()+": "+sourceName, sourceConfig));
                 }
+            }
+
+            if (!sourceConfig.getFieldConfigs().isEmpty() && sourceConfig.getPrimaryKeyFieldConfigs().isEmpty()) {
+                results.add(new PartitionValidationResult(PartitionValidationResult.ERROR, "Missing primary key(s).", partition.getName()+": "+sourceName, sourceConfig));
             }
         }
 
         return results;
     }
 
-    public Collection validateEntries(Partition partition) throws Exception {
+    public Collection validateEntryMappings(Partition partition) throws Exception {
         Collection results = new ArrayList();
 
         for (Iterator i=partition.getEntryMappings().iterator(); i.hasNext(); ) {
@@ -141,15 +143,15 @@ public class PartitionValidator {
                 results.add(new PartitionValidationResult(PartitionValidationResult.ERROR, "Invalid parent DN: "+parentDn, entryMapping.getDn(), entryMapping));
             }
 
-            results.addAll(validateEntryObjectClasses(partition, entryMapping));
-            results.addAll(validateEntryAttributeTypes(partition, entryMapping));
-            results.addAll(validateEntrySources(partition, entryMapping));
+            results.addAll(validateObjectClasses(partition, entryMapping));
+            results.addAll(validateAttributeMappings(partition, entryMapping));
+            results.addAll(validateSourceMappings(partition, entryMapping));
         }
 
         return results;
     }
 
-    public Collection validateEntryObjectClasses(Partition partition, EntryMapping entryMapping) {
+    public Collection validateObjectClasses(Partition partition, EntryMapping entryMapping) {
         Collection results = new ArrayList();
 
         //log.debug("Validating entry "+entryMapping"'s object classes");
@@ -187,7 +189,7 @@ public class PartitionValidator {
         return results;
     }
 
-    public Collection validateEntryAttributeTypes(Partition partition, EntryMapping entryMapping) {
+    public Collection validateAttributeMappings(Partition partition, EntryMapping entryMapping) {
         Collection results = new ArrayList();
 
         //log.debug("Validating entry "+entryMapping"'s attributes");
@@ -214,6 +216,10 @@ public class PartitionValidator {
 */
         }
 
+        if (!entryMapping.getAttributeMappings().isEmpty() && entryMapping.getRdnAttributes().isEmpty()) {
+            results.add(new PartitionValidationResult(PartitionValidationResult.ERROR, "Missing rdn attribute(s).", entryMapping.getDn(), entryMapping));
+        }
+
         Collection objectClasses = schemaManager.getObjectClasses(entryMapping);
         for (Iterator i=objectClasses.iterator(); i.hasNext(); ) {
             ObjectClass objectClass = (ObjectClass)i.next();
@@ -231,7 +237,7 @@ public class PartitionValidator {
         return results;
     }
 
-    public Collection validateEntrySources(Partition partition, EntryMapping entryMapping) {
+    public Collection validateSourceMappings(Partition partition, EntryMapping entryMapping) {
         Collection results = new ArrayList();
 
         for (Iterator i=entryMapping.getSourceMappings().iterator(); i.hasNext(); ) {
@@ -285,7 +291,7 @@ public class PartitionValidator {
         return results;
     }
 
-    public Collection validateModules(Partition partition) throws Exception {
+    public Collection validateModuleConfigs(Partition partition) throws Exception {
         Collection results = new ArrayList();
 
         for (Iterator i=partition.getModuleConfigs().iterator(); i.hasNext(); ) {
@@ -294,18 +300,18 @@ public class PartitionValidator {
 
             String moduleName = moduleConfig.getName();
             if (moduleName == null || "".equals(moduleName)) {
-                results.add(new PartitionValidationResult(PartitionValidationResult.ERROR, "Missing module name.", null, moduleConfig));
+                results.add(new PartitionValidationResult(PartitionValidationResult.ERROR, "Missing module name.", partition.getName()+":", moduleConfig));
             }
 
             String moduleClass = moduleConfig.getModuleClass();
             if (moduleClass == null || "".equals(moduleClass)) {
-                results.add(new PartitionValidationResult(PartitionValidationResult.ERROR, "Missing module class name.", moduleName, moduleConfig));
+                results.add(new PartitionValidationResult(PartitionValidationResult.ERROR, "Missing module class name.", partition.getName()+": "+moduleName, moduleConfig));
             }
 
             try {
                 Class.forName(moduleClass);
             } catch (Exception e) {
-                results.add(new PartitionValidationResult(PartitionValidationResult.ERROR, "Module class not found: "+moduleClass, moduleName, moduleConfig));
+                results.add(new PartitionValidationResult(PartitionValidationResult.ERROR, "Module class not found: "+moduleClass, partition.getName()+": "+moduleName, moduleConfig));
             }
         }
 
