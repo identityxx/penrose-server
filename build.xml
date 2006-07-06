@@ -78,7 +78,7 @@
             target="1.4"
         />
         <copy todir="target/classes">
-            <fileset dir="src/java" includes="**/*.xml"/>
+            <fileset dir="src/java" includes="**/*.xml,**/*.dtd"/>
         </copy>
         <jar jarfile="target/${project.name}-${project.version}.jar">
             <fileset dir="target/classes"/>

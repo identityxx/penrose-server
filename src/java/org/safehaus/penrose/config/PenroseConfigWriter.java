@@ -67,11 +67,13 @@ public class PenroseConfigWriter {
 
 		XMLWriter xmlWriter = new XMLWriter(writer, format);
 		xmlWriter.startDocument();
-		/*
-		writer.startDTD("server",
-				"-//Penrose/Penrose Server Configuration DTD 1.0//EN",
-				"http://penrose.safehaus.org/dtd/penrose-server-config-1.0.dtd");
-				*/
+
+		xmlWriter.startDTD(
+                "server",
+				"-//Penrose/DTD Server 1.0//EN",
+				"http://penrose.safehaus.org/dtd/server.dtd"
+        );
+
 		xmlWriter.write(toElement(penroseConfig));
 		xmlWriter.close();
         

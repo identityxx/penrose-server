@@ -1,0 +1,19 @@
+<?xml version='1.0' encoding='utf-8'?>
+
+<!--
+<!DOCTYPE connections PUBLIC
+  "-//Penrose/DTD Connections 1.0//EN"
+  "http://penrose.safehaus.org/dtd/connections.dtd">
+-->
+
+<!ELEMENT connections (connection*)>
+
+<!ELEMENT connection (adapter-name, description?, parameter*)>
+<!ATTLIST connection name CDATA #REQUIRED>
+<!ELEMENT adapter-name (#PCDATA)>
+
+<!ELEMENT description (#PCDATA)>
+
+<!ELEMENT parameter (param-name, param-value)>
+<!ELEMENT param-name (#PCDATA)>
+<!ELEMENT param-value (#PCDATA)>

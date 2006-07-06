@@ -23,9 +23,11 @@ import org.apache.log4j.Logger;
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.interpreter.DefaultInterpreter;
 import org.safehaus.penrose.interpreter.Token;
-import org.safehaus.penrose.partition.Partition;
+import org.xml.sax.EntityResolver;
+import org.xml.sax.InputSource;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.URL;
 import java.util.Collection;
 import java.util.Iterator;
@@ -33,17 +35,30 @@ import java.util.Iterator;
 /**
  * @author Endi S. Dewata
  */
-public class PartitionReader {
+public class PartitionReader implements EntityResolver {
 
     Logger log = Logger.getLogger(getClass());
 
     private String home;
 
+    URL connectionsDtdUrl;
+    URL sourcesDtdUrl;
+    URL mappingDtdUrl;
+    URL modulesDtdUrl;
+
     public PartitionReader() {
+        this(null);
     }
 
     public PartitionReader(String home) {
         this.home = home;
+
+        ClassLoader cl = getClass().getClassLoader();
+
+        connectionsDtdUrl = cl.getResource("org/safehaus/penrose/partition/connections.dtd");
+        sourcesDtdUrl = cl.getResource("org/safehaus/penrose/partition/sources.dtd");
+        mappingDtdUrl = cl.getResource("org/safehaus/penrose/partition/mapping.dtd");
+        modulesDtdUrl = cl.getResource("org/safehaus/penrose/partition/modules.dtd");
     }
 
     public Partition read(PartitionConfig partitionConfig) throws Exception {
@@ -93,7 +108,8 @@ public class PartitionReader {
         ClassLoader cl = getClass().getClassLoader();
         URL url = cl.getResource("org/safehaus/penrose/partition/mapping-digester-rules.xml");
 		Digester digester = DigesterLoader.createDigester(url);
-		digester.setValidating(false);
+        digester.setEntityResolver(this);
+        digester.setValidating(true);
         digester.setClassLoader(cl);
 		digester.push(partition);
 		digester.parse(file);
@@ -241,7 +257,8 @@ public class PartitionReader {
         ClassLoader cl = getClass().getClassLoader();
         URL url = cl.getResource("org/safehaus/penrose/partition/modules-digester-rules.xml");
 		Digester digester = DigesterLoader.createDigester(url);
-		digester.setValidating(false);
+        digester.setEntityResolver(this);
+        digester.setValidating(true);
         digester.setClassLoader(cl);
 		digester.push(partition);
 		digester.parse(file);
@@ -269,7 +286,8 @@ public class PartitionReader {
         ClassLoader cl = getClass().getClassLoader();
         URL url = cl.getResource("org/safehaus/penrose/partition/connections-digester-rules.xml");
 		Digester digester = DigesterLoader.createDigester(url);
-        digester.setValidating(false);
+        digester.setEntityResolver(this);
+        digester.setValidating(true);
         digester.setClassLoader(cl);
         digester.push(partition);
         digester.parse(file);
@@ -297,7 +315,8 @@ public class PartitionReader {
         ClassLoader cl = getClass().getClassLoader();
         URL url = cl.getResource("org/safehaus/penrose/partition/sources-digester-rules.xml");
 		Digester digester = DigesterLoader.createDigester(url);
-        digester.setValidating(false);
+        digester.setEntityResolver(this);
+        digester.setValidating(true);
         digester.setClassLoader(cl);
         digester.push(partition);
         digester.parse(file);
@@ -309,5 +328,32 @@ public class PartitionReader {
 
     public void setHome(String home) {
         this.home = home;
+    }
+
+    public InputSource resolveEntity(String publicId, String systemId) throws IOException {
+        //log.debug("Resolving "+publicId+" "+systemId);
+
+        int i = systemId.lastIndexOf("/");
+        String file = systemId.substring(i+1);
+        //log.debug("=> "+file);
+
+        URL url = null;
+
+        if ("connections.dtd".equals(file)) {
+            url = connectionsDtdUrl;
+
+        } else if ("sources.dtd".equals(file)) {
+            url = sourcesDtdUrl;
+
+        } else if ("mapping.dtd".equals(file)) {
+            url = mappingDtdUrl;
+
+        } else if ("modules.dtd".equals(file)) {
+            url = modulesDtdUrl;
+        }
+
+        if (url == null) return null;
+
+        return new InputSource(url.openStream());
     }
 }

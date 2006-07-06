@@ -1,9 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE modules PUBLIC
+  "-//Penrose/DTD Modules 1.0//EN"
+  "http://penrose.safehaus.org/dtd/modules.dtd">
 
 <modules>
 
-  <module>
-    <module-name>DemoModule</module-name>
+  <module name="DemoModule">
     <module-class>org.safehaus.penrose.example.module.DemoModule</module-class>
   </module>
 
