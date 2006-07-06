@@ -1,0 +1,27 @@
+<?xml version='1.0' encoding='utf-8'?>
+
+<!--
+<!DOCTYPE modules PUBLIC
+  "-//Penrose/DTD Modules 1.0//EN"
+  "http://penrose.safehaus.org/dtd/modules.dtd">
+-->
+
+<!ELEMENT modules (module*, module-mapping*)>
+
+<!ELEMENT module (module-name?,module-class, description?, parameter*)>
+<!ATTLIST module name CDATA #IMPLIED>
+<!ATTLIST module enabled CDATA #IMPLIED>
+<!ELEMENT module-name (#PCDATA)>
+<!ELEMENT module-class (#PCDATA)>
+
+<!ELEMENT module-mapping (module-name, base-dn, filter, scope)>
+<!ELEMENT module-name (#PCDATA)>
+<!ELEMENT base-dn (#PCDATA)>
+<!ELEMENT filter (#PCDATA)>
+<!ELEMENT scope (#PCDATA)>
+
+<!ELEMENT description (#PCDATA)>
+
+<!ELEMENT parameter (param-name, param-value)>
+<!ELEMENT param-name (#PCDATA)>
+<!ELEMENT param-value (#PCDATA)>

@@ -7,10 +7,7 @@ import org.apache.log4j.Logger;
 import org.xml.sax.EntityResolver;
 import org.xml.sax.InputSource;
 
-import java.io.File;
-import java.io.InputStream;
-import java.io.FileInputStream;
-import java.io.IOException;
+import java.io.*;
 import java.net.URL;
 
 /**
@@ -21,10 +18,14 @@ public class Log4jConfigReader implements EntityResolver {
     Logger log = Logger.getLogger(getClass());
 
     URL log4jDtdUrl;
-    InputStream is;
+    Reader reader;
 
     public Log4jConfigReader(File file) throws Exception {
-        is = new FileInputStream(file);
+        this(new FileReader(file));
+    }
+
+    public Log4jConfigReader(Reader reader) throws Exception {
+        this.reader = reader;
 
         ClassLoader cl = getClass().getClassLoader();
         log4jDtdUrl = cl.getResource("org/apache/log4j/xml/log4j.dtd");
@@ -68,7 +69,7 @@ public class Log4jConfigReader implements EntityResolver {
         digester.setValidating(false);
         digester.setClassLoader(cl);
         digester.push(config);
-        digester.parse(is);
+        digester.parse(reader);
 
         return config;
 /*
@@ -83,7 +84,7 @@ public class Log4jConfigReader implements EntityResolver {
     }
 
     public void close() throws Exception {
-        is.close();
+        reader.close();
     }
 
     public Log4jConfig createLog4jConfig(Document document) {

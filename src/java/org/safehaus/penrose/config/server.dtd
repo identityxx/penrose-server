@@ -1,0 +1,74 @@
+<?xml version='1.0' encoding='utf-8'?>
+
+<!--
+<!DOCTYPE server PUBLIC
+  "-//Penrose/DTD Server 1.0//EN"
+  "http://penrose.safehaus.org/dtd/server.dtd">
+-->
+
+<!ELEMENT server (
+        system-property*,
+        service*,
+        schema*,
+        interpreter*,
+        entry-cache*,
+        source-cache*,
+        session*,
+        engine*,
+        connector*,
+        adapter*,
+        partition*,
+        root
+)>
+
+<!ELEMENT system-property (property-name, property-value)>
+<!ELEMENT property-name (#PCDATA)>
+<!ELEMENT property-value (#PCDATA)>
+
+<!ELEMENT service (service-class, description?, parameter*)>
+<!ATTLIST service name CDATA #REQUIRED>
+<!ELEMENT service-class (#PCDATA)>
+
+<!ELEMENT schema EMPTY>
+<!ATTLIST schema path CDATA #REQUIRED>
+
+<!ELEMENT interpreter (interpreter-class?, description?, parameter*)>
+<!ATTLIST interpreter name CDATA #IMPLIED>
+<!ELEMENT interpreter-class (#PCDATA)>
+
+<!ELEMENT entry-cache (cache-class?, description?, parameter*)>
+<!ATTLIST entry-cache name CDATA #IMPLIED>
+
+<!ELEMENT source-cache (cache-class?, description?, parameter*)>
+<!ATTLIST source-cache name CDATA #IMPLIED>
+
+<!ELEMENT session (description?, parameter*)>
+<!ATTLIST session name CDATA #IMPLIED>
+
+<!ELEMENT engine (engine-class?, description?, parameter*)>
+<!ATTLIST engine name CDATA #IMPLIED>
+<!ELEMENT engine-class (#PCDATA)>
+
+<!ELEMENT connector (connector-class?, description?, parameter*)>
+<!ATTLIST connector name CDATA #IMPLIED>
+<!ELEMENT connector-class (#PCDATA)>
+
+<!ELEMENT adapter (adapter-class, description?, parameter*)>
+<!ATTLIST adapter name CDATA #REQUIRED>
+<!ELEMENT adapter-class (#PCDATA)>
+
+<!ELEMENT partition EMPTY>
+<!ATTLIST partition name CDATA #REQUIRED>
+<!ATTLIST partition path CDATA #REQUIRED>
+
+<!ELEMENT root (root-dn, root-password)>
+<!ELEMENT root-dn (#PCDATA)>
+<!ELEMENT root-password (#PCDATA)>
+
+<!ELEMENT cache-class (#PCDATA)>
+
+<!ELEMENT description (#PCDATA)>
+
+<!ELEMENT parameter (param-name, param-value)>
+<!ELEMENT param-name (#PCDATA)>
+<!ELEMENT param-value (#PCDATA)>

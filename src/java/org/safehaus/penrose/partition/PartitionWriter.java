@@ -68,11 +68,13 @@ public class PartitionWriter {
 
 		XMLWriter writer = new XMLWriter(fw, format);
 		writer.startDocument();
-		/*
-		writer.startDTD("mapping",
-				"-//Penrose/Penrose Server Configuration DTD 1.0//EN",
-				"http://penrose.safehaus.org/dtd/penrose-mapping-config-1.0.dtd");
-				*/
+
+        writer.startDTD(
+                "mapping",
+                "-//Penrose/DTD Mapping 1.0//EN",
+                "http://penrose.safehaus.org/dtd/mapping.dtd"
+        );
+
 		writer.write(toMappingXmlElement(partition));
 		writer.close();
 	}
@@ -86,11 +88,13 @@ public class PartitionWriter {
 
 		XMLWriter writer = new XMLWriter(fw, format);
 		writer.startDocument();
-		/*
-		writer.startDTD("mapping",
-				"-//Penrose/Penrose Server Configuration DTD 1.0//EN",
-				"http://penrose.safehaus.org/dtd/penrose-mapping-config-1.0.dtd");
-				*/
+
+        writer.startDTD(
+                "connections",
+                "-//Penrose/DTD Connections 1.0//EN",
+                "http://penrose.safehaus.org/dtd/connections.dtd"
+        );
+
 		writer.write(toConnectionsXmlElement(partition));
 		writer.close();
     }
@@ -104,11 +108,13 @@ public class PartitionWriter {
 
 		XMLWriter writer = new XMLWriter(fw, format);
 		writer.startDocument();
-		/*
-		writer.startDTD("mapping",
-				"-//Penrose/Penrose Server Configuration DTD 1.0//EN",
-				"http://penrose.safehaus.org/dtd/penrose-mapping-config-1.0.dtd");
-				*/
+
+        writer.startDTD(
+                "sources",
+                "-//Penrose/DTD Sources 1.0//EN",
+                "http://penrose.safehaus.org/dtd/sources.dtd"
+        );
+
 		writer.write(toSourcesXmlElement(partition));
 		writer.close();
     }
@@ -122,11 +128,13 @@ public class PartitionWriter {
 
 		XMLWriter writer = new XMLWriter(fw, format);
 		writer.startDocument();
-		/*
-		writer.startDTD("mapping",
-				"-//Penrose/Penrose Server Configuration DTD 1.0//EN",
-				"http://penrose.safehaus.org/dtd/penrose-mapping-config-1.0.dtd");
-				*/
+
+        writer.startDTD(
+                "modules",
+                "-//Penrose/DTD Modules 1.0//EN",
+                "http://penrose.safehaus.org/dtd/modules.dtd"
+        );
+
 		writer.write(toModulesXmlElement(partition));
 		writer.close();
     }

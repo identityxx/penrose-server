@@ -20,26 +20,34 @@ package org.safehaus.penrose.config;
 import org.apache.commons.digester.Digester;
 import org.apache.commons.digester.xmlrules.DigesterLoader;
 import org.apache.log4j.Logger;
+import org.xml.sax.EntityResolver;
+import org.xml.sax.InputSource;
 
 import java.io.Reader;
 import java.io.FileReader;
+import java.io.IOException;
 import java.net.URL;
 
 /**
  * @author Endi S. Dewata
  */
-public class PenroseConfigReader {
+public class PenroseConfigReader implements EntityResolver {
 
     Logger log = Logger.getLogger(getClass());
 
+    URL serverDtdUrl;
     Reader reader;
 
     public PenroseConfigReader(String filename) throws Exception {
-        reader = new FileReader(filename);
+        this(new FileReader(filename));
     }
 
     public PenroseConfigReader(Reader reader) {
         this.reader = reader;
+
+        ClassLoader cl = getClass().getClassLoader();
+        serverDtdUrl = cl.getResource("org/safehaus/penrose/config/server.dtd");
+        //log.debug("Server DTD URL: "+serverDtdUrl);
     }
 
     public PenroseConfig read() throws Exception {
@@ -51,10 +59,26 @@ public class PenroseConfigReader {
     public void read(PenroseConfig penroseConfig) throws Exception {
         ClassLoader cl = getClass().getClassLoader();
         URL url = cl.getResource("org/safehaus/penrose/config/server-digester-rules.xml");
+
 		Digester digester = DigesterLoader.createDigester(url);
-		digester.setValidating(false);
+        digester.setEntityResolver(this);
+		digester.setValidating(true);
         digester.setClassLoader(cl);
 		digester.push(penroseConfig);
 		digester.parse(reader);
+    }
+
+    public InputSource resolveEntity(String publicId, String systemId) throws IOException {
+        //log.debug("Resolving "+publicId+" "+systemId);
+
+        int i = systemId.lastIndexOf("/");
+        String file = systemId.substring(i+1);
+        //log.debug("=> "+file);
+
+        if ("server.dtd".equals(file)) {
+            return new InputSource(serverDtdUrl.openStream());
+        }
+
+        return null;
     }
 }
