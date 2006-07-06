@@ -35,6 +35,7 @@ Source: "..\target\dist\bin\*"; DestDir: "{app}\bin"; Components: main
 Source: "..\target\dist\conf\*"; DestDir: "{app}\conf"; Flags: onlyifdoesntexist uninsneveruninstall; Components: main
 Source: "..\target\dist\conf\default\*"; DestDir: "{app}\conf\default"; Flags: recursesubdirs; Components: main
 Source: "..\target\dist\docs\*"; DestDir: "{app}\docs"; Flags: recursesubdirs; Components: docs
+Source: "..\target\dist\dtd\*"; DestDir: "{app}\dtd"; Flags: recursesubdirs; Components: main
 Source: "..\target\dist\lib\*"; DestDir: "{app}\lib"; Flags: recursesubdirs; Components: main
 Source: "..\target\dist\schema\*"; DestDir: "{app}\schema"; Flags: recursesubdirs; Components: main
 Source: "..\target\dist\samples\*"; DestDir: "{app}\samples"; Flags: recursesubdirs; Components: sample
