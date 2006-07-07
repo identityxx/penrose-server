@@ -22,7 +22,6 @@ import java.io.*;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 
-import org.apache.log4j.*;
 import org.safehaus.penrose.config.*;
 import org.safehaus.penrose.schema.*;
 import org.safehaus.penrose.engine.EngineConfig;
@@ -41,13 +40,15 @@ import org.safehaus.penrose.session.SessionManager;
 import org.safehaus.penrose.module.ModuleManager;
 import org.safehaus.penrose.thread.ThreadManager;
 import org.safehaus.penrose.event.EventManager;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 
 /**
  * @author Endi S. Dewata
  */
 public class Penrose {
 
-    Logger log = Logger.getLogger(Penrose.class);
+    Logger log = LoggerFactory.getLogger(getClass());
 
     public static String PRODUCT_NAME;
     public static String PRODUCT_VERSION;

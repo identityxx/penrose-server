@@ -17,7 +17,8 @@
  */
 package org.safehaus.penrose.schema;
 
-import org.apache.log4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -27,7 +28,7 @@ import java.io.StringWriter;
 
 public class ObjectClass implements Cloneable, Comparable {
 
-    Logger log = Logger.getLogger(getClass());
+    Logger log = LoggerFactory.getLogger(getClass());
 
 	public final static String ABSTRACT   = "ABSTRACT";
 	public final static String STRUCTURAL = "STRUCTURAL";

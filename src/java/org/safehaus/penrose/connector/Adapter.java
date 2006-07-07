@@ -24,8 +24,9 @@ import org.safehaus.penrose.filter.SubstringFilter;
 import org.safehaus.penrose.session.PenroseSearchResults;
 import org.safehaus.penrose.session.PenroseSearchControls;
 import org.safehaus.penrose.partition.SourceConfig;
-import org.apache.log4j.Logger;
 import org.ietf.ldap.LDAPException;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 
 import java.util.Collection;
 import java.util.Map;
@@ -35,7 +36,7 @@ import java.util.Map;
  */
 public abstract class Adapter {
 
-    Logger log = Logger.getLogger(getClass());
+    Logger log = LoggerFactory.getLogger(getClass());
 
     private AdapterConfig adapterConfig;
     private Connection connection;

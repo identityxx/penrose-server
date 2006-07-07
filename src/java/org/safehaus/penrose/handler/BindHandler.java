@@ -28,7 +28,8 @@ import org.safehaus.penrose.service.ServiceConfig;
 import org.safehaus.penrose.engine.Engine;
 import org.ietf.ldap.LDAPDN;
 import org.ietf.ldap.LDAPException;
-import org.apache.log4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 
 import javax.naming.AuthenticationException;
 
@@ -37,7 +38,7 @@ import javax.naming.AuthenticationException;
  */
 public class BindHandler {
 
-    Logger log = Logger.getLogger(getClass());
+    Logger log = LoggerFactory.getLogger(getClass());
 
     private Handler handler;
 

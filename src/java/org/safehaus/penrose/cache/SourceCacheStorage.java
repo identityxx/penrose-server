@@ -28,7 +28,8 @@ import org.safehaus.penrose.session.PenroseSearchControls;
 import org.safehaus.penrose.pipeline.PipelineEvent;
 import org.safehaus.penrose.pipeline.PipelineAdapter;
 import org.safehaus.penrose.thread.ThreadManager;
-import org.apache.log4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 
 import java.util.*;
 
@@ -37,7 +38,7 @@ import java.util.*;
  */
 public class SourceCacheStorage {
 
-    Logger log = Logger.getLogger(getClass());
+    Logger log = LoggerFactory.getLogger(getClass());
 
     ThreadManager threadManager;
 

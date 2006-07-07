@@ -3,7 +3,8 @@ package org.safehaus.penrose.connector;
 import org.safehaus.penrose.filter.*;
 import org.safehaus.penrose.partition.FieldConfig;
 import org.safehaus.penrose.partition.SourceConfig;
-import org.apache.log4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 
 import java.util.Iterator;
 import java.util.Collection;
@@ -13,7 +14,7 @@ import java.util.Collection;
  */
 public class JDBCFilterTool {
 
-    Logger log = Logger.getLogger(getClass());
+    Logger log = LoggerFactory.getLogger(getClass());
 
     /**
      * Convert parsed SQL filter into string to be used in SQL queries.

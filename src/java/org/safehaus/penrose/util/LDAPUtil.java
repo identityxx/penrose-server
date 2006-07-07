@@ -1,6 +1,7 @@
 package org.safehaus.penrose.util;
 
-import org.apache.log4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 import org.safehaus.penrose.session.PenroseSearchControls;
 
 import javax.naming.directory.DirContext;
@@ -12,7 +13,7 @@ import javax.naming.NamingEnumeration;
  */
 public class LDAPUtil {
 
-    public static Logger log = Logger.getLogger(LDAPUtil.class);
+    public static Logger log = LoggerFactory.getLogger(LDAPUtil.class);
 
     public static boolean isBinary(Attribute attribute) throws Exception {
 

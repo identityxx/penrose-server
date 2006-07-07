@@ -20,7 +20,8 @@ package org.safehaus.penrose.cache;
 import org.safehaus.penrose.filter.*;
 import org.safehaus.penrose.partition.FieldConfig;
 import org.safehaus.penrose.partition.SourceConfig;
-import org.apache.log4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 
 import java.util.Iterator;
 import java.util.Collection;
@@ -30,7 +31,7 @@ import java.util.Collection;
  */
 public class JDBCCacheTool {
 
-    Logger log = Logger.getLogger(getClass());
+    Logger log = LoggerFactory.getLogger(getClass());
 
     boolean convert(
             String tableName,

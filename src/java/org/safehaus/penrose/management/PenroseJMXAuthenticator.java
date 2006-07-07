@@ -17,10 +17,11 @@
  */
 package org.safehaus.penrose.management;
 
-import org.apache.log4j.Logger;
 import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.session.PenroseSession;
 import org.ietf.ldap.LDAPException;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 
 import javax.management.remote.JMXAuthenticator;
 import javax.security.auth.Subject;
@@ -31,7 +32,7 @@ import java.security.Principal;
  */
 public class PenroseJMXAuthenticator implements JMXAuthenticator {
 
-    Logger log = Logger.getLogger(getClass());
+    Logger log = LoggerFactory.getLogger(getClass());
 
     private Penrose penrose;
 

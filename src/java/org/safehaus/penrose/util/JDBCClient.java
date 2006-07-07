@@ -21,23 +21,24 @@ import java.sql.*;
 import java.util.*;
 import java.lang.reflect.Field;
 
-import org.apache.log4j.Logger;
 import org.safehaus.penrose.partition.FieldConfig;
 import org.safehaus.penrose.partition.TableConfig;
 import org.safehaus.penrose.connector.JDBCAdapter;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 
 public class JDBCClient {
-	
-	Logger log = Logger.getLogger(JDBCClient.class);
+
+    Logger log = LoggerFactory.getLogger(getClass());
 
     String driver;
     String url;
     String username;
     String password;
 
-	DatabaseMetaData dmd;
+    DatabaseMetaData dmd;
 
-	Connection connection;
+    Connection connection;
 
     public JDBCClient(Map parameters) throws Exception {
         this.driver = (String)parameters.get(JDBCAdapter.DRIVER);
@@ -46,17 +47,17 @@ public class JDBCClient {
         this.password = (String)parameters.get(JDBCAdapter.PASSWORD);
     }
 
-	public JDBCClient(
+    public JDBCClient(
             String driver,
             String url,
             String username,
-			String password) throws Exception {
+            String password) throws Exception {
 
         this.driver = driver;
         this.url = url;
         this.username = username;
         this.password = password;
-	}
+    }
 
     public void connect() throws Exception {
         Class.forName(driver);
@@ -64,9 +65,9 @@ public class JDBCClient {
         dmd = connection.getMetaData();
     }
 
-	public void close() throws Exception{
+    public void close() throws Exception{
         connection.close();
-	}
+    }
 
     public String getTypeName(int type) throws Exception {
         Field fields[] = Types.class.getFields();
@@ -82,15 +83,15 @@ public class JDBCClient {
         return getColumns(null, null, tableName);
     }
 
-	public Collection getColumns(String catalog, String schema, String tableName) throws Exception {
+    public Collection getColumns(String catalog, String schema, String tableName) throws Exception {
 
         log.debug("Getting column names for "+tableName+" "+catalog+" "+schema);
 
         Map columns = new HashMap();
 
-		ResultSet rs = dmd.getColumns(catalog, schema, tableName, "%");
+        ResultSet rs = dmd.getColumns(catalog, schema, tableName, "%");
 
-		while (rs.next()) {
+        while (rs.next()) {
             //String tableCatalog = rs.getString(1);
             //String tableSchema = rs.getString(2);
             //String tableNm = rs.getString(3);
@@ -101,30 +102,30 @@ public class JDBCClient {
 
             log.debug(" - "+columnName+" "+columnType+" ("+length+","+precision+")");
 
-			FieldConfig field = new FieldConfig(columnName);
+            FieldConfig field = new FieldConfig(columnName);
             field.setOriginalName(columnName);
             field.setType(columnType);
             field.setLength(length);
             field.setPrecision(precision);
 
-			columns.put(columnName, field);
-		}
+            columns.put(columnName, field);
+        }
 
-		rs.close();
+        rs.close();
 
-		rs = dmd.getPrimaryKeys(catalog, schema, tableName);
+        rs = dmd.getPrimaryKeys(catalog, schema, tableName);
 
-		while (rs.next()) {
+        while (rs.next()) {
             String name = rs.getString(4);
 
             FieldConfig field = (FieldConfig)columns.get(name);
             field.setPrimaryKey(true);;
-		}
+        }
 
-		rs.close();
-		
-		return columns.values();
-	}
+        rs.close();
+
+        return columns.values();
+    }
 
     public Collection getCatalogs() throws Exception {
         log.debug("Getting catalogs");
@@ -158,7 +159,7 @@ public class JDBCClient {
         return schemas;
     }
 
-	public Collection getTables() throws SQLException {
+    public Collection getTables() throws SQLException {
         return getTables(null, null);
     }
 
@@ -167,27 +168,27 @@ public class JDBCClient {
         log.debug("Getting table names for "+catalog+" "+schema);
         Collection tables = new TreeSet();
 
-		/*
-		 * String[] tableTypes = { "TABLE", "VIEW", "ALIAS", "SYNONYM", "GLOBAL
-		 * TEMPORARY", "LOCAL TEMPORARY", "SYSTEM TABLE" };
-		 */
-		String[] tableTypes = { "TABLE", "VIEW", "ALIAS", "SYNONYM" };
-		ResultSet rs = dmd.getTables(catalog, schema, "%", tableTypes);
+        /*
+           * String[] tableTypes = { "TABLE", "VIEW", "ALIAS", "SYNONYM", "GLOBAL
+           * TEMPORARY", "LOCAL TEMPORARY", "SYSTEM TABLE" };
+           */
+        String[] tableTypes = { "TABLE", "VIEW", "ALIAS", "SYNONYM" };
+        ResultSet rs = dmd.getTables(catalog, schema, "%", tableTypes);
 
-		while (rs.next()) {
+        while (rs.next()) {
             String tableCatalog = rs.getString(1);
             String tableSchema = rs.getString(2);
-			String tableName = rs.getString(3);
+            String tableName = rs.getString(3);
             String tableType = rs.getString(4);
             //String remarks = rs.getString(5);
 
             //log.debug(" - "+tableSchema+" "+tableName);
             TableConfig tableConfig = new TableConfig(tableName, tableType, tableCatalog, tableSchema);
-			tables.add(tableConfig);
-		}
+            tables.add(tableConfig);
+        }
 
-		rs.close();
+        rs.close();
 
-		return tables;
-	}
+        return tables;
+    }
 }

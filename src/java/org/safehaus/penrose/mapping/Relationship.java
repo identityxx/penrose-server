@@ -24,14 +24,15 @@ import Zql.ZExp;
 import java.io.ByteArrayInputStream;
 import java.util.*;
 
-import org.apache.log4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 
 /**
  * @author Endi S. Dewata
  */
 public class Relationship implements Cloneable {
 
-    Logger log = Logger.getLogger(getClass());
+    Logger log = LoggerFactory.getLogger(getClass());
 
     private String operator = "=";
     private List operands = new ArrayList();
@@ -80,7 +81,7 @@ public class Relationship implements Cloneable {
             log.error(e.getMessage(), e);
         }
     }
-    
+
     public String getLhs() {
         if (operands.size() < 1) return null;
         return operands.get(0).toString();
@@ -137,7 +138,7 @@ public class Relationship implements Cloneable {
     }
 
     public String toString() {
-    	return getExpression();
+        return getExpression();
     }
 
     public Collection getOperands() {

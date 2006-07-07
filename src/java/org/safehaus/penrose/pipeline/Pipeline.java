@@ -17,7 +17,8 @@
  */
 package org.safehaus.penrose.pipeline;
 
-import org.apache.log4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 
 import java.util.*;
 
@@ -26,7 +27,7 @@ import java.util.*;
  */
 public class Pipeline implements Iterator {
 
-    public Logger log = Logger.getLogger(getClass());
+    public Logger log = LoggerFactory.getLogger(getClass());
 
     List list = new ArrayList();
     int totalCount;

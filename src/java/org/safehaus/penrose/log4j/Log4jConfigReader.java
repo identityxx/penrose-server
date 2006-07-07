@@ -3,9 +3,10 @@ package org.safehaus.penrose.log4j;
 import org.w3c.dom.*;
 import org.apache.commons.digester.Digester;
 import org.apache.commons.digester.xmlrules.DigesterLoader;
-import org.apache.log4j.Logger;
 import org.xml.sax.EntityResolver;
 import org.xml.sax.InputSource;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 
 import java.io.*;
 import java.net.URL;
@@ -15,7 +16,7 @@ import java.net.URL;
  */
 public class Log4jConfigReader implements EntityResolver {
 
-    Logger log = Logger.getLogger(getClass());
+    Logger log = LoggerFactory.getLogger(getClass());
 
     URL log4jDtdUrl;
     Reader reader;

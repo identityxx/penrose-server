@@ -19,11 +19,12 @@ package org.safehaus.penrose.session;
 
 import java.util.*;
 
-import org.apache.log4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 
 public class SessionManager implements SessionManagerMBean {
 
-	public Logger log = Logger.getLogger(getClass());
+    public Logger log = LoggerFactory.getLogger(getClass());
 
     public final static String SESSION_ID_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890";
 
@@ -34,17 +35,17 @@ public class SessionManager implements SessionManagerMBean {
     private int maxSessions;
     private int maxIdleTime; // minutes
 
-	public SessionManager(SessionConfig sessionConfig) {
+    public SessionManager(SessionConfig sessionConfig) {
         this.sessionConfig = sessionConfig;
-	}
+    }
 
-	public void start() throws Exception {
+    public void start() throws Exception {
         String s = sessionConfig.getParameter(SessionConfig.MAX_SESSIONS);
         maxSessions = s == null ? SessionConfig.DEFAULT_MAX_SESSIONS : Integer.parseInt(s);
 
         s = sessionConfig.getParameter(SessionConfig.MAX_IDLE_TIME);
         maxIdleTime = s == null ? SessionConfig.DEFAULT_MAX_IDLE_TIME : Integer.parseInt(s);
-	}
+    }
 
     public void stop() throws Exception {
         log.debug("Removing all sessions");

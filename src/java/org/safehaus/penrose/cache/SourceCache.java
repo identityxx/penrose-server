@@ -17,7 +17,6 @@
  */
 package org.safehaus.penrose.cache;
 
-import org.apache.log4j.Logger;
 import org.safehaus.penrose.connector.Connector;
 import org.safehaus.penrose.connector.ConnectionManager;
 import org.safehaus.penrose.partition.SourceConfig;
@@ -27,6 +26,8 @@ import org.safehaus.penrose.partition.PartitionConfig;
 import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.thread.ThreadManager;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 
 import java.util.Map;
 import java.util.TreeMap;
@@ -38,7 +39,7 @@ import java.util.Collection;
  */
 public class SourceCache {
 
-    Logger log = Logger.getLogger(getClass());
+    Logger log = LoggerFactory.getLogger(getClass());
 
     CacheConfig cacheConfig;
     Connector connector;

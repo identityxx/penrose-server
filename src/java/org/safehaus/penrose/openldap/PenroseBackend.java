@@ -31,9 +31,10 @@ import org.safehaus.penrose.session.PenroseSession;
 import org.safehaus.penrose.session.PenroseSearchResults;
 import org.safehaus.penrose.session.*;
 import org.safehaus.penrose.config.PenroseConfig;
-import org.apache.log4j.Logger;
 import org.openldap.backend.Backend;
 import org.openldap.backend.Result;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 
 import javax.naming.directory.Attributes;
 
@@ -41,6 +42,8 @@ import javax.naming.directory.Attributes;
  * @author Endi S. Dewata
  */
 public class PenroseBackend implements Backend {
+
+    Logger log = LoggerFactory.getLogger(getClass());
 
     public String slapdConfig;
     public Properties properties;
@@ -79,8 +82,6 @@ public class PenroseBackend implements Backend {
      * @throws Exception
      */
     public int init() throws Exception {
-        Logger log = Logger.getLogger(getClass());
-
         try {
             return initImpl();
         } catch (Throwable e) {
@@ -91,7 +92,6 @@ public class PenroseBackend implements Backend {
 
     public int initImpl() throws Exception {
     	
-        Logger log = Logger.getLogger(getClass());
         log.debug("-------------------------------------------------------------------------------");
         log.debug("PenroseBackend.init();");
 
@@ -140,7 +140,6 @@ public class PenroseBackend implements Backend {
      * @param schemaDn
      */
     public void setSchema(String schemaDn) {
-        Logger log = Logger.getLogger(getClass());
         log.debug("-------------------------------------------------------------------------------");
         log.debug("Penrose.setSchema(schemaDn);");
         log.debug(" schemaDN           : " + schemaDn);
@@ -154,7 +153,6 @@ public class PenroseBackend implements Backend {
      * @param suffixes
      */
     public void setSuffix(String suffixes[]) {
-        Logger log = Logger.getLogger(getClass());
        	log.debug("-------------------------------------------------------------------------------");
        	log.debug("PenroseBackend.setSuffix(suffixArray);");
        	
@@ -172,7 +170,6 @@ public class PenroseBackend implements Backend {
      * @param rootPassword
      */
     public void setRoot(String rootDn, String rootPassword) {
-        Logger log = Logger.getLogger(getClass());
     	log.debug("-------------------------------------------------------------------------------");
     	log.debug("PenroseBackend.setRoot(rootDn, rootPassword)");
     	log.debug(" rootDN           : "+rootDn);
@@ -221,7 +218,6 @@ public class PenroseBackend implements Backend {
      * @throws Exception
      */
     public int setSlapdConfig(String slapdConfig) throws Exception {
-        Logger log = Logger.getLogger(getClass());
         try {
             return setSlapdConfigImpl(slapdConfig);
         } catch (Throwable e) {
@@ -232,7 +228,6 @@ public class PenroseBackend implements Backend {
 
     public int setSlapdConfigImpl(String slapdConfig) throws Throwable {
 
-        Logger log = Logger.getLogger(getClass());
     	log.debug("-------------------------------------------------------------------------------");
     	log.debug("PenroseBackend.setSlapdConfig(slapdConfig)");
     	log.debug(" slapdConfig: "+slapdConfig);
@@ -251,7 +246,6 @@ public class PenroseBackend implements Backend {
      */
     public int setProperties(Properties properties) throws Exception {
 
-        Logger log = Logger.getLogger(getClass());
     	log.debug("-------------------------------------------------------------------------------");
     	log.debug("PenroseBackend.setProperties(properties)");
 
@@ -272,7 +266,6 @@ public class PenroseBackend implements Backend {
      */
     public int bind(int connectionId, String dn, String password) throws Exception {
 
-        Logger log = Logger.getLogger(getClass());
         PenroseSession session = getConnection(connectionId);
         if (session == null) {
             createConnection(connectionId);
@@ -297,7 +290,6 @@ public class PenroseBackend implements Backend {
      */
     public int unbind(int connectionId) throws Exception {
 
-        Logger log = Logger.getLogger(getClass());
         PenroseSession session = getConnection(connectionId);
         if (session == null) {
             createConnection(connectionId);
@@ -332,7 +324,6 @@ public class PenroseBackend implements Backend {
             String[] attributeNames)
     throws Exception {
 
-        Logger log = Logger.getLogger(getClass());
         PenroseSession session = getConnection(connectionId);
         if (session == null) {
             createConnection(connectionId);
@@ -380,7 +371,6 @@ public class PenroseBackend implements Backend {
             String[] attributeNames)
     throws Exception {
 
-        Logger log = Logger.getLogger(getClass());
         PenroseSession session = getConnection(connectionId);
         if (session == null) {
             createConnection(connectionId);
@@ -422,7 +412,6 @@ public class PenroseBackend implements Backend {
             Attributes attributes)
     throws Exception {
 
-        Logger log = Logger.getLogger(getClass());
         PenroseSession session = getConnection(connectionId);
         if (session == null) {
             createConnection(connectionId);
@@ -451,7 +440,6 @@ public class PenroseBackend implements Backend {
             String dn)
     throws Exception {
 
-        Logger log = Logger.getLogger(getClass());
         PenroseSession session = getConnection(connectionId);
         if (session == null) {
             createConnection(connectionId);
@@ -482,7 +470,6 @@ public class PenroseBackend implements Backend {
             Collection modifications)
     throws Exception {
 
-        Logger log = Logger.getLogger(getClass());
         PenroseSession session = getConnection(connectionId);
         if (session == null) {
             createConnection(connectionId);
@@ -515,7 +502,6 @@ public class PenroseBackend implements Backend {
             Object attributeValue)
     throws Exception {
 
-        Logger log = Logger.getLogger(getClass());
         PenroseSession session = getConnection(connectionId);
         if (session == null) {
             createConnection(connectionId);

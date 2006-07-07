@@ -19,9 +19,10 @@ package org.safehaus.penrose.config;
 
 import org.apache.commons.digester.Digester;
 import org.apache.commons.digester.xmlrules.DigesterLoader;
-import org.apache.log4j.Logger;
 import org.xml.sax.EntityResolver;
 import org.xml.sax.InputSource;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 
 import java.io.Reader;
 import java.io.FileReader;
@@ -33,7 +34,7 @@ import java.net.URL;
  */
 public class PenroseConfigReader implements EntityResolver {
 
-    Logger log = Logger.getLogger(getClass());
+    Logger log = LoggerFactory.getLogger(getClass());
 
     URL serverDtdUrl;
     Reader reader;

@@ -32,7 +32,8 @@ import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.service.ServiceConfig;
 import org.ietf.ldap.*;
-import org.apache.log4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 
 import javax.naming.directory.DirContext;
 import javax.naming.directory.ModificationItem;
@@ -46,7 +47,7 @@ import java.util.*;
  */
 public class ModifyHandler {
 
-    Logger log = Logger.getLogger(getClass());
+    Logger log = LoggerFactory.getLogger(getClass());
 
     private Handler handler;
 

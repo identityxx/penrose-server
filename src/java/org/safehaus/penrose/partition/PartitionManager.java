@@ -19,10 +19,9 @@ package org.safehaus.penrose.partition;
 
 import org.safehaus.penrose.mapping.EntryMapping;
 import org.safehaus.penrose.mapping.SourceMapping;
-import org.safehaus.penrose.mapping.Row;
-import org.safehaus.penrose.mapping.Entry;
 import org.safehaus.penrose.schema.SchemaManager;
-import org.apache.log4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 
 import java.util.*;
 import java.io.File;
@@ -32,7 +31,7 @@ import java.io.File;
  */
 public class PartitionManager implements PartitionManagerMBean {
 
-    Logger log = Logger.getLogger(getClass());
+    Logger log = LoggerFactory.getLogger(getClass());
 
     private SchemaManager schemaManager;
 

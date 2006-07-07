@@ -17,22 +17,23 @@
  */
 package org.safehaus.penrose.connector;
 
-import org.apache.log4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 
 /**
  * @author Endi S. Dewata
  */
 public class PollingConnectorRunnable implements Runnable {
 
-    Logger log = Logger.getLogger(getClass());
+    Logger log = LoggerFactory.getLogger(getClass());
 
-	private PollingConnectorModule module;
+    private PollingConnectorModule module;
 
     boolean running = true;
 
-	public PollingConnectorRunnable(PollingConnectorModule module) {
-		this.module = module;
-	}
+    public PollingConnectorRunnable(PollingConnectorModule module) {
+        this.module = module;
+    }
 
     public void run() {
         try {
@@ -42,14 +43,14 @@ public class PollingConnectorRunnable implements Runnable {
         }
     }
 
-	public void runImpl() throws Exception {
+    public void runImpl() throws Exception {
 
-		while (running) {
+        while (running) {
             Thread.sleep(module.interval * 1000);
             if (running) module.process();
-		}
-		
-	}
+        }
+
+    }
 
     public void stop() {
         running = false;

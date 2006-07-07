@@ -17,7 +17,8 @@
  */
 package org.safehaus.penrose.mapping;
 
-import org.apache.log4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 
 import java.util.*;
 
@@ -26,7 +27,7 @@ import java.util.*;
  */
 public class SourceMapping implements Cloneable {
 
-    Logger log = Logger.getLogger(getClass());
+    Logger log = LoggerFactory.getLogger(getClass());
 
     public final static String FILTER     = "filter";
 

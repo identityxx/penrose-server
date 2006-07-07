@@ -152,17 +152,18 @@
         <copy todir="target/dist/conf">
             <fileset dir="target/dist/conf/default"/>
         </copy>
+        <mkdir dir="target/dist/schema/ext"/>
         <copy todir="target/dist/schema">
             <fileset dir="schema"/>
-        </copy>
-        <copy todir="target/dist/jboss">
-            <fileset dir="jboss"/>
         </copy>
         <copy todir="target/dist"
             file="images/penrose.ico">
         </copy>
         <copy todir="target/dist/bin">
             <fileset dir="bin"/>
+        </copy>
+        <copy todir="target/dist/dtd" flatten="true">
+            <fileset dir="src" includes="**/*.dtd"/>
         </copy>
         <fixcrlf
             srcdir="target/dist/bin"
@@ -175,32 +176,6 @@
         </copy>
         <mkdir dir="target/dist/partitions"/>
         <mkdir dir="target/dist/var"/>
-    </target>
-
-    <target name="dist-jboss" depends="build">
-        <mkdir dir="target/nlog4j"/>
-        <unjar src="lib/nlog4j-1.2.17.jar" dest="target/nlog4j">
-            <patternset excludes="META-INF/MANIFEST.MF"/>
-        </unjar>
-        <jar jarfile="target/${project.name}-jboss-${project.version}.jar">
-            <fileset dir="target/classes"/>
-            <fileset dir="target/nlog4j"/>
-        </jar>
-        <mkdir dir="target/penrose.sar"/>
-        <copy todir="target/penrose.sar" includeEmptyDirs="false">
-            <fileset dir="lib" includes="*"/>
-        </copy>
-        <copy todir="target/penrose.sar"
-            file="target/${project.name}-jboss-${project.version}.jar">
-        </copy>
-        <mkdir dir="target/penrose.sar/META-INF"/>
-        <copy todir="target/penrose.sar/META-INF">
-            <fileset file="conf/jboss/jboss-service.xml"/>
-        </copy>
-        <copy todir="target/penrose.sar/conf" includeEmptyDirs="false">
-            <fileset dir="conf" includes="*" />
-        </copy>
-        <jar basedir="target/penrose.sar" jarfile="target/${project.name}-${project.version}.sar"/>
     </target>
 
     <target name="dist-src" depends="docs,dist">

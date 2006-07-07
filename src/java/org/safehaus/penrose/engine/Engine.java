@@ -39,7 +39,8 @@ import org.safehaus.penrose.filter.FilterTool;
 import org.safehaus.penrose.session.PenroseSearchResults;
 import org.safehaus.penrose.session.PenroseSearchControls;
 import org.safehaus.penrose.util.EntryUtil;
-import org.apache.log4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 
 import javax.naming.directory.Attributes;
 import java.util.*;
@@ -49,7 +50,7 @@ import java.util.*;
  */
 public abstract class Engine {
 
-    public static Logger log = Logger.getLogger(Engine.class);
+    public static Logger log = LoggerFactory.getLogger(Engine.class);
 
     public EngineConfig engineConfig;
     public PenroseConfig penroseConfig;

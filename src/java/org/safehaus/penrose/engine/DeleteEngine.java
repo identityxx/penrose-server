@@ -17,19 +17,19 @@
  */
 package org.safehaus.penrose.engine;
 
-import org.apache.log4j.Logger;
 import org.safehaus.penrose.mapping.*;
-import org.safehaus.penrose.util.Formatter;
 import org.safehaus.penrose.graph.Graph;
 import org.safehaus.penrose.partition.Partition;
 import org.ietf.ldap.LDAPException;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 
 /**
  * @author Endi S. Dewata
  */
 public class DeleteEngine {
 
-    Logger log = Logger.getLogger(getClass());
+    Logger log = LoggerFactory.getLogger(getClass());
 
     Engine engine;
 

@@ -2,20 +2,20 @@
  Copyright (c) 2000-2005, Identyx Corporation.
  All rights reserved.
 -->
-<project name="penrose" default="build" basedir="..">
+<project name="penrose-jboss" default="build" basedir="../..">
 
     <property name="jboss.home" value="/usr/local/jboss"/>
     <property name="jboss.server" value="default"/>
     <property name="jboss.deploy" value="${jboss.home}/server/${jboss.server}/deploy"/>
 
     <target name="build">
-        <copy file="jboss/jboss-service.xml" tofile="jboss/META-INF/jboss-service.xml" overwrite="true">
+        <copy file="samples/jboss/jboss-service.xml" tofile="samples/jboss/META-INF/jboss-service.xml" overwrite="true">
             <filterchain>
                 <expandproperties/>
             </filterchain>
         </copy>
-        <jar destfile="jboss/penrose.sar">
-            <fileset dir="jboss" includes="META-INF/*"/>
+        <jar destfile="samples/jboss/penrose.sar">
+            <fileset dir="samples/jboss" includes="META-INF/*"/>
             <fileset dir="lib" includes="*.jar" excludes="bsh-2.0b4.jar"/>
             <fileset dir="lib/ext" includes="*.jar"/>
             <fileset dir="schema/ext" includes="*.jar"/>
@@ -23,7 +23,7 @@
     </target>
 
     <target name="deploy" depends="build">
-        <copy file="jboss/penrose.sar" todir="${jboss.deploy}" overwrite="true"/>
+        <copy file="samples/jboss/penrose.sar" todir="${jboss.deploy}" overwrite="true"/>
     </target>
 
     <target name="undeploy">
@@ -31,8 +31,8 @@
     </target>
 
     <target name="clean">
-        <delete dir="jboss/META-INF"/>
-        <delete file="jboss/penrose.sar"/>
+        <delete dir="samples/jboss/META-INF"/>
+        <delete file="samples/jboss/penrose.sar"/>
     </target>
 
 </project>

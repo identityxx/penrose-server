@@ -1,6 +1,7 @@
 package org.safehaus.penrose.schema;
 
-import org.apache.log4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -13,7 +14,7 @@ import java.util.Iterator;
  */
 public class SchemaWriter {
 
-    Logger log = Logger.getLogger(getClass());
+    Logger log = LoggerFactory.getLogger(getClass());
 
     File baseDir;
 

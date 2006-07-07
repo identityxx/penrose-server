@@ -28,15 +28,14 @@ import org.safehaus.penrose.schema.SchemaManager;
 import org.safehaus.penrose.engine.Engine;
 import org.safehaus.penrose.engine.EngineManager;
 import org.safehaus.penrose.interpreter.InterpreterManager;
-import org.safehaus.penrose.module.Module;
-import org.safehaus.penrose.module.ModuleManager;
 import org.safehaus.penrose.event.*;
 import org.safehaus.penrose.pipeline.PipelineAdapter;
 import org.safehaus.penrose.pipeline.PipelineEvent;
 import org.safehaus.penrose.mapping.Entry;
 import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.Penrose;
-import org.apache.log4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 
 import javax.naming.directory.*;
 import java.util.*;
@@ -46,7 +45,7 @@ import java.util.*;
  */
 public class Handler {
 
-    Logger log = Logger.getLogger(getClass());
+    Logger log = LoggerFactory.getLogger(getClass());
 
     public final static String STOPPED  = "STOPPED";
     public final static String STARTING = "STARTING";

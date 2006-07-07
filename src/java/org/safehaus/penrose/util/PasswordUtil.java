@@ -20,8 +20,9 @@ package org.safehaus.penrose.util;
 import javax.crypto.spec.SecretKeySpec;
 import javax.crypto.Cipher;
 
-import org.apache.log4j.Logger;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 
 import java.security.MessageDigest;
 import java.security.Security;
@@ -34,7 +35,7 @@ import java.math.BigInteger;
  */
 public class PasswordUtil {
 
-    public static Logger log = Logger.getLogger(PasswordUtil.class);
+    public static Logger log = LoggerFactory.getLogger(PasswordUtil.class);
 
 	protected final static boolean DEBUG = true;
 

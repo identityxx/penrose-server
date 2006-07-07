@@ -18,10 +18,9 @@
 package org.safehaus.penrose.mapping;
 
 import org.safehaus.penrose.util.BinaryUtil;
-import org.apache.log4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 
-import java.util.Collection;
-import java.util.ArrayList;
 import java.util.Arrays;
 
 /**
@@ -29,7 +28,7 @@ import java.util.Arrays;
  */
 public class AttributeMapping implements Cloneable {
 
-    Logger log = Logger.getLogger(getClass());
+    Logger log = LoggerFactory.getLogger(getClass());
 
     public final static String CONSTANT       = "CONSTANT";
     public final static String VARIABLE       = "VARIABLE";

@@ -19,9 +19,9 @@ package org.safehaus.penrose.ldap;
 
 import org.safehaus.penrose.session.PenroseSearchResults;
 import org.safehaus.penrose.util.ExceptionUtil;
-import org.safehaus.penrose.util.EntryUtil;
 import org.ietf.ldap.LDAPException;
-import org.apache.log4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 
 import javax.naming.NamingEnumeration;
 import javax.naming.NamingException;
@@ -33,7 +33,7 @@ import java.util.*;
  */
 public class PenroseEnumeration implements NamingEnumeration {
 
-    Logger log = Logger.getLogger(getClass());
+    Logger log = LoggerFactory.getLogger(getClass());
 
     public Hashtable environment;
     public PenroseSearchResults searchResults;

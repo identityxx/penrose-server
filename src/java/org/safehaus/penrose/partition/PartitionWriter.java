@@ -35,20 +35,21 @@ import org.safehaus.penrose.module.ModuleConfig;
 import org.safehaus.penrose.module.ModuleMapping;
 import org.safehaus.penrose.acl.ACI;
 import org.safehaus.penrose.util.BinaryUtil;
-import org.apache.log4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 
 /**
  * @author Endi S. Dewata
  */
 public class PartitionWriter {
 
-    Logger log = Logger.getLogger(getClass());
+    Logger log = LoggerFactory.getLogger(getClass());
 
     File directory;
 
-	public PartitionWriter(String directory) {
+    public PartitionWriter(String directory) {
         this.directory = new File(directory);
-	}
+    }
 
     public void write(Partition partition) throws Exception {
         directory.mkdirs();
@@ -59,15 +60,15 @@ public class PartitionWriter {
         storeModulesConfig(partition);
     }
 
-	public void storeMappingConfig(Partition partition) throws Exception {
+    public void storeMappingConfig(Partition partition) throws Exception {
         File file = new File(directory, "mapping.xml");
 
-		FileWriter fw = new FileWriter(file);
-		OutputFormat format = OutputFormat.createPrettyPrint();
+        FileWriter fw = new FileWriter(file);
+        OutputFormat format = OutputFormat.createPrettyPrint();
         format.setTrimText(false);
 
-		XMLWriter writer = new XMLWriter(fw, format);
-		writer.startDocument();
+        XMLWriter writer = new XMLWriter(fw, format);
+        writer.startDocument();
 
         writer.startDTD(
                 "mapping",
@@ -75,19 +76,19 @@ public class PartitionWriter {
                 "http://penrose.safehaus.org/dtd/mapping.dtd"
         );
 
-		writer.write(toMappingXmlElement(partition));
-		writer.close();
-	}
+        writer.write(toMappingXmlElement(partition));
+        writer.close();
+    }
 
     public void storeConnectionsConfig(Partition partition) throws Exception {
         File file = new File(directory, "connections.xml");
 
-		FileWriter fw = new FileWriter(file);
-		OutputFormat format = OutputFormat.createPrettyPrint();
+        FileWriter fw = new FileWriter(file);
+        OutputFormat format = OutputFormat.createPrettyPrint();
         format.setTrimText(false);
 
-		XMLWriter writer = new XMLWriter(fw, format);
-		writer.startDocument();
+        XMLWriter writer = new XMLWriter(fw, format);
+        writer.startDocument();
 
         writer.startDTD(
                 "connections",
@@ -95,19 +96,19 @@ public class PartitionWriter {
                 "http://penrose.safehaus.org/dtd/connections.dtd"
         );
 
-		writer.write(toConnectionsXmlElement(partition));
-		writer.close();
+        writer.write(toConnectionsXmlElement(partition));
+        writer.close();
     }
 
     public void storeSourcesConfig(Partition partition) throws Exception {
         File file = new File(directory, "sources.xml");
 
-		FileWriter fw = new FileWriter(file);
-		OutputFormat format = OutputFormat.createPrettyPrint();
+        FileWriter fw = new FileWriter(file);
+        OutputFormat format = OutputFormat.createPrettyPrint();
         format.setTrimText(false);
 
-		XMLWriter writer = new XMLWriter(fw, format);
-		writer.startDocument();
+        XMLWriter writer = new XMLWriter(fw, format);
+        writer.startDocument();
 
         writer.startDTD(
                 "sources",
@@ -115,19 +116,19 @@ public class PartitionWriter {
                 "http://penrose.safehaus.org/dtd/sources.dtd"
         );
 
-		writer.write(toSourcesXmlElement(partition));
-		writer.close();
+        writer.write(toSourcesXmlElement(partition));
+        writer.close();
     }
 
     public void storeModulesConfig(Partition partition) throws Exception {
         File file = new File(directory, "modules.xml");
 
-		FileWriter fw = new FileWriter(file);
-		OutputFormat format = OutputFormat.createPrettyPrint();
+        FileWriter fw = new FileWriter(file);
+        OutputFormat format = OutputFormat.createPrettyPrint();
         format.setTrimText(false);
 
-		XMLWriter writer = new XMLWriter(fw, format);
-		writer.startDocument();
+        XMLWriter writer = new XMLWriter(fw, format);
+        writer.startDocument();
 
         writer.startDTD(
                 "modules",
@@ -135,20 +136,20 @@ public class PartitionWriter {
                 "http://penrose.safehaus.org/dtd/modules.dtd"
         );
 
-		writer.write(toModulesXmlElement(partition));
-		writer.close();
+        writer.write(toModulesXmlElement(partition));
+        writer.close();
     }
 
-	public Element toMappingXmlElement(Partition partition) throws Exception {
-		Element mappingElement = new DefaultElement("mapping");
+    public Element toMappingXmlElement(Partition partition) throws Exception {
+        Element mappingElement = new DefaultElement("mapping");
 
-		for (Iterator i = partition.getRootEntryMappings().iterator(); i.hasNext();) {
-			EntryMapping entry = (EntryMapping)i.next();
+        for (Iterator i = partition.getRootEntryMappings().iterator(); i.hasNext();) {
+            EntryMapping entry = (EntryMapping)i.next();
             toElement(partition, entry, mappingElement);
-		}
+        }
 
-		return mappingElement;
-	}
+        return mappingElement;
+    }
 
     public Element toConnectionsXmlElement(Partition partition) {
         Element element = new DefaultElement("connections");
@@ -161,29 +162,29 @@ public class PartitionWriter {
         return element;
     }
 
-	public Element toSourcesXmlElement(Partition partition) {
-		Element element = new DefaultElement("sources");
+    public Element toSourcesXmlElement(Partition partition) {
+        Element element = new DefaultElement("sources");
 
         for (Iterator i = partition.getSourceConfigs().iterator(); i.hasNext(); ) {
             SourceConfig sourceConfig = (SourceConfig)i.next();
             element.add(toElement(sourceConfig));
         }
 
-		return element;
-	}
+        return element;
+    }
 
-	public Element toModulesXmlElement(Partition partition) {
-		Element modulesElement = new DefaultElement("modules");
+    public Element toModulesXmlElement(Partition partition) {
+        Element modulesElement = new DefaultElement("modules");
 
-		// module
-		for (Iterator iter = partition.getModuleConfigs().iterator(); iter.hasNext();) {
-			ModuleConfig module = (ModuleConfig)iter.next();
+        // module
+        for (Iterator iter = partition.getModuleConfigs().iterator(); iter.hasNext();) {
+            ModuleConfig module = (ModuleConfig)iter.next();
             Element moduleElement = toElement(module);
-			modulesElement.add(moduleElement);
-		}
+            modulesElement.add(moduleElement);
+        }
 
-		// module-mapping
-		for (Iterator i = partition.getModuleMappings().iterator(); i.hasNext();) {
+        // module-mapping
+        for (Iterator i = partition.getModuleMappings().iterator(); i.hasNext();) {
             Collection c = (Collection)i.next();
 
             for (Iterator j = c.iterator(); j.hasNext(); ) {
@@ -191,13 +192,13 @@ public class PartitionWriter {
                 Element mappingElement = toElement(mapping);
                 modulesElement.add(mappingElement);
             }
-		}
-		return modulesElement;
-	}
+        }
+        return modulesElement;
+    }
 
-	public Element toElement(FieldMapping fieldMapping) throws Exception {
-		Element element = new DefaultElement("field");
-		element.add(new DefaultAttribute("name", fieldMapping.getName()));
+    public Element toElement(FieldMapping fieldMapping) throws Exception {
+        Element element = new DefaultElement("field");
+        element.add(new DefaultAttribute("name", fieldMapping.getName()));
 
         if (fieldMapping.getConstant() != null) {
             Object value = fieldMapping.getConstant();
@@ -221,23 +222,23 @@ public class PartitionWriter {
             return null;
         }
 
-		return element;
-	}
+        return element;
+    }
 
     public Element toElement(ConnectionConfig connection) {
-		Element element = new DefaultElement("connection");
+        Element element = new DefaultElement("connection");
         element.add(new DefaultAttribute("name", connection.getName()));
 
         Element adapterName = new DefaultElement("adapter-name");
         adapterName.add(new DefaultText(connection.getAdapterName()));
         element.add(adapterName);
 
-		// parameters
-		for (Iterator iter = connection.parameters.keySet().iterator(); iter.hasNext();) {
-			String name = (String) iter.next();
-			String value = (String) connection.parameters.get(name);
+        // parameters
+        for (Iterator iter = connection.parameters.keySet().iterator(); iter.hasNext();) {
+            String name = (String) iter.next();
+            String value = (String) connection.parameters.get(name);
 
-			Element parameter = new DefaultElement("parameter");
+            Element parameter = new DefaultElement("parameter");
 
             Element paramName = new DefaultElement("param-name");
             paramName.add(new DefaultText(name));
@@ -247,25 +248,25 @@ public class PartitionWriter {
             paramValue.add(new DefaultText(value));
             parameter.add(paramValue);
 
-			element.add(parameter);
-		}
+            element.add(parameter);
+        }
 
-		return element;
-	}
+        return element;
+    }
 
     public Element toElement(SourceConfig source) {
-    	Element element = new DefaultElement("source");
-    	element.addAttribute("name", source.getName());
+        Element element = new DefaultElement("source");
+        element.addAttribute("name", source.getName());
 
         Element adapterName = new DefaultElement("connection-name");
         adapterName.add(new DefaultText(source.getConnectionName()));
         element.add(adapterName);
 
-    	for (Iterator i = source.getFieldConfigs().iterator(); i.hasNext(); ) {
-    		FieldConfig field = (FieldConfig)i.next();
-    		Element fieldElement = toElement(field);
-    		element.add(fieldElement);
-    	}
+        for (Iterator i = source.getFieldConfigs().iterator(); i.hasNext(); ) {
+            FieldConfig field = (FieldConfig)i.next();
+            Element fieldElement = toElement(field);
+            element.add(fieldElement);
+        }
 
         for (Iterator i = source.getParameterNames().iterator(); i.hasNext(); ) {
             String name = (String)i.next();
@@ -276,42 +277,42 @@ public class PartitionWriter {
             element.add(parameterElement);
         }
 
-    	return element;
+        return element;
     }
 
-	public Element toElement(Partition partition, EntryMapping entryMapping, Element configElement) throws Exception {
+    public Element toElement(Partition partition, EntryMapping entryMapping, Element configElement) throws Exception {
 
         Element entryElement = new DefaultElement("entry");
         entryElement.add(new DefaultAttribute("dn", entryMapping.getDn()));
         if (!entryMapping.isEnabled()) entryElement.add(new DefaultAttribute("enabled", "false"));
         configElement.add(entryElement);
 
-		for (Iterator i=entryMapping.getObjectClasses().iterator(); i.hasNext(); ) {
-			String objectClass = (String)i.next();
-			Element objectClassElement = new DefaultElement("oc");
-			objectClassElement.setText(objectClass);
-			entryElement.add(objectClassElement);
-		}
+        for (Iterator i=entryMapping.getObjectClasses().iterator(); i.hasNext(); ) {
+            String objectClass = (String)i.next();
+            Element objectClassElement = new DefaultElement("oc");
+            objectClassElement.setText(objectClass);
+            entryElement.add(objectClassElement);
+        }
 
-		Collection attributes = entryMapping.getAttributeMappings();
-		for (Iterator i = attributes.iterator(); i.hasNext(); ) {
-			AttributeMapping attribute = (AttributeMapping)i.next();
+        Collection attributes = entryMapping.getAttributeMappings();
+        for (Iterator i = attributes.iterator(); i.hasNext(); ) {
+            AttributeMapping attribute = (AttributeMapping)i.next();
 
             Element child = toElement(attribute);
             if (child == null) continue;
 
             entryElement.add(child);
-		}
+        }
 
-		for (Iterator i = entryMapping.getSourceMappings().iterator(); i.hasNext(); ) {
-			SourceMapping sourceMapping = (SourceMapping)i.next();
+        for (Iterator i = entryMapping.getSourceMappings().iterator(); i.hasNext(); ) {
+            SourceMapping sourceMapping = (SourceMapping)i.next();
             entryElement.add(toElement(sourceMapping));
-		}
+        }
 
-		for (Iterator i = entryMapping.getRelationships().iterator(); i.hasNext(); ) {
-			Relationship relationship = (Relationship)i.next();
-			entryElement.add(toElement(relationship));
-		}
+        for (Iterator i = entryMapping.getRelationships().iterator(); i.hasNext(); ) {
+            Relationship relationship = (Relationship)i.next();
+            entryElement.add(toElement(relationship));
+        }
 
         for (Iterator i = entryMapping.getACL().iterator(); i.hasNext(); ) {
             ACI aci = (ACI)i.next();
@@ -333,13 +334,13 @@ public class PartitionWriter {
             toElement(partition, child, configElement);
         }
 
-		return entryElement;
-	}
+        return entryElement;
+    }
 
     public Element toElement(AttributeMapping attributeMapping) throws Exception {
-    	Element element = new DefaultElement("at");
-    	element.add(new DefaultAttribute("name", attributeMapping.getName()));
-    	if (attributeMapping.isRdn()) element.add(new DefaultAttribute("rdn", "true"));
+        Element element = new DefaultElement("at");
+        element.add(new DefaultAttribute("name", attributeMapping.getName()));
+        if (attributeMapping.isRdn()) element.add(new DefaultAttribute("rdn", "true"));
         if (!AttributeMapping.DEFAULT_TYPE.equals(attributeMapping.getType())) element.addAttribute("type", attributeMapping.getType());
         if (attributeMapping.getLength() != AttributeMapping.DEFAULT_LENGTH) element.addAttribute("length", ""+attributeMapping.getLength());
         if (attributeMapping.getPrecision() != AttributeMapping.DEFAULT_PRECISION) element.addAttribute("precision", ""+attributeMapping.getPrecision());
@@ -372,7 +373,7 @@ public class PartitionWriter {
             return null;
         }
 
-    	return element;
+        return element;
     }
 
     public Element toElement(Expression expression) {
@@ -385,7 +386,7 @@ public class PartitionWriter {
     }
 
     public Element toElement(SourceMapping sourceMapping) throws Exception {
-		Element element = new DefaultElement("source");
+        Element element = new DefaultElement("source");
 
         element.add(new DefaultAttribute("name", sourceMapping.getName()));
         if (!sourceMapping.isRequired()) element.add(new DefaultAttribute("required", "false"));
@@ -400,17 +401,17 @@ public class PartitionWriter {
         sourceName.add(new DefaultText(sourceMapping.getSourceName()));
         element.add(sourceName);
 
-		// fields
-		for (Iterator i=sourceMapping.getFieldMappings().iterator(); i.hasNext(); ) {
-			FieldMapping fieldMapping = (FieldMapping)i.next();
+        // fields
+        for (Iterator i=sourceMapping.getFieldMappings().iterator(); i.hasNext(); ) {
+            FieldMapping fieldMapping = (FieldMapping)i.next();
 
             Element child = toElement(fieldMapping);
             if (child == null) continue;
 
             element.add(child);
-		}
+        }
 
-    	// parameters
+        // parameters
         for (Iterator i = sourceMapping.getParameterNames().iterator(); i.hasNext(); ) {
             String name = (String)i.next();
             String value = sourceMapping.getParameter(name);
@@ -429,21 +430,21 @@ public class PartitionWriter {
             element.add(parameterElement);
         }
 
-    	return element;
+        return element;
     }
 
     public Element toElement(Relationship relationship) {
-    	Element element = new DefaultElement("relationship");
+        Element element = new DefaultElement("relationship");
 
         Element expressionElement = new DefaultElement("expression");
         expressionElement.add(new DefaultText(relationship.getExpression()));
         element.add(expressionElement);
 
-    	return element;
+        return element;
     }
 
     public Element toElement(ACI aci) {
-    	Element element = new DefaultElement("aci");
+        Element element = new DefaultElement("aci");
 
         if (!ACI.SUBJECT_ANYBODY.equals(aci.getSubject())) {
             element.add(new DefaultAttribute("subject", aci.getSubject()));
@@ -483,128 +484,128 @@ public class PartitionWriter {
         permissionElement.add(new DefaultText(aci.getPermission()));
         element.add(permissionElement);
 
-    	return element;
+        return element;
     }
 
     public Element toElement(ObjectClass oc) {
-    	Element element = new DefaultElement("objectclass");
+        Element element = new DefaultElement("objectclass");
 
-    	Element oidElement = new DefaultElement("oid");
-    	oidElement.add(new DefaultText(oc.getOid()));
-    	element.add(oidElement);
+        Element oidElement = new DefaultElement("oid");
+        oidElement.add(new DefaultText(oc.getOid()));
+        element.add(oidElement);
 
-    	Element namesElement = new DefaultElement("names");
-    	for (Iterator i=oc.getNames().iterator(); i.hasNext(); ) {
+        Element namesElement = new DefaultElement("names");
+        for (Iterator i=oc.getNames().iterator(); i.hasNext(); ) {
             String name = (String)i.next();
-    		Element nameElement = new DefaultElement("name");
-    		nameElement.add(new DefaultText(name));
-    		namesElement.add(nameElement);
-    	}
-    	element.add(namesElement);
+            Element nameElement = new DefaultElement("name");
+            nameElement.add(new DefaultText(name));
+            namesElement.add(nameElement);
+        }
+        element.add(namesElement);
 
-    	Element descElement = new DefaultElement("description");
-    	if (oc.getDescription() != null) descElement.add(new DefaultText(oc.getDescription()));
-    	element.add(descElement);
+        Element descElement = new DefaultElement("description");
+        if (oc.getDescription() != null) descElement.add(new DefaultText(oc.getDescription()));
+        element.add(descElement);
 
-    	Element obsoleteElement = new DefaultElement("obsolete");
-    	obsoleteElement.add(new DefaultText(Boolean.toString(oc.isObsolete())));
-    	element.add(obsoleteElement);
+        Element obsoleteElement = new DefaultElement("obsolete");
+        obsoleteElement.add(new DefaultText(Boolean.toString(oc.isObsolete())));
+        element.add(obsoleteElement);
 
-    	Element superclassesElement = new DefaultElement("superclasses");
-    	for (Iterator i=oc.getSuperClasses().iterator(); i.hasNext(); ) {
+        Element superclassesElement = new DefaultElement("superclasses");
+        for (Iterator i=oc.getSuperClasses().iterator(); i.hasNext(); ) {
             String superClass = (String)i.next();
-    		Element ocElement = new DefaultElement("oc");
-    		ocElement.add(new DefaultText(superClass));
-    		superclassesElement.add(ocElement);
-    	}
-    	element.add(superclassesElement);
+            Element ocElement = new DefaultElement("oc");
+            ocElement.add(new DefaultText(superClass));
+            superclassesElement.add(ocElement);
+        }
+        element.add(superclassesElement);
 
-    	Element typeElement = new DefaultElement("type");
-    	typeElement.add(new DefaultText(oc.getType()));
-    	element.add(typeElement);
+        Element typeElement = new DefaultElement("type");
+        typeElement.add(new DefaultText(oc.getType()));
+        element.add(typeElement);
 
-    	Element requiredAttributesElement = new DefaultElement("required-attributes");
-    	for (Iterator i=oc.getRequiredAttributes().iterator(); i.hasNext(); ) {
+        Element requiredAttributesElement = new DefaultElement("required-attributes");
+        for (Iterator i=oc.getRequiredAttributes().iterator(); i.hasNext(); ) {
             String name = (String)i.next();
-    		Element atElement = new DefaultElement("at");
-    		atElement.add(new DefaultText(name));
-    		requiredAttributesElement.add(atElement);
-    	}
-    	element.add(requiredAttributesElement);
+            Element atElement = new DefaultElement("at");
+            atElement.add(new DefaultText(name));
+            requiredAttributesElement.add(atElement);
+        }
+        element.add(requiredAttributesElement);
 
-    	Element optionalAttributesElement = new DefaultElement("optional-attributes");
-    	for (Iterator i=oc.getOptionalAttributes().iterator(); i.hasNext(); ) {
+        Element optionalAttributesElement = new DefaultElement("optional-attributes");
+        for (Iterator i=oc.getOptionalAttributes().iterator(); i.hasNext(); ) {
             String name = (String)i.next();
-    		Element atElement = new DefaultElement("at");
-    		atElement.add(new DefaultText(name));
-    		optionalAttributesElement.add(atElement);
-    	}
-    	element.add(optionalAttributesElement);
+            Element atElement = new DefaultElement("at");
+            atElement.add(new DefaultText(name));
+            optionalAttributesElement.add(atElement);
+        }
+        element.add(optionalAttributesElement);
 
-    	return element;
+        return element;
     }
 
     public Element toElement(AttributeType at) {
-    	Element element = new DefaultElement("attributetype");
+        Element element = new DefaultElement("attributetype");
 
-    	Element oidElement = new DefaultElement("oid");
-    	oidElement.add(new DefaultText(at.getOid()));
-    	element.add(oidElement);
+        Element oidElement = new DefaultElement("oid");
+        oidElement.add(new DefaultText(at.getOid()));
+        element.add(oidElement);
 
-    	Element namesElement = new DefaultElement("names");
-    	for (Iterator i=at.getNames().iterator(); i.hasNext(); ) {
+        Element namesElement = new DefaultElement("names");
+        for (Iterator i=at.getNames().iterator(); i.hasNext(); ) {
             String name = (String)i.next();
-    		Element nameElement = new DefaultElement("name");
-    		nameElement.add(new DefaultText(name));
-    		namesElement.add(nameElement);
-    	}
-    	element.add(namesElement);
+            Element nameElement = new DefaultElement("name");
+            nameElement.add(new DefaultText(name));
+            namesElement.add(nameElement);
+        }
+        element.add(namesElement);
 
-    	Element descElement = new DefaultElement("description");
-    	if (at.getDescription() != null) descElement.add(new DefaultText(at.getDescription()));
-    	element.add(descElement);
+        Element descElement = new DefaultElement("description");
+        if (at.getDescription() != null) descElement.add(new DefaultText(at.getDescription()));
+        element.add(descElement);
 
-    	Element obsoleteElement = new DefaultElement("obsolete");
-    	obsoleteElement.add(new DefaultText(Boolean.toString(at.isObsolete())));
-    	element.add(obsoleteElement);
+        Element obsoleteElement = new DefaultElement("obsolete");
+        obsoleteElement.add(new DefaultText(Boolean.toString(at.isObsolete())));
+        element.add(obsoleteElement);
 
-    	Element superclassElement = new DefaultElement("superclass");
-    	superclassElement.add(new DefaultText(at.getSuperClass()));
-    	element.add(superclassElement);
+        Element superclassElement = new DefaultElement("superclass");
+        superclassElement.add(new DefaultText(at.getSuperClass()));
+        element.add(superclassElement);
 
-    	Element equalityElement = new DefaultElement("equality");
-    	equalityElement.add(new DefaultText(at.getEquality()));
-    	element.add(equalityElement);
+        Element equalityElement = new DefaultElement("equality");
+        equalityElement.add(new DefaultText(at.getEquality()));
+        element.add(equalityElement);
 
-    	Element orderingElement = new DefaultElement("ordering");
-    	orderingElement.add(new DefaultText(at.getOrdering()));
-    	element.add(orderingElement);
+        Element orderingElement = new DefaultElement("ordering");
+        orderingElement.add(new DefaultText(at.getOrdering()));
+        element.add(orderingElement);
 
-    	Element substringElement = new DefaultElement("substring");
-    	substringElement.add(new DefaultText(at.getSubstring()));
-    	element.add(substringElement);
+        Element substringElement = new DefaultElement("substring");
+        substringElement.add(new DefaultText(at.getSubstring()));
+        element.add(substringElement);
 
-    	Element syntaxElement = new DefaultElement("syntax");
-    	syntaxElement.add(new DefaultText(at.getSyntax()));
-    	element.add(syntaxElement);
+        Element syntaxElement = new DefaultElement("syntax");
+        syntaxElement.add(new DefaultText(at.getSyntax()));
+        element.add(syntaxElement);
 
-    	Element singleValuedElement = new DefaultElement("single-valued");
-    	singleValuedElement.add(new DefaultText(Boolean.toString(at.isSingleValued())));
-    	element.add(singleValuedElement);
+        Element singleValuedElement = new DefaultElement("single-valued");
+        singleValuedElement.add(new DefaultText(Boolean.toString(at.isSingleValued())));
+        element.add(singleValuedElement);
 
-    	Element collectiveElement = new DefaultElement("collective");
-    	collectiveElement.add(new DefaultText(Boolean.toString(at.isCollective())));
-    	element.add(collectiveElement);
+        Element collectiveElement = new DefaultElement("collective");
+        collectiveElement.add(new DefaultText(Boolean.toString(at.isCollective())));
+        element.add(collectiveElement);
 
-    	Element modifiableElement = new DefaultElement("modifiable");
-    	modifiableElement.add(new DefaultText(Boolean.toString(at.isModifiable())));
-    	element.add(modifiableElement);
+        Element modifiableElement = new DefaultElement("modifiable");
+        modifiableElement.add(new DefaultText(Boolean.toString(at.isModifiable())));
+        element.add(modifiableElement);
 
-    	Element usageElement = new DefaultElement("usage");
-    	usageElement.add(new DefaultText(at.getUsage()));
-    	element.add(usageElement);
+        Element usageElement = new DefaultElement("usage");
+        usageElement.add(new DefaultText(at.getUsage()));
+        element.add(usageElement);
 
-    	return element;
+        return element;
     }
 
     public Element toElement(ModuleConfig moduleConfig) {
@@ -657,8 +658,8 @@ public class PartitionWriter {
     }
 
     public Element toElement(FieldConfig field) {
-    	Element element = new DefaultElement("field");
-    	element.addAttribute("name", field.getName());
+        Element element = new DefaultElement("field");
+        element.addAttribute("name", field.getName());
         if (!field.getName().equals(field.getOriginalName())) element.addAttribute("originalName", field.getOriginalName());
         if (field.isPrimaryKey()) element.addAttribute("primaryKey", "true");
         if (!field.isSearchable()) element.addAttribute("searchable", "false");
@@ -668,21 +669,21 @@ public class PartitionWriter {
         if (!FieldConfig.DEFAULT_TYPE.equals(field.getType())) element.addAttribute("type", field.getType());
         if (field.getLength() != FieldConfig.DEFAULT_LENGTH) element.addAttribute("length", ""+field.getLength());
         if (field.getPrecision() != FieldConfig.DEFAULT_PRECISION) element.addAttribute("precision", ""+field.getPrecision());
-    	return element;
+        return element;
     }
 
     public Element createParameterElement(String paramName, String paramValue) {
 
-    	Element element = new DefaultElement("parameter");
+        Element element = new DefaultElement("parameter");
 
-    	Element name = new DefaultElement("param-name");
-    	name.add(new DefaultText(paramName));
-    	element.add(name);
+        Element name = new DefaultElement("param-name");
+        name.add(new DefaultText(paramName));
+        element.add(name);
 
-    	Element value = new DefaultElement("param-value");
-    	value.add(new DefaultText(paramValue));
-    	element.add(value);
+        Element value = new DefaultElement("param-value");
+        value.add(new DefaultText(paramValue));
+        element.add(value);
 
-    	return element;
+        return element;
     }
 }

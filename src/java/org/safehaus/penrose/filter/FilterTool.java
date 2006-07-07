@@ -21,20 +21,21 @@ package org.safehaus.penrose.filter;
 import java.util.*;
 import java.io.StringReader;
 
-import org.apache.log4j.Logger;
 import org.safehaus.penrose.schema.AttributeType;
 import org.safehaus.penrose.schema.SchemaManager;
 import org.safehaus.penrose.schema.matchingRule.EqualityMatchingRule;
 import org.safehaus.penrose.schema.matchingRule.OrderingMatchingRule;
 import org.safehaus.penrose.schema.matchingRule.SubstringsMatchingRule;
 import org.safehaus.penrose.mapping.*;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 
 /**
  * @author Endi S. Dewata
  */
 public class FilterTool {
 
-    static Logger log = Logger.getLogger(FilterTool.class);
+    static Logger log = LoggerFactory.getLogger(FilterTool.class);
 
     private SchemaManager schemaManager;
 
@@ -50,7 +51,7 @@ public class FilterTool {
     }
 
     public boolean checkFilter(Entry sr, Filter filter) throws Exception {
-    	log.debug("Checking filter on "+sr.getDn());
+        log.debug("Checking filter on "+sr.getDn());
         return isValid(sr, filter);
     }
 
@@ -215,7 +216,7 @@ public class FilterTool {
                 if (containsAttribute(exp, attributeName)) return true;
             }
             return false;
-            
+
         } else if (operator.equals("|")) {
             for (int i=1; i<filterTree.size(); i++) {
                 Vector exp = (Vector)filterTree.get(i);

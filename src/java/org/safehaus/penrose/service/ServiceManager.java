@@ -17,8 +17,9 @@
  */
 package org.safehaus.penrose.service;
 
-import org.apache.log4j.Logger;
 import org.safehaus.penrose.PenroseServer;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 
 import java.util.Map;
 import java.util.Iterator;
@@ -30,7 +31,7 @@ import java.util.Collection;
  */
 public class ServiceManager implements ServiceManagerMBean {
 
-    Logger log = Logger.getLogger(ServiceManager.class);
+    Logger log = LoggerFactory.getLogger(getClass());
 
     private PenroseServer penroseServer;
 

@@ -36,8 +36,9 @@ import org.safehaus.penrose.partition.PartitionManager;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.filter.FilterTool;
 import org.safehaus.penrose.mapping.*;
-import org.apache.log4j.Logger;
 import org.ietf.ldap.*;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 
 import javax.naming.directory.SearchResult;
 import javax.naming.directory.Attributes;
@@ -50,7 +51,7 @@ import java.util.*;
  */
 public class SearchHandler {
 
-    Logger log = Logger.getLogger(getClass());
+    Logger log = LoggerFactory.getLogger(getClass());
 
     private Handler handler;
 

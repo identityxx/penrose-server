@@ -20,7 +20,8 @@ package org.safehaus.penrose.schema;
 import org.safehaus.penrose.mapping.EntryMapping;
 import org.safehaus.penrose.mapping.Row;
 import org.safehaus.penrose.mapping.AttributeValues;
-import org.apache.log4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 
 import java.util.*;
 
@@ -29,7 +30,7 @@ import java.util.*;
  */
 public class Schema implements Cloneable {
 
-    Logger log = Logger.getLogger(getClass());
+    Logger log = LoggerFactory.getLogger(getClass());
 
     private SchemaConfig schemaConfig;
 

@@ -32,9 +32,9 @@ import org.safehaus.penrose.filter.FilterTool;
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.pipeline.PipelineEvent;
 import org.safehaus.penrose.pipeline.PipelineAdapter;
-import org.safehaus.penrose.util.PasswordUtil;
-import org.apache.log4j.Logger;
 import org.ietf.ldap.LDAPException;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 
 import javax.naming.directory.BasicAttribute;
 import javax.naming.directory.Attribute;
@@ -47,7 +47,7 @@ import java.util.*;
  */
 public class Connector {
 
-    static Logger log = Logger.getLogger(Connector.class);
+    static Logger log = LoggerFactory.getLogger(Connector.class);
 
     public final static String DEFAULT_CACHE_CLASS = SourceCache.class.getName();
 

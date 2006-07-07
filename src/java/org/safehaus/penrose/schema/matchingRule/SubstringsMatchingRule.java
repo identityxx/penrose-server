@@ -17,7 +17,8 @@
  */
 package org.safehaus.penrose.schema.matchingRule;
 
-import org.apache.log4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 
 import java.util.Map;
 import java.util.TreeMap;
@@ -31,7 +32,7 @@ import java.util.regex.Matcher;
  */
 public class SubstringsMatchingRule {
 
-    Logger log = Logger.getLogger(getClass());
+    Logger log = LoggerFactory.getLogger(getClass());
 
     public final static String CASE_IGNORE      = "caseIgnoreSubstringsMatch";
     public final static String CASE_EXACT       = "caseExactSubstringsMatch";

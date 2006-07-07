@@ -28,7 +28,6 @@ import org.apache.directory.server.core.jndi.ServerContext;
 import org.apache.directory.server.core.jndi.LdapJndiProperties;
 import org.apache.directory.shared.ldap.filter.ExprNode;
 import org.apache.directory.shared.ldap.exception.LdapAuthenticationException;
-import org.apache.log4j.Logger;
 import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.schema.SchemaManager;
 import org.safehaus.penrose.config.PenroseConfig;
@@ -41,6 +40,8 @@ import org.safehaus.penrose.mapping.EntryMapping;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.PartitionManager;
 import org.ietf.ldap.*;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 
 import javax.naming.*;
 import javax.naming.ldap.LdapContext;
@@ -52,7 +53,7 @@ import java.util.*;
  */
 public class PenroseInterceptor extends BaseInterceptor {
 
-    public Logger log = Logger.getLogger(getClass());
+    public Logger log = LoggerFactory.getLogger(getClass());
 
     Penrose penrose;
     PartitionManager partitionManager;
