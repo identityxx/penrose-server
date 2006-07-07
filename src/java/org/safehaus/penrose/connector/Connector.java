@@ -723,21 +723,13 @@ public class Connector {
                     sc.setSizeLimit(sizeLimit);
 
                     connection.load(sourceConfig, filter, sc, sr);
-/*
-                    for (Iterator i=sr.iterator(); i.hasNext();) {
-                        AttributeValues sourceValues = (AttributeValues)i.next();
-                        store(sourceConfig, sourceValues);
-                        results.add(sourceValues);
-                    }
 
-                    results.setReturnCode(sr.getReturnCode());
-*/
                 } catch (Exception e) {
                     log.error(e.getMessage(), e);
-                    //results.setReturnCode(LDAPException.OPERATIONS_ERROR);
+                    results.setReturnCode(LDAPException.OPERATIONS_ERROR);
 
                 } finally {
-                    //results.close();
+                    results.close();
                 }
             }
         });
