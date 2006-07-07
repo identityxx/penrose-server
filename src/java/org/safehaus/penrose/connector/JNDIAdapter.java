@@ -28,10 +28,7 @@ import org.safehaus.penrose.session.PenroseSearchResults;
 import org.safehaus.penrose.session.PenroseSearchControls;
 import org.safehaus.penrose.partition.FieldConfig;
 import org.safehaus.penrose.partition.SourceConfig;
-import org.safehaus.penrose.util.JNDIClient;
-import org.safehaus.penrose.util.Formatter;
-import org.safehaus.penrose.util.EntryUtil;
-import org.safehaus.penrose.util.PasswordUtil;
+import org.safehaus.penrose.util.*;
 
 import java.util.*;
 
@@ -137,6 +134,10 @@ public class JNDIAdapter extends Adapter {
                 results.add(row);
             }
 
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+            results.setReturnCode(ExceptionUtil.getReturnCode(e));
+
         } finally {
             results.close();
             if (ctx != null) try { ctx.close(); } catch (Exception e) {}
@@ -190,6 +191,10 @@ public class JNDIAdapter extends Adapter {
                 AttributeValues av = getValues(sourceConfig, sr);
                 results.add(av);
             }
+
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+            results.setReturnCode(ExceptionUtil.getReturnCode(e));
 
         } finally {
             results.close();
@@ -290,8 +295,11 @@ public class JNDIAdapter extends Adapter {
 
         } catch (NameAlreadyBoundException e) {
             return modifyAdd(sourceConfig, sourceValues);
-            //log.debug("Error: "+e.getMessage());
-            //return LDAPException.ENTRY_ALREADY_EXISTS;
+
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+            return ExceptionUtil.getReturnCode(e);
+
         } finally {
             if (ctx != null) try { ctx.close(); } catch (Exception e) {}
         }
@@ -339,6 +347,11 @@ public class JNDIAdapter extends Adapter {
         try {
             ctx = ((JNDIClient)openConnection()).getContext();
             ctx.modifyAttributes(dn, mods);
+
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+            return ExceptionUtil.getReturnCode(e);
+
         } finally {
             if (ctx != null) try { ctx.close(); } catch (Exception e) {}
         }
@@ -364,6 +377,11 @@ public class JNDIAdapter extends Adapter {
 
         } catch (NameNotFoundException e) {
             return LDAPException.NO_SUCH_OBJECT;
+
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+            return ExceptionUtil.getReturnCode(e);
+
         } finally {
             if (ctx != null) try { ctx.close(); } catch (Exception e) {}
         }
@@ -532,7 +550,7 @@ public class JNDIAdapter extends Adapter {
 
         } catch (Exception e) {
             log.error(e.getMessage(), e);
-            throw e;
+            return ExceptionUtil.getReturnCode(e);
 
         } finally {
             if (ctx != null) try { ctx.close(); } catch (Exception e) {}
@@ -558,6 +576,11 @@ public class JNDIAdapter extends Adapter {
         try {
             ctx = ((JNDIClient)openConnection()).getContext();
             ctx.rename(dn, newRdn);
+
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+            return ExceptionUtil.getReturnCode(e);
+
         } finally {
             if (ctx != null) try { ctx.close(); } catch (Exception e) {}
         }
@@ -611,6 +634,11 @@ public class JNDIAdapter extends Adapter {
         try {
             ctx = ((JNDIClient)openConnection()).getContext();
             ctx.modifyAttributes(dn, mods);
+
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+            return ExceptionUtil.getReturnCode(e);
+
         } finally {
             if (ctx != null) try { ctx.close(); } catch (Exception e) {}
         }

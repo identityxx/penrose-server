@@ -25,6 +25,7 @@ import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.filter.FilterTool;
 import org.safehaus.penrose.partition.SourceConfig;
 import org.safehaus.penrose.partition.ConnectionConfig;
+import org.ietf.ldap.LDAPException;
 
 import java.util.Collection;
 import java.util.Map;
@@ -60,7 +61,7 @@ public class Connection implements ConnectionMBean {
     }
 
     public void close() throws Exception {
-        adapter.dispose();
+        if (adapter != null) adapter.dispose();
     }
     
     public ConnectionConfig getConnectionConfig() {
@@ -100,22 +101,34 @@ public class Connection implements ConnectionMBean {
     }
 
     public int bind(SourceConfig sourceConfig, Row pk, String password) throws Exception {
+        if (adapter == null) return LDAPException.OPERATIONS_ERROR;
         return adapter.bind(sourceConfig, pk, password);
     }
 
     public void search(SourceConfig sourceConfig, Filter filter, PenroseSearchControls sc, PenroseSearchResults results) throws Exception {
+        if (adapter == null) {
+            results.setReturnCode(LDAPException.OPERATIONS_ERROR);
+            results.close();
+        }
         adapter.search(sourceConfig, filter, sc, results);
     }
 
     public void load(SourceConfig sourceConfig, Filter filter, PenroseSearchControls sc, PenroseSearchResults results) throws Exception {
+        if (adapter == null) {
+            results.setReturnCode(LDAPException.OPERATIONS_ERROR);
+            results.close();
+        }
         adapter.load(sourceConfig, filter, sc, results);
     }
 
     public int add(SourceConfig sourceConfig, Row pk, AttributeValues sourceValues) throws Exception {
+        if (adapter == null) return LDAPException.OPERATIONS_ERROR;
         return adapter.add(sourceConfig, pk, sourceValues);
     }
 
     public AttributeValues get(SourceConfig sourceConfig, Row pk) throws Exception {
+        if (adapter == null) return null;
+
         Filter filter = FilterTool.createFilter(pk);
         PenroseSearchControls sc = new PenroseSearchControls();
         PenroseSearchResults sr = new PenroseSearchResults();
@@ -124,27 +137,30 @@ public class Connection implements ConnectionMBean {
 
         if (!sr.hasNext()) return null;
         return (AttributeValues)sr.next();
-
-        //return adapter.get(sourceConfig, pk);
     }
 
     public int modify(SourceConfig sourceConfig, Row pk, Collection modifications) throws Exception {
+        if (adapter == null) return LDAPException.OPERATIONS_ERROR;
         return adapter.modify(sourceConfig, pk, modifications);
     }
 
     public int delete(SourceConfig sourceConfig, Row pk) throws Exception {
+        if (adapter == null) return LDAPException.OPERATIONS_ERROR;
         return adapter.delete(sourceConfig, pk);
     }
 
     public int getLastChangeNumber(SourceConfig sourceConfig) throws Exception {
+        if (adapter == null) return -1;
         return adapter.getLastChangeNumber(sourceConfig);
     }
 
     public PenroseSearchResults getChanges(SourceConfig sourceConfig, int lastChangeNumber) throws Exception {
+        if (adapter == null) return null;
         return adapter.getChanges(sourceConfig, lastChangeNumber);
     }
 
     public Object openConnection() throws Exception {
+        if (adapter == null) return null;
         return adapter.openConnection();
     }
 
