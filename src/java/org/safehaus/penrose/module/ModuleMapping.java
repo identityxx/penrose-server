@@ -17,9 +17,9 @@
  */
 package org.safehaus.penrose.module;
 
-import org.apache.log4j.Logger;
-import org.safehaus.penrose.mapping.Entry;
 import org.safehaus.penrose.util.EntryUtil;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 
 /**
  * @author Endi S. Dewata
@@ -30,7 +30,7 @@ public class ModuleMapping implements Cloneable {
     public final static String ONELEVEL = "ONELEVEL";
     public final static String SUBTREE  = "SUBTREE";
 
-    Logger log = Logger.getLogger(getClass());
+    Logger log = LoggerFactory.getLogger(getClass());
 
     private String moduleName;
     private ModuleConfig moduleConfig;
@@ -54,20 +54,20 @@ public class ModuleMapping implements Cloneable {
     public void setBaseDn(String dnPattern) {
         this.baseDn = dnPattern;
     }
-    
-    
-	public String getFilter() {
-		return filter;
-	}
-	public void setFilter(String filter) {
-		this.filter = filter;
-	}
-	public String getScope() {
-		return scope;
-	}
-	public void setScope(String scope) {
-		this.scope = scope;
-	}
+
+
+    public String getFilter() {
+        return filter;
+    }
+    public void setFilter(String filter) {
+        this.filter = filter;
+    }
+    public String getScope() {
+        return scope;
+    }
+    public void setScope(String scope) {
+        this.scope = scope;
+    }
 
     public boolean match(String dn) throws Exception {
 
@@ -139,7 +139,7 @@ public class ModuleMapping implements Cloneable {
         if (!equals(baseDn, mapping.getBaseDn())) return false;
         if (!equals(scope, mapping.getScope())) return false;
         if (!equals(filter, mapping.getFilter())) return false;
-        
+
         return true;
     }
 

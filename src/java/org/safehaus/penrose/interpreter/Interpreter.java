@@ -18,7 +18,8 @@
 package org.safehaus.penrose.interpreter;
 
 import org.safehaus.penrose.mapping.*;
-import org.apache.log4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 
 import java.util.Iterator;
 import java.util.Collection;
@@ -30,7 +31,7 @@ import java.util.HashSet;
  */
 public abstract class Interpreter {
 
-    Logger log = Logger.getLogger(getClass());
+    Logger log = LoggerFactory.getLogger(getClass());
 
     Collection rows;
 

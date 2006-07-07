@@ -17,10 +17,11 @@
  */
 package org.safehaus.penrose.module;
 
-import org.apache.log4j.Logger;
 import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.partition.PartitionManager;
 import org.safehaus.penrose.partition.Partition;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 
 import java.util.*;
 
@@ -29,7 +30,7 @@ import java.util.*;
  */
 public class ModuleManager implements ModuleManagerMBean {
 
-    Logger log = Logger.getLogger(ModuleManager.class);
+    Logger log = LoggerFactory.getLogger(getClass());
 
     private Penrose penrose;
 

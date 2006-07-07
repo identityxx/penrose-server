@@ -1,0 +1,43 @@
+<!--
+ Copyright (c) 2000-2005, Identyx Corporation.
+ All rights reserved.
+-->
+<project name="penrose-apacheds" default="deploy" basedir="../..">
+
+    <property name="penrose.home" value="/usr/local/penrose"/>
+    <property name="apacheds.home" value="/usr/local/apacheds"/>
+
+    <target name="deploy">
+        <copy file="samples/apacheds/conf/server.xml" tofile="samples/apacheds/server.xml" overwrite="true">
+            <filterchain>
+                <expandproperties/>
+            </filterchain>
+        </copy>
+        <copy todir="${apacheds.home}/lib/ext" flatten="true">
+            <fileset dir="lib">
+                <include name="*.jar" />
+                <exclude name="antlr-*.jar"/>
+                <exclude name="log4j-*.jar"/>
+                <exclude name="slf4j-*.jar"/>
+                <exclude name="apacheds-*.jar"/>
+                <exclude name="checkstyle-*.jar"/>
+                <exclude name="commons-cli-*.jar"/>
+                <exclude name="commons-collections-*.jar"/>
+                <exclude name="commons-lang-*.jar"/>
+                <exclude name="commons-logging-*.jar"/>
+                <exclude name="jdbm-*.jar"/>
+                <exclude name="lcrypto-*.jar"/>
+                <exclude name="mina-*.jar"/>
+                <exclude name="shared-*.jar"/>
+                <exclude name="spring-*.jar"/>
+            </fileset>
+            <fileset dir="lib/ext" includes="*.jar"/>
+        </copy>
+        <copy file="target/penrose-1.0.jar" todir="${apacheds.home}/lib/ext" failonerror="false"/>
+    </target>
+
+    <target name="clean">
+        <delete file="samples/apacheds/server.xml"/>
+    </target>
+
+</project>

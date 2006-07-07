@@ -20,19 +20,20 @@ package org.safehaus.penrose.engine;
 
 import java.util.*;
 
-import org.apache.log4j.Logger;
 import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.FieldConfig;
 import org.safehaus.penrose.partition.SourceConfig;
 import org.safehaus.penrose.mapping.*;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 
 /**
  * @author Endi S. Dewata
  */
 public class TransformEngine {
 
-    static Logger log = Logger.getLogger(TransformEngine.class);
+    static Logger log = LoggerFactory.getLogger(TransformEngine.class);
 
     public Engine engine;
 
@@ -94,7 +95,7 @@ public class TransformEngine {
             }
 
             if (crossProductDebug >= 65535) {
-            	//log.debug(name+": "+c);
+                //log.debug(name+": "+c);
             }
 
             for (Iterator iterator = c.iterator(); iterator.hasNext(); ) {
@@ -111,12 +112,12 @@ public class TransformEngine {
             results.add(map);
 
             //if (crossProductDebug >= 65535) {
-            	//log.debug("Generated: "+map);
+                //log.debug("Generated: "+map);
             //}
 
         } else {
             if (crossProductDebug >= 65535) {
-            	//log.debug("Temp is empty: "+temp);
+                //log.debug("Temp is empty: "+temp);
             }
         }
     }

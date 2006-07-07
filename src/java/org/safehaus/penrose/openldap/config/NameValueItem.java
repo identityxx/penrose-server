@@ -19,7 +19,8 @@ package org.safehaus.penrose.openldap.config;
 
 import java.io.StringReader;
 
-import org.apache.log4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 
 
 /**
@@ -27,71 +28,71 @@ import org.apache.log4j.Logger;
  */
 public class NameValueItem extends ConfigurationItem {
 
-    Logger log = Logger.getLogger(getClass());
+    Logger log = LoggerFactory.getLogger(getClass());
 
-	protected String name;
-	protected String whitespace;
-	protected String value;
+    protected String name;
+    protected String whitespace;
+    protected String value;
 
-	/**
-	 * 
-	 */
-	public NameValueItem() {
-		super();
-	}
+    /**
+     *
+     */
+    public NameValueItem() {
+        super();
+    }
 
-	/**
-	 * @param originalText
-	 */
-	public NameValueItem(String originalText) {
-		super(originalText);
-		parse(originalText);
-	}
-	
-	/**
-	 * 
-	 * @param s
-	 */
-	protected void parse(String s) {
-		StringReader sr = new StringReader(s);
-		SlapdParser parser = new SlapdParser(sr);
-		try {
-			String[] result = parser.NameValue();
-			this.name = result[0];
-			this.whitespace = result[1];
-			this.value = result[2];
-		} catch (Exception ex) {
-			log.error(ex.getMessage(), ex);
-		}
-	}
+    /**
+     * @param originalText
+     */
+    public NameValueItem(String originalText) {
+        super(originalText);
+        parse(originalText);
+    }
 
-	public String getName() {
-		return name;
-	}
-	public void setName(String name) {
-		this.name = name;
-		modify();
-	}
-	public String getValue() {
-		return value;
-	}
-	public void setValue(String value) {
-		this.value = value;
-		modify();
-	}
-	public String getWhitespace() {
-		return whitespace;
-	}
-	public void setWhitespace(String whitespace) {
-		this.whitespace = whitespace;
-		modify();
-	}
-	
-	protected void modify() {
-		modifiedText = name + whitespace;
-		if (value != null) {
-			modifiedText +=
-			("".equals(value) || value.indexOf(" ")>0 ? "\"" + value + "\"" : value);
-		}
-	}
+    /**
+     *
+     * @param s
+     */
+    protected void parse(String s) {
+        StringReader sr = new StringReader(s);
+        SlapdParser parser = new SlapdParser(sr);
+        try {
+            String[] result = parser.NameValue();
+            this.name = result[0];
+            this.whitespace = result[1];
+            this.value = result[2];
+        } catch (Exception ex) {
+            log.error(ex.getMessage(), ex);
+        }
+    }
+
+    public String getName() {
+        return name;
+    }
+    public void setName(String name) {
+        this.name = name;
+        modify();
+    }
+    public String getValue() {
+        return value;
+    }
+    public void setValue(String value) {
+        this.value = value;
+        modify();
+    }
+    public String getWhitespace() {
+        return whitespace;
+    }
+    public void setWhitespace(String whitespace) {
+        this.whitespace = whitespace;
+        modify();
+    }
+
+    protected void modify() {
+        modifiedText = name + whitespace;
+        if (value != null) {
+            modifiedText +=
+            ("".equals(value) || value.indexOf(" ")>0 ? "\"" + value + "\"" : value);
+        }
+    }
 }

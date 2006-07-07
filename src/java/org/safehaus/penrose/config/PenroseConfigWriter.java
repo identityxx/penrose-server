@@ -37,14 +37,15 @@ import org.safehaus.penrose.partition.PartitionConfig;
 import org.safehaus.penrose.user.UserConfig;
 import org.safehaus.penrose.service.ServiceConfig;
 import org.safehaus.penrose.session.SessionConfig;
-import org.apache.log4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 
 /**
  * @author Endi S. Dewata
  */
 public class PenroseConfigWriter {
 
-    Logger log = Logger.getLogger(getClass());
+    Logger log = LoggerFactory.getLogger(getClass());
 
     File file;
 
@@ -52,36 +53,36 @@ public class PenroseConfigWriter {
         file = new File(filename);
     }
 
-	/**
-	 * Store configuration into xml file.
-	 *
-	 * @throws Exception
-	 */
-	public void write(PenroseConfig penroseConfig) throws Exception {
+    /**
+     * Store configuration into xml file.
+     *
+     * @throws Exception
+     */
+    public void write(PenroseConfig penroseConfig) throws Exception {
 
         file.getParentFile().mkdirs();
         Writer writer = new FileWriter(file);
 
-		OutputFormat format = OutputFormat.createPrettyPrint();
+        OutputFormat format = OutputFormat.createPrettyPrint();
         format.setTrimText(false);
 
-		XMLWriter xmlWriter = new XMLWriter(writer, format);
-		xmlWriter.startDocument();
+        XMLWriter xmlWriter = new XMLWriter(writer, format);
+        xmlWriter.startDocument();
 
-		xmlWriter.startDTD(
+        xmlWriter.startDTD(
                 "server",
-				"-//Penrose/DTD Server 1.0//EN",
-				"http://penrose.safehaus.org/dtd/server.dtd"
+                "-//Penrose/DTD Server 1.0//EN",
+                "http://penrose.safehaus.org/dtd/server.dtd"
         );
 
-		xmlWriter.write(toElement(penroseConfig));
-		xmlWriter.close();
-        
+        xmlWriter.write(toElement(penroseConfig));
+        xmlWriter.close();
+
         writer.close();
     }
 
-	public Element toElement(PenroseConfig penroseConfig) {
-		Element element = new DefaultElement("server");
+    public Element toElement(PenroseConfig penroseConfig) {
+        Element element = new DefaultElement("server");
 
         for (Iterator i = penroseConfig.getSystemPropertyNames().iterator(); i.hasNext();) {
             String name = (String)i.next();
@@ -180,8 +181,8 @@ public class PenroseConfigWriter {
             element.add(rootElement);
         }
 
-		return element;
-	}
+        return element;
+    }
 
     public Element toElement(ServiceConfig serviceConfig) {
 
@@ -254,7 +255,7 @@ public class PenroseConfigWriter {
     }
 
     public Element toElement(InterpreterConfig interpreterConfig) {
-    	Element element = new DefaultElement("interpreter");
+        Element element = new DefaultElement("interpreter");
 /*
         Element interpreterName = new DefaultElement("interpreter-name");
         interpreterName.add(new DefaultText(interpreterConfig.getName()));
@@ -287,11 +288,11 @@ public class PenroseConfigWriter {
             element.add(parameter);
         }
 
-    	return element;
+        return element;
     }
 
     public Element toElement(SessionConfig sessionConfig) {
-    	Element element = new DefaultElement("session");
+        Element element = new DefaultElement("session");
 
         if (sessionConfig.getDescription() != null && !"".equals(sessionConfig.getDescription())) {
             Element description = new DefaultElement("description");
@@ -320,7 +321,7 @@ public class PenroseConfigWriter {
     }
 
     public Element toElement(EngineConfig engineConfig) {
-    	Element element = new DefaultElement("engine");
+        Element element = new DefaultElement("engine");
 /*
         Element engineName = new DefaultElement("engine-name");
         engineName.add(new DefaultText(engineConfig.getName()));
@@ -393,7 +394,7 @@ public class PenroseConfigWriter {
     }
 
     public Element toElement(ConnectorConfig connectorConfig) {
-    	Element element = new DefaultElement("connector");
+        Element element = new DefaultElement("connector");
 /*
         Element cacheName = new DefaultElement("connector-name");
         cacheName.add(new DefaultText(connectorConfig.getName()));
@@ -428,7 +429,7 @@ public class PenroseConfigWriter {
             element.add(parameter);
         }
 
-    	return element;
+        return element;
     }
 
 }

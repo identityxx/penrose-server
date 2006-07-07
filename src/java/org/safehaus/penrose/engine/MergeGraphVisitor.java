@@ -25,7 +25,8 @@ import org.safehaus.penrose.filter.FilterTool;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.util.Formatter;
 import org.safehaus.penrose.partition.Partition;
-import org.apache.log4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 
 import java.util.*;
 
@@ -34,7 +35,7 @@ import java.util.*;
  */
 public class MergeGraphVisitor extends GraphVisitor {
 
-    Logger log = Logger.getLogger(getClass());
+    Logger log = LoggerFactory.getLogger(getClass());
 
     private Partition partition;
     private Graph graph;

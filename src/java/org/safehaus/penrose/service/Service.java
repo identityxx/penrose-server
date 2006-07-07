@@ -18,7 +18,8 @@
 package org.safehaus.penrose.service;
 
 import org.safehaus.penrose.PenroseServer;
-import org.apache.log4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 
 import java.util.Collection;
 
@@ -27,7 +28,7 @@ import java.util.Collection;
  */
 public class Service {
 
-    public Logger log = Logger.getLogger(getClass());
+    public Logger log = LoggerFactory.getLogger(getClass());
 
     public final static String STOPPING = "STOPPING";
     public final static String STOPPED  = "STOPPED";

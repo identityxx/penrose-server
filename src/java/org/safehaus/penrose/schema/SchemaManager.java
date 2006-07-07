@@ -19,7 +19,8 @@ package org.safehaus.penrose.schema;
 
 import org.safehaus.penrose.mapping.EntryMapping;
 import org.safehaus.penrose.mapping.Row;
-import org.apache.log4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 
 import java.util.TreeMap;
 import java.util.Map;
@@ -31,7 +32,7 @@ import java.util.Iterator;
  */
 public class SchemaManager implements SchemaManagerMBean {
 
-    Logger log = Logger.getLogger(getClass());
+    Logger log = LoggerFactory.getLogger(getClass());
 
     private Map schemas = new TreeMap();
     private Schema allSchema = new Schema();

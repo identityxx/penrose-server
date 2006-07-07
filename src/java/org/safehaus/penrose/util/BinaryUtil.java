@@ -5,14 +5,15 @@ import sun.misc.BASE64Decoder;
 
 import java.math.BigInteger;
 
-import org.apache.log4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 
 /**
  * @author Endi S. Dewata
  */
 public class BinaryUtil {
 
-    public static Logger log = Logger.getLogger(BinaryUtil.class);
+    public static Logger log = LoggerFactory.getLogger(BinaryUtil.class);
 
     public static String BASE64      = "Base64";
     public static String BIG_INTEGER = "BigInteger";

@@ -28,13 +28,11 @@ import org.safehaus.penrose.cache.EntryCache;
 import org.safehaus.penrose.util.EntryUtil;
 import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.service.ServiceConfig;
-import org.apache.log4j.Logger;
 import org.ietf.ldap.LDAPException;
 import org.ietf.ldap.LDAPDN;
-import org.ietf.ldap.LDAPConnection;
-import org.ietf.ldap.LDAPSearchConstraints;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 
-import java.util.ArrayList;
 import java.util.Iterator;
 
 /**
@@ -42,7 +40,7 @@ import java.util.Iterator;
  */
 public class ModRdnHandler {
 
-    Logger log = Logger.getLogger(getClass());
+    Logger log = LoggerFactory.getLogger(getClass());
 
     public Handler handler;
 

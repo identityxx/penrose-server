@@ -19,18 +19,19 @@ package org.safehaus.penrose.partition;
 
 import java.util.*;
 
-import org.apache.log4j.Logger;
 import org.safehaus.penrose.module.ModuleMapping;
 import org.safehaus.penrose.module.ModuleConfig;
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.util.EntryUtil;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 
 /**
  * @author Endi S. Dewata
  */
 public class Partition {
 
-    Logger log = Logger.getLogger(getClass());
+    Logger log = LoggerFactory.getLogger(getClass());
 
     private PartitionConfig partitionConfig;
 
@@ -51,11 +52,11 @@ public class Partition {
     public String getName() {
         return partitionConfig.getName();
     }
-    
+
     public boolean containsEntryMapping(EntryMapping entryMapping) {
         return entryMappings.containsKey(entryMapping.getDn().toLowerCase());
     }
-    
+
     public EntryMapping getEntryMapping(String dn) {
         Collection c = getEntryMappings(dn);
         if (c == null || c.isEmpty()) return null;
@@ -98,7 +99,7 @@ public class Partition {
         }
     }
 
-	public void addEntryMapping(EntryMapping entryMapping) throws Exception {
+    public void addEntryMapping(EntryMapping entryMapping) throws Exception {
 
         String dn = entryMapping.getDn();
         log.debug("Adding "+dn+".");
@@ -118,7 +119,7 @@ public class Partition {
             //System.out.println("Found parent "+parentDn+".");
             addChildren(parent, entryMapping);
         } else {
-        	rootEntryMappings.add(entryMapping);
+            rootEntryMappings.add(entryMapping);
         }
 
         //entryMappings.put(dn, entryMapping);
@@ -151,11 +152,11 @@ public class Partition {
     }
 
     public void renameEntryMapping(EntryMapping entry, String newDn) {
-    	if (entry == null) return;
-    	if (entry.getDn().equals(newDn)) return;
+        if (entry == null) return;
+        if (entry.getDn().equals(newDn)) return;
 
         EntryMapping oldParent = getParent(entry);
-    	String oldDn = entry.getDn();
+        String oldDn = entry.getDn();
 
         Collection c = getEntryMappings(oldDn);
         if (c == null) return;
@@ -163,7 +164,7 @@ public class Partition {
         c.remove(entry);
         if (c.isEmpty()) removeEntryMappings(oldDn);
 
-    	entry.setDn(newDn);
+        entry.setDn(newDn);
         Collection newList = getEntryMappings(newDn);
         if (newList == null) {
             newList = new ArrayList();
@@ -201,8 +202,8 @@ public class Partition {
     }
 
     public void renameChildren(EntryMapping entry, String newDn) {
-    	if (entry == null) return;
-    	if (newDn.equals(entry.getDn())) return;
+        if (entry == null) return;
+        if (newDn.equals(entry.getDn())) return;
 
         String oldDn = entry.getDn();
 
@@ -343,10 +344,10 @@ public class Partition {
         mapping.setModuleConfig(moduleConfig);
     }
 
-	public void addConnectionConfig(ConnectionConfig connectionConfig) {
-		connectionConfigs.put(connectionConfig.getName(), connectionConfig);
-	}
-	
+    public void addConnectionConfig(ConnectionConfig connectionConfig) {
+        connectionConfigs.put(connectionConfig.getName(), connectionConfig);
+    }
+
     public void renameConnectionConfig(ConnectionConfig connectionConfig, String newName) {
         if (connectionConfig == null) return;
         if (connectionConfig.getName().equals(newName)) return;
@@ -360,9 +361,9 @@ public class Partition {
         connectionConfig.copy(newConnectionConfig);
     }
 
-	public ConnectionConfig removeConnectionConfig(String connectionName) {
-		return (ConnectionConfig)connectionConfigs.remove(connectionName);
-	}
+    public ConnectionConfig removeConnectionConfig(String connectionName) {
+        return (ConnectionConfig)connectionConfigs.remove(connectionName);
+    }
 
     public ConnectionConfig getConnectionConfig(String name) {
         return (ConnectionConfig)connectionConfigs.get(name);
@@ -397,14 +398,14 @@ public class Partition {
         sourceConfig.copy(newSourceConfig);
     }
 
-	public Collection getEntryMappings() {
+    public Collection getEntryMappings() {
         Collection list = new ArrayList();
         for (Iterator i=entryMappings.values().iterator(); i.hasNext(); ) {
             Collection c = (Collection)i.next();
             list.addAll(c);
         }
-		return list;
-	}
+        return list;
+    }
 
     public EntryMapping findEntryMapping(String dn) throws Exception {
         //.log.debug("Finding entry mapping \""+dn+"\" in partition "+getName());
@@ -502,37 +503,37 @@ public class Partition {
         return results;
     }
 
-	public Collection getConnectionConfigs() {
-		return connectionConfigs.values();
-	}
+    public Collection getConnectionConfigs() {
+        return connectionConfigs.values();
+    }
 
-	public void setConnectionConfigs(Map connectionConfigs) {
-		this.connectionConfigs = connectionConfigs;
-	}
+    public void setConnectionConfigs(Map connectionConfigs) {
+        this.connectionConfigs = connectionConfigs;
+    }
 
-	public Collection getModuleMappings() {
-		return moduleMappings.values();
-	}
-	public Collection getRootEntryMappings() {
-		return rootEntryMappings;
-	}
+    public Collection getModuleMappings() {
+        return moduleMappings.values();
+    }
+    public Collection getRootEntryMappings() {
+        return rootEntryMappings;
+    }
 
     public ModuleConfig removeModuleConfig(String moduleName) {
-    	return (ModuleConfig)moduleConfigs.remove(moduleName);
+        return (ModuleConfig)moduleConfigs.remove(moduleName);
     }
-    
+
     public Collection getModuleConfigs() {
-    	return moduleConfigs.values();
+        return moduleConfigs.values();
     }
-    
+
     public Collection removeModuleMapping(String moduleName) {
-    	return (Collection)moduleMappings.remove(moduleName);
+        return (Collection)moduleMappings.remove(moduleName);
     }
 
     public void removeModuleMapping(ModuleMapping mapping) {
         if (mapping == null) return;
         if (mapping.getModuleName() == null) return;
-        
+
         Collection c = (Collection)moduleMappings.get(mapping.getModuleName());
         if (c != null) c.remove(mapping);
     }

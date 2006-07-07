@@ -1,6 +1,7 @@
 package org.safehaus.penrose.util;
 
-import org.apache.log4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 
 import java.util.Collection;
 import java.util.Iterator;
@@ -9,7 +10,7 @@ import java.util.Map;
 
 public class ClassRegistry extends ClassLoader {
 
-    Logger log = Logger.getLogger(getClass());
+    Logger log = LoggerFactory.getLogger(getClass());
 
     Map classes = new TreeMap();
 

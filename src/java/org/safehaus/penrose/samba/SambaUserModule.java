@@ -8,7 +8,8 @@ import org.safehaus.penrose.session.PenroseSession;
 import org.safehaus.penrose.session.PenroseSearchResults;
 import org.safehaus.penrose.session.PenroseSearchControls;
 import org.ietf.ldap.LDAPException;
-import org.apache.log4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 
 import javax.naming.directory.*;
 import java.util.*;
@@ -20,7 +21,7 @@ import java.io.InputStreamReader;
  */
 public class SambaUserModule extends Module {
 
-    Logger log = Logger.getLogger(getClass());
+    Logger log = LoggerFactory.getLogger(getClass());
 
     public final static String SSH_CLIENT   = "ssh.client";
     public final static String SAMBA_ADMIN  = "samba.admin";

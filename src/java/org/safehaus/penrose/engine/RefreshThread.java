@@ -17,44 +17,45 @@
  */
 package org.safehaus.penrose.engine;
 
-import org.apache.log4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 
 /**
  * @author Administrator
  */
 public class RefreshThread implements Runnable {
 
-    Logger log = Logger.getLogger(getClass());
+    Logger log = LoggerFactory.getLogger(getClass());
 
-	private Engine engine;
-	
-	public RefreshThread(Engine penrose) {
-		this.engine = penrose;
-	}
+    private Engine engine;
 
-	public void run() {
+    public RefreshThread(Engine penrose) {
+        this.engine = penrose;
+    }
 
-		try {
-			// sleep 5 minutes first, to allow server initialization 
-			Thread.sleep(5*60000);
+    public void run() {
 
-		} catch (InterruptedException ex) {
-			// ignore
-		}
+        try {
+            // sleep 5 minutes first, to allow server initialization
+            Thread.sleep(5*60000);
 
-		while (!engine.isStopping()) {
+        } catch (InterruptedException ex) {
+            // ignore
+        }
 
-			try {
-				//handlerrceCache().refresh();
-				Thread.sleep(2*60000); // sleep 2 minutes
+        while (!engine.isStopping()) {
 
-			} catch (Exception ex) {
-				// ignore
-			}
-		}
-		
-	}
+            try {
+                //handlerrceCache().refresh();
+                Thread.sleep(2*60000); // sleep 2 minutes
 
-	
+            } catch (Exception ex) {
+                // ignore
+            }
+        }
+
+    }
+
+
 
 }

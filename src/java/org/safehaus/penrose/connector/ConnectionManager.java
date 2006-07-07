@@ -17,9 +17,10 @@
  */
 package org.safehaus.penrose.connector;
 
-import org.apache.log4j.Logger;
 import org.safehaus.penrose.partition.ConnectionConfig;
 import org.safehaus.penrose.partition.Partition;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 
 import java.util.*;
 
@@ -28,7 +29,7 @@ import java.util.*;
  */
 public class ConnectionManager implements ConnectionManagerMBean {
 
-    public Logger log = Logger.getLogger(ConnectionManager.class);
+    public Logger log = LoggerFactory.getLogger(getClass());
 
     public Map connections = new TreeMap();
 

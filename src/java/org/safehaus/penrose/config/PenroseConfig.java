@@ -19,7 +19,6 @@ package org.safehaus.penrose.config;
 
 import java.util.*;
 
-import org.apache.log4j.Logger;
 import org.safehaus.penrose.cache.CacheConfig;
 import org.safehaus.penrose.cache.EntryCache;
 import org.safehaus.penrose.engine.EngineConfig;
@@ -32,13 +31,15 @@ import org.safehaus.penrose.user.UserConfig;
 import org.safehaus.penrose.service.ServiceConfig;
 import org.safehaus.penrose.session.SessionConfig;
 import org.safehaus.penrose.handler.HandlerConfig;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 
 /**
  * @author Endi S. Dewata
  */
 public class PenroseConfig implements PenroseConfigMBean, Cloneable {
 
-    Logger log = Logger.getLogger(getClass());
+    Logger log = LoggerFactory.getLogger(getClass());
 
     private String home;
 
@@ -129,7 +130,7 @@ public class PenroseConfig implements PenroseConfigMBean, Cloneable {
     public Collection getSystemPropertyNames() {
         return systemProperties.keySet();
     }
-    
+
     public void setSystemProperty(String name, String value) {
         systemProperties.put(name, value);
     }
@@ -145,7 +146,7 @@ public class PenroseConfig implements PenroseConfigMBean, Cloneable {
     public ConnectorConfig getConnectorConfig() {
         return connectorConfig;
     }
-    
+
     public CacheConfig getEntryCacheConfig() {
         return entryCacheConfig;
     }

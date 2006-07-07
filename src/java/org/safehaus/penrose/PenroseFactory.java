@@ -1,7 +1,8 @@
 package org.safehaus.penrose;
 
 import org.safehaus.penrose.config.PenroseConfig;
-import org.apache.log4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 
 import java.net.URL;
 import java.util.Properties;
@@ -11,7 +12,7 @@ import java.util.Properties;
  */
 public class PenroseFactory {
 
-    public static Logger log = Logger.getLogger(PenroseFactory.class);
+    public static Logger log = LoggerFactory.getLogger(PenroseFactory.class);
 
     public static PenroseFactory instance;
 

@@ -24,7 +24,8 @@ import org.safehaus.penrose.schema.SchemaManager;
 import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.module.ModuleConfig;
 import org.ietf.ldap.LDAPDN;
-import org.apache.log4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 
 import java.util.Collection;
 import java.util.ArrayList;
@@ -36,7 +37,7 @@ import java.util.TreeSet;
  */
 public class PartitionValidator {
 
-    Logger log = Logger.getLogger(getClass());
+    Logger log = LoggerFactory.getLogger(getClass());
 
     private PenroseConfig penroseConfig;
     private SchemaManager schemaManager;

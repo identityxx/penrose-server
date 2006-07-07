@@ -19,12 +19,13 @@ package org.safehaus.penrose.ldap;
 
 import org.apache.directory.server.core.partition.AbstractDirectoryPartition;
 import org.apache.directory.shared.ldap.filter.ExprNode;
-import org.apache.log4j.Logger;
 import org.ietf.ldap.*;
 import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.session.PenroseSearchResults;
 import org.safehaus.penrose.session.PenroseSession;
 import org.safehaus.penrose.session.PenroseSearchControls;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 
 import javax.naming.*;
 import javax.naming.directory.*;
@@ -36,7 +37,7 @@ import java.io.File;
  */
 public class PenrosePartition extends AbstractDirectoryPartition {
 
-    Logger log = Logger.getLogger(getClass());
+    Logger log = LoggerFactory.getLogger(getClass());
 
     Penrose penrose;
 
@@ -51,7 +52,6 @@ public class PenrosePartition extends AbstractDirectoryPartition {
         File dir = new File("partitions/"+name);
         if (!dir.exists()) return;
 
-        Logger log = Logger.getLogger(getClass());
         log.debug("-------------------------------------------------------------------------------");
         log.debug("Initializing "+name+" partition ...");
     }
@@ -356,7 +356,6 @@ public class PenrosePartition extends AbstractDirectoryPartition {
     }
 
     public boolean isClosed() {
-        //Logger log = Logger.getLogger(PenrosePartition.class);
         //log.info("isClosed();");
         return false;
     }

@@ -17,14 +17,15 @@
  */
 package org.safehaus.penrose.thread;
 
-import org.apache.log4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 
 import java.util.Collection;
 import java.util.Iterator;
 
 public class ThreadManager {
 
-    Logger log = Logger.getLogger(getClass());
+    Logger log = LoggerFactory.getLogger(getClass());
 
 	private Queue idleWorkers;
 	private ThreadWorker[] workers;

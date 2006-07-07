@@ -21,13 +21,14 @@ import java.util.List;
 import java.util.ArrayList;
 import java.util.Collection;
 
-import org.apache.log4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 
 public class Queue {
-	
-    public Logger log = Logger.getLogger(getClass());
 
-	protected List queue = new ArrayList();
+    public Logger log = LoggerFactory.getLogger(getClass());
+
+    protected List queue = new ArrayList();
 
     private int maxSize = 0; // no limit
 
@@ -42,11 +43,11 @@ public class Queue {
         return queue.size();
     }
 
-	public synchronized boolean isEmpty() {
-		return queue.size() == 0;
-	}
-	
-	public synchronized void add(Object obj) {
+    public synchronized boolean isEmpty() {
+        return queue.size() == 0;
+    }
+
+    public synchronized void add(Object obj) {
 
         if (maxSize > 0) {
             while (queue.size() == maxSize) {
@@ -59,10 +60,10 @@ public class Queue {
         }
 
         //log.debug("Adding object");
-		queue.add(obj);
+        queue.add(obj);
         //log.debug("size: "+queue.size());
         notifyAll();
-	}
+    }
 
     public synchronized Collection getAll() {
         List c = new ArrayList();
@@ -70,7 +71,7 @@ public class Queue {
         return c;
     }
 
-	public synchronized Object remove() {
+    public synchronized Object remove() {
         //log.debug("Removing object");
         while (queue.size() == 0) {
             try {
@@ -80,15 +81,15 @@ public class Queue {
             }
         }
 
-		Object o = queue.remove(0);
+        Object o = queue.remove(0);
         //log.debug("size: "+queue.size());
 
         notifyAll();
 
         return o;
-	}
-	
-	public synchronized Object peek() {
+    }
+
+    public synchronized Object peek() {
         while (queue.size() == 0) {
             try {
                 wait();
@@ -97,8 +98,8 @@ public class Queue {
             }
         }
 
-		return queue.get(0);
-	}
+        return queue.get(0);
+    }
 
     public int getMaxSize() {
         return maxSize;

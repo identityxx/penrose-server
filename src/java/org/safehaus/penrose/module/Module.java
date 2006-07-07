@@ -20,7 +20,8 @@ package org.safehaus.penrose.module;
 import org.safehaus.penrose.event.*;
 import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.partition.Partition;
-import org.apache.log4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 
 import java.util.Collection;
 
@@ -29,7 +30,7 @@ import java.util.Collection;
  */
 public class Module implements AddListener, BindListener, CompareListener, DeleteListener, ModifyListener, ModRdnListener, SearchListener {
 
-    public Logger log = Logger.getLogger(getClass());
+    public Logger log = LoggerFactory.getLogger(getClass());
 
     public final static String STOPPING = "STOPPING";
     public final static String STOPPED  = "STOPPED";

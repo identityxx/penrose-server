@@ -8,10 +8,9 @@
 
 <!ELEMENT modules (module*, module-mapping*)>
 
-<!ELEMENT module (module-name?,module-class, description?, parameter*)>
+<!ELEMENT module (module-class, description?, parameter*)>
 <!ATTLIST module name CDATA #IMPLIED>
 <!ATTLIST module enabled CDATA #IMPLIED>
-<!ELEMENT module-name (#PCDATA)>
 <!ELEMENT module-class (#PCDATA)>
 
 <!ELEMENT module-mapping (module-name, base-dn, filter, scope)>

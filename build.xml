@@ -152,6 +152,7 @@
         <copy todir="target/dist/conf">
             <fileset dir="target/dist/conf/default"/>
         </copy>
+        <mkdir dir="target/dist/schema/ext"/>
         <copy todir="target/dist/schema">
             <fileset dir="schema"/>
         </copy>

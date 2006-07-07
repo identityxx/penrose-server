@@ -45,6 +45,7 @@ Source: "..\target\dist\samples\*"; DestDir: "{app}\samples"; Flags: recursesubd
 Name: "{app}\docs"
 Name: "{app}\lib\ext"
 Name: "{app}\samples"
+Name: "{app}\schema\ext"
 Name: "{app}\var"
 
 [Components]

@@ -25,7 +25,6 @@ import javax.naming.NamingEnumeration;
 import javax.naming.directory.*;
 import javax.naming.ldap.*;
 
-import org.apache.log4j.Logger;
 import org.safehaus.penrose.schema.AttributeType;
 import org.safehaus.penrose.schema.ObjectClass;
 import org.safehaus.penrose.schema.SchemaParser;
@@ -33,10 +32,12 @@ import org.safehaus.penrose.schema.Schema;
 import org.safehaus.penrose.session.PenroseSearchResults;
 import org.safehaus.penrose.session.PenroseSearchControls;
 import org.ietf.ldap.*;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 
 public class JNDIClient {
 
-	Logger log = Logger.getLogger(getClass());
+    Logger log = LoggerFactory.getLogger(getClass());
 
     public String[] BINARY_ATTRIBUTES = new String[] {
         "photo", "personalSignature", "audio", "jpegPhoto", "javaSerializedData",
@@ -382,7 +383,7 @@ public class JNDIClient {
                 log.debug("Default Schema: "+schemaDn);
                 schema = getLDAPSchema(schemaDn);
             }
-            
+
         } catch (Exception e) {
             log.error(e.getMessage(), e);
             throw e;
@@ -689,7 +690,7 @@ public class JNDIClient {
             if (context != null) try { context.close(); } catch (Exception e) {}
         }
     }
-    
+
     public SearchResult getEntry(String dn) throws Exception {
 
         String searchBase = EntryUtil.append(dn, suffix);

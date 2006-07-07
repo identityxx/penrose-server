@@ -24,7 +24,9 @@ import org.safehaus.penrose.partition.PartitionManager;
 import org.safehaus.penrose.schema.SchemaManager;
 import org.safehaus.penrose.config.PenroseConfig;
 import org.ietf.ldap.LDAPException;
-import org.apache.log4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
+
 import java.util.*;
 
 /**
@@ -32,7 +34,7 @@ import java.util.*;
  */
 public class ACLEngine {
 
-    public Logger log = Logger.getLogger(getClass());
+    public Logger log = LoggerFactory.getLogger(getClass());
 
     private PenroseConfig penroseConfig;
     private SchemaManager schemaManager;

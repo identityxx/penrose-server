@@ -1,6 +1,7 @@
 package org.safehaus.penrose.mapping;
 
-import org.apache.log4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 
 import java.util.*;
 
@@ -11,7 +12,7 @@ import java.util.*;
  */
 public class AttributeValues implements Cloneable, Comparable {
 
-    Logger log = Logger.getLogger(getClass());
+    Logger log = LoggerFactory.getLogger(getClass());
 
     public Map values = new TreeMap();
 

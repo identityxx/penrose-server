@@ -19,7 +19,8 @@ package org.safehaus.penrose.mapping;
 
 import org.safehaus.penrose.acl.ACI;
 import org.safehaus.penrose.util.EntryUtil;
-import org.apache.log4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 
 import java.util.*;
 
@@ -28,7 +29,7 @@ import java.util.*;
  */
 public class EntryMapping implements Cloneable {
 
-    Logger log = Logger.getLogger(getClass());
+    Logger log = LoggerFactory.getLogger(getClass());
 
     public final static String QUERY_CACHE_SIZE        = "queryCacheSize";
     public final static String QUERY_CACHE_EXPIRATION  = "queryCacheExpiration";

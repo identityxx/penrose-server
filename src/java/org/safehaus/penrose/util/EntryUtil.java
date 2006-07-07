@@ -21,12 +21,13 @@ import org.safehaus.penrose.mapping.Row;
 import org.safehaus.penrose.mapping.Entry;
 import org.safehaus.penrose.mapping.AttributeValues;
 import org.safehaus.penrose.mapping.EntryMapping;
-import org.apache.log4j.Logger;
 import org.apache.directory.shared.ldap.name.LdapName;
 import org.ietf.ldap.LDAPEntry;
 import org.ietf.ldap.LDAPAttributeSet;
 import org.ietf.ldap.LDAPAttribute;
 import org.ietf.ldap.LDAPDN;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 
 import javax.naming.directory.*;
 import javax.naming.NamingEnumeration;
@@ -37,7 +38,7 @@ import java.util.*;
  */
 public class EntryUtil {
 
-    static Logger log = Logger.getLogger(EntryUtil.class);
+    static Logger log = LoggerFactory.getLogger(EntryUtil.class);
 
     /**
      * Compare dn1 and dn2

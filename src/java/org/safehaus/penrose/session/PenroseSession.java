@@ -21,7 +21,8 @@ import org.safehaus.penrose.handler.Handler;
 import org.safehaus.penrose.event.*;
 import org.safehaus.penrose.pipeline.PipelineAdapter;
 import org.safehaus.penrose.pipeline.PipelineEvent;
-import org.apache.log4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 
 import javax.naming.directory.Attributes;
 import java.util.Date;
@@ -32,7 +33,7 @@ import java.util.Collection;
  */
 public class PenroseSession {
 
-    Logger log = Logger.getLogger(getClass());
+    Logger log = LoggerFactory.getLogger(getClass());
 
     private SessionManager sessionManager;
     private EventManager eventManager;

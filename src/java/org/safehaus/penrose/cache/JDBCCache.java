@@ -23,7 +23,8 @@ import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.connector.ConnectionManager;
 import org.safehaus.penrose.partition.FieldConfig;
 import org.safehaus.penrose.partition.SourceConfig;
-import org.apache.log4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 
 import java.sql.*;
 import java.util.*;
@@ -33,7 +34,7 @@ import java.util.*;
  */
 public class JDBCCache {
 
-    static Logger log = Logger.getLogger(JDBCCache.class);
+    static Logger log = LoggerFactory.getLogger(JDBCCache.class);
 
     JDBCCacheTool tool = new JDBCCacheTool();
 

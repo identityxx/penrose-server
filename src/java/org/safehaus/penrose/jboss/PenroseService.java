@@ -17,11 +17,12 @@
  */
 package org.safehaus.penrose.jboss;
 
-import org.apache.log4j.Logger;
 import org.safehaus.penrose.PenroseServer;
 import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.service.ServiceManager;
 import org.safehaus.penrose.config.PenroseConfig;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 
 import java.util.Collection;
 import java.util.ArrayList;
@@ -34,7 +35,7 @@ import java.io.FileOutputStream;
  */
 public class PenroseService implements PenroseServiceMBean {
 
-    Logger log = Logger.getLogger(getClass());
+    Logger log = LoggerFactory.getLogger(getClass());
 
     private String home;
     PenroseServer penroseServer;

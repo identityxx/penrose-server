@@ -30,6 +30,7 @@
 <!ELEMENT service-class (#PCDATA)>
 
 <!ELEMENT schema EMPTY>
+<!ATTLIST schema name CDATA #REQUIRED>
 <!ATTLIST schema path CDATA #REQUIRED>
 
 <!ELEMENT interpreter (interpreter-class?, description?, parameter*)>
