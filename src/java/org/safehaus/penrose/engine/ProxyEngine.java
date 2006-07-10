@@ -5,8 +5,6 @@ import org.safehaus.penrose.cache.CacheConfig;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.SourceConfig;
 import org.safehaus.penrose.mapping.*;
-import org.safehaus.penrose.util.*;
-import org.safehaus.penrose.schema.ObjectClass;
 import org.safehaus.penrose.connector.Connection;
 import org.safehaus.penrose.connector.JNDIAdapter;
 import org.safehaus.penrose.filter.Filter;
@@ -14,12 +12,16 @@ import org.safehaus.penrose.session.PenroseSearchControls;
 import org.safehaus.penrose.session.PenroseSearchResults;
 import org.safehaus.penrose.pipeline.PipelineAdapter;
 import org.safehaus.penrose.pipeline.PipelineEvent;
+import org.safehaus.penrose.util.*;
 import org.ietf.ldap.LDAPException;
 import org.ietf.ldap.LDAPConnection;
 
 import javax.naming.directory.*;
 import javax.naming.NamingEnumeration;
-import java.util.*;
+import java.util.Collection;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Iterator;
 
 /**
  * @author Endi S. Dewata
