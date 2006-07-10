@@ -29,8 +29,10 @@ import org.safehaus.penrose.session.PenroseSearchControls;
 import org.safehaus.penrose.partition.FieldConfig;
 import org.safehaus.penrose.partition.SourceConfig;
 import org.safehaus.penrose.util.*;
+import org.safehaus.penrose.util.Formatter;
 
 import java.util.*;
+
 
 /**
  * @author Endi S. Dewata
@@ -109,13 +111,13 @@ public class JNDIAdapter extends Adapter {
         SearchControls ctls = new SearchControls();
         ctls.setReturningAttributes(new String[] { "dn" });
         if ("OBJECT".equals(ldapScope)) {
-        	ctls.setSearchScope(SearchControls.OBJECT_SCOPE);
-        	
+            ctls.setSearchScope(SearchControls.OBJECT_SCOPE);
+
         } else if ("ONELEVEL".equals(ldapScope)) {
-        	ctls.setSearchScope(SearchControls.ONELEVEL_SCOPE);
-        	
+            ctls.setSearchScope(SearchControls.ONELEVEL_SCOPE);
+
         } else if ("SUBTREE".equals(ldapScope)) {
-        	ctls.setSearchScope(SearchControls.SUBTREE_SCOPE);
+            ctls.setSearchScope(SearchControls.SUBTREE_SCOPE);
         }
         ctls.setCountLimit(sc.getSizeLimit());
 
@@ -167,13 +169,13 @@ public class JNDIAdapter extends Adapter {
 
         SearchControls ctls = new SearchControls();
         if ("OBJECT".equals(ldapScope)) {
-        	ctls.setSearchScope(SearchControls.OBJECT_SCOPE);
+            ctls.setSearchScope(SearchControls.OBJECT_SCOPE);
 
         } else if ("ONELEVEL".equals(ldapScope)) {
-        	ctls.setSearchScope(SearchControls.ONELEVEL_SCOPE);
+            ctls.setSearchScope(SearchControls.ONELEVEL_SCOPE);
 
         } else if ("SUBTREE".equals(ldapScope)) {
-        	ctls.setSearchScope(SearchControls.SUBTREE_SCOPE);
+            ctls.setSearchScope(SearchControls.SUBTREE_SCOPE);
         }
         ctls.setCountLimit(sc.getSizeLimit());
 
@@ -232,7 +234,7 @@ public class JNDIAdapter extends Adapter {
         Collection fields = sourceConfig.getFieldConfigs();
         for (Iterator i=fields.iterator(); i.hasNext(); ) {
             FieldConfig fieldConfig = (FieldConfig)i.next();
-            
+
             String name = fieldConfig.getName();
             //if (name.equals("objectClass")) continue;
 
@@ -677,7 +679,7 @@ public class JNDIAdapter extends Adapter {
     public int getLastChangeNumber(SourceConfig sourceConfig) throws Exception {
         return 0;
     }
-    
+
     public PenroseSearchResults getChanges(SourceConfig sourceConfig, int lastChangeNumber) throws Exception {
 
         PenroseSearchResults results = new PenroseSearchResults();
