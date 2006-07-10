@@ -25,17 +25,17 @@ import java.util.Iterator;
  */
 public interface Result {
 
-    public Iterator iterator();
+    public Iterator iterator() throws Exception;
 
-    public int getReturnCode();
+    public int getReturnCode() throws Exception;
 
-    public int size();
+    public int size() throws Exception;
 
-    public Collection getAll();
+    public Collection getAll() throws Exception;
 
-    public boolean hasNext();
-    public Object next();
+    public boolean hasNext() throws Exception;
+    public Object next() throws Exception;
 
-    public void close();
+    public void close() throws Exception;
 
 }

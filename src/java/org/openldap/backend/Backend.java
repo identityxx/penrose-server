@@ -17,9 +17,12 @@
  */
 package org.openldap.backend;
 
+import org.safehaus.penrose.session.PenroseSession;
+
 import java.util.*;
 
 import javax.naming.directory.Attributes;
+import javax.naming.directory.SearchControls;
 
 /**
  * @author Endi S. Dewata
@@ -34,29 +37,12 @@ public interface Backend {
      */
     public int init() throws Exception;
 
-    public int setHomeDirectory(String configHomeDirectory, String realHomeDirectory);
-
-
     /**
      * Initialize server with schema DN.
      *
      * @param schemaDn
      */
     public void setSchema(String schemaDn);
-
-    /**
-     * Create connection.
-     *
-     * @param connectionId
-     */
-    public void createConnection(int connectionId) throws Exception;
-
-    /**
-     * Remove connection.
-     *
-     * @param connectionId
-     */
-    public void removeConnection(int connectionId) throws Exception;
 
     /**
      * Initialize server with a set of suffixes.
@@ -73,23 +59,8 @@ public interface Backend {
      */
     public void setRoot(String rootDn, String rootPassword) throws Exception;
 
-    /**
-     * Set the location of slapd.conf.
-     *
-     * @param slapdConfig Location of slapd.conf.
-     * @return return value
-     * @throws Exception
-     */
-    public int setSlapdConfig(String slapdConfig) throws Exception;
-
-    /**
-     * Set the properties.
-     *
-     * @param properties
-     * @return return value
-     * @throws Exception
-     */
-    public int setProperties(Properties properties) throws Exception;
+    public void openConnection(int connectionId) throws Exception;
+    public void closeConnection(int connectionId) throws Exception;
 
     /**
      * Performs bind operation.
@@ -101,9 +72,9 @@ public interface Backend {
      * @throws Exception
      */
     public int bind(
-    		int connectionId,
-			String dn,
-			String password)
+            int connectionId,
+            String dn,
+            String password)
     throws Exception;
 
     /**
@@ -114,7 +85,7 @@ public interface Backend {
      * @throws Exception
      */
     public int unbind(
-    		int connectionId)
+            int connectionId)
     throws Exception;
 
     /**
@@ -122,39 +93,15 @@ public interface Backend {
      *
      * @param connectionId Connection ID.
      * @param baseDn Base DN.
-     * @param scope Scope (0: base, 1: one level, 2: subtree).
      * @param filter Search filter (e.g. objectClass=*).
-     * @param attributeNames Attribute names to be returned.
      * @return return value
      * @throws Exception
      */
     public Result search(
-    		int connectionId,
-			String baseDn,
-			int scope,
-			String filter,
-			String[] attributeNames)
-    throws Exception;
-
-    /**
-     * Performs search operation.
-     *
-     * @param connectionId Connection ID.
-     * @param baseDn Base DN.
-     * @param scope Scope (0: base, 1: one level, 2: subtree).
-     * @param deref Dereference referrals.
-     * @param filter Search filter (e.g. objectClass=*).
-     * @param attributeNames Attribute names to be returned.
-     * @return return value
-     * @throws Exception
-     */
-    public Result search(
-    		int connectionId,
-			String baseDn,
-			int scope,
-			int deref,
-			String filter,
-			String[] attributeNames)
+            int connectionId,
+            String baseDn,
+            String filter,
+            SearchControls sc)
     throws Exception;
 
     /**
@@ -167,9 +114,9 @@ public interface Backend {
      * @throws Exception
      */
     public int add(
-    		int connectionId,
+            int connectionId,
             String dn,
-			Attributes attributes)
+            Attributes attributes)
     throws Exception;
 
     /**
@@ -181,8 +128,8 @@ public interface Backend {
      * @throws Exception
      */
     public int delete(
-    		int connectionId,
-			String dn)
+            int connectionId,
+            String dn)
     throws Exception;
 
     /**
@@ -195,9 +142,9 @@ public interface Backend {
      * @throws Exception
      */
     public int modify(
-    		int connectionId,
-			String dn,
-			Collection modifications)
+            int connectionId,
+            String dn,
+            Collection modifications)
     throws Exception;
 
     /**
@@ -211,9 +158,9 @@ public interface Backend {
      * @throws Exception
      */
     public int compare(
-    		int connectionId,
-			String dn,
-			String attributeName,
-			Object attributeValue)
+            int connectionId,
+            String dn,
+            String attributeName,
+            Object attributeValue)
     throws Exception;
 }

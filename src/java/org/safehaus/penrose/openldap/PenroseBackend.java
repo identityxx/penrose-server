@@ -19,6 +19,7 @@ package org.safehaus.penrose.openldap;
 
 import java.util.*;
 import java.io.FileReader;
+import java.io.File;
 
 import org.ietf.ldap.*;
 import org.safehaus.penrose.openldap.config.ConfigurationItem;
@@ -26,17 +27,18 @@ import org.safehaus.penrose.openldap.config.NameValueItem;
 import org.safehaus.penrose.openldap.config.SlapdConfig;
 import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.PenroseFactory;
-import org.safehaus.penrose.user.UserConfig;
 import org.safehaus.penrose.session.PenroseSession;
 import org.safehaus.penrose.session.PenroseSearchResults;
 import org.safehaus.penrose.session.*;
 import org.safehaus.penrose.config.PenroseConfig;
+import org.safehaus.penrose.config.PenroseConfigReader;
 import org.openldap.backend.Backend;
 import org.openldap.backend.Result;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
 import javax.naming.directory.Attributes;
+import javax.naming.directory.SearchControls;
 
 /**
  * @author Endi S. Dewata
@@ -46,7 +48,6 @@ public class PenroseBackend implements Backend {
     Logger log = LoggerFactory.getLogger(getClass());
 
     public String slapdConfig;
-    public Properties properties;
 
     public String suffixes[];
     public String schemaDn;
@@ -54,23 +55,21 @@ public class PenroseBackend implements Backend {
     public String rootDn;
     public String rootPassword;
 
-    public String configHomeDirectory;
-    public String realHomeDirectory;
+    public String homeDirectory;
 
     public Penrose penrose;
 
-    public Map connections = new HashMap();
+    public Map sessions = new HashMap();
 
     public PenroseBackend() {
         //File f = new File("conf/log4j.properties");
         //if (f.exists()) PropertyConfigurator.configure(f.getAbsolutePath());
     }
 
-    public int setHomeDirectory(String configHomeDirectory, String realHomeDirectory) {
-        this.configHomeDirectory = configHomeDirectory;
-        this.realHomeDirectory = realHomeDirectory;
+    public int setHomeDirectory(String homeDirectory) {
+        this.homeDirectory = homeDirectory;
 
-        slapdConfig = this.realHomeDirectory + "/etc/openldap/slapd.conf";
+        slapdConfig = this.homeDirectory + "/etc/openldap/slapd.conf";
 
         return LDAPException.SUCCESS;
     }
@@ -91,18 +90,23 @@ public class PenroseBackend implements Backend {
     }
 
     public int initImpl() throws Exception {
-    	
+
         log.debug("-------------------------------------------------------------------------------");
         log.debug("PenroseBackend.init();");
 
-        PenroseFactory penroseFactory = PenroseFactory.getInstance();
-        penrose = penroseFactory.createPenrose(realHomeDirectory);
-        penrose.start();
+        String home = System.getProperty("penrose.home");
 
-        PenroseConfig penroseConfig = penrose.getPenroseConfig();
-        UserConfig rootUserConfig = penroseConfig.getRootUserConfig();
-        rootUserConfig.setDn(rootDn);
-        rootUserConfig.setPassword(rootPassword);
+        PenroseConfigReader reader = new PenroseConfigReader((home == null ? "" : home+ File.separator)+"conf"+File.separator+"server.xml");
+        PenroseConfig penroseConfig = reader.read();
+        penroseConfig.setHome(home);
+
+        //UserConfig rootUserConfig = penroseConfig.getRootUserConfig();
+        //rootUserConfig.setDn(rootDn);
+        //rootUserConfig.setPassword(rootPassword);
+
+        PenroseFactory penroseFactory = PenroseFactory.getInstance();
+        penrose = penroseFactory.createPenrose(penroseConfig);
+        penrose.start();
 
         return LDAPException.SUCCESS;
     }
@@ -121,12 +125,7 @@ public class PenroseBackend implements Backend {
             NameValueItem nvi = (NameValueItem) ci;
             String value = nvi.getValue();
 
-            if (!nvi.getName().equals("include"))
-                continue;
-
-            if (value.startsWith(configHomeDirectory)) {
-                value = realHomeDirectory+value.substring(configHomeDirectory.length());
-            }
+            if (!nvi.getName().equals("include")) continue;
 
             schemaFiles.add(value);
         }
@@ -153,9 +152,9 @@ public class PenroseBackend implements Backend {
      * @param suffixes
      */
     public void setSuffix(String suffixes[]) {
-       	log.debug("-------------------------------------------------------------------------------");
-       	log.debug("PenroseBackend.setSuffix(suffixArray);");
-       	
+           log.debug("-------------------------------------------------------------------------------");
+           log.debug("PenroseBackend.setSuffix(suffixArray);");
+
         for (int i=0; i<suffixes.length; i++) {
             log.debug(" suffix            : "+suffixes[i]);
         }
@@ -170,10 +169,10 @@ public class PenroseBackend implements Backend {
      * @param rootPassword
      */
     public void setRoot(String rootDn, String rootPassword) {
-    	log.debug("-------------------------------------------------------------------------------");
-    	log.debug("PenroseBackend.setRoot(rootDn, rootPassword)");
-    	log.debug(" rootDN           : "+rootDn);
-    	log.debug(" rootPassword     : "+rootPassword);
+        log.debug("-------------------------------------------------------------------------------");
+        log.debug("PenroseBackend.setRoot(rootDn, rootPassword)");
+        log.debug(" rootDN           : "+rootDn);
+        log.debug(" rootPassword     : "+rootPassword);
 
         this.rootDn = rootDn;
         this.rootPassword = rootPassword;
@@ -185,8 +184,8 @@ public class PenroseBackend implements Backend {
      * @param connectionId
      * @return connection
      */
-    public PenroseSession getConnection(int connectionId) throws Exception {
-        return (PenroseSession)connections.remove(new Integer(connectionId));
+    public PenroseSession getSession(int connectionId) throws Exception {
+        return (PenroseSession)sessions.remove(new Integer(connectionId));
     }
 
     /**
@@ -194,10 +193,10 @@ public class PenroseBackend implements Backend {
      * 
      * @param connectionId
      */
-    public void createConnection(int connectionId) throws Exception {
+    public void openConnection(int connectionId) throws Exception {
         PenroseSession session = penrose.newSession();
         if (session == null) throw new Exception("Unable to create session.");
-        connections.put(new Integer(connectionId), session);
+        sessions.put(new Integer(connectionId), session);
     }
 
     /**
@@ -205,11 +204,11 @@ public class PenroseBackend implements Backend {
      * 
      * @param connectionId
      */
-    public void removeConnection(int connectionId) throws Exception {
-        PenroseSession session = (PenroseSession)connections.remove(new Integer(connectionId));
+    public void closeConnection(int connectionId) throws Exception {
+        PenroseSession session = (PenroseSession)sessions.remove(new Integer(connectionId));
         session.close();
     }
-    
+
     /**
      * Set the location of slapd.conf.
      *
@@ -228,32 +227,14 @@ public class PenroseBackend implements Backend {
 
     public int setSlapdConfigImpl(String slapdConfig) throws Throwable {
 
-    	log.debug("-------------------------------------------------------------------------------");
-    	log.debug("PenroseBackend.setSlapdConfig(slapdConfig)");
-    	log.debug(" slapdConfig: "+slapdConfig);
+        log.debug("-------------------------------------------------------------------------------");
+        log.debug("PenroseBackend.setSlapdConfig(slapdConfig)");
+        log.debug(" slapdConfig: "+slapdConfig);
 
         this.slapdConfig = slapdConfig;
 
         return LDAPException.SUCCESS;
     }
-
-    /**
-     * Set the properties.
-     *
-     * @param properties
-     * @return return value
-     * @throws Exception
-     */
-    public int setProperties(Properties properties) throws Exception {
-
-    	log.debug("-------------------------------------------------------------------------------");
-    	log.debug("PenroseBackend.setProperties(properties)");
-
-        this.properties = properties;
-
-        return LDAPException.SUCCESS;
-    }
-
 
     /**
      * Performs bind operation.
@@ -266,10 +247,10 @@ public class PenroseBackend implements Backend {
      */
     public int bind(int connectionId, String dn, String password) throws Exception {
 
-        PenroseSession session = getConnection(connectionId);
+        PenroseSession session = getSession(connectionId);
         if (session == null) {
-            createConnection(connectionId);
-            session = getConnection(connectionId);
+            openConnection(connectionId);
+            session = getSession(connectionId);
         }
 
         try {
@@ -290,10 +271,10 @@ public class PenroseBackend implements Backend {
      */
     public int unbind(int connectionId) throws Exception {
 
-        PenroseSession session = getConnection(connectionId);
+        PenroseSession session = getSession(connectionId);
         if (session == null) {
-            createConnection(connectionId);
-            session = getConnection(connectionId);
+            openConnection(connectionId);
+            session = getSession(connectionId);
         }
 
         try {
@@ -309,83 +290,34 @@ public class PenroseBackend implements Backend {
      * Performs search operation.
      *
      * @param connectionId
-     * @param base
-     * @param scope
+     * @param baseDn
      * @param filter
-     * @param attributeNames
      * @return search result
      * @throws Exception
      */
     public Result search(
             int connectionId,
-            String base,
-            int scope,
+            String baseDn,
             String filter,
-            String[] attributeNames)
+            SearchControls sc)
     throws Exception {
 
-        PenroseSession session = getConnection(connectionId);
+        PenroseSession session = getSession(connectionId);
         if (session == null) {
-            createConnection(connectionId);
-            session = getConnection(connectionId);
+            openConnection(connectionId);
+            session = getSession(connectionId);
         }
 
         PenroseSearchResults results = new PenroseSearchResults();
 
         try {
-            PenroseSearchControls sc = new PenroseSearchControls();
-            sc.setScope(scope);
-            sc.setDereference(PenroseSearchControls.DEREF_ALWAYS);
-            sc.setAttributes(attributeNames);
+            PenroseSearchControls psc = new PenroseSearchControls();
+            psc.setScope(sc.getSearchScope());
+            psc.setTimeLimit(sc.getTimeLimit());
+            psc.setDereference(PenroseSearchControls.DEREF_ALWAYS);
+            psc.setAttributes(sc.getReturningAttributes());
 
-            session.search(base, filter, sc, results);
-
-        } catch (Throwable e) {
-            log.error(e.getMessage(), e);
-
-            results.setReturnCode(LDAPException.OPERATIONS_ERROR);
-            results.close();
-        }
-
-        return new PenroseResult(results);
-    }
-
-    /**
-     * Performs search operation.
-     *
-     * @param connectionId
-     * @param base
-     * @param scope
-     * @param deref
-     * @param filter
-     * @param attributeNames
-     * @return search result
-     * @throws Exception
-     */
-    public Result search(
-            int connectionId,
-            String base,
-            int scope,
-            int deref,
-            String filter,
-            String[] attributeNames)
-    throws Exception {
-
-        PenroseSession session = getConnection(connectionId);
-        if (session == null) {
-            createConnection(connectionId);
-            session = getConnection(connectionId);
-        }
-
-        PenroseSearchResults results = new PenroseSearchResults();
-
-        try {
-            PenroseSearchControls sc = new PenroseSearchControls();
-            sc.setScope(scope);
-            sc.setDereference(PenroseSearchControls.DEREF_ALWAYS);
-            sc.setAttributes(attributeNames);
-
-            session.search(base, filter, sc, results);
+            int rc = session.search(baseDn, filter, psc, results);
 
         } catch (Throwable e) {
             log.error(e.getMessage(), e);
@@ -412,10 +344,10 @@ public class PenroseBackend implements Backend {
             Attributes attributes)
     throws Exception {
 
-        PenroseSession session = getConnection(connectionId);
+        PenroseSession session = getSession(connectionId);
         if (session == null) {
-            createConnection(connectionId);
-            session = getConnection(connectionId);
+            openConnection(connectionId);
+            session = getSession(connectionId);
         }
 
         try {
@@ -440,10 +372,10 @@ public class PenroseBackend implements Backend {
             String dn)
     throws Exception {
 
-        PenroseSession session = getConnection(connectionId);
+        PenroseSession session = getSession(connectionId);
         if (session == null) {
-            createConnection(connectionId);
-            session = getConnection(connectionId);
+            openConnection(connectionId);
+            session = getSession(connectionId);
         }
 
         try {
@@ -470,10 +402,10 @@ public class PenroseBackend implements Backend {
             Collection modifications)
     throws Exception {
 
-        PenroseSession session = getConnection(connectionId);
+        PenroseSession session = getSession(connectionId);
         if (session == null) {
-            createConnection(connectionId);
-            session = getConnection(connectionId);
+            openConnection(connectionId);
+            session = getSession(connectionId);
         }
 
         try {
@@ -502,10 +434,10 @@ public class PenroseBackend implements Backend {
             Object attributeValue)
     throws Exception {
 
-        PenroseSession session = getConnection(connectionId);
+        PenroseSession session = getSession(connectionId);
         if (session == null) {
-            createConnection(connectionId);
-            session = getConnection(connectionId);
+            openConnection(connectionId);
+            session = getSession(connectionId);
         }
 
         try {
