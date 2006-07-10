@@ -31,22 +31,21 @@ public class ConnectionManager implements ConnectionManagerMBean {
 
     public Logger log = LoggerFactory.getLogger(getClass());
 
+    public Map connectionConfigs = new TreeMap();
+    public Map adapterConfigs = new TreeMap();
+    public Map partitions = new TreeMap();
+
     public Map connections = new TreeMap();
 
     public void init(Partition partition, ConnectionConfig connectionConfig, AdapterConfig adapterConfig) throws Exception {
 
         String name = partition.getName()+"/"+connectionConfig.getName();
-        Connection connection = (Connection)connections.get(name);
-        if (connection != null) return;
+        if (connectionConfigs.containsKey(name)) return;
 
-        log.debug("Initializing "+name+" connection.");
-        connection = new Connection(connectionConfig, adapterConfig);
-        addConnection(partition, connection);
-    }
-
-    public void addConnection(Partition partition, Connection connection) {
-        String name = partition.getName()+"/"+connection.getName();
-        connections.put(name, connection);
+        log.debug("Registering "+name+" connection.");
+        connectionConfigs.put(name, connectionConfig);
+        adapterConfigs.put(name, adapterConfig);
+        partitions.put(name, partition);
     }
 
     public void clear() {
@@ -54,13 +53,19 @@ public class ConnectionManager implements ConnectionManagerMBean {
     }
 
     public void start() throws Exception {
-        for (Iterator i=connections.keySet().iterator(); i.hasNext(); ) {
+        for (Iterator i=connectionConfigs.keySet().iterator(); i.hasNext(); ) {
             String name = (String)i.next();
-            Connection connection = (Connection)connections.get(name);
 
             log.debug("Starting "+name+" connection.");
             try {
+                ConnectionConfig connectionConfig = (ConnectionConfig )connectionConfigs.get(name);
+                AdapterConfig adapterConfig = (AdapterConfig)adapterConfigs.get(name);
+
+                Connection connection = new Connection(connectionConfig, adapterConfig);
+
                 connection.init();
+                connections.put(name, connection);
+
             } catch (Exception e) {
                 log.error(e.getMessage(), e);
             }
@@ -68,11 +73,17 @@ public class ConnectionManager implements ConnectionManagerMBean {
     }
 
     public void stop() throws Exception {
-        for (Iterator i=connections.values().iterator(); i.hasNext(); ) {
-            Connection connection = (Connection)i.next();
+        for (Iterator i=connections.keySet().iterator(); i.hasNext(); ) {
+            String name = (String)i.next();
+            Connection connection = (Connection)connections.get(name);
 
             log.debug("Closing "+connection.getConnectionName()+" connection.");
-            connection.close();
+            try {
+                connection.close();
+
+            } catch (Exception e) {
+                log.error(e.getMessage(), e);
+            }
         }
     }
 
