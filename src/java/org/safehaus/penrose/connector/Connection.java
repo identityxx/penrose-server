@@ -109,6 +109,7 @@ public class Connection implements ConnectionMBean {
         if (adapter == null) {
             results.setReturnCode(LDAPException.OPERATIONS_ERROR);
             results.close();
+            return;
         }
         adapter.search(sourceConfig, filter, sc, results);
     }
@@ -117,6 +118,7 @@ public class Connection implements ConnectionMBean {
         if (adapter == null) {
             results.setReturnCode(LDAPException.OPERATIONS_ERROR);
             results.close();
+            return;
         }
         adapter.load(sourceConfig, filter, sc, results);
     }
