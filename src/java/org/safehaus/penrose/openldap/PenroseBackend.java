@@ -34,6 +34,7 @@ import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.config.PenroseConfigReader;
 import org.openldap.backend.Backend;
 import org.openldap.backend.Result;
+import org.apache.log4j.xml.DOMConfigurator;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
@@ -55,23 +56,17 @@ public class PenroseBackend implements Backend {
     public String rootDn;
     public String rootPassword;
 
-    public String homeDirectory;
+    public String home;
 
     public Penrose penrose;
 
     public Map sessions = new HashMap();
 
     public PenroseBackend() {
-        //File f = new File("conf/log4j.properties");
-        //if (f.exists()) PropertyConfigurator.configure(f.getAbsolutePath());
-    }
+        home = System.getProperty("penrose.home");
 
-    public int setHomeDirectory(String homeDirectory) {
-        this.homeDirectory = homeDirectory;
-
-        slapdConfig = this.homeDirectory + "/etc/openldap/slapd.conf";
-
-        return LDAPException.SUCCESS;
+        File f = new File((home == null ? "" : home+File.separator)+"conf"+File.separator+"log4j.xml");
+        if (f.exists()) DOMConfigurator.configure(f.getAbsolutePath());
     }
 
     /**
@@ -93,8 +88,6 @@ public class PenroseBackend implements Backend {
 
         log.debug("-------------------------------------------------------------------------------");
         log.debug("PenroseBackend.init();");
-
-        String home = System.getProperty("penrose.home");
 
         PenroseConfigReader reader = new PenroseConfigReader((home == null ? "" : home+ File.separator)+"conf"+File.separator+"server.xml");
         PenroseConfig penroseConfig = reader.read();
@@ -185,7 +178,7 @@ public class PenroseBackend implements Backend {
      * @return connection
      */
     public PenroseSession getSession(int connectionId) throws Exception {
-        return (PenroseSession)sessions.remove(new Integer(connectionId));
+        return (PenroseSession)sessions.get(new Integer(connectionId));
     }
 
     /**
@@ -206,7 +199,7 @@ public class PenroseBackend implements Backend {
      */
     public void closeConnection(int connectionId) throws Exception {
         PenroseSession session = (PenroseSession)sessions.remove(new Integer(connectionId));
-        session.close();
+        if (session != null) session.close();
     }
 
     /**
@@ -410,6 +403,36 @@ public class PenroseBackend implements Backend {
 
         try {
             return session.modify(dn, modifications);
+
+        } catch (Throwable e) {
+            log.error(e.getMessage(), e);
+            return LDAPException.OPERATIONS_ERROR;
+        }
+    }
+
+    /**
+     * Performs modrdn operation.
+     *
+     * @param connectionId
+     * @param dn
+     * @param newrdn
+     * @return return code
+     * @throws Exception
+     */
+    public int modrdn(
+            int connectionId,
+            String dn,
+            String newrdn)
+    throws Exception {
+
+        PenroseSession session = getSession(connectionId);
+        if (session == null) {
+            openConnection(connectionId);
+            session = getSession(connectionId);
+        }
+
+        try {
+            return session.modrdn(dn, newrdn);
 
         } catch (Throwable e) {
             log.error(e.getMessage(), e);

@@ -148,6 +148,21 @@ public interface Backend {
     throws Exception;
 
     /**
+     * Performs modrdn operation.
+     *
+     * @param connectionId
+     * @param dn
+     * @param newrdn
+     * @return return code
+     * @throws Exception
+     */
+    public int modrdn(
+            int connectionId,
+            String dn,
+            String newrdn)
+    throws Exception;
+
+    /**
      * Performs compare operation.
      * 
      * @param connectionId Connection ID.
