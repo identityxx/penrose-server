@@ -18,8 +18,8 @@
 package org.safehaus.penrose.config;
 
 import org.safehaus.penrose.connector.AdapterConfig;
-import org.safehaus.penrose.connector.JDBCAdapter;
-import org.safehaus.penrose.connector.JNDIAdapter;
+import org.safehaus.penrose.jdbc.JDBCAdapter;
+import org.safehaus.penrose.ldap.LDAPAdapter;
 import org.safehaus.penrose.partition.PartitionConfig;
 import org.safehaus.penrose.schema.SchemaConfig;
 import org.safehaus.penrose.service.ServiceConfig;
@@ -52,7 +52,7 @@ public class DefaultPenroseConfig extends PenroseConfig {
         addSchemaConfig(new SchemaConfig("schema/apachedns.schema"));
 
         addAdapterConfig(new AdapterConfig("JDBC", JDBCAdapter.class.getName()));
-        addAdapterConfig(new AdapterConfig("JNDI", JNDIAdapter.class.getName()));
+        addAdapterConfig(new AdapterConfig("LDAP", LDAPAdapter.class.getName()));
 
         addEngineConfig(new EngineConfig());
         

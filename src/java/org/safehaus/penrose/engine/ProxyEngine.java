@@ -6,7 +6,8 @@ import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.SourceConfig;
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.connector.Connection;
-import org.safehaus.penrose.connector.JNDIAdapter;
+import org.safehaus.penrose.ldap.LDAPAdapter;
+import org.safehaus.penrose.ldap.LDAPClient;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.session.PenroseSearchControls;
 import org.safehaus.penrose.session.PenroseSearchResults;
@@ -74,7 +75,7 @@ public class ProxyEngine extends Engine {
         String connectionName = sourceConfig.getConnectionName();
 
         Connection connection = connectionManager.getConnection(partition, connectionName);
-        JNDIAdapter adapter = (JNDIAdapter)connection.getAdapter();
+        LDAPAdapter adapter = (LDAPAdapter)connection.getAdapter();
 
         String targetDn = dn.substring(0, dn.length() - proxyDn.length());
         if (targetDn.endsWith(",")) targetDn = targetDn.substring(0, targetDn.length()-1);
@@ -84,7 +85,7 @@ public class ProxyEngine extends Engine {
 
         log.debug("Binding via proxy "+sourceName+" as \""+targetDn+"\" with "+password);
 
-        JNDIClient client = adapter.getClient();
+        LDAPClient client = adapter.getClient();
         return client.bind(targetDn, password);
     }
 
@@ -105,7 +106,7 @@ public class ProxyEngine extends Engine {
         String connectionName = sourceConfig.getConnectionName();
 
         Connection connection = connectionManager.getConnection(partition, connectionName);
-        JNDIAdapter adapter = (JNDIAdapter)connection.getAdapter();
+        LDAPAdapter adapter = (LDAPAdapter)connection.getAdapter();
 
         String proxyDn = proxyMapping.getDn();
 
@@ -117,7 +118,7 @@ public class ProxyEngine extends Engine {
 
         log.debug("Modifying via proxy "+sourceName+" as \""+targetDn+"\"");
 
-        JNDIClient client = adapter.getClient();
+        LDAPClient client = adapter.getClient();
         return client.add(targetDn, attributes);
     }
 
@@ -137,7 +138,7 @@ public class ProxyEngine extends Engine {
         String connectionName = sourceConfig.getConnectionName();
 
         Connection connection = connectionManager.getConnection(partition, connectionName);
-        JNDIAdapter adapter = (JNDIAdapter)connection.getAdapter();
+        LDAPAdapter adapter = (LDAPAdapter)connection.getAdapter();
 
         String proxyDn = entryMapping.getDn();
 
@@ -149,7 +150,7 @@ public class ProxyEngine extends Engine {
 
         log.debug("Modifying via proxy "+sourceName+" as \""+targetDn+"\"");
 
-        JNDIClient client = adapter.getClient();
+        LDAPClient client = adapter.getClient();
         return client.modify(targetDn, modifications);
     }
 
@@ -169,7 +170,7 @@ public class ProxyEngine extends Engine {
         String connectionName = sourceConfig.getConnectionName();
 
         Connection connection = connectionManager.getConnection(partition, connectionName);
-        JNDIAdapter adapter = (JNDIAdapter)connection.getAdapter();
+        LDAPAdapter adapter = (LDAPAdapter)connection.getAdapter();
 
         String proxyDn = entryMapping.getDn();
 
@@ -181,7 +182,7 @@ public class ProxyEngine extends Engine {
 
         log.debug("Renaming via proxy "+sourceName+" as \""+targetDn+"\"");
 
-        JNDIClient client = adapter.getClient();
+        LDAPClient client = adapter.getClient();
         return client.modrdn(targetDn, newRdn);
     }
 
@@ -200,7 +201,7 @@ public class ProxyEngine extends Engine {
         String connectionName = sourceConfig.getConnectionName();
 
         Connection connection = connectionManager.getConnection(partition, connectionName);
-        JNDIAdapter adapter = (JNDIAdapter)connection.getAdapter();
+        LDAPAdapter adapter = (LDAPAdapter)connection.getAdapter();
 
         String proxyDn = entryMapping.getDn();
 
@@ -212,7 +213,7 @@ public class ProxyEngine extends Engine {
 
         log.debug("Modifying via proxy "+sourceName+" as \""+targetDn+"\"");
 
-        JNDIClient client = adapter.getClient();
+        LDAPClient client = adapter.getClient();
         return client.delete(targetDn);
     }
 
@@ -288,7 +289,7 @@ public class ProxyEngine extends Engine {
         String connectionName = sourceConfig.getConnectionName();
 
         Connection connection = connectionManager.getConnection(partition, connectionName);
-        JNDIAdapter adapter = (JNDIAdapter)connection.getAdapter();
+        LDAPAdapter adapter = (LDAPAdapter)connection.getAdapter();
 
         final String proxyDn = entryMapping.getDn();
         log.debug("Proxy DN: "+proxyDn);
@@ -345,7 +346,7 @@ Mapping: ou=Groups,dc=Proxy,dc=Example,dc=org
 
         log.debug("Searching proxy "+sourceName+" for \""+targetDn+"\" with filter="+filter+" attrs="+newSc.getAttributes());
 
-        final JNDIClient client = adapter.getClient();
+        final LDAPClient client = adapter.getClient();
 
         try {
             PenroseSearchResults res = new PenroseSearchResults();

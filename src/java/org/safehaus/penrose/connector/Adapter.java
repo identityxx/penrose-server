@@ -36,7 +36,7 @@ import java.util.Map;
  */
 public abstract class Adapter {
 
-    Logger log = LoggerFactory.getLogger(getClass());
+    public Logger log = LoggerFactory.getLogger(getClass());
 
     private AdapterConfig adapterConfig;
     private Connection connection;

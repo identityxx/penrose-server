@@ -67,11 +67,11 @@
   <connector/>
 
   <adapter name="JDBC">
-    <adapter-class>org.safehaus.penrose.connector.JDBCAdapter</adapter-class>
+    <adapter-class>org.safehaus.penrose.jdbc.JDBCAdapter</adapter-class>
   </adapter>
 
-  <adapter name="JNDI">
-    <adapter-class>org.safehaus.penrose.connector.JNDIAdapter</adapter-class>
+  <adapter name="LDAP">
+    <adapter-class>org.safehaus.penrose.ldap.LDAPAdapter</adapter-class>
   </adapter>
 
   <partition name="DEFAULT" path="conf"/>

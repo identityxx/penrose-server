@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
-package org.safehaus.penrose.util;
+package org.safehaus.penrose.ldap;
 
 import java.io.StringReader;
 import java.util.*;
@@ -31,11 +31,13 @@ import org.safehaus.penrose.schema.SchemaParser;
 import org.safehaus.penrose.schema.Schema;
 import org.safehaus.penrose.session.PenroseSearchResults;
 import org.safehaus.penrose.session.PenroseSearchControls;
+import org.safehaus.penrose.util.EntryUtil;
+import org.safehaus.penrose.util.PasswordUtil;
 import org.ietf.ldap.*;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
-public class JNDIClient {
+public class LDAPClient {
 
     Logger log = LoggerFactory.getLogger(getClass());
 
@@ -57,14 +59,14 @@ public class JNDIClient {
     private SearchResult rootDSE;
     private Schema schema;
 
-    public JNDIClient(JNDIClient client, Map parameters) throws Exception {
+    public LDAPClient(LDAPClient client, Map parameters) throws Exception {
         init(parameters);
 
         this.rootDSE = client.rootDSE;
         this.schema = client.schema;
     }
 
-    public JNDIClient(Map parameters) throws Exception {
+    public LDAPClient(Map parameters) throws Exception {
         init(parameters);
 
         //getRootDSE();

@@ -78,7 +78,7 @@
             target="1.4"
         />
         <copy todir="target/classes">
-            <fileset dir="src/java" includes="**/*.xml,**/*.dtd"/>
+            <fileset dir="src/java" includes="**/*.properties,**/*.xml,**/*.dtd"/>
         </copy>
         <jar jarfile="target/${project.name}-${project.version}.jar">
             <fileset dir="target/classes"/>
@@ -147,7 +147,11 @@
         <copy todir="target/dist/conf/default">
             <fileset dir="conf"/>
         </copy>
-        <taskdef name="wrapper" classname="org.safehaus.penrose.ant.WrapperTask" classpath="target/penrose-ant.jar"/>
+        <taskdef
+                name="wrapper"
+                classname="org.safehaus.penrose.ant.WrapperTask"
+                classpath="target/penrose-ant.jar"
+        />
         <wrapper file="target/dist/conf/default/wrapper.conf" dir="lib"/>
         <copy todir="target/dist/conf">
             <fileset dir="target/dist/conf/default"/>

@@ -28,7 +28,6 @@ import org.safehaus.penrose.connector.ConnectionManager;
 import org.safehaus.penrose.session.PenroseSearchResults;
 import org.safehaus.penrose.session.PenroseSearchControls;
 import org.safehaus.penrose.session.PenroseSession;
-import org.safehaus.penrose.util.JNDIClient;
 import org.safehaus.penrose.partition.PartitionManager;
 import org.safehaus.penrose.partition.Partition;
 
@@ -63,7 +62,7 @@ public class LDAPSyncModule extends Module implements EntryCacheListener {
     }
 
     public DirContext getConnection() throws Exception {
-        JNDIClient client = (JNDIClient)connectionManager.openConnection(connectionName);
+        LDAPClient client = (LDAPClient)connectionManager.openConnection(connectionName);
         return client.getContext();
     }
 

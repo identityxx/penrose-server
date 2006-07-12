@@ -2,7 +2,7 @@
  Copyright (c) 2000-2005, Identyx Corporation.
  All rights reserved.
 -->
-<project name="jdbc" basedir=".">
+<project name="ldap" basedir=".">
 
     <property name="test.hostname" value="localhost"/>
     <property name="test.port" value="10389"/>
@@ -17,7 +17,7 @@
             <arg line="-w ${test.password}"/>
             <arg line="-x"/>
             <arg line="-s sub"/>
-            <arg line="-b dc=JNDI,dc=Example,dc=com"/>
+            <arg line="-b dc=LDAP,dc=Example,dc=com"/>
         </exec>
     </target>
 

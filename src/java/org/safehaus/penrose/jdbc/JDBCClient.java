@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
-package org.safehaus.penrose.util;
+package org.safehaus.penrose.jdbc;
 
 import java.sql.*;
 import java.util.*;
@@ -23,7 +23,7 @@ import java.lang.reflect.Field;
 
 import org.safehaus.penrose.partition.FieldConfig;
 import org.safehaus.penrose.partition.TableConfig;
-import org.safehaus.penrose.connector.JDBCAdapter;
+import org.safehaus.penrose.jdbc.JDBCAdapter;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 

@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
-package org.safehaus.penrose.connector;
+package org.safehaus.penrose.ldap;
 
 import javax.naming.directory.*;
 import javax.naming.*;
@@ -30,6 +30,7 @@ import org.safehaus.penrose.partition.FieldConfig;
 import org.safehaus.penrose.partition.SourceConfig;
 import org.safehaus.penrose.util.*;
 import org.safehaus.penrose.util.Formatter;
+import org.safehaus.penrose.connector.Adapter;
 
 import java.util.*;
 
@@ -37,21 +38,21 @@ import java.util.*;
 /**
  * @author Endi S. Dewata
  */
-public class JNDIAdapter extends Adapter {
+public class LDAPAdapter extends Adapter {
 
     public final static String BASE_DN        = "baseDn";
     public final static String SCOPE          = "scope";
     public final static String FILTER         = "filter";
     public final static String OBJECT_CLASSES = "objectClasses";
 
-    private JNDIClient client;
+    private LDAPClient client;
 
     public void init() throws Exception {
-        client = new JNDIClient(getParameters());
+        client = new LDAPClient(getParameters());
     }
 
     public Object openConnection() throws Exception {
-        return new JNDIClient(client, getParameters());
+        return new LDAPClient(client, getParameters());
     }
 
     public int bind(SourceConfig sourceConfig, Row pk, String password) throws Exception {
@@ -60,7 +61,7 @@ public class JNDIAdapter extends Adapter {
 
         if (log.isDebugEnabled()) {
             log.debug(Formatter.displaySeparator(80));
-            log.debug(Formatter.displayLine("JNDI Bind", 80));
+            log.debug(Formatter.displayLine("LDAP Bind", 80));
             log.debug(Formatter.displayLine(" - Bind DN : "+dn, 80));
             log.debug(Formatter.displayLine(" - Password: "+password, 80));
             log.debug(Formatter.displaySeparator(80));
@@ -101,7 +102,7 @@ public class JNDIAdapter extends Adapter {
 
         if (log.isDebugEnabled()) {
             log.debug(Formatter.displaySeparator(80));
-            log.debug(Formatter.displayLine("JNDI Search "+sourceConfig.getConnectionName()+"/"+sourceConfig.getName(), 80));
+            log.debug(Formatter.displayLine("LDAP Search "+sourceConfig.getConnectionName()+"/"+sourceConfig.getName(), 80));
             log.debug(Formatter.displayLine(" - Base DN: "+ldapBase, 80));
             log.debug(Formatter.displayLine(" - Scope: "+ldapScope, 80));
             log.debug(Formatter.displayLine(" - Filter: "+ldapFilter, 80));
@@ -123,7 +124,7 @@ public class JNDIAdapter extends Adapter {
 
         DirContext ctx = null;
         try {
-            ctx = ((JNDIClient)openConnection()).getContext();
+            ctx = ((LDAPClient)openConnection()).getContext();
             NamingEnumeration ne = ctx.search(ldapBase, ldapFilter, ctls);
 
             log.debug("Result:");
@@ -160,7 +161,7 @@ public class JNDIAdapter extends Adapter {
 
         if (log.isDebugEnabled()) {
             log.debug(Formatter.displaySeparator(80));
-            log.debug(Formatter.displayLine("JNDI Search "+sourceConfig.getConnectionName()+"/"+sourceConfig.getName(), 80));
+            log.debug(Formatter.displayLine("LDAP Search "+sourceConfig.getConnectionName()+"/"+sourceConfig.getName(), 80));
             log.debug(Formatter.displayLine(" - Base DN: "+ldapBase, 80));
             log.debug(Formatter.displayLine(" - Scope: "+ldapScope, 80));
             log.debug(Formatter.displayLine(" - Filter: "+ldapFilter, 80));
@@ -181,7 +182,7 @@ public class JNDIAdapter extends Adapter {
 
         DirContext ctx = null;
         try {
-            ctx = ((JNDIClient)openConnection()).getContext();
+            ctx = ((LDAPClient)openConnection()).getContext();
             NamingEnumeration ne = ctx.search(ldapBase, ldapFilter, ctls);
 
             log.debug("Result:");
@@ -254,7 +255,7 @@ public class JNDIAdapter extends Adapter {
 
         if (log.isDebugEnabled()) {
             log.debug(Formatter.displaySeparator(80));
-            log.debug(Formatter.displayLine("JNDI Add "+sourceConfig.getConnectionName()+"/"+sourceConfig.getName(), 80));
+            log.debug(Formatter.displayLine("LDAP Add "+sourceConfig.getConnectionName()+"/"+sourceConfig.getName(), 80));
             log.debug(Formatter.displayLine(" - DN: "+dn, 80));
             log.debug(Formatter.displaySeparator(80));
         }
@@ -292,7 +293,7 @@ public class JNDIAdapter extends Adapter {
         log.debug("Adding "+dn);
         DirContext ctx = null;
         try {
-            ctx = ((JNDIClient)openConnection()).getContext();
+            ctx = ((LDAPClient)openConnection()).getContext();
             ctx.createSubcontext(dn, attributes);
 
         } catch (NameAlreadyBoundException e) {
@@ -311,7 +312,7 @@ public class JNDIAdapter extends Adapter {
 
     public int modifyDelete(SourceConfig sourceConfig, AttributeValues entry) throws Exception {
 
-        log.debug("JNDI Modify Delete:");
+        log.debug("LDAP Modify Delete:");
 
         String dn = getDn(sourceConfig, entry);
         log.debug("Deleting attributes in "+dn);
@@ -347,7 +348,7 @@ public class JNDIAdapter extends Adapter {
 
         DirContext ctx = null;
         try {
-            ctx = ((JNDIClient)openConnection()).getContext();
+            ctx = ((LDAPClient)openConnection()).getContext();
             ctx.modifyAttributes(dn, mods);
 
         } catch (Exception e) {
@@ -367,14 +368,14 @@ public class JNDIAdapter extends Adapter {
 
         if (log.isDebugEnabled()) {
             log.debug(Formatter.displaySeparator(80));
-            log.debug(Formatter.displayLine("JNDI Delete "+sourceConfig.getConnectionName()+"/"+sourceConfig.getName(), 80));
+            log.debug(Formatter.displayLine("LDAP Delete "+sourceConfig.getConnectionName()+"/"+sourceConfig.getName(), 80));
             log.debug(Formatter.displayLine(" - DN: "+dn, 80));
             log.debug(Formatter.displaySeparator(80));
         }
 
         DirContext ctx = null;
         try {
-            ctx = ((JNDIClient)openConnection()).getContext();
+            ctx = ((LDAPClient)openConnection()).getContext();
             ctx.destroySubcontext(dn);
 
         } catch (NameNotFoundException e) {
@@ -397,7 +398,7 @@ public class JNDIAdapter extends Adapter {
 
         if (log.isDebugEnabled()) {
             log.debug(Formatter.displaySeparator(80));
-            log.debug(Formatter.displayLine("JNDI Modify "+sourceConfig.getConnectionName()+"/"+sourceConfig.getName(), 80));
+            log.debug(Formatter.displayLine("LDAP Modify "+sourceConfig.getConnectionName()+"/"+sourceConfig.getName(), 80));
             log.debug(Formatter.displayLine(" - DN: "+dn, 80));
             log.debug(Formatter.displaySeparator(80));
         }
@@ -547,7 +548,7 @@ public class JNDIAdapter extends Adapter {
 
         DirContext ctx = null;
         try {
-            ctx = ((JNDIClient)openConnection()).getContext();
+            ctx = ((LDAPClient)openConnection()).getContext();
             ctx.modifyAttributes(dn, mods);
 
         } catch (Exception e) {
@@ -568,7 +569,7 @@ public class JNDIAdapter extends Adapter {
 
         if (log.isDebugEnabled()) {
             log.debug(Formatter.displaySeparator(80));
-            log.debug(Formatter.displayLine("JNDI ModRDN "+sourceConfig.getConnectionName()+"/"+sourceConfig.getName(), 80));
+            log.debug(Formatter.displayLine("LDAP ModRDN "+sourceConfig.getConnectionName()+"/"+sourceConfig.getName(), 80));
             log.debug(Formatter.displayLine(" - DN: "+dn, 80));
             log.debug(Formatter.displayLine(" - New RDN: "+newRdn, 80));
             log.debug(Formatter.displaySeparator(80));
@@ -576,7 +577,7 @@ public class JNDIAdapter extends Adapter {
 
         DirContext ctx = null;
         try {
-            ctx = ((JNDIClient)openConnection()).getContext();
+            ctx = ((LDAPClient)openConnection()).getContext();
             ctx.rename(dn, newRdn);
 
         } catch (Exception e) {
@@ -591,7 +592,7 @@ public class JNDIAdapter extends Adapter {
     }
 
     public int modifyAdd(SourceConfig sourceConfig, AttributeValues entry) throws Exception {
-        log.debug("JNDI Modify Add:");
+        log.debug("LDAP Modify Add:");
 
         String dn = getDn(sourceConfig, entry);
         log.debug("Replacing attributes "+dn);
@@ -634,7 +635,7 @@ public class JNDIAdapter extends Adapter {
 
         DirContext ctx = null;
         try {
-            ctx = ((JNDIClient)openConnection()).getContext();
+            ctx = ((LDAPClient)openConnection()).getContext();
             ctx.modifyAttributes(dn, mods);
 
         } catch (Exception e) {
@@ -691,7 +692,7 @@ public class JNDIAdapter extends Adapter {
 
         if (log.isDebugEnabled()) {
             log.debug(Formatter.displaySeparator(80));
-            log.debug(Formatter.displayLine("JNDI Search "+sourceConfig.getConnectionName()+"/"+sourceConfig.getName(), 80));
+            log.debug(Formatter.displayLine("LDAP Search "+sourceConfig.getConnectionName()+"/"+sourceConfig.getName(), 80));
             log.debug(Formatter.displayLine(" - Base DN: "+ldapBase, 80));
             log.debug(Formatter.displayLine(" - Filter: "+ldapFilter, 80));
             log.debug(Formatter.displaySeparator(80));
@@ -702,7 +703,7 @@ public class JNDIAdapter extends Adapter {
 
         DirContext ctx = null;
         try {
-            ctx = ((JNDIClient)openConnection()).getContext();
+            ctx = ((LDAPClient)openConnection()).getContext();
             NamingEnumeration ne = ctx.search(ldapBase, ldapFilter, ctls);
 
             log.debug("Result:");
@@ -740,7 +741,7 @@ public class JNDIAdapter extends Adapter {
         return new SubstringFilter(fieldName, substrings);
     }
 
-    public JNDIClient getClient() throws Exception {
-        return new JNDIClient(client, getParameters());
+    public LDAPClient getClient() throws Exception {
+        return new LDAPClient(client, getParameters());
     }
 }

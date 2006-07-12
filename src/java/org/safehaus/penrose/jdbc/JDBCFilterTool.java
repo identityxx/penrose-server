@@ -1,4 +1,4 @@
-package org.safehaus.penrose.connector;
+package org.safehaus.penrose.jdbc;
 
 import org.safehaus.penrose.filter.*;
 import org.safehaus.penrose.partition.FieldConfig;

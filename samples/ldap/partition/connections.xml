@@ -6,7 +6,7 @@
 <connections>
 
   <connection name="SunONE">
-    <adapter-name>JNDI</adapter-name>
+    <adapter-name>LDAP</adapter-name>
     <parameter>
       <param-name>java.naming.factory.initial</param-name>
       <param-value>com.sun.jndi.ldap.LdapCtxFactory</param-value>

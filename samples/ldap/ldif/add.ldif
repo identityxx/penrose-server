@@ -1,4 +1,4 @@
-dn: uid=test,ou=Users,dc=JNDI,dc=Example,dc=com
+dn: uid=test,ou=Users,dc=LDAP,dc=Example,dc=com
 objectClass: inetOrgPerson
 objectClass: organizationalPerson
 objectClass: person
