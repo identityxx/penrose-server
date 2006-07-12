@@ -154,7 +154,7 @@ public class SearchHandler {
 
         int rc;
         try {
-            String scope = LDAPUtil.getScope(sc);
+            String scope = LDAPUtil.getScope(sc.getScope());
             baseDn = normalizeDn(baseDn);
 
             attributeNames = normalizeAttributeNames(attributeNames);

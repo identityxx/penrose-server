@@ -385,7 +385,7 @@ public class DefaultEngine extends Engine {
             log.debug(Formatter.displayLine("Entry: \""+entryMapping.getDn()+"\"", 80));
             log.debug(Formatter.displayLine("Base DN: "+baseDn, 80));
             log.debug(Formatter.displayLine("Filter: "+filter, 80));
-            log.debug(Formatter.displayLine("Scope: "+LDAPUtil.getScope(sc), 80));
+            log.debug(Formatter.displayLine("Scope: "+LDAPUtil.getScope(sc.getScope()), 80));
             log.debug(Formatter.displayLine("Parent source values:", 80));
 
             if (parentSourceValues != null) {

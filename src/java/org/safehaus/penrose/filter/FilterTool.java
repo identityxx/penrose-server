@@ -458,7 +458,7 @@ public class FilterTool {
     }
 
     public static boolean isValid(AttributeValues attributeValues, Filter filter) throws Exception {
-        log.debug("Checking filter "+filter);
+        //log.debug("Checking filter "+filter);
 
         boolean result = false;
 

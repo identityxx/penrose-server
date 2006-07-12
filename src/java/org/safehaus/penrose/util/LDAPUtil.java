@@ -6,6 +6,7 @@ import org.safehaus.penrose.session.PenroseSearchControls;
 
 import javax.naming.directory.DirContext;
 import javax.naming.directory.Attribute;
+import javax.naming.directory.SearchControls;
 import javax.naming.NamingEnumeration;
 
 /**
@@ -45,8 +46,14 @@ public class LDAPUtil {
         return binary;
     }
 
-    public static String getScope(PenroseSearchControls sc) {
-        return getScope(sc.getScope());
+    public static PenroseSearchControls convert(SearchControls sc) {
+        PenroseSearchControls psc = new PenroseSearchControls();
+        psc.setScope(sc.getSearchScope());
+        psc.setSizeLimit(sc.getCountLimit());
+        psc.setTimeLimit(sc.getTimeLimit());
+        psc.setAttributes(sc.getReturningAttributes());
+        psc.setTypesOnly(sc.getReturningObjFlag());
+        return psc;
     }
 
     public static String getScope(int scope) {

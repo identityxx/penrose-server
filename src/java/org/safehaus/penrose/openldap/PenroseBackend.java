@@ -306,6 +306,7 @@ public class PenroseBackend implements Backend {
         try {
             PenroseSearchControls psc = new PenroseSearchControls();
             psc.setScope(sc.getSearchScope());
+            psc.setSizeLimit(sc.getCountLimit());
             psc.setTimeLimit(sc.getTimeLimit());
             psc.setDereference(PenroseSearchControls.DEREF_ALWAYS);
             psc.setAttributes(sc.getReturningAttributes());
