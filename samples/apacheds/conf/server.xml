@@ -12,15 +12,15 @@
         init-method="start" destroy-method="stop">
     <constructor-arg><value>${penrose.home}</value></constructor-arg>
   </bean>
-<!--
+
   <bean id="penroseInterceptor" class="org.safehaus.penrose.ldap.PenroseInterceptor">
     <property name="penrose"><ref bean="penrose"/></property>
   </bean>
--->
+<!--
   <bean id="penrosePartition" class="org.safehaus.penrose.ldap.PenrosePartition">
     <property name="penrose"><ref bean="penrose"/></property>
   </bean>
-
+-->
   <bean id="environment" class="org.springframework.beans.factory.config.PropertiesFactoryBean">
     <property name="properties">
       <props>
@@ -78,7 +78,9 @@
     <property name="contextPartitionConfigurations">
       <set>
         <ref bean="testPartitionConfiguration"/>
+<!--
         <ref bean="penrosePartitionConfiguration"/>
+-->
       </set>
     </property>
     <property name="bootstrapSchemas">
@@ -107,14 +109,12 @@
 
     <property name="interceptorConfigurations">
       <list>
-<!--
         <bean class="org.apache.directory.server.core.configuration.MutableInterceptorConfiguration">
           <property name="name"><value>penroseService</value></property>
           <property name="interceptor">
             <ref bean="penroseInterceptor"/>
           </property>
         </bean>
--->
         <bean class="org.apache.directory.server.core.configuration.MutableInterceptorConfiguration">
           <property name="name"><value>normalizationService</value></property>
           <property name="interceptor">
@@ -207,13 +207,13 @@
       </value>
     </property>
   </bean>
-
+<!--
   <bean id="penrosePartitionConfiguration" class="org.apache.directory.server.core.configuration.MutableDirectoryPartitionConfiguration">
     <property name="name"><value>penrose</value></property>
     <property name="suffix"><value>dc=Example,dc=com</value></property>
     <property name="contextPartition"><ref bean="penrosePartition"/></property>
   </bean>
-
+-->
   <bean class="org.springframework.beans.factory.config.CustomEditorConfigurer">
     <property name="customEditors">
       <map>
