@@ -63,7 +63,7 @@ public class EntryUtil {
             String value = (String)rdn1.get(name);
             String value2 = (String)rdn2.get(name);
             //log.debug(" - Comparing attribute values ["+value+"] with ["+value2+"]");
-            if (!"...".equals(value) && !"...".equals(value2) && !value.equals(value2)) return false;
+            if (!"...".equals(value) && !"...".equals(value2) && !value.equalsIgnoreCase(value2)) return false;
         }
 
         String parentDn1 = getParentDn(dn1);

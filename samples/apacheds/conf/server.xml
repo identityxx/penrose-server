@@ -12,8 +12,12 @@
         init-method="start" destroy-method="stop">
     <constructor-arg><value>${penrose.home}</value></constructor-arg>
   </bean>
-
+<!--
   <bean id="penroseInterceptor" class="org.safehaus.penrose.ldap.PenroseInterceptor">
+    <property name="penrose"><ref bean="penrose"/></property>
+  </bean>
+-->
+  <bean id="penrosePartition" class="org.safehaus.penrose.ldap.PenrosePartition">
     <property name="penrose"><ref bean="penrose"/></property>
   </bean>
 
@@ -73,7 +77,8 @@
     <property name="ldapPort"><value>10389</value></property>
     <property name="contextPartitionConfigurations">
       <set>
-        <ref bean="examplePartitionConfiguration"/>
+        <ref bean="testPartitionConfiguration"/>
+        <ref bean="penrosePartitionConfiguration"/>
       </set>
     </property>
     <property name="bootstrapSchemas">
@@ -102,12 +107,14 @@
 
     <property name="interceptorConfigurations">
       <list>
+<!--
         <bean class="org.apache.directory.server.core.configuration.MutableInterceptorConfiguration">
           <property name="name"><value>penroseService</value></property>
           <property name="interceptor">
             <ref bean="penroseInterceptor"/>
           </property>
         </bean>
+-->
         <bean class="org.apache.directory.server.core.configuration.MutableInterceptorConfiguration">
           <property name="name"><value>normalizationService</value></property>
           <property name="interceptor">
@@ -178,8 +185,8 @@
     </property>
   </bean>
 
-  <bean id="examplePartitionConfiguration" class="org.apache.directory.server.core.configuration.MutableDirectoryPartitionConfiguration">
-    <property name="name"><value>example</value></property>
+  <bean id="testPartitionConfiguration" class="org.apache.directory.server.core.configuration.MutableDirectoryPartitionConfiguration">
+    <property name="name"><value>test</value></property>
     <property name="suffix"><value>dc=Test,dc=com</value></property>
     <property name="indexedAttributes">
       <set>
@@ -199,6 +206,12 @@
         o: Test
       </value>
     </property>
+  </bean>
+
+  <bean id="penrosePartitionConfiguration" class="org.apache.directory.server.core.configuration.MutableDirectoryPartitionConfiguration">
+    <property name="name"><value>penrose</value></property>
+    <property name="suffix"><value>dc=Example,dc=com</value></property>
+    <property name="contextPartition"><ref bean="penrosePartition"/></property>
   </bean>
 
   <bean class="org.springframework.beans.factory.config.CustomEditorConfigurer">
