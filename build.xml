@@ -244,7 +244,7 @@
     </target>
 
     <target name="dist-win32" depends="docs,dist">
-        <echo message="Creating ${project.name}-server-${project.version}.exe"/>
+        <echo message="Creating ${project.name}-${project.version}.exe"/>
         <copy todir="target" file="penrose.iss">
             <filterchain>
                 <expandproperties/>
