@@ -276,6 +276,9 @@
     </target>
 
     <target name="install" depends="pre-install,copy-penrose-conf">
+        <delete failonerror="false">
+            <fileset dir="${penrose.home}" includes="lib/*"/>
+        </delete>
         <copy todir="${penrose.home}">
             <fileset dir="target/dist">
                 <include name="**/*"/>
