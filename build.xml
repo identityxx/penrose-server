@@ -10,7 +10,7 @@
     <property name="project.version" value="1.0"/>
     <property name="project.dist" value="dist"/>
     <property name="prefix" value=""/>
-    <property name="penrose.home" value="${prefix}/usr/local/penrose"/>
+    <property name="penrose.home" value="${prefix}/usr/local/${project.name}-${project.version}"/>
     <property name="iscc.path" value="ISCC.exe"/>
     <property name="docs.target" value="${project.dist}/javadoc"/>
 
@@ -92,7 +92,7 @@
         </jar>
     </target>
 
-    <target name="docs" depends="build">
+    <target name="docs">
         <mkdir dir="target/javadoc"/>
         <javadoc packagenames="org.safehaus.penrose.*"
             sourcepath="src/java"
@@ -252,7 +252,7 @@
         </exec>
     </target>
 
-    <target name="dist-all" depends="dist-src,dist-unix,dist-win32">
+    <target name="dist-all" depends="dist-src,dist-unix,dist-win32,dist-rpm">
         <copy todir="${project.dist}"
             file="target/${project.name}-${project.version}.jar">
         </copy>
@@ -286,9 +286,6 @@
             </fileset>
         </copy>
         <chmod dir="${penrose.home}/bin" perm="ugo+rx" includes="**/*.sh"/>
-        <copy todir="${prefix}/etc/init.d"
-            file="target/dist/etc/init.d/penrose"/>
-        <chmod file="${prefix}/etc/init.d/penrose" perm="ugo+rx"/>
     </target>
 
     <target name="uninstall">
@@ -300,7 +297,6 @@
             <fileset dir="${penrose.home}/samples" includes="**/*"/>
             <fileset dir="${penrose.home}/schema" includes="**/*"/>
             <fileset dir="${penrose.home}" includes="*"/>
-            <fileset dir="${prefix}/etc/init.d" includes="penrose"/>
         </delete>
     </target>
 
