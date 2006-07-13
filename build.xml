@@ -84,11 +84,14 @@
             <fileset dir="target/classes"/>
             <manifest>
               <attribute name="Specification-Version"  value="1.0"/>
-              <attribute name="Implementation-Title"   value="Penrose Virtual Directory Server"/>
+              <attribute name="Implementation-Title"   value="Penrose Server"/>
               <attribute name="Implementation-Version" value="${project.version}"/>
               <attribute name="Implementation-Vendor"  value="Identyx Corporation"/>
               <attribute name="Built-Date" value="${DSTAMP}"/>
             </manifest>
+        </jar>
+        <jar jarfile="target/${project.name}-samples-${project.version}.jar">
+            <fileset dir="samples"/>
         </jar>
     </target>
 
@@ -240,7 +243,7 @@
     </target>
 
     <target name="dist-win32" depends="docs,dist">
-        <echo message="Creating ${project.name}-server-${project.version}.exe"/>
+        <echo message="Creating ${project.name}-${project.version}.exe"/>
         <copy todir="target" file="penrose.iss">
             <filterchain>
                 <expandproperties/>
