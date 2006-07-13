@@ -21,9 +21,6 @@ public class PresentFilter extends Filter {
 
 	String attribute;
 	
-	public PresentFilter() {
-	}
-	
 	public PresentFilter(String attr) {
 		this.attribute = attr;
 	}

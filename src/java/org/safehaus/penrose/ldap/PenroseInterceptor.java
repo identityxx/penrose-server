@@ -29,6 +29,7 @@ import org.apache.directory.server.core.jndi.LdapJndiProperties;
 import org.apache.directory.shared.ldap.filter.ExprNode;
 import org.apache.directory.shared.ldap.exception.LdapAuthenticationException;
 import org.safehaus.penrose.Penrose;
+import org.safehaus.penrose.filter.FilterTool;
 import org.safehaus.penrose.schema.SchemaManager;
 import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.session.PenroseSession;
@@ -651,14 +652,12 @@ public class PenroseInterceptor extends BaseInterceptor {
             String returningAttributes[] = searchControls.getReturningAttributes();
             List attributeNames = returningAttributes == null ? new ArrayList() : Arrays.asList(returningAttributes);
 
-            StringBuffer sb = new StringBuffer();
-            filter.printToBuffer(sb);
-            String newFilter = sb.toString();
+            String newFilter = FilterTool.convert(filter).toString();
 
             log.debug("Searching \""+base+"\"");
             log.debug(" - deref: "+deref);
             log.debug(" - scope: "+scope);
-            log.debug(" - filter: "+newFilter+" ("+filter.getClass().getName()+")");
+            log.debug(" - filter: "+newFilter);
             log.debug(" - attributeNames: "+attributeNames);
 
             PenroseSession session = null;

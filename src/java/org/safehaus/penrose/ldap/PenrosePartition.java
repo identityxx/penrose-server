@@ -21,6 +21,7 @@ import org.apache.directory.server.core.partition.AbstractDirectoryPartition;
 import org.apache.directory.shared.ldap.filter.ExprNode;
 import org.ietf.ldap.*;
 import org.safehaus.penrose.Penrose;
+import org.safehaus.penrose.filter.FilterTool;
 import org.safehaus.penrose.session.PenroseSearchResults;
 import org.safehaus.penrose.session.PenroseSession;
 import org.safehaus.penrose.session.PenroseSearchControls;
@@ -193,24 +194,27 @@ public class PenrosePartition extends AbstractDirectoryPartition {
 
     public NamingEnumeration search(Name base, Map env, ExprNode filter, SearchControls searchControls) throws NamingException {
 
-        String deref = (String)env.get("java.naming.ldap.derefAliases");
-        int scope = searchControls.getSearchScope();
-        String returningAttributes[] = searchControls.getReturningAttributes();
-        List attributeNames = returningAttributes == null ? new ArrayList() : Arrays.asList(returningAttributes);
-
-        StringBuffer sb = new StringBuffer();
-        filter.printToBuffer(sb);
-        String newFilter = sb.toString();
-
-        log.info("Searching \""+base+"\"");
-        log.debug(" - deref: "+deref);
-        log.debug(" - scope: "+scope);
-        log.debug(" - filter: "+newFilter+" ("+filter.getClass().getName()+")");
-        log.debug(" - attributeNames: "+attributeNames);
-
+        PenroseSession session = null;
         try {
-            PenroseSession session = penrose.newSession();
+            String baseDn = base.toString();
+            String bindDn = (String)env.get(Context.SECURITY_PRINCIPAL);
+            String deref = (String)env.get("java.naming.ldap.derefAliases");
+            int scope = searchControls.getSearchScope();
+            String returningAttributes[] = searchControls.getReturningAttributes();
+            List attributeNames = returningAttributes == null ? new ArrayList() : Arrays.asList(returningAttributes);
+
+            String newFilter = FilterTool.convert(filter).toString();
+
+            log.info("Searching \""+baseDn+"\" as "+bindDn);
+            log.debug(" - deref: "+deref);
+            log.debug(" - scope: "+scope);
+            log.debug(" - filter: "+newFilter);
+            log.debug(" - attributeNames: "+attributeNames);
+
+            session = penrose.newSession();
             if (session == null) throw new ServiceUnavailableException();
+
+            if (bindDn != null) session.setBindDn(bindDn);
 
             PenroseSearchResults results = new PenroseSearchResults();
 
@@ -219,7 +223,6 @@ public class PenrosePartition extends AbstractDirectoryPartition {
             sc.setDereference(PenroseSearchControls.DEREF_ALWAYS);
             sc.setAttributes(searchControls == null ? null : searchControls.getReturningAttributes());
 
-            String baseDn = base.toString();
             session.search(
                     baseDn,
                     newFilter,
@@ -228,9 +231,15 @@ public class PenrosePartition extends AbstractDirectoryPartition {
 
             return new PenroseEnumeration(results);
 
+        } catch (NamingException e) {
+            throw e;
+
         } catch (Exception e) {
             log.error(e.getMessage(), e);
             throw new NamingException(e.getMessage());
+
+        } finally {
+            if (session != null) try { session.close(); } catch (Exception e) {}
         }
     }
 

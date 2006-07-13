@@ -13,7 +13,7 @@
                 <expandproperties/>
             </filterchain>
         </copy>
-        <copy todir="${apacheds.home}/lib/ext" flatten="true">
+        <copy todir="${apacheds.home}/lib/ext" flatten="true" overwrite="true">
             <fileset dir="lib">
                 <include name="*.jar" />
                 <exclude name="antlr-*.jar"/>
@@ -33,7 +33,7 @@
             </fileset>
             <fileset dir="lib/ext" includes="*.jar"/>
         </copy>
-        <copy file="target/penrose-1.0.jar" todir="${apacheds.home}/lib/ext" failonerror="false"/>
+        <copy file="target/penrose-1.0.jar" todir="${apacheds.home}/lib/ext" failonerror="false" overwrite="true"/>
     </target>
 
     <target name="clean">

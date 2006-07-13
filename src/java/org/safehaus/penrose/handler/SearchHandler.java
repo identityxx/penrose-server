@@ -406,6 +406,8 @@ public class SearchHandler {
                         sc,
                         sr
                 );
+            } else {
+                sr.close();
             }
 
             log.debug("Processing search results:");
@@ -423,7 +425,11 @@ public class SearchHandler {
                 results.add(e);
             }
 
+            log.debug("Done processing search results:");
+
             int rc = sr.getReturnCode();
+
+            log.debug("RC: "+rc);
 
             if (rc != LDAPException.SUCCESS) {
                 log.debug("RC: "+rc);
