@@ -5,6 +5,8 @@ import org.safehaus.penrose.graph.GraphEdge;
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.PartitionManager;
+import org.safehaus.penrose.partition.SourceConfig;
+import org.safehaus.penrose.partition.FieldConfig;
 import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.interpreter.InterpreterManager;
 import org.slf4j.LoggerFactory;
@@ -24,6 +26,7 @@ public class Analyzer {
 
     public Map graphs = new HashMap();
     public Map primarySources = new HashMap();
+    public Map uniqueness = new HashMap();
 
     public void analyze(EntryMapping entryMapping) throws Exception {
 
@@ -42,6 +45,9 @@ public class Analyzer {
             graphs.put(entryMapping, graph);
             //log.debug(" - graph: "+graph);
         }
+
+        boolean unique = isUnique(entryMapping);
+        log.debug("Unique: "+unique);
 
         Collection children = partition.getChildren(entryMapping);
         for (Iterator i=children.iterator(); i.hasNext(); ) {
@@ -179,4 +185,111 @@ public class Analyzer {
         return (SourceMapping)primarySources.get(entryMapping);
     }
 
+    /**
+     * Check whether each rdn value corresponds to one row from the source.
+     */
+    public boolean checkUniqueness(EntryMapping entryMapping) throws Exception {
+
+        Collection rdnSources = new TreeSet();
+        Collection rdnFields = new TreeSet();
+
+        // check each RDN attribute
+        Collection rdnAttributes = entryMapping.getRdnAttributes();
+        for (Iterator i=rdnAttributes.iterator(); i.hasNext(); ) {
+            AttributeMapping attributeMapping = (AttributeMapping)i.next();
+            //log.debug("Attribute "+attributeMapping.getName()+": "+attributeMapping.getType());
+
+            if (AttributeMapping.VARIABLE.equals(attributeMapping.getType())) {
+                String variable = attributeMapping.getVariable();
+
+                int j = variable.indexOf(".");
+                String sourceAlias = variable.substring(0, j);
+                String fieldName = variable.substring(j+1);
+
+                rdnSources.add(sourceAlias);
+                rdnFields.add(fieldName);
+
+                continue;
+            }
+
+            if (!AttributeMapping.EXPRESSION.equals(attributeMapping.getType())) continue;
+
+            log.debug("RDN attribute "+attributeMapping.getName()+" is an expression.");
+            return false;
+        }
+
+        //log.debug("RDN sources: "+rdnSources);
+
+        if (rdnSources.isEmpty()) {
+            log.debug("RDN attributes are constants.");
+            return true;
+        }
+
+        if (rdnSources.size() > 1) {
+            log.debug("RDN uses multiple sources: "+rdnSources);
+            return false;
+        }
+
+        String sourceAlias = (String)rdnSources.iterator().next();
+        SourceMapping sourceMapping = entryMapping.getSourceMapping(sourceAlias);
+
+        Partition partition = partitionManager.getPartition(entryMapping);
+        SourceConfig sourceConfig = partition.getSourceConfig(sourceMapping.getSourceName());
+        //log.debug("Source "+sourceMapping.getSourceName()+" in partition "+partition.getPartitionConfig().getName()+": "+sourceConfig);
+
+        Collection uniqueFields = new TreeSet();
+        Collection pkFields = new TreeSet();
+
+        for (Iterator i=rdnFields.iterator(); i.hasNext(); ) {
+            String fieldName = (String)i.next();
+            FieldConfig fieldConfig = sourceConfig.getFieldConfig(fieldName);
+
+            if (fieldConfig.isUnique()) {
+                uniqueFields.add(fieldName);
+                continue;
+            }
+
+            if (fieldConfig.isPrimaryKey()) {
+                pkFields.add(fieldName);
+                continue;
+            }
+
+            log.debug("RDN uses non-unique field: "+fieldName);
+            return false;
+        }
+
+        //log.debug("RDN unique fields: "+uniqueFields);
+        //log.debug("RDN PK fields: "+pkFields);
+
+        // rdn uses unique fields
+        if (pkFields.isEmpty() && !uniqueFields.isEmpty()) return true;
+
+        Collection list = sourceConfig.getPrimaryKeyNames();
+        //log.debug("Source PK fields: "+list);
+
+        if (!pkFields.equals(list)) {
+            log.debug("RDN doesn't use all primary keys of "+sourceConfig.getName());
+            return false;
+        }
+
+        return true;
+    }
+
+    public boolean isUnique(EntryMapping entryMapping) throws Exception {
+
+        Boolean b = (Boolean)uniqueness.get(entryMapping);
+        if (b != null) return b.booleanValue();
+
+        b = new Boolean(checkUniqueness(entryMapping));
+
+        if (b.booleanValue()) { // check parent mapping
+            Partition partition = partitionManager.getPartition(entryMapping);
+            EntryMapping parentMapping = partition.getParent(entryMapping);
+
+            if (parentMapping != null) b = new Boolean(isUnique(parentMapping));
+        }
+
+        uniqueness.put(entryMapping, b);
+        return b.booleanValue();
+    }
 }

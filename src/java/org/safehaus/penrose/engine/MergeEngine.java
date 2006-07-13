@@ -48,19 +48,15 @@ public class MergeEngine {
             final PenroseSearchResults results
             ) throws Exception {
 
-        final Interpreter interpreter = engine.getInterpreterFactory().newInstance();
+        final Interpreter interpreter = engine.getInterpreterManager().newInstance();
 
-        engine.threadManager.execute(new Runnable() {
-            public void run() {
-                try {
-                    mergeBackground(entryMapping, loadedBatches, interpreter, results);
+        try {
+            mergeBackground(entryMapping, loadedBatches, interpreter, results);
 
-                } catch (Throwable e) {
-                    log.error(e.getMessage(), e);
-                    results.setReturnCode(org.ietf.ldap.LDAPException.OPERATIONS_ERROR);
-                }
-            }
-        });
+        } catch (Throwable e) {
+            log.error(e.getMessage(), e);
+            results.setReturnCode(org.ietf.ldap.LDAPException.OPERATIONS_ERROR);
+        }
     }
 
     public void mergeBackground(

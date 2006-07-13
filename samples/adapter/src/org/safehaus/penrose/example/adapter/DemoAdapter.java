@@ -78,8 +78,6 @@ public class DemoAdapter extends Adapter {
 
             results.add(sourceValues);
         }
-
-        results.close();
     }
 
     public int add(SourceConfig sourceConfig, Row pk, AttributeValues sourceValues) throws Exception {

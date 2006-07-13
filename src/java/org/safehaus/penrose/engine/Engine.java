@@ -104,7 +104,7 @@ public abstract class Engine {
         this.schemaManager = schemaManager;
     }
 
-    public InterpreterManager getInterpreterFactory() {
+    public InterpreterManager getInterpreterManager() {
         return interpreterManager;
     }
 
@@ -488,88 +488,8 @@ public abstract class Engine {
         loadEngine.load(entryMapping, entriesToLoad, loadedEntries);
     }
 
-    /**
-     * Check whether each rdn value corresponds to one row from the source.
-     */
     public boolean isUnique(EntryMapping entryMapping) throws Exception {
-
-        Collection rdnSources = new TreeSet();
-        Collection rdnFields = new TreeSet();
-
-        Collection rdnAttributes = entryMapping.getRdnAttributes();
-        for (Iterator i=rdnAttributes.iterator(); i.hasNext(); ) {
-            AttributeMapping attributeMapping = (AttributeMapping)i.next();
-
-            if (attributeMapping.getConstant() != null) continue;
-
-            String variable = attributeMapping.getVariable();
-
-            if (variable != null) { // get the sourceMapping and field name
-                int j = variable.indexOf(".");
-                String sourceAlias = variable.substring(0, j);
-                String fieldName = variable.substring(j+1);
-
-                rdnSources.add(sourceAlias);
-                rdnFields.add(fieldName);
-
-                continue;
-            }
-
-            // attribute is an expression
-            return false;
-        }
-
-        //log.debug("RDN sources: "+rdnSources);
-
-        // rdn is constant
-        if (rdnSources.isEmpty()) return false;
-
-        // rdn uses more than one sourceMapping
-        if (rdnSources.size() > 1) return false;
-
-        String sourceAlias = (String)rdnSources.iterator().next();
-        SourceMapping sourceMapping = entryMapping.getSourceMapping(sourceAlias);
-
-        Partition partition = partitionManager.getPartition(entryMapping);
-        SourceConfig sourceConfig = partition.getSourceConfig(sourceMapping.getSourceName());
-        //log.debug("Source "+sourceMapping.getSourceName()+" in partition "+partition.getPartitionConfig().getName()+": "+sourceConfig);
-
-        Collection uniqueFields = new TreeSet();
-        Collection pkFields = new TreeSet();
-
-        for (Iterator i=rdnFields.iterator(); i.hasNext(); ) {
-            String fieldName = (String)i.next();
-            FieldConfig fieldConfig = sourceConfig.getFieldConfig(fieldName);
-
-            if (fieldConfig.isUnique()) {
-                uniqueFields.add(fieldName);
-                continue;
-            }
-
-            if (fieldConfig.isPrimaryKey()) {
-                pkFields.add(fieldName);
-                continue;
-            }
-
-            return false;
-        }
-
-        //log.debug("RDN unique fields: "+uniqueFields);
-        //log.debug("RDN PK fields: "+pkFields);
-
-        // rdn uses unique fields
-        if (pkFields.isEmpty() && !uniqueFields.isEmpty()) return true;
-
-        Collection list = sourceConfig.getPrimaryKeyNames();
-        //log.debug("Source PK fields: "+list);
-
-        // rdn uses primary key fields
-        boolean result = pkFields.equals(list);
-
-        EntryMapping parentMapping = partition.getParent(entryMapping);
-        if (parentMapping == null) return result;
-
-        return isUnique(parentMapping);
+        return analyzer.isUnique(entryMapping);
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

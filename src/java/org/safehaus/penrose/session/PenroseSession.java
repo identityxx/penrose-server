@@ -214,7 +214,6 @@ public class PenroseSession {
                     log.error(e.getMessage(), e);
                 }
             }
-
         });
 
         return handler.search(this, baseDn, filter, sc, results);

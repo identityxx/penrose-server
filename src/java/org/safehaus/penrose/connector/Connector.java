@@ -357,7 +357,10 @@ public class Connector {
 
             newSourceValues.clear();
 
-            PenroseSearchResults list = retrieve(partition, sourceConfig, pks);
+            PenroseSearchResults list = new PenroseSearchResults();
+            retrieve(partition, sourceConfig, pks, list);
+            list.close();
+
             for (Iterator i=list.iterator(); i.hasNext(); ) {
                 AttributeValues sv = (AttributeValues)i.next();
                 newSourceValues.add(sv);
@@ -437,35 +440,35 @@ public class Connector {
     /**
      * Search the data sources.
      */
-    public PenroseSearchResults search(
+    public void search(
             final Partition partition,
             final SourceConfig sourceConfig,
-            final Filter filter)
+            final Filter filter,
+            final PenroseSearchResults results)
             throws Exception {
 
         String method = sourceConfig.getParameter(SourceConfig.LOADING_METHOD);
         if (SourceConfig.SEARCH_AND_LOAD.equals(method)) { // search for PKs first then load full record
 
             log.debug("Searching source "+sourceConfig.getName()+" with filter "+filter);
-            return searchAndLoad(partition, sourceConfig, filter);
+            searchAndLoad(partition, sourceConfig, filter, results);
 
         } else { // load full record immediately
 
             log.debug("Loading source "+sourceConfig.getName()+" with filter "+filter);
-            return fullLoad(partition, sourceConfig, filter);
+            fullLoad(partition, sourceConfig, filter, results);
         }
     }
 
     /**
      * Check query cache, peroform search, store results in query cache.
      */
-    public PenroseSearchResults searchAndLoad(
+    public void searchAndLoad(
             Partition partition,
             SourceConfig sourceConfig,
-            Filter filter)
+            Filter filter,
+            PenroseSearchResults results)
             throws Exception {
-
-        PenroseSearchResults results = new PenroseSearchResults();
 
         log.debug("Checking query cache for "+filter);
         Collection pks = getSourceCache().search(sourceConfig, filter);
@@ -474,7 +477,8 @@ public class Connector {
 
         if (pks == null) {
             log.debug("Searching source "+sourceConfig.getName()+" with filter "+filter);
-            PenroseSearchResults sr = performSearch(partition, sourceConfig, filter);
+            PenroseSearchResults sr = new PenroseSearchResults();
+            performSearch(partition, sourceConfig, filter, sr);
             pks = sr.getAll();
 
             int rc = sr.getReturnCode();
@@ -489,27 +493,20 @@ public class Connector {
 
         log.debug("Loading source "+sourceConfig.getName()+" with pks "+pks);
         load(partition, sourceConfig, pks, results);
-
-        return results;
-
     }
 
     /**
      * Load then store in data cache.
      */
-    public PenroseSearchResults fullLoad(Partition partition, SourceConfig sourceConfig, Filter filter) throws Exception {
+    public void fullLoad(Partition partition, SourceConfig sourceConfig, Filter filter, PenroseSearchResults results) throws Exception {
 
         Collection pks = getSourceCache().search(sourceConfig, filter);
 
         if (pks != null) {
-            PenroseSearchResults results = new PenroseSearchResults();
             load(partition, sourceConfig, pks, results);
-            return results;
 
         } else {
-            PenroseSearchResults results = new PenroseSearchResults();
             performLoad(partition, sourceConfig, filter, results);
-            return results;
             //store(sourceConfig, values);
         }
     }
@@ -529,63 +526,60 @@ public class Connector {
             return;
         }
 
-        threadManager.execute(new Runnable() {
-            public void run() {
-                try {
-                    Collection normalizedPks = new ArrayList();
-                    for (Iterator i=pks.iterator(); i.hasNext(); ) {
-                        Row pk = (Row)i.next();
-                        Row npk = normalize(pk);
-                        normalizedPks.add(npk);
-                    }
-
-                    log.debug("Checking data cache for "+normalizedPks);
-                    Collection missingPks = new ArrayList();
-                    Map loadedRows = getSourceCache().load(sourceConfig, normalizedPks, missingPks);
-
-                    log.debug("Cached values: "+loadedRows.keySet());
-                    results.addAll(loadedRows.values());
-
-                    log.debug("Loading missing keys: "+missingPks);
-                    PenroseSearchResults list = retrieve(partition, sourceConfig, missingPks);
-                    results.addAll(list.getAll());
-
-                    int rc = list.getReturnCode();
-                    log.debug("RC: "+rc);
-                    results.setReturnCode(rc);
-
-                } catch (Exception e) {
-                    log.error(e.getMessage(), e);
-                    results.setReturnCode(LDAPException.OPERATIONS_ERROR);
-                }
-
-                results.close();
+        try {
+            Collection normalizedPks = new ArrayList();
+            for (Iterator i=pks.iterator(); i.hasNext(); ) {
+                Row pk = (Row)i.next();
+                Row npk = normalize(pk);
+                normalizedPks.add(npk);
             }
-        });
+
+            log.debug("Checking data cache for "+normalizedPks);
+            Collection missingPks = new ArrayList();
+            Map loadedRows = getSourceCache().load(sourceConfig, normalizedPks, missingPks);
+
+            log.debug("Cached values: "+loadedRows.keySet());
+            results.addAll(loadedRows.values());
+
+            log.debug("Loading missing keys: "+missingPks);
+            PenroseSearchResults list = new PenroseSearchResults();
+            retrieve(partition, sourceConfig, missingPks, list);
+            list.close();
+
+            results.addAll(list.getAll());
+
+            int rc = list.getReturnCode();
+            log.debug("RC: "+rc);
+            results.setReturnCode(rc);
+
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+            results.setReturnCode(LDAPException.OPERATIONS_ERROR);
+        }
+
+        results.close();
     }
 
     /**
      * Load then store in data cache.
      */
-    public PenroseSearchResults retrieve(Partition partition, SourceConfig sourceConfig, Collection keys) throws Exception {
+    public void retrieve(
+            Partition partition,
+            SourceConfig sourceConfig,
+            Collection keys,
+            PenroseSearchResults sr
+    ) throws Exception {
 
-        if (keys.isEmpty()) {
-            PenroseSearchResults sr = new PenroseSearchResults();
-            sr.close();
-            return sr;
-        }
+        if (keys.isEmpty()) return;
 
         Filter filter = FilterTool.createFilter(keys);
 
-        PenroseSearchResults sr = new PenroseSearchResults();
         performLoad(partition, sourceConfig, filter, sr);
 
         //Collection values = new ArrayList();
         //values.addAll(sr.getAll());
 
         //store(sourceConfig, values);
-
-        return sr;
     }
 
     public Row store(SourceConfig sourceConfig, AttributeValues sourceValues) throws Exception {
@@ -646,9 +640,12 @@ public class Connector {
     /**
      * Perform the search operation.
      */
-    public PenroseSearchResults performSearch(Partition partition, SourceConfig sourceConfig, Filter filter) throws Exception {
-
-        PenroseSearchResults results = new PenroseSearchResults();
+    public void performSearch(
+            Partition partition,
+            SourceConfig sourceConfig,
+            Filter filter,
+            PenroseSearchResults results
+    ) throws Exception {
 
         String s = sourceConfig.getParameter(SourceConfig.SIZE_LIMIT);
         int sizeLimit = s == null ? SourceConfig.DEFAULT_SIZE_LIMIT : Integer.parseInt(s);
@@ -678,8 +675,6 @@ public class Connector {
         } finally {
             results.close();
         }
-
-        return results;
     }
 
     /**
@@ -711,28 +706,23 @@ public class Connector {
             }
         });
 
-        threadManager.execute(new Runnable() {
-            public void run() {
-                try {
-                    String s = sourceConfig.getParameter(SourceConfig.SIZE_LIMIT);
-                    int sizeLimit = s == null ? SourceConfig.DEFAULT_SIZE_LIMIT : Integer.parseInt(s);
+        try {
+            String s = sourceConfig.getParameter(SourceConfig.SIZE_LIMIT);
+            int sizeLimit = s == null ? SourceConfig.DEFAULT_SIZE_LIMIT : Integer.parseInt(s);
 
-                    Connection connection = getConnection(partition, sourceConfig.getConnectionName());
+            Connection connection = getConnection(partition, sourceConfig.getConnectionName());
 
-                    PenroseSearchControls sc = new PenroseSearchControls();
-                    sc.setSizeLimit(sizeLimit);
+            PenroseSearchControls sc = new PenroseSearchControls();
+            sc.setSizeLimit(sizeLimit);
 
-                    connection.load(sourceConfig, filter, sc, sr);
+            connection.load(sourceConfig, filter, sc, sr);
 
-                } catch (Exception e) {
-                    log.error(e.getMessage(), e);
-                    results.setReturnCode(LDAPException.OPERATIONS_ERROR);
-
-                } finally {
-                    results.close();
-                }
-            }
-        });
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+            sr.setReturnCode(LDAPException.OPERATIONS_ERROR);
+        } finally {
+            sr.close();
+        }
     }
 
     public ConnectorConfig getConnectorConfig() {

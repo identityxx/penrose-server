@@ -113,7 +113,9 @@ public class PollingConnectorModule extends Module {
             log.debug(" - "+pk+": "+av);
         }
 
-        connector.retrieve(partition, sourceConfig, map.keySet());
+        PenroseSearchResults list = new PenroseSearchResults();
+        connector.retrieve(partition, sourceConfig, map.keySet(), list);
+        list.close();
     }
 
     public void pollChanges(SourceConfig sourceConfig) throws Exception {
@@ -168,7 +170,9 @@ public class PollingConnectorModule extends Module {
 
         sourceCache.setLastChangeNumber(sourceConfig, lastChangeNumber);
 
-        connector.retrieve(partition, sourceConfig, pks);
+        PenroseSearchResults list = new PenroseSearchResults();
+        connector.retrieve(partition, sourceConfig, pks, list);
+        list.close();
 
         for (Iterator i=pks.iterator(); i.hasNext(); ) {
             Row pk = (Row)i.next();
@@ -199,7 +203,7 @@ public class PollingConnectorModule extends Module {
             log.debug(" - "+name+": "+values);
         }
 
-        Interpreter interpreter = engine.getInterpreterFactory().newInstance();
+        Interpreter interpreter = engine.getInterpreterManager().newInstance();
         AttributeValues attributeValues = engine.computeAttributeValues(entryMapping, sourceValues, interpreter);
 
         log.debug("Attribute values:");

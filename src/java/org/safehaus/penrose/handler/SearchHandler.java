@@ -85,6 +85,8 @@ public class SearchHandler {
                 } catch (Throwable e) {
                     log.error(e.getMessage(), e);
                     results.setReturnCode(LDAPException.OPERATIONS_ERROR);
+
+                } finally {
                     results.close();
                 }
             }
@@ -192,9 +194,6 @@ public class SearchHandler {
             log.error(e.getMessage(), e);
             rc = LDAPException.OPERATIONS_ERROR;
             results.setReturnCode(rc);
-
-        } finally {
-            results.close();
         }
 
         if (rc == LDAPException.SUCCESS) {
@@ -279,11 +278,11 @@ public class SearchHandler {
         final Filter f = FilterTool.parseFilter(filter);
         log.debug("Parsed filter: "+f+" ("+f.getClass().getName()+")");
 
-        final PenroseSearchResults sr = new PenroseSearchResults();
+        final PenroseSearchResults filterPipeline = new PenroseSearchResults();
 
-        sr.addListener(new PipelineAdapter() {
+        filterPipeline.addListener(new PipelineAdapter() {
             public void objectAdded(PipelineEvent event) {
-                Entry child = (Entry)sr.next();
+                Entry child = (Entry)filterPipeline.next();
 
                 try {
                     Entry e = checkEntry(session, child, f, sc);
@@ -296,8 +295,7 @@ public class SearchHandler {
             }
 
             public void pipelineClosed(PipelineEvent event) {
-                results.setReturnCode(sr.getReturnCode());
-                //results.close();
+                results.setReturnCode(filterPipeline.getReturnCode());
             }
 
         });
@@ -316,7 +314,7 @@ public class SearchHandler {
                 baseDn,
                 f,
                 sc,
-                sr
+                filterPipeline
         );
 
         if (sc.getScope() == LDAPConnection.SCOPE_ONE || sc.getScope() == LDAPConnection.SCOPE_SUB) { // one level or subtree
@@ -327,11 +325,11 @@ public class SearchHandler {
             for (Iterator i = children.iterator(); i.hasNext();) {
                 EntryMapping childMapping = (EntryMapping) i.next();
 
-                searchChildren(partition, path, parentSourceValues, childMapping, baseDn, f, sc, results);
+                searchChildren(partition, path, parentSourceValues, childMapping, baseDn, f, sc, filterPipeline);
             }
         }
 
-        results.close();
+        filterPipeline.close();
 
         return LDAPException.SUCCESS;
 	}
@@ -385,7 +383,9 @@ public class SearchHandler {
                 sr
         );
 
-        log.debug("Waiting for search results from \""+entryMapping.getDn()+"\".");
+        sr.close();
+
+        //log.debug("Waiting for search results from \""+entryMapping.getDn()+"\".");
 
         int rc = sr.getReturnCode();
         log.debug("RC: "+rc);
@@ -401,7 +401,7 @@ public class SearchHandler {
 
         AttributeValues newParentSourceValues = handler.getEngine().shiftParentSourceValues(parentSourceValues);
 
-        Interpreter interpreter = handler.getEngine().getInterpreterFactory().newInstance();
+        Interpreter interpreter = handler.getEngine().getInterpreterManager().newInstance();
 
         AttributeValues av = handler.getEngine().computeAttributeValues(entryMapping, interpreter);
         for (Iterator j=av.getNames().iterator(); j.hasNext(); ) {
@@ -463,7 +463,6 @@ public class SearchHandler {
         }
 
         results.add(entry);
-        results.close();
 
         return LDAPException.SUCCESS;
     }

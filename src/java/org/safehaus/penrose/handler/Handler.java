@@ -205,13 +205,13 @@ public class Handler {
             final PenroseSearchResults results)
             throws Exception {
 
-        final PenroseSearchResults tempResults = new PenroseSearchResults();
+        final PenroseSearchResults conversionPipeline = new PenroseSearchResults();
 
-        tempResults.addListener(new PipelineAdapter() {
-
+        conversionPipeline.addListener(new PipelineAdapter() {
             public void objectAdded(PipelineEvent event) {
                 try {
                     Entry entry = (Entry)event.getObject();
+                    log.debug("Creating LDAP search result for "+entry.getDn());
 
                     SearchResult searchResult = getSearchHandler().createSearchResult(session, entry);
                     if (searchResult == null) return;
@@ -224,12 +224,12 @@ public class Handler {
             }
 
             public void pipelineClosed(PipelineEvent event) {
-                results.setReturnCode(tempResults.getReturnCode());
+                results.setReturnCode(conversionPipeline.getReturnCode());
                 results.close();
             }
         });
 
-        return getSearchHandler().search(session, baseDn, filter, sc, tempResults);
+        return getSearchHandler().search(session, baseDn, filter, sc, conversionPipeline);
     }
 
     public BindHandler getBindHandler() {

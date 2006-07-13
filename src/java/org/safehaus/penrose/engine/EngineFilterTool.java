@@ -79,7 +79,7 @@ public class EngineFilterTool {
                 return null;
         }
 
-        Interpreter interpreter = engine.getInterpreterFactory().newInstance();
+        Interpreter interpreter = engine.getInterpreterManager().newInstance();
         interpreter.set(attributeName, attributeValue);
 
         if (parentValues != null) {

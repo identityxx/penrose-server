@@ -333,7 +333,6 @@ Mapping: ou=Groups,dc=Proxy,dc=Example,dc=org
 
         } else {
             if (sc.getScope() == LDAPConnection.SCOPE_BASE) {
-                results.close();
                 return LDAPException.SUCCESS;
 
             } else if (sc.getScope() == LDAPConnection.SCOPE_ONE) {
@@ -388,10 +387,6 @@ Mapping: ou=Groups,dc=Proxy,dc=Example,dc=org
                     } catch (Exception e) {
                         log.error(e.getMessage(), e);
                     }
-                }
-
-                public void pipelineClosed(PipelineEvent event) {
-                    results.close();
                 }
             });
 

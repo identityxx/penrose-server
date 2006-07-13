@@ -22,12 +22,10 @@ import org.safehaus.penrose.session.PenroseSearchResults;
 import org.safehaus.penrose.session.PenroseSearchControls;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.PartitionManager;
-import org.safehaus.penrose.schema.ObjectClass;
 import org.safehaus.penrose.schema.AttributeType;
 import org.safehaus.penrose.util.PasswordUtil;
 import org.safehaus.penrose.util.BinaryUtil;
 import org.safehaus.penrose.util.Formatter;
-import org.safehaus.penrose.util.EntryUtil;
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.service.ServiceConfig;
@@ -312,17 +310,17 @@ public class ModifyHandler {
 		return LDAPException.SUCCESS;
 	}
 
-    public void addAttribute(EntryMapping entry, String name, Object value)
+    public void addAttribute(EntryMapping entryMapping, String name, Object value)
 			throws Exception {
 
-		AttributeMapping attribute = entry.getAttributeMapping(name);
+		AttributeMapping attributeMapping = entryMapping.getAttributeMapping(name);
 
-		if (attribute == null) {
-			attribute = new AttributeMapping(name, AttributeMapping.CONSTANT, value, true);
-			entry.addAttributeMapping(attribute);
+		if (attributeMapping == null) {
+			attributeMapping = new AttributeMapping(name, AttributeMapping.CONSTANT, value, true);
+			entryMapping.addAttributeMapping(attributeMapping);
 
 		} else {
-			attribute.setConstant(value);
+			attributeMapping.setConstant(value);
 		}
 	}
 

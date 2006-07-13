@@ -31,6 +31,7 @@ import org.safehaus.penrose.util.PasswordUtil;
 import org.safehaus.penrose.util.EntryUtil;
 import org.safehaus.penrose.util.LDAPUtil;
 import org.safehaus.penrose.schema.ObjectClass;
+import org.safehaus.penrose.interpreter.Interpreter;
 import org.ietf.ldap.LDAPException;
 import org.ietf.ldap.LDAPConnection;
 
@@ -400,7 +401,6 @@ public class DefaultEngine extends Engine {
         }
 
         if (!getFilterTool().isValid(entryMapping, filter)) {
-            results.close();
             return LDAPException.SUCCESS;
         }
 
@@ -421,13 +421,11 @@ Mapping: cn=Managers,ou=Groups,dc=Proxy,dc=Example,dc=org
 */
         if (sc.getScope() == PenroseSearchControls.SCOPE_BASE) {
             if (!(EntryUtil.match(entryMapping.getDn(), baseDn))) {
-                results.close();
                 return LDAPException.SUCCESS;
             }
 
         } else if (sc.getScope() == PenroseSearchControls.SCOPE_ONE) {
             if (!EntryUtil.match(entryMapping.getParentDn(), baseDn)) {
-                results.close();
                 return LDAPException.SUCCESS;
             }
 
@@ -447,15 +445,19 @@ Mapping: cn=Managers,ou=Groups,dc=Proxy,dc=Example,dc=org
             log.debug("Result: "+found);
 
             if (!found) {
-                results.close();
                 return LDAPException.SUCCESS;
             }
         }
+
+        final boolean unique = isUnique(entryMapping);
+        final Collection effectiveSources = partition.getEffectiveSourceMappings(entryMapping);
 
         final PenroseSearchResults dns = new PenroseSearchResults();
         final PenroseSearchResults entriesToLoad = new PenroseSearchResults();
         final PenroseSearchResults loadedEntries = new PenroseSearchResults();
         final PenroseSearchResults newEntries = new PenroseSearchResults();
+
+        final Interpreter interpreter = getInterpreterManager().newInstance();
 
         Collection attributeNames = sc.getAttributes();
         Collection attributeDefinitions = entryMapping.getAttributeMappings(attributeNames);
@@ -470,26 +472,36 @@ Mapping: cn=Managers,ou=Groups,dc=Proxy,dc=Example,dc=org
         dns.addListener(new PipelineAdapter() {
             public void objectAdded(PipelineEvent event) {
                 try {
-                    EntryData map = (EntryData)event.getObject();
-                    String dn = map.getDn();
+                    EntryData data = (EntryData)event.getObject();
+                    String dn = data.getDn();
 
                     Entry entry = getEntryCache().get(dn);
-                    log.debug("Entry cache for "+dn+": "+(entry == null ? "not found." : "found."));
 
                     if (entry == null) {
+                        log.debug("Entry "+dn+" is not cached.");
 
                         if (dnOnly) {
-                            AttributeValues sv = map.getMergedValues();
-                            //AttributeValues attributeValues = handler.getEngine().computeAttributeValues(entryMapping, sv, interpreter);
+                            log.debug("Returning DN only.");
+
+                            AttributeValues sv = data.getMergedValues();
                             entry = new Entry(dn, entryMapping, sv, null);
 
                             results.add(entry);
 
+                        } else if (unique && effectiveSources.size() == 1) {
+                            log.debug("Entry data is complete, returning entry.");
+                            AttributeValues sv = data.getMergedValues();
+                            AttributeValues attributeValues = computeAttributeValues(entryMapping, sv, interpreter);
+                            entry = new Entry(dn, entryMapping, sv, attributeValues);
+                            results.add(entry);
+
                         } else {
-                            entriesToLoad.add(map);
+                            log.debug("Entry data is incomplete, loading full entry data.");
+                            entriesToLoad.add(data);
                         }
 
                     } else {
+                        log.debug("Entry "+dn+" is cached, returning entry.");
                         results.add(entry);
                     }
 
@@ -504,7 +516,6 @@ Mapping: cn=Managers,ou=Groups,dc=Proxy,dc=Example,dc=org
 
                 if (dnOnly) {
                     results.setReturnCode(rc);
-                    results.close();
                 } else {
                     entriesToLoad.setReturnCode(rc);
                     entriesToLoad.close();
@@ -529,8 +540,8 @@ Mapping: cn=Managers,ou=Groups,dc=Proxy,dc=Example,dc=org
             dns.addListener(new PipelineAdapter() {
                 public void objectAdded(PipelineEvent event) {
                     try {
-                        EntryData map = (EntryData)event.getObject();
-                        String dn = map.getDn();
+                        EntryData data = (EntryData)event.getObject();
+                        String dn = data.getDn();
 
                         log.info("Storing "+dn+" in filter cache.");
 
@@ -543,6 +554,8 @@ Mapping: cn=Managers,ou=Groups,dc=Proxy,dc=Example,dc=org
             });
 
             searchEngine.search(partition, parent, parentSourceValues, entryMapping, filter, dns);
+            
+            dns.close();
 
         } else {
             log.debug("Filter cache for "+filter+" found.");
@@ -555,11 +568,11 @@ Mapping: cn=Managers,ou=Groups,dc=Proxy,dc=Example,dc=org
                         String dn = (String)event.getObject();
                         log.info("Loading "+dn+" from filter cache.");
 
-                        EntryData map = new EntryData();
-                        map.setDn(dn);
-                        map.setMergedValues(new AttributeValues());
-                        map.setRows(new ArrayList());
-                        dns.add(map);
+                        EntryData data = new EntryData();
+                        data.setDn(dn);
+                        data.setMergedValues(new AttributeValues());
+                        data.setRows(new ArrayList());
+                        dns.add(data);
 
                     } catch (Exception e) {
                         log.error(e.getMessage(), e);
@@ -575,6 +588,7 @@ Mapping: cn=Managers,ou=Groups,dc=Proxy,dc=Example,dc=org
         }
 
         if (dnOnly) return LDAPException.SUCCESS;
+        if (unique && effectiveSources.size() == 1) return LDAPException.SUCCESS;
 
         load(entryMapping, entriesToLoad, loadedEntries);
 
@@ -598,7 +612,6 @@ Mapping: cn=Managers,ou=Groups,dc=Proxy,dc=Example,dc=org
                 //log.debug("RC: "+rc);
 
                 results.setReturnCode(rc);
-                results.close();
             }
         });
 

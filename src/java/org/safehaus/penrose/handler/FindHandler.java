@@ -161,6 +161,8 @@ public class FindHandler {
                     results
             );
 
+            results.close();
+
             if (!results.hasNext()) continue;
 
             return (Entry)results.next();

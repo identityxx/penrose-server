@@ -78,7 +78,6 @@ public abstract class Adapter {
      * @throws Exception
      */
     public void load(SourceConfig sourceConfig, Filter filter, PenroseSearchControls sc, PenroseSearchResults results) throws Exception {
-        results.close();
     }
 
     /**

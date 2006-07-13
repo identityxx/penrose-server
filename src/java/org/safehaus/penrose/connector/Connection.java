@@ -117,7 +117,6 @@ public class Connection implements ConnectionMBean {
     public void load(SourceConfig sourceConfig, Filter filter, PenroseSearchControls sc, PenroseSearchResults results) throws Exception {
         if (adapter == null) {
             results.setReturnCode(LDAPException.OPERATIONS_ERROR);
-            results.close();
             return;
         }
         adapter.load(sourceConfig, filter, sc, results);

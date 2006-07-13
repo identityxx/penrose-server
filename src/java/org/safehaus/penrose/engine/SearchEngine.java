@@ -26,6 +26,8 @@ import org.safehaus.penrose.util.EntryUtil;
 import org.safehaus.penrose.session.PenroseSearchResults;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.SourceConfig;
+import org.safehaus.penrose.pipeline.PipelineAdapter;
+import org.safehaus.penrose.pipeline.PipelineEvent;
 import org.ietf.ldap.LDAPException;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
@@ -82,34 +84,24 @@ public class SearchEngine {
         }
         log.debug("Effective Sources: "+effectiveSourceNames);
 
-        if (unique && sources.size() == 1 && effectiveSources.size() == 1) {
-            engine.threadManager.execute(new Runnable() {
-                public void run() {
-                    try {
-                        simpleSearch(parentSourceValues, entryMapping, filter, results);
+        if (unique && effectiveSources.size() == 1) {
+            try {
+                simpleSearch(parentSourceValues, entryMapping, filter, results);
 
-                    } catch (Throwable e) {
-                        log.error(e.getMessage(), e);
-                        results.setReturnCode(LDAPException.OPERATIONS_ERROR);
-                    }
-                }
-            });
+            } catch (Throwable e) {
+                log.error(e.getMessage(), e);
+                results.setReturnCode(LDAPException.OPERATIONS_ERROR);
+            }
             return;
         }
 
-        engine.threadManager.execute(new Runnable() {
-            public void run() {
-                try {
-                    searchDynamic(parent, parentSourceValues, entryMapping, filter, results);
+        try {
+            searchDynamic(parent, parentSourceValues, entryMapping, filter, results);
 
-                } catch (Throwable e) {
-                    log.error(e.getMessage(), e);
-                    results.setReturnCode(LDAPException.OPERATIONS_ERROR);
-                } finally {
-                    results.close();
-                }
-            }
-        });
+        } catch (Throwable e) {
+            log.error(e.getMessage(), e);
+            results.setReturnCode(LDAPException.OPERATIONS_ERROR);
+        }
     }
 
     public void searchStatic(
@@ -119,7 +111,7 @@ public class SearchEngine {
             final PenroseSearchResults entries
             ) throws Exception {
 
-        Interpreter interpreter = engine.getInterpreterFactory().newInstance();
+        Interpreter interpreter = engine.getInterpreterManager().newInstance();
 
         Collection list = engine.computeDns(interpreter, entryMapping, parentSourceValues);
         for (Iterator j=list.iterator(); j.hasNext(); ) {
@@ -147,9 +139,11 @@ public class SearchEngine {
         Partition partition = engine.getPartitionManager().getPartition(entryMapping);
         EntryMapping parentMapping = partition.getParent(entryMapping);
 
-        Interpreter interpreter = engine.getInterpreterFactory().newInstance();
+        Interpreter interpreter = engine.getInterpreterManager().newInstance();
 
-        PenroseSearchResults values = searchSources(parentSourceValues, entryMapping, filter);
+        PenroseSearchResults values = new PenroseSearchResults();
+        searchSources(parentSourceValues, entryMapping, filter, values);
+        values.close();
 
         Map sourceValues = new TreeMap();
         Map rows = new TreeMap();
@@ -241,10 +235,10 @@ public class SearchEngine {
     }
 
     public void simpleSearch(
-            AttributeValues parentSourceValues,
-            EntryMapping entryMapping,
-            Filter filter,
-            PenroseSearchResults results) throws Exception {
+            final AttributeValues parentSourceValues,
+            final EntryMapping entryMapping,
+            final Filter filter,
+            final PenroseSearchResults results) throws Exception {
 
         SearchPlanner planner = new SearchPlanner(
                 engine,
@@ -254,7 +248,7 @@ public class SearchEngine {
 
         planner.run();
 
-        SourceMapping sourceMapping = engine.getPrimarySource(entryMapping);
+        final SourceMapping sourceMapping = engine.getPrimarySource(entryMapping);
 
         if (log.isDebugEnabled()) {
             log.debug(Formatter.displaySeparator(80));
@@ -274,57 +268,59 @@ public class SearchEngine {
         Partition partition = engine.getPartitionManager().getPartition(entryMapping);
         SourceConfig sourceConfig = partition.getSourceConfig(sourceMapping.getSourceName());
 
-        PenroseSearchResults sr = engine.getConnector().search(partition, sourceConfig, newFilter);
+        final Interpreter interpreter = engine.getInterpreterManager().newInstance();
 
-        Interpreter interpreter = engine.getInterpreterFactory().newInstance();
+        final PenroseSearchResults sr = new PenroseSearchResults();
 
-        log.debug("Search Results:");
-        for (Iterator i=sr.iterator(); i.hasNext(); ) {
-            AttributeValues av = (AttributeValues)i.next();
+        sr.addListener(new PipelineAdapter() {
+            public void objectAdded(PipelineEvent event) {
+                AttributeValues av = (AttributeValues)event.getObject();
 
-            AttributeValues sv = new AttributeValues();
-            sv.add(parentSourceValues);
-            sv.add(sourceMapping.getName(), av);
-
-            Collection list = engine.computeDns(interpreter, entryMapping, sv);
-            for (Iterator j=list.iterator(); j.hasNext(); ) {
-                String dn = (String)j.next();
-                log.debug(" - "+dn);
-
-                EntryData map = new EntryData();
-                map.setDn(dn);
-                map.setMergedValues(sv);
-                results.add(map);
-            }
-        }
-
-        results.setReturnCode(sr.getReturnCode());
-        results.close();
-    }
-
-    public PenroseSearchResults searchSources(
-            final AttributeValues sourceValues,
-            final EntryMapping entryMapping,
-            final Filter filter)
-            throws Exception {
-
-        final PenroseSearchResults results = new PenroseSearchResults();
-
-        engine.threadManager.execute(new Runnable() {
-            public void run() {
                 try {
-                    searchSourcesInBackground(sourceValues, entryMapping, filter, results);
+                    AttributeValues sv = new AttributeValues();
+                    sv.add(parentSourceValues);
+                    sv.add(sourceMapping.getName(), av);
 
-                } catch (Throwable e) {
+                    Collection list = engine.computeDns(interpreter, entryMapping, sv);
+                    for (Iterator j=list.iterator(); j.hasNext(); ) {
+                        String dn = (String)j.next();
+                        log.debug("Generated DN: "+dn);
+
+                        EntryData data = new EntryData();
+                        data.setDn(dn);
+                        data.setMergedValues(sv);
+                        data.setComplete(true);
+                        results.add(data);
+                    }
+                    
+                } catch (Exception e) {
                     log.error(e.getMessage(), e);
-                    results.setReturnCode(LDAPException.OPERATIONS_ERROR);
-                } finally {
-                    results.close();
                 }
+            }
+
+            public void pipelineClosed(PipelineEvent event) {
+                results.setReturnCode(sr.getReturnCode());
+                results.close();
             }
         });
 
-        return results;
+        engine.getConnector().search(partition, sourceConfig, newFilter, sr);
+    }
+
+    public void searchSources(
+            final AttributeValues sourceValues,
+            final EntryMapping entryMapping,
+            final Filter filter,
+            final PenroseSearchResults results)
+            throws Exception {
+
+        try {
+            searchSourcesInBackground(sourceValues, entryMapping, filter, results);
+
+        } catch (Throwable e) {
+            log.error(e.getMessage(), e);
+            results.setReturnCode(LDAPException.OPERATIONS_ERROR);
+        }
     }
 
     public void searchSourcesInBackground(

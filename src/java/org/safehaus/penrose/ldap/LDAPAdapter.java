@@ -200,7 +200,6 @@ public class LDAPAdapter extends Adapter {
             results.setReturnCode(ExceptionUtil.getReturnCode(e));
 
         } finally {
-            results.close();
             if (ctx != null) try { ctx.close(); } catch (Exception e) {}
         }
     }

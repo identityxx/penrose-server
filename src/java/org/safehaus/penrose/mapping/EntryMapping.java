@@ -158,12 +158,15 @@ public class EntryMapping implements Cloneable {
     }
     
     public Collection getRdnAttributes() {
+        //log.debug("RDN Attributes:");
         Collection results = new ArrayList();
         for (Iterator i=attributeMappings.values().iterator(); i.hasNext(); ) {
             Collection list = (Collection)i.next();
 
             for (Iterator j=list.iterator(); j.hasNext(); ) {
                 AttributeMapping attributeMapping = (AttributeMapping)j.next();
+                //log.debug(" - "+attributeMapping.getName()+" ("+attributeMapping.isRdn()+")");
+
                 if (!attributeMapping.isRdn()) continue;
                 results.add(attributeMapping);
             }
@@ -306,6 +309,8 @@ public class EntryMapping implements Cloneable {
 
 	public void addAttributeMapping(AttributeMapping attributeMapping) {
         String name = attributeMapping.getName().toLowerCase();
+        log.debug("Adding attribute "+name+(attributeMapping.isRdn() ? " (rdn)" : ""));
+
         Collection list = (Collection)attributeMappings.get(name);
         if (list == null) {
             list = new ArrayList();

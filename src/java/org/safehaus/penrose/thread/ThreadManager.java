@@ -46,7 +46,8 @@ public class ThreadManager {
 	}
 	
 	public void execute(Runnable runnable) throws InterruptedException {
-        execute(runnable, log.isDebugEnabled());
+        //execute(runnable, log.isDebugEnabled());
+        execute(runnable, false);
     }
 
     public void execute(Runnable runnable, boolean foreground) throws InterruptedException {

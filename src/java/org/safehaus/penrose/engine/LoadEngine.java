@@ -24,7 +24,6 @@ import org.safehaus.penrose.util.Formatter;
 import org.safehaus.penrose.util.EntryUtil;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.filter.FilterTool;
-import org.safehaus.penrose.partition.Partition;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
@@ -90,31 +89,23 @@ public class LoadEngine {
 
         final PenroseSearchResults batches = new PenroseSearchResults();
 
-        engine.threadManager.execute(new Runnable() {
-            public void run() {
-                try {
-                    createBatches(entryMapping, entries, batches);
+        try {
+            createBatches(entryMapping, entries, batches);
 
-                } catch (Throwable e) {
-                    log.error(e.getMessage(), e);
-                    batches.setReturnCode(org.ietf.ldap.LDAPException.OPERATIONS_ERROR);
-                }
-            }
-        });
+        } catch (Throwable e) {
+            log.error(e.getMessage(), e);
+            batches.setReturnCode(org.ietf.ldap.LDAPException.OPERATIONS_ERROR);
+        }
 
         log.debug("Loading batches.");
 
-        engine.threadManager.execute(new Runnable() {
-            public void run() {
-                try {
-                    loadBackground(entryMapping, batches, loadedEntries);
+        try {
+            loadBackground(entryMapping, batches, loadedEntries);
 
-                } catch (Throwable e) {
-                    log.error(e.getMessage(), e);
-                    loadedEntries.setReturnCode(org.ietf.ldap.LDAPException.OPERATIONS_ERROR);
-                }
-            }
-        });
+        } catch (Throwable e) {
+            log.error(e.getMessage(), e);
+            loadedEntries.setReturnCode(org.ietf.ldap.LDAPException.OPERATIONS_ERROR);
+        }
     }
 
     public void checkCache(EntryMapping entryMapping, PenroseSearchResults entries, PenroseSearchResults loadedEntries) throws Exception {
@@ -149,7 +140,7 @@ public class LoadEngine {
             ) throws Exception {
 
         try {
-            Interpreter interpreter = engine.getInterpreterFactory().newInstance();
+            Interpreter interpreter = engine.getInterpreterManager().newInstance();
 
             SourceMapping primarySourceMapping = engine.getPrimarySource(entryMapping);
 

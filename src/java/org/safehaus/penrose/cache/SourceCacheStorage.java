@@ -208,6 +208,8 @@ public class SourceCacheStorage {
         sc.setSizeLimit(sizeLimit);
 
         connection.load(sourceConfig, null, sc, sr);
+
+        sr.close();
     }
 
     public Partition getPartition() {

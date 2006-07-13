@@ -267,12 +267,12 @@ public class JDBCAdapter extends Adapter {
                     first = false;
                 }
 
-                printValues(sourceConfig, row);
+                log.debug(format(sourceConfig, row));
 
                 i++;
             }
 
-            if (width > 0) printFooter(width);
+            if (width > 0) log.debug(printFooter(width));
 
             if (sc.getSizeLimit() != 0 && i >= sc.getSizeLimit()) {
                 log.debug("RC: size limit exceeded.");
@@ -369,15 +369,16 @@ public class JDBCAdapter extends Adapter {
                 results.add(av);
 
                 if (first) {
-                    width = printHeader(sourceConfig);
+                    //width = printHeader(sourceConfig);
                     first = false;
                 }
 
-                printValues(sourceConfig, av);
+                //log.debug(format(sourceConfig, av));
+                log.debug("Row: "+av);
                 i++;
             }
 
-            if (width > 0) printFooter(width);
+            if (width > 0) log.debug(printFooter(width));
 
             if (sc.getSizeLimit() != 0 && i >= sc.getSizeLimit()) {
                 log.debug("RC: size limit exceeded.");
@@ -392,8 +393,6 @@ public class JDBCAdapter extends Adapter {
             if (rs != null) try { rs.close(); } catch (Exception e) {}
             if (ps != null) try { ps.close(); } catch (Exception e) {}
             if (con != null) try { con.close(); } catch (Exception e) {}
-
-            results.close();
         }
     }
 
@@ -926,10 +925,10 @@ public class JDBCAdapter extends Adapter {
                     first = false;
                 }
 
-                printChanges(sourceConfig, row);
+                log.debug(printChanges(sourceConfig, row));
             }
 
-            if (width > 0) printFooter(width);
+            if (width > 0) log.debug(printFooter(width));
 
             if (rs.next()) {
                 log.debug("RC: size limit exceeded.");
@@ -1009,7 +1008,7 @@ public class JDBCAdapter extends Adapter {
         return width;
     }
 
-    public void printValues(SourceConfig sourceConfig, AttributeValues av) throws Exception {
+    public String format(SourceConfig sourceConfig, AttributeValues av) throws Exception {
 
         Row row = new Row();
 
@@ -1029,10 +1028,10 @@ public class JDBCAdapter extends Adapter {
             row.set(name, value);
         }
 
-        printValues(sourceConfig, row);
+        return format(sourceConfig, row);
     }
 
-    public void printValues(SourceConfig sourceConfig, Row row) throws Exception {
+    public String format(SourceConfig sourceConfig, Row row) throws Exception {
         StringBuffer resultFields = new StringBuffer();
         resultFields.append("|");
 
@@ -1048,10 +1047,10 @@ public class JDBCAdapter extends Adapter {
             resultFields.append(" |");
         }
 
-        log.debug(resultFields.toString());
+        return resultFields.toString();
     }
 
-    public void printChanges(SourceConfig sourceConfig, Row row) throws Exception {
+    public String printChanges(SourceConfig sourceConfig, Row row) throws Exception {
         StringBuffer resultFields = new StringBuffer();
         resultFields.append("| ");
         resultFields.append(Formatter.rightPad(row.get("changeNumber").toString(), 5));
@@ -1075,11 +1074,11 @@ public class JDBCAdapter extends Adapter {
             resultFields.append(" |");
         }
 
-        log.debug(resultFields.toString());
+        return resultFields.toString();
     }
 
-    public void printFooter(int width) throws Exception {
-        log.debug(Formatter.displaySeparator(width));
+    public String printFooter(int width) throws Exception {
+        return Formatter.displaySeparator(width);
     }
 
     public Filter convert(EntryMapping entryMapping, SubstringFilter filter) throws Exception {

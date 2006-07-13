@@ -12,6 +12,10 @@ public class EntryData {
     private Collection rows;
     private Row filter;
     private AttributeValues loadedSourceValues;
+    private boolean complete;
+
+    public EntryData() {
+    }
 
     public String getDn() {
         return dn;
@@ -51,5 +55,13 @@ public class EntryData {
 
     public void setLoadedSourceValues(AttributeValues loadedSourceValues) {
         this.loadedSourceValues = loadedSourceValues;
+    }
+
+    public boolean isComplete() {
+        return complete;
+    }
+
+    public void setComplete(boolean complete) {
+        this.complete = complete;
     }
 }
