@@ -24,7 +24,7 @@ UninstallDisplayName=Penrose Server ${project.version}
 UninstallDisplayIcon={app}\penrose.ico
 Compression=zip
 SolidCompression=yes
-OutputBaseFilename=penrose-server-${project.version}
+OutputBaseFilename=penrose-${project.version}
 OutputDir=..\dist
 LicenseFile=..\LICENSE.txt
 

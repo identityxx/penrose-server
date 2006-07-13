@@ -65,6 +65,8 @@ public class ACLEngine {
             String scope,
             String permission) throws Exception {
 
+        if (entryMapping == null) return true;
+
         targetDn = schemaManager.normalize(targetDn);
         //log.debug("Checking ACL on \""+entryMapping.getDn()+"\".");
 
