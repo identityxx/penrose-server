@@ -1,11 +1,11 @@
 Summary: Penrose Virtual Directory Server
-Name: penrose
+Name: ${project-name}
 Version: ${project.version}
 Release: 1
 License: GPL
 Vendor: Identyx, Inc.
 Group: System Environment/Base
-Source: http://dist.safehaus.org/penrose/release/penrose-${project.version}/artifacts/penrose-${project.version}-src.tar.gz
+Source: http://dist.safehaus.org/penrose/release/penrose-${project.version}/artifacts/${project-name}-${project.version}-src.tar.gz
 BuildRoot: /var/tmp/%{name}-buildroot
 
 %description
