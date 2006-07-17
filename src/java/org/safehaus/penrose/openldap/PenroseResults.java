@@ -15,7 +15,10 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
-package org.openldap.backend;
+package org.safehaus.penrose.openldap;
+
+import org.openldap.backend.Results;
+import org.safehaus.penrose.session.PenroseSearchResults;
 
 import java.util.Collection;
 import java.util.Iterator;
@@ -23,19 +26,39 @@ import java.util.Iterator;
 /**
  * @author Endi S. Dewata
  */
-public interface Result {
+public class PenroseResults implements Results {
 
-    public Iterator iterator() throws Exception;
+    private PenroseSearchResults results;
 
-    public int getReturnCode() throws Exception;
+    public PenroseResults(PenroseSearchResults results) {
+        this.results = results;
+    }
 
-    public int size() throws Exception;
+    public Object next() {
+        return results.next();
+    }
 
-    public Collection getAll() throws Exception;
+    public void close() {
+        results.close();
+    }
 
-    public boolean hasNext() throws Exception;
-    public Object next() throws Exception;
+    public Collection getAll() {
+        return results.getAll();
+    }
 
-    public void close() throws Exception;
+    public int size() {
+        return results.size();
+    }
 
+    public synchronized Iterator iterator() {
+        return results.iterator();
+    }
+
+    public int getReturnCode() {
+        return results.getReturnCode();
+    }
+
+    public boolean hasNext() {
+        return results.hasNext();
+    }
 }

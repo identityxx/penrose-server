@@ -17,8 +17,6 @@
  */
 package org.openldap.backend;
 
-import org.safehaus.penrose.session.PenroseSession;
-
 import java.util.*;
 
 import javax.naming.directory.Attributes;
@@ -30,34 +28,12 @@ import javax.naming.directory.SearchControls;
 public interface Backend {
 
     /**
-     * Initialize Penrose engine.
+     * Initialize Backend.
      *
      * @return return value
      * @throws Exception
      */
     public int init() throws Exception;
-
-    /**
-     * Initialize server with schema DN.
-     *
-     * @param schemaDn
-     */
-    public void setSchema(String schemaDn);
-
-    /**
-     * Initialize server with a set of suffixes.
-     *
-     * @param suffixes Directory suffix (e.g. dc=penrose, dc=safehaus, dc=org).
-     */
-    public void setSuffix(String suffixes[]) throws Exception;
-
-    /**
-     * Initialize server with root DN and password.
-     *
-     * @param rootDn Root DN (e.g. cn=Manager, dc=penrose, dc=safehaus, dc=org).
-     * @param rootPassword Root password.
-     */
-    public void setRoot(String rootDn, String rootPassword) throws Exception;
 
     public void openConnection(int connectionId) throws Exception;
     public void closeConnection(int connectionId) throws Exception;
@@ -97,7 +73,7 @@ public interface Backend {
      * @return return value
      * @throws Exception
      */
-    public Result search(
+    public Results search(
             int connectionId,
             String baseDn,
             String filter,
