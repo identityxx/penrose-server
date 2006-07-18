@@ -14,7 +14,10 @@ int java_back_add( Operation *op, SlapReply *rs ) {
 
     Debug( LDAP_DEBUG_TRACE, "==> java_back_add()\n", 0, 0, 0);
 
-    JavaBackend *be = (JavaBackend *)op->o_bd->be_private;
+    JavaBackend *java_back = (JavaBackend *)op->o_bd->be_private;
+    JavaVM *jvm = java_back->jvm;
+    JNIEnv *env;
+
     Connection *conn = (Connection *)op->o_conn;
     Debug( LDAP_DEBUG_TRACE, "Connection  : %d\n", conn->c_connid, 0, 0 );
 
@@ -22,7 +25,6 @@ int java_back_add( Operation *op, SlapReply *rs ) {
 
     Debug( LDAP_DEBUG_TRACE, "Adding %s\n", e->e_name.bv_val, 0, 0);
 
-    JNIEnv *env;
     jint res;
   
     jobject attributes;

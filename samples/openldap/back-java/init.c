@@ -14,40 +14,6 @@
 
 #include "java_back.h"
 
-JNIEnv *env = NULL;
-JavaVM *jvm = NULL;
-JavaBackend *java_back = NULL;
-//JavaBackendDB *java_back_db = NULL;
-
-void *handle = NULL;
-void *libjavaHandle = NULL;
-void *libverifyHandle = NULL;
-
-
-typedef struct {
-    CreateJavaVM_t CreateJavaVM;
-    GetDefaultJavaVMInitArgs_t GetDefaultJavaVMInitArgs;
-} InvocationFunctions;
-
-#ifdef SLAPD_JAVA_DYNAMIC
-
-int back_java_LTX_init_module(
-    int argc, 
-    char *argv[]
-) 
-{
-    BackendInfo bi;
-
-    memset( &bi, '\0', sizeof(bi) );
-    bi.bi_type = "java";
-    bi.bi_init = java_back_initialize;
-
-    backend_add(&bi);
-    return 0;
-}
-
-#endif /* SLAPD_JAVA_DYNAMIC */
-
 jstring newStringUTF(
     JNIEnv *env,
     char *str
@@ -95,7 +61,7 @@ jmethodID getMethodID(
 {
     jmethodID mid;
 
-    Debug( LDAP_DEBUG_TRACE, "==> getMethodID(%s, %s)\n", methodName, methodSignature, 0);
+    Debug( LDAP_DEBUG_TRACE, "==> getMethodID(\"%s\", \"%s\")\n", methodName, methodSignature, 0);
     mid = (*env)->GetMethodID(env, clazz, methodName, methodSignature);
 
     if (mid == 0) {
@@ -245,18 +211,8 @@ java_back_initialize(
 
     bi->bi_chk_referrals = 0;
 
-    //bi->bi_acl_group = java_acl_group;
-    //bi->bi_acl_attribute = java_acl_attribute;
-
     bi->bi_connection_init = java_connection_init;
     bi->bi_connection_destroy = java_connection_destroy;
-
-    //------------------------------------------------------------------------------------------
-    // Creating JavaBackend
-    //------------------------------------------------------------------------------------------
-
-    java_back = (JavaBackend*)ch_malloc(sizeof(JavaBackend));
-    memset(java_back, '\0', sizeof(JavaBackend));
 
     Debug(LDAP_DEBUG_TRACE, "<== java_back_initialize()\n", 0, 0, 0);
 
@@ -268,29 +224,63 @@ java_back_open(
     BackendInfo *bi
 )
 {
+    Debug( LDAP_DEBUG_TRACE, "==> java_back_open()\n", 0, 0, 0);
+    Debug( LDAP_DEBUG_TRACE, "<== java_back_open()\n", 0, 0, 0);
+
+    return 0;
+}
+
+int
+java_back_db_init(
+    BackendDB	*be
+)
+{
+    Debug(LDAP_DEBUG_TRACE, "==> java_back_db_init()\n", 0, 0, 0);
+
+    JavaBackend *java_back = (JavaBackend*)ch_malloc(sizeof(JavaBackend));
+    memset(java_back, '\0', sizeof(JavaBackend));
+
+    be->be_private = java_back;
+
+    Debug(LDAP_DEBUG_TRACE, "<== java_back_db_init()\n", 0, 0, 0);
+
+    return 0;
+}
+
+int
+java_back_db_open(
+    BackendDB *be
+)
+{
+    Debug( LDAP_DEBUG_TRACE, "==> java_back_db_open()\n", 0, 0, 0);
+
     JavaVMInitArgs vm_args;
     jint i, res, counter;
     char classpath[1024];
     char libpath[1024];
 
-    Debug( LDAP_DEBUG_TRACE, "==> java_back_open()\n", 0, 0, 0);
+    JavaBackend *java_back = (JavaBackend*)be->be_private;
+    JNIEnv *env;
 
     //------------------------------------------------------------------------------------------
-    // Creating JVM
+    Debug(LDAP_DEBUG_TRACE, "Creating JVM...\n", 0, 0, 0);
     //------------------------------------------------------------------------------------------
 
     vm_args.version = JNI_VERSION_1_4;
+
+    Debug(LDAP_DEBUG_TRACE, "Getting default JVM initialization arguments...\n", 0, 0, 0);
     JNI_GetDefaultJavaVMInitArgs(&vm_args);
 
+    Debug(LDAP_DEBUG_TRACE, "Counting options...\n", 0, 0, 0);
     vm_args.nOptions = 0;
     if (java_back->nclasspath > 0) vm_args.nOptions++;
     if (java_back->nlibpath > 0) vm_args.nOptions++;
     if (java_back->nproperties > 0) vm_args.nOptions += java_back->nproperties;
 
+    Debug( LDAP_DEBUG_TRACE, "Creating %d option(s):\n", vm_args.nOptions, 0, 0);
+
     vm_args.options = (JavaVMOption *)ch_calloc(vm_args.nOptions, sizeof(JavaVMOption));
     counter = 0;
-
-    Debug( LDAP_DEBUG_TRACE, "Creating %d option(s):\n", vm_args.nOptions, 0, 0);
 
     if (java_back->nclasspath > 0) {
         classpath[0] = 0;
@@ -340,38 +330,14 @@ java_back_open(
 
     vm_args.ignoreUnrecognized = JNI_FALSE;
 
-    //Debug( LDAP_DEBUG_TRACE, "==> JNI_CreateJavaVM()\n", 0, 0, 0);
-    res = JNI_CreateJavaVM(&jvm, (void **)&env, &vm_args);
-    //Debug( LDAP_DEBUG_TRACE, "<== JNI_CreateJavaVM(): RC=%d\n", res, 0, 0);
+    res = JNI_CreateJavaVM(&java_back->jvm, (void **)&env, &vm_args);
 
-/*
-#ifndef __CYGWIN__
-    char *libjvm = "libjvm.so";
-    char *symbol = "JNI_CreateJavaVM";
-    fprintf(stderr, "Opening %s\n", libjvm);
-    handle = dlopen(libjvm, RTLD_LAZY);
-    if (!handle) {
-        fprintf(stderr, "Cannot open library '%s': %s\n", libjvm, dlerror());
-        return -1;
-    }
-    fprintf(stderr, "Loading symbol %s\n", symbol);
-    CreateJavaVM_t jcvm = (CreateJavaVM_t) dlsym(handle, symbol);
-    if (!jcvm) {
-        fprintf(stderr, "Cannot load symbol '%s': %s\n", symbol, dlerror());
-        dlclose(handle);
-        return -1;
-    }
-    fprintf(stderr, "Symbol loaded! Now instantiating res...\n");
-    res = jcvm(&jvm, (void **)&env, &vm_args);
-    fprintf(stderr, "res instantiated successfully!\n");
-#else
-    res = JNI_CreateJavaVM(&jvm, (void **)&env, &vm_args);
-#endif
-*/
     if (res < 0) {
-        Debug( LDAP_DEBUG_TRACE, "<== java_back_open(): Can't create Java VM (%i)\n", res, 0, 0);
+        Debug( LDAP_DEBUG_TRACE, "<== java_back_db_init(): Can't create Java VM (%i)\n", res, 0, 0);
         return -1;
     }
+
+    Debug(LDAP_DEBUG_TRACE, "JVM created.\n", 0, 0, 0);
 
     //------------------------------------------------------------------------------------------
     // java.lang.String
@@ -604,48 +570,14 @@ java_back_open(
         "(ILjava/lang/String;Ljava/lang/String;Ljava/lang/Object;)I");
     if (java_back->backendCompare == 0) return -1;
 
-    Debug(LDAP_DEBUG_TRACE, "<== java_back_open()\n", 0, 0, 0);
+    //------------------------------------------------------------------------------------------
+    Debug(LDAP_DEBUG_TRACE, "Initializing JavaBackend...\n", 0, 0, 0);
+    //------------------------------------------------------------------------------------------
 
-    return 0;
-}
-
-int
-java_back_db_init(
-    BackendDB	*be
-)
-{
-    Debug(LDAP_DEBUG_TRACE, "==> java_back_db_init()\n", 0, 0, 0);
-    Debug(LDAP_DEBUG_TRACE, "<== java_back_db_init()\n", 0, 0, 0);
-/*
-    java_back_db = (JavaBackendDB*)ch_malloc(sizeof(JavaBackendDB));
-    memset(java_back_db, '\0', sizeof(JavaBackendDB));
-*/
-
-    return 0;
-}
-
-int
-java_back_db_open(
-    BackendDB *be
-)
-{
-    jint res;
-    jmethodID mid;
-    BerValue *psuffix;
-    jobjectArray suffixArray;
-    int i;
-    int length;
-    jstring configHomeDirectory;
-    jstring realHomeDirectory;
-    jstring schemaDn;
-    jstring rootDn;
-    jstring rootPassword;
-
-    Debug( LDAP_DEBUG_TRACE, "==> java_back_db_open()\n", 0, 0, 0);
     Debug( LDAP_DEBUG_TRACE, "Class clazz = Class.forName(\"%s\");\n", java_back->className, 0, 0);
     Debug( LDAP_DEBUG_TRACE, "Backend backend = (Backend)clazz.newInstance();\n", 0, 0, 0);
 
-    java_back->backend = (*env)->NewObject(env, java_back->backendClass, java_back->backendConstructor);
+    java_back->backend = newObject(env, java_back->backendClass, java_back->backendConstructor);
 
     if (java_back->backend == 0) {
         Debug( LDAP_DEBUG_TRACE, "<== java_back_db_open(): Failed creating backend instance.\n", 0, 0, 0);
@@ -659,7 +591,7 @@ java_back_db_open(
 
     Debug( LDAP_DEBUG_TRACE, "backend.init();\n", 0, 0, 0);
 
-    res = (*env)->CallIntMethod(env, java_back->backend, java_back->backendInit);
+    res = callIntMethod(env, java_back->backend, java_back->backendInit);
 
     if (exceptionOccurred(env)) {
         Debug( LDAP_DEBUG_TRACE, "<== java_back_db_open(): Backend initialization failed.\n", 0, 0, 0);
@@ -676,7 +608,10 @@ java_connection_init(
     BackendDB	*be, Connection *conn
 )
 {
+    JavaBackend *java_back = (JavaBackend*)be->be_private;
+    JavaVM *jvm = java_back->jvm;
     JNIEnv *env;
+
     jint res;
     jmethodID backendCreateConnection;
   
@@ -689,7 +624,7 @@ java_connection_init(
     }
 
     // backend.openConnection();
-    (*env)->CallVoidMethod(env, java_back->backend, java_back->backendOpenConnection, conn->c_connid);
+    callVoidMethod(env, java_back->backend, java_back->backendOpenConnection, conn->c_connid);
 
     if (exceptionOccurred(env)) {
         Debug( LDAP_DEBUG_TRACE, "<== java_connection_init(): Failed initializing connection.\n", 0, 0, 0);
@@ -706,7 +641,10 @@ java_connection_destroy(
     BackendDB	*be, Connection *conn
 )
 {
+    JavaBackend *java_back = (JavaBackend*)be->be_private;
+    JavaVM *jvm = java_back->jvm;
     JNIEnv *env;
+
     jint res;
     jmethodID backendRemoveConnection;
 
@@ -719,7 +657,7 @@ java_connection_destroy(
     }
 
     // backend.removeConnection();
-    (*env)->CallVoidMethod(env, java_back->backend, java_back->backendRemoveConnection, conn->c_connid);
+    callVoidMethod(env, java_back->backend, java_back->backendRemoveConnection, conn->c_connid);
 
     if (exceptionOccurred(env)) {
         Debug( LDAP_DEBUG_TRACE, "<== java_connection_destroy(): Failed destroying connection.\n", 0, 0, 0);
@@ -731,46 +669,26 @@ java_connection_destroy(
     return 0;
 }
 
-/*
-int
-java_acl_group(
-    Backend	*be,
-    Connection	*conn,
-    Operation	*op,
-    Entry	*e,
-    struct berval	*bdn,
-    struct berval	*edn,
-    ObjectClass	*group_oc,
-    AttributeDescription	*group_at
-)
-{
-    Debug( LDAP_DEBUG_TRACE, "==> java_acl_group()\n", 0, 0, 0);
-    Debug( LDAP_DEBUG_TRACE, "<== java_acl_group()\n", 0, 0, 0);
-
-    return 0;
-}
-
-int
-java_acl_attribute(
-    Backend	*be,
-    Connection	*conn,
-    Operation	*op,
-    Entry	*e,
-    struct berval	*edn,
-    AttributeDescription	*group_at,
-    BerVarray	*vals
-)
-{
-    Debug( LDAP_DEBUG_TRACE, "==> java_acl_attribute()\n", 0, 0, 0);
-    Debug( LDAP_DEBUG_TRACE, "<== java_acl_attribute()\n", 0, 0, 0);
-
-    return 0;
-}
-*/
-
 #if SLAPD_JAVA == SLAPD_MOD_DYNAMIC
 
-/* conditionally define the init_module() function */
+#ifdef SLAP_BACKEND_INIT_MODULE
+
 SLAP_BACKEND_INIT_MODULE( java )
 
-#endif /* SLAPD_JAVA == SLAPD_MOD_DYNAMIC */
+#else
+
+int init_module(int argc, char *argv[]) {
+    BackendInfo bi;
+
+    memset(&bi, '\0', sizeof(bi));
+    bi.bi_type = "java";
+    bi.bi_init = java_back_initialize;
+
+    backend_add(&bi);
+
+    return 0;
+}
+
+#endif
+
+#endif

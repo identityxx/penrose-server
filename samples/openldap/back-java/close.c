@@ -15,6 +15,12 @@ java_back_db_close(
 )
 {
     Debug( LDAP_DEBUG_TRACE, "==> java_back_db_close().\n", 0, 0, 0);
+
+    JavaBackend *java_back = (JavaBackend*)be->be_private;
+    JavaVM *jvm = java_back->jvm;
+
+    (*jvm)->DestroyJavaVM(jvm);
+
     Debug( LDAP_DEBUG_TRACE, "<== java_back_db_close().\n", 0, 0, 0);
 
     return 0;
@@ -39,8 +45,6 @@ java_back_destroy(
     Debug( LDAP_DEBUG_TRACE, "==> java_back_destroy().\n", 0, 0, 0);
     Debug( LDAP_DEBUG_TRACE, "<== java_back_destroy().\n", 0, 0, 0);
 
-    (*jvm)->DestroyJavaVM(jvm);
-
     return 0;
 }
 
@@ -50,10 +54,11 @@ java_back_db_destroy(
 )
 {
     Debug( LDAP_DEBUG_TRACE, "==> java_back_db_destroy().\n", 0, 0, 0);
-    Debug( LDAP_DEBUG_TRACE, "<== java_back_db_destroy().\n", 0, 0, 0);
     
-    //free(java_back_db);
-    free(java_back);
+    free(be->be_private);
+    be->be_private = NULL;
+
+    Debug( LDAP_DEBUG_TRACE, "<== java_back_db_destroy().\n", 0, 0, 0);
 
     return 0;
 }

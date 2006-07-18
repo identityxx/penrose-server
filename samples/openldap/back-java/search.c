@@ -9,19 +9,21 @@
 
 #include "java_back.h"
 
-Entry* java_back_create_entry( JNIEnv *env, jobject searchResult );
+Entry* java_back_create_entry(JavaBackend *java_back, JNIEnv *env, jobject searchResult);
 
 int java_back_search(Operation *op, SlapReply *rs) { 
 
     Debug( LDAP_DEBUG_TRACE, "==> java_back_search()\n", 0, 0, 0);
 
-    //JavaBackend *be = (JavaBackend *)op->o_bd->be_private;
+    JavaBackend *java_back = (JavaBackend *)op->o_bd->be_private;
+    JavaVM *jvm = java_back->jvm;
+    JNIEnv *env;
+
     Connection *conn = (Connection *)op->o_conn;
 
     AttributeName *attrs = op->ors_attrs;
     int attrsonly        = op->ors_attrsonly;
 
-    JNIEnv *env;
     jint res;
     jstring base;
     jstring filter;
@@ -130,7 +132,7 @@ int java_back_search(Operation *op, SlapReply *rs) {
 
         Entry *entry;
 
-        entry = java_back_create_entry(env, searchResult);
+        entry = java_back_create_entry(java_back, env, searchResult);
 
         rs->sr_entry = entry;
         rs->sr_attrs = attrs;
@@ -157,7 +159,7 @@ int java_back_search(Operation *op, SlapReply *rs) {
     return 0;
 }
 
-Entry* java_back_create_entry( JNIEnv *env, jobject searchResult ) {
+Entry* java_back_create_entry(JavaBackend *java_back, JNIEnv *env, jobject searchResult) {
 
     int rc;
     Entry		*e;
@@ -231,7 +233,7 @@ Entry* java_back_create_entry( JNIEnv *env, jobject searchResult ) {
         //if (slap_debug & 2048) fprintf(stderr, " - slap_str2ad: %d\n", (rc == LDAP_SUCCESS));
         if( rc != LDAP_SUCCESS ) {
 
-            rc = slap_str2undef_ad( type, &ad, &text, 0 );
+            rc = slap_str2undef_ad( type, &ad, &text );
             if( rc != LDAP_SUCCESS ) {
                 entry_free( e );
                 (*env)->ReleaseStringUTFChars(env, jname, type);

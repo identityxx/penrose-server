@@ -1,0 +1,276 @@
+Index: configure
+===================================================================
+RCS file: /repo/OpenLDAP/pkg/ldap/configure,v
+retrieving revision 1.510.2.34
+diff -r1.510.2.34 configure
+109a110,111
+>     --enable-java	  enable java backend no|yes|mod [no]"
+> ac_help="$ac_help
+1861c1863
+< 	passwd perl shell sql"
+---
+> 	passwd java perl shell sql"
+2091a2094,2113
+> # OpenLDAP --enable-java
+>         # Check whether --enable-java or --disable-java was given.
+> if test "${enable_java+set}" = set; then
+>   enableval="$enable_java"
+> 
+>         ol_arg=invalid
+>         for ol_val in no yes mod ; do
+>                 if test "$enableval" = "$ol_val" ; then
+>                         ol_arg="$ol_val"
+>                 fi
+>         done
+>         if test "$ol_arg" = "invalid" ; then
+>                 { echo "configure: error: bad value $enableval for --enable-java" 1>&2; exit 1; }
+>         fi
+>         ol_enable_java="$ol_arg"
+> 
+> else
+>         ol_enable_java="no"
+> fi
+> # end --enable-java
+2367a2390
+> 		$ol_enable_java = no -a \
+2475a2499
+> BUILD_JAVA=no
+2490a2515,2518
+> SLAPD_JAVA_LDFLAGS=
+> MOD_JAVA_LDFLAGS=
+> JAVA_CPPFLAGS=
+> 
+7495a7524,7601
+> ol_link_java=no
+> if test $ol_enable_java != no ; then
+> 
+>         echo =====================================================================================
+>         echo ol_enable_java = $ol_enable_java
+> 
+>         # Extract the first word of "java", so it can be a program name with args.
+> set dummy java; ac_word=$2
+> echo $ac_n "checking for $ac_word""... $ac_c" 1>&6
+> echo "configure:7502: checking for $ac_word" >&5
+> if eval "test \"\${ac_cv_path_JAVABIN+set}\" = set"; then
+>   echo $ac_n "(cached) $ac_c" 1>&6
+> else
+>   case "$JAVABIN" in
+>   /*)
+>   ac_cv_path_JAVABIN="$JAVABIN" # Let the user override the test with a path.
+>   ;;
+>   ?:/*)
+>   ac_cv_path_JAVABIN="$JAVABIN" # Let the user override the test with a dos path.
+>   ;;
+>   *)
+>   IFS="${IFS=   }"; ac_save_ifs="$IFS"; IFS=":"
+>   ac_dummy="$PATH"
+>   for ac_dir in $ac_dummy; do
+>     test -z "$ac_dir" && ac_dir=.
+>     if test -f $ac_dir/$ac_word; then
+>       ac_cv_path_JAVABIN="$ac_dir/$ac_word"
+>       break
+>     fi
+>   done
+>   IFS="$ac_save_ifs"
+>   test -z "$ac_cv_path_JAVABIN" && ac_cv_path_JAVABIN="/usr/local/java/bin/java"
+>   ;;
+> esac
+> fi
+> JAVABIN="$ac_cv_path_JAVABIN"
+> if test -n "$JAVABIN"; then
+>   echo "$ac_t""$JAVABIN" 1>&6
+> else
+>   echo "$ac_t""no" 1>&6
+> fi
+> 
+> 
+>         if test "no$JAVABIN" = "no" ; then
+>                 if test $ol_enable_java = yes ; then
+>                         { echo "configure: error: could not locate java" 1>&2; exit 1; }
+>                 fi
+> 
+>         else
+>                 case $host_os in
+>                 cygwin* | mingw* | pw32*)
+>                         JAVA_HOME=`/usr/bin/cygpath --unix $JAVA_HOME`
+>                         JAVA_CPPFLAGS="-D__int64='long long' -I$JAVA_HOME/include -I$JAVA_HOME/include/win32"
+>                         JAVA_LDFLAGS="-L`pwd`/servers/slapd/back-java/win32 -L$JAVA_HOME/jre/bin -L$JAVA_HOME/jre/bin/server -ljava -ljvm -lverify"
+>                         ;;
+>                 *)
+>                         JAVA_CPPFLAGS="-I$JAVA_HOME/include -I$JAVA_HOME/include/linux"
+>                         JAVA_LDFLAGS="-L$JAVA_HOME/jre/lib/i386 -L$JAVA_HOME/jre/lib/i386/server  -L$JAVA_HOME/jre/lib/i386 -ljava -ljvm -lverify"
+>                         ;;
+>                 esac
+> 
+>                 if test x"$ol_enable_java" = "xyes" ; then
+>                         SLAPD_JAVA_LDFLAGS="$JAVA_LDFLAGS"
+>                 else
+>                         MOD_JAVA_LDFLAGS="$JAVA_LDFLAGS"
+>                 fi
+>                                 ol_link_java=yes
+>         fi
+> 
+>         echo JAVA_HOME          = $JAVA_HOME
+>         echo JAVA_CPPFLAGS      = $JAVA_CPPFLAGS
+>         echo SLAPD_JAVA_LDFLAGS = $SLAPD_JAVA_LDFLAGS
+>         echo MOD_JAVA_LDFLAGS   = $MOD_JAVA_LDFLAGS
+> 
+>         echo =====================================================================================
+> 
+> fi
+> 
+24129a24236,24251
+> if test "$ol_link_java" != no ; then
+>         BUILD_SLAPD=yes
+>         BUILD_JAVA=$ol_enable_java
+>         if test "$ol_enable_java" = mod ; then
+>                 SLAPD_DYNAMIC_BACKENDS="$SLAPD_DYNAMIC_BACKENDS back-java"
+>                 MFLAG=SLAPD_MOD_DYNAMIC
+>         else
+>                 SLAPD_STATIC_BACKENDS="$SLAPD_STATIC_BACKENDS back-java"
+>                 MFLAG=SLAPD_MOD_STATIC
+>         fi
+>         cat >> confdefs.h <<EOF
+> #define SLAPD_JAVA $MFLAG
+> EOF
+> 
+> fi
+> 
+24397a24520
+> servers/slapd/back-java/Makefile:build/top.mk:servers/slapd/back-java/Makefile.in:build/mod.mk \
+24488a24612
+> s%@JAVABIN@%$JAVABIN%g
+24509a24634
+> s%@BUILD_JAVA@%$BUILD_JAVA%g
+24528a24654,24656
+> s%@JAVA_CPPFLAGS@%$JAVA_CPPFLAGS%g
+> s%@SLAPD_JAVA_LDFLAGS@%$SLAPD_JAVA_LDFLAGS%g
+> s%@MOD_JAVA_LDFLAGS@%$MOD_JAVA_LDFLAGS%g
+24614a24743
+> servers/slapd/back-java/Makefile:build/top.mk:servers/slapd/back-java/Makefile.in:build/mod.mk \
+Index: configure.in
+===================================================================
+RCS file: /repo/OpenLDAP/pkg/ldap/configure.in,v
+retrieving revision 1.478.2.24
+diff -r1.478.2.24 configure.in
+201c201
+< 	passwd perl shell sql"
+---
+> 	passwd java perl shell sql"
+218a219
+> OL_ARG_ENABLE(java,[    --enable-java	  enable java backend no|yes|mod], no, [no yes mod])dnl
+334a336
+> 		$ol_enable_java = no -a \
+446a449
+> BUILD_JAVA=no
+461a465,468
+> SLAPD_JAVA_LDFLAGS=
+> MOD_JAVA_LDFLAGS=
+> JAVA_CPPFLAGS=
+> 
+558a566,614
+> dnl Java
+> ol_link_java=no
+> if test $ol_enable_java != no ; then
+> 
+>         echo =====================================================================================
+>         echo ol_enable_java = $ol_enable_java
+> 
+>         AC_PATH_PROG(JAVABIN, java, /usr/local/java/bin/java)
+> 
+>         if test "no$JAVABIN" = "no" ; then
+>                 if test $ol_enable_java = yes ; then
+>                         AC_MSG_ERROR([could not locate java])
+>                 fi
+> 
+>         else
+>                 case $host_os in
+>                 cygwin* | mingw* | pw32*)
+>                         JAVA_HOME=`/usr/bin/cygpath --unix $JAVA_HOME`
+>                         JAVA_CPPFLAGS="-D__int64='long long' -I$JAVA_HOME/include -I$JAVA_HOME/include/win32"
+>                         JAVA_LDFLAGS="-L`pwd`/servers/slapd/back-java/win32 -L$JAVA_HOME/jre/bin -L$JAVA_HOME/jre/bin/server -ljava -ljvm -lverify"
+>                         ;;
+>                 *)
+>                         JAVA_CPPFLAGS="-I$JAVA_HOME/include -I$JAVA_HOME/include/linux"
+>                         JAVA_LDFLAGS="-L$JAVA_HOME/jre/lib/i386 -L$JAVA_HOME/jre/lib/i386/server -ljava -ljvm -lverify"
+>                         ;;
+>                 esac
+> 
+>                 if test x"$ol_enable_java" = "xyes" ; then
+>                         SLAPD_JAVA_LDFLAGS="$JAVA_LDFLAGS"
+>                 else
+>                         MOD_JAVA_LDFLAGS="$JAVA_LDFLAGS"
+>                 fi
+>                 dnl should check java version
+>                 ol_link_java=yes
+>         fi
+> 
+>         echo JAVA_HOME          = $JAVA_HOME
+>         echo JAVA_CPPFLAGS      = $JAVA_CPPFLAGS
+>         echo JAVA_LDFLAGS       = $JAVA_LDFLAGS
+>         echo SLAPD_JAVA_LDFLAGS = $SLAPD_JAVA_LDFLAGS
+>         echo MOD_JAVA_LDFLAGS   = $MOD_JAVA_LDFLAGS
+> 
+>         echo =====================================================================================
+> 
+> fi
+> 
+> AC_PROG_CPP
+> 
+> dnl ----------------------------------------------------------------
+2527a2584,2596
+> if test "$ol_link_java" != no ; then
+>         BUILD_SLAPD=yes
+>         BUILD_JAVA=$ol_enable_java
+>         if test "$ol_enable_java" = mod ; then
+>                 SLAPD_DYNAMIC_BACKENDS="$SLAPD_DYNAMIC_BACKENDS back-java"
+>                 MFLAG=SLAPD_MOD_DYNAMIC
+>         else
+>                 SLAPD_STATIC_BACKENDS="$SLAPD_STATIC_BACKENDS back-java"
+>                 MFLAG=SLAPD_MOD_STATIC
+>         fi
+>         AC_DEFINE_UNQUOTED(SLAPD_JAVA,$MFLAG,[define to support JAVA backend])
+> fi
+> 
+2646a2716
+>   AC_SUBST(BUILD_JAVA)
+2670a2741,2744
+> AC_SUBST(JAVA_CPPFLAGS)
+> AC_SUBST(SLAPD_JAVA_LDFLAGS)
+> AC_SUBST(MOD_JAVA_LDFLAGS)
+> 
+2728a2803
+> servers/slapd/back-java/Makefile:build/top.mk:servers/slapd/back-java/Makefile.in:build/mod.mk \
+Index: build/top.mk
+===================================================================
+RCS file: /repo/OpenLDAP/pkg/ldap/build/top.mk,v
+retrieving revision 1.78.2.9
+diff -r1.78.2.9 top.mk
+187a188
+> SLAPD_JAVA_LDFLAGS = @SLAPD_JAVA_LDFLAGS@
+194c195
+< SLAPD_LIBS = @SLAPD_LIBS@ @SLAPD_PERL_LDFLAGS@ @SLAPD_SQL_LDFLAGS@ @SLAPD_SQL_LIBS@ @SLAPD_SLP_LIBS@
+---
+> SLAPD_LIBS = @SLAPD_LIBS@ @SLAPD_JAVA_LDFLAGS@ @SLAPD_PERL_LDFLAGS@ @SLAPD_SQL_LDFLAGS@ @SLAPD_SQL_LIBS@ @SLAPD_SLP_LIBS@
+Index: include/portable.h.in
+===================================================================
+RCS file: /repo/OpenLDAP/pkg/ldap/include/Attic/portable.h.in,v
+retrieving revision 1.225.2.12
+diff -r1.225.2.12 portable.h.in
+976a977,979
+> /* define to support JAVA backend */
+> #undef SLAPD_JAVA
+> 
+Index: servers/slapd/backend.c
+===================================================================
+RCS file: /repo/OpenLDAP/pkg/ldap/servers/slapd/backend.c,v
+retrieving revision 1.206.2.27
+diff -r1.206.2.27 backend.c
+85a86,88
+> #if SLAPD_JAVA == SLAPD_MOD_STATIC
+> #include "back-java/external.h"
+> #endif
+132a136,138
+> #if SLAPD_JAVA == SLAPD_MOD_STATIC
+> 	{"java",	java_back_initialize},
+> #endif

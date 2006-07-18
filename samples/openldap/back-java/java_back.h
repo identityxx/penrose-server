@@ -18,14 +18,15 @@ LDAP_BEGIN_DECL
 #define PATH_SEPARATOR ":"
 #endif
 
-typedef jint (JNICALL *CreateJavaVM_t)(JavaVM **pvm, void **env, void *args);
-typedef jint (JNICALL *GetDefaultJavaVMInitArgs_t)(void *args);
-
-extern JavaVM *jvm;
+//typedef jint (JNICALL *CreateJavaVM_t)(JavaVM **pvm, void **env, void *args);
+//typedef jint (JNICALL *GetDefaultJavaVMInitArgs_t)(void *args);
 
 typedef struct java_backend_instance {
 
+    //--------------------------------------------------------------------------------
     // Backend configuration
+    //--------------------------------------------------------------------------------
+
     char *className;
 
     int nclasspath;
@@ -37,10 +38,16 @@ typedef struct java_backend_instance {
     int nproperties;
     char **properties;
 
-    // Backend object
+    //--------------------------------------------------------------------------------
+    // Backend objects
+    //--------------------------------------------------------------------------------
+
+    JavaVM *jvm;
     jobject backend;
 
+    //--------------------------------------------------------------------------------
     // Java classes and methods
+    //--------------------------------------------------------------------------------
 
     // java.lang.String
     jclass stringClass;
@@ -122,26 +129,8 @@ typedef struct java_backend_instance {
     jmethodID backendModify;
     jmethodID backendModRdn;
     jmethodID backendCompare;
+
 } JavaBackend;
-
-/*
-typedef struct java_config_list {
-    char **argv;
-    int argc;
-    struct java_config_list *next;
-} JavaConfigList;
-
-typedef struct java_backend_db_instance {
-    char *conn_classname;
-    char *bdb_classname;
-
-    struct JavaConfigList *config_first;
-    struct JavaConfigList *config_last;
-} JavaBackendDB;
-*/
-
-extern JavaBackend *java_back;
-//extern JavaBackendDB *java_back_db;
 
 LDAP_END_DECL
 

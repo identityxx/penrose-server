@@ -31,6 +31,8 @@ java_back_db_config(
 {
     Debug( LDAP_DEBUG_TRACE, "==>java_back_db_config()\n", 0, 0, 0 );
 
+    JavaBackend *java_back = (JavaBackend *)be->be_private;
+
     if ( !strcasecmp( argv[0], "class" ) ) {
 
         int i;

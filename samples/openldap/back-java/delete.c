@@ -13,10 +13,12 @@ int java_back_delete( Operation *op, SlapReply *rs ) {
 
     Debug( LDAP_DEBUG_TRACE, "==> java_back_delete()\n", 0, 0, 0);
 
-    JavaBackend *be = (JavaBackend *)op->o_bd->be_private;
+    JavaBackend *java_back = (JavaBackend *)op->o_bd->be_private;
+    JavaVM *jvm = java_back->jvm;
+    JNIEnv *env;
+
     Connection *conn = (Connection *)op->o_conn;
 
-    JNIEnv *env;
     jint res;
   
     jstring dn;
