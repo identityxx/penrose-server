@@ -10,15 +10,23 @@
 #include "java_back.h"
 
 int
+java_back_db_close(
+    BackendDB   *be
+)
+{
+    Debug( LDAP_DEBUG_TRACE, "==> java_back_db_close().\n", 0, 0, 0);
+    Debug( LDAP_DEBUG_TRACE, "<== java_back_db_close().\n", 0, 0, 0);
+
+    return 0;
+}
+
+int
 java_back_close(
 	BackendInfo *bd
 )
 {
-    if (slap_debug & 1024) {
-        fprintf( stderr, "--------------------------------------------------------------------------------\n");
-        fprintf( stderr, "Calling java_back_close\n");
-        fprintf( stderr, "--------------------------------------------------------------------------------\n");
-    }
+    Debug( LDAP_DEBUG_TRACE, "==> java_back_close().\n", 0, 0, 0);
+    Debug( LDAP_DEBUG_TRACE, "<== java_back_close().\n", 0, 0, 0);
 
     return 0;
 }
@@ -28,11 +36,8 @@ java_back_destroy(
     BackendInfo *bd
 )
 {
-    if (slap_debug & 1024) {
-        fprintf( stderr, "--------------------------------------------------------------------------------\n");
-        fprintf( stderr, "Calling java_back_destroy\n");
-        fprintf( stderr, "--------------------------------------------------------------------------------\n");
-    }
+    Debug( LDAP_DEBUG_TRACE, "==> java_back_destroy().\n", 0, 0, 0);
+    Debug( LDAP_DEBUG_TRACE, "<== java_back_destroy().\n", 0, 0, 0);
 
     (*jvm)->DestroyJavaVM(jvm);
 
@@ -44,13 +49,10 @@ java_back_db_destroy(
     BackendDB *be
 )
 {
-    if (slap_debug & 1024) {
-        fprintf( stderr, "--------------------------------------------------------------------------------\n");
-        fprintf( stderr, "Calling java_back_db_destroy\n");
-        fprintf( stderr, "--------------------------------------------------------------------------------\n");
-    }
+    Debug( LDAP_DEBUG_TRACE, "==> java_back_db_destroy().\n", 0, 0, 0);
+    Debug( LDAP_DEBUG_TRACE, "<== java_back_db_destroy().\n", 0, 0, 0);
     
-    free(java_back_db);
+    //free(java_back_db);
     free(java_back);
 
     return 0;

@@ -89,7 +89,7 @@ int java_back_search(Operation *op, SlapReply *rs) {
 
     (*env)->CallVoidMethod(env, searchControls, java_back->searchControlsSetReturningAttributes, attributeNames);
 
-    Debug( LDAP_DEBUG_TRACE, "Result result = backend.search(connectionId, base, filter, searchControls);\n", 0, 0, 0);
+    Debug( LDAP_DEBUG_TRACE, "Results results = backend.search(connectionId, base, filter, searchControls);\n", 0, 0, 0);
 
     results = (*env)->CallObjectMethod(env, java_back->backend, java_back->backendSearch,
         conn->c_connid, base, filter, searchControls);
@@ -122,7 +122,7 @@ int java_back_search(Operation *op, SlapReply *rs) {
         return res;
     }
     
-    Debug( LDAP_DEBUG_TRACE, "SearchResult sr = (SearchResult)result.next();\n", 0, 0, 0);
+    Debug( LDAP_DEBUG_TRACE, "SearchResult sr = (SearchResult)results.next();\n", 0, 0, 0);
 
     searchResult = (*env)->CallObjectMethod(env, results, java_back->resultsNext);
 
@@ -146,7 +146,7 @@ int java_back_search(Operation *op, SlapReply *rs) {
 
         entry_free(entry);
 
-        Debug( LDAP_DEBUG_TRACE, "sr = (SearchResult)result.next();\n", 0, 0, 0);
+        Debug( LDAP_DEBUG_TRACE, "sr = (SearchResult)results.next();\n", 0, 0, 0);
 
         searchResult = (*env)->CallObjectMethod(env, results, java_back->resultsNext);
     }

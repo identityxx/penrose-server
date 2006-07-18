@@ -17,7 +17,7 @@
 JNIEnv *env = NULL;
 JavaVM *jvm = NULL;
 JavaBackend *java_back = NULL;
-JavaBackendDB *java_back_db = NULL;
+//JavaBackendDB *java_back_db = NULL;
 
 void *handle = NULL;
 void *libjavaHandle = NULL;
@@ -74,7 +74,7 @@ jclass findClass(
 {
     jclass clazz;
 
-    Debug( LDAP_DEBUG_TRACE, "==> findClass(%s)\n", className, 0, 0);
+    Debug( LDAP_DEBUG_TRACE, "==> findClass(\"%s\")\n", className, 0, 0);
     clazz = (*env)->FindClass(env, className);
 
     if (clazz == 0) {
@@ -217,11 +217,7 @@ java_back_initialize(
     BackendInfo	*bi
 )
 {
-    if (slap_debug & 1024) {
-        fprintf(stderr, "-------------------------------------------------------------------------------\n");
-        fprintf(stderr, "Calling java_back_initialize\n");
-        fprintf(stderr, "-------------------------------------------------------------------------------\n");
-    }
+    Debug(LDAP_DEBUG_TRACE, "==> java_back_initialize()\n", 0, 0, 0);
 
     bi->bi_open = java_back_open;
     bi->bi_config = java_back_config;
@@ -262,6 +258,8 @@ java_back_initialize(
     java_back = (JavaBackend*)ch_malloc(sizeof(JavaBackend));
     memset(java_back, '\0', sizeof(JavaBackend));
 
+    Debug(LDAP_DEBUG_TRACE, "<== java_back_initialize()\n", 0, 0, 0);
+
     return 0;
 }
 		
@@ -287,7 +285,7 @@ java_back_open(
     vm_args.nOptions = 0;
     if (java_back->nclasspath > 0) vm_args.nOptions++;
     if (java_back->nlibpath > 0) vm_args.nOptions++;
-    if (java_back->nproperty > 0) vm_args.nOptions += java_back->nproperty;
+    if (java_back->nproperties > 0) vm_args.nOptions += java_back->nproperties;
 
     vm_args.options = (JavaVMOption *)ch_calloc(vm_args.nOptions, sizeof(JavaVMOption));
     counter = 0;
@@ -295,7 +293,7 @@ java_back_open(
     Debug( LDAP_DEBUG_TRACE, "Creating %d option(s):\n", vm_args.nOptions, 0, 0);
 
     if (java_back->nclasspath > 0) {
-        classpath[0] = NULL;
+        classpath[0] = 0;
 
         for (i=0; i<java_back->nclasspath; i++) {
             if (i > 0) {
@@ -312,7 +310,7 @@ java_back_open(
     }
 
     if (java_back->nlibpath > 0) {
-        libpath[0] = NULL;
+        libpath[0] = 0;
 
         for (i=0; i<java_back->nlibpath; i++) {
             if (i > 0) {
@@ -328,12 +326,12 @@ java_back_open(
         counter++; 
     }
 
-    if (java_back->nproperty > 0) {
+    if (java_back->nproperties > 0) {
 
-        for (i=0; i<java_back->nproperty; i++) {
+        for (i=0; i<java_back->nproperties; i++) {
 
             vm_args.options[counter].optionString = (char*)ch_malloc(1024);
-            snprintf(vm_args.options[counter].optionString, 1024, "-D%s", java_back->property[i]);
+            snprintf(vm_args.options[counter].optionString, 1024, "-D%s", java_back->properties[i]);
             Debug( LDAP_DEBUG_TRACE, "[%d] %s\n", counter, vm_args.options[counter].optionString, 0);
 
             counter++;
@@ -343,7 +341,7 @@ java_back_open(
     vm_args.ignoreUnrecognized = JNI_FALSE;
 
     //Debug( LDAP_DEBUG_TRACE, "==> JNI_CreateJavaVM()\n", 0, 0, 0);
-    res = JNI_CreateJavaVM(&jvm, &env, &vm_args);
+    res = JNI_CreateJavaVM(&jvm, (void **)&env, &vm_args);
     //Debug( LDAP_DEBUG_TRACE, "<== JNI_CreateJavaVM(): RC=%d\n", res, 0, 0);
 
 /*
@@ -546,16 +544,12 @@ java_back_open(
     if (java_back->namingEnumerationNext == 0) return -1;
 
     //------------------------------------------------------------------------------------------
-    // org.openldap.backend.Result
+    // org.openldap.backend.Results
     //------------------------------------------------------------------------------------------
 
-    java_back->resultsClass = findClass(env, "org/openldap/backend/Result");
+    java_back->resultsClass = findClass(env, "org/openldap/backend/Results");
     if (java_back->resultsClass == 0) return -1;
 
-/*
-    java_back->resultsConstructor = getMethodID(env, java_back->resultsClass, "<init>", "()V");
-    if (java_back->resultsConstructor == 0) return -1;
-*/
     java_back->resultsNext = getMethodID(env, java_back->resultsClass, "next", "()Ljava/lang/Object;");
     if (java_back->resultsNext == 0) return -1;
 
@@ -571,30 +565,6 @@ java_back_open(
 
     java_back->backendConstructor = getMethodID(env, java_back->backendClass, "<init>", "()V");
     if (java_back->backendConstructor == 0) return -1;
-
-/*
-    java_back->backendSetHomeDirectory = getMethodID(env, java_back->backendClass, "setHomeDirectory",
-        "(Ljava/lang/String;Ljava/lang/String;)I");
-    if (java_back->backendSetHomeDirectory == 0) return -1;
-*/
-
-    java_back->backendSetSuffix = getMethodID(env, java_back->backendClass, "setSuffix",
-        "([Ljava/lang/String;)V");
-    if (java_back->backendSetSuffix == 0) return -1;
-
-    java_back->backendSetSchema = getMethodID(env, java_back->backendClass, "setSchema",
-        "(Ljava/lang/String;)V");
-    if (java_back->backendSetSchema == 0) return -1;
-
-    java_back->backendSetRoot = getMethodID(env, java_back->backendClass, "setRoot",
-        "(Ljava/lang/String;Ljava/lang/String;)V");
-    if (java_back->backendSetRoot == 0) return -1;
-
-/*
-    java_back->backendSetProperties = getMethodID(env, java_back->backendClass, "setProperties",
-        "(Ljava/util/Properties;)I");
-    if (java_back->backendSetProperties == 0) return -1;
-*/
 
     java_back->backendInit = getMethodID(env, java_back->backendClass, "init", "()I");
     if (java_back->backendInit == 0) return -1;
@@ -613,7 +583,7 @@ java_back_open(
     if (java_back->backendUnbind == 0) return -1;
   
     java_back->backendSearch = getMethodID(env, java_back->backendClass, "search",
-        "(ILjava/lang/String;Ljava/lang/String;Ljavax/naming/directory/SearchControls;)Lorg/openldap/backend/Result;");
+        "(ILjava/lang/String;Ljava/lang/String;Ljavax/naming/directory/SearchControls;)Lorg/openldap/backend/Results;");
     if (java_back->backendSearch == 0) return -1;
   
     java_back->backendAdd = getMethodID(env, java_back->backendClass, "add", "(ILjava/lang/String;Ljavax/naming/directory/Attributes;)I");
@@ -634,64 +604,22 @@ java_back_open(
         "(ILjava/lang/String;Ljava/lang/String;Ljava/lang/Object;)I");
     if (java_back->backendCompare == 0) return -1;
 
-    return 0;
-}
-
-int
-java_back_config(
-    BackendInfo	*bi, const char *fname, int lineno, int argc, char **argv
-)
-{
-    if (slap_debug & 1024) {
-        fprintf(stderr, "-------------------------------------------------------------------------------\n");
-        fprintf(stderr, "Calling java_back_config\n");
-        fprintf(stderr, "-------------------------------------------------------------------------------\n");
-    }
-
-    return 0;
-}
-/*
-int
-java_back_close(
-    BackendInfo	*bi
-)
-{
-    if (slap_debug & 1024) {
-        fprintf(stderr, "-------------------------------------------------------------------------------\n");
-        fprintf(stderr, "Calling java_back_close\n");
-        fprintf(stderr, "-------------------------------------------------------------------------------\n");
-    }
+    Debug(LDAP_DEBUG_TRACE, "<== java_back_open()\n", 0, 0, 0);
 
     return 0;
 }
 
-int
-java_back_destroy(
-    BackendInfo	*bi
-)
-{
-    if (slap_debug & 1024) {
-        fprintf(stderr, "-------------------------------------------------------------------------------\n");
-        fprintf(stderr, "Calling java_back_destroy\n");
-        fprintf(stderr, "-------------------------------------------------------------------------------\n");
-    }
-
-    return 0;
-}
-*/
 int
 java_back_db_init(
     BackendDB	*be
 )
 {
-    if (slap_debug & 1024) {
-        fprintf(stderr, "-------------------------------------------------------------------------------\n");
-        fprintf(stderr, "Calling java_back_db_init\n");
-        fprintf(stderr, "-------------------------------------------------------------------------------\n");
-    }
-
+    Debug(LDAP_DEBUG_TRACE, "==> java_back_db_init()\n", 0, 0, 0);
+    Debug(LDAP_DEBUG_TRACE, "<== java_back_db_init()\n", 0, 0, 0);
+/*
     java_back_db = (JavaBackendDB*)ch_malloc(sizeof(JavaBackendDB));
     memset(java_back_db, '\0', sizeof(JavaBackendDB));
+*/
 
     return 0;
 }
@@ -713,176 +641,32 @@ java_back_db_open(
     jstring rootDn;
     jstring rootPassword;
 
-    if (slap_debug & 1024) {
-        fprintf(stderr, "-------------------------------------------------------------------------------\n");
-        fprintf(stderr, "Calling java_back_db_open\n");
-        fprintf(stderr, "-------------------------------------------------------------------------------\n");
-
-        fprintf(stderr, "Class clazz = Class.forName(\"%s\");\n", java_back->className);
-        fprintf(stderr, "Backend backend = (Backend)clazz.newInstance();\n");
-    }
+    Debug( LDAP_DEBUG_TRACE, "==> java_back_db_open()\n", 0, 0, 0);
+    Debug( LDAP_DEBUG_TRACE, "Class clazz = Class.forName(\"%s\");\n", java_back->className, 0, 0);
+    Debug( LDAP_DEBUG_TRACE, "Backend backend = (Backend)clazz.newInstance();\n", 0, 0, 0);
 
     java_back->backend = (*env)->NewObject(env, java_back->backendClass, java_back->backendConstructor);
-    if (java_back->backend == 0) return -1;
 
-    if (exceptionOccurred(env)) {
-        if (slap_debug & 1024) fprintf(stderr, "Backend backend = new %s() failed.\n", java_back->className);
+    if (java_back->backend == 0) {
+        Debug( LDAP_DEBUG_TRACE, "<== java_back_db_open(): Failed creating backend instance.\n", 0, 0, 0);
         return -1;
     }
 
-/*
-    //------------------------------------------------------------------------------------------
-    if (slap_debug & 1024) fprintf(stderr, "backend.setHomeDirectory(\"%s\");\n", java_back->configHomeDirectory);
-    //------------------------------------------------------------------------------------------
-
-    configHomeDirectory = (*env)->NewStringUTF(env, java_back->configHomeDirectory);
-    realHomeDirectory = (*env)->NewStringUTF(env, java_back->realHomeDirectory);
-
-    (*env)->CallIntMethod(env, java_back->backend, java_back->backendSetHomeDirectory, configHomeDirectory);
-
     if (exceptionOccurred(env)) {
-        if (slap_debug & 1024) fprintf(stderr, "backend.setHomeDirectory() failed.\n");
-        return -1;
-    }
-*/
-
-    //------------------------------------------------------------------------------------------
-    if (slap_debug & 1024) fprintf(stderr, "backend.setSuffix(suffixArray);\n");
-    //------------------------------------------------------------------------------------------
-
-    psuffix = be->be_suffix;
-    length = 0;
-    while ((psuffix != 0) && (psuffix->bv_val != 0)) {
-        length++;
-        psuffix++;
-    }
-
-    suffixArray = (*env)->NewObjectArray(env, length, java_back->stringClass, NULL);
-
-    for (i=0; i<length; i++) {
-        jstring suffix;
-
-        //if (slap_debug & 1024) fprintf(stderr, "suffix: %s\n", be->be_suffix[i].bv_val);
-
-        suffix = (*env)->NewStringUTF(env, be->be_suffix[i].bv_val);
-
-        (*env)->SetObjectArrayElement(env, suffixArray, i, suffix);
-    }
-
-    (*env)->CallVoidMethod(env, java_back->backend, java_back->backendSetSuffix, suffixArray);
-
-    if (exceptionOccurred(env)) {
-        if (slap_debug & 1024) fprintf(stderr, "backend.setSuffix() failed.\n");
+        Debug( LDAP_DEBUG_TRACE, "<== java_back_db_open(): Exception occured while creating backend instance.\n", 0, 0, 0);
         return -1;
     }
 
-    if (be->be_schemadn.bv_val) {
-        //------------------------------------------------------------------------------------------
-        if (slap_debug & 1024) fprintf(stderr, "backend.setSchema(\"%s\");\n", be->be_schemadn.bv_val);
-        //------------------------------------------------------------------------------------------
-
-        schemaDn = (*env)->NewStringUTF(env, be->be_schemadn.bv_val);
-
-        (*env)->CallVoidMethod(env, java_back->backend, java_back->backendSetSchema, schemaDn);
-
-        if (exceptionOccurred(env)) {
-            if (slap_debug & 1024) fprintf(stderr, "backend.setSchema() failed.\n");
-            return -1;
-        }
-    }
-
-/*
-    //------------------------------------------------------------------------------------------
-    if (slap_debug & 1024) fprintf(stderr, "backend.setRoot(rootDn, rootPassword);\n");
-    //------------------------------------------------------------------------------------------
-
-    rootDn = (*env)->NewStringUTF(env, be->be_rootdn.bv_val);
-    rootPassword = (*env)->NewStringUTF(env, be->be_rootpw.bv_val);
-
-    (*env)->CallVoidMethod(env, java_back->backend, java_back->backendSetRoot, rootDn, rootPassword);
-
-    if (exceptionOccurred(env)) {
-        if (slap_debug & 1024) fprintf(stderr, "backend.setRoot() failed.\n");
-        return -1;
-    }
-
-    if (java_back->properties) {
-        char path[1024];
-        jstring propertiesPath;
-        jobject propertiesFileInputStream;
-        jobject properties;
-
-        //------------------------------------------------------------------------------------------
-        if (slap_debug & 1024) fprintf(stderr, "backend.setProperties(properties);\n");
-        //------------------------------------------------------------------------------------------
-
-#ifdef __CYGWIN__
-        cygwin_conv_to_full_win32_path(java_back->properties, path);
-#else
-        snprintf(path, 1024, "%s", java_back->properties);
-#endif
-
-        //------------------------------------------------------------------------------------------
-        if (slap_debug & 1024) fprintf(stderr, "FileInputStream is = new FileInputStream(\"%s\");\n", path);
-        //------------------------------------------------------------------------------------------
-
-        propertiesPath = (*env)->NewStringUTF(env, path);
-
-        propertiesFileInputStream = (*env)->NewObject(
-                env,
-                java_back->fileInputStreamClass,
-                java_back->fileInputStreamConstructor,
-                propertiesPath
-        );
-
-        //------------------------------------------------------------------------------------------
-        if (slap_debug & 1024) fprintf(stderr, "Properties properties = new Properties();\n");
-        //------------------------------------------------------------------------------------------
-
-        properties = (*env)->NewObject(env, java_back->propertiesClass, java_back->propertiesConstructor);
-
-        //------------------------------------------------------------------------------------------
-        if (slap_debug & 1024) fprintf(stderr, "properties.load(is);\n");
-        //------------------------------------------------------------------------------------------
-
-        (*env)->CallVoidMethod(env, properties, java_back->propertiesLoad, propertiesFileInputStream);
-
-        //------------------------------------------------------------------------------------------
-        if (slap_debug & 1024) fprintf(stderr, "backend.setProperties(properties);\n");
-        //------------------------------------------------------------------------------------------
-
-        res = (*env)->CallIntMethod(env, java_back->backend, java_back->backendSetProperties, properties);
-
-        if (exceptionOccurred(env)) {
-            if (slap_debug & 1024) fprintf(stderr, "backend.setProperties() failed.\n");
-            return -1;
-        }
-    }
-*/
-    //------------------------------------------------------------------------------------------
-    if (slap_debug & 1024) fprintf(stderr, "backend.init();\n");
-    //------------------------------------------------------------------------------------------
+    Debug( LDAP_DEBUG_TRACE, "backend.init();\n", 0, 0, 0);
 
     res = (*env)->CallIntMethod(env, java_back->backend, java_back->backendInit);
 
     if (exceptionOccurred(env)) {
-        if (slap_debug & 1024) fprintf(stderr, "backend.init() failed.\n");
+        Debug( LDAP_DEBUG_TRACE, "<== java_back_db_open(): Backend initialization failed.\n", 0, 0, 0);
         return -1;
     }
 
-    return 0;
-}
-
-int
-java_back_db_close(
-    BackendDB	*be
-)
-{
-    if (slap_debug & 1024) {
-        fprintf(stderr, "-------------------------------------------------------------------------------\n");
-        fprintf(stderr, "Calling java_back_db_close\n");
-        fprintf(stderr, "-------------------------------------------------------------------------------\n");
-    }
+    Debug( LDAP_DEBUG_TRACE, "<== java_back_db_open()\n", 0, 0, 0);
 
     return 0;
 }
@@ -896,16 +680,11 @@ java_connection_init(
     jint res;
     jmethodID backendCreateConnection;
   
-    if (slap_debug & 1024) {
-        fprintf(stderr, "-------------------------------------------------------------------------------\n");
-        fprintf(stderr, "Calling java_connection_init\n");
-        fprintf(stderr, "connection = %d\n", conn->c_connid);
-        fprintf(stderr, "-------------------------------------------------------------------------------\n");
-    }
+    Debug( LDAP_DEBUG_TRACE, "==> java_connection_init()\n", 0, 0, 0);
 
     res = (*jvm)->AttachCurrentThread(jvm, (void**)&env, NULL);
     if (res < 0) {
-        if (slap_debug & 1024) fprintf(stderr, "Attach failed\n");
+        Debug( LDAP_DEBUG_TRACE, "<== java_connection_init(): Failed connecting to JVM.\n", 0, 0, 0);
         return -1;
     }
 
@@ -913,9 +692,11 @@ java_connection_init(
     (*env)->CallVoidMethod(env, java_back->backend, java_back->backendOpenConnection, conn->c_connid);
 
     if (exceptionOccurred(env)) {
-        if (slap_debug & 1024) fprintf(stderr, "backend.createConnection() failed.\n");
+        Debug( LDAP_DEBUG_TRACE, "<== java_connection_init(): Failed initializing connection.\n", 0, 0, 0);
         return -1;
     }
+
+    Debug( LDAP_DEBUG_TRACE, "<== java_connection_init()\n", 0, 0, 0);
 
     return 0;
 }
@@ -929,16 +710,11 @@ java_connection_destroy(
     jint res;
     jmethodID backendRemoveConnection;
 
-    if (slap_debug & 1024) {
-        fprintf(stderr, "-------------------------------------------------------------------------------\n");
-        fprintf(stderr, "Calling java_connection_destroy\n");
-        fprintf(stderr, "connection = %d\n", conn->c_connid);
-        fprintf(stderr, "-------------------------------------------------------------------------------\n");
-    }
+    Debug( LDAP_DEBUG_TRACE, "==> java_connection_destroy()\n", 0, 0, 0);
 
     res = (*jvm)->AttachCurrentThread(jvm, (void**)&env, NULL);
     if (res < 0) {
-        if (slap_debug & 1024) fprintf(stderr, "Attach failed\n");
+        Debug( LDAP_DEBUG_TRACE, "<== java_connection_destroy(): Failed attaching to JVM.\n", 0, 0, 0);
         return -1;
     }
 
@@ -946,9 +722,11 @@ java_connection_destroy(
     (*env)->CallVoidMethod(env, java_back->backend, java_back->backendRemoveConnection, conn->c_connid);
 
     if (exceptionOccurred(env)) {
-        if (slap_debug & 1024) fprintf(stderr, "backend.removeConnection() failed.\n");
+        Debug( LDAP_DEBUG_TRACE, "<== java_connection_destroy(): Failed destroying connection.\n", 0, 0, 0);
         return -1;
     }
+
+    Debug( LDAP_DEBUG_TRACE, "<== java_connection_destroy()\n", 0, 0, 0);
 
     return 0;
 }
@@ -966,14 +744,8 @@ java_acl_group(
     AttributeDescription	*group_at
 )
 {
-    if (slap_debug & 1024) {
-        fprintf(stderr, "-------------------------------------------------------------------------------\n");
-        fprintf(stderr, "Calling java_acl_group\n");
-        fprintf(stderr, "connection = %d\n", conn);
-        fprintf(stderr, "ndn        = %s\n", bdn->bv_val);
-        fprintf(stderr, "dn         = %s\n", edn->bv_val);
-        fprintf(stderr, "-------------------------------------------------------------------------------\n");
-    }
+    Debug( LDAP_DEBUG_TRACE, "==> java_acl_group()\n", 0, 0, 0);
+    Debug( LDAP_DEBUG_TRACE, "<== java_acl_group()\n", 0, 0, 0);
 
     return 0;
 }
@@ -989,13 +761,8 @@ java_acl_attribute(
     BerVarray	*vals
 )
 {
-    if (slap_debug & 1024) {
-        fprintf(stderr, "-------------------------------------------------------------------------------\n");
-        fprintf(stderr, "Calling java_acl_attribute\n");
-        fprintf(stderr, "connection = %d\n", conn);
-        fprintf(stderr, "ndn        = %s\n", edn->bv_val);
-        fprintf(stderr, "-------------------------------------------------------------------------------\n");
-    }
+    Debug( LDAP_DEBUG_TRACE, "==> java_acl_attribute()\n", 0, 0, 0);
+    Debug( LDAP_DEBUG_TRACE, "<== java_acl_attribute()\n", 0, 0, 0);
 
     return 0;
 }

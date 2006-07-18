@@ -25,21 +25,22 @@ extern JavaVM *jvm;
 
 typedef struct java_backend_instance {
 
+    // Backend configuration
+    char *className;
+
     int nclasspath;
     char **classpath;
 
     int nlibpath;
     char **libpath;
 
-    int nproperty;
-    char **property;
+    int nproperties;
+    char **properties;
 
-    char *className;
-    char *configHomeDirectory;
-    char *realHomeDirectory;
-    char *properties;
-
+    // Backend object
     jobject backend;
+
+    // Java classes and methods
 
     // java.lang.String
     jclass stringClass;
@@ -102,20 +103,14 @@ typedef struct java_backend_instance {
     jclass modificationItemClass;
     jmethodID modificationItemConstructor;
 
-    // org.openldap.backend.Result
+    // org.openldap.backend.Results
     jclass resultsClass;
-    jmethodID resultsConstructor;
     jmethodID resultsNext;
     jmethodID resultsGetReturnCode;
 
     // org.openldap.backend.Backend
     jclass backendClass;
     jmethodID backendConstructor;
-    jmethodID backendSetHomeDirectory;
-    jmethodID backendSetSuffix;
-    jmethodID backendSetSchema;
-    jmethodID backendSetRoot;
-    jmethodID backendSetProperties;
     jmethodID backendInit;
     jmethodID backendOpenConnection;
     jmethodID backendRemoveConnection;
@@ -129,6 +124,7 @@ typedef struct java_backend_instance {
     jmethodID backendCompare;
 } JavaBackend;
 
+/*
 typedef struct java_config_list {
     char **argv;
     int argc;
@@ -142,9 +138,10 @@ typedef struct java_backend_db_instance {
     struct JavaConfigList *config_first;
     struct JavaConfigList *config_last;
 } JavaBackendDB;
+*/
 
 extern JavaBackend *java_back;
-extern JavaBackendDB *java_back_db;
+//extern JavaBackendDB *java_back_db;
 
 LDAP_END_DECL
 

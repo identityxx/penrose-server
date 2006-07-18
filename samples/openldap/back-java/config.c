@@ -10,6 +10,17 @@
 #include "java_back.h"
 
 int
+java_back_config(
+    BackendInfo *bi, const char *fname, int lineno, int argc, char **argv
+)
+{
+    Debug(LDAP_DEBUG_TRACE, "==> java_back_config()\n", 0, 0, 0);
+    Debug(LDAP_DEBUG_TRACE, "<== java_back_config()\n", 0, 0, 0);
+
+    return 0;
+}
+
+int
 java_back_db_config(
     BackendDB *be,
     const char *fname,
@@ -38,7 +49,7 @@ java_back_db_config(
             if (java_back->className[i] == '.') java_back->className[i] = '/';
         }
 
-        Debug( LDAP_DEBUG_TRACE, "<==java_back_db_config(): class=%s\n", java_back->className, 0, 0 );
+        Debug( LDAP_DEBUG_TRACE, "<==java_back_db_config(): className=%s\n", java_back->className, 0, 0 );
 
     } else if ( !strcasecmp( argv[0], "libpath" ) ) {
 
@@ -109,7 +120,7 @@ java_back_db_config(
     } else if ( !strcasecmp( argv[0], "property" ) ) {
 
         int i;
-        char **property;
+        char **properties;
 
         if ( argc < 2 ) {
             Debug( LDAP_DEBUG_TRACE,
@@ -119,61 +130,25 @@ java_back_db_config(
             return 1;
         }
 
-        property = ch_calloc(java_back->nproperty + 1, sizeof(char *));
-        property[java_back->nproperty] = ch_strdup( argv[1] );
+        properties = ch_calloc(java_back->nproperties + 1, sizeof(char *));
+        properties[java_back->nproperties] = ch_strdup( argv[1] );
 
-        if (java_back->nproperty > 0) {
+        if (java_back->nproperties > 0) {
 
-            for (i=0; i<java_back->nproperty; i++) {
-                //Debug( LDAP_DEBUG_TRACE, "Moving old property #%d\n", i, 0, 0 );
-                property[i] = java_back->property[i];
-                java_back->property[i] = NULL;
+            for (i=0; i<java_back->nproperties; i++) {
+                //Debug( LDAP_DEBUG_TRACE, "Moving old properties #%d\n", i, 0, 0 );
+                properties[i] = java_back->properties[i];
+                java_back->properties[i] = NULL;
             }
 
-            //Debug( LDAP_DEBUG_TRACE, "Releasing old property\n", 0, 0, 0);
-            ch_free(java_back->property);
+            //Debug( LDAP_DEBUG_TRACE, "Releasing old properties\n", 0, 0, 0);
+            ch_free(java_back->properties);
         }
 
-        java_back->property = property;
-        java_back->nproperty++;
+        java_back->properties = properties;
+        java_back->nproperties++;
 
-        Debug( LDAP_DEBUG_TRACE, "<==java_back_db_config(): property=%s\n", java_back->property[java_back->nproperty-1], 0, 0 );
-
-    } else if ( !strcasecmp( argv[0], "homeDirectory" ) ) {
-
-        if ( argc < 2 ) {
-            Debug( LDAP_DEBUG_TRACE,
-                "<==java_back_db_config (%s line %d): "
-                "missing home directory in \"homeDirectory\" directive\n",
-                fname, lineno, 0 );
-            return 1;
-        }
-
-        java_back->configHomeDirectory = ch_strdup(argv[1]);
-
-#ifdef __CYGWIN__
-        java_back->realHomeDirectory = (char*)ch_malloc(1024);
-        cygwin_conv_to_full_win32_path(java_back->configHomeDirectory, java_back->realHomeDirectory);
-#else
-        java_back->realHomeDirectory = ch_strdup(argv[1]);
-#endif
-
-        Debug( LDAP_DEBUG_TRACE, "<==java_back_db_config(): configHomeDirectory=%s\n", java_back->configHomeDirectory, 0, 0 );
-        Debug( LDAP_DEBUG_TRACE, "<==java_back_db_config(): realHomeDirectory=%s\n", java_back->realHomeDirectory, 0, 0 );
-
-    } else if ( !strcasecmp( argv[0], "properties" ) ) {
-
-        if ( argc < 2 ) {
-            Debug( LDAP_DEBUG_TRACE,
-                "<==java_back_db_config (%s line %d): "
-                "missing properties file in \"properties\" directive\n",
-                fname, lineno, 0 );
-            return 1;
-        }
-
-        java_back->properties = ch_strdup( argv[1] );
-
-        Debug( LDAP_DEBUG_TRACE, "<==java_back_db_config(): properties=%s\n", java_back->properties, 0, 0 );
+        Debug( LDAP_DEBUG_TRACE, "<==java_back_db_config(): properties=%s\n", java_back->properties[java_back->nproperties-1], 0, 0 );
 
     }
 
