@@ -14,6 +14,8 @@
     <property name="iscc.path" value="ISCC.exe"/>
     <property name="docs.target" value="${project.dist}/javadoc"/>
 
+    <property name="cygwin.home" value="c:/cygwin"/>
+
     <tstamp/>
 
     <path id="lib.path">
@@ -35,13 +37,22 @@
 
     <taskdef resource="svntask.properties" classpathref="project.classpath"/>
 
-    <target name="build-ant">
+    <target name="init">
+        <condition property="isWindows">
+            <os family="windows"/>
+        </condition>
+        <condition property="isUnix">
+            <os family="unix"/>
+        </condition>
+    </target>
+
+    <target name="build-ant" depends="init">
         <mkdir dir="target/ant"/>
         <javac srcdir="src/ant" destdir="target/ant"/>
         <jar destfile="target/penrose-ant.jar" basedir="target/ant"/>
     </target>
 
-    <target name="build">
+    <target name="build" depends="init">
         <javacc
             target="src/java/org/safehaus/penrose/schema/LDAPv3Schema.jj"
             javacchome="lib/javacc"
@@ -104,7 +115,7 @@
         </jar>
     </target>
 
-    <target name="docs-publish">
+    <target name="docs-publish" depends="init">
         <delete dir="${docs.target}"/>
         <mkdir dir="${docs.target}"/>
         <copy todir="${docs.target}" overwrite="true">
@@ -224,26 +235,57 @@
     </target>
 
     <target name="dist-rpm" depends="dist-src">
+        <antcall target="dist-rpm-linux"/>
+        <antcall target="dist-rpm-windows"/>
+    </target>
+
+    <target name="dist-rpm-linux" if="isUnix">
+        <property name="rpm.prefix" value=""/>
+        <property name="rpm.home" value="/usr/src/redhat"/>
+        <property name="rpm.builder" value="${cygwin.home}/usr/bin/rpmbuild"/>
         <copy todir="target" file="rpm/penrose.spec">
             <filterchain>
                 <expandproperties/>
             </filterchain>
         </copy>
-        <copy todir="/usr/src/redhat/SOURCES" overwrite="true"
+        <copy todir="${rpm.home}/SOURCES" overwrite="true"
             file="${project.dist}/${project.name}-${project.version}-src.tar.gz">
         </copy>
-        <exec executable="/usr/bin/rpmbuild" os="Linux">
+        <exec executable="${rpm.builder}">
             <arg line="-ba target/penrose.spec"/>
         </exec>
         <copy todir="${project.dist}" failonerror="false"
-            file="/usr/src/redhat/SRPMS/${project.name}-${project.version}-1.src.rpm">
+            file="${rpm.home}/SRPMS/${project.name}-${project.version}-1.src.rpm">
         </copy>
         <copy todir="${project.dist}" failonerror="false"
-            file="/usr/src/redhat/RPMS/i386/${project.name}-${project.version}-1.i386.rpm">
+            file="${rpm.home}/RPMS/i386/${project.name}-${project.version}-1.i386.rpm">
         </copy>
     </target>
 
-    <target name="dist-win32" depends="docs,dist">
+    <target name="dist-rpm-windows" if="isWindows">
+        <property name="rpm.prefix" value="${cygwin.home}"/>
+        <property name="rpm.home" value="${cygwin.home}/usr/src/rpm"/>
+        <property name="rpm.builder" value="${cygwin.home}/lib/rpm/rpmb.exe"/>
+        <copy todir="target" file="rpm/penrose.spec">
+            <filterchain>
+                <expandproperties/>
+            </filterchain>
+        </copy>
+        <copy todir="${rpm.home}/SOURCES" overwrite="true"
+            file="${project.dist}/${project.name}-${project.version}-src.tar.gz">
+        </copy>
+        <exec executable="${rpm.builder}">
+            <arg line="-ba target/penrose.spec"/>
+        </exec>
+        <copy todir="${project.dist}" failonerror="false"
+            file="${rpm.home}/SRPMS/${project.name}-${project.version}-1.src.rpm">
+        </copy>
+        <copy todir="${project.dist}" failonerror="false"
+            file="${rpm.home}/RPMS/i386/${project.name}-${project.version}-1.cygwin.i386.rpm">
+        </copy>
+    </target>
+
+    <target name="dist-win32" depends="docs,dist" if="isWindows">
         <echo message="Creating ${project.name}-${project.version}.exe"/>
         <copy todir="target" file="penrose.iss">
             <filterchain>
@@ -251,7 +293,7 @@
             </filterchain>
         </copy>
         <mkdir dir="${project.dist}"/>
-        <exec executable="${iscc.path}" os="Windows NT,Windows 2000,Windows XP,Windows 2003">
+        <exec executable="${iscc.path}">
             <arg line="/Q target/penrose.iss"/>
         </exec>
     </target>
@@ -279,7 +321,7 @@
         </copy>
     </target>
 
-    <target name="install" depends="pre-install,copy-penrose-conf">
+    <target name="install" depends="init,pre-install,copy-penrose-conf">
         <delete failonerror="false">
             <fileset dir="${penrose.home}" includes="lib/*"/>
         </delete>
@@ -290,9 +332,6 @@
             </fileset>
         </copy>
         <chmod dir="${penrose.home}/bin" perm="ugo+rx" includes="**/*.sh"/>
-        <copy todir="${prefix}/etc/init.d"
-            file="target/dist/etc/init.d/penrose"/>
-        <chmod file="${prefix}/etc/init.d/penrose" perm="ugo+rx"/>
     </target>
 
     <target name="uninstall">
@@ -304,7 +343,6 @@
             <fileset dir="${penrose.home}/samples" includes="**/*"/>
             <fileset dir="${penrose.home}/schema" includes="**/*"/>
             <fileset dir="${penrose.home}" includes="*"/>
-            <fileset dir="${prefix}/etc/init.d" includes="penrose"/>
         </delete>
     </target>
 
