@@ -21,11 +21,11 @@
     </target>
 
     <target name="install" depends="init">
-        <antcall target="install-linux"/>
+        <antcall target="install-unix"/>
         <antcall target="install-windows"/>
     </target>
 
-    <target name="install-linux" if="isLinux">
+    <target name="install-unix" if="isUnix">
 
         <property name="patch" value="/usr/bin/patch"/>
         <echo message="Patching files in ${openldap.src} using ${openldap.patch}:" />
@@ -35,6 +35,10 @@
             <arg line="-d ${openldap.src}"/>
         </exec>
         
+        <copy todir="${openldap.src}/servers/slapd/back-java" overwrite="true">
+            <fileset dir="back-java" />
+        </copy>
+
     </target>
 
     <target name="install-windows" if="isWindows">

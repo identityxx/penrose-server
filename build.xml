@@ -235,11 +235,11 @@
     </target>
 
     <target name="dist-rpm" depends="dist-src">
-        <antcall target="dist-rpm-linux"/>
+        <antcall target="dist-rpm-unix"/>
         <antcall target="dist-rpm-windows"/>
     </target>
 
-    <target name="dist-rpm-linux" if="isUnix">
+    <target name="dist-rpm-unix" if="isUnix">
         <property name="rpm.prefix" value=""/>
         <property name="rpm.home" value="/usr/src/redhat"/>
         <property name="rpm.builder" value="/usr/bin/rpmbuild"/>

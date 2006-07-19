@@ -1,11 +1,11 @@
-Index: configure
+Index: openldap-2.3/configure
 ===================================================================
 RCS file: /repo/OpenLDAP/pkg/ldap/configure,v
 retrieving revision 1.598.2.33
-diff -u -p -r1.598.2.33 configure
---- configure	8 Apr 2006 17:49:11 -0000	1.598.2.33
-+++ configure	10 Jul 2006 21:17:10 -0000
-@@ -465,7 +465,7 @@ ac_includes_default="\
+diff -u -r1.598.2.33 configure
+--- openldap-2.3/configure	8 Apr 2006 17:49:11 -0000	1.598.2.33
++++ openldap-2.3/configure	19 Jul 2006 21:39:06 -0000
+@@ -465,7 +465,7 @@
  # include <unistd.h>
  #endif"
  
@@ -14,7 +14,7 @@ diff -u -p -r1.598.2.33 configure
  ac_subst_files=''
  
  # Initialize some variables set by options.
-@@ -1040,6 +1040,7 @@ SLAPD Backend Options:
+@@ -1040,6 +1040,7 @@
      --enable-monitor	  enable monitor backend no|yes|mod [yes]
      --enable-null	  enable null backend no|yes|mod [no]
      --enable-passwd	  enable passwd backend no|yes|mod [no]
@@ -22,7 +22,7 @@ diff -u -p -r1.598.2.33 configure
      --enable-perl	  enable perl backend no|yes|mod [no]
      --enable-relay  	  enable relay backend no|yes|mod [yes]
      --enable-shell	  enable shell backend no|yes|mod [no]
-@@ -2743,6 +2744,7 @@ Backends="bdb \
+@@ -2743,6 +2744,7 @@
  	monitor \
  	null \
  	passwd \
@@ -30,7 +30,7 @@ diff -u -p -r1.598.2.33 configure
  	perl \
  	relay \
  	shell \
-@@ -3048,6 +3050,29 @@ else
+@@ -3048,6 +3050,29 @@
    	ol_enable_passwd=${ol_enable_backends:-no}
  fi;
  # end --enable-passwd
@@ -60,7 +60,7 @@ diff -u -p -r1.598.2.33 configure
  # OpenLDAP --enable-perl
  
  	# Check whether --enable-perl or --disable-perl was given.
-@@ -3736,6 +3761,7 @@ echo "$as_me: WARNING: LDBM disabled, ig
+@@ -3736,6 +3761,7 @@
  	   test $ol_enable_monitor = no &&
  	   test $ol_enable_null = no &&
  	   test $ol_enable_passwd = no &&
@@ -68,7 +68,7 @@ diff -u -p -r1.598.2.33 configure
  	   test $ol_enable_perl = no &&
  	   test $ol_enable_relay = no &&
  	   test $ol_enable_shell = no &&
-@@ -3868,6 +3894,7 @@ BUILD_META=no
+@@ -3868,6 +3894,7 @@
  BUILD_MONITOR=no
  BUILD_NULL=no
  BUILD_PASSWD=no
@@ -76,7 +76,7 @@ diff -u -p -r1.598.2.33 configure
  BUILD_PERL=no
  BUILD_RELAY=no
  BUILD_SHELL=no
-@@ -3898,6 +3925,10 @@ SLAPD_MODULES_CPPFLAGS=
+@@ -3898,6 +3925,10 @@
  SLAPD_STATIC_BACKENDS=back-ldif
  SLAPD_DYNAMIC_BACKENDS=
  
@@ -87,7 +87,7 @@ diff -u -p -r1.598.2.33 configure
  SLAPD_PERL_LDFLAGS=
  MOD_PERL_LDFLAGS=
  PERL_CPPFLAGS=
-@@ -5713,7 +5744,7 @@ ia64-*-hpux*)
+@@ -5713,7 +5744,7 @@
    ;;
  *-*-irix6*)
    # Find out which ABI we are using.
@@ -96,7 +96,7 @@ diff -u -p -r1.598.2.33 configure
    if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
    (eval $ac_compile) 2>&5
    ac_status=$?
-@@ -7693,11 +7724,11 @@ else
+@@ -7693,11 +7724,11 @@
     -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
     -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
     -e 's:$: $lt_compiler_flag:'`
@@ -110,7 +110,7 @@ diff -u -p -r1.598.2.33 configure
     if (exit $ac_status) && test -s "$ac_outfile"; then
       # The compiler can only warn and ignore the option if not recognized
       # So say no if there are warnings other than the usual output.
-@@ -7955,11 +7986,11 @@ else
+@@ -7955,11 +7986,11 @@
     -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
     -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
     -e 's:$: $lt_compiler_flag:'`
@@ -124,7 +124,7 @@ diff -u -p -r1.598.2.33 configure
     if (exit $ac_status) && test -s "$ac_outfile"; then
       # The compiler can only warn and ignore the option if not recognized
       # So say no if there are warnings other than the usual output.
-@@ -8017,11 +8048,11 @@ else
+@@ -8017,11 +8048,11 @@
     -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
     -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
     -e 's:$: $lt_compiler_flag:'`
@@ -138,7 +138,7 @@ diff -u -p -r1.598.2.33 configure
     if (exit $ac_status) && test -s out/conftest2.$ac_objext
     then
       # The compiler can only warn and ignore the option if not recognized
-@@ -10265,7 +10296,7 @@ else
+@@ -10265,7 +10296,7 @@
    lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
    lt_status=$lt_dlunknown
    cat > conftest.$ac_ext <<EOF
@@ -147,7 +147,7 @@ diff -u -p -r1.598.2.33 configure
  #include "confdefs.h"
  
  #if HAVE_DLFCN_H
-@@ -10363,7 +10394,7 @@ else
+@@ -10363,7 +10394,7 @@
    lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
    lt_status=$lt_dlunknown
    cat > conftest.$ac_ext <<EOF
@@ -156,7 +156,7 @@ diff -u -p -r1.598.2.33 configure
  #include "confdefs.h"
  
  #if HAVE_DLFCN_H
-@@ -11586,6 +11617,325 @@ LIBTOOL='$(SHELL) $(top_builddir)/libtoo
+@@ -11586,6 +11617,326 @@
  
  
  
@@ -223,7 +223,7 @@ diff -u -p -r1.598.2.33 configure
 +                        ;;
 +                *)
 +                        JAVA_CPPFLAGS="-I$JAVA_HOME/include -I$JAVA_HOME/include/linux"
-+                        JAVA_LDFLAGS="-L$JAVA_HOME/jre/lib/i386 -L$JAVA_HOME/jre/lib/i386/server  -L$JAVA_HOME/jre/lib/i386 -ljava -ljvm -lverify"
++                        JAVA_LDFLAGS="-L$JAVA_HOME/jre/lib/i386 -L$JAVA_HOME/jre/lib/i386/server -ljava -ljvm -lverify"
 +                        ;;
 +                esac
 +
@@ -237,6 +237,7 @@ diff -u -p -r1.598.2.33 configure
 +
 +        echo JAVA_HOME          = $JAVA_HOME
 +        echo JAVA_CPPFLAGS      = $JAVA_CPPFLAGS
++        echo JAVA_LDFLAGS       = $JAVA_LDFLAGS
 +        echo SLAPD_JAVA_LDFLAGS = $SLAPD_JAVA_LDFLAGS
 +        echo MOD_JAVA_LDFLAGS   = $MOD_JAVA_LDFLAGS
 +
@@ -482,7 +483,7 @@ diff -u -p -r1.598.2.33 configure
  ol_link_perl=no
  if test $ol_enable_perl != no ; then
  	# Extract the first word of "perl", so it can be a program name with args.
-@@ -44428,6 +44778,23 @@ _ACEOF
+@@ -44428,6 +44779,23 @@
  
  fi
  
@@ -506,7 +507,7 @@ diff -u -p -r1.598.2.33 configure
  if test "$ol_link_perl" != no ; then
  	BUILD_SLAPD=yes
  	BUILD_PERL=$ol_enable_perl
-@@ -44856,6 +45223,11 @@ fi
+@@ -44856,6 +45224,11 @@
  
  
  
@@ -518,7 +519,7 @@ diff -u -p -r1.598.2.33 configure
  # Check whether --with-xxinstall or --without-xxinstall was given.
  if test "${with_xxinstall+set}" = set; then
    withval="$with_xxinstall"
-@@ -44863,7 +45235,7 @@ if test "${with_xxinstall+set}" = set; t
+@@ -44863,7 +45236,7 @@
  fi;
  
  
@@ -527,7 +528,7 @@ diff -u -p -r1.598.2.33 configure
  
  
            ac_config_commands="$ac_config_commands default"
-@@ -45404,6 +45776,7 @@ do
+@@ -45404,6 +45777,7 @@
    "servers/slapd/back-monitor/Makefile" ) CONFIG_FILES="$CONFIG_FILES servers/slapd/back-monitor/Makefile:build/top.mk:servers/slapd/back-monitor/Makefile.in:build/mod.mk" ;;
    "servers/slapd/back-null/Makefile" ) CONFIG_FILES="$CONFIG_FILES servers/slapd/back-null/Makefile:build/top.mk:servers/slapd/back-null/Makefile.in:build/mod.mk" ;;
    "servers/slapd/back-passwd/Makefile" ) CONFIG_FILES="$CONFIG_FILES servers/slapd/back-passwd/Makefile:build/top.mk:servers/slapd/back-passwd/Makefile.in:build/mod.mk" ;;
@@ -535,7 +536,7 @@ diff -u -p -r1.598.2.33 configure
    "servers/slapd/back-perl/Makefile" ) CONFIG_FILES="$CONFIG_FILES servers/slapd/back-perl/Makefile:build/top.mk:servers/slapd/back-perl/Makefile.in:build/mod.mk" ;;
    "servers/slapd/back-relay/Makefile" ) CONFIG_FILES="$CONFIG_FILES servers/slapd/back-relay/Makefile:build/top.mk:servers/slapd/back-relay/Makefile.in:build/mod.mk" ;;
    "servers/slapd/back-shell/Makefile" ) CONFIG_FILES="$CONFIG_FILES servers/slapd/back-shell/Makefile:build/top.mk:servers/slapd/back-shell/Makefile.in:build/mod.mk" ;;
-@@ -45575,6 +45948,7 @@ s,@OBJDUMP@,$OBJDUMP,;t t
+@@ -45575,6 +45949,7 @@
  s,@ac_ct_OBJDUMP@,$ac_ct_OBJDUMP,;t t
  s,@CPP@,$CPP,;t t
  s,@LIBTOOL@,$LIBTOOL,;t t
@@ -543,7 +544,7 @@ diff -u -p -r1.598.2.33 configure
  s,@PERLBIN@,$PERLBIN,;t t
  s,@OL_MKDEP@,$OL_MKDEP,;t t
  s,@OL_MKDEP_FLAGS@,$OL_MKDEP_FLAGS,;t t
-@@ -45601,6 +45975,7 @@ s,@BUILD_MONITOR@,$BUILD_MONITOR,;t t
+@@ -45601,6 +45976,7 @@
  s,@BUILD_NULL@,$BUILD_NULL,;t t
  s,@BUILD_PASSWD@,$BUILD_PASSWD,;t t
  s,@BUILD_RELAY@,$BUILD_RELAY,;t t
@@ -551,7 +552,7 @@ diff -u -p -r1.598.2.33 configure
  s,@BUILD_PERL@,$BUILD_PERL,;t t
  s,@BUILD_SHELL@,$BUILD_SHELL,;t t
  s,@BUILD_SQL@,$BUILD_SQL,;t t
-@@ -45634,6 +46009,9 @@ s,@SLAPD_STATIC_BACKENDS@,$SLAPD_STATIC_
+@@ -45634,6 +46010,9 @@
  s,@SLAPD_DYNAMIC_BACKENDS@,$SLAPD_DYNAMIC_BACKENDS,;t t
  s,@SLAPD_STATIC_OVERLAYS@,$SLAPD_STATIC_OVERLAYS,;t t
  s,@SLAPD_DYNAMIC_OVERLAYS@,$SLAPD_DYNAMIC_OVERLAYS,;t t
@@ -561,14 +562,14 @@ diff -u -p -r1.598.2.33 configure
  s,@PERL_CPPFLAGS@,$PERL_CPPFLAGS,;t t
  s,@SLAPD_PERL_LDFLAGS@,$SLAPD_PERL_LDFLAGS,;t t
  s,@MOD_PERL_LDFLAGS@,$MOD_PERL_LDFLAGS,;t t
-Index: configure.in
+Index: openldap-2.3/configure.in
 ===================================================================
 RCS file: /repo/OpenLDAP/pkg/ldap/configure.in,v
 retrieving revision 1.560.2.29
-diff -u -p -r1.560.2.29 configure.in
---- configure.in	5 Apr 2006 21:36:14 -0000	1.560.2.29
-+++ configure.in	10 Jul 2006 21:17:10 -0000
-@@ -288,6 +288,7 @@ Backends="bdb \
+diff -u -r1.560.2.29 configure.in
+--- openldap-2.3/configure.in	5 Apr 2006 21:36:14 -0000	1.560.2.29
++++ openldap-2.3/configure.in	19 Jul 2006 21:39:06 -0000
+@@ -288,6 +288,7 @@
  	monitor \
  	null \
  	passwd \
@@ -576,7 +577,7 @@ diff -u -p -r1.560.2.29 configure.in
  	perl \
  	relay \
  	shell \
-@@ -326,6 +327,8 @@ OL_ARG_ENABLE(null,[    --enable-null	  
+@@ -326,6 +327,8 @@
  	no, [no yes mod], ol_enable_backends)dnl
  OL_ARG_ENABLE(passwd,[    --enable-passwd	  enable passwd backend],
  	no, [no yes mod], ol_enable_backends)dnl
@@ -585,7 +586,7 @@ diff -u -p -r1.560.2.29 configure.in
  OL_ARG_ENABLE(perl,[    --enable-perl	  enable perl backend],
  	no, [no yes mod], ol_enable_backends)dnl
  OL_ARG_ENABLE(relay,[    --enable-relay  	  enable relay backend],
-@@ -496,6 +499,7 @@ elif test $ol_enable_ldbm = no ; then
+@@ -496,6 +499,7 @@
  	   test $ol_enable_monitor = no &&
  	   test $ol_enable_null = no &&
  	   test $ol_enable_passwd = no &&
@@ -593,7 +594,7 @@ diff -u -p -r1.560.2.29 configure.in
  	   test $ol_enable_perl = no &&
  	   test $ol_enable_relay = no &&
  	   test $ol_enable_shell = no &&
-@@ -609,6 +613,7 @@ BUILD_META=no
+@@ -609,6 +613,7 @@
  BUILD_MONITOR=no
  BUILD_NULL=no
  BUILD_PASSWD=no
@@ -601,7 +602,7 @@ diff -u -p -r1.560.2.29 configure.in
  BUILD_PERL=no
  BUILD_RELAY=no
  BUILD_SHELL=no
-@@ -639,6 +644,10 @@ SLAPD_MODULES_CPPFLAGS=
+@@ -639,6 +644,10 @@
  SLAPD_STATIC_BACKENDS=back-ldif
  SLAPD_DYNAMIC_BACKENDS=
  
@@ -612,7 +613,7 @@ diff -u -p -r1.560.2.29 configure.in
  SLAPD_PERL_LDFLAGS=
  MOD_PERL_LDFLAGS=
  PERL_CPPFLAGS=
-@@ -733,6 +742,55 @@ AC_LIBTOOL_DLOPEN
+@@ -733,6 +742,55 @@
  AC_PROG_LIBTOOL
  
  dnl ----------------------------------------------------------------
@@ -668,7 +669,7 @@ diff -u -p -r1.560.2.29 configure.in
  dnl Perl
  ol_link_perl=no
  if test $ol_enable_perl != no ; then
-@@ -2772,6 +2830,19 @@ if test "$ol_enable_passwd" != no ; then
+@@ -2772,6 +2830,19 @@
  	AC_DEFINE_UNQUOTED(SLAPD_PASSWD,$MFLAG,[define to support PASSWD backend])
  fi
  
@@ -688,7 +689,7 @@ diff -u -p -r1.560.2.29 configure.in
  if test "$ol_link_perl" != no ; then
  	BUILD_SLAPD=yes
  	BUILD_PERL=$ol_enable_perl
-@@ -3063,6 +3134,7 @@ dnl backends
+@@ -3063,6 +3134,7 @@
    AC_SUBST(BUILD_NULL)
    AC_SUBST(BUILD_PASSWD)
    AC_SUBST(BUILD_RELAY)
@@ -696,7 +697,7 @@ diff -u -p -r1.560.2.29 configure.in
    AC_SUBST(BUILD_PERL)
    AC_SUBST(BUILD_SHELL)
    AC_SUBST(BUILD_SQL)
-@@ -3101,6 +3173,10 @@ AC_SUBST(SLAPD_DYNAMIC_BACKENDS)
+@@ -3101,6 +3173,10 @@
  AC_SUBST(SLAPD_STATIC_OVERLAYS)
  AC_SUBST(SLAPD_DYNAMIC_OVERLAYS)
  
@@ -707,7 +708,7 @@ diff -u -p -r1.560.2.29 configure.in
  AC_SUBST(PERL_CPPFLAGS)
  AC_SUBST(SLAPD_PERL_LDFLAGS)
  AC_SUBST(MOD_PERL_LDFLAGS)
-@@ -3160,6 +3236,7 @@ AC_CONFIG_FILES([Makefile:build/top.mk:M
+@@ -3160,6 +3236,7 @@
  [servers/slapd/back-monitor/Makefile:build/top.mk:servers/slapd/back-monitor/Makefile.in:build/mod.mk]
  [servers/slapd/back-null/Makefile:build/top.mk:servers/slapd/back-null/Makefile.in:build/mod.mk]
  [servers/slapd/back-passwd/Makefile:build/top.mk:servers/slapd/back-passwd/Makefile.in:build/mod.mk]
@@ -715,14 +716,14 @@ diff -u -p -r1.560.2.29 configure.in
  [servers/slapd/back-perl/Makefile:build/top.mk:servers/slapd/back-perl/Makefile.in:build/mod.mk]
  [servers/slapd/back-relay/Makefile:build/top.mk:servers/slapd/back-relay/Makefile.in:build/mod.mk]
  [servers/slapd/back-shell/Makefile:build/top.mk:servers/slapd/back-shell/Makefile.in:build/mod.mk]
-Index: build/top.mk
+Index: openldap-2.3/build/top.mk
 ===================================================================
 RCS file: /repo/OpenLDAP/pkg/ldap/build/top.mk,v
 retrieving revision 1.93.2.8
-diff -u -p -r1.93.2.8 top.mk
---- build/top.mk	3 Jan 2006 22:16:01 -0000	1.93.2.8
-+++ build/top.mk	10 Jul 2006 21:17:10 -0000
-@@ -191,13 +191,14 @@ SECURITY_LIBS = $(SASL_LIBS) $(KRB_LIBS)
+diff -u -r1.93.2.8 top.mk
+--- openldap-2.3/build/top.mk	3 Jan 2006 22:16:01 -0000	1.93.2.8
++++ openldap-2.3/build/top.mk	19 Jul 2006 21:39:06 -0000
+@@ -191,13 +191,14 @@
  MODULES_CPPFLAGS = @SLAPD_MODULES_CPPFLAGS@
  MODULES_LDFLAGS = @SLAPD_MODULES_LDFLAGS@
  MODULES_LIBS = @MODULES_LIBS@
@@ -738,13 +739,13 @@ diff -u -p -r1.93.2.8 top.mk
  SLURPD_LIBS = @SLURPD_LIBS@
  
  # Our Defaults
-Index: include/portable.hin
+Index: openldap-2.3/include/portable.hin
 ===================================================================
 RCS file: /repo/OpenLDAP/pkg/ldap/include/portable.hin,v
 retrieving revision 1.2.2.10
-diff -u -p -r1.2.2.10 portable.hin
---- include/portable.hin	5 Apr 2006 21:36:15 -0000	1.2.2.10
-+++ include/portable.hin	10 Jul 2006 21:17:10 -0000
+diff -u -r1.2.2.10 portable.hin
+--- openldap-2.3/include/portable.hin	5 Apr 2006 21:36:15 -0000	1.2.2.10
++++ openldap-2.3/include/portable.hin	19 Jul 2006 21:39:07 -0000
 @@ -1017,6 +1017,9 @@
  /* define to support PASSWD backend */
  #undef SLAPD_PASSWD
