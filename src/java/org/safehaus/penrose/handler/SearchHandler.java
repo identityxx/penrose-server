@@ -66,7 +66,7 @@ public class SearchHandler {
      * @param filter
      * @param sc
      * @param results This will be filled with objects of type Entry.
-     * @return
+     * @return return code
      * @throws Exception
      */
     public int search(

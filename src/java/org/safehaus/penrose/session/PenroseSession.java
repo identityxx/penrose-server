@@ -184,7 +184,7 @@ public class PenroseSession {
      * @param filter
      * @param sc
      * @param results This will be filled with objects of type SearchResult.
-     * @return
+     * @return return code
      * @throws Exception
      */
     public int search(

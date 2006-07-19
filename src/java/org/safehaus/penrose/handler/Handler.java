@@ -194,7 +194,7 @@ public class Handler {
      * @param filter
      * @param sc
      * @param results The results will be filled with objects of type SearchResult.
-     * @return
+     * @return return code
      * @throws Exception
      */
     public int search(

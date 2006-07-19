@@ -242,7 +242,7 @@
     <target name="dist-rpm-linux" if="isUnix">
         <property name="rpm.prefix" value=""/>
         <property name="rpm.home" value="/usr/src/redhat"/>
-        <property name="rpm.builder" value="${cygwin.home}/usr/bin/rpmbuild"/>
+        <property name="rpm.builder" value="/usr/bin/rpmbuild"/>
         <copy todir="target" file="rpm/penrose.spec">
             <filterchain>
                 <expandproperties/>

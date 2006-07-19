@@ -171,7 +171,7 @@ public abstract class Engine {
      * @param sourceValues
      * @param rows
      * @param interpreter
-     * @return
+     * @return attribute values
      * @throws Exception
      */
     public AttributeValues computeAttributeValues(

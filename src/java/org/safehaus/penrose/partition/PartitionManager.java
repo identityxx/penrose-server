@@ -140,7 +140,7 @@ public class PartitionManager implements PartitionManagerMBean {
     /**
      * Find the closest partition matching the DN
      * @param dn
-     * @return
+     * @return partition
      * @throws Exception
      */
     public Partition getPartitionByDn(String dn) throws Exception {
@@ -180,7 +180,7 @@ public class PartitionManager implements PartitionManagerMBean {
     /**
      * Find a partition exactly matching the DN.
      * @param dn
-     * @return
+     * @return partition
      * @throws Exception
      */
     public Partition findPartition(String dn) throws Exception {
