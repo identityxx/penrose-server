@@ -39,12 +39,17 @@ int java_back_delete( Operation *op, SlapReply *rs ) {
 
     res = (*env)->CallIntMethod(env, java_back->backend, java_back->backendDelete, conn->c_connid, dn);
 
-    if (exceptionOccurred(env)) {
+    jthrowable exc = (*env)->ExceptionOccurred(env);
 
+    if (exc) {
         Debug( LDAP_DEBUG_TRACE, "<== java_back_delete(): Failed deleting entry %s.\n", dn, 0, 0);
+
+        (*env)->ExceptionDescribe(env);
+        (*env)->ExceptionClear(env);
 
         rs->sr_err = LDAP_OPERATIONS_ERROR;
         send_ldap_result( op, rs );
+
         return LDAP_OPERATIONS_ERROR;
     }       
 

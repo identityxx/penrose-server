@@ -66,12 +66,17 @@ int java_back_modify( Operation *op, SlapReply *rs ) {
 
         attribute = (*env)->NewObject(env, java_back->basicAttributeClass, java_back->basicAttributeConstructor, attributeName);
 
-        if (exceptionOccurred(env)) {
+        jthrowable exc = (*env)->ExceptionOccurred(env);
 
+        if (exc) {
             Debug( LDAP_DEBUG_TRACE, "<== java_back_modify(): Failed creating attribute.\n", 0, 0, 0);
+
+            (*env)->ExceptionDescribe(env);
+            (*env)->ExceptionClear(env);
 
             rs->sr_err = LDAP_OPERATIONS_ERROR;
             send_ldap_result( op, rs );
+
             return LDAP_OPERATIONS_ERROR;
         }       
 
@@ -86,9 +91,13 @@ int java_back_modify( Operation *op, SlapReply *rs ) {
 
             (*env)->CallBooleanMethod(env, attribute, java_back->attributeAdd, attributeValue);
 
-            if (exceptionOccurred(env)) {
+            jthrowable exc = (*env)->ExceptionOccurred(env);
 
+            if (exc) {
                 Debug( LDAP_DEBUG_TRACE, "<== java_back_modify(): Failed adding attribute value.\n", 0, 0, 0);
+
+                (*env)->ExceptionDescribe(env);
+                (*env)->ExceptionClear(env);
 
                 rs->sr_err = LDAP_OPERATIONS_ERROR;
                 send_ldap_result( op, rs );
@@ -102,9 +111,13 @@ int java_back_modify( Operation *op, SlapReply *rs ) {
 
         modification = (*env)->NewObject(env, java_back->modificationItemClass, java_back->modificationItemConstructor, modOp, attribute);
 
-        if (exceptionOccurred(env)) {
+        exc = (*env)->ExceptionOccurred(env);
 
+        if (exc) {
             Debug( LDAP_DEBUG_TRACE, "<== java_back_modify(): Failed creating modification.\n", 0, 0, 0);
+
+            (*env)->ExceptionDescribe(env);
+            (*env)->ExceptionClear(env);
 
             rs->sr_err = LDAP_OPERATIONS_ERROR;
             send_ldap_result( op, rs );
@@ -115,9 +128,13 @@ int java_back_modify( Operation *op, SlapReply *rs ) {
  
         res = (*env)->CallIntMethod(env, modifications, java_back->arrayListAdd, modification);
 
-        if (exceptionOccurred(env)) {
+        exc = (*env)->ExceptionOccurred(env);
 
+        if (exc) {
             Debug( LDAP_DEBUG_TRACE, "<== java_back_modify(): Failed adding modification to modifications.\n", 0, 0, 0);
+
+            (*env)->ExceptionDescribe(env);
+            (*env)->ExceptionClear(env);
 
             rs->sr_err = LDAP_OPERATIONS_ERROR;
             send_ldap_result( op, rs );
@@ -130,12 +147,17 @@ int java_back_modify( Operation *op, SlapReply *rs ) {
     Debug( LDAP_DEBUG_TRACE, "backend.modify(\"%s\", modifications);\n", dn, 0, 0);
     res = (*env)->CallIntMethod(env, java_back->backend, java_back->backendModify, conn->c_connid, dn, modifications);
 
-    if (exceptionOccurred(env)) {
+    jthrowable exc = (*env)->ExceptionOccurred(env);
 
+    if (exc) {
         Debug( LDAP_DEBUG_TRACE, "<== java_back_modify(): Failed modifying entry %s.\n", dn, 0, 0);
+
+        (*env)->ExceptionDescribe(env);
+        (*env)->ExceptionClear(env);
 
         rs->sr_err = LDAP_OPERATIONS_ERROR;
         send_ldap_result( op, rs );
+
         return LDAP_OPERATIONS_ERROR;
     }       
 

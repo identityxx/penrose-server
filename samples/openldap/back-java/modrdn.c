@@ -37,12 +37,17 @@ int java_back_modrdn( Operation *op, SlapReply *rs ) {
 
     res = (*env)->CallIntMethod(env, java_back->backend, java_back->backendModRdn, conn->c_connid, dn, newRdn);
 
-    if (exceptionOccurred(env)) {
+    jthrowable exc = (*env)->ExceptionOccurred(env);
 
+    if (exc) {
         Debug( LDAP_DEBUG_TRACE, "<== java_back_modrdn(): Failed renaming entry %s.\n", dn, 0, 0);
+
+        (*env)->ExceptionDescribe(env);
+        (*env)->ExceptionClear(env);
 
         rs->sr_err = LDAP_OPERATIONS_ERROR;
         send_ldap_result( op, rs );
+
         return LDAP_OPERATIONS_ERROR;
     }
 

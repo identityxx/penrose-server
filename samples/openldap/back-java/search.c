@@ -24,20 +24,16 @@ int java_back_search(Operation *op, SlapReply *rs) {
     AttributeName *attrs = op->ors_attrs;
     int attrsonly        = op->ors_attrsonly;
 
-    jint res;
-    jstring base;
-    jstring filter;
     jobject jattrs;
     AttributeName* a;
     jobject results;
     jthrowable exc;
     jint size;
     jint i;
-    jobject searchResult;
     jobject searchControls;
     jobjectArray attributeNames;
 
-    res = (*jvm)->AttachCurrentThread(jvm, (void**)&env, NULL);
+    jint res = (*jvm)->AttachCurrentThread(jvm, (void**)&env, NULL);
 
     if (res < 0) {
 
@@ -48,8 +44,8 @@ int java_back_search(Operation *op, SlapReply *rs) {
         return LDAP_OPERATIONS_ERROR;
     }
 
-    base = (*env)->NewStringUTF(env, op->o_req_dn.bv_val);
-    filter = (*env)->NewStringUTF(env, op->ors_filterstr.bv_val);
+    jstring base = (*env)->NewStringUTF(env, op->o_req_dn.bv_val);
+    jstring filter = (*env)->NewStringUTF(env, op->ors_filterstr.bv_val);
 
     Debug( LDAP_DEBUG_TRACE, "SearchControls sc = new SearchControls();\n", 0, 0, 0);
 
@@ -64,8 +60,16 @@ int java_back_search(Operation *op, SlapReply *rs) {
         return LDAP_OPERATIONS_ERROR;
     }
 
+    Debug( LDAP_DEBUG_TRACE, "sc.setSearchScope(%d);\n", op->ors_scope, 0, 0);
+
     (*env)->CallVoidMethod(env, searchControls, java_back->searchControlsSetSearchScope, op->ors_scope);
+
+    Debug( LDAP_DEBUG_TRACE, "sc.setCountLimit(%d);\n", op->ors_slimit, 0, 0);
+
     (*env)->CallVoidMethod(env, searchControls, java_back->searchControlsSetCountLimit, op->ors_slimit);
+
+    Debug( LDAP_DEBUG_TRACE, "sc.setTimeLimit(%d);\n", op->ors_tlimit, 0, 0);
+
     (*env)->CallVoidMethod(env, searchControls, java_back->searchControlsSetTimeLimit, op->ors_tlimit);
 
     Debug( LDAP_DEBUG_TRACE, "ArrayList attrs = new ArrayList();\n", 0, 0, 0);
@@ -78,7 +82,7 @@ int java_back_search(Operation *op, SlapReply *rs) {
 
         attributeName = (*env)->NewStringUTF(env, a->an_name.bv_val);
 
-        Debug( LDAP_DEBUG_TRACE, "attrs.add(\"%s\")\n", attributeName, 0, 0);
+        Debug( LDAP_DEBUG_TRACE, "attrs.add(\"%s\")\n", a->an_name.bv_val, 0, 0);
 
         (*env)->CallBooleanMethod(env, jattrs, java_back->arrayListAdd, attributeName);
 
@@ -91,15 +95,12 @@ int java_back_search(Operation *op, SlapReply *rs) {
 
     (*env)->CallVoidMethod(env, searchControls, java_back->searchControlsSetReturningAttributes, attributeNames);
 
-    Debug( LDAP_DEBUG_TRACE, "Results results = backend.search(connectionId, base, filter, searchControls);\n", 0, 0, 0);
+    Debug( LDAP_DEBUG_TRACE, "Results results = backend.search(connectionId, \"%s\", \"%s\", searchControls);\n", op->o_req_dn.bv_val, op->ors_filterstr.bv_val, 0);
 
     results = (*env)->CallObjectMethod(env, java_back->backend, java_back->backendSearch,
         conn->c_connid, base, filter, searchControls);
 
     Debug( LDAP_DEBUG_TRACE, "int res = results.getReturnCode();\n", 0, 0, 0);
-
-    res = (*env)->CallIntMethod(env, results, java_back->resultsGetReturnCode);
-    //Debug( LDAP_DEBUG_TRACE, "RC: %d\n", res, 0, 0);
 
     exc = (*env)->ExceptionOccurred(env);
 
@@ -115,6 +116,9 @@ int java_back_search(Operation *op, SlapReply *rs) {
         return LDAP_OPERATIONS_ERROR;
     }
 
+    res = (*env)->CallIntMethod(env, results, java_back->resultsGetReturnCode);
+    //Debug( LDAP_DEBUG_TRACE, "RC: %d\n", res, 0, 0);
+
     if (res > 0) {
 
         Debug( LDAP_DEBUG_TRACE, "<== java_back_search(): Failed searching base %s.\n", base, 0, 0);
@@ -124,15 +128,19 @@ int java_back_search(Operation *op, SlapReply *rs) {
         return res;
     }
     
-    Debug( LDAP_DEBUG_TRACE, "SearchResult sr = (SearchResult)results.next();\n", 0, 0, 0);
+    Debug(LDAP_DEBUG_TRACE, "boolean hasNext = results.hasNext();\n", 0, 0, 0);
 
-    searchResult = (*env)->CallObjectMethod(env, results, java_back->resultsNext);
+    int hasNext = (*env)->CallBooleanMethod(env, results, java_back->resultsHasNext);
 
-    while (searchResult) {
+    Debug(LDAP_DEBUG_TRACE, "hasNext: %d\n", hasNext, 0, 0);
 
-        Entry *entry;
+    while (hasNext) {
 
-        entry = java_back_create_entry(java_back, env, searchResult);
+        Debug( LDAP_DEBUG_TRACE, "SearchResult sr = (SearchResult)results.next();\n", 0, 0, 0);
+
+        jobject searchResult = (*env)->CallObjectMethod(env, results, java_back->resultsNext);
+
+        Entry *entry = java_back_create_entry(java_back, env, searchResult);
 
         rs->sr_entry = entry;
         rs->sr_attrs = attrs;
@@ -148,12 +156,21 @@ int java_back_search(Operation *op, SlapReply *rs) {
 
         entry_free(entry);
 
-        Debug( LDAP_DEBUG_TRACE, "sr = (SearchResult)results.next();\n", 0, 0, 0);
+        Debug(LDAP_DEBUG_TRACE, "hasNext = results.hasNext();\n", 0, 0, 0);
 
-        searchResult = (*env)->CallObjectMethod(env, results, java_back->resultsNext);
+        hasNext = (*env)->CallBooleanMethod(env, results, java_back->resultsHasNext);
+
+        Debug(LDAP_DEBUG_TRACE, "hasNext: %d\n", hasNext, 0, 0);
     }
 
+    Debug( LDAP_DEBUG_TRACE, "int rc = sr.getReturnCode();\n", 0, 0, 0);
+
     res = (*env)->CallIntMethod(env, results, java_back->resultsGetReturnCode);
+
+    Debug( LDAP_DEBUG_TRACE, "rc: %d\n", res, 0, 0);
+
+    rs->sr_err = res;
+
     send_ldap_result(op, rs);
 
     return 0;
@@ -162,7 +179,6 @@ int java_back_search(Operation *op, SlapReply *rs) {
 Entry* java_back_create_entry(JavaBackend *java_back, JNIEnv *env, jobject searchResult) {
 
     int rc;
-    Entry		*e;
     char		*type;
     struct berval	vals[2];
     AttributeDescription *ad;
@@ -170,31 +186,33 @@ Entry* java_back_create_entry(JavaBackend *java_back, JNIEnv *env, jobject searc
     char	*next;
     jstring jdn;
     char *dn;
-    jobject jattributes;
     jobject jiterator;
     int hasMore;
 
-    e = (Entry *) ch_calloc( 1, sizeof(Entry) );
+    Entry *e = (Entry *)ch_calloc( 1, sizeof(Entry) );
 
-    if( e == NULL ) {
-        return( NULL );
+    if (e == NULL) {
+        return NULL;
     }
 
     e->e_id = NOID;
 
-    Debug( LDAP_DEBUG_TRACE, "sr.getName()\n", 0, 0, 0 );
+    Debug(LDAP_DEBUG_TRACE, "String dn = sr.getName();\n", 0, 0, 0);
 
     jdn = (*env)->CallObjectMethod(env, searchResult, java_back->searchResultGetName);
 
     vals[0].bv_val = (char *)(*env)->GetStringUTFChars(env, jdn, 0);
     vals[0].bv_len = strlen(vals[0].bv_val);
-    if (slap_debug & 2048) fprintf(stderr, "dn: %s\n", vals[0].bv_val, vals[0].bv_len);
 
-    rc = dnPrettyNormal( NULL, &vals[0], &e->e_name, &e->e_nname, NULL );
+    Debug(LDAP_DEBUG_TRACE, "dn: %s\n", vals[0].bv_val, 0, 0);
+
+    rc = dnPrettyNormal(NULL, &vals[0], &e->e_name, &e->e_nname, NULL);
+
     (*env)->ReleaseStringUTFChars(env, jdn, vals[0].bv_val);
 
-    if( rc != LDAP_SUCCESS ) { // invalid dn
-        entry_free( e );
+    if (rc != LDAP_SUCCESS) {
+        Debug(LDAP_DEBUG_TRACE, "Invalid dn.\n", 0, 0, 0);
+        entry_free(e);
         return NULL;
     }
 
@@ -203,34 +221,38 @@ Entry* java_back_create_entry(JavaBackend *java_back, JNIEnv *env, jobject searc
 
     Debug( LDAP_DEBUG_TRACE, "Attributes attributes = sr.getAttributes();\n", 0, 0, 0 );
 
-    jattributes = (*env)->CallObjectMethod(env, searchResult, java_back->searchResultGetAttributes);
+    jobject jattributes = (*env)->CallObjectMethod(env, searchResult, java_back->searchResultGetAttributes);
 
     Debug( LDAP_DEBUG_TRACE, "NamingEnumeration ne = attributes.getAll();\n", 0, 0, 0 );
 
     jiterator = (*env)->CallObjectMethod(env, jattributes, java_back->attributesGetAll);
 
-    Debug( LDAP_DEBUG_TRACE, "ne.hasMore();\n", 0, 0, 0 );
+    Debug( LDAP_DEBUG_TRACE, "boolean hasMore = ne.hasMore();\n", 0, 0, 0 );
 
     hasMore = (*env)->CallBooleanMethod(env, jiterator, java_back->namingEnumerationHasMore);
-    Debug( LDAP_DEBUG_TRACE, "HAS MORE: %d\n", hasMore, 0, 0);
+
+    Debug( LDAP_DEBUG_TRACE, "hasMore: %d\n", hasMore, 0, 0);
 
     while ( hasMore ) {
 
-    	jobject jattribute;
     	jstring jname;
     	jobject values;
         jsize len;
         int i;
         int valuesHasNext;
 
-        Debug( LDAP_DEBUG_TRACE, "ne.next()\n", 0, 0, 0 );
-        jattribute = (*env)->CallObjectMethod(env, jiterator, java_back->namingEnumerationNext);
+        Debug( LDAP_DEBUG_TRACE, "Attribute attribute = (Attribute)ne.next();\n", 0, 0, 0 );
+
+    	jobject jattribute = (*env)->CallObjectMethod(env, jiterator, java_back->namingEnumerationNext);
+
         jname = (*env)->CallObjectMethod(env, jattribute, java_back->attributeGetID);
         type = (char *)(*env)->GetStringUTFChars(env, jname, 0);
 
         ad = NULL;
         rc = slap_str2ad( type, &ad, &text );
+
         //if (slap_debug & 2048) fprintf(stderr, " - slap_str2ad: %d\n", (rc == LDAP_SUCCESS));
+
         if( rc != LDAP_SUCCESS ) {
 
             rc = slap_str2undef_ad( type, &ad, &text );
@@ -253,22 +275,21 @@ Entry* java_back_create_entry(JavaBackend *java_back, JNIEnv *env, jobject searc
 
             jvalue = (*env)->CallObjectMethod(env, values, java_back->namingEnumerationNext);
 
-            Debug( LDAP_DEBUG_TRACE, " - %s\n", type, jvalue, 0 );
-
             vals[0].bv_val = (char *)(*env)->GetStringUTFChars(env, jvalue, 0);
             vals[0].bv_len = strlen(vals[0].bv_val);
 
-            if (slap_debug & 2048) fprintf(stderr, "%s: %s\n", type, vals[0].bv_val);
+            Debug(LDAP_DEBUG_TRACE, "%s: %s\n", type, vals[0].bv_val, 0);
 
             rc = attr_merge( e, ad, vals, NULL );
 
             //fprintf(stderr, " - attr_merge: %d\n", (rc == LDAP_SUCCESS));
+
             (*env)->ReleaseStringUTFChars(env, jvalue, vals[0].bv_val);
 
             if( rc != 0 ) {
                 entry_free( e );
                 (*env)->ReleaseStringUTFChars(env, jname, type);
-                return( NULL );
+                return NULL;
             }
 
             valuesHasNext = (*env)->CallBooleanMethod(env, values, java_back->namingEnumerationHasMore);
@@ -278,8 +299,6 @@ Entry* java_back_create_entry(JavaBackend *java_back, JNIEnv *env, jobject searc
 
         hasMore = (*env)->CallBooleanMethod(env, jiterator, java_back->namingEnumerationHasMore);
     }
-
-    if (slap_debug & 2048) fprintf(stderr, "\n");
 
     return e;
 }

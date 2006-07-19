@@ -12,14 +12,11 @@
 
 LDAP_BEGIN_DECL
 
-#ifdef WIN32
+#ifdef __CYGWIN__
 #define PATH_SEPARATOR ";"
 #else
 #define PATH_SEPARATOR ":"
 #endif
-
-//typedef jint (JNICALL *CreateJavaVM_t)(JavaVM **pvm, void **env, void *args);
-//typedef jint (JNICALL *GetDefaultJavaVMInitArgs_t)(void *args);
 
 typedef struct java_backend_instance {
 
@@ -103,8 +100,8 @@ typedef struct java_backend_instance {
 
     // javax.naming.NamingEnumeration
     jclass namingEnumerationClass;
-    jmethodID namingEnumerationNext;
     jmethodID namingEnumerationHasMore;
+    jmethodID namingEnumerationNext;
 
     // javax.naming.directory.ModificationItem
     jclass modificationItemClass;
@@ -112,6 +109,7 @@ typedef struct java_backend_instance {
 
     // org.openldap.backend.Results
     jclass resultsClass;
+    jmethodID resultsHasNext;
     jmethodID resultsNext;
     jmethodID resultsGetReturnCode;
 

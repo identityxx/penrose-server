@@ -73,6 +73,7 @@ jmethodID getMethodID(
     return mid;
 }
 
+/*
 jobject newObject(
     JNIEnv *env,
     jclass clazz,
@@ -162,21 +163,20 @@ void callVoidMethod(
     va_end(args);
 }
 
-int exceptionOccurred(
+jthrowable exceptionOccurred(
     JNIEnv *env
 )
 {
-    jthrowable exc;
+    jthrowable exc = (*env)->ExceptionOccurred(env);
 
-    exc = (*env)->ExceptionOccurred(env);
     if (exc) {
-        if (slap_debug & 1024) fprintf(stderr, "Exception occured.\n");
         (*env)->ExceptionDescribe(env);
         (*env)->ExceptionClear(env);
     }       
 
-    return exc ? 1 : 0;
+    return exc;
 }
+*/
 
 int
 java_back_initialize(
@@ -516,6 +516,9 @@ java_back_db_open(
     java_back->resultsClass = findClass(env, "org/openldap/backend/Results");
     if (java_back->resultsClass == 0) return -1;
 
+    java_back->resultsHasNext = getMethodID(env, java_back->resultsClass, "hasNext", "()Z");
+    if (java_back->resultsHasNext == 0) return -1;
+
     java_back->resultsNext = getMethodID(env, java_back->resultsClass, "next", "()Ljava/lang/Object;");
     if (java_back->resultsNext == 0) return -1;
 
@@ -577,24 +580,35 @@ java_back_db_open(
     Debug( LDAP_DEBUG_TRACE, "Class clazz = Class.forName(\"%s\");\n", java_back->className, 0, 0);
     Debug( LDAP_DEBUG_TRACE, "Backend backend = (Backend)clazz.newInstance();\n", 0, 0, 0);
 
-    java_back->backend = newObject(env, java_back->backendClass, java_back->backendConstructor);
+    java_back->backend = (*env)->NewObject(env, java_back->backendClass, java_back->backendConstructor);
 
     if (java_back->backend == 0) {
         Debug( LDAP_DEBUG_TRACE, "<== java_back_db_open(): Failed creating backend instance.\n", 0, 0, 0);
         return -1;
     }
 
-    if (exceptionOccurred(env)) {
+    jthrowable exc = (*env)->ExceptionOccurred(env);
+
+    if (exc) {
         Debug( LDAP_DEBUG_TRACE, "<== java_back_db_open(): Exception occured while creating backend instance.\n", 0, 0, 0);
+        (*env)->ExceptionDescribe(env);
+        (*env)->ExceptionClear(env);
+
         return -1;
     }
 
     Debug( LDAP_DEBUG_TRACE, "backend.init();\n", 0, 0, 0);
 
-    res = callIntMethod(env, java_back->backend, java_back->backendInit);
+    res = (*env)->CallIntMethod(env, java_back->backend, java_back->backendInit);
 
-    if (exceptionOccurred(env)) {
+    exc = (*env)->ExceptionOccurred(env);
+
+    if (exc) {
         Debug( LDAP_DEBUG_TRACE, "<== java_back_db_open(): Backend initialization failed.\n", 0, 0, 0);
+
+        (*env)->ExceptionDescribe(env);
+        (*env)->ExceptionClear(env);
+
         return -1;
     }
 
@@ -603,64 +617,72 @@ java_back_db_open(
     return 0;
 }
 
-int
-java_connection_init(
-    BackendDB	*be, Connection *conn
-)
-{
+int java_connection_init(BackendDB *be, Connection *conn) {
+
+    Debug( LDAP_DEBUG_TRACE, "==> java_connection_init()\n", 0, 0, 0);
+
     JavaBackend *java_back = (JavaBackend*)be->be_private;
     JavaVM *jvm = java_back->jvm;
     JNIEnv *env;
 
-    jint res;
-    jmethodID backendCreateConnection;
-  
-    Debug( LDAP_DEBUG_TRACE, "==> java_connection_init()\n", 0, 0, 0);
+    jint res = (*jvm)->AttachCurrentThread(jvm, (void**)&env, NULL);
 
-    res = (*jvm)->AttachCurrentThread(jvm, (void**)&env, NULL);
     if (res < 0) {
         Debug( LDAP_DEBUG_TRACE, "<== java_connection_init(): Failed connecting to JVM.\n", 0, 0, 0);
         return -1;
     }
 
-    // backend.openConnection();
-    callVoidMethod(env, java_back->backend, java_back->backendOpenConnection, conn->c_connid);
+    jint connectionId = conn->c_connid;
+  
+    Debug(LDAP_DEBUG_TRACE, "backend.openConnection(%d);\n", connectionId, 0, 0);
 
-    if (exceptionOccurred(env)) {
+    (*env)->CallVoidMethod(env, java_back->backend, java_back->backendOpenConnection, connectionId);
+
+    jthrowable exc = (*env)->ExceptionOccurred(env);
+
+    if (exc) {
         Debug( LDAP_DEBUG_TRACE, "<== java_connection_init(): Failed initializing connection.\n", 0, 0, 0);
+
+        (*env)->ExceptionDescribe(env);
+        (*env)->ExceptionClear(env);
+
         return -1;
     }
 
-    Debug( LDAP_DEBUG_TRACE, "<== java_connection_init()\n", 0, 0, 0);
+    Debug(LDAP_DEBUG_TRACE, "<== java_connection_init()\n", 0, 0, 0);
 
     return 0;
 }
 
-int
-java_connection_destroy(
-    BackendDB	*be, Connection *conn
-)
-{
+int java_connection_destroy(BackendDB *be, Connection *conn) {
+
+    Debug( LDAP_DEBUG_TRACE, "==> java_connection_destroy()\n", 0, 0, 0);
+
     JavaBackend *java_back = (JavaBackend*)be->be_private;
     JavaVM *jvm = java_back->jvm;
     JNIEnv *env;
 
-    jint res;
-    jmethodID backendRemoveConnection;
+    jint res = (*jvm)->AttachCurrentThread(jvm, (void**)&env, NULL);
 
-    Debug( LDAP_DEBUG_TRACE, "==> java_connection_destroy()\n", 0, 0, 0);
-
-    res = (*jvm)->AttachCurrentThread(jvm, (void**)&env, NULL);
     if (res < 0) {
         Debug( LDAP_DEBUG_TRACE, "<== java_connection_destroy(): Failed attaching to JVM.\n", 0, 0, 0);
         return -1;
     }
 
-    // backend.removeConnection();
-    callVoidMethod(env, java_back->backend, java_back->backendRemoveConnection, conn->c_connid);
+    jint connectionId = conn->c_connid;
 
-    if (exceptionOccurred(env)) {
+    Debug( LDAP_DEBUG_TRACE, "backend.removeConnection(%d);\n", connectionId, 0, 0);
+
+    (*env)->CallVoidMethod(env, java_back->backend, java_back->backendRemoveConnection, connectionId);
+
+    jthrowable exc = (*env)->ExceptionOccurred(env);
+
+    if (exc) {
         Debug( LDAP_DEBUG_TRACE, "<== java_connection_destroy(): Failed destroying connection.\n", 0, 0, 0);
+
+        (*env)->ExceptionDescribe(env);
+        (*env)->ExceptionClear(env);
+
         return -1;
     }
 

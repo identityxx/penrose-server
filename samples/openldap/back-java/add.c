@@ -48,9 +48,13 @@ int java_back_add( Operation *op, SlapReply *rs ) {
 
     attributes = (*env)->NewObject(env, java_back->basicAttributesClass, java_back->basicAttributesConstructor);
 
-    if (exceptionOccurred(env)) {
+    jthrowable exc = (*env)->ExceptionOccurred(env);
 
+    if (exc) {
         Debug( LDAP_DEBUG_TRACE, "<== java_back_add(): Failed creating BasicAttributes.\n", 0, 0, 0);
+
+        (*env)->ExceptionDescribe(env);
+        (*env)->ExceptionClear(env);
 
         rs->sr_err = LDAP_OPERATIONS_ERROR;
         send_ldap_result( op, rs);
@@ -80,8 +84,13 @@ int java_back_add( Operation *op, SlapReply *rs ) {
         attributeName = (*env)->NewStringUTF(env, desc->ad_cname.bv_val);
         attribute = (*env)->NewObject(env, java_back->basicAttributeClass, java_back->basicAttributeConstructor, attributeName);
 
-        if (exceptionOccurred(env)) {
+        exc = (*env)->ExceptionOccurred(env);
+
+        if (exc) {
             Debug( LDAP_DEBUG_TRACE, "<== java_back_add(): Failed creating BasicAttribute.\n", 0, 0, 0);
+
+            (*env)->ExceptionDescribe(env);
+            (*env)->ExceptionClear(env);
 
             rs->sr_err = LDAP_OPERATIONS_ERROR;
             send_ldap_result( op, rs);
@@ -98,13 +107,17 @@ int java_back_add( Operation *op, SlapReply *rs ) {
             attributeValue = (*env)->NewStringUTF(env, vals->bv_val);
             (*env)->CallBooleanMethod(env, attribute, java_back->attributeAdd, attributeValue);
 
-            if (exceptionOccurred(env)) {
-                if (slap_debug & 1024) fprintf(stderr, "Failed to add attribute value.\n");
+            jthrowable exc = (*env)->ExceptionOccurred(env);
 
+            if (exc) {
                 Debug( LDAP_DEBUG_TRACE, "<== java_back_add(): Failed adding attribute value.\n", 0, 0, 0);
+
+                (*env)->ExceptionDescribe(env);
+                (*env)->ExceptionClear(env);
 
                 rs->sr_err = LDAP_OPERATIONS_ERROR;
                 send_ldap_result( op, rs );
+
                 return LDAP_OPERATIONS_ERROR;
             }       
 
@@ -115,9 +128,13 @@ int java_back_add( Operation *op, SlapReply *rs ) {
 
         (*env)->CallBooleanMethod(env, attributes, java_back->attributesPut, attribute);
 
-        if (exceptionOccurred(env)) {
+        exc = (*env)->ExceptionOccurred(env);
 
+        if (exc) {
             Debug( LDAP_DEBUG_TRACE, "<== java_back_add(): Failed adding attribute to set.\n", 0, 0, 0);
+
+            (*env)->ExceptionDescribe(env);
+            (*env)->ExceptionClear(env);
 
             rs->sr_err = LDAP_OPERATIONS_ERROR;
             send_ldap_result( op, rs );
@@ -131,9 +148,13 @@ int java_back_add( Operation *op, SlapReply *rs ) {
 
     res = (*env)->CallIntMethod(env, java_back->backend, java_back->backendAdd, conn->c_connid, dn, attributes);
 
-    if (exceptionOccurred(env)) {
+    exc = (*env)->ExceptionOccurred(env);
 
+    if (exc) {
         Debug( LDAP_DEBUG_TRACE, "<== java_back_add(): Failed adding entry %s.\n", dn, 0, 0);
+
+        (*env)->ExceptionDescribe(env);
+        (*env)->ExceptionClear(env);
 
         rs->sr_err = LDAP_OPERATIONS_ERROR;
         send_ldap_result( op, rs );

@@ -46,12 +46,17 @@ int java_back_compare( Operation *op, SlapReply *rs ) {
     res = (*env)->CallIntMethod(env, java_back->backend, java_back->backendCompare,
         conn->c_connid, dn, name, value);
 
-    if (exceptionOccurred(env)) {
+    jthrowable exc = (*env)->ExceptionOccurred(env);
 
+    if (exc) {
         Debug( LDAP_DEBUG_TRACE, "<== java_back_compare(): Failed to compare \"%s\" %s:%s.\n", dn, name, value);
+
+        (*env)->ExceptionDescribe(env);
+        (*env)->ExceptionClear(env);
 
         rs->sr_err = LDAP_OPERATIONS_ERROR;
         send_ldap_result( op, rs );
+
         return LDAP_OPERATIONS_ERROR;
     }       
 
