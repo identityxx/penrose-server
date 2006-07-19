@@ -680,7 +680,7 @@ public class PenroseInterceptor extends BaseInterceptor {
                         sc,
                         results);
 
-                return new PenroseEnumeration(environment, results);
+                return new PenroseEnumeration(results);
 
             } finally {
                 if (session != null) try { session.close(); } catch (Exception e) {}

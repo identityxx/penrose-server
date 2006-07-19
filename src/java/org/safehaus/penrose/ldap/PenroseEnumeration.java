@@ -26,7 +26,6 @@ import org.slf4j.Logger;
 import javax.naming.NamingEnumeration;
 import javax.naming.NamingException;
 import javax.naming.directory.*;
-import java.util.*;
 
 /**
  * @author Endi S. Dewata
@@ -35,35 +34,14 @@ public class PenroseEnumeration implements NamingEnumeration {
 
     Logger log = LoggerFactory.getLogger(getClass());
 
-    public Hashtable environment;
     public PenroseSearchResults searchResults;
-
-    public Collection binaryAttributes = new HashSet();
 
     public PenroseEnumeration(PenroseSearchResults searchResults) {
         this.searchResults = searchResults;
     }
 
-    public PenroseEnumeration(Hashtable environment, PenroseSearchResults searchResults) {
-        this.environment = environment;
-        this.searchResults = searchResults;
-/*
-        log.debug("Environment:");
-        for (Iterator i=environment.keySet().iterator(); i.hasNext(); ) {
-            String name = (String)i.next();
-            log.debug(" - "+name+": "+environment.get(name));
-        }
-*/
-        Collection c = (Collection)environment.get("java.naming.ldap.attributes.binary");
-        if (c != null) {
-            for (Iterator i=c.iterator(); i.hasNext(); ) {
-                String name = (String)i.next();
-                binaryAttributes.add(name.toLowerCase());
-            }
-        }
-    }
-
     public void close() throws NamingException {
+        searchResults.close();
     }
 
     public boolean hasMore() throws NamingException {
@@ -86,57 +64,7 @@ public class PenroseEnumeration implements NamingEnumeration {
 
         log.info("Returning \""+result.getName()+"\" to client.");
 
-        if (log.isDebugEnabled()) {
-            Attributes attributes = result.getAttributes();
-            
-            for (NamingEnumeration i = attributes.getAll(); i.hasMore(); ) {
-                Attribute attribute = (Attribute)i.next();
-                String name = attribute.getID();
-
-                for (NamingEnumeration j = attribute.getAll(); j.hasMore(); ) {
-                    Object value = j.next();
-                    //log.debug(" - "+name+": "+value+" ("+value.getClass()+")");
-                }
-            }
-        }
-
         return result;
-/*
-        LDAPAttributeSet attributeSet = result.getAttributeSet();
-        Attributes attributes = new BasicAttributes();
-
-        //log.debug("Entry "+result.getDN());
-        for (Iterator j = attributeSet.iterator(); j.hasNext(); ) {
-            LDAPAttribute attribute = (LDAPAttribute)j.next();
-            String name = attribute.getName();
-            Attribute attr = new BasicAttribute(name);
-
-            if (binaryAttributes.contains(name.toLowerCase())) {
-                for (Enumeration k=attribute.getByteValues(); k.hasMoreElements(); ) {
-                    byte[] value = (byte[])k.nextElement();
-                    attr.add(value);
-                    //log.debug("- "+name+": binary");
-                }
-
-            } else {
-                for (Enumeration k=attribute.getStringValues(); k.hasMoreElements(); ) {
-                    String value = (String)k.nextElement();
-                    attr.add(value);
-                    //log.debug("- "+name+": "+value);
-                }
-            }
-
-            attributes.put(attr);
-        }
-
-        SearchResult sr = new SearchResult(
-                result.getDN(),
-                result,
-                attributes
-        );
-
-        return sr;
-*/
     }
 
     public boolean hasMoreElements() {

@@ -74,9 +74,6 @@ public class PenroseBackend implements Backend {
 
     public int initImpl() throws Exception {
 
-        log.debug("-------------------------------------------------------------------------------");
-        log.debug("PenroseBackend.init();");
-
         PenroseConfigReader reader = new PenroseConfigReader((home == null ? "" : home+ File.separator)+"conf"+File.separator+"server.xml");
         PenroseConfig penroseConfig = reader.read();
         penroseConfig.setHome(home);
@@ -104,6 +101,7 @@ public class PenroseBackend implements Backend {
      * @param connectionId
      */
     public void openConnection(int connectionId) throws Exception {
+        log.debug("openConnection("+connectionId+")");
         PenroseSession session = penrose.newSession();
         if (session == null) throw new Exception("Unable to create session.");
         sessions.put(new Integer(connectionId), session);
@@ -115,6 +113,7 @@ public class PenroseBackend implements Backend {
      * @param connectionId
      */
     public void closeConnection(int connectionId) throws Exception {
+        log.debug("closeConnection("+connectionId+")");
         PenroseSession session = (PenroseSession)sessions.remove(new Integer(connectionId));
         if (session != null) session.close();
     }
@@ -130,8 +129,11 @@ public class PenroseBackend implements Backend {
      */
     public int bind(int connectionId, String dn, String password) throws Exception {
 
+        log.debug("bind("+connectionId+")");
+
         PenroseSession session = getSession(connectionId);
         if (session == null) {
+            log.debug("Invalid connection ID: "+connectionId);
             return LDAPException.OPERATIONS_ERROR;
         }
 
@@ -153,8 +155,11 @@ public class PenroseBackend implements Backend {
      */
     public int unbind(int connectionId) throws Exception {
 
+        log.debug("unbind("+connectionId+")");
+
         PenroseSession session = getSession(connectionId);
         if (session == null) {
+            log.debug("Invalid connection ID: "+connectionId);
             return LDAPException.OPERATIONS_ERROR;
         }
 
@@ -183,8 +188,11 @@ public class PenroseBackend implements Backend {
             SearchControls sc)
     throws Exception {
 
+        log.debug("search("+connectionId+", \""+baseDn+"\", \""+filter+"\", sc)");
+
         PenroseSession session = getSession(connectionId);
         if (session == null) {
+            log.debug("Invalid connection ID: "+connectionId);
             return null;
         }
 
@@ -226,8 +234,11 @@ public class PenroseBackend implements Backend {
             Attributes attributes)
     throws Exception {
 
+        log.debug("add("+connectionId+")");
+
         PenroseSession session = getSession(connectionId);
         if (session == null) {
+            log.debug("Invalid connection ID: "+connectionId);
             return LDAPException.OPERATIONS_ERROR;
         }
 
@@ -253,8 +264,11 @@ public class PenroseBackend implements Backend {
             String dn)
     throws Exception {
 
+        log.debug("delete("+connectionId+")");
+
         PenroseSession session = getSession(connectionId);
         if (session == null) {
+            log.debug("Invalid connection ID: "+connectionId);
             return LDAPException.OPERATIONS_ERROR;
         }
 
@@ -282,8 +296,11 @@ public class PenroseBackend implements Backend {
             Collection modifications)
     throws Exception {
 
+        log.debug("modify("+connectionId+")");
+
         PenroseSession session = getSession(connectionId);
         if (session == null) {
+            log.debug("Invalid connection ID: "+connectionId);
             return LDAPException.OPERATIONS_ERROR;
         }
 
@@ -311,8 +328,11 @@ public class PenroseBackend implements Backend {
             String newrdn)
     throws Exception {
 
+        log.debug("modrdn("+connectionId+")");
+
         PenroseSession session = getSession(connectionId);
         if (session == null) {
+            log.debug("Invalid connection ID: "+connectionId);
             return LDAPException.OPERATIONS_ERROR;
         }
 
@@ -342,8 +362,11 @@ public class PenroseBackend implements Backend {
             Object attributeValue)
     throws Exception {
 
+        log.debug("compare("+connectionId+")");
+
         PenroseSession session = getSession(connectionId);
         if (session == null) {
+            log.debug("Invalid connection ID: "+connectionId);
             return LDAPException.OPERATIONS_ERROR;
         }
 
