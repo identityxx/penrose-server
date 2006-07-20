@@ -12,6 +12,8 @@
     <property name="openldap.src" value="${cygwin.home}/usr/src/openldap-${openldap.version}"/>
     <property name="openldap.patch" value="openldap-${openldap.version}/openldap.patch"/>
 
+    <property file="build.properties"/>
+
     <property name="project.name" value="openldap-servers-java"/>
     <property name="project.version" value="${openldap.version}"/>
     <property name="project.dist" value="dist"/>
@@ -73,6 +75,9 @@
         <mkdir dir="target"/>
         <tar destfile="target/${project.name}-${project.version}-src.tar">
             <tarfileset dir="openldap-${openldap.version}/linux" prefix="${project.name}-${project.version}/lib" mode="755">
+            </tarfileset>
+            <tarfileset dir="openldap-${openldap.version}" prefix="${project.name}-${project.version}">
+                <include name="build.properties"/>
             </tarfileset>
             <tarfileset dir="." prefix="${project.name}-${project.version}">
                 <include name="build.xml"/>
@@ -146,8 +151,9 @@
             <fileset dir="lib"/>
         </copy>
         <chmod dir="${project.home}" perm="ugo+rx" includes="**/*"/>
+        <echo message="Create link ${back.java.library.link} to ${back.java.library.name}"/>
         <exec executable="${ln}" os="Linux">
-            <arg line="-sf back_java-2.2.so.7.0.22 ${project.home}/back_java-2.2.so.7"/>
+            <arg line="-sf ${back.java.library.name} ${project.home}/${back.java.library.link}"/>
         </exec>
     </target>
 
