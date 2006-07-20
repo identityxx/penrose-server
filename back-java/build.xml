@@ -22,12 +22,6 @@
 
     <tstamp/>
 
-    <path id="lib.path">
-        <fileset dir="../lib">
-            <include name="**/*.jar"/>
-        </fileset>
-    </path>
-
     <target name="init">
         <echo message="Operating System: ${os.name} ${os.version}" />
         <condition property="isWindows">
@@ -84,7 +78,6 @@
         <javac
             srcdir="src/java"
             destdir="target/classes"
-            classpathref="lib.path"
             debug="on"
             debuglevel="lines,vars,source"
             source="1.4"
@@ -109,12 +102,8 @@
         <mkdir dir="target/javadoc"/>
         <javadoc packagenames="org.openldap.backend.*"
             sourcepath="src/java"
-            destdir="target/javadoc"
-            classpathref="lib.path">
+            destdir="target/javadoc">
         </javadoc>
-        <jar jarfile="dist/openldap-javadoc-${openldap.version}.jar">
-            <fileset dir="target/javadoc"/>
-        </jar>
     </target>
 
     <target name="install" depends="dist,docs">
@@ -132,7 +121,7 @@
         <copy todir="${prefix}/usr/share/openldap/lib" file="dist/openldap-${openldap.version}.jar"/>
         <mkdir dir="${prefix}/usr/share/doc/${project.name}-${project.version}/javadoc"/>
         <copy todir="${prefix}/usr/share/doc/${project.name}-${project.version}/javadoc">
-            <fileset dir="lib"/>
+            <fileset dir="target/javadoc"/>
         </copy>
     </target>
 
