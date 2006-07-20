@@ -109,7 +109,7 @@
     <target name="install" depends="dist,docs">
         <property name="ln" value="/bin/ln"/>
         <mkdir dir="${prefix}/usr/sbin/openldap"/>
-        <copy todir="${prefix}/usr/sbin/openldap">
+        <copy todir="${prefix}/usr/sbin/openldap" failonerror="false">
             <fileset dir="lib"/>
         </copy>
         <chmod dir="${prefix}/usr/sbin/openldap" perm="ugo+rx" includes="**/*"/>

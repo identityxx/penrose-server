@@ -17,7 +17,7 @@ AutoReqProv: no
 %build
 
 %install
-ant -Dprefix=$RPM_BUILD_ROOT -Dopenldap.version=${openldap.version} install
+ant -Dprefix=${rpm.prefix}$RPM_BUILD_ROOT -Dopenldap.version=${openldap.version} install
 
 %clean
 rm -rf $RPM_BUILD_ROOT
