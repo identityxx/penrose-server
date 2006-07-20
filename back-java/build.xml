@@ -1,0 +1,166 @@
+<!--
+ Copyright (c) 2000-2005, Identyx Corporation.
+ All rights reserved.
+-->
+<project name="back-java" default="patch">
+
+    <description>Java Backend for OpenLDAP</description>
+
+    <property name="prefix" value=""/>
+
+    <property name="openldap.version" value="2.2.26"/>
+    <property name="openldap.src" value="${cygwin.home}/usr/src/openldap-${openldap.version}"/>
+    <property name="openldap.patch" value="openldap-${openldap.version}/openldap.patch"/>
+
+    <property name="project.name" value="openldap-servers-java"/>
+    <property name="project.version" value="${openldap.version}"/>
+    <property name="project.dist" value="dist"/>
+    <property name="project.home" value="${prefix}/usr/sbin/openldap"/>
+
+    <property name="cygwin.home" value="c:/cygwin"/>
+
+    <target name="init">
+        <condition property="isWindows">
+            <os family="windows"/>
+        </condition>
+        <condition property="isUnix">
+            <os family="unix"/>
+        </condition>
+    </target>
+
+    <target name="patch" depends="init">
+        <antcall target="patch-unix"/>
+        <antcall target="patch-windows"/>
+    </target>
+
+    <target name="patch-unix" if="isUnix">
+
+        <property name="patch" value="/usr/bin/patch"/>
+        <echo message="Patching files in ${openldap.src} using ${openldap.patch}:" />
+        <exec executable="${patch}">
+            <arg line="-p1"/>
+            <arg line="-i ${basedir}/${openldap.patch}"/>
+            <arg line="-d ${openldap.src}"/>
+        </exec>
+
+        <copy todir="${openldap.src}/servers/slapd/back-java" overwrite="true">
+            <fileset dir="src/c" />
+        </copy>
+
+    </target>
+
+    <target name="patch-windows" if="isWindows">
+
+        <property name="patch" value="${cygwin.home}/bin/patch.exe"/>
+        <echo message="Patching files in ${openldap.src} using ${openldap.patch}:" />
+        <exec executable="${patch}">
+            <arg line="-p1"/>
+            <arg line="-i ${basedir}/${openldap.patch}"/>
+            <arg line="-d ${openldap.src}"/>
+        </exec>
+
+        <copy todir="${openldap.src}/servers/slapd/back-java" overwrite="true">
+            <fileset dir="src/c" />
+        </copy>
+
+        <property name="dlltool" value="${cygwin.home}/bin/dlltool.exe"/>
+        <echo message="Calling ${dlltool}:" />
+        <echo message=" --input-def ${openldap.src}/servers/slapd/back-java/jvm.def" />
+        <echo message=" --output-lib ${openldap.src}/servers/slapd/back-java/libjvm.dll.a" />
+        <exec executable="${dlltool}">
+            <arg line="--input-def ${openldap.src}/servers/slapd/back-java/jvm.def"/>
+            <arg line="--output-lib ${openldap.src}/servers/slapd/back-java/libjvm.dll.a"/>
+            <arg line="--kill-at"/>
+            <arg line="--dllname jvm.dll"/>
+        </exec>
+
+    </target>
+
+    <target name="dist" depends="init">
+        <mkdir dir="target"/>
+        <tar destfile="target/${project.name}-${project.version}-src.tar">
+            <tarfileset dir="openldap-${openldap.version}/linux" prefix="${project.name}-${project.version}/lib" mode="755">
+            </tarfileset>
+            <tarfileset dir="." prefix="${project.name}-${project.version}">
+                <include name="build.xml"/>
+            </tarfileset>
+        </tar>
+        <mkdir dir="dist"/>
+        <gzip
+            destfile="${project.dist}/${project.name}-${project.version}-src.tar.gz"
+            src="target/${project.name}-${project.version}-src.tar"
+        />
+    </target>
+
+    <target name="dist-rpm" depends="dist">
+        <mkdir dir="dist"/>
+        <antcall target="dist-rpm-unix"/>
+        <antcall target="dist-rpm-windows"/>
+    </target>
+
+    <target name="dist-rpm-unix" if="isUnix">
+        <property name="rpm.release" value="1.FC3"/>
+        <property name="rpm.prefix" value=""/>
+        <property name="rpm.home" value="/usr/src/redhat"/>
+        <property name="rpm.builder" value="/usr/bin/rpmbuild"/>
+        <copy todir="target" file="${project.name}.spec">
+            <filterchain>
+                <expandproperties/>
+            </filterchain>
+        </copy>
+        <copy todir="${rpm.home}/SOURCES" overwrite="true"
+            file="${project.dist}/${project.name}-${project.version}-src.tar.gz">
+        </copy>
+        <exec executable="${rpm.builder}">
+            <arg line="-ba target/${project.name}.spec"/>
+        </exec>
+        <copy todir="${project.dist}" failonerror="false"
+            file="${rpm.home}/SRPMS/${project.name}-${project.version}-1.FC3.src.rpm">
+        </copy>
+        <copy todir="${project.dist}" failonerror="false"
+            file="${rpm.home}/RPMS/i386/${project.name}-${project.version}-1.FC3.i386.rpm">
+        </copy>
+    </target>
+
+    <target name="dist-rpm-windows" if="isWindows">
+        <property name="rpm.release" value="1"/>
+        <property name="rpm.prefix" value="${cygwin.home}"/>
+        <property name="rpm.home" value="${cygwin.home}/usr/src/rpm"/>
+        <property name="rpm.builder" value="${cygwin.home}/lib/rpm/rpmb.exe"/>
+        <copy todir="target" file="${project.name}.spec">
+            <filterchain>
+                <expandproperties/>
+            </filterchain>
+        </copy>
+        <copy todir="${rpm.home}/SOURCES" overwrite="true"
+            file="${project.dist}/${project.name}-${project.version}-src.tar.gz">
+        </copy>
+        <exec executable="${rpm.builder}">
+            <arg line="-ba target/${project.name}.spec"/>
+        </exec>
+        <copy todir="${project.dist}" failonerror="false"
+            file="${rpm.home}/SRPMS/${project.name}-${project.version}-1.src.rpm">
+        </copy>
+        <copy todir="${project.dist}" failonerror="false"
+            file="${rpm.home}/RPMS/i386/${project.name}-${project.version}-1.cygwin.i386.rpm">
+        </copy>
+    </target>
+
+    <target name="install">
+        <property name="ln" value="/bin/ln"/>
+        <mkdir dir="${project.home}"/>
+        <copy todir="${project.home}">
+            <fileset dir="lib"/>
+        </copy>
+        <chmod dir="${project.home}" perm="ugo+rx" includes="**/*"/>
+        <exec executable="${ln}" os="Linux">
+            <arg line="-sf back_java-2.2.so.7.0.22 ${project.home}/back_java-2.2.so.7"/>
+        </exec>
+    </target>
+
+    <target name="clean">
+        <delete dir="target" failonerror="false"/>
+        <delete dir="dist" failonerror="false"/>
+    </target>
+
+</project>

@@ -219,7 +219,7 @@ diff -u -r1.598.2.33 configure
 +                cygwin* | mingw* | pw32*)
 +                        JAVA_HOME=`/usr/bin/cygpath --unix $JAVA_HOME`
 +                        JAVA_CPPFLAGS="-D__int64='long long' -I$JAVA_HOME/include -I$JAVA_HOME/include/win32"
-+                        JAVA_LDFLAGS="-L`pwd`/servers/slapd/back-java/win32 -L$JAVA_HOME/jre/bin -L$JAVA_HOME/jre/bin/server -ljava -ljvm -lverify"
++                        JAVA_LDFLAGS="-L`pwd`/servers/slapd/back-java -L$JAVA_HOME/jre/bin -L$JAVA_HOME/jre/bin/server -ljava -ljvm -lverify"
 +                        ;;
 +                *)
 +                        JAVA_CPPFLAGS="-I$JAVA_HOME/include -I$JAVA_HOME/include/linux"
@@ -636,7 +636,7 @@ diff -u -r1.560.2.29 configure.in
 +                cygwin* | mingw* | pw32*)
 +                        JAVA_HOME=`/usr/bin/cygpath --unix $JAVA_HOME`
 +                        JAVA_CPPFLAGS="-D__int64='long long' -I$JAVA_HOME/include -I$JAVA_HOME/include/win32"
-+                        JAVA_LDFLAGS="-L`pwd`/servers/slapd/back-java/win32 -L$JAVA_HOME/jre/bin -L$JAVA_HOME/jre/bin/server -ljava -ljvm -lverify"
++                        JAVA_LDFLAGS="-L`pwd`/servers/slapd/back-java -L$JAVA_HOME/jre/bin -L$JAVA_HOME/jre/bin/server -ljava -ljvm -lverify"
 +                        ;;
 +                *)
 +                        JAVA_CPPFLAGS="-I$JAVA_HOME/include -I$JAVA_HOME/include/linux"

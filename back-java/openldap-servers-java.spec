@@ -1,12 +1,13 @@
 Summary: OpenLDAP Java Backend
 Name: ${project.name}
 Version: ${project.version}
-Release: 1.FC3
+Release: ${rpm.releases}
 License: GPL
 Vendor: Identyx, Inc.
 Group: System Environment/Base
-Source: http://dist.safehaus.org/penrose/release/penrose-1.1/artifacts/${project.name}-${project.version}-src.tar.gz
+Source: ${project.name}-${project.version}-src.tar.gz
 BuildRoot: /var/tmp/${project.name}-${project.version}
+AutoReqProv: no
 
 %description
 
