@@ -34,23 +34,22 @@
     </target>
 
     <target name="patch-unix" if="isUnix">
-
         <property name="patch" value="/usr/bin/patch"/>
+        <copy todir="${openldap.src}/servers/slapd/back-java" overwrite="true">
+            <fileset dir="src/c" />
+        </copy>
         <echo message="Patching files in ${openldap.src} using ${openldap.patch}:" />
         <exec executable="${patch}">
             <arg line="-p1"/>
             <arg line="-i ${basedir}/${openldap.patch}"/>
             <arg line="-d ${openldap.src}"/>
         </exec>
-
-        <copy todir="${openldap.src}/servers/slapd/back-java" overwrite="true">
-            <fileset dir="src/c" />
-        </copy>
-
     </target>
 
     <target name="patch-windows" if="isWindows">
-
+        <copy todir="${openldap.src}/servers/slapd/back-java" overwrite="true">
+            <fileset dir="src/c" />
+        </copy>
         <property name="patch" value="${cygwin.home}/bin/patch.exe"/>
         <echo message="Patching files in ${openldap.src} using ${openldap.patch}:" />
         <exec executable="${patch}">
@@ -58,11 +57,6 @@
             <arg line="-i ${basedir}/${openldap.patch}"/>
             <arg line="-d ${openldap.src}"/>
         </exec>
-
-        <copy todir="${openldap.src}/servers/slapd/back-java" overwrite="true">
-            <fileset dir="src/c" />
-        </copy>
-
         <property name="dlltool" value="${cygwin.home}/bin/dlltool.exe"/>
         <echo message="Calling ${dlltool}:" />
         <echo message=" --input-def ${openldap.src}/servers/slapd/back-java/jvm.def" />
@@ -73,7 +67,6 @@
             <arg line="--kill-at"/>
             <arg line="--dllname jvm.dll"/>
         </exec>
-
     </target>
 
     <target name="dist" depends="init">

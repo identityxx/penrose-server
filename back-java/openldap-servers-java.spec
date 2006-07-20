@@ -1,7 +1,7 @@
 Summary: OpenLDAP Java Backend
 Name: ${project.name}
 Version: ${project.version}
-Release: ${rpm.releases}
+Release: ${rpm.release}
 License: GPL
 Vendor: Identyx, Inc.
 Group: System Environment/Base
