@@ -2,11 +2,13 @@
  Copyright (c) 2000-2005, Identyx Corporation.
  All rights reserved.
 -->
-<project name="back-java" default="patch">
+<project name="back-java" default="build">
 
     <description>Java Backend for OpenLDAP</description>
 
     <property name="prefix" value=""/>
+
+    <property name="cygwin.home" value="c:/cygwin"/>
 
     <property name="openldap.version" value="2.2.26"/>
     <property name="openldap.src" value="${cygwin.home}/usr/src/openldap-${openldap.version}"/>
@@ -17,11 +19,17 @@
     <property name="project.name" value="openldap-servers-java"/>
     <property name="project.version" value="${openldap.version}"/>
     <property name="project.dist" value="dist"/>
-    <property name="project.home" value="${prefix}/usr/sbin/openldap"/>
 
-    <property name="cygwin.home" value="c:/cygwin"/>
+    <tstamp/>
+
+    <path id="lib.path">
+        <fileset dir="../lib">
+            <include name="**/*.jar"/>
+        </fileset>
+    </path>
 
     <target name="init">
+        <echo message="Operating System: ${os.name} ${os.version}" />
         <condition property="isWindows">
             <os family="windows"/>
         </condition>
@@ -71,10 +79,67 @@
         </exec>
     </target>
 
-    <target name="dist" depends="init">
-        <mkdir dir="target"/>
-        <tar destfile="target/${project.name}-${project.version}-src.tar">
-            <tarfileset dir="openldap-${openldap.version}/linux" prefix="${project.name}-${project.version}/lib" mode="755">
+    <target name="build" depends="init">
+        <mkdir dir="target/classes"/>
+        <javac
+            srcdir="src/java"
+            destdir="target/classes"
+            classpathref="lib.path"
+            debug="on"
+            debuglevel="lines,vars,source"
+            source="1.4"
+            target="1.4"
+        />
+        <copy todir="target/classes">
+            <fileset dir="src/java" includes="**/*.properties,**/*.xml,**/*.dtd"/>
+        </copy>
+    </target>
+
+    <target name="dist" depends="build">
+        <mkdir dir="dist"/>
+        <jar jarfile="dist/openldap-${openldap.version}.jar">
+            <fileset dir="target/classes"/>
+            <manifest>
+              <attribute name="Build-Date" value="${DSTAMP}"/>
+            </manifest>
+        </jar>
+    </target>
+
+    <target name="docs" depends="init">
+        <mkdir dir="target/javadoc"/>
+        <javadoc packagenames="org.openldap.backend.*"
+            sourcepath="src/java"
+            destdir="target/javadoc"
+            classpathref="lib.path">
+        </javadoc>
+        <jar jarfile="dist/openldap-javadoc-${openldap.version}.jar">
+            <fileset dir="target/javadoc"/>
+        </jar>
+    </target>
+
+    <target name="install" depends="dist,docs">
+        <property name="ln" value="/bin/ln"/>
+        <mkdir dir="${prefix}/usr/sbin/openldap"/>
+        <copy todir="${prefix}/usr/sbin/openldap">
+            <fileset dir="lib"/>
+        </copy>
+        <chmod dir="${prefix}/usr/sbin/openldap" perm="ugo+rx" includes="**/*"/>
+        <echo message="Create link ${back.java.library.link} to ${back.java.library.name}"/>
+        <exec executable="${ln}" os="Linux">
+            <arg line="-sf ${back.java.library.name} ${prefix}/usr/sbin/openldap/${back.java.library.link}"/>
+        </exec>
+        <mkdir dir="${prefix}/usr/share/openldap/lib"/>
+        <copy todir="${prefix}/usr/share/openldap/lib" file="dist/openldap-${openldap.version}.jar"/>
+        <mkdir dir="${prefix}/usr/share/doc/${project.name}-${project.version}/javadoc"/>
+        <copy todir="${prefix}/usr/share/doc/${project.name}-${project.version}/javadoc">
+            <fileset dir="lib"/>
+        </copy>
+    </target>
+
+    <target name="dist-src" depends="init">
+        <mkdir dir="dist"/>
+        <tar destfile="dist/${project.name}-${project.version}-src.tar.gz" compression="gzip">
+            <tarfileset dir="openldap-${openldap.version}/${os.name}" prefix="${project.name}-${project.version}/lib" mode="755">
             </tarfileset>
             <tarfileset dir="openldap-${openldap.version}" prefix="${project.name}-${project.version}">
                 <include name="build.properties"/>
@@ -82,15 +147,12 @@
             <tarfileset dir="." prefix="${project.name}-${project.version}">
                 <include name="build.xml"/>
             </tarfileset>
+            <tarfileset dir="src/java" prefix="${project.name}-${project.version}/src/java">
+            </tarfileset>
         </tar>
-        <mkdir dir="dist"/>
-        <gzip
-            destfile="${project.dist}/${project.name}-${project.version}-src.tar.gz"
-            src="target/${project.name}-${project.version}-src.tar"
-        />
     </target>
 
-    <target name="dist-rpm" depends="dist">
+    <target name="dist-rpm" depends="dist-src">
         <mkdir dir="dist"/>
         <antcall target="dist-rpm-unix"/>
         <antcall target="dist-rpm-windows"/>
@@ -142,19 +204,6 @@
         <copy todir="${project.dist}" failonerror="false"
             file="${rpm.home}/RPMS/i386/${project.name}-${project.version}-1.cygwin.i386.rpm">
         </copy>
-    </target>
-
-    <target name="install">
-        <property name="ln" value="/bin/ln"/>
-        <mkdir dir="${project.home}"/>
-        <copy todir="${project.home}">
-            <fileset dir="lib"/>
-        </copy>
-        <chmod dir="${project.home}" perm="ugo+rx" includes="**/*"/>
-        <echo message="Create link ${back.java.library.link} to ${back.java.library.name}"/>
-        <exec executable="${ln}" os="Linux">
-            <arg line="-sf ${back.java.library.name} ${project.home}/${back.java.library.link}"/>
-        </exec>
     </target>
 
     <target name="clean">

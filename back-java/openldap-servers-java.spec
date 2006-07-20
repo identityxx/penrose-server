@@ -17,7 +17,7 @@ AutoReqProv: no
 %build
 
 %install
-ant -Dprefix=$RPM_BUILD_ROOT install
+ant -Dprefix=$RPM_BUILD_ROOT -Dopenldap.version=${openldap.version} install
 
 %clean
 rm -rf $RPM_BUILD_ROOT
@@ -26,4 +26,6 @@ rm -rf $RPM_BUILD_ROOT
 %defattr(-,root,root)
 
 /usr/sbin/openldap
+/usr/share/openldap/lib
+/usr/share/doc/${project.name}-${project.version}
 

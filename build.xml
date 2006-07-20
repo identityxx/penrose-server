@@ -94,11 +94,11 @@
         <jar jarfile="target/${project.name}-${project.version}.jar">
             <fileset dir="target/classes"/>
             <manifest>
-              <attribute name="Specification-Version"  value="1.0"/>
-              <attribute name="Implementation-Title"   value="Penrose Virtual Directory Server"/>
+              <attribute name="Specification-Version"  value="1.1"/>
+              <attribute name="Implementation-Title"   value="Penrose Server"/>
               <attribute name="Implementation-Version" value="${project.version}"/>
               <attribute name="Implementation-Vendor"  value="Identyx Corporation"/>
-              <attribute name="Built-Date" value="${DSTAMP}"/>
+              <attribute name="Build-Date" value="${DSTAMP}"/>
             </manifest>
         </jar>
     </target>
@@ -204,14 +204,12 @@
         </zip>
         <echo message="Creating ${project.name}-${project.version}-src.tar.gz"/>
         <mkdir dir="target"/>
-        <tar destfile="target/${project.name}-${project.version}-src.tar">
+        <tar destfile="${project.dist}/${project.name}-${project.version}-src.tar.gz" compression="gzip">
             <tarfileset dir="." prefix="${project.name}-${project.version}">
                 <exclude name="${project.dist}/**"/>
                 <exclude name="target/**"/>
             </tarfileset>
         </tar>
-        <gzip destfile="${project.dist}/${project.name}-${project.version}-src.tar.gz"
-            src="target/${project.name}-${project.version}-src.tar"/>
     </target>
 
     <target name="dist-unix" depends="docs,dist">
@@ -221,7 +219,7 @@
             basedir="target/dist"/>
         <echo message="Creating ${project.name}-${project.version}.tar.gz"/>
         <mkdir dir="target"/>
-        <tar destfile="target/${project.name}-${project.version}.tar">
+        <tar destfile="${project.dist}/${project.name}-${project.version}.tar.gz" compression="gzip">
             <tarfileset dir="target/dist" prefix="${project.name}-${project.version}" mode="755">
                 <include name="bin/*.sh"/>
             </tarfileset>
@@ -230,8 +228,6 @@
                 <exclude name="bin/*.sh"/>
             </tarfileset>
         </tar>
-        <gzip destfile="${project.dist}/${project.name}-${project.version}.tar.gz"
-            src="target/${project.name}-${project.version}.tar"/>
     </target>
 
     <target name="dist-rpm" depends="dist-src">

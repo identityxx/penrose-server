@@ -27,6 +27,8 @@ import org.slf4j.Logger;
 import javax.naming.directory.Attributes;
 import java.util.Date;
 import java.util.Collection;
+import java.util.Map;
+import java.util.HashMap;
 
 /**
  * @author Endi S. Dewata
@@ -43,9 +45,11 @@ public class PenroseSession {
     private String sessionId;
 
     private String bindDn;
-    
+
     private Date createDate;
     private Date lastActivityDate;
+
+    private Map attributes = new HashMap();
 
     public PenroseSession(SessionManager sessionManager) {
         this.sessionManager = sessionManager;
@@ -345,5 +349,21 @@ public class PenroseSession {
 
     public void removeSearchListener(SearchListener listener) {
         eventManager.removeSearchListener(listener);
+    }
+
+    public Collection getAttributes() {
+        return attributes.values();
+    }
+
+    public void setAttribute(String name, Object value) {
+        attributes.put(name, value);
+    }
+
+    public Object getAttribute(String name) {
+        return attributes.get(name);
+    }
+
+    public Collection getAttributeNames() {
+        return attributes.keySet();
     }
 }
