@@ -22,7 +22,8 @@
         <fileset dir="lib">
             <include name="**/*.jar"/>
         </fileset>
-        <pathelement location="lib/"/>
+        <pathelement location="lib"/>
+        <pathelement location="back-java/target/classes"/>
     </path>
 
     <path id="main.path">
@@ -53,6 +54,7 @@
     </target>
 
     <target name="build" depends="init">
+        <ant dir="back-java" target="build"/>
         <javacc
             target="src/java/org/safehaus/penrose/schema/LDAPv3Schema.jj"
             javacchome="lib/javacc"
@@ -124,6 +126,7 @@
     </target>
 
     <target name="dist" depends="build-ant,build">
+        <ant dir="back-java" target="dist"/>
         <mkdir dir="target/dist"/>
         <copy todir="target/dist" file="README.txt">
             <filterchain>
@@ -150,6 +153,9 @@
         </copy>
         <copy todir="target/dist/lib" includeEmptyDirs="false">
             <fileset dir="lib" includes="*"/>
+        </copy>
+        <copy todir="target/dist/lib">
+            <fileset dir="back-java/dist" includes="openldap-*.jar"/>
         </copy>
         <copy todir="target/dist/lib"
             file="target/${project.name}-${project.version}.jar">
@@ -343,6 +349,7 @@
     </target>
 
     <target name="clean">
+        <ant dir="back-java" target="clean"/>
         <delete dir="dist" failonerror="false"/>
         <delete dir="target" failonerror="false"/>
     </target>

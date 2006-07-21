@@ -32,16 +32,19 @@
         </condition>
     </target>
 
-    <target name="patch" depends="init">
+    <target name="copy" depends="init">
+        <copy todir="${openldap.src}/servers/slapd/back-java" overwrite="true">
+            <fileset dir="src/c" />
+        </copy>
+    </target>
+
+    <target name="patch" depends="copy">
         <antcall target="patch-unix"/>
         <antcall target="patch-windows"/>
     </target>
 
     <target name="patch-unix" if="isUnix">
         <property name="patch" value="/usr/bin/patch"/>
-        <copy todir="${openldap.src}/servers/slapd/back-java" overwrite="true">
-            <fileset dir="src/c" />
-        </copy>
         <echo message="Patching files in ${openldap.src} using ${openldap.patch}:" />
         <exec executable="${patch}">
             <arg line="-p1"/>
@@ -51,16 +54,6 @@
     </target>
 
     <target name="patch-windows" if="isWindows">
-        <copy todir="${openldap.src}/servers/slapd/back-java" overwrite="true">
-            <fileset dir="src/c" />
-        </copy>
-        <property name="patch" value="${cygwin.home}/bin/patch.exe"/>
-        <echo message="Patching files in ${openldap.src} using ${openldap.patch}:" />
-        <exec executable="${patch}">
-            <arg line="-p1"/>
-            <arg line="-i ${basedir}/${openldap.patch}"/>
-            <arg line="-d ${openldap.src}"/>
-        </exec>
         <property name="dlltool" value="${cygwin.home}/bin/dlltool.exe"/>
         <echo message="Calling ${dlltool}:" />
         <echo message=" --input-def ${openldap.src}/servers/slapd/back-java/jvm.def" />
@@ -70,6 +63,13 @@
             <arg line="--output-lib ${openldap.src}/servers/slapd/back-java/libjvm.dll.a"/>
             <arg line="--kill-at"/>
             <arg line="--dllname jvm.dll"/>
+        </exec>
+        <property name="patch" value="${cygwin.home}/bin/patch.exe"/>
+        <echo message="Patching files in ${openldap.src} using ${openldap.patch}:" />
+        <exec executable="${patch}">
+            <arg line="-p1"/>
+            <arg line="-i ${basedir}/${openldap.patch}"/>
+            <arg line="-d ${openldap.src}"/>
         </exec>
     </target>
 

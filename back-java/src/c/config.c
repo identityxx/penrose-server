@@ -11,7 +11,11 @@
 
 int
 java_back_config(
-    BackendInfo *bi, const char *fname, int lineno, int argc, char **argv
+    BackendInfo *bi,
+    const char *fname,
+    int lineno,
+    int argc,
+    char **argv
 )
 {
     Debug(LDAP_DEBUG_TRACE, "==> java_back_config()\n", 0, 0, 0);
@@ -40,7 +44,7 @@ java_back_db_config(
         if ( argc < 2 ) {
             Debug( LDAP_DEBUG_TRACE,
                 "<==java_back_db_config (%s line %d): "
-                "missing class name in \"class\" directive\n",
+                "missing value in \"class\" directive\n",
                 fname, lineno, 0 );
             return 1;
         }
@@ -61,7 +65,7 @@ java_back_db_config(
         if ( argc < 2 ) {
             Debug( LDAP_DEBUG_TRACE,
                 "<==java_back_db_config (%s line %d): "
-                "missing path in \"libpath\" directive\n",
+                "missing value in \"libpath\" directive\n",
                 fname, lineno, 0 );
             return 1;
         }
@@ -94,7 +98,7 @@ java_back_db_config(
         if ( argc < 2 ) {
             Debug( LDAP_DEBUG_TRACE,
                 "<==java_back_db_config (%s line %d): "
-                "missing path in \"classpath\" directive\n",
+                "missing value in \"classpath\" directive\n",
                 fname, lineno, 0 );
             return 1;
         }
@@ -122,35 +126,92 @@ java_back_db_config(
     } else if ( !strcasecmp( argv[0], "property" ) ) {
 
         int i;
-        char **properties;
+        char **names;
+        char **values;
 
         if ( argc < 2 ) {
             Debug( LDAP_DEBUG_TRACE,
                 "<==java_back_db_config (%s line %d): "
-                "missing path in \"property\" directive\n",
+                "missing name in \"property\" directive\n",
                 fname, lineno, 0 );
             return 1;
         }
 
-        properties = ch_calloc(java_back->nproperties + 1, sizeof(char *));
-        properties[java_back->nproperties] = ch_strdup( argv[1] );
+        if ( argc < 3 ) {
+            Debug( LDAP_DEBUG_TRACE,
+                "<==java_back_db_config (%s line %d): "
+                "missing value in \"property\" directive\n",
+                fname, lineno, 0 );
+            return 1;
+        }
+
+        names = ch_calloc(java_back->nproperties + 1, sizeof(char *));
+        names[java_back->nproperties] = ch_strdup( argv[1] );
+
+        values = ch_calloc(java_back->nproperties + 1, sizeof(char *));
+        values[java_back->nproperties] = ch_strdup( argv[2] );
 
         if (java_back->nproperties > 0) {
 
             for (i=0; i<java_back->nproperties; i++) {
                 //Debug( LDAP_DEBUG_TRACE, "Moving old properties #%d\n", i, 0, 0 );
-                properties[i] = java_back->properties[i];
-                java_back->properties[i] = NULL;
+
+                names[i] = java_back->propertyNames[i];
+                java_back->propertyNames[i] = NULL;
+
+                values[i] = java_back->propertyValues[i];
+                java_back->propertyValues[i] = NULL;
             }
 
             //Debug( LDAP_DEBUG_TRACE, "Releasing old properties\n", 0, 0, 0);
-            ch_free(java_back->properties);
+            ch_free(java_back->propertyNames);
+            ch_free(java_back->propertyValues);
         }
 
-        java_back->properties = properties;
+        java_back->propertyNames = names;
+        java_back->propertyValues = values;
         java_back->nproperties++;
 
-        Debug( LDAP_DEBUG_TRACE, "<==java_back_db_config(): properties=%s\n", java_back->properties[java_back->nproperties-1], 0, 0 );
+        Debug(
+            LDAP_DEBUG_TRACE,
+            "<==java_back_db_config(): property %s=%s\n",
+            java_back->propertyNames[java_back->nproperties-1],
+            java_back->propertyValues[java_back->nproperties-1],
+            0
+        );
+
+    } else if ( !strcasecmp( argv[0], "option" ) ) {
+
+        int i;
+        char **options;
+
+        if ( argc < 2 ) {
+            Debug( LDAP_DEBUG_TRACE,
+                "<==java_back_db_config (%s line %d): "
+                "missing value in \"option\" directive\n",
+                fname, lineno, 0 );
+            return 1;
+        }
+
+        options = ch_calloc(java_back->noptions + 1, sizeof(char *));
+        options[java_back->noptions] = ch_strdup( argv[1] );
+
+        if (java_back->noptions > 0) {
+
+            for (i=0; i<java_back->noptions; i++) {
+                //Debug( LDAP_DEBUG_TRACE, "Moving old options #%d\n", i, 0, 0 );
+                options[i] = java_back->options[i];
+                java_back->options[i] = NULL;
+            }
+
+            //Debug( LDAP_DEBUG_TRACE, "Releasing old options\n", 0, 0, 0);
+            ch_free(java_back->options);
+        }
+
+        java_back->options = options;
+        java_back->noptions++;
+
+        Debug( LDAP_DEBUG_TRACE, "<==java_back_db_config(): option=%s\n", java_back->options[java_back->noptions-1], 0, 0 );
 
     }
 

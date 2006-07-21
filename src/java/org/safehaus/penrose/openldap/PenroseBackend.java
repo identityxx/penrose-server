@@ -22,7 +22,8 @@ import java.io.File;
 
 import org.ietf.ldap.*;
 import org.safehaus.penrose.Penrose;
-import org.safehaus.penrose.PenroseFactory;
+import org.safehaus.penrose.PenroseServer;
+import org.safehaus.penrose.service.ServiceConfig;
 import org.safehaus.penrose.session.PenroseSession;
 import org.safehaus.penrose.session.PenroseSearchResults;
 import org.safehaus.penrose.session.*;
@@ -46,7 +47,7 @@ public class PenroseBackend implements Backend {
 
     public String home;
 
-    public Penrose penrose;
+    public PenroseServer server;
 
     public Map sessions = new HashMap();
 
@@ -78,9 +79,11 @@ public class PenroseBackend implements Backend {
         PenroseConfig penroseConfig = reader.read();
         penroseConfig.setHome(home);
 
-        PenroseFactory penroseFactory = PenroseFactory.getInstance();
-        penrose = penroseFactory.createPenrose(penroseConfig);
-        penrose.start();
+        ServiceConfig ldapServiceConfig = penroseConfig.getServiceConfig("LDAP");
+        ldapServiceConfig.setEnabled(false);
+
+        server = new PenroseServer(penroseConfig);
+        server.start();
 
         return LDAPException.SUCCESS;
     }
@@ -102,6 +105,7 @@ public class PenroseBackend implements Backend {
      */
     public void openConnection(int connectionId) throws Exception {
         log.debug("openConnection("+connectionId+")");
+        Penrose penrose = server.getPenrose();
         PenroseSession session = penrose.newSession();
         if (session == null) throw new Exception("Unable to create session.");
         sessions.put(new Integer(connectionId), session);

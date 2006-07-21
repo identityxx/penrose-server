@@ -33,7 +33,11 @@ typedef struct java_backend_instance {
     char **libpath;
 
     int nproperties;
-    char **properties;
+    char **propertyNames;
+    char **propertyValues;
+
+    int noptions;
+    char **options;
 
     //--------------------------------------------------------------------------------
     // Backend objects

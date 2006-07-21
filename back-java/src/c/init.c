@@ -276,8 +276,9 @@ java_back_db_open(
     if (java_back->nclasspath > 0) vm_args.nOptions++;
     if (java_back->nlibpath > 0) vm_args.nOptions++;
     if (java_back->nproperties > 0) vm_args.nOptions += java_back->nproperties;
+    if (java_back->noptions > 0) vm_args.nOptions += java_back->noptions;
 
-    Debug( LDAP_DEBUG_TRACE, "Creating %d option(s):\n", vm_args.nOptions, 0, 0);
+    Debug(LDAP_DEBUG_TRACE, "Creating %d option(s):\n", vm_args.nOptions, 0, 0);
 
     vm_args.options = (JavaVMOption *)ch_calloc(vm_args.nOptions, sizeof(JavaVMOption));
     counter = 0;
@@ -294,7 +295,7 @@ java_back_db_open(
 
         vm_args.options[counter].optionString = (char*)ch_malloc(1024);
         snprintf(vm_args.options[counter].optionString, 1024, "-Djava.class.path=%s", classpath);
-        Debug( LDAP_DEBUG_TRACE, "[%d] %s\n", counter, vm_args.options[counter].optionString, 0);
+        Debug(LDAP_DEBUG_TRACE, "[%d] %s\n", counter, vm_args.options[counter].optionString, 0);
 
         counter++;
     }
@@ -311,21 +312,27 @@ java_back_db_open(
 
         vm_args.options[counter].optionString = (char*)ch_malloc(1024);
         snprintf(vm_args.options[counter].optionString, 1024, "-Djava.ext.dirs=%s", libpath);
-        Debug( LDAP_DEBUG_TRACE, "[%d] %s\n", counter, vm_args.options[counter].optionString, 0);
+        Debug(LDAP_DEBUG_TRACE, "[%d] %s\n", counter, vm_args.options[counter].optionString, 0);
 
         counter++; 
     }
 
-    if (java_back->nproperties > 0) {
+    for (i=0; i<java_back->nproperties; i++) {
 
-        for (i=0; i<java_back->nproperties; i++) {
+        vm_args.options[counter].optionString = (char*)ch_malloc(1024);
+        snprintf(vm_args.options[counter].optionString, 1024, "-D%s=%s", java_back->propertyNames[i], java_back->propertyValues[i]);
+        Debug(LDAP_DEBUG_TRACE, "[%d] %s\n", counter, vm_args.options[counter].optionString, 0);
 
-            vm_args.options[counter].optionString = (char*)ch_malloc(1024);
-            snprintf(vm_args.options[counter].optionString, 1024, "-D%s", java_back->properties[i]);
-            Debug( LDAP_DEBUG_TRACE, "[%d] %s\n", counter, vm_args.options[counter].optionString, 0);
+        counter++;
+    }
 
-            counter++;
-        }
+    for (i=0; i<java_back->noptions; i++) {
+
+        vm_args.options[counter].optionString = (char*)ch_malloc(1024);
+        snprintf(vm_args.options[counter].optionString, 1024, "%s", java_back->options[i]);
+        Debug(LDAP_DEBUG_TRACE, "[%d] %s\n", counter, vm_args.options[counter].optionString, 0);
+
+        counter++;
     }
 
     vm_args.ignoreUnrecognized = JNI_FALSE;
