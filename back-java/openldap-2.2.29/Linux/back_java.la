@@ -22,7 +22,7 @@ age=0
 revision=22
 
 # Is this an already installed library?
-installed=yes
+installed=no
 
 # Files to dlopen/dlpreopen
 dlopen=''
