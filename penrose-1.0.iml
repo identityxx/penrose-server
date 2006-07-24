@@ -7,11 +7,11 @@
     <content url="file://$MODULE_DIR$">
       <sourceFolder url="file://$MODULE_DIR$/samples/adapter/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/samples/module/src" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/src/ant" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/src/examples" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/src/ext" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/src/java" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/src/test" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/src/tools" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/test/target/src" isTestSource="false" />
       <excludeFolder url="file://$MODULE_DIR$/dist" />
       <excludeFolder url="file://$MODULE_DIR$/target" />
