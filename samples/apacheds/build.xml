@@ -8,7 +8,8 @@
     <property name="apacheds.home" value="/usr/local/apacheds"/>
 
     <target name="deploy">
-        <copy file="samples/apacheds/conf/server.xml" tofile="samples/apacheds/server.xml" overwrite="true">
+        <mkdir dir="samples/apacheds/target"/>
+        <copy file="samples/apacheds/conf/server.xml" tofile="samples/apacheds/target/server.xml" overwrite="true">
             <filterchain>
                 <expandproperties/>
             </filterchain>
@@ -37,7 +38,7 @@
     </target>
 
     <target name="clean">
-        <delete file="samples/apacheds/server.xml"/>
+        <delete file="samples/apacheds/target"/>
     </target>
 
 </project>
