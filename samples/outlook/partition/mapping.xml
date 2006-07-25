@@ -1,0 +1,339 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapping PUBLIC
+  "-//Penrose/DTD Mapping 1.0//EN"
+  "http://penrose.safehaus.org/dtd/mapping.dtd">
+
+<mapping>
+
+  <entry dn="dc=Outlook,dc=Example,dc=com">
+    <oc>dcObject</oc>
+    <oc>organization</oc>
+    <at name="dc" rdn="true">
+      <constant>Outlook</constant>
+    </at>
+    <at name="o">
+      <constant>Outlook</constant>
+    </at>
+    <aci subject="self">
+      <permission>rws</permission>
+    </aci>
+    <aci>
+      <target>ATTRIBUTES</target>
+      <attributes>userPassword</attributes>
+      <action>deny</action>
+      <permission>rs</permission>
+    </aci>
+    <aci>
+      <permission>rs</permission>
+    </aci>
+  </entry>
+
+  <entry dn="ou=Users,dc=Outlook,dc=Example,dc=com">
+    <oc>organizationalUnit</oc>
+    <at name="ou" rdn="true">
+      <constant>Users</constant>
+    </at>
+  </entry>
+
+  <entry dn="uid=...,ou=Users,dc=Outlook,dc=Example,dc=com">
+
+    <oc>person</oc>
+    <oc>organizationalPerson</oc>
+    <oc>inetOrgPerson</oc>
+
+    <at name="uid" rdn="true">
+      <variable>u.username</variable>
+    </at>
+    <at name="mail">
+      <expression>
+if (u == void || u == null) return null;
+if (u.username == void || u.username == null) return null;
+return u.username+"@example.com";
+      </expression>
+    </at>
+    <at name="mailNickname">
+      <variable>u.username</variable>
+    </at>
+
+    <at name="displayName">
+      <expression>
+if (u == void || u == null) return null;
+String cn = u.firstName;
+if (u.initials != void &amp;&amp; u.initials != null) cn += " "+u.initials;
+cn += " "+u.lastName;
+return cn;
+      </expression>
+    </at>
+    <at name="cn">
+      <expression>
+if (u == void || u == null) return null;
+String cn = u.firstName;
+if (u.initials != void &amp;&amp; u.initials != null) cn += " "+u.initials;
+cn += " "+u.lastName;
+return cn;
+      </expression>
+    </at>
+    <at name="givenName">
+      <variable>u.firstName</variable>
+    </at>
+    <at name="initials">
+      <variable>u.initials</variable>
+    </at>
+    <at name="sn">
+      <variable>u.lastName</variable>
+    </at>
+
+    <at name="title">
+      <variable>u.title</variable>
+    </at>
+    <at name="company">
+      <variable>u.company</variable>
+    </at>
+    <at name="department">
+      <variable>u.department</variable>
+    </at>
+    <at name="physicalDeliveryOfficeName">
+      <variable>u.office</variable>
+    </at>
+    <at name="secretary">
+      <variable>u.assistant</variable>
+    </at>
+
+    <at name="postalAddress">
+      <variable>u.address</variable>
+    </at>
+    <at name="l">
+      <variable>u.city</variable>
+    </at>
+    <at name="st">
+      <variable>u.state</variable>
+    </at>
+    <at name="postalCode">
+      <variable>u.zipCode</variable>
+    </at>
+    <at name="co">
+      <variable>u.country</variable>
+    </at>
+
+    <at name="telephoneNumber">
+      <variable>u.businessPhone</variable>
+    </at>
+    <at name="telephone-office2">
+      <variable>u.businessPhone2</variable>
+    </at>
+    <at name="facsimileTelephoneNumber">
+      <variable>u.businessFax</variable>
+    </at>
+    <at name="telephone-assistant">
+      <variable>u.assistantPhone</variable>
+    </at>
+    <at name="homePhone">
+      <variable>u.homePhone</variable>
+    </at>
+    <at name="mobile">
+      <variable>u.mobile</variable>
+    </at>
+    <at name="pager">
+      <variable>u.pager</variable>
+    </at>
+
+    <at name="info">
+      <variable>u.notes</variable>
+    </at>
+
+    <at name="userPassword">
+      <expression>
+import org.safehaus.penrose.util.*;
+
+if (u == void || u == null) return null;
+if (u.encPassword == void || u.encPassword == null) return null;
+
+byte[] bytes = BinaryUtil.decode("BigInteger", u.encPassword);
+return "{SHA}"+BinaryUtil.encode("Base64", bytes);
+      </expression>
+    </at>
+
+    <at name="manager">
+      <expression>
+if (m == void || m == null) return null;
+if (m.manager == void || m.manager == null) return null;
+return "uid="+m.manager+",ou=Users,dc=Outlook,dc=Example,dc=com";
+      </expression>
+    </at>
+
+    <at name="reports">
+      <expression foreach="r.report" var="report">
+return "uid="+report+",ou=Users,dc=Outlook,dc=Example,dc=com";
+      </expression>
+    </at>
+
+    <source name="u">
+      <source-name>users</source-name>
+      <field name="username">
+        <expression>
+if (uid != void &amp;&amp; uid != null) return uid;
+if (mailNickname != void &amp;&amp; mailNickname != null) return mailNickname;
+return null;
+        </expression>
+      </field>
+
+      <field name="firstName">
+        <expression>
+if (givenName != void &amp;&amp; givenName != null) return givenName;
+if (cn != void &amp;&amp; cn != null) {
+    int i = cn.indexOf(" ");
+    if (i &gt;= 0) return cn.substring(0, i);
+}
+if (displayName != void &amp;&amp; displayName != null) {
+    int i = displayName.indexOf(" ");
+    if (i &gt;= 0) return displayName.substring(0, i);
+}
+return null;
+        </expression>
+      </field>
+      <field name="initials">
+        <expression>
+if (initials != void &amp;&amp; initials != null) return initials;
+if (cn != void &amp;&amp; cn != null) {
+    int i = cn.indexOf(" ");
+    int j = cn.lastIndexOf(" ");
+    if (i &gt;= 0 &amp;&amp; j &gt;= 0 &amp;&amp; j &gt; i) return cn.substring(i+1, j);
+}
+if (displayName != void &amp;&amp; displayName != null) {
+    int i = displayName.indexOf(" ");
+    int j = displayName.lastIndexOf(" ");
+    if (i &gt;= 0 &amp;&amp; j &gt;= 0 &amp;&amp; j &gt; i) return displayName.substring(i+1, j);
+}
+return null;
+        </expression>
+      </field>
+      <field name="lastName">
+        <expression>
+if (sn != void &amp;&amp; sn != null) return sn;
+if (cn != void &amp;&amp; cn != null) {
+    int i = cn.lastIndexOf(" ");
+    if (i &gt;= 0) return cn.substring(i+1);
+}
+if (displayName != void &amp;&amp; displayName != null) {
+    int i = displayName.lastIndexOf(" ");
+    if (i &gt;= 0) return displayName.substring(i+1);
+}
+return null;
+        </expression>
+      </field>
+
+      <field name="title">
+        <variable>title</variable>
+      </field>
+      <field name="company">
+        <variable>company</variable>
+      </field>
+      <field name="department">
+        <variable>department</variable>
+      </field>
+      <field name="office">
+        <variable>physicalDeliveryOfficeName</variable>
+      </field>
+      <field name="assistant">
+        <variable>secretart</variable>
+      </field>
+
+      <field name="address">
+        <variable>postalAddress</variable>
+      </field>
+      <field name="city">
+        <variable>l</variable>
+      </field>
+      <field name="state">
+        <variable>st</variable>
+      </field>
+      <field name="zipCode">
+        <variable>postalCode</variable>
+      </field>
+      <field name="country">
+        <variable>co</variable>
+      </field>
+
+      <field name="businessPhone">
+        <variable>telephoneNumber</variable>
+      </field>
+      <field name="businessFax">
+        <variable>facsimileTelephoneNumber</variable>
+      </field>
+      <field name="homePhone">
+        <variable>homePhone</variable>
+      </field>
+      <field name="mobile">
+        <variable>mobile</variable>
+      </field>
+      <field name="pager">
+        <variable>pager</variable>
+      </field>
+
+      <field name="notes">
+        <variable>info</variable>
+      </field>
+
+      <field name="encPassword">
+        <expression>import org.safehaus.penrose.util.*;
+if (userPassword == void || userPassword == null) return null;
+
+String method = PasswordUtil.getEncryptionMethod(userPassword);
+byte[] bytes;
+
+if (method == null) {
+    bytes = PasswordUtil.encrypt("SHA", userPassword);
+
+} else if ("SHA".equals(method)) {
+    String password = PasswordUtil.getEncryptedPassword(userPassword);
+    bytes = BinaryUtil.decode("Base64", password);
+
+} else {
+    throw new Exception("Unsupported encryption: "+method);
+}
+
+return BinaryUtil.encode("BigInteger", bytes);
+        </expression>
+      </field>
+    </source>
+
+    <source name="m" required="false">
+      <source-name>relationships</source-name>
+      <field name="manager">
+        <expression>
+if (manager == void || manager == null) return null;
+int i = manager.indexOf("=");
+int j = manager.indexOf(",");
+return manager.substring(i+1, j);
+        </expression>
+      </field>
+      <field name="report">
+        <variable>username</variable>
+      </field>
+    </source>
+
+    <source name="r" required="false">
+      <source-name>relationships</source-name>
+      <field name="manager">
+        <variable>username</variable>
+      </field>
+      <field name="report">
+        <expression foreach="reports" var="report">
+int i = report.indexOf("=");
+int j = report.indexOf(",");
+return report.substring(i+1, j);
+        </expression>
+      </field>
+    </source>
+
+    <relationship>
+      <expression>u.username = m.report</expression>
+    </relationship>
+
+    <relationship>
+      <expression>u.username = r.manager</expression>
+    </relationship>
+
+  </entry>
+
+</mapping>

@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sources PUBLIC
+  "-//Penrose/DTD Sources 1.0//EN"
+  "http://penrose.safehaus.org/dtd/sources.dtd">
+
+<sources>
+
+  <source name="users">
+
+    <connection-name>MySQL</connection-name>
+
+    <field name="username" primaryKey="true"/>
+
+    <field name="firstName"/>
+    <field name="initials"/>
+    <field name="lastName"/>
+
+    <field name="title"/>
+    <field name="company"/>
+    <field name="department"/>
+    <field name="office"/>
+    <field name="assistant"/>
+
+    <field name="address"/>
+    <field name="city"/>
+    <field name="state"/>
+    <field name="zipCode"/>
+    <field name="country"/>
+
+    <field name="businessPhone"/>
+    <field name="businessPhone2"/>
+    <field name="businessFax"/>
+    <field name="assistantPhone"/>
+    <field name="homePhone"/>
+    <field name="mobile"/>
+    <field name="pager"/>
+
+    <field name="notes"/>
+
+    <field name="encPassword"/>
+    <field name="password"/>
+
+    <parameter>
+      <param-name>tableName</param-name>
+      <param-value>users</param-value>
+    </parameter>
+
+  </source>
+
+  <source name="relationships">
+
+    <connection-name>MySQL</connection-name>
+
+    <field name="manager" primaryKey="true"/>
+    <field name="report" primaryKey="true"/>
+
+    <parameter>
+      <param-name>tableName</param-name>
+      <param-value>relationships</param-value>
+    </parameter>
+
+  </source>
+
+</sources>
