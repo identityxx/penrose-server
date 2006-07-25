@@ -22,8 +22,6 @@ import org.apache.directory.shared.ldap.filter.ExprNode;
 import org.ietf.ldap.*;
 import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.util.ExceptionUtil;
-import org.safehaus.penrose.mapping.EntryMapping;
-import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.PartitionManager;
 import org.safehaus.penrose.filter.FilterTool;
 import org.safehaus.penrose.session.PenroseSearchResults;

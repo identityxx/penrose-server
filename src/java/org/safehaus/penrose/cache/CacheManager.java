@@ -21,7 +21,6 @@ import org.safehaus.penrose.connector.Connector;
 import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.PenroseFactory;
 import org.safehaus.penrose.partition.*;
-import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.engine.Engine;
 import org.apache.log4j.*;
 

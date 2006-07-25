@@ -9,7 +9,7 @@
     <property name="product.name" value="penrose"/>
 
     <property name="project.name" value="penrose-server"/>
-    <property name="project.version" value="1.0"/>
+    <property name="project.version" value="1.0.3"/>
     <property name="project.dist" value="dist"/>
 
     <property name="prefix" value=""/>

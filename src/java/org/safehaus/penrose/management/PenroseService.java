@@ -25,7 +25,6 @@ import org.safehaus.penrose.service.ServiceManager;
 
 import java.util.Collection;
 import java.util.ArrayList;
-import java.util.TreeSet;
 import java.util.Enumeration;
 import java.io.File;
 import java.io.FileInputStream;

@@ -18,14 +18,9 @@
 package org.safehaus.penrose.schema;
 
 import org.apache.directory.server.core.tools.schema.DirectorySchemaToolMojo;
-import org.apache.directory.server.core.schema.bootstrap.AbstractBootstrapSchema;
 import org.apache.maven.embedder.MavenEmbedder;
 import org.apache.maven.embedder.MavenEmbedderConsoleLogger;
-import org.apache.maven.embedder.PlexusLoggerAdapter;
 import org.apache.maven.project.MavenProject;
-import org.apache.maven.monitor.event.EventMonitor;
-import org.apache.maven.monitor.event.DefaultEventMonitor;
-import org.apache.maven.cli.ConsoleDownloadMonitor;
 import org.apache.log4j.*;
 import org.apache.log4j.xml.DOMConfigurator;
 

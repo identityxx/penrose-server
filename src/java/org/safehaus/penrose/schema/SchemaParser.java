@@ -19,7 +19,6 @@
 package org.safehaus.penrose.schema;
 
 import java.util.*;
-import org.safehaus.penrose.config.*;
 
 /**
  * LDAP Schema Parser.

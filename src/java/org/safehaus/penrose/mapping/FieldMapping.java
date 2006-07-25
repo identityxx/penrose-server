@@ -19,8 +19,6 @@ package org.safehaus.penrose.mapping;
 
 import org.safehaus.penrose.util.BinaryUtil;
 
-import java.util.Collection;
-import java.util.ArrayList;
 import java.util.Arrays;
 
 /**
