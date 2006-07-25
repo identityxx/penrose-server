@@ -706,6 +706,26 @@ public class FilterTool {
 
                 return filter;
             }
+
+        } else if (node instanceof SubstringNode) {
+            SubstringNode substringNode = (SubstringNode)node;
+
+            SubstringFilter filter = new SubstringFilter();
+            filter.setAttribute(substringNode.getAttribute());
+
+            if (substringNode.getInitial() != null) filter.addSubstring(substringNode.getInitial());
+            filter.addSubstring("*");
+
+            for (Iterator i=substringNode.getAny().iterator(); i.hasNext(); ) {
+                String any = (String)i.next();
+                filter.addSubstring(any);
+                filter.addSubstring("*");
+            }
+
+            if (substringNode.getFinal() != null) filter.addSubstring(substringNode.getFinal());
+            substringNode.getFinal();
+
+            return filter;
         }
 
         return null;

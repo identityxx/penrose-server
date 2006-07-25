@@ -190,6 +190,8 @@ public class Analyzer {
      */
     public boolean checkUniqueness(EntryMapping entryMapping) throws Exception {
 
+        Partition partition = partitionManager.getPartition(entryMapping);
+
         Collection rdnSources = new TreeSet();
         Collection rdnFields = new TreeSet();
 
@@ -233,7 +235,6 @@ public class Analyzer {
         String sourceAlias = (String)rdnSources.iterator().next();
         SourceMapping sourceMapping = entryMapping.getSourceMapping(sourceAlias);
 
-        Partition partition = partitionManager.getPartition(entryMapping);
         SourceConfig sourceConfig = partition.getSourceConfig(sourceMapping.getSourceName());
         //log.debug("Source "+sourceMapping.getSourceName()+" in partition "+partition.getPartitionConfig().getName()+": "+sourceConfig);
 

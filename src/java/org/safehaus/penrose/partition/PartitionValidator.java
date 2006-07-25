@@ -215,6 +215,38 @@ public class PartitionValidator {
                 }
             }
 */
+
+            if (AttributeMapping.VARIABLE.equals(attributeMapping.getType())) {
+                String variable = attributeMapping.getVariable();
+
+                int j = variable.indexOf(".");
+                String sourceAlias = variable.substring(0, j);
+                String fieldName = variable.substring(j+1);
+
+                SourceMapping sourceMapping = entryMapping.getSourceMapping(sourceAlias);
+                if (sourceMapping == null) {
+                    results.add(new PartitionValidationResult(PartitionValidationResult.ERROR, "Unknown source mapping: "+sourceAlias, entryMapping.getDn(), entryMapping));
+                    continue;
+                }
+
+                Collection fieldMappings = sourceMapping.getFieldMappings(fieldName);
+                if (fieldMappings == null || fieldMappings.isEmpty()) {
+                    results.add(new PartitionValidationResult(PartitionValidationResult.ERROR, "Unknown field mapping: "+fieldName, entryMapping.getDn(), entryMapping));
+                    continue;
+                }
+
+                SourceConfig sourceConfig = partition.getSourceConfig(sourceMapping.getSourceName());
+                if (sourceConfig == null) {
+                    results.add(new PartitionValidationResult(PartitionValidationResult.ERROR, "Unknown source: "+sourceMapping.getSourceName(), entryMapping.getDn(), entryMapping));
+                    continue;
+                }
+
+                FieldConfig fieldConfig = sourceConfig.getFieldConfig(fieldName);
+                if (fieldConfig == null) {
+                    results.add(new PartitionValidationResult(PartitionValidationResult.ERROR, "Unknown field: "+variable, entryMapping.getDn(), entryMapping));
+                    continue;
+                }
+            }
         }
 
         if (!entryMapping.getAttributeMappings().isEmpty() && entryMapping.getRdnAttributes().isEmpty()) {
@@ -235,6 +267,7 @@ public class PartitionValidator {
                 }
             }
         }
+
         return results;
     }
 

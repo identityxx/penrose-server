@@ -1,4 +1,4 @@
-Summary: Penrose Virtual Directory Server
+Summary: Penrose Server
 Name: ${project.name}
 Version: ${project.version}
 Release: 1
@@ -16,10 +16,10 @@ http://penrose.safehaus.org
 %setup -q
 
 %build
-ant dist
+ant -Dproject.version=${project.version} -Dprefix=${rpm.prefix}$RPM_BUILD_ROOT dist docs
 
 %install
-ant -Dprefix=${rpm.prefix}$RPM_BUILD_ROOT install
+ant -Dproject.version=${project.version} -Dprefix=${rpm.prefix}$RPM_BUILD_ROOT install
 
 %clean
 rm -rf $RPM_BUILD_ROOT
