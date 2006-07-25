@@ -229,12 +229,6 @@ public class PartitionValidator {
                     continue;
                 }
 
-                Collection fieldMappings = sourceMapping.getFieldMappings(fieldName);
-                if (fieldMappings == null || fieldMappings.isEmpty()) {
-                    results.add(new PartitionValidationResult(PartitionValidationResult.ERROR, "Unknown field mapping: "+fieldName, entryMapping.getDn(), entryMapping));
-                    continue;
-                }
-
                 SourceConfig sourceConfig = partition.getSourceConfig(sourceMapping.getSourceName());
                 if (sourceConfig == null) {
                     results.add(new PartitionValidationResult(PartitionValidationResult.ERROR, "Unknown source: "+sourceMapping.getSourceName(), entryMapping.getDn(), entryMapping));

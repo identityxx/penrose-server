@@ -51,10 +51,19 @@ if (u.username == void || u.username == null) return null;
 return u.username+"@example.com";
       </expression>
     </at>
-    <at name="mailnickname">
+    <at name="mailNickname">
       <variable>u.username</variable>
     </at>
 
+    <at name="displayName">
+      <expression>
+if (u == void || u == null) return null;
+String cn = u.firstName;
+if (u.initials != void &amp;&amp; u.initials != null) cn += " "+u.initials;
+cn += " "+u.lastName;
+return cn;
+      </expression>
+    </at>
     <at name="cn">
       <expression>
 if (u == void || u == null) return null;
@@ -80,7 +89,7 @@ return cn;
     <at name="company">
       <variable>u.company</variable>
     </at>
-    <at name="ou">
+    <at name="department">
       <variable>u.department</variable>
     </at>
     <at name="physicalDeliveryOfficeName">
@@ -91,19 +100,19 @@ return cn;
     </at>
 
     <at name="postalAddress">
-      <variable>u.businessAddress</variable>
+      <variable>u.address</variable>
     </at>
     <at name="l">
-      <variable>u.businessCity</variable>
+      <variable>u.city</variable>
     </at>
     <at name="st">
-      <variable>u.businessState</variable>
+      <variable>u.state</variable>
     </at>
     <at name="postalCode">
-      <variable>u.businessZipCode</variable>
+      <variable>u.zipCode</variable>
     </at>
     <at name="co">
-      <variable>u.businessCountry</variable>
+      <variable>u.country</variable>
     </at>
 
     <at name="telephoneNumber">
@@ -161,36 +170,55 @@ return "uid="+report+",ou=Users,dc=Outlook,dc=Example,dc=com";
     <source name="u">
       <source-name>users</source-name>
       <field name="username">
-        <variable>uid</variable>
+        <expression>
+if (uid != void &amp;&amp; uid != null) return uid;
+if (mailNickname != void &amp;&amp; mailNickname != null) return mailNickname;
+return null;
+        </expression>
       </field>
 
       <field name="firstName">
         <expression>
 if (givenName != void &amp;&amp; givenName != null) return givenName;
-if (cn == void || cn == null) return null;
-int i = cn.indexOf(" ");
-if (i &lt; 0) return null;
-return cn.substring(0, i);
+if (cn != void &amp;&amp; cn != null) {
+    int i = cn.indexOf(" ");
+    if (i &gt;= 0) return cn.substring(0, i);
+}
+if (displayName != void &amp;&amp; displayName != null) {
+    int i = displayName.indexOf(" ");
+    if (i &gt;= 0) return displayName.substring(0, i);
+}
+return null;
         </expression>
       </field>
       <field name="initials">
         <expression>
 if (initials != void &amp;&amp; initials != null) return initials;
-if (cn == void || cn == null) return null;
-int i = cn.indexOf(" ");
-int j = cn.lastIndexOf(" ");
-if (i &lt; 0) return null;
-if (j &lt; 0) return null;
-return cn.substring(i+1, j);
+if (cn != void &amp;&amp; cn != null) {
+    int i = cn.indexOf(" ");
+    int j = cn.lastIndexOf(" ");
+    if (i &gt;= 0 &amp;&amp; j &gt;= 0 &amp;&amp; j &gt; i) return cn.substring(i+1, j);
+}
+if (displayName != void &amp;&amp; displayName != null) {
+    int i = displayName.indexOf(" ");
+    int j = displayName.lastIndexOf(" ");
+    if (i &gt;= 0 &amp;&amp; j &gt;= 0 &amp;&amp; j &gt; i) return displayName.substring(i+1, j);
+}
+return null;
         </expression>
       </field>
       <field name="lastName">
         <expression>
 if (sn != void &amp;&amp; sn != null) return sn;
-if (cn == void || cn == null) return null;
-int i = cn.lastIndexOf(" ");
-if (i &lt; 0) return null;
-return cn.substring(i+1);
+if (cn != void &amp;&amp; cn != null) {
+    int i = cn.lastIndexOf(" ");
+    if (i &gt;= 0) return cn.substring(i+1);
+}
+if (displayName != void &amp;&amp; displayName != null) {
+    int i = displayName.lastIndexOf(" ");
+    if (i &gt;= 0) return displayName.substring(i+1);
+}
+return null;
         </expression>
       </field>
 
@@ -201,7 +229,7 @@ return cn.substring(i+1);
         <variable>company</variable>
       </field>
       <field name="department">
-        <variable>ou</variable>
+        <variable>department</variable>
       </field>
       <field name="office">
         <variable>physicalDeliveryOfficeName</variable>
@@ -210,19 +238,19 @@ return cn.substring(i+1);
         <variable>secretart</variable>
       </field>
 
-      <field name="businessAddress">
+      <field name="address">
         <variable>postalAddress</variable>
       </field>
-      <field name="businessCity">
+      <field name="city">
         <variable>l</variable>
       </field>
-      <field name="businessState">
+      <field name="state">
         <variable>st</variable>
       </field>
-      <field name="businessZipCode">
+      <field name="zipCode">
         <variable>postalCode</variable>
       </field>
-      <field name="businessCountry">
+      <field name="country">
         <variable>co</variable>
       </field>
 

@@ -11,12 +11,11 @@ create table users (
     office varchar(50),
     assistant varchar(100),
 
-    businessAddress varchar(255),
-    businessCity varchar(50),
-    businessState varchar(50),
-    businessZipCode varchar(10),
-    businessCountry varchar(50),
-    homeAddress varchar(255),
+    address varchar(255),
+    city varchar(50),
+    state varchar(50),
+    zipCode varchar(10),
+    country varchar(50),
 
     businessPhone varchar(50),
     businessPhone2 varchar(50),

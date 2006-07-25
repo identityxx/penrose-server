@@ -21,11 +21,11 @@
     <field name="office"/>
     <field name="assistant"/>
 
-    <field name="businessAddress"/>
-    <field name="businessCity"/>
-    <field name="businessState"/>
-    <field name="businessZipCode"/>
-    <field name="businessCountry"/>
+    <field name="address"/>
+    <field name="city"/>
+    <field name="state"/>
+    <field name="zipCode"/>
+    <field name="country"/>
 
     <field name="businessPhone"/>
     <field name="businessPhone2"/>

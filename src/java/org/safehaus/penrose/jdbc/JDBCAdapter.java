@@ -661,6 +661,9 @@ public class JDBCAdapter extends Adapter {
                         break;
                 }
             }
+
+            // if there's nothing to update, return
+            if (columns.length() == 0) return LDAPException.SUCCESS;
 /*
             Collection fields = sourceConfig.getFieldConfigs();
             for (Iterator i=fields.iterator(); i.hasNext(); ) {

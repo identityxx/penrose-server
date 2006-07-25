@@ -64,13 +64,15 @@ public class SubstringsMatchingRule {
         if (object == null) return false;
 
         StringBuffer sb = new StringBuffer();
+        sb.append("^");
         for (Iterator i=substrings.iterator(); i.hasNext(); ) {
             String substring = (String)i.next();
             if ("*".equals(substring)) sb.append(".");
             sb.append(substring);
         }
+        sb.append("$");
 
-        Pattern pattern = Pattern.compile(sb.toString());
+        Pattern pattern = Pattern.compile(sb.toString(), Pattern.CASE_INSENSITIVE);
         Matcher matcher = pattern.matcher(object.toString());
 
         return matcher.find();

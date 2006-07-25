@@ -1,21 +1,22 @@
 insert into users (
     username, firstName, initials, lastName,
     title, company, department, office, assistant,
-    businessAddress, businessCity, businessState, businessZipCode, businessCountry,
+    address, city, state, zipCode, country,
     businessPhone, businessPhone2, businessFax, assistantPhone, homePhone, mobile, pager,
     notes, encPassword, password
 ) values (
-    'jstockton', 'Jim', 'P.', 'Stockton',
+    'jstockton', 'James', 'P.', 'Stockton',
     'Manager', 'Example Corp.', 'Services', 'San Francisco', 'Sarah',
     '500 Grant Ave', 'San Francisco', 'CA', '94108', 'US',
     '415-808-0808', '415-808-0809', '415-808-0800', '415-808-0801', '415-808-0802', '415-808-0803', '415-808-0804',
-    null, '29609449ad6a267aac664f9c1d9c267b54aade19', 'j5t0ckt0n'
+    "I'm out of the office today. Please contact my assistant Sarah at 415-808-0801.",
+    '29609449ad6a267aac664f9c1d9c267b54aade19', 'j5t0ckt0n'
 );
 
 insert into users (
     username, firstName, initials, lastName,
     title, company, department, office, assistant,
-    businessAddress, businessCity, businessState, businessZipCode, businessCountry,
+    address, city, state, zipCode, country,
     businessPhone, businessPhone2, businessFax, assistantPhone, homePhone, mobile, pager,
     notes, encPassword, password
 ) values (
@@ -29,21 +30,21 @@ insert into users (
 insert into users (
     username, firstName, initials, lastName,
     title, company, department, office, assistant,
-    businessAddress, businessCity, businessState, businessZipCode, businessCountry,
+    address, city, state, zipCode, country,
     businessPhone, businessPhone2, businessFax, assistantPhone, homePhone, mobile, pager,
     notes, encPassword, password
 ) values (
-    'pfarmer', 'Pete', 'S.', 'Farmer',
+    'jfarmer', 'James', null, 'Farmer',
     'Software Quality Assurance', 'Example Corp.', 'Services', 'Austin', null,
     '1100 Riverside Dr.', 'Austin', 'TX', '78704', 'US',
     '512-444-4444', null, '512-444-4446', null, '512-444-4448', '512-444-4449', '512-444-4440',
-    null, 'e7beca51ea8907ea427f538c73638058401ff795', 'pf4rm3r'
+    null, 'd4c8a0135330ba771a4d7a6bc15a446bb290d78e', 'jf4rm3r'
 );
 
 insert into users (
     username, firstName, initials, lastName,
     title, company, department, office, assistant,
-    businessAddress, businessCity, businessState, businessZipCode, businessCountry,
+    address, city, state, zipCode, country,
     businessPhone, businessPhone2, businessFax, assistantPhone, homePhone, mobile, pager,
     notes, encPassword, password
 ) values (
@@ -52,13 +53,13 @@ insert into users (
     '10699 Parmer Ln.', 'Austin', 'TX', '78717', 'US',
     '512-123-4567', '512-123-4568', '512-123-4569', '512-123-4560', '512-123-4561', '512-123-4562', '512-123-4563',
     "I'm out of the office today. In case of emergency please contact my manager Jim Stockton at 512-123-4567.",
-    'ed7369e175739f26aa2f421a67e3d8a66d753bdd', 'lw4lk3r'
+    '2e8ec3aeda24ac16d9200b1c29519ce50b3d719c', 'dw4lk3r'
 );
 
 insert into users (
     username, firstName, initials, lastName,
     title, company, department, office, assistant,
-    businessAddress, businessCity, businessState, businessZipCode, businessCountry,
+    address, city, state, zipCode, country,
     businessPhone, businessPhone2, businessFax, assistantPhone, homePhone, mobile, pager,
     notes, encPassword, password
 ) values (
@@ -72,4 +73,4 @@ insert into users (
 insert into relationships (manager, report) values ('jstockton', 'dwalker');
 insert into relationships (manager, report) values ('jstockton', 'swhite');
 insert into relationships (manager, report) values ('dwalker', 'alange');
-insert into relationships (manager, report) values ('dwalker', 'pfarmer');
+insert into relationships (manager, report) values ('dwalker', 'jfarmer');
