@@ -7,7 +7,6 @@
     <description>Java Backend for OpenLDAP</description>
 
     <property name="prefix" value=""/>
-
     <property name="cygwin.home" value="c:/cygwin"/>
 
     <property name="openldap.version" value="2.2.26"/>
@@ -23,7 +22,6 @@
     <tstamp/>
 
     <target name="init">
-        <echo message="Operating System: ${os.name} ${os.version}" />
         <condition property="isWindows">
             <os family="windows"/>
         </condition>
@@ -73,7 +71,8 @@
         </exec>
     </target>
 
-    <target name="build" depends="init">
+    <target name="compile" depends="init">
+        <echo message="Compiling Java Backend."/>
         <mkdir dir="target/classes"/>
         <javac
             srcdir="src/java"
@@ -88,9 +87,9 @@
         </copy>
     </target>
 
-    <target name="dist" depends="build">
-        <mkdir dir="dist"/>
-        <jar jarfile="dist/openldap-${openldap.version}.jar">
+    <target name="build" depends="compile">
+        <echo message="Building Java Backend."/>
+        <jar jarfile="target/openldap-${openldap.version}.jar">
             <fileset dir="target/classes"/>
             <manifest>
               <attribute name="Build-Date" value="${DSTAMP}"/>
@@ -104,6 +103,29 @@
             sourcepath="src/java"
             destdir="target/javadoc">
         </javadoc>
+    </target>
+
+    <target name="dist" depends="build,docs">
+        <mkdir dir="dist"/>
+        <copy todir="dist"
+            file="target/openldap-${openldap.version}.jar">
+        </copy>
+    </target>
+
+    <target name="dist-src" depends="init">
+        <mkdir dir="dist"/>
+        <tar destfile="dist/${project.name}-${project.version}-src.tar.gz" compression="gzip">
+            <tarfileset dir="openldap-${openldap.version}/${os.name}" prefix="${project.name}-${project.version}/lib" mode="755">
+            </tarfileset>
+            <tarfileset dir="openldap-${openldap.version}" prefix="${project.name}-${project.version}">
+                <include name="build.properties"/>
+            </tarfileset>
+            <tarfileset dir="." prefix="${project.name}-${project.version}">
+                <include name="build.xml"/>
+            </tarfileset>
+            <tarfileset dir="src/java" prefix="${project.name}-${project.version}/src/java">
+            </tarfileset>
+        </tar>
     </target>
 
     <target name="install" depends="dist,docs">
@@ -125,20 +147,7 @@
         </copy>
     </target>
 
-    <target name="dist-src" depends="init">
-        <mkdir dir="dist"/>
-        <tar destfile="dist/${project.name}-${project.version}-src.tar.gz" compression="gzip">
-            <tarfileset dir="openldap-${openldap.version}/${os.name}" prefix="${project.name}-${project.version}/lib" mode="755">
-            </tarfileset>
-            <tarfileset dir="openldap-${openldap.version}" prefix="${project.name}-${project.version}">
-                <include name="build.properties"/>
-            </tarfileset>
-            <tarfileset dir="." prefix="${project.name}-${project.version}">
-                <include name="build.xml"/>
-            </tarfileset>
-            <tarfileset dir="src/java" prefix="${project.name}-${project.version}/src/java">
-            </tarfileset>
-        </tar>
+    <target name="dist-unix" depends="dist">
     </target>
 
     <target name="dist-rpm" depends="dist-src">
@@ -195,7 +204,10 @@
         </copy>
     </target>
 
-    <target name="clean">
+    <target name="dist-win32" depends="dist">
+    </target>
+
+    <target name="clean" depends="init">
         <delete dir="target" failonerror="false"/>
         <delete dir="dist" failonerror="false"/>
     </target>

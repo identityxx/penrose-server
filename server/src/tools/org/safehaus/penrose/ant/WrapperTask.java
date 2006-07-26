@@ -19,6 +19,7 @@ package org.safehaus.penrose.ant;
 
 import org.apache.tools.ant.Task;
 import org.apache.tools.ant.BuildException;
+import org.apache.tools.ant.Project;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -42,11 +43,14 @@ public class WrapperTask extends Task {
     }
 
     public void executeImpl() throws Exception {
-        log("Generating wrapper.conf");
+        Project project = this.getProject();
+        File targetFile = new File(project.getBaseDir(), file);
 
-        PrintWriter out = new PrintWriter(new FileWriter(file, true));
+        log("Generating "+file);
 
-        File libDir = new File(dir);
+        PrintWriter out = new PrintWriter(new FileWriter(targetFile, true));
+
+        File libDir = new File(project.getBaseDir(), dir);
         File files[] = libDir.listFiles();
 
         int counter = 1;

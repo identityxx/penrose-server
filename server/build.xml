@@ -2,29 +2,33 @@
  Copyright (c) 2000-2005, Identyx Corporation.
  All rights reserved.
 -->
-<project name="penrose-server" default="build" basedir=".">
+<project name="penrose-server" default="build">
 
     <description>Penrose Server</description>
+
+    <property name="prefix" value=""/>
+    <property name="iscc.path" value="ISCC.exe"/>
+    <property name="cygwin.home" value="c:/cygwin"/>
 
     <property name="project.name" value="penrose-server"/>
     <property name="project.version" value="1.1"/>
     <property name="project.dist" value="dist"/>
 
-    <property name="prefix" value=""/>
     <property name="penrose.home" value="${prefix}/usr/local/${project.name}-${project.version}"/>
-    <property name="iscc.path" value="ISCC.exe"/>
     <property name="docs.target" value="${project.dist}/javadoc"/>
-
-    <property name="cygwin.home" value="c:/cygwin"/>
 
     <tstamp/>
 
     <path id="lib.path">
+        <fileset dir="lib">
+            <include name="**/*.jar"/>
+        </fileset>
+        <pathelement location="lib"/>
         <fileset dir="../lib">
             <include name="**/*.jar"/>
         </fileset>
         <pathelement location="../lib"/>
-        <pathelement location="../target/classes"/>
+        <pathelement location="../core/target/classes"/>
         <pathelement location="../back-java/target/classes"/>
     </path>
 
@@ -53,7 +57,8 @@
         <jar destfile="target/${project.name}-tools-${project.version}.jar" basedir="target/tools"/>
     </target>
 
-    <target name="build" depends="init">
+    <target name="compile" depends="init">
+        <echo message="Compiling Penrose Server."/>
         <javacc
             target="src/java/org/safehaus/penrose/openldap/config/SlapdParser.jj"
             javacchome="lib/javacc"
@@ -72,6 +77,10 @@
         <copy todir="target/classes">
             <fileset dir="src/java" includes="**/*.properties,**/*.xml,**/*.dtd"/>
         </copy>
+    </target>
+
+    <target name="build" depends="compile">
+        <echo message="Building Penrose Server."/>
         <jar jarfile="target/${project.name}-${project.version}.jar">
             <fileset dir="target/classes"/>
             <manifest>
@@ -90,7 +99,8 @@
             destdir="target/javadoc"
             classpathref="lib.path">
             <fileset dir="src/java"/>
-            <fileset dir="../src/java"/>
+            <fileset dir="../core/src/java"/>
+            <fileset dir="../back-java/src/java"/>
         </javadoc>
         <jar jarfile="target/${project.name}-docs-${project.version}.jar">
             <fileset dir="target/javadoc"/>
@@ -127,13 +137,9 @@
             <fileset dir="../lib" includes="*"/>
         </copy>
         <copy todir="target/dist/lib">
+            <fileset dir="target" includes="${project.name}-${project.version}.jar"/>
+            <fileset dir="../core/dist" includes="penrose-${project.version}.jar"/>
             <fileset dir="../back-java/dist" includes="openldap-*.jar"/>
-        </copy>
-        <copy todir="target/dist/lib"
-            file="target/${project.name}-${project.version}.jar">
-        </copy>
-        <copy todir="target/dist/lib"
-            file="../target/penrose-${project.version}.jar">
         </copy>
         <mkdir dir="target/dist/lib/ext"/>
         <copy todir="target/dist/conf">
@@ -171,6 +177,9 @@
         </copy>
         <mkdir dir="target/dist/partitions"/>
         <mkdir dir="target/dist/var"/>
+        <mkdir dir="${project.dist}"/>
+        <zip destfile="${project.dist}/${project.name}-${project.version}.zip"
+            basedir="target/dist"/>
     </target>
 
     <target name="dist-src">
@@ -206,10 +215,6 @@
     </target>
 
     <target name="dist-unix" depends="dist">
-        <echo message="Creating ${project.name}-${project.version}.zip"/>
-        <mkdir dir="${project.dist}"/>
-        <zip destfile="${project.dist}/${project.name}-${project.version}.zip"
-            basedir="target/dist"/>
         <echo message="Creating ${project.name}-${project.version}.tar.gz"/>
         <mkdir dir="target"/>
         <tar destfile="${project.dist}/${project.name}-${project.version}.tar.gz" compression="gzip">

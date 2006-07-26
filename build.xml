@@ -2,42 +2,20 @@
  Copyright (c) 2000-2005, Identyx Corporation.
  All rights reserved.
 -->
-<project name="penrose" default="build" basedir=".">
+<project name="penrose" default="build">
 
     <description>Penrose</description>
 
-    <property name="project.name" value="penrose"/>
-    <property name="project.version" value="1.1"/>
-    <property name="project.dist" value="dist"/>
-
     <property name="prefix" value=""/>
-    <property name="penrose.home" value="${prefix}/usr/local/${project.name}-${project.version}"/>
     <property name="iscc.path" value="ISCC.exe"/>
-    <property name="docs.target" value="${project.dist}/javadoc"/>
-
     <property name="cygwin.home" value="c:/cygwin"/>
+
+    <property name="project.version" value="1.1"/>
 
     <tstamp/>
 
-    <path id="lib.path">
-        <fileset dir="lib">
-            <include name="**/*.jar"/>
-        </fileset>
-        <pathelement location="lib"/>
-        <pathelement location="back-java/target/classes"/>
-    </path>
-
-    <path id="main.path">
-        <pathelement location="target/classes"/>
-    </path>
-
-    <path id="project.classpath">
-        <fileset dir="svnant">
-            <include name="**/*.jar"/>
-        </fileset>
-    </path>
-
     <target name="init">
+        <echo message="Operating System: ${os.name} ${os.version}" />
         <condition property="isWindows">
             <os family="windows"/>
         </condition>
@@ -46,113 +24,52 @@
         </condition>
     </target>
 
-    <target name="build-tools" depends="init">
-        <mkdir dir="target/tools"/>
-        <javac srcdir="src/tools" destdir="target/tools"/>
-        <jar destfile="target/${project.name}-tools-${project.version}.jar" basedir="target/tools"/>
+    <target name="compile" depends="init">
+        <ant dir="back-java" target="compile"/>
+        <ant dir="core" target="compile"/>
+        <ant dir="server" target="compile"/>
     </target>
 
     <target name="build" depends="init">
         <ant dir="back-java" target="build"/>
-        <javacc
-            target="src/java/org/safehaus/penrose/schema/LDAPv3Schema.jj"
-            javacchome="lib/javacc"
-            outputdirectory="src/java/org/safehaus/penrose/schema"
-        />
-        <javacc
-            target="src/java/org/safehaus/penrose/filter/item/ItemParser.jj"
-            javacchome="lib/javacc"
-            outputdirectory="src/java/org/safehaus/penrose/filter/item"
-        />
-        <javacc
-            target="src/java/org/safehaus/penrose/filter/FilterParser.jj"
-            javacchome="lib/javacc"
-            outputdirectory="src/java/org/safehaus/penrose/filter"
-        />
-        <javacc
-            target="src/java/org/safehaus/penrose/sql/SQLParser.jj"
-            javacchome="lib/javacc"
-            outputdirectory="src/java/org/safehaus/penrose/sql"
-        />
-        <mkdir dir="target/classes"/>
-        <javac
-            srcdir="src/java"
-            destdir="target/classes"
-            classpathref="lib.path"
-            debug="on"
-            debuglevel="lines,vars,source"
-            source="1.4"
-            target="1.4"
-        />
-        <copy todir="target/classes">
-            <fileset dir="src/java" includes="**/*.properties,**/*.xml,**/*.dtd"/>
-        </copy>
-        <jar jarfile="target/${project.name}-${project.version}.jar">
-            <fileset dir="target/classes"/>
-            <manifest>
-              <attribute name="Specification-Version"  value="1.1"/>
-              <attribute name="Implementation-Title"   value="Penrose Server"/>
-              <attribute name="Implementation-Version" value="${project.version}"/>
-              <attribute name="Implementation-Vendor"  value="Identyx Corporation"/>
-              <attribute name="Build-Date" value="${DSTAMP}"/>
-            </manifest>
-        </jar>
+        <ant dir="core" target="build"/>
+        <ant dir="server" target="build"/>
     </target>
 
     <target name="docs" depends="init">
-        <mkdir dir="target/javadoc"/>
-        <javadoc packagenames="org.safehaus.penrose.*"
-            sourcepath="src/java"
-            destdir="target/javadoc"
-            classpathref="lib.path">
-        </javadoc>
-        <jar jarfile="target/${project.name}-docs-${project.version}.jar">
-            <fileset dir="target/javadoc"/>
-        </jar>
+        <ant dir="back-java" target="docs"/>
+        <ant dir="core" target="docs"/>
+        <ant dir="server" target="docs"/>
     </target>
 
-    <target name="docs-publish" depends="init">
-        <delete dir="${docs.target}"/>
-        <mkdir dir="${docs.target}"/>
-        <copy todir="${docs.target}" overwrite="true">
-            <fileset dir="target/javadoc" includes="**/*"/>
-        </copy>
-    </target>
-
-    <target name="dist" depends="build-tools,build">
+    <target name="dist" depends="init">
         <ant dir="back-java" target="dist"/>
+        <ant dir="core" target="dist"/>
         <ant dir="server" target="dist"/>
     </target>
 
-    <target name="dist-src" depends="docs">
-        <echo message="Creating ${project.name}-${project.version}-src.zip"/>
-        <mkdir dir="${project.dist}"/>
-        <zip destfile="${project.dist}/${project.name}-${project.version}-src.zip">
-            <zipfileset dir=".">
-                <exclude name="${project.dist}/**"/>
-                <exclude name="target/**"/>
-            </zipfileset>
-        </zip>
-        <echo message="Creating ${project.name}-${project.version}-src.tar.gz"/>
-        <mkdir dir="target"/>
-        <tar destfile="${project.dist}/${project.name}-${project.version}-src.tar.gz" compression="gzip">
-            <tarfileset dir="." prefix="${project.name}-${project.version}">
-                <exclude name="${project.dist}/**"/>
-                <exclude name="target/**"/>
-            </tarfileset>
-        </tar>
+    <target name="dist-src" depends="init">
+        <ant dir="back-java" target="dist-src"/>
+        <ant dir="core" target="dist-src"/>
+        <ant dir="server" target="dist-src"/>
     </target>
 
     <target name="dist-unix" depends="init">
+        <ant dir="back-java" target="dist-unix"/>
+        <ant dir="core" target="dist-unix"/>
         <ant dir="server" target="dist-unix"/>
     </target>
 
-    <target name="dist-win32" depends="init">
-        <ant dir="server" target="dist-win32"/>
+    <target name="dist-rpm" depends="init">
+        <ant dir="back-java" target="dist-rpm"/>
+        <ant dir="core" target="dist-rpm"/>
+        <ant dir="server" target="dist-rpm"/>
     </target>
 
-    <target name="dist-rpm" depends="init">
-        <ant dir="server" target="dist-rpm"/>
+    <target name="dist-win32" depends="init">
+        <ant dir="back-java" target="dist-win32"/>
+        <ant dir="core" target="dist-win32"/>
+        <ant dir="server" target="dist-win32"/>
     </target>
 
     <target name="dist-all" depends="init">
@@ -168,10 +85,9 @@
     </target>
 
     <target name="clean" depends="init">
-        <ant dir="back-java" target="clean"/>
         <ant dir="server" target="clean"/>
-        <delete dir="dist" failonerror="false"/>
-        <delete dir="target" failonerror="false"/>
+        <ant dir="core" target="clean"/>
+        <ant dir="back-java" target="clean"/>
     </target>
 
 </project>
