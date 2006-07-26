@@ -22,9 +22,6 @@ import org.safehaus.penrose.jdbc.JDBCAdapter;
 import org.safehaus.penrose.ldap.LDAPAdapter;
 import org.safehaus.penrose.partition.PartitionConfig;
 import org.safehaus.penrose.schema.SchemaConfig;
-import org.safehaus.penrose.service.ServiceConfig;
-import org.safehaus.penrose.ldap.PenroseLDAPService;
-import org.safehaus.penrose.management.PenroseJMXService;
 import org.safehaus.penrose.engine.EngineConfig;
 
 
@@ -34,9 +31,6 @@ import org.safehaus.penrose.engine.EngineConfig;
 public class DefaultPenroseConfig extends PenroseConfig {
 
     public DefaultPenroseConfig() {
-
-        addServiceConfig(new ServiceConfig("JMX", PenroseJMXService.class.getName()));
-        addServiceConfig(new ServiceConfig("LDAP", PenroseLDAPService.class.getName()));
 
         addSchemaConfig(new SchemaConfig("schema/autofs.schema"));
         addSchemaConfig(new SchemaConfig("schema/corba.schema"));

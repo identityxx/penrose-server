@@ -23,32 +23,8 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 -->
 <digester-rules>
 
-	<pattern value="server">
+	<pattern value="penrose">
         <set-properties-rule/>
-
-        <!-- system property -->
-        <pattern value="system-property">
-            <call-method-rule methodname="setSystemProperty" paramcount="2" />
-            <call-param-rule pattern="property-name" paramnumber="0"/>
-            <call-param-rule pattern="property-value" paramnumber="1"/>
-        </pattern>
-
-        <!-- service -->
-        <pattern value="service">
-            <object-create-rule classname="org.safehaus.penrose.service.ServiceConfig" />
-            <set-properties-rule>
-                <alias attr-name="class" prop-name="serviceClass" />
-            </set-properties-rule>
-            <call-method-rule pattern="service-name" methodname="setName" paramcount="0" />
-            <call-method-rule pattern="service-class" methodname="setServiceClass" paramcount="0" />
-            <call-method-rule pattern="description" methodname="setDescription" paramcount="0" />
-            <pattern value="parameter">
-                <call-method-rule methodname="setParameter" paramcount="2" />
-                <call-param-rule pattern="param-name" paramnumber="0"/>
-                <call-param-rule pattern="param-value" paramnumber="1"/>
-            </pattern>
-            <set-next-rule methodname="addServiceConfig" />
-        </pattern>
 
         <!-- schema -->
         <pattern value="schema">

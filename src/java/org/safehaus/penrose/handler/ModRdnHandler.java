@@ -26,8 +26,6 @@ import org.safehaus.penrose.mapping.Entry;
 import org.safehaus.penrose.mapping.EntryMapping;
 import org.safehaus.penrose.cache.EntryCache;
 import org.safehaus.penrose.util.EntryUtil;
-import org.safehaus.penrose.config.PenroseConfig;
-import org.safehaus.penrose.service.ServiceConfig;
 import org.ietf.ldap.LDAPException;
 import org.ietf.ldap.LDAPDN;
 import org.slf4j.LoggerFactory;
@@ -61,16 +59,6 @@ public class ModRdnHandler {
             if (session != null && session.getBindDn() != null) log.debug(" - Bind DN: " + session.getBindDn());
             log.debug(" - DN: " + dn);
             log.debug(" - New RDN: " + newRdn);
-
-            if (session != null && session.getBindDn() == null) {
-                PenroseConfig penroseConfig = handler.getPenroseConfig();
-                ServiceConfig serviceConfig = penroseConfig.getServiceConfig("LDAP");
-                String s = serviceConfig == null ? null : serviceConfig.getParameter("allowAnonymousAccess");
-                boolean allowAnonymousAccess = s == null ? true : new Boolean(s).booleanValue();
-                if (!allowAnonymousAccess) {
-                    return LDAPException.INSUFFICIENT_ACCESS_RIGHTS;
-                }
-            }
 
             String ndn = LDAPDN.normalize(dn);
 

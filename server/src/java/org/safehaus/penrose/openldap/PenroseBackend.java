@@ -22,13 +22,13 @@ import java.io.File;
 
 import org.ietf.ldap.*;
 import org.safehaus.penrose.Penrose;
-import org.safehaus.penrose.PenroseServer;
+import org.safehaus.penrose.server.PenroseServer;
+import org.safehaus.penrose.server.config.PenroseServerConfigReader;
+import org.safehaus.penrose.server.config.PenroseServerConfig;
 import org.safehaus.penrose.service.ServiceConfig;
 import org.safehaus.penrose.session.PenroseSession;
 import org.safehaus.penrose.session.PenroseSearchResults;
 import org.safehaus.penrose.session.*;
-import org.safehaus.penrose.config.PenroseConfig;
-import org.safehaus.penrose.config.PenroseConfigReader;
 import org.openldap.backend.Backend;
 import org.openldap.backend.Results;
 import org.apache.log4j.xml.DOMConfigurator;
@@ -47,7 +47,7 @@ public class PenroseBackend implements Backend {
 
     public String home;
 
-    public PenroseServer server;
+    public PenroseServer penroseServer;
 
     public Map sessions = new HashMap();
 
@@ -75,15 +75,15 @@ public class PenroseBackend implements Backend {
 
     public int initImpl() throws Exception {
 
-        PenroseConfigReader reader = new PenroseConfigReader((home == null ? "" : home+ File.separator)+"conf"+File.separator+"server.xml");
-        PenroseConfig penroseConfig = reader.read();
-        penroseConfig.setHome(home);
+        PenroseServerConfigReader reader = new PenroseServerConfigReader((home == null ? "" : home+ File.separator)+"conf"+File.separator+"server.xml");
+        PenroseServerConfig penroseServerConfig = reader.read();
+        penroseServerConfig.setHome(home);
 
-        ServiceConfig ldapServiceConfig = penroseConfig.getServiceConfig("LDAP");
+        ServiceConfig ldapServiceConfig = penroseServerConfig.getServiceConfig("LDAP");
         ldapServiceConfig.setEnabled(false);
 
-        server = new PenroseServer(penroseConfig);
-        server.start();
+        penroseServer = new PenroseServer(penroseServerConfig);
+        penroseServer.start();
 
         return LDAPException.SUCCESS;
     }
@@ -105,7 +105,7 @@ public class PenroseBackend implements Backend {
      */
     public void openConnection(int connectionId) throws Exception {
         log.debug("openConnection("+connectionId+")");
-        Penrose penrose = server.getPenrose();
+        Penrose penrose = penroseServer.getPenrose();
         PenroseSession session = penrose.newSession();
         if (session == null) throw new Exception("Unable to create session.");
         sessions.put(new Integer(connectionId), session);

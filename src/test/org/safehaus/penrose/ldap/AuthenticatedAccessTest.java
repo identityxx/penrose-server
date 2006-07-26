@@ -21,7 +21,7 @@ import junit.framework.TestCase;
 import org.apache.log4j.*;
 import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.config.DefaultPenroseConfig;
-import org.safehaus.penrose.PenroseServer;
+import org.safehaus.penrose.server.PenroseServer;
 import org.ietf.ldap.*;
 
 import javax.naming.Context;

@@ -23,7 +23,7 @@ import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.config.DefaultPenroseConfig;
 import org.safehaus.penrose.schema.SchemaConfig;
 import org.safehaus.penrose.partition.PartitionConfig;
-import org.safehaus.penrose.PenroseServer;
+import org.safehaus.penrose.server.PenroseServer;
 import org.safehaus.penrose.ldap.PenroseLDAPService;
 import org.safehaus.penrose.service.ServiceManager;
 

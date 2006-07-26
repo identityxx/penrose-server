@@ -21,22 +21,16 @@ import org.apache.directory.server.core.interceptor.BaseInterceptor;
 import org.apache.directory.server.core.interceptor.NextInterceptor;
 import org.apache.directory.server.core.configuration.InterceptorConfiguration;
 import org.apache.directory.server.core.DirectoryServiceConfiguration;
-import org.apache.directory.server.core.authn.AuthenticationService;
-import org.apache.directory.server.core.authn.LdapPrincipal;
-import org.apache.directory.server.core.invocation.InvocationStack;
-import org.apache.directory.server.core.jndi.ServerContext;
-import org.apache.directory.server.core.jndi.LdapJndiProperties;
 import org.apache.directory.shared.ldap.filter.ExprNode;
-import org.apache.directory.shared.ldap.exception.LdapAuthenticationException;
 import org.safehaus.penrose.Penrose;
+import org.safehaus.penrose.server.PenroseServer;
+import org.safehaus.penrose.server.config.PenroseServerConfig;
+import org.safehaus.penrose.service.ServiceConfig;
 import org.safehaus.penrose.filter.FilterTool;
-import org.safehaus.penrose.schema.SchemaManager;
-import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.session.PenroseSession;
 import org.safehaus.penrose.session.PenroseSearchResults;
 import org.safehaus.penrose.session.PenroseSearchControls;
 import org.safehaus.penrose.util.ExceptionUtil;
-import org.safehaus.penrose.util.EntryUtil;
 import org.safehaus.penrose.mapping.EntryMapping;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.PartitionManager;
@@ -56,13 +50,27 @@ public class PenroseInterceptor extends BaseInterceptor {
 
     public Logger log = LoggerFactory.getLogger(getClass());
 
+    PenroseServer penroseServer;
     Penrose penrose;
     PartitionManager partitionManager;
 
     DirectoryServiceConfiguration factoryCfg;
 
-    public void setPenrose(Penrose penrose) throws Exception {
-        this.penrose = penrose;
+    boolean allowAnonymousAccess;
+
+    public PenroseServer getPenroseServer() {
+        return penroseServer;
+    }
+
+    public void setPenroseServer(PenroseServer penroseServer) {
+        this.penroseServer = penroseServer;
+
+        PenroseServerConfig penroseServerConfig = penroseServer.getPenroseServerConfig();
+        ServiceConfig serviceConfig = penroseServerConfig.getServiceConfig("LDAP");
+        String s = serviceConfig == null ? null : serviceConfig.getParameter("allowAnonymousAccess");
+        allowAnonymousAccess = s == null ? true : new Boolean(s).booleanValue();
+
+        Penrose penrose = penroseServer.getPenrose();
         this.partitionManager = penrose.getPartitionManager();
     }
 
@@ -147,10 +155,17 @@ public class PenroseInterceptor extends BaseInterceptor {
                 return;
             }
 
+            Penrose penrose = penroseServer.getPenrose();
             PenroseSession session = penrose.newSession();
             if (session == null) throw new ServiceUnavailableException();
 
-            if (principalDn != null) session.setBindDn(principalDn.toString());
+            if (principalDn == null) {
+                if (!allowAnonymousAccess) {
+                    ExceptionUtil.throwNamingException(LDAPException.INSUFFICIENT_ACCESS_RIGHTS);
+                }
+            } else {
+                session.setBindDn(principalDn.toString());
+            }
 
             int rc = session.add(upName, attributes);
 
@@ -196,10 +211,17 @@ public class PenroseInterceptor extends BaseInterceptor {
                 return next.compare(name, attributeName, value);
             }
 
+            Penrose penrose = penroseServer.getPenrose();
             PenroseSession session = penrose.newSession();
             if (session == null) throw new ServiceUnavailableException();
 
-            if (principalDn != null) session.setBindDn(principalDn.toString());
+            if (principalDn == null) {
+                if (!allowAnonymousAccess) {
+                    ExceptionUtil.throwNamingException(LDAPException.INSUFFICIENT_ACCESS_RIGHTS);
+                }
+            } else {
+                session.setBindDn(principalDn.toString());
+            }
 
             int rc = session.compare(dn, attributeName, value);
 
@@ -247,10 +269,17 @@ public class PenroseInterceptor extends BaseInterceptor {
                 return;
             }
 
+            Penrose penrose = penroseServer.getPenrose();
             PenroseSession session = penrose.newSession();
             if (session == null) throw new ServiceUnavailableException();
 
-            if (principalDn != null) session.setBindDn(principalDn.toString());
+            if (principalDn == null) {
+                if (!allowAnonymousAccess) {
+                    ExceptionUtil.throwNamingException(LDAPException.INSUFFICIENT_ACCESS_RIGHTS);
+                }
+            } else {
+                session.setBindDn(principalDn.toString());
+            }
 
             int rc = session.delete(dn);
 
@@ -330,10 +359,17 @@ public class PenroseInterceptor extends BaseInterceptor {
                 return next.list(name);
             }
 
+            Penrose penrose = penroseServer.getPenrose();
             PenroseSession session = penrose.newSession();
             if (session == null) throw new ServiceUnavailableException();
 
-            if (principalDn != null) session.setBindDn(principalDn.toString());
+            if (principalDn == null) {
+                if (!allowAnonymousAccess) {
+                    ExceptionUtil.throwNamingException(LDAPException.INSUFFICIENT_ACCESS_RIGHTS);
+                }
+            } else {
+                session.setBindDn(principalDn.toString());
+            }
 
             PenroseSearchResults results = new PenroseSearchResults();
 
@@ -393,10 +429,17 @@ public class PenroseInterceptor extends BaseInterceptor {
 
             log.debug("searching \""+dn+"\"");
 
+            Penrose penrose = penroseServer.getPenrose();
             PenroseSession session = penrose.newSession();
             if (session == null) throw new ServiceUnavailableException();
 
-            if (principalDn != null) session.setBindDn(principalDn.toString());
+            if (principalDn == null) {
+                if (!allowAnonymousAccess) {
+                    ExceptionUtil.throwNamingException(LDAPException.INSUFFICIENT_ACCESS_RIGHTS);
+                }
+            } else {
+                session.setBindDn(principalDn.toString());
+            }
 
             PenroseSearchResults results = new PenroseSearchResults();
 
@@ -452,10 +495,17 @@ public class PenroseInterceptor extends BaseInterceptor {
                 return next.lookup(name, attrIds);
             }
 
+            Penrose penrose = penroseServer.getPenrose();
             PenroseSession session = penrose.newSession();
             if (session == null) throw new ServiceUnavailableException();
 
-            if (principalDn != null) session.setBindDn(principalDn.toString());
+            if (principalDn == null) {
+                if (!allowAnonymousAccess) {
+                    ExceptionUtil.throwNamingException(LDAPException.INSUFFICIENT_ACCESS_RIGHTS);
+                }
+            } else {
+                session.setBindDn(principalDn.toString());
+            }
 
             PenroseSearchResults results = new PenroseSearchResults();
 
@@ -519,10 +569,17 @@ public class PenroseInterceptor extends BaseInterceptor {
                 return next.lookup(name);
             }
 
+            Penrose penrose = penroseServer.getPenrose();
             PenroseSession session = penrose.newSession();
             if (session == null) throw new ServiceUnavailableException();
 
-            if (principalDn != null) session.setBindDn(principalDn.toString());
+            if (principalDn == null) {
+                if (!allowAnonymousAccess) {
+                    ExceptionUtil.throwNamingException(LDAPException.INSUFFICIENT_ACCESS_RIGHTS);
+                }
+            } else {
+                session.setBindDn(principalDn.toString());
+            }
 
             PenroseSearchResults results = new PenroseSearchResults();
 
@@ -595,10 +652,17 @@ public class PenroseInterceptor extends BaseInterceptor {
 
                     PenroseSession session = null;
                     try {
+                        Penrose penrose = penroseServer.getPenrose();
                         session = penrose.newSession();
                         if (session == null) throw new ServiceUnavailableException();
 
-                        if (principalDn != null) session.setBindDn(principalDn.toString());
+                        if (principalDn == null) {
+                            if (!allowAnonymousAccess) {
+                                ExceptionUtil.throwNamingException(LDAPException.INSUFFICIENT_ACCESS_RIGHTS);
+                            }
+                        } else {
+                            session.setBindDn(principalDn.toString());
+                        }
 
                         PenroseSearchResults results = new PenroseSearchResults();
 
@@ -662,10 +726,17 @@ public class PenroseInterceptor extends BaseInterceptor {
 
             PenroseSession session = null;
             try {
+                Penrose penrose = penroseServer.getPenrose();
                 session = penrose.newSession();
                 if (session == null) throw new ServiceUnavailableException();
 
-                if (principalDn != null) session.setBindDn(principalDn.toString());
+                if (principalDn == null) {
+                    if (!allowAnonymousAccess) {
+                        ExceptionUtil.throwNamingException(LDAPException.INSUFFICIENT_ACCESS_RIGHTS);
+                    }
+                } else {
+                    session.setBindDn(principalDn.toString());
+                }
 
                 PenroseSearchResults results = new PenroseSearchResults();
 
@@ -733,10 +804,17 @@ public class PenroseInterceptor extends BaseInterceptor {
                 modifications.add(modification);
             }
 
+            Penrose penrose = penroseServer.getPenrose();
             PenroseSession session = penrose.newSession();
             if (session == null) throw new ServiceUnavailableException();
 
-            if (principalDn != null) session.setBindDn(principalDn.toString());
+            if (principalDn == null) {
+                if (!allowAnonymousAccess) {
+                    ExceptionUtil.throwNamingException(LDAPException.INSUFFICIENT_ACCESS_RIGHTS);
+                }
+            } else {
+                session.setBindDn(principalDn.toString());
+            }
 
             int rc = session.modify(dn.toString(), modifications);
 
@@ -784,10 +862,17 @@ public class PenroseInterceptor extends BaseInterceptor {
                 return;
             }
 
+            Penrose penrose = penroseServer.getPenrose();
             PenroseSession session = penrose.newSession();
             if (session == null) throw new ServiceUnavailableException();
 
-            if (principalDn != null) session.setBindDn(principalDn.toString());
+            if (principalDn == null) {
+                if (!allowAnonymousAccess) {
+                    ExceptionUtil.throwNamingException(LDAPException.INSUFFICIENT_ACCESS_RIGHTS);
+                }
+            } else {
+                session.setBindDn(principalDn.toString());
+            }
 
             int rc = session.modify(dn.toString(), Arrays.asList(modificationItems));
 
@@ -835,10 +920,17 @@ public class PenroseInterceptor extends BaseInterceptor {
                 return;
             }
 
+            Penrose penrose = penroseServer.getPenrose();
             PenroseSession session = penrose.newSession();
             if (session == null) throw new ServiceUnavailableException();
 
-            if (principalDn != null) session.setBindDn(principalDn.toString());
+            if (principalDn == null) {
+                if (!allowAnonymousAccess) {
+                    ExceptionUtil.throwNamingException(LDAPException.INSUFFICIENT_ACCESS_RIGHTS);
+                }
+            } else {
+                session.setBindDn(principalDn.toString());
+            }
 
             int rc = session.modrdn(dn.toString(), newDn);
 
@@ -872,5 +964,4 @@ public class PenroseInterceptor extends BaseInterceptor {
         log.debug("move(\""+dn+"\")");
         next.move( oriChildName, newParentName );
     }
-
 }

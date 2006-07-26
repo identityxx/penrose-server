@@ -29,8 +29,6 @@ import org.safehaus.penrose.util.EntryUtil;
 import org.safehaus.penrose.util.LDAPUtil;
 import org.safehaus.penrose.schema.SchemaManager;
 import org.safehaus.penrose.schema.AttributeType;
-import org.safehaus.penrose.service.ServiceConfig;
-import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.PartitionManager;
 import org.safehaus.penrose.filter.Filter;
@@ -172,17 +170,6 @@ public class SearchHandler {
             log.debug(" - Filter: "+filter);
             log.debug(" - Attribute Names: "+attributeNames);
             log.debug("");
-
-            if (session != null && session.getBindDn() == null) {
-                PenroseConfig penroseConfig = handler.getPenroseConfig();
-                ServiceConfig serviceConfig = penroseConfig.getServiceConfig("LDAP");
-                scope = serviceConfig == null ? null : serviceConfig.getParameter("allowAnonymousAccess");
-                boolean allowAnonymousAccess = scope == null ? true : new Boolean(scope).booleanValue();
-                if (!allowAnonymousAccess) {
-                    results.setReturnCode(LDAPException.INSUFFICIENT_ACCESS_RIGHTS);
-                    return LDAPException.INSUFFICIENT_ACCESS_RIGHTS;
-                }
-            }
 
             rc = performSearch(session, baseDn, filter, sc, results);
 

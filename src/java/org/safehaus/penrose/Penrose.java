@@ -227,8 +227,6 @@ public class Penrose {
 
     public void load() throws Exception {
 
-        loadSystemProperties();
-
         loadInterpreter();
         loadSchemas();
 
@@ -240,15 +238,6 @@ public class Penrose {
         loadHandler();
 
         loadModules();
-    }
-
-    public void loadSystemProperties() throws Exception {
-        for (Iterator i=penroseConfig.getSystemPropertyNames().iterator(); i.hasNext(); ) {
-            String name = (String)i.next();
-            String value = penroseConfig.getSystemProperty(name);
-
-            System.setProperty(name, value);
-        }
     }
 
     public void loadInterpreter() throws Exception {

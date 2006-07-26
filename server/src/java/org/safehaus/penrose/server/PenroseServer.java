@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
-package org.safehaus.penrose;
+package org.safehaus.penrose.server;
 
 import java.util.*;
 import java.io.File;
@@ -25,6 +25,10 @@ import org.apache.log4j.xml.DOMConfigurator;
 import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.config.PenroseConfigReader;
 import org.safehaus.penrose.service.ServiceManager;
+import org.safehaus.penrose.Penrose;
+import org.safehaus.penrose.PenroseFactory;
+import org.safehaus.penrose.server.config.PenroseServerConfig;
+import org.safehaus.penrose.server.config.PenroseServerConfigReader;
 import sun.misc.Signal;
 import sun.misc.SignalHandler;
 
@@ -36,7 +40,9 @@ public class PenroseServer implements SignalHandler {
 
     public static Logger log = Logger.getLogger(PenroseServer.class);
 
+    private PenroseServerConfig penroseServerConfig;
     private PenroseConfig penroseConfig;
+
     private Penrose penrose;
 
     private ServiceManager serviceManager;
@@ -46,27 +52,37 @@ public class PenroseServer implements SignalHandler {
     }
 
     public PenroseServer(String home) throws Exception {
-        PenroseConfigReader reader = new PenroseConfigReader((home == null ? "" : home+File.separator)+"conf"+File.separator+"server.xml");
-        penroseConfig = reader.read();
-        penroseConfig.setHome(home);
+        PenroseServerConfigReader reader = new PenroseServerConfigReader((home == null ? "" : home+File.separator)+"conf"+File.separator+"server.xml");
+        penroseServerConfig = reader.read();
+        penroseServerConfig.setHome(home);
 
         init();
     }
 
-    public PenroseServer(PenroseConfig penroseConfig) throws Exception {
-        this.penroseConfig = penroseConfig;
+    public PenroseServer(PenroseServerConfig penroseServerConfig) throws Exception {
+        this.penroseServerConfig = penroseServerConfig;
 
         init();
     }
 
     public void init() throws Exception {
 
+        for (Iterator i=penroseServerConfig.getSystemPropertyNames().iterator(); i.hasNext(); ) {
+            String name = (String)i.next();
+            String value = penroseServerConfig.getSystemProperty(name);
+            System.setProperty(name, value);
+        }
+
+        String home = penroseServerConfig.getHome();
+        PenroseConfigReader reader = new PenroseConfigReader((home == null ? "" : home+File.separator)+"conf"+File.separator+"penrose.xml");
+        penroseConfig = reader.read();
+
         PenroseFactory penroseFactory = PenroseFactory.getInstance();
         penrose = penroseFactory.createPenrose(penroseConfig);
 
         serviceManager = new ServiceManager();
         serviceManager.setPenroseServer(this);
-        serviceManager.load(penroseConfig.getServiceConfigs());
+        serviceManager.load(penroseServerConfig.getServiceConfigs());
     }
 
     public void start() throws Exception {
@@ -152,12 +168,12 @@ public class PenroseServer implements SignalHandler {
         }
     }
 
-    public PenroseConfig getPenroseConfig() {
-        return penroseConfig;
+    public PenroseServerConfig getPenroseServerConfig() {
+        return penroseServerConfig;
     }
 
-    public void setPenroseConfig(PenroseConfig penroseConfig) {
-        this.penroseConfig = penroseConfig;
+    public void setPenroseServerConfig(PenroseServerConfig penroseServerConfig) {
+        this.penroseServerConfig = penroseServerConfig;
     }
 
     public Penrose getPenrose() {
@@ -180,7 +196,7 @@ public class PenroseServer implements SignalHandler {
         penrose.reload();
 
         serviceManager.clear();
-        serviceManager.load(penroseConfig.getServiceConfigs());
+        serviceManager.load(penroseServerConfig.getServiceConfigs());
     }
 
     public void store() throws Exception {
@@ -193,7 +209,7 @@ public class PenroseServer implements SignalHandler {
             Collection parameters = Arrays.asList(args);
 
             if (parameters.contains("-?") || parameters.contains("--help")) {
-                System.out.println("Usage: org.safehaus.penrose.PenroseServer [OPTION]...");
+                System.out.println("Usage: org.safehaus.penrose.server.PenroseServer [OPTION]...");
                 System.out.println();
                 System.out.println("  -?, --help     display this help and exit");
                 System.out.println("  -d             run in debug mode");
@@ -263,5 +279,13 @@ public class PenroseServer implements SignalHandler {
             log.error("Server failed to start: "+name+": "+e.getMessage());
             System.exit(1);
         }
+    }
+
+    public PenroseConfig getPenroseConfig() {
+        return penroseConfig;
+    }
+
+    public void setPenroseConfig(PenroseConfig penroseConfig) {
+        this.penroseConfig = penroseConfig;
     }
 }

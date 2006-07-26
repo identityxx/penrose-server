@@ -162,7 +162,7 @@ if [ "$1" = "start" ] ; then
     exec "$JAVACMD" $PENROSE_DEBUG_OPTS $PENROSE_OPTS \
     -classpath "$LOCALCLASSPATH" \
     -Dpenrose.home="$PENROSE_HOME" \
-    org.safehaus.penrose.PenroseServer $PENROSE_ARGS "$@" \
+    org.safehaus.penrose.server.PenroseServer $PENROSE_ARGS "$@" \
     >> "$PENROSE_HOME/var/penrose.out" 2>&1 &
 
     echo $! > "$PENROSE_PID"
@@ -191,7 +191,7 @@ else
   exec "$JAVACMD" $PENROSE_DEBUG_OPTS $PENROSE_OPTS \
   -classpath "$LOCALCLASSPATH" \
   -Dpenrose.home="$PENROSE_HOME" \
-  org.safehaus.penrose.PenroseServer $PENROSE_ARGS "$@"
+  org.safehaus.penrose.server.PenroseServer $PENROSE_ARGS "$@"
 
 fi
 

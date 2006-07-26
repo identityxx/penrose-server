@@ -10,6 +10,8 @@
       <sourceFolder url="file://$MODULE_DIR$/samples/embedded/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/samples/listener/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/samples/module/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/samples/samba/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/server/src/java" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/src/java" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/src/test" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/src/tools" isTestSource="false" />

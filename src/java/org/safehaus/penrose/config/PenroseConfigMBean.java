@@ -28,15 +28,9 @@ public interface PenroseConfigMBean {
     public String getHome() throws Exception;
     public void setHome(String home) throws Exception;
 
-    public Map getSystemProperties() throws Exception;
-    public String getSystemProperty(String name) throws Exception;
-    public void setSystemProperty(String name, String value) throws Exception;
-    public String removeSystemProperty(String name) throws Exception;
-
     public Collection getAdapterNames() throws Exception;
     public Collection getSchemaNames() throws Exception;
     public Collection getPartitionNames() throws Exception;
-    public Collection getServiceNames() throws Exception;
 
     public String getRootDn() throws Exception;
     public void setRootDn(String rootDn) throws Exception;

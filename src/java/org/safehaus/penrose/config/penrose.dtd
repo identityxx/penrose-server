@@ -1,14 +1,12 @@
 <?xml version='1.0' encoding='utf-8'?>
 
 <!--
-<!DOCTYPE server PUBLIC
-  "-//Penrose/DTD Server 1.0//EN"
-  "http://penrose.safehaus.org/dtd/server.dtd">
+<!DOCTYPE penrose PUBLIC
+  "-//Penrose/DTD Penrose 1.0//EN"
+  "http://penrose.safehaus.org/dtd/penrose.dtd">
 -->
 
-<!ELEMENT server (
-        system-property*,
-        service*,
+<!ELEMENT penrose (
         schema*,
         interpreter*,
         entry-cache*,
@@ -20,14 +18,6 @@
         partition*,
         root
 )>
-
-<!ELEMENT system-property (property-name, property-value)>
-<!ELEMENT property-name (#PCDATA)>
-<!ELEMENT property-value (#PCDATA)>
-
-<!ELEMENT service (service-class, description?, parameter*)>
-<!ATTLIST service name CDATA #REQUIRED>
-<!ELEMENT service-class (#PCDATA)>
 
 <!ELEMENT schema EMPTY>
 <!ATTLIST schema name CDATA #IMPLIED>

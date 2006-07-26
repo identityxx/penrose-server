@@ -23,8 +23,6 @@ import org.safehaus.penrose.util.PasswordUtil;
 import org.safehaus.penrose.util.Formatter;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.PartitionManager;
-import org.safehaus.penrose.config.PenroseConfig;
-import org.safehaus.penrose.service.ServiceConfig;
 import org.safehaus.penrose.engine.Engine;
 import org.ietf.ldap.LDAPDN;
 import org.ietf.ldap.LDAPException;
@@ -60,14 +58,7 @@ public class BindHandler {
             String ndn = LDAPDN.normalize(dn);
             String rootDn = handler.getPenroseConfig().getRootDn();
 
-            if (ndn == null || "".equals(dn)) {
-                PenroseConfig penroseConfig = handler.getPenroseConfig();
-                ServiceConfig serviceConfig = penroseConfig.getServiceConfig("LDAP");
-                String s = serviceConfig == null ? null : serviceConfig.getParameter("allowAnonymousAccess");
-                boolean allowAnonymousAccess = s == null ? true : new Boolean(s).booleanValue();
-                return allowAnonymousAccess ? LDAPException.SUCCESS : LDAPException.INSUFFICIENT_ACCESS_RIGHTS;
-
-            } else if (rootDn != null && ndn != null && ndn.equals(LDAPDN.normalize(rootDn))) { // bind as root
+            if (rootDn != null && ndn != null && ndn.equals(LDAPDN.normalize(rootDn))) { // bind as root
 
                 rc = bindAsRoot(password);
                 if (rc != LDAPException.SUCCESS) return rc;

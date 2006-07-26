@@ -20,6 +20,8 @@ package org.safehaus.penrose.ldap;
 import org.safehaus.penrose.service.Service;
 import org.safehaus.penrose.schema.SchemaConfig;
 import org.safehaus.penrose.config.PenroseConfig;
+import org.safehaus.penrose.server.config.PenroseServerConfig;
+import org.safehaus.penrose.Penrose;
 import org.apache.directory.server.core.configuration.*;
 import org.apache.directory.server.jndi.ServerContextFactory;
 import org.apache.directory.server.core.jndi.CoreContextFactory;
@@ -87,8 +89,11 @@ public class PenroseLDAPService extends Service {
 
         setStatus(STARTING);
 
-        PenroseConfig penroseConfig = getPenroseServer().getPenroseConfig();
-        String home = penroseConfig.getHome();
+        PenroseServerConfig penroseServerConfig = getPenroseServer().getPenroseServerConfig();
+        String home = penroseServerConfig.getHome();
+
+        Penrose penrose = getPenroseServer().getPenrose();
+        PenroseConfig penroseConfig = penrose.getPenroseConfig();
 
         MutableServerStartupConfiguration configuration = new MutableServerStartupConfiguration();
 
@@ -134,7 +139,7 @@ public class PenroseLDAPService extends Service {
         // Register Penrose authenticator
 
         PenroseAuthenticator authenticator = new PenroseAuthenticator();
-        authenticator.setPenrose(getPenroseServer().getPenrose());
+        authenticator.setPenroseServer(getPenroseServer());
 
         MutableAuthenticatorConfiguration authenticatorConfig = new MutableAuthenticatorConfiguration();
         authenticatorConfig.setName("Penrose");
@@ -155,7 +160,7 @@ public class PenroseLDAPService extends Service {
 
         // Register Penrose interceptor
         PenroseInterceptor interceptor = new PenroseInterceptor();
-        interceptor.setPenrose(getPenroseServer().getPenrose());
+        interceptor.setPenroseServer(getPenroseServer());
 
         MutableInterceptorConfiguration interceptorConfig = new MutableInterceptorConfiguration();
         interceptorConfig.setName("penroseService");
@@ -241,7 +246,8 @@ public class PenroseLDAPService extends Service {
 
         setStatus(STOPPING);
         
-        PenroseConfig penroseConfig = getPenroseServer().getPenroseConfig();
+        Penrose penrose = getPenroseServer().getPenrose();
+        PenroseConfig penroseConfig = penrose.getPenroseConfig();
 
         Hashtable env = new ShutdownConfiguration().toJndiEnvironment();
         env.put(Context.INITIAL_CONTEXT_FACTORY, CoreContextFactory.class.getName());

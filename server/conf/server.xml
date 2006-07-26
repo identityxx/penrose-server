@@ -45,40 +45,4 @@
     </parameter>
   </service>
 
-  <schema path="schema/autofs.schema"/>
-  <schema path="schema/corba.schema"/>
-  <schema path="schema/core.schema"/>
-  <schema path="schema/cosine.schema"/>
-  <schema path="schema/apache.schema"/>
-  <schema path="schema/collective.schema"/>
-  <schema path="schema/inetorgperson.schema"/>
-  <schema path="schema/java.schema"/>
-  <schema path="schema/krb5kdc.schema"/>
-  <schema path="schema/nis.schema"/>
-  <schema path="schema/system.schema"/>
-  <schema path="schema/apachedns.schema"/>
-
-  <entry-cache/>
-
-  <source-cache/>
-
-  <engine/>
-
-  <connector/>
-
-  <adapter name="JDBC">
-    <adapter-class>org.safehaus.penrose.jdbc.JDBCAdapter</adapter-class>
-  </adapter>
-
-  <adapter name="LDAP">
-    <adapter-class>org.safehaus.penrose.ldap.LDAPAdapter</adapter-class>
-  </adapter>
-
-  <partition name="DEFAULT" path="conf"/>
-
-  <root>
-    <root-dn>uid=admin,ou=system</root-dn>
-    <root-password>secret</root-password>
-  </root>
-
 </server>
