@@ -26,14 +26,13 @@ Compression=zip
 SolidCompression=yes
 OutputBaseFilename=${project.name}-${project.version}
 OutputDir=..\dist
-LicenseFile=..\LICENSE.txt
+LicenseFile=..\..\LICENSE.txt
 
 [Files]
 
 Source: "..\target\dist\*"; DestDir: "{app}"; Components: main
 Source: "..\target\dist\bin\*"; DestDir: "{app}\bin"; Components: main
 Source: "..\target\dist\conf\*"; DestDir: "{app}\conf"; Flags: onlyifdoesntexist uninsneveruninstall; Components: main
-Source: "..\target\dist\conf\default\*"; DestDir: "{app}\conf\default"; Flags: recursesubdirs; Components: main
 Source: "..\target\dist\docs\*"; DestDir: "{app}\docs"; Flags: recursesubdirs; Components: docs
 Source: "..\target\dist\lib\*"; DestDir: "{app}\lib"; Flags: recursesubdirs; Components: main
 Source: "..\target\dist\schema\*"; DestDir: "{app}\schema"; Flags: recursesubdirs; Components: main

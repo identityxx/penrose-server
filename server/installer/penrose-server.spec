@@ -21,6 +21,11 @@ ant -Dproject.version=${project.version} -Dprefix=${rpm.prefix}$RPM_BUILD_ROOT d
 %install
 ant -Dproject.version=${project.version} -Dprefix=${rpm.prefix}$RPM_BUILD_ROOT install
 
+%post
+cat << EOF
+Penrose Server ${project.version} has been installed in /usr/local/${project.name}-${project.version}.
+EOF
+
 %clean
 rm -rf $RPM_BUILD_ROOT
 

@@ -31,6 +31,7 @@ public class WrapperTask extends Task {
 
     private String file;
     private String dir;
+    private String path;
 
     public void execute() throws BuildException {
         try {
@@ -41,7 +42,7 @@ public class WrapperTask extends Task {
     }
 
     public void executeImpl() throws Exception {
-        //log("Generating wrapper.conf");
+        log("Generating wrapper.conf");
 
         PrintWriter out = new PrintWriter(new FileWriter(file, true));
 
@@ -55,9 +56,9 @@ public class WrapperTask extends Task {
             if (!f.isFile()) continue;
             if (!f.getName().endsWith(".jar")) continue;
 
-            String line = "wrapper.java.classpath."+counter+"=../"+dir+"/"+f.getName();
+            String line = "wrapper.java.classpath."+counter+"="+path+"/"+f.getName();
 
-            //log(line);
+            log(line);
             out.println(line);
 
             counter++;
@@ -80,5 +81,13 @@ public class WrapperTask extends Task {
 
     public void setFile(String file) {
         this.file = file;
+    }
+
+    public String getPath() {
+        return path;
+    }
+
+    public void setPath(String path) {
+        this.path = path;
     }
 }
