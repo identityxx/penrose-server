@@ -1,11 +1,11 @@
 #!/bin/bash
 #
-# penrose This shell script takes care of starting and stopping penrose server.
+# penrose This shell script takes care of starting and stopping Penrose Server.
 #
 # chkconfig: - 38 62
-# description: Penrose Virtual Directory Server.
+# description: Penrose Server ${project.version}.
 # processname: java
-# pidfile: /usr/local/penrose/var/run/penrose.pid
+# pidfile: /usr/local/${project.name}-${project.version}/var/run/penrose.pid
 
 # Source function library.
 . /etc/init.d/functions
@@ -21,7 +21,7 @@ if [ -r /etc/sysconfig/penrose ] ; then
 	. /etc/sysconfig/penrose
 fi
 
-PENROSE_HOME=/usr/local/penrose
+PENROSE_HOME=/usr/local/${project.name}-${project.version}
 PENROSE_SCRIPT=$PENROSE_HOME/bin/penrose.sh
 
 PENROSE_PROG=penrose

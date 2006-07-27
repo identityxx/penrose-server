@@ -61,7 +61,7 @@
         <echo message="Compiling Penrose Server."/>
         <javacc
             target="src/java/org/safehaus/penrose/openldap/config/SlapdParser.jj"
-            javacchome="lib/javacc"
+            javacchome="../lib/javacc"
             outputdirectory="src/java/org/safehaus/penrose/openldap/config"
         />
         <mkdir dir="target/classes"/>
@@ -127,6 +127,9 @@
         <copy todir="target/dist" file="../pom.xml"/>
         <copy todir="target/dist/etc">
             <fileset dir="etc" includes="**/*"/>
+            <filterchain>
+                <expandproperties/>
+            </filterchain>
         </copy>
         <chmod file="target/dist/etc/init.d/penrose" perm="ugo+rx"/>
         <copy todir="target/dist/docs">
