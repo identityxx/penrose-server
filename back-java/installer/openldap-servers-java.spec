@@ -1,12 +1,12 @@
 Summary: OpenLDAP Java Backend
-Name: ${project.name}
-Version: ${project.version}
+Name: ${module.name}
+Version: ${module.version}
 Release: ${rpm.release}
 License: GPL
 Vendor: Identyx, Inc.
 Group: System Environment/Base
-Source: ${project.name}-${project.version}-src.tar.gz
-BuildRoot: /var/tmp/${project.name}-${project.version}
+Source: ${module.name}-${module.version}-src.tar.gz
+BuildRoot: /var/tmp/${module.name}-${module.version}
 AutoReqProv: no
 
 %description
@@ -27,5 +27,5 @@ rm -rf $RPM_BUILD_ROOT
 
 /usr/sbin/openldap
 /usr/share/openldap/lib
-/usr/share/doc/${project.name}-${project.version}
+/usr/share/doc/${module.name}-${module.version}
 

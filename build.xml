@@ -73,6 +73,8 @@
     </target>
 
     <target name="dist-all" depends="init">
+        <ant dir="back-java" target="dist-all"/>
+        <ant dir="core" target="dist-all"/>
         <ant dir="server" target="dist-all"/>
     </target>
 

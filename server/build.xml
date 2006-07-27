@@ -21,11 +21,11 @@
 
     <path id="lib.path">
         <fileset dir="lib">
-            <include name="**/*.jar"/>
+            <include name="*.jar"/>
         </fileset>
         <pathelement location="lib"/>
         <fileset dir="../lib">
-            <include name="**/*.jar"/>
+            <include name="*.jar"/>
         </fileset>
         <pathelement location="../lib"/>
         <pathelement location="../core/target/classes"/>
@@ -95,12 +95,15 @@
 
     <target name="docs" depends="init">
         <mkdir dir="target/javadoc"/>
-        <javadoc packagenames="org.safehaus.penrose.*"
+        <javadoc packagenames="org.safehaus.penrose.*,org.openldap.backend.*"
+            sourcepath="src/java"
             destdir="target/javadoc"
             classpathref="lib.path">
-            <fileset dir="src/java"/>
-            <fileset dir="../core/src/java"/>
-            <fileset dir="../back-java/src/java"/>
+            <sourcepath>
+                <pathelement path="src/java"/>
+                <pathelement path="../core/src/java"/>
+                <pathelement path="../back-java/src/java"/>
+            </sourcepath>
         </javadoc>
         <jar jarfile="target/${project.name}-docs-${project.version}.jar">
             <fileset dir="target/javadoc"/>
@@ -145,6 +148,9 @@
         <copy todir="target/dist/conf">
             <fileset dir="conf"/>
             <fileset dir="../conf"/>
+            <filterchain>
+                <expandproperties/>
+            </filterchain>
         </copy>
         <taskdef
                 name="wrapper"
@@ -170,7 +176,7 @@
         <chmod dir="target/dist/bin" perm="ugo+rx" includes="**/*.sh"/>
         <copy todir="target/dist/dtd" flatten="true">
             <fileset dir="src" includes="**/*.dtd"/>
-            <fileset dir="../src" includes="**/*.dtd"/>
+            <fileset dir="../core/src" includes="**/*.dtd"/>
         </copy>
         <copy todir="target/dist/samples">
             <fileset dir="../samples"/>
@@ -206,7 +212,6 @@
                 <exclude name="server/dist/**"/>
                 <exclude name="server/target/**"/>
                 <exclude name="server/var/**"/>
-                <exclude name="server/**"/>
                 <exclude name="dist/**"/>
                 <exclude name="target/**"/>
                 <exclude name="var/**"/>
@@ -292,7 +297,7 @@
         </exec>
     </target>
 
-    <target name="dist-all" depends="dist-src,dist-unix,dist-win32,dist-rpm">
+    <target name="dist-all" depends="dist-unix,dist-win32,dist-rpm">
         <copy todir="${project.dist}"
             file="target/${project.name}-${project.version}.jar">
         </copy>

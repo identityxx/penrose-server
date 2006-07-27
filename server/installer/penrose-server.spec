@@ -16,7 +16,7 @@ http://penrose.safehaus.org
 %setup -q
 
 %build
-ant -Dproject.version=${project.version} -Dprefix=${rpm.prefix}$RPM_BUILD_ROOT dist docs
+ant -Dproject.version=${project.version} -Dprefix=${rpm.prefix}$RPM_BUILD_ROOT dist
 
 %install
 ant -Dproject.version=${project.version} -Dprefix=${rpm.prefix}$RPM_BUILD_ROOT install

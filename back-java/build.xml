@@ -15,9 +15,9 @@
 
     <property file="build.properties"/>
 
-    <property name="project.name" value="openldap-servers-java"/>
-    <property name="project.version" value="${openldap.version}"/>
-    <property name="project.dist" value="dist"/>
+    <property name="module.name" value="openldap-servers-java"/>
+    <property name="module.version" value="${openldap.version}"/>
+    <property name="module.dist" value="dist"/>
 
     <tstamp/>
 
@@ -114,16 +114,16 @@
 
     <target name="dist-src" depends="init">
         <mkdir dir="dist"/>
-        <tar destfile="dist/${project.name}-${project.version}-src.tar.gz" compression="gzip">
-            <tarfileset dir="openldap-${openldap.version}/${os.name}" prefix="${project.name}-${project.version}/lib" mode="755">
+        <tar destfile="dist/${module.name}-${module.version}-src.tar.gz" compression="gzip">
+            <tarfileset dir="openldap-${openldap.version}/${os.name}" prefix="${module.name}-${module.version}/lib" mode="755">
             </tarfileset>
-            <tarfileset dir="openldap-${openldap.version}" prefix="${project.name}-${project.version}">
+            <tarfileset dir="openldap-${openldap.version}" prefix="${module.name}-${module.version}">
                 <include name="build.properties"/>
             </tarfileset>
-            <tarfileset dir="." prefix="${project.name}-${project.version}">
+            <tarfileset dir="." prefix="${module.name}-${module.version}">
                 <include name="build.xml"/>
             </tarfileset>
-            <tarfileset dir="src/java" prefix="${project.name}-${project.version}/src/java">
+            <tarfileset dir="src/java" prefix="${module.name}-${module.version}/src/java">
             </tarfileset>
         </tar>
     </target>
@@ -141,8 +141,8 @@
         </exec>
         <mkdir dir="${prefix}/usr/share/openldap/lib"/>
         <copy todir="${prefix}/usr/share/openldap/lib" file="dist/openldap-${openldap.version}.jar"/>
-        <mkdir dir="${prefix}/usr/share/doc/${project.name}-${project.version}/javadoc"/>
-        <copy todir="${prefix}/usr/share/doc/${project.name}-${project.version}/javadoc">
+        <mkdir dir="${prefix}/usr/share/doc/${module.name}-${module.version}/javadoc"/>
+        <copy todir="${prefix}/usr/share/doc/${module.name}-${module.version}/javadoc">
             <fileset dir="target/javadoc"/>
         </copy>
     </target>
@@ -161,22 +161,22 @@
         <property name="rpm.prefix" value=""/>
         <property name="rpm.home" value="/usr/src/redhat"/>
         <property name="rpm.builder" value="/usr/bin/rpmbuild"/>
-        <copy todir="target" file="${project.name}.spec">
+        <copy todir="target" file="installer/${module.name}.spec">
             <filterchain>
                 <expandproperties/>
             </filterchain>
         </copy>
         <copy todir="${rpm.home}/SOURCES" overwrite="true"
-            file="${project.dist}/${project.name}-${project.version}-src.tar.gz">
+            file="${module.dist}/${module.name}-${module.version}-src.tar.gz">
         </copy>
         <exec executable="${rpm.builder}">
-            <arg line="-ba target/${project.name}.spec"/>
+            <arg line="-ba target/${module.name}.spec"/>
         </exec>
-        <copy todir="${project.dist}" failonerror="false"
-            file="${rpm.home}/SRPMS/${project.name}-${project.version}-1.FC3.src.rpm">
+        <copy todir="${module.dist}" failonerror="false"
+            file="${rpm.home}/SRPMS/${module.name}-${module.version}-1.FC3.src.rpm">
         </copy>
-        <copy todir="${project.dist}" failonerror="false"
-            file="${rpm.home}/RPMS/i386/${project.name}-${project.version}-1.FC3.i386.rpm">
+        <copy todir="${module.dist}" failonerror="false"
+            file="${rpm.home}/RPMS/i386/${module.name}-${module.version}-1.FC3.i386.rpm">
         </copy>
     </target>
 
@@ -185,26 +185,29 @@
         <property name="rpm.prefix" value="${cygwin.home}"/>
         <property name="rpm.home" value="${cygwin.home}/usr/src/rpm"/>
         <property name="rpm.builder" value="${cygwin.home}/lib/rpm/rpmb.exe"/>
-        <copy todir="target" file="${project.name}.spec">
+        <copy todir="target" file="installer/${module.name}.spec">
             <filterchain>
                 <expandproperties/>
             </filterchain>
         </copy>
         <copy todir="${rpm.home}/SOURCES" overwrite="true"
-            file="${project.dist}/${project.name}-${project.version}-src.tar.gz">
+            file="${module.dist}/${module.name}-${module.version}-src.tar.gz">
         </copy>
         <exec executable="${rpm.builder}">
-            <arg line="-ba target/${project.name}.spec"/>
+            <arg line="-ba target/${module.name}.spec"/>
         </exec>
-        <copy todir="${project.dist}" failonerror="false"
-            file="${rpm.home}/SRPMS/${project.name}-${project.version}-1.src.rpm">
+        <copy todir="${module.dist}" failonerror="false"
+            file="${rpm.home}/SRPMS/${module.name}-${module.version}-1.src.rpm">
         </copy>
-        <copy todir="${project.dist}" failonerror="false"
-            file="${rpm.home}/RPMS/i386/${project.name}-${project.version}-1.cygwin.i386.rpm">
+        <copy todir="${module.dist}" failonerror="false"
+            file="${rpm.home}/RPMS/i386/${module.name}-${module.version}-1.cygwin.i386.rpm">
         </copy>
     </target>
 
     <target name="dist-win32" depends="dist">
+    </target>
+
+    <target name="dist-all" depends="dist-unix,dist-win32,dist-rpm">
     </target>
 
     <target name="clean" depends="init">
