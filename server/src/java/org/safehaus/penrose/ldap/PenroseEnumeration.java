@@ -18,7 +18,6 @@
 package org.safehaus.penrose.ldap;
 
 import org.safehaus.penrose.session.PenroseSearchResults;
-import org.safehaus.penrose.util.ExceptionUtil;
 import org.ietf.ldap.LDAPException;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
@@ -53,7 +52,7 @@ public class PenroseEnumeration implements NamingEnumeration {
 
         int rc = searchResults.getReturnCode();
         if (rc != LDAPException.SUCCESS) {
-            ExceptionUtil.throwNamingException(rc, "RC: "+rc);
+            ExceptionTool.throwNamingException(rc, "RC: "+rc);
         }
 
         return false;

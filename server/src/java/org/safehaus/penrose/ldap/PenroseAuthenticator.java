@@ -24,8 +24,9 @@ import org.apache.directory.shared.ldap.exception.LdapAuthenticationException;
 import org.apache.directory.shared.ldap.aci.AuthenticationLevel;
 import org.ietf.ldap.LDAPException;
 import org.safehaus.penrose.Penrose;
+import org.safehaus.penrose.service.ServiceConfig;
 import org.safehaus.penrose.server.PenroseServer;
-import org.safehaus.penrose.util.ExceptionUtil;
+import org.safehaus.penrose.server.config.PenroseServerConfig;
 import org.safehaus.penrose.session.PenroseSession;
 import org.safehaus.penrose.config.PenroseConfig;
 import org.slf4j.LoggerFactory;
@@ -44,9 +45,24 @@ public class PenroseAuthenticator extends AbstractAuthenticator {
 
     PenroseServer penroseServer;
 
+    boolean allowAnonymousAccess;
+
     public PenroseAuthenticator()
     {
         super("simple");
+    }
+
+    public PenroseServer getPenroseServer() {
+        return penroseServer;
+    }
+
+    public void setPenroseServer(PenroseServer penroseServer) {
+        this.penroseServer = penroseServer;
+
+        PenroseServerConfig penroseServerConfig = penroseServer.getPenroseServerConfig();
+        ServiceConfig serviceConfig = penroseServerConfig.getServiceConfig("LDAP");
+        String s = serviceConfig == null ? null : serviceConfig.getParameter("allowAnonymousAccess");
+        allowAnonymousAccess = s == null ? true : new Boolean(s).booleanValue();
     }
 
     public void init() throws NamingException {
@@ -73,6 +89,10 @@ public class PenroseAuthenticator extends AbstractAuthenticator {
             throw new LdapAuthenticationException();
         }
 
+        if (dn == null || "".equals(dn)) {
+            throw new LdapAuthenticationException();
+        }
+
         try {
             PenroseSession session = penrose.newSession();
             if (session == null) throw new ServiceUnavailableException();
@@ -81,7 +101,7 @@ public class PenroseAuthenticator extends AbstractAuthenticator {
             session.close();
 
             if (rc != LDAPException.SUCCESS) {
-                ExceptionUtil.throwNamingException(rc);
+                ExceptionTool.throwNamingException(rc);
             }
 
             log.warn("Bind operation succeeded.");
@@ -96,13 +116,5 @@ public class PenroseAuthenticator extends AbstractAuthenticator {
             log.error(e.getMessage(), e);
             throw new NamingException(e.getMessage());
         }
-    }
-
-    public PenroseServer getPenroseServer() {
-        return penroseServer;
-    }
-
-    public void setPenroseServer(PenroseServer penroseServer) {
-        this.penroseServer = penroseServer;
     }
 }

@@ -21,7 +21,6 @@ import org.safehaus.penrose.mapping.Row;
 import org.safehaus.penrose.mapping.Entry;
 import org.safehaus.penrose.mapping.AttributeValues;
 import org.safehaus.penrose.mapping.EntryMapping;
-import org.apache.directory.shared.ldap.name.LdapName;
 import org.ietf.ldap.LDAPEntry;
 import org.ietf.ldap.LDAPAttributeSet;
 import org.ietf.ldap.LDAPAttribute;
@@ -91,8 +90,8 @@ public class EntryUtil {
         try {
             //log.debug("###### Getting RDN from "+dn);
 
-            LdapName name = new LdapName(dn);
-            String r = name.getRdn();
+            String rdns[] = LDAPDN.explodeDN(dn, false);
+            String r = rdns[0];
 
             StringTokenizer st = new StringTokenizer(r, "+");
 
@@ -100,6 +99,7 @@ public class EntryUtil {
                 String s = LDAPDN.unescapeRDN(st.nextToken());
                 int index = s.indexOf("=");
                 String attribute = s.substring(0, index);
+                if (attribute.startsWith("null")) attribute = attribute.substring(4);
                 String value =  s.substring(index+1);
                 //log.debug(" - "+attribute+": "+value);
                 rdn.set(attribute, value);
@@ -118,13 +118,16 @@ public class EntryUtil {
         try {
             //log.debug("###### Getting Parent DN from "+dn);
 
-            LdapName name = new LdapName(dn);
-            if (name.size() == 1) return null;
+            String rdns[] = LDAPDN.explodeDN(dn, false);
+            if (rdns.length == 1) return null;
 
-            LdapName parent = (LdapName)name.getSuffix(name.size() - 1);
-            //log.debug(" - "+parent);
-            
-            return parent.toString();
+            StringBuffer sb = new StringBuffer();
+            for (int i=1; i<rdns.length; i++) {
+                if (sb.length() > 0) sb.append(",");
+                sb.append(rdns[i]);
+            }
+
+            return sb.toString();
 
         } catch (Exception e) {
             log.error(e.getMessage(), e);

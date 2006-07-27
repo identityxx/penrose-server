@@ -68,7 +68,7 @@ echo.
 
 set LOCALCLASSPATH=%PENROSE_HOME%\conf;%LOCALCLASSPATH%
 
-"%_JAVACMD%" %PENROSE_DEBUG_OPTS% %PENROSE_OPTS% -classpath "%LOCALCLASSPATH%" -Dpenrose.home="%PENROSE_HOME%" org.safehaus.penrose.schema.SchemaGenerator %PENROSE_ARGS% %PENROSE_CMD_LINE_ARGS%
+"%_JAVACMD%" %PENROSE_DEBUG_OPTS% %PENROSE_OPTS% -classpath "%LOCALCLASSPATH%" -Dpenrose.home="%PENROSE_HOME%" org.safehaus.penrose.ldap.SchemaGenerator %PENROSE_ARGS% %PENROSE_CMD_LINE_ARGS%
 goto end
 
 

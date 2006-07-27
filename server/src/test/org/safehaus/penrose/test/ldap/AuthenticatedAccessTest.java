@@ -15,13 +15,13 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
-package org.safehaus.penrose.ldap;
+package org.safehaus.penrose.test.ldap;
 
 import junit.framework.TestCase;
 import org.apache.log4j.*;
-import org.safehaus.penrose.config.PenroseConfig;
-import org.safehaus.penrose.config.DefaultPenroseConfig;
 import org.safehaus.penrose.server.PenroseServer;
+import org.safehaus.penrose.server.config.DefaultPenroseServerConfig;
+import org.safehaus.penrose.server.config.PenroseServerConfig;
 import org.ietf.ldap.*;
 
 import javax.naming.Context;
@@ -36,7 +36,7 @@ import java.util.Hashtable;
  */
 public class AuthenticatedAccessTest extends TestCase {
 
-    PenroseConfig penroseConfig;
+    PenroseServerConfig penroseServerConfig;
     PenroseServer penroseServer;
 
     static {
@@ -52,9 +52,9 @@ public class AuthenticatedAccessTest extends TestCase {
 
     public void setUp() throws Exception {
 
-        penroseConfig = new DefaultPenroseConfig();
+        penroseServerConfig = new DefaultPenroseServerConfig();
 
-        penroseServer = new PenroseServer(penroseConfig);
+        penroseServer = new PenroseServer(penroseServerConfig);
         penroseServer.start();
 
     }

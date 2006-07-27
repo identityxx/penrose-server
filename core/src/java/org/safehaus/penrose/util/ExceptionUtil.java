@@ -18,10 +18,12 @@
 package org.safehaus.penrose.util;
 
 import org.ietf.ldap.LDAPException;
-import org.apache.directory.shared.ldap.exception.LdapNamingException;
-import org.apache.directory.shared.ldap.message.ResultCodeEnum;
 
-import javax.naming.NamingException;
+import javax.naming.*;
+import javax.naming.directory.NoSuchAttributeException;
+import javax.naming.directory.InvalidAttributeIdentifierException;
+import javax.naming.directory.InvalidSearchFilterException;
+import javax.naming.directory.AttributeInUseException;
 
 /**
  * @author Endi S. Dewata
@@ -29,17 +31,20 @@ import javax.naming.NamingException;
 public class ExceptionUtil {
 
     public static int getReturnCode(Throwable t) {
-        ResultCodeEnum rc = ResultCodeEnum.getResultCode(t);
-        if (rc == null) return LDAPException.OPERATIONS_ERROR;
-        return rc.getValue();
-    }
 
-    public static void throwNamingException(int rc) throws NamingException {
-        throwNamingException(rc, null);
-    }
+        if (t instanceof CommunicationException) return LDAPException.PROTOCOL_ERROR;
+        if (t instanceof TimeLimitExceededException) return LDAPException.TIME_LIMIT_EXCEEDED;
+        if (t instanceof SizeLimitExceededException) return LDAPException.SIZE_LIMIT_EXCEEDED;
+        if (t instanceof AuthenticationException) return LDAPException.INVALID_CREDENTIALS;
+        if (t instanceof NoPermissionException) return LDAPException.INSUFFICIENT_ACCESS_RIGHTS;
+        if (t instanceof NoSuchAttributeException) return LDAPException.NO_SUCH_ATTRIBUTE;
+        if (t instanceof InvalidAttributeIdentifierException) return LDAPException.UNDEFINED_ATTRIBUTE_TYPE;
+        if (t instanceof InvalidSearchFilterException) return LDAPException.INAPPROPRIATE_MATCHING;
+        if (t instanceof AttributeInUseException) return LDAPException.ATTRIBUTE_OR_VALUE_EXISTS;
+        if (t instanceof NameNotFoundException) return LDAPException.NO_SUCH_OBJECT;
+        if (t instanceof NameAlreadyBoundException) return LDAPException.ENTRY_ALREADY_EXISTS;
+        if (t instanceof ContextNotEmptyException) return LDAPException.NOT_ALLOWED_ON_NONLEAF;
 
-    public static void throwNamingException(int rc, String message) throws NamingException {
-        ResultCodeEnum rce = ResultCodeEnum.getResultCodeEnum(rc);
-        throw new LdapNamingException(message, rce);
+        return LDAPException.OPERATIONS_ERROR;
     }
 }

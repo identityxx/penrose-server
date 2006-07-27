@@ -15,17 +15,19 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
-package org.safehaus.penrose.server;
+package org.safehaus.penrose.test.ldap;
 
 import junit.framework.TestCase;
 import org.apache.log4j.*;
-import org.safehaus.penrose.config.PenroseConfig;
-import org.safehaus.penrose.config.DefaultPenroseConfig;
 import org.safehaus.penrose.schema.SchemaConfig;
 import org.safehaus.penrose.partition.PartitionConfig;
 import org.safehaus.penrose.server.PenroseServer;
+import org.safehaus.penrose.server.config.DefaultPenroseServerConfig;
+import org.safehaus.penrose.server.config.PenroseServerConfig;
 import org.safehaus.penrose.ldap.PenroseLDAPService;
 import org.safehaus.penrose.service.ServiceManager;
+import org.safehaus.penrose.Penrose;
+import org.safehaus.penrose.config.PenroseConfig;
 
 import javax.naming.directory.DirContext;
 import javax.naming.directory.InitialDirContext;
@@ -40,7 +42,7 @@ import java.util.Hashtable;
  */
 public class LDAPServiceTest extends TestCase {
 
-    PenroseConfig penroseConfig;
+    PenroseServerConfig penroseServerConfig;
     PenroseServer penroseServer;
 
     public void setUp() throws Exception {
@@ -60,16 +62,10 @@ public class LDAPServiceTest extends TestCase {
         Logger logger = Logger.getLogger("org.safehaus.penrose");
         logger.setLevel(Level.INFO);
 
-        penroseConfig = new DefaultPenroseConfig();
-        penroseConfig.removeServiceConfig("JMX");
+        penroseServerConfig = new DefaultPenroseServerConfig();
+        penroseServerConfig.removeServiceConfig("JMX");
 
-        SchemaConfig schemaConfig = new SchemaConfig("samples/shop/schema/example.schema");
-        penroseConfig.addSchemaConfig(schemaConfig);
-
-        PartitionConfig partitionConfig = new PartitionConfig("example", "samples/shop/partition");
-        penroseConfig.addPartitionConfig(partitionConfig);
-
-        penroseServer = new PenroseServer(penroseConfig);
+        penroseServer = new PenroseServer(penroseServerConfig);
         penroseServer.start();
 
     }
@@ -205,6 +201,9 @@ public class LDAPServiceTest extends TestCase {
     public void search(int port) throws Exception {
 
         System.out.println("Searching at port "+port);
+
+        Penrose penrose = penroseServer.getPenrose();
+        PenroseConfig penroseConfig = penrose.getPenroseConfig();
 
         Hashtable env = new Hashtable();
         env.put(Context.INITIAL_CONTEXT_FACTORY, "com.sun.jndi.ldap.LdapCtxFactory");

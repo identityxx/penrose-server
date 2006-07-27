@@ -26,11 +26,9 @@ import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.server.PenroseServer;
 import org.safehaus.penrose.server.config.PenroseServerConfig;
 import org.safehaus.penrose.service.ServiceConfig;
-import org.safehaus.penrose.filter.FilterTool;
 import org.safehaus.penrose.session.PenroseSession;
 import org.safehaus.penrose.session.PenroseSearchResults;
 import org.safehaus.penrose.session.PenroseSearchControls;
-import org.safehaus.penrose.util.ExceptionUtil;
 import org.safehaus.penrose.mapping.EntryMapping;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.PartitionManager;
@@ -161,7 +159,7 @@ public class PenroseInterceptor extends BaseInterceptor {
 
             if (principalDn == null) {
                 if (!allowAnonymousAccess) {
-                    ExceptionUtil.throwNamingException(LDAPException.INSUFFICIENT_ACCESS_RIGHTS);
+                    ExceptionTool.throwNamingException(LDAPException.INSUFFICIENT_ACCESS_RIGHTS);
                 }
             } else {
                 session.setBindDn(principalDn.toString());
@@ -172,7 +170,7 @@ public class PenroseInterceptor extends BaseInterceptor {
             session.close();
 
             if (rc != LDAPException.SUCCESS) {
-                ExceptionUtil.throwNamingException(rc);
+                ExceptionTool.throwNamingException(rc);
             }
 
         } catch (NamingException e) {
@@ -217,7 +215,7 @@ public class PenroseInterceptor extends BaseInterceptor {
 
             if (principalDn == null) {
                 if (!allowAnonymousAccess) {
-                    ExceptionUtil.throwNamingException(LDAPException.INSUFFICIENT_ACCESS_RIGHTS);
+                    ExceptionTool.throwNamingException(LDAPException.INSUFFICIENT_ACCESS_RIGHTS);
                 }
             } else {
                 session.setBindDn(principalDn.toString());
@@ -228,7 +226,7 @@ public class PenroseInterceptor extends BaseInterceptor {
             session.close();
 
             if (rc != LDAPException.COMPARE_TRUE && rc != LDAPException.COMPARE_FALSE) {
-                ExceptionUtil.throwNamingException(rc);
+                ExceptionTool.throwNamingException(rc);
             }
 
             return rc == LDAPException.COMPARE_TRUE;
@@ -275,7 +273,7 @@ public class PenroseInterceptor extends BaseInterceptor {
 
             if (principalDn == null) {
                 if (!allowAnonymousAccess) {
-                    ExceptionUtil.throwNamingException(LDAPException.INSUFFICIENT_ACCESS_RIGHTS);
+                    ExceptionTool.throwNamingException(LDAPException.INSUFFICIENT_ACCESS_RIGHTS);
                 }
             } else {
                 session.setBindDn(principalDn.toString());
@@ -286,7 +284,7 @@ public class PenroseInterceptor extends BaseInterceptor {
             session.close();
 
             if (rc != LDAPException.SUCCESS) {
-                ExceptionUtil.throwNamingException(rc);
+                ExceptionTool.throwNamingException(rc);
             }
 
         } catch (NamingException e) {
@@ -365,7 +363,7 @@ public class PenroseInterceptor extends BaseInterceptor {
 
             if (principalDn == null) {
                 if (!allowAnonymousAccess) {
-                    ExceptionUtil.throwNamingException(LDAPException.INSUFFICIENT_ACCESS_RIGHTS);
+                    ExceptionTool.throwNamingException(LDAPException.INSUFFICIENT_ACCESS_RIGHTS);
                 }
             } else {
                 session.setBindDn(principalDn.toString());
@@ -435,7 +433,7 @@ public class PenroseInterceptor extends BaseInterceptor {
 
             if (principalDn == null) {
                 if (!allowAnonymousAccess) {
-                    ExceptionUtil.throwNamingException(LDAPException.INSUFFICIENT_ACCESS_RIGHTS);
+                    ExceptionTool.throwNamingException(LDAPException.INSUFFICIENT_ACCESS_RIGHTS);
                 }
             } else {
                 session.setBindDn(principalDn.toString());
@@ -501,7 +499,7 @@ public class PenroseInterceptor extends BaseInterceptor {
 
             if (principalDn == null) {
                 if (!allowAnonymousAccess) {
-                    ExceptionUtil.throwNamingException(LDAPException.INSUFFICIENT_ACCESS_RIGHTS);
+                    ExceptionTool.throwNamingException(LDAPException.INSUFFICIENT_ACCESS_RIGHTS);
                 }
             } else {
                 session.setBindDn(principalDn.toString());
@@ -524,13 +522,13 @@ public class PenroseInterceptor extends BaseInterceptor {
             session.close();
 
             if (rc != LDAPException.SUCCESS) {
-                ExceptionUtil.throwNamingException(rc);
+                ExceptionTool.throwNamingException(rc);
             }
 
             SearchResult result = (SearchResult)results.next();
 
             if (result == null) {
-                ExceptionUtil.throwNamingException(LDAPException.NO_SUCH_OBJECT);
+                ExceptionTool.throwNamingException(LDAPException.NO_SUCH_OBJECT);
             }
 
             return result.getAttributes();
@@ -575,7 +573,7 @@ public class PenroseInterceptor extends BaseInterceptor {
 
             if (principalDn == null) {
                 if (!allowAnonymousAccess) {
-                    ExceptionUtil.throwNamingException(LDAPException.INSUFFICIENT_ACCESS_RIGHTS);
+                    ExceptionTool.throwNamingException(LDAPException.INSUFFICIENT_ACCESS_RIGHTS);
                 }
             } else {
                 session.setBindDn(principalDn.toString());
@@ -598,7 +596,7 @@ public class PenroseInterceptor extends BaseInterceptor {
             session.close();
 
             if (rc != LDAPException.SUCCESS) {
-                ExceptionUtil.throwNamingException(rc);
+                ExceptionTool.throwNamingException(rc);
             }
 
             SearchResult result = (SearchResult)results.next();
@@ -658,7 +656,7 @@ public class PenroseInterceptor extends BaseInterceptor {
 
                         if (principalDn == null) {
                             if (!allowAnonymousAccess) {
-                                ExceptionUtil.throwNamingException(LDAPException.INSUFFICIENT_ACCESS_RIGHTS);
+                                ExceptionTool.throwNamingException(LDAPException.INSUFFICIENT_ACCESS_RIGHTS);
                             }
                         } else {
                             session.setBindDn(principalDn.toString());
@@ -732,7 +730,7 @@ public class PenroseInterceptor extends BaseInterceptor {
 
                 if (principalDn == null) {
                     if (!allowAnonymousAccess) {
-                        ExceptionUtil.throwNamingException(LDAPException.INSUFFICIENT_ACCESS_RIGHTS);
+                        ExceptionTool.throwNamingException(LDAPException.INSUFFICIENT_ACCESS_RIGHTS);
                     }
                 } else {
                     session.setBindDn(principalDn.toString());
@@ -810,7 +808,7 @@ public class PenroseInterceptor extends BaseInterceptor {
 
             if (principalDn == null) {
                 if (!allowAnonymousAccess) {
-                    ExceptionUtil.throwNamingException(LDAPException.INSUFFICIENT_ACCESS_RIGHTS);
+                    ExceptionTool.throwNamingException(LDAPException.INSUFFICIENT_ACCESS_RIGHTS);
                 }
             } else {
                 session.setBindDn(principalDn.toString());
@@ -821,7 +819,7 @@ public class PenroseInterceptor extends BaseInterceptor {
             session.close();
 
             if (rc != LDAPException.SUCCESS) {
-                ExceptionUtil.throwNamingException(rc);
+                ExceptionTool.throwNamingException(rc);
             }
 
         } catch (NamingException e) {
@@ -868,7 +866,7 @@ public class PenroseInterceptor extends BaseInterceptor {
 
             if (principalDn == null) {
                 if (!allowAnonymousAccess) {
-                    ExceptionUtil.throwNamingException(LDAPException.INSUFFICIENT_ACCESS_RIGHTS);
+                    ExceptionTool.throwNamingException(LDAPException.INSUFFICIENT_ACCESS_RIGHTS);
                 }
             } else {
                 session.setBindDn(principalDn.toString());
@@ -879,7 +877,7 @@ public class PenroseInterceptor extends BaseInterceptor {
             session.close();
 
             if (rc != LDAPException.SUCCESS) {
-                ExceptionUtil.throwNamingException(rc);
+                ExceptionTool.throwNamingException(rc);
             }
 
         } catch (NamingException e) {
@@ -926,7 +924,7 @@ public class PenroseInterceptor extends BaseInterceptor {
 
             if (principalDn == null) {
                 if (!allowAnonymousAccess) {
-                    ExceptionUtil.throwNamingException(LDAPException.INSUFFICIENT_ACCESS_RIGHTS);
+                    ExceptionTool.throwNamingException(LDAPException.INSUFFICIENT_ACCESS_RIGHTS);
                 }
             } else {
                 session.setBindDn(principalDn.toString());
@@ -937,7 +935,7 @@ public class PenroseInterceptor extends BaseInterceptor {
             session.close();
 
             if (rc != LDAPException.SUCCESS) {
-                ExceptionUtil.throwNamingException(rc);
+                ExceptionTool.throwNamingException(rc);
             }
 
         } catch (NamingException e) {
