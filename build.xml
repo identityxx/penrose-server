@@ -32,14 +32,6 @@
         <pathelement location="target/classes"/>
     </path>
 
-    <path id="project.classpath">
-        <fileset dir="svnant">
-            <include name="**/*.jar"/>
-        </fileset>
-    </path>
-
-    <taskdef resource="svntask.properties" classpathref="project.classpath"/>
-
     <target name="init">
         <condition property="isWindows">
             <os family="windows"/>
@@ -104,8 +96,17 @@
               <attribute name="Built-Date" value="${DSTAMP}"/>
             </manifest>
         </jar>
+        <jar jarfile="target/${product.name}-bin-${project.version}.jar">
+            <fileset dir="bin"/>
+        </jar>
+        <jar jarfile="target/${product.name}-conf-${project.version}.jar">
+            <fileset dir="conf"/>
+        </jar>
         <jar jarfile="target/${product.name}-samples-${project.version}.jar">
             <fileset dir="samples"/>
+        </jar>
+        <jar jarfile="target/${product.name}-schema-${project.version}.jar">
+            <fileset dir="schema"/>
         </jar>
     </target>
 
@@ -117,7 +118,8 @@
             classpathref="lib.path">
         </javadoc>
         <jar jarfile="target/${product.name}-docs-${project.version}.jar">
-            <fileset dir="target/javadoc"/>
+            <fileset dir="target" includes="javadoc/**"/>
+            <fileset dir="docs"/>
         </jar>
     </target>
 
@@ -164,8 +166,11 @@
         <copy todir="target/dist/conf/default">
             <fileset dir="conf"/>
         </copy>
-        <taskdef name="wrapper" classname="org.safehaus.penrose.ant.WrapperTask" classpath="target/${product.name}-tools-${project.version}.jar"/>
-        <wrapper file="target/dist/conf/default/wrapper.conf" dir="lib"/>
+        <taskdef
+            name="wrapper"
+            classname="org.safehaus.penrose.ant.WrapperTask"
+            classpath="target/${product.name}-tools-${project.version}.jar"/>
+        <wrapper file="target/dist/conf/default/wrapper.conf" dir="target/dist/lib" path="../lib"/>
         <copy todir="target/dist/conf">
             <fileset dir="target/dist/conf/default"/>
         </copy>
@@ -349,12 +354,6 @@
     <target name="clean" depends="init">
         <delete dir="dist" failonerror="false"/>
         <delete dir="target" failonerror="false"/>
-    </target>
-
-    <target name="update">
-        <svn>
-            <update dir="."/>
-        </svn> 
     </target>
 
 </project>
