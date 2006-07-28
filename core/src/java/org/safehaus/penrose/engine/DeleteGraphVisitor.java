@@ -93,7 +93,7 @@ public class DeleteGraphVisitor extends GraphVisitor {
 
         SourceConfig sourceConfig = partition.getSourceConfig(sourceMapping.getSourceName());
 
-        returnCode = engine.getConnector().delete(partition, sourceConfig, newSourceValues);
+        returnCode = engine.getConnector(sourceConfig).delete(partition, sourceConfig, newSourceValues);
         if (returnCode != LDAPException.SUCCESS) return;
 
         graphIterator.traverseEdges(node);

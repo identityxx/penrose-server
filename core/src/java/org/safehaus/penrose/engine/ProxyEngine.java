@@ -49,13 +49,13 @@ public class ProxyEngine extends Engine {
 
         entryCache.init();
 
-        log.debug("Initializing engine...");
-
         engineFilterTool      = new EngineFilterTool(this);
         loadEngine      = new LoadEngine(this);
         mergeEngine     = new MergeEngine(this);
         joinEngine      = new JoinEngine(this);
         transformEngine = new TransformEngine(this);
+
+        log.debug("Proxy engine initialized.");
     }
 
     public int bind(
@@ -80,7 +80,7 @@ public class ProxyEngine extends Engine {
         String targetDn = dn.substring(0, dn.length() - proxyDn.length());
         if (targetDn.endsWith(",")) targetDn = targetDn.substring(0, targetDn.length()-1);
 
-        String baseDn = sourceConfig.getParameter("baseDn");
+        String baseDn = sourceConfig.getParameter(LDAPAdapter.BASE_DN);
         targetDn = EntryUtil.append(targetDn, baseDn);
 
         log.debug("Binding via proxy "+sourceName+" as \""+targetDn+"\" with "+password);
@@ -113,7 +113,7 @@ public class ProxyEngine extends Engine {
         String targetDn = dn.substring(0, dn.length() - proxyDn.length());
         if (targetDn.endsWith(",")) targetDn = targetDn.substring(0, targetDn.length()-1);
 
-        String baseDn = sourceConfig.getParameter("baseDn");
+        String baseDn = sourceConfig.getParameter(LDAPAdapter.BASE_DN);
         targetDn = EntryUtil.append(targetDn, baseDn);
 
         log.debug("Modifying via proxy "+sourceName+" as \""+targetDn+"\"");
@@ -145,7 +145,7 @@ public class ProxyEngine extends Engine {
         String targetDn = dn.substring(0, dn.length() - proxyDn.length());
         if (targetDn.endsWith(",")) targetDn = targetDn.substring(0, targetDn.length()-1);
 
-        String baseDn = sourceConfig.getParameter("baseDn");
+        String baseDn = sourceConfig.getParameter(LDAPAdapter.BASE_DN);
         targetDn = EntryUtil.append(targetDn, baseDn);
 
         log.debug("Modifying via proxy "+sourceName+" as \""+targetDn+"\"");
@@ -177,7 +177,7 @@ public class ProxyEngine extends Engine {
         String targetDn = dn.substring(0, dn.length() - proxyDn.length());
         if (targetDn.endsWith(",")) targetDn = targetDn.substring(0, targetDn.length()-1);
 
-        String baseDn = sourceConfig.getParameter("baseDn");
+        String baseDn = sourceConfig.getParameter(LDAPAdapter.BASE_DN);
         targetDn = EntryUtil.append(targetDn, baseDn);
 
         log.debug("Renaming via proxy "+sourceName+" as \""+targetDn+"\"");
@@ -208,7 +208,7 @@ public class ProxyEngine extends Engine {
         String targetDn = dn.substring(0, dn.length() - proxyDn.length());
         if (targetDn.endsWith(",")) targetDn = targetDn.substring(0, targetDn.length()-1);
 
-        String baseDn = sourceConfig.getParameter("baseDn");
+        String baseDn = sourceConfig.getParameter(LDAPAdapter.BASE_DN);
         targetDn = EntryUtil.append(targetDn, baseDn);
 
         log.debug("Modifying via proxy "+sourceName+" as \""+targetDn+"\"");
@@ -294,7 +294,7 @@ public class ProxyEngine extends Engine {
         final String proxyDn = entryMapping.getDn();
         log.debug("Proxy DN: "+proxyDn);
 
-        final String proxyBaseDn = sourceConfig.getParameter("baseDn");
+        final String proxyBaseDn = sourceConfig.getParameter(LDAPAdapter.BASE_DN);
         log.debug("Proxy Base DN: "+proxyBaseDn);
 
 /*

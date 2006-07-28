@@ -18,6 +18,7 @@
 package org.safehaus.penrose.cache;
 
 import org.safehaus.penrose.connector.Connector;
+import org.safehaus.penrose.connector.JDBCAdapter;
 import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.PenroseFactory;
 import org.safehaus.penrose.partition.*;
@@ -44,8 +45,8 @@ public class CacheManager {
 
     public static void create(Penrose penrose) throws Exception {
         Connector connector = penrose.getConnector();
-        SourceCache sourceCache = connector.getSourceCache();
-        sourceCache.create();
+        SourceCacheManager sourceCacheManager = connector.getSourceCacheManager();
+        sourceCacheManager.create();
 
         Engine engine = penrose.getEngine();
         EntryCache entryCache = engine.getEntryCache();
@@ -54,8 +55,8 @@ public class CacheManager {
 
     public static void load(Penrose penrose) throws Exception {
         Connector connector = penrose.getConnector();
-        SourceCache sourceCache = connector.getSourceCache();
-        sourceCache.load();
+        SourceCacheManager sourceCacheManager = connector.getSourceCacheManager();
+        sourceCacheManager.load();
 
         Engine engine = penrose.getEngine();
         EntryCache entryCache = engine.getEntryCache();
@@ -69,8 +70,8 @@ public class CacheManager {
         entryCache.clean();
 
         Connector connector = penrose.getConnector();
-        SourceCache sourceCache = connector.getSourceCache();
-        sourceCache.clean();
+        SourceCacheManager sourceCacheManager = connector.getSourceCacheManager();
+        sourceCacheManager.clean();
     }
 
     public static void drop(Penrose penrose) throws Exception {
@@ -80,8 +81,8 @@ public class CacheManager {
         entryCache.drop();
 
         Connector connector = penrose.getConnector();
-        SourceCache sourceCache = connector.getSourceCache();
-        sourceCache.drop();
+        SourceCacheManager sourceCacheManager = connector.getSourceCacheManager();
+        sourceCacheManager.drop();
     }
 
     public static void changeTable(Penrose penrose) throws Exception {
@@ -101,7 +102,7 @@ public class CacheManager {
 
                 if (!"JDBC".equals(connectionConfig.getAdapterName())) continue;
 
-                String tableName = sourceConfig.getParameter("tableName");
+                String tableName = sourceConfig.getParameter(JDBCAdapter.TABLE_NAME);
                 Collection primaryKeyFieldConfigs = sourceConfig.getPrimaryKeyFieldConfigs();
 
                 generateCreateTable(tableName, primaryKeyFieldConfigs);

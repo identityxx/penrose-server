@@ -45,6 +45,22 @@ public class PersistentEntryCache extends EntryCache {
         connectionName = getParameter(CONNECTION);
     }
 
+    public EntryCacheStorage createCacheStorage(EntryMapping entryMapping) throws Exception {
+
+        Partition partition = partitionManager.getPartition(entryMapping);
+
+        EntryCacheStorage cacheStorage = new PersistentEntryCacheStorage();
+        cacheStorage.setCacheConfig(getCacheConfig());
+        cacheStorage.setConnectionManager(connectionManager);
+        cacheStorage.setPartition(partition);
+        cacheStorage.setEntryMapping(entryMapping);
+        cacheStorage.setThreadManager(threadManager);
+
+        cacheStorage.init();
+
+        return cacheStorage;
+    }
+
     public Connection getConnection() throws Exception {
         return (Connection)getConnectionManager().openConnection(connectionName);
     }
@@ -119,22 +135,6 @@ public class PersistentEntryCache extends EntryCache {
             if (ps != null) try { ps.close(); } catch (Exception e) {}
             if (con != null) try { con.close(); } catch (Exception e) {}
         }
-    }
-
-    public EntryCacheStorage createCacheStorage(EntryMapping entryMapping) throws Exception {
-
-        Partition partition = partitionManager.getPartition(entryMapping);
-
-        EntryCacheStorage cacheStorage = new PersistentEntryCacheStorage();
-        cacheStorage.setCacheConfig(getCacheConfig());
-        cacheStorage.setConnectionManager(connectionManager);
-        cacheStorage.setPartition(partition);
-        cacheStorage.setEntryMapping(entryMapping);
-        cacheStorage.setThreadManager(threadManager);
-
-        cacheStorage.init();
-
-        return cacheStorage;
     }
 
     public void load(Penrose penrose, Partition partition) throws Exception {

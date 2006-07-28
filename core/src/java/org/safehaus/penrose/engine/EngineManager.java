@@ -19,6 +19,7 @@ package org.safehaus.penrose.engine;
 
 import org.safehaus.penrose.connector.Connector;
 import org.safehaus.penrose.connector.ConnectionManager;
+import org.safehaus.penrose.connector.ConnectorManager;
 import org.safehaus.penrose.interpreter.InterpreterManager;
 import org.safehaus.penrose.schema.SchemaManager;
 import org.safehaus.penrose.config.PenroseConfig;
@@ -42,6 +43,7 @@ public class EngineManager {
     private PenroseConfig penroseConfig;
     private SchemaManager schemaManager;
     private InterpreterManager interpreterManager;
+    private ConnectorManager connectorManager;
     private ConnectionManager connectionManager;
     private PartitionManager partitionManager;
     private ThreadManager threadManager;
@@ -49,7 +51,7 @@ public class EngineManager {
     public EngineManager() {
     }
 
-    public void init(EngineConfig engineConfig, Connector connector) throws Exception {
+    public void init(EngineConfig engineConfig) throws Exception {
 
         log.debug("Initializing engine "+engineConfig.getName()+".");
 
@@ -61,7 +63,7 @@ public class EngineManager {
         engine.setPenroseConfig(penroseConfig);
         engine.setSchemaManager(schemaManager);
         engine.setInterpreterFactory(interpreterManager);
-        engine.setConnector(connector);
+        engine.setConnectorManager(connectorManager);
         engine.setConnectionManager(connectionManager);
         engine.setPartitionManager(partitionManager);
         engine.setThreadManager(threadManager);
@@ -139,5 +141,13 @@ public class EngineManager {
 
     public void setThreadManager(ThreadManager threadManager) {
         this.threadManager = threadManager;
+    }
+
+    public ConnectorManager getConnectorManager() {
+        return connectorManager;
+    }
+
+    public void setConnectorManager(ConnectorManager connectorManager) {
+        this.connectorManager = connectorManager;
     }
 }

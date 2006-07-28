@@ -304,7 +304,7 @@ public class SearchEngine {
             }
         });
 
-        engine.getConnector().search(partition, sourceConfig, newFilter, sr);
+        engine.getConnector(sourceConfig).search(partition, sourceConfig, newFilter, sr);
     }
 
     public void searchSources(

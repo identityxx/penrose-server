@@ -54,6 +54,8 @@ public class ModuleManager implements ModuleManagerMBean {
         
         if (!moduleConfig.isEnabled()) return;
 
+        log.debug("Initializing module "+moduleConfig.getName());
+        
         Class clazz = Class.forName(moduleConfig.getModuleClass());
         module = (Module)clazz.newInstance();
 

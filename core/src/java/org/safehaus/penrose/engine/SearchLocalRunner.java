@@ -111,7 +111,7 @@ public class SearchLocalRunner extends GraphVisitor {
         SourceConfig sourceConfig = partition.getSourceConfig(sourceMapping.getSourceName());
 
         PenroseSearchResults tmp = new PenroseSearchResults();
-        engine.getConnector().search(partition, sourceConfig, filter, tmp);
+        engine.getConnector(sourceConfig).search(partition, sourceConfig, filter, tmp);
 
         Collection list = new ArrayList();
         for (Iterator i=tmp.iterator(); i.hasNext(); ) {

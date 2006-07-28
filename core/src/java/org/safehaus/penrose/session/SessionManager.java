@@ -21,6 +21,7 @@ import java.util.*;
 
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
+import org.safehaus.penrose.config.PenroseConfig;
 
 public class SessionManager implements SessionManagerMBean {
 
@@ -28,16 +29,13 @@ public class SessionManager implements SessionManagerMBean {
 
     public final static String SESSION_ID_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890";
 
+    private PenroseConfig penroseConfig;
     private SessionConfig sessionConfig;
 
     public Map sessions = new LinkedHashMap();
 
     private int maxSessions;
     private int maxIdleTime; // minutes
-
-    public SessionManager(SessionConfig sessionConfig) {
-        this.sessionConfig = sessionConfig;
-    }
 
     public void start() throws Exception {
         String s = sessionConfig.getParameter(SessionConfig.MAX_SESSIONS);
@@ -149,5 +147,22 @@ public class SessionManager implements SessionManagerMBean {
 
     public void setSessionManagerConfig(SessionConfig sessionConfig) {
         this.sessionConfig = sessionConfig;
+    }
+
+    public SessionConfig getSessionConfig() {
+        return sessionConfig;
+    }
+
+    public void setSessionConfig(SessionConfig sessionConfig) {
+        this.sessionConfig = sessionConfig;
+    }
+
+    public PenroseConfig getPenroseConfig() {
+        return penroseConfig;
+    }
+
+    public void setPenroseConfig(PenroseConfig penroseConfig) {
+        this.penroseConfig = penroseConfig;
+        this.sessionConfig = penroseConfig.getSessionConfig();
     }
 }

@@ -18,8 +18,11 @@
 package org.safehaus.penrose.connector;
 
 import org.safehaus.penrose.partition.PartitionManager;
+import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.thread.ThreadManager;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.TreeMap;
 import java.util.Map;
@@ -30,6 +33,8 @@ import java.util.Iterator;
  */
 public class ConnectorManager {
 
+    Logger log = LoggerFactory.getLogger(getClass());
+    
     Map connectors = new TreeMap();
 
     private PenroseConfig penroseConfig;
@@ -42,6 +47,8 @@ public class ConnectorManager {
 
     public void init(ConnectorConfig connectorConfig) throws Exception {
 
+        log.debug("Initializing connector "+connectorConfig.getName());
+
         Class clazz = Class.forName(connectorConfig.getConnectorClass());
         Connector connector = (Connector)clazz.newInstance();
 
@@ -49,7 +56,6 @@ public class ConnectorManager {
         connector.setPenroseConfig(penroseConfig);
         connector.setConnectionManager(connectionManager);
         connector.setPartitionManager(partitionManager);
-        connector.setThreadManager(threadManager);
         
         connector.init();
 
@@ -57,7 +63,7 @@ public class ConnectorManager {
     }
 
     public Connector getConnector(String name) {
-        return (Connector)connectors.get(name);
+        return (Connector)connectors.get(name == null ? "DEFAULT" : name);
     }
 
     public void clear() {
@@ -67,6 +73,12 @@ public class ConnectorManager {
     public void start() throws Exception {
         for (Iterator i=connectors.values().iterator(); i.hasNext(); ) {
             Connector connector = (Connector)i.next();
+
+            for (Iterator j=partitionManager.getPartitions().iterator(); j.hasNext(); ) {
+                Partition partition = (Partition)j.next();
+                connector.addPartition(partition);
+            }
+
             connector.start();
         }
     }

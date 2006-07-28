@@ -349,7 +349,7 @@ public class PenroseConfig implements PenroseConfigMBean, Cloneable {
         adapterConfigs.clear();
         partitionConfigs.clear();
         engineConfigs.clear();
-        handlerConfigs.clear();
+        //handlerConfigs.clear();
     }
 
     public Object clone() {

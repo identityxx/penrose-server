@@ -210,6 +210,8 @@ public class PenroseSession {
         results.addListener(new PipelineAdapter() {
             public void pipelineClosed(PipelineEvent event) {
                 try {
+                    lastActivityDate.setTime(System.currentTimeMillis());
+
                     SearchEvent afterSearchEvent = new SearchEvent(session, SearchEvent.AFTER_SEARCH, session, baseDn, filter, sc, results);
                     afterSearchEvent.setReturnCode(results.getReturnCode());
                     eventManager.postEvent(baseDn, afterSearchEvent);

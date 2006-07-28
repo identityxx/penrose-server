@@ -124,18 +124,10 @@ public class EntryCacheStorage {
         return false;
     }
 
-    /**
-     * @return DNs (Collection of String)
-     */
-    public PenroseSearchResults search(String baseDn, Filter filter, PenroseSearchResults results) throws Exception {
-        return null;
+    public void search(String baseDn, Filter filter, PenroseSearchResults results) throws Exception {
     }
 
-    /**
-     * @return DNs (Collection of Strings)
-     */
-    public Collection search(SourceConfig sourceConfig, Row filter) throws Exception {
-        return null;
+    public void search(SourceConfig sourceConfig, Row filter, PenroseSearchResults results) throws Exception {
     }
 
     public void add(Filter filter, String dn) throws Exception { }

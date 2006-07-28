@@ -943,30 +943,7 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
         return false;
     }
 
-    /**
-     * @return DNs (Collection of Strings)
-     */
-    public PenroseSearchResults search(final String baseDn, final Filter filter, final PenroseSearchResults results) throws Exception {
-
-        threadManager.execute(new Runnable() {
-            public void run() {
-                try {
-                    searchBackground(baseDn, filter, results);
-
-                } catch (Exception e) {
-                    log.error(e.getMessage(), e);
-                    results.setReturnCode(LDAPException.OPERATIONS_ERROR);
-
-                } finally {
-                    results.close();
-                }
-            }
-        });
-
-        return results;
-    }
-
-    public void searchBackground(String baseDn, Filter filter, PenroseSearchResults results) throws Exception {
+    public void search(final String baseDn, final Filter filter, final PenroseSearchResults results) throws Exception {
 
         log.debug(Formatter.displaySeparator(80));
         log.debug(Formatter.displayLine("Searching entry cache for "+entryMapping.getDn(), 80));
@@ -1064,19 +1041,18 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
             log.debug(Formatter.displaySeparator(80));
 
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
+            results.setReturnCode(LDAPException.OPERATIONS_ERROR);
 
         } finally {
             if (rs != null) try { rs.close(); } catch (Exception e) {}
             if (ps != null) try { ps.close(); } catch (Exception e) {}
             if (con != null) try { con.close(); } catch (Exception e) {}
+            results.close();
         }
     }
 
-    /**
-     * @return DNs (Collection of Strings)
-     */
-    public Collection search(SourceConfig sourceConfig, Row filter) throws Exception {
+    public void search(SourceConfig sourceConfig, Row filter, PenroseSearchResults results) throws Exception {
 
         StringBuffer tableNames = new StringBuffer();
         tableNames.append("penrose_"+mappingId+"_entries t");
@@ -1134,8 +1110,6 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
         PreparedStatement ps = null;
         ResultSet rs = null;
 
-        Collection results = new ArrayList();
-
         try {
             con = getConnection();
 
@@ -1177,15 +1151,15 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
             }
 
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
+            results.setReturnCode(LDAPException.OPERATIONS_ERROR);
 
         } finally {
             if (rs != null) try { rs.close(); } catch (Exception e) {}
             if (ps != null) try { ps.close(); } catch (Exception e) {}
             if (con != null) try { con.close(); } catch (Exception e) {}
+            results.close();
         }
-
-        return results;
     }
 
     public Map getExpired() throws Exception {

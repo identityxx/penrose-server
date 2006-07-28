@@ -25,6 +25,8 @@ import org.safehaus.penrose.session.SessionManager;
 import org.safehaus.penrose.module.ModuleManager;
 import org.safehaus.penrose.partition.PartitionManager;
 import org.safehaus.penrose.Penrose;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.TreeMap;
 import java.util.Map;
@@ -35,6 +37,8 @@ import java.util.Iterator;
  */
 public class HandlerManager {
 
+    Logger log = LoggerFactory.getLogger(getClass());
+    
     Map handlers = new TreeMap();
 
     private Penrose penrose;
@@ -50,6 +54,9 @@ public class HandlerManager {
     }
 
     public void init(HandlerConfig handlerConfig, EngineManager engineManager) throws Exception {
+
+        log.debug("Initializing handler.");
+
         Handler handler = new Handler();
         handler.setPenroseConfig(penroseConfig);
         handler.setSessionManager(sessionManager);

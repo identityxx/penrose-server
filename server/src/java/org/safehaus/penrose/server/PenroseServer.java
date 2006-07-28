@@ -22,13 +22,10 @@ import java.io.File;
 
 import org.apache.log4j.*;
 import org.apache.log4j.xml.DOMConfigurator;
-import org.safehaus.penrose.config.PenroseConfig;
-import org.safehaus.penrose.config.PenroseConfigReader;
-import org.safehaus.penrose.config.PenroseServerConfig;
 import org.safehaus.penrose.service.ServiceManager;
 import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.PenroseFactory;
-import org.safehaus.penrose.config.PenroseServerConfigReader;
+import org.safehaus.penrose.config.*;
 import sun.misc.Signal;
 import sun.misc.SignalHandler;
 
@@ -48,13 +45,18 @@ public class PenroseServer implements SignalHandler {
     private ServiceManager serviceManager;
 
     public PenroseServer() throws Exception {
-        this((String)null);
+
+        penroseServerConfig = new PenroseServerConfig();
+        loadConfig();
+
+        init();
     }
 
     public PenroseServer(String home) throws Exception {
-        PenroseServerConfigReader reader = new PenroseServerConfigReader((home == null ? "" : home+File.separator)+"conf"+File.separator+"server.xml");
-        penroseServerConfig = reader.read();
+
+        penroseServerConfig = new PenroseServerConfig();
         penroseServerConfig.setHome(home);
+        loadConfig();
 
         init();
     }
@@ -63,6 +65,15 @@ public class PenroseServer implements SignalHandler {
         this.penroseServerConfig = penroseServerConfig;
 
         init();
+    }
+
+    public void loadConfig() throws Exception {
+        String home = penroseServerConfig.getHome();
+
+        penroseServerConfig.clear();
+
+        PenroseServerConfigReader reader = new PenroseServerConfigReader((home == null ? "" : home+File.separator)+"conf"+File.separator+"server.xml");
+        reader.read(penroseServerConfig);
     }
 
     public void init() throws Exception {
@@ -74,11 +85,10 @@ public class PenroseServer implements SignalHandler {
         }
 
         String home = penroseServerConfig.getHome();
-        PenroseConfigReader reader = new PenroseConfigReader((home == null ? "" : home+File.separator)+"conf"+File.separator+"penrose.xml");
-        penroseConfig = reader.read();
 
         PenroseFactory penroseFactory = PenroseFactory.getInstance();
-        penrose = penroseFactory.createPenrose(penroseConfig);
+        penrose = penroseFactory.createPenrose(home);
+        penroseConfig = penrose.getPenroseConfig();
 
         serviceManager = new ServiceManager();
         serviceManager.setPenroseServer(this);
@@ -193,13 +203,21 @@ public class PenroseServer implements SignalHandler {
     }
 
     public void reload() throws Exception {
-        penrose.reload();
+
+        loadConfig();
 
         serviceManager.clear();
         serviceManager.load(penroseServerConfig.getServiceConfigs());
+
+        penrose.reload();
     }
 
     public void store() throws Exception {
+
+        String home = penroseServerConfig.getHome();
+        PenroseServerConfigWriter writer = new PenroseServerConfigWriter((home == null ? "" : home+File.separator)+"conf"+File.separator+"server.xml");
+        writer.write(penroseServerConfig);
+
         penrose.store();
     }
     

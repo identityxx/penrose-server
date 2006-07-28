@@ -75,14 +75,13 @@ public class PenroseBackend implements Backend {
 
     public int initImpl() throws Exception {
 
-        PenroseServerConfigReader reader = new PenroseServerConfigReader((home == null ? "" : home+ File.separator)+"conf"+File.separator+"server.xml");
-        PenroseServerConfig penroseServerConfig = reader.read();
-        penroseServerConfig.setHome(home);
+        penroseServer = new PenroseServer(home);
+
+        PenroseServerConfig penroseServerConfig = penroseServer.getPenroseServerConfig();
 
         ServiceConfig ldapServiceConfig = penroseServerConfig.getServiceConfig("LDAP");
         ldapServiceConfig.setEnabled(false);
 
-        penroseServer = new PenroseServer(penroseServerConfig);
         penroseServer.start();
 
         return LDAPException.SUCCESS;

@@ -23,12 +23,17 @@ public class PenroseServerConfigReader implements EntityResolver {
     Reader reader;
 
     public PenroseServerConfigReader(String filename) throws Exception {
-        this(new FileReader(filename));
+        log.debug("Loading Penrose Server configuration: "+filename);
+        init(new FileReader(filename));
     }
 
-    public PenroseServerConfigReader(Reader reader) {
-        this.reader = reader;
+    public PenroseServerConfigReader(Reader reader) throws Exception {
+        init(reader);
+    }
 
+    public void init(Reader reader) throws Exception {
+        this.reader = reader;
+        
         ClassLoader cl = getClass().getClassLoader();
         serverDtdUrl = cl.getResource("org/safehaus/penrose/config/server.dtd");
         //log.debug("Server DTD URL: "+serverDtdUrl);
@@ -41,6 +46,7 @@ public class PenroseServerConfigReader implements EntityResolver {
     }
 
     public void read(PenroseServerConfig penroseServerConfig) throws Exception {
+
         ClassLoader cl = getClass().getClassLoader();
         URL url = cl.getResource("org/safehaus/penrose/config/server-digester-rules.xml");
 

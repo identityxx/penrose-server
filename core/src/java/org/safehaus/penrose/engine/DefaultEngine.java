@@ -70,8 +70,6 @@ public class DefaultEngine extends Engine {
 
         entryCache.init();
 
-        log.debug("Initializing engine...");
-
         engineFilterTool      = new EngineFilterTool(this);
         addEngine       = new AddEngine(this);
         deleteEngine    = new DeleteEngine(this);
@@ -82,6 +80,8 @@ public class DefaultEngine extends Engine {
         mergeEngine     = new MergeEngine(this);
         joinEngine      = new JoinEngine(this);
         transformEngine = new TransformEngine(this);
+
+        log.debug("Default engine initialized.");
     }
 
     public int bind(Partition partition, Entry entry, String password) throws Exception {
@@ -116,7 +116,7 @@ public class DefaultEngine extends Engine {
 
                 log.debug("Bind to "+source.getName()+" as "+pk+".");
 
-                int rc = connector.bind(partition, sourceConfig, entryMapping, pk, password);
+                int rc = getConnector(sourceConfig).bind(partition, sourceConfig, entryMapping, pk, password);
                 if (rc == LDAPException.SUCCESS) return rc;
             }
         }

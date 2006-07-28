@@ -40,7 +40,6 @@ public class JDBCCache {
 
     private ConnectionManager connectionManager;
     private String connectionName;
-    CacheConfig cacheConfig;
     SourceConfig sourceConfig;
 
     private String tableName;
@@ -50,11 +49,9 @@ public class JDBCCache {
 
     public JDBCCache(
             String tableName,
-            CacheConfig cacheConfig,
             SourceConfig sourceConfig) {
 
         this.tableName = tableName;
-        this.cacheConfig = cacheConfig;
         this.sourceConfig = sourceConfig;
     }
 

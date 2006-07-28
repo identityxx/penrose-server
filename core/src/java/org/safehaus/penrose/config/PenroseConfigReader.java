@@ -40,10 +40,15 @@ public class PenroseConfigReader implements EntityResolver {
     Reader reader;
 
     public PenroseConfigReader(String filename) throws Exception {
-        this(new FileReader(filename));
+        log.debug("Loading Penrose configuration: "+filename);
+        init(new FileReader(filename));
     }
 
-    public PenroseConfigReader(Reader reader) {
+    public PenroseConfigReader(Reader reader) throws Exception {
+        init(reader);
+    }
+
+    public void init(Reader reader) throws Exception {
         this.reader = reader;
 
         ClassLoader cl = getClass().getClassLoader();

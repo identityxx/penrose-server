@@ -25,6 +25,8 @@ import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.PartitionManager;
 import org.safehaus.penrose.partition.SourceConfig;
 import org.safehaus.penrose.Penrose;
+import org.safehaus.penrose.pipeline.PipelineAdapter;
+import org.safehaus.penrose.pipeline.PipelineEvent;
 import org.safehaus.penrose.thread.ThreadManager;
 import org.safehaus.penrose.session.PenroseSearchResults;
 import org.safehaus.penrose.connector.ConnectionManager;
@@ -53,6 +55,21 @@ public class EntryCache {
     public Map caches = new TreeMap();
     public Collection listeners = new ArrayList();
 
+    public EntryCacheStorage createCacheStorage(EntryMapping entryMapping) throws Exception {
+
+        Partition partition = partitionManager.getPartition(entryMapping);
+
+        EntryCacheStorage cacheStorage = new EntryCacheStorage();
+        cacheStorage.setCacheConfig(cacheConfig);
+        cacheStorage.setConnectionManager(connectionManager);
+        cacheStorage.setPartition(partition);
+        cacheStorage.setEntryMapping(entryMapping);
+
+        cacheStorage.init();
+
+        return cacheStorage;
+    }
+
     public void addListener(EntryCacheListener listener) {
         listeners.add(listener);
     }
@@ -70,21 +87,6 @@ public class EntryCache {
     }
 
     public void init() throws Exception {
-    }
-
-    public EntryCacheStorage createCacheStorage(EntryMapping entryMapping) throws Exception {
-
-        Partition partition = partitionManager.getPartition(entryMapping);
-
-        EntryCacheStorage cacheStorage = new EntryCacheStorage();
-        cacheStorage.setCacheConfig(cacheConfig);
-        cacheStorage.setConnectionManager(connectionManager);
-        cacheStorage.setPartition(partition);
-        cacheStorage.setEntryMapping(entryMapping);
-
-        cacheStorage.init();
-
-        return cacheStorage;
     }
 
     public EntryCacheStorage getCacheStorage(EntryMapping entryMapping) throws Exception {
@@ -112,8 +114,8 @@ public class EntryCache {
         getCacheStorage(entryMapping).search(null, (Filter)null, results);
     }
 
-    public Collection search(EntryMapping entryMapping, SourceConfig sourceConfig, Row filter) throws Exception {
-        return getCacheStorage(entryMapping).search(sourceConfig, filter);
+    public void search(EntryMapping entryMapping, SourceConfig sourceConfig, Row filter, PenroseSearchResults results) throws Exception {
+        getCacheStorage(entryMapping).search(sourceConfig, filter, results);
     }
 
     public boolean contains(EntryMapping entryMapping, String parentDn, Filter filter) throws Exception {
@@ -241,26 +243,35 @@ public class EntryCache {
         }
     }
 
-    public void clean(Partition partition, Collection entryDefinitions) throws Exception {
+    public void clean(
+            final Partition partition,
+            final Collection entryDefinitions
+    ) throws Exception {
 
         for (Iterator i=entryDefinitions.iterator(); i.hasNext(); ) {
-            EntryMapping entryMapping = (EntryMapping)i.next();
+            final EntryMapping entryMapping = (EntryMapping)i.next();
+
+            Collection children = partition.getChildren(entryMapping);
+            clean(partition, children);
 
             EntryCacheStorage entryCacheStorage = getCacheStorage(entryMapping);
             if (!entryCacheStorage.contains(null, (Filter)null)) continue;
 
             PenroseSearchResults dns = new PenroseSearchResults();
-            dns = entryCacheStorage.search(null, (Filter)null, dns);
 
-            if (dns == null) continue;
+            dns.addListener(new PipelineAdapter() {
+                public void objectAdded(PipelineEvent event) {
+                    try {
+                        String dn = (String)event.getObject();
+                        remove(partition, entryMapping, dn);
 
-            Collection children = partition.getChildren(entryMapping);
-            clean(partition, children);
+                    } catch (Exception e) {
+                        log.debug(e.getMessage(), e);
+                    }
+                }
+            });
 
-            for (Iterator j=dns.iterator(); j.hasNext(); ) {
-                String dn = (String)j.next();
-                remove(partition, entryMapping, dn);
-            }
+            entryCacheStorage.search(null, (Filter)null, dns);
         }
     }
 

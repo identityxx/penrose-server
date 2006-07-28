@@ -23,8 +23,10 @@ import org.safehaus.penrose.interpreter.InterpreterManager;
 import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.connector.Connector;
 import org.safehaus.penrose.connector.ConnectionManager;
+import org.safehaus.penrose.connector.ConnectorManager;
 import org.safehaus.penrose.partition.PartitionManager;
 import org.safehaus.penrose.partition.Partition;
+import org.safehaus.penrose.partition.SourceConfig;
 import org.safehaus.penrose.cache.EntryCache;
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.graph.Graph;
@@ -54,7 +56,7 @@ public abstract class Engine {
     public PenroseConfig penroseConfig;
     public SchemaManager schemaManager;
     public InterpreterManager interpreterManager;
-    public Connector connector;
+    private ConnectorManager connectorManager;
     public ConnectionManager connectionManager;
     public PartitionManager partitionManager;
     public EntryCache entryCache;
@@ -63,6 +65,7 @@ public abstract class Engine {
 
     ThreadManager threadManager;
     public EngineFilterTool engineFilterTool;
+
     private FilterTool filterTool;
 
     public Map locks = new HashMap();
@@ -77,6 +80,9 @@ public abstract class Engine {
     Analyzer analyzer;
 
     public void init() throws Exception {
+        filterTool = new FilterTool();
+        filterTool.setSchemaManager(schemaManager);
+
         analyzer = new Analyzer();
         analyzer.setPartitionManager(partitionManager);
         analyzer.setInterpreterManager(interpreterManager);
@@ -110,12 +116,9 @@ public abstract class Engine {
         this.interpreterManager = interpreterManager;
     }
 
-    public Connector getConnector() {
-        return connector;
-    }
-
-    public void setConnector(Connector connector) {
-        this.connector = connector;
+    public Connector getConnector(SourceConfig sourceConfig) {
+        String connectorName = sourceConfig.getParameter("connectorName");
+        return connectorManager.getConnector(connectorName);
     }
 
     public ConnectionManager getConnectionManager() {
@@ -222,9 +225,6 @@ public abstract class Engine {
     }
 
     public void start() throws Exception {
-        filterTool = new FilterTool();
-        filterTool.setSchemaManager(schemaManager);
-
     }
 
     public void stop() throws Exception {
@@ -793,6 +793,14 @@ public abstract class Engine {
 
     public void setFilterTool(FilterTool filterTool) {
         this.filterTool = filterTool;
+    }
+
+    public ConnectorManager getConnectorManager() {
+        return connectorManager;
+    }
+
+    public void setConnectorManager(ConnectorManager connectorManager) {
+        this.connectorManager = connectorManager;
     }
 }
 

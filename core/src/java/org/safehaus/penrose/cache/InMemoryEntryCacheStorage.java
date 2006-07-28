@@ -85,10 +85,7 @@ public class InMemoryEntryCacheStorage extends EntryCacheStorage {
         return queryMap.containsKey(key);
     }
 
-    /**
-     * @return DNs (Collection of String)
-     */
-    public PenroseSearchResults search(String baseDn, Filter filter, PenroseSearchResults results) throws Exception {
+    public void search(String baseDn, Filter filter, PenroseSearchResults results) throws Exception {
 
         //log.debug("Searching entry filter cache for "+filter);
         //log.debug("filter cache: "+queryMap.keySet());
@@ -98,7 +95,6 @@ public class InMemoryEntryCacheStorage extends EntryCacheStorage {
         Collection dns = (Collection)queryMap.get(key);
         if (dns == null) {
             //log.debug("No filter cache found.");
-            return null;
         }
 
         if (baseDn == null) {
@@ -117,22 +113,12 @@ public class InMemoryEntryCacheStorage extends EntryCacheStorage {
             //log.debug("Filter cache has expired.");
             queryMap.remove(key);
             queryExpirationMap.remove(key);
-            return null;
         }
 
         results.close();
-
-        //log.debug("Returning "+results.size()+" entry(s).");
-
-        return results;
     }
 
-    /**
-     * @return DNs (Collection of Strings)
-     */
-    public Collection search(SourceConfig sourceConfig, Row filter) throws Exception {
-
-        Collection results = new ArrayList();
+    public void search(SourceConfig sourceConfig, Row filter, PenroseSearchResults results) throws Exception {
 
         for (Iterator i=dataMap.keySet().iterator(); i.hasNext(); ) {
             String dn = (String)i.next();
@@ -147,7 +133,7 @@ public class InMemoryEntryCacheStorage extends EntryCacheStorage {
             results.add(dn);
         }
 
-        return results;
+        results.close();
     }
 
     public void add(Filter filter, String dn) throws Exception {

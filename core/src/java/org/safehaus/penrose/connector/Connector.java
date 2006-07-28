@@ -21,7 +21,7 @@ import org.safehaus.penrose.session.PenroseSearchResults;
 import org.safehaus.penrose.session.PenroseSearchControls;
 import org.safehaus.penrose.partition.*;
 import org.safehaus.penrose.cache.CacheConfig;
-import org.safehaus.penrose.cache.SourceCache;
+import org.safehaus.penrose.cache.SourceCacheManager;
 import org.safehaus.penrose.engine.TransformEngine;
 import org.safehaus.penrose.config.*;
 import org.safehaus.penrose.thread.MRSWLock;
@@ -49,15 +49,14 @@ public class Connector {
 
     static Logger log = LoggerFactory.getLogger(Connector.class);
 
-    public final static String DEFAULT_CACHE_CLASS = SourceCache.class.getName();
+    public final static String DEFAULT_CACHE_CLASS = SourceCacheManager.class.getName();
 
     private PenroseConfig penroseConfig;
     private ConnectorConfig connectorConfig;
     private ConnectionManager connectionManager;
     private PartitionManager partitionManager;
-    private SourceCache sourceCache;
+    private SourceCacheManager sourceCacheManager;
 
-    private ThreadManager threadManager;
     private boolean stopping = false;
 
     private Map locks = new HashMap();
@@ -72,25 +71,14 @@ public class Connector {
 
         log.debug("Initializing source cache "+cacheClass);
         Class clazz = Class.forName(cacheClass);
-        sourceCache = (SourceCache)clazz.newInstance();
+        sourceCacheManager = (SourceCacheManager)clazz.newInstance();
 
-        sourceCache.setCacheConfig(cacheConfig);
-        sourceCache.setConnector(this);
-        sourceCache.setPenroseConfig(penroseConfig);
-        sourceCache.setConnectionManager(connectionManager);
-        sourceCache.setPartitionManager(partitionManager);
-        sourceCache.setThreadManager(threadManager);
+        sourceCacheManager.setCacheConfig(cacheConfig);
+        sourceCacheManager.setConnector(this);
+        sourceCacheManager.setPenroseConfig(penroseConfig);
     }
 
     public void start() throws Exception {
-
-        String s = connectorConfig.getParameter(ConnectorConfig.THREAD_POOL_SIZE);
-        int threadPoolSize = s == null ? ConnectorConfig.DEFAULT_THREAD_POOL_SIZE : Integer.parseInt(s);
-
-        for (Iterator i=partitionManager.getPartitions().iterator(); i.hasNext(); ) {
-            Partition partition = (Partition)i.next();
-            addPartition(partition);
-        }
     }
 
     public boolean isStopping() {
@@ -116,7 +104,13 @@ public class Connector {
         Collection sourceConfigs = partition.getSourceConfigs();
         for (Iterator i=sourceConfigs.iterator(); i.hasNext(); ) {
             SourceConfig sourceConfig = (SourceConfig)i.next();
-            sourceCache.create(sourceConfig);
+
+            String connectorName = sourceConfig.getParameter("connectorName");
+            connectorName = connectorName == null ? "DEFAULT" : connectorName;
+
+            if (!connectorConfig.getName().equals(connectorName)) continue;
+
+            sourceCacheManager.create(partition, sourceConfig);
         }
     }
 
@@ -201,7 +195,7 @@ public class Connector {
                 Filter filter = FilterTool.createFilter(pk);
 
                 AttributeValues sv = connection.get(sourceConfig, pk);
-                getSourceCache().put(sourceConfig, pk, sv);
+                getSourceCacheManager().put(partition, sourceConfig, pk, sv);
             }
 /*
             sourceValues.clear();
@@ -247,7 +241,7 @@ public class Connector {
                     return rc;
 
                 // Delete row from source table in the cache
-                getSourceCache().remove(sourceConfig, pk);
+                getSourceCacheManager().remove(partition, sourceConfig, pk);
             }
 
             //getQueryCache(connectionConfig, sourceConfig).invalidate();
@@ -306,7 +300,7 @@ public class Connector {
                     return rc;
 
                 // Delete row from source table in the cache
-                getSourceCache().remove(sourceConfig, pk);
+                getSourceCacheManager().remove(partition, sourceConfig, pk);
             }
 
             // Add rows
@@ -324,7 +318,7 @@ public class Connector {
                 Filter filter = FilterTool.createFilter(pk);
 
                 AttributeValues sv = connection.get(sourceConfig, pk);
-                getSourceCache().put(sourceConfig, pk, sv);
+                getSourceCacheManager().put(partition, sourceConfig, pk, sv);
 
                 pks.add(pk);
             }
@@ -349,8 +343,8 @@ public class Connector {
                 Filter filter = FilterTool.createFilter(pk);
 
                 AttributeValues sv = connection.get(sourceConfig, pk);
-                getSourceCache().remove(sourceConfig, pk);
-                getSourceCache().put(sourceConfig, pk, sv);
+                getSourceCacheManager().remove(partition, sourceConfig, pk);
+                getSourceCacheManager().put(partition, sourceConfig, pk, sv);
 
                 pks.add(pk);
             }
@@ -471,7 +465,7 @@ public class Connector {
             throws Exception {
 
         log.debug("Checking query cache for "+filter);
-        Collection pks = getSourceCache().search(sourceConfig, filter);
+        Collection pks = getSourceCacheManager().search(partition, sourceConfig, filter);
 
         log.debug("Cached results: "+pks);
 
@@ -488,7 +482,7 @@ public class Connector {
             }
 
             log.debug("Storing query cache for: "+pks);
-            getSourceCache().put(sourceConfig, filter, pks);
+            getSourceCacheManager().put(partition, sourceConfig, filter, pks);
         }
 
         log.debug("Loading source "+sourceConfig.getName()+" with pks "+pks);
@@ -500,7 +494,7 @@ public class Connector {
      */
     public void fullLoad(Partition partition, SourceConfig sourceConfig, Filter filter, PenroseSearchResults results) throws Exception {
 
-        Collection pks = getSourceCache().search(sourceConfig, filter);
+        Collection pks = getSourceCacheManager().search(partition, sourceConfig, filter);
 
         if (pks != null) {
             load(partition, sourceConfig, pks, results);
@@ -536,7 +530,7 @@ public class Connector {
 
             log.debug("Checking data cache for "+normalizedPks);
             Collection missingPks = new ArrayList();
-            Map loadedRows = getSourceCache().load(sourceConfig, normalizedPks, missingPks);
+            Map loadedRows = getSourceCacheManager().load(partition, sourceConfig, normalizedPks, missingPks);
 
             log.debug("Cached values: "+loadedRows.keySet());
             results.addAll(loadedRows.values());
@@ -582,24 +576,24 @@ public class Connector {
         //store(sourceConfig, values);
     }
 
-    public Row store(SourceConfig sourceConfig, AttributeValues sourceValues) throws Exception {
+    public Row store(Partition partition, SourceConfig sourceConfig, AttributeValues sourceValues) throws Exception {
         Row pk = sourceConfig.getPrimaryKeyValues(sourceValues);
         Row npk = normalize(pk);
 
         //log.debug("Storing connector cache: "+pk);
-        getSourceCache().put(sourceConfig, pk, sourceValues);
+        getSourceCacheManager().put(partition, sourceConfig, pk, sourceValues);
 
         Filter f = FilterTool.createFilter(npk);
         Collection c = new TreeSet();
         c.add(npk);
 
         //log.debug("Storing query cache "+f+": "+c);
-        getSourceCache().put(sourceConfig, f, c);
+        getSourceCacheManager().put(partition, sourceConfig, f, c);
 
         return npk;
     }
 
-    public void store(SourceConfig sourceConfig, Collection values) throws Exception {
+    public void store(Partition partition, SourceConfig sourceConfig, Collection values) throws Exception {
 
         Collection pks = new TreeSet();
 
@@ -608,7 +602,7 @@ public class Connector {
 
         for (Iterator i=values.iterator(); i.hasNext(); ) {
             AttributeValues sourceValues = (AttributeValues)i.next();
-            Row npk = store(sourceConfig, sourceValues);
+            Row npk = store(partition, sourceConfig, sourceValues);
             pks.add(npk);
 
             for (Iterator j=uniqueFieldDefinitions.iterator(); j.hasNext(); ) {
@@ -627,13 +621,13 @@ public class Connector {
         if (!uniqueKeys.isEmpty()) {
             Filter f = FilterTool.createFilter(uniqueKeys);
             log.debug("Storing query cache "+f+": "+pks);
-            getSourceCache().put(sourceConfig, f, pks);
+            getSourceCacheManager().put(partition, sourceConfig, f, pks);
         }
 
         if (pks.size() <= 10) {
             Filter filter = FilterTool.createFilter(pks);
             log.debug("Storing query cache "+filter+": "+pks);
-            getSourceCache().put(sourceConfig, filter, pks);
+            getSourceCacheManager().put(partition, sourceConfig, filter, pks);
         }
     }
 
@@ -693,7 +687,7 @@ public class Connector {
             public void objectAdded(PipelineEvent event) {
                 try {
                     AttributeValues sourceValues = (AttributeValues)event.getObject();
-                    store(sourceConfig, sourceValues);
+                    store(partition, sourceConfig, sourceValues);
                     results.add(sourceValues);
                 } catch (Exception e) {
                     log.error(e.getMessage(), e);
@@ -749,19 +743,11 @@ public class Connector {
         this.penroseConfig = penroseConfig;
     }
 
-    public SourceCache getSourceCache() {
-        return sourceCache;
+    public SourceCacheManager getSourceCacheManager() {
+        return sourceCacheManager;
     }
 
-    public void setSourceCache(SourceCache sourceCache) {
-        this.sourceCache = sourceCache;
-    }
-
-    public ThreadManager getThreadManager() {
-        return threadManager;
-    }
-
-    public void setThreadManager(ThreadManager threadManager) {
-        this.threadManager = threadManager;
+    public void setSourceCacheManager(SourceCacheManager sourceCacheManager) {
+        this.sourceCacheManager = sourceCacheManager;
     }
 }

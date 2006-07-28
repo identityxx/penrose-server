@@ -203,6 +203,13 @@ public class PenroseClient {
         );
     }
 
+    public void store() throws Exception {
+        invoke("store",
+                new Object[] { },
+                new String[] { }
+        );
+    }
+
     public void restart() throws Exception {
         invoke("restart",
                 new Object[] { },
@@ -397,15 +404,29 @@ public class PenroseClient {
             System.out.println(version);
 
         } else if ("start".equals(command)) {
-            String serviceName = (String)iterator.next();
-            client.start(serviceName);
+            if (iterator.hasNext()) {
+                String serviceName = (String)iterator.next();
+                client.start(serviceName);
+            } else {
+                client.start();
+            }
 
         } else if ("stop".equals(command)) {
-            String serviceName = (String)iterator.next();
-            client.stop(serviceName);
+            if (iterator.hasNext()) {
+                String serviceName = (String)iterator.next();
+                client.stop(serviceName);
+            } else {
+                client.stop();
+            }
 
         } else if ("restart".equals(command)) {
             client.restart();
+
+        } else if ("reload".equals(command)) {
+            client.reload();
+
+        } else if ("store".equals(command)) {
+            client.store();
 
         } else if ("list".equals(command)) {
             Collection serviceNames = client.getServiceNames();
