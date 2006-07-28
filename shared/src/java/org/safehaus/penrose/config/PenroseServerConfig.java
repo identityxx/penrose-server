@@ -1,4 +1,4 @@
-package org.safehaus.penrose.server.config;
+package org.safehaus.penrose.config;
 
 import org.safehaus.penrose.service.ServiceConfig;
 import org.slf4j.Logger;

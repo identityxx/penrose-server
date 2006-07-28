@@ -24,7 +24,7 @@ import org.apache.directory.server.core.DirectoryServiceConfiguration;
 import org.apache.directory.shared.ldap.filter.ExprNode;
 import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.server.PenroseServer;
-import org.safehaus.penrose.server.config.PenroseServerConfig;
+import org.safehaus.penrose.config.PenroseServerConfig;
 import org.safehaus.penrose.service.ServiceConfig;
 import org.safehaus.penrose.session.PenroseSession;
 import org.safehaus.penrose.session.PenroseSearchResults;

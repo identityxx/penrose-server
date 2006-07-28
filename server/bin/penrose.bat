@@ -52,6 +52,8 @@ set _JAVACMD=%JAVACMD%
 set LOCALCLASSPATH=%CLASSPATH%
 for %%i in ("%PENROSE_HOME%\lib\*.jar") do call "%PENROSE_HOME%\bin\lcp.bat" %%i
 for %%i in ("%PENROSE_HOME%\lib\ext\*.jar") do call "%PENROSE_HOME%\bin\lcp.bat" %%i
+for %%i in ("%PENROSE_HOME%\server\lib\*.jar") do call "%PENROSE_HOME%\bin\lcp.bat" %%i
+for %%i in ("%PENROSE_HOME%\server\lib\ext\*.jar") do call "%PENROSE_HOME%\bin\lcp.bat" %%i
 for %%i in ("%PENROSE_HOME%\schema\ext\*.jar") do call "%PENROSE_HOME%\bin\lcp.bat" %%i
 
 if "%JAVA_HOME%" == "" goto noJavaHome

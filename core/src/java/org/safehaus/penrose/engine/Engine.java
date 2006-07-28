@@ -25,8 +25,6 @@ import org.safehaus.penrose.connector.Connector;
 import org.safehaus.penrose.connector.ConnectionManager;
 import org.safehaus.penrose.partition.PartitionManager;
 import org.safehaus.penrose.partition.Partition;
-import org.safehaus.penrose.partition.SourceConfig;
-import org.safehaus.penrose.partition.FieldConfig;
 import org.safehaus.penrose.cache.EntryCache;
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.graph.Graph;

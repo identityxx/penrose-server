@@ -20,7 +20,7 @@ package org.safehaus.penrose.management;
 import org.apache.log4j.*;
 import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.server.PenroseServer;
-import org.safehaus.penrose.server.config.PenroseServerConfig;
+import org.safehaus.penrose.config.PenroseServerConfig;
 import org.safehaus.penrose.service.ServiceManager;
 
 import java.util.Collection;

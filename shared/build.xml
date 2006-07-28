@@ -2,15 +2,15 @@
  Copyright (c) 2000-2005, Identyx Corporation.
  All rights reserved.
 -->
-<project name="penrose-core" default="build">
+<project name="penrose-shared" default="build">
 
-    <description>Penrose Core</description>
+    <description>Penrose Shared</description>
 
     <property name="prefix" value=""/>
     <property name="iscc.path" value="ISCC.exe"/>
     <property name="cygwin.home" value="c:/cygwin"/>
 
-    <property name="project.name" value="penrose"/>
+    <property name="project.name" value="penrose-shared"/>
     <property name="project.version" value="1.1"/>
 
     <property name="penrose.home" value="${prefix}/usr/local/${project.name}-${project.version}"/>
@@ -19,10 +19,7 @@
     <tstamp/>
 
     <path id="lib.path">
-        <fileset dir="../lib">
-            <include name="**/*.jar"/>
-        </fileset>
-        <fileset dir="../shared/lib">
+        <fileset dir="lib">
             <include name="**/*.jar"/>
         </fileset>
     </path>
@@ -41,27 +38,7 @@
     </target>
 
     <target name="compile" depends="init">
-        <echo message="Compiling Penrose Core."/>
-        <javacc
-            target="src/java/org/safehaus/penrose/schema/LDAPv3Schema.jj"
-            javacchome="../lib/javacc"
-            outputdirectory="src/java/org/safehaus/penrose/schema"
-        />
-        <javacc
-            target="src/java/org/safehaus/penrose/filter/item/ItemParser.jj"
-            javacchome="../lib/javacc"
-            outputdirectory="src/java/org/safehaus/penrose/filter/item"
-        />
-        <javacc
-            target="src/java/org/safehaus/penrose/filter/FilterParser.jj"
-            javacchome="../lib/javacc"
-            outputdirectory="src/java/org/safehaus/penrose/filter"
-        />
-        <javacc
-            target="src/java/org/safehaus/penrose/sql/SQLParser.jj"
-            javacchome="../lib/javacc"
-            outputdirectory="src/java/org/safehaus/penrose/sql"
-        />
+        <echo message="Compiling Penrose Shared."/>
         <mkdir dir="target/classes"/>
         <javac
             srcdir="src/java"
@@ -78,7 +55,7 @@
     </target>
 
     <target name="build" depends="compile">
-        <echo message="Building Penrose Core."/>
+        <echo message="Building Penrose Shared."/>
         <jar jarfile="target/${project.name}-${project.version}.jar">
             <fileset dir="target/classes"/>
             <manifest>

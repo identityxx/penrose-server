@@ -1,9 +1,9 @@
-package org.safehaus.penrose.server.config;
+package org.safehaus.penrose.server;
 
-import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.service.ServiceConfig;
 import org.safehaus.penrose.management.PenroseJMXService;
 import org.safehaus.penrose.ldap.PenroseLDAPService;
+import org.safehaus.penrose.config.PenroseServerConfig;
 
 /**
  * @author Endi S. Dewata

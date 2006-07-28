@@ -17,10 +17,6 @@
  */
 package org.safehaus.penrose.sql;
 
-import java.util.Collection;
-import java.util.ArrayList;
-import java.util.Iterator;
-
 /**
  * @author Endi S. Dewata
  */

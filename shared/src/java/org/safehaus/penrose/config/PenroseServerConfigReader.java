@@ -1,4 +1,4 @@
-package org.safehaus.penrose.server.config;
+package org.safehaus.penrose.config;
 
 import org.xml.sax.EntityResolver;
 import org.xml.sax.InputSource;
@@ -30,7 +30,7 @@ public class PenroseServerConfigReader implements EntityResolver {
         this.reader = reader;
 
         ClassLoader cl = getClass().getClassLoader();
-        serverDtdUrl = cl.getResource("org/safehaus/penrose/server/config/server.dtd");
+        serverDtdUrl = cl.getResource("org/safehaus/penrose/config/server.dtd");
         //log.debug("Server DTD URL: "+serverDtdUrl);
     }
 
@@ -42,7 +42,7 @@ public class PenroseServerConfigReader implements EntityResolver {
 
     public void read(PenroseServerConfig penroseServerConfig) throws Exception {
         ClassLoader cl = getClass().getClassLoader();
-        URL url = cl.getResource("org/safehaus/penrose/server/config/server-digester-rules.xml");
+        URL url = cl.getResource("org/safehaus/penrose/config/server-digester-rules.xml");
 
         Digester digester = DigesterLoader.createDigester(url);
         digester.setEntityResolver(this);

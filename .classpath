@@ -1,9 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
-	<classpathentry kind="src" path="src/java"/>
 	<classpathentry kind="src" path="back-java/src/java"/>
-	<classpathentry kind="src" path="src/ant"/>
-	<classpathentry kind="src" path="src/test"/>
+	<classpathentry kind="src" path="core/src/java"/>
+	<classpathentry kind="src" path="core/src/test"/>
+	<classpathentry kind="src" path="server/src/java"/>
+	<classpathentry kind="src" path="server/src/test"/>
+	<classpathentry kind="src" path="server/src/tools"/>
 	<classpathentry kind="con" path="org.eclipse.pde.core.requiredPlugins"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry kind="lib" path="lib/commons-beanutils-1.6.jar"/>
@@ -11,57 +13,57 @@
 	<classpathentry kind="lib" path="lib/commons-digester-1.5.jar"/>
 	<classpathentry kind="lib" path="lib/commons-pool-1.2.jar"/>
 	<classpathentry kind="lib" path="lib/dom4j-1.4.jar"/>
-	<classpathentry kind="lib" path="lib/hsqldb-1.7.2.2.jar"/>
-	<classpathentry kind="lib" path="lib/jmx.jar"/>
-	<classpathentry kind="lib" path="lib/jmxremote.jar"/>
-	<classpathentry kind="lib" path="lib/jmxri-1.2.1.jar"/>
-	<classpathentry kind="lib" path="lib/jmxtools-1.2.1.jar"/>
 	<classpathentry kind="lib" path="lib/junit-3.8.1.jar"/>
 	<classpathentry kind="lib" path="lib/ldap.jar"/>
-	<classpathentry kind="lib" path="lib/mx4j.jar"/>
-	<classpathentry kind="lib" path="lib/mx4j-tools.jar"/>
-	<classpathentry kind="lib" path="lib/mysql-connector-java-3.0.16-ga-bin.jar"/>
 	<classpathentry kind="lib" path="lib/hibernate3.jar"/>
-	<classpathentry kind="lib" path="lib/jboss/jboss-system.jar"/>
 	<classpathentry kind="lib" path="lib/bsh-2.0b4.jar"/>
 	<classpathentry kind="lib" path="lib/zql.jar"/>
 	<classpathentry kind="lib" path="lib/java-getopt-1.0.12.jar"/>
-	<classpathentry kind="lib" path="lib/velocity-dep-1.4.jar"/>
-	<classpathentry kind="lib" path="lib/antlr-2.7.2.jar"/>
 	<classpathentry kind="lib" path="lib/commons-cli-1.0.jar"/>
 	<classpathentry kind="lib" path="lib/commons-collections-3.0.jar"/>
 	<classpathentry kind="lib" path="lib/commons-lang-2.0.jar"/>
 	<classpathentry kind="lib" path="lib/commons-logging-1.0.4.jar"/>
-	<classpathentry kind="lib" path="lib/jdbm-1.0.jar"/>
-	<classpathentry kind="lib" path="lib/lcrypto-jdk14-131.jar"/>
 	<classpathentry kind="lib" path="lib/log4j-1.2.13.jar"/>
-	<classpathentry kind="lib" path="lib/maven-embedder-2.0.2-dep.jar"/>
 	<classpathentry kind="lib" path="lib/slf4j-log4j12.jar"/>
-	<classpathentry kind="lib" path="lib/spring-beans-1.2.1.jar"/>
-	<classpathentry kind="lib" path="lib/spring-context-1.2.1.jar"/>
-	<classpathentry kind="lib" path="lib/spring-core-1.2.1.jar"/>
-	<classpathentry kind="lib" path="lib/wrapper.jar"/>
 	<classpathentry kind="lib" path="C:/svn.safehaus.org/penrose/lib/xml-apis-2.8.0.jar"/>
 	<classpathentry kind="lib" path="lib/ant/ant.jar"/>
 	<classpathentry kind="lib" path="lib/bcprov-jdk14-132.jar"/>
-	<classpathentry kind="lib" path="lib/apacheds-core-1.0-RC3.jar"/>
-	<classpathentry kind="lib" path="lib/apacheds-core-plugin-1.0-RC3.jar"/>
-	<classpathentry kind="lib" path="lib/apacheds-core-shared-1.0-RC3.jar"/>
-	<classpathentry kind="lib" path="lib/apacheds-kerberos-shared-1.0-RC3.jar"/>
-	<classpathentry kind="lib" path="lib/apacheds-protocol-changepw-1.0-RC3.jar"/>
-	<classpathentry kind="lib" path="lib/apacheds-protocol-kerberos-1.0-RC3.jar"/>
-	<classpathentry kind="lib" path="lib/apacheds-protocol-ldap-1.0-RC3.jar"/>
-	<classpathentry kind="lib" path="lib/apacheds-protocol-ntp-1.0-RC3.jar"/>
-	<classpathentry kind="lib" path="lib/apacheds-protocol-shared-1.0-RC3.jar"/>
-	<classpathentry kind="lib" path="lib/apacheds-server-jndi-1.0-RC3.jar"/>
-	<classpathentry kind="lib" path="lib/apacheds-server-main-1.0-RC3.jar"/>
-	<classpathentry kind="lib" path="lib/apacheds-server-ssl-1.0-RC3.jar"/>
-	<classpathentry kind="lib" path="lib/checkstyle-2.2.jar"/>
-	<classpathentry kind="lib" path="lib/jbossall-client.jar"/>
-	<classpathentry kind="lib" path="lib/mina-core-0.9.4.jar"/>
-	<classpathentry kind="lib" path="lib/mina-filter-codec-asn1-0.9.4.jar"/>
-	<classpathentry kind="lib" path="lib/mina-filter-ssl-0.9.4.jar"/>
-	<classpathentry kind="lib" path="lib/shared-asn1-0.9.5.1.jar"/>
-	<classpathentry kind="lib" path="lib/shared-ldap-0.9.5.1.jar"/>
+	<classpathentry kind="lib" path="server/lib/apacheds-core-1.0-RC3.jar"/>
+	<classpathentry kind="lib" path="server/lib/apacheds-core-plugin-1.0-RC3.jar"/>
+	<classpathentry kind="lib" path="server/lib/apacheds-core-shared-1.0-RC3.jar"/>
+	<classpathentry kind="lib" path="server/lib/apacheds-kerberos-shared-1.0-RC3.jar"/>
+	<classpathentry kind="lib" path="server/lib/apacheds-protocol-changepw-1.0-RC3.jar"/>
+	<classpathentry kind="lib" path="server/lib/apacheds-protocol-kerberos-1.0-RC3.jar"/>
+	<classpathentry kind="lib" path="server/lib/apacheds-protocol-ldap-1.0-RC3.jar"/>
+	<classpathentry kind="lib" path="server/lib/apacheds-protocol-ntp-1.0-RC3.jar"/>
+	<classpathentry kind="lib" path="server/lib/apacheds-protocol-shared-1.0-RC3.jar"/>
+	<classpathentry kind="lib" path="server/lib/apacheds-server-jndi-1.0-RC3.jar"/>
+	<classpathentry kind="lib" path="server/lib/apacheds-server-main-1.0-RC3.jar"/>
+	<classpathentry kind="lib" path="server/lib/apacheds-server-ssl-1.0-RC3.jar"/>
+	<classpathentry kind="lib" path="server/lib/checkstyle-2.2.jar"/>
+	<classpathentry kind="lib" path="server/lib/hsqldb-1.7.2.2.jar"/>
+	<classpathentry kind="lib" path="server/lib/jbossall-client.jar"/>
+	<classpathentry kind="lib" path="server/lib/jdbm-1.0.jar"/>
+	<classpathentry kind="lib" path="server/lib/jmx.jar"/>
+	<classpathentry kind="lib" path="server/lib/jmxremote.jar"/>
+	<classpathentry kind="lib" path="server/lib/jmxri-1.2.1.jar"/>
+	<classpathentry kind="lib" path="server/lib/jmxtools-1.2.1.jar"/>
+	<classpathentry kind="lib" path="server/lib/lcrypto-jdk14-131.jar"/>
+	<classpathentry kind="lib" path="server/lib/maven-embedder-2.0.2-dep.jar"/>
+	<classpathentry kind="lib" path="server/lib/mina-core-0.9.4.jar"/>
+	<classpathentry kind="lib" path="server/lib/mina-filter-codec-asn1-0.9.4.jar"/>
+	<classpathentry kind="lib" path="server/lib/mina-filter-ssl-0.9.4.jar"/>
+	<classpathentry kind="lib" path="server/lib/mx4j.jar"/>
+	<classpathentry kind="lib" path="server/lib/mx4j-tools.jar"/>
+	<classpathentry kind="lib" path="server/lib/mysql-connector-java-3.0.16-ga-bin.jar"/>
+	<classpathentry kind="lib" path="server/lib/postgresql-8.1-405.jdbc3.jar"/>
+	<classpathentry kind="lib" path="server/lib/shared-asn1-0.9.5.1.jar"/>
+	<classpathentry kind="lib" path="server/lib/shared-ldap-0.9.5.1.jar"/>
+	<classpathentry kind="lib" path="server/lib/spring-beans-1.2.1.jar"/>
+	<classpathentry kind="lib" path="server/lib/spring-context-1.2.1.jar"/>
+	<classpathentry kind="lib" path="server/lib/spring-core-1.2.1.jar"/>
+	<classpathentry kind="lib" path="server/lib/velocity-dep-1.4.jar"/>
+	<classpathentry kind="lib" path="server/lib/antlr-2.7.2.jar"/>
+	<classpathentry kind="lib" path="server/lib/wrapper.jar"/>
 	<classpathentry kind="output" path="target/classes"/>
 </classpath>

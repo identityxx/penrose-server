@@ -18,7 +18,6 @@
 package org.safehaus.penrose.cache;
 
 import org.safehaus.penrose.mapping.*;
-import org.safehaus.penrose.util.PasswordUtil;
 import org.safehaus.penrose.util.Formatter;
 import org.safehaus.penrose.util.EntryUtil;
 import org.safehaus.penrose.partition.FieldConfig;

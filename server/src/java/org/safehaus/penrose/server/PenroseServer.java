@@ -24,11 +24,11 @@ import org.apache.log4j.*;
 import org.apache.log4j.xml.DOMConfigurator;
 import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.config.PenroseConfigReader;
+import org.safehaus.penrose.config.PenroseServerConfig;
 import org.safehaus.penrose.service.ServiceManager;
 import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.PenroseFactory;
-import org.safehaus.penrose.server.config.PenroseServerConfig;
-import org.safehaus.penrose.server.config.PenroseServerConfigReader;
+import org.safehaus.penrose.config.PenroseServerConfigReader;
 import sun.misc.Signal;
 import sun.misc.SignalHandler;
 

@@ -69,9 +69,6 @@ if $cygwin ; then
     CLASSPATH=`cygpath --path --unix "$CLASSPATH"`
 fi
 
-# set PENROSE_LIB location
-PENROSE_LIB="$PENROSE_HOME/lib"
-
 if [ -z "$JAVACMD" ] ; then
   if [ -n "$JAVA_HOME"  ] ; then
     if [ -x "$JAVA_HOME/jre/sh/java" ] ; then
@@ -101,7 +98,7 @@ fi
 LOCALCLASSPATH=$LOCALCLASSPATH:$JAVA_HOME/lib/tools.jar
 
 # add in the required dependency .jar files
-for i in "$PENROSE_LIB"/*.jar
+for i in "$PENROSE_HOME"/lib/*.jar
 do
   # if the directory is empty, then it will return the input string
   # this is stupid, so case for it
@@ -115,7 +112,35 @@ do
 done
 
 # add in the optional dependency .jar files
-for i in "$PENROSE_LIB"/ext/*.jar
+for i in "$PENROSE_HOME"/lib/ext/*.jar
+do
+  # if the directory is empty, then it will return the input string
+  # this is stupid, so case for it
+  if [ -f "$i" ] ; then
+    if [ -z "$LOCALCLASSPATH" ] ; then
+      LOCALCLASSPATH="$i"
+    else
+      LOCALCLASSPATH="$i":"$LOCALCLASSPATH"
+    fi
+  fi
+done
+
+# add in the required dependency .jar files
+for i in "$PENROSE_HOME"/server/lib/*.jar
+do
+  # if the directory is empty, then it will return the input string
+  # this is stupid, so case for it
+  if [ -f "$i" ] ; then
+    if [ -z "$LOCALCLASSPATH" ] ; then
+      LOCALCLASSPATH="$i"
+    else
+      LOCALCLASSPATH="$i":"$LOCALCLASSPATH"
+    fi
+  fi
+done
+
+# add in the optional dependency .jar files
+for i in "$PENROSE_HOME"/server/lib/ext/*.jar
 do
   # if the directory is empty, then it will return the input string
   # this is stupid, so case for it

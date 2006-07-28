@@ -103,7 +103,7 @@ public class Penrose {
 
     protected Penrose(String home) throws Exception {
 
-        PenroseConfigReader reader = new PenroseConfigReader((home == null ? "" : home+File.separator)+"conf"+File.separator+"server.xml");
+        PenroseConfigReader reader = new PenroseConfigReader((home == null ? "" : home+File.separator)+"conf"+File.separator+"penrose.xml");
         penroseConfig = reader.read();
         penroseConfig.setHome(home);
 
@@ -215,7 +215,7 @@ public class Penrose {
 
     public void load(String home) throws Exception {
 
-        String filename = (home == null ? "" : home+File.separator)+"conf"+File.separator+"server.xml";
+        String filename = (home == null ? "" : home+File.separator)+"conf"+File.separator+"penrose.xml";
         log.debug("Loading Penrose configuration from "+filename);
 
         PenroseConfigReader reader = new PenroseConfigReader(filename);

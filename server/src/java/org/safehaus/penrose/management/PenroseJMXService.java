@@ -35,7 +35,7 @@ import java.util.Iterator;
 import org.safehaus.penrose.service.Service;
 import org.safehaus.penrose.service.ServiceConfig;
 import org.safehaus.penrose.Penrose;
-import org.safehaus.penrose.server.config.PenroseServerConfig;
+import org.safehaus.penrose.config.PenroseServerConfig;
 import org.safehaus.penrose.module.ModuleConfig;
 import org.safehaus.penrose.partition.*;
 import org.safehaus.penrose.connector.AdapterConfig;

@@ -1,4 +1,4 @@
-package org.safehaus.penrose.server.config;
+package org.safehaus.penrose.config;
 
 import java.util.Map;
 import java.util.Collection;

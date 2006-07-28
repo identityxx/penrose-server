@@ -18,7 +18,7 @@
 package org.safehaus.penrose.jboss;
 
 import org.safehaus.penrose.server.PenroseServer;
-import org.safehaus.penrose.server.config.PenroseServerConfig;
+import org.safehaus.penrose.config.PenroseServerConfig;
 import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.service.ServiceManager;
 import org.slf4j.LoggerFactory;

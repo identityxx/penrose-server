@@ -23,11 +23,13 @@
         <fileset dir="lib">
             <include name="*.jar"/>
         </fileset>
-        <pathelement location="lib"/>
+        <fileset dir="../shared/lib">
+            <include name="*.jar"/>
+        </fileset>
         <fileset dir="../lib">
             <include name="*.jar"/>
         </fileset>
-        <pathelement location="../lib"/>
+        <pathelement location="../shared/target/classes"/>
         <pathelement location="../core/target/classes"/>
         <pathelement location="../back-java/target/classes"/>
     </path>
@@ -139,15 +141,18 @@
             <fileset dir="target/javadoc"/>
         </copy>
         <copy todir="target/dist/lib" includeEmptyDirs="false">
-            <fileset dir="lib" includes="*"/>
             <fileset dir="../lib" includes="*"/>
-        </copy>
-        <copy todir="target/dist/lib">
-            <fileset dir="target" includes="${project.name}-${project.version}.jar"/>
+            <fileset dir="../shared/lib" includes="*"/>
             <fileset dir="../core/dist" includes="penrose-${project.version}.jar"/>
-            <fileset dir="../back-java/dist" includes="openldap-*.jar"/>
+            <fileset dir="../shared/dist" includes="penrose-shared-${project.version}.jar"/>
         </copy>
         <mkdir dir="target/dist/lib/ext"/>
+        <copy todir="target/dist/server/lib" includeEmptyDirs="false">
+            <fileset dir="lib" includes="*"/>
+            <fileset dir="target" includes="${project.name}-${project.version}.jar"/>
+            <fileset dir="../back-java/dist" includes="openldap-*.jar"/>
+        </copy>
+        <mkdir dir="target/dist/server/lib/ext"/>
         <copy todir="target/dist/conf">
             <fileset dir="conf"/>
             <fileset dir="../conf"/>
@@ -326,6 +331,7 @@
     <target name="install" depends="init,pre-install,copy-penrose-conf">
         <delete failonerror="false">
             <fileset dir="${penrose.home}" includes="lib/*"/>
+            <fileset dir="${penrose.home}" includes="shared/lib/*"/>
         </delete>
         <copy todir="${penrose.home}">
             <fileset dir="target/dist">

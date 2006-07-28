@@ -26,7 +26,7 @@ import org.ietf.ldap.LDAPException;
 import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.service.ServiceConfig;
 import org.safehaus.penrose.server.PenroseServer;
-import org.safehaus.penrose.server.config.PenroseServerConfig;
+import org.safehaus.penrose.config.PenroseServerConfig;
 import org.safehaus.penrose.session.PenroseSession;
 import org.safehaus.penrose.config.PenroseConfig;
 import org.slf4j.LoggerFactory;

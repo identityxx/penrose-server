@@ -123,6 +123,34 @@ do
   fi
 done
 
+# add in the required dependency .jar files
+for i in "$PENROSE_HOME"/server/lib/*.jar
+do
+  # if the directory is empty, then it will return the input string
+  # this is stupid, so case for it
+  if [ -f "$i" ] ; then
+    if [ -z "$LOCALCLASSPATH" ] ; then
+      LOCALCLASSPATH="$i"
+    else
+      LOCALCLASSPATH="$i":"$LOCALCLASSPATH"
+    fi
+  fi
+done
+
+# add in the optional dependency .jar files
+for i in "$PENROSE_HOME"/server/lib/ext/*.jar
+do
+  # if the directory is empty, then it will return the input string
+  # this is stupid, so case for it
+  if [ -f "$i" ] ; then
+    if [ -z "$LOCALCLASSPATH" ] ; then
+      LOCALCLASSPATH="$i"
+    else
+      LOCALCLASSPATH="$i":"$LOCALCLASSPATH"
+    fi
+  fi
+done
+
 # add in the schema .jar files
 for i in "$PENROSE_HOME"/schema/ext/*.jar
 do

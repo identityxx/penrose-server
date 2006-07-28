@@ -20,7 +20,7 @@ package org.safehaus.penrose.ldap;
 import org.safehaus.penrose.service.Service;
 import org.safehaus.penrose.schema.SchemaConfig;
 import org.safehaus.penrose.config.PenroseConfig;
-import org.safehaus.penrose.server.config.PenroseServerConfig;
+import org.safehaus.penrose.config.PenroseServerConfig;
 import org.safehaus.penrose.Penrose;
 import org.apache.directory.server.core.configuration.*;
 import org.apache.directory.server.jndi.ServerContextFactory;

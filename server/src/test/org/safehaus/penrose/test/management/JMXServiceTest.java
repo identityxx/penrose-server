@@ -19,8 +19,8 @@ package org.safehaus.penrose.test.management;
 
 import junit.framework.TestCase;
 import org.apache.log4j.*;
-import org.safehaus.penrose.server.config.DefaultPenroseServerConfig;
-import org.safehaus.penrose.server.config.PenroseServerConfig;
+import org.safehaus.penrose.server.DefaultPenroseServerConfig;
+import org.safehaus.penrose.config.PenroseServerConfig;
 import org.safehaus.penrose.server.PenroseServer;
 import org.safehaus.penrose.service.ServiceManager;
 import org.safehaus.penrose.management.PenroseClient;
