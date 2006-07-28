@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
 	<classpathentry kind="src" path="back-java/src/java"/>
+	<classpathentry kind="src" path="shared/src/java"/>
 	<classpathentry kind="src" path="core/src/java"/>
 	<classpathentry kind="src" path="core/src/test"/>
 	<classpathentry kind="src" path="server/src/java"/>
@@ -10,21 +11,16 @@
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry kind="lib" path="lib/commons-beanutils-1.6.jar"/>
 	<classpathentry kind="lib" path="lib/commons-dbcp-1.2.jar"/>
-	<classpathentry kind="lib" path="lib/commons-digester-1.5.jar"/>
 	<classpathentry kind="lib" path="lib/commons-pool-1.2.jar"/>
-	<classpathentry kind="lib" path="lib/dom4j-1.4.jar"/>
 	<classpathentry kind="lib" path="lib/junit-3.8.1.jar"/>
 	<classpathentry kind="lib" path="lib/ldap.jar"/>
 	<classpathentry kind="lib" path="lib/hibernate3.jar"/>
 	<classpathentry kind="lib" path="lib/bsh-2.0b4.jar"/>
 	<classpathentry kind="lib" path="lib/zql.jar"/>
-	<classpathentry kind="lib" path="lib/java-getopt-1.0.12.jar"/>
 	<classpathentry kind="lib" path="lib/commons-cli-1.0.jar"/>
 	<classpathentry kind="lib" path="lib/commons-collections-3.0.jar"/>
 	<classpathentry kind="lib" path="lib/commons-lang-2.0.jar"/>
 	<classpathentry kind="lib" path="lib/commons-logging-1.0.4.jar"/>
-	<classpathentry kind="lib" path="lib/log4j-1.2.13.jar"/>
-	<classpathentry kind="lib" path="lib/slf4j-log4j12.jar"/>
 	<classpathentry kind="lib" path="C:/svn.safehaus.org/penrose/lib/xml-apis-2.8.0.jar"/>
 	<classpathentry kind="lib" path="lib/ant/ant.jar"/>
 	<classpathentry kind="lib" path="lib/bcprov-jdk14-132.jar"/>
@@ -44,8 +40,6 @@
 	<classpathentry kind="lib" path="server/lib/hsqldb-1.7.2.2.jar"/>
 	<classpathentry kind="lib" path="server/lib/jbossall-client.jar"/>
 	<classpathentry kind="lib" path="server/lib/jdbm-1.0.jar"/>
-	<classpathentry kind="lib" path="server/lib/jmx.jar"/>
-	<classpathentry kind="lib" path="server/lib/jmxremote.jar"/>
 	<classpathentry kind="lib" path="server/lib/jmxri-1.2.1.jar"/>
 	<classpathentry kind="lib" path="server/lib/jmxtools-1.2.1.jar"/>
 	<classpathentry kind="lib" path="server/lib/lcrypto-jdk14-131.jar"/>
@@ -65,5 +59,12 @@
 	<classpathentry kind="lib" path="server/lib/velocity-dep-1.4.jar"/>
 	<classpathentry kind="lib" path="server/lib/antlr-2.7.2.jar"/>
 	<classpathentry kind="lib" path="server/lib/wrapper.jar"/>
+	<classpathentry kind="lib" path="shared/lib/commons-digester-1.5.jar"/>
+	<classpathentry kind="lib" path="shared/lib/dom4j-1.4.jar"/>
+	<classpathentry kind="lib" path="shared/lib/java-getopt-1.0.12.jar"/>
+	<classpathentry kind="lib" path="shared/lib/jmx.jar"/>
+	<classpathentry kind="lib" path="shared/lib/jmxremote.jar"/>
+	<classpathentry kind="lib" path="shared/lib/log4j-1.2.13.jar"/>
+	<classpathentry kind="lib" path="shared/lib/slf4j-log4j12.jar"/>
 	<classpathentry kind="output" path="target/classes"/>
 </classpath>
