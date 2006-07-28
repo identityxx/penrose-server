@@ -55,6 +55,7 @@ public class SearchLocalRunner extends GraphVisitor {
 
     public SearchLocalRunner(
             Engine engine,
+            Partition partition,
             EntryMapping entryMapping,
             AttributeValues sourceValues,
             SearchPlanner planner,
@@ -62,12 +63,12 @@ public class SearchLocalRunner extends GraphVisitor {
             Collection relationships) throws Exception {
 
         this.engine = engine;
+        this.partition = partition;
         this.entryMapping = entryMapping;
         this.filters = planner.getFilters();
         this.startingSourceMapping = startingSourceMapping;
         this.sourceValues = sourceValues;
 
-        partition = engine.getPartitionManager().getPartition(entryMapping);
         graph = engine.getGraph(entryMapping);
 
         Filter filter = (Filter)filters.get(startingSourceMapping);
@@ -132,9 +133,9 @@ public class SearchLocalRunner extends GraphVisitor {
         } else {
             Collection temp;
             if (sourceMapping.isRequired()) {
-                temp = engine.getJoinEngine().join(results, list, entryMapping, relationships);
+                temp = engine.getJoinEngine().join(results, list, partition, entryMapping, relationships);
             } else {
-                temp = engine.getJoinEngine().leftJoin(results, list, entryMapping, relationships);
+                temp = engine.getJoinEngine().leftJoin(results, list, partition, entryMapping, relationships);
             }
 
             results.clear();

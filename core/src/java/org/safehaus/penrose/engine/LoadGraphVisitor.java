@@ -53,15 +53,16 @@ public class LoadGraphVisitor extends GraphVisitor {
 
     public LoadGraphVisitor(
             Engine engine,
+            Partition partition,
             EntryMapping entryMapping,
             AttributeValues sourceValues,
             Filter filter) throws Exception {
 
         this.engine = engine;
+        this.partition = partition;
         this.entryMapping = entryMapping;
         this.sourceValues = sourceValues;
 
-        partition = engine.getPartitionManager().getPartition(entryMapping);
         graph = engine.getGraph(entryMapping);
         primarySourceMapping = engine.getPrimarySource(entryMapping);
 

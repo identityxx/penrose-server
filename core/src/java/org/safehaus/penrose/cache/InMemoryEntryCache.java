@@ -25,16 +25,13 @@ import org.safehaus.penrose.partition.Partition;
  */
 public class InMemoryEntryCache extends EntryCache {
 
-    public EntryCacheStorage createCacheStorage(EntryMapping entryMapping) throws Exception {
-
-        Partition partition = partitionManager.getPartition(entryMapping);
+    public EntryCacheStorage createCacheStorage(Partition partition, EntryMapping entryMapping) throws Exception {
 
         EntryCacheStorage cacheStorage = new InMemoryEntryCacheStorage();
         cacheStorage.setCacheConfig(cacheConfig);
         cacheStorage.setConnectionManager(connectionManager);
         cacheStorage.setPartition(partition);
         cacheStorage.setEntryMapping(entryMapping);
-        cacheStorage.setThreadManager(threadManager);
 
         cacheStorage.init();
 

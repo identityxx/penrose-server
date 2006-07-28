@@ -24,6 +24,7 @@ import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.filter.FilterTool;
 import org.safehaus.penrose.util.Formatter;
 import org.safehaus.penrose.util.EntryUtil;
+import org.safehaus.penrose.partition.Partition;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
@@ -43,6 +44,7 @@ public class MergeEngine {
     }
 
     public void merge(
+            final Partition partition,
             final EntryMapping entryMapping,
             final PenroseSearchResults loadedBatches,
             final PenroseSearchResults results
@@ -51,7 +53,7 @@ public class MergeEngine {
         final Interpreter interpreter = engine.getInterpreterManager().newInstance();
 
         try {
-            mergeBackground(entryMapping, loadedBatches, interpreter, results);
+            mergeBackground(partition, entryMapping, loadedBatches, interpreter, results);
 
         } catch (Throwable e) {
             log.error(e.getMessage(), e);
@@ -60,6 +62,7 @@ public class MergeEngine {
     }
 
     public void mergeBackground(
+            Partition partition,
             EntryMapping entryMapping,
             PenroseSearchResults entries,
             Interpreter interpreter,
@@ -123,7 +126,7 @@ public class MergeEngine {
                     log.debug(Formatter.displaySeparator(80));
                 }
 
-                mergeEntries(dn, entryMapping, primarySourceValues, loadedSourceValues, rows, interpreter, filter, results);
+                mergeEntries(partition, dn, entryMapping, primarySourceValues, loadedSourceValues, rows, interpreter, filter, results);
             }
 
         } finally {
@@ -138,6 +141,7 @@ public class MergeEngine {
     }
 
     public PenroseSearchResults mergeEntries(
+            Partition partition,
             String dn,
             EntryMapping entryMapping,
             AttributeValues primarySourceValues,
@@ -160,6 +164,7 @@ public class MergeEngine {
 
             MergeGraphVisitor merger = new MergeGraphVisitor(
                     engine,
+                    partition,
                     entryMapping,
                     primarySourceValues,
                     loadedSourceValues,

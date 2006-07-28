@@ -58,14 +58,14 @@ public class SearchEngine {
 
         log.info("Searching "+entryMapping.getDn()+" for "+filter+".");
 
-        boolean staticEntry = engine.isStatic(entryMapping);
+        boolean staticEntry = engine.isStatic(partition, entryMapping);
         if (staticEntry) {
             log.debug("Returning static entries.");
-            searchStatic(parentSourceValues, entryMapping, filter, results);
+            searchStatic(partition, parentSourceValues, entryMapping, filter, results);
             return;
         }
 
-        boolean unique = engine.isUnique(entryMapping);
+        boolean unique = engine.isUnique(partition, entryMapping);
         log.debug("Entry "+entryMapping.getDn()+" "+(unique ? "is" : "is not")+" unique.");
 
         Collection sources = entryMapping.getSourceMappings();
@@ -86,7 +86,7 @@ public class SearchEngine {
 
         if (unique && effectiveSources.size() == 1) {
             try {
-                simpleSearch(parentSourceValues, entryMapping, filter, results);
+                simpleSearch(partition, parentSourceValues, entryMapping, filter, results);
 
             } catch (Throwable e) {
                 log.error(e.getMessage(), e);
@@ -96,7 +96,7 @@ public class SearchEngine {
         }
 
         try {
-            searchDynamic(parent, parentSourceValues, entryMapping, filter, results);
+            searchDynamic(partition, parent, parentSourceValues, entryMapping, filter, results);
 
         } catch (Throwable e) {
             log.error(e.getMessage(), e);
@@ -105,6 +105,7 @@ public class SearchEngine {
     }
 
     public void searchStatic(
+            final Partition partition,
             final AttributeValues parentSourceValues,
             final EntryMapping entryMapping,
             final Filter filter,
@@ -113,7 +114,7 @@ public class SearchEngine {
 
         Interpreter interpreter = engine.getInterpreterManager().newInstance();
 
-        Collection list = engine.computeDns(interpreter, entryMapping, parentSourceValues);
+        Collection list = engine.computeDns(partition, interpreter, entryMapping, parentSourceValues);
         for (Iterator j=list.iterator(); j.hasNext(); ) {
             String dn = (String)j.next();
             log.debug("Static entry "+dn);
@@ -127,6 +128,7 @@ public class SearchEngine {
     }
 
     public void searchDynamic(
+            Partition partition,
             Entry parent,
             final AttributeValues parentSourceValues,
             final EntryMapping entryMapping,
@@ -136,13 +138,12 @@ public class SearchEngine {
 
         //boolean unique = engine.isUnique(entryMapping  //log.debug("Entry "+entryMapping" "+(unique ? "is" : "is not")+" unique.");
 
-        Partition partition = engine.getPartitionManager().getPartition(entryMapping);
         EntryMapping parentMapping = partition.getParent(entryMapping);
 
         Interpreter interpreter = engine.getInterpreterManager().newInstance();
 
         PenroseSearchResults values = new PenroseSearchResults();
-        searchSources(parentSourceValues, entryMapping, filter, values);
+        searchSources(partition, parentSourceValues, entryMapping, filter, values);
         values.close();
 
         Map sourceValues = new TreeMap();
@@ -156,7 +157,7 @@ public class SearchEngine {
             AttributeValues sv = (AttributeValues)i.next();
             //log.debug("==> "+sv);
 
-            Collection list = engine.computeDns(interpreter, entryMapping, sv);
+            Collection list = engine.computeDns(partition, interpreter, entryMapping, sv);
             for (Iterator j=list.iterator(); j.hasNext(); ) {
                 String dn = (String)j.next();
                 //log.debug("     - "+dn);
@@ -235,6 +236,7 @@ public class SearchEngine {
     }
 
     public void simpleSearch(
+            final Partition partition,
             final AttributeValues parentSourceValues,
             final EntryMapping entryMapping,
             final Filter filter,
@@ -242,6 +244,7 @@ public class SearchEngine {
 
         SearchPlanner planner = new SearchPlanner(
                 engine,
+                partition,
                 entryMapping,
                 filter,
                 parentSourceValues);
@@ -265,7 +268,6 @@ public class SearchEngine {
             newFilter = FilterTool.appendAndFilter(newFilter, sourceFilter);
         }
 
-        Partition partition = engine.getPartitionManager().getPartition(entryMapping);
         SourceConfig sourceConfig = partition.getSourceConfig(sourceMapping.getSourceName());
 
         final Interpreter interpreter = engine.getInterpreterManager().newInstance();
@@ -281,7 +283,7 @@ public class SearchEngine {
                     sv.add(parentSourceValues);
                     sv.add(sourceMapping.getName(), av);
 
-                    Collection list = engine.computeDns(interpreter, entryMapping, sv);
+                    Collection list = engine.computeDns(partition, interpreter, entryMapping, sv);
                     for (Iterator j=list.iterator(); j.hasNext(); ) {
                         String dn = (String)j.next();
                         log.debug("Generated DN: "+dn);
@@ -308,6 +310,7 @@ public class SearchEngine {
     }
 
     public void searchSources(
+            Partition partition,
             final AttributeValues sourceValues,
             final EntryMapping entryMapping,
             final Filter filter,
@@ -315,7 +318,7 @@ public class SearchEngine {
             throws Exception {
 
         try {
-            searchSourcesInBackground(sourceValues, entryMapping, filter, results);
+            searchSourcesInBackground(partition, sourceValues, entryMapping, filter, results);
 
         } catch (Throwable e) {
             log.error(e.getMessage(), e);
@@ -324,6 +327,7 @@ public class SearchEngine {
     }
 
     public void searchSourcesInBackground(
+            Partition partition,
             AttributeValues sourceValues,
             EntryMapping entryMapping,
             Filter filter,
@@ -332,6 +336,7 @@ public class SearchEngine {
 
         SearchPlanner planner = new SearchPlanner(
                 engine,
+                partition,
                 entryMapping,
                 filter,
                 sourceValues);
@@ -349,6 +354,7 @@ public class SearchEngine {
             localResults.close();
 
             Collection parentResults = searchParent(
+                    partition,
                     entryMapping,
                     planner,
                     localResults,
@@ -360,6 +366,7 @@ public class SearchEngine {
         }
 
         PenroseSearchResults localResults = searchLocal(
+                partition,
                 entryMapping,
                 sourceValues,
                 planner,
@@ -376,6 +383,7 @@ public class SearchEngine {
         }
 */
         Collection parentResults = searchParent(
+                partition,
                 entryMapping,
                 planner,
                 localResults,
@@ -393,6 +401,7 @@ public class SearchEngine {
     }
 
     public PenroseSearchResults searchLocal(
+            Partition partition,
             EntryMapping entryMapping,
             AttributeValues sourceValues,
             SearchPlanner planner,
@@ -473,6 +482,7 @@ public class SearchEngine {
 
         SearchLocalRunner runner = new SearchLocalRunner(
                 engine,
+                partition,
                 entryMapping,
                 sourceValues,
                 planner,
@@ -496,6 +506,7 @@ public class SearchEngine {
 */
         SearchCleaner cleaner = new SearchCleaner(
                 engine,
+                partition,
                 entryMapping,
                 planner,
                 primarySourceMapping);
@@ -530,6 +541,7 @@ public class SearchEngine {
     }
 
     public Collection searchParent(
+            Partition partition,
             EntryMapping entryMapping,
             SearchPlanner planner,
             PenroseSearchResults localResults,
@@ -585,7 +597,6 @@ public class SearchEngine {
         if (startingSources.isEmpty()) {
             log.debug("No connecting sources");
 
-            Partition partition = engine.getPartitionManager().getPartition(entryMapping);
             EntryMapping parentMapping = partition.getParent(entryMapping);
 
             while (parentMapping != null) {
@@ -631,6 +642,7 @@ public class SearchEngine {
 
             SearchParentRunner runner = new SearchParentRunner(
                     engine,
+                    partition,
                     entryMapping,
                     results,
                     sourceValues,

@@ -55,16 +55,17 @@ public class SearchPlanner extends GraphVisitor {
 
     public SearchPlanner(
             Engine engine,
+            Partition partition,
             EntryMapping entryMapping,
             Filter filter,
             AttributeValues sourceValues) throws Exception {
 
         this.engine = engine;
+        this.partition = partition;
         this.entryMapping = entryMapping;
         this.searchFilter = filter;
         this.sourceValues = sourceValues;
 
-        partition = engine.getPartitionManager().getPartition(entryMapping);
         graph = engine.getGraph(entryMapping);
         primarySourceMapping = engine.getPrimarySource(entryMapping);
     }
@@ -134,7 +135,7 @@ public class SearchPlanner extends GraphVisitor {
 
         Integer depth = (Integer)depthStack.peek();
 
-        Filter sourceFilter = engine.getEngineFilterTool().toSourceFilter(null, entryMapping, sourceMapping, searchFilter);
+        Filter sourceFilter = engine.getEngineFilterTool().toSourceFilter(partition, null, entryMapping, sourceMapping, searchFilter);
         log.debug("Filter: "+sourceFilter+" ("+(sourceFilter == null ? "null" : "not null")+")");
         log.debug("Depth: "+depth);
 

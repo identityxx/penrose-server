@@ -53,6 +53,7 @@ public class Connector {
 
     private PenroseConfig penroseConfig;
     private ConnectorConfig connectorConfig;
+
     private ConnectionManager connectionManager;
     private PartitionManager partitionManager;
     private SourceCacheManager sourceCacheManager;
@@ -66,16 +67,9 @@ public class Connector {
     }
 
     public void init() throws Exception {
-        CacheConfig cacheConfig = penroseConfig.getSourceCacheConfig();
-        String cacheClass = cacheConfig.getCacheClass() == null ? DEFAULT_CACHE_CLASS : cacheConfig.getCacheClass();
-
-        log.debug("Initializing source cache "+cacheClass);
-        Class clazz = Class.forName(cacheClass);
-        sourceCacheManager = (SourceCacheManager)clazz.newInstance();
-
-        sourceCacheManager.setCacheConfig(cacheConfig);
+        sourceCacheManager = new SourceCacheManager();
+        sourceCacheManager.setCacheConfig(penroseConfig.getSourceCacheConfig());
         sourceCacheManager.setConnector(this);
-        sourceCacheManager.setPenroseConfig(penroseConfig);
     }
 
     public void start() throws Exception {

@@ -47,17 +47,18 @@ public class SearchCleaner extends GraphVisitor {
 
     public SearchCleaner(
             Engine engine,
+            Partition partition,
             EntryMapping entryMapping,
             SearchPlanner planner,
             SourceMapping primarySourceMapping) throws Exception {
 
         this.engine = engine;
+        this.partition = partition;
         this.entryMapping = entryMapping;
         this.filters = planner.getFilters();
         this.depths = planner.getDepths();
         this.primarySourceMapping = primarySourceMapping;
 
-        partition = engine.getPartitionManager().getPartition(entryMapping);
         graph = engine.getGraph(entryMapping);
 
         needCleaning.put(primarySourceMapping, new Boolean(false));

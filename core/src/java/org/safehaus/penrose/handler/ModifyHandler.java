@@ -95,12 +95,17 @@ public class ModifyHandler {
                 return LDAPException.NO_SUCH_OBJECT;
             }
 
-            rc = performModify(session, entry, modifications);
+            EntryMapping entryMapping = entry.getEntryMapping();
+
+            PartitionManager partitionManager = handler.getPartitionManager();
+            Partition partition = partitionManager.getPartition(entryMapping);
+
+            rc = performModify(session, partition, entry, modifications);
             if (rc != LDAPException.SUCCESS) return rc;
 
             // refreshing entry cache
 
-            handler.getEngine().getEntryCache().remove(entry);
+            handler.getEngine().getEntryCache().remove(partition, entry);
 
             PenroseSession adminSession = handler.getPenrose().newSession();
             adminSession.setBindDn(handler.getPenroseConfig().getRootDn());
@@ -136,8 +141,12 @@ public class ModifyHandler {
         return rc;
     }
 
-    public int performModify(PenroseSession session, Entry entry, Collection modifications)
-			throws Exception {
+    public int performModify(
+            PenroseSession session,
+            Partition partition,
+            Entry entry,
+            Collection modifications
+    ) throws Exception {
 
         log.debug("Modifying "+entry.getDn());
 
@@ -190,9 +199,6 @@ public class ModifyHandler {
         log.info("");
 
         EntryMapping entryMapping = entry.getEntryMapping();
-
-        PartitionManager partitionManager = handler.getPartitionManager();
-        Partition partition = partitionManager.getPartition(entryMapping);
 
         if (partition.isProxy(entryMapping)) {
             return handler.getEngine("PROXY").modify(partition, entry, modifications);

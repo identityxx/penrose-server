@@ -39,7 +39,6 @@ public class SourceCacheManager {
     Logger log = LoggerFactory.getLogger(getClass());
 
     CacheConfig cacheConfig;
-    PenroseConfig penroseConfig;
 
     Connector connector;
 
@@ -119,14 +118,6 @@ public class SourceCacheManager {
             SourceCache sourceCache = (SourceCache)i.next();
             sourceCache.drop();
         }
-    }
-
-    public PenroseConfig getPenroseConfig() {
-        return penroseConfig;
-    }
-
-    public void setPenroseConfig(PenroseConfig penroseConfig) {
-        this.penroseConfig = penroseConfig;
     }
 
     public void remove(Partition partition, SourceConfig sourceConfig, Object key) throws Exception {

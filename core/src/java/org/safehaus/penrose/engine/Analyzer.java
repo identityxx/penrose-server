@@ -28,7 +28,7 @@ public class Analyzer {
     public Map primarySources = new HashMap();
     public Map uniqueness = new HashMap();
 
-    public void analyze(EntryMapping entryMapping) throws Exception {
+    public void analyze(Partition partition, EntryMapping entryMapping) throws Exception {
 
         log.debug("Analyzing entry "+entryMapping.getDn()+".");
 
@@ -38,7 +38,6 @@ public class Analyzer {
             //log.debug(" - primary sourceMapping: "+sourceMapping);
         }
 
-        Partition partition = partitionManager.getPartition(entryMapping);
         Graph graph = computeGraph(partition, entryMapping);
 
         if (graph != null) {
@@ -46,13 +45,13 @@ public class Analyzer {
             //log.debug(" - graph: "+graph);
         }
 
-        boolean unique = isUnique(entryMapping);
+        boolean unique = isUnique(partition, entryMapping);
         log.debug("Unique: "+unique);
 
         Collection children = partition.getChildren(entryMapping);
         for (Iterator i=children.iterator(); i.hasNext(); ) {
             EntryMapping childMapping = (EntryMapping)i.next();
-            analyze(childMapping);
+            analyze(partition, childMapping);
         }
 	}
 
@@ -188,9 +187,7 @@ public class Analyzer {
     /**
      * Check whether each rdn value corresponds to one row from the source.
      */
-    public boolean checkUniqueness(EntryMapping entryMapping) throws Exception {
-
-        Partition partition = partitionManager.getPartition(entryMapping);
+    public boolean checkUniqueness(Partition partition, EntryMapping entryMapping) throws Exception {
 
         Collection rdnSources = new TreeSet();
         Collection rdnFields = new TreeSet();
@@ -276,18 +273,17 @@ public class Analyzer {
         return true;
     }
 
-    public boolean isUnique(EntryMapping entryMapping) throws Exception {
+    public boolean isUnique(Partition partition, EntryMapping entryMapping) throws Exception {
 
         Boolean b = (Boolean)uniqueness.get(entryMapping);
         if (b != null) return b.booleanValue();
 
-        b = new Boolean(checkUniqueness(entryMapping));
+        b = new Boolean(checkUniqueness(partition, entryMapping));
 
         if (b.booleanValue()) { // check parent mapping
-            Partition partition = partitionManager.getPartition(entryMapping);
             EntryMapping parentMapping = partition.getParent(entryMapping);
 
-            if (parentMapping != null) b = new Boolean(isUnique(parentMapping));
+            if (parentMapping != null) b = new Boolean(isUnique(partition, parentMapping));
         }
 
         uniqueness.put(entryMapping, b);

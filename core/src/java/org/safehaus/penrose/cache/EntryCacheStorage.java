@@ -40,7 +40,6 @@ public class EntryCacheStorage {
     Logger log = LoggerFactory.getLogger(getClass());
 
     ConnectionManager connectionManager;
-    ThreadManager threadManager;
 
     Partition partition;
     EntryMapping entryMapping;
@@ -151,12 +150,4 @@ public class EntryCacheStorage {
     public void put(String dn, Entry entry) throws Exception { }
 
     public void remove(String dn) throws Exception { }
-
-    public ThreadManager getThreadManager() {
-        return threadManager;
-    }
-
-    public void setThreadManager(ThreadManager threadManager) {
-        this.threadManager = threadManager;
-    }
 }

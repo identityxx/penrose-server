@@ -255,7 +255,7 @@ public class PollingConnectorModule extends Module {
             }
         });
 
-        entryCache.search(parentMapping, parentDns);
+        entryCache.search(partition, parentMapping, parentDns);
     }
 
     public void remove(
@@ -281,7 +281,7 @@ public class PollingConnectorModule extends Module {
             }
         });
 
-        entryCache.search(entryMapping, sourceConfig, pk, dns);
+        entryCache.search(partition, entryMapping, sourceConfig, pk, dns);
     }
 
 }

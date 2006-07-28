@@ -24,6 +24,7 @@ import org.safehaus.penrose.util.Formatter;
 import org.safehaus.penrose.util.EntryUtil;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.filter.FilterTool;
+import org.safehaus.penrose.partition.Partition;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
@@ -43,14 +44,13 @@ public class LoadEngine {
     }
 
     public void load(
+            Partition partition,
             final EntryMapping entryMapping,
             final PenroseSearchResults entries,
             final PenroseSearchResults loadedEntries
     ) throws Exception {
 
 /*
-        Partition partition = engine.getPartitionManager().getPartition(entryMapping);
-
         Collection sources = entryMapping.getSourceMappings();
         Collection sourceNames = new ArrayList();
         for (Iterator i=sources.iterator(); i.hasNext(); ) {
@@ -90,7 +90,7 @@ public class LoadEngine {
         final PenroseSearchResults batches = new PenroseSearchResults();
 
         try {
-            createBatches(entryMapping, entries, batches);
+            createBatches(partition, entryMapping, entries, batches);
 
         } catch (Throwable e) {
             log.error(e.getMessage(), e);
@@ -100,7 +100,7 @@ public class LoadEngine {
         log.debug("Loading batches.");
 
         try {
-            loadBackground(entryMapping, batches, loadedEntries);
+            loadBackground(partition, entryMapping, batches, loadedEntries);
 
         } catch (Throwable e) {
             log.error(e.getMessage(), e);
@@ -134,6 +134,7 @@ public class LoadEngine {
     }
 
     public void createBatches(
+            Partition partition,
             EntryMapping entryMapping,
             PenroseSearchResults entries,
             PenroseSearchResults batches
@@ -169,7 +170,7 @@ public class LoadEngine {
                     }
                 }
 */
-                Row filter = engine.createFilter(interpreter, primarySourceMapping, entryMapping, rdn);
+                Row filter = engine.createFilter(partition, interpreter, primarySourceMapping, entryMapping, rdn);
                 if (filter == null) continue;
 
                 //if (filter.isEmpty()) filter.add(rdn);
@@ -193,6 +194,7 @@ public class LoadEngine {
     }
 
     public void loadBackground(
+            Partition partition,
             EntryMapping entryMapping,
             PenroseSearchResults batches,
             PenroseSearchResults loadedBatches
@@ -244,7 +246,7 @@ public class LoadEngine {
 
                 log.debug(Formatter.displaySeparator(80));
 
-                AttributeValues loadedSourceValues = loadEntries(sourceValues, entryMapping, entries);
+                AttributeValues loadedSourceValues = loadEntries(partition, sourceValues, entryMapping, entries);
 
                 if (log.isDebugEnabled()) {
                     log.debug(Formatter.displaySeparator(80));
@@ -284,6 +286,7 @@ public class LoadEngine {
     }
 
     public AttributeValues loadEntries(
+            Partition partition,
             AttributeValues sourceValues,
             EntryMapping entryMapping,
             Collection maps)
@@ -334,7 +337,7 @@ public class LoadEngine {
         Collection filters = new ArrayList();
         filters.add(map);
 
-        LoadGraphVisitor loadVisitor = new LoadGraphVisitor(engine, entryMapping, sourceValues, filter);
+        LoadGraphVisitor loadVisitor = new LoadGraphVisitor(engine, partition, entryMapping, sourceValues, filter);
         loadVisitor.run();
 
         return loadVisitor.getLoadedSourceValues();

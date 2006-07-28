@@ -51,6 +51,14 @@ public class CacheManager {
         Engine engine = penrose.getEngine();
         EntryCache entryCache = engine.getEntryCache();
         entryCache.create();
+
+        PartitionManager partitionManager = penrose.getPartitionManager();
+
+        for (Iterator i=partitionManager.getPartitions().iterator(); i.hasNext(); ) {
+            Partition partition = (Partition)i.next();
+            Collection entryMappings = partition.getRootEntryMappings();
+            entryCache.create(partition, entryMappings);
+        }
     }
 
     public static void load(Penrose penrose) throws Exception {
@@ -60,14 +68,27 @@ public class CacheManager {
 
         Engine engine = penrose.getEngine();
         EntryCache entryCache = engine.getEntryCache();
-        entryCache.load(penrose);
+
+        PartitionManager partitionManager = penrose.getPartitionManager();
+
+        for (Iterator i=partitionManager.getPartitions().iterator(); i.hasNext(); ) {
+            Partition partition = (Partition)i.next();
+            entryCache.load(penrose, partition);
+        }
     }
 
     public static void clean(Penrose penrose) throws Exception {
 
         Engine engine = penrose.getEngine();
         EntryCache entryCache = engine.getEntryCache();
-        entryCache.clean();
+
+        PartitionManager partitionManager = penrose.getPartitionManager();
+
+        for (Iterator i=partitionManager.getPartitions().iterator(); i.hasNext(); ) {
+            Partition partition = (Partition)i.next();
+            Collection entryMappings = partition.getRootEntryMappings();
+            entryCache.clean(partition, entryMappings);
+        }
 
         Connector connector = penrose.getConnector();
         SourceCacheManager sourceCacheManager = connector.getSourceCacheManager();
@@ -78,6 +99,15 @@ public class CacheManager {
 
         Engine engine = penrose.getEngine();
         EntryCache entryCache = engine.getEntryCache();
+
+        PartitionManager partitionManager = penrose.getPartitionManager();
+
+        for (Iterator i=partitionManager.getPartitions().iterator(); i.hasNext(); ) {
+            Partition partition = (Partition)i.next();
+            Collection entryMappings = partition.getRootEntryMappings();
+            entryCache.drop(partition, entryMappings);
+        }
+
         entryCache.drop();
 
         Connector connector = penrose.getConnector();

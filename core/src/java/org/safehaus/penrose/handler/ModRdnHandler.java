@@ -65,7 +65,12 @@ public class ModRdnHandler {
             Entry entry = handler.getFindHandler().find(session, ndn);
             if (entry == null) return LDAPException.NO_SUCH_OBJECT;
 
-            rc = performModRdn(session, entry, newRdn);
+            EntryMapping entryMapping = entry.getEntryMapping();
+
+            PartitionManager partitionManager = handler.getPartitionManager();
+            Partition partition = partitionManager.getPartition(entryMapping);
+
+            rc = performModRdn(session, partition, entry, newRdn);
             if (rc != LDAPException.SUCCESS) return rc;
 
             // refreshing entry cache
@@ -89,10 +94,10 @@ public class ModRdnHandler {
             EntryCache entryCache = handler.getEngine().getEntryCache();
             for (Iterator i=results.iterator(); i.hasNext(); ) {
                 Entry e = (Entry)i.next();
-                entryCache.put(e);
+                entryCache.put(partition, e);
             }
 
-            handler.getEngine().getEntryCache().remove(entry);
+            handler.getEngine().getEntryCache().remove(partition, entry);
 
         } catch (LDAPException e) {
             rc = e.getResultCode();
@@ -113,6 +118,7 @@ public class ModRdnHandler {
 
     public int performModRdn(
             PenroseSession session,
+            Partition partition,
             Entry entry,
             String newRdn)
 			throws Exception {
@@ -121,8 +127,6 @@ public class ModRdnHandler {
         if (rc != LDAPException.SUCCESS) return rc;
 
         EntryMapping entryMapping = entry.getEntryMapping();
-        PartitionManager partitionManager = handler.getPartitionManager();
-        Partition partition = partitionManager.getPartition(entryMapping);
 
         if (partition.isProxy(entryMapping)) {
             return handler.getEngine("PROXY").modrdn(partition, entry, newRdn);

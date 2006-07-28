@@ -53,6 +53,7 @@ public class SearchParentRunner extends GraphVisitor {
 
     public SearchParentRunner(
             Engine engine,
+            Partition partition,
             EntryMapping entryMapping,
             Collection results,
             AttributeValues sourceValues,
@@ -61,13 +62,13 @@ public class SearchParentRunner extends GraphVisitor {
             Collection relationships) throws Exception {
 
         this.engine = engine;
+        this.partition = partition;
         this.entryMapping = entryMapping;
         this.filters = planner.getFilters();
         this.startingSourceMapping = startingSourceMapping;
         this.results = results;
         this.sourceValues = sourceValues;
 
-        partition = engine.getPartitionManager().getPartition(entryMapping);
         graph = engine.getGraph(entryMapping);
 
         Filter filter = (Filter)filters.get(startingSourceMapping);
@@ -119,7 +120,7 @@ public class SearchParentRunner extends GraphVisitor {
                     if (!FilterTool.isValid(av, filter)) continue;
 
                 } else {
-                    if (!engine.getJoinEngine().evaluate(entryMapping, relationships, av, av)) continue;
+                    if (!engine.getJoinEngine().evaluate(partition, entryMapping, relationships, av, av)) continue;
                 }
 
                 list.add(av);
@@ -152,9 +153,9 @@ public class SearchParentRunner extends GraphVisitor {
             } else {
                 Collection temp;
                 if (sourceMapping.isRequired()) {
-                    temp = engine.getJoinEngine().join(results, list, entryMapping, relationships);
+                    temp = engine.getJoinEngine().join(results, list, partition, entryMapping, relationships);
                 } else {
-                    temp = engine.getJoinEngine().leftJoin(results, list, entryMapping, relationships);
+                    temp = engine.getJoinEngine().leftJoin(results, list, partition, entryMapping, relationships);
                 }
                 results.clear();
                 results.addAll(temp);

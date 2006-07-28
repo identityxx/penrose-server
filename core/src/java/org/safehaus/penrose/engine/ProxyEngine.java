@@ -42,10 +42,7 @@ public class ProxyEngine extends Engine {
         entryCache = (EntryCache)clazz.newInstance();
 
         entryCache.setCacheConfig(cacheConfig);
-        entryCache.setPenroseConfig(penroseConfig);
         entryCache.setConnectionManager(connectionManager);
-        entryCache.setPartitionManager(partitionManager);
-        entryCache.setThreadManager(threadManager);
 
         entryCache.init();
 
@@ -410,7 +407,7 @@ Mapping: ou=Groups,dc=Proxy,dc=Example,dc=org
 
             for (Iterator j=partition.getRootEntryMappings().iterator(); j.hasNext(); ) {
                 EntryMapping entryMapping = (EntryMapping)j.next();
-                analyzer.analyze(entryMapping);
+                analyzer.analyze(partition, entryMapping);
             }
         }
 

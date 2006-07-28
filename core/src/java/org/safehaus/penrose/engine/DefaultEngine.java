@@ -63,10 +63,7 @@ public class DefaultEngine extends Engine {
         entryCache = (EntryCache)clazz.newInstance();
 
         entryCache.setCacheConfig(cacheConfig);
-        entryCache.setPenroseConfig(penroseConfig);
         entryCache.setConnectionManager(connectionManager);
-        entryCache.setPartitionManager(partitionManager);
-        entryCache.setThreadManager(threadManager);
 
         entryCache.init();
 
@@ -108,7 +105,7 @@ public class DefaultEngine extends Engine {
 
             SourceConfig sourceConfig = partition.getSourceConfig(source.getSourceName());
 
-            Map entries = transformEngine.split(entryMapping, source, attributeValues);
+            Map entries = transformEngine.split(partition, entryMapping, source, attributeValues);
 
             for (Iterator j=entries.keySet().iterator(); j.hasNext(); ) {
                 Row pk = (Row)j.next();
@@ -349,7 +346,7 @@ public class DefaultEngine extends Engine {
 
             for (Iterator j=partition.getRootEntryMappings().iterator(); j.hasNext(); ) {
                 EntryMapping entryMapping = (EntryMapping)j.next();
-                analyzer.analyze(entryMapping);
+                analyzer.analyze(partition, entryMapping);
             }
         }
 
@@ -449,7 +446,7 @@ Mapping: cn=Managers,ou=Groups,dc=Proxy,dc=Example,dc=org
             }
         }
 
-        final boolean unique = isUnique(entryMapping);
+        final boolean unique = isUnique(partition, entryMapping);
         final Collection effectiveSources = partition.getEffectiveSourceMappings(entryMapping);
 
         final PenroseSearchResults dns = new PenroseSearchResults();
@@ -475,7 +472,7 @@ Mapping: cn=Managers,ou=Groups,dc=Proxy,dc=Example,dc=org
                     EntryData data = (EntryData)event.getObject();
                     String dn = data.getDn();
 
-                    Entry entry = getEntryCache().get(dn);
+                    Entry entry = getEntryCache().get(partition, dn);
 
                     if (entry == null) {
                         log.debug("Entry "+dn+" is not cached.");
@@ -531,7 +528,7 @@ Mapping: cn=Managers,ou=Groups,dc=Proxy,dc=Example,dc=org
         log.debug("Parent: "+(parent == null ? null : parent.getDn()));
         String parentDn = parent == null ? null : parent.getDn();
 
-        boolean cacheFilter = getEntryCache().contains(entryMapping, parentDn, filter);
+        boolean cacheFilter = getEntryCache().contains(partition, entryMapping, parentDn, filter);
 
         if (!cacheFilter) {
 
@@ -545,7 +542,7 @@ Mapping: cn=Managers,ou=Groups,dc=Proxy,dc=Example,dc=org
 
                         log.info("Storing "+dn+" in filter cache.");
 
-                        getEntryCache().add(entryMapping, filter, dn);
+                        getEntryCache().add(partition, entryMapping, filter, dn);
 
                     } catch (Exception e) {
                         log.error(e.getMessage(), e);
@@ -584,13 +581,13 @@ Mapping: cn=Managers,ou=Groups,dc=Proxy,dc=Example,dc=org
                 }
             });
 
-            getEntryCache().search(entryMapping, parentDn, filter, list);
+            getEntryCache().search(partition, entryMapping, parentDn, filter, list);
         }
 
         if (dnOnly) return LDAPException.SUCCESS;
         if (unique && effectiveSources.size() == 1) return LDAPException.SUCCESS;
 
-        load(entryMapping, entriesToLoad, loadedEntries);
+        load(partition, entryMapping, entriesToLoad, loadedEntries);
 
         newEntries.addListener(new PipelineAdapter() {
             public void objectAdded(PipelineEvent event) {
@@ -599,7 +596,7 @@ Mapping: cn=Managers,ou=Groups,dc=Proxy,dc=Example,dc=org
 
                     log.info("Storing "+entry.getDn()+" in entry cache.");
 
-                    getEntryCache().put(entry);
+                    getEntryCache().put(partition, entry);
                     results.add(entry);
 
                 } catch (Exception e) {
@@ -615,7 +612,7 @@ Mapping: cn=Managers,ou=Groups,dc=Proxy,dc=Example,dc=org
             }
         });
 
-        merge(entryMapping, loadedEntries, newEntries);
+        merge(partition, entryMapping, loadedEntries, newEntries);
 
         return LDAPException.SUCCESS;
     }

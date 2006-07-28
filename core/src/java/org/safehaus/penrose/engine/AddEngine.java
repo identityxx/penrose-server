@@ -56,7 +56,7 @@ public class AddEngine {
             SourceMapping sourceMapping = (SourceMapping)i.next();
 
             AttributeValues output = new AttributeValues();
-            Row pk = engine.getTransformEngine().translate(entryMapping, sourceMapping, attributeValues, output);
+            Row pk = engine.getTransformEngine().translate(partition, entryMapping, sourceMapping, attributeValues, output);
             if (pk == null) continue;
 
             for (Iterator j=output.getNames().iterator(); j.hasNext(); ) {
@@ -87,7 +87,7 @@ public class AddEngine {
         sourceValues.add(parentSourceValues);
 
         Graph graph = engine.getGraph(entryMapping);
-        String startingSourceName = engine.getStartingSourceName(entryMapping);
+        String startingSourceName = engine.getStartingSourceName(partition, entryMapping);
         if (startingSourceName == null) return LDAPException.SUCCESS;
 
         SourceMapping startingSourceMapping = partition.getEffectiveSourceMapping(entryMapping, startingSourceName);
@@ -116,7 +116,7 @@ public class AddEngine {
             }
         }
 
-        AddGraphVisitor visitor = new AddGraphVisitor(engine, entryMapping, sourceValues);
+        AddGraphVisitor visitor = new AddGraphVisitor(engine, partition, entryMapping, sourceValues);
         visitor.run();
 
         if (visitor.getReturnCode() != LDAPException.SUCCESS) return visitor.getReturnCode();

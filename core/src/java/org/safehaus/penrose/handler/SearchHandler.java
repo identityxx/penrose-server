@@ -93,6 +93,55 @@ public class SearchHandler {
         return LDAPException.SUCCESS;
     }
 
+    public int searchInBackground(
+            PenroseSession session,
+            String baseDn,
+            String filter,
+            PenroseSearchControls sc,
+            PenroseSearchResults results) throws Exception {
+
+        Collection attributeNames = sc.getAttributes();
+
+        int rc;
+        try {
+            String scope = LDAPUtil.getScope(sc.getScope());
+            baseDn = normalizeDn(baseDn);
+
+            attributeNames = normalizeAttributeNames(attributeNames);
+            sc.setAttributes(attributeNames);
+
+            log.warn("Search \""+baseDn +"\" with scope "+scope+" and filter \""+filter+"\"");
+
+            log.debug("----------------------------------------------------------------------------------");
+            log.debug("SEARCH:");
+            if (session != null && session.getBindDn() != null) log.debug(" - Bind DN: " + session.getBindDn());
+            log.debug(" - Base DN: "+baseDn);
+            log.debug(" - Scope: "+scope);
+            log.debug(" - Filter: "+filter);
+            log.debug(" - Attribute Names: "+attributeNames);
+            log.debug("");
+
+            rc = performSearch(session, baseDn, filter, sc, results);
+
+        } catch (LDAPException e) {
+            rc = e.getResultCode();
+            results.setReturnCode(rc);
+
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+            rc = LDAPException.OPERATIONS_ERROR;
+            results.setReturnCode(rc);
+        }
+
+        if (rc == LDAPException.SUCCESS) {
+            log.warn("Search operation succeded.");
+        } else {
+            log.warn("Search operation failed. RC="+rc);
+        }
+
+        return rc;
+    }
+
     public String getNormalizedAttributeName(String attributeName) {
 
         SchemaManager schemaManager = handler.getSchemaManager();
@@ -141,55 +190,6 @@ public class SearchHandler {
         }
 
         return list;
-    }
-
-    public int searchInBackground(
-            PenroseSession session,
-            String baseDn,
-            String filter,
-            PenroseSearchControls sc,
-            PenroseSearchResults results) throws Exception {
-
-        Collection attributeNames = sc.getAttributes();
-
-        int rc;
-        try {
-            String scope = LDAPUtil.getScope(sc.getScope());
-            baseDn = normalizeDn(baseDn);
-
-            attributeNames = normalizeAttributeNames(attributeNames);
-            sc.setAttributes(attributeNames);
-
-            log.warn("Search \""+baseDn +"\" with scope "+scope+" and filter \""+filter+"\"");
-
-            log.debug("----------------------------------------------------------------------------------");
-            log.debug("SEARCH:");
-            if (session != null && session.getBindDn() != null) log.debug(" - Bind DN: " + session.getBindDn());
-            log.debug(" - Base DN: "+baseDn);
-            log.debug(" - Scope: "+scope);
-            log.debug(" - Filter: "+filter);
-            log.debug(" - Attribute Names: "+attributeNames);
-            log.debug("");
-
-            rc = performSearch(session, baseDn, filter, sc, results);
-
-        } catch (LDAPException e) {
-            rc = e.getResultCode();
-            results.setReturnCode(rc);
-
-        } catch (Exception e) {
-            log.error(e.getMessage(), e);
-            rc = LDAPException.OPERATIONS_ERROR;
-            results.setReturnCode(rc);
-        }
-
-        if (rc == LDAPException.SUCCESS) {
-            log.warn("Search operation succeded.");
-        } else {
-            log.warn("Search operation failed. RC="+rc);
-        }
-
-        return rc;
     }
 
     /**

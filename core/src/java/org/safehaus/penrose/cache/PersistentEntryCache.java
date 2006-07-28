@@ -45,16 +45,13 @@ public class PersistentEntryCache extends EntryCache {
         connectionName = getParameter(CONNECTION);
     }
 
-    public EntryCacheStorage createCacheStorage(EntryMapping entryMapping) throws Exception {
-
-        Partition partition = partitionManager.getPartition(entryMapping);
+    public EntryCacheStorage createCacheStorage(Partition partition, EntryMapping entryMapping) throws Exception {
 
         EntryCacheStorage cacheStorage = new PersistentEntryCacheStorage();
         cacheStorage.setCacheConfig(getCacheConfig());
         cacheStorage.setConnectionManager(connectionManager);
         cacheStorage.setPartition(partition);
         cacheStorage.setEntryMapping(entryMapping);
-        cacheStorage.setThreadManager(threadManager);
 
         cacheStorage.init();
 
@@ -66,11 +63,6 @@ public class PersistentEntryCache extends EntryCache {
     }
 
     public void create() throws Exception {
-        createMappingsTable();
-        super.create();
-    }
-
-    public void createMappingsTable() throws Exception {
         String sql = "create table penrose_mappings (id integer auto_increment, dn varchar(255) unique, primary key (id))";
 
         Connection con = null;
@@ -102,11 +94,6 @@ public class PersistentEntryCache extends EntryCache {
     }
 
     public void drop() throws Exception {
-        super.drop();
-        dropMappingsTable();
-    }
-
-    public void dropMappingsTable() throws Exception {
         String sql = "drop table penrose_mappings";
 
         Connection con = null;

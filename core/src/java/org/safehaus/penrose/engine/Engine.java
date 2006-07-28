@@ -54,9 +54,10 @@ public abstract class Engine {
 
     public EngineConfig engineConfig;
     public PenroseConfig penroseConfig;
+
     public SchemaManager schemaManager;
     public InterpreterManager interpreterManager;
-    private ConnectorManager connectorManager;
+    public ConnectorManager connectorManager;
     public ConnectionManager connectionManager;
     public PartitionManager partitionManager;
     public EntryCache entryCache;
@@ -231,11 +232,9 @@ public abstract class Engine {
 
     }
 
-    public String getStartingSourceName(EntryMapping entryMapping) throws Exception {
+    public String getStartingSourceName(Partition partition, EntryMapping entryMapping) throws Exception {
 
         log.debug("Searching the starting sourceMapping for "+entryMapping.getDn());
-
-        Partition partition = partitionManager.getPartition(entryMapping);
 
         Collection relationships = entryMapping.getRelationships();
         for (Iterator i=relationships.iterator(); i.hasNext(); ) {
@@ -382,8 +381,7 @@ public abstract class Engine {
     /**
      * Check whether the entry uses no sources and all attributes are constants.
      */
-    public boolean isStatic(EntryMapping entryMapping) throws Exception {
-        Partition partition = partitionManager.getPartition(entryMapping);
+    public boolean isStatic(Partition partition, EntryMapping entryMapping) throws Exception {
         Collection effectiveSources = partition.getEffectiveSourceMappings(entryMapping);
         if (effectiveSources.size() > 0) return false;
 
@@ -396,7 +394,7 @@ public abstract class Engine {
         EntryMapping parentMapping = partition.getParent(entryMapping);
         if (parentMapping == null) return true;
 
-        return isStatic(parentMapping);
+        return isStatic(partition, parentMapping);
     }
 
     public EngineFilterTool getEngineFilterTool() {
@@ -478,16 +476,17 @@ public abstract class Engine {
     }
 
     public void load(
+            Partition partition,
             EntryMapping entryMapping,
             PenroseSearchResults entriesToLoad,
             PenroseSearchResults loadedEntries)
             throws Exception {
 
-        loadEngine.load(entryMapping, entriesToLoad, loadedEntries);
+        loadEngine.load(partition, entryMapping, entriesToLoad, loadedEntries);
     }
 
-    public boolean isUnique(EntryMapping entryMapping) throws Exception {
-        return analyzer.isUnique(entryMapping);
+    public boolean isUnique(Partition partition, EntryMapping entryMapping) throws Exception {
+        return analyzer.isUnique(partition, entryMapping);
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -578,19 +577,18 @@ public abstract class Engine {
 	}
 
     public void merge(
+            Partition partition,
             EntryMapping entryMapping,
             PenroseSearchResults loadedEntries,
             PenroseSearchResults newEntries)
             throws Exception {
 
-        mergeEngine.merge(entryMapping, loadedEntries, newEntries);
+        mergeEngine.merge(partition, entryMapping, loadedEntries, newEntries);
     }
 
-    public Relationship getConnectingRelationship(EntryMapping entryMapping) throws Exception {
+    public Relationship getConnectingRelationship(Partition partition, EntryMapping entryMapping) throws Exception {
 
         // log.debug("Searching the connecting relationship for "+entryMapping;
-
-        Partition partition = partitionManager.getPartition(entryMapping);
 
         Collection relationships = partition.getEffectiveRelationships(entryMapping);
 
@@ -650,6 +648,7 @@ public abstract class Engine {
     }
 
     public Row createFilter(
+            Partition partition,
             Interpreter interpreter,
             SourceMapping sourceMapping,
             EntryMapping entryMapping,
@@ -659,7 +658,6 @@ public abstract class Engine {
             return new Row();
         }
 
-        Partition partition = partitionManager.getPartition(entryMapping);
         Collection fields = partition.getSearchableFields(sourceMapping);
 
         interpreter.set(rdn);
@@ -685,6 +683,7 @@ public abstract class Engine {
     }
 
     public Collection computeDns(
+            Partition partition,
             Interpreter interpreter,
             EntryMapping entryMapping,
             AttributeValues sourceValues)
@@ -694,21 +693,20 @@ public abstract class Engine {
 
         Collection results = new ArrayList();
 
-        results.addAll(computeDns(interpreter, entryMapping));
+        results.addAll(computeDns(partition, interpreter, entryMapping));
 
         interpreter.clear();
 
         return results;
     }
 
-    public Collection computeDns(Interpreter interpreter, EntryMapping entryMapping) throws Exception {
+    public Collection computeDns(Partition partition, Interpreter interpreter, EntryMapping entryMapping) throws Exception {
 
-        Partition partition = partitionManager.getPartition(entryMapping);
         EntryMapping parentMapping = partition.getParent(entryMapping);
 
         Collection parentDns;
         if (parentMapping != null) {
-            parentDns = computeDns(interpreter, parentMapping);
+            parentDns = computeDns(partition, interpreter, parentMapping);
         } else {
             parentDns = new ArrayList();
             if (entryMapping.getParentDn() != null) {

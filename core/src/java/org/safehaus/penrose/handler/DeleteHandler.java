@@ -60,10 +60,15 @@ public class DeleteHandler {
             Entry entry = getHandler().getFindHandler().find(session, ndn);
             if (entry == null) return LDAPException.NO_SUCH_OBJECT;
 
-            rc = performDelete(session, entry);
+            EntryMapping entryMapping = entry.getEntryMapping();
+
+            PartitionManager partitionManager = handler.getPartitionManager();
+            Partition partition = partitionManager.getPartition(entryMapping);
+
+            rc = performDelete(session, partition, entry);
             if (rc != LDAPException.SUCCESS) return rc;
 
-            handler.getEngine().getEntryCache().remove(entry);
+            handler.getEngine().getEntryCache().remove(partition, entry);
 
         } catch (LDAPException e) {
             rc = e.getResultCode();
@@ -82,7 +87,7 @@ public class DeleteHandler {
         return rc;
     }
 
-    public int performDelete(PenroseSession session, Entry entry) throws Exception {
+    public int performDelete(PenroseSession session, Partition partition, Entry entry) throws Exception {
 
         EntryMapping entryMapping = entry.getEntryMapping();
 
@@ -91,9 +96,6 @@ public class DeleteHandler {
             log.debug("Not allowed to delete "+entry.getDn());
             return rc;
         }
-
-        PartitionManager partitionManager = handler.getPartitionManager();
-        Partition partition = partitionManager.getPartition(entryMapping);
 
         if (partition.isProxy(entryMapping)) {
             return handler.getEngine("PROXY").delete(partition, entry);
