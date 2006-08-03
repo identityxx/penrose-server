@@ -56,7 +56,7 @@ public class Penrose {
     public static String PRODUCT_COPYRIGHT = "Copyright (c) 2000-2006, Identyx Corporation.";
 
     public final static DateFormat DATE_FORMAT   = new SimpleDateFormat("MM/dd/yyyy");
-    public final static String RELEASE_DATE      = "04/01/2006";
+    public final static String RELEASE_DATE      = "08/01/2006";
 
     public final static String STOPPED  = "STOPPED";
     public final static String STARTING = "STARTING";

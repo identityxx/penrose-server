@@ -9,7 +9,7 @@
     <property name="product.name" value="penrose"/>
 
     <property name="project.name" value="penrose-server"/>
-    <property name="project.version" value="1.0.3"/>
+    <property name="project.version" value="1.0.4"/>
     <property name="project.dist" value="dist"/>
 
     <property name="prefix" value=""/>
@@ -44,7 +44,7 @@
     <target name="build-tools" depends="init">
         <mkdir dir="target/tools"/>
         <javac srcdir="src/tools" destdir="target/tools"/>
-        <jar destfile="target/${product.name}-tools-${project.version}.jar" basedir="target/tools"/>
+        <jar destfile="lib/tools/${product.name}-tools-${project.version}.jar" basedir="target/tools"/>
     </target>
 
     <target name="build" depends="init">
@@ -169,7 +169,7 @@
         <taskdef
             name="wrapper"
             classname="org.safehaus.penrose.ant.WrapperTask"
-            classpath="target/${product.name}-tools-${project.version}.jar"/>
+            classpath="lib/tools/${product.name}-tools-${project.version}.jar"/>
         <wrapper file="target/dist/conf/default/wrapper.conf" dir="target/dist/lib" path="../lib"/>
         <copy todir="target/dist/conf">
             <fileset dir="target/dist/conf/default"/>
