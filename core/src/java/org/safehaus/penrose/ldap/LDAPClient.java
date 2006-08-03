@@ -444,16 +444,24 @@ public class LDAPClient {
                     SearchResult sr = (SearchResult)results.next();
                     Attributes attributes = sr.getAttributes();
 
-                    Attribute attribute = attributes.get("lDAPDisplayName");
-                    String atName = (String)attribute.get();
+                    Attribute lDAPDisplayName = attributes.get("lDAPDisplayName");
+                    String atName = (String)lDAPDisplayName.get();
                     //log.debug(" - "+atName);
 
                     AttributeType at = new AttributeType();
                     at.setName(atName);
-                    at.setOid((String)attributes.get("attributeID").get());
-                    at.setDescription((String)attributes.get("adminDescription").get());
-                    at.setSyntax((String)attributes.get("attributeSyntax").get());
-                    at.setSingleValued(Boolean.valueOf((String)attributes.get("isSingleValued").get()).booleanValue());
+
+                    Attribute attributeID = attributes.get("attributeID");
+                    if (attributeID != null) at.setOid(attributeID.get().toString());
+
+                    Attribute adminDescription = attributes.get("adminDescription");
+                    if (adminDescription != null) at.setDescription(adminDescription.get().toString());
+
+                    Attribute attributeSyntax = attributes.get("attributeSyntax");
+                    if (attributeSyntax != null) at.setSyntax(attributeSyntax.get().toString());
+
+                    Attribute isSingleValued = attributes.get("isSingleValued");
+                    if (isSingleValued != null) at.setSingleValued(Boolean.valueOf(isSingleValued.get().toString()).booleanValue());
 
                     schema.addAttributeType(at);
                 }
@@ -507,45 +515,49 @@ public class LDAPClient {
                     SearchResult sr = (SearchResult)results.next();
                     Attributes attributes = sr.getAttributes();
 
-                    Attribute attribute = attributes.get("lDAPDisplayName");
-                    String ocName = (String)attribute.get();
+                    Attribute lDAPDisplayName = attributes.get("lDAPDisplayName");
+                    String ocName = (String)lDAPDisplayName.get();
                     //log.debug(" - "+ocName);
 
                     ObjectClass oc = new ObjectClass();
                     oc.setName(ocName);
-                    oc.setOid((String)attributes.get("governsID").get());
-                    oc.setDescription((String)attributes.get("adminDescription").get());
 
-                    attribute = attributes.get("mustContain");
-                    if (attribute != null) {
-                        NamingEnumeration ne = attribute.getAll();
+                    Attribute governsID = attributes.get("governsID");
+                    if (governsID != null) oc.setOid(governsID.get().toString());
+
+                    Attribute adminDescription = attributes.get("adminDescription");
+                    if (adminDescription != null) oc.setDescription(adminDescription.get().toString());
+
+                    Attribute mustContain = attributes.get("mustContain");
+                    if (mustContain != null) {
+                        NamingEnumeration ne = mustContain.getAll();
                         while (ne.hasMore()) {
                             String requiredAttribute = (String)ne.next();
                             oc.addRequiredAttribute(requiredAttribute);
                         }
                     }
 
-                    attribute = attributes.get("systemMustContain");
-                    if (attribute != null) {
-                        NamingEnumeration ne = attribute.getAll();
+                    Attribute systemMustContain = attributes.get("systemMustContain");
+                    if (systemMustContain != null) {
+                        NamingEnumeration ne = systemMustContain.getAll();
                         while (ne.hasMore()) {
                             String requiredAttribute = (String)ne.next();
                             oc.addRequiredAttribute(requiredAttribute);
                         }
                     }
 
-                    attribute = attributes.get("mayContain");
-                    if (attribute != null) {
-                        NamingEnumeration ne = attribute.getAll();
+                    Attribute mayContain = attributes.get("mayContain");
+                    if (mayContain != null) {
+                        NamingEnumeration ne = mayContain.getAll();
                         while (ne.hasMore()) {
                             String optionalAttribute = (String)ne.next();
                             oc.addOptionalAttribute(optionalAttribute);
                         }
                     }
 
-                    attribute = attributes.get("systemMayContain");
-                    if (attribute != null) {
-                        NamingEnumeration ne = attribute.getAll();
+                    Attribute systemMayContain = attributes.get("systemMayContain");
+                    if (systemMayContain != null) {
+                        NamingEnumeration ne = systemMayContain.getAll();
                         while (ne.hasMore()) {
                             String optionalAttribute = (String)ne.next();
                             oc.addOptionalAttribute(optionalAttribute);
@@ -599,9 +611,9 @@ public class LDAPClient {
             Attributes attributes = sr.getAttributes();
 
             //log.debug("Object Classes:");
-            Attribute attribute = attributes.get("objectClasses");
+            Attribute objectClasses = attributes.get("objectClasses");
 
-            NamingEnumeration values = attribute.getAll();
+            NamingEnumeration values = objectClasses.getAll();
             while (values.hasMore()) {
                 String value = (String)values.next();
                 //System.out.println("objectClass "+value);
@@ -613,9 +625,9 @@ public class LDAPClient {
             }
 
             //log.debug("Attribute Types:");
-            attribute = attributes.get("attributeTypes");
+            Attribute attributeTypes = attributes.get("attributeTypes");
 
-            values = attribute.getAll();
+            values = attributeTypes.getAll();
             while (values.hasMore()) {
                 String value = (String)values.next();
                 //System.out.println("attributeTypes "+value);
