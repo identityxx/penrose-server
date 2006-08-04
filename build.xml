@@ -226,7 +226,7 @@
             basedir="target/dist"/>
         <echo message="Creating ${project.name}-${project.version}.tar.gz"/>
         <mkdir dir="target"/>
-        <tar destfile="target/${project.name}-${project.version}.tar">
+        <tar destfile="${project.dist}/${project.name}-${project.version}.tar" compression="gzip">
             <tarfileset dir="target/dist" prefix="${project.name}-${project.version}" mode="755">
                 <include name="bin/*.sh"/>
             </tarfileset>
@@ -235,20 +235,23 @@
                 <exclude name="bin/*.sh"/>
             </tarfileset>
         </tar>
-        <gzip destfile="${project.dist}/${project.name}-${project.version}.tar.gz"
-            src="target/${project.name}-${project.version}.tar"/>
+        <antcall target="rpm">
+            <param name="rpm.prefix" value=""/>
+            <param name="rpm.home" value="/usr/src/redhat"/>
+            <param name="rpm.builder" value="/usr/bin/rpmbuild"/>
+            <param name="rpm.name" value="${project.name}-${project.version}-1.i386.rpm"/>
+        </antcall>
     </target>
 
-    <target name="dist-rpm" depends="dist-src">
-        <antcall target="dist-rpm-unix"/>
-        <antcall target="dist-rpm-windows"/>
+    <target name="rpm-check" depends="init">
+        <echo message="Checking ${rpm.builder}"/>
+        <condition property="hasRpmBuilder">
+            <available file="${rpm.builder}"/>
+        </condition>
     </target>
 
-    <target name="dist-rpm-unix" if="isUnix">
-        <property name="rpm.prefix" value=""/>
-        <property name="rpm.home" value="/usr/src/redhat"/>
-        <property name="rpm.builder" value="/usr/bin/rpmbuild"/>
-        <copy todir="target" file="rpm/penrose.spec">
+    <target name="rpm-build" depends="dist-src" if="hasRpmBuilder">
+        <copy todir="target" file="installer/penrose-server.spec">
             <filterchain>
                 <expandproperties/>
             </filterchain>
@@ -257,53 +260,36 @@
             file="${project.dist}/${project.name}-${project.version}-src.tar.gz">
         </copy>
         <exec executable="${rpm.builder}">
-            <arg line="-ba target/penrose.spec"/>
+            <arg line="-bb target/penrose-server.spec"/>
         </exec>
         <copy todir="${project.dist}" failonerror="false"
-            file="${rpm.home}/SRPMS/${project.name}-${project.version}-1.src.rpm">
-        </copy>
-        <copy todir="${project.dist}" failonerror="false"
-            file="${rpm.home}/RPMS/i386/${project.name}-${project.version}-1.i386.rpm">
+            file="${rpm.home}/RPMS/i386/${rpm.name}">
         </copy>
     </target>
 
-    <target name="dist-rpm-windows" if="isWindows">
-        <property name="rpm.prefix" value="${cygwin.home}"/>
-        <property name="rpm.home" value="${cygwin.home}/usr/src/rpm"/>
-        <property name="rpm.builder" value="${cygwin.home}/lib/rpm/rpmb.exe"/>
-        <copy todir="target" file="rpm/penrose.spec">
-            <filterchain>
-                <expandproperties/>
-            </filterchain>
-        </copy>
-        <copy todir="${rpm.home}/SOURCES" overwrite="true"
-            file="${project.dist}/${project.name}-${project.version}-src.tar.gz">
-        </copy>
-        <exec executable="${rpm.builder}">
-            <arg line="-ba target/penrose.spec"/>
-        </exec>
-        <copy todir="${project.dist}" failonerror="false"
-            file="${rpm.home}/SRPMS/${project.name}-${project.version}-1.src.rpm">
-        </copy>
-        <copy todir="${project.dist}" failonerror="false"
-            file="${rpm.home}/RPMS/i386/${project.name}-${project.version}-1.cygwin.i386.rpm">
-        </copy>
+    <target name="rpm" depends="rpm-check,rpm-build">
     </target>
 
     <target name="dist-win32" depends="docs,dist" if="isWindows">
         <echo message="Creating ${project.name}-${project.version}.exe"/>
-        <copy todir="target" file="penrose.iss">
+        <copy todir="target" file="installer/penrose-server.iss">
             <filterchain>
                 <expandproperties/>
             </filterchain>
         </copy>
         <mkdir dir="${project.dist}"/>
         <exec executable="${iscc.path}">
-            <arg line="/Q target/penrose.iss"/>
+            <arg line="/Q target/penrose-server.iss"/>
         </exec>
+        <antcall target="rpm">
+            <param name="rpm.prefix" value="${cygwin.home}"/>
+            <param name="rpm.home" value="${cygwin.home}/usr/src/rpm"/>
+            <param name="rpm.builder" value="${cygwin.home}/lib/rpm/rpmb.exe"/>
+            <param name="rpm.name" value="${project.name}-${project.version}-1.cygwin.i386.rpm"/>
+        </antcall>
     </target>
 
-    <target name="dist-all" depends="dist-src,dist-unix,dist-win32,dist-rpm">
+    <target name="dist-all" depends="dist-src,dist-unix,dist-win32">
         <copy todir="${project.dist}"
             file="target/${product.name}-${project.version}.jar">
         </copy>

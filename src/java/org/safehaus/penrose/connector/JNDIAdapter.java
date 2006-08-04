@@ -29,6 +29,7 @@ import org.safehaus.penrose.session.PenroseSearchControls;
 import org.safehaus.penrose.partition.FieldConfig;
 import org.safehaus.penrose.partition.SourceConfig;
 import org.safehaus.penrose.util.*;
+import org.safehaus.penrose.util.Formatter;
 
 import java.util.*;
 
