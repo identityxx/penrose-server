@@ -226,7 +226,7 @@
             basedir="target/dist"/>
         <echo message="Creating ${project.name}-${project.version}.tar.gz"/>
         <mkdir dir="target"/>
-        <tar destfile="${project.dist}/${project.name}-${project.version}.tar" compression="gzip">
+        <tar destfile="${project.dist}/${project.name}-${project.version}.tar.gz" compression="gzip">
             <tarfileset dir="target/dist" prefix="${project.name}-${project.version}" mode="755">
                 <include name="bin/*.sh"/>
             </tarfileset>
