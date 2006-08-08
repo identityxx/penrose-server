@@ -171,6 +171,7 @@ public class FindHandler {
                         sc.setScope(PenroseSearchControls.SCOPE_BASE);
 
                         engine.searchProxy(
+                                session,
                                 partition,
                                 entryMapping,
                                 dn,

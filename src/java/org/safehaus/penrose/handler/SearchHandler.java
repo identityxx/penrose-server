@@ -22,6 +22,7 @@ import org.safehaus.penrose.session.PenroseSession;
 import org.safehaus.penrose.session.PenroseSearchControls;
 import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.util.EntryUtil;
+import org.safehaus.penrose.util.ExceptionUtil;
 import org.safehaus.penrose.schema.SchemaManager;
 import org.safehaus.penrose.schema.AttributeType;
 import org.safehaus.penrose.service.ServiceConfig;
@@ -81,7 +82,7 @@ public class SearchHandler {
 
                 } catch (Throwable e) {
                     log.error(e.getMessage(), e);
-                    results.setReturnCode(LDAPException.OPERATIONS_ERROR);
+                    results.setReturnCode(ExceptionUtil.getReturnCode(e));
                     results.close();
                 }
             }
@@ -218,7 +219,7 @@ public class SearchHandler {
 
         } catch (Exception e) {
             log.error(e.getMessage(), e);
-            rc = LDAPException.OPERATIONS_ERROR;
+            rc = ExceptionUtil.getReturnCode(e);
             results.setReturnCode(rc);
 
         } finally {
@@ -336,7 +337,7 @@ public class SearchHandler {
                 }
 
             } else {
-                handler.getEngine().searchProxy(partition, entryMapping, base, filter, sc, results);
+                handler.getEngine().searchProxy(session, partition, entryMapping, base, filter, sc, results);
             }
 
         } else { // not a proxy
@@ -393,7 +394,7 @@ public class SearchHandler {
             if (partition.isProxy(childMapping)) {
                 sc.setScope(scope == LDAPConnection.SCOPE_ONE ? LDAPConnection.SCOPE_BASE : scope);
 
-                handler.getEngine().searchProxy(partition, childMapping, childMapping.getDn(), filter.toString(), sc, sr);
+                handler.getEngine().searchProxy(session, partition, childMapping, childMapping.getDn(), filter.toString(), sc, sr);
 
             } else if (handler.getFilterTool().isValid(childMapping, filter)) {
 

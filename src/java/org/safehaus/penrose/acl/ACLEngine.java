@@ -23,6 +23,7 @@ import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.PartitionManager;
 import org.safehaus.penrose.schema.SchemaManager;
 import org.safehaus.penrose.config.PenroseConfig;
+import org.safehaus.penrose.util.EntryUtil;
 import org.ietf.ldap.LDAPException;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
@@ -67,8 +68,10 @@ public class ACLEngine {
 
         if (entryMapping == null) return true;
 
-        targetDn = schemaManager.normalize(targetDn);
+        String mappingDn = entryMapping.getDn();
         //log.debug("Checking ACL on \""+entryMapping.getDn()+"\".");
+        //log.debug("Bind DN: "+bindDn);
+        //log.debug("Target DN: "+targetDn);
 
         for (Iterator i=entryMapping.getACL().iterator(); i.hasNext(); ) {
             ACI aci = (ACI)i.next();
@@ -89,30 +92,50 @@ public class ACLEngine {
                 continue;
             }
 
-            String subject = schemaManager.normalize(aci.getSubject());
+            String subject = aci.getSubject();
             //log.debug("   ==> checking subject "+subject);
 
-            if (subject.equals(ACI.SUBJECT_USER) && aci.getDn().equals(bindDn)) {
-                boolean b = aci.getAction().equals(ACI.ACTION_GRANT);
-                //log.debug("User access: "+b);
-                return b;
+            if (subject.equals(ACI.SUBJECT_USER)) {
+                boolean match = EntryUtil.match(aci.getDn(), bindDn);
+                //log.debug("User matches \""+aci.getDn()+"\": "+match);
+                if (match) {
+                    boolean b = aci.getAction().equals(ACI.ACTION_GRANT);
+                    //log.debug("User access: "+b);
+                    return b;
+                }
+            }
 
-            } else if (subject.equals(ACI.SUBJECT_SELF) && targetDn.equals(bindDn)) {
-                boolean b = aci.getAction().equals(ACI.ACTION_GRANT);
-                //log.debug("Self access: "+b);
-                return b;
+            if (subject.equals(ACI.SUBJECT_SELF)) {
+                boolean match = EntryUtil.match(targetDn, bindDn);
+                //log.debug("User matches \""+targetDn+"\": "+match);
+                if (match) {
+                    boolean b = aci.getAction().equals(ACI.ACTION_GRANT);
+                    //log.debug("Self access: "+b);
+                    return b;
+                }
+            }
 
-            } else if (subject.equals(ACI.SUBJECT_ANONYMOUS) && (bindDn == null || bindDn.equals(""))) {
-                boolean b = aci.getAction().equals(ACI.ACTION_GRANT);
-                //log.debug("Anonymous access: "+b);
-                return b;
+            if (subject.equals(ACI.SUBJECT_ANONYMOUS)) {
+                boolean anonymous = bindDn == null || bindDn.equals("");
+                //log.debug("User is anonymous: "+anonymous);
+                if (anonymous) {
+                    boolean b = aci.getAction().equals(ACI.ACTION_GRANT);
+                    //log.debug("Anonymous access: "+b);
+                    return b;
+                }
+            }
 
-            } else if (subject.equals(ACI.SUBJECT_AUTHENTICATED) && bindDn != null && !bindDn.equals("")) {
-                boolean b = aci.getAction().equals(ACI.ACTION_GRANT);
-                //log.debug("Authenticated access: "+b);
-                return b;
+            if (subject.equals(ACI.SUBJECT_AUTHENTICATED)) {
+                boolean authenticated = bindDn != null && !bindDn.equals("");
+                //log.debug("User is authenticated: "+authenticated);
+                if (authenticated) {
+                    boolean b = aci.getAction().equals(ACI.ACTION_GRANT);
+                    //log.debug("Authenticated access: "+b);
+                    return b;
+                }
+            }
 
-            } else if (subject.equals(ACI.SUBJECT_ANYBODY)) {
+            if (subject.equals(ACI.SUBJECT_ANYBODY)) {
                 boolean b = aci.getAction().equals(ACI.ACTION_GRANT);
                 //log.debug("Anybody access: "+b);
                 return b;
@@ -127,7 +150,7 @@ public class ACLEngine {
 
         entryMapping = partition.getParent(entryMapping);
         if (entryMapping == null) {
-            log.debug("Parent entry for "+targetDn+" not found.");
+            log.debug("Parent entry for "+mappingDn+" not found.");
             return false;
         }
 

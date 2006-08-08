@@ -21,6 +21,7 @@ import org.safehaus.penrose.session.PenroseSession;
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.util.PasswordUtil;
 import org.safehaus.penrose.util.Formatter;
+import org.safehaus.penrose.util.ExceptionUtil;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.PartitionManager;
 import org.safehaus.penrose.config.PenroseConfig;
@@ -78,18 +79,16 @@ public class BindHandler {
             }
 
             session.setBindDn(dn);
+            session.setBindPassword(password);
+
             return LDAPException.SUCCESS; // LDAP_SUCCESS
 
         } catch (LDAPException e) {
             rc = e.getResultCode();
 
-        } catch (AuthenticationException e) {
-            log.error(e.getMessage());
-            rc = LDAPException.INVALID_CREDENTIALS;
-
         } catch (Exception e) {
             log.error(e.getMessage(), e);
-            rc = LDAPException.OPERATIONS_ERROR;
+            rc = ExceptionUtil.getReturnCode(e);
         }
 
         return rc;
@@ -103,6 +102,7 @@ public class BindHandler {
         if (session == null) return 0;
 
         session.setBindDn(null);
+        session.setBindPassword(null);
 
         log.debug("  dn: " + session.getBindDn());
 
@@ -137,7 +137,7 @@ public class BindHandler {
         Partition partition = partitionManager.getPartition(entryMapping);
 
         if (partition.isProxy(entryMapping)) {
-            handler.getEngine().bindProxy(partition, entryMapping, dn, password);
+            handler.getEngine().bindProxy(session, partition, entryMapping, dn, password);
             return LDAPException.SUCCESS;
         }
 

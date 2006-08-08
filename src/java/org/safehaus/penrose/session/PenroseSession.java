@@ -43,6 +43,7 @@ public class PenroseSession {
     private String sessionId;
 
     private String bindDn;
+    private String bindPassword;
     
     private Date createDate;
     private Date lastActivityDate;
@@ -290,5 +291,13 @@ public class PenroseSession {
 
     public void setEventManager(EventManager eventManager) {
         this.eventManager = eventManager;
+    }
+
+    public String getBindPassword() {
+        return bindPassword;
+    }
+
+    public void setBindPassword(String bindPassword) {
+        this.bindPassword = bindPassword;
     }
 }

@@ -23,6 +23,7 @@ import org.safehaus.penrose.schema.matchingRule.EqualityMatchingRule;
 import org.safehaus.penrose.mapping.Entry;
 import org.safehaus.penrose.mapping.AttributeValues;
 import org.safehaus.penrose.util.BinaryUtil;
+import org.safehaus.penrose.util.ExceptionUtil;
 import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.service.ServiceConfig;
 import org.ietf.ldap.*;
@@ -105,7 +106,7 @@ public class CompareHandler {
 
         } catch (Exception e) {
             log.error(e.getMessage(), e);
-            rc = LDAPException.OPERATIONS_ERROR;
+            rc = ExceptionUtil.getReturnCode(e);
         }
 
         if (rc == LDAPException.SUCCESS) {

@@ -24,10 +24,8 @@ import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.PartitionManager;
 import org.safehaus.penrose.schema.ObjectClass;
 import org.safehaus.penrose.schema.AttributeType;
-import org.safehaus.penrose.util.PasswordUtil;
-import org.safehaus.penrose.util.BinaryUtil;
+import org.safehaus.penrose.util.*;
 import org.safehaus.penrose.util.Formatter;
-import org.safehaus.penrose.util.EntryUtil;
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.service.ServiceConfig;
@@ -138,7 +136,7 @@ public class ModifyHandler {
 
         } catch (Exception e) {
             log.error(e.getMessage(), e);
-            rc = LDAPException.OPERATIONS_ERROR;
+            rc = ExceptionUtil.getReturnCode(e);
         }
 
         if (rc == LDAPException.SUCCESS) {
@@ -210,7 +208,7 @@ public class ModifyHandler {
 
         if (partition.isProxy(entryMapping)) {
             log.debug("Modifying "+entry.getDn()+" via proxy");
-            handler.getEngine().modifyProxy(partition, entryMapping, entry, modifications);
+            handler.getEngine().modifyProxy(session, partition, entryMapping, entry, modifications);
             return LDAPException.SUCCESS;
         }
 

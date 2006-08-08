@@ -19,6 +19,7 @@ package org.safehaus.penrose.engine;
 
 import org.safehaus.penrose.session.PenroseSearchResults;
 import org.safehaus.penrose.session.PenroseSearchControls;
+import org.safehaus.penrose.session.PenroseSession;
 import org.safehaus.penrose.connector.*;
 import org.safehaus.penrose.cache.EntryCache;
 import org.safehaus.penrose.cache.CacheConfig;
@@ -28,16 +29,15 @@ import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.pipeline.PipelineAdapter;
 import org.safehaus.penrose.pipeline.PipelineEvent;
 import org.safehaus.penrose.util.*;
+import org.safehaus.penrose.util.Formatter;
 import org.ietf.ldap.LDAPException;
 
 import javax.naming.directory.Attributes;
 import javax.naming.directory.SearchResult;
 import javax.naming.directory.Attribute;
 import javax.naming.NamingEnumeration;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.ArrayList;
+import javax.naming.Context;
+import java.util.*;
 
 /**
  * @author Endi S. Dewata
@@ -245,9 +245,21 @@ public class DefaultEngine extends Engine {
         searchEngine.search(parent, parentSourceValues, entryMapping, filter, dns);
     }
 
+    public String convertDn(String dn, String oldSuffix, String newSuffix) throws Exception {
+
+        if (dn == null) return null;
+        if (!dn.endsWith(oldSuffix)) return null;
+
+        dn = dn.substring(0, dn.length() - oldSuffix.length());
+        if (dn.endsWith(",")) dn = dn.substring(0, dn.length()-1);
+
+        return EntryUtil.append(dn, newSuffix);
+    }
+
     public void bindProxy(
-            final Partition partition,
-            final EntryMapping entryMapping,
+            PenroseSession session,
+            Partition partition,
+            EntryMapping entryMapping,
             String dn,
             String password
             ) throws Exception {
@@ -259,25 +271,25 @@ public class DefaultEngine extends Engine {
         String connectionName = sourceConfig.getConnectionName();
 
         Connection connection = connectionManager.getConnection(partition, connectionName);
-        JNDIAdapter adapter = (JNDIAdapter)connection.getAdapter();
 
         String proxyDn = entryMapping.getDn();
-
-        String targetDn = dn.substring(0, dn.length() - proxyDn.length());
-        if (targetDn.endsWith(",")) targetDn = targetDn.substring(0, targetDn.length()-1);
-
         String baseDn = sourceConfig.getParameter("baseDn");
-        targetDn = EntryUtil.append(targetDn, baseDn);
 
-        log.debug("Binding via proxy "+sourceName+" as \""+targetDn+"\" with "+password);
+        String bindDn = convertDn(dn, proxyDn, baseDn);
 
-        JNDIClient client = adapter.getClient();
-        client.bind(targetDn, password);
+        log.debug("Binding via proxy "+sourceName+" as \""+bindDn +"\" with "+password);
+
+        Map parameters = new HashMap();
+        parameters.putAll(connection.getParameters());
+
+        JNDIClient client = new JNDIClient(parameters);
+        client.bind(bindDn, password);
     }
 
     public void addProxy(
-            final Partition partition,
-            final EntryMapping entryMapping,
+            PenroseSession session,
+            Partition partition,
+            EntryMapping entryMapping,
             String dn,
             Attributes attributes
             ) throws Exception {
@@ -289,25 +301,31 @@ public class DefaultEngine extends Engine {
         String connectionName = sourceConfig.getConnectionName();
 
         Connection connection = connectionManager.getConnection(partition, connectionName);
-        JNDIAdapter adapter = (JNDIAdapter)connection.getAdapter();
 
         String proxyDn = entryMapping.getDn();
-
-        String targetDn = dn.substring(0, dn.length() - proxyDn.length());
-        if (targetDn.endsWith(",")) targetDn = targetDn.substring(0, targetDn.length()-1);
-
         String baseDn = sourceConfig.getParameter("baseDn");
-        targetDn = EntryUtil.append(targetDn, baseDn);
+
+        String targetDn = convertDn(dn, proxyDn, baseDn);
 
         log.debug("Modifying via proxy "+sourceName+" as \""+targetDn+"\"");
 
-        JNDIClient client = adapter.getClient();
+        Map parameters = new HashMap();
+        parameters.putAll(connection.getParameters());
+
+        String bindDn = convertDn(session.getBindDn(), proxyDn, baseDn);
+        if (bindDn != null) {
+            parameters.put(Context.SECURITY_PRINCIPAL, bindDn);
+            parameters.put(Context.SECURITY_CREDENTIALS, session.getBindPassword());
+        }
+
+        JNDIClient client = new JNDIClient(parameters);
         client.add(targetDn, attributes);
     }
 
     public void modifyProxy(
-            final Partition partition,
-            final EntryMapping entryMapping,
+            PenroseSession session,
+            Partition partition,
+            EntryMapping entryMapping,
             Entry entry,
             Collection modifications
             ) throws Exception {
@@ -321,25 +339,31 @@ public class DefaultEngine extends Engine {
         String connectionName = sourceConfig.getConnectionName();
 
         Connection connection = connectionManager.getConnection(partition, connectionName);
-        JNDIAdapter adapter = (JNDIAdapter)connection.getAdapter();
 
         String proxyDn = entryMapping.getDn();
-
-        String targetDn = dn.substring(0, dn.length() - proxyDn.length());
-        if (targetDn.endsWith(",")) targetDn = targetDn.substring(0, targetDn.length()-1);
-
         String baseDn = sourceConfig.getParameter("baseDn");
-        targetDn = EntryUtil.append(targetDn, baseDn);
+
+        String targetDn = convertDn(dn, proxyDn, baseDn);
 
         log.debug("Modifying via proxy "+sourceName+" as \""+targetDn+"\"");
 
-        JNDIClient client = adapter.getClient();
+        Map parameters = new HashMap();
+        parameters.putAll(connection.getParameters());
+
+        String bindDn = convertDn(session.getBindDn(), proxyDn, baseDn);
+        if (bindDn != null) {
+            parameters.put(Context.SECURITY_PRINCIPAL, bindDn);
+            parameters.put(Context.SECURITY_CREDENTIALS, session.getBindPassword());
+        }
+
+        JNDIClient client = new JNDIClient(parameters);
         client.modify(targetDn, modifications);
     }
 
     public void modrdnProxy(
-            final Partition partition,
-            final EntryMapping entryMapping,
+            PenroseSession session,
+            Partition partition,
+            EntryMapping entryMapping,
             Entry entry,
             String newRdn
             ) throws Exception {
@@ -353,25 +377,31 @@ public class DefaultEngine extends Engine {
         String connectionName = sourceConfig.getConnectionName();
 
         Connection connection = connectionManager.getConnection(partition, connectionName);
-        JNDIAdapter adapter = (JNDIAdapter)connection.getAdapter();
 
         String proxyDn = entryMapping.getDn();
-
-        String targetDn = dn.substring(0, dn.length() - proxyDn.length());
-        if (targetDn.endsWith(",")) targetDn = targetDn.substring(0, targetDn.length()-1);
-
         String baseDn = sourceConfig.getParameter("baseDn");
-        targetDn = EntryUtil.append(targetDn, baseDn);
+
+        String targetDn = convertDn(dn, proxyDn, baseDn);
 
         log.debug("Renaming via proxy "+sourceName+" as \""+targetDn+"\"");
 
-        JNDIClient client = adapter.getClient();
+        Map parameters = new HashMap();
+        parameters.putAll(connection.getParameters());
+
+        String bindDn = convertDn(session.getBindDn(), proxyDn, baseDn);
+        if (bindDn != null) {
+            parameters.put(Context.SECURITY_PRINCIPAL, bindDn);
+            parameters.put(Context.SECURITY_CREDENTIALS, session.getBindPassword());
+        }
+
+        JNDIClient client = new JNDIClient(parameters);
         client.modrdn(targetDn, newRdn);
     }
 
     public void deleteProxy(
-            final Partition partition,
-            final EntryMapping entryMapping,
+            PenroseSession session,
+            Partition partition,
+            EntryMapping entryMapping,
             String dn
             ) throws Exception {
 
@@ -382,23 +412,29 @@ public class DefaultEngine extends Engine {
         String connectionName = sourceConfig.getConnectionName();
 
         Connection connection = connectionManager.getConnection(partition, connectionName);
-        JNDIAdapter adapter = (JNDIAdapter)connection.getAdapter();
 
         String proxyDn = entryMapping.getDn();
-
-        String targetDn = dn.substring(0, dn.length() - proxyDn.length());
-        if (targetDn.endsWith(",")) targetDn = targetDn.substring(0, targetDn.length()-1);
-
         String baseDn = sourceConfig.getParameter("baseDn");
-        targetDn = EntryUtil.append(targetDn, baseDn);
+
+        String targetDn = convertDn(dn, proxyDn, baseDn);
 
         log.debug("Modifying via proxy "+sourceName+" as \""+targetDn+"\"");
 
-        JNDIClient client = adapter.getClient();
+        Map parameters = new HashMap();
+        parameters.putAll(connection.getParameters());
+
+        String bindDn = convertDn(session.getBindDn(), proxyDn, baseDn);
+        if (bindDn != null) {
+            parameters.put(Context.SECURITY_PRINCIPAL, bindDn);
+            parameters.put(Context.SECURITY_CREDENTIALS, session.getBindPassword());
+        }
+
+        JNDIClient client = new JNDIClient(parameters);
         client.delete(targetDn);
     }
 
     public void searchProxy(
+            final PenroseSession session,
             final Partition partition,
             final EntryMapping entryMapping,
             final String base,
@@ -414,19 +450,25 @@ public class DefaultEngine extends Engine {
         String connectionName = sourceConfig.getConnectionName();
 
         Connection connection = connectionManager.getConnection(partition, connectionName);
-        JNDIAdapter adapter = (JNDIAdapter)connection.getAdapter();
 
         final String proxyDn = entryMapping.getDn();
-
-        String targetDn = base.substring(0, base.length() - proxyDn.length());
-        if (targetDn.endsWith(",")) targetDn = targetDn.substring(0, targetDn.length()-1);
-
         final String baseDn = sourceConfig.getParameter("baseDn");
-        targetDn = EntryUtil.append(targetDn, baseDn);
+
+        String targetDn = convertDn(base, proxyDn, baseDn);
 
         log.debug("Searching proxy "+sourceName+" for \""+targetDn+"\" with filter="+filter+" attrs="+sc.getAttributes());
+        log.debug("Bind DN: "+session.getBindDn());
 
-        final JNDIClient client = adapter.getClient();
+        Map parameters = new HashMap();
+        parameters.putAll(connection.getParameters());
+
+        String bindDn = convertDn(session.getBindDn(), proxyDn, baseDn);
+        if (bindDn != null) {
+            parameters.put(Context.SECURITY_PRINCIPAL, bindDn);
+            parameters.put(Context.SECURITY_CREDENTIALS, session.getBindPassword());
+        }
+
+        final JNDIClient client = new JNDIClient(parameters);
 
         try {
             PenroseSearchResults res = new PenroseSearchResults();
@@ -480,6 +522,9 @@ public class DefaultEngine extends Engine {
         } catch (Exception e) {
             log.error(e.getMessage(), e);
             results.setReturnCode(ExceptionUtil.getReturnCode(e));
+
+        } finally {
+            if (client != null) try { client.close(); } catch (Exception e) {}
         }
     }
 

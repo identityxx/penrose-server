@@ -24,16 +24,14 @@ import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.PartitionManager;
 import org.safehaus.penrose.mapping.Entry;
 import org.safehaus.penrose.mapping.EntryMapping;
-import org.safehaus.penrose.cache.EntryCache;
 import org.safehaus.penrose.util.EntryUtil;
+import org.safehaus.penrose.util.ExceptionUtil;
 import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.service.ServiceConfig;
 import org.ietf.ldap.LDAPException;
 import org.ietf.ldap.LDAPDN;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
-
-import java.util.Iterator;
 
 /**
  * @author Endi S. Dewata
@@ -85,24 +83,22 @@ public class ModRdnHandler {
             String parentDn = EntryUtil.getParentDn(dn);
             String newDn = newRdn+","+parentDn;
 
+            PenroseSession adminSession = handler.getPenrose().newSession();
+            adminSession.setBindDn(handler.getPenroseConfig().getRootDn());
+
             PenroseSearchResults results = new PenroseSearchResults();
 
             PenroseSearchControls sc = new PenroseSearchControls();
             sc.setScope(PenroseSearchControls.SCOPE_SUB);
 
-            handler.getSearchHandler().search(
-                    null,
+            adminSession.search(
                     newDn,
                     "(objectClass=*)",
                     sc,
                     results
             );
 
-            EntryCache entryCache = handler.getEngine().getEntryCache();
-            for (Iterator i=results.iterator(); i.hasNext(); ) {
-                Entry e = (Entry)i.next();
-                entryCache.put(e);
-            }
+            while (results.hasNext()) results.next();
 
             handler.getEngine().getEntryCache().remove(entry);
 
@@ -111,7 +107,7 @@ public class ModRdnHandler {
 
         } catch (Exception e) {
             log.error(e.getMessage(), e);
-            rc = LDAPException.OPERATIONS_ERROR;
+            rc = ExceptionUtil.getReturnCode(e);
         }
 
         if (rc == LDAPException.SUCCESS) {
@@ -138,7 +134,7 @@ public class ModRdnHandler {
 
         if (partition.isProxy(entryMapping)) {
             log.debug("Renaming "+entry.getDn()+" via proxy");
-            handler.getEngine().modrdnProxy(partition, entryMapping, entry, newRdn);
+            handler.getEngine().modrdnProxy(session, partition, entryMapping, entry, newRdn);
             return LDAPException.SUCCESS;
         }
 

@@ -38,6 +38,7 @@ import org.safehaus.penrose.filter.SimpleFilter;
 import org.safehaus.penrose.filter.FilterTool;
 import org.safehaus.penrose.session.PenroseSearchResults;
 import org.safehaus.penrose.session.PenroseSearchControls;
+import org.safehaus.penrose.session.PenroseSession;
 import org.safehaus.penrose.util.EntryUtil;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
@@ -447,6 +448,7 @@ public abstract class Engine {
     }
 
     public abstract void bindProxy(
+            PenroseSession session,
             Partition partition,
             EntryMapping entryMapping,
             String dn,
@@ -454,6 +456,7 @@ public abstract class Engine {
             ) throws Exception;
 
     public abstract void addProxy(
+            PenroseSession session,
             Partition partition,
             EntryMapping entryMapping,
             String dn,
@@ -461,6 +464,7 @@ public abstract class Engine {
             ) throws Exception;
 
     public abstract void modifyProxy(
+            PenroseSession session,
             Partition partition,
             EntryMapping entryMapping,
             Entry entry,
@@ -468,6 +472,7 @@ public abstract class Engine {
             ) throws Exception;
 
     public abstract void modrdnProxy(
+            PenroseSession session,
             Partition partition,
             EntryMapping entryMapping,
             Entry entry,
@@ -475,6 +480,7 @@ public abstract class Engine {
             ) throws Exception;
 
     public abstract void deleteProxy(
+            PenroseSession session,
             Partition partition,
             EntryMapping entryMapping,
             String dn
@@ -597,6 +603,7 @@ public abstract class Engine {
             PenroseSearchResults results) throws Exception;
 
     public abstract void searchProxy(
+            PenroseSession session,
             Partition partition,
             EntryMapping entryMapping,
             String base,

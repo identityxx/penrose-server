@@ -24,6 +24,7 @@ import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.PartitionManager;
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.util.EntryUtil;
+import org.safehaus.penrose.util.ExceptionUtil;
 import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.service.ServiceConfig;
 import org.ietf.ldap.*;
@@ -100,7 +101,7 @@ public class AddHandler {
 
         } catch (Exception e) {
             log.error(e.getMessage(), e);
-            rc = LDAPException.OPERATIONS_ERROR;
+            rc = ExceptionUtil.getReturnCode(e);
         }
 
         if (rc == LDAPException.SUCCESS) {
@@ -142,7 +143,7 @@ public class AddHandler {
 
         if (partition.isProxy(parentMapping)) {
             log.debug("Adding "+dn+" via proxy");
-            handler.getEngine().addProxy(partition, parentMapping, dn, attributes);
+            handler.getEngine().addProxy(session, partition, parentMapping, dn, attributes);
             return LDAPException.SUCCESS;
         }
 

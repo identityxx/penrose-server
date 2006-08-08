@@ -24,6 +24,7 @@ import org.safehaus.penrose.mapping.EntryMapping;
 import org.safehaus.penrose.mapping.Entry;
 import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.service.ServiceConfig;
+import org.safehaus.penrose.util.ExceptionUtil;
 import org.ietf.ldap.LDAPDN;
 import org.ietf.ldap.LDAPException;
 import org.slf4j.LoggerFactory;
@@ -82,7 +83,7 @@ public class DeleteHandler {
 
         } catch (Exception e) {
             log.error(e.getMessage(), e);
-            rc = LDAPException.OPERATIONS_ERROR;
+            rc = ExceptionUtil.getReturnCode(e);
         }
 
         if (rc == LDAPException.SUCCESS) {
@@ -109,7 +110,7 @@ public class DeleteHandler {
 
         if (partition.isProxy(entryMapping)) {
             log.debug("Deleting "+entry.getDn()+" via proxy");
-            handler.getEngine().deleteProxy(partition, entryMapping, entry.getDn());
+            handler.getEngine().deleteProxy(session, partition, entryMapping, entry.getDn());
             return LDAPException.SUCCESS;
         }
 
