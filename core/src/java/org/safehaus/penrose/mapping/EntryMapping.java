@@ -136,7 +136,7 @@ public class EntryMapping implements Cloneable {
 
             for (Iterator j=list.iterator(); j.hasNext(); ) {
                 AttributeMapping attributeMapping = (AttributeMapping)j.next();
-                if (!attributeMapping.isRdn()) continue;
+                if (!attributeMapping.isPK()) continue;
                 if (attributeMapping.getConstant() == null) return true;
             }
         }
@@ -167,7 +167,7 @@ public class EntryMapping implements Cloneable {
                 AttributeMapping attributeMapping = (AttributeMapping)j.next();
                 //log.debug(" - "+attributeMapping.getName()+" ("+attributeMapping.isRdn()+")");
 
-                if (!attributeMapping.isRdn()) continue;
+                if (!attributeMapping.isPK()) continue;
                 results.add(attributeMapping);
             }
         }
@@ -181,7 +181,7 @@ public class EntryMapping implements Cloneable {
 
             for (Iterator j=list.iterator(); j.hasNext(); ) {
                 AttributeMapping attributeMapping = (AttributeMapping)j.next();
-                if (attributeMapping.isRdn()) continue;
+                if (attributeMapping.isPK()) continue;
                 results.add(attributeMapping);
             }
         }
@@ -309,7 +309,7 @@ public class EntryMapping implements Cloneable {
 
 	public void addAttributeMapping(AttributeMapping attributeMapping) {
         String name = attributeMapping.getName().toLowerCase();
-        log.debug("Adding attribute "+name+(attributeMapping.isRdn() ? " (rdn)" : ""));
+        log.debug("Adding attribute "+name+(attributeMapping.isPK() ? " ("+attributeMapping.getRdn()+")" : ""));
 
         Collection list = (Collection)attributeMappings.get(name);
         if (list == null) {

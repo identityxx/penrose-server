@@ -2,7 +2,7 @@
  Copyright (c) 2000-2005, Identyx Corporation.
  All rights reserved.
 -->
-<project name="embedding" default="compile" basedir=".">
+<project name="embedding" default="compile">
 
     <property name="program" value="Demo"/>
 

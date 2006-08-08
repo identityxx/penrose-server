@@ -24,8 +24,8 @@ import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.PartitionManager;
 import org.safehaus.penrose.mapping.Entry;
 import org.safehaus.penrose.mapping.EntryMapping;
-import org.safehaus.penrose.cache.EntryCache;
 import org.safehaus.penrose.util.EntryUtil;
+import org.safehaus.penrose.util.ExceptionUtil;
 import org.ietf.ldap.LDAPException;
 import org.ietf.ldap.LDAPDN;
 import org.slf4j.LoggerFactory;
@@ -78,24 +78,22 @@ public class ModRdnHandler {
             String parentDn = EntryUtil.getParentDn(dn);
             String newDn = newRdn+","+parentDn;
 
+            PenroseSession adminSession = handler.getPenrose().newSession();
+            adminSession.setBindDn(handler.getPenroseConfig().getRootDn());
+
             PenroseSearchResults results = new PenroseSearchResults();
 
             PenroseSearchControls sc = new PenroseSearchControls();
             sc.setScope(PenroseSearchControls.SCOPE_SUB);
 
-            handler.getSearchHandler().search(
-                    null,
+            adminSession.search(
                     newDn,
                     "(objectClass=*)",
                     sc,
                     results
             );
 
-            EntryCache entryCache = handler.getEngine().getEntryCache();
-            for (Iterator i=results.iterator(); i.hasNext(); ) {
-                Entry e = (Entry)i.next();
-                entryCache.put(partition, e);
-            }
+            while (results.hasNext()) results.next();
 
             handler.getEngine().getEntryCache().remove(partition, entry);
 
@@ -104,7 +102,7 @@ public class ModRdnHandler {
 
         } catch (Exception e) {
             log.error(e.getMessage(), e);
-            rc = LDAPException.OPERATIONS_ERROR;
+            rc = ExceptionUtil.getReturnCode(e);
         }
 
         if (rc == LDAPException.SUCCESS) {
@@ -129,10 +127,10 @@ public class ModRdnHandler {
         EntryMapping entryMapping = entry.getEntryMapping();
 
         if (partition.isProxy(entryMapping)) {
-            return handler.getEngine("PROXY").modrdn(partition, entry, newRdn);
+            return handler.getEngine("PROXY").modrdn(session, partition, entry, newRdn);
 
         } else if (partition.isDynamic(entryMapping)) {
-            return handler.getEngine().modrdn(partition, entry, newRdn);
+            return handler.getEngine().modrdn(session, partition, entry, newRdn);
 
         } else {
             return modRdnStaticEntry(partition, entry, newRdn);

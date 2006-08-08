@@ -21,6 +21,7 @@ import org.safehaus.penrose.session.PenroseSession;
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.util.PasswordUtil;
 import org.safehaus.penrose.util.Formatter;
+import org.safehaus.penrose.util.ExceptionUtil;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.PartitionManager;
 import org.safehaus.penrose.engine.Engine;
@@ -70,18 +71,16 @@ public class BindHandler {
             }
 
             session.setBindDn(dn);
+            session.setBindPassword(password);
+
             return LDAPException.SUCCESS; // LDAP_SUCCESS
 
         } catch (LDAPException e) {
             rc = e.getResultCode();
 
-        } catch (AuthenticationException e) {
-            log.error(e.getMessage());
-            rc = LDAPException.INVALID_CREDENTIALS;
-
         } catch (Exception e) {
             log.error(e.getMessage(), e);
-            rc = LDAPException.OPERATIONS_ERROR;
+            rc = ExceptionUtil.getReturnCode(e);
         }
 
         return rc;
@@ -95,6 +94,7 @@ public class BindHandler {
         if (session == null) return 0;
 
         session.setBindDn(null);
+        session.setBindPassword(null);
 
         log.debug("  dn: " + session.getBindDn());
 
@@ -113,25 +113,18 @@ public class BindHandler {
     }
 
     public int bindAsUser(PenroseSession session, String dn, String password) throws Exception {
-        log.debug("Searching for "+dn);
 
-        Entry entry = handler.getFindHandler().find(session, dn);
-
-        if (entry == null) {
-            log.debug("Entry "+dn+" not found => BIND FAILED");
-            return LDAPException.INVALID_CREDENTIALS;
-        }
-
-        log.debug("Found "+entry.getDn());
-
-        EntryMapping entryMapping = entry.getEntryMapping();
         PartitionManager partitionManager = handler.getPartitionManager();
-        Partition partition = partitionManager.getPartition(entryMapping);
+        Partition partition = partitionManager.findPartition(dn);
+        EntryMapping entryMapping = partition.findEntryMapping(dn);
 
         Engine engine = handler.getEngine();
-        if (partition.isProxy(entryMapping)) engine = handler.getEngine("PROXY");
 
-        return engine.bind(partition, entry, password);
+        if (partition.isProxy(entryMapping)) {
+            engine = handler.getEngine("PROXY");
+        }
+        
+        return engine.bind(session, partition, dn, password);
     }
 
     public Handler getHandler() {

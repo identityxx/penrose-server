@@ -38,6 +38,7 @@ import org.safehaus.penrose.filter.SimpleFilter;
 import org.safehaus.penrose.filter.FilterTool;
 import org.safehaus.penrose.session.PenroseSearchResults;
 import org.safehaus.penrose.session.PenroseSearchControls;
+import org.safehaus.penrose.session.PenroseSession;
 import org.safehaus.penrose.util.EntryUtil;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
@@ -187,19 +188,19 @@ public abstract class Engine {
 
         if (sourceValues != null) interpreter.set(sourceValues, rows);
 
-        //log.debug("Attribute values:");
+        log.debug("Attribute values:");
         Collection attributeMappings = entryMapping.getAttributeMappings();
         for (Iterator j=attributeMappings.iterator(); j.hasNext(); ) {
             AttributeMapping attributeMapping = (AttributeMapping)j.next();
 
             String name = attributeMapping.getName();
-            //log.debug(" - "+name+":");
+            log.debug(" * "+name+":");
 
             Object value = interpreter.eval(entryMapping, attributeMapping);
             if (value == null) continue;
 
             attributeValues.add(name, value);
-            //log.debug("   - "+value+" ("+value.getClass().getName()+")");
+            log.debug("   - "+value+" ("+value.getClass().getName()+")");
         }
 
         interpreter.clear();
@@ -494,8 +495,9 @@ public abstract class Engine {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public abstract int bind(
+            PenroseSession session,
             Partition partition,
-            Entry entry,
+            String dn,
             String password
     ) throws Exception;
 
@@ -504,6 +506,7 @@ public abstract class Engine {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public abstract int add(
+            PenroseSession session,
             Partition partition,
             Entry parent,
             EntryMapping entryMapping,
@@ -516,6 +519,7 @@ public abstract class Engine {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public abstract int delete(
+            PenroseSession session,
             Partition partition,
             Entry entry
     ) throws Exception;
@@ -525,6 +529,7 @@ public abstract class Engine {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public abstract int modify(
+            PenroseSession session,
             Partition partition,
             Entry entry,
             Collection modifications
@@ -535,6 +540,7 @@ public abstract class Engine {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public abstract int modrdn(
+            PenroseSession session,
             Partition partition,
             Entry entry,
             String newRdn
@@ -545,6 +551,7 @@ public abstract class Engine {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public abstract int search(
+            PenroseSession session,
             Partition partition,
             Collection path,
             AttributeValues parentSourceValues,
@@ -556,7 +563,7 @@ public abstract class Engine {
     ) throws Exception;
 
     public abstract int expand(
-            Partition partition,
+            PenroseSession session, Partition partition,
             Collection path,
             AttributeValues parentSourceValues,
             EntryMapping entryMapping,
@@ -692,7 +699,6 @@ public abstract class Engine {
         interpreter.set(sourceValues);
 
         Collection results = new ArrayList();
-
         results.addAll(computeDns(partition, interpreter, entryMapping));
 
         interpreter.clear();
@@ -759,7 +765,12 @@ public abstract class Engine {
             Object value = interpreter.eval(entryMapping, attributeMapping);
             if (value == null) continue;
 
-            rdns.add(name, value);
+            if (value instanceof Collection && AttributeMapping.RDN_FIRST.equals(attributeMapping.getRdn())) {
+                Collection c = (Collection)value;
+                if (c.size() > 0) rdns.add(name, c.iterator().next());
+            } else {
+                rdns.add(name, value);
+            }
         }
 
         return TransformEngine.convert(rdns);

@@ -10,6 +10,7 @@
     <property name="iscc.path" value="ISCC.exe"/>
     <property name="cygwin.home" value="c:/cygwin"/>
 
+    <property name="project.name" value="penrose"/>
     <property name="project.version" value="1.1"/>
 
     <tstamp/>
@@ -31,11 +32,28 @@
         <ant dir="server" target="compile"/>
     </target>
 
+    <target name="build-tools" depends="init">
+        <ant dir="server" target="build-tools"/>
+    </target>
+
     <target name="build" depends="init">
         <ant dir="back-java" target="build"/>
         <ant dir="shared" target="build"/>
         <ant dir="core" target="build"/>
         <ant dir="server" target="build"/>
+        <jar jarfile="target/${project.name}-bin-${project.version}.jar">
+            <fileset dir="server/bin"/>
+        </jar>
+        <jar jarfile="target/${project.name}-conf-${project.version}.jar">
+            <fileset dir="conf"/>
+            <fileset dir="server/conf"/>
+        </jar>
+        <jar jarfile="target/${project.name}-samples-${project.version}.jar">
+            <fileset dir="samples"/>
+        </jar>
+        <jar jarfile="target/${project.name}-schema-${project.version}.jar">
+            <fileset dir="schema"/>
+        </jar>
     </target>
 
     <target name="docs" depends="init">

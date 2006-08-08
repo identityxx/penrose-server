@@ -111,7 +111,7 @@
         </copy>
     </target>
 
-    <target name="dist" depends="build,docs">
+    <target name="dist" depends="build">
         <mkdir dir="dist"/>
         <copy todir="dist"
             file="target/${project.name}-${project.version}.jar">

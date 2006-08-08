@@ -57,6 +57,21 @@ public abstract class Interpreter {
             }
             set(name, value);
         }
+/*
+        Row rdn = av.getRdn();
+        log.debug("Setting PK values:");
+
+        for (Iterator i=rdn.getNames().iterator(); i.hasNext(); ) {
+            String name = (String)i.next();
+            Object value = rdn.get(name);
+
+            int j = name.indexOf(".");
+            if (j > 0) name = name.substring(0, j)+".primaryKey."+name.substring(j+1);
+            log.debug(" - "+name+": "+value);
+
+            set(name, value);
+        }
+*/
     }
 
     public void set(AttributeValues av, Collection rows) throws Exception {

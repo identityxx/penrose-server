@@ -340,7 +340,7 @@ public class PartitionWriter {
     public Element toElement(AttributeMapping attributeMapping) throws Exception {
         Element element = new DefaultElement("at");
         element.add(new DefaultAttribute("name", attributeMapping.getName()));
-        if (attributeMapping.isRdn()) element.add(new DefaultAttribute("rdn", "true"));
+        if (attributeMapping.isPK()) element.add(new DefaultAttribute("rdn", "true"));
         if (!AttributeMapping.DEFAULT_TYPE.equals(attributeMapping.getType())) element.addAttribute("type", attributeMapping.getType());
         if (attributeMapping.getLength() != AttributeMapping.DEFAULT_LENGTH) element.addAttribute("length", ""+attributeMapping.getLength());
         if (attributeMapping.getPrecision() != AttributeMapping.DEFAULT_PRECISION) element.addAttribute("precision", ""+attributeMapping.getPrecision());
@@ -661,7 +661,7 @@ public class PartitionWriter {
         Element element = new DefaultElement("field");
         element.addAttribute("name", field.getName());
         if (!field.getName().equals(field.getOriginalName())) element.addAttribute("originalName", field.getOriginalName());
-        if (field.isPrimaryKey()) element.addAttribute("primaryKey", "true");
+        if (field.isPK()) element.addAttribute("primaryKey", "true");
         if (!field.isSearchable()) element.addAttribute("searchable", "false");
         if (field.isUnique()) element.addAttribute("unique", "true");
         if (field.isIndex()) element.addAttribute("index", "true");

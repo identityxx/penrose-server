@@ -105,7 +105,7 @@
         </javadoc>
     </target>
 
-    <target name="dist" depends="build,docs">
+    <target name="dist" depends="build">
         <mkdir dir="dist"/>
         <copy todir="dist"
             file="target/openldap-${openldap.version}.jar">
@@ -128,7 +128,7 @@
         </tar>
     </target>
 
-    <target name="install" depends="dist,docs">
+    <target name="install" depends="dist">
         <property name="ln" value="/bin/ln"/>
         <mkdir dir="${prefix}/usr/sbin/openldap"/>
         <copy todir="${prefix}/usr/sbin/openldap" failonerror="false">

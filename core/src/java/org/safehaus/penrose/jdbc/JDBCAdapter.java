@@ -630,7 +630,7 @@ public class JDBCAdapter extends Adapter {
                 String name = attribute.getID();
 
                 FieldConfig fieldConfig = sourceConfig.getFieldConfig(name);
-                if (fieldConfig.isPrimaryKey()) continue;
+                if (fieldConfig.isPK()) continue;
 
                 switch (mi.getModificationOp()) {
                     case DirContext.ADD_ATTRIBUTE:
@@ -751,7 +751,7 @@ public class JDBCAdapter extends Adapter {
             Collection fields = sourceConfig.getFieldConfigs();
             for (Iterator i=fields.iterator(); i.hasNext(); ) {
                 FieldConfig fieldConfig = (FieldConfig)i.next();
-                if (!fieldConfig.isPrimaryKey()) continue;
+                if (!fieldConfig.isPK()) continue;
 
                 if (columns.length() > 0) columns.append(", ");
 
@@ -764,7 +764,7 @@ public class JDBCAdapter extends Adapter {
 
             for (Iterator i=fields.iterator(); i.hasNext(); ) {
                 FieldConfig fieldConfig = (FieldConfig)i.next();
-                if (!fieldConfig.isPrimaryKey()) continue;
+                if (!fieldConfig.isPK()) continue;
 
                 if (whereClause.length() > 0) whereClause.append(" and ");
 

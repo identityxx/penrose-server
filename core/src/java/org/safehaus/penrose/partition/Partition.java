@@ -102,7 +102,7 @@ public class Partition {
     public void addEntryMapping(EntryMapping entryMapping) throws Exception {
 
         String dn = entryMapping.getDn();
-        log.debug("Adding "+dn+".");
+        log.debug("Adding entry "+dn);
 
         Collection c = getEntryMappings(dn);
         if (c == null) {
@@ -370,6 +370,7 @@ public class Partition {
     }
 
     public void addSourceConfig(SourceConfig sourceConfig) {
+        log.debug("Adding source "+sourceConfig.getName());
         sourceConfigs.put(sourceConfig.getName(), sourceConfig);
     }
 

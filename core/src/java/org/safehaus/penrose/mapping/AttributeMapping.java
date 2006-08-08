@@ -38,6 +38,10 @@ public class AttributeMapping implements Cloneable {
     public final static int DEFAULT_LENGTH    = 50;
     public final static int DEFAULT_PRECISION = 0;
 
+    public final static String RDN_TRUE  = "true";
+    public final static String RDN_FIRST = "first";
+    public final static String RDN_FALSE = "false";
+
 	/**
 	 * Name. This refers to AttributeType's name.
 	 */
@@ -58,7 +62,7 @@ public class AttributeMapping implements Cloneable {
     /**
      * This attribute is used in RDN.
      */
-    private boolean rdn;
+    private String rdn = RDN_FALSE;
 
     /**
      * Encryption method used to encrypt the value
@@ -94,7 +98,7 @@ public class AttributeMapping implements Cloneable {
             this.expression = (Expression)value;
         }
 
-        this.rdn = rdn;
+        this.rdn = rdn ? RDN_TRUE : RDN_FALSE;
     }
 
 	public String getName() {
@@ -114,16 +118,16 @@ public class AttributeMapping implements Cloneable {
         this.expression = expression;
     }
 
-    public boolean isRdn() {
+    public boolean isPK() {
+        return !RDN_FALSE.equals(rdn);
+    }
+
+    public String getRdn() {
         return rdn;
     }
 
-    public void setRdn(boolean rdn) {
-        this.rdn = rdn;
-    }
-
     public void setRdn(String rdn) {
-    	this.rdn = Boolean.getBoolean(rdn);
+    	this.rdn = rdn;
     }
 
     public byte[] getBinary() {
@@ -212,7 +216,7 @@ public class AttributeMapping implements Cloneable {
                 (constant == null ? 0 : constant.hashCode()) +
                 (variable == null ? 0 : variable.hashCode()) +
                 (expression == null ? 0 : expression.hashCode()) +
-                (rdn ? 0 : 1) +
+                (rdn == null ? 0 : rdn.hashCode()) +
                 (encryption == null ? 0 : encryption.hashCode()) +
                 (encoding == null ? 0 : encoding.hashCode()) +
                 (type == null ? 0 : type.hashCode()) +
@@ -242,7 +246,7 @@ public class AttributeMapping implements Cloneable {
 
         if (!equals(variable, attributeMapping.variable)) return false;
         if (!equals(expression, attributeMapping.expression)) return false;
-        if (rdn != attributeMapping.rdn) return false;
+        if (!equals(rdn, attributeMapping.rdn)) return false;
         if (!equals(encryption, attributeMapping.encryption)) return false;
         if (!equals(encoding, attributeMapping.encoding)) return false;
         if (!equals(type, attributeMapping.type)) return false;

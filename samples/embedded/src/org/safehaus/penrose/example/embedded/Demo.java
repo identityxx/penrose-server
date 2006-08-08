@@ -50,7 +50,7 @@ public class Demo {
         attribute.setName("dc");
         attribute.setType(AttributeMapping.CONSTANT);
         attribute.setConstant("Example");
-        attribute.setRdn(true);
+        attribute.setRdn(AttributeMapping.RDN_TRUE);
 
         entryMapping.addAttributeMapping(attribute);
 
@@ -75,7 +75,7 @@ public class Demo {
         attribute.setName("ou");
         attribute.setType(AttributeMapping.CONSTANT);
         attribute.setConstant("Users");
-        attribute.setRdn(true);
+        attribute.setRdn(AttributeMapping.RDN_TRUE);
 
         entryMapping.addAttributeMapping(attribute);
 

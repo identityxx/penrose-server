@@ -572,16 +572,17 @@ public class Connector {
 
     public Row store(Partition partition, SourceConfig sourceConfig, AttributeValues sourceValues) throws Exception {
         Row pk = sourceConfig.getPrimaryKeyValues(sourceValues);
+        //Row pk = sourceValues.getRdn();
         Row npk = normalize(pk);
 
-        //log.debug("Storing connector cache: "+pk);
+        log.debug("Storing source cache: "+pk);
         getSourceCacheManager().put(partition, sourceConfig, pk, sourceValues);
 
         Filter f = FilterTool.createFilter(npk);
         Collection c = new TreeSet();
         c.add(npk);
 
-        //log.debug("Storing query cache "+f+": "+c);
+        log.debug("Storing filter cache "+f+": "+c);
         getSourceCacheManager().put(partition, sourceConfig, f, c);
 
         return npk;
@@ -683,6 +684,7 @@ public class Connector {
                     AttributeValues sourceValues = (AttributeValues)event.getObject();
                     store(partition, sourceConfig, sourceValues);
                     results.add(sourceValues);
+
                 } catch (Exception e) {
                     log.error(e.getMessage(), e);
                     results.setReturnCode(LDAPException.OPERATIONS_ERROR);

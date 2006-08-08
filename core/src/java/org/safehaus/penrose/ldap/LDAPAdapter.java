@@ -325,7 +325,7 @@ public class LDAPAdapter extends Adapter {
             boolean primaryKey = false;
             for (Iterator j=fields.iterator(); j.hasNext(); ) {
                 FieldConfig fieldConfig = (FieldConfig)j.next();
-                if (!fieldConfig.isPrimaryKey()) continue;
+                if (!fieldConfig.isPK()) continue;
                 if (!fieldConfig.getName().equals(name)) continue;
                 primaryKey = true;
                 break;
@@ -411,7 +411,7 @@ public class LDAPAdapter extends Adapter {
             String name = attribute.getID();
 
             FieldConfig fieldConfig = sourceConfig.getFieldConfig(name);
-            if (fieldConfig.isPrimaryKey()) continue;
+            if (fieldConfig.isPK()) continue;
 
             if ("unicodePwd".equals(name) && mi.getModificationOp() == DirContext.ADD_ATTRIBUTE) { // need to encode unicodePwd
                 Attribute newAttribute = new BasicAttribute(fieldConfig.getOriginalName());
@@ -607,7 +607,7 @@ public class LDAPAdapter extends Adapter {
             boolean primaryKey = false;
             for (Iterator j=fields.iterator(); j.hasNext(); ) {
                 FieldConfig fieldConfig = (FieldConfig)j.next();
-                if (!fieldConfig.isPrimaryKey()) continue;
+                if (!fieldConfig.isPK()) continue;
                 if (!fieldConfig.getName().equals(name)) continue;
                 primaryKey = true;
                 break;
@@ -652,6 +652,7 @@ public class LDAPAdapter extends Adapter {
         //log.debug("Computing DN for "+source.getName()+" with "+sourceValues);
 
         Row pk = sourceConfig.getPrimaryKeyValues(sourceValues);
+        //Row pk = sourceValues.getRdn();
 
         String baseDn = sourceConfig.getParameter(BASE_DN);
         //log.debug("Base DN: "+baseDn);

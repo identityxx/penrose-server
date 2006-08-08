@@ -10,10 +10,10 @@
     <property name="iscc.path" value="ISCC.exe"/>
     <property name="cygwin.home" value="c:/cygwin"/>
 
-    <property name="project.name" value="penrose-shared"/>
+    <property name="module.name" value="penrose-shared"/>
     <property name="project.version" value="1.1"/>
 
-    <property name="penrose.home" value="${prefix}/usr/local/${project.name}-${project.version}"/>
+    <property name="penrose.home" value="${prefix}/usr/local/${module.name}-${project.version}"/>
     <property name="docs.target" value="dist/javadoc"/>
 
     <tstamp/>
@@ -56,7 +56,7 @@
 
     <target name="build" depends="compile">
         <echo message="Building Penrose Shared."/>
-        <jar jarfile="target/${project.name}-${project.version}.jar">
+        <jar jarfile="target/${module.name}-${project.version}.jar">
             <fileset dir="target/classes"/>
             <manifest>
               <attribute name="Specification-Version"  value="1.1"/>
@@ -75,7 +75,7 @@
             destdir="target/javadoc"
             classpathref="lib.path">
         </javadoc>
-        <jar jarfile="target/${project.name}-docs-${project.version}.jar">
+        <jar jarfile="target/${module.name}-docs-${project.version}.jar">
             <fileset dir="target/javadoc"/>
         </jar>
     </target>
@@ -88,26 +88,26 @@
         </copy>
     </target>
 
-    <target name="dist" depends="build,docs">
+    <target name="dist" depends="build">
         <mkdir dir="dist"/>
         <copy todir="dist"
-            file="target/${project.name}-${project.version}.jar">
+            file="target/${module.name}-${project.version}.jar">
         </copy>
     </target>
 
     <target name="dist-src" depends="docs">
-        <echo message="Creating ${project.name}-${project.version}-src.zip"/>
+        <echo message="Creating ${module.name}-${project.version}-src.zip"/>
         <mkdir dir="dist"/>
-        <zip destfile="dist/${project.name}-${project.version}-src.zip">
+        <zip destfile="dist/${module.name}-${project.version}-src.zip">
             <zipfileset dir=".">
                 <exclude name="dist/**"/>
                 <exclude name="target/**"/>
             </zipfileset>
         </zip>
-        <echo message="Creating ${project.name}-${project.version}-src.tar.gz"/>
+        <echo message="Creating ${module.name}-${project.version}-src.tar.gz"/>
         <mkdir dir="target"/>
-        <tar destfile="dist/${project.name}-${project.version}-src.tar.gz" compression="gzip">
-            <tarfileset dir="." prefix="${project.name}-${project.version}">
+        <tar destfile="dist/${module.name}-${project.version}-src.tar.gz" compression="gzip">
+            <tarfileset dir="." prefix="${module.name}-${project.version}">
                 <exclude name="dist/**"/>
                 <exclude name="target/**"/>
             </tarfileset>

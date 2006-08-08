@@ -177,4 +177,4 @@ insert into employees values ('jstockton', 'Jim', 'Stockton', '29609449ad6a267aa
 insert into employees values ('swhite', 'Scott', 'White', '1c60f10728e0f6878d60f7345225a8c680844d19', 'swh1t3');
 insert into employees values ('pfarmer', 'Pete', 'Farmer', 'e7beca51ea8907ea427f538c73638058401ff795', 'pf4rm3r');
 insert into employees values ('lwalker', 'Lee', 'Walker', 'ed7369e175739f26aa2f421a67e3d8a66d753bdd', 'lw4lk3r');
-insert into employees values ('alange', 'Andy', 'Lange', '47af3474c807aaea8b876c39e6ce8fb41e7ac637', '4l4ng3');
+insert into employees values ('alange', 'Andy', 'Lange', '545308e67a464b01c7b56d12b21b46d41e88d99b', '4l4ng3');

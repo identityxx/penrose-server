@@ -25,8 +25,8 @@ public interface FieldConfigMBean {
     public String getName() throws Exception;
     public void setName(String name) throws Exception;
 
-    public boolean isPrimaryKey() throws Exception;
-    public void setPrimaryKey(boolean primaryKey) throws Exception;
+    public String getPrimaryKey() throws Exception;
+    public void setPrimaryKey(String primaryKey) throws Exception;
 
     public String getOriginalName() throws Exception;
     public void setOriginalName(String originalName) throws Exception;

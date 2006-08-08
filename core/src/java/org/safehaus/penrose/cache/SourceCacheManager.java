@@ -80,7 +80,7 @@ public class SourceCacheManager {
     public SourceCache getCacheStorage(Partition partition, SourceConfig sourceConfig) throws Exception {
         PartitionConfig partitionConfig = partition.getPartitionConfig();
         String cacheName = partitionConfig.getName()+"."+sourceConfig.getName();
-        log.debug("Getting source cache "+cacheName+".");
+        //log.debug("Getting source cache "+cacheName+".");
         return (SourceCache)caches.get(cacheName);
     }
 

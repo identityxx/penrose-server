@@ -19,6 +19,7 @@ package org.safehaus.penrose.engine;
 
 import org.safehaus.penrose.session.PenroseSearchResults;
 import org.safehaus.penrose.session.PenroseSearchControls;
+import org.safehaus.penrose.session.PenroseSession;
 import org.safehaus.penrose.cache.EntryCache;
 import org.safehaus.penrose.cache.CacheConfig;
 import org.safehaus.penrose.partition.*;
@@ -81,11 +82,41 @@ public class DefaultEngine extends Engine {
         log.debug("Default engine initialized.");
     }
 
-    public int bind(Partition partition, Entry entry, String password) throws Exception {
+    public int bind(PenroseSession session, Partition partition, String dn, String password) throws Exception {
 
-        log.debug("Bind as user "+entry.getDn());
+        log.debug("Bind as user "+dn);
 
-        EntryMapping entryMapping = entry.getEntryMapping();
+        EntryMapping entryMapping = partition.findEntryMapping(dn);
+
+        PenroseSearchResults results = new PenroseSearchResults();
+
+        PenroseSearchControls sc = new PenroseSearchControls();
+        sc.setScope(PenroseSearchControls.SCOPE_BASE);
+
+        Row rdn = EntryUtil.getRdn(dn);
+        Filter filter = FilterTool.createFilter(rdn);
+
+        expand(
+                session,
+                partition,
+                new ArrayList(),
+                new AttributeValues(),
+                entryMapping,
+                dn,
+                filter,
+                sc,
+                results
+        );
+
+        results.close();
+
+        if (!results.hasNext()) {
+            log.debug("Entry "+dn+" not found => BIND FAILED");
+            return LDAPException.INVALID_CREDENTIALS;
+        }
+
+        Entry entry = (Entry)results.next();
+
         AttributeValues attributeValues = entry.getAttributeValues();
 
         Collection set = attributeValues.get("userPassword");
@@ -122,7 +153,7 @@ public class DefaultEngine extends Engine {
     }
 
     public int add(
-            Partition partition,
+            PenroseSession session, Partition partition,
             Entry parent,
             EntryMapping entryMapping,
             String dn,
@@ -176,7 +207,7 @@ public class DefaultEngine extends Engine {
         return rc;
     }
 
-    public int delete(Partition partition, Entry entry) throws Exception {
+    public int delete(PenroseSession session, Partition partition, Entry entry) throws Exception {
 
         if (log.isDebugEnabled()) {
             log.debug(Formatter.displaySeparator(80));
@@ -191,7 +222,7 @@ public class DefaultEngine extends Engine {
         return rc;
     }
 
-    public int modrdn(Partition partition, Entry entry, String newRdn) throws Exception {
+    public int modrdn(PenroseSession session, Partition partition, Entry entry, String newRdn) throws Exception {
 
         if (log.isDebugEnabled()) {
             log.debug(Formatter.displaySeparator(80));
@@ -205,7 +236,7 @@ public class DefaultEngine extends Engine {
         return rc;
     }
 
-    public int modify(Partition partition, Entry entry, Collection modifications) throws Exception {
+    public int modify(PenroseSession session, Partition partition, Entry entry, Collection modifications) throws Exception {
 
         EntryMapping entryMapping = entry.getEntryMapping();
         AttributeValues oldValues = entry.getAttributeValues();
@@ -368,7 +399,7 @@ public class DefaultEngine extends Engine {
     }
 
     public int expand(
-            final Partition partition,
+            PenroseSession session, final Partition partition,
             final Collection parentPath,
             final AttributeValues parentSourceValues,
             final EntryMapping entryMapping,
@@ -618,7 +649,7 @@ Mapping: cn=Managers,ou=Groups,dc=Proxy,dc=Example,dc=org
     }
 
     public int search(
-            Partition partition,
+            PenroseSession session, Partition partition,
             Collection path,
             AttributeValues parentSourceValues,
             EntryMapping entryMapping,
@@ -628,29 +659,41 @@ Mapping: cn=Managers,ou=Groups,dc=Proxy,dc=Example,dc=org
             PenroseSearchResults results
     ) throws Exception {
 
-        if (sc.getScope() == LDAPConnection.SCOPE_BASE || sc.getScope() == LDAPConnection.SCOPE_SUB) {
+        try {
+            if (sc.getScope() != LDAPConnection.SCOPE_BASE && sc.getScope() != LDAPConnection.SCOPE_SUB) {
+                return LDAPException.SUCCESS;
+            }
 
             Entry baseEntry = (Entry)path.iterator().next();
 
-            if (getFilterTool().isValid(baseEntry, filter)) {
-
-                Entry e = baseEntry;
-                Collection attributeNames = sc.getAttributes();
-
-                if (!attributeNames.isEmpty() && !attributeNames.contains("*")) {
-                    AttributeValues av = new AttributeValues();
-                    av.add(baseEntry.getAttributeValues());
-                    av.retain(attributeNames);
-                    e = new Entry(baseEntry.getDn(), entryMapping, baseEntry.getSourceValues(), av);
-                }
-
-                results.add(e);
+            if (!getFilterTool().isValid(baseEntry, filter)) {
+                log.debug("Entry \""+baseEntry.getDn()+"\" is invalid.");
+                return LDAPException.SUCCESS;
             }
+
+            log.debug("Returning \""+baseEntry.getDn()+"\".");
+
+            Entry e = baseEntry;
+            Collection attributeNames = sc.getAttributes();
+
+            if (!attributeNames.isEmpty() && !attributeNames.contains("*")) {
+                AttributeValues av = new AttributeValues();
+                av.add(baseEntry.getAttributeValues());
+                av.retain(attributeNames);
+                e = new Entry(baseEntry.getDn(), entryMapping, baseEntry.getSourceValues(), av);
+            }
+
+            results.add(e);
+
+            return LDAPException.SUCCESS;
+
+        } catch (Exception e) {
+            log.debug(e.getMessage(), e);
+            return LDAPException.OPERATIONS_ERROR;
+
+        } finally {
+            results.close();
         }
-
-        results.close();
-
-        return LDAPException.SUCCESS;
     }
 
 }

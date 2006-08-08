@@ -549,7 +549,7 @@ public class JDBCCache {
                 FieldConfig fieldConfig = sourceConfig.getFieldConfig(name);
                 String t;
 
-                if (fieldConfig.isPrimaryKey()) {
+                if (fieldConfig.isPK()) {
                     t = tableName;
                 } else {
                     t = tableName+"_"+name;

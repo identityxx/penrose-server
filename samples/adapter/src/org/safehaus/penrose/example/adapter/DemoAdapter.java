@@ -30,6 +30,18 @@ public class DemoAdapter extends Adapter {
 
     public void init() throws Exception {
         System.out.println("Initializing DemoAdapter.");
+
+        Row pk = new Row();
+        pk.set("cn", "Test User");
+        pk.set("sn", "User");
+
+        AttributeValues sourceValues = new AttributeValues();
+        sourceValues.add("uid", "test");
+        sourceValues.add("cn", "Penrose User");
+        sourceValues.add("cn", "Test User");
+        sourceValues.add("sn", "User");
+
+        entries.put(pk, sourceValues);
     }
 
     public int bind(SourceConfig sourceConfig, Row pk, String password) throws Exception {
@@ -74,9 +86,22 @@ public class DemoAdapter extends Adapter {
             Row pk = (Row)i.next();
             AttributeValues sourceValues = (AttributeValues)entries.get(pk);
 
-            if (!FilterTool.isValid(sourceValues, filter)) continue;
+            if (!FilterTool.isValid(sourceValues, filter)) {
+                System.out.println(" - "+pk+" => false");
+                continue;
+            }
 
-            results.add(sourceValues);
+            System.out.println(" - "+pk+" => true");
+
+            AttributeValues av = new AttributeValues();
+            for (Iterator j=pk.getNames().iterator(); j.hasNext(); ) {
+                String name = (String)j.next();
+                Object value = pk.get(name);
+                av.add("primaryKey."+name, value);
+            }
+            av.add(sourceValues);
+
+            results.add(av);
         }
     }
 

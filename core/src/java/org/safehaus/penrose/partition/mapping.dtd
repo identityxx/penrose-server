@@ -15,7 +15,7 @@
 
 <!ELEMENT at (binary|constant|variable|expression)>
 <!ATTLIST at name CDATA #REQUIRED>
-<!ATTLIST at rdn (true|false) "false">
+<!ATTLIST at rdn (true|first|false) "false">
  
 <!ELEMENT source (source-name,field*,parameter*)>
 <!ATTLIST source name CDATA #REQUIRED>

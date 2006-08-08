@@ -24,6 +24,7 @@ import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.PartitionManager;
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.util.EntryUtil;
+import org.safehaus.penrose.util.ExceptionUtil;
 import org.ietf.ldap.*;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
@@ -88,7 +89,7 @@ public class AddHandler {
 
         } catch (Exception e) {
             log.error(e.getMessage(), e);
-            rc = LDAPException.OPERATIONS_ERROR;
+            rc = ExceptionUtil.getReturnCode(e);
         }
 
         if (rc == LDAPException.SUCCESS) {
@@ -129,7 +130,7 @@ public class AddHandler {
         Partition partition = partitionManager.getPartition(parentMapping);
 
         if (partition.isProxy(parentMapping)) {
-            return handler.getEngine("PROXY").add(partition, parent, parentMapping, dn, attributes);
+            return handler.getEngine("PROXY").add(session, partition, parent, parentMapping, dn, attributes);
         }
 
         Collection children = partition.getChildren(parentMapping);
@@ -138,7 +139,7 @@ public class AddHandler {
             EntryMapping entryMapping = (EntryMapping)iterator.next();
             if (!partition.isDynamic(entryMapping)) continue;
 
-            return handler.getEngine().add(partition, parent, entryMapping, dn, attributes);
+            return handler.getEngine().add(session, partition, parent, entryMapping, dn, attributes);
         }
 
         return addStaticEntry(parentMapping, dn, attributes);
@@ -208,7 +209,7 @@ public class AddHandler {
                 AttributeMapping newAttribute = new AttributeMapping();
                 newAttribute.setName(name);
                 newAttribute.setConstant(value);
-                newAttribute.setRdn(rdn.contains(name));
+                newAttribute.setRdn(rdn.contains(name) ? AttributeMapping.RDN_TRUE : AttributeMapping.RDN_FALSE);
 
                 log.debug("Add attribute "+name+": "+value);
                 newEntry.addAttributeMapping(newAttribute);

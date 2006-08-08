@@ -15,7 +15,7 @@
 <!ELEMENT field EMPTY>
 <!ATTLIST field name CDATA #REQUIRED>
 <!ATTLIST field originalName CDATA #IMPLIED>
-<!ATTLIST field primaryKey (true|false) "false">
+<!ATTLIST field primaryKey (true|first|false) "false">
 <!ATTLIST field type CDATA #IMPLIED>
 <!ATTLIST field length CDATA #IMPLIED>
 <!ATTLIST field precision CDATA #IMPLIED>

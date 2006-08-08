@@ -2,7 +2,7 @@
  Copyright (c) 2000-2005, Identyx Corporation.
  All rights reserved.
 -->
-<project name="modules" default="compile" basedir=".">
+<project name="modules" default="compile">
 
     <path id="lib.path">
         <fileset dir="../../lib">

@@ -148,7 +148,7 @@ public class TransformEngine {
             log.debug(" - "+name+": "+newValues);
 
             if (newValues == null) {
-                if (fieldConfig.isPrimaryKey()) pk = null;
+                if (fieldConfig.isPK()) pk = null;
                 continue;
             }
 
@@ -180,7 +180,7 @@ public class TransformEngine {
 
             //log.debug("   => "+newValues);
 
-            if (fieldConfig.isPrimaryKey()) {
+            if (fieldConfig.isPK()) {
                 if (pk != null) pk.set(name, newValues);
             }
 

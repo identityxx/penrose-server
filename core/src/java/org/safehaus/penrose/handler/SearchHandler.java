@@ -27,6 +27,7 @@ import org.safehaus.penrose.pipeline.PipelineAdapter;
 import org.safehaus.penrose.pipeline.PipelineEvent;
 import org.safehaus.penrose.util.EntryUtil;
 import org.safehaus.penrose.util.LDAPUtil;
+import org.safehaus.penrose.util.ExceptionUtil;
 import org.safehaus.penrose.schema.SchemaManager;
 import org.safehaus.penrose.schema.AttributeType;
 import org.safehaus.penrose.partition.Partition;
@@ -82,7 +83,7 @@ public class SearchHandler {
 
                 } catch (Throwable e) {
                     log.error(e.getMessage(), e);
-                    results.setReturnCode(LDAPException.OPERATIONS_ERROR);
+                    results.setReturnCode(ExceptionUtil.getReturnCode(e));
 
                 } finally {
                     results.close();
@@ -129,7 +130,7 @@ public class SearchHandler {
 
         } catch (Exception e) {
             log.error(e.getMessage(), e);
-            rc = LDAPException.OPERATIONS_ERROR;
+            rc = ExceptionUtil.getReturnCode(e);
             results.setReturnCode(rc);
         }
 
@@ -273,8 +274,12 @@ public class SearchHandler {
 
                 try {
                     Entry e = checkEntry(session, child, f, sc);
-                    if (e == null) return;
+                    if (e == null) {
+                        log.debug("Entry \""+child.getDn()+"\" is invalid/inaccessible.");
+                        return;
+                    }
 
+                    log.debug("Returning \""+child.getDn()+"\".");
                     results.add(e);
                 } catch (Exception e) {
                     // ignore
@@ -294,6 +299,7 @@ public class SearchHandler {
         }
 
         engine.search(
+                session,
                 partition,
                 path,
                 parentSourceValues,
@@ -312,7 +318,7 @@ public class SearchHandler {
             for (Iterator i = children.iterator(); i.hasNext();) {
                 EntryMapping childMapping = (EntryMapping) i.next();
 
-                searchChildren(partition, path, parentSourceValues, childMapping, baseDn, f, sc, filterPipeline);
+                searchChildren(session, partition, path, parentSourceValues, childMapping, baseDn, f, sc, filterPipeline);
             }
         }
 
@@ -322,6 +328,7 @@ public class SearchHandler {
 	}
 
     public void searchChildren(
+            PenroseSession session,
             Partition partition,
             Collection parentPath,
             AttributeValues parentSourceValues,
@@ -360,6 +367,7 @@ public class SearchHandler {
         }
 
         engine.expand(
+                session,
                 partition,
                 parentPath,
                 parentSourceValues,
@@ -415,7 +423,7 @@ public class SearchHandler {
         for (Iterator i = children.iterator(); i.hasNext();) {
             EntryMapping childMapping = (EntryMapping) i.next();
 
-            searchChildren(partition, newParentPath, newParentSourceValues, childMapping, baseDn, filter, sc, results);
+            searchChildren(session, partition, newParentPath, newParentSourceValues, childMapping, baseDn, filter, sc, results);
         }
     }
 

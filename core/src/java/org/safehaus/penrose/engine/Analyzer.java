@@ -230,16 +230,20 @@ public class Analyzer {
         }
 
         String sourceAlias = (String)rdnSources.iterator().next();
+
         SourceMapping sourceMapping = entryMapping.getSourceMapping(sourceAlias);
+        if (sourceMapping == null) throw new Exception("Invalid source mapping \""+sourceAlias+"\" in \""+entryMapping.getDn()+"\".");
 
         SourceConfig sourceConfig = partition.getSourceConfig(sourceMapping.getSourceName());
-        //log.debug("Source "+sourceMapping.getSourceName()+" in partition "+partition.getPartitionConfig().getName()+": "+sourceConfig);
+        if (sourceMapping == null) throw new Exception("Invalid source reference \""+sourceMapping.getSourceName()+"\" in \""+entryMapping.getDn()+"\".");
 
         Collection uniqueFields = new TreeSet();
         Collection pkFields = new TreeSet();
 
         for (Iterator i=rdnFields.iterator(); i.hasNext(); ) {
             String fieldName = (String)i.next();
+            if (fieldName.startsWith("primaryKey.")) continue;
+
             FieldConfig fieldConfig = sourceConfig.getFieldConfig(fieldName);
 
             if (fieldConfig.isUnique()) {
@@ -247,7 +251,7 @@ public class Analyzer {
                 continue;
             }
 
-            if (fieldConfig.isPrimaryKey()) {
+            if (fieldConfig.isPK()) {
                 pkFields.add(fieldName);
                 continue;
             }

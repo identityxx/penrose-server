@@ -151,6 +151,7 @@ public class FindHandler {
             }
 
             engine.expand(
+                    session,
                     partition,
                     parentPath,
                     parentSourceValues,

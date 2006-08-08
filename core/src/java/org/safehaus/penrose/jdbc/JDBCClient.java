@@ -119,7 +119,7 @@ public class JDBCClient {
             String name = rs.getString(4);
 
             FieldConfig field = (FieldConfig)columns.get(name);
-            field.setPrimaryKey(true);;
+            field.setPrimaryKey(FieldConfig.PRIMARY_KEY_TRUE);
         }
 
         rs.close();

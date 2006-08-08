@@ -26,6 +26,7 @@ import org.safehaus.penrose.schema.AttributeType;
 import org.safehaus.penrose.util.PasswordUtil;
 import org.safehaus.penrose.util.BinaryUtil;
 import org.safehaus.penrose.util.Formatter;
+import org.safehaus.penrose.util.ExceptionUtil;
 import org.safehaus.penrose.mapping.*;
 import org.ietf.ldap.*;
 import org.slf4j.LoggerFactory;
@@ -129,7 +130,7 @@ public class ModifyHandler {
 
         } catch (Exception e) {
             log.error(e.getMessage(), e);
-            rc = LDAPException.OPERATIONS_ERROR;
+            rc = ExceptionUtil.getReturnCode(e);
         }
 
         if (rc == LDAPException.SUCCESS) {
@@ -201,10 +202,10 @@ public class ModifyHandler {
         EntryMapping entryMapping = entry.getEntryMapping();
 
         if (partition.isProxy(entryMapping)) {
-            return handler.getEngine("PROXY").modify(partition, entry, modifications);
+            return handler.getEngine("PROXY").modify(session, partition, entry, modifications);
 
         } else if (partition.isDynamic(entryMapping)) {
-            return handler.getEngine().modify(partition, entry, modifications);
+            return handler.getEngine().modify(session, partition, entry, modifications);
 
         } else {
             return modifyStaticEntry(partition, entryMapping, modifications);
