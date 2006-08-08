@@ -123,6 +123,21 @@ public class BindHandler {
     public int bindAsUser(PenroseSession session, String dn, String password) throws Exception {
         log.debug("Searching for "+dn);
 
+        PartitionManager partitionManager = handler.getPartitionManager();
+        Partition partition = partitionManager.findPartition(dn);
+        //Partition partition = partitionManager.getPartition(entryMapping);
+
+        if (partition == null) {
+            log.debug("Entry "+dn+" not found => BIND FAILED");
+            return LDAPException.INVALID_CREDENTIALS;
+        }
+
+        EntryMapping entryMapping = partition.findEntryMapping(dn);
+
+        if (partition.isProxy(entryMapping)) {
+            return handler.getEngine().bindProxy(session, partition, entryMapping, dn, password);
+        }
+
         Entry entry = handler.getFindHandler().find(session, dn);
 
         if (entry == null) {
@@ -132,14 +147,7 @@ public class BindHandler {
 
         log.debug("Found "+entry.getDn());
 
-        EntryMapping entryMapping = entry.getEntryMapping();
-        PartitionManager partitionManager = handler.getPartitionManager();
-        Partition partition = partitionManager.getPartition(entryMapping);
-
-        if (partition.isProxy(entryMapping)) {
-            handler.getEngine().bindProxy(session, partition, entryMapping, dn, password);
-            return LDAPException.SUCCESS;
-        }
+        //EntryMapping entryMapping = entry.getEntryMapping();
 
         return handler.getEngine().bind(entry, password);
     }

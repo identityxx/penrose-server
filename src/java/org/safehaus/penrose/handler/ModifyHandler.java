@@ -208,8 +208,7 @@ public class ModifyHandler {
 
         if (partition.isProxy(entryMapping)) {
             log.debug("Modifying "+entry.getDn()+" via proxy");
-            handler.getEngine().modifyProxy(session, partition, entryMapping, entry, modifications);
-            return LDAPException.SUCCESS;
+            return handler.getEngine().modifyProxy(session, partition, entryMapping, entry, modifications);
         }
 
         if (partition.isDynamic(entryMapping)) {

@@ -134,8 +134,7 @@ public class ModRdnHandler {
 
         if (partition.isProxy(entryMapping)) {
             log.debug("Renaming "+entry.getDn()+" via proxy");
-            handler.getEngine().modrdnProxy(session, partition, entryMapping, entry, newRdn);
-            return LDAPException.SUCCESS;
+            return handler.getEngine().modrdnProxy(session, partition, entryMapping, entry, newRdn);
         }
 
         if (partition.isDynamic(entryMapping)) {

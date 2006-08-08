@@ -143,8 +143,7 @@ public class AddHandler {
 
         if (partition.isProxy(parentMapping)) {
             log.debug("Adding "+dn+" via proxy");
-            handler.getEngine().addProxy(session, partition, parentMapping, dn, attributes);
-            return LDAPException.SUCCESS;
+            return handler.getEngine().addProxy(session, partition, parentMapping, dn, attributes);
         }
 
         Collection children = partition.getChildren(parentMapping);

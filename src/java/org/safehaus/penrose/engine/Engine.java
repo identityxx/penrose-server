@@ -447,7 +447,7 @@ public abstract class Engine {
         return prefix;
     }
 
-    public abstract void bindProxy(
+    public abstract int bindProxy(
             PenroseSession session,
             Partition partition,
             EntryMapping entryMapping,
@@ -455,7 +455,7 @@ public abstract class Engine {
             String password
             ) throws Exception;
 
-    public abstract void addProxy(
+    public abstract int addProxy(
             PenroseSession session,
             Partition partition,
             EntryMapping entryMapping,
@@ -463,7 +463,7 @@ public abstract class Engine {
             Attributes attributes
             ) throws Exception;
 
-    public abstract void modifyProxy(
+    public abstract int modifyProxy(
             PenroseSession session,
             Partition partition,
             EntryMapping entryMapping,
@@ -471,7 +471,7 @@ public abstract class Engine {
             Collection modifications
             ) throws Exception;
 
-    public abstract void modrdnProxy(
+    public abstract int modrdnProxy(
             PenroseSession session,
             Partition partition,
             EntryMapping entryMapping,
@@ -479,7 +479,7 @@ public abstract class Engine {
             String newRdn
             ) throws Exception;
 
-    public abstract void deleteProxy(
+    public abstract int deleteProxy(
             PenroseSession session,
             Partition partition,
             EntryMapping entryMapping,
@@ -602,7 +602,7 @@ public abstract class Engine {
             PenroseSearchControls sc,
             PenroseSearchResults results) throws Exception;
 
-    public abstract void searchProxy(
+    public abstract int searchProxy(
             PenroseSession session,
             Partition partition,
             EntryMapping entryMapping,

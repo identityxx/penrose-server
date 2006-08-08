@@ -110,8 +110,7 @@ public class DeleteHandler {
 
         if (partition.isProxy(entryMapping)) {
             log.debug("Deleting "+entry.getDn()+" via proxy");
-            handler.getEngine().deleteProxy(session, partition, entryMapping, entry.getDn());
-            return LDAPException.SUCCESS;
+            return handler.getEngine().deleteProxy(session, partition, entryMapping, entry.getDn());
         }
 
         if (partition.isDynamic(entryMapping)) {
