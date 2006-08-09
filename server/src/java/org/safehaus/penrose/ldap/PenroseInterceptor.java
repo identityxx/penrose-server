@@ -85,7 +85,7 @@ public class PenroseInterceptor extends BaseInterceptor {
         Thread currentThread = Thread.currentThread();
 
         PenroseSession session = (PenroseSession)sessions.get(currentThread);
-        if (session != null) return session;
+        if (session != null && session.isValid()) return session;
 
         session = penrose.newSession();
         if (session == null) throw new ServiceUnavailableException();

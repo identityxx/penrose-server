@@ -210,6 +210,13 @@ public class PenroseClient {
         );
     }
 
+    public void renameEntryMapping(String oldDn, String newDn) throws Exception {
+        invoke("renameEntryMapping",
+                new Object[] { oldDn, newDn },
+                new String[] { String.class.getName(), String.class.getName() }
+        );
+    }
+
     public void restart() throws Exception {
         invoke("restart",
                 new Object[] { },
@@ -427,6 +434,15 @@ public class PenroseClient {
 
         } else if ("store".equals(command)) {
             client.store();
+
+        } else if ("rename".equals(command)) {
+            String object = (String)iterator.next();
+            if ("entry".equals(object)) {
+                String oldDn = (String)iterator.next();
+                String newDn = (String)iterator.next();
+                log.debug("Renaming "+oldDn+" to "+newDn);
+                client.renameEntryMapping(oldDn, newDn);
+            }
 
         } else if ("list".equals(command)) {
             Collection serviceNames = client.getServiceNames();

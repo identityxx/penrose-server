@@ -186,7 +186,8 @@ public class PartitionManager implements PartitionManagerMBean {
     public Partition findPartition(String dn) throws Exception {
         for (Iterator i=partitions.values().iterator(); i.hasNext(); ) {
             Partition partition = (Partition)i.next();
-            if (partition.findEntryMapping(dn) != null) return partition;
+            Collection list = partition.findEntryMappings(dn);
+            if (list != null && !list.isEmpty()) return partition;
         }
         return null;
     }

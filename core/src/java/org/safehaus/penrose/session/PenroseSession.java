@@ -79,8 +79,12 @@ public class PenroseSession {
         this.handler = handler;
     }
 
+    public boolean isValid() {
+        return sessionManager.isValid(this);
+    }
+
     public int add(String dn, Attributes attributes) throws Exception {
-        if (!sessionManager.isValid(this)) throw new Exception("Invalid session.");
+        if (!isValid()) throw new Exception("Invalid session.");
 
         lastActivityDate.setTime(System.currentTimeMillis());
 
@@ -97,7 +101,7 @@ public class PenroseSession {
     }
 
     public int bind(String dn, String password) throws Exception {
-        if (!sessionManager.isValid(this)) throw new Exception("Invalid session.");
+        if (!isValid()) throw new Exception("Invalid session.");
 
         lastActivityDate.setTime(System.currentTimeMillis());
 
@@ -114,7 +118,7 @@ public class PenroseSession {
     }
 
     public int compare(String dn, String attributeName, Object attributeValue) throws Exception {
-        if (!sessionManager.isValid(this)) throw new Exception("Invalid session.");
+        if (!isValid()) throw new Exception("Invalid session.");
 
         lastActivityDate.setTime(System.currentTimeMillis());
 
@@ -131,7 +135,7 @@ public class PenroseSession {
      }
 
     public int delete(String dn) throws Exception {
-        if (!sessionManager.isValid(this)) throw new Exception("Invalid session.");
+        if (!isValid()) throw new Exception("Invalid session.");
 
         lastActivityDate.setTime(System.currentTimeMillis());
 
@@ -149,7 +153,7 @@ public class PenroseSession {
 
     public int modify(String dn, Collection modifications) throws Exception {
 
-        if (!sessionManager.isValid(this)) throw new Exception("Invalid session.");
+        if (!isValid()) throw new Exception("Invalid session.");
 
         lastActivityDate.setTime(System.currentTimeMillis());
 
@@ -167,7 +171,7 @@ public class PenroseSession {
 
     public int modrdn(String dn, String newRdn) throws Exception {
 
-        if (!sessionManager.isValid(this)) throw new Exception("Invalid session.");
+        if (!isValid()) throw new Exception("Invalid session.");
 
         lastActivityDate.setTime(System.currentTimeMillis());
 
@@ -199,7 +203,7 @@ public class PenroseSession {
             final PenroseSearchResults results)
             throws Exception {
 
-        if (!sessionManager.isValid(this)) throw new Exception("Invalid session.");
+        if (!isValid()) throw new Exception("Invalid session.");
 
         lastActivityDate.setTime(System.currentTimeMillis());
 
@@ -247,7 +251,7 @@ public class PenroseSession {
 
     public int unbind() throws Exception {
 
-        if (!sessionManager.isValid(this)) throw new Exception("Invalid session.");
+        if (!isValid()) throw new Exception("Invalid session.");
 
         lastActivityDate.setTime(System.currentTimeMillis());
 
