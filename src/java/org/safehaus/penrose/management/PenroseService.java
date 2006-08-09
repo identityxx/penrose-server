@@ -20,12 +20,16 @@ package org.safehaus.penrose.management;
 import org.apache.log4j.*;
 import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.PenroseServer;
+import org.safehaus.penrose.mapping.EntryMapping;
+import org.safehaus.penrose.partition.PartitionManager;
+import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.service.ServiceManager;
 
 import java.util.Collection;
 import java.util.ArrayList;
 import java.util.Enumeration;
+import java.util.Iterator;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -117,6 +121,32 @@ public class PenroseService implements PenroseServiceMBean {
     public void store() throws Exception {
         try {
             penroseServer.store();
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+            throw e;
+        }
+    }
+
+    public void renameEntryMapping(String oldDn, String newDn) throws Exception {
+        try {
+            log.debug("Renaming "+oldDn+" to "+newDn);
+
+            Penrose penrose = penroseServer.getPenrose();
+            PartitionManager partitionManager = penrose.getPartitionManager();
+
+            Partition partition = partitionManager.findPartition(oldDn);
+            if (partition == null) return;
+
+            Collection c = partition.findEntryMappings(oldDn);
+            Collection entryMappings = new ArrayList();
+            if (c != null) entryMappings.addAll(c);
+
+            log.debug("Found "+entryMappings.size()+" entries.");
+            for (Iterator i=entryMappings.iterator(); i.hasNext(); ) {
+                EntryMapping entryMapping = (EntryMapping)i.next();
+                partition.renameEntryMapping(entryMapping, newDn);
+            }
+
         } catch (Exception e) {
             log.error(e.getMessage(), e);
             throw e;

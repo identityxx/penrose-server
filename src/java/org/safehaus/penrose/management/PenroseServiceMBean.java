@@ -33,6 +33,8 @@ public interface PenroseServiceMBean {
     public void restart() throws Exception;
     public void store() throws Exception;
 
+    public void renameEntryMapping(String oldDn, String newDn) throws Exception;
+
     public Collection getServiceNames() throws Exception;
     public void start(String serviceName) throws Exception;
     public void stop(String serviceName) throws Exception;
