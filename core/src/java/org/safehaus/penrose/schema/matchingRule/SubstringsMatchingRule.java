@@ -19,6 +19,7 @@ package org.safehaus.penrose.schema.matchingRule;
 
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
+import org.safehaus.penrose.filter.SubstringFilter;
 
 import java.util.Map;
 import java.util.TreeMap;
@@ -66,9 +67,13 @@ public class SubstringsMatchingRule {
         StringBuffer sb = new StringBuffer();
         sb.append("^");
         for (Iterator i=substrings.iterator(); i.hasNext(); ) {
-            String substring = (String)i.next();
-            if ("*".equals(substring)) sb.append(".");
-            sb.append(substring);
+            Object o = i.next();
+            if (o.equals(SubstringFilter.STAR)) {
+                sb.append(".*");
+            } else {
+                String substring = (String)o;
+                sb.append(escape(substring));
+            }
         }
         sb.append("$");
 
@@ -76,5 +81,22 @@ public class SubstringsMatchingRule {
         Matcher matcher = pattern.matcher(object.toString());
 
         return matcher.find();
+    }
+
+    public static String escape(String s) {
+        StringBuffer sb = new StringBuffer(s);
+        int i = 0;
+        while (i<sb.length()) {
+            char c = sb.charAt(i);
+            if (c == '\\' || c == '.' || c == '?' || c == '*'
+                    || c == '^' || c == '$' || c == '{' || c == '}'
+                    || c == '[' || c == ']' || c == '(' || c == ')') {
+                sb.replace(i, i+1, "\\"+c);
+                i += 2;
+                continue;
+            }
+            i++;
+        }
+        return sb.toString();
     }
 }

@@ -1100,10 +1100,11 @@ public class JDBCAdapter extends Adapter {
 
         StringBuffer sb = new StringBuffer();
         for (Iterator i=substrings.iterator(); i.hasNext(); ) {
-            String substring = (String)i.next();
-            if ("*".equals(substring)) {
+            Object o = i.next();
+            if (o.equals(SubstringFilter.STAR)) {
                 sb.append("%");
             } else {
+                String substring = (String)o;
                 sb.append(substring);
             }
         }

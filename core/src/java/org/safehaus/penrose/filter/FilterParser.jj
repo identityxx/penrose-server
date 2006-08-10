@@ -231,19 +231,24 @@ Filter Item() :
         //System.out.println("Expression: ["+attr+"] ["+type+"] ["+value+"]");
 
         if (!"=".equals(type.toString())) {
-            filter = new SimpleFilter(attr, type, value);
+            filter = new SimpleFilter(attr, type, FilterTool.unescape(value));
 
         } else if ("*".equals(value)) {
             filter = new PresentFilter(attr);
 
         } else if (value.indexOf('*') < 0) {
-            filter = new SimpleFilter(attr, "=", value);
+            filter = new SimpleFilter(attr, "=", FilterTool.unescape(value));
 
         } else {
             List values = new ArrayList();
             StringTokenizer st = new StringTokenizer(value, "*", true);
             while (st.hasMoreTokens()) {
-                values.add(st.nextToken());
+                String token = st.nextToken();
+                if ("*".equals(token)) {
+                    values.add(SubstringFilter.STAR);
+                } else {
+                    values.add(FilterTool.unescape(token));
+                }
             }
             filter = new SubstringFilter(attr, values);
         }

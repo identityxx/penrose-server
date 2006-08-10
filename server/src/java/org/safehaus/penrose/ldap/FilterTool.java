@@ -76,12 +76,12 @@ public class FilterTool {
             filter.setAttribute(substringNode.getAttribute());
 
             if (substringNode.getInitial() != null) filter.addSubstring(substringNode.getInitial());
-            filter.addSubstring("*");
+            filter.addSubstring(SubstringFilter.STAR);
 
             for (Iterator i=substringNode.getAny().iterator(); i.hasNext(); ) {
                 String any = (String)i.next();
                 filter.addSubstring(any);
-                filter.addSubstring("*");
+                filter.addSubstring(SubstringFilter.STAR);
             }
 
             if (substringNode.getFinal() != null) filter.addSubstring(substringNode.getFinal());

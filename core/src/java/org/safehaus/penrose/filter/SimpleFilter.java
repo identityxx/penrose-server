@@ -78,6 +78,6 @@ public class SimpleFilter extends Filter {
     }
 
 	public String toString() {
-		return "(" + attribute + operator + value + ")";
+		return "(" + attribute + operator + FilterTool.escape(value) + ")";
 	}
 }
