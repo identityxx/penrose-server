@@ -23,7 +23,9 @@ import java.util.Collection;
 
 public class SubstringFilter extends Filter {
 
-	protected String attribute;
+    public final static Character STAR = new Character('*');
+
+    protected String attribute;
 	protected Collection substrings = new ArrayList();
 	
 	public SubstringFilter() {
@@ -46,7 +48,7 @@ public class SubstringFilter extends Filter {
 		return substrings;
 	}
 
-	public void addSubstring(String s) {
+	public void addSubstring(Object s) {
 		this.substrings.add(s);
 	}
 
@@ -75,8 +77,13 @@ public class SubstringFilter extends Filter {
 	public String toString() {
 		StringBuffer sb = new StringBuffer("(" + attribute + "=");
 		for (Iterator i=substrings.iterator(); i.hasNext(); ) {
-            String substring = (String)i.next();
-			sb.append(substring);
+            Object o = i.next();
+            if (o.equals(STAR)) {
+                sb.append(o);
+            } else {
+                String value = (String)o;
+                sb.append(FilterTool.escape(value));
+            }
 		}
 		sb.append(")");
 		return sb.toString();

@@ -714,12 +714,12 @@ public class FilterTool {
             filter.setAttribute(substringNode.getAttribute());
 
             if (substringNode.getInitial() != null) filter.addSubstring(substringNode.getInitial());
-            filter.addSubstring("*");
+            filter.addSubstring(SubstringFilter.STAR);
 
             for (Iterator i=substringNode.getAny().iterator(); i.hasNext(); ) {
                 String any = (String)i.next();
                 filter.addSubstring(any);
-                filter.addSubstring("*");
+                filter.addSubstring(SubstringFilter.STAR);
             }
 
             if (substringNode.getFinal() != null) filter.addSubstring(substringNode.getFinal());
@@ -729,5 +729,42 @@ public class FilterTool {
         }
 
         return null;
+    }
+
+    public static String escape(String value) {
+
+        StringBuffer sb = new StringBuffer(value);
+        int i = 0;
+        while (i<sb.length()) {
+            char c = sb.charAt(i);
+
+            if (c == '*' || c == '(' || c == ')' || c == '\\') {
+                String hex = Integer.toHexString(c);
+                if (hex.length() < 2) hex = "0"+hex;
+                sb.replace(i, i+1, "\\"+hex);
+                i += 3;
+                continue;
+            }
+
+            i++;
+        }
+
+        return sb.toString();
+    }
+
+    public static String unescape(String value) {
+
+        StringBuffer sb = new StringBuffer(value);
+        int i = sb.indexOf("\\");
+        while (i >= 0) {
+            String hex = sb.substring(i+1, i+3);
+            int dec = Integer.parseInt(hex, 16);
+
+            sb.setCharAt(i, (char)dec);
+            sb.delete(i+1, i+3);
+            i = sb.indexOf("\\", i+1);
+        }
+
+        return sb.toString();
     }
 }
