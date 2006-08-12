@@ -19,11 +19,9 @@ package org.safehaus.penrose.handler;
 
 import org.safehaus.penrose.session.PenroseSession;
 import org.safehaus.penrose.partition.Partition;
-import org.safehaus.penrose.partition.PartitionManager;
 import org.safehaus.penrose.mapping.EntryMapping;
 import org.safehaus.penrose.mapping.Entry;
 import org.safehaus.penrose.util.ExceptionUtil;
-import org.ietf.ldap.LDAPDN;
 import org.ietf.ldap.LDAPException;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
@@ -56,15 +54,21 @@ public class DeleteHandler {
             log.debug(" - DN: "+dn);
             log.debug("");
 
-            String ndn = LDAPDN.normalize(dn);
+            Partition partition = handler.getPartitionManager().findPartition(dn);
 
-            Entry entry = getHandler().getFindHandler().find(session, ndn);
-            if (entry == null) return LDAPException.NO_SUCH_OBJECT;
+            if (partition == null) {
+                log.debug("Entry "+dn+" not found");
+                return LDAPException.NO_SUCH_OBJECT;
+            }
 
-            EntryMapping entryMapping = entry.getEntryMapping();
+            Collection path = handler.getFindHandler().find(session, partition, dn);
 
-            PartitionManager partitionManager = handler.getPartitionManager();
-            Partition partition = partitionManager.getPartition(entryMapping);
+            if (path == null || path.isEmpty()) {
+                log.debug("Entry "+dn+" not found");
+                return LDAPException.NO_SUCH_OBJECT;
+            }
+
+            Entry entry = (Entry)path.iterator().next();
 
             rc = performDelete(session, partition, entry);
             if (rc != LDAPException.SUCCESS) return rc;

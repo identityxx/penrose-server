@@ -77,7 +77,7 @@ public class DemoAdapter extends Adapter {
         results.close();
     }
 
-    public void load(SourceConfig sourceConfig, Filter filter, PenroseSearchControls sc, PenroseSearchResults results) throws Exception {
+    public void load(SourceConfig sourceConfig, Collection primaryKeys, Filter filter, PenroseSearchControls sc, PenroseSearchResults results) throws Exception {
 
         String sourceName = sourceConfig.getName();
         System.out.println("Loading entries from source "+sourceName+" with filter "+filter+".");

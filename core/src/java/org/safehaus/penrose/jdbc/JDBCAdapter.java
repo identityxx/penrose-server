@@ -190,7 +190,12 @@ public class JDBCAdapter extends Adapter {
 
     public void search(SourceConfig sourceConfig, Filter filter, PenroseSearchControls sc, PenroseSearchResults results) throws Exception {
 
-        log.debug("Searching JDBC source "+sourceConfig.getConnectionName()+"/"+sourceConfig.getName());
+        if (log.isDebugEnabled()) {
+            log.debug(Formatter.displaySeparator(80));
+            log.debug(Formatter.displayLine("Search "+sourceConfig.getConnectionName()+"/"+sourceConfig.getName(), 80));
+            log.debug(Formatter.displayLine(" - Filter: "+filter, 80));
+            log.debug(Formatter.displaySeparator(80));
+        }
 
         String tableName = sourceConfig.getParameter(TABLE_NAME);
         String s = sourceConfig.getParameter(FILTER);
@@ -292,9 +297,15 @@ public class JDBCAdapter extends Adapter {
         }
     }
 
-    public void load(SourceConfig sourceConfig, Filter filter, PenroseSearchControls sc, PenroseSearchResults results) throws Exception {
+    public void load(SourceConfig sourceConfig, Collection primaryKeys, Filter filter, PenroseSearchControls sc, PenroseSearchResults results) throws Exception {
 
-        log.debug("Loading JDBC source "+sourceConfig.getConnectionName()+"/"+sourceConfig.getName());
+        if (log.isDebugEnabled()) {
+            log.debug(Formatter.displaySeparator(80));
+            log.debug(Formatter.displayLine("Load "+sourceConfig.getConnectionName()+"/"+sourceConfig.getName(), 80));
+            log.debug(Formatter.displayLine(" - Primary Keys: "+primaryKeys, 80));
+            log.debug(Formatter.displayLine(" - Filter: "+filter, 80));
+            log.debug(Formatter.displaySeparator(80));
+        }
 
         String tableName = sourceConfig.getParameter(TABLE_NAME);
         String s = sourceConfig.getParameter(FILTER);
@@ -310,8 +321,11 @@ public class JDBCAdapter extends Adapter {
 
         List parameters = new ArrayList();
         if (filter != null) {
-            if (sqlFilter.length() > 0) sqlFilter.append(" and ");
-            sqlFilter.append(filterTool.convert(sourceConfig, filter, parameters));
+            String f = filterTool.convert(sourceConfig, filter, parameters);
+            if (f != null) {
+                if (sqlFilter.length() > 0) sqlFilter.append(" and ");
+                sqlFilter.append(f);
+            }
         }
 
         if (sqlFilter.length() > 0) {

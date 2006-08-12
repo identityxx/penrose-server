@@ -49,7 +49,6 @@ public class PenroseInterceptor extends BaseInterceptor {
     public Logger log = LoggerFactory.getLogger(getClass());
 
     PenroseServer penroseServer;
-    Penrose penrose;
     PartitionManager partitionManager;
 
     DirectoryServiceConfiguration factoryCfg;
@@ -86,6 +85,11 @@ public class PenroseInterceptor extends BaseInterceptor {
 
         PenroseSession session = (PenroseSession)sessions.get(currentThread);
         if (session != null && session.isValid()) return session;
+
+        Penrose penrose = penroseServer.getPenrose();
+        if (penrose == null) {
+            throw new Exception("Penrose is not initialized.");
+        }
 
         session = penrose.newSession();
         if (session == null) throw new ServiceUnavailableException();

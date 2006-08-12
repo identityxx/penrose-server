@@ -69,9 +69,6 @@ public class MergeEngine {
             PenroseSearchResults results
             ) throws Exception {
 
-        //MRSWLock lock = getLock(entryMapping;
-        //lock.getWriteLock(Penrose.WAIT_TIMEOUT);
-
         try {
             while (entries.hasNext()) {
                 EntryData map = (EntryData)entries.next();
@@ -82,56 +79,21 @@ public class MergeEngine {
                 Row filter = map.getFilter();
                 AttributeValues loadedSourceValues = map.getLoadedSourceValues();
 
-                if (log.isDebugEnabled()) {
-                    log.debug(Formatter.displaySeparator(80));
-                    log.debug(Formatter.displayLine("MERGE", 80));
-                    log.debug(Formatter.displayLine("Entry: "+dn, 80));
-                    log.debug(Formatter.displayLine("Filter: "+filter, 80));
+                Entry entry = mergeEntries(
+                        partition,
+                        dn,
+                        entryMapping,
+                        primarySourceValues,
+                        loadedSourceValues,
+                        rows,
+                        interpreter,
+                        filter
+                );
 
-                    if (primarySourceValues != null) {
-                        log.debug(Formatter.displayLine("Primary source values:", 80));
-                        for (Iterator j=primarySourceValues.getNames().iterator(); j.hasNext(); ) {
-                            String name = (String)j.next();
-                            Collection v = primarySourceValues.get(name);
-                            log.debug(Formatter.displayLine(" - "+name+": "+v, 80));
-                        }
-                    }
-
-                    log.debug(Formatter.displayLine("Loaded source values:", 80));
-                    if (loadedSourceValues != null) {
-                        for (Iterator i=loadedSourceValues.getNames().iterator(); i.hasNext(); ) {
-                            String sourceName = (String)i.next();
-                            log.debug(Formatter.displayLine(" - "+sourceName+":", 80));
-                            Collection avs = loadedSourceValues.get(sourceName);
-                            for (Iterator j=avs.iterator(); j.hasNext(); ) {
-                                AttributeValues av = (AttributeValues)j.next();
-                                for (Iterator k=av.getNames().iterator(); k.hasNext(); ) {
-                                    String name = (String)k.next();
-                                    Collection values = av.get(name);
-                                    log.debug(Formatter.displayLine("   - "+name+": "+values, 80));
-                                }
-                            }
-                       }
-                    }
-
-                    log.debug(Formatter.displayLine("Rows:", 80));
-                    if (rows != null) {
-                        int counter = 0;
-                        for (Iterator j=rows.iterator(); j.hasNext() && counter <= 20; counter++) {
-                            AttributeValues row = (AttributeValues)j.next();
-                            log.debug(Formatter.displayLine(" - "+row, 80));
-                        }
-                    }
-
-                    log.debug(Formatter.displaySeparator(80));
-                }
-
-                mergeEntries(partition, dn, entryMapping, primarySourceValues, loadedSourceValues, rows, interpreter, filter, results);
+                results.add(entry);
             }
 
         } finally {
-            //lock.releaseWriteLock(Penrose.WAIT_TIMEOUT);
-
             int rc = entries.getReturnCode();
             //log.debug("RC: "+rc);
 
@@ -140,7 +102,7 @@ public class MergeEngine {
         }
     }
 
-    public PenroseSearchResults mergeEntries(
+    public Entry mergeEntries(
             Partition partition,
             String dn,
             EntryMapping entryMapping,
@@ -148,9 +110,47 @@ public class MergeEngine {
             AttributeValues loadedSourceValues,
             Collection rows,
             Interpreter interpreter,
-            Row pk,
-            PenroseSearchResults results)
+            Row pk)
             throws Exception {
+
+        if (log.isDebugEnabled()) {
+            log.debug(Formatter.displaySeparator(80));
+            log.debug(Formatter.displayLine("MERGE", 80));
+            log.debug(Formatter.displayLine("Entry: "+dn, 80));
+            log.debug(Formatter.displayLine("PK: "+pk, 80));
+
+            if (primarySourceValues != null) {
+                log.debug(Formatter.displayLine("Primary source values:", 80));
+                for (Iterator j=primarySourceValues.getNames().iterator(); j.hasNext(); ) {
+                    String name = (String)j.next();
+                    Collection v = primarySourceValues.get(name);
+                    log.debug(Formatter.displayLine(" - "+name+": "+v, 80));
+                }
+            }
+
+            if (loadedSourceValues != null) {
+                for (Iterator i=loadedSourceValues.getNames().iterator(); i.hasNext(); ) {
+                    String sourceName = (String)i.next();
+                    log.debug(Formatter.displayLine("Source "+sourceName+":", 80));
+                    Collection avs = loadedSourceValues.get(sourceName);
+                    for (Iterator j=avs.iterator(); j.hasNext(); ) {
+                        AttributeValues av = (AttributeValues)j.next();
+                        log.debug(Formatter.displayLine(" - "+av, 80));
+                    }
+               }
+            }
+
+            log.debug(Formatter.displayLine("Rows:", 80));
+            if (rows != null) {
+                int counter = 0;
+                for (Iterator j=rows.iterator(); j.hasNext() && counter <= 20; counter++) {
+                    AttributeValues row = (AttributeValues)j.next();
+                    log.debug(Formatter.displayLine(" - "+row, 80));
+                }
+            }
+
+            log.debug(Formatter.displaySeparator(80));
+        }
 
         AttributeValues sourceValues;
         SourceMapping primarySourceMapping = engine.getPrimarySource(entryMapping);
@@ -218,9 +218,7 @@ public class MergeEngine {
         //log.debug("Storing "+rdn+" in entry data cache for "+entry.getParentDn());
         //engine.getEntryCache().put(entry);
 
-        results.add(entry);
-
-        return results;
+        return entry;
     }
 
     public Engine getEngine() {

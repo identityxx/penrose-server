@@ -9,6 +9,7 @@ import org.safehaus.penrose.connector.Connection;
 import org.safehaus.penrose.ldap.LDAPAdapter;
 import org.safehaus.penrose.ldap.LDAPClient;
 import org.safehaus.penrose.filter.Filter;
+import org.safehaus.penrose.filter.FilterTool;
 import org.safehaus.penrose.session.PenroseSearchControls;
 import org.safehaus.penrose.session.PenroseSearchResults;
 import org.safehaus.penrose.session.PenroseSession;
@@ -569,5 +570,41 @@ Mapping: ou=Groups,dc=Proxy,dc=Example,dc=org
         //if (threadManager != null) threadManager.stopRequestAllWorkers();
         log.debug("Engine stopped.");
         super.stop();
+    }
+
+    public Entry find(
+            PenroseSession session,
+            Partition partition,
+            Collection parentPath,
+            AttributeValues parentSourceValues,
+            EntryMapping entryMapping,
+            String dn
+    ) throws Exception {
+
+        PenroseSearchResults results = new PenroseSearchResults();
+
+        PenroseSearchControls sc = new PenroseSearchControls();
+        sc.setScope(PenroseSearchControls.SCOPE_BASE);
+
+        Row rdn = EntryUtil.getRdn(dn);
+        Filter filter = FilterTool.createFilter(rdn);
+
+        expand(
+                session,
+                partition,
+                parentPath,
+                parentSourceValues,
+                entryMapping,
+                dn,
+                filter,
+                sc,
+                results
+        );
+
+        results.close();
+
+        if (!results.hasNext()) return null;
+
+        return (Entry)results.next();
     }
 }

@@ -29,12 +29,18 @@ public class JDBCFilterTool {
             Collection parameters)
             throws Exception {
 
+        log.debug("Converting source filter "+filter+" to JDBC filter for source "+sourceConfig.getName());
+
         StringBuffer sb = new StringBuffer();
         boolean valid = convert(sourceConfig, filter, parameters, sb);
 
-        if (valid && sb.length() > 0) return sb.toString();
+        String jdbcFilter = null;
 
-        return null;
+        if (valid && sb.length() > 0) jdbcFilter = sb.toString();
+
+        log.debug("JDBC filter: "+jdbcFilter);
+
+        return jdbcFilter;
     }
 
     boolean convert(
@@ -71,7 +77,7 @@ public class JDBCFilterTool {
         String operator = filter.getOperator();
         String value = filter.getValue();
 
-        //log.debug("Converting "+name+" "+operator+" "+value);
+        log.debug("Converting simple filter "+name+" "+operator+" "+value);
 
         if (name.equals("objectClass")) {
             if (value.equals("*"))
@@ -86,7 +92,10 @@ public class JDBCFilterTool {
         }
 
         FieldConfig fieldConfig = sourceConfig.getFieldConfig(name);
-        if (fieldConfig == null) return false;
+        if (fieldConfig == null) {
+            log.debug("Unknown field: "+name);
+            return false;
+        }
 
         if ("VARCHAR".equals(fieldConfig.getType())) {
             if (!fieldConfig.isCaseSensitive()) sb.append("lower(");

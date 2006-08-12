@@ -21,17 +21,15 @@ import org.safehaus.penrose.session.PenroseSession;
 import org.safehaus.penrose.session.PenroseSearchResults;
 import org.safehaus.penrose.session.PenroseSearchControls;
 import org.safehaus.penrose.partition.Partition;
-import org.safehaus.penrose.partition.PartitionManager;
 import org.safehaus.penrose.mapping.Entry;
 import org.safehaus.penrose.mapping.EntryMapping;
 import org.safehaus.penrose.util.EntryUtil;
 import org.safehaus.penrose.util.ExceptionUtil;
 import org.ietf.ldap.LDAPException;
-import org.ietf.ldap.LDAPDN;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
-import java.util.Iterator;
+import java.util.Collection;
 
 /**
  * @author Endi S. Dewata
@@ -42,12 +40,12 @@ public class ModRdnHandler {
 
     public Handler handler;
 
-	public ModRdnHandler(Handler handler) {
+    public ModRdnHandler(Handler handler) {
         this.handler = handler;
-	}
+    }
 
-	public int modrdn(PenroseSession session, String dn, String newRdn)
-			throws Exception {
+    public int modrdn(PenroseSession session, String dn, String newRdn)
+            throws Exception {
 
         int rc;
         try {
@@ -60,15 +58,21 @@ public class ModRdnHandler {
             log.debug(" - DN: " + dn);
             log.debug(" - New RDN: " + newRdn);
 
-            String ndn = LDAPDN.normalize(dn);
+            Partition partition = handler.getPartitionManager().findPartition(dn);
 
-            Entry entry = handler.getFindHandler().find(session, ndn);
-            if (entry == null) return LDAPException.NO_SUCH_OBJECT;
+            if (partition == null) {
+                log.debug("Entry "+dn+" not found");
+                return LDAPException.NO_SUCH_OBJECT;
+            }
 
-            EntryMapping entryMapping = entry.getEntryMapping();
+            Collection path = handler.getFindHandler().find(session, partition, dn);
 
-            PartitionManager partitionManager = handler.getPartitionManager();
-            Partition partition = partitionManager.getPartition(entryMapping);
+            if (path == null || path.isEmpty()) {
+                log.debug("Entry "+dn+" not found");
+                return LDAPException.NO_SUCH_OBJECT;
+            }
+
+            Entry entry = (Entry)path.iterator().next();
 
             rc = performModRdn(session, partition, entry, newRdn);
             if (rc != LDAPException.SUCCESS) return rc;
@@ -112,14 +116,14 @@ public class ModRdnHandler {
         }
 
         return rc;
-	}
+    }
 
     public int performModRdn(
             PenroseSession session,
             Partition partition,
             Entry entry,
             String newRdn)
-			throws Exception {
+            throws Exception {
 
         int rc = handler.getACLEngine().checkModify(session, entry.getDn(), entry.getEntryMapping());
         if (rc != LDAPException.SUCCESS) return rc;
@@ -135,13 +139,13 @@ public class ModRdnHandler {
         } else {
             return modRdnStaticEntry(partition, entry, newRdn);
         }
-	}
+    }
 
     public int modRdnStaticEntry(
             Partition partition,
             Entry entry,
             String newRdn)
-			throws Exception {
+            throws Exception {
 
         EntryMapping entryMapping = entry.getEntryMapping();
         partition.renameEntryMapping(entryMapping, newRdn);

@@ -22,6 +22,7 @@ import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.util.PasswordUtil;
 import org.safehaus.penrose.util.Formatter;
 import org.safehaus.penrose.util.ExceptionUtil;
+import org.safehaus.penrose.util.EntryUtil;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.PartitionManager;
 import org.safehaus.penrose.engine.Engine;
@@ -56,17 +57,16 @@ public class BindHandler {
             log.debug(Formatter.displayLine(" - Password : "+password, 80));
             log.debug(Formatter.displaySeparator(80));
 
-            String ndn = LDAPDN.normalize(dn);
             String rootDn = handler.getPenroseConfig().getRootDn();
 
-            if (rootDn != null && ndn != null && ndn.equals(LDAPDN.normalize(rootDn))) { // bind as root
+            if (rootDn != null && dn != null && EntryUtil.match(dn, rootDn)) { // bind as root
 
                 rc = bindAsRoot(password);
                 if (rc != LDAPException.SUCCESS) return rc;
 
             } else {
 
-                rc = bindAsUser(session, ndn, password);
+                rc = bindAsUser(session, dn, password);
                 if (rc != LDAPException.SUCCESS) return rc;
             }
 

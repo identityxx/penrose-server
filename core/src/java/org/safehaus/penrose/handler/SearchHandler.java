@@ -31,7 +31,6 @@ import org.safehaus.penrose.util.ExceptionUtil;
 import org.safehaus.penrose.schema.SchemaManager;
 import org.safehaus.penrose.schema.AttributeType;
 import org.safehaus.penrose.partition.Partition;
-import org.safehaus.penrose.partition.PartitionManager;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.filter.FilterTool;
 import org.safehaus.penrose.mapping.*;
@@ -217,41 +216,33 @@ public class SearchHandler {
             return searchRootDSE(session, baseDn, filter, sc, results);
         }
 
-        PartitionManager partitionManager = handler.getPartitionManager();
-        Partition partition = null;
-        EntryMapping entryMapping = null;
-
-        for (Iterator i=partitionManager.getPartitions().iterator(); i.hasNext(); ) {
-            Partition p = (Partition)i.next();
-            entryMapping = p.findEntryMapping(normalizedBaseDn);
-
-            if (entryMapping == null) continue;
-
-            partition = p;
-            break;
-        }
+        Partition partition = handler.getPartitionManager().findPartition(baseDn);
 
         if (partition == null) {
-            log.debug("Entry \""+normalizedBaseDn +"\" not found.");
-
-            log.debug("Can't find base entry "+normalizedBaseDn);
+            log.debug("Entry \""+baseDn +"\" not found.");
             results.setReturnCode(LDAPException.NO_SUCH_OBJECT);
             return LDAPException.NO_SUCH_OBJECT;
         }
 
+        EntryMapping entryMapping = partition.findEntryMapping(baseDn);
+
         log.debug("Found entry mapping \""+entryMapping.getDn()+"\".");
 
-		Collection path = handler.getFindHandler().findPath(session, partition, normalizedBaseDn);
+		Collection path = handler.getFindHandler().find(session, partition, normalizedBaseDn);
 
         if (path == null || path.isEmpty()) {
-            log.debug("Entry \""+normalizedBaseDn +"\" not found.");
-
             log.debug("Can't find base entry "+normalizedBaseDn);
             results.setReturnCode(LDAPException.NO_SUCH_OBJECT);
             return LDAPException.NO_SUCH_OBJECT;
         }
 
         Entry baseEntry = (Entry)path.iterator().next();
+
+        if (baseEntry == null) {
+            log.debug("Can't find base entry "+normalizedBaseDn);
+            results.setReturnCode(LDAPException.NO_SUCH_OBJECT);
+            return LDAPException.NO_SUCH_OBJECT;
+        }
 
         log.debug("Found base entry: " + baseEntry.getDn());
 

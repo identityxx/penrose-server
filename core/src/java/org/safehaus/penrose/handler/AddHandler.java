@@ -21,7 +21,6 @@ import org.safehaus.penrose.session.PenroseSession;
 import org.safehaus.penrose.session.PenroseSearchResults;
 import org.safehaus.penrose.session.PenroseSearchControls;
 import org.safehaus.penrose.partition.Partition;
-import org.safehaus.penrose.partition.PartitionManager;
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.util.EntryUtil;
 import org.safehaus.penrose.util.ExceptionUtil;
@@ -107,15 +106,23 @@ public class AddHandler {
             Attributes attributes)
     throws Exception {
 
-        dn = LDAPDN.normalize(dn);
-
-        // find parent entry
         String parentDn = EntryUtil.getParentDn(dn);
-        Entry parent = getHandler().getFindHandler().find(session, parentDn);
-        if (parent == null) {
+
+        Partition partition = handler.getPartitionManager().findPartition(dn);
+
+        if (partition == null) {
             log.debug("Parent entry "+parentDn+" not found");
             return LDAPException.NO_SUCH_OBJECT;
         }
+
+        Collection path = handler.getFindHandler().find(session, partition, parentDn);
+
+        if (path == null || path.isEmpty()) {
+            log.debug("Parent entry "+parentDn+" not found");
+            return LDAPException.NO_SUCH_OBJECT;
+        }
+
+        Entry parent = (Entry)path.iterator().next();
 
         int rc = handler.getACLEngine().checkAdd(session, parentDn, parent.getEntryMapping());
         if (rc != LDAPException.SUCCESS) {
@@ -126,8 +133,6 @@ public class AddHandler {
         log.debug("Adding entry under "+parentDn);
 
         EntryMapping parentMapping = parent.getEntryMapping();
-        PartitionManager partitionManager = handler.getPartitionManager();
-        Partition partition = partitionManager.getPartition(parentMapping);
 
         if (partition.isProxy(parentMapping)) {
             return handler.getEngine("PROXY").add(session, partition, parent, parentMapping, dn, attributes);

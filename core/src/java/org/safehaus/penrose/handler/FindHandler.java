@@ -17,14 +17,9 @@
  */
 package org.safehaus.penrose.handler;
 
-import org.safehaus.penrose.session.PenroseSearchResults;
 import org.safehaus.penrose.session.PenroseSession;
-import org.safehaus.penrose.session.PenroseSearchControls;
-import org.safehaus.penrose.util.Formatter;
 import org.safehaus.penrose.util.EntryUtil;
 import org.safehaus.penrose.partition.Partition;
-import org.safehaus.penrose.filter.Filter;
-import org.safehaus.penrose.filter.FilterTool;
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.engine.Engine;
 import org.ietf.ldap.*;
@@ -59,7 +54,7 @@ public class FindHandler {
         Partition partition = handler.getPartitionManager().findPartition(dn);
         if (partition == null) return null;
 
-        Collection path = findPath(session, partition, dn);
+        Collection path = find(session, partition, dn);
         if (path.size() == 0) return null;
 
         return (Entry)path.iterator().next();
@@ -68,17 +63,10 @@ public class FindHandler {
     /**
      * @return path (List of Entries).
      */
-    public Collection findPath(
+    public Collection find(
             PenroseSession session,
             Partition partition,
             String dn) throws Exception {
-
-        if (log.isDebugEnabled()) {
-            log.debug(Formatter.displaySeparator(80));
-            log.debug(Formatter.displayLine("FIND", 80));
-            log.debug(Formatter.displayLine("Entry: "+dn, 80));
-            log.debug(Formatter.displaySeparator(80));
-        }
 
         List path = new ArrayList();
         String entryDn = null;
@@ -88,24 +76,9 @@ public class FindHandler {
             entryDn = EntryUtil.append(suffix, entryDn);
 
             Entry entry = find(session, partition, path, entryDn);
-            if (entry != null) path.add(0, entry);
+            path.add(0, entry);
 
             dn = EntryUtil.getPrefix(dn);
-        }
-
-        if (log.isDebugEnabled()) {
-            log.debug(Formatter.displaySeparator(80));
-            log.debug(Formatter.displayLine("FIND RESULT", 80));
-
-            log.debug(Formatter.displayLine("Path:", 80));
-            if (path != null) {
-                for (Iterator i=path.iterator(); i.hasNext(); ) {
-                    Entry e = (Entry)i.next();
-                    log.debug(Formatter.displayLine(" - "+e.getDn(), 80));
-                }
-            }
-
-            log.debug(Formatter.displaySeparator(80));
         }
 
         return path;
@@ -136,37 +109,14 @@ public class FindHandler {
                 throw new LDAPException("Insufficient access rights", LDAPException.INSUFFICIENT_ACCESS_RIGHTS, "Insufficient access rights");
             }
 
-            PenroseSearchResults results = new PenroseSearchResults();
-
-            PenroseSearchControls sc = new PenroseSearchControls();
-            sc.setScope(PenroseSearchControls.SCOPE_BASE);
-
-            Row rdn = EntryUtil.getRdn(dn);
-            Filter filter = FilterTool.createFilter(rdn);
-
             Engine engine = handler.getEngine();
 
             if (partition.isProxy(entryMapping)) {
                 engine = handler.getEngine("PROXY");
             }
 
-            engine.expand(
-                    session,
-                    partition,
-                    parentPath,
-                    parentSourceValues,
-                    entryMapping,
-                    dn,
-                    filter,
-                    sc,
-                    results
-            );
-
-            results.close();
-
-            if (!results.hasNext()) continue;
-
-            return (Entry)results.next();
+            Entry entry = engine.find(session, partition, parentPath, parentSourceValues, entryMapping, dn);
+            if (entry != null) return entry;
         }
 
         log.debug("Can't find \""+dn+"\".");

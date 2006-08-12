@@ -48,7 +48,6 @@ public class LoadGraphVisitor extends GraphVisitor {
 
     private Stack stack = new Stack();
 
-    private Collection results = new ArrayList();
     private AttributeValues loadedSourceValues = new AttributeValues();
 
     public LoadGraphVisitor(
@@ -56,7 +55,9 @@ public class LoadGraphVisitor extends GraphVisitor {
             Partition partition,
             EntryMapping entryMapping,
             AttributeValues sourceValues,
-            Filter filter) throws Exception {
+            Collection primaryKeys,
+            Filter filter
+    ) throws Exception {
 
         this.engine = engine;
         this.partition = partition;
@@ -66,7 +67,10 @@ public class LoadGraphVisitor extends GraphVisitor {
         graph = engine.getGraph(entryMapping);
         primarySourceMapping = engine.getPrimarySource(entryMapping);
 
+        filter = engine.getEngineFilterTool().toSourceFilter(partition, sourceValues, entryMapping, primarySourceMapping, filter);
+
         Map map = new HashMap();
+        map.put("primaryKeys", primaryKeys);
         map.put("filter", filter);
 
         stack.push(map);
@@ -91,9 +95,11 @@ public class LoadGraphVisitor extends GraphVisitor {
         }
 */
         Map map = (Map)stack.peek();
+        Collection primaryKeys = (Collection)map.get("primaryKeys");
         Filter filter = (Filter)map.get("filter");
         Collection relationships = (Collection)map.get("relationships");
 
+        log.debug("Primary Keys: "+primaryKeys);
         log.debug("Filter: "+filter);
         log.debug("Relationships: "+relationships);
 
@@ -114,7 +120,7 @@ public class LoadGraphVisitor extends GraphVisitor {
         SourceConfig sourceConfig = partition.getSourceConfig(sourceMapping.getSourceName());
 
         PenroseSearchResults tmp = new PenroseSearchResults();
-        engine.getConnector(sourceConfig).search(partition, sourceConfig, filter, tmp);
+        engine.getConnector(sourceConfig).search(partition, sourceConfig, primaryKeys, filter, tmp);
 
         Collection list = new ArrayList();
         for (Iterator i=tmp.iterator(); i.hasNext(); ) {
@@ -134,11 +140,12 @@ public class LoadGraphVisitor extends GraphVisitor {
 
     public void visitEdge(GraphIterator graphIterator, Object node1, Object node2, Object object) throws Exception {
 
-        //SourceMapping fromSourceMapping = (SourceMapping)node1;
+        SourceMapping fromSourceMapping = (SourceMapping)node1;
         SourceMapping toSourceMapping = (SourceMapping)node2;
         Collection relationships = (Collection)object;
 
         log.debug(Formatter.displaySeparator(60));
+        log.debug(Formatter.displayLine(fromSourceMapping.getName()+"-"+toSourceMapping.getName()+" relationship:", 60));
         for (Iterator i=relationships.iterator(); i.hasNext(); ) {
             Relationship relationship = (Relationship)i.next();
             log.debug(Formatter.displayLine(relationship.toString(), 60));
@@ -150,20 +157,20 @@ public class LoadGraphVisitor extends GraphVisitor {
             return;
         }
 
-/*
         Filter filter = null;
 
-        log.debug("Generating filters:");
-        for (Iterator i=results.iterator(); i.hasNext(); ) {
-            AttributeValues av = (AttributeValues)i.next();
+        Collection list = loadedSourceValues.get(fromSourceMapping.getName());
+        if (list != null) {
+            log.debug("Generating filters:");
+            for (Iterator i=list.iterator(); i.hasNext(); ) {
+                AttributeValues av = (AttributeValues)i.next();
 
-            Filter f = engine.generateFilter(toSource, relationships, av);
-            log.debug(" - "+f);
+                Filter f = engine.generateFilter(toSourceMapping, relationships, av);
+                log.debug(" - "+f);
 
-            filter = engineContext.getFilterTool().appendOrFilter(filter, f);
+                filter = engine.getFilterTool().appendOrFilter(filter, f);
+            }
         }
-*/
-        Filter filter = engine.generateFilter(toSourceMapping, relationships, sourceValues);
 
         Map map = new HashMap();
         map.put("filter", filter);
@@ -174,10 +181,6 @@ public class LoadGraphVisitor extends GraphVisitor {
         graphIterator.traverse(node2);
 
         stack.pop();
-    }
-
-    public Collection getResults() {
-        return results;
     }
 
     public AttributeValues getLoadedSourceValues() {

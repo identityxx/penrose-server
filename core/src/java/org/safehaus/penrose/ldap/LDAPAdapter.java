@@ -61,7 +61,7 @@ public class LDAPAdapter extends Adapter {
 
         if (log.isDebugEnabled()) {
             log.debug(Formatter.displaySeparator(80));
-            log.debug(Formatter.displayLine("LDAP Bind", 80));
+            log.debug(Formatter.displayLine("Bind", 80));
             log.debug(Formatter.displayLine(" - Bind DN : "+dn, 80));
             log.debug(Formatter.displayLine(" - Password: "+password, 80));
             log.debug(Formatter.displaySeparator(80));
@@ -102,7 +102,7 @@ public class LDAPAdapter extends Adapter {
 
         if (log.isDebugEnabled()) {
             log.debug(Formatter.displaySeparator(80));
-            log.debug(Formatter.displayLine("LDAP Search "+sourceConfig.getConnectionName()+"/"+sourceConfig.getName(), 80));
+            log.debug(Formatter.displayLine("Search "+sourceConfig.getConnectionName()+"/"+sourceConfig.getName(), 80));
             log.debug(Formatter.displayLine(" - Base DN: "+ldapBase, 80));
             log.debug(Formatter.displayLine(" - Scope: "+ldapScope, 80));
             log.debug(Formatter.displayLine(" - Filter: "+ldapFilter, 80));
@@ -131,7 +131,8 @@ public class LDAPAdapter extends Adapter {
 
             while (ne.hasMore()) {
                 javax.naming.directory.SearchResult sr = (javax.naming.directory.SearchResult)ne.next();
-                log.debug(" - "+sr.getName()+","+ldapBase);
+                String dn = EntryUtil.append(sr.getName(), ldapBase);
+                log.debug(" - "+dn);
 
                 Row row = getPkValues(sourceConfig, sr);
                 results.add(row);
@@ -147,23 +148,35 @@ public class LDAPAdapter extends Adapter {
         }
     }
 
-    public void load(SourceConfig sourceConfig, Filter filter, PenroseSearchControls sc, PenroseSearchResults results) throws Exception {
+    public void load(
+            SourceConfig sourceConfig,
+            Collection primaryKeys,
+            Filter filter,
+            PenroseSearchControls sc,
+            PenroseSearchResults results
+    ) throws Exception {
 
         String ldapBase = sourceConfig.getParameter(BASE_DN);
-        ldapBase = EntryUtil.append(ldapBase, client.getSuffix());
-
         String ldapScope = sourceConfig.getParameter(SCOPE);
         String ldapFilter = sourceConfig.getParameter(FILTER);
 
+        ldapBase = EntryUtil.append(ldapBase, client.getSuffix());
         if (filter != null) {
             ldapFilter = "(&"+ldapFilter+filter+")";
         }
 
+        if (primaryKeys != null && primaryKeys.size() == 1) {
+            Row pk = (Row)primaryKeys.iterator().next();
+            ldapBase = EntryUtil.append(pk.toString(), ldapBase);
+            ldapScope = "OBJECT";
+        }
+
         if (log.isDebugEnabled()) {
             log.debug(Formatter.displaySeparator(80));
-            log.debug(Formatter.displayLine("LDAP Search "+sourceConfig.getConnectionName()+"/"+sourceConfig.getName(), 80));
+            log.debug(Formatter.displayLine("Load "+sourceConfig.getConnectionName()+"/"+sourceConfig.getName(), 80));
             log.debug(Formatter.displayLine(" - Base DN: "+ldapBase, 80));
             log.debug(Formatter.displayLine(" - Scope: "+ldapScope, 80));
+            log.debug(Formatter.displayLine(" - Primary Keys: "+primaryKeys, 80));
             log.debug(Formatter.displayLine(" - Filter: "+ldapFilter, 80));
             log.debug(Formatter.displaySeparator(80));
         }
@@ -189,7 +202,8 @@ public class LDAPAdapter extends Adapter {
 
             while (ne.hasMore()) {
                 javax.naming.directory.SearchResult sr = (javax.naming.directory.SearchResult)ne.next();
-                log.debug(" - "+sr.getName()+","+ldapBase);
+                String dn = EntryUtil.append(sr.getName(), ldapBase);
+                log.debug(" - "+dn);
 
                 AttributeValues av = getValues(sourceConfig, sr);
                 results.add(av);
@@ -254,7 +268,7 @@ public class LDAPAdapter extends Adapter {
 
         if (log.isDebugEnabled()) {
             log.debug(Formatter.displaySeparator(80));
-            log.debug(Formatter.displayLine("LDAP Add "+sourceConfig.getConnectionName()+"/"+sourceConfig.getName(), 80));
+            log.debug(Formatter.displayLine("Add "+sourceConfig.getConnectionName()+"/"+sourceConfig.getName(), 80));
             log.debug(Formatter.displayLine(" - DN: "+dn, 80));
             log.debug(Formatter.displaySeparator(80));
         }
@@ -311,7 +325,7 @@ public class LDAPAdapter extends Adapter {
 
     public int modifyDelete(SourceConfig sourceConfig, AttributeValues entry) throws Exception {
 
-        log.debug("LDAP Modify Delete:");
+        log.debug("Modify Delete:");
 
         String dn = getDn(sourceConfig, entry);
         log.debug("Deleting attributes in "+dn);
@@ -367,7 +381,7 @@ public class LDAPAdapter extends Adapter {
 
         if (log.isDebugEnabled()) {
             log.debug(Formatter.displaySeparator(80));
-            log.debug(Formatter.displayLine("LDAP Delete "+sourceConfig.getConnectionName()+"/"+sourceConfig.getName(), 80));
+            log.debug(Formatter.displayLine("Delete "+sourceConfig.getConnectionName()+"/"+sourceConfig.getName(), 80));
             log.debug(Formatter.displayLine(" - DN: "+dn, 80));
             log.debug(Formatter.displaySeparator(80));
         }
@@ -397,7 +411,7 @@ public class LDAPAdapter extends Adapter {
 
         if (log.isDebugEnabled()) {
             log.debug(Formatter.displaySeparator(80));
-            log.debug(Formatter.displayLine("LDAP Modify "+sourceConfig.getConnectionName()+"/"+sourceConfig.getName(), 80));
+            log.debug(Formatter.displayLine("Modify "+sourceConfig.getConnectionName()+"/"+sourceConfig.getName(), 80));
             log.debug(Formatter.displayLine(" - DN: "+dn, 80));
             log.debug(Formatter.displaySeparator(80));
         }
@@ -568,7 +582,7 @@ public class LDAPAdapter extends Adapter {
 
         if (log.isDebugEnabled()) {
             log.debug(Formatter.displaySeparator(80));
-            log.debug(Formatter.displayLine("LDAP ModRDN "+sourceConfig.getConnectionName()+"/"+sourceConfig.getName(), 80));
+            log.debug(Formatter.displayLine("ModRDN "+sourceConfig.getConnectionName()+"/"+sourceConfig.getName(), 80));
             log.debug(Formatter.displayLine(" - DN: "+dn, 80));
             log.debug(Formatter.displayLine(" - New RDN: "+newRdn, 80));
             log.debug(Formatter.displaySeparator(80));
@@ -591,7 +605,7 @@ public class LDAPAdapter extends Adapter {
     }
 
     public int modifyAdd(SourceConfig sourceConfig, AttributeValues entry) throws Exception {
-        log.debug("LDAP Modify Add:");
+        log.debug("Modify Add:");
 
         String dn = getDn(sourceConfig, entry);
         log.debug("Replacing attributes "+dn);
@@ -692,7 +706,7 @@ public class LDAPAdapter extends Adapter {
 
         if (log.isDebugEnabled()) {
             log.debug(Formatter.displaySeparator(80));
-            log.debug(Formatter.displayLine("LDAP Search "+sourceConfig.getConnectionName()+"/"+sourceConfig.getName(), 80));
+            log.debug(Formatter.displayLine("Search "+sourceConfig.getConnectionName()+"/"+sourceConfig.getName(), 80));
             log.debug(Formatter.displayLine(" - Base DN: "+ldapBase, 80));
             log.debug(Formatter.displayLine(" - Filter: "+ldapFilter, 80));
             log.debug(Formatter.displaySeparator(80));

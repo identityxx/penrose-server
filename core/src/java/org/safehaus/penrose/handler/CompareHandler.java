@@ -24,6 +24,7 @@ import org.safehaus.penrose.mapping.Entry;
 import org.safehaus.penrose.mapping.AttributeValues;
 import org.safehaus.penrose.util.BinaryUtil;
 import org.safehaus.penrose.util.ExceptionUtil;
+import org.safehaus.penrose.partition.Partition;
 import org.ietf.ldap.*;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
@@ -43,8 +44,12 @@ public class CompareHandler {
         this.handler = handler;
     }
     
-    public int compare(PenroseSession session, String dn, String attributeName,
-            Object attributeValue) throws Exception {
+    public int compare(
+            PenroseSession session,
+            String dn,
+            String attributeName,
+            Object attributeValue
+    ) throws Exception {
 
         int rc;
         try {
@@ -66,7 +71,21 @@ public class CompareHandler {
             List attributeNames = new ArrayList();
             attributeNames.add(attributeName);
 
-            Entry entry = handler.getFindHandler().find(session, dn);
+            Partition partition = handler.getPartitionManager().findPartition(dn);
+
+            if (partition == null) {
+                log.debug("Entry "+dn+" not found");
+                return LDAPException.NO_SUCH_OBJECT;
+            }
+
+            Collection path = handler.getFindHandler().find(session, partition, dn);
+
+            if (path == null || path.isEmpty()) {
+                log.debug("Entry "+dn+" not found");
+                return LDAPException.NO_SUCH_OBJECT;
+            }
+
+            Entry entry = (Entry)path.iterator().next();
 
             AttributeValues attributeValues = entry.getAttributeValues();
             Collection values = attributeValues.get(attributeName);

@@ -209,20 +209,16 @@ public class LoadEngine {
             while (batches.hasNext()) {
                 Collection entries = (Collection)batches.next();
 
-                log.debug(Formatter.displaySeparator(80));
-                log.debug(Formatter.displayLine("LOAD", 80));
-                log.debug(Formatter.displayLine("Entry: "+entryMapping.getDn(), 80));
-
                 AttributeValues sourceValues = new AttributeValues();
                 for (Iterator i=entries.iterator(); i.hasNext(); ) {
-                    EntryData map = (EntryData)i.next();
-                    String dn = map.getDn();
-                    AttributeValues sv = map.getMergedValues();
-                    Collection rows = map.getRows();
-                    Row filter = map.getFilter();
+                    EntryData data = (EntryData)i.next();
+                    String dn = data.getDn();
+                    AttributeValues sv = data.getMergedValues();
+                    Collection rows = data.getRows();
+                    Row filter = data.getFilter();
 
-                    log.debug(Formatter.displayLine(" - "+dn, 80));
-                    log.debug(Formatter.displayLine("   filter: "+filter, 80));
+                    //log.debug(Formatter.displayLine(" - "+dn, 80));
+                    //log.debug(Formatter.displayLine("   filter: "+filter, 80));
 
                     if (sv == null) continue;
 
@@ -231,48 +227,27 @@ public class LoadEngine {
                     for (Iterator j=sv.getNames().iterator(); j.hasNext(); ) {
                         String name = (String)j.next();
                         Collection values = sv.get(name);
-                        log.debug(Formatter.displayLine("   - "+name+": "+values, 80));
+                        //log.debug(Formatter.displayLine("   - "+name+": "+values, 80));
                     }
 
-                    log.debug(Formatter.displayLine("   rows:", 80));
+                    //log.debug(Formatter.displayLine("   rows:", 80));
                     if (rows != null) {
                         int counter = 0;
                         for (Iterator j=rows.iterator(); j.hasNext() && counter <= 20; counter++) {
                             AttributeValues row = (AttributeValues)j.next();
-                            log.debug(Formatter.displayLine("   - "+row, 80));
+                            //log.debug(Formatter.displayLine("   - "+row, 80));
                         }
                     }
                 }
 
                 log.debug(Formatter.displaySeparator(80));
 
-                AttributeValues loadedSourceValues = loadEntries(partition, sourceValues, entryMapping, entries);
-
-                if (log.isDebugEnabled()) {
-                    log.debug(Formatter.displaySeparator(80));
-                    log.debug(Formatter.displayLine("LOAD RESULT", 80));
-
-                    for (Iterator i=loadedSourceValues.getNames().iterator(); i.hasNext(); ) {
-                        String sourceName = (String)i.next();
-                        log.debug(Formatter.displayLine(" - "+sourceName+":", 80));
-                        Collection avs = loadedSourceValues.get(sourceName);
-                        for (Iterator j=avs.iterator(); j.hasNext(); ) {
-                            AttributeValues av = (AttributeValues)j.next();
-                            for (Iterator k=av.getNames().iterator(); k.hasNext(); ) {
-                                String name = (String)k.next();
-                                Collection values = av.get(name);
-                                log.debug(Formatter.displayLine("   - "+name+": "+values, 80));
-                            }
-                        }
-                    }
-
-                    log.debug(Formatter.displaySeparator(80));
-                }
+                AttributeValues sv = loadEntries(partition, sourceValues, entryMapping, entries);
 
                 for (Iterator i=entries.iterator(); i.hasNext(); ) {
                     EntryData map = (EntryData)i.next();
 
-                    map.setLoadedSourceValues(loadedSourceValues);
+                    map.setLoadedSourceValues(sv);
 
                     loadedBatches.add(map);
                 }
@@ -287,17 +262,32 @@ public class LoadEngine {
 
     public AttributeValues loadEntries(
             Partition partition,
-            AttributeValues sourceValues,
+            AttributeValues parentSourceValues,
             EntryMapping entryMapping,
-            Collection maps)
+            Collection list)
             throws Exception {
+
+        if (log.isDebugEnabled()) {
+            log.debug(Formatter.displaySeparator(80));
+            log.debug(Formatter.displayLine("LOAD", 80));
+            log.debug(Formatter.displayLine("Entry: "+entryMapping.getDn(), 80));
+
+            log.debug(Formatter.displayLine("Primary Keys:", 80));
+            for (Iterator i=list.iterator(); i.hasNext(); ) {
+                EntryData data = (EntryData)i.next();
+                Row pk = data.getFilter();
+                log.debug(Formatter.displayLine(" - "+pk, 80));
+            }
+
+            log.debug(Formatter.displaySeparator(80));
+        }
 
         SourceMapping primarySourceMapping = engine.getPrimarySource(entryMapping);
         log.debug("Primary source: "+(primarySourceMapping == null ? null : primarySourceMapping.getName()));
 
         if (primarySourceMapping == null) {
             Collection sourceNames = new TreeSet();
-            for (Iterator i=sourceValues.getNames().iterator(); i.hasNext(); ) {
+            for (Iterator i=parentSourceValues.getNames().iterator(); i.hasNext(); ) {
                 String name = (String)i.next();
                 int index = name.indexOf(".");
                 String sourceName = name.substring(0, index);
@@ -310,7 +300,7 @@ public class LoadEngine {
                 String sourceName = (String)i.next();
                 if ("parent".equals(sourceName)) continue;
 
-                AttributeValues sv = new AttributeValues(sourceValues);
+                AttributeValues sv = new AttributeValues(parentSourceValues);
                 sv.retain(sourceName);
 
                 newSourceValues.add(sv);
@@ -320,27 +310,46 @@ public class LoadEngine {
         }
 
         Collection pks = new TreeSet();
-        for (Iterator i=maps.iterator(); i.hasNext(); ) {
-            EntryData m = (EntryData)i.next();
-            //String dn = (String)m.get("dn");
-            //AttributeValues sv = (AttributeValues)m.get("sourceValues");
-            Row pk = m.getFilter();
+        for (Iterator i=list.iterator(); i.hasNext(); ) {
+            EntryData data = (EntryData)i.next();
+            Row pk = data.getFilter();
             pks.add(pk);
         }
 
         Filter filter  = FilterTool.createFilter(pks, true);
 
-        Map map = new HashMap();
-        map.put("attributeValues", sourceValues);
-        map.put("filter", filter);
+        LoadGraphVisitor loadVisitor = new LoadGraphVisitor(
+                engine,
+                partition,
+                entryMapping,
+                parentSourceValues,
+                pks,
+                filter
+        );
 
-        Collection filters = new ArrayList();
-        filters.add(map);
-
-        LoadGraphVisitor loadVisitor = new LoadGraphVisitor(engine, partition, entryMapping, sourceValues, filter);
         loadVisitor.run();
 
-        return loadVisitor.getLoadedSourceValues();
+        AttributeValues allSourceValues = loadVisitor.getLoadedSourceValues();
+
+        if (log.isDebugEnabled()) {
+            log.debug(Formatter.displaySeparator(80));
+            log.debug(Formatter.displayLine("LOAD RESULT", 80));
+
+            for (Iterator i=allSourceValues.getNames().iterator(); i.hasNext(); ) {
+                String sourceName = (String)i.next();
+                log.debug(Formatter.displayLine("Source "+sourceName+":", 80));
+
+                Collection rows = allSourceValues.get(sourceName);
+                for (Iterator j=rows.iterator(); j.hasNext(); ) {
+                    AttributeValues row = (AttributeValues)j.next();
+                    log.debug(Formatter.displayLine(" - "+row, 80));
+                }
+            }
+
+            log.debug(Formatter.displaySeparator(80));
+        }
+
+        return allSourceValues;
     }
 
     public Engine getEngine() {

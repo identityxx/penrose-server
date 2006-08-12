@@ -309,14 +309,20 @@ public abstract class Engine {
         return filter;
     }
 
-    public Filter generateFilter(SourceMapping toSource, Collection relationships, AttributeValues av) throws Exception {
-        log.debug("Filters:");
-
+    public Filter generateFilter(SourceMapping toSource, Collection relationships, AttributeValues sv) throws Exception {
+/*
+        log.debug("Generating filters using source values:");
+        for (Iterator i=sv.getNames().iterator(); i.hasNext(); ) {
+            String name = (String)i.next();
+            Collection values = sv.get(name);
+            log.debug(" - "+name+": "+values);
+        }
+*/
         Filter filter = null;
 
         for (Iterator j=relationships.iterator(); j.hasNext(); ) {
             Relationship relationship = (Relationship)j.next();
-            log.debug(" - "+relationship);
+            //log.debug("Relationship "+relationship);
 
             String lhs = relationship.getLhs();
             String operator = relationship.getOperator();
@@ -338,7 +344,7 @@ public abstract class Engine {
 
             //log.debug("   converting "+rhs+" ==> ("+lname+" "+operator+" ?)");
 
-            Collection v = av.get(rhs);
+            Collection v = sv.get(rhs);
             //log.debug("   - found "+v);
             if (v == null) continue;
 
@@ -433,13 +439,15 @@ public abstract class Engine {
         //log.debug("Parents' source values:");
         for (Iterator iterator = path.iterator(); iterator.hasNext(); ) {
             Entry entry = (Entry)iterator.next();
-            EntryMapping parentMapping = entry.getEntryMapping();
+
+            prefix = prefix == null ? "parent" : "parent."+prefix;
+            if (entry == null) continue;
 
             //log.debug(" - "+dn);
 
-            prefix = prefix == null ? "parent" : "parent."+prefix;
-
+/*
             if (entry == null) {
+                EntryMapping parentMapping = entry.getEntryMapping();
                 AttributeValues av = computeAttributeValues(parentMapping, interpreter);
                 for (Iterator j=av.getNames().iterator(); j.hasNext(); ) {
                     String name = (String)j.next();
@@ -451,6 +459,7 @@ public abstract class Engine {
                 interpreter.clear();
 
             } else {
+*/
                 AttributeValues av = entry.getAttributeValues();
                 for (Iterator j=av.getNames().iterator(); j.hasNext(); ) {
                     String name = (String)j.next();
@@ -468,9 +477,7 @@ public abstract class Engine {
                     //log.debug("   - "+name+": "+values);
                     sourceValues.add(name, values);
                 }
-            }
-
-            parentMapping = partition.getParent(parentMapping);
+//            }
         }
 
         return sourceValues;
@@ -561,6 +568,17 @@ public abstract class Engine {
             PenroseSearchControls sc,
             PenroseSearchResults results
     ) throws Exception;
+
+    public Entry find(
+            PenroseSession session,
+            Partition partition,
+            Collection parentPath,
+            AttributeValues parentSourceValues,
+            EntryMapping entryMapping,
+            String dn
+    ) throws Exception {
+        return null;
+    }
 
     public abstract int expand(
             PenroseSession session, Partition partition,

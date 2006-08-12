@@ -74,10 +74,11 @@ public abstract class Adapter {
     /**
      * Load.
      *
+     * @param primaryKeys
      * @param results AttributeValues
      * @throws Exception
      */
-    public void load(SourceConfig sourceConfig, Filter filter, PenroseSearchControls sc, PenroseSearchResults results) throws Exception {
+    public void load(SourceConfig sourceConfig, Collection primaryKeys, Filter filter, PenroseSearchControls sc, PenroseSearchResults results) throws Exception {
     }
 
     /**

@@ -209,7 +209,7 @@ public class SourceCache {
         PenroseSearchControls sc = new PenroseSearchControls();
         sc.setSizeLimit(sizeLimit);
 
-        connection.load(sourceConfig, null, sc, sr);
+        connection.load(sourceConfig, null, null, sc, sr);
 
         sr.close();
     }

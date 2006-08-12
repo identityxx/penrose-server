@@ -20,13 +20,11 @@ package org.safehaus.penrose.connector;
 import org.safehaus.penrose.session.PenroseSearchResults;
 import org.safehaus.penrose.session.PenroseSearchControls;
 import org.safehaus.penrose.partition.*;
-import org.safehaus.penrose.cache.CacheConfig;
 import org.safehaus.penrose.cache.SourceCacheManager;
 import org.safehaus.penrose.engine.TransformEngine;
 import org.safehaus.penrose.config.*;
 import org.safehaus.penrose.thread.MRSWLock;
 import org.safehaus.penrose.thread.Queue;
-import org.safehaus.penrose.thread.ThreadManager;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.filter.FilterTool;
 import org.safehaus.penrose.mapping.*;
@@ -431,6 +429,7 @@ public class Connector {
     public void search(
             final Partition partition,
             final SourceConfig sourceConfig,
+            Collection primaryKeys,
             final Filter filter,
             final PenroseSearchResults results)
             throws Exception {
@@ -444,7 +443,7 @@ public class Connector {
         } else { // load full record immediately
 
             log.debug("Loading source "+sourceConfig.getName()+" with filter "+filter);
-            fullLoad(partition, sourceConfig, filter, results);
+            fullLoad(partition, sourceConfig, primaryKeys, filter, results);
         }
     }
 
@@ -486,7 +485,13 @@ public class Connector {
     /**
      * Load then store in data cache.
      */
-    public void fullLoad(Partition partition, SourceConfig sourceConfig, Filter filter, PenroseSearchResults results) throws Exception {
+    public void fullLoad(
+            Partition partition,
+            SourceConfig sourceConfig,
+            Collection primaryKeys,
+            Filter filter,
+            PenroseSearchResults results
+    ) throws Exception {
 
         Collection pks = getSourceCacheManager().search(partition, sourceConfig, filter);
 
@@ -494,7 +499,7 @@ public class Connector {
             load(partition, sourceConfig, pks, results);
 
         } else {
-            performLoad(partition, sourceConfig, filter, results);
+            performLoad(partition, sourceConfig, primaryKeys, filter, results);
             //store(sourceConfig, values);
         }
     }
@@ -562,7 +567,7 @@ public class Connector {
 
         Filter filter = FilterTool.createFilter(keys);
 
-        performLoad(partition, sourceConfig, filter, sr);
+        performLoad(partition, sourceConfig, keys, filter, sr);
 
         //Collection values = new ArrayList();
         //values.addAll(sr.getAll());
@@ -672,9 +677,10 @@ public class Connector {
     public void performLoad(
             final Partition partition,
             final SourceConfig sourceConfig,
+            Collection primaryKeys,
             final Filter filter,
             final PenroseSearchResults results
-            ) throws Exception {
+    ) throws Exception {
 
         final PenroseSearchResults sr = new PenroseSearchResults();
 
@@ -705,7 +711,7 @@ public class Connector {
             PenroseSearchControls sc = new PenroseSearchControls();
             sc.setSizeLimit(sizeLimit);
 
-            connection.load(sourceConfig, filter, sc, sr);
+            connection.load(sourceConfig, primaryKeys, filter, sc, sr);
 
         } catch (Exception e) {
             log.error(e.getMessage(), e);

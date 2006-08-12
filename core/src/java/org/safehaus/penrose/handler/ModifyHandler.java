@@ -21,7 +21,6 @@ import org.safehaus.penrose.session.PenroseSession;
 import org.safehaus.penrose.session.PenroseSearchResults;
 import org.safehaus.penrose.session.PenroseSearchControls;
 import org.safehaus.penrose.partition.Partition;
-import org.safehaus.penrose.partition.PartitionManager;
 import org.safehaus.penrose.schema.AttributeType;
 import org.safehaus.penrose.util.PasswordUtil;
 import org.safehaus.penrose.util.BinaryUtil;
@@ -88,18 +87,21 @@ public class ModifyHandler {
 
             log.debug(Formatter.displaySeparator(80));
 
-            String ndn = LDAPDN.normalize(dn);
+            Partition partition = handler.getPartitionManager().findPartition(dn);
 
-            Entry entry = handler.getFindHandler().find(session, ndn);
-            if (entry == null) {
-                log.debug("Entry "+entry.getDn()+" not found");
+            if (partition == null) {
+                log.debug("Entry "+dn+" not found");
                 return LDAPException.NO_SUCH_OBJECT;
             }
 
-            EntryMapping entryMapping = entry.getEntryMapping();
+            Collection path = handler.getFindHandler().find(session, partition, dn);
 
-            PartitionManager partitionManager = handler.getPartitionManager();
-            Partition partition = partitionManager.getPartition(entryMapping);
+            if (path == null || path.isEmpty()) {
+                log.debug("Entry "+dn+" not found");
+                return LDAPException.NO_SUCH_OBJECT;
+            }
+
+            Entry entry = (Entry)path.iterator().next();
 
             rc = performModify(session, partition, entry, modifications);
             if (rc != LDAPException.SUCCESS) return rc;

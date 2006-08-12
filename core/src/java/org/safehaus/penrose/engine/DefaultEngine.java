@@ -88,34 +88,12 @@ public class DefaultEngine extends Engine {
 
         EntryMapping entryMapping = partition.findEntryMapping(dn);
 
-        PenroseSearchResults results = new PenroseSearchResults();
+        Entry entry = find(session, partition, new ArrayList(), new AttributeValues(), entryMapping, dn);
 
-        PenroseSearchControls sc = new PenroseSearchControls();
-        sc.setScope(PenroseSearchControls.SCOPE_BASE);
-
-        Row rdn = EntryUtil.getRdn(dn);
-        Filter filter = FilterTool.createFilter(rdn);
-
-        expand(
-                session,
-                partition,
-                new ArrayList(),
-                new AttributeValues(),
-                entryMapping,
-                dn,
-                filter,
-                sc,
-                results
-        );
-
-        results.close();
-
-        if (!results.hasNext()) {
+        if (entry == null) {
             log.debug("Entry "+dn+" not found => BIND FAILED");
             return LDAPException.INVALID_CREDENTIALS;
         }
-
-        Entry entry = (Entry)results.next();
 
         AttributeValues attributeValues = entry.getAttributeValues();
 
@@ -696,5 +674,102 @@ Mapping: cn=Managers,ou=Groups,dc=Proxy,dc=Example,dc=org
         }
     }
 
+    public Entry find(
+            PenroseSession session,
+            Partition partition,
+            Collection parentPath,
+            AttributeValues parentSourceValues,
+            EntryMapping entryMapping,
+            String dn
+    ) throws Exception {
+
+        if (log.isDebugEnabled()) {
+            log.debug(Formatter.displaySeparator(80));
+            log.debug(Formatter.displayLine("FIND", 80));
+            log.debug(Formatter.displayLine("Entry: "+dn, 80));
+            log.debug(Formatter.displayLine("Parent source values:", 80));
+
+            if (parentSourceValues != null) {
+                for (Iterator i = parentSourceValues.getNames().iterator(); i.hasNext(); ) {
+                    String name = (String)i.next();
+                    Collection values = parentSourceValues.get(name);
+                    log.debug(Formatter.displayLine(" - "+name+": "+values, 80));
+                }
+            }
+
+            log.debug(Formatter.displaySeparator(80));
+        }
+
+        Row rdn = EntryUtil.getRdn(dn);
+
+        EntryData data = new EntryData();
+        data.setDn(dn);
+        data.setFilter(rdn);
+
+        Collection list = new ArrayList();
+        list.add(data);
+
+        AttributeValues loadedSourceValues = loadEngine.loadEntries(
+                partition,
+                parentSourceValues,
+                entryMapping,
+                list
+        );
+
+        final Interpreter interpreter = getInterpreterManager().newInstance();
+
+        SourceMapping primarySourceMapping = getPrimarySource(entryMapping);
+
+        Row filter = createFilter(partition, interpreter, primarySourceMapping, entryMapping, rdn);
+
+        Entry entry = mergeEngine.mergeEntries(
+                partition,
+                dn,
+                entryMapping,
+                parentSourceValues,
+                loadedSourceValues,
+                new ArrayList(),
+                interpreter,
+                filter
+        );
+
+/*
+        PenroseSearchResults results = new PenroseSearchResults();
+
+        PenroseSearchControls sc = new PenroseSearchControls();
+        sc.setScope(PenroseSearchControls.SCOPE_BASE);
+
+        Filter filter = FilterTool.createFilter(rdn);
+
+        expand(
+                session,
+                partition,
+                parentPath,
+                parentSourceValues,
+                entryMapping,
+                dn,
+                filter,
+                sc,
+                results
+        );
+
+        results.close();
+
+        Entry entry = results.hasNext() ? (Entry)results.next() : null;
+*/
+        if (log.isDebugEnabled()) {
+            log.debug(Formatter.displaySeparator(80));
+            log.debug(Formatter.displayLine("FIND RESULT", 80));
+
+            log.debug(Formatter.displayLine("Path:", 80));
+            if (entry != null) {
+                log.debug(Formatter.displayLine(" - "+entry.getDn(), 80));
+            }
+
+            log.debug(Formatter.displaySeparator(80));
+        }
+
+        return entry;
+    }
 }
 
