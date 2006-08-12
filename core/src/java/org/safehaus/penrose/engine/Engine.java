@@ -188,19 +188,18 @@ public abstract class Engine {
 
         if (sourceValues != null) interpreter.set(sourceValues, rows);
 
-        log.debug("Attribute values:");
         Collection attributeMappings = entryMapping.getAttributeMappings();
         for (Iterator j=attributeMappings.iterator(); j.hasNext(); ) {
             AttributeMapping attributeMapping = (AttributeMapping)j.next();
 
             String name = attributeMapping.getName();
-            log.debug(" * "+name+":");
+            log.debug("Attribute "+name+":");
 
             Object value = interpreter.eval(entryMapping, attributeMapping);
             if (value == null) continue;
 
             attributeValues.add(name, value);
-            log.debug("   - "+value+" ("+value.getClass().getName()+")");
+            log.debug(" - "+value+" ("+value.getClass().getName()+")");
         }
 
         interpreter.clear();

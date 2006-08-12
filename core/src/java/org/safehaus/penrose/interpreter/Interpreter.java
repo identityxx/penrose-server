@@ -104,7 +104,7 @@ public abstract class Interpreter {
                 return null;
             }
         } catch (Exception e) {
-            throw new Exception("Error evaluating attribute "+attributeMapping.getName(), e);
+            throw new Exception("Error evaluating attribute "+attributeMapping.getName()+": "+e.getMessage(), e);
         }
     }
 

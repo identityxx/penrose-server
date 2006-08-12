@@ -245,7 +245,8 @@ public class Analyzer {
             if (fieldName.startsWith("primaryKey.")) continue;
 
             FieldConfig fieldConfig = sourceConfig.getFieldConfig(fieldName);
-
+            if (fieldConfig == null) throw new Exception("Unknown field: "+fieldName);
+            
             if (fieldConfig.isUnique()) {
                 uniqueFields.add(fieldName);
                 continue;
