@@ -243,9 +243,9 @@ public class ModifyHandler {
 
                 byte[] bytes;
                 if (value instanceof byte[]) {
-                    bytes = PasswordUtil.encrypt(encryption, (byte[])value);
+                    bytes = PasswordUtil.encrypt(encryption, null, (byte[])value);
                 } else {
-                    bytes = PasswordUtil.encrypt(encryption, value.toString());
+                    bytes = PasswordUtil.encrypt(encryption, null, value.toString());
                 }
 
                 value = BinaryUtil.encode(encoding, bytes);

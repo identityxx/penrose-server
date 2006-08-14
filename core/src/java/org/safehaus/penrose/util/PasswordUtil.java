@@ -29,6 +29,8 @@ import java.security.Security;
 import java.security.Provider;
 import java.math.BigInteger;
 
+import grid.security.MD5Crypt;
+
 
 /**
  * @author Endi S. Dewata
@@ -37,9 +39,13 @@ public class PasswordUtil {
 
     public static Logger log = LoggerFactory.getLogger(PasswordUtil.class);
 
-	protected final static boolean DEBUG = true;
+    protected final static boolean DEBUG = true;
 
     public static Provider SECURITY_PROVIDER = new BouncyCastleProvider();
+    public static String SALT_CHARACTERS =
+            "abcdefghijklmnopqrstuvwxyz"+
+            "ABCDEFGHIJKLMNOPQRSTUVWXYZ"+
+            "0123456789./";
 
     static {
         try {
@@ -61,25 +67,45 @@ public class PasswordUtil {
         }
     }
 
-    public static String encrypt(String method, String encoding, String password) throws Exception {
-        byte[] bytes = encrypt(method, password);
-        return BinaryUtil.encode(encoding, bytes);
+    public static byte[] encrypt(String method, String password) throws Exception {
+        return encrypt(method, null, password);
     }
 
-    public static byte[] encrypt(String method, String password) throws Exception {
+    public static byte[] encrypt(String method, String salt, String password) throws Exception {
         if (password == null) return null;
 
-        return encrypt(method, password.getBytes());
+        byte[] saltBytes = salt == null ? null : salt.getBytes();
+        byte[] passwordBytes = password == null ? null : password.getBytes();
+
+        return encrypt(method, saltBytes, passwordBytes);
     }
 
     public static byte[] encrypt(String method, byte[] bytes) throws Exception {
+        return encrypt(method, null, bytes);
+    }
+
+    public static byte[] encrypt(String method, byte[] salt, byte[] bytes) throws Exception {
         if (method == null) return bytes;
         if (bytes == null) return null;
+
+        if ("crypt".equalsIgnoreCase(method)) {
+            salt = salt == null ? generateSalt() : salt;
+            return MD5Crypt.crypt(new String(bytes), new String(salt)).getBytes();
+        }
 
         MessageDigest md = MessageDigest.getInstance(method);
         md.update(bytes);
 
         return md.digest();
+    }
+
+    public static byte[] generateSalt() {
+        byte[] salt = new byte[2];
+        for (int i=0; i<salt.length; i++) {
+            int r = (int)(Math.random() * salt.length);
+            salt[0] = (byte)SALT_CHARACTERS.charAt(r);
+        }
+        return salt;
     }
 
     public static byte[] encryptNTPassword(Object password) throws Exception {
@@ -183,8 +209,22 @@ public class PasswordUtil {
         log.debug("  encoding        : ["+encoding+"]");
         log.debug("  digest          : ["+storedPassword+"]");
 
-        byte[] bytes = encrypt(encryption, credential);
-        String encryptedCredential = BinaryUtil.encode(encoding, bytes);
+        String encryptedCredential;
+
+        if ("crypt".equals(encryption) && storedPassword.startsWith("$1$")) {
+            // get the salt form the stored password
+            int i = storedPassword.indexOf("$", 3);
+            String salt = storedPassword.substring(3, i);
+            log.debug("  salt            : ["+salt+"]");
+            // encrypt the new password with the same salt
+            byte[] bytes = encrypt(encryption, salt, credential);
+            // the result is already in encoded form: $1$salt$hash
+            encryptedCredential = new String(bytes);
+
+        } else {
+            byte[] bytes = encrypt(encryption, null, credential);
+            encryptedCredential = BinaryUtil.encode(encoding, bytes);
+        }
 
         //log.debug("  credential      : ["+credential+"]");
         log.debug("  enc credential  : ["+encryptedCredential+"]");
