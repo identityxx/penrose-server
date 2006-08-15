@@ -141,10 +141,13 @@
             <fileset dir="target/javadoc"/>
         </copy>
         <copy todir="target/dist/lib" includeEmptyDirs="false">
+            <fileset dir="lib" includes="*"/>
+            <fileset dir="target" includes="${module.name}-${project.version}.jar"/>
             <fileset dir="../lib" includes="*"/>
             <fileset dir="../shared/lib" includes="*"/>
             <fileset dir="../core/dist" includes="penrose-${project.version}.jar"/>
             <fileset dir="../shared/dist" includes="penrose-shared-${project.version}.jar"/>
+            <fileset dir="../back-java/target" includes="openldap-*.jar"/>
         </copy>
         <mkdir dir="target/dist/lib/ext"/>
         <copy todir="target/dist/server/lib" includeEmptyDirs="false">

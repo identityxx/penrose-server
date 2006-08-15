@@ -23,7 +23,6 @@ import java.io.File;
 import org.ietf.ldap.*;
 import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.server.PenroseServer;
-import org.safehaus.penrose.config.PenroseServerConfigReader;
 import org.safehaus.penrose.config.PenroseServerConfig;
 import org.safehaus.penrose.service.ServiceConfig;
 import org.safehaus.penrose.session.PenroseSession;
