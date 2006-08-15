@@ -128,7 +128,7 @@
         </tar>
     </target>
 
-    <target name="install" depends="dist">
+    <target name="install" depends="init">
         <property name="ln" value="/bin/ln"/>
         <mkdir dir="${prefix}/usr/sbin/openldap"/>
         <copy todir="${prefix}/usr/sbin/openldap" failonerror="false">

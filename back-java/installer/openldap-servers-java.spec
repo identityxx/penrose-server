@@ -15,6 +15,7 @@ AutoReqProv: no
 %setup -q
 
 %build
+ant -Dprefix=${rpm.prefix}$RPM_BUILD_ROOT -Dopenldap.version=${openldap.version} dist docs
 
 %install
 ant -Dprefix=${rpm.prefix}$RPM_BUILD_ROOT -Dopenldap.version=${openldap.version} install
