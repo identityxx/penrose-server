@@ -169,18 +169,18 @@ public class PenroseSession {
         return rc;
     }
 
-    public int modrdn(String dn, String newRdn) throws Exception {
+    public int modrdn(String dn, String newRdn, boolean deleteOldRdn) throws Exception {
 
         if (!isValid()) throw new Exception("Invalid session.");
 
         lastActivityDate.setTime(System.currentTimeMillis());
 
-        ModRdnEvent beforeModRdnEvent = new ModRdnEvent(this, ModRdnEvent.BEFORE_MODRDN, this, dn, newRdn);
+        ModRdnEvent beforeModRdnEvent = new ModRdnEvent(this, ModRdnEvent.BEFORE_MODRDN, this, dn, newRdn, deleteOldRdn);
         eventManager.postEvent(dn, beforeModRdnEvent);
 
-        int rc = handler.modrdn(this, dn, newRdn);
+        int rc = handler.modrdn(this, dn, newRdn, deleteOldRdn);
 
-        ModRdnEvent afterModRdnEvent = new ModRdnEvent(this, ModRdnEvent.AFTER_MODRDN, this, dn, newRdn);
+        ModRdnEvent afterModRdnEvent = new ModRdnEvent(this, ModRdnEvent.AFTER_MODRDN, this, dn, newRdn, deleteOldRdn);
         afterModRdnEvent.setReturnCode(rc);
         eventManager.postEvent(dn, afterModRdnEvent);
 

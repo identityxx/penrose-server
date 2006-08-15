@@ -196,7 +196,7 @@ public class DefaultEngine extends Engine {
         return rc;
     }
 
-    public int modrdn(Entry entry, String newRdn) throws Exception {
+    public int modrdn(Entry entry, String newRdn, boolean deleteOldRdn) throws Exception {
 
         if (log.isDebugEnabled()) {
             log.debug(Formatter.displaySeparator(80));
@@ -205,7 +205,7 @@ public class DefaultEngine extends Engine {
             log.debug(Formatter.displayLine("New RDN: "+newRdn, 80));
         }
 
-        int rc = modrdnEngine.modrdn(entry, newRdn);
+        int rc = modrdnEngine.modrdn(entry, newRdn, deleteOldRdn);
 
         return rc;
     }
@@ -424,8 +424,7 @@ public class DefaultEngine extends Engine {
             Partition partition,
             EntryMapping entryMapping,
             Entry entry,
-            String newRdn
-            ) throws Exception {
+            String newRdn, boolean deleteOldRdn) throws Exception {
 
         String dn = entry.getDn();
 

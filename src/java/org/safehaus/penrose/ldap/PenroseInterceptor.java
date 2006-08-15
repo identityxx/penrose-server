@@ -786,7 +786,7 @@ public class PenroseInterceptor extends BaseInterceptor {
 
             PenroseSession session = getSession();
 
-            int rc = session.modrdn(dn.toString(), newDn);
+            int rc = session.modrdn(dn.toString(), newDn, deleteOldDn);
 
             if (rc != LDAPException.SUCCESS) {
                 ExceptionUtil.throwNamingException(rc);

@@ -453,7 +453,7 @@ public abstract class Engine {
             EntryMapping entryMapping,
             String dn,
             String password
-            ) throws Exception;
+    ) throws Exception;
 
     public abstract int addProxy(
             PenroseSession session,
@@ -461,7 +461,7 @@ public abstract class Engine {
             EntryMapping entryMapping,
             String dn,
             Attributes attributes
-            ) throws Exception;
+    ) throws Exception;
 
     public abstract int modifyProxy(
             PenroseSession session,
@@ -469,22 +469,23 @@ public abstract class Engine {
             EntryMapping entryMapping,
             Entry entry,
             Collection modifications
-            ) throws Exception;
+    ) throws Exception;
 
     public abstract int modrdnProxy(
             PenroseSession session,
             Partition partition,
             EntryMapping entryMapping,
             Entry entry,
-            String newRdn
-            ) throws Exception;
+            String newRdn,
+            boolean deleteOldRdn
+    ) throws Exception;
 
     public abstract int deleteProxy(
             PenroseSession session,
             Partition partition,
             EntryMapping entryMapping,
             String dn
-            ) throws Exception;
+    ) throws Exception;
 
     public void load(
             EntryMapping entryMapping,
@@ -589,7 +590,7 @@ public abstract class Engine {
 
     public abstract int delete(Entry entry) throws Exception;
 
-    public abstract int modrdn(Entry entry, String newRdn) throws Exception;
+    public abstract int modrdn(Entry entry, String newRdn, boolean deleteOldRdn) throws Exception;
 
     public abstract int modify(Entry entry, AttributeValues newValues) throws Exception;
 

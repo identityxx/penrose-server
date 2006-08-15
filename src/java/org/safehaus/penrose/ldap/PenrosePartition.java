@@ -386,7 +386,7 @@ public class PenrosePartition extends AbstractDirectoryPartition {
             PenroseSession session = penrose.newSession();
             if (session == null) throw new ServiceUnavailableException();
 
-            int rc = session.modrdn(dn.toString(), newRn);
+            int rc = session.modrdn(dn.toString(), newRn, deleteOldRn);
 
             session.close();
 

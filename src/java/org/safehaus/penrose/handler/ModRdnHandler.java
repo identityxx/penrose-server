@@ -46,8 +46,12 @@ public class ModRdnHandler {
         this.handler = handler;
 	}
 
-	public int modrdn(PenroseSession session, String dn, String newRdn)
-			throws Exception {
+	public int modrdn(
+            PenroseSession session,
+            String dn,
+            String newRdn,
+            boolean deleteOldRdn
+    ) throws Exception {
 
         int rc;
         try {
@@ -75,7 +79,7 @@ public class ModRdnHandler {
             Entry entry = handler.getFindHandler().find(session, ndn);
             if (entry == null) return LDAPException.NO_SUCH_OBJECT;
 
-            rc = performModRdn(session, entry, newRdn);
+            rc = performModRdn(session, entry, newRdn, deleteOldRdn);
             if (rc != LDAPException.SUCCESS) return rc;
 
             // refreshing entry cache
@@ -122,8 +126,9 @@ public class ModRdnHandler {
     public int performModRdn(
             PenroseSession session,
             Entry entry,
-            String newRdn)
-			throws Exception {
+            String newRdn,
+            boolean deleteOldRdn
+    ) throws Exception {
 
         int rc = handler.getACLEngine().checkModify(session, entry.getDn(), entry.getEntryMapping());
         if (rc != LDAPException.SUCCESS) return rc;
@@ -134,21 +139,22 @@ public class ModRdnHandler {
 
         if (partition.isProxy(entryMapping)) {
             log.debug("Renaming "+entry.getDn()+" via proxy");
-            return handler.getEngine().modrdnProxy(session, partition, entryMapping, entry, newRdn);
+            return handler.getEngine().modrdnProxy(session, partition, entryMapping, entry, newRdn, deleteOldRdn);
         }
 
         if (partition.isDynamic(entryMapping)) {
-            return modRdnVirtualEntry(session, entry, newRdn);
+            return modRdnVirtualEntry(session, entry, newRdn, deleteOldRdn);
 
         } else {
-            return modRdnStaticEntry(entryMapping, newRdn);
+            return modRdnStaticEntry(entryMapping, newRdn, deleteOldRdn);
         }
 	}
 
     public int modRdnStaticEntry(
             EntryMapping entry,
-            String newRdn)
-			throws Exception {
+            String newRdn,
+            boolean deleteOldRdn
+    ) throws Exception {
 
         Partition partition = handler.getPartitionManager().getPartitionByDn(entry.getDn());
         partition.renameEntryMapping(entry, newRdn);
@@ -159,9 +165,10 @@ public class ModRdnHandler {
     public int modRdnVirtualEntry(
             PenroseSession session,
             Entry entry,
-			String newRdn)
-            throws Exception {
+            String newRdn,
+            boolean deleteOldRdn
+    ) throws Exception {
 
-        return handler.getEngine().modrdn(entry, newRdn);
+        return handler.getEngine().modrdn(entry, newRdn, deleteOldRdn);
     }
 }
