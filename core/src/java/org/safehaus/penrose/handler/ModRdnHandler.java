@@ -44,8 +44,12 @@ public class ModRdnHandler {
         this.handler = handler;
     }
 
-    public int modrdn(PenroseSession session, String dn, String newRdn)
-            throws Exception {
+    public int modrdn(
+            PenroseSession session,
+            String dn,
+            String newRdn,
+            boolean deleteOldRdn
+    ) throws Exception {
 
         int rc;
         try {
@@ -74,7 +78,7 @@ public class ModRdnHandler {
 
             Entry entry = (Entry)path.iterator().next();
 
-            rc = performModRdn(session, partition, entry, newRdn);
+            rc = performModRdn(session, partition, entry, newRdn, deleteOldRdn);
             if (rc != LDAPException.SUCCESS) return rc;
 
             // refreshing entry cache
@@ -122,7 +126,8 @@ public class ModRdnHandler {
             PenroseSession session,
             Partition partition,
             Entry entry,
-            String newRdn)
+            String newRdn,
+            boolean deleteOldRdn)
             throws Exception {
 
         int rc = handler.getACLEngine().checkModify(session, entry.getDn(), entry.getEntryMapping());
@@ -131,21 +136,22 @@ public class ModRdnHandler {
         EntryMapping entryMapping = entry.getEntryMapping();
 
         if (partition.isProxy(entryMapping)) {
-            return handler.getEngine("PROXY").modrdn(session, partition, entry, newRdn);
+            return handler.getEngine("PROXY").modrdn(session, partition, entry, newRdn, deleteOldRdn);
 
         } else if (partition.isDynamic(entryMapping)) {
-            return handler.getEngine().modrdn(session, partition, entry, newRdn);
+            return handler.getEngine().modrdn(session, partition, entry, newRdn, deleteOldRdn);
 
         } else {
-            return modRdnStaticEntry(partition, entry, newRdn);
+            return modRdnStaticEntry(partition, entry, newRdn, deleteOldRdn);
         }
     }
 
     public int modRdnStaticEntry(
             Partition partition,
             Entry entry,
-            String newRdn)
-            throws Exception {
+            String newRdn,
+            boolean deleteOldRdn
+    ) throws Exception {
 
         EntryMapping entryMapping = entry.getEntryMapping();
         partition.renameEntryMapping(entryMapping, newRdn);

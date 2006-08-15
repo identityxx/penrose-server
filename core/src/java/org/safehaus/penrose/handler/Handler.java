@@ -184,8 +184,8 @@ public class Handler {
         return getModifyHandler().modify(session, dn, modifications);
     }
 
-    public int modrdn(PenroseSession session, String dn, String newRdn) throws Exception {
-        return getModRdnHandler().modrdn(session, dn, newRdn);
+    public int modrdn(PenroseSession session, String dn, String newRdn, boolean deleteOldRdn) throws Exception {
+        return getModRdnHandler().modrdn(session, dn, newRdn, deleteOldRdn);
     }
 
     /**

@@ -87,10 +87,10 @@ public class PenroseBackend implements Backend {
     }
 
     /**
-     * Get connection.
+     * Get session.
      * 
      * @param connectionId
-     * @return connection
+     * @return session
      */
     public PenroseSession getSession(int connectionId) throws Exception {
         return (PenroseSession)sessions.get(new Integer(connectionId));
@@ -131,7 +131,7 @@ public class PenroseBackend implements Backend {
      */
     public int bind(int connectionId, String dn, String password) throws Exception {
 
-        log.debug("bind("+connectionId+")");
+        log.debug("bind("+connectionId+", \""+dn+", \""+password+"\")");
 
         PenroseSession session = getSession(connectionId);
         if (session == null) {
@@ -327,7 +327,8 @@ public class PenroseBackend implements Backend {
     public int modrdn(
             int connectionId,
             String dn,
-            String newrdn)
+            String newrdn,
+            boolean deleteOldRdn)
     throws Exception {
 
         log.debug("modrdn("+connectionId+")");
@@ -339,7 +340,7 @@ public class PenroseBackend implements Backend {
         }
 
         try {
-            return session.modrdn(dn, newrdn);
+            return session.modrdn(dn, newrdn, deleteOldRdn);
 
         } catch (Throwable e) {
             log.error(e.getMessage(), e);

@@ -857,7 +857,7 @@ public class PenroseInterceptor extends BaseInterceptor {
                 ExceptionTool.throwNamingException(LDAPException.INSUFFICIENT_ACCESS_RIGHTS);
             }
 
-            int rc = session.modrdn(dn.toString(), newDn);
+            int rc = session.modrdn(dn.toString(), newDn, deleteOldDn);
 
             if (rc != LDAPException.SUCCESS) {
                 ExceptionTool.throwNamingException(rc);

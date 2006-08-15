@@ -6,7 +6,6 @@ import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.SourceConfig;
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.connector.Connection;
-import org.safehaus.penrose.ldap.LDAPAdapter;
 import org.safehaus.penrose.ldap.LDAPClient;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.filter.FilterTool;
@@ -232,8 +231,7 @@ public class ProxyEngine extends Engine {
     public int modrdn(
             PenroseSession session, Partition partition,
             Entry entry,
-            String newRdn
-    ) throws Exception {
+            String newRdn, boolean deleteOldRdn) throws Exception {
 
         EntryMapping entryMapping = entry.getEntryMapping();
         String dn = entry.getDn();

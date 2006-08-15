@@ -135,7 +135,8 @@ public interface Backend {
     public int modrdn(
             int connectionId,
             String dn,
-            String newrdn)
+            String newrdn,
+            boolean deleteOldRdn)
     throws Exception;
 
     /**

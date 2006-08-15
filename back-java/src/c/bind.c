@@ -19,11 +19,7 @@ int java_back_bind( Operation *op, SlapReply *rs ) {
 
     Connection *conn = (Connection *)op->o_conn;
 
-    jint res;
-    jstring dn;
-    jstring cred;
-
-    res = (*jvm)->AttachCurrentThread(jvm, (void**)&env, NULL);
+    jint res = (*jvm)->AttachCurrentThread(jvm, (void**)&env, NULL);
 
     if (res < 0) {
 
@@ -35,8 +31,8 @@ int java_back_bind( Operation *op, SlapReply *rs ) {
         return LDAP_OPERATIONS_ERROR;
     }
 
-    dn = (*env)->NewStringUTF(env, op->o_req_dn.bv_val);
-    cred = (*env)->NewStringUTF(env, op->orb_cred.bv_val);
+    jstring dn = (*env)->NewStringUTF(env, op->o_req_dn.bv_val);
+    jstring cred = (*env)->NewStringUTF(env, op->orb_cred.bv_val);
   
     // backend.bind(connectionId, dn, normalizedDn, password);
     res = (*env)->CallIntMethod(env, java_back->backend, java_back->backendBind, conn->c_connid, dn, cred);

@@ -200,7 +200,7 @@ public class DefaultEngine extends Engine {
         return rc;
     }
 
-    public int modrdn(PenroseSession session, Partition partition, Entry entry, String newRdn) throws Exception {
+    public int modrdn(PenroseSession session, Partition partition, Entry entry, String newRdn, boolean deleteOldRdn) throws Exception {
 
         if (log.isDebugEnabled()) {
             log.debug(Formatter.displaySeparator(80));
@@ -209,7 +209,7 @@ public class DefaultEngine extends Engine {
             log.debug(Formatter.displayLine("New RDN: "+newRdn, 80));
         }
 
-        int rc = modrdnEngine.modrdn(partition, entry, newRdn);
+        int rc = modrdnEngine.modrdn(partition, entry, newRdn, deleteOldRdn);
 
         return rc;
     }

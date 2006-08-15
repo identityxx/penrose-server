@@ -32,10 +32,11 @@ int java_back_modrdn( Operation *op, SlapReply *rs ) {
 
     jstring dn = (*env)->NewStringUTF(env, op->o_req_dn.bv_val);
     jstring newRdn = (*env)->NewStringUTF(env, op->orr_newrdn.bv_val);
+    jboolean deleteOldRdn = op->orr_deleteoldrdn;
 
     Debug( LDAP_DEBUG_TRACE, "backend.modrdn(\"%s\", \"%s\")\n", dn, newRdn, 0);
 
-    res = (*env)->CallIntMethod(env, java_back->backend, java_back->backendModRdn, conn->c_connid, dn, newRdn);
+    res = (*env)->CallIntMethod(env, java_back->backend, java_back->backendModRdn, conn->c_connid, dn, newRdn, deleteOldRdn);
 
     jthrowable exc = (*env)->ExceptionOccurred(env);
 

@@ -31,13 +31,15 @@ public class ModRdnEvent extends Event {
     private PenroseSession session;
     private String dn;
     private String newRdn;
+    private boolean deleteOldRdn;
     private int returnCode;
 
-    public ModRdnEvent(Object source, int type, PenroseSession session, String dn, String newRdn) {
+    public ModRdnEvent(Object source, int type, PenroseSession session, String dn, String newRdn, boolean deleteOldRdn) {
         super(source, type);
         this.session = session;
         this.dn = dn;
         this.newRdn = newRdn;
+        this.deleteOldRdn = deleteOldRdn;
     }
 
     public int getReturnCode() {
@@ -70,5 +72,13 @@ public class ModRdnEvent extends Event {
 
     public void setNewRdn(String newRdn) {
         this.newRdn = newRdn;
+    }
+
+    public boolean isDeleteOldRdn() {
+        return deleteOldRdn;
+    }
+
+    public void setDeleteOldRdn(boolean deleteOldRdn) {
+        this.deleteOldRdn = deleteOldRdn;
     }
 }

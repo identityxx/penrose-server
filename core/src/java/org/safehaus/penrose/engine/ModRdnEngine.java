@@ -40,7 +40,7 @@ public class ModRdnEngine {
         this.engine = engine;
     }
 
-    public int modrdn(Partition partition, Entry entry, String newRdn) throws Exception {
+    public int modrdn(Partition partition, Entry entry, String newRdn, boolean deleteOldRdn) throws Exception {
 
         EntryMapping entryMapping = entry.getEntryMapping();
         AttributeValues oldAttributeValues = entry.getAttributeValues();

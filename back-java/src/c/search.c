@@ -100,8 +100,6 @@ int java_back_search(Operation *op, SlapReply *rs) {
     results = (*env)->CallObjectMethod(env, java_back->backend, java_back->backendSearch,
         conn->c_connid, base, filter, searchControls);
 
-    Debug( LDAP_DEBUG_TRACE, "int res = results.getReturnCode();\n", 0, 0, 0);
-
     exc = (*env)->ExceptionOccurred(env);
 
     if (exc) {
@@ -116,12 +114,14 @@ int java_back_search(Operation *op, SlapReply *rs) {
         return LDAP_OPERATIONS_ERROR;
     }
 
+    Debug( LDAP_DEBUG_TRACE, "int res = results.getReturnCode();\n", 0, 0, 0);
+
     res = (*env)->CallIntMethod(env, results, java_back->resultsGetReturnCode);
     //Debug( LDAP_DEBUG_TRACE, "RC: %d\n", res, 0, 0);
 
     if (res > 0) {
 
-        Debug( LDAP_DEBUG_TRACE, "<== java_back_search(): Failed searching base %s.\n", base, 0, 0);
+        Debug( LDAP_DEBUG_TRACE, "<== java_back_search(): Search failed. RC=%d.\n", res, 0, 0);
 
         rs->sr_err = res;
         send_ldap_result( op, rs );

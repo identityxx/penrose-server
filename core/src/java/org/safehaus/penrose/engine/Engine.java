@@ -549,7 +549,8 @@ public abstract class Engine {
             PenroseSession session,
             Partition partition,
             Entry entry,
-            String newRdn
+            String newRdn,
+            boolean deleteOldRdn
     ) throws Exception;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

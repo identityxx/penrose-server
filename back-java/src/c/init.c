@@ -573,7 +573,7 @@ java_back_db_open(
     if (java_back->backendModify == 0) return -1;
 
     java_back->backendModRdn = getMethodID(env, java_back->backendClass, "modrdn",
-        "(ILjava/lang/String;Ljava/lang/String;)I");
+        "(ILjava/lang/String;Ljava/lang/String;Z)I");
     if (java_back->backendModRdn == 0) return -1;
 
     java_back->backendCompare = getMethodID(env, java_back->backendClass, "compare",
