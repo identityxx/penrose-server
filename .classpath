@@ -62,5 +62,6 @@
 	<classpathentry kind="lib" path="lib/mina-filter-ssl-0.9.4.jar"/>
 	<classpathentry kind="lib" path="lib/shared-asn1-0.9.5.1.jar"/>
 	<classpathentry kind="lib" path="lib/shared-ldap-0.9.5.1.jar"/>
+	<classpathentry kind="lib" path="lib/openldap-2.2.26.jar"/>
 	<classpathentry kind="output" path="target/classes"/>
 </classpath>
