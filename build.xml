@@ -41,12 +41,6 @@
         </condition>
     </target>
 
-    <target name="build-tools" depends="init">
-        <mkdir dir="target/tools"/>
-        <javac srcdir="src/tools" destdir="target/tools"/>
-        <jar destfile="lib/tools/${product.name}-tools-${project.version}.jar" basedir="target/tools"/>
-    </target>
-
     <target name="build" depends="init">
         <javacc
             target="src/java/org/safehaus/penrose/schema/LDAPv3Schema.jj"
@@ -131,7 +125,7 @@
         </copy>
     </target>
 
-    <target name="dist" depends="build-tools,build">
+    <target name="dist" depends="build">
         <mkdir dir="target/dist"/>
         <copy todir="target/dist" file="README.txt">
             <filterchain>
@@ -165,12 +159,10 @@
         <mkdir dir="target/dist/lib/ext"/>
         <copy todir="target/dist/conf/default">
             <fileset dir="conf"/>
+            <filterchain>
+                <expandproperties/>
+            </filterchain>
         </copy>
-        <taskdef
-            name="wrapper"
-            classname="org.safehaus.penrose.ant.WrapperTask"
-            classpath="lib/tools/${product.name}-tools-${project.version}.jar"/>
-        <wrapper file="target/dist/conf/default/wrapper.conf" dir="target/dist/lib" path="../lib"/>
         <copy todir="target/dist/conf">
             <fileset dir="target/dist/conf/default"/>
         </copy>
