@@ -95,7 +95,9 @@ public class PenroseEnumeration implements NamingEnumeration {
 
                 for (NamingEnumeration j = attribute.getAll(); j.hasMore(); ) {
                     Object value = j.next();
-                    log.debug(" - "+name+": "+value+" ("+value.getClass()+")");
+                    String className = value.getClass().getName();
+                    className = className.substring(className.lastIndexOf(".")+1);
+                    log.debug(" - "+name+" ("+className+"): "+value);
                 }
             }
         }

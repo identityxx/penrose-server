@@ -501,6 +501,8 @@ public class SearchHandler {
             Entry entry)
             throws Exception {
 
+        log.debug("Converting Entry to SearchResult: "+entry.getDn());
+
         int rc = handler.getACLEngine().checkRead(session, entry.getDn(), entry.getEntryMapping());
         if (rc != LDAPException.SUCCESS) return null;
 

@@ -179,9 +179,9 @@ public class EntryUtil {
             for (Iterator j=values.iterator(); j.hasNext(); ) {
                 Object value = j.next();
 
-                if (value instanceof String) {
+                if (value instanceof byte[]) {
                     attribute.add(value);
-                    
+
                 } else { // TODO This is ApacheDS's bug
                     attribute.add(value.toString());
                 }

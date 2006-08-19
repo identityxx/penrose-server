@@ -443,6 +443,28 @@ public class Penrose {
         return session;
     }
 
+    public PenroseSession createSession(String sessionId) throws Exception {
+
+        PenroseSession session = sessionManager.createSession(sessionId);
+        if (session == null) return null;
+
+        HandlerConfig handlerConfig = penroseConfig.getHandlerConfig();
+        Handler handler = handlerManager.getHandler(handlerConfig.getName());
+        session.setHandler(handler);
+
+        session.setEventManager(eventManager);
+
+        return session;
+    }
+
+    public PenroseSession getSession(String sessionId) throws Exception {
+        return sessionManager.getSession(sessionId);
+    }
+
+    public PenroseSession removeSession(String sessionId) throws Exception {
+        return sessionManager.removeSession(sessionId);
+    }
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Setters & Getters
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

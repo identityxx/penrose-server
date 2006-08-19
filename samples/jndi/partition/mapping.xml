@@ -47,27 +47,6 @@
     <at name="sn">
       <variable>u.sn</variable>
     </at>
-    <at name="givenName">
-      <variable>u.givenName</variable>
-    </at>
-    <at name="ou">
-      <variable>u.ou</variable>
-    </at>
-    <at name="l">
-      <variable>u.l</variable>
-    </at>
-    <at name="mail">
-      <variable>u.mail</variable>
-    </at>
-    <at name="telephoneNumber">
-      <variable>u.telephoneNumber</variable>
-    </at>
-    <at name="facsimileTelephoneNumber">
-      <variable>u.facsimileTelephoneNumber</variable>
-    </at>
-    <at name="roomNumber">
-      <variable>u.roomNumber</variable>
-    </at>
     <at name="userPassword">
       <variable>u.userPassword</variable>
     </at>
@@ -81,27 +60,6 @@
       </field>
       <field name="sn">
         <variable>sn</variable>
-      </field>
-      <field name="givenName">
-        <variable>givenName</variable>
-      </field>
-      <field name="ou">
-        <variable>ou</variable>
-      </field>
-      <field name="l">
-        <variable>l</variable>
-      </field>
-      <field name="mail">
-        <variable>mail</variable>
-      </field>
-      <field name="telephoneNumber">
-        <variable>telephoneNumber</variable>
-      </field>
-      <field name="facsimileTelephoneNumber">
-        <variable>facsimileTelephoneNumber</variable>
-      </field>
-      <field name="roomNumber">
-        <variable>roomNumber</variable>
       </field>
       <field name="userPassword">
         <variable>userPassword</variable>
@@ -121,14 +79,11 @@
     <at name="cn" rdn="true">
       <variable>g.cn</variable>
     </at>
-    <at name="ou">
-      <variable>g.ou</variable>
-    </at>
     <at name="uniqueMember">
       <expression foreach="g.uniqueMember" var="um">
 int i=um.indexOf("=");
 int j=um.indexOf(",");
-return "uid="+um.substring(i+1, j)+",ou=Users,dc=Example,dc=com";
+return "uid="+um.substring(i+1, j)+",ou=Users,dc=JNDI,dc=Example,dc=com";
       </expression>
     </at>
     <source name="g">
@@ -136,14 +91,11 @@ return "uid="+um.substring(i+1, j)+",ou=Users,dc=Example,dc=com";
       <field name="cn">
         <variable>cn</variable>
       </field>
-      <field name="ou">
-        <variable>ou</variable>
-      </field>
       <field name="uniqueMember">
         <expression foreach="uniqueMember" var="um">
 int i=um.indexOf("=");
 int j=um.indexOf(",");
-return "uid="+um.substring(i+1, j)+",ou=People,dc=Example,dc=com";
+return "uid="+um.substring(i+1, j)+",ou=Users,dc=my-domain,dc=com";
         </expression>
       </field>
     </source>

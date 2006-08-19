@@ -28,7 +28,7 @@
     </aci>
   </entry>
 
-  <entry dn="ou=People,dc=Proxy,dc=Example,dc=com">
+  <entry dn="ou=Users,dc=Proxy,dc=Example,dc=com">
     <source name="users" proxy="true">
       <source-name>users</source-name>
     </source>

@@ -63,6 +63,11 @@ public class SessionManager implements SessionManagerMBean {
             sessionId = createSessionId();
         }
 
+        return createSession(sessionId);
+    }
+
+    public synchronized PenroseSession createSession(String sessionId) {
+
         log.debug("Creating session "+sessionId);
         PenroseSession session = new PenroseSession(this);
         session.setSessionId(sessionId);
@@ -72,6 +77,14 @@ public class SessionManager implements SessionManagerMBean {
         return session;
     }
 
+    public synchronized PenroseSession getSession(String sessionId) {
+        return (PenroseSession)sessions.get(sessionId);
+    }
+
+    public synchronized PenroseSession removeSession(String sessionId) {
+        return (PenroseSession)sessions.remove(sessionId);
+    }
+    
     public String createSessionId() {
         StringBuffer sb = new StringBuffer();
         for (int i=0; i<64; i++) {

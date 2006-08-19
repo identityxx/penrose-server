@@ -76,11 +76,14 @@ public class PenroseAuthenticator extends AbstractAuthenticator {
         }
 
         try {
-            PenroseSession session = penrose.newSession();
-            if (session == null) throw new ServiceUnavailableException();
+            PenroseSession session = penrose.getSession(dn);
 
-            int rc = session.bind(dn.toString(), password);
-            session.close();
+            if (session == null) {
+                session = penrose.createSession(dn);
+                if (session == null) throw new ServiceUnavailableException();
+            }
+
+            int rc = session.bind(dn, password);
 
             if (rc != LDAPException.SUCCESS) {
                 ExceptionUtil.throwNamingException(rc);

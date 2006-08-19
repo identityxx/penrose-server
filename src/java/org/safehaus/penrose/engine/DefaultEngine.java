@@ -549,14 +549,13 @@ public class DefaultEngine extends Engine {
         final String baseDn = sourceConfig.getParameter(PROXY_BASE_DN);
 
         String targetDn = convertDn(base, proxyDn, baseDn);
+        String bindDn = convertDn(session.getBindDn(), proxyDn, baseDn);
 
         log.debug("Searching proxy "+sourceName+" for \""+targetDn+"\" with filter="+filter+" attrs="+sc.getAttributes());
-        log.debug("Bind DN: "+session.getBindDn());
+        log.debug("Bind DN: "+bindDn);
 
         Map parameters = new HashMap();
         parameters.putAll(connection.getParameters());
-
-        String bindDn = convertDn(session.getBindDn(), proxyDn, baseDn);
 
         String pta = sourceConfig.getParameter(PROXY_AUTHENTICATON);
         if (PROXY_AUTHENTICATON_FULL.equals(pta)) {

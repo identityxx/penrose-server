@@ -6,10 +6,10 @@
 <sources>
 
   <source name="users">
-    <connection-name>SunONE</connection-name>
+    <connection-name>OpenLDAP</connection-name>
     <parameter>
       <param-name>baseDn</param-name>
-      <param-value>ou=People,dc=Example,dc=com</param-value>
+      <param-value>ou=Users,dc=my-domain,dc=com</param-value>
     </parameter>
     <parameter>
       <param-name>scope</param-name>
@@ -22,10 +22,10 @@
   </source>
 
   <source name="groups">
-    <connection-name>SunONE</connection-name>
+    <connection-name>OpenLDAP</connection-name>
     <parameter>
       <param-name>baseDn</param-name>
-      <param-value>ou=Groups,dc=Example,dc=com</param-value>
+      <param-value>ou=Groups,dc=my-domain,dc=com</param-value>
     </parameter>
     <parameter>
       <param-name>scope</param-name>

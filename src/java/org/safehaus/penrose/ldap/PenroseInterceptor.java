@@ -52,8 +52,6 @@ public class PenroseInterceptor extends BaseInterceptor {
 
     DirectoryServiceConfiguration factoryCfg;
 
-    Map sessions = new HashMap();
-
     public void setPenrose(Penrose penrose) throws Exception {
         this.penrose = penrose;
         this.partitionManager = penrose.getPartitionManager();
@@ -67,21 +65,23 @@ public class PenroseInterceptor extends BaseInterceptor {
 
     public PenroseSession getSession() throws Exception {
 
-        Thread currentThread = Thread.currentThread();
+        String bindDn = getPrincipal() == null ? null : getPrincipal().getJndiName().toString();
 
-        PenroseSession session = (PenroseSession)sessions.get(currentThread);
-        if (session != null && session.isValid()) return session;
+        PenroseSession session = penrose.getSession(bindDn);
 
-        session = penrose.newSession();
-        if (session == null) throw new ServiceUnavailableException();
+        if (session == null) {
+            session = penrose.createSession(bindDn);
+            if (session == null) throw new ServiceUnavailableException();
+        }
 
-        sessions.put(currentThread, session);
         return session;
     }
 
-    public void removeSession() {
-        LdapContext context = getContext();
-        sessions.remove(context);
+    public void removeSession() throws Exception {
+
+        String bindDn = getPrincipal() == null ? null : getPrincipal().getJndiName().toString();
+
+        penrose.removeSession(bindDn);
     }
 
     public void bind(
@@ -133,9 +133,9 @@ public class PenroseInterceptor extends BaseInterceptor {
         try {
             next.bind(bindDn, credentials, mechanisms, saslAuthId);
 
-            PenroseSession session = getSession();
-            session.setBindDn(bindDn.toString());
-            session.setBindPassword(password);
+            //PenroseSession session = getSession();
+            //session.setBindDn(bindDn.toString());
+            //session.setBindPassword(password);
 
             //log.debug("Bind successful.");
 
