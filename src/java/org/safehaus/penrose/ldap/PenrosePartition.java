@@ -21,9 +21,7 @@ import org.apache.directory.server.core.partition.AbstractDirectoryPartition;
 import org.apache.directory.shared.ldap.filter.ExprNode;
 import org.ietf.ldap.*;
 import org.safehaus.penrose.Penrose;
-import org.safehaus.penrose.util.ExceptionUtil;
 import org.safehaus.penrose.partition.PartitionManager;
-import org.safehaus.penrose.filter.FilterTool;
 import org.safehaus.penrose.session.PenroseSearchResults;
 import org.safehaus.penrose.session.PenroseSession;
 import org.safehaus.penrose.session.PenroseSearchControls;
@@ -207,7 +205,7 @@ public class PenrosePartition extends AbstractDirectoryPartition {
             String returningAttributes[] = searchControls.getReturningAttributes();
             List attributeNames = returningAttributes == null ? new ArrayList() : Arrays.asList(returningAttributes);
 
-            String newFilter = FilterTool.convert(filter).toString();
+            String newFilter = org.safehaus.penrose.ldap.FilterTool.convert(filter).toString();
 
             log.info("Searching \""+baseDn+"\" as "+bindDn);
             log.debug(" - deref: "+deref);
@@ -328,7 +326,7 @@ public class PenrosePartition extends AbstractDirectoryPartition {
             session.close();
 
             if (rc != LDAPException.SUCCESS) {
-                ExceptionUtil.throwNamingException(rc);
+                ExceptionTool.throwNamingException(rc);
             }
 
             SearchResult result = (SearchResult)results.next();
@@ -391,7 +389,7 @@ public class PenrosePartition extends AbstractDirectoryPartition {
             session.close();
 
             if (rc != LDAPException.SUCCESS) {
-                ExceptionUtil.throwNamingException(rc);
+                ExceptionTool.throwNamingException(rc);
             }
 
         } catch (NamingException e) {

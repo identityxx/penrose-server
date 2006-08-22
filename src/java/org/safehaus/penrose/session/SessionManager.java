@@ -54,10 +54,6 @@ public class SessionManager implements SessionManagerMBean {
 
     public synchronized PenroseSession newSession() {
 
-        purge();
-
-        if (sessions.size() >= maxSessions) return null;
-
         String sessionId = createSessionId();
         while (sessions.get(sessionId) != null) {
             sessionId = createSessionId();
@@ -67,6 +63,10 @@ public class SessionManager implements SessionManagerMBean {
     }
 
     public synchronized PenroseSession createSession(String sessionId) {
+
+        purge();
+
+        if (sessions.size() >= maxSessions) return null;
 
         log.debug("Creating session "+sessionId);
         PenroseSession session = new PenroseSession(this);
@@ -78,13 +78,19 @@ public class SessionManager implements SessionManagerMBean {
     }
 
     public synchronized PenroseSession getSession(String sessionId) {
+
+        purge();
+
         return (PenroseSession)sessions.get(sessionId);
     }
 
     public synchronized PenroseSession removeSession(String sessionId) {
+
+        purge();
+
         return (PenroseSession)sessions.remove(sessionId);
     }
-    
+
     public String createSessionId() {
         StringBuffer sb = new StringBuffer();
         for (int i=0; i<64; i++) {

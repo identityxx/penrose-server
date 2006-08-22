@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
-package org.safehaus.penrose.schema;
+package org.safehaus.penrose.ldap;
 
 import org.apache.directory.server.core.tools.schema.DirectorySchemaToolMojo;
 import org.apache.maven.embedder.MavenEmbedder;
@@ -253,7 +253,7 @@ public class SchemaGenerator {
     }
 
     public static void showUsage() {
-        System.out.println("Usage: org.safehaus.penrose.schema.SchemaGenerator [OPTION]... <FILE>");
+        System.out.println("Usage: org.safehaus.penrose.ldap.SchemaGenerator [OPTION]... <FILE>");
         System.out.println();
         System.out.println("Options:");
         System.out.println("  -?, --help         display this help and exit");

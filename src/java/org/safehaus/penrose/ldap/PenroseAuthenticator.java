@@ -24,7 +24,6 @@ import org.apache.directory.shared.ldap.exception.LdapAuthenticationException;
 import org.apache.directory.shared.ldap.aci.AuthenticationLevel;
 import org.ietf.ldap.LDAPException;
 import org.safehaus.penrose.Penrose;
-import org.safehaus.penrose.util.ExceptionUtil;
 import org.safehaus.penrose.session.PenroseSession;
 import org.safehaus.penrose.config.PenroseConfig;
 import org.slf4j.LoggerFactory;
@@ -86,7 +85,7 @@ public class PenroseAuthenticator extends AbstractAuthenticator {
             int rc = session.bind(dn, password);
 
             if (rc != LDAPException.SUCCESS) {
-                ExceptionUtil.throwNamingException(rc);
+                ExceptionTool.throwNamingException(rc);
             }
 
             log.warn("Bind operation succeeded.");
