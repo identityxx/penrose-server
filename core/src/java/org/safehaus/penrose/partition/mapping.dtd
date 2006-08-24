@@ -30,6 +30,7 @@
 
 <!ELEMENT field (binary|constant|variable|expression)>
 <!ATTLIST field name CDATA #REQUIRED>
+<!ATTLIST field primaryKey (true|first|false) "false">
 
 <!ELEMENT relationship (expression)>
 

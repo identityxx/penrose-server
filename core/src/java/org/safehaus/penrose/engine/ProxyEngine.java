@@ -456,17 +456,15 @@ Mapping: ou=Groups,dc=Proxy,dc=Example,dc=org
                 newSc.setScope(LDAPConnection.SCOPE_BASE);
             }
         }
-        log.debug("Target DN: "+targetDn);
 
         targetDn = EntryUtil.append(targetDn, proxyBaseDn);
+        String bindDn = convertDn(session.getBindDn(), proxyDn, baseDn);
 
         log.debug("Searching proxy "+sourceName+" for \""+targetDn+"\" with filter="+filter+" attrs="+newSc.getAttributes());
-
+        log.debug("Bind DN: "+bindDn);
 
         Map parameters = new HashMap();
         parameters.putAll(connection.getParameters());
-
-        String bindDn = convertDn(session.getBindDn(), proxyDn, baseDn);
 
         String pta = sourceConfig.getParameter(PROXY_AUTHENTICATON);
         if (PROXY_AUTHENTICATON_FULL.equals(pta)) {

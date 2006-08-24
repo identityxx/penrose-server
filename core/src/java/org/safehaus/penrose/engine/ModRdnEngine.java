@@ -43,22 +43,39 @@ public class ModRdnEngine {
     public int modrdn(Partition partition, Entry entry, String newRdn, boolean deleteOldRdn) throws Exception {
 
         EntryMapping entryMapping = entry.getEntryMapping();
+
         AttributeValues oldAttributeValues = entry.getAttributeValues();
-        AttributeValues oldSourceValues = entry.getSourceValues();
-
-        Row rdn = EntryUtil.getRdn(newRdn);
-
         AttributeValues newAttributeValues = new AttributeValues(oldAttributeValues);
+
+        Row rdn1 = EntryUtil.getRdn(entry.getDn());
+        oldAttributeValues.set("rdn", rdn1);
+
+        Row rdn2 = EntryUtil.getRdn(newRdn);
+        newAttributeValues.set("rdn", rdn2);
+
+        log.debug("Renaming "+rdn1+" to "+rdn2);
+
+        if (deleteOldRdn) {
+            log.debug("Removing old RDN:");
+            for (Iterator i=rdn1.getNames().iterator(); i.hasNext(); ) {
+                String name = (String)i.next();
+                Object value = rdn1.get(name);
+                newAttributeValues.remove(name, value);
+                log.debug(" - "+name+": "+value);
+            }
+        }
+/*
         Collection rdnAttributes = entryMapping.getRdnAttributes();
         for (Iterator i=rdnAttributes.iterator(); i.hasNext(); ) {
             AttributeMapping attributeMapping = (AttributeMapping)i.next();
             String name = attributeMapping.getName();
-            String newValue = (String)rdn.get(name);
+            String newValue = (String)rdn2.get(name);
 
             newAttributeValues.remove(name);
             newAttributeValues.add(name, newValue);
         }
-
+*/
+        AttributeValues oldSourceValues = entry.getSourceValues();
         AttributeValues newSourceValues = new AttributeValues(oldSourceValues);
         Collection sources = entryMapping.getSourceMappings();
         for (Iterator i=sources.iterator(); i.hasNext(); ) {
@@ -70,7 +87,14 @@ public class ModRdnEngine {
         }
 
         if (log.isDebugEnabled()) {
-            log.debug("Attribute values:");
+            log.debug("Old attribute values:");
+            for (Iterator iterator = oldAttributeValues.getNames().iterator(); iterator.hasNext(); ) {
+                String name = (String)iterator.next();
+                Collection values = newAttributeValues.get(name);
+                log.debug(" - "+name+": "+values);
+            }
+
+            log.debug("New attribute values:");
             for (Iterator iterator = newAttributeValues.getNames().iterator(); iterator.hasNext(); ) {
                 String name = (String)iterator.next();
                 Collection values = newAttributeValues.get(name);

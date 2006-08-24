@@ -125,4 +125,12 @@ public class SchemaManager implements SchemaManagerMBean {
     public AttributeType getAttributeType(String attributeName) {
         return allSchema.getAttributeType(attributeName);
     }
+
+    public String getNormalizedAttributeName(String attributeName) {
+
+        AttributeType attributeType = getAttributeType(attributeName);
+        if (attributeType == null) return attributeName;
+
+        return attributeType.getName();
+    }
 }

@@ -176,15 +176,14 @@ public class Connector {
             for (Iterator i = pks.iterator(); i.hasNext();) {
                 Row pk = (Row) i.next();
                 AttributeValues newEntry = (AttributeValues)sourceValues.clone();
-                newEntry.set(pk);
-                log.debug("ADDING ROW: " + newEntry);
+                newEntry.set("primaryKey", pk);
+                log.debug("Adding entry: "+pk);
+                log.debug(" - "+newEntry);
 
                 // Add row to source table in the source database/directory
                 Connection connection = getConnection(partition, sourceConfig.getConnectionName());
                 int rc = connection.add(sourceConfig, pk, newEntry);
                 if (rc != LDAPException.SUCCESS) return rc;
-
-                Filter filter = FilterTool.createFilter(pk);
 
                 AttributeValues sv = connection.get(sourceConfig, pk);
                 getSourceCacheManager().put(partition, sourceConfig, pk, sv);
@@ -249,7 +248,8 @@ public class Connector {
             Partition partition,
             SourceConfig sourceConfig,
             AttributeValues oldSourceValues,
-            AttributeValues newSourceValues) throws Exception {
+            AttributeValues newSourceValues
+    ) throws Exception {
 
         log.debug("Modifying entry in " + sourceConfig.getName());
 
@@ -282,7 +282,7 @@ public class Connector {
                 Row pk = (Row) i.next();
                 Row key = normalize((Row)pk);
                 AttributeValues oldEntry = (AttributeValues)oldSourceValues.clone();
-                oldEntry.set(pk);
+                oldEntry.set("primaryKey", pk);
                 //log.debug("DELETE ROW: " + oldEntry);
 
                 // Delete row from source table in the source database/directory
@@ -299,7 +299,7 @@ public class Connector {
             for (Iterator i = addRows.iterator(); i.hasNext();) {
                 Row pk = (Row) i.next();
                 AttributeValues newEntry = (AttributeValues)newSourceValues.clone();
-                newEntry.set(pk);
+                newEntry.set("primaryKey", pk);
                 //log.debug("ADDING ROW: " + newEntry);
 
                 // Add row to source table in the source database/directory
@@ -320,9 +320,9 @@ public class Connector {
                 Row pk = (Row) i.next();
                 Row key = normalize((Row)pk);
                 AttributeValues oldEntry = (AttributeValues)oldSourceValues.clone();
-                oldEntry.set(pk);
+                oldEntry.set("primaryKey", pk);
                 AttributeValues newEntry = (AttributeValues)newSourceValues.clone();
-                newEntry.set(pk);
+                newEntry.set("primaryKey", pk);
                 //log.debug("REPLACE ROW: " + oldEntry+" with "+newEntry);
 
                 // Modify row from source table in the source database/directory
@@ -353,6 +353,38 @@ public class Connector {
             }
 
             //getQueryCache(connectionConfig, sourceConfig).invalidate();
+
+        } finally {
+            lock.releaseWriteLock(ConnectorConfig.DEFAULT_TIMEOUT);
+        }
+
+        return LDAPException.SUCCESS;
+    }
+
+    public int modrdn(
+            Partition partition,
+            SourceConfig sourceConfig,
+            Row oldPk,
+            Row newPk,
+            AttributeValues sourceValues
+    ) throws Exception {
+
+        log.debug("Renaming entry in " + sourceConfig.getName());
+
+        MRSWLock lock = getLock(sourceConfig);
+        lock.getWriteLock(ConnectorConfig.DEFAULT_TIMEOUT);
+
+        try {
+            Connection connection = getConnection(partition, sourceConfig.getConnectionName());
+
+            int rc = connection.add(sourceConfig, newPk, sourceValues);
+            if (rc != LDAPException.SUCCESS) return rc;
+
+            rc = connection.delete(sourceConfig, oldPk);
+            if (rc != LDAPException.SUCCESS) return rc;
+
+            getSourceCacheManager().put(partition, sourceConfig, newPk, sourceValues);
+            getSourceCacheManager().remove(partition, sourceConfig, oldPk);
 
         } finally {
             lock.releaseWriteLock(ConnectorConfig.DEFAULT_TIMEOUT);

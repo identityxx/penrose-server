@@ -209,6 +209,8 @@ public class EntryUtil {
 
     public static Attributes getAttributes(Entry entry) {
 
+        //log.debug("Converting "+entry.getDn());
+
         AttributeValues attributeValues = entry.getAttributeValues();
 
         Attributes attributes = new BasicAttributes();
@@ -222,10 +224,14 @@ public class EntryUtil {
             for (Iterator j=values.iterator(); j.hasNext(); ) {
                 Object value = j.next();
 
-                if (value instanceof String) {
+                String className = value.getClass().getName();
+                className = className.substring(className.lastIndexOf(".")+1);
+                //log.debug(" - "+name+": "+value+" ("+className+")");
+
+                if (value instanceof byte[]) {
                     attribute.add(value);
-                    
-                } else { // TODO This is ApacheDS's bug
+
+                } else {
                     attribute.add(value.toString());
                 }
             }
@@ -285,9 +291,16 @@ public class EntryUtil {
 
             for (NamingEnumeration j = attribute.getAll(); j.hasMore(); ) {
                 Object value = j.next();
+
+                String className = value.getClass().getName();
+                className = className.substring(className.lastIndexOf(".")+1);
+
                 sb.append(name);
                 sb.append(": ");
                 sb.append(value);
+                sb.append(" (");
+                sb.append(className);
+                sb.append(")");
                 sb.append("\n");
             }
         }

@@ -49,11 +49,6 @@ goto end
 
 :checkJava
 set _JAVACMD=%JAVACMD%
-set LOCALCLASSPATH=%CLASSPATH%;%JAVA_HOME%\lib\tools.jar
-for %%i in ("%PENROSE_HOME%\lib\*.jar") do call "%PENROSE_HOME%\bin\lcp.bat" %%i
-for %%i in ("%PENROSE_HOME%\lib\ext\*.jar") do call "%PENROSE_HOME%\bin\lcp.bat" %%i
-for %%i in ("%PENROSE_HOME%\server\lib\*.jar") do call "%PENROSE_HOME%\bin\lcp.bat" %%i
-for %%i in ("%PENROSE_HOME%\server\lib\ext\*.jar") do call "%PENROSE_HOME%\bin\lcp.bat" %%i
 
 if "%JAVA_HOME%" == "" goto noJavaHome
 if not exist "%JAVA_HOME%\bin\java.exe" goto noJavaHome
@@ -68,16 +63,22 @@ echo.
 
 :runPenrose
 
-set LOCALCLASSPATH=%PENROSE_HOME%\conf;%LOCALCLASSPATH%
+set LOCALCLASSPATH=%JAVA_HOME%\lib\tools.jar;%CLASSPATH%
+
+set LOCALLIBPATH=%PENROSE_HOME%\lib;%LOCALLIBPATH%
+set LOCALLIBPATH=%PENROSE_HOME%\lib\ext;%LOCALLIBPATH%
+set LOCALLIBPATH=%PENROSE_HOME%\server\lib;%LOCALLIBPATH%
+set LOCALLIBPATH=%PENROSE_HOME%\server\lib\ext;%LOCALLIBPATH%
 
 cd %PENROSE_HOME%
 
-"%_JAVACMD%" %PENROSE_DEBUG_OPTS% %PENROSE_OPTS% -classpath "%LOCALCLASSPATH%" -Dpenrose.home="%PENROSE_HOME%" org.safehaus.penrose.cache.CacheManager %PENROSE_ARGS% %PENROSE_CMD_LINE_ARGS%
+"%_JAVACMD%" %PENROSE_DEBUG_OPTS% %PENROSE_OPTS% -classpath "%LOCALCLASSPATH%" -Djava.ext.dirs="%LOCALLIBPATH%" -Dpenrose.home="%PENROSE_HOME%" org.safehaus.penrose.cache.CacheManager %PENROSE_ARGS% %PENROSE_CMD_LINE_ARGS%
 goto end
 
 
 :end
 set LOCALCLASSPATH=
+set LOCALLIBPATH=
 set _JAVACMD=
 set PENROSE_CMD_LINE_ARGS=
 

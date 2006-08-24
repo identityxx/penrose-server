@@ -135,7 +135,12 @@ public class MergeEngine {
                     Collection avs = loadedSourceValues.get(sourceName);
                     for (Iterator j=avs.iterator(); j.hasNext(); ) {
                         AttributeValues av = (AttributeValues)j.next();
-                        log.debug(Formatter.displayLine(" - "+av, 80));
+                        
+                        for (Iterator k=av.getNames().iterator(); k.hasNext(); ) {
+                            String name = (String)k.next();
+                            Collection values = av.get(name);
+                            log.debug(Formatter.displayLine(" - "+name+": "+values, 80));
+                        }
                     }
                }
             }

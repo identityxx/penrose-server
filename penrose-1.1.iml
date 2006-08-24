@@ -15,7 +15,6 @@
       <sourceFolder url="file://$MODULE_DIR$/samples/samba/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/server/src/java" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/server/src/test" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/server/src/tools" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/shared/src/java" isTestSource="false" />
       <excludeFolder url="file://$MODULE_DIR$/back-java/target" />
       <excludeFolder url="file://$MODULE_DIR$/core/target" />

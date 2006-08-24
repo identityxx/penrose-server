@@ -129,12 +129,18 @@ public class TransformEngine {
         Interpreter interpreter = engine.getInterpreterManager().newInstance();
         interpreter.set(input);
 
-        Row pk = new Row();
-        Collection fields = sourceMapping.getFieldMappings();
+        log.debug("Translating attributes:");
+        for (Iterator i=input.getNames().iterator(); i.hasNext(); ) {
+            String name = (String)i.next();
+            Collection values = input.get(name);
+            log.debug(" - "+name+": "+values);
+        }
 
-        log.debug("Translating for source "+sourceMapping.getName()+":");
-        for (Iterator j=fields.iterator(); j.hasNext(); ) {
-            FieldMapping fieldMapping = (FieldMapping)j.next();
+        log.debug("into source "+sourceMapping.getName()+":");
+        Collection fields = sourceMapping.getFieldMappings();
+        Row pk = new Row();
+        for (Iterator i =fields.iterator(); i.hasNext(); ) {
+            FieldMapping fieldMapping = (FieldMapping)i.next();
             String name = fieldMapping.getName();
 
             FieldConfig fieldConfig = sourceConfig.getFieldConfig(name);
@@ -142,10 +148,8 @@ public class TransformEngine {
                 throw new Exception("Unknown field "+name+" in source "+sourceMapping.getName()+" in \""+entryMapping.getDn()+"\".");
             }
 
-            //log.debug(" - "+name);
-
             Object newValues = interpreter.eval(entryMapping, fieldMapping);
-            log.debug(" - "+name+": "+newValues);
+            log.debug(" - "+name+": "+newValues+(fieldMapping.isPK() ? " (pk)" : ""));
 
             if (newValues == null) {
                 if (fieldConfig.isPK()) pk = null;
@@ -179,13 +183,20 @@ public class TransformEngine {
 */
 
             //log.debug("   => "+newValues);
-
+/*
             if (fieldConfig.isPK()) {
                 if (pk != null) pk.set(name, newValues);
+            }
+*/
+            if (fieldMapping.isPK()) {
+                if (pk != null) pk.set(name, newValues);
+                output.set("primaryKey."+name, newValues);
             }
 
             output.add(name, newValues);
         }
+
+        log.debug("PK: "+pk);
 
         interpreter.clear();
 
@@ -194,11 +205,27 @@ public class TransformEngine {
 
     public static Collection getPrimaryKeys(SourceConfig sourceConfig, AttributeValues sourceValues) throws Exception {
 
-        AttributeValues pkValues = new AttributeValues();
+        Collection list = new ArrayList();
+        Row pk = new Row();
 
+        for (Iterator i=sourceValues.getNames().iterator(); i.hasNext(); ) {
+            String name = (String)i.next();
+            if (!name.startsWith("primaryKey.")) continue;
+
+            Collection values = sourceValues.get(name);
+            if (values == null || values.isEmpty()) return list;
+
+            String targetName = name.substring("primaryKey.".length());
+            Object value = values.iterator().next();
+            pk.set(targetName, value);
+        }
+
+        list.add(pk);
+/*
+        AttributeValues pkValues = new AttributeValues();
         Collection pkFields = sourceConfig.getPrimaryKeyFieldConfigs();
-        for (Iterator j=pkFields.iterator(); j.hasNext(); ) {
-            FieldConfig fieldConfig = (FieldConfig)j.next();
+        for (Iterator i =pkFields.iterator(); i.hasNext(); ) {
+            FieldConfig fieldConfig = (FieldConfig)i.next();
 
             Collection values = sourceValues.get(fieldConfig.getName());
             if (values == null) {
@@ -209,6 +236,8 @@ public class TransformEngine {
         }
 
         return convert(pkValues);
+*/
+        return list;
     }
 
     public Map split(Partition partition, EntryMapping entryMapping, SourceMapping sourceMapping, AttributeValues entry) throws Exception {

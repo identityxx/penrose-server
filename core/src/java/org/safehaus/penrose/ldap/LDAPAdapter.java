@@ -205,7 +205,13 @@ public class LDAPAdapter extends Adapter {
                 String dn = EntryUtil.append(sr.getName(), ldapBase);
                 log.debug(" - "+dn);
 
-                AttributeValues av = getValues(sourceConfig, sr);
+                AttributeValues av = getValues(dn, sourceConfig, sr);
+                for (Iterator i=av.getNames().iterator(); i.hasNext(); ) {
+                    String name = (String)i.next();
+                    Collection values = (Collection)av.get(name);
+                    log.debug("   "+name+": "+values);
+                }
+
                 results.add(av);
             }
 
@@ -240,9 +246,12 @@ public class LDAPAdapter extends Adapter {
         return row;
     }
 
-    public AttributeValues getValues(SourceConfig sourceConfig, SearchResult sr) throws Exception {
+    public AttributeValues getValues(String dn, SourceConfig sourceConfig, SearchResult sr) throws Exception {
 
         AttributeValues av = new AttributeValues();
+
+        Row rdn = EntryUtil.getRdn(dn);
+        av.add("primaryKey", rdn);
 
         Attributes attrs = sr.getAttributes();
         Collection fields = sourceConfig.getFieldConfigs();
@@ -284,8 +293,11 @@ public class LDAPAdapter extends Adapter {
         }
         attributes.put(ocAttribute);
 
+        log.debug("Adding attributes:");
         for (Iterator i=sourceValues.getNames().iterator(); i.hasNext(); ) {
             String name = (String)i.next();
+            if (name.startsWith("primaryKey.")) continue;
+
             Collection values = sourceValues.get(name);
             if (values.isEmpty()) continue;
 
@@ -425,7 +437,7 @@ public class LDAPAdapter extends Adapter {
             String name = attribute.getID();
 
             FieldConfig fieldConfig = sourceConfig.getFieldConfig(name);
-            if (fieldConfig.isPK()) continue;
+            if (fieldConfig == null || fieldConfig.isPK()) continue;
 
             if ("unicodePwd".equals(name) && mi.getModificationOp() == DirContext.ADD_ATTRIBUTE) { // need to encode unicodePwd
                 Attribute newAttribute = new BasicAttribute(fieldConfig.getOriginalName());
@@ -615,6 +627,8 @@ public class LDAPAdapter extends Adapter {
 
         for (Iterator i=entry.getNames().iterator(); i.hasNext(); ) {
             String name = (String)i.next();
+            if (name.startsWith("primaryKey.")) continue;
+            
             Set set = (Set)entry.get(name);
             if (set.isEmpty()) continue;
 

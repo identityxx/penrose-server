@@ -28,44 +28,16 @@
     </aci>
   </entry>
 
-  <entry dn="ou=People,dc=Proxy,dc=Example,dc=com">
+  <entry dn="ou=Users,dc=Proxy,dc=Example,dc=com">
     <source name="users" proxy="true">
       <source-name>users</source-name>
     </source>
-  </entry>
-
-  <entry dn="uid=manager,ou=People,dc=Proxy,dc=Example,dc=com">
-    <oc>person</oc>
-    <oc>organizationalPerson</oc>
-    <oc>inetOrgPerson</oc>
-    <at name="uid" rdn="true">
-      <constant>manager</constant>
-    </at>
-    <at name="sn">
-      <constant>Manager</constant>
-    </at>
-    <at name="cn">
-      <constant>Manager</constant>
-    </at>
   </entry>
 
   <entry dn="ou=Groups,dc=Proxy,dc=Example,dc=com">
     <source name="groups" proxy="true">
       <source-name>groups</source-name>
     </source>
-  </entry>
-
-  <entry dn="cn=Managers,ou=Groups,dc=Proxy,dc=Example,dc=com">
-    <oc>groupOfUniqueNames</oc>
-    <at name="cn" rdn="true">
-      <constant>Managers</constant>
-    </at>
-    <at name="uniqueMember">
-      <constant>uid=manager,ou=People,dc=Proxy,dc=Example,dc=com</constant>
-    </at>
-    <at name="uniqueMember">
-      <constant>uid=admin,ou=People,dc=Proxy,dc=Example,dc=com</constant>
-    </at>
   </entry>
 
 </mapping>

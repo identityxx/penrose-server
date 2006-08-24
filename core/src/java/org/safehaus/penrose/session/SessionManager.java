@@ -52,22 +52,43 @@ public class SessionManager implements SessionManagerMBean {
 
     public synchronized PenroseSession newSession() {
 
-        purge();
-
-        if (sessions.size() >= maxSessions) return null;
-
         String sessionId = createSessionId();
         while (sessions.get(sessionId) != null) {
             sessionId = createSessionId();
         }
 
-        log.debug("Creating session "+sessionId);
+        return createSession(sessionId);
+    }
+
+    public synchronized PenroseSession createSession(String sessionId) {
+
+        purge();
+
+        if (sessions.size() >= maxSessions) return null;
+
+        //log.debug("Creating session "+sessionId);
         PenroseSession session = new PenroseSession(this);
         session.setSessionId(sessionId);
 
         sessions.put(sessionId, session);
 
         return session;
+    }
+
+    public synchronized PenroseSession getSession(String sessionId) {
+
+        purge();
+
+        //log.debug("Retrieving session "+sessionId);
+        return (PenroseSession)sessions.get(sessionId);
+    }
+
+    public synchronized PenroseSession removeSession(String sessionId) {
+
+        purge();
+
+        //log.debug("Removing session "+sessionId);
+        return (PenroseSession)sessions.remove(sessionId);
     }
 
     public String createSessionId() {
@@ -89,7 +110,7 @@ public class SessionManager implements SessionManagerMBean {
 
         for (Iterator i=expiredSessions.iterator(); i.hasNext(); ) {
             String sessionId = (String)i.next();
-            log.debug("Removing session "+sessionId);
+            //log.debug("Removing session "+sessionId);
             sessions.remove(sessionId);
         }
     }

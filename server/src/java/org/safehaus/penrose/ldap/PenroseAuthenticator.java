@@ -71,6 +71,7 @@ public class PenroseAuthenticator extends AbstractAuthenticator {
     public LdapPrincipal authenticate(ServerContext ctx) throws NamingException {
 
         String dn = (String)ctx.getEnvironment().get(Context.SECURITY_PRINCIPAL);
+        //log.info("Login "+dn);
 
         Object credentials = ctx.getEnvironment().get(Context.SECURITY_CREDENTIALS);
         String password = new String((byte[])credentials);
@@ -80,25 +81,27 @@ public class PenroseAuthenticator extends AbstractAuthenticator {
         String rootDn = penroseConfig.getRootUserConfig().getDn();
         String rootPassword = penroseConfig.getRootUserConfig().getPassword();
 
-        //log.info("Login "+dn);
-
+/*
         if (rootDn != null &&
                 rootPassword != null &&
                 rootDn.equals(dn)) {
 
             throw new LdapAuthenticationException();
         }
-
+*/
         if (dn == null || "".equals(dn)) {
             throw new LdapAuthenticationException();
         }
 
         try {
-            PenroseSession session = penrose.newSession();
-            if (session == null) throw new ServiceUnavailableException();
+            PenroseSession session = penrose.getSession(dn);
 
-            int rc = session.bind(dn.toString(), password);
-            session.close();
+            if (session == null) {
+                session = penrose.createSession(dn);
+                if (session == null) throw new ServiceUnavailableException();
+            }
+
+            int rc = session.bind(dn, password);
 
             if (rc != LDAPException.SUCCESS) {
                 ExceptionTool.throwNamingException(rc);

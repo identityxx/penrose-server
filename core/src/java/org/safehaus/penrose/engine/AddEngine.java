@@ -19,6 +19,7 @@ package org.safehaus.penrose.engine;
 
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.util.Formatter;
+import org.safehaus.penrose.util.EntryUtil;
 import org.safehaus.penrose.graph.Graph;
 import org.safehaus.penrose.partition.Partition;
 import org.ietf.ldap.LDAPException;
@@ -45,8 +46,12 @@ public class AddEngine {
             Partition partition,
             Entry parent,
             EntryMapping entryMapping,
+            String dn,
             AttributeValues attributeValues)
             throws Exception {
+
+        Row rdn = EntryUtil.getRdn(dn);
+        attributeValues.set("rdn", rdn);
 
         AttributeValues parentSourceValues = parent.getSourceValues();
         AttributeValues sourceValues = new AttributeValues();
@@ -59,6 +64,8 @@ public class AddEngine {
             Row pk = engine.getTransformEngine().translate(partition, entryMapping, sourceMapping, attributeValues, output);
             if (pk == null) continue;
 
+            sourceValues.set(sourceMapping.getName()+".primaryKey", pk);
+            
             for (Iterator j=output.getNames().iterator(); j.hasNext(); ) {
                 String name = (String)j.next();
                 Collection values = output.get(name);
@@ -67,6 +74,8 @@ public class AddEngine {
         }
 
         if (log.isDebugEnabled()) {
+            log.debug(Formatter.displaySeparator(80));
+
             log.debug(Formatter.displayLine("Parent source values:", 80));
             for (Iterator i = parentSourceValues.getNames().iterator(); i.hasNext(); ) {
                 String name = (String)i.next();

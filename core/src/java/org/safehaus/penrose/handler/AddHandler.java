@@ -24,12 +24,15 @@ import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.util.EntryUtil;
 import org.safehaus.penrose.util.ExceptionUtil;
+import org.safehaus.penrose.schema.SchemaManager;
 import org.ietf.ldap.*;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
 import javax.naming.directory.Attributes;
 import javax.naming.directory.Attribute;
+import javax.naming.directory.BasicAttributes;
+import javax.naming.directory.BasicAttribute;
 import javax.naming.NamingEnumeration;
 import java.util.*;
 
@@ -46,6 +49,27 @@ public class AddHandler {
         this.handler = handler;
     }
 
+    public Attributes normalize(Attributes attributes) throws Exception{
+
+        BasicAttributes newAttributes = new BasicAttributes();
+
+        SchemaManager schemaManager = handler.getSchemaManager();
+        for (NamingEnumeration e=attributes.getAll(); e.hasMore(); ) {
+            Attribute attribute = (Attribute)e.next();
+            String attributeName = schemaManager.getNormalizedAttributeName(attribute.getID());
+
+            BasicAttribute newAttribute = new BasicAttribute(attributeName);
+            for (NamingEnumeration e2=attribute.getAll(); e2.hasMore(); ) {
+                Object value = e2.next();
+                newAttribute.add(value);
+            }
+
+            newAttributes.put(newAttribute);
+        }
+
+        return newAttributes;
+    }
+
     public int add(
             PenroseSession session,
             String dn,
@@ -54,6 +78,9 @@ public class AddHandler {
 
         int rc;
         try {
+
+            attributes = normalize(attributes);
+            
             log.warn("Add entry \""+dn+"\".");
             log.debug("-------------------------------------------------");
             log.debug("ADD:");

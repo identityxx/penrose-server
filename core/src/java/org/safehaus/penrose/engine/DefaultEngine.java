@@ -174,7 +174,7 @@ public class DefaultEngine extends Engine {
             log.debug(Formatter.displaySeparator(80));
         }
 
-        int rc = addEngine.add(partition, parent, entryMapping, attributeValues);
+        int rc = addEngine.add(partition, parent, entryMapping, dn, attributeValues);
 
         if (log.isDebugEnabled()) {
             log.debug(Formatter.displaySeparator(80));
@@ -207,6 +207,8 @@ public class DefaultEngine extends Engine {
             log.debug(Formatter.displayLine("MODRDN", 80));
             log.debug(Formatter.displayLine("DN: "+entry.getDn(), 80));
             log.debug(Formatter.displayLine("New RDN: "+newRdn, 80));
+            log.debug(Formatter.displayLine("Delete old RDN: "+deleteOldRdn, 80));
+            log.debug(Formatter.displaySeparator(80));
         }
 
         int rc = modrdnEngine.modrdn(partition, entry, newRdn, deleteOldRdn);

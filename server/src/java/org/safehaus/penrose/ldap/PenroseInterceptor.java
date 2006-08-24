@@ -37,7 +37,6 @@ import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
 import javax.naming.*;
-import javax.naming.ldap.LdapContext;
 import javax.naming.directory.*;
 import java.util.*;
 
@@ -54,8 +53,6 @@ public class PenroseInterceptor extends BaseInterceptor {
     DirectoryServiceConfiguration factoryCfg;
 
     boolean allowAnonymousAccess;
-
-    Map sessions = new HashMap();
 
     public PenroseServer getPenroseServer() {
         return penroseServer;
@@ -81,40 +78,33 @@ public class PenroseInterceptor extends BaseInterceptor {
 
     public PenroseSession getSession() throws Exception {
 
-        Thread currentThread = Thread.currentThread();
+        Penrose penrose = penroseServer.getPenrose();
+        if (penrose == null) {
+            throw new Exception("Penrose is not initialized.");
+        }
 
-        PenroseSession session = (PenroseSession)sessions.get(currentThread);
-        if (session != null && session.isValid()) return session;
+        String bindDn = getPrincipal() == null ? null : getPrincipal().getJndiName().toString();
+
+        PenroseSession session = penrose.getSession(bindDn);
+
+        if (session == null) {
+            session = penrose.createSession(bindDn);
+            if (session == null) throw new ServiceUnavailableException();
+        }
+
+        return session;
+    }
+
+    public void removeSession() throws Exception {
 
         Penrose penrose = penroseServer.getPenrose();
         if (penrose == null) {
             throw new Exception("Penrose is not initialized.");
         }
 
-        session = penrose.newSession();
-        if (session == null) throw new ServiceUnavailableException();
+        String bindDn = getPrincipal() == null ? null : getPrincipal().getJndiName().toString();
 
-        sessions.put(currentThread, session);
-
-        Name principalDn = getPrincipal() == null ? null : getPrincipal().getJndiName();
-        LdapContext ctx = getContext();
-
-        Hashtable environment = ctx.getEnvironment();
-        log.debug("Environment:");
-        for (Iterator i=environment.keySet().iterator(); i.hasNext(); ) {
-            String name = (String)i.next();
-            Object value = environment.get(name);
-            log.debug(" - "+name+": "+value+" ("+value.getClass().getName()+")");
-        }
-
-        session.setBindDn(principalDn.toString());
-
-        return session;
-    }
-
-    public void removeSession() {
-        LdapContext context = getContext();
-        sessions.remove(context);
+        penrose.removeSession(bindDn);
     }
 
     public void bind(
@@ -164,7 +154,18 @@ public class PenroseInterceptor extends BaseInterceptor {
         try {
             next.bind(bindDn, credentials, mechanisms, saslAuthId);
 
-            PenroseSession session = getSession();
+            Penrose penrose = penroseServer.getPenrose();
+            if (penrose == null) {
+                throw new Exception("Penrose is not initialized.");
+            }
+
+            PenroseSession session = penrose.getSession(bindDn.toString());
+
+            if (session == null) {
+                session = penrose.createSession(bindDn.toString());
+                if (session == null) throw new ServiceUnavailableException();
+            }
+
             session.setBindDn(bindDn.toString());
             session.setBindPassword(password);
 

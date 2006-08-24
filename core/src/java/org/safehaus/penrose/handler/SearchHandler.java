@@ -29,7 +29,6 @@ import org.safehaus.penrose.util.EntryUtil;
 import org.safehaus.penrose.util.LDAPUtil;
 import org.safehaus.penrose.util.ExceptionUtil;
 import org.safehaus.penrose.schema.SchemaManager;
-import org.safehaus.penrose.schema.AttributeType;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.filter.FilterTool;
@@ -105,9 +104,9 @@ public class SearchHandler {
         int rc;
         try {
             String scope = LDAPUtil.getScope(sc.getScope());
-            baseDn = normalizeDn(baseDn);
+            baseDn = normalize(baseDn);
 
-            attributeNames = normalizeAttributeNames(attributeNames);
+            attributeNames = normalize(attributeNames);
             sc.setAttributes(attributeNames);
 
             log.warn("Search \""+baseDn +"\" with scope "+scope+" and filter \""+filter+"\"");
@@ -142,23 +141,10 @@ public class SearchHandler {
         return rc;
     }
 
-    public String getNormalizedAttributeName(String attributeName) {
-
-        SchemaManager schemaManager = handler.getSchemaManager();
-
-        AttributeType attributeType = schemaManager.getAttributeType(attributeName);
-
-        String newAttributeName = attributeName;
-        if (attributeType != null) newAttributeName = attributeType.getName();
-
-        //log.debug("Normalized attribute "+attributeName+" => "+newAttributeName);
-
-        return newAttributeName;
-    }
-
-    public String normalizeDn(String dn) {
+    public String normalize(String dn) {
         String newDn = "";
 
+        SchemaManager schemaManager = handler.getSchemaManager();
         while (dn != null) {
             Row rdn = EntryUtil.getRdn(dn);
             String parentDn = EntryUtil.getParentDn(dn);
@@ -168,7 +154,7 @@ public class SearchHandler {
                 String name = (String)i.next();
                 Object value = rdn.get(name);
 
-                newRdn.set(getNormalizedAttributeName(name), value);
+                newRdn.set(schemaManager.getNormalizedAttributeName(name), value);
             }
 
             //log.debug("Normalized rdn "+rdn+" => "+newRdn);
@@ -180,13 +166,14 @@ public class SearchHandler {
         return newDn;
     }
 
-    public Collection normalizeAttributeNames(Collection attributeNames) {
+    public Collection normalize(Collection attributeNames) {
         if (attributeNames == null) return null;
 
+        SchemaManager schemaManager = handler.getSchemaManager();
         Collection list = new ArrayList();
         for (Iterator i = attributeNames.iterator(); i.hasNext(); ) {
             String name = (String)i.next();
-            list.add(getNormalizedAttributeName(name));
+            list.add(schemaManager.getNormalizedAttributeName(name));
         }
 
         return list;
@@ -483,6 +470,8 @@ public class SearchHandler {
             Entry entry
     ) throws Exception {
 
+        log.debug("Converting Entry to SearchResult: "+entry.getDn());
+
         int rc = handler.getACLEngine().checkRead(session, entry.getDn(), entry.getEntryMapping());
         if (rc != LDAPException.SUCCESS) return null;
 
@@ -523,6 +512,7 @@ public class SearchHandler {
 
         for (Iterator i=list.iterator(); i.hasNext(); ) {
             Attribute attribute = (Attribute)i.next();
+            log.debug("Removing "+attribute.getID()+" attribute");
             attributes.remove(attribute.getID());
         }
 

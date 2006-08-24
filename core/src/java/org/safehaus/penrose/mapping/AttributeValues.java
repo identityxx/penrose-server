@@ -64,10 +64,11 @@ public class AttributeValues implements Cloneable, Comparable {
             String name = (String)i.next();
             Object value = row.get(name);
 
-            Collection c = get(name);
+            String targetName = prefix == null ? name : prefix+"."+name;
+            Collection c = get(targetName);
             if (c == null) c = new LinkedHashSet();
             c.add(value);
-            set(prefix == null ? name : prefix+"."+name, c);
+            set(targetName, c);
         }
     }
 
@@ -80,9 +81,10 @@ public class AttributeValues implements Cloneable, Comparable {
             String name = (String)i.next();
             Object value = row.get(name);
 
+            String targetName = prefix == null ? name : prefix+"."+name;
             Collection c = new LinkedHashSet();
             c.add(value);
-            set(prefix == null ? name : prefix+"."+name, c);
+            set(targetName, c);
         }
     }
 

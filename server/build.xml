@@ -53,12 +53,6 @@
         </condition>
     </target>
 
-    <target name="build-tools" depends="init">
-        <mkdir dir="target/tools"/>
-        <javac srcdir="src/tools" destdir="target/tools"/>
-        <jar destfile="target/${module.name}-tools-${project.version}.jar" basedir="target/tools"/>
-    </target>
-
     <target name="compile" depends="init">
         <echo message="Compiling Penrose Server."/>
         <javacc
@@ -112,7 +106,7 @@
         </jar>
     </target>
 
-    <target name="dist" depends="build-tools,build">
+    <target name="dist" depends="build">
         <mkdir dir="target/dist"/>
         <copy todir="target/dist" file="../README.txt">
             <filterchain>
@@ -163,12 +157,6 @@
                 <expandproperties/>
             </filterchain>
         </copy>
-        <taskdef
-                name="wrapper"
-                classname="org.safehaus.penrose.ant.WrapperTask"
-                classpath="target/${module.name}-tools-${project.version}.jar"
-        />
-        <wrapper file="target/dist/conf/wrapper.conf" dir="target/dist/lib" path="../lib"/>
         <mkdir dir="target/dist/schema/ext"/>
         <copy todir="target/dist/schema">
             <fileset dir="../schema"/>

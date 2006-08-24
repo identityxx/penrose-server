@@ -341,8 +341,13 @@ public class LoadEngine {
 
                 Collection rows = allSourceValues.get(sourceName);
                 for (Iterator j=rows.iterator(); j.hasNext(); ) {
-                    AttributeValues row = (AttributeValues)j.next();
-                    log.debug(Formatter.displayLine(" - "+row, 80));
+                    AttributeValues av = (AttributeValues)j.next();
+
+                    for (Iterator k=av.getNames().iterator(); k.hasNext(); ) {
+                        String name = (String)k.next();
+                        Collection values = av.get(name);
+                        log.debug(Formatter.displayLine(" - "+name+": "+values, 80));
+                    }
                 }
             }
 
