@@ -207,7 +207,6 @@ public class Handler {
         final PenroseSearchResults tempResults = new PenroseSearchResults();
 
         tempResults.addListener(new PipelineAdapter() {
-
             public void objectAdded(PipelineEvent event) {
                 try {
                     Entry entry = (Entry)event.getObject();

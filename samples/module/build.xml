@@ -2,7 +2,7 @@
  Copyright (c) 2000-2005, Identyx Corporation.
  All rights reserved.
 -->
-<project name="modules" default="dist" basedir=".">
+<project name="modules" default="dist">
 
     <property name="prefix" value=""/>
     <property name="penrose.home" value="${prefix}/usr/local/penrose"/>

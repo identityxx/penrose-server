@@ -55,8 +55,7 @@ public class PenroseInterceptor extends BaseInterceptor {
         this.partitionManager = penrose.getPartitionManager();
     }
 
-    public void init(DirectoryServiceConfiguration factoryCfg, InterceptorConfiguration cfg) throws NamingException
-    {
+    public void init(DirectoryServiceConfiguration factoryCfg, InterceptorConfiguration cfg) throws NamingException {
         super.init(factoryCfg, cfg);
         this.factoryCfg = factoryCfg;
     }
@@ -178,7 +177,7 @@ public class PenroseInterceptor extends BaseInterceptor {
             int rc = session.add(upName, attributes);
 
             if (rc != LDAPException.SUCCESS) {
-                ExceptionTool.throwNamingException(rc);
+                throw ExceptionTool.createNamingException(rc);
             }
 
         } catch (NamingException e) {
@@ -220,7 +219,7 @@ public class PenroseInterceptor extends BaseInterceptor {
             int rc = session.compare(dn, attributeName, value);
 
             if (rc != LDAPException.COMPARE_TRUE && rc != LDAPException.COMPARE_FALSE) {
-                ExceptionTool.throwNamingException(rc);
+                throw ExceptionTool.createNamingException(rc);
             }
 
             return rc == LDAPException.COMPARE_TRUE;
@@ -264,7 +263,7 @@ public class PenroseInterceptor extends BaseInterceptor {
             int rc = session.delete(dn);
 
             if (rc != LDAPException.SUCCESS) {
-                ExceptionTool.throwNamingException(rc);
+                throw ExceptionTool.createNamingException(rc);
             }
 
         } catch (NamingException e) {
@@ -464,13 +463,13 @@ public class PenroseInterceptor extends BaseInterceptor {
             int rc = results.getReturnCode();
 
             if (rc != LDAPException.SUCCESS) {
-                ExceptionTool.throwNamingException(rc);
+                throw ExceptionTool.createNamingException(rc);
             }
 
             SearchResult result = (SearchResult)results.next();
 
             if (result == null) {
-                ExceptionTool.throwNamingException(LDAPException.NO_SUCH_OBJECT);
+                throw ExceptionTool.createNamingException(LDAPException.NO_SUCH_OBJECT);
             }
 
             return result.getAttributes();
@@ -525,7 +524,7 @@ public class PenroseInterceptor extends BaseInterceptor {
             int rc = results.getReturnCode();
 
             if (rc != LDAPException.SUCCESS) {
-                ExceptionTool.throwNamingException(rc);
+                throw ExceptionTool.createNamingException(rc);
             }
 
             SearchResult result = (SearchResult)results.next();
@@ -699,7 +698,7 @@ public class PenroseInterceptor extends BaseInterceptor {
             int rc = session.modify(dn.toString(), modifications);
 
             if (rc != LDAPException.SUCCESS) {
-                ExceptionTool.throwNamingException(rc);
+                throw ExceptionTool.createNamingException(rc);
             }
 
         } catch (NamingException e) {
@@ -743,7 +742,7 @@ public class PenroseInterceptor extends BaseInterceptor {
             int rc = session.modify(dn.toString(), Arrays.asList(modificationItems));
 
             if (rc != LDAPException.SUCCESS) {
-                ExceptionTool.throwNamingException(rc);
+                throw ExceptionTool.createNamingException(rc);
             }
 
         } catch (NamingException e) {
@@ -787,7 +786,7 @@ public class PenroseInterceptor extends BaseInterceptor {
             int rc = session.modrdn(dn.toString(), newDn, deleteOldDn);
 
             if (rc != LDAPException.SUCCESS) {
-                ExceptionTool.throwNamingException(rc);
+                throw ExceptionTool.createNamingException(rc);
             }
 
         } catch (NamingException e) {
