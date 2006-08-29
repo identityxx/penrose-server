@@ -23,6 +23,7 @@ import org.safehaus.penrose.pipeline.PipelineAdapter;
 import org.safehaus.penrose.pipeline.PipelineEvent;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
+import org.ietf.ldap.LDAPException;
 
 import javax.naming.directory.Attributes;
 import java.util.Date;
@@ -89,7 +90,11 @@ public class PenroseSession {
         lastActivityDate.setTime(System.currentTimeMillis());
 
         AddEvent beforeModifyEvent = new AddEvent(this, AddEvent.BEFORE_ADD, this, dn, attributes);
-        eventManager.postEvent(dn, beforeModifyEvent);
+        boolean b = eventManager.postEvent(dn, beforeModifyEvent);
+
+        if (!b) {
+            return LDAPException.SUCCESS;
+        }
 
         int rc = handler.add(this, dn, attributes);
 
@@ -106,7 +111,11 @@ public class PenroseSession {
         lastActivityDate.setTime(System.currentTimeMillis());
 
         BindEvent beforeBindEvent = new BindEvent(this, BindEvent.BEFORE_BIND, this, dn, password);
-        eventManager.postEvent(dn, beforeBindEvent);
+        boolean b = eventManager.postEvent(dn, beforeBindEvent);
+
+        if (!b) {
+            return LDAPException.SUCCESS;
+        }
 
         int rc = handler.bind(this, dn, password);
 
@@ -123,7 +132,11 @@ public class PenroseSession {
         lastActivityDate.setTime(System.currentTimeMillis());
 
         CompareEvent beforeCompareEvent = new CompareEvent(this, CompareEvent.BEFORE_COMPARE, this, dn, attributeName, attributeValue);
-        eventManager.postEvent(dn, beforeCompareEvent);
+        boolean b = eventManager.postEvent(dn, beforeCompareEvent);
+
+        if (!b) {
+            return LDAPException.SUCCESS;
+        }
 
         int rc = handler.compare(this, dn, attributeName, attributeValue);
 
@@ -140,7 +153,11 @@ public class PenroseSession {
         lastActivityDate.setTime(System.currentTimeMillis());
 
         DeleteEvent beforeDeleteEvent = new DeleteEvent(this, DeleteEvent.BEFORE_DELETE, this, dn);
-        eventManager.postEvent(dn, beforeDeleteEvent);
+        boolean b = eventManager.postEvent(dn, beforeDeleteEvent);
+
+        if (!b) {
+            return LDAPException.SUCCESS;
+        }
 
         int rc = handler.delete(this, dn);
 
@@ -158,7 +175,11 @@ public class PenroseSession {
         lastActivityDate.setTime(System.currentTimeMillis());
 
         ModifyEvent beforeModifyEvent = new ModifyEvent(this, ModifyEvent.BEFORE_MODIFY, this, dn, modifications);
-        eventManager.postEvent(dn, beforeModifyEvent);
+        boolean b = eventManager.postEvent(dn, beforeModifyEvent);
+
+        if (!b) {
+            return LDAPException.SUCCESS;
+        }
 
         int rc = handler.modify(this, dn, modifications);
 
@@ -176,7 +197,11 @@ public class PenroseSession {
         lastActivityDate.setTime(System.currentTimeMillis());
 
         ModRdnEvent beforeModRdnEvent = new ModRdnEvent(this, ModRdnEvent.BEFORE_MODRDN, this, dn, newRdn, deleteOldRdn);
-        eventManager.postEvent(dn, beforeModRdnEvent);
+        boolean b = eventManager.postEvent(dn, beforeModRdnEvent);
+
+        if (!b) {
+            return LDAPException.SUCCESS;
+        }
 
         int rc = handler.modrdn(this, dn, newRdn, deleteOldRdn);
 
@@ -208,7 +233,12 @@ public class PenroseSession {
         lastActivityDate.setTime(System.currentTimeMillis());
 
         SearchEvent beforeSearchEvent = new SearchEvent(this, SearchEvent.BEFORE_SEARCH, this, baseDn, filter, sc, results);
-        eventManager.postEvent(baseDn, beforeSearchEvent);
+        boolean b = eventManager.postEvent(baseDn, beforeSearchEvent);
+
+        if (!b) {
+            results.close();
+            return LDAPException.SUCCESS;
+        }
 
         final PenroseSession session = this;
 
@@ -230,25 +260,6 @@ public class PenroseSession {
         return handler.search(this, baseDn, filter, sc, results);
     }
 
-    /**
-     * Synchronous search.
-     * @param baseDn
-     * @param filter
-     * @param sc
-     * @return Results will contain objects of type SearchResult.
-     * @throws Exception
-     */
-    public PenroseSearchResults search(
-            String baseDn,
-            String filter,
-            PenroseSearchControls sc)
-            throws Exception {
-
-        PenroseSearchResults results = new PenroseSearchResults();
-        search(baseDn, filter, sc, results);
-        return results;
-    }
-
     public int unbind() throws Exception {
 
         if (!isValid()) throw new Exception("Invalid session.");
@@ -256,7 +267,11 @@ public class PenroseSession {
         lastActivityDate.setTime(System.currentTimeMillis());
 
         BindEvent beforeUnbindEvent = new BindEvent(this, BindEvent.BEFORE_UNBIND, this, bindDn);
-        eventManager.postEvent(bindDn, beforeUnbindEvent);
+        boolean b = eventManager.postEvent(bindDn, beforeUnbindEvent);
+
+        if (!b) {
+            return LDAPException.SUCCESS;
+        }
 
         int rc = handler.unbind(this);
 

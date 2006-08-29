@@ -27,6 +27,7 @@ import org.safehaus.penrose.filter.FilterTool;
 import org.safehaus.penrose.partition.Partition;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
+import org.ietf.ldap.LDAPException;
 
 import java.util.*;
 
@@ -244,12 +245,14 @@ public class LoadEngine {
 
                 AttributeValues sv = loadEntries(partition, sourceValues, entryMapping, entries);
 
-                for (Iterator i=entries.iterator(); i.hasNext(); ) {
-                    EntryData map = (EntryData)i.next();
+                if (sv != null) {
+                    for (Iterator i=entries.iterator(); i.hasNext(); ) {
+                        EntryData map = (EntryData)i.next();
 
-                    map.setLoadedSourceValues(sv);
+                        map.setLoadedSourceValues(sv);
 
-                    loadedBatches.add(map);
+                        loadedBatches.add(map);
+                    }
                 }
             }
 
@@ -309,14 +312,43 @@ public class LoadEngine {
             return newSourceValues;
         }
 
-        Collection pks = new TreeSet();
-        for (Iterator i=list.iterator(); i.hasNext(); ) {
-            EntryData data = (EntryData)i.next();
-            Row pk = data.getFilter();
-            pks.add(pk);
+        boolean pkDefined = false;
+        Collection fieldMappings = primarySourceMapping.getPrimaryKeyFieldMappings();
+        for (Iterator i=fieldMappings.iterator(); !pkDefined && i.hasNext(); ) {
+            FieldMapping fieldMapping = (FieldMapping)i.next();
+            if (!fieldMapping.isPK()) continue;
+            if (!fieldMapping.getType().equalsIgnoreCase(FieldMapping.VARIABLE)) continue;
+
+            String attributeName = fieldMapping.getVariable();
+            if (attributeName.startsWith("rdn.")) attributeName = attributeName.substring(4);
+
+            Collection attributeMappings = entryMapping.getAttributeMappings(attributeName);
+            for (Iterator j=attributeMappings.iterator(); !pkDefined && j.hasNext(); ) {
+                AttributeMapping attributeMapping = (AttributeMapping)j.next();
+                if (!attributeMapping.isPK()) continue;
+
+                log.debug("PK is defined");
+                pkDefined = true;
+                break;
+            }
         }
 
-        Filter filter  = FilterTool.createFilter(pks, true);
+        Collection pks = new TreeSet();
+        if (pkDefined) {
+            for (Iterator i=list.iterator(); i.hasNext(); ) {
+                EntryData data = (EntryData)i.next();
+                Row pk = EntryUtil.getRdn(data.getDn());
+                pks.add(pk);
+            }
+        }
+
+        Collection filters = new ArrayList();
+        for (Iterator i=list.iterator(); i.hasNext(); ) {
+            EntryData data = (EntryData)i.next();
+            Row filter = data.getFilter();
+            filters.add(filter);
+        }
+        Filter filter  = FilterTool.createFilter(filters, true);
 
         LoadGraphVisitor loadVisitor = new LoadGraphVisitor(
                 engine,
@@ -329,11 +361,12 @@ public class LoadEngine {
 
         loadVisitor.run();
 
+        int rc = loadVisitor.getReturnCode();
         AttributeValues allSourceValues = loadVisitor.getLoadedSourceValues();
 
         if (log.isDebugEnabled()) {
             log.debug(Formatter.displaySeparator(80));
-            log.debug(Formatter.displayLine("LOAD RESULT", 80));
+            log.debug(Formatter.displayLine("LOAD RESULT ("+rc+")", 80));
 
             for (Iterator i=allSourceValues.getNames().iterator(); i.hasNext(); ) {
                 String sourceName = (String)i.next();
@@ -354,6 +387,8 @@ public class LoadEngine {
             log.debug(Formatter.displaySeparator(80));
         }
 
+        if (rc != LDAPException.SUCCESS) return null;
+        
         return allSourceValues;
     }
 

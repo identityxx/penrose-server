@@ -135,7 +135,7 @@ public class MergeEngine {
                     Collection avs = loadedSourceValues.get(sourceName);
                     for (Iterator j=avs.iterator(); j.hasNext(); ) {
                         AttributeValues av = (AttributeValues)j.next();
-                        
+
                         for (Iterator k=av.getNames().iterator(); k.hasNext(); ) {
                             String name = (String)k.next();
                             Collection values = av.get(name);
@@ -212,6 +212,8 @@ public class MergeEngine {
                 rows,
                 interpreter
         );
+
+        if (attributeValues == null) return null;
 
         //log.debug(" - attribute values: "+attributeValues);
 

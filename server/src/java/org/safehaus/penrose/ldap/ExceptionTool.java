@@ -10,12 +10,12 @@ import javax.naming.NamingException;
  */
 public class ExceptionTool {
     
-    public static void throwNamingException(int rc) throws NamingException {
-        throwNamingException(rc, null);
+    public static NamingException throwNamingException(int rc) {
+        return createNamingException(rc, null);
     }
 
-    public static void throwNamingException(int rc, String message) throws NamingException {
+    public static NamingException createNamingException(int rc, String message) {
         ResultCodeEnum rce = ResultCodeEnum.getResultCodeEnum(rc);
-        throw new LdapNamingException(message, rce);
+        return new LdapNamingException(message, rce);
     }
 }

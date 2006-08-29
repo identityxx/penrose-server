@@ -77,7 +77,7 @@ public class SambaUserModule extends Module {
         }
     }
 
-    public void beforeAdd(AddEvent event) throws Exception {
+    public boolean beforeAdd(AddEvent event) throws Exception {
         Attributes attributes = event.getAttributes();
 
         String dn = event.getDn();
@@ -157,9 +157,11 @@ public class SambaUserModule extends Module {
             set = new BasicAttribute("sambaAcctFlags", flags);
             attributes.put(set);
         }
+
+        return true;
     }
 
-    public void beforeModify(ModifyEvent event) throws Exception {
+    public boolean beforeModify(ModifyEvent event) throws Exception {
 
         String dn = event.getDn();
         int i = dn.indexOf("=");
@@ -262,6 +264,8 @@ public class SambaUserModule extends Module {
             modification = new ModificationItem(DirContext.ADD_ATTRIBUTE, attribute);
             modifications.add(modification);
         }
+
+        return true;
     }
 
     public Map getServerInfo() throws Exception {

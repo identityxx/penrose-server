@@ -196,7 +196,10 @@ public abstract class Engine {
             String name = attributeMapping.getName();
 
             Object value = interpreter.eval(entryMapping, attributeMapping);
-            if (value == null) continue;
+            if (value == null) {
+                if (attributeMapping.isPK()) return null;
+                continue;
+            }
 
             attributeValues.add(name, value);
 

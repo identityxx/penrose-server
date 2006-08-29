@@ -17,7 +17,7 @@
         <fileset dir="../../lib">
             <include name="**/*.jar"/>
         </fileset>
-        <pathelement location="../../target/classes"/>
+        <pathelement location="../../core/target/classes"/>
     </path>
 
     <target name="build">

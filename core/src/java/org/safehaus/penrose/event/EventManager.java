@@ -1,6 +1,7 @@
 package org.safehaus.penrose.event;
 
 import org.safehaus.penrose.module.ModuleManager;
+import org.ietf.ldap.LDAPException;
 
 import java.util.Collection;
 import java.util.Iterator;
@@ -21,7 +22,7 @@ public class EventManager {
     public Collection modrdnListeners = new ArrayList();
     public Collection searchListeners = new ArrayList();
 
-    public void postEvent(String dn, AddEvent event) throws Exception {
+    public boolean postEvent(String dn, AddEvent event) throws Exception {
 
         Collection listeners = moduleManager.getModules(dn);
         listeners.addAll(addListeners);
@@ -31,7 +32,8 @@ public class EventManager {
 
             switch (event.getType()) {
                 case AddEvent.BEFORE_ADD:
-                    listener.beforeAdd(event);
+                    boolean b = listener.beforeAdd(event);
+                    if (!b) return false;
                     break;
 
                 case AddEvent.AFTER_ADD:
@@ -39,9 +41,11 @@ public class EventManager {
                     break;
             }
         }
+
+        return true;
     }
 
-    public void postEvent(String dn, BindEvent event) throws Exception {
+    public boolean postEvent(String dn, BindEvent event) throws Exception {
 
         Collection listeners = moduleManager.getModules(dn);
         listeners.addAll(bindListeners);
@@ -51,7 +55,8 @@ public class EventManager {
 
             switch (event.getType()) {
                 case BindEvent.BEFORE_BIND:
-                    listener.beforeBind(event);
+                    boolean b = listener.beforeBind(event);
+                    if (!b) return false;
                     break;
 
                 case BindEvent.AFTER_BIND:
@@ -59,7 +64,8 @@ public class EventManager {
                     break;
 
                 case BindEvent.BEFORE_UNBIND:
-                    listener.beforeUnbind(event);
+                    b = listener.beforeUnbind(event);
+                    if (!b) return false;
                     break;
 
                 case BindEvent.AFTER_UNBIND:
@@ -67,9 +73,11 @@ public class EventManager {
                     break;
             }
         }
+
+        return true;
     }
 
-    public void postEvent(String dn, CompareEvent event) throws Exception {
+    public boolean postEvent(String dn, CompareEvent event) throws Exception {
 
         Collection listeners = moduleManager.getModules(dn);
         listeners.addAll(compareListeners);
@@ -79,7 +87,8 @@ public class EventManager {
 
             switch (event.getType()) {
                 case CompareEvent.BEFORE_COMPARE:
-                    listener.beforeCompare(event);
+                    boolean b = listener.beforeCompare(event);
+                    if (!b) return false;
                     break;
 
                 case CompareEvent.AFTER_COMPARE:
@@ -87,9 +96,11 @@ public class EventManager {
                     break;
             }
         }
+
+        return true;
     }
 
-    public void postEvent(String dn, DeleteEvent event) throws Exception {
+    public boolean postEvent(String dn, DeleteEvent event) throws Exception {
 
         Collection listeners = moduleManager.getModules(dn);
         listeners.addAll(deleteListeners);
@@ -99,7 +110,8 @@ public class EventManager {
 
             switch (event.getType()) {
                 case DeleteEvent.BEFORE_DELETE:
-                    listener.beforeDelete((DeleteEvent)event);
+                    boolean b = listener.beforeDelete((DeleteEvent)event);
+                    if (!b) return false;
                     break;
 
                 case DeleteEvent.AFTER_DELETE:
@@ -107,9 +119,11 @@ public class EventManager {
                     break;
             }
         }
+
+        return true;
     }
 
-    public void postEvent(String dn, ModifyEvent event) throws Exception {
+    public boolean postEvent(String dn, ModifyEvent event) throws Exception {
 
         Collection listeners = moduleManager.getModules(dn);
         listeners.addAll(modifyListeners);
@@ -119,7 +133,8 @@ public class EventManager {
 
             switch (event.getType()) {
             case ModifyEvent.BEFORE_MODIFY:
-                listener.beforeModify(event);
+                boolean b = listener.beforeModify(event);
+                if (!b) return false;
                 break;
 
             case ModifyEvent.AFTER_MODIFY:
@@ -127,9 +142,11 @@ public class EventManager {
                 break;
             }
         }
+
+        return true;
     }
 
-    public void postEvent(String dn, ModRdnEvent event) throws Exception {
+    public boolean postEvent(String dn, ModRdnEvent event) throws Exception {
 
         Collection listeners = moduleManager.getModules(dn);
         listeners.addAll(modrdnListeners);
@@ -139,7 +156,8 @@ public class EventManager {
 
             switch (event.getType()) {
             case ModRdnEvent.BEFORE_MODRDN:
-                listener.beforeModRdn(event);
+                boolean b = listener.beforeModRdn(event);
+                if (!b) return false;
                 break;
 
             case ModRdnEvent.AFTER_MODRDN:
@@ -147,9 +165,11 @@ public class EventManager {
                 break;
             }
         }
+
+        return true;
     }
 
-    public void postEvent(String dn, SearchEvent event) throws Exception {
+    public boolean postEvent(String dn, SearchEvent event) throws Exception {
 
         Collection listeners = moduleManager.getModules(dn);
         listeners.addAll(searchListeners);
@@ -159,7 +179,8 @@ public class EventManager {
 
             switch (event.getType()) {
                 case SearchEvent.BEFORE_SEARCH:
-                    listener.beforeSearch(event);
+                    boolean b = listener.beforeSearch(event);
+                    if (!b) return false;
                     break;
 
                 case SearchEvent.AFTER_SEARCH:
@@ -167,6 +188,8 @@ public class EventManager {
                     break;
             }
         }
+
+        return true;
     }
 
     public ModuleManager getModuleManager() {

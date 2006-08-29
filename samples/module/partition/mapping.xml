@@ -9,10 +9,10 @@
     <oc>dcObject</oc>
     <oc>organization</oc>
     <at name="dc" rdn="true">
-      <constant>Modules</constant>
+      <constant>Module</constant>
     </at>
     <at name="o">
-      <constant>Modules</constant>
+      <constant>Module</constant>
     </at>
     <aci subject="self">
       <permission>rws</permission>

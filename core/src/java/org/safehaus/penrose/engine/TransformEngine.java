@@ -143,16 +143,11 @@ public class TransformEngine {
             FieldMapping fieldMapping = (FieldMapping)i.next();
             String name = fieldMapping.getName();
 
-            FieldConfig fieldConfig = sourceConfig.getFieldConfig(name);
-            if (fieldConfig == null) {
-                throw new Exception("Unknown field "+name+" in source "+sourceMapping.getName()+" in \""+entryMapping.getDn()+"\".");
-            }
-
             Object newValues = interpreter.eval(entryMapping, fieldMapping);
             log.debug(" - "+name+": "+newValues+(fieldMapping.isPK() ? " (pk)" : ""));
 
             if (newValues == null) {
-                if (fieldConfig.isPK()) pk = null;
+                if (fieldMapping.isPK()) pk = null;
                 continue;
             }
 

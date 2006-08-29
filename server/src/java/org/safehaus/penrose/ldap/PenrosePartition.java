@@ -326,7 +326,7 @@ public class PenrosePartition extends AbstractDirectoryPartition {
             session.close();
 
             if (rc != LDAPException.SUCCESS) {
-                ExceptionTool.throwNamingException(rc);
+                throw ExceptionTool.throwNamingException(rc);
             }
 
             SearchResult result = (SearchResult)results.next();
@@ -389,7 +389,7 @@ public class PenrosePartition extends AbstractDirectoryPartition {
             session.close();
 
             if (rc != LDAPException.SUCCESS) {
-                ExceptionTool.throwNamingException(rc);
+                throw ExceptionTool.throwNamingException(rc);
             }
 
         } catch (NamingException e) {

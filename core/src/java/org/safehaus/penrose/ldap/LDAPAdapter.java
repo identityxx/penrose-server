@@ -348,16 +348,8 @@ public class LDAPAdapter extends Adapter {
         for (Iterator i=entry.getNames().iterator(); i.hasNext(); ) {
             String name = (String)i.next();
 
-            boolean primaryKey = false;
-            for (Iterator j=fields.iterator(); j.hasNext(); ) {
-                FieldConfig fieldConfig = (FieldConfig)j.next();
-                if (!fieldConfig.isPK()) continue;
-                if (!fieldConfig.getName().equals(name)) continue;
-                primaryKey = true;
-                break;
-            }
-
-            if (primaryKey) continue; // don't delete primary key
+            FieldConfig fieldConfig = sourceConfig.getFieldConfig(name);
+            if (fieldConfig == null) continue;
 
             Set set = (Set)entry.get(name);
             Attribute attribute = new BasicAttribute(name);
@@ -437,7 +429,7 @@ public class LDAPAdapter extends Adapter {
             String name = attribute.getID();
 
             FieldConfig fieldConfig = sourceConfig.getFieldConfig(name);
-            if (fieldConfig == null || fieldConfig.isPK()) continue;
+            if (fieldConfig == null) continue;
 
             if ("unicodePwd".equals(name) && mi.getModificationOp() == DirContext.ADD_ATTRIBUTE) { // need to encode unicodePwd
                 Attribute newAttribute = new BasicAttribute(fieldConfig.getOriginalName());
@@ -628,20 +620,12 @@ public class LDAPAdapter extends Adapter {
         for (Iterator i=entry.getNames().iterator(); i.hasNext(); ) {
             String name = (String)i.next();
             if (name.startsWith("primaryKey.")) continue;
-            
+
             Set set = (Set)entry.get(name);
             if (set.isEmpty()) continue;
 
-            boolean primaryKey = false;
-            for (Iterator j=fields.iterator(); j.hasNext(); ) {
-                FieldConfig fieldConfig = (FieldConfig)j.next();
-                if (!fieldConfig.isPK()) continue;
-                if (!fieldConfig.getName().equals(name)) continue;
-                primaryKey = true;
-                break;
-            }
-
-            if (primaryKey) continue; // don't add primary key
+            FieldConfig fieldConfig = sourceConfig.getFieldConfig(name);
+            if (fieldConfig == null) continue;
 
             Attribute attribute = new BasicAttribute(name);
             for (Iterator j = set.iterator(); j.hasNext(); ) {

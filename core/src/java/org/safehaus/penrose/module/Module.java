@@ -22,6 +22,7 @@ import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.partition.Partition;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
+import org.ietf.ldap.LDAPException;
 
 import java.util.Collection;
 
@@ -66,49 +67,57 @@ public class Module implements AddListener, BindListener, CompareListener, Delet
         setStatus(STOPPED);
     }
 
-    public void beforeBind(BindEvent event) throws Exception {
+    public boolean beforeBind(BindEvent event) throws Exception {
+        return true;
     }
 
     public void afterBind(BindEvent event) throws Exception {
     }
 
-    public void beforeUnbind(BindEvent event) throws Exception {
+    public boolean beforeUnbind(BindEvent event) throws Exception {
+        return true;
     }
 
     public void afterUnbind(BindEvent event) throws Exception {
     }
 
-    public void beforeCompare(CompareEvent event) throws Exception {
+    public boolean beforeCompare(CompareEvent event) throws Exception {
+        return true;
     }
 
     public void afterCompare(CompareEvent event) throws Exception {
     }
 
-    public void beforeAdd(AddEvent event) throws Exception {
+    public boolean beforeAdd(AddEvent event) throws Exception {
+        return true;
     }
 
     public void afterAdd(AddEvent event) throws Exception {
     }
 
-    public void beforeModify(ModifyEvent event) throws Exception {
+    public boolean beforeModify(ModifyEvent event) throws Exception {
+        return true;
     }
 
     public void afterModify(ModifyEvent event) throws Exception {
     }
 
-    public void beforeModRdn(ModRdnEvent event) throws Exception {
+    public boolean beforeModRdn(ModRdnEvent event) throws Exception {
+        return true;
     }
 
     public void afterModRdn(ModRdnEvent event) throws Exception {
     }
 
-    public void beforeDelete(DeleteEvent event) throws Exception {
+    public boolean beforeDelete(DeleteEvent event) throws Exception {
+        return true;
     }
 
     public void afterDelete(DeleteEvent event) throws Exception {
     }
 
-    public void beforeSearch(SearchEvent event) throws Exception {
+    public boolean beforeSearch(SearchEvent event) throws Exception {
+        return true;
     }
 
     public void afterSearch(SearchEvent event) throws Exception {

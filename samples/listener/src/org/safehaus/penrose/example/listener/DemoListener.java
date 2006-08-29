@@ -19,6 +19,8 @@ import javax.naming.directory.SearchResult;
 import javax.naming.directory.Attributes;
 import javax.naming.directory.Attribute;
 import javax.naming.NamingEnumeration;
+import javax.naming.NamingException;
+import javax.naming.NoPermissionException;
 import java.util.Iterator;
 import java.io.File;
 
@@ -29,7 +31,7 @@ public class DemoListener implements SearchListener {
 
     public final static String SUFFIX = "dc=Example,dc=com";
 
-    public void run () throws Exception {
+    public void run() throws Exception {
 
         ClassLoader cl = getClass().getClassLoader();
         while (cl != null) {
@@ -44,7 +46,7 @@ public class DemoListener implements SearchListener {
         rootLogger.setLevel(Level.OFF);
 
         Logger logger = Logger.getLogger("org.safehaus.penrose");
-        logger.setLevel(Level.WARN);
+        logger.setLevel(Level.DEBUG);
 
         PenroseConfig penroseConfig = new DefaultPenroseConfig();
         penroseConfig.setHome("../..");
@@ -98,8 +100,16 @@ public class DemoListener implements SearchListener {
         return sb.toString();
     }
 
-    public void beforeSearch(SearchEvent event) throws Exception {
+    public boolean beforeSearch(SearchEvent event) throws Exception {
         System.out.println("#### Searching "+event.getBaseDn()+" with filter "+event.getFilter()+".");
+
+        if (event.getFilter().equalsIgnoreCase("(ou=*)")) {
+            return false;
+        }
+
+        if (event.getFilter().equalsIgnoreCase("(ou=secret)")) {
+            throw new NoPermissionException();
+        }
 
         PenroseSearchResults results = event.getSearchResults();
 
@@ -109,6 +119,8 @@ public class DemoListener implements SearchListener {
                 System.out.println("#### Returning "+entry.getName());
             }
         });
+
+        return true;
     }
 
     public void afterSearch(SearchEvent event) throws Exception {

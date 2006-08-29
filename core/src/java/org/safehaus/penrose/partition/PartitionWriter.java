@@ -345,12 +345,6 @@ public class PartitionWriter {
         if (attributeMapping.getLength() != AttributeMapping.DEFAULT_LENGTH) element.addAttribute("length", ""+attributeMapping.getLength());
         if (attributeMapping.getPrecision() != AttributeMapping.DEFAULT_PRECISION) element.addAttribute("precision", ""+attributeMapping.getPrecision());
 
-        if (attributeMapping.getScript() != null) {
-            Element scriptElement = new DefaultElement("script");
-            scriptElement.setText(attributeMapping.getScript());
-            element.add(scriptElement);
-        }
-
         if (attributeMapping.getConstant() != null) {
             Object value = attributeMapping.getConstant();
             if (value instanceof byte[]) {

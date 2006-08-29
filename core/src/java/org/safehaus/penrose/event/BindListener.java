@@ -22,9 +22,9 @@ package org.safehaus.penrose.event;
  */
 public interface BindListener {
 
-    public void beforeBind(BindEvent event) throws Exception;
+    public boolean beforeBind(BindEvent event) throws Exception;
     public void afterBind(BindEvent event) throws Exception;
 
-    public void beforeUnbind(BindEvent event) throws Exception;
+    public boolean beforeUnbind(BindEvent event) throws Exception;
     public void afterUnbind(BindEvent event) throws Exception;
 }

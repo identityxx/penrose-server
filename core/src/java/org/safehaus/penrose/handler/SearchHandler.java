@@ -377,11 +377,13 @@ public class SearchHandler {
         Interpreter interpreter = handler.getEngine().getInterpreterManager().newInstance();
 
         AttributeValues av = handler.getEngine().computeAttributeValues(entryMapping, interpreter);
-        for (Iterator j=av.getNames().iterator(); j.hasNext(); ) {
-            String name = (String)j.next();
-            Collection values = av.get(name);
+        if (av != null) {
+            for (Iterator j=av.getNames().iterator(); j.hasNext(); ) {
+                String name = (String)j.next();
+                Collection values = av.get(name);
 
-            newParentSourceValues.add("parent."+name, values);
+                newParentSourceValues.add("parent."+name, values);
+            }
         }
 
         interpreter.clear();

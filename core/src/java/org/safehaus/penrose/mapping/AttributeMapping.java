@@ -47,11 +47,6 @@ public class AttributeMapping implements Cloneable {
 	 */
 	private String name;
 
-    /**
-     * Script.
-     */
-    private String script;
-
 	/**
 	 * Values.
 	 */
@@ -81,17 +76,18 @@ public class AttributeMapping implements Cloneable {
     public AttributeMapping() {
     }
 
-    public AttributeMapping(String name, String expType, Object value) {
-        this(name, expType, value, false);
+    public AttributeMapping(String name, String type, Object value) {
+        this(name, type, value, false);
     }
     
-    public AttributeMapping(String name, String expType, Object value, boolean rdn) {
+    public AttributeMapping(String name, String type, Object value, boolean rdn) {
         this.name = name;
+        this.type = type;
 
-        if (CONSTANT.equals(expType)) {
+        if (CONSTANT.equals(type)) {
             this.constant = value;
 
-        } else if (VARIABLE.equals(expType)) {
+        } else if (VARIABLE.equals(type)) {
             this.variable = (String)value;
 
         } else {
@@ -178,14 +174,6 @@ public class AttributeMapping implements Cloneable {
         this.encoding = encoding;
     }
 
-    public String getScript() {
-        return script;
-    }
-
-    public void setScript(String script) {
-        this.script = script;
-    }
-
     public String getType() {
         return type;
     }
@@ -212,7 +200,6 @@ public class AttributeMapping implements Cloneable {
 
     public int hashCode() {
         return (name == null ? 0 : name.hashCode()) +
-                (script == null ? 0 : script.hashCode()) +
                 (constant == null ? 0 : constant.hashCode()) +
                 (variable == null ? 0 : variable.hashCode()) +
                 (expression == null ? 0 : expression.hashCode()) +
@@ -236,7 +223,6 @@ public class AttributeMapping implements Cloneable {
 
         AttributeMapping attributeMapping = (AttributeMapping)object;
         if (!equals(name, attributeMapping.name)) return false;
-        if (!equals(script, attributeMapping.script)) return false;
 
         if (constant instanceof byte[] && attributeMapping.constant instanceof byte[]) {
             if (!Arrays.equals((byte[])constant, (byte[])attributeMapping.constant)) return false;
@@ -258,7 +244,6 @@ public class AttributeMapping implements Cloneable {
 
     public Object copy(AttributeMapping attributeMapping) {
         name = attributeMapping.name;
-        script = attributeMapping.script;
 
         if (attributeMapping.constant instanceof byte[]) {
             constant = ((byte[])attributeMapping.constant).clone();

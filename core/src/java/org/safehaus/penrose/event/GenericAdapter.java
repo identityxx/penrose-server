@@ -23,7 +23,10 @@ import org.slf4j.Logger;
 /**
  * @author Endi S. Dewata
  */
-public class GenericAdapter implements BindListener, AddListener, ModifyListener {
+public class GenericAdapter
+        implements BindListener, AddListener, ModifyListener, ModRdnListener,
+        DeleteListener, SearchListener, CompareListener
+    {
 
     Logger log = LoggerFactory.getLogger(getClass());
 
@@ -31,35 +34,75 @@ public class GenericAdapter implements BindListener, AddListener, ModifyListener
         log.debug("GenericAdapter.<init>()");
     }
 
-    public void beforeBind(BindEvent e) throws Exception {
+    public boolean beforeBind(BindEvent e) throws Exception {
         log.debug("GenericAdapter.beforeBind()");
+        return true;
     }
 
     public void afterBind(BindEvent e) throws Exception {
         log.debug("GenericAdapter.afterBind()");
     }
 
-    public void beforeUnbind(BindEvent e) throws Exception {
+    public boolean beforeUnbind(BindEvent e) throws Exception {
         log.debug("GenericAdapter.beforeUnbind()");
+        return true;
     }
 
     public void afterUnbind(BindEvent e) throws Exception {
         log.debug("GenericAdapter.afterUnbind()");
     }
 
-    public void beforeAdd(AddEvent event) throws Exception {
+    public boolean beforeAdd(AddEvent event) throws Exception {
         log.debug("GenericAdapter.beforeAdd()");
+        return true;
     }
 
     public void afterAdd(AddEvent event) throws Exception {
         log.debug("GenericAdapter.afterAdd()");
     }
 
-    public void beforeModify(ModifyEvent event) throws Exception {
+    public boolean beforeModify(ModifyEvent event) throws Exception {
         log.debug("GenericAdapter.beforeModify()");
+        return true;
     }
 
     public void afterModify(ModifyEvent event) throws Exception {
         log.debug("GenericAdapter.afterModify()");
+    }
+
+    public boolean beforeModRdn(ModRdnEvent event) throws Exception {
+        log.debug("GenericAdapter.beforeModRdn()");
+        return true;
+    }
+
+    public void afterModRdn(ModRdnEvent event) throws Exception {
+        log.debug("GenericAdapter.afterModRdn()");
+    }
+
+    public boolean beforeDelete(DeleteEvent event) throws Exception {
+        log.debug("GenericAdapter.beforeDelete()");
+        return true;
+    }
+
+    public void afterDelete(DeleteEvent event) throws Exception {
+        log.debug("GenericAdapter.afterDelete()");
+    }
+
+    public boolean beforeSearch(SearchEvent event) throws Exception {
+        log.debug("GenericAdapter.beforeSearch()");
+        return true;
+    }
+
+    public void afterSearch(SearchEvent event) throws Exception {
+        log.debug("GenericAdapter.afterSearch()");
+    }
+
+    public boolean beforeCompare(CompareEvent event) throws Exception {
+        log.debug("GenericAdapter.beforeCompare()");
+        return true;
+    }
+
+    public void afterCompare(CompareEvent event) throws Exception {
+        log.debug("GenericAdapter.afterCompare()");
     }
 }

@@ -29,6 +29,7 @@ import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.SourceConfig;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
+import org.ietf.ldap.LDAPException;
 
 import java.util.*;
 
@@ -49,6 +50,7 @@ public class LoadGraphVisitor extends GraphVisitor {
     private Stack stack = new Stack();
 
     private AttributeValues loadedSourceValues = new AttributeValues();
+    private int returnCode;
 
     public LoadGraphVisitor(
             Engine engine,
@@ -135,6 +137,11 @@ public class LoadGraphVisitor extends GraphVisitor {
 
         loadedSourceValues.set(sourceMapping.getName(), list);
 
+        int rc = tmp.getReturnCode();
+        if (rc != LDAPException.SUCCESS) {
+            returnCode = rc;
+        }
+        
         graphIterator.traverseEdges(node);
     }
 
@@ -185,5 +192,13 @@ public class LoadGraphVisitor extends GraphVisitor {
 
     public AttributeValues getLoadedSourceValues() {
         return loadedSourceValues;
+    }
+
+    public int getReturnCode() {
+        return returnCode;
+    }
+
+    public void setReturnCode(int returnCode) {
+        this.returnCode = returnCode;
     }
 }

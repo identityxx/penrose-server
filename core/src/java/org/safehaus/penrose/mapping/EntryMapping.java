@@ -70,7 +70,7 @@ public class EntryMapping implements Cloneable {
      */
     private Collection objectClasses = new TreeSet();
     
-    private String script;
+    private String description;
 
     /**
      * Attributes. The keys are the attribute names (java.lang.String). Each value is of type org.safehaus.penrose.mapping.AttributeMapping.
@@ -367,12 +367,12 @@ public class EntryMapping implements Cloneable {
         relationships.clear();
     }
     
-    public String getScript() {
-        return script;
+    public String getDescription() {
+        return description;
     }
 
-    public void setScript(String script) {
-        this.script = script;
+    public void setDescription(String description) {
+        this.description = description;
     }
 
     public void setRdn(String rdn) {
@@ -428,7 +428,7 @@ public class EntryMapping implements Cloneable {
                 (parentDn == null ? 0 : parentDn.hashCode()) +
                 (enabled ? 0 : 1) +
                 (objectClasses == null ? 0 : objectClasses.hashCode()) +
-                (script == null ? 0 : script.hashCode()) +
+                (description == null ? 0 : description.hashCode()) +
                 (attributeMappings == null ? 0 : attributeMappings.hashCode()) +
                 (sourceMappings == null ? 0 : sourceMappings.hashCode()) +
                 (relationships == null ? 0 : relationships.hashCode()) +
@@ -451,7 +451,7 @@ public class EntryMapping implements Cloneable {
         if (!equals(parentDn, entryMapping.parentDn)) return false;
         if (enabled != entryMapping.enabled) return false;
         if (!equals(objectClasses, entryMapping.objectClasses)) return false;
-        if (!equals(script, entryMapping.script)) return false;
+        if (!equals(description, entryMapping.description)) return false;
         if (!equals(attributeMappings, entryMapping.attributeMappings)) return false;
         if (!equals(sourceMappings, entryMapping.sourceMappings)) return false;
         if (!equals(relationships, entryMapping.relationships)) return false;
@@ -465,7 +465,7 @@ public class EntryMapping implements Cloneable {
         rdn = entryMapping.rdn;
         parentDn = entryMapping.parentDn;
         enabled = entryMapping.enabled;
-        script = entryMapping.script;
+        description = entryMapping.description;
 
         removeObjectClasses();
         for (Iterator i=entryMapping.objectClasses.iterator(); i.hasNext(); ) {

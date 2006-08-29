@@ -718,6 +718,8 @@ Mapping: cn=Managers,ou=Groups,dc=Proxy,dc=Example,dc=org
                 list
         );
 
+        if (loadedSourceValues == null) return null;
+        
         final Interpreter interpreter = getInterpreterManager().newInstance();
 
         SourceMapping primarySourceMapping = getPrimarySource(entryMapping);

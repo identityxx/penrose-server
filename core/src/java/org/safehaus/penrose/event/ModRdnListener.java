@@ -22,6 +22,6 @@ package org.safehaus.penrose.event;
  */
 public interface ModRdnListener {
     
-    public void beforeModRdn(ModRdnEvent event) throws Exception;
+    public boolean beforeModRdn(ModRdnEvent event) throws Exception;
     public void afterModRdn(ModRdnEvent event) throws Exception;
 }

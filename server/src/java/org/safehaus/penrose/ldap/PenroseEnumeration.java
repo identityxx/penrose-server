@@ -52,7 +52,7 @@ public class PenroseEnumeration implements NamingEnumeration {
 
         int rc = searchResults.getReturnCode();
         if (rc != LDAPException.SUCCESS) {
-            ExceptionTool.throwNamingException(rc, "RC: "+rc);
+            throw ExceptionTool.createNamingException(rc, "RC: "+rc);
         }
 
         return false;

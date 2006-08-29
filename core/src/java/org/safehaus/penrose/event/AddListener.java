@@ -22,6 +22,6 @@ package org.safehaus.penrose.event;
  */
 public interface AddListener {
 
-    public void beforeAdd(AddEvent event) throws Exception;
+    public boolean beforeAdd(AddEvent event) throws Exception;
     public void afterAdd(AddEvent event) throws Exception;
 }

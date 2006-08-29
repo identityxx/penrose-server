@@ -104,7 +104,7 @@ public class PenroseAuthenticator extends AbstractAuthenticator {
             int rc = session.bind(dn, password);
 
             if (rc != LDAPException.SUCCESS) {
-                ExceptionTool.throwNamingException(rc);
+                throw ExceptionTool.throwNamingException(rc);
             }
 
             log.warn("Bind operation succeeded.");

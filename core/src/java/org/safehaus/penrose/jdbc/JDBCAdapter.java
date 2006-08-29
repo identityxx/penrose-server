@@ -617,15 +617,6 @@ public class JDBCAdapter extends Adapter {
 
     public int modify(SourceConfig sourceConfig, Row pk, Collection modifications) throws Exception {
 
-        // convert sets into single values
-        //Collection oldRows = TransformEngine.convert(oldEntry);
-        //Collection newRows = TransformEngine.convert(sourceValues);
-
-        //Row oldRow = (Row)oldRows.iterator().next();
-        //Row newRow = (Row)newRows.iterator().next();
-
-        //log.debug("Modifying source "+source.getName()+": "+oldRow+" with "+newRow);
-
         String tableName = sourceConfig.getParameter(TABLE_NAME);
 
         java.sql.Connection con = null;
@@ -644,7 +635,6 @@ public class JDBCAdapter extends Adapter {
                 String name = attribute.getID();
 
                 FieldConfig fieldConfig = sourceConfig.getFieldConfig(name);
-                if (fieldConfig.isPK()) continue;
 
                 switch (mi.getModificationOp()) {
                     case DirContext.ADD_ATTRIBUTE:
