@@ -1,0 +1,552 @@
+Index: configure
+===================================================================
+RCS file: /repo/OpenLDAP/pkg/ldap/configure,v
+retrieving revision 1.598.2.29
+diff -r1.598.2.29 configure
+468c468
+< ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS build build_cpu build_vendor build_os host host_cpu host_vendor host_os target target_cpu target_vendor target_os INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA CYGPATH_W PACKAGE VERSION ACLOCAL AUTOCONF AUTOMAKE AUTOHEADER MAKEINFO install_sh STRIP ac_ct_STRIP INSTALL_STRIP_PROGRAM mkdir_p AWK SET_MAKE am__leading_dot AMTAR am__tar am__untar OPENLDAP_LIBRELEASE OPENLDAP_LIBVERSION OPENLDAP_RELEASE_DATE top_builddir ldap_subdir CC AR CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT DEPDIR am__include am__quote AMDEP_TRUE AMDEP_FALSE AMDEPBACKSLASH CCDEPMODE am__fastdepCC_TRUE am__fastdepCC_FALSE EGREP LN_S ECHO ac_ct_AR RANLIB ac_ct_RANLIB DLLTOOL ac_ct_DLLTOOL AS ac_ct_AS OBJDUMP ac_ct_OBJDUMP CPP LIBTOOL PERLBIN OL_MKDEP OL_MKDEP_FLAGS LTSTATIC LIBOBJS LIBSRCS PLAT WITH_SASL WITH_TLS WITH_MODULES_ENABLED WITH_ACI_ENABLED BUILD_THREAD BUILD_LIBS_DYNAMIC BUILD_SLAPD BUILD_SLAPI SLAPD_SLAPI_DEPEND BUILD_BDB BUILD_DNSSRV BUILD_HDB BUILD_LDAP BUILD_LDBM BUILD_META BUILD_MONITOR BUILD_NULL BUILD_PASSWD BUILD_RELAY BUILD_PERL BUILD_SHELL BUILD_SQL BUILD_ACCESSLOG BUILD_DENYOP BUILD_DYNGROUP BUILD_DYNLIST BUILD_LASTMOD BUILD_PPOLICY BUILD_PROXYCACHE BUILD_REFINT BUILD_RETCODE BUILD_RWM BUILD_SYNCPROV BUILD_TRANSLUCENT BUILD_UNIQUE BUILD_VALSORT BUILD_SLURPD LDAP_LIBS SLAPD_LIBS SLURPD_LIBS LDBM_LIBS LTHREAD_LIBS LUTIL_LIBS WRAP_LIBS SLAPD_MODULES_CPPFLAGS SLAPD_MODULES_LDFLAGS SLAPD_NO_STATIC SLAPD_STATIC_BACKENDS SLAPD_DYNAMIC_BACKENDS SLAPD_STATIC_OVERLAYS SLAPD_DYNAMIC_OVERLAYS PERL_CPPFLAGS SLAPD_PERL_LDFLAGS MOD_PERL_LDFLAGS KRB4_LIBS KRB5_LIBS SASL_LIBS TLS_LIBS MODULES_LIBS SLAPI_LIBS LIBSLAPI LIBSLAPITOOLS AUTH_LIBS SLAPD_SLP_LIBS SLAPD_GMP_LIBS SLAPD_SQL_LDFLAGS SLAPD_SQL_LIBS SLAPD_SQL_INCLUDES LTLIBOBJS'
+---
+> ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS build build_cpu build_vendor build_os host host_cpu host_vendor host_os target target_cpu target_vendor target_os INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA CYGPATH_W PACKAGE VERSION ACLOCAL AUTOCONF AUTOMAKE AUTOHEADER MAKEINFO install_sh STRIP ac_ct_STRIP INSTALL_STRIP_PROGRAM mkdir_p AWK SET_MAKE am__leading_dot AMTAR am__tar am__untar OPENLDAP_LIBRELEASE OPENLDAP_LIBVERSION OPENLDAP_RELEASE_DATE top_builddir ldap_subdir CC AR CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT DEPDIR am__include am__quote AMDEP_TRUE AMDEP_FALSE AMDEPBACKSLASH CCDEPMODE am__fastdepCC_TRUE am__fastdepCC_FALSE EGREP LN_S ECHO ac_ct_AR RANLIB ac_ct_RANLIB DLLTOOL ac_ct_DLLTOOL AS ac_ct_AS OBJDUMP ac_ct_OBJDUMP CPP LIBTOOL JAVABIN PERLBIN OL_MKDEP OL_MKDEP_FLAGS LTSTATIC LIBOBJS LIBSRCS PLAT WITH_SASL WITH_TLS WITH_MODULES_ENABLED WITH_ACI_ENABLED BUILD_THREAD BUILD_LIBS_DYNAMIC BUILD_SLAPD BUILD_SLAPI SLAPD_SLAPI_DEPEND BUILD_BDB BUILD_DNSSRV BUILD_HDB BUILD_LDAP BUILD_LDBM BUILD_META BUILD_MONITOR BUILD_NULL BUILD_PASSWD BUILD_RELAY BUILD_JAVA BUILD_PERL BUILD_SHELL BUILD_SQL BUILD_ACCESSLOG BUILD_DENYOP BUILD_DYNGROUP BUILD_DYNLIST BUILD_LASTMOD BUILD_PPOLICY BUILD_PROXYCACHE BUILD_REFINT BUILD_RETCODE BUILD_RWM BUILD_SYNCPROV BUILD_TRANSLUCENT BUILD_UNIQUE BUILD_VALSORT BUILD_SLURPD LDAP_LIBS SLAPD_LIBS SLURPD_LIBS LDBM_LIBS LTHREAD_LIBS LUTIL_LIBS WRAP_LIBS SLAPD_MODULES_CPPFLAGS SLAPD_MODULES_LDFLAGS SLAPD_NO_STATIC SLAPD_STATIC_BACKENDS SLAPD_DYNAMIC_BACKENDS SLAPD_STATIC_OVERLAYS SLAPD_DYNAMIC_OVERLAYS JAVA_CPPFLAGS SLAPD_JAVA_LDFLAGS MOD_JAVA_LDFLAGS PERL_CPPFLAGS SLAPD_PERL_LDFLAGS MOD_PERL_LDFLAGS KRB4_LIBS KRB5_LIBS SASL_LIBS TLS_LIBS MODULES_LIBS SLAPI_LIBS LIBSLAPI LIBSLAPITOOLS AUTH_LIBS SLAPD_SLP_LIBS SLAPD_GMP_LIBS SLAPD_SQL_LDFLAGS SLAPD_SQL_LIBS SLAPD_SQL_INCLUDES LTLIBOBJS'
+1042a1043
+>     --enable-java	  enable java backend no|yes|mod [no]
+2746a2748
+> 	java \
+3051a3054,3076
+> # OpenLDAP --enable-java
+> 
+> 	# Check whether --enable-java or --disable-java was given.
+> if test "${enable_java+set}" = set; then
+>   enableval="$enable_java"
+> 
+> 	ol_arg=invalid
+> 	for ol_val in no yes mod ; do
+> 		if test "$enableval" = "$ol_val" ; then
+> 			ol_arg="$ol_val"
+> 		fi
+> 	done
+> 	if test "$ol_arg" = "invalid" ; then
+> 		{ { echo "$as_me:$LINENO: error: bad value $enableval for --enable-java" >&5
+> echo "$as_me: error: bad value $enableval for --enable-java" >&2;}
+>    { (exit 1); exit 1; }; }
+> 	fi
+> 	ol_enable_java="$ol_arg"
+> 
+> else
+>   	ol_enable_java=${ol_enable_backends:-no}
+> fi;
+> # end --enable-java
+3714a3740
+> 	   test $ol_enable_java = no &&
+3846a3873
+> BUILD_JAVA=no
+3875a3903,3906
+> SLAPD_JAVA_LDFLAGS=
+> MOD_JAVA_LDFLAGS=
+> JAVA_CPPFLAGS=
+> 
+5691c5722
+<   echo '#line 5691 "configure"' > conftest.$ac_ext
+---
+>   echo '#line 5722 "configure"' > conftest.$ac_ext
+7671c7702
+<    (eval echo "\"\$as_me:7671: $lt_compile\"" >&5)
+---
+>    (eval echo "\"\$as_me:7702: $lt_compile\"" >&5)
+7675c7706
+<    echo "$as_me:7675: \$? = $ac_status" >&5
+---
+>    echo "$as_me:7706: \$? = $ac_status" >&5
+7933c7964
+<    (eval echo "\"\$as_me:7933: $lt_compile\"" >&5)
+---
+>    (eval echo "\"\$as_me:7964: $lt_compile\"" >&5)
+7937c7968
+<    echo "$as_me:7937: \$? = $ac_status" >&5
+---
+>    echo "$as_me:7968: \$? = $ac_status" >&5
+7995c8026
+<    (eval echo "\"\$as_me:7995: $lt_compile\"" >&5)
+---
+>    (eval echo "\"\$as_me:8026: $lt_compile\"" >&5)
+7999c8030
+<    echo "$as_me:7999: \$? = $ac_status" >&5
+---
+>    echo "$as_me:8030: \$? = $ac_status" >&5
+10243c10274
+< #line 10243 "configure"
+---
+> #line 10274 "configure"
+10341c10372
+< #line 10341 "configure"
+---
+> #line 10372 "configure"
+11563a11595,11914
+> ol_link_java=no
+> if test $ol_enable_java != no ; then
+> 
+>         echo =====================================================================================
+>         echo ol_enable_java = $ol_enable_java
+> 
+>         # Extract the first word of "java", so it can be a program name with args.
+> set dummy java; ac_word=$2
+> echo "$as_me:$LINENO: checking for $ac_word" >&5
+> echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
+> if test "${ac_cv_path_JAVABIN+set}" = set; then
+>   echo $ECHO_N "(cached) $ECHO_C" >&6
+> else
+>   case $JAVABIN in
+>   [\\/]* | ?:[\\/]*)
+>   ac_cv_path_JAVABIN="$JAVABIN" # Let the user override the test with a path.
+>   ;;
+>   *)
+>   as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+> for as_dir in $PATH
+> do
+>   IFS=$as_save_IFS
+>   test -z "$as_dir" && as_dir=.
+>   for ac_exec_ext in '' $ac_executable_extensions; do
+>   if $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+>     ac_cv_path_JAVABIN="$as_dir/$ac_word$ac_exec_ext"
+>     echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
+>     break 2
+>   fi
+> done
+> done
+> 
+>   test -z "$ac_cv_path_JAVABIN" && ac_cv_path_JAVABIN="/usr/local/java/bin/java"
+>   ;;
+> esac
+> fi
+> JAVABIN=$ac_cv_path_JAVABIN
+> 
+> if test -n "$JAVABIN"; then
+>   echo "$as_me:$LINENO: result: $JAVABIN" >&5
+> echo "${ECHO_T}$JAVABIN" >&6
+> else
+>   echo "$as_me:$LINENO: result: no" >&5
+> echo "${ECHO_T}no" >&6
+> fi
+> 
+> 
+>         if test "no$JAVABIN" = "no" ; then
+>                 if test $ol_enable_java = yes ; then
+>                         { { echo "$as_me:$LINENO: error: could not locate java" >&5
+> echo "$as_me: error: could not locate java" >&2;}
+>    { (exit 1); exit 1; }; }
+>                 fi
+> 
+>         else
+>                 case $host_os in
+>                 cygwin* | mingw* | pw32*)
+>                         JAVA_HOME=`/usr/bin/cygpath --unix $JAVA_HOME`
+>                         JAVA_CPPFLAGS="-D__int64='long long' -I$JAVA_HOME/include -I$JAVA_HOME/include/win32"
+>                         JAVA_LDFLAGS="-L`pwd`/servers/slapd/back-java -L$JAVA_HOME/jre/bin -L$JAVA_HOME/jre/bin/server -ljava -ljvm -lverify"
+>                         ;;
+>                 *)
+>                         JAVA_CPPFLAGS="-I$JAVA_HOME/include -I$JAVA_HOME/include/linux"
+>                         JAVA_LDFLAGS="-L$JAVA_HOME/jre/lib/i386 -L$JAVA_HOME/jre/lib/i386/server -ljava -ljvm -lverify"
+>                         ;;
+>                 esac
+> 
+>                 if test x"$ol_enable_java" = "xyes" ; then
+>                         SLAPD_JAVA_LDFLAGS="$JAVA_LDFLAGS"
+>                 else
+>                         MOD_JAVA_LDFLAGS="$JAVA_LDFLAGS"
+>                 fi
+>                                 ol_link_java=yes
+>         fi
+> 
+>         echo JAVA_HOME          = $JAVA_HOME
+>         echo JAVA_CPPFLAGS      = $JAVA_CPPFLAGS
+>         echo JAVA_LDFLAGS       = $JAVA_LDFLAGS
+>         echo SLAPD_JAVA_LDFLAGS = $SLAPD_JAVA_LDFLAGS
+>         echo MOD_JAVA_LDFLAGS   = $MOD_JAVA_LDFLAGS
+> 
+>         echo =====================================================================================
+> 
+> fi
+> 
+> ac_ext=c
+> ac_cpp='$CPP $CPPFLAGS'
+> ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+> ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+> ac_compiler_gnu=$ac_cv_c_compiler_gnu
+> echo "$as_me:$LINENO: checking how to run the C preprocessor" >&5
+> echo $ECHO_N "checking how to run the C preprocessor... $ECHO_C" >&6
+> # On Suns, sometimes $CPP names a directory.
+> if test -n "$CPP" && test -d "$CPP"; then
+>   CPP=
+> fi
+> if test -z "$CPP"; then
+>   if test "${ac_cv_prog_CPP+set}" = set; then
+>   echo $ECHO_N "(cached) $ECHO_C" >&6
+> else
+>       # Double quotes because CPP needs to be expanded
+>     for CPP in "$CC -E" "$CC -E -traditional-cpp" "/lib/cpp"
+>     do
+>       ac_preproc_ok=false
+> for ac_c_preproc_warn_flag in '' yes
+> do
+>   # Use a header file that comes with gcc, so configuring glibc
+>   # with a fresh cross-compiler works.
+>   # Prefer <limits.h> to <assert.h> if __STDC__ is defined, since
+>   # <limits.h> exists even on freestanding compilers.
+>   # On the NeXT, cc -E runs the code through the compiler's parser,
+>   # not just through cpp. "Syntax error" is here to catch this case.
+>   cat >conftest.$ac_ext <<_ACEOF
+> /* confdefs.h.  */
+> _ACEOF
+> cat confdefs.h >>conftest.$ac_ext
+> cat >>conftest.$ac_ext <<_ACEOF
+> /* end confdefs.h.  */
+> #ifdef __STDC__
+> # include <limits.h>
+> #else
+> # include <assert.h>
+> #endif
+> 		     Syntax error
+> _ACEOF
+> if { (eval echo "$as_me:$LINENO: \"$ac_cpp conftest.$ac_ext\"") >&5
+>   (eval $ac_cpp conftest.$ac_ext) 2>conftest.er1
+>   ac_status=$?
+>   grep -v '^ *+' conftest.er1 >conftest.err
+>   rm -f conftest.er1
+>   cat conftest.err >&5
+>   echo "$as_me:$LINENO: \$? = $ac_status" >&5
+>   (exit $ac_status); } >/dev/null; then
+>   if test -s conftest.err; then
+>     ac_cpp_err=$ac_c_preproc_warn_flag
+>     ac_cpp_err=$ac_cpp_err$ac_c_werror_flag
+>   else
+>     ac_cpp_err=
+>   fi
+> else
+>   ac_cpp_err=yes
+> fi
+> if test -z "$ac_cpp_err"; then
+>   :
+> else
+>   echo "$as_me: failed program was:" >&5
+> sed 's/^/| /' conftest.$ac_ext >&5
+> 
+>   # Broken: fails on valid input.
+> continue
+> fi
+> rm -f conftest.err conftest.$ac_ext
+> 
+>   # OK, works on sane cases.  Now check whether non-existent headers
+>   # can be detected and how.
+>   cat >conftest.$ac_ext <<_ACEOF
+> /* confdefs.h.  */
+> _ACEOF
+> cat confdefs.h >>conftest.$ac_ext
+> cat >>conftest.$ac_ext <<_ACEOF
+> /* end confdefs.h.  */
+> #include <ac_nonexistent.h>
+> _ACEOF
+> if { (eval echo "$as_me:$LINENO: \"$ac_cpp conftest.$ac_ext\"") >&5
+>   (eval $ac_cpp conftest.$ac_ext) 2>conftest.er1
+>   ac_status=$?
+>   grep -v '^ *+' conftest.er1 >conftest.err
+>   rm -f conftest.er1
+>   cat conftest.err >&5
+>   echo "$as_me:$LINENO: \$? = $ac_status" >&5
+>   (exit $ac_status); } >/dev/null; then
+>   if test -s conftest.err; then
+>     ac_cpp_err=$ac_c_preproc_warn_flag
+>     ac_cpp_err=$ac_cpp_err$ac_c_werror_flag
+>   else
+>     ac_cpp_err=
+>   fi
+> else
+>   ac_cpp_err=yes
+> fi
+> if test -z "$ac_cpp_err"; then
+>   # Broken: success on invalid input.
+> continue
+> else
+>   echo "$as_me: failed program was:" >&5
+> sed 's/^/| /' conftest.$ac_ext >&5
+> 
+>   # Passes both tests.
+> ac_preproc_ok=:
+> break
+> fi
+> rm -f conftest.err conftest.$ac_ext
+> 
+> done
+> # Because of `break', _AC_PREPROC_IFELSE's cleaning code was skipped.
+> rm -f conftest.err conftest.$ac_ext
+> if $ac_preproc_ok; then
+>   break
+> fi
+> 
+>     done
+>     ac_cv_prog_CPP=$CPP
+> 
+> fi
+>   CPP=$ac_cv_prog_CPP
+> else
+>   ac_cv_prog_CPP=$CPP
+> fi
+> echo "$as_me:$LINENO: result: $CPP" >&5
+> echo "${ECHO_T}$CPP" >&6
+> ac_preproc_ok=false
+> for ac_c_preproc_warn_flag in '' yes
+> do
+>   # Use a header file that comes with gcc, so configuring glibc
+>   # with a fresh cross-compiler works.
+>   # Prefer <limits.h> to <assert.h> if __STDC__ is defined, since
+>   # <limits.h> exists even on freestanding compilers.
+>   # On the NeXT, cc -E runs the code through the compiler's parser,
+>   # not just through cpp. "Syntax error" is here to catch this case.
+>   cat >conftest.$ac_ext <<_ACEOF
+> /* confdefs.h.  */
+> _ACEOF
+> cat confdefs.h >>conftest.$ac_ext
+> cat >>conftest.$ac_ext <<_ACEOF
+> /* end confdefs.h.  */
+> #ifdef __STDC__
+> # include <limits.h>
+> #else
+> # include <assert.h>
+> #endif
+> 		     Syntax error
+> _ACEOF
+> if { (eval echo "$as_me:$LINENO: \"$ac_cpp conftest.$ac_ext\"") >&5
+>   (eval $ac_cpp conftest.$ac_ext) 2>conftest.er1
+>   ac_status=$?
+>   grep -v '^ *+' conftest.er1 >conftest.err
+>   rm -f conftest.er1
+>   cat conftest.err >&5
+>   echo "$as_me:$LINENO: \$? = $ac_status" >&5
+>   (exit $ac_status); } >/dev/null; then
+>   if test -s conftest.err; then
+>     ac_cpp_err=$ac_c_preproc_warn_flag
+>     ac_cpp_err=$ac_cpp_err$ac_c_werror_flag
+>   else
+>     ac_cpp_err=
+>   fi
+> else
+>   ac_cpp_err=yes
+> fi
+> if test -z "$ac_cpp_err"; then
+>   :
+> else
+>   echo "$as_me: failed program was:" >&5
+> sed 's/^/| /' conftest.$ac_ext >&5
+> 
+>   # Broken: fails on valid input.
+> continue
+> fi
+> rm -f conftest.err conftest.$ac_ext
+> 
+>   # OK, works on sane cases.  Now check whether non-existent headers
+>   # can be detected and how.
+>   cat >conftest.$ac_ext <<_ACEOF
+> /* confdefs.h.  */
+> _ACEOF
+> cat confdefs.h >>conftest.$ac_ext
+> cat >>conftest.$ac_ext <<_ACEOF
+> /* end confdefs.h.  */
+> #include <ac_nonexistent.h>
+> _ACEOF
+> if { (eval echo "$as_me:$LINENO: \"$ac_cpp conftest.$ac_ext\"") >&5
+>   (eval $ac_cpp conftest.$ac_ext) 2>conftest.er1
+>   ac_status=$?
+>   grep -v '^ *+' conftest.er1 >conftest.err
+>   rm -f conftest.er1
+>   cat conftest.err >&5
+>   echo "$as_me:$LINENO: \$? = $ac_status" >&5
+>   (exit $ac_status); } >/dev/null; then
+>   if test -s conftest.err; then
+>     ac_cpp_err=$ac_c_preproc_warn_flag
+>     ac_cpp_err=$ac_cpp_err$ac_c_werror_flag
+>   else
+>     ac_cpp_err=
+>   fi
+> else
+>   ac_cpp_err=yes
+> fi
+> if test -z "$ac_cpp_err"; then
+>   # Broken: success on invalid input.
+> continue
+> else
+>   echo "$as_me: failed program was:" >&5
+> sed 's/^/| /' conftest.$ac_ext >&5
+> 
+>   # Passes both tests.
+> ac_preproc_ok=:
+> break
+> fi
+> rm -f conftest.err conftest.$ac_ext
+> 
+> done
+> # Because of `break', _AC_PREPROC_IFELSE's cleaning code was skipped.
+> rm -f conftest.err conftest.$ac_ext
+> if $ac_preproc_ok; then
+>   :
+> else
+>   { { echo "$as_me:$LINENO: error: C preprocessor \"$CPP\" fails sanity check
+> See \`config.log' for more details." >&5
+> echo "$as_me: error: C preprocessor \"$CPP\" fails sanity check
+> See \`config.log' for more details." >&2;}
+>    { (exit 1); exit 1; }; }
+> fi
+> 
+> ac_ext=c
+> ac_cpp='$CPP $CPPFLAGS'
+> ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+> ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+> ac_compiler_gnu=$ac_cv_c_compiler_gnu
+> 
+> 
+43963a44315,44331
+> if test "$ol_link_java" != no ; then
+>         BUILD_SLAPD=yes
+>         BUILD_JAVA=$ol_enable_java
+>         if test "$ol_enable_java" = mod ; then
+>                 SLAPD_DYNAMIC_BACKENDS="$SLAPD_DYNAMIC_BACKENDS back-java"
+>                 MFLAG=SLAPD_MOD_DYNAMIC
+>         else
+>                 SLAPD_STATIC_BACKENDS="$SLAPD_STATIC_BACKENDS back-java"
+>                 MFLAG=SLAPD_MOD_STATIC
+>         fi
+> 
+> cat >>confdefs.h <<_ACEOF
+> #define SLAPD_JAVA $MFLAG
+> _ACEOF
+> 
+> fi
+> 
+44374a44743,44747
+> 
+> 
+> 
+> 
+> 
+44382c44755
+<                                                                                                                                                                                                                                                                                                                                                                                                                 ac_config_files="$ac_config_files Makefile:build/top.mk:Makefile.in:build/dir.mk doc/Makefile:build/top.mk:doc/Makefile.in:build/dir.mk doc/man/Makefile:build/top.mk:doc/man/Makefile.in:build/dir.mk doc/man/man1/Makefile:build/top.mk:doc/man/man1/Makefile.in:build/man.mk doc/man/man3/Makefile:build/top.mk:doc/man/man3/Makefile.in:build/man.mk doc/man/man5/Makefile:build/top.mk:doc/man/man5/Makefile.in:build/man.mk doc/man/man8/Makefile:build/top.mk:doc/man/man8/Makefile.in:build/man.mk clients/Makefile:build/top.mk:clients/Makefile.in:build/dir.mk clients/tools/Makefile:build/top.mk:clients/tools/Makefile.in:build/rules.mk include/Makefile:build/top.mk:include/Makefile.in libraries/Makefile:build/top.mk:libraries/Makefile.in:build/dir.mk libraries/liblber/Makefile:build/top.mk:libraries/liblber/Makefile.in:build/lib.mk:build/lib-shared.mk libraries/libldap/Makefile:build/top.mk:libraries/libldap/Makefile.in:build/lib.mk:build/lib-shared.mk libraries/libldap_r/Makefile:build/top.mk:libraries/libldap_r/Makefile.in:build/lib.mk:build/lib-shared.mk libraries/liblunicode/Makefile:build/top.mk:libraries/liblunicode/Makefile.in:build/lib.mk:build/lib-static.mk libraries/liblutil/Makefile:build/top.mk:libraries/liblutil/Makefile.in:build/lib.mk:build/lib-static.mk libraries/librewrite/Makefile:build/top.mk:libraries/librewrite/Makefile.in:build/lib.mk:build/lib-static.mk servers/Makefile:build/top.mk:servers/Makefile.in:build/dir.mk servers/slapd/Makefile:build/top.mk:servers/slapd/Makefile.in:build/srv.mk servers/slapd/back-bdb/Makefile:build/top.mk:servers/slapd/back-bdb/Makefile.in:build/mod.mk servers/slapd/back-dnssrv/Makefile:build/top.mk:servers/slapd/back-dnssrv/Makefile.in:build/mod.mk servers/slapd/back-hdb/Makefile:build/top.mk:servers/slapd/back-hdb/Makefile.in:build/mod.mk servers/slapd/back-ldap/Makefile:build/top.mk:servers/slapd/back-ldap/Makefile.in:build/mod.mk servers/slapd/back-ldbm/Makefile:build/top.mk:servers/slapd/back-ldbm/Makefile.in:build/mod.mk servers/slapd/back-ldif/Makefile:build/top.mk:servers/slapd/back-ldif/Makefile.in:build/mod.mk servers/slapd/back-meta/Makefile:build/top.mk:servers/slapd/back-meta/Makefile.in:build/mod.mk servers/slapd/back-monitor/Makefile:build/top.mk:servers/slapd/back-monitor/Makefile.in:build/mod.mk servers/slapd/back-null/Makefile:build/top.mk:servers/slapd/back-null/Makefile.in:build/mod.mk servers/slapd/back-passwd/Makefile:build/top.mk:servers/slapd/back-passwd/Makefile.in:build/mod.mk servers/slapd/back-perl/Makefile:build/top.mk:servers/slapd/back-perl/Makefile.in:build/mod.mk servers/slapd/back-relay/Makefile:build/top.mk:servers/slapd/back-relay/Makefile.in:build/mod.mk servers/slapd/back-shell/Makefile:build/top.mk:servers/slapd/back-shell/Makefile.in:build/mod.mk servers/slapd/back-sql/Makefile:build/top.mk:servers/slapd/back-sql/Makefile.in:build/mod.mk servers/slapd/shell-backends/Makefile:build/top.mk:servers/slapd/shell-backends/Makefile.in:build/srv.mk servers/slapd/slapi/Makefile:build/top.mk:servers/slapd/slapi/Makefile.in:build/lib.mk:build/lib-shared.mk servers/slapd/overlays/Makefile:build/top.mk:servers/slapd/overlays/Makefile.in:build/lib.mk servers/slurpd/Makefile:build/top.mk:servers/slurpd/Makefile.in:build/srv.mk tests/Makefile:build/top.mk:tests/Makefile.in:build/dir.mk tests/run tests/progs/Makefile:build/top.mk:tests/progs/Makefile.in:build/rules.mk"
+---
+>                                                                                                                                                                                                                                                                                                                                                                                                                           ac_config_files="$ac_config_files Makefile:build/top.mk:Makefile.in:build/dir.mk doc/Makefile:build/top.mk:doc/Makefile.in:build/dir.mk doc/man/Makefile:build/top.mk:doc/man/Makefile.in:build/dir.mk doc/man/man1/Makefile:build/top.mk:doc/man/man1/Makefile.in:build/man.mk doc/man/man3/Makefile:build/top.mk:doc/man/man3/Makefile.in:build/man.mk doc/man/man5/Makefile:build/top.mk:doc/man/man5/Makefile.in:build/man.mk doc/man/man8/Makefile:build/top.mk:doc/man/man8/Makefile.in:build/man.mk clients/Makefile:build/top.mk:clients/Makefile.in:build/dir.mk clients/tools/Makefile:build/top.mk:clients/tools/Makefile.in:build/rules.mk include/Makefile:build/top.mk:include/Makefile.in libraries/Makefile:build/top.mk:libraries/Makefile.in:build/dir.mk libraries/liblber/Makefile:build/top.mk:libraries/liblber/Makefile.in:build/lib.mk:build/lib-shared.mk libraries/libldap/Makefile:build/top.mk:libraries/libldap/Makefile.in:build/lib.mk:build/lib-shared.mk libraries/libldap_r/Makefile:build/top.mk:libraries/libldap_r/Makefile.in:build/lib.mk:build/lib-shared.mk libraries/liblunicode/Makefile:build/top.mk:libraries/liblunicode/Makefile.in:build/lib.mk:build/lib-static.mk libraries/liblutil/Makefile:build/top.mk:libraries/liblutil/Makefile.in:build/lib.mk:build/lib-static.mk libraries/librewrite/Makefile:build/top.mk:libraries/librewrite/Makefile.in:build/lib.mk:build/lib-static.mk servers/Makefile:build/top.mk:servers/Makefile.in:build/dir.mk servers/slapd/Makefile:build/top.mk:servers/slapd/Makefile.in:build/srv.mk servers/slapd/back-bdb/Makefile:build/top.mk:servers/slapd/back-bdb/Makefile.in:build/mod.mk servers/slapd/back-dnssrv/Makefile:build/top.mk:servers/slapd/back-dnssrv/Makefile.in:build/mod.mk servers/slapd/back-hdb/Makefile:build/top.mk:servers/slapd/back-hdb/Makefile.in:build/mod.mk servers/slapd/back-ldap/Makefile:build/top.mk:servers/slapd/back-ldap/Makefile.in:build/mod.mk servers/slapd/back-ldbm/Makefile:build/top.mk:servers/slapd/back-ldbm/Makefile.in:build/mod.mk servers/slapd/back-ldif/Makefile:build/top.mk:servers/slapd/back-ldif/Makefile.in:build/mod.mk servers/slapd/back-meta/Makefile:build/top.mk:servers/slapd/back-meta/Makefile.in:build/mod.mk servers/slapd/back-monitor/Makefile:build/top.mk:servers/slapd/back-monitor/Makefile.in:build/mod.mk servers/slapd/back-null/Makefile:build/top.mk:servers/slapd/back-null/Makefile.in:build/mod.mk servers/slapd/back-passwd/Makefile:build/top.mk:servers/slapd/back-passwd/Makefile.in:build/mod.mk servers/slapd/back-java/Makefile:build/top.mk:servers/slapd/back-java/Makefile.in:build/mod.mk servers/slapd/back-perl/Makefile:build/top.mk:servers/slapd/back-perl/Makefile.in:build/mod.mk servers/slapd/back-relay/Makefile:build/top.mk:servers/slapd/back-relay/Makefile.in:build/mod.mk servers/slapd/back-shell/Makefile:build/top.mk:servers/slapd/back-shell/Makefile.in:build/mod.mk servers/slapd/back-sql/Makefile:build/top.mk:servers/slapd/back-sql/Makefile.in:build/mod.mk servers/slapd/shell-backends/Makefile:build/top.mk:servers/slapd/shell-backends/Makefile.in:build/srv.mk servers/slapd/slapi/Makefile:build/top.mk:servers/slapd/slapi/Makefile.in:build/lib.mk:build/lib-shared.mk servers/slapd/overlays/Makefile:build/top.mk:servers/slapd/overlays/Makefile.in:build/lib.mk servers/slurpd/Makefile:build/top.mk:servers/slurpd/Makefile.in:build/srv.mk tests/Makefile:build/top.mk:tests/Makefile.in:build/dir.mk tests/run tests/progs/Makefile:build/top.mk:tests/progs/Makefile.in:build/rules.mk"
+44922a45296
+>   "servers/slapd/back-java/Makefile" ) CONFIG_FILES="$CONFIG_FILES servers/slapd/back-java/Makefile:build/top.mk:servers/slapd/back-java/Makefile.in:build/mod.mk" ;;
+45093a45468
+> s,@JAVABIN@,$JAVABIN,;t t
+45119a45495
+> s,@BUILD_JAVA@,$BUILD_JAVA,;t t
+45151a45528,45530
+> s,@JAVA_CPPFLAGS@,$JAVA_CPPFLAGS,;t t
+> s,@SLAPD_JAVA_LDFLAGS@,$SLAPD_JAVA_LDFLAGS,;t t
+> s,@MOD_JAVA_LDFLAGS@,$MOD_JAVA_LDFLAGS,;t t
+Index: configure.in
+===================================================================
+RCS file: /repo/OpenLDAP/pkg/ldap/configure.in,v
+retrieving revision 1.560.2.25
+diff -r1.560.2.25 configure.in
+290a291
+> 	java \
+328a330,331
+> OL_ARG_ENABLE(java,[    --enable-java	  enable java backend],
+> 	no, [no yes mod], ol_enable_backends)dnl
+495a499
+> 	   test $ol_enable_java = no &&
+608a613
+> BUILD_JAVA=no
+637a643,646
+> SLAPD_JAVA_LDFLAGS=
+> MOD_JAVA_LDFLAGS=
+> JAVA_CPPFLAGS=
+> 
+730a740,787
+> dnl Java
+> ol_link_java=no
+> if test $ol_enable_java != no ; then
+> 
+>         echo =====================================================================================
+>         echo ol_enable_java = $ol_enable_java
+> 
+>         AC_PATH_PROG(JAVABIN, java, /usr/local/java/bin/java)
+> 
+>         if test "no$JAVABIN" = "no" ; then
+>                 if test $ol_enable_java = yes ; then
+>                         AC_MSG_ERROR([could not locate java])
+>                 fi
+> 
+>         else
+>                 case $host_os in
+>                 cygwin* | mingw* | pw32*)
+>                         JAVA_HOME=`/usr/bin/cygpath --unix $JAVA_HOME`
+>                         JAVA_CPPFLAGS="-D__int64='long long' -I$JAVA_HOME/include -I$JAVA_HOME/include/win32"
+>                         JAVA_LDFLAGS="-L`pwd`/servers/slapd/back-java -L$JAVA_HOME/jre/bin -L$JAVA_HOME/jre/bin/server -ljava -ljvm -lverify"
+>                         ;;
+>                 *)
+>                         JAVA_CPPFLAGS="-I$JAVA_HOME/include -I$JAVA_HOME/include/linux"
+>                         JAVA_LDFLAGS="-L$JAVA_HOME/jre/lib/i386 -L$JAVA_HOME/jre/lib/i386/server -ljava -ljvm -lverify"
+>                         ;;
+>                 esac
+> 
+>                 if test x"$ol_enable_java" = "xyes" ; then
+>                         SLAPD_JAVA_LDFLAGS="$JAVA_LDFLAGS"
+>                 else
+>                         MOD_JAVA_LDFLAGS="$JAVA_LDFLAGS"
+>                 fi
+>                 dnl should check java version
+>                 ol_link_java=yes
+>         fi
+> 
+>         echo JAVA_HOME          = $JAVA_HOME
+>         echo JAVA_CPPFLAGS      = $JAVA_CPPFLAGS
+>         echo JAVA_LDFLAGS       = $JAVA_LDFLAGS
+>         echo SLAPD_JAVA_LDFLAGS = $SLAPD_JAVA_LDFLAGS
+>         echo MOD_JAVA_LDFLAGS   = $MOD_JAVA_LDFLAGS
+> 
+>         echo =====================================================================================
+> 
+> fi
+> 
+> AC_PROG_CPP
+> 
+2815a2873,2885
+> if test "$ol_link_java" != no ; then
+>         BUILD_SLAPD=yes
+>         BUILD_JAVA=$ol_enable_java
+>         if test "$ol_enable_java" = mod ; then
+>                 SLAPD_DYNAMIC_BACKENDS="$SLAPD_DYNAMIC_BACKENDS back-java"
+>                 MFLAG=SLAPD_MOD_DYNAMIC
+>         else
+>                 SLAPD_STATIC_BACKENDS="$SLAPD_STATIC_BACKENDS back-java"
+>                 MFLAG=SLAPD_MOD_STATIC
+>         fi
+>         AC_DEFINE_UNQUOTED(SLAPD_JAVA,$MFLAG,[define to support JAVA backend])
+> fi
+> 
+3094a3165
+>   AC_SUBST(BUILD_JAVA)
+3131a3203,3206
+> AC_SUBST(JAVA_CPPFLAGS)
+> AC_SUBST(SLAPD_JAVA_LDFLAGS)
+> AC_SUBST(MOD_JAVA_LDFLAGS)
+> 
+3190a3266
+> [servers/slapd/back-java/Makefile:build/top.mk:servers/slapd/back-java/Makefile.in:build/mod.mk]
+Index: build/top.mk
+===================================================================
+RCS file: /repo/OpenLDAP/pkg/ldap/build/top.mk,v
+retrieving revision 1.93.2.8
+diff -r1.93.2.8 top.mk
+193a194
+> SLAPD_JAVA_LDFLAGS = @SLAPD_JAVA_LDFLAGS@
+200c201
+< SLAPD_LIBS = @SLAPD_LIBS@ @SLAPD_PERL_LDFLAGS@ @SLAPD_SQL_LDFLAGS@ @SLAPD_SQL_LIBS@ @SLAPD_SLP_LIBS@ @SLAPD_GMP_LIBS@
+---
+> SLAPD_LIBS = @SLAPD_LIBS@ @SLAPD_JAVA_LDFLAGS@ @SLAPD_PERL_LDFLAGS@ @SLAPD_SQL_LDFLAGS@ @SLAPD_SQL_LIBS@ @SLAPD_SLP_LIBS@ @SLAPD_GMP_LIBS@
+Index: include/portable.hin
+===================================================================
+RCS file: /repo/OpenLDAP/pkg/ldap/include/portable.hin,v
+retrieving revision 1.2.2.8
+diff -r1.2.2.8 portable.hin
+1022a1023,1025
+> /* define to support JAVA backend */
+> #undef SLAPD_JAVA
+> 
