@@ -13,11 +13,13 @@
     <property name="openldap.src" value="${cygwin.home}/usr/src/openldap-${openldap.version}"/>
     <property name="openldap.patch" value="openldap-${openldap.version}/openldap.patch"/>
 
-    <property file="build.properties"/>
+    <property file="openldap-${openldap.version}/build.properties"/>
 
     <property name="module.name" value="openldap-servers-java"/>
     <property name="module.version" value="${openldap.version}"/>
     <property name="module.dist" value="dist"/>
+
+    <property name="rpm.release" value="1"/>
 
     <tstamp/>
 
@@ -117,7 +119,7 @@
         <tar destfile="dist/${module.name}-${module.version}-src.tar.gz" compression="gzip">
             <tarfileset dir="openldap-${openldap.version}/${os.name}" prefix="${module.name}-${module.version}/lib" mode="755">
             </tarfileset>
-            <tarfileset dir="openldap-${openldap.version}" prefix="${module.name}-${module.version}">
+            <tarfileset dir="openldap-${openldap.version}" prefix="${module.name}-${module.version}/openldap-${openldap.version}">
                 <include name="build.properties"/>
             </tarfileset>
             <tarfileset dir="." prefix="${module.name}-${module.version}">
@@ -130,14 +132,14 @@
 
     <target name="install" depends="init">
         <property name="ln" value="/bin/ln"/>
-        <mkdir dir="${prefix}/usr/sbin/openldap"/>
-        <copy todir="${prefix}/usr/sbin/openldap" failonerror="false">
+        <mkdir dir="${prefix}${back.java.library.path}"/>
+        <copy todir="${prefix}${back.java.library.path}" failonerror="false">
             <fileset dir="lib"/>
         </copy>
-        <chmod dir="${prefix}/usr/sbin/openldap" perm="ugo+rx" includes="**/*"/>
+        <chmod dir="${prefix}${back.java.library.path}" perm="ugo+rx" includes="**/*"/>
         <echo message="Create link ${back.java.library.link} to ${back.java.library.name}"/>
         <exec executable="${ln}" os="Linux">
-            <arg line="-sf ${back.java.library.name} ${prefix}/usr/sbin/openldap/${back.java.library.link}"/>
+            <arg line="-sf ${back.java.library.name} ${prefix}${back.java.library.path}/${back.java.library.link}"/>
         </exec>
         <mkdir dir="${prefix}/usr/share/openldap/lib"/>
         <copy todir="${prefix}/usr/share/openldap/lib" file="dist/openldap-${openldap.version}.jar"/>
@@ -157,7 +159,6 @@
     </target>
 
     <target name="dist-rpm-unix" if="isUnix">
-        <property name="rpm.release" value="1.FC3"/>
         <property name="rpm.prefix" value=""/>
         <property name="rpm.home" value="/usr/src/redhat"/>
         <property name="rpm.builder" value="/usr/bin/rpmbuild"/>
@@ -170,18 +171,14 @@
             file="${module.dist}/${module.name}-${module.version}-src.tar.gz">
         </copy>
         <exec executable="${rpm.builder}">
-            <arg line="-ba target/${module.name}.spec"/>
+            <arg line="-bb target/${module.name}.spec"/>
         </exec>
         <copy todir="${module.dist}" failonerror="false"
-            file="${rpm.home}/SRPMS/${module.name}-${module.version}-1.FC3.src.rpm">
-        </copy>
-        <copy todir="${module.dist}" failonerror="false"
-            file="${rpm.home}/RPMS/i386/${module.name}-${module.version}-1.FC3.i386.rpm">
+            file="${rpm.home}/RPMS/i386/${module.name}-${module.version}-${rpm.release}.i386.rpm">
         </copy>
     </target>
 
     <target name="dist-rpm-windows" if="isWindows">
-        <property name="rpm.release" value="1"/>
         <property name="rpm.prefix" value="${cygwin.home}"/>
         <property name="rpm.home" value="${cygwin.home}/usr/src/rpm"/>
         <property name="rpm.builder" value="${cygwin.home}/lib/rpm/rpmb.exe"/>
@@ -194,13 +191,10 @@
             file="${module.dist}/${module.name}-${module.version}-src.tar.gz">
         </copy>
         <exec executable="${rpm.builder}">
-            <arg line="-ba target/${module.name}.spec"/>
+            <arg line="-bb target/${module.name}.spec"/>
         </exec>
         <copy todir="${module.dist}" failonerror="false"
-            file="${rpm.home}/SRPMS/${module.name}-${module.version}-1.src.rpm">
-        </copy>
-        <copy todir="${module.dist}" failonerror="false"
-            file="${rpm.home}/RPMS/i386/${module.name}-${module.version}-1.cygwin.i386.rpm">
+            file="${rpm.home}/RPMS/i386/${module.name}-${module.version}-${rpm.release}.cygwin.i386.rpm">
         </copy>
     </target>
 

@@ -26,7 +26,7 @@ rm -rf $RPM_BUILD_ROOT
 %files
 %defattr(-,root,root)
 
-/usr/sbin/openldap
+${back.java.library.path}
 /usr/share/openldap/lib
 /usr/share/doc/${module.name}-${module.version}
 
