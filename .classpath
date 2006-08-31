@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
-	<classpathentry kind="src" path="back-java/src/java"/>
 	<classpathentry kind="src" path="shared/src/java"/>
 	<classpathentry kind="src" path="core/src/java"/>
 	<classpathentry kind="src" path="core/src/test"/>

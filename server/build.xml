@@ -31,7 +31,6 @@
         </fileset>
         <pathelement location="../shared/target/classes"/>
         <pathelement location="../core/target/classes"/>
-        <pathelement location="../back-java/target/classes"/>
     </path>
 
     <path id="main.path">
@@ -98,7 +97,6 @@
             <sourcepath>
                 <pathelement path="src/java"/>
                 <pathelement path="../core/src/java"/>
-                <pathelement path="../back-java/src/java"/>
             </sourcepath>
         </javadoc>
         <jar jarfile="target/${module.name}-docs-${project.version}.jar">
@@ -141,13 +139,11 @@
             <fileset dir="../shared/lib" includes="*"/>
             <fileset dir="../core/dist" includes="penrose-${project.version}.jar"/>
             <fileset dir="../shared/dist" includes="penrose-shared-${project.version}.jar"/>
-            <fileset dir="../back-java/target" includes="openldap-*.jar"/>
         </copy>
         <mkdir dir="target/dist/lib/ext"/>
         <copy todir="target/dist/server/lib" includeEmptyDirs="false">
             <fileset dir="lib" includes="*"/>
             <fileset dir="target" includes="${module.name}-${project.version}.jar"/>
-            <fileset dir="../back-java/dist" includes="openldap-*.jar"/>
         </copy>
         <mkdir dir="target/dist/server/lib/ext"/>
         <copy todir="target/dist/conf">
@@ -192,8 +188,6 @@
         <mkdir dir="${project.dist}"/>
         <zip destfile="${project.dist}/${module.name}-${project.version}-src.zip">
             <zipfileset dir="..">
-                <exclude name="back-java/dist/**"/>
-                <exclude name="back-java/target/**"/>
                 <exclude name="server/dist/**"/>
                 <exclude name="server/target/**"/>
                 <exclude name="server/var/**"/>
@@ -206,8 +200,6 @@
         <mkdir dir="target"/>
         <tar destfile="${project.dist}/${module.name}-${project.version}-src.tar.gz" compression="gzip">
             <tarfileset dir=".." prefix="${module.name}-${project.version}">
-                <exclude name="back-java/dist/**"/>
-                <exclude name="back-java/target/**"/>
                 <exclude name="server/dist/**"/>
                 <exclude name="server/target/**"/>
                 <exclude name="server/var/**"/>
