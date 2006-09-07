@@ -22,6 +22,7 @@ import org.apache.directory.server.core.authn.LdapPrincipal;
 import org.apache.directory.server.core.jndi.ServerContext;
 import org.apache.directory.shared.ldap.exception.LdapAuthenticationException;
 import org.apache.directory.shared.ldap.aci.AuthenticationLevel;
+import org.apache.directory.shared.ldap.name.LdapDN;
 import org.ietf.ldap.LDAPException;
 import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.session.PenroseSession;
@@ -54,9 +55,7 @@ public class PenroseAuthenticator extends AbstractAuthenticator {
         this.penrose = penrose;
     }
 
-    public LdapPrincipal authenticate(ServerContext ctx) throws NamingException {
-
-        String dn = (String)ctx.getEnvironment().get(Context.SECURITY_PRINCIPAL);
+    public LdapPrincipal authenticate(LdapDN dn, ServerContext ctx) throws NamingException {
 
         Object credentials = ctx.getEnvironment().get(Context.SECURITY_CREDENTIALS);
         String password = new String((byte[])credentials);
@@ -75,14 +74,14 @@ public class PenroseAuthenticator extends AbstractAuthenticator {
         }
 
         try {
-            PenroseSession session = penrose.getSession(dn);
+            PenroseSession session = penrose.getSession(dn.getUpName());
 
             if (session == null) {
-                session = penrose.createSession(dn);
+                session = penrose.createSession(dn.getUpName());
                 if (session == null) throw new ServiceUnavailableException();
             }
 
-            int rc = session.bind(dn, password);
+            int rc = session.bind(dn.getUpName(), password);
 
             if (rc != LDAPException.SUCCESS) {
                 throw ExceptionTool.createNamingException(rc);
@@ -90,7 +89,7 @@ public class PenroseAuthenticator extends AbstractAuthenticator {
 
             log.warn("Bind operation succeeded.");
 
-            return createLdapPrincipal(dn, AuthenticationLevel.SIMPLE);
+            return createLdapPrincipal(dn.getUpName(), AuthenticationLevel.SIMPLE);
 
         } catch (NamingException e) {
             log.warn("Bind operation failed.");
