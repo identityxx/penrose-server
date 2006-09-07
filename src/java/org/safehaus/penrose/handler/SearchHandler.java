@@ -257,6 +257,7 @@ public class SearchHandler {
             return LDAPException.INVALID_DN_SYNTAX;
         }
 
+        log.debug("Find base entry \""+nbase+"\".");
 		List path = handler.getFindHandler().findPath(session, nbase);
 
 		if (path == null) {

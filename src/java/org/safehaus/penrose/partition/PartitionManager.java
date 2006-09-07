@@ -141,7 +141,7 @@ public class PartitionManager implements PartitionManagerMBean {
     }
 
     public Partition getPartitionByDn(String dn) throws Exception {
-        log.debug("Getting partition for "+dn);
+        //log.debug("Getting partition for "+dn);
         Partition partition = (Partition)cache.get(dn);
         if (partition != null) return partition;
 
@@ -195,7 +195,7 @@ public class PartitionManager implements PartitionManagerMBean {
     }
 
     public Partition findPartition(String dn) throws Exception {
-        log.debug("Finding partition for "+dn);
+        //log.debug("Finding partition for "+dn);
         Partition partition = (Partition)cache.get(dn);
         if (partition != null) return partition;
 
