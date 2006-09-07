@@ -2,37 +2,21 @@
  Copyright (c) 2000-2005, Identyx Corporation.
  All rights reserved.
 -->
-<project name="penrose" default="build" basedir=".">
+<project name="penrose" default="build">
 
     <description>Penrose</description>
 
-    <property name="product.name" value="penrose"/>
-
-    <property name="project.name" value="penrose-server"/>
-    <property name="project.version" value="1.1"/>
-    <property name="project.dist" value="dist"/>
-
     <property name="prefix" value=""/>
-    <property name="penrose.home" value="${prefix}/usr/local/${project.name}-${project.version}"/>
     <property name="iscc.path" value="ISCC.exe"/>
-    <property name="docs.target" value="${project.dist}/javadoc"/>
-
     <property name="cygwin.home" value="c:/cygwin"/>
+
+    <property name="project.name" value="penrose"/>
+    <property name="project.version" value="1.1"/>
 
     <tstamp/>
 
-    <path id="lib.path">
-        <fileset dir="lib">
-            <include name="**/*.jar"/>
-        </fileset>
-        <pathelement location="lib/"/>
-    </path>
-
-    <path id="main.path">
-        <pathelement location="target/classes"/>
-    </path>
-
     <target name="init">
+        <echo message="Operating System: ${os.name} ${os.version}" />
         <condition property="isWindows">
             <os family="windows"/>
         </condition>
@@ -41,297 +25,75 @@
         </condition>
     </target>
 
+    <target name="compile" depends="init">
+        <ant dir="core" target="compile"/>
+        <ant dir="server" target="compile"/>
+    </target>
+
     <target name="build" depends="init">
-        <javacc
-            target="src/java/org/safehaus/penrose/schema/LDAPv3Schema.jj"
-            javacchome="lib/javacc"
-            outputdirectory="src/java/org/safehaus/penrose/schema"
-        />
-        <javacc
-            target="src/java/org/safehaus/penrose/filter/item/ItemParser.jj"
-            javacchome="lib/javacc"
-            outputdirectory="src/java/org/safehaus/penrose/filter/item"
-        />
-        <javacc
-            target="src/java/org/safehaus/penrose/filter/FilterParser.jj"
-            javacchome="lib/javacc"
-            outputdirectory="src/java/org/safehaus/penrose/filter"
-        />
-        <javacc
-            target="src/java/org/safehaus/penrose/openldap/config/SlapdParser.jj"
-            javacchome="lib/javacc"
-            outputdirectory="src/java/org/safehaus/penrose/openldap/config"
-        />
-        <javacc
-            target="src/java/org/safehaus/penrose/sql/SQLParser.jj"
-            javacchome="lib/javacc"
-            outputdirectory="src/java/org/safehaus/penrose/sql"
-        />
-        <mkdir dir="target/classes"/>
-        <javac
-            srcdir="src/java"
-            destdir="target/classes"
-            classpathref="lib.path"
-            debug="on"
-            debuglevel="lines,vars,source"
-            source="1.4"
-            target="1.4"
-        />
-        <copy todir="target/classes">
-            <fileset dir="src/java" includes="**/*.xml,**/*.dtd"/>
-        </copy>
-        <jar jarfile="target/${product.name}-${project.version}.jar">
-            <fileset dir="target/classes"/>
-            <manifest>
-              <attribute name="Specification-Version"  value="1.0"/>
-              <attribute name="Implementation-Title"   value="Penrose Server"/>
-              <attribute name="Implementation-Version" value="${project.version}"/>
-              <attribute name="Implementation-Vendor"  value="Identyx Corporation"/>
-              <attribute name="Built-Date" value="${DSTAMP}"/>
-            </manifest>
+        <ant dir="core" target="build"/>
+        <ant dir="server" target="build"/>
+        <jar jarfile="target/${project.name}-bin-${project.version}.jar">
+            <fileset dir="server/bin"/>
         </jar>
-        <jar jarfile="target/${product.name}-bin-${project.version}.jar">
-            <fileset dir="bin"/>
-        </jar>
-        <jar jarfile="target/${product.name}-conf-${project.version}.jar">
+        <jar jarfile="target/${project.name}-conf-${project.version}.jar">
             <fileset dir="conf"/>
+            <fileset dir="server/conf"/>
         </jar>
-        <jar jarfile="target/${product.name}-samples-${project.version}.jar">
+        <jar jarfile="target/${project.name}-samples-${project.version}.jar">
             <fileset dir="samples"/>
         </jar>
-        <jar jarfile="target/${product.name}-schema-${project.version}.jar">
+        <jar jarfile="target/${project.name}-schema-${project.version}.jar">
             <fileset dir="schema"/>
         </jar>
     </target>
 
     <target name="docs" depends="init">
-        <mkdir dir="target/javadoc"/>
-        <javadoc packagenames="org.safehaus.penrose.*"
-            sourcepath="src/java"
-            destdir="target/javadoc"
-            classpathref="lib.path">
-        </javadoc>
-        <jar jarfile="target/${product.name}-docs-${project.version}.jar">
-            <fileset dir="target" includes="javadoc/**"/>
-            <fileset dir="docs"/>
-        </jar>
+        <ant dir="core" target="docs"/>
+        <ant dir="server" target="docs"/>
     </target>
 
-    <target name="docs-publish" depends="init">
-        <delete dir="${docs.target}"/>
-        <mkdir dir="${docs.target}"/>
-        <copy todir="${docs.target}" overwrite="true">
-            <fileset dir="target/javadoc" includes="**/*"/>
-        </copy>
+    <target name="dist" depends="init">
+        <ant dir="core" target="dist"/>
+        <ant dir="server" target="dist"/>
     </target>
 
-    <target name="dist" depends="build">
-        <mkdir dir="target/dist"/>
-        <copy todir="target/dist" file="README.txt">
-            <filterchain>
-                <expandproperties/>
-            </filterchain>
-        </copy>
-        <copy todir="target/dist" file="LICENSE.txt"/>
-        <copy todir="target/dist" file="COPYING.txt"/>
-        <copy todir="target/dist" file="INSTALL-BINARY.txt">
-            <filterchain>
-                <expandproperties/>
-            </filterchain>
-        </copy>
-        <copy todir="target/dist" file="pom.xml"/>
-        <copy todir="target/dist/etc">
-            <fileset dir="etc" includes="**/*"/>
-        </copy>
-        <chmod file="target/dist/etc/init.d/penrose" perm="ugo+rx"/>
-        <copy todir="target/dist/docs">
-            <fileset dir="docs" includes="*.url"/>
-        </copy>
-        <copy todir="target/dist/docs/javadoc" failonerror="false">
-            <fileset dir="target/javadoc"/>
-        </copy>
-        <copy todir="target/dist/lib" includeEmptyDirs="false">
-            <fileset dir="lib" includes="*"/>
-        </copy>
-        <copy todir="target/dist/lib"
-            file="target/${product.name}-${project.version}.jar">
-        </copy>
-        <mkdir dir="target/dist/lib/ext"/>
-        <copy todir="target/dist/conf/default">
-            <fileset dir="conf"/>
-            <filterchain>
-                <expandproperties/>
-            </filterchain>
-        </copy>
-        <copy todir="target/dist/conf">
-            <fileset dir="target/dist/conf/default"/>
-        </copy>
-        <mkdir dir="target/dist/schema/ext"/>
-        <copy todir="target/dist/schema">
-            <fileset dir="schema"/>
-        </copy>
-        <copy todir="target/dist"
-            file="images/penrose.ico">
-        </copy>
-        <copy todir="target/dist/bin">
-            <fileset dir="bin"/>
-        </copy>
-        <copy todir="target/dist/dtd" flatten="true">
-            <fileset dir="src" includes="**/*.dtd"/>
-        </copy>
-        <fixcrlf
-            srcdir="target/dist/bin"
-            includes="**/*.sh"
-            eol="unix"
-        />
-        <chmod dir="target/dist/bin" perm="ugo+rx" includes="**/*.sh"/>
-        <copy todir="target/dist/samples">
-            <fileset dir="samples"/>
-        </copy>
-        <mkdir dir="target/dist/partitions"/>
-        <mkdir dir="target/dist/var"/>
+    <target name="dist-src" depends="init">
+        <ant dir="core" target="dist-src"/>
+        <ant dir="server" target="dist-src"/>
     </target>
 
-    <target name="dist-src" depends="docs,dist">
-        <echo message="Creating ${project.name}-${project.version}-src.zip"/>
-        <mkdir dir="${project.dist}"/>
-        <zip destfile="${project.dist}/${project.name}-${project.version}-src.zip">
-            <zipfileset dir=".">
-                <exclude name="${project.dist}/**"/>
-                <exclude name="target/**"/>
-            </zipfileset>
-        </zip>
-        <echo message="Creating ${project.name}-${project.version}-src.tar.gz"/>
-        <mkdir dir="target"/>
-        <tar destfile="${project.dist}/${project.name}-${project.version}-src.tar.gz" compression="gzip">
-            <tarfileset dir="." prefix="${project.name}-${project.version}">
-                <exclude name="${project.dist}/**"/>
-                <exclude name="target/**"/>
-            </tarfileset>
-        </tar>
+    <target name="dist-unix" depends="init">
+        <ant dir="core" target="dist-unix"/>
+        <ant dir="server" target="dist-unix"/>
     </target>
 
-    <target name="dist-unix" depends="docs,dist">
-        <echo message="Creating ${project.name}-${project.version}.zip"/>
-        <mkdir dir="${project.dist}"/>
-        <zip destfile="${project.dist}/${project.name}-${project.version}.zip"
-            basedir="target/dist"/>
-        <echo message="Creating ${project.name}-${project.version}.tar.gz"/>
-        <mkdir dir="target"/>
-        <tar destfile="${project.dist}/${project.name}-${project.version}.tar.gz" compression="gzip">
-            <tarfileset dir="target/dist" prefix="${project.name}-${project.version}" mode="755">
-                <include name="bin/*.sh"/>
-            </tarfileset>
-            <tarfileset dir="target/dist" prefix="${project.name}-${project.version}">
-                <include name="**/*"/>
-                <exclude name="bin/*.sh"/>
-            </tarfileset>
-        </tar>
-        <antcall target="rpm">
-            <param name="rpm.prefix" value=""/>
-            <param name="rpm.home" value="/usr/src/redhat"/>
-            <param name="rpm.builder" value="/usr/bin/rpmbuild"/>
-            <param name="rpm.name" value="${project.name}-${project.version}-1.i386.rpm"/>
-        </antcall>
+    <target name="dist-rpm" depends="init">
+        <ant dir="core" target="dist-rpm"/>
+        <ant dir="server" target="dist-rpm"/>
     </target>
 
-    <target name="rpm-check" depends="init">
-        <echo message="Checking ${rpm.builder}"/>
-        <condition property="hasRpmBuilder">
-            <available file="${rpm.builder}"/>
-        </condition>
+    <target name="dist-win32" depends="init">
+        <ant dir="core" target="dist-win32"/>
+        <ant dir="server" target="dist-win32"/>
     </target>
 
-    <target name="rpm-build" depends="dist-src" if="hasRpmBuilder">
-        <copy todir="target" file="installer/penrose-server.spec">
-            <filterchain>
-                <expandproperties/>
-            </filterchain>
-        </copy>
-        <copy todir="${rpm.home}/SOURCES" overwrite="true"
-            file="${project.dist}/${project.name}-${project.version}-src.tar.gz">
-        </copy>
-        <exec executable="${rpm.builder}">
-            <arg line="-bb target/penrose-server.spec"/>
-        </exec>
-        <copy todir="${project.dist}" failonerror="false"
-            file="${rpm.home}/RPMS/i386/${rpm.name}">
-        </copy>
+    <target name="dist-all" depends="init">
+        <ant dir="core" target="dist-all"/>
+        <ant dir="server" target="dist-all"/>
     </target>
 
-    <target name="rpm" depends="rpm-check,rpm-build">
-    </target>
-
-    <target name="dist-win32" depends="docs,dist" if="isWindows">
-        <echo message="Creating ${project.name}-${project.version}.exe"/>
-        <copy todir="target" file="installer/penrose-server.iss">
-            <filterchain>
-                <expandproperties/>
-            </filterchain>
-        </copy>
-        <mkdir dir="${project.dist}"/>
-        <exec executable="${iscc.path}">
-            <arg line="/Q target/penrose-server.iss"/>
-        </exec>
-        <antcall target="rpm">
-            <param name="rpm.prefix" value="${cygwin.home}"/>
-            <param name="rpm.home" value="${cygwin.home}/usr/src/rpm"/>
-            <param name="rpm.builder" value="${cygwin.home}/lib/rpm/rpmb.exe"/>
-            <param name="rpm.name" value="${project.name}-${project.version}-1.cygwin.i386.rpm"/>
-        </antcall>
-    </target>
-
-    <target name="dist-all" depends="dist-src,dist-unix,dist-win32">
-        <copy todir="${project.dist}"
-            file="target/${product.name}-${project.version}.jar">
-        </copy>
-    </target>
-
-    <target name="pre-install">
-        <mkdir dir="${penrose.home}"/>
-        <condition property="penrose.conf.missing">
-          <not>
-            <available file="${penrose.home}/conf/server.xml"/>
-          </not>
-        </condition>
-    </target>
-
-    <target name="copy-penrose-conf" if="penrose.conf.missing">
-        <copy todir="${penrose.home}">
-            <fileset dir="target/dist">
-                <include name="conf/**/*"/>
-            </fileset>
-        </copy>
-    </target>
-
-    <target name="install" depends="init,pre-install,copy-penrose-conf">
-        <delete failonerror="false">
-            <fileset dir="${penrose.home}" includes="lib/*"/>
-        </delete>
-        <copy todir="${penrose.home}">
-            <fileset dir="target/dist">
-                <include name="**/*"/>
-                <exclude name="conf/**/*"/>
-            </fileset>
-        </copy>
-        <chmod dir="${penrose.home}/bin" perm="ugo+rx" includes="**/*.sh"/>
+    <target name="install" depends="init">
+        <ant dir="server" target="install"/>
     </target>
 
     <target name="uninstall" depends="init">
-        <delete failonerror="false" includeemptydirs="true">
-            <fileset dir="${penrose.home}/bin" includes="**/*"/>
-            <fileset dir="${penrose.home}/conf/default" includes="*"/>
-            <fileset dir="${penrose.home}/docs" includes="**/*"/>
-            <fileset dir="${penrose.home}/lib" includes="*"/>
-            <fileset dir="${penrose.home}/samples" includes="**/*"/>
-            <fileset dir="${penrose.home}/schema" includes="**/*"/>
-            <fileset dir="${penrose.home}" includes="*"/>
-        </delete>
+        <ant dir="server" target="uninstall"/>
     </target>
 
     <target name="clean" depends="init">
-        <delete dir="dist" failonerror="false"/>
-        <delete dir="target" failonerror="false"/>
+        <ant dir="server" target="clean"/>
+        <ant dir="core" target="clean"/>
     </target>
 
 </project>
