@@ -49,6 +49,7 @@ public class EntryUtil {
     public static boolean match(String dn1, String dn2) throws Exception {
 
         //log.debug("Matching ["+dn1+"] with ["+dn2+"]");
+
         Row rdn1 = getRdn(dn1);
         Row rdn2 = getRdn(dn2);
 

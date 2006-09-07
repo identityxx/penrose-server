@@ -305,7 +305,12 @@ public class DefaultEngine extends Engine {
             return ExceptionUtil.getReturnCode(e);
 
         } finally {
-            client.close();
+            if (PROXY_AUTHENTICATON_FULL.equals(pta)) {
+                log.debug("Storing connection info in session.");
+                session.setAttribute(partition.getName()+"."+sourceName+".connection", client);
+            } else {
+                client.close();
+            }
         }
     }
 
@@ -332,23 +337,24 @@ public class DefaultEngine extends Engine {
 
         log.debug("Modifying via proxy "+sourceName+" as \""+targetDn+"\"");
 
-        Map parameters = new HashMap();
-        parameters.putAll(connection.getParameters());
-
-        String bindDn = convertDn(session.getBindDn(), proxyDn, baseDn);
-
         String pta = sourceConfig.getParameter(PROXY_AUTHENTICATON);
-        if (PROXY_AUTHENTICATON_FULL.equals(pta)) {
-            if (bindDn != null) {
-                parameters.put(Context.SECURITY_PRINCIPAL, bindDn);
-                parameters.put(Context.SECURITY_CREDENTIALS, session.getBindPassword());
-            } else {
-                log.debug("Missing credentials.");
-                return LDAPException.INVALID_CREDENTIALS;
-            }
-        }
 
-        JNDIClient client = new JNDIClient(parameters);
+        JNDIClient client;
+
+        if (PROXY_AUTHENTICATON_FULL.equals(pta)) {
+            log.debug("Getting connection info from session.");
+            client = (JNDIClient)session.getAttribute(partition.getName()+"."+sourceName+".connection");
+            if (client == null) {
+                log.debug("Missing credentials.");
+                return LDAPException.SUCCESS;
+            }
+        } else {
+            log.debug("Creating new connection.");
+            Map parameters = new HashMap();
+            parameters.putAll(connection.getParameters());
+
+            client = new JNDIClient(parameters);
+        }
 
         try {
             client.add(targetDn, attributes);
@@ -359,7 +365,9 @@ public class DefaultEngine extends Engine {
             return ExceptionUtil.getReturnCode(e);
 
         } finally {
-            client.close();
+            if (!PROXY_AUTHENTICATON_FULL.equals(pta)) {
+                client.close();
+            }
         }
     }
 
@@ -388,23 +396,24 @@ public class DefaultEngine extends Engine {
 
         log.debug("Modifying via proxy "+sourceName+" as \""+targetDn+"\"");
 
-        Map parameters = new HashMap();
-        parameters.putAll(connection.getParameters());
-
-        String bindDn = convertDn(session.getBindDn(), proxyDn, baseDn);
-
         String pta = sourceConfig.getParameter(PROXY_AUTHENTICATON);
-        if (PROXY_AUTHENTICATON_FULL.equals(pta)) {
-            if (bindDn != null) {
-                parameters.put(Context.SECURITY_PRINCIPAL, bindDn);
-                parameters.put(Context.SECURITY_CREDENTIALS, session.getBindPassword());
-            } else {
-                log.debug("Missing credentials.");
-                return LDAPException.INVALID_CREDENTIALS;
-            }
-        }
 
-        JNDIClient client = new JNDIClient(parameters);
+        JNDIClient client;
+
+        if (PROXY_AUTHENTICATON_FULL.equals(pta)) {
+            log.debug("Getting connection info from session.");
+            client = (JNDIClient)session.getAttribute(partition.getName()+"."+sourceName+".connection");
+            if (client == null) {
+                log.debug("Missing credentials.");
+                return LDAPException.SUCCESS;
+            }
+        } else {
+            log.debug("Creating new connection.");
+            Map parameters = new HashMap();
+            parameters.putAll(connection.getParameters());
+
+            client = new JNDIClient(parameters);
+        }
 
         try {
             client.modify(targetDn, modifications);
@@ -415,7 +424,9 @@ public class DefaultEngine extends Engine {
             return ExceptionUtil.getReturnCode(e);
 
         } finally {
-            client.close();
+            if (!PROXY_AUTHENTICATON_FULL.equals(pta)) {
+                client.close();
+            }
         }
     }
 
@@ -443,23 +454,24 @@ public class DefaultEngine extends Engine {
 
         log.debug("Renaming via proxy "+sourceName+" as \""+targetDn+"\"");
 
-        Map parameters = new HashMap();
-        parameters.putAll(connection.getParameters());
-
-        String bindDn = convertDn(session.getBindDn(), proxyDn, baseDn);
-
         String pta = sourceConfig.getParameter(PROXY_AUTHENTICATON);
-        if (PROXY_AUTHENTICATON_FULL.equals(pta)) {
-            if (bindDn != null) {
-                parameters.put(Context.SECURITY_PRINCIPAL, bindDn);
-                parameters.put(Context.SECURITY_CREDENTIALS, session.getBindPassword());
-            } else {
-                log.debug("Missing credentials.");
-                return LDAPException.INVALID_CREDENTIALS;
-            }
-        }
 
-        JNDIClient client = new JNDIClient(parameters);
+        JNDIClient client;
+
+        if (PROXY_AUTHENTICATON_FULL.equals(pta)) {
+            log.debug("Getting connection info from session.");
+            client = (JNDIClient)session.getAttribute(partition.getName()+"."+sourceName+".connection");
+            if (client == null) {
+                log.debug("Missing credentials.");
+                return LDAPException.SUCCESS;
+            }
+        } else {
+            log.debug("Creating new connection.");
+            Map parameters = new HashMap();
+            parameters.putAll(connection.getParameters());
+
+            client = new JNDIClient(parameters);
+        }
 
         try {
             client.modrdn(targetDn, newRdn);
@@ -470,7 +482,9 @@ public class DefaultEngine extends Engine {
             return ExceptionUtil.getReturnCode(e);
 
         } finally {
-            client.close();
+            if (!PROXY_AUTHENTICATON_FULL.equals(pta)) {
+                client.close();
+            }
         }
     }
 
@@ -496,23 +510,24 @@ public class DefaultEngine extends Engine {
 
         log.debug("Modifying via proxy "+sourceName+" as \""+targetDn+"\"");
 
-        Map parameters = new HashMap();
-        parameters.putAll(connection.getParameters());
-
-        String bindDn = convertDn(session.getBindDn(), proxyDn, baseDn);
-
         String pta = sourceConfig.getParameter(PROXY_AUTHENTICATON);
-        if (PROXY_AUTHENTICATON_FULL.equals(pta)) {
-            if (bindDn != null) {
-                parameters.put(Context.SECURITY_PRINCIPAL, bindDn);
-                parameters.put(Context.SECURITY_CREDENTIALS, session.getBindPassword());
-            } else {
-                log.debug("Missing credentials.");
-                return LDAPException.INVALID_CREDENTIALS;
-            }
-        }
 
-        JNDIClient client = new JNDIClient(parameters);
+        JNDIClient client;
+
+        if (PROXY_AUTHENTICATON_FULL.equals(pta)) {
+            log.debug("Getting connection info from session.");
+            client = (JNDIClient)session.getAttribute(partition.getName()+"."+sourceName+".connection");
+            if (client == null) {
+                log.debug("Missing credentials.");
+                return LDAPException.SUCCESS;
+            }
+        } else {
+            log.debug("Creating new connection.");
+            Map parameters = new HashMap();
+            parameters.putAll(connection.getParameters());
+
+            client = new JNDIClient(parameters);
+        }
 
         try {
             client.delete(targetDn);
@@ -523,7 +538,9 @@ public class DefaultEngine extends Engine {
             return ExceptionUtil.getReturnCode(e);
 
         } finally {
-            client.close();
+            if (!PROXY_AUTHENTICATON_FULL.equals(pta)) {
+                client.close();
+            }
         }
     }
 
@@ -554,19 +571,24 @@ public class DefaultEngine extends Engine {
         log.debug("Searching proxy "+sourceName+" for \""+targetDn+"\" with filter="+filter+" attrs="+sc.getAttributes());
         log.debug("Bind DN: "+bindDn);
 
-        Map parameters = new HashMap();
-        parameters.putAll(connection.getParameters());
-
         String pta = sourceConfig.getParameter(PROXY_AUTHENTICATON);
+
+        JNDIClient client;
+
         if (PROXY_AUTHENTICATON_FULL.equals(pta)) {
-            if (bindDn != null) {
-                parameters.put(Context.SECURITY_PRINCIPAL, bindDn);
-                parameters.put(Context.SECURITY_CREDENTIALS, session.getBindPassword());
-            } else {
+            log.debug("Getting connection info from session.");
+            client = (JNDIClient)session.getAttribute(partition.getName()+"."+sourceName+".connection");
+            if (client == null) {
                 log.debug("Missing credentials.");
                 results.close();
                 return LDAPException.SUCCESS;
             }
+        } else {
+            log.debug("Creating new connection.");
+            Map parameters = new HashMap();
+            parameters.putAll(connection.getParameters());
+
+            client = new JNDIClient(parameters);
         }
 
         PenroseSearchResults res = new PenroseSearchResults();
@@ -615,8 +637,6 @@ public class DefaultEngine extends Engine {
             }
         });
 
-        JNDIClient client = new JNDIClient(parameters);
-
         try {
             client.search(targetDn, filter, sc, res);
 
@@ -629,7 +649,9 @@ public class DefaultEngine extends Engine {
             return rc;
 
         } finally {
-            client.close();
+            if (!PROXY_AUTHENTICATON_FULL.equals(pta)) {
+                client.close();
+            }
         }
     }
 

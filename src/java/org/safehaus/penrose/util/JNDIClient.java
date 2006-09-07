@@ -111,22 +111,39 @@ public class JNDIClient {
     }
 
     public LdapContext getContext() throws Exception {
-        log.debug("Creating InitialLdapContext: "+parameters);
+        log.debug("Creating InitialLdapContext:");
+        for (Iterator i=parameters.keySet().iterator(); i.hasNext(); ) {
+            String name = (String)i.next();
+            Object value = parameters.get(name);
+            log.debug(" - "+name+": "+value);
+        }
         return new InitialLdapContext(parameters, null);
     }
 
     public void close() throws Exception {
-        //context.close();
+        //if (context != null) context.close();
     }
 
-    public DirContext bind(String dn, String password) throws Exception {
+    public int bind(String dn, String password) throws Exception {
 
         dn = EntryUtil.append(dn, suffix);
 
-        Hashtable env = new Hashtable(parameters);
-        env.put(Context.SECURITY_PRINCIPAL, dn);
-        env.put(Context.SECURITY_CREDENTIALS, password);
-        return new InitialLdapContext(env, null);
+        parameters.put(Context.SECURITY_PRINCIPAL, dn);
+        parameters.put(Context.SECURITY_CREDENTIALS, password);
+
+        LdapContext context = null;
+
+        try {
+            context = getContext();
+
+        } catch (Exception e) {
+            return LDAPException.INVALID_CREDENTIALS;
+
+        } finally {
+            if (context != null) try { context.close(); } catch (Exception e) {}
+        }
+
+        return LDAPException.SUCCESS;
     }
 
     public int add(String dn, Attributes attributes) throws Exception {
@@ -677,10 +694,11 @@ public class JNDIClient {
         ctls.setReturningAttributes(sc.getAttributes().isEmpty() ? null : (String[])sc.getAttributes().toArray(new String[sc.getAttributes().size()]));
 
         LdapContext context = null;
+        NamingEnumeration ne = null;
 
         try {
             context = getContext();
-            NamingEnumeration ne = context.search(ldapBase, filter, ctls);
+            ne = context.search(ldapBase, filter, ctls);
 
             log.debug("Search \""+ldapBase+"\" with filter="+filter+" scope="+sc.getScope()+" attrs="+sc.getAttributes()+":");
 
@@ -698,8 +716,9 @@ public class JNDIClient {
             }
 
         } finally {
-            results.close();
+            if (ne != null) try { ne.close(); } catch (Exception e) {}
             if (context != null) try { context.close(); } catch (Exception e) {}
+            results.close();
         }
     }
 
