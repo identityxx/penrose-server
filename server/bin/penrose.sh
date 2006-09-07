@@ -95,49 +95,8 @@ if [ -n "$CLASSPATH" ] ; then
   LOCALCLASSPATH="$CLASSPATH"
 fi
 
-# add in the required dependency .jar files
-for i in "$PENROSE_HOME"/lib/*.jar
-do
-  # if the directory is empty, then it will return the input string
-  # this is stupid, so case for it
-  if [ -f "$i" ] ; then
-    if [ -z "$LOCALCLASSPATH" ] ; then
-      LOCALCLASSPATH="$i"
-    else
-      LOCALCLASSPATH="$i":"$LOCALCLASSPATH"
-    fi
-  fi
-done
-
-# add in the optional dependency .jar files
-for i in "$PENROSE_HOME"/lib/ext/*.jar
-do
-  # if the directory is empty, then it will return the input string
-  # this is stupid, so case for it
-  if [ -f "$i" ] ; then
-    if [ -z "$LOCALCLASSPATH" ] ; then
-      LOCALCLASSPATH="$i"
-    else
-      LOCALCLASSPATH="$i":"$LOCALCLASSPATH"
-    fi
-  fi
-done
-
-# add in the schema .jar files
-for i in "$PENROSE_HOME"/schema/ext/*.jar
-do
-  # if the directory is empty, then it will return the input string
-  # this is stupid, so case for it
-  if [ -f "$i" ] ; then
-    if [ -z "$LOCALCLASSPATH" ] ; then
-      LOCALCLASSPATH="$i"
-    else
-      LOCALCLASSPATH="$i":"$LOCALCLASSPATH"
-    fi
-  fi
-done
-
-LOCALCLASSPATH="$PENROSE_HOME/conf:$LOCALCLASSPATH"
+LOCALCLASSPATH=$LOCALCLASSPATH:$JAVA_HOME/lib/tools.jar
+LOCALLIBPATH=$PENROSE_HOME/lib:$PENROSE_HOME/lib/ext:$PENROSE_HOME/schema/ext:$PENROSE_HOME/server/lib
 
 # For Cygwin, switch paths to Windows format before running java
 if $cygwin; then
@@ -145,6 +104,7 @@ if $cygwin; then
   JAVA_HOME=`cygpath --windows "$JAVA_HOME"`
   CLASSPATH=`cygpath --path --windows "$CLASSPATH"`
   LOCALCLASSPATH=`cygpath --path --windows "$LOCALCLASSPATH"`
+  LOCALLIBPATH=`cygpath --path --windows "LOCALLIBPATH"`
   CYGHOME=`cygpath --windows "$HOME"`
 fi
 
@@ -190,6 +150,7 @@ else
 
   exec "$JAVACMD" $PENROSE_DEBUG_OPTS $PENROSE_OPTS \
   -classpath "$LOCALCLASSPATH" \
+  -Djava.ext.dirs="$LOCALLIBPATH" \
   -Dpenrose.home="$PENROSE_HOME" \
   org.safehaus.penrose.server.PenroseServer $PENROSE_ARGS "$@"
 

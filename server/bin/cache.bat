@@ -49,7 +49,6 @@ goto end
 
 :checkJava
 set _JAVACMD=%JAVACMD%
-set LOCALCLASSPATH=%CLASSPATH%;%JAVA_HOME%\lib\tools.jar
 
 if "%JAVA_HOME%" == "" goto noJavaHome
 if not exist "%JAVA_HOME%\bin\java.exe" goto noJavaHome
@@ -64,7 +63,8 @@ echo.
 
 :runPenrose
 
-set LOCALLIBPATH=%PENROSE_HOME%\lib;%PENROSE_HOME%\lib\ext;%PENROSE_HOME%\schema\ext
+set LOCALCLASSPATH=%CLASSPATH%;%JAVA_HOME%\lib\tools.jar
+set LOCALLIBPATH=%PENROSE_HOME%\lib;%PENROSE_HOME%\lib\ext;%PENROSE_HOME%\schema\ext;%PENROSE_HOME%\server\lib
 
 cd %PENROSE_HOME%
 

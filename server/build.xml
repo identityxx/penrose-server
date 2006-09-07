@@ -11,6 +11,7 @@
     <property name="cygwin.home" value="c:/cygwin"/>
 
     <property name="module.name" value="penrose-server"/>
+    <property name="project.name" value="penrose"/>
     <property name="project.version" value="1.1"/>
     <property name="project.dist" value="dist"/>
 
@@ -123,10 +124,12 @@
             <fileset dir="target/javadoc"/>
         </copy>
         <copy todir="target/dist/lib" includeEmptyDirs="false">
+            <fileset dir="../lib" includes="*"/>
+            <fileset dir="../core/dist" includes="${project.name}-${project.version}.jar"/>
+        </copy>
+        <copy todir="target/dist/server/lib" includeEmptyDirs="false">
             <fileset dir="lib" includes="*"/>
             <fileset dir="target" includes="${module.name}-${project.version}.jar"/>
-            <fileset dir="../lib" includes="*"/>
-            <fileset dir="../core/dist" includes="penrose-${project.version}.jar"/>
         </copy>
         <mkdir dir="target/dist/lib/ext"/>
         <copy todir="target/dist/server/lib" includeEmptyDirs="false">

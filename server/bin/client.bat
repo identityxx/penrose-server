@@ -65,7 +65,7 @@ echo.
 :runPenrose
 
 set LOCALCLASSPATH=%PENROSE_HOME%\conf;%LOCALCLASSPATH%
-set LOCALLIBPATH=%PENROSE_HOME%\lib;%PENROSE_HOME%\lib\ext;%PENROSE_HOME%\schema\ext
+set LOCALLIBPATH=%PENROSE_HOME%\lib;%PENROSE_HOME%\lib\ext;%PENROSE_HOME%\schema\ext;%PENROSE_HOME%\server\lib
 
 "%_JAVACMD%" %PENROSE_DEBUG_OPTS% %PENROSE_OPTS% -classpath "%LOCALCLASSPATH%" -Djava.ext.dirs="%LOCALLIBPATH%" -Dpenrose.home="%PENROSE_HOME%" org.safehaus.penrose.management.PenroseClient %PENROSE_ARGS% %PENROSE_CMD_LINE_ARGS%
 goto end

@@ -63,7 +63,7 @@ echo.
 
 :runPenrose
 
-set LOCALLIBPATH=%PENROSE_HOME%\lib;%PENROSE_HOME%\lib\ext;%PENROSE_HOME%\schema\ext
+set LOCALLIBPATH=%PENROSE_HOME%\lib;%PENROSE_HOME%\lib\ext;%PENROSE_HOME%\schema\ext;%PENROSE_HOME%\server\lib
 
 cd %PENROSE_HOME%
 
