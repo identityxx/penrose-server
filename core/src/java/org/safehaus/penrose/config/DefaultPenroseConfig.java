@@ -23,6 +23,8 @@ import org.safehaus.penrose.ldap.LDAPAdapter;
 import org.safehaus.penrose.partition.PartitionConfig;
 import org.safehaus.penrose.schema.SchemaConfig;
 import org.safehaus.penrose.engine.EngineConfig;
+import org.safehaus.penrose.engine.DefaultEngine;
+import org.safehaus.penrose.engine.ProxyEngine;
 
 
 /**
@@ -48,8 +50,9 @@ public class DefaultPenroseConfig extends PenroseConfig {
         addAdapterConfig(new AdapterConfig("JDBC", JDBCAdapter.class.getName()));
         addAdapterConfig(new AdapterConfig("LDAP", LDAPAdapter.class.getName()));
 
-        addEngineConfig(new EngineConfig());
-        
+        addEngineConfig(new EngineConfig("DEFAULT", DefaultEngine.class.getName()));
+        addEngineConfig(new EngineConfig("PROXY", ProxyEngine.class.getName()));
+
         addPartitionConfig(new PartitionConfig("DEFAULT", "conf"));
     }
 }

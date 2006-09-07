@@ -143,7 +143,7 @@ public class Penrose {
         //String s = engineConfig.getParameter(EngineConfig.THREAD_POOL_SIZE);
         //int threadPoolSize = s == null ? EngineConfig.DEFAULT_THREAD_POOL_SIZE : Integer.parseInt(s);
 
-        threadManager = new ThreadManager(50);
+        threadManager = new ThreadManager(20);
     }
 
     public void initSchemaManager() throws Exception {
@@ -182,7 +182,6 @@ public class Penrose {
         connectorManager.setPenroseConfig(penroseConfig);
         connectorManager.setConnectionManager(connectionManager);
         connectorManager.setPartitionManager(partitionManager);
-        connectorManager.setThreadManager(threadManager);
     }
 
     public void initEngineManager() throws Exception {

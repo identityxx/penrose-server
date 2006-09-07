@@ -96,8 +96,8 @@ public class ProxyEngine extends Engine {
         Connection connection = connectionManager.getConnection(partition, connectionName);
 
         String proxyDn = entryMapping.getDn();
-        String baseDn = sourceConfig.getParameter(PROXY_BASE_DN);
-        String bindDn = convertDn(dn, proxyDn, baseDn);
+        String proxyBaseDn = sourceConfig.getParameter(PROXY_BASE_DN);
+        String bindDn = convertDn(dn, proxyDn, proxyBaseDn);
 
         log.debug("Binding via proxy "+sourceName+" as \""+bindDn +"\" with "+password);
 
@@ -138,15 +138,15 @@ public class ProxyEngine extends Engine {
         Connection connection = connectionManager.getConnection(partition, connectionName);
 
         String proxyDn = proxyMapping.getDn();
-        String baseDn = sourceConfig.getParameter(PROXY_BASE_DN);
-        String targetDn = convertDn(dn, proxyDn, baseDn);
+        String proxyBaseDn = sourceConfig.getParameter(PROXY_BASE_DN);
+        String targetDn = convertDn(dn, proxyDn, proxyBaseDn);
 
         log.debug("Modifying via proxy "+sourceName+" as \""+targetDn+"\"");
 
         Map parameters = new HashMap();
         parameters.putAll(connection.getParameters());
 
-        String bindDn = convertDn(session.getBindDn(), proxyDn, baseDn);
+        String bindDn = convertDn(session.getBindDn(), proxyDn, proxyBaseDn);
 
         String pta = sourceConfig.getParameter(PROXY_AUTHENTICATON);
         if (PROXY_AUTHENTICATON_FULL.equals(pta)) {
@@ -192,15 +192,15 @@ public class ProxyEngine extends Engine {
         Connection connection = connectionManager.getConnection(partition, connectionName);
 
         String proxyDn = entryMapping.getDn();
-        String baseDn = sourceConfig.getParameter(PROXY_BASE_DN);
-        String targetDn = convertDn(dn, proxyDn, baseDn);
+        String proxyBaseDn = sourceConfig.getParameter(PROXY_BASE_DN);
+        String targetDn = convertDn(dn, proxyDn, proxyBaseDn);
 
         log.debug("Modifying via proxy "+sourceName+" as \""+targetDn+"\"");
 
         Map parameters = new HashMap();
         parameters.putAll(connection.getParameters());
 
-        String bindDn = convertDn(session.getBindDn(), proxyDn, baseDn);
+        String bindDn = convertDn(session.getBindDn(), proxyDn, proxyBaseDn);
 
         String pta = sourceConfig.getParameter(PROXY_AUTHENTICATON);
         if (PROXY_AUTHENTICATON_FULL.equals(pta)) {
@@ -245,15 +245,15 @@ public class ProxyEngine extends Engine {
         Connection connection = connectionManager.getConnection(partition, connectionName);
 
         String proxyDn = entryMapping.getDn();
-        String baseDn = sourceConfig.getParameter(PROXY_BASE_DN);
-        String targetDn = convertDn(dn, proxyDn, baseDn);
+        String proxyBaseDn = sourceConfig.getParameter(PROXY_BASE_DN);
+        String targetDn = convertDn(dn, proxyDn, proxyBaseDn);
 
         log.debug("Renaming via proxy "+sourceName+" as \""+targetDn+"\"");
 
         Map parameters = new HashMap();
         parameters.putAll(connection.getParameters());
 
-        String bindDn = convertDn(session.getBindDn(), proxyDn, baseDn);
+        String bindDn = convertDn(session.getBindDn(), proxyDn, proxyBaseDn);
 
         String pta = sourceConfig.getParameter(PROXY_AUTHENTICATON);
         if (PROXY_AUTHENTICATON_FULL.equals(pta)) {
@@ -298,15 +298,15 @@ public class ProxyEngine extends Engine {
         Connection connection = connectionManager.getConnection(partition, connectionName);
 
         String proxyDn = entryMapping.getDn();
-        String baseDn = sourceConfig.getParameter(PROXY_BASE_DN);
-        String targetDn = convertDn(dn, proxyDn, baseDn);
+        String proxyBaseDn = sourceConfig.getParameter(PROXY_BASE_DN);
+        String targetDn = convertDn(dn, proxyDn, proxyBaseDn);
 
         log.debug("Modifying via proxy "+sourceName+" as \""+targetDn+"\"");
 
         Map parameters = new HashMap();
         parameters.putAll(connection.getParameters());
 
-        String bindDn = convertDn(session.getBindDn(), proxyDn, baseDn);
+        String bindDn = convertDn(session.getBindDn(), proxyDn, proxyBaseDn);
 
         String pta = sourceConfig.getParameter(PROXY_AUTHENTICATON);
         if (PROXY_AUTHENTICATON_FULL.equals(pta)) {
@@ -458,7 +458,7 @@ Mapping: ou=Groups,dc=Proxy,dc=Example,dc=org
         }
 
         targetDn = EntryUtil.append(targetDn, proxyBaseDn);
-        String bindDn = convertDn(session.getBindDn(), proxyDn, baseDn);
+        String bindDn = convertDn(session.getBindDn(), proxyDn, proxyBaseDn);
 
         log.debug("Searching proxy "+sourceName+" for \""+targetDn+"\" with filter="+filter+" attrs="+newSc.getAttributes());
         log.debug("Bind DN: "+bindDn);
@@ -535,37 +535,6 @@ Mapping: ou=Groups,dc=Proxy,dc=Example,dc=org
         } finally {
             client.close();
         }
-    }
-
-    public void start() throws Exception {
-        super.start();
-
-        //log.debug("Starting Engine...");
-
-        for (Iterator i=partitionManager.getPartitions().iterator(); i.hasNext(); ) {
-            Partition partition = (Partition)i.next();
-
-            for (Iterator j=partition.getRootEntryMappings().iterator(); j.hasNext(); ) {
-                EntryMapping entryMapping = (EntryMapping)j.next();
-                analyzer.analyze(partition, entryMapping);
-            }
-        }
-
-        threadManager.execute(new RefreshThread(this), false);
-
-        //log.debug("Engine started.");
-    }
-
-    public void stop() throws Exception {
-        if (stopping) return;
-
-        log.debug("Stopping Engine...");
-        stopping = true;
-
-        // wait for all the worker threads to finish
-        //if (threadManager != null) threadManager.stopRequestAllWorkers();
-        log.debug("Engine stopped.");
-        super.stop();
     }
 
     public Entry find(

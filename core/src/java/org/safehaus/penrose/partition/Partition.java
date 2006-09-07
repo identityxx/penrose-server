@@ -439,16 +439,11 @@ public class Partition {
         Collection c = (Collection)entryMappings.get(dn.toLowerCase());
         if (c != null) {
             //log.debug("Found "+c.size()+" mapping(s).");
-            for (Iterator i=c.iterator(); i.hasNext(); ) {
-                EntryMapping entryMapping = (EntryMapping)i.next();
-                //log.debug(" - "+entryMapping.getDn());
-            }
             return c;
         }
 
         // can't find exact match -> search for parent mappings
 
-        Row rdn = EntryUtil.getRdn(dn);
         String parentDn = EntryUtil.getParentDn(dn);
 
         Collection results = new ArrayList();

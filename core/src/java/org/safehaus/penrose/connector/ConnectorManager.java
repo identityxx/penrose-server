@@ -40,7 +40,6 @@ public class ConnectorManager {
     private PenroseConfig penroseConfig;
     private ConnectionManager connectionManager;
     private PartitionManager partitionManager;
-    private ThreadManager threadManager;
 
     public ConnectorManager() {
     }
@@ -112,13 +111,5 @@ public class ConnectorManager {
 
     public void setPartitionManager(PartitionManager partitionManager) {
         this.partitionManager = partitionManager;
-    }
-
-    public ThreadManager getThreadManager() {
-        return threadManager;
-    }
-
-    public void setThreadManager(ThreadManager threadManager) {
-        this.threadManager = threadManager;
     }
 }

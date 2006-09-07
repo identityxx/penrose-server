@@ -361,7 +361,7 @@ public class DefaultEngine extends Engine {
             }
         }
 
-        threadManager.execute(new RefreshThread(this), false);
+        threadManager.execute(new RefreshThread(this));
 
         //log.debug("Engine started.");
     }

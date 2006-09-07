@@ -37,6 +37,14 @@ public class EngineConfig implements Cloneable {
 
     private Properties parameters = new Properties();
 
+    public EngineConfig() {
+    }
+
+    public EngineConfig(String name, String engineClass) {
+        this.name = name;
+        this.engineClass = engineClass;
+    }
+
     public String getEngineClass() {
         return engineClass;
     }

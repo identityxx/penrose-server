@@ -20,6 +20,7 @@ package org.safehaus.penrose.partition;
 import org.safehaus.penrose.mapping.EntryMapping;
 import org.safehaus.penrose.mapping.SourceMapping;
 import org.safehaus.penrose.schema.SchemaManager;
+import org.safehaus.penrose.cache.LRUCache;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
@@ -36,6 +37,8 @@ public class PartitionManager implements PartitionManagerMBean {
     private SchemaManager schemaManager;
 
     private Map partitions = new TreeMap();
+
+    public LRUCache cache = new LRUCache(20);
 
     public PartitionManager() {
     }
@@ -144,37 +147,40 @@ public class PartitionManager implements PartitionManagerMBean {
      * @throws Exception
      */
     public Partition getPartitionByDn(String dn) throws Exception {
+        Partition partition = (Partition)cache.get(dn);
+        if (partition != null) return partition;
+
         String ndn = schemaManager.normalize(dn);
         ndn = ndn == null ? "" : ndn;
 
-        Partition selectedPartition = null;
-        String selectedSuffix = null;
+        String suffix = null;
 
         for (Iterator i=partitions.values().iterator(); i.hasNext(); ) {
-            Partition partition = (Partition)i.next();
+            Partition p = (Partition)i.next();
 
-            for (Iterator j=partition.getRootEntryMappings().iterator(); j.hasNext(); ) {
+            for (Iterator j=p.getRootEntryMappings().iterator(); j.hasNext(); ) {
                 EntryMapping entryMapping = (EntryMapping)j.next();
 
-                String suffix = schemaManager.normalize(entryMapping.getDn());
+                String s = schemaManager.normalize(entryMapping.getDn());
 
                 //log.debug("Checking "+ndn+" with "+suffix);
-                if (ndn.equals(suffix)) {
-                    selectedPartition = partition;
-                    selectedSuffix = suffix;
+                if (ndn.equals(s)) {
+                    partition = p;
+                    suffix = s;
                     continue;
                 }
 
-                if ("".equals(suffix)) continue;
+                if ("".equals(s)) continue;
 
-                if (ndn.endsWith(suffix) && (selectedSuffix == null || suffix.length() > selectedSuffix.length())) {
-                    selectedPartition = partition;
-                    selectedSuffix = suffix;
+                if (ndn.endsWith(s) && (suffix == null || s.length() > suffix.length())) {
+                    partition = p;
+                    suffix = s;
                 }
             }
         }
 
-        return selectedPartition;
+        cache.put(dn, partition);
+        return partition;
     }
 
     /**
@@ -184,12 +190,20 @@ public class PartitionManager implements PartitionManagerMBean {
      * @throws Exception
      */
     public Partition findPartition(String dn) throws Exception {
+        Partition partition = (Partition)cache.get(dn);
+        if (partition != null) return partition;
+
         for (Iterator i=partitions.values().iterator(); i.hasNext(); ) {
-            Partition partition = (Partition)i.next();
-            Collection list = partition.findEntryMappings(dn);
-            if (list != null && !list.isEmpty()) return partition;
+            Partition p = (Partition)i.next();
+            Collection list = p.findEntryMappings(dn);
+            if (list == null || list.isEmpty()) continue;
+
+            partition = p;
+            cache.put(dn, partition);
+            break;
         }
-        return null;
+
+        return partition;
     }
 
     public Collection getPartitions() {
