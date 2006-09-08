@@ -95,9 +95,6 @@
             destdir="target/javadoc"
             classpathref="lib.path">
         </javadoc>
-        <jar jarfile="target/${project.name}-docs-${project.version}.jar">
-            <fileset dir="target/javadoc"/>
-        </jar>
     </target>
 
     <target name="docs-publish" depends="init">

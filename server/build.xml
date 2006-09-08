@@ -90,9 +90,6 @@
                 <pathelement path="../core/src/java"/>
             </sourcepath>
         </javadoc>
-        <jar jarfile="target/${module.name}-docs-${project.version}.jar">
-            <fileset dir="target/javadoc"/>
-        </jar>
     </target>
 
     <target name="dist" depends="build">
