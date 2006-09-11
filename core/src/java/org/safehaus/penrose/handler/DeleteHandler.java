@@ -70,7 +70,7 @@ public class DeleteHandler {
 
             String ndn = LDAPDN.normalize(dn);
 
-            Entry entry = getHandler().getFindHandler().find(session, ndn);
+            Entry entry = getHandler().getFindHandler().find(ndn);
             if (entry == null) return LDAPException.NO_SUCH_OBJECT;
 
             rc = performDelete(session, entry);

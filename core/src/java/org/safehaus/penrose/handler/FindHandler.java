@@ -53,11 +53,9 @@ public class FindHandler {
 	 * @param dn
 	 * @return path from the entry to the root entry
 	 */
-    public Entry find(
-            PenroseSession session,
-            String dn) throws Exception {
+    public Entry find(String dn) throws Exception {
 
-        List path = findPath(session, dn);
+        List path = findPath(dn);
         if (path == null) return null;
         if (path.size() == 0) return null;
 
@@ -69,9 +67,7 @@ public class FindHandler {
     /**
      * @return path (List of Entries).
      */
-    public List findPath(
-            PenroseSession session,
-            String dn) throws Exception {
+    public List findPath(String dn) throws Exception {
 
         if (log.isDebugEnabled()) {
             log.debug(Formatter.displaySeparator(80));
@@ -80,7 +76,7 @@ public class FindHandler {
             log.debug(Formatter.displaySeparator(80));
         }
 
-        List path = findPathRecursive(session, dn);
+        List path = findPathRecursive(dn);
 
         if (log.isDebugEnabled()) {
             log.debug(Formatter.displaySeparator(80));
@@ -100,9 +96,7 @@ public class FindHandler {
         return path;
     }
 
-    public List findPathRecursive(
-            PenroseSession session,
-            String dn) throws Exception {
+    public List findPathRecursive(String dn) throws Exception {
 
         if (dn == null) return null;
         //dn = dn.toLowerCase();
@@ -158,12 +152,6 @@ public class FindHandler {
                 for (Iterator iterator = entryMappings.iterator(); iterator.hasNext(); ) {
                     EntryMapping entryMapping = (EntryMapping) iterator.next();
 
-                    int rc = handler.getACLEngine().checkSearch(session, dn, entryMapping);
-                    if (rc != LDAPException.SUCCESS) {
-                        log.debug("Checking search permission => FAILED");
-                        throw new LDAPException("Insufficient access rights", LDAPException.INSUFFICIENT_ACCESS_RIGHTS, "Insufficient access rights");
-                    }
-
                     if (partition.isProxy(entryMapping)) {
                         PenroseSearchResults results = new PenroseSearchResults();
 
@@ -171,7 +159,7 @@ public class FindHandler {
                         sc.setScope(PenroseSearchControls.SCOPE_BASE);
 
                         engine.searchProxy(
-                                session,
+                                null,
                                 partition,
                                 entryMapping,
                                 dn,

@@ -77,13 +77,27 @@ public class SearchHandler {
 
         handler.getEngine().getThreadManager().execute(new Runnable() {
             public void run() {
-                try {
-                    searchInBackground(session, baseDn, filter, sc, results);
 
-                } catch (Throwable e) {
+                int rc = LDAPException.SUCCESS;
+                try {
+                    rc = searchInBackground(session, baseDn, filter, sc, results);
+
+                } catch (LDAPException e) {
+                    rc = e.getResultCode();
+
+                } catch (Exception e) {
                     log.error(e.getMessage(), e);
-                    results.setReturnCode(ExceptionUtil.getReturnCode(e));
+                    rc = ExceptionUtil.getReturnCode(e);
+
+                } finally {
+                    results.setReturnCode(rc);
                     results.close();
+
+                    if (rc == LDAPException.SUCCESS) {
+                        log.warn("Search operation succeded.");
+                    } else {
+                        log.warn("Search operation failed. RC="+rc);
+                    }
                 }
             }
         });
@@ -152,87 +166,64 @@ public class SearchHandler {
         int deref = sc.getDereference();
         Collection attributeNames = sc.getAttributes();
 
-        int rc;
-        try {
-            String s = null;
-            switch (scope) {
-            case PenroseSearchControls.SCOPE_BASE:
-                s = "base";
-                break;
-            case PenroseSearchControls.SCOPE_ONE:
-                s = "one level";
-                break;
-            case PenroseSearchControls.SCOPE_SUB:
-                s = "subtree";
-                break;
-            }
-
-            String d = null;
-            switch (deref) {
-            case PenroseSearchControls.DEREF_NEVER:
-                d = "never";
-                break;
-            case PenroseSearchControls.DEREF_SEARCHING:
-                d = "searching";
-                break;
-            case PenroseSearchControls.DEREF_FINDING:
-                d = "finding";
-                break;
-            case PenroseSearchControls.DEREF_ALWAYS:
-                d = "always";
-                break;
-            }
-
-            baseDn = normalizeDn(baseDn);
-
-            attributeNames = normalizeAttributeNames(attributeNames);
-            sc.setAttributes(attributeNames);
-
-            log.warn("Search \""+baseDn +"\" with scope "+s+" and filter \""+filter+"\"");
-
-            log.debug("----------------------------------------------------------------------------------");
-            log.debug("SEARCH:");
-            if (session != null && session.getBindDn() != null) log.debug(" - Bind DN: " + session.getBindDn());
-            log.debug(" - Base DN: " + baseDn);
-            log.debug(" - Scope: " + s);
-            log.debug(" - Filter: "+filter);
-            log.debug(" - Alias Dereferencing: " + d);
-            log.debug(" - Attribute Names: " + attributeNames);
-            log.debug("");
-
-            if (session != null && session.getBindDn() == null) {
-                PenroseConfig penroseConfig = handler.getPenroseConfig();
-                ServiceConfig serviceConfig = penroseConfig.getServiceConfig("LDAP");
-                s = serviceConfig == null ? null : serviceConfig.getParameter("allowAnonymousAccess");
-                boolean allowAnonymousAccess = s == null ? true : new Boolean(s).booleanValue();
-                if (!allowAnonymousAccess) {
-                    results.setReturnCode(LDAPException.INSUFFICIENT_ACCESS_RIGHTS);
-                    return LDAPException.INSUFFICIENT_ACCESS_RIGHTS;
-                }
-            }
-
-            rc = performSearch(session, baseDn, filter, sc, results);
-
-        } catch (LDAPException e) {
-            rc = e.getResultCode();
-            results.setReturnCode(rc);
-
-        } catch (Exception e) {
-            log.error(e.getMessage(), e);
-            rc = ExceptionUtil.getReturnCode(e);
-            results.setReturnCode(rc);
-
-        } finally {
-            results.close();
+        String s = null;
+        switch (scope) {
+        case PenroseSearchControls.SCOPE_BASE:
+            s = "base";
+            break;
+        case PenroseSearchControls.SCOPE_ONE:
+            s = "one level";
+            break;
+        case PenroseSearchControls.SCOPE_SUB:
+            s = "subtree";
+            break;
         }
 
-        if (rc == LDAPException.SUCCESS) {
-            log.warn("Search operation succeded.");
-        } else {
-            log.warn("Search operation failed. RC="+rc);
+        String d = null;
+        switch (deref) {
+        case PenroseSearchControls.DEREF_NEVER:
+            d = "never";
+            break;
+        case PenroseSearchControls.DEREF_SEARCHING:
+            d = "searching";
+            break;
+        case PenroseSearchControls.DEREF_FINDING:
+            d = "finding";
+            break;
+        case PenroseSearchControls.DEREF_ALWAYS:
+            d = "always";
+            break;
         }
 
-        return rc;
+        baseDn = normalizeDn(baseDn);
+
+        attributeNames = normalizeAttributeNames(attributeNames);
+        sc.setAttributes(attributeNames);
+
+        log.warn("Search \""+baseDn +"\" with scope "+s+" and filter \""+filter+"\"");
+
+        log.debug("----------------------------------------------------------------------------------");
+        log.debug("SEARCH:");
+        if (session != null && session.getBindDn() != null) log.debug(" - Bind DN: " + session.getBindDn());
+        log.debug(" - Base DN: " + baseDn);
+        log.debug(" - Scope: " + s);
+        log.debug(" - Filter: "+filter);
+        log.debug(" - Alias Dereferencing: " + d);
+        log.debug(" - Attribute Names: " + attributeNames);
+        log.debug("");
+
+        if (session != null && session.getBindDn() == null) {
+            PenroseConfig penroseConfig = handler.getPenroseConfig();
+            ServiceConfig serviceConfig = penroseConfig.getServiceConfig("LDAP");
+            s = serviceConfig == null ? null : serviceConfig.getParameter("allowAnonymousAccess");
+            boolean allowAnonymousAccess = s == null ? true : new Boolean(s).booleanValue();
+            if (!allowAnonymousAccess) {
+                results.setReturnCode(LDAPException.INSUFFICIENT_ACCESS_RIGHTS);
+                return LDAPException.INSUFFICIENT_ACCESS_RIGHTS;
+            }
+        }
+
+        return performSearch(session, baseDn, filter, sc, results);
     }
 
     /**
@@ -258,7 +249,7 @@ public class SearchHandler {
         }
 
         log.debug("Find base entry \""+nbase+"\".");
-		List path = handler.getFindHandler().findPath(session, nbase);
+		List path = handler.getFindHandler().findPath(nbase);
 
 		if (path == null) {
             log.debug("Entry \""+nbase+"\" not found.");
@@ -529,7 +520,7 @@ public class SearchHandler {
             attributeNames.add(attribute.getID());
         }
 
-        handler.getACLEngine().getReadableAttributes(bindDn, targetDn, entryMapping, attributeNames, grants, denies);
+        handler.getACLEngine().getReadableAttributes(session, targetDn, entryMapping, attributeNames, grants, denies);
 
         //log.debug("Readable attributes: "+grants);
         //log.debug("Unreadable attributes: "+denies);

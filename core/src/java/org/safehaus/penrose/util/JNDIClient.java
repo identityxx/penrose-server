@@ -137,6 +137,7 @@ public class JNDIClient {
             context = getContext();
 
         } catch (Exception e) {
+            log.debug(e.getMessage());
             return LDAPException.INVALID_CREDENTIALS;
 
         } finally {

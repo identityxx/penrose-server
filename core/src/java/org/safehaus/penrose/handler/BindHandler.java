@@ -138,7 +138,7 @@ public class BindHandler {
             return handler.getEngine().bindProxy(session, partition, entryMapping, dn, password);
         }
 
-        Entry entry = handler.getFindHandler().find(session, dn);
+        Entry entry = handler.getFindHandler().find(dn);
 
         if (entry == null) {
             log.debug("Entry "+dn+" not found => BIND FAILED");

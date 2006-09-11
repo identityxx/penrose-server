@@ -76,7 +76,7 @@ public class ModRdnHandler {
 
             String ndn = LDAPDN.normalize(dn);
 
-            Entry entry = handler.getFindHandler().find(session, ndn);
+            Entry entry = handler.getFindHandler().find(ndn);
             if (entry == null) return LDAPException.NO_SUCH_OBJECT;
 
             rc = performModRdn(session, entry, newRdn, deleteOldRdn);

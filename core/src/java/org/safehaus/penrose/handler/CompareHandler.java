@@ -78,7 +78,7 @@ public class CompareHandler {
             List attributeNames = new ArrayList();
             attributeNames.add(attributeName);
 
-            Entry entry = handler.getFindHandler().find(session, dn);
+            Entry entry = handler.getFindHandler().find(dn);
 
             AttributeValues attributeValues = entry.getAttributeValues();
             Collection values = attributeValues.get(attributeName);

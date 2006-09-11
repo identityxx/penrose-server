@@ -123,7 +123,7 @@ public class AddHandler {
 
         // find parent entry
         String parentDn = EntryUtil.getParentDn(dn);
-        Entry parent = getHandler().getFindHandler().find(session, parentDn);
+        Entry parent = getHandler().getFindHandler().find(parentDn);
         if (parent == null) {
             log.debug("Parent entry "+parentDn+" not found");
             return LDAPException.NO_SUCH_OBJECT;

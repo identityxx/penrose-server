@@ -87,53 +87,24 @@ public class PenroseInterceptor extends BaseInterceptor {
             LdapDN bindDn,
             byte[] credentials,
             List mechanisms,
-            String saslAuthId) throws NamingException {
+            String saslAuthId
+    ) throws NamingException {
 
-        //log.debug("Binding as \""+bindDn+"\"");
-        //log.debug(" - mechanisms: "+mechanisms);
-        //log.debug(" - sslAuthId: "+saslAuthId);
-
-        String password = new String((byte[])credentials);
-        //log.debug(" - password: "+password);
-/*
-
+        log.debug("===============================================================================");
         try {
-            PenroseConfig penroseConfig = penrose.getPenroseConfig();
-            String rootDn = penroseConfig.getRootUserConfig().getDn();
+            String dn = bindDn.toString();
+            log.debug("bind(\""+dn+"\")");
+            //log.debug(" - mechanisms: "+mechanisms);
+            //log.debug(" - sslAuthId: "+saslAuthId);
 
-            if (bindDn.equals(rootDn)) {
-                next.bind(bindDn, credentials, mechanisms, saslAuthId);
+            String password = new String((byte[])credentials);
+            //log.debug(" - password: "+password);
 
-            } else {
-                PenroseSession session = penrose.newSession();
-                if (session == null) throw new ServiceUnavailableException();
-
-                int rc = session.bind(bindDn.toString(), password);
-                session.close();
-
-                if (rc != LDAPException.SUCCESS) {
-                    throw new LdapAuthenticationException();
-                }
-
-                log.info("Login success.");
-                next.bind(bindDn, credentials, mechanisms, saslAuthId);
-            }
-
-        } catch (NamingException e) {
-            log.info("Login failed.");
-            throw e;
-
-        } catch (Exception e) {
-            log.error(e.getMessage(), e);
-            throw new NamingException(e.getMessage());
-        }
-*/
-        try {
             next.bind(bindDn, credentials, mechanisms, saslAuthId);
 
-            //PenroseSession session = getSession();
-            //session.setBindDn(bindDn.toString());
-            //session.setBindPassword(password);
+            PenroseSession session = getSession();
+            session.setBindDn(bindDn.toString());
+            session.setBindPassword(password);
 
             //log.debug("Bind successful.");
 
@@ -147,23 +118,22 @@ public class PenroseInterceptor extends BaseInterceptor {
     }
 
     public void unbind(NextInterceptor nextInterceptor, LdapDN bindDn) throws NamingException {
-        log.debug("Unbinding as \""+bindDn+"\"");
+        log.debug("===============================================================================");
+        log.debug("unbind(\""+bindDn+"\")");
         nextInterceptor.unbind(bindDn);
     }
 
     public void add(
             NextInterceptor next,
             LdapDN name,
-            Attributes attributes)
-            throws NamingException {
+            Attributes attributes
+    ) throws NamingException {
 
-        LdapDN principalDn = getPrincipal() == null ? null : getPrincipal().getJndiName();
+        log.debug("===============================================================================");
 
         try {
             String dn = name.getUpName();
-
-            log.debug("===============================================================================");
-            log.debug("add(\""+dn+"\") as "+principalDn);
+            log.debug("add(\""+dn+"\")");
 
             Partition partition = partitionManager.getPartitionByDn(dn);
             if (partition == null) {
@@ -193,13 +163,12 @@ public class PenroseInterceptor extends BaseInterceptor {
             NextInterceptor next,
             LdapDN name,
             String attributeName,
-            Object value)
-            throws NamingException {
+            Object value
+    ) throws NamingException {
 
+        log.debug("===============================================================================");
         try {
             String dn = name.getUpName();
-
-            log.debug("===============================================================================");
             log.debug("compare(\""+dn+"\", \""+attributeName+"\", "+value+")");
 
             Partition partition = partitionManager.getPartitionByDn(dn);
@@ -235,13 +204,12 @@ public class PenroseInterceptor extends BaseInterceptor {
 
     public void delete(
             NextInterceptor next,
-            LdapDN name)
-            throws NamingException {
+            LdapDN name
+    ) throws NamingException {
 
+        log.debug("===============================================================================");
         try {
             String dn = name.getUpName();
-
-            log.debug("===============================================================================");
             log.debug("delete(\""+dn+"\")");
 
             Partition partition = partitionManager.getPartitionByDn(dn);
@@ -275,36 +243,31 @@ public class PenroseInterceptor extends BaseInterceptor {
         }
     }
 
-    public LdapDN getMatchedName( NextInterceptor next, LdapDN dn ) throws NamingException
-    {
+    public LdapDN getMatchedName(NextInterceptor next, LdapDN dn) throws NamingException {
         log.debug("===============================================================================");
         log.debug("getMatchedName(\""+dn+"\")");
         return next.getMatchedName( dn );
     }
 
-    public Attributes getRootDSE( NextInterceptor next ) throws NamingException
-    {
+    public Attributes getRootDSE(NextInterceptor next) throws NamingException {
         log.debug("===============================================================================");
         log.debug("getRootDSE()");
         return next.getRootDSE();
     }
 
-    public LdapDN getSuffix( NextInterceptor next, LdapDN dn ) throws NamingException
-    {
+    public LdapDN getSuffix(NextInterceptor next, LdapDN dn) throws NamingException {
         log.debug("===============================================================================");
         log.debug("getSuffix(\""+dn+"\")");
         return next.getSuffix( dn );
     }
 
-    public boolean isSuffix( NextInterceptor next, LdapDN name ) throws NamingException
-    {
+    public boolean isSuffix(NextInterceptor next, LdapDN name) throws NamingException {
         log.debug("===============================================================================");
         log.debug("isSuffix(\""+name+"\")");
         return next.isSuffix( name );
     }
 
-    public Iterator listSuffixes( NextInterceptor next ) throws NamingException
-    {
+    public Iterator listSuffixes(NextInterceptor next) throws NamingException {
         log.debug("===============================================================================");
         log.debug("listSuffixes()");
         return next.listSuffixes( );
@@ -312,15 +275,13 @@ public class PenroseInterceptor extends BaseInterceptor {
 
     public NamingEnumeration list(
             NextInterceptor next,
-            LdapDN name)
-            throws NamingException {
+            LdapDN name
+    ) throws NamingException {
 
+        log.debug("===============================================================================");
         try {
             String dn = name.getUpName();
-
-            log.debug("===============================================================================");
             log.debug("list(\""+dn+"\")");
-
 
             Partition partition = partitionManager.getPartitionByDn(dn);
             if (partition == null) {
@@ -369,20 +330,19 @@ public class PenroseInterceptor extends BaseInterceptor {
 
     public boolean hasEntry(
             NextInterceptor next,
-            LdapDN name)
-            throws NamingException {
+            LdapDN name
+    ) throws NamingException {
 
+        log.debug("===============================================================================");
         try {
             String dn = name.getUpName();
+            log.debug("hasEntry(\""+dn+"\")");
 
             Partition partition = partitionManager.getPartitionByDn(dn);
             if (partition == null) {
                 //log.debug(dn+" is a static entry");
                 return next.hasEntry(name);
             }
-
-            //log.debug("===============================================================================");
-            //log.debug("hasEntry(\""+dn+"\") as "+principalDn);
 
             EntryMapping ed = partition.findEntryMapping(dn);
             if (ed == null) {
@@ -424,14 +384,13 @@ public class PenroseInterceptor extends BaseInterceptor {
     public Attributes lookup(
             NextInterceptor next,
             LdapDN name,
-            String[] attrIds)
-            throws NamingException {
+            String[] attrIds
+    ) throws NamingException {
 
+        log.debug("===============================================================================");
         try {
             String dn = name.getUpName();
-
-            //log.debug("===============================================================================");
-            //log.debug("lookup(\""+dn+"\", "+Arrays.asList(attrIds)+") as \""+principalDn+"\"");
+            log.debug("lookup(\""+dn+"\", "+Arrays.asList(attrIds)+")");
 
             Partition partition = partitionManager.getPartitionByDn(dn);
             if (partition == null) {
@@ -485,14 +444,13 @@ public class PenroseInterceptor extends BaseInterceptor {
 
     public Attributes lookup(
             NextInterceptor next,
-            LdapDN name)
-            throws NamingException {
+            LdapDN name
+    ) throws NamingException {
 
+        log.debug("===============================================================================");
         try {
             String dn = name.getUpName();
-
-            //log.debug("===============================================================================");
-            //log.debug("lookup(\""+dn+"\") as \""+principalDn+"\"");
+            log.debug("lookup(\""+dn+"\")");
 
             Partition partition = partitionManager.getPartitionByDn(dn);
             if (partition == null) {
@@ -545,20 +503,14 @@ public class PenroseInterceptor extends BaseInterceptor {
             LdapDN base,
             Map env,
             ExprNode filter,
-            SearchControls searchControls)
-            throws NamingException {
+            SearchControls searchControls
+    ) throws NamingException {
 
-        Name principalDn = getPrincipal() == null ? null : getPrincipal().getJndiName();
-        LdapContext ctx = getContext();
-        Hashtable environment = ctx.getEnvironment();
-        //entryCache.setNextInterceptor(next);
-        //entryCache.setContext(getContext());
+        log.debug("===============================================================================");
 
         try {
             String baseDn = base.getUpName();
-
-            log.debug("===============================================================================");
-            log.debug("search(\""+baseDn+"\") as "+principalDn);
+            log.debug("search(\""+baseDn+"\")");
 
             if (!"".equals(baseDn)) {
                 Partition partition = partitionManager.getPartitionByDn(baseDn);
@@ -646,6 +598,8 @@ public class PenroseInterceptor extends BaseInterceptor {
                     sc,
                     results);
 
+            LdapContext ctx = getContext();
+            Hashtable environment = ctx.getEnvironment();
             return new PenroseEnumeration(environment, results);
 
         } catch (NamingException e) {
@@ -661,13 +615,12 @@ public class PenroseInterceptor extends BaseInterceptor {
             NextInterceptor next,
             LdapDN name,
             int modOp,
-            Attributes attributes)
-            throws NamingException {
+            Attributes attributes
+    ) throws NamingException {
 
+        log.debug("===============================================================================");
         try {
             String dn = name.getUpName();
-
-            log.debug("===============================================================================");
             log.debug("modify(\""+dn+"\")");
 
             Partition partition = partitionManager.getPartitionByDn(dn);
@@ -710,17 +663,15 @@ public class PenroseInterceptor extends BaseInterceptor {
         }
     }
 
-
     public void modify(
             NextInterceptor next,
             LdapDN name,
-            ModificationItem[] modificationItems)
-            throws NamingException {
+            ModificationItem[] modificationItems
+    ) throws NamingException {
 
+        log.debug("===============================================================================");
         try {
             String dn = name.getUpName();
-
-            log.debug("===============================================================================");
             log.debug("modify(\""+dn+"\")");
 
             Partition partition = partitionManager.getPartitionByDn(dn);
@@ -759,12 +710,11 @@ public class PenroseInterceptor extends BaseInterceptor {
             LdapDN name,
             String newDn,
             boolean deleteOldDn
-            ) throws NamingException {
+    ) throws NamingException {
 
+        log.debug("===============================================================================");
         try {
             String dn = name.getUpName();
-
-            log.debug("===============================================================================");
             log.debug("modifyDn(\""+dn+"\")");
 
             Partition partition = partitionManager.getPartitionByDn(dn);
@@ -798,18 +748,28 @@ public class PenroseInterceptor extends BaseInterceptor {
         }
     }
 
-    public void move( NextInterceptor next, LdapDN oriChildName, LdapDN newParentName, String newRn, boolean deleteOldRn ) throws NamingException
-    {
-        String dn = oriChildName.getUpName();
+    public void move(
+            NextInterceptor next,
+            LdapDN oriChildName,
+            LdapDN newParentName,
+            String newRn,
+            boolean deleteOldRn
+    ) throws NamingException {
+
         log.debug("===============================================================================");
+        String dn = oriChildName.getUpName();
         log.debug("move(\""+dn+"\")");
         next.move( oriChildName, newParentName, newRn, deleteOldRn );
     }
 
-    public void move( NextInterceptor next, LdapDN oriChildName, LdapDN newParentName ) throws NamingException
-    {
-        String dn = oriChildName.getUpName();
+    public void move(
+            NextInterceptor next,
+            LdapDN oriChildName,
+            LdapDN newParentName
+    ) throws NamingException {
+
         log.debug("===============================================================================");
+        String dn = oriChildName.getUpName();
         log.debug("move(\""+dn+"\")");
         next.move( oriChildName, newParentName );
     }

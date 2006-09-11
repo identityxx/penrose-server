@@ -101,7 +101,7 @@ public class ModifyHandler {
 
             String ndn = LDAPDN.normalize(dn);
 
-            Entry entry = handler.getFindHandler().find(session, ndn);
+            Entry entry = handler.getFindHandler().find(ndn);
             if (entry == null) {
                 log.debug("Entry "+entry.getDn()+" not found");
                 return LDAPException.NO_SUCH_OBJECT;
