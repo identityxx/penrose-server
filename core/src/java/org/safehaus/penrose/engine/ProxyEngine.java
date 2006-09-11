@@ -483,18 +483,22 @@ Mapping: ou=Groups,dc=Proxy,dc=Example,dc=org
             public void objectAdded(PipelineEvent event) {
                 try {
                     SearchResult ldapEntry = (SearchResult)event.getObject();
-                    //log.debug("Subtracting \""+proxyBaseDn+"\" from \""+ldapEntry.getDN()+"\"");
-
                     String dn = ldapEntry.getName();
+                    //String dn = EntryUtil.append(ldapEntry.getName(), proxyBaseDn);
 
+                    log.debug("Renaming \""+dn+"\"");
+
+                    dn = convertDn(dn, proxyBaseDn, proxyDn);
+/*
                     if (proxyBaseDn != null) {
                         dn = dn.substring(0, ldapEntry.getName().length() - proxyBaseDn.length());
                         if (dn.endsWith(",")) dn = dn.substring(0, dn.length()-1);
                     }
 
-                    //dn = "".equals(ldapEntry.getDN()) ? baseDn : ldapEntry.getDN()+","+baseDn;
-                    dn = EntryUtil.append(dn, proxyDn);
-                    //log.debug("=> "+dn);
+                    //dn = "".equals(ldapEntry.getDN()) ? base : ldapEntry.getDN()+","+base;
+*/
+                    //dn = EntryUtil.append(dn, proxyDn);
+                    log.debug("into "+dn);
 
                     AttributeValues attributeValues = new AttributeValues();
 
