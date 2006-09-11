@@ -36,7 +36,6 @@ import javax.naming.directory.Attributes;
 import javax.naming.directory.SearchResult;
 import javax.naming.directory.Attribute;
 import javax.naming.NamingEnumeration;
-import javax.naming.Context;
 import java.util.*;
 
 /**
@@ -254,7 +253,7 @@ public class DefaultEngine extends Engine {
     public String convertDn(String dn, String oldSuffix, String newSuffix) throws Exception {
 
         if (dn == null) return null;
-        if (!dn.endsWith(oldSuffix)) return null;
+        if (!dn.toLowerCase().endsWith(oldSuffix.toLowerCase())) return dn;
 
         dn = dn.substring(0, dn.length() - oldSuffix.length());
         if (dn.endsWith(",")) dn = dn.substring(0, dn.length()-1);
@@ -563,10 +562,10 @@ public class DefaultEngine extends Engine {
         Connection connection = connectionManager.getConnection(partition, connectionName);
 
         final String proxyDn = entryMapping.getDn();
-        final String baseDn = sourceConfig.getParameter(PROXY_BASE_DN);
+        final String proxyBaseDn = sourceConfig.getParameter(PROXY_BASE_DN);
 
-        String targetDn = convertDn(base, proxyDn, baseDn);
-        String bindDn = convertDn(session.getBindDn(), proxyDn, baseDn);
+        String targetDn = convertDn(base, proxyDn, proxyBaseDn);
+        String bindDn = convertDn(session.getBindDn(), proxyDn, proxyBaseDn);
 
         log.debug("Searching proxy "+sourceName+" for \""+targetDn+"\" with filter="+filter+" attrs="+sc.getAttributes());
         log.debug("Bind DN: "+bindDn);
@@ -597,18 +596,22 @@ public class DefaultEngine extends Engine {
             public void objectAdded(PipelineEvent event) {
                 try {
                     SearchResult ldapEntry = (SearchResult)event.getObject();
-                    //log.debug("Subtracting \""+baseDn+"\" from \""+ldapEntry.getDN()+"\"");
-
                     String dn = ldapEntry.getName();
+                    //String dn = EntryUtil.append(ldapEntry.getName(), proxyBaseDn);
 
-                    if (baseDn != null) {
-                        dn = dn.substring(0, ldapEntry.getName().length() - baseDn.length());
+                    log.debug("Renaming \""+dn+"\"");
+
+                    dn = convertDn(dn, proxyBaseDn, proxyDn);
+/*
+                    if (proxyBaseDn != null) {
+                        dn = dn.substring(0, ldapEntry.getName().length() - proxyBaseDn.length());
                         if (dn.endsWith(",")) dn = dn.substring(0, dn.length()-1);
                     }
 
                     //dn = "".equals(ldapEntry.getDN()) ? base : ldapEntry.getDN()+","+base;
-                    dn = EntryUtil.append(dn, proxyDn);
-                    //log.debug("=> "+dn);
+*/
+                    //dn = EntryUtil.append(dn, proxyDn);
+                    log.debug("into "+dn);
 
                     AttributeValues attributeValues = new AttributeValues();
 
