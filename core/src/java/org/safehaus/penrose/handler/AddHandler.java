@@ -142,7 +142,7 @@ public class AddHandler {
             return LDAPException.NO_SUCH_OBJECT;
         }
 
-        Collection path = handler.getFindHandler().find(session, partition, parentDn);
+        Collection path = handler.getFindHandler().find(partition, parentDn);
 
         if (path == null || path.isEmpty()) {
             log.debug("Parent entry "+parentDn+" not found");

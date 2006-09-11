@@ -76,15 +76,27 @@ public class SearchHandler {
 
         handler.getEngine().getThreadManager().execute(new Runnable() {
             public void run() {
-                try {
-                    searchInBackground(session, baseDn, filter, sc, results);
 
-                } catch (Throwable e) {
+                int rc = LDAPException.SUCCESS;
+                try {
+                    rc = searchInBackground(session, baseDn, filter, sc, results);
+
+                } catch (LDAPException e) {
+                    rc = e.getResultCode();
+
+                } catch (Exception e) {
                     log.error(e.getMessage(), e);
-                    results.setReturnCode(ExceptionUtil.getReturnCode(e));
+                    rc = ExceptionUtil.getReturnCode(e);
 
                 } finally {
+                    results.setReturnCode(rc);
                     results.close();
+
+                    if (rc == LDAPException.SUCCESS) {
+                        log.warn("Search operation succeded.");
+                    } else {
+                        log.warn("Search operation failed. RC="+rc);
+                    }
                 }
             }
         });
@@ -101,44 +113,24 @@ public class SearchHandler {
 
         Collection attributeNames = sc.getAttributes();
 
-        int rc;
-        try {
-            String scope = LDAPUtil.getScope(sc.getScope());
-            baseDn = normalize(baseDn);
+        String scope = LDAPUtil.getScope(sc.getScope());
+        baseDn = normalize(baseDn);
 
-            attributeNames = normalize(attributeNames);
-            sc.setAttributes(attributeNames);
+        attributeNames = normalize(attributeNames);
+        sc.setAttributes(attributeNames);
 
-            log.warn("Search \""+baseDn +"\" with scope "+scope+" and filter \""+filter+"\"");
+        log.warn("Search \""+baseDn +"\" with scope "+scope+" and filter \""+filter+"\"");
 
-            log.debug("----------------------------------------------------------------------------------");
-            log.debug("SEARCH:");
-            if (session != null && session.getBindDn() != null) log.debug(" - Bind DN: " + session.getBindDn());
-            log.debug(" - Base DN: "+baseDn);
-            log.debug(" - Scope: "+scope);
-            log.debug(" - Filter: "+filter);
-            log.debug(" - Attribute Names: "+attributeNames);
-            log.debug("");
+        log.debug("----------------------------------------------------------------------------------");
+        log.debug("SEARCH:");
+        if (session != null && session.getBindDn() != null) log.debug(" - Bind DN: " + session.getBindDn());
+        log.debug(" - Base DN: "+baseDn);
+        log.debug(" - Scope: "+scope);
+        log.debug(" - Filter: "+filter);
+        log.debug(" - Attribute Names: "+attributeNames);
+        log.debug("");
 
-            rc = performSearch(session, baseDn, filter, sc, results);
-
-        } catch (LDAPException e) {
-            rc = e.getResultCode();
-            results.setReturnCode(rc);
-
-        } catch (Exception e) {
-            log.error(e.getMessage(), e);
-            rc = ExceptionUtil.getReturnCode(e);
-            results.setReturnCode(rc);
-        }
-
-        if (rc == LDAPException.SUCCESS) {
-            log.warn("Search operation succeded.");
-        } else {
-            log.warn("Search operation failed. RC="+rc);
-        }
-
-        return rc;
+        return performSearch(session, baseDn, filter, sc, results);
     }
 
     public String normalize(String dn) {
@@ -215,7 +207,7 @@ public class SearchHandler {
 
         log.debug("Found entry mapping \""+entryMapping.getDn()+"\".");
 
-		Collection path = handler.getFindHandler().find(session, partition, normalizedBaseDn);
+		Collection path = handler.getFindHandler().find(partition, normalizedBaseDn);
 
         if (path == null || path.isEmpty()) {
             log.debug("Can't find base entry "+normalizedBaseDn);
@@ -499,7 +491,7 @@ public class SearchHandler {
             attributeNames.add(attribute.getID());
         }
 
-        handler.getACLEngine().getReadableAttributes(bindDn, targetDn, entryMapping, attributeNames, grants, denies);
+        handler.getACLEngine().getReadableAttributes(session, targetDn, entryMapping, attributeNames, grants, denies);
 
         //log.debug("Readable attributes: "+grants);
         //log.debug("Unreadable attributes: "+denies);

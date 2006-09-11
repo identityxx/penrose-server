@@ -139,6 +139,7 @@ public class LDAPClient {
             context = getContext();
 
         } catch (Exception e) {
+            log.debug(e.getMessage());
             return LDAPException.INVALID_CREDENTIALS;
 
         } finally {

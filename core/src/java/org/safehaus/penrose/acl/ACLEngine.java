@@ -159,18 +159,19 @@ public class ACLEngine {
 
     public int checkPermission(PenroseSession session, String dn, EntryMapping entryMapping, String permission) throws Exception {
     	
-        //log.debug("Evaluating object \""+permission+"\" permission on "+entryMapping.getDn()+" for "+dn+(session == null ? null : " as "+session.getBindDn()));
+        log.debug("Checking object \""+permission+"\" permission on for "+dn);
 
         int rc = LDAPException.SUCCESS;
         if (session == null) {
-            //log.debug("no session => SUCCESS");
+            log.debug("No session => SUCCESS");
             return rc;
         }
 
         String rootDn = schemaManager.normalize(penroseConfig.getRootDn());
-        String bindDn = schemaManager.normalize(session == null ? null : session.getBindDn());
+        String bindDn = schemaManager.normalize(session.getBindDn());
+
         if (rootDn != null && rootDn.equals(bindDn)) {
-            //log.debug("root user => SUCCESS");
+            log.debug("Root user => SUCCESS");
             return rc;
         }
 
@@ -178,7 +179,7 @@ public class ACLEngine {
         boolean result = getObjectPermission(bindDn, targetDn, entryMapping, ACI.SCOPE_OBJECT, permission);
 
         if (result) {
-            //log.debug("acl evaluation => SUCCESS");
+            log.debug("ACL evaluation => SUCCESS");
             return rc;
         }
 
@@ -397,7 +398,7 @@ public class ACLEngine {
     }
 
     public void getReadableAttributes(
-            String bindDn,
+            PenroseSession session,
             String targetDn,
             EntryMapping entryMapping,
             Collection attributeNames,
@@ -405,8 +406,19 @@ public class ACLEngine {
             Collection denies
             ) throws Exception {
 
+        log.debug("Checking readable attributes for "+targetDn);
+
+        if (session == null) {
+            log.debug("No session => SUCCESS");
+            grants.addAll(attributeNames);
+            return;
+        }
+
         String rootDn = schemaManager.normalize(penroseConfig.getRootDn());
-    	if (rootDn.equals(bindDn)) {
+        String bindDn = schemaManager.normalize(session.getBindDn());
+
+    	if (rootDn != null && rootDn.equals(bindDn)) {
+            log.debug("Root user => SUCCESS");
             grants.addAll(attributeNames);
             return;
         }
@@ -425,6 +437,9 @@ public class ACLEngine {
             denies.add("*");
         }
 */
+
+        log.debug("Granted: "+grants);
+        log.debug("Denied: "+denies);
     }
 
     public SchemaManager getSchemaManager() {

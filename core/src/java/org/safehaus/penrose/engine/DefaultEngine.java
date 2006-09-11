@@ -629,7 +629,8 @@ Mapping: cn=Managers,ou=Groups,dc=Proxy,dc=Example,dc=org
     }
 
     public int search(
-            PenroseSession session, Partition partition,
+            PenroseSession session,
+            Partition partition,
             Collection path,
             AttributeValues parentSourceValues,
             EntryMapping entryMapping,

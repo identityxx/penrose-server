@@ -47,8 +47,7 @@ public class PenroseAuthenticator extends AbstractAuthenticator {
 
     boolean allowAnonymousAccess;
 
-    public PenroseAuthenticator()
-    {
+    public PenroseAuthenticator() {
         super("simple");
     }
 
@@ -71,29 +70,16 @@ public class PenroseAuthenticator extends AbstractAuthenticator {
     public LdapPrincipal authenticate(ServerContext ctx) throws NamingException {
 
         String dn = (String)ctx.getEnvironment().get(Context.SECURITY_PRINCIPAL);
-        //log.info("Login "+dn);
 
         Object credentials = ctx.getEnvironment().get(Context.SECURITY_CREDENTIALS);
         String password = new String((byte[])credentials);
 
-        Penrose penrose = penroseServer.getPenrose();
-        PenroseConfig penroseConfig = penrose.getPenroseConfig();
-        String rootDn = penroseConfig.getRootUserConfig().getDn();
-        String rootPassword = penroseConfig.getRootUserConfig().getPassword();
-
-/*
-        if (rootDn != null &&
-                rootPassword != null &&
-                rootDn.equals(dn)) {
-
-            throw new LdapAuthenticationException();
-        }
-*/
         if (dn == null || "".equals(dn)) {
             throw new LdapAuthenticationException();
         }
 
         try {
+            Penrose penrose = penroseServer.getPenrose();
             PenroseSession session = penrose.getSession(dn);
 
             if (session == null) {

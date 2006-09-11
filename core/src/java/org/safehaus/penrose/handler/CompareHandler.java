@@ -78,7 +78,7 @@ public class CompareHandler {
                 return LDAPException.NO_SUCH_OBJECT;
             }
 
-            Collection path = handler.getFindHandler().find(session, partition, dn);
+            Collection path = handler.getFindHandler().find(partition, dn);
 
             if (path == null || path.isEmpty()) {
                 log.debug("Entry "+dn+" not found");

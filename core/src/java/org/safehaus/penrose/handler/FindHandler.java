@@ -47,14 +47,12 @@ public class FindHandler {
 	 * @param dn
 	 * @return path from the entry to the root entry
 	 */
-    public Entry find(
-            PenroseSession session,
-            String dn) throws Exception {
+    public Entry find(String dn) throws Exception {
 
         Partition partition = handler.getPartitionManager().findPartition(dn);
         if (partition == null) return null;
 
-        Collection path = find(session, partition, dn);
+        Collection path = find(partition, dn);
         if (path.size() == 0) return null;
 
         return (Entry)path.iterator().next();
@@ -64,9 +62,9 @@ public class FindHandler {
      * @return path (List of Entries).
      */
     public Collection find(
-            PenroseSession session,
             Partition partition,
-            String dn) throws Exception {
+            String dn
+    ) throws Exception {
 
         List path = new ArrayList();
         String entryDn = null;
@@ -75,7 +73,7 @@ public class FindHandler {
             String suffix = EntryUtil.getSuffix(dn);
             entryDn = EntryUtil.append(suffix, entryDn);
 
-            Entry entry = find(session, partition, path, entryDn);
+            Entry entry = find(partition, path, entryDn);
             path.add(0, entry);
 
             dn = EntryUtil.getPrefix(dn);
@@ -85,7 +83,6 @@ public class FindHandler {
     }
 
     public Entry find(
-            PenroseSession session,
             Partition partition,
             Collection parentPath,
             String dn) throws Exception {
@@ -103,19 +100,13 @@ public class FindHandler {
         for (Iterator iterator = entryMappings.iterator(); iterator.hasNext(); ) {
             EntryMapping entryMapping = (EntryMapping) iterator.next();
 
-            int rc = handler.getACLEngine().checkSearch(session, dn, entryMapping);
-            if (rc != LDAPException.SUCCESS) {
-                log.debug("Checking search permission => FAILED");
-                throw new LDAPException("Insufficient access rights", LDAPException.INSUFFICIENT_ACCESS_RIGHTS, "Insufficient access rights");
-            }
-
             Engine engine = handler.getEngine();
 
             if (partition.isProxy(entryMapping)) {
                 engine = handler.getEngine("PROXY");
             }
 
-            Entry entry = engine.find(session, partition, parentPath, parentSourceValues, entryMapping, dn);
+            Entry entry = engine.find(null, partition, parentPath, parentSourceValues, entryMapping, dn);
             if (entry != null) return entry;
         }
 

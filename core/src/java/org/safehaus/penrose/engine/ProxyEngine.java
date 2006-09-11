@@ -64,7 +64,7 @@ public class ProxyEngine extends Engine {
     public String convertDn(String dn, String oldSuffix, String newSuffix) throws Exception {
 
         if (dn == null) return null;
-        if (!dn.endsWith(oldSuffix)) return null;
+        if (!dn.toLowerCase().endsWith(oldSuffix.toLowerCase())) return null;
 
         dn = dn.substring(0, dn.length() - oldSuffix.length());
         if (dn.endsWith(",")) dn = dn.substring(0, dn.length()-1);
@@ -75,11 +75,11 @@ public class ProxyEngine extends Engine {
     public int bind(
             PenroseSession session,
             Partition partition,
-            String dn,
+            String bindDn,
             String password
     ) throws Exception {
 
-        EntryMapping entryMapping = partition.findEntryMapping(dn);
+        EntryMapping entryMapping = partition.findEntryMapping(bindDn);
 
         SourceMapping sourceMapping = entryMapping.getSourceMapping(0);
         String sourceName = sourceMapping.getSourceName();
@@ -97,7 +97,7 @@ public class ProxyEngine extends Engine {
 
         String proxyDn = entryMapping.getDn();
         String proxyBaseDn = sourceConfig.getParameter(PROXY_BASE_DN);
-        String bindDn = convertDn(dn, proxyDn, proxyBaseDn);
+        bindDn = convertDn(bindDn, proxyDn, proxyBaseDn);
 
         log.debug("Binding via proxy "+sourceName+" as \""+bindDn +"\" with "+password);
 
@@ -107,15 +107,18 @@ public class ProxyEngine extends Engine {
         LDAPClient client = new LDAPClient(parameters);
 
         try {
-            client.bind(bindDn, password);
-
-            return LDAPException.SUCCESS;
+            return client.bind(bindDn, password);
 
         } catch (Exception e) {
             return ExceptionUtil.getReturnCode(e);
 
         } finally {
-            client.close();
+            if (PROXY_AUTHENTICATON_FULL.equals(pta)) {
+                log.debug("Storing connection info in session.");
+                if (session != null) session.setAttribute(partition.getName()+"."+sourceName+".connection", client);
+            } else {
+                client.close();
+            }
         }
     }
 
@@ -143,23 +146,39 @@ public class ProxyEngine extends Engine {
 
         log.debug("Modifying via proxy "+sourceName+" as \""+targetDn+"\"");
 
-        Map parameters = new HashMap();
-        parameters.putAll(connection.getParameters());
-
-        String bindDn = convertDn(session.getBindDn(), proxyDn, proxyBaseDn);
-
         String pta = sourceConfig.getParameter(PROXY_AUTHENTICATON);
-        if (PROXY_AUTHENTICATON_FULL.equals(pta)) {
-            if (bindDn != null) {
-                parameters.put(Context.SECURITY_PRINCIPAL, bindDn);
-                parameters.put(Context.SECURITY_CREDENTIALS, session.getBindPassword());
-            } else {
-                log.debug("Missing credentials.");
-                return LDAPException.INVALID_CREDENTIALS;
-            }
-        }
 
-        LDAPClient client = new LDAPClient(parameters);
+        LDAPClient client;
+
+        if (PROXY_AUTHENTICATON_FULL.equals(pta)) {
+            log.debug("Getting connection info from session.");
+            client = session == null ? null : (LDAPClient)session.getAttribute(partition.getName()+"."+sourceName+".connection");
+
+            if (client == null) {
+
+                String rootDn = schemaManager.normalize(penroseConfig.getRootDn());
+                String bindDn = schemaManager.normalize(session == null ? null : session.getBindDn());
+
+                if (session == null || rootDn.equals(bindDn)) {
+                    log.debug("Creating new connection.");
+                    Map parameters = new HashMap();
+                    parameters.putAll(connection.getParameters());
+
+                    client = new LDAPClient(parameters);
+
+                } else {
+                    log.debug("Missing credentials.");
+                    return LDAPException.SUCCESS;
+                }
+            }
+
+        } else {
+            log.debug("Creating new connection.");
+            Map parameters = new HashMap();
+            parameters.putAll(connection.getParameters());
+
+            client = new LDAPClient(parameters);
+        }
 
         try {
             client.add(targetDn, attributes);
@@ -197,23 +216,39 @@ public class ProxyEngine extends Engine {
 
         log.debug("Modifying via proxy "+sourceName+" as \""+targetDn+"\"");
 
-        Map parameters = new HashMap();
-        parameters.putAll(connection.getParameters());
-
-        String bindDn = convertDn(session.getBindDn(), proxyDn, proxyBaseDn);
-
         String pta = sourceConfig.getParameter(PROXY_AUTHENTICATON);
-        if (PROXY_AUTHENTICATON_FULL.equals(pta)) {
-            if (bindDn != null) {
-                parameters.put(Context.SECURITY_PRINCIPAL, bindDn);
-                parameters.put(Context.SECURITY_CREDENTIALS, session.getBindPassword());
-            } else {
-                log.debug("Missing credentials.");
-                return LDAPException.INVALID_CREDENTIALS;
-            }
-        }
 
-        LDAPClient client = new LDAPClient(parameters);
+        LDAPClient client;
+
+        if (PROXY_AUTHENTICATON_FULL.equals(pta)) {
+            log.debug("Getting connection info from session.");
+            client = session == null ? null : (LDAPClient)session.getAttribute(partition.getName()+"."+sourceName+".connection");
+
+            if (client == null) {
+
+                String rootDn = schemaManager.normalize(penroseConfig.getRootDn());
+                String bindDn = schemaManager.normalize(session == null ? null : session.getBindDn());
+
+                if (session == null || rootDn.equals(bindDn)) {
+                    log.debug("Creating new connection.");
+                    Map parameters = new HashMap();
+                    parameters.putAll(connection.getParameters());
+
+                    client = new LDAPClient(parameters);
+
+                } else {
+                    log.debug("Missing credentials.");
+                    return LDAPException.SUCCESS;
+                }
+            }
+
+        } else {
+            log.debug("Creating new connection.");
+            Map parameters = new HashMap();
+            parameters.putAll(connection.getParameters());
+
+            client = new LDAPClient(parameters);
+        }
 
         try {
             client.modify(targetDn, modifications);
@@ -250,23 +285,39 @@ public class ProxyEngine extends Engine {
 
         log.debug("Renaming via proxy "+sourceName+" as \""+targetDn+"\"");
 
-        Map parameters = new HashMap();
-        parameters.putAll(connection.getParameters());
-
-        String bindDn = convertDn(session.getBindDn(), proxyDn, proxyBaseDn);
-
         String pta = sourceConfig.getParameter(PROXY_AUTHENTICATON);
-        if (PROXY_AUTHENTICATON_FULL.equals(pta)) {
-            if (bindDn != null) {
-                parameters.put(Context.SECURITY_PRINCIPAL, bindDn);
-                parameters.put(Context.SECURITY_CREDENTIALS, session.getBindPassword());
-            } else {
-                log.debug("Missing credentials.");
-                return LDAPException.INVALID_CREDENTIALS;
-            }
-        }
 
-        LDAPClient client = new LDAPClient(parameters);
+        LDAPClient client;
+
+        if (PROXY_AUTHENTICATON_FULL.equals(pta)) {
+            log.debug("Getting connection info from session.");
+            client = session == null ? null : (LDAPClient)session.getAttribute(partition.getName()+"."+sourceName+".connection");
+
+            if (client == null) {
+
+                String rootDn = schemaManager.normalize(penroseConfig.getRootDn());
+                String bindDn = schemaManager.normalize(session == null ? null : session.getBindDn());
+
+                if (session == null || rootDn.equals(bindDn)) {
+                    log.debug("Creating new connection.");
+                    Map parameters = new HashMap();
+                    parameters.putAll(connection.getParameters());
+
+                    client = new LDAPClient(parameters);
+
+                } else {
+                    log.debug("Missing credentials.");
+                    return LDAPException.SUCCESS;
+                }
+            }
+
+        } else {
+            log.debug("Creating new connection.");
+            Map parameters = new HashMap();
+            parameters.putAll(connection.getParameters());
+
+            client = new LDAPClient(parameters);
+        }
 
         try {
             client.modrdn(targetDn, newRdn);
@@ -301,25 +352,41 @@ public class ProxyEngine extends Engine {
         String proxyBaseDn = sourceConfig.getParameter(PROXY_BASE_DN);
         String targetDn = convertDn(dn, proxyDn, proxyBaseDn);
 
-        log.debug("Modifying via proxy "+sourceName+" as \""+targetDn+"\"");
-
-        Map parameters = new HashMap();
-        parameters.putAll(connection.getParameters());
-
-        String bindDn = convertDn(session.getBindDn(), proxyDn, proxyBaseDn);
+        log.debug("Deleting via proxy "+sourceName+" as \""+targetDn+"\"");
 
         String pta = sourceConfig.getParameter(PROXY_AUTHENTICATON);
-        if (PROXY_AUTHENTICATON_FULL.equals(pta)) {
-            if (bindDn != null) {
-                parameters.put(Context.SECURITY_PRINCIPAL, bindDn);
-                parameters.put(Context.SECURITY_CREDENTIALS, session.getBindPassword());
-            } else {
-                log.debug("Missing credentials.");
-                return LDAPException.INVALID_CREDENTIALS;
-            }
-        }
 
-        LDAPClient client = new LDAPClient(parameters);
+        LDAPClient client;
+
+        if (PROXY_AUTHENTICATON_FULL.equals(pta)) {
+            log.debug("Getting connection info from session.");
+            client = session == null ? null : (LDAPClient)session.getAttribute(partition.getName()+"."+sourceName+".connection");
+
+            if (client == null) {
+
+                String rootDn = schemaManager.normalize(penroseConfig.getRootDn());
+                String bindDn = schemaManager.normalize(session == null ? null : session.getBindDn());
+
+                if (session == null || rootDn.equals(bindDn)) {
+                    log.debug("Creating new connection.");
+                    Map parameters = new HashMap();
+                    parameters.putAll(connection.getParameters());
+
+                    client = new LDAPClient(parameters);
+
+                } else {
+                    log.debug("Missing credentials.");
+                    return LDAPException.SUCCESS;
+                }
+            }
+
+        } else {
+            log.debug("Creating new connection.");
+            Map parameters = new HashMap();
+            parameters.putAll(connection.getParameters());
+
+            client = new LDAPClient(parameters);
+        }
 
         try {
             client.delete(targetDn);
@@ -380,7 +447,8 @@ public class ProxyEngine extends Engine {
     }
 
     public int expand(
-            PenroseSession session, final Partition partition,
+            PenroseSession session,
+            final Partition partition,
             Collection parentPath,
             AttributeValues parentSourceValues,
             final EntryMapping entryMapping,
@@ -445,8 +513,7 @@ Mapping: ou=Groups,dc=Proxy,dc=Example,dc=org
 
         String targetDn = "";
         if (found) {
-            targetDn = baseDn.substring(0, baseDn.length() - entryMapping.getDn().length());
-            if (targetDn.endsWith(",")) targetDn = targetDn.substring(0, targetDn.length()-1);
+            targetDn = convertDn(baseDn, proxyDn, proxyBaseDn);
 
         } else {
             if (sc.getScope() == LDAPConnection.SCOPE_BASE) {
@@ -455,26 +522,44 @@ Mapping: ou=Groups,dc=Proxy,dc=Example,dc=org
             } else if (sc.getScope() == LDAPConnection.SCOPE_ONE) {
                 newSc.setScope(LDAPConnection.SCOPE_BASE);
             }
+            targetDn = EntryUtil.append(targetDn, proxyBaseDn);
         }
 
-        targetDn = EntryUtil.append(targetDn, proxyBaseDn);
-        String bindDn = convertDn(session.getBindDn(), proxyDn, proxyBaseDn);
-
         log.debug("Searching proxy "+sourceName+" for \""+targetDn+"\" with filter="+filter+" attrs="+newSc.getAttributes());
-        log.debug("Bind DN: "+bindDn);
-
-        Map parameters = new HashMap();
-        parameters.putAll(connection.getParameters());
 
         String pta = sourceConfig.getParameter(PROXY_AUTHENTICATON);
+
+        LDAPClient client;
+
         if (PROXY_AUTHENTICATON_FULL.equals(pta)) {
-            if (bindDn != null) {
-                parameters.put(Context.SECURITY_PRINCIPAL, bindDn);
-                parameters.put(Context.SECURITY_CREDENTIALS, session.getBindPassword());
-            } else {
-                log.debug("Missing credentials.");
-                return LDAPException.INVALID_CREDENTIALS;
+            log.debug("Getting connection info from session.");
+            client = session == null ? null : (LDAPClient)session.getAttribute(partition.getName()+"."+sourceName+".connection");
+
+            if (client == null) {
+
+                String rootDn = schemaManager.normalize(penroseConfig.getRootDn());
+                String bindDn = schemaManager.normalize(session == null ? null : session.getBindDn());
+
+                if (session == null || rootDn.equals(bindDn)) {
+                    log.debug("Creating new connection.");
+                    Map parameters = new HashMap();
+                    parameters.putAll(connection.getParameters());
+
+                    client = new LDAPClient(parameters);
+
+                } else {
+                    log.debug("Missing credentials.");
+                    results.close();
+                    return LDAPException.SUCCESS;
+                }
             }
+
+        } else {
+            log.debug("Creating new connection.");
+            Map parameters = new HashMap();
+            parameters.putAll(connection.getParameters());
+
+            client = new LDAPClient(parameters);
         }
 
         PenroseSearchResults res = new PenroseSearchResults();
@@ -522,8 +607,6 @@ Mapping: ou=Groups,dc=Proxy,dc=Example,dc=org
                 }
             }
         });
-
-        LDAPClient client = new LDAPClient(parameters);
 
         try {
             client.search(targetDn, filter.toString(), newSc, res);
