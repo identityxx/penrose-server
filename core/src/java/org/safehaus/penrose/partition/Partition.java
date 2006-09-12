@@ -482,13 +482,8 @@ public class Partition {
         for (Iterator iterator = list.iterator(); iterator.hasNext(); ) {
             EntryMapping childMapping = (EntryMapping) iterator.next();
 
-            String childDn = childMapping.getDn().toLowerCase();
-            //log.debug("Checking \""+dn+"\" against \""+childDn+"\"");
-
-            Row childRdn = EntryUtil.getRdn(childDn);
-            String childParentDn = EntryUtil.getParentDn(childDn);
-
-            if (!EntryUtil.match(dn, childDn)) continue;
+            //log.debug("Checking \""+dn+"\" against \""+childMapping.getDn()+"\"");
+            if (!EntryUtil.match(dn, childMapping.getDn())) continue;
 /*
             if (parentDn != null && childParentDn != null && !parentDn.equals(childParentDn)) continue;
 

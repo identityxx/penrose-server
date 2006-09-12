@@ -96,7 +96,8 @@ public class ACLEngine {
             //log.debug("   ==> checking subject "+subject);
 
             if (subject.equals(ACI.SUBJECT_USER)) {
-                boolean match = EntryUtil.match(aci.getDn(), bindDn);
+                String dn = schemaManager.normalize(aci.getDn());
+                boolean match = dn.equals(bindDn);
                 //log.debug("User matches \""+aci.getDn()+"\": "+match);
                 if (match) {
                     boolean b = aci.getAction().equals(ACI.ACTION_GRANT);
@@ -106,7 +107,7 @@ public class ACLEngine {
             }
 
             if (subject.equals(ACI.SUBJECT_SELF)) {
-                boolean match = EntryUtil.match(targetDn, bindDn);
+                boolean match = targetDn.equals(bindDn);
                 //log.debug("User matches \""+targetDn+"\": "+match);
                 if (match) {
                     boolean b = aci.getAction().equals(ACI.ACTION_GRANT);
@@ -159,7 +160,7 @@ public class ACLEngine {
 
     public int checkPermission(PenroseSession session, String dn, EntryMapping entryMapping, String permission) throws Exception {
     	
-        log.debug("Checking object \""+permission+"\" permission on for "+dn);
+        log.debug("Checking object \""+permission+"\" permission");
 
         int rc = LDAPException.SUCCESS;
         if (session == null) {
@@ -239,93 +240,60 @@ public class ACLEngine {
 
     public boolean checkSubject(String bindDn, String targetDn, ACI aci) throws Exception {
 
-        String subject = schemaManager.normalize(aci.getSubject());
-        //log.debug("   ==> checking subject "+subject);
+        String subject = aci.getSubject();
+        log.debug("   Checking bind DN ["+bindDn+"] with "+subject);
 
-        if (subject.equals(ACI.SUBJECT_USER) && aci.getDn().equals(bindDn)) {
-            //log.debug("   ==> matching user");
-            return true;
+        if (subject.equals(ACI.SUBJECT_USER)) {
+
+            String dn = schemaManager.normalize(aci.getDn());
+            log.debug("   Comparing with ["+dn+"]");
+
+            if (dn.equals(bindDn)) {
+                log.debug("   ==> matching user");
+                return true;
+            }
+
+            return false;
         }
 
-        if (subject.equals(ACI.SUBJECT_SELF) && targetDn.equals(bindDn)) {
-            //log.debug("   ==> matching self");
-            return true;
+        if (subject.equals(ACI.SUBJECT_SELF) ) {
+
+            log.debug("   Comparing with ["+targetDn+"]");
+
+            if (targetDn.equals(bindDn)) {
+                log.debug("   ==> matching self");
+                return true;
+            }
+
+            return false;
         }
 
-        if (subject.equals(ACI.SUBJECT_ANONYMOUS) && (bindDn == null || bindDn.equals(""))) {
-            //log.debug("   ==> matching anonymous");
-            return true;
+        if (subject.equals(ACI.SUBJECT_ANONYMOUS)) {
+
+            if (bindDn == null || bindDn.equals("")) {
+                log.debug("   ==> matching anonymous");
+                return true;
+            }
+
+            return false;
         }
 
-        if (subject.equals(ACI.SUBJECT_AUTHENTICATED) && bindDn != null && !bindDn.equals("")) {
-            //log.debug("   ==> matching authenticated");
-            return true;
+        if (subject.equals(ACI.SUBJECT_AUTHENTICATED)) {
+
+            if (bindDn != null && !bindDn.equals("")) {
+                log.debug("   ==> matching authenticated");
+                return true;
+            }
+
+            return false;
         }
 
         if (subject.equals(ACI.SUBJECT_ANYBODY)) {
-            //log.debug("   ==> matching anybody");
+            log.debug("   ==> matching anybody");
             return true;
         }
 
         return false;
-    }
-
-    public boolean checkAttributeReadPermission(
-            String bindDn,
-            String targetDn,
-            EntryMapping entryMapping,
-            String attributeName) throws Exception {
-
-        //log.debug("Checking read permission for attribute "+attributeName+":");
-        return checkAttributeReadPermission(bindDn, targetDn, entryMapping, null, attributeName);
-    }
-
-    public boolean checkAttributeReadPermission(
-            String bindDn,
-            String targetDn,
-            EntryMapping entryMapping,
-            String scope,
-            String attributeName) throws Exception {
-
-        //log.debug(" * "+entryMapping.getDn()+":");
-
-        for (Iterator i=entryMapping.getACL().iterator(); i.hasNext(); ) {
-            ACI aci = (ACI)i.next();
-            //log.debug("   - "+aci);
-
-            if (!checkSubject(bindDn, targetDn, aci)) {
-                //log.debug("     ==> subject doesn't match");
-                continue;
-            }
-
-            if (scope != null && !scope.equals(aci.getScope())) {
-                //log.debug("     ==> scope doesn't match");
-                continue;
-            }
-
-            if (aci.getPermission().indexOf(ACI.PERMISSION_READ) < 0) {
-                //log.debug("     ==> read permission not defined");
-                continue;
-            }
-
-            if (aci.getTarget().equals(ACI.TARGET_ATTRIBUTES)) {
-                Collection attributes = getAttributes(aci.getAttributes());
-                if (!attributes.contains(attributeName)) {
-                    //log.debug("     ==> attribute doesn't match");
-                    continue;
-                }
-            }
-
-            return aci.getAction().equals(ACI.ACTION_GRANT);
-        }
-
-        Partition partition = partitionManager.getPartitionByDn(entryMapping.getDn());
-        if (partition == null) return false;
-
-        entryMapping = partition.getParent(entryMapping);
-        if (entryMapping == null) return false;
-
-        return checkAttributeReadPermission(bindDn, targetDn, entryMapping, ACI.SCOPE_SUBTREE, attributeName);
     }
 
     public void getReadableAttributes(
@@ -342,50 +310,59 @@ public class ACLEngine {
             return;
         }
 
-        //log.debug(" * "+entryMapping.getDn()+":");
+        log.debug("Checking ACL in "+entryMapping.getDn()+":");
 
         for (Iterator i=entryMapping.getACL().iterator(); i.hasNext(); ) {
             ACI aci = (ACI)i.next();
-            //log.debug("   - "+aci);
+            log.debug(" - "+aci);
 
             if (!checkSubject(bindDn, targetDn, aci)) {
-                //log.debug("     ==> subject doesn't match");
+                log.debug("   ==> subject doesn't match");
                 continue;
             }
 
             if (scope != null && !scope.equals(aci.getScope())) {
-                //log.debug("     ==> scope doesn't match");
+                log.debug("   ==> scope doesn't match");
                 continue;
             }
 
             if (aci.getPermission().indexOf(ACI.PERMISSION_READ) < 0) {
-                //log.debug("     ==> read permission not defined");
+                log.debug("   ==> read permission not defined");
+                continue;
+            }
+
+            if (aci.getTarget().equals(ACI.TARGET_ATTRIBUTES)) {
+                Collection attributes = getAttributes(aci.getAttributes());
+
+                if (aci.getAction().equals(ACI.ACTION_GRANT)) {
+                    attributes.removeAll(denies);
+                    log.debug("   ==> Granting read access to attributes "+attributes);
+                    grants.addAll(attributes);
+
+                } else if (aci.getAction().equals(ACI.ACTION_DENY)) {
+                    attributes.removeAll(grants);
+                    log.debug("   ==> Denying read access to attributes "+attributes);
+                    denies.addAll(attributes);
+                }
+
                 continue;
             }
 
             if (aci.getTarget().equals(ACI.TARGET_OBJECT)) {
                 if (aci.getAction().equals(ACI.ACTION_GRANT)) {
                     attributeNames.removeAll(denies);
+                    log.debug("   ==> Granting read access to attributes "+attributeNames);
                     grants.addAll(attributeNames);
 
                 } else if (aci.getAction().equals(ACI.ACTION_DENY)) {
                     attributeNames.removeAll(grants);
+                    log.debug("   ==> Denying read access to attributes "+attributeNames);
                     denies.addAll(attributeNames);
                 }
-                return;
+
+                continue;
             }
 
-            // if (aci.getTarget().equals(ACI.TARGET_ATTRIBUTES))
-            Collection attributes = getAttributes(aci.getAttributes());
-
-            if (aci.getAction().equals(ACI.ACTION_GRANT)) {
-                attributes.removeAll(denies);
-                grants.addAll(attributes);
-
-            } else if (aci.getAction().equals(ACI.ACTION_DENY)) {
-                attributes.removeAll(grants);
-                denies.addAll(attributes);
-            }
         }
 
         Partition partition = partitionManager.getPartitionByDn(entryMapping.getDn());
@@ -406,7 +383,7 @@ public class ACLEngine {
             Collection denies
             ) throws Exception {
 
-        log.debug("Checking readable attributes for "+targetDn);
+        log.debug("Checking readable attributes");
 
         if (session == null) {
             log.debug("No session => SUCCESS");
