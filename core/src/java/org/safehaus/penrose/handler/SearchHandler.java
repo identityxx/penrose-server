@@ -529,8 +529,7 @@ public class SearchHandler {
         for (NamingEnumeration i=attributes.getAll(); i.hasMore(); ) {
             Attribute attribute = (Attribute)i.next();
             //if (checkAttributeReadPermission(bindDn, targetDn, entryMapping, attribute.getName())) continue;
-            if (grants.contains(attribute.getID())) continue;
-            list.add(attribute);
+            if (denies.contains(attribute.getID())) list.add(attribute);
         }
 
         for (Iterator i=list.iterator(); i.hasNext(); ) {
