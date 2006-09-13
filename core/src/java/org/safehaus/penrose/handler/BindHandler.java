@@ -110,7 +110,6 @@ public class BindHandler {
     }
 
     public int bindAsRoot(String password) throws Exception {
-        log.debug("Comparing root's password");
 
         if (!PasswordUtil.comparePassword(password, handler.getPenroseConfig().getRootPassword())) {
             log.debug("Password doesn't match => BIND FAILED");

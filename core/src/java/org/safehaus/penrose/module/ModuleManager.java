@@ -150,7 +150,7 @@ public class ModuleManager implements ModuleManagerMBean {
 
     public Collection getModules(String dn) throws Exception {
 
-        log.debug("Finding matching modules for \""+dn+"\".");
+        //log.debug("Finding matching modules for \""+dn+"\".");
 
         Collection list = new ArrayList();
 
@@ -168,14 +168,14 @@ public class ModuleManager implements ModuleManagerMBean {
                     Module module = (Module)modules.get(moduleName);
 
                     if (moduleMapping.match(dn)) {
-                        log.debug(" - "+moduleName);
+                        //log.debug(" - "+moduleName);
                         list.add(module);
                     }
                 }
             }
         }
 
-        log.debug("Found "+list.size()+" module(s).");
+        //log.debug("Found "+list.size()+" module(s).");
 
         return list;
     }
