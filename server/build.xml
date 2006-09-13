@@ -35,11 +35,20 @@
     </path>
 
     <target name="init">
+        <echo message="Operating System: ${os.name} ${os.version}" />
         <condition property="isWindows">
             <os family="windows"/>
         </condition>
         <condition property="isUnix">
-            <os family="unix"/>
+            <and>
+                <os family="unix"/>
+                <not>
+                    <os family="mac"/>
+                </not>
+            </and>
+        </condition>
+        <condition property="isMac">
+            <os family="mac"/>
         </condition>
     </target>
 
@@ -202,7 +211,24 @@
         </tar>
     </target>
 
-    <target name="dist-unix" depends="dist">
+    <target name="dist-macosx" depends="docs,dist" if="isMac">
+        <echo message="Creating ${project.name}-${project.version}.dmg"/>
+        <mkdir dir="target/${project.name}-${project.version}.dmg"/>
+        <exec executable="/Developer/Applications/Utilities/PackageMaker.app/Contents/MacOS/PackageMaker">
+            <arg line="-build"/>
+            <arg line="-proj installer/${project.name}.pmproj"/>
+            <arg line="-p target/${project.name}-${project.version}.dmg/${project.name}-${project.version}.pkg"/>
+        </exec>
+        <mkdir dir="${project.dist}"/>
+        <exec executable="/usr/bin/hdiutil">
+            <arg line="create"/>
+            <arg line="-fs HFS+"/>
+            <arg line="-srcdir target/${project.name}-${project.version}.dmg"/>
+            <arg line="${project.dist}/${project.name}-${project.version}.dmg"/>
+        </exec>
+    </target>
+
+    <target name="dist-unix" depends="dist" if="isUnix">
         <echo message="Creating ${module.name}-${project.version}.tar.gz"/>
         <mkdir dir="target"/>
         <tar destfile="${project.dist}/${module.name}-${project.version}.tar.gz" compression="gzip">
@@ -280,7 +306,7 @@
         </exec>
     </target>
 
-    <target name="dist-all" depends="dist-unix,dist-win32,dist-rpm">
+    <target name="dist-all" depends="dist-unix,dist-win32,dist-rpm,dist-macosx">
         <copy todir="${project.dist}"
             file="target/${module.name}-${project.version}.jar">
         </copy>
