@@ -204,10 +204,9 @@ public class PasswordUtil {
     }
 
     public static boolean comparePassword(String credential, String encryption, String encoding, String storedPassword) throws Exception {
-        log.debug("COMPARING PASSWORDS:");
-        log.debug("  encryption      : ["+encryption+"]");
-        log.debug("  encoding        : ["+encoding+"]");
-        log.debug("  digest          : ["+storedPassword+"]");
+        log.debug("Comparing passwords:");
+        if (encryption != null) log.debug("Encryption: "+encryption);
+        if (encoding != null) log.debug("Encoding: "+encoding);
 
         String encryptedCredential;
 
@@ -226,12 +225,12 @@ public class PasswordUtil {
             encryptedCredential = BinaryUtil.encode(encoding, bytes);
         }
 
-        //log.debug("  credential      : ["+credential+"]");
-        log.debug("  enc credential  : ["+encryptedCredential+"]");
+        log.debug("Supplied ["+encryptedCredential+"]");
+        log.debug("Stored   ["+storedPassword+"]");
 
         boolean result = encryptedCredential.equals(storedPassword);
 
-        log.debug("  result          : ["+result+"]");
+        log.debug("Result: "+result);
 
         return result;
     }
