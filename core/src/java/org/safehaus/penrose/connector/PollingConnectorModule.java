@@ -31,6 +31,7 @@ import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.engine.Engine;
 import org.safehaus.penrose.pipeline.PipelineAdapter;
 import org.safehaus.penrose.pipeline.PipelineEvent;
+import org.safehaus.penrose.handler.Handler;
 
 import java.util.Collection;
 import java.util.Iterator;
@@ -218,7 +219,8 @@ public class PollingConnectorModule extends Module {
         final Row rdn = entryMapping.getRdn(attributeValues);
         EntryMapping parentMapping = partition.getParent(entryMapping);
 
-        EntryCache entryCache = engine.getEntryCache();
+        Handler handler = penrose.getHandler();
+        EntryCache entryCache = handler.getEntryCache();
 
         PenroseSearchResults parentDns = new PenroseSearchResults();
 
@@ -266,7 +268,8 @@ public class PollingConnectorModule extends Module {
 
         log.debug("Removing entry cache for "+entryMapping.getDn());
 
-        final EntryCache entryCache = engine.getEntryCache();
+        Handler handler = penrose.getHandler();
+        final EntryCache entryCache = handler.getEntryCache();
 
         PenroseSearchResults dns = new PenroseSearchResults();
         dns.addListener(new PipelineAdapter() {

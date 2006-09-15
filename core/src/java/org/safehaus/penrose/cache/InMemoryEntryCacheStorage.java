@@ -22,6 +22,8 @@ import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.partition.SourceConfig;
 import org.safehaus.penrose.util.EntryUtil;
 import org.safehaus.penrose.session.PenroseSearchResults;
+import org.safehaus.penrose.Penrose;
+import org.ietf.ldap.LDAPException;
 
 import java.util.*;
 
@@ -35,6 +37,10 @@ public class InMemoryEntryCacheStorage extends EntryCacheStorage {
 
     Map dataMap = new TreeMap();
     Map dataExpirationMap = new LinkedHashMap();
+
+    public InMemoryEntryCacheStorage(Penrose penrose) throws Exception {
+        super(penrose);
+    }
 
     public Entry get(String dn) throws Exception {
 
@@ -98,40 +104,46 @@ public class InMemoryEntryCacheStorage extends EntryCacheStorage {
         return result;
     }
 
-    public void search(String baseDn, Filter filter, PenroseSearchResults results) throws Exception {
+    public boolean search(String baseDn, Filter filter, PenroseSearchResults results) throws Exception {
 
         log.debug("search("+baseDn+", "+filter+")");
 
-        String key = filter == null ? "" : filter.toString();
+        try {
+            String key = filter == null ? "" : filter.toString();
 
-        Collection dns = (Collection)queryMap.get(key);
-        if (dns == null) {
-            //log.debug("No filter cache found.");
-        }
+            Collection dns = (Collection)queryMap.get(key);
+            if (dns == null) return false;
 
-        if (baseDn == null) {
-            log.debug("search("+baseDn+", "+filter+") => "+dns);
-            results.addAll(dns);
-        } else {
+            Collection entries = new ArrayList();
             for (Iterator i=dns.iterator(); i.hasNext(); ) {
                 String dn = (String)i.next();
-                String pdn = EntryUtil.getParentDn(dn);
-                if (baseDn.equals(pdn)) {
-                    log.debug("search("+baseDn+", "+filter+") => "+dn);
-                    results.add(dn);
-                }
+                if (baseDn != null && !dn.endsWith(baseDn)) continue;
+
+                Entry entry = get(dn);
+                if (entry == null) return false;
+
+                entries.add(entry);
             }
+
+            for (Iterator i=entries.iterator(); i.hasNext(); ) {
+                Entry entry = (Entry)i.next();
+                log.debug("search("+baseDn+", "+filter+") => "+entry.getDn());
+                results.add(entry);
+            }
+
+            Date date = (Date)queryExpirationMap.get(key);
+
+            if (date == null || date.getTime() <= System.currentTimeMillis()) {
+                //log.debug("Filter cache has expired.");
+                queryMap.remove(key);
+                queryExpirationMap.remove(key);
+            }
+
+            return true;
+
+        } finally {
+            results.close();
         }
-
-        Date date = (Date)queryExpirationMap.get(key);
-
-        if (date == null || date.getTime() <= System.currentTimeMillis()) {
-            //log.debug("Filter cache has expired.");
-            queryMap.remove(key);
-            queryExpirationMap.remove(key);
-        }
-
-        results.close();
     }
 
     public void search(SourceConfig sourceConfig, Row filter, PenroseSearchResults results) throws Exception {

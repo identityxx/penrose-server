@@ -26,6 +26,7 @@ import org.safehaus.penrose.partition.SourceConfig;
 import org.safehaus.penrose.connector.ConnectionManager;
 import org.safehaus.penrose.session.PenroseSearchResults;
 import org.safehaus.penrose.thread.ThreadManager;
+import org.safehaus.penrose.Penrose;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
@@ -39,7 +40,7 @@ public class EntryCacheStorage {
 
     Logger log = LoggerFactory.getLogger(getClass());
 
-    ConnectionManager connectionManager;
+    Penrose penrose;
 
     Partition partition;
     EntryMapping entryMapping;
@@ -48,6 +49,10 @@ public class EntryCacheStorage {
 
     int size;
     int expiration; // minutes
+
+    public EntryCacheStorage(Penrose penrose) throws Exception {
+        this.penrose = penrose;
+    }
 
     public CacheConfig getCacheConfig() {
         return cacheConfig;
@@ -111,19 +116,12 @@ public class EntryCacheStorage {
         this.partition = partition;
     }
 
-    public ConnectionManager getConnectionManager() {
-        return connectionManager;
-    }
-
-    public void setConnectionManager(ConnectionManager connectionManager) {
-        this.connectionManager = connectionManager;
-    }
-
     public boolean contains(String baseDn, Filter filter) throws Exception {
         return false;
     }
 
-    public void search(String baseDn, Filter filter, PenroseSearchResults results) throws Exception {
+    public boolean search(String baseDn, Filter filter, PenroseSearchResults results) throws Exception {
+        return false;
     }
 
     public void search(SourceConfig sourceConfig, Row filter, PenroseSearchResults results) throws Exception {
@@ -150,4 +148,12 @@ public class EntryCacheStorage {
     public void put(String dn, Entry entry) throws Exception { }
 
     public void remove(String dn) throws Exception { }
+
+    public Penrose getPenrose() {
+        return penrose;
+    }
+
+    public void setPenrose(Penrose penrose) {
+        this.penrose = penrose;
+    }
 }

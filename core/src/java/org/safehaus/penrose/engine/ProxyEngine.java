@@ -21,7 +21,6 @@ import org.ietf.ldap.LDAPConnection;
 
 import javax.naming.directory.*;
 import javax.naming.NamingEnumeration;
-import javax.naming.Context;
 import java.util.*;
 
 /**
@@ -35,22 +34,8 @@ public class ProxyEngine extends Engine {
     public final static String PROXY_AUTHENTICATON_FULL     = "full";
     public final static String PROXY_AUTHENTICATON_DISABLED = "disabled";
 
-    public final static String DEFAULT_CACHE_CLASS = EntryCache.class.getName();
-
     public void init() throws Exception {
         super.init();
-
-        CacheConfig cacheConfig = penroseConfig.getEntryCacheConfig();
-        String cacheClass = cacheConfig.getCacheClass() == null ? ProxyEngine.DEFAULT_CACHE_CLASS : cacheConfig.getCacheClass();
-
-        log.debug("Initializing entry cache "+cacheClass);
-        Class clazz = Class.forName(cacheClass);
-        entryCache = (EntryCache)clazz.newInstance();
-
-        entryCache.setCacheConfig(cacheConfig);
-        entryCache.setConnectionManager(connectionManager);
-
-        entryCache.init();
 
         engineFilterTool      = new EngineFilterTool(this);
         loadEngine      = new LoadEngine(this);
@@ -75,11 +60,9 @@ public class ProxyEngine extends Engine {
     public int bind(
             PenroseSession session,
             Partition partition,
-            String bindDn,
+            EntryMapping entryMapping, String bindDn,
             String password
     ) throws Exception {
-
-        EntryMapping entryMapping = partition.findEntryMapping(bindDn);
 
         SourceMapping sourceMapping = entryMapping.getSourceMapping(0);
         String sourceName = sourceMapping.getSourceName();
@@ -416,21 +399,7 @@ public class ProxyEngine extends Engine {
         if (sc.getScope() == LDAPConnection.SCOPE_BASE) {
 
             Entry baseEntry = (Entry)path.iterator().next();
-
-            if (getFilterTool().isValid(baseEntry, filter)) {
-
-                Entry e = baseEntry;
-                Collection attributeNames = sc.getAttributes();
-
-                if (!attributeNames.isEmpty() && !attributeNames.contains("*")) {
-                    AttributeValues av = new AttributeValues();
-                    av.add(baseEntry.getAttributeValues());
-                    av.retain(attributeNames);
-                    e = new Entry(baseEntry.getDn(), entryMapping, baseEntry.getSourceValues(), av);
-                }
-
-                results.add(e);
-            }
+            results.add(baseEntry);
 
         } else {
 

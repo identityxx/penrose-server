@@ -63,20 +63,20 @@ public class Penrose {
     public final static String STARTED  = "STARTED";
     public final static String STOPPING = "STOPPING";
 
-    private PenroseConfig penroseConfig;
+    private PenroseConfig      penroseConfig;
 
-    private ThreadManager threadManager;
-    private SchemaManager schemaManager;
-    private PartitionManager partitionManager;
+    private ThreadManager      threadManager;
+    private SchemaManager      schemaManager;
+    private PartitionManager   partitionManager;
     private PartitionValidator partitionValidator;
-    private ConnectionManager connectionManager;
-    private ModuleManager moduleManager;
-    private SessionManager sessionManager;
+    private ConnectionManager  connectionManager;
+    private ModuleManager      moduleManager;
+    private SessionManager     sessionManager;
 
-    private ConnectorManager connectorManager;
-    private EngineManager engineManager;
-    private EventManager eventManager;
-    private HandlerManager handlerManager;
+    private ConnectorManager   connectorManager;
+    private EngineManager      engineManager;
+    private EventManager       eventManager;
+    private HandlerManager     handlerManager;
 
     private InterpreterManager interpreterManager;
 

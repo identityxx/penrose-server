@@ -21,6 +21,7 @@ import org.safehaus.penrose.connector.Connector;
 import org.safehaus.penrose.connector.JDBCAdapter;
 import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.PenroseFactory;
+import org.safehaus.penrose.handler.Handler;
 import org.safehaus.penrose.partition.*;
 import org.safehaus.penrose.engine.Engine;
 import org.apache.log4j.*;
@@ -48,8 +49,8 @@ public class CacheManager {
         SourceCacheManager sourceCacheManager = connector.getSourceCacheManager();
         sourceCacheManager.create();
 
-        Engine engine = penrose.getEngine();
-        EntryCache entryCache = engine.getEntryCache();
+        Handler handler = penrose.getHandler();
+        EntryCache entryCache = handler.getEntryCache();
         entryCache.create();
 
         PartitionManager partitionManager = penrose.getPartitionManager();
@@ -66,8 +67,8 @@ public class CacheManager {
         SourceCacheManager sourceCacheManager = connector.getSourceCacheManager();
         sourceCacheManager.load();
 
-        Engine engine = penrose.getEngine();
-        EntryCache entryCache = engine.getEntryCache();
+        Handler handler = penrose.getHandler();
+        EntryCache entryCache = handler.getEntryCache();
 
         PartitionManager partitionManager = penrose.getPartitionManager();
 
@@ -79,8 +80,8 @@ public class CacheManager {
 
     public static void clean(Penrose penrose) throws Exception {
 
-        Engine engine = penrose.getEngine();
-        EntryCache entryCache = engine.getEntryCache();
+        Handler handler = penrose.getHandler();
+        EntryCache entryCache = handler.getEntryCache();
 
         PartitionManager partitionManager = penrose.getPartitionManager();
 
@@ -97,8 +98,8 @@ public class CacheManager {
 
     public static void drop(Penrose penrose) throws Exception {
 
-        Engine engine = penrose.getEngine();
-        EntryCache entryCache = engine.getEntryCache();
+        Handler handler = penrose.getHandler();
+        EntryCache entryCache = handler.getEntryCache();
 
         PartitionManager partitionManager = penrose.getPartitionManager();
 

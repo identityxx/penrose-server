@@ -30,6 +30,7 @@ import org.safehaus.penrose.session.PenroseSearchControls;
 import org.safehaus.penrose.session.PenroseSession;
 import org.safehaus.penrose.partition.PartitionManager;
 import org.safehaus.penrose.partition.Partition;
+import org.safehaus.penrose.handler.Handler;
 
 import javax.naming.directory.*;
 import javax.naming.NamingEnumeration;
@@ -55,8 +56,8 @@ public class LDAPSyncModule extends Module implements EntryCacheListener {
         partitionManager = penrose.getPartitionManager();
         connectionManager = penrose.getConnectionManager();
 
-        Engine engine = penrose.getEngine();
-        EntryCache entryCache = engine.getEntryCache();
+        Handler handler = penrose.getHandler();
+        EntryCache entryCache = handler.getEntryCache();
 
         entryCache.addListener(this);
     }

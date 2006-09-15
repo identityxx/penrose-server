@@ -66,10 +66,10 @@ public class ModifyHandler {
             // refreshing entry cache
 
             EntryMapping entryMapping = entry.getEntryMapping();
-            handler.getEngine().getEntryCache().remove(partition, entryMapping, entry.getDn());
+            handler.getEntryCache().remove(partition, entryMapping, entry.getDn());
 
             PenroseSession adminSession = handler.getPenrose().newSession();
-            adminSession.setBindDn(handler.getPenroseConfig().getRootDn());
+            adminSession.setBindDn(handler.getPenrose().getPenroseConfig().getRootDn());
 
             PenroseSearchResults results = new PenroseSearchResults();
 

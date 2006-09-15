@@ -38,6 +38,8 @@ import org.safehaus.penrose.mapping.EntryMapping;
 import org.safehaus.penrose.mapping.AttributeValues;
 import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.Penrose;
+import org.safehaus.penrose.cache.EntryCache;
+import org.safehaus.penrose.cache.CacheConfig;
 import org.safehaus.penrose.util.*;
 import org.safehaus.penrose.util.Formatter;
 import org.slf4j.LoggerFactory;
@@ -83,11 +85,14 @@ public class Handler {
     private InterpreterManager interpreterManager;
     private ACLEngine aclEngine;
     private FilterTool filterTool;
+    private EntryCache entryCache;
 
     private String status = STOPPED;
 
-    public Handler() {
-        aclEngine = new ACLEngine();
+    public Handler(Penrose penrose) throws Exception {
+        this.penrose = penrose;
+
+        aclEngine = new ACLEngine(penrose);
 
         addHandler = createAddHandler();
         bindHandler = createBindHandler();
@@ -97,6 +102,19 @@ public class Handler {
         modRdnHandler = createModRdnHandler();
         findHandler = createFindHandler();
         searchHandler = createSearchHandler();
+
+        PenroseConfig penroseConfig = penrose.getPenroseConfig();
+        CacheConfig cacheConfig = penroseConfig.getEntryCacheConfig();
+        String cacheClass = cacheConfig.getCacheClass() == null ? EntryCache.class.getName() : cacheConfig.getCacheClass();
+
+        log.debug("Initializing entry cache "+cacheClass);
+        Class clazz = Class.forName(cacheClass);
+        entryCache = (EntryCache)clazz.newInstance();
+
+        entryCache.setCacheConfig(cacheConfig);
+        entryCache.setPenrose(penrose);
+
+        entryCache.init();
     }
 
     public AddHandler createAddHandler() {
@@ -174,6 +192,7 @@ public class Handler {
             String password
     ) throws Exception {
 
+        PenroseConfig penroseConfig = penrose.getPenroseConfig();
         String rootDn = schemaManager.normalize(penroseConfig.getRootDn());
         dn = schemaManager.normalize(dn);
 
@@ -492,27 +511,13 @@ public class Handler {
             public void objectAdded(PipelineEvent event) {
                 try {
                     Entry entry = (Entry)event.getObject();
-
                     String dn = entry.getDn();
                     EntryMapping entryMapping = entry.getEntryMapping();
 
-                    // check search permission
-                    int rc = aclEngine.checkSearch(session, partition, entryMapping, dn);
-                    if (rc != LDAPException.SUCCESS) {
-                        log.debug("Entry \""+entry.getDn()+"\" is not searchable.");
-                        return;
-                    }
-
                     // check read permission
-                    rc = aclEngine.checkRead(session, partition, entryMapping, dn);
+                    int rc = aclEngine.checkRead(session, partition, entryMapping, dn);
                     if (rc != LDAPException.SUCCESS) {
                         log.debug("Entry \""+entry.getDn()+"\" is not readable.");
-                        return;
-                    }
-
-                    // check filter
-                    if (!filterTool.isValid(entry, f)) {
-                        log.debug("Entry \""+entry.getDn()+"\" doesn't match search filter.");
                         return;
                     }
 
@@ -806,7 +811,6 @@ public class Handler {
 
     public void setPenroseConfig(PenroseConfig penroseConfig) {
         this.penroseConfig = penroseConfig;
-        aclEngine.setPenroseConfig(penroseConfig);
     }
 
     public Penrose getPenrose() {
@@ -857,5 +861,20 @@ public class Handler {
         return list;
     }
 
+    public FilterTool getFilterTool() {
+        return filterTool;
+    }
+
+    public void setFilterTool(FilterTool filterTool) {
+        this.filterTool = filterTool;
+    }
+
+    public EntryCache getEntryCache() {
+        return entryCache;
+    }
+
+    public void setEntryCache(EntryCache entryCache) {
+        this.entryCache = entryCache;
+    }
 }
 

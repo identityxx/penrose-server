@@ -19,19 +19,13 @@ package org.safehaus.penrose.handler;
 
 import org.safehaus.penrose.session.PenroseSession;
 import org.safehaus.penrose.mapping.*;
-import org.safehaus.penrose.util.PasswordUtil;
 import org.safehaus.penrose.util.Formatter;
 import org.safehaus.penrose.util.ExceptionUtil;
-import org.safehaus.penrose.util.EntryUtil;
 import org.safehaus.penrose.partition.Partition;
-import org.safehaus.penrose.partition.PartitionManager;
 import org.safehaus.penrose.engine.Engine;
-import org.ietf.ldap.LDAPDN;
 import org.ietf.ldap.LDAPException;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
-
-import javax.naming.AuthenticationException;
 
 /**
  * @author Endi S. Dewata
@@ -79,8 +73,8 @@ public class BindHandler {
         if (partition.isProxy(entryMapping)) {
             engine = handler.getEngine("PROXY");
         }
-        
-        return engine.bind(session, partition, dn, password);
+
+        return engine.bind(session, partition, entryMapping, dn, password);
     }
 
     public Handler getHandler() {

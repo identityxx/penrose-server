@@ -24,6 +24,8 @@ import org.safehaus.penrose.partition.FieldConfig;
 import org.safehaus.penrose.partition.SourceConfig;
 import org.safehaus.penrose.filter.*;
 import org.safehaus.penrose.session.PenroseSearchResults;
+import org.safehaus.penrose.connector.ConnectionManager;
+import org.safehaus.penrose.Penrose;
 import org.ietf.ldap.LDAPException;
 
 import javax.naming.NamingException;
@@ -41,6 +43,10 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
 
     String connectionName;
 
+    public PersistentEntryCacheStorage(Penrose penrose) throws Exception {
+        super(penrose);
+    }
+
     public void init() throws Exception {
         super.init();
 
@@ -50,7 +56,8 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
     }
 
     public Connection getConnection() throws Exception {
-        return (Connection)getConnectionManager().openConnection(connectionName);
+        ConnectionManager connectionManager = penrose.getConnectionManager();
+        return (Connection)connectionManager.openConnection(connectionName);
     }
 
     public void create() throws Exception {
@@ -943,7 +950,7 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
         return false;
     }
 
-    public void search(final String baseDn, final Filter filter, final PenroseSearchResults results) throws Exception {
+    public boolean search(final String baseDn, final Filter filter, final PenroseSearchResults results) throws Exception {
 
         log.debug(Formatter.displaySeparator(80));
         log.debug(Formatter.displayLine("Searching entry cache for "+entryMapping.getDn(), 80));
@@ -959,7 +966,7 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
         StringBuffer whereClause = new StringBuffer();
 
         boolean b = convert(filter, tables, parameters, whereClause);
-        if (!b) return;
+        if (!b) return true;
 
         StringBuffer selectClause = new StringBuffer();
         selectClause.append("t.rdn, t.parentDn");
@@ -1050,6 +1057,8 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
             if (con != null) try { con.close(); } catch (Exception e) {}
             results.close();
         }
+
+        return true;
     }
 
     public void search(SourceConfig sourceConfig, Row filter, PenroseSearchResults results) throws Exception {

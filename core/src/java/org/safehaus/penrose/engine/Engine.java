@@ -61,7 +61,6 @@ public abstract class Engine {
     public ConnectorManager connectorManager;
     public ConnectionManager connectionManager;
     public PartitionManager partitionManager;
-    public EntryCache entryCache;
 
     public boolean stopping = false;
 
@@ -137,14 +136,6 @@ public abstract class Engine {
 
     public void setPartitionManager(PartitionManager partitionManager) throws Exception {
         this.partitionManager = partitionManager;
-    }
-
-    public EntryCache getEntryCache() {
-        return entryCache;
-    }
-
-    public void setEntryCache(EntryCache entryCache) {
-        this.entryCache = entryCache;
     }
 
     public SourceMapping getPrimarySource(EntryMapping entryMapping) throws Exception {
@@ -509,6 +500,7 @@ public abstract class Engine {
     public abstract int bind(
             PenroseSession session,
             Partition partition,
+            EntryMapping entryMapping,
             String dn,
             String password
     ) throws Exception;

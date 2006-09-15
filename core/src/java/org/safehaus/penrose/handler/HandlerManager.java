@@ -57,14 +57,12 @@ public class HandlerManager {
 
         log.debug("Initializing handler.");
 
-        Handler handler = new Handler();
-        handler.setPenroseConfig(penroseConfig);
+        Handler handler = new Handler(penrose);
         handler.setSessionManager(sessionManager);
         handler.setSchemaManager(schemaManager);
         handler.setInterpreterFactory(interpreterManager);
         handler.setEngineManager(engineManager);
         handler.setPartitionManager(partitionManager);
-        handler.setPenrose(penrose);
 
         handlers.put(handlerConfig.getName(), handler);
     }

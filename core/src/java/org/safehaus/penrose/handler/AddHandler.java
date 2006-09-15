@@ -65,7 +65,7 @@ public class AddHandler {
             // refreshing entry cache
 
             PenroseSession adminSession = handler.getPenrose().newSession();
-            adminSession.setBindDn(handler.getPenroseConfig().getRootDn());
+            adminSession.setBindDn(handler.getPenrose().getPenroseConfig().getRootDn());
 
             PenroseSearchResults results = new PenroseSearchResults();
 

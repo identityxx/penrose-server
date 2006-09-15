@@ -48,16 +48,15 @@ public class EntryCache {
 
     CacheConfig cacheConfig;
 
-    ConnectionManager connectionManager;
+    Penrose penrose;
 
     public Map caches = new TreeMap();
     public Collection listeners = new ArrayList();
 
     public EntryCacheStorage createCacheStorage(Partition partition, EntryMapping entryMapping) throws Exception {
 
-        EntryCacheStorage cacheStorage = new EntryCacheStorage();
+        EntryCacheStorage cacheStorage = new EntryCacheStorage(penrose);
         cacheStorage.setCacheConfig(cacheConfig);
-        cacheStorage.setConnectionManager(connectionManager);
         cacheStorage.setPartition(partition);
         cacheStorage.setEntryMapping(entryMapping);
 
@@ -126,7 +125,7 @@ public class EntryCache {
         getCacheStorage(partition, entryMapping).search(null, (Filter)null, results);
     }
 
-    public void search(
+    public boolean search(
             Partition partition,
             EntryMapping entryMapping,
             String parentDn,
@@ -136,7 +135,7 @@ public class EntryCache {
 
         log.info("["+entryMapping.getDn()+"] search("+parentDn+", "+filter+")");
 
-        getCacheStorage(partition, entryMapping).search(parentDn, filter, results);
+        return getCacheStorage(partition, entryMapping).search(parentDn, filter, results);
     }
 
     public void put(Partition partition, EntryMapping entryMapping, Entry entry) throws Exception {
@@ -259,14 +258,6 @@ public class EntryCache {
         return cacheStorage;
     }
 
-    public ConnectionManager getConnectionManager() {
-        return connectionManager;
-    }
-
-    public void setConnectionManager(ConnectionManager connectionManager) {
-        this.connectionManager = connectionManager;
-    }
-
     public CacheConfig getCacheConfig() {
         return cacheConfig;
     }
@@ -293,5 +284,13 @@ public class EntryCache {
                 log.error(e.getMessage(), e);
             }
         }
+    }
+
+    public Penrose getPenrose() {
+        return penrose;
+    }
+
+    public void setPenrose(Penrose penrose) {
+        this.penrose = penrose;
     }
 }
