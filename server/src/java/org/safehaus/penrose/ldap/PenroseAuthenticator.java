@@ -20,13 +20,11 @@ package org.safehaus.penrose.ldap;
 import org.apache.directory.server.core.authn.AbstractAuthenticator;
 import org.apache.directory.server.core.authn.LdapPrincipal;
 import org.apache.directory.server.core.jndi.ServerContext;
-import org.apache.directory.shared.ldap.exception.LdapAuthenticationException;
 import org.apache.directory.shared.ldap.aci.AuthenticationLevel;
 import org.apache.directory.shared.ldap.name.LdapDN;
 import org.ietf.ldap.LDAPException;
 import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.session.PenroseSession;
-import org.safehaus.penrose.config.PenroseConfig;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
@@ -54,20 +52,21 @@ public class PenroseAuthenticator extends AbstractAuthenticator {
         this.penrose = penrose;
     }
 
-    public LdapPrincipal authenticate(LdapDN dn, ServerContext ctx) throws NamingException {
+    public LdapPrincipal authenticate(LdapDN name, ServerContext ctx) throws NamingException {
 
+        String dn = name.getUpName();
         Object credentials = ctx.getEnvironment().get(Context.SECURITY_CREDENTIALS);
         String password = new String((byte[])credentials);
 
         try {
-            PenroseSession session = penrose.getSession(dn.getUpName());
+            PenroseSession session = penrose.getSession(dn);
 
             if (session == null) {
-                session = penrose.createSession(dn.getUpName());
+                session = penrose.createSession(dn);
                 if (session == null) throw new ServiceUnavailableException();
             }
 
-            int rc = session.bind(dn.getUpName(), password);
+            int rc = session.bind(dn, password);
 
             if (rc != LDAPException.SUCCESS) {
                 throw ExceptionTool.createNamingException(rc);
@@ -75,7 +74,7 @@ public class PenroseAuthenticator extends AbstractAuthenticator {
 
             log.warn("Bind operation succeeded.");
 
-            return createLdapPrincipal(dn.getUpName(), AuthenticationLevel.SIMPLE);
+            return createLdapPrincipal(dn, AuthenticationLevel.SIMPLE);
 
         } catch (NamingException e) {
             log.warn("Bind operation failed.");

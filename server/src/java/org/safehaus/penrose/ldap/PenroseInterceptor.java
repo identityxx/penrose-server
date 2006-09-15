@@ -92,7 +92,7 @@ public class PenroseInterceptor extends BaseInterceptor {
 
         log.debug("===============================================================================");
         try {
-            String dn = bindDn.toString();
+            String dn = bindDn.getUpName();
             log.debug("bind(\""+dn+"\")");
             //log.debug(" - mechanisms: "+mechanisms);
             //log.debug(" - sslAuthId: "+saslAuthId);
@@ -103,7 +103,7 @@ public class PenroseInterceptor extends BaseInterceptor {
             next.bind(bindDn, credentials, mechanisms, saslAuthId);
 
             PenroseSession session = getSession();
-            session.setBindDn(bindDn.toString());
+            session.setBindDn(dn);
             session.setBindPassword(password);
 
             //log.debug("Bind successful.");
@@ -117,7 +117,11 @@ public class PenroseInterceptor extends BaseInterceptor {
         }
     }
 
-    public void unbind(NextInterceptor nextInterceptor, LdapDN bindDn) throws NamingException {
+    public void unbind(
+            NextInterceptor nextInterceptor,
+            LdapDN bindDn
+    ) throws NamingException {
+
         log.debug("===============================================================================");
         log.debug("unbind(\""+bindDn+"\")");
         nextInterceptor.unbind(bindDn);
@@ -246,7 +250,7 @@ public class PenroseInterceptor extends BaseInterceptor {
     public LdapDN getMatchedName(NextInterceptor next, LdapDN dn) throws NamingException {
         log.debug("===============================================================================");
         log.debug("getMatchedName(\""+dn+"\")");
-        return next.getMatchedName( dn );
+        return next.getMatchedName(dn);
     }
 
     public Attributes getRootDSE(NextInterceptor next) throws NamingException {
@@ -258,13 +262,13 @@ public class PenroseInterceptor extends BaseInterceptor {
     public LdapDN getSuffix(NextInterceptor next, LdapDN dn) throws NamingException {
         log.debug("===============================================================================");
         log.debug("getSuffix(\""+dn+"\")");
-        return next.getSuffix( dn );
+        return next.getSuffix(dn);
     }
 
     public boolean isSuffix(NextInterceptor next, LdapDN name) throws NamingException {
         log.debug("===============================================================================");
         log.debug("isSuffix(\""+name+"\")");
-        return next.isSuffix( name );
+        return next.isSuffix(name);
     }
 
     public Iterator listSuffixes(NextInterceptor next) throws NamingException {
@@ -303,9 +307,8 @@ public class PenroseInterceptor extends BaseInterceptor {
             sc.setScope(PenroseSearchControls.SCOPE_ONE);
             sc.setDereference(PenroseSearchControls.DEREF_ALWAYS);
 
-            String baseDn = dn.toString();
             session.search(
-                    baseDn,
+                    dn,
                     "(objectClass=*)",
                     sc,
                     results);
@@ -412,9 +415,8 @@ public class PenroseInterceptor extends BaseInterceptor {
             sc.setScope(PenroseSearchControls.SCOPE_BASE);
             sc.setDereference(PenroseSearchControls.DEREF_ALWAYS);
 
-            String baseDn = dn.toString();
             session.search(
-                    baseDn,
+                    dn,
                     "(objectClass=*)",
                     sc,
                     results);
@@ -472,9 +474,8 @@ public class PenroseInterceptor extends BaseInterceptor {
             sc.setScope(PenroseSearchControls.SCOPE_BASE);
             sc.setDereference(PenroseSearchControls.DEREF_ALWAYS);
 
-            String baseDn = dn.toString();
             session.search(
-                    baseDn,
+                    dn,
                     "(objectClass=*)",
                     sc,
                     results);
@@ -648,7 +649,7 @@ public class PenroseInterceptor extends BaseInterceptor {
 
             PenroseSession session = getSession();
 
-            int rc = session.modify(dn.toString(), modifications);
+            int rc = session.modify(dn, modifications);
 
             if (rc != LDAPException.SUCCESS) {
                 throw ExceptionTool.createNamingException(rc);
@@ -690,7 +691,7 @@ public class PenroseInterceptor extends BaseInterceptor {
 
             PenroseSession session = getSession();
 
-            int rc = session.modify(dn.toString(), Arrays.asList(modificationItems));
+            int rc = session.modify(dn, Arrays.asList(modificationItems));
 
             if (rc != LDAPException.SUCCESS) {
                 throw ExceptionTool.createNamingException(rc);
@@ -733,7 +734,7 @@ public class PenroseInterceptor extends BaseInterceptor {
 
             PenroseSession session = getSession();
 
-            int rc = session.modrdn(dn.toString(), newDn, deleteOldDn);
+            int rc = session.modrdn(dn, newDn, deleteOldDn);
 
             if (rc != LDAPException.SUCCESS) {
                 throw ExceptionTool.createNamingException(rc);
@@ -759,7 +760,7 @@ public class PenroseInterceptor extends BaseInterceptor {
         log.debug("===============================================================================");
         String dn = oriChildName.getUpName();
         log.debug("move(\""+dn+"\")");
-        next.move( oriChildName, newParentName, newRn, deleteOldRn );
+        next.move(oriChildName, newParentName, newRn, deleteOldRn);
     }
 
     public void move(
@@ -771,7 +772,7 @@ public class PenroseInterceptor extends BaseInterceptor {
         log.debug("===============================================================================");
         String dn = oriChildName.getUpName();
         log.debug("move(\""+dn+"\")");
-        next.move( oriChildName, newParentName );
+        next.move(oriChildName, newParentName);
     }
 
 }

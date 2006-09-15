@@ -44,10 +44,11 @@ public class PenroseConfig implements PenroseConfigMBean, Cloneable {
     private String home;
 
     private Map systemProperties = new LinkedHashMap();
+    private Map serviceConfigs   = new LinkedHashMap();
+
     private Map schemaConfigs    = new LinkedHashMap();
     private Map adapterConfigs   = new LinkedHashMap();
     private Map partitionConfigs = new LinkedHashMap();
-    private Map serviceConfigs   = new LinkedHashMap();
     private Map handlerConfigs   = new LinkedHashMap();
 
     private InterpreterConfig interpreterConfig;

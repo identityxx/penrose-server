@@ -94,9 +94,8 @@ public class PenrosePartition implements org.apache.directory.server.core.partit
         }
     }
 
-    public final boolean isSuffix( LdapDN name ) throws NamingException
-    {
-        return getSuffix().equals( name );
+    public final boolean isSuffix(LdapDN name) throws NamingException {
+        return getSuffix().equals(name);
     }
 
 
@@ -110,14 +109,15 @@ public class PenrosePartition implements org.apache.directory.server.core.partit
         log.info("Unbinding as \""+bindDn+"\"");
     }
 
-    public void delete(LdapDN dn) throws NamingException {
+    public void delete(LdapDN name) throws NamingException {
+        String dn = name.getUpName();
         log.info("Deleting \""+dn+"\"");
 
         try {
             PenroseSession session = penrose.newSession();
             if (session == null) throw new ServiceUnavailableException();
 
-            int rc = session.delete(dn.getUpName());
+            int rc = session.delete(dn);
 
             session.close();
 
@@ -131,7 +131,8 @@ public class PenrosePartition implements org.apache.directory.server.core.partit
         }
     }
 
-    public void add(LdapDN dn, Attributes attributes) throws NamingException {
+    public void add(LdapDN name, Attributes attributes) throws NamingException {
+        String dn = name.getUpName();
         log.info("Adding \""+dn+"\"");
 
         if (getSuffix().equals(dn)) return;
@@ -140,7 +141,7 @@ public class PenrosePartition implements org.apache.directory.server.core.partit
             PenroseSession session = penrose.newSession();
             if (session == null) throw new ServiceUnavailableException();
 
-            int rc = session.add(dn.getUpName(), attributes);
+            int rc = session.add(dn, attributes);
 
             session.close();
 
@@ -154,7 +155,8 @@ public class PenrosePartition implements org.apache.directory.server.core.partit
         }
     }
 
-    public void modify(LdapDN dn, int modOp, Attributes attributes) throws NamingException {
+    public void modify(LdapDN name, int modOp, Attributes attributes) throws NamingException {
+        String dn = name.getUpName();
         log.info("Modifying \""+dn+"\"");
         log.debug("changetype: modify");
 
@@ -171,7 +173,7 @@ public class PenrosePartition implements org.apache.directory.server.core.partit
             PenroseSession session = penrose.newSession();
             if (session == null) throw new ServiceUnavailableException();
 
-            int rc = session.modify(dn.getUpName(), modifications);
+            int rc = session.modify(dn, modifications);
 
             session.close();
 
@@ -185,7 +187,8 @@ public class PenrosePartition implements org.apache.directory.server.core.partit
         }
     }
 
-    public void modify(LdapDN dn, ModificationItem[] modificationItems) throws NamingException {
+    public void modify(LdapDN name, ModificationItem[] modificationItems) throws NamingException {
+        String dn = name.getUpName();
         log.info("Modifying \""+dn+"\"");
         log.debug("changetype: modify");
 
@@ -193,7 +196,7 @@ public class PenrosePartition implements org.apache.directory.server.core.partit
             PenroseSession session = penrose.newSession();
             if (session == null) throw new ServiceUnavailableException();
 
-            int rc = session.modify(dn.getUpName(), Arrays.asList(modificationItems));
+            int rc = session.modify(dn, Arrays.asList(modificationItems));
 
             session.close();
 
@@ -207,7 +210,8 @@ public class PenrosePartition implements org.apache.directory.server.core.partit
         }
     }
 
-    public NamingEnumeration list(LdapDN dn) throws NamingException {
+    public NamingEnumeration list(LdapDN name) throws NamingException {
+        String dn = name.getUpName();
         log.info("Listing \""+dn+"\"");
 
         try {
@@ -220,9 +224,8 @@ public class PenrosePartition implements org.apache.directory.server.core.partit
             sc.setScope(PenroseSearchControls.SCOPE_ONE);
             sc.setDereference(PenroseSearchControls.DEREF_ALWAYS);
 
-            String baseDn = dn.getUpName();
             session.search(
-                    baseDn,
+                    dn,
                     "(objectClass=*)",
                     sc,
                     results);
@@ -244,7 +247,7 @@ public class PenrosePartition implements org.apache.directory.server.core.partit
 
         PenroseSession session = null;
         try {
-            String baseDn = base.getUpName();
+            String dn = base.getUpName();
             String deref = (String)env.get("java.naming.ldap.derefAliases");
             int scope = searchControls.getSearchScope();
             String returningAttributes[] = searchControls.getReturningAttributes();
@@ -252,7 +255,7 @@ public class PenrosePartition implements org.apache.directory.server.core.partit
 
             String newFilter = org.safehaus.penrose.ldap.FilterTool.convert(filter).toString();
 
-            log.info("Searching \""+baseDn+"\"");
+            log.info("Searching \""+dn+"\"");
             log.debug(" - deref: "+deref);
             log.debug(" - scope: "+scope);
             log.debug(" - filter: "+newFilter);
@@ -269,7 +272,7 @@ public class PenrosePartition implements org.apache.directory.server.core.partit
             sc.setAttributes(searchControls == null ? null : searchControls.getReturningAttributes());
 
             session.search(
-                    baseDn,
+                    dn,
                     newFilter,
                     sc,
                     results);
@@ -301,7 +304,8 @@ public class PenrosePartition implements org.apache.directory.server.core.partit
         }
     }
 
-    public Attributes lookup(LdapDN dn) throws NamingException {
+    public Attributes lookup(LdapDN name) throws NamingException {
+        String dn = name.getUpName();
         log.debug("Looking up \""+dn+"\"");
 
         try {
@@ -314,9 +318,8 @@ public class PenrosePartition implements org.apache.directory.server.core.partit
             sc.setScope(PenroseSearchControls.SCOPE_BASE);
             sc.setDereference(PenroseSearchControls.DEREF_ALWAYS);
 
-            String baseDn = dn.getUpName();
             session.search(
-                    baseDn,
+                    dn,
                     "(objectClass=*)",
                     sc,
                     results);
@@ -342,10 +345,9 @@ public class PenrosePartition implements org.apache.directory.server.core.partit
     }
 
     public Attributes lookup(LdapDN name, String[] attrIds) throws NamingException {
+        String dn = name.getUpName();
 
         try {
-            String dn = name.getUpName();
-
             //log.debug("===============================================================================");
             //log.debug("lookup(\""+dn+"\") as \""+principalDn+"\"");
 
@@ -358,9 +360,8 @@ public class PenrosePartition implements org.apache.directory.server.core.partit
             sc.setScope(PenroseSearchControls.SCOPE_BASE);
             sc.setDereference(PenroseSearchControls.DEREF_ALWAYS);
 
-            String baseDn = dn.toString();
             session.search(
-                    baseDn,
+                    dn,
                     "(objectClass=*)",
                     sc,
                     results);
@@ -386,7 +387,8 @@ public class PenrosePartition implements org.apache.directory.server.core.partit
     }
 
     public boolean hasEntry(LdapDN name) throws NamingException {
-        log.info("Checking \""+name+"\"");
+        String dn = name.getUpName();
+        log.info("Checking \""+dn+"\"");
 
         try {
             PenroseSession session = penrose.newSession();
@@ -398,9 +400,8 @@ public class PenrosePartition implements org.apache.directory.server.core.partit
             sc.setScope(PenroseSearchControls.SCOPE_BASE);
             sc.setDereference(PenroseSearchControls.DEREF_ALWAYS);
 
-            String base = name.getUpName();
             session.search(
-                    base,
+                    dn,
                     "(objectClass=*)",
                     sc,
                     results);
@@ -418,16 +419,15 @@ public class PenrosePartition implements org.apache.directory.server.core.partit
     }
 
     public void modifyRn(LdapDN name, String newRn, boolean deleteOldRn) throws NamingException {
+        String dn = name.getUpName();
         try {
-            String dn = name.getUpName();
-
             log.debug("===============================================================================");
             log.debug("modifyDn(\""+dn+"\")");
 
             PenroseSession session = penrose.newSession();
             if (session == null) throw new ServiceUnavailableException();
 
-            int rc = session.modrdn(dn.toString(), newRn, deleteOldRn);
+            int rc = session.modrdn(dn, newRn, deleteOldRn);
 
             session.close();
 
