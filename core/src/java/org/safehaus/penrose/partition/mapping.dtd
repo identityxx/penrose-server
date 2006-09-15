@@ -8,7 +8,7 @@
 
 <!ELEMENT mapping (entry*)>
 
-<!ELEMENT entry (description?, oc*, at*, source*, relationship*,aci*)>
+<!ELEMENT entry (description?, oc*, at*, source*, relationship*,aci*,parameter*)>
 <!ATTLIST entry dn CDATA #REQUIRED>
 
 <!ELEMENT description (#PCDATA)>

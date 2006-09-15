@@ -62,8 +62,16 @@
 
   <source-cache/>
 
-  <engine/>
+  <engine>
+    <engine-name>DEFAULT</engine-name>
+    <engine-class>org.safehaus.penrose.engine.DefaultEngine</engine-class>
+  </engine>
 
+  <engine>
+    <engine-name>PROXY</engine-name>
+    <engine-class>org.safehaus.penrose.engine.ProxyEngine</engine-class>
+  </engine>
+    
   <connector/>
 
   <adapter name="JDBC">

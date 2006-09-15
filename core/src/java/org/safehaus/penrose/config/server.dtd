@@ -46,8 +46,9 @@
 <!ELEMENT session (description?, parameter*)>
 <!ATTLIST session name CDATA #IMPLIED>
 
-<!ELEMENT engine (engine-class?, description?, parameter*)>
+<!ELEMENT engine (engine-name?, engine-class?, description?, parameter*)>
 <!ATTLIST engine name CDATA #IMPLIED>
+<!ELEMENT engine-name (#PCDATA)>
 <!ELEMENT engine-class (#PCDATA)>
 
 <!ELEMENT connector (connector-class?, description?, parameter*)>
