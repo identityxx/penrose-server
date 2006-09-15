@@ -46,7 +46,7 @@ public class BindHandler {
         this.handler = handler;
     }
 
-    public int bind(PenroseSession session, String dn, String password) throws Exception {
+    public int bind(PenroseSession session, Partition partition, String dn, String password) throws Exception {
 
         int rc;
         try {
@@ -57,23 +57,7 @@ public class BindHandler {
             log.debug(Formatter.displayLine(" - Password : "+password, 80));
             log.debug(Formatter.displaySeparator(80));
 
-            String rootDn = handler.getPenroseConfig().getRootDn();
-
-            if (rootDn != null && dn != null && EntryUtil.match(dn, rootDn)) { // bind as root
-
-                rc = bindAsRoot(password);
-                if (rc != LDAPException.SUCCESS) return rc;
-
-            } else {
-
-                rc = bindAsUser(session, dn, password);
-                if (rc != LDAPException.SUCCESS) return rc;
-            }
-
-            session.setBindDn(dn);
-            session.setBindPassword(password);
-
-            return LDAPException.SUCCESS; // LDAP_SUCCESS
+            rc = bindAsUser(session, partition, dn, password);
 
         } catch (LDAPException e) {
             rc = e.getResultCode();
@@ -86,35 +70,8 @@ public class BindHandler {
         return rc;
     }
 
-    public int unbind(PenroseSession session) throws Exception {
+    public int bindAsUser(PenroseSession session, Partition partition, String dn, String password) throws Exception {
 
-        log.debug("-------------------------------------------------------------------------------");
-        log.debug("UNBIND:");
-
-        if (session == null) return 0;
-
-        session.setBindDn(null);
-        session.setBindPassword(null);
-
-        log.debug("  dn: " + session.getBindDn());
-
-        return 0;
-    }
-
-    public int bindAsRoot(String password) throws Exception {
-
-        if (!PasswordUtil.comparePassword(password, handler.getPenroseConfig().getRootPassword())) {
-            log.debug("Password doesn't match => BIND FAILED");
-            return LDAPException.INVALID_CREDENTIALS;
-        }
-
-        return LDAPException.SUCCESS;
-    }
-
-    public int bindAsUser(PenroseSession session, String dn, String password) throws Exception {
-
-        PartitionManager partitionManager = handler.getPartitionManager();
-        Partition partition = partitionManager.findPartition(dn);
         EntryMapping entryMapping = partition.findEntryMapping(dn);
 
         Engine engine = handler.getEngine();

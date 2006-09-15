@@ -215,33 +215,11 @@ public class LoadEngine {
                     EntryData data = (EntryData)i.next();
                     String dn = data.getDn();
                     AttributeValues sv = data.getMergedValues();
-                    Collection rows = data.getRows();
-                    Row filter = data.getFilter();
-
-                    //log.debug(Formatter.displayLine(" - "+dn, 80));
-                    //log.debug(Formatter.displayLine("   filter: "+filter, 80));
 
                     if (sv == null) continue;
 
                     sourceValues.add(sv);
-
-                    for (Iterator j=sv.getNames().iterator(); j.hasNext(); ) {
-                        String name = (String)j.next();
-                        Collection values = sv.get(name);
-                        //log.debug(Formatter.displayLine("   - "+name+": "+values, 80));
-                    }
-
-                    //log.debug(Formatter.displayLine("   rows:", 80));
-                    if (rows != null) {
-                        int counter = 0;
-                        for (Iterator j=rows.iterator(); j.hasNext() && counter <= 20; counter++) {
-                            AttributeValues row = (AttributeValues)j.next();
-                            //log.debug(Formatter.displayLine("   - "+row, 80));
-                        }
-                    }
                 }
-
-                log.debug(Formatter.displaySeparator(80));
 
                 AttributeValues sv = loadEntries(partition, sourceValues, entryMapping, entries);
 

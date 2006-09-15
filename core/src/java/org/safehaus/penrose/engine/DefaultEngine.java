@@ -379,14 +379,16 @@ public class DefaultEngine extends Engine {
     }
 
     public int expand(
-            PenroseSession session, final Partition partition,
+            PenroseSession session,
+            final Partition partition,
             final Collection parentPath,
             final AttributeValues parentSourceValues,
             final EntryMapping entryMapping,
             final String baseDn,
             final Filter filter,
             final PenroseSearchControls sc,
-            final PenroseSearchResults results) throws Exception {
+            final PenroseSearchResults results
+    ) throws Exception {
 
         if (log.isDebugEnabled()) {
             log.debug(Formatter.displaySeparator(80));
@@ -483,25 +485,31 @@ Mapping: cn=Managers,ou=Groups,dc=Proxy,dc=Example,dc=org
                     EntryData data = (EntryData)event.getObject();
                     String dn = data.getDn();
 
-                    Entry entry = getEntryCache().get(partition, dn);
+                    if (dnOnly) {
+                        log.debug("Returning DN only.");
+
+                        AttributeValues sv = data.getMergedValues();
+                        Entry entry = new Entry(dn, entryMapping, sv, null);
+
+                        results.add(entry);
+                        return;
+                    }
+
+                    Entry entry = getEntryCache().get(partition, entryMapping, dn);
 
                     if (entry == null) {
                         log.debug("Entry "+dn+" is not cached.");
 
-                        if (dnOnly) {
-                            log.debug("Returning DN only.");
-
-                            AttributeValues sv = data.getMergedValues();
-                            entry = new Entry(dn, entryMapping, sv, null);
-
-                            results.add(entry);
-
-                        } else if (unique && effectiveSources.size() == 1) {
+                        if (unique && effectiveSources.size() == 1 && !data.getMergedValues().isEmpty()) {
                             log.debug("Entry data is complete, returning entry.");
+
                             AttributeValues sv = data.getMergedValues();
                             AttributeValues attributeValues = computeAttributeValues(entryMapping, sv, interpreter);
+
                             entry = new Entry(dn, entryMapping, sv, attributeValues);
                             results.add(entry);
+
+                            getEntryCache().put(partition, entryMapping, entry);
 
                         } else {
                             log.debug("Entry data is incomplete, loading full entry data.");
@@ -551,8 +559,6 @@ Mapping: cn=Managers,ou=Groups,dc=Proxy,dc=Example,dc=org
                         EntryData data = (EntryData)event.getObject();
                         String dn = data.getDn();
 
-                        log.info("Storing "+dn+" in filter cache.");
-
                         getEntryCache().add(partition, entryMapping, filter, dn);
 
                     } catch (Exception e) {
@@ -596,7 +602,7 @@ Mapping: cn=Managers,ou=Groups,dc=Proxy,dc=Example,dc=org
         }
 
         if (dnOnly) return LDAPException.SUCCESS;
-        if (unique && effectiveSources.size() == 1) return LDAPException.SUCCESS;
+        //if (unique && effectiveSources.size() == 1) return LDAPException.SUCCESS;
 
         load(partition, entryMapping, entriesToLoad, loadedEntries);
 
@@ -604,10 +610,11 @@ Mapping: cn=Managers,ou=Groups,dc=Proxy,dc=Example,dc=org
             public void objectAdded(PipelineEvent event) {
                 try {
                     Entry entry = (Entry)event.getObject();
+                    EntryMapping entryMapping = entry.getEntryMapping();
 
                     log.info("Storing "+entry.getDn()+" in entry cache.");
 
-                    getEntryCache().put(partition, entry);
+                    getEntryCache().put(partition, entryMapping, entry);
                     results.add(entry);
 
                 } catch (Exception e) {

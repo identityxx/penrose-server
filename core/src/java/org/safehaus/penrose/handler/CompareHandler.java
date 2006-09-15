@@ -46,7 +46,8 @@ public class CompareHandler {
     
     public int compare(
             PenroseSession session,
-            String dn,
+            Partition partition,
+            Entry entry,
             String attributeName,
             Object attributeValue
     ) throws Exception {
@@ -54,38 +55,8 @@ public class CompareHandler {
         int rc;
         try {
 
-            log.warn("Compare attribute "+attributeName+" in \""+dn+"\" with \""+attributeValue+"\".");
-
-            log.debug("-------------------------------------------------------------------------------");
-            log.debug("COMPARE:");
-            if (session != null && session.getBindDn() != null) log.debug(" - Bind DN: " + session.getBindDn());
-            log.debug(" - DN: " + dn);
-            log.debug(" - Attribute Name: " + attributeName);
-            if (attributeValue instanceof byte[]) {
-                log.debug(" - Attribute Value: " + BinaryUtil.encode(BinaryUtil.BIG_INTEGER, (byte[])attributeValue));
-            } else {
-                log.debug(" - Attribute Value: " + attributeValue);
-            }
-            log.debug("-------------------------------------------------------------------------------");
-
             List attributeNames = new ArrayList();
             attributeNames.add(attributeName);
-
-            Partition partition = handler.getPartitionManager().findPartition(dn);
-
-            if (partition == null) {
-                log.debug("Entry "+dn+" not found");
-                return LDAPException.NO_SUCH_OBJECT;
-            }
-
-            Collection path = handler.getFindHandler().find(partition, dn);
-
-            if (path == null || path.isEmpty()) {
-                log.debug("Entry "+dn+" not found");
-                return LDAPException.NO_SUCH_OBJECT;
-            }
-
-            Entry entry = (Entry)path.iterator().next();
 
             AttributeValues attributeValues = entry.getAttributeValues();
             Collection values = attributeValues.get(attributeName);

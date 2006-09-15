@@ -41,39 +41,16 @@ public class DeleteHandler {
         this.handler = handler;
     }
 
-    public int delete(PenroseSession session, String dn) throws Exception {
+    public int delete(PenroseSession session, Partition partition, Entry entry) throws Exception {
 
         int rc;
         try {
 
-            log.warn("Delete entry \""+dn+"\".");
-
-            log.debug("-------------------------------------------------");
-            log.debug("DELETE:");
-            if (session != null && session.getBindDn() != null) log.debug(" - Bind DN: "+session.getBindDn());
-            log.debug(" - DN: "+dn);
-            log.debug("");
-
-            Partition partition = handler.getPartitionManager().findPartition(dn);
-
-            if (partition == null) {
-                log.debug("Entry "+dn+" not found");
-                return LDAPException.NO_SUCH_OBJECT;
-            }
-
-            Collection path = handler.getFindHandler().find(partition, dn);
-
-            if (path == null || path.isEmpty()) {
-                log.debug("Entry "+dn+" not found");
-                return LDAPException.NO_SUCH_OBJECT;
-            }
-
-            Entry entry = (Entry)path.iterator().next();
-
             rc = performDelete(session, partition, entry);
             if (rc != LDAPException.SUCCESS) return rc;
 
-            handler.getEngine().getEntryCache().remove(partition, entry);
+            EntryMapping entryMapping = entry.getEntryMapping();
+            handler.getEngine().getEntryCache().remove(partition, entryMapping, entry.getDn());
 
         } catch (LDAPException e) {
             rc = e.getResultCode();
@@ -95,12 +72,6 @@ public class DeleteHandler {
     public int performDelete(PenroseSession session, Partition partition, Entry entry) throws Exception {
 
         EntryMapping entryMapping = entry.getEntryMapping();
-
-        int rc = handler.getACLEngine().checkDelete(session, entry.getDn(), entryMapping);
-        if (rc != LDAPException.SUCCESS) {
-            log.debug("Not allowed to delete "+entry.getDn());
-            return rc;
-        }
 
         if (partition.isProxy(entryMapping)) {
             return handler.getEngine("PROXY").delete(session, partition, entry);

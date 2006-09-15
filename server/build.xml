@@ -129,8 +129,6 @@
             <fileset dir="target/javadoc"/>
         </copy>
         <copy todir="target/dist/lib" includeEmptyDirs="false">
-            <fileset dir="lib" includes="*"/>
-            <fileset dir="target" includes="${module.name}-${project.version}.jar"/>
             <fileset dir="../lib" includes="*"/>
             <fileset dir="../core/dist" includes="penrose-${project.version}.jar"/>
         </copy>
@@ -140,6 +138,10 @@
             <fileset dir="target" includes="${module.name}-${project.version}.jar"/>
         </copy>
         <mkdir dir="target/dist/server/lib/ext"/>
+        <copy todir="target/dist/server/lib" includeEmptyDirs="false">
+            <fileset dir="lib" includes="*"/>
+            <fileset dir="target" includes="${module.name}-${project.version}.jar"/>
+        </copy>
         <copy todir="target/dist/conf">
             <fileset dir="conf"/>
             <fileset dir="../conf"/>
@@ -308,6 +310,7 @@
     <target name="install" depends="init,pre-install,copy-penrose-conf">
         <delete failonerror="false">
             <fileset dir="${penrose.home}" includes="lib/*"/>
+            <fileset dir="${penrose.home}" includes="server/lib/*"/>
         </delete>
         <copy todir="${penrose.home}">
             <fileset dir="target/dist">

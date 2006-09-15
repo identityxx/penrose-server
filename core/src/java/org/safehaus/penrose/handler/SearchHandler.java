@@ -37,10 +37,6 @@ import org.ietf.ldap.*;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
-import javax.naming.directory.SearchResult;
-import javax.naming.directory.Attributes;
-import javax.naming.directory.Attribute;
-import javax.naming.NamingEnumeration;
 import java.util.*;
 
 /**
@@ -59,7 +55,7 @@ public class SearchHandler {
     /**
      *
      * @param session
-     * @param baseDn
+     * @param entry
      * @param filter
      * @param sc
      * @param results This will be filled with objects of type Entry.
@@ -68,8 +64,10 @@ public class SearchHandler {
      */
     public int search(
             final PenroseSession session,
-            final String baseDn,
-            final String filter,
+            final Partition partition,
+            final Collection path,
+            final Entry entry,
+            final Filter filter,
             final PenroseSearchControls sc,
             final PenroseSearchResults results
     ) throws Exception {
@@ -79,7 +77,7 @@ public class SearchHandler {
 
                 int rc = LDAPException.SUCCESS;
                 try {
-                    rc = searchInBackground(session, baseDn, filter, sc, results);
+                    rc = searchInBackground(session, partition, path, entry, filter, sc, results);
 
                 } catch (LDAPException e) {
                     rc = e.getResultCode();
@@ -102,35 +100,6 @@ public class SearchHandler {
         });
 
         return LDAPException.SUCCESS;
-    }
-
-    public int searchInBackground(
-            PenroseSession session,
-            String baseDn,
-            String filter,
-            PenroseSearchControls sc,
-            PenroseSearchResults results) throws Exception {
-
-        Collection attributeNames = sc.getAttributes();
-
-        String scope = LDAPUtil.getScope(sc.getScope());
-        baseDn = normalize(baseDn);
-
-        attributeNames = normalize(attributeNames);
-        sc.setAttributes(attributeNames);
-
-        log.warn("Search \""+baseDn +"\" with scope "+scope+" and filter \""+filter+"\"");
-
-        log.debug("----------------------------------------------------------------------------------");
-        log.debug("SEARCH:");
-        if (session != null && session.getBindDn() != null) log.debug(" - Bind DN: " + session.getBindDn());
-        log.debug(" - Base DN: "+baseDn);
-        log.debug(" - Scope: "+scope);
-        log.debug(" - Filter: "+filter);
-        log.debug(" - Attribute Names: "+attributeNames);
-        log.debug("");
-
-        return performSearch(session, baseDn, filter, sc, results);
     }
 
     public String normalize(String dn) {
@@ -158,113 +127,34 @@ public class SearchHandler {
         return newDn;
     }
 
-    public Collection normalize(Collection attributeNames) {
-        if (attributeNames == null) return null;
-
-        SchemaManager schemaManager = handler.getSchemaManager();
-        Collection list = new ArrayList();
-        for (Iterator i = attributeNames.iterator(); i.hasNext(); ) {
-            String name = (String)i.next();
-            list.add(schemaManager.getNormalizedAttributeName(name));
-        }
-
-        return list;
-    }
-
-    /**
-     * @param results of Entries
-     */
-    public int performSearch(
-            final PenroseSession session,
-            final String baseDn,
-            final String filter,
+    public int searchInBackground(
+            PenroseSession session,
+            Partition partition,
+            Collection path,
+            Entry entry,
+            final Filter filter,
             final PenroseSearchControls sc,
-            final PenroseSearchResults results) throws Exception {
-
-        String normalizedBaseDn;
-        try {
-            normalizedBaseDn = LDAPDN.normalize(baseDn);
-            if (normalizedBaseDn == null) normalizedBaseDn = "";
-
-        } catch (IllegalArgumentException e) {
-            results.setReturnCode(LDAPException.INVALID_DN_SYNTAX);
-            return LDAPException.INVALID_DN_SYNTAX;
-        }
-
-        if ("".equals(baseDn) && sc.getScope() == LDAPConnection.SCOPE_BASE) { // finding root DSE
-            return searchRootDSE(session, baseDn, filter, sc, results);
-        }
-
-        Partition partition = handler.getPartitionManager().findPartition(baseDn);
-
-        if (partition == null) {
-            log.debug("Entry \""+baseDn +"\" not found.");
-            results.setReturnCode(LDAPException.NO_SUCH_OBJECT);
-            return LDAPException.NO_SUCH_OBJECT;
-        }
-
-        EntryMapping entryMapping = partition.findEntryMapping(baseDn);
-
-        log.debug("Found entry mapping \""+entryMapping.getDn()+"\".");
-
-		Collection path = handler.getFindHandler().find(partition, normalizedBaseDn);
-
-        if (path == null || path.isEmpty()) {
-            log.debug("Can't find base entry "+normalizedBaseDn);
-            results.setReturnCode(LDAPException.NO_SUCH_OBJECT);
-            return LDAPException.NO_SUCH_OBJECT;
-        }
-
-        Entry baseEntry = (Entry)path.iterator().next();
-
-        if (baseEntry == null) {
-            log.debug("Can't find base entry "+normalizedBaseDn);
-            results.setReturnCode(LDAPException.NO_SUCH_OBJECT);
-            return LDAPException.NO_SUCH_OBJECT;
-        }
-
-        log.debug("Found base entry: " + baseEntry.getDn());
+            final PenroseSearchResults results
+    ) throws Exception {
 
         AttributeValues parentSourceValues = handler.getEngine().getParentSourceValues(partition, path);
 
-        int rc = handler.getACLEngine().checkSearch(session, baseEntry.getDn(), entryMapping);
-        if (rc != LDAPException.SUCCESS) {
-            log.debug("Checking search permission => FAILED");
-            return rc;
-        }
+        final PenroseSearchResults sr = new PenroseSearchResults();
 
-        final Filter f = FilterTool.parseFilter(filter);
-        log.debug("Parsed filter: "+f+" ("+f.getClass().getName()+")");
-
-        final PenroseSearchResults filterPipeline = new PenroseSearchResults();
-
-        filterPipeline.addListener(new PipelineAdapter() {
+        sr.addListener(new PipelineAdapter() {
             public void objectAdded(PipelineEvent event) {
-                Entry child = (Entry)filterPipeline.next();
-
-                try {
-                    Entry e = checkEntry(session, child, f, sc);
-                    if (e == null) {
-                        log.debug("Entry \""+child.getDn()+"\" is invalid/inaccessible.");
-                        return;
-                    }
-
-                    log.debug("Returning \""+child.getDn()+"\".");
-                    results.add(e);
-                } catch (Exception e) {
-                    // ignore
-                }
+                Entry child = (Entry)event.getObject();
+                results.add(child);
             }
 
             public void pipelineClosed(PipelineEvent event) {
-                results.setReturnCode(filterPipeline.getReturnCode());
+                results.setReturnCode(sr.getReturnCode());
             }
-
         });
 
         Engine engine = handler.getEngine();
 
-        if (partition.isProxy(entryMapping)) {
+        if (partition.isProxy(entry.getEntryMapping())) {
             engine = handler.getEngine("PROXY");
         }
 
@@ -273,26 +163,36 @@ public class SearchHandler {
                 partition,
                 path,
                 parentSourceValues,
-                entryMapping,
-                baseDn,
-                f,
+                entry.getEntryMapping(),
+                entry.getDn(),
+                filter,
                 sc,
-                filterPipeline
+                sr
         );
 
         if (sc.getScope() == LDAPConnection.SCOPE_ONE || sc.getScope() == LDAPConnection.SCOPE_SUB) { // one level or subtree
-            log.debug("Searching children of \""+entryMapping.getDn()+"\"");
+            log.debug("Searching children of \""+entry.getEntryMapping().getDn()+"\"");
 
-            Collection children = partition.getChildren(entryMapping);
+            Collection children = partition.getChildren(entry.getEntryMapping());
 
             for (Iterator i = children.iterator(); i.hasNext();) {
                 EntryMapping childMapping = (EntryMapping) i.next();
 
-                searchChildren(session, partition, path, parentSourceValues, childMapping, baseDn, f, sc, filterPipeline);
+                searchChildren(
+                        session,
+                        partition,
+                        path,
+                        parentSourceValues,
+                        childMapping,
+                        entry.getDn(),
+                        filter,
+                        sc,
+                        sr
+                );
             }
         }
 
-        filterPipeline.close();
+        sr.close();
 
         return LDAPException.SUCCESS;
 	}
@@ -397,118 +297,5 @@ public class SearchHandler {
 
             searchChildren(session, partition, newParentPath, newParentSourceValues, childMapping, baseDn, filter, sc, results);
         }
-    }
-
-    public int searchRootDSE(
-            PenroseSession session,
-            String baseDn,
-            String filter,
-            PenroseSearchControls sc,
-            PenroseSearchResults results) throws Exception {
-
-        log.debug("Creating default Root DSE");
-
-        Entry entry = new Entry("", null);
-        AttributeValues attributeValues = entry.getAttributeValues();
-        attributeValues.set("objectClass", "top");
-        attributeValues.add("objectClass", "extensibleObject");
-        attributeValues.set("vendorName", Penrose.VENDOR_NAME);
-        attributeValues.set("vendorVersion", Penrose.PRODUCT_NAME+" "+Penrose.PRODUCT_VERSION);
-
-        for (Iterator i=handler.getPartitionManager().getPartitions().iterator(); i.hasNext(); ) {
-            Partition p = (Partition)i.next();
-            for (Iterator j=p.getRootEntryMappings().iterator(); j.hasNext(); ) {
-                EntryMapping e = (EntryMapping)j.next();
-                if ("".equals(e.getDn())) continue;
-                attributeValues.add("namingContexts", e.getDn());
-            }
-        }
-
-        Collection attributeNames = sc.getAttributes();
-        if (!attributeNames.isEmpty() && !attributeNames.contains("*")) {
-            attributeValues.retain(attributeNames);
-        }
-
-        results.add(entry);
-
-        return LDAPException.SUCCESS;
-    }
-
-    public Entry checkEntry(
-            PenroseSession session,
-            Entry entry,
-            Filter filter,
-            PenroseSearchControls sc
-    ) throws Exception {
-
-        if (!handler.getFilterTool().isValid(entry, filter)) return null;
-
-        int rc = handler.getACLEngine().checkSearch(session, entry.getDn(), entry.getEntryMapping());
-        if (rc != LDAPException.SUCCESS) return null;
-
-        Entry newEntry = entry;
-
-        if (!sc.getAttributes().isEmpty() && !sc.getAttributes().contains("*")) {
-            AttributeValues av = new AttributeValues();
-            av.add(entry.getAttributeValues());
-            av.retain(sc.getAttributes());
-
-            newEntry = new Entry(entry.getDn(), entry.getEntryMapping(), entry.getSourceValues(), av);
-        }
-
-        return newEntry;
-    }
-
-    public SearchResult createSearchResult(
-            PenroseSession session,
-            Entry entry
-    ) throws Exception {
-
-        log.debug("Converting Entry to SearchResult: "+entry.getDn());
-
-        int rc = handler.getACLEngine().checkRead(session, entry.getDn(), entry.getEntryMapping());
-        if (rc != LDAPException.SUCCESS) return null;
-
-        SchemaManager schemaManager = handler.getSchemaManager();
-        //log.debug("Schema manager: "+schemaManager);
-
-        String bindDn = schemaManager.normalize(session == null ? null : session.getBindDn());
-        String targetDn = schemaManager.normalize(entry.getDn());
-
-        EntryMapping entryMapping = entry.getEntryMapping();
-
-        SearchResult sr = EntryUtil.toSearchResult(entry);
-        Attributes attributes = sr.getAttributes();
-
-        //log.debug("Evaluating attributes read permission for "+bindDn);
-
-        Set grants = new HashSet();
-        Set denies = new HashSet();
-
-        Collection attributeNames = new ArrayList();
-        for (NamingEnumeration i=attributes.getAll(); i.hasMore(); ) {
-            Attribute attribute = (Attribute)i.next();
-            attributeNames.add(attribute.getID());
-        }
-
-        handler.getACLEngine().getReadableAttributes(session, targetDn, entryMapping, attributeNames, grants, denies);
-
-        //log.debug("Readable attributes: "+grants);
-        //log.debug("Unreadable attributes: "+denies);
-
-        Collection list = new ArrayList();
-        for (NamingEnumeration i=attributes.getAll(); i.hasMore(); ) {
-            Attribute attribute = (Attribute)i.next();
-            //if (checkAttributeReadPermission(bindDn, targetDn, entryMapping, attribute.getName())) continue;
-            if (denies.contains(attribute.getID())) list.add(attribute);
-        }
-
-        for (Iterator i=list.iterator(); i.hasNext(); ) {
-            Attribute attribute = (Attribute)i.next();
-            log.debug("Removing "+attribute.getID()+" attribute");
-            attributes.remove(attribute.getID());
-        }
-
-        return sr;
     }
 }

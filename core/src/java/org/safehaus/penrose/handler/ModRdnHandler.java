@@ -46,7 +46,8 @@ public class ModRdnHandler {
 
     public int modrdn(
             PenroseSession session,
-            String dn,
+            Partition partition,
+            Entry entry,
             String newRdn,
             boolean deleteOldRdn
     ) throws Exception {
@@ -54,36 +55,12 @@ public class ModRdnHandler {
         int rc;
         try {
 
-            log.warn("ModRDN \""+dn+"\" to \""+newRdn+"\".");
-
-            log.debug("-------------------------------------------------------------------------------");
-            log.debug("MODRDN:");
-            if (session != null && session.getBindDn() != null) log.debug(" - Bind DN: " + session.getBindDn());
-            log.debug(" - DN: " + dn);
-            log.debug(" - New RDN: " + newRdn);
-
-            Partition partition = handler.getPartitionManager().findPartition(dn);
-
-            if (partition == null) {
-                log.debug("Entry "+dn+" not found");
-                return LDAPException.NO_SUCH_OBJECT;
-            }
-
-            Collection path = handler.getFindHandler().find(partition, dn);
-
-            if (path == null || path.isEmpty()) {
-                log.debug("Entry "+dn+" not found");
-                return LDAPException.NO_SUCH_OBJECT;
-            }
-
-            Entry entry = (Entry)path.iterator().next();
-
             rc = performModRdn(session, partition, entry, newRdn, deleteOldRdn);
             if (rc != LDAPException.SUCCESS) return rc;
 
             // refreshing entry cache
 
-            String parentDn = EntryUtil.getParentDn(dn);
+            String parentDn = EntryUtil.getParentDn(entry.getDn());
             String newDn = newRdn+","+parentDn;
 
             PenroseSession adminSession = handler.getPenrose().newSession();
@@ -103,7 +80,8 @@ public class ModRdnHandler {
 
             while (results.hasNext()) results.next();
 
-            handler.getEngine().getEntryCache().remove(partition, entry);
+            EntryMapping entryMapping = entry.getEntryMapping();
+            handler.getEngine().getEntryCache().remove(partition, entryMapping, entry.getDn());
 
         } catch (LDAPException e) {
             rc = e.getResultCode();
@@ -129,9 +107,6 @@ public class ModRdnHandler {
             String newRdn,
             boolean deleteOldRdn)
             throws Exception {
-
-        int rc = handler.getACLEngine().checkModify(session, entry.getDn(), entry.getEntryMapping());
-        if (rc != LDAPException.SUCCESS) return rc;
 
         EntryMapping entryMapping = entry.getEntryMapping();
 

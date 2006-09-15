@@ -39,7 +39,6 @@ public class ACLEngine {
 
     private PenroseConfig penroseConfig;
     private SchemaManager schemaManager;
-    private PartitionManager partitionManager;
 
     public ACLEngine() {
     }
@@ -61,8 +60,9 @@ public class ACLEngine {
 
     public boolean getObjectPermission(
             String bindDn,
-            String targetDn,
+            Partition partition,
             EntryMapping entryMapping,
+            String targetDn,
             String scope,
             String permission) throws Exception {
 
@@ -143,22 +143,22 @@ public class ACLEngine {
             }
         }
 
-        Partition partition = partitionManager.getPartitionByDn(targetDn);
-        if (partition == null) {
-            log.debug("Partition for "+targetDn+" not found.");
-            return false;
-        }
-
         entryMapping = partition.getParent(entryMapping);
         if (entryMapping == null) {
             log.debug("Parent entry for "+mappingDn+" not found.");
             return false;
         }
 
-        return getObjectPermission(bindDn, targetDn, entryMapping, ACI.SCOPE_SUBTREE, permission);
+        return getObjectPermission(bindDn, partition, entryMapping, targetDn, ACI.SCOPE_SUBTREE, permission);
     }
 
-    public int checkPermission(PenroseSession session, String dn, EntryMapping entryMapping, String permission) throws Exception {
+    public int checkPermission(
+            PenroseSession session,
+            Partition partition,
+            EntryMapping entryMapping,
+            String dn,
+            String permission
+    ) throws Exception {
     	
         log.debug("Checking object \""+permission+"\" permission");
 
@@ -177,7 +177,7 @@ public class ACLEngine {
         }
 
         String targetDn = schemaManager.normalize(dn);
-        boolean result = getObjectPermission(bindDn, targetDn, entryMapping, ACI.SCOPE_OBJECT, permission);
+        boolean result = getObjectPermission(bindDn, partition, entryMapping, targetDn, ACI.SCOPE_OBJECT, permission);
 
         if (result) {
             log.debug("ACL evaluation => SUCCESS");
@@ -189,24 +189,24 @@ public class ACLEngine {
         return rc;
     }
 
-    public int checkRead(PenroseSession session, String dn, EntryMapping entryMapping) throws Exception {
-    	return checkPermission(session, dn, entryMapping, ACI.PERMISSION_READ);
+    public int checkRead(PenroseSession session, Partition partition, EntryMapping entryMapping, String dn) throws Exception {
+    	return checkPermission(session, partition, entryMapping, dn, ACI.PERMISSION_READ);
     }
 
-    public int checkSearch(PenroseSession session, String dn, EntryMapping entryMapping) throws Exception {
-    	return checkPermission(session, dn, entryMapping, ACI.PERMISSION_SEARCH);
+    public int checkSearch(PenroseSession session, Partition partition, EntryMapping entryMapping, String dn) throws Exception {
+    	return checkPermission(session, partition, entryMapping, dn, ACI.PERMISSION_SEARCH);
     }
 
-    public int checkAdd(PenroseSession session, String dn, EntryMapping entryMapping) throws Exception {
-    	return checkPermission(session, dn, entryMapping, ACI.PERMISSION_ADD);
+    public int checkAdd(PenroseSession session, Partition partition, EntryMapping entryMapping, String dn) throws Exception {
+    	return checkPermission(session, partition, entryMapping, dn, ACI.PERMISSION_ADD);
     }
 
-    public int checkDelete(PenroseSession session, String dn, EntryMapping entryMapping) throws Exception {
-    	return checkPermission(session, dn, entryMapping, ACI.PERMISSION_DELETE);
+    public int checkDelete(PenroseSession session, Partition partition, EntryMapping entryMapping, String dn) throws Exception {
+    	return checkPermission(session, partition, entryMapping, dn, ACI.PERMISSION_DELETE);
     }
 
-    public int checkModify(PenroseSession session, String dn, EntryMapping entryMapping) throws Exception {
-    	return checkPermission(session, dn, entryMapping, ACI.PERMISSION_WRITE);
+    public int checkModify(PenroseSession session, Partition partition, EntryMapping entryMapping, String dn) throws Exception {
+    	return checkPermission(session, partition, entryMapping, dn, ACI.PERMISSION_WRITE);
     }
 
     public Collection getAttributes(String attributes) {
@@ -298,8 +298,9 @@ public class ACLEngine {
 
     public void getReadableAttributes(
             String bindDn,
-            String targetDn,
+            Partition partition,
             EntryMapping entryMapping,
+            String targetDn,
             String scope,
             Collection attributeNames,
             Collection grants,
@@ -365,19 +366,17 @@ public class ACLEngine {
 
         }
 
-        Partition partition = partitionManager.getPartitionByDn(entryMapping.getDn());
-        if (partition == null) return;
-
         entryMapping = partition.getParent(entryMapping);
         if (entryMapping == null) return;
 
-        getReadableAttributes(bindDn, targetDn, entryMapping, ACI.SCOPE_SUBTREE, attributeNames, grants, denies);
+        getReadableAttributes(bindDn, partition, entryMapping, targetDn, ACI.SCOPE_SUBTREE, attributeNames, grants, denies);
     }
 
     public void getReadableAttributes(
             PenroseSession session,
-            String targetDn,
+            Partition partition,
             EntryMapping entryMapping,
+            String targetDn,
             Collection attributeNames,
             Collection grants,
             Collection denies
@@ -400,7 +399,7 @@ public class ACLEngine {
             return;
         }
 
-        getReadableAttributes(bindDn, targetDn, entryMapping, null, attributeNames, grants, denies);
+        getReadableAttributes(bindDn, partition, entryMapping, targetDn, null, attributeNames, grants, denies);
 
         attributeNames.removeAll(grants);
         denies.addAll(attributeNames);
@@ -425,14 +424,6 @@ public class ACLEngine {
 
     public void setSchemaManager(SchemaManager schemaManager) {
         this.schemaManager = schemaManager;
-    }
-
-    public PartitionManager getPartitionManager() {
-        return partitionManager;
-    }
-
-    public void setPartitionManager(PartitionManager partitionManager) {
-        this.partitionManager = partitionManager;
     }
 
     public PenroseConfig getPenroseConfig() {

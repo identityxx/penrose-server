@@ -507,7 +507,7 @@ public class Penrose {
         return connectorManager.getConnector(connectorConfig.getName());
     }
 
-    public Handler getSessionHandler() {
+    public Handler getHandler() {
         HandlerConfig handlerConfig = penroseConfig.getHandlerConfig();
         return handlerManager.getHandler(handlerConfig.getName());
     }

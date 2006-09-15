@@ -51,64 +51,22 @@ public class ModifyHandler {
         this.handler = handler;
     }
 
-    public int modify(PenroseSession session, String dn, Collection modifications)
-			throws Exception {
+    public int modify(
+            PenroseSession session,
+            Partition partition,
+            Entry entry,
+            Collection modifications
+    ) throws Exception {
 
         int rc;
         try {
-            log.warn("Modify entry \""+dn+"\".");
-
-            log.debug(Formatter.displaySeparator(80));
-            log.debug(Formatter.displayLine("MODIFY:", 80));
-            if (session != null && session.getBindDn() != null) {
-                log.debug(Formatter.displayLine(" - Bind DN: " + session.getBindDn(), 80));
-            }
-            log.debug(Formatter.displayLine(" - DN: " + dn, 80));
-
-            log.debug(Formatter.displayLine(" - Attributes: " + dn, 80));
-            for (Iterator i=modifications.iterator(); i.hasNext(); ) {
-                ModificationItem mi = (ModificationItem)i.next();
-                Attribute attribute = mi.getAttribute();
-                String op = "replace";
-                switch (mi.getModificationOp()) {
-                    case DirContext.ADD_ATTRIBUTE:
-                        op = "add";
-                        break;
-                    case DirContext.REMOVE_ATTRIBUTE:
-                        op = "delete";
-                        break;
-                    case DirContext.REPLACE_ATTRIBUTE:
-                        op = "replace";
-                        break;
-                }
-
-                log.debug(Formatter.displayLine("   - "+op+": "+attribute.getID()+" => "+attribute.get(), 80));
-            }
-
-            log.debug(Formatter.displaySeparator(80));
-
-            Partition partition = handler.getPartitionManager().findPartition(dn);
-
-            if (partition == null) {
-                log.debug("Entry "+dn+" not found");
-                return LDAPException.NO_SUCH_OBJECT;
-            }
-
-            Collection path = handler.getFindHandler().find(partition, dn);
-
-            if (path == null || path.isEmpty()) {
-                log.debug("Entry "+dn+" not found");
-                return LDAPException.NO_SUCH_OBJECT;
-            }
-
-            Entry entry = (Entry)path.iterator().next();
-
             rc = performModify(session, partition, entry, modifications);
             if (rc != LDAPException.SUCCESS) return rc;
 
             // refreshing entry cache
 
-            handler.getEngine().getEntryCache().remove(partition, entry);
+            EntryMapping entryMapping = entry.getEntryMapping();
+            handler.getEngine().getEntryCache().remove(partition, entryMapping, entry.getDn());
 
             PenroseSession adminSession = handler.getPenrose().newSession();
             adminSession.setBindDn(handler.getPenroseConfig().getRootDn());
@@ -119,7 +77,7 @@ public class ModifyHandler {
             sc.setScope(PenroseSearchControls.SCOPE_SUB);
 
             adminSession.search(
-                    dn,
+                    entry.getDn(),
                     "(objectClass=*)",
                     sc,
                     results
@@ -152,12 +110,6 @@ public class ModifyHandler {
     ) throws Exception {
 
         log.debug("Modifying "+entry.getDn());
-
-        int rc = handler.getACLEngine().checkModify(session, entry.getDn(), entry.getEntryMapping());
-        if (rc != LDAPException.SUCCESS) {
-            log.debug("Not authorized to modify "+entry.getDn());
-            return rc;
-        }
 
         Collection normalizedModifications = new ArrayList();
 

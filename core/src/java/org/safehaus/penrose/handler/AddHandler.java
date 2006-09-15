@@ -49,46 +49,17 @@ public class AddHandler {
         this.handler = handler;
     }
 
-    public Attributes normalize(Attributes attributes) throws Exception{
-
-        BasicAttributes newAttributes = new BasicAttributes();
-
-        SchemaManager schemaManager = handler.getSchemaManager();
-        for (NamingEnumeration e=attributes.getAll(); e.hasMore(); ) {
-            Attribute attribute = (Attribute)e.next();
-            String attributeName = schemaManager.getNormalizedAttributeName(attribute.getID());
-
-            BasicAttribute newAttribute = new BasicAttribute(attributeName);
-            for (NamingEnumeration e2=attribute.getAll(); e2.hasMore(); ) {
-                Object value = e2.next();
-                newAttribute.add(value);
-            }
-
-            newAttributes.put(newAttribute);
-        }
-
-        return newAttributes;
-    }
-
     public int add(
             PenroseSession session,
+            Partition partition,
+            Entry parent,
             String dn,
             Attributes attributes)
     throws Exception {
 
         int rc;
         try {
-
-            attributes = normalize(attributes);
-            
-            log.warn("Add entry \""+dn+"\".");
-            log.debug("-------------------------------------------------");
-            log.debug("ADD:");
-            if (session != null && session.getBindDn() != null) log.debug(" - Bind DN: "+session.getBindDn());
-            log.debug(" - Entry: "+dn);
-            log.debug("");
-
-            rc = performAdd(session, dn, attributes);
+            rc = performAdd(session, partition, parent, dn, attributes);
             if (rc != LDAPException.SUCCESS) return rc;
 
             // refreshing entry cache
@@ -129,35 +100,13 @@ public class AddHandler {
 
     public int performAdd(
             PenroseSession session,
+            Partition partition,
+            Entry parent,
             String dn,
             Attributes attributes)
     throws Exception {
 
-        String parentDn = EntryUtil.getParentDn(dn);
-
-        Partition partition = handler.getPartitionManager().findPartition(dn);
-
-        if (partition == null) {
-            log.debug("Parent entry "+parentDn+" not found");
-            return LDAPException.NO_SUCH_OBJECT;
-        }
-
-        Collection path = handler.getFindHandler().find(partition, parentDn);
-
-        if (path == null || path.isEmpty()) {
-            log.debug("Parent entry "+parentDn+" not found");
-            return LDAPException.NO_SUCH_OBJECT;
-        }
-
-        Entry parent = (Entry)path.iterator().next();
-
-        int rc = handler.getACLEngine().checkAdd(session, parentDn, parent.getEntryMapping());
-        if (rc != LDAPException.SUCCESS) {
-            log.debug("Not allowed to add children under "+parentDn);
-            return rc;
-        }
-
-        log.debug("Adding entry under "+parentDn);
+        log.debug("Adding entry under "+parent.getDn());
 
         EntryMapping parentMapping = parent.getEntryMapping();
 

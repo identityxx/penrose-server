@@ -255,7 +255,7 @@ public class PollingConnectorModule extends Module {
             }
         });
 
-        entryCache.search(partition, parentMapping, parentDns);
+        entryCache.update(partition, parentMapping, parentDns);
     }
 
     public void remove(
