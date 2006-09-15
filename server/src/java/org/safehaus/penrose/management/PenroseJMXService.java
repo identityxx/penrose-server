@@ -35,7 +35,6 @@ import java.util.Iterator;
 import org.safehaus.penrose.service.Service;
 import org.safehaus.penrose.service.ServiceConfig;
 import org.safehaus.penrose.Penrose;
-import org.safehaus.penrose.config.PenroseServerConfig;
 import org.safehaus.penrose.module.ModuleConfig;
 import org.safehaus.penrose.partition.*;
 import org.safehaus.penrose.connector.AdapterConfig;
@@ -236,8 +235,6 @@ public class PenroseJMXService extends Service {
 
     public void registerConfigs() throws Exception {
 
-        PenroseServerConfig penroseServerConfig = getPenroseServer().getPenroseServerConfig();
-
         Penrose penrose = getPenroseServer().getPenrose();
         PenroseConfig penroseConfig = penrose.getPenroseConfig();
 
@@ -262,7 +259,7 @@ public class PenroseJMXService extends Service {
             register("Penrose Config:name="+partitionConfig.getName()+",type=PartitionConfig", partitionConfig);
         }
 
-        Collection serviceConfigs = penroseServerConfig.getServiceConfigs();
+        Collection serviceConfigs = penroseConfig.getServiceConfigs();
         for (Iterator i=serviceConfigs.iterator(); i.hasNext(); ) {
             ServiceConfig serviceConfig = (ServiceConfig)i.next();
             register("Penrose Config:name="+serviceConfig.getName()+",type=ServiceConfig", serviceConfig);
@@ -271,12 +268,10 @@ public class PenroseJMXService extends Service {
 
     public void unregisterConfigs() throws Exception {
 
-        PenroseServerConfig penroseServerConfig = getPenroseServer().getPenroseServerConfig();
-
         Penrose penrose = getPenroseServer().getPenrose();
         PenroseConfig penroseConfig = penrose.getPenroseConfig();
 
-        Collection serviceConfigs = penroseServerConfig.getServiceConfigs();
+        Collection serviceConfigs = penroseConfig.getServiceConfigs();
         for (Iterator i=serviceConfigs.iterator(); i.hasNext(); ) {
             ServiceConfig serviceConfig = (ServiceConfig)i.next();
             unregister("Penrose Config:name="+serviceConfig.getName()+",type=ServiceConfig");

@@ -18,6 +18,7 @@
 package org.safehaus.penrose.config;
 
 import java.util.Collection;
+import java.util.Map;
 
 /**
  * @author Endi S. Dewata
@@ -26,6 +27,13 @@ public interface PenroseConfigMBean {
 
     public String getHome() throws Exception;
     public void setHome(String home) throws Exception;
+
+    public Map getSystemProperties() throws Exception;
+    public String getSystemProperty(String name) throws Exception;
+    public void setSystemProperty(String name, String value) throws Exception;
+    public String removeSystemProperty(String name) throws Exception;
+
+    public Collection getServiceNames() throws Exception;
 
     public Collection getAdapterNames() throws Exception;
     public Collection getSchemaNames() throws Exception;

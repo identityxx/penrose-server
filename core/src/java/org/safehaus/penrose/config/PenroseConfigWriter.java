@@ -36,6 +36,7 @@ import org.safehaus.penrose.schema.SchemaConfig;
 import org.safehaus.penrose.partition.PartitionConfig;
 import org.safehaus.penrose.user.UserConfig;
 import org.safehaus.penrose.session.SessionConfig;
+import org.safehaus.penrose.service.ServiceConfig;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
@@ -69,9 +70,9 @@ public class PenroseConfigWriter {
         xmlWriter.startDocument();
 
         xmlWriter.startDTD(
-                "penrose",
+                "server",
                 "-//Penrose/DTD Server 1.0//EN",
-                "http://penrose.safehaus.org/dtd/penrose.dtd"
+                "http://penrose.safehaus.org/dtd/server.dtd"
         );
 
         xmlWriter.write(toElement(penroseConfig));
@@ -81,7 +82,29 @@ public class PenroseConfigWriter {
     }
 
     public Element toElement(PenroseConfig penroseConfig) {
-        Element element = new DefaultElement("penrose");
+        Element element = new DefaultElement("server");
+
+        for (Iterator i = penroseConfig.getSystemPropertyNames().iterator(); i.hasNext();) {
+            String name = (String)i.next();
+            String value = penroseConfig.getSystemProperty(name);
+
+            Element parameter = new DefaultElement("system-property");
+
+            Element paramName = new DefaultElement("property-name");
+            paramName.add(new DefaultText(name));
+            parameter.add(paramName);
+
+            Element paramValue = new DefaultElement("property-value");
+            paramValue.add(new DefaultText(value));
+            parameter.add(paramValue);
+
+            element.add(parameter);
+        }
+
+        for (Iterator i = penroseConfig.getServiceConfigs().iterator(); i.hasNext();) {
+            ServiceConfig serviceConfig = (ServiceConfig)i.next();
+            element.add(toElement(serviceConfig));
+        }
 
         for (Iterator i=penroseConfig.getSchemaConfigs().iterator(); i.hasNext(); ) {
             SchemaConfig schemaConfig = (SchemaConfig)i.next();
@@ -156,6 +179,42 @@ public class PenroseConfigWriter {
             }
 
             element.add(rootElement);
+        }
+
+        return element;
+    }
+
+    public Element toElement(ServiceConfig serviceConfig) {
+
+        Element element = new DefaultElement("service");
+        element.addAttribute("name", serviceConfig.getName());
+        if (!serviceConfig.isEnabled()) element.addAttribute("enabled", "false");
+
+        Element adapterClass = new DefaultElement("service-class");
+        adapterClass.add(new DefaultText(serviceConfig.getServiceClass()));
+        element.add(adapterClass);
+
+        if (serviceConfig.getDescription() != null && !"".equals(serviceConfig.getDescription())) {
+            Element description = new DefaultElement("description");
+            description.add(new DefaultText(serviceConfig.getDescription()));
+            element.add(description);
+        }
+
+        for (Iterator i = serviceConfig.getParameterNames().iterator(); i.hasNext();) {
+            String name = (String)i.next();
+            String value = (String)serviceConfig.getParameter(name);
+
+            Element parameter = new DefaultElement("parameter");
+
+            Element paramName = new DefaultElement("param-name");
+            paramName.add(new DefaultText(name));
+            parameter.add(paramName);
+
+            Element paramValue = new DefaultElement("param-value");
+            paramValue.add(new DefaultText(value));
+            parameter.add(paramValue);
+
+            element.add(parameter);
         }
 
         return element;

@@ -17,11 +17,15 @@
  */
 package org.safehaus.penrose.ldap;
 
-import org.apache.directory.server.core.partition.AbstractDirectoryPartition;
 import org.apache.directory.shared.ldap.filter.ExprNode;
+import org.apache.directory.shared.ldap.name.LdapDN;
+import org.apache.directory.server.core.DirectoryServiceConfiguration;
+import org.apache.directory.server.core.configuration.PartitionConfiguration;
 import org.ietf.ldap.*;
 import org.safehaus.penrose.Penrose;
+import org.safehaus.penrose.mapping.EntryMapping;
 import org.safehaus.penrose.partition.PartitionManager;
+import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.session.PenroseSearchResults;
 import org.safehaus.penrose.session.PenroseSession;
 import org.safehaus.penrose.session.PenroseSearchControls;
@@ -36,9 +40,12 @@ import java.io.File;
 /**
  * @author Endi S. Dewata
  */
-public class PenrosePartition extends AbstractDirectoryPartition {
+public class PenrosePartition implements org.apache.directory.server.core.partition.Partition {
 
     Logger log = LoggerFactory.getLogger(getClass());
+
+    DirectoryServiceConfiguration directoryServiceConfiguration;
+    PartitionConfiguration partitionConfiguration;
 
     Penrose penrose;
     PartitionManager partitionManager;
@@ -48,9 +55,14 @@ public class PenrosePartition extends AbstractDirectoryPartition {
         this.partitionManager = penrose.getPartitionManager();
     }
 
-    public void doInit() throws NamingException {
+    public void init(
+            DirectoryServiceConfiguration directoryServiceConfiguration,
+            PartitionConfiguration partitionConfiguration
+    ) throws NamingException {
+        this.directoryServiceConfiguration = directoryServiceConfiguration;
+        this.partitionConfiguration = partitionConfiguration;
 
-        String name = getConfiguration().getName();
+        String name = partitionConfiguration.getName();
 
         File dir = new File("partitions/"+name);
         if (!dir.exists()) return;
@@ -59,24 +71,52 @@ public class PenrosePartition extends AbstractDirectoryPartition {
         log.debug("Initializing "+name+" partition ...");
     }
 
-    public void bind(Name bindDn, byte[] credentials, List mechanisms, String saslAuthId) throws NamingException {
+    public boolean isInitialized() {
+        return true;
+    }
+
+    public void destroy() {
+    }
+
+    public LdapDN getSuffix() throws NamingException {
+        return getUpSuffix();
+    }
+
+    public LdapDN getUpSuffix() throws NamingException {
+        try {
+            Partition partition = partitionManager.getPartition("DEFAULT");
+            Collection rootEntryMappings = partition.getRootEntryMappings();
+            EntryMapping entryMapping = (EntryMapping)rootEntryMappings.iterator().next();
+            return new LdapDN(entryMapping.getDn());
+
+        } catch (Exception e) {
+            throw new NamingException(e.getMessage());
+        }
+    }
+
+    public final boolean isSuffix(LdapDN name) throws NamingException {
+        return getSuffix().equals(name);
+    }
+
+    public void bind(LdapDN bindDn, byte[] credentials, List mechanisms, String saslAuthId) throws NamingException {
         log.info("Binding as \""+bindDn+"\"");
         log.info(" - mechanisms: \""+mechanisms+"\"");
         log.info(" - sslAuthId: \""+saslAuthId+"\"");
     }
 
-    public void unbind(Name bindDn) throws NamingException {
+    public void unbind(LdapDN bindDn) throws NamingException {
         log.info("Unbinding as \""+bindDn+"\"");
     }
 
-    public void delete(Name dn) throws NamingException {
+    public void delete(LdapDN name) throws NamingException {
+        String dn = name.getUpName();
         log.info("Deleting \""+dn+"\"");
 
         try {
             PenroseSession session = penrose.newSession();
             if (session == null) throw new ServiceUnavailableException();
 
-            int rc = session.delete(dn.toString());
+            int rc = session.delete(dn);
 
             session.close();
 
@@ -90,16 +130,17 @@ public class PenrosePartition extends AbstractDirectoryPartition {
         }
     }
 
-    public void add(String upName, Name normName, Attributes attributes) throws NamingException {
-        log.info("Adding \""+upName+"\"");
+    public void add(LdapDN name, Attributes attributes) throws NamingException {
+        String dn = name.getUpName();
+         log.info("Adding \""+dn+"\"");
 
-        if (getSuffix(true).equals(normName)) return;
+        if (getSuffix().equals(dn)) return;
 
         try {
             PenroseSession session = penrose.newSession();
             if (session == null) throw new ServiceUnavailableException();
 
-            int rc = session.add(upName, attributes);
+            int rc = session.add(dn, attributes);
 
             session.close();
 
@@ -113,7 +154,8 @@ public class PenrosePartition extends AbstractDirectoryPartition {
         }
     }
 
-    public void modify(Name dn, int modOp, Attributes attributes) throws NamingException {
+    public void modify(LdapDN name, int modOp, Attributes attributes) throws NamingException {
+        String dn = name.getUpName();
         log.info("Modifying \""+dn+"\"");
         log.debug("changetype: modify");
 
@@ -130,7 +172,7 @@ public class PenrosePartition extends AbstractDirectoryPartition {
             PenroseSession session = penrose.newSession();
             if (session == null) throw new ServiceUnavailableException();
 
-            int rc = session.modify(dn.toString(), modifications);
+            int rc = session.modify(dn, modifications);
 
             session.close();
 
@@ -144,7 +186,8 @@ public class PenrosePartition extends AbstractDirectoryPartition {
         }
     }
 
-    public void modify(Name dn, ModificationItem[] modificationItems) throws NamingException {
+    public void modify(LdapDN name, ModificationItem[] modificationItems) throws NamingException {
+        String dn = name.getUpName();
         log.info("Modifying \""+dn+"\"");
         log.debug("changetype: modify");
 
@@ -152,7 +195,7 @@ public class PenrosePartition extends AbstractDirectoryPartition {
             PenroseSession session = penrose.newSession();
             if (session == null) throw new ServiceUnavailableException();
 
-            int rc = session.modify(dn.toString(), Arrays.asList(modificationItems));
+            int rc = session.modify(dn, Arrays.asList(modificationItems));
 
             session.close();
 
@@ -166,7 +209,8 @@ public class PenrosePartition extends AbstractDirectoryPartition {
         }
     }
 
-    public NamingEnumeration list(Name dn) throws NamingException {
+    public NamingEnumeration list(LdapDN name) throws NamingException {
+        String dn = name.getUpName();
         log.info("Listing \""+dn+"\"");
 
         try {
@@ -179,9 +223,8 @@ public class PenrosePartition extends AbstractDirectoryPartition {
             sc.setScope(PenroseSearchControls.SCOPE_ONE);
             sc.setDereference(PenroseSearchControls.DEREF_ALWAYS);
 
-            String baseDn = dn.toString();
             session.search(
-                    baseDn,
+                    dn,
                     "(objectClass=*)",
                     sc,
                     results);
@@ -195,7 +238,7 @@ public class PenrosePartition extends AbstractDirectoryPartition {
     }
 
     public NamingEnumeration search(
-            Name base,
+            LdapDN base,
             Map env,
             ExprNode filter,
             SearchControls searchControls
@@ -203,7 +246,7 @@ public class PenrosePartition extends AbstractDirectoryPartition {
 
         PenroseSession session = null;
         try {
-            String baseDn = base.toString();
+            String dn = base.getUpName();
             String deref = (String)env.get("java.naming.ldap.derefAliases");
             int scope = searchControls.getSearchScope();
             String returningAttributes[] = searchControls.getReturningAttributes();
@@ -211,7 +254,7 @@ public class PenrosePartition extends AbstractDirectoryPartition {
 
             String newFilter = FilterTool.convert(filter).toString();
 
-            log.info("Searching \""+baseDn+"\"");
+            log.info("Searching \""+dn+"\"");
             log.debug(" - deref: "+deref);
             log.debug(" - scope: "+scope);
             log.debug(" - filter: "+newFilter);
@@ -228,7 +271,7 @@ public class PenrosePartition extends AbstractDirectoryPartition {
             sc.setAttributes(searchControls == null ? null : searchControls.getReturningAttributes());
 
             session.search(
-                    baseDn,
+                    dn,
                     newFilter,
                     sc,
                     results);
@@ -260,7 +303,8 @@ public class PenrosePartition extends AbstractDirectoryPartition {
         }
     }
 
-    public Attributes lookup(Name dn) throws NamingException {
+    public Attributes lookup(LdapDN name) throws NamingException {
+        String dn = name.getUpName();
         log.debug("Looking up \""+dn+"\"");
 
         try {
@@ -273,9 +317,8 @@ public class PenrosePartition extends AbstractDirectoryPartition {
             sc.setScope(PenroseSearchControls.SCOPE_BASE);
             sc.setDereference(PenroseSearchControls.DEREF_ALWAYS);
 
-            String baseDn = dn.toString();
             session.search(
-                    baseDn,
+                    dn,
                     "(objectClass=*)",
                     sc,
                     results);
@@ -300,11 +343,10 @@ public class PenrosePartition extends AbstractDirectoryPartition {
         }
     }
 
-    public Attributes lookup(Name name, String[] attrIds) throws NamingException {
+    public Attributes lookup(LdapDN name, String[] attrIds) throws NamingException {
+        String dn = name.getUpName();
 
         try {
-            String dn = name.toString();
-
             //log.debug("===============================================================================");
             //log.debug("lookup(\""+dn+"\") as \""+principalDn+"\"");
 
@@ -317,9 +359,8 @@ public class PenrosePartition extends AbstractDirectoryPartition {
             sc.setScope(PenroseSearchControls.SCOPE_BASE);
             sc.setDereference(PenroseSearchControls.DEREF_ALWAYS);
 
-            String baseDn = dn.toString();
             session.search(
-                    baseDn,
+                    dn,
                     "(objectClass=*)",
                     sc,
                     results);
@@ -344,8 +385,9 @@ public class PenrosePartition extends AbstractDirectoryPartition {
         }
     }
 
-    public boolean hasEntry(Name name) throws NamingException {
-        log.info("Checking \""+name+"\"");
+    public boolean hasEntry(LdapDN name) throws NamingException {
+        String dn = name.getUpName();
+        log.info("Checking \""+dn+"\"");
 
         try {
             PenroseSession session = penrose.newSession();
@@ -357,9 +399,8 @@ public class PenrosePartition extends AbstractDirectoryPartition {
             sc.setScope(PenroseSearchControls.SCOPE_BASE);
             sc.setDereference(PenroseSearchControls.DEREF_ALWAYS);
 
-            String base = name.toString();
             session.search(
-                    base,
+                    dn,
                     "(objectClass=*)",
                     sc,
                     results);
@@ -376,17 +417,16 @@ public class PenrosePartition extends AbstractDirectoryPartition {
         }
     }
 
-    public void modifyRn(Name name, String newRn, boolean deleteOldRn) throws NamingException {
+    public void modifyRn(LdapDN name, String newRn, boolean deleteOldRn) throws NamingException {
+        String dn = name.getUpName();
         try {
-            String dn = name.toString();
-
             log.debug("===============================================================================");
             log.debug("modifyDn(\""+dn+"\")");
 
             PenroseSession session = penrose.newSession();
             if (session == null) throw new ServiceUnavailableException();
 
-            int rc = session.modrdn(dn.toString(), newRn, deleteOldRn);
+            int rc = session.modrdn(dn, newRn, deleteOldRn);
 
             session.close();
 
@@ -403,11 +443,11 @@ public class PenrosePartition extends AbstractDirectoryPartition {
         }
     }
 
-    public void move(Name oriChildName, Name newParentName) throws NamingException {
+    public void move(LdapDN oriChildName, LdapDN newParentName) throws NamingException {
         log.info("Moving \""+oriChildName+"\" to \""+newParentName+"\"");
     }
 
-    public void move(Name oriChildName, Name newParentName, String newRn, boolean deleteOldRn) throws NamingException {
+    public void move(LdapDN oriChildName, LdapDN newParentName, String newRn, boolean deleteOldRn) throws NamingException {
         log.info("Moving \""+oriChildName+"\" to \""+newParentName+"\"");
     }
 

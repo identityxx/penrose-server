@@ -22,13 +22,13 @@ import org.apache.directory.server.core.authn.LdapPrincipal;
 import org.apache.directory.server.core.jndi.ServerContext;
 import org.apache.directory.shared.ldap.exception.LdapAuthenticationException;
 import org.apache.directory.shared.ldap.aci.AuthenticationLevel;
+import org.apache.directory.shared.ldap.name.LdapDN;
 import org.ietf.ldap.LDAPException;
 import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.service.ServiceConfig;
 import org.safehaus.penrose.server.PenroseServer;
-import org.safehaus.penrose.config.PenroseServerConfig;
-import org.safehaus.penrose.session.PenroseSession;
 import org.safehaus.penrose.config.PenroseConfig;
+import org.safehaus.penrose.session.PenroseSession;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
@@ -58,8 +58,8 @@ public class PenroseAuthenticator extends AbstractAuthenticator {
     public void setPenroseServer(PenroseServer penroseServer) {
         this.penroseServer = penroseServer;
 
-        PenroseServerConfig penroseServerConfig = penroseServer.getPenroseServerConfig();
-        ServiceConfig serviceConfig = penroseServerConfig.getServiceConfig("LDAP");
+        PenroseConfig penroseConfig = penroseServer.getPenroseConfig();
+        ServiceConfig serviceConfig = penroseConfig.getServiceConfig("LDAP");
         String s = serviceConfig == null ? null : serviceConfig.getParameter("allowAnonymousAccess");
         allowAnonymousAccess = s == null ? true : new Boolean(s).booleanValue();
     }
@@ -67,10 +67,9 @@ public class PenroseAuthenticator extends AbstractAuthenticator {
     public void init() throws NamingException {
     }
 
-    public LdapPrincipal authenticate(ServerContext ctx) throws NamingException {
+    public LdapPrincipal authenticate(LdapDN name, ServerContext ctx) throws NamingException {
 
-        String dn = (String)ctx.getEnvironment().get(Context.SECURITY_PRINCIPAL);
-
+        String dn = name.getUpName();
         Object credentials = ctx.getEnvironment().get(Context.SECURITY_CREDENTIALS);
         String password = new String((byte[])credentials);
 

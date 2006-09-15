@@ -37,62 +37,45 @@ public class PenroseServer implements SignalHandler {
 
     public static Logger log = Logger.getLogger(PenroseServer.class);
 
-    private PenroseServerConfig penroseServerConfig;
     private PenroseConfig penroseConfig;
-
     private Penrose penrose;
 
     private ServiceManager serviceManager;
 
     public PenroseServer() throws Exception {
-
-        penroseServerConfig = new PenroseServerConfig();
+        penroseConfig = new DefaultPenroseConfig();
         loadConfig();
-
         init();
     }
 
     public PenroseServer(String home) throws Exception {
-
-        penroseServerConfig = new PenroseServerConfig();
-        penroseServerConfig.setHome(home);
+        penroseConfig = new PenroseConfig();
+        penroseConfig.setHome(home);
         loadConfig();
-
         init();
     }
 
-    public PenroseServer(PenroseServerConfig penroseServerConfig) throws Exception {
-        this.penroseServerConfig = penroseServerConfig;
-
+    public PenroseServer(PenroseConfig penroseConfig) throws Exception {
+        this.penroseConfig = penroseConfig;
         init();
     }
 
     public void loadConfig() throws Exception {
-        String home = penroseServerConfig.getHome();
+        String home = penroseConfig.getHome();
 
-        penroseServerConfig.clear();
-
-        PenroseServerConfigReader reader = new PenroseServerConfigReader((home == null ? "" : home+File.separator)+"conf"+File.separator+"server.xml");
-        reader.read(penroseServerConfig);
+        PenroseConfigReader reader = new PenroseConfigReader((home == null ? "" : home+File.separator)+"conf"+File.separator+"server.xml");
+        reader.read(penroseConfig);
     }
 
     public void init() throws Exception {
-
-        for (Iterator i=penroseServerConfig.getSystemPropertyNames().iterator(); i.hasNext(); ) {
-            String name = (String)i.next();
-            String value = penroseServerConfig.getSystemProperty(name);
-            System.setProperty(name, value);
-        }
-
-        String home = penroseServerConfig.getHome();
-
+        
         PenroseFactory penroseFactory = PenroseFactory.getInstance();
-        penrose = penroseFactory.createPenrose(home);
+        penrose = penroseFactory.createPenrose(penroseConfig);
         penroseConfig = penrose.getPenroseConfig();
 
         serviceManager = new ServiceManager();
         serviceManager.setPenroseServer(this);
-        serviceManager.load(penroseServerConfig.getServiceConfigs());
+        serviceManager.load(penroseConfig.getServiceConfigs());
     }
 
     public void start() throws Exception {
@@ -178,12 +161,12 @@ public class PenroseServer implements SignalHandler {
         }
     }
 
-    public PenroseServerConfig getPenroseServerConfig() {
-        return penroseServerConfig;
+    public PenroseConfig getPenroseConfig() {
+        return penroseConfig;
     }
 
-    public void setPenroseServerConfig(PenroseServerConfig penroseServerConfig) {
-        this.penroseServerConfig = penroseServerConfig;
+    public void setPenroseConfig(PenroseConfig penroseConfig) {
+        this.penroseConfig = penroseConfig;
     }
 
     public Penrose getPenrose() {
@@ -207,17 +190,12 @@ public class PenroseServer implements SignalHandler {
         loadConfig();
 
         serviceManager.clear();
-        serviceManager.load(penroseServerConfig.getServiceConfigs());
+        serviceManager.load(penroseConfig.getServiceConfigs());
 
         penrose.reload();
     }
 
     public void store() throws Exception {
-
-        String home = penroseServerConfig.getHome();
-        PenroseServerConfigWriter writer = new PenroseServerConfigWriter((home == null ? "" : home+File.separator)+"conf"+File.separator+"server.xml");
-        writer.write(penroseServerConfig);
-
         penrose.store();
     }
     
@@ -297,13 +275,5 @@ public class PenroseServer implements SignalHandler {
             log.error("Server failed to start: "+name+": "+e.getMessage());
             System.exit(1);
         }
-    }
-
-    public PenroseConfig getPenroseConfig() {
-        return penroseConfig;
-    }
-
-    public void setPenroseConfig(PenroseConfig penroseConfig) {
-        this.penroseConfig = penroseConfig;
     }
 }

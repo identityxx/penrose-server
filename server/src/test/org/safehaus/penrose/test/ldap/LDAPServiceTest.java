@@ -20,12 +20,11 @@ package org.safehaus.penrose.test.ldap;
 import junit.framework.TestCase;
 import org.apache.log4j.*;
 import org.safehaus.penrose.server.PenroseServer;
-import org.safehaus.penrose.server.DefaultPenroseServerConfig;
-import org.safehaus.penrose.config.PenroseServerConfig;
 import org.safehaus.penrose.ldap.PenroseLDAPService;
 import org.safehaus.penrose.service.ServiceManager;
 import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.config.PenroseConfig;
+import org.safehaus.penrose.config.DefaultPenroseConfig;
 
 import javax.naming.directory.DirContext;
 import javax.naming.directory.InitialDirContext;
@@ -40,7 +39,7 @@ import java.util.Hashtable;
  */
 public class LDAPServiceTest extends TestCase {
 
-    PenroseServerConfig penroseServerConfig;
+    PenroseConfig penroseConfig;
     PenroseServer penroseServer;
 
     public void setUp() throws Exception {
@@ -60,10 +59,10 @@ public class LDAPServiceTest extends TestCase {
         Logger logger = Logger.getLogger("org.safehaus.penrose");
         logger.setLevel(Level.INFO);
 
-        penroseServerConfig = new DefaultPenroseServerConfig();
-        penroseServerConfig.removeServiceConfig("JMX");
+        penroseConfig = new DefaultPenroseConfig();
+        penroseConfig.removeServiceConfig("JMX");
 
-        penroseServer = new PenroseServer(penroseServerConfig);
+        penroseServer = new PenroseServer(penroseConfig);
         penroseServer.start();
 
     }

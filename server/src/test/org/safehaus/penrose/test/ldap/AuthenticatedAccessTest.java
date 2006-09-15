@@ -20,8 +20,8 @@ package org.safehaus.penrose.test.ldap;
 import junit.framework.TestCase;
 import org.apache.log4j.*;
 import org.safehaus.penrose.server.PenroseServer;
-import org.safehaus.penrose.server.DefaultPenroseServerConfig;
-import org.safehaus.penrose.config.PenroseServerConfig;
+import org.safehaus.penrose.config.PenroseConfig;
+import org.safehaus.penrose.config.DefaultPenroseConfig;
 import org.ietf.ldap.*;
 
 import javax.naming.Context;
@@ -36,7 +36,7 @@ import java.util.Hashtable;
  */
 public class AuthenticatedAccessTest extends TestCase {
 
-    PenroseServerConfig penroseServerConfig;
+    PenroseConfig penroseConfig;
     PenroseServer penroseServer;
 
     static {
@@ -52,9 +52,9 @@ public class AuthenticatedAccessTest extends TestCase {
 
     public void setUp() throws Exception {
 
-        penroseServerConfig = new DefaultPenroseServerConfig();
+        penroseConfig = new DefaultPenroseConfig();
 
-        penroseServer = new PenroseServer(penroseServerConfig);
+        penroseServer = new PenroseServer(penroseConfig);
         penroseServer.start();
 
     }

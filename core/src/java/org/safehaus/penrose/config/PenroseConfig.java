@@ -30,6 +30,7 @@ import org.safehaus.penrose.schema.SchemaConfig;
 import org.safehaus.penrose.user.UserConfig;
 import org.safehaus.penrose.session.SessionConfig;
 import org.safehaus.penrose.handler.HandlerConfig;
+import org.safehaus.penrose.service.ServiceConfig;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
@@ -41,6 +42,9 @@ public class PenroseConfig implements PenroseConfigMBean, Cloneable {
     Logger log = LoggerFactory.getLogger(getClass());
 
     private String home;
+
+    private Map systemProperties = new LinkedHashMap();
+    private Map serviceConfigs   = new LinkedHashMap();
 
     private Map schemaConfigs    = new LinkedHashMap();
     private Map adapterConfigs   = new LinkedHashMap();
@@ -77,6 +81,46 @@ public class PenroseConfig implements PenroseConfigMBean, Cloneable {
         addHandlerConfig(handlerConfig);
 
         rootUserConfig = new UserConfig("uid=admin,ou=system", "secret");
+    }
+
+    public String getSystemProperty(String name) {
+        return (String)systemProperties.get(name);
+    }
+
+    public Map getSystemProperties() {
+        return systemProperties;
+    }
+
+    public Collection getSystemPropertyNames() {
+        return systemProperties.keySet();
+    }
+
+    public void setSystemProperty(String name, String value) {
+        systemProperties.put(name, value);
+    }
+
+    public String removeSystemProperty(String name) {
+        return (String)systemProperties.remove(name);
+    }
+
+    public void addServiceConfig(ServiceConfig serviceConfig) {
+        serviceConfigs.put(serviceConfig.getName(), serviceConfig);
+    }
+
+    public ServiceConfig getServiceConfig(String name) {
+        return (ServiceConfig)serviceConfigs.get(name);
+    }
+
+    public Collection getServiceConfigs() {
+        return serviceConfigs.values();
+    }
+
+    public Collection getServiceNames() {
+        return serviceConfigs.keySet();
+    }
+
+    public ServiceConfig removeServiceConfig(String name) {
+        return (ServiceConfig)serviceConfigs.remove(name);
     }
 
     public void addEngineConfig(EngineConfig engineConfig) {
@@ -257,6 +301,8 @@ public class PenroseConfig implements PenroseConfigMBean, Cloneable {
 
     public int hashCode() {
         return (home == null ? 0 : home.hashCode()) +
+                (systemProperties == null ? 0 : systemProperties.hashCode()) +
+                (serviceConfigs == null ? 0 : serviceConfigs.hashCode()) +
                 (schemaConfigs == null ? 0 : schemaConfigs.hashCode()) +
                 (adapterConfigs == null ? 0 : adapterConfigs.hashCode()) +
                 (partitionConfigs == null ? 0 : partitionConfigs.hashCode()) +
@@ -284,6 +330,9 @@ public class PenroseConfig implements PenroseConfigMBean, Cloneable {
 
         if (!equals(home, penroseConfig.home)) return false;
 
+        if (!equals(systemProperties, penroseConfig.systemProperties)) return false;
+        if (!equals(serviceConfigs, penroseConfig.serviceConfigs)) return false;
+
         if (!equals(schemaConfigs, penroseConfig.schemaConfigs)) return false;
         if (!equals(adapterConfigs, penroseConfig.adapterConfigs)) return false;
         if (!equals(partitionConfigs, penroseConfig.partitionConfigs)) return false;
@@ -307,6 +356,13 @@ public class PenroseConfig implements PenroseConfigMBean, Cloneable {
         clear();
 
         home = penroseConfig.home;
+
+        systemProperties.putAll(penroseConfig.systemProperties);
+
+        for (Iterator i=penroseConfig.serviceConfigs.values().iterator(); i.hasNext(); ) {
+            ServiceConfig serviceConfig = (ServiceConfig)i.next();
+            addServiceConfig((ServiceConfig)serviceConfig.clone());
+        }
 
         for (Iterator i=penroseConfig.schemaConfigs.values().iterator(); i.hasNext(); ) {
             SchemaConfig schemaConfig = (SchemaConfig)i.next();
@@ -345,11 +401,12 @@ public class PenroseConfig implements PenroseConfigMBean, Cloneable {
     }
 
     public void clear() {
+        systemProperties.clear();
+        serviceConfigs.clear();
         schemaConfigs.clear();
         adapterConfigs.clear();
         partitionConfigs.clear();
         engineConfigs.clear();
-        //handlerConfigs.clear();
     }
 
     public Object clone() {

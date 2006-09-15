@@ -23,7 +23,7 @@ import java.io.File;
 import org.ietf.ldap.*;
 import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.server.PenroseServer;
-import org.safehaus.penrose.config.PenroseServerConfig;
+import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.service.ServiceConfig;
 import org.safehaus.penrose.session.PenroseSession;
 import org.safehaus.penrose.session.PenroseSearchResults;
@@ -76,9 +76,9 @@ public class PenroseBackend implements Backend {
 
         penroseServer = new PenroseServer(home);
 
-        PenroseServerConfig penroseServerConfig = penroseServer.getPenroseServerConfig();
+        PenroseConfig penroseConfig = penroseServer.getPenroseConfig();
 
-        ServiceConfig ldapServiceConfig = penroseServerConfig.getServiceConfig("LDAP");
+        ServiceConfig ldapServiceConfig = penroseConfig.getServiceConfig("LDAP");
         ldapServiceConfig.setEnabled(false);
 
         penroseServer.start();

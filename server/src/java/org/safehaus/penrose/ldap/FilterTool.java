@@ -27,8 +27,8 @@ public class FilterTool {
 
             String attribute = simpleNode.getAttribute();
             String operation = AbstractExprNode.getOperationString(simpleNode.getAssertionType());
-            String value = simpleNode.getValue();
-            return new SimpleFilter(attribute, operation, value);
+            Object value = simpleNode.getValue();
+            return new SimpleFilter(attribute, operation, value.toString());
 
         } else if (node instanceof PresenceNode) {
             PresenceNode presenceNode = (PresenceNode)node;

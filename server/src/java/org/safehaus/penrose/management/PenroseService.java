@@ -23,7 +23,7 @@ import org.safehaus.penrose.mapping.EntryMapping;
 import org.safehaus.penrose.partition.PartitionManager;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.server.PenroseServer;
-import org.safehaus.penrose.config.PenroseServerConfig;
+import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.service.ServiceManager;
 
 import java.util.Collection;
@@ -62,7 +62,7 @@ public class PenroseService implements PenroseServiceMBean {
 
     public String getHome() throws Exception {
         try {
-            return penroseServer.getPenroseServerConfig().getHome();
+            return penroseServer.getPenroseConfig().getHome();
         } catch (Exception e) {
             log.error(e.getMessage(), e);
             throw e;
@@ -71,8 +71,8 @@ public class PenroseService implements PenroseServiceMBean {
 
     public void setHome(String home) throws Exception {
         try {
-            PenroseServerConfig penroseServerConfig = penroseServer.getPenroseServerConfig();
-            penroseServerConfig.setHome(home);
+            PenroseConfig penroseConfig = penroseServer.getPenroseConfig();
+            penroseConfig.setHome(home);
             penroseServer.reload();
         } catch (Exception e) {
             log.error(e.getMessage(), e);
@@ -199,7 +199,7 @@ public class PenroseService implements PenroseServiceMBean {
         try {
             Collection results = new ArrayList();
 
-            String homeDirectory = penroseServer.getPenroseServerConfig().getHome();
+            String homeDirectory = penroseServer.getPenroseConfig().getHome();
             File file = new File((homeDirectory == null ? "" : homeDirectory+File.separator)+directory);
             if (!file.exists()) return results;
 
@@ -220,7 +220,7 @@ public class PenroseService implements PenroseServiceMBean {
 
     public byte[] download(String filename) throws Exception {
         try {
-            String homeDirectory = penroseServer.getPenroseServerConfig().getHome();
+            String homeDirectory = penroseServer.getPenroseConfig().getHome();
             File file = new File((homeDirectory == null ? "" : homeDirectory+File.separator)+filename);
             if (!file.exists()) return null;
 
@@ -240,7 +240,7 @@ public class PenroseService implements PenroseServiceMBean {
 
     public void upload(String filename, byte content[]) throws Exception {
         try {
-            String homeDirectory = penroseServer.getPenroseServerConfig().getHome();
+            String homeDirectory = penroseServer.getPenroseConfig().getHome();
             File file = new File((homeDirectory == null ? "" : homeDirectory+File.separator)+filename);
             file.getParentFile().mkdirs();
 

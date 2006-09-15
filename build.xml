@@ -26,68 +26,68 @@
     </target>
 
     <target name="compile" depends="init">
-        <ant dir="shared" target="compile"/>
         <ant dir="core" target="compile"/>
         <ant dir="server" target="compile"/>
     </target>
 
     <target name="build" depends="init">
-        <ant dir="shared" target="build"/>
         <ant dir="core" target="build"/>
         <ant dir="server" target="build"/>
-        <jar jarfile="target/${project.name}-bin-${project.version}.jar">
-            <fileset dir="server/bin"/>
-        </jar>
-        <jar jarfile="target/${project.name}-conf-${project.version}.jar">
-            <fileset dir="conf"/>
-            <fileset dir="server/conf"/>
-        </jar>
-        <jar jarfile="target/${project.name}-samples-${project.version}.jar">
-            <fileset dir="samples"/>
-        </jar>
-        <jar jarfile="target/${project.name}-schema-${project.version}.jar">
-            <fileset dir="schema"/>
-        </jar>
     </target>
 
     <target name="docs" depends="init">
-        <ant dir="shared" target="docs"/>
         <ant dir="core" target="docs"/>
         <ant dir="server" target="docs"/>
     </target>
 
+    <target name="export" depends="build,docs">
+        <mkdir dir="target"/>
+        <tar destfile="target/${project.name}-bin-${project.version}.tar.gz" compression="gzip">
+            <tarfileset dir="server/bin"/>
+        </tar>
+        <tar destfile="target/${project.name}-conf-${project.version}.tar.gz" compression="gzip">
+            <tarfileset dir="conf"/>
+            <tarfileset dir="server/conf"/>
+        </tar>
+        <tar destfile="target/${project.name}-samples-${project.version}.tar.gz" compression="gzip">
+            <tarfileset dir="samples"/>
+        </tar>
+        <tar destfile="target/${project.name}-schema-${project.version}.tar.gz" compression="gzip">
+            <tarfileset dir="schema"/>
+        </tar>
+        <tar destfile="target/${project.name}-docs-${project.version}.tar.gz" compression="gzip">
+            <tarfileset dir="core/target" includes="javadoc/**"/>
+            <tarfileset dir="server/target" prefix="server" includes="javadoc/**"/>
+            <tarfileset dir="docs"/>
+        </tar>
+    </target>
+
     <target name="dist" depends="init">
-        <ant dir="shared" target="dist"/>
         <ant dir="core" target="dist"/>
         <ant dir="server" target="dist"/>
     </target>
 
     <target name="dist-src" depends="init">
-        <ant dir="shared" target="dist-src"/>
         <ant dir="core" target="dist-src"/>
         <ant dir="server" target="dist-src"/>
     </target>
 
     <target name="dist-unix" depends="init">
-        <ant dir="shared" target="dist-unix"/>
         <ant dir="core" target="dist-unix"/>
         <ant dir="server" target="dist-unix"/>
     </target>
 
     <target name="dist-rpm" depends="init">
-        <ant dir="shared" target="dist-rpm"/>
         <ant dir="core" target="dist-rpm"/>
         <ant dir="server" target="dist-rpm"/>
     </target>
 
     <target name="dist-win32" depends="init">
-        <ant dir="shared" target="dist-win32"/>
         <ant dir="core" target="dist-win32"/>
         <ant dir="server" target="dist-win32"/>
     </target>
 
     <target name="dist-all" depends="init">
-        <ant dir="shared" target="dist-all"/>
         <ant dir="core" target="dist-all"/>
         <ant dir="server" target="dist-all"/>
     </target>
@@ -103,7 +103,6 @@
     <target name="clean" depends="init">
         <ant dir="server" target="clean"/>
         <ant dir="core" target="clean"/>
-        <ant dir="shared" target="clean"/>
     </target>
 
 </project>

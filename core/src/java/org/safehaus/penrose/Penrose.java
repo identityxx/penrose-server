@@ -56,7 +56,7 @@ public class Penrose {
     public static String PRODUCT_COPYRIGHT = "Copyright (c) 2000-2006, Identyx Corporation.";
 
     public final static DateFormat DATE_FORMAT   = new SimpleDateFormat("MM/dd/yyyy");
-    public final static String RELEASE_DATE      = "07/01/2006";
+    public final static String RELEASE_DATE      = "09/01/2006";
 
     public final static String STOPPED  = "STOPPED";
     public final static String STARTING = "STARTING";
@@ -221,12 +221,14 @@ public class Penrose {
 
         penroseConfig.clear();
 
-        PenroseConfigReader reader = new PenroseConfigReader((home == null ? "" : home+File.separator)+"conf"+File.separator+"penrose.xml");
+        PenroseConfigReader reader = new PenroseConfigReader((home == null ? "" : home+File.separator)+"conf"+File.separator+"server.xml");
         reader.read(penroseConfig);
         penroseConfig.setHome(home);
     }
 
     public void load() throws Exception {
+
+        loadSystemProperties();
 
         loadInterpreter();
         loadSchemas();
@@ -239,6 +241,15 @@ public class Penrose {
         loadHandler();
 
         loadModules();
+    }
+
+    public void loadSystemProperties() throws Exception {
+        for (Iterator i=penroseConfig.getSystemPropertyNames().iterator(); i.hasNext(); ) {
+            String name = (String)i.next();
+            String value = penroseConfig.getSystemProperty(name);
+
+            System.setProperty(name, value);
+        }
     }
 
     public void loadInterpreter() throws Exception {
@@ -347,7 +358,7 @@ public class Penrose {
     public void store() throws Exception {
 
         String home = penroseConfig.getHome();
-        String filename = (home == null ? "" : home+File.separator)+"conf"+File.separator+"penrose.xml";
+        String filename = (home == null ? "" : home+File.separator)+"conf"+File.separator+"server.xml";
         log.debug("Storing Penrose configuration into "+filename);
 
         PenroseConfigWriter serverConfigWriter = new PenroseConfigWriter(filename);

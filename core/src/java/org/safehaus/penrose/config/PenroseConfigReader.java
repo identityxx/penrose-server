@@ -52,7 +52,7 @@ public class PenroseConfigReader implements EntityResolver {
         this.reader = reader;
 
         ClassLoader cl = getClass().getClassLoader();
-        penroseDtdUrl = cl.getResource("org/safehaus/penrose/config/penrose.dtd");
+        penroseDtdUrl = cl.getResource("org/safehaus/penrose/config/server.dtd");
         //log.debug("Penrose DTD URL: "+penroseDtdUrl);
     }
 
@@ -64,7 +64,7 @@ public class PenroseConfigReader implements EntityResolver {
 
     public void read(PenroseConfig penroseConfig) throws Exception {
         ClassLoader cl = getClass().getClassLoader();
-        URL url = cl.getResource("org/safehaus/penrose/config/penrose-digester-rules.xml");
+        URL url = cl.getResource("org/safehaus/penrose/config/server-digester-rules.xml");
 
 		Digester digester = DigesterLoader.createDigester(url);
         digester.setEntityResolver(this);
@@ -81,7 +81,7 @@ public class PenroseConfigReader implements EntityResolver {
         String file = systemId.substring(i+1);
         //log.debug("=> "+file);
 
-        if ("penrose.dtd".equals(file)) {
+        if ("server.dtd".equals(file)) {
             return new InputSource(penroseDtdUrl.openStream());
         }
 

@@ -20,7 +20,6 @@ package org.safehaus.penrose.ldap;
 import org.safehaus.penrose.service.Service;
 import org.safehaus.penrose.schema.SchemaConfig;
 import org.safehaus.penrose.config.PenroseConfig;
-import org.safehaus.penrose.config.PenroseServerConfig;
 import org.safehaus.penrose.Penrose;
 import org.apache.directory.server.core.configuration.*;
 import org.apache.directory.server.jndi.ServerContextFactory;
@@ -89,11 +88,9 @@ public class PenroseLDAPService extends Service {
 
         setStatus(STARTING);
 
-        PenroseServerConfig penroseServerConfig = getPenroseServer().getPenroseServerConfig();
-        String home = penroseServerConfig.getHome();
-
         Penrose penrose = getPenroseServer().getPenrose();
         PenroseConfig penroseConfig = penrose.getPenroseConfig();
+        String home = penroseConfig.getHome();
 
         MutableServerStartupConfiguration configuration = new MutableServerStartupConfiguration();
 
