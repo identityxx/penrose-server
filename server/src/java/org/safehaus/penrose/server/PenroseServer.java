@@ -26,14 +26,11 @@ import org.safehaus.penrose.service.ServiceManager;
 import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.PenroseFactory;
 import org.safehaus.penrose.config.*;
-import sun.misc.Signal;
-import sun.misc.SignalHandler;
-
 
 /**
  * @author Endi S. Dewata
  */
-public class PenroseServer implements SignalHandler {
+public class PenroseServer {
 
     public static Logger log = Logger.getLogger(PenroseServer.class);
 
@@ -90,29 +87,6 @@ public class PenroseServer implements SignalHandler {
 
     public String getStatus() {
         return penrose.getStatus();
-    }
-    /**
-     * Ctrl-C (Interrupt Signal) handler
-     * The obvious drawback with this is that it relies on undocumented classes from
-     * Sun. There are other solutions, including one given at
-     * http://www.naturalbridge.com/useful/index.html and another at
-     * http://interstice.com/~kevinh/projects/javasignals/ but both of these use
-     * native code.
-     */
-    public void initSignalHandler() {
-        Signal.handle(new Signal("INT"), this);
-    }
-
-    public void handle(Signal sig) {
-        //code to be executed goes here
-        log.info("Interrupt Signal (Ctrl-C) caught! Initiating shutdown...");
-        listAllThreads();
-        
-        try {
-            stop();
-        } catch (Exception e) {
-            log.error(e.getMessage());
-        }
     }
 
     public void listAllThreads() {

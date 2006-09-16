@@ -32,13 +32,13 @@ public class LRUCache {
     }
 
     public synchronized void put(Object key, Object value) {
-        log.debug("Adding cache key "+key);
+        //log.debug("Adding cache key "+key);
         map.put(key, value);
         prune();
     }
 
     public synchronized Object get(Object key) {
-        log.debug("Getting cache key "+key);
+        //log.debug("Getting cache key "+key);
         Object value = map.remove(key);
         if (value == null) return value;
 
@@ -50,7 +50,7 @@ public class LRUCache {
     public synchronized void prune() {
         while (map.size() > size && map.size() > 0) {
             Object key = map.keySet().iterator().next();
-            log.debug("Removing cache key "+key);
+            //log.debug("Removing cache key "+key);
             map.remove(key);
         }
     }
