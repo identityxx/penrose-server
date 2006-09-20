@@ -72,24 +72,10 @@ public class DefaultEngine extends Engine {
 
         log.debug("Bind as user "+dn);
 
-        Entry entry = find(session, partition, new ArrayList(), new AttributeValues(), entryMapping, dn);
+        Row rdn = EntryUtil.getRdn(dn);
 
-        if (entry == null) {
-            log.debug("Entry "+dn+" not found => BIND FAILED");
-            return LDAPException.INVALID_CREDENTIALS;
-        }
-
-        AttributeValues attributeValues = entry.getAttributeValues();
-
-        Collection set = attributeValues.get("userPassword");
-
-        if (set != null) {
-            for (Iterator i = set.iterator(); i.hasNext(); ) {
-                Object userPassword = i.next();
-                log.debug("userPassword: "+userPassword);
-                if (PasswordUtil.comparePassword(password, userPassword)) return LDAPException.SUCCESS;
-            }
-        }
+        AttributeValues attributeValues = new AttributeValues();
+        attributeValues.add(rdn);
 
         Collection sources = entryMapping.getSourceMappings();
 

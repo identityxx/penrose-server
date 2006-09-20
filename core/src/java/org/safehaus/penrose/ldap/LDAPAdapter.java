@@ -84,7 +84,12 @@ public class LDAPAdapter extends Adapter {
         return LDAPException.SUCCESS;
     }
 
-    public void search(SourceConfig sourceConfig, Filter filter, PenroseSearchControls sc, PenroseSearchResults results) throws Exception {
+    public void search(
+            SourceConfig sourceConfig,
+            Filter filter,
+            PenroseSearchControls searchControls,
+            PenroseSearchResults results
+    ) throws Exception {
 
         String ldapBase = sourceConfig.getParameter(BASE_DN);
         if ("".equals(ldapBase)) {
@@ -109,23 +114,23 @@ public class LDAPAdapter extends Adapter {
             log.debug(Formatter.displaySeparator(80));
         }
 
-        SearchControls ctls = new SearchControls();
-        ctls.setReturningAttributes(new String[] { "dn" });
+        SearchControls sc = new SearchControls();
+        sc.setReturningAttributes(new String[] { "dn" });
         if ("OBJECT".equals(ldapScope)) {
-            ctls.setSearchScope(SearchControls.OBJECT_SCOPE);
+            sc.setSearchScope(SearchControls.OBJECT_SCOPE);
 
         } else if ("ONELEVEL".equals(ldapScope)) {
-            ctls.setSearchScope(SearchControls.ONELEVEL_SCOPE);
+            sc.setSearchScope(SearchControls.ONELEVEL_SCOPE);
 
         } else if ("SUBTREE".equals(ldapScope)) {
-            ctls.setSearchScope(SearchControls.SUBTREE_SCOPE);
+            sc.setSearchScope(SearchControls.SUBTREE_SCOPE);
         }
-        ctls.setCountLimit(sc.getSizeLimit());
+        sc.setCountLimit(searchControls.getSizeLimit());
 
         DirContext ctx = null;
         try {
             ctx = ((LDAPClient)openConnection()).getContext();
-            NamingEnumeration ne = ctx.search(ldapBase, ldapFilter, ctls);
+            NamingEnumeration ne = ctx.search(ldapBase, ldapFilter, sc);
 
             log.debug("Result:");
 
@@ -239,7 +244,13 @@ public class LDAPAdapter extends Adapter {
             Attribute attr = attrs.get(fieldConfig.getOriginalName());
             if (attr == null) continue;
 
-            Collection values = client.getAttributeValues(attr);
+            Collection values = new ArrayList();
+
+            for (NamingEnumeration ne = attr.getAll(); ne.hasMore(); ) {
+                Object value = ne.next();
+                values.add(value);
+            }
+
             row.set(name, values.iterator().next());
         }
 
@@ -264,7 +275,13 @@ public class LDAPAdapter extends Adapter {
             Attribute attr = attrs.get(fieldConfig.getOriginalName());
             if (attr == null) continue;
 
-            Collection values = client.getAttributeValues(attr);
+            Collection values = new ArrayList();
+
+            for (NamingEnumeration ne = attr.getAll(); ne.hasMore(); ) {
+                Object value = ne.next();
+                values.add(value);
+            }
+
             av.add(name, values);
         }
 

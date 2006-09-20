@@ -23,6 +23,9 @@
         <condition property="isUnix">
             <os family="unix"/>
         </condition>
+        <condition property="isMac">
+            <os family="mac"/>
+        </condition>
     </target>
 
     <target name="compile" depends="init">

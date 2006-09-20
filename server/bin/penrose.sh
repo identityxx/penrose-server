@@ -99,7 +99,6 @@ LOCALCLASSPATH="$PENROSE_HOME/conf:$LOCALCLASSPATH"
 
 LOCALLIBPATH="$PENROSE_HOME/lib:$LOCALLIBPATH"
 LOCALLIBPATH="$PENROSE_HOME/lib/ext:$LOCALLIBPATH"
-LOCALLIBPATH="$PENROSE_HOME/lib/`uname`:$LOCALLIBPATH"
 LOCALLIBPATH="$PENROSE_HOME/server/lib:$LOCALLIBPATH"
 LOCALLIBPATH="$PENROSE_HOME/server/lib/ext:$LOCALLIBPATH"
 LOCALLIBPATH="$PENROSE_HOME/schema/ext:$LOCALLIBPATH"
@@ -154,13 +153,6 @@ elif [ "$1" = "status" ] ; then
   fi
 
 else
-
-  echo "$JAVACMD" $PENROSE_DEBUG_OPTS $PENROSE_OPTS \
-  -classpath "$LOCALCLASSPATH" \
-  -Djava.ext.dirs="$LOCALLIBPATH" \
-  -Djava.library.path="$LOCALLIBPATH" \
-  -Dpenrose.home="$PENROSE_HOME" \
-  org.safehaus.penrose.server.PenroseServer $PENROSE_ARGS "$@"
 
   exec "$JAVACMD" $PENROSE_DEBUG_OPTS $PENROSE_OPTS \
   -classpath "$LOCALCLASSPATH" \

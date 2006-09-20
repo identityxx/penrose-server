@@ -205,8 +205,8 @@ public class PasswordUtil {
 
     public static boolean comparePassword(String credential, String encryption, String encoding, String storedPassword) throws Exception {
         log.debug("Comparing passwords:");
-        if (encryption != null) log.debug("Encryption: "+encryption);
-        if (encoding != null) log.debug("Encoding: "+encoding);
+        if (encryption != null) log.debug("Encryption ["+encryption+"]");
+        if (encoding != null)   log.debug("Encoding   ["+encoding+"]");
 
         String encryptedCredential;
 
@@ -214,7 +214,7 @@ public class PasswordUtil {
             // get the salt form the stored password
             int i = storedPassword.indexOf("$", 3);
             String salt = storedPassword.substring(3, i);
-            log.debug("  salt            : ["+salt+"]");
+            log.debug("Salt       ["+salt+"]");
             // encrypt the new password with the same salt
             byte[] bytes = encrypt(encryption, salt, credential);
             // the result is already in encoded form: $1$salt$hash
@@ -225,8 +225,8 @@ public class PasswordUtil {
             encryptedCredential = BinaryUtil.encode(encoding, bytes);
         }
 
-        log.debug("Supplied ["+encryptedCredential+"]");
-        log.debug("Stored   ["+storedPassword+"]");
+        log.debug("Supplied   ["+encryptedCredential+"]");
+        log.debug("Stored     ["+storedPassword+"]");
 
         boolean result = encryptedCredential.equals(storedPassword);
 
