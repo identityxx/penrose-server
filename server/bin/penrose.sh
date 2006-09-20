@@ -128,7 +128,6 @@ if [ "$1" = "start" ] ; then
     -classpath "$LOCALCLASSPATH" \
     -Djava.ext.dirs="$LOCALLIBPATH" \
     -Djava.library.path="$LOCALLIBPATH" \
-    -Djava.security.auth.login.config=="$PENROSE_HOME/conf/jaas.config" \
     -Dpenrose.home="$PENROSE_HOME" \
     org.safehaus.penrose.server.PenroseServer $PENROSE_ARGS "$@" \
     >> "$PENROSE_HOME/var/penrose.out" 2>&1 &
@@ -167,7 +166,6 @@ else
   -classpath "$LOCALCLASSPATH" \
   -Djava.ext.dirs="$LOCALLIBPATH" \
   -Djava.library.path="$LOCALLIBPATH" \
-  -Djava.security.auth.login.config=="$PENROSE_HOME/conf/jaas.config" \
   -Dpenrose.home="$PENROSE_HOME" \
   org.safehaus.penrose.server.PenroseServer $PENROSE_ARGS "$@"
 
