@@ -257,9 +257,12 @@ public class Handler {
             return LDAPException.NO_SUCH_OBJECT;
         }
 
-        Collection path = findHandler.find(partition, parentDn);
+        List path = new ArrayList();
+        AttributeValues parentSourceValues = new AttributeValues();
 
-        if (path == null || path.isEmpty()) {
+        findHandler.find(partition, parentDn, path, parentSourceValues);
+
+        if (path.isEmpty()) {
             log.debug("Parent entry "+parentDn+" not found");
             return LDAPException.NO_SUCH_OBJECT;
         }
@@ -304,9 +307,12 @@ public class Handler {
             return LDAPException.NO_SUCH_OBJECT;
         }
 
-        Collection path = findHandler.find(partition, dn);
+        List path = new ArrayList();
+        AttributeValues parentSourceValues = new AttributeValues();
 
-        if (path == null || path.isEmpty()) {
+        findHandler.find(partition, dn, path, parentSourceValues);
+
+        if (path.isEmpty()) {
             log.debug("Entry "+dn+" not found");
             return LDAPException.NO_SUCH_OBJECT;
         }
@@ -343,9 +349,12 @@ public class Handler {
             return LDAPException.NO_SUCH_OBJECT;
         }
 
-        Collection path = findHandler.find(partition, dn);
+        List path = new ArrayList();
+        AttributeValues parentSourceValues = new AttributeValues();
 
-        if (path == null || path.isEmpty()) {
+        findHandler.find(partition, dn, path, parentSourceValues);
+
+        if (path.isEmpty()) {
             log.debug("Entry "+dn+" not found");
             return LDAPException.NO_SUCH_OBJECT;
         }
@@ -406,9 +415,12 @@ public class Handler {
             return LDAPException.NO_SUCH_OBJECT;
         }
 
-        Collection path = findHandler.find(partition, dn);
+        List path = new ArrayList();
+        AttributeValues parentSourceValues = new AttributeValues();
 
-        if (path == null || path.isEmpty()) {
+        findHandler.find(partition, dn, path, parentSourceValues);
+
+        if (path.isEmpty()) {
             log.debug("Entry "+dn+" not found");
             return LDAPException.NO_SUCH_OBJECT;
         }
@@ -447,9 +459,12 @@ public class Handler {
             return LDAPException.NO_SUCH_OBJECT;
         }
 
-        Collection path = findHandler.find(partition, dn);
+        List path = new ArrayList();
+        AttributeValues parentSourceValues = new AttributeValues();
 
-        if (path == null || path.isEmpty()) {
+        findHandler.find(partition, dn, path, parentSourceValues);
+
+        if (path.isEmpty()) {
             log.debug("Entry "+dn+" not found");
             return LDAPException.NO_SUCH_OBJECT;
         }
@@ -556,9 +571,13 @@ public class Handler {
             return LDAPException.NO_SUCH_OBJECT;
         }
 
-        Collection path = findHandler.find(partition, baseDn);
+        List path = new ArrayList();
+        AttributeValues parentSourceValues = new AttributeValues();
 
-        if (path == null || path.isEmpty()) {
+        findHandler.find(partition, baseDn, path, parentSourceValues);
+        //AttributeValues parentSourceValues = getEngine().getParentSourceValues(partition, path);
+
+        if (path.isEmpty()) {
             log.debug("Entry "+baseDn+" not found");
             results.setReturnCode(LDAPException.NO_SUCH_OBJECT);
             return LDAPException.NO_SUCH_OBJECT;
@@ -579,7 +598,7 @@ public class Handler {
             return rc;
         }
 
-        return getSearchHandler().search(session, partition, path, entry, f, sc, sr);
+        return getSearchHandler().search(session, partition, parentSourceValues, entry, f, sc, sr);
     }
 
     public Entry createRootDSE() throws Exception {
@@ -881,5 +900,32 @@ public class Handler {
     public void setEntryCache(EntryCache entryCache) {
         this.entryCache = entryCache;
     }
+
+    public AttributeValues pushSourceValues(
+            AttributeValues oldSourceValues,
+            AttributeValues newSourceValues
+    ) {
+        AttributeValues av = new AttributeValues();
+
+        for (Iterator i=oldSourceValues.getNames().iterator(); i.hasNext(); ) {
+            String name = (String)i.next();
+            Collection values = oldSourceValues.get(name);
+
+            if (name.startsWith("parent.")) name = "parent."+name;
+            av.add(name, values);
+        }
+
+        if (newSourceValues != null) {
+            for (Iterator i=newSourceValues.getNames().iterator(); i.hasNext(); ) {
+                String name = (String)i.next();
+                Collection values = newSourceValues.get(name);
+
+                av.add("parent."+name, values);
+            }
+        }
+
+        return av;
+    }
+
 }
 

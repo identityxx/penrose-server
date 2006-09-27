@@ -408,20 +408,6 @@ public abstract class Engine {
         this.engineFilterTool = engineFilterTool;
     }
 
-    public AttributeValues shiftParentSourceValues(AttributeValues attributeValues) {
-        AttributeValues newSourceValues = new AttributeValues();
-
-        for (Iterator j=attributeValues.getNames().iterator(); j.hasNext(); ) {
-            String name = (String)j.next();
-            Collection values = attributeValues.get(name);
-
-            if (name.startsWith("parent.")) name = "parent."+name;
-            newSourceValues.add(name, values);
-        }
-
-        return newSourceValues;
-    }
-
     public AttributeValues getParentSourceValues(
             Partition partition,
             Collection path
@@ -555,22 +541,9 @@ public abstract class Engine {
     // Search
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    public abstract int search(
-            PenroseSession session,
-            Partition partition,
-            Collection path,
-            AttributeValues parentSourceValues,
-            EntryMapping entryMapping,
-            String baseDn,
-            Filter filter,
-            PenroseSearchControls sc,
-            PenroseSearchResults results
-    ) throws Exception;
-
     public Entry find(
-            PenroseSession session,
             Partition partition,
-            Collection parentPath,
+            Entry parent,
             AttributeValues parentSourceValues,
             EntryMapping entryMapping,
             String dn
@@ -578,9 +551,21 @@ public abstract class Engine {
         return null;
     }
 
+    public abstract int search(
+            PenroseSession session,
+            Partition partition,
+            AttributeValues parentSourceValues,
+            EntryMapping entryMapping,
+            Entry baseEntry,
+            String baseDn,
+            Filter filter,
+            PenroseSearchControls sc,
+            PenroseSearchResults results
+    ) throws Exception;
+
     public abstract int expand(
             PenroseSession session, Partition partition,
-            Collection path,
+            Entry baseEntry,
             AttributeValues parentSourceValues,
             EntryMapping entryMapping,
             String baseDn,

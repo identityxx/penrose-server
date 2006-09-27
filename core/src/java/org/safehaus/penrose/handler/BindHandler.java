@@ -30,6 +30,8 @@ import org.slf4j.Logger;
 
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.List;
+import java.util.ArrayList;
 
 /**
  * @author Endi S. Dewata
@@ -81,15 +83,18 @@ public class BindHandler {
             log.debug("Engine "+engineName+" not found");
             return LDAPException.OPERATIONS_ERROR;
         }
-        
+
         // attempt direct bind to the source
         int rc = engine.bind(session, partition, entryMapping, dn, password);
         if (rc == LDAPException.SUCCESS) return rc;
 
         // attempt to compare the userPassword attribute
-        Collection path = handler.getFindHandler().find(partition, dn);
+        List path = new ArrayList();
+        AttributeValues parentSourceValues = new AttributeValues();
 
-        if (path == null || path.isEmpty()) {
+        handler.getFindHandler().find(partition, dn, path, parentSourceValues);
+
+        if (path.isEmpty()) {
             log.debug("Entry "+dn+" not found");
             return LDAPException.INVALID_CREDENTIALS;
         }

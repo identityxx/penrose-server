@@ -348,7 +348,7 @@ public class DefaultEngine extends Engine {
     public int expand(
             PenroseSession session,
             final Partition partition,
-            final Collection parentPath,
+            final Entry baseEntry,
             final AttributeValues parentSourceValues,
             final EntryMapping entryMapping,
             final String baseDn,
@@ -479,11 +479,6 @@ public class DefaultEngine extends Engine {
             }
         });
 
-        Entry parent = null;
-        if (parentPath != null && parentPath.size() > 0) {
-            parent = (Entry)parentPath.iterator().next();
-        }
-
         log.debug("Filter cache for "+filter+" not found.");
 
         dns.addListener(new PipelineAdapter() {
@@ -498,7 +493,7 @@ public class DefaultEngine extends Engine {
             }
         });
 
-        searchEngine.search(partition, parent, parentSourceValues, entryMapping, filter, dns);
+        searchEngine.search(partition, baseEntry, parentSourceValues, entryMapping, filter, dns);
 
         dns.close();
 
@@ -534,9 +529,9 @@ public class DefaultEngine extends Engine {
     public int search(
             PenroseSession session,
             Partition partition,
-            Collection path,
             AttributeValues parentSourceValues,
             EntryMapping entryMapping,
+            Entry baseEntry,
             String baseDn,
             Filter filter,
             PenroseSearchControls sc,
@@ -548,7 +543,6 @@ public class DefaultEngine extends Engine {
                 return LDAPException.SUCCESS;
             }
 
-            Entry baseEntry = (Entry)path.iterator().next();
             results.add(baseEntry);
 
             return LDAPException.SUCCESS;
@@ -563,9 +557,8 @@ public class DefaultEngine extends Engine {
     }
 
     public Entry find(
-            PenroseSession session,
             Partition partition,
-            Collection parentPath,
+            Entry parent,
             AttributeValues parentSourceValues,
             EntryMapping entryMapping,
             String dn

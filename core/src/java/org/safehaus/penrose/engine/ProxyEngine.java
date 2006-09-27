@@ -4,7 +4,6 @@ import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.SourceConfig;
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.connector.Connection;
-import org.safehaus.penrose.connector.Connector;
 import org.safehaus.penrose.ldap.LDAPClient;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.filter.FilterTool;
@@ -384,9 +383,9 @@ public class ProxyEngine extends Engine {
     public int search(
             PenroseSession session,
             final Partition partition,
-            Collection path,
             AttributeValues parentSourceValues,
             final EntryMapping entryMapping,
+            Entry baseEntry,
             final String baseDn,
             final Filter filter,
             PenroseSearchControls sc,
@@ -395,19 +394,14 @@ public class ProxyEngine extends Engine {
 
         if (sc.getScope() == LDAPConnection.SCOPE_BASE) {
 
-            Entry baseEntry = (Entry)path.iterator().next();
             results.add(baseEntry);
 
         } else {
 
-            List parentPath = new ArrayList();
-            parentPath.addAll(path);
-            parentPath.remove(parentPath.size() - 1);
-
             expand(
                     session,
                     partition,
-                    parentPath,
+                    baseEntry,
                     parentSourceValues,
                     entryMapping,
                     baseDn,
@@ -425,7 +419,7 @@ public class ProxyEngine extends Engine {
     public int expand(
             PenroseSession session,
             final Partition partition,
-            Collection parentPath,
+            Entry baseEntry,
             AttributeValues parentSourceValues,
             final EntryMapping entryMapping,
             final String baseDn,
@@ -617,9 +611,8 @@ Mapping: ou=Groups,dc=Proxy,dc=Example,dc=org
     }
 
     public Entry find(
-            PenroseSession session,
             Partition partition,
-            Collection parentPath,
+            Entry parent,
             AttributeValues parentSourceValues,
             EntryMapping entryMapping,
             String dn
@@ -634,9 +627,9 @@ Mapping: ou=Groups,dc=Proxy,dc=Example,dc=org
         Filter filter = FilterTool.createFilter(rdn);
 
         expand(
-                session,
+                null,
                 partition,
-                parentPath,
+                parent,
                 parentSourceValues,
                 entryMapping,
                 dn,

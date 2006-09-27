@@ -55,6 +55,16 @@ public class AttributeValues implements Cloneable, Comparable {
         }
     }
 
+    public void shift(String prefix) {
+        Map newValues = new TreeMap();
+        for (Iterator i=values.keySet().iterator(); i.hasNext(); ) {
+            String name = (String)i.next();
+            Collection c = (Collection)values.get(name);
+            newValues.put(prefix+"."+name, c);
+        }
+        values = newValues;
+    }
+
     public void add(Row row) {
         add(null, row);
     }

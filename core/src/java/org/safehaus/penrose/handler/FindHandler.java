@@ -17,12 +17,10 @@
  */
 package org.safehaus.penrose.handler;
 
-import org.safehaus.penrose.session.PenroseSession;
 import org.safehaus.penrose.util.EntryUtil;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.engine.Engine;
-import org.ietf.ldap.*;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
@@ -52,50 +50,72 @@ public class FindHandler {
         Partition partition = handler.getPartitionManager().findPartition(dn);
         if (partition == null) return null;
 
-        Collection path = find(partition, dn);
+        List path = new ArrayList();
+        AttributeValues parentSourceValues = new AttributeValues();
+
+        find(partition, dn, path, parentSourceValues);
         if (path.size() == 0) return null;
 
         return (Entry)path.iterator().next();
     }
 
-    /**
-     * @return path (List of Entries).
-     */
-    public Collection find(
+    public void find(
             Partition partition,
-            String dn
+            String dn,
+            List path,
+            AttributeValues parentSourceValues
     ) throws Exception {
 
-        List path = new ArrayList();
-        String entryDn = null;
+        if (partition == null) return;
+        if (dn == null) return;
 
-        while (dn != null) {
-            String prefix = EntryUtil.getPrefix(dn);
-            String suffix = EntryUtil.getSuffix(dn);
-            log.debug("Split ["+dn+"] into ["+prefix+"] and ["+suffix+"]");
+        String entryDn = null;
+        Entry parent = null;
+
+        String tmpDn = dn;
+
+        while (tmpDn != null) {
+            String prefix = EntryUtil.getPrefix(tmpDn);
+            String suffix = EntryUtil.getSuffix(tmpDn);
+            log.debug("Split ["+tmpDn +"] into ["+prefix+"] and ["+suffix+"]");
 
             entryDn = EntryUtil.append(suffix, entryDn);
 
-            Entry entry = find(partition, path, entryDn);
+            Entry entry = find(partition, parent, parentSourceValues, entryDn);
+
             path.add(0, entry);
+            tmpDn = prefix;
+            parent = entry;
 
-            dn = prefix;
+            AttributeValues newParentSourceValues = new AttributeValues();
+            newParentSourceValues.add(parentSourceValues);
+
+            if (entry != null) {
+                newParentSourceValues.add(entry.getAttributeValues());
+                newParentSourceValues.add(entry.getSourceValues());
+            }
+
+            newParentSourceValues.shift("parent");
+
+            parentSourceValues = newParentSourceValues;
         }
-
-        return path;
+/*
+        log.debug("Parent source values:");
+        for (Iterator i=parentSourceValues.getNames().iterator(); i.hasNext(); ) {
+            String name = (String)i.next();
+            Collection c = parentSourceValues.get(name);
+            log.debug(" - "+name+": "+c);
+        }
+*/
     }
 
     public Entry find(
             Partition partition,
-            Collection parentPath,
+            Entry parent,
+            AttributeValues parentSourceValues,
             String dn) throws Exception {
 
         log.debug("Finding entry \""+dn+"\".");
-
-        if (dn == null) return null;
-        if (partition == null) return null;
-
-        AttributeValues parentSourceValues = handler.getEngine().getParentSourceValues(partition, parentPath);
 
         Collection entryMappings = partition.findEntryMappings(dn);
         if (entryMappings == null) return null;
@@ -113,7 +133,7 @@ public class FindHandler {
                 return null;
             }
 
-            Entry entry = engine.find(null, partition, parentPath, parentSourceValues, entryMapping, dn);
+            Entry entry = engine.find(partition, parent, parentSourceValues, entryMapping, dn);
             if (entry != null) return entry;
         }
 

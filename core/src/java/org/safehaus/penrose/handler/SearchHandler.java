@@ -61,7 +61,7 @@ public class SearchHandler {
     public int search(
             final PenroseSession session,
             final Partition partition,
-            final Collection path,
+            final AttributeValues parentSourceValues,
             final Entry entry,
             final Filter filter,
             final PenroseSearchControls sc,
@@ -73,7 +73,15 @@ public class SearchHandler {
 
                 int rc = LDAPException.SUCCESS;
                 try {
-                    rc = searchInBackground(session, partition, path, entry, filter, sc, results);
+                    rc = searchInBackground(
+                            session,
+                            partition,
+                            parentSourceValues,
+                            entry,
+                            filter,
+                            sc,
+                            results
+                    );
 
                 } catch (LDAPException e) {
                     rc = e.getResultCode();
@@ -126,7 +134,7 @@ public class SearchHandler {
     public int searchInBackground(
             final PenroseSession session,
             final Partition partition,
-            final Collection path,
+            final AttributeValues parentSourceValues,
             final Entry entry,
             final Filter filter,
             final PenroseSearchControls sc,
@@ -134,7 +142,6 @@ public class SearchHandler {
     ) throws Exception {
 
         EntryMapping entryMapping = entry.getEntryMapping();
-        AttributeValues parentSourceValues = handler.getEngine().getParentSourceValues(partition, path);
 
         final PenroseSearchResults sr = new PenroseSearchResults();
         final EntryCache cache = handler.getEntryCache();
@@ -188,9 +195,9 @@ public class SearchHandler {
         engine.search(
                 session,
                 partition,
-                path,
                 parentSourceValues,
                 entry.getEntryMapping(),
+                entry,
                 entry.getDn(),
                 filter,
                 sc,
@@ -208,7 +215,7 @@ public class SearchHandler {
                 searchChildren(
                         session,
                         partition,
-                        path,
+                        entry,
                         parentSourceValues,
                         childMapping,
                         entry.getDn(),
@@ -227,7 +234,7 @@ public class SearchHandler {
     public void searchChildren(
             PenroseSession session,
             final Partition partition,
-            Collection parentPath,
+            Entry parent,
             AttributeValues parentSourceValues,
             final EntryMapping entryMapping,
             String baseDn,
@@ -272,7 +279,7 @@ public class SearchHandler {
                 engine.expand(
                         session,
                         partition,
-                        parentPath,
+                        parent,
                         parentSourceValues,
                         entryMapping,
                         baseDn,
@@ -299,38 +306,37 @@ public class SearchHandler {
 
         log.debug("Searching children of " + entryMapping.getDn());
 
-        AttributeValues newParentSourceValues = handler.getEngine().shiftParentSourceValues(parentSourceValues);
-
         Interpreter interpreter = handler.getEngine().getInterpreterManager().newInstance();
-
-        AttributeValues av = handler.getEngine().computeAttributeValues(entryMapping, interpreter);
-        if (av != null) {
-            for (Iterator j=av.getNames().iterator(); j.hasNext(); ) {
-                String name = (String)j.next();
-                Collection values = av.get(name);
-
-                newParentSourceValues.add("parent."+name, values);
-            }
-        }
-
+        AttributeValues sourceValues = handler.getEngine().computeAttributeValues(entryMapping, interpreter);
         interpreter.clear();
 
-        for (Iterator j=newParentSourceValues.getNames().iterator(); j.hasNext(); ) {
-            String name = (String)j.next();
+        AttributeValues newParentSourceValues = new AttributeValues();
+        newParentSourceValues.add("parent", parentSourceValues);
+        newParentSourceValues.add("parent", sourceValues);
+        //AttributeValues newParentSourceValues = handler.pushSourceValues(parentSourceValues, sourceValues);
+
+        for (Iterator i =newParentSourceValues.getNames().iterator(); i.hasNext(); ) {
+            String name = (String)i.next();
             Collection values = newParentSourceValues.get(name);
             log.debug(" - "+name+": "+values);
         }
-
-        Collection newParentPath = new ArrayList();
-        newParentPath.add(null);
-        newParentPath.addAll(parentPath);
 
         Collection children = partition.getChildren(entryMapping);
 
         for (Iterator i = children.iterator(); i.hasNext();) {
             EntryMapping childMapping = (EntryMapping) i.next();
 
-            searchChildren(session, partition, newParentPath, newParentSourceValues, childMapping, baseDn, filter, sc, results);
+            searchChildren(
+                    session,
+                    partition,
+                    null,
+                    newParentSourceValues,
+                    childMapping,
+                    baseDn,
+                    filter,
+                    sc,
+                    results
+            );
         }
     }
 }
