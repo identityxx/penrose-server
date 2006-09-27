@@ -1,44 +1,26 @@
-/**
- * Copyright (c) 2000-2005, Identyx Corporation.
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
- */
-package org.safehaus.penrose.ldap;
+package org.safehaus.penrose.util;
 
-import java.io.StringReader;
-import java.util.*;
-
-import javax.naming.Context;
-import javax.naming.NamingEnumeration;
-import javax.naming.ReferralException;
-import javax.naming.directory.*;
-import javax.naming.ldap.*;
-
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.safehaus.penrose.schema.Schema;
 import org.safehaus.penrose.schema.AttributeType;
 import org.safehaus.penrose.schema.ObjectClass;
 import org.safehaus.penrose.schema.SchemaParser;
-import org.safehaus.penrose.schema.Schema;
-import org.safehaus.penrose.session.PenroseSearchResults;
+import org.safehaus.penrose.ldap.LDAPClient;
 import org.safehaus.penrose.session.PenroseSearchControls;
-import org.safehaus.penrose.util.EntryUtil;
-import org.safehaus.penrose.util.PasswordUtil;
+import org.safehaus.penrose.session.PenroseSearchResults;
 import org.ietf.ldap.*;
-import org.slf4j.LoggerFactory;
-import org.slf4j.Logger;
 
-public class LDAPClient {
+import javax.naming.directory.*;
+import javax.naming.Context;
+import javax.naming.NamingEnumeration;
+import javax.naming.ReferralException;
+import javax.naming.ldap.LdapContext;
+import javax.naming.ldap.InitialLdapContext;
+import java.util.*;
+import java.io.StringReader;
+
+public class JNDIClient {
 
     Logger log = LoggerFactory.getLogger(getClass());
 
@@ -55,19 +37,19 @@ public class LDAPClient {
     private String suffix;
     private String url;
 
-    LDAPConnection connection = null;
+    //private LdapContext context;
 
     private SearchResult rootDSE;
     private Schema schema;
 
-    public LDAPClient(LDAPClient client, Map parameters) throws Exception {
+    public JNDIClient(JNDIClient client, Map parameters) throws Exception {
         init(parameters);
 
         this.rootDSE = client.rootDSE;
         this.schema = client.schema;
     }
 
-    public LDAPClient(Map parameters) throws Exception {
+    public JNDIClient(Map parameters) throws Exception {
         init(parameters);
 
         //getRootDSE();
@@ -109,23 +91,8 @@ public class LDAPClient {
                 binaryAttributes.add(attribute.toLowerCase());
             }
         }
-/*
-        LDAPUrl url = new LDAPUrl(providerUrl);
 
-        String server = url.getHost();
-        int port = url.getPort();
-
-        log.debug("Connecting to "+server+":"+port);
-        connection = new LDAPConnection();
-        connection.connect(server, port);
-
-        String bindDn = (String)parameters.get(Context.SECURITY_PRINCIPAL);
-        String bindPassword = (String)parameters.get(Context.SECURITY_CREDENTIALS);
-
-        if (bindDn != null && !"".equals(bindDn)) {
-            connection.bind(3, bindDn, bindPassword.getBytes());
-        }
-*/
+        //context = new InitialLdapContext(this.parameters, null);
     }
 
     public LdapContext getContext() throws Exception {
@@ -139,7 +106,7 @@ public class LDAPClient {
     }
 
     public void close() throws Exception {
-        if (connection != null) connection.disconnect();
+        //if (context != null) context.close();
     }
 
     public int bind(String dn, String password) throws Exception {
@@ -702,52 +669,20 @@ public class LDAPClient {
     public void search(
             String baseDn,
             String filter,
-            PenroseSearchControls searchControls,
+            PenroseSearchControls sc,
             PenroseSearchResults results
             ) throws Exception {
 
         String ldapBase = EntryUtil.append(baseDn, suffix);
-        log.debug("Search \""+ldapBase+"\" with filter="+filter+" scope="+searchControls.getScope()+" attrs="+searchControls.getAttributes()+":");
-
-        String attributes[] = (String[])searchControls.getAttributes().toArray(new String[searchControls.getAttributes().size()]);
 
         SearchControls ctls = new SearchControls();
-        ctls.setSearchScope(searchControls.getScope());
-        ctls.setReturningAttributes(searchControls.getAttributes().isEmpty() ? null : attributes);
+        ctls.setSearchScope(sc.getScope());
+        ctls.setReturningAttributes(sc.getAttributes().isEmpty() ? null : (String[])sc.getAttributes().toArray(new String[sc.getAttributes().size()]));
 
         LdapContext context = null;
         NamingEnumeration ne = null;
 
         try {
-/*
-            LDAPSearchResults searchResults = connection.search(ldapBase, searchControls.getScope(), filter, attributes, searchControls.isTypesOnly());
-            while (searchResults.hasMore()) {
-                try {
-                    LDAPEntry entry = searchResults.next();
-                    log.debug("Received entry "+entry.getDN());
-                    SearchResult sr = EntryUtil.toSearchResult(entry);
-                    results.add(sr);
-
-                } catch (LDAPReferralException e) {
-                    log.debug("Referrals:");
-                    String referrals[] = e.getReferrals();
-                    for (int i=0; i<referrals.length; i++) {
-                        String referral = referrals[i];
-                        log.debug(" - "+referral);
-
-                        LDAPUrl url = new LDAPUrl(referral);
-
-                        Attributes attrs = new BasicAttributes();
-                        attrs.put("ref", referral);
-                        attrs.put("objectClass", "referral");
-
-                        SearchResult sr = new SearchResult(url.getDN(), null, attrs);
-                        results.add(sr);
-                        //results.addReferral(referral);
-                    }
-                }
-            }
-*/
             context = getContext();
 
             boolean moreReferrals = true;
@@ -755,6 +690,8 @@ public class LDAPClient {
             while (moreReferrals) {
                 try {
                     ne = context.search(ldapBase, filter, ctls);
+
+                    log.debug("Search \""+ldapBase+"\" with filter="+filter+" scope="+sc.getScope()+" attrs="+sc.getAttributes()+":");
 
                     while (ne.hasMore()) {
                         SearchResult sr = (SearchResult)ne.next();
@@ -774,16 +711,7 @@ public class LDAPClient {
                 } catch (ReferralException e) {
                     String referral = e.getReferralInfo().toString();
                     log.debug("Referral: "+referral);
-
-                    LDAPUrl url = new LDAPUrl(referral);
-
-                    Attributes attrs = new BasicAttributes();
-                    attrs.put("ref", referral);
-                    attrs.put("objectClass", "referral");
-
-                    SearchResult sr = new SearchResult(url.getDN(), null, attrs);
-                    results.add(sr);
-                    //results.addReferral(referral);
+                    results.addReferral(referral);
 
                     moreReferrals = e.skipReferral();
 
@@ -796,7 +724,6 @@ public class LDAPClient {
         } finally {
             if (ne != null) try { ne.close(); } catch (Exception e) {}
             if (context != null) try { context.close(); } catch (Exception e) {}
-            //if (connection != null) try { connection.disconnect(); } catch (Exception e) {}
             results.close();
         }
     }

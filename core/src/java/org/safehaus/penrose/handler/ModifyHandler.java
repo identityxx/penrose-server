@@ -27,6 +27,7 @@ import org.safehaus.penrose.util.BinaryUtil;
 import org.safehaus.penrose.util.Formatter;
 import org.safehaus.penrose.util.ExceptionUtil;
 import org.safehaus.penrose.mapping.*;
+import org.safehaus.penrose.engine.Engine;
 import org.ietf.ldap.*;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
@@ -155,15 +156,17 @@ public class ModifyHandler {
 
         EntryMapping entryMapping = entry.getEntryMapping();
 
-        if (partition.isProxy(entryMapping)) {
-            return handler.getEngine("PROXY").modify(session, partition, entry, modifications);
+        String engineName = "DEFAULT";
+        if (partition.isProxy(entryMapping)) engineName = "PROXY";
 
-        } else if (partition.isDynamic(entryMapping)) {
-            return handler.getEngine().modify(session, partition, entry, modifications);
+        Engine engine = handler.getEngine(engineName);
 
-        } else {
-            return modifyStaticEntry(partition, entryMapping, modifications);
+        if (engine == null) {
+            log.debug("Engine "+engineName+" not found");
+            return LDAPException.OPERATIONS_ERROR;
         }
+
+        return engine.modify(session, partition, entry, modifications);
 	}
 
     /**

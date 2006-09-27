@@ -19,12 +19,17 @@ package org.safehaus.penrose.ldap;
 
 import org.safehaus.penrose.session.PenroseSearchResults;
 import org.ietf.ldap.LDAPException;
+import org.ietf.ldap.LDAPDN;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
+import org.apache.directory.shared.ldap.exception.LdapReferralException;
 
 import javax.naming.NamingEnumeration;
 import javax.naming.NamingException;
+import javax.naming.ReferralException;
 import javax.naming.directory.*;
+import java.util.Collection;
+import java.util.List;
 
 /**
  * @author Endi S. Dewata
@@ -48,6 +53,19 @@ public class PenroseEnumeration implements NamingEnumeration {
         boolean hasNext = searchResults.hasNext();
         if (hasNext) return true;
 
+        List referrals = searchResults.getReferrals();
+        log.debug("Search operation returned "+referrals.size()+" referral(s).");
+
+        if (!referrals.isEmpty()) {
+            LdapReferralException lre = new LdapReferralException( referrals );
+            throw lre;
+            /*
+            String referral = (String)referrals.remove(0);
+            log.debug("Referral: "+referral);
+            throw new PenroseReferralException(referral, !referrals.isEmpty());
+            */
+        }
+
         log.warn("Search operation returned "+searchResults.getTotalCount()+" entries.");
 
         int rc = searchResults.getReturnCode();
@@ -61,7 +79,24 @@ public class PenroseEnumeration implements NamingEnumeration {
     public Object next() throws NamingException {
         SearchResult result = (SearchResult)searchResults.next();
 
-        log.info("Returning \""+result.getName()+"\" to client.");
+        String dn = result.getName();
+        log.debug("Converting dn: "+dn);
+
+        String rdns[] = LDAPDN.explodeDN(dn, false);
+        StringBuffer sb = new StringBuffer();
+        for (int i=0; i<rdns.length; i++) {
+            String rdn = rdns[i];
+            log.debug(" - "+rdn);
+            rdn = LDAPDN.escapeRDN(rdn);
+            rdn = LDAPDN.escapeRDN(rdn); // temporary solution for Apache DS bug
+
+            if (sb.length() > 0) sb.append(",");
+            sb.append(rdn);
+        }
+
+        dn = sb.toString();
+        result.setName(dn);
+        log.info("Returning \""+dn+"\" to client.");
 
         return result;
     }

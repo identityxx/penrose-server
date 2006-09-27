@@ -72,12 +72,16 @@ public class BindHandler {
 
         EntryMapping entryMapping = partition.findEntryMapping(dn);
 
-        Engine engine = handler.getEngine();
+        String engineName = "DEFAULT";
+        if (partition.isProxy(entryMapping)) engineName = "PROXY";
 
-        if (partition.isProxy(entryMapping)) {
-            engine = handler.getEngine("PROXY");
+        Engine engine = handler.getEngine(engineName);
+
+        if (engine == null) {
+            log.debug("Engine "+engineName+" not found");
+            return LDAPException.OPERATIONS_ERROR;
         }
-
+        
         // attempt direct bind to the source
         int rc = engine.bind(session, partition, entryMapping, dn, password);
         if (rc == LDAPException.SUCCESS) return rc;

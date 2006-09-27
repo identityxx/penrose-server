@@ -116,8 +116,9 @@ public class PollingConnectorModule extends Module {
             log.debug(" - "+pk+": "+av);
         }
 
+        PenroseSearchControls sc = new PenroseSearchControls();
         PenroseSearchResults list = new PenroseSearchResults();
-        connector.retrieve(partition, sourceConfig, map.keySet(), list);
+        connector.retrieve(partition, sourceConfig, map.keySet(), sc, list);
         list.close();
     }
 
@@ -173,8 +174,9 @@ public class PollingConnectorModule extends Module {
 
         sourceCacheManager.setLastChangeNumber(partition, sourceConfig, lastChangeNumber);
 
+        PenroseSearchControls sc = new PenroseSearchControls();
         PenroseSearchResults list = new PenroseSearchResults();
-        connector.retrieve(partition, sourceConfig, pks, list);
+        connector.retrieve(partition, sourceConfig, pks, sc, list);
         list.close();
 
         for (Iterator i=pks.iterator(); i.hasNext(); ) {

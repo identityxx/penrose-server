@@ -70,13 +70,16 @@ public class FindHandler {
         String entryDn = null;
 
         while (dn != null) {
+            String prefix = EntryUtil.getPrefix(dn);
             String suffix = EntryUtil.getSuffix(dn);
+            log.debug("Split ["+dn+"] into ["+prefix+"] and ["+suffix+"]");
+
             entryDn = EntryUtil.append(suffix, entryDn);
 
             Entry entry = find(partition, path, entryDn);
             path.add(0, entry);
 
-            dn = EntryUtil.getPrefix(dn);
+            dn = prefix;
         }
 
         return path;
@@ -100,10 +103,14 @@ public class FindHandler {
         for (Iterator iterator = entryMappings.iterator(); iterator.hasNext(); ) {
             EntryMapping entryMapping = (EntryMapping) iterator.next();
 
-            Engine engine = handler.getEngine();
+            String engineName = "DEFAULT";
+            if (partition.isProxy(entryMapping)) engineName = "PROXY";
 
-            if (partition.isProxy(entryMapping)) {
-                engine = handler.getEngine("PROXY");
+            Engine engine = handler.getEngine(engineName);
+
+            if (engine == null) {
+                log.debug("Engine "+engineName+" not found");
+                return null;
             }
 
             Entry entry = engine.find(null, partition, parentPath, parentSourceValues, entryMapping, dn);

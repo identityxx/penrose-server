@@ -17,9 +17,7 @@
  */
 package org.safehaus.penrose.handler;
 
-import org.safehaus.penrose.session.PenroseSearchResults;
-import org.safehaus.penrose.session.PenroseSession;
-import org.safehaus.penrose.session.PenroseSearchControls;
+import org.safehaus.penrose.session.*;
 import org.safehaus.penrose.cache.EntryCache;
 import org.safehaus.penrose.engine.Engine;
 import org.safehaus.penrose.interpreter.Interpreter;
@@ -135,6 +133,7 @@ public class SearchHandler {
             final PenroseSearchResults results
     ) throws Exception {
 
+        EntryMapping entryMapping = entry.getEntryMapping();
         AttributeValues parentSourceValues = handler.getEngine().getParentSourceValues(partition, path);
 
         final PenroseSearchResults sr = new PenroseSearchResults();
@@ -168,10 +167,22 @@ public class SearchHandler {
             }
         });
 
-        Engine engine = handler.getEngine();
+        sr.addReferralListener(new ReferralAdapter() {
+            public void referralAdded(ReferralEvent event) {
+                Object referral = event.getReferral();
+                //log.debug("Passing referral: "+referral);
+                results.addReferral(referral);
+            }
+        });
 
-        if (partition.isProxy(entry.getEntryMapping())) {
-            engine = handler.getEngine("PROXY");
+        String engineName = "DEFAULT";
+        if (partition.isProxy(entryMapping)) engineName = "PROXY";
+
+        Engine engine = handler.getEngine(engineName);
+
+        if (engine == null) {
+            log.debug("Engine "+engineName+" not found");
+            return LDAPException.OPERATIONS_ERROR;
         }
 
         engine.search(
@@ -236,28 +247,40 @@ public class SearchHandler {
             }
         });
 
+        sr.addReferralListener(new ReferralAdapter() {
+            public void referralAdded(ReferralEvent event) {
+                Object referral = event.getReferral();
+                log.debug("Passing referral: "+referral);
+                results.addReferral(referral);
+            }
+        });
+
         boolean cacheFilter = cache.search(partition, entryMapping, baseDn, filter, sr);
         log.debug("Cache filter: "+cacheFilter);
 
         if (!cacheFilter) {
 
-            Engine engine = handler.getEngine();
+            String engineName = "DEFAULT";
+            if (partition.isProxy(entryMapping)) engineName = "PROXY";
 
-            if (partition.isProxy(entryMapping)) {
-                engine = handler.getEngine("PROXY");
+            Engine engine = handler.getEngine(engineName);
+
+            if (engine == null) {
+                log.debug("Engine "+engineName+" not found");
+
+            } else {
+                engine.expand(
+                        session,
+                        partition,
+                        parentPath,
+                        parentSourceValues,
+                        entryMapping,
+                        baseDn,
+                        filter,
+                        sc,
+                        sr
+                );
             }
-
-            engine.expand(
-                    session,
-                    partition,
-                    parentPath,
-                    parentSourceValues,
-                    entryMapping,
-                    baseDn,
-                    filter,
-                    sc,
-                    sr
-            );
 
             sr.close();
         }

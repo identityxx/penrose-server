@@ -480,28 +480,13 @@ public class Partition {
 
         // check against each mapping in the list
         for (Iterator iterator = list.iterator(); iterator.hasNext(); ) {
-            EntryMapping childMapping = (EntryMapping) iterator.next();
+            EntryMapping entryMapping = (EntryMapping) iterator.next();
 
-            //log.debug("Checking \""+dn+"\" against \""+childMapping.getDn()+"\"");
-            if (!EntryUtil.match(dn, childMapping.getDn())) continue;
-/*
-            if (parentDn != null && childParentDn != null && !parentDn.equals(childParentDn)) continue;
+            //log.debug("Checking \""+dn+"\" against \""+entryMapping.getDn()+"\"");
+            if (!EntryUtil.match(dn, entryMapping.getDn())) continue;
 
-            // if the rdn names don't match, skip
-            if (!rdn.getNames().equals(childRdn.getNames())) continue;
-
-            // if the rdn is dynamic, the entry could be in this mapping
-            if (childMapping.isRdnDynamic()) {
-                log.debug("Found "+childDn);
-                results.add(childMapping);
-                continue;
-            }
-
-            // if rdn's don't match, skip
-            if (!rdn.equals(childRdn)) continue;
-*/
             //log.debug("Found "+childDn);
-            results.add(childMapping);
+            results.add(entryMapping);
         }
 
         return results;

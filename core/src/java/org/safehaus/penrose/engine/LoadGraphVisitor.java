@@ -25,8 +25,10 @@ import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.filter.FilterTool;
 import org.safehaus.penrose.util.Formatter;
 import org.safehaus.penrose.session.PenroseSearchResults;
+import org.safehaus.penrose.session.PenroseSearchControls;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.SourceConfig;
+import org.safehaus.penrose.connector.Connector;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 import org.ietf.ldap.LDAPException;
@@ -121,8 +123,11 @@ public class LoadGraphVisitor extends GraphVisitor {
 
         SourceConfig sourceConfig = partition.getSourceConfig(sourceMapping.getSourceName());
 
+        PenroseSearchControls sc = new PenroseSearchControls();
         PenroseSearchResults tmp = new PenroseSearchResults();
-        engine.getConnector(sourceConfig).search(partition, sourceConfig, primaryKeys, filter, tmp);
+        
+        Connector connector = engine.getConnector(sourceConfig);
+        connector.search(partition, sourceConfig, primaryKeys, filter, sc, tmp);
 
         Collection list = new ArrayList();
         for (Iterator i=tmp.iterator(); i.hasNext(); ) {

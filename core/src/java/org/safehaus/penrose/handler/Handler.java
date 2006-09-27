@@ -17,10 +17,7 @@
  */
 package org.safehaus.penrose.handler;
 
-import org.safehaus.penrose.session.PenroseSearchResults;
-import org.safehaus.penrose.session.PenroseSession;
-import org.safehaus.penrose.session.SessionManager;
-import org.safehaus.penrose.session.PenroseSearchControls;
+import org.safehaus.penrose.session.*;
 import org.safehaus.penrose.acl.ACLEngine;
 import org.safehaus.penrose.filter.FilterTool;
 import org.safehaus.penrose.filter.Filter;
@@ -535,6 +532,14 @@ public class Handler {
             public void pipelineClosed(PipelineEvent event) {
                 results.setReturnCode(sr.getReturnCode());
                 results.close();
+            }
+        });
+
+        sr.addReferralListener(new ReferralAdapter() {
+            public void referralAdded(ReferralEvent event) {
+                Object referral = event.getReferral();
+                //log.debug("Passing referral: "+referral);
+                results.addReferral(referral);
             }
         });
 

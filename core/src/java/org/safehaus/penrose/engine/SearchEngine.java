@@ -24,10 +24,12 @@ import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.util.Formatter;
 import org.safehaus.penrose.util.EntryUtil;
 import org.safehaus.penrose.session.PenroseSearchResults;
+import org.safehaus.penrose.session.PenroseSearchControls;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.SourceConfig;
 import org.safehaus.penrose.pipeline.PipelineAdapter;
 import org.safehaus.penrose.pipeline.PipelineEvent;
+import org.safehaus.penrose.connector.Connector;
 import org.ietf.ldap.LDAPException;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
@@ -272,6 +274,7 @@ public class SearchEngine {
 
         final Interpreter interpreter = engine.getInterpreterManager().newInstance();
 
+        PenroseSearchControls sc = new PenroseSearchControls();
         final PenroseSearchResults sr = new PenroseSearchResults();
 
         sr.addListener(new PipelineAdapter() {
@@ -306,7 +309,8 @@ public class SearchEngine {
             }
         });
 
-        engine.getConnector(sourceConfig).search(partition, sourceConfig, null, newFilter, sr);
+        Connector connector = engine.getConnector(sourceConfig);
+        connector.search(partition, sourceConfig, null, newFilter, sc, sr);
     }
 
     public void searchSources(

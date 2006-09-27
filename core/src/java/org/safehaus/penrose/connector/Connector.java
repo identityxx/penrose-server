@@ -343,8 +343,9 @@ public class Connector {
 
             newSourceValues.clear();
 
+            PenroseSearchControls sc = new PenroseSearchControls();
             PenroseSearchResults list = new PenroseSearchResults();
-            retrieve(partition, sourceConfig, pks, list);
+            retrieve(partition, sourceConfig, pks, sc, list);
             list.close();
 
             for (Iterator i=list.iterator(); i.hasNext(); ) {
@@ -463,6 +464,7 @@ public class Connector {
             final SourceConfig sourceConfig,
             Collection primaryKeys,
             final Filter filter,
+            PenroseSearchControls searchControls,
             final PenroseSearchResults results)
             throws Exception {
 
@@ -470,12 +472,12 @@ public class Connector {
         if (SourceConfig.SEARCH_AND_LOAD.equals(method)) { // search for PKs first then load full record
 
             log.debug("Searching source "+sourceConfig.getName()+" with filter "+filter);
-            searchAndLoad(partition, sourceConfig, filter, results);
+            searchAndLoad(partition, sourceConfig, filter, searchControls, results);
 
         } else { // load full record immediately
 
             log.debug("Loading source "+sourceConfig.getName()+" with filter "+filter);
-            fullLoad(partition, sourceConfig, primaryKeys, filter, results);
+            fullLoad(partition, sourceConfig, primaryKeys, filter, searchControls, results);
         }
     }
 
@@ -486,6 +488,7 @@ public class Connector {
             Partition partition,
             SourceConfig sourceConfig,
             Filter filter,
+            PenroseSearchControls searchControls,
             PenroseSearchResults results)
             throws Exception {
 
@@ -497,7 +500,7 @@ public class Connector {
         if (pks == null) {
             log.debug("Searching source "+sourceConfig.getName()+" with filter "+filter);
             PenroseSearchResults sr = new PenroseSearchResults();
-            performSearch(partition, sourceConfig, filter, sr);
+            performSearch(partition, sourceConfig, filter, searchControls, sr);
             pks = sr.getAll();
 
             int rc = sr.getReturnCode();
@@ -511,7 +514,7 @@ public class Connector {
         }
 
         log.debug("Loading source "+sourceConfig.getName()+" with pks "+pks);
-        load(partition, sourceConfig, pks, results);
+        load(partition, sourceConfig, pks, searchControls, results);
     }
 
     /**
@@ -522,16 +525,17 @@ public class Connector {
             SourceConfig sourceConfig,
             Collection primaryKeys,
             Filter filter,
+            PenroseSearchControls searchControls,
             PenroseSearchResults results
     ) throws Exception {
 
         Collection pks = getSourceCacheManager().search(partition, sourceConfig, filter);
 
         if (pks != null) {
-            load(partition, sourceConfig, pks, results);
+            load(partition, sourceConfig, pks, searchControls, results);
 
         } else {
-            performLoad(partition, sourceConfig, primaryKeys, filter, results);
+            performLoad(partition, sourceConfig, primaryKeys, filter, searchControls, results);
             //store(sourceConfig, values);
         }
     }
@@ -543,8 +547,9 @@ public class Connector {
             final Partition partition,
             final SourceConfig sourceConfig,
             final Collection pks,
-            final PenroseSearchResults results)
-            throws Exception {
+            PenroseSearchControls searchControls,
+            final PenroseSearchResults results
+    ) throws Exception {
 
         if (pks == null || pks.isEmpty()) {
             results.close();
@@ -568,7 +573,7 @@ public class Connector {
 
             log.debug("Loading missing keys: "+missingPks);
             PenroseSearchResults list = new PenroseSearchResults();
-            retrieve(partition, sourceConfig, missingPks, list);
+            retrieve(partition, sourceConfig, missingPks, searchControls, list);
             list.close();
 
             results.addAll(list.getAll());
@@ -592,17 +597,18 @@ public class Connector {
             Partition partition,
             SourceConfig sourceConfig,
             Collection keys,
-            PenroseSearchResults sr
+            PenroseSearchControls searchControls,
+            PenroseSearchResults results
     ) throws Exception {
 
         if (keys.isEmpty()) return;
 
         Filter filter = FilterTool.createFilter(keys);
 
-        performLoad(partition, sourceConfig, keys, filter, sr);
+        performLoad(partition, sourceConfig, keys, filter, searchControls, results);
 
         //Collection values = new ArrayList();
-        //values.addAll(sr.getAll());
+        //values.addAll(results.getAll());
 
         //store(sourceConfig, values);
     }
@@ -670,15 +676,20 @@ public class Connector {
             Partition partition,
             SourceConfig sourceConfig,
             Filter filter,
+            PenroseSearchControls searchControls,
             PenroseSearchResults results
     ) throws Exception {
-
-        String s = sourceConfig.getParameter(SourceConfig.SIZE_LIMIT);
-        int sizeLimit = s == null ? SourceConfig.DEFAULT_SIZE_LIMIT : Integer.parseInt(s);
 
         Connection connection = getConnection(partition, sourceConfig.getConnectionName());
         PenroseSearchResults sr = new PenroseSearchResults();
         try {
+
+            long sizeLimit = searchControls.getSizeLimit();
+            if (sizeLimit == 0) {
+                String s = sourceConfig.getParameter(SourceConfig.SIZE_LIMIT);
+                sizeLimit = s == null ? SourceConfig.DEFAULT_SIZE_LIMIT : Integer.parseInt(s);
+            }
+
             PenroseSearchControls sc = new PenroseSearchControls();
             sc.setSizeLimit(sizeLimit);
 
@@ -711,6 +722,7 @@ public class Connector {
             final SourceConfig sourceConfig,
             Collection primaryKeys,
             final Filter filter,
+            PenroseSearchControls searchControls,
             final PenroseSearchResults results
     ) throws Exception {
 
@@ -735,10 +747,13 @@ public class Connector {
         });
 
         try {
-            String s = sourceConfig.getParameter(SourceConfig.SIZE_LIMIT);
-            int sizeLimit = s == null ? SourceConfig.DEFAULT_SIZE_LIMIT : Integer.parseInt(s);
-
             Connection connection = getConnection(partition, sourceConfig.getConnectionName());
+
+            long sizeLimit = searchControls.getSizeLimit();
+            if (sizeLimit == 0) {
+                String s = sourceConfig.getParameter(SourceConfig.SIZE_LIMIT);
+                sizeLimit = s == null ? SourceConfig.DEFAULT_SIZE_LIMIT : Integer.parseInt(s);
+            }
 
             PenroseSearchControls sc = new PenroseSearchControls();
             sc.setSizeLimit(sizeLimit);

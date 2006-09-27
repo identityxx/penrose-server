@@ -27,6 +27,8 @@ import org.safehaus.penrose.graph.Graph;
 import org.safehaus.penrose.graph.GraphIterator;
 import org.safehaus.penrose.util.Formatter;
 import org.safehaus.penrose.session.PenroseSearchResults;
+import org.safehaus.penrose.session.PenroseSearchControls;
+import org.safehaus.penrose.connector.Connector;
 import org.ietf.ldap.LDAPException;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
@@ -111,8 +113,11 @@ public class SearchLocalRunner extends GraphVisitor {
 
         SourceConfig sourceConfig = partition.getSourceConfig(sourceMapping.getSourceName());
 
+        PenroseSearchControls sc = new PenroseSearchControls();
         PenroseSearchResults tmp = new PenroseSearchResults();
-        engine.getConnector(sourceConfig).search(partition, sourceConfig, null, filter, tmp);
+        
+        Connector connector = engine.getConnector(sourceConfig);
+        connector.search(partition, sourceConfig, null, filter, sc, tmp);
 
         Collection list = new ArrayList();
         for (Iterator i=tmp.iterator(); i.hasNext(); ) {

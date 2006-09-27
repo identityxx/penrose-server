@@ -20,6 +20,11 @@ package org.safehaus.penrose.session;
 import org.safehaus.penrose.pipeline.Pipeline;
 import org.ietf.ldap.LDAPException;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Collection;
+import java.util.Iterator;
+
 /**
  * @author Endi S. Dewata
  */
@@ -27,7 +32,32 @@ public class PenroseSearchResults extends Pipeline {
 
     int returnCode = LDAPException.SUCCESS;
 
+    List referrals = new ArrayList();
+    Collection referralListeners = new ArrayList();
+
     public PenroseSearchResults() {
+    }
+
+    public void addReferralListener(ReferralListener listener) {
+        referralListeners.add(listener);
+    }
+
+    public void removeReferralListener(ReferralListener listener) {
+        referralListeners.remove(listener);
+    }
+
+    public void fireEvent(final ReferralEvent event) {
+        for (Iterator i=referralListeners.iterator(); i.hasNext(); ) {
+            ReferralListener listener = (ReferralListener)i.next();
+            switch (event.getType()) {
+                case ReferralEvent.REFERRAL_ADDED:
+                    listener.referralAdded(event);
+                    break;
+                case ReferralEvent.REFERRAL_REMOVED:
+                    listener.referralRemoved(event);
+                    break;
+            }
+        }
     }
 
     public synchronized int getReturnCode() {
@@ -49,5 +79,19 @@ public class PenroseSearchResults extends Pipeline {
     public void setReturnCode(int returnCode) {
         if (this.returnCode != LDAPException.SUCCESS) return;
         this.returnCode = returnCode;
+    }
+
+    public synchronized void addReferral(Object referral) {
+        referrals.add(referral);
+        fireEvent(new ReferralEvent(ReferralEvent.REFERRAL_ADDED, referral));
+    }
+
+    public synchronized void removeReferral(Object referral) {
+        referrals.remove(referral);
+        fireEvent(new ReferralEvent(ReferralEvent.REFERRAL_REMOVED, referral));
+    }
+
+    public synchronized List getReferrals() {
+        return referrals;
     }
 }

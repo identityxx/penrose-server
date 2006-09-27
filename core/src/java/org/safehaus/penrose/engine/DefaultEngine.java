@@ -20,15 +20,12 @@ package org.safehaus.penrose.engine;
 import org.safehaus.penrose.session.PenroseSearchResults;
 import org.safehaus.penrose.session.PenroseSearchControls;
 import org.safehaus.penrose.session.PenroseSession;
-import org.safehaus.penrose.cache.EntryCache;
-import org.safehaus.penrose.cache.CacheConfig;
 import org.safehaus.penrose.partition.*;
 import org.safehaus.penrose.filter.*;
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.pipeline.PipelineAdapter;
 import org.safehaus.penrose.pipeline.PipelineEvent;
 import org.safehaus.penrose.util.Formatter;
-import org.safehaus.penrose.util.PasswordUtil;
 import org.safehaus.penrose.util.EntryUtil;
 import org.safehaus.penrose.util.LDAPUtil;
 import org.safehaus.penrose.schema.ObjectClass;
@@ -54,16 +51,16 @@ public class DefaultEngine extends Engine {
     public void init() throws Exception {
         super.init();
 
-        engineFilterTool      = new EngineFilterTool(this);
-        addEngine       = new AddEngine(this);
-        deleteEngine    = new DeleteEngine(this);
-        modifyEngine    = new ModifyEngine(this);
-        modrdnEngine    = new ModRdnEngine(this);
-        searchEngine    = new SearchEngine(this);
-        loadEngine      = new LoadEngine(this);
-        mergeEngine     = new MergeEngine(this);
-        joinEngine      = new JoinEngine(this);
-        transformEngine = new TransformEngine(this);
+        engineFilterTool = new EngineFilterTool(this);
+        addEngine        = new AddEngine(this);
+        deleteEngine     = new DeleteEngine(this);
+        modifyEngine     = new ModifyEngine(this);
+        modrdnEngine     = new ModRdnEngine(this);
+        searchEngine     = new SearchEngine(this);
+        loadEngine       = new LoadEngine(this);
+        mergeEngine      = new MergeEngine(this);
+        joinEngine       = new JoinEngine(this);
+        transformEngine  = new TransformEngine(this);
 
         log.debug("Default engine initialized.");
     }

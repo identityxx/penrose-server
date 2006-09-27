@@ -34,7 +34,6 @@ import org.safehaus.penrose.connector.Adapter;
 
 import java.util.*;
 
-
 /**
  * @author Endi S. Dewata
  */
@@ -48,7 +47,8 @@ public class LDAPAdapter extends Adapter {
     private LDAPClient client;
 
     public void init() throws Exception {
-        client = new LDAPClient(getParameters());
+        Map parameters = getParameters();
+        client = new LDAPClient(parameters);
     }
 
     public Object openConnection() throws Exception {

@@ -51,7 +51,7 @@ import java.util.*;
  */
 public abstract class Engine {
 
-    public static Logger log = LoggerFactory.getLogger(Engine.class);
+    public Logger log = LoggerFactory.getLogger(getClass());
 
     public EngineConfig engineConfig;
     public PenroseConfig penroseConfig;

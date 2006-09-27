@@ -124,7 +124,7 @@ public class EntryUtil {
             StringBuffer sb = new StringBuffer();
             for (int i=1; i<rdns.length; i++) {
                 if (sb.length() > 0) sb.append(",");
-                sb.append(rdns[i]);
+                sb.append(LDAPDN.escapeRDN(rdns[i]));
             }
 
             return sb.toString();
@@ -141,13 +141,18 @@ public class EntryUtil {
         try {
             //log.debug("###### Getting suffix from "+dn);
 
-            int i = dn.lastIndexOf(",");
-            if (i<0) return dn;
+            String rdns[] = LDAPDN.explodeDN(dn, false);
+            if (rdns.length < 2) return dn;
 
-            String suffix = dn.substring(i+1);
+            return LDAPDN.escapeRDN(rdns[rdns.length-1]);
+
+            //int i = dn.lastIndexOf(",");
+            //if (i<0) return dn;
+
+            //String suffix = dn.substring(i+1);
             //log.debug(" - "+suffix);
 
-            return suffix.toString();
+            //return suffix.toString();
 
         } catch (Exception e) {
             log.error(e.getMessage(), e);
@@ -161,13 +166,24 @@ public class EntryUtil {
         try {
             //log.debug("###### Getting prefix from "+dn);
 
-            int i = dn.lastIndexOf(",");
-            if (i<0) return null;
+            String rdns[] = LDAPDN.explodeDN(dn, false);
+            if (rdns.length < 2) return null;
 
-            String prefix = dn.substring(0, i);
+            StringBuffer sb = new StringBuffer();
+            for (int i=0; i<rdns.length-1; i++) {
+                if (sb.length() > 0) sb.append(",");
+                sb.append(LDAPDN.escapeRDN(rdns[i]));
+            }
+
+            return sb.toString();
+
+            //int i = dn.lastIndexOf(",");
+            //if (i<0) return null;
+
+            //String prefix = dn.substring(0, i);
             //log.debug(" - "+prefix);
 
-            return prefix;
+            //return prefix;
 
         } catch (Exception e) {
             log.error(e.getMessage(), e);

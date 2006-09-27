@@ -181,6 +181,7 @@ public class PenroseLDAPService extends Service {
         env.setProperty(Context.SECURITY_PRINCIPAL, penroseConfig.getRootUserConfig().getDn());
         env.setProperty(Context.SECURITY_CREDENTIALS, penroseConfig.getRootUserConfig().getPassword());
         env.setProperty(Context.SECURITY_AUTHENTICATION, "simple");
+        env.setProperty(Context.REFERRAL, "throw");
 /*
         env.setProperty("asn.1.berlib.provider", "org.apache.ldap.common.berlib.asn1.SnickersProvider");
         //env.setProperty("asn.1.berlib.provider", "org.apache.asn1new.ldap.TwixProvider");

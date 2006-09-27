@@ -25,6 +25,7 @@ import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.util.EntryUtil;
 import org.safehaus.penrose.util.ExceptionUtil;
 import org.safehaus.penrose.schema.SchemaManager;
+import org.safehaus.penrose.engine.Engine;
 import org.ietf.ldap.*;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
@@ -110,20 +111,36 @@ public class AddHandler {
 
         EntryMapping parentMapping = parent.getEntryMapping();
 
-        if (partition.isProxy(parentMapping)) {
-            return handler.getEngine("PROXY").add(session, partition, parent, parentMapping, dn, attributes);
-        }
-
         Collection children = partition.getChildren(parentMapping);
 
         for (Iterator iterator = children.iterator(); iterator.hasNext(); ) {
             EntryMapping entryMapping = (EntryMapping)iterator.next();
             if (!partition.isDynamic(entryMapping)) continue;
 
-            return handler.getEngine().add(session, partition, parent, entryMapping, dn, attributes);
+            String engineName = "DEFAULT";
+            if (partition.isProxy(entryMapping)) engineName = "PROXY";
+
+            Engine engine = handler.getEngine(engineName);
+
+            if (engine == null) {
+                log.debug("Engine "+engineName+" not found");
+                return LDAPException.OPERATIONS_ERROR;
+            }
+
+            return engine.add(session, partition, parent, entryMapping, dn, attributes);
         }
 
-        return addStaticEntry(parentMapping, dn, attributes);
+        String engineName = "DEFAULT";
+        if (partition.isProxy(parentMapping)) engineName = "PROXY";
+
+        Engine engine = handler.getEngine(engineName);
+
+        if (engine == null) {
+            log.debug("Engine "+engineName+" not found");
+            return LDAPException.OPERATIONS_ERROR;
+        }
+
+        return engine.add(session, partition, parent, parentMapping, dn, attributes);
     }
 
     public Handler getHandler() {
