@@ -90,9 +90,9 @@ public class BindHandler {
 
         // attempt to compare the userPassword attribute
         List path = new ArrayList();
-        AttributeValues parentSourceValues = new AttributeValues();
+        AttributeValues sourceValues = new AttributeValues();
 
-        handler.getFindHandler().find(partition, dn, path, parentSourceValues);
+        handler.getFindHandler().find(partition, dn, path, sourceValues);
 
         if (path.isEmpty()) {
             log.debug("Entry "+dn+" not found");

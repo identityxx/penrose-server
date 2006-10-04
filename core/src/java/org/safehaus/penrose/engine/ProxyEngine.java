@@ -420,7 +420,7 @@ public class ProxyEngine extends Engine {
             PenroseSession session,
             final Partition partition,
             Entry baseEntry,
-            AttributeValues parentSourceValues,
+            AttributeValues sourceValues,
             final EntryMapping entryMapping,
             final String baseDn,
             final Filter filter,
@@ -433,7 +433,7 @@ public class ProxyEngine extends Engine {
         if (log.isDebugEnabled()) {
             log.debug(Formatter.displaySeparator(80));
             log.debug(Formatter.displayLine("EXPAND PROXY", 80));
-            log.debug(Formatter.displayLine("Entry: \""+entryMapping.getDn()+"\"", 80));
+            log.debug(Formatter.displayLine("Mapping DN: \""+entryMapping.getDn()+"\"", 80));
             log.debug(Formatter.displayLine("Base DN: "+baseDn, 80));
             log.debug(Formatter.displayLine("Filter: "+filter, 80));
             log.debug(Formatter.displayLine("Scope: "+LDAPUtil.getScope(searchControls.getScope()), 80));
@@ -610,13 +610,35 @@ Mapping: ou=Groups,dc=Proxy,dc=Example,dc=org
         }
     }
 
-    public Entry find(
+    public int find(
             Partition partition,
             Entry parent,
-            AttributeValues parentSourceValues,
+            AttributeValues sourceValues,
             EntryMapping entryMapping,
-            String dn
+            String rdns[],
+            int position,
+            List path
     ) throws Exception {
+
+        String dn = null;
+        for (int i = 0; i < rdns.length; i++) dn = EntryUtil.append(dn, rdns[i]);
+
+        if (log.isDebugEnabled()) {
+            log.debug(Formatter.displaySeparator(80));
+            log.debug(Formatter.displayLine("FIND", 80));
+            log.debug(Formatter.displayLine("Entry: "+dn, 80));
+            log.debug(Formatter.displayLine("Source values:", 80));
+
+            if (sourceValues != null) {
+                for (Iterator i = sourceValues.getNames().iterator(); i.hasNext(); ) {
+                    String name = (String)i.next();
+                    Collection values = sourceValues.get(name);
+                    log.debug(Formatter.displayLine(" - "+name+": "+values, 80));
+                }
+            }
+
+            log.debug(Formatter.displaySeparator(80));
+        }
 
         PenroseSearchResults results = new PenroseSearchResults();
 
@@ -630,7 +652,7 @@ Mapping: ou=Groups,dc=Proxy,dc=Example,dc=org
                 null,
                 partition,
                 parent,
-                parentSourceValues,
+                sourceValues,
                 entryMapping,
                 dn,
                 filter,
@@ -640,8 +662,24 @@ Mapping: ou=Groups,dc=Proxy,dc=Example,dc=org
 
         results.close();
 
-        if (!results.hasNext()) return null;
+        if (!results.hasNext()) return 0;
 
-        return (Entry)results.next();
+        Entry entry = (Entry)results.next();
+
+        if (log.isDebugEnabled()) {
+            log.debug(Formatter.displaySeparator(80));
+            log.debug(Formatter.displayLine("FIND RESULT", 80));
+
+            log.debug(Formatter.displayLine("Path:", 80));
+            if (entry != null) {
+                log.debug(Formatter.displayLine(" - "+entry.getDn(), 80));
+            }
+
+            log.debug(Formatter.displaySeparator(80));
+        }
+
+        path.add(0, entry);
+
+        return position;
     }
 }

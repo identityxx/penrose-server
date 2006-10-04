@@ -541,14 +541,16 @@ public abstract class Engine {
     // Search
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    public Entry find(
+    public int find(
             Partition partition,
             Entry parent,
-            AttributeValues parentSourceValues,
+            AttributeValues sourceValues,
             EntryMapping entryMapping,
-            String dn
+            String rdns[],
+            int position,
+            List path
     ) throws Exception {
-        return null;
+        return 0;
     }
 
     public abstract int search(

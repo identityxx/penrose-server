@@ -57,7 +57,7 @@ public class PenroseEnumeration implements NamingEnumeration {
         log.debug("Search operation returned "+referrals.size()+" referral(s).");
 
         if (!referrals.isEmpty()) {
-            LdapReferralException lre = new LdapReferralException( referrals );
+            PenroseReferralException lre = new PenroseReferralException(referrals);
             throw lre;
             /*
             String referral = (String)referrals.remove(0);

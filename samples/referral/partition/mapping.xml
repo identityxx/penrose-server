@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapping PUBLIC
+  "-//Penrose/DTD Mapping 1.0//EN"
+  "http://penrose.safehaus.org/dtd/mapping.dtd">
+
+<mapping>
+
+  <entry dn="dc=Referral,dc=Example,dc=com">
+    <oc>dcObject</oc>
+    <oc>organization</oc>
+    <at name="dc" rdn="true">
+      <constant>Referral</constant>
+    </at>
+    <at name="o">
+      <constant>Referral</constant>
+    </at>
+    <aci subject="self">
+      <permission>rws</permission>
+    </aci>
+    <aci>
+      <target>ATTRIBUTES</target>
+      <attributes>userPassword</attributes>
+      <action>deny</action>
+      <permission>rs</permission>
+    </aci>
+    <aci>
+      <permission>rs</permission>
+    </aci>
+  </entry>
+
+  <entry dn="ou=Users,dc=Referral,dc=Example,dc=com">
+    <oc>referral</oc>
+    <at name="ou" rdn="true">
+      <constant>Users</constant>
+    </at>
+    <at name="ref">
+      <constant>ldap://localhost/ou=Users,dc=Referral,dc=Example,dc=com</constant>
+    </at>
+  </entry>
+
+  <entry dn="ou=Groups,dc=Referral,dc=Example,dc=com">
+    <oc>referral</oc>
+    <at name="ou" rdn="true">
+      <constant>Groups</constant>
+    </at>
+    <at name="ref">
+      <constant>ldap://localhost/ou=Groups,dc=Referral,dc=Example,dc=com</constant>
+    </at>
+  </entry>
+
+</mapping>

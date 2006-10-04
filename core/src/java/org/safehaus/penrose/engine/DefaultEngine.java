@@ -360,7 +360,7 @@ public class DefaultEngine extends Engine {
         if (log.isDebugEnabled()) {
             log.debug(Formatter.displaySeparator(80));
             log.debug(Formatter.displayLine("EXPAND MAPPING", 80));
-            log.debug(Formatter.displayLine("Entry: \""+entryMapping.getDn()+"\"", 80));
+            log.debug(Formatter.displayLine("Mapping DN: \""+entryMapping.getDn()+"\"", 80));
             log.debug(Formatter.displayLine("Base DN: "+baseDn, 80));
             log.debug(Formatter.displayLine("Filter: "+filter, 80));
             log.debug(Formatter.displayLine("Scope: "+LDAPUtil.getScope(sc.getScope()), 80));
@@ -377,153 +377,166 @@ public class DefaultEngine extends Engine {
             log.debug(Formatter.displaySeparator(80));
         }
 
-        if (!getFilterTool().isValid(entryMapping, filter)) {
-            return LDAPException.SUCCESS;
+        int rc = LDAPException.SUCCESS;
 
-        } if (sc.getScope() == PenroseSearchControls.SCOPE_BASE) {
-            if (!(EntryUtil.match(entryMapping.getDn(), baseDn))) {
-                return LDAPException.SUCCESS;
-            }
+        try {
 
-        } else if (sc.getScope() == PenroseSearchControls.SCOPE_ONE) {
-            if (!EntryUtil.match(entryMapping.getParentDn(), baseDn)) {
-                return LDAPException.SUCCESS;
-            }
+            if (!getFilterTool().isValid(entryMapping, filter)) {
+                return rc;
 
-        } else { // if (sc.getScope() == PenroseSearchControls.SCOPE_SUB) {
-
-            log.debug("Checking whether "+baseDn+" is an ancestor of "+entryMapping.getDn());
-            String dn = entryMapping.getDn();
-            boolean found = false;
-            while (dn != null) {
-                if (EntryUtil.match(dn, baseDn)) {
-                    found = true;
-                    break;
+            } if (sc.getScope() == PenroseSearchControls.SCOPE_BASE) {
+                if (!(EntryUtil.match(entryMapping.getDn(), baseDn))) {
+                    return rc;
                 }
-                dn = EntryUtil.getParentDn(dn);
+
+            } else if (sc.getScope() == PenroseSearchControls.SCOPE_ONE) {
+                if (!EntryUtil.match(entryMapping.getParentDn(), baseDn)) {
+                    return rc;
+                }
+
+            } else { // if (sc.getScope() == PenroseSearchControls.SCOPE_SUB) {
+
+                log.debug("Checking whether "+baseDn+" is an ancestor of "+entryMapping.getDn());
+                String dn = entryMapping.getDn();
+                boolean found = false;
+                while (dn != null) {
+                    if (EntryUtil.match(dn, baseDn)) {
+                        found = true;
+                        break;
+                    }
+                    dn = EntryUtil.getParentDn(dn);
+                }
+
+                log.debug("Result: "+found);
+
+                if (!found) {
+                    return rc;
+                }
             }
 
-            log.debug("Result: "+found);
+            final boolean unique = isUnique(partition, entryMapping);
+            final Collection effectiveSources = partition.getEffectiveSourceMappings(entryMapping);
 
-            if (!found) {
-                return LDAPException.SUCCESS;
-            }
-        }
+            final PenroseSearchResults dns = new PenroseSearchResults();
+            final PenroseSearchResults entriesToLoad = new PenroseSearchResults();
+            final PenroseSearchResults loadedEntries = new PenroseSearchResults();
+            final PenroseSearchResults newEntries = new PenroseSearchResults();
 
-        final boolean unique = isUnique(partition, entryMapping);
-        final Collection effectiveSources = partition.getEffectiveSourceMappings(entryMapping);
+            final Interpreter interpreter = getInterpreterManager().newInstance();
 
-        final PenroseSearchResults dns = new PenroseSearchResults();
-        final PenroseSearchResults entriesToLoad = new PenroseSearchResults();
-        final PenroseSearchResults loadedEntries = new PenroseSearchResults();
-        final PenroseSearchResults newEntries = new PenroseSearchResults();
+            Collection attributeNames = sc.getAttributes();
+            Collection attributeDefinitions = entryMapping.getAttributeMappings(attributeNames);
 
-        final Interpreter interpreter = getInterpreterManager().newInstance();
+            // check if client only requests the dn to be returned
+            final boolean dnOnly = attributeNames != null && attributeNames.contains("dn")
+                    && attributeDefinitions.isEmpty()
+                    && "(objectclass=*)".equals(filter.toString().toLowerCase());
 
-        Collection attributeNames = sc.getAttributes();
-        Collection attributeDefinitions = entryMapping.getAttributeMappings(attributeNames);
+            log.debug("Search DNs only: "+dnOnly);
 
-        // check if client only requests the dn to be returned
-        final boolean dnOnly = attributeNames != null && attributeNames.contains("dn")
-                && attributeDefinitions.isEmpty()
-                && "(objectclass=*)".equals(filter.toString().toLowerCase());
+            dns.addListener(new PipelineAdapter() {
+                public void objectAdded(PipelineEvent event) {
+                    try {
+                        EntryData data = (EntryData)event.getObject();
+                        String dn = data.getDn();
 
-        log.debug("Search DNs only: "+dnOnly);
+                        if (dnOnly) {
+                            log.debug("Returning DN only.");
 
-        dns.addListener(new PipelineAdapter() {
-            public void objectAdded(PipelineEvent event) {
-                try {
-                    EntryData data = (EntryData)event.getObject();
-                    String dn = data.getDn();
+                            AttributeValues sv = data.getMergedValues();
+                            Entry entry = new Entry(dn, entryMapping, sv, null);
+
+                            results.add(entry);
+                            return;
+                        }
+
+                        if (unique && effectiveSources.size() == 1 && !data.getMergedValues().isEmpty()) {
+                            log.debug("Entry data is complete, returning entry.");
+
+                            AttributeValues sv = data.getMergedValues();
+                            AttributeValues attributeValues = computeAttributeValues(entryMapping, sv, interpreter);
+
+                            Entry entry = new Entry(dn, entryMapping, sv, attributeValues);
+                            results.add(entry);
+
+                            return;
+                        }
+
+                        log.debug("Entry data is incomplete, loading full entry data.");
+                        entriesToLoad.add(data);
+
+                    } catch (Exception e) {
+                        log.error(e.getMessage(), e);
+                    }
+                }
+
+                public void pipelineClosed(PipelineEvent event) {
+                    int rc = dns.getReturnCode();
+                    //log.debug("RC: "+rc);
 
                     if (dnOnly) {
-                        log.debug("Returning DN only.");
-
-                        AttributeValues sv = data.getMergedValues();
-                        Entry entry = new Entry(dn, entryMapping, sv, null);
-
-                        results.add(entry);
-                        return;
+                        results.setReturnCode(rc);
+                    } else {
+                        entriesToLoad.setReturnCode(rc);
+                        entriesToLoad.close();
                     }
-
-                    if (unique && effectiveSources.size() == 1 && !data.getMergedValues().isEmpty()) {
-                        log.debug("Entry data is complete, returning entry.");
-
-                        AttributeValues sv = data.getMergedValues();
-                        AttributeValues attributeValues = computeAttributeValues(entryMapping, sv, interpreter);
-
-                        Entry entry = new Entry(dn, entryMapping, sv, attributeValues);
-                        results.add(entry);
-
-                        return;
-                    }
-
-                    log.debug("Entry data is incomplete, loading full entry data.");
-                    entriesToLoad.add(data);
-
-                } catch (Exception e) {
-                    log.error(e.getMessage(), e);
                 }
-            }
+            });
 
-            public void pipelineClosed(PipelineEvent event) {
-                int rc = dns.getReturnCode();
-                //log.debug("RC: "+rc);
+            log.debug("Filter cache for "+filter+" not found.");
 
-                if (dnOnly) {
+            dns.addListener(new PipelineAdapter() {
+                public void objectAdded(PipelineEvent event) {
+                    try {
+                        EntryData data = (EntryData)event.getObject();
+                        String dn = data.getDn();
+
+                    } catch (Exception e) {
+                        log.error(e.getMessage(), e);
+                    }
+                }
+            });
+
+            searchEngine.search(partition, baseEntry, parentSourceValues, entryMapping, filter, dns);
+
+            dns.close();
+
+            if (dnOnly) return rc;
+            //if (unique && effectiveSources.size() == 1) return LDAPException.SUCCESS;
+
+            load(partition, entryMapping, entriesToLoad, loadedEntries);
+
+            newEntries.addListener(new PipelineAdapter() {
+                public void objectAdded(PipelineEvent event) {
+                    try {
+                        Entry entry = (Entry)event.getObject();
+                        results.add(entry);
+
+                    } catch (Exception e) {
+                        log.error(e.getMessage(), e);
+                    }
+                }
+
+                public void pipelineClosed(PipelineEvent event) {
+                    int rc = newEntries.getReturnCode();
+                    //log.debug("RC: "+rc);
+
                     results.setReturnCode(rc);
-                } else {
-                    entriesToLoad.setReturnCode(rc);
-                    entriesToLoad.close();
                 }
+            });
+
+            merge(partition, entryMapping, loadedEntries, newEntries);
+
+            return rc;
+
+        } finally {
+            if (log.isDebugEnabled()) {
+                log.debug(Formatter.displaySeparator(80));
+                log.debug(Formatter.displayLine("EXPAND MAPPING", 80));
+                log.debug(Formatter.displayLine("Return code: "+rc, 80));
+                log.debug(Formatter.displaySeparator(80));
             }
-        });
-
-        log.debug("Filter cache for "+filter+" not found.");
-
-        dns.addListener(new PipelineAdapter() {
-            public void objectAdded(PipelineEvent event) {
-                try {
-                    EntryData data = (EntryData)event.getObject();
-                    String dn = data.getDn();
-
-                } catch (Exception e) {
-                    log.error(e.getMessage(), e);
-                }
-            }
-        });
-
-        searchEngine.search(partition, baseEntry, parentSourceValues, entryMapping, filter, dns);
-
-        dns.close();
-
-        if (dnOnly) return LDAPException.SUCCESS;
-        //if (unique && effectiveSources.size() == 1) return LDAPException.SUCCESS;
-
-        load(partition, entryMapping, entriesToLoad, loadedEntries);
-
-        newEntries.addListener(new PipelineAdapter() {
-            public void objectAdded(PipelineEvent event) {
-                try {
-                    Entry entry = (Entry)event.getObject();
-                    results.add(entry);
-
-                } catch (Exception e) {
-                    log.error(e.getMessage(), e);
-                }
-            }
-
-            public void pipelineClosed(PipelineEvent event) {
-                int rc = newEntries.getReturnCode();
-                //log.debug("RC: "+rc);
-
-                results.setReturnCode(rc);
-            }
-        });
-
-        merge(partition, entryMapping, loadedEntries, newEntries);
-
-        return LDAPException.SUCCESS;
+        }
     }
 
     public int search(
@@ -556,24 +569,29 @@ public class DefaultEngine extends Engine {
         }
     }
 
-    public Entry find(
+    public int find(
             Partition partition,
             Entry parent,
-            AttributeValues parentSourceValues,
+            AttributeValues sourceValues,
             EntryMapping entryMapping,
-            String dn
+            String rdns[],
+            int position,
+            List path
     ) throws Exception {
+
+        String dn = null;
+        for (int i = rdns.length-position-1; i < rdns.length; i++) dn = EntryUtil.append(dn, rdns[i]);
 
         if (log.isDebugEnabled()) {
             log.debug(Formatter.displaySeparator(80));
             log.debug(Formatter.displayLine("FIND", 80));
-            log.debug(Formatter.displayLine("Entry: "+dn, 80));
+            log.debug(Formatter.displayLine("Entry DN: "+dn, 80));
             log.debug(Formatter.displayLine("Parent source values:", 80));
 
-            if (parentSourceValues != null) {
-                for (Iterator i = parentSourceValues.getNames().iterator(); i.hasNext(); ) {
+            if (sourceValues != null) {
+                for (Iterator i = sourceValues.getNames().iterator(); i.hasNext(); ) {
                     String name = (String)i.next();
-                    Collection values = parentSourceValues.get(name);
+                    Collection values = sourceValues.get(name);
                     log.debug(Formatter.displayLine(" - "+name+": "+values, 80));
                 }
             }
@@ -592,12 +610,12 @@ public class DefaultEngine extends Engine {
 
         AttributeValues loadedSourceValues = loadEngine.loadEntries(
                 partition,
-                parentSourceValues,
+                sourceValues,
                 entryMapping,
                 list
         );
 
-        if (loadedSourceValues == null) return null;
+        if (loadedSourceValues == null) return 0;
         
         final Interpreter interpreter = getInterpreterManager().newInstance();
 
@@ -609,7 +627,7 @@ public class DefaultEngine extends Engine {
                 partition,
                 dn,
                 entryMapping,
-                parentSourceValues,
+                sourceValues,
                 loadedSourceValues,
                 new ArrayList(),
                 interpreter,
@@ -628,7 +646,7 @@ public class DefaultEngine extends Engine {
                 session,
                 partition,
                 parentPath,
-                parentSourceValues,
+                sourceValues,
                 entryMapping,
                 dn,
                 filter,
@@ -652,7 +670,9 @@ public class DefaultEngine extends Engine {
             log.debug(Formatter.displaySeparator(80));
         }
 
-        return entry;
+        path.add(0, entry);
+
+        return 1;
     }
 }
 

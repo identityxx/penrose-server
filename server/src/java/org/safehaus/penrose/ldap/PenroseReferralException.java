@@ -2,11 +2,16 @@ package org.safehaus.penrose.ldap;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.apache.directory.shared.ldap.message.ResultCodeEnum;
+import org.apache.directory.shared.ldap.NotImplementedException;
 
 import javax.naming.ReferralException;
 import javax.naming.Context;
 import javax.naming.NamingException;
 import java.util.Hashtable;
+import java.util.List;
+import java.util.Collection;
+import java.util.ArrayList;
 
 /**
  * @author Endi S. Dewata
@@ -15,44 +20,73 @@ public class PenroseReferralException extends ReferralException {
 
     Logger log = LoggerFactory.getLogger(getClass());
 
-    private Object referralInfo;
-    private boolean moreReferrals;
-    private Context referralContext;
+    private final List refs;
 
-    public PenroseReferralException(Object referralInfo, boolean moreReferrals) {
-        this.referralInfo = referralInfo;
-        this.moreReferrals = moreReferrals;
+    private int index = 0;
+
+
+    /**
+     * @see ReferralException#ReferralException()
+     */
+    public PenroseReferralException(Collection refs)
+    {
+        log.debug("Creating referral exception: "+refs);
+        this.refs = new ArrayList( refs );
     }
 
-    public Object getReferralInfo() {
-        log.debug("getReferralInfo() => "+referralInfo);
-        return referralInfo;
+
+    /**
+     * @see ReferralException#ReferralException(java.lang.String)
+     */
+    public PenroseReferralException(Collection refs, String explanation)
+    {
+        super( explanation );
+        log.debug("Creating referral exception: "+refs);
+        this.refs = new ArrayList( refs );
     }
 
-    public void setReferralInfo(Object referralInfo) {
-        this.referralInfo = referralInfo;
+
+    /**
+     * Always returns {@link org.apache.directory.shared.ldap.message.ResultCodeEnum#REFERRAL}
+     *
+     * @see org.apache.directory.shared.ldap.exception.LdapException#getResultCode()
+     */
+    public ResultCodeEnum getResultCode()
+    {
+        return ResultCodeEnum.REFERRAL;
     }
 
-    public void setReferralContext(Context referralContext) {
-        this.referralContext = referralContext;
+
+    public Object getReferralInfo()
+    {
+        Object referral = refs.get( index );
+        log.debug("Returning referral #"+index+": "+referral);
+        return referral;
     }
 
-    public Context getReferralContext() {
-        log.debug("getReferralContext() => "+referralContext);
-        return referralContext;
+
+    public Context getReferralContext() throws NamingException
+    {
+        throw new NotImplementedException();
     }
 
-    public Context getReferralContext(Hashtable env) throws NamingException {
-        log.debug("getReferralContext("+env+") => "+referralContext);
-        return referralContext;
+
+    public Context getReferralContext( Hashtable arg ) throws NamingException
+    {
+        throw new NotImplementedException();
     }
 
-    public boolean skipReferral() {
-        log.debug("skipReferral() => "+moreReferrals);
-        return moreReferrals;
+
+    public boolean skipReferral()
+    {
+        index++;
+        log.debug("Skipping to referral #"+index);
+        return index < refs.size();
     }
 
-    public void retryReferral() {
-        log.debug("retryReferral()");
+
+    public void retryReferral()
+    {
+        throw new NotImplementedException();
     }
 }

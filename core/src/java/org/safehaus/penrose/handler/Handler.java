@@ -258,9 +258,9 @@ public class Handler {
         }
 
         List path = new ArrayList();
-        AttributeValues parentSourceValues = new AttributeValues();
+        AttributeValues sourceValues = new AttributeValues();
 
-        findHandler.find(partition, parentDn, path, parentSourceValues);
+        findHandler.find(partition, parentDn, path, sourceValues);
 
         if (path.isEmpty()) {
             log.debug("Parent entry "+parentDn+" not found");
@@ -308,9 +308,9 @@ public class Handler {
         }
 
         List path = new ArrayList();
-        AttributeValues parentSourceValues = new AttributeValues();
+        AttributeValues sourceValues = new AttributeValues();
 
-        findHandler.find(partition, dn, path, parentSourceValues);
+        findHandler.find(partition, dn, path, sourceValues);
 
         if (path.isEmpty()) {
             log.debug("Entry "+dn+" not found");
@@ -350,9 +350,9 @@ public class Handler {
         }
 
         List path = new ArrayList();
-        AttributeValues parentSourceValues = new AttributeValues();
+        AttributeValues sourceValues = new AttributeValues();
 
-        findHandler.find(partition, dn, path, parentSourceValues);
+        findHandler.find(partition, dn, path, sourceValues);
 
         if (path.isEmpty()) {
             log.debug("Entry "+dn+" not found");
@@ -416,9 +416,9 @@ public class Handler {
         }
 
         List path = new ArrayList();
-        AttributeValues parentSourceValues = new AttributeValues();
+        AttributeValues sourceValues = new AttributeValues();
 
-        findHandler.find(partition, dn, path, parentSourceValues);
+        findHandler.find(partition, dn, path, sourceValues);
 
         if (path.isEmpty()) {
             log.debug("Entry "+dn+" not found");
@@ -460,9 +460,9 @@ public class Handler {
         }
 
         List path = new ArrayList();
-        AttributeValues parentSourceValues = new AttributeValues();
+        AttributeValues sourceValues = new AttributeValues();
 
-        findHandler.find(partition, dn, path, parentSourceValues);
+        findHandler.find(partition, dn, path, sourceValues);
 
         if (path.isEmpty()) {
             log.debug("Entry "+dn+" not found");
@@ -572,10 +572,12 @@ public class Handler {
         }
 
         List path = new ArrayList();
-        AttributeValues parentSourceValues = new AttributeValues();
+        AttributeValues sourceValues = new AttributeValues();
 
-        findHandler.find(partition, baseDn, path, parentSourceValues);
-        //AttributeValues parentSourceValues = getEngine().getParentSourceValues(partition, path);
+        findHandler.find(partition, baseDn, path, sourceValues);
+
+        AttributeValues parentSourceValues = new AttributeValues();
+        parentSourceValues.add(sourceValues);
 
         if (path.isEmpty()) {
             log.debug("Entry "+baseDn+" not found");
@@ -656,7 +658,11 @@ public class Handler {
         }
 
         Collection requestedAttributeNames = sc.getAttributes();
-        if (requestedAttributeNames != null && !requestedAttributeNames.isEmpty() && !requestedAttributeNames.contains("*")) {
+        if (requestedAttributeNames != null
+                && !requestedAttributeNames.isEmpty()
+                && !requestedAttributeNames.contains("*")
+                && !requestedAttributeNames.contains("+")) {
+
             for (NamingEnumeration i=attributes.getAll(); i.hasMore(); ) {
                 Attribute attribute = (Attribute)i.next();
                 if (!requestedAttributeNames.contains(attribute.getID())) list.add(attribute);

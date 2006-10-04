@@ -23,6 +23,7 @@ import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.engine.Engine;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
+import org.ietf.ldap.LDAPDN;
 
 import java.util.*;
 
@@ -51,9 +52,9 @@ public class FindHandler {
         if (partition == null) return null;
 
         List path = new ArrayList();
-        AttributeValues parentSourceValues = new AttributeValues();
+        AttributeValues sourceValues = new AttributeValues();
 
-        find(partition, dn, path, parentSourceValues);
+        find(partition, dn, path, sourceValues);
         if (path.size() == 0) return null;
 
         return (Entry)path.iterator().next();
@@ -63,83 +64,109 @@ public class FindHandler {
             Partition partition,
             String dn,
             List path,
-            AttributeValues parentSourceValues
+            AttributeValues sourceValues
     ) throws Exception {
 
         if (partition == null) return;
         if (dn == null) return;
 
-        String entryDn = null;
         Entry parent = null;
 
-        String tmpDn = dn;
+        String rdns[] = LDAPDN.explodeDN(dn, false);
 
-        while (tmpDn != null) {
-            String prefix = EntryUtil.getPrefix(tmpDn);
-            String suffix = EntryUtil.getSuffix(tmpDn);
-            log.debug("Split ["+tmpDn +"] into ["+prefix+"] and ["+suffix+"]");
+        int position = 0;
+        log.debug("Length ["+rdns.length+"]");
+        while (position < rdns.length) {
 
-            entryDn = EntryUtil.append(suffix, entryDn);
+            String prefix = null;
+            for (int i = 0; i < rdns.length-1-position; i++) prefix = EntryUtil.append(prefix, rdns[i]);
 
-            Entry entry = find(partition, parent, parentSourceValues, entryDn);
+            String suffix = null;
+            for (int i = rdns.length-1-position; i < rdns.length; i++) suffix = EntryUtil.append(suffix, rdns[i]);
 
-            path.add(0, entry);
-            tmpDn = prefix;
-            parent = entry;
+            log.debug("Position ["+position+"]: ["+prefix+"] ["+suffix+"]");
 
-            AttributeValues newParentSourceValues = new AttributeValues();
-            newParentSourceValues.add(parentSourceValues);
+            Collection entryMappings = partition.findEntryMappings(suffix);
 
-            if (entry != null) {
-                newParentSourceValues.add(entry.getAttributeValues());
-                newParentSourceValues.add(entry.getSourceValues());
+            int count = 0;
+
+            //AttributeValues attributeValues = new AttributeValues();
+
+            if (entryMappings == null) {
+                path.add(0, null);
+                count = 1;
+
+            } else {
+
+                AttributeValues parentSourceValues = new AttributeValues();
+                parentSourceValues.add(sourceValues);
+
+                for (Iterator iterator = entryMappings.iterator(); iterator.hasNext(); ) {
+                    EntryMapping entryMapping = (EntryMapping)iterator.next();
+
+                    log.debug("Check mapping ["+entryMapping.getDn()+"]");
+
+                    String engineName = "DEFAULT";
+                    if (partition.isProxy(entryMapping)) engineName = "PROXY";
+
+                    Engine engine = handler.getEngine(engineName);
+
+                    if (engine == null) {
+                        log.debug("Engine "+engineName+" not found");
+                        continue;
+                    }
+
+                    count = engine.find(
+                            partition,
+                            parent,
+                            parentSourceValues,
+                            entryMapping,
+                            rdns,
+                            position,
+                            path
+                    );
+
+                    log.debug("Returned ["+count+"]");
+
+                    if (count == 0) continue;
+
+                    Entry entry = (Entry)path.get(0);
+
+                    if (entry != null) {
+                        //attributeValues.add(entry.getAttributeValues());
+                        sourceValues.add(entry.getSourceValues());
+                    }
+
+                    break;
+                }
+
+                if (count == 0) {
+                    path.add(0, null);
+                    count = 1;
+                }
             }
 
-            newParentSourceValues.shift("parent");
+            for (int i = 0; i < count; i++) {
+                AttributeValues newSourceValues = new AttributeValues();
+                for (Iterator j=sourceValues.getNames().iterator(); j.hasNext(); ) {
+                    String name = (String)j.next();
+                    Collection c = sourceValues.get(name);
+                    if (name.startsWith("parent")) name = "parent."+name;
+                    newSourceValues.add(name, c);
+                }
+                sourceValues.clear();
+                sourceValues.add(newSourceValues);
+            }
 
-            parentSourceValues = newParentSourceValues;
+            position += count;
+            log.debug("New position ["+position+"] = old position + "+count);
+
+            log.debug("Source values:");
+            for (Iterator i=sourceValues.getNames().iterator(); i.hasNext(); ) {
+                String name = (String)i.next();
+                Collection c = sourceValues.get(name);
+                log.debug(" - "+name+": "+c);
+            }
         }
-/*
-        log.debug("Parent source values:");
-        for (Iterator i=parentSourceValues.getNames().iterator(); i.hasNext(); ) {
-            String name = (String)i.next();
-            Collection c = parentSourceValues.get(name);
-            log.debug(" - "+name+": "+c);
-        }
-*/
     }
-
-    public Entry find(
-            Partition partition,
-            Entry parent,
-            AttributeValues parentSourceValues,
-            String dn) throws Exception {
-
-        log.debug("Finding entry \""+dn+"\".");
-
-        Collection entryMappings = partition.findEntryMappings(dn);
-        if (entryMappings == null) return null;
-
-        for (Iterator iterator = entryMappings.iterator(); iterator.hasNext(); ) {
-            EntryMapping entryMapping = (EntryMapping) iterator.next();
-
-            String engineName = "DEFAULT";
-            if (partition.isProxy(entryMapping)) engineName = "PROXY";
-
-            Engine engine = handler.getEngine(engineName);
-
-            if (engine == null) {
-                log.debug("Engine "+engineName+" not found");
-                return null;
-            }
-
-            Entry entry = engine.find(partition, parent, parentSourceValues, entryMapping, dn);
-            if (entry != null) return entry;
-        }
-
-        log.debug("Can't find \""+dn+"\".");
-
-        return null;
-	}
-
 }

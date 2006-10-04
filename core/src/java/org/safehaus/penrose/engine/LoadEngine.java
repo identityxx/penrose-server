@@ -95,7 +95,7 @@ public class LoadEngine {
 
         } catch (Throwable e) {
             log.error(e.getMessage(), e);
-            batches.setReturnCode(org.ietf.ldap.LDAPException.OPERATIONS_ERROR);
+            batches.setReturnCode(LDAPException.OPERATIONS_ERROR);
         }
 
         log.debug("Loading batches.");
@@ -105,7 +105,7 @@ public class LoadEngine {
 
         } catch (Throwable e) {
             log.error(e.getMessage(), e);
-            loadedEntries.setReturnCode(org.ietf.ldap.LDAPException.OPERATIONS_ERROR);
+            loadedEntries.setReturnCode(LDAPException.OPERATIONS_ERROR);
         }
     }
 

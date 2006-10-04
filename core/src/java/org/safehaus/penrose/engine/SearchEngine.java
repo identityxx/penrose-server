@@ -111,7 +111,7 @@ public class SearchEngine {
             final AttributeValues parentSourceValues,
             final EntryMapping entryMapping,
             final Filter filter,
-            final PenroseSearchResults entries
+            final PenroseSearchResults results
             ) throws Exception {
 
         Interpreter interpreter = engine.getInterpreterManager().newInstance();
@@ -124,9 +124,9 @@ public class SearchEngine {
             EntryData map = new EntryData();
             map.setDn(entryMapping.getDn());
             map.setMergedValues(parentSourceValues);
-            entries.add(map);
+            results.add(map);
         }
-        entries.close();
+        results.close();
     }
 
     public void searchDynamic(

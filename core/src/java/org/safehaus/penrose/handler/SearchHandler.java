@@ -257,7 +257,7 @@ public class SearchHandler {
         sr.addReferralListener(new ReferralAdapter() {
             public void referralAdded(ReferralEvent event) {
                 Object referral = event.getReferral();
-                log.debug("Passing referral: "+referral);
+                //log.debug("Passing referral: "+referral);
                 results.addReferral(referral);
             }
         });
@@ -315,7 +315,8 @@ public class SearchHandler {
         newParentSourceValues.add("parent", sourceValues);
         //AttributeValues newParentSourceValues = handler.pushSourceValues(parentSourceValues, sourceValues);
 
-        for (Iterator i =newParentSourceValues.getNames().iterator(); i.hasNext(); ) {
+        log.debug("New parent source values:");
+        for (Iterator i = newParentSourceValues.getNames().iterator(); i.hasNext(); ) {
             String name = (String)i.next();
             Collection values = newParentSourceValues.get(name);
             log.debug(" - "+name+": "+values);
