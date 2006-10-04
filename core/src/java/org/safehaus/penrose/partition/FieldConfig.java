@@ -22,7 +22,12 @@ package org.safehaus.penrose.partition;
  */
 public class FieldConfig implements FieldConfigMBean, Comparable, Cloneable {
 
-    public final static String DEFAULT_TYPE   = "VARCHAR";
+    public final static String TYPE_VARCHAR   = "VARCHAR";
+    public final static String TYPE_INTEGER   = "INTEGER";
+    public final static String TYPE_DOUBLE    = "DOUBLE";
+    public final static String TYPE_DATETIME  = "DATETIME";
+
+    public final static String DEFAULT_TYPE   = TYPE_VARCHAR;
     public final static int DEFAULT_LENGTH    = 50;
     public final static int DEFAULT_PRECISION = 0;
 

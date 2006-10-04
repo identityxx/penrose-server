@@ -269,6 +269,11 @@ public class Handler {
 
         Entry parent = (Entry)path.iterator().next();
 
+        if (parent == null) {
+            log.debug("Parent entry "+dn+" not found");
+            return LDAPException.NO_SUCH_OBJECT;
+        }
+
         int rc = aclEngine.checkAdd(session, partition, parent.getEntryMapping(), parentDn);
 
         if (rc != LDAPException.SUCCESS) {
@@ -319,6 +324,11 @@ public class Handler {
 
         Entry entry = (Entry)path.iterator().next();
 
+        if (entry == null) {
+            log.debug("Entry "+dn+" not found");
+            return LDAPException.NO_SUCH_OBJECT;
+        }
+
         int rc = aclEngine.checkRead(session, partition, entry.getEntryMapping(), dn);
 
         if (rc != LDAPException.SUCCESS) {
@@ -360,6 +370,11 @@ public class Handler {
         }
 
         Entry entry = (Entry)path.iterator().next();
+
+        if (entry == null) {
+            log.debug("Entry "+dn+" not found");
+            return LDAPException.NO_SUCH_OBJECT;
+        }
 
         int rc = aclEngine.checkDelete(session, partition, entry.getEntryMapping(), dn);
 
@@ -427,6 +442,11 @@ public class Handler {
 
         Entry entry = (Entry)path.iterator().next();
 
+        if (entry == null) {
+            log.debug("Entry "+dn+" not found");
+            return LDAPException.NO_SUCH_OBJECT;
+        }
+
         int rc = aclEngine.checkModify(session, partition, entry.getEntryMapping(), dn);
 
         if (rc != LDAPException.SUCCESS) {
@@ -470,6 +490,11 @@ public class Handler {
         }
 
         Entry entry = (Entry)path.iterator().next();
+
+        if (entry == null) {
+            log.debug("Entry "+dn+" not found");
+            return LDAPException.NO_SUCH_OBJECT;
+        }
 
         int rc = aclEngine.checkModify(session, partition, entry.getEntryMapping(), dn);
 
@@ -658,14 +683,28 @@ public class Handler {
         }
 
         Collection requestedAttributeNames = sc.getAttributes();
-        if (requestedAttributeNames != null
-                && !requestedAttributeNames.isEmpty()
-                && !requestedAttributeNames.contains("*")
-                && !requestedAttributeNames.contains("+")) {
 
-            for (NamingEnumeration i=attributes.getAll(); i.hasMore(); ) {
-                Attribute attribute = (Attribute)i.next();
-                if (!requestedAttributeNames.contains(attribute.getID())) list.add(attribute);
+        if (requestedAttributeNames != null && !requestedAttributeNames.isEmpty()) {
+
+            boolean allAttributes = requestedAttributeNames.contains("*");
+            boolean opAttributes = requestedAttributeNames.contains("+");
+
+            if (!allAttributes && !opAttributes) { // some attributes
+
+                for (NamingEnumeration i=attributes.getAll(); i.hasMore(); ) {
+                    Attribute attribute = (Attribute)i.next();
+                    if (!requestedAttributeNames.contains(attribute.getID())) list.add(attribute);
+                }
+
+            } else if (!opAttributes) { // all attributes
+
+            } else if (!allAttributes) { // operational attributes
+
+                Collection opAtNames = entryMapping.getOperationalAttributeNames();
+                for (NamingEnumeration i=attributes.getAll(); i.hasMore(); ) {
+                    Attribute attribute = (Attribute)i.next();
+                    if (!opAtNames.contains(attribute.getID())) list.add(attribute);
+                }
             }
         }
 

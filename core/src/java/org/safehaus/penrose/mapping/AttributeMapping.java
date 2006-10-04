@@ -59,6 +59,8 @@ public class AttributeMapping implements Cloneable {
      */
     private String rdn = RDN_FALSE;
 
+    private boolean operational;
+
     /**
      * Encryption method used to encrypt the value
      */
@@ -204,6 +206,7 @@ public class AttributeMapping implements Cloneable {
                 (variable == null ? 0 : variable.hashCode()) +
                 (expression == null ? 0 : expression.hashCode()) +
                 (rdn == null ? 0 : rdn.hashCode()) +
+                (operational ? 0 : 1) +
                 (encryption == null ? 0 : encryption.hashCode()) +
                 (encoding == null ? 0 : encoding.hashCode()) +
                 (type == null ? 0 : type.hashCode()) +
@@ -233,6 +236,7 @@ public class AttributeMapping implements Cloneable {
         if (!equals(variable, attributeMapping.variable)) return false;
         if (!equals(expression, attributeMapping.expression)) return false;
         if (!equals(rdn, attributeMapping.rdn)) return false;
+        if (operational != attributeMapping.operational) return false;
         if (!equals(encryption, attributeMapping.encryption)) return false;
         if (!equals(encoding, attributeMapping.encoding)) return false;
         if (!equals(type, attributeMapping.type)) return false;
@@ -254,6 +258,7 @@ public class AttributeMapping implements Cloneable {
         variable = attributeMapping.variable;
         expression = attributeMapping.expression == null ? null : (Expression)attributeMapping.expression.clone();
         rdn = attributeMapping.rdn;
+        operational = attributeMapping.operational;
         encryption = attributeMapping.encryption;
         encoding = attributeMapping.encoding;
         type = attributeMapping.type;
@@ -267,5 +272,13 @@ public class AttributeMapping implements Cloneable {
         AttributeMapping attributeMapping = new AttributeMapping();
         attributeMapping.copy(this);
         return attributeMapping;
+    }
+
+    public boolean isOperational() {
+        return operational;
+    }
+
+    public void setOperational(boolean operational) {
+        this.operational = operational;
     }
 }

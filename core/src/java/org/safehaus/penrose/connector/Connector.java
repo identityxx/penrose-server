@@ -441,7 +441,8 @@ public class Connector {
         log.debug("Values to replace:");
         for (Iterator i=replaceAttributes.iterator(); i.hasNext(); ) {
             String name = (String)i.next();
-
+            if (name.startsWith("primaryKey.")) continue;
+            
             Set set = (Set)newValues.get(name);
             Attribute attribute = new BasicAttribute(name);
             for (Iterator j = set.iterator(); j.hasNext(); ) {

@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE modules PUBLIC
+  "-//Penrose/DTD Modules 1.0//EN"
+  "http://penrose.safehaus.org/dtd/modules.dtd">
+
+<modules>
+
+  <module name="OperationalAttributeModule">
+    <module-class>org.safehaus.penrose.operationalAttribute.OperationalAttributeModule</module-class>
+  </module>
+
+  <module-mapping>
+    <module-name>OperationalAttributeModule</module-name>
+    <base-dn>dc=Operational Attribute,dc=Example,dc=com</base-dn>
+    <filter>(objectClass=*)</filter>
+    <scope>SUBTREE</scope>
+  </module-mapping>
+
+</modules>

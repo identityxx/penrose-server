@@ -27,7 +27,6 @@ import org.safehaus.penrose.connector.ConnectorManager;
 import org.safehaus.penrose.partition.PartitionManager;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.SourceConfig;
-import org.safehaus.penrose.cache.EntryCache;
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.graph.Graph;
 import org.safehaus.penrose.thread.ThreadManager;
@@ -760,7 +759,7 @@ public abstract class Engine {
 
         AttributeValues rdns = new AttributeValues();
 
-        Collection rdnAttributes = entryMapping.getRdnAttributes();
+        Collection rdnAttributes = entryMapping.getRdnAttributeNames();
         for (Iterator i=rdnAttributes.iterator(); i.hasNext(); ) {
             AttributeMapping attributeMapping = (AttributeMapping)i.next();
             String name = attributeMapping.getName();

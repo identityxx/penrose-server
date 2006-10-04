@@ -18,7 +18,8 @@
 <!ELEMENT at (binary|constant|variable|expression)>
 <!ATTLIST at name CDATA #REQUIRED>
 <!ATTLIST at rdn (true|first|false) "false">
- 
+<!ATTLIST at operational (true|false) "false">
+
 <!ELEMENT source (source-name,field*,parameter*)>
 <!ATTLIST source name CDATA #REQUIRED>
 <!ATTLIST source proxy CDATA #IMPLIED>

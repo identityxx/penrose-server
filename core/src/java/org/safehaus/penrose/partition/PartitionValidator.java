@@ -243,7 +243,7 @@ public class PartitionValidator {
             }
         }
 
-        if (!entryMapping.getAttributeMappings().isEmpty() && entryMapping.getRdnAttributes().isEmpty()) {
+        if (!entryMapping.getAttributeMappings().isEmpty() && entryMapping.getRdnAttributeNames().isEmpty()) {
             results.add(new PartitionValidationResult(PartitionValidationResult.ERROR, "Missing rdn attribute(s).", entryMapping.getDn(), entryMapping));
         }
 

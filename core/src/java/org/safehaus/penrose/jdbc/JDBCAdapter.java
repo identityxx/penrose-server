@@ -457,7 +457,8 @@ public class JDBCAdapter extends Adapter {
 
     public AttributeValues getValues(SourceConfig sourceConfig, ResultSet rs) throws Exception {
 
-        AttributeValues row = new AttributeValues();
+        AttributeValues av = new AttributeValues();
+        Row primaryKey = new Row();
 
         ResultSetMetaData rsmd = rs.getMetaData();
         int count = rsmd.getColumnCount();
@@ -472,12 +473,16 @@ public class JDBCAdapter extends Adapter {
             Object value = rs.getObject(c);
             if (value == null) continue;
 
-            row.add(fieldConfig.getName(), value);
+            av.add(fieldConfig.getName(), value);
+
+            if (!fieldConfig.isPK()) continue;
+            primaryKey.set(fieldConfig.getName(), value);
         }
 
-        //log.debug("=> values: "+row);
+        av.set("primaryKey", primaryKey);
+        //log.debug("=> values: "+av);
 
-        return row;
+        return av;
     }
 
     public int add(SourceConfig sourceConfig, Row pk, AttributeValues sourceValues) throws Exception {

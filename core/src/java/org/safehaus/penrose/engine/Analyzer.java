@@ -117,7 +117,7 @@ public class Analyzer {
 
     public SourceMapping computePrimarySource(EntryMapping entryMapping) throws Exception {
 
-        Collection rdnAttributes = entryMapping.getRdnAttributes();
+        Collection rdnAttributes = entryMapping.getRdnAttributeNames();
         if (rdnAttributes.isEmpty()) return null;
 
         // TODO need to handle multiple rdn attributes
@@ -193,7 +193,7 @@ public class Analyzer {
         Collection rdnFields = new TreeSet();
 
         // check each RDN attribute
-        Collection rdnAttributes = entryMapping.getRdnAttributes();
+        Collection rdnAttributes = entryMapping.getRdnAttributeNames();
         for (Iterator i=rdnAttributes.iterator(); i.hasNext(); ) {
             AttributeMapping attributeMapping = (AttributeMapping)i.next();
             //log.debug("Attribute "+attributeMapping.getName()+": "+attributeMapping.getType());

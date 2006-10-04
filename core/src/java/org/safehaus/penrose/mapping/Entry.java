@@ -70,7 +70,7 @@ public class Entry {
 
         Row rdn = new Row();
 
-        Collection rdnAttributes = entryMapping.getRdnAttributes();
+        Collection rdnAttributes = entryMapping.getRdnAttributeNames();
 
         for (Iterator i = rdnAttributes.iterator(); i.hasNext();) {
             AttributeMapping attributeMapping = (AttributeMapping) i.next();

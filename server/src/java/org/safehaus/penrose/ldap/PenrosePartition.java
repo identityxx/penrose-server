@@ -195,7 +195,8 @@ public class PenrosePartition implements org.apache.directory.server.core.partit
             PenroseSession session = penrose.newSession();
             if (session == null) throw new ServiceUnavailableException();
 
-            int rc = session.modify(dn, Arrays.asList(modificationItems));
+            Collection modifications = new ArrayList(Arrays.asList(modificationItems));
+            int rc = session.modify(dn, modifications);
 
             session.close();
 

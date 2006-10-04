@@ -113,7 +113,7 @@ public class EntryMapping implements Cloneable {
     }
     
     public Row getRdn(AttributeValues attributeValues) {
-        Collection rdnAttributes = getRdnAttributes();
+        Collection rdnAttributes = getRdnAttributeNames();
         Row row = new Row();
 
         for (Iterator i=rdnAttributes.iterator(); i.hasNext(); ) {
@@ -157,7 +157,7 @@ public class EntryMapping implements Cloneable {
         return false;
     }
     
-    public Collection getRdnAttributes() {
+    public Collection getRdnAttributeNames() {
         //log.debug("RDN Attributes:");
         Collection results = new ArrayList();
         for (Iterator i=attributeMappings.values().iterator(); i.hasNext(); ) {
@@ -174,7 +174,7 @@ public class EntryMapping implements Cloneable {
         return results;
     }
 
-    public Collection getNonRdnAttributes() {
+    public Collection getNonRdnAttributeNames() {
         Collection results = new ArrayList();
         for (Iterator i=attributeMappings.values().iterator(); i.hasNext(); ) {
             Collection list = (Collection)i.next();
@@ -183,6 +183,40 @@ public class EntryMapping implements Cloneable {
                 AttributeMapping attributeMapping = (AttributeMapping)j.next();
                 if (attributeMapping.isPK()) continue;
                 results.add(attributeMapping);
+            }
+        }
+        return results;
+    }
+
+    public Collection getOperationalAttributeMappings() {
+        //log.debug("Operational Attributes:");
+        Collection results = new ArrayList();
+        for (Iterator i=attributeMappings.values().iterator(); i.hasNext(); ) {
+            Collection list = (Collection)i.next();
+
+            for (Iterator j=list.iterator(); j.hasNext(); ) {
+                AttributeMapping attributeMapping = (AttributeMapping)j.next();
+                //log.debug(" - "+attributeMapping.getName()+" ("+attributeMapping.isRdn()+")");
+
+                if (!attributeMapping.isOperational()) continue;
+                results.add(attributeMapping);
+            }
+        }
+        return results;
+    }
+
+    public Collection getOperationalAttributeNames() {
+        //log.debug("Operational Attributes:");
+        Collection results = new ArrayList();
+        for (Iterator i=attributeMappings.values().iterator(); i.hasNext(); ) {
+            Collection list = (Collection)i.next();
+
+            for (Iterator j=list.iterator(); j.hasNext(); ) {
+                AttributeMapping attributeMapping = (AttributeMapping)j.next();
+                //log.debug(" - "+attributeMapping.getName()+" ("+attributeMapping.isRdn()+")");
+
+                if (!attributeMapping.isOperational()) continue;
+                results.add(attributeMapping.getName());
             }
         }
         return results;

@@ -208,36 +208,8 @@ public class DefaultEngine extends Engine {
             Attribute attribute = modification.getAttribute();
             String attributeName = attribute.getID();
 
-            if (attributeName.equals("entryCSN"))
-                continue; // ignore
-            if (attributeName.equals("modifiersName"))
-                continue; // ignore
-            if (attributeName.equals("modifyTimestamp"))
-                continue; // ignore
-
             if (attributeName.equals("objectClass"))
                 return LDAPException.OBJECT_CLASS_MODS_PROHIBITED;
-
-            // check if the attribute is defined in the object class
-
-            boolean found = false;
-            for (Iterator j = objectClasses.iterator(); j.hasNext();) {
-                ObjectClass oc = (ObjectClass) j.next();
-                //log.debug("Object Class: " + oc.getName());
-                //log.debug(" - required: " + oc.getRequiredAttributes());
-                //log.debug(" - optional: " + oc.getOptionalAttributes());
-
-                if (oc.containsRequiredAttribute(attributeName) || oc.containsOptionalAttribute(attributeName)) {
-                    found = true;
-                    break;
-                }
-            }
-
-            if (!found) {
-                log.debug("Can't find attribute " + attributeName
-                        + " in object classes "+objectClasses);
-                return LDAPException.OBJECT_CLASS_VIOLATION;
-            }
 
             Set newAttrValues = new HashSet();
             for (NamingEnumeration j=attribute.getAll(); j.hasMore(); ) {
