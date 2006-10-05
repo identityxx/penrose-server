@@ -14,6 +14,7 @@ import org.safehaus.penrose.util.*;
 import org.safehaus.penrose.util.Formatter;
 import org.ietf.ldap.LDAPException;
 import org.ietf.ldap.LDAPConnection;
+import org.ietf.ldap.LDAPDN;
 
 import javax.naming.directory.*;
 import javax.naming.NamingEnumeration;
@@ -621,7 +622,9 @@ Mapping: ou=Groups,dc=Proxy,dc=Example,dc=org
     ) throws Exception {
 
         String dn = null;
-        for (int i = 0; i < rdns.length; i++) dn = EntryUtil.append(dn, rdns[i]);
+        for (int i = 0; i < rdns.length; i++) {
+            dn = EntryUtil.append(dn, LDAPDN.escapeRDN(rdns[i]));
+        }
 
         if (log.isDebugEnabled()) {
             log.debug(Formatter.displaySeparator(80));

@@ -79,10 +79,14 @@ public class FindHandler {
         while (position < rdns.length) {
 
             String prefix = null;
-            for (int i = 0; i < rdns.length-1-position; i++) prefix = EntryUtil.append(prefix, rdns[i]);
+            for (int i = 0; i < rdns.length-1-position; i++) {
+                prefix = EntryUtil.append(prefix, LDAPDN.escapeRDN(rdns[i]));
+            }
 
             String suffix = null;
-            for (int i = rdns.length-1-position; i < rdns.length; i++) suffix = EntryUtil.append(suffix, rdns[i]);
+            for (int i = rdns.length-1-position; i < rdns.length; i++) {
+                suffix = EntryUtil.append(suffix, LDAPDN.escapeRDN(rdns[i]));
+            }
 
             log.debug("Position ["+position+"]: ["+prefix+"] ["+suffix+"]");
 

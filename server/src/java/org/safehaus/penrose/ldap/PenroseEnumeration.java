@@ -88,7 +88,6 @@ public class PenroseEnumeration implements NamingEnumeration {
             String rdn = rdns[i];
             log.debug(" - "+rdn);
             rdn = LDAPDN.escapeRDN(rdn);
-            rdn = LDAPDN.escapeRDN(rdn); // temporary solution for Apache DS bug
 
             if (sb.length() > 0) sb.append(",");
             sb.append(rdn);

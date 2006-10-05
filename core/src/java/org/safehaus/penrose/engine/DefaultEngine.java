@@ -32,6 +32,7 @@ import org.safehaus.penrose.schema.ObjectClass;
 import org.safehaus.penrose.interpreter.Interpreter;
 import org.ietf.ldap.LDAPException;
 import org.ietf.ldap.LDAPConnection;
+import org.ietf.ldap.LDAPDN;
 
 import javax.naming.directory.*;
 import javax.naming.NamingEnumeration;
@@ -552,7 +553,9 @@ public class DefaultEngine extends Engine {
     ) throws Exception {
 
         String dn = null;
-        for (int i = rdns.length-position-1; i < rdns.length; i++) dn = EntryUtil.append(dn, rdns[i]);
+        for (int i = rdns.length-position-1; i < rdns.length; i++) {
+            dn = EntryUtil.append(dn, LDAPDN.escapeRDN(rdns[i]));
+        }
 
         if (log.isDebugEnabled()) {
             log.debug(Formatter.displaySeparator(80));
