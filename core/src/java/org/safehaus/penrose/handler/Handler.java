@@ -35,6 +35,7 @@ import org.safehaus.penrose.mapping.EntryMapping;
 import org.safehaus.penrose.mapping.AttributeValues;
 import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.Penrose;
+import org.safehaus.penrose.thread.ThreadManager;
 import org.safehaus.penrose.cache.EntryCache;
 import org.safehaus.penrose.cache.CacheConfig;
 import org.safehaus.penrose.util.*;
@@ -83,6 +84,8 @@ public class Handler {
     private ACLEngine aclEngine;
     private FilterTool filterTool;
     private EntryCache entryCache;
+
+    ThreadManager threadManager;
 
     private String status = STOPPED;
 
@@ -256,7 +259,7 @@ public class Handler {
             log.debug("Parent entry "+parentDn+" not found");
             return LDAPException.NO_SUCH_OBJECT;
         }
-
+/*
         List path = new ArrayList();
         AttributeValues sourceValues = new AttributeValues();
 
@@ -268,6 +271,8 @@ public class Handler {
         }
 
         Entry parent = (Entry)path.iterator().next();
+*/
+        Entry parent = findHandler.find(partition, parentDn);
 
         if (parent == null) {
             log.debug("Parent entry "+dn+" not found");
@@ -311,7 +316,7 @@ public class Handler {
             log.debug("Entry "+dn+" not found");
             return LDAPException.NO_SUCH_OBJECT;
         }
-
+/*
         List path = new ArrayList();
         AttributeValues sourceValues = new AttributeValues();
 
@@ -323,6 +328,8 @@ public class Handler {
         }
 
         Entry entry = (Entry)path.iterator().next();
+*/
+        Entry entry = findHandler.find(partition, dn);
 
         if (entry == null) {
             log.debug("Entry "+dn+" not found");
@@ -358,7 +365,7 @@ public class Handler {
             log.debug("Entry "+dn+" not found");
             return LDAPException.NO_SUCH_OBJECT;
         }
-
+/*
         List path = new ArrayList();
         AttributeValues sourceValues = new AttributeValues();
 
@@ -370,6 +377,8 @@ public class Handler {
         }
 
         Entry entry = (Entry)path.iterator().next();
+*/
+        Entry entry = findHandler.find(partition, dn);
 
         if (entry == null) {
             log.debug("Entry "+dn+" not found");
@@ -429,7 +438,7 @@ public class Handler {
             log.debug("Entry "+dn+" not found");
             return LDAPException.NO_SUCH_OBJECT;
         }
-
+/*
         List path = new ArrayList();
         AttributeValues sourceValues = new AttributeValues();
 
@@ -441,6 +450,8 @@ public class Handler {
         }
 
         Entry entry = (Entry)path.iterator().next();
+*/
+        Entry entry = findHandler.find(partition, dn);
 
         if (entry == null) {
             log.debug("Entry "+dn+" not found");
@@ -478,7 +489,7 @@ public class Handler {
             log.debug("Entry "+dn+" not found");
             return LDAPException.NO_SUCH_OBJECT;
         }
-
+/*
         List path = new ArrayList();
         AttributeValues sourceValues = new AttributeValues();
 
@@ -490,6 +501,8 @@ public class Handler {
         }
 
         Entry entry = (Entry)path.iterator().next();
+*/
+        Entry entry = findHandler.find(partition, dn);
 
         if (entry == null) {
             log.debug("Entry "+dn+" not found");
@@ -523,6 +536,69 @@ public class Handler {
             final PenroseSearchResults results
     ) throws Exception {
 
+        if ("".equals(baseDn) && sc.getScope() == LDAPConnection.SCOPE_BASE) {
+            Entry rootDSE = createRootDSE();
+            results.add(rootDSE);
+            results.close();
+            return LDAPException.SUCCESS;
+        }
+
+        final Partition partition = partitionManager.findPartition(baseDn);
+
+        if (partition == null) {
+            log.debug("Entry "+baseDn+" not found");
+            results.setReturnCode(LDAPException.NO_SUCH_OBJECT);
+            return LDAPException.NO_SUCH_OBJECT;
+        }
+
+        threadManager.execute(new Runnable() {
+            public void run() {
+
+                int rc = LDAPException.SUCCESS;
+                try {
+                    rc = searchInBackground(
+                            session,
+                            partition,
+                            baseDn,
+                            filter,
+                            sc,
+                            results
+                    );
+                    results.setReturnCode(rc);
+
+                } catch (LDAPException e) {
+                    rc = e.getResultCode();
+                    results.setReturnCode(rc);
+
+                } catch (Exception e) {
+                    log.error(e.getMessage(), e);
+                    rc = ExceptionUtil.getReturnCode(e);
+                    results.setReturnCode(rc);
+
+                } finally {
+                    results.close();
+
+                    if (rc == LDAPException.SUCCESS) {
+                        log.warn("Search operation succeded.");
+                    } else {
+                        log.warn("Search operation failed. RC="+rc);
+                    }
+                }
+            }
+        });
+
+        return LDAPException.SUCCESS;
+    }
+
+    public int searchInBackground(
+            final PenroseSession session,
+            final Partition partition,
+            final String baseDn,
+            final String filter,
+            final PenroseSearchControls sc,
+            final PenroseSearchResults results
+    ) throws Exception {
+
         String scope = LDAPUtil.getScope(sc.getScope());
 
         Collection attributeNames = sc.getAttributes();
@@ -540,7 +616,6 @@ public class Handler {
         log.debug(" - Attribute Names: "+attributeNames);
         log.debug("");
 
-        final Partition partition = partitionManager.findPartition(baseDn);
         final PenroseSearchResults sr = new PenroseSearchResults();
         final Filter f = FilterTool.parseFilter(filter);
 
@@ -552,6 +627,7 @@ public class Handler {
                     EntryMapping entryMapping = entry.getEntryMapping();
 
                     // check read permission
+                    log.debug("Checking read permission on "+dn);
                     int rc = aclEngine.checkRead(session, partition, entryMapping, dn);
                     if (rc != LDAPException.SUCCESS) {
                         log.debug("Entry \""+entry.getDn()+"\" is not readable.");
@@ -571,7 +647,6 @@ public class Handler {
 
             public void pipelineClosed(PipelineEvent event) {
                 results.setReturnCode(sr.getReturnCode());
-                results.close();
             }
         });
 
@@ -583,26 +658,9 @@ public class Handler {
             }
         });
 
-        if ("".equals(baseDn) && sc.getScope() == LDAPConnection.SCOPE_BASE) {
-            Entry rootDSE = createRootDSE();
-            sr.add(rootDSE);
-            sr.close();
-            return LDAPException.SUCCESS;
-        }
-
-        if (partition == null) {
-            log.debug("Entry "+baseDn+" not found");
-            results.setReturnCode(LDAPException.NO_SUCH_OBJECT);
-            return LDAPException.NO_SUCH_OBJECT;
-        }
-
+/*
         List path = new ArrayList();
-        AttributeValues sourceValues = new AttributeValues();
-
         findHandler.find(partition, baseDn, path, sourceValues);
-
-        AttributeValues parentSourceValues = new AttributeValues();
-        parentSourceValues.add(sourceValues);
 
         if (path.isEmpty()) {
             log.debug("Entry "+baseDn+" not found");
@@ -610,22 +668,43 @@ public class Handler {
             return LDAPException.NO_SUCH_OBJECT;
         }
 
-        Entry entry = (Entry)path.iterator().next();
+        final Entry entry = (Entry)path.iterator().next();
 
         if (entry == null) {
             log.debug("Entry "+baseDn+" not found");
             results.setReturnCode(LDAPException.NO_SUCH_OBJECT);
             return LDAPException.NO_SUCH_OBJECT;
         }
+*/
+        Collection entryMappings = partition.findEntryMappings(baseDn);
 
-        int rc = aclEngine.checkSearch(session, partition, entry.getEntryMapping(), baseDn);
+        int rc = LDAPException.SUCCESS;
 
-        if (rc != LDAPException.SUCCESS) {
-            log.debug("Not allowed to search "+baseDn);
-            return rc;
+        for (Iterator i=entryMappings.iterator(); i.hasNext(); ) {
+            final EntryMapping entryMapping = (EntryMapping)i.next();
+
+            rc = aclEngine.checkSearch(session, partition, entryMapping, baseDn);
+
+            if (rc != LDAPException.SUCCESS) {
+                log.debug("Not allowed to search "+baseDn);
+                continue;
+            }
+
+            AttributeValues sourceValues = new AttributeValues();
+
+            rc = getSearchHandler().search(
+                    session,
+                    partition,
+                    sourceValues,
+                    entryMapping,
+                    baseDn,
+                    f,
+                    sc,
+                    sr
+            );
         }
 
-        return getSearchHandler().search(session, partition, parentSourceValues, entry, f, sc, sr);
+        return rc;
     }
 
     public Entry createRootDSE() throws Exception {
@@ -657,6 +736,9 @@ public class Handler {
             SearchResult searchResult,
             PenroseSearchControls sc
     ) throws Exception {
+
+        Collection attributeMappings = entryMapping.getAttributeMappings();
+        if (attributeMappings.isEmpty()) return;
 
         Attributes attributes = searchResult.getAttributes();
 
@@ -793,6 +875,14 @@ public class Handler {
 
     public void setPartitionManager(PartitionManager partitionManager) {
         this.partitionManager = partitionManager;
+    }
+
+    public ThreadManager getThreadManager() {
+        return threadManager;
+    }
+
+    public void setThreadManager(ThreadManager threadManager) {
+        this.threadManager = threadManager;
     }
 
     // ------------------------------------------------

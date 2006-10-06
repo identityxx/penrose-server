@@ -116,7 +116,7 @@ public class MergeEngine {
         if (log.isDebugEnabled()) {
             log.debug(Formatter.displaySeparator(80));
             log.debug(Formatter.displayLine("MERGE", 80));
-            log.debug(Formatter.displayLine("Entry: "+dn, 80));
+            log.debug(Formatter.displayLine("DN: "+dn, 80));
             log.debug(Formatter.displayLine("PK: "+pk, 80));
 
             if (primarySourceValues != null) {

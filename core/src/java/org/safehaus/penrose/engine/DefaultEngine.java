@@ -30,6 +30,8 @@ import org.safehaus.penrose.util.EntryUtil;
 import org.safehaus.penrose.util.LDAPUtil;
 import org.safehaus.penrose.schema.ObjectClass;
 import org.safehaus.penrose.interpreter.Interpreter;
+import org.safehaus.penrose.handler.Handler;
+import org.safehaus.penrose.handler.FindHandler;
 import org.ietf.ldap.LDAPException;
 import org.ietf.ldap.LDAPConnection;
 import org.ietf.ldap.LDAPDN;
@@ -301,7 +303,7 @@ public class DefaultEngine extends Engine {
             }
         }
 
-        threadManager.execute(new RefreshThread(this));
+        //threadManager.execute(new RefreshThread(this));
 
         //log.debug("Engine started.");
     }
@@ -318,11 +320,141 @@ public class DefaultEngine extends Engine {
         super.stop();
     }
 
+    public List find(
+            Partition partition,
+            AttributeValues sourceValues,
+            EntryMapping entryMapping,
+            String rdns[],
+            int position
+    ) throws Exception {
+
+        String dn = null;
+        for (int i = rdns.length-position-1; i < rdns.length; i++) {
+            dn = EntryUtil.append(dn, LDAPDN.escapeRDN(rdns[i]));
+        }
+
+        if (log.isDebugEnabled()) {
+            log.debug(Formatter.displaySeparator(80));
+            log.debug(Formatter.displayLine("FIND", 80));
+            log.debug(Formatter.displayLine("DN: "+dn, 80));
+            log.debug(Formatter.displayLine("Mapping: "+entryMapping.getDn(), 80));
+
+            if (!sourceValues.isEmpty()) {
+                log.debug(Formatter.displayLine("Source values:", 80));
+                for (Iterator i = sourceValues.getNames().iterator(); i.hasNext(); ) {
+                    String name = (String)i.next();
+                    Collection values = sourceValues.get(name);
+                    log.debug(Formatter.displayLine(" - "+name+": "+values, 80));
+                }
+            }
+
+            log.debug(Formatter.displaySeparator(80));
+        }
+
+        List path = new ArrayList();
+
+        Row rdn = EntryUtil.getRdn(dn);
+
+        EntryData data = new EntryData();
+        data.setDn(dn);
+        data.setFilter(rdn);
+
+        Collection list = new ArrayList();
+        list.add(data);
+
+        AttributeValues loadedSourceValues = loadEngine.loadEntries(
+                partition,
+                sourceValues,
+                entryMapping,
+                list
+        );
+
+        if (loadedSourceValues != null) {
+
+            final Interpreter interpreter = getInterpreterManager().newInstance();
+
+            SourceMapping primarySourceMapping = getPrimarySource(entryMapping);
+
+            Row filter = createFilter(partition, interpreter, primarySourceMapping, entryMapping, rdn);
+
+            Entry entry = mergeEngine.mergeEntries(
+                    partition,
+                    dn,
+                    entryMapping,
+                    sourceValues,
+                    loadedSourceValues,
+                    new ArrayList(),
+                    interpreter,
+                    filter
+            );
+
+            path.add(entry);
+            if (entry != null) sourceValues.add(entry.getSourceValues());
+        }
+
+        if (log.isDebugEnabled()) {
+            log.debug(Formatter.displaySeparator(80));
+            log.debug(Formatter.displayLine("FIND RESULT", 80));
+
+            if (path.isEmpty()) {
+                log.debug(Formatter.displayLine("Entry \""+dn+"\" not found", 80));
+            } else {
+                for (Iterator i=path.iterator(); i.hasNext(); ) {
+                    Entry entry = (Entry)i.next();
+                    log.debug(Formatter.displayLine(" - "+(entry == null ? null : entry.getDn()), 80));
+                }
+            }
+
+            if (!sourceValues.isEmpty()) {
+                log.debug(Formatter.displayLine("Source values:", 80));
+                for (Iterator i = sourceValues.getNames().iterator(); i.hasNext(); ) {
+                    String name = (String)i.next();
+                    Collection values = sourceValues.get(name);
+                    log.debug(Formatter.displayLine(" - "+name+": "+values, 80));
+                }
+            }
+
+            log.debug(Formatter.displaySeparator(80));
+        }
+
+        return path;
+    }
+
+    public int search(
+            PenroseSession session,
+            Partition partition,
+            AttributeValues sourceValues,
+            EntryMapping entryMapping,
+            String baseDn,
+            Filter filter,
+            PenroseSearchControls sc,
+            PenroseSearchResults results
+    ) throws Exception {
+
+        Handler handler = penrose.getHandler();
+        FindHandler findHandler = handler.getFindHandler();
+
+        List path = new ArrayList();
+        findHandler.find(partition, baseDn, path, sourceValues);
+
+        Entry entry = (Entry)path.iterator().next();
+
+        if (entry == null) {
+            log.debug("Entry "+baseDn+" not found");
+            return LDAPException.NO_SUCH_OBJECT;
+        }
+
+        if (sc.getScope() == PenroseSearchControls.SCOPE_BASE || sc.getScope() == PenroseSearchControls.SCOPE_SUB) {
+            results.add(entry);
+        }
+
+        return LDAPException.SUCCESS;
+    }
+
     public int expand(
             PenroseSession session,
             final Partition partition,
-            final Entry baseEntry,
-            final AttributeValues parentSourceValues,
+            final AttributeValues sourceValues,
             final EntryMapping entryMapping,
             final String baseDn,
             final Filter filter,
@@ -339,10 +471,10 @@ public class DefaultEngine extends Engine {
             log.debug(Formatter.displayLine("Scope: "+LDAPUtil.getScope(sc.getScope()), 80));
             log.debug(Formatter.displayLine("Parent source values:", 80));
 
-            if (parentSourceValues != null) {
-                for (Iterator i = parentSourceValues.getNames().iterator(); i.hasNext(); ) {
+            if (sourceValues != null) {
+                for (Iterator i = sourceValues.getNames().iterator(); i.hasNext(); ) {
                     String name = (String)i.next();
-                    Collection values = parentSourceValues.get(name);
+                    Collection values = sourceValues.get(name);
                     log.debug(Formatter.displayLine(" - "+name+": "+values, 80));
                 }
             }
@@ -470,7 +602,7 @@ public class DefaultEngine extends Engine {
                 }
             });
 
-            searchEngine.search(partition, baseEntry, parentSourceValues, entryMapping, filter, dns);
+            searchEngine.search(partition, sourceValues, entryMapping, filter, dns);
 
             dns.close();
 
@@ -510,144 +642,6 @@ public class DefaultEngine extends Engine {
                 log.debug(Formatter.displaySeparator(80));
             }
         }
-    }
-
-    public int search(
-            PenroseSession session,
-            Partition partition,
-            AttributeValues parentSourceValues,
-            EntryMapping entryMapping,
-            Entry baseEntry,
-            String baseDn,
-            Filter filter,
-            PenroseSearchControls sc,
-            PenroseSearchResults results
-    ) throws Exception {
-
-        try {
-            if (sc.getScope() != LDAPConnection.SCOPE_BASE && sc.getScope() != LDAPConnection.SCOPE_SUB) {
-                return LDAPException.SUCCESS;
-            }
-
-            results.add(baseEntry);
-
-            return LDAPException.SUCCESS;
-
-        } catch (Exception e) {
-            log.debug(e.getMessage(), e);
-            return LDAPException.OPERATIONS_ERROR;
-
-        } finally {
-            results.close();
-        }
-    }
-
-    public int find(
-            Partition partition,
-            Entry parent,
-            AttributeValues sourceValues,
-            EntryMapping entryMapping,
-            String rdns[],
-            int position,
-            List path
-    ) throws Exception {
-
-        String dn = null;
-        for (int i = rdns.length-position-1; i < rdns.length; i++) {
-            dn = EntryUtil.append(dn, LDAPDN.escapeRDN(rdns[i]));
-        }
-
-        if (log.isDebugEnabled()) {
-            log.debug(Formatter.displaySeparator(80));
-            log.debug(Formatter.displayLine("FIND", 80));
-            log.debug(Formatter.displayLine("Entry DN: "+dn, 80));
-            log.debug(Formatter.displayLine("Parent source values:", 80));
-
-            if (sourceValues != null) {
-                for (Iterator i = sourceValues.getNames().iterator(); i.hasNext(); ) {
-                    String name = (String)i.next();
-                    Collection values = sourceValues.get(name);
-                    log.debug(Formatter.displayLine(" - "+name+": "+values, 80));
-                }
-            }
-
-            log.debug(Formatter.displaySeparator(80));
-        }
-
-        Row rdn = EntryUtil.getRdn(dn);
-
-        EntryData data = new EntryData();
-        data.setDn(dn);
-        data.setFilter(rdn);
-
-        Collection list = new ArrayList();
-        list.add(data);
-
-        AttributeValues loadedSourceValues = loadEngine.loadEntries(
-                partition,
-                sourceValues,
-                entryMapping,
-                list
-        );
-
-        if (loadedSourceValues == null) return 0;
-        
-        final Interpreter interpreter = getInterpreterManager().newInstance();
-
-        SourceMapping primarySourceMapping = getPrimarySource(entryMapping);
-
-        Row filter = createFilter(partition, interpreter, primarySourceMapping, entryMapping, rdn);
-
-        Entry entry = mergeEngine.mergeEntries(
-                partition,
-                dn,
-                entryMapping,
-                sourceValues,
-                loadedSourceValues,
-                new ArrayList(),
-                interpreter,
-                filter
-        );
-
-/*
-        PenroseSearchResults results = new PenroseSearchResults();
-
-        PenroseSearchControls sc = new PenroseSearchControls();
-        sc.setScope(PenroseSearchControls.SCOPE_BASE);
-
-        Filter filter = FilterTool.createFilter(rdn);
-
-        expand(
-                session,
-                partition,
-                parentPath,
-                sourceValues,
-                entryMapping,
-                dn,
-                filter,
-                sc,
-                results
-        );
-
-        results.close();
-
-        Entry entry = results.hasNext() ? (Entry)results.next() : null;
-*/
-        if (log.isDebugEnabled()) {
-            log.debug(Formatter.displaySeparator(80));
-            log.debug(Formatter.displayLine("FIND RESULT", 80));
-
-            log.debug(Formatter.displayLine("Path:", 80));
-            if (entry != null) {
-                log.debug(Formatter.displayLine(" - "+entry.getDn(), 80));
-            }
-
-            log.debug(Formatter.displaySeparator(80));
-        }
-
-        path.add(0, entry);
-
-        return 1;
     }
 }
 

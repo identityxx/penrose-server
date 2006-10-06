@@ -381,38 +381,120 @@ public class ProxyEngine extends Engine {
         }
     }
 
+    public List find(
+            Partition partition,
+            AttributeValues sourceValues,
+            EntryMapping entryMapping,
+            String rdns[],
+            int position
+    ) throws Exception {
+
+        String dn = null;
+        for (int i = 0; i < rdns.length; i++) {
+            dn = EntryUtil.append(dn, LDAPDN.escapeRDN(rdns[i]));
+        }
+
+        if (log.isDebugEnabled()) {
+            log.debug(Formatter.displaySeparator(80));
+            log.debug(Formatter.displayLine("FIND", 80));
+            log.debug(Formatter.displayLine("DN: "+dn, 80));
+            log.debug(Formatter.displayLine("Mapping: "+entryMapping.getDn(), 80));
+
+            if (!sourceValues.isEmpty()) {
+                log.debug(Formatter.displayLine("Source values:", 80));
+                for (Iterator i = sourceValues.getNames().iterator(); i.hasNext(); ) {
+                    String name = (String)i.next();
+                    Collection values = sourceValues.get(name);
+                    log.debug(Formatter.displayLine(" - "+name+": "+values, 80));
+                }
+            }
+
+            log.debug(Formatter.displaySeparator(80));
+        }
+
+        List path = new ArrayList();
+
+        PenroseSearchResults results = new PenroseSearchResults();
+
+        PenroseSearchControls sc = new PenroseSearchControls();
+        sc.setScope(PenroseSearchControls.SCOPE_BASE);
+
+        Row rdn = EntryUtil.getRdn(dn);
+        Filter filter = FilterTool.createFilter(rdn);
+
+        expand(
+                null,
+                partition,
+                sourceValues,
+                entryMapping,
+                dn,
+                filter,
+                sc,
+                results
+        );
+
+        results.close();
+
+        if (results.hasNext()) {
+            Entry entry = (Entry)results.next();
+
+            path.add(entry);
+
+            for (int i=0; i<rdns.length-position-1; i++) {
+                path.add(null);
+            }
+        }
+
+        if (log.isDebugEnabled()) {
+            log.debug(Formatter.displaySeparator(80));
+            log.debug(Formatter.displayLine("FIND RESULT", 80));
+
+            if (path.isEmpty()) {
+                log.debug(Formatter.displayLine("Entry \""+dn+"\" not found", 80));
+            } else {
+                for (Iterator i=path.iterator(); i.hasNext(); ) {
+                    Entry entry = (Entry)i.next();
+                    log.debug(Formatter.displayLine(" - "+(entry == null ? null : entry.getDn()), 80));
+                }
+            }
+
+            if (!sourceValues.isEmpty()) {
+                log.debug(Formatter.displayLine("Source values:", 80));
+                for (Iterator i = sourceValues.getNames().iterator(); i.hasNext(); ) {
+                    String name = (String)i.next();
+                    Collection values = sourceValues.get(name);
+                    log.debug(Formatter.displayLine(" - "+name+": "+values, 80));
+                }
+            }
+
+            log.debug(Formatter.displaySeparator(80));
+        }
+
+
+        return path;
+    }
+
     public int search(
-            PenroseSession session,
+            final PenroseSession session,
             final Partition partition,
-            AttributeValues parentSourceValues,
+            final AttributeValues sourceValues,
             final EntryMapping entryMapping,
-            Entry baseEntry,
             final String baseDn,
             final Filter filter,
-            PenroseSearchControls sc,
+            final PenroseSearchControls sc,
             final PenroseSearchResults results
     ) throws Exception {
 
-        if (sc.getScope() == LDAPConnection.SCOPE_BASE) {
-
-            results.add(baseEntry);
-
-        } else {
-
-            expand(
-                    session,
-                    partition,
-                    baseEntry,
-                    parentSourceValues,
-                    entryMapping,
-                    baseDn,
-                    filter,
-                    sc,
-                    results
-            );
-        }
-
-        results.close();
+        expand(
+                session,
+                partition,
+                sourceValues,
+                entryMapping,
+                baseDn,
+                filter,
+                sc,
+                results
+        );
 
         return LDAPException.SUCCESS;
     }
@@ -420,7 +502,6 @@ public class ProxyEngine extends Engine {
     public int expand(
             PenroseSession session,
             final Partition partition,
-            Entry baseEntry,
             AttributeValues sourceValues,
             final EntryMapping entryMapping,
             final String baseDn,
@@ -609,80 +690,5 @@ Mapping: ou=Groups,dc=Proxy,dc=Example,dc=org
         } finally {
             client.close();
         }
-    }
-
-    public int find(
-            Partition partition,
-            Entry parent,
-            AttributeValues sourceValues,
-            EntryMapping entryMapping,
-            String rdns[],
-            int position,
-            List path
-    ) throws Exception {
-
-        String dn = null;
-        for (int i = 0; i < rdns.length; i++) {
-            dn = EntryUtil.append(dn, LDAPDN.escapeRDN(rdns[i]));
-        }
-
-        if (log.isDebugEnabled()) {
-            log.debug(Formatter.displaySeparator(80));
-            log.debug(Formatter.displayLine("FIND", 80));
-            log.debug(Formatter.displayLine("Entry: "+dn, 80));
-            log.debug(Formatter.displayLine("Source values:", 80));
-
-            if (sourceValues != null) {
-                for (Iterator i = sourceValues.getNames().iterator(); i.hasNext(); ) {
-                    String name = (String)i.next();
-                    Collection values = sourceValues.get(name);
-                    log.debug(Formatter.displayLine(" - "+name+": "+values, 80));
-                }
-            }
-
-            log.debug(Formatter.displaySeparator(80));
-        }
-
-        PenroseSearchResults results = new PenroseSearchResults();
-
-        PenroseSearchControls sc = new PenroseSearchControls();
-        sc.setScope(PenroseSearchControls.SCOPE_BASE);
-
-        Row rdn = EntryUtil.getRdn(dn);
-        Filter filter = FilterTool.createFilter(rdn);
-
-        expand(
-                null,
-                partition,
-                parent,
-                sourceValues,
-                entryMapping,
-                dn,
-                filter,
-                sc,
-                results
-        );
-
-        results.close();
-
-        if (!results.hasNext()) return 0;
-
-        Entry entry = (Entry)results.next();
-
-        if (log.isDebugEnabled()) {
-            log.debug(Formatter.displaySeparator(80));
-            log.debug(Formatter.displayLine("FIND RESULT", 80));
-
-            log.debug(Formatter.displayLine("Path:", 80));
-            if (entry != null) {
-                log.debug(Formatter.displayLine(" - "+entry.getDn(), 80));
-            }
-
-            log.debug(Formatter.displaySeparator(80));
-        }
-
-        path.add(0, entry);
-
-        return position;
     }
 }

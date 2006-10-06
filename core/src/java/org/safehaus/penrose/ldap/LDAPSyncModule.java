@@ -23,7 +23,6 @@ import org.safehaus.penrose.mapping.EntryMapping;
 import org.safehaus.penrose.cache.EntryCache;
 import org.safehaus.penrose.cache.EntryCacheListener;
 import org.safehaus.penrose.cache.EntryCacheEvent;
-import org.safehaus.penrose.engine.Engine;
 import org.safehaus.penrose.connector.ConnectionManager;
 import org.safehaus.penrose.session.PenroseSearchResults;
 import org.safehaus.penrose.session.PenroseSearchControls;
@@ -36,6 +35,7 @@ import javax.naming.directory.*;
 import javax.naming.NamingEnumeration;
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.Collection;
 
 /**
  * @author Endi S. Dewata
@@ -126,9 +126,9 @@ public class LDAPSyncModule extends Module implements EntryCacheListener {
 
         String baseDn = (String)event.getSource();
         Partition partition = partitionManager.findPartition(baseDn);
-        EntryMapping entryMapping = partition.findEntryMapping(baseDn);
-        
-        if (entryMapping == null) return;
+        Collection entryMappings = partition.findEntryMappings(baseDn);
+
+        if (entryMappings == null || entryMappings.isEmpty()) return;
 
         DirContext ctx = null;
 

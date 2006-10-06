@@ -514,8 +514,10 @@ public class FilterTool {
         String attributeName = filter.getAttribute();
         String operator = filter.getOperator();
         String attributeValue = filter.getValue().toLowerCase();
+        log.debug("Checking "+attributeName+" "+operator+" "+attributeValue);
 
         Collection values = attributeValues.get(attributeName);
+        if (values == null) return false;
 
         for (Iterator i=values.iterator(); i.hasNext(); ) {
             String value = i.next().toString().toLowerCase();

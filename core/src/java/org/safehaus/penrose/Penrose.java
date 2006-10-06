@@ -186,13 +186,13 @@ public class Penrose {
 
     public void initEngineManager() throws Exception {
         engineManager = new EngineManager();
+        engineManager.setPenrose(this);
         engineManager.setPenroseConfig(penroseConfig);
         engineManager.setSchemaManager(schemaManager);
         engineManager.setInterpreterFactory(interpreterManager);
         engineManager.setConnectorManager(connectorManager);
         engineManager.setConnectionManager(connectionManager);
         engineManager.setPartitionManager(partitionManager);
-        engineManager.setThreadManager(threadManager);
     }
 
     public void initEventManager() throws Exception {
@@ -208,6 +208,7 @@ public class Penrose {
         handlerManager.setInterpreterFactory(interpreterManager);
         handlerManager.setPartitionManager(partitionManager);
         handlerManager.setModuleManager(moduleManager);
+        handlerManager.setThreadManager(threadManager);
         handlerManager.setPenrose(this);
     }
 

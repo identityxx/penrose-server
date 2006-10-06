@@ -51,7 +51,6 @@ public class SearchEngine {
 
     public void search(
             Partition partition,
-            final Entry parent,
             final AttributeValues parentSourceValues,
             final EntryMapping entryMapping,
             final Filter filter,
@@ -98,7 +97,7 @@ public class SearchEngine {
         }
 
         try {
-            searchDynamic(partition, parent, parentSourceValues, entryMapping, filter, results);
+            searchDynamic(partition, parentSourceValues, entryMapping, filter, results);
 
         } catch (Throwable e) {
             log.error(e.getMessage(), e);
@@ -131,7 +130,6 @@ public class SearchEngine {
 
     public void searchDynamic(
             Partition partition,
-            Entry parent,
             final AttributeValues parentSourceValues,
             final EntryMapping entryMapping,
             final Filter filter,

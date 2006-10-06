@@ -25,6 +25,7 @@ import org.safehaus.penrose.schema.SchemaManager;
 import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.partition.PartitionManager;
 import org.safehaus.penrose.thread.ThreadManager;
+import org.safehaus.penrose.Penrose;
 import org.apache.log4j.Logger;
 
 import java.util.TreeMap;
@@ -40,13 +41,13 @@ public class EngineManager {
     
     Map engines = new TreeMap();
 
+    private Penrose penrose;
     private PenroseConfig penroseConfig;
     private SchemaManager schemaManager;
     private InterpreterManager interpreterManager;
     private ConnectorManager connectorManager;
     private ConnectionManager connectionManager;
     private PartitionManager partitionManager;
-    private ThreadManager threadManager;
 
     public EngineManager() {
     }
@@ -60,13 +61,13 @@ public class EngineManager {
         Engine engine = (Engine)clazz.newInstance();
 
         engine.setEngineConfig(engineConfig);
+        engine.setPenrose(penrose);
         engine.setPenroseConfig(penroseConfig);
         engine.setSchemaManager(schemaManager);
         engine.setInterpreterFactory(interpreterManager);
         engine.setConnectorManager(connectorManager);
         engine.setConnectionManager(connectionManager);
         engine.setPartitionManager(partitionManager);
-        engine.setThreadManager(threadManager);
 
         engine.init();
 
@@ -135,19 +136,19 @@ public class EngineManager {
         this.partitionManager = partitionManager;
     }
 
-    public ThreadManager getThreadManager() {
-        return threadManager;
-    }
-
-    public void setThreadManager(ThreadManager threadManager) {
-        this.threadManager = threadManager;
-    }
-
     public ConnectorManager getConnectorManager() {
         return connectorManager;
     }
 
     public void setConnectorManager(ConnectorManager connectorManager) {
         this.connectorManager = connectorManager;
+    }
+
+    public Penrose getPenrose() {
+        return penrose;
+    }
+
+    public void setPenrose(Penrose penrose) {
+        this.penrose = penrose;
     }
 }

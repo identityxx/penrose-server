@@ -24,7 +24,6 @@ import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.pipeline.PipelineAdapter;
 import org.safehaus.penrose.pipeline.PipelineEvent;
 import org.safehaus.penrose.util.EntryUtil;
-import org.safehaus.penrose.util.ExceptionUtil;
 import org.safehaus.penrose.schema.SchemaManager;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.filter.Filter;
@@ -46,64 +45,6 @@ public class SearchHandler {
 
     public SearchHandler(Handler handler) {
         this.handler = handler;
-    }
-
-    /**
-     *
-     * @param session
-     * @param entry
-     * @param filter
-     * @param sc
-     * @param results This will be filled with objects of type Entry.
-     * @return return code
-     * @throws Exception
-     */
-    public int search(
-            final PenroseSession session,
-            final Partition partition,
-            final AttributeValues parentSourceValues,
-            final Entry entry,
-            final Filter filter,
-            final PenroseSearchControls sc,
-            final PenroseSearchResults results
-    ) throws Exception {
-
-        handler.getEngine().getThreadManager().execute(new Runnable() {
-            public void run() {
-
-                int rc = LDAPException.SUCCESS;
-                try {
-                    rc = searchInBackground(
-                            session,
-                            partition,
-                            parentSourceValues,
-                            entry,
-                            filter,
-                            sc,
-                            results
-                    );
-
-                } catch (LDAPException e) {
-                    rc = e.getResultCode();
-
-                } catch (Exception e) {
-                    log.error(e.getMessage(), e);
-                    rc = ExceptionUtil.getReturnCode(e);
-
-                } finally {
-                    results.setReturnCode(rc);
-                    results.close();
-
-                    if (rc == LDAPException.SUCCESS) {
-                        log.warn("Search operation succeded.");
-                    } else {
-                        log.warn("Search operation failed. RC="+rc);
-                    }
-                }
-            }
-        });
-
-        return LDAPException.SUCCESS;
     }
 
     public String normalize(String dn) {
@@ -131,17 +72,19 @@ public class SearchHandler {
         return newDn;
     }
 
-    public int searchInBackground(
+    public int search(
             final PenroseSession session,
             final Partition partition,
-            final AttributeValues parentSourceValues,
-            final Entry entry,
+            final AttributeValues sourceValues,
+            final EntryMapping entryMapping,
+            final String baseDn,
             final Filter filter,
             final PenroseSearchControls sc,
             final PenroseSearchResults results
     ) throws Exception {
 
-        EntryMapping entryMapping = entry.getEntryMapping();
+        log.debug("Searching "+baseDn);
+        log.debug("in mapping "+entryMapping.getDn());
 
         final PenroseSearchResults sr = new PenroseSearchResults();
         final EntryCache cache = handler.getEntryCache();
@@ -151,16 +94,16 @@ public class SearchHandler {
                 try {
                     Entry child = (Entry)event.getObject();
 
-                    // check filter
+                    log.debug("Checking filter "+filter+" on "+child.getDn());
                     if (!handler.getFilterTool().isValid(child, filter)) {
                         log.debug("Entry \""+child.getDn()+"\" doesn't match search filter.");
                         return;
                     }
 
-                    // store in entry cache
-                    EntryMapping entryMapping = child.getEntryMapping();
-                    cache.add(partition, entryMapping, filter, child.getDn());
-                    cache.put(partition, entryMapping, child);
+                    log.debug("Storing "+child.getDn()+" in cache");
+                    EntryMapping childMapping = child.getEntryMapping();
+                    cache.add(partition, childMapping, filter, child.getDn());
+                    cache.put(partition, childMapping, child);
 
                     results.add(child);
 
@@ -195,19 +138,18 @@ public class SearchHandler {
         engine.search(
                 session,
                 partition,
-                parentSourceValues,
-                entry.getEntryMapping(),
-                entry,
-                entry.getDn(),
+                sourceValues,
+                entryMapping,
+                baseDn,
                 filter,
                 sc,
                 sr
         );
 
         if (sc.getScope() == LDAPConnection.SCOPE_ONE || sc.getScope() == LDAPConnection.SCOPE_SUB) { // one level or subtree
-            log.debug("Searching children of \""+entry.getEntryMapping().getDn()+"\"");
+            log.debug("Searching children of \""+entryMapping.getDn()+"\"");
 
-            Collection children = partition.getChildren(entry.getEntryMapping());
+            Collection children = partition.getChildren(entryMapping);
 
             for (Iterator i = children.iterator(); i.hasNext();) {
                 EntryMapping childMapping = (EntryMapping) i.next();
@@ -215,10 +157,9 @@ public class SearchHandler {
                 searchChildren(
                         session,
                         partition,
-                        entry,
-                        parentSourceValues,
+                        sourceValues,
                         childMapping,
-                        entry.getDn(),
+                        baseDn,
                         filter,
                         sc,
                         sr
@@ -234,8 +175,7 @@ public class SearchHandler {
     public void searchChildren(
             PenroseSession session,
             final Partition partition,
-            Entry parent,
-            AttributeValues parentSourceValues,
+            AttributeValues sourceValues,
             final EntryMapping entryMapping,
             String baseDn,
             Filter filter,
@@ -279,8 +219,7 @@ public class SearchHandler {
                 engine.expand(
                         session,
                         partition,
-                        parent,
-                        parentSourceValues,
+                        sourceValues,
                         entryMapping,
                         baseDn,
                         filter,
@@ -307,18 +246,18 @@ public class SearchHandler {
         log.debug("Searching children of " + entryMapping.getDn());
 
         Interpreter interpreter = handler.getEngine().getInterpreterManager().newInstance();
-        AttributeValues sourceValues = handler.getEngine().computeAttributeValues(entryMapping, interpreter);
+        AttributeValues sv = handler.getEngine().computeAttributeValues(entryMapping, interpreter);
         interpreter.clear();
 
-        AttributeValues newParentSourceValues = new AttributeValues();
-        newParentSourceValues.add("parent", parentSourceValues);
-        newParentSourceValues.add("parent", sourceValues);
-        //AttributeValues newParentSourceValues = handler.pushSourceValues(parentSourceValues, sourceValues);
+        AttributeValues newSourceValues = new AttributeValues();
+        newSourceValues.add("parent", sourceValues);
+        newSourceValues.add("parent", sv);
+        //AttributeValues newSourceValues = handler.pushSourceValues(sourceValues, sv);
 
         log.debug("New parent source values:");
-        for (Iterator i = newParentSourceValues.getNames().iterator(); i.hasNext(); ) {
+        for (Iterator i = newSourceValues.getNames().iterator(); i.hasNext(); ) {
             String name = (String)i.next();
-            Collection values = newParentSourceValues.get(name);
+            Collection values = newSourceValues.get(name);
             log.debug(" - "+name+": "+values);
         }
 
@@ -330,8 +269,7 @@ public class SearchHandler {
             searchChildren(
                     session,
                     partition,
-                    null,
-                    newParentSourceValues,
+                    newSourceValues,
                     childMapping,
                     baseDn,
                     filter,

@@ -39,6 +39,7 @@ import org.safehaus.penrose.session.PenroseSearchResults;
 import org.safehaus.penrose.session.PenroseSearchControls;
 import org.safehaus.penrose.session.PenroseSession;
 import org.safehaus.penrose.util.EntryUtil;
+import org.safehaus.penrose.Penrose;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
@@ -52,6 +53,7 @@ public abstract class Engine {
 
     public Logger log = LoggerFactory.getLogger(getClass());
 
+    public Penrose penrose;
     public EngineConfig engineConfig;
     public PenroseConfig penroseConfig;
 
@@ -63,7 +65,6 @@ public abstract class Engine {
 
     public boolean stopping = false;
 
-    ThreadManager threadManager;
     public EngineFilterTool engineFilterTool;
 
     private FilterTool filterTool;
@@ -540,24 +541,21 @@ public abstract class Engine {
     // Search
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    public int find(
+    public List find(
             Partition partition,
-            Entry parent,
             AttributeValues sourceValues,
             EntryMapping entryMapping,
             String rdns[],
-            int position,
-            List path
+            int position
     ) throws Exception {
-        return 0;
+        return new ArrayList();
     }
 
     public abstract int search(
             PenroseSession session,
             Partition partition,
-            AttributeValues parentSourceValues,
+            AttributeValues sourceValues,
             EntryMapping entryMapping,
-            Entry baseEntry,
             String baseDn,
             Filter filter,
             PenroseSearchControls sc,
@@ -565,9 +563,9 @@ public abstract class Engine {
     ) throws Exception;
 
     public abstract int expand(
-            PenroseSession session, Partition partition,
-            Entry baseEntry,
-            AttributeValues parentSourceValues,
+            PenroseSession session,
+            Partition partition,
+            AttributeValues sourceValues,
             EntryMapping entryMapping,
             String baseDn,
             Filter filter,
@@ -790,14 +788,6 @@ public abstract class Engine {
         return penroseConfig;
     }
 
-    public ThreadManager getThreadManager() {
-        return threadManager;
-    }
-
-    public void setThreadManager(ThreadManager threadManager) {
-        this.threadManager = threadManager;
-    }
-
     public FilterTool getFilterTool() {
         return filterTool;
     }
@@ -812,6 +802,14 @@ public abstract class Engine {
 
     public void setConnectorManager(ConnectorManager connectorManager) {
         this.connectorManager = connectorManager;
+    }
+
+    public Penrose getPenrose() {
+        return penrose;
+    }
+
+    public void setPenrose(Penrose penrose) {
+        this.penrose = penrose;
     }
 }
 

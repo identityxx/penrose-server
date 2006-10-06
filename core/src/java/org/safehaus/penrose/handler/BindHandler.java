@@ -72,53 +72,60 @@ public class BindHandler {
 
     public int performBind(PenroseSession session, Partition partition, String dn, String password) throws Exception {
 
-        EntryMapping entryMapping = partition.findEntryMapping(dn);
+        Collection entryMappings = partition.findEntryMappings(dn);
 
-        String engineName = "DEFAULT";
-        if (partition.isProxy(entryMapping)) engineName = "PROXY";
+        for (Iterator i=entryMappings.iterator(); i.hasNext(); ) {
+            EntryMapping entryMapping = (EntryMapping)i.next();
 
-        Engine engine = handler.getEngine(engineName);
+            String engineName = "DEFAULT";
+            if (partition.isProxy(entryMapping)) engineName = "PROXY";
 
-        if (engine == null) {
-            log.debug("Engine "+engineName+" not found");
-            return LDAPException.OPERATIONS_ERROR;
-        }
+            Engine engine = handler.getEngine(engineName);
 
-        // attempt direct bind to the source
-        int rc = engine.bind(session, partition, entryMapping, dn, password);
-        if (rc == LDAPException.SUCCESS) return rc;
+            if (engine == null) {
+                log.debug("Engine "+engineName+" not found");
+                continue;
+            }
 
-        // attempt to compare the userPassword attribute
-        List path = new ArrayList();
-        AttributeValues sourceValues = new AttributeValues();
+            // attempt direct bind to the source
+            int rc = engine.bind(session, partition, entryMapping, dn, password);
+            if (rc == LDAPException.SUCCESS) return rc;
 
-        handler.getFindHandler().find(partition, dn, path, sourceValues);
+            // attempt to compare the userPassword attribute
+/*
+            List path = new ArrayList();
+            AttributeValues sourceValues = new AttributeValues();
 
-        if (path.isEmpty()) {
-            log.debug("Entry "+dn+" not found");
-            return LDAPException.INVALID_CREDENTIALS;
-        }
+            handler.getFindHandler().find(partition, dn, path, sourceValues);
 
-        Entry entry = (Entry)path.iterator().next();
+            if (path.isEmpty()) {
+                log.debug("Entry "+dn+" not found");
+                continue;
+            }
 
-        if (entry == null) {
-            log.debug("Entry "+dn+" not found");
-            return LDAPException.INVALID_CREDENTIALS;
-        }
+            Entry entry = (Entry)path.iterator().next();
+*/
+            Entry entry = handler.getFindHandler().find(partition, dn);
+            
+            if (entry == null) {
+                log.debug("Entry "+dn+" not found");
+                continue;
+            }
 
-        AttributeValues attributeValues = entry.getAttributeValues();
+            AttributeValues attributeValues = entry.getAttributeValues();
 
-        Collection userPasswords = attributeValues.get("userPassword");
+            Collection userPasswords = attributeValues.get("userPassword");
 
-        if (userPasswords == null) {
-            log.debug("Attribute userPassword not found");
-            return LDAPException.INVALID_CREDENTIALS;
-        }
+            if (userPasswords == null) {
+                log.debug("Attribute userPassword not found");
+                continue;
+            }
 
-        for (Iterator i = userPasswords.iterator(); i.hasNext(); ) {
-            Object userPassword = i.next();
-            log.debug("userPassword: "+userPassword);
-            if (PasswordUtil.comparePassword(password, userPassword)) return LDAPException.SUCCESS;
+            for (Iterator j = userPasswords.iterator(); j.hasNext(); ) {
+                Object userPassword = j.next();
+                log.debug("userPassword: "+userPassword);
+                if (PasswordUtil.comparePassword(password, userPassword)) return LDAPException.SUCCESS;
+            }
         }
 
         return LDAPException.INVALID_CREDENTIALS;

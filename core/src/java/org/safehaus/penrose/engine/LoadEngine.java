@@ -251,7 +251,7 @@ public class LoadEngine {
         if (log.isDebugEnabled()) {
             log.debug(Formatter.displaySeparator(80));
             log.debug(Formatter.displayLine("LOAD", 80));
-            log.debug(Formatter.displayLine("Entry: "+entryMapping.getDn(), 80));
+            log.debug(Formatter.displayLine("DN: "+entryMapping.getDn(), 80));
 
             log.debug(Formatter.displayLine("Primary Keys:", 80));
             for (Iterator i=list.iterator(); i.hasNext(); ) {

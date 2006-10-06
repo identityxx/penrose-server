@@ -80,13 +80,13 @@ public class PenroseEnumeration implements NamingEnumeration {
         SearchResult result = (SearchResult)searchResults.next();
 
         String dn = result.getName();
-        log.debug("Converting dn: "+dn);
+        //log.debug("Converting dn: "+dn);
 
         String rdns[] = LDAPDN.explodeDN(dn, false);
         StringBuffer sb = new StringBuffer();
         for (int i=0; i<rdns.length; i++) {
             String rdn = rdns[i];
-            log.debug(" - "+rdn);
+            //log.debug(" - "+rdn);
             rdn = LDAPDN.escapeRDN(rdn);
 
             if (sb.length() > 0) sb.append(",");

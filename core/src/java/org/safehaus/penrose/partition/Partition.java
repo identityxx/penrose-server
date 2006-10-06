@@ -57,12 +57,6 @@ public class Partition {
         return entryMappings.containsKey(entryMapping.getDn().toLowerCase());
     }
 
-    public EntryMapping getEntryMapping(String dn) {
-        Collection c = getEntryMappings(dn);
-        if (c == null || c.isEmpty()) return null;
-        return (EntryMapping)c.iterator().next();
-    }
-
     public Collection getEntryMappings(String dn) {
         if (dn == null) return null;
 
@@ -418,13 +412,6 @@ public class Partition {
             list.addAll(c);
         }
         return list;
-    }
-
-    public EntryMapping findEntryMapping(String dn) throws Exception {
-        //.log.debug("Finding entry mapping \""+dn+"\" in partition "+getName());
-        Collection c = findEntryMappings(dn);
-        if (c == null || c.isEmpty()) return null;
-        return (EntryMapping)c.iterator().next();
     }
 
     public Collection findEntryMappings(String dn) throws Exception {
