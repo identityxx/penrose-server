@@ -222,7 +222,7 @@ public class ACLEngine {
         //log.debug("Adding attributes: "+attributes);
         StringTokenizer st = new StringTokenizer(attributes, ",");
         while (st.hasMoreTokens()) {
-            String attributeName = st.nextToken().trim();
+            String attributeName = st.nextToken().trim().toLowerCase();
             list.add(attributeName);
             //log.debug("Adding attribute: "+attributeName);
         }
@@ -309,14 +309,20 @@ public class ACLEngine {
             Collection grants,
             Collection denies) throws Exception {
 
-        if (entryMapping == null) {
-            grants.addAll(attributeNames);
-            return;
-        }
+        if (entryMapping == null) return;
+
+        EntryMapping parentMapping = partition.getParent(entryMapping);
+        getReadableAttributes(bindDn, partition, parentMapping, targetDn, ACI.SCOPE_SUBTREE, attributeNames, grants, denies);
 
         log.debug("Checking ACL in "+entryMapping.getDn()+":");
 
+        List acls = new ArrayList();
         for (Iterator i=entryMapping.getACL().iterator(); i.hasNext(); ) {
+            ACI aci = (ACI)i.next();
+            acls.add(0, aci);
+        }
+
+        for (Iterator i=acls.iterator(); i.hasNext(); ) {
             ACI aci = (ACI)i.next();
             log.debug(" - "+aci);
 
@@ -339,13 +345,13 @@ public class ACLEngine {
                 Collection attributes = getAttributes(aci.getAttributes());
 
                 if (aci.getAction().equals(ACI.ACTION_GRANT)) {
-                    attributes.removeAll(denies);
                     log.debug("   ==> Granting read access to attributes "+attributes);
                     grants.addAll(attributes);
+                    denies.removeAll(attributes);
 
                 } else if (aci.getAction().equals(ACI.ACTION_DENY)) {
-                    attributes.removeAll(grants);
                     log.debug("   ==> Denying read access to attributes "+attributes);
+                    grants.removeAll(attributes);
                     denies.addAll(attributes);
                 }
 
@@ -354,13 +360,13 @@ public class ACLEngine {
 
             if (aci.getTarget().equals(ACI.TARGET_OBJECT)) {
                 if (aci.getAction().equals(ACI.ACTION_GRANT)) {
-                    attributeNames.removeAll(denies);
                     log.debug("   ==> Granting read access to attributes "+attributeNames);
                     grants.addAll(attributeNames);
+                    denies.removeAll(attributeNames);
 
                 } else if (aci.getAction().equals(ACI.ACTION_DENY)) {
-                    attributeNames.removeAll(grants);
                     log.debug("   ==> Denying read access to attributes "+attributeNames);
+                    grants.removeAll(attributeNames);
                     denies.addAll(attributeNames);
                 }
 
@@ -368,11 +374,6 @@ public class ACLEngine {
             }
 
         }
-
-        entryMapping = partition.getParent(entryMapping);
-        if (entryMapping == null) return;
-
-        getReadableAttributes(bindDn, partition, entryMapping, targetDn, ACI.SCOPE_SUBTREE, attributeNames, grants, denies);
     }
 
     public void getReadableAttributes(
@@ -385,13 +386,9 @@ public class ACLEngine {
             Collection denies
             ) throws Exception {
 
-        log.debug("Checking readable attributes");
+        if (session == null) return;
 
-        if (session == null) {
-            log.debug("No session => SUCCESS");
-            grants.addAll(attributeNames);
-            return;
-        }
+        log.debug("Checking readable attributes");
 
         PenroseConfig penroseConfig = penrose.getPenroseConfig();
         String rootDn = schemaManager.normalize(penroseConfig.getRootDn());
@@ -400,26 +397,11 @@ public class ACLEngine {
     	if (rootDn != null && rootDn.equals(bindDn)) {
             log.debug("Root user => SUCCESS");
             grants.addAll(attributeNames);
+            denies.removeAll(attributeNames);
             return;
         }
 
         getReadableAttributes(bindDn, partition, entryMapping, targetDn, null, attributeNames, grants, denies);
-
-        attributeNames.removeAll(grants);
-        denies.addAll(attributeNames);
-/*
-        grants.removeAll(denies);
-        denies.removeAll(grants);
-
-        if (denies.contains("*")) {
-            grants.clear();
-            denies.clear();
-            denies.add("*");
-        }
-*/
-
-        log.debug("Granted: "+grants);
-        log.debug("Denied: "+denies);
     }
 
     public SchemaManager getSchemaManager() {

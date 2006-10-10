@@ -737,63 +737,100 @@ public class Handler {
             PenroseSearchControls sc
     ) throws Exception {
 
-        Collection attributeMappings = entryMapping.getAttributeMappings();
-        if (attributeMappings.isEmpty()) return;
+        Collection requestedAttributeNames = new HashSet();
 
-        Attributes attributes = searchResult.getAttributes();
+        boolean allRegularAttributes = false;
+        boolean opAttributes = false;
 
-        Set grants = new HashSet();
-        Set denies = new HashSet();
+        if (sc.getAttributes() != null && !sc.getAttributes().isEmpty()) {
+
+            for (Iterator i=sc.getAttributes().iterator(); i.hasNext(); ) {
+                String attributeName = (String)i.next();
+                requestedAttributeNames.add(attributeName.toLowerCase());
+            }
+
+            allRegularAttributes = requestedAttributeNames.contains("*");
+            opAttributes = requestedAttributeNames.contains("+");
+        }
+
+        log.debug("Requested: "+requestedAttributeNames);
 
         Collection attributeNames = new ArrayList();
+        Attributes attributes = searchResult.getAttributes();
 
         for (NamingEnumeration i=attributes.getAll(); i.hasMore(); ) {
             Attribute attribute = (Attribute)i.next();
-            attributeNames.add(attribute.getID());
+            attributeNames.add(attribute.getID().toLowerCase());
         }
+
+        log.debug("Returned: "+attributeNames);
+
+        Set grants = new HashSet();
+        Set denies = new HashSet();
+        denies.addAll(attributeNames);
 
         String targetDn = schemaManager.normalize(searchResult.getName());
         aclEngine.getReadableAttributes(session, partition, entryMapping, targetDn, attributeNames, grants, denies);
 
-        //log.debug("Readable attributes: "+grants);
-        //log.debug("Unreadable attributes: "+denies);
+        log.debug("Granted: "+grants);
+        log.debug("Denied: "+denies);
 
-        Collection list = new ArrayList();
+        Collection opAtNames = new HashSet();
+        for (Iterator i=entryMapping.getOperationalAttributeNames().iterator(); i.hasNext(); ) {
+            String attributeName = (String)i.next();
+            opAtNames.add(attributeName.toLowerCase());
+        }
+        
+        Collection list = new HashSet();
+
         for (NamingEnumeration i=attributes.getAll(); i.hasMore(); ) {
             Attribute attribute = (Attribute)i.next();
-            if (denies.contains(attribute.getID())) list.add(attribute);
-        }
+            String attributeName = attribute.getID();
+            String normalizedName = attributeName.toLowerCase();
 
-        Collection requestedAttributeNames = sc.getAttributes();
-
-        if (requestedAttributeNames != null && !requestedAttributeNames.isEmpty()) {
-
-            boolean allAttributes = requestedAttributeNames.contains("*");
-            boolean opAttributes = requestedAttributeNames.contains("+");
-
-            if (!allAttributes && !opAttributes) { // some attributes
-
-                for (NamingEnumeration i=attributes.getAll(); i.hasMore(); ) {
-                    Attribute attribute = (Attribute)i.next();
-                    if (!requestedAttributeNames.contains(attribute.getID())) list.add(attribute);
-                }
-
-            } else if (!opAttributes) { // all attributes
-
-            } else if (!allAttributes) { // operational attributes
-
-                Collection opAtNames = entryMapping.getOperationalAttributeNames();
-                for (NamingEnumeration i=attributes.getAll(); i.hasMore(); ) {
-                    Attribute attribute = (Attribute)i.next();
-                    if (!opAtNames.contains(attribute.getID())) list.add(attribute);
-                }
+            if (denies.contains(normalizedName)) {
+                log.debug("Remove denied attribute "+normalizedName);
+                list.add(attributeName);
+                continue;
             }
+
+            if (partition.isProxy(entryMapping)) {
+                log.debug("Keep proxied attribute "+normalizedName);
+                continue;
+            }
+
+            if (requestedAttributeNames.isEmpty()) {
+                if (opAtNames.contains(normalizedName)) {
+                    log.debug("Remove operational attribute "+normalizedName);
+                    list.add(attributeName);
+                } else {
+                    log.debug("Keep regular attribute "+normalizedName);
+                }
+                continue;
+            }
+
+            if (opAttributes && opAtNames.contains(normalizedName)) {
+                log.debug("Keep operational attribute "+normalizedName);
+                continue;
+            }
+
+            if (allRegularAttributes && !opAtNames.contains(normalizedName)) {
+                log.debug("Keep all regular attribute "+normalizedName);
+                continue;
+            }
+
+            if (requestedAttributeNames.contains(normalizedName)) {
+                log.debug("Keep requested attribute "+normalizedName);
+                continue;
+            }
+
+            log.debug("Remove unrequested attribute "+normalizedName);
+            list.add(attributeName);
         }
 
         for (Iterator i=list.iterator(); i.hasNext(); ) {
-            Attribute attribute = (Attribute)i.next();
-            log.debug("Removing attribute "+attribute.getID());
-            attributes.remove(attribute.getID());
+            String attributeName = (String)i.next();
+            attributes.remove(attributeName);
         }
     }
 
