@@ -20,7 +20,6 @@ package org.safehaus.penrose.connector;
 import org.safehaus.penrose.partition.PartitionManager;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.config.PenroseConfig;
-import org.safehaus.penrose.thread.ThreadManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

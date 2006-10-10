@@ -22,7 +22,6 @@ import org.safehaus.penrose.schema.AttributeType;
 import org.safehaus.penrose.schema.matchingRule.EqualityMatchingRule;
 import org.safehaus.penrose.mapping.Entry;
 import org.safehaus.penrose.mapping.AttributeValues;
-import org.safehaus.penrose.util.BinaryUtil;
 import org.safehaus.penrose.util.ExceptionUtil;
 import org.safehaus.penrose.partition.Partition;
 import org.ietf.ldap.*;

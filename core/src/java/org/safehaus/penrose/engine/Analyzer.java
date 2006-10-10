@@ -198,7 +198,7 @@ public class Analyzer {
             AttributeMapping attributeMapping = (AttributeMapping)i.next();
             //log.debug("Attribute "+attributeMapping.getName()+": "+attributeMapping.getType());
 
-            if (AttributeMapping.VARIABLE.equals(attributeMapping.getType())) {
+            if (attributeMapping.getVariable() != null) {
                 String variable = attributeMapping.getVariable();
 
                 int j = variable.indexOf(".");
@@ -211,7 +211,7 @@ public class Analyzer {
                 continue;
             }
 
-            if (!AttributeMapping.EXPRESSION.equals(attributeMapping.getType())) continue;
+            if (attributeMapping.getExpression() == null) continue;
 
             log.debug("RDN attribute "+attributeMapping.getName()+" is an expression.");
             return false;

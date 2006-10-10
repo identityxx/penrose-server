@@ -30,8 +30,6 @@ import org.ietf.ldap.LDAPException;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
-import java.util.Collection;
-
 /**
  * @author Endi S. Dewata
  */

@@ -24,7 +24,6 @@ import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.util.EntryUtil;
 import org.safehaus.penrose.util.ExceptionUtil;
-import org.safehaus.penrose.schema.SchemaManager;
 import org.safehaus.penrose.engine.Engine;
 import org.ietf.ldap.*;
 import org.slf4j.LoggerFactory;
@@ -32,8 +31,6 @@ import org.slf4j.Logger;
 
 import javax.naming.directory.Attributes;
 import javax.naming.directory.Attribute;
-import javax.naming.directory.BasicAttributes;
-import javax.naming.directory.BasicAttribute;
 import javax.naming.NamingEnumeration;
 import java.util.*;
 

@@ -23,7 +23,6 @@ import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.connector.ConnectionManager;
 import org.safehaus.penrose.connector.Connection;
 import org.safehaus.penrose.connector.Adapter;
-import org.safehaus.penrose.partition.PartitionManager;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.SourceConfig;
 import org.slf4j.LoggerFactory;

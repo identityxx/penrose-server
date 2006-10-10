@@ -30,7 +30,6 @@ import org.safehaus.penrose.engine.EngineManager;
 import org.safehaus.penrose.handler.Handler;
 import org.safehaus.penrose.handler.HandlerManager;
 import org.safehaus.penrose.handler.HandlerConfig;
-import org.safehaus.penrose.session.SessionConfig;
 import org.safehaus.penrose.interpreter.InterpreterConfig;
 import org.safehaus.penrose.interpreter.InterpreterManager;
 import org.safehaus.penrose.connector.*;

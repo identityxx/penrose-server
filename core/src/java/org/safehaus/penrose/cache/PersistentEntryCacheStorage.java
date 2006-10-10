@@ -457,14 +457,15 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
 
     public String getColumnTypeDeclaration(AttributeMapping attributeMapping) {
         StringBuffer sb = new StringBuffer();
+        sb.append("VARCHAR");
+/*
         sb.append(attributeMapping.getType());
-
         if ("VARCHAR".equals(attributeMapping.getType()) && attributeMapping.getLength() > 0) {
             sb.append("(");
             sb.append(attributeMapping.getLength());
             sb.append(")");
         }
-
+*/
         return sb.toString();
     }
 

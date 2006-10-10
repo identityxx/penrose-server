@@ -17,14 +17,12 @@
  */
 package org.safehaus.penrose.engine;
 
-import org.safehaus.penrose.connector.Connector;
 import org.safehaus.penrose.connector.ConnectionManager;
 import org.safehaus.penrose.connector.ConnectorManager;
 import org.safehaus.penrose.interpreter.InterpreterManager;
 import org.safehaus.penrose.schema.SchemaManager;
 import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.partition.PartitionManager;
-import org.safehaus.penrose.thread.ThreadManager;
 import org.safehaus.penrose.Penrose;
 import org.apache.log4j.Logger;
 

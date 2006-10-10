@@ -33,7 +33,6 @@ import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.handler.Handler;
 import org.safehaus.penrose.handler.FindHandler;
 import org.ietf.ldap.LDAPException;
-import org.ietf.ldap.LDAPConnection;
 import org.ietf.ldap.LDAPDN;
 
 import javax.naming.directory.*;

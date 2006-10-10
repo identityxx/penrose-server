@@ -216,7 +216,7 @@ public class PartitionValidator {
             }
 */
 
-            if (AttributeMapping.VARIABLE.equals(attributeMapping.getType())) {
+            if (attributeMapping.getVariable() != null) {
                 String variable = attributeMapping.getVariable();
 
                 int j = variable.indexOf(".");

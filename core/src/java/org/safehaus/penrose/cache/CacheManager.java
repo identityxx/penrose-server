@@ -23,7 +23,6 @@ import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.PenroseFactory;
 import org.safehaus.penrose.handler.Handler;
 import org.safehaus.penrose.partition.*;
-import org.safehaus.penrose.engine.Engine;
 import org.apache.log4j.*;
 
 import java.util.Collection;

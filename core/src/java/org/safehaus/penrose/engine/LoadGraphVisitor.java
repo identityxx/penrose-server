@@ -180,7 +180,7 @@ public class LoadGraphVisitor extends GraphVisitor {
                 Filter f = engine.generateFilter(toSourceMapping, relationships, av);
                 log.debug(" - "+f);
 
-                filter = engine.getFilterTool().appendOrFilter(filter, f);
+                filter = FilterTool.appendOrFilter(filter, f);
             }
         }
 

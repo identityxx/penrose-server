@@ -29,7 +29,6 @@ import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.SourceConfig;
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.graph.Graph;
-import org.safehaus.penrose.thread.ThreadManager;
 import org.safehaus.penrose.thread.MRSWLock;
 import org.safehaus.penrose.thread.Queue;
 import org.safehaus.penrose.filter.Filter;
@@ -406,63 +405,6 @@ public abstract class Engine {
 
     public void setEngineFilterTool(EngineFilterTool engineFilterTool) {
         this.engineFilterTool = engineFilterTool;
-    }
-
-    public AttributeValues getParentSourceValues(
-            Partition partition,
-            Collection path
-    ) throws Exception {
-
-        AttributeValues sourceValues = new AttributeValues();
-
-        String prefix = null;
-        Interpreter interpreter = interpreterManager.newInstance();
-
-        //log.debug("Parents' source values:");
-        for (Iterator iterator = path.iterator(); iterator.hasNext(); ) {
-            Entry entry = (Entry)iterator.next();
-
-            prefix = prefix == null ? "parent" : "parent."+prefix;
-            if (entry == null) continue;
-
-            //log.debug(" - "+dn);
-
-/*
-            if (entry == null) {
-                EntryMapping parentMapping = entry.getEntryMapping();
-                AttributeValues av = computeAttributeValues(parentMapping, interpreter);
-                for (Iterator j=av.getNames().iterator(); j.hasNext(); ) {
-                    String name = (String)j.next();
-                    Collection values = av.get(name);
-                    name = prefix+"."+name;
-                    //log.debug("   - "+name+": "+values);
-                    sourceValues.add(name, values);
-                }
-                interpreter.clear();
-
-            } else {
-*/
-                AttributeValues av = entry.getAttributeValues();
-                for (Iterator j=av.getNames().iterator(); j.hasNext(); ) {
-                    String name = (String)j.next();
-                    Collection values = av.get(name);
-                    name = prefix+"."+name;
-                    //log.debug("   - "+name+": "+values);
-                    sourceValues.add(name, values);
-                }
-
-                AttributeValues sv = entry.getSourceValues();
-                for (Iterator j=sv.getNames().iterator(); j.hasNext(); ) {
-                    String name = (String)j.next();
-                    Collection values = sv.get(name);
-                    if (name.startsWith("parent.")) name = prefix+"."+name;
-                    //log.debug("   - "+name+": "+values);
-                    sourceValues.add(name, values);
-                }
-//            }
-        }
-
-        return sourceValues;
     }
 
     public void load(

@@ -24,7 +24,6 @@ import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.schema.AttributeType;
 import org.safehaus.penrose.util.PasswordUtil;
 import org.safehaus.penrose.util.BinaryUtil;
-import org.safehaus.penrose.util.Formatter;
 import org.safehaus.penrose.util.ExceptionUtil;
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.engine.Engine;
@@ -286,10 +285,8 @@ public class ModifyHandler {
 		AttributeMapping attributeMapping = entryMapping.getAttributeMapping(name);
 		if (attributeMapping == null) return;
 
-        if (!AttributeMapping.CONSTANT.equals(attributeMapping.getType())) return;
-
         Object attrValue = attributeMapping.getConstant();
-		if (!attrValue.equals(value)) return;
+        if (attrValue == null || !attrValue.equals(value)) return;
 
         entryMapping.removeAttributeMapping(attributeMapping);
 	}

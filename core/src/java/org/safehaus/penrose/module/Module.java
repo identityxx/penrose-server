@@ -22,7 +22,6 @@ import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.partition.Partition;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
-import org.ietf.ldap.LDAPException;
 
 import java.util.Collection;
 

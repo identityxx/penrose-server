@@ -17,7 +17,6 @@
  */
 package org.safehaus.penrose.cache;
 
-import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.connector.Connector;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.partition.Partition;
