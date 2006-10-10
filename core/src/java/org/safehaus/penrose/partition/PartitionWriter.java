@@ -72,7 +72,7 @@ public class PartitionWriter {
 
         writer.startDTD(
                 "mapping",
-                "-//Penrose/DTD Mapping 1.0//EN",
+                "-//Penrose/DTD Mapping 1.1//EN",
                 "http://penrose.safehaus.org/dtd/mapping.dtd"
         );
 
@@ -92,7 +92,7 @@ public class PartitionWriter {
 
         writer.startDTD(
                 "connections",
-                "-//Penrose/DTD Connections 1.0//EN",
+                "-//Penrose/DTD Connections 1.1//EN",
                 "http://penrose.safehaus.org/dtd/connections.dtd"
         );
 
@@ -112,7 +112,7 @@ public class PartitionWriter {
 
         writer.startDTD(
                 "sources",
-                "-//Penrose/DTD Sources 1.0//EN",
+                "-//Penrose/DTD Sources 1.1//EN",
                 "http://penrose.safehaus.org/dtd/sources.dtd"
         );
 
@@ -132,7 +132,7 @@ public class PartitionWriter {
 
         writer.startDTD(
                 "modules",
-                "-//Penrose/DTD Modules 1.0//EN",
+                "-//Penrose/DTD Modules 1.1//EN",
                 "http://penrose.safehaus.org/dtd/modules.dtd"
         );
 

@@ -11,7 +11,7 @@
     <property name="cygwin.home" value="c:/cygwin"/>
 
     <property name="project.name" value="penrose"/>
-    <property name="project.version" value="1.2"/>
+    <property name="project.version" value="1.1"/>
 
     <property name="penrose.home" value="${prefix}/usr/local/${project.name}-${project.version}"/>
     <property name="docs.target" value="dist/javadoc"/>
@@ -20,9 +20,6 @@
 
     <path id="lib.path">
         <fileset dir="../lib">
-            <include name="**/*.jar"/>
-        </fileset>
-        <fileset dir="../shared/lib">
             <include name="**/*.jar"/>
         </fileset>
     </path>

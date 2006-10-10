@@ -5,18 +5,18 @@
   <groupId>org.safehaus.penrose</groupId>
   <artifactId>penrose</artifactId>
   <packaging>jar</packaging>
-  <version>1.0</version>
+  <version>1.1</version>
   <name>Penrose</name>
   <dependencies>
     <dependency>
       <groupId>org.apache.directory.server</groupId>
       <artifactId>apacheds-core</artifactId>
-      <version>1.0-RC3</version>
+      <version>1.0.0</version>
     </dependency>
     <dependency>
       <groupId>org.apache.directory.server</groupId>
       <artifactId>apacheds-core-shared</artifactId>
-      <version>1.0-RC3</version>
+      <version>1.0.0</version>
     </dependency>
   </dependencies>
   <url>http://penrose.safehaus.org</url>

@@ -11,7 +11,7 @@
     <property name="cygwin.home" value="c:/cygwin"/>
 
     <property name="module.name" value="penrose-server"/>
-    <property name="project.version" value="1.2"/>
+    <property name="project.version" value="1.1"/>
     <property name="project.dist" value="dist"/>
 
     <property name="penrose.home" value="${prefix}/usr/local/${module.name}-${project.version}"/>

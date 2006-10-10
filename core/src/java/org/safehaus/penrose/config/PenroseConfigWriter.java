@@ -71,7 +71,7 @@ public class PenroseConfigWriter {
 
         xmlWriter.startDTD(
                 "server",
-                "-//Penrose/DTD Server 1.0//EN",
+                "-//Penrose/DTD Server 1.1//EN",
                 "http://penrose.safehaus.org/dtd/server.dtd"
         );
 
