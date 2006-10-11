@@ -98,9 +98,12 @@ public class EntryUtil {
             while (st.hasMoreTokens()) {
                 String s = LDAPDN.unescapeRDN(st.nextToken());
                 int index = s.indexOf("=");
+
                 String attribute = s.substring(0, index);
                 if (attribute.startsWith("null")) attribute = attribute.substring(4);
+
                 String value =  s.substring(index+1);
+
                 //log.debug(" - "+attribute+": "+value);
                 rdn.set(attribute, value);
             }
@@ -123,8 +126,30 @@ public class EntryUtil {
 
             StringBuffer sb = new StringBuffer();
             for (int i=1; i<rdns.length; i++) {
+                String r = rdns[i];
+
+                StringTokenizer st = new StringTokenizer(r, "+");
+                StringBuffer sb2 = new StringBuffer();
+
+                while (st.hasMoreTokens()) {
+                    String s = LDAPDN.unescapeRDN(st.nextToken());
+
+                    int index = s.indexOf("=");
+
+                    String attribute = s.substring(0, index);
+                    if (attribute.startsWith("null")) attribute = attribute.substring(4);
+
+                    String value =  s.substring(index+1);
+
+                    String rdn = attribute+"="+value;
+                    //log.debug("Processing "+rdn);
+
+                    if (sb2.length() > 0) sb2.append("+");
+                    sb2.append(LDAPDN.escapeRDN(rdn));
+                }
+
                 if (sb.length() > 0) sb.append(",");
-                sb.append(LDAPDN.escapeRDN(rdns[i]));
+                sb.append(sb2);
             }
 
             return sb.toString();

@@ -811,14 +811,19 @@ public class LDAPClient {
         LdapContext context = null;
 
         try {
-            context = getContext();
-            NamingEnumeration entries = context.search(searchBase, "(objectClass=*)", ctls);
-            if (!entries.hasMore()) return null;
+            if ("".equals(searchBase)) {
+                return getRootDSE();
+                
+            } else {
+                context = getContext();
+                NamingEnumeration entries = context.search(searchBase, "(objectClass=*)", ctls);
+                if (!entries.hasMore()) return null;
 
-            SearchResult sr = (SearchResult)entries.next();
-            sr.setName(dn);
+                SearchResult sr = (SearchResult)entries.next();
+                sr.setName(dn);
 
-            return sr;
+                return sr;
+            }
 
         } finally {
             if (context != null) try { context.close(); } catch (Exception e) {}
@@ -838,6 +843,8 @@ public class LDAPClient {
             String searchBase = EntryUtil.append(baseDn, suffix);
 
             if ("".equals(searchBase)) {
+                SearchResult rootDse = getRootDSE();
+/*
                 log.debug("Searching Root DSE:");
 
                 SearchControls ctls = new SearchControls();
@@ -846,7 +853,7 @@ public class LDAPClient {
                 context = getContext();
                 NamingEnumeration entries = context.search(searchBase, "(objectClass=*)", ctls);
                 SearchResult rootDse = (SearchResult)entries.next();
-
+*/
                 Attributes attributes = rootDse.getAttributes();
                 Attribute attribute = attributes.get("namingContexts");
 
