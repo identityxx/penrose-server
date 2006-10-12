@@ -498,8 +498,7 @@ public class Penrose {
     }
 
     public Engine getEngine() {
-        EngineConfig engineConfig = penroseConfig.getEngineConfig();
-        return engineManager.getEngine(engineConfig.getName());
+        return engineManager.getEngine("DEFAULT");
     }
 
     public Connector getConnector() {

@@ -84,8 +84,9 @@ public class SearchEngine {
             effectiveSourceNames.add(sm.getName());
         }
         log.debug("Effective Sources: "+effectiveSourceNames);
+        final SourceMapping primarySourceMapping = engine.getPrimarySource(entryMapping);
 
-        if (unique && effectiveSources.size() == 1) {
+        if (unique && effectiveSources.size() == 1 && primarySourceMapping != null) {
             try {
                 simpleSearch(partition, parentSourceValues, entryMapping, filter, results);
 
@@ -251,13 +252,13 @@ public class SearchEngine {
 
         planner.run();
 
-        final SourceMapping sourceMapping = engine.getPrimarySource(entryMapping);
-
         if (log.isDebugEnabled()) {
             log.debug(Formatter.displaySeparator(80));
             log.debug(Formatter.displayLine("SIMPLE SEARCH", 80));
             log.debug(Formatter.displaySeparator(80));
         }
+
+        final SourceMapping sourceMapping = engine.getPrimarySource(entryMapping);
 
         Map filters = planner.getFilters();
         Filter newFilter = (Filter)filters.get(sourceMapping);

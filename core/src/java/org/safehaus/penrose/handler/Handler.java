@@ -538,7 +538,9 @@ public class Handler {
 
         if ("".equals(baseDn) && sc.getScope() == LDAPConnection.SCOPE_BASE) {
             Entry rootDSE = createRootDSE();
-            results.add(rootDSE);
+            SearchResult searchResult = EntryUtil.toSearchResult(rootDSE);
+            filterAttributes(session, searchResult, sc);
+            results.add(searchResult);
             results.close();
             return LDAPException.SUCCESS;
         }
@@ -826,6 +828,61 @@ public class Handler {
 
             log.debug("Remove unrequested attribute "+normalizedName);
             list.add(attributeName);
+        }
+
+        for (Iterator i=list.iterator(); i.hasNext(); ) {
+            String attributeName = (String)i.next();
+            attributes.remove(attributeName);
+        }
+    }
+
+    public void filterAttributes(
+            PenroseSession session,
+            SearchResult searchResult,
+            PenroseSearchControls sc
+    ) throws Exception {
+
+        Collection requestedAttributeNames = new HashSet();
+
+        boolean allRegularAttributes = false;
+        boolean opAttributes = false;
+
+        if (sc.getAttributes() != null && !sc.getAttributes().isEmpty()) {
+
+            for (Iterator i=sc.getAttributes().iterator(); i.hasNext(); ) {
+                String attributeName = (String)i.next();
+                requestedAttributeNames.add(attributeName.toLowerCase());
+            }
+
+            allRegularAttributes = requestedAttributeNames.contains("*");
+            opAttributes = requestedAttributeNames.contains("+");
+        }
+
+        if (allRegularAttributes || opAttributes) return;
+
+        log.debug("Requested: "+requestedAttributeNames);
+
+        Collection attributeNames = new ArrayList();
+        Attributes attributes = searchResult.getAttributes();
+
+        for (NamingEnumeration i=attributes.getAll(); i.hasMore(); ) {
+            Attribute attribute = (Attribute)i.next();
+            attributeNames.add(attribute.getID().toLowerCase());
+        }
+
+        log.debug("Returned: "+attributeNames);
+
+        Collection list = new HashSet();
+
+        for (NamingEnumeration i=attributes.getAll(); i.hasMore(); ) {
+            Attribute attribute = (Attribute)i.next();
+            String attributeName = attribute.getID();
+            String normalizedName = attributeName.toLowerCase();
+
+            if (requestedAttributeNames.contains(normalizedName)) {
+                log.debug("Keep requested attribute "+normalizedName);
+                continue;
+            }
         }
 
         for (Iterator i=list.iterator(); i.hasNext(); ) {

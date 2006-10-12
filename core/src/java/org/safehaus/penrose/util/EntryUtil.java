@@ -52,17 +52,24 @@ public class EntryUtil {
         Row rdn1 = getRdn(dn1);
         Row rdn2 = getRdn(dn2);
 
-        // if attribute types don't match => false
-        //log.debug(" - Comparing attribute types ["+attr+"] with ["+attr2+"]");
-        if (!rdn1.getNames().equals(rdn2.getNames())) return false;
+        Iterator i = rdn1.getNames().iterator();
+        Iterator j = rdn2.getNames().iterator();
 
-        // if values are not dynamic and they don't match => false
-        for (Iterator i=rdn1.getNames().iterator(); i.hasNext(); ) {
-            String name = (String)i.next();
-            String value = (String)rdn1.get(name);
-            String value2 = (String)rdn2.get(name);
+        while (i.hasNext() && j.hasNext()) {
+            String name1 = (String)i.next();
+            String name2 = (String)j.next();
+
+            if (!name1.equalsIgnoreCase(name2)) {
+                return false;
+            }
+
+            String value = (String)rdn1.get(name1);
+            String value2 = (String)rdn2.get(name2);
+
             //log.debug(" - Comparing attribute values ["+value+"] with ["+value2+"]");
-            if (!"...".equals(value) && !"...".equals(value2) && !value.equalsIgnoreCase(value2)) return false;
+            if (!"...".equals(value) && !"...".equals(value2) && !value.equalsIgnoreCase(value2)) {
+                return false;
+            }
         }
 
         String parentDn1 = getParentDn(dn1);
@@ -70,7 +77,9 @@ public class EntryUtil {
 
         // if parents matches => true
         //log.debug(" - Comparing parents ["+parentDn1+"] with ["+parentDn2+"]");
-        if (parentDn1 != null && parentDn2 != null && match(parentDn1, parentDn2)) return true;
+        if (parentDn1 != null && parentDn2 != null && match(parentDn1, parentDn2)) {
+            return true;
+        }
 
         // if neither has parents => true
         return parentDn1 == null && parentDn2 == null;

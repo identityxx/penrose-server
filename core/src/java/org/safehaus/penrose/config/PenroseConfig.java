@@ -127,10 +127,6 @@ public class PenroseConfig implements PenroseConfigMBean, Cloneable {
         engineConfigs.put(engineConfig.getName(), engineConfig);
     }
 
-    public EngineConfig getEngineConfig() {
-        return getEngineConfig("DEFAULT");
-    }
-
     public EngineConfig getEngineConfig(String name) {
         return (EngineConfig)engineConfigs.get(name);
     }

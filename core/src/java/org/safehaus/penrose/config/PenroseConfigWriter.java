@@ -18,6 +18,7 @@
 package org.safehaus.penrose.config;
 
 import java.util.Iterator;
+import java.util.Collection;
 import java.io.FileWriter;
 import java.io.Writer;
 import java.io.File;
@@ -137,8 +138,9 @@ public class PenroseConfigWriter {
             element.add(toElement(sessionConfig));
         }
 
-        if (penroseConfig.getEngineConfig() != null) {
-            EngineConfig engineConfig = penroseConfig.getEngineConfig();
+        Collection engineConfigs = penroseConfig.getEngineConfigs();
+        for (Iterator i=engineConfigs.iterator(); i.hasNext(); ) {
+            EngineConfig engineConfig = (EngineConfig)i.next();
             element.add(toElement(engineConfig));
         }
 

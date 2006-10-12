@@ -416,7 +416,7 @@ public class Partition {
 
     public Collection findEntryMappings(String dn) throws Exception {
 
-        //log.debug("Finding entry mappings \""+dn+"\" in partition "+getName());
+        log.debug("Finding entry mappings \""+dn+"\" in partition "+getName());
 
         if (dn == null) return null;
 
@@ -442,18 +442,21 @@ public class Partition {
             list = rootEntryMappings;
 
         } else {
-            //log.debug("Search parent mappings for \""+parentDn+"\"");
+            log.debug("Search parent mappings for \""+parentDn+"\"");
             Collection parentMappings = findEntryMappings(parentDn);
 
             // if no parent mappings found, the entry doesn't exist in this partition
-            if (parentMappings == null || parentMappings.isEmpty()) return null;
+            if (parentMappings == null || parentMappings.isEmpty()) {
+                log.debug("Entry mapping \""+parentDn+"\" not found");
+                return null;
+            }
 
             list = new ArrayList();
 
             // for each parent mapping found
             for (Iterator i=parentMappings.iterator(); i.hasNext(); ) {
                 EntryMapping parentMapping = (EntryMapping)i.next();
-                //log.debug("Found parent "+parentMapping.getDn());
+                log.debug("Found parent "+parentMapping.getDn());
 
                 if (isProxy(parentMapping)) { // if parent is proxy, include it in results
                     results.add(parentMapping);
@@ -469,10 +472,10 @@ public class Partition {
         for (Iterator iterator = list.iterator(); iterator.hasNext(); ) {
             EntryMapping entryMapping = (EntryMapping) iterator.next();
 
-            //log.debug("Checking \""+dn+"\" against \""+entryMapping.getDn()+"\"");
+            log.debug("Checking \""+dn+"\" against \""+entryMapping.getDn()+"\"");
             if (!EntryUtil.match(dn, entryMapping.getDn())) continue;
 
-            //log.debug("Found "+childDn);
+            log.debug("Found "+entryMapping.getDn());
             results.add(entryMapping);
         }
 
