@@ -194,18 +194,6 @@ public class MergeEngine {
             sourceValues = primarySourceValues;
         }
 
-        log.debug("Generating entry "+dn);
-
-        for (Iterator i=sourceValues.getNames().iterator(); i.hasNext(); ) {
-            String name = (String)i.next();
-            for (Iterator j=sourceValues.get(name).iterator(); j.hasNext(); ) {
-                Object value = j.next();
-                String className = value.getClass().getName();
-                className = className.substring(className.lastIndexOf(".")+1);
-                log.debug(" - "+name+" ("+className+"): "+value);
-            }
-        }
-
         AttributeValues attributeValues = engine.computeAttributeValues(
                 entryMapping,
                 sourceValues,
@@ -213,9 +201,14 @@ public class MergeEngine {
                 interpreter
         );
 
-        if (attributeValues == null) return null;
+        if (attributeValues == null) {
+            log.debug("Attribute values: "+attributeValues);
+            return null;
+        }
 
         //log.debug(" - attribute values: "+attributeValues);
+
+        log.debug("Generating entry "+dn);
 
         Entry entry = new Entry(dn, entryMapping, sourceValues, attributeValues);
         log.debug("\n"+EntryUtil.toString(entry));

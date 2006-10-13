@@ -36,7 +36,7 @@
     <field name="bad_password_count"/>
     <field name="bad_password_time"/>
     <parameter>
-      <param-name>tableName</param-name>
+      <param-name>table</param-name>
       <param-value>users</param-value>
     </parameter>
   </source>
@@ -48,7 +48,7 @@
     <field name="gid"/>
     <field name="group_sid"/>
     <parameter>
-      <param-name>tableName</param-name>
+      <param-name>table</param-name>
       <param-value>groups</param-value>
     </parameter>
   </source>
@@ -58,7 +58,7 @@
     <field name="groupname" primaryKey="true"/>
     <field name="username" primaryKey="true"/>
     <parameter>
-      <param-name>tableName</param-name>
+      <param-name>table</param-name>
       <param-value>usergroups</param-value>
     </parameter>
   </source>

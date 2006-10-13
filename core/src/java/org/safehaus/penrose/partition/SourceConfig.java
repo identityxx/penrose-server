@@ -203,7 +203,11 @@ public class SourceConfig implements SourceConfigMBean, Cloneable {
     }
 
     public void setParameter(String name, String value) {
-        parameters.put(name, value);
+        if (value == null) {
+            parameters.remove(name);
+        } else {
+            parameters.put(name, value);
+        }
     }
 
     public void removeParameter(String name) {

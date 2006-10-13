@@ -324,7 +324,7 @@ public class PenroseConfigWriter {
 
     public Element toElement(EngineConfig engineConfig) {
         Element element = new DefaultElement("engine");
-/*
+
         Element engineName = new DefaultElement("engine-name");
         engineName.add(new DefaultText(engineConfig.getName()));
         element.add(engineName);
@@ -332,7 +332,7 @@ public class PenroseConfigWriter {
         Element engineClass = new DefaultElement("engine-class");
         engineClass.add(new DefaultText(engineConfig.getEngineClass()));
         element.add(engineClass);
-*/
+
         if (engineConfig.getDescription() != null && !"".equals(engineConfig.getDescription())) {
             Element description = new DefaultElement("description");
             description.add(new DefaultText(engineConfig.getDescription()));

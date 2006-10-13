@@ -30,7 +30,7 @@ import org.safehaus.penrose.filter.SimpleFilter;
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.partition.FieldConfig;
 import org.safehaus.penrose.partition.SourceConfig;
-import org.safehaus.penrose.connector.Adapter;
+import org.safehaus.penrose.connector.*;
 
 import javax.sql.DataSource;
 import javax.naming.directory.ModificationItem;
@@ -46,13 +46,16 @@ import java.util.*;
  */
 public class JDBCAdapter extends Adapter {
 
-    public final static String DRIVER     = "driver";
-    public final static String URL        = "url";
-    public final static String USER       = "user";
-    public final static String PASSWORD   = "password";
+    public final static String DRIVER       = "driver";
+    public final static String URL          = "url";
+    public final static String USER         = "user";
+    public final static String PASSWORD     = "password";
 
-    public final static String TABLE_NAME = "tableName";
-    public final static String FILTER     = "filter";
+    public final static String CATALOG      = "catalog";
+    public final static String SCHEMA       = "schema";
+    public final static String TABLE        = "table";
+    public final static String TABLE_NAME   = "tableName";
+    public final static String FILTER       = "filter";
 
     public final static String MAX_ACTIVE                           = "maxActive";
     public final static String MAX_IDLE                             = "maxIdle";
@@ -197,7 +200,13 @@ public class JDBCAdapter extends Adapter {
             log.debug(Formatter.displaySeparator(80));
         }
 
-        String tableName = sourceConfig.getParameter(TABLE_NAME);
+        String catalog = sourceConfig.getParameter(CATALOG);
+        String schema = sourceConfig.getParameter(SCHEMA);
+        String tableName = sourceConfig.getParameter(TABLE);
+        if (tableName == null) tableName = sourceConfig.getParameter(TABLE_NAME);
+        if (catalog != null) tableName = catalog +"."+tableName;
+        if (schema != null) tableName = schema +"."+tableName;
+
         String s = sourceConfig.getParameter(FILTER);
 
         StringBuffer sb = new StringBuffer();
@@ -307,7 +316,13 @@ public class JDBCAdapter extends Adapter {
             log.debug(Formatter.displaySeparator(80));
         }
 
-        String tableName = sourceConfig.getParameter(TABLE_NAME);
+        String catalog = sourceConfig.getParameter(CATALOG);
+        String schema = sourceConfig.getParameter(SCHEMA);
+        String tableName = sourceConfig.getParameter(TABLE);
+        if (tableName == null) tableName = sourceConfig.getParameter(TABLE_NAME);
+        if (catalog != null) tableName = catalog +"."+tableName;
+        if (schema != null) tableName = schema +"."+tableName;
+
         String s = sourceConfig.getParameter(FILTER);
 
         StringBuffer sb = new StringBuffer();
@@ -498,7 +513,12 @@ public class JDBCAdapter extends Adapter {
         Collection rows = TransformEngine.convert(sourceValues);
     	Row row = (Row)rows.iterator().next();
 
-        String tableName = sourceConfig.getParameter(TABLE_NAME);
+        String catalog = sourceConfig.getParameter(CATALOG);
+        String schema = sourceConfig.getParameter(SCHEMA);
+        String tableName = sourceConfig.getParameter(TABLE);
+        if (tableName == null) tableName = sourceConfig.getParameter(TABLE_NAME);
+        if (catalog != null) tableName = catalog +"."+tableName;
+        if (schema != null) tableName = schema +"."+tableName;
 
         java.sql.Connection con = null;
         PreparedStatement ps = null;
@@ -569,7 +589,12 @@ public class JDBCAdapter extends Adapter {
 
         //log.debug("Deleting entry "+pk);
 
-        String tableName = sourceConfig.getParameter(TABLE_NAME);
+        String catalog = sourceConfig.getParameter(CATALOG);
+        String schema = sourceConfig.getParameter(SCHEMA);
+        String tableName = sourceConfig.getParameter(TABLE);
+        if (tableName == null) tableName = sourceConfig.getParameter(TABLE_NAME);
+        if (catalog != null) tableName = catalog +"."+tableName;
+        if (schema != null) tableName = schema +"."+tableName;
 
         java.sql.Connection con = null;
         PreparedStatement ps = null;
@@ -622,7 +647,12 @@ public class JDBCAdapter extends Adapter {
 
     public int modify(SourceConfig sourceConfig, Row pk, Collection modifications) throws Exception {
 
-        String tableName = sourceConfig.getParameter(TABLE_NAME);
+        String catalog = sourceConfig.getParameter(CATALOG);
+        String schema = sourceConfig.getParameter(SCHEMA);
+        String tableName = sourceConfig.getParameter(TABLE);
+        if (tableName == null) tableName = sourceConfig.getParameter(TABLE_NAME);
+        if (catalog != null) tableName = catalog +"."+tableName;
+        if (schema != null) tableName = schema +"."+tableName;
 
         java.sql.Connection con = null;
         PreparedStatement ps = null;
@@ -745,7 +775,12 @@ public class JDBCAdapter extends Adapter {
 
         //log.debug("Renaming source "+source.getName()+": "+oldRdn+" with "+newRdn);
 
-        String tableName = sourceConfig.getParameter(TABLE_NAME);
+        String catalog = sourceConfig.getParameter(CATALOG);
+        String schema = sourceConfig.getParameter(SCHEMA);
+        String tableName = sourceConfig.getParameter(TABLE);
+        if (tableName == null) tableName = sourceConfig.getParameter(TABLE_NAME);
+        if (catalog != null) tableName = catalog +"."+tableName;
+        if (schema != null) tableName = schema +"."+tableName;
 
         java.sql.Connection con = null;
         PreparedStatement ps = null;
@@ -821,7 +856,14 @@ public class JDBCAdapter extends Adapter {
     }
 
     public int getLastChangeNumber(SourceConfig sourceConfig) throws Exception {
-        String tableName = sourceConfig.getParameter(TABLE_NAME);
+
+        String catalog = sourceConfig.getParameter(CATALOG);
+        String schema = sourceConfig.getParameter(SCHEMA);
+        String tableName = sourceConfig.getParameter(TABLE);
+        if (tableName == null) tableName = sourceConfig.getParameter(TABLE_NAME);
+        if (catalog != null) tableName = catalog +"."+tableName;
+        if (schema != null) tableName = schema +"."+tableName;
+
         String sql = "select max(changeNumber) from "+tableName+"_changes";
 
         java.sql.Connection con = null;
@@ -865,7 +907,13 @@ public class JDBCAdapter extends Adapter {
 
         PenroseSearchResults results = new PenroseSearchResults();
 
-        String tableName = sourceConfig.getParameter(TABLE_NAME);
+        String catalog = sourceConfig.getParameter(CATALOG);
+        String schema = sourceConfig.getParameter(SCHEMA);
+        String tableName = sourceConfig.getParameter(TABLE);
+        if (tableName == null) tableName = sourceConfig.getParameter(TABLE_NAME);
+        if (catalog != null) tableName = catalog +"."+tableName;
+        if (schema != null) tableName = schema +"."+tableName;
+
         int sizeLimit = 100;
 
         StringBuffer columns = new StringBuffer();

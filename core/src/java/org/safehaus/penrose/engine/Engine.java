@@ -174,7 +174,18 @@ public abstract class Engine {
             Interpreter interpreter
             ) throws Exception {
 
-        log.debug("Generating attributes:");
+        log.debug("Generating attributes with source values:");
+        for (Iterator i=sourceValues.getNames().iterator(); i.hasNext(); ) {
+            String name = (String)i.next();
+
+            for (Iterator j=sourceValues.get(name).iterator(); j.hasNext(); ) {
+                Object value = j.next();
+                String className = value.getClass().getName();
+                className = className.substring(className.lastIndexOf(".")+1);
+                log.debug(" - "+name+": "+value+" ("+className+")");
+            }
+        }
+
         AttributeValues attributeValues = new AttributeValues();
 
         if (sourceValues != null) interpreter.set(sourceValues, rows);
@@ -184,10 +195,14 @@ public abstract class Engine {
             AttributeMapping attributeMapping = (AttributeMapping)j.next();
 
             String name = attributeMapping.getName();
-
             Object value = interpreter.eval(entryMapping, attributeMapping);
             if (value == null) {
-                if (attributeMapping.isPK()) return null;
+                if (attributeMapping.isPK()) {
+                    log.debug(" - "+name+" (PK): null");
+                    return null;
+                }
+
+                log.debug(" - "+name+": null");
                 continue;
             }
 

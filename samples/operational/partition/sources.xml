@@ -16,7 +16,7 @@
     <field name="modifiersName"/>
     <field name="modifyTimestamp" type="DATETIME"/>
     <parameter>
-      <param-name>tableName</param-name>
+      <param-name>table</param-name>
       <param-value>users</param-value>
     </parameter>
   </source>

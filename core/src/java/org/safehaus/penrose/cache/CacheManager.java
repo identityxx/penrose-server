@@ -132,7 +132,13 @@ public class CacheManager {
 
                 if (!"JDBC".equals(connectionConfig.getAdapterName())) continue;
 
-                String tableName = sourceConfig.getParameter(JDBCAdapter.TABLE_NAME);
+                String catalog = sourceConfig.getParameter(JDBCAdapter.CATALOG);
+                String schema = sourceConfig.getParameter(JDBCAdapter.SCHEMA);
+                String tableName = sourceConfig.getParameter(JDBCAdapter.TABLE);
+                if (tableName == null) tableName = sourceConfig.getParameter(JDBCAdapter.TABLE_NAME);
+                if (catalog != null) tableName = catalog +"."+tableName;
+                if (schema != null) tableName = schema +"."+tableName;
+
                 Collection primaryKeyFieldConfigs = sourceConfig.getPrimaryKeyFieldConfigs();
 
                 generateCreateTable(tableName, primaryKeyFieldConfigs);

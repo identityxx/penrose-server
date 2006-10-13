@@ -41,7 +41,6 @@ public class MergeGraphVisitor extends GraphVisitor {
     private Graph graph;
     private Engine engine;
     private EntryMapping entryMapping;
-    private AttributeValues primarySourceValues;
     private AttributeValues loadedSourceValues;
     private SourceMapping primarySourceMapping;
 
@@ -61,7 +60,6 @@ public class MergeGraphVisitor extends GraphVisitor {
         this.engine = engine;
         this.partition = partition;
         this.entryMapping = entryMapping;
-        this.primarySourceValues = primarySourceValues;
         this.loadedSourceValues = loadedSourceValues;
         this.primarySourceMapping = primarySourceMapping;
 

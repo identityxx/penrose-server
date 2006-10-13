@@ -12,7 +12,7 @@
     <field name="lastName"/>
     <field name="password"/>
     <parameter>
-      <param-name>tableName</param-name>
+      <param-name>table</param-name>
       <param-value>users</param-value>
     </parameter>
   </source>
@@ -24,7 +24,7 @@
     <field name="lastName"/>
     <field name="password"/>
     <parameter>
-      <param-name>tableName</param-name>
+      <param-name>table</param-name>
       <param-value>users2</param-value>
     </parameter>
   </source>

@@ -376,12 +376,21 @@ public class DefaultEngine extends Engine {
 
             Row filter = createFilter(partition, interpreter, primarySourceMapping, entryMapping, rdn);
 
+            for (Iterator i=loadedSourceValues.getNames().iterator(); i.hasNext(); ) {
+                String name = (String)i.next();
+                Collection c = loadedSourceValues.get(name);
+                for (Iterator j=c.iterator(); j.hasNext(); ) {
+                    AttributeValues sv = (AttributeValues)j.next();
+                    sourceValues.add(sv);
+                }
+            }
+
             Entry entry = mergeEngine.mergeEntries(
                     partition,
                     dn,
                     entryMapping,
                     sourceValues,
-                    loadedSourceValues,
+                    new AttributeValues(),
                     new ArrayList(),
                     interpreter,
                     filter
