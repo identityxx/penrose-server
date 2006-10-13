@@ -40,11 +40,20 @@
     </path>
 
     <target name="init">
+        <echo message="Operating System: ${os.name} ${os.version}" />
         <condition property="isWindows">
             <os family="windows"/>
         </condition>
         <condition property="isUnix">
-            <os family="unix"/>
+            <and>
+                <os family="unix"/>
+                <not>
+                    <os family="mac"/>
+                </not>
+            </and>
+        </condition>
+        <condition property="isMac">
+            <os family="mac"/>
         </condition>
     </target>
 
@@ -86,7 +95,7 @@
 
     <target name="docs" depends="init">
         <mkdir dir="target/javadoc"/>
-        <javadoc packagenames="org.safehaus.penrose.*,org.openldap.backend.*"
+        <javadoc packagenames="org.safehaus.penrose.*"
             sourcepath="src/java"
             destdir="target/javadoc"
             classpathref="lib.path">
@@ -95,9 +104,6 @@
                 <pathelement path="../core/src/java"/>
             </sourcepath>
         </javadoc>
-        <jar jarfile="target/${module.name}-docs-${project.version}.jar">
-            <fileset dir="target/javadoc"/>
-        </jar>
     </target>
 
     <target name="dist" depends="build">
@@ -206,7 +212,7 @@
         </tar>
     </target>
 
-    <target name="dist-unix" depends="dist">
+    <target name="dist-macosx" depends="dist,docs" if="isMac">
         <echo message="Creating ${module.name}-${project.version}.tar.gz"/>
         <mkdir dir="target"/>
         <tar destfile="${project.dist}/${module.name}-${project.version}.tar.gz" compression="gzip">
@@ -220,6 +226,53 @@
         </tar>
     </target>
 
+    <target name="dist-unix" depends="dist,docs" if="isUnix">
+        <echo message="Creating ${module.name}-${project.version}.tar.gz"/>
+        <mkdir dir="target"/>
+        <tar destfile="${project.dist}/${module.name}-${project.version}.tar.gz" compression="gzip">
+            <tarfileset dir="target/dist" prefix="${module.name}-${project.version}" mode="755">
+                <include name="bin/*.sh"/>
+            </tarfileset>
+            <tarfileset dir="target/dist" prefix="${module.name}-${project.version}">
+                <include name="**/*"/>
+                <exclude name="bin/*.sh"/>
+            </tarfileset>
+        </tar>
+        <antcall target="rpm">
+            <param name="rpm.prefix" value=""/>
+            <param name="rpm.home" value="/usr/src/redhat"/>
+            <param name="rpm.builder" value="/usr/bin/rpmbuild"/>
+            <param name="rpm.name" value="${module.name}-${project.version}-1.i386.rpm"/>
+        </antcall>
+    </target>
+
+    <target name="rpm" depends="rpm-check,rpm-build">
+    </target>
+
+    <target name="rpm-check" depends="init">
+        <echo message="Checking ${rpm.builder}"/>
+        <condition property="hasRpmBuilder">
+            <available file="${rpm.builder}"/>
+        </condition>
+    </target>
+
+    <target name="rpm-build" depends="dist-src" if="hasRpmBuilder">
+        <copy todir="target" file="installer/${module.name}.spec">
+            <filterchain>
+                <expandproperties/>
+            </filterchain>
+        </copy>
+        <copy todir="${rpm.home}/SOURCES" overwrite="true"
+            file="${project.dist}/${module.name}-${project.version}-src.tar.gz">
+        </copy>
+        <exec executable="${rpm.builder}">
+            <arg line="-bb target/${module.name}.spec"/>
+        </exec>
+        <copy todir="${project.dist}" failonerror="false"
+            file="${rpm.home}/RPMS/i386/${rpm.name}">
+        </copy>
+    </target>
+<!--
     <target name="dist-rpm" depends="dist-src">
         <antcall target="dist-rpm-unix"/>
         <antcall target="dist-rpm-windows"/>
@@ -270,8 +323,8 @@
             file="${rpm.home}/RPMS/i386/${module.name}-${project.version}-1.cygwin.i386.rpm">
         </copy>
     </target>
-
-    <target name="dist-win32" depends="dist" if="isWindows">
+-->
+    <target name="dist-win32" depends="dist,docs" if="isWindows">
         <echo message="Creating ${module.name}-${project.version}.exe"/>
         <copy todir="target" file="installer/${module.name}.iss">
             <filterchain>
@@ -282,9 +335,15 @@
         <exec executable="${iscc.path}">
             <arg line="/Q target/${module.name}.iss"/>
         </exec>
+        <antcall target="rpm">
+            <param name="rpm.prefix" value="${cygwin.home}"/>
+            <param name="rpm.home" value="${cygwin.home}/usr/src/rpm"/>
+            <param name="rpm.builder" value="${cygwin.home}/lib/rpm/rpmb.exe"/>
+            <param name="rpm.name" value="${module.name}-${project.version}-1.cygwin.i386.rpm"/>
+        </antcall>
     </target>
 
-    <target name="dist-all" depends="dist-unix,dist-win32,dist-rpm">
+    <target name="dist-all" depends="dist-macosx,dist-unix,dist-win32">
         <copy todir="${project.dist}"
             file="target/${module.name}-${project.version}.jar">
         </copy>

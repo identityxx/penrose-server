@@ -29,11 +29,20 @@
     </path>
 
     <target name="init">
+        <echo message="Operating System: ${os.name} ${os.version}" />
         <condition property="isWindows">
             <os family="windows"/>
         </condition>
         <condition property="isUnix">
-            <os family="unix"/>
+            <and>
+                <os family="unix"/>
+                <not>
+                    <os family="mac"/>
+                </not>
+            </and>
+        </condition>
+        <condition property="isMac">
+            <os family="mac"/>
         </condition>
     </target>
 
@@ -95,9 +104,6 @@
             destdir="target/javadoc"
             classpathref="lib.path">
         </javadoc>
-        <jar jarfile="target/${project.name}-docs-${project.version}.jar">
-            <fileset dir="target/javadoc"/>
-        </jar>
     </target>
 
     <target name="docs-publish" depends="init">
