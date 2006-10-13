@@ -228,6 +228,20 @@
             <arg line="-srcdir target/${module.name}-${project.version}.dmg"/>
             <arg line="${project.dist}/${module.name}-${project.version}.dmg"/>
         </exec>
+<!--
+        <exec executable="server/tools/pkg-dmg">
+            <arg line="- -source target/${module.name}-${project.version}.dmg"/>
+            <arg line="- -target ${module.name}-${project.version}.dmg"/>
+            <arg line="- -volname &quot;Penrose Server ${project.version}&quot;"/>
+            <arg line="- -mkdir /.background"/>
+            <arg line="- -icon images/PenroseDMG.icns"/>
+            <arg line="- -license target/LICENSE.txt"/>
+            <arg line="- -copy images/background.png:/.background/background.png"/>
+            <arg line="- -copy server/installer/DSStore:/.DS_Store"/>
+            <arg line="- -verbosity 2"/>
+        </exec>
+-->
+
     </target>
 
     <target name="dist-unix" depends="docs,dist" if="isUnix">
