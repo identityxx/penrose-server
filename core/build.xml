@@ -140,16 +140,16 @@
         </tar>
     </target>
 
-    <target name="dist-unix" depends="dist">
+    <target name="dist-macosx" depends="dist">
     </target>
 
-    <target name="dist-rpm" depends="dist-src">
+    <target name="dist-unix" depends="dist">
     </target>
 
     <target name="dist-win32" depends="dist">
     </target>
 
-    <target name="dist-all" depends="dist-unix,dist-win32,dist-rpm">
+    <target name="dist-all" depends="dist-macosx,dist-unix,dist-win32">
     </target>
 
     <target name="clean" depends="init">
