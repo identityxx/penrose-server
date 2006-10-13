@@ -212,21 +212,25 @@
         </tar>
     </target>
 
-    <target name="dist-macosx" depends="dist,docs" if="isMac">
-        <echo message="Creating ${module.name}-${project.version}.tar.gz"/>
-        <mkdir dir="target"/>
-        <tar destfile="${project.dist}/${module.name}-${project.version}.tar.gz" compression="gzip">
-            <tarfileset dir="target/dist" prefix="${module.name}-${project.version}" mode="755">
-                <include name="bin/*.sh"/>
-            </tarfileset>
-            <tarfileset dir="target/dist" prefix="${module.name}-${project.version}">
-                <include name="**/*"/>
-                <exclude name="bin/*.sh"/>
-            </tarfileset>
-        </tar>
+    <target name="dist-macosx" depends="docs,dist" if="isMac">
+        <echo message="Creating ${module.name}-${project.version}.pkg"/>
+        <mkdir dir="target/${module.name}-${project.version}.dmg"/>
+        <exec executable="/Developer/Applications/Utilities/PackageMaker.app/Contents/MacOS/PackageMaker">
+            <arg line="-build"/>
+            <arg line="-proj server/installer/${module.name}.pmproj"/>
+            <arg line="-p server/target/${module.name}-${project.version}.dmg/${module.name}-${project.version}.pkg"/>
+        </exec>
+        <echo message="Creating ${module.name}-${project.version}.dmg"/>
+        <mkdir dir="${project.dist}"/>
+        <exec executable="/usr/bin/hdiutil">
+            <arg line="create"/>
+            <arg line="-fs HFS+"/>
+            <arg line="-srcdir target/${module.name}-${project.version}.dmg"/>
+            <arg line="${project.dist}/${module.name}-${project.version}.dmg"/>
+        </exec>
     </target>
 
-    <target name="dist-unix" depends="dist,docs" if="isUnix">
+    <target name="dist-unix" depends="docs,dist" if="isUnix">
         <echo message="Creating ${module.name}-${project.version}.tar.gz"/>
         <mkdir dir="target"/>
         <tar destfile="${project.dist}/${module.name}-${project.version}.tar.gz" compression="gzip">
@@ -273,7 +277,7 @@
         </copy>
     </target>
 
-    <target name="dist-win32" depends="dist,docs" if="isWindows">
+    <target name="dist-win32" depends="docs,dist" if="isWindows">
         <echo message="Creating ${module.name}-${project.version}.exe"/>
         <copy todir="target" file="installer/${module.name}.iss">
             <filterchain>
