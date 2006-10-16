@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2005, Identyx Corporation.
+ * Copyright (c) 2000-2006, Identyx Corporation.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,10 +22,8 @@ import org.safehaus.penrose.schema.AttributeType;
 import org.safehaus.penrose.schema.matchingRule.EqualityMatchingRule;
 import org.safehaus.penrose.mapping.Entry;
 import org.safehaus.penrose.mapping.AttributeValues;
-import org.safehaus.penrose.util.BinaryUtil;
 import org.safehaus.penrose.util.ExceptionUtil;
-import org.safehaus.penrose.config.PenroseConfig;
-import org.safehaus.penrose.service.ServiceConfig;
+import org.safehaus.penrose.partition.Partition;
 import org.ietf.ldap.*;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
@@ -45,40 +43,19 @@ public class CompareHandler {
         this.handler = handler;
     }
     
-    public int compare(PenroseSession session, String dn, String attributeName,
-            Object attributeValue) throws Exception {
+    public int compare(
+            PenroseSession session,
+            Partition partition,
+            Entry entry,
+            String attributeName,
+            Object attributeValue
+    ) throws Exception {
 
         int rc;
         try {
 
-            log.warn("Compare attribute "+attributeName+" in \""+dn+"\" with \""+attributeValue+"\".");
-
-            log.debug("-------------------------------------------------------------------------------");
-            log.debug("COMPARE:");
-            if (session != null && session.getBindDn() != null) log.debug(" - Bind DN: " + session.getBindDn());
-            log.debug(" - DN: " + dn);
-            log.debug(" - Attribute Name: " + attributeName);
-            if (attributeValue instanceof byte[]) {
-                log.debug(" - Attribute Value: " + BinaryUtil.encode(BinaryUtil.BIG_INTEGER, (byte[])attributeValue));
-            } else {
-                log.debug(" - Attribute Value: " + attributeValue);
-            }
-            log.debug("-------------------------------------------------------------------------------");
-
-            if (session != null && session.getBindDn() == null) {
-                PenroseConfig penroseConfig = handler.getPenroseConfig();
-                ServiceConfig serviceConfig = penroseConfig.getServiceConfig("LDAP");
-                String s = serviceConfig == null ? null : serviceConfig.getParameter("allowAnonymousAccess");
-                boolean allowAnonymousAccess = s == null ? true : new Boolean(s).booleanValue();
-                if (!allowAnonymousAccess) {
-                    return LDAPException.INSUFFICIENT_ACCESS_RIGHTS;
-                }
-            }
-
             List attributeNames = new ArrayList();
             attributeNames.add(attributeName);
-
-            Entry entry = handler.getFindHandler().find(dn);
 
             AttributeValues attributeValues = entry.getAttributeValues();
             Collection values = attributeValues.get(attributeName);

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2005, Identyx Corporation.
+ * Copyright (c) 2000-2006, Identyx Corporation.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,8 +20,8 @@ package org.safehaus.penrose.cache;
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.partition.SourceConfig;
-import org.safehaus.penrose.util.EntryUtil;
 import org.safehaus.penrose.session.PenroseSearchResults;
+import org.safehaus.penrose.Penrose;
 
 import java.util.*;
 
@@ -36,9 +36,13 @@ public class InMemoryEntryCacheStorage extends EntryCacheStorage {
     Map dataMap = new TreeMap();
     Map dataExpirationMap = new LinkedHashMap();
 
+    public InMemoryEntryCacheStorage(Penrose penrose) throws Exception {
+        super(penrose);
+    }
+
     public Entry get(String dn) throws Exception {
 
-        //log.debug("Getting entry cache ("+dataMap.size()+"): "+dn);
+        log.debug("get("+dn+")");
 
         Entry entry = (Entry)dataMap.get(dn);
         Date date = (Date)dataExpirationMap.get(dn);
@@ -50,6 +54,8 @@ public class InMemoryEntryCacheStorage extends EntryCacheStorage {
             return null;
         }
 
+        log.debug("get("+dn+") => "+(entry != null));
+
         return entry;
     }
 
@@ -59,6 +65,9 @@ public class InMemoryEntryCacheStorage extends EntryCacheStorage {
     }
 
     public void put(String dn, Entry entry) throws Exception {
+
+        log.debug("put("+dn+")");
+
         if (getSize() == 0) return;
 
         while (dataMap.get(dn) == null && dataMap.size() >= getSize()) {
@@ -75,64 +84,69 @@ public class InMemoryEntryCacheStorage extends EntryCacheStorage {
 
     public void remove(String dn) throws Exception {
 
-        //log.debug("Removing entry cache ("+dataMap.size()+"): "+dn);
+        log.debug("remove("+dn+")");
+
         dataMap.remove(dn);
         dataExpirationMap.remove(dn);
     }
 
     public boolean contains(String baseDn, Filter filter) throws Exception {
+
+        log.debug("contains("+baseDn+", "+filter+")");
+
         String key = filter == null ? "" : filter.toString();
-        return queryMap.containsKey(key);
+        boolean result = queryMap.containsKey(key);
+
+        log.debug("contains("+baseDn+", "+filter+") => "+result);
+
+        return result;
     }
 
-    /**
-     * @return DNs (Collection of String)
-     */
-    public PenroseSearchResults search(String baseDn, Filter filter, PenroseSearchResults results) throws Exception {
+    public boolean search(String baseDn, Filter filter, PenroseSearchResults results) throws Exception {
 
-        //log.debug("Searching entry filter cache for "+filter);
-        //log.debug("filter cache: "+queryMap.keySet());
+        log.debug("search("+baseDn+", "+filter+")");
 
-        String key = filter == null ? "" : filter.toString();
+        try {
+            String key = filter == null ? "" : filter.toString();
 
-        Collection dns = (Collection)queryMap.get(key);
-        if (dns == null) {
-            //log.debug("No filter cache found.");
-            return null;
-        }
+            Collection dns = (Collection)queryMap.get(key);
+            if (dns == null) return false;
 
-        if (baseDn == null) {
-            results.addAll(dns);
-        } else {
+            Collection entries = new ArrayList();
             for (Iterator i=dns.iterator(); i.hasNext(); ) {
                 String dn = (String)i.next();
-                String pdn = EntryUtil.getParentDn(dn);
-                if (baseDn.equals(pdn)) results.add(dn);
+                if (baseDn != null && !dn.endsWith(baseDn)) continue;
+
+                Entry entry = get(dn);
+                if (entry == null) return false;
+
+                entries.add(entry);
             }
+
+            for (Iterator i=entries.iterator(); i.hasNext(); ) {
+                Entry entry = (Entry)i.next();
+                log.debug("search("+baseDn+", "+filter+") => "+entry.getDn());
+                results.add(entry);
+            }
+
+            Date date = (Date)queryExpirationMap.get(key);
+
+            if (date == null || date.getTime() <= System.currentTimeMillis()) {
+                //log.debug("Filter cache has expired.");
+                queryMap.remove(key);
+                queryExpirationMap.remove(key);
+            }
+
+            return true;
+
+        } finally {
+            results.close();
         }
-
-        Date date = (Date)queryExpirationMap.get(key);
-
-        if (date == null || date.getTime() <= System.currentTimeMillis()) {
-            //log.debug("Filter cache has expired.");
-            queryMap.remove(key);
-            queryExpirationMap.remove(key);
-            return null;
-        }
-
-        results.close();
-
-        //log.debug("Returning "+results.size()+" entry(s).");
-
-        return results;
     }
 
-    /**
-     * @return DNs (Collection of Strings)
-     */
-    public Collection search(SourceConfig sourceConfig, Row filter) throws Exception {
+    public void search(SourceConfig sourceConfig, Row filter, PenroseSearchResults results) throws Exception {
 
-        Collection results = new ArrayList();
+        log.debug("search("+sourceConfig.getName()+", "+filter+")");
 
         for (Iterator i=dataMap.keySet().iterator(); i.hasNext(); ) {
             String dn = (String)i.next();
@@ -144,15 +158,16 @@ public class InMemoryEntryCacheStorage extends EntryCacheStorage {
             AttributeValues sv = entry.getSourceValues();
             if (!sv.contains(filter)) continue;
 
+            log.debug("search("+sourceConfig.getName()+", "+filter+") => "+dn);
             results.add(dn);
         }
 
-        return results;
+        results.close();
     }
 
     public void add(Filter filter, String dn) throws Exception {
 
-        //log.debug("Adding entry "+dn+" into filter cache for "+filter);
+        log.debug("add("+filter+", "+dn+")");
 
         String key = filter == null ? "" : filter.toString();
 
@@ -179,6 +194,9 @@ public class InMemoryEntryCacheStorage extends EntryCacheStorage {
     }
 
     public void put(Filter filter, Collection dns) throws Exception {
+
+        log.debug("put("+filter+", "+dns+")");
+
         if (getSize() == 0) return;
 
         String key = filter == null ? "" : filter.toString();

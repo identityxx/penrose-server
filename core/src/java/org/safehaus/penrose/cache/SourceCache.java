@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2005, Identyx Corporation.
+ * Copyright (c) 2000-2006, Identyx Corporation.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,22 +17,23 @@
  */
 package org.safehaus.penrose.cache;
 
+import org.safehaus.penrose.connector.Connection;
 import org.safehaus.penrose.connector.Connector;
-import org.safehaus.penrose.connector.ConnectionManager;
-import org.safehaus.penrose.partition.SourceConfig;
-import org.safehaus.penrose.partition.Partition;
-import org.safehaus.penrose.partition.PartitionManager;
-import org.safehaus.penrose.partition.PartitionConfig;
-import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.filter.Filter;
-import org.safehaus.penrose.thread.ThreadManager;
-import org.slf4j.LoggerFactory;
+import org.safehaus.penrose.mapping.AttributeValues;
+import org.safehaus.penrose.mapping.Row;
+import org.safehaus.penrose.partition.Partition;
+import org.safehaus.penrose.partition.SourceConfig;
+import org.safehaus.penrose.pipeline.PipelineAdapter;
+import org.safehaus.penrose.pipeline.PipelineEvent;
+import org.safehaus.penrose.session.PenroseSearchControls;
+import org.safehaus.penrose.session.PenroseSearchResults;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import java.util.Map;
-import java.util.TreeMap;
-import java.util.Iterator;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @author Endi S. Dewata
@@ -42,27 +43,119 @@ public class SourceCache {
     Logger log = LoggerFactory.getLogger(getClass());
 
     CacheConfig cacheConfig;
+
+    Partition partition;
+    SourceConfig sourceConfig;
+
     Connector connector;
-    PenroseConfig penroseConfig;
-    ConnectionManager connectionManager;
-    PartitionManager partitionManager;
-    ThreadManager threadManager;
 
-    private Map caches = new TreeMap();
+    int size;
+    int expiration; // minutes
 
-    public SourceCacheStorage createCacheStorage(SourceConfig sourceConfig) throws Exception {
+    public CacheConfig getCacheConfig() {
+        return cacheConfig;
+    }
 
-        Partition partition = partitionManager.getPartition(sourceConfig);
+    public void setCacheConfig(CacheConfig cacheConfig) {
+        this.cacheConfig = cacheConfig;
+    }
 
-        SourceCacheStorage sourceCacheStorage = new SourceCacheStorage();
-        sourceCacheStorage.setSourceDefinition(sourceConfig);
-        sourceCacheStorage.setPartition(partition);
-        sourceCacheStorage.setConnector(connector);
-        sourceCacheStorage.setThreadManager(threadManager);
+    public Collection getParameterNames() {
+        return cacheConfig.getParameterNames();
+    }
 
-        sourceCacheStorage.init(cacheConfig);
+    public String getParameter(String name) {
+        return cacheConfig.getParameter(name);
+    }
 
-        return sourceCacheStorage;
+    public int getSize() {
+        return size;
+    }
+
+    public void setSize(int size) {
+        this.size = size;
+    }
+
+    public int getExpiration() {
+        return expiration;
+    }
+
+    public void setExpiration(int expiration) {
+        this.expiration = expiration;
+    }
+
+    public SourceConfig getSourceDefinition() {
+        return sourceConfig;
+    }
+
+    public void setSourceDefinition(SourceConfig sourceConfig) {
+        this.sourceConfig = sourceConfig;
+    }
+
+    public void init(CacheConfig cacheConfig) throws Exception {
+        this.cacheConfig = cacheConfig;
+
+        String s = cacheConfig.getParameter(CacheConfig.CACHE_SIZE);
+        size = s == null ? CacheConfig.DEFAULT_CACHE_SIZE : Integer.parseInt(s);
+
+        s = cacheConfig.getParameter(CacheConfig.CACHE_EXPIRATION);
+        expiration = s == null ? CacheConfig.DEFAULT_CACHE_EXPIRATION : Integer.parseInt(s);
+
+        init();
+    }
+
+    public void init() throws Exception {
+
+        String s = sourceConfig.getParameter(SourceConfig.DATA_CACHE_SIZE);
+        if (s != null) size = Integer.parseInt(s);
+
+        s = sourceConfig.getParameter(SourceConfig.DATA_CACHE_EXPIRATION);
+        if (s != null) expiration = Integer.parseInt(s);
+    }
+
+    public int getLastChangeNumber() throws Exception {
+        return -1;
+    }
+
+    public void setLastChangeNumber(int lastChangeNumber) throws Exception {
+    }
+
+    public Map load(Collection filters, Collection missingKeys) throws Exception {
+        missingKeys.addAll(filters);
+        return new HashMap();
+    }
+
+    public void create() throws Exception {
+    }
+
+    public void clean() throws Exception {
+    }
+
+    public void drop() throws Exception {
+    }
+
+    public Collection search(Filter filter) throws Exception {
+        return null;
+    }
+
+    public Object get(Object key) throws Exception {
+        return null;
+    }
+
+    public void put(Object key, Object object) throws Exception {
+    }
+
+    public void put(Filter filter, Collection pks) throws Exception {
+    }
+
+    public void invalidate() throws Exception {
+    }
+
+    public void remove(Object key) throws Exception {
+    }
+
+    public Map getExpired() throws Exception {
+        return null;
     }
 
     public Connector getConnector() {
@@ -73,123 +166,59 @@ public class SourceCache {
         this.connector = connector;
     }
 
-    public CacheConfig getCacheConfig() {
-        return cacheConfig;
-    }
-
-    public void setCacheConfig(CacheConfig cacheConfig) {
-        this.cacheConfig = cacheConfig;
-    }
-
-    public SourceCacheStorage getCacheStorage(SourceConfig sourceConfig) throws Exception {
-        Partition partition = partitionManager.getPartition(sourceConfig);
-        PartitionConfig partitionConfig = partition.getPartitionConfig();
-
-        return (SourceCacheStorage)caches.get(partitionConfig.getName()+"."+sourceConfig.getName());
-    }
-
-    public void create() throws Exception {
-        for (Iterator i=caches.values().iterator(); i.hasNext(); ) {
-            SourceCacheStorage sourceCacheStorage = (SourceCacheStorage)i.next();
-            sourceCacheStorage.create();
-        }
-    }
-
-    public void create(SourceConfig sourceConfig) throws Exception {
-
-        Partition partition = partitionManager.getPartition(sourceConfig);
-        PartitionConfig partitionConfig = partition.getPartitionConfig();
-
-        SourceCacheStorage sourceCacheStorage = createCacheStorage(sourceConfig);
-        caches.put(partitionConfig.getName()+"."+sourceConfig.getName(), sourceCacheStorage);
-    }
-
     public void load() throws Exception {
-        for (Iterator i=caches.values().iterator(); i.hasNext(); ) {
-            SourceCacheStorage sourceCacheStorage = (SourceCacheStorage)i.next();
-            sourceCacheStorage.load();
-        }
+/*
+        String s = sourceConfig.getParameter(SourceConfig.AUTO_REFRESH);
+        boolean autoRefresh = s == null ? SourceConfig.DEFAULT_AUTO_REFRESH : new Boolean(s).booleanValue();
+
+        if (!autoRefresh) return;
+*/
+        String s = sourceConfig.getParameter(SourceConfig.SIZE_LIMIT);
+        final int sizeLimit = s == null ? SourceConfig.DEFAULT_SIZE_LIMIT : Integer.parseInt(s);
+
+        log.info("Loading cache for "+sourceConfig.getName()+"...");
+
+        final Connection connection = connector.getConnection(partition, sourceConfig.getConnectionName());
+
+        final PenroseSearchResults sr = new PenroseSearchResults();
+
+        sr.addListener(new PipelineAdapter() {
+            public void objectAdded(PipelineEvent event) {
+                try {
+                    AttributeValues sourceValues = (AttributeValues)event.getObject();
+                    Row pk = sourceConfig.getPrimaryKeyValues(sourceValues);
+                    //Row pk = sourceValues.getRdn();
+                    log.info("Storing "+pk+" in source cache");
+                    put(pk, sourceValues);
+                } catch (Exception e) {
+                    log.debug(e.getMessage(), e);
+                }
+            }
+
+            public void pipelineClosed(PipelineEvent event) {
+                try {
+                    int lastChangeNumber = connection.getLastChangeNumber(sourceConfig);
+                    log.info("Last change number for "+sourceConfig.getName()+": "+lastChangeNumber);
+                    setLastChangeNumber(lastChangeNumber);
+                } catch (Exception e) {
+                    log.debug(e.getMessage(), e);
+                }
+            }
+        });
+
+        PenroseSearchControls sc = new PenroseSearchControls();
+        sc.setSizeLimit(sizeLimit);
+
+        connection.load(sourceConfig, null, null, sc, sr);
+
+        sr.close();
     }
 
-    public void clean() throws Exception {
-        for (Iterator i=caches.values().iterator(); i.hasNext(); ) {
-            SourceCacheStorage sourceCacheStorage = (SourceCacheStorage)i.next();
-            sourceCacheStorage.clean();
-        }
+    public Partition getPartition() {
+        return partition;
     }
 
-    public void drop() throws Exception {
-        for (Iterator i=caches.values().iterator(); i.hasNext(); ) {
-            SourceCacheStorage sourceCacheStorage = (SourceCacheStorage)i.next();
-            sourceCacheStorage.drop();
-        }
-    }
-
-    public PartitionManager getPartitionManager() {
-        return partitionManager;
-    }
-
-    public void setPartitionManager(PartitionManager partitionManager) {
-        this.partitionManager = partitionManager;
-    }
-
-    public PenroseConfig getPenroseConfig() {
-        return penroseConfig;
-    }
-
-    public void setPenroseConfig(PenroseConfig penroseConfig) {
-        this.penroseConfig = penroseConfig;
-    }
-
-    public ConnectionManager getConnectionManager() {
-        return connectionManager;
-    }
-
-    public void setConnectionManager(ConnectionManager connectionManager) {
-        this.connectionManager = connectionManager;
-    }
-
-    public void remove(SourceConfig sourceConfig, Object key) throws Exception {
-        getCacheStorage(sourceConfig).remove(key);
-    }
-
-    public Object get(SourceConfig sourceConfig, Object key) throws Exception {
-        return getCacheStorage(sourceConfig).get(key);
-    }
-
-    public void put(SourceConfig sourceConfig, Object pk, Object sourceValues) throws Exception {
-        getCacheStorage(sourceConfig).put(pk, sourceValues);
-    }
-
-    public void put(SourceConfig sourceConfig, Filter filter, Collection pks) throws Exception {
-        getCacheStorage(sourceConfig).put(filter, pks);
-    }
-
-    public Collection search(SourceConfig sourceConfig, Filter filter) throws Exception {
-        return getCacheStorage(sourceConfig).search(filter);
-    }
-
-    public Map load(SourceConfig sourceConfig, Collection filters, Collection missingKeys) throws Exception {
-        return getCacheStorage(sourceConfig).load(filters, missingKeys);
-    }
-
-    public Map getExpired(SourceConfig sourceConfig) throws Exception {
-        return getCacheStorage(sourceConfig).getExpired();
-    }
-
-    public int getLastChangeNumber(SourceConfig sourceConfig) throws Exception {
-        return getCacheStorage(sourceConfig).getLastChangeNumber();
-    }
-
-    public void setLastChangeNumber(SourceConfig sourceConfig, int lastChangeNumber) throws Exception {
-        getCacheStorage(sourceConfig).setLastChangeNumber(lastChangeNumber);
-    }
-
-    public ThreadManager getThreadManager() {
-        return threadManager;
-    }
-
-    public void setThreadManager(ThreadManager threadManager) {
-        this.threadManager = threadManager;
+    public void setPartition(Partition partition) {
+        this.partition = partition;
     }
 }

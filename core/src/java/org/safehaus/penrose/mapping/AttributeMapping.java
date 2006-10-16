@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2005, Identyx Corporation.
+ * Copyright (c) 2000-2006, Identyx Corporation.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -38,15 +38,14 @@ public class AttributeMapping implements Cloneable {
     public final static int DEFAULT_LENGTH    = 50;
     public final static int DEFAULT_PRECISION = 0;
 
+    public final static String RDN_TRUE  = "true";
+    public final static String RDN_FIRST = "first";
+    public final static String RDN_FALSE = "false";
+
 	/**
 	 * Name. This refers to AttributeType's name.
 	 */
 	private String name;
-
-    /**
-     * Script.
-     */
-    private String script;
 
 	/**
 	 * Values.
@@ -58,7 +57,9 @@ public class AttributeMapping implements Cloneable {
     /**
      * This attribute is used in RDN.
      */
-    private boolean rdn;
+    private String rdn = RDN_FALSE;
+
+    private boolean operational;
 
     /**
      * Encryption method used to encrypt the value
@@ -77,24 +78,25 @@ public class AttributeMapping implements Cloneable {
     public AttributeMapping() {
     }
 
-    public AttributeMapping(String name, String expType, Object value) {
-        this(name, expType, value, false);
+    public AttributeMapping(String name, String type, Object value) {
+        this(name, type, value, false);
     }
     
-    public AttributeMapping(String name, String expType, Object value, boolean rdn) {
+    public AttributeMapping(String name, String type, Object value, boolean rdn) {
         this.name = name;
+        this.type = type;
 
-        if (CONSTANT.equals(expType)) {
+        if (CONSTANT.equals(type)) {
             this.constant = value;
 
-        } else if (VARIABLE.equals(expType)) {
+        } else if (VARIABLE.equals(type)) {
             this.variable = (String)value;
 
         } else {
             this.expression = (Expression)value;
         }
 
-        this.rdn = rdn;
+        this.rdn = rdn ? RDN_TRUE : RDN_FALSE;
     }
 
 	public String getName() {
@@ -110,19 +112,20 @@ public class AttributeMapping implements Cloneable {
     }
 
     public void setExpression(Expression expression) {
+        this.type = EXPRESSION;
         this.expression = expression;
     }
 
-    public boolean isRdn() {
+    public boolean isPK() {
+        return !RDN_FALSE.equals(rdn);
+    }
+
+    public String getRdn() {
         return rdn;
     }
 
-    public void setRdn(boolean rdn) {
-        this.rdn = rdn;
-    }
-
     public void setRdn(String rdn) {
-    	this.rdn = Boolean.getBoolean(rdn);
+    	this.rdn = rdn;
     }
 
     public byte[] getBinary() {
@@ -130,10 +133,12 @@ public class AttributeMapping implements Cloneable {
     }
 
     public void setBinary(byte[] bytes) {
+        this.type = CONSTANT;
         constant = bytes;
     }
 
     public void setBinary(String encodedData) throws Exception {
+        this.type = CONSTANT;
         constant = BinaryUtil.decode(BinaryUtil.BASE64, encodedData);
     }
 
@@ -142,6 +147,7 @@ public class AttributeMapping implements Cloneable {
     }
 
     public void setConstant(Object constant) {
+        this.type = CONSTANT;
         this.constant = constant;
     }
 
@@ -150,6 +156,7 @@ public class AttributeMapping implements Cloneable {
     }
 
     public void setVariable(String variable) {
+        this.type = VARIABLE;
         this.variable = variable;
     }
 
@@ -167,14 +174,6 @@ public class AttributeMapping implements Cloneable {
 
     public void setEncoding(String encoding) {
         this.encoding = encoding;
-    }
-
-    public String getScript() {
-        return script;
-    }
-
-    public void setScript(String script) {
-        this.script = script;
     }
 
     public String getType() {
@@ -203,11 +202,11 @@ public class AttributeMapping implements Cloneable {
 
     public int hashCode() {
         return (name == null ? 0 : name.hashCode()) +
-                (script == null ? 0 : script.hashCode()) +
                 (constant == null ? 0 : constant.hashCode()) +
                 (variable == null ? 0 : variable.hashCode()) +
                 (expression == null ? 0 : expression.hashCode()) +
-                (rdn ? 0 : 1) +
+                (rdn == null ? 0 : rdn.hashCode()) +
+                (operational ? 0 : 1) +
                 (encryption == null ? 0 : encryption.hashCode()) +
                 (encoding == null ? 0 : encoding.hashCode()) +
                 (type == null ? 0 : type.hashCode()) +
@@ -227,7 +226,6 @@ public class AttributeMapping implements Cloneable {
 
         AttributeMapping attributeMapping = (AttributeMapping)object;
         if (!equals(name, attributeMapping.name)) return false;
-        if (!equals(script, attributeMapping.script)) return false;
 
         if (constant instanceof byte[] && attributeMapping.constant instanceof byte[]) {
             if (!Arrays.equals((byte[])constant, (byte[])attributeMapping.constant)) return false;
@@ -237,7 +235,8 @@ public class AttributeMapping implements Cloneable {
 
         if (!equals(variable, attributeMapping.variable)) return false;
         if (!equals(expression, attributeMapping.expression)) return false;
-        if (rdn != attributeMapping.rdn) return false;
+        if (!equals(rdn, attributeMapping.rdn)) return false;
+        if (operational != attributeMapping.operational) return false;
         if (!equals(encryption, attributeMapping.encryption)) return false;
         if (!equals(encoding, attributeMapping.encoding)) return false;
         if (!equals(type, attributeMapping.type)) return false;
@@ -249,7 +248,6 @@ public class AttributeMapping implements Cloneable {
 
     public Object copy(AttributeMapping attributeMapping) {
         name = attributeMapping.name;
-        script = attributeMapping.script;
 
         if (attributeMapping.constant instanceof byte[]) {
             constant = ((byte[])attributeMapping.constant).clone();
@@ -260,6 +258,7 @@ public class AttributeMapping implements Cloneable {
         variable = attributeMapping.variable;
         expression = attributeMapping.expression == null ? null : (Expression)attributeMapping.expression.clone();
         rdn = attributeMapping.rdn;
+        operational = attributeMapping.operational;
         encryption = attributeMapping.encryption;
         encoding = attributeMapping.encoding;
         type = attributeMapping.type;
@@ -273,5 +272,13 @@ public class AttributeMapping implements Cloneable {
         AttributeMapping attributeMapping = new AttributeMapping();
         attributeMapping.copy(this);
         return attributeMapping;
+    }
+
+    public boolean isOperational() {
+        return operational;
+    }
+
+    public void setOperational(boolean operational) {
+        this.operational = operational;
     }
 }

@@ -63,15 +63,22 @@ echo.
 
 :runPenrose
 
-set LOCALLIBPATH=%PENROSE_HOME%\lib;%PENROSE_HOME%\lib\ext;%PENROSE_HOME%\schema\ext;%PENROSE_HOME%\server\lib
+set LOCALCLASSPATH=%JAVA_HOME%\lib\tools.jar;%CLASSPATH%
+
+set LOCALLIBPATH=%PENROSE_HOME%\lib;%LOCALLIBPATH%
+set LOCALLIBPATH=%PENROSE_HOME%\lib\ext;%LOCALLIBPATH%
+set LOCALLIBPATH=%PENROSE_HOME%\server\lib;%LOCALLIBPATH%
+set LOCALLIBPATH=%PENROSE_HOME%\server\lib\ext;%LOCALLIBPATH%
+set LOCALLIBPATH=%PENROSE_HOME%\schema\ext;%LOCALLIBPATH%
 
 cd %PENROSE_HOME%
 
-"%_JAVACMD%" %PENROSE_DEBUG_OPTS% %PENROSE_OPTS% -Djava.ext.dirs="%LOCALLIBPATH%" -Djavax.management.builder.initial=mx4j.server.MX4JMBeanServerBuilder -Dpenrose.home="%PENROSE_HOME%" org.safehaus.penrose.server.PenroseServer %PENROSE_ARGS% %PENROSE_CMD_LINE_ARGS%
+"%_JAVACMD%" %PENROSE_DEBUG_OPTS% %PENROSE_OPTS% -classpath "%LOCALCLASSPATH%" -Djava.ext.dirs="%LOCALLIBPATH%" -Djavax.management.builder.initial=mx4j.server.MX4JMBeanServerBuilder -Dpenrose.home="%PENROSE_HOME%" org.safehaus.penrose.server.PenroseServer %PENROSE_ARGS% %PENROSE_CMD_LINE_ARGS%
 goto end
 
 
 :end
+set LOCALCLASSPATH=
 set LOCALLIBPATH=
 set _JAVACMD=
 set PENROSE_CMD_LINE_ARGS=

@@ -1,3 +1,20 @@
+/**
+ * Copyright (c) 2000-2006, Identyx Corporation.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ */
 package org.safehaus.penrose.engine;
 
 import org.safehaus.penrose.graph.Graph;
@@ -5,6 +22,8 @@ import org.safehaus.penrose.graph.GraphEdge;
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.PartitionManager;
+import org.safehaus.penrose.partition.SourceConfig;
+import org.safehaus.penrose.partition.FieldConfig;
 import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.interpreter.InterpreterManager;
 import org.slf4j.LoggerFactory;
@@ -24,8 +43,9 @@ public class Analyzer {
 
     public Map graphs = new HashMap();
     public Map primarySources = new HashMap();
+    public Map uniqueness = new HashMap();
 
-    public void analyze(EntryMapping entryMapping) throws Exception {
+    public void analyze(Partition partition, EntryMapping entryMapping) throws Exception {
 
         log.debug("Analyzing entry "+entryMapping.getDn()+".");
 
@@ -35,7 +55,6 @@ public class Analyzer {
             //log.debug(" - primary sourceMapping: "+sourceMapping);
         }
 
-        Partition partition = partitionManager.getPartition(entryMapping);
         Graph graph = computeGraph(partition, entryMapping);
 
         if (graph != null) {
@@ -43,10 +62,13 @@ public class Analyzer {
             //log.debug(" - graph: "+graph);
         }
 
+        boolean unique = isUnique(partition, entryMapping);
+        log.debug("Unique: "+unique);
+
         Collection children = partition.getChildren(entryMapping);
         for (Iterator i=children.iterator(); i.hasNext(); ) {
             EntryMapping childMapping = (EntryMapping)i.next();
-            analyze(childMapping);
+            analyze(partition, childMapping);
         }
 	}
 
@@ -112,7 +134,7 @@ public class Analyzer {
 
     public SourceMapping computePrimarySource(EntryMapping entryMapping) throws Exception {
 
-        Collection rdnAttributes = entryMapping.getRdnAttributes();
+        Collection rdnAttributes = entryMapping.getRdnAttributeNames();
         if (rdnAttributes.isEmpty()) return null;
 
         // TODO need to handle multiple rdn attributes
@@ -179,4 +201,114 @@ public class Analyzer {
         return (SourceMapping)primarySources.get(entryMapping);
     }
 
+    /**
+     * Check whether each rdn value corresponds to one row from the source.
+     */
+    public boolean checkUniqueness(Partition partition, EntryMapping entryMapping) throws Exception {
+
+        Collection rdnSources = new TreeSet();
+        Collection rdnFields = new TreeSet();
+
+        // check each RDN attribute
+        Collection rdnAttributes = entryMapping.getRdnAttributeNames();
+        for (Iterator i=rdnAttributes.iterator(); i.hasNext(); ) {
+            AttributeMapping attributeMapping = (AttributeMapping)i.next();
+            //log.debug("Attribute "+attributeMapping.getName()+": "+attributeMapping.getType());
+
+            if (attributeMapping.getVariable() != null) {
+                String variable = attributeMapping.getVariable();
+
+                int j = variable.indexOf(".");
+                String sourceAlias = variable.substring(0, j);
+                String fieldName = variable.substring(j+1);
+
+                rdnSources.add(sourceAlias);
+                rdnFields.add(fieldName);
+
+                continue;
+            }
+
+            if (attributeMapping.getExpression() == null) continue;
+
+            log.debug("RDN attribute "+attributeMapping.getName()+" is an expression.");
+            return false;
+        }
+
+        //log.debug("RDN sources: "+rdnSources);
+
+        if (rdnSources.isEmpty()) {
+            log.debug("RDN attributes are constants.");
+            return true;
+        }
+
+        if (rdnSources.size() > 1) {
+            log.debug("RDN uses multiple sources: "+rdnSources);
+            return false;
+        }
+
+        String sourceAlias = (String)rdnSources.iterator().next();
+
+        SourceMapping sourceMapping = entryMapping.getSourceMapping(sourceAlias);
+        if (sourceMapping == null) throw new Exception("Invalid source mapping \""+sourceAlias+"\" in \""+entryMapping.getDn()+"\".");
+
+        SourceConfig sourceConfig = partition.getSourceConfig(sourceMapping.getSourceName());
+        if (sourceMapping == null) throw new Exception("Invalid source reference \""+sourceMapping.getSourceName()+"\" in \""+entryMapping.getDn()+"\".");
+
+        Collection uniqueFields = new TreeSet();
+        Collection pkFields = new TreeSet();
+
+        for (Iterator i=rdnFields.iterator(); i.hasNext(); ) {
+            String fieldName = (String)i.next();
+            if (fieldName.startsWith("primaryKey.")) continue;
+
+            FieldConfig fieldConfig = sourceConfig.getFieldConfig(fieldName);
+            if (fieldConfig == null) throw new Exception("Unknown field: "+fieldName);
+            
+            if (fieldConfig.isUnique()) {
+                uniqueFields.add(fieldName);
+                continue;
+            }
+
+            if (fieldConfig.isPK()) {
+                pkFields.add(fieldName);
+                continue;
+            }
+
+            log.debug("RDN uses non-unique field: "+fieldName);
+            return false;
+        }
+
+        //log.debug("RDN unique fields: "+uniqueFields);
+        //log.debug("RDN PK fields: "+pkFields);
+
+        // rdn uses unique fields
+        if (pkFields.isEmpty() && !uniqueFields.isEmpty()) return true;
+
+        Collection list = sourceConfig.getPrimaryKeyNames();
+        //log.debug("Source PK fields: "+list);
+
+        if (!pkFields.equals(list)) {
+            log.debug("RDN doesn't use all primary keys of "+sourceConfig.getName());
+            return false;
+        }
+
+        return true;
+    }
+
+    public boolean isUnique(Partition partition, EntryMapping entryMapping) throws Exception {
+
+        Boolean b = (Boolean)uniqueness.get(entryMapping);
+        if (b != null) return b.booleanValue();
+
+        b = new Boolean(checkUniqueness(partition, entryMapping));
+
+        if (b.booleanValue()) { // check parent mapping
+            EntryMapping parentMapping = partition.getParent(entryMapping);
+
+            if (parentMapping != null) b = new Boolean(isUnique(partition, parentMapping));
+        }
+
+        uniqueness.put(entryMapping, b);
+        return b.booleanValue();
+    }
 }

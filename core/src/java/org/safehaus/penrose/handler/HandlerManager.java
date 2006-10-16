@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2005, Identyx Corporation.
+ * Copyright (c) 2000-2006, Identyx Corporation.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@
  */
 package org.safehaus.penrose.handler;
 
-import org.safehaus.penrose.engine.Engine;
+import org.safehaus.penrose.engine.EngineManager;
 import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.interpreter.InterpreterManager;
 import org.safehaus.penrose.schema.SchemaManager;
@@ -25,6 +25,9 @@ import org.safehaus.penrose.session.SessionManager;
 import org.safehaus.penrose.module.ModuleManager;
 import org.safehaus.penrose.partition.PartitionManager;
 import org.safehaus.penrose.Penrose;
+import org.safehaus.penrose.thread.ThreadManager;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.TreeMap;
 import java.util.Map;
@@ -35,6 +38,8 @@ import java.util.Iterator;
  */
 public class HandlerManager {
 
+    Logger log = LoggerFactory.getLogger(getClass());
+    
     Map handlers = new TreeMap();
 
     private Penrose penrose;
@@ -45,19 +50,22 @@ public class HandlerManager {
     private PenroseConfig penroseConfig;
     private PartitionManager partitionManager;
     private ModuleManager moduleManager;
+    private ThreadManager threadManager;
 
     public HandlerManager() {
     }
 
-    public void init(HandlerConfig handlerConfig, Engine engine) throws Exception {
-        Handler handler = new Handler();
-        handler.setPenroseConfig(penroseConfig);
+    public void init(HandlerConfig handlerConfig, EngineManager engineManager) throws Exception {
+
+        log.debug("Initializing handler.");
+
+        Handler handler = new Handler(penrose);
         handler.setSessionManager(sessionManager);
         handler.setSchemaManager(schemaManager);
         handler.setInterpreterFactory(interpreterManager);
-        handler.setEngine(engine);
+        handler.setEngineManager(engineManager);
         handler.setPartitionManager(partitionManager);
-        handler.setPenrose(penrose);
+        handler.setThreadManager(threadManager);
 
         handlers.put(handlerConfig.getName(), handler);
     }
@@ -138,5 +146,13 @@ public class HandlerManager {
 
     public void setPenrose(Penrose penrose) {
         this.penrose = penrose;
+    }
+
+    public ThreadManager getThreadManager() {
+        return threadManager;
+    }
+
+    public void setThreadManager(ThreadManager threadManager) {
+        this.threadManager = threadManager;
     }
 }

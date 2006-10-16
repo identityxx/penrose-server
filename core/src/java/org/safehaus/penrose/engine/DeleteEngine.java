@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2005, Identyx Corporation.
+ * Copyright (c) 2000-2006, Identyx Corporation.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,6 +19,7 @@ package org.safehaus.penrose.engine;
 
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.graph.Graph;
+import org.safehaus.penrose.partition.Partition;
 import org.ietf.ldap.LDAPException;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
@@ -36,7 +37,7 @@ public class DeleteEngine {
         this.engine = engine;
     }
 
-    public int delete(Entry entry) throws Exception {
+    public int delete(Partition partition, Entry entry) throws Exception {
 
         EntryMapping entryMapping = entry.getEntryMapping();
 
@@ -48,7 +49,7 @@ public class DeleteEngine {
 
         log.debug("Deleting entry "+entry.getDn()+" ["+sourceValues+"]");
 
-        DeleteGraphVisitor visitor = new DeleteGraphVisitor(engine, entryMapping, sourceValues);
+        DeleteGraphVisitor visitor = new DeleteGraphVisitor(engine, partition, entryMapping, sourceValues);
         graph.traverse(visitor, primarySourceMapping);
 
         if (visitor.getReturnCode() != LDAPException.SUCCESS) return visitor.getReturnCode();

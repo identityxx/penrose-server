@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2005, Identyx Corporation.
+ * Copyright (c) 2000-2006, Identyx Corporation.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -36,6 +36,14 @@ public class EngineConfig implements Cloneable {
     private String description;
 
     private Properties parameters = new Properties();
+
+    public EngineConfig() {
+    }
+
+    public EngineConfig(String name, String engineClass) {
+        this.name = name;
+        this.engineClass = engineClass;
+    }
 
     public String getEngineClass() {
         return engineClass;

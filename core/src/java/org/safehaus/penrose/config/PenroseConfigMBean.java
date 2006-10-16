@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2005, Identyx Corporation.
+ * Copyright (c) 2000-2006, Identyx Corporation.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -33,10 +33,11 @@ public interface PenroseConfigMBean {
     public void setSystemProperty(String name, String value) throws Exception;
     public String removeSystemProperty(String name) throws Exception;
 
+    public Collection getServiceNames() throws Exception;
+
     public Collection getAdapterNames() throws Exception;
     public Collection getSchemaNames() throws Exception;
     public Collection getPartitionNames() throws Exception;
-    public Collection getServiceNames() throws Exception;
 
     public String getRootDn() throws Exception;
     public void setRootDn(String rootDn) throws Exception;

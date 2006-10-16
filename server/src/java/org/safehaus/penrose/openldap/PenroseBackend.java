@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2005, Identyx Corporation.
+ * Copyright (c) 2000-2006, Identyx Corporation.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,16 +23,16 @@ import java.io.File;
 import org.ietf.ldap.*;
 import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.server.PenroseServer;
+import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.service.ServiceConfig;
 import org.safehaus.penrose.session.PenroseSession;
 import org.safehaus.penrose.session.PenroseSearchResults;
 import org.safehaus.penrose.session.*;
-import org.safehaus.penrose.config.PenroseConfig;
 import org.openldap.backend.Backend;
 import org.openldap.backend.Results;
+import org.apache.log4j.xml.DOMConfigurator;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
-import org.apache.log4j.xml.DOMConfigurator;
 
 import javax.naming.directory.Attributes;
 import javax.naming.directory.SearchControls;

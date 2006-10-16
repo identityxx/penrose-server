@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2005, Identyx Corporation.
+ * Copyright (c) 2000-2006, Identyx Corporation.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -26,9 +26,12 @@ import org.safehaus.penrose.session.PenroseSession;
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.module.Module;
 import org.safehaus.penrose.cache.EntryCache;
-import org.safehaus.penrose.cache.SourceCache;
+import org.safehaus.penrose.cache.SourceCacheManager;
 import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.engine.Engine;
+import org.safehaus.penrose.pipeline.PipelineAdapter;
+import org.safehaus.penrose.pipeline.PipelineEvent;
+import org.safehaus.penrose.handler.Handler;
 
 import java.util.Collection;
 import java.util.Iterator;
@@ -47,7 +50,7 @@ public class PollingConnectorModule extends Module {
     public int interval; // 1 second
 
     public Connector connector;
-    public SourceCache sourceCache;
+    public SourceCacheManager sourceCacheManager;
     public Engine engine;
 
     public PollingConnectorRunnable runnable;
@@ -61,7 +64,7 @@ public class PollingConnectorModule extends Module {
         log.debug("Interval: "+interval);
 
         connector = penrose.getConnector();
-        sourceCache = connector.getSourceCache();
+        sourceCacheManager = connector.getSourceCacheManager();
         engine = penrose.getEngine();
     }
 
@@ -103,7 +106,7 @@ public class PollingConnectorModule extends Module {
 
     public void reloadExpired(Partition partition, SourceConfig sourceConfig) throws Exception {
 
-        Map map = sourceCache.getExpired(sourceConfig);
+        Map map = sourceCacheManager.getExpired(partition, sourceConfig);
 
         log.debug("Reloading expired caches...");
 
@@ -113,12 +116,15 @@ public class PollingConnectorModule extends Module {
             log.debug(" - "+pk+": "+av);
         }
 
-        connector.retrieve(partition, sourceConfig, map.keySet());
+        PenroseSearchControls sc = new PenroseSearchControls();
+        PenroseSearchResults list = new PenroseSearchResults();
+        connector.retrieve(partition, sourceConfig, map.keySet(), sc, list);
+        list.close();
     }
 
     public void pollChanges(SourceConfig sourceConfig) throws Exception {
 
-        int lastChangeNumber = sourceCache.getLastChangeNumber(sourceConfig);
+        int lastChangeNumber = sourceCacheManager.getLastChangeNumber(partition, sourceConfig);
 
         Connection connection = connector.getConnection(partition, sourceConfig.getConnectionName());
         PenroseSearchResults sr = connection.getChanges(sourceConfig, lastChangeNumber);
@@ -158,7 +164,7 @@ public class PollingConnectorModule extends Module {
                 pks.add(pk);
             }
 
-            sourceCache.remove(sourceConfig, pk);
+            sourceCacheManager.remove(partition, sourceConfig, pk);
 
             for (Iterator i=entryMappings.iterator(); i.hasNext(); ) {
                 EntryMapping entryMapping = (EntryMapping)i.next();
@@ -166,9 +172,12 @@ public class PollingConnectorModule extends Module {
             }
         }
 
-        sourceCache.setLastChangeNumber(sourceConfig, lastChangeNumber);
+        sourceCacheManager.setLastChangeNumber(partition, sourceConfig, lastChangeNumber);
 
-        connector.retrieve(partition, sourceConfig, pks);
+        PenroseSearchControls sc = new PenroseSearchControls();
+        PenroseSearchResults list = new PenroseSearchResults();
+        connector.retrieve(partition, sourceConfig, pks, sc, list);
+        list.close();
 
         for (Iterator i=pks.iterator(); i.hasNext(); ) {
             Row pk = (Row)i.next();
@@ -187,7 +196,7 @@ public class PollingConnectorModule extends Module {
         SourceMapping sourceMapping = engine.getPrimarySource(entryMapping);
         log.debug("Primary source: "+sourceMapping.getName()+" ("+sourceMapping.getSourceName()+")");
 
-        AttributeValues sv = (AttributeValues)sourceCache.get(sourceConfig, pk);
+        AttributeValues sv = (AttributeValues)sourceCacheManager.get(partition, sourceConfig, pk);
 
         AttributeValues sourceValues = new AttributeValues();
         sourceValues.set(sourceMapping.getName(), sv);
@@ -199,7 +208,7 @@ public class PollingConnectorModule extends Module {
             log.debug(" - "+name+": "+values);
         }
 
-        Interpreter interpreter = engine.getInterpreterFactory().newInstance();
+        Interpreter interpreter = engine.getInterpreterManager().newInstance();
         AttributeValues attributeValues = engine.computeAttributeValues(entryMapping, sourceValues, interpreter);
 
         log.debug("Attribute values:");
@@ -209,53 +218,75 @@ public class PollingConnectorModule extends Module {
             log.debug(" - "+name+": "+values);
         }
 
-        Row rdn = entryMapping.getRdn(attributeValues);
+        final Row rdn = entryMapping.getRdn(attributeValues);
         EntryMapping parentMapping = partition.getParent(entryMapping);
 
-        EntryCache entryCache = engine.getEntryCache();
+        Handler handler = penrose.getHandler();
+        EntryCache entryCache = handler.getEntryCache();
 
         PenroseSearchResults parentDns = new PenroseSearchResults();
-        entryCache.search(parentMapping, parentDns);
 
-        for (Iterator i=parentDns.iterator(); i.hasNext(); ) {
-            String parentDn = (String)i.next();
-            String dn = rdn+","+parentDn;
+        parentDns.addListener(new PipelineAdapter() {
+            public void objectAdded(PipelineEvent event) {
+                try {
+                    String parentDn = (String)event.getObject();
+                    String dn = rdn+","+parentDn;
 
-            log.debug("Adding "+dn);
+                    log.debug("Adding "+dn);
 
-            PenroseSession adminSession = penrose.newSession();
-            adminSession.setBindDn(penrose.getPenroseConfig().getRootDn());
+                    PenroseSession adminSession = penrose.newSession();
+                    adminSession.setBindDn(penrose.getPenroseConfig().getRootDn());
 
-            PenroseSearchResults sr = new PenroseSearchResults();
+                    PenroseSearchResults sr = new PenroseSearchResults();
 
-            PenroseSearchControls sc = new PenroseSearchControls();
-            sc.setScope(PenroseSearchControls.SCOPE_SUB);
+                    PenroseSearchControls sc = new PenroseSearchControls();
+                    sc.setScope(PenroseSearchControls.SCOPE_SUB);
 
-            adminSession.search(
-                    dn,
-                    "(objectClass=*)",
-                    sc,
-                    sr
-            );
+                    adminSession.search(
+                            dn,
+                            "(objectClass=*)",
+                            sc,
+                            sr
+                    );
 
-            while (sr.hasNext()) sr.next();
+                    while (sr.hasNext()) sr.next();
 
-            adminSession.close();
-        }
+                    adminSession.close();
+
+                } catch (Exception e) {
+                    log.debug(e.getMessage(), e);
+                }
+            }
+        });
+
+        entryCache.update(partition, parentMapping, parentDns);
     }
 
-    public void remove(EntryMapping entryMapping, SourceConfig sourceConfig, Row pk) throws Exception {
+    public void remove(
+            final EntryMapping entryMapping,
+            final SourceConfig sourceConfig,
+            final Row pk
+    ) throws Exception {
 
         log.debug("Removing entry cache for "+entryMapping.getDn());
 
-        EntryCache entryCache = engine.getEntryCache();
+        Handler handler = penrose.getHandler();
+        final EntryCache entryCache = handler.getEntryCache();
 
-        Collection dns = entryCache.search(entryMapping, sourceConfig, pk);
-        for (Iterator i=dns.iterator(); i.hasNext(); ) {
-            String dn = (String)i.next();
+        PenroseSearchResults dns = new PenroseSearchResults();
+        dns.addListener(new PipelineAdapter() {
+            public void objectAdded(PipelineEvent event) {
+                try {
+                    String dn = (String)event.getObject();
+                    entryCache.remove(partition, entryMapping, dn);
 
-            entryCache.remove(partition, entryMapping, dn);
-        }
+                } catch (Exception e) {
+                    log.debug(e.getMessage(), e);
+                }
+            }
+        });
+
+        entryCache.search(partition, entryMapping, sourceConfig, pk, dns);
     }
 
 }

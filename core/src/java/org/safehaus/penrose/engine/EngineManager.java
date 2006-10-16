@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2005, Identyx Corporation.
+ * Copyright (c) 2000-2006, Identyx Corporation.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,13 +17,14 @@
  */
 package org.safehaus.penrose.engine;
 
-import org.safehaus.penrose.connector.Connector;
 import org.safehaus.penrose.connector.ConnectionManager;
+import org.safehaus.penrose.connector.ConnectorManager;
 import org.safehaus.penrose.interpreter.InterpreterManager;
 import org.safehaus.penrose.schema.SchemaManager;
 import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.partition.PartitionManager;
-import org.safehaus.penrose.thread.ThreadManager;
+import org.safehaus.penrose.Penrose;
+import org.apache.log4j.Logger;
 
 import java.util.TreeMap;
 import java.util.Map;
@@ -34,32 +35,37 @@ import java.util.Iterator;
  */
 public class EngineManager {
 
+    Logger log = Logger.getLogger(getClass());
+    
     Map engines = new TreeMap();
 
+    private Penrose penrose;
     private PenroseConfig penroseConfig;
     private SchemaManager schemaManager;
     private InterpreterManager interpreterManager;
+    private ConnectorManager connectorManager;
     private ConnectionManager connectionManager;
     private PartitionManager partitionManager;
-    private ThreadManager threadManager;
 
     public EngineManager() {
     }
 
-    public void init(EngineConfig engineConfig, Connector connector) throws Exception {
+    public void init(EngineConfig engineConfig) throws Exception {
+
+        log.debug("Initializing engine "+engineConfig.getName()+".");
 
         Class clazz = Class.forName(engineConfig.getEngineClass());
 
         Engine engine = (Engine)clazz.newInstance();
 
         engine.setEngineConfig(engineConfig);
+        engine.setPenrose(penrose);
         engine.setPenroseConfig(penroseConfig);
         engine.setSchemaManager(schemaManager);
         engine.setInterpreterFactory(interpreterManager);
-        engine.setConnector(connector);
+        engine.setConnectorManager(connectorManager);
         engine.setConnectionManager(connectionManager);
         engine.setPartitionManager(partitionManager);
-        engine.setThreadManager(threadManager);
 
         engine.init();
 
@@ -128,11 +134,19 @@ public class EngineManager {
         this.partitionManager = partitionManager;
     }
 
-    public ThreadManager getThreadManager() {
-        return threadManager;
+    public ConnectorManager getConnectorManager() {
+        return connectorManager;
     }
 
-    public void setThreadManager(ThreadManager threadManager) {
-        this.threadManager = threadManager;
+    public void setConnectorManager(ConnectorManager connectorManager) {
+        this.connectorManager = connectorManager;
+    }
+
+    public Penrose getPenrose() {
+        return penrose;
+    }
+
+    public void setPenrose(Penrose penrose) {
+        this.penrose = penrose;
     }
 }

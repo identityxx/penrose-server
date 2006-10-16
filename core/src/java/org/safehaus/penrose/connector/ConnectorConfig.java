@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2005, Identyx Corporation.
+ * Copyright (c) 2000-2006, Identyx Corporation.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@
  */
 package org.safehaus.penrose.connector;
 
-import org.safehaus.penrose.cache.DefaultSourceCache;
+import org.safehaus.penrose.cache.SourceCache;
 
 import java.util.*;
 
@@ -32,7 +32,7 @@ public class ConnectorConfig implements Cloneable {
     public final static String THREAD_POOL_SIZE    = "threadPoolSize";
 
     public final static String DEFAULT_CACHE_NAME  = "Source Cache";
-    public final static String DEFAULT_CACHE_CLASS = DefaultSourceCache.class.getName();
+    public final static String DEFAULT_CACHE_CLASS = SourceCache.class.getName();
 
 
     public final static int DEFAULT_REFRESH_INTERVAL = 60; // seconds

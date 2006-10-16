@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2005, Identyx Corporation.
+ * Copyright (c) 2000-2006, Identyx Corporation.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -25,7 +25,7 @@ public class SubstringFilter extends Filter {
 
     public final static Character STAR = new Character('*');
 
-    protected String attribute;
+	protected String attribute;
 	protected Collection substrings = new ArrayList();
 	
 	public SubstringFilter() {

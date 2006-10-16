@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2005, Identyx Corporation.
+ * Copyright (c) 2000-2006, Identyx Corporation.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -30,15 +30,18 @@ public class FieldMapping implements Cloneable {
     public final static String VARIABLE       = "VARIABLE";
     public final static String EXPRESSION     = "EXPRESSION";
 
+    public final static String DEFAULT_TYPE   = "VARCHAR";
+
+    public final static String PK_TRUE  = "true";
+    public final static String PK_FIRST = "first";
+    public final static String PK_FALSE = "false";
+
 	/**
 	 * Name.
 	 */
 	private String name;
 
-    /**
-     * Script.
-     */
-    private String script;
+    private String type   = DEFAULT_TYPE;
 
 	/**
 	 * Expression.
@@ -47,6 +50,10 @@ public class FieldMapping implements Cloneable {
     private String variable;
 	private Expression expression;
 
+    /**
+     * This field is used in primary key.
+     */
+    private String primaryKey = PK_FALSE;
 
     public FieldMapping() {
     }
@@ -55,13 +62,14 @@ public class FieldMapping implements Cloneable {
         this.name = name;
     }
 
-    public FieldMapping(String name, String expType, String value) {
+    public FieldMapping(String name, String type, String value) {
         this.name = name;
+        this.type = type;
 
-        if (CONSTANT.equals(expType)) {
+        if (CONSTANT.equals(type)) {
             this.constant = value;
 
-        } else if (VARIABLE.equals(expType)) {
+        } else if (VARIABLE.equals(type)) {
             this.variable = value;
 
         } else {
@@ -82,26 +90,21 @@ public class FieldMapping implements Cloneable {
 	}
 
 	public void setExpression(Expression expression) {
+        this.type = EXPRESSION;
 		this.expression = expression;
 	}
-
-    public String getScript() {
-        return script;
-    }
-
-    public void setScript(String script) {
-        this.script = script;
-    }
 
     public byte[] getBinary() {
         return (byte[])constant;
     }
 
     public void setBinary(byte[] bytes) {
+        this.type = CONSTANT;
         constant = bytes;
     }
 
     public void setBinary(String encodedData) throws Exception {
+        this.type = CONSTANT;
         constant = BinaryUtil.decode(BinaryUtil.BASE64, encodedData);
     }
 
@@ -110,6 +113,7 @@ public class FieldMapping implements Cloneable {
     }
 
     public void setConstant(Object constant) {
+        this.type = CONSTANT;
         this.constant = constant;
     }
 
@@ -118,12 +122,13 @@ public class FieldMapping implements Cloneable {
     }
 
     public void setVariable(String variable) {
+        this.type = VARIABLE;
         this.variable = variable;
     }
 
     public int hashCode() {
         return (name == null ? 0 : name.hashCode()) +
-                (script == null ? 0 : script.hashCode()) +
+                (type == null ? 0 : type.hashCode()) +
                 (constant == null ? 0 : constant.hashCode()) +
                 (variable == null ? 0 : variable.hashCode()) +
                 (expression == null ? 0 : expression.hashCode());
@@ -141,7 +146,7 @@ public class FieldMapping implements Cloneable {
 
         FieldMapping fieldMapping = (FieldMapping)object;
         if (!equals(name, fieldMapping.name)) return false;
-        if (!equals(script, fieldMapping.script)) return false;
+        if (!equals(type, fieldMapping.type)) return false;
 
         if (constant instanceof byte[] && fieldMapping.constant instanceof byte[]) {
             if (!Arrays.equals((byte[])constant, (byte[])fieldMapping.constant)) return false;
@@ -157,7 +162,7 @@ public class FieldMapping implements Cloneable {
 
     public void copy(FieldMapping fieldMapping) {
         name = fieldMapping.name;
-        script = fieldMapping.script;
+        type = fieldMapping.type;
 
         if (fieldMapping.constant instanceof byte[]) {
             constant = ((byte[])fieldMapping.constant).clone();
@@ -173,5 +178,25 @@ public class FieldMapping implements Cloneable {
         FieldMapping fieldMapping = new FieldMapping();
         fieldMapping.copy(this);
         return fieldMapping;
+    }
+
+    public boolean isPK() {
+        return !PK_FALSE.equals(primaryKey);
+    }
+
+    public String getPrimaryKey() {
+        return primaryKey;
+    }
+
+    public void setPrimaryKey(String primaryKey) {
+        this.primaryKey = primaryKey;
+    }
+
+    public String getType() {
+        return type;
+    }
+
+    public void setType(String type) {
+        this.type = type;
     }
 }

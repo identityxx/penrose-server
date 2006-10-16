@@ -49,7 +49,6 @@ goto end
 
 :checkJava
 set _JAVACMD=%JAVACMD%
-set LOCALCLASSPATH=%CLASSPATH%;%JAVA_HOME%\lib\tools.jar
 
 if "%JAVA_HOME%" == "" goto noJavaHome
 if not exist "%JAVA_HOME%\bin\java.exe" goto noJavaHome
@@ -64,8 +63,12 @@ echo.
 
 :runPenrose
 
-set LOCALCLASSPATH=%PENROSE_HOME%\conf;%LOCALCLASSPATH%
-set LOCALLIBPATH=%PENROSE_HOME%\lib;%PENROSE_HOME%\lib\ext;%PENROSE_HOME%\schema\ext;%PENROSE_HOME%\server\lib
+set LOCALCLASSPATH=%JAVA_HOME%\lib\tools.jar;%CLASSPATH%
+
+set LOCALLIBPATH=%PENROSE_HOME%\lib;%LOCALLIBPATH%
+set LOCALLIBPATH=%PENROSE_HOME%\lib\ext;%LOCALLIBPATH%
+set LOCALLIBPATH=%PENROSE_HOME%\server\lib;%LOCALLIBPATH%
+set LOCALLIBPATH=%PENROSE_HOME%\server\lib\ext;%LOCALLIBPATH%
 
 "%_JAVACMD%" %PENROSE_DEBUG_OPTS% %PENROSE_OPTS% -classpath "%LOCALCLASSPATH%" -Djava.ext.dirs="%LOCALLIBPATH%" -Dpenrose.home="%PENROSE_HOME%" org.safehaus.penrose.ldap.SchemaGenerator %PENROSE_ARGS% %PENROSE_CMD_LINE_ARGS%
 goto end

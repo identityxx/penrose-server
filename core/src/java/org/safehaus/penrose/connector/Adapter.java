@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2005, Identyx Corporation.
+ * Copyright (c) 2000-2006, Identyx Corporation.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -36,7 +36,7 @@ import java.util.Map;
  */
 public abstract class Adapter {
 
-    Logger log = LoggerFactory.getLogger(getClass());
+    public Logger log = LoggerFactory.getLogger(getClass());
 
     private AdapterConfig adapterConfig;
     private Connection connection;
@@ -74,11 +74,11 @@ public abstract class Adapter {
     /**
      * Load.
      *
+     * @param primaryKeys
      * @param results AttributeValues
      * @throws Exception
      */
-    public void load(SourceConfig sourceConfig, Filter filter, PenroseSearchControls sc, PenroseSearchResults results) throws Exception {
-        results.close();
+    public void load(SourceConfig sourceConfig, Collection primaryKeys, Filter filter, PenroseSearchControls sc, PenroseSearchResults results) throws Exception {
     }
 
     /**

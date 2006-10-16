@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2005, Identyx Corporation.
+ * Copyright (c) 2000-2006, Identyx Corporation.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -72,7 +72,7 @@ public class PartitionWriter {
 
         writer.startDTD(
                 "mapping",
-                "-//Penrose/DTD Mapping 1.0//EN",
+                "-//Penrose/DTD Mapping 1.1//EN",
                 "http://penrose.safehaus.org/dtd/mapping.dtd"
         );
 
@@ -92,7 +92,7 @@ public class PartitionWriter {
 
         writer.startDTD(
                 "connections",
-                "-//Penrose/DTD Connections 1.0//EN",
+                "-//Penrose/DTD Connections 1.1//EN",
                 "http://penrose.safehaus.org/dtd/connections.dtd"
         );
 
@@ -112,7 +112,7 @@ public class PartitionWriter {
 
         writer.startDTD(
                 "sources",
-                "-//Penrose/DTD Sources 1.0//EN",
+                "-//Penrose/DTD Sources 1.1//EN",
                 "http://penrose.safehaus.org/dtd/sources.dtd"
         );
 
@@ -132,7 +132,7 @@ public class PartitionWriter {
 
         writer.startDTD(
                 "modules",
-                "-//Penrose/DTD Modules 1.0//EN",
+                "-//Penrose/DTD Modules 1.1//EN",
                 "http://penrose.safehaus.org/dtd/modules.dtd"
         );
 
@@ -340,16 +340,11 @@ public class PartitionWriter {
     public Element toElement(AttributeMapping attributeMapping) throws Exception {
         Element element = new DefaultElement("at");
         element.add(new DefaultAttribute("name", attributeMapping.getName()));
-        if (attributeMapping.isRdn()) element.add(new DefaultAttribute("rdn", "true"));
-        if (!AttributeMapping.DEFAULT_TYPE.equals(attributeMapping.getType())) element.addAttribute("type", attributeMapping.getType());
+        if (attributeMapping.isPK()) element.add(new DefaultAttribute("rdn", "true"));
+        if (attributeMapping.isOperational()) element.add(new DefaultAttribute("operational", "true"));
+        //if (!AttributeMapping.DEFAULT_TYPE.equals(attributeMapping.getType())) element.addAttribute("type", attributeMapping.getType());
         if (attributeMapping.getLength() != AttributeMapping.DEFAULT_LENGTH) element.addAttribute("length", ""+attributeMapping.getLength());
         if (attributeMapping.getPrecision() != AttributeMapping.DEFAULT_PRECISION) element.addAttribute("precision", ""+attributeMapping.getPrecision());
-
-        if (attributeMapping.getScript() != null) {
-            Element scriptElement = new DefaultElement("script");
-            scriptElement.setText(attributeMapping.getScript());
-            element.add(scriptElement);
-        }
 
         if (attributeMapping.getConstant() != null) {
             Object value = attributeMapping.getConstant();
@@ -661,7 +656,7 @@ public class PartitionWriter {
         Element element = new DefaultElement("field");
         element.addAttribute("name", field.getName());
         if (!field.getName().equals(field.getOriginalName())) element.addAttribute("originalName", field.getOriginalName());
-        if (field.isPrimaryKey()) element.addAttribute("primaryKey", "true");
+        if (field.isPK()) element.addAttribute("primaryKey", "true");
         if (!field.isSearchable()) element.addAttribute("searchable", "false");
         if (field.isUnique()) element.addAttribute("unique", "true");
         if (field.isIndex()) element.addAttribute("index", "true");

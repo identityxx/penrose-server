@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapping PUBLIC
+  "-//Penrose/DTD Mapping 1.1//EN"
+  "http://penrose.safehaus.org/dtd/mapping.dtd">
+
+<mapping>
+
+  <entry dn="dc=Operational Attribute,dc=Example,dc=com">
+    <oc>dcObject</oc>
+    <oc>organization</oc>
+    <at name="dc" rdn="true">
+      <constant>Operational Attribute</constant>
+    </at>
+    <at name="o">
+      <constant>Operational Attribute</constant>
+    </at>
+    <aci subject="self">
+      <permission>rws</permission>
+    </aci>
+    <aci>
+      <target>ATTRIBUTES</target>
+      <attributes>userPassword</attributes>
+      <action>deny</action>
+      <permission>rs</permission>
+    </aci>
+    <aci>
+      <permission>rs</permission>
+    </aci>
+  </entry>
+
+  <entry dn="ou=Users,dc=Operational Attribute,dc=Example,dc=com">
+    <oc>organizationalUnit</oc>
+    <at name="ou" rdn="true">
+      <constant>Users</constant>
+    </at>
+  </entry>
+
+  <entry dn="uid=...,ou=Users,dc=Operational Attribute,dc=Example,dc=com">
+    <oc>person</oc>
+    <oc>organizationalPerson</oc>
+    <oc>inetOrgPerson</oc>
+    <at name="uid" rdn="true">
+      <variable>u.username</variable>
+    </at>
+    <at name="cn">
+      <expression>
+if (u == void || u == null) return null;
+return u.firstName+" "+u.lastName;
+      </expression>
+    </at>
+    <at name="sn">
+      <variable>u.lastName</variable>
+    </at>
+    <at name="userPassword">
+      <variable>u.password</variable>
+    </at>
+    <at name="creatorsName" operational="true">
+      <variable>u.creatorsName</variable>
+    </at>
+    <at name="createTimestamp" operational="true">
+      <expression>
+import org.safehaus.penrose.operationalAttribute.*;
+
+if (u == void || u == null) return;
+if (u.createTimestamp == void || u.createTimestamp == null) return null;
+return OperationalAttribute.formatDate(u.createTimestamp);
+      </expression>
+    </at>
+    <at name="modifiersName" operational="true">
+      <variable>u.modifiersName</variable>
+    </at>
+    <at name="modifyTimestamp" operational="true">
+      <expression>
+import org.safehaus.penrose.operationalAttribute.*;
+
+if (u == void || u == null) return;
+if (u.modifyTimestamp == void || u.modifyTimestamp == null) return null;
+return OperationalAttribute.formatDate(u.modifyTimestamp);
+      </expression>
+    </at>
+    <source name="u">
+      <source-name>users</source-name>
+      <field name="username">
+        <variable>uid</variable>
+      </field>
+      <field name="firstName">
+        <expression>
+if (cn == void || cn == null) return null;
+int i = cn.lastIndexOf(" ");
+return cn.substring(0, i);
+        </expression>
+      </field>
+      <field name="lastName">
+        <expression>
+if (sn != void &amp;&amp; sn != null) return sn;
+if (cn == void || cn == null) return null;
+int i = cn.lastIndexOf(" ");
+return cn.substring(i+1);
+        </expression>
+      </field>
+      <field name="password">
+        <variable>userPassword</variable>
+      </field>
+      <field name="creatorsName">
+        <variable>creatorsName</variable>
+      </field>
+      <field name="createTimestamp">
+        <expression>
+import org.safehaus.penrose.operationalAttribute.*;
+
+if (createTimestamp == void || createTimestamp == null) return null;
+return OperationalAttribute.parseDate(createTimestamp);
+        </expression>
+      </field>
+      <field name="modifiersName">
+        <variable>modifiersName</variable>
+      </field>
+      <field name="modifyTimestamp">
+        <expression>
+import org.safehaus.penrose.operationalAttribute.*;
+
+if (modifyTimestamp == void || modifyTimestamp == null) return null;
+return OperationalAttribute.parseDate(modifyTimestamp);
+        </expression>
+      </field>
+    </source>
+  </entry>
+
+</mapping>

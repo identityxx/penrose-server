@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2005, Identyx Corporation.
+ * Copyright (c) 2000-2006, Identyx Corporation.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -30,7 +30,6 @@ import org.safehaus.penrose.engine.EngineManager;
 import org.safehaus.penrose.handler.Handler;
 import org.safehaus.penrose.handler.HandlerManager;
 import org.safehaus.penrose.handler.HandlerConfig;
-import org.safehaus.penrose.session.SessionConfig;
 import org.safehaus.penrose.interpreter.InterpreterConfig;
 import org.safehaus.penrose.interpreter.InterpreterManager;
 import org.safehaus.penrose.connector.*;
@@ -63,20 +62,20 @@ public class Penrose {
     public final static String STARTED  = "STARTED";
     public final static String STOPPING = "STOPPING";
 
-    private PenroseConfig penroseConfig;
+    private PenroseConfig      penroseConfig;
 
-    private ThreadManager threadManager;
-    private SchemaManager schemaManager;
-    private PartitionManager partitionManager;
+    private ThreadManager      threadManager;
+    private SchemaManager      schemaManager;
+    private PartitionManager   partitionManager;
     private PartitionValidator partitionValidator;
-    private ConnectionManager connectionManager;
-    private ModuleManager moduleManager;
-    private SessionManager sessionManager;
+    private ConnectionManager  connectionManager;
+    private ModuleManager      moduleManager;
+    private SessionManager     sessionManager;
 
-    private ConnectorManager connectorManager;
-    private EngineManager engineManager;
-    private EventManager eventManager;
-    private HandlerManager handlerManager;
+    private ConnectorManager   connectorManager;
+    private EngineManager      engineManager;
+    private EventManager       eventManager;
+    private HandlerManager     handlerManager;
 
     private InterpreterManager interpreterManager;
 
@@ -103,18 +102,20 @@ public class Penrose {
 
     protected Penrose(String home) throws Exception {
 
-        PenroseConfigReader reader = new PenroseConfigReader((home == null ? "" : home+File.separator)+"conf"+File.separator+"server.xml");
-        penroseConfig = reader.read();
+        penroseConfig = new PenroseConfig();
         penroseConfig.setHome(home);
+        loadConfig();
 
         init();
-        load(home);
+        load();
     }
 
     protected Penrose() throws Exception {
         penroseConfig = new PenroseConfig();
+        loadConfig();
+
         init();
-        load(null);
+        load();
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -149,8 +150,8 @@ public class Penrose {
     }
 
     public void initSessionManager() throws Exception {
-        SessionConfig sessionConfig = penroseConfig.getSessionConfig();
-        sessionManager = new SessionManager(sessionConfig);
+        sessionManager = new SessionManager();
+        sessionManager.setPenroseConfig(penroseConfig);
     }
 
     public void initPartitionManager() throws Exception {
@@ -180,17 +181,17 @@ public class Penrose {
         connectorManager.setPenroseConfig(penroseConfig);
         connectorManager.setConnectionManager(connectionManager);
         connectorManager.setPartitionManager(partitionManager);
-        connectorManager.setThreadManager(threadManager);
     }
 
     public void initEngineManager() throws Exception {
         engineManager = new EngineManager();
+        engineManager.setPenrose(this);
         engineManager.setPenroseConfig(penroseConfig);
         engineManager.setSchemaManager(schemaManager);
         engineManager.setInterpreterFactory(interpreterManager);
+        engineManager.setConnectorManager(connectorManager);
         engineManager.setConnectionManager(connectionManager);
         engineManager.setPartitionManager(partitionManager);
-        engineManager.setThreadManager(threadManager);
     }
 
     public void initEventManager() throws Exception {
@@ -206,6 +207,7 @@ public class Penrose {
         handlerManager.setInterpreterFactory(interpreterManager);
         handlerManager.setPartitionManager(partitionManager);
         handlerManager.setModuleManager(moduleManager);
+        handlerManager.setThreadManager(threadManager);
         handlerManager.setPenrose(this);
     }
 
@@ -213,16 +215,15 @@ public class Penrose {
     // Load Penrose Configurations
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    public void load(String home) throws Exception {
+    public void loadConfig() throws Exception {
 
-        String filename = (home == null ? "" : home+File.separator)+"conf"+File.separator+"server.xml";
-        log.debug("Loading Penrose configuration from "+filename);
+        String home = penroseConfig.getHome();
 
-        PenroseConfigReader reader = new PenroseConfigReader(filename);
+        penroseConfig.clear();
+
+        PenroseConfigReader reader = new PenroseConfigReader((home == null ? "" : home+File.separator)+"conf"+File.separator+"server.xml");
         reader.read(penroseConfig);
         penroseConfig.setHome(home);
-
-        load();
     }
 
     public void load() throws Exception {
@@ -315,28 +316,25 @@ public class Penrose {
 
     public void loadEngine() throws Exception {
 
-        EngineConfig engineConfig = penroseConfig.getEngineConfig();
-        Engine engine = engineManager.getEngine(engineConfig.getName());
-
-        if (engine != null) return;
-
         ConnectorConfig connectorConfig = penroseConfig.getConnectorConfig();
         Connector connector = connectorManager.getConnector(connectorConfig.getName());
 
-        engineManager.init(engineConfig, connector);
+        Collection engineConfigs = penroseConfig.getEngineConfigs();
+
+        for (Iterator i=engineConfigs.iterator(); i.hasNext(); ) {
+            EngineConfig engineConfig = (EngineConfig)i.next();
+            if (engineManager.getEngine(engineConfig.getName()) != null) continue;
+
+            engineManager.init(engineConfig);
+        }
     }
 
     public void loadHandler() throws Exception {
 
         HandlerConfig handlerConfig = penroseConfig.getHandlerConfig();
-        Handler handler = handlerManager.getHandler(handlerConfig.getName());
+        if (handlerManager.getHandler(handlerConfig.getName()) != null) return;
 
-        if (handler != null) return;
-
-        EngineConfig engineConfig = penroseConfig.getEngineConfig();
-        Engine engine = engineManager.getEngine(engineConfig.getName());
-
-        handlerManager.init(handlerConfig, engine);
+        handlerManager.init(handlerConfig, engineManager);
     }
 
 
@@ -352,7 +350,9 @@ public class Penrose {
 
     public void reload() throws Exception {
         clear();
-        load(penroseConfig.getHome());
+        loadConfig();
+        init();
+        load();
     }
 
     public void store() throws Exception {
@@ -498,8 +498,7 @@ public class Penrose {
     }
 
     public Engine getEngine() {
-        EngineConfig engineConfig = penroseConfig.getEngineConfig();
-        return engineManager.getEngine(engineConfig.getName());
+        return engineManager.getEngine("DEFAULT");
     }
 
     public Connector getConnector() {

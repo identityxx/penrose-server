@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2005, Identyx Corporation.
+ * Copyright (c) 2000-2006, Identyx Corporation.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -89,7 +89,7 @@ public class SubstringsMatchingRule {
         while (i<sb.length()) {
             char c = sb.charAt(i);
             if (c == '\\' || c == '.' || c == '?' || c == '*'
-                    || c == '^' || c == '$' || c == '{' || c == '}' 
+                    || c == '^' || c == '$' || c == '{' || c == '}'
                     || c == '[' || c == ']' || c == '(' || c == ')') {
                 sb.replace(i, i+1, "\\"+c);
                 i += 2;

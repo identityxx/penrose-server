@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2005, Identyx Corporation.
+ * Copyright (c) 2000-2006, Identyx Corporation.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,10 +20,14 @@ package org.safehaus.penrose.ldap;
 import org.apache.directory.server.core.authn.AbstractAuthenticator;
 import org.apache.directory.server.core.authn.LdapPrincipal;
 import org.apache.directory.server.core.jndi.ServerContext;
+import org.apache.directory.shared.ldap.exception.LdapAuthenticationException;
 import org.apache.directory.shared.ldap.aci.AuthenticationLevel;
 import org.apache.directory.shared.ldap.name.LdapDN;
 import org.ietf.ldap.LDAPException;
 import org.safehaus.penrose.Penrose;
+import org.safehaus.penrose.service.ServiceConfig;
+import org.safehaus.penrose.server.PenroseServer;
+import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.session.PenroseSession;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
@@ -39,17 +43,28 @@ public class PenroseAuthenticator extends AbstractAuthenticator {
 
     Logger log = LoggerFactory.getLogger(getClass());
 
-    Penrose penrose;
+    PenroseServer penroseServer;
+
+    boolean allowAnonymousAccess;
 
     public PenroseAuthenticator() {
         super("simple");
     }
 
-    public void init() throws NamingException {
+    public PenroseServer getPenroseServer() {
+        return penroseServer;
     }
 
-    public void setPenrose(Penrose penrose) throws Exception {
-        this.penrose = penrose;
+    public void setPenroseServer(PenroseServer penroseServer) {
+        this.penroseServer = penroseServer;
+
+        PenroseConfig penroseConfig = penroseServer.getPenroseConfig();
+        ServiceConfig serviceConfig = penroseConfig.getServiceConfig("LDAP");
+        String s = serviceConfig == null ? null : serviceConfig.getParameter("allowAnonymousAccess");
+        allowAnonymousAccess = s == null ? true : new Boolean(s).booleanValue();
+    }
+
+    public void init() throws NamingException {
     }
 
     public LdapPrincipal authenticate(LdapDN name, ServerContext ctx) throws NamingException {
@@ -58,7 +73,12 @@ public class PenroseAuthenticator extends AbstractAuthenticator {
         Object credentials = ctx.getEnvironment().get(Context.SECURITY_CREDENTIALS);
         String password = new String((byte[])credentials);
 
+        if (dn == null || "".equals(dn)) {
+            throw new LdapAuthenticationException();
+        }
+
         try {
+            Penrose penrose = penroseServer.getPenrose();
             PenroseSession session = penrose.getSession(dn);
 
             if (session == null) {
@@ -69,7 +89,7 @@ public class PenroseAuthenticator extends AbstractAuthenticator {
             int rc = session.bind(dn, password);
 
             if (rc != LDAPException.SUCCESS) {
-                throw ExceptionTool.createNamingException(rc);
+                throw ExceptionTool.throwNamingException(rc);
             }
 
             log.warn("Bind operation succeeded.");

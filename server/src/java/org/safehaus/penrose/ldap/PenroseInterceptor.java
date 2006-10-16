@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2005, Identyx Corporation.
+ * Copyright (c) 2000-2006, Identyx Corporation.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -24,10 +24,12 @@ import org.apache.directory.server.core.DirectoryServiceConfiguration;
 import org.apache.directory.shared.ldap.filter.ExprNode;
 import org.apache.directory.shared.ldap.name.LdapDN;
 import org.safehaus.penrose.Penrose;
+import org.safehaus.penrose.server.PenroseServer;
+import org.safehaus.penrose.config.PenroseConfig;
+import org.safehaus.penrose.service.ServiceConfig;
 import org.safehaus.penrose.session.PenroseSession;
 import org.safehaus.penrose.session.PenroseSearchResults;
 import org.safehaus.penrose.session.PenroseSearchControls;
-import org.safehaus.penrose.mapping.EntryMapping;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.PartitionManager;
 import org.ietf.ldap.*;
@@ -35,7 +37,6 @@ import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
 import javax.naming.*;
-import javax.naming.ldap.LdapContext;
 import javax.naming.directory.*;
 import java.util.*;
 
@@ -46,22 +47,44 @@ public class PenroseInterceptor extends BaseInterceptor {
 
     public Logger log = LoggerFactory.getLogger(getClass());
 
-    Penrose penrose;
+    PenroseServer penroseServer;
     PartitionManager partitionManager;
 
     DirectoryServiceConfiguration factoryCfg;
 
-    public void setPenrose(Penrose penrose) throws Exception {
-        this.penrose = penrose;
+    boolean allowAnonymousAccess;
+
+    public PenroseServer getPenroseServer() {
+        return penroseServer;
+    }
+
+    public void setPenroseServer(PenroseServer penroseServer) {
+        this.penroseServer = penroseServer;
+
+        PenroseConfig penroseConfig = penroseServer.getPenroseConfig();
+        ServiceConfig serviceConfig = penroseConfig.getServiceConfig("LDAP");
+        String s = serviceConfig == null ? null : serviceConfig.getParameter("allowAnonymousAccess");
+        allowAnonymousAccess = s == null ? true : new Boolean(s).booleanValue();
+
+        Penrose penrose = penroseServer.getPenrose();
         this.partitionManager = penrose.getPartitionManager();
     }
 
-    public void init(DirectoryServiceConfiguration factoryCfg, InterceptorConfiguration cfg) throws NamingException {
+    public void init(
+            DirectoryServiceConfiguration factoryCfg,
+            InterceptorConfiguration cfg
+    ) throws NamingException {
+
         super.init(factoryCfg, cfg);
         this.factoryCfg = factoryCfg;
     }
 
     public PenroseSession getSession() throws Exception {
+
+        Penrose penrose = penroseServer.getPenrose();
+        if (penrose == null) {
+            throw new Exception("Penrose is not initialized.");
+        }
 
         String bindDn = getPrincipal() == null ? null : getPrincipal().getJndiName().getUpName();
 
@@ -77,6 +100,11 @@ public class PenroseInterceptor extends BaseInterceptor {
 
     public void removeSession() throws Exception {
 
+        Penrose penrose = penroseServer.getPenrose();
+        if (penrose == null) {
+            throw new Exception("Penrose is not initialized.");
+        }
+
         String bindDn = getPrincipal() == null ? null : getPrincipal().getJndiName().getUpName();
 
         penrose.removeSession(bindDn);
@@ -87,8 +115,7 @@ public class PenroseInterceptor extends BaseInterceptor {
             LdapDN bindDn,
             byte[] credentials,
             List mechanisms,
-            String saslAuthId
-    ) throws NamingException {
+            String saslAuthId) throws NamingException {
 
         log.debug("===============================================================================");
         try {
@@ -148,10 +175,14 @@ public class PenroseInterceptor extends BaseInterceptor {
 
             PenroseSession session = getSession();
 
+            if (session.getBindDn() == null && !allowAnonymousAccess) {
+                throw ExceptionTool.throwNamingException(LDAPException.INSUFFICIENT_ACCESS_RIGHTS);
+            }
+
             int rc = session.add(dn, attributes);
 
             if (rc != LDAPException.SUCCESS) {
-                throw ExceptionTool.createNamingException(rc);
+                throw ExceptionTool.throwNamingException(rc);
             }
 
         } catch (NamingException e) {
@@ -181,22 +212,26 @@ public class PenroseInterceptor extends BaseInterceptor {
                 return next.compare(name, attributeName, value);
             }
 
-            EntryMapping ed = partition.findEntryMapping(dn);
-            if (ed == null) {
+            Collection entryMappings = partition.findEntryMappings(dn);
+            if (entryMappings == null || entryMappings.isEmpty()) {
                 log.debug(dn+" is a static entry");
                 return next.compare(name, attributeName, value);
             }
 
             PenroseSession session = getSession();
 
+            if (session.getBindDn() == null && !allowAnonymousAccess) {
+                throw ExceptionTool.throwNamingException(LDAPException.INSUFFICIENT_ACCESS_RIGHTS);
+            }
+
             int rc = session.compare(dn, attributeName, value);
 
             if (rc != LDAPException.COMPARE_TRUE && rc != LDAPException.COMPARE_FALSE) {
-                throw ExceptionTool.createNamingException(rc);
+                throw ExceptionTool.throwNamingException(rc);
             }
 
             return rc == LDAPException.COMPARE_TRUE;
-
+            
         } catch (NamingException e) {
             throw e;
 
@@ -223,8 +258,8 @@ public class PenroseInterceptor extends BaseInterceptor {
                 return;
             }
 
-            EntryMapping ed = partition.findEntryMapping(dn);
-            if (ed == null) {
+            Collection entryMappings = partition.findEntryMappings(dn);
+            if (entryMappings == null || entryMappings.isEmpty()) {
                 log.debug(dn+" is a static entry");
                 next.delete(name);
                 return;
@@ -232,10 +267,14 @@ public class PenroseInterceptor extends BaseInterceptor {
 
             PenroseSession session = getSession();
 
+            if (session.getBindDn() == null && !allowAnonymousAccess) {
+                throw ExceptionTool.throwNamingException(LDAPException.INSUFFICIENT_ACCESS_RIGHTS);
+            }
+
             int rc = session.delete(dn);
 
             if (rc != LDAPException.SUCCESS) {
-                throw ExceptionTool.createNamingException(rc);
+                throw ExceptionTool.throwNamingException(rc);
             }
 
         } catch (NamingException e) {
@@ -274,7 +313,7 @@ public class PenroseInterceptor extends BaseInterceptor {
     public Iterator listSuffixes(NextInterceptor next) throws NamingException {
         log.debug("===============================================================================");
         log.debug("listSuffixes()");
-        return next.listSuffixes( );
+        return next.listSuffixes();
     }
 
     public NamingEnumeration list(
@@ -293,13 +332,17 @@ public class PenroseInterceptor extends BaseInterceptor {
                 return next.list(name);
             }
 
-            EntryMapping ed = partition.findEntryMapping(dn);
-            if (ed == null) {
+            Collection entryMappings = partition.findEntryMappings(dn);
+            if (entryMappings == null || entryMappings.isEmpty()) {
                 log.debug(dn+" is a static entry");
                 return next.list(name);
             }
 
             PenroseSession session = getSession();
+
+            if (session.getBindDn() == null && !allowAnonymousAccess) {
+                throw ExceptionTool.throwNamingException(LDAPException.INSUFFICIENT_ACCESS_RIGHTS);
+            }
 
             PenroseSearchResults results = new PenroseSearchResults();
 
@@ -347,8 +390,8 @@ public class PenroseInterceptor extends BaseInterceptor {
                 return next.hasEntry(name);
             }
 
-            EntryMapping ed = partition.findEntryMapping(dn);
-            if (ed == null) {
+            Collection entryMappings = partition.findEntryMappings(dn);
+            if (entryMappings == null || entryMappings.isEmpty()) {
                 //log.debug(dn+" is a static entry");
                 return next.hasEntry(name);
             }
@@ -357,15 +400,18 @@ public class PenroseInterceptor extends BaseInterceptor {
 
             PenroseSession session = getSession();
 
+            if (session.getBindDn() == null && !allowAnonymousAccess) {
+                throw ExceptionTool.throwNamingException(LDAPException.INSUFFICIENT_ACCESS_RIGHTS);
+            }
+
             PenroseSearchResults results = new PenroseSearchResults();
 
             PenroseSearchControls sc = new PenroseSearchControls();
             sc.setScope(PenroseSearchControls.SCOPE_BASE);
             sc.setDereference(PenroseSearchControls.DEREF_ALWAYS);
 
-            String base = name.getUpName();
             session.search(
-                    base,
+                    dn,
                     "(objectClass=*)",
                     sc,
                     results);
@@ -401,13 +447,17 @@ public class PenroseInterceptor extends BaseInterceptor {
                 return next.lookup(name, attrIds);
             }
 
-            EntryMapping ed = partition.findEntryMapping(dn);
-            if (ed == null) {
+            Collection entryMappings = partition.findEntryMappings(dn);
+            if (entryMappings == null || entryMappings.isEmpty()) {
                 //log.debug(dn+" is a static entry");
                 return next.lookup(name, attrIds);
             }
 
             PenroseSession session = getSession();
+
+            if (session.getBindDn() == null && !allowAnonymousAccess) {
+                throw ExceptionTool.throwNamingException(LDAPException.INSUFFICIENT_ACCESS_RIGHTS);
+            }
 
             PenroseSearchResults results = new PenroseSearchResults();
 
@@ -424,13 +474,13 @@ public class PenroseInterceptor extends BaseInterceptor {
             int rc = results.getReturnCode();
 
             if (rc != LDAPException.SUCCESS) {
-                throw ExceptionTool.createNamingException(rc);
+                throw ExceptionTool.throwNamingException(rc);
             }
 
             SearchResult result = (SearchResult)results.next();
 
             if (result == null) {
-                throw ExceptionTool.createNamingException(LDAPException.NO_SUCH_OBJECT);
+                throw ExceptionTool.throwNamingException(LDAPException.NO_SUCH_OBJECT);
             }
 
             return result.getAttributes();
@@ -460,13 +510,17 @@ public class PenroseInterceptor extends BaseInterceptor {
                 return next.lookup(name);
             }
 
-            EntryMapping ed = partition.findEntryMapping(dn);
-            if (ed == null) {
+            Collection entryMappings = partition.findEntryMappings(dn);
+            if (entryMappings == null || entryMappings.isEmpty()) {
                 //log.debug(dn+" is a static entry");
                 return next.lookup(name);
             }
 
             PenroseSession session = getSession();
+
+            if (session.getBindDn() == null && !allowAnonymousAccess) {
+                throw ExceptionTool.throwNamingException(LDAPException.INSUFFICIENT_ACCESS_RIGHTS);
+            }
 
             PenroseSearchResults results = new PenroseSearchResults();
 
@@ -483,7 +537,7 @@ public class PenroseInterceptor extends BaseInterceptor {
             int rc = results.getReturnCode();
 
             if (rc != LDAPException.SUCCESS) {
-                throw ExceptionTool.createNamingException(rc);
+                throw ExceptionTool.throwNamingException(rc);
             }
 
             SearchResult result = (SearchResult)results.next();
@@ -513,6 +567,12 @@ public class PenroseInterceptor extends BaseInterceptor {
             String baseDn = base.getUpName();
             log.debug("search(\""+baseDn+"\")");
 
+            PenroseSession session = getSession();
+
+            if (session.getBindDn() == null && !allowAnonymousAccess) {
+                throw ExceptionTool.throwNamingException(LDAPException.INSUFFICIENT_ACCESS_RIGHTS);
+            }
+
             if (!"".equals(baseDn)) {
                 Partition partition = partitionManager.getPartitionByDn(baseDn);
                 if (partition == null) {
@@ -529,7 +589,6 @@ public class PenroseInterceptor extends BaseInterceptor {
                     SearchResult sr = (SearchResult)ne.next();
                     Attributes attributes = sr.getAttributes();
 
-                    PenroseSession session = getSession();
                     PenroseSearchResults results = new PenroseSearchResults();
 
                     PenroseSearchControls sc = new PenroseSearchControls();
@@ -576,15 +635,13 @@ public class PenroseInterceptor extends BaseInterceptor {
             String returningAttributes[] = searchControls.getReturningAttributes();
             List attributeNames = returningAttributes == null ? new ArrayList() : Arrays.asList(returningAttributes);
 
-            String newFilter = org.safehaus.penrose.ldap.FilterTool.convert(filter).toString();
+            String newFilter = FilterTool.convert(filter).toString();
 
             log.debug("Searching \""+base+"\"");
             log.debug(" - deref: "+deref);
             log.debug(" - scope: "+scope);
             log.debug(" - filter: "+newFilter);
             log.debug(" - attributeNames: "+attributeNames);
-
-            PenroseSession session = getSession();
 
             PenroseSearchResults results = new PenroseSearchResults();
 
@@ -593,15 +650,17 @@ public class PenroseInterceptor extends BaseInterceptor {
             sc.setDereference(PenroseSearchControls.DEREF_ALWAYS);
             sc.setAttributes(searchControls == null ? null : searchControls.getReturningAttributes());
 
-            session.search(
+            int rc = session.search(
                     baseDn,
                     newFilter,
                     sc,
                     results);
 
-            LdapContext ctx = getContext();
-            Hashtable environment = ctx.getEnvironment();
-            return new PenroseEnumeration(environment, results);
+            if (rc != LDAPException.SUCCESS) {
+                throw ExceptionTool.throwNamingException(rc);
+            }
+
+            return new PenroseEnumeration(results);
 
         } catch (NamingException e) {
             throw e;
@@ -631,8 +690,8 @@ public class PenroseInterceptor extends BaseInterceptor {
                 return;
             }
 
-            EntryMapping ed = partition.findEntryMapping(dn);
-            if (ed == null) {
+            Collection entryMappings = partition.findEntryMappings(dn);
+            if (entryMappings == null || entryMappings.isEmpty()) {
                 log.debug(dn+" is a static entry");
                 next.modify(name, modOp, attributes);
                 return;
@@ -649,10 +708,14 @@ public class PenroseInterceptor extends BaseInterceptor {
 
             PenroseSession session = getSession();
 
+            if (session.getBindDn() == null && !allowAnonymousAccess) {
+                throw ExceptionTool.throwNamingException(LDAPException.INSUFFICIENT_ACCESS_RIGHTS);
+            }
+
             int rc = session.modify(dn, modifications);
 
             if (rc != LDAPException.SUCCESS) {
-                throw ExceptionTool.createNamingException(rc);
+                throw ExceptionTool.throwNamingException(rc);
             }
 
         } catch (NamingException e) {
@@ -682,8 +745,8 @@ public class PenroseInterceptor extends BaseInterceptor {
                 return;
             }
 
-            EntryMapping ed = partition.findEntryMapping(dn);
-            if (ed == null) {
+            Collection entryMappings = partition.findEntryMappings(dn);
+            if (entryMappings == null || entryMappings.isEmpty()) {
                 log.debug(dn+" is a static entry");
                 next.modify(name, modificationItems);
                 return;
@@ -691,10 +754,15 @@ public class PenroseInterceptor extends BaseInterceptor {
 
             PenroseSession session = getSession();
 
-            int rc = session.modify(dn, Arrays.asList(modificationItems));
+            if (session.getBindDn() == null && !allowAnonymousAccess) {
+                throw ExceptionTool.throwNamingException(LDAPException.INSUFFICIENT_ACCESS_RIGHTS);
+            }
+
+            Collection modifications = new ArrayList(Arrays.asList(modificationItems));
+            int rc = session.modify(dn, modifications);
 
             if (rc != LDAPException.SUCCESS) {
-                throw ExceptionTool.createNamingException(rc);
+                throw ExceptionTool.throwNamingException(rc);
             }
 
         } catch (NamingException e) {
@@ -725,8 +793,8 @@ public class PenroseInterceptor extends BaseInterceptor {
                 return;
             }
 
-            EntryMapping ed = partition.findEntryMapping(dn);
-            if (ed == null) {
+            Collection entryMappings = partition.findEntryMappings(dn);
+            if (entryMappings == null || entryMappings.isEmpty()) {
                 log.debug(dn+" is a static entry");
                 next.modifyRn(name, newDn, deleteOldDn);
                 return;
@@ -734,10 +802,14 @@ public class PenroseInterceptor extends BaseInterceptor {
 
             PenroseSession session = getSession();
 
+            if (session.getBindDn() == null && !allowAnonymousAccess) {
+                throw ExceptionTool.throwNamingException(LDAPException.INSUFFICIENT_ACCESS_RIGHTS);
+            }
+
             int rc = session.modrdn(dn, newDn, deleteOldDn);
 
             if (rc != LDAPException.SUCCESS) {
-                throw ExceptionTool.createNamingException(rc);
+                throw ExceptionTool.throwNamingException(rc);
             }
 
         } catch (NamingException e) {
@@ -772,7 +844,6 @@ public class PenroseInterceptor extends BaseInterceptor {
         log.debug("===============================================================================");
         String dn = oriChildName.getUpName();
         log.debug("move(\""+dn+"\")");
-        next.move(oriChildName, newParentName);
+        next.move( oriChildName, newParentName );
     }
-
 }

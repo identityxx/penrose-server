@@ -1,10 +1,29 @@
+/**
+ * Copyright (c) 2000-2006, Identyx Corporation.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ */
 package org.safehaus.penrose.util;
 
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
+import org.safehaus.penrose.session.PenroseSearchControls;
 
 import javax.naming.directory.DirContext;
 import javax.naming.directory.Attribute;
+import javax.naming.directory.SearchControls;
 import javax.naming.NamingEnumeration;
 
 /**
@@ -42,5 +61,54 @@ public class LDAPUtil {
         }
 
         return binary;
+    }
+
+    public static PenroseSearchControls convert(SearchControls sc) {
+        PenroseSearchControls psc = new PenroseSearchControls();
+        psc.setScope(sc.getSearchScope());
+        psc.setSizeLimit(sc.getCountLimit());
+        psc.setTimeLimit(sc.getTimeLimit());
+        psc.setAttributes(sc.getReturningAttributes());
+        psc.setTypesOnly(sc.getReturningObjFlag());
+        return psc;
+    }
+
+    public static String getScope(int scope) {
+
+        switch (scope) {
+            case PenroseSearchControls.SCOPE_BASE:
+                return "base";
+
+            case PenroseSearchControls.SCOPE_ONE:
+                return "one level";
+
+            case PenroseSearchControls.SCOPE_SUB:
+                return "subtree";
+        }
+
+        return null;
+    }
+
+    public static String getDereference(PenroseSearchControls sc) {
+        return getDereference(sc.getDereference());
+    }
+
+    public static String getDereference(int deref) {
+
+        switch (deref) {
+            case PenroseSearchControls.DEREF_NEVER:
+                return "never";
+
+            case PenroseSearchControls.DEREF_SEARCHING:
+                return "searching";
+
+            case PenroseSearchControls.DEREF_FINDING:
+                return "finding";
+
+            case PenroseSearchControls.DEREF_ALWAYS:
+                return "always";
+        }
+
+        return null;
     }
 }

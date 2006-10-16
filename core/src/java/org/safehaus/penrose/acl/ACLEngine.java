@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2005, Identyx Corporation.
+ * Copyright (c) 2000-2006, Identyx Corporation.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,10 +20,9 @@ package org.safehaus.penrose.acl;
 import org.safehaus.penrose.mapping.EntryMapping;
 import org.safehaus.penrose.session.PenroseSession;
 import org.safehaus.penrose.partition.Partition;
-import org.safehaus.penrose.partition.PartitionManager;
 import org.safehaus.penrose.schema.SchemaManager;
 import org.safehaus.penrose.config.PenroseConfig;
-import org.safehaus.penrose.util.EntryUtil;
+import org.safehaus.penrose.Penrose;
 import org.ietf.ldap.LDAPException;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
@@ -37,11 +36,11 @@ public class ACLEngine {
 
     public Logger log = LoggerFactory.getLogger(getClass());
 
-    private PenroseConfig penroseConfig;
+    Penrose penrose;
     private SchemaManager schemaManager;
-    private PartitionManager partitionManager;
 
-    public ACLEngine() {
+    public ACLEngine(Penrose penrose) {
+        this.penrose = penrose;
     }
 
     public void addPermission(Set set, String permission) {
@@ -61,8 +60,9 @@ public class ACLEngine {
 
     public boolean getObjectPermission(
             String bindDn,
-            String targetDn,
+            Partition partition,
             EntryMapping entryMapping,
+            String targetDn,
             String scope,
             String permission) throws Exception {
 
@@ -143,22 +143,22 @@ public class ACLEngine {
             }
         }
 
-        Partition partition = partitionManager.getPartitionByDn(targetDn);
-        if (partition == null) {
-            log.debug("Partition for "+targetDn+" not found.");
-            return false;
-        }
-
         entryMapping = partition.getParent(entryMapping);
         if (entryMapping == null) {
             log.debug("Parent entry for "+mappingDn+" not found.");
             return false;
         }
 
-        return getObjectPermission(bindDn, targetDn, entryMapping, ACI.SCOPE_SUBTREE, permission);
+        return getObjectPermission(bindDn, partition, entryMapping, targetDn, ACI.SCOPE_SUBTREE, permission);
     }
 
-    public int checkPermission(PenroseSession session, String dn, EntryMapping entryMapping, String permission) throws Exception {
+    public int checkPermission(
+            PenroseSession session,
+            Partition partition,
+            EntryMapping entryMapping,
+            String dn,
+            String permission
+    ) throws Exception {
     	
         log.debug("Checking object \""+permission+"\" permission");
 
@@ -168,6 +168,7 @@ public class ACLEngine {
             return rc;
         }
 
+        PenroseConfig penroseConfig = penrose.getPenroseConfig();
         String rootDn = schemaManager.normalize(penroseConfig.getRootDn());
         String bindDn = schemaManager.normalize(session.getBindDn());
 
@@ -177,7 +178,7 @@ public class ACLEngine {
         }
 
         String targetDn = schemaManager.normalize(dn);
-        boolean result = getObjectPermission(bindDn, targetDn, entryMapping, ACI.SCOPE_OBJECT, permission);
+        boolean result = getObjectPermission(bindDn, partition, entryMapping, targetDn, ACI.SCOPE_OBJECT, permission);
 
         if (result) {
             log.debug("ACL evaluation => SUCCESS");
@@ -189,24 +190,24 @@ public class ACLEngine {
         return rc;
     }
 
-    public int checkRead(PenroseSession session, String dn, EntryMapping entryMapping) throws Exception {
-    	return checkPermission(session, dn, entryMapping, ACI.PERMISSION_READ);
+    public int checkRead(PenroseSession session, Partition partition, EntryMapping entryMapping, String dn) throws Exception {
+    	return checkPermission(session, partition, entryMapping, dn, ACI.PERMISSION_READ);
     }
 
-    public int checkSearch(PenroseSession session, String dn, EntryMapping entryMapping) throws Exception {
-    	return checkPermission(session, dn, entryMapping, ACI.PERMISSION_SEARCH);
+    public int checkSearch(PenroseSession session, Partition partition, EntryMapping entryMapping, String dn) throws Exception {
+    	return checkPermission(session, partition, entryMapping, dn, ACI.PERMISSION_SEARCH);
     }
 
-    public int checkAdd(PenroseSession session, String dn, EntryMapping entryMapping) throws Exception {
-    	return checkPermission(session, dn, entryMapping, ACI.PERMISSION_ADD);
+    public int checkAdd(PenroseSession session, Partition partition, EntryMapping entryMapping, String dn) throws Exception {
+    	return checkPermission(session, partition, entryMapping, dn, ACI.PERMISSION_ADD);
     }
 
-    public int checkDelete(PenroseSession session, String dn, EntryMapping entryMapping) throws Exception {
-    	return checkPermission(session, dn, entryMapping, ACI.PERMISSION_DELETE);
+    public int checkDelete(PenroseSession session, Partition partition, EntryMapping entryMapping, String dn) throws Exception {
+    	return checkPermission(session, partition, entryMapping, dn, ACI.PERMISSION_DELETE);
     }
 
-    public int checkModify(PenroseSession session, String dn, EntryMapping entryMapping) throws Exception {
-    	return checkPermission(session, dn, entryMapping, ACI.PERMISSION_WRITE);
+    public int checkModify(PenroseSession session, Partition partition, EntryMapping entryMapping, String dn) throws Exception {
+    	return checkPermission(session, partition, entryMapping, dn, ACI.PERMISSION_WRITE);
     }
 
     public Collection getAttributes(String attributes) {
@@ -219,7 +220,7 @@ public class ACLEngine {
         //log.debug("Adding attributes: "+attributes);
         StringTokenizer st = new StringTokenizer(attributes, ",");
         while (st.hasMoreTokens()) {
-            String attributeName = st.nextToken().trim();
+            String attributeName = st.nextToken().trim().toLowerCase();
             list.add(attributeName);
             //log.debug("Adding attribute: "+attributeName);
         }
@@ -298,21 +299,28 @@ public class ACLEngine {
 
     public void getReadableAttributes(
             String bindDn,
-            String targetDn,
+            Partition partition,
             EntryMapping entryMapping,
+            String targetDn,
             String scope,
             Collection attributeNames,
             Collection grants,
             Collection denies) throws Exception {
 
-        if (entryMapping == null) {
-            grants.addAll(attributeNames);
-            return;
-        }
+        if (entryMapping == null) return;
+
+        EntryMapping parentMapping = partition.getParent(entryMapping);
+        getReadableAttributes(bindDn, partition, parentMapping, targetDn, ACI.SCOPE_SUBTREE, attributeNames, grants, denies);
 
         log.debug("Checking ACL in "+entryMapping.getDn()+":");
 
+        List acls = new ArrayList();
         for (Iterator i=entryMapping.getACL().iterator(); i.hasNext(); ) {
+            ACI aci = (ACI)i.next();
+            acls.add(0, aci);
+        }
+
+        for (Iterator i=acls.iterator(); i.hasNext(); ) {
             ACI aci = (ACI)i.next();
             log.debug(" - "+aci);
 
@@ -335,13 +343,13 @@ public class ACLEngine {
                 Collection attributes = getAttributes(aci.getAttributes());
 
                 if (aci.getAction().equals(ACI.ACTION_GRANT)) {
-                    attributes.removeAll(denies);
                     log.debug("   ==> Granting read access to attributes "+attributes);
                     grants.addAll(attributes);
+                    denies.removeAll(attributes);
 
                 } else if (aci.getAction().equals(ACI.ACTION_DENY)) {
-                    attributes.removeAll(grants);
                     log.debug("   ==> Denying read access to attributes "+attributes);
+                    grants.removeAll(attributes);
                     denies.addAll(attributes);
                 }
 
@@ -350,13 +358,13 @@ public class ACLEngine {
 
             if (aci.getTarget().equals(ACI.TARGET_OBJECT)) {
                 if (aci.getAction().equals(ACI.ACTION_GRANT)) {
-                    attributeNames.removeAll(denies);
                     log.debug("   ==> Granting read access to attributes "+attributeNames);
                     grants.addAll(attributeNames);
+                    denies.removeAll(attributeNames);
 
                 } else if (aci.getAction().equals(ACI.ACTION_DENY)) {
-                    attributeNames.removeAll(grants);
                     log.debug("   ==> Denying read access to attributes "+attributeNames);
+                    grants.removeAll(attributeNames);
                     denies.addAll(attributeNames);
                 }
 
@@ -364,59 +372,34 @@ public class ACLEngine {
             }
 
         }
-
-        Partition partition = partitionManager.getPartitionByDn(entryMapping.getDn());
-        if (partition == null) return;
-
-        entryMapping = partition.getParent(entryMapping);
-        if (entryMapping == null) return;
-
-        getReadableAttributes(bindDn, targetDn, entryMapping, ACI.SCOPE_SUBTREE, attributeNames, grants, denies);
     }
 
     public void getReadableAttributes(
             PenroseSession session,
-            String targetDn,
+            Partition partition,
             EntryMapping entryMapping,
+            String targetDn,
             Collection attributeNames,
             Collection grants,
             Collection denies
             ) throws Exception {
 
+        if (session == null) return;
+
         log.debug("Checking readable attributes");
 
-        if (session == null) {
-            log.debug("No session => SUCCESS");
-            grants.addAll(attributeNames);
-            return;
-        }
-
+        PenroseConfig penroseConfig = penrose.getPenroseConfig();
         String rootDn = schemaManager.normalize(penroseConfig.getRootDn());
         String bindDn = schemaManager.normalize(session.getBindDn());
 
     	if (rootDn != null && rootDn.equals(bindDn)) {
             log.debug("Root user => SUCCESS");
             grants.addAll(attributeNames);
+            denies.removeAll(attributeNames);
             return;
         }
 
-        getReadableAttributes(bindDn, targetDn, entryMapping, null, attributeNames, grants, denies);
-
-        attributeNames.removeAll(grants);
-        denies.addAll(attributeNames);
-/*
-        grants.removeAll(denies);
-        denies.removeAll(grants);
-
-        if (denies.contains("*")) {
-            grants.clear();
-            denies.clear();
-            denies.add("*");
-        }
-*/
-
-        log.debug("Granted: "+grants);
-        log.debug("Denied: "+denies);
+        getReadableAttributes(bindDn, partition, entryMapping, targetDn, null, attributeNames, grants, denies);
     }
 
     public SchemaManager getSchemaManager() {
@@ -425,21 +408,5 @@ public class ACLEngine {
 
     public void setSchemaManager(SchemaManager schemaManager) {
         this.schemaManager = schemaManager;
-    }
-
-    public PartitionManager getPartitionManager() {
-        return partitionManager;
-    }
-
-    public void setPartitionManager(PartitionManager partitionManager) {
-        this.partitionManager = partitionManager;
-    }
-
-    public PenroseConfig getPenroseConfig() {
-        return penroseConfig;
-    }
-
-    public void setPenroseConfig(PenroseConfig penroseConfig) {
-        this.penroseConfig = penroseConfig;
     }
 }

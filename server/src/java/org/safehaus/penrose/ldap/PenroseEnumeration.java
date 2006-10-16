@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2005, Identyx Corporation.
+ * Copyright (c) 2000-2006, Identyx Corporation.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,13 +19,17 @@ package org.safehaus.penrose.ldap;
 
 import org.safehaus.penrose.session.PenroseSearchResults;
 import org.ietf.ldap.LDAPException;
+import org.ietf.ldap.LDAPDN;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
+import org.apache.directory.shared.ldap.exception.LdapReferralException;
 
 import javax.naming.NamingEnumeration;
 import javax.naming.NamingException;
+import javax.naming.ReferralException;
 import javax.naming.directory.*;
-import java.util.*;
+import java.util.Collection;
+import java.util.List;
 
 /**
  * @author Endi S. Dewata
@@ -34,41 +38,33 @@ public class PenroseEnumeration implements NamingEnumeration {
 
     Logger log = LoggerFactory.getLogger(getClass());
 
-    public Hashtable environment;
     public PenroseSearchResults searchResults;
-
-    public Collection binaryAttributes = new HashSet();
 
     public PenroseEnumeration(PenroseSearchResults searchResults) {
         this.searchResults = searchResults;
     }
 
-    public PenroseEnumeration(Hashtable environment, PenroseSearchResults searchResults) {
-        this.environment = environment;
-        this.searchResults = searchResults;
-/*
-        log.debug("Environment:");
-        for (Iterator i=environment.keySet().iterator(); i.hasNext(); ) {
-            String name = (String)i.next();
-            log.debug(" - "+name+": "+environment.get(name));
-        }
-*/
-        Collection c = (Collection)environment.get("java.naming.ldap.attributes.binary");
-        if (c != null) {
-            for (Iterator i=c.iterator(); i.hasNext(); ) {
-                String name = (String)i.next();
-                binaryAttributes.add(name.toLowerCase());
-            }
-        }
-    }
-
     public void close() throws NamingException {
+        searchResults.close();
     }
 
     public boolean hasMore() throws NamingException {
 
         boolean hasNext = searchResults.hasNext();
         if (hasNext) return true;
+
+        List referrals = searchResults.getReferrals();
+        log.debug("Search operation returned "+referrals.size()+" referral(s).");
+
+        if (!referrals.isEmpty()) {
+            PenroseReferralException lre = new PenroseReferralException(referrals);
+            throw lre;
+            /*
+            String referral = (String)referrals.remove(0);
+            log.debug("Referral: "+referral);
+            throw new PenroseReferralException(referral, !referrals.isEmpty());
+            */
+        }
 
         log.warn("Search operation returned "+searchResults.getTotalCount()+" entries.");
 
@@ -83,61 +79,25 @@ public class PenroseEnumeration implements NamingEnumeration {
     public Object next() throws NamingException {
         SearchResult result = (SearchResult)searchResults.next();
 
-        log.info("Returning \""+result.getName()+"\" to client.");
+        String dn = result.getName();
+        //log.debug("Converting dn: "+dn);
 
-        if (log.isDebugEnabled()) {
-            Attributes attributes = result.getAttributes();
-            
-            for (NamingEnumeration i = attributes.getAll(); i.hasMore(); ) {
-                Attribute attribute = (Attribute)i.next();
-                String name = attribute.getID();
+        String rdns[] = LDAPDN.explodeDN(dn, false);
+        StringBuffer sb = new StringBuffer();
+        for (int i=0; i<rdns.length; i++) {
+            String rdn = rdns[i];
+            //log.debug(" - "+rdn);
+            rdn = LDAPDN.escapeRDN(rdn);
 
-                for (NamingEnumeration j = attribute.getAll(); j.hasMore(); ) {
-                    Object value = j.next();
-                    String className = value.getClass().getName();
-                    className = className.substring(className.lastIndexOf(".")+1);
-                    log.debug(" - "+name+" ("+className+"): "+value);
-                }
-            }
+            if (sb.length() > 0) sb.append(",");
+            sb.append(rdn);
         }
+
+        dn = sb.toString();
+        result.setName(dn);
+        log.info("Returning \""+dn+"\" to client.");
 
         return result;
-/*
-        LDAPAttributeSet attributeSet = result.getAttributeSet();
-        Attributes attributes = new BasicAttributes();
-
-        //log.debug("Entry "+result.getDN());
-        for (Iterator j = attributeSet.iterator(); j.hasNext(); ) {
-            LDAPAttribute attribute = (LDAPAttribute)j.next();
-            String name = attribute.getName();
-            Attribute attr = new BasicAttribute(name);
-
-            if (binaryAttributes.contains(name.toLowerCase())) {
-                for (Enumeration k=attribute.getByteValues(); k.hasMoreElements(); ) {
-                    byte[] value = (byte[])k.nextElement();
-                    attr.add(value);
-                    //log.debug("- "+name+": binary");
-                }
-
-            } else {
-                for (Enumeration k=attribute.getStringValues(); k.hasMoreElements(); ) {
-                    String value = (String)k.nextElement();
-                    attr.add(value);
-                    //log.debug("- "+name+": "+value);
-                }
-            }
-
-            attributes.put(attr);
-        }
-
-        SearchResult sr = new SearchResult(
-                result.getDN(),
-                result,
-                attributes
-        );
-
-        return sr;
-*/
     }
 
     public boolean hasMoreElements() {

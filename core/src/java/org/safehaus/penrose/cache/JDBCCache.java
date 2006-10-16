@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2005, Identyx Corporation.
+ * Copyright (c) 2000-2006, Identyx Corporation.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -40,7 +40,6 @@ public class JDBCCache {
 
     private ConnectionManager connectionManager;
     private String connectionName;
-    CacheConfig cacheConfig;
     SourceConfig sourceConfig;
 
     private String tableName;
@@ -50,11 +49,9 @@ public class JDBCCache {
 
     public JDBCCache(
             String tableName,
-            CacheConfig cacheConfig,
             SourceConfig sourceConfig) {
 
         this.tableName = tableName;
-        this.cacheConfig = cacheConfig;
         this.sourceConfig = sourceConfig;
     }
 
@@ -552,7 +549,7 @@ public class JDBCCache {
                 FieldConfig fieldConfig = sourceConfig.getFieldConfig(name);
                 String t;
 
-                if (fieldConfig.isPrimaryKey()) {
+                if (fieldConfig.isPK()) {
                     t = tableName;
                 } else {
                     t = tableName+"_"+name;

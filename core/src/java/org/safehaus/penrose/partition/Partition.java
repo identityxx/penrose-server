@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2005, Identyx Corporation.
+ * Copyright (c) 2000-2006, Identyx Corporation.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -100,7 +100,7 @@ public class Partition {
     public void addEntryMapping(EntryMapping entryMapping) throws Exception {
 
         String dn = entryMapping.getDn();
-        log.debug("Adding "+dn+".");
+        log.debug("Adding entry "+dn);
 
         Collection c = (Collection)entryMappings.get(dn.toLowerCase());
         if (c == null) {
@@ -213,7 +213,7 @@ public class Partition {
         String oldDn = entryMapping.getDn();
         log.debug("Renaming "+oldDn+" to "+newDn);
 
-        Collection c = (Collection)entryMappings.get(oldDn.toLowerCase());
+        Collection c = getEntryMappings(oldDn);
         if (c == null) return;
 
         c.remove(entryMapping);
@@ -291,7 +291,7 @@ public class Partition {
         return (Collection)childrenMap.remove(entryMapping);
     }
 
-    public Collection getEffectiveSourceMappings(EntryMapping entryMapping) {
+   public Collection getEffectiveSourceMappings(EntryMapping entryMapping) {
         Collection list = new ArrayList();
         list.addAll(entryMapping.getSourceMappings());
 
@@ -376,6 +376,7 @@ public class Partition {
     }
 
     public void addSourceConfig(SourceConfig sourceConfig) {
+        log.debug("Adding source "+sourceConfig.getName());
         sourceConfigs.put(sourceConfig.getName(), sourceConfig);
     }
 
@@ -413,16 +414,9 @@ public class Partition {
         return list;
     }
 
-    public EntryMapping findEntryMapping(String dn) throws Exception {
-        //.log.debug("Finding entry mapping \""+dn+"\" in partition "+getName());
-        Collection c = findEntryMappings(dn);
-        if (c == null || c.isEmpty()) return null;
-        return (EntryMapping)c.iterator().next();
-    }
-
     public Collection findEntryMappings(String dn) throws Exception {
 
-        //log.debug("Finding entry mappings \""+dn+"\" in partition "+getName());
+        log.debug("Finding entry mappings \""+dn+"\" in partition "+getName());
 
         if (dn == null) return null;
 
@@ -432,16 +426,11 @@ public class Partition {
         Collection c = (Collection)entryMappings.get(dn.toLowerCase());
         if (c != null) {
             //log.debug("Found "+c.size()+" mapping(s).");
-            for (Iterator i=c.iterator(); i.hasNext(); ) {
-                EntryMapping entryMapping = (EntryMapping)i.next();
-                //log.debug(" - "+entryMapping.getDn());
-            }
             return c;
         }
 
         // can't find exact match -> search for parent mappings
 
-        Row rdn = EntryUtil.getRdn(dn);
         String parentDn = EntryUtil.getParentDn(dn);
 
         Collection results = new ArrayList();
@@ -453,18 +442,21 @@ public class Partition {
             list = rootEntryMappings;
 
         } else {
-            //log.debug("Search parent mappings for \""+parentDn+"\"");
+            log.debug("Search parent mappings for \""+parentDn+"\"");
             Collection parentMappings = findEntryMappings(parentDn);
 
             // if no parent mappings found, the entry doesn't exist in this partition
-            if (parentMappings == null || parentMappings.isEmpty()) return null;
+            if (parentMappings == null || parentMappings.isEmpty()) {
+                log.debug("Entry mapping \""+parentDn+"\" not found");
+                return null;
+            }
 
             list = new ArrayList();
 
             // for each parent mapping found
             for (Iterator i=parentMappings.iterator(); i.hasNext(); ) {
                 EntryMapping parentMapping = (EntryMapping)i.next();
-                //log.debug("Found parent "+parentMapping.getDn());
+                log.debug("Found parent "+parentMapping.getDn());
 
                 if (isProxy(parentMapping)) { // if parent is proxy, include it in results
                     results.add(parentMapping);
@@ -478,28 +470,13 @@ public class Partition {
 
         // check against each mapping in the list
         for (Iterator iterator = list.iterator(); iterator.hasNext(); ) {
-            EntryMapping childMapping = (EntryMapping) iterator.next();
+            EntryMapping entryMapping = (EntryMapping) iterator.next();
 
-            //log.debug("Checking \""+dn+"\" against \""+childMapping.getDn()+"\"");
-            if (!EntryUtil.match(dn, childMapping.getDn())) continue;
-/*
-            if (parentDn != null && childParentDn != null && !parentDn.equals(childParentDn)) continue;
+            log.debug("Checking \""+dn+"\" against \""+entryMapping.getDn()+"\"");
+            if (!EntryUtil.match(dn, entryMapping.getDn())) continue;
 
-            // if the rdn names don't match, skip
-            if (!rdn.getNames().equals(childRdn.getNames())) continue;
-
-            // if the rdn is dynamic, the entry could be in this mapping
-            if (childMapping.isRdnDynamic()) {
-                log.debug("Found "+childDn);
-                results.add(childMapping);
-                continue;
-            }
-
-            // if rdn's don't match, skip
-            if (!rdn.equals(childRdn)) continue;
-*/
-            //log.debug("Found "+childDn);
-            results.add(childMapping);
+            log.debug("Found "+entryMapping.getDn());
+            results.add(entryMapping);
         }
 
         return results;

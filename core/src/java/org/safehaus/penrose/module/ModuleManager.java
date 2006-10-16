@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2005, Identyx Corporation.
+ * Copyright (c) 2000-2006, Identyx Corporation.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -54,6 +54,8 @@ public class ModuleManager implements ModuleManagerMBean {
         
         if (!moduleConfig.isEnabled()) return;
 
+        log.debug("Initializing module "+moduleConfig.getName());
+        
         Class clazz = Class.forName(moduleConfig.getModuleClass());
         module = (Module)clazz.newInstance();
 

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2005, Identyx Corporation.
+ * Copyright (c) 2000-2006, Identyx Corporation.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,9 +23,8 @@ import org.safehaus.penrose.mapping.Row;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.SourceConfig;
-import org.safehaus.penrose.connector.ConnectionManager;
 import org.safehaus.penrose.session.PenroseSearchResults;
-import org.safehaus.penrose.thread.ThreadManager;
+import org.safehaus.penrose.Penrose;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
@@ -39,8 +38,7 @@ public class EntryCacheStorage {
 
     Logger log = LoggerFactory.getLogger(getClass());
 
-    ConnectionManager connectionManager;
-    ThreadManager threadManager;
+    Penrose penrose;
 
     Partition partition;
     EntryMapping entryMapping;
@@ -49,6 +47,10 @@ public class EntryCacheStorage {
 
     int size;
     int expiration; // minutes
+
+    public EntryCacheStorage(Penrose penrose) throws Exception {
+        this.penrose = penrose;
+    }
 
     public CacheConfig getCacheConfig() {
         return cacheConfig;
@@ -112,30 +114,15 @@ public class EntryCacheStorage {
         this.partition = partition;
     }
 
-    public ConnectionManager getConnectionManager() {
-        return connectionManager;
-    }
-
-    public void setConnectionManager(ConnectionManager connectionManager) {
-        this.connectionManager = connectionManager;
-    }
-
     public boolean contains(String baseDn, Filter filter) throws Exception {
         return false;
     }
 
-    /**
-     * @return DNs (Collection of String)
-     */
-    public PenroseSearchResults search(String baseDn, Filter filter, PenroseSearchResults results) throws Exception {
-        return null;
+    public boolean search(String baseDn, Filter filter, PenroseSearchResults results) throws Exception {
+        return false;
     }
 
-    /**
-     * @return DNs (Collection of Strings)
-     */
-    public Collection search(SourceConfig sourceConfig, Row filter) throws Exception {
-        return null;
+    public void search(SourceConfig sourceConfig, Row filter, PenroseSearchResults results) throws Exception {
     }
 
     public void add(Filter filter, String dn) throws Exception { }
@@ -160,11 +147,11 @@ public class EntryCacheStorage {
 
     public void remove(String dn) throws Exception { }
 
-    public ThreadManager getThreadManager() {
-        return threadManager;
+    public Penrose getPenrose() {
+        return penrose;
     }
 
-    public void setThreadManager(ThreadManager threadManager) {
-        this.threadManager = threadManager;
+    public void setPenrose(Penrose penrose) {
+        this.penrose = penrose;
     }
 }

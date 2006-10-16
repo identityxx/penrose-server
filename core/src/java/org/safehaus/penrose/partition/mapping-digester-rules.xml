@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <!--
 
-Copyright (c) 2000-2005, Identyx Corporation.
+Copyright (c) 2000-2006, Identyx Corporation.
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -31,7 +31,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
             <object-create-rule classname="org.safehaus.penrose.mapping.EntryMapping" />
             <set-properties-rule />
 
-            <call-method-rule pattern="script" methodname="setScript" paramcount="0" />
+            <call-method-rule pattern="description" methodname="setDescription" paramcount="0" />
 
             <call-method-rule pattern="oc" methodname="addObjectClass" paramcount="0" />
 
@@ -39,8 +39,6 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 
                 <object-create-rule classname="org.safehaus.penrose.mapping.AttributeMapping" />
                 <set-properties-rule />
-
-                <call-method-rule pattern="script" methodname="setScript" paramcount="0" />
 
                 <call-method-rule pattern="binary" methodname="setBinary" paramcount="0" />
                 <call-method-rule pattern="constant" methodname="setConstant" paramcount="0" />
@@ -68,8 +66,6 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
                 <pattern value="field">
                     <object-create-rule classname="org.safehaus.penrose.mapping.FieldMapping" />
                     <set-properties-rule />
-
-                    <call-method-rule pattern="script" methodname="setScript" paramcount="0" />
 
                     <call-method-rule pattern="binary" methodname="setBinary" paramcount="0" />
                     <call-method-rule pattern="constant" methodname="setConstant" paramcount="0" />

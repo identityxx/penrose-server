@@ -1,9 +1,9 @@
 package org.safehaus.penrose.ldap;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.safehaus.penrose.filter.*;
 import org.apache.directory.shared.ldap.filter.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
 import java.util.Iterator;

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2005, Identyx Corporation.
+ * Copyright (c) 2000-2006, Identyx Corporation.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,6 +19,7 @@ package org.safehaus.penrose.engine;
 
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.util.Formatter;
+import org.safehaus.penrose.util.EntryUtil;
 import org.safehaus.penrose.graph.Graph;
 import org.safehaus.penrose.partition.Partition;
 import org.ietf.ldap.LDAPException;
@@ -42,10 +43,15 @@ public class AddEngine {
     }
 
     public int add(
+            Partition partition,
             Entry parent,
             EntryMapping entryMapping,
+            String dn,
             AttributeValues attributeValues)
             throws Exception {
+
+        Row rdn = EntryUtil.getRdn(dn);
+        attributeValues.set("rdn", rdn);
 
         AttributeValues parentSourceValues = parent.getSourceValues();
         AttributeValues sourceValues = new AttributeValues();
@@ -55,9 +61,11 @@ public class AddEngine {
             SourceMapping sourceMapping = (SourceMapping)i.next();
 
             AttributeValues output = new AttributeValues();
-            Row pk = engine.getTransformEngine().translate(entryMapping, sourceMapping, attributeValues, output);
+            Row pk = engine.getTransformEngine().translate(partition, entryMapping, sourceMapping, attributeValues, output);
             if (pk == null) continue;
 
+            sourceValues.set(sourceMapping.getName()+".primaryKey", pk);
+            
             for (Iterator j=output.getNames().iterator(); j.hasNext(); ) {
                 String name = (String)j.next();
                 Collection values = output.get(name);
@@ -66,6 +74,8 @@ public class AddEngine {
         }
 
         if (log.isDebugEnabled()) {
+            log.debug(Formatter.displaySeparator(80));
+
             log.debug(Formatter.displayLine("Parent source values:", 80));
             for (Iterator i = parentSourceValues.getNames().iterator(); i.hasNext(); ) {
                 String name = (String)i.next();
@@ -85,10 +95,8 @@ public class AddEngine {
 
         sourceValues.add(parentSourceValues);
 
-        Partition partition = engine.getPartitionManager().getPartition(entryMapping);
-
         Graph graph = engine.getGraph(entryMapping);
-        String startingSourceName = engine.getStartingSourceName(entryMapping);
+        String startingSourceName = engine.getStartingSourceName(partition, entryMapping);
         if (startingSourceName == null) return LDAPException.SUCCESS;
 
         SourceMapping startingSourceMapping = partition.getEffectiveSourceMapping(entryMapping, startingSourceName);
@@ -117,7 +125,7 @@ public class AddEngine {
             }
         }
 
-        AddGraphVisitor visitor = new AddGraphVisitor(engine, entryMapping, sourceValues);
+        AddGraphVisitor visitor = new AddGraphVisitor(engine, partition, entryMapping, sourceValues);
         visitor.run();
 
         if (visitor.getReturnCode() != LDAPException.SUCCESS) return visitor.getReturnCode();

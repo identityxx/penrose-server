@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2005, Identyx Corporation.
+ * Copyright (c) 2000-2006, Identyx Corporation.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,6 +23,7 @@ import org.safehaus.penrose.pipeline.PipelineAdapter;
 import org.safehaus.penrose.pipeline.PipelineEvent;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
+import org.ietf.ldap.LDAPException;
 
 import javax.naming.directory.Attributes;
 import java.util.Date;
@@ -89,7 +90,11 @@ public class PenroseSession {
         lastActivityDate.setTime(System.currentTimeMillis());
 
         AddEvent beforeModifyEvent = new AddEvent(this, AddEvent.BEFORE_ADD, this, dn, attributes);
-        eventManager.postEvent(dn, beforeModifyEvent);
+        boolean b = eventManager.postEvent(dn, beforeModifyEvent);
+
+        if (!b) {
+            return LDAPException.SUCCESS;
+        }
 
         int rc = handler.add(this, dn, attributes);
 
@@ -106,7 +111,11 @@ public class PenroseSession {
         lastActivityDate.setTime(System.currentTimeMillis());
 
         BindEvent beforeBindEvent = new BindEvent(this, BindEvent.BEFORE_BIND, this, dn, password);
-        eventManager.postEvent(dn, beforeBindEvent);
+        boolean b = eventManager.postEvent(dn, beforeBindEvent);
+
+        if (!b) {
+            return LDAPException.SUCCESS;
+        }
 
         int rc = handler.bind(this, dn, password);
 
@@ -123,7 +132,11 @@ public class PenroseSession {
         lastActivityDate.setTime(System.currentTimeMillis());
 
         CompareEvent beforeCompareEvent = new CompareEvent(this, CompareEvent.BEFORE_COMPARE, this, dn, attributeName, attributeValue);
-        eventManager.postEvent(dn, beforeCompareEvent);
+        boolean b = eventManager.postEvent(dn, beforeCompareEvent);
+
+        if (!b) {
+            return LDAPException.SUCCESS;
+        }
 
         int rc = handler.compare(this, dn, attributeName, attributeValue);
 
@@ -140,7 +153,11 @@ public class PenroseSession {
         lastActivityDate.setTime(System.currentTimeMillis());
 
         DeleteEvent beforeDeleteEvent = new DeleteEvent(this, DeleteEvent.BEFORE_DELETE, this, dn);
-        eventManager.postEvent(dn, beforeDeleteEvent);
+        boolean b = eventManager.postEvent(dn, beforeDeleteEvent);
+
+        if (!b) {
+            return LDAPException.SUCCESS;
+        }
 
         int rc = handler.delete(this, dn);
 
@@ -158,7 +175,11 @@ public class PenroseSession {
         lastActivityDate.setTime(System.currentTimeMillis());
 
         ModifyEvent beforeModifyEvent = new ModifyEvent(this, ModifyEvent.BEFORE_MODIFY, this, dn, modifications);
-        eventManager.postEvent(dn, beforeModifyEvent);
+        boolean b = eventManager.postEvent(dn, beforeModifyEvent);
+
+        if (!b) {
+            return LDAPException.SUCCESS;
+        }
 
         int rc = handler.modify(this, dn, modifications);
 
@@ -176,7 +197,11 @@ public class PenroseSession {
         lastActivityDate.setTime(System.currentTimeMillis());
 
         ModRdnEvent beforeModRdnEvent = new ModRdnEvent(this, ModRdnEvent.BEFORE_MODRDN, this, dn, newRdn, deleteOldRdn);
-        eventManager.postEvent(dn, beforeModRdnEvent);
+        boolean b = eventManager.postEvent(dn, beforeModRdnEvent);
+
+        if (!b) {
+            return LDAPException.SUCCESS;
+        }
 
         int rc = handler.modrdn(this, dn, newRdn, deleteOldRdn);
 
@@ -193,7 +218,7 @@ public class PenroseSession {
      * @param filter
      * @param sc
      * @param results This will be filled with objects of type SearchResult.
-     * @return
+     * @return return code
      * @throws Exception
      */
     public int search(
@@ -208,13 +233,20 @@ public class PenroseSession {
         lastActivityDate.setTime(System.currentTimeMillis());
 
         SearchEvent beforeSearchEvent = new SearchEvent(this, SearchEvent.BEFORE_SEARCH, this, baseDn, filter, sc, results);
-        eventManager.postEvent(baseDn, beforeSearchEvent);
+        boolean b = eventManager.postEvent(baseDn, beforeSearchEvent);
+
+        if (!b) {
+            results.close();
+            return LDAPException.SUCCESS;
+        }
 
         final PenroseSession session = this;
 
         results.addListener(new PipelineAdapter() {
             public void pipelineClosed(PipelineEvent event) {
                 try {
+                    lastActivityDate.setTime(System.currentTimeMillis());
+
                     SearchEvent afterSearchEvent = new SearchEvent(session, SearchEvent.AFTER_SEARCH, session, baseDn, filter, sc, results);
                     afterSearchEvent.setReturnCode(results.getReturnCode());
                     eventManager.postEvent(baseDn, afterSearchEvent);
@@ -223,29 +255,9 @@ public class PenroseSession {
                     log.error(e.getMessage(), e);
                 }
             }
-
         });
 
         return handler.search(this, baseDn, filter, sc, results);
-    }
-
-    /**
-     * Synchronous search.
-     * @param baseDn
-     * @param filter
-     * @param sc
-     * @return Results will contain objects of type SearchResult.
-     * @throws Exception
-     */
-    public PenroseSearchResults search(
-            String baseDn,
-            String filter,
-            PenroseSearchControls sc)
-            throws Exception {
-
-        PenroseSearchResults results = new PenroseSearchResults();
-        search(baseDn, filter, sc, results);
-        return results;
     }
 
     public int unbind() throws Exception {
@@ -255,7 +267,11 @@ public class PenroseSession {
         lastActivityDate.setTime(System.currentTimeMillis());
 
         BindEvent beforeUnbindEvent = new BindEvent(this, BindEvent.BEFORE_UNBIND, this, bindDn);
-        eventManager.postEvent(bindDn, beforeUnbindEvent);
+        boolean b = eventManager.postEvent(bindDn, beforeUnbindEvent);
+
+        if (!b) {
+            return LDAPException.SUCCESS;
+        }
 
         int rc = handler.unbind(this);
 
@@ -301,12 +317,68 @@ public class PenroseSession {
         this.eventManager = eventManager;
     }
 
-    public String getBindPassword() {
-        return bindPassword;
+    public void addAddListener(AddListener listener) {
+        eventManager.addAddListener(listener);
     }
 
-    public void setBindPassword(String bindPassword) {
-        this.bindPassword = bindPassword;
+    public void removeAddListener(AddListener listener) {
+        eventManager.removeAddListener(listener);
+    }
+
+    public void addBindListener(BindListener listener) {
+        eventManager.addBindListener(listener);
+    }
+
+    public void removeBindListener(BindListener listener) {
+        eventManager.removeBindListener(listener);
+    }
+
+    public void addCompareListener(CompareListener listener) {
+        eventManager.addCompareListener(listener);
+    }
+
+    public void removeCompareListener(CompareListener listener) {
+        eventManager.removeCompareListener(listener);
+    }
+
+    public void addDeleteListener(DeleteListener listener) {
+        eventManager.addDeleteListener(listener);
+    }
+
+    public void removeDeleteListener(DeleteListener listener) {
+        eventManager.removeDeleteListener(listener);
+    }
+
+    public void addModifyListener(ModifyListener listener) {
+        eventManager.addModifyListener(listener);
+    }
+
+    public void removeModifyListener(ModifyListener listener) {
+        eventManager.removeModifyListener(listener);
+    }
+
+    public void addModrdnListener(ModRdnListener listener) {
+        eventManager.addModRdnListener(listener);
+    }
+
+    public void removeModrdnListener(ModRdnListener listener) {
+        eventManager.removeModRdnListener(listener);
+    }
+
+    public void addSearchListener(SearchListener listener) {
+        eventManager.addSearchListener(listener);
+    }
+
+    public void removeSearchListener(SearchListener listener) {
+        eventManager.removeSearchListener(listener);
+    }
+
+    public Collection getAttributes() {
+        return attributes.values();
+    }
+
+    public void setAttribute(String name, Object value) {
+        attributes.put(name, value);
     }
 
     public Object getAttribute(String name) {
@@ -316,8 +388,12 @@ public class PenroseSession {
     public Collection getAttributeNames() {
         return attributes.keySet();
     }
-    
-    public void setAttribute(String name, Object object) {
-        attributes.put(name, object);
+
+    public String getBindPassword() {
+        return bindPassword;
+    }
+
+    public void setBindPassword(String bindPassword) {
+        this.bindPassword = bindPassword;
     }
 }

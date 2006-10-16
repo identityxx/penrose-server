@@ -5,7 +5,7 @@ Release: 1
 License: GPL
 Vendor: Identyx, Inc.
 Group: System Environment/Base
-Source: http://dist.safehaus.org/penrose/release/${module.name}-${project.version}/artifacts/${module.name}-${project.version}-src.tar.gz
+Source: ${module.name}-${project.version}-src.tar.gz
 BuildRoot: /var/tmp/${module.name}-${project.version}
 
 %description
@@ -16,7 +16,7 @@ http://penrose.safehaus.org
 %setup -q
 
 %build
-ant -Dproject.version=${project.version} -Dprefix=${rpm.prefix}$RPM_BUILD_ROOT dist docs
+ant -Dproject.version=${project.version} -Dprefix=${rpm.prefix}$RPM_BUILD_ROOT docs dist
 
 %install
 ant -Dproject.version=${project.version} -Dprefix=${rpm.prefix}$RPM_BUILD_ROOT install

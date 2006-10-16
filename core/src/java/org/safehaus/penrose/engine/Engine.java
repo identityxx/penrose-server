@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2005, Identyx Corporation.
+ * Copyright (c) 2000-2006, Identyx Corporation.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,14 +23,12 @@ import org.safehaus.penrose.interpreter.InterpreterManager;
 import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.connector.Connector;
 import org.safehaus.penrose.connector.ConnectionManager;
+import org.safehaus.penrose.connector.ConnectorManager;
 import org.safehaus.penrose.partition.PartitionManager;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.SourceConfig;
-import org.safehaus.penrose.partition.FieldConfig;
-import org.safehaus.penrose.cache.EntryCache;
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.graph.Graph;
-import org.safehaus.penrose.thread.ThreadManager;
 import org.safehaus.penrose.thread.MRSWLock;
 import org.safehaus.penrose.thread.Queue;
 import org.safehaus.penrose.filter.Filter;
@@ -40,6 +38,7 @@ import org.safehaus.penrose.session.PenroseSearchResults;
 import org.safehaus.penrose.session.PenroseSearchControls;
 import org.safehaus.penrose.session.PenroseSession;
 import org.safehaus.penrose.util.EntryUtil;
+import org.safehaus.penrose.Penrose;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
@@ -51,21 +50,23 @@ import java.util.*;
  */
 public abstract class Engine {
 
-    public static Logger log = LoggerFactory.getLogger(Engine.class);
+    public Logger log = LoggerFactory.getLogger(getClass());
 
+    public Penrose penrose;
     public EngineConfig engineConfig;
     public PenroseConfig penroseConfig;
+
     public SchemaManager schemaManager;
     public InterpreterManager interpreterManager;
-    public Connector connector;
+    public ConnectorManager connectorManager;
     public ConnectionManager connectionManager;
     public PartitionManager partitionManager;
-    public EntryCache entryCache;
 
     public boolean stopping = false;
 
-    ThreadManager threadManager;
-    public EngineFilterTool filterTool;
+    public EngineFilterTool engineFilterTool;
+
+    private FilterTool filterTool;
 
     public Map locks = new HashMap();
     public Queue queue = new Queue();
@@ -79,6 +80,9 @@ public abstract class Engine {
     Analyzer analyzer;
 
     public void init() throws Exception {
+        filterTool = new FilterTool();
+        filterTool.setSchemaManager(schemaManager);
+
         analyzer = new Analyzer();
         analyzer.setPartitionManager(partitionManager);
         analyzer.setInterpreterManager(interpreterManager);
@@ -104,7 +108,7 @@ public abstract class Engine {
         this.schemaManager = schemaManager;
     }
 
-    public InterpreterManager getInterpreterFactory() {
+    public InterpreterManager getInterpreterManager() {
         return interpreterManager;
     }
 
@@ -112,12 +116,9 @@ public abstract class Engine {
         this.interpreterManager = interpreterManager;
     }
 
-    public Connector getConnector() {
-        return connector;
-    }
-
-    public void setConnector(Connector connector) {
-        this.connector = connector;
+    public Connector getConnector(SourceConfig sourceConfig) {
+        String connectorName = sourceConfig.getParameter("connectorName");
+        return connectorManager.getConnector(connectorName);
     }
 
     public ConnectionManager getConnectionManager() {
@@ -134,14 +135,6 @@ public abstract class Engine {
 
     public void setPartitionManager(PartitionManager partitionManager) throws Exception {
         this.partitionManager = partitionManager;
-    }
-
-    public EntryCache getEntryCache() {
-        return entryCache;
-    }
-
-    public void setEntryCache(EntryCache entryCache) {
-        this.entryCache = entryCache;
     }
 
     public SourceMapping getPrimarySource(EntryMapping entryMapping) throws Exception {
@@ -165,6 +158,15 @@ public abstract class Engine {
         return computeAttributeValues(entryMapping, sourceValues, null, interpreter);
     }
 
+    /**
+     * Compute attribute values of an entry given the source values or row values
+     * @param entryMapping
+     * @param sourceValues
+     * @param rows
+     * @param interpreter
+     * @return attribute values
+     * @throws Exception
+     */
     public AttributeValues computeAttributeValues(
             EntryMapping entryMapping,
             AttributeValues sourceValues,
@@ -172,23 +174,43 @@ public abstract class Engine {
             Interpreter interpreter
             ) throws Exception {
 
+        log.debug("Generating attributes with source values:");
+        for (Iterator i=sourceValues.getNames().iterator(); i.hasNext(); ) {
+            String name = (String)i.next();
+
+            for (Iterator j=sourceValues.get(name).iterator(); j.hasNext(); ) {
+                Object value = j.next();
+                String className = value.getClass().getName();
+                className = className.substring(className.lastIndexOf(".")+1);
+                log.debug(" - "+name+": "+value+" ("+className+")");
+            }
+        }
+
         AttributeValues attributeValues = new AttributeValues();
 
         if (sourceValues != null) interpreter.set(sourceValues, rows);
 
-        //log.debug("Attribute values:");
-        Collection attributeDefinitions = entryMapping.getAttributeMappings();
-        for (Iterator j=attributeDefinitions.iterator(); j.hasNext(); ) {
+        Collection attributeMappings = entryMapping.getAttributeMappings();
+        for (Iterator j=attributeMappings.iterator(); j.hasNext(); ) {
             AttributeMapping attributeMapping = (AttributeMapping)j.next();
 
             String name = attributeMapping.getName();
-            //log.debug(" - "+name+":");
-
             Object value = interpreter.eval(entryMapping, attributeMapping);
-            if (value == null) continue;
+            if (value == null) {
+                if (attributeMapping.isPK()) {
+                    log.debug(" - "+name+" (PK): null");
+                    return null;
+                }
+
+                log.debug(" - "+name+": null");
+                continue;
+            }
 
             attributeValues.add(name, value);
-            //log.debug("   - "+value+" ("+value.getClass().getName()+")");
+
+            String className = value.getClass().getName();
+            className = className.substring(className.lastIndexOf(".")+1);
+            log.debug(" - "+name+": "+value+" ("+className+")");
         }
 
         interpreter.clear();
@@ -214,15 +236,16 @@ public abstract class Engine {
         return analyzer.getGraph(entryMapping);
     }
 
-    public abstract void start() throws Exception;
+    public void start() throws Exception {
+    }
 
-    public abstract void stop() throws Exception;
+    public void stop() throws Exception {
 
-    public String getStartingSourceName(EntryMapping entryMapping) throws Exception {
+    }
+
+    public String getStartingSourceName(Partition partition, EntryMapping entryMapping) throws Exception {
 
         log.debug("Searching the starting sourceMapping for "+entryMapping.getDn());
-
-        Partition partition = partitionManager.getPartition(entryMapping);
 
         Collection relationships = entryMapping.getRelationships();
         for (Iterator i=relationships.iterator(); i.hasNext(); ) {
@@ -296,14 +319,20 @@ public abstract class Engine {
         return filter;
     }
 
-    public Filter generateFilter(SourceMapping toSource, Collection relationships, AttributeValues av) throws Exception {
-        log.debug("Filters:");
-
+    public Filter generateFilter(SourceMapping toSource, Collection relationships, AttributeValues sv) throws Exception {
+/*
+        log.debug("Generating filters using source values:");
+        for (Iterator i=sv.getNames().iterator(); i.hasNext(); ) {
+            String name = (String)i.next();
+            Collection values = sv.get(name);
+            log.debug(" - "+name+": "+values);
+        }
+*/
         Filter filter = null;
 
         for (Iterator j=relationships.iterator(); j.hasNext(); ) {
             Relationship relationship = (Relationship)j.next();
-            log.debug(" - "+relationship);
+            //log.debug("Relationship "+relationship);
 
             String lhs = relationship.getLhs();
             String operator = relationship.getOperator();
@@ -325,7 +354,7 @@ public abstract class Engine {
 
             //log.debug("   converting "+rhs+" ==> ("+lname+" "+operator+" ?)");
 
-            Collection v = av.get(rhs);
+            Collection v = sv.get(rhs);
             //log.debug("   - found "+v);
             if (v == null) continue;
 
@@ -369,8 +398,7 @@ public abstract class Engine {
     /**
      * Check whether the entry uses no sources and all attributes are constants.
      */
-    public boolean isStatic(EntryMapping entryMapping) throws Exception {
-        Partition partition = partitionManager.getPartition(entryMapping);
+    public boolean isStatic(Partition partition, EntryMapping entryMapping) throws Exception {
         Collection effectiveSources = partition.getEffectiveSourceMappings(entryMapping);
         if (effectiveSources.size() > 0) return false;
 
@@ -383,71 +411,36 @@ public abstract class Engine {
         EntryMapping parentMapping = partition.getParent(entryMapping);
         if (parentMapping == null) return true;
 
-        return isStatic(parentMapping);
+        return isStatic(partition, parentMapping);
     }
 
-    public EngineFilterTool getFilterTool() {
-        return filterTool;
+    public EngineFilterTool getEngineFilterTool() {
+        return engineFilterTool;
     }
 
-    public void setFilterTool(EngineFilterTool filterTool) {
-        this.filterTool = filterTool;
+    public void setEngineFilterTool(EngineFilterTool engineFilterTool) {
+        this.engineFilterTool = engineFilterTool;
     }
 
-    public String getParentSourceValues(Collection path, EntryMapping entryMapping, AttributeValues parentSourceValues) throws Exception {
-        Partition partition = partitionManager.getPartition(entryMapping);
-        EntryMapping parentMapping = partition.getParent(entryMapping);
+    public void load(
+            Partition partition,
+            EntryMapping entryMapping,
+            PenroseSearchResults entriesToLoad,
+            PenroseSearchResults loadedEntries)
+            throws Exception {
 
-        String prefix = null;
-        Interpreter interpreter = interpreterManager.newInstance();
-
-        //log.debug("Parents' source values:");
-        for (Iterator iterator = path.iterator(); iterator.hasNext(); ) {
-            //Map map = (Map)iterator.next();
-            //Entry entry = (Entry)map.get("entry");
-            Entry entry = (Entry)iterator.next();
-            //log.debug(" - "+dn);
-
-            prefix = prefix == null ? "parent" : "parent."+prefix;
-
-            if (entry == null) {
-                AttributeValues av = computeAttributeValues(parentMapping, interpreter);
-                for (Iterator j=av.getNames().iterator(); j.hasNext(); ) {
-                    String name = (String)j.next();
-                    Collection values = av.get(name);
-                    name = prefix+"."+name;
-                    //log.debug("   - "+name+": "+values);
-                    parentSourceValues.add(name, values);
-                }
-                interpreter.clear();
-
-            } else {
-                AttributeValues av = entry.getAttributeValues();
-                for (Iterator j=av.getNames().iterator(); j.hasNext(); ) {
-                    String name = (String)j.next();
-                    Collection values = av.get(name);
-                    name = prefix+"."+name;
-                    //log.debug("   - "+name+": "+values);
-                    parentSourceValues.add(name, values);
-                }
-
-                AttributeValues sv = entry.getSourceValues();
-                for (Iterator j=sv.getNames().iterator(); j.hasNext(); ) {
-                    String name = (String)j.next();
-                    Collection values = sv.get(name);
-                    if (name.startsWith("parent.")) name = prefix+"."+name;
-                    //log.debug("   - "+name+": "+values);
-                    parentSourceValues.add(name, values);
-                }
-            }
-
-            parentMapping = partition.getParent(parentMapping);
-        }
-
-        return prefix;
+        loadEngine.load(partition, entryMapping, entriesToLoad, loadedEntries);
     }
 
-    public abstract int bindProxy(
+    public boolean isUnique(Partition partition, EntryMapping entryMapping) throws Exception {
+        return analyzer.isUnique(partition, entryMapping);
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Bind
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    public abstract int bind(
             PenroseSession session,
             Partition partition,
             EntryMapping entryMapping,
@@ -455,165 +448,89 @@ public abstract class Engine {
             String password
     ) throws Exception;
 
-    public abstract int addProxy(
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Add
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    public abstract int add(
             PenroseSession session,
             Partition partition,
+            Entry parent,
             EntryMapping entryMapping,
             String dn,
             Attributes attributes
     ) throws Exception;
 
-    public abstract int modifyProxy(
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Delete
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    public abstract int delete(
             PenroseSession session,
             Partition partition,
-            EntryMapping entryMapping,
+            Entry entry
+    ) throws Exception;
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Modify
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    public abstract int modify(
+            PenroseSession session,
+            Partition partition,
             Entry entry,
             Collection modifications
     ) throws Exception;
 
-    public abstract int modrdnProxy(
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // ModRDN
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    public abstract int modrdn(
             PenroseSession session,
             Partition partition,
-            EntryMapping entryMapping,
             Entry entry,
             String newRdn,
             boolean deleteOldRdn
     ) throws Exception;
 
-    public abstract int deleteProxy(
-            PenroseSession session,
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Search
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    public List find(
             Partition partition,
+            AttributeValues sourceValues,
             EntryMapping entryMapping,
-            String dn
-    ) throws Exception;
-
-    public void load(
-            EntryMapping entryMapping,
-            PenroseSearchResults entriesToLoad,
-            PenroseSearchResults loadedEntries)
-            throws Exception {
-
-        loadEngine.load(entryMapping, entriesToLoad, loadedEntries);
+            String rdns[],
+            int position
+    ) throws Exception {
+        return new ArrayList();
     }
 
-    /**
-     * Check whether each rdn value corresponds to one row from the source.
-     */
-    public boolean isUnique(EntryMapping entryMapping) throws Exception {
-
-        Collection rdnSources = new TreeSet();
-        Collection rdnFields = new TreeSet();
-
-        Collection rdnAttributes = entryMapping.getRdnAttributes();
-        for (Iterator i=rdnAttributes.iterator(); i.hasNext(); ) {
-            AttributeMapping attributeMapping = (AttributeMapping)i.next();
-
-            if (attributeMapping.getConstant() != null) continue;
-
-            String variable = attributeMapping.getVariable();
-
-            if (variable != null) { // get the sourceMapping and field name
-                int j = variable.indexOf(".");
-                String sourceAlias = variable.substring(0, j);
-                String fieldName = variable.substring(j+1);
-
-                rdnSources.add(sourceAlias);
-                rdnFields.add(fieldName);
-
-                continue;
-            }
-
-            // attribute is an expression
-            return false;
-        }
-
-        //log.debug("RDN sources: "+rdnSources);
-
-        // rdn is constant
-        if (rdnSources.isEmpty()) return false;
-
-        // rdn uses more than one sourceMapping
-        if (rdnSources.size() > 1) return false;
-
-        String sourceAlias = (String)rdnSources.iterator().next();
-        SourceMapping sourceMapping = entryMapping.getSourceMapping(sourceAlias);
-
-        Partition partition = partitionManager.getPartition(entryMapping);
-        SourceConfig sourceConfig = partition.getSourceConfig(sourceMapping.getSourceName());
-        //log.debug("Source "+sourceMapping.getSourceName()+" in partition "+partition.getPartitionConfig().getName()+": "+sourceConfig);
-
-        Collection uniqueFields = new TreeSet();
-        Collection pkFields = new TreeSet();
-
-        for (Iterator i=rdnFields.iterator(); i.hasNext(); ) {
-            String fieldName = (String)i.next();
-            FieldConfig fieldConfig = sourceConfig.getFieldConfig(fieldName);
-
-            if (fieldConfig.isUnique()) {
-                uniqueFields.add(fieldName);
-                continue;
-            }
-
-            if (fieldConfig.isPrimaryKey()) {
-                pkFields.add(fieldName);
-                continue;
-            }
-
-            return false;
-        }
-
-        //log.debug("RDN unique fields: "+uniqueFields);
-        //log.debug("RDN PK fields: "+pkFields);
-
-        // rdn uses unique fields
-        if (pkFields.isEmpty() && !uniqueFields.isEmpty()) return true;
-
-        Collection list = sourceConfig.getPrimaryKeyNames();
-        //log.debug("Source PK fields: "+list);
-
-        // rdn uses primary key fields
-        boolean result = pkFields.equals(list);
-
-        EntryMapping parentMapping = partition.getParent(entryMapping);
-        if (parentMapping == null) return result;
-
-        return isUnique(parentMapping);
-    }
-
-    public abstract int bind(Entry entry, String password) throws Exception;
-
-    public abstract int add(
-            Entry parent,
-            EntryMapping entryMapping,
-            AttributeValues attributeValues)
-            throws Exception;
-
-    public abstract int delete(Entry entry) throws Exception;
-
-    public abstract int modrdn(Entry entry, String newRdn, boolean deleteOldRdn) throws Exception;
-
-    public abstract int modify(Entry entry, AttributeValues newValues) throws Exception;
-
-    public abstract void search(
-            final Collection path,
-            final AttributeValues parentSourceValues,
-            final EntryMapping entryMapping,
-            boolean single,
-            final Filter filter,
-            PenroseSearchControls sc,
-            PenroseSearchResults results) throws Exception;
-
-    public abstract int searchProxy(
+    public abstract int search(
             PenroseSession session,
             Partition partition,
+            AttributeValues sourceValues,
             EntryMapping entryMapping,
-            String base,
-            String filter,
+            String baseDn,
+            Filter filter,
             PenroseSearchControls sc,
             PenroseSearchResults results
-            ) throws Exception;
+    ) throws Exception;
 
-   public synchronized MRSWLock getLock(String dn) {
+    public abstract int expand(
+            PenroseSession session,
+            Partition partition,
+            AttributeValues sourceValues,
+            EntryMapping entryMapping,
+            String baseDn,
+            Filter filter,
+            PenroseSearchControls sc,
+            PenroseSearchResults results
+    ) throws Exception;
+
+    public synchronized MRSWLock getLock(String dn) {
 
 		MRSWLock lock = (MRSWLock)locks.get(dn);
 
@@ -624,19 +541,18 @@ public abstract class Engine {
 	}
 
     public void merge(
+            Partition partition,
             EntryMapping entryMapping,
             PenroseSearchResults loadedEntries,
             PenroseSearchResults newEntries)
             throws Exception {
 
-        mergeEngine.merge(entryMapping, loadedEntries, newEntries);
+        mergeEngine.merge(partition, entryMapping, loadedEntries, newEntries);
     }
 
-    public Relationship getConnectingRelationship(EntryMapping entryMapping) throws Exception {
+    public Relationship getConnectingRelationship(Partition partition, EntryMapping entryMapping) throws Exception {
 
         // log.debug("Searching the connecting relationship for "+entryMapping;
-
-        Partition partition = partitionManager.getPartition(entryMapping);
 
         Collection relationships = partition.getEffectiveRelationships(entryMapping);
 
@@ -696,6 +612,7 @@ public abstract class Engine {
     }
 
     public Row createFilter(
+            Partition partition,
             Interpreter interpreter,
             SourceMapping sourceMapping,
             EntryMapping entryMapping,
@@ -705,7 +622,6 @@ public abstract class Engine {
             return new Row();
         }
 
-        Partition partition = partitionManager.getPartition(entryMapping);
         Collection fields = partition.getSearchableFields(sourceMapping);
 
         interpreter.set(rdn);
@@ -731,6 +647,7 @@ public abstract class Engine {
     }
 
     public Collection computeDns(
+            Partition partition,
             Interpreter interpreter,
             EntryMapping entryMapping,
             AttributeValues sourceValues)
@@ -739,22 +656,20 @@ public abstract class Engine {
         interpreter.set(sourceValues);
 
         Collection results = new ArrayList();
-
-        results.addAll(computeDns(interpreter, entryMapping));
+        results.addAll(computeDns(partition, interpreter, entryMapping));
 
         interpreter.clear();
 
         return results;
     }
 
-    public Collection computeDns(Interpreter interpreter, EntryMapping entryMapping) throws Exception {
+    public Collection computeDns(Partition partition, Interpreter interpreter, EntryMapping entryMapping) throws Exception {
 
-        Partition partition = partitionManager.getPartition(entryMapping);
         EntryMapping parentMapping = partition.getParent(entryMapping);
 
         Collection parentDns;
         if (parentMapping != null) {
-            parentDns = computeDns(interpreter, parentMapping);
+            parentDns = computeDns(partition, interpreter, parentMapping);
         } else {
             parentDns = new ArrayList();
             if (entryMapping.getParentDn() != null) {
@@ -799,7 +714,7 @@ public abstract class Engine {
 
         AttributeValues rdns = new AttributeValues();
 
-        Collection rdnAttributes = entryMapping.getRdnAttributes();
+        Collection rdnAttributes = entryMapping.getRdnAttributeNames();
         for (Iterator i=rdnAttributes.iterator(); i.hasNext(); ) {
             AttributeMapping attributeMapping = (AttributeMapping)i.next();
             String name = attributeMapping.getName();
@@ -807,7 +722,12 @@ public abstract class Engine {
             Object value = interpreter.eval(entryMapping, attributeMapping);
             if (value == null) continue;
 
-            rdns.add(name, value);
+            if (value instanceof Collection && AttributeMapping.RDN_FIRST.equals(attributeMapping.getRdn())) {
+                Collection c = (Collection)value;
+                if (c.size() > 0) rdns.add(name, c.iterator().next());
+            } else {
+                rdns.add(name, value);
+            }
         }
 
         return TransformEngine.convert(rdns);
@@ -825,12 +745,28 @@ public abstract class Engine {
         return penroseConfig;
     }
 
-    public ThreadManager getThreadManager() {
-        return threadManager;
+    public FilterTool getFilterTool() {
+        return filterTool;
     }
 
-    public void setThreadManager(ThreadManager threadManager) {
-        this.threadManager = threadManager;
+    public void setFilterTool(FilterTool filterTool) {
+        this.filterTool = filterTool;
+    }
+
+    public ConnectorManager getConnectorManager() {
+        return connectorManager;
+    }
+
+    public void setConnectorManager(ConnectorManager connectorManager) {
+        this.connectorManager = connectorManager;
+    }
+
+    public Penrose getPenrose() {
+        return penrose;
+    }
+
+    public void setPenrose(Penrose penrose) {
+        this.penrose = penrose;
     }
 }
 

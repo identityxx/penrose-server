@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2005, Identyx Corporation.
+ * Copyright (c) 2000-2006, Identyx Corporation.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -49,21 +49,27 @@ public class EntryUtil {
     public static boolean match(String dn1, String dn2) throws Exception {
 
         //log.debug("Matching ["+dn1+"] with ["+dn2+"]");
-
         Row rdn1 = getRdn(dn1);
         Row rdn2 = getRdn(dn2);
 
-        // if attribute types don't match => false
-        //log.debug(" - Comparing attribute types ["+attr+"] with ["+attr2+"]");
-        if (!rdn1.getNames().equals(rdn2.getNames())) return false;
+        Iterator i = rdn1.getNames().iterator();
+        Iterator j = rdn2.getNames().iterator();
 
-        // if values are not dynamic and they don't match => false
-        for (Iterator i=rdn1.getNames().iterator(); i.hasNext(); ) {
-            String name = (String)i.next();
-            String value = (String)rdn1.get(name);
-            String value2 = (String)rdn2.get(name);
+        while (i.hasNext() && j.hasNext()) {
+            String name1 = (String)i.next();
+            String name2 = (String)j.next();
+
+            if (!name1.equalsIgnoreCase(name2)) {
+                return false;
+            }
+
+            String value = (String)rdn1.get(name1);
+            String value2 = (String)rdn2.get(name2);
+
             //log.debug(" - Comparing attribute values ["+value+"] with ["+value2+"]");
-            if (!"...".equals(value) && !"...".equals(value2) && !value.equalsIgnoreCase(value2)) return false;
+            if (!"...".equals(value) && !"...".equals(value2) && !value.equalsIgnoreCase(value2)) {
+                return false;
+            }
         }
 
         String parentDn1 = getParentDn(dn1);
@@ -71,7 +77,9 @@ public class EntryUtil {
 
         // if parents matches => true
         //log.debug(" - Comparing parents ["+parentDn1+"] with ["+parentDn2+"]");
-        if (parentDn1 != null && parentDn2 != null && match(parentDn1, parentDn2)) return true;
+        if (parentDn1 != null && parentDn2 != null && match(parentDn1, parentDn2)) {
+            return true;
+        }
 
         // if neither has parents => true
         return parentDn1 == null && parentDn2 == null;
@@ -99,9 +107,12 @@ public class EntryUtil {
             while (st.hasMoreTokens()) {
                 String s = LDAPDN.unescapeRDN(st.nextToken());
                 int index = s.indexOf("=");
+
                 String attribute = s.substring(0, index);
                 if (attribute.startsWith("null")) attribute = attribute.substring(4);
+
                 String value =  s.substring(index+1);
+
                 //log.debug(" - "+attribute+": "+value);
                 rdn.set(attribute, value);
             }
@@ -124,11 +135,89 @@ public class EntryUtil {
 
             StringBuffer sb = new StringBuffer();
             for (int i=1; i<rdns.length; i++) {
+                String r = rdns[i];
+
+                StringTokenizer st = new StringTokenizer(r, "+");
+                StringBuffer sb2 = new StringBuffer();
+
+                while (st.hasMoreTokens()) {
+                    String s = LDAPDN.unescapeRDN(st.nextToken());
+
+                    int index = s.indexOf("=");
+
+                    String attribute = s.substring(0, index);
+                    if (attribute.startsWith("null")) attribute = attribute.substring(4);
+
+                    String value =  s.substring(index+1);
+
+                    String rdn = attribute+"="+value;
+                    //log.debug("Processing "+rdn);
+
+                    if (sb2.length() > 0) sb2.append("+");
+                    sb2.append(LDAPDN.escapeRDN(rdn));
+                }
+
                 if (sb.length() > 0) sb.append(",");
-                sb.append(rdns[i]);
+                sb.append(sb2);
             }
 
             return sb.toString();
+
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+            return null;
+        }
+    }
+
+    public static String getSuffix(String dn) {
+        if (dn == null || "".equals(dn)) return null;
+
+        try {
+            //log.debug("###### Getting suffix from "+dn);
+
+            String rdns[] = LDAPDN.explodeDN(dn, false);
+            if (rdns.length < 2) return dn;
+
+            return LDAPDN.escapeRDN(rdns[rdns.length-1]);
+
+            //int i = dn.lastIndexOf(",");
+            //if (i<0) return dn;
+
+            //String suffix = dn.substring(i+1);
+            //log.debug(" - "+suffix);
+
+            //return suffix.toString();
+
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+            return null;
+        }
+    }
+
+    public static String getPrefix(String dn) {
+        if (dn == null || "".equals(dn)) return null;
+
+        try {
+            //log.debug("###### Getting prefix from "+dn);
+
+            String rdns[] = LDAPDN.explodeDN(dn, false);
+            if (rdns.length < 2) return null;
+
+            StringBuffer sb = new StringBuffer();
+            for (int i=0; i<rdns.length-1; i++) {
+                if (sb.length() > 0) sb.append(",");
+                sb.append(LDAPDN.escapeRDN(rdns[i]));
+            }
+
+            return sb.toString();
+
+            //int i = dn.lastIndexOf(",");
+            //if (i<0) return null;
+
+            //String prefix = dn.substring(0, i);
+            //log.debug(" - "+prefix);
+
+            //return prefix;
 
         } catch (Exception e) {
             log.error(e.getMessage(), e);
@@ -170,6 +259,8 @@ public class EntryUtil {
 
     public static Attributes getAttributes(Entry entry) {
 
+        //log.debug("Converting "+entry.getDn());
+
         AttributeValues attributeValues = entry.getAttributeValues();
 
         Attributes attributes = new BasicAttributes();
@@ -183,10 +274,14 @@ public class EntryUtil {
             for (Iterator j=values.iterator(); j.hasNext(); ) {
                 Object value = j.next();
 
+                String className = value.getClass().getName();
+                className = className.substring(className.lastIndexOf(".")+1);
+                //log.debug(" - "+name+": "+value+" ("+className+")");
+
                 if (value instanceof byte[]) {
                     attribute.add(value);
 
-                } else { // TODO This is ApacheDS's bug
+                } else {
                     attribute.add(value.toString());
                 }
             }
@@ -246,9 +341,16 @@ public class EntryUtil {
 
             for (NamingEnumeration j = attribute.getAll(); j.hasMore(); ) {
                 Object value = j.next();
+
+                String className = value.getClass().getName();
+                className = className.substring(className.lastIndexOf(".")+1);
+
                 sb.append(name);
                 sb.append(": ");
                 sb.append(value);
+                sb.append(" (");
+                sb.append(className);
+                sb.append(")");
                 sb.append("\n");
             }
         }

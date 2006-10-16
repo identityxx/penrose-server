@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2005, Identyx Corporation.
+ * Copyright (c) 2000-2006, Identyx Corporation.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,6 +21,6 @@ package org.safehaus.penrose.event;
  * @author Endi S. Dewata
  */
 public interface DeleteListener {
-    public void beforeDelete(DeleteEvent event) throws Exception;
+    public boolean beforeDelete(DeleteEvent event) throws Exception;
     public void afterDelete(DeleteEvent event) throws Exception;
 }

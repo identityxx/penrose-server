@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2005, Identyx Corporation.
+ * Copyright (c) 2000-2006, Identyx Corporation.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -215,9 +215,35 @@ public class PartitionValidator {
                 }
             }
 */
+
+            if (attributeMapping.getVariable() != null) {
+                String variable = attributeMapping.getVariable();
+
+                int j = variable.indexOf(".");
+                String sourceAlias = variable.substring(0, j);
+                String fieldName = variable.substring(j+1);
+
+                SourceMapping sourceMapping = entryMapping.getSourceMapping(sourceAlias);
+                if (sourceMapping == null) {
+                    results.add(new PartitionValidationResult(PartitionValidationResult.ERROR, "Unknown source mapping: "+sourceAlias, entryMapping.getDn(), entryMapping));
+                    continue;
+                }
+
+                SourceConfig sourceConfig = partition.getSourceConfig(sourceMapping.getSourceName());
+                if (sourceConfig == null) {
+                    results.add(new PartitionValidationResult(PartitionValidationResult.ERROR, "Unknown source: "+sourceMapping.getSourceName(), entryMapping.getDn(), entryMapping));
+                    continue;
+                }
+
+                FieldConfig fieldConfig = sourceConfig.getFieldConfig(fieldName);
+                if (fieldConfig == null) {
+                    results.add(new PartitionValidationResult(PartitionValidationResult.ERROR, "Unknown field: "+variable, entryMapping.getDn(), entryMapping));
+                    continue;
+                }
+            }
         }
 
-        if (!entryMapping.getAttributeMappings().isEmpty() && entryMapping.getRdnAttributes().isEmpty()) {
+        if (!entryMapping.getAttributeMappings().isEmpty() && entryMapping.getRdnAttributeNames().isEmpty()) {
             results.add(new PartitionValidationResult(PartitionValidationResult.ERROR, "Missing rdn attribute(s).", entryMapping.getDn(), entryMapping));
         }
 
@@ -235,6 +261,7 @@ public class PartitionValidator {
                 }
             }
         }
+
         return results;
     }
 

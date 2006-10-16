@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2005, Identyx Corporation.
+ * Copyright (c) 2000-2006, Identyx Corporation.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,9 +22,9 @@ package org.safehaus.penrose.event;
  */
 public interface BindListener {
 
-    public void beforeBind(BindEvent event) throws Exception;
+    public boolean beforeBind(BindEvent event) throws Exception;
     public void afterBind(BindEvent event) throws Exception;
 
-    public void beforeUnbind(BindEvent event) throws Exception;
+    public boolean beforeUnbind(BindEvent event) throws Exception;
     public void afterUnbind(BindEvent event) throws Exception;
 }

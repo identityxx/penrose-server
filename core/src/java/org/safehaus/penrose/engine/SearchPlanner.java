@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2005, Identyx Corporation.
+ * Copyright (c) 2000-2006, Identyx Corporation.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -55,16 +55,17 @@ public class SearchPlanner extends GraphVisitor {
 
     public SearchPlanner(
             Engine engine,
+            Partition partition,
             EntryMapping entryMapping,
             Filter filter,
             AttributeValues sourceValues) throws Exception {
 
         this.engine = engine;
+        this.partition = partition;
         this.entryMapping = entryMapping;
         this.searchFilter = filter;
         this.sourceValues = sourceValues;
 
-        partition = engine.getPartitionManager().getPartition(entryMapping);
         graph = engine.getGraph(entryMapping);
         primarySourceMapping = engine.getPrimarySource(entryMapping);
     }
@@ -134,7 +135,7 @@ public class SearchPlanner extends GraphVisitor {
 
         Integer depth = (Integer)depthStack.peek();
 
-        Filter sourceFilter = engine.getFilterTool().toSourceFilter(null, entryMapping, sourceMapping, searchFilter);
+        Filter sourceFilter = engine.getEngineFilterTool().toSourceFilter(partition, null, entryMapping, sourceMapping, searchFilter);
         log.debug("Filter: "+sourceFilter+" ("+(sourceFilter == null ? "null" : "not null")+")");
         log.debug("Depth: "+depth);
 
@@ -166,7 +167,7 @@ public class SearchPlanner extends GraphVisitor {
         }
         
         if (entryMapping.getSourceMapping(toSourceMapping.getName()) == null) {
-            log.debug("Source "+toSourceMapping.getName()+" is not defined in entry "+entryMapping.getDn());
+            log.debug("Source "+toSourceMapping.getName()+" is inherited");
             connectingRelationships.add(relationships);
             
             return;

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2005, Identyx Corporation.
+ * Copyright (c) 2000-2006, Identyx Corporation.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,19 +23,19 @@ import org.safehaus.penrose.mapping.EntryMapping;
 import org.safehaus.penrose.cache.EntryCache;
 import org.safehaus.penrose.cache.EntryCacheListener;
 import org.safehaus.penrose.cache.EntryCacheEvent;
-import org.safehaus.penrose.engine.Engine;
 import org.safehaus.penrose.connector.ConnectionManager;
 import org.safehaus.penrose.session.PenroseSearchResults;
 import org.safehaus.penrose.session.PenroseSearchControls;
 import org.safehaus.penrose.session.PenroseSession;
-import org.safehaus.penrose.util.JNDIClient;
 import org.safehaus.penrose.partition.PartitionManager;
 import org.safehaus.penrose.partition.Partition;
+import org.safehaus.penrose.handler.Handler;
 
 import javax.naming.directory.*;
 import javax.naming.NamingEnumeration;
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.Collection;
 
 /**
  * @author Endi S. Dewata
@@ -56,14 +56,14 @@ public class LDAPSyncModule extends Module implements EntryCacheListener {
         partitionManager = penrose.getPartitionManager();
         connectionManager = penrose.getConnectionManager();
 
-        Engine engine = penrose.getEngine();
-        EntryCache entryCache = engine.getEntryCache();
+        Handler handler = penrose.getHandler();
+        EntryCache entryCache = handler.getEntryCache();
 
         entryCache.addListener(this);
     }
 
     public DirContext getConnection() throws Exception {
-        JNDIClient client = (JNDIClient)connectionManager.openConnection(connectionName);
+        LDAPClient client = (LDAPClient)connectionManager.openConnection(connectionName);
         return client.getContext();
     }
 
@@ -126,9 +126,9 @@ public class LDAPSyncModule extends Module implements EntryCacheListener {
 
         String baseDn = (String)event.getSource();
         Partition partition = partitionManager.findPartition(baseDn);
-        EntryMapping entryMapping = partition.findEntryMapping(baseDn);
-        
-        if (entryMapping == null) return;
+        Collection entryMappings = partition.findEntryMappings(baseDn);
+
+        if (entryMappings == null || entryMappings.isEmpty()) return;
 
         DirContext ctx = null;
 

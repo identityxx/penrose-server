@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2005, Identyx Corporation.
+ * Copyright (c) 2000-2006, Identyx Corporation.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,6 +20,8 @@ package org.safehaus.penrose.partition;
 import org.safehaus.penrose.partition.FieldConfig;
 import org.safehaus.penrose.mapping.Row;
 import org.safehaus.penrose.mapping.AttributeValues;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 
 import java.util.*;
 
@@ -27,6 +29,8 @@ import java.util.*;
  * @author Endi S. Dewata
  */
 public class SourceConfig implements SourceConfigMBean, Cloneable {
+
+    Logger log = LoggerFactory.getLogger(getClass());
 
     //public final static String AUTO_REFRESH            = "autoRefresh";
 
@@ -108,7 +112,7 @@ public class SourceConfig implements SourceConfigMBean, Cloneable {
         Collection results = new TreeSet();
         for (Iterator i=fieldConfigs.values().iterator(); i.hasNext(); ) {
             FieldConfig fieldConfig = (FieldConfig)i.next();
-            if (!fieldConfig.isPrimaryKey()) continue;
+            if (!fieldConfig.isPK()) continue;
             results.add(fieldConfig.getName());
         }
         return results;
@@ -118,7 +122,7 @@ public class SourceConfig implements SourceConfigMBean, Cloneable {
         Collection results = new TreeSet();
         for (Iterator i=fieldConfigs.values().iterator(); i.hasNext(); ) {
             FieldConfig fieldConfig = (FieldConfig)i.next();
-            if (!fieldConfig.isPrimaryKey()) continue;
+            if (!fieldConfig.isPK()) continue;
             results.add(fieldConfig.getOriginalName());
         }
         return results;
@@ -128,7 +132,7 @@ public class SourceConfig implements SourceConfigMBean, Cloneable {
         Collection results = new ArrayList();
         for (Iterator i=fieldConfigs.values().iterator(); i.hasNext(); ) {
             FieldConfig fieldConfig = (FieldConfig)i.next();
-            if (!fieldConfig.isPrimaryKey()) continue;
+            if (!fieldConfig.isPK()) continue;
             results.add(fieldConfig);
         }
         return results;
@@ -138,7 +142,7 @@ public class SourceConfig implements SourceConfigMBean, Cloneable {
         Collection results = new ArrayList();
         for (Iterator i=fieldConfigs.values().iterator(); i.hasNext(); ) {
             FieldConfig fieldConfig = (FieldConfig)i.next();
-            if (fieldConfig.isPrimaryKey()) continue;
+            if (fieldConfig.isPK()) continue;
             results.add(fieldConfig);
         }
         return results;
@@ -158,7 +162,7 @@ public class SourceConfig implements SourceConfigMBean, Cloneable {
         Collection results = new ArrayList();
         for (Iterator i=fieldConfigs.values().iterator(); i.hasNext(); ) {
             FieldConfig fieldConfig = (FieldConfig)i.next();
-            if (!fieldConfig.isPrimaryKey() && !fieldConfig.isUnique() && !fieldConfig.isIndex()) continue;
+            if (!fieldConfig.isPK() && !fieldConfig.isUnique() && !fieldConfig.isIndex()) continue;
             results.add(fieldConfig);
         }
         return results;
@@ -169,7 +173,10 @@ public class SourceConfig implements SourceConfigMBean, Cloneable {
 	}
 
 	public void addFieldConfig(FieldConfig fieldConfig) {
-		fieldConfigs.put(fieldConfig.getName(), fieldConfig);
+        String name = fieldConfig.getName();
+        log.debug("Adding field "+name+(fieldConfig.isPK() ? " ("+fieldConfig.getPrimaryKey()+")" : ""));
+
+        fieldConfigs.put(name, fieldConfig);
 	}
 
     public void renameFieldConfig(String oldName, String newName) {
@@ -196,7 +203,11 @@ public class SourceConfig implements SourceConfigMBean, Cloneable {
     }
 
     public void setParameter(String name, String value) {
-        parameters.put(name, value);
+        if (value == null) {
+            parameters.remove(name);
+        } else {
+            parameters.put(name, value);
+        }
     }
 
     public void removeParameter(String name) {
@@ -234,7 +245,7 @@ public class SourceConfig implements SourceConfigMBean, Cloneable {
 
         for (Iterator i=fieldConfigs.values().iterator(); i.hasNext(); ) {
             FieldConfig fieldConfig = (FieldConfig)i.next();
-            if (!fieldConfig.isPrimaryKey()) continue;
+            if (!fieldConfig.isPK()) continue;
 
             String fieldName = fieldConfig.getName();
 

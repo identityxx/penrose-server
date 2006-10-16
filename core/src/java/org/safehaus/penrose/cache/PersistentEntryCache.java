@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2005, Identyx Corporation.
+ * Copyright (c) 2000-2006, Identyx Corporation.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,6 +20,7 @@ package org.safehaus.penrose.cache;
 import org.safehaus.penrose.mapping.EntryMapping;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.Penrose;
+import org.safehaus.penrose.connector.ConnectionManager;
 import org.safehaus.penrose.util.Formatter;
 import org.safehaus.penrose.session.PenroseSearchResults;
 import org.safehaus.penrose.session.PenroseSearchControls;
@@ -45,16 +46,24 @@ public class PersistentEntryCache extends EntryCache {
         connectionName = getParameter(CONNECTION);
     }
 
+    public EntryCacheStorage createCacheStorage(Partition partition, EntryMapping entryMapping) throws Exception {
+
+        EntryCacheStorage cacheStorage = new PersistentEntryCacheStorage(penrose);
+        cacheStorage.setCacheConfig(getCacheConfig());
+        cacheStorage.setPartition(partition);
+        cacheStorage.setEntryMapping(entryMapping);
+
+        cacheStorage.init();
+
+        return cacheStorage;
+    }
+
     public Connection getConnection() throws Exception {
-        return (Connection)getConnectionManager().openConnection(connectionName);
+        ConnectionManager connectionManager = penrose.getConnectionManager();
+        return (Connection)connectionManager.openConnection(connectionName);
     }
 
     public void create() throws Exception {
-        createMappingsTable();
-        super.create();
-    }
-
-    public void createMappingsTable() throws Exception {
         String sql = "create table penrose_mappings (id integer auto_increment, dn varchar(255) unique, primary key (id))";
 
         Connection con = null;
@@ -86,11 +95,6 @@ public class PersistentEntryCache extends EntryCache {
     }
 
     public void drop() throws Exception {
-        super.drop();
-        dropMappingsTable();
-    }
-
-    public void dropMappingsTable() throws Exception {
         String sql = "drop table penrose_mappings";
 
         Connection con = null;
@@ -119,22 +123,6 @@ public class PersistentEntryCache extends EntryCache {
             if (ps != null) try { ps.close(); } catch (Exception e) {}
             if (con != null) try { con.close(); } catch (Exception e) {}
         }
-    }
-
-    public EntryCacheStorage createCacheStorage(EntryMapping entryMapping) throws Exception {
-
-        Partition partition = partitionManager.getPartition(entryMapping);
-
-        EntryCacheStorage cacheStorage = new PersistentEntryCacheStorage();
-        cacheStorage.setCacheConfig(getCacheConfig());
-        cacheStorage.setConnectionManager(connectionManager);
-        cacheStorage.setPartition(partition);
-        cacheStorage.setEntryMapping(entryMapping);
-        cacheStorage.setThreadManager(threadManager);
-
-        cacheStorage.init();
-
-        return cacheStorage;
     }
 
     public void load(Penrose penrose, Partition partition) throws Exception {

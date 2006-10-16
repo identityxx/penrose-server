@@ -1,5 +1,5 @@
 <!--
- Copyright (c) 2000-2005, Identyx Corporation.
+ Copyright (c) 2000-2006, Identyx Corporation.
  All rights reserved.
 -->
 <project name="penrose-apacheds" default="deploy" basedir="../..">
@@ -34,7 +34,7 @@
             </fileset>
             <fileset dir="lib/ext" includes="*.jar"/>
         </copy>
-        <copy file="target/penrose-1.0.jar" todir="${apacheds.home}/lib/ext" failonerror="false" overwrite="true"/>
+        <copy file="target/penrose-1.1.jar" todir="${apacheds.home}/lib/ext" failonerror="false" overwrite="true"/>
     </target>
 
     <target name="clean">

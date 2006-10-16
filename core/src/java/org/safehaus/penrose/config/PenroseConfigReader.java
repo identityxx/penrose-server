@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2005, Identyx Corporation.
+ * Copyright (c) 2000-2006, Identyx Corporation.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,6 +23,8 @@ import org.xml.sax.EntityResolver;
 import org.xml.sax.InputSource;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
+import org.safehaus.penrose.engine.EngineConfig;
+import org.safehaus.penrose.engine.ProxyEngine;
 
 import java.io.Reader;
 import java.io.FileReader;
@@ -36,19 +38,24 @@ public class PenroseConfigReader implements EntityResolver {
 
     Logger log = LoggerFactory.getLogger(getClass());
 
-    URL serverDtdUrl;
+    URL penroseDtdUrl;
     Reader reader;
 
     public PenroseConfigReader(String filename) throws Exception {
-        this(new FileReader(filename));
+        log.debug("Loading Penrose configuration: "+filename);
+        init(new FileReader(filename));
     }
 
-    public PenroseConfigReader(Reader reader) {
+    public PenroseConfigReader(Reader reader) throws Exception {
+        init(reader);
+    }
+
+    public void init(Reader reader) throws Exception {
         this.reader = reader;
 
         ClassLoader cl = getClass().getClassLoader();
-        serverDtdUrl = cl.getResource("org/safehaus/penrose/config/server.dtd");
-        //log.debug("Server DTD URL: "+serverDtdUrl);
+        penroseDtdUrl = cl.getResource("org/safehaus/penrose/config/server.dtd");
+        //log.debug("Penrose DTD URL: "+penroseDtdUrl);
     }
 
     public PenroseConfig read() throws Exception {
@@ -67,6 +74,18 @@ public class PenroseConfigReader implements EntityResolver {
         digester.setClassLoader(cl);
 		digester.push(penroseConfig);
 		digester.parse(reader);
+
+        EngineConfig defaultEngineConfig = penroseConfig.getEngineConfig("DEFAULT");
+        if (defaultEngineConfig == null) {
+            defaultEngineConfig = new EngineConfig("DEFAULT", ProxyEngine.class.getName());
+            penroseConfig.addEngineConfig(defaultEngineConfig);
+        }
+
+        EngineConfig proxyEngineConfig = penroseConfig.getEngineConfig("PROXY");
+        if (proxyEngineConfig == null) {
+            proxyEngineConfig = new EngineConfig("PROXY", ProxyEngine.class.getName());
+            penroseConfig.addEngineConfig(proxyEngineConfig);
+        }
     }
 
     public InputSource resolveEntity(String publicId, String systemId) throws IOException {
@@ -77,7 +96,7 @@ public class PenroseConfigReader implements EntityResolver {
         //log.debug("=> "+file);
 
         if ("server.dtd".equals(file)) {
-            return new InputSource(serverDtdUrl.openStream());
+            return new InputSource(penroseDtdUrl.openStream());
         }
 
         return null;

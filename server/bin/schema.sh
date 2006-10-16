@@ -69,9 +69,6 @@ if $cygwin ; then
     CLASSPATH=`cygpath --path --unix "$CLASSPATH"`
 fi
 
-# set PENROSE_LIB location
-PENROSE_LIB="$PENROSE_HOME/lib"
-
 if [ -z "$JAVACMD" ] ; then
   if [ -n "$JAVA_HOME"  ] ; then
     if [ -x "$JAVA_HOME/jre/sh/java" ] ; then
@@ -99,7 +96,64 @@ if [ -n "$CLASSPATH" ] ; then
 fi
 
 LOCALCLASSPATH=$LOCALCLASSPATH:$JAVA_HOME/lib/tools.jar
-LOCALLIBPATH=$PENROSE_HOME/lib:$PENROSE_HOME/lib/ext:$PENROSE_HOME/schema/ext:$PENROSE_HOME/server/lib
+
+# add in the required dependency .jar files
+for i in "$PENROSE_HOME"/lib/*.jar
+do
+  # if the directory is empty, then it will return the input string
+  # this is stupid, so case for it
+  if [ -f "$i" ] ; then
+    if [ -z "$LOCALCLASSPATH" ] ; then
+      LOCALCLASSPATH="$i"
+    else
+      LOCALCLASSPATH="$i":"$LOCALCLASSPATH"
+    fi
+  fi
+done
+
+# add in the optional dependency .jar files
+for i in "$PENROSE_HOME"/lib/ext/*.jar
+do
+  # if the directory is empty, then it will return the input string
+  # this is stupid, so case for it
+  if [ -f "$i" ] ; then
+    if [ -z "$LOCALCLASSPATH" ] ; then
+      LOCALCLASSPATH="$i"
+    else
+      LOCALCLASSPATH="$i":"$LOCALCLASSPATH"
+    fi
+  fi
+done
+
+# add in the required dependency .jar files
+for i in "$PENROSE_HOME"/server/lib/*.jar
+do
+  # if the directory is empty, then it will return the input string
+  # this is stupid, so case for it
+  if [ -f "$i" ] ; then
+    if [ -z "$LOCALCLASSPATH" ] ; then
+      LOCALCLASSPATH="$i"
+    else
+      LOCALCLASSPATH="$i":"$LOCALCLASSPATH"
+    fi
+  fi
+done
+
+# add in the optional dependency .jar files
+for i in "$PENROSE_HOME"/server/lib/ext/*.jar
+do
+  # if the directory is empty, then it will return the input string
+  # this is stupid, so case for it
+  if [ -f "$i" ] ; then
+    if [ -z "$LOCALCLASSPATH" ] ; then
+      LOCALCLASSPATH="$i"
+    else
+      LOCALCLASSPATH="$i":"$LOCALCLASSPATH"
+    fi
+  fi
+done
+
+LOCALCLASSPATH="$PENROSE_HOME/conf:$LOCALCLASSPATH"
 
 # For Cygwin, switch paths to Windows format before running java
 if $cygwin; then
@@ -107,12 +161,10 @@ if $cygwin; then
   JAVA_HOME=`cygpath --windows "$JAVA_HOME"`
   CLASSPATH=`cygpath --path --windows "$CLASSPATH"`
   LOCALCLASSPATH=`cygpath --path --windows "$LOCALCLASSPATH"`
-  LOCALLIBPATH=`cygpath --path --windows "LOCALLIBPATH"`
   CYGHOME=`cygpath --windows "$HOME"`
 fi
 
 exec "$JAVACMD" $PENROSE_DEBUG_OPTS $PENROSE_OPTS \
 -classpath "$LOCALCLASSPATH" \
--Djava.ext.dirs="$LOCALLIBPATH" \
 -Dpenrose.home="$PENROSE_HOME" \
 org.safehaus.penrose.ldap.SchemaGenerator $PENROSE_ARGS "$@"

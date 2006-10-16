@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2005, Identyx Corporation.
+ * Copyright (c) 2000-2006, Identyx Corporation.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -70,7 +70,7 @@ public class EntryMapping implements Cloneable {
      */
     private Collection objectClasses = new TreeSet();
     
-    private String script;
+    private String description;
 
     /**
      * Attributes. The keys are the attribute names (java.lang.String). Each value is of type org.safehaus.penrose.mapping.AttributeMapping.
@@ -113,7 +113,7 @@ public class EntryMapping implements Cloneable {
     }
     
     public Row getRdn(AttributeValues attributeValues) {
-        Collection rdnAttributes = getRdnAttributes();
+        Collection rdnAttributes = getRdnAttributeNames();
         Row row = new Row();
 
         for (Iterator i=rdnAttributes.iterator(); i.hasNext(); ) {
@@ -136,7 +136,7 @@ public class EntryMapping implements Cloneable {
 
             for (Iterator j=list.iterator(); j.hasNext(); ) {
                 AttributeMapping attributeMapping = (AttributeMapping)j.next();
-                if (!attributeMapping.isRdn()) continue;
+                if (!attributeMapping.isPK()) continue;
                 if (attributeMapping.getConstant() == null) return true;
             }
         }
@@ -157,29 +157,66 @@ public class EntryMapping implements Cloneable {
         return false;
     }
     
-    public Collection getRdnAttributes() {
+    public Collection getRdnAttributeNames() {
+        //log.debug("RDN Attributes:");
         Collection results = new ArrayList();
         for (Iterator i=attributeMappings.values().iterator(); i.hasNext(); ) {
             Collection list = (Collection)i.next();
 
             for (Iterator j=list.iterator(); j.hasNext(); ) {
                 AttributeMapping attributeMapping = (AttributeMapping)j.next();
-                if (!attributeMapping.isRdn()) continue;
+                //log.debug(" - "+attributeMapping.getName()+" ("+attributeMapping.isRdn()+")");
+
+                if (!attributeMapping.isPK()) continue;
                 results.add(attributeMapping);
             }
         }
         return results;
     }
 
-    public Collection getNonRdnAttributes() {
+    public Collection getNonRdnAttributeNames() {
         Collection results = new ArrayList();
         for (Iterator i=attributeMappings.values().iterator(); i.hasNext(); ) {
             Collection list = (Collection)i.next();
 
             for (Iterator j=list.iterator(); j.hasNext(); ) {
                 AttributeMapping attributeMapping = (AttributeMapping)j.next();
-                if (attributeMapping.isRdn()) continue;
+                if (attributeMapping.isPK()) continue;
                 results.add(attributeMapping);
+            }
+        }
+        return results;
+    }
+
+    public Collection getOperationalAttributeMappings() {
+        //log.debug("Operational Attributes:");
+        Collection results = new ArrayList();
+        for (Iterator i=attributeMappings.values().iterator(); i.hasNext(); ) {
+            Collection list = (Collection)i.next();
+
+            for (Iterator j=list.iterator(); j.hasNext(); ) {
+                AttributeMapping attributeMapping = (AttributeMapping)j.next();
+                //log.debug(" - "+attributeMapping.getName()+" ("+attributeMapping.isRdn()+")");
+
+                if (!attributeMapping.isOperational()) continue;
+                results.add(attributeMapping);
+            }
+        }
+        return results;
+    }
+
+    public Collection getOperationalAttributeNames() {
+        //log.debug("Operational Attributes:");
+        Collection results = new ArrayList();
+        for (Iterator i=attributeMappings.values().iterator(); i.hasNext(); ) {
+            Collection list = (Collection)i.next();
+
+            for (Iterator j=list.iterator(); j.hasNext(); ) {
+                AttributeMapping attributeMapping = (AttributeMapping)j.next();
+                //log.debug(" - "+attributeMapping.getName()+" ("+attributeMapping.isRdn()+")");
+
+                if (!attributeMapping.isOperational()) continue;
+                results.add(attributeMapping.getName());
             }
         }
         return results;
@@ -306,6 +343,8 @@ public class EntryMapping implements Cloneable {
 
 	public void addAttributeMapping(AttributeMapping attributeMapping) {
         String name = attributeMapping.getName().toLowerCase();
+        log.debug("Adding attribute "+name+(attributeMapping.isPK() ? " ("+attributeMapping.getRdn()+")" : ""));
+
         Collection list = (Collection)attributeMappings.get(name);
         if (list == null) {
             list = new ArrayList();
@@ -362,12 +401,12 @@ public class EntryMapping implements Cloneable {
         relationships.clear();
     }
     
-    public String getScript() {
-        return script;
+    public String getDescription() {
+        return description;
     }
 
-    public void setScript(String script) {
-        this.script = script;
+    public void setDescription(String description) {
+        this.description = description;
     }
 
     public void setRdn(String rdn) {
@@ -423,7 +462,7 @@ public class EntryMapping implements Cloneable {
                 (parentDn == null ? 0 : parentDn.hashCode()) +
                 (enabled ? 0 : 1) +
                 (objectClasses == null ? 0 : objectClasses.hashCode()) +
-                (script == null ? 0 : script.hashCode()) +
+                (description == null ? 0 : description.hashCode()) +
                 (attributeMappings == null ? 0 : attributeMappings.hashCode()) +
                 (sourceMappings == null ? 0 : sourceMappings.hashCode()) +
                 (relationships == null ? 0 : relationships.hashCode()) +
@@ -446,7 +485,7 @@ public class EntryMapping implements Cloneable {
         if (!equals(parentDn, entryMapping.parentDn)) return false;
         if (enabled != entryMapping.enabled) return false;
         if (!equals(objectClasses, entryMapping.objectClasses)) return false;
-        if (!equals(script, entryMapping.script)) return false;
+        if (!equals(description, entryMapping.description)) return false;
         if (!equals(attributeMappings, entryMapping.attributeMappings)) return false;
         if (!equals(sourceMappings, entryMapping.sourceMappings)) return false;
         if (!equals(relationships, entryMapping.relationships)) return false;
@@ -460,7 +499,7 @@ public class EntryMapping implements Cloneable {
         rdn = entryMapping.rdn;
         parentDn = entryMapping.parentDn;
         enabled = entryMapping.enabled;
-        script = entryMapping.script;
+        description = entryMapping.description;
 
         removeObjectClasses();
         for (Iterator i=entryMapping.objectClasses.iterator(); i.hasNext(); ) {

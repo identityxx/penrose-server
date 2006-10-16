@@ -9,8 +9,8 @@ import javax.naming.NamingException;
  * @author Endi S. Dewata
  */
 public class ExceptionTool {
-
-    public static NamingException createNamingException(int rc) {
+    
+    public static NamingException throwNamingException(int rc) {
         return createNamingException(rc, null);
     }
 

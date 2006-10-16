@@ -5,22 +5,14 @@
 
 <beans>
 
-  <bean id="penroseFactory" class="org.safehaus.penrose.PenroseFactory" factory-method="getInstance"/>
-
-  <bean id="penrose"
-        factory-bean="penroseFactory" factory-method="createPenrose"
-        init-method="start" destroy-method="stop">
+  <bean id="penroseServer" class="org.safehaus.penrose.server.PenroseServer">
     <constructor-arg><value>${penrose.home}</value></constructor-arg>
   </bean>
 
   <bean id="penroseInterceptor" class="org.safehaus.penrose.ldap.PenroseInterceptor">
-    <property name="penrose"><ref bean="penrose"/></property>
+    <property name="penroseServer"><ref bean="penroseServer"/></property>
   </bean>
-<!--
-  <bean id="penrosePartition" class="org.safehaus.penrose.ldap.PenrosePartition">
-    <property name="penrose"><ref bean="penrose"/></property>
-  </bean>
--->
+
   <bean id="environment" class="org.springframework.beans.factory.config.PropertiesFactoryBean">
     <property name="properties">
       <props>
@@ -78,9 +70,6 @@
     <property name="contextPartitionConfigurations">
       <set>
         <ref bean="testPartitionConfiguration"/>
-<!--
-        <ref bean="penrosePartitionConfiguration"/>
--->
       </set>
     </property>
     <property name="bootstrapSchemas">
@@ -207,13 +196,7 @@
       </value>
     </property>
   </bean>
-<!--
-  <bean id="penrosePartitionConfiguration" class="org.apache.directory.server.core.configuration.MutableDirectoryPartitionConfiguration">
-    <property name="name"><value>penrose</value></property>
-    <property name="suffix"><value>dc=Example,dc=com</value></property>
-    <property name="contextPartition"><ref bean="penrosePartition"/></property>
-  </bean>
--->
+
   <bean class="org.springframework.beans.factory.config.CustomEditorConfigurer">
     <property name="customEditors">
       <map>
@@ -223,4 +206,5 @@
       </map>
    </property>
   </bean>
+    
 </beans>

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2005, Identyx Corporation.
+ * Copyright (c) 2000-2006, Identyx Corporation.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -25,16 +25,12 @@ import org.safehaus.penrose.partition.Partition;
  */
 public class InMemoryEntryCache extends EntryCache {
 
-    public EntryCacheStorage createCacheStorage(EntryMapping entryMapping) throws Exception {
+    public EntryCacheStorage createCacheStorage(Partition partition, EntryMapping entryMapping) throws Exception {
 
-        Partition partition = partitionManager.getPartition(entryMapping);
-
-        EntryCacheStorage cacheStorage = new InMemoryEntryCacheStorage();
+        EntryCacheStorage cacheStorage = new InMemoryEntryCacheStorage(penrose);
         cacheStorage.setCacheConfig(cacheConfig);
-        cacheStorage.setConnectionManager(connectionManager);
         cacheStorage.setPartition(partition);
         cacheStorage.setEntryMapping(entryMapping);
-        cacheStorage.setThreadManager(threadManager);
 
         cacheStorage.init();
 

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2005, Identyx Corporation.
+ * Copyright (c) 2000-2006, Identyx Corporation.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -88,6 +88,19 @@ public class SourceMapping implements Cloneable {
         }
 		return results;
 	}
+
+    public Collection getPrimaryKeyFieldMappings() {
+        Collection results = new ArrayList();
+        for (Iterator i=fieldMappings.values().iterator(); i.hasNext(); ) {
+            Collection list = (Collection)i.next();
+            for (Iterator j=list.iterator(); j.hasNext(); ) {
+                FieldMapping fieldMapping = (FieldMapping)j.next();
+                if (!fieldMapping.isPK()) continue;
+                results.add(fieldMapping);
+            }
+        }
+        return results;
+    }
 
 	public void addFieldMapping(FieldMapping fieldMapping) {
         String name = fieldMapping.getName().toLowerCase();

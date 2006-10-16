@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2005, Identyx Corporation.
+ * Copyright (c) 2000-2006, Identyx Corporation.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -33,7 +33,6 @@ public class ConnectionManager implements ConnectionManagerMBean {
 
     public Map connectionConfigs = new TreeMap();
     public Map adapterConfigs = new TreeMap();
-    public Map partitions = new TreeMap();
 
     public Map connections = new TreeMap();
 
@@ -45,7 +44,6 @@ public class ConnectionManager implements ConnectionManagerMBean {
         log.debug("Registering "+name+" connection.");
         connectionConfigs.put(name, connectionConfig);
         adapterConfigs.put(name, adapterConfig);
-        partitions.put(name, partition);
     }
 
     public void clear() {

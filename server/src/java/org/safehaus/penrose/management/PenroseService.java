@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2005, Identyx Corporation.
+ * Copyright (c) 2000-2006, Identyx Corporation.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,10 +19,10 @@ package org.safehaus.penrose.management;
 
 import org.apache.log4j.*;
 import org.safehaus.penrose.Penrose;
-import org.safehaus.penrose.server.PenroseServer;
 import org.safehaus.penrose.mapping.EntryMapping;
 import org.safehaus.penrose.partition.PartitionManager;
 import org.safehaus.penrose.partition.Partition;
+import org.safehaus.penrose.server.PenroseServer;
 import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.service.ServiceManager;
 
@@ -127,6 +127,18 @@ public class PenroseService implements PenroseServiceMBean {
         }
     }
 
+    public Collection getServiceNames() throws Exception {
+        try {
+            Collection serviceNames = new ArrayList();
+            ServiceManager serviceManager = penroseServer.getServiceManager();
+            serviceNames.addAll(serviceManager.getServiceNames());
+            return serviceNames;
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+            throw e;
+        }
+    }
+
     public void renameEntryMapping(String oldDn, String newDn) throws Exception {
         try {
             log.debug("Renaming "+oldDn+" to "+newDn);
@@ -147,18 +159,6 @@ public class PenroseService implements PenroseServiceMBean {
                 partition.renameEntryMapping(entryMapping, newDn);
             }
 
-        } catch (Exception e) {
-            log.error(e.getMessage(), e);
-            throw e;
-        }
-    }
-
-    public Collection getServiceNames() throws Exception {
-        try {
-            Collection serviceNames = new ArrayList();
-            ServiceManager serviceManager = penroseServer.getServiceManager();
-            serviceNames.addAll(serviceManager.getServiceNames());
-            return serviceNames;
         } catch (Exception e) {
             log.error(e.getMessage(), e);
             throw e;

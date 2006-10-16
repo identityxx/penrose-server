@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2005, Identyx Corporation.
+ * Copyright (c) 2000-2006, Identyx Corporation.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -24,8 +24,12 @@ import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.util.Formatter;
 import org.safehaus.penrose.util.EntryUtil;
 import org.safehaus.penrose.session.PenroseSearchResults;
+import org.safehaus.penrose.session.PenroseSearchControls;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.SourceConfig;
+import org.safehaus.penrose.pipeline.PipelineAdapter;
+import org.safehaus.penrose.pipeline.PipelineEvent;
+import org.safehaus.penrose.connector.Connector;
 import org.ietf.ldap.LDAPException;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
@@ -46,7 +50,7 @@ public class SearchEngine {
     }
 
     public void search(
-            final Entry parent,
+            Partition partition,
             final AttributeValues parentSourceValues,
             final EntryMapping entryMapping,
             final Filter filter,
@@ -55,69 +59,64 @@ public class SearchEngine {
 
         log.info("Searching "+entryMapping.getDn()+" for "+filter+".");
 
-        boolean staticEntry = engine.isStatic(entryMapping);
+        boolean staticEntry = engine.isStatic(partition, entryMapping);
         if (staticEntry) {
             log.debug("Returning static entries.");
-            searchStatic(parentSourceValues, entryMapping, filter, results);
+            searchStatic(partition, parentSourceValues, entryMapping, filter, results);
             return;
         }
 
-        boolean unique = engine.isUnique(entryMapping);
+        boolean unique = engine.isUnique(partition, entryMapping);
         log.debug("Entry "+entryMapping.getDn()+" "+(unique ? "is" : "is not")+" unique.");
 
-        Partition partition = engine.getPartitionManager().getPartition(entryMapping);
-
         Collection sources = entryMapping.getSourceMappings();
-        log.debug("Sources: "+sources);
+        Collection sourceNames = new ArrayList();
+        for (Iterator i=sources.iterator(); i.hasNext(); ) {
+            SourceMapping sm = (SourceMapping)i.next();
+            sourceNames.add(sm.getName());
+        }
+        log.debug("Sources: "+sourceNames);
 
         Collection effectiveSources = partition.getEffectiveSourceMappings(entryMapping);
-        Collection names = new ArrayList();
+        Collection effectiveSourceNames = new ArrayList();
         for (Iterator i=effectiveSources.iterator(); i.hasNext(); ) {
             SourceMapping sm = (SourceMapping)i.next();
-            names.add(sm.getName());
+            effectiveSourceNames.add(sm.getName());
         }
-        log.debug("Effective Sources: "+names);
+        log.debug("Effective Sources: "+effectiveSourceNames);
+        final SourceMapping primarySourceMapping = engine.getPrimarySource(entryMapping);
 
-        if (unique && sources.size() == 1 && effectiveSources.size() == 1) {
-            engine.threadManager.execute(new Runnable() {
-                public void run() {
-                    try {
-                        simpleSearch(parentSourceValues, entryMapping, filter, results);
+        if (unique && effectiveSources.size() == 1 && primarySourceMapping != null) {
+            try {
+                simpleSearch(partition, parentSourceValues, entryMapping, filter, results);
 
-                    } catch (Throwable e) {
-                        log.error(e.getMessage(), e);
-                        results.setReturnCode(LDAPException.OPERATIONS_ERROR);
-                    }
-                }
-            });
+            } catch (Throwable e) {
+                log.error(e.getMessage(), e);
+                results.setReturnCode(LDAPException.OPERATIONS_ERROR);
+            }
             return;
         }
 
-        engine.threadManager.execute(new Runnable() {
-            public void run() {
-                try {
-                    searchDynamic(parent, parentSourceValues, entryMapping, filter, results);
+        try {
+            searchDynamic(partition, parentSourceValues, entryMapping, filter, results);
 
-                } catch (Throwable e) {
-                    log.error(e.getMessage(), e);
-                    results.setReturnCode(LDAPException.OPERATIONS_ERROR);
-                } finally {
-                    results.close();
-                }
-            }
-        });
+        } catch (Throwable e) {
+            log.error(e.getMessage(), e);
+            results.setReturnCode(LDAPException.OPERATIONS_ERROR);
+        }
     }
 
     public void searchStatic(
+            final Partition partition,
             final AttributeValues parentSourceValues,
             final EntryMapping entryMapping,
             final Filter filter,
-            final PenroseSearchResults entries
+            final PenroseSearchResults results
             ) throws Exception {
 
-        Interpreter interpreter = engine.getInterpreterFactory().newInstance();
+        Interpreter interpreter = engine.getInterpreterManager().newInstance();
 
-        Collection list = engine.computeDns(interpreter, entryMapping, parentSourceValues);
+        Collection list = engine.computeDns(partition, interpreter, entryMapping, parentSourceValues);
         for (Iterator j=list.iterator(); j.hasNext(); ) {
             String dn = (String)j.next();
             log.debug("Static entry "+dn);
@@ -125,13 +124,13 @@ public class SearchEngine {
             EntryData map = new EntryData();
             map.setDn(entryMapping.getDn());
             map.setMergedValues(parentSourceValues);
-            entries.add(map);
+            results.add(map);
         }
-        entries.close();
+        results.close();
     }
 
     public void searchDynamic(
-            Entry parent,
+            Partition partition,
             final AttributeValues parentSourceValues,
             final EntryMapping entryMapping,
             final Filter filter,
@@ -140,12 +139,13 @@ public class SearchEngine {
 
         //boolean unique = engine.isUnique(entryMapping  //log.debug("Entry "+entryMapping" "+(unique ? "is" : "is not")+" unique.");
 
-        Partition partition = engine.getPartitionManager().getPartition(entryMapping);
         EntryMapping parentMapping = partition.getParent(entryMapping);
 
-        Interpreter interpreter = engine.getInterpreterFactory().newInstance();
+        Interpreter interpreter = engine.getInterpreterManager().newInstance();
 
-        PenroseSearchResults values = searchSources(parentSourceValues, entryMapping, filter);
+        PenroseSearchResults values = new PenroseSearchResults();
+        searchSources(partition, parentSourceValues, entryMapping, filter, values);
+        values.close();
 
         Map sourceValues = new TreeMap();
         Map rows = new TreeMap();
@@ -158,7 +158,7 @@ public class SearchEngine {
             AttributeValues sv = (AttributeValues)i.next();
             //log.debug("==> "+sv);
 
-            Collection list = engine.computeDns(interpreter, entryMapping, sv);
+            Collection list = engine.computeDns(partition, interpreter, entryMapping, sv);
             for (Iterator j=list.iterator(); j.hasNext(); ) {
                 String dn = (String)j.next();
                 //log.debug("     - "+dn);
@@ -237,26 +237,28 @@ public class SearchEngine {
     }
 
     public void simpleSearch(
-            AttributeValues parentSourceValues,
-            EntryMapping entryMapping,
-            Filter filter,
-            PenroseSearchResults results) throws Exception {
+            final Partition partition,
+            final AttributeValues parentSourceValues,
+            final EntryMapping entryMapping,
+            final Filter filter,
+            final PenroseSearchResults results) throws Exception {
 
         SearchPlanner planner = new SearchPlanner(
                 engine,
+                partition,
                 entryMapping,
                 filter,
                 parentSourceValues);
 
         planner.run();
 
-        SourceMapping sourceMapping = engine.getPrimarySource(entryMapping);
-
         if (log.isDebugEnabled()) {
             log.debug(Formatter.displaySeparator(80));
             log.debug(Formatter.displayLine("SIMPLE SEARCH", 80));
             log.debug(Formatter.displaySeparator(80));
         }
+
+        final SourceMapping sourceMapping = engine.getPrimarySource(entryMapping);
 
         Map filters = planner.getFilters();
         Filter newFilter = (Filter)filters.get(sourceMapping);
@@ -267,63 +269,68 @@ public class SearchEngine {
             newFilter = FilterTool.appendAndFilter(newFilter, sourceFilter);
         }
 
-        Partition partition = engine.getPartitionManager().getPartition(entryMapping);
         SourceConfig sourceConfig = partition.getSourceConfig(sourceMapping.getSourceName());
 
-        PenroseSearchResults sr = engine.getConnector().search(partition, sourceConfig, newFilter);
+        final Interpreter interpreter = engine.getInterpreterManager().newInstance();
 
-        Interpreter interpreter = engine.getInterpreterFactory().newInstance();
+        PenroseSearchControls sc = new PenroseSearchControls();
+        final PenroseSearchResults sr = new PenroseSearchResults();
 
-        log.debug("Search Results:");
-        for (Iterator i=sr.iterator(); i.hasNext(); ) {
-            AttributeValues av = (AttributeValues)i.next();
+        sr.addListener(new PipelineAdapter() {
+            public void objectAdded(PipelineEvent event) {
+                AttributeValues av = (AttributeValues)event.getObject();
 
-            AttributeValues sv = new AttributeValues();
-            sv.add(parentSourceValues);
-            sv.add(sourceMapping.getName(), av);
-
-            Collection list = engine.computeDns(interpreter, entryMapping, sv);
-            for (Iterator j=list.iterator(); j.hasNext(); ) {
-                String dn = (String)j.next();
-                log.debug(" - "+dn);
-
-                EntryData map = new EntryData();
-                map.setDn(dn);
-                map.setMergedValues(sv);
-                results.add(map);
-            }
-        }
-
-        results.setReturnCode(sr.getReturnCode());
-        results.close();
-    }
-
-    public PenroseSearchResults searchSources(
-            final AttributeValues sourceValues,
-            final EntryMapping entryMapping,
-            final Filter filter)
-            throws Exception {
-
-        final PenroseSearchResults results = new PenroseSearchResults();
-
-        engine.threadManager.execute(new Runnable() {
-            public void run() {
                 try {
-                    searchSourcesInBackground(sourceValues, entryMapping, filter, results);
+                    AttributeValues sv = new AttributeValues();
+                    sv.add(parentSourceValues);
+                    sv.add(sourceMapping.getName(), av);
 
-                } catch (Throwable e) {
+                    Collection list = engine.computeDns(partition, interpreter, entryMapping, sv);
+                    for (Iterator j=list.iterator(); j.hasNext(); ) {
+                        String dn = (String)j.next();
+                        log.debug("Generated DN: "+dn);
+
+                        EntryData data = new EntryData();
+                        data.setDn(dn);
+                        data.setMergedValues(sv);
+                        data.setComplete(true);
+                        results.add(data);
+                    }
+                    
+                } catch (Exception e) {
                     log.error(e.getMessage(), e);
-                    results.setReturnCode(LDAPException.OPERATIONS_ERROR);
-                } finally {
-                    results.close();
                 }
+            }
+
+            public void pipelineClosed(PipelineEvent event) {
+                results.setReturnCode(sr.getReturnCode());
+                results.close();
             }
         });
 
-        return results;
+        Connector connector = engine.getConnector(sourceConfig);
+        connector.search(partition, sourceConfig, null, newFilter, sc, sr);
+    }
+
+    public void searchSources(
+            Partition partition,
+            final AttributeValues sourceValues,
+            final EntryMapping entryMapping,
+            final Filter filter,
+            final PenroseSearchResults results)
+            throws Exception {
+
+        try {
+            searchSourcesInBackground(partition, sourceValues, entryMapping, filter, results);
+
+        } catch (Throwable e) {
+            log.error(e.getMessage(), e);
+            results.setReturnCode(LDAPException.OPERATIONS_ERROR);
+        }
     }
 
     public void searchSourcesInBackground(
+            Partition partition,
             AttributeValues sourceValues,
             EntryMapping entryMapping,
             Filter filter,
@@ -332,6 +339,7 @@ public class SearchEngine {
 
         SearchPlanner planner = new SearchPlanner(
                 engine,
+                partition,
                 entryMapping,
                 filter,
                 sourceValues);
@@ -349,6 +357,7 @@ public class SearchEngine {
             localResults.close();
 
             Collection parentResults = searchParent(
+                    partition,
                     entryMapping,
                     planner,
                     localResults,
@@ -360,6 +369,7 @@ public class SearchEngine {
         }
 
         PenroseSearchResults localResults = searchLocal(
+                partition,
                 entryMapping,
                 sourceValues,
                 planner,
@@ -376,6 +386,7 @@ public class SearchEngine {
         }
 */
         Collection parentResults = searchParent(
+                partition,
                 entryMapping,
                 planner,
                 localResults,
@@ -393,6 +404,7 @@ public class SearchEngine {
     }
 
     public PenroseSearchResults searchLocal(
+            Partition partition,
             EntryMapping entryMapping,
             AttributeValues sourceValues,
             SearchPlanner planner,
@@ -473,6 +485,7 @@ public class SearchEngine {
 
         SearchLocalRunner runner = new SearchLocalRunner(
                 engine,
+                partition,
                 entryMapping,
                 sourceValues,
                 planner,
@@ -496,6 +509,7 @@ public class SearchEngine {
 */
         SearchCleaner cleaner = new SearchCleaner(
                 engine,
+                partition,
                 entryMapping,
                 planner,
                 primarySourceMapping);
@@ -530,6 +544,7 @@ public class SearchEngine {
     }
 
     public Collection searchParent(
+            Partition partition,
             EntryMapping entryMapping,
             SearchPlanner planner,
             PenroseSearchResults localResults,
@@ -585,7 +600,6 @@ public class SearchEngine {
         if (startingSources.isEmpty()) {
             log.debug("No connecting sources");
 
-            Partition partition = engine.getPartitionManager().getPartition(entryMapping);
             EntryMapping parentMapping = partition.getParent(entryMapping);
 
             while (parentMapping != null) {
@@ -631,6 +645,7 @@ public class SearchEngine {
 
             SearchParentRunner runner = new SearchParentRunner(
                     engine,
+                    partition,
                     entryMapping,
                     results,
                     sourceValues,

@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <!--
 
-Copyright (c) 2000-2005, Identyx Corporation.
+Copyright (c) 2000-2006, Identyx Corporation.
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -24,6 +24,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 <digester-rules>
 
 	<pattern value="server">
+
         <set-properties-rule/>
 
         <!-- system property -->
@@ -135,7 +136,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 				<call-param-rule pattern="param-name" paramnumber="0"/>
 				<call-param-rule pattern="param-value" paramnumber="1"/>
 			</pattern>
-			<set-next-rule methodname="setEngineConfig" />
+			<set-next-rule methodname="addEngineConfig" />
 		</pattern>
 
         <!-- connector -->

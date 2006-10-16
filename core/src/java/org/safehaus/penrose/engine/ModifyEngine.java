@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2005, Identyx Corporation.
+ * Copyright (c) 2000-2006, Identyx Corporation.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,6 +18,7 @@
 package org.safehaus.penrose.engine;
 
 import org.safehaus.penrose.mapping.*;
+import org.safehaus.penrose.partition.Partition;
 import org.ietf.ldap.LDAPException;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
@@ -38,7 +39,7 @@ public class ModifyEngine {
         this.engine = engine;
     }
 
-    public int modify(Entry entry, AttributeValues newValues) throws Exception {
+    public int modify(Partition partition, Entry entry, AttributeValues newValues) throws Exception {
 
         EntryMapping entryMapping = entry.getEntryMapping();
         AttributeValues oldSourceValues = entry.getSourceValues();
@@ -49,7 +50,7 @@ public class ModifyEngine {
             SourceMapping sourceMapping = (SourceMapping)i.next();
 
             AttributeValues output = new AttributeValues();
-            engine.getTransformEngine().translate(entryMapping, sourceMapping, newValues, output);
+            engine.getTransformEngine().translate(partition, entryMapping, sourceMapping, newValues, output);
             newSourceValues.set(sourceMapping.getName(), output);
         }
 
@@ -69,7 +70,7 @@ public class ModifyEngine {
             }
         }
 
-        ModifyGraphVisitor visitor = new ModifyGraphVisitor(engine, entryMapping, oldSourceValues, newSourceValues);
+        ModifyGraphVisitor visitor = new ModifyGraphVisitor(engine, partition, entryMapping, oldSourceValues, newSourceValues);
         visitor.run();
 
         if (visitor.getReturnCode() != LDAPException.SUCCESS) return visitor.getReturnCode();

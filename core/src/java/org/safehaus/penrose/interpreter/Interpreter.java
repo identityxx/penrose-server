@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2005, Identyx Corporation.
+ * Copyright (c) 2000-2006, Identyx Corporation.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -89,7 +89,7 @@ public abstract class Interpreter {
                 return null;
             }
         } catch (Exception e) {
-            throw new Exception("Error evaluating attribute "+attributeMapping.getName(), e);
+            throw new Exception("Error evaluating attribute "+attributeMapping.getName()+": "+e.getMessage(), e);
         }
     }
 

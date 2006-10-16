@@ -95,8 +95,13 @@ if [ -n "$CLASSPATH" ] ; then
   LOCALCLASSPATH="$CLASSPATH"
 fi
 
-LOCALCLASSPATH=$LOCALCLASSPATH:$JAVA_HOME/lib/tools.jar
-LOCALLIBPATH=$PENROSE_HOME/lib:$PENROSE_HOME/lib/ext:$PENROSE_HOME/schema/ext:$PENROSE_HOME/server/lib
+LOCALCLASSPATH="$PENROSE_HOME/conf:$LOCALCLASSPATH"
+
+LOCALLIBPATH="$PENROSE_HOME/lib:$LOCALLIBPATH"
+LOCALLIBPATH="$PENROSE_HOME/lib/ext:$LOCALLIBPATH"
+LOCALLIBPATH="$PENROSE_HOME/server/lib:$LOCALLIBPATH"
+LOCALLIBPATH="$PENROSE_HOME/server/lib/ext:$LOCALLIBPATH"
+LOCALLIBPATH="$PENROSE_HOME/schema/ext:$LOCALLIBPATH"
 
 # For Cygwin, switch paths to Windows format before running java
 if $cygwin; then
@@ -104,7 +109,6 @@ if $cygwin; then
   JAVA_HOME=`cygpath --windows "$JAVA_HOME"`
   CLASSPATH=`cygpath --path --windows "$CLASSPATH"`
   LOCALCLASSPATH=`cygpath --path --windows "$LOCALCLASSPATH"`
-  LOCALLIBPATH=`cygpath --path --windows "LOCALLIBPATH"`
   CYGHOME=`cygpath --windows "$HOME"`
 fi
 
@@ -121,6 +125,8 @@ if [ "$1" = "start" ] ; then
     shift
     exec "$JAVACMD" $PENROSE_DEBUG_OPTS $PENROSE_OPTS \
     -classpath "$LOCALCLASSPATH" \
+    -Djava.ext.dirs="$LOCALLIBPATH" \
+    -Djava.library.path="$LOCALLIBPATH" \
     -Dpenrose.home="$PENROSE_HOME" \
     org.safehaus.penrose.server.PenroseServer $PENROSE_ARGS "$@" \
     >> "$PENROSE_HOME/var/penrose.out" 2>&1 &
@@ -151,6 +157,7 @@ else
   exec "$JAVACMD" $PENROSE_DEBUG_OPTS $PENROSE_OPTS \
   -classpath "$LOCALCLASSPATH" \
   -Djava.ext.dirs="$LOCALLIBPATH" \
+  -Djava.library.path="$LOCALLIBPATH" \
   -Dpenrose.home="$PENROSE_HOME" \
   org.safehaus.penrose.server.PenroseServer $PENROSE_ARGS "$@"
 

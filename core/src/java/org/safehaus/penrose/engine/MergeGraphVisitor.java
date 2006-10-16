@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2005, Identyx Corporation.
+ * Copyright (c) 2000-2006, Identyx Corporation.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -41,7 +41,6 @@ public class MergeGraphVisitor extends GraphVisitor {
     private Graph graph;
     private Engine engine;
     private EntryMapping entryMapping;
-    private AttributeValues primarySourceValues;
     private AttributeValues loadedSourceValues;
     private SourceMapping primarySourceMapping;
 
@@ -51,6 +50,7 @@ public class MergeGraphVisitor extends GraphVisitor {
 
     public MergeGraphVisitor(
             Engine engine,
+            Partition partition,
             EntryMapping entryMapping,
             AttributeValues primarySourceValues,
             AttributeValues loadedSourceValues,
@@ -58,12 +58,11 @@ public class MergeGraphVisitor extends GraphVisitor {
             Filter filter) throws Exception {
 
         this.engine = engine;
+        this.partition = partition;
         this.entryMapping = entryMapping;
-        this.primarySourceValues = primarySourceValues;
         this.loadedSourceValues = loadedSourceValues;
         this.primarySourceMapping = primarySourceMapping;
 
-        partition = engine.getPartitionManager().getPartition(entryMapping);
         graph = engine.getGraph(entryMapping);
 
         sourceValues.add(primarySourceValues);
@@ -119,7 +118,7 @@ public class MergeGraphVisitor extends GraphVisitor {
                     if (!FilterTool.isValid(av, filter)) continue;
 
                 } else {
-                    if (!engine.getJoinEngine().evaluate(entryMapping, relationships, sourceValues, av)) continue;
+                    if (!engine.getJoinEngine().evaluate(partition, entryMapping, relationships, sourceValues, av)) continue;
                 }
 
                 sourceValues.add(av);

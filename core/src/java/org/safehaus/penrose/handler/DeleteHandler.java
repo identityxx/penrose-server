@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2005, Identyx Corporation.
+ * Copyright (c) 2000-2006, Identyx Corporation.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,13 +19,10 @@ package org.safehaus.penrose.handler;
 
 import org.safehaus.penrose.session.PenroseSession;
 import org.safehaus.penrose.partition.Partition;
-import org.safehaus.penrose.partition.PartitionManager;
 import org.safehaus.penrose.mapping.EntryMapping;
 import org.safehaus.penrose.mapping.Entry;
-import org.safehaus.penrose.config.PenroseConfig;
-import org.safehaus.penrose.service.ServiceConfig;
 import org.safehaus.penrose.util.ExceptionUtil;
-import org.ietf.ldap.LDAPDN;
+import org.safehaus.penrose.engine.Engine;
 import org.ietf.ldap.LDAPException;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
@@ -45,38 +42,16 @@ public class DeleteHandler {
         this.handler = handler;
     }
 
-    public int delete(PenroseSession session, String dn) throws Exception {
+    public int delete(PenroseSession session, Partition partition, Entry entry) throws Exception {
 
         int rc;
         try {
 
-            log.warn("Delete entry \""+dn+"\".");
-
-            log.debug("-------------------------------------------------");
-            log.debug("DELETE:");
-            if (session != null && session.getBindDn() != null) log.debug(" - Bind DN: "+session.getBindDn());
-            log.debug(" - DN: "+dn);
-            log.debug("");
-
-            if (session != null && session.getBindDn() == null) {
-                PenroseConfig penroseConfig = handler.getPenroseConfig();
-                ServiceConfig serviceConfig = penroseConfig.getServiceConfig("LDAP");
-                String s = serviceConfig == null ? null : serviceConfig.getParameter("allowAnonymousAccess");
-                boolean allowAnonymousAccess = s == null ? true : new Boolean(s).booleanValue();
-                if (!allowAnonymousAccess) {
-                    return LDAPException.INSUFFICIENT_ACCESS_RIGHTS;
-                }
-            }
-
-            String ndn = LDAPDN.normalize(dn);
-
-            Entry entry = getHandler().getFindHandler().find(ndn);
-            if (entry == null) return LDAPException.NO_SUCH_OBJECT;
-
-            rc = performDelete(session, entry);
+            rc = performDelete(session, partition, entry);
             if (rc != LDAPException.SUCCESS) return rc;
 
-            handler.getEngine().getEntryCache().remove(entry);
+            EntryMapping entryMapping = entry.getEntryMapping();
+            handler.getEntryCache().remove(partition, entryMapping, entry.getDn());
 
         } catch (LDAPException e) {
             rc = e.getResultCode();
@@ -95,39 +70,26 @@ public class DeleteHandler {
         return rc;
     }
 
-    public int performDelete(PenroseSession session, Entry entry) throws Exception {
+    public int performDelete(PenroseSession session, Partition partition, Entry entry) throws Exception {
 
         EntryMapping entryMapping = entry.getEntryMapping();
 
-        int rc = handler.getACLEngine().checkDelete(session, entry.getDn(), entryMapping);
-        if (rc != LDAPException.SUCCESS) {
-            log.debug("Not allowed to delete "+entry.getDn());
-            return rc;
+        String engineName = "DEFAULT";
+        if (partition.isProxy(entryMapping)) engineName = "PROXY";
+
+        Engine engine = handler.getEngine(engineName);
+
+        if (engine == null) {
+            log.debug("Engine "+engineName+" not found");
+            return LDAPException.OPERATIONS_ERROR;
         }
 
-        PartitionManager partitionManager = handler.getPartitionManager();
-        Partition partition = partitionManager.getPartition(entryMapping);
-
-        if (partition.isProxy(entryMapping)) {
-            log.debug("Deleting "+entry.getDn()+" via proxy");
-            return handler.getEngine().deleteProxy(session, partition, entryMapping, entry.getDn());
-        }
-
-        if (partition.isDynamic(entryMapping)) {
-	        return handler.getEngine().delete(entry);
-
-        } else {
-            return deleteStaticEntry(entryMapping);
-
-        }
+        return engine.delete(session, partition, entry);
     }
 
-    public int deleteStaticEntry(EntryMapping entryMapping) throws Exception {
+    public int deleteStaticEntry(Partition partition, EntryMapping entryMapping) throws Exception {
 
         log.debug("Deleting static entry "+entryMapping.getDn());
-
-        Partition partition = handler.getPartitionManager().getPartitionByDn(entryMapping.getDn());
-        if (partition == null) return LDAPException.NO_SUCH_OBJECT;
 
         // can't delete no leaf
         Collection children = partition.getChildren(entryMapping);

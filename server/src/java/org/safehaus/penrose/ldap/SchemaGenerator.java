@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2005, Identyx Corporation.
+ * Copyright (c) 2000-2006, Identyx Corporation.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -24,9 +24,7 @@ import org.apache.maven.project.MavenProject;
 import org.apache.log4j.*;
 import org.apache.log4j.xml.DOMConfigurator;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.FileInputStream;
+import java.io.*;
 import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
 import java.util.jar.JarEntry;
@@ -181,13 +179,54 @@ public class SchemaGenerator {
         //String path = file.getPath().substring(prefix.length()+1);
         //System.out.println("Compiling "+path);
 
-        String paths[] = new String[] { file.getAbsolutePath() };
-        //Main.compile(paths);
+        String extdirs = ".."+File.separator+"lib"+File.pathSeparator+
+                ".."+File.separator+"lib"+File.separator+"ext"+File.pathSeparator+
+                ".."+File.separator+"server"+File.separator+"lib";
 
-        Class clazz = Class.forName("com.sun.tools.javac.Main");
-        Method method = clazz.getMethod("compile", new Class[] { Class.forName("[Ljava.lang.String;") });
+        String command[] = new String[] {
+                "javac",
+                "-extdirs",
+                extdirs,
+                file.getAbsolutePath()
+        };
 
-        method.invoke(null, new Object[] { paths });
+        for (int i=0; i<command.length; i++) {
+            System.out.print(command[i]+" ");
+        }
+        System.out.println();
+
+        Runtime runtime = Runtime.getRuntime();
+        final Process process = runtime.exec(command);
+
+        new Thread() {
+            public void run() {
+                try {
+                    BufferedReader in = new BufferedReader(new InputStreamReader(process.getErrorStream()));
+                    String line;
+                    while ((line = in.readLine()) != null) System.out.println(line);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        }.start();
+
+        new Thread() {
+            public void run() {
+                try {
+                    BufferedReader in = new BufferedReader(new InputStreamReader(process.getInputStream()));
+                    String line;
+                    while ((line = in.readLine()) != null) System.out.println(line);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        }.start();
+
+        int rc = process.waitFor();
+        if (rc != 0) {
+            System.out.println("Error: rc="+rc);
+            System.exit(rc);
+        }
     }
 
     public void createJar() throws Exception {

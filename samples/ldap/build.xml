@@ -1,0 +1,57 @@
+<!--
+ Copyright (c) 2000-2006, Identyx Corporation.
+ All rights reserved.
+-->
+<project name="ldap">
+
+    <property name="test.hostname" value="localhost"/>
+    <property name="test.port" value="10389"/>
+    <property name="test.bindDn" value="uid=admin,ou=system"/>
+    <property name="test.password" value="secret"/>
+
+    <target name="test-search">
+        <exec executable="ldapsearch">
+            <arg line="-h ${test.hostname}"/>
+            <arg line="-p ${test.port}"/>
+            <arg line="-D ${test.bindDn}"/>
+            <arg line="-w ${test.password}"/>
+            <arg line="-x"/>
+            <arg line="-s sub"/>
+            <arg line="-b dc=LDAP,dc=Example,dc=com"/>
+        </exec>
+    </target>
+
+    <target name="test-modify">
+        <exec executable="ldapmodify">
+            <arg line="-h ${test.hostname}"/>
+            <arg line="-p ${test.port}"/>
+            <arg line="-D ${test.bindDn}"/>
+            <arg line="-w ${test.password}"/>
+            <arg line="-x"/>
+            <arg line="-f ldif/modify.ldif"/>
+        </exec>
+    </target>
+
+    <target name="test-delete">
+        <exec executable="ldapdelete">
+            <arg line="-h ${test.hostname}"/>
+            <arg line="-p ${test.port}"/>
+            <arg line="-D ${test.bindDn}"/>
+            <arg line="-w ${test.password}"/>
+            <arg line="-x"/>
+            <arg line="-f ldif/delete.ldif"/>
+        </exec>
+    </target>
+
+    <target name="test-add">
+        <exec executable="ldapadd">
+            <arg line="-h ${test.hostname}"/>
+            <arg line="-p ${test.port}"/>
+            <arg line="-D ${test.bindDn}"/>
+            <arg line="-w ${test.password}"/>
+            <arg line="-x"/>
+            <arg line="-f ldif/add.ldif"/>
+        </exec>
+    </target>
+
+</project>

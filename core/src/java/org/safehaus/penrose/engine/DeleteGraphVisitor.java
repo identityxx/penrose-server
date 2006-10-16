@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2005, Identyx Corporation.
+ * Copyright (c) 2000-2006, Identyx Corporation.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -37,6 +37,7 @@ public class DeleteGraphVisitor extends GraphVisitor {
     Logger log = LoggerFactory.getLogger(getClass());
 
     public Engine engine;
+    public Partition partition;
     public EntryMapping entryMapping;
     public AttributeValues sourceValues;
 
@@ -44,11 +45,13 @@ public class DeleteGraphVisitor extends GraphVisitor {
 
     public DeleteGraphVisitor(
             Engine engine,
+            Partition partition,
             EntryMapping entryMapping,
             AttributeValues sourceValues
             ) throws Exception {
 
         this.engine = engine;
+        this.partition = partition;
         this.entryMapping = entryMapping;
         this.sourceValues = sourceValues;
     }
@@ -88,10 +91,9 @@ public class DeleteGraphVisitor extends GraphVisitor {
             newSourceValues.set(name, values);
         }
 
-        Partition partition = engine.getPartitionManager().getPartition(entryMapping);
         SourceConfig sourceConfig = partition.getSourceConfig(sourceMapping.getSourceName());
 
-        returnCode = engine.getConnector().delete(partition, sourceConfig, newSourceValues);
+        returnCode = engine.getConnector(sourceConfig).delete(partition, sourceConfig, newSourceValues);
         if (returnCode != LDAPException.SUCCESS) return;
 
         graphIterator.traverseEdges(node);

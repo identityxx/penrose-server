@@ -1,4 +1,4 @@
-; Copyright (c) 2000-2005, Identyx Corporation.
+; Copyright (c) 2000-2006, Identyx Corporation.
 ;
 ; This program is free software; you can redistribute it and/or modify
 ; it under the terms of the GNU General Public License as published by
@@ -34,9 +34,8 @@ Source: "dist\*"; DestDir: "{app}"; Components: main
 Source: "dist\bin\*"; DestDir: "{app}\bin"; Components: main
 Source: "dist\conf\*"; DestDir: "{app}\conf"; Flags: onlyifdoesntexist uninsneveruninstall; Components: main
 Source: "dist\docs\*"; DestDir: "{app}\docs"; Flags: recursesubdirs; Components: docs
-Source: "dist\dtd\*"; DestDir: "{app}\dtd"; Flags: recursesubdirs; Components: main
 Source: "dist\lib\*"; DestDir: "{app}\lib"; Flags: recursesubdirs; Components: main
-Source: "dist\server\*"; DestDir: "{app}\server"; Flags: recursesubdirs; Components: main
+Source: "dist\server\lib\*"; DestDir: "{app}\server\lib"; Flags: recursesubdirs; Components: main
 Source: "dist\schema\*"; DestDir: "{app}\schema"; Flags: recursesubdirs; Components: main
 Source: "dist\samples\*"; DestDir: "{app}\samples"; Flags: recursesubdirs; Components: sample
 
@@ -46,6 +45,7 @@ Name: "{app}\docs"
 Name: "{app}\lib\ext"
 Name: "{app}\partitions"
 Name: "{app}\samples"
+Name: "{app}\server\lib\ext"
 Name: "{app}\schema\ext"
 Name: "{app}\var"
 

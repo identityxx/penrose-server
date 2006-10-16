@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2005, Identyx Corporation.
+ * Copyright (c) 2000-2006, Identyx Corporation.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,9 +22,18 @@ package org.safehaus.penrose.partition;
  */
 public class FieldConfig implements FieldConfigMBean, Comparable, Cloneable {
 
-    public final static String DEFAULT_TYPE   = "VARCHAR";
+    public final static String TYPE_VARCHAR   = "VARCHAR";
+    public final static String TYPE_INTEGER   = "INTEGER";
+    public final static String TYPE_DOUBLE    = "DOUBLE";
+    public final static String TYPE_DATETIME  = "DATETIME";
+
+    public final static String DEFAULT_TYPE   = TYPE_VARCHAR;
     public final static int DEFAULT_LENGTH    = 50;
     public final static int DEFAULT_PRECISION = 0;
+
+    public final static String PRIMARY_KEY_TRUE  = "true";
+    public final static String PRIMARY_KEY_FIRST = "first";
+    public final static String PRIMARY_KEY_FALSE = "false";
 
 	/**
 	 * Name.
@@ -37,7 +46,7 @@ public class FieldConfig implements FieldConfigMBean, Comparable, Cloneable {
     private int length    = DEFAULT_LENGTH;
     private int precision = DEFAULT_PRECISION;
 
-	private boolean primaryKey;
+	private String primaryKey = PRIMARY_KEY_FALSE;
     private boolean searchable = true;
     private boolean unique;
     private boolean index;
@@ -60,7 +69,7 @@ public class FieldConfig implements FieldConfigMBean, Comparable, Cloneable {
         this.name = name;
     }
 
-    public FieldConfig(String name, boolean primaryKey) {
+    public FieldConfig(String name, String primaryKey) {
         this.name = name;
         this.primaryKey = primaryKey;
     }
@@ -73,14 +82,18 @@ public class FieldConfig implements FieldConfigMBean, Comparable, Cloneable {
 		this.name = name;
 	}
 
-	public boolean isPrimaryKey() {
-		return primaryKey;
+	public boolean isPK() {
+		return !PRIMARY_KEY_FALSE.equals(primaryKey);
 	}
 
-	public void setPrimaryKey(boolean primaryKey) {
+    public String getPrimaryKey() {
+        return primaryKey;
+    }
+
+    public void setPrimaryKey(String primaryKey) {
 		this.primaryKey = primaryKey;
 	}
-	
+
     public String getOriginalName() {
         return originalName == null ? name : originalName;
     }
@@ -164,7 +177,7 @@ public class FieldConfig implements FieldConfigMBean, Comparable, Cloneable {
     public int hashCode() {
         return (name == null ? 0 : name.hashCode()) +
                 (originalName == null ? 0 : originalName.hashCode()) +
-                (primaryKey ? 0 : 1) +
+                (primaryKey == null ? 0 : primaryKey.hashCode()) +
                 (searchable ? 0 : 1) +
                 (unique ? 0 : 1) +
                 (index ? 0 : 1) +
@@ -189,7 +202,7 @@ public class FieldConfig implements FieldConfigMBean, Comparable, Cloneable {
         FieldConfig fieldConfig = (FieldConfig)object;
         if (!equals(name, fieldConfig.name)) return false;
         if (!equals(originalName, fieldConfig.originalName)) return false;
-        if (primaryKey != fieldConfig.primaryKey) return false;
+        if (!equals(primaryKey, fieldConfig.primaryKey)) return false;
         if (searchable != fieldConfig.searchable) return false;
         if (unique != fieldConfig.unique) return false;
         if (index != fieldConfig.index) return false;

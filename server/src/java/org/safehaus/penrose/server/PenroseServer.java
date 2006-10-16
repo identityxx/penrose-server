@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2005, Identyx Corporation.
+ * Copyright (c) 2000-2006, Identyx Corporation.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,20 +22,15 @@ import java.io.File;
 
 import org.apache.log4j.*;
 import org.apache.log4j.xml.DOMConfigurator;
-import org.safehaus.penrose.config.PenroseConfig;
-import org.safehaus.penrose.config.PenroseConfigReader;
 import org.safehaus.penrose.service.ServiceManager;
-import org.safehaus.penrose.service.ServiceContext;
 import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.PenroseFactory;
-import sun.misc.Signal;
-import sun.misc.SignalHandler;
-
+import org.safehaus.penrose.config.*;
 
 /**
  * @author Endi S. Dewata
  */
-public class PenroseServer implements SignalHandler, ServiceContext {
+public class PenroseServer {
 
     public static Logger log = Logger.getLogger(PenroseServer.class);
 
@@ -45,27 +40,35 @@ public class PenroseServer implements SignalHandler, ServiceContext {
     private ServiceManager serviceManager;
 
     public PenroseServer() throws Exception {
-        this((String)null);
+        penroseConfig = new DefaultPenroseConfig();
+        loadConfig();
+        init();
     }
 
     public PenroseServer(String home) throws Exception {
-        PenroseConfigReader reader = new PenroseConfigReader((home == null ? "" : home+File.separator)+"conf"+File.separator+"server.xml");
-        penroseConfig = reader.read();
+        penroseConfig = new PenroseConfig();
         penroseConfig.setHome(home);
-
+        loadConfig();
         init();
     }
 
     public PenroseServer(PenroseConfig penroseConfig) throws Exception {
         this.penroseConfig = penroseConfig;
-
         init();
     }
 
-    public void init() throws Exception {
+    public void loadConfig() throws Exception {
+        String home = penroseConfig.getHome();
 
+        PenroseConfigReader reader = new PenroseConfigReader((home == null ? "" : home+File.separator)+"conf"+File.separator+"server.xml");
+        reader.read(penroseConfig);
+    }
+
+    public void init() throws Exception {
+        
         PenroseFactory penroseFactory = PenroseFactory.getInstance();
         penrose = penroseFactory.createPenrose(penroseConfig);
+        penroseConfig = penrose.getPenroseConfig();
 
         serviceManager = new ServiceManager();
         serviceManager.setPenroseServer(this);
@@ -84,29 +87,6 @@ public class PenroseServer implements SignalHandler, ServiceContext {
 
     public String getStatus() {
         return penrose.getStatus();
-    }
-    /**
-     * Ctrl-C (Interrupt Signal) handler
-     * The obvious drawback with this is that it relies on undocumented classes from
-     * Sun. There are other solutions, including one given at
-     * http://www.naturalbridge.com/useful/index.html and another at
-     * http://interstice.com/~kevinh/projects/javasignals/ but both of these use
-     * native code.
-     */
-    public void initSignalHandler() {
-        Signal.handle(new Signal("INT"), this);
-    }
-
-    public void handle(Signal sig) {
-        //code to be executed goes here
-        log.info("Interrupt Signal (Ctrl-C) caught! Initiating shutdown...");
-        listAllThreads();
-        
-        try {
-            stop();
-        } catch (Exception e) {
-            log.error(e.getMessage());
-        }
     }
 
     public void listAllThreads() {
@@ -180,10 +160,13 @@ public class PenroseServer implements SignalHandler, ServiceContext {
     }
 
     public void reload() throws Exception {
-        penrose.reload();
+
+        loadConfig();
 
         serviceManager.clear();
         serviceManager.load(penroseConfig.getServiceConfigs());
+
+        penrose.reload();
     }
 
     public void store() throws Exception {

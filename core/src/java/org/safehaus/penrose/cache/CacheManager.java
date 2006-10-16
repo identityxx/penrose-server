@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2005, Identyx Corporation.
+ * Copyright (c) 2000-2006, Identyx Corporation.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,10 +18,11 @@
 package org.safehaus.penrose.cache;
 
 import org.safehaus.penrose.connector.Connector;
+import org.safehaus.penrose.connector.JDBCAdapter;
 import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.PenroseFactory;
+import org.safehaus.penrose.handler.Handler;
 import org.safehaus.penrose.partition.*;
-import org.safehaus.penrose.engine.Engine;
 import org.apache.log4j.*;
 
 import java.util.Collection;
@@ -44,44 +45,74 @@ public class CacheManager {
 
     public static void create(Penrose penrose) throws Exception {
         Connector connector = penrose.getConnector();
-        SourceCache sourceCache = connector.getSourceCache();
-        sourceCache.create();
+        SourceCacheManager sourceCacheManager = connector.getSourceCacheManager();
+        sourceCacheManager.create();
 
-        Engine engine = penrose.getEngine();
-        EntryCache entryCache = engine.getEntryCache();
+        Handler handler = penrose.getHandler();
+        EntryCache entryCache = handler.getEntryCache();
         entryCache.create();
+
+        PartitionManager partitionManager = penrose.getPartitionManager();
+
+        for (Iterator i=partitionManager.getPartitions().iterator(); i.hasNext(); ) {
+            Partition partition = (Partition)i.next();
+            Collection entryMappings = partition.getRootEntryMappings();
+            entryCache.create(partition, entryMappings);
+        }
     }
 
     public static void load(Penrose penrose) throws Exception {
         Connector connector = penrose.getConnector();
-        SourceCache sourceCache = connector.getSourceCache();
-        sourceCache.load();
+        SourceCacheManager sourceCacheManager = connector.getSourceCacheManager();
+        sourceCacheManager.load();
 
-        Engine engine = penrose.getEngine();
-        EntryCache entryCache = engine.getEntryCache();
-        entryCache.load(penrose);
+        Handler handler = penrose.getHandler();
+        EntryCache entryCache = handler.getEntryCache();
+
+        PartitionManager partitionManager = penrose.getPartitionManager();
+
+        for (Iterator i=partitionManager.getPartitions().iterator(); i.hasNext(); ) {
+            Partition partition = (Partition)i.next();
+            entryCache.load(penrose, partition);
+        }
     }
 
     public static void clean(Penrose penrose) throws Exception {
 
-        Engine engine = penrose.getEngine();
-        EntryCache entryCache = engine.getEntryCache();
-        entryCache.clean();
+        Handler handler = penrose.getHandler();
+        EntryCache entryCache = handler.getEntryCache();
+
+        PartitionManager partitionManager = penrose.getPartitionManager();
+
+        for (Iterator i=partitionManager.getPartitions().iterator(); i.hasNext(); ) {
+            Partition partition = (Partition)i.next();
+            Collection entryMappings = partition.getRootEntryMappings();
+            entryCache.clean(partition, entryMappings);
+        }
 
         Connector connector = penrose.getConnector();
-        SourceCache sourceCache = connector.getSourceCache();
-        sourceCache.clean();
+        SourceCacheManager sourceCacheManager = connector.getSourceCacheManager();
+        sourceCacheManager.clean();
     }
 
     public static void drop(Penrose penrose) throws Exception {
 
-        Engine engine = penrose.getEngine();
-        EntryCache entryCache = engine.getEntryCache();
+        Handler handler = penrose.getHandler();
+        EntryCache entryCache = handler.getEntryCache();
+
+        PartitionManager partitionManager = penrose.getPartitionManager();
+
+        for (Iterator i=partitionManager.getPartitions().iterator(); i.hasNext(); ) {
+            Partition partition = (Partition)i.next();
+            Collection entryMappings = partition.getRootEntryMappings();
+            entryCache.drop(partition, entryMappings);
+        }
+
         entryCache.drop();
 
         Connector connector = penrose.getConnector();
-        SourceCache sourceCache = connector.getSourceCache();
-        sourceCache.drop();
+        SourceCacheManager sourceCacheManager = connector.getSourceCacheManager();
+        sourceCacheManager.drop();
     }
 
     public static void changeTable(Penrose penrose) throws Exception {
@@ -101,7 +132,13 @@ public class CacheManager {
 
                 if (!"JDBC".equals(connectionConfig.getAdapterName())) continue;
 
-                String tableName = sourceConfig.getParameter("tableName");
+                String catalog = sourceConfig.getParameter(JDBCAdapter.CATALOG);
+                String schema = sourceConfig.getParameter(JDBCAdapter.SCHEMA);
+                String tableName = sourceConfig.getParameter(JDBCAdapter.TABLE);
+                if (tableName == null) tableName = sourceConfig.getParameter(JDBCAdapter.TABLE_NAME);
+                if (catalog != null) tableName = catalog +"."+tableName;
+                if (schema != null) tableName = schema +"."+tableName;
+
                 Collection primaryKeyFieldConfigs = sourceConfig.getPrimaryKeyFieldConfigs();
 
                 generateCreateTable(tableName, primaryKeyFieldConfigs);

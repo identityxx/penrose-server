@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2005, Identyx Corporation.
+ * Copyright (c) 2000-2006, Identyx Corporation.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,6 +20,7 @@ package org.safehaus.penrose.ldap;
 import org.safehaus.penrose.service.Service;
 import org.safehaus.penrose.schema.SchemaConfig;
 import org.safehaus.penrose.config.PenroseConfig;
+import org.safehaus.penrose.Penrose;
 import org.apache.directory.server.core.configuration.*;
 import org.apache.directory.server.jndi.ServerContextFactory;
 import org.apache.directory.server.core.jndi.CoreContextFactory;
@@ -87,7 +88,8 @@ public class PenroseLDAPService extends Service {
 
         setStatus(STARTING);
 
-        PenroseConfig penroseConfig = getServiceContext().getPenroseConfig();
+        Penrose penrose = getPenroseServer().getPenrose();
+        PenroseConfig penroseConfig = penrose.getPenroseConfig();
         String home = penroseConfig.getHome();
 
         MutableServerStartupConfiguration configuration = new MutableServerStartupConfiguration();
@@ -134,7 +136,7 @@ public class PenroseLDAPService extends Service {
         // Register Penrose authenticator
 
         PenroseAuthenticator authenticator = new PenroseAuthenticator();
-        authenticator.setPenrose(getServiceContext().getPenrose());
+        authenticator.setPenroseServer(getPenroseServer());
 
         MutableAuthenticatorConfiguration authenticatorConfig = new MutableAuthenticatorConfiguration();
         authenticatorConfig.setName("Penrose");
@@ -155,7 +157,7 @@ public class PenroseLDAPService extends Service {
 
         // Register Penrose interceptor
         PenroseInterceptor interceptor = new PenroseInterceptor();
-        interceptor.setPenrose(getServiceContext().getPenrose());
+        interceptor.setPenroseServer(getPenroseServer());
 
         MutableInterceptorConfiguration interceptorConfig = new MutableInterceptorConfiguration();
         interceptorConfig.setName("penroseService");
@@ -179,6 +181,7 @@ public class PenroseLDAPService extends Service {
         env.setProperty(Context.SECURITY_PRINCIPAL, penroseConfig.getRootUserConfig().getDn());
         env.setProperty(Context.SECURITY_CREDENTIALS, penroseConfig.getRootUserConfig().getPassword());
         env.setProperty(Context.SECURITY_AUTHENTICATION, "simple");
+        env.setProperty(Context.REFERRAL, "throw");
 /*
         env.setProperty("asn.1.berlib.provider", "org.apache.ldap.common.berlib.asn1.SnickersProvider");
         //env.setProperty("asn.1.berlib.provider", "org.apache.asn1new.ldap.TwixProvider");
@@ -241,7 +244,8 @@ public class PenroseLDAPService extends Service {
 
         setStatus(STOPPING);
         
-        PenroseConfig penroseConfig = getServiceContext().getPenroseConfig();
+        Penrose penrose = getPenroseServer().getPenrose();
+        PenroseConfig penroseConfig = penrose.getPenroseConfig();
 
         Hashtable env = new ShutdownConfiguration().toJndiEnvironment();
         env.put(Context.INITIAL_CONTEXT_FACTORY, CoreContextFactory.class.getName());

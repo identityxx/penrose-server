@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2005, Identyx Corporation.
+ * Copyright (c) 2000-2006, Identyx Corporation.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -46,7 +46,8 @@ public class ThreadManager {
 	}
 	
 	public void execute(Runnable runnable) throws InterruptedException {
-        execute(runnable, log.isDebugEnabled());
+        //execute(runnable, log.isDebugEnabled());
+        execute(runnable, false);
     }
 
     public void execute(Runnable runnable, boolean foreground) throws InterruptedException {

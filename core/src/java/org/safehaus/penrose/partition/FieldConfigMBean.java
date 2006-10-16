@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2005, Identyx Corporation.
+ * Copyright (c) 2000-2006, Identyx Corporation.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -25,8 +25,8 @@ public interface FieldConfigMBean {
     public String getName() throws Exception;
     public void setName(String name) throws Exception;
 
-    public boolean isPrimaryKey() throws Exception;
-    public void setPrimaryKey(boolean primaryKey) throws Exception;
+    public String getPrimaryKey() throws Exception;
+    public void setPrimaryKey(String primaryKey) throws Exception;
 
     public String getOriginalName() throws Exception;
     public void setOriginalName(String originalName) throws Exception;

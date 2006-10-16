@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2005, Identyx Corporation.
+ * Copyright (c) 2000-2006, Identyx Corporation.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -35,7 +35,7 @@ import org.slf4j.Logger;
  */
 public class FilterTool {
 
-    static Logger log = LoggerFactory.getLogger(FilterTool.class);
+    public static Logger log = LoggerFactory.getLogger(FilterTool.class);
 
     private SchemaManager schemaManager;
 
@@ -458,7 +458,7 @@ public class FilterTool {
     }
 
     public static boolean isValid(AttributeValues attributeValues, Filter filter) throws Exception {
-        log.debug("Checking filter "+filter);
+        //log.debug("Checking filter "+filter);
 
         boolean result = false;
 
@@ -479,6 +479,9 @@ public class FilterTool {
 
         } else if (filter instanceof PresentFilter) {
             result = isValid(attributeValues, (PresentFilter)filter);
+
+        } else if (filter instanceof SubstringFilter) {
+            result = isValid(attributeValues, (SubstringFilter)filter);
         }
 
         // log.debug("=> "+filter+" ("+filter.getClass().getName()+"): "+result);
@@ -486,39 +489,63 @@ public class FilterTool {
         return result;
     }
 
-    public static boolean isValid(AttributeValues attributeValues, SimpleFilter filter) throws Exception {
+    public static boolean isValid(AttributeValues attributeValues, SubstringFilter filter) throws Exception {
         String attributeName = filter.getAttribute();
-        String operator = filter.getOperator();
-        String attributeValue = filter.getValue();
+        Collection substrings = filter.getSubstrings();
+
+        SubstringsMatchingRule substringsMatchingRule = SubstringsMatchingRule.getInstance(null);
 
         Collection values = attributeValues.get(attributeName);
 
         for (Iterator i=values.iterator(); i.hasNext(); ) {
-            String value = i.next().toString();
+            String value = i.next().toString().toLowerCase();
+            log.debug("Comparing "+substrings+" with "+value);
 
-            int c = attributeValue.toString().compareTo(value);
+            boolean b = substringsMatchingRule.compare(value, substrings);
+            log.debug(" - ["+value+"] => "+b);
+
+            if (b) return true;
+        }
+
+        return false;
+    }
+
+    public static boolean isValid(AttributeValues attributeValues, SimpleFilter filter) throws Exception {
+        String attributeName = filter.getAttribute();
+        String operator = filter.getOperator();
+        String attributeValue = filter.getValue().toLowerCase();
+        log.debug("Checking "+attributeName+" "+operator+" "+attributeValue);
+
+        Collection values = attributeValues.get(attributeName);
+        if (values == null) return false;
+
+        for (Iterator i=values.iterator(); i.hasNext(); ) {
+            String value = i.next().toString().toLowerCase();
+            log.debug("Comparing "+attributeValue+" with "+value);
+
+            int c = attributeValue.compareTo(value);
 
             if ("=".equals(operator)) {
-                if (c != 0) return false;
+                if (c == 0) return true;
 
             } else if ("<".equals(operator)) {
-                if (c >= 0) return false;
+                if (c < 0) return true;
 
             } else if ("<=".equals(operator)) {
-                if (c > 0) return false;
+                if (c <= 0) return true;
 
             } else if (">".equals(operator)) {
-                if (c <= 0) return false;
+                if (c > 0) return true;
 
             } else if (">=".equals(operator)) {
-                if (c < 0) return false;
+                if (c >= 0) return true;
 
             } else {
                 throw new Exception("Unsupported operator \""+operator+"\" in \""+filter+"\"");
             }
         }
 
-        return true;
+        return false;
     }
 
     public static boolean isValid(AttributeValues attributeValues, PresentFilter filter) throws Exception {

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2005, Identyx Corporation.
+ * Copyright (c) 2000-2006, Identyx Corporation.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,14 +20,12 @@ package org.safehaus.penrose.cache;
 import org.safehaus.penrose.mapping.EntryMapping;
 import org.safehaus.penrose.mapping.Entry;
 import org.safehaus.penrose.mapping.Row;
-import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.partition.Partition;
-import org.safehaus.penrose.partition.PartitionManager;
 import org.safehaus.penrose.partition.SourceConfig;
 import org.safehaus.penrose.Penrose;
-import org.safehaus.penrose.thread.ThreadManager;
+import org.safehaus.penrose.pipeline.PipelineAdapter;
+import org.safehaus.penrose.pipeline.PipelineEvent;
 import org.safehaus.penrose.session.PenroseSearchResults;
-import org.safehaus.penrose.connector.ConnectionManager;
 import org.safehaus.penrose.filter.Filter;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
@@ -45,13 +43,23 @@ public class EntryCache {
     public final static String DEFAULT_CACHE_CLASS = DefaultEntryCache.class.getName();
 
     CacheConfig cacheConfig;
-    ConnectionManager connectionManager;
-    PenroseConfig penroseConfig;
-    PartitionManager partitionManager;
-    ThreadManager threadManager;
+
+    Penrose penrose;
 
     public Map caches = new TreeMap();
     public Collection listeners = new ArrayList();
+
+    public EntryCacheStorage createCacheStorage(Partition partition, EntryMapping entryMapping) throws Exception {
+
+        EntryCacheStorage cacheStorage = new EntryCacheStorage(penrose);
+        cacheStorage.setCacheConfig(cacheConfig);
+        cacheStorage.setPartition(partition);
+        cacheStorage.setEntryMapping(entryMapping);
+
+        cacheStorage.init();
+
+        return cacheStorage;
+    }
 
     public void addListener(EntryCacheListener listener) {
         listeners.add(listener);
@@ -72,22 +80,7 @@ public class EntryCache {
     public void init() throws Exception {
     }
 
-    public EntryCacheStorage createCacheStorage(EntryMapping entryMapping) throws Exception {
-
-        Partition partition = partitionManager.getPartition(entryMapping);
-
-        EntryCacheStorage cacheStorage = new EntryCacheStorage();
-        cacheStorage.setCacheConfig(cacheConfig);
-        cacheStorage.setConnectionManager(connectionManager);
-        cacheStorage.setPartition(partition);
-        cacheStorage.setEntryMapping(entryMapping);
-
-        cacheStorage.init();
-
-        return cacheStorage;
-    }
-
-    public EntryCacheStorage getCacheStorage(EntryMapping entryMapping) throws Exception {
+    public EntryCacheStorage getCacheStorage(Partition partition, EntryMapping entryMapping) throws Exception {
 
         String key = entryMapping.getDn();
         //log.debug("Getting cache storage for "+key);
@@ -97,77 +90,80 @@ public class EntryCache {
 
         if (cacheStorage == null) {
             //log.debug("Creating new cache storage.");
-            cacheStorage = createCacheStorage(entryMapping);
+            cacheStorage = createCacheStorage(partition, entryMapping);
             caches.put(key, cacheStorage);
         }
 
         return cacheStorage;
     }
 
-    public void add(EntryMapping entryMapping, Filter filter, String dn) throws Exception {
-        getCacheStorage(entryMapping).add(filter, dn);
+    public void add(Partition partition, EntryMapping entryMapping, Filter filter, String dn) throws Exception {
+        log.info("["+entryMapping.getDn()+"] add("+filter+", "+dn+")");
+
+        getCacheStorage(partition, entryMapping).add(filter, dn);
     }
     
-    public void search(EntryMapping entryMapping, PenroseSearchResults results) throws Exception {
-        getCacheStorage(entryMapping).search(null, (Filter)null, results);
+    public void search(Partition partition, EntryMapping entryMapping, SourceConfig sourceConfig, Row filter, PenroseSearchResults results) throws Exception {
+        log.info("["+entryMapping.getDn()+"] search("+sourceConfig.getName()+", "+filter+")");
+
+        getCacheStorage(partition, entryMapping).search(sourceConfig, filter, results);
     }
 
-    public Collection search(EntryMapping entryMapping, SourceConfig sourceConfig, Row filter) throws Exception {
-        return getCacheStorage(entryMapping).search(sourceConfig, filter);
+    public boolean contains(Partition partition, EntryMapping entryMapping, String parentDn, Filter filter) throws Exception {
+        log.info("["+entryMapping.getDn()+"] contains("+parentDn+", "+filter+")");
+
+        return getCacheStorage(partition, entryMapping).contains(parentDn, filter);
     }
 
-    public boolean contains(EntryMapping entryMapping, String parentDn, Filter filter) throws Exception {
-        return getCacheStorage(entryMapping).contains(parentDn, filter);
+    public void update(Partition partition, EntryMapping entryMapping, PenroseSearchResults results) throws Exception {
+        log.info("["+entryMapping.getDn()+"] update()");
+
+        getCacheStorage(partition, entryMapping).search(null, (Filter)null, results);
     }
 
-    public void search(
+    public boolean search(
+            Partition partition,
             EntryMapping entryMapping,
             String parentDn,
             Filter filter,
             PenroseSearchResults results)
             throws Exception {
 
-        getCacheStorage(entryMapping).search(parentDn, filter, results);
+        log.info("["+entryMapping.getDn()+"] search("+parentDn+", "+filter+")");
+
+        return getCacheStorage(partition, entryMapping).search(parentDn, filter, results);
     }
 
-    public void put(Entry entry) throws Exception {
-        EntryMapping entryMapping = entry.getEntryMapping();
-        getCacheStorage(entryMapping).put(entry.getDn(), entry);
+    public void put(Partition partition, EntryMapping entryMapping, Entry entry) throws Exception {
+        log.info("["+entryMapping.getDn()+"] put("+entry.getDn()+")");
+
+        getCacheStorage(partition, entryMapping).put(entry.getDn(), entry);
 
         EntryCacheEvent event = new EntryCacheEvent(entry, EntryCacheEvent.CACHE_ADDED);
         postEvent(event);
     }
 
-    public void put(EntryMapping entryMapping, Filter filter, Collection dns) throws Exception {
-        getCacheStorage(entryMapping).put(filter, dns);
+    public void put(Partition partition, EntryMapping entryMapping, Filter filter, Collection dns) throws Exception {
+        log.info("["+entryMapping.getDn()+"] put("+filter+", "+dns+")");
+
+        getCacheStorage(partition, entryMapping).put(filter, dns);
     }
 
-    public Entry get(String dn) throws Exception {
-        Partition partition = partitionManager.findPartition(dn);
-        if (partition == null) throw new Exception("Can't find partition for "+dn);
+    public Entry get(Partition partition, EntryMapping entryMapping, String dn) throws Exception {
+        log.info("["+entryMapping.getDn()+"]: get("+dn+")");
 
-        EntryMapping entryMapping = partition.findEntryMapping(dn);
-        if (entryMapping == null) throw new Exception("Can't entry mapping for "+dn);
-
-        return getCacheStorage(entryMapping).get(dn);
-    }
-
-    public void remove(Entry entry) throws Exception {
-
-        EntryMapping entryMapping = entry.getEntryMapping();
-
-        Partition partition = partitionManager.getPartition(entryMapping);
-        remove(partition, entryMapping, entry.getDn());
+        return getCacheStorage(partition, entryMapping).get(dn);
     }
 
     public void remove(Partition partition, EntryMapping entryMapping, String dn) throws Exception {
+        log.info("["+entryMapping.getDn()+"] remove("+dn+")");
 
         Collection children = partition.getChildren(entryMapping);
         for (Iterator i=children.iterator(); i.hasNext(); ) {
             EntryMapping childMapping = (EntryMapping)i.next();
 
             PenroseSearchResults childDns = new PenroseSearchResults();
-            search(childMapping, dn, null, childDns);
+            search(partition, childMapping, dn, null, childDns);
 
             for (Iterator j=childDns.iterator(); j.hasNext(); ) {
                 String childDn = (String)j.next();
@@ -178,34 +174,13 @@ public class EntryCache {
 
         log.debug("Remove cache "+dn);
 
-        getCacheStorage(entryMapping).remove(dn);
+        getCacheStorage(partition, entryMapping).remove(dn);
 
         EntryCacheEvent event = new EntryCacheEvent(dn, EntryCacheEvent.CACHE_REMOVED);
         postEvent(event);
     }
 
-    public PenroseConfig getPenroseConfig() {
-        return penroseConfig;
-    }
-
-    public void setPenroseConfig(PenroseConfig penroseConfig) {
-        this.penroseConfig = penroseConfig;
-    }
-
-    public PartitionManager getPartitionManager() {
-        return partitionManager;
-    }
-
-    public void setPartitionManager(PartitionManager partitionManager) {
-        this.partitionManager = partitionManager;
-    }
-
     public void create() throws Exception {
-        for (Iterator i=partitionManager.getPartitions().iterator(); i.hasNext(); ) {
-            Partition partition = (Partition)i.next();
-            Collection entryMappings = partition.getRootEntryMappings();
-            create(partition, entryMappings);
-        }
     }
 
     public  void create(Partition partition, Collection entryDefinitions) throws Exception {
@@ -213,7 +188,7 @@ public class EntryCache {
         for (Iterator i=entryDefinitions.iterator(); i.hasNext(); ) {
             EntryMapping entryMapping = (EntryMapping)i.next();
 
-            EntryCacheStorage cacheStorage = getCacheStorage(entryMapping);
+            EntryCacheStorage cacheStorage = getCacheStorage(partition, entryMapping);
 
             log.debug("Creating tables for "+entryMapping.getDn());
             cacheStorage.create();
@@ -223,54 +198,42 @@ public class EntryCache {
         }
     }
 
-    public void load(Penrose penrose) throws Exception {
-        for (Iterator i=partitionManager.getPartitions().iterator(); i.hasNext(); ) {
-            Partition partition = (Partition)i.next();
-            load(penrose, partition);
-        }
-    }
-
     public void load(Penrose penrose, Partition partition) throws Exception {
     }
 
-    public void clean() throws Exception {
-        for (Iterator i=partitionManager.getPartitions().iterator(); i.hasNext(); ) {
-            Partition partition = (Partition)i.next();
-            Collection entryMappings = partition.getRootEntryMappings();
-            clean(partition, entryMappings);
-        }
-    }
-
-    public void clean(Partition partition, Collection entryDefinitions) throws Exception {
+    public void clean(
+            final Partition partition,
+            final Collection entryDefinitions
+    ) throws Exception {
 
         for (Iterator i=entryDefinitions.iterator(); i.hasNext(); ) {
-            EntryMapping entryMapping = (EntryMapping)i.next();
-
-            EntryCacheStorage entryCacheStorage = getCacheStorage(entryMapping);
-            if (!entryCacheStorage.contains(null, (Filter)null)) continue;
-
-            PenroseSearchResults dns = new PenroseSearchResults();
-            dns = entryCacheStorage.search(null, (Filter)null, dns);
-
-            if (dns == null) continue;
+            final EntryMapping entryMapping = (EntryMapping)i.next();
 
             Collection children = partition.getChildren(entryMapping);
             clean(partition, children);
 
-            for (Iterator j=dns.iterator(); j.hasNext(); ) {
-                String dn = (String)j.next();
-                remove(partition, entryMapping, dn);
-            }
+            EntryCacheStorage entryCacheStorage = getCacheStorage(partition, entryMapping);
+            if (!entryCacheStorage.contains(null, (Filter)null)) continue;
+
+            PenroseSearchResults dns = new PenroseSearchResults();
+
+            dns.addListener(new PipelineAdapter() {
+                public void objectAdded(PipelineEvent event) {
+                    try {
+                        String dn = (String)event.getObject();
+                        remove(partition, entryMapping, dn);
+
+                    } catch (Exception e) {
+                        log.debug(e.getMessage(), e);
+                    }
+                }
+            });
+
+            entryCacheStorage.search(null, (Filter)null, dns);
         }
     }
 
     public void drop() throws Exception {
-
-        for (Iterator i=partitionManager.getPartitions().iterator(); i.hasNext(); ) {
-            Partition partition = (Partition)i.next();
-            Collection entryMappings = partition.getRootEntryMappings();
-            drop(partition, entryMappings);
-        }
     }
 
     public EntryCacheStorage drop(Partition partition, Collection entryDefinitions) throws Exception {
@@ -283,20 +246,12 @@ public class EntryCache {
             Collection children = partition.getChildren(entryMapping);
             drop(partition, children);
 
-            cacheStorage = getCacheStorage(entryMapping);
+            cacheStorage = getCacheStorage(partition, entryMapping);
             log.debug("Dropping tables for "+entryMapping.getDn());
             cacheStorage.drop();
         }
 
         return cacheStorage;
-    }
-
-    public ConnectionManager getConnectionManager() {
-        return connectionManager;
-    }
-
-    public void setConnectionManager(ConnectionManager connectionManager) {
-        this.connectionManager = connectionManager;
     }
 
     public CacheConfig getCacheConfig() {
@@ -327,11 +282,11 @@ public class EntryCache {
         }
     }
 
-    public ThreadManager getThreadManager() {
-        return threadManager;
+    public Penrose getPenrose() {
+        return penrose;
     }
 
-    public void setThreadManager(ThreadManager threadManager) {
-        this.threadManager = threadManager;
+    public void setPenrose(Penrose penrose) {
+        this.penrose = penrose;
     }
 }

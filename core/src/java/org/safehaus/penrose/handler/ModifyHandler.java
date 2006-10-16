@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2005, Identyx Corporation.
+ * Copyright (c) 2000-2006, Identyx Corporation.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,14 +21,12 @@ import org.safehaus.penrose.session.PenroseSession;
 import org.safehaus.penrose.session.PenroseSearchResults;
 import org.safehaus.penrose.session.PenroseSearchControls;
 import org.safehaus.penrose.partition.Partition;
-import org.safehaus.penrose.partition.PartitionManager;
-import org.safehaus.penrose.schema.ObjectClass;
 import org.safehaus.penrose.schema.AttributeType;
-import org.safehaus.penrose.util.*;
-import org.safehaus.penrose.util.Formatter;
+import org.safehaus.penrose.util.PasswordUtil;
+import org.safehaus.penrose.util.BinaryUtil;
+import org.safehaus.penrose.util.ExceptionUtil;
 import org.safehaus.penrose.mapping.*;
-import org.safehaus.penrose.config.PenroseConfig;
-import org.safehaus.penrose.service.ServiceConfig;
+import org.safehaus.penrose.engine.Engine;
 import org.ietf.ldap.*;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
@@ -53,69 +51,25 @@ public class ModifyHandler {
         this.handler = handler;
     }
 
-    public int modify(PenroseSession session, String dn, Collection modifications)
-			throws Exception {
+    public int modify(
+            PenroseSession session,
+            Partition partition,
+            Entry entry,
+            Collection modifications
+    ) throws Exception {
 
         int rc;
         try {
-            log.warn("Modify entry \""+dn+"\".");
-
-            log.debug(Formatter.displaySeparator(80));
-            log.debug(Formatter.displayLine("MODIFY:", 80));
-            if (session != null && session.getBindDn() != null) {
-                log.debug(Formatter.displayLine(" - Bind DN: " + session.getBindDn(), 80));
-            }
-            log.debug(Formatter.displayLine(" - DN: " + dn, 80));
-
-            log.debug(Formatter.displayLine(" - Attributes: " + dn, 80));
-            for (Iterator i=modifications.iterator(); i.hasNext(); ) {
-                ModificationItem mi = (ModificationItem)i.next();
-                Attribute attribute = mi.getAttribute();
-                String op = "replace";
-                switch (mi.getModificationOp()) {
-                    case DirContext.ADD_ATTRIBUTE:
-                        op = "add";
-                        break;
-                    case DirContext.REMOVE_ATTRIBUTE:
-                        op = "delete";
-                        break;
-                    case DirContext.REPLACE_ATTRIBUTE:
-                        op = "replace";
-                        break;
-                }
-
-                log.debug(Formatter.displayLine("   - "+op+": "+attribute.getID()+" => "+attribute.get(), 80));
-            }
-
-            log.debug(Formatter.displaySeparator(80));
-
-            if (session != null && session.getBindDn() == null) {
-                PenroseConfig penroseConfig = handler.getPenroseConfig();
-                ServiceConfig serviceConfig = penroseConfig.getServiceConfig("LDAP");
-                String s = serviceConfig == null ? null : serviceConfig.getParameter("allowAnonymousAccess");
-                boolean allowAnonymousAccess = s == null ? true : new Boolean(s).booleanValue();
-                if (!allowAnonymousAccess) {
-                    return LDAPException.INSUFFICIENT_ACCESS_RIGHTS;
-                }
-            }
-
-            String ndn = LDAPDN.normalize(dn);
-
-            Entry entry = handler.getFindHandler().find(ndn);
-            if (entry == null) {
-                log.debug("Entry "+entry.getDn()+" not found");
-                return LDAPException.NO_SUCH_OBJECT;
-            }
-
-            rc = performModify(session, entry, modifications);
+            rc = performModify(session, partition, entry, modifications);
             if (rc != LDAPException.SUCCESS) return rc;
 
             // refreshing entry cache
 
-            handler.getEngine().getEntryCache().remove(entry);
+            EntryMapping entryMapping = entry.getEntryMapping();
+            handler.getEntryCache().remove(partition, entryMapping, entry.getDn());
 
             PenroseSession adminSession = handler.getPenrose().newSession();
-            adminSession.setBindDn(handler.getPenroseConfig().getRootDn());
+            adminSession.setBindDn(handler.getPenrose().getPenroseConfig().getRootDn());
 
             PenroseSearchResults results = new PenroseSearchResults();
 
@@ -123,7 +77,7 @@ public class ModifyHandler {
             sc.setScope(PenroseSearchControls.SCOPE_SUB);
 
             adminSession.search(
-                    dn,
+                    entry.getDn(),
                     "(objectClass=*)",
                     sc,
                     results
@@ -148,16 +102,14 @@ public class ModifyHandler {
         return rc;
     }
 
-    public int performModify(PenroseSession session, Entry entry, Collection modifications)
-			throws Exception {
+    public int performModify(
+            PenroseSession session,
+            Partition partition,
+            Entry entry,
+            Collection modifications
+    ) throws Exception {
 
         log.debug("Modifying "+entry.getDn());
-
-        int rc = handler.getACLEngine().checkModify(session, entry.getDn(), entry.getEntryMapping());
-        if (rc != LDAPException.SUCCESS) {
-            log.debug("Not authorized to modify "+entry.getDn());
-            return rc;
-        }
 
         Collection normalizedModifications = new ArrayList();
 
@@ -203,20 +155,17 @@ public class ModifyHandler {
 
         EntryMapping entryMapping = entry.getEntryMapping();
 
-        PartitionManager partitionManager = handler.getPartitionManager();
-        Partition partition = partitionManager.getPartition(entryMapping);
+        String engineName = "DEFAULT";
+        if (partition.isProxy(entryMapping)) engineName = "PROXY";
 
-        if (partition.isProxy(entryMapping)) {
-            log.debug("Modifying "+entry.getDn()+" via proxy");
-            return handler.getEngine().modifyProxy(session, partition, entryMapping, entry, modifications);
+        Engine engine = handler.getEngine(engineName);
+
+        if (engine == null) {
+            log.debug("Engine "+engineName+" not found");
+            return LDAPException.OPERATIONS_ERROR;
         }
 
-        if (partition.isDynamic(entryMapping)) {
-            return modifyVirtualEntry(session, entry, modifications);
-
-        } else {
-            return modifyStaticEntry(entryMapping, modifications);
-        }
+        return engine.modify(session, partition, entry, modifications);
 	}
 
     /**
@@ -248,9 +197,9 @@ public class ModifyHandler {
 
                 byte[] bytes;
                 if (value instanceof byte[]) {
-                    bytes = PasswordUtil.encrypt(encryption, (byte[])value);
+                    bytes = PasswordUtil.encrypt(encryption, null, (byte[])value);
                 } else {
-                    bytes = PasswordUtil.encrypt(encryption, value.toString());
+                    bytes = PasswordUtil.encrypt(encryption, null, value.toString());
                 }
 
                 value = BinaryUtil.encode(encoding, bytes);
@@ -261,113 +210,8 @@ public class ModifyHandler {
 		}
 	}
 
-    public int modifyVirtualEntry(
-            PenroseSession session,
-            Entry entry,
-			Collection modifications)
-            throws Exception {
 
-		EntryMapping entryMapping = entry.getEntryMapping();
-        AttributeValues oldValues = entry.getAttributeValues();
-
-		//convertValues(entryMapping, modifications);
-
-		log.debug("Old entry:");
-		log.debug("\n"+EntryUtil.toString(entry));
-
-		log.debug("--- perform modification:");
-		AttributeValues newValues = new AttributeValues(oldValues);
-
-		Collection objectClasses = handler.getSchemaManager().getObjectClasses(entryMapping);
-        Collection objectClassNames = new ArrayList();
-        for (Iterator i=objectClasses.iterator(); i.hasNext(); ) {
-            ObjectClass oc = (ObjectClass)i.next();
-            objectClassNames.add(oc.getName());
-        }
-        log.debug("Object classes: "+objectClassNames);
-
-		for (Iterator i = modifications.iterator(); i.hasNext();) {
-			ModificationItem modification = (ModificationItem)i.next();
-
-			Attribute attribute = modification.getAttribute();
-			String attributeName = attribute.getID();
-
-			if (attributeName.equals("entryCSN"))
-				continue; // ignore
-			if (attributeName.equals("modifiersName"))
-				continue; // ignore
-			if (attributeName.equals("modifyTimestamp"))
-				continue; // ignore
-
-			if (attributeName.equals("objectClass"))
-				return LDAPException.OBJECT_CLASS_MODS_PROHIBITED;
-
-			// check if the attribute is defined in the object class
-
-			boolean found = false;
-			for (Iterator j = objectClasses.iterator(); j.hasNext();) {
-				ObjectClass oc = (ObjectClass) j.next();
-				//log.debug("Object Class: " + oc.getName());
-				//log.debug(" - required: " + oc.getRequiredAttributes());
-				//log.debug(" - optional: " + oc.getOptionalAttributes());
-
-				if (oc.containsRequiredAttribute(attributeName) || oc.containsOptionalAttribute(attributeName)) {
-					found = true;
-					break;
-				}
-			}
-
-			if (!found) {
-				log.debug("Can't find attribute " + attributeName
-						+ " in object classes "+objectClasses);
-				return LDAPException.OBJECT_CLASS_VIOLATION;
-			}
-
-			Set newAttrValues = new HashSet();
-			for (NamingEnumeration j=attribute.getAll(); j.hasMore(); ) {
-                Object value = j.next();
-				newAttrValues.add(value);
-			}
-
-			Collection value = newValues.get(attributeName);
-			log.debug("old value " + attributeName + ": "
-					+ newValues.get(attributeName));
-
-			Set newValue = new HashSet();
-            if (value != null) newValue.addAll(value);
-
-			switch (modification.getModificationOp()) {
-                case DirContext.ADD_ATTRIBUTE:
-                    newValue.addAll(newAttrValues);
-                    break;
-                case DirContext.REMOVE_ATTRIBUTE:
-                    if (attribute.get() == null) {
-                        newValue.clear();
-                    } else {
-                        newValue.removeAll(newAttrValues);
-                    }
-                    break;
-                case DirContext.REPLACE_ATTRIBUTE:
-                    newValue = newAttrValues;
-                    break;
-			}
-
-			newValues.set(attributeName, newValue);
-
-			log.debug("new value " + attributeName + ": "
-					+ newValues.get(attributeName));
-		}
-
-        Entry newEntry = new Entry(entry.getDn(), entryMapping, entry.getSourceValues(), newValues);
-
-		log.debug("New entry:");
-		log.debug("\n"+EntryUtil.toString(newEntry));
-
-        return handler.getEngine().modify(entry, newValues);
-	}
-
-
-    public int modifyStaticEntry(EntryMapping entry, Collection modifications)
+    public int modifyStaticEntry(Partition partition, EntryMapping entry, Collection modifications)
             throws Exception {
 
         //convertValues(entry, modifications);
@@ -417,17 +261,17 @@ public class ModifyHandler {
 		return LDAPException.SUCCESS;
 	}
 
-    public void addAttribute(EntryMapping entry, String name, Object value)
+    public void addAttribute(EntryMapping entryMapping, String name, Object value)
 			throws Exception {
 
-		AttributeMapping attribute = entry.getAttributeMapping(name);
+		AttributeMapping attributeMapping = entryMapping.getAttributeMapping(name);
 
-		if (attribute == null) {
-			attribute = new AttributeMapping(name, AttributeMapping.CONSTANT, value, true);
-			entry.addAttributeMapping(attribute);
+		if (attributeMapping == null) {
+			attributeMapping = new AttributeMapping(name, AttributeMapping.CONSTANT, value, true);
+			entryMapping.addAttributeMapping(attributeMapping);
 
 		} else {
-			attribute.setConstant(value);
+			attributeMapping.setConstant(value);
 		}
 	}
 
@@ -441,10 +285,8 @@ public class ModifyHandler {
 		AttributeMapping attributeMapping = entryMapping.getAttributeMapping(name);
 		if (attributeMapping == null) return;
 
-        if (!AttributeMapping.CONSTANT.equals(attributeMapping.getType())) return;
-
         Object attrValue = attributeMapping.getConstant();
-		if (!attrValue.equals(value)) return;
+        if (attrValue == null || !attrValue.equals(value)) return;
 
         entryMapping.removeAttributeMapping(attributeMapping);
 	}

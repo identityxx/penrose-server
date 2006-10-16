@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2005, Identyx Corporation.
+ * Copyright (c) 2000-2006, Identyx Corporation.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,6 +19,7 @@ package org.safehaus.penrose.engine;
 
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.util.EntryUtil;
+import org.safehaus.penrose.partition.Partition;
 import org.ietf.ldap.LDAPException;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
@@ -39,37 +40,61 @@ public class ModRdnEngine {
         this.engine = engine;
     }
 
-    public int modrdn(Entry entry, String newRdn, boolean deleteOldRdn) throws Exception {
+    public int modrdn(Partition partition, Entry entry, String newRdn, boolean deleteOldRdn) throws Exception {
 
         EntryMapping entryMapping = entry.getEntryMapping();
+
         AttributeValues oldAttributeValues = entry.getAttributeValues();
-        AttributeValues oldSourceValues = entry.getSourceValues();
-
-        Row rdn = EntryUtil.getRdn(newRdn);
-
         AttributeValues newAttributeValues = new AttributeValues(oldAttributeValues);
+
+        Row rdn1 = EntryUtil.getRdn(entry.getDn());
+        oldAttributeValues.set("rdn", rdn1);
+
+        Row rdn2 = EntryUtil.getRdn(newRdn);
+        newAttributeValues.set("rdn", rdn2);
+
+        log.debug("Renaming "+rdn1+" to "+rdn2);
+
+        if (deleteOldRdn) {
+            log.debug("Removing old RDN:");
+            for (Iterator i=rdn1.getNames().iterator(); i.hasNext(); ) {
+                String name = (String)i.next();
+                Object value = rdn1.get(name);
+                newAttributeValues.remove(name, value);
+                log.debug(" - "+name+": "+value);
+            }
+        }
+/*
         Collection rdnAttributes = entryMapping.getRdnAttributes();
         for (Iterator i=rdnAttributes.iterator(); i.hasNext(); ) {
             AttributeMapping attributeMapping = (AttributeMapping)i.next();
             String name = attributeMapping.getName();
-            String newValue = (String)rdn.get(name);
+            String newValue = (String)rdn2.get(name);
 
             newAttributeValues.remove(name);
             newAttributeValues.add(name, newValue);
         }
-
+*/
+        AttributeValues oldSourceValues = entry.getSourceValues();
         AttributeValues newSourceValues = new AttributeValues(oldSourceValues);
         Collection sources = entryMapping.getSourceMappings();
         for (Iterator i=sources.iterator(); i.hasNext(); ) {
             SourceMapping sourceMapping = (SourceMapping)i.next();
 
             AttributeValues output = new AttributeValues();
-            engine.getTransformEngine().translate(entryMapping, sourceMapping, newAttributeValues, output);
+            engine.getTransformEngine().translate(partition, entryMapping, sourceMapping, newAttributeValues, output);
             newSourceValues.set(sourceMapping.getName(), output);
         }
 
         if (log.isDebugEnabled()) {
-            log.debug("Attribute values:");
+            log.debug("Old attribute values:");
+            for (Iterator iterator = oldAttributeValues.getNames().iterator(); iterator.hasNext(); ) {
+                String name = (String)iterator.next();
+                Collection values = newAttributeValues.get(name);
+                log.debug(" - "+name+": "+values);
+            }
+
+            log.debug("New attribute values:");
             for (Iterator iterator = newAttributeValues.getNames().iterator(); iterator.hasNext(); ) {
                 String name = (String)iterator.next();
                 Collection values = newAttributeValues.get(name);
@@ -91,7 +116,7 @@ public class ModRdnEngine {
             }
         }
 
-        ModRdnGraphVisitor visitor = new ModRdnGraphVisitor(engine, entryMapping, oldSourceValues, newSourceValues);
+        ModRdnGraphVisitor visitor = new ModRdnGraphVisitor(engine, partition, entryMapping, oldSourceValues, newSourceValues);
         visitor.run();
 
         if (visitor.getReturnCode() != LDAPException.SUCCESS) return visitor.getReturnCode();

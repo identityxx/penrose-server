@@ -2,7 +2,7 @@
 
 <!--
 <!DOCTYPE server PUBLIC
-  "-//Penrose/DTD Server 1.0//EN"
+  "-//Penrose/DTD Server 1.1//EN"
   "http://penrose.safehaus.org/dtd/server.dtd">
 -->
 
@@ -30,7 +30,7 @@
 <!ELEMENT service-class (#PCDATA)>
 
 <!ELEMENT schema EMPTY>
-<!ATTLIST schema name CDATA #REQUIRED>
+<!ATTLIST schema name CDATA #IMPLIED>
 <!ATTLIST schema path CDATA #REQUIRED>
 
 <!ELEMENT interpreter (interpreter-class?, description?, parameter*)>
@@ -46,8 +46,9 @@
 <!ELEMENT session (description?, parameter*)>
 <!ATTLIST session name CDATA #IMPLIED>
 
-<!ELEMENT engine (engine-class?, description?, parameter*)>
+<!ELEMENT engine (engine-name?, engine-class?, description?, parameter*)>
 <!ATTLIST engine name CDATA #IMPLIED>
+<!ELEMENT engine-name (#PCDATA)>
 <!ELEMENT engine-class (#PCDATA)>
 
 <!ELEMENT connector (connector-class?, description?, parameter*)>

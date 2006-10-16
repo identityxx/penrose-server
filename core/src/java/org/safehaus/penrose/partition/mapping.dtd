@@ -2,21 +2,24 @@
 
 <!--
 <!DOCTYPE mapping PUBLIC
-  "-//Penrose/DTD Mapping 1.0//EN"
+  "-//Penrose/DTD Mapping 1.1//EN"
   "http://penrose.safehaus.org/dtd/mapping.dtd">
 -->
 
 <!ELEMENT mapping (entry*)>
 
-<!ELEMENT entry (oc*, at*, source*, relationship*,aci*)>
+<!ELEMENT entry (description?, oc*, at*, source*, relationship*,aci*,parameter*)>
 <!ATTLIST entry dn CDATA #REQUIRED>
+
+<!ELEMENT description (#PCDATA)>
 
 <!ELEMENT oc (#PCDATA)>
 
 <!ELEMENT at (binary|constant|variable|expression)>
 <!ATTLIST at name CDATA #REQUIRED>
-<!ATTLIST at rdn (true|false) "false">
- 
+<!ATTLIST at rdn (true|first|false) "false">
+<!ATTLIST at operational (true|false) "false">
+
 <!ELEMENT source (source-name,field*,parameter*)>
 <!ATTLIST source name CDATA #REQUIRED>
 <!ATTLIST source proxy CDATA #IMPLIED>
@@ -30,6 +33,7 @@
 
 <!ELEMENT field (binary|constant|variable|expression)>
 <!ATTLIST field name CDATA #REQUIRED>
+<!ATTLIST field primaryKey (true|first|false) "false">
 
 <!ELEMENT relationship (expression)>
 

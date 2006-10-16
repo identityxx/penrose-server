@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2005, Identyx Corporation.
+ * Copyright (c) 2000-2006, Identyx Corporation.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -140,8 +140,13 @@ public class PartitionManager implements PartitionManagerMBean {
         return getPartitionByDn(entryMapping.getDn());
     }
 
+    /**
+     * Find the closest partition matching the DN
+     * @param dn
+     * @return partition
+     * @throws Exception
+     */
     public Partition getPartitionByDn(String dn) throws Exception {
-        //log.debug("Getting partition for "+dn);
         Partition partition = (Partition)cache.get(dn);
         if (partition != null) return partition;
 
@@ -178,24 +183,13 @@ public class PartitionManager implements PartitionManagerMBean {
         return partition;
     }
 
-    public Collection getPartitions() {
-        return partitions.values();
-    }
-
-    public Collection getPartitionNames() {
-        return partitions.keySet();
-    }
-
-    public SchemaManager getSchemaManager() {
-        return schemaManager;
-    }
-
-    public void setSchemaManager(SchemaManager schemaManager) {
-        this.schemaManager = schemaManager;
-    }
-
+    /**
+     * Find a partition exactly matching the DN.
+     * @param dn
+     * @return partition
+     * @throws Exception
+     */
     public Partition findPartition(String dn) throws Exception {
-        //log.debug("Finding partition for "+dn);
         Partition partition = (Partition)cache.get(dn);
         if (partition != null) return partition;
 
@@ -210,5 +204,21 @@ public class PartitionManager implements PartitionManagerMBean {
         }
 
         return partition;
+    }
+
+    public Collection getPartitions() {
+        return partitions.values();
+    }
+
+    public Collection getPartitionNames() {
+        return partitions.keySet();
+    }
+
+    public SchemaManager getSchemaManager() {
+        return schemaManager;
+    }
+
+    public void setSchemaManager(SchemaManager schemaManager) {
+        this.schemaManager = schemaManager;
     }
 }

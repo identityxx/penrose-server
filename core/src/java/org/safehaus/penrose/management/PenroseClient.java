@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2005, Identyx Corporation.
+ * Copyright (c) 2000-2006, Identyx Corporation.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -411,15 +411,26 @@ public class PenroseClient {
             System.out.println(version);
 
         } else if ("start".equals(command)) {
-            String serviceName = (String)iterator.next();
-            client.start(serviceName);
+            if (iterator.hasNext()) {
+                String serviceName = (String)iterator.next();
+                client.start(serviceName);
+            } else {
+                client.start();
+            }
 
         } else if ("stop".equals(command)) {
-            String serviceName = (String)iterator.next();
-            client.stop(serviceName);
+            if (iterator.hasNext()) {
+                String serviceName = (String)iterator.next();
+                client.stop(serviceName);
+            } else {
+                client.stop();
+            }
 
         } else if ("restart".equals(command)) {
             client.restart();
+
+        } else if ("reload".equals(command)) {
+            client.reload();
 
         } else if ("store".equals(command)) {
             client.store();

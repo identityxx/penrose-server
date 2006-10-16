@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE sources PUBLIC
-  "-//Penrose/DTD Sources 1.0//EN"
+  "-//Penrose/DTD Sources 1.1//EN"
   "http://penrose.safehaus.org/dtd/sources.dtd">
 
 <sources>
@@ -41,7 +41,7 @@
     <field name="password"/>
 
     <parameter>
-      <param-name>tableName</param-name>
+      <param-name>table</param-name>
       <param-value>users</param-value>
     </parameter>
 
@@ -55,7 +55,7 @@
     <field name="report" primaryKey="true"/>
 
     <parameter>
-      <param-name>tableName</param-name>
+      <param-name>table</param-name>
       <param-value>relationships</param-value>
     </parameter>
 

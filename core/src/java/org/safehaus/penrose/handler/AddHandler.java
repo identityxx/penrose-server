@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2005, Identyx Corporation.
+ * Copyright (c) 2000-2006, Identyx Corporation.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,12 +21,10 @@ import org.safehaus.penrose.session.PenroseSession;
 import org.safehaus.penrose.session.PenroseSearchResults;
 import org.safehaus.penrose.session.PenroseSearchControls;
 import org.safehaus.penrose.partition.Partition;
-import org.safehaus.penrose.partition.PartitionManager;
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.util.EntryUtil;
 import org.safehaus.penrose.util.ExceptionUtil;
-import org.safehaus.penrose.config.PenroseConfig;
-import org.safehaus.penrose.service.ServiceConfig;
+import org.safehaus.penrose.engine.Engine;
 import org.ietf.ldap.*;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
@@ -51,36 +49,21 @@ public class AddHandler {
 
     public int add(
             PenroseSession session,
+            Partition partition,
+            Entry parent,
             String dn,
             Attributes attributes)
     throws Exception {
 
         int rc;
         try {
-            log.warn("Add entry \""+dn+"\".");
-            log.debug("-------------------------------------------------");
-            log.debug("ADD:");
-            if (session != null && session.getBindDn() != null) log.debug(" - Bind DN: "+session.getBindDn());
-            log.debug(" - Entry: "+dn);
-            log.debug("");
-
-            if (session != null && session.getBindDn() == null) {
-                PenroseConfig penroseConfig = handler.getPenroseConfig();
-                ServiceConfig serviceConfig = penroseConfig.getServiceConfig("LDAP");
-                String s = serviceConfig == null ? null : serviceConfig.getParameter("allowAnonymousAccess");
-                boolean allowAnonymousAccess = s == null ? true : new Boolean(s).booleanValue();
-                if (!allowAnonymousAccess) {
-                    return LDAPException.INSUFFICIENT_ACCESS_RIGHTS;
-                }
-            }
-
-            rc = performAdd(session, dn, attributes);
+            rc = performAdd(session, partition, parent, dn, attributes);
             if (rc != LDAPException.SUCCESS) return rc;
 
             // refreshing entry cache
 
             PenroseSession adminSession = handler.getPenrose().newSession();
-            adminSession.setBindDn(handler.getPenroseConfig().getRootDn());
+            adminSession.setBindDn(handler.getPenrose().getPenroseConfig().getRootDn());
 
             PenroseSearchResults results = new PenroseSearchResults();
 
@@ -115,65 +98,46 @@ public class AddHandler {
 
     public int performAdd(
             PenroseSession session,
+            Partition partition,
+            Entry parent,
             String dn,
             Attributes attributes)
     throws Exception {
 
-        dn = LDAPDN.normalize(dn);
-
-        // find parent entry
-        String parentDn = EntryUtil.getParentDn(dn);
-        Entry parent = getHandler().getFindHandler().find(parentDn);
-        if (parent == null) {
-            log.debug("Parent entry "+parentDn+" not found");
-            return LDAPException.NO_SUCH_OBJECT;
-        }
-
-        int rc = handler.getACLEngine().checkAdd(session, parentDn, parent.getEntryMapping());
-        if (rc != LDAPException.SUCCESS) {
-            log.debug("Not allowed to add children under "+parentDn);
-            return rc;
-        }
-
-        log.debug("Adding entry under "+parentDn);
+        log.debug("Adding entry under "+parent.getDn());
 
         EntryMapping parentMapping = parent.getEntryMapping();
-        PartitionManager partitionManager = handler.getPartitionManager();
-        Partition partition = partitionManager.getPartition(parentMapping);
-
-        if (partition.isProxy(parentMapping)) {
-            log.debug("Adding "+dn+" via proxy");
-            return handler.getEngine().addProxy(session, partition, parentMapping, dn, attributes);
-        }
 
         Collection children = partition.getChildren(parentMapping);
 
-        AttributeValues values = new AttributeValues();
-
-        for (NamingEnumeration i=attributes.getAll(); i.hasMore(); ) {
-            Attribute attribute = (Attribute)i.next();
-            String attributeName = attribute.getID();
-
-            Set set = new HashSet();
-            for (NamingEnumeration j=attribute.getAll(); j.hasMore(); ) {
-                Object value = j.next();
-                set.add(value);
-            }
-            values.set(attributeName, set);
-        }
-
-        // add into the first matching child
         for (Iterator iterator = children.iterator(); iterator.hasNext(); ) {
             EntryMapping entryMapping = (EntryMapping)iterator.next();
-            boolean dynamic = partition.isDynamic(entryMapping);
+            if (!partition.isDynamic(entryMapping)) continue;
 
-            //log.debug("Checking mapping "+entryMapping.getDn()+": "+dynamic);
-            if (!dynamic) continue;
+            String engineName = "DEFAULT";
+            if (partition.isProxy(entryMapping)) engineName = "PROXY";
 
-            return handler.getEngine().add(parent, entryMapping, values);
+            Engine engine = handler.getEngine(engineName);
+
+            if (engine == null) {
+                log.debug("Engine "+engineName+" not found");
+                return LDAPException.OPERATIONS_ERROR;
+            }
+
+            return engine.add(session, partition, parent, entryMapping, dn, attributes);
         }
 
-        return addStaticEntry(parentMapping, values, dn);
+        String engineName = "DEFAULT";
+        if (partition.isProxy(parentMapping)) engineName = "PROXY";
+
+        Engine engine = handler.getEngine(engineName);
+
+        if (engine == null) {
+            log.debug("Engine "+engineName+" not found");
+            return LDAPException.OPERATIONS_ERROR;
+        }
+
+        return engine.add(session, partition, parent, parentMapping, dn, attributes);
     }
 
     public Handler getHandler() {
@@ -184,8 +148,20 @@ public class AddHandler {
         this.handler = handler;
     }
 
-    public int addStaticEntry(EntryMapping parent, AttributeValues values, String dn) throws Exception {
+    public int addStaticEntry(EntryMapping parent, String dn, Attributes attributes) throws Exception {
         log.debug("Adding static entry "+dn);
+
+        AttributeValues values = new AttributeValues();
+
+        for (NamingEnumeration i=attributes.getAll(); i.hasMore(); ) {
+            Attribute attribute = (Attribute)i.next();
+            String attributeName = attribute.getID();
+
+            for (NamingEnumeration j=attribute.getAll(); j.hasMore(); ) {
+                Object value = j.next();
+                values.set(attributeName, value);
+            }
+        }
 
         EntryMapping newEntry;
 
@@ -228,7 +204,7 @@ public class AddHandler {
                 AttributeMapping newAttribute = new AttributeMapping();
                 newAttribute.setName(name);
                 newAttribute.setConstant(value);
-                newAttribute.setRdn(rdn.contains(name));
+                newAttribute.setRdn(rdn.contains(name) ? AttributeMapping.RDN_TRUE : AttributeMapping.RDN_FALSE);
 
                 log.debug("Add attribute "+name+": "+value);
                 newEntry.addAttributeMapping(newAttribute);

@@ -1,5 +1,5 @@
 <!--
- Copyright (c) 2000-2005, Identyx Corporation.
+ Copyright (c) 2000-2006, Identyx Corporation.
  All rights reserved.
 -->
 <project name="penrose" default="build">
@@ -80,14 +80,14 @@
         <ant dir="server" target="dist-src"/>
     </target>
 
+    <target name="dist-macosx" depends="init">
+        <ant dir="core" target="dist-macosx"/>
+        <ant dir="server" target="dist-macosx"/>
+    </target>
+
     <target name="dist-unix" depends="init">
         <ant dir="core" target="dist-unix"/>
         <ant dir="server" target="dist-unix"/>
-    </target>
-
-    <target name="dist-rpm" depends="init">
-        <ant dir="core" target="dist-rpm"/>
-        <ant dir="server" target="dist-rpm"/>
     </target>
 
     <target name="dist-win32" depends="init">
@@ -111,7 +111,6 @@
     <target name="clean" depends="init">
         <ant dir="server" target="clean"/>
         <ant dir="core" target="clean"/>
-        <delete dir="target" failonerror="false"/>
     </target>
 
 </project>

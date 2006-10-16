@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2005, Identyx Corporation.
+ * Copyright (c) 2000-2006, Identyx Corporation.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -41,7 +41,14 @@ public class JoinEngine {
         this.engine = engine;
     }
 
-    public Collection join(Collection list1, Collection list2, EntryMapping entryMapping, Collection relationships) throws Exception {
+    public Collection join(
+            Collection list1,
+            Collection list2,
+            Partition partition,
+            EntryMapping entryMapping,
+            Collection relationships
+    ) throws Exception {
+
         Collection results = new ArrayList();
 
         for (Iterator i=list1.iterator(); i.hasNext(); ) {
@@ -50,7 +57,7 @@ public class JoinEngine {
             for (Iterator j=list2.iterator(); j.hasNext(); ) {
                 AttributeValues av2 = (AttributeValues)j.next();
 
-                if (!evaluate(entryMapping, relationships, av1, av2)) continue;
+                if (!evaluate(partition, entryMapping, relationships, av1, av2)) continue;
 
                 AttributeValues sv = new AttributeValues();
                 sv.add(av1);
@@ -69,7 +76,14 @@ public class JoinEngine {
         return results;
     }
 
-    public Collection leftJoin(Collection list1, Collection list2, EntryMapping entryMapping, Collection relationships) throws Exception {
+    public Collection leftJoin(
+            Collection list1,
+            Collection list2,
+            Partition partition,
+            EntryMapping entryMapping,
+            Collection relationships
+    ) throws Exception {
+
         Collection results = new ArrayList();
 
         //log.debug("Left join:");
@@ -83,7 +97,7 @@ public class JoinEngine {
                 AttributeValues av2 = (AttributeValues)j.next();
                 //log.debug("    - "+av2);
 
-                if (evaluate(entryMapping, relationships, av1, av2)) {
+                if (evaluate(partition, entryMapping, relationships, av1, av2)) {
 
                     AttributeValues sv = new AttributeValues();
                     sv.add(av1);
@@ -108,6 +122,7 @@ public class JoinEngine {
     }
 
     public boolean evaluate(
+            Partition partition,
             EntryMapping entryMapping,
             Collection relationships,
             AttributeValues sv1,
@@ -115,8 +130,6 @@ public class JoinEngine {
             throws Exception {
 
         if (relationships == null) return true;
-
-        Partition partition = engine.getPartitionManager().getPartition(entryMapping);
 
         for (Iterator i=relationships.iterator(); i.hasNext(); ) {
             Relationship relationship = (Relationship)i.next();

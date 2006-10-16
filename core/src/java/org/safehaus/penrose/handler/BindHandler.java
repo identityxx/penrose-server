@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2005, Identyx Corporation.
+ * Copyright (c) 2000-2006, Identyx Corporation.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,19 +19,17 @@ package org.safehaus.penrose.handler;
 
 import org.safehaus.penrose.session.PenroseSession;
 import org.safehaus.penrose.mapping.*;
-import org.safehaus.penrose.util.PasswordUtil;
 import org.safehaus.penrose.util.Formatter;
 import org.safehaus.penrose.util.ExceptionUtil;
+import org.safehaus.penrose.util.PasswordUtil;
 import org.safehaus.penrose.partition.Partition;
-import org.safehaus.penrose.partition.PartitionManager;
-import org.safehaus.penrose.config.PenroseConfig;
-import org.safehaus.penrose.service.ServiceConfig;
-import org.ietf.ldap.LDAPDN;
+import org.safehaus.penrose.engine.Engine;
 import org.ietf.ldap.LDAPException;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
-import javax.naming.AuthenticationException;
+import java.util.Collection;
+import java.util.Iterator;
 
 /**
  * @author Endi S. Dewata
@@ -46,42 +44,18 @@ public class BindHandler {
         this.handler = handler;
     }
 
-    public int bind(PenroseSession session, String dn, String password) throws Exception {
+    public int bind(PenroseSession session, Partition partition, String dn, String password) throws Exception {
 
         int rc;
         try {
-            log.warn("Bind as "+dn+".");
+            log.warn("Bind as \""+dn+"\".");
             log.debug(Formatter.displaySeparator(80));
             log.debug(Formatter.displayLine("BIND:", 80));
             log.debug(Formatter.displayLine(" - DN       : "+dn, 80));
             log.debug(Formatter.displayLine(" - Password : "+password, 80));
             log.debug(Formatter.displaySeparator(80));
 
-            String ndn = LDAPDN.normalize(dn);
-            String rootDn = handler.getPenroseConfig().getRootDn();
-
-            if (ndn == null || "".equals(dn)) {
-                PenroseConfig penroseConfig = handler.getPenroseConfig();
-                ServiceConfig serviceConfig = penroseConfig.getServiceConfig("LDAP");
-                String s = serviceConfig == null ? null : serviceConfig.getParameter("allowAnonymousAccess");
-                boolean allowAnonymousAccess = s == null ? true : new Boolean(s).booleanValue();
-                return allowAnonymousAccess ? LDAPException.SUCCESS : LDAPException.INSUFFICIENT_ACCESS_RIGHTS;
-
-            } else if (rootDn != null && ndn != null && ndn.equals(LDAPDN.normalize(rootDn))) { // bind as root
-
-                rc = bindAsRoot(password);
-                if (rc != LDAPException.SUCCESS) return rc;
-
-            } else {
-
-                rc = bindAsUser(session, ndn, password);
-                if (rc != LDAPException.SUCCESS) return rc;
-            }
-
-            session.setBindDn(dn);
-            session.setBindPassword(password);
-
-            return LDAPException.SUCCESS; // LDAP_SUCCESS
+            rc = performBind(session, partition, dn, password);
 
         } catch (LDAPException e) {
             rc = e.getResultCode();
@@ -94,61 +68,65 @@ public class BindHandler {
         return rc;
     }
 
-    public int unbind(PenroseSession session) throws Exception {
+    public int performBind(PenroseSession session, Partition partition, String dn, String password) throws Exception {
 
-        log.debug("-------------------------------------------------------------------------------");
-        log.debug("UNBIND:");
+        Collection entryMappings = partition.findEntryMappings(dn);
 
-        if (session == null) return 0;
+        for (Iterator i=entryMappings.iterator(); i.hasNext(); ) {
+            EntryMapping entryMapping = (EntryMapping)i.next();
 
-        session.setBindDn(null);
-        session.setBindPassword(null);
+            String engineName = "DEFAULT";
+            if (partition.isProxy(entryMapping)) engineName = "PROXY";
 
-        log.debug("  dn: " + session.getBindDn());
+            Engine engine = handler.getEngine(engineName);
 
-        return 0;
-    }
+            if (engine == null) {
+                log.debug("Engine "+engineName+" not found");
+                continue;
+            }
 
-    public int bindAsRoot(String password) throws Exception {
+            // attempt direct bind to the source
+            int rc = engine.bind(session, partition, entryMapping, dn, password);
+            if (rc == LDAPException.SUCCESS) return rc;
 
-        if (!PasswordUtil.comparePassword(password, handler.getPenroseConfig().getRootPassword())) {
-            log.debug("Password doesn't match => BIND FAILED");
-            return LDAPException.INVALID_CREDENTIALS;
+            // attempt to compare the userPassword attribute
+/*
+            List path = new ArrayList();
+            AttributeValues sourceValues = new AttributeValues();
+
+            handler.getFindHandler().find(partition, dn, path, sourceValues);
+
+            if (path.isEmpty()) {
+                log.debug("Entry "+dn+" not found");
+                continue;
+            }
+
+            Entry entry = (Entry)path.iterator().next();
+*/
+            Entry entry = handler.getFindHandler().find(partition, dn);
+            
+            if (entry == null) {
+                log.debug("Entry "+dn+" not found");
+                continue;
+            }
+
+            AttributeValues attributeValues = entry.getAttributeValues();
+
+            Collection userPasswords = attributeValues.get("userPassword");
+
+            if (userPasswords == null) {
+                log.debug("Attribute userPassword not found");
+                continue;
+            }
+
+            for (Iterator j = userPasswords.iterator(); j.hasNext(); ) {
+                Object userPassword = j.next();
+                log.debug("userPassword: "+userPassword);
+                if (PasswordUtil.comparePassword(password, userPassword)) return LDAPException.SUCCESS;
+            }
         }
 
-        return LDAPException.SUCCESS;
-    }
-
-    public int bindAsUser(PenroseSession session, String dn, String password) throws Exception {
-        log.debug("Searching for "+dn);
-
-        PartitionManager partitionManager = handler.getPartitionManager();
-        Partition partition = partitionManager.findPartition(dn);
-        //Partition partition = partitionManager.getPartition(entryMapping);
-
-        if (partition == null) {
-            log.debug("Entry "+dn+" not found => BIND FAILED");
-            return LDAPException.INVALID_CREDENTIALS;
-        }
-
-        EntryMapping entryMapping = partition.findEntryMapping(dn);
-
-        if (partition.isProxy(entryMapping)) {
-            return handler.getEngine().bindProxy(session, partition, entryMapping, dn, password);
-        }
-
-        Entry entry = handler.getFindHandler().find(dn);
-
-        if (entry == null) {
-            log.debug("Entry "+dn+" not found => BIND FAILED");
-            return LDAPException.INVALID_CREDENTIALS;
-        }
-
-        log.debug("Found "+entry.getDn());
-
-        //EntryMapping entryMapping = entry.getEntryMapping();
-
-        return handler.getEngine().bind(entry, password);
+        return LDAPException.INVALID_CREDENTIALS;
     }
 
     public Handler getHandler() {

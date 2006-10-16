@@ -1,3 +1,0 @@
-dn: uid=test,ou=Users,dc=JNDI,dc=Example,dc=com
-userPassword: secret
-cn: Secret User

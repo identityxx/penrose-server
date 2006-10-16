@@ -1,5 +1,5 @@
 <!--
- Copyright (c) 2000-2005, Identyx Corporation.
+ Copyright (c) 2000-2006, Identyx Corporation.
  All rights reserved.
 -->
 <project name="modules" default="dist">
@@ -17,7 +17,7 @@
         <fileset dir="../../lib">
             <include name="**/*.jar"/>
         </fileset>
-        <pathelement location="../../target/classes"/>
+        <pathelement location="../../core/target/classes"/>
     </path>
 
     <target name="build">

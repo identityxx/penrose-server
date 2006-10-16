@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2005, Identyx Corporation.
+ * Copyright (c) 2000-2006, Identyx Corporation.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,6 +18,7 @@
 package org.safehaus.penrose.config;
 
 import java.util.Iterator;
+import java.util.Collection;
 import java.io.FileWriter;
 import java.io.Writer;
 import java.io.File;
@@ -35,8 +36,8 @@ import org.safehaus.penrose.connector.ConnectorConfig;
 import org.safehaus.penrose.schema.SchemaConfig;
 import org.safehaus.penrose.partition.PartitionConfig;
 import org.safehaus.penrose.user.UserConfig;
-import org.safehaus.penrose.service.ServiceConfig;
 import org.safehaus.penrose.session.SessionConfig;
+import org.safehaus.penrose.service.ServiceConfig;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
@@ -71,7 +72,7 @@ public class PenroseConfigWriter {
 
         xmlWriter.startDTD(
                 "server",
-                "-//Penrose/DTD Server 1.0//EN",
+                "-//Penrose/DTD Server 1.1//EN",
                 "http://penrose.safehaus.org/dtd/server.dtd"
         );
 
@@ -137,8 +138,9 @@ public class PenroseConfigWriter {
             element.add(toElement(sessionConfig));
         }
 
-        if (penroseConfig.getEngineConfig() != null) {
-            EngineConfig engineConfig = penroseConfig.getEngineConfig();
+        Collection engineConfigs = penroseConfig.getEngineConfigs();
+        for (Iterator i=engineConfigs.iterator(); i.hasNext(); ) {
+            EngineConfig engineConfig = (EngineConfig)i.next();
             element.add(toElement(engineConfig));
         }
 
@@ -322,7 +324,7 @@ public class PenroseConfigWriter {
 
     public Element toElement(EngineConfig engineConfig) {
         Element element = new DefaultElement("engine");
-/*
+
         Element engineName = new DefaultElement("engine-name");
         engineName.add(new DefaultText(engineConfig.getName()));
         element.add(engineName);
@@ -330,7 +332,7 @@ public class PenroseConfigWriter {
         Element engineClass = new DefaultElement("engine-class");
         engineClass.add(new DefaultText(engineConfig.getEngineClass()));
         element.add(engineClass);
-*/
+
         if (engineConfig.getDescription() != null && !"".equals(engineConfig.getDescription())) {
             Element description = new DefaultElement("description");
             description.add(new DefaultText(engineConfig.getDescription()));

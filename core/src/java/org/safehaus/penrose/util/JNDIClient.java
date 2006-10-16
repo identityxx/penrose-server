@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2005, Identyx Corporation.
+ * Copyright (c) 2000-2006, Identyx Corporation.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,23 +17,25 @@
  */
 package org.safehaus.penrose.util;
 
-import java.io.StringReader;
-import java.util.*;
-
-import javax.naming.Context;
-import javax.naming.NamingEnumeration;
-import javax.naming.directory.*;
-import javax.naming.ldap.*;
-
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.safehaus.penrose.schema.Schema;
 import org.safehaus.penrose.schema.AttributeType;
 import org.safehaus.penrose.schema.ObjectClass;
 import org.safehaus.penrose.schema.SchemaParser;
-import org.safehaus.penrose.schema.Schema;
-import org.safehaus.penrose.session.PenroseSearchResults;
+import org.safehaus.penrose.ldap.LDAPClient;
 import org.safehaus.penrose.session.PenroseSearchControls;
+import org.safehaus.penrose.session.PenroseSearchResults;
 import org.ietf.ldap.*;
-import org.slf4j.LoggerFactory;
-import org.slf4j.Logger;
+
+import javax.naming.directory.*;
+import javax.naming.Context;
+import javax.naming.NamingEnumeration;
+import javax.naming.ReferralException;
+import javax.naming.ldap.LdapContext;
+import javax.naming.ldap.InitialLdapContext;
+import java.util.*;
+import java.io.StringReader;
 
 public class JNDIClient {
 
@@ -519,8 +521,8 @@ public class JNDIClient {
                     SearchResult sr = (SearchResult)results.next();
                     Attributes attributes = sr.getAttributes();
 
-                    Attribute attribute = attributes.get("lDAPDisplayName");
-                    String ocName = (String)attribute.get();
+                    Attribute lDAPDisplayName = attributes.get("lDAPDisplayName");
+                    String ocName = (String)lDAPDisplayName.get();
                     //log.debug(" - "+ocName);
 
                     ObjectClass oc = new ObjectClass();
@@ -699,21 +701,41 @@ public class JNDIClient {
 
         try {
             context = getContext();
-            ne = context.search(ldapBase, filter, ctls);
 
-            log.debug("Search \""+ldapBase+"\" with filter="+filter+" scope="+sc.getScope()+" attrs="+sc.getAttributes()+":");
+            boolean moreReferrals = true;
 
-            while (ne.hasMore()) {
-                javax.naming.directory.SearchResult sr = (javax.naming.directory.SearchResult)ne.next();
+            while (moreReferrals) {
+                try {
+                    ne = context.search(ldapBase, filter, ctls);
 
-                //String dn = "".equals(sr.getName()) ? baseDn : sr.getName()+","+baseDn;
-                String dn = EntryUtil.append(sr.getName(), baseDn);
-                //String dn = sr.getName();
-                //log.debug(" - "+dn);
+                    log.debug("Search \""+ldapBase+"\" with filter="+filter+" scope="+sc.getScope()+" attrs="+sc.getAttributes()+":");
 
-                sr.setName(dn);
+                    while (ne.hasMore()) {
+                        SearchResult sr = (SearchResult)ne.next();
 
-                results.add(sr);
+                        //String dn = "".equals(sr.getName()) ? baseDn : sr.getName()+","+baseDn;
+                        String dn = EntryUtil.append(sr.getName(), baseDn);
+                        //String dn = sr.getName();
+                        //log.debug(" - "+dn);
+
+                        sr.setName(dn);
+
+                        results.add(sr);
+                    }
+
+                    moreReferrals = false;
+
+                } catch (ReferralException e) {
+                    String referral = e.getReferralInfo().toString();
+                    log.debug("Referral: "+referral);
+                    results.addReferral(referral);
+
+                    moreReferrals = e.skipReferral();
+
+                    if (moreReferrals) {
+                        context = (LdapContext)e.getReferralContext();
+                    }
+                }
             }
 
         } finally {

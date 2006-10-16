@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2005, Identyx Corporation.
+ * Copyright (c) 2000-2006, Identyx Corporation.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -98,7 +98,6 @@ public class PenrosePartition implements org.apache.directory.server.core.partit
         return getSuffix().equals(name);
     }
 
-
     public void bind(LdapDN bindDn, byte[] credentials, List mechanisms, String saslAuthId) throws NamingException {
         log.info("Binding as \""+bindDn+"\"");
         log.info(" - mechanisms: \""+mechanisms+"\"");
@@ -133,7 +132,7 @@ public class PenrosePartition implements org.apache.directory.server.core.partit
 
     public void add(LdapDN name, Attributes attributes) throws NamingException {
         String dn = name.getUpName();
-        log.info("Adding \""+dn+"\"");
+         log.info("Adding \""+dn+"\"");
 
         if (getSuffix().equals(dn)) return;
 
@@ -196,7 +195,8 @@ public class PenrosePartition implements org.apache.directory.server.core.partit
             PenroseSession session = penrose.newSession();
             if (session == null) throw new ServiceUnavailableException();
 
-            int rc = session.modify(dn, Arrays.asList(modificationItems));
+            Collection modifications = new ArrayList(Arrays.asList(modificationItems));
+            int rc = session.modify(dn, modifications);
 
             session.close();
 
@@ -253,7 +253,7 @@ public class PenrosePartition implements org.apache.directory.server.core.partit
             String returningAttributes[] = searchControls.getReturningAttributes();
             List attributeNames = returningAttributes == null ? new ArrayList() : Arrays.asList(returningAttributes);
 
-            String newFilter = org.safehaus.penrose.ldap.FilterTool.convert(filter).toString();
+            String newFilter = FilterTool.convert(filter).toString();
 
             log.info("Searching \""+dn+"\"");
             log.debug(" - deref: "+deref);
@@ -370,7 +370,7 @@ public class PenrosePartition implements org.apache.directory.server.core.partit
             session.close();
 
             if (rc != LDAPException.SUCCESS) {
-                throw ExceptionTool.createNamingException(rc);
+                throw ExceptionTool.throwNamingException(rc);
             }
 
             SearchResult result = (SearchResult)results.next();
@@ -432,7 +432,7 @@ public class PenrosePartition implements org.apache.directory.server.core.partit
             session.close();
 
             if (rc != LDAPException.SUCCESS) {
-                throw ExceptionTool.createNamingException(rc);
+                throw ExceptionTool.throwNamingException(rc);
             }
 
         } catch (NamingException e) {

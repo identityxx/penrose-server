@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2005, Identyx Corporation.
+ * Copyright (c) 2000-2006, Identyx Corporation.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -29,6 +29,7 @@ import org.ietf.ldap.LDAPException;
 
 import java.util.Collection;
 import java.util.Map;
+import java.util.ArrayList;
 
 /**
  * @author Endi S. Dewata
@@ -63,7 +64,7 @@ public class Connection implements ConnectionMBean {
     public void close() throws Exception {
         if (adapter != null) adapter.dispose();
     }
-    
+
     public ConnectionConfig getConnectionConfig() {
         return connectionConfig;
     }
@@ -87,7 +88,7 @@ public class Connection implements ConnectionMBean {
     public Map getParameters() {
         return connectionConfig.getParameters();
     }
-    
+
     public Collection getParameterNames() {
         return connectionConfig.getParameterNames();
     }
@@ -114,13 +115,12 @@ public class Connection implements ConnectionMBean {
         adapter.search(sourceConfig, filter, sc, results);
     }
 
-    public void load(SourceConfig sourceConfig, Filter filter, PenroseSearchControls sc, PenroseSearchResults results) throws Exception {
+    public void load(SourceConfig sourceConfig, Collection primaryKeys, Filter filter, PenroseSearchControls sc, PenroseSearchResults results) throws Exception {
         if (adapter == null) {
             results.setReturnCode(LDAPException.OPERATIONS_ERROR);
-            results.close();
             return;
         }
-        adapter.load(sourceConfig, filter, sc, results);
+        adapter.load(sourceConfig, primaryKeys, filter, sc, results);
     }
 
     public int add(SourceConfig sourceConfig, Row pk, AttributeValues sourceValues) throws Exception {
@@ -135,7 +135,10 @@ public class Connection implements ConnectionMBean {
         PenroseSearchControls sc = new PenroseSearchControls();
         PenroseSearchResults sr = new PenroseSearchResults();
 
-        adapter.load(sourceConfig, filter, sc, sr);
+        Collection pks = new ArrayList();
+        pks.add(pk);
+
+        adapter.load(sourceConfig, pks, filter, sc, sr);
 
         if (!sr.hasNext()) return null;
         return (AttributeValues)sr.next();

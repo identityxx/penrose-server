@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2005, Identyx Corporation.
+ * Copyright (c) 2000-2006, Identyx Corporation.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,7 +23,6 @@ import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.connector.ConnectionManager;
 import org.safehaus.penrose.connector.Connection;
 import org.safehaus.penrose.connector.Adapter;
-import org.safehaus.penrose.partition.PartitionManager;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.SourceConfig;
 import org.slf4j.LoggerFactory;
@@ -45,30 +44,42 @@ public class EngineFilterTool {
         this.engine = engine;
     }
 
-    public Filter toSourceFilter(AttributeValues parentValues, EntryMapping entry, SourceMapping sourceMapping, Filter filter) throws Exception {
+    public Filter toSourceFilter(
+            Partition partition,
+            AttributeValues parentValues,
+            EntryMapping entryMapping,
+            SourceMapping sourceMapping,
+            Filter filter
+    ) throws Exception {
+
         log.debug("Converting filter "+filter+" for "+sourceMapping.getName());
 
         if (filter instanceof NotFilter) {
-            return toSourceFilter(parentValues, entry, sourceMapping, (NotFilter) filter);
+            return toSourceFilter(partition, parentValues, entryMapping, sourceMapping, (NotFilter) filter);
 
         } else if (filter instanceof AndFilter) {
-            return toSourceFilter(parentValues, entry, sourceMapping, (AndFilter) filter);
+            return toSourceFilter(partition, parentValues, entryMapping, sourceMapping, (AndFilter) filter);
 
         } else if (filter instanceof OrFilter) {
-            return toSourceFilter(parentValues, entry, sourceMapping, (OrFilter) filter);
+            return toSourceFilter(partition, parentValues, entryMapping, sourceMapping, (OrFilter) filter);
 
         } else if (filter instanceof SimpleFilter) {
-            return toSourceFilter(parentValues, entry, sourceMapping, (SimpleFilter) filter);
+            return toSourceFilter(partition, parentValues, entryMapping, sourceMapping, (SimpleFilter) filter);
 
         } else if (filter instanceof SubstringFilter) {
-            return toSourceFilter(parentValues, entry, sourceMapping, (SubstringFilter) filter);
+            return toSourceFilter(partition, parentValues, entryMapping, sourceMapping, (SubstringFilter) filter);
         }
 
         return null;
     }
 
-    public Filter toSourceFilter(AttributeValues parentValues, EntryMapping entryMapping, SourceMapping sourceMapping, SimpleFilter filter)
-            throws Exception {
+    public Filter toSourceFilter(
+            Partition partition,
+            AttributeValues parentValues,
+            EntryMapping entryMapping,
+            SourceMapping sourceMapping,
+            SimpleFilter filter
+    ) throws Exception {
 
         String attributeName = filter.getAttribute();
         String operator = filter.getOperator();
@@ -79,7 +90,7 @@ public class EngineFilterTool {
                 return null;
         }
 
-        Interpreter interpreter = engine.getInterpreterFactory().newInstance();
+        Interpreter interpreter = engine.getInterpreterManager().newInstance();
         interpreter.set(attributeName, attributeValue);
 
         if (parentValues != null) {
@@ -107,6 +118,7 @@ public class EngineFilterTool {
     }
 
     public Filter toSourceFilter(
+            Partition partition,
             AttributeValues parentValues,
             EntryMapping entryMapping,
             SourceMapping sourceMapping,
@@ -130,9 +142,6 @@ public class EngineFilterTool {
 
         if (!sourceName.equals(sourceMapping.getName())) return null;
 
-        PartitionManager partitionManager = engine.getPartitionManager();
-        Partition partition = partitionManager.getPartition(entryMapping);
-
         SourceConfig sourceConfig = partition.getSourceConfig(sourceMapping.getSourceName());
         if (sourceConfig == null) throw new Exception("Unknown source: "+sourceMapping.getSourceName());
 
@@ -146,17 +155,17 @@ public class EngineFilterTool {
         return newFilter;
     }
 
-    public Filter toSourceFilter(AttributeValues parentValues, EntryMapping entry, SourceMapping sourceMapping, NotFilter filter)
+    public Filter toSourceFilter(Partition partition, AttributeValues parentValues, EntryMapping entry, SourceMapping sourceMapping, NotFilter filter)
             throws Exception {
 
         Filter f = filter.getFilter();
 
-        Filter newFilter = toSourceFilter(parentValues, entry, sourceMapping, f);
+        Filter newFilter = toSourceFilter(partition, parentValues, entry, sourceMapping, f);
 
         return new NotFilter(newFilter);
     }
 
-    public Filter toSourceFilter(AttributeValues parentValues, EntryMapping entry, SourceMapping sourceMapping, AndFilter filter)
+    public Filter toSourceFilter(Partition partition, AttributeValues parentValues, EntryMapping entry, SourceMapping sourceMapping, AndFilter filter)
             throws Exception {
 
         Collection filters = filter.getFilters();
@@ -165,7 +174,7 @@ public class EngineFilterTool {
         for (Iterator i=filters.iterator(); i.hasNext(); ) {
             Filter f = (Filter)i.next();
 
-            Filter nf = toSourceFilter(parentValues, entry, sourceMapping, f);
+            Filter nf = toSourceFilter(partition, parentValues, entry, sourceMapping, f);
             if (nf == null) continue;
 
             af.addFilter(nf);
@@ -176,7 +185,7 @@ public class EngineFilterTool {
         return af;
     }
 
-    public Filter toSourceFilter(AttributeValues parentValues, EntryMapping entry, SourceMapping sourceMapping, OrFilter filter)
+    public Filter toSourceFilter(Partition partition, AttributeValues parentValues, EntryMapping entry, SourceMapping sourceMapping, OrFilter filter)
             throws Exception {
 
         Collection filters = filter.getFilters();
@@ -185,7 +194,7 @@ public class EngineFilterTool {
         for (Iterator i=filters.iterator(); i.hasNext(); ) {
             Filter f = (Filter)i.next();
 
-            Filter nf = toSourceFilter(parentValues, entry, sourceMapping, f);
+            Filter nf = toSourceFilter(partition, parentValues, entry, sourceMapping, f);
             if (nf == null) continue;
 
             of.addFilter(nf);

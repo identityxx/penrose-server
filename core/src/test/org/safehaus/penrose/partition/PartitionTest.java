@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2005, Identyx Corporation.
+ * Copyright (c) 2000-2006, Identyx Corporation.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -81,21 +81,27 @@ public class PartitionTest extends TestCase {
     }
 
     public void testFindingRootEntry() throws Exception {
-        EntryMapping entry = partition.findEntryMapping("dc=Example,dc=com");
-        assertNotNull(entry);
-        System.out.println("Found "+entry.getDn());
+        Collection entryMappings = partition.findEntryMappings("dc=Example,dc=com");
+        assertNotNull(entryMappings);
+        assertFalse(entryMappings.isEmpty());
+        EntryMapping entryMapping = (EntryMapping)entryMappings.iterator().next();
+        System.out.println("Found "+entryMapping.getDn());
     }
 
     public void testFindingStaticEntry() throws Exception {
-        EntryMapping entry = partition.findEntryMapping("cn=Users,dc=Example,dc=com");
-        assertNotNull(entry);
-        System.out.println("Found "+entry.getDn());
+        Collection entryMappings = partition.findEntryMappings("cn=Users,dc=Example,dc=com");
+        assertNotNull(entryMappings);
+        assertFalse(entryMappings.isEmpty());
+        EntryMapping entryMapping = (EntryMapping)entryMappings.iterator().next();
+        System.out.println("Found "+entryMapping.getDn());
     }
 
     public void testFindingDynamicEntry() throws Exception {
-        EntryMapping entry = partition.findEntryMapping("cn=...,cn=Users,dc=Example,dc=com");
-        assertNotNull(entry);
-        System.out.println("Found "+entry.getDn());
+        Collection entryMappings = partition.findEntryMappings("cn=...,cn=Users,dc=Example,dc=com");
+        assertNotNull(entryMappings);
+        assertFalse(entryMappings.isEmpty());
+        EntryMapping entryMapping = (EntryMapping)entryMappings.iterator().next();
+        System.out.println("Found "+entryMapping.getDn());
     }
 
     public void print(Partition partition) throws Exception {

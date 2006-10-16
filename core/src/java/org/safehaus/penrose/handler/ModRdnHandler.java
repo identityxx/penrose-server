@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2005, Identyx Corporation.
+ * Copyright (c) 2000-2006, Identyx Corporation.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,15 +21,12 @@ import org.safehaus.penrose.session.PenroseSession;
 import org.safehaus.penrose.session.PenroseSearchResults;
 import org.safehaus.penrose.session.PenroseSearchControls;
 import org.safehaus.penrose.partition.Partition;
-import org.safehaus.penrose.partition.PartitionManager;
 import org.safehaus.penrose.mapping.Entry;
 import org.safehaus.penrose.mapping.EntryMapping;
 import org.safehaus.penrose.util.EntryUtil;
 import org.safehaus.penrose.util.ExceptionUtil;
-import org.safehaus.penrose.config.PenroseConfig;
-import org.safehaus.penrose.service.ServiceConfig;
+import org.safehaus.penrose.engine.Engine;
 import org.ietf.ldap.LDAPException;
-import org.ietf.ldap.LDAPDN;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
@@ -42,13 +39,14 @@ public class ModRdnHandler {
 
     public Handler handler;
 
-	public ModRdnHandler(Handler handler) {
+    public ModRdnHandler(Handler handler) {
         this.handler = handler;
-	}
+    }
 
-	public int modrdn(
+    public int modrdn(
             PenroseSession session,
-            String dn,
+            Partition partition,
+            Entry entry,
             String newRdn,
             boolean deleteOldRdn
     ) throws Exception {
@@ -56,39 +54,16 @@ public class ModRdnHandler {
         int rc;
         try {
 
-            log.warn("ModRDN \""+dn+"\" to \""+newRdn+"\".");
-
-            log.debug("-------------------------------------------------------------------------------");
-            log.debug("MODRDN:");
-            if (session != null && session.getBindDn() != null) log.debug(" - Bind DN: " + session.getBindDn());
-            log.debug(" - DN: " + dn);
-            log.debug(" - New RDN: " + newRdn);
-
-            if (session != null && session.getBindDn() == null) {
-                PenroseConfig penroseConfig = handler.getPenroseConfig();
-                ServiceConfig serviceConfig = penroseConfig.getServiceConfig("LDAP");
-                String s = serviceConfig == null ? null : serviceConfig.getParameter("allowAnonymousAccess");
-                boolean allowAnonymousAccess = s == null ? true : new Boolean(s).booleanValue();
-                if (!allowAnonymousAccess) {
-                    return LDAPException.INSUFFICIENT_ACCESS_RIGHTS;
-                }
-            }
-
-            String ndn = LDAPDN.normalize(dn);
-
-            Entry entry = handler.getFindHandler().find(ndn);
-            if (entry == null) return LDAPException.NO_SUCH_OBJECT;
-
-            rc = performModRdn(session, entry, newRdn, deleteOldRdn);
+            rc = performModRdn(session, partition, entry, newRdn, deleteOldRdn);
             if (rc != LDAPException.SUCCESS) return rc;
 
             // refreshing entry cache
 
-            String parentDn = EntryUtil.getParentDn(dn);
+            String parentDn = EntryUtil.getParentDn(entry.getDn());
             String newDn = newRdn+","+parentDn;
 
             PenroseSession adminSession = handler.getPenrose().newSession();
-            adminSession.setBindDn(handler.getPenroseConfig().getRootDn());
+            adminSession.setBindDn(handler.getPenrose().getPenroseConfig().getRootDn());
 
             PenroseSearchResults results = new PenroseSearchResults();
 
@@ -104,7 +79,8 @@ public class ModRdnHandler {
 
             while (results.hasNext()) results.next();
 
-            handler.getEngine().getEntryCache().remove(entry);
+            EntryMapping entryMapping = entry.getEntryMapping();
+            handler.getEntryCache().remove(partition, entryMapping, entry.getDn());
 
         } catch (LDAPException e) {
             rc = e.getResultCode();
@@ -121,54 +97,41 @@ public class ModRdnHandler {
         }
 
         return rc;
-	}
+    }
 
     public int performModRdn(
             PenroseSession session,
+            Partition partition,
             Entry entry,
             String newRdn,
-            boolean deleteOldRdn
-    ) throws Exception {
-
-        int rc = handler.getACLEngine().checkModify(session, entry.getDn(), entry.getEntryMapping());
-        if (rc != LDAPException.SUCCESS) return rc;
+            boolean deleteOldRdn)
+            throws Exception {
 
         EntryMapping entryMapping = entry.getEntryMapping();
-        PartitionManager partitionManager = handler.getPartitionManager();
-        Partition partition = partitionManager.getPartition(entryMapping);
 
-        if (partition.isProxy(entryMapping)) {
-            log.debug("Renaming "+entry.getDn()+" via proxy");
-            return handler.getEngine().modrdnProxy(session, partition, entryMapping, entry, newRdn, deleteOldRdn);
+        String engineName = "DEFAULT";
+        if (partition.isProxy(entryMapping)) engineName = "PROXY";
+
+        Engine engine = handler.getEngine(engineName);
+
+        if (engine == null) {
+            log.debug("Engine "+engineName+" not found");
+            return LDAPException.OPERATIONS_ERROR;
         }
 
-        if (partition.isDynamic(entryMapping)) {
-            return modRdnVirtualEntry(session, entry, newRdn, deleteOldRdn);
-
-        } else {
-            return modRdnStaticEntry(entryMapping, newRdn, deleteOldRdn);
-        }
-	}
-
-    public int modRdnStaticEntry(
-            EntryMapping entry,
-            String newRdn,
-            boolean deleteOldRdn
-    ) throws Exception {
-
-        Partition partition = handler.getPartitionManager().getPartitionByDn(entry.getDn());
-        partition.renameEntryMapping(entry, newRdn);
-
-        return LDAPException.SUCCESS;
+        return engine.modrdn(session, partition, entry, newRdn, deleteOldRdn);
     }
 
-    public int modRdnVirtualEntry(
-            PenroseSession session,
+    public int modRdnStaticEntry(
+            Partition partition,
             Entry entry,
             String newRdn,
             boolean deleteOldRdn
     ) throws Exception {
 
-        return handler.getEngine().modrdn(entry, newRdn, deleteOldRdn);
+        EntryMapping entryMapping = entry.getEntryMapping();
+        partition.renameEntryMapping(entryMapping, newRdn);
+
+        return LDAPException.SUCCESS;
     }
 }

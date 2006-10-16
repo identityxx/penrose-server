@@ -1,5 +1,5 @@
 <!--
- Copyright (c) 2000-2005, Identyx Corporation.
+ Copyright (c) 2000-2006, Identyx Corporation.
  All rights reserved.
 -->
 <project name="penrose-server" default="build">
@@ -11,7 +11,6 @@
     <property name="cygwin.home" value="c:/cygwin"/>
 
     <property name="module.name" value="penrose-server"/>
-    <property name="project.name" value="penrose"/>
     <property name="project.version" value="1.1"/>
     <property name="project.dist" value="dist"/>
 
@@ -32,6 +31,12 @@
 
     <path id="main.path">
         <pathelement location="target/classes"/>
+    </path>
+
+    <path id="project.classpath">
+        <fileset dir="svnant">
+            <include name="**/*.jar"/>
+        </fileset>
     </path>
 
     <target name="init">
@@ -79,7 +84,7 @@
         <jar jarfile="target/${module.name}-${project.version}.jar">
             <fileset dir="target/classes"/>
             <manifest>
-              <attribute name="Specification-Version"  value="1.0"/>
+              <attribute name="Specification-Version"  value="1.1"/>
               <attribute name="Implementation-Title"   value="Penrose Server"/>
               <attribute name="Implementation-Version" value="${project.version}"/>
               <attribute name="Implementation-Vendor"  value="Identyx Corporation"/>
@@ -90,7 +95,7 @@
 
     <target name="docs" depends="init">
         <mkdir dir="target/javadoc"/>
-        <javadoc packagenames="org.safehaus.penrose.*,org.openldap.backend.*"
+        <javadoc packagenames="org.safehaus.penrose.*"
             sourcepath="src/java"
             destdir="target/javadoc"
             classpathref="lib.path">
@@ -131,11 +136,7 @@
         </copy>
         <copy todir="target/dist/lib" includeEmptyDirs="false">
             <fileset dir="../lib" includes="*"/>
-            <fileset dir="../core/dist" includes="${project.name}-${project.version}.jar"/>
-        </copy>
-        <copy todir="target/dist/server/lib" includeEmptyDirs="false">
-            <fileset dir="lib" includes="*"/>
-            <fileset dir="target" includes="${module.name}-${project.version}.jar"/>
+            <fileset dir="../core/dist" includes="penrose-${project.version}.jar"/>
         </copy>
         <mkdir dir="target/dist/lib/ext"/>
         <copy todir="target/dist/server/lib" includeEmptyDirs="false">
@@ -143,6 +144,10 @@
             <fileset dir="target" includes="${module.name}-${project.version}.jar"/>
         </copy>
         <mkdir dir="target/dist/server/lib/ext"/>
+        <copy todir="target/dist/server/lib" includeEmptyDirs="false">
+            <fileset dir="lib" includes="*"/>
+            <fileset dir="target" includes="${module.name}-${project.version}.jar"/>
+        </copy>
         <copy todir="target/dist/conf">
             <fileset dir="conf"/>
             <fileset dir="../conf"/>
@@ -185,8 +190,6 @@
         <mkdir dir="${project.dist}"/>
         <zip destfile="${project.dist}/${module.name}-${project.version}-src.zip">
             <zipfileset dir="..">
-                <exclude name="core/dist/**"/>
-                <exclude name="core/target/**"/>
                 <exclude name="server/dist/**"/>
                 <exclude name="server/target/**"/>
                 <exclude name="server/var/**"/>
@@ -199,8 +202,6 @@
         <mkdir dir="target"/>
         <tar destfile="${project.dist}/${module.name}-${project.version}-src.tar.gz" compression="gzip">
             <tarfileset dir=".." prefix="${module.name}-${project.version}">
-                <exclude name="core/dist/**"/>
-                <exclude name="core/target/**"/>
                 <exclude name="server/dist/**"/>
                 <exclude name="server/target/**"/>
                 <exclude name="server/var/**"/>
@@ -212,23 +213,38 @@
     </target>
 
     <target name="dist-macosx" depends="docs,dist" if="isMac">
-        <echo message="Creating ${project.name}-${project.version}.dmg"/>
-        <mkdir dir="target/${project.name}-${project.version}.dmg"/>
+        <echo message="Creating ${module.name}-${project.version}.pkg"/>
+        <mkdir dir="target/${module.name}-${project.version}.dmg"/>
         <exec executable="/Developer/Applications/Utilities/PackageMaker.app/Contents/MacOS/PackageMaker">
             <arg line="-build"/>
-            <arg line="-proj installer/${project.name}.pmproj"/>
-            <arg line="-p target/${project.name}-${project.version}.dmg/${project.name}-${project.version}.pkg"/>
+            <arg line="-proj server/installer/${module.name}.pmproj"/>
+            <arg line="-p server/target/${module.name}-${project.version}.dmg/${module.name}-${project.version}.pkg"/>
         </exec>
+        <echo message="Creating ${module.name}-${project.version}.dmg"/>
         <mkdir dir="${project.dist}"/>
         <exec executable="/usr/bin/hdiutil">
             <arg line="create"/>
             <arg line="-fs HFS+"/>
-            <arg line="-srcdir target/${project.name}-${project.version}.dmg"/>
-            <arg line="${project.dist}/${project.name}-${project.version}.dmg"/>
+            <arg line="-srcdir target/${module.name}-${project.version}.dmg"/>
+            <arg line="${project.dist}/${module.name}-${project.version}.dmg"/>
         </exec>
+<!--
+        <exec executable="server/tools/pkg-dmg">
+            <arg line="- -source target/${module.name}-${project.version}.dmg"/>
+            <arg line="- -target ${module.name}-${project.version}.dmg"/>
+            <arg line="- -volname &quot;Penrose Server ${project.version}&quot;"/>
+            <arg line="- -mkdir /.background"/>
+            <arg line="- -icon images/PenroseDMG.icns"/>
+            <arg line="- -license target/LICENSE.txt"/>
+            <arg line="- -copy images/background.png:/.background/background.png"/>
+            <arg line="- -copy server/installer/DSStore:/.DS_Store"/>
+            <arg line="- -verbosity 2"/>
+        </exec>
+-->
+
     </target>
 
-    <target name="dist-unix" depends="dist" if="isUnix">
+    <target name="dist-unix" depends="docs,dist" if="isUnix">
         <echo message="Creating ${module.name}-${project.version}.tar.gz"/>
         <mkdir dir="target"/>
         <tar destfile="${project.dist}/${module.name}-${project.version}.tar.gz" compression="gzip">
@@ -240,17 +256,25 @@
                 <exclude name="bin/*.sh"/>
             </tarfileset>
         </tar>
+        <antcall target="rpm">
+            <param name="rpm.prefix" value=""/>
+            <param name="rpm.home" value="/usr/src/redhat"/>
+            <param name="rpm.builder" value="/usr/bin/rpmbuild"/>
+            <param name="rpm.name" value="${module.name}-${project.version}-1.i386.rpm"/>
+        </antcall>
     </target>
 
-    <target name="dist-rpm" depends="dist-src">
-        <antcall target="dist-rpm-unix"/>
-        <antcall target="dist-rpm-windows"/>
+    <target name="rpm" depends="rpm-check,rpm-build">
     </target>
 
-    <target name="dist-rpm-unix" if="isUnix">
-        <property name="rpm.prefix" value=""/>
-        <property name="rpm.home" value="/usr/src/redhat"/>
-        <property name="rpm.builder" value="/usr/bin/rpmbuild"/>
+    <target name="rpm-check" depends="init">
+        <echo message="Checking ${rpm.builder}"/>
+        <condition property="hasRpmBuilder">
+            <available file="${rpm.builder}"/>
+        </condition>
+    </target>
+
+    <target name="rpm-build" depends="dist-src" if="hasRpmBuilder">
         <copy todir="target" file="installer/${module.name}.spec">
             <filterchain>
                 <expandproperties/>
@@ -260,40 +284,14 @@
             file="${project.dist}/${module.name}-${project.version}-src.tar.gz">
         </copy>
         <exec executable="${rpm.builder}">
-            <arg line="-ba target/${module.name}.spec"/>
+            <arg line="-bb target/${module.name}.spec"/>
         </exec>
         <copy todir="${project.dist}" failonerror="false"
-            file="${rpm.home}/SRPMS/${module.name}-${project.version}-1.src.rpm">
-        </copy>
-        <copy todir="${project.dist}" failonerror="false"
-            file="${rpm.home}/RPMS/i386/${module.name}-${project.version}-1.i386.rpm">
+            file="${rpm.home}/RPMS/i386/${rpm.name}">
         </copy>
     </target>
 
-    <target name="dist-rpm-windows" if="isWindows">
-        <property name="rpm.prefix" value="${cygwin.home}"/>
-        <property name="rpm.home" value="${cygwin.home}/usr/src/rpm"/>
-        <property name="rpm.builder" value="${cygwin.home}/lib/rpm/rpmb.exe"/>
-        <copy todir="target" file="installer/${module.name}.spec">
-            <filterchain>
-                <expandproperties/>
-            </filterchain>
-        </copy>
-        <copy todir="${rpm.home}/SOURCES" overwrite="true"
-            file="${project.dist}/${module.name}-${project.version}-src.tar.gz">
-        </copy>
-        <exec executable="${rpm.builder}">
-            <arg line="-ba target/${module.name}.spec"/>
-        </exec>
-        <copy todir="${project.dist}" failonerror="false"
-            file="${rpm.home}/SRPMS/${module.name}-${project.version}-1.src.rpm">
-        </copy>
-        <copy todir="${project.dist}" failonerror="false"
-            file="${rpm.home}/RPMS/i386/${module.name}-${project.version}-1.cygwin.i386.rpm">
-        </copy>
-    </target>
-
-    <target name="dist-win32" depends="dist" if="isWindows">
+    <target name="dist-win32" depends="docs,dist" if="isWindows">
         <echo message="Creating ${module.name}-${project.version}.exe"/>
         <copy todir="target" file="installer/${module.name}.iss">
             <filterchain>
@@ -304,9 +302,15 @@
         <exec executable="${iscc.path}">
             <arg line="/Q target/${module.name}.iss"/>
         </exec>
+        <antcall target="rpm">
+            <param name="rpm.prefix" value="${cygwin.home}"/>
+            <param name="rpm.home" value="${cygwin.home}/usr/src/rpm"/>
+            <param name="rpm.builder" value="${cygwin.home}/lib/rpm/rpmb.exe"/>
+            <param name="rpm.name" value="${module.name}-${project.version}-1.cygwin.i386.rpm"/>
+        </antcall>
     </target>
 
-    <target name="dist-all" depends="dist-unix,dist-win32,dist-rpm,dist-macosx">
+    <target name="dist-all" depends="dist-macosx,dist-unix,dist-win32">
         <copy todir="${project.dist}"
             file="target/${module.name}-${project.version}.jar">
         </copy>
@@ -332,6 +336,7 @@
     <target name="install" depends="init,pre-install,copy-penrose-conf">
         <delete failonerror="false">
             <fileset dir="${penrose.home}" includes="lib/*"/>
+            <fileset dir="${penrose.home}" includes="server/lib/*"/>
         </delete>
         <copy todir="${penrose.home}">
             <fileset dir="target/dist">

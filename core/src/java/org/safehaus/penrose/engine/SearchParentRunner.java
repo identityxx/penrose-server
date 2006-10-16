@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2005, Identyx Corporation.
+ * Copyright (c) 2000-2006, Identyx Corporation.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -27,6 +27,8 @@ import org.safehaus.penrose.graph.Graph;
 import org.safehaus.penrose.graph.GraphIterator;
 import org.safehaus.penrose.util.Formatter;
 import org.safehaus.penrose.session.PenroseSearchResults;
+import org.safehaus.penrose.session.PenroseSearchControls;
+import org.safehaus.penrose.connector.Connector;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
@@ -53,6 +55,7 @@ public class SearchParentRunner extends GraphVisitor {
 
     public SearchParentRunner(
             Engine engine,
+            Partition partition,
             EntryMapping entryMapping,
             Collection results,
             AttributeValues sourceValues,
@@ -61,13 +64,13 @@ public class SearchParentRunner extends GraphVisitor {
             Collection relationships) throws Exception {
 
         this.engine = engine;
+        this.partition = partition;
         this.entryMapping = entryMapping;
         this.filters = planner.getFilters();
         this.startingSourceMapping = startingSourceMapping;
         this.results = results;
         this.sourceValues = sourceValues;
 
-        partition = engine.getPartitionManager().getPartition(entryMapping);
         graph = engine.getGraph(entryMapping);
 
         Filter filter = (Filter)filters.get(startingSourceMapping);
@@ -119,7 +122,7 @@ public class SearchParentRunner extends GraphVisitor {
                     if (!FilterTool.isValid(av, filter)) continue;
 
                 } else {
-                    if (!engine.getJoinEngine().evaluate(entryMapping, relationships, av, av)) continue;
+                    if (!engine.getJoinEngine().evaluate(partition, entryMapping, relationships, av, av)) continue;
                 }
 
                 list.add(av);
@@ -134,7 +137,11 @@ public class SearchParentRunner extends GraphVisitor {
 
             SourceConfig sourceConfig = partition.getSourceConfig(sourceMapping.getSourceName());
 
-            PenroseSearchResults tmp = engine.getConnector().search(partition, sourceConfig, filter);
+            PenroseSearchControls sc = new PenroseSearchControls();
+            PenroseSearchResults tmp = new PenroseSearchResults();
+            
+            Connector connector = engine.getConnector(sourceConfig);
+            connector.search(partition, sourceConfig, null, filter, sc, tmp);
 
             Collection list = new ArrayList();
             for (Iterator i=tmp.iterator(); i.hasNext(); ) {
@@ -151,9 +158,9 @@ public class SearchParentRunner extends GraphVisitor {
             } else {
                 Collection temp;
                 if (sourceMapping.isRequired()) {
-                    temp = engine.getJoinEngine().join(results, list, entryMapping, relationships);
+                    temp = engine.getJoinEngine().join(results, list, partition, entryMapping, relationships);
                 } else {
-                    temp = engine.getJoinEngine().leftJoin(results, list, entryMapping, relationships);
+                    temp = engine.getJoinEngine().leftJoin(results, list, partition, entryMapping, relationships);
                 }
                 results.clear();
                 results.addAll(temp);

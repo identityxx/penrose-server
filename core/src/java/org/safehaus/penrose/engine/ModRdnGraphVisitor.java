@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2005, Identyx Corporation.
+ * Copyright (c) 2000-2006, Identyx Corporation.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -38,6 +38,7 @@ public class ModRdnGraphVisitor extends GraphVisitor {
     Logger log = LoggerFactory.getLogger(getClass());
 
     public Engine engine;
+    public Partition partition;
     public EntryMapping entryMapping;
 
     public Graph graph;
@@ -51,12 +52,14 @@ public class ModRdnGraphVisitor extends GraphVisitor {
 
     public ModRdnGraphVisitor(
             Engine engine,
+            Partition partition,
             EntryMapping entryMapping,
             AttributeValues oldSourceValues,
             AttributeValues newSourceValues
             ) throws Exception {
 
         this.engine = engine;
+        this.partition = partition;
         this.entryMapping = entryMapping;
 
         this.oldSourceValues = oldSourceValues;
@@ -118,10 +121,9 @@ public class ModRdnGraphVisitor extends GraphVisitor {
             newValues.set(name, values);
         }
 
-        Partition partition = engine.getPartitionManager().getPartition(entryMapping);
         SourceConfig sourceConfig = partition.getSourceConfig(sourceMapping.getSourceName());
 
-        returnCode = engine.getConnector().modify(partition, sourceConfig, oldValues, newValues);
+        returnCode = engine.getConnector(sourceConfig).modify(partition, sourceConfig, oldValues, newValues);
         if (returnCode != LDAPException.SUCCESS) return;
 
         modifiedSourceValues.remove(sourceMapping.getName());

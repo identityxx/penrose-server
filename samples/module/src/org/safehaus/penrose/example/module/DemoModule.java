@@ -18,24 +18,29 @@ import java.util.Iterator;
 public class DemoModule extends Module {
 
     public void init() throws Exception {
-        System.out.println("Initializing DemoModule.");
+        System.out.println("#### Initializing DemoModule.");
     }
 
-    public void beforeBind(BindEvent event) throws Exception {
-        System.out.println("Binding as "+event.getDn()+" with password "+event.getPassword()+".");
+    public boolean beforeBind(BindEvent event) throws Exception {
+        System.out.println("#### Binding as "+event.getDn()+" with password "+event.getPassword()+".");
+        return true;
     }
 
     public void afterBind(BindEvent event) throws Exception {
         int rc = event.getReturnCode();
         if (rc == LDAPException.SUCCESS) {
-            System.out.println("Bound as "+event.getDn()+".");
+            System.out.println("#### Bound as "+event.getDn()+".");
         } else {
-            System.out.println("Failed to bind as "+event.getDn()+". RC="+rc);
+            System.out.println("#### Failed to bind as "+event.getDn()+". RC="+rc);
         }
     }
 
-    public void beforeSearch(SearchEvent event) throws Exception {
-        System.out.println("Searching "+event.getBase()+" with filter "+event.getFilter()+".");
+    public boolean beforeSearch(SearchEvent event) throws Exception {
+        System.out.println("#### Searching "+event.getBaseDn()+" with filter "+event.getFilter()+".");
+
+        if (event.getFilter().equalsIgnoreCase("(cn=secret)")) {
+            return false;
+        }
 
         PenroseSearchResults results = event.getSearchResults();
 
@@ -47,19 +52,21 @@ public class DemoModule extends Module {
                 System.out.println("Returning "+dn+".");
             }
         });
+
+        return true;
     }
 
     public void afterSearch(SearchEvent event) throws Exception {
         int rc = event.getReturnCode();
         if (rc == LDAPException.SUCCESS) {
-            System.out.println("Search succeded.");
+            System.out.println("#### Search succeded.");
         } else {
-            System.out.println("Search failed. RC="+rc);
+            System.out.println("#### Search failed. RC="+rc);
         }
     }
 
-    public void beforeAdd(AddEvent event) throws Exception {
-        System.out.println("Adding "+event.getDn()+":");
+    public boolean beforeAdd(AddEvent event) throws Exception {
+        System.out.println("#### Adding "+event.getDn()+":");
 
         Attributes attributes = event.getAttributes();
         for (NamingEnumeration i=attributes.getAll(); i.hasMore(); ) {
@@ -76,19 +83,21 @@ public class DemoModule extends Module {
         String value = (String)sn.get();
         sn.clear();
         sn.add(value.toUpperCase());
+
+        return true;
     }
 
     public void afterAdd(AddEvent event) throws Exception {
         int rc = event.getReturnCode();
         if (rc == LDAPException.SUCCESS) {
-            System.out.println("Add succeded.");
+            System.out.println("#### Add succeded.");
         } else {
-            System.out.println("Add failed. RC="+rc);
+            System.out.println("#### Add failed. RC="+rc);
         }
     }
 
-    public void beforeModify(ModifyEvent event) throws Exception {
-        System.out.println("Modifying "+event.getDn()+":");
+    public boolean beforeModify(ModifyEvent event) throws Exception {
+        System.out.println("#### Modifying "+event.getDn()+":");
 
         Collection modifications = event.getModifications();
         for (Iterator i=modifications.iterator(); i.hasNext(); ) {
@@ -113,27 +122,30 @@ public class DemoModule extends Module {
                 System.out.println("   "+name+": "+value);
             }
         }
+
+        return true;
     }
 
     public void afterModify(ModifyEvent event) throws Exception {
         int rc = event.getReturnCode();
         if (rc == LDAPException.SUCCESS) {
-            System.out.println("Modify succeded.");
+            System.out.println("#### Modify succeded.");
         } else {
-            System.out.println("Modify failed. RC="+rc);
+            System.out.println("#### Modify failed. RC="+rc);
         }
     }
 
-    public void beforeDelete(DeleteEvent event) throws Exception {
-        System.out.println("Deleting "+event.getDn());
+    public boolean beforeDelete(DeleteEvent event) throws Exception {
+        System.out.println("#### Deleting "+event.getDn());
+        return true;
     }
 
     public void afterDelete(DeleteEvent event) throws Exception {
         int rc = event.getReturnCode();
         if (rc == LDAPException.SUCCESS) {
-            System.out.println("Delete succeded.");
+            System.out.println("#### Delete succeded.");
         } else {
-            System.out.println("Delete failed. RC="+rc);
+            System.out.println("#### Delete failed. RC="+rc);
         }
     }
 }

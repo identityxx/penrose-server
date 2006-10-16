@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2005, Identyx Corporation.
+ * Copyright (c) 2000-2006, Identyx Corporation.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -124,5 +124,13 @@ public class SchemaManager implements SchemaManagerMBean {
 
     public AttributeType getAttributeType(String attributeName) {
         return allSchema.getAttributeType(attributeName);
+    }
+
+    public String getNormalizedAttributeName(String attributeName) {
+
+        AttributeType attributeType = getAttributeType(attributeName);
+        if (attributeType == null) return attributeName;
+
+        return attributeType.getName();
     }
 }
