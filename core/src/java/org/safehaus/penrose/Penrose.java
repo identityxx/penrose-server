@@ -39,6 +39,10 @@ import org.safehaus.penrose.session.SessionManager;
 import org.safehaus.penrose.module.ModuleManager;
 import org.safehaus.penrose.thread.ThreadManager;
 import org.safehaus.penrose.event.EventManager;
+import org.safehaus.penrose.log4j.Log4jConfigReader;
+import org.safehaus.penrose.log4j.Log4jConfig;
+import org.safehaus.penrose.log4j.LoggerConfig;
+import org.safehaus.penrose.log4j.AppenderConfig;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
@@ -123,6 +127,7 @@ public class Penrose {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     void init() throws Exception {
+        initLoggers();
         initThreadManager();
         initSchemaManager();
         initSessionManager();
@@ -136,6 +141,29 @@ public class Penrose {
         initEngineManager();
         initEventManager();
         initHandlerManager();
+    }
+
+    public void initLoggers() throws Exception {
+
+        String home = penroseConfig.getHome();
+
+        File log4jXml = new File((home == null ? "" : home+File.separator)+"conf"+File.separator+"log4j.xml");
+        if (!log4jXml.exists()) return;
+
+        Log4jConfigReader configReader = new Log4jConfigReader(log4jXml);
+        Log4jConfig config = configReader.read();
+
+        log.debug("Appenders:");
+        for (Iterator i=config.getAppenderConfigs().iterator(); i.hasNext(); ) {
+            AppenderConfig appenderConfig = (AppenderConfig)i.next();
+            log.debug(" - "+appenderConfig.getName());
+        }
+
+        log.debug("Loggers:");
+        for (Iterator i=config.getLoggerConfigs().iterator(); i.hasNext(); ) {
+            LoggerConfig loggerConfig = (LoggerConfig)i.next();
+            log.debug(" - "+loggerConfig.getName()+": "+loggerConfig.getLevel()+" "+loggerConfig.getAppenders());
+        }
     }
 
     public void initThreadManager() throws Exception {
