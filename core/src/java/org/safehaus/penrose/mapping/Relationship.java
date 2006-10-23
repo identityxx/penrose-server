@@ -22,6 +22,7 @@ import Zql.ZExpression;
 import Zql.ZExp;
 
 import java.io.ByteArrayInputStream;
+import java.io.Serializable;
 import java.util.*;
 
 import org.slf4j.LoggerFactory;
@@ -30,7 +31,7 @@ import org.slf4j.Logger;
 /**
  * @author Endi S. Dewata
  */
-public class Relationship implements Cloneable {
+public class Relationship implements Cloneable, Serializable {
 
     Logger log = LoggerFactory.getLogger(getClass());
 

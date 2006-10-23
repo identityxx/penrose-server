@@ -21,10 +21,7 @@ import org.safehaus.penrose.server.PenroseServer;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
-import java.util.Map;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.Collection;
+import java.util.*;
 
 /**
  * @author Endi S. Dewata
@@ -48,7 +45,7 @@ public class ServiceManager implements ServiceManagerMBean {
 
         Service service = getService(serviceConfig.getName());
         if (service != null) return;
-        
+
         Class clazz = Class.forName(serviceConfig.getServiceClass());
         service = (Service)clazz.newInstance();
 
@@ -101,6 +98,11 @@ public class ServiceManager implements ServiceManagerMBean {
         service.stop();
     }
 
+    public void restart() throws Exception {
+        stop();
+        start();
+    }
+
     public String getStatus(String name) throws Exception {
         Service service = getService(name);
         if (service == null) throw new Exception(name+" not found.");
@@ -115,8 +117,14 @@ public class ServiceManager implements ServiceManagerMBean {
         return (Service)services.get(name);
     }
 
+    public ServiceConfig getServiceConfig(String name) {
+        Service service = getService(name);
+        if (service == null) return null;
+        return service.getServiceConfig();
+    }
+
     public Collection getServiceNames() {
-        return services.keySet();
+        return new ArrayList(services.keySet()); // return Serializable list
     }
 
     public Collection getServices() {

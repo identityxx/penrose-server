@@ -53,7 +53,7 @@ public class PenroseService implements PenroseServiceMBean {
     }
 
     public String getProductName() {
-        return Penrose.PRODUCT_NAME;
+        return Penrose.PRODUCT_NAME+" Server";
     }
 
     public String getProductVersion() {
@@ -80,24 +80,6 @@ public class PenroseService implements PenroseServiceMBean {
         }
     }
 
-    public void start() throws Exception {
-        try {
-            penroseServer.start();
-        } catch (Exception e) {
-            log.error(e.getMessage(), e);
-            throw e;
-        }
-    }
-
-    public void stop() throws Exception {
-        try {
-            penroseServer.stop();
-        } catch (Exception e) {
-            log.error(e.getMessage(), e);
-            throw e;
-        }
-    }
-
     public void reload() throws Exception {
         try {
             penroseServer.reload();
@@ -107,32 +89,9 @@ public class PenroseService implements PenroseServiceMBean {
         }
     }
 
-    public void restart() throws Exception {
-        try {
-            penroseServer.stop();
-            penroseServer.reload();
-            penroseServer.start();
-        } catch (Exception e) {
-            log.error(e.getMessage(), e);
-            throw e;
-        }
-    }
-
     public void store() throws Exception {
         try {
             penroseServer.store();
-        } catch (Exception e) {
-            log.error(e.getMessage(), e);
-            throw e;
-        }
-    }
-
-    public Collection getServiceNames() throws Exception {
-        try {
-            Collection serviceNames = new ArrayList();
-            ServiceManager serviceManager = penroseServer.getServiceManager();
-            serviceNames.addAll(serviceManager.getServiceNames());
-            return serviceNames;
         } catch (Exception e) {
             log.error(e.getMessage(), e);
             throw e;
@@ -159,36 +118,6 @@ public class PenroseService implements PenroseServiceMBean {
                 partition.renameEntryMapping(entryMapping, newDn);
             }
 
-        } catch (Exception e) {
-            log.error(e.getMessage(), e);
-            throw e;
-        }
-    }
-
-    public void start(String serviceName) throws Exception {
-        try {
-            ServiceManager serviceManager = penroseServer.getServiceManager();
-            serviceManager.start(serviceName);
-        } catch (Exception e) {
-            log.error(e.getMessage(), e);
-            throw e;
-        }
-    }
-
-    public void stop(String serviceName) throws Exception {
-        try {
-            ServiceManager serviceManager = penroseServer.getServiceManager();
-            serviceManager.stop(serviceName);
-        } catch (Exception e) {
-            log.error(e.getMessage(), e);
-            throw e;
-        }
-    }
-
-    public String getStatus(String serviceName) throws Exception {
-        try {
-            ServiceManager serviceManager = penroseServer.getServiceManager();
-            return serviceManager.getStatus(serviceName);
         } catch (Exception e) {
             log.error(e.getMessage(), e);
             throw e;

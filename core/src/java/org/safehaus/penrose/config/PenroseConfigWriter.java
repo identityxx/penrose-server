@@ -156,12 +156,7 @@ public class PenroseConfigWriter {
 
         for (Iterator i=penroseConfig.getPartitionConfigs().iterator(); i.hasNext(); ) {
             PartitionConfig partitionConfig = (PartitionConfig)i.next();
-
-            Element partition = new DefaultElement("partition");
-            if (partitionConfig.getName() != null) partition.addAttribute("name", partitionConfig.getName());
-            if (partitionConfig.getPath() != null) partition.addAttribute("path", partitionConfig.getPath());
-
-            element.add(partition);
+            element.add(toElement(partitionConfig));
         }
 
         UserConfig rootUserConfig = penroseConfig.getRootUserConfig();
@@ -183,6 +178,14 @@ public class PenroseConfigWriter {
             element.add(rootElement);
         }
 
+        return element;
+    }
+
+    public Element toElement(PartitionConfig partitionConfig) {
+        Element element = new DefaultElement("partition");
+        if (partitionConfig.getName() != null) element.addAttribute("name", partitionConfig.getName());
+        if (partitionConfig.getPath() != null) element.addAttribute("path", partitionConfig.getPath());
+        if (!partitionConfig.isEnabled()) element.addAttribute("enabled", "false");
         return element;
     }
 

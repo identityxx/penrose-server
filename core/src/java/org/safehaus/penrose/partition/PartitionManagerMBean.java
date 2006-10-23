@@ -24,7 +24,14 @@ import java.util.Collection;
  */
 public interface PartitionManagerMBean {
 
+    public final static String NAME = "Penrose:name=PartitionManager";
+
     public void clear() throws Exception;
 
     public Collection getPartitionNames() throws Exception;
+    public Partition getPartition(String name) throws Exception;
+    public String getStatus(String name) throws Exception;
+
+    public void start(String name) throws Exception;
+    public void stop(String name) throws Exception;
 }

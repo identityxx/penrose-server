@@ -18,6 +18,7 @@
 package org.safehaus.penrose.partition;
 
 import java.util.*;
+import java.io.Serializable;
 
 import org.safehaus.penrose.module.ModuleMapping;
 import org.safehaus.penrose.module.ModuleConfig;
@@ -29,9 +30,14 @@ import org.slf4j.Logger;
 /**
  * @author Endi S. Dewata
  */
-public class Partition {
+public class Partition implements PartitionMBean, Serializable {
 
     Logger log = LoggerFactory.getLogger(getClass());
+
+    public final static String STOPPING = "STOPPING";
+    public final static String STOPPED  = "STOPPED";
+    public final static String STARTING = "STARTING";
+    public final static String STARTED  = "STARTED";
 
     private PartitionConfig partitionConfig;
 
@@ -45,12 +51,39 @@ public class Partition {
     private Map moduleConfigs = new LinkedHashMap();
     private Map moduleMappings = new LinkedHashMap();
 
+    private String status = STOPPED;
+
     public Partition(PartitionConfig partitionConfig) {
         this.partitionConfig = partitionConfig;
     }
 
+    public void start() throws Exception {
+        setStatus(STARTED);
+    }
+
+    public void stop() throws Exception {
+        setStatus(STOPPED);
+    }
+
+    public void restart() throws Exception {
+        stop();
+        start();
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
     public String getName() {
         return partitionConfig.getName();
+    }
+
+    public boolean isEnabled() {
+        return partitionConfig.isEnabled();
     }
 
     public boolean containsEntryMapping(EntryMapping entryMapping) {

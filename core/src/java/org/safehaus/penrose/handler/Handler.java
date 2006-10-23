@@ -717,7 +717,7 @@ public class Handler {
         attributeValues.set("objectClass", "top");
         attributeValues.add("objectClass", "extensibleObject");
         attributeValues.set("vendorName", Penrose.VENDOR_NAME);
-        attributeValues.set("vendorVersion", Penrose.PRODUCT_NAME+" "+Penrose.PRODUCT_VERSION);
+        attributeValues.set("vendorVersion", Penrose.PRODUCT_NAME+" Server "+Penrose.PRODUCT_VERSION);
 
         for (Iterator i=partitionManager.getPartitions().iterator(); i.hasNext(); ) {
             Partition p = (Partition)i.next();

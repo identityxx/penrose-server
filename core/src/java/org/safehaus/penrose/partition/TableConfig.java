@@ -17,19 +17,21 @@
  */
 package org.safehaus.penrose.partition;
 
+import java.io.Serializable;
+
 /**
  * @author Endi S. Dewata
  */
-public class TableConfig implements Comparable, Cloneable {
+public class TableConfig implements Comparable, Cloneable, Serializable {
 
-	private String name;
+    private String name;
     private String type;
 
     private String catalog;
     private String schema;
 
-	public TableConfig() {
-	}
+    public TableConfig() {
+    }
 
     public TableConfig(String name) {
         this.name = name;
@@ -42,13 +44,13 @@ public class TableConfig implements Comparable, Cloneable {
         this.schema = schema;
     }
 
-	public String getName() {
-		return name;
-	}
+    public String getName() {
+        return name;
+    }
 
-	public void setName(String name) {
-		this.name = name;
-	}
+    public void setName(String name) {
+        this.name = name;
+    }
 
     public String getType() {
         return type;

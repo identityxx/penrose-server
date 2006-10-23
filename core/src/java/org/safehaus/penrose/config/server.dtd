@@ -62,6 +62,7 @@
 <!ELEMENT partition EMPTY>
 <!ATTLIST partition name CDATA #REQUIRED>
 <!ATTLIST partition path CDATA #REQUIRED>
+<!ATTLIST partition enabled (true|false) "true">
 
 <!ELEMENT root (root-dn, root-password)>
 <!ELEMENT root-dn (#PCDATA)>

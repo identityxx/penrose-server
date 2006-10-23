@@ -92,15 +92,7 @@ public class PollingConnectorModule extends Module {
 
             if (!autoRefresh) continue;
 */
-            String s = sourceConfig.getParameter(SourceConfig.REFRESH_METHOD);
-            String refreshMethod = s == null ? SourceConfig.DEFAULT_REFRESH_METHOD : s;
-
-            //if (SourceConfig.POLL_CHANGES.equals(refreshMethod)) {
-                pollChanges(sourceConfig);
-
-            //} else { // if (SourceConfig.RELOAD_EXPIRED.equals(refreshMethod)) {
-            //    reloadExpired(sourceConfig);
-            //}
+            pollChanges(sourceConfig);
         }
     }
 

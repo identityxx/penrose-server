@@ -18,43 +18,44 @@
 package org.safehaus.penrose.partition;
 
 import java.util.*;
+import java.io.Serializable;
 
 /**
  * @author Endi S. Dewata
  */
-public class ConnectionConfig implements ConnectionConfigMBean, Cloneable {
+public class ConnectionConfig implements ConnectionConfigMBean, Cloneable, Serializable {
 
-	public String name;
+    public String name;
 
-	public String adapterName;
+    public String adapterName;
 
-	public String description;
+    public String description;
 
-	public Properties parameters = new Properties();
+    public Properties parameters = new Properties();
 
-	public ConnectionConfig() {
-	}
+    public ConnectionConfig() {
+    }
 
-	public ConnectionConfig(String name, String type) {
-		this.name = name;
-		this.adapterName = type;
-	}
+    public ConnectionConfig(String name, String type) {
+        this.name = name;
+        this.adapterName = type;
+    }
 
-	public String getName() {
-		return name;
-	}
+    public String getName() {
+        return name;
+    }
 
-	public void setName(String name) {
-		this.name = name;
-	}
+    public void setName(String name) {
+        this.name = name;
+    }
 
-	public String getAdapterName() {
-		return adapterName;
-	}
+    public String getAdapterName() {
+        return adapterName;
+    }
 
-	public void setAdapterName(String adapterName) {
-		this.adapterName = adapterName;
-	}
+    public void setAdapterName(String adapterName) {
+        this.adapterName = adapterName;
+    }
 
     public Map getParameters() {
         return parameters;
@@ -76,13 +77,13 @@ public class ConnectionConfig implements ConnectionConfigMBean, Cloneable {
         return (String)parameters.remove(name);
     }
 
-	public String getDescription() {
-		return description;
-	}
+    public String getDescription() {
+        return description;
+    }
 
-	public void setDescription(String description) {
-		this.description = description;
-	}
+    public void setDescription(String description) {
+        this.description = description;
+    }
 
     public int hashCode() {
         return (name == null ? 0 : name.hashCode()) +

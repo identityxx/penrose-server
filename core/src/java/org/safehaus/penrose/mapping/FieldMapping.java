@@ -20,11 +20,12 @@ package org.safehaus.penrose.mapping;
 import org.safehaus.penrose.util.BinaryUtil;
 
 import java.util.Arrays;
+import java.io.Serializable;
 
 /**
  * @author Endi S. Dewata
  */
-public class FieldMapping implements Cloneable {
+public class FieldMapping implements Cloneable, Serializable {
 
     public final static String CONSTANT       = "CONSTANT";
     public final static String VARIABLE       = "VARIABLE";
@@ -36,19 +37,19 @@ public class FieldMapping implements Cloneable {
     public final static String PK_FIRST = "first";
     public final static String PK_FALSE = "false";
 
-	/**
-	 * Name.
-	 */
-	private String name;
+    /**
+     * Name.
+     */
+    private String name;
 
     private String type   = DEFAULT_TYPE;
 
-	/**
-	 * Expression.
-	 */
+    /**
+     * Expression.
+     */
     private Object constant;
     private String variable;
-	private Expression expression;
+    private Expression expression;
 
     /**
      * This field is used in primary key.
@@ -57,7 +58,7 @@ public class FieldMapping implements Cloneable {
 
     public FieldMapping() {
     }
-    
+
     public FieldMapping(String name) {
         this.name = name;
     }
@@ -77,22 +78,22 @@ public class FieldMapping implements Cloneable {
         }
     }
 
-	public String getName() {
-		return name;
-	}
+    public String getName() {
+        return name;
+    }
 
-	public void setName(String name) {
-		this.name = name;
-	}
+    public void setName(String name) {
+        this.name = name;
+    }
 
-	public Expression getExpression() {
-		return expression;
-	}
+    public Expression getExpression() {
+        return expression;
+    }
 
-	public void setExpression(Expression expression) {
+    public void setExpression(Expression expression) {
         this.type = EXPRESSION;
-		this.expression = expression;
-	}
+        this.expression = expression;
+    }
 
     public byte[] getBinary() {
         return (byte[])constant;

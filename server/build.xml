@@ -26,6 +26,7 @@
         <fileset dir="../lib">
             <include name="*.jar"/>
         </fileset>
+        <pathelement location="../shared/target/classes"/>
         <pathelement location="../core/target/classes"/>
     </path>
 
@@ -136,6 +137,7 @@
         </copy>
         <copy todir="target/dist/lib" includeEmptyDirs="false">
             <fileset dir="../lib" includes="*"/>
+            <fileset dir="../shared/dist" includes="penrose-shared-${project.version}.jar"/>
             <fileset dir="../core/dist" includes="penrose-${project.version}.jar"/>
         </copy>
         <mkdir dir="target/dist/lib/ext"/>

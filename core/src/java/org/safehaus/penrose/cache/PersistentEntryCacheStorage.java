@@ -526,8 +526,7 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
     public void drop() throws Exception {
         if (!getPartition().isDynamic(getEntryMapping())) {
             String dn = getEntryMapping().getDn();
-            Row rdn = EntryUtil.getRdn(dn);
-            remove(getEntryMapping().getDn());
+            remove(dn);
         }
 
         Collection sources = getPartition().getEffectiveSourceMappings(getEntryMapping());

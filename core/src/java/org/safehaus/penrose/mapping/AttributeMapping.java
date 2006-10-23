@@ -22,11 +22,12 @@ import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
 import java.util.Arrays;
+import java.io.Serializable;
 
 /**
  * @author Endi S. Dewata
  */
-public class AttributeMapping implements Cloneable {
+public class AttributeMapping implements Cloneable, Serializable {
 
     Logger log = LoggerFactory.getLogger(getClass());
 
@@ -42,14 +43,14 @@ public class AttributeMapping implements Cloneable {
     public final static String RDN_FIRST = "first";
     public final static String RDN_FALSE = "false";
 
-	/**
-	 * Name. This refers to AttributeType's name.
-	 */
-	private String name;
+    /**
+     * Name. This refers to AttributeType's name.
+     */
+    private String name;
 
-	/**
-	 * Values.
-	 */
+    /**
+     * Values.
+     */
     private Object constant;
     private String variable;
     private Expression expression;
@@ -81,7 +82,7 @@ public class AttributeMapping implements Cloneable {
     public AttributeMapping(String name, String type, Object value) {
         this(name, type, value, false);
     }
-    
+
     public AttributeMapping(String name, String type, Object value, boolean rdn) {
         this.name = name;
         this.type = type;
@@ -99,9 +100,9 @@ public class AttributeMapping implements Cloneable {
         this.rdn = rdn ? RDN_TRUE : RDN_FALSE;
     }
 
-	public String getName() {
-		return name;
-	}
+    public String getName() {
+        return name;
+    }
 
     public void setName(String name) {
         this.name = name;
@@ -125,7 +126,7 @@ public class AttributeMapping implements Cloneable {
     }
 
     public void setRdn(String rdn) {
-    	this.rdn = rdn;
+        this.rdn = rdn;
     }
 
     public byte[] getBinary() {

@@ -220,7 +220,6 @@ public class Connector {
             // Remove rows
             for (Iterator i = pks.iterator(); i.hasNext();) {
                 Row pk = (Row) i.next();
-                Row key = normalize((Row)pk);
                 AttributeValues oldEntry = (AttributeValues)sourceValues.clone();
                 oldEntry.set(pk);
                 log.debug("DELETE ROW: " + oldEntry);
@@ -280,7 +279,6 @@ public class Connector {
             // Remove rows
             for (Iterator i = removeRows.iterator(); i.hasNext();) {
                 Row pk = (Row) i.next();
-                Row key = normalize((Row)pk);
                 AttributeValues oldEntry = (AttributeValues)oldSourceValues.clone();
                 oldEntry.set("primaryKey", pk);
                 //log.debug("DELETE ROW: " + oldEntry);
@@ -307,8 +305,6 @@ public class Connector {
                 int rc = connection.add(sourceConfig, pk, newEntry);
                 if (rc != LDAPException.SUCCESS) return rc;
 
-                Filter filter = FilterTool.createFilter(pk);
-
                 AttributeValues sv = connection.get(sourceConfig, pk);
                 getSourceCacheManager().put(partition, sourceConfig, pk, sv);
 
@@ -318,7 +314,6 @@ public class Connector {
             // Replace rows
             for (Iterator i = replaceRows.iterator(); i.hasNext();) {
                 Row pk = (Row) i.next();
-                Row key = normalize((Row)pk);
                 AttributeValues oldEntry = (AttributeValues)oldSourceValues.clone();
                 oldEntry.set("primaryKey", pk);
                 AttributeValues newEntry = (AttributeValues)newSourceValues.clone();
@@ -330,9 +325,6 @@ public class Connector {
                 Collection modifications = createModifications(oldEntry, newEntry);
                 int rc = connection.modify(sourceConfig, pk, modifications);
                 if (rc != LDAPException.SUCCESS) return rc;
-
-                // Modify row from source table in the cache
-                Filter filter = FilterTool.createFilter(pk);
 
                 AttributeValues sv = connection.get(sourceConfig, pk);
                 getSourceCacheManager().remove(partition, sourceConfig, pk);

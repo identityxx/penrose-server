@@ -2,31 +2,40 @@
  Copyright (c) 2000-2006, Identyx Corporation.
  All rights reserved.
 -->
-<project name="penrose-core" default="build">
+<project name="penrose-shared" default="build">
 
-    <description>Penrose Core</description>
+    <description>Penrose Shared</description>
 
     <property name="prefix" value=""/>
     <property name="iscc.path" value="ISCC.exe"/>
     <property name="cygwin.home" value="c:/cygwin"/>
 
-    <property name="project.name" value="penrose"/>
+    <property name="module.name" value="penrose-shared"/>
     <property name="project.version" value="1.1"/>
+    <property name="project.dist" value="dist"/>
 
-    <property name="penrose.home" value="${prefix}/usr/local/${project.name}-${project.version}"/>
-    <property name="docs.target" value="dist/javadoc"/>
+    <property name="penrose.home" value="${prefix}/usr/local/${module.name}-${project.version}"/>
+    <property name="docs.target" value="${project.dist}/javadoc"/>
 
     <tstamp/>
 
     <path id="lib.path">
-        <fileset dir="../lib">
-            <include name="**/*.jar"/>
+        <fileset dir="lib">
+            <include name="*.jar"/>
         </fileset>
-        <pathelement location="../shared/target/classes"/>
+        <fileset dir="../lib">
+            <include name="*.jar"/>
+        </fileset>
     </path>
 
     <path id="main.path">
         <pathelement location="target/classes"/>
+    </path>
+
+    <path id="project.classpath">
+        <fileset dir="svnant">
+            <include name="**/*.jar"/>
+        </fileset>
     </path>
 
     <target name="init">
@@ -48,27 +57,7 @@
     </target>
 
     <target name="compile" depends="init">
-        <echo message="Compiling Penrose Core."/>
-        <javacc
-            target="src/java/org/safehaus/penrose/schema/LDAPv3Schema.jj"
-            javacchome="../lib/javacc"
-            outputdirectory="src/java/org/safehaus/penrose/schema"
-        />
-        <javacc
-            target="src/java/org/safehaus/penrose/filter/item/ItemParser.jj"
-            javacchome="../lib/javacc"
-            outputdirectory="src/java/org/safehaus/penrose/filter/item"
-        />
-        <javacc
-            target="src/java/org/safehaus/penrose/filter/FilterParser.jj"
-            javacchome="../lib/javacc"
-            outputdirectory="src/java/org/safehaus/penrose/filter"
-        />
-        <javacc
-            target="src/java/org/safehaus/penrose/sql/SQLParser.jj"
-            javacchome="../lib/javacc"
-            outputdirectory="src/java/org/safehaus/penrose/sql"
-        />
+        <echo message="Compiling Penrose Shared."/>
         <mkdir dir="target/classes"/>
         <javac
             srcdir="src/java"
@@ -85,12 +74,12 @@
     </target>
 
     <target name="build" depends="compile">
-        <echo message="Building Penrose Core."/>
-        <jar jarfile="target/${project.name}-${project.version}.jar">
+        <echo message="Building Penrose Shared."/>
+        <jar jarfile="target/${module.name}-${project.version}.jar">
             <fileset dir="target/classes"/>
             <manifest>
               <attribute name="Specification-Version"  value="1.1"/>
-              <attribute name="Implementation-Title"   value="Penrose"/>
+              <attribute name="Implementation-Title"   value="Penrose Shared"/>
               <attribute name="Implementation-Version" value="${project.version}"/>
               <attribute name="Implementation-Vendor"  value="Identyx Corporation"/>
               <attribute name="Build-Date" value="${DSTAMP}"/>
@@ -107,34 +96,26 @@
         </javadoc>
     </target>
 
-    <target name="docs-publish" depends="init">
-        <delete dir="${docs.target}"/>
-        <mkdir dir="${docs.target}"/>
-        <copy todir="${docs.target}" overwrite="true">
-            <fileset dir="target/javadoc" includes="**/*"/>
-        </copy>
-    </target>
-
     <target name="dist" depends="build">
         <mkdir dir="dist"/>
         <copy todir="dist"
-            file="target/${project.name}-${project.version}.jar">
+            file="target/${module.name}-${project.version}.jar">
         </copy>
     </target>
 
     <target name="dist-src" depends="docs">
-        <echo message="Creating ${project.name}-${project.version}-src.zip"/>
+        <echo message="Creating ${module.name}-${project.version}-src.zip"/>
         <mkdir dir="dist"/>
-        <zip destfile="dist/${project.name}-${project.version}-src.zip">
+        <zip destfile="dist/${module.name}-${project.version}-src.zip">
             <zipfileset dir=".">
                 <exclude name="dist/**"/>
                 <exclude name="target/**"/>
             </zipfileset>
         </zip>
-        <echo message="Creating ${project.name}-${project.version}-src.tar.gz"/>
+        <echo message="Creating ${module.name}-${project.version}-src.tar.gz"/>
         <mkdir dir="target"/>
-        <tar destfile="dist/${project.name}-${project.version}-src.tar.gz" compression="gzip">
-            <tarfileset dir="." prefix="${project.name}-${project.version}">
+        <tar destfile="dist/${module.name}-${project.version}-src.tar.gz" compression="gzip">
+            <tarfileset dir="." prefix="${module.name}-${project.version}">
                 <exclude name="dist/**"/>
                 <exclude name="target/**"/>
             </tarfileset>

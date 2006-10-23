@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
-package org.safehaus.penrose.management;
+package org.safehaus.penrose.client;
 
 import org.apache.log4j.*;
 import org.apache.log4j.xml.DOMConfigurator;
@@ -37,7 +37,7 @@ public class PenroseClient {
 
     public static Logger log = Logger.getLogger(PenroseClient.class);
 
-    public final static String MBEAN_NAME = "Penrose:service=Penrose";
+    public final static String NAME = "Penrose:service=Penrose";
 
     public final static String PENROSE = "PENROSE";
     public final static String JBOSS   = "JBOSS";
@@ -63,8 +63,13 @@ public class PenroseClient {
 	public String domain;
 	public ObjectName name;
 
+    PartitionManagerClient partitionManagerClient;
+    ServiceManagerClient serviceManagerClient;
+
     public PenroseClient(String host, int port, String username, String password) throws Exception {
         this(PENROSE, host, port, username, password);
+
+        init();
     }
 
 	public PenroseClient(String type, String host, int port, String username, String password) throws Exception {
@@ -74,6 +79,8 @@ public class PenroseClient {
 
 		this.username = username;
 		this.password = password;
+
+        init();
 	}
 
     public PenroseClient(String type, String protocol, String host, int port, String username, String password) throws Exception {
@@ -84,9 +91,16 @@ public class PenroseClient {
 
         this.username = username;
         this.password = password;
+
+        init();
     }
 
-	public void connect() throws Exception {
+    public void init() throws Exception {
+        setPartitionManagerClient(new PartitionManagerClient(this));
+        serviceManagerClient = new ServiceManagerClient(this);
+    }
+
+    public void connect() throws Exception {
 
         if (JBOSS.equals(type)) {
 
@@ -101,7 +115,7 @@ public class PenroseClient {
             parameters.put(Context.SECURITY_CREDENTIALS, password);
 
             context = new InitialContext(parameters);
-            connection = (MBeanServerConnection)context.lookup("jmx/invoker/RMIAdaptor");
+            setConnection((MBeanServerConnection)context.lookup("jmx/invoker/RMIAdaptor"));
 
         } else {
 
@@ -127,11 +141,11 @@ public class PenroseClient {
             parameters.put(JMXConnector.CREDENTIALS, credentials);
 
             connector = JMXConnectorFactory.connect(serviceURL, parameters);
-            connection = connector.getMBeanServerConnection();
+            setConnection(connector.getMBeanServerConnection());
         }
 
-		domain = connection.getDefaultDomain();
-		name = new ObjectName(MBEAN_NAME);
+		domain = getConnection().getDefaultDomain();
+		name = new ObjectName(NAME);
 	}
 
     public void close() throws Exception {
@@ -167,33 +181,15 @@ public class PenroseClient {
     }
 
 	public Object invoke(String method, Object[] paramValues, String[] paramClassNames) throws Exception {
-		return connection.invoke(name, method, paramValues, paramClassNames);
+		return getConnection().invoke(name, method, paramValues, paramClassNames);
 	}
 
     public String getProductName() throws Exception {
-        return (String)connection.getAttribute(name, "ProductName");
+        return (String)getConnection().getAttribute(name, "ProductName");
     }
 
     public String getProductVersion() throws Exception {
-        return (String)connection.getAttribute(name, "ProductVersion");
-    }
-
-    public Collection getServiceNames() throws Exception {
-        return (Collection)connection.getAttribute(name, "ServiceNames");
-    }
-
-    public void start() throws Exception {
-        invoke("start",
-                new Object[] { },
-                new String[] { }
-        );
-    }
-
-    public void stop() throws Exception {
-        invoke("stop",
-                new Object[] { },
-                new String[] { }
-        );
+        return (String)getConnection().getAttribute(name, "ProductVersion");
     }
 
     public void reload() throws Exception {
@@ -214,34 +210,6 @@ public class PenroseClient {
         invoke("renameEntryMapping",
                 new Object[] { oldDn, newDn },
                 new String[] { String.class.getName(), String.class.getName() }
-        );
-    }
-
-    public void restart() throws Exception {
-        invoke("restart",
-                new Object[] { },
-                new String[] { }
-        );
-    }
-
-    public void start(String serviceName) throws Exception {
-        invoke("start",
-                new Object[] { serviceName },
-                new String[] { String.class.getName() }
-        );
-    }
-
-    public void stop(String serviceName) throws Exception {
-        invoke("stop",
-                new Object[] { serviceName },
-                new String[] { String.class.getName() }
-        );
-    }
-
-    public String getStatus(String serviceName) throws Exception {
-        return (String)invoke("getStatus",
-                new Object[] { serviceName },
-                new String[] { String.class.getName() }
         );
     }
 
@@ -267,7 +235,7 @@ public class PenroseClient {
     }
 
     public Collection getLoggerNames() throws Exception {
-        return (Collection)connection.getAttribute(name, "LoggerNames");
+        return (Collection)getConnection().getAttribute(name, "LoggerNames");
     }
 
     public String getLoggerLevel(String name) throws Exception {
@@ -285,13 +253,7 @@ public class PenroseClient {
     }
 
     public static void showUsage() {
-        System.out.println("Usage: org.safehaus.penrose.management.PenroseClient [OPTION]... <COMMAND>");
-        System.out.println();
-        System.out.println("Commands:");
-        System.out.println("  version            get server version");
-        System.out.println("  start <service>    start service");
-        System.out.println("  stop <service>     stop service");
-        System.out.println("  list               display service status");
+        System.out.println("Usage: org.safehaus.penrose.client.PenroseClient [OPTION]... <COMMAND>");
         System.out.println();
         System.out.println("Options:");
         System.out.println("  -?, --help         display this help and exit");
@@ -302,6 +264,17 @@ public class PenroseClient {
         System.out.println("  -w password        password");
         System.out.println("  -d                 run in debug mode");
         System.out.println("  -v                 run in verbose mode");
+        System.out.println();
+        System.out.println("Commands:");
+        System.out.println("  version                  get server version");
+        System.out.println("  list services            display all services");
+        System.out.println("  service <name> start     start service");
+        System.out.println("  service <name> stop      stop service");
+        System.out.println("  service <name> restart   restart service");
+        System.out.println("  service <name> info      display service info");
+        System.out.println("  list partitions          display all partitions");
+        System.out.println("  partition <name> start   start partition");
+        System.out.println("  partition <name> stop    stop partition");
     }
 
     public static void main(String args[]) throws Exception {
@@ -406,28 +379,53 @@ public class PenroseClient {
         String command = (String)iterator.next();
         log.debug("Executing "+command);
 
+        PartitionManagerClient partitionManager = client.getPartitionManagerClient();
+        ServiceManagerClient serviceManager = client.getServiceManagerClient();
+
         if ("version".equals(command)) {
             String version = client.getProductName()+" "+client.getProductVersion();
             System.out.println(version);
 
-        } else if ("start".equals(command)) {
-            if (iterator.hasNext()) {
-                String serviceName = (String)iterator.next();
-                client.start(serviceName);
-            } else {
-                client.start();
+        } else if ("service".equals(command)) {
+
+            String name = (String)iterator.next();
+            ServiceClient service = serviceManager.getService(name);
+
+            String action = (String)iterator.next();
+            if ("start".equals(action)) {
+                service.start();
+
+            } else if ("stop".equals(action)) {
+                service.stop();
+
+            } else if ("restart".equals(action)) {
+                service.restart();
+
+            } else if ("info".equals(action)) {
+                service.printInfo();
             }
 
-        } else if ("stop".equals(command)) {
-            if (iterator.hasNext()) {
-                String serviceName = (String)iterator.next();
-                client.stop(serviceName);
-            } else {
-                client.stop();
+        } else if ("partition".equals(command)) {
+
+            String name = (String)iterator.next();
+            PartitionClient partition = partitionManager.getPartition(name);
+
+            String action = (String)iterator.next();
+            if ("start".equals(action)) {
+                partition.start();
+
+            } else if ("stop".equals(action)) {
+                partition.stop();
+
+            } else if ("restart".equals(action)) {
+                partition.restart();
+
+            } else if ("info".equals(action)) {
+                partition.printInfo();
             }
 
         } else if ("restart".equals(command)) {
-            client.restart();
+            serviceManager.restart();
 
         } else if ("reload".equals(command)) {
             client.reload();
@@ -445,15 +443,13 @@ public class PenroseClient {
             }
 
         } else if ("list".equals(command)) {
-            Collection serviceNames = client.getServiceNames();
-            for (Iterator i=serviceNames.iterator(); i.hasNext(); ) {
-                String serviceName = (String)i.next();
-                String status = client.getStatus(serviceName);
 
-                StringBuffer padding = new StringBuffer();
-                for (int j=0; j<20-serviceName.length(); j++) padding.append(" ");
+            String target = (String)iterator.next();
+            if ("services".equals(target)) {
+                serviceManager.printServices();
 
-                System.out.println(serviceName+padding+"["+status+"]");
+            } else if ("partitions".equals(target)) {
+                partitionManager.printPartitions();
             }
 
         } else if ("loggers".equals(command)) {
@@ -478,4 +474,29 @@ public class PenroseClient {
 
         client.close();
     }
+
+    public MBeanServerConnection getConnection() {
+        return connection;
+    }
+
+    public void setConnection(MBeanServerConnection connection) {
+        this.connection = connection;
+    }
+
+    public ServiceManagerClient getServiceManagerClient() {
+        return serviceManagerClient;
+    }
+
+    public void setServiceManagerClient(ServiceManagerClient serviceManagerClient) {
+        this.serviceManagerClient = serviceManagerClient;
+    }
+
+    public PartitionManagerClient getPartitionManagerClient() {
+        return partitionManagerClient;
+    }
+
+    public void setPartitionManagerClient(PartitionManagerClient partitionManagerClient) {
+        this.partitionManagerClient = partitionManagerClient;
+    }
+
 }

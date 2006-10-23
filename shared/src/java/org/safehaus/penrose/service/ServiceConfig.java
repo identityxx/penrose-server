@@ -20,11 +20,13 @@ package org.safehaus.penrose.service;
 import java.util.Collection;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.ArrayList;
+import java.io.Serializable;
 
 /**
  * @author Endi S. Dewata
  */
-public class ServiceConfig implements Cloneable, ServiceConfigMBean {
+public class ServiceConfig implements ServiceConfigMBean, Cloneable, Serializable {
 
     private String name;
     private boolean enabled = true;
@@ -40,7 +42,7 @@ public class ServiceConfig implements Cloneable, ServiceConfigMBean {
         this.name = name;
         this.serviceClass = serviceClass;
     }
-    
+
     public String getName() {
         return name;
     }
@@ -74,7 +76,7 @@ public class ServiceConfig implements Cloneable, ServiceConfigMBean {
     }
 
     public Collection getParameterNames() {
-        return parameters.keySet();
+        return new ArrayList(parameters.keySet()); // return Serializable list
     }
 
     public Map getParameters() {
@@ -85,8 +87,8 @@ public class ServiceConfig implements Cloneable, ServiceConfigMBean {
         parameters.put(name, value);
     }
 
-    public void removeParameter(String name) {
-        parameters.remove(name);
+    public String removeParameter(String name) {
+        return (String)parameters.remove(name);
     }
 
     public String getParameter(String name) {

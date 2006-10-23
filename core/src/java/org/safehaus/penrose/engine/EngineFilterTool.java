@@ -126,7 +126,6 @@ public class EngineFilterTool {
             throws Exception {
 
         String attributeName = filter.getAttribute();
-        Collection substrings = filter.getSubstrings();
 
         AttributeMapping attributeMapping = entryMapping.getAttributeMapping(attributeName);
         String variable = attributeMapping.getVariable();

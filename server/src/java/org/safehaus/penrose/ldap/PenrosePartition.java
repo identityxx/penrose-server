@@ -84,9 +84,13 @@ public class PenrosePartition implements org.apache.directory.server.core.partit
 
     public LdapDN getUpSuffix() throws NamingException {
         try {
-            Partition partition = partitionManager.getPartition("DEFAULT");
-            Collection rootEntryMappings = partition.getRootEntryMappings();
-            EntryMapping entryMapping = (EntryMapping)rootEntryMappings.iterator().next();
+            Collection list = new ArrayList();
+            for (Iterator i=partitionManager.getPartitions().iterator(); i.hasNext(); ) {
+                Partition partition = partitionManager.getPartition("DEFAULT");
+                list.add(partition.getRootEntryMappings());
+            }
+            
+            EntryMapping entryMapping = (EntryMapping)list.iterator().next();
             return new LdapDN(entryMapping.getDn());
 
         } catch (Exception e) {

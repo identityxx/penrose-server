@@ -213,7 +213,6 @@ public class LoadEngine {
                 AttributeValues sourceValues = new AttributeValues();
                 for (Iterator i=entries.iterator(); i.hasNext(); ) {
                     EntryData data = (EntryData)i.next();
-                    String dn = data.getDn();
                     AttributeValues sv = data.getMergedValues();
 
                     if (sv == null) continue;

@@ -34,16 +34,19 @@
     </target>
 
     <target name="compile" depends="init">
+        <ant dir="shared" target="compile"/>
         <ant dir="core" target="compile"/>
         <ant dir="server" target="compile"/>
     </target>
 
     <target name="build" depends="init">
+        <ant dir="shared" target="build"/>
         <ant dir="core" target="build"/>
         <ant dir="server" target="build"/>
     </target>
 
     <target name="docs" depends="init">
+        <ant dir="shared" target="docs"/>
         <ant dir="core" target="docs"/>
         <ant dir="server" target="docs"/>
     </target>
@@ -71,31 +74,37 @@
     </target>
 
     <target name="dist" depends="init">
+        <ant dir="shared" target="dist"/>
         <ant dir="core" target="dist"/>
         <ant dir="server" target="dist"/>
     </target>
 
     <target name="dist-src" depends="init">
+        <ant dir="shared" target="dist-src"/>
         <ant dir="core" target="dist-src"/>
         <ant dir="server" target="dist-src"/>
     </target>
 
     <target name="dist-macosx" depends="init">
+        <ant dir="shared" target="dist-macosx"/>
         <ant dir="core" target="dist-macosx"/>
         <ant dir="server" target="dist-macosx"/>
     </target>
 
     <target name="dist-unix" depends="init">
+        <ant dir="shared" target="dist-unix"/>
         <ant dir="core" target="dist-unix"/>
         <ant dir="server" target="dist-unix"/>
     </target>
 
     <target name="dist-win32" depends="init">
+        <ant dir="shared" target="dist-win32"/>
         <ant dir="core" target="dist-win32"/>
         <ant dir="server" target="dist-win32"/>
     </target>
 
     <target name="dist-all" depends="init">
+        <ant dir="shared" target="dist-all"/>
         <ant dir="core" target="dist-all"/>
         <ant dir="server" target="dist-all"/>
     </target>
@@ -111,6 +120,7 @@
     <target name="clean" depends="init">
         <ant dir="server" target="clean"/>
         <ant dir="core" target="clean"/>
+        <ant dir="shared" target="clean"/>
     </target>
 
 </project>

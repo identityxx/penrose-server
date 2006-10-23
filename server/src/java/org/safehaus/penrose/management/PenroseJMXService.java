@@ -34,7 +34,10 @@ import java.util.Iterator;
 
 import org.safehaus.penrose.service.Service;
 import org.safehaus.penrose.service.ServiceConfig;
+import org.safehaus.penrose.service.ServiceManager;
+import org.safehaus.penrose.service.ServiceManagerMBean;
 import org.safehaus.penrose.Penrose;
+import org.safehaus.penrose.server.PenroseServer;
 import org.safehaus.penrose.module.ModuleConfig;
 import org.safehaus.penrose.partition.*;
 import org.safehaus.penrose.connector.AdapterConfig;
@@ -50,13 +53,24 @@ public class PenroseJMXService extends Service {
     public final static String RMI_TRANSPORT_PORT = "rmiTransportPort";
     public final static String HTTP_PORT          = "httpPort";
 
+    public final static int DEFAULT_RMI_PORT            = 1099;
+    public final static int DEFAULT_RMI_TRANSPORT_PORT  = 0;
+    public final static int DEFAULT_HTTP_PORT           = 8112;
+    public final static String DEFAULT_PROTOCOL         = "rmi";
+
     PenroseJMXAuthenticator jmxAuthenticator;
 
     MBeanServer mbeanServer;
     boolean createdMBeanServer;
 
-    ObjectName penroseServiceName = ObjectName.getInstance(PenroseClient.MBEAN_NAME);
+    ObjectName penroseServiceName = ObjectName.getInstance(PenroseServiceMBean.NAME);
     PenroseService penroseService;
+
+    ObjectName partitionManagerName = ObjectName.getInstance(PartitionManagerMBean.NAME);
+    PartitionManager partitionManager;
+
+    ObjectName serviceManagerName = ObjectName.getInstance(ServiceManagerMBean.NAME);
+    ServiceManager serviceManager;
 
     ObjectName registryName = ObjectName.getInstance("naming:type=rmiregistry");
     NamingService registry;
@@ -87,13 +101,13 @@ public class PenroseJMXService extends Service {
         ServiceConfig serviceConfig = getServiceConfig();
 
         String s = serviceConfig.getParameter(RMI_PORT);
-        rmiPort = s == null ? PenroseClient.DEFAULT_RMI_PORT : Integer.parseInt(s);
+        rmiPort = s == null ? DEFAULT_RMI_PORT : Integer.parseInt(s);
 
         s = serviceConfig.getParameter(RMI_TRANSPORT_PORT);
-        rmiTransportPort = s == null ? PenroseClient.DEFAULT_RMI_TRANSPORT_PORT : Integer.parseInt(s);
+        rmiTransportPort = s == null ? DEFAULT_RMI_TRANSPORT_PORT : Integer.parseInt(s);
 
         s = serviceConfig.getParameter(HTTP_PORT);
-        httpPort = s == null ? PenroseClient.DEFAULT_HTTP_PORT : Integer.parseInt(s);
+        httpPort = s == null ? DEFAULT_HTTP_PORT : Integer.parseInt(s);
     }
 
     public void start() throws Exception {
@@ -124,7 +138,7 @@ public class PenroseJMXService extends Service {
             registry.start();
 
             String url = "service:jmx:rmi://localhost";
-            if (rmiTransportPort != PenroseClient.DEFAULT_RMI_TRANSPORT_PORT) url += ":"+rmiTransportPort;
+            if (rmiTransportPort != DEFAULT_RMI_TRANSPORT_PORT) url += ":"+rmiTransportPort;
 
             url += "/jndi/rmi://localhost";
             //if (rmiPort != PenroseClient.DEFAULT_RMI_PORT)
@@ -143,7 +157,7 @@ public class PenroseJMXService extends Service {
             rmiConnector.start();
 
             log.warn("Listening to port "+rmiPort+" (RMI).");
-            if (rmiTransportPort != PenroseClient.DEFAULT_RMI_TRANSPORT_PORT) log.warn("Listening to port "+rmiTransportPort+" (RMI Transport).");
+            if (rmiTransportPort != DEFAULT_RMI_TRANSPORT_PORT) log.warn("Listening to port "+rmiTransportPort+" (RMI Transport).");
         }
 
         if (httpPort > 0) {
@@ -178,6 +192,10 @@ public class PenroseJMXService extends Service {
         }
 
         unregister();
+
+        if (partitionManager != null) {
+            mbeanServer.unregisterMBean(partitionManagerName);
+        }
 
         if (penroseService != null) {
             mbeanServer.unregisterMBean(penroseServiceName);
@@ -220,17 +238,42 @@ public class PenroseJMXService extends Service {
     }
 
     public void register() throws Exception {
-
         registerConfigs();
-        registerServices();
+        registerManagers();
         registerPartitions();
+        registerServices();
     }
 
     public void unregister() throws Exception {
-
-        unregisterPartitions();
         unregisterServices();
+        unregisterPartitions();
+        unregisterManagers();
         unregisterConfigs();
+    }
+
+    public void registerServices() throws Exception {
+        PenroseServer penroseServer = getPenroseServer();
+        ServiceManager serviceManager = penroseServer.getServiceManager();
+
+        register(ServiceManagerMBean.NAME, serviceManager);
+
+        for (Iterator i=serviceManager.getServiceNames().iterator(); i.hasNext(); ) {
+            String serviceName = (String)i.next();
+            Service service = serviceManager.getService(serviceName);
+            register("Penrose Services:name="+serviceName+",type=Service", service);
+        }
+    }
+
+    public void unregisterServices() throws Exception {
+        PenroseServer penroseServer = getPenroseServer();
+        ServiceManager serviceManager = penroseServer.getServiceManager();
+
+        for (Iterator i=serviceManager.getServiceNames().iterator(); i.hasNext(); ) {
+            String serviceName = (String)i.next();
+            unregister("Penrose Services:name="+serviceName+",type=Service");
+        }
+
+        unregister(ServiceManagerMBean.NAME);
     }
 
     public void registerConfigs() throws Exception {
@@ -299,7 +342,7 @@ public class PenroseJMXService extends Service {
         unregister("Penrose Config:type=PenroseConfig");
     }
 
-    public void registerServices() throws Exception {
+    public void registerManagers() throws Exception {
         Penrose penrose = getPenroseServer().getPenrose();
 
         register("Penrose:service=SchemaManager", penrose.getSchemaManager());
@@ -310,7 +353,7 @@ public class PenroseJMXService extends Service {
         register("Penrose:service=ServiceManager", getPenroseServer().getServiceManager());
     }
 
-    public void unregisterServices() throws Exception {
+    public void unregisterManagers() throws Exception {
         unregister("Penrose:service=ServiceManager");
         unregister("Penrose:service=SessionManager");
         unregister("Penrose:service=ModuleManager");
@@ -324,12 +367,13 @@ public class PenroseJMXService extends Service {
         Penrose penrose = getPenroseServer().getPenrose();
         PartitionManager partitionManager = penrose.getPartitionManager();
 
-        Collection partitions = partitionManager.getPartitions();
-        for (Iterator i=partitions.iterator(); i.hasNext(); ) {
-            Partition partition = (Partition)i.next();
+        register(PartitionManagerMBean.NAME, partitionManager);
 
-            //String name = "Penrose Config:name="+partition.getName()+",type=Partition";
-            //register(name, partition);
+        for (Iterator i=partitionManager.getPartitionNames().iterator(); i.hasNext(); ) {
+            String name = (String)i.next();
+            Partition partition = partitionManager.getPartition(name);
+
+            register("Penrose Partitions:name="+name+",type=Partition", partition);
 
             registerConnections(partition);
             //registerSources(partition);
@@ -342,17 +386,18 @@ public class PenroseJMXService extends Service {
         Penrose penrose = getPenroseServer().getPenrose();
         PartitionManager partitionManager = penrose.getPartitionManager();
 
-        Collection partitions = partitionManager.getPartitions();
-        for (Iterator i=partitions.iterator(); i.hasNext(); ) {
-            Partition partition = (Partition)i.next();
+        for (Iterator i=partitionManager.getPartitionNames().iterator(); i.hasNext(); ) {
+            String name = (String)i.next();
+            Partition partition = partitionManager.getPartition(name);
 
             unregisterModules(partition);
             //unregisterSources(partition);
             unregisterConnections(partition);
 
-            //String name = "Penrose Config:name="+partition.getName()+",type=Partition";
-            //unregister(name);
+            unregister("Penrose Partitions:name="+name+",type=Partition");
         }
+
+        unregister(PartitionManagerMBean.NAME);
     }
 
     public void registerConnections(Partition partition) throws Exception {

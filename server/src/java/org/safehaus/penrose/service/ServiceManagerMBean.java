@@ -24,7 +24,12 @@ import java.util.Collection;
  */
 public interface ServiceManagerMBean {
 
+    public final static String NAME = "Penrose:name=ServiceManager";
+
     public Collection getServiceNames() throws Exception;
+    public ServiceConfig getServiceConfig(String name) throws Exception;
+
+    public String getStatus(String name) throws Exception;
 
     public void start() throws Exception;
     public void start(String name) throws Exception;
@@ -32,5 +37,5 @@ public interface ServiceManagerMBean {
     public void stop() throws Exception;
     public void stop(String name) throws Exception;
 
-    public String getStatus(String name) throws Exception;
+    public void restart() throws Exception;
 }

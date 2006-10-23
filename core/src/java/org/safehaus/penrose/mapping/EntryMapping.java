@@ -23,11 +23,12 @@ import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
 import java.util.*;
+import java.io.Serializable;
 
 /**
  * @author Endi S. Dewata
  */
-public class EntryMapping implements Cloneable {
+public class EntryMapping implements Cloneable, Serializable {
 
     Logger log = LoggerFactory.getLogger(getClass());
 
@@ -60,16 +61,16 @@ public class EntryMapping implements Cloneable {
 
     private boolean enabled = true;
 
-	/**
-	 * Children. Each element is of type org.safehaus.penrose.mapping.EntryMapping.
-	 */
+    /**
+     * Children. Each element is of type org.safehaus.penrose.mapping.EntryMapping.
+     */
     private Collection childMappings = new ArrayList();
 
     /**
      * Object classes. Each element is of type String.
      */
     private Collection objectClasses = new TreeSet();
-    
+
     private String description;
 
     /**
@@ -81,7 +82,7 @@ public class EntryMapping implements Cloneable {
      * Sources. Each element is of type org.safehaus.penrose.mapping.Source.
      */
     private List sourceMappings = new ArrayList();
-    
+
     /**
      * Relationship. Each element is of type org.safehaus.penrose.mapping.Relationship.
      */
@@ -94,10 +95,10 @@ public class EntryMapping implements Cloneable {
 
     private Map parameters = new TreeMap();
 
-	public EntryMapping() {
-	}
+    public EntryMapping() {
+    }
 
-	public EntryMapping(String dn) {
+    public EntryMapping(String dn) {
         Row row = EntryUtil.getRdn(dn);
         rdn = row.toString();
         parentDn = EntryUtil.getParentDn(dn);
@@ -111,7 +112,7 @@ public class EntryMapping implements Cloneable {
     public String getRdn() {
         return rdn;
     }
-    
+
     public Row getRdn(AttributeValues attributeValues) {
         Collection rdnAttributes = getRdnAttributeNames();
         Row row = new Row();
@@ -156,7 +157,7 @@ public class EntryMapping implements Cloneable {
 
         return false;
     }
-    
+
     public Collection getRdnAttributeNames() {
         //log.debug("RDN Attributes:");
         Collection results = new ArrayList();
@@ -277,9 +278,9 @@ public class EntryMapping implements Cloneable {
         return false;
     }
 
-	public void addObjectClass(String oc) {
-		objectClasses.add(oc);
-	}
+    public void addObjectClass(String oc) {
+        objectClasses.add(oc);
+    }
 
     public void addObjectClasses(Collection list) {
         objectClasses.addAll(list);
@@ -296,7 +297,7 @@ public class EntryMapping implements Cloneable {
     public void addEntryMapping(MappingRule mappingRule) {
         childMappings.add(mappingRule);
     }
-    
+
     public void addSourceMapping(SourceMapping sourceMapping) {
         sourceMappings.add(sourceMapping);
     }
@@ -341,7 +342,7 @@ public class EntryMapping implements Cloneable {
         }
     }
 
-	public void addAttributeMapping(AttributeMapping attributeMapping) {
+    public void addAttributeMapping(AttributeMapping attributeMapping) {
         String name = attributeMapping.getName().toLowerCase();
         log.debug("Adding attribute "+name+(attributeMapping.isPK() ? " ("+attributeMapping.getRdn()+")" : ""));
 
@@ -351,7 +352,7 @@ public class EntryMapping implements Cloneable {
             attributeMappings.put(name, list);
         }
         list.add(attributeMapping);
-	}
+    }
 
     public AttributeMapping getAttributeMapping(String name) {
         Collection list = getAttributeMappings(name);
@@ -389,9 +390,9 @@ public class EntryMapping implements Cloneable {
         if (list.isEmpty()) removeAttributeMappings(attributeMapping.getName());
     }
 
-	public void addRelationship(Relationship relationship) {
-		relationships.add(relationship);
-	}
+    public void addRelationship(Relationship relationship) {
+        relationships.add(relationship);
+    }
 
     public void removeRelationship(Relationship relationship) {
         relationships.remove(relationship);
@@ -400,7 +401,7 @@ public class EntryMapping implements Cloneable {
     public void removeRelationships() {
         relationships.clear();
     }
-    
+
     public String getDescription() {
         return description;
     }
@@ -436,7 +437,7 @@ public class EntryMapping implements Cloneable {
     public void removeACI(ACI aci) {
         acl.remove(aci);
     }
-    
+
     public void removeACL() {
         acl.clear();
     }

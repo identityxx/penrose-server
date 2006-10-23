@@ -360,7 +360,6 @@ public class JNDIAdapter extends Adapter {
         log.debug("Deleting attributes in "+dn);
 
         List list = new ArrayList();
-        Collection fields = sourceConfig.getFieldConfigs();
 
         for (Iterator i=entry.getNames().iterator(); i.hasNext(); ) {
             String name = (String)i.next();
@@ -631,7 +630,6 @@ public class JNDIAdapter extends Adapter {
         String dn = getDn(sourceConfig, entry);
         log.debug("Replacing attributes "+dn);
 
-        Collection fields = sourceConfig.getFieldConfigs();
         List list = new ArrayList();
 
         for (Iterator i=entry.getNames().iterator(); i.hasNext(); ) {
@@ -764,7 +762,6 @@ public class JNDIAdapter extends Adapter {
         if (variable == null) return null;
 
         int index = variable.indexOf(".");
-        String sourceName = variable.substring(0, index);
         String fieldName = variable.substring(index+1);
 
         return new SubstringFilter(fieldName, substrings);

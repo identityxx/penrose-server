@@ -21,30 +21,31 @@ import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
 import java.util.*;
+import java.io.Serializable;
 
 /**
  * @author Endi S. Dewata
  */
-public class SourceMapping implements Cloneable {
+public class SourceMapping implements Cloneable, Serializable {
 
     Logger log = LoggerFactory.getLogger(getClass());
 
     public final static String FILTER     = "filter";
 
-	/**
-	 * Name.
-	 */
-	private String name = "DEFAULT";
+    /**
+     * Name.
+     */
+    private String name = "DEFAULT";
 
     /**
      * Source name.
      */
     private String sourceName;
 
-	/**
-	 * Fields. Each element is of type org.safehaus.penrose.mapping.Field.
-	 */
-	private Map fieldMappings = new TreeMap();
+    /**
+     * Fields. Each element is of type org.safehaus.penrose.mapping.Field.
+     */
+    private Map fieldMappings = new TreeMap();
 
     /**
      * Parameters.
@@ -60,34 +61,34 @@ public class SourceMapping implements Cloneable {
     private boolean includeOnDelete = true;
     private boolean proxy = false;
 
-	public SourceMapping() {
-	}
+    public SourceMapping() {
+    }
 
     public SourceMapping(String name, String sourceName) {
         this.name = name;
         this.sourceName = sourceName;
     }
-    
-	public String getName() {
-		return name;
-	}
 
-	public void setName(String name) {
-		this.name = name;
-	}
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
 
     public Collection getFieldMappings(String name) {
         return (Collection)fieldMappings.get(name.toLowerCase());
     }
 
-	public Collection getFieldMappings() {
+    public Collection getFieldMappings() {
         Collection results = new ArrayList();
         for (Iterator i=fieldMappings.values().iterator(); i.hasNext(); ) {
             Collection list = (Collection)i.next();
             results.addAll(list);
         }
-		return results;
-	}
+        return results;
+    }
 
     public Collection getPrimaryKeyFieldMappings() {
         Collection results = new ArrayList();
@@ -102,7 +103,7 @@ public class SourceMapping implements Cloneable {
         return results;
     }
 
-	public void addFieldMapping(FieldMapping fieldMapping) {
+    public void addFieldMapping(FieldMapping fieldMapping) {
         String name = fieldMapping.getName().toLowerCase();
         Collection list = (Collection)fieldMappings.get(name);
         if (list == null) {
@@ -110,7 +111,7 @@ public class SourceMapping implements Cloneable {
             fieldMappings.put(name, list);
         }
         list.add(fieldMapping);
-	}
+    }
 
     public void removeFieldMappings(String name) {
         fieldMappings.remove(name.toLowerCase());
@@ -127,7 +128,7 @@ public class SourceMapping implements Cloneable {
     public void removeFieldMappings() {
         fieldMappings.clear();
     }
-    
+
     public String getSourceName() {
         return sourceName;
     }

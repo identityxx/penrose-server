@@ -294,6 +294,7 @@ public class Penrose {
 
         for (Iterator i=newPartitions.iterator(); i.hasNext(); ) {
             Partition partition = (Partition)i.next();
+
             Collection results = partitionValidator.validate(partition);
 
             for (Iterator j=results.iterator(); j.hasNext(); ) {
@@ -343,9 +344,6 @@ public class Penrose {
     }
 
     public void loadEngine() throws Exception {
-
-        ConnectorConfig connectorConfig = penroseConfig.getConnectorConfig();
-        Connector connector = connectorManager.getConnector(connectorConfig.getName());
 
         Collection engineConfigs = penroseConfig.getEngineConfigs();
 

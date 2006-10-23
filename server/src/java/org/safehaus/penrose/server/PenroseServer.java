@@ -189,7 +189,7 @@ public class PenroseServer {
             }
 
             if (parameters.contains("--version")) {
-                System.out.println(Penrose.PRODUCT_NAME+" "+Penrose.PRODUCT_VERSION);
+                System.out.println(Penrose.PRODUCT_NAME+" Server "+Penrose.PRODUCT_VERSION);
                 System.out.println(Penrose.PRODUCT_COPYRIGHT);
                 System.exit(0);
             }
@@ -226,7 +226,7 @@ public class PenroseServer {
                 BasicConfigurator.configure(appender);
             }
 
-            log.warn("Starting "+Penrose.PRODUCT_NAME+" "+Penrose.PRODUCT_VERSION+".");
+            log.warn("Starting "+Penrose.PRODUCT_NAME+" Server "+Penrose.PRODUCT_VERSION+".");
 
             String javaVersion = System.getProperty("java.version");
             log.info("Java version: "+javaVersion);

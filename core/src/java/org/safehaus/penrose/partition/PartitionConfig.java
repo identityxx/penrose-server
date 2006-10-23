@@ -17,13 +17,16 @@
  */
 package org.safehaus.penrose.partition;
 
+import java.io.Serializable;
+
 /**
  * @author Endi S. Dewata
  */
-public class PartitionConfig implements PartitionConfigMBean, Cloneable {
+public class PartitionConfig implements PartitionConfigMBean, Cloneable, Serializable {
 
     private String name;
     private String path;
+    private boolean enabled = true;
 
     public PartitionConfig() {
     }
@@ -49,9 +52,18 @@ public class PartitionConfig implements PartitionConfigMBean, Cloneable {
         this.path = path;
     }
 
+    public boolean isEnabled() {
+        return enabled;
+    }
+
+    public void setEnabled(boolean enabled) {
+        this.enabled = enabled;
+    }
+
     public int hashCode() {
         return (name == null ? 0 : name.hashCode()) +
-                (path == null ? 0 : path.hashCode());
+                (path == null ? 0 : path.hashCode()) +
+                (enabled ? 0 : 1);
     }
 
     boolean equals(Object o1, Object o2) {
@@ -66,6 +78,7 @@ public class PartitionConfig implements PartitionConfigMBean, Cloneable {
         PartitionConfig partitionConfig = (PartitionConfig)object;
         if (!equals(name, partitionConfig.name)) return false;
         if (!equals(path, partitionConfig.path)) return false;
+        if (enabled != partitionConfig.enabled) return false;
 
         return true;
     }
@@ -73,6 +86,7 @@ public class PartitionConfig implements PartitionConfigMBean, Cloneable {
     public void copy(PartitionConfig partitionConfig) {
         name = partitionConfig.name;
         path = partitionConfig.path;
+        enabled = partitionConfig.enabled;
     }
 
     public Object clone() {

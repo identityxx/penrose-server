@@ -24,11 +24,12 @@ import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
 import java.util.*;
+import java.io.Serializable;
 
 /**
  * @author Endi S. Dewata
  */
-public class SourceConfig implements SourceConfigMBean, Cloneable {
+public class SourceConfig implements SourceConfigMBean, Cloneable, Serializable {
 
     Logger log = LoggerFactory.getLogger(getClass());
 
@@ -69,10 +70,10 @@ public class SourceConfig implements SourceConfigMBean, Cloneable {
 
     public final static String DEFAULT_CACHE                   = "DEFAULT";
 
-	/**
-	 * Name.
-	 */
-	private String name;
+    /**
+     * Name.
+     */
+    private String name;
 
     private String connectionName;
 
@@ -88,21 +89,21 @@ public class SourceConfig implements SourceConfigMBean, Cloneable {
      */
     private Map fieldConfigs = new TreeMap();
 
-	public SourceConfig() {
-	}
+    public SourceConfig() {
+    }
 
     public SourceConfig(String name, String connectionName) {
         this.name = name;
         this.connectionName = connectionName;
     }
-    
-	public String getName() {
-		return name;
-	}
 
-	public void setName(String name) {
-		this.name = name;
-	}
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
 
     public FieldConfig getFieldConfig(String name) {
         return (FieldConfig)fieldConfigs.get(name);
@@ -168,16 +169,16 @@ public class SourceConfig implements SourceConfigMBean, Cloneable {
         return results;
     }
 
-	public Collection getFieldConfigs() {
-		return fieldConfigs.values();
-	}
+    public Collection getFieldConfigs() {
+        return fieldConfigs.values();
+    }
 
-	public void addFieldConfig(FieldConfig fieldConfig) {
+    public void addFieldConfig(FieldConfig fieldConfig) {
         String name = fieldConfig.getName();
         log.debug("Adding field "+name+(fieldConfig.isPK() ? " ("+fieldConfig.getPrimaryKey()+")" : ""));
 
         fieldConfigs.put(name, fieldConfig);
-	}
+    }
 
     public void renameFieldConfig(String oldName, String newName) {
         if (oldName.equals(newName)) return;
@@ -217,7 +218,7 @@ public class SourceConfig implements SourceConfigMBean, Cloneable {
     public Map getParameters() {
         return parameters;
     }
-    
+
     public Collection getParameterNames() {
         return parameters.keySet();
     }

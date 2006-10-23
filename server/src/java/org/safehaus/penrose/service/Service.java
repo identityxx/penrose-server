@@ -26,7 +26,7 @@ import java.util.Collection;
 /**
  * @author Endi S. Dewata
  */
-public class Service {
+public class Service implements ServiceMBean {
 
     public Logger log = LoggerFactory.getLogger(getClass());
 
@@ -40,14 +40,21 @@ public class Service {
 
     private String status = STOPPED;
 
-    public String getParameter(String name) {
-        return serviceConfig.getParameter(name);
-    }
-
     public Collection getParameterNames() {
         return serviceConfig.getParameterNames();
     }
 
+    public String getParameter(String name) {
+        return serviceConfig.getParameter(name);
+    }
+
+    public void setParameter(String name, String value) {
+        serviceConfig.setParameter(name, value);
+    }
+
+    public String removeParameter(String name) {
+        return serviceConfig.removeParameter(name);
+    }
 
     public void init() throws Exception {
     }
@@ -58,6 +65,11 @@ public class Service {
 
     public void stop() throws Exception {
         setStatus(STOPPED);
+    }
+
+    public void restart() throws Exception {
+        stop();
+        start();
     }
 
     public ServiceConfig getServiceConfig() {
@@ -82,5 +94,17 @@ public class Service {
 
     public void setStatus(String status) {
         this.status = status;
+    }
+
+    public String getName() {
+        return serviceConfig.getName();
+    }
+
+    public String getServiceClass() {
+        return serviceConfig.getServiceClass();
+    }
+
+    public String getDescription() {
+        return serviceConfig.getDescription();
     }
 }

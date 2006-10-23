@@ -17,7 +17,7 @@
  */
 package org.safehaus.penrose.service;
 
-import java.util.Map;
+import java.util.Collection;
 
 /**
  * @author Endi S. Dewata
@@ -36,8 +36,8 @@ public interface ServiceConfigMBean {
     public String getDescription() throws Exception;
     public void setDescription(String description) throws Exception;
 
-    public Map getParameters() throws Exception;
+    public Collection getParameterNames() throws Exception;
     public void setParameter(String name, String value) throws Exception;
-    public void removeParameter(String name) throws Exception;
+    public String removeParameter(String name) throws Exception;
     public String getParameter(String name) throws Exception;
 }

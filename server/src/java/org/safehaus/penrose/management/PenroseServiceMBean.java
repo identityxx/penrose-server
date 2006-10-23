@@ -21,24 +21,18 @@ import java.util.*;
 
 public interface PenroseServiceMBean {
 
+    public final static String NAME = "Penrose:service=Penrose";
+
     public String getProductName() throws Exception;
     public String getProductVersion() throws Exception;
 
     public String getHome() throws Exception;
     public void setHome(String home) throws Exception;
 
-    public void start() throws Exception;
-    public void stop() throws Exception;
     public void reload() throws Exception;
-    public void restart() throws Exception;
     public void store() throws Exception;
 
     public void renameEntryMapping(String oldDn, String newDn) throws Exception;
-
-    public Collection getServiceNames() throws Exception;
-    public void start(String serviceName) throws Exception;
-    public void stop(String serviceName) throws Exception;
-    public String getStatus(String serviceName) throws Exception;
 
     public byte[] download(String filename) throws Exception;
 	public void upload(String filename, byte content[]) throws Exception;

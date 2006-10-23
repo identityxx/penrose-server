@@ -17,10 +17,12 @@
  */
 package org.safehaus.penrose.partition;
 
+import java.io.Serializable;
+
 /**
  * @author Endi S. Dewata
  */
-public class FieldConfig implements FieldConfigMBean, Comparable, Cloneable {
+public class FieldConfig implements FieldConfigMBean, Comparable, Cloneable, Serializable {
 
     public final static String TYPE_VARCHAR   = "VARCHAR";
     public final static String TYPE_INTEGER   = "INTEGER";
@@ -35,10 +37,10 @@ public class FieldConfig implements FieldConfigMBean, Comparable, Cloneable {
     public final static String PRIMARY_KEY_FIRST = "first";
     public final static String PRIMARY_KEY_FALSE = "false";
 
-	/**
-	 * Name.
-	 */
-	private String name;
+    /**
+     * Name.
+     */
+    private String name;
 
     private String originalName;
 
@@ -46,7 +48,7 @@ public class FieldConfig implements FieldConfigMBean, Comparable, Cloneable {
     private int length    = DEFAULT_LENGTH;
     private int precision = DEFAULT_PRECISION;
 
-	private String primaryKey = PRIMARY_KEY_FALSE;
+    private String primaryKey = PRIMARY_KEY_FALSE;
     private boolean searchable = true;
     private boolean unique;
     private boolean index;
@@ -62,8 +64,8 @@ public class FieldConfig implements FieldConfigMBean, Comparable, Cloneable {
      */
     private String encoding;
 
-	public FieldConfig() {
-	}
+    public FieldConfig() {
+    }
 
     public FieldConfig(String name) {
         this.name = name;
@@ -74,25 +76,25 @@ public class FieldConfig implements FieldConfigMBean, Comparable, Cloneable {
         this.primaryKey = primaryKey;
     }
 
-	public String getName() {
-		return name;
-	}
+    public String getName() {
+        return name;
+    }
 
-	public void setName(String name) {
-		this.name = name;
-	}
+    public void setName(String name) {
+        this.name = name;
+    }
 
-	public boolean isPK() {
-		return !PRIMARY_KEY_FALSE.equals(primaryKey);
-	}
+    public boolean isPK() {
+        return !PRIMARY_KEY_FALSE.equals(primaryKey);
+    }
 
     public String getPrimaryKey() {
         return primaryKey;
     }
 
     public void setPrimaryKey(String primaryKey) {
-		this.primaryKey = primaryKey;
-	}
+        this.primaryKey = primaryKey;
+    }
 
     public String getOriginalName() {
         return originalName == null ? name : originalName;

@@ -94,15 +94,36 @@ public class PartitionManager implements PartitionManagerMBean {
     }
 
     public void addPartition(Partition partition) {
+        if (partition.isEnabled()) partition.setStatus(Partition.STARTED);
         partitions.put(partition.getName(), partition);
     }
 
     public Partition removePartition(String name) throws Exception {
-        return (Partition)partitions.remove(name);
+        Partition partition = (Partition)partitions.remove(name);
+        if (Partition.STARTED.equals(partition.getStatus())) partition.setStatus(Partition.STOPPED);
+        return partition;
     }
 
     public void clear() throws Exception {
         partitions.clear();
+    }
+
+    public String getStatus(String name) throws Exception {
+        Partition partition = getPartition(name);
+        if (partition == null) return null;
+        return partition.getStatus();
+    }
+
+    public void start(String name) throws Exception {
+        Partition partition = getPartition(name);
+        if (partition == null) return;
+        partition.setStatus(Partition.STARTED);
+    }
+
+    public void stop(String name) throws Exception {
+        Partition partition = getPartition(name);
+        if (partition == null) return;
+        partition.setStatus(Partition.STOPPED);
     }
 
     public Partition getPartition(String name) throws Exception {
@@ -157,6 +178,7 @@ public class PartitionManager implements PartitionManagerMBean {
 
         for (Iterator i=partitions.values().iterator(); i.hasNext(); ) {
             Partition p = (Partition)i.next();
+            if (!Partition.STARTED.equals(p.getStatus())) continue;
 
             for (Iterator j=p.getRootEntryMappings().iterator(); j.hasNext(); ) {
                 EntryMapping entryMapping = (EntryMapping)j.next();
@@ -195,6 +217,8 @@ public class PartitionManager implements PartitionManagerMBean {
 
         for (Iterator i=partitions.values().iterator(); i.hasNext(); ) {
             Partition p = (Partition)i.next();
+            if (!Partition.STARTED.equals(p.getStatus())) continue;
+
             Collection list = p.findEntryMappings(dn);
             if (list == null || list.isEmpty()) continue;
 
@@ -207,11 +231,22 @@ public class PartitionManager implements PartitionManagerMBean {
     }
 
     public Collection getPartitions() {
-        return partitions.values();
+        Collection list = new ArrayList();
+        for (Iterator i=partitions.values().iterator(); i.hasNext(); ) {
+            Partition partition = (Partition)i.next();
+            if (!Partition.STARTED.equals(partition.getStatus())) continue;
+
+            list.add(partition);
+        }
+        return list;
+    }
+
+    public Collection getAllPartitions() {
+        return new ArrayList(partitions.values()); // return Serializable list
     }
 
     public Collection getPartitionNames() {
-        return partitions.keySet();
+        return new ArrayList(partitions.keySet()); // return Serializable list
     }
 
     public SchemaManager getSchemaManager() {

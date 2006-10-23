@@ -41,7 +41,7 @@ public class PenroseService implements PenroseServiceMBean {
     PenroseServer penroseServer;
 
     public String getProductName() throws Exception {
-        return Penrose.PRODUCT_NAME;
+        return Penrose.PRODUCT_NAME+" Server";
     }
 
     public String getProductVersion() throws Exception {

@@ -175,14 +175,16 @@ public abstract class Engine {
             ) throws Exception {
 
         log.debug("Generating attributes with source values:");
-        for (Iterator i=sourceValues.getNames().iterator(); i.hasNext(); ) {
-            String name = (String)i.next();
+        if (sourceValues != null) {
+            for (Iterator i=sourceValues.getNames().iterator(); i.hasNext(); ) {
+                String name = (String)i.next();
 
-            for (Iterator j=sourceValues.get(name).iterator(); j.hasNext(); ) {
-                Object value = j.next();
-                String className = value.getClass().getName();
-                className = className.substring(className.lastIndexOf(".")+1);
-                log.debug(" - "+name+": "+value+" ("+className+")");
+                for (Iterator j=sourceValues.get(name).iterator(); j.hasNext(); ) {
+                    Object value = j.next();
+                    String className = value.getClass().getName();
+                    className = className.substring(className.lastIndexOf(".")+1);
+                    log.debug(" - "+name+": "+value+" ("+className+")");
+                }
             }
         }
 
