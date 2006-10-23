@@ -11,7 +11,7 @@
     <property name="cygwin.home" value="c:/cygwin"/>
 
     <property name="project.name" value="penrose"/>
-    <property name="project.version" value="1.1"/>
+    <property name="project.version" value="1.2"/>
 
     <property name="penrose.home" value="${prefix}/usr/local/${project.name}-${project.version}"/>
     <property name="docs.target" value="dist/javadoc"/>
@@ -89,7 +89,7 @@
         <jar jarfile="target/${project.name}-${project.version}.jar">
             <fileset dir="target/classes"/>
             <manifest>
-              <attribute name="Specification-Version"  value="1.1"/>
+              <attribute name="Specification-Version"  value="1.2"/>
               <attribute name="Implementation-Title"   value="Penrose"/>
               <attribute name="Implementation-Version" value="${project.version}"/>
               <attribute name="Implementation-Vendor"  value="Identyx Corporation"/>
