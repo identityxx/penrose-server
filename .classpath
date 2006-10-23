@@ -16,7 +16,6 @@
 	<classpathentry kind="lib" path="lib/zql.jar"/>
 	<classpathentry kind="lib" path="lib/commons-cli-1.0.jar"/>
 	<classpathentry kind="lib" path="lib/commons-logging-1.0.4.jar"/>
-	<classpathentry kind="lib" path="C:/svn.safehaus.org/penrose/lib/xml-apis-2.8.0.jar"/>
 	<classpathentry kind="lib" path="lib/ant/ant.jar"/>
 	<classpathentry kind="lib" path="lib/bcprov-jdk14-132.jar"/>
 	<classpathentry kind="lib" path="server/lib/checkstyle-2.2.jar"/>
