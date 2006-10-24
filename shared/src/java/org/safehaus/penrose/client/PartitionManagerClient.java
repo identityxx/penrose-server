@@ -1,5 +1,7 @@
 package org.safehaus.penrose.client;
 
+import org.safehaus.penrose.partition.PartitionManagerMBean;
+
 import javax.management.ObjectName;
 import javax.management.MBeanServerConnection;
 import java.util.Collection;
@@ -8,16 +10,14 @@ import java.util.Iterator;
 /**
  * @author Endi S. Dewata
  */
-public class PartitionManagerClient {
-
-    public final static String NAME = "Penrose:name=PartitionManager";
+public class PartitionManagerClient implements PartitionManagerMBean {
 
     PenroseClient client;
     ObjectName objectName;
 
     public PartitionManagerClient(PenroseClient client) throws Exception {
         this.client = client;
-        objectName = new ObjectName(NAME);
+        objectName = new ObjectName(PartitionManagerMBean.NAME);
     }
 
     public PenroseClient getClient() {
@@ -43,28 +43,37 @@ public class PartitionManagerClient {
         );
     }
 
-    public void start() throws Exception {
+    public void start(String name) throws Exception {
         MBeanServerConnection connection = client.getConnection();
         connection.invoke(
                 objectName,
                 "start",
-                new Object[] { },
-                new String[] { }
+                new Object[] { name },
+                new String[] { String.class.getName() }
         );
     }
 
-    public void stop() throws Exception {
+    public void stop(String name) throws Exception {
         MBeanServerConnection connection = client.getConnection();
         connection.invoke(
                 objectName,
                 "stop",
-                new Object[] { },
-                new String[] { }
+                new Object[] { name },
+                new String[] { String.class.getName() }
         );
     }
 
+    public void restart(String name) throws Exception {
+        MBeanServerConnection connection = client.getConnection();
+        connection.invoke(
+                objectName,
+                "restart",
+                new Object[] { name },
+                new String[] { String.class.getName() }
+        );
+    }
 
-    public PartitionClient getPartition(String name) throws Exception {
+    public PartitionClient getPartitionClient(String name) throws Exception {
         return new PartitionClient(client, name);
     }
 

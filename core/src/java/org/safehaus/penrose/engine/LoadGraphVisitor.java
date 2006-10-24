@@ -68,8 +68,8 @@ public class LoadGraphVisitor extends GraphVisitor {
         this.entryMapping = entryMapping;
         this.sourceValues = sourceValues;
 
-        graph = engine.getGraph(entryMapping);
-        primarySourceMapping = engine.getPrimarySource(entryMapping);
+        graph = engine.getPartitionManager().getGraph(partition, entryMapping);
+        primarySourceMapping = engine.getPartitionManager().getPrimarySource(partition, entryMapping);
 
         filter = engine.getEngineFilterTool().toSourceFilter(partition, sourceValues, entryMapping, primarySourceMapping, filter);
 

@@ -21,6 +21,12 @@ import org.safehaus.penrose.mapping.EntryMapping;
 import org.safehaus.penrose.mapping.SourceMapping;
 import org.safehaus.penrose.schema.SchemaManager;
 import org.safehaus.penrose.cache.LRUCache;
+import org.safehaus.penrose.graph.Graph;
+import org.safehaus.penrose.interpreter.InterpreterManager;
+import org.safehaus.penrose.connection.ConnectionManager;
+import org.safehaus.penrose.connection.Connection;
+import org.safehaus.penrose.connector.AdapterConfig;
+import org.safehaus.penrose.config.PenroseConfig;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
@@ -34,42 +40,63 @@ public class PartitionManager implements PartitionManagerMBean {
 
     Logger log = LoggerFactory.getLogger(getClass());
 
+    private PenroseConfig penroseConfig;
+
+    private InterpreterManager interpreterManager;
     private SchemaManager schemaManager;
+    private ConnectionManager connectionManager;
 
     private Map partitions = new TreeMap();
 
     public LRUCache cache = new LRUCache(20);
+    public PartitionAnalyzer analyzer;
 
     public PartitionManager() {
     }
 
-    public Collection load(String home, Collection partitionConfigs) throws Exception {
+    public void init() throws Exception {
+        analyzer = new PartitionAnalyzer();
+        analyzer.setPartitionManager(this);
+        analyzer.setInterpreterManager(interpreterManager);
+    }
 
-        Collection newPartitions = new ArrayList();
+    public Graph getGraph(Partition partition, EntryMapping entryMapping) throws Exception {
+        return analyzer.getGraph(entryMapping);
+    }
 
-        for (Iterator i=partitionConfigs.iterator(); i.hasNext(); ) {
-            PartitionConfig partitionConfig = (PartitionConfig)i.next();
+    public SourceMapping getPrimarySource(Partition partition, EntryMapping entryMapping) throws Exception {
+        return analyzer.getPrimarySource(entryMapping);
+    }
 
-            Partition partition = load(home, partitionConfig);
-            if (partition == null) continue;
+    public boolean isUnique(Partition partition, EntryMapping entryMapping) throws Exception {
+        return analyzer.isUnique(partition, entryMapping);
+    }
 
-            newPartitions.add(partition);
-        }
-
-        return newPartitions;
+    public Partition load(PartitionConfig partitionConfig) throws Exception {
+        return load(penroseConfig.getHome(), partitionConfig);
     }
 
     public Partition load(String home, PartitionConfig partitionConfig) throws Exception {
 
-        Partition partition = getPartition(partitionConfig.getName());
-        if (partition != null) return null;
-
         log.debug("Loading "+partitionConfig.getName()+" partition.");
 
         PartitionReader partitionReader = new PartitionReader(home);
-        partition = partitionReader.read(partitionConfig);
+        Partition partition = partitionReader.read(partitionConfig);
 
         addPartition(partition);
+
+        Collection connectionConfigs = partition.getConnectionConfigs();
+        for (Iterator j=connectionConfigs.iterator(); j.hasNext(); ) {
+            ConnectionConfig connectionConfig = (ConnectionConfig)j.next();
+
+            String adapterName = connectionConfig.getAdapterName();
+            if (adapterName == null) throw new Exception("Missing adapter name");
+
+            AdapterConfig adapterConfig = penroseConfig.getAdapterConfig(adapterName);
+            if (adapterConfig == null) throw new Exception("Undefined adapter "+adapterName);
+
+            connectionManager.addConnection(partition, connectionConfig, adapterConfig);
+        }
 
         return partition;
     }
@@ -93,15 +120,16 @@ public class PartitionManager implements PartitionManagerMBean {
         partitionWriter.write(partition);
     }
 
-    public void addPartition(Partition partition) {
-        if (partition.isEnabled()) partition.setStatus(Partition.STARTED);
+    public Partition getPartition(String name) throws Exception {
+        return (Partition)partitions.get(name);
+    }
+
+    public void addPartition(Partition partition) throws Exception {
         partitions.put(partition.getName(), partition);
     }
 
     public Partition removePartition(String name) throws Exception {
-        Partition partition = (Partition)partitions.remove(name);
-        if (Partition.STARTED.equals(partition.getStatus())) partition.setStatus(Partition.STOPPED);
-        return partition;
+        return (Partition)partitions.remove(name);
     }
 
     public void clear() throws Exception {
@@ -114,20 +142,78 @@ public class PartitionManager implements PartitionManagerMBean {
         return partition.getStatus();
     }
 
+    public void start() throws Exception {
+        for (Iterator i=partitions.values().iterator(); i.hasNext(); ) {
+            Partition partition = (Partition)i.next();
+            if (!partition.isEnabled()) continue;
+            start(partition);
+        }
+    }
+
     public void start(String name) throws Exception {
         Partition partition = getPartition(name);
-        if (partition == null) return;
+        if (partition == null) {
+            log.debug("Partition "+name+" not found");
+            return;
+        }
+
+        start(partition);
+    }
+
+    public void start(Partition partition) throws Exception {
+        log.info("Starting partition "+partition.getName()+".");
+        partition.setStatus(Partition.STARTING);
+
+        for (Iterator i=partition.getRootEntryMappings().iterator(); i.hasNext(); ) {
+            EntryMapping entryMapping = (EntryMapping)i.next();
+            analyzer.analyze(partition, entryMapping);
+        }
+
+        Collection connectionConfigs = partition.getConnectionConfigs();
+        for (Iterator j=connectionConfigs.iterator(); j.hasNext(); ) {
+            ConnectionConfig connectionConfig = (ConnectionConfig)j.next();
+
+            connectionManager.start(partition, connectionConfig.getName());
+        }
+
         partition.setStatus(Partition.STARTED);
+        log.info("Partition "+partition.getName()+" started.");
+    }
+
+    public void stop() throws Exception {
+        for (Iterator i=partitions.values().iterator(); i.hasNext(); ) {
+            Partition partition = (Partition)i.next();
+            if (!partition.isEnabled()) continue;
+            stop(partition);
+        }
     }
 
     public void stop(String name) throws Exception {
         Partition partition = getPartition(name);
-        if (partition == null) return;
-        partition.setStatus(Partition.STOPPED);
+        if (partition == null) {
+            log.debug("Partition "+name+" not found");
+            return;
+        }
+
+        stop(partition);
     }
 
-    public Partition getPartition(String name) throws Exception {
-        return (Partition)partitions.get(name);
+    public void stop(Partition partition) throws Exception {
+        log.info("Stopping partition "+partition.getName()+".");
+
+        Collection connectionConfigs = partition.getConnectionConfigs();
+        for (Iterator j=connectionConfigs.iterator(); j.hasNext(); ) {
+            ConnectionConfig connectionConfig = (ConnectionConfig)j.next();
+            connectionManager.stop(partition, connectionConfig.getName());
+        }
+
+        partition.setStatus(Partition.STOPPED);
+        log.info("Partition "+partition.getName()+" stopped.");
+    }
+
+    public void restart(String name) throws Exception {
+        stop(name);
+        start(name);
     }
 
     public Partition getPartition(SourceMapping sourceMapping) throws Exception {
@@ -255,5 +341,29 @@ public class PartitionManager implements PartitionManagerMBean {
 
     public void setSchemaManager(SchemaManager schemaManager) {
         this.schemaManager = schemaManager;
+    }
+
+    public InterpreterManager getInterpreterManager() {
+        return interpreterManager;
+    }
+
+    public void setInterpreterManager(InterpreterManager interpreterManager) {
+        this.interpreterManager = interpreterManager;
+    }
+
+    public ConnectionManager getConnectionManager() {
+        return connectionManager;
+    }
+
+    public void setConnectionManager(ConnectionManager connectionManager) {
+        this.connectionManager = connectionManager;
+    }
+
+    public PenroseConfig getPenroseConfig() {
+        return penroseConfig;
+    }
+
+    public void setPenroseConfig(PenroseConfig penroseConfig) {
+        this.penroseConfig = penroseConfig;
     }
 }

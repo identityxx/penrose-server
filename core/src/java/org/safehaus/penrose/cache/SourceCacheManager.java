@@ -120,38 +120,92 @@ public class SourceCacheManager {
     }
 
     public void remove(Partition partition, SourceConfig sourceConfig, Object key) throws Exception {
-        getCacheStorage(partition, sourceConfig).remove(key);
+        SourceCache sourceCache = getCacheStorage(partition, sourceConfig);
+        if (sourceCache == null) {
+            log.debug("Source cache for "+partition+"/"+sourceConfig.getName()+" not found");
+            return;
+        }
+
+        sourceCache.remove(key);
     }
 
     public Object get(Partition partition, SourceConfig sourceConfig, Object key) throws Exception {
-        return getCacheStorage(partition, sourceConfig).get(key);
+        SourceCache sourceCache = getCacheStorage(partition, sourceConfig);
+        if (sourceCache == null) {
+            log.debug("Source cache for "+partition+"/"+sourceConfig.getName()+" not found");
+            return null;
+        }
+
+        return sourceCache.get(key);
     }
 
     public void put(Partition partition, SourceConfig sourceConfig, Object pk, Object sourceValues) throws Exception {
-        getCacheStorage(partition, sourceConfig).put(pk, sourceValues);
+        SourceCache sourceCache = getCacheStorage(partition, sourceConfig);
+        if (sourceCache == null) {
+            log.debug("Source cache for "+partition+"/"+sourceConfig.getName()+" not found");
+            return;
+        }
+
+        sourceCache.put(pk, sourceValues);
     }
 
     public void put(Partition partition, SourceConfig sourceConfig, Filter filter, Collection pks) throws Exception {
-        getCacheStorage(partition, sourceConfig).put(filter, pks);
+        SourceCache sourceCache = getCacheStorage(partition, sourceConfig);
+        if (sourceCache == null) {
+            log.debug("Source cache for "+partition+"/"+sourceConfig.getName()+" not found");
+            return;
+        }
+
+        sourceCache.put(filter, pks);
     }
 
     public Collection search(Partition partition, SourceConfig sourceConfig, Filter filter) throws Exception {
-        return getCacheStorage(partition, sourceConfig).search(filter);
+        SourceCache sourceCache = getCacheStorage(partition, sourceConfig);
+        if (sourceCache == null) {
+            log.debug("Source cache for "+partition+"/"+sourceConfig.getName()+" not found");
+            return null;
+        }
+
+        return sourceCache.search(filter);
     }
 
     public Map load(Partition partition, SourceConfig sourceConfig, Collection filters, Collection missingKeys) throws Exception {
-        return getCacheStorage(partition, sourceConfig).load(filters, missingKeys);
+        SourceCache sourceCache = getCacheStorage(partition, sourceConfig);
+        if (sourceCache == null) {
+            log.debug("Source cache for "+partition+"/"+sourceConfig.getName()+" not found");
+            return null;
+        }
+
+        return sourceCache.load(filters, missingKeys);
     }
 
     public Map getExpired(Partition partition, SourceConfig sourceConfig) throws Exception {
-        return getCacheStorage(partition, sourceConfig).getExpired();
+        SourceCache sourceCache = getCacheStorage(partition, sourceConfig);
+        if (sourceCache == null) {
+            log.debug("Source cache for "+partition+"/"+sourceConfig.getName()+" not found");
+            return null;
+        }
+
+        return sourceCache.getExpired();
     }
 
     public int getLastChangeNumber(Partition partition, SourceConfig sourceConfig) throws Exception {
-        return getCacheStorage(partition, sourceConfig).getLastChangeNumber();
+        SourceCache sourceCache = getCacheStorage(partition, sourceConfig);
+        if (sourceCache == null) {
+            log.debug("Source cache for "+partition+"/"+sourceConfig.getName()+" not found");
+            return 0;
+        }
+
+        return sourceCache.getLastChangeNumber();
     }
 
     public void setLastChangeNumber(Partition partition, SourceConfig sourceConfig, int lastChangeNumber) throws Exception {
-        getCacheStorage(partition, sourceConfig).setLastChangeNumber(lastChangeNumber);
+        SourceCache sourceCache = getCacheStorage(partition, sourceConfig);
+        if (sourceCache == null) {
+            log.debug("Source cache for "+partition+"/"+sourceConfig.getName()+" not found");
+            return;
+        }
+
+        sourceCache.setLastChangeNumber(lastChangeNumber);
     }
 }

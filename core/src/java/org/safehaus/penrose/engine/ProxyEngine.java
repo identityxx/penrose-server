@@ -20,7 +20,7 @@ package org.safehaus.penrose.engine;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.SourceConfig;
 import org.safehaus.penrose.mapping.*;
-import org.safehaus.penrose.connector.Connection;
+import org.safehaus.penrose.connection.Connection;
 import org.safehaus.penrose.ldap.LDAPClient;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.filter.FilterTool;

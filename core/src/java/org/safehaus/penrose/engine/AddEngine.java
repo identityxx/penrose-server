@@ -95,7 +95,7 @@ public class AddEngine {
 
         sourceValues.add(parentSourceValues);
 
-        Graph graph = engine.getGraph(entryMapping);
+        Graph graph = engine.getPartitionManager().getGraph(partition, entryMapping);
         String startingSourceName = engine.getStartingSourceName(partition, entryMapping);
         if (startingSourceName == null) return LDAPException.SUCCESS;
 

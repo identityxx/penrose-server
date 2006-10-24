@@ -66,8 +66,8 @@ public class SearchPlanner extends GraphVisitor {
         this.searchFilter = filter;
         this.sourceValues = sourceValues;
 
-        graph = engine.getGraph(entryMapping);
-        primarySourceMapping = engine.getPrimarySource(entryMapping);
+        graph = engine.getPartitionManager().getGraph(partition, entryMapping);
+        primarySourceMapping = engine.getPartitionManager().getPrimarySource(partition, entryMapping);
     }
 
     public void run() throws Exception {

@@ -63,6 +63,7 @@ public class PenroseClient {
 	public String domain;
 	public ObjectName name;
 
+    ConnectionManagerClient connectionManagerClient;
     PartitionManagerClient partitionManagerClient;
     ServiceManagerClient serviceManagerClient;
 
@@ -96,7 +97,8 @@ public class PenroseClient {
     }
 
     public void init() throws Exception {
-        setPartitionManagerClient(new PartitionManagerClient(this));
+        connectionManagerClient = new ConnectionManagerClient(this);
+        partitionManagerClient = new PartitionManagerClient(this);
         serviceManagerClient = new ServiceManagerClient(this);
     }
 
@@ -252,6 +254,140 @@ public class PenroseClient {
         );
     }
 
+    public void execute(Collection parameters) throws Exception {
+
+        Iterator iterator = parameters.iterator();
+        String command = (String)iterator.next();
+        log.debug("Executing "+command);
+
+        if ("version".equals(command)) {
+            String version = getProductName()+" "+getProductVersion();
+            System.out.println(version);
+
+        } else if ("service".equals(command)) {
+
+            String name = (String)iterator.next();
+            ServiceClient service = serviceManagerClient.getService(name);
+
+            String action = (String)iterator.next();
+            if ("start".equals(action)) {
+                service.start();
+
+            } else if ("stop".equals(action)) {
+                service.stop();
+
+            } else if ("restart".equals(action)) {
+                service.restart();
+
+            } else if ("info".equals(action)) {
+                service.printInfo();
+
+            } else {
+                System.out.println("Invalid action: "+action);
+            }
+
+        } else if ("partition".equals(command)) {
+
+            String name = (String)iterator.next();
+            PartitionClient partition = partitionManagerClient.getPartitionClient(name);
+
+            String action = (String)iterator.next();
+            if ("start".equals(action)) {
+                partitionManagerClient.start(name);
+
+            } else if ("stop".equals(action)) {
+                partitionManagerClient.stop(name);
+
+            } else if ("restart".equals(action)) {
+                partitionManagerClient.restart(name);
+
+            } else if ("info".equals(action)) {
+                partition.printInfo();
+
+            } else {
+                System.out.println("Invalid action: "+action);
+            }
+
+        } else if ("connection".equals(command)) {
+
+            String name = (String)iterator.next();
+            ConnectionClient connection = connectionManagerClient.getConnectionClient(name);
+
+            String action = (String)iterator.next();
+            if ("start".equals(action)) {
+                connectionManagerClient.start(name);
+
+            } else if ("stop".equals(action)) {
+                connectionManagerClient.stop(name);
+
+            } else if ("restart".equals(action)) {
+                connectionManagerClient.restart(name);
+
+            } else if ("info".equals(action)) {
+                connection.printInfo();
+
+            } else {
+                System.out.println("Invalid action: "+action);
+            }
+
+        } else if ("restart".equals(command)) {
+            serviceManagerClient.restart();
+
+        } else if ("reload".equals(command)) {
+            reload();
+
+        } else if ("store".equals(command)) {
+            store();
+
+        } else if ("rename".equals(command)) {
+            String object = (String)iterator.next();
+            if ("entry".equals(object)) {
+                String oldDn = (String)iterator.next();
+                String newDn = (String)iterator.next();
+                log.debug("Renaming "+oldDn+" to "+newDn);
+                renameEntryMapping(oldDn, newDn);
+            }
+
+        } else if ("list".equals(command)) {
+
+            String target = (String)iterator.next();
+            if ("services".equals(target)) {
+                serviceManagerClient.printServices();
+
+            } else if ("partitions".equals(target)) {
+                partitionManagerClient.printPartitions();
+
+            } else if ("connections".equals(target)) {
+                connectionManagerClient.printConnections();
+
+            } else {
+                System.out.println("Invalid command: "+command);
+            }
+
+        } else if ("loggers".equals(command)) {
+            Collection loggerNames = getLoggerNames();
+            for (Iterator i=loggerNames.iterator(); i.hasNext(); ) {
+                String loggerName = (String)i.next();
+                String l = getLoggerLevel(loggerName);
+
+                System.out.println(loggerName+" ["+l +"]");
+            }
+
+        } else if ("logger".equals(command)) {
+            String loggerName = (String)iterator.next();
+            if (iterator.hasNext()) {
+                String l = (String)iterator.next();
+                setLoggerLevel(loggerName, "".equals(l) ? null : l);
+            } else {
+                String l = getLoggerLevel(loggerName);
+                System.out.println(l);
+            }
+
+        } else {
+            System.out.println("Invalid command: "+command);
+        }
+    }
+
     public static void showUsage() {
         System.out.println("Usage: org.safehaus.penrose.client.PenroseClient [OPTION]... <COMMAND>");
         System.out.println();
@@ -266,15 +402,22 @@ public class PenroseClient {
         System.out.println("  -v                 run in verbose mode");
         System.out.println();
         System.out.println("Commands:");
-        System.out.println("  version                  get server version");
-        System.out.println("  list services            display all services");
-        System.out.println("  service <name> start     start service");
-        System.out.println("  service <name> stop      stop service");
-        System.out.println("  service <name> restart   restart service");
-        System.out.println("  service <name> info      display service info");
-        System.out.println("  list partitions          display all partitions");
-        System.out.println("  partition <name> start   start partition");
-        System.out.println("  partition <name> stop    stop partition");
+        System.out.println("  version                    get server version");
+        System.out.println("  list services              display all services");
+        System.out.println("  service <name> start       start service");
+        System.out.println("  service <name> stop        stop service");
+        System.out.println("  service <name> restart     restart service");
+        System.out.println("  service <name> info        display service info");
+        System.out.println("  list partitions            display all partitions");
+        System.out.println("  partition <name> start     start partition");
+        System.out.println("  partition <name> stop      stop partition");
+        System.out.println("  partition <name> restart   restart partition");
+        System.out.println("  partition <name> info      display partition info");
+        System.out.println("  list connections           display all connections");
+        System.out.println("  connection <name> start    start connection");
+        System.out.println("  connection <name> stop     stop connection");
+        System.out.println("  connection <name> restart  restart connection");
+        System.out.println("  connection <name> info     display connection info");
     }
 
     public static void main(String args[]) throws Exception {
@@ -375,102 +518,7 @@ public class PenroseClient {
         client.setRmiTransportPort(rmiTransportPort);
         client.connect();
 
-        Iterator iterator = parameters.iterator();
-        String command = (String)iterator.next();
-        log.debug("Executing "+command);
-
-        PartitionManagerClient partitionManager = client.getPartitionManagerClient();
-        ServiceManagerClient serviceManager = client.getServiceManagerClient();
-
-        if ("version".equals(command)) {
-            String version = client.getProductName()+" "+client.getProductVersion();
-            System.out.println(version);
-
-        } else if ("service".equals(command)) {
-
-            String name = (String)iterator.next();
-            ServiceClient service = serviceManager.getService(name);
-
-            String action = (String)iterator.next();
-            if ("start".equals(action)) {
-                service.start();
-
-            } else if ("stop".equals(action)) {
-                service.stop();
-
-            } else if ("restart".equals(action)) {
-                service.restart();
-
-            } else if ("info".equals(action)) {
-                service.printInfo();
-            }
-
-        } else if ("partition".equals(command)) {
-
-            String name = (String)iterator.next();
-            PartitionClient partition = partitionManager.getPartition(name);
-
-            String action = (String)iterator.next();
-            if ("start".equals(action)) {
-                partition.start();
-
-            } else if ("stop".equals(action)) {
-                partition.stop();
-
-            } else if ("restart".equals(action)) {
-                partition.restart();
-
-            } else if ("info".equals(action)) {
-                partition.printInfo();
-            }
-
-        } else if ("restart".equals(command)) {
-            serviceManager.restart();
-
-        } else if ("reload".equals(command)) {
-            client.reload();
-
-        } else if ("store".equals(command)) {
-            client.store();
-
-        } else if ("rename".equals(command)) {
-            String object = (String)iterator.next();
-            if ("entry".equals(object)) {
-                String oldDn = (String)iterator.next();
-                String newDn = (String)iterator.next();
-                log.debug("Renaming "+oldDn+" to "+newDn);
-                client.renameEntryMapping(oldDn, newDn);
-            }
-
-        } else if ("list".equals(command)) {
-
-            String target = (String)iterator.next();
-            if ("services".equals(target)) {
-                serviceManager.printServices();
-
-            } else if ("partitions".equals(target)) {
-                partitionManager.printPartitions();
-            }
-
-        } else if ("loggers".equals(command)) {
-            Collection loggerNames = client.getLoggerNames();
-            for (Iterator i=loggerNames.iterator(); i.hasNext(); ) {
-                String loggerName = (String)i.next();
-                String l = client.getLoggerLevel(loggerName);
-
-                System.out.println(loggerName+" ["+l +"]");
-            }
-
-        } else if ("logger".equals(command)) {
-            String loggerName = (String)iterator.next();
-            if (iterator.hasNext()) {
-                String l = (String)iterator.next();
-                client.setLoggerLevel(loggerName, "".equals(l) ? null : l);
-            } else {
-                String l = client.getLoggerLevel(loggerName);
-                System.out.println(l);
-            }
-        }
+        client.execute(parameters);
 
         client.close();
     }
@@ -499,4 +547,11 @@ public class PenroseClient {
         this.partitionManagerClient = partitionManagerClient;
     }
 
+    public ConnectionManagerClient getConnectionManagerClient() {
+        return connectionManagerClient;
+    }
+
+    public void setConnectionManagerClient(ConnectionManagerClient connectionManagerClient) {
+        this.connectionManagerClient = connectionManagerClient;
+    }
 }

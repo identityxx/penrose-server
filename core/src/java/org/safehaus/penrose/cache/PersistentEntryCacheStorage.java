@@ -24,7 +24,7 @@ import org.safehaus.penrose.partition.FieldConfig;
 import org.safehaus.penrose.partition.SourceConfig;
 import org.safehaus.penrose.filter.*;
 import org.safehaus.penrose.session.PenroseSearchResults;
-import org.safehaus.penrose.connector.ConnectionManager;
+import org.safehaus.penrose.connection.ConnectionManager;
 import org.safehaus.penrose.Penrose;
 import org.ietf.ldap.LDAPException;
 

@@ -1,7 +1,6 @@
 package org.safehaus.penrose.client;
 
-import org.safehaus.penrose.service.ServiceManagerMBean;
-import org.safehaus.penrose.service.ServiceConfig;
+import org.safehaus.penrose.connection.ConnectionManagerMBean;
 
 import javax.management.ObjectName;
 import javax.management.MBeanServerConnection;
@@ -11,14 +10,16 @@ import java.util.Iterator;
 /**
  * @author Endi S. Dewata
  */
-public class ServiceManagerClient implements ServiceManagerMBean {
+public class ConnectionManagerClient implements ConnectionManagerMBean {
+
+    public final static String NAME = "Penrose:name=ConnectionManager";
 
     PenroseClient client;
     ObjectName objectName;
 
-    public ServiceManagerClient(PenroseClient client) throws Exception {
+    public ConnectionManagerClient(PenroseClient client) throws Exception {
         this.client = client;
-        objectName = new ObjectName(ServiceManagerMBean.NAME);
+        objectName = new ObjectName(ConnectionManagerClient.NAME);
     }
 
     public PenroseClient getClient() {
@@ -29,19 +30,9 @@ public class ServiceManagerClient implements ServiceManagerMBean {
         this.client = client;
     }
 
-    public Collection getServiceNames() throws Exception {
+    public Collection getConnectionNames() throws Exception {
         MBeanServerConnection connection = client.getConnection();
-        return (Collection)connection.getAttribute(objectName, "ServiceNames");
-    }
-
-    public ServiceConfig getServiceConfig(String name) throws Exception {
-        MBeanServerConnection connection = client.getConnection();
-        return (ServiceConfig)connection.invoke(
-                objectName,
-                "getServiceConfig",
-                new Object[] { name },
-                new String[] { String.class.getName() }
-        );
+        return (Collection)connection.getAttribute(objectName, "ConnectionNames");
     }
 
     public String getStatus(String name) throws Exception {
@@ -51,20 +42,6 @@ public class ServiceManagerClient implements ServiceManagerMBean {
                 "getStatus",
                 new Object[] { name },
                 new String[] { String.class.getName() }
-        );
-    }
-
-    public ServiceClient getService(String name) throws Exception {
-        return new ServiceClient(client, name);
-    }
-
-    public void start() throws Exception {
-        MBeanServerConnection connection = client.getConnection();
-        connection.invoke(
-                objectName,
-                "start",
-                new Object[] { },
-                new String[] { }
         );
     }
 
@@ -78,16 +55,6 @@ public class ServiceManagerClient implements ServiceManagerMBean {
         );
     }
 
-    public void stop() throws Exception {
-        MBeanServerConnection connection = client.getConnection();
-        connection.invoke(
-                objectName,
-                "stop",
-                new Object[] { },
-                new String[] { }
-        );
-    }
-
     public void stop(String name) throws Exception {
         MBeanServerConnection connection = client.getConnection();
         connection.invoke(
@@ -98,18 +65,22 @@ public class ServiceManagerClient implements ServiceManagerMBean {
         );
     }
 
-    public void restart() throws Exception {
+    public void restart(String name) throws Exception {
         MBeanServerConnection connection = client.getConnection();
         connection.invoke(
                 objectName,
                 "restart",
-                new Object[] { },
-                new String[] { }
+                new Object[] { name },
+                new String[] { String.class.getName() }
         );
     }
 
-    public void printServices() throws Exception {
-        for (Iterator i=getServiceNames().iterator(); i.hasNext(); ) {
+    public ConnectionClient getConnectionClient(String name) throws Exception {
+        return new ConnectionClient(client, name);
+    }
+
+    public void printConnections() throws Exception {
+        for (Iterator i=getConnectionNames().iterator(); i.hasNext(); ) {
             String name = (String)i.next();
             String status = getStatus(name);
 

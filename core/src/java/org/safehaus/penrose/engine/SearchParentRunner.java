@@ -71,7 +71,7 @@ public class SearchParentRunner extends GraphVisitor {
         this.results = results;
         this.sourceValues = sourceValues;
 
-        graph = engine.getGraph(entryMapping);
+        graph = engine.getPartitionManager().getGraph(partition, entryMapping);
 
         Filter filter = (Filter)filters.get(startingSourceMapping);
 

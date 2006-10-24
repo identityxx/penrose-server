@@ -10,6 +10,7 @@ public interface ServiceMBean {
     public String getName() throws Exception;
     public String getServiceClass() throws Exception;
     public String getDescription() throws Exception;
+
     public Collection getParameterNames() throws Exception;
     public String getParameter(String name) throws Exception;
     public void setParameter(String name, String value) throws Exception;

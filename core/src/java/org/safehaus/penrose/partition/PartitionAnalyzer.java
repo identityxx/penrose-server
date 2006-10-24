@@ -15,15 +15,11 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
-package org.safehaus.penrose.engine;
+package org.safehaus.penrose.partition;
 
 import org.safehaus.penrose.graph.Graph;
 import org.safehaus.penrose.graph.GraphEdge;
 import org.safehaus.penrose.mapping.*;
-import org.safehaus.penrose.partition.Partition;
-import org.safehaus.penrose.partition.PartitionManager;
-import org.safehaus.penrose.partition.SourceConfig;
-import org.safehaus.penrose.partition.FieldConfig;
 import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.interpreter.InterpreterManager;
 import org.slf4j.LoggerFactory;
@@ -34,7 +30,7 @@ import java.util.*;
 /**
  * @author Endi S. Dewata
  */
-public class Analyzer {
+public class PartitionAnalyzer {
 
     Logger log = LoggerFactory.getLogger(getClass());
 

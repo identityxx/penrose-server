@@ -15,9 +15,10 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
-package org.safehaus.penrose.connector;
+package org.safehaus.penrose.connection;
 
 import org.safehaus.penrose.connector.Adapter;
+import org.safehaus.penrose.connector.AdapterConfig;
 import org.safehaus.penrose.session.PenroseSearchResults;
 import org.safehaus.penrose.session.PenroseSearchControls;
 import org.safehaus.penrose.mapping.*;
@@ -36,9 +37,16 @@ import java.util.ArrayList;
  */
 public class Connection implements ConnectionMBean {
 
+    public final static String STOPPING = "STOPPING";
+    public final static String STOPPED  = "STOPPED";
+    public final static String STARTING = "STARTING";
+    public final static String STARTED  = "STARTED";
+
     private ConnectionConfig connectionConfig;
     private AdapterConfig adapterConfig;
     private Adapter adapter;
+
+    private String status = STOPPED;
 
     public Connection(ConnectionConfig connectionConfig, AdapterConfig adapterConfig) {
         this.connectionConfig = connectionConfig;
@@ -49,7 +57,15 @@ public class Connection implements ConnectionMBean {
         return connectionConfig.getName();
     }
 
-    public void init() throws Exception {
+    public String getAdapterName() {
+        return adapterConfig.getName();
+    }
+
+    public String getDescription() {
+        return connectionConfig.getDescription();
+    }
+
+    public void start() throws Exception {
 
         String adapterClass = adapterConfig.getAdapterClass();
         Class clazz = Class.forName(adapterClass);
@@ -59,10 +75,17 @@ public class Connection implements ConnectionMBean {
         adapter.setConnection(this);
 
         adapter.init();
+        setStatus(STARTED);
     }
 
-    public void close() throws Exception {
+    public void stop() throws Exception {
         if (adapter != null) adapter.dispose();
+        setStatus(STOPPED);
+    }
+
+    public void restart() throws Exception {
+        stop();
+        start();
     }
 
     public ConnectionConfig getConnectionConfig() {
@@ -91,6 +114,10 @@ public class Connection implements ConnectionMBean {
 
     public Collection getParameterNames() {
         return connectionConfig.getParameterNames();
+    }
+
+    public void setParameter(String name, String value) {
+        connectionConfig.setParameter(name, value);
     }
 
     public String removeParameter(String name) {
@@ -175,5 +202,13 @@ public class Connection implements ConnectionMBean {
 
     public void setAdapterConfig(AdapterConfig adapterConfig) {
         this.adapterConfig = adapterConfig;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
     }
 }

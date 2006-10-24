@@ -19,7 +19,7 @@ package org.safehaus.penrose.cache;
 
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.filter.Filter;
-import org.safehaus.penrose.connector.ConnectionManager;
+import org.safehaus.penrose.connection.ConnectionManager;
 
 import java.util.*;
 

@@ -44,8 +44,8 @@ public class DeleteEngine {
         AttributeValues sourceValues = entry.getSourceValues();
         //getFieldValues(entry.getDn(), sourceValues);
 
-        Graph graph = engine.getGraph(entryMapping);
-        SourceMapping primarySourceMapping = engine.getPrimarySource(entryMapping);
+        Graph graph = engine.getPartitionManager().getGraph(partition, entryMapping);
+        SourceMapping primarySourceMapping = engine.getPartitionManager().getPrimarySource(partition, entryMapping);
 
         log.debug("Deleting entry "+entry.getDn()+" ["+sourceValues+"]");
 

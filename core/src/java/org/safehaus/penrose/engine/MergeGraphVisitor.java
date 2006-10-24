@@ -63,7 +63,7 @@ public class MergeGraphVisitor extends GraphVisitor {
         this.loadedSourceValues = loadedSourceValues;
         this.primarySourceMapping = primarySourceMapping;
 
-        graph = engine.getGraph(entryMapping);
+        graph = engine.getPartitionManager().getGraph(partition, entryMapping);
 
         sourceValues.add(primarySourceValues);
 

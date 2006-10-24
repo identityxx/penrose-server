@@ -71,7 +71,7 @@ public class SearchLocalRunner extends GraphVisitor {
         this.startingSourceMapping = startingSourceMapping;
         this.sourceValues = sourceValues;
 
-        graph = engine.getGraph(entryMapping);
+        graph = engine.getPartitionManager().getGraph(partition, entryMapping);
 
         Filter filter = (Filter)filters.get(startingSourceMapping);
 

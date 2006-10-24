@@ -17,7 +17,7 @@
  */
 package org.safehaus.penrose.engine;
 
-import org.safehaus.penrose.connector.ConnectionManager;
+import org.safehaus.penrose.connection.ConnectionManager;
 import org.safehaus.penrose.connector.ConnectorManager;
 import org.safehaus.penrose.interpreter.InterpreterManager;
 import org.safehaus.penrose.schema.SchemaManager;

@@ -290,21 +290,6 @@ public class DefaultEngine extends Engine {
 
     public void start() throws Exception {
         super.start();
-
-        //log.debug("Starting Engine...");
-
-        for (Iterator i=partitionManager.getPartitions().iterator(); i.hasNext(); ) {
-            Partition partition = (Partition)i.next();
-
-            for (Iterator j=partition.getRootEntryMappings().iterator(); j.hasNext(); ) {
-                EntryMapping entryMapping = (EntryMapping)j.next();
-                analyzer.analyze(partition, entryMapping);
-            }
-        }
-
-        //threadManager.execute(new RefreshThread(this));
-
-        //log.debug("Engine started.");
     }
 
     public void stop() throws Exception {
@@ -372,7 +357,7 @@ public class DefaultEngine extends Engine {
 
             final Interpreter interpreter = getInterpreterManager().newInstance();
 
-            SourceMapping primarySourceMapping = getPrimarySource(entryMapping);
+            SourceMapping primarySourceMapping = getPartitionManager().getPrimarySource(partition, entryMapping);
 
             Row filter = createFilter(partition, interpreter, primarySourceMapping, entryMapping, rdn);
 
@@ -527,7 +512,7 @@ public class DefaultEngine extends Engine {
                 }
             }
 
-            final boolean unique = isUnique(partition, entryMapping);
+            final boolean unique = partitionManager.isUnique(partition, entryMapping);
             final Collection effectiveSources = partition.getEffectiveSourceMappings(entryMapping);
 
             final PenroseSearchResults dns = new PenroseSearchResults();

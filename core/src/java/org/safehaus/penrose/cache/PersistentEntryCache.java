@@ -20,7 +20,7 @@ package org.safehaus.penrose.cache;
 import org.safehaus.penrose.mapping.EntryMapping;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.Penrose;
-import org.safehaus.penrose.connector.ConnectionManager;
+import org.safehaus.penrose.connection.ConnectionManager;
 import org.safehaus.penrose.util.Formatter;
 import org.safehaus.penrose.session.PenroseSearchResults;
 import org.safehaus.penrose.session.PenroseSearchControls;

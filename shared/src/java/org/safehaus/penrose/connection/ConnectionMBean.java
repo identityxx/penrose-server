@@ -15,11 +15,27 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
-package org.safehaus.penrose.connector;
+package org.safehaus.penrose.connection;
+
+import java.util.Collection;
 
 /**
  * @author Endi S. Dewata
  */
 public interface ConnectionMBean {
+
     public String getName() throws Exception;
+    public String getAdapterName() throws Exception;
+    public String getDescription() throws Exception;
+
+    public Collection getParameterNames() throws Exception;
+    public String getParameter(String name) throws Exception;
+    public void setParameter(String name, String value) throws Exception;
+    public String removeParameter(String name) throws Exception;
+
+    public String getStatus() throws Exception;
+
+    public void start() throws Exception;
+    public void stop() throws Exception;
+    public void restart() throws Exception;
 }

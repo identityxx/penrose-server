@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
 	<classpathentry kind="src" path="core/src/java"/>
+	<classpathentry kind="src" path="shared/src/.svn"/>
+	<classpathentry kind="src" path="shared/src/java"/>
 	<classpathentry kind="src" path="core/src/test"/>
 	<classpathentry kind="src" path="server/src/java"/>
 	<classpathentry kind="src" path="server/src/test"/>
@@ -16,7 +18,6 @@
 	<classpathentry kind="lib" path="lib/zql.jar"/>
 	<classpathentry kind="lib" path="lib/commons-cli-1.0.jar"/>
 	<classpathentry kind="lib" path="lib/commons-logging-1.0.4.jar"/>
-	<classpathentry kind="lib" path="C:/svn.safehaus.org/penrose/lib/xml-apis-2.8.0.jar"/>
 	<classpathentry kind="lib" path="lib/ant/ant.jar"/>
 	<classpathentry kind="lib" path="lib/bcprov-jdk14-132.jar"/>
 	<classpathentry kind="lib" path="server/lib/checkstyle-2.2.jar"/>
@@ -67,6 +68,5 @@
 	<classpathentry kind="lib" path="server/lib/spring-beans-1.2.8.jar"/>
 	<classpathentry kind="lib" path="server/lib/spring-context-1.2.8.jar"/>
 	<classpathentry kind="lib" path="server/lib/spring-core-1.2.8.jar"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/license"/>
 	<classpathentry kind="output" path="target/classes"/>
 </classpath>

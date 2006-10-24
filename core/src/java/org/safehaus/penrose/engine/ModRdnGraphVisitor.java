@@ -67,8 +67,8 @@ public class ModRdnGraphVisitor extends GraphVisitor {
 
         modifiedSourceValues.add(newSourceValues);
 
-        graph = engine.getGraph(entryMapping);
-        primarySourceMapping = engine.getPrimarySource(entryMapping);
+        graph = engine.getPartitionManager().getGraph(partition, entryMapping);
+        primarySourceMapping = engine.getPartitionManager().getPrimarySource(partition, entryMapping);
     }
 
     public void run() throws Exception {

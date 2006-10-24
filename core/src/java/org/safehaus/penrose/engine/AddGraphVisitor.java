@@ -62,8 +62,8 @@ public class AddGraphVisitor extends GraphVisitor {
 
         addedSourceValues.add(sourceValues);
 
-        this.graph = engine.getGraph(entryMapping);
-        this.primarySourceMapping = engine.getPrimarySource(entryMapping);
+        this.graph = engine.getPartitionManager().getGraph(partition, entryMapping);
+        this.primarySourceMapping = engine.getPartitionManager().getPrimarySource(partition, entryMapping);
     }
 
     public void run() throws Exception {

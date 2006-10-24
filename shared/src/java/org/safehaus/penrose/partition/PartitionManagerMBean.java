@@ -15,17 +15,21 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
-package org.safehaus.penrose.connector;
+package org.safehaus.penrose.partition;
 
 import java.util.Collection;
 
 /**
  * @author Endi S. Dewata
  */
-public interface ConnectionManagerMBean {
+public interface PartitionManagerMBean {
 
-    public Collection getConnectionNames() throws Exception;
+    public final static String NAME = "Penrose:name=PartitionManager";
 
-    public void start() throws Exception;
-    public void stop() throws Exception;
+    public Collection getPartitionNames() throws Exception;
+    public String getStatus(String name) throws Exception;
+
+    public void start(String name) throws Exception;
+    public void stop(String name) throws Exception;
+    public void restart(String name) throws Exception;
 }

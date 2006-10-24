@@ -43,6 +43,7 @@ import org.safehaus.penrose.log4j.Log4jConfigReader;
 import org.safehaus.penrose.log4j.Log4jConfig;
 import org.safehaus.penrose.log4j.LoggerConfig;
 import org.safehaus.penrose.log4j.AppenderConfig;
+import org.safehaus.penrose.connection.ConnectionManager;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
@@ -128,15 +129,16 @@ public class Penrose {
 
     void init() throws Exception {
         initLoggers();
+
         initThreadManager();
+        initInterpreterManager();
         initSchemaManager();
         initSessionManager();
 
-        initPartitionManager();
         initConnectionManager();
+        initPartitionManager();
         initModuleManager();
 
-        initInterpreterManager();
         initConnectorManager();
         initEngineManager();
         initEventManager();
@@ -184,7 +186,11 @@ public class Penrose {
 
     public void initPartitionManager() throws Exception {
         partitionManager = new PartitionManager();
+        partitionManager.setPenroseConfig(penroseConfig);
         partitionManager.setSchemaManager(schemaManager);
+        partitionManager.setInterpreterManager(interpreterManager);
+        partitionManager.setConnectionManager(connectionManager);
+        partitionManager.init();
 
         partitionValidator = new PartitionValidator();
         partitionValidator.setPenroseConfig(penroseConfig);
@@ -261,9 +267,6 @@ public class Penrose {
         loadInterpreter();
         loadSchemas();
 
-        loadPartitions();
-        loadConnections();
-
         loadConnector();
         loadEngine();
         loadHandler();
@@ -290,9 +293,14 @@ public class Penrose {
     }
 
     public void loadPartitions() throws Exception {
-        Collection newPartitions = partitionManager.load(penroseConfig.getHome(), penroseConfig.getPartitionConfigs());
 
-        for (Iterator i=newPartitions.iterator(); i.hasNext(); ) {
+        for (Iterator i=penroseConfig.getPartitionConfigs().iterator(); i.hasNext(); ) {
+            PartitionConfig partitionConfig = (PartitionConfig)i.next();
+
+            partitionManager.load(penroseConfig.getHome(), partitionConfig);
+        }
+
+        for (Iterator i=partitionManager.getPartitions().iterator(); i.hasNext(); ) {
             Partition partition = (Partition)i.next();
 
             Collection results = partitionValidator.validate(partition);
@@ -305,26 +313,6 @@ public class Penrose {
                 } else {
                     log.warn("WARNING: "+resultPartition.getMessage()+" ["+resultPartition.getSource()+"]");
                 }
-            }
-        }
-    }
-
-    public void loadConnections() throws Exception {
-        Collection partitions = partitionManager.getPartitions();
-        for (Iterator i=partitions.iterator(); i.hasNext(); ) {
-            Partition partition = (Partition)i.next();
-
-            Collection connectionConfigs = partition.getConnectionConfigs();
-            for (Iterator j=connectionConfigs.iterator(); j.hasNext(); ) {
-                ConnectionConfig connectionConfig = (ConnectionConfig)j.next();
-
-                String adapterName = connectionConfig.getAdapterName();
-                if (adapterName == null) throw new Exception("Missing adapter name");
-
-                AdapterConfig adapterConfig = penroseConfig.getAdapterConfig(adapterName);
-                if (adapterConfig == null) throw new Exception("Undefined adapter "+adapterName);
-
-                connectionManager.init(partition, connectionConfig, adapterConfig);
             }
         }
     }
@@ -405,10 +393,9 @@ public class Penrose {
             status = STARTING;
 
             loadPartitions();
-            loadConnections();
             loadModules();
 
-            connectionManager.start();
+            partitionManager.start();
             connectorManager.start();
             engineManager.start();
             sessionManager.start();
@@ -442,7 +429,7 @@ public class Penrose {
             sessionManager.stop();
             engineManager.stop();
             connectorManager.stop();
-            connectionManager.stop();
+            partitionManager.stop();
 
         } catch (Exception e) {
             log.error(e.getMessage(), e);

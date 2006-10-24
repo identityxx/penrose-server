@@ -22,13 +22,12 @@ import org.safehaus.penrose.schema.SchemaManager;
 import org.safehaus.penrose.interpreter.InterpreterManager;
 import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.connector.Connector;
-import org.safehaus.penrose.connector.ConnectionManager;
+import org.safehaus.penrose.connection.ConnectionManager;
 import org.safehaus.penrose.connector.ConnectorManager;
 import org.safehaus.penrose.partition.PartitionManager;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.SourceConfig;
 import org.safehaus.penrose.mapping.*;
-import org.safehaus.penrose.graph.Graph;
 import org.safehaus.penrose.thread.MRSWLock;
 import org.safehaus.penrose.thread.Queue;
 import org.safehaus.penrose.filter.Filter;
@@ -77,15 +76,9 @@ public abstract class Engine {
 
     public TransformEngine transformEngine;
 
-    Analyzer analyzer;
-
     public void init() throws Exception {
         filterTool = new FilterTool();
         filterTool.setSchemaManager(schemaManager);
-
-        analyzer = new Analyzer();
-        analyzer.setPartitionManager(partitionManager);
-        analyzer.setInterpreterManager(interpreterManager);
     }
 
     public EngineConfig getEngineConfig() {
@@ -135,10 +128,6 @@ public abstract class Engine {
 
     public void setPartitionManager(PartitionManager partitionManager) throws Exception {
         this.partitionManager = partitionManager;
-    }
-
-    public SourceMapping getPrimarySource(EntryMapping entryMapping) throws Exception {
-        return analyzer.getPrimarySource(entryMapping);
     }
 
     public AttributeValues computeAttributeValues(
@@ -232,10 +221,6 @@ public abstract class Engine {
 
     public void setTransformEngine(TransformEngine transformEngine) {
         this.transformEngine = transformEngine;
-    }
-
-    public Graph getGraph(EntryMapping entryMapping) throws Exception {
-        return analyzer.getGraph(entryMapping);
     }
 
     public void start() throws Exception {
@@ -432,10 +417,6 @@ public abstract class Engine {
             throws Exception {
 
         loadEngine.load(partition, entryMapping, entriesToLoad, loadedEntries);
-    }
-
-    public boolean isUnique(Partition partition, EntryMapping entryMapping) throws Exception {
-        return analyzer.isUnique(partition, entryMapping);
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

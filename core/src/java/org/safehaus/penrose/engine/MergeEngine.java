@@ -158,7 +158,7 @@ public class MergeEngine {
         }
 
         AttributeValues sourceValues;
-        SourceMapping primarySourceMapping = engine.getPrimarySource(entryMapping);
+        SourceMapping primarySourceMapping = engine.getPartitionManager().getPrimarySource(partition, entryMapping);
 
         if (primarySourceMapping != null && loadedSourceValues != null) {
 

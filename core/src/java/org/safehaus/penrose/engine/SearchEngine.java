@@ -66,7 +66,7 @@ public class SearchEngine {
             return;
         }
 
-        boolean unique = engine.isUnique(partition, entryMapping);
+        boolean unique = engine.getPartitionManager().isUnique(partition, entryMapping);
         log.debug("Entry "+entryMapping.getDn()+" "+(unique ? "is" : "is not")+" unique.");
 
         Collection sources = entryMapping.getSourceMappings();
@@ -84,7 +84,7 @@ public class SearchEngine {
             effectiveSourceNames.add(sm.getName());
         }
         log.debug("Effective Sources: "+effectiveSourceNames);
-        final SourceMapping primarySourceMapping = engine.getPrimarySource(entryMapping);
+        final SourceMapping primarySourceMapping = engine.getPartitionManager().getPrimarySource(partition, entryMapping);
 
         if (unique && effectiveSources.size() == 1 && primarySourceMapping != null) {
             try {
@@ -258,7 +258,7 @@ public class SearchEngine {
             log.debug(Formatter.displaySeparator(80));
         }
 
-        final SourceMapping sourceMapping = engine.getPrimarySource(entryMapping);
+        final SourceMapping sourceMapping = engine.getPartitionManager().getPrimarySource(partition, entryMapping);
 
         Map filters = planner.getFilters();
         Filter newFilter = (Filter)filters.get(sourceMapping);
@@ -348,7 +348,7 @@ public class SearchEngine {
 
         Collection connectingSources = planner.getConnectingSources();
 
-        SourceMapping primarySourceMapping = engine.getPrimarySource(entryMapping);
+        SourceMapping primarySourceMapping = engine.getPartitionManager().getPrimarySource(partition, entryMapping);
 
         if (primarySourceMapping == null || entryMapping.getSourceMapping(primarySourceMapping.getName()) == null) {
             log.debug("Primary source is not local");
@@ -410,7 +410,7 @@ public class SearchEngine {
             SearchPlanner planner,
             Collection connectingSources) throws Exception {
 
-        SourceMapping primarySourceMapping = engine.getPrimarySource(entryMapping);
+        SourceMapping primarySourceMapping = engine.getPartitionManager().getPrimarySource(partition, entryMapping);
 
         Map filters = planner.getFilters();
 
@@ -605,7 +605,7 @@ public class SearchEngine {
             while (parentMapping != null) {
                 log.debug("Checking: "+parentMapping.getDn());
 
-                SourceMapping sourceMapping = engine.getPrimarySource(parentMapping);
+                SourceMapping sourceMapping = engine.getPartitionManager().getPrimarySource(partition, parentMapping);
                 log.debug("Primary source: "+sourceMapping);
 
                 if (sourceMapping != null) {

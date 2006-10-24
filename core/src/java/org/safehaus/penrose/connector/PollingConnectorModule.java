@@ -32,6 +32,7 @@ import org.safehaus.penrose.engine.Engine;
 import org.safehaus.penrose.pipeline.PipelineAdapter;
 import org.safehaus.penrose.pipeline.PipelineEvent;
 import org.safehaus.penrose.handler.Handler;
+import org.safehaus.penrose.connection.Connection;
 
 import java.util.Collection;
 import java.util.Iterator;
@@ -185,7 +186,7 @@ public class PollingConnectorModule extends Module {
 
         log.debug("Adding entry cache for "+entryMapping.getDn());
 
-        SourceMapping sourceMapping = engine.getPrimarySource(entryMapping);
+        SourceMapping sourceMapping = engine.getPartitionManager().getPrimarySource(partition, entryMapping);
         log.debug("Primary source: "+sourceMapping.getName()+" ("+sourceMapping.getSourceName()+")");
 
         AttributeValues sv = (AttributeValues)sourceCacheManager.get(partition, sourceConfig, pk);

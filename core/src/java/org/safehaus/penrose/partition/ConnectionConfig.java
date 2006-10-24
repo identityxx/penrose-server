@@ -62,7 +62,7 @@ public class ConnectionConfig implements ConnectionConfigMBean, Cloneable, Seria
     }
 
     public Collection getParameterNames() {
-        return parameters.keySet();
+        return new ArrayList(parameters.keySet()); // return Serializable list
     }
 
     public String getParameter(String name) {

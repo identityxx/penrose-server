@@ -17,7 +17,7 @@
  */
 package org.safehaus.penrose.cache;
 
-import org.safehaus.penrose.connector.Connection;
+import org.safehaus.penrose.connection.Connection;
 import org.safehaus.penrose.connector.Connector;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.mapping.AttributeValues;

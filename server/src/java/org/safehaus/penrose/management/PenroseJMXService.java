@@ -37,6 +37,9 @@ import org.safehaus.penrose.service.ServiceConfig;
 import org.safehaus.penrose.service.ServiceManager;
 import org.safehaus.penrose.service.ServiceManagerMBean;
 import org.safehaus.penrose.Penrose;
+import org.safehaus.penrose.connection.ConnectionManager;
+import org.safehaus.penrose.connection.ConnectionManagerMBean;
+import org.safehaus.penrose.connection.Connection;
 import org.safehaus.penrose.server.PenroseServer;
 import org.safehaus.penrose.module.ModuleConfig;
 import org.safehaus.penrose.partition.*;
@@ -65,12 +68,6 @@ public class PenroseJMXService extends Service {
 
     ObjectName penroseServiceName = ObjectName.getInstance(PenroseServiceMBean.NAME);
     PenroseService penroseService;
-
-    ObjectName partitionManagerName = ObjectName.getInstance(PartitionManagerMBean.NAME);
-    PartitionManager partitionManager;
-
-    ObjectName serviceManagerName = ObjectName.getInstance(ServiceManagerMBean.NAME);
-    ServiceManager serviceManager;
 
     ObjectName registryName = ObjectName.getInstance("naming:type=rmiregistry");
     NamingService registry;
@@ -193,10 +190,6 @@ public class PenroseJMXService extends Service {
 
         unregister();
 
-        if (partitionManager != null) {
-            mbeanServer.unregisterMBean(partitionManagerName);
-        }
-
         if (penroseService != null) {
             mbeanServer.unregisterMBean(penroseServiceName);
         }
@@ -240,6 +233,7 @@ public class PenroseJMXService extends Service {
     public void register() throws Exception {
         registerConfigs();
         registerManagers();
+        registerConnections();
         registerPartitions();
         registerServices();
     }
@@ -247,6 +241,7 @@ public class PenroseJMXService extends Service {
     public void unregister() throws Exception {
         unregisterServices();
         unregisterPartitions();
+        unregisterConnections();
         unregisterManagers();
         unregisterConfigs();
     }
@@ -345,21 +340,51 @@ public class PenroseJMXService extends Service {
     public void registerManagers() throws Exception {
         Penrose penrose = getPenroseServer().getPenrose();
 
-        register("Penrose:service=SchemaManager", penrose.getSchemaManager());
-        register("Penrose:service=ConnectionManager", penrose.getConnectionManager());
-        register("Penrose:service=PartitionManager", penrose.getPartitionManager());
-        register("Penrose:service=ModuleManager", penrose.getModuleManager());
-        register("Penrose:service=SessionManager", penrose.getSessionManager());
-        register("Penrose:service=ServiceManager", getPenroseServer().getServiceManager());
+        register("Penrose:name=SchemaManager", penrose.getSchemaManager());
+        register("Penrose:name=ConnectionManager", penrose.getConnectionManager());
+        register("Penrose:name=PartitionManager", penrose.getPartitionManager());
+        register("Penrose:name=ModuleManager", penrose.getModuleManager());
+        register("Penrose:name=SessionManager", penrose.getSessionManager());
+        register("Penrose:name=ServiceManager", getPenroseServer().getServiceManager());
     }
 
     public void unregisterManagers() throws Exception {
-        unregister("Penrose:service=ServiceManager");
-        unregister("Penrose:service=SessionManager");
-        unregister("Penrose:service=ModuleManager");
-        unregister("Penrose:service=PartitionManager");
-        unregister("Penrose:service=ConnectionManager");
-        unregister("Penrose:service=SchemaManager");
+        unregister("Penrose:name=ServiceManager");
+        unregister("Penrose:name=SessionManager");
+        unregister("Penrose:name=ModuleManager");
+        unregister("Penrose:name=PartitionManager");
+        unregister("Penrose:name=ConnectionManager");
+        unregister("Penrose:name=SchemaManager");
+    }
+
+    public void registerConnections() throws Exception {
+        Penrose penrose = getPenroseServer().getPenrose();
+        ConnectionManager connectionManager = penrose.getConnectionManager();
+
+        register(ConnectionManagerMBean.NAME, connectionManager);
+
+        for (Iterator i=connectionManager.getConnectionNames().iterator(); i.hasNext(); ) {
+            String name = (String)i.next();
+            Connection connection = connectionManager.getConnection(name);
+
+            register("Penrose Connections:name="+name+",type=Connection", connection);
+        }
+    }
+
+    public void unregisterConnections() throws Exception {
+
+        Penrose penrose = getPenroseServer().getPenrose();
+        ConnectionManager connectionManager = penrose.getConnectionManager();
+
+        register(ConnectionManagerMBean.NAME, connectionManager);
+
+        for (Iterator i=connectionManager.getConnectionNames().iterator(); i.hasNext(); ) {
+            String name = (String)i.next();
+
+            unregister("Penrose Connections:name="+name+",type=Connection");
+        }
+
+        unregister(ConnectionManagerMBean.NAME);
     }
 
     public void registerPartitions() throws Exception {

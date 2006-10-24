@@ -144,7 +144,7 @@ public class LoadEngine {
         try {
             Interpreter interpreter = engine.getInterpreterManager().newInstance();
 
-            SourceMapping primarySourceMapping = engine.getPrimarySource(entryMapping);
+            SourceMapping primarySourceMapping = engine.getPartitionManager().getPrimarySource(partition, entryMapping);
 
             Collection batch = new ArrayList();
 
@@ -262,7 +262,7 @@ public class LoadEngine {
             log.debug(Formatter.displaySeparator(80));
         }
 
-        SourceMapping primarySourceMapping = engine.getPrimarySource(entryMapping);
+        SourceMapping primarySourceMapping = engine.getPartitionManager().getPrimarySource(partition, entryMapping);
         log.debug("Primary source: "+(primarySourceMapping == null ? null : primarySourceMapping.getName()));
 
         if (primarySourceMapping == null) {
