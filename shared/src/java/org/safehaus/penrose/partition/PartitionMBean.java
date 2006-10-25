@@ -6,6 +6,7 @@ package org.safehaus.penrose.partition;
 public interface PartitionMBean {
 
     public String getName() throws Exception;
+    public PartitionConfig getPartitionConfig() throws Exception;
     public String getStatus() throws Exception;
 
     public void start() throws Exception;

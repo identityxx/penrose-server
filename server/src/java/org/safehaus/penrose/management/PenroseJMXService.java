@@ -18,8 +18,8 @@
 package org.safehaus.penrose.management;
 
 import mx4j.tools.naming.NamingService;
-import mx4j.tools.adaptor.http.HttpAdaptor;
-import mx4j.tools.adaptor.http.XSLTProcessor;
+//import mx4j.tools.adaptor.http.HttpAdaptor;
+//import mx4j.tools.adaptor.http.XSLTProcessor;
 import mx4j.log.Log4JLogger;
 
 import javax.management.MBeanServer;
@@ -40,6 +40,7 @@ import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.connection.ConnectionManager;
 import org.safehaus.penrose.connection.ConnectionManagerMBean;
 import org.safehaus.penrose.connection.Connection;
+import org.safehaus.penrose.connection.ConnectionConfig;
 import org.safehaus.penrose.server.PenroseServer;
 import org.safehaus.penrose.module.ModuleConfig;
 import org.safehaus.penrose.partition.*;
@@ -76,10 +77,11 @@ public class PenroseJMXService extends Service {
     JMXConnectorServer rmiConnector;
 
     ObjectName httpConnectorName = ObjectName.getInstance("connectors:type=http");
-    HttpAdaptor httpConnector;
+    //HttpAdaptor httpConnector;
+    JMXConnectorServer httpConnector;
 
-    ObjectName xsltProcessorName = ObjectName.getInstance("connectors:type=http,processor=xslt");
-    XSLTProcessor xsltProcessor;
+    //ObjectName xsltProcessorName = ObjectName.getInstance("connectors:type=http,processor=xslt");
+    //XSLTProcessor xsltProcessor;
 
     private int rmiPort;
     private int rmiTransportPort;
@@ -128,8 +130,12 @@ public class PenroseJMXService extends Service {
 
         register();
 
-        if (rmiPort > 0 && createdMBeanServer) {
+        jmxAuthenticator = new PenroseJMXAuthenticator(getPenroseServer().getPenrose());
 
+        HashMap environment = new HashMap();
+        environment.put("jmx.remote.authenticator", jmxAuthenticator);
+
+        if (rmiPort > 0 && createdMBeanServer) {
             registry = new NamingService(rmiPort);
             mbeanServer.registerMBean(registry, registryName);
             registry.start();
@@ -144,12 +150,14 @@ public class PenroseJMXService extends Service {
             url += "/jmx";
 
             JMXServiceURL serviceURL = new JMXServiceURL(url);
-            jmxAuthenticator = new PenroseJMXAuthenticator(getPenroseServer().getPenrose());
+            //JMXServiceURL serviceURL = new JMXServiceURL("rmi", "localhost", rmiPort, null);
+            log.debug("Running RMI Connector at "+serviceURL);
 
-            HashMap environment = new HashMap();
-            environment.put("jmx.remote.authenticator", jmxAuthenticator);
-
-            rmiConnector = JMXConnectorServerFactory.newJMXConnectorServer(serviceURL, environment, null);
+            rmiConnector = JMXConnectorServerFactory.newJMXConnectorServer(
+                    serviceURL,
+                    environment,
+                    mbeanServer
+            );
             mbeanServer.registerMBean(rmiConnector, rmiConnectorName);
             rmiConnector.start();
 
@@ -158,6 +166,17 @@ public class PenroseJMXService extends Service {
         }
 
         if (httpPort > 0) {
+            JMXServiceURL serviceURL = new JMXServiceURL("soap", null, httpPort, "/jmxconnector");
+            log.debug("Running HTTP Connector at "+serviceURL);
+
+            httpConnector = JMXConnectorServerFactory.newJMXConnectorServer(
+                    serviceURL,
+                    null,
+                    mbeanServer
+            );
+            mbeanServer.registerMBean(httpConnector, httpConnectorName);
+            httpConnector.start();
+/*
             xsltProcessor = new XSLTProcessor();
             mbeanServer.registerMBean(xsltProcessor, xsltProcessorName);
 
@@ -165,7 +184,7 @@ public class PenroseJMXService extends Service {
             httpConnector.setProcessorName(xsltProcessorName);
             mbeanServer.registerMBean(httpConnector, httpConnectorName);
             httpConnector.start();
-
+*/
             log.warn("Listening to port "+httpPort+" (HTTP).");
         }
 
@@ -177,7 +196,7 @@ public class PenroseJMXService extends Service {
         if (httpPort > 0) {
             httpConnector.stop();
             mbeanServer.unregisterMBean(httpConnectorName);
-            mbeanServer.unregisterMBean(xsltProcessorName);
+            //mbeanServer.unregisterMBean(xsltProcessorName);
         }
 
         if (rmiPort > 0 && createdMBeanServer) {
@@ -363,11 +382,15 @@ public class PenroseJMXService extends Service {
 
         register(ConnectionManagerMBean.NAME, connectionManager);
 
-        for (Iterator i=connectionManager.getConnectionNames().iterator(); i.hasNext(); ) {
-            String name = (String)i.next();
-            Connection connection = connectionManager.getConnection(name);
+        for (Iterator i=connectionManager.getPartitionNames().iterator(); i.hasNext(); ) {
+            String partitionName = (String)i.next();
 
-            register("Penrose Connections:name="+name+",type=Connection", connection);
+            for (Iterator j=connectionManager.getConnectionNames(partitionName).iterator(); j.hasNext(); ) {
+                String connectionName = (String)j.next();
+                Connection connection = connectionManager.getConnection(partitionName, connectionName);
+
+                register("Penrose Connections:name="+connectionName+",partition="+partitionName+",type=Connection", connection);
+            }
         }
     }
 
@@ -378,10 +401,15 @@ public class PenroseJMXService extends Service {
 
         register(ConnectionManagerMBean.NAME, connectionManager);
 
-        for (Iterator i=connectionManager.getConnectionNames().iterator(); i.hasNext(); ) {
-            String name = (String)i.next();
+        for (Iterator i=connectionManager.getPartitionNames().iterator(); i.hasNext(); ) {
+            String partitionName = (String)i.next();
 
-            unregister("Penrose Connections:name="+name+",type=Connection");
+            for (Iterator j=connectionManager.getConnectionNames(partitionName).iterator(); j.hasNext(); ) {
+                String connectionName = (String)j.next();
+                Connection connection = connectionManager.getConnection(partitionName, connectionName);
+
+                unregister("Penrose Connections:name="+connectionName+",partition="+partitionName+",type=Connection");
+            }
         }
 
         unregister(ConnectionManagerMBean.NAME);

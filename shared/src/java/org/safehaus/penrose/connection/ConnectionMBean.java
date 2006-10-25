@@ -33,7 +33,9 @@ public interface ConnectionMBean {
     public void setParameter(String name, String value) throws Exception;
     public String removeParameter(String name) throws Exception;
 
+    public ConnectionConfig getConnectionConfig() throws Exception;
     public String getStatus() throws Exception;
+    public ConnectionCounter getCounter() throws Exception;
 
     public void start() throws Exception;
     public void stop() throws Exception;

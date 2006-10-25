@@ -103,6 +103,11 @@ public class ServiceManager implements ServiceManagerMBean {
         start();
     }
 
+    public void restart(String name) throws Exception {
+        stop(name);
+        start(name);
+    }
+
     public String getStatus(String name) throws Exception {
         Service service = getService(name);
         if (service == null) throw new Exception(name+" not found.");

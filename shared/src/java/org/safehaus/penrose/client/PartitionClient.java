@@ -1,6 +1,7 @@
 package org.safehaus.penrose.client;
 
 import org.safehaus.penrose.partition.PartitionMBean;
+import org.safehaus.penrose.partition.PartitionConfig;
 
 import javax.management.ObjectName;
 import javax.management.MBeanServerConnection;
@@ -29,6 +30,11 @@ public class PartitionClient implements PartitionMBean {
     public String getName() throws Exception {
         MBeanServerConnection connection = client.getConnection();
         return (String)connection.getAttribute(objectName, "Name");
+    }
+
+    public PartitionConfig getPartitionConfig() throws Exception {
+        MBeanServerConnection connection = client.getConnection();
+        return (PartitionConfig)connection.getAttribute(objectName, "PartitionConfig");
     }
 
     public String getStatus() throws Exception {
@@ -67,7 +73,10 @@ public class PartitionClient implements PartitionMBean {
     }
 
     public void printInfo() throws Exception {
-        System.out.println("Partition   : "+getName());
+        PartitionConfig partitionConfig = getPartitionConfig();
+        System.out.println("Partition   : "+partitionConfig.getName());
+        System.out.println("Path        : "+partitionConfig.getPath());
+        System.out.println("Enabled     : "+partitionConfig.isEnabled());
         System.out.println("Status      : "+getStatus());
     }
 }

@@ -21,6 +21,7 @@ import org.safehaus.penrose.connector.Connector;
 import org.safehaus.penrose.connector.JDBCAdapter;
 import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.PenroseFactory;
+import org.safehaus.penrose.connection.ConnectionConfig;
 import org.safehaus.penrose.handler.Handler;
 import org.safehaus.penrose.partition.*;
 import org.apache.log4j.*;

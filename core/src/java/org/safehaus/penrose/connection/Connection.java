@@ -25,7 +25,6 @@ import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.filter.FilterTool;
 import org.safehaus.penrose.partition.SourceConfig;
-import org.safehaus.penrose.partition.ConnectionConfig;
 import org.ietf.ldap.LDAPException;
 
 import java.util.Collection;
@@ -47,6 +46,7 @@ public class Connection implements ConnectionMBean {
     private Adapter adapter;
 
     private String status = STOPPED;
+    private ConnectionCounter counter = new ConnectionCounter();
 
     public Connection(ConnectionConfig connectionConfig, AdapterConfig adapterConfig) {
         this.connectionConfig = connectionConfig;
@@ -67,6 +67,8 @@ public class Connection implements ConnectionMBean {
 
     public void start() throws Exception {
 
+        counter.reset();
+
         String adapterClass = adapterConfig.getAdapterClass();
         Class clazz = Class.forName(adapterClass);
         adapter = (Adapter)clazz.newInstance();
@@ -75,6 +77,7 @@ public class Connection implements ConnectionMBean {
         adapter.setConnection(this);
 
         adapter.init();
+
         setStatus(STARTED);
     }
 
@@ -130,6 +133,7 @@ public class Connection implements ConnectionMBean {
 
     public int bind(SourceConfig sourceConfig, Row pk, String password) throws Exception {
         if (adapter == null) return LDAPException.OPERATIONS_ERROR;
+        counter.incBindCounter();
         return adapter.bind(sourceConfig, pk, password);
     }
 
@@ -139,6 +143,7 @@ public class Connection implements ConnectionMBean {
             results.close();
             return;
         }
+        counter.incSearchCounter();
         adapter.search(sourceConfig, filter, sc, results);
     }
 
@@ -147,11 +152,13 @@ public class Connection implements ConnectionMBean {
             results.setReturnCode(LDAPException.OPERATIONS_ERROR);
             return;
         }
+        counter.incLoadCounter();
         adapter.load(sourceConfig, primaryKeys, filter, sc, results);
     }
 
     public int add(SourceConfig sourceConfig, Row pk, AttributeValues sourceValues) throws Exception {
         if (adapter == null) return LDAPException.OPERATIONS_ERROR;
+        counter.incAddCounter();
         return adapter.add(sourceConfig, pk, sourceValues);
     }
 
@@ -165,6 +172,7 @@ public class Connection implements ConnectionMBean {
         Collection pks = new ArrayList();
         pks.add(pk);
 
+        counter.incLoadCounter();
         adapter.load(sourceConfig, pks, filter, sc, sr);
 
         if (!sr.hasNext()) return null;
@@ -173,11 +181,13 @@ public class Connection implements ConnectionMBean {
 
     public int modify(SourceConfig sourceConfig, Row pk, Collection modifications) throws Exception {
         if (adapter == null) return LDAPException.OPERATIONS_ERROR;
+        counter.incModifyCounter();
         return adapter.modify(sourceConfig, pk, modifications);
     }
 
     public int delete(SourceConfig sourceConfig, Row pk) throws Exception {
         if (adapter == null) return LDAPException.OPERATIONS_ERROR;
+        counter.incDeleteCounter();
         return adapter.delete(sourceConfig, pk);
     }
 
@@ -210,5 +220,13 @@ public class Connection implements ConnectionMBean {
 
     public void setStatus(String status) {
         this.status = status;
+    }
+
+    public ConnectionCounter getCounter() {
+        return counter;
+    }
+
+    public void setCounter(ConnectionCounter counter) {
+        this.counter = counter;
     }
 }

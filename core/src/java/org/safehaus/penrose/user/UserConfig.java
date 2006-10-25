@@ -17,8 +17,6 @@
  */
 package org.safehaus.penrose.user;
 
-import org.safehaus.penrose.partition.ConnectionConfig;
-
 /**
  * @author Endi S. Dewata
  */

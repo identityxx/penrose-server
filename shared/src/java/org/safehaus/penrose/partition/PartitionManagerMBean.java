@@ -27,6 +27,7 @@ public interface PartitionManagerMBean {
     public final static String NAME = "Penrose:name=PartitionManager";
 
     public Collection getPartitionNames() throws Exception;
+    public PartitionConfig getPartitionConfig(String name) throws Exception;
     public String getStatus(String name) throws Exception;
 
     public void start(String name) throws Exception;

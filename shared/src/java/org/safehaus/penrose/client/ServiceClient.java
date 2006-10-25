@@ -7,6 +7,7 @@ import javax.management.ObjectName;
 import javax.management.MBeanServerConnection;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.Arrays;
 
 /**
  * @author Endi S. Dewata
@@ -86,7 +87,17 @@ public class ServiceClient implements ServiceMBean {
 
     public Collection getParameterNames() throws Exception {
         MBeanServerConnection connection = client.getConnection();
-        return (Collection)connection.getAttribute(objectName, "ParameterNames");
+        Object object = connection.getAttribute(objectName, "ParameterNames");
+
+        if (object instanceof Object[]) {
+            return Arrays.asList((Object[])object);
+
+        } else if (object instanceof Collection) {
+            return (Collection)object;
+
+        } else {
+            return null;
+        }
     }
 
     public String getParameter(String name) throws Exception {

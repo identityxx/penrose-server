@@ -26,10 +26,12 @@ public interface ConnectionManagerMBean {
 
     public final static String NAME = "Penrose:name=ConnectionManager";
 
-    public Collection getConnectionNames() throws Exception;
-    public String getStatus(String name) throws Exception;
+    public Collection getPartitionNames() throws Exception;
+    public Collection getConnectionNames(String partitionName) throws Exception;
+    public ConnectionConfig getConnectionConfig(String partitionName, String connectionName) throws Exception;
+    public String getStatus(String partitionName, String connectionName) throws Exception;
 
-    public void start(String name) throws Exception;
-    public void stop(String name) throws Exception;
-    public void restart(String name) throws Exception;
+    public void start(String partitionName, String connectionName) throws Exception;
+    public void stop(String partitionName, String connectionName) throws Exception;
+    public void restart(String partitionName, String connectionName) throws Exception;
 }

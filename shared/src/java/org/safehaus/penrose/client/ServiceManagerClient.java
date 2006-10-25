@@ -2,11 +2,13 @@ package org.safehaus.penrose.client;
 
 import org.safehaus.penrose.service.ServiceManagerMBean;
 import org.safehaus.penrose.service.ServiceConfig;
+import org.safehaus.penrose.util.Formatter;
 
 import javax.management.ObjectName;
 import javax.management.MBeanServerConnection;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.Arrays;
 
 /**
  * @author Endi S. Dewata
@@ -31,7 +33,17 @@ public class ServiceManagerClient implements ServiceManagerMBean {
 
     public Collection getServiceNames() throws Exception {
         MBeanServerConnection connection = client.getConnection();
-        return (Collection)connection.getAttribute(objectName, "ServiceNames");
+        Object object = connection.getAttribute(objectName, "ServiceNames");
+
+        if (object instanceof Object[]) {
+            return Arrays.asList((Object[])object);
+
+        } else if (object instanceof Collection) {
+            return (Collection)object;
+
+        } else {
+            return null;
+        }
     }
 
     public ServiceConfig getServiceConfig(String name) throws Exception {
@@ -108,15 +120,30 @@ public class ServiceManagerClient implements ServiceManagerMBean {
         );
     }
 
+    public void restart(String name) throws Exception {
+        MBeanServerConnection connection = client.getConnection();
+        connection.invoke(
+                objectName,
+                "restart",
+                new Object[] { name },
+                new String[] { String.class.getName() }
+        );
+    }
+
     public void printServices() throws Exception {
+        System.out.print(Formatter.rightPad("PARTITION", 15)+" ");
+        System.out.println(Formatter.rightPad("STATUS", 10));
+
+        System.out.print(Formatter.repeat("-", 15)+" ");
+        System.out.println(Formatter.repeat("-", 10));
+
         for (Iterator i=getServiceNames().iterator(); i.hasNext(); ) {
             String name = (String)i.next();
             String status = getStatus(name);
 
-            StringBuffer padding = new StringBuffer();
-            for (int j=0; j<20-name.length(); j++) padding.append(" ");
+            System.out.print(Formatter.rightPad(name, 15)+" ");
+            System.out.println(Formatter.rightPad(status, 10));
 
-            System.out.println(name +padding+"["+status+"]");
         }
     }
 }

@@ -38,4 +38,5 @@ public interface ServiceManagerMBean {
     public void stop(String name) throws Exception;
 
     public void restart() throws Exception;
+    public void restart(String name) throws Exception;
 }

@@ -24,7 +24,9 @@ import java.io.Serializable;
  */
 public class PartitionConfig implements PartitionConfigMBean, Cloneable, Serializable {
 
-    private String name;
+	private static final long serialVersionUID = 8442096980176568175L;
+
+	private String name;
     private String path;
     private boolean enabled = true;
 

@@ -40,6 +40,7 @@ public class PenroseClient {
     public final static String NAME = "Penrose:service=Penrose";
 
     public final static String PENROSE = "PENROSE";
+    public final static String SOAP    = "SOAP";
     public final static String JBOSS   = "JBOSS";
 
     public final static int DEFAULT_RMI_PORT            = 1099;
@@ -105,7 +106,6 @@ public class PenroseClient {
     public void connect() throws Exception {
 
         if (JBOSS.equals(type)) {
-
             String url = "jnp://"+host+":"+port;
             log.debug("Connecting to JBoss server at "+url);
 
@@ -117,10 +117,23 @@ public class PenroseClient {
             parameters.put(Context.SECURITY_CREDENTIALS, password);
 
             context = new InitialContext(parameters);
-            setConnection((MBeanServerConnection)context.lookup("jmx/invoker/RMIAdaptor"));
+            connection = (MBeanServerConnection)context.lookup("jmx/invoker/RMIAdaptor");
+
+        } else if (SOAP.equals(type)) {
+            JMXServiceURL serviceURL = new JMXServiceURL("soap", host, port, "/jmxconnector");
+            log.debug("Connecting to SOAP Connector at "+serviceURL);
+
+            String[] credentials = new String[2];
+            credentials[0] = username;
+            credentials[1] = password;
+
+            Hashtable parameters = new Hashtable();
+            parameters.put(JMXConnector.CREDENTIALS, credentials);
+
+            connector = JMXConnectorFactory.connect(serviceURL, parameters);
+            connection = connector.getMBeanServerConnection();
 
         } else {
-
             String url = "service:jmx:"+protocol+"://"+host;
             if (rmiTransportPort != DEFAULT_RMI_TRANSPORT_PORT) url += ":"+rmiTransportPort;
 
@@ -131,9 +144,10 @@ public class PenroseClient {
             url += "/jmx";
 
             //String url = "service:jmx:"+protocol+"://"+host+(port == 0 ? "" : ":"+port);
-            log.debug("Connecting to Penrose server at "+url);
 
             JMXServiceURL serviceURL = new JMXServiceURL(url);
+            //JMXServiceURL serviceURL = new JMXServiceURL("rmi", host, port, null);
+            log.debug("Connecting to RMI Connector at "+serviceURL);
 
             String[] credentials = new String[2];
             credentials[0] = username;
@@ -143,7 +157,7 @@ public class PenroseClient {
             parameters.put(JMXConnector.CREDENTIALS, credentials);
 
             connector = JMXConnectorFactory.connect(serviceURL, parameters);
-            setConnection(connector.getMBeanServerConnection());
+            connection = connector.getMBeanServerConnection();
         }
 
 		domain = getConnection().getDefaultDomain();
@@ -216,10 +230,20 @@ public class PenroseClient {
     }
 
     public Collection listFiles(String directory) throws Exception {
-        return (Collection)invoke("listFiles",
+        Object object = invoke("listFiles",
                 new Object[] { directory },
                 new String[] { String.class.getName() }
         );
+
+        if (object instanceof Object[]) {
+            return Arrays.asList((Object[])object);
+
+        } else if (object instanceof Collection) {
+            return (Collection)object;
+
+        } else {
+            return null;
+        }
     }
 
     public byte[] download(String filename) throws Exception {
@@ -237,7 +261,17 @@ public class PenroseClient {
     }
 
     public Collection getLoggerNames() throws Exception {
-        return (Collection)getConnection().getAttribute(name, "LoggerNames");
+        Object object = getConnection().getAttribute(name, "LoggerNames");
+
+        if (object instanceof Object[]) {
+            return Arrays.asList((Object[])object);
+
+        } else if (object instanceof Collection) {
+            return (Collection)object;
+
+        } else {
+            return null;
+        }
     }
 
     public String getLoggerLevel(String name) throws Exception {
@@ -264,70 +298,124 @@ public class PenroseClient {
             String version = getProductName()+" "+getProductVersion();
             System.out.println(version);
 
-        } else if ("service".equals(command)) {
+        } else if ("show".equals(command)) {
 
-            String name = (String)iterator.next();
-            ServiceClient service = serviceManagerClient.getService(name);
+            String target = (String)iterator.next();
+            if ("services".equals(target)) {
+                serviceManagerClient.printServices();
 
-            String action = (String)iterator.next();
-            if ("start".equals(action)) {
-                service.start();
+            } else if ("partitions".equals(target)) {
+                partitionManagerClient.printPartitions();
 
-            } else if ("stop".equals(action)) {
-                service.stop();
+            } else if ("connections".equals(target)) {
+                connectionManagerClient.printConnections();
 
-            } else if ("restart".equals(action)) {
-                service.restart();
-
-            } else if ("info".equals(action)) {
+            } else if ("service".equals(target)) {
+                String name = (String)iterator.next();
+                ServiceClient service = serviceManagerClient.getService(name);
                 service.printInfo();
 
-            } else {
-                System.out.println("Invalid action: "+action);
-            }
-
-        } else if ("partition".equals(command)) {
-
-            String name = (String)iterator.next();
-            PartitionClient partition = partitionManagerClient.getPartitionClient(name);
-
-            String action = (String)iterator.next();
-            if ("start".equals(action)) {
-                partitionManagerClient.start(name);
-
-            } else if ("stop".equals(action)) {
-                partitionManagerClient.stop(name);
-
-            } else if ("restart".equals(action)) {
-                partitionManagerClient.restart(name);
-
-            } else if ("info".equals(action)) {
+            } else if ("partition".equals(target)) {
+                String name = (String)iterator.next();
+                PartitionClient partition = partitionManagerClient.getPartitionClient(name);
                 partition.printInfo();
 
+            } else if ("connection".equals(target)) {
+                String connectionName = (String)iterator.next();
+                String partition = (String)iterator.next();
+
+                if ("partition".equals(partition)) {
+                    String partitionName = (String)iterator.next();
+                    ConnectionClient connection = connectionManagerClient.getConnectionClient(partitionName, connectionName);
+                    connection.printInfo(partitionName);
+
+                } else {
+                    System.out.println("Missing partition name");
+                }
+
             } else {
-                System.out.println("Invalid action: "+action);
+                System.out.println("Invalid target: "+target);
             }
 
-        } else if ("connection".equals(command)) {
+        } else if ("start".equals(command)) {
 
-            String name = (String)iterator.next();
-            ConnectionClient connection = connectionManagerClient.getConnectionClient(name);
+            String target = (String)iterator.next();
+            if ("service".equals(target)) {
+                String name = (String)iterator.next();
+                serviceManagerClient.start(name);
 
-            String action = (String)iterator.next();
-            if ("start".equals(action)) {
-                connectionManagerClient.start(name);
+            } else if ("partition".equals(target)) {
+                String name = (String)iterator.next();
+                partitionManagerClient.start(name);
 
-            } else if ("stop".equals(action)) {
-                connectionManagerClient.stop(name);
+            } else if ("connection".equals(target)) {
+                String connectionName = (String)iterator.next();
+                String partition = (String)iterator.next();
 
-            } else if ("restart".equals(action)) {
-                connectionManagerClient.restart(name);
+                if ("partition".equals(partition)) {
+                    String partitionName = (String)iterator.next();
+                    connectionManagerClient.start(partitionName, connectionName);
 
-            } else if ("info".equals(action)) {
-                connection.printInfo();
+                } else {
+                    System.out.println("Missing partition name");
+                }
 
             } else {
-                System.out.println("Invalid action: "+action);
+                System.out.println("Invalid target: "+target);
+            }
+
+        } else if ("stop".equals(command)) {
+
+            String target = (String)iterator.next();
+            if ("service".equals(target)) {
+                String name = (String)iterator.next();
+                serviceManagerClient.stop(name);
+
+            } else if ("partition".equals(target)) {
+                String name = (String)iterator.next();
+                partitionManagerClient.stop(name);
+
+            } else if ("connection".equals(target)) {
+                String connectionName = (String)iterator.next();
+                String partition = (String)iterator.next();
+
+                if ("partition".equals(partition)) {
+                    String partitionName = (String)iterator.next();
+                    connectionManagerClient.stop(partitionName, connectionName);
+
+                } else {
+                    System.out.println("Missing partition name");
+                }
+
+            } else {
+                System.out.println("Invalid target: "+target);
+            }
+
+        } else if ("restart".equals(command)) {
+
+            String target = (String)iterator.next();
+            if ("service".equals(target)) {
+                String name = (String)iterator.next();
+                serviceManagerClient.restart(name);
+
+            } else if ("partition".equals(target)) {
+                String name = (String)iterator.next();
+                partitionManagerClient.restart(name);
+
+            } else if ("connection".equals(target)) {
+                String connectionName = (String)iterator.next();
+                String partition = (String)iterator.next();
+
+                if ("partition".equals(partition)) {
+                    String partitionName = (String)iterator.next();
+                    connectionManagerClient.restart(partitionName, connectionName);
+
+                } else {
+                    System.out.println("Missing partition name");
+                }
+
+            } else {
+                System.out.println("Invalid target: "+target);
             }
 
         } else if ("restart".equals(command)) {
@@ -346,22 +434,6 @@ public class PenroseClient {
                 String newDn = (String)iterator.next();
                 log.debug("Renaming "+oldDn+" to "+newDn);
                 renameEntryMapping(oldDn, newDn);
-            }
-
-        } else if ("list".equals(command)) {
-
-            String target = (String)iterator.next();
-            if ("services".equals(target)) {
-                serviceManagerClient.printServices();
-
-            } else if ("partitions".equals(target)) {
-                partitionManagerClient.printPartitions();
-
-            } else if ("connections".equals(target)) {
-                connectionManagerClient.printConnections();
-
-            } else {
-                System.out.println("Invalid command: "+command);
             }
 
         } else if ("loggers".equals(command)) {
@@ -402,22 +474,25 @@ public class PenroseClient {
         System.out.println("  -v                 run in verbose mode");
         System.out.println();
         System.out.println("Commands:");
-        System.out.println("  version                    get server version");
-        System.out.println("  list services              display all services");
-        System.out.println("  service <name> start       start service");
-        System.out.println("  service <name> stop        stop service");
-        System.out.println("  service <name> restart     restart service");
-        System.out.println("  service <name> info        display service info");
-        System.out.println("  list partitions            display all partitions");
-        System.out.println("  partition <name> start     start partition");
-        System.out.println("  partition <name> stop      stop partition");
-        System.out.println("  partition <name> restart   restart partition");
-        System.out.println("  partition <name> info      display partition info");
-        System.out.println("  list connections           display all connections");
-        System.out.println("  connection <name> start    start connection");
-        System.out.println("  connection <name> stop     stop connection");
-        System.out.println("  connection <name> restart  restart connection");
-        System.out.println("  connection <name> info     display connection info");
+        System.out.println("  version");
+        System.out.println();
+        System.out.println("  show services");
+        System.out.println("  show service <name>");
+        System.out.println("  start service <name>");
+        System.out.println("  stop service <name>");
+        System.out.println("  restart service <name>");
+        System.out.println();
+        System.out.println("  show partitions");
+        System.out.println("  show partition <name>");
+        System.out.println("  start partition <name>");
+        System.out.println("  stop partition <name>");
+        System.out.println("  restart partition <name>");
+        System.out.println();
+        System.out.println("  show connections");
+        System.out.println("  show connection <name> partition <name>");
+        System.out.println("  start connection <name> partition <name>");
+        System.out.println("  stop connection <name> partition <name>");
+        System.out.println("  restart connection <name> partition <name>");
     }
 
     public static void main(String args[]) throws Exception {

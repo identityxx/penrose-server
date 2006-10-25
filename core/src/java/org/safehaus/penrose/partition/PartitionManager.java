@@ -24,7 +24,7 @@ import org.safehaus.penrose.cache.LRUCache;
 import org.safehaus.penrose.graph.Graph;
 import org.safehaus.penrose.interpreter.InterpreterManager;
 import org.safehaus.penrose.connection.ConnectionManager;
-import org.safehaus.penrose.connection.Connection;
+import org.safehaus.penrose.connection.ConnectionConfig;
 import org.safehaus.penrose.connector.AdapterConfig;
 import org.safehaus.penrose.config.PenroseConfig;
 import org.slf4j.LoggerFactory;
@@ -124,6 +124,12 @@ public class PartitionManager implements PartitionManagerMBean {
         return (Partition)partitions.get(name);
     }
 
+    public PartitionConfig getPartitionConfig(String name) throws Exception {
+        Partition partition = getPartition(name);
+        if (partition == null) return null;
+        return partition.getPartitionConfig();
+    }
+    
     public void addPartition(Partition partition) throws Exception {
         partitions.put(partition.getName(), partition);
     }

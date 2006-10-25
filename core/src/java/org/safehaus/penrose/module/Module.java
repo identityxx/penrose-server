@@ -28,7 +28,7 @@ import java.util.Collection;
 /**
  * @author Endi S. Dewata
  */
-public class Module implements AddListener, BindListener, CompareListener, DeleteListener, ModifyListener, ModRdnListener, SearchListener {
+public class Module implements AddListener, BindListener, CompareListener, DeleteListener, ModifyListener, ModRdnListener, SearchListener, ModuleMBean {
 
     public Logger log = LoggerFactory.getLogger(getClass());
 

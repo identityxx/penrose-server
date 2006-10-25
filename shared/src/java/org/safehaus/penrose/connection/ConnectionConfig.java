@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
-package org.safehaus.penrose.partition;
+package org.safehaus.penrose.connection;
 
 import java.util.*;
 import java.io.Serializable;
@@ -26,9 +26,7 @@ import java.io.Serializable;
 public class ConnectionConfig implements ConnectionConfigMBean, Cloneable, Serializable {
 
     public String name;
-
     public String adapterName;
-
     public String description;
 
     public Properties parameters = new Properties();

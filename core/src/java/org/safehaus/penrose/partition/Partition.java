@@ -24,6 +24,7 @@ import org.safehaus.penrose.module.ModuleMapping;
 import org.safehaus.penrose.module.ModuleConfig;
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.util.EntryUtil;
+import org.safehaus.penrose.connection.ConnectionConfig;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 

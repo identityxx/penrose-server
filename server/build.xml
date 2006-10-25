@@ -23,6 +23,9 @@
         <fileset dir="lib">
             <include name="*.jar"/>
         </fileset>
+        <fileset dir="../shared/lib">
+            <include name="*.jar"/>
+        </fileset>
         <fileset dir="../lib">
             <include name="*.jar"/>
         </fileset>
@@ -136,6 +139,7 @@
             <fileset dir="target/javadoc"/>
         </copy>
         <copy todir="target/dist/lib" includeEmptyDirs="false">
+            <fileset dir="../shared/lib" includes="*"/>
             <fileset dir="../lib" includes="*"/>
             <fileset dir="../shared/dist" includes="penrose-shared-${project.version}.jar"/>
             <fileset dir="../core/dist" includes="penrose-${project.version}.jar"/>

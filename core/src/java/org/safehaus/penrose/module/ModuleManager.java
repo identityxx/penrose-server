@@ -126,6 +126,12 @@ public class ModuleManager implements ModuleManagerMBean {
         return (Module)modules.get(name);
     }
 
+    public ModuleConfig getModuleConfig(String name) {
+        Module module = getModule(name);
+        if (module == null) return null;
+        return module.getModuleConfig();
+    }
+    
     public Collection getModuleNames() {
         return modules.keySet();
     }
