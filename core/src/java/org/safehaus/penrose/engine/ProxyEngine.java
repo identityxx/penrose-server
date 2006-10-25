@@ -402,13 +402,13 @@ public class ProxyEngine extends Engine {
             Partition partition,
             AttributeValues sourceValues,
             EntryMapping entryMapping,
-            String rdns[],
+            List rdns,
             int position
     ) throws Exception {
 
         String dn = null;
-        for (int i = 0; i < rdns.length; i++) {
-            dn = EntryUtil.append(dn, LDAPDN.escapeRDN(rdns[i]));
+        for (int i = 0; i < rdns.size(); i++) {
+            dn = EntryUtil.append(dn, (Row)rdns.get(i));
         }
 
         if (log.isDebugEnabled()) {
@@ -457,7 +457,7 @@ public class ProxyEngine extends Engine {
 
             path.add(entry);
 
-            for (int i=0; i<rdns.length-position-1; i++) {
+            for (int i=0; i<rdns.size()-position-1; i++) {
                 path.add(null);
             }
         }

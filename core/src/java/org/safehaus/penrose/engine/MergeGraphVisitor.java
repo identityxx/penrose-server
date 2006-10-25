@@ -109,19 +109,20 @@ public class MergeGraphVisitor extends GraphVisitor {
 
             //log.debug("Loaded values:");
             Collection list = loadedSourceValues.get(sourceMapping.getName());
+            if (list != null) {
+                for (Iterator i=list.iterator(); i.hasNext(); ) {
+                    AttributeValues av = (AttributeValues)i.next();
+                    //log.debug(" - "+av);
 
-            for (Iterator i=list.iterator(); i.hasNext(); ) {
-                AttributeValues av = (AttributeValues)i.next();
-                //log.debug(" - "+av);
+                    if (relationships == null) {
+                        if (!FilterTool.isValid(av, filter)) continue;
 
-                if (relationships == null) {
-                    if (!FilterTool.isValid(av, filter)) continue;
-
-                } else {
-                    if (!engine.getJoinEngine().evaluate(partition, entryMapping, relationships, sourceValues, av)) continue;
+                    } else {
+                        if (!engine.getJoinEngine().evaluate(partition, entryMapping, relationships, sourceValues, av)) continue;
+                    }
+    
+                    sourceValues.add(av);
                 }
-
-                sourceValues.add(av);
             }
         }
 /*

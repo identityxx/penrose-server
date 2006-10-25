@@ -67,13 +67,13 @@ public class FindHandler {
         if (partition == null) return;
         if (dn == null) return;
 
-        String rdns[] = LDAPDN.explodeDN(dn, false);
-        log.debug("Length ["+rdns.length+"]");
+        List rdns = EntryUtil.parseDn(dn);
+        log.debug("Length ["+rdns.size()+"]");
 
         int p = 0;
         int position = 0;
 
-        while (position < rdns.length) {
+        while (position < rdns.size()) {
 
             for (int i = p; i < position; i++) {
                 AttributeValues newSourceValues = new AttributeValues();
@@ -88,13 +88,13 @@ public class FindHandler {
             }
 
             String prefix = null;
-            for (int i = 0; i < rdns.length-1-position; i++) {
-                prefix = EntryUtil.append(prefix, LDAPDN.escapeRDN(rdns[i]));
+            for (int i = 0; i < rdns.size()-1-position; i++) {
+                prefix = EntryUtil.append(prefix, (Row)rdns.get(i));
             }
 
             String suffix = null;
-            for (int i = rdns.length-1-position; i < rdns.length; i++) {
-                suffix = EntryUtil.append(suffix, LDAPDN.escapeRDN(rdns[i]));
+            for (int i = rdns.size()-1-position; i < rdns.size(); i++) {
+                suffix = EntryUtil.append(suffix, (Row)rdns.get(i));
             }
 
             log.debug("Position ["+position +"]: ["+(prefix == null ? "" : prefix)+"] ["+suffix+"]");

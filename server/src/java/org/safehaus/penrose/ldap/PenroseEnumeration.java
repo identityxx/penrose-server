@@ -78,24 +78,7 @@ public class PenroseEnumeration implements NamingEnumeration {
 
     public Object next() throws NamingException {
         SearchResult result = (SearchResult)searchResults.next();
-
-        String dn = result.getName();
-        //log.debug("Converting dn: "+dn);
-
-        String rdns[] = LDAPDN.explodeDN(dn, false);
-        StringBuffer sb = new StringBuffer();
-        for (int i=0; i<rdns.length; i++) {
-            String rdn = rdns[i];
-            //log.debug(" - "+rdn);
-            rdn = LDAPDN.escapeRDN(rdn);
-
-            if (sb.length() > 0) sb.append(",");
-            sb.append(rdn);
-        }
-
-        dn = sb.toString();
-        result.setName(dn);
-        log.info("Returning \""+dn+"\" to client.");
+        log.info("Returning \""+result.getName()+"\" to client.");
 
         return result;
     }

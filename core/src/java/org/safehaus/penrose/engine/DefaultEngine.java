@@ -323,13 +323,13 @@ public class DefaultEngine extends Engine {
             Partition partition,
             AttributeValues sourceValues,
             EntryMapping entryMapping,
-            String rdns[],
+            List rdns,
             int position
     ) throws Exception {
 
         String dn = null;
-        for (int i = rdns.length-position-1; i < rdns.length; i++) {
-            dn = EntryUtil.append(dn, LDAPDN.escapeRDN(rdns[i]));
+        for (int i = rdns.size()-position-1; i < rdns.size(); i++) {
+            dn = EntryUtil.append(dn, (Row)rdns.get(i));
         }
 
         if (log.isDebugEnabled()) {
