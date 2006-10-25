@@ -168,6 +168,7 @@
       <field name="price">
         <expression>if (price == void || price == null) return;
 int i = price.indexOf(" ");
+if (i &lt; 0) return price;
 return price.substring(0, i);</expression>
       </field>
     </source>

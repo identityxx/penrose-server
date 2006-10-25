@@ -17,6 +17,8 @@
  */
 package org.safehaus.penrose.mapping;
 
+import org.ietf.ldap.LDAPDN;
+
 import java.util.TreeMap;
 import java.util.Map;
 import java.util.Collection;
@@ -101,12 +103,10 @@ public class Row implements Comparable {
         for (Iterator i=values.keySet().iterator(); i.hasNext(); ) {
             String name = (String)i.next();
             Object value = values.get(name);
+            String rdn = name+"="+value;
 
             if (sb.length() > 0) sb.append("+");
-            sb.append(name);
-            sb.append("=");
-            sb.append(value);
-            //sb.append(value+"("+value.getClass().getName()+")");
+            sb.append(LDAPDN.escapeRDN(rdn));
         }
 
         return sb.toString();

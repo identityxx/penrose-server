@@ -485,7 +485,7 @@ public abstract class Engine {
             Partition partition,
             AttributeValues sourceValues,
             EntryMapping entryMapping,
-            String rdns[],
+            List rdns,
             int position
     ) throws Exception {
         return new ArrayList();

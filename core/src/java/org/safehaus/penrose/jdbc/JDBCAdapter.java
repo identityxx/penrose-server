@@ -271,6 +271,7 @@ public class JDBCAdapter extends Adapter {
             int width = 0;
             boolean first = true;
 
+            log.debug("Results:");
             int i = 0;
             while (rs.next() && (sc.getSizeLimit() == 0 || i<sc.getSizeLimit())) {
                 Row row = getPkValues(sourceConfig, rs);
@@ -392,22 +393,27 @@ public class JDBCAdapter extends Adapter {
             int width = 0;
             boolean first = true;
 
+            log.debug("Results:");
             int i = 0;
             while (rs.next() && (sc.getSizeLimit() == 0 || i<sc.getSizeLimit())) {
                 AttributeValues av = getValues(sourceConfig, rs);
                 results.add(av);
 
                 if (first) {
-                    //width = printHeader(sourceConfig);
+                    width = printHeader(sourceConfig);
                     first = false;
                 }
 
-                //log.debug(format(sourceConfig, av));
-                log.debug("Row: "+av);
+                log.debug(format(sourceConfig, av));
+                //log.debug("Row: "+av);
                 i++;
             }
 
-            if (width > 0) log.debug(printFooter(width));
+            if (width > 0) {
+                log.debug(printFooter(width));
+            } else {
+                log.debug("No results found");
+            }
 
             if (sc.getSizeLimit() != 0 && i >= sc.getSizeLimit()) {
                 log.debug("RC: size limit exceeded.");
@@ -1025,7 +1031,6 @@ public class JDBCAdapter extends Adapter {
 
         int width = resultHeader.length();
 
-        log.debug("Results:");
         log.debug(Formatter.displaySeparator(width));
         log.debug(resultHeader.toString());
         log.debug(Formatter.displaySeparator(width));

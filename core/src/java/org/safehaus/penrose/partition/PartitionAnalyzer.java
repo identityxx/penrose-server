@@ -234,7 +234,7 @@ public class PartitionAnalyzer {
 
         if (rdnSources.isEmpty()) {
             log.debug("RDN attributes are constants.");
-            return true;
+            return false;
         }
 
         if (rdnSources.size() > 1) {

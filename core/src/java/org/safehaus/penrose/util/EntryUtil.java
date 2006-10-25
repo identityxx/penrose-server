@@ -92,6 +92,18 @@ public class EntryUtil {
         return dn+","+suffix;
     }
 
+    public static String append(String dn, Row rdn) {
+        return append(dn, toRdn(rdn));
+    }
+
+    public static String append(Row rdn, String dn) {
+        return append(toRdn(rdn), dn);
+    }
+
+    public static String append(Row rdn1, Row rdn2) {
+        return append(toRdn(rdn1), toRdn(rdn2));
+    }
+
     public static Row getRdn(String dn) {
         Row rdn = new Row();
         if (dn == null || "".equals(dn)) return rdn;
@@ -358,4 +370,59 @@ public class EntryUtil {
         return sb.toString();
     }
 
+    public static List parseDn(String dn) {
+        List list = new ArrayList();
+
+        String compositeRdns[] = LDAPDN.explodeDN(dn, false);
+        for (int i=0; i<compositeRdns.length; i++) {
+            String compositeRdn = compositeRdns[i];
+
+            StringTokenizer st = new StringTokenizer(compositeRdn, "+");
+            Row rdn = new Row();
+
+            while (st.hasMoreTokens()) {
+                String s = LDAPDN.unescapeRDN(st.nextToken());
+
+                int index = s.indexOf("=");
+
+                String name = s.substring(0, index);
+                if (name.startsWith("null")) name = name.substring(4);
+
+                String value = s.substring(index+1);
+
+                rdn.set(name, value);
+            }
+
+            list.add(rdn);
+        }
+
+        return list;
+    }
+
+    public static String getSubDn(List dn, int start, int length) {
+        String newDn = null;
+
+        for (int i=0; i<length; i++) {
+            int p = i+start;
+            if (p >= dn.size()) break;
+            Row rdn = (Row)dn.get(p);
+            append(newDn, toRdn(rdn));
+        }
+
+        return newDn;
+    }
+
+    public static String toRdn(Row rdn) {
+        StringBuffer sb = new StringBuffer();
+        for (Iterator i=rdn.getNames().iterator(); i.hasNext(); ) {
+            String name = (String)i.next();
+            Object value = rdn.get(name);
+            String r = name+"="+value;
+
+            if (sb.length() > 0) sb.append("+");
+            sb.append(LDAPDN.escapeRDN(r));
+        }
+
+        return sb.toString();
+    }
 }
