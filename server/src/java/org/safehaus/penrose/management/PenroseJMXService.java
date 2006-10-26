@@ -43,6 +43,9 @@ import org.safehaus.penrose.connection.Connection;
 import org.safehaus.penrose.connection.ConnectionConfig;
 import org.safehaus.penrose.server.PenroseServer;
 import org.safehaus.penrose.module.ModuleConfig;
+import org.safehaus.penrose.module.ModuleManager;
+import org.safehaus.penrose.module.ModuleManagerMBean;
+import org.safehaus.penrose.module.Module;
 import org.safehaus.penrose.partition.*;
 import org.safehaus.penrose.connector.AdapterConfig;
 import org.safehaus.penrose.schema.SchemaConfig;
@@ -251,8 +254,9 @@ public class PenroseJMXService extends Service {
 
     public void register() throws Exception {
         registerConfigs();
-        registerManagers();
+        //registerManagers();
         registerConnections();
+        registerModules();
         registerPartitions();
         registerServices();
     }
@@ -260,8 +264,9 @@ public class PenroseJMXService extends Service {
     public void unregister() throws Exception {
         unregisterServices();
         unregisterPartitions();
+        unregisterModules();
         unregisterConnections();
-        unregisterManagers();
+        //unregisterManagers();
         unregisterConfigs();
     }
 
@@ -406,13 +411,45 @@ public class PenroseJMXService extends Service {
 
             for (Iterator j=connectionManager.getConnectionNames(partitionName).iterator(); j.hasNext(); ) {
                 String connectionName = (String)j.next();
-                Connection connection = connectionManager.getConnection(partitionName, connectionName);
-
                 unregister("Penrose Connections:name="+connectionName+",partition="+partitionName+",type=Connection");
             }
         }
 
         unregister(ConnectionManagerMBean.NAME);
+    }
+
+    public void registerModules() throws Exception {
+        Penrose penrose = getPenroseServer().getPenrose();
+        ModuleManager moduleManager = penrose.getModuleManager();
+
+        register(ModuleManagerMBean.NAME, moduleManager);
+
+        for (Iterator i=moduleManager.getPartitionNames().iterator(); i.hasNext(); ) {
+            String partitionName = (String)i.next();
+
+            for (Iterator j=moduleManager.getModuleNames(partitionName).iterator(); j.hasNext(); ) {
+                String moduleName = (String)j.next();
+                Module module = moduleManager.getModule(partitionName, moduleName);
+
+                register("Penrose Modules:name="+moduleName +",partition="+partitionName+",type=Module", module);
+            }
+        }
+    }
+
+    public void unregisterModules() throws Exception {
+        Penrose penrose = getPenroseServer().getPenrose();
+        ModuleManager moduleManager = penrose.getModuleManager();
+
+        for (Iterator i=moduleManager.getPartitionNames().iterator(); i.hasNext(); ) {
+            String partitionName = (String)i.next();
+
+            for (Iterator j=moduleManager.getModuleNames(partitionName).iterator(); j.hasNext(); ) {
+                String moduleName = (String)j.next();
+                unregister("Penrose Modules:name="+moduleName +",partition="+partitionName+",type=Module");
+            }
+        }
+
+        unregister(ModuleManagerMBean.NAME);
     }
 
     public void registerPartitions() throws Exception {

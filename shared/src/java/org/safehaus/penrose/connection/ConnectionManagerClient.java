@@ -1,8 +1,9 @@
-package org.safehaus.penrose.client;
+package org.safehaus.penrose.connection;
 
 import org.safehaus.penrose.connection.ConnectionManagerMBean;
 import org.safehaus.penrose.connection.ConnectionConfig;
 import org.safehaus.penrose.util.Formatter;
+import org.safehaus.penrose.client.PenroseClient;
 
 import javax.management.ObjectName;
 import javax.management.MBeanServerConnection;
@@ -120,29 +121,5 @@ public class ConnectionManagerClient implements ConnectionManagerMBean {
 
     public ConnectionClient getConnectionClient(String partitionName, String connectionName) throws Exception {
         return new ConnectionClient(client, partitionName, connectionName);
-    }
-
-    public void printConnections() throws Exception {
-
-        System.out.print(Formatter.rightPad("CONNECTION", 15)+" ");
-        System.out.print(Formatter.rightPad("PARTITION", 15)+" ");
-        System.out.println(Formatter.rightPad("STATUS", 10));
-
-        System.out.print(Formatter.repeat("-", 15)+" ");
-        System.out.print(Formatter.repeat("-", 15)+" ");
-        System.out.println(Formatter.repeat("-", 10));
-
-        for (Iterator i=getPartitionNames().iterator(); i.hasNext(); ) {
-            String partitionName = (String)i.next();
-
-            for (Iterator j=getConnectionNames(partitionName).iterator(); j.hasNext(); ) {
-                String connectionName = (String)j.next();
-                String status = getStatus(partitionName, connectionName);
-
-                System.out.print(Formatter.rightPad(connectionName, 15)+" ");
-                System.out.print(Formatter.rightPad(partitionName, 15)+" ");
-                System.out.println(Formatter.rightPad(status, 10));
-            }
-        }
     }
 }

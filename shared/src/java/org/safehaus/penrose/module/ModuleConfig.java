@@ -20,11 +20,12 @@ package org.safehaus.penrose.module;
 import java.util.Collection;
 import java.util.Properties;
 import java.util.Map;
+import java.io.Serializable;
 
 /**
  * @author Endi S. Dewata
  */
-public class ModuleConfig implements ModuleConfigMBean, Cloneable {
+public class ModuleConfig implements ModuleConfigMBean, Cloneable, Serializable {
 
     private String name;
     private boolean enabled = true;

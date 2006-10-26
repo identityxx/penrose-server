@@ -24,10 +24,14 @@ import java.util.Collection;
  */
 public interface ModuleManagerMBean {
 
-    public void start() throws Exception;
-    public void stop() throws Exception;
+    public final static String NAME = "Penrose:name=ModuleManager";
 
-    public String getStatus(String name) throws Exception;
-    public Collection getModuleNames() throws Exception;
-    public ModuleConfig getModuleConfig(String name) throws Exception;
+    public Collection getPartitionNames() throws Exception;
+    public Collection getModuleNames(String partitionName) throws Exception;
+    public ModuleConfig getModuleConfig(String partitionName, String moduleName) throws Exception;
+    public String getStatus(String partitionName, String moduleName) throws Exception;
+
+    public void start(String partitionName, String moduleName) throws Exception;
+    public void stop(String partitionName, String moduleName) throws Exception;
+    public void restart(String partitionName, String moduleName) throws Exception;
 }

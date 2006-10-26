@@ -66,6 +66,11 @@ public class Module implements AddListener, BindListener, CompareListener, Delet
         setStatus(STOPPED);
     }
 
+    public void restart() throws Exception {
+        stop();
+        start();
+    }
+
     public boolean beforeBind(BindEvent event) throws Exception {
         return true;
     }

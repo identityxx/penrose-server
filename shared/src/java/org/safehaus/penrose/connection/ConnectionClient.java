@@ -1,8 +1,9 @@
-package org.safehaus.penrose.client;
+package org.safehaus.penrose.connection;
 
 import org.safehaus.penrose.connection.ConnectionMBean;
 import org.safehaus.penrose.connection.ConnectionConfig;
 import org.safehaus.penrose.connection.ConnectionCounter;
+import org.safehaus.penrose.client.PenroseClient;
 
 import javax.management.ObjectName;
 import javax.management.MBeanServerConnection;
@@ -134,36 +135,5 @@ public class ConnectionClient implements ConnectionMBean {
                 new Object[] { name },
                 new String[] { String.class.getName() }
         );
-    }
-
-    public void printInfo(String partitionName) throws Exception {
-        ConnectionConfig connectionConfig = getConnectionConfig();
-
-        System.out.println("Connection  : "+connectionConfig.getName());
-        System.out.println("Partition   : "+partitionName);
-        System.out.println("Adapter     : "+connectionConfig.getAdapterName());
-
-        String description = connectionConfig.getDescription();
-        System.out.println("Description : "+(description == null ? "" : description));
-
-        System.out.println("Status      : "+getStatus());
-        System.out.println();
-
-        System.out.println("Parameters  :");
-        for (Iterator i=connectionConfig.getParameterNames().iterator(); i.hasNext(); ) {
-            String paramName = (String)i.next();
-            String value = connectionConfig.getParameter(paramName);
-            System.out.println(" - "+paramName +": "+value);
-        }
-        System.out.println();
-
-        ConnectionCounter counter = getCounter();
-        System.out.println("Counters    :");
-        System.out.println(" - add      : "+counter.getAddCounter());
-        System.out.println(" - bind     : "+counter.getBindCounter());
-        System.out.println(" - delete   : "+counter.getDeleteCounter());
-        System.out.println(" - load     : "+counter.getLoadCounter());
-        System.out.println(" - modify   : "+counter.getModifyCounter());
-        System.out.println(" - search   : "+counter.getSearchCounter());
     }
 }

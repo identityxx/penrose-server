@@ -1,7 +1,8 @@
-package org.safehaus.penrose.client;
+package org.safehaus.penrose.partition;
 
 import org.safehaus.penrose.partition.PartitionMBean;
 import org.safehaus.penrose.partition.PartitionConfig;
+import org.safehaus.penrose.client.PenroseClient;
 
 import javax.management.ObjectName;
 import javax.management.MBeanServerConnection;
@@ -70,13 +71,5 @@ public class PartitionClient implements PartitionMBean {
                 new Object[] { },
                 new String[] { }
         );
-    }
-
-    public void printInfo() throws Exception {
-        PartitionConfig partitionConfig = getPartitionConfig();
-        System.out.println("Partition   : "+partitionConfig.getName());
-        System.out.println("Path        : "+partitionConfig.getPath());
-        System.out.println("Enabled     : "+partitionConfig.isEnabled());
-        System.out.println("Status      : "+getStatus());
     }
 }

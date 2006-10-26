@@ -27,6 +27,9 @@ import org.safehaus.penrose.connection.ConnectionManager;
 import org.safehaus.penrose.connection.ConnectionConfig;
 import org.safehaus.penrose.connector.AdapterConfig;
 import org.safehaus.penrose.config.PenroseConfig;
+import org.safehaus.penrose.util.Formatter;
+import org.safehaus.penrose.module.ModuleConfig;
+import org.safehaus.penrose.module.ModuleManager;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
@@ -44,7 +47,9 @@ public class PartitionManager implements PartitionManagerMBean {
 
     private InterpreterManager interpreterManager;
     private SchemaManager schemaManager;
+
     private ConnectionManager connectionManager;
+    private ModuleManager moduleManager;
 
     private Map partitions = new TreeMap();
 
@@ -78,7 +83,9 @@ public class PartitionManager implements PartitionManagerMBean {
 
     public Partition load(String home, PartitionConfig partitionConfig) throws Exception {
 
-        log.debug("Loading "+partitionConfig.getName()+" partition.");
+        log.debug(Formatter.displaySeparator(80));
+        log.debug(Formatter.displayLine("Loading partition "+partitionConfig.getName(), 80));
+        log.debug(Formatter.displaySeparator(80));
 
         PartitionReader partitionReader = new PartitionReader(home);
         Partition partition = partitionReader.read(partitionConfig);
@@ -98,6 +105,16 @@ public class PartitionManager implements PartitionManagerMBean {
             connectionManager.addConnection(partition, connectionConfig, adapterConfig);
         }
 
+        Collection moduleConfigs = partition.getModuleConfigs();
+        for (Iterator i =moduleConfigs.iterator(); i.hasNext(); ) {
+            ModuleConfig moduleConfig = (ModuleConfig)i.next();
+            moduleManager.addModule(partition, moduleConfig);
+        }
+
+        log.debug(Formatter.displaySeparator(80));
+        log.debug(Formatter.displayLine("Partition "+partitionConfig.getName()+" loaded", 80));
+        log.debug(Formatter.displaySeparator(80));
+        
         return partition;
     }
 
@@ -167,10 +184,15 @@ public class PartitionManager implements PartitionManagerMBean {
     }
 
     public void start(Partition partition) throws Exception {
-        log.info("Starting partition "+partition.getName()+".");
+
+        log.debug(Formatter.displaySeparator(80));
+        log.debug(Formatter.displayLine("Starting partition "+partition.getName(), 80));
+        log.debug(Formatter.displaySeparator(80));
+
         partition.setStatus(Partition.STARTING);
 
-        for (Iterator i=partition.getRootEntryMappings().iterator(); i.hasNext(); ) {
+        Collection rootEntryMappings = partition.getRootEntryMappings();
+        for (Iterator i=rootEntryMappings.iterator(); i.hasNext(); ) {
             EntryMapping entryMapping = (EntryMapping)i.next();
             analyzer.analyze(partition, entryMapping);
         }
@@ -178,12 +200,20 @@ public class PartitionManager implements PartitionManagerMBean {
         Collection connectionConfigs = partition.getConnectionConfigs();
         for (Iterator j=connectionConfigs.iterator(); j.hasNext(); ) {
             ConnectionConfig connectionConfig = (ConnectionConfig)j.next();
+            connectionManager.start(partition.getName(), connectionConfig.getName());
+        }
 
-            connectionManager.start(partition, connectionConfig.getName());
+        Collection moduleConfigs = partition.getModuleConfigs();
+        for (Iterator i =moduleConfigs.iterator(); i.hasNext(); ) {
+            ModuleConfig moduleConfig = (ModuleConfig)i.next();
+            moduleManager.start(partition.getName(), moduleConfig.getName());
         }
 
         partition.setStatus(Partition.STARTED);
-        log.info("Partition "+partition.getName()+" started.");
+
+        log.debug(Formatter.displaySeparator(80));
+        log.debug(Formatter.displayLine("Partition "+partition.getName()+" started", 80));
+        log.debug(Formatter.displaySeparator(80));
     }
 
     public void stop() throws Exception {
@@ -210,7 +240,7 @@ public class PartitionManager implements PartitionManagerMBean {
         Collection connectionConfigs = partition.getConnectionConfigs();
         for (Iterator j=connectionConfigs.iterator(); j.hasNext(); ) {
             ConnectionConfig connectionConfig = (ConnectionConfig)j.next();
-            connectionManager.stop(partition, connectionConfig.getName());
+            connectionManager.stop(partition.getName(), connectionConfig.getName());
         }
 
         partition.setStatus(Partition.STOPPED);
@@ -371,5 +401,13 @@ public class PartitionManager implements PartitionManagerMBean {
 
     public void setPenroseConfig(PenroseConfig penroseConfig) {
         this.penroseConfig = penroseConfig;
+    }
+
+    public ModuleManager getModuleManager() {
+        return moduleManager;
+    }
+
+    public void setModuleManager(ModuleManager moduleManager) {
+        this.moduleManager = moduleManager;
     }
 }

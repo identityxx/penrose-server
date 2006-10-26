@@ -42,14 +42,14 @@ public class ModuleManager implements ModuleManagerMBean {
 
             for (Iterator j=partition.getModuleConfigs().iterator(); j.hasNext(); ) {
                 ModuleConfig moduleConfig = (ModuleConfig)j.next();
-                load(partition, moduleConfig);
+                addModule(partition, moduleConfig);
             }
         }
     }
 
-    public void load(Partition partition, ModuleConfig moduleConfig) throws Exception {
+    public void addModule(Partition partition, ModuleConfig moduleConfig) throws Exception {
 
-        Module module = getModule(moduleConfig.getName());
+        Module module = getModule(partition.getName(), moduleConfig.getName());
         if (module != null) return;
         
         if (!moduleConfig.isEnabled()) return;
@@ -64,84 +64,126 @@ public class ModuleManager implements ModuleManagerMBean {
         module.setPenrose(penrose);
         module.init();
 
-        addModule(module);
+        addModule(partition, module);
     }
 
     public void start() throws Exception {
-        //log.debug("Starting Modules...");
-        for (Iterator i=getModuleNames().iterator(); i.hasNext(); ) {
-            String name = (String)i.next();
-            start(name);
+        log.debug("Starting modules...");
+
+        for (Iterator i=modules.keySet().iterator(); i.hasNext(); ) {
+            String partitionName = (String)i.next();
+            Map map = (Map)modules.get(partitionName);
+
+            for (Iterator j=map.keySet().iterator(); j.hasNext(); ) {
+                String moduleName = (String)j.next();
+                Module module = (Module)map.get(moduleName);
+
+                ModuleConfig moduleConfig = module.getModuleConfig();
+                if (!moduleConfig.isEnabled()) continue;
+
+                module.start();
+            }
         }
-        //log.debug("Modules started.");
+
+        log.debug("Modules started.");
     }
 
-    public void start(String name) throws Exception {
+    public void start(String partitionName, String moduleName) throws Exception {
 
-        Module module = getModule(name);
-        if (module == null) throw new Exception(name+" not found.");
+        Module module = getModule(partitionName, moduleName);
+        if (module == null) throw new Exception(moduleName +" not found.");
 
         ModuleConfig moduleConfig = module.getModuleConfig();
         if (!moduleConfig.isEnabled()) return;
 
-        log.debug("Starting "+name+" module.");
+        log.debug("Starting "+moduleName +" module.");
         module.start();
     }
 
     public void stop() throws Exception {
-        log.debug("Stopping Modules...");
-        Collection list = getModuleNames();
-        String names[] = (String[])list.toArray(new String[list.size()]);
+        log.debug("Stopping modules...");
 
-        for (int i=names.length-1; i>=0; i--) {
-            String name = names[i];
-            stop(name);
+        for (Iterator i=modules.keySet().iterator(); i.hasNext(); ) {
+            String partitionName = (String)i.next();
+            Map map = (Map)modules.get(partitionName);
+
+            for (Iterator j=map.keySet().iterator(); j.hasNext(); ) {
+                String moduleName = (String)j.next();
+                Module module = (Module)map.get(moduleName);
+
+                ModuleConfig moduleConfig = module.getModuleConfig();
+                if (!moduleConfig.isEnabled()) continue;
+
+                module.stop();
+            }
         }
+
         log.debug("Modules stopped.");
     }
 
-    public void stop(String name) throws Exception {
+    public void stop(String partitionName, String moduleName) throws Exception {
 
-        Module module = getModule(name);
-        if (module == null) throw new Exception(name+" not found.");
+        Module module = getModule(partitionName, moduleName);
+        if (module == null) throw new Exception(moduleName +" not found.");
 
         ModuleConfig moduleConfig = module.getModuleConfig();
         if (!moduleConfig.isEnabled()) return;
 
-        log.debug("Stopping "+name+" module.");
+        log.debug("Stopping "+moduleName +" module.");
         module.stop();
     }
 
-    public String getStatus(String name) throws Exception {
-        Module module = getModule(name);
-        if (module == null) throw new Exception(name+" not found.");
+    public void restart() throws Exception {
+        stop();
+        start();
+    }
+
+    public void restart(String partitionName, String moduleName) throws Exception {
+        stop(partitionName, moduleName);
+        start(partitionName, moduleName);
+    }
+
+    public String getStatus(String partitionName, String moduleName) throws Exception {
+        Module module = getModule(partitionName, moduleName);
+        if (module == null) throw new Exception(moduleName +" not found.");
         return module.getStatus();
     }
 
-    public void addModule(Module module) {
-        modules.put(module.getName(), module);
+    public void addModule(Partition partition, Module module) {
+        Map map = (Map)modules.get(partition.getName());
+        if (map == null) {
+            map = new TreeMap();
+            modules.put(partition.getName(), map);
+        }
+        map.put(module.getName(), module);
     }
 
-    public Module getModule(String name) {
-        return (Module)modules.get(name);
+    public Module getModule(String partitionName, String moduleName) {
+        Map map = (Map)modules.get(partitionName);
+        if (map == null) return null;
+        return (Module)map.get(moduleName);
     }
 
-    public ModuleConfig getModuleConfig(String name) {
-        Module module = getModule(name);
+    public ModuleConfig getModuleConfig(String partitionName, String name) {
+        Module module = getModule(partitionName, name);
         if (module == null) return null;
         return module.getModuleConfig();
     }
     
-    public Collection getModuleNames() {
-        return modules.keySet();
+    public Collection getPartitionNames() {
+        return new ArrayList(modules.keySet()); // return Serializable list
     }
 
-    public Collection getModules() {
-        return modules.values();
+    public Collection getModuleNames(String partitionName) {
+        Map map = (Map)modules.get(partitionName);
+        if (map == null) return new ArrayList();
+        return new ArrayList(map.keySet()); // return Serializable list
     }
 
-    public Module removeModule(String name) {
-        return (Module)modules.remove(name);
+    public Module removeModule(String partitionName, String moduleName) {
+        Map map = (Map)modules.get(partitionName);
+        if (map == null) return null;
+        return (Module)map.remove(moduleName);
     }
 
     public void clear() {
@@ -165,21 +207,21 @@ public class ModuleManager implements ModuleManagerMBean {
         PartitionManager partitionManager = penrose.getPartitionManager();
         Partition partition = partitionManager.getPartitionByDn(dn);
         
-        if (partition != null) {
-            for (Iterator i = partition.getModuleMappings().iterator(); i.hasNext(); ) {
-                Collection c = (Collection)i.next();
+        if (partition == null) return list;
 
-                for (Iterator j=c.iterator(); j.hasNext(); ) {
-                    ModuleMapping moduleMapping = (ModuleMapping)j.next();
+        for (Iterator i = partition.getModuleMappings().iterator(); i.hasNext(); ) {
+            Collection c = (Collection)i.next();
 
-                    String moduleName = moduleMapping.getModuleName();
-                    Module module = (Module)modules.get(moduleName);
+            for (Iterator j=c.iterator(); j.hasNext(); ) {
+                ModuleMapping moduleMapping = (ModuleMapping)j.next();
+                if (!moduleMapping.match(dn)) continue;
 
-                    if (moduleMapping.match(dn)) {
-                        //log.debug(" - "+moduleName);
-                        list.add(module);
-                    }
-                }
+                String moduleName = moduleMapping.getModuleName();
+                Module module = getModule(partition.getName(), moduleName);
+                if (!Module.STARTED.equals(module.getStatus())) continue;
+
+                //log.debug(" - "+moduleName);
+                list.add(module);
             }
         }
 

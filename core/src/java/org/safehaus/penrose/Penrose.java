@@ -136,8 +136,8 @@ public class Penrose {
         initSessionManager();
 
         initConnectionManager();
-        initPartitionManager();
         initModuleManager();
+        initPartitionManager();
 
         initConnectorManager();
         initEngineManager();
@@ -184,19 +184,6 @@ public class Penrose {
         sessionManager.setPenroseConfig(penroseConfig);
     }
 
-    public void initPartitionManager() throws Exception {
-        partitionManager = new PartitionManager();
-        partitionManager.setPenroseConfig(penroseConfig);
-        partitionManager.setSchemaManager(schemaManager);
-        partitionManager.setInterpreterManager(interpreterManager);
-        partitionManager.setConnectionManager(connectionManager);
-        partitionManager.init();
-
-        partitionValidator = new PartitionValidator();
-        partitionValidator.setPenroseConfig(penroseConfig);
-        partitionValidator.setSchemaManager(schemaManager);
-    }
-
     public void initConnectionManager() throws Exception {
         connectionManager = new ConnectionManager();
     }
@@ -204,6 +191,20 @@ public class Penrose {
     public void initModuleManager() throws Exception {
         moduleManager = new ModuleManager();
         moduleManager.setPenrose(this);
+    }
+
+    public void initPartitionManager() throws Exception {
+        partitionManager = new PartitionManager();
+        partitionManager.setPenroseConfig(penroseConfig);
+        partitionManager.setSchemaManager(schemaManager);
+        partitionManager.setInterpreterManager(interpreterManager);
+        partitionManager.setConnectionManager(connectionManager);
+        partitionManager.setModuleManager(moduleManager);
+        partitionManager.init();
+
+        partitionValidator = new PartitionValidator();
+        partitionValidator.setPenroseConfig(penroseConfig);
+        partitionValidator.setSchemaManager(schemaManager);
     }
 
     public void initInterpreterManager() throws Exception {
@@ -270,8 +271,6 @@ public class Penrose {
         loadConnector();
         loadEngine();
         loadHandler();
-
-        loadModules();
     }
 
     public void loadSystemProperties() throws Exception {
@@ -393,14 +392,12 @@ public class Penrose {
             status = STARTING;
 
             loadPartitions();
-            loadModules();
 
             partitionManager.start();
             connectorManager.start();
             engineManager.start();
             sessionManager.start();
             handlerManager.start();
-            moduleManager.start();
 
             status = STARTED;
 
@@ -424,7 +421,6 @@ public class Penrose {
 
             threadManager.stopRequestAllWorkers();
 
-            moduleManager.stop();
             handlerManager.stop();
             sessionManager.stop();
             engineManager.stop();

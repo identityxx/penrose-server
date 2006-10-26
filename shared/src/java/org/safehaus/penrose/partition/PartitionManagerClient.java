@@ -1,8 +1,10 @@
-package org.safehaus.penrose.client;
+package org.safehaus.penrose.partition;
 
 import org.safehaus.penrose.partition.PartitionManagerMBean;
 import org.safehaus.penrose.partition.PartitionConfig;
+import org.safehaus.penrose.partition.PartitionClient;
 import org.safehaus.penrose.util.Formatter;
+import org.safehaus.penrose.client.PenroseClient;
 
 import javax.management.ObjectName;
 import javax.management.MBeanServerConnection;
@@ -98,21 +100,5 @@ public class PartitionManagerClient implements PartitionManagerMBean {
 
     public PartitionClient getPartitionClient(String name) throws Exception {
         return new PartitionClient(client, name);
-    }
-
-    public void printPartitions() throws Exception {
-        System.out.print(Formatter.rightPad("PARTITION", 15)+" ");
-        System.out.println(Formatter.rightPad("STATUS", 10));
-
-        System.out.print(Formatter.repeat("-", 15)+" ");
-        System.out.println(Formatter.repeat("-", 10));
-
-        for (Iterator i=getPartitionNames().iterator(); i.hasNext(); ) {
-            String name = (String)i.next();
-            String status = getStatus(name);
-
-            System.out.print(Formatter.rightPad(name, 15)+" ");
-            System.out.println(Formatter.rightPad(status, 10));
-        }
     }
 }

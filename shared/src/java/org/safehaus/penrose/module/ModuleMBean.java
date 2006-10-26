@@ -13,9 +13,9 @@ public interface ModuleMBean {
     public String getParameter(String name) throws Exception;
     public Collection getParameterNames() throws Exception;
 
-    public void init() throws Exception;
     public void start() throws Exception;
     public void stop() throws Exception;
+    public void restart() throws Exception;
 
     public String getStatus() throws Exception;
 }

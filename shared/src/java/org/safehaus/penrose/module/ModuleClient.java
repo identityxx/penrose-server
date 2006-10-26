@@ -1,25 +1,25 @@
-package org.safehaus.penrose.client;
+package org.safehaus.penrose.module;
 
-import org.safehaus.penrose.service.ServiceMBean;
-import org.safehaus.penrose.service.ServiceConfig;
+import org.safehaus.penrose.connection.ConnectionCounter;
+import org.safehaus.penrose.client.PenroseClient;
 
 import javax.management.ObjectName;
 import javax.management.MBeanServerConnection;
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.Arrays;
+import java.util.Iterator;
 
 /**
  * @author Endi S. Dewata
  */
-public class ServiceClient implements ServiceMBean {
+public class ModuleClient implements ModuleMBean {
 
     PenroseClient client;
     ObjectName objectName;
 
-    public ServiceClient(PenroseClient client, String name) throws Exception {
+    public ModuleClient(PenroseClient client, String partitionName, String moduleName) throws Exception {
         this.client = client;
-        this.objectName = new ObjectName("Penrose Services:name="+name+",type=Service");
+        this.objectName = new ObjectName("Penrose Modules:name="+moduleName +",partition="+partitionName+",type=Module");
     }
 
     public PenroseClient getClient() {
@@ -33,11 +33,6 @@ public class ServiceClient implements ServiceMBean {
     public String getName() throws Exception {
         MBeanServerConnection connection = client.getConnection();
         return (String)connection.getAttribute(objectName, "Name");
-    }
-
-    public String getServiceClass() throws Exception {
-        MBeanServerConnection connection = client.getConnection();
-        return (String)connection.getAttribute(objectName, "ServiceClass");
     }
 
     public String getDescription() throws Exception {
@@ -80,9 +75,9 @@ public class ServiceClient implements ServiceMBean {
         );
     }
 
-    public ServiceConfig getServiceConfig() throws Exception {
+    public ModuleConfig getModuleConfig() throws Exception {
         MBeanServerConnection connection = client.getConnection();
-        return (ServiceConfig)connection.getAttribute(objectName, "ServiceConfig");
+        return (ModuleConfig)connection.getAttribute(objectName, "ModuleConfig");
     }
 
     public Collection getParameterNames() throws Exception {
@@ -128,23 +123,5 @@ public class ServiceClient implements ServiceMBean {
                 new Object[] { name },
                 new String[] { String.class.getName() }
         );
-    }
-
-    public void printInfo() throws Exception {
-        System.out.println("Service     : "+getName());
-        System.out.println("Class       : "+getServiceClass());
-
-        String description = getDescription();
-        System.out.println("Description : "+(description == null ? "" : description));
-
-        System.out.println("Status      : "+getStatus());
-        System.out.println();
-
-        System.out.println("Parameters  : ");
-        for (Iterator i=getParameterNames().iterator(); i.hasNext(); ) {
-            String paramName = (String)i.next();
-            String value = getParameter(paramName);
-            System.out.println(" - "+paramName +": "+value);
-        }
     }
 }

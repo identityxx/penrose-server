@@ -167,4 +167,4 @@ fi
 exec "$JAVACMD" $PENROSE_DEBUG_OPTS $PENROSE_OPTS \
 -classpath "$LOCALCLASSPATH" \
 -Dpenrose.home="$PENROSE_HOME" \
-org.safehaus.penrose.client.PenroseClient $PENROSE_ARGS "$@"
+org.safehaus.penrose.client.Client $PENROSE_ARGS "$@"

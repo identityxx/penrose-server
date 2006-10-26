@@ -34,10 +34,6 @@ public class ConnectionManager implements ConnectionManagerMBean {
 
     public Map connections = new TreeMap();
 
-    public String getStatus(Partition partition, String connectionName) throws Exception {
-        return getStatus(partition.getName(), connectionName);
-    }
-
     public String getStatus(String partitionName, String connectionName) throws Exception {
 
         Map map = (Map)connections.get(partitionName);
@@ -76,10 +72,6 @@ public class ConnectionManager implements ConnectionManagerMBean {
         return connection;
     }
 
-    public void start(Partition partition, String connectionName) throws Exception {
-        start(partition.getName(), connectionName);
-    }
-
     public void start(String partitionName, String connectionName) throws Exception {
         Map map = (Map)connections.get(partitionName);
         if (map == null) {
@@ -95,10 +87,6 @@ public class ConnectionManager implements ConnectionManagerMBean {
 
         log.info("Starting connection "+connectionName+".");
         connection.start();
-    }
-
-    public void stop(Partition partition, String connectionName) throws Exception {
-        stop(partition.getName(), connectionName);
     }
 
     public void stop(String partitionName, String connectionName) throws Exception {

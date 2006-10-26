@@ -53,20 +53,20 @@
 
     <target name="export" depends="build,docs">
         <mkdir dir="target"/>
-        <tar destfile="target/${project.name}-bin-${project.version}.tar.gz" compression="gzip">
+        <tar destfile="target/${project.name}-bin.tar.gz" compression="gzip">
             <tarfileset dir="server/bin"/>
         </tar>
-        <tar destfile="target/${project.name}-conf-${project.version}.tar.gz" compression="gzip">
+        <tar destfile="target/${project.name}-conf.tar.gz" compression="gzip">
             <tarfileset dir="conf"/>
             <tarfileset dir="server/conf"/>
         </tar>
-        <tar destfile="target/${project.name}-samples-${project.version}.tar.gz" compression="gzip">
+        <tar destfile="target/${project.name}-samples.tar.gz" compression="gzip">
             <tarfileset dir="samples"/>
         </tar>
-        <tar destfile="target/${project.name}-schema-${project.version}.tar.gz" compression="gzip">
+        <tar destfile="target/${project.name}-schema.tar.gz" compression="gzip">
             <tarfileset dir="schema"/>
         </tar>
-        <tar destfile="target/${project.name}-docs-${project.version}.tar.gz" compression="gzip">
+        <tar destfile="target/${project.name}-docs.tar.gz" compression="gzip">
             <tarfileset dir="core/target" includes="javadoc/**"/>
             <tarfileset dir="server/target" prefix="server" includes="javadoc/**"/>
             <tarfileset dir="docs"/>
@@ -118,6 +118,8 @@
     </target>
 
     <target name="clean" depends="init">
+        <delete dir="dist" failonerror="false"/>
+        <delete dir="target" failonerror="false"/>
         <ant dir="server" target="clean"/>
         <ant dir="core" target="clean"/>
         <ant dir="shared" target="clean"/>
