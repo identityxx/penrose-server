@@ -19,7 +19,7 @@ package org.safehaus.penrose.cache;
 
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.filter.Filter;
-import org.safehaus.penrose.partition.FieldConfig;
+import org.safehaus.penrose.source.FieldConfig;
 
 import java.util.*;
 

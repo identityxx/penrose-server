@@ -18,6 +18,7 @@
 package org.safehaus.penrose.connector;
 
 import org.safehaus.penrose.cache.SourceCache;
+import org.safehaus.penrose.source.Source;
 
 import java.util.*;
 
@@ -41,7 +42,7 @@ public class ConnectorConfig implements Cloneable {
     public final static int DEFAULT_TIMEOUT          = 10000; // wait timeout is 10 seconds
 
     private String name = "DEFAULT";
-    private String connectorClass = Connector.class.getName();
+    private String connectorClass = Source.class.getName();
     private String description;
 
     private Properties parameters = new Properties();

@@ -23,7 +23,8 @@ import org.safehaus.penrose.graph.GraphIterator;
 import org.safehaus.penrose.graph.Graph;
 import org.safehaus.penrose.util.Formatter;
 import org.safehaus.penrose.partition.Partition;
-import org.safehaus.penrose.partition.SourceConfig;
+import org.safehaus.penrose.source.SourceConfig;
+import org.safehaus.penrose.source.Source;
 import org.ietf.ldap.LDAPException;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
@@ -124,8 +125,9 @@ public class ModifyGraphVisitor extends GraphVisitor {
         }
 
         SourceConfig sourceConfig = partition.getSourceConfig(sourceMapping.getSourceName());
+        Source source = engine.getSource(partition, sourceConfig);
 
-        returnCode = engine.getConnector(sourceConfig).modify(partition, sourceConfig, oldValues, newValues);
+        returnCode = source.modify(partition, sourceConfig, oldValues, newValues);
         if (returnCode != LDAPException.SUCCESS) return;
 
         modifiedSourceValues.remove(sourceMapping.getName());

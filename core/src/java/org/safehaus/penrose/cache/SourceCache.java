@@ -18,12 +18,12 @@
 package org.safehaus.penrose.cache;
 
 import org.safehaus.penrose.connection.Connection;
-import org.safehaus.penrose.connector.Connector;
+import org.safehaus.penrose.connection.ConnectionManager;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.mapping.AttributeValues;
 import org.safehaus.penrose.mapping.Row;
 import org.safehaus.penrose.partition.Partition;
-import org.safehaus.penrose.partition.SourceConfig;
+import org.safehaus.penrose.source.SourceConfig;
 import org.safehaus.penrose.pipeline.PipelineAdapter;
 import org.safehaus.penrose.pipeline.PipelineEvent;
 import org.safehaus.penrose.session.PenroseSearchControls;
@@ -47,7 +47,7 @@ public class SourceCache {
     Partition partition;
     SourceConfig sourceConfig;
 
-    Connector connector;
+    SourceCacheManager sourceCacheManager;
 
     int size;
     int expiration; // minutes
@@ -158,12 +158,12 @@ public class SourceCache {
         return null;
     }
 
-    public Connector getConnector() {
-        return connector;
+    public SourceCacheManager getSourceCacheManager() {
+        return sourceCacheManager;
     }
 
-    public void setConnector(Connector connector) {
-        this.connector = connector;
+    public void setSourceCacheManager(SourceCacheManager source) {
+        this.sourceCacheManager = source;
     }
 
     public void load() throws Exception {
@@ -178,7 +178,8 @@ public class SourceCache {
 
         log.info("Loading cache for "+sourceConfig.getName()+"...");
 
-        final Connection connection = connector.getConnection(partition, sourceConfig.getConnectionName());
+        ConnectionManager connectionManager = sourceCacheManager.getConnectionManager();
+        final Connection connection = connectionManager.getConnection(partition, sourceConfig.getConnectionName());
 
         final PenroseSearchResults sr = new PenroseSearchResults();
 

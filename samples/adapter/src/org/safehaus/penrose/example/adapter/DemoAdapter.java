@@ -1,7 +1,7 @@
 package org.safehaus.penrose.example.adapter;
 
 import org.safehaus.penrose.connector.Adapter;
-import org.safehaus.penrose.partition.SourceConfig;
+import org.safehaus.penrose.source.SourceConfig;
 import org.safehaus.penrose.mapping.AttributeValues;
 import org.safehaus.penrose.mapping.Row;
 import org.safehaus.penrose.filter.Filter;

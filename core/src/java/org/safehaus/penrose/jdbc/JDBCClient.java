@@ -21,7 +21,7 @@ import java.sql.*;
 import java.util.*;
 import java.lang.reflect.Field;
 
-import org.safehaus.penrose.partition.FieldConfig;
+import org.safehaus.penrose.source.FieldConfig;
 import org.safehaus.penrose.partition.TableConfig;
 import org.safehaus.penrose.jdbc.JDBCAdapter;
 import org.slf4j.LoggerFactory;

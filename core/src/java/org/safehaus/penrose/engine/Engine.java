@@ -21,12 +21,12 @@ import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.schema.SchemaManager;
 import org.safehaus.penrose.interpreter.InterpreterManager;
 import org.safehaus.penrose.interpreter.Interpreter;
-import org.safehaus.penrose.connector.Connector;
+import org.safehaus.penrose.source.Source;
+import org.safehaus.penrose.source.SourceManager;
+import org.safehaus.penrose.source.SourceConfig;
 import org.safehaus.penrose.connection.ConnectionManager;
-import org.safehaus.penrose.connector.ConnectorManager;
 import org.safehaus.penrose.partition.PartitionManager;
 import org.safehaus.penrose.partition.Partition;
-import org.safehaus.penrose.partition.SourceConfig;
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.thread.MRSWLock;
 import org.safehaus.penrose.thread.Queue;
@@ -57,7 +57,7 @@ public abstract class Engine {
 
     public SchemaManager schemaManager;
     public InterpreterManager interpreterManager;
-    public ConnectorManager connectorManager;
+    public SourceManager sourceManager;
     public ConnectionManager connectionManager;
     public PartitionManager partitionManager;
 
@@ -109,9 +109,8 @@ public abstract class Engine {
         this.interpreterManager = interpreterManager;
     }
 
-    public Connector getConnector(SourceConfig sourceConfig) {
-        String connectorName = sourceConfig.getParameter("connectorName");
-        return connectorManager.getConnector(connectorName);
+    public Source getSource(Partition partition, SourceConfig sourceConfig) {
+        return sourceManager.getSource(partition.getName(), sourceConfig.getName());
     }
 
     public ConnectionManager getConnectionManager() {
@@ -736,12 +735,12 @@ public abstract class Engine {
         this.filterTool = filterTool;
     }
 
-    public ConnectorManager getConnectorManager() {
-        return connectorManager;
+    public SourceManager getSourceManager() {
+        return sourceManager;
     }
 
-    public void setConnectorManager(ConnectorManager connectorManager) {
-        this.connectorManager = connectorManager;
+    public void setSourceManager(SourceManager sourceManager) {
+        this.sourceManager = sourceManager;
     }
 
     public Penrose getPenrose() {

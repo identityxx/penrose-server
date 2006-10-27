@@ -22,6 +22,8 @@ import org.safehaus.penrose.graph.GraphEdge;
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.interpreter.InterpreterManager;
+import org.safehaus.penrose.source.SourceConfig;
+import org.safehaus.penrose.source.FieldConfig;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 

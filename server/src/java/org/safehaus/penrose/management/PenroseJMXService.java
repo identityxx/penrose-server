@@ -37,6 +37,7 @@ import org.safehaus.penrose.service.ServiceConfig;
 import org.safehaus.penrose.service.ServiceManager;
 import org.safehaus.penrose.service.ServiceManagerMBean;
 import org.safehaus.penrose.Penrose;
+import org.safehaus.penrose.source.*;
 import org.safehaus.penrose.connection.ConnectionManager;
 import org.safehaus.penrose.connection.ConnectionManagerMBean;
 import org.safehaus.penrose.connection.Connection;
@@ -256,6 +257,7 @@ public class PenroseJMXService extends Service {
         registerConfigs();
         //registerManagers();
         registerConnections();
+        registerSources();
         registerModules();
         registerPartitions();
         registerServices();
@@ -265,6 +267,7 @@ public class PenroseJMXService extends Service {
         unregisterServices();
         unregisterPartitions();
         unregisterModules();
+        unregisterSources();
         unregisterConnections();
         //unregisterManagers();
         unregisterConfigs();
@@ -416,6 +419,40 @@ public class PenroseJMXService extends Service {
         }
 
         unregister(ConnectionManagerMBean.NAME);
+    }
+
+    public void registerSources() throws Exception {
+        Penrose penrose = getPenroseServer().getPenrose();
+        SourceManager sourceManager = penrose.getSourceManager();
+
+        register(SourceManagerMBean.NAME, sourceManager);
+
+        for (Iterator i=sourceManager.getPartitionNames().iterator(); i.hasNext(); ) {
+            String partitionName = (String)i.next();
+
+            for (Iterator j=sourceManager.getSourceNames(partitionName).iterator(); j.hasNext(); ) {
+                String sourceName = (String)j.next();
+                Source source = sourceManager.getSource(partitionName, sourceName);
+
+                register("Penrose Sources:name="+sourceName +",partition="+partitionName+",type=Source", source);
+            }
+        }
+    }
+
+    public void unregisterSources() throws Exception {
+        Penrose penrose = getPenroseServer().getPenrose();
+        SourceManager sourceManager = penrose.getSourceManager();
+
+        for (Iterator i=sourceManager.getPartitionNames().iterator(); i.hasNext(); ) {
+            String partitionName = (String)i.next();
+
+            for (Iterator j=sourceManager.getSourceNames(partitionName).iterator(); j.hasNext(); ) {
+                String sourceName = (String)j.next();
+                unregister("Penrose Sources:name="+sourceName +",partition="+partitionName+",type=Source");
+            }
+        }
+
+        unregister(SourceManagerMBean.NAME);
     }
 
     public void registerModules() throws Exception {

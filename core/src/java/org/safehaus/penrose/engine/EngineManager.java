@@ -18,7 +18,7 @@
 package org.safehaus.penrose.engine;
 
 import org.safehaus.penrose.connection.ConnectionManager;
-import org.safehaus.penrose.connector.ConnectorManager;
+import org.safehaus.penrose.source.SourceManager;
 import org.safehaus.penrose.interpreter.InterpreterManager;
 import org.safehaus.penrose.schema.SchemaManager;
 import org.safehaus.penrose.config.PenroseConfig;
@@ -43,7 +43,7 @@ public class EngineManager {
     private PenroseConfig penroseConfig;
     private SchemaManager schemaManager;
     private InterpreterManager interpreterManager;
-    private ConnectorManager connectorManager;
+    private SourceManager sourceManager;
     private ConnectionManager connectionManager;
     private PartitionManager partitionManager;
 
@@ -63,7 +63,7 @@ public class EngineManager {
         engine.setPenroseConfig(penroseConfig);
         engine.setSchemaManager(schemaManager);
         engine.setInterpreterFactory(interpreterManager);
-        engine.setConnectorManager(connectorManager);
+        engine.setSourceManager(sourceManager);
         engine.setConnectionManager(connectionManager);
         engine.setPartitionManager(partitionManager);
 
@@ -134,12 +134,12 @@ public class EngineManager {
         this.partitionManager = partitionManager;
     }
 
-    public ConnectorManager getConnectorManager() {
-        return connectorManager;
+    public SourceManager getConnectorManager() {
+        return sourceManager;
     }
 
-    public void setConnectorManager(ConnectorManager connectorManager) {
-        this.connectorManager = connectorManager;
+    public void setConnectorManager(SourceManager sourceManager) {
+        this.sourceManager = sourceManager;
     }
 
     public Penrose getPenrose() {

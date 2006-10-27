@@ -18,7 +18,7 @@
 package org.safehaus.penrose.engine;
 
 import org.safehaus.penrose.partition.Partition;
-import org.safehaus.penrose.partition.SourceConfig;
+import org.safehaus.penrose.source.SourceConfig;
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.connection.Connection;
 import org.safehaus.penrose.ldap.LDAPClient;
@@ -31,7 +31,6 @@ import org.safehaus.penrose.util.*;
 import org.safehaus.penrose.util.Formatter;
 import org.ietf.ldap.LDAPException;
 import org.ietf.ldap.LDAPConnection;
-import org.ietf.ldap.LDAPDN;
 
 import javax.naming.directory.*;
 import javax.naming.NamingEnumeration;
@@ -544,7 +543,7 @@ public class ProxyEngine extends Engine {
         String sourceName = sourceMapping.getSourceName();
 
         SourceConfig sourceConfig = partition.getSourceConfig(sourceName);
-        //Connector connector = getConnector(sourceConfig);
+        //Source connector = getConnector(sourceConfig);
 
         String connectionName = sourceConfig.getConnectionName();
         Connection connection = connectionManager.getConnection(partition, connectionName);

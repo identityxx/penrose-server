@@ -26,6 +26,8 @@ import org.safehaus.penrose.interpreter.InterpreterManager;
 import org.safehaus.penrose.connection.ConnectionManager;
 import org.safehaus.penrose.connection.ConnectionConfig;
 import org.safehaus.penrose.connector.AdapterConfig;
+import org.safehaus.penrose.source.SourceManager;
+import org.safehaus.penrose.source.SourceConfig;
 import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.util.Formatter;
 import org.safehaus.penrose.module.ModuleConfig;
@@ -49,6 +51,7 @@ public class PartitionManager implements PartitionManagerMBean {
     private SchemaManager schemaManager;
 
     private ConnectionManager connectionManager;
+    private SourceManager sourceManager;
     private ModuleManager moduleManager;
 
     private Map partitions = new TreeMap();
@@ -103,6 +106,12 @@ public class PartitionManager implements PartitionManagerMBean {
             if (adapterConfig == null) throw new Exception("Undefined adapter "+adapterName);
 
             connectionManager.addConnection(partition, connectionConfig, adapterConfig);
+        }
+
+        Collection sourceConfigs = partition.getSourceConfigs();
+        for (Iterator i=sourceConfigs.iterator(); i.hasNext(); ) {
+            SourceConfig sourceConfig = (SourceConfig)i.next();
+            sourceManager.addSource(partition, sourceConfig);
         }
 
         Collection moduleConfigs = partition.getModuleConfigs();
@@ -198,13 +207,19 @@ public class PartitionManager implements PartitionManagerMBean {
         }
 
         Collection connectionConfigs = partition.getConnectionConfigs();
-        for (Iterator j=connectionConfigs.iterator(); j.hasNext(); ) {
-            ConnectionConfig connectionConfig = (ConnectionConfig)j.next();
+        for (Iterator i=connectionConfigs.iterator(); i.hasNext(); ) {
+            ConnectionConfig connectionConfig = (ConnectionConfig)i.next();
             connectionManager.start(partition.getName(), connectionConfig.getName());
         }
 
+        Collection sourceConfigs = partition.getSourceConfigs();
+        for (Iterator i=sourceConfigs.iterator(); i.hasNext(); ) {
+            SourceConfig sourceConfig = (SourceConfig)i.next();
+            sourceManager.start(partition.getName(), sourceConfig.getName());
+        }
+
         Collection moduleConfigs = partition.getModuleConfigs();
-        for (Iterator i =moduleConfigs.iterator(); i.hasNext(); ) {
+        for (Iterator i=moduleConfigs.iterator(); i.hasNext(); ) {
             ModuleConfig moduleConfig = (ModuleConfig)i.next();
             moduleManager.start(partition.getName(), moduleConfig.getName());
         }
@@ -409,5 +424,13 @@ public class PartitionManager implements PartitionManagerMBean {
 
     public void setModuleManager(ModuleManager moduleManager) {
         this.moduleManager = moduleManager;
+    }
+
+    public SourceManager getSourceManager() {
+        return sourceManager;
+    }
+
+    public void setSourceManager(SourceManager sourceManager) {
+        this.sourceManager = sourceManager;
     }
 }

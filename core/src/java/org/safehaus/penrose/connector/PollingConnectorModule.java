@@ -17,7 +17,7 @@
  */
 package org.safehaus.penrose.connector;
 
-import org.safehaus.penrose.partition.SourceConfig;
+import org.safehaus.penrose.source.SourceConfig;
 import org.safehaus.penrose.connection.ConnectionConfig;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.session.PenroseSearchResults;
@@ -26,13 +26,16 @@ import org.safehaus.penrose.session.PenroseSession;
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.module.Module;
 import org.safehaus.penrose.cache.EntryCache;
-import org.safehaus.penrose.cache.SourceCacheManager;
+import org.safehaus.penrose.cache.SourceCache;
 import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.engine.Engine;
 import org.safehaus.penrose.pipeline.PipelineAdapter;
 import org.safehaus.penrose.pipeline.PipelineEvent;
 import org.safehaus.penrose.handler.Handler;
 import org.safehaus.penrose.connection.Connection;
+import org.safehaus.penrose.connection.ConnectionManager;
+import org.safehaus.penrose.source.Source;
+import org.safehaus.penrose.source.SourceManager;
 
 import java.util.Collection;
 import java.util.Iterator;
@@ -50,8 +53,7 @@ public class PollingConnectorModule extends Module {
 
     public int interval; // 1 second
 
-    public Connector connector;
-    public SourceCacheManager sourceCacheManager;
+    public SourceManager sourceManager;
     public Engine engine;
 
     public PollingConnectorRunnable runnable;
@@ -64,8 +66,7 @@ public class PollingConnectorModule extends Module {
         interval = s == null ? DEFAULT_INTERVAL : Integer.parseInt(s);
         log.debug("Interval: "+interval);
 
-        connector = penrose.getConnector();
-        sourceCacheManager = connector.getSourceCacheManager();
+        sourceManager = penrose.getSourceManager();
         engine = penrose.getEngine();
     }
 
@@ -99,7 +100,9 @@ public class PollingConnectorModule extends Module {
 
     public void reloadExpired(Partition partition, SourceConfig sourceConfig) throws Exception {
 
-        Map map = sourceCacheManager.getExpired(partition, sourceConfig);
+        Source source = sourceManager.getSource(partition.getName(), sourceConfig.getName());
+        SourceCache sourceCache = source.getSourceCache();
+        Map map = sourceCache.getExpired();
 
         log.debug("Reloading expired caches...");
 
@@ -111,15 +114,18 @@ public class PollingConnectorModule extends Module {
 
         PenroseSearchControls sc = new PenroseSearchControls();
         PenroseSearchResults list = new PenroseSearchResults();
-        connector.retrieve(partition, sourceConfig, map.keySet(), sc, list);
+        source.retrieve(partition, sourceConfig, map.keySet(), sc, list);
         list.close();
     }
 
     public void pollChanges(SourceConfig sourceConfig) throws Exception {
 
-        int lastChangeNumber = sourceCacheManager.getLastChangeNumber(partition, sourceConfig);
+        Source source = sourceManager.getSource(partition.getName(), sourceConfig.getName());
+        SourceCache sourceCache = source.getSourceCache();
+        int lastChangeNumber = sourceCache.getLastChangeNumber();
 
-        Connection connection = connector.getConnection(partition, sourceConfig.getConnectionName());
+        ConnectionManager connectionManager = penrose.getConnectionManager();
+        Connection connection = connectionManager.getConnection(partition, sourceConfig.getConnectionName());
         PenroseSearchResults sr = connection.getChanges(sourceConfig, lastChangeNumber);
         if (!sr.hasNext()) return;
 
@@ -157,7 +163,7 @@ public class PollingConnectorModule extends Module {
                 pks.add(pk);
             }
 
-            sourceCacheManager.remove(partition, sourceConfig, pk);
+            sourceCache.remove(pk);
 
             for (Iterator i=entryMappings.iterator(); i.hasNext(); ) {
                 EntryMapping entryMapping = (EntryMapping)i.next();
@@ -165,11 +171,11 @@ public class PollingConnectorModule extends Module {
             }
         }
 
-        sourceCacheManager.setLastChangeNumber(partition, sourceConfig, lastChangeNumber);
+        sourceCache.setLastChangeNumber(lastChangeNumber);
 
         PenroseSearchControls sc = new PenroseSearchControls();
         PenroseSearchResults list = new PenroseSearchResults();
-        connector.retrieve(partition, sourceConfig, pks, sc, list);
+        source.retrieve(partition, sourceConfig, pks, sc, list);
         list.close();
 
         for (Iterator i=pks.iterator(); i.hasNext(); ) {
@@ -189,7 +195,9 @@ public class PollingConnectorModule extends Module {
         SourceMapping sourceMapping = engine.getPartitionManager().getPrimarySource(partition, entryMapping);
         log.debug("Primary source: "+sourceMapping.getName()+" ("+sourceMapping.getSourceName()+")");
 
-        AttributeValues sv = (AttributeValues)sourceCacheManager.get(partition, sourceConfig, pk);
+        Source source = sourceManager.getSource(partition.getName(), sourceConfig.getName());
+        SourceCache sourceCache = source.getSourceCache();
+        AttributeValues sv = (AttributeValues)sourceCache.get(pk);
 
         AttributeValues sourceValues = new AttributeValues();
         sourceValues.set(sourceMapping.getName(), sv);

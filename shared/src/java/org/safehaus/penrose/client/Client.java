@@ -15,6 +15,9 @@ import org.safehaus.penrose.service.ServiceManagerClient;
 import org.safehaus.penrose.module.ModuleConfig;
 import org.safehaus.penrose.module.ModuleClient;
 import org.safehaus.penrose.module.ModuleManagerClient;
+import org.safehaus.penrose.source.SourceManagerClient;
+import org.safehaus.penrose.source.SourceClient;
+import org.safehaus.penrose.source.SourceConfig;
 
 import java.util.*;
 import java.io.File;
@@ -118,6 +121,31 @@ public class Client {
         }
     }
 
+    public void printSources() throws Exception {
+
+        System.out.print(org.safehaus.penrose.util.Formatter.rightPad("SOURCE", 15)+" ");
+        System.out.print(org.safehaus.penrose.util.Formatter.rightPad("PARTITION", 15)+" ");
+        System.out.println(org.safehaus.penrose.util.Formatter.rightPad("STATUS", 10));
+
+        System.out.print(org.safehaus.penrose.util.Formatter.repeat("-", 15)+" ");
+        System.out.print(org.safehaus.penrose.util.Formatter.repeat("-", 15)+" ");
+        System.out.println(org.safehaus.penrose.util.Formatter.repeat("-", 10));
+
+        SourceManagerClient sourceManagerClient = client.getSourceManagerClient();
+        for (Iterator i=sourceManagerClient.getPartitionNames().iterator(); i.hasNext(); ) {
+            String partitionName = (String)i.next();
+
+            for (Iterator j=sourceManagerClient.getSourceNames(partitionName).iterator(); j.hasNext(); ) {
+                String sourceName = (String)j.next();
+                String status = sourceManagerClient.getStatus(partitionName, sourceName);
+
+                System.out.print(org.safehaus.penrose.util.Formatter.rightPad(sourceName, 15)+" ");
+                System.out.print(org.safehaus.penrose.util.Formatter.rightPad(partitionName, 15)+" ");
+                System.out.println(org.safehaus.penrose.util.Formatter.rightPad(status, 10));
+            }
+        }
+    }
+
     public void printModules() throws Exception {
 
         System.out.print(org.safehaus.penrose.util.Formatter.rightPad("MODULE", 15)+" ");
@@ -206,6 +234,28 @@ public class Client {
         System.out.println(" - search   : "+counter.getSearchCounter());
     }
 
+    public void printSource(String partitionName, String sourceName) throws Exception {
+        SourceClient sourceClient = client.getSourceManagerClient().getSourceClient(partitionName, sourceName);
+        SourceConfig sourceConfig = sourceClient.getSourceConfig();
+
+        System.out.println("Source      : "+sourceConfig.getName());
+        System.out.println("Partition   : "+partitionName);
+
+        String description = sourceConfig.getDescription();
+        System.out.println("Description : "+(description == null ? "" : description));
+
+        System.out.println("Status      : "+sourceClient.getStatus());
+        System.out.println();
+
+        System.out.println("Parameters  :");
+        for (Iterator i=sourceConfig.getParameterNames().iterator(); i.hasNext(); ) {
+            String paramName = (String)i.next();
+            String value = sourceConfig.getParameter(paramName);
+            System.out.println(" - "+paramName +": "+value);
+        }
+        System.out.println();
+    }
+
     public void printModule(String partitionName, String moduleName) throws Exception {
         ModuleClient moduleClient = client.getModuleManagerClient().getModuleClient(partitionName, moduleName);
         ModuleConfig moduleConfig = moduleClient.getModuleConfig();
@@ -239,6 +289,9 @@ public class Client {
         } else if ("connections".equals(target)) {
             printConnections();
 
+        } else if ("sources".equals(target)) {
+            printSources();
+
         } else if ("modules".equals(target)) {
             printModules();
 
@@ -257,6 +310,18 @@ public class Client {
             if ("partition".equals(partition)) {
                 String partitionName = (String)iterator.next();
                 printConnection(partitionName, connectionName);
+
+            } else {
+                System.out.println("Missing partition name");
+            }
+
+        } else if ("source".equals(target)) {
+            String sourceName = (String)iterator.next();
+            String partition = (String)iterator.next();
+
+            if ("partition".equals(partition)) {
+                String partitionName = (String)iterator.next();
+                printSource(partitionName, sourceName);
 
             } else {
                 System.out.println("Missing partition name");
@@ -301,6 +366,18 @@ public class Client {
                 System.out.println("Missing partition name");
             }
 
+        } else if ("source".equals(target)) {
+            String sourceName = (String)iterator.next();
+            String partition = (String)iterator.next();
+
+            if ("partition".equals(partition)) {
+                String partitionName = (String)iterator.next();
+                client.getSourceManagerClient().start(partitionName, sourceName);
+
+            } else {
+                System.out.println("Missing partition name");
+            }
+
         } else if ("module".equals(target)) {
             String moduleName = (String)iterator.next();
             String partition = (String)iterator.next();
@@ -335,6 +412,18 @@ public class Client {
             if ("partition".equals(partition)) {
                 String partitionName = (String)iterator.next();
                 client.getConnectionManagerClient().stop(partitionName, connectionName);
+
+            } else {
+                System.out.println("Missing partition name");
+            }
+
+        } else if ("source".equals(target)) {
+            String sourceName = (String)iterator.next();
+            String partition = (String)iterator.next();
+
+            if ("partition".equals(partition)) {
+                String partitionName = (String)iterator.next();
+                client.getSourceManagerClient().stop(partitionName, sourceName);
 
             } else {
                 System.out.println("Missing partition name");
@@ -375,6 +464,18 @@ public class Client {
             if ("partition".equals(partition)) {
                 String partitionName = (String)iterator.next();
                 client.getConnectionManagerClient().restart(partitionName, connectionName);
+
+            } else {
+                System.out.println("Missing partition name");
+            }
+
+        } else if ("source".equals(target)) {
+            String sourceName = (String)iterator.next();
+            String partition = (String)iterator.next();
+
+            if ("partition".equals(partition)) {
+                String partitionName = (String)iterator.next();
+                client.getSourceManagerClient().restart(partitionName, sourceName);
 
             } else {
                 System.out.println("Missing partition name");

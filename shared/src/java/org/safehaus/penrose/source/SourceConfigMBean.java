@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
-package org.safehaus.penrose.partition;
+package org.safehaus.penrose.source;
 
 import java.util.Collection;
 import java.util.Map;
@@ -33,7 +33,7 @@ public interface SourceConfigMBean {
 
     public String getParameter(String name) throws Exception;
     public void setParameter(String name, String value) throws Exception;
-    public void removeParameter(String name) throws Exception;
+    public String removeParameter(String name) throws Exception;
     public Map getParameters() throws Exception;
 
     public String getDescription() throws Exception;

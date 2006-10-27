@@ -36,7 +36,7 @@ public class PersistentSourceCache extends SourceCache {
     public void init() throws Exception {
         super.init();
 
-        connectionManager = connector.getConnectionManager();
+        connectionManager = sourceCacheManager.getConnectionManager();
         connectionName = getParameter("connection");
 
         String tableName = getTableName();

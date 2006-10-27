@@ -22,6 +22,7 @@ import org.safehaus.penrose.partition.PartitionManagerClient;
 import org.safehaus.penrose.service.ServiceManagerClient;
 import org.safehaus.penrose.connection.ConnectionManagerClient;
 import org.safehaus.penrose.module.ModuleManagerClient;
+import org.safehaus.penrose.source.SourceManagerClient;
 
 import javax.management.remote.JMXServiceURL;
 import javax.management.remote.JMXConnector;
@@ -64,6 +65,7 @@ public class PenroseClient {
 	public ObjectName name;
 
     ConnectionManagerClient connectionManagerClient;
+    SourceManagerClient sourceManagerClient;
     ModuleManagerClient moduleManagerClient;
     PartitionManagerClient partitionManagerClient;
     ServiceManagerClient serviceManagerClient;
@@ -99,6 +101,7 @@ public class PenroseClient {
 
     public void init() throws Exception {
         setConnectionManagerClient(new ConnectionManagerClient(this));
+        setSourceManagerClient(new SourceManagerClient(this));
         setModuleManagerClient(new ModuleManagerClient(this));
         setPartitionManagerClient(new PartitionManagerClient(this));
         setServiceManagerClient(new ServiceManagerClient(this));
@@ -327,5 +330,13 @@ public class PenroseClient {
 
     public void setModuleManagerClient(ModuleManagerClient moduleManagerClient) {
         this.moduleManagerClient = moduleManagerClient;
+    }
+
+    public SourceManagerClient getSourceManagerClient() {
+        return sourceManagerClient;
+    }
+
+    public void setSourceManagerClient(SourceManagerClient sourceManagerClient) {
+        this.sourceManagerClient = sourceManagerClient;
     }
 }

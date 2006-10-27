@@ -32,7 +32,6 @@ import org.safehaus.penrose.handler.HandlerManager;
 import org.safehaus.penrose.handler.HandlerConfig;
 import org.safehaus.penrose.interpreter.InterpreterConfig;
 import org.safehaus.penrose.interpreter.InterpreterManager;
-import org.safehaus.penrose.connector.*;
 import org.safehaus.penrose.partition.*;
 import org.safehaus.penrose.session.PenroseSession;
 import org.safehaus.penrose.session.SessionManager;
@@ -44,6 +43,7 @@ import org.safehaus.penrose.log4j.Log4jConfig;
 import org.safehaus.penrose.log4j.LoggerConfig;
 import org.safehaus.penrose.log4j.AppenderConfig;
 import org.safehaus.penrose.connection.ConnectionManager;
+import org.safehaus.penrose.source.SourceManager;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
@@ -71,13 +71,16 @@ public class Penrose {
 
     private ThreadManager      threadManager;
     private SchemaManager      schemaManager;
+
     private PartitionManager   partitionManager;
     private PartitionValidator partitionValidator;
+
     private ConnectionManager  connectionManager;
+    private SourceManager      sourceManager;
     private ModuleManager      moduleManager;
+
     private SessionManager     sessionManager;
 
-    private ConnectorManager   connectorManager;
     private EngineManager      engineManager;
     private EventManager       eventManager;
     private HandlerManager     handlerManager;
@@ -136,10 +139,10 @@ public class Penrose {
         initSessionManager();
 
         initConnectionManager();
+        initSourceManager();
         initModuleManager();
         initPartitionManager();
 
-        initConnectorManager();
         initEngineManager();
         initEventManager();
         initHandlerManager();
@@ -188,6 +191,14 @@ public class Penrose {
         connectionManager = new ConnectionManager();
     }
 
+    public void initSourceManager() throws Exception {
+        sourceManager = new SourceManager();
+        sourceManager.setPenroseConfig(penroseConfig);
+        sourceManager.setConnectionManager(connectionManager);
+        sourceManager.setPartitionManager(partitionManager);
+        sourceManager.init();
+    }
+
     public void initModuleManager() throws Exception {
         moduleManager = new ModuleManager();
         moduleManager.setPenrose(this);
@@ -199,6 +210,7 @@ public class Penrose {
         partitionManager.setSchemaManager(schemaManager);
         partitionManager.setInterpreterManager(interpreterManager);
         partitionManager.setConnectionManager(connectionManager);
+        partitionManager.setSourceManager(sourceManager);
         partitionManager.setModuleManager(moduleManager);
         partitionManager.init();
 
@@ -211,20 +223,13 @@ public class Penrose {
         interpreterManager = new InterpreterManager();
     }
 
-    public void initConnectorManager() throws Exception {
-        connectorManager = new ConnectorManager();
-        connectorManager.setPenroseConfig(penroseConfig);
-        connectorManager.setConnectionManager(connectionManager);
-        connectorManager.setPartitionManager(partitionManager);
-    }
-
     public void initEngineManager() throws Exception {
         engineManager = new EngineManager();
         engineManager.setPenrose(this);
         engineManager.setPenroseConfig(penroseConfig);
         engineManager.setSchemaManager(schemaManager);
         engineManager.setInterpreterFactory(interpreterManager);
-        engineManager.setConnectorManager(connectorManager);
+        engineManager.setConnectorManager(sourceManager);
         engineManager.setConnectionManager(connectionManager);
         engineManager.setPartitionManager(partitionManager);
     }
@@ -268,7 +273,6 @@ public class Penrose {
         loadInterpreter();
         loadSchemas();
 
-        loadConnector();
         loadEngine();
         loadHandler();
     }
@@ -320,16 +324,6 @@ public class Penrose {
         moduleManager.load(partitionManager.getPartitions());
     }
 
-    public void loadConnector() throws Exception {
-
-        ConnectorConfig connectorConfig = penroseConfig.getConnectorConfig();
-        Connector connector = connectorManager.getConnector(connectorConfig.getName());
-
-        if (connector != null) return;
-
-        connectorManager.init(connectorConfig);
-    }
-
     public void loadEngine() throws Exception {
 
         Collection engineConfigs = penroseConfig.getEngineConfigs();
@@ -354,7 +348,7 @@ public class Penrose {
     public void clear() throws Exception {
         handlerManager.clear();
         engineManager.clear();
-        connectorManager.clear();
+        sourceManager.clear();
         interpreterManager.clear();
         connectionManager.clear();
         partitionManager.clear();
@@ -394,7 +388,7 @@ public class Penrose {
             loadPartitions();
 
             partitionManager.start();
-            connectorManager.start();
+            sourceManager.start();
             engineManager.start();
             sessionManager.start();
             handlerManager.start();
@@ -424,7 +418,7 @@ public class Penrose {
             handlerManager.stop();
             sessionManager.stop();
             engineManager.stop();
-            connectorManager.stop();
+            sourceManager.stop();
             partitionManager.stop();
 
         } catch (Exception e) {
@@ -510,11 +504,6 @@ public class Penrose {
         return engineManager.getEngine("DEFAULT");
     }
 
-    public Connector getConnector() {
-        ConnectorConfig connectorConfig = penroseConfig.getConnectorConfig();
-        return connectorManager.getConnector(connectorConfig.getName());
-    }
-
     public Handler getHandler() {
         HandlerConfig handlerConfig = penroseConfig.getHandlerConfig();
         return handlerManager.getHandler(handlerConfig.getName());
@@ -562,5 +551,13 @@ public class Penrose {
 
     public void setEventManager(EventManager eventManager) {
         this.eventManager = eventManager;
+    }
+
+    public SourceManager getSourceManager() {
+        return sourceManager;
+    }
+
+    public void setSourceManager(SourceManager sourceManager) {
+        this.sourceManager = sourceManager;
     }
 }

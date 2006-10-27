@@ -15,13 +15,10 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
-package org.safehaus.penrose.partition;
+package org.safehaus.penrose.source;
 
-import org.safehaus.penrose.partition.FieldConfig;
 import org.safehaus.penrose.mapping.Row;
 import org.safehaus.penrose.mapping.AttributeValues;
-import org.slf4j.LoggerFactory;
-import org.slf4j.Logger;
 
 import java.util.*;
 import java.io.Serializable;
@@ -30,8 +27,6 @@ import java.io.Serializable;
  * @author Endi S. Dewata
  */
 public class SourceConfig implements SourceConfigMBean, Cloneable, Serializable {
-
-    Logger log = LoggerFactory.getLogger(getClass());
 
     //public final static String AUTO_REFRESH            = "autoRefresh";
 
@@ -85,7 +80,7 @@ public class SourceConfig implements SourceConfigMBean, Cloneable, Serializable 
     private Properties parameters = new Properties();
 
     /**
-     * Fields. Each element is of type org.safehaus.penrose.partition.FieldConfig.
+     * Fields. Each element is of type org.safehaus.penrose.source.FieldConfig.
      */
     private Map fieldConfigs = new TreeMap();
 
@@ -175,8 +170,6 @@ public class SourceConfig implements SourceConfigMBean, Cloneable, Serializable 
 
     public void addFieldConfig(FieldConfig fieldConfig) {
         String name = fieldConfig.getName();
-        log.debug("Adding field "+name+(fieldConfig.isPK() ? " ("+fieldConfig.getPrimaryKey()+")" : ""));
-
         fieldConfigs.put(name, fieldConfig);
     }
 
@@ -211,8 +204,8 @@ public class SourceConfig implements SourceConfigMBean, Cloneable, Serializable 
         }
     }
 
-    public void removeParameter(String name) {
-        parameters.remove(name);
+    public String removeParameter(String name) {
+        return (String)parameters.remove(name);
     }
 
     public Map getParameters() {
@@ -220,7 +213,7 @@ public class SourceConfig implements SourceConfigMBean, Cloneable, Serializable 
     }
 
     public Collection getParameterNames() {
-        return parameters.keySet();
+        return new ArrayList(parameters.keySet()); // return Serializable list
     }
 
     public String getDescription() {

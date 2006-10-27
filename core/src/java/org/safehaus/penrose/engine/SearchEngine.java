@@ -26,10 +26,10 @@ import org.safehaus.penrose.util.EntryUtil;
 import org.safehaus.penrose.session.PenroseSearchResults;
 import org.safehaus.penrose.session.PenroseSearchControls;
 import org.safehaus.penrose.partition.Partition;
-import org.safehaus.penrose.partition.SourceConfig;
+import org.safehaus.penrose.source.SourceConfig;
 import org.safehaus.penrose.pipeline.PipelineAdapter;
 import org.safehaus.penrose.pipeline.PipelineEvent;
-import org.safehaus.penrose.connector.Connector;
+import org.safehaus.penrose.source.Source;
 import org.ietf.ldap.LDAPException;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
@@ -308,8 +308,8 @@ public class SearchEngine {
             }
         });
 
-        Connector connector = engine.getConnector(sourceConfig);
-        connector.search(partition, sourceConfig, null, newFilter, sc, sr);
+        Source source = engine.getSource(partition, sourceConfig);
+        source.search(partition, sourceConfig, null, newFilter, sc, sr);
     }
 
     public void searchSources(

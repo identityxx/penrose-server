@@ -72,8 +72,6 @@
     <engine-class>org.safehaus.penrose.engine.ProxyEngine</engine-class>
   </engine>
     
-  <connector/>
-
   <adapter name="JDBC">
     <adapter-class>org.safehaus.penrose.jdbc.JDBCAdapter</adapter-class>
   </adapter>

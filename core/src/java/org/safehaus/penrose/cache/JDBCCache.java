@@ -21,8 +21,8 @@ import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.util.Formatter;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.connection.ConnectionManager;
-import org.safehaus.penrose.partition.FieldConfig;
-import org.safehaus.penrose.partition.SourceConfig;
+import org.safehaus.penrose.source.FieldConfig;
+import org.safehaus.penrose.source.SourceConfig;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 

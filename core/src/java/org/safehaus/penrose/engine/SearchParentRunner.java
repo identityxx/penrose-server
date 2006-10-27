@@ -21,14 +21,14 @@ import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.filter.FilterTool;
 import org.safehaus.penrose.partition.Partition;
-import org.safehaus.penrose.partition.SourceConfig;
+import org.safehaus.penrose.source.SourceConfig;
 import org.safehaus.penrose.graph.GraphVisitor;
 import org.safehaus.penrose.graph.Graph;
 import org.safehaus.penrose.graph.GraphIterator;
 import org.safehaus.penrose.util.Formatter;
 import org.safehaus.penrose.session.PenroseSearchResults;
 import org.safehaus.penrose.session.PenroseSearchControls;
-import org.safehaus.penrose.connector.Connector;
+import org.safehaus.penrose.source.Source;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
@@ -140,8 +140,8 @@ public class SearchParentRunner extends GraphVisitor {
             PenroseSearchControls sc = new PenroseSearchControls();
             PenroseSearchResults tmp = new PenroseSearchResults();
             
-            Connector connector = engine.getConnector(sourceConfig);
-            connector.search(partition, sourceConfig, null, filter, sc, tmp);
+            Source source = engine.getSource(partition, sourceConfig);
+            source.search(partition, sourceConfig, null, filter, sc, tmp);
 
             Collection list = new ArrayList();
             for (Iterator i=tmp.iterator(); i.hasNext(); ) {

@@ -17,15 +17,12 @@
  */
 package org.safehaus.penrose.cache;
 
-import org.safehaus.penrose.connector.Connector;
-import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.partition.Partition;
-import org.safehaus.penrose.partition.PartitionConfig;
-import org.safehaus.penrose.partition.SourceConfig;
+import org.safehaus.penrose.source.SourceConfig;
+import org.safehaus.penrose.connection.ConnectionManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.TreeMap;
@@ -39,7 +36,7 @@ public class SourceCacheManager {
 
     CacheConfig cacheConfig;
 
-    Connector connector;
+    ConnectionManager connectionManager;
 
     private Map caches = new TreeMap();
 
@@ -53,19 +50,19 @@ public class SourceCacheManager {
 
         sourceCache.setSourceDefinition(sourceConfig);
         sourceCache.setPartition(partition);
-        sourceCache.setConnector(connector);
+        sourceCache.setSourceCacheManager(this);
 
         sourceCache.init(cacheConfig);
 
         return sourceCache;
     }
 
-    public Connector getConnector() {
-        return connector;
+    public ConnectionManager getConnectionManager() {
+        return connectionManager;
     }
 
-    public void setConnector(Connector connector) {
-        this.connector = connector;
+    public void setConnectionManager(ConnectionManager source) {
+        this.connectionManager = source;
     }
 
     public CacheConfig getCacheConfig() {
@@ -76,136 +73,74 @@ public class SourceCacheManager {
         this.cacheConfig = cacheConfig;
     }
 
-    public SourceCache getCacheStorage(Partition partition, SourceConfig sourceConfig) throws Exception {
-        PartitionConfig partitionConfig = partition.getPartitionConfig();
-        String cacheName = partitionConfig.getName()+"."+sourceConfig.getName();
-        //log.debug("Getting source cache "+cacheName+".");
-        return (SourceCache)caches.get(cacheName);
+    public SourceCache create(Partition partition, SourceConfig sourceConfig) throws Exception {
+        SourceCache sourceCache = createCacheStorage(partition, sourceConfig);
+
+        Map map = (Map)caches.get(partition.getName());
+        if (map == null) {
+            map = new TreeMap();
+            caches.put(partition.getName(), map);
+        }
+        map.put(sourceConfig.getName(), sourceCache);
+
+        return sourceCache;
+    }
+
+    public SourceCache getSourceCache(Partition partition, SourceConfig sourceConfig) throws Exception {
+        Map map = (Map)caches.get(partition.getName());
+        if (map == null) return null;
+        return (SourceCache)map.get(sourceConfig.getName());
     }
 
     public void create() throws Exception {
-        for (Iterator i=caches.values().iterator(); i.hasNext(); ) {
-            SourceCache sourceCache = (SourceCache)i.next();
-            sourceCache.create();
+        for (Iterator i=caches.keySet().iterator(); i.hasNext(); ) {
+            String partitionName = (String)i.next();
+            Map map = (Map)caches.get(partitionName);
+
+            for (Iterator j=map.keySet().iterator(); j.hasNext(); ) {
+                String sourceName = (String)j.next();
+                SourceCache sourceCache = (SourceCache)map.get(sourceName);
+                sourceCache.create();
+            }
         }
     }
 
-    public void create(Partition partition, SourceConfig sourceConfig) throws Exception {
-
-        PartitionConfig partitionConfig = partition.getPartitionConfig();
-
-        SourceCache sourceCache = createCacheStorage(partition, sourceConfig);
-        caches.put(partitionConfig.getName()+"."+sourceConfig.getName(), sourceCache);
-    }
-
     public void load() throws Exception {
-        for (Iterator i=caches.values().iterator(); i.hasNext(); ) {
-            SourceCache sourceCache = (SourceCache)i.next();
-            sourceCache.load();
+        for (Iterator i=caches.keySet().iterator(); i.hasNext(); ) {
+            String partitionName = (String)i.next();
+            Map map = (Map)caches.get(partitionName);
+
+            for (Iterator j=map.keySet().iterator(); j.hasNext(); ) {
+                String sourceName = (String)j.next();
+                SourceCache sourceCache = (SourceCache)map.get(sourceName);
+                sourceCache.load();
+            }
         }
     }
 
     public void clean() throws Exception {
-        for (Iterator i=caches.values().iterator(); i.hasNext(); ) {
-            SourceCache sourceCache = (SourceCache)i.next();
-            sourceCache.clean();
+        for (Iterator i=caches.keySet().iterator(); i.hasNext(); ) {
+            String partitionName = (String)i.next();
+            Map map = (Map)caches.get(partitionName);
+
+            for (Iterator j=map.keySet().iterator(); j.hasNext(); ) {
+                String sourceName = (String)j.next();
+                SourceCache sourceCache = (SourceCache)map.get(sourceName);
+                sourceCache.clean();
+            }
         }
     }
 
     public void drop() throws Exception {
-        for (Iterator i=caches.values().iterator(); i.hasNext(); ) {
-            SourceCache sourceCache = (SourceCache)i.next();
-            sourceCache.drop();
+        for (Iterator i=caches.keySet().iterator(); i.hasNext(); ) {
+            String partitionName = (String)i.next();
+            Map map = (Map)caches.get(partitionName);
+
+            for (Iterator j=map.keySet().iterator(); j.hasNext(); ) {
+                String sourceName = (String)j.next();
+                SourceCache sourceCache = (SourceCache)map.get(sourceName);
+                sourceCache.drop();
+            }
         }
-    }
-
-    public void remove(Partition partition, SourceConfig sourceConfig, Object key) throws Exception {
-        SourceCache sourceCache = getCacheStorage(partition, sourceConfig);
-        if (sourceCache == null) {
-            log.debug("Source cache for "+partition+"/"+sourceConfig.getName()+" not found");
-            return;
-        }
-
-        sourceCache.remove(key);
-    }
-
-    public Object get(Partition partition, SourceConfig sourceConfig, Object key) throws Exception {
-        SourceCache sourceCache = getCacheStorage(partition, sourceConfig);
-        if (sourceCache == null) {
-            log.debug("Source cache for "+partition+"/"+sourceConfig.getName()+" not found");
-            return null;
-        }
-
-        return sourceCache.get(key);
-    }
-
-    public void put(Partition partition, SourceConfig sourceConfig, Object pk, Object sourceValues) throws Exception {
-        SourceCache sourceCache = getCacheStorage(partition, sourceConfig);
-        if (sourceCache == null) {
-            log.debug("Source cache for "+partition+"/"+sourceConfig.getName()+" not found");
-            return;
-        }
-
-        sourceCache.put(pk, sourceValues);
-    }
-
-    public void put(Partition partition, SourceConfig sourceConfig, Filter filter, Collection pks) throws Exception {
-        SourceCache sourceCache = getCacheStorage(partition, sourceConfig);
-        if (sourceCache == null) {
-            log.debug("Source cache for "+partition+"/"+sourceConfig.getName()+" not found");
-            return;
-        }
-
-        sourceCache.put(filter, pks);
-    }
-
-    public Collection search(Partition partition, SourceConfig sourceConfig, Filter filter) throws Exception {
-        SourceCache sourceCache = getCacheStorage(partition, sourceConfig);
-        if (sourceCache == null) {
-            log.debug("Source cache for "+partition+"/"+sourceConfig.getName()+" not found");
-            return null;
-        }
-
-        return sourceCache.search(filter);
-    }
-
-    public Map load(Partition partition, SourceConfig sourceConfig, Collection filters, Collection missingKeys) throws Exception {
-        SourceCache sourceCache = getCacheStorage(partition, sourceConfig);
-        if (sourceCache == null) {
-            log.debug("Source cache for "+partition+"/"+sourceConfig.getName()+" not found");
-            return null;
-        }
-
-        return sourceCache.load(filters, missingKeys);
-    }
-
-    public Map getExpired(Partition partition, SourceConfig sourceConfig) throws Exception {
-        SourceCache sourceCache = getCacheStorage(partition, sourceConfig);
-        if (sourceCache == null) {
-            log.debug("Source cache for "+partition+"/"+sourceConfig.getName()+" not found");
-            return null;
-        }
-
-        return sourceCache.getExpired();
-    }
-
-    public int getLastChangeNumber(Partition partition, SourceConfig sourceConfig) throws Exception {
-        SourceCache sourceCache = getCacheStorage(partition, sourceConfig);
-        if (sourceCache == null) {
-            log.debug("Source cache for "+partition+"/"+sourceConfig.getName()+" not found");
-            return 0;
-        }
-
-        return sourceCache.getLastChangeNumber();
-    }
-
-    public void setLastChangeNumber(Partition partition, SourceConfig sourceConfig, int lastChangeNumber) throws Exception {
-        SourceCache sourceCache = getCacheStorage(partition, sourceConfig);
-        if (sourceCache == null) {
-            log.debug("Source cache for "+partition+"/"+sourceConfig.getName()+" not found");
-            return;
-        }
-
-        sourceCache.setLastChangeNumber(lastChangeNumber);
     }
 }

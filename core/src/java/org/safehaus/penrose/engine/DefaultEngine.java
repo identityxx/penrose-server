@@ -32,8 +32,9 @@ import org.safehaus.penrose.schema.ObjectClass;
 import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.handler.Handler;
 import org.safehaus.penrose.handler.FindHandler;
+import org.safehaus.penrose.source.Source;
+import org.safehaus.penrose.source.SourceConfig;
 import org.ietf.ldap.LDAPException;
-import org.ietf.ldap.LDAPDN;
 
 import javax.naming.directory.*;
 import javax.naming.NamingEnumeration;
@@ -79,19 +80,20 @@ public class DefaultEngine extends Engine {
         Collection sources = entryMapping.getSourceMappings();
 
         for (Iterator i=sources.iterator(); i.hasNext(); ) {
-            SourceMapping source = (SourceMapping)i.next();
+            SourceMapping sourceMapping = (SourceMapping)i.next();
 
-            SourceConfig sourceConfig = partition.getSourceConfig(source.getSourceName());
+            SourceConfig sourceConfig = partition.getSourceConfig(sourceMapping.getSourceName());
 
-            Map entries = transformEngine.split(partition, entryMapping, source, attributeValues);
+            Map entries = transformEngine.split(partition, entryMapping, sourceMapping, attributeValues);
 
             for (Iterator j=entries.keySet().iterator(); j.hasNext(); ) {
                 Row pk = (Row)j.next();
                 //AttributeValues sourceValues = (AttributeValues)entries.get(pk);
 
-                log.debug("Bind to "+source.getName()+" as "+pk+".");
+                log.debug("Bind to "+sourceMapping.getName()+" as "+pk+".");
 
-                int rc = getConnector(sourceConfig).bind(partition, sourceConfig, entryMapping, pk, password);
+                Source source = getSource(partition, sourceConfig);
+                int rc = source.bind(partition, sourceConfig, entryMapping, pk, password);
                 if (rc == LDAPException.SUCCESS) return rc;
             }
         }

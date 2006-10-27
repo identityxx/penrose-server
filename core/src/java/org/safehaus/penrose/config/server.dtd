@@ -51,7 +51,7 @@
 <!ELEMENT engine-name (#PCDATA)>
 <!ELEMENT engine-class (#PCDATA)>
 
-<!ELEMENT connector (connector-class?, description?, parameter*)>
+<!ELEMENT connector (source-class?, description?, parameter*)>
 <!ATTLIST connector name CDATA #IMPLIED>
 <!ELEMENT connector-class (#PCDATA)>
 
