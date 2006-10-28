@@ -33,15 +33,13 @@ import org.slf4j.Logger;
  */
 public class Relationship implements Cloneable, Serializable {
 
-    Logger log = LoggerFactory.getLogger(getClass());
-
     private String operator = "=";
     private List operands = new ArrayList();
 
     public Relationship() {
     }
 
-    public Relationship(String expression) {
+    public Relationship(String expression) throws Exception {
         setExpression(expression);
     }
 
@@ -59,28 +57,23 @@ public class Relationship implements Cloneable, Serializable {
         return sb.toString();
     }
 
-    public void setExpression(String expression) {
-        try {
-            //System.out.println("EXPRESSION: "+expression);
+    public void setExpression(String expression) throws Exception {
+        //System.out.println("EXPRESSION: "+expression);
 
-            ZqlParser parser = new ZqlParser(new ByteArrayInputStream(expression.getBytes()));
+        ZqlParser parser = new ZqlParser(new ByteArrayInputStream(expression.getBytes()));
 
-            ZExpression exp = (ZExpression)parser.readExpression();
-            //System.out.println("Operator: "+exp.getOperator());
-            operator = exp.getOperator();
+        ZExpression exp = (ZExpression)parser.readExpression();
+        //System.out.println("Operator: "+exp.getOperator());
+        operator = exp.getOperator();
 
-            operands.clear();
-            for (Iterator i=exp.getOperands().iterator(); i.hasNext(); ) {
-                ZExp operand = (ZExp)i.next();
-                //System.out.println("Operand: "+operand+" ("+operand.getClass()+")");
-                operands.add(operand);
-            }
-
-            //System.out.println("Polish: "+exp.toReversePolish());
-
-        } catch (Exception e) {
-            log.error(e.getMessage(), e);
+        operands.clear();
+        for (Iterator i=exp.getOperands().iterator(); i.hasNext(); ) {
+            ZExp operand = (ZExp)i.next();
+            //System.out.println("Operand: "+operand+" ("+operand.getClass()+")");
+            operands.add(operand);
         }
+
+        //System.out.println("Polish: "+exp.toReversePolish());
     }
 
     public String getLhs() {

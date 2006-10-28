@@ -309,7 +309,7 @@ public class SearchEngine {
         });
 
         Source source = engine.getSource(partition, sourceConfig);
-        source.search(partition, sourceConfig, null, newFilter, sc, sr);
+        source.search(null, newFilter, sc, sr);
     }
 
     public void searchSources(

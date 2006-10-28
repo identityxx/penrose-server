@@ -17,8 +17,8 @@
  */
 package org.safehaus.penrose.connection;
 
-import org.safehaus.penrose.connector.Adapter;
-import org.safehaus.penrose.connector.AdapterConfig;
+import org.safehaus.penrose.adapter.Adapter;
+import org.safehaus.penrose.adapter.AdapterConfig;
 import org.safehaus.penrose.session.PenroseSearchResults;
 import org.safehaus.penrose.session.PenroseSearchControls;
 import org.safehaus.penrose.mapping.*;

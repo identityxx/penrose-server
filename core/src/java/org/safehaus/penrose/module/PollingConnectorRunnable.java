@@ -15,10 +15,44 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
-package org.safehaus.penrose.connector;
+package org.safehaus.penrose.module;
+
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 
 /**
  * @author Endi S. Dewata
  */
-public class JDBCAdapter extends org.safehaus.penrose.jdbc.JDBCAdapter {
+public class PollingConnectorRunnable implements Runnable {
+
+    Logger log = LoggerFactory.getLogger(getClass());
+
+    private PollingConnectorModule module;
+
+    boolean running = true;
+
+    public PollingConnectorRunnable(PollingConnectorModule module) {
+        this.module = module;
+    }
+
+    public void run() {
+        try {
+            runImpl();
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+        }
+    }
+
+    public void runImpl() throws Exception {
+
+        while (running) {
+            Thread.sleep(module.interval * 1000);
+            if (running) module.process();
+        }
+
+    }
+
+    public void stop() {
+        running = false;
+    }
 }

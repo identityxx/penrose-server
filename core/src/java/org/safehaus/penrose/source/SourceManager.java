@@ -17,7 +17,6 @@
  */
 package org.safehaus.penrose.source;
 
-import org.safehaus.penrose.partition.PartitionManager;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.connection.ConnectionManager;
@@ -40,7 +39,6 @@ public class SourceManager implements SourceManagerMBean {
 
     private PenroseConfig penroseConfig;
     private ConnectionManager connectionManager;
-    private PartitionManager partitionManager;
     private SourceCacheManager sourceCacheManager;
 
     public SourceManager() {
@@ -165,11 +163,11 @@ public class SourceManager implements SourceManagerMBean {
         this.connectionManager = connectionManager;
     }
 
-    public PartitionManager getPartitionManager() {
-        return partitionManager;
+    public SourceCacheManager getSourceCacheManager() {
+        return sourceCacheManager;
     }
 
-    public void setPartitionManager(PartitionManager partitionManager) {
-        this.partitionManager = partitionManager;
+    public void setSourceCacheManager(SourceCacheManager sourceCacheManager) {
+        this.sourceCacheManager = sourceCacheManager;
     }
 }

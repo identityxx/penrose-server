@@ -48,7 +48,7 @@ import org.safehaus.penrose.module.ModuleManager;
 import org.safehaus.penrose.module.ModuleManagerMBean;
 import org.safehaus.penrose.module.Module;
 import org.safehaus.penrose.partition.*;
-import org.safehaus.penrose.connector.AdapterConfig;
+import org.safehaus.penrose.adapter.AdapterConfig;
 import org.safehaus.penrose.schema.SchemaConfig;
 import org.safehaus.penrose.config.PenroseConfig;
 

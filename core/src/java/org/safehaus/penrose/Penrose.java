@@ -195,7 +195,6 @@ public class Penrose {
         sourceManager = new SourceManager();
         sourceManager.setPenroseConfig(penroseConfig);
         sourceManager.setConnectionManager(connectionManager);
-        sourceManager.setPartitionManager(partitionManager);
         sourceManager.init();
     }
 

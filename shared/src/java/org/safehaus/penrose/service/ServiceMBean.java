@@ -1,5 +1,7 @@
 package org.safehaus.penrose.service;
 
+import org.safehaus.penrose.source.SourceCounter;
+
 import java.util.Collection;
 
 /**

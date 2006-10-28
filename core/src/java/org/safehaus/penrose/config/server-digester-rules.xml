@@ -139,26 +139,9 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 			<set-next-rule methodname="addEngineConfig" />
 		</pattern>
 
-        <!-- connector -->
-        <pattern value="connector">
-            <object-create-rule classname="org.safehaus.penrose.connector.ConnectorConfig" />
-            <set-properties-rule>
-                <alias attr-name="class" prop-name="setConnectorClass" />
-            </set-properties-rule>
-            <call-method-rule pattern="connector-name" methodname="setName" paramcount="0" />
-            <call-method-rule pattern="connector-class" methodname="setConnectorClass" paramcount="0" />
-            <call-method-rule pattern="description" methodname="setDescription" paramcount="0" />
-            <pattern value="parameter">
-                <call-method-rule methodname="setParameter" paramcount="2" />
-                <call-param-rule pattern="param-name" paramnumber="0"/>
-                <call-param-rule pattern="param-value" paramnumber="1"/>
-            </pattern>
-            <set-next-rule methodname="setConnectorConfig" />
-        </pattern>
-
 		<!-- adapter -->
 		<pattern value="adapter">
-			<object-create-rule classname="org.safehaus.penrose.connector.AdapterConfig" />
+			<object-create-rule classname="org.safehaus.penrose.adapter.AdapterConfig" />
             <set-properties-rule>
                 <alias attr-name="class" prop-name="adapterClass" />
             </set-properties-rule>

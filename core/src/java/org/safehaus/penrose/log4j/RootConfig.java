@@ -20,11 +20,12 @@ package org.safehaus.penrose.log4j;
 import java.util.Set;
 import java.util.LinkedHashSet;
 import java.util.Collection;
+import java.io.Serializable;
 
 /**
  * @author Endi S. Dewata
  */
-public class RootConfig {
+public class RootConfig implements Cloneable, Serializable {
 
     String level;
 
@@ -53,5 +54,40 @@ public class RootConfig {
     public void setAppenders(Collection appenderNames) {
         appenders.clear();
         appenders.addAll(appenderNames);
+    }
+
+    public int hashCode() {
+        return (level == null ? 0 : level.hashCode()) +
+                (appenders == null ? 0 : appenders.hashCode());
+    }
+
+    boolean equals(Object o1, Object o2) {
+        if (o1 == null && o2 == null) return true;
+        if (o1 != null) return o1.equals(o2);
+        return o2.equals(o1);
+    }
+
+    public boolean equals(Object object) {
+        if (this == object) return true;
+        if((object == null) || (object.getClass() != this.getClass())) return false;
+
+        RootConfig rootConfig = (RootConfig)object;
+        if (!equals(level, rootConfig.level)) return false;
+        if (!equals(appenders, rootConfig.appenders)) return false;
+
+        return true;
+    }
+
+    public void copy(RootConfig rootConfig) {
+        level = rootConfig.level;
+
+        appenders.clear();
+        appenders.addAll(rootConfig.appenders);
+    }
+
+    public Object clone() {
+        RootConfig rootConfig = new RootConfig();
+        rootConfig.copy(this);
+        return rootConfig;
     }
 }

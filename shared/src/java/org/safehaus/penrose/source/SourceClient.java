@@ -122,4 +122,9 @@ public class SourceClient implements SourceMBean {
                 new String[] { String.class.getName() }
         );
     }
+
+    public SourceCounter getCounter() throws Exception {
+        MBeanServerConnection connection = client.getConnection();
+        return (SourceCounter)connection.getAttribute(objectName, "Counter");
+    }
 }

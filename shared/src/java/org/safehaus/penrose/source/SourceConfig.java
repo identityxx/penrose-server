@@ -19,6 +19,8 @@ package org.safehaus.penrose.source;
 
 import org.safehaus.penrose.mapping.Row;
 import org.safehaus.penrose.mapping.AttributeValues;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
 import java.io.Serializable;
@@ -37,8 +39,8 @@ public class SourceConfig implements SourceConfigMBean, Cloneable, Serializable 
     public final static String LOAD_ON_STARTUP         = "loadOnStartup";
     public final static String LOAD_UPON_EXPIRATION    = "loadUponExpiration";
 
-    public final static String QUERY_CACHE_SIZE        = "queryCacheSize";
-    public final static String QUERY_CACHE_EXPIRATION  = "queryCacheExpiration";
+    public final static String FILTER_CACHE_SIZE       = "filterCacheSize";
+    public final static String FILTER_CACHE_EXPIRATION = "filterCacheExpiration";
 
     public final static String DATA_CACHE_SIZE         = "dataCacheSize";
     public final static String DATA_CACHE_EXPIRATION   = "dataCacheExpiration";
@@ -275,12 +277,46 @@ public class SourceConfig implements SourceConfigMBean, Cloneable, Serializable 
         if (this == object) return true;
         if((object == null) || (object.getClass() != this.getClass())) return false;
 
+        Logger log = LoggerFactory.getLogger(getClass());
+
         SourceConfig sourceConfig = (SourceConfig)object;
-        if (!equals(name, sourceConfig.name)) return false;
-        if (!equals(connectionName, sourceConfig.connectionName)) return false;
-        if (!equals(description, sourceConfig.description)) return false;
-        if (!equals(fieldConfigs, sourceConfig.fieldConfigs)) return false;
-        if (!equals(parameters, sourceConfig.parameters)) return false;
+        if (!equals(name, sourceConfig.name)) {
+            log.debug("Names don't match: ["+name+"] vs. ["+sourceConfig.name+"]");
+            return false;
+        }
+
+        if (!equals(connectionName, sourceConfig.connectionName)) {
+            log.debug("Connection names don't match: ["+connectionName+"] vs. ["+sourceConfig.connectionName+"]");
+            return false;
+        }
+
+        if (!equals(description, sourceConfig.description)) {
+            log.debug("Descriptions don't match: ["+description+"] vs. ["+sourceConfig.description+"]");
+            return false;
+        }
+
+        if (!equals(fieldConfigs, sourceConfig.fieldConfigs)) {
+            log.debug("Fields don't match.");
+            return false;
+        }
+
+        if (!equals(parameters, sourceConfig.parameters)) {
+            if (log.isDebugEnabled()) {
+                log.debug("Parameters don't match. This source config's parameters:");
+                for (Iterator i=parameters.keySet().iterator(); i.hasNext(); ) {
+                    String name = (String)i.next();
+                    String value = (String)parameters.get(name);
+                    log.debug(" - "+name+": "+value);
+                }
+                log.debug("The other source config's parameters:");
+                for (Iterator i=sourceConfig.parameters.keySet().iterator(); i.hasNext(); ) {
+                    String name = (String)i.next();
+                    String value = (String)sourceConfig.parameters.get(name);
+                    log.debug(" - "+name+": "+value);
+                }
+            }
+            return false;
+        }
 
         return true;
     }

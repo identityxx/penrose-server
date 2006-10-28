@@ -20,11 +20,12 @@ package org.safehaus.penrose.log4j;
 import java.util.Collection;
 import java.util.Map;
 import java.util.LinkedHashMap;
+import java.io.Serializable;
 
 /**
  * @author Endi S. Dewata
  */
-public class LayoutConfig {
+public class LayoutConfig implements Cloneable, Serializable {
 
     String layoutClass;
     Map parameters = new LinkedHashMap();
@@ -55,5 +56,40 @@ public class LayoutConfig {
 
     public void setLayoutClass(String layoutClass) {
         this.layoutClass = layoutClass;
+    }
+
+    public int hashCode() {
+        return (layoutClass == null ? 0 : layoutClass.hashCode()) +
+                (parameters == null ? 0 : parameters.hashCode());
+    }
+
+    boolean equals(Object o1, Object o2) {
+        if (o1 == null && o2 == null) return true;
+        if (o1 != null) return o1.equals(o2);
+        return o2.equals(o1);
+    }
+
+    public boolean equals(Object object) {
+        if (this == object) return true;
+        if((object == null) || (object.getClass() != this.getClass())) return false;
+
+        LayoutConfig layoutConfig = (LayoutConfig)object;
+        if (!equals(layoutClass, layoutConfig.layoutClass)) return false;
+        if (!equals(parameters, layoutConfig.parameters)) return false;
+
+        return true;
+    }
+
+    public void copy(LayoutConfig layoutConfig) {
+        layoutClass = layoutConfig.layoutClass;
+
+        parameters.clear();
+        parameters.putAll(layoutConfig.parameters);
+    }
+
+    public Object clone() {
+        LayoutConfig layoutConfig = new LayoutConfig();
+        layoutConfig.copy(this);
+        return layoutConfig;
     }
 }

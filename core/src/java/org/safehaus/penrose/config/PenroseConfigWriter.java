@@ -28,11 +28,10 @@ import org.dom4j.io.OutputFormat;
 import org.dom4j.io.XMLWriter;
 import org.dom4j.tree.DefaultElement;
 import org.dom4j.tree.DefaultText;
-import org.safehaus.penrose.connector.AdapterConfig;
+import org.safehaus.penrose.adapter.AdapterConfig;
 import org.safehaus.penrose.cache.CacheConfig;
 import org.safehaus.penrose.interpreter.InterpreterConfig;
 import org.safehaus.penrose.engine.EngineConfig;
-import org.safehaus.penrose.connector.ConnectorConfig;
 import org.safehaus.penrose.schema.SchemaConfig;
 import org.safehaus.penrose.partition.PartitionConfig;
 import org.safehaus.penrose.user.UserConfig;
@@ -142,11 +141,6 @@ public class PenroseConfigWriter {
         for (Iterator i=engineConfigs.iterator(); i.hasNext(); ) {
             EngineConfig engineConfig = (EngineConfig)i.next();
             element.add(toElement(engineConfig));
-        }
-
-        if (penroseConfig.getConnectorConfig() != null) {
-            ConnectorConfig connectorConfig = penroseConfig.getConnectorConfig();
-            element.add(toElement(connectorConfig));
         }
 
         for (Iterator i = penroseConfig.getAdapterConfigs().iterator(); i.hasNext();) {
@@ -397,44 +391,4 @@ public class PenroseConfigWriter {
             element.add(parameter);
         }
     }
-
-    public Element toElement(ConnectorConfig connectorConfig) {
-        Element element = new DefaultElement("connector");
-/*
-        Element cacheName = new DefaultElement("connector-name");
-        cacheName.add(new DefaultText(connectorConfig.getName()));
-        element.add(cacheName);
-
-        if (connectorConfig.getConnectorClass() != null && !"".equals(connectorConfig.getConnectorClass())) {
-            Element cacheClass = new DefaultElement("connector-class");
-            cacheClass.add(new DefaultText(connectorConfig.getConnectorClass()));
-            element.add(cacheClass);
-        }
-*/
-        if (connectorConfig.getDescription() != null && !"".equals(connectorConfig.getDescription())) {
-            Element description = new DefaultElement("description");
-            description.add(new DefaultText(connectorConfig.getDescription()));
-            element.add(description);
-        }
-
-        for (Iterator i = connectorConfig.getParameterNames().iterator(); i.hasNext();) {
-            String name = (String)i.next();
-            String value = (String)connectorConfig.getParameter(name);
-
-            Element parameter = new DefaultElement("parameter");
-
-            Element paramName = new DefaultElement("param-name");
-            paramName.add(new DefaultText(name));
-            parameter.add(paramName);
-
-            Element paramValue = new DefaultElement("param-value");
-            paramValue.add(new DefaultText(value));
-            parameter.add(paramValue);
-
-            element.add(parameter);
-        }
-
-        return element;
-    }
-
 }

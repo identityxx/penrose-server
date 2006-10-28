@@ -125,7 +125,7 @@ public class ModRdnGraphVisitor extends GraphVisitor {
         SourceConfig sourceConfig = partition.getSourceConfig(sourceMapping.getSourceName());
         Source source = engine.getSource(partition, sourceConfig);
 
-        returnCode = source.modify(partition, sourceConfig, oldValues, newValues);
+        returnCode = source.modify(oldValues, newValues);
         if (returnCode != LDAPException.SUCCESS) return;
 
         modifiedSourceValues.remove(sourceMapping.getName());

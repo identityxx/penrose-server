@@ -18,8 +18,6 @@
 package org.safehaus.penrose.mapping;
 
 import org.safehaus.penrose.util.BinaryUtil;
-import org.slf4j.LoggerFactory;
-import org.slf4j.Logger;
 
 import java.util.Arrays;
 import java.io.Serializable;
@@ -28,8 +26,6 @@ import java.io.Serializable;
  * @author Endi S. Dewata
  */
 public class AttributeMapping implements Cloneable, Serializable {
-
-    Logger log = LoggerFactory.getLogger(getClass());
 
     public final static String CONSTANT       = "CONSTANT";
     public final static String VARIABLE       = "VARIABLE";

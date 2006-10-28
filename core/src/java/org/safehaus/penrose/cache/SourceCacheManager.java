@@ -40,23 +40,6 @@ public class SourceCacheManager {
 
     private Map caches = new TreeMap();
 
-    public SourceCache createCacheStorage(Partition partition, SourceConfig sourceConfig) throws Exception {
-
-        String cacheClass = cacheConfig.getCacheClass() == null ? SourceCache.class.getName() : cacheConfig.getCacheClass();
-
-        log.debug("Initializing source cache "+cacheClass);
-        Class clazz = Class.forName(cacheClass);
-        SourceCache sourceCache = (SourceCache)clazz.newInstance();
-
-        sourceCache.setSourceDefinition(sourceConfig);
-        sourceCache.setPartition(partition);
-        sourceCache.setSourceCacheManager(this);
-
-        sourceCache.init(cacheConfig);
-
-        return sourceCache;
-    }
-
     public ConnectionManager getConnectionManager() {
         return connectionManager;
     }
@@ -74,7 +57,16 @@ public class SourceCacheManager {
     }
 
     public SourceCache create(Partition partition, SourceConfig sourceConfig) throws Exception {
-        SourceCache sourceCache = createCacheStorage(partition, sourceConfig);
+        String cacheClass = cacheConfig.getCacheClass() == null ? SourceCache.class.getName() : cacheConfig.getCacheClass();
+
+        log.debug("Initializing source cache "+cacheClass);
+        Class clazz = Class.forName(cacheClass);
+        SourceCache sourceCache = (SourceCache)clazz.newInstance();
+
+        sourceCache.setSourceCacheManager(this);
+        sourceCache.setSourceDefinition(sourceConfig);
+        sourceCache.setPartition(partition);
+        sourceCache.init(cacheConfig);
 
         Map map = (Map)caches.get(partition.getName());
         if (map == null) {

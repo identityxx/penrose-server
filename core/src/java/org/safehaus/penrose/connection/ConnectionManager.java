@@ -19,7 +19,7 @@ package org.safehaus.penrose.connection;
 
 import org.safehaus.penrose.connection.ConnectionConfig;
 import org.safehaus.penrose.partition.Partition;
-import org.safehaus.penrose.connector.AdapterConfig;
+import org.safehaus.penrose.adapter.AdapterConfig;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 

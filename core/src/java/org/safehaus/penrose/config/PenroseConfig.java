@@ -21,10 +21,10 @@ import java.util.*;
 
 import org.safehaus.penrose.cache.CacheConfig;
 import org.safehaus.penrose.cache.EntryCache;
+import org.safehaus.penrose.cache.SourceCache;
 import org.safehaus.penrose.engine.EngineConfig;
 import org.safehaus.penrose.interpreter.InterpreterConfig;
-import org.safehaus.penrose.connector.ConnectorConfig;
-import org.safehaus.penrose.connector.AdapterConfig;
+import org.safehaus.penrose.adapter.AdapterConfig;
 import org.safehaus.penrose.partition.PartitionConfig;
 import org.safehaus.penrose.schema.SchemaConfig;
 import org.safehaus.penrose.user.UserConfig;
@@ -58,7 +58,6 @@ public class PenroseConfig implements PenroseConfigMBean, Cloneable {
     private CacheConfig sourceCacheConfig;
 
     private SessionConfig sessionConfig;
-    private ConnectorConfig connectorConfig;
 
     private UserConfig rootUserConfig;
 
@@ -67,14 +66,13 @@ public class PenroseConfig implements PenroseConfigMBean, Cloneable {
         interpreterConfig = new InterpreterConfig();
 
         sourceCacheConfig = new CacheConfig();
-        sourceCacheConfig.setName(ConnectorConfig.DEFAULT_CACHE_NAME);
-        sourceCacheConfig.setCacheClass(ConnectorConfig.DEFAULT_CACHE_CLASS);
+        sourceCacheConfig.setName(SourceCache.DEFAULT_CACHE_NAME);
+        sourceCacheConfig.setCacheClass(SourceCache.DEFAULT_CACHE_CLASS);
 
         entryCacheConfig = new CacheConfig();
         entryCacheConfig.setName(EntryCache.DEFAULT_CACHE_NAME);
         entryCacheConfig.setCacheClass(EntryCache.DEFAULT_CACHE_CLASS);
 
-        connectorConfig = new ConnectorConfig();
         sessionConfig = new SessionConfig();
 
         HandlerConfig handlerConfig = new HandlerConfig();
@@ -127,6 +125,10 @@ public class PenroseConfig implements PenroseConfigMBean, Cloneable {
         engineConfigs.put(engineConfig.getName(), engineConfig);
     }
 
+    public EngineConfig removeEngineConfig(String name) {
+        return (EngineConfig)engineConfigs.remove(name);
+    }
+    
     public EngineConfig getEngineConfig(String name) {
         return (EngineConfig)engineConfigs.get(name);
     }
@@ -165,14 +167,6 @@ public class PenroseConfig implements PenroseConfigMBean, Cloneable {
 
     public Collection getAdapterNames() {
         return adapterConfigs.keySet();
-    }
-
-    public void setConnectorConfig(ConnectorConfig connectorConfig) {
-        this.connectorConfig = connectorConfig;
-    }
-
-    public ConnectorConfig getConnectorConfig() {
-        return connectorConfig;
     }
 
     public CacheConfig getEntryCacheConfig() {
@@ -308,7 +302,6 @@ public class PenroseConfig implements PenroseConfigMBean, Cloneable {
                 (sourceCacheConfig == null ? 0 : sourceCacheConfig.hashCode()) +
                 (sessionConfig == null ? 0 : sessionConfig.hashCode()) +
                 (engineConfigs == null ? 0 : engineConfigs.hashCode()) +
-                (connectorConfig == null ? 0 : connectorConfig.hashCode()) +
                 (rootUserConfig == null ? 0 : rootUserConfig.hashCode());
     }
 
@@ -341,7 +334,6 @@ public class PenroseConfig implements PenroseConfigMBean, Cloneable {
 
         if (!equals(sessionConfig, penroseConfig.sessionConfig)) return false;
         if (!equals(engineConfigs, penroseConfig.engineConfigs)) return false;
-        if (!equals(connectorConfig, penroseConfig.connectorConfig)) return false;
 
         if (!equals(rootUserConfig, penroseConfig.rootUserConfig)) return false;
 
@@ -391,7 +383,6 @@ public class PenroseConfig implements PenroseConfigMBean, Cloneable {
         sourceCacheConfig.copy(sourceCacheConfig);
 
         sessionConfig.copy(sessionConfig);
-        connectorConfig.copy(connectorConfig);
 
         rootUserConfig.copy(rootUserConfig);
     }

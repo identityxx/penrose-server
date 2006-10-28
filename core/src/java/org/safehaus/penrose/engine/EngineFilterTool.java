@@ -22,7 +22,7 @@ import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.connection.ConnectionManager;
 import org.safehaus.penrose.connection.Connection;
-import org.safehaus.penrose.connector.Adapter;
+import org.safehaus.penrose.adapter.Adapter;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.source.SourceConfig;
 import org.slf4j.LoggerFactory;

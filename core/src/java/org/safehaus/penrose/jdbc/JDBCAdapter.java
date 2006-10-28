@@ -30,7 +30,7 @@ import org.safehaus.penrose.filter.SimpleFilter;
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.source.FieldConfig;
 import org.safehaus.penrose.source.SourceConfig;
-import org.safehaus.penrose.connector.*;
+import org.safehaus.penrose.adapter.*;
 
 import javax.sql.DataSource;
 import javax.naming.directory.ModificationItem;

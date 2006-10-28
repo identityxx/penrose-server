@@ -18,6 +18,7 @@ import org.safehaus.penrose.module.ModuleManagerClient;
 import org.safehaus.penrose.source.SourceManagerClient;
 import org.safehaus.penrose.source.SourceClient;
 import org.safehaus.penrose.source.SourceConfig;
+import org.safehaus.penrose.source.SourceCounter;
 
 import java.util.*;
 import java.io.File;
@@ -254,6 +255,15 @@ public class Client {
             System.out.println(" - "+paramName +": "+value);
         }
         System.out.println();
+
+        SourceCounter counter = sourceClient.getCounter();
+        System.out.println("Counters    :");
+        System.out.println(" - add      : "+counter.getAddCounter());
+        System.out.println(" - bind     : "+counter.getBindCounter());
+        System.out.println(" - delete   : "+counter.getDeleteCounter());
+        System.out.println(" - modify   : "+counter.getModifyCounter());
+        System.out.println(" - modrdn   : "+counter.getModRdnCounter());
+        System.out.println(" - search   : "+counter.getSearchCounter());
     }
 
     public void printModule(String partitionName, String moduleName) throws Exception {
@@ -595,6 +605,12 @@ public class Client {
         System.out.println("  start connection <name> partition <name>");
         System.out.println("  stop connection <name> partition <name>");
         System.out.println("  restart connection <name> partition <name>");
+        System.out.println();
+        System.out.println("  show sources");
+        System.out.println("  show source <name> partition <name>");
+        System.out.println("  start source <name> partition <name>");
+        System.out.println("  stop source <name> partition <name>");
+        System.out.println("  restart source <name> partition <name>");
         System.out.println();
         System.out.println("  show modules");
         System.out.println("  show module <name> partition <name>");

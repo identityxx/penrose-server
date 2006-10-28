@@ -30,7 +30,7 @@ import org.safehaus.penrose.source.FieldConfig;
 import org.safehaus.penrose.source.SourceConfig;
 import org.safehaus.penrose.util.*;
 import org.safehaus.penrose.util.Formatter;
-import org.safehaus.penrose.connector.Adapter;
+import org.safehaus.penrose.adapter.Adapter;
 
 import java.util.*;
 

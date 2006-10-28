@@ -15,44 +15,26 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
-package org.safehaus.penrose.connector;
+package org.safehaus.penrose.adapter;
 
-import org.slf4j.LoggerFactory;
-import org.slf4j.Logger;
+import java.util.Map;
 
 /**
  * @author Endi S. Dewata
  */
-public class PollingConnectorRunnable implements Runnable {
+public interface AdapterConfigMBean {
 
-    Logger log = LoggerFactory.getLogger(getClass());
+    public String getAdapterClass() throws Exception;
+    public void setAdapterClass(String adapterClass) throws Exception;
 
-    private PollingConnectorModule module;
+    public String getName() throws Exception;
+    public void setName(String name) throws Exception;
 
-    boolean running = true;
+    public String getDescription() throws Exception;
+    public void setDescription(String description) throws Exception;
 
-    public PollingConnectorRunnable(PollingConnectorModule module) {
-        this.module = module;
-    }
-
-    public void run() {
-        try {
-            runImpl();
-        } catch (Exception e) {
-            log.error(e.getMessage(), e);
-        }
-    }
-
-    public void runImpl() throws Exception {
-
-        while (running) {
-            Thread.sleep(module.interval * 1000);
-            if (running) module.process();
-        }
-
-    }
-
-    public void stop() {
-        running = false;
-    }
+    public void setParameter(String name, String value) throws Exception;
+    public void removeParameter(String name) throws Exception;
+    public Map getParameters() throws Exception;
+    public String getParameter(String name) throws Exception;
 }

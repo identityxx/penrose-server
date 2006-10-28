@@ -17,6 +17,9 @@
  */
 package org.safehaus.penrose.source;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.Serializable;
 
 /**
@@ -201,18 +204,38 @@ public class FieldConfig implements FieldConfigMBean, Comparable, Cloneable, Ser
         if (object == null) return false;
         if (!(object instanceof FieldConfig)) return false;
 
+        Logger log = LoggerFactory.getLogger(getClass());
+
         FieldConfig fieldConfig = (FieldConfig)object;
-        if (!equals(name, fieldConfig.name)) return false;
-        if (!equals(originalName, fieldConfig.originalName)) return false;
-        if (!equals(primaryKey, fieldConfig.primaryKey)) return false;
+        if (!equals(name, fieldConfig.name)) {
+            log.debug("Names don't match: ["+name+"] vs. ["+fieldConfig.name+"]");
+            return false;
+        }
+
+        if (!equals(originalName, fieldConfig.originalName)) {
+            log.debug("Original names don't match: ["+originalName+"] vs. ["+fieldConfig.originalName+"]");
+            return false;
+        }
+
+        if (!equals(primaryKey, fieldConfig.primaryKey)) {
+            log.debug("Primary keys don't match: ["+primaryKey+"] vs. ["+fieldConfig.primaryKey+"]");
+            return false;
+        }
+
         if (searchable != fieldConfig.searchable) return false;
+
         if (unique != fieldConfig.unique) return false;
         if (index != fieldConfig.index) return false;
         if (caseSensitive != fieldConfig.caseSensitive) return false;
         if (!equals(encryption, fieldConfig.encryption)) return false;
         if (!equals(encoding, fieldConfig.encoding)) return false;
         if (!equals(type, fieldConfig.type)) return false;
-        if (length != fieldConfig.length) return false;
+
+        if (length != fieldConfig.length) {
+            log.debug("Lengths don't match: ["+length+"] vs. ["+fieldConfig.length+"]");
+            return false;
+        }
+        
         if (precision != fieldConfig.precision) return false;
 
         return true;

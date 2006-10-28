@@ -19,8 +19,6 @@ package org.safehaus.penrose.mapping;
 
 import org.safehaus.penrose.acl.ACI;
 import org.safehaus.penrose.util.EntryUtil;
-import org.slf4j.LoggerFactory;
-import org.slf4j.Logger;
 
 import java.util.*;
 import java.io.Serializable;
@@ -30,10 +28,8 @@ import java.io.Serializable;
  */
 public class EntryMapping implements Cloneable, Serializable {
 
-    Logger log = LoggerFactory.getLogger(getClass());
-
-    public final static String QUERY_CACHE_SIZE        = "queryCacheSize";
-    public final static String QUERY_CACHE_EXPIRATION  = "queryCacheExpiration";
+    public final static String FILTER_CACHE_SIZE       = "filterCacheSize";
+    public final static String FILTER_CACHE_EXPIRATION = "filterCacheExpiration";
 
     public final static String DATA_CACHE_SIZE         = "dataCacheSize";
     public final static String DATA_CACHE_EXPIRATION   = "dataCacheExpiration";
@@ -344,7 +340,6 @@ public class EntryMapping implements Cloneable, Serializable {
 
     public void addAttributeMapping(AttributeMapping attributeMapping) {
         String name = attributeMapping.getName().toLowerCase();
-        log.debug("Adding attribute "+name+(attributeMapping.isPK() ? " ("+attributeMapping.getRdn()+")" : ""));
 
         Collection list = (Collection)attributeMappings.get(name);
         if (list == null) {

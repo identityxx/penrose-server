@@ -30,8 +30,6 @@ import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.pipeline.PipelineEvent;
 import org.safehaus.penrose.pipeline.PipelineAdapter;
 import org.safehaus.penrose.connection.Connection;
-import org.safehaus.penrose.connection.ConnectionManager;
-import org.safehaus.penrose.connector.ConnectorConfig;
 import org.ietf.ldap.LDAPException;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
@@ -63,6 +61,8 @@ public class Source implements SourceMBean {
 
     private String status = STOPPED;
 
+    private SourceCounter counter = new SourceCounter();
+
     private Map locks = new HashMap();
     private Queue queue = new Queue();
 
@@ -77,6 +77,7 @@ public class Source implements SourceMBean {
     }
 
     public void start() throws Exception {
+        counter.reset();
         setStatus(STARTED);
     }
 
@@ -103,26 +104,6 @@ public class Source implements SourceMBean {
 
     public String removeParameter(String name) {
         return sourceConfig.removeParameter(name);
-    }
-
-    public void addPartition(Partition partition) throws Exception {
-
-        Collection sourceConfigs = partition.getSourceConfigs();
-        for (Iterator i=sourceConfigs.iterator(); i.hasNext(); ) {
-            SourceConfig sourceConfig = (SourceConfig)i.next();
-
-            String connectorName = sourceConfig.getParameter("connectorName");
-            connectorName = connectorName == null ? "DEFAULT" : connectorName;
-
-            if (!this.sourceConfig.getName().equals(connectorName)) continue;
-
-            sourceCache.create();
-        }
-    }
-
-    public Connection getConnection(Partition partition, String name) throws Exception {
-        ConnectionManager connectionManager = sourceManager.getConnectionManager();
-        return connectionManager.getConnection(partition, name);
     }
 
     public Row normalize(Row row) throws Exception {
@@ -158,8 +139,6 @@ public class Source implements SourceMBean {
 	}
 
     public int bind(
-            Partition partition,
-            SourceConfig sourceConfig,
             EntryMapping entry,
             Row pk,
             String password
@@ -167,22 +146,13 @@ public class Source implements SourceMBean {
 
         log.debug("Binding as entry in "+sourceConfig.getName());
 
-        MRSWLock lock = getLock(sourceConfig);
-        lock.getReadLock(ConnectorConfig.DEFAULT_TIMEOUT);
+        counter.incBindCounter();
+        int rc = connection.bind(sourceConfig, pk, password);
 
-        try {
-            int rc = connection.bind(sourceConfig, pk, password);
-
-            return rc;
-
-        } finally {
-        	lock.releaseReadLock(ConnectorConfig.DEFAULT_TIMEOUT);
-        }
+        return rc;
     }
 
     public int add(
-            Partition partition,
-            SourceConfig sourceConfig,
             AttributeValues sourceValues
     ) throws Exception {
 
@@ -190,199 +160,172 @@ public class Source implements SourceMBean {
         log.debug("Adding entry into "+sourceConfig.getName());
         log.debug("Values: "+sourceValues);
 
-        MRSWLock lock = getLock(sourceConfig);
-        lock.getWriteLock(ConnectorConfig.DEFAULT_TIMEOUT);
+        counter.incAddCounter();
+        Collection pks = TransformEngine.getPrimaryKeys(sourceConfig, sourceValues);
 
-        try {
-            Collection pks = TransformEngine.getPrimaryKeys(sourceConfig, sourceValues);
+        // Add rows
+        for (Iterator i = pks.iterator(); i.hasNext();) {
+            Row pk = (Row) i.next();
+            AttributeValues newEntry = (AttributeValues)sourceValues.clone();
+            newEntry.set("primaryKey", pk);
+            log.debug("Adding entry: "+pk);
+            log.debug(" - "+newEntry);
 
-            // Add rows
-            for (Iterator i = pks.iterator(); i.hasNext();) {
-                Row pk = (Row) i.next();
-                AttributeValues newEntry = (AttributeValues)sourceValues.clone();
-                newEntry.set("primaryKey", pk);
-                log.debug("Adding entry: "+pk);
-                log.debug(" - "+newEntry);
+            // Add row to source table in the source database/directory
+            int rc = connection.add(sourceConfig, pk, newEntry);
+            if (rc != LDAPException.SUCCESS) return rc;
 
-                // Add row to source table in the source database/directory
-                int rc = connection.add(sourceConfig, pk, newEntry);
-                if (rc != LDAPException.SUCCESS) return rc;
+            AttributeValues sv = connection.get(sourceConfig, pk);
 
-                AttributeValues sv = connection.get(sourceConfig, pk);
-
-                sourceCache.put(pk, sv);
-            }
-/*
-            sourceValues.clear();
-            Collection list = retrieve(sourceConfig, pks);
-            log.debug("Added rows:");
-            for (Iterator i=list.iterator(); i.hasNext(); ) {
-                AttributeValues sv = (AttributeValues)i.next();
-                sourceValues.add(sv);
-                log.debug(" - "+sv);
-            }
-*/
-            //getQueryCache(connectionConfig, sourceConfig).invalidate();
-
-        } finally {
-        	lock.releaseWriteLock(ConnectorConfig.DEFAULT_TIMEOUT);
+            sourceCache.put(pk, sv);
         }
+/*
+        sourceValues.clear();
+        Collection list = retrieve(sourceConfig, pks);
+        log.debug("Added rows:");
+        for (Iterator i=list.iterator(); i.hasNext(); ) {
+            AttributeValues sv = (AttributeValues)i.next();
+            sourceValues.add(sv);
+            log.debug(" - "+sv);
+        }
+*/
+        //getQueryCache(connectionConfig, sourceConfig).invalidate();
 
         return LDAPException.SUCCESS;
     }
 
     public int delete(
-            Partition partition,
-            SourceConfig sourceConfig,
             AttributeValues sourceValues
     ) throws Exception {
 
         log.debug("Deleting entry in "+sourceConfig.getName());
 
-        MRSWLock lock = getLock(sourceConfig);
-        lock.getWriteLock(ConnectorConfig.DEFAULT_TIMEOUT);
+        counter.incDeleteCounter();
+        Collection pks = TransformEngine.getPrimaryKeys(sourceConfig, sourceValues);
 
-        try {
-            Collection pks = TransformEngine.getPrimaryKeys(sourceConfig, sourceValues);
+        // Remove rows
+        for (Iterator i = pks.iterator(); i.hasNext();) {
+            Row pk = (Row) i.next();
+            AttributeValues oldEntry = (AttributeValues)sourceValues.clone();
+            oldEntry.set(pk);
+            log.debug("DELETE ROW: " + oldEntry);
 
-            // Remove rows
-            for (Iterator i = pks.iterator(); i.hasNext();) {
-                Row pk = (Row) i.next();
-                AttributeValues oldEntry = (AttributeValues)sourceValues.clone();
-                oldEntry.set(pk);
-                log.debug("DELETE ROW: " + oldEntry);
+            // Delete row from source table in the source database/directory
+            int rc = connection.delete(sourceConfig, pk);
+            if (rc != LDAPException.SUCCESS)
+                return rc;
 
-                // Delete row from source table in the source database/directory
-                int rc = connection.delete(sourceConfig, pk);
-                if (rc != LDAPException.SUCCESS)
-                    return rc;
-
-                // Delete row from source table in the cache
-                sourceCache.remove(pk);
-            }
-
-            //getQueryCache(connectionConfig, sourceConfig).invalidate();
-
-        } finally {
-            lock.releaseWriteLock(ConnectorConfig.DEFAULT_TIMEOUT);
+            // Delete row from source table in the cache
+            sourceCache.remove(pk);
         }
+
+        //getQueryCache(connectionConfig, sourceConfig).invalidate();
 
         return LDAPException.SUCCESS;
     }
 
     public int modify(
-            Partition partition,
-            SourceConfig sourceConfig,
             AttributeValues oldSourceValues,
             AttributeValues newSourceValues
     ) throws Exception {
 
         log.debug("Modifying entry in " + sourceConfig.getName());
 
-        MRSWLock lock = getLock(sourceConfig);
-        lock.getWriteLock(ConnectorConfig.DEFAULT_TIMEOUT);
+        counter.incModifyCounter();
+        Collection oldPKs = TransformEngine.getPrimaryKeys(sourceConfig, oldSourceValues);
+        Collection newPKs = TransformEngine.getPrimaryKeys(sourceConfig, newSourceValues);
 
-        try {
-            Collection oldPKs = TransformEngine.getPrimaryKeys(sourceConfig, oldSourceValues);
-            Collection newPKs = TransformEngine.getPrimaryKeys(sourceConfig, newSourceValues);
+        log.debug("Old PKs: " + oldPKs);
+        log.debug("New PKs: " + newPKs);
 
-            log.debug("Old PKs: " + oldPKs);
-            log.debug("New PKs: " + newPKs);
+        Set removeRows = new HashSet(oldPKs);
+        removeRows.removeAll(newPKs);
+        log.debug("PKs to remove: " + removeRows);
 
-            Set removeRows = new HashSet(oldPKs);
-            removeRows.removeAll(newPKs);
-            log.debug("PKs to remove: " + removeRows);
+        Set addRows = new HashSet(newPKs);
+        addRows.removeAll(oldPKs);
+        log.debug("PKs to add: " + addRows);
 
-            Set addRows = new HashSet(newPKs);
-            addRows.removeAll(oldPKs);
-            log.debug("PKs to add: " + addRows);
+        Set replaceRows = new HashSet(oldPKs);
+        replaceRows.retainAll(newPKs);
+        log.debug("PKs to replace: " + replaceRows);
 
-            Set replaceRows = new HashSet(oldPKs);
-            replaceRows.retainAll(newPKs);
-            log.debug("PKs to replace: " + replaceRows);
+        Collection pks = new ArrayList();
 
-            Collection pks = new ArrayList();
+        // Remove rows
+        for (Iterator i = removeRows.iterator(); i.hasNext();) {
+            Row pk = (Row) i.next();
+            AttributeValues oldEntry = (AttributeValues)oldSourceValues.clone();
+            oldEntry.set("primaryKey", pk);
+            //log.debug("DELETE ROW: " + oldEntry);
 
-            // Remove rows
-            for (Iterator i = removeRows.iterator(); i.hasNext();) {
-                Row pk = (Row) i.next();
-                AttributeValues oldEntry = (AttributeValues)oldSourceValues.clone();
-                oldEntry.set("primaryKey", pk);
-                //log.debug("DELETE ROW: " + oldEntry);
+            // Delete row from source table in the source database/directory
+            int rc = connection.delete(sourceConfig, pk);
+            if (rc != LDAPException.SUCCESS)
+                return rc;
 
-                // Delete row from source table in the source database/directory
-                int rc = connection.delete(sourceConfig, pk);
-                if (rc != LDAPException.SUCCESS)
-                    return rc;
-
-                // Delete row from source table in the cache
-                sourceCache.remove(pk);
-            }
-
-            // Add rows
-            for (Iterator i = addRows.iterator(); i.hasNext();) {
-                Row pk = (Row) i.next();
-                AttributeValues newEntry = (AttributeValues)newSourceValues.clone();
-                newEntry.set("primaryKey", pk);
-                //log.debug("ADDING ROW: " + newEntry);
-
-                // Add row to source table in the source database/directory
-                int rc = connection.add(sourceConfig, pk, newEntry);
-                if (rc != LDAPException.SUCCESS) return rc;
-
-                AttributeValues sv = connection.get(sourceConfig, pk);
-
-                sourceCache.put(pk, sv);
-
-                pks.add(pk);
-            }
-
-            // Replace rows
-            for (Iterator i = replaceRows.iterator(); i.hasNext();) {
-                Row pk = (Row) i.next();
-                AttributeValues oldEntry = (AttributeValues)oldSourceValues.clone();
-                oldEntry.set("primaryKey", pk);
-                AttributeValues newEntry = (AttributeValues)newSourceValues.clone();
-                newEntry.set("primaryKey", pk);
-                //log.debug("REPLACE ROW: " + oldEntry+" with "+newEntry);
-
-                // Modify row from source table in the source database/directory
-                Collection modifications = createModifications(oldEntry, newEntry);
-                int rc = connection.modify(sourceConfig, pk, modifications);
-                if (rc != LDAPException.SUCCESS) return rc;
-
-                AttributeValues sv = connection.get(sourceConfig, pk);
-
-                sourceCache.remove(pk);
-                sourceCache.put(pk, sv);
-
-                pks.add(pk);
-            }
-
-            newSourceValues.clear();
-
-            PenroseSearchControls sc = new PenroseSearchControls();
-            PenroseSearchResults list = new PenroseSearchResults();
-            retrieve(partition, sourceConfig, pks, sc, list);
-            list.close();
-
-            for (Iterator i=list.iterator(); i.hasNext(); ) {
-                AttributeValues sv = (AttributeValues)i.next();
-                newSourceValues.add(sv);
-            }
-
-            //getQueryCache(connectionConfig, sourceConfig).invalidate();
-
-        } finally {
-            lock.releaseWriteLock(ConnectorConfig.DEFAULT_TIMEOUT);
+            // Delete row from source table in the cache
+            sourceCache.remove(pk);
         }
+
+        // Add rows
+        for (Iterator i = addRows.iterator(); i.hasNext();) {
+            Row pk = (Row) i.next();
+            AttributeValues newEntry = (AttributeValues)newSourceValues.clone();
+            newEntry.set("primaryKey", pk);
+            //log.debug("ADDING ROW: " + newEntry);
+
+            // Add row to source table in the source database/directory
+            int rc = connection.add(sourceConfig, pk, newEntry);
+            if (rc != LDAPException.SUCCESS) return rc;
+
+            AttributeValues sv = connection.get(sourceConfig, pk);
+
+            sourceCache.put(pk, sv);
+
+            pks.add(pk);
+        }
+
+        // Replace rows
+        for (Iterator i = replaceRows.iterator(); i.hasNext();) {
+            Row pk = (Row) i.next();
+            AttributeValues oldEntry = (AttributeValues)oldSourceValues.clone();
+            oldEntry.set("primaryKey", pk);
+            AttributeValues newEntry = (AttributeValues)newSourceValues.clone();
+            newEntry.set("primaryKey", pk);
+            //log.debug("REPLACE ROW: " + oldEntry+" with "+newEntry);
+
+            // Modify row from source table in the source database/directory
+            Collection modifications = createModifications(oldEntry, newEntry);
+            int rc = connection.modify(sourceConfig, pk, modifications);
+            if (rc != LDAPException.SUCCESS) return rc;
+
+            AttributeValues sv = connection.get(sourceConfig, pk);
+
+            sourceCache.remove(pk);
+            sourceCache.put(pk, sv);
+
+            pks.add(pk);
+        }
+
+        newSourceValues.clear();
+
+        PenroseSearchControls sc = new PenroseSearchControls();
+        PenroseSearchResults list = new PenroseSearchResults();
+        retrieve(pks, sc, list);
+        list.close();
+
+        for (Iterator i=list.iterator(); i.hasNext(); ) {
+            AttributeValues sv = (AttributeValues)i.next();
+            newSourceValues.add(sv);
+        }
+
+        //getQueryCache(connectionConfig, sourceConfig).invalidate();
 
         return LDAPException.SUCCESS;
     }
 
     public int modrdn(
-            Partition partition,
-            SourceConfig sourceConfig,
             Row oldPk,
             Row newPk,
             AttributeValues sourceValues
@@ -390,22 +333,15 @@ public class Source implements SourceMBean {
 
         log.debug("Renaming entry in " + sourceConfig.getName());
 
-        MRSWLock lock = getLock(sourceConfig);
-        lock.getWriteLock(ConnectorConfig.DEFAULT_TIMEOUT);
+        counter.incModRdnCounter();
+        int rc = connection.add(sourceConfig, newPk, sourceValues);
+        if (rc != LDAPException.SUCCESS) return rc;
 
-        try {
-            int rc = connection.add(sourceConfig, newPk, sourceValues);
-            if (rc != LDAPException.SUCCESS) return rc;
+        rc = connection.delete(sourceConfig, oldPk);
+        if (rc != LDAPException.SUCCESS) return rc;
 
-            rc = connection.delete(sourceConfig, oldPk);
-            if (rc != LDAPException.SUCCESS) return rc;
-
-            sourceCache.put(newPk, sourceValues);
-            sourceCache.remove(oldPk);
-
-        } finally {
-            lock.releaseWriteLock(ConnectorConfig.DEFAULT_TIMEOUT);
-        }
+        sourceCache.put(newPk, sourceValues);
+        sourceCache.remove(oldPk);
 
         return LDAPException.SUCCESS;
     }
@@ -480,24 +416,24 @@ public class Source implements SourceMBean {
      * Search the data sources.
      */
     public void search(
-            final Partition partition,
-            final SourceConfig sourceConfig,
             Collection primaryKeys,
             final Filter filter,
             PenroseSearchControls searchControls,
             final PenroseSearchResults results
     ) throws Exception {
 
+        counter.incSearchCounter();
+
         String method = sourceConfig.getParameter(SourceConfig.LOADING_METHOD);
         if (SourceConfig.SEARCH_AND_LOAD.equals(method)) { // search for PKs first then load full record
 
             log.debug("Searching source "+sourceConfig.getName()+" with filter "+filter);
-            searchAndLoad(partition, sourceConfig, filter, searchControls, results);
+            searchAndLoad(filter, searchControls, results);
 
         } else { // load full record immediately
 
             log.debug("Loading source "+sourceConfig.getName()+" with filter "+filter);
-            fullLoad(partition, sourceConfig, primaryKeys, filter, searchControls, results);
+            fullLoad(primaryKeys, filter, searchControls, results);
         }
     }
 
@@ -505,8 +441,6 @@ public class Source implements SourceMBean {
      * Check query cache, peroform search, store results in query cache.
      */
     public void searchAndLoad(
-            Partition partition,
-            SourceConfig sourceConfig,
             Filter filter,
             PenroseSearchControls searchControls,
             PenroseSearchResults results
@@ -520,7 +454,7 @@ public class Source implements SourceMBean {
         if (pks == null) {
             log.debug("Searching source "+sourceConfig.getName()+" with filter "+filter);
             PenroseSearchResults sr = new PenroseSearchResults();
-            performSearch(partition, sourceConfig, filter, searchControls, sr);
+            performSearch(filter, searchControls, sr);
             pks = sr.getAll();
 
             int rc = sr.getReturnCode();
@@ -534,15 +468,13 @@ public class Source implements SourceMBean {
         }
 
         log.debug("Loading source "+sourceConfig.getName()+" with pks "+pks);
-        load(partition, sourceConfig, pks, searchControls, results);
+        load(pks, searchControls, results);
     }
 
     /**
      * Load then store in data cache.
      */
     public void fullLoad(
-            Partition partition,
-            SourceConfig sourceConfig,
             Collection primaryKeys,
             Filter filter,
             PenroseSearchControls searchControls,
@@ -552,10 +484,10 @@ public class Source implements SourceMBean {
         Collection pks = sourceCache.search(filter);
 
         if (pks != null) {
-            load(partition, sourceConfig, pks, searchControls, results);
+            load(pks, searchControls, results);
 
         } else {
-            performLoad(partition, sourceConfig, primaryKeys, filter, searchControls, results);
+            performLoad(primaryKeys, filter, searchControls, results);
             //store(sourceConfig, values);
         }
     }
@@ -564,8 +496,6 @@ public class Source implements SourceMBean {
      * Check data cache then load.
      */
     public void load(
-            final Partition partition,
-            final SourceConfig sourceConfig,
             final Collection pks,
             PenroseSearchControls searchControls,
             final PenroseSearchResults results
@@ -594,7 +524,7 @@ public class Source implements SourceMBean {
 
             log.debug("Loading missing keys: "+missingPks);
             PenroseSearchResults list = new PenroseSearchResults();
-            retrieve(partition, sourceConfig, missingPks, searchControls, list);
+            retrieve(missingPks, searchControls, list);
             list.close();
 
             results.addAll(list.getAll());
@@ -615,8 +545,6 @@ public class Source implements SourceMBean {
      * Load then store in data cache.
      */
     public void retrieve(
-            Partition partition,
-            SourceConfig sourceConfig,
             Collection keys,
             PenroseSearchControls searchControls,
             PenroseSearchResults results
@@ -626,7 +554,7 @@ public class Source implements SourceMBean {
 
         Filter filter = FilterTool.createFilter(keys);
 
-        performLoad(partition, sourceConfig, keys, filter, searchControls, results);
+        performLoad(keys, filter, searchControls, results);
 
         //Collection values = new ArrayList();
         //values.addAll(results.getAll());
@@ -635,8 +563,6 @@ public class Source implements SourceMBean {
     }
 
     public Row store(
-            Partition partition,
-            SourceConfig sourceConfig,
             AttributeValues sourceValues
     ) throws Exception {
         Row pk = sourceConfig.getPrimaryKeyValues(sourceValues);
@@ -657,8 +583,6 @@ public class Source implements SourceMBean {
     }
 
     public void store(
-            Partition partition,
-            SourceConfig sourceConfig,
             Collection values
     ) throws Exception {
 
@@ -669,7 +593,7 @@ public class Source implements SourceMBean {
 
         for (Iterator i=values.iterator(); i.hasNext(); ) {
             AttributeValues sourceValues = (AttributeValues)i.next();
-            Row npk = store(partition, sourceConfig, sourceValues);
+            Row npk = store(sourceValues);
             pks.add(npk);
 
             for (Iterator j=uniqueFieldDefinitions.iterator(); j.hasNext(); ) {
@@ -702,8 +626,6 @@ public class Source implements SourceMBean {
      * Perform the search operation.
      */
     public void performSearch(
-            Partition partition,
-            SourceConfig sourceConfig,
             Filter filter,
             PenroseSearchControls searchControls,
             PenroseSearchResults results
@@ -711,7 +633,6 @@ public class Source implements SourceMBean {
 
         PenroseSearchResults sr = new PenroseSearchResults();
         try {
-
             long sizeLimit = searchControls.getSizeLimit();
             if (sizeLimit == 0) {
                 String s = sourceConfig.getParameter(SourceConfig.SIZE_LIMIT);
@@ -746,8 +667,6 @@ public class Source implements SourceMBean {
      * Perform the load operation.
      */
     public void performLoad(
-            final Partition partition,
-            final SourceConfig sourceConfig,
             Collection primaryKeys,
             final Filter filter,
             PenroseSearchControls searchControls,
@@ -760,7 +679,7 @@ public class Source implements SourceMBean {
             public void objectAdded(PipelineEvent event) {
                 try {
                     AttributeValues sourceValues = (AttributeValues)event.getObject();
-                    store(partition, sourceConfig, sourceValues);
+                    store(sourceValues);
                     results.add(sourceValues);
 
                 } catch (Exception e) {
@@ -840,5 +759,13 @@ public class Source implements SourceMBean {
 
     public void setStatus(String status) {
         this.status = status;
+    }
+
+    public SourceCounter getCounter() {
+        return counter;
+    }
+
+    public void setCounter(SourceCounter counter) {
+        this.counter = counter;
     }
 }

@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
-package org.safehaus.penrose.connector;
+package org.safehaus.penrose.module;
 
 import org.safehaus.penrose.source.SourceConfig;
 import org.safehaus.penrose.connection.ConnectionConfig;
@@ -25,6 +25,7 @@ import org.safehaus.penrose.session.PenroseSearchControls;
 import org.safehaus.penrose.session.PenroseSession;
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.module.Module;
+import org.safehaus.penrose.module.PollingConnectorRunnable;
 import org.safehaus.penrose.cache.EntryCache;
 import org.safehaus.penrose.cache.SourceCache;
 import org.safehaus.penrose.interpreter.Interpreter;
@@ -114,7 +115,7 @@ public class PollingConnectorModule extends Module {
 
         PenroseSearchControls sc = new PenroseSearchControls();
         PenroseSearchResults list = new PenroseSearchResults();
-        source.retrieve(partition, sourceConfig, map.keySet(), sc, list);
+        source.retrieve(map.keySet(), sc, list);
         list.close();
     }
 
@@ -175,7 +176,7 @@ public class PollingConnectorModule extends Module {
 
         PenroseSearchControls sc = new PenroseSearchControls();
         PenroseSearchResults list = new PenroseSearchResults();
-        source.retrieve(partition, sourceConfig, pks, sc, list);
+        source.retrieve(pks, sc, list);
         list.close();
 
         for (Iterator i=pks.iterator(); i.hasNext(); ) {

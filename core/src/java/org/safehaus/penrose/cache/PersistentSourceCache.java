@@ -20,6 +20,12 @@ package org.safehaus.penrose.cache;
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.connection.ConnectionManager;
+import org.safehaus.penrose.connection.Connection;
+import org.safehaus.penrose.source.SourceConfig;
+import org.safehaus.penrose.session.PenroseSearchResults;
+import org.safehaus.penrose.session.PenroseSearchControls;
+import org.safehaus.penrose.pipeline.PipelineAdapter;
+import org.safehaus.penrose.pipeline.PipelineEvent;
 
 import java.util.*;
 
@@ -80,6 +86,55 @@ public class PersistentSourceCache extends SourceCache {
     
     public Map load(Collection keys, Collection missingKeys) throws Exception {
         return cache.load(keys, missingKeys);
+    }
+
+    public void load() throws Exception {
+/*
+        String s = sourceConfig.getParameter(SourceConfig.AUTO_REFRESH);
+        boolean autoRefresh = s == null ? SourceConfig.DEFAULT_AUTO_REFRESH : new Boolean(s).booleanValue();
+
+        if (!autoRefresh) return;
+*/
+        String s = sourceConfig.getParameter(SourceConfig.SIZE_LIMIT);
+        final int sizeLimit = s == null ? SourceConfig.DEFAULT_SIZE_LIMIT : Integer.parseInt(s);
+
+        log.info("Loading cache for "+sourceConfig.getName()+"...");
+
+        ConnectionManager connectionManager = sourceCacheManager.getConnectionManager();
+        final Connection connection = connectionManager.getConnection(partition, sourceConfig.getConnectionName());
+
+        final PenroseSearchResults sr = new PenroseSearchResults();
+
+        sr.addListener(new PipelineAdapter() {
+            public void objectAdded(PipelineEvent event) {
+                try {
+                    AttributeValues sourceValues = (AttributeValues)event.getObject();
+                    Row pk = sourceConfig.getPrimaryKeyValues(sourceValues);
+                    //Row pk = sourceValues.getRdn();
+                    log.info("Storing "+pk+" in source cache");
+                    put(pk, sourceValues);
+                } catch (Exception e) {
+                    log.debug(e.getMessage(), e);
+                }
+            }
+
+            public void pipelineClosed(PipelineEvent event) {
+                try {
+                    int lastChangeNumber = connection.getLastChangeNumber(sourceConfig);
+                    log.info("Last change number for "+sourceConfig.getName()+": "+lastChangeNumber);
+                    setLastChangeNumber(lastChangeNumber);
+                } catch (Exception e) {
+                    log.debug(e.getMessage(), e);
+                }
+            }
+        });
+
+        PenroseSearchControls sc = new PenroseSearchControls();
+        sc.setSizeLimit(sizeLimit);
+
+        connection.load(sourceConfig, null, null, sc, sr);
+
+        sr.close();
     }
 
     public Collection search(Filter filter) throws Exception {

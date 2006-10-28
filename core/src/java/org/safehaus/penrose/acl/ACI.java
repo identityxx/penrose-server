@@ -17,10 +17,12 @@
  */
 package org.safehaus.penrose.acl;
 
+import java.io.Serializable;
+
 /**
  * @author Endi S. Dewata
  */
-public class ACI implements Cloneable {
+public class ACI implements Cloneable, Serializable {
 
     public final static String SUBJECT_USER          = "user";
     public final static String SUBJECT_GROUP         = "group";

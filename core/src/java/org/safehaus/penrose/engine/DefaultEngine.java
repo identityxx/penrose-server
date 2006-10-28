@@ -93,7 +93,7 @@ public class DefaultEngine extends Engine {
                 log.debug("Bind to "+sourceMapping.getName()+" as "+pk+".");
 
                 Source source = getSource(partition, sourceConfig);
-                int rc = source.bind(partition, sourceConfig, entryMapping, pk, password);
+                int rc = source.bind(entryMapping, pk, password);
                 if (rc == LDAPException.SUCCESS) return rc;
             }
         }

@@ -17,11 +17,10 @@
  */
 package org.safehaus.penrose.cache;
 
-import org.safehaus.penrose.source.Source;
 import org.safehaus.penrose.source.SourceManager;
 import org.safehaus.penrose.source.SourceConfig;
 import org.safehaus.penrose.source.FieldConfig;
-import org.safehaus.penrose.connector.JDBCAdapter;
+import org.safehaus.penrose.jdbc.JDBCAdapter;
 import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.PenroseFactory;
 import org.safehaus.penrose.connection.ConnectionConfig;
@@ -53,21 +52,17 @@ public class CacheManager {
         entryCache.create();
 
         PartitionManager partitionManager = penrose.getPartitionManager();
-        SourceManager sourceManager = penrose.getSourceManager();
 
         for (Iterator i=partitionManager.getPartitions().iterator(); i.hasNext(); ) {
             Partition partition = (Partition)i.next();
 
             Collection entryMappings = partition.getRootEntryMappings();
             entryCache.create(partition, entryMappings);
-
-            for (Iterator j=partition.getSourceConfigs().iterator(); j.hasNext(); ) {
-                SourceConfig sourceConfig = (SourceConfig)j.next();
-                Source source = sourceManager.getSource(partition.getName(), sourceConfig.getName());
-                SourceCache sourceCache = source.getSourceCache();
-                sourceCache.create();
-            }
         }
+
+        SourceManager sourceManager = penrose.getSourceManager();
+        SourceCacheManager sourceCacheManager = sourceManager.getSourceCacheManager();
+        sourceCacheManager.create();
     }
 
     public static void load(Penrose penrose) throws Exception {
@@ -75,19 +70,15 @@ public class CacheManager {
         EntryCache entryCache = handler.getEntryCache();
 
         PartitionManager partitionManager = penrose.getPartitionManager();
-        SourceManager sourceManager = penrose.getSourceManager();
 
         for (Iterator i=partitionManager.getPartitions().iterator(); i.hasNext(); ) {
             Partition partition = (Partition)i.next();
             entryCache.load(penrose, partition);
-
-            for (Iterator j=partition.getSourceConfigs().iterator(); j.hasNext(); ) {
-                SourceConfig sourceConfig = (SourceConfig)j.next();
-                Source source = sourceManager.getSource(partition.getName(), sourceConfig.getName());
-                SourceCache sourceCache = source.getSourceCache();
-                sourceCache.load();
-            }
         }
+
+        SourceManager sourceManager = penrose.getSourceManager();
+        SourceCacheManager sourceCacheManager = sourceManager.getSourceCacheManager();
+        sourceCacheManager.load();
     }
 
     public static void clean(Penrose penrose) throws Exception {
@@ -96,21 +87,17 @@ public class CacheManager {
         EntryCache entryCache = handler.getEntryCache();
 
         PartitionManager partitionManager = penrose.getPartitionManager();
-        SourceManager sourceManager = penrose.getSourceManager();
 
         for (Iterator i=partitionManager.getPartitions().iterator(); i.hasNext(); ) {
             Partition partition = (Partition)i.next();
 
             Collection entryMappings = partition.getRootEntryMappings();
             entryCache.clean(partition, entryMappings);
-
-            for (Iterator j=partition.getSourceConfigs().iterator(); j.hasNext(); ) {
-                SourceConfig sourceConfig = (SourceConfig)j.next();
-                Source source = sourceManager.getSource(partition.getName(), sourceConfig.getName());
-                SourceCache sourceCache = source.getSourceCache();
-                sourceCache.clean();
-            }
         }
+
+        SourceManager sourceManager = penrose.getSourceManager();
+        SourceCacheManager sourceCacheManager = sourceManager.getSourceCacheManager();
+        sourceCacheManager.clean();
     }
 
     public static void drop(Penrose penrose) throws Exception {
@@ -118,21 +105,17 @@ public class CacheManager {
         Handler handler = penrose.getHandler();
         EntryCache entryCache = handler.getEntryCache();
 
-        PartitionManager partitionManager = penrose.getPartitionManager();
         SourceManager sourceManager = penrose.getSourceManager();
+        SourceCacheManager sourceCacheManager = sourceManager.getSourceCacheManager();
+        sourceCacheManager.drop();
+
+        PartitionManager partitionManager = penrose.getPartitionManager();
 
         for (Iterator i=partitionManager.getPartitions().iterator(); i.hasNext(); ) {
             Partition partition = (Partition)i.next();
 
             Collection entryMappings = partition.getRootEntryMappings();
             entryCache.drop(partition, entryMappings);
-
-            for (Iterator j=partition.getSourceConfigs().iterator(); j.hasNext(); ) {
-                SourceConfig sourceConfig = (SourceConfig)j.next();
-                Source source = sourceManager.getSource(partition.getName(), sourceConfig.getName());
-                SourceCache sourceCache = source.getSourceCache();
-                sourceCache.drop();
-            }
         }
 
         entryCache.drop();

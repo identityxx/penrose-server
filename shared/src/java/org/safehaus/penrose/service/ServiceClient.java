@@ -1,13 +1,10 @@
 package org.safehaus.penrose.service;
 
-import org.safehaus.penrose.service.ServiceMBean;
-import org.safehaus.penrose.service.ServiceConfig;
 import org.safehaus.penrose.client.PenroseClient;
 
 import javax.management.ObjectName;
 import javax.management.MBeanServerConnection;
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.Arrays;
 
 /**

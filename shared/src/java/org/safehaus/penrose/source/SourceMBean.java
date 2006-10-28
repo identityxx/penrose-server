@@ -12,6 +12,7 @@ public interface SourceMBean {
     public String getName() throws Exception;
     public SourceConfig getSourceConfig() throws Exception;
     public String getStatus() throws Exception;
+    public SourceCounter getCounter() throws Exception;
 
     public void start() throws Exception;
     public void stop() throws Exception;

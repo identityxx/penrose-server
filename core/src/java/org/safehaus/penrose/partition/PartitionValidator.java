@@ -18,7 +18,7 @@
 package org.safehaus.penrose.partition;
 
 import org.safehaus.penrose.mapping.*;
-import org.safehaus.penrose.connector.AdapterConfig;
+import org.safehaus.penrose.adapter.AdapterConfig;
 import org.safehaus.penrose.schema.ObjectClass;
 import org.safehaus.penrose.schema.SchemaManager;
 import org.safehaus.penrose.config.PenroseConfig;

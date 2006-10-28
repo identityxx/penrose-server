@@ -25,7 +25,7 @@ import org.safehaus.penrose.graph.Graph;
 import org.safehaus.penrose.interpreter.InterpreterManager;
 import org.safehaus.penrose.connection.ConnectionManager;
 import org.safehaus.penrose.connection.ConnectionConfig;
-import org.safehaus.penrose.connector.AdapterConfig;
+import org.safehaus.penrose.adapter.AdapterConfig;
 import org.safehaus.penrose.source.SourceManager;
 import org.safehaus.penrose.source.SourceConfig;
 import org.safehaus.penrose.config.PenroseConfig;

@@ -35,8 +35,6 @@ import org.slf4j.Logger;
  */
 public class Partition implements PartitionMBean, Serializable {
 
-    Logger log = LoggerFactory.getLogger(getClass());
-
     public final static String STOPPING = "STOPPING";
     public final static String STOPPED  = "STOPPED";
     public final static String STARTING = "STARTING";
@@ -136,7 +134,6 @@ public class Partition implements PartitionMBean, Serializable {
     public void addEntryMapping(EntryMapping entryMapping) throws Exception {
 
         String dn = entryMapping.getDn();
-        log.debug("Adding entry "+dn);
 
         Collection c = (Collection)entryMappings.get(dn.toLowerCase());
         if (c == null) {
@@ -188,6 +185,8 @@ public class Partition implements PartitionMBean, Serializable {
 
         EntryMapping oldParent = getParent(entryMapping);
         String oldDn = entryMapping.getDn();
+
+        Logger log = LoggerFactory.getLogger(getClass());
 
         log.debug("Renaming "+oldDn+" to "+newDn);
 
@@ -245,6 +244,8 @@ public class Partition implements PartitionMBean, Serializable {
     public void renameChildren(EntryMapping entryMapping, String newDn) {
         if (entryMapping == null) return;
         if (newDn.equals(entryMapping.getDn())) return;
+
+        Logger log = LoggerFactory.getLogger(getClass());
 
         String oldDn = entryMapping.getDn();
         log.debug("Renaming "+oldDn+" to "+newDn);
@@ -412,7 +413,6 @@ public class Partition implements PartitionMBean, Serializable {
     }
 
     public void addSourceConfig(SourceConfig sourceConfig) {
-        log.debug("Adding source "+sourceConfig.getName());
         sourceConfigs.put(sourceConfig.getName(), sourceConfig);
     }
 
@@ -451,6 +451,8 @@ public class Partition implements PartitionMBean, Serializable {
     }
 
     public Collection findEntryMappings(String dn) throws Exception {
+
+        Logger log = LoggerFactory.getLogger(getClass());
 
         log.debug("Finding entry mappings \""+dn+"\" in partition "+getName());
 
