@@ -79,14 +79,13 @@ public class AttributeMapping implements Cloneable, Serializable {
         this(name, type, value, false);
     }
 
-    public AttributeMapping(String name, String type, Object value, boolean rdn) {
+    public AttributeMapping(String name, String valueType, Object value, boolean rdn) {
         this.name = name;
-        this.type = type;
 
-        if (CONSTANT.equals(type)) {
+        if (CONSTANT.equals(valueType)) {
             this.constant = value;
 
-        } else if (VARIABLE.equals(type)) {
+        } else if (VARIABLE.equals(valueType)) {
             this.variable = (String)value;
 
         } else {
@@ -109,7 +108,6 @@ public class AttributeMapping implements Cloneable, Serializable {
     }
 
     public void setExpression(Expression expression) {
-        this.type = EXPRESSION;
         this.expression = expression;
     }
 
@@ -130,12 +128,10 @@ public class AttributeMapping implements Cloneable, Serializable {
     }
 
     public void setBinary(byte[] bytes) {
-        this.type = CONSTANT;
         constant = bytes;
     }
 
     public void setBinary(String encodedData) throws Exception {
-        this.type = CONSTANT;
         constant = BinaryUtil.decode(BinaryUtil.BASE64, encodedData);
     }
 
@@ -144,7 +140,6 @@ public class AttributeMapping implements Cloneable, Serializable {
     }
 
     public void setConstant(Object constant) {
-        this.type = CONSTANT;
         this.constant = constant;
     }
 
@@ -153,7 +148,6 @@ public class AttributeMapping implements Cloneable, Serializable {
     }
 
     public void setVariable(String variable) {
-        this.type = VARIABLE;
         this.variable = variable;
     }
 

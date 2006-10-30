@@ -102,7 +102,11 @@ public class InMemoryEntryCacheStorage extends EntryCacheStorage {
         return result;
     }
 
-    public boolean search(String baseDn, Filter filter, PenroseSearchResults results) throws Exception {
+    public boolean search(
+            String baseDn,
+            Filter filter,
+            PenroseSearchResults results
+    ) throws Exception {
 
         log.debug("search("+baseDn+", "+filter+")");
 

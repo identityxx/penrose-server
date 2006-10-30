@@ -457,15 +457,14 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
 
     public String getColumnTypeDeclaration(AttributeMapping attributeMapping) {
         StringBuffer sb = new StringBuffer();
-        sb.append("VARCHAR");
-/*
+
         sb.append(attributeMapping.getType());
         if ("VARCHAR".equals(attributeMapping.getType()) && attributeMapping.getLength() > 0) {
             sb.append("(");
             sb.append(attributeMapping.getLength());
             sb.append(")");
         }
-*/
+
         return sb.toString();
     }
 
@@ -950,7 +949,11 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
         return false;
     }
 
-    public boolean search(final String baseDn, final Filter filter, final PenroseSearchResults results) throws Exception {
+    public boolean search(
+            final String baseDn,
+            final Filter filter,
+            final PenroseSearchResults results
+    ) throws Exception {
 
         log.debug(Formatter.displaySeparator(80));
         log.debug(Formatter.displayLine("Searching entry cache for "+entryMapping.getDn(), 80));
@@ -1037,19 +1040,26 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
 
             log.debug(Formatter.displayLine("Results:", 80));
 
+            boolean empty = true;
+
             while (rs.next()) {
                 String rdn = (String)rs.getObject(1);
                 String pdn = (String)rs.getObject(2);
                 String dn = rdn+","+pdn;
                 log.debug(Formatter.displayLine(" - "+dn, 80));
-                results.add(dn);
+                Entry entry = get(dn);
+                results.add(entry);
+                empty = false;
             }
 
             log.debug(Formatter.displaySeparator(80));
 
+            return !empty;
+
         } catch (Exception e) {
             log.error(e.getMessage(), e);
             results.setReturnCode(LDAPException.OPERATIONS_ERROR);
+            return false;
 
         } finally {
             if (rs != null) try { rs.close(); } catch (Exception e) {}
@@ -1057,8 +1067,6 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
             if (con != null) try { con.close(); } catch (Exception e) {}
             results.close();
         }
-
-        return true;
     }
 
     public void search(SourceConfig sourceConfig, Row filter, PenroseSearchResults results) throws Exception {
