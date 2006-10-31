@@ -33,6 +33,7 @@ import java.util.*;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.Timestamp;
 
 /**
  * @author Endi S. Dewata
@@ -100,7 +101,7 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
         int id = 0;
 
         try {
-            String sql = "select id from penrose_mappings where dn=?";
+            String sql = "select id from "+partition.getName()+"_mappings where dn=?";
             con = getConnection();
 
             if (log.isDebugEnabled()) {
@@ -148,7 +149,7 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
         PreparedStatement ps = null;
 
         try {
-            String sql = "insert into penrose_mappings values (null, ?)";
+            String sql = "insert into "+partition.getName()+"_mappings values (null, ?)";
             con = getConnection();
 
             if (log.isDebugEnabled()) {
@@ -175,9 +176,285 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
         }
     }
 
+    public int getQueryId(String baseDn, String filter) throws Exception {
+
+        String tableName = partition.getName()+"_"+mappingId+"_queries";
+
+        StringBuffer sb = new StringBuffer();
+        Collection parameters = new ArrayList();
+
+        sb.append("select id from ");
+        sb.append(tableName);
+        sb.append(" where baseDn=? and filter=?");
+
+        parameters.add(baseDn);
+        parameters.add(filter);
+
+        String sql = sb.toString();
+
+        Connection con = null;
+        PreparedStatement ps = null;
+        ResultSet rs = null;
+
+        int id = 0;
+
+        try {
+            con = getConnection();
+
+            if (log.isDebugEnabled()) {
+                log.debug(Formatter.displaySeparator(80));
+                Collection lines = Formatter.split(sql, 80);
+                for (Iterator i=lines.iterator(); i.hasNext(); ) {
+                    String line = (String)i.next();
+                    log.debug(Formatter.displayLine(line, 80));
+                }
+                log.debug(Formatter.displaySeparator(80));
+            }
+
+            ps = con.prepareStatement(sql);
+
+            int counter = 1;
+            for (Iterator i=parameters.iterator(); i.hasNext(); counter++) {
+                Object value = i.next();
+                ps.setObject(counter, value);
+            }
+
+            if (log.isDebugEnabled()) {
+                log.debug(Formatter.displayLine("Parameters:", 80));
+                counter = 1;
+                for (Iterator i=parameters.iterator(); i.hasNext(); counter++) {
+                    Object value = i.next();
+                    log.debug(Formatter.displayLine(" - "+counter+" = "+value, 80));
+                }
+                log.debug(Formatter.displaySeparator(80));
+            }
+
+            rs = ps.executeQuery();
+            if (rs.next()) {
+                id = rs.getInt(1);
+            }
+
+            if (log.isDebugEnabled()) {
+                log.debug(Formatter.displayLine("Results: id = "+id, 80));
+                log.debug(Formatter.displaySeparator(80));
+            }
+
+            return id;
+
+        } catch (Exception e) {
+            log.error(e.getMessage());
+            return -1;
+
+        } finally {
+            if (rs != null) try { rs.close(); } catch (Exception e) {}
+            if (ps != null) try { ps.close(); } catch (Exception e) {}
+            if (con != null) try { con.close(); } catch (Exception e) {}
+        }
+    }
+
+    public Collection getQueryResults(int queryId) throws Exception {
+
+        String tableName = partition.getName()+"_"+mappingId+"_query_results";
+
+        StringBuffer sb = new StringBuffer();
+        Collection parameters = new ArrayList();
+
+        sb.append("select entryId from ");
+        sb.append(tableName);
+        sb.append(" where queryId=?");
+
+        parameters.add(new Integer(queryId));
+
+        String sql = sb.toString();
+
+        Connection con = null;
+        PreparedStatement ps = null;
+        ResultSet rs = null;
+
+        try {
+            con = getConnection();
+
+            if (log.isDebugEnabled()) {
+                log.debug(Formatter.displaySeparator(80));
+                Collection lines = Formatter.split(sql, 80);
+                for (Iterator i=lines.iterator(); i.hasNext(); ) {
+                    String line = (String)i.next();
+                    log.debug(Formatter.displayLine(line, 80));
+                }
+                log.debug(Formatter.displaySeparator(80));
+            }
+
+            ps = con.prepareStatement(sql);
+
+            int counter = 1;
+            for (Iterator i=parameters.iterator(); i.hasNext(); counter++) {
+                Object value = i.next();
+                ps.setObject(counter, value);
+            }
+
+            if (log.isDebugEnabled()) {
+                log.debug(Formatter.displayLine("Parameters:", 80));
+                counter = 1;
+                for (Iterator i=parameters.iterator(); i.hasNext(); counter++) {
+                    Object value = i.next();
+                    log.debug(Formatter.displayLine(" - "+counter+" = "+value, 80));
+                }
+                log.debug(Formatter.displaySeparator(80));
+            }
+
+            rs = ps.executeQuery();
+
+            log.debug(Formatter.displayLine("Results:", 80));
+            Collection list = new ArrayList();
+
+            while (rs.next()) {
+                int entryId = rs.getInt(1);
+                log.debug(Formatter.displayLine(" - "+entryId, 80));
+                list.add(new Integer(entryId));
+            }
+
+            if (log.isDebugEnabled()) {
+                log.debug(Formatter.displaySeparator(80));
+            }
+
+            return list;
+
+        } catch (Exception e) {
+            log.error(e.getMessage());
+            return null;
+
+        } finally {
+            if (rs != null) try { rs.close(); } catch (Exception e) {}
+            if (ps != null) try { ps.close(); } catch (Exception e) {}
+            if (con != null) try { con.close(); } catch (Exception e) {}
+        }
+    }
+
+    public void invalidate() throws Exception {
+
+        Connection con = null;
+        PreparedStatement ps = null;
+
+        try {
+            con = getConnection();
+
+            String tableName = partition.getName()+"_"+mappingId+"_queries";
+            String sql = "delete from "+tableName;
+
+            if (log.isDebugEnabled()) {
+                log.debug(Formatter.displaySeparator(80));
+                Collection lines = Formatter.split(sql, 80);
+                for (Iterator i=lines.iterator(); i.hasNext(); ) {
+                    String line = (String)i.next();
+                    log.debug(Formatter.displayLine(line, 80));
+                }
+                log.debug(Formatter.displaySeparator(80));
+            }
+
+            ps = con.prepareStatement(sql);
+            ps.execute();
+
+        } catch (Exception e) {
+            log.error(e.getMessage());
+
+        } finally {
+            if (ps != null) try { ps.close(); } catch (Exception e) {}
+            if (con != null) try { con.close(); } catch (Exception e) {}
+        }
+
+        try {
+            con = getConnection();
+
+            String tableName = partition.getName()+"_"+mappingId+"_query_results";
+            String sql = "delete from "+tableName;
+
+            if (log.isDebugEnabled()) {
+                log.debug(Formatter.displaySeparator(80));
+                Collection lines = Formatter.split(sql, 80);
+                for (Iterator i=lines.iterator(); i.hasNext(); ) {
+                    String line = (String)i.next();
+                    log.debug(Formatter.displayLine(line, 80));
+                }
+                log.debug(Formatter.displaySeparator(80));
+            }
+
+            ps = con.prepareStatement(sql);
+            ps.execute();
+
+        } catch (Exception e) {
+            log.error(e.getMessage());
+
+        } finally {
+            if (ps != null) try { ps.close(); } catch (Exception e) {}
+            if (con != null) try { con.close(); } catch (Exception e) {}
+        }
+    }
+
+    public void addQuery(String baseDn, String filter) throws Exception {
+
+        String tableName = partition.getName()+"_"+mappingId+"_queries";
+
+        StringBuffer sb = new StringBuffer();
+        Collection parameters = new ArrayList();
+
+        sb.append("insert into ");
+        sb.append(tableName);
+        sb.append(" values (null, ?, ?, ?)");
+
+        parameters.add(baseDn);
+        parameters.add(filter);
+        parameters.add(new Timestamp(System.currentTimeMillis() + expiration * 60 * 1000));
+
+        String sql = sb.toString();
+
+        Connection con = null;
+        PreparedStatement ps = null;
+
+        try {
+            con = getConnection();
+
+            if (log.isDebugEnabled()) {
+                log.debug(Formatter.displaySeparator(80));
+                Collection lines = Formatter.split(sql, 80);
+                for (Iterator i=lines.iterator(); i.hasNext(); ) {
+                    String line = (String)i.next();
+                    log.debug(Formatter.displayLine(line, 80));
+                }
+                log.debug(Formatter.displaySeparator(80));
+            }
+
+            ps = con.prepareStatement(sql);
+
+            int counter = 1;
+            for (Iterator i=parameters.iterator(); i.hasNext(); counter++) {
+                Object value = i.next();
+                ps.setObject(counter, value);
+            }
+
+            if (log.isDebugEnabled()) {
+                log.debug(Formatter.displayLine("Parameters:", 80));
+                counter = 1;
+                for (Iterator i=parameters.iterator(); i.hasNext(); counter++) {
+                    Object value = i.next();
+                    log.debug(Formatter.displayLine(" - "+counter+" = "+value, 80));
+                }
+                log.debug(Formatter.displaySeparator(80));
+            }
+
+            ps.execute();
+
+        } catch (Exception e) {
+            log.error(e.getMessage());
+
+        } finally {
+            if (ps != null) try { ps.close(); } catch (Exception e) {}
+            if (con != null) try { con.close(); } catch (Exception e) {}
+        }
+    }
+
     public int getEntryId(String dn) throws Exception {
 
-        String tableName = "penrose_"+mappingId+"_entries";
+        String tableName = partition.getName()+"_"+mappingId+"_entries";
 
         StringBuffer sb = new StringBuffer();
         Collection parameters = new ArrayList();
@@ -256,20 +533,21 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
 
     public void addEntry(String dn) throws Exception {
 
-        String tableName = "penrose_"+mappingId+"_entries";
+        String tableName = partition.getName()+"_"+mappingId+"_entries";
 
         StringBuffer sb = new StringBuffer();
         Collection parameters = new ArrayList();
 
         sb.append("insert into ");
         sb.append(tableName);
-        sb.append(" values (null, ?, ?)");
+        sb.append(" values (null, ?, ?, ?)");
 
         String parentDn = EntryUtil.getParentDn(dn);
         Row rdn = EntryUtil.getRdn(dn);
 
         parameters.add(rdn.toString());
         parameters.add(parentDn);
+        parameters.add(new Timestamp(System.currentTimeMillis() + expiration * 60 * 1000));
 
         String sql = sb.toString();
 
@@ -320,7 +598,7 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
 
     public void removeEntry(int entryId) throws Exception {
 
-        String tableName = "penrose_"+mappingId+"_entries";
+        String tableName = partition.getName()+"_"+mappingId+"_entries";
 
         StringBuffer sb = new StringBuffer();
         Collection parameters = new ArrayList();
@@ -377,20 +655,86 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
 
     public void createEntriesTable() throws Exception {
 
-        String tableName = "penrose_"+mappingId+"_entries";
-
-        StringBuffer sb = new StringBuffer();
-        sb.append("create table ");
-        sb.append(tableName);
-        sb.append(" (id integer auto_increment, rdn varchar(255), parentDn varchar(255), primary key (id))");
-
-        String sql = sb.toString();
-
         Connection con = null;
         PreparedStatement ps = null;
 
         try {
             con = getConnection();
+
+            String tableName = partition.getName()+"_"+mappingId+"_entries";
+
+            StringBuffer sb = new StringBuffer();
+            sb.append("create table ");
+            sb.append(tableName);
+            sb.append(" (id integer auto_increment, rdn varchar(255), parentDn varchar(255), expiration DATETIME, primary key (id))");
+
+            String sql = sb.toString();
+
+            if (log.isDebugEnabled()) {
+                log.debug(Formatter.displaySeparator(80));
+                Collection lines = Formatter.split(sql, 80);
+                for (Iterator i=lines.iterator(); i.hasNext(); ) {
+                    String line = (String)i.next();
+                    log.debug(Formatter.displayLine(line, 80));
+                }
+                log.debug(Formatter.displaySeparator(80));
+            }
+
+            ps = con.prepareStatement(sql);
+            ps.execute();
+
+        } catch (Exception e) {
+            log.error(e.getMessage());
+
+        } finally {
+            if (ps != null) try { ps.close(); } catch (Exception e) {}
+            if (con != null) try { con.close(); } catch (Exception e) {}
+        }
+
+        try {
+            con = getConnection();
+
+            String tableName = partition.getName()+"_"+mappingId+"_queries";
+
+            StringBuffer sb = new StringBuffer();
+            sb.append("create table ");
+            sb.append(tableName);
+            sb.append(" (id integer auto_increment, baseDn varchar(255), filter varchar(255), expiration DATETIME, primary key (id))");
+
+            String sql = sb.toString();
+
+            if (log.isDebugEnabled()) {
+                log.debug(Formatter.displaySeparator(80));
+                Collection lines = Formatter.split(sql, 80);
+                for (Iterator i=lines.iterator(); i.hasNext(); ) {
+                    String line = (String)i.next();
+                    log.debug(Formatter.displayLine(line, 80));
+                }
+                log.debug(Formatter.displaySeparator(80));
+            }
+
+            ps = con.prepareStatement(sql);
+            ps.execute();
+
+        } catch (Exception e) {
+            log.error(e.getMessage());
+
+        } finally {
+            if (ps != null) try { ps.close(); } catch (Exception e) {}
+            if (con != null) try { con.close(); } catch (Exception e) {}
+        }
+
+        try {
+            con = getConnection();
+
+            String tableName = partition.getName()+"_"+mappingId+"_query_results";
+
+            StringBuffer sb = new StringBuffer();
+            sb.append("create table ");
+            sb.append(tableName);
+            sb.append(" (queryId integer, entryId integer, primary key (queryId, entryId))");
+
+            String sql = sb.toString();
 
             if (log.isDebugEnabled()) {
                 log.debug(Formatter.displaySeparator(80));
@@ -416,7 +760,7 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
 
     public void createAttributeTable(AttributeMapping attributeMapping) throws Exception {
 
-        String tableName = "penrose_"+mappingId+"_attribute_"+attributeMapping.getName();
+        String tableName = partition.getName()+"_"+mappingId+"_attribute_"+attributeMapping.getName();
 
         StringBuffer sb = new StringBuffer();
         sb.append("create table ");
@@ -483,7 +827,7 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
 
     public void createFieldTable(SourceMapping sourceMapping, FieldConfig fieldConfig) throws Exception {
 
-        String tableName = "penrose_"+mappingId+"_field_"+sourceMapping.getName()+"_"+fieldConfig.getName();
+        String tableName = partition.getName()+"_"+mappingId+"_field_"+sourceMapping.getName()+"_"+fieldConfig.getName();
 
         StringBuffer sb = new StringBuffer();
         sb.append("create table ");
@@ -558,7 +902,7 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
 
     public void dropFieldTable(SourceMapping sourceMapping, SourceConfig sourceConfig, FieldConfig fieldConfig) throws Exception {
 
-        String tableName = "penrose_"+mappingId+"_field_"+sourceMapping.getName()+"_"+fieldConfig.getName();
+        String tableName = partition.getName()+"_"+mappingId+"_field_"+sourceMapping.getName()+"_"+fieldConfig.getName();
 
         String sql = "drop table "+tableName;
 
@@ -592,15 +936,71 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
 
     public void dropEntriesTable() throws Exception {
 
-        String tableName = "penrose_"+mappingId+"_entries";
-
-        String sql = "drop table "+tableName;
-
         Connection con = null;
         PreparedStatement ps = null;
 
         try {
             con = getConnection();
+
+            String tableName = partition.getName()+"_"+mappingId+"_entries";
+
+            String sql = "drop table "+tableName;
+
+            if (log.isDebugEnabled()) {
+                log.debug(Formatter.displaySeparator(80));
+                Collection lines = Formatter.split(sql, 80);
+                for (Iterator i=lines.iterator(); i.hasNext(); ) {
+                    String line = (String)i.next();
+                    log.debug(Formatter.displayLine(line, 80));
+                }
+                log.debug(Formatter.displaySeparator(80));
+            }
+
+            ps = con.prepareStatement(sql);
+            ps.execute();
+
+        } catch (Exception e) {
+            log.error(e.getMessage());
+
+        } finally {
+            if (ps != null) try { ps.close(); } catch (Exception e) {}
+            if (con != null) try { con.close(); } catch (Exception e) {}
+        }
+
+        try {
+            con = getConnection();
+
+            String tableName = partition.getName()+"_"+mappingId+"_queries";
+
+            String sql = "drop table "+tableName;
+
+            if (log.isDebugEnabled()) {
+                log.debug(Formatter.displaySeparator(80));
+                Collection lines = Formatter.split(sql, 80);
+                for (Iterator i=lines.iterator(); i.hasNext(); ) {
+                    String line = (String)i.next();
+                    log.debug(Formatter.displayLine(line, 80));
+                }
+                log.debug(Formatter.displaySeparator(80));
+            }
+
+            ps = con.prepareStatement(sql);
+            ps.execute();
+
+        } catch (Exception e) {
+            log.error(e.getMessage());
+
+        } finally {
+            if (ps != null) try { ps.close(); } catch (Exception e) {}
+            if (con != null) try { con.close(); } catch (Exception e) {}
+        }
+
+        try {
+            con = getConnection();
+
+            String tableName = partition.getName()+"_"+mappingId+"_query_results";
+
+            String sql = "drop table "+tableName;
 
             if (log.isDebugEnabled()) {
                 log.debug(Formatter.displaySeparator(80));
@@ -626,7 +1026,7 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
 
     public void dropAttributeTable(AttributeMapping attributeMapping) throws Exception {
 
-        String tableName = "penrose_"+mappingId+"_attribute_"+attributeMapping.getName();
+        String tableName = partition.getName()+"_"+mappingId+"_attribute_"+attributeMapping.getName();
 
         String sql = "drop table "+tableName;
 
@@ -659,13 +1059,21 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
     }
 
     public Entry get(String dn) throws Exception {
+        log.debug("Getting "+dn);
+
+        int entryId = getEntryId(dn);
+        if (entryId == 0) return null;
+
+        return get(entryId);
+    }
+
+    public Entry get(int entryId) throws Exception {
+
         Entry entry = null;
 
         try {
-            log.debug("Getting "+dn);
-
-            int entryId = getEntryId(dn);
-            if (entryId == 0) return null;
+            String dn = getDn(entryId);
+            if (dn == null) return null;
 
             AttributeValues attributeValues = new AttributeValues();
 
@@ -755,7 +1163,7 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
             if (value.equals("*")) return true;
         }
 
-        String tableName = "penrose_"+mappingId+"_attribute_"+name;
+        String tableName = partition.getName()+"_"+mappingId+"_attribute_"+name;
 
         String alias = (String)tables.get(tableName);
         if (alias == null) {
@@ -858,7 +1266,7 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
 
     public boolean contains(String baseDn, Filter filter) throws Exception {
 
-        String tableName = "penrose_"+mappingId+"_entries";
+        String tableName = partition.getName()+"_"+mappingId+"_entries";
 
         Map tables = new LinkedHashMap();
 
@@ -933,7 +1341,7 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
             rs = ps.executeQuery();
 
             if (!rs.next()) return false;
-            
+
             long count = rs.getLong(1);
 
             return count > 0;
@@ -962,7 +1370,24 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
         log.debug(Formatter.displayLine("Base DN: "+baseDn, 80));
         log.debug(Formatter.displaySeparator(80));
 
-        String tableName = "penrose_"+mappingId+"_entries";
+        try {
+            int queryId = getQueryId(baseDn, filter == null ? null : filter.toString());
+            if (queryId <= 0) return false;
+
+            Collection entryIds = getQueryResults(queryId);
+            for (Iterator i=entryIds.iterator(); i.hasNext(); ) {
+                Integer entryId = (Integer)i.next();
+                Entry entry = get(entryId.intValue());
+                results.add(entry);
+            }
+
+            return true;
+
+        } finally {
+            results.close();
+        }
+/*
+        String tableName = partition.getName()+"_"+mappingId+"_entries";
 
         Map tables = new LinkedHashMap();
 
@@ -1068,12 +1493,13 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
             if (con != null) try { con.close(); } catch (Exception e) {}
             results.close();
         }
+*/
     }
 
     public void search(SourceConfig sourceConfig, Row filter, PenroseSearchResults results) throws Exception {
 
         StringBuffer tableNames = new StringBuffer();
-        tableNames.append("penrose_"+mappingId+"_entries t");
+        tableNames.append(partition.getName()+"_"+mappingId+"_entries t");
 
         StringBuffer whereClause = new StringBuffer();
 
@@ -1091,7 +1517,7 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
                 SourceMapping sourceMapping = (SourceMapping)j.next();
                 if (!sourceMapping.getSourceName().equals(sourceConfig.getName())) continue;
 
-                String tableName = "penrose_"+mappingId+"_field_"+sourceMapping.getName()+"_"+name;
+                String tableName = partition.getName()+"_"+mappingId+"_field_"+sourceMapping.getName()+"_"+name;
 
                 tableNames.append(", ");
                 tableNames.append(tableName);
@@ -1185,6 +1611,85 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
         return results;
     }
 
+    public void add(String baseDn, Filter filter, String dn) throws Exception {
+
+        log.debug("put("+filter+", "+dn+")");
+
+        if (getSize() == 0) return;
+
+        int queryId = getQueryId(baseDn, filter.toString());
+        if (queryId == 0) {
+            addQuery(baseDn, filter.toString());
+            queryId = getQueryId(baseDn, filter.toString());
+        }
+
+        int entryId = getEntryId(dn);
+        if (entryId == 0) return;
+
+        addQueryResult(queryId, entryId);
+    }
+
+    public void addQueryResult(int queryId, int entryId) throws Exception {
+
+        String tableName = partition.getName()+"_"+mappingId+"_query_results";
+
+        StringBuffer sb = new StringBuffer();
+        Collection parameters = new ArrayList();
+
+        sb.append("insert into ");
+        sb.append(tableName);
+        sb.append(" values (?, ?)");
+
+        parameters.add(new Integer(queryId));
+        parameters.add(new Integer(entryId));
+
+        String sql = sb.toString();
+
+        Connection con = null;
+        PreparedStatement ps = null;
+
+        try {
+            con = getConnection();
+
+            if (log.isDebugEnabled()) {
+                log.debug(Formatter.displaySeparator(80));
+                Collection lines = Formatter.split(sql, 80);
+                for (Iterator i=lines.iterator(); i.hasNext(); ) {
+                    String line = (String)i.next();
+                    log.debug(Formatter.displayLine(line, 80));
+                }
+                log.debug(Formatter.displaySeparator(80));
+            }
+
+            ps = con.prepareStatement(sql);
+
+            int counter = 1;
+            for (Iterator i=parameters.iterator(); i.hasNext(); counter++) {
+                Object value = i.next();
+                ps.setObject(counter, value);
+            }
+
+            if (log.isDebugEnabled()) {
+                log.debug(Formatter.displayLine("Parameters:", 80));
+                counter = 1;
+                for (Iterator i=parameters.iterator(); i.hasNext(); counter++) {
+                    Object value = i.next();
+                    log.debug(Formatter.displayLine(" - "+counter+" = "+value, 80));
+                }
+                log.debug(Formatter.displaySeparator(80));
+            }
+
+            ps.execute();
+
+        } catch (Exception e) {
+            log.error(e.getMessage());
+
+        } finally {
+            if (ps != null) try { ps.close(); } catch (Exception e) {}
+            if (con != null) try { con.close(); } catch (Exception e) {}
+        }
+    }
+
     public void put(String dn, Entry entry) throws Exception {
 
         AttributeValues attributeValues = entry.getAttributeValues();
@@ -1205,7 +1710,7 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
 
             Collection values = attributeValues.get(attributeDefinition.getName());
             if (values == null) continue;
-            
+
             for (Iterator j=values.iterator(); j.hasNext(); ) {
                 Object value = j.next();
                 insertAttribute(attributeDefinition, entryId, value);
@@ -1228,7 +1733,7 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
 
                 Collection values = sourceValues.get(sourceMapping.getName()+"."+fieldConfig.getName());
                 if (values == null) continue;
-                
+
                 for (Iterator k=values.iterator(); k.hasNext(); ) {
                     Object value = k.next();
                     insertField(sourceMapping, fieldConfig, entryId, value);
@@ -1243,7 +1748,7 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
             Object value
             ) throws Exception {
 
-        String tableName = "penrose_"+mappingId+"_attribute_"+attributeMapping.getName();
+        String tableName = partition.getName()+"_"+mappingId+"_attribute_"+attributeMapping.getName();
 
         StringBuffer sb = new StringBuffer();
         sb.append("insert into ");
@@ -1301,9 +1806,79 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
         }
     }
 
+    public String getDn(int entryId) throws Exception {
+
+        String tableName = partition.getName()+"_"+mappingId+"_entries";
+
+        StringBuffer sb = new StringBuffer();
+        sb.append("select rdn, parentDn from ");
+        sb.append(tableName);
+        sb.append(" where id=?");
+
+        String sql = sb.toString();
+
+        Collection parameters = new ArrayList();
+        parameters.add(new Integer(entryId));
+
+        Connection con = null;
+        PreparedStatement ps = null;
+        ResultSet rs = null;
+
+        try {
+            con = getConnection();
+
+            if (log.isDebugEnabled()) {
+                log.debug(Formatter.displaySeparator(80));
+                Collection lines = Formatter.split(sql, 80);
+                for (Iterator i=lines.iterator(); i.hasNext(); ) {
+                    String line = (String)i.next();
+                    log.debug(Formatter.displayLine(line, 80));
+                }
+                log.debug(Formatter.displaySeparator(80));
+            }
+
+            ps = con.prepareStatement(sql);
+
+            int counter = 1;
+            for (Iterator i=parameters.iterator(); i.hasNext(); counter++) {
+                Object param = i.next();
+                ps.setObject(counter, param);
+            }
+
+            if (log.isDebugEnabled()) {
+                log.debug(Formatter.displayLine("Parameters: id = "+entryId, 80));
+                log.debug(Formatter.displaySeparator(80));
+            }
+
+            rs = ps.executeQuery();
+
+            if (!rs.next()) return null;
+
+            String rdn = rs.getString(1);
+            String parentDn = rs.getString(2);
+            String dn = EntryUtil.append(rdn, parentDn);
+
+            if (log.isDebugEnabled()) {
+                log.debug(Formatter.displayLine("DN: "+dn, 80));
+                log.debug(Formatter.displaySeparator(80));
+            }
+
+            return dn;
+
+        } catch (Exception e) {
+            log.error(e.getMessage());
+            return null;
+
+        } finally {
+            if (rs != null) try { rs.close(); } catch (Exception e) {}
+            if (ps != null) try { ps.close(); } catch (Exception e) {}
+            if (con != null) try { con.close(); } catch (Exception e) {}
+        }
+    }
+
     public Collection getAttribute(AttributeMapping attributeMapping, int entryId) throws Exception {
 
-        String tableName = "penrose_"+mappingId+"_attribute_"+attributeMapping.getName();
+        String tableName = partition.getName()+"_"+mappingId+"_attribute_"+attributeMapping.getName();
 
         StringBuffer sb = new StringBuffer();
         sb.append("select value from ");
@@ -1378,7 +1953,7 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
             Object value
             ) throws Exception {
 
-        String tableName = "penrose_"+mappingId+"_field_"+sourceMapping.getName()+"_"+fieldConfig.getName();
+        String tableName = partition.getName()+"_"+mappingId+"_field_"+sourceMapping.getName()+"_"+fieldConfig.getName();
 
         StringBuffer sb = new StringBuffer();
         sb.append("insert into ");
@@ -1433,7 +2008,7 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
 
     public Collection getField(SourceMapping sourceMapping, FieldConfig fieldConfig, int entryId) throws Exception {
 
-        String tableName = "penrose_"+mappingId+"_field_"+sourceMapping.getName()+"_"+fieldConfig.getName();
+        String tableName = partition.getName()+"_"+mappingId+"_field_"+sourceMapping.getName()+"_"+fieldConfig.getName();
 
         StringBuffer sb = new StringBuffer();
         sb.append("select value from ");
@@ -1501,9 +2076,35 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
         return values;
     }
 
-    public void remove(String dn) throws Exception {
+    public void clean() throws Exception {
+
+        Collection attributeDefinitions = getEntryMapping().getAttributeMappings();
+        for (Iterator i=attributeDefinitions.iterator(); i.hasNext(); ) {
+            AttributeMapping attributeDefinition = (AttributeMapping)i.next();
+
+            deleteAttribute(attributeDefinition, 0);
+        }
 
         Collection sources = getPartition().getEffectiveSourceMappings(getEntryMapping());
+
+        for (Iterator i=sources.iterator(); i.hasNext(); ) {
+            SourceMapping sourceMapping = (SourceMapping)i.next();
+
+            SourceConfig sourceConfig = getPartition().getSourceConfig(sourceMapping.getSourceName());
+
+            Collection fields = sourceConfig.getFieldConfigs();
+            for (Iterator j=fields.iterator(); j.hasNext(); ) {
+                FieldConfig fieldConfig = (FieldConfig)j.next();
+                deleteField(sourceMapping, fieldConfig, 0);
+            }
+        }
+
+        removeEntry(0);
+
+        invalidate();
+    }
+
+    public void remove(String dn) throws Exception {
 
         int entryId = getEntryId(dn);
 
@@ -1513,6 +2114,8 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
 
             deleteAttribute(attributeDefinition, entryId);
         }
+
+        Collection sources = getPartition().getEffectiveSourceMappings(getEntryMapping());
 
         for (Iterator i=sources.iterator(); i.hasNext(); ) {
             SourceMapping sourceMapping = (SourceMapping)i.next();
@@ -1527,13 +2130,15 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
         }
 
         removeEntry(entryId);
+
+        invalidate();
     }
 
     public void deleteAttribute(
             AttributeMapping attributeMapping,
             int entryId) throws Exception {
 
-        String tableName = "penrose_"+mappingId+"_attribute_"+attributeMapping.getName();
+        String tableName = partition.getName()+"_"+mappingId+"_attribute_"+attributeMapping.getName();
 
         Collection parameters = new ArrayList();
 
@@ -1593,7 +2198,7 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
             FieldConfig fieldConfig,
             int entryId) throws Exception {
 
-        String tableName = "penrose_"+mappingId+"_field_"+sourceMapping.getName()+"_"+fieldConfig.getName();
+        String tableName = partition.getName()+"_"+mappingId+"_field_"+sourceMapping.getName()+"_"+fieldConfig.getName();
 
         Collection parameters = new ArrayList();
 
@@ -1647,5 +2252,4 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
             if (con != null) try { con.close(); } catch (Exception e) {}
         }
     }
-
 }

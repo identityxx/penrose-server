@@ -125,7 +125,7 @@ public class EntryCacheStorage {
     public void search(SourceConfig sourceConfig, Row filter, PenroseSearchResults results) throws Exception {
     }
 
-    public void add(Filter filter, String dn) throws Exception { }
+    public void add(String baseDn, Filter filter, String dn) throws Exception { }
 
     public void put(Filter filter, Collection rdns) throws Exception { }
 
@@ -144,6 +144,8 @@ public class EntryCacheStorage {
     }
 
     public void put(String dn, Entry entry) throws Exception { }
+
+    public void clean() throws Exception { }
 
     public void remove(String dn) throws Exception { }
 

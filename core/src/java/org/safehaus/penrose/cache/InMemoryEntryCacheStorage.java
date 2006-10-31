@@ -88,6 +88,8 @@ public class InMemoryEntryCacheStorage extends EntryCacheStorage {
 
         dataMap.remove(dn);
         dataExpirationMap.remove(dn);
+
+        invalidate();
     }
 
     public boolean contains(String baseDn, Filter filter) throws Exception {
@@ -169,7 +171,7 @@ public class InMemoryEntryCacheStorage extends EntryCacheStorage {
         results.close();
     }
 
-    public void add(Filter filter, String dn) throws Exception {
+    public void add(String baseDn, Filter filter, String dn) throws Exception {
 
         log.debug("add("+filter+", "+dn+")");
 

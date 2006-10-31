@@ -63,8 +63,10 @@ public class PersistentEntryCache extends EntryCache {
         return (Connection)connectionManager.openConnection(connectionName);
     }
 
-    public void create() throws Exception {
-        String sql = "create table penrose_mappings (id integer auto_increment, dn varchar(255) unique, primary key (id))";
+    public void create(Partition partition) throws Exception {
+        String sql = "create table "+
+                partition.getName()+
+                "_mappings (id integer auto_increment, dn varchar(255) unique, primary key (id))";
 
         Connection con = null;
         PreparedStatement ps = null;
@@ -92,10 +94,14 @@ public class PersistentEntryCache extends EntryCache {
             if (ps != null) try { ps.close(); } catch (Exception e) {}
             if (con != null) try { con.close(); } catch (Exception e) {}
         }
+
+        super.create(partition);
     }
 
-    public void drop() throws Exception {
-        String sql = "drop table penrose_mappings";
+    public void drop(Partition partition) throws Exception {
+        super.drop(partition);
+
+        String sql = "drop table "+partition.getName()+"_mappings";
 
         Connection con = null;
         PreparedStatement ps = null;

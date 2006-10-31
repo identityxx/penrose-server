@@ -50,14 +50,13 @@ public class CacheManager {
 
         Handler handler = penrose.getHandler();
         EntryCache entryCache = handler.getEntryCache();
-        entryCache.create();
 
         PartitionManager partitionManager = penrose.getPartitionManager();
 
         for (Iterator i=partitionManager.getPartitions().iterator(); i.hasNext(); ) {
             Partition partition = (Partition)i.next();
-            Collection entryMappings = partition.getRootEntryMappings();
-            entryCache.create(partition, entryMappings);
+
+            entryCache.create(partition);
         }
     }
 
@@ -86,8 +85,7 @@ public class CacheManager {
 
         for (Iterator i=partitionManager.getPartitions().iterator(); i.hasNext(); ) {
             Partition partition = (Partition)i.next();
-            Collection entryMappings = partition.getRootEntryMappings();
-            entryCache.clean(partition, entryMappings);
+            entryCache.clean(partition);
         }
 
         Connector connector = penrose.getConnector();
@@ -104,11 +102,8 @@ public class CacheManager {
 
         for (Iterator i=partitionManager.getPartitions().iterator(); i.hasNext(); ) {
             Partition partition = (Partition)i.next();
-            Collection entryMappings = partition.getRootEntryMappings();
-            entryCache.drop(partition, entryMappings);
+            entryCache.drop(partition);
         }
-
-        entryCache.drop();
 
         Connector connector = penrose.getConnector();
         SourceCacheManager sourceCacheManager = connector.getSourceCacheManager();

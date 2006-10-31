@@ -87,7 +87,6 @@ public class SearchHandler {
         log.debug("in mapping "+entryMapping.getDn());
 
         final PenroseSearchResults sr = new PenroseSearchResults();
-        final EntryCache cache = handler.getEntryCache();
 
         sr.addListener(new PipelineAdapter() {
             public void objectAdded(PipelineEvent event) {
@@ -99,11 +98,6 @@ public class SearchHandler {
                         log.debug("Entry \""+child.getDn()+"\" doesn't match search filter.");
                         return;
                     }
-
-                    log.debug("Storing "+child.getDn()+" in cache");
-                    EntryMapping childMapping = child.getEntryMapping();
-                    cache.add(partition, childMapping, filter, child.getDn());
-                    cache.put(partition, childMapping, child);
 
                     results.add(child);
 
@@ -125,17 +119,7 @@ public class SearchHandler {
             }
         });
 
-        String engineName = "DEFAULT";
-        if (partition.isProxy(entryMapping)) engineName = "PROXY";
-
-        Engine engine = handler.getEngine(engineName);
-
-        if (engine == null) {
-            log.debug("Engine "+engineName+" not found");
-            return LDAPException.OPERATIONS_ERROR;
-        }
-
-        engine.search(
+        searchBase(
                 session,
                 partition,
                 sourceValues,
@@ -172,15 +156,92 @@ public class SearchHandler {
         return LDAPException.SUCCESS;
 	}
 
-    public void searchChildren(
-            PenroseSession session,
+    public void searchBase(
+            final PenroseSession session,
             final Partition partition,
-            AttributeValues sourceValues,
+            final AttributeValues sourceValues,
             final EntryMapping entryMapping,
-            String baseDn,
-            Filter filter,
-            PenroseSearchControls sc,
-            final PenroseSearchResults results) throws Exception {
+            final String baseDn,
+            final Filter filter,
+            final PenroseSearchControls sc,
+            final PenroseSearchResults results
+    ) throws Exception {
+
+        log.info("Search base mapping \""+entryMapping.getDn()+"\":");
+
+        final PenroseSearchResults sr = new PenroseSearchResults();
+        final EntryCache cache = handler.getEntryCache();
+
+        sr.addListener(new PipelineAdapter() {
+            public void objectAdded(PipelineEvent event) {
+                Entry entry = (Entry)event.getObject();
+                results.add(entry);
+            }
+        });
+
+        sr.addReferralListener(new ReferralAdapter() {
+            public void referralAdded(ReferralEvent event) {
+                Object referral = event.getReferral();
+                //log.debug("Passing referral: "+referral);
+                results.addReferral(referral);
+            }
+        });
+
+        boolean cacheFilter = cache.search(partition, entryMapping, baseDn, filter, sr);
+        log.debug("Cache filter: "+cacheFilter);
+
+        if (!cacheFilter) {
+
+            sr.addListener(new PipelineAdapter() {
+                public void objectAdded(PipelineEvent event) {
+                    Entry entry = (Entry)event.getObject();
+
+                    try {
+                        log.debug("Storing "+entry.getDn()+" in cache");
+                        cache.put(partition, entryMapping, entry);
+                        cache.add(partition, entryMapping, baseDn, filter, entry.getDn());
+
+                    } catch (Exception e) {
+                        log.debug(e.getMessage(), e);
+                    }
+                }
+            });
+
+            String engineName = "DEFAULT";
+            if (partition.isProxy(entryMapping)) engineName = "PROXY";
+
+            Engine engine = handler.getEngine(engineName);
+
+            if (engine == null) {
+                log.debug("Engine "+engineName+" not found");
+
+            } else {
+                engine.search(
+                        session,
+                        partition,
+                        sourceValues,
+                        entryMapping,
+                        baseDn,
+                        filter,
+                        sc,
+                        sr
+                );
+            }
+        }
+
+        sr.close();
+    }
+
+    public void searchChildren(
+            final PenroseSession session,
+            final Partition partition,
+            final AttributeValues sourceValues,
+            final EntryMapping entryMapping,
+            final String baseDn,
+            final Filter filter,
+            final PenroseSearchControls sc,
+            final PenroseSearchResults results
+    ) throws Exception {
 
         log.info("Search child mapping \""+entryMapping.getDn()+"\":");
 
@@ -207,6 +268,21 @@ public class SearchHandler {
 
         if (!cacheFilter) {
 
+            sr.addListener(new PipelineAdapter() {
+                public void objectAdded(PipelineEvent event) {
+                    Entry entry = (Entry)event.getObject();
+
+                    try {
+                        log.debug("Storing "+entry.getDn()+" in cache");
+                        cache.put(partition, entryMapping, entry);
+                        cache.add(partition, entryMapping, baseDn, filter, entry.getDn());
+
+                    } catch (Exception e) {
+                        log.debug(e.getMessage(), e);
+                    }
+                }
+            });
+
             String engineName = "DEFAULT";
             if (partition.isProxy(entryMapping)) engineName = "PROXY";
 
@@ -227,9 +303,9 @@ public class SearchHandler {
                         sr
                 );
             }
-
-            sr.close();
         }
+
+        sr.close();
 
         //log.debug("Waiting for search results from \""+entryMapping.getDn()+"\".");
 
