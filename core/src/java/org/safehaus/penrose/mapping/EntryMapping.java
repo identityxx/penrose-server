@@ -28,8 +28,8 @@ import java.io.Serializable;
  */
 public class EntryMapping implements Cloneable, Serializable {
 
-    public final static String FILTER_CACHE_SIZE       = "filterCacheSize";
-    public final static String FILTER_CACHE_EXPIRATION = "filterCacheExpiration";
+    public final static String QUERY_CACHE_SIZE        = "queryCacheSize";
+    public final static String QUERY_CACHE_EXPIRATION  = "queryCacheExpiration";
 
     public final static String DATA_CACHE_SIZE         = "dataCacheSize";
     public final static String DATA_CACHE_EXPIRATION   = "dataCacheExpiration";
