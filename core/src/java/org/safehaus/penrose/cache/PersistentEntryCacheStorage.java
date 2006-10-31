@@ -1582,17 +1582,17 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
 
             rs = ps.executeQuery();
 
+            log.debug(Formatter.displayLine("Results:", 80));
+
             while (rs.next()) {
                 String rdn = (String)rs.getObject(1);
                 String parentDn = (String)rs.getObject(2);
                 String dn = rdn+","+parentDn;
+                log.debug(Formatter.displayLine(" - "+dn, 80));
                 results.add(dn);
             }
 
-            if (log.isDebugEnabled()) {
-                log.debug(Formatter.displayLine("Results: value = "+results, 80));
-                log.debug(Formatter.displaySeparator(80));
-            }
+            log.debug(Formatter.displaySeparator(80));
 
         } catch (Exception e) {
             log.error(e.getMessage(), e);
