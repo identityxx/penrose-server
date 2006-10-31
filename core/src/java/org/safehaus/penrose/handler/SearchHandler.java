@@ -18,6 +18,7 @@
 package org.safehaus.penrose.handler;
 
 import org.safehaus.penrose.session.*;
+import org.safehaus.penrose.cache.EntryCacheManager;
 import org.safehaus.penrose.cache.EntryCache;
 import org.safehaus.penrose.engine.Engine;
 import org.safehaus.penrose.interpreter.Interpreter;
@@ -170,7 +171,7 @@ public class SearchHandler {
         log.info("Search base mapping \""+entryMapping.getDn()+"\":");
 
         final PenroseSearchResults sr = new PenroseSearchResults();
-        final EntryCache cache = handler.getEntryCache();
+        final EntryCacheManager cacheManager = handler.getEntryCacheManager();
 
         sr.addListener(new PipelineAdapter() {
             public void objectAdded(PipelineEvent event) {
@@ -187,7 +188,8 @@ public class SearchHandler {
             }
         });
 
-        boolean cacheFilter = cache.search(partition, entryMapping, baseDn, filter, sr);
+        EntryCache cache = cacheManager.get(partition, entryMapping);
+        boolean cacheFilter = cache.search(baseDn, filter, sr);
         log.debug("Cache filter: "+cacheFilter);
 
         if (!cacheFilter) {
@@ -198,8 +200,9 @@ public class SearchHandler {
 
                     try {
                         log.debug("Storing "+entry.getDn()+" in cache");
-                        cache.put(partition, entryMapping, entry);
-                        cache.add(partition, entryMapping, baseDn, filter, entry.getDn());
+                        EntryCache entryCache = cacheManager.get(partition, entryMapping);
+                        entryCache.put(entry);
+                        entryCache.add(baseDn, filter, entry.getDn());
 
                     } catch (Exception e) {
                         log.debug(e.getMessage(), e);
@@ -246,7 +249,7 @@ public class SearchHandler {
         log.info("Search child mapping \""+entryMapping.getDn()+"\":");
 
         final PenroseSearchResults sr = new PenroseSearchResults();
-        final EntryCache cache = handler.getEntryCache();
+        final EntryCacheManager cacheManager = handler.getEntryCacheManager();
 
         sr.addListener(new PipelineAdapter() {
             public void objectAdded(PipelineEvent event) {
@@ -263,7 +266,8 @@ public class SearchHandler {
             }
         });
 
-        boolean cacheFilter = cache.search(partition, entryMapping, baseDn, filter, sr);
+        EntryCache cache = cacheManager.get(partition, entryMapping);
+        boolean cacheFilter = cache.search(baseDn, filter, sr);
         log.debug("Cache filter: "+cacheFilter);
 
         if (!cacheFilter) {
@@ -274,8 +278,9 @@ public class SearchHandler {
 
                     try {
                         log.debug("Storing "+entry.getDn()+" in cache");
-                        cache.put(partition, entryMapping, entry);
-                        cache.add(partition, entryMapping, baseDn, filter, entry.getDn());
+                        EntryCache entryCache = cacheManager.get(partition, entryMapping);
+                        entryCache.put(entry);
+                        entryCache.add(baseDn, filter, entry.getDn());
 
                     } catch (Exception e) {
                         log.debug(e.getMessage(), e);

@@ -58,17 +58,11 @@
   <schema path="schema/system.schema"/>
   <schema path="schema/apachedns.schema"/>
 
-  <entry-cache/>
-
-  <source-cache/>
-
-  <engine>
-    <engine-name>DEFAULT</engine-name>
+  <engine name="DEFAULT">
     <engine-class>org.safehaus.penrose.engine.DefaultEngine</engine-class>
   </engine>
 
-  <engine>
-    <engine-name>PROXY</engine-name>
+  <engine name="PROXY">
     <engine-class>org.safehaus.penrose.engine.ProxyEngine</engine-class>
   </engine>
     
@@ -79,8 +73,6 @@
   <adapter name="LDAP">
     <adapter-class>org.safehaus.penrose.ldap.LDAPAdapter</adapter-class>
   </adapter>
-
-  <partition name="DEFAULT" path="conf"/>
 
   <root>
     <root-dn>uid=admin,ou=system</root-dn>

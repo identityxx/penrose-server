@@ -80,7 +80,7 @@ public class ModRdnHandler {
             while (results.hasNext()) results.next();
 
             EntryMapping entryMapping = entry.getEntryMapping();
-            handler.getEntryCache().remove(partition, entryMapping, entry.getDn());
+            handler.getEntryCacheManager().remove(partition, entryMapping, entry.getDn());
 
         } catch (LDAPException e) {
             rc = e.getResultCode();

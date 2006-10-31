@@ -20,7 +20,7 @@ package org.safehaus.penrose.ldap;
 import org.safehaus.penrose.module.Module;
 import org.safehaus.penrose.mapping.Entry;
 import org.safehaus.penrose.mapping.EntryMapping;
-import org.safehaus.penrose.cache.EntryCache;
+import org.safehaus.penrose.cache.EntryCacheManager;
 import org.safehaus.penrose.cache.EntryCacheListener;
 import org.safehaus.penrose.cache.EntryCacheEvent;
 import org.safehaus.penrose.connection.ConnectionManager;
@@ -56,14 +56,13 @@ public class LDAPSyncModule extends Module implements EntryCacheListener {
         partitionManager = penrose.getPartitionManager();
         connectionManager = penrose.getConnectionManager();
 
-        Handler handler = penrose.getHandler();
-        EntryCache entryCache = handler.getEntryCache();
+        EntryCacheManager entryCacheManager = penrose.getEntryCacheManager();
 
-        entryCache.addListener(this);
+        entryCacheManager.addListener(this);
     }
 
     public DirContext getConnection() throws Exception {
-        LDAPClient client = (LDAPClient)connectionManager.openConnection(connectionName);
+        LDAPClient client = (LDAPClient)connectionManager.openConnection(partition, connectionName);
         return client.getContext();
     }
 

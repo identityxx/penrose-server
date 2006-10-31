@@ -318,9 +318,11 @@ public class PenroseJMXService extends Service {
             register("Penrose Config:name="+adapterConfig.getName()+",type=AdapterConfig", adapterConfig);
         }
 
-        Collection partitionConfigs = penroseConfig.getPartitionConfigs();
-        for (Iterator i=partitionConfigs.iterator(); i.hasNext(); ) {
-            PartitionConfig partitionConfig = (PartitionConfig)i.next();
+        PartitionManager partitionManager = penrose.getPartitionManager();
+        Collection partitions = partitionManager.getPartitions();
+        for (Iterator i=partitions.iterator(); i.hasNext(); ) {
+            Partition partition = (Partition)i.next();
+            PartitionConfig partitionConfig = partition.getPartitionConfig();
             register("Penrose Config:name="+partitionConfig.getName()+",type=PartitionConfig", partitionConfig);
         }
 
@@ -342,9 +344,11 @@ public class PenroseJMXService extends Service {
             unregister("Penrose Config:name="+serviceConfig.getName()+",type=ServiceConfig");
         }
 
-        Collection partitionConfigs = penroseConfig.getPartitionConfigs();
-        for (Iterator i=partitionConfigs.iterator(); i.hasNext(); ) {
-            PartitionConfig partitionConfig = (PartitionConfig)i.next();
+        PartitionManager partitionManager = penrose.getPartitionManager();
+        Collection partitions = partitionManager.getPartitions();
+        for (Iterator i=partitions.iterator(); i.hasNext(); ) {
+            Partition partition = (Partition)i.next();
+            PartitionConfig partitionConfig = partition.getPartitionConfig();
             unregister("Penrose Config:name="+partitionConfig.getName()+",type=PartitionConfig");
         }
 

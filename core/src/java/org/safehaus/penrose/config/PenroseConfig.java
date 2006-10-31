@@ -20,12 +20,11 @@ package org.safehaus.penrose.config;
 import java.util.*;
 
 import org.safehaus.penrose.cache.CacheConfig;
-import org.safehaus.penrose.cache.EntryCache;
+import org.safehaus.penrose.cache.EntryCacheManager;
 import org.safehaus.penrose.cache.SourceCache;
 import org.safehaus.penrose.engine.EngineConfig;
 import org.safehaus.penrose.interpreter.InterpreterConfig;
 import org.safehaus.penrose.adapter.AdapterConfig;
-import org.safehaus.penrose.partition.PartitionConfig;
 import org.safehaus.penrose.schema.SchemaConfig;
 import org.safehaus.penrose.user.UserConfig;
 import org.safehaus.penrose.session.SessionConfig;
@@ -48,7 +47,6 @@ public class PenroseConfig implements PenroseConfigMBean, Cloneable {
 
     private Map schemaConfigs    = new LinkedHashMap();
     private Map adapterConfigs   = new LinkedHashMap();
-    private Map partitionConfigs = new LinkedHashMap();
     private Map engineConfigs    = new LinkedHashMap();
     private Map handlerConfigs   = new LinkedHashMap();
 
@@ -70,8 +68,8 @@ public class PenroseConfig implements PenroseConfigMBean, Cloneable {
         sourceCacheConfig.setCacheClass(SourceCache.DEFAULT_CACHE_CLASS);
 
         entryCacheConfig = new CacheConfig();
-        entryCacheConfig.setName(EntryCache.DEFAULT_CACHE_NAME);
-        entryCacheConfig.setCacheClass(EntryCache.DEFAULT_CACHE_CLASS);
+        entryCacheConfig.setName(EntryCacheManager.DEFAULT_CACHE_NAME);
+        entryCacheConfig.setCacheClass(EntryCacheManager.DEFAULT_CACHE_CLASS);
 
         sessionConfig = new SessionConfig();
 
@@ -213,26 +211,6 @@ public class PenroseConfig implements PenroseConfigMBean, Cloneable {
         return (SchemaConfig)schemaConfigs.remove(name);
     }
 
-    public void addPartitionConfig(PartitionConfig partitionConfig) {
-        partitionConfigs.put(partitionConfig.getName(), partitionConfig);
-    }
-
-    public PartitionConfig getPartitionConfig(String name) {
-        return (PartitionConfig)partitionConfigs.get(name);
-    }
-
-    public Collection getPartitionConfigs() {
-        return partitionConfigs.values();
-    }
-
-    public Collection getPartitionNames() {
-        return partitionConfigs.keySet();
-    }
-
-    public PartitionConfig removePartitionConfig(String name) {
-        return (PartitionConfig)partitionConfigs.remove(name);
-    }
-
     public HandlerConfig getHandlerConfig() {
         return getHandlerConfig("DEFAULT");
     }
@@ -295,7 +273,6 @@ public class PenroseConfig implements PenroseConfigMBean, Cloneable {
                 (serviceConfigs == null ? 0 : serviceConfigs.hashCode()) +
                 (schemaConfigs == null ? 0 : schemaConfigs.hashCode()) +
                 (adapterConfigs == null ? 0 : adapterConfigs.hashCode()) +
-                (partitionConfigs == null ? 0 : partitionConfigs.hashCode()) +
                 (handlerConfigs == null ? 0 : handlerConfigs.hashCode()) +
                 (interpreterConfig == null ? 0 : interpreterConfig.hashCode()) +
                 (entryCacheConfig == null ? 0 : entryCacheConfig.hashCode()) +
@@ -324,7 +301,6 @@ public class PenroseConfig implements PenroseConfigMBean, Cloneable {
 
         if (!equals(schemaConfigs, penroseConfig.schemaConfigs)) return false;
         if (!equals(adapterConfigs, penroseConfig.adapterConfigs)) return false;
-        if (!equals(partitionConfigs, penroseConfig.partitionConfigs)) return false;
         if (!equals(handlerConfigs, penroseConfig.handlerConfigs)) return false;
 
         if (!equals(interpreterConfig, penroseConfig.interpreterConfig)) return false;
@@ -362,11 +338,6 @@ public class PenroseConfig implements PenroseConfigMBean, Cloneable {
             addAdapterConfig((AdapterConfig)adapterConfig.clone());
         }
 
-        for (Iterator i=penroseConfig.partitionConfigs.values().iterator(); i.hasNext(); ) {
-            PartitionConfig partitionConfig = (PartitionConfig)i.next();
-            addPartitionConfig((PartitionConfig)partitionConfig.clone());
-        }
-
         for (Iterator i=penroseConfig.engineConfigs.values().iterator(); i.hasNext(); ) {
             EngineConfig engineConfig = (EngineConfig)i.next();
             addEngineConfig((EngineConfig)engineConfig.clone());
@@ -392,7 +363,6 @@ public class PenroseConfig implements PenroseConfigMBean, Cloneable {
         serviceConfigs.clear();
         schemaConfigs.clear();
         adapterConfigs.clear();
-        partitionConfigs.clear();
         engineConfigs.clear();
     }
 

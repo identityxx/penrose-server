@@ -18,6 +18,7 @@
 package org.safehaus.penrose.cache;
 
 import org.safehaus.penrose.partition.Partition;
+import org.safehaus.penrose.partition.PartitionConfig;
 import org.safehaus.penrose.source.SourceConfig;
 import org.safehaus.penrose.connection.ConnectionManager;
 import org.slf4j.Logger;
@@ -34,8 +35,6 @@ public class SourceCacheManager {
 
     Logger log = LoggerFactory.getLogger(getClass());
 
-    CacheConfig cacheConfig;
-
     ConnectionManager connectionManager;
 
     private Map caches = new TreeMap();
@@ -48,18 +47,13 @@ public class SourceCacheManager {
         this.connectionManager = source;
     }
 
-    public CacheConfig getCacheConfig() {
-        return cacheConfig;
-    }
-
-    public void setCacheConfig(CacheConfig cacheConfig) {
-        this.cacheConfig = cacheConfig;
-    }
-
     public SourceCache create(Partition partition, SourceConfig sourceConfig) throws Exception {
-        String cacheClass = cacheConfig.getCacheClass() == null ? SourceCache.class.getName() : cacheConfig.getCacheClass();
+        PartitionConfig partitionConfig = partition.getPartitionConfig();
+        CacheConfig cacheConfig = partitionConfig.getSourceCacheConfig();
 
-        log.debug("Initializing source cache "+cacheClass);
+        String cacheClass = cacheConfig.getCacheClass();
+        log.debug("Creating source cache for "+sourceConfig.getName());
+
         Class clazz = Class.forName(cacheClass);
         SourceCache sourceCache = (SourceCache)clazz.newInstance();
 

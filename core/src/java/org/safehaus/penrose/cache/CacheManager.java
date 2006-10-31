@@ -48,69 +48,58 @@ public class CacheManager {
 
     public static void create(Penrose penrose) throws Exception {
         
-        Handler handler = penrose.getHandler();
-        EntryCache entryCache = handler.getEntryCache();
-
+        EntryCacheManager entryCacheManager = penrose.getEntryCacheManager();
         PartitionManager partitionManager = penrose.getPartitionManager();
 
         for (Iterator i=partitionManager.getPartitions().iterator(); i.hasNext(); ) {
             Partition partition = (Partition)i.next();
-            entryCache.create(partition);
+            entryCacheManager.create(partition);
         }
 
-        SourceManager sourceManager = penrose.getSourceManager();
-        SourceCacheManager sourceCacheManager = sourceManager.getSourceCacheManager();
+        SourceCacheManager sourceCacheManager = penrose.getSourceCacheManager();
         sourceCacheManager.create();
     }
 
     public static void load(Penrose penrose) throws Exception {
 
-        Handler handler = penrose.getHandler();
-        EntryCache entryCache = handler.getEntryCache();
-
+        EntryCacheManager entryCacheManager = penrose.getEntryCacheManager();
         PartitionManager partitionManager = penrose.getPartitionManager();
 
         for (Iterator i=partitionManager.getPartitions().iterator(); i.hasNext(); ) {
             Partition partition = (Partition)i.next();
-            entryCache.load(penrose, partition);
+            entryCacheManager.load(penrose, partition);
         }
 
-        SourceManager sourceManager = penrose.getSourceManager();
-        SourceCacheManager sourceCacheManager = sourceManager.getSourceCacheManager();
+        SourceCacheManager sourceCacheManager = penrose.getSourceCacheManager();
         sourceCacheManager.load();
     }
 
     public static void clean(Penrose penrose) throws Exception {
 
-        Handler handler = penrose.getHandler();
-        EntryCache entryCache = handler.getEntryCache();
-
+        EntryCacheManager entryCacheManager = penrose.getEntryCacheManager();
         PartitionManager partitionManager = penrose.getPartitionManager();
 
         for (Iterator i=partitionManager.getPartitions().iterator(); i.hasNext(); ) {
             Partition partition = (Partition)i.next();
-            entryCache.clean(partition);
+            entryCacheManager.clean(partition);
         }
 
-        SourceManager sourceManager = penrose.getSourceManager();
-        SourceCacheManager sourceCacheManager = sourceManager.getSourceCacheManager();
+        SourceCacheManager sourceCacheManager = penrose.getSourceCacheManager();
         sourceCacheManager.clean();
     }
 
     public static void drop(Penrose penrose) throws Exception {
 
-        Handler handler = penrose.getHandler();
-        EntryCache entryCache = handler.getEntryCache();
+        EntryCacheManager entryCacheManager = penrose.getEntryCacheManager();
 
-        SourceManager sourceManager = penrose.getSourceManager();
-        SourceCacheManager sourceCacheManager = sourceManager.getSourceCacheManager();
+        SourceCacheManager sourceCacheManager = penrose.getSourceCacheManager();
         sourceCacheManager.drop();
 
         PartitionManager partitionManager = penrose.getPartitionManager();
 
         for (Iterator i=partitionManager.getPartitions().iterator(); i.hasNext(); ) {
             Partition partition = (Partition)i.next();
-            entryCache.drop(partition);
+            entryCacheManager.drop(partition);
         }
     }
 

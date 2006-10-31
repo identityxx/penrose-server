@@ -37,7 +37,6 @@ public interface PenroseConfigMBean {
 
     public Collection getAdapterNames() throws Exception;
     public Collection getSchemaNames() throws Exception;
-    public Collection getPartitionNames() throws Exception;
 
     public String getRootDn() throws Exception;
     public void setRootDn(String rootDn) throws Exception;

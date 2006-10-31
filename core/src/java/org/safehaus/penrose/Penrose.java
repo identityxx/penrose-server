@@ -44,6 +44,8 @@ import org.safehaus.penrose.log4j.LoggerConfig;
 import org.safehaus.penrose.log4j.AppenderConfig;
 import org.safehaus.penrose.connection.ConnectionManager;
 import org.safehaus.penrose.source.SourceManager;
+import org.safehaus.penrose.cache.EntryCacheManager;
+import org.safehaus.penrose.cache.SourceCacheManager;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
@@ -76,6 +78,8 @@ public class Penrose {
     private PartitionValidator partitionValidator;
 
     private ConnectionManager  connectionManager;
+    private SourceCacheManager sourceCacheManager;
+    private EntryCacheManager  entryCacheManager;
     private SourceManager      sourceManager;
     private ModuleManager      moduleManager;
 
@@ -139,7 +143,9 @@ public class Penrose {
         initSessionManager();
 
         initConnectionManager();
+        initSourceCacheManager();
         initSourceManager();
+        initEntryCacheManager();
         initModuleManager();
         initPartitionManager();
 
@@ -191,6 +197,17 @@ public class Penrose {
         connectionManager = new ConnectionManager();
     }
 
+    public void initSourceCacheManager() throws Exception {
+        sourceCacheManager = new SourceCacheManager();
+        sourceCacheManager.setConnectionManager(connectionManager);
+    }
+
+    public void initEntryCacheManager() throws Exception {
+        entryCacheManager = new EntryCacheManager();
+        entryCacheManager.setConnectionManager(connectionManager);
+        entryCacheManager.init();
+    }
+
     public void initSourceManager() throws Exception {
         sourceManager = new SourceManager();
         sourceManager.setPenroseConfig(penroseConfig);
@@ -209,7 +226,9 @@ public class Penrose {
         partitionManager.setSchemaManager(schemaManager);
         partitionManager.setInterpreterManager(interpreterManager);
         partitionManager.setConnectionManager(connectionManager);
+        partitionManager.setSourceCacheManager(sourceCacheManager);
         partitionManager.setSourceManager(sourceManager);
+        partitionManager.setEntryCacheManager(entryCacheManager);
         partitionManager.setModuleManager(moduleManager);
         partitionManager.init();
 
@@ -245,6 +264,7 @@ public class Penrose {
         handlerManager.setSchemaManager(schemaManager);
         handlerManager.setInterpreterFactory(interpreterManager);
         handlerManager.setPartitionManager(partitionManager);
+        handlerManager.setEntryCacheManager(entryCacheManager);
         handlerManager.setModuleManager(moduleManager);
         handlerManager.setThreadManager(threadManager);
         handlerManager.setPenrose(this);
@@ -296,11 +316,12 @@ public class Penrose {
 
     public void loadPartitions() throws Exception {
 
-        for (Iterator i=penroseConfig.getPartitionConfigs().iterator(); i.hasNext(); ) {
-            PartitionConfig partitionConfig = (PartitionConfig)i.next();
-
-            partitionManager.load(penroseConfig.getHome(), partitionConfig);
-        }
+        PartitionConfig partitionConfig = new PartitionConfig();
+        partitionConfig.setName("DEFAULT");
+        partitionConfig.setPath("conf");
+        partitionManager.load(penroseConfig.getHome(), partitionConfig);
+        
+        partitionManager.load("partitions");
 
         for (Iterator i=partitionManager.getPartitions().iterator(); i.hasNext(); ) {
             Partition partition = (Partition)i.next();
@@ -317,10 +338,6 @@ public class Penrose {
                 }
             }
         }
-    }
-
-    public void loadModules() throws Exception {
-        moduleManager.load(partitionManager.getPartitions());
     }
 
     public void loadEngine() throws Exception {
@@ -370,7 +387,7 @@ public class Penrose {
         PenroseConfigWriter serverConfigWriter = new PenroseConfigWriter(filename);
         serverConfigWriter.write(penroseConfig);
 
-        partitionManager.store(home, penroseConfig.getPartitionConfigs());
+        partitionManager.store(home);
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -387,7 +404,6 @@ public class Penrose {
             loadPartitions();
 
             partitionManager.start();
-            sourceManager.start();
             engineManager.start();
             sessionManager.start();
             handlerManager.start();
@@ -417,7 +433,6 @@ public class Penrose {
             handlerManager.stop();
             sessionManager.stop();
             engineManager.stop();
-            sourceManager.stop();
             partitionManager.stop();
 
         } catch (Exception e) {
@@ -558,5 +573,21 @@ public class Penrose {
 
     public void setSourceManager(SourceManager sourceManager) {
         this.sourceManager = sourceManager;
+    }
+
+    public EntryCacheManager getEntryCacheManager() {
+        return entryCacheManager;
+    }
+
+    public void setEntryCacheManager(EntryCacheManager entryCacheManager) {
+        this.entryCacheManager = entryCacheManager;
+    }
+
+    public SourceCacheManager getSourceCacheManager() {
+        return sourceCacheManager;
+    }
+
+    public void setSourceCacheManager(SourceCacheManager sourceCacheManager) {
+        this.sourceCacheManager = sourceCacheManager;
     }
 }

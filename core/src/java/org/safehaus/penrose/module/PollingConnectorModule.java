@@ -26,8 +26,9 @@ import org.safehaus.penrose.session.PenroseSession;
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.module.Module;
 import org.safehaus.penrose.module.PollingConnectorRunnable;
-import org.safehaus.penrose.cache.EntryCache;
+import org.safehaus.penrose.cache.EntryCacheManager;
 import org.safehaus.penrose.cache.SourceCache;
+import org.safehaus.penrose.cache.EntryCache;
 import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.engine.Engine;
 import org.safehaus.penrose.pipeline.PipelineAdapter;
@@ -37,6 +38,7 @@ import org.safehaus.penrose.connection.Connection;
 import org.safehaus.penrose.connection.ConnectionManager;
 import org.safehaus.penrose.source.Source;
 import org.safehaus.penrose.source.SourceManager;
+import org.safehaus.penrose.filter.Filter;
 
 import java.util.Collection;
 import java.util.Iterator;
@@ -223,8 +225,7 @@ public class PollingConnectorModule extends Module {
         final Row rdn = entryMapping.getRdn(attributeValues);
         EntryMapping parentMapping = partition.getParent(entryMapping);
 
-        Handler handler = penrose.getHandler();
-        EntryCache entryCache = handler.getEntryCache();
+        EntryCacheManager entryCacheManager = penrose.getEntryCacheManager();
 
         PenroseSearchResults parentDns = new PenroseSearchResults();
 
@@ -261,7 +262,9 @@ public class PollingConnectorModule extends Module {
             }
         });
 
-        entryCache.update(partition, parentMapping, parentDns);
+        EntryCache cache = entryCacheManager.get(partition, entryMapping);
+        cache.search(null, (Filter)null, parentDns);
+        parentDns.close();
     }
 
     public void remove(
@@ -272,15 +275,14 @@ public class PollingConnectorModule extends Module {
 
         log.debug("Removing entry cache for "+entryMapping.getDn());
 
-        Handler handler = penrose.getHandler();
-        final EntryCache entryCache = handler.getEntryCache();
+        final EntryCacheManager entryCacheManager = penrose.getEntryCacheManager();
 
         PenroseSearchResults dns = new PenroseSearchResults();
         dns.addListener(new PipelineAdapter() {
             public void objectAdded(PipelineEvent event) {
                 try {
                     String dn = (String)event.getObject();
-                    entryCache.remove(partition, entryMapping, dn);
+                    entryCacheManager.remove(partition, entryMapping, dn);
 
                 } catch (Exception e) {
                     log.debug(e.getMessage(), e);
@@ -288,7 +290,8 @@ public class PollingConnectorModule extends Module {
             }
         });
 
-        entryCache.search(partition, entryMapping, sourceConfig, pk, dns);
+        EntryCache cache = entryCacheManager.get(partition, entryMapping);
+        cache.search(sourceConfig, pk, dns);
     }
 
 }

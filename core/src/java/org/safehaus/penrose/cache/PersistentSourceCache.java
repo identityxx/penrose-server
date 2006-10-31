@@ -48,6 +48,7 @@ public class PersistentSourceCache extends SourceCache {
         String tableName = getTableName();
 
         cache = new JDBCCache(tableName, sourceConfig);
+        cache.setPartition(partition);
         cache.setConnectionManager(connectionManager);
         cache.setConnectionName(connectionName);
         cache.setSize(size);

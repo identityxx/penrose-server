@@ -17,7 +17,6 @@
  */
 package org.safehaus.penrose.connection;
 
-import org.safehaus.penrose.connection.ConnectionConfig;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.adapter.AdapterConfig;
 import org.slf4j.LoggerFactory;
@@ -151,10 +150,6 @@ public class ConnectionManager implements ConnectionManagerMBean {
         Map map = (Map)connections.get(partitionName);
         if (map == null) return new ArrayList();
         return new ArrayList(map.keySet()); // return Serializable list
-    }
-
-    public Object openConnection(String connectionName) throws Exception {
-        return openConnection(null, connectionName);
     }
 
     public Object openConnection(Partition partition, String connectionName) throws Exception {

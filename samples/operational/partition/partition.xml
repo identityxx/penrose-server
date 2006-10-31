@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE modules PUBLIC
+  "-//Penrose/DTD Partition 1.2//EN"
+  "http://penrose.safehaus.org/dtd/partition.dtd">
+
+<partition enabled="true">
+
+    <name>Operational</name>
+    <description>Operational Attributes</description>
+
+</partition>

@@ -36,7 +36,7 @@ import org.safehaus.penrose.mapping.AttributeValues;
 import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.thread.ThreadManager;
-import org.safehaus.penrose.cache.EntryCache;
+import org.safehaus.penrose.cache.EntryCacheManager;
 import org.safehaus.penrose.cache.CacheConfig;
 import org.safehaus.penrose.util.*;
 import org.safehaus.penrose.util.Formatter;
@@ -79,11 +79,11 @@ public class Handler {
 
     private SessionManager sessionManager;
     private PartitionManager partitionManager;
+    private EntryCacheManager entryCacheManager;
 
     private InterpreterManager interpreterManager;
     private ACLEngine aclEngine;
     private FilterTool filterTool;
-    private EntryCache entryCache;
 
     ThreadManager threadManager;
 
@@ -102,19 +102,6 @@ public class Handler {
         modRdnHandler = createModRdnHandler();
         findHandler = createFindHandler();
         searchHandler = createSearchHandler();
-
-        PenroseConfig penroseConfig = penrose.getPenroseConfig();
-        CacheConfig cacheConfig = penroseConfig.getEntryCacheConfig();
-        String cacheClass = cacheConfig.getCacheClass() == null ? EntryCache.class.getName() : cacheConfig.getCacheClass();
-
-        log.debug("Initializing entry cache "+cacheClass);
-        Class clazz = Class.forName(cacheClass);
-        entryCache = (EntryCache)clazz.newInstance();
-
-        entryCache.setCacheConfig(cacheConfig);
-        entryCache.setPenrose(penrose);
-
-        entryCache.init();
     }
 
     public AddHandler createAddHandler() {
@@ -1122,12 +1109,12 @@ public class Handler {
         this.filterTool = filterTool;
     }
 
-    public EntryCache getEntryCache() {
-        return entryCache;
+    public EntryCacheManager getEntryCacheManager() {
+        return entryCacheManager;
     }
 
-    public void setEntryCache(EntryCache entryCache) {
-        this.entryCache = entryCache;
+    public void setEntryCacheManager(EntryCacheManager entryCacheManager) {
+        this.entryCacheManager = entryCacheManager;
     }
 
     public AttributeValues pushSourceValues(

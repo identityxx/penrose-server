@@ -120,18 +120,6 @@ public class PenroseConfigWriter {
             element.add(toElement(penroseConfig.getInterpreterConfig()));
         }
 
-        if (penroseConfig.getEntryCacheConfig() != null) {
-            Element entryCache = new DefaultElement("entry-cache");
-            addElements(entryCache, penroseConfig.getEntryCacheConfig());
-            element.add(entryCache);
-        }
-
-        if (penroseConfig.getSourceCacheConfig() != null) {
-            Element sourceCache = new DefaultElement("source-cache");
-            addElements(sourceCache, penroseConfig.getSourceCacheConfig());
-            element.add(sourceCache);
-        }
-
         if (penroseConfig.getSessionConfig() != null) {
             SessionConfig sessionConfig = penroseConfig.getSessionConfig();
             element.add(toElement(sessionConfig));
@@ -146,11 +134,6 @@ public class PenroseConfigWriter {
         for (Iterator i = penroseConfig.getAdapterConfigs().iterator(); i.hasNext();) {
             AdapterConfig adapterConfig = (AdapterConfig)i.next();
             element.add(toElement(adapterConfig));
-        }
-
-        for (Iterator i=penroseConfig.getPartitionConfigs().iterator(); i.hasNext(); ) {
-            PartitionConfig partitionConfig = (PartitionConfig)i.next();
-            element.add(toElement(partitionConfig));
         }
 
         UserConfig rootUserConfig = penroseConfig.getRootUserConfig();

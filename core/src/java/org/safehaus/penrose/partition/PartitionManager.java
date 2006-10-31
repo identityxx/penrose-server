@@ -21,6 +21,9 @@ import org.safehaus.penrose.mapping.EntryMapping;
 import org.safehaus.penrose.mapping.SourceMapping;
 import org.safehaus.penrose.schema.SchemaManager;
 import org.safehaus.penrose.cache.LRUCache;
+import org.safehaus.penrose.cache.EntryCacheManager;
+import org.safehaus.penrose.cache.SourceCache;
+import org.safehaus.penrose.cache.SourceCacheManager;
 import org.safehaus.penrose.graph.Graph;
 import org.safehaus.penrose.interpreter.InterpreterManager;
 import org.safehaus.penrose.connection.ConnectionManager;
@@ -28,6 +31,7 @@ import org.safehaus.penrose.connection.ConnectionConfig;
 import org.safehaus.penrose.adapter.AdapterConfig;
 import org.safehaus.penrose.source.SourceManager;
 import org.safehaus.penrose.source.SourceConfig;
+import org.safehaus.penrose.source.Source;
 import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.util.Formatter;
 import org.safehaus.penrose.module.ModuleConfig;
@@ -51,7 +55,9 @@ public class PartitionManager implements PartitionManagerMBean {
     private SchemaManager schemaManager;
 
     private ConnectionManager connectionManager;
+    private SourceCacheManager sourceCacheManager;
     private SourceManager sourceManager;
+    private EntryCacheManager entryCacheManager;
     private ModuleManager moduleManager;
 
     private Map partitions = new TreeMap();
@@ -84,6 +90,27 @@ public class PartitionManager implements PartitionManagerMBean {
         return load(penroseConfig.getHome(), partitionConfig);
     }
 
+    public void load(String dir) throws Exception {
+
+        PartitionReader reader = new PartitionReader(penroseConfig.getHome());
+
+        File partitionsDir = new File(dir);
+        File files[] = partitionsDir.listFiles();
+        if (files == null) return;
+        
+        for (int i=0; i<files.length; i++) {
+            File file = files[i];
+            if (!file.isDirectory()) continue;
+
+            String path = dir+File.separator+file.getName();
+            PartitionConfig partitionConfig = reader.readPartitionConfig(path);
+            if (partitionConfig == null) continue;
+
+            partitionConfig.setPath(path);
+            load(penroseConfig.getHome(), partitionConfig);
+        }
+    }
+
     public Partition load(String home, PartitionConfig partitionConfig) throws Exception {
 
         log.debug(Formatter.displaySeparator(80));
@@ -95,31 +122,6 @@ public class PartitionManager implements PartitionManagerMBean {
 
         addPartition(partition);
 
-        Collection connectionConfigs = partition.getConnectionConfigs();
-        for (Iterator j=connectionConfigs.iterator(); j.hasNext(); ) {
-            ConnectionConfig connectionConfig = (ConnectionConfig)j.next();
-
-            String adapterName = connectionConfig.getAdapterName();
-            if (adapterName == null) throw new Exception("Missing adapter name");
-
-            AdapterConfig adapterConfig = penroseConfig.getAdapterConfig(adapterName);
-            if (adapterConfig == null) throw new Exception("Undefined adapter "+adapterName);
-
-            connectionManager.addConnection(partition, connectionConfig, adapterConfig);
-        }
-
-        Collection sourceConfigs = partition.getSourceConfigs();
-        for (Iterator i=sourceConfigs.iterator(); i.hasNext(); ) {
-            SourceConfig sourceConfig = (SourceConfig)i.next();
-            sourceManager.addSource(partition, sourceConfig);
-        }
-
-        Collection moduleConfigs = partition.getModuleConfigs();
-        for (Iterator i =moduleConfigs.iterator(); i.hasNext(); ) {
-            ModuleConfig moduleConfig = (ModuleConfig)i.next();
-            moduleManager.addModule(partition, moduleConfig);
-        }
-
         log.debug(Formatter.displaySeparator(80));
         log.debug(Formatter.displayLine("Partition "+partitionConfig.getName()+" loaded", 80));
         log.debug(Formatter.displaySeparator(80));
@@ -127,9 +129,11 @@ public class PartitionManager implements PartitionManagerMBean {
         return partition;
     }
 
-    public void store(String home, Collection partitionConfigs) throws Exception {
-        for (Iterator i=partitionConfigs.iterator(); i.hasNext(); ) {
-            PartitionConfig partitionConfig = (PartitionConfig)i.next();
+    public void store(String home) throws Exception {
+        for (Iterator i=partitions.keySet().iterator(); i.hasNext(); ) {
+            String name = (String)i.next();
+            Partition partition = (Partition)partitions.get(name);
+            PartitionConfig partitionConfig = partition.getPartitionConfig();
             store(home, partitionConfig);
         }
     }
@@ -207,20 +211,44 @@ public class PartitionManager implements PartitionManagerMBean {
         }
 
         Collection connectionConfigs = partition.getConnectionConfigs();
-        for (Iterator i=connectionConfigs.iterator(); i.hasNext(); ) {
-            ConnectionConfig connectionConfig = (ConnectionConfig)i.next();
+        for (Iterator j=connectionConfigs.iterator(); j.hasNext(); ) {
+            ConnectionConfig connectionConfig = (ConnectionConfig)j.next();
+
+            String adapterName = connectionConfig.getAdapterName();
+            if (adapterName == null) throw new Exception("Missing adapter name");
+
+            AdapterConfig adapterConfig = penroseConfig.getAdapterConfig(adapterName);
+            if (adapterConfig == null) throw new Exception("Undefined adapter "+adapterName);
+
+            connectionManager.addConnection(partition, connectionConfig, adapterConfig);
             connectionManager.start(partition.getName(), connectionConfig.getName());
         }
 
         Collection sourceConfigs = partition.getSourceConfigs();
         for (Iterator i=sourceConfigs.iterator(); i.hasNext(); ) {
             SourceConfig sourceConfig = (SourceConfig)i.next();
+            Source source = sourceManager.create(partition, sourceConfig);
+
+            if (sourceCacheManager != null) {
+                SourceCache sourceCache = sourceCacheManager.create(partition, sourceConfig);
+                source.setSourceCache(sourceCache);
+            }
+
             sourceManager.start(partition.getName(), sourceConfig.getName());
+        }
+
+        if (entryCacheManager != null) {
+            Collection entryMappings = partition.getEntryMappings();
+            for (Iterator i=entryMappings.iterator(); i.hasNext(); ) {
+                EntryMapping entryMapping = (EntryMapping)i.next();
+                entryCacheManager.create(partition, entryMapping);
+            }
         }
 
         Collection moduleConfigs = partition.getModuleConfigs();
         for (Iterator i=moduleConfigs.iterator(); i.hasNext(); ) {
             ModuleConfig moduleConfig = (ModuleConfig)i.next();
+            moduleManager.create(partition, moduleConfig);
             moduleManager.start(partition.getName(), moduleConfig.getName());
         }
 
@@ -432,5 +460,21 @@ public class PartitionManager implements PartitionManagerMBean {
 
     public void setSourceManager(SourceManager sourceManager) {
         this.sourceManager = sourceManager;
+    }
+
+    public EntryCacheManager getEntryCacheManager() {
+        return entryCacheManager;
+    }
+
+    public void setEntryCacheManager(EntryCacheManager entryCacheManager) {
+        this.entryCacheManager = entryCacheManager;
+    }
+
+    public SourceCacheManager getSourceCacheManager() {
+        return sourceCacheManager;
+    }
+
+    public void setSourceCacheManager(SourceCacheManager sourceCacheManager) {
+        this.sourceCacheManager = sourceCacheManager;
     }
 }

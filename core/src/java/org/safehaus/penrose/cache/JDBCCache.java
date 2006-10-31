@@ -23,6 +23,7 @@ import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.connection.ConnectionManager;
 import org.safehaus.penrose.source.FieldConfig;
 import org.safehaus.penrose.source.SourceConfig;
+import org.safehaus.penrose.partition.Partition;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
@@ -38,6 +39,7 @@ public class JDBCCache {
 
     JDBCCacheTool tool = new JDBCCacheTool();
 
+    private Partition partition;
     private ConnectionManager connectionManager;
     private String connectionName;
     SourceConfig sourceConfig;
@@ -60,7 +62,7 @@ public class JDBCCache {
     }
 
     public Connection getConnection() throws Exception {
-        return (Connection)connectionManager.openConnection(connectionName);
+        return (Connection)connectionManager.openConnection(partition, connectionName);
     }
 
     public String getTableName() {
@@ -1625,5 +1627,13 @@ public class JDBCCache {
 
     public void setTableName(String tableName) {
         this.tableName = tableName;
+    }
+
+    public Partition getPartition() {
+        return partition;
+    }
+
+    public void setPartition(Partition partition) {
+        this.partition = partition;
     }
 }

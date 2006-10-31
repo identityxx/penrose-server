@@ -97,7 +97,6 @@ public class Demo {
         log.warn("Configuring Penrose.");
 
         PenroseConfig penroseConfig = new DefaultPenroseConfig();
-        penroseConfig.removePartitionConfig("DEFAULT");
 
         PenroseFactory penroseFactory = PenroseFactory.getInstance();
         Penrose penrose = penroseFactory.createPenrose(penroseConfig);

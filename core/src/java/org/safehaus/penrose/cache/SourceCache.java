@@ -17,17 +17,9 @@
  */
 package org.safehaus.penrose.cache;
 
-import org.safehaus.penrose.connection.Connection;
-import org.safehaus.penrose.connection.ConnectionManager;
 import org.safehaus.penrose.filter.Filter;
-import org.safehaus.penrose.mapping.AttributeValues;
-import org.safehaus.penrose.mapping.Row;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.source.SourceConfig;
-import org.safehaus.penrose.pipeline.PipelineAdapter;
-import org.safehaus.penrose.pipeline.PipelineEvent;
-import org.safehaus.penrose.session.PenroseSearchControls;
-import org.safehaus.penrose.session.PenroseSearchResults;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

@@ -36,18 +36,7 @@ public class ModuleManager implements ModuleManagerMBean {
 
     private Map modules = new LinkedHashMap();
 
-    public void load(Collection partitions) throws Exception {
-        for (Iterator i=partitions.iterator(); i.hasNext(); ) {
-            Partition partition = (Partition)i.next();
-
-            for (Iterator j=partition.getModuleConfigs().iterator(); j.hasNext(); ) {
-                ModuleConfig moduleConfig = (ModuleConfig)j.next();
-                addModule(partition, moduleConfig);
-            }
-        }
-    }
-
-    public void addModule(Partition partition, ModuleConfig moduleConfig) throws Exception {
+    public void create(Partition partition, ModuleConfig moduleConfig) throws Exception {
 
         Module module = getModule(partition.getName(), moduleConfig.getName());
         if (module != null) return;

@@ -20,5 +20,5 @@ package org.safehaus.penrose.cache;
 /**
  * @author Endi S. Dewata
  */
-public class DefaultEntryCache extends EntryCache {
+public class DefaultEntryCache extends EntryCacheManager {
 }

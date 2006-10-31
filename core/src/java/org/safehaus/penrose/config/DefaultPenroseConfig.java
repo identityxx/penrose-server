@@ -52,7 +52,5 @@ public class DefaultPenroseConfig extends PenroseConfig {
 
         addEngineConfig(new EngineConfig("DEFAULT", DefaultEngine.class.getName()));
         addEngineConfig(new EngineConfig("PROXY", ProxyEngine.class.getName()));
-
-        addPartitionConfig(new PartitionConfig("DEFAULT", "conf"));
     }
 }

@@ -20,12 +20,13 @@ package org.safehaus.penrose.cache;
 import java.util.Collection;
 import java.util.Map;
 import java.util.TreeMap;
+import java.io.Serializable;
 
 /**
  * @author Administrator
  */
-public class CacheConfig implements Cloneable {
-	
+public class CacheConfig implements Cloneable, Serializable {
+
     public final static String DRIVER                  = "driver";
     public final static String URL                     = "url";
     public final static String USER                    = "user";
@@ -41,14 +42,14 @@ public class CacheConfig implements Cloneable {
     private String cacheClass;
     private String description;
 
-	/**
-	 * Parameters.
-	 */
-	public Map parameters = new TreeMap();
+    /**
+     * Parameters.
+     */
+    public Map parameters = new TreeMap();
 
-	public Collection getParameterNames() {
-		return parameters.keySet();
-	}
+    public Collection getParameterNames() {
+        return parameters.keySet();
+    }
 
     public void setParameter(String name, String value) {
         parameters.put(name, value);

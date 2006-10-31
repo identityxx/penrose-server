@@ -25,6 +25,7 @@ import org.safehaus.penrose.session.SessionManager;
 import org.safehaus.penrose.module.ModuleManager;
 import org.safehaus.penrose.partition.PartitionManager;
 import org.safehaus.penrose.Penrose;
+import org.safehaus.penrose.cache.EntryCacheManager;
 import org.safehaus.penrose.thread.ThreadManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -49,6 +50,7 @@ public class HandlerManager {
 
     private PenroseConfig penroseConfig;
     private PartitionManager partitionManager;
+    private EntryCacheManager entryCacheManager;
     private ModuleManager moduleManager;
     private ThreadManager threadManager;
 
@@ -65,6 +67,7 @@ public class HandlerManager {
         handler.setInterpreterFactory(interpreterManager);
         handler.setEngineManager(engineManager);
         handler.setPartitionManager(partitionManager);
+        handler.setEntryCacheManager(entryCacheManager);
         handler.setThreadManager(threadManager);
 
         handlers.put(handlerConfig.getName(), handler);
@@ -154,5 +157,13 @@ public class HandlerManager {
 
     public void setThreadManager(ThreadManager threadManager) {
         this.threadManager = threadManager;
+    }
+
+    public EntryCacheManager getEntryCacheManager() {
+        return entryCacheManager;
+    }
+
+    public void setEntryCacheManager(EntryCacheManager entryCacheManager) {
+        this.entryCacheManager = entryCacheManager;
     }
 }

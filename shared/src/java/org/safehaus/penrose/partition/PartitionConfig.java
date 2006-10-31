@@ -17,6 +17,8 @@
  */
 package org.safehaus.penrose.partition;
 
+import org.safehaus.penrose.cache.CacheConfig;
+
 import java.io.Serializable;
 
 /**
@@ -24,16 +26,27 @@ import java.io.Serializable;
  */
 public class PartitionConfig implements PartitionConfigMBean, Cloneable, Serializable {
 
-	private static final long serialVersionUID = 8442096980176568175L;
-
 	private String name;
     private String path;
+    private String description;
     private boolean enabled = true;
 
+    private CacheConfig entryCacheConfig;
+    private CacheConfig sourceCacheConfig;
+
     public PartitionConfig() {
+        entryCacheConfig = new CacheConfig();
+        entryCacheConfig.setName("DEFAULT");
+        entryCacheConfig.setCacheClass("org.safehaus.penrose.cache.EntryCache");
+
+        sourceCacheConfig = new CacheConfig();
+        sourceCacheConfig.setName("DEFAULT");
+        sourceCacheConfig.setCacheClass("org.safehaus.penrose.cache.SourceCache");
     }
 
     public PartitionConfig(String name, String path) {
+        this();
+
         this.name = name;
         this.path = path;
     }
@@ -54,6 +67,14 @@ public class PartitionConfig implements PartitionConfigMBean, Cloneable, Seriali
         this.path = path;
     }
 
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
     public boolean isEnabled() {
         return enabled;
     }
@@ -62,10 +83,29 @@ public class PartitionConfig implements PartitionConfigMBean, Cloneable, Seriali
         this.enabled = enabled;
     }
 
+    public CacheConfig getEntryCacheConfig() {
+        return entryCacheConfig;
+    }
+
+    public void setEntryCacheConfig(CacheConfig entryCacheConfig) {
+        this.entryCacheConfig.copy(entryCacheConfig);
+    }
+
+    public CacheConfig getSourceCacheConfig() {
+        return sourceCacheConfig;
+    }
+
+    public void setSourceCacheConfig(CacheConfig sourceCacheConfig) {
+        this.sourceCacheConfig.copy(sourceCacheConfig);
+    }
+
     public int hashCode() {
         return (name == null ? 0 : name.hashCode()) +
                 (path == null ? 0 : path.hashCode()) +
-                (enabled ? 0 : 1);
+                (description == null ? 0 : description.hashCode()) +
+                (enabled ? 0 : 1) +
+                (entryCacheConfig == null ? 0 : entryCacheConfig.hashCode()) +
+                (sourceCacheConfig == null ? 0 : sourceCacheConfig.hashCode());
     }
 
     boolean equals(Object o1, Object o2) {
@@ -80,7 +120,11 @@ public class PartitionConfig implements PartitionConfigMBean, Cloneable, Seriali
         PartitionConfig partitionConfig = (PartitionConfig)object;
         if (!equals(name, partitionConfig.name)) return false;
         if (!equals(path, partitionConfig.path)) return false;
+        if (!equals(description, partitionConfig.description)) return false;
         if (enabled != partitionConfig.enabled) return false;
+
+        if (!equals(entryCacheConfig, partitionConfig.entryCacheConfig)) return false;
+        if (!equals(sourceCacheConfig, partitionConfig.sourceCacheConfig)) return false;
 
         return true;
     }
@@ -88,7 +132,11 @@ public class PartitionConfig implements PartitionConfigMBean, Cloneable, Seriali
     public void copy(PartitionConfig partitionConfig) {
         name = partitionConfig.name;
         path = partitionConfig.path;
+        description = partitionConfig.description;
         enabled = partitionConfig.enabled;
+
+        entryCacheConfig.copy(partitionConfig.entryCacheConfig);
+        sourceCacheConfig.copy(partitionConfig.sourceCacheConfig);
     }
 
     public Object clone() {

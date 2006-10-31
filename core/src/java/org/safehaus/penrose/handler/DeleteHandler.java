@@ -51,7 +51,7 @@ public class DeleteHandler {
             if (rc != LDAPException.SUCCESS) return rc;
 
             EntryMapping entryMapping = entry.getEntryMapping();
-            handler.getEntryCache().remove(partition, entryMapping, entry.getDn());
+            handler.getEntryCacheManager().remove(partition, entryMapping, entry.getDn());
 
         } catch (LDAPException e) {
             rc = e.getResultCode();

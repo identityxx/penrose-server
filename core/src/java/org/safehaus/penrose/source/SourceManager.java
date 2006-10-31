@@ -21,8 +21,6 @@ import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.connection.ConnectionManager;
 import org.safehaus.penrose.connection.Connection;
-import org.safehaus.penrose.cache.SourceCacheManager;
-import org.safehaus.penrose.cache.SourceCache;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,26 +37,19 @@ public class SourceManager implements SourceManagerMBean {
 
     private PenroseConfig penroseConfig;
     private ConnectionManager connectionManager;
-    private SourceCacheManager sourceCacheManager;
 
     public SourceManager() {
     }
 
     public void init() throws Exception {
-        sourceCacheManager = new SourceCacheManager();
-        sourceCacheManager.setCacheConfig(penroseConfig.getSourceCacheConfig());
-        sourceCacheManager.setConnectionManager(connectionManager);
     }
 
-    public void addSource(Partition partition, SourceConfig sourceConfig) throws Exception {
+    public Source create(Partition partition, SourceConfig sourceConfig) throws Exception {
 
         Source source = new Source();
         source.setSourceManager(this);
         source.setPartition(partition);
         source.setSourceConfig(sourceConfig);
-
-        SourceCache sourceCache = sourceCacheManager.create(partition, sourceConfig);
-        source.setSourceCache(sourceCache);
 
         Connection connection = connectionManager.getConnection(partition, sourceConfig.getConnectionName());
         source.setConnection(connection);
@@ -71,6 +62,8 @@ public class SourceManager implements SourceManagerMBean {
             sources.put(partition.getName(), map);
         }
         map.put(sourceConfig.getName(), source);
+
+        return source;
     }
 
     public Source getSource(String partitionName, String sourceName) {
@@ -161,13 +154,5 @@ public class SourceManager implements SourceManagerMBean {
 
     public void setConnectionManager(ConnectionManager connectionManager) {
         this.connectionManager = connectionManager;
-    }
-
-    public SourceCacheManager getSourceCacheManager() {
-        return sourceCacheManager;
-    }
-
-    public void setSourceCacheManager(SourceCacheManager sourceCacheManager) {
-        this.sourceCacheManager = sourceCacheManager;
     }
 }

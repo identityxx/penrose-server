@@ -42,6 +42,7 @@ public class PartitionReader implements EntityResolver {
 
     private String home;
 
+    URL partitionDtdUrl;
     URL connectionsDtdUrl;
     URL sourcesDtdUrl;
     URL mappingDtdUrl;
@@ -56,10 +57,48 @@ public class PartitionReader implements EntityResolver {
 
         ClassLoader cl = getClass().getClassLoader();
 
-        connectionsDtdUrl = cl.getResource("org/safehaus/penrose/partition/connections.dtd");
-        sourcesDtdUrl = cl.getResource("org/safehaus/penrose/partition/sources.dtd");
-        mappingDtdUrl = cl.getResource("org/safehaus/penrose/partition/mapping.dtd");
-        modulesDtdUrl = cl.getResource("org/safehaus/penrose/partition/modules.dtd");
+        partitionDtdUrl = cl.getResource("org/safehaus/penrose/partition/partition.dtd");
+        connectionsDtdUrl = cl.getResource("org/safehaus/penrose/connection/connections.dtd");
+        sourcesDtdUrl = cl.getResource("org/safehaus/penrose/source/sources.dtd");
+        mappingDtdUrl = cl.getResource("org/safehaus/penrose/mapping/mapping.dtd");
+        modulesDtdUrl = cl.getResource("org/safehaus/penrose/module/modules.dtd");
+    }
+
+    public PartitionConfig readPartitionConfig(String path) throws Exception {
+
+        PartitionConfig partitionConfig = new PartitionConfig();
+
+        if (path == null) {
+            path = home;
+        } else if (home != null) {
+            path = home+File.separator+path;
+        }
+
+        String filename = (path == null ? "" : path+File.separator)+"partition.xml";
+        log.debug("Loading "+filename);
+
+        File pathFile = new File(path);
+        File file = new File(filename);
+        if (!file.exists()) {
+            log.debug("File "+filename+" not found");
+
+            partitionConfig.setName(pathFile.getName());
+            partitionConfig.setPath(path);
+            return partitionConfig;
+        }
+
+        //log.debug("Loading partition configuration from: "+file.getAbsolutePath());
+
+        ClassLoader cl = getClass().getClassLoader();
+        URL url = cl.getResource("org/safehaus/penrose/partition/partition-digester-rules.xml");
+		Digester digester = DigesterLoader.createDigester(url);
+        digester.setEntityResolver(this);
+        digester.setValidating(true);
+        digester.setClassLoader(cl);
+		digester.push(partitionConfig);
+		digester.parse(file);
+
+        return partitionConfig;
     }
 
     public Partition read(PartitionConfig partitionConfig) throws Exception {
@@ -107,7 +146,7 @@ public class PartitionReader implements EntityResolver {
         if (!file.exists()) return;
 
         ClassLoader cl = getClass().getClassLoader();
-        URL url = cl.getResource("org/safehaus/penrose/partition/mapping-digester-rules.xml");
+        URL url = cl.getResource("org/safehaus/penrose/mapping/mapping-digester-rules.xml");
 		Digester digester = DigesterLoader.createDigester(url);
         digester.setEntityResolver(this);
         digester.setValidating(true);
@@ -256,7 +295,7 @@ public class PartitionReader implements EntityResolver {
         //log.debug("Loading modules configuration from: "+file.getAbsolutePath());
 
         ClassLoader cl = getClass().getClassLoader();
-        URL url = cl.getResource("org/safehaus/penrose/partition/modules-digester-rules.xml");
+        URL url = cl.getResource("org/safehaus/penrose/module/modules-digester-rules.xml");
 		Digester digester = DigesterLoader.createDigester(url);
         digester.setEntityResolver(this);
         digester.setValidating(true);
@@ -285,7 +324,7 @@ public class PartitionReader implements EntityResolver {
 		//log.debug("Loading source configuration from: "+file.getAbsolutePath());
 
         ClassLoader cl = getClass().getClassLoader();
-        URL url = cl.getResource("org/safehaus/penrose/partition/connections-digester-rules.xml");
+        URL url = cl.getResource("org/safehaus/penrose/connection/connections-digester-rules.xml");
 		Digester digester = DigesterLoader.createDigester(url);
         digester.setEntityResolver(this);
         digester.setValidating(true);
@@ -314,7 +353,7 @@ public class PartitionReader implements EntityResolver {
 		//log.debug("Loading source configuration from: "+file.getAbsolutePath());
 
         ClassLoader cl = getClass().getClassLoader();
-        URL url = cl.getResource("org/safehaus/penrose/partition/sources-digester-rules.xml");
+        URL url = cl.getResource("org/safehaus/penrose/source/sources-digester-rules.xml");
 		Digester digester = DigesterLoader.createDigester(url);
         digester.setEntityResolver(this);
         digester.setValidating(true);
@@ -340,7 +379,10 @@ public class PartitionReader implements EntityResolver {
 
         URL url = null;
 
-        if ("connections.dtd".equals(file)) {
+        if ("partition.dtd".equals(file)) {
+            url = partitionDtdUrl;
+
+        } else if ("connections.dtd".equals(file)) {
             url = connectionsDtdUrl;
 
         } else if ("sources.dtd".equals(file)) {
