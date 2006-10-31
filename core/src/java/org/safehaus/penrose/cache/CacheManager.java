@@ -47,17 +47,15 @@ public class CacheManager {
     }
 
     public static void create(Penrose penrose) throws Exception {
+        
         Handler handler = penrose.getHandler();
         EntryCache entryCache = handler.getEntryCache();
-        entryCache.create();
 
         PartitionManager partitionManager = penrose.getPartitionManager();
 
         for (Iterator i=partitionManager.getPartitions().iterator(); i.hasNext(); ) {
             Partition partition = (Partition)i.next();
-
-            Collection entryMappings = partition.getRootEntryMappings();
-            entryCache.create(partition, entryMappings);
+            entryCache.create(partition);
         }
 
         SourceManager sourceManager = penrose.getSourceManager();
@@ -66,6 +64,7 @@ public class CacheManager {
     }
 
     public static void load(Penrose penrose) throws Exception {
+
         Handler handler = penrose.getHandler();
         EntryCache entryCache = handler.getEntryCache();
 
@@ -90,9 +89,7 @@ public class CacheManager {
 
         for (Iterator i=partitionManager.getPartitions().iterator(); i.hasNext(); ) {
             Partition partition = (Partition)i.next();
-
-            Collection entryMappings = partition.getRootEntryMappings();
-            entryCache.clean(partition, entryMappings);
+            entryCache.clean(partition);
         }
 
         SourceManager sourceManager = penrose.getSourceManager();
@@ -113,12 +110,8 @@ public class CacheManager {
 
         for (Iterator i=partitionManager.getPartitions().iterator(); i.hasNext(); ) {
             Partition partition = (Partition)i.next();
-
-            Collection entryMappings = partition.getRootEntryMappings();
-            entryCache.drop(partition, entryMappings);
+            entryCache.drop(partition);
         }
-
-        entryCache.drop();
     }
 
     public static void changeTable(Penrose penrose) throws Exception {
