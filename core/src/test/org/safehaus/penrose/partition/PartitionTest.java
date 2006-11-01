@@ -46,10 +46,8 @@ public class PartitionTest extends TestCase {
     }
 
     public void setUp() throws Exception {
-        PartitionConfig partitionConfig = new PartitionConfig("example", "samples/conf");
-
         PartitionReader partitionReader = new PartitionReader();
-        partition = partitionReader.read(partitionConfig);
+        partition = partitionReader.read("samples/conf");
 /*
         EntryMapping rootEntry = new EntryMapping("dc=Example,dc=com");
         rootEntry.addAttributeMapping(new AttributeMapping("dc", AttributeMapping.CONSTANT, "Example", true));

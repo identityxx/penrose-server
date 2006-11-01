@@ -318,10 +318,12 @@ public class Penrose {
 
         PartitionConfig partitionConfig = new PartitionConfig();
         partitionConfig.setName("DEFAULT");
-        partitionConfig.setPath("conf");
-        partitionManager.load(penroseConfig.getHome(), partitionConfig);
-        
-        partitionManager.load("partitions");
+
+        String conf = (penroseConfig.getHome() == null ? "" : penroseConfig.getHome()+File.separator)+"conf";
+        partitionManager.load(conf, partitionConfig);
+
+        String partitions = (penroseConfig.getHome() == null ? "" : penroseConfig.getHome()+File.separator)+"partitions";
+        partitionManager.loadPartitions(partitions);
 
         for (Iterator i=partitionManager.getPartitions().iterator(); i.hasNext(); ) {
             Partition partition = (Partition)i.next();
@@ -387,7 +389,12 @@ public class Penrose {
         PenroseConfigWriter serverConfigWriter = new PenroseConfigWriter(filename);
         serverConfigWriter.write(penroseConfig);
 
-        partitionManager.store(home);
+        PartitionConfig partitionConfig = partitionManager.getPartitionConfig("DEFAULT");
+        String conf = (home == null ? "" : home +File.separator)+"conf";
+        partitionManager.store(conf, partitionConfig);
+
+        String partitions = (home == null ? "" : home+File.separator)+"partitions";
+        partitionManager.storePartitions(partitions);
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

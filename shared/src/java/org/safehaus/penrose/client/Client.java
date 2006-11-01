@@ -198,7 +198,6 @@ public class Client {
         PartitionConfig partitionConfig = partitionClient.getPartitionConfig();
 
         System.out.println("Partition   : "+partitionConfig.getName());
-        System.out.println("Path        : "+partitionConfig.getPath());
         System.out.println("Enabled     : "+partitionConfig.isEnabled());
         System.out.println("Status      : "+partitionClient.getStatus());
     }

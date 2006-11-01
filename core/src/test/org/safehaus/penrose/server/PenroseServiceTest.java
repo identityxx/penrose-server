@@ -61,8 +61,6 @@ public class PenroseServiceTest extends TestCase {
         SchemaConfig schemaConfig = new SchemaConfig("samples/shop/schema/example.schema");
         penroseConfig.addSchemaConfig(schemaConfig);
 
-        PartitionConfig partitionConfig = new PartitionConfig("example", "samples/shop/partition");
-
         PenroseFactory penroseFactory = PenroseFactory.getInstance();
         penrose = penroseFactory.createPenrose(penroseConfig);
         penrose.start();

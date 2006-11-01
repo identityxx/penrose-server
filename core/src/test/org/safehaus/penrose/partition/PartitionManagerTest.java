@@ -77,10 +77,8 @@ public class PartitionManagerTest extends TestCase {
 
         penrose.stop();
 
-        PartitionConfig partitionConfig = new PartitionConfig("example", "samples/shop/partition");
-
         PartitionReader partitionReader = new PartitionReader();
-        Partition partition = partitionReader.read(partitionConfig);
+        Partition partition = partitionReader.read("samples/shop/partition");
 
         PartitionManager partitionManager = penrose.getPartitionManager();
         partitionManager.addPartition(partition);
@@ -96,10 +94,8 @@ public class PartitionManagerTest extends TestCase {
 
         penrose.stop();
 
-        PartitionConfig partitionConfig = new PartitionConfig("example", "samples/shop/partition");
-
         PartitionReader partitionReader = new PartitionReader();
-        Partition partition = partitionReader.read(partitionConfig);
+        Partition partition = partitionReader.read("samples/shop/partition");
 
         PartitionManager partitionManager = penrose.getPartitionManager();
         partitionManager.addPartition(partition);

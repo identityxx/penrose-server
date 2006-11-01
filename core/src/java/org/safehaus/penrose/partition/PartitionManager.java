@@ -86,39 +86,34 @@ public class PartitionManager implements PartitionManagerMBean {
         return analyzer.isUnique(partition, entryMapping);
     }
 
-    public Partition load(PartitionConfig partitionConfig) throws Exception {
-        return load(penroseConfig.getHome(), partitionConfig);
-    }
+    public void loadPartitions(String partitionsDir) throws Exception {
 
-    public void load(String dir) throws Exception {
+        PartitionConfigReader partitionConfigReader = new PartitionConfigReader();
 
-        PartitionReader reader = new PartitionReader(penroseConfig.getHome());
-
-        File partitionsDir = new File(dir);
-        File files[] = partitionsDir.listFiles();
+        File dir = new File(partitionsDir);
+        File files[] = dir.listFiles();
         if (files == null) return;
         
         for (int i=0; i<files.length; i++) {
             File file = files[i];
             if (!file.isDirectory()) continue;
 
-            String path = dir+File.separator+file.getName();
-            PartitionConfig partitionConfig = reader.readPartitionConfig(path);
+            String path = partitionsDir+File.separator+file.getName();
+            PartitionConfig partitionConfig = partitionConfigReader.read(path);
             if (partitionConfig == null) continue;
 
-            partitionConfig.setPath(path);
-            load(penroseConfig.getHome(), partitionConfig);
+            load(path, partitionConfig);
         }
     }
 
-    public Partition load(String home, PartitionConfig partitionConfig) throws Exception {
+    public Partition load(String partitionDir, PartitionConfig partitionConfig) throws Exception {
 
         log.debug(Formatter.displaySeparator(80));
         log.debug(Formatter.displayLine("Loading partition "+partitionConfig.getName(), 80));
         log.debug(Formatter.displaySeparator(80));
 
-        PartitionReader partitionReader = new PartitionReader(home);
-        Partition partition = partitionReader.read(partitionConfig);
+        PartitionReader partitionReader = new PartitionReader();
+        Partition partition = partitionReader.read(partitionDir, partitionConfig);
 
         addPartition(partition);
 
@@ -129,25 +124,30 @@ public class PartitionManager implements PartitionManagerMBean {
         return partition;
     }
 
-    public void store(String home) throws Exception {
+    public void storePartitions(String dir) throws Exception {
         for (Iterator i=partitions.keySet().iterator(); i.hasNext(); ) {
             String name = (String)i.next();
+            if ("DEFAULT".equals(name)) continue;
+
             Partition partition = (Partition)partitions.get(name);
             PartitionConfig partitionConfig = partition.getPartitionConfig();
-            store(home, partitionConfig);
+            
+            String path = (dir == null ? "" : dir +File.separator)+partitionConfig.getName();
+            store(path, partitionConfig);
         }
     }
 
-    public void store(String home, PartitionConfig partitionConfig) throws Exception {
-
-        String path = (home == null ? "" : home+File.separator)+partitionConfig.getPath();
+    public void store(String path, PartitionConfig partitionConfig) throws Exception {
 
         log.debug("Storing "+partitionConfig.getName()+" partition into "+path+".");
 
         Partition partition = getPartition(partitionConfig.getName());
 
-        PartitionWriter partitionWriter = new PartitionWriter(path);
-        partitionWriter.write(partition);
+        PartitionConfigWriter partitionConfigWriter = new PartitionConfigWriter();
+        partitionConfigWriter.write(path, partitionConfig);
+
+        PartitionWriter partitionWriter = new PartitionWriter();
+        partitionWriter.write(path, partition);
     }
 
     public Partition getPartition(String name) throws Exception {

@@ -158,14 +158,6 @@ public class PenroseConfigWriter {
         return element;
     }
 
-    public Element toElement(PartitionConfig partitionConfig) {
-        Element element = new DefaultElement("partition");
-        if (partitionConfig.getName() != null) element.addAttribute("name", partitionConfig.getName());
-        if (partitionConfig.getPath() != null) element.addAttribute("path", partitionConfig.getPath());
-        if (!partitionConfig.isEnabled()) element.addAttribute("enabled", "false");
-        return element;
-    }
-
     public Element toElement(ServiceConfig serviceConfig) {
 
         Element element = new DefaultElement("service");

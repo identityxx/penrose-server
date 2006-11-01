@@ -44,11 +44,10 @@ public class PartitionConfig implements PartitionConfigMBean, Cloneable, Seriali
         sourceCacheConfig.setCacheClass("org.safehaus.penrose.cache.SourceCache");
     }
 
-    public PartitionConfig(String name, String path) {
+    public PartitionConfig(String name) {
         this();
 
         this.name = name;
-        this.path = path;
     }
 
     public String getName() {
