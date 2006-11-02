@@ -11,7 +11,7 @@
     <property name="cygwin.home" value="c:/cygwin"/>
 
     <property name="project.name" value="penrose"/>
-    <property name="project.version" value="1.1.1"/>
+    <property name="project.version" value="1.1.2"/>
 
     <tstamp/>
 
