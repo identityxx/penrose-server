@@ -220,10 +220,9 @@ public class Connector {
             // Remove rows
             for (Iterator i = pks.iterator(); i.hasNext();) {
                 Row pk = (Row) i.next();
-                Row key = normalize((Row)pk);
                 AttributeValues oldEntry = (AttributeValues)sourceValues.clone();
                 oldEntry.set(pk);
-                log.debug("DELETE ROW: " + oldEntry);
+                log.debug("DELETE ("+pk+"): "+oldEntry);
 
                 // Delete row from source table in the source database/directory
                 Connection connection = getConnection(partition, sourceConfig.getConnectionName());

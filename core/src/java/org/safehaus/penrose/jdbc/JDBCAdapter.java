@@ -255,16 +255,14 @@ public class JDBCAdapter extends Adapter {
 
             ps = con.prepareStatement(sql);
 
-            log.debug(Formatter.displayLine("Parameters:", 80));
+            log.debug("Parameters:");
 
             int counter = 0;
             for (Iterator i=parameters.iterator(); i.hasNext(); ) {
                 Object param = i.next();
                 ps.setObject(++counter, param);
-                log.debug(Formatter.displayLine(" - "+counter+" = "+param, 80));
+                log.debug(" - "+counter+" = "+param);
             }
-
-            log.debug(Formatter.displaySeparator(80));
 
             rs = ps.executeQuery();
 
@@ -626,17 +624,15 @@ public class JDBCAdapter extends Adapter {
 
             ps = con.prepareStatement(sql);
 
-            log.debug(Formatter.displayLine("Parameters:", 80));
+            log.debug("Parameters:");
 
             int c = 1;
             for (Iterator i=pk.getNames().iterator(); i.hasNext(); c++) {
                 String name = (String)i.next();
                 Object value = pk.get(name);
                 ps.setObject(c, value);
-                log.debug(Formatter.displayLine(" - "+c+" = "+value, 80));
+                log.debug(" - "+c+" = "+value);
             }
-
-            log.debug(Formatter.displaySeparator(80));
 
             int count = ps.executeUpdate();
             if (count == 0) return LDAPException.NO_SUCH_OBJECT;

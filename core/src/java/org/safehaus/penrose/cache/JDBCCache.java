@@ -487,12 +487,13 @@ public class JDBCCache {
         if (keys.isEmpty()) return values;
 
         Collection pks = searchPrimaryKeys(keys, missingKeys);
-        log.debug("Loading "+values.keySet());
+        log.debug("Loading "+pks);
 
         for (Iterator i=pks.iterator(); i.hasNext(); ) {
             Row pk = (Row)i.next();
             AttributeValues av = new AttributeValues();
             av.add(pk);
+            av.set("primaryKey", pk);
             values.put(pk, av);
         }
 
