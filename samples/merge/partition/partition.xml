@@ -5,7 +5,7 @@
 
 <partition enabled="true">
 
-    <name>Merge</name>
-    <description>Merge Partition</description>
+  <name>Merge</name>
+  <description>Merge Partition</description>
 
 </partition>

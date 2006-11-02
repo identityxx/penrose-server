@@ -5,7 +5,7 @@
 
 <partition enabled="true">
 
-    <name>Operational</name>
-    <description>Operational Attributes</description>
+  <name>Operational</name>
+  <description>Operational Attributes</description>
 
 </partition>

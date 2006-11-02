@@ -126,6 +126,12 @@ public class EntryCacheManager {
 
     public void create(Partition partition) throws Exception {
         Collection entryMappings = partition.getRootEntryMappings();
+
+        EntryMapping entryMapping = (EntryMapping)entryMappings.iterator().next();
+        EntryCache cache = get(partition, entryMapping);
+
+        cache.globalCreate();
+
         create(partition, entryMappings);
     }
 
@@ -195,9 +201,35 @@ public class EntryCacheManager {
         }
     }
 
+    public void invalidate(Partition partition) throws Exception {
+        Collection entryMappings = partition.getRootEntryMappings();
+        invalidate(partition, entryMappings);
+    }
+
+    public void invalidate(
+            final Partition partition,
+            final Collection entryDefinitions
+    ) throws Exception {
+
+        for (Iterator i=entryDefinitions.iterator(); i.hasNext(); ) {
+            final EntryMapping entryMapping = (EntryMapping)i.next();
+
+            Collection children = partition.getChildren(entryMapping);
+            invalidate(partition, children);
+
+            EntryCache entryCache = get(partition, entryMapping);
+            entryCache.invalidate();
+        }
+    }
+
     public void drop(Partition partition) throws Exception {
         Collection entryMappings = partition.getRootEntryMappings();
         drop(partition, entryMappings);
+
+        EntryMapping entryMapping = (EntryMapping)entryMappings.iterator().next();
+        EntryCache cache = get(partition, entryMapping);
+
+        cache.globalDrop();
     }
 
     public EntryCache drop(Partition partition, Collection entryDefinitions) throws Exception {

@@ -6,7 +6,7 @@
 <modules>
 
   <module name="Polling Connector" enabled="false">
-    <module-class>org.safehaus.penrose.connector.PollingConnectorModule</module-class>
+    <module-class>org.safehaus.penrose.module.PollingConnectorModule</module-class>
     <parameter>
       <param-name>interval</param-name>
       <param-value>5</param-value>

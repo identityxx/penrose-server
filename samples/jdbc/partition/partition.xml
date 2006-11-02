@@ -5,7 +5,7 @@
 
 <partition enabled="true">
 
-    <name>JDBC</name>
-    <description>JDBC Partition</description>
+  <name>JDBC</name>
+  <description>JDBC Partition</description>
 
 </partition>

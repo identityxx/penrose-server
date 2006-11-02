@@ -5,7 +5,7 @@
 
 <partition enabled="true">
 
-    <name>Outlook</name>
-    <description>Outlook Partition</description>
+  <name>Outlook</name>
+  <description>Outlook Partition</description>
 
 </partition>

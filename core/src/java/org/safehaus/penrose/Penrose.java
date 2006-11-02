@@ -294,6 +294,8 @@ public class Penrose {
 
         loadEngine();
         loadHandler();
+
+        loadPartitions();
     }
 
     public void loadSystemProperties() throws Exception {
@@ -407,8 +409,6 @@ public class Penrose {
 
         try {
             status = STARTING;
-
-            loadPartitions();
 
             partitionManager.start();
             engineManager.start();

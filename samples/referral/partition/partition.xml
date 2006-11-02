@@ -5,7 +5,7 @@
 
 <partition enabled="true">
 
-    <name>Referral</name>
-    <description>Referral Partition</description>
+  <name>Referral</name>
+  <description>Referral Partition</description>
 
 </partition>

@@ -5,7 +5,7 @@
         
 <partition enabled="true">
 
-    <name>Adapter</name>
-    <description>Adapter Partition</description>
+  <name>Adapter</name>
+  <description>Adapter Partition</description>
 
 </partition>

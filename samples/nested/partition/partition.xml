@@ -5,7 +5,7 @@
 
 <partition enabled="true">
 
-    <name>Nested</name>
-    <description>Nested Partition</description>
+  <name>Nested</name>
+  <description>Nested Partition</description>
 
 </partition>

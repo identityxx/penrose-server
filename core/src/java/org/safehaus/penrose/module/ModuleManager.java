@@ -39,9 +39,15 @@ public class ModuleManager implements ModuleManagerMBean {
     public void create(Partition partition, ModuleConfig moduleConfig) throws Exception {
 
         Module module = getModule(partition.getName(), moduleConfig.getName());
-        if (module != null) return;
+        if (module != null) {
+            log.debug("Module "+moduleConfig.getName()+" alread exists");
+            return;
+        }
         
-        if (!moduleConfig.isEnabled()) return;
+        if (!moduleConfig.isEnabled()) {
+            log.debug("Module "+moduleConfig.getName()+" is disabled");
+            return;
+        }
 
         log.debug("Initializing module "+moduleConfig.getName());
         
@@ -53,7 +59,7 @@ public class ModuleManager implements ModuleManagerMBean {
         module.setPenrose(penrose);
         module.init();
 
-        addModule(partition, module);
+        addModule(partition.getName(), module);
     }
 
     public void start() throws Exception {
@@ -68,7 +74,10 @@ public class ModuleManager implements ModuleManagerMBean {
                 Module module = (Module)map.get(moduleName);
 
                 ModuleConfig moduleConfig = module.getModuleConfig();
-                if (!moduleConfig.isEnabled()) continue;
+                if (!moduleConfig.isEnabled()) {
+                    log.debug("Module "+moduleConfig.getName()+" is disabled");
+                    continue;
+                }
 
                 module.start();
             }
@@ -80,10 +89,16 @@ public class ModuleManager implements ModuleManagerMBean {
     public void start(String partitionName, String moduleName) throws Exception {
 
         Module module = getModule(partitionName, moduleName);
-        if (module == null) throw new Exception(moduleName +" not found.");
+        if (module == null) {
+            log.debug("Module "+moduleName+" not found");
+            return;
+         }
 
         ModuleConfig moduleConfig = module.getModuleConfig();
-        if (!moduleConfig.isEnabled()) return;
+        if (!moduleConfig.isEnabled()) {
+            log.debug("Module "+moduleConfig.getName()+" is disabled");
+            return;
+        }
 
         log.debug("Starting "+moduleName +" module.");
         module.start();
@@ -101,7 +116,10 @@ public class ModuleManager implements ModuleManagerMBean {
                 Module module = (Module)map.get(moduleName);
 
                 ModuleConfig moduleConfig = module.getModuleConfig();
-                if (!moduleConfig.isEnabled()) continue;
+                if (!moduleConfig.isEnabled()) {
+                    log.debug("Module "+moduleConfig.getName()+" is disabled");
+                    continue;
+                }
 
                 module.stop();
             }
@@ -113,10 +131,16 @@ public class ModuleManager implements ModuleManagerMBean {
     public void stop(String partitionName, String moduleName) throws Exception {
 
         Module module = getModule(partitionName, moduleName);
-        if (module == null) throw new Exception(moduleName +" not found.");
+        if (module == null) {
+            log.debug("Module "+moduleName+" not found");
+            return;
+        }
 
         ModuleConfig moduleConfig = module.getModuleConfig();
-        if (!moduleConfig.isEnabled()) return;
+        if (!moduleConfig.isEnabled()) {
+            log.debug("Module "+moduleConfig.getName()+" is disabled");
+            return;
+        }
 
         log.debug("Stopping "+moduleName +" module.");
         module.stop();
@@ -138,11 +162,11 @@ public class ModuleManager implements ModuleManagerMBean {
         return module.getStatus();
     }
 
-    public void addModule(Partition partition, Module module) {
-        Map map = (Map)modules.get(partition.getName());
+    public void addModule(String partitionName, Module module) {
+        Map map = (Map)modules.get(partitionName);
         if (map == null) {
             map = new TreeMap();
-            modules.put(partition.getName(), map);
+            modules.put(partitionName, map);
         }
         map.put(module.getName(), module);
     }

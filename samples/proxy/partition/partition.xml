@@ -5,7 +5,7 @@
 
 <partition enabled="true">
 
-    <name>Proxy</name>
-    <description>Proxy Partition</description>
+  <name>Proxy</name>
+  <description>Proxy Partition</description>
 
 </partition>

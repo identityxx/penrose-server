@@ -5,7 +5,7 @@
 
 <partition enabled="true">
 
-    <name>Module</name>
-    <description>Module Partition</description>
+  <name>Module</name>
+  <description>Module Partition</description>
 
 </partition>

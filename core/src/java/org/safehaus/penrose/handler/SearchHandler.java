@@ -120,16 +120,18 @@ public class SearchHandler {
             }
         });
 
-        searchBase(
-                session,
-                partition,
-                sourceValues,
-                entryMapping,
-                baseDn,
-                filter,
-                sc,
-                sr
-        );
+        if (sc.getScope() == LDAPConnection.SCOPE_BASE || sc.getScope() == LDAPConnection.SCOPE_SUB) { // base or subtree
+            searchBase(
+                    session,
+                    partition,
+                    sourceValues,
+                    entryMapping,
+                    baseDn,
+                    filter,
+                    sc,
+                    sr
+            );
+        }
 
         if (sc.getScope() == LDAPConnection.SCOPE_ONE || sc.getScope() == LDAPConnection.SCOPE_SUB) { // one level or subtree
             log.debug("Searching children of \""+entryMapping.getDn()+"\"");

@@ -660,29 +660,31 @@ public abstract class Engine {
         }
 
         Collection rdns = computeRdn(interpreter, entryMapping);
+
+        log.debug("Computing DNs for \""+entryMapping.getDn()+"\"");
         Collection dns = new ArrayList();
-
-        //log.info("Computing DNs for \""+entryMapping.getDn()+"\"");
-
         if (parentDns.isEmpty()) {
-            dns.add(entryMapping.getDn());
-        } else {
-            for (Iterator i=parentDns.iterator(); i.hasNext(); ) {
-                String parentDn = (String)i.next();
-                //log.info(" - parent dn: "+parentDn);
-                for (Iterator j=rdns.iterator(); j.hasNext(); ) {
-                    Row rdn = (Row)j.next();
-                    //log.info("   - rdn: "+rdn);
+            String dn = entryMapping.getDn();
+            log.debug(" - "+dn);
+            dns.add(dn);
+            return dns;
+        }
 
-                    String s = rdn.toString(); //.trim();
-                    //s = LDAPDN.escapeRDN(s);
-                    //log.info("     => rdn: "+rdn);
+        for (Iterator i=parentDns.iterator(); i.hasNext(); ) {
+            String parentDn = (String)i.next();
+            //log.info(" - parent dn: "+parentDn);
+            for (Iterator j=rdns.iterator(); j.hasNext(); ) {
+                Row rdn = (Row)j.next();
+                //log.info("   - rdn: "+rdn);
 
-                    String dn = EntryUtil.append(s, parentDn);
+                String s = rdn.toString(); //.trim();
+                //s = LDAPDN.escapeRDN(s);
+                //log.info("     => rdn: "+rdn);
 
-                    //log.info("     => dn: "+dn);
-                    dns.add(dn);
-                }
+                String dn = EntryUtil.append(s, parentDn);
+
+                log.debug(" - "+dn);
+                dns.add(dn);
             }
         }
 
@@ -694,6 +696,7 @@ public abstract class Engine {
             EntryMapping entryMapping
             ) throws Exception {
 
+        //log.debug("Computing RDNs:");
         AttributeValues rdns = new AttributeValues();
 
         Collection rdnAttributes = entryMapping.getRdnAttributeNames();
@@ -702,6 +705,8 @@ public abstract class Engine {
             String name = attributeMapping.getName();
 
             Object value = interpreter.eval(entryMapping, attributeMapping);
+            //log.debug(" - "+name+": "+value);
+
             if (value == null) continue;
 
             if (value instanceof Collection && AttributeMapping.RDN_FIRST.equals(attributeMapping.getRdn())) {

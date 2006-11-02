@@ -5,7 +5,23 @@
 
 <partition enabled="true">
 
-    <name>PollingConnector</name>
-    <description>Polling Connector</description>
+  <name>PollingConnector</name>
+  <description>Polling Connector</description>
+
+  <entry-cache>
+    <cache-class>org.safehaus.penrose.cache.PersistentEntryCache</cache-class>
+    <parameter>
+      <param-name>connection</param-name>
+      <param-value>penrose</param-value>
+    </parameter>
+  </entry-cache>
+
+  <source-cache>
+    <cache-class>org.safehaus.penrose.cache.PersistentSourceCache</cache-class>
+    <parameter>
+      <param-name>connection</param-name>
+      <param-value>penrose</param-value>
+    </parameter>
+  </source-cache>
 
 </partition>

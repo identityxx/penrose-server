@@ -133,6 +133,10 @@ public class EntryCache {
 
     public void drop() throws Exception { }
 
+    public void globalCreate() throws Exception { }
+    
+    public void globalDrop() throws Exception { }
+
     public Entry get(String dn) throws Exception {
         return null;
     }

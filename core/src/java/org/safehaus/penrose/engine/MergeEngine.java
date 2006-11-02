@@ -210,7 +210,7 @@ public class MergeEngine {
 
         log.debug("Generating entry "+dn);
 
-        Entry entry = new Entry(dn, entryMapping, sourceValues, attributeValues);
+        Entry entry = new Entry(dn, entryMapping, attributeValues, sourceValues);
         log.debug("\n"+EntryUtil.toString(entry));
 
         //Row rdn = entry.getRdn();

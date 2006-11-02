@@ -5,7 +5,7 @@
 
 <partition enabled="true">
 
-    <name>Samba</name>
-    <description>Samba Partition</description>
+  <name>Samba</name>
+  <description>Samba Partition</description>
 
 </partition>

@@ -5,7 +5,7 @@
 
 <partition enabled="true">
 
-    <name>SASL</name>
-    <description>SASL Partition</description>
+  <name>SASL</name>
+  <description>SASL Partition</description>
 
 </partition>

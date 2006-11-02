@@ -5,7 +5,7 @@
 
 <partition enabled="true">
 
-    <name>Shop</name>
-    <description>Shop Partition</description>
+  <name>Shop</name>
+  <description>Shop Partition</description>
 
 </partition>

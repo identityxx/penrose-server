@@ -130,7 +130,7 @@ public class PersistentEntryCache extends EntryCache {
             return id;
 
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return -1;
 
         } finally {
@@ -140,8 +140,7 @@ public class PersistentEntryCache extends EntryCache {
         }
     }
 
-    public void addMapping() throws Exception {
-        String dn = getEntryMapping().getDn();
+    public void globalCreate() throws Exception {
 
         Connection con = null;
         PreparedStatement ps = null;
@@ -157,12 +156,20 @@ public class PersistentEntryCache extends EntryCache {
             ps.execute();
 
         } catch (Exception e) {
-            //already created
+            log.error(e.getMessage(), e);
 
         } finally {
             if (ps != null) try { ps.close(); } catch (Exception e) {}
             if (con != null) try { con.close(); } catch (Exception e) {}
         }
+    }
+
+    public void addMapping() throws Exception {
+
+        String dn = getEntryMapping().getDn();
+
+        Connection con = null;
+        PreparedStatement ps = null;
 
         try {
             String sql = "insert into "+partition.getName()+"_mappings values (null, ?)";
@@ -184,7 +191,7 @@ public class PersistentEntryCache extends EntryCache {
             ps.execute();
 
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
 
         } finally {
             if (ps != null) try { ps.close(); } catch (Exception e) {}
@@ -258,7 +265,7 @@ public class PersistentEntryCache extends EntryCache {
             return id;
 
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return -1;
 
         } finally {
@@ -336,7 +343,7 @@ public class PersistentEntryCache extends EntryCache {
             return list;
 
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return null;
 
         } finally {
@@ -371,7 +378,7 @@ public class PersistentEntryCache extends EntryCache {
             ps.execute();
 
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
 
         } finally {
             if (ps != null) try { ps.close(); } catch (Exception e) {}
@@ -398,7 +405,7 @@ public class PersistentEntryCache extends EntryCache {
             ps.execute();
 
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
 
         } finally {
             if (ps != null) try { ps.close(); } catch (Exception e) {}
@@ -460,7 +467,7 @@ public class PersistentEntryCache extends EntryCache {
             ps.execute();
 
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
 
         } finally {
             if (ps != null) try { ps.close(); } catch (Exception e) {}
@@ -537,7 +544,7 @@ public class PersistentEntryCache extends EntryCache {
             return id;
 
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return -1;
 
         } finally {
@@ -604,7 +611,7 @@ public class PersistentEntryCache extends EntryCache {
             ps.execute();
 
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
 
         } finally {
             if (ps != null) try { ps.close(); } catch (Exception e) {}
@@ -661,7 +668,7 @@ public class PersistentEntryCache extends EntryCache {
             ps.execute();
 
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
 
         } finally {
             if (ps != null) try { ps.close(); } catch (Exception e) {}
@@ -700,7 +707,7 @@ public class PersistentEntryCache extends EntryCache {
             ps.execute();
 
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
 
         } finally {
             if (ps != null) try { ps.close(); } catch (Exception e) {}
@@ -733,7 +740,7 @@ public class PersistentEntryCache extends EntryCache {
             ps.execute();
 
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
 
         } finally {
             if (ps != null) try { ps.close(); } catch (Exception e) {}
@@ -766,7 +773,7 @@ public class PersistentEntryCache extends EntryCache {
             ps.execute();
 
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
 
         } finally {
             if (ps != null) try { ps.close(); } catch (Exception e) {}
@@ -807,7 +814,7 @@ public class PersistentEntryCache extends EntryCache {
             ps.execute();
 
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
 
         } finally {
             if (ps != null) try { ps.close(); } catch (Exception e) {}
@@ -874,7 +881,7 @@ public class PersistentEntryCache extends EntryCache {
             ps.execute();
 
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
 
         } finally {
             if (ps != null) try { ps.close(); } catch (Exception e) {}
@@ -941,7 +948,7 @@ public class PersistentEntryCache extends EntryCache {
             ps.execute();
 
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
 
         } finally {
             if (ps != null) try { ps.close(); } catch (Exception e) {}
@@ -975,7 +982,7 @@ public class PersistentEntryCache extends EntryCache {
             ps.execute();
 
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
 
         } finally {
             if (ps != null) try { ps.close(); } catch (Exception e) {}
@@ -1003,7 +1010,7 @@ public class PersistentEntryCache extends EntryCache {
             ps.execute();
 
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
 
         } finally {
             if (ps != null) try { ps.close(); } catch (Exception e) {}
@@ -1031,12 +1038,19 @@ public class PersistentEntryCache extends EntryCache {
             ps.execute();
 
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
 
         } finally {
             if (ps != null) try { ps.close(); } catch (Exception e) {}
             if (con != null) try { con.close(); } catch (Exception e) {}
         }
+
+    }
+
+    public void globalDrop() throws Exception {
+
+        Connection con = null;
+        PreparedStatement ps = null;
 
         try {
             con = getConnection();
@@ -1057,7 +1071,7 @@ public class PersistentEntryCache extends EntryCache {
             ps.execute();
 
         } catch (Exception e) {
-            // already dropped
+            log.error(e.getMessage(), e);
 
         } finally {
             if (ps != null) try { ps.close(); } catch (Exception e) {}
@@ -1091,7 +1105,7 @@ public class PersistentEntryCache extends EntryCache {
             ps.execute();
 
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
 
         } finally {
             if (ps != null) try { ps.close(); } catch (Exception e) {}
@@ -1164,7 +1178,7 @@ public class PersistentEntryCache extends EntryCache {
             }
 
         } catch (NamingException e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
         }
 
         return entry;
@@ -1722,7 +1736,7 @@ public class PersistentEntryCache extends EntryCache {
             ps.execute();
 
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
 
         } finally {
             if (ps != null) try { ps.close(); } catch (Exception e) {}
@@ -1840,7 +1854,7 @@ public class PersistentEntryCache extends EntryCache {
             ps.execute();
 
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
 
         } finally {
             if (ps != null) try { ps.close(); } catch (Exception e) {}
@@ -1908,7 +1922,7 @@ public class PersistentEntryCache extends EntryCache {
             return dn;
 
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return null;
 
         } finally {
@@ -1977,7 +1991,7 @@ public class PersistentEntryCache extends EntryCache {
             }
 
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
 
         } finally {
             if (rs != null) try { rs.close(); } catch (Exception e) {}
@@ -2040,7 +2054,7 @@ public class PersistentEntryCache extends EntryCache {
             ps.execute();
 
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
 
         } finally {
             if (ps != null) try { ps.close(); } catch (Exception e) {}
@@ -2107,7 +2121,7 @@ public class PersistentEntryCache extends EntryCache {
             }
 
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
 
         } finally {
             if (rs != null) try { rs.close(); } catch (Exception e) {}
@@ -2227,7 +2241,7 @@ public class PersistentEntryCache extends EntryCache {
             ps.execute();
 
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
 
         } finally {
             if (ps != null) try { ps.close(); } catch (Exception e) {}
@@ -2287,7 +2301,7 @@ public class PersistentEntryCache extends EntryCache {
             ps.execute();
 
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
 
         } finally {
             if (ps != null) try { ps.close(); } catch (Exception e) {}
