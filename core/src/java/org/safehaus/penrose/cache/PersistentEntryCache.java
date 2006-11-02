@@ -96,7 +96,7 @@ public class PersistentEntryCache extends EntryCache {
         PreparedStatement ps = null;
         ResultSet rs = null;
 
-        int id = 0;
+        int id = -1;
 
         try {
             String sql = "select id from "+partition.getName()+"_mappings where dn=?";
@@ -110,8 +110,7 @@ public class PersistentEntryCache extends EntryCache {
                     log.debug(Formatter.displayLine(line, 80));
                 }
                 log.debug(Formatter.displaySeparator(80));
-                log.debug(Formatter.displayLine("Parameters: dn = "+dn, 80));
-                log.debug(Formatter.displaySeparator(80));
+                log.debug("Parameters: dn = "+dn);
             }
 
             ps = con.prepareStatement(sql);
@@ -122,22 +121,18 @@ public class PersistentEntryCache extends EntryCache {
                 id = rs.getInt(1);
             }
 
-            if (log.isDebugEnabled()) {
-                log.debug(Formatter.displayLine("Results: id = "+id, 80));
-                log.debug(Formatter.displaySeparator(80));
-            }
-
-            return id;
+            log.debug("Results: id = "+id);
 
         } catch (Exception e) {
             log.error(e.getMessage(), e);
-            return -1;
 
         } finally {
             if (rs != null) try { rs.close(); } catch (Exception e) {}
             if (ps != null) try { ps.close(); } catch (Exception e) {}
             if (con != null) try { con.close(); } catch (Exception e) {}
         }
+
+        return id;
     }
 
     public void globalCreate() throws Exception {
@@ -219,7 +214,7 @@ public class PersistentEntryCache extends EntryCache {
         PreparedStatement ps = null;
         ResultSet rs = null;
 
-        int id = 0;
+        int id = -1;
 
         try {
             con = getConnection();
@@ -243,13 +238,12 @@ public class PersistentEntryCache extends EntryCache {
             }
 
             if (log.isDebugEnabled()) {
-                log.debug(Formatter.displayLine("Parameters:", 80));
+                log.debug("Parameters:");
                 counter = 1;
                 for (Iterator i=parameters.iterator(); i.hasNext(); counter++) {
                     Object value = i.next();
-                    log.debug(Formatter.displayLine(" - "+counter+" = "+value, 80));
+                    log.debug(" - "+counter+" = "+value);
                 }
-                log.debug(Formatter.displaySeparator(80));
             }
 
             rs = ps.executeQuery();
@@ -257,22 +251,18 @@ public class PersistentEntryCache extends EntryCache {
                 id = rs.getInt(1);
             }
 
-            if (log.isDebugEnabled()) {
-                log.debug(Formatter.displayLine("Results: id = "+id, 80));
-                log.debug(Formatter.displaySeparator(80));
-            }
-
-            return id;
+            log.debug("Results: id = "+id);
 
         } catch (Exception e) {
             log.error(e.getMessage(), e);
-            return -1;
 
         } finally {
             if (rs != null) try { rs.close(); } catch (Exception e) {}
             if (ps != null) try { ps.close(); } catch (Exception e) {}
             if (con != null) try { con.close(); } catch (Exception e) {}
         }
+
+        return id;
     }
 
     public Collection getQueryResults(int queryId) throws Exception {
@@ -316,28 +306,23 @@ public class PersistentEntryCache extends EntryCache {
             }
 
             if (log.isDebugEnabled()) {
-                log.debug(Formatter.displayLine("Parameters:", 80));
+                log.debug("Parameters:");
                 counter = 1;
                 for (Iterator i=parameters.iterator(); i.hasNext(); counter++) {
                     Object value = i.next();
-                    log.debug(Formatter.displayLine(" - "+counter+" = "+value, 80));
+                    log.debug(" - "+counter+" = "+value);
                 }
-                log.debug(Formatter.displaySeparator(80));
             }
 
             rs = ps.executeQuery();
 
-            log.debug(Formatter.displayLine("Results:", 80));
+            log.debug("Results:");
             Collection list = new ArrayList();
 
             while (rs.next()) {
                 int entryId = rs.getInt(1);
-                log.debug(Formatter.displayLine(" - "+entryId, 80));
+                log.debug(" - "+entryId);
                 list.add(new Integer(entryId));
-            }
-
-            if (log.isDebugEnabled()) {
-                log.debug(Formatter.displaySeparator(80));
             }
 
             return list;
@@ -455,13 +440,12 @@ public class PersistentEntryCache extends EntryCache {
             }
 
             if (log.isDebugEnabled()) {
-                log.debug(Formatter.displayLine("Parameters:", 80));
+                log.debug("Parameters:");
                 counter = 1;
                 for (Iterator i=parameters.iterator(); i.hasNext(); counter++) {
                     Object value = i.next();
-                    log.debug(Formatter.displayLine(" - "+counter+" = "+value, 80));
+                    log.debug(" - "+counter+" = "+value);
                 }
-                log.debug(Formatter.displaySeparator(80));
             }
 
             ps.execute();
@@ -498,7 +482,7 @@ public class PersistentEntryCache extends EntryCache {
         PreparedStatement ps = null;
         ResultSet rs = null;
 
-        int id = 0;
+        int id = -1;
 
         try {
             con = getConnection();
@@ -522,13 +506,12 @@ public class PersistentEntryCache extends EntryCache {
             }
 
             if (log.isDebugEnabled()) {
-                log.debug(Formatter.displayLine("Parameters:", 80));
+                log.debug("Parameters:");
                 counter = 1;
                 for (Iterator i=parameters.iterator(); i.hasNext(); counter++) {
                     Object value = i.next();
-                    log.debug(Formatter.displayLine(" - "+counter+" = "+value, 80));
+                    log.debug(" - "+counter+" = "+value);
                 }
-                log.debug(Formatter.displaySeparator(80));
             }
 
             rs = ps.executeQuery();
@@ -536,22 +519,18 @@ public class PersistentEntryCache extends EntryCache {
                 id = rs.getInt(1);
             }
 
-            if (log.isDebugEnabled()) {
-                log.debug(Formatter.displayLine("Results: id = "+id, 80));
-                log.debug(Formatter.displaySeparator(80));
-            }
-
-            return id;
+            log.debug("Result: id = "+id);
 
         } catch (Exception e) {
             log.error(e.getMessage(), e);
-            return -1;
 
         } finally {
             if (rs != null) try { rs.close(); } catch (Exception e) {}
             if (ps != null) try { ps.close(); } catch (Exception e) {}
             if (con != null) try { con.close(); } catch (Exception e) {}
         }
+
+        return id;
     }
 
     public void addEntry(String dn) throws Exception {
@@ -620,6 +599,8 @@ public class PersistentEntryCache extends EntryCache {
     }
 
     public void removeEntry(int entryId) throws Exception {
+
+        if (entryId < 0) return;
 
         String tableName = partition.getName()+"_"+mappingId+"_entries";
 
@@ -1117,7 +1098,7 @@ public class PersistentEntryCache extends EntryCache {
         log.debug("Getting "+dn);
 
         int entryId = getEntryId(dn);
-        if (entryId == 0) return null;
+        if (entryId <= 0) return null;
 
         return get(entryId);
     }
@@ -1623,30 +1604,26 @@ public class PersistentEntryCache extends EntryCache {
 
             ps = con.prepareStatement(sql);
 
-            log.debug(Formatter.displayLine("Parameters:", 80));
+            log.debug("Parameters:");
 
             int counter = 1;
             for (Iterator i=parameters.iterator(); i.hasNext(); counter++) {
                 Object param = i.next();
                 ps.setObject(counter, param);
-                log.debug(Formatter.displayLine(" - "+counter+" = "+param, 80));
+                log.debug(" - "+counter+" = "+param);
             }
-
-            log.debug(Formatter.displaySeparator(80));
 
             rs = ps.executeQuery();
 
-            log.debug(Formatter.displayLine("Results:", 80));
+            log.debug("Results:");
 
             while (rs.next()) {
                 String rdn = (String)rs.getObject(1);
                 String parentDn = (String)rs.getObject(2);
                 String dn = rdn+","+parentDn;
-                log.debug(Formatter.displayLine(" - "+dn, 80));
+                log.debug(" - "+dn);
                 results.add(dn);
             }
-
-            log.debug(Formatter.displaySeparator(80));
 
         } catch (Exception e) {
             log.error(e.getMessage(), e);
@@ -1672,13 +1649,13 @@ public class PersistentEntryCache extends EntryCache {
         if (getSize() == 0) return;
 
         int queryId = getQueryId(baseDn, filter.toString());
-        if (queryId == 0) {
+        if (queryId <= 0) {
             addQuery(baseDn, filter.toString());
             queryId = getQueryId(baseDn, filter.toString());
         }
 
         int entryId = getEntryId(dn);
-        if (entryId == 0) return;
+        if (entryId <= 0) return;
 
         addQueryResult(queryId, entryId);
     }
@@ -1724,13 +1701,12 @@ public class PersistentEntryCache extends EntryCache {
             }
 
             if (log.isDebugEnabled()) {
-                log.debug(Formatter.displayLine("Parameters:", 80));
+                log.debug("Parameters:");
                 counter = 1;
                 for (Iterator i=parameters.iterator(); i.hasNext(); counter++) {
                     Object value = i.next();
-                    log.debug(Formatter.displayLine(" - "+counter+" = "+value, 80));
+                    log.debug(" - "+counter+" = "+value);
                 }
-                log.debug(Formatter.displaySeparator(80));
             }
 
             ps.execute();
@@ -1753,7 +1729,7 @@ public class PersistentEntryCache extends EntryCache {
         log.debug("Storing "+dn);
 
         int entryId = getEntryId(dn);
-        if (entryId == 0) {
+        if (entryId <= 0) {
             addEntry(dn);
             entryId = getEntryId(dn);
         }
@@ -1842,13 +1818,12 @@ public class PersistentEntryCache extends EntryCache {
             }
 
             if (log.isDebugEnabled()) {
-                log.debug(Formatter.displayLine("Parameters:", 80));
+                log.debug("Parameters:");
                 counter = 1;
                 for (Iterator i=parameters.iterator(); i.hasNext(); counter++) {
                     Object v = i.next();
-                    log.debug(Formatter.displayLine(" - "+counter+" = "+v, 80));
+                    log.debug(" - "+counter+" = "+v);
                 }
-                log.debug(Formatter.displaySeparator(80));
             }
 
             ps.execute();
@@ -1901,10 +1876,7 @@ public class PersistentEntryCache extends EntryCache {
                 ps.setObject(counter, param);
             }
 
-            if (log.isDebugEnabled()) {
-                log.debug(Formatter.displayLine("Parameters: id = "+entryId, 80));
-                log.debug(Formatter.displaySeparator(80));
-            }
+            log.debug("Parameters: id = "+entryId);
 
             rs = ps.executeQuery();
 
@@ -1914,10 +1886,7 @@ public class PersistentEntryCache extends EntryCache {
             String parentDn = rs.getString(2);
             String dn = EntryUtil.append(rdn, parentDn);
 
-            if (log.isDebugEnabled()) {
-                log.debug(Formatter.displayLine("DN: "+dn, 80));
-                log.debug(Formatter.displaySeparator(80));
-            }
+            log.debug("DN: "+dn);
 
             return dn;
 
@@ -1973,10 +1942,7 @@ public class PersistentEntryCache extends EntryCache {
                 ps.setObject(counter, param);
             }
 
-            if (log.isDebugEnabled()) {
-                log.debug(Formatter.displayLine("Parameters: id = "+entryId, 80));
-                log.debug(Formatter.displaySeparator(80));
-            }
+            log.debug("Parameters: id = "+entryId);
 
             rs = ps.executeQuery();
 
@@ -1985,10 +1951,7 @@ public class PersistentEntryCache extends EntryCache {
                 values.add(value);
             }
 
-            if (log.isDebugEnabled()) {
-                log.debug(Formatter.displayLine("Results: value = "+values, 80));
-                log.debug(Formatter.displaySeparator(80));
-            }
+            log.debug("Results: value = "+values);
 
         } catch (Exception e) {
             log.error(e.getMessage(), e);
@@ -2040,16 +2003,14 @@ public class PersistentEntryCache extends EntryCache {
 
             ps = con.prepareStatement(sql);
 
-            log.debug(Formatter.displayLine("Parameters:", 80));
+            log.debug("Parameters:");
 
             int counter = 1;
             for (Iterator i=parameters.iterator(); i.hasNext(); counter++) {
                 Object v = i.next();
                 ps.setObject(counter, v);
-                log.debug(Formatter.displayLine(" - "+counter+" = "+v, 80));
+                log.debug(" - "+counter+" = "+v);
             }
-
-            log.debug(Formatter.displaySeparator(80));
 
             ps.execute();
 
@@ -2194,6 +2155,8 @@ public class PersistentEntryCache extends EntryCache {
             AttributeMapping attributeMapping,
             int entryId) throws Exception {
 
+        if (entryId < 0) return;
+
         String tableName = partition.getName()+"_"+mappingId+"_attribute_"+attributeMapping.getName();
 
         Collection parameters = new ArrayList();
@@ -2233,10 +2196,7 @@ public class PersistentEntryCache extends EntryCache {
                 ps.setObject(counter, v);
             }
 
-            if (log.isDebugEnabled()) {
-                log.debug(Formatter.displayLine("Parameters: id = "+entryId, 80));
-                log.debug(Formatter.displaySeparator(80));
-            }
+            log.debug("Parameter: id = "+entryId);
 
             ps.execute();
 
@@ -2253,6 +2213,8 @@ public class PersistentEntryCache extends EntryCache {
             SourceMapping sourceMapping,
             FieldConfig fieldConfig,
             int entryId) throws Exception {
+
+        if (entryId < 0) return;
 
         String tableName = partition.getName()+"_"+mappingId+"_field_"+sourceMapping.getName()+"_"+fieldConfig.getName();
 
@@ -2293,10 +2255,7 @@ public class PersistentEntryCache extends EntryCache {
                 ps.setObject(counter, v);
             }
 
-            if (log.isDebugEnabled()) {
-                log.debug(Formatter.displayLine("Parameters: id = "+entryId, 80));
-                log.debug(Formatter.displaySeparator(80));
-            }
+            log.debug("Parameters: id = "+entryId);
 
             ps.execute();
 
