@@ -472,7 +472,9 @@ public class Partition {
         for (Iterator iterator = list.iterator(); iterator.hasNext(); ) {
             EntryMapping entryMapping = (EntryMapping) iterator.next();
 
-            log.debug("Checking \""+dn+"\" against \""+entryMapping.getDn()+"\"");
+            log.debug("Checking DN pattern:");
+            log.debug(" - "+dn);
+            log.debug(" - "+entryMapping.getDn());
             if (!EntryUtil.match(dn, entryMapping.getDn())) continue;
 
             log.debug("Found "+entryMapping.getDn());

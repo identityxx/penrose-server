@@ -376,16 +376,14 @@ public class JDBCAdapter extends Adapter {
             ps = con.prepareStatement(sql);
 
             if (parameters.size() > 0) {
-                log.debug(Formatter.displayLine("Parameters:", 80));
+                log.debug("Parameters:");
 
                 int counter = 0;
                 for (Iterator i=parameters.iterator(); i.hasNext(); ) {
                     Object param = i.next();
                     ps.setObject(++counter, param);
-                    log.debug(Formatter.displayLine(" - "+counter+" = "+param, 80));
+                    log.debug(" - "+counter+" = "+param);
                 }
-
-                log.debug(Formatter.displaySeparator(80));
             }
 
             rs = ps.executeQuery();
@@ -463,10 +461,11 @@ public class JDBCAdapter extends Adapter {
         row.set("changeAction", rs.getObject("changeAction"));
         row.set("changeUser", rs.getObject("changeUser"));
 
+        int counter = 5;
         for (Iterator i=sourceConfig.getPrimaryKeyNames().iterator(); i.hasNext(); ) {
             String name = (String)i.next();
 
-            Object value = rs.getObject(name);
+            Object value = rs.getObject(counter++);
             if (value == null) continue;
 
             row.set(name, value);
@@ -934,8 +933,6 @@ public class JDBCAdapter extends Adapter {
 
             columns.append(", ");
             columns.append(fieldConfig.getOriginalName());
-            columns.append(" ");
-            columns.append(fieldConfig.getName());
         }
 
         StringBuffer whereClause = new StringBuffer();
@@ -965,7 +962,7 @@ public class JDBCAdapter extends Adapter {
 
             ps = con.prepareStatement(sql);
 
-            log.debug(Formatter.displayLine("Parameters: changeNumber = "+lastChangeNumber, 80));
+            log.debug("Parameters: changeNumber = "+lastChangeNumber);
 
             int counter = 0;
             for (Iterator i=parameters.iterator(); i.hasNext(); ) {
@@ -973,8 +970,6 @@ public class JDBCAdapter extends Adapter {
                 ps.setObject(++counter, param);
                 //log.debug(Formatter.displayLine(" - "+counter+" = "+param, 80));
             }
-
-            log.debug(Formatter.displaySeparator(80));
 
             rs = ps.executeQuery();
 

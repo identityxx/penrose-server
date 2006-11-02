@@ -667,13 +667,12 @@ public class JDBCCache {
             }
 
             if (log.isDebugEnabled()) {
-                log.debug(Formatter.displayLine("Parameters:", 80));
+                log.debug("Parameters:");
                 counter = 1;
                 for (Iterator i=parameters.iterator(); i.hasNext(); counter++) {
                     Object param = i.next();
-                    log.debug(Formatter.displayLine(" - "+counter+" = "+param, 80));
+                    log.debug(" - "+counter+" = "+param);
                 }
-                log.debug(Formatter.displaySeparator(80));
             }
 
             rs = ps.executeQuery();
@@ -958,6 +957,7 @@ public class JDBCCache {
 
             ps = con.prepareStatement(sql);
 
+            log.debug("Parameters:");
             int counter = 1;
             for (Iterator i=parameters.iterator(); i.hasNext(); counter++) {
                 Object v = i.next();
@@ -1277,6 +1277,7 @@ public class JDBCCache {
                     String line = (String)i.next();
                     log.debug(Formatter.displayLine(line, 80));
                 }
+                log.debug(Formatter.displaySeparator(80));
             }
 
             ps = con.prepareStatement(sql);
@@ -1287,11 +1288,7 @@ public class JDBCCache {
 
             Integer value = (Integer)rs.getObject(1);
 
-            if (log.isDebugEnabled()) {
-                log.debug(Formatter.displaySeparator(80));
-                log.debug(Formatter.displayLine("Results: lastChangeNumber = "+value, 80));
-                log.debug(Formatter.displaySeparator(80));
-            }
+            log.debug("Results: lastChangeNumber = "+value);
 
             return value.intValue();
 
@@ -1503,13 +1500,12 @@ public class JDBCCache {
             }
 
             if (log.isDebugEnabled()) {
-                log.debug(Formatter.displayLine("Parameters:", 80));
+                log.debug("Parameters:");
                 counter = 1;
                 for (Iterator i=parameters.iterator(); i.hasNext(); counter++) {
                     Object param = i.next();
-                    log.debug(Formatter.displayLine(" - "+counter+" = "+param, 80));
+                    log.debug(" - "+counter+" = "+param);
                 }
-                log.debug(Formatter.displaySeparator(80));
             }
 
             rs = ps.executeQuery();
