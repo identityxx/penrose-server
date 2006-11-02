@@ -85,19 +85,6 @@ public class SourceMapping implements Cloneable, Serializable {
         return results;
     }
 
-    public Collection getPrimaryKeyFieldMappings() {
-        Collection results = new ArrayList();
-        for (Iterator i=fieldMappings.values().iterator(); i.hasNext(); ) {
-            Collection list = (Collection)i.next();
-            for (Iterator j=list.iterator(); j.hasNext(); ) {
-                FieldMapping fieldMapping = (FieldMapping)j.next();
-                if (!fieldMapping.isPK()) continue;
-                results.add(fieldMapping);
-            }
-        }
-        return results;
-    }
-
     public void addFieldMapping(FieldMapping fieldMapping) {
         String name = fieldMapping.getName().toLowerCase();
         Collection list = (Collection)fieldMappings.get(name);

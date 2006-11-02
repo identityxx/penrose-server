@@ -142,12 +142,13 @@ public class TransformEngine {
         for (Iterator i =fields.iterator(); i.hasNext(); ) {
             FieldMapping fieldMapping = (FieldMapping)i.next();
             String name = fieldMapping.getName();
+            FieldConfig fieldConfig = sourceConfig.getFieldConfig(name);
 
             Object newValues = interpreter.eval(entryMapping, fieldMapping);
-            log.debug(" - "+name+": "+newValues+(fieldMapping.isPK() ? " (pk)" : ""));
+            log.debug(" - "+name+": "+newValues+(fieldConfig.isPK() ? " (pk)" : ""));
 
             if (newValues == null) {
-                if (fieldMapping.isPK()) pk = null;
+                if (fieldConfig.isPK()) pk = null;
                 continue;
             }
 
@@ -183,7 +184,7 @@ public class TransformEngine {
                 if (pk != null) pk.set(name, newValues);
             }
 */
-            if (fieldMapping.isPK()) {
+            if (fieldConfig.isPK()) {
                 if (pk != null) pk.set(name, newValues);
                 output.set("primaryKey."+name, newValues);
             }

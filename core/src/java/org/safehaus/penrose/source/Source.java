@@ -208,7 +208,7 @@ public class Source implements SourceMBean {
             Row pk = (Row) i.next();
             AttributeValues oldEntry = (AttributeValues)sourceValues.clone();
             oldEntry.set(pk);
-            log.debug("DELETE ROW: " + oldEntry);
+            log.debug("DELETE (" + pk+"): "+oldEntry);
 
             // Delete row from source table in the source database/directory
             int rc = connection.delete(sourceConfig, pk);

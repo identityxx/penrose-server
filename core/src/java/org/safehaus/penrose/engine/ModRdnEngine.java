@@ -52,6 +52,7 @@ public class ModRdnEngine {
 
         Row rdn2 = EntryUtil.getRdn(newRdn);
         newAttributeValues.set("rdn", rdn2);
+        newAttributeValues.add(rdn2);
 
         log.debug("Renaming "+rdn1+" to "+rdn2);
 

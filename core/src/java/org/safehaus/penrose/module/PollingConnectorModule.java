@@ -170,14 +170,15 @@ public class PollingConnectorModule extends Module {
         PenroseSearchControls sc = new PenroseSearchControls();
         PenroseSearchResults list = new PenroseSearchResults();
         source.retrieve(pks, sc, list);
+        list.close();
         while (list.hasNext()) list.next();
 
+        log.debug("Creating entries with "+pks);
         for (Iterator i=pks.iterator(); i.hasNext(); ) {
             Row pk = (Row)i.next();
 
             for (Iterator j=entryMappings.iterator(); j.hasNext(); ) {
                 EntryMapping entryMapping = (EntryMapping)j.next();
-                log.debug("Adding entries in "+entryMapping.getDn()+" with "+pk);
                 add(entryMapping, sourceConfig, pk);
             }
         }

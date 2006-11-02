@@ -80,7 +80,12 @@ public abstract class Interpreter {
                 return attributeMapping.getConstant();
 
             } else if (attributeMapping.getVariable() != null) {
-                return get(attributeMapping.getVariable());
+                String name = attributeMapping.getVariable();
+                Object value = get(name);
+                if (value == null && name.startsWith("primaryKey.")) {
+                    value = get(name.substring(11));
+                }
+                return value;
 
             } else if (attributeMapping.getExpression() != null) {
                 return eval(entryMapping, attributeMapping.getExpression());
@@ -99,7 +104,12 @@ public abstract class Interpreter {
                 return fieldMapping.getConstant();
 
             } else if (fieldMapping.getVariable() != null) {
-                return get(fieldMapping.getVariable());
+                String name = fieldMapping.getVariable();
+                Object value = get(name);
+                if (value == null && name.startsWith("rdn.")) {
+                    value = get(name.substring(4));
+                }
+                return value;
 
             } else if (fieldMapping.getExpression() != null) {
                 return eval(entryMapping, fieldMapping.getExpression());

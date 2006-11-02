@@ -25,6 +25,8 @@ import org.safehaus.penrose.util.EntryUtil;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.filter.FilterTool;
 import org.safehaus.penrose.partition.Partition;
+import org.safehaus.penrose.source.SourceConfig;
+import org.safehaus.penrose.source.FieldConfig;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 import org.ietf.ldap.LDAPException;
@@ -290,10 +292,12 @@ public class LoadEngine {
         }
 
         boolean pkDefined = false;
-        Collection fieldMappings = primarySourceMapping.getPrimaryKeyFieldMappings();
+        SourceConfig sourceConfig = partition.getSourceConfig(primarySourceMapping.getSourceName());
+        Collection fieldMappings = primarySourceMapping.getFieldMappings();
         for (Iterator i=fieldMappings.iterator(); !pkDefined && i.hasNext(); ) {
             FieldMapping fieldMapping = (FieldMapping)i.next();
-            if (!fieldMapping.isPK()) continue;
+            FieldConfig fieldConfig = sourceConfig.getFieldConfig(fieldMapping.getName());
+            if (!fieldConfig.isPK()) continue;
             if (!fieldMapping.getType().equalsIgnoreCase(FieldMapping.VARIABLE)) continue;
 
             String attributeName = fieldMapping.getVariable();

@@ -33,10 +33,6 @@ public class FieldMapping implements Cloneable, Serializable {
 
     public final static String DEFAULT_TYPE   = "VARCHAR";
 
-    public final static String PK_TRUE  = "true";
-    public final static String PK_FIRST = "first";
-    public final static String PK_FALSE = "false";
-
     /**
      * Name.
      */
@@ -50,11 +46,6 @@ public class FieldMapping implements Cloneable, Serializable {
     private Object constant;
     private String variable;
     private Expression expression;
-
-    /**
-     * This field is used in primary key.
-     */
-    private String primaryKey = PK_FALSE;
 
     public FieldMapping() {
     }
@@ -179,18 +170,6 @@ public class FieldMapping implements Cloneable, Serializable {
         FieldMapping fieldMapping = new FieldMapping();
         fieldMapping.copy(this);
         return fieldMapping;
-    }
-
-    public boolean isPK() {
-        return !PK_FALSE.equals(primaryKey);
-    }
-
-    public String getPrimaryKey() {
-        return primaryKey;
-    }
-
-    public void setPrimaryKey(String primaryKey) {
-        this.primaryKey = primaryKey;
     }
 
     public String getType() {
