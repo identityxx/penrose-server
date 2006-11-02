@@ -132,7 +132,7 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
             return id;
 
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return -1;
 
         } finally {
@@ -168,7 +168,7 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
             ps.execute();
 
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
 
         } finally {
             if (ps != null) try { ps.close(); } catch (Exception e) {}
@@ -242,7 +242,7 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
             return id;
 
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return -1;
 
         } finally {
@@ -320,7 +320,7 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
             return list;
 
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return null;
 
         } finally {
@@ -355,7 +355,7 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
             ps.execute();
 
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
 
         } finally {
             if (ps != null) try { ps.close(); } catch (Exception e) {}
@@ -382,7 +382,7 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
             ps.execute();
 
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
 
         } finally {
             if (ps != null) try { ps.close(); } catch (Exception e) {}
@@ -444,7 +444,7 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
             ps.execute();
 
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
 
         } finally {
             if (ps != null) try { ps.close(); } catch (Exception e) {}
@@ -521,7 +521,7 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
             return id;
 
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return -1;
 
         } finally {
@@ -588,7 +588,7 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
             ps.execute();
 
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
 
         } finally {
             if (ps != null) try { ps.close(); } catch (Exception e) {}
@@ -645,7 +645,7 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
             ps.execute();
 
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
 
         } finally {
             if (ps != null) try { ps.close(); } catch (Exception e) {}
@@ -684,7 +684,7 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
             ps.execute();
 
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
 
         } finally {
             if (ps != null) try { ps.close(); } catch (Exception e) {}
@@ -717,7 +717,7 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
             ps.execute();
 
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
 
         } finally {
             if (ps != null) try { ps.close(); } catch (Exception e) {}
@@ -750,7 +750,7 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
             ps.execute();
 
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
 
         } finally {
             if (ps != null) try { ps.close(); } catch (Exception e) {}
@@ -791,7 +791,7 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
             ps.execute();
 
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
 
         } finally {
             if (ps != null) try { ps.close(); } catch (Exception e) {}
@@ -858,7 +858,7 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
             ps.execute();
 
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
 
         } finally {
             if (ps != null) try { ps.close(); } catch (Exception e) {}
@@ -926,7 +926,7 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
             ps.execute();
 
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
 
         } finally {
             if (ps != null) try { ps.close(); } catch (Exception e) {}
@@ -960,7 +960,7 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
             ps.execute();
 
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
 
         } finally {
             if (ps != null) try { ps.close(); } catch (Exception e) {}
@@ -988,7 +988,7 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
             ps.execute();
 
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
 
         } finally {
             if (ps != null) try { ps.close(); } catch (Exception e) {}
@@ -1016,7 +1016,7 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
             ps.execute();
 
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
 
         } finally {
             if (ps != null) try { ps.close(); } catch (Exception e) {}
@@ -1050,7 +1050,7 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
             ps.execute();
 
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
 
         } finally {
             if (ps != null) try { ps.close(); } catch (Exception e) {}
@@ -1123,7 +1123,7 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
             }
 
         } catch (NamingException e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
         }
 
         return entry;
@@ -1682,7 +1682,7 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
             ps.execute();
 
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
 
         } finally {
             if (ps != null) try { ps.close(); } catch (Exception e) {}
@@ -1798,7 +1798,7 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
             ps.execute();
 
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
 
         } finally {
             if (ps != null) try { ps.close(); } catch (Exception e) {}
@@ -1866,7 +1866,7 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
             return dn;
 
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return null;
 
         } finally {
@@ -1935,7 +1935,7 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
             }
 
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
 
         } finally {
             if (rs != null) try { rs.close(); } catch (Exception e) {}
@@ -1998,7 +1998,7 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
             ps.execute();
 
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
 
         } finally {
             if (ps != null) try { ps.close(); } catch (Exception e) {}
@@ -2065,7 +2065,7 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
             }
 
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
 
         } finally {
             if (rs != null) try { rs.close(); } catch (Exception e) {}
@@ -2185,7 +2185,7 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
             ps.execute();
 
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
 
         } finally {
             if (ps != null) try { ps.close(); } catch (Exception e) {}
@@ -2245,7 +2245,7 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
             ps.execute();
 
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
 
         } finally {
             if (ps != null) try { ps.close(); } catch (Exception e) {}

@@ -54,7 +54,7 @@ public class Entry {
         this.attributeValues = attributes;
     }
 
-    public Entry(String dn, EntryMapping entryMapping, AttributeValues sourceValues, AttributeValues attributeValues) {
+    public Entry(String dn, EntryMapping entryMapping, AttributeValues attributeValues, AttributeValues sourceValues) {
         this.dn = dn;
         this.parentDn = EntryUtil.getParentDn(dn);
         this.entryMapping = entryMapping;

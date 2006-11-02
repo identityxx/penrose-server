@@ -33,7 +33,6 @@ import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.handler.Handler;
 import org.safehaus.penrose.handler.FindHandler;
 import org.ietf.ldap.LDAPException;
-import org.ietf.ldap.LDAPDN;
 
 import javax.naming.directory.*;
 import javax.naming.NamingEnumeration;
@@ -248,7 +247,7 @@ public class DefaultEngine extends Engine {
                     + newValues.get(attributeName));
         }
 
-        Entry newEntry = new Entry(entry.getDn(), entryMapping, entry.getSourceValues(), newValues);
+        Entry newEntry = new Entry(entry.getDn(), entryMapping, newValues, entry.getSourceValues());
 
         log.debug("New entry:");
         log.debug("\n"+EntryUtil.toString(newEntry));
@@ -557,7 +556,7 @@ public class DefaultEngine extends Engine {
                             log.debug("Returning DN only.");
 
                             AttributeValues sv = data.getMergedValues();
-                            Entry entry = new Entry(dn, entryMapping, sv, null);
+                            Entry entry = new Entry(dn, entryMapping, null, sv);
 
                             results.add(entry);
                             return;
@@ -569,7 +568,7 @@ public class DefaultEngine extends Engine {
                             AttributeValues sv = data.getMergedValues();
                             AttributeValues attributeValues = computeAttributeValues(entryMapping, sv, interpreter);
 
-                            Entry entry = new Entry(dn, entryMapping, sv, attributeValues);
+                            Entry entry = new Entry(dn, entryMapping, attributeValues, sv);
                             results.add(entry);
 
                             return;

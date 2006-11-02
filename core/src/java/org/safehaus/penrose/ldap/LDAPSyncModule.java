@@ -18,6 +18,7 @@
 package org.safehaus.penrose.ldap;
 
 import org.safehaus.penrose.module.Module;
+import org.safehaus.penrose.module.ModuleManager;
 import org.safehaus.penrose.mapping.Entry;
 import org.safehaus.penrose.mapping.EntryMapping;
 import org.safehaus.penrose.cache.EntryCache;
@@ -30,6 +31,7 @@ import org.safehaus.penrose.session.PenroseSession;
 import org.safehaus.penrose.partition.PartitionManager;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.handler.Handler;
+import org.safehaus.penrose.util.EntryUtil;
 
 import javax.naming.directory.*;
 import javax.naming.NamingEnumeration;
@@ -82,37 +84,9 @@ public class LDAPSyncModule extends Module implements EntryCacheListener {
             String baseDn = entry.getDn();
             log.debug("Adding "+baseDn);
 
-            PenroseSession adminSession = penrose.newSession();
-            adminSession.setBindDn(penrose.getPenroseConfig().getRootDn());
-
-            PenroseSearchResults sr = new PenroseSearchResults();
-
-            PenroseSearchControls sc = new PenroseSearchControls();
-            sc.setScope(PenroseSearchControls.SCOPE_SUB);
-
-            adminSession.search(
-                    baseDn,
-                    "(objectClass=*)",
-                    sc,
-                    sr
-            );
-
-            while (sr.hasNext()) {
-                SearchResult ldapEntry = (SearchResult)sr.next();
-
-                String dn = ldapEntry.getName();
-                log.debug(" - "+dn);
-
-                Attributes attributes = ldapEntry.getAttributes();
-
-                try {
-                    ctx.createSubcontext(dn, attributes);
-                } catch (Exception e) {
-                    log.error(e.getMessage());
-                }
-            }
-
-            adminSession.close();
+            SearchResult searchResult = EntryUtil.toSearchResult(entry);
+            Attributes attributes = searchResult.getAttributes();
+            ctx.createSubcontext(searchResult.getName(), attributes);
 
         } catch (Exception e) {
             log.error(e.getMessage());
@@ -136,32 +110,7 @@ public class LDAPSyncModule extends Module implements EntryCacheListener {
             ctx = getConnection();
 
             log.debug("Removing "+baseDn);
-
-            SearchControls sc = new SearchControls();
-            sc.setSearchScope(SearchControls.SUBTREE_SCOPE);
-            sc.setReturningAttributes(new String[] { "dn" });
-
-            NamingEnumeration ne = ctx.search(baseDn, "(objectClass=*)", sc);
-
-            ArrayList dns = new ArrayList();
-            while (ne.hasMore()) {
-                SearchResult sr = (SearchResult)ne.next();
-                String name = sr.getName();
-
-                String dn = "".equals(name) ? baseDn : name+","+baseDn;
-                dns.add(0, dn);
-            }
-
-            for (Iterator i=dns.iterator(); i.hasNext(); ) {
-                String dn = (String)i.next();
-                log.debug(" - "+dn);
-
-                try {
-                    ctx.destroySubcontext(dn);
-                } catch (Exception e) {
-                    log.error(e.getMessage());
-                }
-            }
+            ctx.destroySubcontext(baseDn);
 
         } catch (Exception e) {
             log.error(e.getMessage());

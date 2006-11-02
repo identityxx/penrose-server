@@ -397,7 +397,6 @@ public class JDBCAdapter extends Adapter {
             int i = 0;
             while (rs.next() && (sc.getSizeLimit() == 0 || i<sc.getSizeLimit())) {
                 AttributeValues av = getValues(sourceConfig, rs);
-                results.add(av);
 
                 if (first) {
                     width = printHeader(sourceConfig);
@@ -405,7 +404,7 @@ public class JDBCAdapter extends Adapter {
                 }
 
                 log.debug(format(sourceConfig, av));
-                //log.debug("Row: "+av);
+                results.add(av);
                 i++;
             }
 

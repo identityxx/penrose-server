@@ -227,6 +227,27 @@ public class EntryCache {
         }
     }
 
+    public void invalidate(Partition partition) throws Exception {
+        Collection entryMappings = partition.getRootEntryMappings();
+        invalidate(partition, entryMappings);
+    }
+
+    public void invalidate(
+            final Partition partition,
+            final Collection entryDefinitions
+    ) throws Exception {
+
+        for (Iterator i=entryDefinitions.iterator(); i.hasNext(); ) {
+            final EntryMapping entryMapping = (EntryMapping)i.next();
+
+            Collection children = partition.getChildren(entryMapping);
+            invalidate(partition, children);
+
+            EntryCacheStorage entryCacheStorage = getCacheStorage(partition, entryMapping);
+            entryCacheStorage.invalidate();
+        }
+    }
+
     public void drop(Partition partition) throws Exception {
         Collection entryMappings = partition.getRootEntryMappings();
         drop(partition, entryMappings);

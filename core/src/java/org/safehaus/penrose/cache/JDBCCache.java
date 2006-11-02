@@ -149,7 +149,7 @@ public class JDBCCache {
             ps.execute();
 
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
 
         } finally {
             if (ps != null) try { ps.close(); } catch (Exception e) {}
@@ -180,7 +180,7 @@ public class JDBCCache {
             ps.execute();
 
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
 
         } finally {
             if (ps != null) try { ps.close(); } catch (Exception e) {}
@@ -213,7 +213,7 @@ public class JDBCCache {
             ps.execute();
 
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
 
         } finally {
             if (ps != null) try { ps.close(); } catch (Exception e) {}
@@ -244,7 +244,7 @@ public class JDBCCache {
             ps.execute();
 
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
 
         } finally {
             if (ps != null) try { ps.close(); } catch (Exception e) {}
@@ -275,7 +275,7 @@ public class JDBCCache {
             ps.execute();
 
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
 
         } finally {
             if (ps != null) try { ps.close(); } catch (Exception e) {}
@@ -306,7 +306,7 @@ public class JDBCCache {
             ps.execute();
 
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
 
         } finally {
             if (ps != null) try { ps.close(); } catch (Exception e) {}
@@ -342,7 +342,7 @@ public class JDBCCache {
             ps.execute();
 
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
 
         } finally {
             if (ps != null) try { ps.close(); } catch (Exception e) {}
@@ -395,7 +395,7 @@ public class JDBCCache {
             ps.execute();
 
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
 
         } finally {
             if (ps != null) try { ps.close(); } catch (Exception e) {}
@@ -454,7 +454,7 @@ public class JDBCCache {
             ps.execute();
 
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
 
         } finally {
             if (ps != null) try { ps.close(); } catch (Exception e) {}
@@ -706,7 +706,7 @@ public class JDBCCache {
             }
 
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
 
         } finally {
             if (rs != null) try { rs.close(); } catch (Exception e) {}
@@ -875,7 +875,7 @@ public class JDBCCache {
             if (width > 0) printFooter(width);
 
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
 
         } finally {
             if (rs != null) try { rs.close(); } catch (Exception e) {}
@@ -970,7 +970,7 @@ public class JDBCCache {
 
         } catch (Exception e) {
             return false;
-            //log.error(e.getMessage());
+            //log.error(e.getMessage(), e);
 
         } finally {
             if (ps != null) try { ps.close(); } catch (Exception e) {}
@@ -1033,7 +1033,7 @@ public class JDBCCache {
             ps.execute();
 
         } catch (Exception e) {
-            //log.error(e.getMessage());
+            //log.error(e.getMessage(), e);
 
         } finally {
             if (ps != null) try { ps.close(); } catch (Exception e) {}
@@ -1109,7 +1109,7 @@ public class JDBCCache {
             ps.execute();
 
         } catch (Exception e) {
-            //log.error(e.getMessage());
+            //log.error(e.getMessage(), e);
 
         } finally {
             if (ps != null) try { ps.close(); } catch (Exception e) {}
@@ -1180,7 +1180,7 @@ public class JDBCCache {
             ps.execute();
 
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
 
         } finally {
             if (ps != null) try { ps.close(); } catch (Exception e) {}
@@ -1296,7 +1296,7 @@ public class JDBCCache {
             return value.intValue();
 
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
 
         } finally {
             if (rs != null) try { rs.close(); } catch (Exception e) {}
@@ -1348,7 +1348,7 @@ public class JDBCCache {
             if (count > 0) return;
 
         } catch (Exception e) {
-            //log.error(e.getMessage());
+            //log.error(e.getMessage(), e);
 
         } finally {
             if (ps != null) try { ps.close(); } catch (Exception e) {}
@@ -1382,7 +1382,7 @@ public class JDBCCache {
             ps.execute();
 
         } catch (Exception e) {
-            //log.error(e.getMessage());
+            //log.error(e.getMessage(), e);
 
         } finally {
             if (ps != null) try { ps.close(); } catch (Exception e) {}

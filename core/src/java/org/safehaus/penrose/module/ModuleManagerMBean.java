@@ -26,8 +26,4 @@ public interface ModuleManagerMBean {
 
     public void start() throws Exception;
     public void stop() throws Exception;
-
-    public String getStatus(String name) throws Exception;
-
-    public Collection getModuleNames() throws Exception;
 }
