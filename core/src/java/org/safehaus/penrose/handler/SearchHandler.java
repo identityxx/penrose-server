@@ -119,7 +119,7 @@ public class SearchHandler {
             }
         });
 
-        if (sc.getScope() == LDAPConnection.SCOPE_BASE || sc.getScope() == LDAPConnection.SCOPE_SUB) { // base or subtree
+        //if (sc.getScope() == LDAPConnection.SCOPE_BASE || sc.getScope() == LDAPConnection.SCOPE_SUB) { // base or subtree
             searchBase(
                     session,
                     partition,
@@ -130,7 +130,7 @@ public class SearchHandler {
                     sc,
                     sr
             );
-        }
+        //}
 
         if (sc.getScope() == LDAPConnection.SCOPE_ONE || sc.getScope() == LDAPConnection.SCOPE_SUB) { // one level or subtree
             log.debug("Searching children of \""+entryMapping.getDn()+"\"");

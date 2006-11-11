@@ -20,7 +20,7 @@
       <excludeFolder url="file://$MODULE_DIR$/server/target" />
       <excludeFolder url="file://$MODULE_DIR$/target" />
     </content>
-    <orderEntry type="jdk" jdkName="java version &quot;1.5.0_05&quot;" />
+    <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module-library">
       <library>
@@ -295,15 +295,6 @@
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/server/lib/apacheds-core-plugin-1.0-RC4.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
-    <orderEntry type="module-library">
-      <library>
-        <CLASSES>
           <root url="jar://$MODULE_DIR$/lib/commons-digester-1.5.jar!/" />
         </CLASSES>
         <JAVADOC />
@@ -545,10 +536,6 @@
       </library>
     </orderEntry>
     <orderEntryProperties />
-  </component>
-  <component name="VcsManagerConfiguration">
-    <option name="ACTIVE_VCS_NAME" value="svn" />
-    <option name="USE_PROJECT_VCS" value="false" />
   </component>
 </module>
 
