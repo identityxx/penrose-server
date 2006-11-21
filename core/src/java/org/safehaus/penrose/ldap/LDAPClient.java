@@ -758,12 +758,16 @@ public class LDAPClient {
 
                     while (ne.hasMore()) {
                         SearchResult sr = (SearchResult)ne.next();
+                        String dn = sr.getName();
+                        log.debug("SearchResult: ["+dn+"]");
 
-                        //String dn = "".equals(sr.getName()) ? baseDn : sr.getName()+","+baseDn;
-                        String dn = EntryUtil.append(sr.getName(), baseDn);
-                        //String dn = sr.getName();
-                        //log.debug(" - "+dn);
-
+                        if (dn.startsWith("ldap://")) {
+                            LDAPUrl url = new LDAPUrl(dn);
+                            dn = LDAPUrl.decode(url.getDN());
+                        } else {
+                            dn = EntryUtil.append(dn, baseDn);
+                        }
+                        
                         sr.setName(dn);
 
                         results.add(sr);

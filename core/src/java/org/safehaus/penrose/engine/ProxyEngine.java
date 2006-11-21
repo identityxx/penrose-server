@@ -62,12 +62,37 @@ public class ProxyEngine extends Engine {
     public String convertDn(String dn, String oldSuffix, String newSuffix) throws Exception {
 
         if (dn == null) return null;
-        if (!dn.toLowerCase().endsWith(oldSuffix.toLowerCase())) return null;
 
-        dn = dn.substring(0, dn.length() - oldSuffix.length());
-        if (dn.endsWith(",")) dn = dn.substring(0, dn.length()-1);
+        List rdns1 = EntryUtil.parseDn(dn);
+        List rdns2 = EntryUtil.parseDn(oldSuffix);
 
-        return EntryUtil.append(dn, newSuffix);
+        if (rdns1.size() < rdns2.size()) {
+            log.debug("["+dn+"] is not a decendant of ["+oldSuffix+"]");
+            return null;
+        }
+
+        int start = rdns1.size() - rdns2.size();
+
+        for (int i=0; i<rdns2.size(); i++) {
+            Row rdn1 = (Row)rdns1.get(start+i);
+            Row rdn2 = (Row)rdns2.get(i);
+
+            rdn1 = getSchemaManager().normalize(rdn1);
+            rdn2 = getSchemaManager().normalize(rdn2);
+
+            if (rdn1.equals(rdn2)) continue;
+
+            log.debug("["+rdn1+"] does not match ["+rdn2+"]");
+            return null;
+        }
+
+        String newDn = null;
+        for (int i=0; i<start; i++) {
+            Row rdn = (Row)rdns1.get(i);
+            newDn = EntryUtil.append(newDn, rdn);
+        }
+
+        return EntryUtil.append(newDn, newSuffix);
     }
 
     public int bind(

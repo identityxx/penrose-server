@@ -20,6 +20,7 @@ package org.safehaus.penrose.schema;
 import org.safehaus.penrose.mapping.EntryMapping;
 import org.safehaus.penrose.mapping.Row;
 import org.safehaus.penrose.mapping.AttributeValues;
+import org.safehaus.penrose.util.EntryUtil;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
@@ -374,8 +375,18 @@ public class Schema implements Cloneable {
     }
 
     public String normalize(String dn) throws Exception {
-        if (dn == null) return null;
-        return dn.toLowerCase();
+        String newDn = null;
+
+        if (dn == null) return newDn;
+
+        Collection rdns = EntryUtil.parseDn(dn);
+        for (Iterator i=rdns.iterator(); i.hasNext(); ) {
+            Row rdn = (Row)i.next();
+            Row newRdn = normalize(rdn);
+            newDn = EntryUtil.append(newDn, newRdn);
+        }
+
+        return newDn;
     }
 
     public int hashCode() {
