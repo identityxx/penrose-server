@@ -222,9 +222,9 @@ public class PenroseSession {
      * @throws Exception
      */
     public int search(
-            final String baseDn,
-            final String filter,
-            final PenroseSearchControls sc,
+            String baseDn,
+            String filter,
+            PenroseSearchControls sc,
             final PenroseSearchResults results)
             throws Exception {
 
@@ -240,6 +240,10 @@ public class PenroseSession {
             return LDAPException.SUCCESS;
         }
 
+        final String newBaseDn = beforeSearchEvent.getBaseDn();
+        final String newFilter = beforeSearchEvent.getFilter();
+        final PenroseSearchControls newSc = beforeSearchEvent.getSearchControls();
+
         final PenroseSession session = this;
 
         results.addListener(new PipelineAdapter() {
@@ -247,9 +251,9 @@ public class PenroseSession {
                 try {
                     lastActivityDate.setTime(System.currentTimeMillis());
 
-                    SearchEvent afterSearchEvent = new SearchEvent(session, SearchEvent.AFTER_SEARCH, session, baseDn, filter, sc, results);
+                    SearchEvent afterSearchEvent = new SearchEvent(session, SearchEvent.AFTER_SEARCH, session, newBaseDn, newFilter, newSc, results);
                     afterSearchEvent.setReturnCode(results.getReturnCode());
-                    eventManager.postEvent(baseDn, afterSearchEvent);
+                    eventManager.postEvent(newBaseDn, afterSearchEvent);
 
                 } catch (Exception e) {
                     log.error(e.getMessage(), e);
@@ -257,7 +261,7 @@ public class PenroseSession {
             }
         });
 
-        return handler.search(this, baseDn, filter, sc, results);
+        return handler.search(this, newBaseDn, newFilter, newSc, results);
     }
 
     public int unbind() throws Exception {

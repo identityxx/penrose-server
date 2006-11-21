@@ -31,7 +31,6 @@ import org.safehaus.penrose.util.*;
 import org.safehaus.penrose.util.Formatter;
 import org.ietf.ldap.LDAPException;
 import org.ietf.ldap.LDAPConnection;
-import org.ietf.ldap.LDAPDN;
 
 import javax.naming.directory.*;
 import javax.naming.NamingEnumeration;
