@@ -12,6 +12,7 @@
       <sourceFolder url="file://$MODULE_DIR$/samples/listener/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/samples/module/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/samples/samba/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/samples/tomcat/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/server/src/java" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/server/src/test" isTestSource="false" />
       <excludeFolder url="file://$MODULE_DIR$/core/dist" />

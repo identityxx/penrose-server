@@ -66,5 +66,6 @@
 	<classpathentry kind="lib" path="server/lib/spring-beans-1.2.8.jar"/>
 	<classpathentry kind="lib" path="server/lib/spring-context-1.2.8.jar"/>
 	<classpathentry kind="lib" path="server/lib/spring-core-1.2.8.jar"/>
+	<classpathentry kind="lib" path="server/lib/jboss/jboss-system.jar"/>
 	<classpathentry kind="output" path="target/classes"/>
 </classpath>
