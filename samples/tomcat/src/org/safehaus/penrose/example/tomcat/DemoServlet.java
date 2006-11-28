@@ -21,8 +21,10 @@ public class DemoServlet extends GenericServlet {
         super.init(servletConfig);
 
         try {
-            System.out.println("Starting Penrose Server...");
-            penroseServer = new PenroseServer("c:/usr/local/penrose-server-1.1.2");
+            String home = servletConfig.getInitParameter("penrose.home");
+
+            System.out.println("Starting Penrose Server at "+home+"...");
+            penroseServer = new PenroseServer(home);
             penroseServer.start();
 
             System.out.println("Penrose Server started.");
