@@ -452,7 +452,12 @@ public class DefaultEngine extends Engine {
         }
 
         if (sc.getScope() == PenroseSearchControls.SCOPE_BASE || sc.getScope() == PenroseSearchControls.SCOPE_SUB) {
-            results.add(entry);
+            log.debug("Checking filter "+filter+" on "+entry.getDn());
+            if (handler.getFilterTool().isValid(entry, filter)) {
+                results.add(entry);
+            } else {
+                log.debug("Base entry \""+entry.getDn()+"\" doesn't match search filter.");
+            }
         }
 
         return LDAPException.SUCCESS;
@@ -533,6 +538,7 @@ public class DefaultEngine extends Engine {
             final PenroseSearchResults entriesToLoad = new PenroseSearchResults();
             final PenroseSearchResults loadedEntries = new PenroseSearchResults();
             final PenroseSearchResults newEntries = new PenroseSearchResults();
+            final Handler handler = penrose.getHandler();
 
             final Interpreter interpreter = getInterpreterManager().newInstance();
 
@@ -569,7 +575,13 @@ public class DefaultEngine extends Engine {
                             AttributeValues attributeValues = computeAttributeValues(entryMapping, sv, interpreter);
 
                             Entry entry = new Entry(dn, entryMapping, attributeValues, sv);
-                            results.add(entry);
+
+                            log.debug("Checking filter "+filter+" on "+entry.getDn());
+                            if (handler.getFilterTool().isValid(entry, filter)) {
+                                results.add(entry);
+                            } else {
+                                log.debug("Entry \""+entry.getDn()+"\" doesn't match search filter.");
+                            }
 
                             return;
                         }
@@ -622,7 +634,13 @@ public class DefaultEngine extends Engine {
                 public void objectAdded(PipelineEvent event) {
                     try {
                         Entry entry = (Entry)event.getObject();
-                        results.add(entry);
+
+                        log.debug("Checking filter "+filter+" on "+entry.getDn());
+                        if (handler.getFilterTool().isValid(entry, filter)) {
+                            results.add(entry);
+                        } else {
+                            log.debug("Entry \""+entry.getDn()+"\" doesn't match search filter.");
+                        }
 
                     } catch (Exception e) {
                         log.error(e.getMessage(), e);
