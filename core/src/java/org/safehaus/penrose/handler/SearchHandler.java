@@ -93,13 +93,6 @@ public class SearchHandler {
             public void objectAdded(PipelineEvent event) {
                 try {
                     Entry child = (Entry)event.getObject();
-
-                    log.debug("Checking filter "+filter+" on "+child.getDn());
-                    if (!handler.getFilterTool().isValid(child, filter)) {
-                        log.debug("Entry \""+child.getDn()+"\" doesn't match search filter.");
-                        return;
-                    }
-
                     results.add(child);
 
                 } catch (Exception e) {
