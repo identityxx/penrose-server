@@ -1,0 +1,1 @@
+Replace TOMCAT_HOME/bin/jmx.jar with PENROSE_SERVER_HOME/lib/jmx.jar.

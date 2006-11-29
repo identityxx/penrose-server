@@ -4,7 +4,7 @@
 <server>
 
     <mbean code="org.safehaus.penrose.jboss.PenroseService" name="Penrose:service=Penrose">
-        <attribute name="Home">${basedir}</attribute>
+        <attribute name="Home">${penrose.home}</attribute>
     </mbean>
 
 </server>

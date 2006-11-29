@@ -12,6 +12,7 @@
       <sourceFolder url="file://$MODULE_DIR$/samples/listener/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/samples/module/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/samples/samba/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/samples/tomcat/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/server/src/java" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/server/src/test" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/shared/src/java" isTestSource="false" />
@@ -23,7 +24,7 @@
       <excludeFolder url="file://$MODULE_DIR$/shared/target" />
       <excludeFolder url="file://$MODULE_DIR$/target" />
     </content>
-    <orderEntry type="jdk" jdkName="java version &quot;1.5.0_05&quot;" />
+    <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module-library">
       <library>
@@ -191,15 +192,6 @@
       <library>
         <CLASSES>
           <root url="jar://$MODULE_DIR$/server/lib/hsqldb-1.7.2.2.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
-    <orderEntry type="module-library">
-      <library>
-        <CLASSES>
-          <root url="jar://$MODULE_DIR$/server/lib/mx4j.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -497,15 +489,6 @@
       <library>
         <CLASSES>
           <root url="jar://$MODULE_DIR$/server/lib/spring-core-1.2.8.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
-    <orderEntry type="module-library">
-      <library>
-        <CLASSES>
-          <root url="jar://$MODULE_DIR$/server/lib/mx4j-remote.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
