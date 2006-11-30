@@ -17,11 +17,11 @@
  */
 package org.safehaus.penrose.filter;
 
-public class ExtensibleFilter extends Filter {
+public class ExtensibleFilter extends ItemFilter {
 
-	protected String attribute;
-	protected String matchingRule;
-	protected String value;
+	String attribute;
+	String matchingRule;
+	String value;
 	
 	public ExtensibleFilter() {
 	}

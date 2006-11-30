@@ -17,11 +17,11 @@
  */
 package org.safehaus.penrose.filter;
 
-public class SimpleFilter extends Filter {
+public class SimpleFilter extends ItemFilter {
 
-	protected String attribute;
-	protected String operator;
-	protected String value;
+	String attribute;
+	String operator;
+	String value;
 
 	public SimpleFilter(String attribute, String operator, String value) {
 		this.attribute = attribute;
