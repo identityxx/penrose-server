@@ -117,7 +117,7 @@ public class PenroseJMXService extends Service {
 
         register();
 
-        if (rmiPort > 0 && createdMBeanServer) {
+        if (rmiPort > 0) { // && createdMBeanServer) {
 
             registry = new NamingService(rmiPort);
             mbeanServer.registerMBean(registry, registryName);
@@ -169,7 +169,7 @@ public class PenroseJMXService extends Service {
             mbeanServer.unregisterMBean(xsltProcessorName);
         }
 
-        if (rmiPort > 0 && createdMBeanServer) {
+        if (rmiPort > 0) { // && createdMBeanServer) {
             rmiConnector.stop();
             mbeanServer.unregisterMBean(rmiConnectorName);
 

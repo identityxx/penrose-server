@@ -63,7 +63,11 @@ public class ServiceManager implements ServiceManagerMBean {
         //log.debug("Starting services...");
         for (Iterator i=getServiceNames().iterator(); i.hasNext(); ) {
             String name = (String)i.next();
-            start(name);
+            try {
+                start(name);
+            } catch (Exception e) {
+                log.error(e.getMessage(), e);
+            }
         }
     }
 
@@ -85,7 +89,11 @@ public class ServiceManager implements ServiceManagerMBean {
 
         for (int i=names.length-1; i>=0; i--) {
             String name = names[i];
-            stop(name);
+            try {
+                stop(name);
+            } catch (Exception e) {
+                log.error(e.getMessage(), e);
+            }
         }
     }
 
