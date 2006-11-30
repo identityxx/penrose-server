@@ -31,6 +31,7 @@
             </filterchain>
         </copy>
         <mkdir dir="samples/tomcat/target/WEB-INF/classes"/>
+        <copy todir="samples/tomcat/target/WEB-INF/classes" file="conf/log4j.xml"/>
         <javac
             srcdir="samples/tomcat/src"
             destdir="samples/tomcat/target/WEB-INF/classes"
