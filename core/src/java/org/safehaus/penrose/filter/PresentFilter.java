@@ -17,7 +17,7 @@
  */
 package org.safehaus.penrose.filter;
 
-public class PresentFilter extends Filter {
+public class PresentFilter extends ItemFilter {
 
 	String attribute;
 	

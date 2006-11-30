@@ -21,12 +21,12 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Collection;
 
-public class SubstringFilter extends Filter {
+public class SubstringFilter extends ItemFilter {
 
     public final static Character STAR = new Character('*');
 
-	protected String attribute;
-	protected Collection substrings = new ArrayList();
+	String attribute;
+	Collection substrings = new ArrayList();
 	
 	public SubstringFilter() {
 	}
