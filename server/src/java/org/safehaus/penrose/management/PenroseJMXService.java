@@ -139,7 +139,7 @@ public class PenroseJMXService extends Service {
         HashMap environment = new HashMap();
         environment.put("jmx.remote.authenticator", jmxAuthenticator);
 
-        if (rmiPort > 0 && createdMBeanServer) {
+        if (rmiPort > 0) { // && createdMBeanServer) {
             registry = new NamingService(rmiPort);
             mbeanServer.registerMBean(registry, registryName);
             registry.start();
@@ -203,7 +203,7 @@ public class PenroseJMXService extends Service {
             //mbeanServer.unregisterMBean(xsltProcessorName);
         }
 
-        if (rmiPort > 0 && createdMBeanServer) {
+        if (rmiPort > 0) { // && createdMBeanServer) {
             rmiConnector.stop();
             mbeanServer.unregisterMBean(rmiConnectorName);
 
