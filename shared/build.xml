@@ -6,15 +6,15 @@
 
     <description>Penrose Shared</description>
 
+    <property file="../build.properties"/>
     <property name="prefix" value=""/>
     <property name="iscc.path" value="ISCC.exe"/>
     <property name="cygwin.home" value="c:/cygwin"/>
 
     <property name="module.name" value="penrose-shared"/>
-    <property name="project.version" value="1.2"/>
     <property name="project.dist" value="dist"/>
 
-    <property name="penrose.home" value="${prefix}/usr/local/${module.name}-${project.version}"/>
+    <property name="penrose.home" value="${prefix}/usr/local/${module.name}-${product.version}"/>
     <property name="docs.target" value="${project.dist}/javadoc"/>
 
     <tstamp/>
@@ -75,12 +75,12 @@
 
     <target name="build" depends="compile">
         <echo message="Building Penrose Shared."/>
-        <jar jarfile="target/${module.name}-${project.version}.jar">
+        <jar jarfile="target/${module.name}-${product.version}.jar">
             <fileset dir="target/classes"/>
             <manifest>
               <attribute name="Specification-Version"  value="1.2"/>
               <attribute name="Implementation-Title"   value="Penrose Shared"/>
-              <attribute name="Implementation-Version" value="${project.version}"/>
+              <attribute name="Implementation-Version" value="${product.version}"/>
               <attribute name="Implementation-Vendor"  value="Identyx Corporation"/>
               <attribute name="Build-Date" value="${DSTAMP}"/>
             </manifest>
@@ -99,23 +99,23 @@
     <target name="dist" depends="build">
         <mkdir dir="dist"/>
         <copy todir="dist"
-            file="target/${module.name}-${project.version}.jar">
+            file="target/${module.name}-${product.version}.jar">
         </copy>
     </target>
 
     <target name="dist-src" depends="docs">
-        <echo message="Creating ${module.name}-${project.version}-src.zip"/>
+        <echo message="Creating ${module.name}-${product.version}-src.zip"/>
         <mkdir dir="dist"/>
-        <zip destfile="dist/${module.name}-${project.version}-src.zip">
+        <zip destfile="dist/${module.name}-${product.version}-src.zip">
             <zipfileset dir=".">
                 <exclude name="dist/**"/>
                 <exclude name="target/**"/>
             </zipfileset>
         </zip>
-        <echo message="Creating ${module.name}-${project.version}-src.tar.gz"/>
+        <echo message="Creating ${module.name}-${product.version}-src.tar.gz"/>
         <mkdir dir="target"/>
-        <tar destfile="dist/${module.name}-${project.version}-src.tar.gz" compression="gzip">
-            <tarfileset dir="." prefix="${module.name}-${project.version}">
+        <tar destfile="dist/${module.name}-${product.version}-src.tar.gz" compression="gzip">
+            <tarfileset dir="." prefix="${module.name}-${product.version}">
                 <exclude name="dist/**"/>
                 <exclude name="target/**"/>
             </tarfileset>

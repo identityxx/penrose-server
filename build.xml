@@ -6,12 +6,10 @@
 
     <description>Penrose</description>
 
+    <property file="build.properties"/>
     <property name="prefix" value=""/>
     <property name="iscc.path" value="ISCC.exe"/>
     <property name="cygwin.home" value="c:/cygwin"/>
-
-    <property name="project.name" value="penrose"/>
-    <property name="project.version" value="1.2"/>
 
     <tstamp/>
 
@@ -53,20 +51,20 @@
 
     <target name="export" depends="build,docs">
         <mkdir dir="target"/>
-        <tar destfile="target/${project.name}-bin.tar.gz" compression="gzip">
+        <tar destfile="target/${product.name}-bin.tar.gz" compression="gzip">
             <tarfileset dir="server/bin"/>
         </tar>
-        <tar destfile="target/${project.name}-conf.tar.gz" compression="gzip">
+        <tar destfile="target/${product.name}-conf.tar.gz" compression="gzip">
             <tarfileset dir="conf"/>
             <tarfileset dir="server/conf"/>
         </tar>
-        <tar destfile="target/${project.name}-samples.tar.gz" compression="gzip">
+        <tar destfile="target/${product.name}-samples.tar.gz" compression="gzip">
             <tarfileset dir="samples"/>
         </tar>
-        <tar destfile="target/${project.name}-schema.tar.gz" compression="gzip">
+        <tar destfile="target/${product.name}-schema.tar.gz" compression="gzip">
             <tarfileset dir="schema"/>
         </tar>
-        <tar destfile="target/${project.name}-docs.tar.gz" compression="gzip">
+        <tar destfile="target/${product.name}-docs.tar.gz" compression="gzip">
             <tarfileset dir="core/target" includes="javadoc/**"/>
             <tarfileset dir="server/target" prefix="server" includes="javadoc/**"/>
             <tarfileset dir="docs"/>

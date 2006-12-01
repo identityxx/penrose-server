@@ -4,6 +4,7 @@
 -->
 <project name="penrose-apacheds" default="deploy" basedir="../..">
 
+    <property file="build.properties"/>
     <property name="penrose.home" value="/usr/local/penrose"/>
     <property name="apacheds.home" value="/usr/local/apacheds"/>
 
@@ -34,7 +35,7 @@
             </fileset>
             <fileset dir="lib/ext" includes="*.jar"/>
         </copy>
-        <copy file="target/penrose-1.2.jar" todir="${apacheds.home}/lib/ext" failonerror="false" overwrite="true"/>
+        <copy file="target/penrose-${product.version}.jar" todir="${apacheds.home}/lib/ext" failonerror="false" overwrite="true"/>
     </target>
 
     <target name="clean">

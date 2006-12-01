@@ -1,24 +1,24 @@
 Installing Penrose on Windows
 -----------------------------
 
-On Windows platforms, double-click the installer program (${project.name}-${project.version}.exe).
-Select an installation directory (e.g. C:\Program Files\Identyx\Penrose Server ${project.version}).
+On Windows platforms, double-click the installer program (${product.name}-${product.version}.exe).
+Select an installation directory (e.g. C:\Program Files\Identyx\${product.title} ${product.version}).
 We will refer the installation directory as PENROSE_SERVER_HOME.
 
 Installing Penrose on Unix
 --------------------------
 
 On Linux and other Unix-like platforms, create an installation directory
-(e.g. /usr/local/${project.name}-${project.version}), then unzip/untar the distribution file.
+(e.g. /usr/local/${product.name}-${product.version}), then unzip/untar the distribution file.
 
-  tar xzvf ${project.name}-${project.version}.tar.gz
+  tar xzvf ${product.name}-${product.version}.tar.gz
 
 We will refer the installation directory as PENROSE_SERVER_HOME.
 
 Running Penrose
 ---------------
 
-On Windows platforms, go to Start -> Programs -> Identyx -> Penrose Server ${project.version} -> Penrose Server.
+On Windows platforms, go to Start -> Programs -> Identyx -> ${product.title} ${product.version} -> ${product.title}.
 
 On other platforms, go to PENROSE_SERVER_HOME, execute:
 
@@ -45,4 +45,4 @@ with password "penrose". Create a database called "shop". Populate the database 
 SQL script provided in PENROSE_SERVER_HOME/samples/shop/sql.
 
 Copy the files in PENROSE_SERVER_HOME/samples/shop/partition into a new directory PENROSE_SERVER_HOME/partitions/shop.
-Register the new partition in PENROSE_SERVER_HOME/conf/server.xml. Restart Penrose Server.
+Register the new partition in PENROSE_SERVER_HOME/conf/server.xml. Restart ${product.title}.
