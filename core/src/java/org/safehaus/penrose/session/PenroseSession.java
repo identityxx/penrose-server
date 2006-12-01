@@ -222,8 +222,8 @@ public class PenroseSession {
      * @throws Exception
      */
     public int search(
-            String filter,
             String baseDn,
+            String filter,
             PenroseSearchControls sc,
             final PenroseSearchResults results)
             throws Exception {
