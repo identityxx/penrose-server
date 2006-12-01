@@ -6,15 +6,15 @@
 
     <description>Penrose Server</description>
 
+    <property file="../build.properties"/>
     <property name="prefix" value=""/>
     <property name="iscc.path" value="ISCC.exe"/>
     <property name="cygwin.home" value="c:/cygwin"/>
 
-    <property name="module.name" value="penrose-server"/>
-    <property name="project.version" value="1.1.2"/>
+    <property name="module.name" value="${product.name}-server"/>
     <property name="project.dist" value="dist"/>
 
-    <property name="penrose.home" value="${prefix}/usr/local/${module.name}-${project.version}"/>
+    <property name="penrose.home" value="${prefix}/usr/local/${module.name}-${product.version}"/>
     <property name="docs.target" value="${project.dist}/javadoc"/>
 
     <tstamp/>
@@ -58,7 +58,7 @@
     </target>
 
     <target name="compile" depends="init">
-        <echo message="Compiling Penrose Server."/>
+        <echo message="Compiling ${product.title}."/>
         <javacc
             target="src/java/org/safehaus/penrose/openldap/config/SlapdParser.jj"
             javacchome="../lib/javacc"
@@ -80,13 +80,13 @@
     </target>
 
     <target name="build" depends="compile">
-        <echo message="Building Penrose Server."/>
-        <jar jarfile="target/${module.name}-${project.version}.jar">
+        <echo message="Building ${product.title}."/>
+        <jar jarfile="target/${module.name}-${product.version}.jar">
             <fileset dir="target/classes"/>
             <manifest>
               <attribute name="Specification-Version"  value="1.1"/>
-              <attribute name="Implementation-Title"   value="Penrose Server"/>
-              <attribute name="Implementation-Version" value="${project.version}"/>
+              <attribute name="Implementation-Title"   value="${product.title}"/>
+              <attribute name="Implementation-Version" value="${product.version}"/>
               <attribute name="Implementation-Vendor"  value="Identyx Corporation"/>
               <attribute name="Build-Date" value="${DSTAMP}"/>
             </manifest>
@@ -108,6 +108,7 @@
 
     <target name="dist" depends="build">
         <mkdir dir="target/dist"/>
+        <copy todir="target/dist" file="../build.properties"/>
         <copy todir="target/dist" file="../README.txt">
             <filterchain>
                 <expandproperties/>
@@ -136,17 +137,17 @@
         </copy>
         <copy todir="target/dist/lib" includeEmptyDirs="false">
             <fileset dir="../lib" includes="*"/>
-            <fileset dir="../core/dist" includes="penrose-${project.version}.jar"/>
+            <fileset dir="../core/dist" includes="penrose-${product.version}.jar"/>
         </copy>
         <mkdir dir="target/dist/lib/ext"/>
         <copy todir="target/dist/server/lib" includeEmptyDirs="false">
             <fileset dir="lib" includes="*"/>
-            <fileset dir="target" includes="${module.name}-${project.version}.jar"/>
+            <fileset dir="target" includes="${module.name}-${product.version}.jar"/>
         </copy>
         <mkdir dir="target/dist/server/lib/ext"/>
         <copy todir="target/dist/server/lib" includeEmptyDirs="false">
             <fileset dir="lib" includes="*"/>
-            <fileset dir="target" includes="${module.name}-${project.version}.jar"/>
+            <fileset dir="target" includes="${module.name}-${product.version}.jar"/>
         </copy>
         <copy todir="target/dist/conf">
             <fileset dir="conf"/>
@@ -181,14 +182,14 @@
         <mkdir dir="target/dist/partitions"/>
         <mkdir dir="target/dist/var"/>
         <mkdir dir="${project.dist}"/>
-        <zip destfile="${project.dist}/${module.name}-${project.version}.zip"
+        <zip destfile="${project.dist}/${module.name}-${product.version}.zip"
             basedir="target/dist"/>
     </target>
 
     <target name="dist-src">
-        <echo message="Creating ${module.name}-${project.version}-src.zip"/>
+        <echo message="Creating ${module.name}-${product.version}-src.zip"/>
         <mkdir dir="${project.dist}"/>
-        <zip destfile="${project.dist}/${module.name}-${project.version}-src.zip">
+        <zip destfile="${project.dist}/${module.name}-${product.version}-src.zip">
             <zipfileset dir="..">
                 <exclude name="server/dist/**"/>
                 <exclude name="server/target/**"/>
@@ -198,10 +199,10 @@
                 <exclude name="var/**"/>
             </zipfileset>
         </zip>
-        <echo message="Creating ${module.name}-${project.version}-src.tar.gz"/>
+        <echo message="Creating ${module.name}-${product.version}-src.tar.gz"/>
         <mkdir dir="target"/>
-        <tar destfile="${project.dist}/${module.name}-${project.version}-src.tar.gz" compression="gzip">
-            <tarfileset dir=".." prefix="${module.name}-${project.version}">
+        <tar destfile="${project.dist}/${module.name}-${product.version}-src.tar.gz" compression="gzip">
+            <tarfileset dir=".." prefix="${module.name}-${product.version}">
                 <exclude name="server/dist/**"/>
                 <exclude name="server/target/**"/>
                 <exclude name="server/var/**"/>
@@ -213,26 +214,26 @@
     </target>
 
     <target name="dist-macosx" depends="docs,dist" if="isMac">
-        <echo message="Creating ${module.name}-${project.version}.pkg"/>
-        <mkdir dir="target/${module.name}-${project.version}.dmg"/>
+        <echo message="Creating ${module.name}-${product.version}.pkg"/>
+        <mkdir dir="target/${module.name}-${product.version}.dmg"/>
         <exec executable="/Developer/Applications/Utilities/PackageMaker.app/Contents/MacOS/PackageMaker">
             <arg line="-build"/>
             <arg line="-proj server/installer/${module.name}.pmproj"/>
-            <arg line="-p server/target/${module.name}-${project.version}.dmg/${module.name}-${project.version}.pkg"/>
+            <arg line="-p server/target/${module.name}-${product.version}.dmg/${module.name}-${product.version}.pkg"/>
         </exec>
-        <echo message="Creating ${module.name}-${project.version}.dmg"/>
+        <echo message="Creating ${module.name}-${product.version}.dmg"/>
         <mkdir dir="${project.dist}"/>
         <exec executable="/usr/bin/hdiutil">
             <arg line="create"/>
             <arg line="-fs HFS+"/>
-            <arg line="-srcdir target/${module.name}-${project.version}.dmg"/>
-            <arg line="${project.dist}/${module.name}-${project.version}.dmg"/>
+            <arg line="-srcdir target/${module.name}-${product.version}.dmg"/>
+            <arg line="${project.dist}/${module.name}-${product.version}.dmg"/>
         </exec>
 <!--
         <exec executable="server/tools/pkg-dmg">
-            <arg line="- -source target/${module.name}-${project.version}.dmg"/>
-            <arg line="- -target ${module.name}-${project.version}.dmg"/>
-            <arg line="- -volname &quot;Penrose Server ${project.version}&quot;"/>
+            <arg line="- -source target/${module.name}-${product.version}.dmg"/>
+            <arg line="- -target ${module.name}-${product.version}.dmg"/>
+            <arg line="- -volname &quot;Penrose Server ${product.version}&quot;"/>
             <arg line="- -mkdir /.background"/>
             <arg line="- -icon images/PenroseDMG.icns"/>
             <arg line="- -license target/LICENSE.txt"/>
@@ -245,13 +246,13 @@
     </target>
 
     <target name="dist-unix" depends="docs,dist" if="isUnix">
-        <echo message="Creating ${module.name}-${project.version}.tar.gz"/>
+        <echo message="Creating ${module.name}-${product.version}.tar.gz"/>
         <mkdir dir="target"/>
-        <tar destfile="${project.dist}/${module.name}-${project.version}.tar.gz" compression="gzip">
-            <tarfileset dir="target/dist" prefix="${module.name}-${project.version}" mode="755">
+        <tar destfile="${project.dist}/${module.name}-${product.version}.tar.gz" compression="gzip">
+            <tarfileset dir="target/dist" prefix="${module.name}-${product.version}" mode="755">
                 <include name="bin/*.sh"/>
             </tarfileset>
-            <tarfileset dir="target/dist" prefix="${module.name}-${project.version}">
+            <tarfileset dir="target/dist" prefix="${module.name}-${product.version}">
                 <include name="**/*"/>
                 <exclude name="bin/*.sh"/>
             </tarfileset>
@@ -260,7 +261,7 @@
             <param name="rpm.prefix" value=""/>
             <param name="rpm.home" value="/usr/src/redhat"/>
             <param name="rpm.builder" value="/usr/bin/rpmbuild"/>
-            <param name="rpm.name" value="${module.name}-${project.version}-1.i386.rpm"/>
+            <param name="rpm.name" value="${module.name}-${product.version}-1.i386.rpm"/>
         </antcall>
     </target>
 
@@ -281,7 +282,7 @@
             </filterchain>
         </copy>
         <copy todir="${rpm.home}/SOURCES" overwrite="true"
-            file="${project.dist}/${module.name}-${project.version}-src.tar.gz">
+            file="${project.dist}/${module.name}-${product.version}-src.tar.gz">
         </copy>
         <exec executable="${rpm.builder}">
             <arg line="-bb target/${module.name}.spec"/>
@@ -292,7 +293,7 @@
     </target>
 
     <target name="dist-win32" depends="docs,dist" if="isWindows">
-        <echo message="Creating ${module.name}-${project.version}.exe"/>
+        <echo message="Creating ${module.name}-${product.version}.exe"/>
         <copy todir="target" file="installer/${module.name}.iss">
             <filterchain>
                 <expandproperties/>
@@ -306,13 +307,13 @@
             <param name="rpm.prefix" value="${cygwin.home}"/>
             <param name="rpm.home" value="${cygwin.home}/usr/src/rpm"/>
             <param name="rpm.builder" value="${cygwin.home}/lib/rpm/rpmb.exe"/>
-            <param name="rpm.name" value="${module.name}-${project.version}-1.cygwin.i386.rpm"/>
+            <param name="rpm.name" value="${module.name}-${product.version}-1.cygwin.i386.rpm"/>
         </antcall>
     </target>
 
     <target name="dist-all" depends="dist-macosx,dist-unix,dist-win32">
         <copy todir="${project.dist}"
-            file="target/${module.name}-${project.version}.jar">
+            file="target/${module.name}-${product.version}.jar">
         </copy>
     </target>
 

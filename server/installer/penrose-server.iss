@@ -16,15 +16,15 @@
 
 [Setup]
 
-AppName=Penrose Server
-AppVerName=Penrose Server ${project.version}
-DefaultDirName={pf}\Identyx\Penrose Server ${project.version}
-DefaultGroupName=Identyx\Penrose Server ${project.version}
-UninstallDisplayName=Penrose Server ${project.version}
+AppName=${product.title}
+AppVerName=${product.title} ${product.version}
+DefaultDirName={pf}\Identyx\${product.title} ${product.version}
+DefaultGroupName=Identyx\${product.title} ${product.version}
+UninstallDisplayName=${product.title} ${product.version}
 UninstallDisplayIcon={app}\penrose.ico
 Compression=zip
 SolidCompression=yes
-OutputBaseFilename=${module.name}-${project.version}
+OutputBaseFilename=${module.name}-${product.version}
 OutputDir=..\dist
 LicenseFile=dist\LICENSE.txt
 
@@ -65,7 +65,7 @@ Name: "{group}\Documentation\Penrose API"; Filename: "{app}\docs\javadoc\index.h
 Name: "{group}\Documentation\Online Documentation"; Filename: "{app}\docs\Online Documentation.url";
 Name: "{group}\Documentation\Penrose Website"; Filename: "{app}\docs\Penrose Website.url";
 Name: "{group}\Documentation\Safehaus Website"; Filename: "{app}\docs\Safehaus Website.url";
-Name: "{group}\Penrose Server"; Filename: "{app}\bin\penrose.bat"; IconFilename: "{app}\penrose.ico"; WorkingDir: "{app}"
+Name: "{group}\${product.title}"; Filename: "{app}\bin\penrose.bat"; IconFilename: "{app}\penrose.ico"; WorkingDir: "{app}"
 Name: "{group}\Configuration Files"; Filename: "{app}\conf";
 Name: "{group}\Sample Files"; Filename: "{app}\samples";
 Name: "{group}\Schema Files"; Filename: "{app}\schema";
@@ -73,4 +73,4 @@ Name: "{group}\Penrose Service\Start Penrose Service"; Filename: "{sys}\net.exe"
 Name: "{group}\Penrose Service\Stop Penrose Service"; Filename: "{sys}\net.exe"; Parameters: "stop ""Penrose Virtual Directory Server"""; IconFilename: "{app}\penrose.ico"; WorkingDir: "{app}"
 Name: "{group}\Penrose Service\Register Penrose Service"; Filename: "{app}\bin\install-penrose-service.bat"; IconFilename: "{app}\penrose.ico"; WorkingDir: "{app}"
 Name: "{group}\Penrose Service\Unregister Penrose Service"; Filename: "{app}\bin\uninstall-penrose-service.bat"; IconFilename: "{app}\penrose.ico"; WorkingDir: "{app}"
-Name: "{group}\Uninstall Penrose Server"; Filename: "{uninstallexe}"
+Name: "{group}\Uninstall ${product.title}"; Filename: "{uninstallexe}"
