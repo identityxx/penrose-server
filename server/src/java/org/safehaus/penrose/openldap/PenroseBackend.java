@@ -18,24 +18,35 @@
 package org.safehaus.penrose.openldap;
 
 import java.util.*;
+import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.PrintWriter;
+import java.io.StringReader;
+import java.io.StringWriter;
 
-import org.ietf.ldap.*;
 import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.server.PenroseServer;
 import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.service.ServiceConfig;
-import org.safehaus.penrose.session.PenroseSession;
-import org.safehaus.penrose.session.PenroseSearchResults;
 import org.safehaus.penrose.session.*;
-import org.openldap.backend.Backend;
-import org.openldap.backend.Results;
+import org.safehaus.backend.Backend;
+import org.safehaus.backend.Results;
 import org.apache.log4j.xml.DOMConfigurator;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
+import com.novell.ldap.LDAPAttribute;
+import com.novell.ldap.LDAPAttributeSet;
+import com.novell.ldap.LDAPEntry;
+import com.novell.ldap.LDAPException;
+import com.novell.ldap.util.LDIFWriter;
+
+import javax.naming.NamingEnumeration;
+import javax.naming.directory.Attribute;
 import javax.naming.directory.Attributes;
 import javax.naming.directory.SearchControls;
+import javax.naming.directory.SearchResult;
 
 /**
  * @author Endi S. Dewata
@@ -380,5 +391,62 @@ public class PenroseBackend implements Backend {
             log.error(e.getMessage(), e);
             return LDAPException.OPERATIONS_ERROR;
         }
+    }
+    
+    public static LDAPEntry toLDAPEntry(SearchResult searchResult) throws Exception {
+        
+        LDAPAttributeSet attributeSet = new LDAPAttributeSet();
+        
+        NamingEnumeration ne = searchResult.getAttributes().getAll();
+        while (ne.hasMore()) {
+            Attribute attribute = (Attribute)ne.next();
+            LDAPAttribute ldapAttribute = new LDAPAttribute(attribute.getID());
+            
+            NamingEnumeration ne2 = attribute.getAll();
+            while (ne2.hasMore()) {
+                Object value = ne2.next();
+                if (value instanceof byte[]) {
+                    ldapAttribute.addValue((byte[])value);
+                } else {
+                    ldapAttribute.addValue(value.toString());
+                }
+            }
+            
+            attributeSet.add(ldapAttribute);
+        }
+        
+        return new LDAPEntry(searchResult.getName(), attributeSet);        
+    }
+    
+    public String toString(Object object) throws Exception {
+        if (!(object instanceof SearchResult)) return null;
+        
+        SearchResult searchResult = (SearchResult)object;
+        
+        ByteArrayOutputStream os = new ByteArrayOutputStream();        
+        LDIFWriter writer = new LDIFWriter(os);
+        
+        LDAPEntry entry = toLDAPEntry(searchResult);
+        writer.writeEntry(entry);
+        
+        writer.finish();
+
+        String ldif = os.toString();
+        
+        BufferedReader in = new BufferedReader(new StringReader(ldif));
+        String line;
+        do {
+            line = in.readLine().trim();
+        } while (!"".equals(line));
+        
+        StringWriter sw = new StringWriter();
+        PrintWriter pw = new PrintWriter(sw, true);
+        while ((line = in.readLine()) != null) pw.println(line);
+        
+        String str = sw.toString();
+        log.debug("Entry:");
+        log.debug(str);
+        
+        return str;
     }
 }

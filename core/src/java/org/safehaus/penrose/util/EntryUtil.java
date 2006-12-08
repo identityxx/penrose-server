@@ -237,6 +237,29 @@ public class EntryUtil {
         }
     }
 
+    public static LDAPEntry toLDAPEntry(SearchResult searchResult) throws Exception {
+        
+        LDAPAttributeSet attributeSet = new LDAPAttributeSet();
+        
+        NamingEnumeration ne = searchResult.getAttributes().getAll();
+        while (ne.hasMore()) {
+            Attribute attribute = (Attribute)ne.next();
+            LDAPAttribute ldapAttribute = new LDAPAttribute(attribute.getID());
+            
+            NamingEnumeration ne2 = attribute.getAll();
+            while (ne2.hasMore()) {
+                Object value = ne2.next();
+                if (value instanceof byte[]) {
+                    ldapAttribute.addValue((byte[])value);
+                } else {
+                    ldapAttribute.addValue(value.toString());
+                }
+            }
+        }
+        
+        return new LDAPEntry(searchResult.getName(), attributeSet);        
+    }
+    
     public static SearchResult toSearchResult(LDAPEntry entry) {
         return new SearchResult(entry.getDN(), entry, getAttributes(entry));
     }

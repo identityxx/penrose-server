@@ -56,7 +56,6 @@
 	<classpathentry kind="lib" path="server/lib/backport-util-concurrent-2.2.jar"/>
 	<classpathentry kind="lib" path="server/lib/mina-core-1.0.0.jar"/>
 	<classpathentry kind="lib" path="server/lib/mina-filter-ssl-1.0.0.jar"/>
-	<classpathentry kind="lib" path="server/lib/openldap-2.2.26.jar"/>
 	<classpathentry kind="lib" path="server/lib/shared-asn1-0.9.5.3.jar"/>
 	<classpathentry kind="lib" path="server/lib/shared-asn1-codec-0.9.5.3.jar"/>
 	<classpathentry kind="lib" path="server/lib/shared-ldap-0.9.5.3.jar"/>
@@ -72,5 +71,8 @@
 	<classpathentry kind="lib" path="server/lib/wsdl4j.jar"/>
 	<classpathentry kind="lib" path="shared/lib/mx4j.jar"/>
 	<classpathentry kind="lib" path="shared/lib/mx4j-remote.jar"/>
+	<classpathentry kind="lib" path="server/lib/java-backend-1.2.jar"/>
+	<classpathentry kind="lib" path="lib/commons-collections-3.0.jar"/>
+	<classpathentry kind="lib" path="lib/commons-lang-2.0.jar"/>
 	<classpathentry kind="output" path="target/classes"/>
 </classpath>
