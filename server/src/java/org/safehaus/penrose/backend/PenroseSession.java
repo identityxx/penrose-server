@@ -5,8 +5,8 @@ import java.util.Collection;
 import javax.naming.directory.Attributes;
 import javax.naming.directory.SearchControls;
 
-import org.safehaus.backend.Results;
-import org.safehaus.backend.Session;
+import com.identyx.javabackend.Results;
+import com.identyx.javabackend.Session;
 import org.safehaus.penrose.session.PenroseSearchControls;
 import org.safehaus.penrose.session.PenroseSearchResults;
 import org.slf4j.Logger;
