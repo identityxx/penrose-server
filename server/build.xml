@@ -84,7 +84,7 @@
         <jar jarfile="target/${module.name}-${product.version}.jar">
             <fileset dir="target/classes"/>
             <manifest>
-              <attribute name="Specification-Version"  value="1.1"/>
+              <attribute name="Specification-Version"  value="${product.specification}"/>
               <attribute name="Implementation-Title"   value="${product.title}"/>
               <attribute name="Implementation-Version" value="${product.version}"/>
               <attribute name="Implementation-Vendor"  value="Identyx Corporation"/>
@@ -121,7 +121,11 @@
                 <expandproperties/>
             </filterchain>
         </copy>
-        <copy todir="target/dist" file="../pom.xml"/>
+        <copy todir="target/dist" file="../pom.xml">
+            <filterchain>
+                <expandproperties/>
+            </filterchain>
+        </copy>
         <copy todir="target/dist/etc">
             <fileset dir="etc" includes="**/*"/>
             <filterchain>
@@ -178,6 +182,9 @@
         </copy>
         <copy todir="target/dist/samples">
             <fileset dir="../samples"/>
+            <filterchain>
+                <expandproperties/>
+            </filterchain>
         </copy>
         <mkdir dir="target/dist/partitions"/>
         <mkdir dir="target/dist/var"/>

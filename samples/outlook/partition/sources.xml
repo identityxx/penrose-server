@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE sources PUBLIC
-  "-//Penrose/DTD Sources 1.1//EN"
+  "-//Penrose/DTD Sources ${product.specification}//EN"
   "http://penrose.safehaus.org/dtd/sources.dtd">
 
 <sources>

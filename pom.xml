@@ -5,7 +5,7 @@
   <groupId>org.safehaus.penrose</groupId>
   <artifactId>penrose</artifactId>
   <packaging>jar</packaging>
-  <version>1.1.2</version>
+  <version>${product.version}</version>
   <name>Penrose</name>
   <dependencies>
     <dependency>

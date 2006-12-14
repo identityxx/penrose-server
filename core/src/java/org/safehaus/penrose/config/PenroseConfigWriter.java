@@ -38,6 +38,7 @@ import org.safehaus.penrose.partition.PartitionConfig;
 import org.safehaus.penrose.user.UserConfig;
 import org.safehaus.penrose.session.SessionConfig;
 import org.safehaus.penrose.service.ServiceConfig;
+import org.safehaus.penrose.Penrose;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
@@ -72,7 +73,7 @@ public class PenroseConfigWriter {
 
         xmlWriter.startDTD(
                 "server",
-                "-//Penrose/DTD Server 1.1//EN",
+                "-//Penrose/DTD Server "+Penrose.SPECIFICATION_VERSION+"//EN",
                 "http://penrose.safehaus.org/dtd/server.dtd"
         );
 

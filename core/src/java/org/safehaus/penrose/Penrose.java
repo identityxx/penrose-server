@@ -55,11 +55,13 @@ public class Penrose {
 
     public static String PRODUCT_NAME;
     public static String PRODUCT_VERSION;
-    public static String VENDOR_NAME;
+    public static String PRODUCT_VENDOR;
     public static String PRODUCT_COPYRIGHT = "Copyright (c) 2000-2006, Identyx Corporation.";
 
+    public static String SPECIFICATION_VERSION;
+
     public final static DateFormat DATE_FORMAT   = new SimpleDateFormat("MM/dd/yyyy");
-    public final static String RELEASE_DATE      = "09/01/2006";
+    public final static String RELEASE_DATE      = "12/15/2006";
 
     public final static String STOPPED  = "STOPPED";
     public final static String STARTING = "STARTING";
@@ -91,7 +93,9 @@ public class Penrose {
 
             PRODUCT_NAME    = pkg.getImplementationTitle();
             PRODUCT_VERSION = pkg.getImplementationVersion();
-            VENDOR_NAME     = pkg.getImplementationVendor();
+            PRODUCT_VENDOR     = pkg.getImplementationVendor();
+
+            SPECIFICATION_VERSION = pkg.getSpecificationVersion();
 
         } catch (Exception e) {
             e.printStackTrace();

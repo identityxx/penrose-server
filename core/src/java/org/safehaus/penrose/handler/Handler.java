@@ -716,7 +716,7 @@ public class Handler {
         AttributeValues attributeValues = entry.getAttributeValues();
         attributeValues.set("objectClass", "top");
         attributeValues.add("objectClass", "extensibleObject");
-        attributeValues.set("vendorName", Penrose.VENDOR_NAME);
+        attributeValues.set("vendorName", Penrose.PRODUCT_VENDOR);
         attributeValues.set("vendorVersion", Penrose.PRODUCT_NAME+" "+Penrose.PRODUCT_VERSION);
 
         for (Iterator i=partitionManager.getPartitions().iterator(); i.hasNext(); ) {

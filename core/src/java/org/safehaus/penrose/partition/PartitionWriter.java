@@ -35,6 +35,7 @@ import org.safehaus.penrose.module.ModuleConfig;
 import org.safehaus.penrose.module.ModuleMapping;
 import org.safehaus.penrose.acl.ACI;
 import org.safehaus.penrose.util.BinaryUtil;
+import org.safehaus.penrose.Penrose;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
@@ -72,7 +73,7 @@ public class PartitionWriter {
 
         writer.startDTD(
                 "mapping",
-                "-//Penrose/DTD Mapping 1.1//EN",
+                "-//Penrose/DTD Mapping "+Penrose.SPECIFICATION_VERSION+"//EN",
                 "http://penrose.safehaus.org/dtd/mapping.dtd"
         );
 
@@ -92,7 +93,7 @@ public class PartitionWriter {
 
         writer.startDTD(
                 "connections",
-                "-//Penrose/DTD Connections 1.1//EN",
+                "-//Penrose/DTD Connections "+Penrose.SPECIFICATION_VERSION+"//EN",
                 "http://penrose.safehaus.org/dtd/connections.dtd"
         );
 
@@ -112,7 +113,7 @@ public class PartitionWriter {
 
         writer.startDTD(
                 "sources",
-                "-//Penrose/DTD Sources 1.1//EN",
+                "-//Penrose/DTD Sources "+Penrose.SPECIFICATION_VERSION+"//EN",
                 "http://penrose.safehaus.org/dtd/sources.dtd"
         );
 
@@ -132,7 +133,7 @@ public class PartitionWriter {
 
         writer.startDTD(
                 "modules",
-                "-//Penrose/DTD Modules 1.1//EN",
+                "-//Penrose/DTD Modules "+Penrose.SPECIFICATION_VERSION+"//EN",
                 "http://penrose.safehaus.org/dtd/modules.dtd"
         );
 
