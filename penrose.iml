@@ -506,7 +506,7 @@
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://C:/svn.safehaus.org/penrose-1.2/server/lib/java-backend-1.2.jar!/" />
+          <root url="jar://$MODULE_DIR$/server/lib/java-backend-1.0.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />

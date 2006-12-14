@@ -17,7 +17,7 @@
  */
 package org.safehaus.penrose.backend;
 
-import org.safehaus.backend.Results;
+import com.identyx.javabackend.Results;
 import org.safehaus.penrose.session.PenroseSearchResults;
 
 import java.util.Collection;
