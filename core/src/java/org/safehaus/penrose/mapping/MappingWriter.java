@@ -7,6 +7,7 @@ import org.safehaus.penrose.util.BinaryUtil;
 import org.safehaus.penrose.acl.ACI;
 import org.safehaus.penrose.schema.ObjectClass;
 import org.safehaus.penrose.schema.AttributeType;
+import org.safehaus.penrose.Penrose;
 import org.dom4j.io.OutputFormat;
 import org.dom4j.io.XMLWriter;
 import org.dom4j.Element;
@@ -44,7 +45,7 @@ public class MappingWriter {
 
         writer.startDTD(
                 "mapping",
-                "-//Penrose/DTD Mapping 1.2//EN",
+                "-//Penrose/DTD Mapping "+Penrose.SPECIFICATION_VERSION+"//EN",
                 "http://penrose.safehaus.org/dtd/mapping.dtd"
         );
 

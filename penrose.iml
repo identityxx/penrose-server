@@ -263,15 +263,6 @@
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/server/lib/openldap-2.2.26.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
-    <orderEntry type="module-library">
-      <library>
-        <CLASSES>
           <root url="jar://$MODULE_DIR$/lib/commons-digester-1.5.jar!/" />
         </CLASSES>
         <JAVADOC />
@@ -507,6 +498,15 @@
       <library>
         <CLASSES>
           <root url="jar://$MODULE_DIR$/shared/lib/mx4j-remote.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="jar://C:/svn.safehaus.org/penrose-1.2/server/lib/java-backend-1.2.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />

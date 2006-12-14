@@ -1,11 +1,5 @@
 <?xml version='1.0' encoding='utf-8'?>
 
-<!--
-<!DOCTYPE connections PUBLIC
-  "-//Penrose/DTD Connections 1.2//EN"
-  "http://penrose.safehaus.org/dtd/connections.dtd">
--->
-
 <!ELEMENT connections (connection*)>
 
 <!ELEMENT connection (adapter-name, description?, parameter*)>

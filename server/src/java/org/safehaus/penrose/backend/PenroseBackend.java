@@ -21,6 +21,7 @@ import java.util.*;
 import java.io.File;
 
 import org.safehaus.penrose.Penrose;
+import org.safehaus.penrose.partition.PartitionManager;
 import org.safehaus.penrose.server.PenroseServer;
 import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.service.ServiceConfig;
@@ -81,6 +82,12 @@ public class PenroseBackend implements Backend {
         return LDAPException.SUCCESS;
     }
 
+    public boolean contains(String dn) throws Exception {
+        Penrose penrose = penroseServer.getPenrose();
+        PartitionManager partitionManager = penrose.getPartitionManager();
+        return partitionManager.getPartitionByDn(dn) != null;
+    }
+
     /**
      * Get session.
      * 
@@ -92,7 +99,7 @@ public class PenroseBackend implements Backend {
     }
 
     /**
-     * Create connection.
+     * Create session.
      * 
      * @param connectionId
      */
@@ -106,7 +113,7 @@ public class PenroseBackend implements Backend {
     }
 
     /**
-     * Remove connection.
+     * Close connection.
      * 
      * @param connectionId
      */

@@ -1,11 +1,5 @@
 <?xml version='1.0' encoding='utf-8'?>
 
-<!--
-<!DOCTYPE server PUBLIC
-  "-//Penrose/DTD Server 1.2//EN"
-  "http://penrose.safehaus.org/dtd/server.dtd">
--->
-
 <!ELEMENT server (
         system-property*,
         service*,

@@ -1,11 +1,5 @@
 <?xml version='1.0' encoding='utf-8'?>
 
-<!--
-<!DOCTYPE modules PUBLIC
-  "-//Penrose/DTD Modules 1.2//EN"
-  "http://penrose.safehaus.org/dtd/modules.dtd">
--->
-
 <!ELEMENT modules (module*, module-mapping*)>
 
 <!ELEMENT module (module-class, description?, parameter*)>

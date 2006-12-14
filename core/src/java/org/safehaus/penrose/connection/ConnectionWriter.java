@@ -3,6 +3,7 @@ package org.safehaus.penrose.connection;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.safehaus.penrose.partition.Partition;
+import org.safehaus.penrose.Penrose;
 import org.dom4j.io.OutputFormat;
 import org.dom4j.io.XMLWriter;
 import org.dom4j.Element;
@@ -39,7 +40,7 @@ public class ConnectionWriter {
 
         writer.startDTD(
                 "connections",
-                "-//Penrose/DTD Connections 1.2//EN",
+                "-//Penrose/DTD Connections "+Penrose.SPECIFICATION_VERSION+"//EN",
                 "http://penrose.safehaus.org/dtd/connections.dtd"
         );
 

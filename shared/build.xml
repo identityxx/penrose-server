@@ -78,7 +78,7 @@
         <jar jarfile="target/${module.name}-${product.version}.jar">
             <fileset dir="target/classes"/>
             <manifest>
-              <attribute name="Specification-Version"  value="1.2"/>
+              <attribute name="Specification-Version"  value="${product.specification}"/>
               <attribute name="Implementation-Title"   value="Penrose Shared"/>
               <attribute name="Implementation-Version" value="${product.version}"/>
               <attribute name="Implementation-Vendor"  value="Identyx Corporation"/>

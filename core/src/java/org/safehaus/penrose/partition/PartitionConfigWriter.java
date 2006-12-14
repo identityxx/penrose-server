@@ -9,6 +9,7 @@ import org.dom4j.tree.DefaultElement;
 import org.dom4j.tree.DefaultAttribute;
 import org.dom4j.tree.DefaultText;
 import org.safehaus.penrose.cache.CacheConfig;
+import org.safehaus.penrose.Penrose;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -39,7 +40,7 @@ public class PartitionConfigWriter {
 
         writer.startDTD(
                 "partition",
-                "-//Penrose/DTD Partition 1.2//EN",
+                "-//Penrose/DTD Partition "+Penrose.SPECIFICATION_VERSION+"//EN",
                 "http://penrose.safehaus.org/dtd/partition.dtd"
         );
 

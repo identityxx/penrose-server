@@ -1,11 +1,5 @@
 <?xml version='1.0' encoding='utf-8'?>
 
-<!--
-<!DOCTYPE sources PUBLIC
-  "-//Penrose/DTD Sources 1.2//EN"
-  "http://penrose.safehaus.org/dtd/sources.dtd">
--->
-
 <!ELEMENT sources (source*)>
 
 <!ELEMENT source (connection-name, description?, field*, parameter*)>

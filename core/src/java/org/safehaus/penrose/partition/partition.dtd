@@ -1,11 +1,5 @@
 <?xml version='1.0' encoding='utf-8'?>
 
-<!--
-<!DOCTYPE partition PUBLIC
-  "-//Penrose/DTD Partition 1.2//EN"
-  "http://penrose.safehaus.org/dtd/partition.dtd">
--->
-
 <!ELEMENT partition (name, description?, source-cache*, entry-cache*)>
 <!ATTLIST partition enabled (true|false) "true">
 

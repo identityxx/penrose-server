@@ -3,6 +3,7 @@ package org.safehaus.penrose.source;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.safehaus.penrose.partition.Partition;
+import org.safehaus.penrose.Penrose;
 import org.dom4j.io.OutputFormat;
 import org.dom4j.io.XMLWriter;
 import org.dom4j.Element;
@@ -38,7 +39,7 @@ public class SourceWriter {
 
         writer.startDTD(
                 "sources",
-                "-//Penrose/DTD Sources 1.2//EN",
+                "-//Penrose/DTD Sources "+Penrose.SPECIFICATION_VERSION+"//EN",
                 "http://penrose.safehaus.org/dtd/sources.dtd"
         );
 

@@ -37,7 +37,6 @@ import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.thread.ThreadManager;
 import org.safehaus.penrose.cache.EntryCacheManager;
-import org.safehaus.penrose.cache.CacheConfig;
 import org.safehaus.penrose.util.*;
 import org.safehaus.penrose.util.Formatter;
 import org.slf4j.LoggerFactory;
@@ -703,7 +702,7 @@ public class Handler {
         AttributeValues attributeValues = entry.getAttributeValues();
         attributeValues.set("objectClass", "top");
         attributeValues.add("objectClass", "extensibleObject");
-        attributeValues.set("vendorName", Penrose.VENDOR_NAME);
+        attributeValues.set("vendorName", Penrose.PRODUCT_VENDOR);
         attributeValues.set("vendorVersion", Penrose.PRODUCT_NAME+" Server "+Penrose.PRODUCT_VERSION);
 
         for (Iterator i=partitionManager.getPartitions().iterator(); i.hasNext(); ) {
