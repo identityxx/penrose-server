@@ -268,35 +268,9 @@
             <param name="rpm.prefix" value=""/>
             <param name="rpm.home" value="/usr/src/redhat"/>
             <param name="rpm.builder" value="/usr/bin/rpmbuild"/>
+            <param name="rpm.spec" value="${module.name}.spec"/>
             <param name="rpm.name" value="${module.name}-${product.version}-1.i386.rpm"/>
         </antcall>
-    </target>
-
-    <target name="rpm" depends="rpm-check,rpm-build">
-    </target>
-
-    <target name="rpm-check" depends="init">
-        <echo message="Checking ${rpm.builder}"/>
-        <condition property="hasRpmBuilder">
-            <available file="${rpm.builder}"/>
-        </condition>
-    </target>
-
-    <target name="rpm-build" depends="dist-src" if="hasRpmBuilder">
-        <copy todir="target" file="installer/${module.name}.spec">
-            <filterchain>
-                <expandproperties/>
-            </filterchain>
-        </copy>
-        <copy todir="${rpm.home}/SOURCES" overwrite="true"
-            file="${project.dist}/${module.name}-${product.version}-src.tar.gz">
-        </copy>
-        <exec executable="${rpm.builder}">
-            <arg line="-bb target/${module.name}.spec"/>
-        </exec>
-        <copy todir="${project.dist}" failonerror="false"
-            file="${rpm.home}/RPMS/i386/${rpm.name}">
-        </copy>
     </target>
 
     <target name="dist-win32" depends="docs,dist" if="isWindows">
@@ -314,8 +288,36 @@
             <param name="rpm.prefix" value="${cygwin.home}"/>
             <param name="rpm.home" value="${cygwin.home}/usr/src/rpm"/>
             <param name="rpm.builder" value="${cygwin.home}/lib/rpm/rpmb.exe"/>
+            <param name="rpm.spec" value="${module.name}.spec"/>
             <param name="rpm.name" value="${module.name}-${product.version}-1.cygwin.i386.rpm"/>
         </antcall>
+    </target>
+
+    <target name="rpm" depends="rpm-check,rpm-build">
+    </target>
+
+    <target name="rpm-check" depends="init">
+        <echo message="Checking ${rpm.builder}"/>
+        <condition property="hasRpmBuilder">
+            <available file="${rpm.builder}"/>
+        </condition>
+    </target>
+
+    <target name="rpm-build" depends="dist-src" if="hasRpmBuilder">
+        <copy todir="target" file="installer/${rpm.spec}">
+            <filterchain>
+                <expandproperties/>
+            </filterchain>
+        </copy>
+        <copy todir="${rpm.home}/SOURCES" overwrite="true"
+            file="${project.dist}/${module.name}-${product.version}-src.tar.gz">
+        </copy>
+        <exec executable="${rpm.builder}">
+            <arg line="-bb target/${rpm.spec}"/>
+        </exec>
+        <copy todir="${project.dist}" failonerror="false"
+            file="${rpm.home}/RPMS/i386/${rpm.name}">
+        </copy>
     </target>
 
     <target name="dist-all" depends="dist-macosx,dist-unix,dist-win32">

@@ -114,13 +114,13 @@ public class DefaultEngine extends Engine {
             String name = attribute.getID();
 
             if ("objectClass".equalsIgnoreCase(name)) continue;
-
+/*
             AttributeMapping attributeMapping = entryMapping.getAttributeMapping(name);
             if (attributeMapping == null) {
                 log.debug("Undefined attribute "+name);
                 return LDAPException.OBJECT_CLASS_VIOLATION;
             }
-
+*/
             for (NamingEnumeration j=attribute.getAll(); j.hasMore(); ) {
                 Object value = j.next();
                 attributeValues.add(name, value);

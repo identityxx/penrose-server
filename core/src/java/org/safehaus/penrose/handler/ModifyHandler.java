@@ -120,9 +120,12 @@ public class ModifyHandler {
 			String attributeName = attribute.getID();
 
             AttributeType at = handler.getSchemaManager().getAttributeType(attributeName);
-            if (at == null) return LDAPException.UNDEFINED_ATTRIBUTE_TYPE;
-
-            attributeName = at.getName();
+            if (at != null) {
+                attributeName = at.getName();
+            } else {
+                //log.debug("Undefined attribute: "+attributeName);
+                //return LDAPException.UNDEFINED_ATTRIBUTE_TYPE;
+            }
 
             switch (modification.getModificationOp()) {
                 case DirContext.ADD_ATTRIBUTE:
