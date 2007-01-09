@@ -22,6 +22,7 @@ import org.safehaus.penrose.graph.GraphVisitor;
 import org.safehaus.penrose.graph.GraphIterator;
 import org.safehaus.penrose.graph.Graph;
 import org.safehaus.penrose.util.Formatter;
+import org.safehaus.penrose.util.ExceptionUtil;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.source.SourceConfig;
 import org.safehaus.penrose.source.Source;
@@ -47,8 +48,6 @@ public class AddGraphVisitor extends GraphVisitor {
     public Graph graph;
     public SourceMapping primarySourceMapping;
 
-    private int returnCode = LDAPException.SUCCESS;
-
     public AddGraphVisitor(
             Engine engine,
             Partition partition,
@@ -67,8 +66,18 @@ public class AddGraphVisitor extends GraphVisitor {
         this.primarySourceMapping = engine.getPartitionManager().getPrimarySource(partition, entryMapping);
     }
 
-    public void run() throws Exception {
-        graph.traverse(this, primarySourceMapping);
+    public void run() throws LDAPException {
+        try {
+            graph.traverse(this, primarySourceMapping);
+        } catch (LDAPException e) {
+            throw e;
+
+        } catch (Exception e) {
+            int rc = ExceptionUtil.getReturnCode(e);
+            String message = e.getMessage();
+            log.error(message, e);
+            throw new LDAPException(LDAPException.resultCodeToString(rc), rc, message);
+        }
     }
 
     public void visitNode(GraphIterator graphIterator, Object node) throws Exception {
@@ -108,22 +117,12 @@ public class AddGraphVisitor extends GraphVisitor {
 
         SourceConfig sourceConfig = partition.getSourceConfig(sourceMapping.getSourceName());
         Source source = engine.getSource(partition, sourceConfig);
-
-        returnCode = source.add(newSourceValues);
-        if (returnCode != LDAPException.SUCCESS) return;
+        source.add(newSourceValues);
 
         //addedSourceValues.remove(source.getName());
         //addedSourceValues.set(source.getName(), newSourceValues);
 
         graphIterator.traverseEdges(node);
-    }
-
-    public int getReturnCode() {
-        return returnCode;
-    }
-
-    public void setReturnCode(int returnCode) {
-        this.returnCode = returnCode;
     }
 
     public AttributeValues getAddedSourceValues() {

@@ -24,6 +24,7 @@ import org.safehaus.penrose.session.PenroseSearchResults;
 import org.safehaus.penrose.session.PenroseSearchControls;
 import org.safehaus.penrose.engine.TransformEngine;
 import org.safehaus.penrose.util.Formatter;
+import org.safehaus.penrose.util.ExceptionUtil;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.filter.SubstringFilter;
 import org.safehaus.penrose.filter.SimpleFilter;
@@ -187,8 +188,9 @@ public class JDBCAdapter extends Adapter {
         return sb.toString();
     }
 
-    public int bind(SourceConfig sourceConfig, Row pk, String cred) throws Exception {
-        return LDAPException.INVALID_CREDENTIALS;
+    public void bind(SourceConfig sourceConfig, Row pk, String cred) throws LDAPException {
+        int rc = LDAPException.INVALID_CREDENTIALS;
+        throw new LDAPException(LDAPException.resultCodeToString(rc), rc, null);
     }
 
     public void search(SourceConfig sourceConfig, Filter filter, PenroseSearchControls sc, PenroseSearchResults results) throws Exception {
@@ -502,7 +504,7 @@ public class JDBCAdapter extends Adapter {
         return av;
     }
 
-    public int add(SourceConfig sourceConfig, Row pk, AttributeValues sourceValues) throws Exception {
+    public void add(SourceConfig sourceConfig, Row pk, AttributeValues sourceValues) throws LDAPException {
 
         if (log.isDebugEnabled()) {
             log.debug(Formatter.displaySeparator(80));
@@ -575,19 +577,22 @@ public class JDBCAdapter extends Adapter {
 
             ps.executeUpdate();
 
+        } catch (LDAPException e) {
+            throw e;
+
         } catch (Exception e) {
-            log.debug("Add failed: ("+e.getClass().getName()+") "+e.getMessage());
-            return LDAPException.OPERATIONS_ERROR;
+            int rc = ExceptionUtil.getReturnCode(e);
+            String message = e.getMessage();
+            log.error(message, e);
+            throw new LDAPException(LDAPException.resultCodeToString(rc), rc, message);
 
         } finally {
             if (ps != null) try { ps.close(); } catch (Exception e) {}
             if (con != null) try { con.close(); } catch (Exception e) {}
         }
-
-        return LDAPException.SUCCESS;
     }
 
-    public int delete(SourceConfig sourceConfig, Row pk) throws Exception {
+    public void delete(SourceConfig sourceConfig, Row pk) throws LDAPException {
 
         //log.debug("Deleting entry "+pk);
 
@@ -635,17 +640,31 @@ public class JDBCAdapter extends Adapter {
             }
 
             int count = ps.executeUpdate();
-            if (count == 0) return LDAPException.NO_SUCH_OBJECT;
+            if (count == 0) {
+                int rc = LDAPException.NO_SUCH_OBJECT;
+                throw new LDAPException(LDAPException.resultCodeToString(rc), rc, null);
+            }
+
+        } catch (LDAPException e) {
+            throw e;
+
+        } catch (Exception e) {
+            int rc = ExceptionUtil.getReturnCode(e);
+            String message = e.getMessage();
+            log.error(message, e);
+            throw new LDAPException(LDAPException.resultCodeToString(rc), rc, message);
 
         } finally {
             if (ps != null) try { ps.close(); } catch (Exception e) {}
             if (con != null) try { con.close(); } catch (Exception e) {}
         }
-
-        return LDAPException.SUCCESS;
     }
 
-    public int modify(SourceConfig sourceConfig, Row pk, Collection modifications) throws Exception {
+    public void modify(
+            SourceConfig sourceConfig,
+            Row pk,
+            Collection modifications
+    ) throws LDAPException {
 
         String catalog = sourceConfig.getParameter(CATALOG);
         String schema = sourceConfig.getParameter(SCHEMA);
@@ -702,7 +721,7 @@ public class JDBCAdapter extends Adapter {
             }
 
             // if there's nothing to update, return
-            if (columns.length() == 0) return LDAPException.SUCCESS;
+            if (columns.length() == 0) return;
 /*
             Collection fields = sourceConfig.getFieldConfigs();
             for (Iterator i=fields.iterator(); i.hasNext(); ) {
@@ -757,21 +776,31 @@ public class JDBCAdapter extends Adapter {
             log.debug(Formatter.displaySeparator(80));
 
             int count = ps.executeUpdate();
-            if (count == 0) return LDAPException.NO_SUCH_OBJECT;
+            if (count == 0) {
+                int rc = LDAPException.NO_SUCH_OBJECT;
+                throw new LDAPException(LDAPException.resultCodeToString(rc), rc, null);
+            }
+
+        } catch (LDAPException e) {
+            throw e;
+
+        } catch (Exception e) {
+            int rc = ExceptionUtil.getReturnCode(e);
+            String message = e.getMessage();
+            log.error(message, e);
+            throw new LDAPException(LDAPException.resultCodeToString(rc), rc, message);
 
         } finally {
             if (ps != null) try { ps.close(); } catch (Exception e) {}
             if (con != null) try { con.close(); } catch (Exception e) {}
         }
-        
-        return LDAPException.SUCCESS;
     }
 
-    public int modrdn(
+    public void modrdn(
             SourceConfig sourceConfig,
             Row oldRdn,
-            Row newRdn)
-            throws Exception {
+            Row newRdn
+    ) throws LDAPException {
 
         //log.debug("Renaming source "+source.getName()+": "+oldRdn+" with "+newRdn);
 
@@ -845,14 +874,24 @@ public class JDBCAdapter extends Adapter {
             log.debug(Formatter.displaySeparator(80));
 
             int count = ps.executeUpdate();
-            if (count == 0) return LDAPException.NO_SUCH_OBJECT;
+            if (count == 0) {
+                int rc = LDAPException.NO_SUCH_OBJECT;
+                throw new LDAPException(LDAPException.resultCodeToString(rc), rc, null);
+            }
+
+        } catch (LDAPException e) {
+            throw e;
+
+        } catch (Exception e) {
+            int rc = ExceptionUtil.getReturnCode(e);
+            String message = e.getMessage();
+            log.error(message, e);
+            throw new LDAPException(LDAPException.resultCodeToString(rc), rc, message);
 
         } finally {
             if (ps != null) try { ps.close(); } catch (Exception e) {}
             if (con != null) try { con.close(); } catch (Exception e) {}
         }
-
-        return LDAPException.SUCCESS;
     }
 
     public int getLastChangeNumber(SourceConfig sourceConfig) throws Exception {

@@ -19,6 +19,7 @@ package org.safehaus.penrose.engine;
 
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.util.EntryUtil;
+import org.safehaus.penrose.util.ExceptionUtil;
 import org.safehaus.penrose.partition.Partition;
 import org.ietf.ldap.LDAPException;
 import org.slf4j.LoggerFactory;
@@ -40,101 +41,100 @@ public class ModRdnEngine {
         this.engine = engine;
     }
 
-    public int modrdn(Partition partition, Entry entry, String newRdn, boolean deleteOldRdn) throws Exception {
+    public void modrdn(
+            Partition partition,
+            Entry entry,
+            String newRdn,
+            boolean deleteOldRdn
+    ) throws LDAPException {
 
-        EntryMapping entryMapping = entry.getEntryMapping();
+        try {
+            EntryMapping entryMapping = entry.getEntryMapping();
 
-        AttributeValues oldAttributeValues = entry.getAttributeValues();
-        AttributeValues newAttributeValues = new AttributeValues(oldAttributeValues);
+            AttributeValues oldAttributeValues = entry.getAttributeValues();
+            AttributeValues newAttributeValues = new AttributeValues(oldAttributeValues);
 
-        Row rdn1 = EntryUtil.getRdn(entry.getDn());
-        oldAttributeValues.set("rdn", rdn1);
+            Row rdn1 = EntryUtil.getRdn(entry.getDn());
+            oldAttributeValues.set("rdn", rdn1);
 
-        Row rdn2 = EntryUtil.getRdn(newRdn);
-        newAttributeValues.set("rdn", rdn2);
-        newAttributeValues.add(rdn2);
+            Row rdn2 = EntryUtil.getRdn(newRdn);
+            newAttributeValues.set("rdn", rdn2);
+            newAttributeValues.add(rdn2);
 
-        log.debug("Renaming "+rdn1+" to "+rdn2);
+            log.debug("Renaming "+rdn1+" to "+rdn2);
 
-        if (deleteOldRdn) {
-            log.debug("Removing old RDN:");
-            for (Iterator i=rdn1.getNames().iterator(); i.hasNext(); ) {
-                String name = (String)i.next();
-                Object value = rdn1.get(name);
-                newAttributeValues.remove(name, value);
-                log.debug(" - "+name+": "+value);
+            if (deleteOldRdn) {
+                log.debug("Removing old RDN:");
+                for (Iterator i=rdn1.getNames().iterator(); i.hasNext(); ) {
+                    String name = (String)i.next();
+                    Object value = rdn1.get(name);
+                    newAttributeValues.remove(name, value);
+                    log.debug(" - "+name+": "+value);
+                }
             }
-        }
 /*
-        Collection rdnAttributes = entryMapping.getRdnAttributes();
-        for (Iterator i=rdnAttributes.iterator(); i.hasNext(); ) {
-            AttributeMapping attributeMapping = (AttributeMapping)i.next();
-            String name = attributeMapping.getName();
-            String newValue = (String)rdn2.get(name);
+            Collection rdnAttributes = entryMapping.getRdnAttributes();
+            for (Iterator i=rdnAttributes.iterator(); i.hasNext(); ) {
+                AttributeMapping attributeMapping = (AttributeMapping)i.next();
+                String name = attributeMapping.getName();
+                String newValue = (String)rdn2.get(name);
 
-            newAttributeValues.remove(name);
-            newAttributeValues.add(name, newValue);
-        }
+                newAttributeValues.remove(name);
+                newAttributeValues.add(name, newValue);
+            }
 */
-        AttributeValues oldSourceValues = entry.getSourceValues();
-        AttributeValues newSourceValues = new AttributeValues(oldSourceValues);
-        Collection sources = entryMapping.getSourceMappings();
-        for (Iterator i=sources.iterator(); i.hasNext(); ) {
-            SourceMapping sourceMapping = (SourceMapping)i.next();
+            AttributeValues oldSourceValues = entry.getSourceValues();
+            AttributeValues newSourceValues = new AttributeValues(oldSourceValues);
+            Collection sources = entryMapping.getSourceMappings();
+            for (Iterator i=sources.iterator(); i.hasNext(); ) {
+                SourceMapping sourceMapping = (SourceMapping)i.next();
 
-            AttributeValues output = new AttributeValues();
-            engine.getTransformEngine().translate(partition, entryMapping, sourceMapping, newAttributeValues, output);
-            newSourceValues.set(sourceMapping.getName(), output);
+                AttributeValues output = new AttributeValues();
+                engine.getTransformEngine().translate(partition, entryMapping, sourceMapping, newAttributeValues, output);
+                newSourceValues.set(sourceMapping.getName(), output);
+            }
+
+            if (log.isDebugEnabled()) {
+                log.debug("Old attribute values:");
+                for (Iterator iterator = oldAttributeValues.getNames().iterator(); iterator.hasNext(); ) {
+                    String name = (String)iterator.next();
+                    Collection values = newAttributeValues.get(name);
+                    log.debug(" - "+name+": "+values);
+                }
+
+                log.debug("New attribute values:");
+                for (Iterator iterator = newAttributeValues.getNames().iterator(); iterator.hasNext(); ) {
+                    String name = (String)iterator.next();
+                    Collection values = newAttributeValues.get(name);
+                    log.debug(" - "+name+": "+values);
+                }
+
+                log.debug("Old source values:");
+                for (Iterator iterator = oldSourceValues.getNames().iterator(); iterator.hasNext(); ) {
+                    String name = (String)iterator.next();
+                    Collection values = oldSourceValues.get(name);
+                    log.debug(" - "+name+": "+values);
+                }
+
+                log.debug("New source values:");
+                for (Iterator iterator = newSourceValues.getNames().iterator(); iterator.hasNext(); ) {
+                    String name = (String)iterator.next();
+                    Collection values = newSourceValues.get(name);
+                    log.debug(" - "+name+": "+values);
+                }
+            }
+
+            ModRdnGraphVisitor visitor = new ModRdnGraphVisitor(engine, partition, entryMapping, oldSourceValues, newSourceValues);
+            visitor.run();
+
+        } catch (LDAPException e) {
+            throw e;
+
+        } catch (Exception e) {
+            int rc = ExceptionUtil.getReturnCode(e);
+            String message = e.getMessage();
+            log.error(message, e);
+            throw new LDAPException(LDAPException.resultCodeToString(rc), rc, message);
         }
-
-        if (log.isDebugEnabled()) {
-            log.debug("Old attribute values:");
-            for (Iterator iterator = oldAttributeValues.getNames().iterator(); iterator.hasNext(); ) {
-                String name = (String)iterator.next();
-                Collection values = newAttributeValues.get(name);
-                log.debug(" - "+name+": "+values);
-            }
-
-            log.debug("New attribute values:");
-            for (Iterator iterator = newAttributeValues.getNames().iterator(); iterator.hasNext(); ) {
-                String name = (String)iterator.next();
-                Collection values = newAttributeValues.get(name);
-                log.debug(" - "+name+": "+values);
-            }
-
-            log.debug("Old source values:");
-            for (Iterator iterator = oldSourceValues.getNames().iterator(); iterator.hasNext(); ) {
-                String name = (String)iterator.next();
-                Collection values = oldSourceValues.get(name);
-                log.debug(" - "+name+": "+values);
-            }
-
-            log.debug("New source values:");
-            for (Iterator iterator = newSourceValues.getNames().iterator(); iterator.hasNext(); ) {
-                String name = (String)iterator.next();
-                Collection values = newSourceValues.get(name);
-                log.debug(" - "+name+": "+values);
-            }
-        }
-
-        ModRdnGraphVisitor visitor = new ModRdnGraphVisitor(engine, partition, entryMapping, oldSourceValues, newSourceValues);
-        visitor.run();
-
-        if (visitor.getReturnCode() != LDAPException.SUCCESS) return visitor.getReturnCode();
-/*
-        Interpreter interpreter = engine.getInterpreterFactory().newInstance();
-
-        AttributeValues sourceValues = visitor.getModifiedSourceValues();
-        AttributeValues attributeValues = engine.computeAttributeValues(entryMapping, sourceValues, interpreter);
-        Row newRdn2 = entryMapping.getRdn(attributeValues);
-        String dn = newRdn2+","+entry.getParentDn();
-
-        Entry newEntry = new Entry(dn, entryMapping, sourceValues, attributeValues);
-
-        log.debug("Storing "+newRdn2+" in entry data cache for "+entry.getParentDn());
-
-        engine.getEntryCache().put(newEntry);
-*/
-        return LDAPException.SUCCESS;
     }
 }

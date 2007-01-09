@@ -120,13 +120,12 @@ public class PenrosePartition implements org.apache.directory.server.core.partit
             PenroseSession session = penrose.newSession();
             if (session == null) throw new ServiceUnavailableException();
 
-            int rc = session.delete(dn);
+            session.delete(dn);
 
             session.close();
 
-            if (rc != LDAPException.SUCCESS) {
-                throw new NamingException("RC: "+rc);
-            }
+        } catch (LDAPException e) {
+            throw ExceptionTool.createNamingException(e);
 
         } catch (Exception e) {
             log.error(e.getMessage(), e);
@@ -144,13 +143,12 @@ public class PenrosePartition implements org.apache.directory.server.core.partit
             PenroseSession session = penrose.newSession();
             if (session == null) throw new ServiceUnavailableException();
 
-            int rc = session.add(dn, attributes);
+            session.add(dn, attributes);
 
             session.close();
 
-            if (rc != LDAPException.SUCCESS) {
-                throw new NamingException("RC: "+rc);
-            }
+        } catch (LDAPException e) {
+            throw ExceptionTool.createNamingException(e);
 
         } catch (Exception e) {
             log.error(e.getMessage(), e);
@@ -176,13 +174,12 @@ public class PenrosePartition implements org.apache.directory.server.core.partit
             PenroseSession session = penrose.newSession();
             if (session == null) throw new ServiceUnavailableException();
 
-            int rc = session.modify(dn, modifications);
+            session.modify(dn, modifications);
 
             session.close();
 
-            if (rc != LDAPException.SUCCESS) {
-                throw new NamingException("RC: "+rc);
-            }
+        } catch (LDAPException e) {
+            throw ExceptionTool.createNamingException(e);
 
         } catch (Exception e) {
             log.error(e.getMessage(), e);
@@ -200,13 +197,12 @@ public class PenrosePartition implements org.apache.directory.server.core.partit
             if (session == null) throw new ServiceUnavailableException();
 
             Collection modifications = new ArrayList(Arrays.asList(modificationItems));
-            int rc = session.modify(dn, modifications);
+            session.modify(dn, modifications);
 
             session.close();
 
-            if (rc != LDAPException.SUCCESS) {
-                throw new NamingException("RC: "+rc);
-            }
+        } catch (LDAPException e) {
+            throw ExceptionTool.createNamingException(e);
 
         } catch (Exception e) {
             log.error(e.getMessage(), e);
@@ -374,7 +370,7 @@ public class PenrosePartition implements org.apache.directory.server.core.partit
             session.close();
 
             if (rc != LDAPException.SUCCESS) {
-                throw ExceptionTool.throwNamingException(rc);
+                throw ExceptionTool.createNamingException(rc);
             }
 
             SearchResult result = (SearchResult)results.next();
@@ -431,16 +427,15 @@ public class PenrosePartition implements org.apache.directory.server.core.partit
             PenroseSession session = penrose.newSession();
             if (session == null) throw new ServiceUnavailableException();
 
-            int rc = session.modrdn(dn, newRn, deleteOldRn);
+            session.modrdn(dn, newRn, deleteOldRn);
 
             session.close();
 
-            if (rc != LDAPException.SUCCESS) {
-                throw ExceptionTool.throwNamingException(rc);
-            }
-
         } catch (NamingException e) {
             throw e;
+
+        } catch (LDAPException e) {
+            throw ExceptionTool.createNamingException(e);
 
         } catch (Exception e) {
             log.error(e.getMessage(), e);

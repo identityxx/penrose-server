@@ -9,6 +9,7 @@ import org.safehaus.penrose.filter.FilterTool;
 import org.safehaus.penrose.session.PenroseSearchResults;
 import org.safehaus.penrose.session.PenroseSearchControls;
 import org.safehaus.penrose.util.PasswordUtil;
+import org.safehaus.penrose.util.ExceptionUtil;
 import org.ietf.ldap.LDAPException;
 
 import javax.naming.directory.ModificationItem;
@@ -44,20 +45,35 @@ public class DemoAdapter extends Adapter {
         entries.put(pk, sourceValues);
     }
 
-    public int bind(SourceConfig sourceConfig, Row pk, String password) throws Exception {
+    public void bind(SourceConfig sourceConfig, Row pk, String password) throws LDAPException {
 
         String sourceName = sourceConfig.getName();
         System.out.println("Binding to "+sourceName+" as "+pk+" with password "+password+".");
 
         AttributeValues sourceValues = (AttributeValues)entries.get(pk);
-        if (sourceValues == null) return LDAPException.INVALID_CREDENTIALS;
+        if (sourceValues == null) {
+            int rc = LDAPException.INVALID_CREDENTIALS;
+            throw new LDAPException(LDAPException.resultCodeToString(rc), rc, null);
+        }
 
         Object userPassword = sourceValues.getOne("userPassword");
-        if (userPassword == null) return LDAPException.INVALID_CREDENTIALS;
+        if (userPassword == null) {
+            int rc = LDAPException.INVALID_CREDENTIALS;
+            throw new LDAPException(LDAPException.resultCodeToString(rc), rc, null);
+        }
 
-        if (!PasswordUtil.comparePassword(password, userPassword)) return LDAPException.INVALID_CREDENTIALS;
+        try {
+            if (!PasswordUtil.comparePassword(password, userPassword)) {
+                int rc = LDAPException.INVALID_CREDENTIALS;
+                throw new LDAPException(LDAPException.resultCodeToString(rc), rc, null);
+            }
 
-        return LDAPException.SUCCESS;
+        } catch (Exception e) {
+            int rc = LDAPException.INVALID_CREDENTIALS;
+            String message = e.getMessage();
+            log.debug("Error: "+message);
+            throw new LDAPException(LDAPException.resultCodeToString(rc), rc, message);
+        }
     }
 
     public void search(SourceConfig sourceConfig, Filter filter, PenroseSearchControls sc, PenroseSearchResults results) throws Exception {
@@ -105,7 +121,7 @@ public class DemoAdapter extends Adapter {
         }
     }
 
-    public int add(SourceConfig sourceConfig, Row pk, AttributeValues sourceValues) throws Exception {
+    public void add(SourceConfig sourceConfig, Row pk, AttributeValues sourceValues) throws LDAPException {
 
         String sourceName = sourceConfig.getName();
         System.out.println("Adding entry "+pk+" into "+sourceName+":");
@@ -116,72 +132,86 @@ public class DemoAdapter extends Adapter {
             System.out.println(" - "+name+": "+values);
         }
 
-        if (entries.containsKey(pk)) return LDAPException.ENTRY_ALREADY_EXISTS;
+        if (entries.containsKey(pk)) {
+            int rc = LDAPException.ENTRY_ALREADY_EXISTS;
+            throw new LDAPException(LDAPException.resultCodeToString(rc), rc, null);
+        }
 
         entries.put(pk, sourceValues);
-
-        return LDAPException.SUCCESS;
     }
 
-    public int modify(SourceConfig sourceConfig, Row pk, Collection modifications) throws Exception {
+    public void modify(SourceConfig sourceConfig, Row pk, Collection modifications) throws LDAPException {
 
         String sourceName = sourceConfig.getName();
         System.out.println("Modifying entry "+pk+" in "+sourceName+" with:");
 
-        AttributeValues sourceValues = (AttributeValues)entries.get(pk);
-        if (sourceValues == null) return LDAPException.NO_SUCH_OBJECT;
+        try {
+            AttributeValues sourceValues = (AttributeValues)entries.get(pk);
+            if (sourceValues == null) {
+                int rc = LDAPException.NO_SUCH_OBJECT;
+                throw new LDAPException(LDAPException.resultCodeToString(rc), rc, null);
+            }
 
-        for (Iterator i=modifications.iterator(); i.hasNext(); ) {
-            ModificationItem mi = (ModificationItem)i.next();
-            Attribute attribute = (Attribute)mi.getAttribute();
-            String name = attribute.getID();
+            for (Iterator i=modifications.iterator(); i.hasNext(); ) {
+                ModificationItem mi = (ModificationItem)i.next();
+                Attribute attribute = (Attribute)mi.getAttribute();
+                String name = attribute.getID();
 
-            switch (mi.getModificationOp()) {
-                case DirContext.ADD_ATTRIBUTE:
-                    for (NamingEnumeration j=attribute.getAll(); j.hasMore(); ) {
-                        Object value = j.next();
-                        System.out.println(" - add "+name+": "+value);
-                        sourceValues.add(name, value);
-                    }
-                    break;
-
-                case DirContext.REPLACE_ATTRIBUTE:
-                    sourceValues.remove(name);
-                    for (NamingEnumeration j=attribute.getAll(); j.hasMore(); ) {
-                        Object value = j.next();
-                        System.out.println(" - replace "+name+": "+value);
-                        sourceValues.add(name, value);
-                    }
-                    break;
-
-                case DirContext.REMOVE_ATTRIBUTE:
-                    if (attribute.size() == 0) {
-                        System.out.println(" - remove "+name);
-                        sourceValues.remove(name);
-
-                    } else {
+                switch (mi.getModificationOp()) {
+                    case DirContext.ADD_ATTRIBUTE:
                         for (NamingEnumeration j=attribute.getAll(); j.hasMore(); ) {
                             Object value = j.next();
-                            System.out.println(" - remove "+name+": "+value);
-                            sourceValues.remove(name, value);
+                            System.out.println(" - add "+name+": "+value);
+                            sourceValues.add(name, value);
                         }
-                    }
-                    break;
-            }
-        }
+                        break;
 
-        return LDAPException.SUCCESS;
+                    case DirContext.REPLACE_ATTRIBUTE:
+                        sourceValues.remove(name);
+                        for (NamingEnumeration j=attribute.getAll(); j.hasMore(); ) {
+                            Object value = j.next();
+                            System.out.println(" - replace "+name+": "+value);
+                            sourceValues.add(name, value);
+                        }
+                        break;
+
+                    case DirContext.REMOVE_ATTRIBUTE:
+                        if (attribute.size() == 0) {
+                            System.out.println(" - remove "+name);
+                            sourceValues.remove(name);
+
+                        } else {
+                            for (NamingEnumeration j=attribute.getAll(); j.hasMore(); ) {
+                                Object value = j.next();
+                                System.out.println(" - remove "+name+": "+value);
+                                sourceValues.remove(name, value);
+                            }
+                        }
+                        break;
+                }
+            }
+
+        } catch (LDAPException e) {
+            throw e;
+
+        } catch (Exception e) {
+            int rc = ExceptionUtil.getReturnCode(e);
+            String message = e.getMessage();
+            log.error(message, e);
+            throw new LDAPException(LDAPException.resultCodeToString(rc), rc, message);
+        }
     }
 
-    public int delete(SourceConfig sourceConfig, Row pk) throws Exception {
+    public void delete(SourceConfig sourceConfig, Row pk) throws LDAPException {
 
         String sourceName = sourceConfig.getName();
         System.out.println("Deleting entry "+pk+" from "+sourceName+".");
 
-        if (!entries.containsKey(pk)) return LDAPException.NO_SUCH_OBJECT;
+        if (!entries.containsKey(pk)) {
+            int rc = LDAPException.NO_SUCH_OBJECT;
+            throw new LDAPException(LDAPException.resultCodeToString(rc), rc, null);
+        }
 
         entries.remove(pk);
-
-        return LDAPException.SUCCESS;
     }
 }

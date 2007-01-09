@@ -28,6 +28,7 @@ import org.safehaus.penrose.pipeline.PipelineEvent;
 import org.safehaus.penrose.util.Formatter;
 import org.safehaus.penrose.util.EntryUtil;
 import org.safehaus.penrose.util.LDAPUtil;
+import org.safehaus.penrose.util.ExceptionUtil;
 import org.safehaus.penrose.schema.ObjectClass;
 import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.handler.Handler;
@@ -68,218 +69,328 @@ public class DefaultEngine extends Engine {
         log.debug("Default engine initialized.");
     }
 
-    public int bind(PenroseSession session, Partition partition, EntryMapping entryMapping, String dn, String password) throws Exception {
+    public void bind(
+            PenroseSession session,
+            Partition partition,
+            EntryMapping entryMapping,
+            String dn,
+            String password
+    ) throws LDAPException {
 
-        log.debug("Bind as user "+dn);
+        int rc = LDAPException.SUCCESS;
 
-        Row rdn = EntryUtil.getRdn(dn);
+        try {
+            log.debug("Bind as user "+dn);
 
-        AttributeValues attributeValues = new AttributeValues();
-        attributeValues.add(rdn);
+            Row rdn = EntryUtil.getRdn(dn);
 
-        Collection sources = entryMapping.getSourceMappings();
+            AttributeValues attributeValues = new AttributeValues();
+            attributeValues.add(rdn);
 
-        for (Iterator i=sources.iterator(); i.hasNext(); ) {
-            SourceMapping sourceMapping = (SourceMapping)i.next();
+            Collection sources = entryMapping.getSourceMappings();
 
-            SourceConfig sourceConfig = partition.getSourceConfig(sourceMapping.getSourceName());
+            for (Iterator i=sources.iterator(); i.hasNext(); ) {
+                SourceMapping sourceMapping = (SourceMapping)i.next();
 
-            Map entries = transformEngine.split(partition, entryMapping, sourceMapping, attributeValues);
+                SourceConfig sourceConfig = partition.getSourceConfig(sourceMapping.getSourceName());
 
-            for (Iterator j=entries.keySet().iterator(); j.hasNext(); ) {
-                Row pk = (Row)j.next();
-                //AttributeValues sourceValues = (AttributeValues)entries.get(pk);
+                Map entries = transformEngine.split(partition, entryMapping, sourceMapping, attributeValues);
 
-                log.debug("Bind to "+sourceMapping.getName()+" as "+pk+".");
+                for (Iterator j=entries.keySet().iterator(); j.hasNext(); ) {
+                    Row pk = (Row)j.next();
+                    //AttributeValues sourceValues = (AttributeValues)entries.get(pk);
 
-                Source source = getSource(partition, sourceConfig);
-                int rc = source.bind(entryMapping, pk, password);
-                if (rc == LDAPException.SUCCESS) return rc;
+                    log.debug("Bind to "+sourceMapping.getName()+" as "+pk+".");
+
+                    try {
+                        Source source = getSource(partition, sourceConfig);
+                        source.bind(entryMapping, pk, password);
+                        return;
+                    } catch (Exception e) {
+                        // continue
+                    }
+                }
+            }
+
+            rc = LDAPException.INVALID_CREDENTIALS;
+            throw new LDAPException(LDAPException.resultCodeToString(rc), rc, null);
+
+        } catch (LDAPException e) {
+            rc = e.getResultCode();
+            throw e;
+
+        } catch (Exception e) {
+            rc = ExceptionUtil.getReturnCode(e);
+            String message = e.getMessage();
+            log.error(message, e);
+            throw new LDAPException(LDAPException.resultCodeToString(rc), rc, message);
+
+        } finally {
+            if (log.isDebugEnabled()) {
+                log.debug(Formatter.displaySeparator(80));
+                log.debug(Formatter.displayLine("BIND RC:"+rc, 80));
+                log.debug(Formatter.displaySeparator(80));
             }
         }
-
-        return LDAPException.INVALID_CREDENTIALS;
     }
 
-    public int add(
-            PenroseSession session, Partition partition,
+    public void add(
+            PenroseSession session,
+            Partition partition,
             Entry parent,
             EntryMapping entryMapping,
             String dn,
-            Attributes attributes)
-            throws Exception {
+            Attributes attributes
+    ) throws LDAPException {
 
-        // normalize attribute names
-        AttributeValues attributeValues = new AttributeValues();
+        int rc = LDAPException.SUCCESS;
 
-        for (NamingEnumeration i=attributes.getAll(); i.hasMore(); ) {
-            Attribute attribute = (Attribute)i.next();
-            String name = attribute.getID();
+        try {
+            // normalize attribute names
+            AttributeValues attributeValues = new AttributeValues();
 
-            if ("objectClass".equalsIgnoreCase(name)) continue;
-/*
-            AttributeMapping attributeMapping = entryMapping.getAttributeMapping(name);
-            if (attributeMapping == null) {
-                log.debug("Undefined attribute "+name);
-                return LDAPException.OBJECT_CLASS_VIOLATION;
-            }
-*/
-            for (NamingEnumeration j=attribute.getAll(); j.hasMore(); ) {
-                Object value = j.next();
-                attributeValues.add(name, value);
-            }
-        }
+            for (NamingEnumeration i=attributes.getAll(); i.hasMore(); ) {
+                Attribute attribute = (Attribute)i.next();
+                String name = attribute.getID();
 
-        if (log.isDebugEnabled()) {
-            log.debug(Formatter.displaySeparator(80));
-            log.debug(Formatter.displayLine("ADD", 80));
-            log.debug(Formatter.displayLine("DN: "+entryMapping.getDn(), 80));
+                if ("objectClass".equalsIgnoreCase(name)) continue;
 
-            log.debug(Formatter.displayLine("Attribute values:", 80));
-            for (Iterator i = attributeValues.getNames().iterator(); i.hasNext(); ) {
-                String name = (String)i.next();
-                Collection values = attributeValues.get(name);
-                log.debug(Formatter.displayLine(" - "+name+": "+values, 80));
+                for (NamingEnumeration j=attribute.getAll(); j.hasMore(); ) {
+                    Object value = j.next();
+                    attributeValues.add(name, value);
+                }
             }
 
-            log.debug(Formatter.displaySeparator(80));
+            if (log.isDebugEnabled()) {
+                log.debug(Formatter.displaySeparator(80));
+                log.debug(Formatter.displayLine("ADD", 80));
+                log.debug(Formatter.displayLine("DN: "+entryMapping.getDn(), 80));
+
+                log.debug(Formatter.displayLine("Attribute values:", 80));
+                for (Iterator i = attributeValues.getNames().iterator(); i.hasNext(); ) {
+                    String name = (String)i.next();
+                    Collection values = attributeValues.get(name);
+                    log.debug(Formatter.displayLine(" - "+name+": "+values, 80));
+                }
+
+                log.debug(Formatter.displaySeparator(80));
+            }
+
+            addEngine.add(partition, parent, entryMapping, dn, attributeValues);
+
+        } catch (LDAPException e) {
+            rc = e.getResultCode();
+            throw e;
+
+        } catch (Exception e) {
+            rc = ExceptionUtil.getReturnCode(e);
+            String message = e.getMessage();
+            log.error(message, e);
+            throw new LDAPException(LDAPException.resultCodeToString(rc), rc, message);
+
+        } finally {
+            if (log.isDebugEnabled()) {
+                log.debug(Formatter.displaySeparator(80));
+                log.debug(Formatter.displayLine("ADD RC:"+rc, 80));
+                log.debug(Formatter.displaySeparator(80));
+            }
         }
-
-        int rc = addEngine.add(partition, parent, entryMapping, dn, attributeValues);
-
-        if (log.isDebugEnabled()) {
-            log.debug(Formatter.displaySeparator(80));
-            log.debug(Formatter.displayLine("ADD RC:"+rc, 80));
-            log.debug(Formatter.displaySeparator(80));
-        }
-
-        return rc;
     }
 
-    public int delete(PenroseSession session, Partition partition, Entry entry) throws Exception {
+    public void delete(PenroseSession session, Partition partition, Entry entry) throws LDAPException {
 
-        if (log.isDebugEnabled()) {
-            log.debug(Formatter.displaySeparator(80));
-            log.debug(Formatter.displayLine("DELETE", 80));
-            log.debug(Formatter.displayLine("DN: "+entry.getDn(), 80));
+        int rc = LDAPException.SUCCESS;
 
-            log.debug(Formatter.displaySeparator(80));
+        try {
+            if (log.isDebugEnabled()) {
+                log.debug(Formatter.displaySeparator(80));
+                log.debug(Formatter.displayLine("DELETE", 80));
+                log.debug(Formatter.displayLine("DN: "+entry.getDn(), 80));
+
+                log.debug(Formatter.displaySeparator(80));
+            }
+
+            deleteEngine.delete(partition, entry);
+
+        } catch (LDAPException e) {
+            rc = e.getResultCode();
+            throw e;
+
+        } catch (Exception e) {
+            rc = ExceptionUtil.getReturnCode(e);
+            String message = e.getMessage();
+            log.error(message, e);
+            throw new LDAPException(LDAPException.resultCodeToString(rc), rc, message);
+
+        } finally {
+            if (log.isDebugEnabled()) {
+                log.debug(Formatter.displaySeparator(80));
+                log.debug(Formatter.displayLine("DELETE RC:"+rc, 80));
+                log.debug(Formatter.displaySeparator(80));
+            }
         }
-
-        int rc = deleteEngine.delete(partition, entry);
-
-        return rc;
     }
 
-    public int modrdn(PenroseSession session, Partition partition, Entry entry, String newRdn, boolean deleteOldRdn) throws Exception {
+    public void modrdn(
+            PenroseSession session,
+            Partition partition,
+            Entry entry,
+            String newRdn,
+            boolean deleteOldRdn
+    ) throws LDAPException {
 
-        if (log.isDebugEnabled()) {
-            log.debug(Formatter.displaySeparator(80));
-            log.debug(Formatter.displayLine("MODRDN", 80));
-            log.debug(Formatter.displayLine("DN: "+entry.getDn(), 80));
-            log.debug(Formatter.displayLine("New RDN: "+newRdn, 80));
-            log.debug(Formatter.displayLine("Delete old RDN: "+deleteOldRdn, 80));
-            log.debug(Formatter.displaySeparator(80));
+        int rc = LDAPException.SUCCESS;
+
+        try {
+            if (log.isDebugEnabled()) {
+                log.debug(Formatter.displaySeparator(80));
+                log.debug(Formatter.displayLine("MODRDN", 80));
+                log.debug(Formatter.displayLine("DN: "+entry.getDn(), 80));
+                log.debug(Formatter.displayLine("New RDN: "+newRdn, 80));
+                log.debug(Formatter.displayLine("Delete old RDN: "+deleteOldRdn, 80));
+                log.debug(Formatter.displaySeparator(80));
+            }
+
+            modrdnEngine.modrdn(partition, entry, newRdn, deleteOldRdn);
+
+        } catch (LDAPException e) {
+            rc = e.getResultCode();
+            throw e;
+
+        } catch (Exception e) {
+            rc = ExceptionUtil.getReturnCode(e);
+            String message = e.getMessage();
+            log.error(message, e);
+            throw new LDAPException(LDAPException.resultCodeToString(rc), rc, message);
+
+        } finally {
+            if (log.isDebugEnabled()) {
+                log.debug(Formatter.displaySeparator(80));
+                log.debug(Formatter.displayLine("MODRDN RC:"+rc, 80));
+                log.debug(Formatter.displaySeparator(80));
+            }
         }
-
-        int rc = modrdnEngine.modrdn(partition, entry, newRdn, deleteOldRdn);
-
-        return rc;
     }
 
-    public int modify(PenroseSession session, Partition partition, Entry entry, Collection modifications) throws Exception {
+    public void modify(
+            PenroseSession session,
+            Partition partition,
+            Entry entry,
+            Collection modifications
+    ) throws LDAPException {
 
-        EntryMapping entryMapping = entry.getEntryMapping();
-        AttributeValues oldValues = entry.getAttributeValues();
+        int rc = LDAPException.SUCCESS;
 
-        log.debug("Old entry:");
-        log.debug("\n"+EntryUtil.toString(entry));
+        try {
+            EntryMapping entryMapping = entry.getEntryMapping();
+            AttributeValues oldValues = entry.getAttributeValues();
 
-        log.debug("--- perform modification:");
-        AttributeValues newValues = new AttributeValues(oldValues);
+            log.debug("Old entry:");
+            log.debug("\n"+EntryUtil.toString(entry));
 
-        Collection objectClasses = getSchemaManager().getObjectClasses(entryMapping);
-        Collection objectClassNames = new ArrayList();
-        for (Iterator i=objectClasses.iterator(); i.hasNext(); ) {
-            ObjectClass oc = (ObjectClass)i.next();
-            objectClassNames.add(oc.getName());
+            log.debug("--- perform modification:");
+            AttributeValues newValues = new AttributeValues(oldValues);
+
+            Collection objectClasses = getSchemaManager().getObjectClasses(entryMapping);
+            Collection objectClassNames = new ArrayList();
+            for (Iterator i=objectClasses.iterator(); i.hasNext(); ) {
+                ObjectClass oc = (ObjectClass)i.next();
+                objectClassNames.add(oc.getName());
+            }
+            log.debug("Object classes: "+objectClassNames);
+
+            for (Iterator i = modifications.iterator(); i.hasNext();) {
+                ModificationItem modification = (ModificationItem)i.next();
+
+                Attribute attribute = modification.getAttribute();
+                String attributeName = attribute.getID();
+
+                if (attributeName.equals("objectClass")) {
+                    rc = LDAPException.OBJECT_CLASS_MODS_PROHIBITED;
+                    throw new LDAPException(LDAPException.resultCodeToString(rc), rc, null);
+                }
+
+                Set newAttrValues = new HashSet();
+                for (NamingEnumeration j=attribute.getAll(); j.hasMore(); ) {
+                    Object value = j.next();
+                    newAttrValues.add(value);
+                }
+
+                Collection value = newValues.get(attributeName);
+                log.debug("old value " + attributeName + ": "
+                        + newValues.get(attributeName));
+
+                Set newValue = new HashSet();
+                if (value != null) newValue.addAll(value);
+
+                switch (modification.getModificationOp()) {
+                    case DirContext.ADD_ATTRIBUTE:
+                        newValue.addAll(newAttrValues);
+                        break;
+                    case DirContext.REMOVE_ATTRIBUTE:
+                        if (attribute.get() == null) {
+                            newValue.clear();
+                        } else {
+                            newValue.removeAll(newAttrValues);
+                        }
+                        break;
+                    case DirContext.REPLACE_ATTRIBUTE:
+                        newValue = newAttrValues;
+                        break;
+                }
+
+                newValues.set(attributeName, newValue);
+
+                log.debug("new value " + attributeName + ": "
+                        + newValues.get(attributeName));
+            }
+
+            Entry newEntry = new Entry(entry.getDn(), entryMapping, newValues, entry.getSourceValues());
+
+            log.debug("New entry:");
+            log.debug("\n"+EntryUtil.toString(newEntry));
+
+            if (log.isDebugEnabled()) {
+                log.debug(Formatter.displaySeparator(80));
+                log.debug(Formatter.displayLine("MODIFY", 80));
+                log.debug(Formatter.displayLine("DN: "+entry.getDn(), 80));
+
+                log.debug(Formatter.displayLine("Old attribute values:", 80));
+                for (Iterator iterator = oldValues.getNames().iterator(); iterator.hasNext(); ) {
+                    String name = (String)iterator.next();
+                    Collection values = oldValues.get(name);
+                    log.debug(Formatter.displayLine(" - "+name+": "+values, 80));
+                }
+
+                log.debug(Formatter.displayLine("New attribute values:", 80));
+                for (Iterator iterator = newValues.getNames().iterator(); iterator.hasNext(); ) {
+                    String name = (String)iterator.next();
+                    Collection values = newValues.get(name);
+                    log.debug(Formatter.displayLine(" - "+name+": "+values, 80));
+                }
+
+                log.debug(Formatter.displaySeparator(80));
+            }
+
+            modifyEngine.modify(partition, entry, newValues);
+
+        } catch (LDAPException e) {
+            rc = e.getResultCode();
+            throw e;
+
+        } catch (Exception e) {
+            rc = ExceptionUtil.getReturnCode(e);
+            String message = e.getMessage();
+            log.error(message, e);
+            throw new LDAPException(LDAPException.resultCodeToString(rc), rc, message);
+
+        } finally {
+            if (log.isDebugEnabled()) {
+                log.debug(Formatter.displaySeparator(80));
+                log.debug(Formatter.displayLine("MODIFY RC:"+rc, 80));
+                log.debug(Formatter.displaySeparator(80));
+            }
         }
-        log.debug("Object classes: "+objectClassNames);
-
-        for (Iterator i = modifications.iterator(); i.hasNext();) {
-            ModificationItem modification = (ModificationItem)i.next();
-
-            Attribute attribute = modification.getAttribute();
-            String attributeName = attribute.getID();
-
-            if (attributeName.equals("objectClass"))
-                return LDAPException.OBJECT_CLASS_MODS_PROHIBITED;
-
-            Set newAttrValues = new HashSet();
-            for (NamingEnumeration j=attribute.getAll(); j.hasMore(); ) {
-                Object value = j.next();
-                newAttrValues.add(value);
-            }
-
-            Collection value = newValues.get(attributeName);
-            log.debug("old value " + attributeName + ": "
-                    + newValues.get(attributeName));
-
-            Set newValue = new HashSet();
-            if (value != null) newValue.addAll(value);
-
-            switch (modification.getModificationOp()) {
-                case DirContext.ADD_ATTRIBUTE:
-                    newValue.addAll(newAttrValues);
-                    break;
-                case DirContext.REMOVE_ATTRIBUTE:
-                    if (attribute.get() == null) {
-                        newValue.clear();
-                    } else {
-                        newValue.removeAll(newAttrValues);
-                    }
-                    break;
-                case DirContext.REPLACE_ATTRIBUTE:
-                    newValue = newAttrValues;
-                    break;
-            }
-
-            newValues.set(attributeName, newValue);
-
-            log.debug("new value " + attributeName + ": "
-                    + newValues.get(attributeName));
-        }
-
-        Entry newEntry = new Entry(entry.getDn(), entryMapping, newValues, entry.getSourceValues());
-
-        log.debug("New entry:");
-        log.debug("\n"+EntryUtil.toString(newEntry));
-
-        if (log.isDebugEnabled()) {
-            log.debug(Formatter.displaySeparator(80));
-            log.debug(Formatter.displayLine("MODIFY", 80));
-            log.debug(Formatter.displayLine("DN: "+entry.getDn(), 80));
-
-            log.debug(Formatter.displayLine("Old attribute values:", 80));
-            for (Iterator iterator = oldValues.getNames().iterator(); iterator.hasNext(); ) {
-                String name = (String)iterator.next();
-                Collection values = oldValues.get(name);
-                log.debug(Formatter.displayLine(" - "+name+": "+values, 80));
-            }
-
-            log.debug(Formatter.displayLine("New attribute values:", 80));
-            for (Iterator iterator = newValues.getNames().iterator(); iterator.hasNext(); ) {
-                String name = (String)iterator.next();
-                Collection values = newValues.get(name);
-                log.debug(Formatter.displayLine(" - "+name+": "+values, 80));
-            }
-
-            log.debug(Formatter.displaySeparator(80));
-        }
-
-        int rc = modifyEngine.modify(partition, entry, newValues);
-
-        return rc;
     }
 
     public SearchEngine getSearchEngine() {

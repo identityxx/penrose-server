@@ -56,10 +56,11 @@ public abstract class Adapter {
 	/**
 	 * Bind.
 	 * 
-	 * @throws Exception
+	 * @throws LDAPException
 	 */
-    public int bind(SourceConfig sourceConfig, Row pk, String password) throws Exception {
-        return LDAPException.INVALID_CREDENTIALS;
+    public void bind(SourceConfig sourceConfig, Row pk, String password) throws LDAPException {
+        int rc = LDAPException.INVALID_CREDENTIALS;
+        throw new LDAPException(LDAPException.resultCodeToString(rc), rc, null);
     }
     
     /**
@@ -85,28 +86,31 @@ public abstract class Adapter {
     /**
      * Add.
      * 
-     * @throws Exception
+     * @throws LDAPException
      */
-    public int add(SourceConfig sourceConfig, Row pk, AttributeValues sourceValues) throws Exception {
-        return LDAPException.OPERATIONS_ERROR;
+    public void add(SourceConfig sourceConfig, Row pk, AttributeValues sourceValues) throws LDAPException {
+        int rc = LDAPException.OPERATIONS_ERROR;
+        throw new LDAPException(LDAPException.resultCodeToString(rc), rc, null);
     }
     
     /**
      * Modify.
      * 
-     * @throws Exception
+     * @throws LDAPException
      */
-    public int modify(SourceConfig sourceConfig, Row pk, Collection modifications) throws Exception {
-        return LDAPException.OPERATIONS_ERROR;
+    public void modify(SourceConfig sourceConfig, Row pk, Collection modifications) throws LDAPException {
+        int rc = LDAPException.OPERATIONS_ERROR;
+        throw new LDAPException(LDAPException.resultCodeToString(rc), rc, null);
     }
 
     /**
      * Delete.
      * 
-     * @throws Exception
+     * @throws LDAPException
      */
-    public int delete(SourceConfig sourceConfig, Row pk) throws Exception {
-        return LDAPException.OPERATIONS_ERROR;
+    public void delete(SourceConfig sourceConfig, Row pk) throws LDAPException {
+        int rc = LDAPException.OPERATIONS_ERROR;
+        throw new LDAPException(LDAPException.resultCodeToString(rc), rc, null);
     }
 
     public int getLastChangeNumber(SourceConfig sourceConfig) throws Exception {

@@ -131,10 +131,13 @@ public class Connection implements ConnectionMBean {
         return connectionConfig.getName();
     }
 
-    public int bind(SourceConfig sourceConfig, Row pk, String password) throws Exception {
-        if (adapter == null) return LDAPException.OPERATIONS_ERROR;
+    public void bind(SourceConfig sourceConfig, Row pk, String password) throws LDAPException {
+        if (adapter == null) {
+            int rc = LDAPException.INVALID_CREDENTIALS;
+            throw new LDAPException(LDAPException.resultCodeToString(rc), rc, null);
+        }
         counter.incBindCounter();
-        return adapter.bind(sourceConfig, pk, password);
+        adapter.bind(sourceConfig, pk, password);
     }
 
     public void search(SourceConfig sourceConfig, Filter filter, PenroseSearchControls sc, PenroseSearchResults results) throws Exception {
@@ -156,10 +159,13 @@ public class Connection implements ConnectionMBean {
         adapter.load(sourceConfig, primaryKeys, filter, sc, results);
     }
 
-    public int add(SourceConfig sourceConfig, Row pk, AttributeValues sourceValues) throws Exception {
-        if (adapter == null) return LDAPException.OPERATIONS_ERROR;
+    public void add(SourceConfig sourceConfig, Row pk, AttributeValues sourceValues) throws LDAPException {
+        if (adapter == null) {
+            int rc = LDAPException.OPERATIONS_ERROR;
+            throw new LDAPException(LDAPException.resultCodeToString(rc), rc, null);
+        }
         counter.incAddCounter();
-        return adapter.add(sourceConfig, pk, sourceValues);
+        adapter.add(sourceConfig, pk, sourceValues);
     }
 
     public AttributeValues get(SourceConfig sourceConfig, Row pk) throws Exception {
@@ -179,16 +185,22 @@ public class Connection implements ConnectionMBean {
         return (AttributeValues)sr.next();
     }
 
-    public int modify(SourceConfig sourceConfig, Row pk, Collection modifications) throws Exception {
-        if (adapter == null) return LDAPException.OPERATIONS_ERROR;
+    public void modify(SourceConfig sourceConfig, Row pk, Collection modifications) throws LDAPException {
+        if (adapter == null) {
+            int rc = LDAPException.OPERATIONS_ERROR;
+            throw new LDAPException(LDAPException.resultCodeToString(rc), rc, null);
+        }
         counter.incModifyCounter();
-        return adapter.modify(sourceConfig, pk, modifications);
+        adapter.modify(sourceConfig, pk, modifications);
     }
 
-    public int delete(SourceConfig sourceConfig, Row pk) throws Exception {
-        if (adapter == null) return LDAPException.OPERATIONS_ERROR;
+    public void delete(SourceConfig sourceConfig, Row pk) throws LDAPException {
+        if (adapter == null) {
+            int rc = LDAPException.OPERATIONS_ERROR;
+            throw new LDAPException(LDAPException.resultCodeToString(rc), rc, null);
+        }
         counter.incDeleteCounter();
-        return adapter.delete(sourceConfig, pk);
+        adapter.delete(sourceConfig, pk);
     }
 
     public int getLastChangeNumber(SourceConfig sourceConfig) throws Exception {

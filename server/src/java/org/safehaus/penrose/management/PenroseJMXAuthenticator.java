@@ -66,7 +66,11 @@ public class PenroseJMXAuthenticator implements JMXAuthenticator {
                 session = penrose.newSession();
                 if (session == null) throw new SecurityException("Unable to create session.");
 
-                rc = session.bind(bindDn, bindPassword);
+                session.bind(bindDn, bindPassword);
+
+            } catch (LDAPException e) {
+                throw new SecurityException("Authentication failed");
+
             } finally {
                 session.close();
             }

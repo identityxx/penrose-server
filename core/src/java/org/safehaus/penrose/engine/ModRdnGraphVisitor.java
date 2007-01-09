@@ -22,6 +22,7 @@ import org.safehaus.penrose.graph.GraphVisitor;
 import org.safehaus.penrose.graph.GraphIterator;
 import org.safehaus.penrose.graph.Graph;
 import org.safehaus.penrose.util.Formatter;
+import org.safehaus.penrose.util.ExceptionUtil;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.source.SourceConfig;
 import org.safehaus.penrose.source.Source;
@@ -72,8 +73,19 @@ public class ModRdnGraphVisitor extends GraphVisitor {
         primarySourceMapping = engine.getPartitionManager().getPrimarySource(partition, entryMapping);
     }
 
-    public void run() throws Exception {
-        graph.traverse(this, primarySourceMapping);
+    public void run() throws LDAPException {
+        try {
+            graph.traverse(this, primarySourceMapping);
+        } catch (LDAPException e) {
+            throw e;
+
+        } catch (Exception e) {
+            int rc = ExceptionUtil.getReturnCode(e);
+            String message = e.getMessage();
+            log.error(message, e);
+            throw new LDAPException(LDAPException.resultCodeToString(rc), rc, message);
+        }
+
     }
 
     public void visitNode(GraphIterator graphIterator, Object node) throws Exception {
@@ -125,8 +137,12 @@ public class ModRdnGraphVisitor extends GraphVisitor {
         SourceConfig sourceConfig = partition.getSourceConfig(sourceMapping.getSourceName());
         Source source = engine.getSource(partition, sourceConfig);
 
-        returnCode = source.modify(oldValues, newValues);
-        if (returnCode != LDAPException.SUCCESS) return;
+        try {
+            source.modify(oldValues, newValues);
+        } catch (LDAPException e) {
+            returnCode = e.getResultCode();
+            return;
+        }
 
         modifiedSourceValues.remove(sourceMapping.getName());
         modifiedSourceValues.set(sourceMapping.getName(), newValues);

@@ -40,6 +40,7 @@ import org.safehaus.penrose.util.EntryUtil;
 import org.safehaus.penrose.Penrose;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
+import org.ietf.ldap.LDAPException;
 
 import javax.naming.directory.Attributes;
 import java.util.*;
@@ -422,59 +423,59 @@ public abstract class Engine {
     // Bind
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    public abstract int bind(
+    public abstract void bind(
             PenroseSession session,
             Partition partition,
             EntryMapping entryMapping,
             String dn,
             String password
-    ) throws Exception;
+    ) throws LDAPException;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Add
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    public abstract int add(
+    public abstract void add(
             PenroseSession session,
             Partition partition,
             Entry parent,
             EntryMapping entryMapping,
             String dn,
             Attributes attributes
-    ) throws Exception;
+    ) throws LDAPException;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Delete
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    public abstract int delete(
+    public abstract void delete(
             PenroseSession session,
             Partition partition,
             Entry entry
-    ) throws Exception;
+    ) throws LDAPException;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Modify
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    public abstract int modify(
+    public abstract void modify(
             PenroseSession session,
             Partition partition,
             Entry entry,
             Collection modifications
-    ) throws Exception;
+    ) throws LDAPException;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // ModRDN
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    public abstract int modrdn(
+    public abstract void modrdn(
             PenroseSession session,
             Partition partition,
             Entry entry,
             String newRdn,
             boolean deleteOldRdn
-    ) throws Exception;
+    ) throws LDAPException;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Search

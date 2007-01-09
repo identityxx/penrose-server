@@ -30,6 +30,7 @@ import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.pipeline.PipelineEvent;
 import org.safehaus.penrose.pipeline.PipelineAdapter;
 import org.safehaus.penrose.connection.Connection;
+import org.safehaus.penrose.util.ExceptionUtil;
 import org.ietf.ldap.LDAPException;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
@@ -138,191 +139,210 @@ public class Source implements SourceMBean {
 		return lock;
 	}
 
-    public int bind(
+    public void bind(
             EntryMapping entry,
             Row pk,
             String password
-    ) throws Exception {
+    ) throws LDAPException {
 
         log.debug("Binding as entry in "+sourceConfig.getName());
 
         counter.incBindCounter();
-        int rc = connection.bind(sourceConfig, pk, password);
-
-        return rc;
+        connection.bind(sourceConfig, pk, password);
     }
 
-    public int add(
+    public void add(
             AttributeValues sourceValues
-    ) throws Exception {
+    ) throws LDAPException {
 
         log.debug("----------------------------------------------------------------");
         log.debug("Adding entry into "+sourceConfig.getName());
         log.debug("Values: "+sourceValues);
 
-        counter.incAddCounter();
-        Collection pks = TransformEngine.getPrimaryKeys(sourceConfig, sourceValues);
+        try {
+            counter.incAddCounter();
+            Collection pks = TransformEngine.getPrimaryKeys(sourceConfig, sourceValues);
 
-        // Add rows
-        for (Iterator i = pks.iterator(); i.hasNext();) {
-            Row pk = (Row) i.next();
-            AttributeValues newEntry = (AttributeValues)sourceValues.clone();
-            newEntry.set("primaryKey", pk);
-            log.debug("Adding entry: "+pk);
-            log.debug(" - "+newEntry);
+            // Add rows
+            for (Iterator i = pks.iterator(); i.hasNext();) {
+                Row pk = (Row) i.next();
+                AttributeValues newEntry = (AttributeValues)sourceValues.clone();
+                newEntry.set("primaryKey", pk);
+                log.debug("Adding entry: "+pk);
+                log.debug(" - "+newEntry);
 
-            // Add row to source table in the source database/directory
-            int rc = connection.add(sourceConfig, pk, newEntry);
-            if (rc != LDAPException.SUCCESS) return rc;
+                // Add row to source table in the source database/directory
+                connection.add(sourceConfig, pk, newEntry);
 
-            AttributeValues sv = connection.get(sourceConfig, pk);
+                AttributeValues sv = connection.get(sourceConfig, pk);
 
-            sourceCache.put(pk, sv);
-        }
+                sourceCache.put(pk, sv);
+            }
 /*
-        sourceValues.clear();
-        Collection list = retrieve(sourceConfig, pks);
-        log.debug("Added rows:");
-        for (Iterator i=list.iterator(); i.hasNext(); ) {
-            AttributeValues sv = (AttributeValues)i.next();
-            sourceValues.add(sv);
-            log.debug(" - "+sv);
-        }
+            sourceValues.clear();
+            Collection list = retrieve(sourceConfig, pks);
+            log.debug("Added rows:");
+            for (Iterator i=list.iterator(); i.hasNext(); ) {
+                AttributeValues sv = (AttributeValues)i.next();
+                sourceValues.add(sv);
+                log.debug(" - "+sv);
+            }
 */
-        //getQueryCache(connectionConfig, sourceConfig).invalidate();
+            //getQueryCache(connectionConfig, sourceConfig).invalidate();
 
-        return LDAPException.SUCCESS;
+        } catch (LDAPException e) {
+            throw e;
+
+        } catch (Exception e) {
+            int rc = ExceptionUtil.getReturnCode(e);
+            String message = e.getMessage();
+            log.error(message, e);
+            throw new LDAPException(LDAPException.resultCodeToString(rc), rc, message);
+        }
     }
 
-    public int delete(
+    public void delete(
             AttributeValues sourceValues
-    ) throws Exception {
+    ) throws LDAPException {
 
         log.debug("Deleting entry in "+sourceConfig.getName());
 
-        counter.incDeleteCounter();
-        Collection pks = TransformEngine.getPrimaryKeys(sourceConfig, sourceValues);
+        try {
+            counter.incDeleteCounter();
+            Collection pks = TransformEngine.getPrimaryKeys(sourceConfig, sourceValues);
 
-        // Remove rows
-        for (Iterator i = pks.iterator(); i.hasNext();) {
-            Row pk = (Row) i.next();
-            AttributeValues oldEntry = (AttributeValues)sourceValues.clone();
-            oldEntry.set(pk);
-            log.debug("DELETE (" + pk+"): "+oldEntry);
+            // Remove rows
+            for (Iterator i = pks.iterator(); i.hasNext();) {
+                Row pk = (Row) i.next();
+                AttributeValues oldEntry = (AttributeValues)sourceValues.clone();
+                oldEntry.set(pk);
+                log.debug("DELETE (" + pk+"): "+oldEntry);
 
-            // Delete row from source table in the source database/directory
-            int rc = connection.delete(sourceConfig, pk);
-            if (rc != LDAPException.SUCCESS)
-                return rc;
+                // Delete row from source table in the source database/directory
+                connection.delete(sourceConfig, pk);
 
-            // Delete row from source table in the cache
-            sourceCache.remove(pk);
+                // Delete row from source table in the cache
+                sourceCache.remove(pk);
+            }
+
+            //getQueryCache(connectionConfig, sourceConfig).invalidate();
+
+        } catch (LDAPException e) {
+            throw e;
+
+        } catch (Exception e) {
+            int rc = ExceptionUtil.getReturnCode(e);
+            String message = e.getMessage();
+            log.error(message, e);
+            throw new LDAPException(LDAPException.resultCodeToString(rc), rc, message);
         }
 
-        //getQueryCache(connectionConfig, sourceConfig).invalidate();
-
-        return LDAPException.SUCCESS;
     }
 
-    public int modify(
+    public void modify(
             AttributeValues oldSourceValues,
             AttributeValues newSourceValues
-    ) throws Exception {
+    ) throws LDAPException {
 
         log.debug("Modifying entry in " + sourceConfig.getName());
 
-        counter.incModifyCounter();
-        Collection oldPKs = TransformEngine.getPrimaryKeys(sourceConfig, oldSourceValues);
-        Collection newPKs = TransformEngine.getPrimaryKeys(sourceConfig, newSourceValues);
+        try {
+            counter.incModifyCounter();
+            Collection oldPKs = TransformEngine.getPrimaryKeys(sourceConfig, oldSourceValues);
+            Collection newPKs = TransformEngine.getPrimaryKeys(sourceConfig, newSourceValues);
 
-        log.debug("Old PKs: " + oldPKs);
-        log.debug("New PKs: " + newPKs);
+            log.debug("Old PKs: " + oldPKs);
+            log.debug("New PKs: " + newPKs);
 
-        Set removeRows = new HashSet(oldPKs);
-        removeRows.removeAll(newPKs);
-        log.debug("PKs to remove: " + removeRows);
+            Set removeRows = new HashSet(oldPKs);
+            removeRows.removeAll(newPKs);
+            log.debug("PKs to remove: " + removeRows);
 
-        Set addRows = new HashSet(newPKs);
-        addRows.removeAll(oldPKs);
-        log.debug("PKs to add: " + addRows);
+            Set addRows = new HashSet(newPKs);
+            addRows.removeAll(oldPKs);
+            log.debug("PKs to add: " + addRows);
 
-        Set replaceRows = new HashSet(oldPKs);
-        replaceRows.retainAll(newPKs);
-        log.debug("PKs to replace: " + replaceRows);
+            Set replaceRows = new HashSet(oldPKs);
+            replaceRows.retainAll(newPKs);
+            log.debug("PKs to replace: " + replaceRows);
 
-        Collection pks = new ArrayList();
+            Collection pks = new ArrayList();
 
-        // Remove rows
-        for (Iterator i = removeRows.iterator(); i.hasNext();) {
-            Row pk = (Row) i.next();
-            AttributeValues oldEntry = (AttributeValues)oldSourceValues.clone();
-            oldEntry.set("primaryKey", pk);
-            //log.debug("DELETE ROW: " + oldEntry);
+            // Remove rows
+            for (Iterator i = removeRows.iterator(); i.hasNext();) {
+                Row pk = (Row) i.next();
+                AttributeValues oldEntry = (AttributeValues)oldSourceValues.clone();
+                oldEntry.set("primaryKey", pk);
+                //log.debug("DELETE ROW: " + oldEntry);
 
-            // Delete row from source table in the source database/directory
-            int rc = connection.delete(sourceConfig, pk);
-            if (rc != LDAPException.SUCCESS)
-                return rc;
+                // Delete row from source table in the source database/directory
+                connection.delete(sourceConfig, pk);
 
-            // Delete row from source table in the cache
-            sourceCache.remove(pk);
+                // Delete row from source table in the cache
+                sourceCache.remove(pk);
+            }
+
+            // Add rows
+            for (Iterator i = addRows.iterator(); i.hasNext();) {
+                Row pk = (Row) i.next();
+                AttributeValues newEntry = (AttributeValues)newSourceValues.clone();
+                newEntry.set("primaryKey", pk);
+                //log.debug("ADDING ROW: " + newEntry);
+
+                // Add row to source table in the source database/directory
+                connection.add(sourceConfig, pk, newEntry);
+
+                AttributeValues sv = connection.get(sourceConfig, pk);
+
+                sourceCache.put(pk, sv);
+
+                pks.add(pk);
+            }
+
+            // Replace rows
+            for (Iterator i = replaceRows.iterator(); i.hasNext();) {
+                Row pk = (Row) i.next();
+                AttributeValues oldEntry = (AttributeValues)oldSourceValues.clone();
+                oldEntry.set("primaryKey", pk);
+                AttributeValues newEntry = (AttributeValues)newSourceValues.clone();
+                newEntry.set("primaryKey", pk);
+                //log.debug("REPLACE ROW: " + oldEntry+" with "+newEntry);
+
+                // Modify row from source table in the source database/directory
+                Collection modifications = createModifications(oldEntry, newEntry);
+                connection.modify(sourceConfig, pk, modifications);
+
+                AttributeValues sv = connection.get(sourceConfig, pk);
+
+                sourceCache.remove(pk);
+                sourceCache.put(pk, sv);
+
+                pks.add(pk);
+            }
+
+            newSourceValues.clear();
+
+            PenroseSearchControls sc = new PenroseSearchControls();
+            PenroseSearchResults list = new PenroseSearchResults();
+            retrieve(pks, sc, list);
+            list.close();
+
+            for (Iterator i=list.iterator(); i.hasNext(); ) {
+                AttributeValues sv = (AttributeValues)i.next();
+                newSourceValues.add(sv);
+            }
+
+            //getQueryCache(connectionConfig, sourceConfig).invalidate();
+
+        } catch (LDAPException e) {
+            throw e;
+
+        } catch (Exception e) {
+            int rc = ExceptionUtil.getReturnCode(e);
+            String message = e.getMessage();
+            log.error(message, e);
+            throw new LDAPException(LDAPException.resultCodeToString(rc), rc, message);
         }
-
-        // Add rows
-        for (Iterator i = addRows.iterator(); i.hasNext();) {
-            Row pk = (Row) i.next();
-            AttributeValues newEntry = (AttributeValues)newSourceValues.clone();
-            newEntry.set("primaryKey", pk);
-            //log.debug("ADDING ROW: " + newEntry);
-
-            // Add row to source table in the source database/directory
-            int rc = connection.add(sourceConfig, pk, newEntry);
-            if (rc != LDAPException.SUCCESS) return rc;
-
-            AttributeValues sv = connection.get(sourceConfig, pk);
-
-            sourceCache.put(pk, sv);
-
-            pks.add(pk);
-        }
-
-        // Replace rows
-        for (Iterator i = replaceRows.iterator(); i.hasNext();) {
-            Row pk = (Row) i.next();
-            AttributeValues oldEntry = (AttributeValues)oldSourceValues.clone();
-            oldEntry.set("primaryKey", pk);
-            AttributeValues newEntry = (AttributeValues)newSourceValues.clone();
-            newEntry.set("primaryKey", pk);
-            //log.debug("REPLACE ROW: " + oldEntry+" with "+newEntry);
-
-            // Modify row from source table in the source database/directory
-            Collection modifications = createModifications(oldEntry, newEntry);
-            int rc = connection.modify(sourceConfig, pk, modifications);
-            if (rc != LDAPException.SUCCESS) return rc;
-
-            AttributeValues sv = connection.get(sourceConfig, pk);
-
-            sourceCache.remove(pk);
-            sourceCache.put(pk, sv);
-
-            pks.add(pk);
-        }
-
-        newSourceValues.clear();
-
-        PenroseSearchControls sc = new PenroseSearchControls();
-        PenroseSearchResults list = new PenroseSearchResults();
-        retrieve(pks, sc, list);
-        list.close();
-
-        for (Iterator i=list.iterator(); i.hasNext(); ) {
-            AttributeValues sv = (AttributeValues)i.next();
-            newSourceValues.add(sv);
-        }
-
-        //getQueryCache(connectionConfig, sourceConfig).invalidate();
-
-        return LDAPException.SUCCESS;
     }
 
     public int modrdn(
@@ -334,11 +354,8 @@ public class Source implements SourceMBean {
         log.debug("Renaming entry in " + sourceConfig.getName());
 
         counter.incModRdnCounter();
-        int rc = connection.add(sourceConfig, newPk, sourceValues);
-        if (rc != LDAPException.SUCCESS) return rc;
-
-        rc = connection.delete(sourceConfig, oldPk);
-        if (rc != LDAPException.SUCCESS) return rc;
+        connection.add(sourceConfig, newPk, sourceValues);
+        connection.delete(sourceConfig, oldPk);
 
         sourceCache.put(newPk, sourceValues);
         sourceCache.remove(oldPk);

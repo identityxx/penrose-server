@@ -55,33 +55,40 @@ public class LDAPAdapter extends Adapter {
         return new LDAPClient(client, getParameters());
     }
 
-    public int bind(SourceConfig sourceConfig, Row pk, String password) throws Exception {
-
-        String dn = getDn(sourceConfig, pk);
-
-        if (log.isDebugEnabled()) {
-            log.debug(Formatter.displaySeparator(80));
-            log.debug(Formatter.displayLine("Bind", 80));
-            log.debug(Formatter.displayLine(" - Bind DN : "+dn, 80));
-            log.debug(Formatter.displayLine(" - Password: "+password, 80));
-            log.debug(Formatter.displaySeparator(80));
-        }
-
-        Hashtable env = new Hashtable();
-        env.put(Context.INITIAL_CONTEXT_FACTORY, getParameter(Context.INITIAL_CONTEXT_FACTORY));
-        env.put(Context.PROVIDER_URL, client.getUrl());
-        env.put(Context.SECURITY_PRINCIPAL, dn);
-        env.put(Context.SECURITY_CREDENTIALS, password);
+    public void bind(SourceConfig sourceConfig, Row pk, String password) throws LDAPException {
 
         try {
+            String dn = getDn(sourceConfig, pk);
+
+            if (log.isDebugEnabled()) {
+                log.debug(Formatter.displaySeparator(80));
+                log.debug(Formatter.displayLine("Bind", 80));
+                log.debug(Formatter.displayLine(" - Bind DN : "+dn, 80));
+                log.debug(Formatter.displayLine(" - Password: "+password, 80));
+                log.debug(Formatter.displaySeparator(80));
+            }
+
+            Hashtable env = new Hashtable();
+            env.put(Context.INITIAL_CONTEXT_FACTORY, getParameter(Context.INITIAL_CONTEXT_FACTORY));
+            env.put(Context.PROVIDER_URL, client.getUrl());
+            env.put(Context.SECURITY_PRINCIPAL, dn);
+            env.put(Context.SECURITY_CREDENTIALS, password);
+
             DirContext c = new InitialDirContext(env);
             c.close();
-        } catch (AuthenticationException e) {
-            log.debug("Error: "+e.getMessage());
-            return LDAPException.INVALID_CREDENTIALS;
-        }
 
-        return LDAPException.SUCCESS;
+        } catch (AuthenticationException e) {
+            int rc = LDAPException.INVALID_CREDENTIALS;
+            String message = e.getMessage();
+            log.debug("Bind failed: "+message);
+            throw new LDAPException(LDAPException.resultCodeToString(rc), rc, message);
+
+        } catch (Exception e) {
+            int rc = ExceptionUtil.getReturnCode(e);
+            String message = e.getMessage();
+            log.error(message, e);
+            throw new LDAPException(LDAPException.resultCodeToString(rc), rc, message);
+        }
     }
 
     public void search(
@@ -288,106 +295,110 @@ public class LDAPAdapter extends Adapter {
         return av;
     }
 
-    public int add(SourceConfig sourceConfig, Row pk, AttributeValues sourceValues) throws Exception {
+    public void add(SourceConfig sourceConfig, Row pk, AttributeValues sourceValues) throws LDAPException {
 
-        String dn = getDn(sourceConfig, pk);
-
-        if (log.isDebugEnabled()) {
-            log.debug(Formatter.displaySeparator(80));
-            log.debug(Formatter.displayLine("Add "+sourceConfig.getConnectionName()+"/"+sourceConfig.getName(), 80));
-            log.debug(Formatter.displayLine(" - DN: "+dn, 80));
-            log.debug(Formatter.displaySeparator(80));
-        }
-
-        Attributes attributes = new BasicAttributes();
-
-        String objectClasses = sourceConfig.getParameter(OBJECT_CLASSES);
-
-        Attribute ocAttribute = new BasicAttribute("objectClass");
-        for (StringTokenizer st = new StringTokenizer(objectClasses, ","); st.hasMoreTokens(); ) {
-            String objectClass = st.nextToken().trim();
-            ocAttribute.add(objectClass);
-        }
-        attributes.put(ocAttribute);
-
-        log.debug("Adding attributes:");
-        for (Iterator i=sourceValues.getNames().iterator(); i.hasNext(); ) {
-            String name = (String)i.next();
-            if (name.startsWith("primaryKey.")) continue;
-
-            Collection values = sourceValues.get(name);
-            if (values.isEmpty()) continue;
-
-            Attribute attribute = new BasicAttribute(name);
-            for (Iterator j=values.iterator(); j.hasNext(); ) {
-                Object value = j.next();
-
-                if ("unicodePwd".equals(name)) {
-                    attribute.add(PasswordUtil.toUnicodePassword(value));
-                } else {
-                    attribute.add(value);
-                }
-                log.debug(" - "+name+": "+value);
-            }
-            attributes.put(attribute);
-        }
-
-        log.debug("Adding "+dn);
         DirContext ctx = null;
         try {
+            String dn = getDn(sourceConfig, pk);
+
+            if (log.isDebugEnabled()) {
+                log.debug(Formatter.displaySeparator(80));
+                log.debug(Formatter.displayLine("Add "+sourceConfig.getConnectionName()+"/"+sourceConfig.getName(), 80));
+                log.debug(Formatter.displayLine(" - DN: "+dn, 80));
+                log.debug(Formatter.displaySeparator(80));
+            }
+
+            Attributes attributes = new BasicAttributes();
+
+            String objectClasses = sourceConfig.getParameter(OBJECT_CLASSES);
+
+            Attribute ocAttribute = new BasicAttribute("objectClass");
+            for (StringTokenizer st = new StringTokenizer(objectClasses, ","); st.hasMoreTokens(); ) {
+                String objectClass = st.nextToken().trim();
+                ocAttribute.add(objectClass);
+            }
+            attributes.put(ocAttribute);
+
+            log.debug("Adding attributes:");
+            for (Iterator i=sourceValues.getNames().iterator(); i.hasNext(); ) {
+                String name = (String)i.next();
+                if (name.startsWith("primaryKey.")) continue;
+
+                Collection values = sourceValues.get(name);
+                if (values.isEmpty()) continue;
+
+                Attribute attribute = new BasicAttribute(name);
+                for (Iterator j=values.iterator(); j.hasNext(); ) {
+                    Object value = j.next();
+
+                    if ("unicodePwd".equals(name)) {
+                        attribute.add(PasswordUtil.toUnicodePassword(value));
+                    } else {
+                        attribute.add(value);
+                    }
+                    log.debug(" - "+name+": "+value);
+                }
+                attributes.put(attribute);
+            }
+
+            log.debug("Adding "+dn);
+
             ctx = ((LDAPClient)openConnection()).getContext();
             ctx.createSubcontext(dn, attributes);
 
         } catch (NameAlreadyBoundException e) {
-            return modifyAdd(sourceConfig, sourceValues);
+            modifyAdd(sourceConfig, sourceValues);
 
         } catch (Exception e) {
-            log.error(e.getMessage(), e);
-            return ExceptionUtil.getReturnCode(e);
+            int rc = ExceptionUtil.getReturnCode(e);
+            String message = e.getMessage();
+            log.error(message, e);
+            throw new LDAPException(LDAPException.resultCodeToString(rc), rc, message);
 
         } finally {
             if (ctx != null) try { ctx.close(); } catch (Exception e) {}
         }
-
-        return LDAPException.SUCCESS;
     }
 
-    public int modifyDelete(SourceConfig sourceConfig, AttributeValues entry) throws Exception {
+    public int modifyDelete(SourceConfig sourceConfig, AttributeValues entry) throws LDAPException {
 
         log.debug("Modify Delete:");
 
-        String dn = getDn(sourceConfig, entry);
-        log.debug("Deleting attributes in "+dn);
-
-        List list = new ArrayList();
-        Collection fields = sourceConfig.getFieldConfigs();
-
-        for (Iterator i=entry.getNames().iterator(); i.hasNext(); ) {
-            String name = (String)i.next();
-
-            FieldConfig fieldConfig = sourceConfig.getFieldConfig(name);
-            if (fieldConfig == null) continue;
-
-            Set set = (Set)entry.get(name);
-            Attribute attribute = new BasicAttribute(name);
-            for (Iterator j = set.iterator(); j.hasNext(); ) {
-                String value = (String)j.next();
-                log.debug(" - "+name+": "+value);
-                attribute.add(value);
-            }
-            list.add(new ModificationItem(DirContext.REMOVE_ATTRIBUTE, attribute));
-        }
-
-        ModificationItem mods[] = (ModificationItem[])list.toArray(new ModificationItem[list.size()]);
-
         DirContext ctx = null;
         try {
+            String dn = getDn(sourceConfig, entry);
+
+            log.debug("Deleting attributes in "+dn);
+
+            List list = new ArrayList();
+            Collection fields = sourceConfig.getFieldConfigs();
+
+            for (Iterator i=entry.getNames().iterator(); i.hasNext(); ) {
+                String name = (String)i.next();
+
+                FieldConfig fieldConfig = sourceConfig.getFieldConfig(name);
+                if (fieldConfig == null) continue;
+
+                Set set = (Set)entry.get(name);
+                Attribute attribute = new BasicAttribute(name);
+                for (Iterator j = set.iterator(); j.hasNext(); ) {
+                    String value = (String)j.next();
+                    log.debug(" - "+name+": "+value);
+                    attribute.add(value);
+                }
+                list.add(new ModificationItem(DirContext.REMOVE_ATTRIBUTE, attribute));
+            }
+
+            ModificationItem mods[] = (ModificationItem[])list.toArray(new ModificationItem[list.size()]);
+
             ctx = ((LDAPClient)openConnection()).getContext();
             ctx.modifyAttributes(dn, mods);
 
         } catch (Exception e) {
-            log.error(e.getMessage(), e);
-            return ExceptionUtil.getReturnCode(e);
+            int rc = ExceptionUtil.getReturnCode(e);
+            String message = e.getMessage();
+            log.error(message, e);
+            throw new LDAPException(LDAPException.resultCodeToString(rc), rc, message);
 
         } finally {
             if (ctx != null) try { ctx.close(); } catch (Exception e) {}
@@ -396,210 +407,100 @@ public class LDAPAdapter extends Adapter {
         return LDAPException.SUCCESS;
     }
 
-    public int delete(SourceConfig sourceConfig, Row pk) throws Exception {
-
-        String dn = getDn(sourceConfig, pk);
-
-        if (log.isDebugEnabled()) {
-            log.debug(Formatter.displaySeparator(80));
-            log.debug(Formatter.displayLine("Delete "+sourceConfig.getConnectionName()+"/"+sourceConfig.getName(), 80));
-            log.debug(Formatter.displayLine(" - DN: "+dn, 80));
-            log.debug(Formatter.displaySeparator(80));
-        }
+    public void delete(SourceConfig sourceConfig, Row pk) throws LDAPException {
 
         DirContext ctx = null;
         try {
+            String dn = getDn(sourceConfig, pk);
+
+            if (log.isDebugEnabled()) {
+                log.debug(Formatter.displaySeparator(80));
+                log.debug(Formatter.displayLine("Delete "+sourceConfig.getConnectionName()+"/"+sourceConfig.getName(), 80));
+                log.debug(Formatter.displayLine(" - DN: "+dn, 80));
+                log.debug(Formatter.displaySeparator(80));
+            }
+
             ctx = ((LDAPClient)openConnection()).getContext();
             ctx.destroySubcontext(dn);
 
-        } catch (NameNotFoundException e) {
-            return LDAPException.NO_SUCH_OBJECT;
-
         } catch (Exception e) {
-            log.error(e.getMessage(), e);
-            return ExceptionUtil.getReturnCode(e);
+            int rc = ExceptionUtil.getReturnCode(e);
+            String message = e.getMessage();
+            log.error(message, e);
+            throw new LDAPException(LDAPException.resultCodeToString(rc), rc, message);
 
         } finally {
             if (ctx != null) try { ctx.close(); } catch (Exception e) {}
         }
-
-        return LDAPException.SUCCESS;
     }
 
-    public int modify(SourceConfig sourceConfig, Row pk, Collection modifications) throws Exception {
-
-        String dn = getDn(sourceConfig, pk);
-
-        if (log.isDebugEnabled()) {
-            log.debug(Formatter.displaySeparator(80));
-            log.debug(Formatter.displayLine("Modify "+sourceConfig.getConnectionName()+"/"+sourceConfig.getName(), 80));
-            log.debug(Formatter.displayLine(" - DN: "+dn, 80));
-            log.debug(Formatter.displaySeparator(80));
-        }
-
-        List list = new ArrayList();
-
-        for (Iterator i=modifications.iterator(); i.hasNext(); ) {
-            ModificationItem mi = (ModificationItem)i.next();
-
-            Attribute attribute = mi.getAttribute();
-            String name = attribute.getID();
-
-            FieldConfig fieldConfig = sourceConfig.getFieldConfig(name);
-            if (fieldConfig == null) continue;
-
-            if ("unicodePwd".equals(name) && mi.getModificationOp() == DirContext.ADD_ATTRIBUTE) { // need to encode unicodePwd
-                Attribute newAttribute = new BasicAttribute(fieldConfig.getOriginalName());
-                for (NamingEnumeration j=attribute.getAll(); j.hasMore(); ) {
-                    Object value = j.next();
-                    newAttribute.add(PasswordUtil.toUnicodePassword(value));
-                }
-
-                mi = new ModificationItem(DirContext.REPLACE_ATTRIBUTE, newAttribute);
-
-            } else {
-                Attribute newAttribute = new BasicAttribute(fieldConfig.getOriginalName());
-                for (NamingEnumeration j=attribute.getAll(); j.hasMore(); ) {
-                    Object value = j.next();
-                    newAttribute.add(value);
-                }
-                mi = new ModificationItem(mi.getModificationOp(), attribute);
-            }
-
-            list.add(mi);
-        }
-
-/*
-        Set addAttributes = new HashSet(sourceValues.getNames());
-        addAttributes.removeAll(oldEntry.getNames());
-        log.debug("Attributes to add: " + addAttributes);
-
-        Set removeAttributes = new HashSet(oldEntry.getNames());
-        removeAttributes.removeAll(sourceValues.getNames());
-        log.debug("Attributes to remove: " + removeAttributes);
-
-        Set replaceAttributes = new HashSet(oldEntry.getNames());
-        replaceAttributes.retainAll(sourceValues.getNames());
-        log.debug("Attributes to replace: " + replaceAttributes);
-
-        for (Iterator i=addAttributes.iterator(); i.hasNext(); ) {
-            String name = (String)i.next();
-            if ("objectClass".equals(name)) continue; // don't add objectClass
-
-            boolean primaryKey = false;
-            for (Iterator j=fields.iterator(); j.hasNext(); ) {
-                FieldConfig fieldConfig = (FieldConfig)j.next();
-                if (!fieldConfig.isPrimaryKey()) continue;
-                if (!fieldConfig.getName().equals(name)) continue;
-                primaryKey = true;
-                break;
-            }
-
-            if (primaryKey) continue; // don't add primary key
-
-            Set set = (Set)sourceValues.get(name);
-            Attribute attribute = new BasicAttribute(name);
-            for (Iterator j = set.iterator(); j.hasNext(); ) {
-                String value = (String)j.next();
-                log.debug(" - add "+name+": "+value);
-
-                if ("unicodePwd".equals(name)) { // need to encode unicodePwd
-                    attribute.add(PasswordUtil.toUnicodePassword(value));
-                } else {
-                    attribute.add(value);
-                }
-
-            }
-
-            if ("unicodePwd".equals(name)) {
-                list.add(new ModificationItem(DirContext.REPLACE_ATTRIBUTE, attribute));
-            } else {
-                list.add(new ModificationItem(DirContext.ADD_ATTRIBUTE, attribute));
-            }
-        }
-
-        for (Iterator i=removeAttributes.iterator(); i.hasNext(); ) {
-            String name = (String)i.next();
-            if ("objectClass".equals(name)) continue; // don't remove objectClass
-            if ("unicodePwd".equals(name)) continue; // can't remove unicodePwd
-
-            boolean primaryKey = false;
-            for (Iterator j=fields.iterator(); j.hasNext(); ) {
-                FieldConfig fieldConfig = (FieldConfig)j.next();
-                if (!fieldConfig.isPrimaryKey()) continue;
-                if (!fieldConfig.getName().equals(name)) continue;
-                primaryKey = true;
-                break;
-            }
-
-            if (primaryKey) continue; // don't remove primary key
-
-            Set set = (Set)sourceValues.get(name);
-            Attribute attribute = new BasicAttribute(name);
-            for (Iterator j = set.iterator(); j.hasNext(); ) {
-                String value = (String)j.next();
-            	log.debug(" - remove "+name+": "+value);
-
-                attribute.add(value);
-            }
-
-            list.add(new ModificationItem(DirContext.REMOVE_ATTRIBUTE, attribute));
-        }
-
-        for (Iterator i=replaceAttributes.iterator(); i.hasNext(); ) {
-            String name = (String)i.next();
-            if ("objectClass".equals(name)) continue; // don't replace objectClass
-
-            boolean primaryKey = false;
-            for (Iterator j=fields.iterator(); j.hasNext(); ) {
-                FieldConfig fieldConfig = (FieldConfig)j.next();
-                if (!fieldConfig.isPrimaryKey()) continue;
-                if (!fieldConfig.getName().equals(name)) continue;
-                primaryKey = true;
-                break;
-            }
-
-            if (primaryKey) continue; // don't replace primary key
-
-            Set set = (Set)sourceValues.get(name);
-            Attribute attribute = new BasicAttribute(name);
-            for (Iterator j = set.iterator(); j.hasNext(); ) {
-                String value = (String)j.next();
-                log.debug(" - replace "+name+": "+value);
-
-                if ("unicodePwd".equals(name)) { // need to encode unicodePwd
-                    attribute.add(PasswordUtil.toUnicodePassword(value));
-                } else {
-                    attribute.add(value);
-                }
-
-            }
-
-            list.add(new ModificationItem(DirContext.REPLACE_ATTRIBUTE, attribute));
-        }
-*/
-        ModificationItem mods[] = (ModificationItem[])list.toArray(new ModificationItem[list.size()]);
+    public void modify(SourceConfig sourceConfig, Row pk, Collection modifications) throws LDAPException {
 
         DirContext ctx = null;
         try {
+            String dn = getDn(sourceConfig, pk);
+
+            if (log.isDebugEnabled()) {
+                log.debug(Formatter.displaySeparator(80));
+                log.debug(Formatter.displayLine("Modify "+sourceConfig.getConnectionName()+"/"+sourceConfig.getName(), 80));
+                log.debug(Formatter.displayLine(" - DN: "+dn, 80));
+                log.debug(Formatter.displaySeparator(80));
+            }
+
+            List list = new ArrayList();
+
+            for (Iterator i=modifications.iterator(); i.hasNext(); ) {
+                ModificationItem mi = (ModificationItem)i.next();
+
+                Attribute attribute = mi.getAttribute();
+                String name = attribute.getID();
+
+                FieldConfig fieldConfig = sourceConfig.getFieldConfig(name);
+                if (fieldConfig == null) continue;
+
+                if ("unicodePwd".equals(name) && mi.getModificationOp() == DirContext.ADD_ATTRIBUTE) { // need to encode unicodePwd
+                    Attribute newAttribute = new BasicAttribute(fieldConfig.getOriginalName());
+                    for (NamingEnumeration j=attribute.getAll(); j.hasMore(); ) {
+                        Object value = j.next();
+                        newAttribute.add(PasswordUtil.toUnicodePassword(value));
+                    }
+
+                    mi = new ModificationItem(DirContext.REPLACE_ATTRIBUTE, newAttribute);
+
+                } else {
+                    Attribute newAttribute = new BasicAttribute(fieldConfig.getOriginalName());
+                    for (NamingEnumeration j=attribute.getAll(); j.hasMore(); ) {
+                        Object value = j.next();
+                        newAttribute.add(value);
+                    }
+                    mi = new ModificationItem(mi.getModificationOp(), attribute);
+                }
+
+                list.add(mi);
+            }
+
+            ModificationItem mods[] = (ModificationItem[])list.toArray(new ModificationItem[list.size()]);
+
             ctx = ((LDAPClient)openConnection()).getContext();
             ctx.modifyAttributes(dn, mods);
 
         } catch (Exception e) {
-            log.error(e.getMessage(), e);
-            return ExceptionUtil.getReturnCode(e);
+            int rc = ExceptionUtil.getReturnCode(e);
+            String message = e.getMessage();
+            log.error(message, e);
+            throw new LDAPException(LDAPException.resultCodeToString(rc), rc, message);
 
         } finally {
             if (ctx != null) try { ctx.close(); } catch (Exception e) {}
         }
-
-        return LDAPException.SUCCESS;
     }
 
-    public int modrdn(SourceConfig sourceConfig, Row oldEntry, Row newEntry) throws Exception {
+    public void modrdn(SourceConfig sourceConfig, Row oldEntry, Row newEntry) throws LDAPException {
 
-        String dn = getDn(sourceConfig, oldEntry);
-        String newRdn = newEntry.toString();
+        DirContext ctx = null;
+        try {
+            String dn = getDn(sourceConfig, oldEntry);
+            String newRdn = newEntry.toString();
 
         if (log.isDebugEnabled()) {
             log.debug(Formatter.displaySeparator(80));
@@ -609,72 +510,71 @@ public class LDAPAdapter extends Adapter {
             log.debug(Formatter.displaySeparator(80));
         }
 
-        DirContext ctx = null;
-        try {
             ctx = ((LDAPClient)openConnection()).getContext();
             ctx.rename(dn, newRdn);
 
         } catch (Exception e) {
-            log.error(e.getMessage(), e);
-            return ExceptionUtil.getReturnCode(e);
+            int rc = ExceptionUtil.getReturnCode(e);
+            String message = e.getMessage();
+            log.error(message, e);
+            throw new LDAPException(LDAPException.resultCodeToString(rc), rc, message);
 
         } finally {
             if (ctx != null) try { ctx.close(); } catch (Exception e) {}
         }
-
-        return LDAPException.SUCCESS;
     }
 
-    public int modifyAdd(SourceConfig sourceConfig, AttributeValues entry) throws Exception {
+    public void modifyAdd(SourceConfig sourceConfig, AttributeValues entry) throws LDAPException {
         log.debug("Modify Add:");
-
-        String dn = getDn(sourceConfig, entry);
-        log.debug("Replacing attributes "+dn);
-
-        Collection fields = sourceConfig.getFieldConfigs();
-        List list = new ArrayList();
-
-        for (Iterator i=entry.getNames().iterator(); i.hasNext(); ) {
-            String name = (String)i.next();
-            if (name.startsWith("primaryKey.")) continue;
-
-            Set set = (Set)entry.get(name);
-            if (set.isEmpty()) continue;
-
-            FieldConfig fieldConfig = sourceConfig.getFieldConfig(name);
-            if (fieldConfig == null) continue;
-
-            Attribute attribute = new BasicAttribute(name);
-            for (Iterator j = set.iterator(); j.hasNext(); ) {
-                Object v = j.next();
-                if ("unicodePwd".equals(name)) {
-                    attribute.add(PasswordUtil.toUnicodePassword(v));
-                } else {
-                    attribute.add(v);
-                }
-                log.debug(" - "+name+": "+v);
-            }
-            list.add(new ModificationItem(DirContext.ADD_ATTRIBUTE, attribute));
-        }
-
-        log.debug("Updating "+dn);
-
-        ModificationItem mods[] = (ModificationItem[])list.toArray(new ModificationItem[list.size()]);
 
         DirContext ctx = null;
         try {
+            String dn = getDn(sourceConfig, entry);
+
+            log.debug("Replacing attributes "+dn);
+
+            Collection fields = sourceConfig.getFieldConfigs();
+            List list = new ArrayList();
+
+            for (Iterator i=entry.getNames().iterator(); i.hasNext(); ) {
+                String name = (String)i.next();
+                if (name.startsWith("primaryKey.")) continue;
+
+                Set set = (Set)entry.get(name);
+                if (set.isEmpty()) continue;
+
+                FieldConfig fieldConfig = sourceConfig.getFieldConfig(name);
+                if (fieldConfig == null) continue;
+
+                Attribute attribute = new BasicAttribute(name);
+                for (Iterator j = set.iterator(); j.hasNext(); ) {
+                    Object v = j.next();
+                    if ("unicodePwd".equals(name)) {
+                        attribute.add(PasswordUtil.toUnicodePassword(v));
+                    } else {
+                        attribute.add(v);
+                    }
+                    log.debug(" - "+name+": "+v);
+                }
+                list.add(new ModificationItem(DirContext.ADD_ATTRIBUTE, attribute));
+            }
+
+            log.debug("Updating "+dn);
+
+            ModificationItem mods[] = (ModificationItem[])list.toArray(new ModificationItem[list.size()]);
+
             ctx = ((LDAPClient)openConnection()).getContext();
             ctx.modifyAttributes(dn, mods);
 
         } catch (Exception e) {
-            log.error(e.getMessage(), e);
-            return ExceptionUtil.getReturnCode(e);
+            int rc = ExceptionUtil.getReturnCode(e);
+            String message = e.getMessage();
+            log.error(message, e);
+            throw new LDAPException(LDAPException.resultCodeToString(rc), rc, message);
 
         } finally {
             if (ctx != null) try { ctx.close(); } catch (Exception e) {}
         }
-
-        return LDAPException.SUCCESS;
     }
 
     public String getDn(SourceConfig sourceConfig, AttributeValues sourceValues) throws Exception {

@@ -44,31 +44,42 @@ public class BindHandler {
         this.handler = handler;
     }
 
-    public int bind(PenroseSession session, Partition partition, String dn, String password) throws Exception {
+    public void bind(PenroseSession session, Partition partition, String dn, String password) throws Exception {
 
-        int rc;
+        int rc = LDAPException.SUCCESS;
+        String message = null;
+
         try {
             log.warn("Bind as \""+dn+"\".");
             log.debug(Formatter.displaySeparator(80));
-            log.debug(Formatter.displayLine("BIND:", 80));
+            log.debug(Formatter.displayLine("BIND REQUEST:", 80));
             log.debug(Formatter.displayLine(" - DN       : "+dn, 80));
             log.debug(Formatter.displayLine(" - Password : "+password, 80));
             log.debug(Formatter.displaySeparator(80));
 
-            rc = performBind(session, partition, dn, password);
+            performBind(session, partition, dn, password);
 
         } catch (LDAPException e) {
             rc = e.getResultCode();
+            message = e.getLDAPErrorMessage();
+            throw e;
 
         } catch (Exception e) {
-            log.error(e.getMessage(), e);
             rc = ExceptionUtil.getReturnCode(e);
-        }
+            message = e.getMessage();
+            log.error(message, e);
+            throw new LDAPException(message, LDAPException.OPERATIONS_ERROR, message);
 
-        return rc;
+        } finally {
+            log.debug(Formatter.displaySeparator(80));
+            log.debug(Formatter.displayLine("BIND RESPONSE:", 80));
+            log.debug(Formatter.displayLine(" - RC      : "+rc, 80));
+            log.debug(Formatter.displayLine(" - Message : "+message, 80));
+            log.debug(Formatter.displaySeparator(80));
+        }
     }
 
-    public int performBind(PenroseSession session, Partition partition, String dn, String password) throws Exception {
+    public void  performBind(PenroseSession session, Partition partition, String dn, String password) throws Exception {
 
         Collection entryMappings = partition.findEntryMappings(dn);
 
@@ -86,8 +97,13 @@ public class BindHandler {
             }
 
             // attempt direct bind to the source
-            int rc = engine.bind(session, partition, entryMapping, dn, password);
-            if (rc == LDAPException.SUCCESS) return rc;
+            try {
+                engine.bind(session, partition, entryMapping, dn, password);
+                return;
+
+            } catch (LDAPException e) {
+                // continue
+            }
 
             // attempt to compare the userPassword attribute
 /*
@@ -122,11 +138,12 @@ public class BindHandler {
             for (Iterator j = userPasswords.iterator(); j.hasNext(); ) {
                 Object userPassword = j.next();
                 log.debug("userPassword: "+userPassword);
-                if (PasswordUtil.comparePassword(password, userPassword)) return LDAPException.SUCCESS;
+                if (PasswordUtil.comparePassword(password, userPassword)) return;
             }
         }
 
-        return LDAPException.INVALID_CREDENTIALS;
+        int rc = LDAPException.INVALID_CREDENTIALS;
+        throw new LDAPException(LDAPException.resultCodeToString(rc), rc, null);
     }
 
     public Handler getHandler() {
