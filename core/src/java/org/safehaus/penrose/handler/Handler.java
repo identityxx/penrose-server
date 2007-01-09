@@ -186,337 +186,388 @@ public class Handler {
         status = STOPPED;
     }
 
-    public int bind(
+    public void bind(
             PenroseSession session,
             String dn,
             String password
-    ) throws Exception {
+    ) throws LDAPException {
 
-        PenroseConfig penroseConfig = penrose.getPenroseConfig();
-        String rootDn = schemaManager.normalize(penroseConfig.getRootDn());
-        dn = schemaManager.normalize(dn);
+        try {
+            PenroseConfig penroseConfig = penrose.getPenroseConfig();
+            String rootDn = schemaManager.normalize(penroseConfig.getRootDn());
+            dn = schemaManager.normalize(dn);
 
-        int rc;
+            int rc;
 
-        if (dn.equals(rootDn)) {
-            if (!PasswordUtil.comparePassword(password, penroseConfig.getRootPassword())) {
-                log.debug("Password doesn't match => BIND FAILED");
-                rc = LDAPException.INVALID_CREDENTIALS;
+            if (dn.equals(rootDn)) {
+                if (!PasswordUtil.comparePassword(password, penroseConfig.getRootPassword())) {
+                    log.debug("Password doesn't match => BIND FAILED");
+                    rc = LDAPException.INVALID_CREDENTIALS;
+                    throw new LDAPException(LDAPException.resultCodeToString(rc), rc, "Password mismatch.");
+                }
+
             } else {
-                rc = LDAPException.SUCCESS;
+
+                Partition partition = partitionManager.findPartition(dn);
+
+                if (partition == null) {
+                    log.debug("Entry "+dn+" not found");
+                    rc = LDAPException.NO_SUCH_OBJECT;
+                    throw new LDAPException(LDAPException.resultCodeToString(rc), rc, null);
+                }
+
+                getBindHandler().bind(session, partition, dn, password);
+                session.setBindDn(dn);
+                session.setBindPassword(password);
             }
 
-        } else {
+        } catch (LDAPException e) {
+            throw e;
+
+        } catch (Exception e) {
+            int rc = ExceptionUtil.getReturnCode(e);
+            String message = e.getMessage();
+            log.error(message, e);
+            throw new LDAPException(LDAPException.resultCodeToString(rc), rc, message);
+        }
+    }
+
+    public void add(
+            PenroseSession session,
+            String dn,
+            Attributes attributes
+    ) throws LDAPException {
+
+        try {
+            attributes = normalize(attributes);
+
+            log.warn("Add entry \""+dn+"\".");
+            log.debug("-------------------------------------------------");
+            log.debug("ADD:");
+            if (session != null && session.getBindDn() != null) log.debug(" - Bind DN: "+session.getBindDn());
+            log.debug(" - Entry: "+dn);
+            log.debug("");
+
+            String parentDn = EntryUtil.getParentDn(dn);
+
+            Partition partition = partitionManager.findPartition(parentDn);
+
+            if (partition == null) {
+                log.debug("Parent entry "+parentDn+" not found");
+                int rc = LDAPException.NO_SUCH_OBJECT;
+                throw new LDAPException(LDAPException.resultCodeToString(rc), rc, null);
+            }
+
+            Entry parent = findHandler.find(partition, parentDn);
+
+            if (parent == null) {
+                log.debug("Parent entry "+dn+" not found");
+                int rc = LDAPException.NO_SUCH_OBJECT;
+                throw new LDAPException(LDAPException.resultCodeToString(rc), rc, null);
+            }
+
+            int rc = aclEngine.checkAdd(session, partition, parent.getEntryMapping(), parentDn);
+
+            if (rc != LDAPException.SUCCESS) {
+                log.debug("Not allowed to add "+dn);
+                throw new LDAPException(LDAPException.resultCodeToString(rc), rc, null);
+            }
+
+            getAddHandler().add(session, partition, parent, dn, attributes);
+
+        } catch (LDAPException e) {
+            throw e;
+
+        } catch (Exception e) {
+            int rc = ExceptionUtil.getReturnCode(e);
+            String message = e.getMessage();
+            log.error(message, e);
+            throw new LDAPException(LDAPException.resultCodeToString(rc), rc, message);
+        }
+    }
+
+    public void unbind(PenroseSession session) throws LDAPException {
+
+        if (session == null) return;
+
+        session.setBindDn(null);
+        session.setBindPassword(null);
+    }
+
+    public boolean compare(
+            PenroseSession session,
+            String dn,
+            String attributeName,
+            Object attributeValue
+    ) throws LDAPException {
+
+        try {
+            log.warn("Compare attribute "+attributeName+" in \""+dn+"\" with \""+attributeValue+"\".");
+
+            log.debug("-------------------------------------------------------------------------------");
+            log.debug("COMPARE:");
+            if (session != null && session.getBindDn() != null) log.debug(" - Bind DN: " + session.getBindDn());
+            log.debug(" - DN: " + dn);
+            log.debug(" - Attribute Name: " + attributeName);
+            if (attributeValue instanceof byte[]) {
+                log.debug(" - Attribute Value: " + BinaryUtil.encode(BinaryUtil.BIG_INTEGER, (byte[])attributeValue));
+            } else {
+                log.debug(" - Attribute Value: " + attributeValue);
+            }
+            log.debug("-------------------------------------------------------------------------------");
 
             Partition partition = partitionManager.findPartition(dn);
 
             if (partition == null) {
                 log.debug("Entry "+dn+" not found");
+                int rc = LDAPException.NO_SUCH_OBJECT;
+                throw new LDAPException(LDAPException.resultCodeToString(rc), rc, null);
+            }
+
+            Entry entry = findHandler.find(partition, dn);
+
+            if (entry == null) {
+                log.debug("Entry "+dn+" not found");
+                int rc = LDAPException.NO_SUCH_OBJECT;
+                throw new LDAPException(LDAPException.resultCodeToString(rc), rc, null);
+            }
+
+            int rc = aclEngine.checkRead(session, partition, entry.getEntryMapping(), dn);
+
+            if (rc != LDAPException.SUCCESS) {
+                log.debug("Not allowed to compare "+dn);
+                throw new LDAPException(LDAPException.resultCodeToString(rc), rc, null);
+            }
+
+            return getCompareHandler().compare(session, partition, entry, attributeName, attributeValue);
+
+        } catch (LDAPException e) {
+            throw e;
+
+        } catch (Exception e) {
+            int rc = ExceptionUtil.getReturnCode(e);
+            String message = e.getMessage();
+            log.error(message, e);
+            throw new LDAPException(LDAPException.resultCodeToString(rc), rc, message);
+        }
+    }
+
+    public void delete(
+            PenroseSession session,
+            String dn
+    ) throws LDAPException {
+
+        try {
+            log.warn("Delete entry \""+dn+"\".");
+
+            log.debug("-------------------------------------------------");
+            log.debug("DELETE:");
+            if (session != null && session.getBindDn() != null) log.debug(" - Bind DN: "+session.getBindDn());
+            log.debug(" - DN: "+dn);
+            log.debug("");
+
+            Partition partition = partitionManager.findPartition(dn);
+
+            if (partition == null) {
+                int rc = LDAPException.NO_SUCH_OBJECT;
+                String message = "Entry "+dn+" not found";
+                log.debug(message);
+                throw new LDAPException(LDAPException.resultCodeToString(rc), rc, message);
+            }
+/*
+            List path = new ArrayList();
+            AttributeValues sourceValues = new AttributeValues();
+
+            findHandler.find(partition, dn, path, sourceValues);
+
+            if (path.isEmpty()) {
+                log.debug("Entry "+dn+" not found");
                 return LDAPException.NO_SUCH_OBJECT;
             }
 
-            rc = getBindHandler().bind(session, partition, dn, password);
-        }
-
-        if (rc == LDAPException.SUCCESS) {
-            session.setBindDn(dn);
-            session.setBindPassword(password);
-        }
-
-        return rc;
-    }
-
-    public int unbind(PenroseSession session) throws Exception {
-
-        if (session == null) return LDAPException.SUCCESS;
-
-        session.setBindDn(null);
-        session.setBindPassword(null);
-
-        return LDAPException.SUCCESS;
-    }
-
-    public int add(
-            PenroseSession session,
-            String dn,
-            Attributes attributes
-    ) throws Exception {
-
-        attributes = normalize(attributes);
-
-        log.warn("Add entry \""+dn+"\".");
-        log.debug("-------------------------------------------------");
-        log.debug("ADD:");
-        if (session != null && session.getBindDn() != null) log.debug(" - Bind DN: "+session.getBindDn());
-        log.debug(" - Entry: "+dn);
-        log.debug("");
-
-        String parentDn = EntryUtil.getParentDn(dn);
-
-        Partition partition = partitionManager.findPartition(parentDn);
-
-        if (partition == null) {
-            log.debug("Parent entry "+parentDn+" not found");
-            return LDAPException.NO_SUCH_OBJECT;
-        }
-/*
-        List path = new ArrayList();
-        AttributeValues sourceValues = new AttributeValues();
-
-        findHandler.find(partition, parentDn, path, sourceValues);
-
-        if (path.isEmpty()) {
-            log.debug("Parent entry "+parentDn+" not found");
-            return LDAPException.NO_SUCH_OBJECT;
-        }
-
-        Entry parent = (Entry)path.iterator().next();
+            Entry entry = (Entry)path.iterator().next();
 */
-        Entry parent = findHandler.find(partition, parentDn);
+            Entry entry = findHandler.find(partition, dn);
 
-        if (parent == null) {
-            log.debug("Parent entry "+dn+" not found");
-            return LDAPException.NO_SUCH_OBJECT;
+            if (entry == null) {
+                int rc = LDAPException.NO_SUCH_OBJECT;
+                String message = "Entry "+dn+" not found";
+                log.debug(message);
+                throw new LDAPException(LDAPException.resultCodeToString(rc), rc, message);
+            }
+
+            int rc = aclEngine.checkDelete(session, partition, entry.getEntryMapping(), dn);
+
+            if (rc != LDAPException.SUCCESS) {
+                log.debug("Not allowed to delete "+dn);
+                throw new LDAPException(LDAPException.resultCodeToString(rc), rc, null);
+            }
+
+            getDeleteHandler().delete(session, partition, entry);
+
+        } catch (LDAPException e) {
+            throw e;
+
+        } catch (Exception e) {
+            int rc = ExceptionUtil.getReturnCode(e);
+            String message = e.getMessage();
+            log.error(message, e);
+            throw new LDAPException(LDAPException.resultCodeToString(rc), rc, message);
         }
-
-        int rc = aclEngine.checkAdd(session, partition, parent.getEntryMapping(), parentDn);
-
-        if (rc != LDAPException.SUCCESS) {
-            log.debug("Not allowed to add "+dn);
-            return rc;
-        }
-
-        return getAddHandler().add(session, partition, parent, dn, attributes);
     }
 
-    public int compare(
-            PenroseSession session,
-            String dn,
-            String attributeName,
-            Object attributeValue
-    ) throws Exception {
-
-        log.warn("Compare attribute "+attributeName+" in \""+dn+"\" with \""+attributeValue+"\".");
-
-        log.debug("-------------------------------------------------------------------------------");
-        log.debug("COMPARE:");
-        if (session != null && session.getBindDn() != null) log.debug(" - Bind DN: " + session.getBindDn());
-        log.debug(" - DN: " + dn);
-        log.debug(" - Attribute Name: " + attributeName);
-        if (attributeValue instanceof byte[]) {
-            log.debug(" - Attribute Value: " + BinaryUtil.encode(BinaryUtil.BIG_INTEGER, (byte[])attributeValue));
-        } else {
-            log.debug(" - Attribute Value: " + attributeValue);
-        }
-        log.debug("-------------------------------------------------------------------------------");
-
-        Partition partition = partitionManager.findPartition(dn);
-
-        if (partition == null) {
-            log.debug("Entry "+dn+" not found");
-            return LDAPException.NO_SUCH_OBJECT;
-        }
-/*
-        List path = new ArrayList();
-        AttributeValues sourceValues = new AttributeValues();
-
-        findHandler.find(partition, dn, path, sourceValues);
-
-        if (path.isEmpty()) {
-            log.debug("Entry "+dn+" not found");
-            return LDAPException.NO_SUCH_OBJECT;
-        }
-
-        Entry entry = (Entry)path.iterator().next();
-*/
-        Entry entry = findHandler.find(partition, dn);
-
-        if (entry == null) {
-            log.debug("Entry "+dn+" not found");
-            return LDAPException.NO_SUCH_OBJECT;
-        }
-
-        int rc = aclEngine.checkRead(session, partition, entry.getEntryMapping(), dn);
-
-        if (rc != LDAPException.SUCCESS) {
-            log.debug("Not allowed to compare "+dn);
-            return rc;
-        }
-
-        return getCompareHandler().compare(session, partition, entry, attributeName, attributeValue);
-    }
-
-    public int delete(
-            PenroseSession session,
-            String dn
-    ) throws Exception {
-
-        log.warn("Delete entry \""+dn+"\".");
-
-        log.debug("-------------------------------------------------");
-        log.debug("DELETE:");
-        if (session != null && session.getBindDn() != null) log.debug(" - Bind DN: "+session.getBindDn());
-        log.debug(" - DN: "+dn);
-        log.debug("");
-
-        Partition partition = partitionManager.findPartition(dn);
-
-        if (partition == null) {
-            log.debug("Entry "+dn+" not found");
-            return LDAPException.NO_SUCH_OBJECT;
-        }
-/*
-        List path = new ArrayList();
-        AttributeValues sourceValues = new AttributeValues();
-
-        findHandler.find(partition, dn, path, sourceValues);
-
-        if (path.isEmpty()) {
-            log.debug("Entry "+dn+" not found");
-            return LDAPException.NO_SUCH_OBJECT;
-        }
-
-        Entry entry = (Entry)path.iterator().next();
-*/
-        Entry entry = findHandler.find(partition, dn);
-
-        if (entry == null) {
-            log.debug("Entry "+dn+" not found");
-            return LDAPException.NO_SUCH_OBJECT;
-        }
-
-        int rc = aclEngine.checkDelete(session, partition, entry.getEntryMapping(), dn);
-
-        if (rc != LDAPException.SUCCESS) {
-            log.debug("Not allowed to delete "+dn);
-            return rc;
-        }
-
-        return getDeleteHandler().delete(session, partition, entry);
-    }
-
-    public int modify(
+    public void modify(
             PenroseSession session,
             String dn,
             Collection modifications
-    ) throws Exception {
+    ) throws LDAPException {
 
-        log.warn("Modify entry \""+dn+"\".");
+        try {
+            log.warn("Modify entry \""+dn+"\".");
 
-        log.debug(Formatter.displaySeparator(80));
-        log.debug(Formatter.displayLine("MODIFY:", 80));
-        if (session != null && session.getBindDn() != null) {
-            log.debug(Formatter.displayLine(" - Bind DN: " + session.getBindDn(), 80));
-        }
-        log.debug(Formatter.displayLine(" - DN: " + dn, 80));
+            log.debug(Formatter.displaySeparator(80));
+            log.debug(Formatter.displayLine("MODIFY:", 80));
+            if (session != null && session.getBindDn() != null) {
+                log.debug(Formatter.displayLine(" - Bind DN: " + session.getBindDn(), 80));
+            }
+            log.debug(Formatter.displayLine(" - DN: " + dn, 80));
 
-        log.debug(Formatter.displayLine(" - Attributes: ", 80));
-        for (Iterator i=modifications.iterator(); i.hasNext(); ) {
-            ModificationItem mi = (ModificationItem)i.next();
-            Attribute attribute = mi.getAttribute();
-            String op = "replace";
-            switch (mi.getModificationOp()) {
-                case DirContext.ADD_ATTRIBUTE:
-                    op = "add";
-                    break;
-                case DirContext.REMOVE_ATTRIBUTE:
-                    op = "delete";
-                    break;
-                case DirContext.REPLACE_ATTRIBUTE:
-                    op = "replace";
-                    break;
+            log.debug(Formatter.displayLine(" - Attributes: ", 80));
+            for (Iterator i=modifications.iterator(); i.hasNext(); ) {
+                ModificationItem mi = (ModificationItem)i.next();
+                Attribute attribute = mi.getAttribute();
+                String op = "replace";
+                switch (mi.getModificationOp()) {
+                    case DirContext.ADD_ATTRIBUTE:
+                        op = "add";
+                        break;
+                    case DirContext.REMOVE_ATTRIBUTE:
+                        op = "delete";
+                        break;
+                    case DirContext.REPLACE_ATTRIBUTE:
+                        op = "replace";
+                        break;
+                }
+
+                log.debug(Formatter.displayLine("   - "+op+": "+attribute.getID()+" => "+attribute.get(), 80));
             }
 
-            log.debug(Formatter.displayLine("   - "+op+": "+attribute.getID()+" => "+attribute.get(), 80));
-        }
+            log.debug(Formatter.displaySeparator(80));
 
-        log.debug(Formatter.displaySeparator(80));
+            Partition partition = partitionManager.findPartition(dn);
 
-        Partition partition = partitionManager.findPartition(dn);
-
-        if (partition == null) {
-            log.debug("Entry "+dn+" not found");
-            return LDAPException.NO_SUCH_OBJECT;
-        }
+            if (partition == null) {
+                int rc = LDAPException.NO_SUCH_OBJECT;
+                String message = "Entry "+dn+" not found";
+                log.debug(message);
+                throw new LDAPException(LDAPException.resultCodeToString(rc), rc, message);
+            }
 /*
-        List path = new ArrayList();
-        AttributeValues sourceValues = new AttributeValues();
+            List path = new ArrayList();
+            AttributeValues sourceValues = new AttributeValues();
 
-        findHandler.find(partition, dn, path, sourceValues);
+            findHandler.find(partition, dn, path, sourceValues);
 
-        if (path.isEmpty()) {
-            log.debug("Entry "+dn+" not found");
-            return LDAPException.NO_SUCH_OBJECT;
-        }
+            if (path.isEmpty()) {
+                log.debug("Entry "+dn+" not found");
+                return LDAPException.NO_SUCH_OBJECT;
+            }
 
-        Entry entry = (Entry)path.iterator().next();
+            Entry entry = (Entry)path.iterator().next();
 */
-        Entry entry = findHandler.find(partition, dn);
+            Entry entry = findHandler.find(partition, dn);
 
-        if (entry == null) {
-            log.debug("Entry "+dn+" not found");
-            return LDAPException.NO_SUCH_OBJECT;
+            if (entry == null) {
+                int rc = LDAPException.NO_SUCH_OBJECT;
+                String message = "Entry "+dn+" not found";
+                log.debug(message);
+                throw new LDAPException(LDAPException.resultCodeToString(rc), rc, message);
+            }
+
+            int rc = aclEngine.checkModify(session, partition, entry.getEntryMapping(), dn);
+
+            if (rc != LDAPException.SUCCESS) {
+                log.debug("Not allowed to modify "+dn);
+                throw new LDAPException(LDAPException.resultCodeToString(rc), rc, null);
+            }
+
+            getModifyHandler().modify(session, partition, entry, modifications);
+
+        } catch (LDAPException e) {
+            throw e;
+
+        } catch (Exception e) {
+            int rc = ExceptionUtil.getReturnCode(e);
+            String message = e.getMessage();
+            log.error(message, e);
+            throw new LDAPException(LDAPException.resultCodeToString(rc), rc, message);
         }
-
-        int rc = aclEngine.checkModify(session, partition, entry.getEntryMapping(), dn);
-
-        if (rc != LDAPException.SUCCESS) {
-            log.debug("Not allowed to modify "+dn);
-            return rc;
-        }
-
-        return getModifyHandler().modify(session, partition, entry, modifications);
     }
 
-    public int modrdn(
+    public void modrdn(
             PenroseSession session,
             String dn,
             String newRdn,
             boolean deleteOldRdn
-    ) throws Exception {
+    ) throws LDAPException {
 
-        log.warn("ModRDN \""+dn+"\" to \""+newRdn+"\".");
+        try {
+            log.warn("ModRDN \""+dn+"\" to \""+newRdn+"\".");
 
-        log.debug("-------------------------------------------------------------------------------");
-        log.debug("MODRDN:");
-        if (session != null && session.getBindDn() != null) log.debug(" - Bind DN: " + session.getBindDn());
-        log.debug(" - DN: " + dn);
-        log.debug(" - New RDN: " + newRdn);
+            log.debug("-------------------------------------------------------------------------------");
+            log.debug("MODRDN:");
+            if (session != null && session.getBindDn() != null) log.debug(" - Bind DN: " + session.getBindDn());
+            log.debug(" - DN: " + dn);
+            log.debug(" - New RDN: " + newRdn);
 
-        Partition partition = partitionManager.findPartition(dn);
+            Partition partition = partitionManager.findPartition(dn);
 
-        if (partition == null) {
-            log.debug("Entry "+dn+" not found");
-            return LDAPException.NO_SUCH_OBJECT;
-        }
+            if (partition == null) {
+                int rc = LDAPException.NO_SUCH_OBJECT;
+                String message = "Entry "+dn+" not found";
+                log.debug(message);
+                throw new LDAPException(LDAPException.resultCodeToString(rc), rc, message);
+            }
 /*
-        List path = new ArrayList();
-        AttributeValues sourceValues = new AttributeValues();
+            List path = new ArrayList();
+            AttributeValues sourceValues = new AttributeValues();
 
-        findHandler.find(partition, dn, path, sourceValues);
+            findHandler.find(partition, dn, path, sourceValues);
 
-        if (path.isEmpty()) {
-            log.debug("Entry "+dn+" not found");
-            return LDAPException.NO_SUCH_OBJECT;
-        }
+            if (path.isEmpty()) {
+                log.debug("Entry "+dn+" not found");
+                return LDAPException.NO_SUCH_OBJECT;
+            }
 
-        Entry entry = (Entry)path.iterator().next();
+            Entry entry = (Entry)path.iterator().next();
 */
-        Entry entry = findHandler.find(partition, dn);
+            Entry entry = findHandler.find(partition, dn);
 
-        if (entry == null) {
-            log.debug("Entry "+dn+" not found");
-            return LDAPException.NO_SUCH_OBJECT;
+            if (entry == null) {
+                int rc = LDAPException.NO_SUCH_OBJECT;
+                String message = "Entry "+dn+" not found";
+                log.debug(message);
+                throw new LDAPException(LDAPException.resultCodeToString(rc), rc, message);
+            }
+
+            int rc = aclEngine.checkModify(session, partition, entry.getEntryMapping(), dn);
+
+            if (rc != LDAPException.SUCCESS) {
+                log.debug("Not allowed to rename "+dn);
+                throw new LDAPException(LDAPException.resultCodeToString(rc), rc, null);
+            }
+
+            getModRdnHandler().modrdn(session, partition, entry, newRdn, deleteOldRdn);
+
+        } catch (LDAPException e) {
+            throw e;
+
+        } catch (Exception e) {
+            int rc = ExceptionUtil.getReturnCode(e);
+            String message = e.getMessage();
+            log.error(message, e);
+            throw new LDAPException(LDAPException.resultCodeToString(rc), rc, message);
         }
-
-        int rc = aclEngine.checkModify(session, partition, entry.getEntryMapping(), dn);
-
-        if (rc != LDAPException.SUCCESS) {
-            log.debug("Not allowed to rename "+dn);
-            return rc;
-        }
-
-        return getModRdnHandler().modrdn(session, partition, entry, newRdn, deleteOldRdn);
     }
 
     /**

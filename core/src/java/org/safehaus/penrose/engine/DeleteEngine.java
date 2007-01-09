@@ -20,6 +20,7 @@ package org.safehaus.penrose.engine;
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.graph.Graph;
 import org.safehaus.penrose.partition.Partition;
+import org.safehaus.penrose.util.ExceptionUtil;
 import org.ietf.ldap.LDAPException;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
@@ -37,23 +38,27 @@ public class DeleteEngine {
         this.engine = engine;
     }
 
-    public int delete(Partition partition, Entry entry) throws Exception {
+    public void delete(Partition partition, Entry entry) throws LDAPException {
 
-        EntryMapping entryMapping = entry.getEntryMapping();
+        try {
+            EntryMapping entryMapping = entry.getEntryMapping();
 
-        AttributeValues sourceValues = entry.getSourceValues();
-        //getFieldValues(entry.getDn(), sourceValues);
+            AttributeValues sourceValues = entry.getSourceValues();
+            //getFieldValues(entry.getDn(), sourceValues);
 
-        Graph graph = engine.getGraph(entryMapping);
-        SourceMapping primarySourceMapping = engine.getPrimarySource(entryMapping);
+            log.debug("Deleting entry "+entry.getDn()+" ["+sourceValues+"]");
 
-        log.debug("Deleting entry "+entry.getDn()+" ["+sourceValues+"]");
+            DeleteGraphVisitor visitor = new DeleteGraphVisitor(engine, partition, entryMapping, sourceValues);
+            visitor.run();
 
-        DeleteGraphVisitor visitor = new DeleteGraphVisitor(engine, partition, entryMapping, sourceValues);
-        graph.traverse(visitor, primarySourceMapping);
+        } catch (LDAPException e) {
+            throw e;
 
-        if (visitor.getReturnCode() != LDAPException.SUCCESS) return visitor.getReturnCode();
-
-        return LDAPException.SUCCESS;
+        } catch (Exception e) {
+            int rc = ExceptionUtil.getReturnCode(e);
+            String message = e.getMessage();
+            log.error(message, e);
+            throw new LDAPException(LDAPException.resultCodeToString(rc), rc, message);
+        }
     }
 }

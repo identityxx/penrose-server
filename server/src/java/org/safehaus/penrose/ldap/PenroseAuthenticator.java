@@ -86,19 +86,18 @@ public class PenroseAuthenticator extends AbstractAuthenticator {
                 if (session == null) throw new ServiceUnavailableException();
             }
 
-            int rc = session.bind(dn, password);
-
-            if (rc != LDAPException.SUCCESS) {
-                throw ExceptionTool.throwNamingException(rc);
-            }
-
+            session.bind(dn, password);
             log.warn("Bind operation succeeded.");
 
             return createLdapPrincipal(dn, AuthenticationLevel.SIMPLE);
 
         } catch (NamingException e) {
-            log.warn("Bind operation failed.");
+            log.warn("Bind operation failed: "+e.getMessage());
             throw e;
+
+        } catch (LDAPException e) {
+            log.warn("Bind operation failed: "+e.getMessage());
+            throw ExceptionTool.createNamingException(e);
 
         } catch (Exception e) {
             log.error(e.getMessage(), e);

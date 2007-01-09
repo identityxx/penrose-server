@@ -22,8 +22,10 @@ import org.safehaus.penrose.graph.GraphVisitor;
 import org.safehaus.penrose.graph.GraphIterator;
 import org.safehaus.penrose.graph.Graph;
 import org.safehaus.penrose.util.Formatter;
+import org.safehaus.penrose.util.ExceptionUtil;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.SourceConfig;
+import org.safehaus.penrose.connector.Connector;
 import org.ietf.ldap.LDAPException;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
@@ -48,8 +50,6 @@ public class ModifyGraphVisitor extends GraphVisitor {
     public AttributeValues newSourceValues;
     private AttributeValues modifiedSourceValues = new AttributeValues();
 
-    private int returnCode = LDAPException.SUCCESS;
-
     public ModifyGraphVisitor(
             Engine engine,
             Partition partition,
@@ -71,8 +71,18 @@ public class ModifyGraphVisitor extends GraphVisitor {
         primarySourceMapping = engine.getPrimarySource(entryMapping);
     }
 
-    public void run() throws Exception {
-        graph.traverse(this, primarySourceMapping);
+    public void run() throws LDAPException {
+        try {
+            graph.traverse(this, primarySourceMapping);
+        } catch (LDAPException e) {
+            throw e;
+
+        } catch (Exception e) {
+            int rc = ExceptionUtil.getReturnCode(e);
+            String message = e.getMessage();
+            log.error(message, e);
+            throw new LDAPException(LDAPException.resultCodeToString(rc), rc, message);
+        }
     }
 
     public void visitNode(GraphIterator graphIterator, Object node) throws Exception {
@@ -124,22 +134,14 @@ public class ModifyGraphVisitor extends GraphVisitor {
         }
 
         SourceConfig sourceConfig = partition.getSourceConfig(sourceMapping.getSourceName());
+        Connector connector = engine.getConnector(sourceConfig);
 
-        returnCode = engine.getConnector(sourceConfig).modify(partition, sourceConfig, oldValues, newValues);
-        if (returnCode != LDAPException.SUCCESS) return;
+        connector.modify(partition, sourceConfig, oldValues, newValues);
 
         modifiedSourceValues.remove(sourceMapping.getName());
         modifiedSourceValues.set(sourceMapping.getName(), newValues);
 
         graphIterator.traverseEdges(node);
-    }
-
-    public int getReturnCode() {
-        return returnCode;
-    }
-
-    public void setReturnCode(int returnCode) {
-        this.returnCode = returnCode;
     }
 
     public AttributeValues getModifiedSourceValues() {

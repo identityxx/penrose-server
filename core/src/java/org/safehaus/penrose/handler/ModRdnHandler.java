@@ -25,6 +25,7 @@ import org.safehaus.penrose.mapping.Entry;
 import org.safehaus.penrose.mapping.EntryMapping;
 import org.safehaus.penrose.util.EntryUtil;
 import org.safehaus.penrose.util.ExceptionUtil;
+import org.safehaus.penrose.util.Formatter;
 import org.safehaus.penrose.engine.Engine;
 import org.ietf.ldap.LDAPException;
 import org.slf4j.LoggerFactory;
@@ -43,19 +44,19 @@ public class ModRdnHandler {
         this.handler = handler;
     }
 
-    public int modrdn(
+    public void modrdn(
             PenroseSession session,
             Partition partition,
             Entry entry,
             String newRdn,
             boolean deleteOldRdn
-    ) throws Exception {
+    ) throws LDAPException {
 
-        int rc;
+        int rc = LDAPException.SUCCESS;
+        String message = null;
+
         try {
-
-            rc = performModRdn(session, partition, entry, newRdn, deleteOldRdn);
-            if (rc != LDAPException.SUCCESS) return rc;
+            performModRdn(session, partition, entry, newRdn, deleteOldRdn);
 
             // refreshing entry cache
 
@@ -84,42 +85,58 @@ public class ModRdnHandler {
 
         } catch (LDAPException e) {
             rc = e.getResultCode();
+            message = e.getLDAPErrorMessage();
+            throw e;
 
         } catch (Exception e) {
-            log.error(e.getMessage(), e);
             rc = ExceptionUtil.getReturnCode(e);
-        }
+            message = e.getMessage();
+            log.error(message, e);
+            throw new LDAPException(LDAPException.resultCodeToString(rc), rc, message);
 
-        if (rc == LDAPException.SUCCESS) {
-            log.warn("ModRDN operation succeded.");
-        } else {
-            log.warn("ModRDN operation failed. RC="+rc);
+        } finally {
+            log.debug(Formatter.displaySeparator(80));
+            log.debug(Formatter.displayLine("MODRDN RESPONSE:", 80));
+            log.debug(Formatter.displayLine(" - RC      : "+rc, 80));
+            log.debug(Formatter.displayLine(" - Message : "+message, 80));
+            log.debug(Formatter.displaySeparator(80));
         }
-
-        return rc;
     }
 
-    public int performModRdn(
+    public void performModRdn(
             PenroseSession session,
             Partition partition,
             Entry entry,
             String newRdn,
             boolean deleteOldRdn)
-            throws Exception {
+            throws LDAPException {
 
-        EntryMapping entryMapping = entry.getEntryMapping();
+        try {
+            EntryMapping entryMapping = entry.getEntryMapping();
 
-        String engineName = "DEFAULT";
-        if (partition.isProxy(entryMapping)) engineName = "PROXY";
+            String engineName = "DEFAULT";
+            if (partition.isProxy(entryMapping)) engineName = "PROXY";
 
-        Engine engine = handler.getEngine(engineName);
+            Engine engine = handler.getEngine(engineName);
 
-        if (engine == null) {
-            log.debug("Engine "+engineName+" not found");
-            return LDAPException.OPERATIONS_ERROR;
+            if (engine == null) {
+                int rc = LDAPException.OPERATIONS_ERROR;;
+                String message = "Engine "+engineName+" not found";
+                log.error(message);
+                throw new LDAPException(LDAPException.resultCodeToString(rc), rc, message);
+            }
+
+            engine.modrdn(session, partition, entry, newRdn, deleteOldRdn);
+
+        } catch (LDAPException e) {
+            throw e;
+
+        } catch (Exception e) {
+            int rc = ExceptionUtil.getReturnCode(e);
+            String message = e.getMessage();
+            log.error(message, e);
+            throw new LDAPException(LDAPException.resultCodeToString(rc), rc, message);
         }
-
-        return engine.modrdn(session, partition, entry, newRdn, deleteOldRdn);
     }
 
     public int modRdnStaticEntry(

@@ -30,6 +30,7 @@ import org.safehaus.penrose.filter.FilterTool;
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.pipeline.PipelineEvent;
 import org.safehaus.penrose.pipeline.PipelineAdapter;
+import org.safehaus.penrose.util.ExceptionUtil;
 import org.ietf.ldap.LDAPException;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
@@ -142,32 +143,29 @@ public class Connector {
 		return lock;
 	}
 
-    public int bind(Partition partition, SourceConfig sourceConfig, EntryMapping entry, Row pk, String password) throws Exception {
+    public void bind(
+            Partition partition,
+            SourceConfig sourceConfig,
+            EntryMapping entry,
+            Row pk,
+            String password
+    ) throws Exception {
 
         log.debug("Binding as entry in "+sourceConfig.getName());
 
-        MRSWLock lock = getLock(sourceConfig);
-        lock.getReadLock(ConnectorConfig.DEFAULT_TIMEOUT);
-
-        try {
-            Connection connection = getConnection(partition, sourceConfig.getConnectionName());
-            int rc = connection.bind(sourceConfig, pk, password);
-
-            return rc;
-
-        } finally {
-        	lock.releaseReadLock(ConnectorConfig.DEFAULT_TIMEOUT);
-        }
+        Connection connection = getConnection(partition, sourceConfig.getConnectionName());
+        connection.bind(sourceConfig, pk, password);
     }
 
-    public int add(Partition partition, SourceConfig sourceConfig, AttributeValues sourceValues) throws Exception {
+    public void add(
+            Partition partition,
+            SourceConfig sourceConfig,
+            AttributeValues sourceValues
+    ) throws LDAPException {
 
         log.debug("----------------------------------------------------------------");
         log.debug("Adding entry into "+sourceConfig.getName());
         log.debug("Values: "+sourceValues);
-
-        MRSWLock lock = getLock(sourceConfig);
-        lock.getWriteLock(ConnectorConfig.DEFAULT_TIMEOUT);
 
         try {
             Collection pks = TransformEngine.getPrimaryKeys(sourceConfig, sourceValues);
@@ -182,8 +180,7 @@ public class Connector {
 
                 // Add row to source table in the source database/directory
                 Connection connection = getConnection(partition, sourceConfig.getConnectionName());
-                int rc = connection.add(sourceConfig, pk, newEntry);
-                if (rc != LDAPException.SUCCESS) return rc;
+                connection.add(sourceConfig, pk, newEntry);
 
                 AttributeValues sv = connection.get(sourceConfig, pk);
                 getSourceCacheManager().put(partition, sourceConfig, pk, sv);
@@ -200,19 +197,24 @@ public class Connector {
 */
             //getQueryCache(connectionConfig, sourceConfig).invalidate();
 
-        } finally {
-        	lock.releaseWriteLock(ConnectorConfig.DEFAULT_TIMEOUT);
-        }
+        } catch (LDAPException e) {
+            throw e;
 
-        return LDAPException.SUCCESS;
+        } catch (Exception e) {
+            int rc = ExceptionUtil.getReturnCode(e);
+            String message = e.getMessage();
+            log.error(message, e);
+            throw new LDAPException(LDAPException.resultCodeToString(rc), rc, message);
+        }
     }
 
-    public int delete(Partition partition, SourceConfig sourceConfig, AttributeValues sourceValues) throws Exception {
+    public void delete(
+            Partition partition,
+            SourceConfig sourceConfig,
+            AttributeValues sourceValues
+    ) throws LDAPException {
 
         log.debug("Deleting entry in "+sourceConfig.getName());
-
-        MRSWLock lock = getLock(sourceConfig);
-        lock.getWriteLock(ConnectorConfig.DEFAULT_TIMEOUT);
 
         try {
             Collection pks = TransformEngine.getPrimaryKeys(sourceConfig, sourceValues);
@@ -226,9 +228,7 @@ public class Connector {
 
                 // Delete row from source table in the source database/directory
                 Connection connection = getConnection(partition, sourceConfig.getConnectionName());
-                int rc = connection.delete(sourceConfig, pk);
-                if (rc != LDAPException.SUCCESS)
-                    return rc;
+                connection.delete(sourceConfig, pk);
 
                 // Delete row from source table in the cache
                 getSourceCacheManager().remove(partition, sourceConfig, pk);
@@ -236,24 +236,25 @@ public class Connector {
 
             //getQueryCache(connectionConfig, sourceConfig).invalidate();
 
-        } finally {
-            lock.releaseWriteLock(ConnectorConfig.DEFAULT_TIMEOUT);
-        }
+        } catch (LDAPException e) {
+            throw e;
 
-        return LDAPException.SUCCESS;
+        } catch (Exception e) {
+            int rc = ExceptionUtil.getReturnCode(e);
+            String message = e.getMessage();
+            log.error(message, e);
+            throw new LDAPException(LDAPException.resultCodeToString(rc), rc, message);
+        }
     }
 
-    public int modify(
+    public void modify(
             Partition partition,
             SourceConfig sourceConfig,
             AttributeValues oldSourceValues,
             AttributeValues newSourceValues
-    ) throws Exception {
+    ) throws LDAPException {
 
         log.debug("Modifying entry in " + sourceConfig.getName());
-
-        MRSWLock lock = getLock(sourceConfig);
-        lock.getWriteLock(ConnectorConfig.DEFAULT_TIMEOUT);
 
         try {
             Collection oldPKs = TransformEngine.getPrimaryKeys(sourceConfig, oldSourceValues);
@@ -286,9 +287,7 @@ public class Connector {
 
                 // Delete row from source table in the source database/directory
                 Connection connection = getConnection(partition, sourceConfig.getConnectionName());
-                int rc = connection.delete(sourceConfig, pk);
-                if (rc != LDAPException.SUCCESS)
-                    return rc;
+                connection.delete(sourceConfig, pk);
 
                 // Delete row from source table in the cache
                 getSourceCacheManager().remove(partition, sourceConfig, pk);
@@ -303,8 +302,7 @@ public class Connector {
 
                 // Add row to source table in the source database/directory
                 Connection connection = getConnection(partition, sourceConfig.getConnectionName());
-                int rc = connection.add(sourceConfig, pk, newEntry);
-                if (rc != LDAPException.SUCCESS) return rc;
+                connection.add(sourceConfig, pk, newEntry);
 
                 Filter filter = FilterTool.createFilter(pk);
 
@@ -327,8 +325,7 @@ public class Connector {
                 // Modify row from source table in the source database/directory
                 Connection connection = getConnection(partition, sourceConfig.getConnectionName());
                 Collection modifications = createModifications(oldEntry, newEntry);
-                int rc = connection.modify(sourceConfig, pk, modifications);
-                if (rc != LDAPException.SUCCESS) return rc;
+                connection.modify(sourceConfig, pk, modifications);
 
                 // Modify row from source table in the cache
                 Filter filter = FilterTool.createFilter(pk);
@@ -354,11 +351,15 @@ public class Connector {
 
             //getQueryCache(connectionConfig, sourceConfig).invalidate();
 
-        } finally {
-            lock.releaseWriteLock(ConnectorConfig.DEFAULT_TIMEOUT);
-        }
+        } catch (LDAPException e) {
+            throw e;
 
-        return LDAPException.SUCCESS;
+        } catch (Exception e) {
+            int rc = ExceptionUtil.getReturnCode(e);
+            String message = e.getMessage();
+            log.error(message, e);
+            throw new LDAPException(LDAPException.resultCodeToString(rc), rc, message);
+        }
     }
 
     public int modrdn(
@@ -376,12 +377,8 @@ public class Connector {
 
         try {
             Connection connection = getConnection(partition, sourceConfig.getConnectionName());
-
-            int rc = connection.add(sourceConfig, newPk, sourceValues);
-            if (rc != LDAPException.SUCCESS) return rc;
-
-            rc = connection.delete(sourceConfig, oldPk);
-            if (rc != LDAPException.SUCCESS) return rc;
+            connection.add(sourceConfig, newPk, sourceValues);
+            connection.delete(sourceConfig, oldPk);
 
             getSourceCacheManager().put(partition, sourceConfig, newPk, sourceValues);
             getSourceCacheManager().remove(partition, sourceConfig, oldPk);

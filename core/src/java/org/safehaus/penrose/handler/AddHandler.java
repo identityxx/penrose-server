@@ -24,6 +24,7 @@ import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.util.EntryUtil;
 import org.safehaus.penrose.util.ExceptionUtil;
+import org.safehaus.penrose.util.Formatter;
 import org.safehaus.penrose.engine.Engine;
 import org.ietf.ldap.*;
 import org.slf4j.LoggerFactory;
@@ -47,7 +48,7 @@ public class AddHandler {
         this.handler = handler;
     }
 
-    public int add(
+    public void add(
             PenroseSession session,
             Partition partition,
             Entry parent,
@@ -55,10 +56,17 @@ public class AddHandler {
             Attributes attributes)
     throws Exception {
 
-        int rc;
+        int rc = LDAPException.SUCCESS;
+        String message = null;
+
         try {
-            rc = performAdd(session, partition, parent, dn, attributes);
-            if (rc != LDAPException.SUCCESS) return rc;
+            log.warn("Adding entry \""+dn+"\".");
+            log.debug(Formatter.displaySeparator(80));
+            log.debug(Formatter.displayLine("ADD REQUEST:", 80));
+            log.debug(Formatter.displayLine(" - DN       : "+dn, 80));
+            log.debug(Formatter.displaySeparator(80));
+
+            performAdd(session, partition, parent, dn, attributes);
 
             // refreshing entry cache
 
@@ -81,22 +89,25 @@ public class AddHandler {
 
         } catch (LDAPException e) {
             rc = e.getResultCode();
+            message = e.getLDAPErrorMessage();
+            throw e;
 
         } catch (Exception e) {
-            log.error(e.getMessage(), e);
             rc = ExceptionUtil.getReturnCode(e);
-        }
+            message = e.getMessage();
+            log.error(message, e);
+            throw new LDAPException(message, LDAPException.OPERATIONS_ERROR, message);
 
-        if (rc == LDAPException.SUCCESS) {
-            log.warn("Add operation succeded.");
-        } else {
-            log.warn("Add operation failed. RC="+rc);
+        } finally {
+            log.debug(Formatter.displaySeparator(80));
+            log.debug(Formatter.displayLine("ADD RESPONSE:", 80));
+            log.debug(Formatter.displayLine(" - RC      : "+rc, 80));
+            log.debug(Formatter.displayLine(" - Message : "+message, 80));
+            log.debug(Formatter.displaySeparator(80));
         }
-
-        return rc;
     }
 
-    public int performAdd(
+    public void performAdd(
             PenroseSession session,
             Partition partition,
             Entry parent,
@@ -106,38 +117,54 @@ public class AddHandler {
 
         log.debug("Adding entry under "+parent.getDn());
 
-        EntryMapping parentMapping = parent.getEntryMapping();
+        try {
+            EntryMapping parentMapping = parent.getEntryMapping();
 
-        Collection children = partition.getChildren(parentMapping);
+            Collection children = partition.getChildren(parentMapping);
 
-        for (Iterator iterator = children.iterator(); iterator.hasNext(); ) {
-            EntryMapping entryMapping = (EntryMapping)iterator.next();
-            if (!partition.isDynamic(entryMapping)) continue;
+            for (Iterator iterator = children.iterator(); iterator.hasNext(); ) {
+                EntryMapping entryMapping = (EntryMapping)iterator.next();
+                if (!partition.isDynamic(entryMapping)) continue;
+
+                String engineName = "DEFAULT";
+                if (partition.isProxy(entryMapping)) engineName = "PROXY";
+
+                Engine engine = handler.getEngine(engineName);
+
+                if (engine == null) {
+                    int rc = LDAPException.OPERATIONS_ERROR;;
+                    String message = "Engine "+engineName+" not found";
+                    log.error(message);
+                    throw new LDAPException(LDAPException.resultCodeToString(rc), rc, message);
+                }
+
+                engine.add(session, partition, parent, entryMapping, dn, attributes);
+                return;
+            }
 
             String engineName = "DEFAULT";
-            if (partition.isProxy(entryMapping)) engineName = "PROXY";
+            if (partition.isProxy(parentMapping)) engineName = "PROXY";
 
             Engine engine = handler.getEngine(engineName);
 
             if (engine == null) {
-                log.debug("Engine "+engineName+" not found");
-                return LDAPException.OPERATIONS_ERROR;
+                int rc = LDAPException.OPERATIONS_ERROR;;
+                String message = "Engine "+engineName+" not found";
+                log.error(message);
+                throw new LDAPException(LDAPException.resultCodeToString(rc), rc, message);
             }
 
-            return engine.add(session, partition, parent, entryMapping, dn, attributes);
+            engine.add(session, partition, parent, parentMapping, dn, attributes);
+
+        } catch (LDAPException e) {
+            throw e;
+
+        } catch (Exception e) {
+            int rc = ExceptionUtil.getReturnCode(e);
+            String message = e.getMessage();
+            log.error(message, e);
+            throw new LDAPException(LDAPException.resultCodeToString(rc), rc, message);
         }
-
-        String engineName = "DEFAULT";
-        if (partition.isProxy(parentMapping)) engineName = "PROXY";
-
-        Engine engine = handler.getEngine(engineName);
-
-        if (engine == null) {
-            log.debug("Engine "+engineName+" not found");
-            return LDAPException.OPERATIONS_ERROR;
-        }
-
-        return engine.add(session, partition, parent, parentMapping, dn, attributes);
     }
 
     public Handler getHandler() {

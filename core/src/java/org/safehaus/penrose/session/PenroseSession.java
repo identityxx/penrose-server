@@ -84,132 +84,235 @@ public class PenroseSession {
         return sessionManager.isValid(this);
     }
 
-    public int add(String dn, Attributes attributes) throws Exception {
-        if (!isValid()) throw new Exception("Invalid session.");
+    public void add(String dn, Attributes attributes) throws LDAPException {
+        int rc = LDAPException.SUCCESS;
 
-        lastActivityDate.setTime(System.currentTimeMillis());
+        try {
+            if (!isValid()) throw new Exception("Invalid session.");
 
-        AddEvent beforeModifyEvent = new AddEvent(this, AddEvent.BEFORE_ADD, this, dn, attributes);
-        boolean b = eventManager.postEvent(dn, beforeModifyEvent);
+            lastActivityDate.setTime(System.currentTimeMillis());
 
-        if (!b) {
-            return LDAPException.SUCCESS;
+            AddEvent beforeAddEvent = new AddEvent(this, AddEvent.BEFORE_ADD, this, dn, attributes);
+            boolean b = eventManager.postEvent(dn, beforeAddEvent);
+
+            if (!b) {
+                rc = LDAPException.UNWILLING_TO_PERFORM;
+                throw new LDAPException(LDAPException.resultCodeToString(rc), rc, null);
+            }
+
+            handler.add(this, dn, attributes);
+
+        } catch (LDAPException e) {
+            rc = e.getResultCode();
+            throw e;
+
+        } catch (Exception e) {
+            rc = LDAPException.OPERATIONS_ERROR;
+            String message = e.getMessage();
+            throw new LDAPException(LDAPException.resultCodeToString(rc), rc, message);
+
+        } finally {
+            AddEvent afterAddEvent = new AddEvent(this, AddEvent.AFTER_ADD, this, dn, attributes);
+            afterAddEvent.setReturnCode(rc);
+            try {
+                eventManager.postEvent(dn, afterAddEvent);
+            } catch (Exception e) {
+                // ignore
+            }
         }
-
-        int rc = handler.add(this, dn, attributes);
-
-        AddEvent afterModifyEvent = new AddEvent(this, AddEvent.AFTER_ADD, this, dn, attributes);
-        afterModifyEvent.setReturnCode(rc);
-        eventManager.postEvent(dn, afterModifyEvent);
-
-        return rc;
     }
 
-    public int bind(String dn, String password) throws Exception {
-        if (!isValid()) throw new Exception("Invalid session.");
+    public void bind(String dn, String password) throws LDAPException {
+        int rc = LDAPException.SUCCESS;
 
-        lastActivityDate.setTime(System.currentTimeMillis());
+        try {
+            if (!isValid()) throw new Exception("Invalid session.");
 
-        BindEvent beforeBindEvent = new BindEvent(this, BindEvent.BEFORE_BIND, this, dn, password);
-        boolean b = eventManager.postEvent(dn, beforeBindEvent);
+            lastActivityDate.setTime(System.currentTimeMillis());
 
-        if (!b) {
-            return LDAPException.SUCCESS;
+            BindEvent beforeBindEvent = new BindEvent(this, BindEvent.BEFORE_BIND, this, dn, password);
+            boolean b = eventManager.postEvent(dn, beforeBindEvent);
+
+            if (!b) {
+                rc = LDAPException.UNWILLING_TO_PERFORM;
+                throw new LDAPException(LDAPException.resultCodeToString(rc), rc, null);
+            }
+
+            handler.bind(this, dn, password);
+
+        } catch (LDAPException e) {
+            rc = e.getResultCode();
+            throw e;
+
+        } catch (Exception e) {
+            rc = LDAPException.OPERATIONS_ERROR;
+            String message = e.getMessage();
+            throw new LDAPException(LDAPException.resultCodeToString(rc), rc, message);
+
+        } finally {
+            BindEvent afterBindEvent = new BindEvent(this, BindEvent.AFTER_BIND, this, dn, password);
+            afterBindEvent.setReturnCode(rc);
+            try {
+                eventManager.postEvent(dn, afterBindEvent);
+            } catch (Exception e) {
+                // ignore
+            }
         }
-
-        int rc = handler.bind(this, dn, password);
-
-        BindEvent afterBindEvent = new BindEvent(this, BindEvent.AFTER_BIND, this, dn, password);
-        afterBindEvent.setReturnCode(rc);
-        eventManager.postEvent(dn, afterBindEvent);
-
-        return rc;
     }
 
-    public int compare(String dn, String attributeName, Object attributeValue) throws Exception {
-        if (!isValid()) throw new Exception("Invalid session.");
+    public boolean compare(String dn, String attributeName, Object attributeValue) throws Exception {
+        int rc = LDAPException.SUCCESS;
 
-        lastActivityDate.setTime(System.currentTimeMillis());
+        try {
+            if (!isValid()) throw new Exception("Invalid session.");
 
-        CompareEvent beforeCompareEvent = new CompareEvent(this, CompareEvent.BEFORE_COMPARE, this, dn, attributeName, attributeValue);
-        boolean b = eventManager.postEvent(dn, beforeCompareEvent);
+            lastActivityDate.setTime(System.currentTimeMillis());
 
-        if (!b) {
-            return LDAPException.SUCCESS;
+            CompareEvent beforeCompareEvent = new CompareEvent(this, CompareEvent.BEFORE_COMPARE, this, dn, attributeName, attributeValue);
+            boolean b = eventManager.postEvent(dn, beforeCompareEvent);
+
+            if (!b) {
+                rc = LDAPException.UNWILLING_TO_PERFORM;
+                throw new LDAPException(LDAPException.resultCodeToString(rc), rc, null);
+            }
+
+            return handler.compare(this, dn, attributeName, attributeValue);
+
+        } catch (LDAPException e) {
+            rc = e.getResultCode();
+            throw e;
+
+        } catch (Exception e) {
+            rc = LDAPException.OPERATIONS_ERROR;
+            String message = e.getMessage();
+            throw new LDAPException(LDAPException.resultCodeToString(rc), rc, message);
+
+        } finally {
+            CompareEvent afterCompareEvent = new CompareEvent(this, CompareEvent.AFTER_COMPARE, this, dn, attributeName, attributeValue);
+            afterCompareEvent.setReturnCode(rc);
+            try {
+                eventManager.postEvent(dn, afterCompareEvent);
+            } catch (Exception e) {
+                // ignore
+            }
         }
-
-        int rc = handler.compare(this, dn, attributeName, attributeValue);
-
-        CompareEvent afterCompareEvent = new CompareEvent(this, CompareEvent.AFTER_COMPARE, this, dn, attributeName, attributeValue);
-        afterCompareEvent.setReturnCode(rc);
-        eventManager.postEvent(dn, afterCompareEvent);
-
-        return rc;
      }
 
-    public int delete(String dn) throws Exception {
-        if (!isValid()) throw new Exception("Invalid session.");
+    public void delete(String dn) throws LDAPException {
 
-        lastActivityDate.setTime(System.currentTimeMillis());
+        int rc = LDAPException.SUCCESS;
 
-        DeleteEvent beforeDeleteEvent = new DeleteEvent(this, DeleteEvent.BEFORE_DELETE, this, dn);
-        boolean b = eventManager.postEvent(dn, beforeDeleteEvent);
+        try {
+            if (!isValid()) throw new Exception("Invalid session.");
 
-        if (!b) {
-            return LDAPException.SUCCESS;
+            lastActivityDate.setTime(System.currentTimeMillis());
+
+            DeleteEvent beforeDeleteEvent = new DeleteEvent(this, DeleteEvent.BEFORE_DELETE, this, dn);
+            boolean b = eventManager.postEvent(dn, beforeDeleteEvent);
+
+            if (!b) {
+                rc = LDAPException.UNWILLING_TO_PERFORM;
+                throw new LDAPException(LDAPException.resultCodeToString(rc), rc, null);
+            }
+
+            handler.delete(this, dn);
+
+        } catch (LDAPException e) {
+            rc = e.getResultCode();
+            throw e;
+
+        } catch (Exception e) {
+            rc = LDAPException.OPERATIONS_ERROR;
+            String message = e.getMessage();
+            throw new LDAPException(LDAPException.resultCodeToString(rc), rc, message);
+
+        } finally {
+            DeleteEvent afterDeleteEvent = new DeleteEvent(this, DeleteEvent.AFTER_DELETE, this, dn);
+            afterDeleteEvent.setReturnCode(rc);
+            try {
+                eventManager.postEvent(dn, afterDeleteEvent);
+            } catch (Exception e) {
+                // ignore
+            }
         }
-
-        int rc = handler.delete(this, dn);
-
-        DeleteEvent afterDeleteEvent = new DeleteEvent(this, DeleteEvent.AFTER_DELETE, this, dn);
-        afterDeleteEvent.setReturnCode(rc);
-        eventManager.postEvent(dn, afterDeleteEvent);
-
-        return rc;
     }
 
-    public int modify(String dn, Collection modifications) throws Exception {
+    public void modify(String dn, Collection modifications) throws LDAPException {
 
-        if (!isValid()) throw new Exception("Invalid session.");
+        int rc = LDAPException.SUCCESS;
 
-        lastActivityDate.setTime(System.currentTimeMillis());
+        try {
+            if (!isValid()) throw new Exception("Invalid session.");
 
-        ModifyEvent beforeModifyEvent = new ModifyEvent(this, ModifyEvent.BEFORE_MODIFY, this, dn, modifications);
-        boolean b = eventManager.postEvent(dn, beforeModifyEvent);
+            lastActivityDate.setTime(System.currentTimeMillis());
 
-        if (!b) {
-            return LDAPException.SUCCESS;
+            ModifyEvent beforeModifyEvent = new ModifyEvent(this, ModifyEvent.BEFORE_MODIFY, this, dn, modifications);
+            boolean b = eventManager.postEvent(dn, beforeModifyEvent);
+
+            if (!b) {
+                rc = LDAPException.UNWILLING_TO_PERFORM;
+                throw new LDAPException(LDAPException.resultCodeToString(rc), rc, null);
+            }
+
+            handler.modify(this, dn, modifications);
+
+        } catch (LDAPException e) {
+            rc = e.getResultCode();
+            throw e;
+
+        } catch (Exception e) {
+            rc = LDAPException.OPERATIONS_ERROR;
+            String message = e.getMessage();
+            throw new LDAPException(LDAPException.resultCodeToString(rc), rc, message);
+
+        } finally {
+            ModifyEvent afterModifyEvent = new ModifyEvent(this, ModifyEvent.AFTER_MODIFY, this, dn, modifications);
+            afterModifyEvent.setReturnCode(rc);
+            try {
+                eventManager.postEvent(dn, afterModifyEvent);
+            } catch (Exception e) {
+                // ignore
+            }
         }
-
-        int rc = handler.modify(this, dn, modifications);
-
-        ModifyEvent afterModifyEvent = new ModifyEvent(this, ModifyEvent.AFTER_MODIFY, this, dn, modifications);
-        afterModifyEvent.setReturnCode(rc);
-        eventManager.postEvent(dn, afterModifyEvent);
-
-        return rc;
     }
 
-    public int modrdn(String dn, String newRdn, boolean deleteOldRdn) throws Exception {
+    public void modrdn(String dn, String newRdn, boolean deleteOldRdn) throws LDAPException {
 
-        if (!isValid()) throw new Exception("Invalid session.");
+        int rc = LDAPException.SUCCESS;
 
-        lastActivityDate.setTime(System.currentTimeMillis());
+        try {
+            if (!isValid()) throw new Exception("Invalid session.");
 
-        ModRdnEvent beforeModRdnEvent = new ModRdnEvent(this, ModRdnEvent.BEFORE_MODRDN, this, dn, newRdn, deleteOldRdn);
-        boolean b = eventManager.postEvent(dn, beforeModRdnEvent);
+            lastActivityDate.setTime(System.currentTimeMillis());
 
-        if (!b) {
-            return LDAPException.SUCCESS;
+            ModRdnEvent beforeModRdnEvent = new ModRdnEvent(this, ModRdnEvent.BEFORE_MODRDN, this, dn, newRdn, deleteOldRdn);
+            boolean b = eventManager.postEvent(dn, beforeModRdnEvent);
+
+            if (!b) {
+                rc = LDAPException.UNWILLING_TO_PERFORM;
+                throw new LDAPException(LDAPException.resultCodeToString(rc), rc, null);
+            }
+
+            handler.modrdn(this, dn, newRdn, deleteOldRdn);
+
+        } catch (LDAPException e) {
+            rc = e.getResultCode();
+            throw e;
+
+        } catch (Exception e) {
+            rc = LDAPException.OPERATIONS_ERROR;
+            String message = e.getMessage();
+            throw new LDAPException(LDAPException.resultCodeToString(rc), rc, message);
+
+        } finally {
+            ModRdnEvent afterModRdnEvent = new ModRdnEvent(this, ModRdnEvent.AFTER_MODRDN, this, dn, newRdn, deleteOldRdn);
+            afterModRdnEvent.setReturnCode(rc);
+            try {
+                eventManager.postEvent(dn, afterModRdnEvent);
+            } catch (Exception e) {
+                // ignore
+            }
         }
-
-        int rc = handler.modrdn(this, dn, newRdn, deleteOldRdn);
-
-        ModRdnEvent afterModRdnEvent = new ModRdnEvent(this, ModRdnEvent.AFTER_MODRDN, this, dn, newRdn, deleteOldRdn);
-        afterModRdnEvent.setReturnCode(rc);
-        eventManager.postEvent(dn, afterModRdnEvent);
-
-        return rc;
     }
 
     /**
@@ -264,25 +367,41 @@ public class PenroseSession {
         return handler.search(this, newBaseDn, newFilter, newSc, results);
     }
 
-    public int unbind() throws Exception {
+    public void unbind() throws LDAPException {
 
-        if (!isValid()) throw new Exception("Invalid session.");
+        int rc = LDAPException.SUCCESS;
+        try {
+            if (!isValid()) throw new Exception("Invalid session.");
 
-        lastActivityDate.setTime(System.currentTimeMillis());
+            lastActivityDate.setTime(System.currentTimeMillis());
 
-        BindEvent beforeUnbindEvent = new BindEvent(this, BindEvent.BEFORE_UNBIND, this, bindDn);
-        boolean b = eventManager.postEvent(bindDn, beforeUnbindEvent);
+            BindEvent beforeUnbindEvent = new BindEvent(this, BindEvent.BEFORE_UNBIND, this, bindDn);
+            boolean b = eventManager.postEvent(bindDn, beforeUnbindEvent);
 
-        if (!b) {
-            return LDAPException.SUCCESS;
+            if (!b) {
+                rc = LDAPException.UNWILLING_TO_PERFORM;
+                throw new LDAPException(LDAPException.resultCodeToString(rc), rc, null);
+            }
+
+            handler.unbind(this);
+
+        } catch (LDAPException e) {
+            rc = e.getResultCode();
+            throw e;
+
+        } catch (Exception e) {
+            rc = LDAPException.OPERATIONS_ERROR;
+            String message = e.getMessage();
+            throw new LDAPException(LDAPException.resultCodeToString(rc), rc, message);
+
+        } finally {
+            BindEvent afterUnbindEvent = new BindEvent(this, BindEvent.AFTER_UNBIND, this, bindDn);
+            try {
+                eventManager.postEvent(bindDn, afterUnbindEvent);
+            } catch (Exception e) {
+                // ignore
+            }
         }
-
-        int rc = handler.unbind(this);
-
-        BindEvent afterUnbindEvent = new BindEvent(this, BindEvent.AFTER_UNBIND, this, bindDn);
-        eventManager.postEvent(bindDn, afterUnbindEvent);
-
-        return rc;
     }
 
     public void close() throws Exception {

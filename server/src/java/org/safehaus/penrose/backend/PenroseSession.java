@@ -12,7 +12,7 @@ import org.safehaus.penrose.session.PenroseSearchResults;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.novell.ldap.LDAPException;
+import org.ietf.ldap.LDAPException;
 
 public class PenroseSession implements Session {
 
@@ -49,7 +49,11 @@ public class PenroseSession implements Session {
         log.debug("bind(\""+dn+", \""+password+"\")");
 
         try {
-            return session.bind(dn, password);
+            session.bind(dn, password);
+            return LDAPException.SUCCESS;
+
+        } catch (LDAPException e) {
+            return e.getResultCode();
 
         } catch (Throwable e) {
             log.error(e.getMessage(), e);
@@ -68,7 +72,8 @@ public class PenroseSession implements Session {
         log.debug("unbind()");
 
         try {
-            return session.unbind();
+            session.unbind();
+            return LDAPException.SUCCESS;
 
         } catch (Throwable e) {
             log.error(e.getMessage(), e);
@@ -131,7 +136,8 @@ public class PenroseSession implements Session {
         log.debug("add("+dn+")");
 
         try {
-            return session.add(dn, attributes);
+            session.add(dn, attributes);
+            return LDAPException.SUCCESS;
 
         } catch (Throwable e) {
             log.error(e.getMessage(), e);
@@ -153,7 +159,8 @@ public class PenroseSession implements Session {
         log.debug("delete("+dn+")");
 
         try {
-            return session.delete(dn);
+            session.delete(dn);
+            return LDAPException.SUCCESS;
 
         } catch (Throwable e) {
             log.error(e.getMessage(), e);
@@ -177,7 +184,8 @@ public class PenroseSession implements Session {
         log.debug("modify("+dn+")");
 
         try {
-            return session.modify(dn, modifications);
+            session.modify(dn, modifications);
+            return LDAPException.SUCCESS;
 
         } catch (Throwable e) {
             log.error(e.getMessage(), e);
@@ -202,7 +210,8 @@ public class PenroseSession implements Session {
         log.debug("modrdn(\""+dn+"\", \""+newrdn+"\")");
 
         try {
-            return session.modrdn(dn, newrdn, deleteOldRdn);
+            session.modrdn(dn, newrdn, deleteOldRdn);
+            return LDAPException.SUCCESS;
 
         } catch (Throwable e) {
             log.error(e.getMessage(), e);
@@ -228,7 +237,8 @@ public class PenroseSession implements Session {
         log.debug("compare("+dn+", "+attributeName+", "+attributeValue+")");
 
         try {
-            return session.compare(dn, attributeName, attributeValue);
+            boolean b = session.compare(dn, attributeName, attributeValue);
+            return b ? LDAPException.COMPARE_TRUE : LDAPException.COMPARE_FALSE;
 
         } catch (Throwable e) {
             log.error(e.getMessage(), e);

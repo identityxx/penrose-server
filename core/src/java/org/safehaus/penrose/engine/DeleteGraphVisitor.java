@@ -20,9 +20,12 @@ package org.safehaus.penrose.engine;
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.graph.GraphVisitor;
 import org.safehaus.penrose.graph.GraphIterator;
+import org.safehaus.penrose.graph.Graph;
 import org.safehaus.penrose.util.Formatter;
+import org.safehaus.penrose.util.ExceptionUtil;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.SourceConfig;
+import org.safehaus.penrose.connector.Connector;
 import org.ietf.ldap.LDAPException;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
@@ -41,7 +44,8 @@ public class DeleteGraphVisitor extends GraphVisitor {
     public EntryMapping entryMapping;
     public AttributeValues sourceValues;
 
-    private int returnCode = LDAPException.SUCCESS;
+    Graph graph;
+    SourceMapping primarySourceMapping;
 
     public DeleteGraphVisitor(
             Engine engine,
@@ -54,6 +58,24 @@ public class DeleteGraphVisitor extends GraphVisitor {
         this.partition = partition;
         this.entryMapping = entryMapping;
         this.sourceValues = sourceValues;
+
+        graph = engine.getGraph(entryMapping);
+        primarySourceMapping = engine.getPrimarySource(entryMapping);
+    }
+
+    public void run() throws LDAPException {
+        try {
+            graph.traverse(this, primarySourceMapping);
+
+        } catch (LDAPException e) {
+            throw e;
+
+        } catch (Exception e) {
+            int rc = ExceptionUtil.getReturnCode(e);
+            String message = e.getMessage();
+            log.error(message, e);
+            throw new LDAPException(LDAPException.resultCodeToString(rc), rc, message);
+        }
     }
 
     public void visitNode(GraphIterator graphIterator, Object node) throws Exception {
@@ -92,18 +114,9 @@ public class DeleteGraphVisitor extends GraphVisitor {
         }
 
         SourceConfig sourceConfig = partition.getSourceConfig(sourceMapping.getSourceName());
-
-        returnCode = engine.getConnector(sourceConfig).delete(partition, sourceConfig, newSourceValues);
-        if (returnCode != LDAPException.SUCCESS) return;
+        Connector connector = engine.getConnector(sourceConfig);
+        connector.delete(partition, sourceConfig, newSourceValues);
 
         graphIterator.traverseEdges(node);
-    }
-
-    public int getReturnCode() {
-        return returnCode;
-    }
-
-    public void setReturnCode(int returnCode) {
-        this.returnCode = returnCode;
     }
 }

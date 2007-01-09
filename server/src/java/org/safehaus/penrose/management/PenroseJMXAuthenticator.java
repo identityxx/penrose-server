@@ -18,6 +18,7 @@
 package org.safehaus.penrose.management;
 
 import org.safehaus.penrose.Penrose;
+import org.safehaus.penrose.ldap.ExceptionTool;
 import org.safehaus.penrose.session.PenroseSession;
 import org.ietf.ldap.LDAPException;
 import org.slf4j.LoggerFactory;
@@ -66,7 +67,11 @@ public class PenroseJMXAuthenticator implements JMXAuthenticator {
                 session = penrose.newSession();
                 if (session == null) throw new SecurityException("Unable to create session.");
 
-                rc = session.bind(bindDn, bindPassword);
+                session.bind(bindDn, bindPassword);
+
+            } catch (LDAPException e) {
+                throw new SecurityException("Authentication failed");
+
             } finally {
                 session.close();
             }

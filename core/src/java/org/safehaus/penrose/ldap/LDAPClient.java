@@ -142,7 +142,7 @@ public class LDAPClient {
         if (connection != null) connection.disconnect();
     }
 
-    public int bind(String dn, String password) throws Exception {
+    public void bind(String dn, String password) throws Exception {
 
         dn = EntryUtil.append(dn, suffix);
 
@@ -154,15 +154,9 @@ public class LDAPClient {
         try {
             context = getContext();
 
-        } catch (Exception e) {
-            log.debug(e.getMessage());
-            return LDAPException.INVALID_CREDENTIALS;
-
         } finally {
             if (context != null) try { context.close(); } catch (Exception e) {}
         }
-
-        return LDAPException.SUCCESS;
     }
 
     public int add(String dn, Attributes attributes) throws Exception {

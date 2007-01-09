@@ -20,6 +20,7 @@ package org.safehaus.penrose.engine;
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.util.Formatter;
 import org.safehaus.penrose.util.EntryUtil;
+import org.safehaus.penrose.util.ExceptionUtil;
 import org.safehaus.penrose.graph.Graph;
 import org.safehaus.penrose.partition.Partition;
 import org.ietf.ldap.LDAPException;
@@ -42,105 +43,101 @@ public class AddEngine {
         this.engine = engine;
     }
 
-    public int add(
+    public void add(
             Partition partition,
             Entry parent,
             EntryMapping entryMapping,
             String dn,
-            AttributeValues attributeValues)
-            throws Exception {
+            AttributeValues attributeValues
+    ) throws Exception {
 
-        Row rdn = EntryUtil.getRdn(dn);
-        attributeValues.set("rdn", rdn);
+        try {
+            Row rdn = EntryUtil.getRdn(dn);
+            attributeValues.set("rdn", rdn);
 
-        AttributeValues parentSourceValues = parent.getSourceValues();
-        AttributeValues sourceValues = new AttributeValues();
+            AttributeValues parentSourceValues = parent.getSourceValues();
+            AttributeValues sourceValues = new AttributeValues();
 
-        Collection sources = entryMapping.getSourceMappings();
-        for (Iterator i=sources.iterator(); i.hasNext(); ) {
-            SourceMapping sourceMapping = (SourceMapping)i.next();
+            Collection sources = entryMapping.getSourceMappings();
+            for (Iterator i=sources.iterator(); i.hasNext(); ) {
+                SourceMapping sourceMapping = (SourceMapping)i.next();
 
-            AttributeValues output = new AttributeValues();
-            Row pk = engine.getTransformEngine().translate(partition, entryMapping, sourceMapping, attributeValues, output);
-            if (pk == null) continue;
+                AttributeValues output = new AttributeValues();
+                Row pk = engine.getTransformEngine().translate(partition, entryMapping, sourceMapping, attributeValues, output);
+                if (pk == null) continue;
 
-            sourceValues.set(sourceMapping.getName()+".primaryKey", pk);
-            
-            for (Iterator j=output.getNames().iterator(); j.hasNext(); ) {
-                String name = (String)j.next();
-                Collection values = output.get(name);
-                sourceValues.add(sourceMapping.getName()+"."+name, values);
-            }
-        }
+                sourceValues.set(sourceMapping.getName()+".primaryKey", pk);
 
-        if (log.isDebugEnabled()) {
-            log.debug(Formatter.displaySeparator(80));
-
-            log.debug(Formatter.displayLine("Parent source values:", 80));
-            for (Iterator i = parentSourceValues.getNames().iterator(); i.hasNext(); ) {
-                String name = (String)i.next();
-                Collection values = parentSourceValues.get(name);
-                log.debug(Formatter.displayLine(" - "+name+": "+values, 80));
+                for (Iterator j=output.getNames().iterator(); j.hasNext(); ) {
+                    String name = (String)j.next();
+                    Collection values = output.get(name);
+                    sourceValues.add(sourceMapping.getName()+"."+name, values);
+                }
             }
 
-            log.debug(Formatter.displayLine("Local source values:", 80));
-            for (Iterator i = sourceValues.getNames().iterator(); i.hasNext(); ) {
-                String name = (String)i.next();
-                Collection values = sourceValues.get(name);
-                log.debug(Formatter.displayLine(" - "+name+": "+values, 80));
-            }
+            if (log.isDebugEnabled()) {
+                log.debug(Formatter.displaySeparator(80));
 
-            log.debug(Formatter.displaySeparator(80));
-        }
-
-        sourceValues.add(parentSourceValues);
-
-        Graph graph = engine.getGraph(entryMapping);
-        String startingSourceName = engine.getStartingSourceName(partition, entryMapping);
-        if (startingSourceName == null) return LDAPException.SUCCESS;
-
-        SourceMapping startingSourceMapping = partition.getEffectiveSourceMapping(entryMapping, startingSourceName);
-        log.debug("Starting from source: "+startingSourceName);
-
-        Collection relationships = graph.getEdgeObjects(startingSourceMapping);
-        for (Iterator i=relationships.iterator(); i.hasNext(); ) {
-            Collection list = (Collection)i.next();
-
-            for (Iterator j=list.iterator(); j.hasNext(); ) {
-                Relationship relationship = (Relationship)j.next();
-                log.debug("Relationship "+relationship);
-
-                String lhs = relationship.getLhs();
-                String rhs = relationship.getRhs();
-
-                if (rhs.startsWith(startingSourceName+".")) {
-                    String exp = lhs;
-                    lhs = rhs;
-                    rhs = exp;
+                log.debug(Formatter.displayLine("Parent source values:", 80));
+                for (Iterator i = parentSourceValues.getNames().iterator(); i.hasNext(); ) {
+                    String name = (String)i.next();
+                    Collection values = parentSourceValues.get(name);
+                    log.debug(Formatter.displayLine(" - "+name+": "+values, 80));
                 }
 
-                Collection lhsValues = sourceValues.get(lhs);
-                log.debug(" - "+lhs+" -> "+rhs+": "+lhsValues);
-                sourceValues.set(rhs, lhsValues);
+                log.debug(Formatter.displayLine("Local source values:", 80));
+                for (Iterator i = sourceValues.getNames().iterator(); i.hasNext(); ) {
+                    String name = (String)i.next();
+                    Collection values = sourceValues.get(name);
+                    log.debug(Formatter.displayLine(" - "+name+": "+values, 80));
+                }
+
+                log.debug(Formatter.displaySeparator(80));
             }
+
+            sourceValues.add(parentSourceValues);
+
+            Graph graph = engine.getGraph(entryMapping);
+            String startingSourceName = engine.getStartingSourceName(partition, entryMapping);
+            if (startingSourceName == null) return;
+
+            SourceMapping startingSourceMapping = partition.getEffectiveSourceMapping(entryMapping, startingSourceName);
+            log.debug("Starting from source: "+startingSourceName);
+
+            Collection relationships = graph.getEdgeObjects(startingSourceMapping);
+            for (Iterator i=relationships.iterator(); i.hasNext(); ) {
+                Collection list = (Collection)i.next();
+
+                for (Iterator j=list.iterator(); j.hasNext(); ) {
+                    Relationship relationship = (Relationship)j.next();
+                    log.debug("Relationship "+relationship);
+
+                    String lhs = relationship.getLhs();
+                    String rhs = relationship.getRhs();
+
+                    if (rhs.startsWith(startingSourceName+".")) {
+                        String exp = lhs;
+                        lhs = rhs;
+                        rhs = exp;
+                    }
+
+                    Collection lhsValues = sourceValues.get(lhs);
+                    log.debug(" - "+lhs+" -> "+rhs+": "+lhsValues);
+                    sourceValues.set(rhs, lhsValues);
+                }
+            }
+
+            AddGraphVisitor visitor = new AddGraphVisitor(engine, partition, entryMapping, sourceValues);
+            visitor.run();
+
+        } catch (LDAPException e) {
+            throw e;
+
+        } catch (Exception e) {
+            int rc = ExceptionUtil.getReturnCode(e);
+            String message = e.getMessage();
+            log.error(message, e);
+            throw new LDAPException(LDAPException.resultCodeToString(rc), rc, message);
         }
-
-        AddGraphVisitor visitor = new AddGraphVisitor(engine, partition, entryMapping, sourceValues);
-        visitor.run();
-
-        if (visitor.getReturnCode() != LDAPException.SUCCESS) return visitor.getReturnCode();
-/*
-        Interpreter interpreter = engine.getInterpreterFactory().newInstance();
-
-        AttributeValues newSourceValues = visitor.getAddedSourceValues();
-        AttributeValues newAttributeValues = engine.computeAttributeValues(entryDefinition, newSourceValues, interpreter);
-        Row rdn = entryDefinition.getRdn(newAttributeValues);
-        String dn = rdn+","+parent.getDn();
-
-        Entry entry = new Entry(dn, entryDefinition, newSourceValues, newAttributeValues);
-
-        engine.getCacheStorage(parent.getDn(), entryDefinition).put(rdn, entry);
-*/
-        return LDAPException.SUCCESS;
     }
 }
