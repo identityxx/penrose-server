@@ -29,6 +29,7 @@ import org.safehaus.penrose.pipeline.PipelineAdapter;
 import org.safehaus.penrose.pipeline.PipelineEvent;
 import org.safehaus.penrose.util.*;
 import org.safehaus.penrose.util.Formatter;
+import org.safehaus.penrose.interpreter.Interpreter;
 import org.ietf.ldap.LDAPException;
 import org.ietf.ldap.LDAPConnection;
 
@@ -709,6 +710,10 @@ Mapping: ou=Groups,dc=Proxy,dc=Example,dc=org
                             //log.debug(" - "+name+": "+value);
                         }
                     }
+
+                    Interpreter interpreter = getInterpreterManager().newInstance();
+                    AttributeValues av = computeAttributeValues(entryMapping, interpreter);
+                    attributeValues.set(av);
 
                     Entry entry = new Entry(dn, entryMapping, attributeValues);
                     searchResults.add(entry);

@@ -16,7 +16,7 @@
 
 <!ELEMENT source (source-name,field*,parameter*)>
 <!ATTLIST source name CDATA #REQUIRED>
-<!ATTLIST source proxy CDATA #IMPLIED>
+<!ATTLIST source engine CDATA #IMPLIED>
 <!ATTLIST source readOnly CDATA #IMPLIED>
 <!ATTLIST source required CDATA #IMPLIED>
 <!ATTLIST source includeOnAdd CDATA #IMPLIED>

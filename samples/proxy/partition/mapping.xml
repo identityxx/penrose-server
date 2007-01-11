@@ -29,13 +29,13 @@
   </entry>
 
   <entry dn="ou=Users,dc=Proxy,dc=Example,dc=com">
-    <source name="users" proxy="true">
+    <source name="users" engine="PROXY">
       <source-name>users</source-name>
     </source>
   </entry>
 
   <entry dn="ou=Groups,dc=Proxy,dc=Example,dc=com">
-    <source name="groups" proxy="true">
+    <source name="groups" engine="PROXY">
       <source-name>groups</source-name>
     </source>
   </entry>

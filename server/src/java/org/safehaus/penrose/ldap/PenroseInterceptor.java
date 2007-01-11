@@ -23,6 +23,7 @@ import org.apache.directory.server.core.configuration.InterceptorConfiguration;
 import org.apache.directory.server.core.DirectoryServiceConfiguration;
 import org.apache.directory.shared.ldap.filter.ExprNode;
 import org.apache.directory.shared.ldap.name.LdapDN;
+import org.apache.directory.shared.ldap.message.ModificationItemImpl;
 import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.server.PenroseServer;
 import org.safehaus.penrose.config.PenroseConfig;
@@ -217,7 +218,7 @@ public class PenroseInterceptor extends BaseInterceptor {
                 return next.compare(name, attributeName, value);
             }
 
-            Collection entryMappings = partition.findEntryMappings(dn);
+            Collection entryMappings = partitionManager.findEntryMappings(partition, dn);
             if (entryMappings == null || entryMappings.isEmpty()) {
                 log.debug(dn+" is a static entry");
                 return next.compare(name, attributeName, value);
@@ -260,7 +261,7 @@ public class PenroseInterceptor extends BaseInterceptor {
                 return;
             }
 
-            Collection entryMappings = partition.findEntryMappings(dn);
+            Collection entryMappings = partitionManager.findEntryMappings(partition, dn);
             if (entryMappings == null || entryMappings.isEmpty()) {
                 log.debug(dn+" is a static entry");
                 next.delete(name);
@@ -333,7 +334,7 @@ public class PenroseInterceptor extends BaseInterceptor {
                 return next.list(name);
             }
 
-            Collection entryMappings = partition.findEntryMappings(dn);
+            Collection entryMappings = partitionManager.findEntryMappings(partition, dn);
             if (entryMappings == null || entryMappings.isEmpty()) {
                 log.debug(dn+" is a static entry");
                 return next.list(name);
@@ -391,7 +392,7 @@ public class PenroseInterceptor extends BaseInterceptor {
                 return next.hasEntry(name);
             }
 
-            Collection entryMappings = partition.findEntryMappings(dn);
+            Collection entryMappings = partitionManager.findEntryMappings(partition, dn);
             if (entryMappings == null || entryMappings.isEmpty()) {
                 //log.debug(dn+" is a static entry");
                 return next.hasEntry(name);
@@ -448,7 +449,7 @@ public class PenroseInterceptor extends BaseInterceptor {
                 return next.lookup(name, attrIds);
             }
 
-            Collection entryMappings = partition.findEntryMappings(dn);
+            Collection entryMappings = partitionManager.findEntryMappings(partition, dn);
             if (entryMappings == null || entryMappings.isEmpty()) {
                 //log.debug(dn+" is a static entry");
                 return next.lookup(name, attrIds);
@@ -511,7 +512,7 @@ public class PenroseInterceptor extends BaseInterceptor {
                 return next.lookup(name);
             }
 
-            Collection entryMappings = partition.findEntryMappings(dn);
+            Collection entryMappings = partitionManager.findEntryMappings(partition, dn);
             if (entryMappings == null || entryMappings.isEmpty()) {
                 //log.debug(dn+" is a static entry");
                 return next.lookup(name);
@@ -693,7 +694,7 @@ public class PenroseInterceptor extends BaseInterceptor {
                 return;
             }
 
-            Collection entryMappings = partition.findEntryMappings(dn);
+            Collection entryMappings = partitionManager.findEntryMappings(partition, dn);
             if (entryMappings == null || entryMappings.isEmpty()) {
                 log.debug(dn+" is a static entry");
                 next.modify(name, modOp, attributes);
@@ -732,7 +733,7 @@ public class PenroseInterceptor extends BaseInterceptor {
     public void modify(
             NextInterceptor next,
             LdapDN name,
-            ModificationItem[] modificationItems
+            ModificationItemImpl[] modificationItems
     ) throws NamingException {
 
         log.debug("===============================================================================");
@@ -747,7 +748,7 @@ public class PenroseInterceptor extends BaseInterceptor {
                 return;
             }
 
-            Collection entryMappings = partition.findEntryMappings(dn);
+            Collection entryMappings = partitionManager.findEntryMappings(partition, dn);
             if (entryMappings == null || entryMappings.isEmpty()) {
                 log.debug(dn+" is a static entry");
                 next.modify(name, modificationItems);
@@ -794,7 +795,7 @@ public class PenroseInterceptor extends BaseInterceptor {
                 return;
             }
 
-            Collection entryMappings = partition.findEntryMappings(dn);
+            Collection entryMappings = partitionManager.findEntryMappings(partition, dn);
             if (entryMappings == null || entryMappings.isEmpty()) {
                 log.debug(dn+" is a static entry");
                 next.modifyRn(name, newDn, deleteOldDn);

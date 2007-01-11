@@ -19,6 +19,7 @@ package org.safehaus.penrose.ldap;
 
 import org.apache.directory.shared.ldap.filter.ExprNode;
 import org.apache.directory.shared.ldap.name.LdapDN;
+import org.apache.directory.shared.ldap.message.ModificationItemImpl;
 import org.apache.directory.server.core.DirectoryServiceConfiguration;
 import org.apache.directory.server.core.configuration.PartitionConfiguration;
 import org.ietf.ldap.*;
@@ -183,7 +184,7 @@ public class PenrosePartition implements org.apache.directory.server.core.partit
         }
     }
 
-    public void modify(LdapDN name, ModificationItem[] modificationItems) throws NamingException {
+    public void modify(LdapDN name, ModificationItemImpl[] modificationItems) throws NamingException {
         String dn = name.getUpName();
         log.info("Modifying \""+dn+"\"");
         log.debug("changetype: modify");

@@ -81,7 +81,7 @@ public class PartitionTest extends TestCase {
     }
 
     public void testFindingRootEntry() throws Exception {
-        Collection entryMappings = partition.findEntryMappings("dc=Example,dc=com");
+        Collection entryMappings = partition.getEntryMappings("dc=Example,dc=com");
         assertNotNull(entryMappings);
         assertFalse(entryMappings.isEmpty());
         EntryMapping entryMapping = (EntryMapping)entryMappings.iterator().next();
@@ -89,7 +89,7 @@ public class PartitionTest extends TestCase {
     }
 
     public void testFindingStaticEntry() throws Exception {
-        Collection entryMappings = partition.findEntryMappings("cn=Users,dc=Example,dc=com");
+        Collection entryMappings = partition.getEntryMappings("cn=Users,dc=Example,dc=com");
         assertNotNull(entryMappings);
         assertFalse(entryMappings.isEmpty());
         EntryMapping entryMapping = (EntryMapping)entryMappings.iterator().next();
@@ -97,7 +97,7 @@ public class PartitionTest extends TestCase {
     }
 
     public void testFindingDynamicEntry() throws Exception {
-        Collection entryMappings = partition.findEntryMappings("cn=...,cn=Users,dc=Example,dc=com");
+        Collection entryMappings = partition.getEntryMappings("cn=...,cn=Users,dc=Example,dc=com");
         assertNotNull(entryMappings);
         assertFalse(entryMappings.isEmpty());
         EntryMapping entryMapping = (EntryMapping)entryMappings.iterator().next();

@@ -100,7 +100,7 @@ public class LDAPSyncModule extends Module implements EntryCacheListener {
 
         String baseDn = (String)event.getSource();
         Partition partition = partitionManager.findPartition(baseDn);
-        Collection entryMappings = partition.findEntryMappings(baseDn);
+        Collection entryMappings = partitionManager.findEntryMappings(partition, baseDn);
 
         if (entryMappings == null || entryMappings.isEmpty()) return;
 

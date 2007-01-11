@@ -21,6 +21,7 @@ import org.safehaus.penrose.mapping.EntryMapping;
 import org.safehaus.penrose.mapping.SourceMapping;
 import org.safehaus.penrose.schema.SchemaManager;
 import org.safehaus.penrose.cache.LRUCache;
+import org.safehaus.penrose.util.EntryUtil;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
@@ -183,29 +184,6 @@ public class PartitionManager implements PartitionManagerMBean {
         return partition;
     }
 
-    /**
-     * Find a partition exactly matching the DN.
-     * @param dn
-     * @return partition
-     * @throws Exception
-     */
-    public Partition findPartition(String dn) throws Exception {
-        Partition partition = (Partition)cache.get(dn);
-        if (partition != null) return partition;
-
-        for (Iterator i=partitions.values().iterator(); i.hasNext(); ) {
-            Partition p = (Partition)i.next();
-            Collection list = p.findEntryMappings(dn);
-            if (list == null || list.isEmpty()) continue;
-
-            partition = p;
-            cache.put(dn, partition);
-            break;
-        }
-
-        return partition;
-    }
-
     public Collection getPartitions() {
         return partitions.values();
     }
@@ -221,4 +199,98 @@ public class PartitionManager implements PartitionManagerMBean {
     public void setSchemaManager(SchemaManager schemaManager) {
         this.schemaManager = schemaManager;
     }
+
+    /**
+     * Find a partition exactly matching the DN.
+     * @param dn
+     * @return partition
+     * @throws Exception
+     */
+    public Partition findPartition(String dn) throws Exception {
+        Partition partition = (Partition)cache.get(dn);
+        if (partition != null) return partition;
+
+        for (Iterator i=partitions.values().iterator(); i.hasNext(); ) {
+            Partition p = (Partition)i.next();
+            Collection list = findEntryMappings(p, dn);
+            if (list == null || list.isEmpty()) continue;
+
+            partition = p;
+            cache.put(dn, partition);
+            break;
+        }
+
+        return partition;
+    }
+
+    public Collection findEntryMappings(Partition partition, String dn) throws Exception {
+
+        log.debug("Finding entry mappings \""+dn+"\" in partition "+partition.getName());
+
+        if (dn == null) return null;
+
+        dn = dn.toLowerCase();
+
+        // search for static mappings
+        Collection c = partition.getEntryMappings(dn);
+        if (c != null) {
+            //log.debug("Found "+c.size()+" mapping(s).");
+            return c;
+        }
+
+        // can't find exact match -> search for parent mappings
+
+        String parentDn = EntryUtil.getParentDn(dn);
+
+        Collection results = new ArrayList();
+        Collection list;
+
+        // if dn has no parent, check against root entries
+        if (parentDn == null) {
+            //log.debug("Check root mappings");
+            list = partition.getRootEntryMappings();
+
+        } else {
+            log.debug("Search parent mappings for \""+parentDn+"\"");
+            Collection parentMappings = findEntryMappings(partition, parentDn);
+
+            // if no parent mappings found, the entry doesn't exist in this partition
+            if (parentMappings == null || parentMappings.isEmpty()) {
+                log.debug("Entry mapping \""+parentDn+"\" not found");
+                return null;
+            }
+
+            list = new ArrayList();
+
+            // for each parent mapping found
+            for (Iterator i=parentMappings.iterator(); i.hasNext(); ) {
+                EntryMapping parentMapping = (EntryMapping)i.next();
+                log.debug("Found parent "+parentMapping.getDn());
+
+                if (partition.isProxy(parentMapping)) { // if parent is proxy, include it in results
+                    results.add(parentMapping);
+
+                } else { // otherwise check for matching siblings
+                    Collection children = partition.getChildren(parentMapping);
+                    list.addAll(children);
+                }
+            }
+        }
+
+        // check against each mapping in the list
+        for (Iterator iterator = list.iterator(); iterator.hasNext(); ) {
+            EntryMapping entryMapping = (EntryMapping) iterator.next();
+
+            log.debug("Checking DN pattern:");
+            log.debug(" - "+dn);
+            log.debug(" - "+entryMapping.getDn());
+            if (!EntryUtil.match(dn, entryMapping.getDn())) continue;
+
+            log.debug("Found "+entryMapping.getDn());
+            results.add(entryMapping);
+        }
+
+        return results;
+    }
+
 }
