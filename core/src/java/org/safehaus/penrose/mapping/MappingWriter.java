@@ -212,7 +212,7 @@ public class MappingWriter {
         if (!sourceMapping.isIncludeOnModify()) element.add(new DefaultAttribute("includeOnModify", "false"));
         if (!sourceMapping.isIncludeOnModRdn()) element.add(new DefaultAttribute("includeOnModRdn", "false"));
         if (!sourceMapping.isIncludeOnDelete()) element.add(new DefaultAttribute("includeOnDelete", "false"));
-        if (sourceMapping.isProxy()) element.add(new DefaultAttribute("proxy", "true"));
+        if (!"DEFAULT".equals(sourceMapping.getEngine())) element.add(new DefaultAttribute("engine", sourceMapping.getEngine()));
 
         Element sourceName = new DefaultElement("source-name");
         sourceName.add(new DefaultText(sourceMapping.getSourceName()));

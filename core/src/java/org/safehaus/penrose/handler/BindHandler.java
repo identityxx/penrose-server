@@ -23,6 +23,7 @@ import org.safehaus.penrose.util.Formatter;
 import org.safehaus.penrose.util.ExceptionUtil;
 import org.safehaus.penrose.util.PasswordUtil;
 import org.safehaus.penrose.partition.Partition;
+import org.safehaus.penrose.partition.PartitionManager;
 import org.safehaus.penrose.engine.Engine;
 import org.ietf.ldap.LDAPException;
 import org.slf4j.LoggerFactory;
@@ -81,7 +82,8 @@ public class BindHandler {
 
     public void  performBind(PenroseSession session, Partition partition, String dn, String password) throws Exception {
 
-        Collection entryMappings = partition.findEntryMappings(dn);
+        PartitionManager partitionManager = handler.getPartitionManager();
+        Collection entryMappings = partitionManager.findEntryMappings(partition, dn);
 
         for (Iterator i=entryMappings.iterator(); i.hasNext(); ) {
             EntryMapping entryMapping = (EntryMapping)i.next();

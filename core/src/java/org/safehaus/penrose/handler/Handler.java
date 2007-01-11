@@ -715,7 +715,7 @@ public class Handler {
             return LDAPException.NO_SUCH_OBJECT;
         }
 */
-        Collection entryMappings = partition.findEntryMappings(baseDn);
+        Collection entryMappings = partitionManager.findEntryMappings(partition, baseDn);
 
         int rc = LDAPException.SUCCESS;
 

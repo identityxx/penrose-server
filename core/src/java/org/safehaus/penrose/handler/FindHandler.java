@@ -19,6 +19,7 @@ package org.safehaus.penrose.handler;
 
 import org.safehaus.penrose.util.EntryUtil;
 import org.safehaus.penrose.partition.Partition;
+import org.safehaus.penrose.partition.PartitionManager;
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.engine.Engine;
 import org.slf4j.LoggerFactory;
@@ -99,7 +100,8 @@ public class FindHandler {
 
             log.debug("Position ["+position +"]: ["+(prefix == null ? "" : prefix)+"] ["+suffix+"]");
 
-            Collection entryMappings = partition.findEntryMappings(suffix);
+            PartitionManager partitionManager = handler.getPartitionManager();
+            Collection entryMappings = partitionManager.findEntryMappings(partition, suffix);
 
             if (entryMappings == null) {
                 path.add(0, null);

@@ -115,6 +115,10 @@ public class AttributeValues implements Cloneable, Comparable {
         }
     }
 
+    public void set(AttributeValues attributeValues) {
+        set(null, attributeValues);
+    }
+
     public void set(String prefix, AttributeValues attributeValues) {
         if (attributeValues == null) {
             remove(prefix);
@@ -124,7 +128,7 @@ public class AttributeValues implements Cloneable, Comparable {
         for (Iterator i=attributeValues.getNames().iterator(); i.hasNext(); ) {
             String name = (String)i.next();
             Collection c = attributeValues.get(name);
-            set(prefix+"."+name, c);
+            set(prefix == null ? name : prefix+"."+name, c);
         }
     }
 
@@ -232,6 +236,8 @@ public class AttributeValues implements Cloneable, Comparable {
     }
 
     public void remove(String name) {
+        if (name == null) return;
+
         Collection list = new ArrayList();
         list.addAll(values.keySet());
 

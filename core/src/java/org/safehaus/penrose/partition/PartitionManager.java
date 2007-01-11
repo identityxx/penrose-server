@@ -34,6 +34,7 @@ import org.safehaus.penrose.source.SourceConfig;
 import org.safehaus.penrose.source.Source;
 import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.util.Formatter;
+import org.safehaus.penrose.util.EntryUtil;
 import org.safehaus.penrose.module.ModuleConfig;
 import org.safehaus.penrose.module.ModuleManager;
 import org.slf4j.LoggerFactory;
@@ -384,7 +385,7 @@ public class PartitionManager implements PartitionManagerMBean {
             Partition p = (Partition)i.next();
             if (!Partition.STARTED.equals(p.getStatus())) continue;
 
-            Collection list = p.findEntryMappings(dn);
+            Collection list = findEntryMappings(p, dn);
             if (list == null || list.isEmpty()) continue;
 
             partition = p;
@@ -476,5 +477,82 @@ public class PartitionManager implements PartitionManagerMBean {
 
     public void setSourceCacheManager(SourceCacheManager sourceCacheManager) {
         this.sourceCacheManager = sourceCacheManager;
+    }
+
+    public Collection findEntryMappings(String dn) throws Exception {
+        Partition partition = findPartition(dn);
+        if (partition == null) return null;
+
+        return findEntryMappings(partition, dn);
+    }
+
+    public Collection findEntryMappings(Partition partition, String dn) throws Exception {
+
+        log.debug("Finding entry mappings \""+dn+"\" in partition "+partition.getName());
+
+        if (dn == null) return null;
+
+        dn = dn.toLowerCase();
+
+        // search for static mappings
+        Collection c = partition.getEntryMappings(dn);
+        if (c != null) {
+            //log.debug("Found "+c.size()+" mapping(s).");
+            return c;
+        }
+
+        // can't find exact match -> search for parent mappings
+
+        String parentDn = EntryUtil.getParentDn(dn);
+
+        Collection results = new ArrayList();
+        Collection list;
+
+        // if dn has no parent, check against root entries
+        if (parentDn == null) {
+            //log.debug("Check root mappings");
+            list = partition.getRootEntryMappings();
+
+        } else {
+            log.debug("Search parent mappings for \""+parentDn+"\"");
+            Collection parentMappings = findEntryMappings(partition, parentDn);
+
+            // if no parent mappings found, the entry doesn't exist in this partition
+            if (parentMappings == null || parentMappings.isEmpty()) {
+                log.debug("Entry mapping \""+parentDn+"\" not found");
+                return null;
+            }
+
+            list = new ArrayList();
+
+            // for each parent mapping found
+            for (Iterator i=parentMappings.iterator(); i.hasNext(); ) {
+                EntryMapping parentMapping = (EntryMapping)i.next();
+                log.debug("Found parent "+parentMapping.getDn());
+
+                if (partition.isProxy(parentMapping)) { // if parent is proxy, include it in results
+                    results.add(parentMapping);
+
+                } else { // otherwise check for matching siblings
+                    Collection children = partition.getChildren(parentMapping);
+                    list.addAll(children);
+                }
+            }
+        }
+
+        // check against each mapping in the list
+        for (Iterator iterator = list.iterator(); iterator.hasNext(); ) {
+            EntryMapping entryMapping = (EntryMapping) iterator.next();
+
+            log.debug("Checking DN pattern:");
+            log.debug(" - "+dn);
+            log.debug(" - "+entryMapping.getDn());
+            if (!EntryUtil.match(dn, entryMapping.getDn())) continue;
+
+            log.debug("Found "+entryMapping.getDn());
+            results.add(entryMapping);
+        }
+
+        return results;
     }
 }

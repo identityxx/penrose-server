@@ -108,7 +108,7 @@ public class PenroseService implements PenroseServiceMBean {
             Partition partition = partitionManager.findPartition(oldDn);
             if (partition == null) return;
 
-            Collection c = partition.findEntryMappings(oldDn);
+            Collection c = partitionManager.findEntryMappings(partition, oldDn);
             Collection entryMappings = new ArrayList();
             if (c != null) entryMappings.addAll(c);
 
