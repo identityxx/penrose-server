@@ -94,8 +94,8 @@ public class PenroseBackend implements Backend {
      * @param connectionId
      * @return session
      */
-    public Session getSession(int connectionId) throws Exception {
-        return (PenroseSession)sessions.get(new Integer(connectionId));
+    public Session getSession(long connectionId) throws Exception {
+        return (PenroseSession)sessions.get(new Long(connectionId));
     }
 
     /**
@@ -103,12 +103,12 @@ public class PenroseBackend implements Backend {
      *
      * @param connectionId
      */
-    public Session createSession(int connectionId) throws Exception {
+    public Session createSession(long connectionId) throws Exception {
         log.debug("openConnection("+connectionId+")");
         Penrose penrose = penroseServer.getPenrose();
         PenroseSession session = new PenroseSession(penrose.newSession());
         if (session == null) throw new Exception("Unable to create session.");
-        sessions.put(new Integer(connectionId), session);
+        sessions.put(new Long(connectionId), session);
         return session;
     }
 
@@ -117,9 +117,9 @@ public class PenroseBackend implements Backend {
      *
      * @param connectionId
      */
-    public void closeSession(int connectionId) throws Exception {
+    public void closeSession(long connectionId) throws Exception {
         log.debug("closeConnection("+connectionId+")");
-        PenroseSession session = (PenroseSession)sessions.remove(new Integer(connectionId));
+        PenroseSession session = (PenroseSession)sessions.remove(new Long(connectionId));
         if (session != null) session.close();
     }
 
