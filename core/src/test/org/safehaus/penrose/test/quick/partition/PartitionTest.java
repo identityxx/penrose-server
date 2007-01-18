@@ -15,12 +15,14 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
-package org.safehaus.penrose.partition;
+package org.safehaus.penrose.test.quick.partition;
 
 import junit.framework.TestCase;
 import org.safehaus.penrose.mapping.EntryMapping;
 import org.safehaus.penrose.mapping.AttributeMapping;
 import org.safehaus.penrose.mapping.SourceMapping;
+import org.safehaus.penrose.partition.Partition;
+import org.safehaus.penrose.partition.PartitionConfig;
 import org.apache.log4j.*;
 
 import java.util.Collection;
@@ -43,18 +45,17 @@ public class PartitionTest extends TestCase {
 
         Logger logger = Logger.getLogger("org.safehaus.penrose");
         logger.setLevel(Level.DEBUG);
+        logger.setAdditivity(false);
     }
 
     public void setUp() throws Exception {
-        PartitionConfig partitionConfig = new PartitionConfig("example", "samples/conf");
+        PartitionConfig partitionConfig = new PartitionConfig("example", "target/example");
+        partition = new Partition(partitionConfig);
 
-        PartitionReader partitionReader = new PartitionReader();
-        partition = partitionReader.read(partitionConfig);
-/*
         EntryMapping rootEntry = new EntryMapping("dc=Example,dc=com");
         rootEntry.addAttributeMapping(new AttributeMapping("dc", AttributeMapping.CONSTANT, "Example", true));
         partition.addEntryMapping(rootEntry);
-*/
+
         EntryMapping usersEntry = new EntryMapping("cn=Users,dc=Example,dc=com");
         usersEntry.addAttributeMapping(new AttributeMapping("cn", AttributeMapping.CONSTANT, "Users", true));
         partition.addEntryMapping(usersEntry);
@@ -74,38 +75,40 @@ public class PartitionTest extends TestCase {
 
     public void tearDown() throws Exception {
     }
-
+/*
     public void testAddingEntry() throws Exception {
         partition.addEntryMapping(new EntryMapping("cn=Groups,dc=Example,dc=com"));
         print(partition);
     }
-
+*/
     public void testFindingRootEntry() throws Exception {
         Collection entryMappings = partition.getEntryMappings("dc=Example,dc=com");
         assertNotNull(entryMappings);
         assertFalse(entryMappings.isEmpty());
+
         EntryMapping entryMapping = (EntryMapping)entryMappings.iterator().next();
-        System.out.println("Found "+entryMapping.getDn());
+        assertEquals(entryMapping.getDn(), "dc=Example,dc=com");
     }
 
     public void testFindingStaticEntry() throws Exception {
         Collection entryMappings = partition.getEntryMappings("cn=Users,dc=Example,dc=com");
         assertNotNull(entryMappings);
         assertFalse(entryMappings.isEmpty());
+
         EntryMapping entryMapping = (EntryMapping)entryMappings.iterator().next();
-        System.out.println("Found "+entryMapping.getDn());
+        assertEquals(entryMapping.getDn(), "cn=Users,dc=Example,dc=com");
     }
 
     public void testFindingDynamicEntry() throws Exception {
         Collection entryMappings = partition.getEntryMappings("cn=...,cn=Users,dc=Example,dc=com");
         assertNotNull(entryMappings);
         assertFalse(entryMappings.isEmpty());
+
         EntryMapping entryMapping = (EntryMapping)entryMappings.iterator().next();
-        System.out.println("Found "+entryMapping.getDn());
+        assertEquals(entryMapping.getDn(), "cn=...,cn=Users,dc=Example,dc=com");
     }
 
     public void print(Partition partition) throws Exception {
-
         System.out.println("Entries:");
         Collection c = partition.getRootEntryMappings();
         print(partition, c, 0);

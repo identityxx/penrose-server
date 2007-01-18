@@ -209,9 +209,7 @@ public class SourceCache {
         PenroseSearchControls sc = new PenroseSearchControls();
         sc.setSizeLimit(sizeLimit);
 
-        connection.load(sourceConfig, null, null, sc, sr);
-
-        sr.close();
+        connection.search(sourceConfig, null, sc, sr);
     }
 
     public Partition getPartition() {

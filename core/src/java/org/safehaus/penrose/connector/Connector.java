@@ -532,7 +532,7 @@ public class Connector {
             load(partition, sourceConfig, pks, searchControls, results);
 
         } else {
-            performLoad(partition, sourceConfig, primaryKeys, filter, searchControls, results);
+            performLoad(partition, sourceConfig, filter, searchControls, results);
             //store(sourceConfig, values);
         }
     }
@@ -602,7 +602,7 @@ public class Connector {
 
         Filter filter = FilterTool.createFilter(keys);
 
-        performLoad(partition, sourceConfig, keys, filter, searchControls, results);
+        performLoad(partition, sourceConfig, filter, searchControls, results);
 
         //Collection values = new ArrayList();
         //values.addAll(results.getAll());
@@ -689,6 +689,7 @@ public class Connector {
 
             PenroseSearchControls sc = new PenroseSearchControls();
             sc.setSizeLimit(sizeLimit);
+            sc.setAttributes(new String[] { "dn" });
 
             connection.search(sourceConfig, filter, sc, sr);
 
@@ -717,7 +718,6 @@ public class Connector {
     public void performLoad(
             final Partition partition,
             final SourceConfig sourceConfig,
-            Collection primaryKeys,
             final Filter filter,
             PenroseSearchControls searchControls,
             final PenroseSearchResults results
@@ -755,13 +755,11 @@ public class Connector {
             PenroseSearchControls sc = new PenroseSearchControls();
             sc.setSizeLimit(sizeLimit);
 
-            connection.load(sourceConfig, primaryKeys, filter, sc, sr);
+            connection.search(sourceConfig, filter, sc, sr);
 
         } catch (Exception e) {
             log.error(e.getMessage(), e);
             sr.setReturnCode(LDAPException.OPERATIONS_ERROR);
-        } finally {
-            sr.close();
         }
     }
 

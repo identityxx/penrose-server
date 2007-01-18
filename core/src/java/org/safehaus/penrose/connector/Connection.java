@@ -29,7 +29,6 @@ import org.ietf.ldap.LDAPException;
 
 import java.util.Collection;
 import java.util.Map;
-import java.util.ArrayList;
 
 /**
  * @author Endi S. Dewata
@@ -112,18 +111,9 @@ public class Connection implements ConnectionMBean {
     public void search(SourceConfig sourceConfig, Filter filter, PenroseSearchControls sc, PenroseSearchResults results) throws Exception {
         if (adapter == null) {
             results.setReturnCode(LDAPException.OPERATIONS_ERROR);
-            results.close();
             return;
         }
         adapter.search(sourceConfig, filter, sc, results);
-    }
-
-    public void load(SourceConfig sourceConfig, Collection primaryKeys, Filter filter, PenroseSearchControls sc, PenroseSearchResults results) throws Exception {
-        if (adapter == null) {
-            results.setReturnCode(LDAPException.OPERATIONS_ERROR);
-            return;
-        }
-        adapter.load(sourceConfig, primaryKeys, filter, sc, results);
     }
 
     public void add(SourceConfig sourceConfig, Row pk, AttributeValues sourceValues) throws LDAPException {
@@ -141,10 +131,7 @@ public class Connection implements ConnectionMBean {
         PenroseSearchControls sc = new PenroseSearchControls();
         PenroseSearchResults sr = new PenroseSearchResults();
 
-        Collection pks = new ArrayList();
-        pks.add(pk);
-
-        adapter.load(sourceConfig, pks, filter, sc, sr);
+        adapter.search(sourceConfig, filter, sc, sr);
 
         if (!sr.hasNext()) return null;
         return (AttributeValues)sr.next();

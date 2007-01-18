@@ -174,7 +174,7 @@ public class JDBCAdapter extends Adapter {
         return sb.toString();
     }
 
-    public String getOringialPrimaryKeyFieldNamesAsString(SourceConfig sourceConfig) throws Exception {
+    public String getOriginalPrimaryKeyFieldNamesAsString(SourceConfig sourceConfig) throws Exception {
         StringBuffer sb = new StringBuffer();
 
         Collection fields = sourceConfig.getOriginalPrimaryKeyNames();
@@ -193,126 +193,11 @@ public class JDBCAdapter extends Adapter {
         throw new LDAPException(LDAPException.resultCodeToString(rc), rc, null);
     }
 
-    public void search(SourceConfig sourceConfig, Filter filter, PenroseSearchControls sc, PenroseSearchResults results) throws Exception {
-
-        if (log.isDebugEnabled()) {
-            log.debug(Formatter.displaySeparator(80));
-            log.debug(Formatter.displayLine("Search "+sourceConfig.getConnectionName()+"/"+sourceConfig.getName(), 80));
-            log.debug(Formatter.displayLine(" - Filter: "+filter, 80));
-            log.debug(Formatter.displaySeparator(80));
-        }
-
-        String catalog = sourceConfig.getParameter(CATALOG);
-        String schema = sourceConfig.getParameter(SCHEMA);
-        String tableName = sourceConfig.getParameter(TABLE);
-        if (tableName == null) tableName = sourceConfig.getParameter(TABLE_NAME);
-        if (catalog != null) tableName = catalog +"."+tableName;
-        if (schema != null) tableName = schema +"."+tableName;
-
-        String s = sourceConfig.getParameter(FILTER);
-
-        StringBuffer sb = new StringBuffer();
-        sb.append("select ");
-        sb.append(getOringialPrimaryKeyFieldNamesAsString(sourceConfig));
-        sb.append(" from ");
-        sb.append(tableName);
-
-        StringBuffer sqlFilter = new StringBuffer();
-        if (s != null) sqlFilter.append(s);
-
-        List parameters = new ArrayList();
-        if (filter != null) {
-            if (sqlFilter.length() > 0) sqlFilter.append(" and ");
-            sqlFilter.append(filterTool.convert(sourceConfig, filter, parameters));
-        }
-
-        if (sqlFilter.length() > 0) {
-            sb.append(" where ");
-            sb.append(sqlFilter);
-        }
-
-        if (!sourceConfig.getOriginalPrimaryKeyNames().isEmpty()) {
-            sb.append(" order by ");
-            sb.append(getOringialPrimaryKeyFieldNamesAsString(sourceConfig));
-        }
-
-        String sql = sb.toString();
-
-        java.sql.Connection con = null;
-        PreparedStatement ps = null;
-        ResultSet rs = null;
-
-        try {
-            con = (java.sql.Connection)openConnection();
-
-            if (log.isDebugEnabled()) {
-                log.debug(Formatter.displaySeparator(80));
-                Collection lines = Formatter.split(sql, 80);
-                for (Iterator i=lines.iterator(); i.hasNext(); ) {
-                    String line = (String)i.next();
-                    log.debug(Formatter.displayLine(line, 80));
-                }
-                log.debug(Formatter.displaySeparator(80));
-            }
-
-            ps = con.prepareStatement(sql);
-
-            log.debug("Parameters:");
-
-            int counter = 0;
-            for (Iterator i=parameters.iterator(); i.hasNext(); ) {
-                Object param = i.next();
-                ps.setObject(++counter, param);
-                log.debug(" - "+counter+" = "+param);
-            }
-
-            rs = ps.executeQuery();
-
-            int width = 0;
-            boolean first = true;
-
-            log.debug("Results:");
-            int i = 0;
-            while (rs.next() && (sc.getSizeLimit() == 0 || i<sc.getSizeLimit())) {
-                Row row = getPkValues(sourceConfig, rs);
-                results.add(row);
-
-                if (first) {
-                    width = printHeader(sourceConfig);
-                    first = false;
-                }
-
-                log.debug(format(sourceConfig, row));
-
-                i++;
-            }
-
-            if (width > 0) log.debug(printFooter(width));
-
-            if (sc.getSizeLimit() != 0 && i >= sc.getSizeLimit()) {
-                log.debug("RC: size limit exceeded.");
-                results.setReturnCode(LDAPException.SIZE_LIMIT_EXCEEDED);
-            }
-
-        } catch (Exception e) {
-            log.error(e.getMessage(), e);
-            results.setReturnCode(LDAPException.OPERATIONS_ERROR);
-
-        } finally {
-            if (rs != null) try { rs.close(); } catch (Exception e) {}
-            if (ps != null) try { ps.close(); } catch (Exception e) {}
-            if (con != null) try { con.close(); } catch (Exception e) {}
-
-            results.close();
-        }
-    }
-
-    public void load(SourceConfig sourceConfig, Collection primaryKeys, Filter filter, PenroseSearchControls sc, PenroseSearchResults results) throws Exception {
+    public void search(SourceConfig sourceConfig, Filter filter, PenroseSearchControls searchControls, PenroseSearchResults results) throws Exception {
 
         if (log.isDebugEnabled()) {
             log.debug(Formatter.displaySeparator(80));
             log.debug(Formatter.displayLine("Load "+sourceConfig.getConnectionName()+"/"+sourceConfig.getName(), 80));
-            log.debug(Formatter.displayLine(" - Primary Keys: "+primaryKeys, 80));
             log.debug(Formatter.displayLine(" - Filter: "+filter, 80));
             log.debug(Formatter.displaySeparator(80));
         }
@@ -351,7 +236,7 @@ public class JDBCAdapter extends Adapter {
 
         if (!sourceConfig.getOriginalPrimaryKeyNames().isEmpty()) {
             sb.append(" order by ");
-            sb.append(getOringialPrimaryKeyFieldNamesAsString(sourceConfig));
+            sb.append(getOriginalPrimaryKeyFieldNamesAsString(sourceConfig));
         }
 
         String sql = sb.toString();
@@ -393,16 +278,26 @@ public class JDBCAdapter extends Adapter {
 
             log.debug("Results:");
             int i = 0;
-            while (rs.next() && (sc.getSizeLimit() == 0 || i<sc.getSizeLimit())) {
-                AttributeValues av = getValues(sourceConfig, rs);
+            Collection attributes = searchControls.getAttributes();
+
+            while (rs.next() && (searchControls.getSizeLimit() == 0 || i<searchControls.getSizeLimit())) {
 
                 if (first) {
                     width = printHeader(sourceConfig);
                     first = false;
                 }
 
-                log.debug(format(sourceConfig, av));
-                results.add(av);
+                if (attributes.size() == 0) {
+                    AttributeValues av = getValues(sourceConfig, rs);
+                    results.add(av);
+                    log.debug(format(sourceConfig, av));
+
+                } else if (attributes.contains("dn")) {
+                    Row row = getPkValues(sourceConfig, rs);
+                    results.add(row);
+                    log.debug(format(sourceConfig, row));
+                }
+
                 i++;
             }
 
@@ -412,7 +307,7 @@ public class JDBCAdapter extends Adapter {
                 log.debug("No results found");
             }
 
-            if (sc.getSizeLimit() != 0 && i >= sc.getSizeLimit()) {
+            if (searchControls.getSizeLimit() != 0 && i >= searchControls.getSizeLimit()) {
                 log.debug("RC: size limit exceeded.");
                 results.setReturnCode(LDAPException.SIZE_LIMIT_EXCEEDED);
             }
@@ -425,6 +320,8 @@ public class JDBCAdapter extends Adapter {
             if (rs != null) try { rs.close(); } catch (Exception e) {}
             if (ps != null) try { ps.close(); } catch (Exception e) {}
             if (con != null) try { con.close(); } catch (Exception e) {}
+
+            results.close();
         }
     }
 

@@ -65,21 +65,12 @@ public abstract class Adapter {
     /**
      * Search.
      *
-     * @param results Rows
-     * @throws Exception
-     */
-    public void search(SourceConfig sourceConfig, Filter filter, PenroseSearchControls sc, PenroseSearchResults results) throws Exception {
-        results.close();
-    }
-
-    /**
-     * Load.
-     *
-     * @param primaryKeys
+     * @param searchControls
      * @param results AttributeValues
      * @throws Exception
      */
-    public void load(SourceConfig sourceConfig, Collection primaryKeys, Filter filter, PenroseSearchControls sc, PenroseSearchResults results) throws Exception {
+    public void search(SourceConfig sourceConfig, Filter filter, PenroseSearchControls searchControls, PenroseSearchResults results) throws Exception {
+        results.close();
     }
 
     /**

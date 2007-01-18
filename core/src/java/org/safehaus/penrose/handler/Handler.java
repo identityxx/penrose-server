@@ -601,6 +601,7 @@ public class Handler {
         if (partition == null) {
             log.debug("Entry "+baseDn+" not found");
             results.setReturnCode(LDAPException.NO_SUCH_OBJECT);
+            results.close();
             return LDAPException.NO_SUCH_OBJECT;
         }
 

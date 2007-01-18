@@ -26,6 +26,13 @@
         <pathelement location="target/classes"/>
     </path>
 
+    <path id="test.path">
+        <fileset dir="../lib">
+            <include name="**/*.jar"/>
+        </fileset>
+        <pathelement location="target/classes"/>
+    </path>
+
     <target name="init">
         <echo message="Operating System: ${os.name} ${os.version}" />
         <condition property="isWindows">
@@ -79,6 +86,16 @@
         <copy todir="target/classes">
             <fileset dir="src/java" includes="**/*.properties,**/*.xml,**/*.dtd"/>
         </copy>
+        <mkdir dir="target/tests"/>
+        <javac
+            srcdir="src/test"
+            destdir="target/tests"
+            classpathref="test.path"
+            debug="on"
+            debuglevel="lines,vars,source"
+            source="1.5"
+            target="1.5"
+        />
     </target>
 
     <target name="build" depends="compile">
@@ -93,6 +110,45 @@
               <attribute name="Build-Date" value="${DSTAMP}"/>
             </manifest>
         </jar>
+    </target>
+
+    <target name="quicktest" depends="compile" >
+        <mkdir dir="target/reports"/>
+        <junit fork="yes" showoutput="true" printsummary="yes">
+            <classpath>
+                <fileset dir="../lib">
+                    <include name="**/*.jar"/>
+                </fileset>
+                <pathelement location="target/classes"/>
+                <pathelement location="target/tests"/>
+            </classpath>
+            <formatter type="plain"/>
+            <batchtest todir="target/reports">
+                <fileset dir="target/tests">
+                    <include name="org/safehaus/penrose/test/quick/**/*Test.class"/>
+                </fileset>
+            </batchtest>
+        </junit>
+    </target>
+
+    <target name="test" depends="compile" >
+        <mkdir dir="target/reports"/>
+        <junit fork="yes" showoutput="true" printsummary="yes">
+            <classpath>
+                <fileset dir="../lib">
+                    <include name="**/*.jar"/>
+                </fileset>
+                <pathelement location="target/classes"/>
+                <pathelement location="target/tests"/>
+            </classpath>
+            <formatter type="plain"/>
+            <batchtest todir="target/reports">
+                <fileset dir="target/tests">
+                    <include name="org/safehaus/penrose/test/**/*Test.class"/>
+                    <exclude name="org/safehaus/penrose/test/quick/**/*"/>
+                </fileset>
+            </batchtest>
+        </junit>
     </target>
 
     <target name="docs" depends="init">

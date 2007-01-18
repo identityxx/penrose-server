@@ -76,28 +76,12 @@ public class DemoAdapter extends Adapter {
         }
     }
 
-    public void search(SourceConfig sourceConfig, Filter filter, PenroseSearchControls sc, PenroseSearchResults results) throws Exception {
-
-        String sourceName = sourceConfig.getName();
-        System.out.println("Searching primary keys from source "+sourceName+" with filter "+filter+".");
-
-        for (Iterator i=entries.keySet().iterator(); i.hasNext(); ) {
-            Row pk = (Row)i.next();
-            AttributeValues sourceValues = (AttributeValues)entries.get(pk);
-
-            if (!FilterTool.isValid(sourceValues, filter)) continue;
-
-            results.add(pk);
-        }
-
-        results.close();
-    }
-
-    public void load(SourceConfig sourceConfig, Collection primaryKeys, Filter filter, PenroseSearchControls sc, PenroseSearchResults results) throws Exception {
+    public void search(SourceConfig sourceConfig, Filter filter, PenroseSearchControls searchControls, PenroseSearchResults results) throws Exception {
 
         String sourceName = sourceConfig.getName();
         System.out.println("Loading entries from source "+sourceName+" with filter "+filter+".");
 
+        Collection attributes = searchControls.getAttributes();
         for (Iterator i=entries.keySet().iterator(); i.hasNext(); ) {
             Row pk = (Row)i.next();
             AttributeValues sourceValues = (AttributeValues)entries.get(pk);
@@ -109,16 +93,23 @@ public class DemoAdapter extends Adapter {
 
             System.out.println(" - "+pk+" => true");
 
-            AttributeValues av = new AttributeValues();
-            for (Iterator j=pk.getNames().iterator(); j.hasNext(); ) {
-                String name = (String)j.next();
-                Object value = pk.get(name);
-                av.add("primaryKey."+name, value);
-            }
-            av.add(sourceValues);
+            if (attributes.size() == 0) {
+                AttributeValues av = new AttributeValues();
+                for (Iterator j=pk.getNames().iterator(); j.hasNext(); ) {
+                    String name = (String)j.next();
+                    Object value = pk.get(name);
+                    av.add("primaryKey."+name, value);
+                }
+                av.add(sourceValues);
 
-            results.add(av);
+                results.add(av);
+
+            } else if (attributes.contains("dn")) {
+                results.add(pk);
+            }
         }
+
+        results.close();
     }
 
     public void add(SourceConfig sourceConfig, Row pk, AttributeValues sourceValues) throws LDAPException {

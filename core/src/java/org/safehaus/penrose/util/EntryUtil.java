@@ -93,15 +93,15 @@ public class EntryUtil {
     }
 
     public static String append(String dn, Row rdn) {
-        return append(dn, toRdn(rdn));
+        return append(dn, toString(rdn));
     }
 
     public static String append(Row rdn, String dn) {
-        return append(toRdn(rdn), dn);
+        return append(toString(rdn), dn);
     }
 
     public static String append(Row rdn1, Row rdn2) {
-        return append(toRdn(rdn1), toRdn(rdn2));
+        return append(toString(rdn1), toString(rdn2));
     }
 
     public static Row getRdn(String dn) {
@@ -406,13 +406,13 @@ public class EntryUtil {
             int p = i+start;
             if (p >= dn.size()) break;
             Row rdn = (Row)dn.get(p);
-            append(newDn, toRdn(rdn));
+            append(newDn, toString(rdn));
         }
 
         return newDn;
     }
 
-    public static String toRdn(Row rdn) {
+    public static String toString(Row rdn) {
         StringBuffer sb = new StringBuffer();
         for (Iterator i=rdn.getNames().iterator(); i.hasNext(); ) {
             String name = (String)i.next();

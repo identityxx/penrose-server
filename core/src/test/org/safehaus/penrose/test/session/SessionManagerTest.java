@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
-package org.safehaus.penrose.session;
+package org.safehaus.penrose.test.session;
 
 import junit.framework.TestCase;
 import org.apache.log4j.*;
@@ -25,6 +25,9 @@ import org.safehaus.penrose.schema.SchemaConfig;
 import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.PenroseFactory;
 import org.safehaus.penrose.user.UserConfig;
+import org.safehaus.penrose.session.SessionConfig;
+import org.safehaus.penrose.session.SessionManager;
+import org.safehaus.penrose.session.PenroseSession;
 
 import java.util.Iterator;
 import java.util.ArrayList;
@@ -69,41 +72,6 @@ public class SessionManagerTest extends TestCase {
         penrose.stop();
     }
 
-    public void testMaxSessions() throws Exception {
-
-        SessionManager sessionManager = penrose.getSessionManager();
-        assertEquals(0, sessionManager.getSessions().size());
-
-        Collection sessions = new ArrayList();
-
-        System.out.println("Creating 6 sessions");
-
-        for (int i=0; i<6; i++) {
-            PenroseSession session = penrose.newSession();
-            assertNotNull("Session should not be null", session);
-            if (session != null) sessions.add(session);
-        }
-
-        assertEquals(6, sessionManager.getSessions().size());
-
-        System.out.println("Creating 6 more sessions");
-
-        for (int i=0; i<6; i++) {
-            PenroseSession session = penrose.newSession();
-            assertNull("Session should be null", session);
-        }
-
-        assertEquals(6, sessionManager.getSessions().size());
-
-        System.out.println("Closing 6 sessions");
-
-        for (Iterator i=sessions.iterator(); i.hasNext(); ) {
-            PenroseSession session = (PenroseSession)i.next();
-            session.close();
-        }
-
-        assertEquals(0, sessionManager.getSessions().size());
-    }
 
     public void testMaxIdleTime() throws Exception {
 

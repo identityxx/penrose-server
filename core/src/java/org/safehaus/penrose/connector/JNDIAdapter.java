@@ -27,6 +27,7 @@ import org.safehaus.penrose.util.*;
 import org.safehaus.penrose.util.Formatter;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.filter.SubstringFilter;
+import org.safehaus.penrose.filter.SimpleFilter;
 import org.safehaus.penrose.session.PenroseSearchControls;
 import org.safehaus.penrose.session.PenroseSearchResults;
 import org.ietf.ldap.LDAPException;
@@ -99,76 +100,6 @@ public class JNDIAdapter extends Adapter {
     ) throws Exception {
 
         String ldapBase = sourceConfig.getParameter(BASE_DN);
-        if ("".equals(ldapBase)) {
-            ldapBase = client.getSuffix();
-        } else {
-            ldapBase = ldapBase+","+client.getSuffix();
-        }
-
-        String ldapScope = sourceConfig.getParameter(SCOPE);
-        String ldapFilter = sourceConfig.getParameter(FILTER);
-
-        if (filter != null) {
-            ldapFilter = "(&"+ldapFilter+filter+")";
-        }
-
-        if (log.isDebugEnabled()) {
-            log.debug(Formatter.displaySeparator(80));
-            log.debug(Formatter.displayLine("Search "+sourceConfig.getConnectionName()+"/"+sourceConfig.getName(), 80));
-            log.debug(Formatter.displayLine(" - Base DN: "+ldapBase, 80));
-            log.debug(Formatter.displayLine(" - Scope: "+ldapScope, 80));
-            log.debug(Formatter.displayLine(" - Filter: "+ldapFilter, 80));
-            log.debug(Formatter.displaySeparator(80));
-        }
-
-        SearchControls sc = new SearchControls();
-        sc.setReturningAttributes(new String[] { "dn" });
-        if ("OBJECT".equals(ldapScope)) {
-            sc.setSearchScope(SearchControls.OBJECT_SCOPE);
-
-        } else if ("ONELEVEL".equals(ldapScope)) {
-            sc.setSearchScope(SearchControls.ONELEVEL_SCOPE);
-
-        } else if ("SUBTREE".equals(ldapScope)) {
-            sc.setSearchScope(SearchControls.SUBTREE_SCOPE);
-        }
-        sc.setCountLimit(searchControls.getSizeLimit());
-
-        DirContext ctx = null;
-        try {
-            ctx = ((JNDIClient)openConnection()).getContext();
-            NamingEnumeration ne = ctx.search(ldapBase, ldapFilter, sc);
-
-            log.debug("Result:");
-
-            while (ne.hasMore()) {
-                javax.naming.directory.SearchResult sr = (javax.naming.directory.SearchResult)ne.next();
-                String dn = EntryUtil.append(sr.getName(), ldapBase);
-                log.debug(" - "+dn);
-
-                Row row = getPkValues(sourceConfig, sr);
-                results.add(row);
-            }
-
-        } catch (Exception e) {
-            log.error(e.getMessage(), e);
-            results.setReturnCode(ExceptionUtil.getReturnCode(e));
-
-        } finally {
-            results.close();
-            if (ctx != null) try { ctx.close(); } catch (Exception e) {}
-        }
-    }
-
-    public void load(
-            SourceConfig sourceConfig,
-            Collection primaryKeys,
-            Filter filter,
-            PenroseSearchControls sc,
-            PenroseSearchResults results
-    ) throws Exception {
-
-        String ldapBase = sourceConfig.getParameter(BASE_DN);
         String ldapScope = sourceConfig.getParameter(SCOPE);
         String ldapFilter = sourceConfig.getParameter(FILTER);
 
@@ -177,9 +108,9 @@ public class JNDIAdapter extends Adapter {
             ldapFilter = "(&"+ldapFilter+filter+")";
         }
 
-        if (primaryKeys != null && primaryKeys.size() == 1) {
-            Row pk = (Row)primaryKeys.iterator().next();
-            ldapBase = EntryUtil.append(pk.toString(), ldapBase);
+        if (filter instanceof SimpleFilter) {
+            SimpleFilter sf = (SimpleFilter)filter;
+            ldapBase = EntryUtil.append(sf.toString(), ldapBase);
             ldapScope = "OBJECT";
         }
 
@@ -188,7 +119,6 @@ public class JNDIAdapter extends Adapter {
             log.debug(Formatter.displayLine("Load "+sourceConfig.getConnectionName()+"/"+sourceConfig.getName(), 80));
             log.debug(Formatter.displayLine(" - Base DN: "+ldapBase, 80));
             log.debug(Formatter.displayLine(" - Scope: "+ldapScope, 80));
-            log.debug(Formatter.displayLine(" - Primary Keys: "+primaryKeys, 80));
             log.debug(Formatter.displayLine(" - Filter: "+ldapFilter, 80));
             log.debug(Formatter.displaySeparator(80));
         }
@@ -203,7 +133,11 @@ public class JNDIAdapter extends Adapter {
         } else if ("SUBTREE".equals(ldapScope)) {
             ctls.setSearchScope(SearchControls.SUBTREE_SCOPE);
         }
-        ctls.setCountLimit(sc.getSizeLimit());
+        ctls.setCountLimit(searchControls.getSizeLimit());
+        ctls.setTimeLimit(searchControls.getTimeLimit());
+
+        Collection attributes = searchControls.getAttributes();
+        ctls.setReturningAttributes((String[])attributes.toArray(new String[attributes.size()]));
 
         DirContext ctx = null;
         try {
@@ -217,14 +151,20 @@ public class JNDIAdapter extends Adapter {
                 String dn = EntryUtil.append(sr.getName(), ldapBase);
                 log.debug(" - "+dn);
 
-                AttributeValues av = getValues(dn, sourceConfig, sr);
-                for (Iterator i=av.getNames().iterator(); i.hasNext(); ) {
-                    String name = (String)i.next();
-                    Collection values = (Collection)av.get(name);
-                    log.debug("   "+name+": "+values);
-                }
+                if (attributes.size() == 1 && attributes.contains("dn")) {
+                    Row row = getPkValues(sourceConfig, sr);
+                    results.add(row);
 
-                results.add(av);
+                } else {
+                    AttributeValues av = getValues(dn, sourceConfig, sr);
+                    for (Iterator i=av.getNames().iterator(); i.hasNext(); ) {
+                        String name = (String)i.next();
+                        Collection values = (Collection)av.get(name);
+                        log.debug("   "+name+": "+values);
+                    }
+
+                    results.add(av);
+                }
             }
 
         } catch (Exception e) {
@@ -232,6 +172,7 @@ public class JNDIAdapter extends Adapter {
             results.setReturnCode(ExceptionUtil.getReturnCode(e));
 
         } finally {
+            results.close();
             if (ctx != null) try { ctx.close(); } catch (Exception e) {}
         }
     }

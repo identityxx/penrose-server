@@ -15,19 +15,19 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
-package org.safehaus.penrose.partition;
+package org.safehaus.penrose.test.server;
 
 import junit.framework.TestCase;
 import org.apache.log4j.*;
 import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.config.DefaultPenroseConfig;
 import org.safehaus.penrose.schema.SchemaConfig;
+import org.safehaus.penrose.partition.PartitionConfig;
 import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.PenroseFactory;
 import org.safehaus.penrose.session.PenroseSession;
 import org.safehaus.penrose.session.PenroseSearchControls;
 import org.safehaus.penrose.session.PenroseSearchResults;
-import org.ietf.ldap.LDAPException;
 
 import javax.naming.directory.SearchResult;
 import java.util.Iterator;
@@ -35,13 +35,12 @@ import java.util.Iterator;
 /**
  * @author Endi S. Dewata
  */
-public class PartitionManagerTest extends TestCase {
+public class PenroseServiceTest extends TestCase {
 
     PenroseConfig penroseConfig;
     Penrose penrose;
 
-    public void setUp() throws Exception {
-
+    public PenroseServiceTest() {
         //PatternLayout patternLayout = new PatternLayout("[%d{MM/dd/yyyy HH:mm:ss}] %m%n");
         PatternLayout patternLayout = new PatternLayout("%-20C{1} [%4L] %m%n");
 
@@ -52,12 +51,18 @@ public class PartitionManagerTest extends TestCase {
         rootLogger.setLevel(Level.OFF);
 
         Logger logger = Logger.getLogger("org.safehaus.penrose");
-        logger.setLevel(Level.DEBUG);
+        logger.setLevel(Level.INFO);
+    }
+
+    public void setUp() throws Exception {
 
         penroseConfig = new DefaultPenroseConfig();
 
         SchemaConfig schemaConfig = new SchemaConfig("samples/shop/schema/example.schema");
         penroseConfig.addSchemaConfig(schemaConfig);
+
+        PartitionConfig partitionConfig = new PartitionConfig("example", "samples/shop/partition");
+        penroseConfig.addPartitionConfig(partitionConfig);
 
         PenroseFactory penroseFactory = PenroseFactory.getInstance();
         penrose = penroseFactory.createPenrose(penroseConfig);
@@ -68,51 +73,68 @@ public class PartitionManagerTest extends TestCase {
     public void tearDown() throws Exception {
         penrose.stop();
     }
+/*
+    public void testStartingAndStopping() throws Exception {
 
-    public void testAddingPartition() throws Exception {
+        PenroseSession session = penrose.newSession();
 
-        System.out.println("Searching before adding the partition");
-        int rc = search();
-        assertFalse("Search should fail", LDAPException.SUCCESS == rc);
+        try {
+            session.bind(penroseConfig.getRootUserConfig().getDn(), penroseConfig.getRootUserConfig().getPassword());
+            search(session);
+        } catch (Exception e) {
+            fail("Bind & search should not fail");
+        }
+
+        assertEquals(Penrose.STARTED, penrose.getStatus());
+
+        System.out.println("Stopping Penrose");
 
         penrose.stop();
 
-        PartitionConfig partitionConfig = new PartitionConfig("example", "samples/shop/partition");
-        penroseConfig.addPartitionConfig(partitionConfig);
+        assertEquals(Penrose.STOPPED, penrose.getStatus());
 
-        PartitionReader partitionReader = new PartitionReader();
-        Partition partition = partitionReader.read(partitionConfig);
+        try {
+            session.bind(penroseConfig.getRootUserConfig().getDn(), penroseConfig.getRootUserConfig().getPassword());
+            fail();
+        } catch (Exception e) {
+            System.out.println("Bind failed as expected");
+        }
 
-        PartitionManager partitionManager = penrose.getPartitionManager();
-        partitionManager.addPartition(partition);
+        PenroseSession session2 = penrose.newSession();
+        assertNull(session2);
+
+        System.out.println("Starting Penrose");
 
         penrose.start();
 
-        System.out.println("Searching after adding the partition");
-        rc = search();
-        assertTrue("Search should succeed", LDAPException.SUCCESS == rc);
+        assertEquals(Penrose.STARTED, penrose.getStatus());
+
+        try {
+            session.bind(penroseConfig.getRootUserConfig().getDn(), penroseConfig.getRootUserConfig().getPassword());
+            fail();
+        } catch (Exception e) {
+            System.out.println("Bind failed as expected");
+        }
+
+        try {
+            PenroseSession session3 = penrose.newSession();
+            session3.bind(penroseConfig.getRootUserConfig().getDn(), penroseConfig.getRootUserConfig().getPassword());
+            search(session3);
+        } catch (Exception e) {
+            e.printStackTrace();
+            fail("Bind & search should not fail");
+        }
     }
 
-    public void testSearchingPartition() throws Exception {
-
-        penrose.stop();
-
-        PartitionConfig partitionConfig = new PartitionConfig("example", "samples/shop/partition");
-        penroseConfig.addPartitionConfig(partitionConfig);
-
-        PartitionReader partitionReader = new PartitionReader();
-        Partition partition = partitionReader.read(partitionConfig);
-
-        PartitionManager partitionManager = penrose.getPartitionManager();
-        partitionManager.addPartition(partition);
-
-        partitionManager.findPartition("dc=Shop,c=Example,dc=com");
-    }
-
-    public int search() throws Exception {
-
+    public void testPenroseService() throws Exception {
         PenroseSession session = penrose.newSession();
         session.bind(penroseConfig.getRootUserConfig().getDn(), penroseConfig.getRootUserConfig().getPassword());
+
+        search(session);
+        session.close();
+    }
+
+    public void search(PenroseSession session) throws Exception {
 
         PenroseSearchResults results = new PenroseSearchResults();
 
@@ -125,14 +147,9 @@ public class PartitionManagerTest extends TestCase {
         session.search(baseDn, "(objectClass=*)", sc, results);
 
         for (Iterator i = results.iterator(); i.hasNext();) {
-            SearchResult entry = (SearchResult)i.next();
+            SearchResult entry = (SearchResult) i.next();
             System.out.println("dn: "+entry.getName());
         }
-
-        session.unbind();
-
-        session.close();
-
-        return results.getReturnCode();
     }
+*/
 }
