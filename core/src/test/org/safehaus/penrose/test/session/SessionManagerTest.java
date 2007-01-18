@@ -52,6 +52,7 @@ public class SessionManagerTest extends TestCase {
 
         Logger logger = Logger.getLogger("org.safehaus.penrose");
         logger.setLevel(Level.INFO);
+        logger.setAdditivity(false);
 
         penroseConfig = new DefaultPenroseConfig();
 
@@ -72,6 +73,35 @@ public class SessionManagerTest extends TestCase {
         penrose.stop();
     }
 
+    public void testMaxSessions() throws Exception {
+
+        SessionManager sessionManager = penrose.getSessionManager();
+        assertEquals(0, sessionManager.getSessions().size());
+
+        Collection sessions = new ArrayList();
+
+        for (int i=0; i<6; i++) {
+            PenroseSession session = penrose.newSession();
+            assertNotNull("Session should not be null", session);
+            if (session != null) sessions.add(session);
+        }
+
+        assertEquals(6, sessionManager.getSessions().size());
+
+        for (int i=0; i<6; i++) {
+            PenroseSession session = penrose.newSession();
+            assertNull("Session should be null", session);
+        }
+
+        assertEquals(6, sessionManager.getSessions().size());
+
+        for (Iterator i=sessions.iterator(); i.hasNext(); ) {
+            PenroseSession session = (PenroseSession)i.next();
+            session.close();
+        }
+
+        assertEquals(0, sessionManager.getSessions().size());
+    }
 
     public void testMaxIdleTime() throws Exception {
 
@@ -113,14 +143,7 @@ public class SessionManagerTest extends TestCase {
             System.out.println("There are "+size+" remaining session(s) at "+date);
 
             assertEquals(c, size);
-
-            try {
-                session.bind(bindDn, password);
-                fail("Bind should fail");
-
-            } catch (Exception e) {
-                System.out.println("Bind failed as expected");
-            }
+            assertFalse(session.isValid());
 
             Thread.sleep(10 * 1000); // wait 10 seconds
         }

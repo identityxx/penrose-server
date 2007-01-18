@@ -1,4 +1,4 @@
-package org.safehaus.penrose.test.quick.filter;
+package org.safehaus.penrose.test.filter;
 
 import junit.framework.TestCase;
 

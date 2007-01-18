@@ -1,4 +1,4 @@
-package org.safehaus.penrose.test.quick.schema;
+package org.safehaus.penrose.test.schema;
 
 import junit.framework.TestCase;
 

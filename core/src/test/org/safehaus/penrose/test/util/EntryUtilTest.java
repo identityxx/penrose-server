@@ -1,4 +1,4 @@
-package org.safehaus.penrose.test.quick.parser;
+package org.safehaus.penrose.test.util;
 
 import junit.framework.TestCase;
 import org.apache.log4j.Logger;
@@ -11,7 +11,7 @@ import java.util.List;
 /**
  * @author Endi S. Dewata
  */
-public class DnParserTest extends TestCase {
+public class EntryUtilTest extends TestCase {
 
     public void testGetRdn() {
         String dn = "cn=James Bond,ou=Users,dc=Example,dc=com";

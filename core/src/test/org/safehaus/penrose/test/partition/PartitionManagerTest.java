@@ -21,20 +21,24 @@ import junit.framework.TestCase;
 import org.apache.log4j.*;
 import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.config.DefaultPenroseConfig;
-import org.safehaus.penrose.schema.SchemaConfig;
 import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.PenroseFactory;
-import org.safehaus.penrose.partition.PartitionConfig;
-import org.safehaus.penrose.partition.Partition;
-import org.safehaus.penrose.partition.PartitionReader;
-import org.safehaus.penrose.partition.PartitionManager;
 import org.safehaus.penrose.session.PenroseSession;
 import org.safehaus.penrose.session.PenroseSearchControls;
 import org.safehaus.penrose.session.PenroseSearchResults;
-import org.ietf.ldap.LDAPException;
+import org.safehaus.penrose.mapping.EntryMapping;
+import org.safehaus.penrose.mapping.AttributeMapping;
+import org.safehaus.penrose.engine.EngineConfig;
+import org.safehaus.penrose.engine.DefaultEngine;
+import org.safehaus.penrose.jdbc.JDBCAdapter;
+import org.safehaus.penrose.connector.AdapterConfig;
+import org.safehaus.penrose.partition.PartitionConfig;
+import org.safehaus.penrose.partition.Partition;
+import org.safehaus.penrose.partition.PartitionManager;
 
 import javax.naming.directory.SearchResult;
-import java.util.Iterator;
+import javax.naming.directory.Attributes;
+import javax.naming.directory.Attribute;
 
 /**
  * @author Endi S. Dewata
@@ -60,44 +64,54 @@ public class PartitionManagerTest extends TestCase {
         logger.setAdditivity(false);
 
         penroseConfig = new DefaultPenroseConfig();
-
-        SchemaConfig schemaConfig = new SchemaConfig("samples/shop/schema/example.schema");
-        penroseConfig.addSchemaConfig(schemaConfig);
-
         PenroseFactory penroseFactory = PenroseFactory.getInstance();
         penrose = penroseFactory.createPenrose(penroseConfig);
-        penrose.start();
 
     }
 
     public void tearDown() throws Exception {
-        penrose.stop();
     }
-/*
+
     public void testAddingPartition() throws Exception {
 
-        System.out.println("Searching before adding the partition");
-        int rc = search();
-        assertFalse("Search should fail", LDAPException.SUCCESS == rc);
+        PenroseConfig penroseConfig = new PenroseConfig();
+        penroseConfig.addAdapterConfig(new AdapterConfig("JDBC", JDBCAdapter.class.getName()));
+        penroseConfig.addEngineConfig(new EngineConfig("DEFAULT", DefaultEngine.class.getName()));
 
-        penrose.stop();
-
-        PartitionConfig partitionConfig = new PartitionConfig("example", "samples/shop/partition");
-        penroseConfig.addPartitionConfig(partitionConfig);
-
-        PartitionReader partitionReader = new PartitionReader();
-        Partition partition = partitionReader.read(partitionConfig);
-
+        PenroseFactory penroseFactory = PenroseFactory.getInstance();
+        penrose = penroseFactory.createPenrose(penroseConfig);
         PartitionManager partitionManager = penrose.getPartitionManager();
+
+        PartitionConfig partitionConfig = new PartitionConfig("DEFAULT", "conf");
+        Partition partition = new Partition(partitionConfig);
+
+        EntryMapping entry = new EntryMapping();
+        entry.setDn("ou=Test,dc=Example,dc=com");
+        entry.addObjectClass("organizationalUnit");
+        entry.addAttributeMapping(new AttributeMapping("ou", AttributeMapping.CONSTANT, "Test", true));
+        partition.addEntryMapping(entry);
+
         partitionManager.addPartition(partition);
 
         penrose.start();
 
-        System.out.println("Searching after adding the partition");
-        rc = search();
-        assertTrue("Search should succeed", LDAPException.SUCCESS == rc);
-    }
+        PenroseSession session = penrose.newSession();
+        session.setBindDn("uid=admin,ou=system");
 
+        PenroseSearchControls sc = new PenroseSearchControls();
+        sc.setScope(PenroseSearchControls.SCOPE_BASE);
+        PenroseSearchResults results = new PenroseSearchResults();
+        session.search("ou=Test,dc=Example,dc=com", "(objectClass=*)", sc, results);
+
+        assertTrue(results.hasNext());
+
+        SearchResult sr = (SearchResult)results.next();
+        String dn = sr.getName();
+        assertEquals(dn, "ou=Test,dc=Example,dc=com");
+
+        penrose.stop();
+    }
+/*
     public void testSearchingPartition() throws Exception {
 
         penrose.stop();
