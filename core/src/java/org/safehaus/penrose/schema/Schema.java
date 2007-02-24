@@ -368,7 +368,7 @@ public class Schema implements Cloneable {
             }
 
             //value = value.toString().toLowerCase();
-            newRow.set(name, value);
+            newRow.set(name.toLowerCase(), value);
         }
 
         return newRow;
