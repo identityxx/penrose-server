@@ -12,8 +12,6 @@ import org.safehaus.penrose.session.PenroseSearchResults;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import org.ietf.ldap.LDAPException;
-
 public class PenroseSession implements Session {
 
     Logger log = LoggerFactory.getLogger(getClass());
@@ -44,21 +42,11 @@ public class PenroseSession implements Session {
      * @return return code
      * @throws Exception
      */
-    public int bind(String dn, String password) throws Exception {
+    public void bind(String dn, String password) throws Exception {
 
         log.debug("bind(\""+dn+", \""+password+"\")");
 
-        try {
-            session.bind(dn, password);
-            return LDAPException.SUCCESS;
-
-        } catch (LDAPException e) {
-            return e.getResultCode();
-
-        } catch (Throwable e) {
-            log.error(e.getMessage(), e);
-            return LDAPException.OPERATIONS_ERROR;
-        }
+        session.bind(dn, password);
     }
 
     /**
@@ -67,18 +55,11 @@ public class PenroseSession implements Session {
      * @return return value
      * @throws Exception
      */
-    public int unbind() throws Exception {
+    public void unbind() throws Exception {
 
         log.debug("unbind()");
 
-        try {
-            session.unbind();
-            return LDAPException.SUCCESS;
-
-        } catch (Throwable e) {
-            log.error(e.getMessage(), e);
-            return LDAPException.OPERATIONS_ERROR;
-        }
+        session.unbind();
     }
 
     /**
@@ -99,23 +80,14 @@ public class PenroseSession implements Session {
 
         PenroseSearchResults results = new PenroseSearchResults();
 
-        try {
-            PenroseSearchControls psc = new PenroseSearchControls();
-            psc.setScope(sc.getSearchScope());
-            psc.setSizeLimit(sc.getCountLimit());
-            psc.setTimeLimit(sc.getTimeLimit());
-            psc.setDereference(PenroseSearchControls.DEREF_ALWAYS);
-            psc.setAttributes(sc.getReturningAttributes());
+        PenroseSearchControls psc = new PenroseSearchControls();
+        psc.setScope(sc.getSearchScope());
+        psc.setSizeLimit(sc.getCountLimit());
+        psc.setTimeLimit(sc.getTimeLimit());
+        psc.setDereference(PenroseSearchControls.DEREF_ALWAYS);
+        psc.setAttributes(sc.getReturningAttributes());
 
-            int rc = session.search(baseDn, filter, psc, results);
-            results.setReturnCode(rc);
-
-        } catch (Throwable e) {
-            log.error(e.getMessage(), e);
-
-            results.setReturnCode(LDAPException.OPERATIONS_ERROR);
-            results.close();
-        }
+        session.search(baseDn, filter, psc, results);
 
         return new PenroseResults(results);
     }
@@ -128,21 +100,14 @@ public class PenroseSession implements Session {
      * @return return code
      * @throws Exception
      */
-    public int add(
+    public void add(
             String dn,
             Attributes attributes)
     throws Exception {
 
         log.debug("add("+dn+")");
 
-        try {
-            session.add(dn, attributes);
-            return LDAPException.SUCCESS;
-
-        } catch (Throwable e) {
-            log.error(e.getMessage(), e);
-            return LDAPException.OPERATIONS_ERROR;
-        }
+        session.add(dn, attributes);
     }
 
     /**
@@ -152,20 +117,13 @@ public class PenroseSession implements Session {
      * @return return code
      * @throws Exception
      */
-    public int delete(
+    public void delete(
             String dn)
     throws Exception {
 
         log.debug("delete("+dn+")");
 
-        try {
-            session.delete(dn);
-            return LDAPException.SUCCESS;
-
-        } catch (Throwable e) {
-            log.error(e.getMessage(), e);
-            return LDAPException.OPERATIONS_ERROR;
-        }
+        session.delete(dn);
     }
 
     /**
@@ -176,21 +134,14 @@ public class PenroseSession implements Session {
      * @return return code
      * @throws Exception
      */
-    public int modify(
+    public void modify(
             String dn,
             Collection modifications)
     throws Exception {
 
         log.debug("modify("+dn+")");
 
-        try {
-            session.modify(dn, modifications);
-            return LDAPException.SUCCESS;
-
-        } catch (Throwable e) {
-            log.error(e.getMessage(), e);
-            return LDAPException.OPERATIONS_ERROR;
-        }
+        session.modify(dn, modifications);
     }
 
     /**
@@ -201,7 +152,7 @@ public class PenroseSession implements Session {
      * @return return code
      * @throws Exception
      */
-    public int modrdn(
+    public void modrdn(
             String dn,
             String newrdn,
             boolean deleteOldRdn)
@@ -209,14 +160,7 @@ public class PenroseSession implements Session {
 
         log.debug("modrdn(\""+dn+"\", \""+newrdn+"\")");
 
-        try {
-            session.modrdn(dn, newrdn, deleteOldRdn);
-            return LDAPException.SUCCESS;
-
-        } catch (Throwable e) {
-            log.error(e.getMessage(), e);
-            return LDAPException.OPERATIONS_ERROR;
-        }
+        session.modrdn(dn, newrdn, deleteOldRdn);
     }
 
     /**
@@ -228,7 +172,7 @@ public class PenroseSession implements Session {
      * @return return code
      * @throws Exception
      */
-    public int compare(
+    public boolean compare(
             String dn,
             String attributeName,
             Object attributeValue)
@@ -236,13 +180,10 @@ public class PenroseSession implements Session {
 
         log.debug("compare("+dn+", "+attributeName+", "+attributeValue+")");
 
-        try {
-            boolean b = session.compare(dn, attributeName, attributeValue);
-            return b ? LDAPException.COMPARE_TRUE : LDAPException.COMPARE_FALSE;
+        return session.compare(dn, attributeName, attributeValue);
+    }
 
-        } catch (Throwable e) {
-            log.error(e.getMessage(), e);
-            return LDAPException.OPERATIONS_ERROR;
-        }
+    public boolean isRoot() {
+        return false;
     }
 }

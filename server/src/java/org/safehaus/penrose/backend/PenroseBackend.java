@@ -31,8 +31,6 @@ import org.apache.log4j.xml.DOMConfigurator;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
-import com.novell.ldap.LDAPException;
-
 /**
  * @author Endi S. Dewata
  */
@@ -53,22 +51,19 @@ public class PenroseBackend implements Backend {
         if (f.exists()) DOMConfigurator.configure(f.getAbsolutePath());
     }
 
+    public PenroseBackend(PenroseServer penroseServer) {
+        this.penroseServer = penroseServer;
+        home = penroseServer.getPenroseConfig().getHome();
+    }
+
     /**
      * Initialize Penrose engine.
      *
      * @return return code
      * @throws Exception
      */
-    public int init() throws Exception {
-        try {
-            return initImpl();
-        } catch (Throwable e) {
-            log.error(e.getMessage(), e);
-            return LDAPException.OPERATIONS_ERROR;
-        }
-    }
-
-    public int initImpl() throws Exception {
+    public void init() throws Exception {
+        if (penroseServer != null) return;
 
         penroseServer = new PenroseServer(home);
 
@@ -78,14 +73,15 @@ public class PenroseBackend implements Backend {
         ldapServiceConfig.setEnabled(false);
 
         penroseServer.start();
-
-        return LDAPException.SUCCESS;
     }
 
     public boolean contains(String dn) throws Exception {
+        PenroseConfig penroseConfig = penroseServer.getPenroseConfig();
+        if (penroseConfig.getRootDn().equalsIgnoreCase(dn)) return true;
+        
         Penrose penrose = penroseServer.getPenrose();
         PartitionManager partitionManager = penrose.getPartitionManager();
-        return partitionManager.getPartitionByDn(dn) != null;
+        return partitionManager.findPartition(dn) != null;
     }
 
     /**

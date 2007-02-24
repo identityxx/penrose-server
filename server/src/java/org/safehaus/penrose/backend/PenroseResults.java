@@ -19,9 +19,9 @@ package org.safehaus.penrose.backend;
 
 import com.identyx.javabackend.Results;
 import org.safehaus.penrose.session.PenroseSearchResults;
+import org.safehaus.penrose.mapping.Entry;
 
-import java.util.Collection;
-import java.util.Iterator;
+import javax.naming.directory.SearchResult;
 
 /**
  * @author Endi S. Dewata
@@ -34,31 +34,12 @@ public class PenroseResults implements Results {
         this.results = results;
     }
 
-    public Object next() {
-        return results.next();
+    public Object next() throws Exception {
+        SearchResult entry = (SearchResult)results.next();
+        return new PenroseEntry(entry);
     }
 
-    public void close() {
-        results.close();
-    }
-
-    public Collection getAll() {
-        return results.getAll();
-    }
-
-    public int size() {
-        return results.size();
-    }
-
-    public Iterator iterator() {
-        return results.iterator();
-    }
-
-    public int getReturnCode() {
-        return results.getReturnCode();
-    }
-
-    public boolean hasNext() {
+    public boolean hasNext() throws Exception {
         return results.hasNext();
     }
 }
