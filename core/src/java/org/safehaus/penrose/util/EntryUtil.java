@@ -17,9 +17,9 @@
  */
 package org.safehaus.penrose.util;
 
-import org.safehaus.penrose.mapping.Row;
-import org.safehaus.penrose.mapping.Entry;
-import org.safehaus.penrose.mapping.AttributeValues;
+import org.safehaus.penrose.entry.RDN;
+import org.safehaus.penrose.entry.Entry;
+import org.safehaus.penrose.entry.AttributeValues;
 import org.safehaus.penrose.mapping.EntryMapping;
 import org.ietf.ldap.LDAPEntry;
 import org.ietf.ldap.LDAPAttributeSet;
@@ -49,8 +49,8 @@ public class EntryUtil {
     public static boolean match(String dn1, String dn2) throws Exception {
 
         //log.debug("Matching ["+dn1+"] with ["+dn2+"]");
-        Row rdn1 = getRdn(dn1);
-        Row rdn2 = getRdn(dn2);
+        RDN rdn1 = getRdn(dn1);
+        RDN rdn2 = getRdn(dn2);
 
         Iterator i = rdn1.getNames().iterator();
         Iterator j = rdn2.getNames().iterator();
@@ -92,20 +92,20 @@ public class EntryUtil {
         return dn+","+suffix;
     }
 
-    public static String append(String dn, Row rdn) {
+    public static String append(String dn, RDN rdn) {
         return append(dn, toString(rdn));
     }
 
-    public static String append(Row rdn, String dn) {
+    public static String append(RDN rdn, String dn) {
         return append(toString(rdn), dn);
     }
 
-    public static String append(Row rdn1, Row rdn2) {
+    public static String append(RDN rdn1, RDN rdn2) {
         return append(toString(rdn1), toString(rdn2));
     }
 
-    public static Row getRdn(String dn) {
-        Row rdn = new Row();
+    public static RDN getRdn(String dn) {
+        RDN rdn = new RDN();
         if (dn == null || "".equals(dn)) return rdn;
 
         try {
@@ -378,7 +378,7 @@ public class EntryUtil {
             String compositeRdn = compositeRdns[i];
 
             StringTokenizer st = new StringTokenizer(compositeRdn, "+");
-            Row rdn = new Row();
+            RDN rdn = new RDN();
 
             while (st.hasMoreTokens()) {
                 String s = LDAPDN.unescapeRDN(st.nextToken());
@@ -405,14 +405,14 @@ public class EntryUtil {
         for (int i=0; i<length; i++) {
             int p = i+start;
             if (p >= dn.size()) break;
-            Row rdn = (Row)dn.get(p);
+            RDN rdn = (RDN)dn.get(p);
             append(newDn, toString(rdn));
         }
 
         return newDn;
     }
 
-    public static String toString(Row rdn) {
+    public static String toString(RDN rdn) {
         StringBuffer sb = new StringBuffer();
         for (Iterator i=rdn.getNames().iterator(); i.hasNext(); ) {
             String name = (String)i.next();

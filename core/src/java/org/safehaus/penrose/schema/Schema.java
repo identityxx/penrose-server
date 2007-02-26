@@ -18,8 +18,8 @@
 package org.safehaus.penrose.schema;
 
 import org.safehaus.penrose.mapping.EntryMapping;
-import org.safehaus.penrose.mapping.Row;
-import org.safehaus.penrose.mapping.AttributeValues;
+import org.safehaus.penrose.entry.RDN;
+import org.safehaus.penrose.entry.AttributeValues;
 import org.safehaus.penrose.util.EntryUtil;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
@@ -278,7 +278,7 @@ public class Schema implements Cloneable {
     /**
      * Check if pk2 is a subset of pk1.
      */
-    public boolean partialMatch(Row pk1, Row pk2) throws Exception {
+    public boolean partialMatch(RDN pk1, RDN pk2) throws Exception {
 
         for (Iterator i=pk2.getNames().iterator(); i.hasNext(); ) {
             String name = (String)i.next();
@@ -303,12 +303,12 @@ public class Schema implements Cloneable {
     /**
      * Check if row is a subset of av.
      */
-    public boolean partialMatch(AttributeValues av, Row row) throws Exception {
+    public boolean partialMatch(AttributeValues av, RDN rdn) throws Exception {
 
-        for (Iterator i=row.getNames().iterator(); i.hasNext(); ) {
+        for (Iterator i=rdn.getNames().iterator(); i.hasNext(); ) {
             String name = (String)i.next();
             Collection values = av.get(name);
-            Object value = row.get(name);
+            Object value = rdn.get(name);
 
             if (values == null && value == null) {
                 continue;
@@ -330,7 +330,7 @@ public class Schema implements Cloneable {
         return true;
     }
 
-    public boolean match(Row pk1, Row pk2) throws Exception {
+    public boolean match(RDN pk1, RDN pk2) throws Exception {
 
         if (!pk1.getNames().equals(pk2.getNames())) return false;
 
@@ -353,13 +353,13 @@ public class Schema implements Cloneable {
         return true;
     }
 
-    public Row normalize(Row row) throws Exception {
+    public RDN normalize(RDN rdn) throws Exception {
 
-        Row newRow = new Row();
+        RDN newRdn = new RDN();
 
-        for (Iterator i=row.getNames().iterator(); i.hasNext(); ) {
+        for (Iterator i=rdn.getNames().iterator(); i.hasNext(); ) {
             String name = (String)i.next();
-            Object value = row.get(name);
+            Object value = rdn.get(name);
 
             if (value == null) continue;
 
@@ -368,10 +368,10 @@ public class Schema implements Cloneable {
             }
 
             //value = value.toString().toLowerCase();
-            newRow.set(name.toLowerCase(), value);
+            newRdn.set(name.toLowerCase(), value);
         }
 
-        return newRow;
+        return newRdn;
     }
 
     public String normalize(String dn) throws Exception {
@@ -381,8 +381,8 @@ public class Schema implements Cloneable {
 
         Collection rdns = EntryUtil.parseDn(dn);
         for (Iterator i=rdns.iterator(); i.hasNext(); ) {
-            Row rdn = (Row)i.next();
-            Row newRdn = normalize(rdn);
+            RDN rdn = (RDN)i.next();
+            RDN newRdn = normalize(rdn);
             newDn = EntryUtil.append(newDn, newRdn);
         }
 

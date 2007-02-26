@@ -1,6 +1,5 @@
 package org.safehaus.penrose.backend;
 
-import org.safehaus.penrose.mapping.Entry;
 import com.identyx.javabackend.Attributes;
 import com.identyx.javabackend.DN;
 

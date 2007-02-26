@@ -15,10 +15,14 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
-package org.safehaus.penrose.mapping;
+package org.safehaus.penrose.entry;
 
 
 import org.safehaus.penrose.util.EntryUtil;
+import org.safehaus.penrose.mapping.EntryMapping;
+import org.safehaus.penrose.entry.AttributeValues;
+import org.safehaus.penrose.entry.RDN;
+import org.safehaus.penrose.mapping.AttributeMapping;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
@@ -66,9 +70,9 @@ public class Entry {
         return dn;
     }
 
-    public Row getRdn() throws Exception {
+    public RDN getRdn() throws Exception {
 
-        Row rdn = new Row();
+        RDN rdn = new RDN();
 
         Collection rdnAttributes = entryMapping.getRdnAttributeNames();
 

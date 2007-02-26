@@ -1,9 +1,8 @@
 package org.safehaus.penrose.test.util;
 
 import junit.framework.TestCase;
-import org.apache.log4j.Logger;
 import org.safehaus.penrose.util.EntryUtil;
-import org.safehaus.penrose.mapping.Row;
+import org.safehaus.penrose.entry.RDN;
 
 import java.util.Collection;
 import java.util.List;
@@ -15,7 +14,7 @@ public class EntryUtilTest extends TestCase {
 
     public void testGetRdn() {
         String dn = "cn=James Bond,ou=Users,dc=Example,dc=com";
-        Row rdn = EntryUtil.getRdn(dn);
+        RDN rdn = EntryUtil.getRdn(dn);
 
         assertEquals(rdn.getNames().size(), 1);
 
@@ -34,7 +33,7 @@ public class EntryUtilTest extends TestCase {
     }
 
     public void testRdnWriter() {
-        Row rdn = new Row();
+        RDN rdn = new RDN();
         rdn.set("cn", "Bond, James");
         rdn.set("description", "Secret, Agent");
 
@@ -47,25 +46,25 @@ public class EntryUtilTest extends TestCase {
 
         assertEquals(rdns.size(), 4);
 
-        Row rdn = (Row)rdns.get(0);
+        RDN rdn = (RDN)rdns.get(0);
         Collection names = rdn.getNames();
         assertEquals(names.size(), 1);
         assertTrue(names.contains("cn"));
         assertEquals(rdn.get("cn"), "James Bond");
 
-        rdn = (Row)rdns.get(1);
+        rdn = (RDN)rdns.get(1);
         names = rdn.getNames();
         assertEquals(names.size(), 1);
         assertTrue(names.contains("ou"));
         assertEquals(rdn.get("ou"), "Users");
 
-        rdn = (Row)rdns.get(2);
+        rdn = (RDN)rdns.get(2);
         names = rdn.getNames();
         assertEquals(names.size(), 1);
         assertTrue(names.contains("dc"));
         assertEquals(rdn.get("dc"), "Example");
 
-        rdn = (Row)rdns.get(3);
+        rdn = (RDN)rdns.get(3);
         names = rdn.getNames();
         assertEquals(names.size(), 1);
         assertTrue(names.contains("dc"));
@@ -79,25 +78,25 @@ public class EntryUtilTest extends TestCase {
 
         assertEquals(rdns.size(), 4);
 
-        Row rdn = (Row)rdns.get(0);
+        RDN rdn = (RDN)rdns.get(0);
         Collection names = rdn.getNames();
         assertEquals(names.size(), 1);
         assertTrue(names.contains("cn"));
         assertEquals(rdn.get("cn"), "Bond, James");
 
-        rdn = (Row)rdns.get(1);
+        rdn = (RDN)rdns.get(1);
         names = rdn.getNames();
         assertEquals(names.size(), 1);
         assertTrue(names.contains("ou"));
         assertEquals(rdn.get("ou"), "Agents, Secret");
 
-        rdn = (Row)rdns.get(2);
+        rdn = (RDN)rdns.get(2);
         names = rdn.getNames();
         assertEquals(names.size(), 1);
         assertTrue(names.contains("dc"));
         assertEquals(rdn.get("dc"), "Example");
 
-        rdn = (Row)rdns.get(3);
+        rdn = (RDN)rdns.get(3);
         names = rdn.getNames();
         assertEquals(names.size(), 1);
         assertTrue(names.contains("dc"));
@@ -111,7 +110,7 @@ public class EntryUtilTest extends TestCase {
 
         assertEquals(rdns.size(), 4);
 
-        Row rdn = (Row)rdns.get(0);
+        RDN rdn = (RDN)rdns.get(0);
         Collection names = rdn.getNames();
         assertEquals(names.size(), 3);
         assertTrue(names.contains("cn"));
@@ -121,7 +120,7 @@ public class EntryUtilTest extends TestCase {
         assertTrue(names.contains("displayName"));
         assertEquals(rdn.get("displayName"), "007");
 
-        rdn = (Row)rdns.get(1);
+        rdn = (RDN)rdns.get(1);
         names = rdn.getNames();
         assertEquals(names.size(), 2);
         assertTrue(names.contains("ou"));
@@ -129,13 +128,13 @@ public class EntryUtilTest extends TestCase {
         assertTrue(names.contains("description"));
         assertEquals(rdn.get("description"), "Secret Agents");
 
-        rdn = (Row)rdns.get(2);
+        rdn = (RDN)rdns.get(2);
         names = rdn.getNames();
         assertEquals(names.size(), 1);
         assertTrue(names.contains("dc"));
         assertEquals(rdn.get("dc"), "Example");
 
-        rdn = (Row)rdns.get(3);
+        rdn = (RDN)rdns.get(3);
         names = rdn.getNames();
         assertEquals(names.size(), 1);
         assertTrue(names.contains("dc"));

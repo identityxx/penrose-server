@@ -25,6 +25,8 @@ import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.FieldConfig;
 import org.safehaus.penrose.partition.SourceConfig;
 import org.safehaus.penrose.mapping.*;
+import org.safehaus.penrose.entry.AttributeValues;
+import org.safehaus.penrose.entry.RDN;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
@@ -48,7 +50,7 @@ public class TransformEngine {
      * Convert attribute values into rows.
      *
      * Input: AttributeValues(value1=Collection(a, b, c), value2=Collection(1, 2, 3))
-     * Output: List(Row(value1=a, value2=1), Row(value1=a, value2=2), ... )
+     * Output: List(RDN(value1=a, value2=1), RDN(value1=a, value2=2), ... )
      *
      * @param attributes
      * @return collection of Rows
@@ -61,7 +63,7 @@ public class TransformEngine {
      * Convert map of values into rows.
      *
      * Input: Map(value1=Collection(a, b, c), value2=Collection(1, 2, 3))
-     * Output: List(Row(value1=a, value2=1), Row(value1=a, value2=2), ... )
+     * Output: List(RDN(value1=a, value2=1), RDN(value1=a, value2=2), ... )
      *
      * @param values Map of collections.
      * @return collection of Rows
@@ -108,7 +110,7 @@ public class TransformEngine {
 
         } else if (!temp.isEmpty()) {
 
-            Row map = new Row(temp);
+            RDN map = new RDN(temp);
             results.add(map);
 
             //if (crossProductDebug >= 65535) {
@@ -122,7 +124,7 @@ public class TransformEngine {
         }
     }
 
-    public Row translate(Partition partition, EntryMapping entryMapping, SourceMapping sourceMapping, AttributeValues input, AttributeValues output) throws Exception {
+    public RDN translate(Partition partition, EntryMapping entryMapping, SourceMapping sourceMapping, AttributeValues input, AttributeValues output) throws Exception {
 
         SourceConfig sourceConfig = partition.getSourceConfig(sourceMapping.getSourceName());
 
@@ -138,7 +140,7 @@ public class TransformEngine {
 
         log.debug("into source "+sourceMapping.getName()+":");
         Collection fields = sourceMapping.getFieldMappings();
-        Row pk = new Row();
+        RDN pk = new RDN();
         for (Iterator i =fields.iterator(); i.hasNext(); ) {
             FieldMapping fieldMapping = (FieldMapping)i.next();
             String name = fieldMapping.getName();
@@ -202,7 +204,7 @@ public class TransformEngine {
     public static Collection getPrimaryKeys(SourceConfig sourceConfig, AttributeValues sourceValues) throws Exception {
 
         Collection list = new ArrayList();
-        Row pk = new Row();
+        RDN pk = new RDN();
 
         for (Iterator i=sourceValues.getNames().iterator(); i.hasNext(); ) {
             String name = (String)i.next();
@@ -243,7 +245,7 @@ public class TransformEngine {
         Collection fields = sourceConfig.getPrimaryKeyFieldConfigs();
 
         AttributeValues output = new AttributeValues();
-        Row m = translate(partition, entryMapping, sourceMapping, entry, output);
+        RDN m = translate(partition, entryMapping, sourceMapping, entry, output);
         log.debug("PKs: "+m);
         log.debug("Output: "+output);
 
@@ -251,16 +253,16 @@ public class TransformEngine {
         Map map = new TreeMap();
 
         for (Iterator i=rows.iterator(); i.hasNext(); ) {
-            Row row = (Row)i.next();
-            log.debug(" - "+row);
+            RDN rdn = (RDN)i.next();
+            log.debug(" - "+rdn);
 
             AttributeValues av = new AttributeValues();
-            av.add(row);
+            av.add(rdn);
 
-            Row pk = new Row();
+            RDN pk = new RDN();
             for (Iterator j=fields.iterator(); j.hasNext(); ) {
                 FieldConfig fieldConfig = (FieldConfig)j.next();
-                pk.set(fieldConfig.getName(), row.get(fieldConfig.getName()));
+                pk.set(fieldConfig.getName(), rdn.get(fieldConfig.getName()));
             }
 
             map.put(pk, av);

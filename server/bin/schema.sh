@@ -91,69 +91,52 @@ if [ ! -x "$JAVACMD" ] ; then
   exit 1
 fi
 
-if [ -n "$CLASSPATH" ] ; then
-  LOCALCLASSPATH="$CLASSPATH"
-fi
-
+LOCALCLASSPATH=$PENROSE_HOME/conf
 LOCALCLASSPATH=$LOCALCLASSPATH:$JAVA_HOME/lib/tools.jar
 
-# add in the required dependency .jar files
 for i in "$PENROSE_HOME"/lib/*.jar
 do
-  # if the directory is empty, then it will return the input string
-  # this is stupid, so case for it
   if [ -f "$i" ] ; then
     if [ -z "$LOCALCLASSPATH" ] ; then
       LOCALCLASSPATH="$i"
     else
-      LOCALCLASSPATH="$i":"$LOCALCLASSPATH"
+      LOCALCLASSPATH="$LOCALCLASSPATH":"$i"
     fi
   fi
 done
 
-# add in the optional dependency .jar files
 for i in "$PENROSE_HOME"/lib/ext/*.jar
 do
-  # if the directory is empty, then it will return the input string
-  # this is stupid, so case for it
   if [ -f "$i" ] ; then
     if [ -z "$LOCALCLASSPATH" ] ; then
       LOCALCLASSPATH="$i"
     else
-      LOCALCLASSPATH="$i":"$LOCALCLASSPATH"
+      LOCALCLASSPATH="$LOCALCLASSPATH":"$i"
     fi
   fi
 done
 
-# add in the required dependency .jar files
 for i in "$PENROSE_HOME"/server/lib/*.jar
 do
-  # if the directory is empty, then it will return the input string
-  # this is stupid, so case for it
   if [ -f "$i" ] ; then
     if [ -z "$LOCALCLASSPATH" ] ; then
       LOCALCLASSPATH="$i"
     else
-      LOCALCLASSPATH="$i":"$LOCALCLASSPATH"
+      LOCALCLASSPATH="$LOCALCLASSPATH":"$i"
     fi
   fi
 done
 
-# add in the optional dependency .jar files
 for i in "$PENROSE_HOME"/server/lib/ext/*.jar
 do
-  # if the directory is empty, then it will return the input string
-  # this is stupid, so case for it
   if [ -f "$i" ] ; then
     if [ -z "$LOCALCLASSPATH" ] ; then
       LOCALCLASSPATH="$i"
     else
-      LOCALCLASSPATH="$i":"$LOCALCLASSPATH"
+      LOCALCLASSPATH="$LOCALCLASSPATH":"$i"
     fi
   fi
 done
-
-LOCALCLASSPATH="$PENROSE_HOME/conf:$LOCALCLASSPATH"
 
 # For Cygwin, switch paths to Windows format before running java
 if $cygwin; then

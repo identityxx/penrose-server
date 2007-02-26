@@ -20,8 +20,8 @@ package org.safehaus.penrose.cache;
 import org.safehaus.penrose.connector.Connection;
 import org.safehaus.penrose.connector.Connector;
 import org.safehaus.penrose.filter.Filter;
-import org.safehaus.penrose.mapping.AttributeValues;
-import org.safehaus.penrose.mapping.Row;
+import org.safehaus.penrose.entry.AttributeValues;
+import org.safehaus.penrose.entry.RDN;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.SourceConfig;
 import org.safehaus.penrose.pipeline.PipelineAdapter;
@@ -186,8 +186,8 @@ public class SourceCache {
             public void objectAdded(PipelineEvent event) {
                 try {
                     AttributeValues sourceValues = (AttributeValues)event.getObject();
-                    Row pk = sourceConfig.getPrimaryKeyValues(sourceValues);
-                    //Row pk = sourceValues.getRdn();
+                    RDN pk = sourceConfig.getPrimaryKeyValues(sourceValues);
+                    //RDN pk = sourceValues.getRdn();
                     log.info("Storing "+pk+" in source cache");
                     put(pk, sourceValues);
                 } catch (Exception e) {

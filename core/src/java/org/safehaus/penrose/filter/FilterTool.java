@@ -27,6 +27,9 @@ import org.safehaus.penrose.schema.matchingRule.EqualityMatchingRule;
 import org.safehaus.penrose.schema.matchingRule.OrderingMatchingRule;
 import org.safehaus.penrose.schema.matchingRule.SubstringsMatchingRule;
 import org.safehaus.penrose.mapping.*;
+import org.safehaus.penrose.entry.Entry;
+import org.safehaus.penrose.entry.AttributeValues;
+import org.safehaus.penrose.entry.RDN;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
@@ -237,7 +240,7 @@ public class FilterTool {
         Filter filter = null;
 
         for (Iterator i=keys.iterator(); i.hasNext(); ) {
-            Row pk = (Row)i.next();
+            RDN pk = (RDN)i.next();
 
             Filter f = createFilter(pk, includeValues);
             filter = appendOrFilter(filter, f);
@@ -246,17 +249,17 @@ public class FilterTool {
         return filter;
     }
 
-    public static Filter createFilter(Row row) {
-        return createFilter(row, true);
+    public static Filter createFilter(RDN rdn) {
+        return createFilter(rdn, true);
     }
 
-    public static Filter createFilter(Row row, boolean includeValues) {
+    public static Filter createFilter(RDN rdn, boolean includeValues) {
 
         Filter f = null;
 
-        for (Iterator i =row.getNames().iterator(); i.hasNext(); ) {
+        for (Iterator i =rdn.getNames().iterator(); i.hasNext(); ) {
             String name = (String)i.next();
-            Object value = row.get(name);
+            Object value = rdn.get(name);
             if (value == null) continue;
 
             String strVal;
@@ -587,12 +590,12 @@ public class FilterTool {
         this.schemaManager = schemaManager;
     }
 
-    public static boolean isValid(Row row, SimpleFilter filter) throws Exception {
+    public static boolean isValid(RDN rdn, SimpleFilter filter) throws Exception {
         String attributeName = filter.getAttribute();
         String operator = filter.getOperator();
         String attributeValue = filter.getValue();
 
-        Object value = row.get(attributeName);
+        Object value = rdn.get(attributeName);
         if (value == null) return false;
 
         int c = attributeValue.toString().compareTo(value.toString());
@@ -619,38 +622,38 @@ public class FilterTool {
         return true;
     }
 
-    public static boolean isValid(Row row, PresentFilter filter) throws Exception {
+    public static boolean isValid(RDN rdn, PresentFilter filter) throws Exception {
         String attributeName = filter.getAttribute();
 
         if (attributeName.equalsIgnoreCase("objectclass")) return true;
 
-        return row.contains(attributeName);
+        return rdn.contains(attributeName);
     }
 
-    public static boolean isValid(Row row, AndFilter filter) throws Exception {
+    public static boolean isValid(RDN rdn, AndFilter filter) throws Exception {
         for (Iterator i=filter.getFilters().iterator(); i.hasNext(); ) {
             Filter f = (Filter)i.next();
-            boolean result = isValid(row, f);
+            boolean result = isValid(rdn, f);
             if (!result) return false;
         }
         return true;
     }
 
-    public static boolean isValid(Row row, OrFilter filter) throws Exception {
+    public static boolean isValid(RDN rdn, OrFilter filter) throws Exception {
         for (Iterator i=filter.getFilters().iterator(); i.hasNext(); ) {
             Filter f = (Filter)i.next();
-            boolean result = isValid(row, f);
+            boolean result = isValid(rdn, f);
             if (result) return true;
         }
         return false;
     }
 
-    public static boolean isValid(Row row, NotFilter filter) throws Exception {
+    public static boolean isValid(RDN rdn, NotFilter filter) throws Exception {
         Filter f = filter.getFilter();
-        return isValid(row, f);
+        return isValid(rdn, f);
     }
 
-    public static boolean isValid(Row row, Filter filter) throws Exception {
+    public static boolean isValid(RDN rdn, Filter filter) throws Exception {
         log.debug("Checking filter "+filter);
 
         boolean result = false;
@@ -659,19 +662,19 @@ public class FilterTool {
             result = true;
 
         } else if (filter instanceof NotFilter) {
-            result = isValid(row, (NotFilter)filter);
+            result = isValid(rdn, (NotFilter)filter);
 
         } else if (filter instanceof AndFilter) {
-            result = isValid(row, (AndFilter)filter);
+            result = isValid(rdn, (AndFilter)filter);
 
         } else if (filter instanceof OrFilter) {
-            result = isValid(row, (OrFilter)filter);
+            result = isValid(rdn, (OrFilter)filter);
 
         } else if (filter instanceof SimpleFilter) {
-            result = isValid(row, (SimpleFilter)filter);
+            result = isValid(rdn, (SimpleFilter)filter);
 
         } else if (filter instanceof PresentFilter) {
-            result = isValid(row, (PresentFilter)filter);
+            result = isValid(rdn, (PresentFilter)filter);
         }
 
         // log.debug("=> "+filter+" ("+filter.getClass().getName()+"): "+result);

@@ -17,9 +17,10 @@
  */
 package org.safehaus.penrose.cache;
 
-import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.partition.FieldConfig;
+import org.safehaus.penrose.entry.AttributeValues;
+import org.safehaus.penrose.entry.RDN;
 
 import java.util.*;
 
@@ -37,13 +38,13 @@ public class InMemorySourceCache extends SourceCache {
     Map uniqueKeyMap = new TreeMap();
     Map dataExpirationMap = new LinkedHashMap();
 
-    public Row normalize(Row row) throws Exception {
+    public RDN normalize(RDN rdn) throws Exception {
 
-        Row newRow = new Row();
+        RDN newRdn = new RDN();
 
-        for (Iterator i=row.getNames().iterator(); i.hasNext(); ) {
+        for (Iterator i=rdn.getNames().iterator(); i.hasNext(); ) {
             String name = (String)i.next();
-            Object value = row.get(name);
+            Object value = rdn.get(name);
 
             if (value == null) continue;
 
@@ -51,15 +52,15 @@ public class InMemorySourceCache extends SourceCache {
                 value = ((String)value).toLowerCase();
             }
 
-            newRow.set(name, value);
+            newRdn.set(name, value);
         }
 
-        return newRow;
+        return newRdn;
     }
 
     public Object get(Object key) throws Exception {
 
-        Row pk = normalize((Row)key);
+        RDN pk = normalize((RDN)key);
 
         AttributeValues attributeValues = (AttributeValues)dataMap.get(pk);
         if (attributeValues == null) return null;
@@ -74,7 +75,7 @@ public class InMemorySourceCache extends SourceCache {
         Map results = new TreeMap();
 
         for (Iterator j=dataMap.keySet().iterator(); j.hasNext(); ) {
-            Row pk = (Row)j.next();
+            RDN pk = (RDN)j.next();
             AttributeValues attributeValues = (AttributeValues)dataMap.get(pk);
 
             Date date = (Date)dataExpirationMap.get(pk);
@@ -86,12 +87,12 @@ public class InMemorySourceCache extends SourceCache {
         return results;
     }
 
-    public boolean isValid(AttributeValues av, Row row) throws Exception {
+    public boolean isValid(AttributeValues av, RDN rdn) throws Exception {
 
-        for (Iterator i=row.getNames().iterator(); i.hasNext(); ) {
+        for (Iterator i=rdn.getNames().iterator(); i.hasNext(); ) {
             String name = (String)i.next();
             Collection values = av.get(name);
-            Object value = row.get(name);
+            Object value = rdn.get(name);
 
             if (values == null && value == null) {
                 continue;
@@ -119,7 +120,7 @@ public class InMemorySourceCache extends SourceCache {
 
         //log.debug("Checking cache:");
         for (Iterator i=keys.iterator(); i.hasNext(); ) {
-            Row key = (Row)i.next();
+            RDN key = (RDN)i.next();
             log.debug(" - "+key);
 
             AttributeValues attributeValues = (AttributeValues)get(key);
@@ -128,7 +129,7 @@ public class InMemorySourceCache extends SourceCache {
             Collection uniqueKeys = (Collection)uniqueKeyMap.get(key);
             if (uniqueKeys != null) {
                 for (Iterator j=uniqueKeys.iterator(); j.hasNext(); ) {
-                    Row uniqueKey = (Row)j.next();
+                    RDN uniqueKey = (RDN)j.next();
                     attributeValues = (AttributeValues)get(uniqueKey);
                     if (attributeValues != null) break;
                 }
@@ -143,7 +144,7 @@ public class InMemorySourceCache extends SourceCache {
 
             boolean found = false;
             for (Iterator j=dataMap.keySet().iterator(); j.hasNext(); ) {
-                Row pk = (Row)j.next();
+                RDN pk = (RDN)j.next();
                 attributeValues = (AttributeValues)dataMap.get(pk);
 
                 Date date = (Date)dataExpirationMap.get(pk);
@@ -170,7 +171,7 @@ public class InMemorySourceCache extends SourceCache {
     public void put(Object key, Object object) throws Exception {
         if (size == 0) return;
 
-        Row pk = normalize((Row)key);
+        RDN pk = normalize((RDN)key);
         AttributeValues values = (AttributeValues)object;
 
         while (dataMap.get(pk) == null && dataMap.size() >= size) {
@@ -192,10 +193,10 @@ public class InMemorySourceCache extends SourceCache {
             String fieldName = fieldConfig.getName();
             Object value = values.getOne(fieldName);
 
-            Row uniqueKey = new Row();
+            RDN uniqueKey = new RDN();
             uniqueKey.set(fieldName, value);
 
-            Row normalizedUniqueKey = normalize(uniqueKey);
+            RDN normalizedUniqueKey = normalize(uniqueKey);
             dataMap.put(normalizedUniqueKey, values);
 
             uniqueKeys.add(normalizedUniqueKey);
@@ -205,7 +206,7 @@ public class InMemorySourceCache extends SourceCache {
     }
 
     public void remove(Object key) throws Exception {
-        Row pk = normalize((Row)key);
+        RDN pk = normalize((RDN)key);
 
         //log.debug("Removing source data cache ("+dataMap.size()+"): "+key);
         dataMap.remove(pk);

@@ -14,7 +14,9 @@
     <property name="penrose.home" value="${prefix}/usr/local/${product.name}-${product.version}"/>
     <property name="docs.target" value="dist/javadoc"/>
 
-    <tstamp/>
+    <tstamp>
+        <format property="TIMESTAMP" pattern="yyyyMMddHHmmss"/>
+    </tstamp>
 
     <path id="lib.path">
         <fileset dir="../lib">
@@ -49,25 +51,32 @@
         <condition property="isMac">
             <os family="mac"/>
         </condition>
+        <condition property="test.name.undefined">
+          <equals arg1="${test.name}" arg2=""/>
+        </condition>
     </target>
 
     <target name="compile" depends="init">
         <echo message="Compiling Penrose Core."/>
+        <attrib file="src/java/org/safehaus/penrose/schema/*.java" readonly="false"/>
         <javacc
             target="src/java/org/safehaus/penrose/schema/LDAPv3Schema.jj"
             javacchome="../lib/javacc"
             outputdirectory="src/java/org/safehaus/penrose/schema"
         />
+        <attrib file="src/java/org/safehaus/penrose/filter/item/*.java" readonly="false"/>
         <javacc
             target="src/java/org/safehaus/penrose/filter/item/ItemParser.jj"
             javacchome="../lib/javacc"
             outputdirectory="src/java/org/safehaus/penrose/filter/item"
         />
+        <attrib file="src/java/org/safehaus/penrose/filter/*.java" readonly="false"/>
         <javacc
             target="src/java/org/safehaus/penrose/filter/FilterParser.jj"
             javacchome="../lib/javacc"
             outputdirectory="src/java/org/safehaus/penrose/filter"
         />
+        <attrib file="src/java/org/safehaus/penrose/sql/*.java" readonly="false"/>
         <javacc
             target="src/java/org/safehaus/penrose/sql/SQLParser.jj"
             javacchome="../lib/javacc"
@@ -96,23 +105,32 @@
             source="1.5"
             target="1.5"
         />
+        <copy todir="target/tests">
+            <fileset dir="src/test" includes="**/*.properties,**/*.xml,**/*.dtd"/>
+            <filterchain>
+                <expandproperties/>
+            </filterchain>
+        </copy>
     </target>
 
-    <target name="build" depends="compile">
-        <echo message="Building Penrose Core."/>
-        <jar jarfile="target/${product.name}-${product.version}.jar">
-            <fileset dir="target/classes"/>
-            <manifest>
-              <attribute name="Specification-Version"  value="${product.specification}"/>
-              <attribute name="Implementation-Title"   value="${product.title}"/>
-              <attribute name="Implementation-Version" value="${product.version}"/>
-              <attribute name="Implementation-Vendor"  value="Identyx Corporation"/>
-              <attribute name="Build-Date" value="${DSTAMP}"/>
-            </manifest>
-        </jar>
+    <target name="test" depends="singletest,alltest">
     </target>
 
-    <target name="test" depends="compile" >
+    <target name="singletest" depends="compile" unless="test.name.undefined">
+        <mkdir dir="target/reports"/>
+        <junit fork="yes" showoutput="true" printsummary="yes">
+            <classpath>
+                <fileset dir="../lib">
+                    <include name="**/*.jar"/>
+                </fileset>
+                <pathelement location="target/classes"/>
+                <pathelement location="target/tests"/>
+            </classpath>
+          <test name="${test.name}" haltonfailure="no"/>
+        </junit>
+    </target>
+
+    <target name="alltest" depends="compile" if="test.name.undefined">
         <mkdir dir="target/reports"/>
         <junit fork="yes" showoutput="true" printsummary="yes">
             <classpath>
@@ -129,6 +147,20 @@
                 </fileset>
             </batchtest>
         </junit>
+    </target>
+
+    <target name="build" depends="compile">
+        <echo message="Building Penrose Core."/>
+        <jar jarfile="target/${product.name}-${product.version}.jar">
+            <fileset dir="target/classes"/>
+            <manifest>
+              <attribute name="Specification-Version"  value="${product.specification}"/>
+              <attribute name="Implementation-Title"   value="${product.title}"/>
+              <attribute name="Implementation-Version" value="${product.version}"/>
+              <attribute name="Implementation-Vendor"  value="Identyx Corporation"/>
+              <attribute name="Build-Date" value="${TIMESTAMP}"/>
+            </manifest>
+        </jar>
     </target>
 
     <target name="docs" depends="init">

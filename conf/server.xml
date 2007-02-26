@@ -69,7 +69,7 @@
 
   <engine>
     <engine-name>PROXY</engine-name>
-    <engine-class>org.safehaus.penrose.engine.ProxyEngine</engine-class>
+    <engine-class>org.safehaus.penrose.engine.proxy.ProxyEngine</engine-class>
   </engine>
     
   <connector/>

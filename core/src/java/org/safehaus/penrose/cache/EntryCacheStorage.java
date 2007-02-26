@@ -18,8 +18,8 @@
 package org.safehaus.penrose.cache;
 
 import org.safehaus.penrose.mapping.EntryMapping;
-import org.safehaus.penrose.mapping.Entry;
-import org.safehaus.penrose.mapping.Row;
+import org.safehaus.penrose.entry.Entry;
+import org.safehaus.penrose.entry.RDN;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.SourceConfig;
@@ -122,7 +122,7 @@ public class EntryCacheStorage {
         return false;
     }
 
-    public void search(SourceConfig sourceConfig, Row filter, PenroseSearchResults results) throws Exception {
+    public void search(SourceConfig sourceConfig, RDN filter, PenroseSearchResults results) throws Exception {
     }
 
     public void add(String baseDn, Filter filter, String dn) throws Exception { }

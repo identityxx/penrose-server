@@ -24,7 +24,7 @@ import org.xml.sax.InputSource;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 import org.safehaus.penrose.engine.EngineConfig;
-import org.safehaus.penrose.engine.ProxyEngine;
+import org.safehaus.penrose.engine.proxy.ProxyEngine;
 
 import java.io.Reader;
 import java.io.FileReader;

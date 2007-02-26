@@ -26,6 +26,9 @@ import org.safehaus.penrose.filter.*;
 import org.safehaus.penrose.session.PenroseSearchResults;
 import org.safehaus.penrose.connector.ConnectionManager;
 import org.safehaus.penrose.Penrose;
+import org.safehaus.penrose.entry.Entry;
+import org.safehaus.penrose.entry.AttributeValues;
+import org.safehaus.penrose.entry.RDN;
 import org.ietf.ldap.LDAPException;
 
 import javax.naming.NamingException;
@@ -448,7 +451,7 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
         sb.append(" where rdn=? and parentDn=?");
 
         String parentDn = EntryUtil.getParentDn(dn);
-        Row rdn = EntryUtil.getRdn(dn);
+        RDN rdn = EntryUtil.getRdn(dn);
 
         parameters.add(rdn.toString());
         parameters.add(parentDn);
@@ -522,7 +525,7 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
         sb.append(" values (null, ?, ?, ?)");
 
         String parentDn = EntryUtil.getParentDn(dn);
-        Row rdn = EntryUtil.getRdn(dn);
+        RDN rdn = EntryUtil.getRdn(dn);
 
         parameters.add(rdn.toString());
         parameters.add(parentDn);
@@ -850,7 +853,7 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
     public void drop() throws Exception {
         if (!getPartition().isDynamic(getEntryMapping())) {
             String dn = getEntryMapping().getDn();
-            Row rdn = EntryUtil.getRdn(dn);
+            RDN rdn = EntryUtil.getRdn(dn);
             remove(getEntryMapping().getDn());
         }
 
@@ -1477,7 +1480,7 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
 */
     }
 
-    public void search(SourceConfig sourceConfig, Row filter, PenroseSearchResults results) throws Exception {
+    public void search(SourceConfig sourceConfig, RDN filter, PenroseSearchResults results) throws Exception {
 
         StringBuffer tableNames = new StringBuffer();
         tableNames.append(partition.getName()+"_"+mappingId+"_entries t");

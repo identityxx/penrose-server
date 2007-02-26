@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
-package org.safehaus.penrose.engine;
+package org.safehaus.penrose.engine.impl;
 
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.session.PenroseSearchResults;
@@ -25,6 +25,11 @@ import org.safehaus.penrose.filter.FilterTool;
 import org.safehaus.penrose.util.Formatter;
 import org.safehaus.penrose.util.EntryUtil;
 import org.safehaus.penrose.partition.Partition;
+import org.safehaus.penrose.engine.Engine;
+import org.safehaus.penrose.engine.EntryData;
+import org.safehaus.penrose.entry.Entry;
+import org.safehaus.penrose.entry.AttributeValues;
+import org.safehaus.penrose.entry.RDN;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
@@ -76,7 +81,7 @@ public class MergeEngine {
                 String dn = map.getDn();
                 AttributeValues primarySourceValues = map.getMergedValues();
                 Collection rows = map.getRows();
-                Row filter = map.getFilter();
+                RDN filter = map.getFilter();
                 AttributeValues loadedSourceValues = map.getLoadedSourceValues();
 
                 Entry entry = mergeEntries(
@@ -110,7 +115,7 @@ public class MergeEngine {
             AttributeValues loadedSourceValues,
             Collection rows,
             Interpreter interpreter,
-            Row pk)
+            RDN pk)
             throws Exception {
 
         if (log.isDebugEnabled()) {
@@ -149,8 +154,8 @@ public class MergeEngine {
             if (rows != null) {
                 int counter = 0;
                 for (Iterator j=rows.iterator(); j.hasNext() && counter <= 20; counter++) {
-                    AttributeValues row = (AttributeValues)j.next();
-                    log.debug(Formatter.displayLine(" - "+row, 80));
+                    AttributeValues rdn = (AttributeValues)j.next();
+                    log.debug(Formatter.displayLine(" - "+rdn, 80));
                 }
             }
 
@@ -162,7 +167,7 @@ public class MergeEngine {
 
         if (primarySourceMapping != null && loadedSourceValues != null) {
 
-            Row key = new Row();
+            RDN key = new RDN();
             key.add(primarySourceMapping.getName(), pk);
 
             Filter filter  = FilterTool.createFilter(key, true);
@@ -213,7 +218,7 @@ public class MergeEngine {
         Entry entry = new Entry(dn, entryMapping, attributeValues, sourceValues);
         log.debug("\n"+EntryUtil.toString(entry));
 
-        //Row rdn = entry.getRdn();
+        //RDN rdn = entry.getRdn();
 
         //log.debug("Storing "+rdn+" in entry data cache for "+entry.getParentDn());
         //engine.getEntryCache().put(entry);

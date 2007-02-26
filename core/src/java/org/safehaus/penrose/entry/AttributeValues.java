@@ -15,10 +15,11 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
-package org.safehaus.penrose.mapping;
+package org.safehaus.penrose.entry;
 
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
+import org.safehaus.penrose.entry.RDN;
 
 import java.util.*;
 
@@ -31,7 +32,7 @@ public class AttributeValues implements Cloneable, Comparable {
 
     Logger log = LoggerFactory.getLogger(getClass());
 
-    public Row rdn = new Row();
+    public RDN rdn = new RDN();
     public Map values = new TreeMap();
 
     public AttributeValues() {
@@ -41,15 +42,15 @@ public class AttributeValues implements Cloneable, Comparable {
         add(attributeValues);
     }
 
-    public Row getRdn() {
+    public RDN getRdn() {
         return rdn;
     }
 
-    public void setRdn(Row rdn) {
+    public void setRdn(RDN rdn) {
         this.rdn.set(rdn);
     }
 
-    public void setRdn(String prefix, Row rdn) {
+    public void setRdn(String prefix, RDN rdn) {
         this.rdn.set(prefix, rdn);
     }
 
@@ -82,14 +83,14 @@ public class AttributeValues implements Cloneable, Comparable {
         values = newValues;
     }
 
-    public void add(Row row) {
-        add(null, row);
+    public void add(RDN rdn) {
+        add(null, rdn);
     }
 
-    public void add(String prefix, Row row) {
-        for (Iterator i = row.getNames().iterator(); i.hasNext(); ) {
+    public void add(String prefix, RDN rdn) {
+        for (Iterator i = rdn.getNames().iterator(); i.hasNext(); ) {
             String name = (String)i.next();
-            Object value = row.get(name);
+            Object value = rdn.get(name);
 
             String targetName = prefix == null ? name : prefix+"."+name;
             Collection c = get(targetName);
@@ -99,14 +100,14 @@ public class AttributeValues implements Cloneable, Comparable {
         }
     }
 
-    public void set(Row row) {
-        set(null, row);
+    public void set(RDN rdn) {
+        set(null, rdn);
     }
 
-    public void set(String prefix, Row row) {
-        for (Iterator i = row.getNames().iterator(); i.hasNext(); ) {
+    public void set(String prefix, RDN rdn) {
+        for (Iterator i = rdn.getNames().iterator(); i.hasNext(); ) {
             String name = (String)i.next();
-            Object value = row.get(name);
+            Object value = rdn.get(name);
 
             String targetName = prefix == null ? name : prefix+"."+name;
             Collection c = new LinkedHashSet();
@@ -211,17 +212,17 @@ public class AttributeValues implements Cloneable, Comparable {
         return false;
     }
 
-    public boolean contains(Row row) {
-        return contains(null, row);
+    public boolean contains(RDN rdn) {
+        return contains(null, rdn);
     }
     
-    public boolean contains(String prefix, Row row) {
+    public boolean contains(String prefix, RDN rdn) {
         
-        for (Iterator i=row.getNames().iterator(); i.hasNext(); ) {
+        for (Iterator i=rdn.getNames().iterator(); i.hasNext(); ) {
             String name = (String)i.next();
             String fullName = (prefix == null ? name : prefix+"."+name);
 
-            Object value = row.get(name);
+            Object value = rdn.get(name);
             Collection list = get(fullName);
 
             if (value == null || list == null) return false;

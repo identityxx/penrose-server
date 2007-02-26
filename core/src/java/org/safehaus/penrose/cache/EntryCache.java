@@ -18,13 +18,11 @@
 package org.safehaus.penrose.cache;
 
 import org.safehaus.penrose.mapping.EntryMapping;
-import org.safehaus.penrose.mapping.Entry;
-import org.safehaus.penrose.mapping.Row;
+import org.safehaus.penrose.entry.Entry;
+import org.safehaus.penrose.entry.RDN;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.SourceConfig;
 import org.safehaus.penrose.Penrose;
-import org.safehaus.penrose.pipeline.PipelineAdapter;
-import org.safehaus.penrose.pipeline.PipelineEvent;
 import org.safehaus.penrose.session.PenroseSearchResults;
 import org.safehaus.penrose.filter.Filter;
 import org.slf4j.LoggerFactory;
@@ -103,7 +101,7 @@ public class EntryCache {
         getCacheStorage(partition, entryMapping).add(baseDn, filter, dn);
     }
     
-    public void search(Partition partition, EntryMapping entryMapping, SourceConfig sourceConfig, Row filter, PenroseSearchResults results) throws Exception {
+    public void search(Partition partition, EntryMapping entryMapping, SourceConfig sourceConfig, RDN filter, PenroseSearchResults results) throws Exception {
         log.info("["+entryMapping.getDn()+"] search("+sourceConfig.getName()+", "+filter+")");
 
         getCacheStorage(partition, entryMapping).search(sourceConfig, filter, results);

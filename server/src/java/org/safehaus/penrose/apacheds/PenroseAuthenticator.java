@@ -23,7 +23,6 @@ import org.apache.directory.server.core.jndi.ServerContext;
 import org.apache.directory.shared.ldap.exception.LdapAuthenticationException;
 import org.apache.directory.shared.ldap.aci.AuthenticationLevel;
 import org.apache.directory.shared.ldap.name.LdapDN;
-import org.ietf.ldap.LDAPException;
 import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.service.ServiceConfig;
 import org.safehaus.penrose.server.PenroseServer;
@@ -31,6 +30,7 @@ import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.session.PenroseSession;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
+import org.ietf.ldap.LDAPException;
 
 import javax.naming.Context;
 import javax.naming.NamingException;
@@ -101,7 +101,7 @@ public class PenroseAuthenticator extends AbstractAuthenticator {
 
         } catch (Exception e) {
             log.error(e.getMessage(), e);
-            throw new NamingException(e.getMessage());
+            throw ExceptionTool.createNamingException(e);
         }
     }
 }

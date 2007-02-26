@@ -39,6 +39,12 @@ import org.safehaus.penrose.session.PenroseSearchControls;
 import org.safehaus.penrose.session.PenroseSession;
 import org.safehaus.penrose.util.EntryUtil;
 import org.safehaus.penrose.Penrose;
+import org.safehaus.penrose.entry.Entry;
+import org.safehaus.penrose.entry.AttributeValues;
+import org.safehaus.penrose.entry.RDN;
+import org.safehaus.penrose.engine.impl.LoadEngine;
+import org.safehaus.penrose.engine.impl.MergeEngine;
+import org.safehaus.penrose.engine.impl.JoinEngine;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 import org.ietf.ldap.LDAPException;
@@ -78,7 +84,7 @@ public abstract class Engine {
 
     public TransformEngine transformEngine;
 
-    Analyzer analyzer;
+    protected Analyzer analyzer;
 
     public void init() throws Exception {
         filterTool = new FilterTool();
@@ -285,8 +291,8 @@ public abstract class Engine {
 
         Filter filter = null;
         for (Iterator i=rows.iterator(); i.hasNext(); ) {
-            Row row = (Row)i.next();
-            log.debug(" - "+row);
+            RDN rdn = (RDN)i.next();
+            log.debug(" - "+rdn);
 
             Filter subFilter = null;
 
@@ -307,7 +313,7 @@ public abstract class Engine {
                 String name = lhs.substring(index+1);
 
                 log.debug("   - "+rhs+" ==> ("+name+" "+operator+" ?)");
-                Object value = row.get(rhs);
+                Object value = rdn.get(rhs);
                 if (value == null) continue;
 
                 SimpleFilter sf = new SimpleFilter(name, operator, value.toString());
@@ -588,9 +594,9 @@ public abstract class Engine {
         if (pks != null) {
             normalizedFilters = new TreeSet();
             for (Iterator i=pks.iterator(); i.hasNext(); ) {
-                Row filter = (Row)i.next();
+                RDN filter = (RDN)i.next();
 
-                Row f = new Row();
+                RDN f = new RDN();
                 for (Iterator j=filter.getNames().iterator(); j.hasNext(); ) {
                     String name = (String)j.next();
                     if (!name.startsWith(sourceMapping.getName()+".")) continue;
@@ -601,7 +607,7 @@ public abstract class Engine {
 
                 if (f.isEmpty()) continue;
 
-                Row normalizedFilter = schemaManager.normalize(f);
+                RDN normalizedFilter = schemaManager.normalize(f);
                 normalizedFilters.add(normalizedFilter);
             }
         }
@@ -614,22 +620,22 @@ public abstract class Engine {
         return filter;
     }
 
-    public Row createFilter(
+    public RDN createFilter(
             Partition partition,
             Interpreter interpreter,
             SourceMapping sourceMapping,
             EntryMapping entryMapping,
-            Row rdn) throws Exception {
+            RDN rdn) throws Exception {
 
         if (sourceMapping == null) {
-            return new Row();
+            return new RDN();
         }
 
         Collection fields = partition.getSearchableFields(sourceMapping);
 
         interpreter.set(rdn);
 
-        Row filter = new Row();
+        RDN filter = new RDN();
         for (Iterator j=fields.iterator(); j.hasNext(); ) {
             FieldMapping fieldMapping = (FieldMapping)j.next();
             String name = fieldMapping.getName();
@@ -696,7 +702,7 @@ public abstract class Engine {
             String parentDn = (String)i.next();
             //log.info(" - parent dn: "+parentDn);
             for (Iterator j=rdns.iterator(); j.hasNext(); ) {
-                Row rdn = (Row)j.next();
+                RDN rdn = (RDN)j.next();
                 //log.info("   - rdn: "+rdn);
 
                 String s = rdn.toString(); //.trim();

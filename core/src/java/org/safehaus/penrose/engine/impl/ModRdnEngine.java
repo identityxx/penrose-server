@@ -15,12 +15,16 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
-package org.safehaus.penrose.engine;
+package org.safehaus.penrose.engine.impl;
 
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.util.EntryUtil;
 import org.safehaus.penrose.util.ExceptionUtil;
 import org.safehaus.penrose.partition.Partition;
+import org.safehaus.penrose.engine.Engine;
+import org.safehaus.penrose.entry.Entry;
+import org.safehaus.penrose.entry.AttributeValues;
+import org.safehaus.penrose.entry.RDN;
 import org.ietf.ldap.LDAPException;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
@@ -54,10 +58,10 @@ public class ModRdnEngine {
             AttributeValues oldAttributeValues = entry.getAttributeValues();
             AttributeValues newAttributeValues = new AttributeValues(oldAttributeValues);
 
-            Row rdn1 = EntryUtil.getRdn(entry.getDn());
+            RDN rdn1 = EntryUtil.getRdn(entry.getDn());
             oldAttributeValues.set("rdn", rdn1);
 
-            Row rdn2 = EntryUtil.getRdn(newRdn);
+            RDN rdn2 = EntryUtil.getRdn(newRdn);
             newAttributeValues.set("rdn", rdn2);
             newAttributeValues.add(rdn2);
 

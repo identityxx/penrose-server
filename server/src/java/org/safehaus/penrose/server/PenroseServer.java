@@ -118,7 +118,7 @@ public class PenroseServer {
         for (int i = 0; i < numThreads; i++) {
             // Get thread
             Thread thread = threads[i];
-            StringBuffer sb = new StringBuffer();
+            StringBuilder sb = new StringBuilder();
             for (int j=0; j<level; j++) sb.append("  ");
             sb.append(thread.toString());
             log.debug(sb.toString());
@@ -240,7 +240,7 @@ public class PenroseServer {
             PenroseServer server = new PenroseServer(homeDirectory);
             server.start();
 
-            log.warn("Server is ready.");
+            log.fatal("Server is ready.");
 
         } catch (Exception e) {
             String name = e.getClass().getName();

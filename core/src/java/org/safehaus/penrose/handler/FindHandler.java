@@ -22,9 +22,11 @@ import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.PartitionManager;
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.engine.Engine;
+import org.safehaus.penrose.entry.Entry;
+import org.safehaus.penrose.entry.AttributeValues;
+import org.safehaus.penrose.entry.RDN;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
-import org.ietf.ldap.LDAPDN;
 
 import java.util.*;
 
@@ -90,12 +92,12 @@ public class FindHandler {
 
             String prefix = null;
             for (int i = 0; i < rdns.size()-1-position; i++) {
-                prefix = EntryUtil.append(prefix, (Row)rdns.get(i));
+                prefix = EntryUtil.append(prefix, (RDN)rdns.get(i));
             }
 
             String suffix = null;
             for (int i = rdns.size()-1-position; i < rdns.size(); i++) {
-                suffix = EntryUtil.append(suffix, (Row)rdns.get(i));
+                suffix = EntryUtil.append(suffix, (RDN)rdns.get(i));
             }
 
             log.debug("Position ["+position +"]: ["+(prefix == null ? "" : prefix)+"] ["+suffix+"]");

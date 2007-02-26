@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
-package org.safehaus.penrose.engine;
+package org.safehaus.penrose.engine.proxy;
 
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.SourceConfig;
@@ -30,6 +30,13 @@ import org.safehaus.penrose.pipeline.PipelineEvent;
 import org.safehaus.penrose.util.*;
 import org.safehaus.penrose.util.Formatter;
 import org.safehaus.penrose.interpreter.Interpreter;
+import org.safehaus.penrose.engine.*;
+import org.safehaus.penrose.engine.impl.JoinEngine;
+import org.safehaus.penrose.engine.impl.LoadEngine;
+import org.safehaus.penrose.engine.impl.MergeEngine;
+import org.safehaus.penrose.entry.Entry;
+import org.safehaus.penrose.entry.AttributeValues;
+import org.safehaus.penrose.entry.RDN;
 import org.ietf.ldap.LDAPException;
 import org.ietf.ldap.LDAPConnection;
 
@@ -75,8 +82,8 @@ public class ProxyEngine extends Engine {
         int start = rdns1.size() - rdns2.size();
 
         for (int i=0; i<rdns2.size(); i++) {
-            Row rdn1 = (Row)rdns1.get(start+i);
-            Row rdn2 = (Row)rdns2.get(i);
+            RDN rdn1 = (RDN)rdns1.get(start+i);
+            RDN rdn2 = (RDN)rdns2.get(i);
 
             rdn1 = getSchemaManager().normalize(rdn1);
             rdn2 = getSchemaManager().normalize(rdn2);
@@ -89,7 +96,7 @@ public class ProxyEngine extends Engine {
 
         String newDn = null;
         for (int i=0; i<start; i++) {
-            Row rdn = (Row)rdns1.get(i);
+            RDN rdn = (RDN)rdns1.get(i);
             newDn = EntryUtil.append(newDn, rdn);
         }
 
@@ -445,7 +452,7 @@ public class ProxyEngine extends Engine {
 
         String dn = null;
         for (int i = 0; i < rdns.size(); i++) {
-            dn = EntryUtil.append(dn, (Row)rdns.get(i));
+            dn = EntryUtil.append(dn, (RDN)rdns.get(i));
         }
 
         if (log.isDebugEnabled()) {
@@ -473,7 +480,7 @@ public class ProxyEngine extends Engine {
         PenroseSearchControls sc = new PenroseSearchControls();
         sc.setScope(PenroseSearchControls.SCOPE_BASE);
 
-        Row rdn = EntryUtil.getRdn(dn);
+        RDN rdn = EntryUtil.getRdn(dn);
         Filter filter = FilterTool.createFilter(rdn);
 
         expand(

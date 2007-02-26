@@ -24,6 +24,8 @@ import org.safehaus.penrose.filter.SubstringFilter;
 import org.safehaus.penrose.session.PenroseSearchResults;
 import org.safehaus.penrose.session.PenroseSearchControls;
 import org.safehaus.penrose.partition.SourceConfig;
+import org.safehaus.penrose.entry.AttributeValues;
+import org.safehaus.penrose.entry.RDN;
 import org.ietf.ldap.LDAPException;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
@@ -57,7 +59,7 @@ public abstract class Adapter {
 	 * 
 	 * @throws LDAPException
 	 */
-    public void bind(SourceConfig sourceConfig, Row pk, String password) throws LDAPException {
+    public void bind(SourceConfig sourceConfig, RDN pk, String password) throws LDAPException {
         int rc = LDAPException.INVALID_CREDENTIALS;
         throw new LDAPException(LDAPException.resultCodeToString(rc), rc, null);
     }
@@ -78,7 +80,7 @@ public abstract class Adapter {
      * 
      * @throws LDAPException
      */
-    public void add(SourceConfig sourceConfig, Row pk, AttributeValues sourceValues) throws LDAPException {
+    public void add(SourceConfig sourceConfig, RDN pk, AttributeValues sourceValues) throws LDAPException {
         int rc = LDAPException.OPERATIONS_ERROR;
         throw new LDAPException(LDAPException.resultCodeToString(rc), rc, null);
     }
@@ -88,7 +90,7 @@ public abstract class Adapter {
      * 
      * @throws LDAPException
      */
-    public void modify(SourceConfig sourceConfig, Row pk, Collection modifications) throws LDAPException {
+    public void modify(SourceConfig sourceConfig, RDN pk, Collection modifications) throws LDAPException {
         int rc = LDAPException.OPERATIONS_ERROR;
         throw new LDAPException(LDAPException.resultCodeToString(rc), rc, null);
     }
@@ -98,7 +100,7 @@ public abstract class Adapter {
      * 
      * @throws LDAPException
      */
-    public void delete(SourceConfig sourceConfig, Row pk) throws LDAPException {
+    public void delete(SourceConfig sourceConfig, RDN pk) throws LDAPException {
         int rc = LDAPException.OPERATIONS_ERROR;
         throw new LDAPException(LDAPException.resultCodeToString(rc), rc, null);
     }

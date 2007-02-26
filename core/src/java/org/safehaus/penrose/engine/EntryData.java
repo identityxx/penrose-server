@@ -15,7 +15,10 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
-package org.safehaus.penrose.mapping;
+package org.safehaus.penrose.engine;
+
+import org.safehaus.penrose.entry.AttributeValues;
+import org.safehaus.penrose.entry.RDN;
 
 import java.util.Collection;
 
@@ -27,7 +30,7 @@ public class EntryData {
     private String dn;
     private AttributeValues mergedValues;
     private Collection rows;
-    private Row filter;
+    private RDN filter;
     private AttributeValues loadedSourceValues;
     private boolean complete;
 
@@ -58,11 +61,11 @@ public class EntryData {
         this.rows = rows;
     }
 
-    public Row getFilter() {
+    public RDN getFilter() {
         return filter;
     }
 
-    public void setFilter(Row filter) {
+    public void setFilter(RDN filter) {
         this.filter = filter;
     }
 

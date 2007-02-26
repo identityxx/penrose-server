@@ -18,6 +18,8 @@
 package org.safehaus.penrose.interpreter;
 
 import org.safehaus.penrose.mapping.*;
+import org.safehaus.penrose.entry.AttributeValues;
+import org.safehaus.penrose.entry.RDN;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
@@ -35,10 +37,10 @@ public abstract class Interpreter {
 
     Collection rows;
 
-    public void set(Row row) throws Exception {
-        for (Iterator i=row.getNames().iterator(); i.hasNext(); ) {
+    public void set(RDN rdn) throws Exception {
+        for (Iterator i=rdn.getNames().iterator(); i.hasNext(); ) {
             String name = (String)i.next();
-            Object value = row.get(name);
+            Object value = rdn.get(name);
             set(name, value);
         }
     }

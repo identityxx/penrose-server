@@ -18,8 +18,8 @@
 package org.safehaus.penrose.partition;
 
 import org.safehaus.penrose.partition.FieldConfig;
-import org.safehaus.penrose.mapping.Row;
-import org.safehaus.penrose.mapping.AttributeValues;
+import org.safehaus.penrose.entry.RDN;
+import org.safehaus.penrose.entry.AttributeValues;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
@@ -239,9 +239,9 @@ public class SourceConfig implements SourceConfigMBean, Cloneable {
     }
 
 
-    public Row getPrimaryKeyValues(AttributeValues sourceValues) throws Exception {
+    public RDN getPrimaryKeyValues(AttributeValues sourceValues) throws Exception {
 
-        Row pk = new Row();
+        RDN pk = new RDN();
 
         for (Iterator i=fieldConfigs.values().iterator(); i.hasNext(); ) {
             FieldConfig fieldConfig = (FieldConfig)i.next();

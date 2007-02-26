@@ -28,6 +28,9 @@ import org.safehaus.penrose.schema.SchemaManager;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.mapping.*;
+import org.safehaus.penrose.entry.Entry;
+import org.safehaus.penrose.entry.AttributeValues;
+import org.safehaus.penrose.entry.RDN;
 import org.ietf.ldap.*;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
@@ -52,10 +55,10 @@ public class SearchHandler {
 
         SchemaManager schemaManager = handler.getSchemaManager();
         while (dn != null) {
-            Row rdn = EntryUtil.getRdn(dn);
+            RDN rdn = EntryUtil.getRdn(dn);
             String parentDn = EntryUtil.getParentDn(dn);
 
-            Row newRdn = new Row();
+            RDN newRdn = new RDN();
             for (Iterator i=rdn.getNames().iterator(); i.hasNext(); ) {
                 String name = (String)i.next();
                 Object value = rdn.get(name);

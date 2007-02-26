@@ -20,7 +20,7 @@ package org.safehaus.penrose.handler;
 import org.safehaus.penrose.session.PenroseSession;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.mapping.EntryMapping;
-import org.safehaus.penrose.mapping.Entry;
+import org.safehaus.penrose.entry.Entry;
 import org.safehaus.penrose.util.ExceptionUtil;
 import org.safehaus.penrose.util.Formatter;
 import org.safehaus.penrose.engine.Engine;

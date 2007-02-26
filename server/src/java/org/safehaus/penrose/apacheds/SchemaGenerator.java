@@ -302,7 +302,7 @@ public class SchemaGenerator {
 
         boolean generateOnly = false;
 
-        StringBuffer depends = new StringBuffer();
+        StringBuilder depends = new StringBuilder();
 
         LongOpt[] longopts = new LongOpt[1];
         longopts[0] = new LongOpt("help", LongOpt.NO_ARGUMENT, null, '?');

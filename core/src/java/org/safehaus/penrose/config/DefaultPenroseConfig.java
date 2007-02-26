@@ -24,7 +24,7 @@ import org.safehaus.penrose.partition.PartitionConfig;
 import org.safehaus.penrose.schema.SchemaConfig;
 import org.safehaus.penrose.engine.EngineConfig;
 import org.safehaus.penrose.engine.DefaultEngine;
-import org.safehaus.penrose.engine.ProxyEngine;
+import org.safehaus.penrose.engine.proxy.ProxyEngine;
 
 
 /**

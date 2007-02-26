@@ -2,8 +2,8 @@ package org.safehaus.penrose.example.adapter;
 
 import org.safehaus.penrose.connector.Adapter;
 import org.safehaus.penrose.partition.SourceConfig;
-import org.safehaus.penrose.mapping.AttributeValues;
-import org.safehaus.penrose.mapping.Row;
+import org.safehaus.penrose.entry.AttributeValues;
+import org.safehaus.penrose.entry.RDN;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.filter.FilterTool;
 import org.safehaus.penrose.session.PenroseSearchResults;
@@ -32,7 +32,7 @@ public class DemoAdapter extends Adapter {
     public void init() throws Exception {
         System.out.println("Initializing DemoAdapter.");
 
-        Row pk = new Row();
+        RDN pk = new RDN();
         pk.set("cn", "Test User");
         pk.set("sn", "User");
 
@@ -45,7 +45,7 @@ public class DemoAdapter extends Adapter {
         entries.put(pk, sourceValues);
     }
 
-    public void bind(SourceConfig sourceConfig, Row pk, String password) throws LDAPException {
+    public void bind(SourceConfig sourceConfig, RDN pk, String password) throws LDAPException {
 
         String sourceName = sourceConfig.getName();
         System.out.println("Binding to "+sourceName+" as "+pk+" with password "+password+".");
@@ -83,7 +83,7 @@ public class DemoAdapter extends Adapter {
 
         Collection attributes = searchControls.getAttributes();
         for (Iterator i=entries.keySet().iterator(); i.hasNext(); ) {
-            Row pk = (Row)i.next();
+            RDN pk = (RDN)i.next();
             AttributeValues sourceValues = (AttributeValues)entries.get(pk);
 
             if (!FilterTool.isValid(sourceValues, filter)) {
@@ -112,7 +112,7 @@ public class DemoAdapter extends Adapter {
         results.close();
     }
 
-    public void add(SourceConfig sourceConfig, Row pk, AttributeValues sourceValues) throws LDAPException {
+    public void add(SourceConfig sourceConfig, RDN pk, AttributeValues sourceValues) throws LDAPException {
 
         String sourceName = sourceConfig.getName();
         System.out.println("Adding entry "+pk+" into "+sourceName+":");
@@ -131,7 +131,7 @@ public class DemoAdapter extends Adapter {
         entries.put(pk, sourceValues);
     }
 
-    public void modify(SourceConfig sourceConfig, Row pk, Collection modifications) throws LDAPException {
+    public void modify(SourceConfig sourceConfig, RDN pk, Collection modifications) throws LDAPException {
 
         String sourceName = sourceConfig.getName();
         System.out.println("Modifying entry "+pk+" in "+sourceName+" with:");
@@ -193,7 +193,7 @@ public class DemoAdapter extends Adapter {
         }
     }
 
-    public void delete(SourceConfig sourceConfig, Row pk) throws LDAPException {
+    public void delete(SourceConfig sourceConfig, RDN pk) throws LDAPException {
 
         String sourceName = sourceConfig.getName();
         System.out.println("Deleting entry "+pk+" from "+sourceName+".");

@@ -1,6 +1,6 @@
 package org.safehaus.penrose.backend;
 
-import org.safehaus.penrose.mapping.Row;
+import org.safehaus.penrose.entry.RDN;
 
 import java.util.Collection;
 import java.util.ArrayList;
@@ -10,9 +10,9 @@ import java.util.ArrayList;
  */
 public class PenroseRDN implements com.identyx.javabackend.RDN {
 
-    Row rdn;
+    RDN rdn;
 
-    public PenroseRDN(Row rdn) {
+    public PenroseRDN(RDN rdn) {
         this.rdn = rdn;
     }
 

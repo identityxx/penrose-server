@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
-package org.safehaus.penrose.mapping;
+package org.safehaus.penrose.entry;
 
 import org.ietf.ldap.LDAPDN;
 
@@ -29,47 +29,47 @@ import java.util.Iterator;
  *
  * @author Endi S. Dewata
  */
-public class Row implements Comparable {
+public class RDN implements Comparable {
 
     public Map values = new TreeMap();
 
-    public Row() {
+    public RDN() {
     }
 
-    public Row(Map values) {
+    public RDN(Map values) {
         this.values.putAll(values);
     }
 
-    public Row(Row row) {
-        values.putAll(row.getValues());
+    public RDN(RDN rdn) {
+        values.putAll(rdn.getValues());
     }
 
     public boolean isEmpty() {
         return values.isEmpty();
     }
     
-    public void add(Row row) {
-        values.putAll(row.getValues());
+    public void add(RDN rdn) {
+        values.putAll(rdn.getValues());
     }
 
-    public void set(Row row) {
+    public void set(RDN rdn) {
         values.clear();
-        values.putAll(row.getValues());
+        values.putAll(rdn.getValues());
     }
 
-    public void add(String prefix, Row row) {
-        for (Iterator i=row.getNames().iterator(); i.hasNext(); ) {
+    public void add(String prefix, RDN rdn) {
+        for (Iterator i=rdn.getNames().iterator(); i.hasNext(); ) {
             String name = (String)i.next();
-            Object value = row.get(name);
+            Object value = rdn.get(name);
             values.put(prefix == null ? name : prefix+"."+name, value);
         }
     }
 
-    public void set(String prefix, Row row) {
+    public void set(String prefix, RDN rdn) {
         values.clear();
-        for (Iterator i=row.getNames().iterator(); i.hasNext(); ) {
+        for (Iterator i=rdn.getNames().iterator(); i.hasNext(); ) {
             String name = (String)i.next();
-            Object value = row.get(name);
+            Object value = rdn.get(name);
             values.put(prefix == null ? name : prefix+"."+name, value);
         }
     }
@@ -113,16 +113,16 @@ public class Row implements Comparable {
     }
 
     public int hashCode() {
-        //System.out.println("Row "+values+" hash code: "+values.hashCode());
+        //System.out.println("RDN "+values+" hash code: "+values.hashCode());
         return values.hashCode();
     }
 
     public boolean equals(Object object) {
         //System.out.println("Comparing row "+values+" with "+object);
         if (object == null) return false;
-        if (!(object instanceof Row)) return false;
-        Row row = (Row)object;
-        return values.equals(row.values);
+        if (!(object instanceof RDN)) return false;
+        RDN rdn = (RDN)object;
+        return values.equals(rdn.values);
     }
 
     public int compareTo(Object object) {
@@ -131,12 +131,12 @@ public class Row implements Comparable {
 
         try {
             if (object == null) return 0;
-            if (!(object instanceof Row)) return 0;
+            if (!(object instanceof RDN)) return 0;
 
-            Row row = (Row)object;
+            RDN rdn = (RDN)object;
 
             Iterator i = values.keySet().iterator();
-            Iterator j = row.values.keySet().iterator();
+            Iterator j = rdn.values.keySet().iterator();
 
             while (i.hasNext() && j.hasNext()) {
                 String name1 = (String)i.next();
@@ -146,7 +146,7 @@ public class Row implements Comparable {
                 if (c != 0) return c;
 
                 Object value1 = values.get(name1);
-                Object value2 = row.values.get(name2);
+                Object value2 = rdn.values.get(name2);
 
                 if (value1 instanceof Comparable && value2 instanceof Comparable) {
                     Comparable v1 = (Comparable)value1.toString();

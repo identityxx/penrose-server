@@ -26,6 +26,9 @@ import org.safehaus.penrose.util.EntryUtil;
 import org.safehaus.penrose.util.ExceptionUtil;
 import org.safehaus.penrose.util.Formatter;
 import org.safehaus.penrose.engine.Engine;
+import org.safehaus.penrose.entry.Entry;
+import org.safehaus.penrose.entry.AttributeValues;
+import org.safehaus.penrose.entry.RDN;
 import org.ietf.ldap.*;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
@@ -192,7 +195,7 @@ public class AddHandler {
 
         EntryMapping newEntry;
 
-        Row rdn = EntryUtil.getRdn(dn);
+        RDN rdn = EntryUtil.getRdn(dn);
 
         if (parent == null) {
             newEntry = new EntryMapping(dn);

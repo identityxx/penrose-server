@@ -30,6 +30,8 @@ import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.engine.Engine;
 import org.safehaus.penrose.handler.Handler;
 import org.safehaus.penrose.config.PenroseConfig;
+import org.safehaus.penrose.entry.AttributeValues;
+import org.safehaus.penrose.entry.RDN;
 
 import java.util.Collection;
 import java.util.Iterator;
@@ -109,7 +111,7 @@ public class PollingConnectorModule extends Module {
         log.debug("Reloading expired caches...");
 
         for (Iterator i=map.keySet().iterator(); i.hasNext(); ) {
-            Row pk = (Row)i.next();
+            RDN pk = (RDN)i.next();
             AttributeValues av = (AttributeValues)map.get(pk);
             log.debug(" - "+pk+": "+av);
         }
@@ -140,7 +142,7 @@ public class PollingConnectorModule extends Module {
 
         log.debug("Synchronizing changes in "+sourceConfig.getName()+":");
         while (sr.hasNext()) {
-            Row pk = (Row)sr.next();
+            RDN pk = (RDN)sr.next();
 
             Number changeNumber = (Number)pk.remove("changeNumber");
             Object changeTime = pk.remove("changeTime");
@@ -177,7 +179,7 @@ public class PollingConnectorModule extends Module {
 
         log.debug("Creating entries with "+pks);
         for (Iterator i=pks.iterator(); i.hasNext(); ) {
-            Row pk = (Row)i.next();
+            RDN pk = (RDN)i.next();
 
             for (Iterator j=entryMappings.iterator(); j.hasNext(); ) {
                 EntryMapping entryMapping = (EntryMapping)j.next();
@@ -195,7 +197,7 @@ public class PollingConnectorModule extends Module {
     public void add(
             EntryMapping entryMapping,
             SourceConfig sourceConfig,
-            Row pk
+            RDN pk
     ) throws Exception {
 
         log.debug("Adding entry cache for "+entryMapping.getDn());
@@ -237,7 +239,7 @@ public class PollingConnectorModule extends Module {
     public void remove(
             EntryMapping entryMapping,
             SourceConfig sourceConfig,
-            Row pk
+            RDN pk
     ) throws Exception {
 
         log.debug("Removing entry cache for "+entryMapping.getDn());

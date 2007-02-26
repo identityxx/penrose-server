@@ -18,25 +18,18 @@
 package org.safehaus.penrose.ldap;
 
 import org.safehaus.penrose.module.Module;
-import org.safehaus.penrose.module.ModuleManager;
-import org.safehaus.penrose.mapping.Entry;
+import org.safehaus.penrose.entry.Entry;
 import org.safehaus.penrose.mapping.EntryMapping;
 import org.safehaus.penrose.cache.EntryCache;
 import org.safehaus.penrose.cache.EntryCacheListener;
 import org.safehaus.penrose.cache.EntryCacheEvent;
 import org.safehaus.penrose.connector.ConnectionManager;
-import org.safehaus.penrose.session.PenroseSearchResults;
-import org.safehaus.penrose.session.PenroseSearchControls;
-import org.safehaus.penrose.session.PenroseSession;
 import org.safehaus.penrose.partition.PartitionManager;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.handler.Handler;
 import org.safehaus.penrose.util.EntryUtil;
 
 import javax.naming.directory.*;
-import javax.naming.NamingEnumeration;
-import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.Collection;
 
 /**

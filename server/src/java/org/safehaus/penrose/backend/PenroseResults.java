@@ -19,7 +19,6 @@ package org.safehaus.penrose.backend;
 
 import com.identyx.javabackend.Results;
 import org.safehaus.penrose.session.PenroseSearchResults;
-import org.safehaus.penrose.mapping.Entry;
 
 import javax.naming.directory.SearchResult;
 

@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
-package org.safehaus.penrose.engine;
+package org.safehaus.penrose.engine.impl;
 
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.interpreter.Interpreter;
@@ -27,6 +27,10 @@ import org.safehaus.penrose.filter.FilterTool;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.SourceConfig;
 import org.safehaus.penrose.partition.FieldConfig;
+import org.safehaus.penrose.engine.Engine;
+import org.safehaus.penrose.engine.EntryData;
+import org.safehaus.penrose.entry.AttributeValues;
+import org.safehaus.penrose.entry.RDN;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 import org.ietf.ldap.LDAPException;
@@ -118,7 +122,7 @@ public class LoadEngine {
             String dn = (String)map.get("dn");
 
             String parentDn = Entry.getParentDn(dn);
-            Row rdn = Entry.getRdn(dn);
+            RDN rdn = Entry.getRdn(dn);
 
             log.debug("Checking "+rdn+" in entry data cache for "+parentDn);
             Entry entry = (Entry)engine.getEntryCache().get(entryMapping, parentDn, rdn);
@@ -158,7 +162,7 @@ public class LoadEngine {
                 String dn = map.getDn();
                 //AttributeValues sv = (AttributeValues)map.get("sourceValues");
 
-                Row rdn = EntryUtil.getRdn(dn);
+                RDN rdn = EntryUtil.getRdn(dn);
 /*
                 if (partition.getParent(entryMapping) != null) {
                     String parentDn = Entry.getParentDn(dn);
@@ -173,7 +177,7 @@ public class LoadEngine {
                     }
                 }
 */
-                Row filter = engine.createFilter(partition, interpreter, primarySourceMapping, entryMapping, rdn);
+                RDN filter = engine.createFilter(partition, interpreter, primarySourceMapping, entryMapping, rdn);
                 if (filter == null) continue;
 
                 //if (filter.isEmpty()) filter.add(rdn);
@@ -258,7 +262,7 @@ public class LoadEngine {
             log.debug(Formatter.displayLine("Primary Keys:", 80));
             for (Iterator i=list.iterator(); i.hasNext(); ) {
                 EntryData data = (EntryData)i.next();
-                Row pk = data.getFilter();
+                RDN pk = data.getFilter();
                 log.debug(Formatter.displayLine(" - "+pk, 80));
             }
 
@@ -319,7 +323,7 @@ public class LoadEngine {
         if (pkDefined) {
             for (Iterator i=list.iterator(); i.hasNext(); ) {
                 EntryData data = (EntryData)i.next();
-                Row pk = EntryUtil.getRdn(data.getDn());
+                RDN pk = EntryUtil.getRdn(data.getDn());
                 pks.add(pk);
             }
         }
@@ -327,7 +331,7 @@ public class LoadEngine {
         Collection filters = new ArrayList();
         for (Iterator i=list.iterator(); i.hasNext(); ) {
             EntryData data = (EntryData)i.next();
-            Row filter = data.getFilter();
+            RDN filter = data.getFilter();
             filters.add(filter);
         }
         Filter filter  = FilterTool.createFilter(filters, true);

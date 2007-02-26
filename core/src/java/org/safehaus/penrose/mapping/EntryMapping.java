@@ -19,6 +19,8 @@ package org.safehaus.penrose.mapping;
 
 import org.safehaus.penrose.acl.ACI;
 import org.safehaus.penrose.util.EntryUtil;
+import org.safehaus.penrose.entry.AttributeValues;
+import org.safehaus.penrose.entry.RDN;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
@@ -98,8 +100,8 @@ public class EntryMapping implements Cloneable {
 	}
 
 	public EntryMapping(String dn) {
-        Row row = EntryUtil.getRdn(dn);
-        rdn = row.toString();
+        RDN rdn = EntryUtil.getRdn(dn);
+        this.rdn = rdn.toString();
         parentDn = EntryUtil.getParentDn(dn);
     }
 
@@ -112,18 +114,18 @@ public class EntryMapping implements Cloneable {
         return rdn;
     }
     
-    public Row getRdn(AttributeValues attributeValues) {
+    public RDN getRdn(AttributeValues attributeValues) {
         Collection rdnAttributes = getRdnAttributeNames();
-        Row row = new Row();
+        RDN rdn = new RDN();
 
         for (Iterator i=rdnAttributes.iterator(); i.hasNext(); ) {
             AttributeMapping rdnAttribute = (AttributeMapping)i.next();
             String name = rdnAttribute.getName();
             Object value = attributeValues.getOne(name);
-            row.set(name, value);
+            rdn.set(name, value);
         }
 
-        return row;
+        return rdn;
     }
 
     public String getParentDn() {
@@ -229,8 +231,8 @@ public class EntryMapping implements Cloneable {
     }
 
     public void setDn(String dn) {
-        Row row = EntryUtil.getRdn(dn);
-        rdn = row.toString();
+        RDN rdn = EntryUtil.getRdn(dn);
+        this.rdn = rdn.toString();
         parentDn = EntryUtil.getParentDn(dn);
     }
 

@@ -32,6 +32,8 @@ import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.partition.FieldConfig;
 import org.safehaus.penrose.partition.SourceConfig;
 import org.safehaus.penrose.connector.*;
+import org.safehaus.penrose.entry.AttributeValues;
+import org.safehaus.penrose.entry.RDN;
 
 import javax.sql.DataSource;
 import javax.naming.directory.ModificationItem;
@@ -188,7 +190,7 @@ public class JDBCAdapter extends Adapter {
         return sb.toString();
     }
 
-    public void bind(SourceConfig sourceConfig, Row pk, String cred) throws LDAPException {
+    public void bind(SourceConfig sourceConfig, RDN pk, String cred) throws LDAPException {
         int rc = LDAPException.INVALID_CREDENTIALS;
         throw new LDAPException(LDAPException.resultCodeToString(rc), rc, null);
     }
@@ -293,9 +295,9 @@ public class JDBCAdapter extends Adapter {
                     log.debug(format(sourceConfig, av));
 
                 } else if (attributes.contains("dn")) {
-                    Row row = getPkValues(sourceConfig, rs);
-                    results.add(row);
-                    log.debug(format(sourceConfig, row));
+                    RDN rdn = getPkValues(sourceConfig, rs);
+                    results.add(rdn);
+                    log.debug(format(sourceConfig, rdn));
                 }
 
                 i++;
@@ -325,9 +327,9 @@ public class JDBCAdapter extends Adapter {
         }
     }
 
-    public Row getPkValues(SourceConfig sourceConfig, ResultSet rs) throws Exception {
+    public RDN getPkValues(SourceConfig sourceConfig, ResultSet rs) throws Exception {
 
-        Row row = new Row();
+        RDN rdn = new RDN();
         int c = 1;
 
         ResultSetMetaData rsmd = rs.getMetaData();
@@ -341,22 +343,22 @@ public class JDBCAdapter extends Adapter {
             Object value = rs.getObject(c);
             if (value == null) continue;
 
-            row.set(fieldConfig.getName(), value);
+            rdn.set(fieldConfig.getName(), value);
         }
 
-        //log.debug("=> values: "+row);
+        //log.debug("=> values: "+rdn);
 
-        return row;
+        return rdn;
     }
 
-    public Row getChanges(SourceConfig sourceConfig, ResultSet rs) throws Exception {
+    public RDN getChanges(SourceConfig sourceConfig, ResultSet rs) throws Exception {
 
-        Row row = new Row();
+        RDN rdn = new RDN();
 
-        row.set("changeNumber", rs.getObject("changeNumber"));
-        row.set("changeTime", rs.getObject("changeTime"));
-        row.set("changeAction", rs.getObject("changeAction"));
-        row.set("changeUser", rs.getObject("changeUser"));
+        rdn.set("changeNumber", rs.getObject("changeNumber"));
+        rdn.set("changeTime", rs.getObject("changeTime"));
+        rdn.set("changeAction", rs.getObject("changeAction"));
+        rdn.set("changeUser", rs.getObject("changeUser"));
 
         int counter = 5;
         for (Iterator i=sourceConfig.getPrimaryKeyNames().iterator(); i.hasNext(); ) {
@@ -365,16 +367,16 @@ public class JDBCAdapter extends Adapter {
             Object value = rs.getObject(counter++);
             if (value == null) continue;
 
-            row.set(name, value);
+            rdn.set(name, value);
         }
 
-        return row;
+        return rdn;
     }
 
     public AttributeValues getValues(SourceConfig sourceConfig, ResultSet rs) throws Exception {
 
         AttributeValues av = new AttributeValues();
-        Row primaryKey = new Row();
+        RDN primaryKey = new RDN();
 
         ResultSetMetaData rsmd = rs.getMetaData();
         int count = rsmd.getColumnCount();
@@ -401,7 +403,7 @@ public class JDBCAdapter extends Adapter {
         return av;
     }
 
-    public void add(SourceConfig sourceConfig, Row pk, AttributeValues sourceValues) throws LDAPException {
+    public void add(SourceConfig sourceConfig, RDN pk, AttributeValues sourceValues) throws LDAPException {
 
         if (log.isDebugEnabled()) {
             log.debug(Formatter.displaySeparator(80));
@@ -412,7 +414,7 @@ public class JDBCAdapter extends Adapter {
 
         // convert sets into single values
         Collection rows = TransformEngine.convert(sourceValues);
-    	Row row = (Row)rows.iterator().next();
+    	RDN rdn = (RDN)rows.iterator().next();
 
         String catalog = sourceConfig.getParameter(CATALOG);
         String schema = sourceConfig.getParameter(SCHEMA);
@@ -443,7 +445,7 @@ public class JDBCAdapter extends Adapter {
                 sb.append(fieldConfig.getOriginalName());
                 sb2.append("?");
 
-                Object obj = row.get(fieldConfig.getName());
+                Object obj = rdn.get(fieldConfig.getName());
                 parameters.add(obj);
             }
 
@@ -489,7 +491,7 @@ public class JDBCAdapter extends Adapter {
         }
     }
 
-    public void delete(SourceConfig sourceConfig, Row pk) throws LDAPException {
+    public void delete(SourceConfig sourceConfig, RDN pk) throws LDAPException {
 
         //log.debug("Deleting entry "+pk);
 
@@ -559,7 +561,7 @@ public class JDBCAdapter extends Adapter {
 
     public void modify(
             SourceConfig sourceConfig,
-            Row pk,
+            RDN pk,
             Collection modifications
     ) throws LDAPException {
 
@@ -695,8 +697,8 @@ public class JDBCAdapter extends Adapter {
 
     public void modrdn(
             SourceConfig sourceConfig,
-            Row oldRdn,
-            Row newRdn
+            RDN oldRdn,
+            RDN newRdn
     ) throws LDAPException {
 
         //log.debug("Renaming source "+source.getName()+": "+oldRdn+" with "+newRdn);
@@ -909,15 +911,15 @@ public class JDBCAdapter extends Adapter {
             boolean first = true;
 
             for (int i=0; rs.next() && (sizeLimit == 0 || i<sizeLimit); i++) {
-                Row row = getChanges(sourceConfig, rs);
-                results.add(row);
+                RDN rdn = getChanges(sourceConfig, rs);
+                results.add(rdn);
 
                 if (first) {
                     width = printChangesHeader(sourceConfig);
                     first = false;
                 }
 
-                log.debug(printChanges(sourceConfig, row));
+                log.debug(printChanges(sourceConfig, rdn));
             }
 
             if (width > 0) log.debug(printFooter(width));
@@ -1001,7 +1003,7 @@ public class JDBCAdapter extends Adapter {
 
     public String format(SourceConfig sourceConfig, AttributeValues av) throws Exception {
 
-        Row row = new Row();
+        RDN rdn = new RDN();
 
         for (Iterator i=av.getNames().iterator(); i.hasNext(); ) {
             String name = (String)i.next();
@@ -1016,13 +1018,13 @@ public class JDBCAdapter extends Adapter {
                 value = c.toString();
             }
 
-            row.set(name, value);
+            rdn.set(name, value);
         }
 
-        return format(sourceConfig, row);
+        return format(sourceConfig, rdn);
     }
 
-    public String format(SourceConfig sourceConfig, Row row) throws Exception {
+    public String format(SourceConfig sourceConfig, RDN rdn) throws Exception {
         StringBuffer resultFields = new StringBuffer();
         resultFields.append("|");
 
@@ -1030,7 +1032,7 @@ public class JDBCAdapter extends Adapter {
         for (Iterator j=fields.iterator(); j.hasNext(); ) {
             FieldConfig fieldConfig = (FieldConfig)j.next();
 
-            Object value = row.get(fieldConfig.getName());
+            Object value = rdn.get(fieldConfig.getName());
             int length = fieldConfig.getLength() > 15 ? 15 : fieldConfig.getLength();
 
             resultFields.append(" ");
@@ -1041,23 +1043,23 @@ public class JDBCAdapter extends Adapter {
         return resultFields.toString();
     }
 
-    public String printChanges(SourceConfig sourceConfig, Row row) throws Exception {
+    public String printChanges(SourceConfig sourceConfig, RDN rdn) throws Exception {
         StringBuffer resultFields = new StringBuffer();
         resultFields.append("| ");
-        resultFields.append(Formatter.rightPad(row.get("changeNumber").toString(), 5));
+        resultFields.append(Formatter.rightPad(rdn.get("changeNumber").toString(), 5));
         resultFields.append(" | ");
-        resultFields.append(Formatter.rightPad(row.get("changeTime").toString(), 19));
+        resultFields.append(Formatter.rightPad(rdn.get("changeTime").toString(), 19));
         resultFields.append(" | ");
-        resultFields.append(Formatter.rightPad(row.get("changeAction").toString(), 10));
+        resultFields.append(Formatter.rightPad(rdn.get("changeAction").toString(), 10));
         resultFields.append(" | ");
-        resultFields.append(Formatter.rightPad(row.get("changeUser").toString(), 10));
+        resultFields.append(Formatter.rightPad(rdn.get("changeUser").toString(), 10));
         resultFields.append(" |");
 
         Collection fields = sourceConfig.getPrimaryKeyFieldConfigs();
         for (Iterator j=fields.iterator(); j.hasNext(); ) {
             FieldConfig fieldConfig = (FieldConfig)j.next();
 
-            Object value = row.get(fieldConfig.getName());
+            Object value = rdn.get(fieldConfig.getName());
             int length = fieldConfig.getLength() > 15 ? 15 : fieldConfig.getLength();
 
             resultFields.append(" ");

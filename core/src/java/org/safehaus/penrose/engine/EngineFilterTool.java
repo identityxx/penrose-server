@@ -25,6 +25,7 @@ import org.safehaus.penrose.connector.Connection;
 import org.safehaus.penrose.connector.Adapter;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.SourceConfig;
+import org.safehaus.penrose.entry.AttributeValues;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 

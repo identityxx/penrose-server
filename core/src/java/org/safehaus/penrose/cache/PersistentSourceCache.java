@@ -17,9 +17,10 @@
  */
 package org.safehaus.penrose.cache;
 
-import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.connector.ConnectionManager;
+import org.safehaus.penrose.entry.AttributeValues;
+import org.safehaus.penrose.entry.RDN;
 
 import java.util.*;
 
@@ -68,7 +69,7 @@ public class PersistentSourceCache extends SourceCache {
     }
 
     public Object get(Object key) throws Exception {
-        Row pk = (Row)key;
+        RDN pk = (RDN)key;
 
         return cache.get(pk);
     }
@@ -87,14 +88,14 @@ public class PersistentSourceCache extends SourceCache {
     }
 
     public void put(Object key, Object object) throws Exception {
-        Row pk = (Row)key;
+        RDN pk = (RDN)key;
         AttributeValues sourceValues = (AttributeValues)object;
 
         cache.put(pk, sourceValues);
     }
 
     public void remove(Object key) throws Exception {
-        Row pk = (Row)key;
+        RDN pk = (RDN)key;
 
         cache.remove(pk);
     }

@@ -28,6 +28,7 @@ import org.safehaus.penrose.util.ExceptionUtil;
 import org.safehaus.penrose.util.Formatter;
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.engine.Engine;
+import org.safehaus.penrose.entry.Entry;
 import org.ietf.ldap.*;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;

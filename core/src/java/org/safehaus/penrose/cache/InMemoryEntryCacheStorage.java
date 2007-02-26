@@ -17,11 +17,13 @@
  */
 package org.safehaus.penrose.cache;
 
-import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.partition.SourceConfig;
 import org.safehaus.penrose.session.PenroseSearchResults;
 import org.safehaus.penrose.Penrose;
+import org.safehaus.penrose.entry.Entry;
+import org.safehaus.penrose.entry.AttributeValues;
+import org.safehaus.penrose.entry.RDN;
 
 import java.util.*;
 
@@ -150,7 +152,7 @@ public class InMemoryEntryCacheStorage extends EntryCacheStorage {
         }
     }
 
-    public void search(SourceConfig sourceConfig, Row filter, PenroseSearchResults results) throws Exception {
+    public void search(SourceConfig sourceConfig, RDN filter, PenroseSearchResults results) throws Exception {
 
         log.debug("search("+sourceConfig.getName()+", "+filter+")");
 

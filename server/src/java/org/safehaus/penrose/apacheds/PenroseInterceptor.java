@@ -137,9 +137,6 @@ public class PenroseInterceptor extends BaseInterceptor {
             //log.debug("Bind successful.");
 
         } catch (NamingException e) {
-            log.debug("Bind failed: "+e.getMessage());
-            log.debug("Explanation: "+e.getExplanation());
-            log.debug("Cause: "+e.getCause());
             throw e;
 
         } catch (LDAPException e) {
@@ -196,7 +193,7 @@ public class PenroseInterceptor extends BaseInterceptor {
 
         } catch (Exception e) {
             log.error(e.getMessage(), e);
-            throw new NamingException(e.getMessage());
+            throw ExceptionTool.createNamingException(e);
         }
     }
 
@@ -240,7 +237,7 @@ public class PenroseInterceptor extends BaseInterceptor {
 
         } catch (Exception e) {
             log.error(e.getMessage(), e);
-            throw new NamingException(e.getMessage());
+            throw ExceptionTool.createNamingException(e);
         }
     }
 
@@ -284,13 +281,14 @@ public class PenroseInterceptor extends BaseInterceptor {
 
         } catch (Exception e) {
             log.error(e.getMessage(), e);
-            throw new NamingException(e.getMessage());
+            throw ExceptionTool.createNamingException(e);
         }
     }
 
     public LdapDN getMatchedName(NextInterceptor next, LdapDN dn) throws NamingException {
         log.debug("===============================================================================");
-        log.debug("getMatchedName(\""+dn+"\")");
+        boolean debug = log.isDebugEnabled();
+        if (debug) log.debug("getMatchedName(\""+dn+"\")");
         return next.getMatchedName(dn);
     }
 
@@ -302,13 +300,15 @@ public class PenroseInterceptor extends BaseInterceptor {
 
     public LdapDN getSuffix(NextInterceptor next, LdapDN dn) throws NamingException {
         log.debug("===============================================================================");
-        log.debug("getSuffix(\""+dn+"\")");
+        boolean debug = log.isDebugEnabled();
+        if (debug) log.debug("getSuffix(\""+dn+"\")");
         return next.getSuffix(dn);
     }
 
     public boolean isSuffix(NextInterceptor next, LdapDN name) throws NamingException {
         log.debug("===============================================================================");
-        log.debug("isSuffix(\""+name+"\")");
+        boolean debug = log.isDebugEnabled();
+        if (debug) log.debug("isSuffix(\""+name+"\")");
         return next.isSuffix(name);
     }
 
@@ -370,9 +370,12 @@ public class PenroseInterceptor extends BaseInterceptor {
         } catch (NamingException e) {
             throw e;
 
+        } catch (LDAPException e) {
+            throw ExceptionTool.createNamingException(e);
+
         } catch (Exception e) {
             log.error(e.getMessage(), e);
-            throw new NamingException(e.getMessage());
+            throw ExceptionTool.createNamingException(e);
         }
     }
 
@@ -423,12 +426,14 @@ public class PenroseInterceptor extends BaseInterceptor {
             return result;
 
         } catch (NamingException e) {
-            //log.error(e.getMessage(), e);
             throw e;
+
+        } catch (LDAPException e) {
+            throw ExceptionTool.createNamingException(e);
 
         } catch (Exception e) {
             log.error(e.getMessage(), e);
-            throw new NamingException(e.getMessage());
+            throw ExceptionTool.createNamingException(e);
         }
     }
 
@@ -490,9 +495,12 @@ public class PenroseInterceptor extends BaseInterceptor {
         } catch (NamingException e) {
             throw e;
 
+        } catch (LDAPException e) {
+            throw ExceptionTool.createNamingException(e);
+
         } catch (Exception e) {
             log.error(e.getMessage(), e);
-            throw new NamingException(e.getMessage());
+            throw ExceptionTool.createNamingException(e);
         }
     }
 
@@ -549,9 +557,12 @@ public class PenroseInterceptor extends BaseInterceptor {
         } catch (NamingException e) {
             throw e;
 
+        } catch (LDAPException e) {
+            throw ExceptionTool.createNamingException(e);
+
         } catch (Exception e) {
             log.error(e.getMessage(), e);
-            throw new NamingException(e.getMessage());
+            throw ExceptionTool.createNamingException(e);
         }
     }
 
@@ -669,9 +680,12 @@ public class PenroseInterceptor extends BaseInterceptor {
         } catch (NamingException e) {
             throw e;
 
+        } catch (LDAPException e) {
+            throw ExceptionTool.createNamingException(e);
+
         } catch (Exception e) {
             log.error(e.getMessage(), e);
-            throw new NamingException(e.getMessage());
+            throw ExceptionTool.createNamingException(e);
         }
     }
 
@@ -726,7 +740,7 @@ public class PenroseInterceptor extends BaseInterceptor {
 
         } catch (Exception e) {
             log.error(e.getMessage(), e);
-            throw new NamingException(e.getMessage());
+            throw ExceptionTool.createNamingException(e);
         }
     }
 
@@ -772,7 +786,7 @@ public class PenroseInterceptor extends BaseInterceptor {
 
         } catch (Exception e) {
             log.error(e.getMessage(), e);
-            throw new NamingException(e.getMessage());
+            throw ExceptionTool.createNamingException(e);
         }
     }
 
@@ -818,7 +832,7 @@ public class PenroseInterceptor extends BaseInterceptor {
 
         } catch (Exception e) {
             log.error(e.getMessage(), e);
-            throw new NamingException(e.getMessage());
+            throw ExceptionTool.createNamingException(e);
         }
     }
 
@@ -832,7 +846,8 @@ public class PenroseInterceptor extends BaseInterceptor {
 
         log.debug("===============================================================================");
         String dn = oriChildName.getUpName();
-        log.debug("move(\""+dn+"\")");
+        boolean debug = log.isDebugEnabled();
+        if (debug) log.debug("move(\""+dn+"\")");
         next.move(oriChildName, newParentName, newRn, deleteOldRn);
     }
 
@@ -844,7 +859,8 @@ public class PenroseInterceptor extends BaseInterceptor {
 
         log.debug("===============================================================================");
         String dn = oriChildName.getUpName();
-        log.debug("move(\""+dn+"\")");
+        boolean debug = log.isDebugEnabled();
+        if (debug) log.debug("move(\""+dn+"\")");
         next.move( oriChildName, newParentName );
     }
 }

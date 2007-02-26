@@ -11,10 +11,14 @@
     <property name="iscc.path" value="ISCC.exe"/>
     <property name="cygwin.home" value="c:/cygwin"/>
 
-    <tstamp/>
+    <tstamp>
+        <format property="TIMESTAMP" pattern="yyyyMMddHHmmss"/>
+    </tstamp>
+
 
     <target name="init">
         <echo message="Operating System: ${os.name} ${os.version}" />
+        <echo message="Java Version: ${java.version}" />
         <condition property="isWindows">
             <os family="windows"/>
         </condition>

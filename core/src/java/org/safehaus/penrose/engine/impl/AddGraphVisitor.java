@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
-package org.safehaus.penrose.engine;
+package org.safehaus.penrose.engine.impl;
 
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.graph.GraphVisitor;
@@ -26,6 +26,8 @@ import org.safehaus.penrose.util.ExceptionUtil;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.SourceConfig;
 import org.safehaus.penrose.connector.Connector;
+import org.safehaus.penrose.engine.Engine;
+import org.safehaus.penrose.entry.AttributeValues;
 import org.ietf.ldap.LDAPException;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
@@ -35,7 +37,7 @@ import java.util.*;
 /**
  * @author Endi S. Dewata
  */
-public class DeleteGraphVisitor extends GraphVisitor {
+public class AddGraphVisitor extends GraphVisitor {
 
     Logger log = LoggerFactory.getLogger(getClass());
 
@@ -43,11 +45,12 @@ public class DeleteGraphVisitor extends GraphVisitor {
     public Partition partition;
     public EntryMapping entryMapping;
     public AttributeValues sourceValues;
+    private AttributeValues addedSourceValues = new AttributeValues();
 
-    Graph graph;
-    SourceMapping primarySourceMapping;
+    public Graph graph;
+    public SourceMapping primarySourceMapping;
 
-    public DeleteGraphVisitor(
+    public AddGraphVisitor(
             Engine engine,
             Partition partition,
             EntryMapping entryMapping,
@@ -59,14 +62,15 @@ public class DeleteGraphVisitor extends GraphVisitor {
         this.entryMapping = entryMapping;
         this.sourceValues = sourceValues;
 
-        graph = engine.getGraph(entryMapping);
-        primarySourceMapping = engine.getPrimarySource(entryMapping);
+        addedSourceValues.add(sourceValues);
+
+        this.graph = engine.getGraph(entryMapping);
+        this.primarySourceMapping = engine.getPrimarySource(entryMapping);
     }
 
     public void run() throws LDAPException {
         try {
             graph.traverse(this, primarySourceMapping);
-
         } catch (LDAPException e) {
             throw e;
 
@@ -88,8 +92,8 @@ public class DeleteGraphVisitor extends GraphVisitor {
             log.debug(Formatter.displaySeparator(40));
         }
 
-        if (sourceMapping.isReadOnly() || !sourceMapping.isIncludeOnDelete()) {
-            log.debug("Source "+sourceMapping.getName()+" is not included on delete");
+        if (sourceMapping.isReadOnly() || !sourceMapping.isIncludeOnAdd()) {
+            log.debug("Source "+sourceMapping.getName()+" is not included on add");
             graphIterator.traverseEdges(node);
             return;
         }
@@ -100,7 +104,7 @@ public class DeleteGraphVisitor extends GraphVisitor {
             return;
         }
 
-        log.debug("Deleting values:");
+        log.debug("Adding values:");
         AttributeValues newSourceValues = new AttributeValues();
         for (Iterator i=sourceValues.getNames().iterator(); i.hasNext(); ) {
             String name = (String)i.next();
@@ -115,8 +119,20 @@ public class DeleteGraphVisitor extends GraphVisitor {
 
         SourceConfig sourceConfig = partition.getSourceConfig(sourceMapping.getSourceName());
         Connector connector = engine.getConnector(sourceConfig);
-        connector.delete(partition, sourceConfig, newSourceValues);
+
+        connector.add(partition, sourceConfig, newSourceValues);
+
+        //addedSourceValues.remove(source.getName());
+        //addedSourceValues.set(source.getName(), newSourceValues);
 
         graphIterator.traverseEdges(node);
+    }
+
+    public AttributeValues getAddedSourceValues() {
+        return addedSourceValues;
+    }
+
+    public void setAddedSourceValues(AttributeValues addedSourceValues) {
+        this.addedSourceValues = addedSourceValues;
     }
 }

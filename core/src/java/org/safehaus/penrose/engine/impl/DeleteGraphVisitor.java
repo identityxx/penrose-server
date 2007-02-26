@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
-package org.safehaus.penrose.engine;
+package org.safehaus.penrose.engine.impl;
 
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.graph.GraphVisitor;
@@ -26,6 +26,8 @@ import org.safehaus.penrose.util.ExceptionUtil;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.SourceConfig;
 import org.safehaus.penrose.connector.Connector;
+import org.safehaus.penrose.engine.Engine;
+import org.safehaus.penrose.entry.AttributeValues;
 import org.ietf.ldap.LDAPException;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
@@ -35,37 +37,29 @@ import java.util.*;
 /**
  * @author Endi S. Dewata
  */
-public class ModifyGraphVisitor extends GraphVisitor {
+public class DeleteGraphVisitor extends GraphVisitor {
 
     Logger log = LoggerFactory.getLogger(getClass());
 
     public Engine engine;
     public Partition partition;
     public EntryMapping entryMapping;
+    public AttributeValues sourceValues;
 
-    public Graph graph;
-    public SourceMapping primarySourceMapping;
+    Graph graph;
+    SourceMapping primarySourceMapping;
 
-    public AttributeValues oldSourceValues;
-    public AttributeValues newSourceValues;
-    private AttributeValues modifiedSourceValues = new AttributeValues();
-
-    public ModifyGraphVisitor(
+    public DeleteGraphVisitor(
             Engine engine,
             Partition partition,
             EntryMapping entryMapping,
-            AttributeValues oldSourceValues,
-            AttributeValues newSourceValues
+            AttributeValues sourceValues
             ) throws Exception {
 
         this.engine = engine;
         this.partition = partition;
         this.entryMapping = entryMapping;
-
-        this.oldSourceValues = oldSourceValues;
-        this.newSourceValues = newSourceValues;
-
-        modifiedSourceValues.add(newSourceValues);
+        this.sourceValues = sourceValues;
 
         graph = engine.getGraph(entryMapping);
         primarySourceMapping = engine.getPrimarySource(entryMapping);
@@ -74,6 +68,7 @@ public class ModifyGraphVisitor extends GraphVisitor {
     public void run() throws LDAPException {
         try {
             graph.traverse(this, primarySourceMapping);
+
         } catch (LDAPException e) {
             throw e;
 
@@ -95,8 +90,8 @@ public class ModifyGraphVisitor extends GraphVisitor {
             log.debug(Formatter.displaySeparator(40));
         }
 
-        if (sourceMapping.isReadOnly() || !sourceMapping.isIncludeOnModify()) {
-            log.debug("Source "+sourceMapping.getName()+" is not included on modify");
+        if (sourceMapping.isReadOnly() || !sourceMapping.isIncludeOnDelete()) {
+            log.debug("Source "+sourceMapping.getName()+" is not included on delete");
             graphIterator.traverseEdges(node);
             return;
         }
@@ -107,48 +102,23 @@ public class ModifyGraphVisitor extends GraphVisitor {
             return;
         }
 
-        log.debug("Old values:");
-        AttributeValues oldValues = new AttributeValues();
-        for (Iterator i=oldSourceValues.getNames().iterator(); i.hasNext(); ) {
+        log.debug("Deleting values:");
+        AttributeValues newSourceValues = new AttributeValues();
+        for (Iterator i=sourceValues.getNames().iterator(); i.hasNext(); ) {
             String name = (String)i.next();
             if (!name.startsWith(sourceMapping.getName()+".")) continue;
 
-            Collection values = oldSourceValues.get(name);
+            Collection values = sourceValues.get(name);
             log.debug(" - "+name+": "+values);
 
             name = name.substring(sourceMapping.getName().length()+1);
-            oldValues.set(name, values);
-        }
-
-        log.debug("New values:");
-        AttributeValues newValues = new AttributeValues();
-        for (Iterator i=newSourceValues.getNames().iterator(); i.hasNext(); ) {
-            String name = (String)i.next();
-            if (!name.startsWith(sourceMapping.getName()+".")) continue;
-
-            Collection values = newSourceValues.get(name);
-            log.debug(" - "+name+": "+values);
-
-            name = name.substring(sourceMapping.getName().length()+1);
-            newValues.set(name, values);
+            newSourceValues.set(name, values);
         }
 
         SourceConfig sourceConfig = partition.getSourceConfig(sourceMapping.getSourceName());
         Connector connector = engine.getConnector(sourceConfig);
-
-        connector.modify(partition, sourceConfig, oldValues, newValues);
-
-        modifiedSourceValues.remove(sourceMapping.getName());
-        modifiedSourceValues.set(sourceMapping.getName(), newValues);
+        connector.delete(partition, sourceConfig, newSourceValues);
 
         graphIterator.traverseEdges(node);
-    }
-
-    public AttributeValues getModifiedSourceValues() {
-        return modifiedSourceValues;
-    }
-
-    public void setModifiedSourceValues(AttributeValues modifiedSourceValues) {
-        this.modifiedSourceValues = modifiedSourceValues;
     }
 }

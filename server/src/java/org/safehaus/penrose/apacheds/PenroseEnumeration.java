@@ -41,42 +41,51 @@ public class PenroseEnumeration implements NamingEnumeration {
     }
 
     public void close() throws NamingException {
-        searchResults.close();
+        try {
+            searchResults.close();
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+            throw ExceptionTool.createNamingException(e);
+        }
     }
 
     public boolean hasMore() throws NamingException {
+        try {
+            boolean hasNext = searchResults.hasNext();
+            if (hasNext) return true;
 
-        boolean hasNext = searchResults.hasNext();
-        if (hasNext) return true;
+            List referrals = searchResults.getReferrals();
+            //log.debug("Search operation returned "+referrals.size()+" referral(s).");
 
-        List referrals = searchResults.getReferrals();
-        log.debug("Search operation returned "+referrals.size()+" referral(s).");
+            if (!referrals.isEmpty()) {
+                PenroseReferralException lre = new PenroseReferralException(referrals);
+                throw lre;
+                /*
+                String referral = (String)referrals.remove(0);
+                log.debug("Referral: "+referral);
+                throw new PenroseReferralException(referral, !referrals.isEmpty());
+                */
+            }
 
-        if (!referrals.isEmpty()) {
-            PenroseReferralException lre = new PenroseReferralException(referrals);
-            throw lre;
-            /*
-            String referral = (String)referrals.remove(0);
-            log.debug("Referral: "+referral);
-            throw new PenroseReferralException(referral, !referrals.isEmpty());
-            */
+            //log.warn("Search operation returned "+searchResults.getTotalCount()+" entries.");
+
+            return false;
+
+        } catch (Exception e) {
+        	log.error(e.getMessage(), e);
+            throw ExceptionTool.createNamingException(e);
         }
-
-        log.warn("Search operation returned "+searchResults.getTotalCount()+" entries.");
-
-        int rc = searchResults.getReturnCode();
-        if (rc != LDAPException.SUCCESS) {
-            throw ExceptionTool.createNamingException(rc, "RC: "+rc);
-        }
-
-        return false;
     }
 
     public Object next() throws NamingException {
-        SearchResult result = (SearchResult)searchResults.next();
-        log.info("Returning \""+result.getName()+"\" to client.");
-
-        return result;
+        try {
+            SearchResult result = (SearchResult)searchResults.next();
+            return result;
+            
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+            throw ExceptionTool.createNamingException(e);
+        }
     }
 
     public boolean hasMoreElements() {

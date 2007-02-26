@@ -19,8 +19,8 @@ package org.safehaus.penrose.connector;
 
 import org.safehaus.penrose.partition.SourceConfig;
 import org.safehaus.penrose.partition.FieldConfig;
-import org.safehaus.penrose.mapping.Row;
-import org.safehaus.penrose.mapping.AttributeValues;
+import org.safehaus.penrose.entry.RDN;
+import org.safehaus.penrose.entry.AttributeValues;
 import org.safehaus.penrose.mapping.EntryMapping;
 import org.safehaus.penrose.mapping.AttributeMapping;
 import org.safehaus.penrose.util.*;
@@ -56,7 +56,7 @@ public class JNDIAdapter extends Adapter {
         return new JNDIClient(client, getParameters());
     }
 
-    public void bind(SourceConfig sourceConfig, Row pk, String password) throws LDAPException {
+    public void bind(SourceConfig sourceConfig, RDN pk, String password) throws LDAPException {
 
         try {
             String dn = getDn(sourceConfig, pk);
@@ -152,8 +152,8 @@ public class JNDIAdapter extends Adapter {
                 log.debug(" - "+dn);
 
                 if (attributes.size() == 1 && attributes.contains("dn")) {
-                    Row row = getPkValues(sourceConfig, sr);
-                    results.add(row);
+                    RDN rdn = getPkValues(sourceConfig, sr);
+                    results.add(rdn);
 
                 } else {
                     AttributeValues av = getValues(dn, sourceConfig, sr);
@@ -177,9 +177,9 @@ public class JNDIAdapter extends Adapter {
         }
     }
 
-    public Row getPkValues(SourceConfig sourceConfig, SearchResult sr) throws Exception {
+    public RDN getPkValues(SourceConfig sourceConfig, SearchResult sr) throws Exception {
 
-        Row row = new Row();
+        RDN rdn = new RDN();
 
         Attributes attrs = sr.getAttributes();
         Collection fields = sourceConfig.getPrimaryKeyFieldConfigs();
@@ -199,17 +199,17 @@ public class JNDIAdapter extends Adapter {
                 values.add(value);
             }
 
-            row.set(name, values.iterator().next());
+            rdn.set(name, values.iterator().next());
         }
 
-        return row;
+        return rdn;
     }
 
     public AttributeValues getValues(String dn, SourceConfig sourceConfig, SearchResult sr) throws Exception {
 
         AttributeValues av = new AttributeValues();
 
-        Row rdn = EntryUtil.getRdn(dn);
+        RDN rdn = EntryUtil.getRdn(dn);
         av.add("primaryKey", rdn);
 
         Attributes attrs = sr.getAttributes();
@@ -236,7 +236,7 @@ public class JNDIAdapter extends Adapter {
         return av;
     }
 
-    public void add(SourceConfig sourceConfig, Row pk, AttributeValues sourceValues) throws LDAPException {
+    public void add(SourceConfig sourceConfig, RDN pk, AttributeValues sourceValues) throws LDAPException {
 
         DirContext ctx = null;
         try {
@@ -347,7 +347,7 @@ public class JNDIAdapter extends Adapter {
         return LDAPException.SUCCESS;
     }
 
-    public void delete(SourceConfig sourceConfig, Row pk) throws LDAPException {
+    public void delete(SourceConfig sourceConfig, RDN pk) throws LDAPException {
 
         DirContext ctx = null;
         try {
@@ -374,7 +374,7 @@ public class JNDIAdapter extends Adapter {
         }
     }
 
-    public void modify(SourceConfig sourceConfig, Row pk, Collection modifications) throws LDAPException {
+    public void modify(SourceConfig sourceConfig, RDN pk, Collection modifications) throws LDAPException {
 
         DirContext ctx = null;
         try {
@@ -435,7 +435,7 @@ public class JNDIAdapter extends Adapter {
         }
     }
 
-    public void modrdn(SourceConfig sourceConfig, Row oldEntry, Row newEntry) throws LDAPException {
+    public void modrdn(SourceConfig sourceConfig, RDN oldEntry, RDN newEntry) throws LDAPException {
 
         DirContext ctx = null;
         try {
@@ -519,8 +519,8 @@ public class JNDIAdapter extends Adapter {
     public String getDn(SourceConfig sourceConfig, AttributeValues sourceValues) throws Exception {
         //log.debug("Computing DN for "+source.getName()+" with "+sourceValues);
 
-        Row pk = sourceConfig.getPrimaryKeyValues(sourceValues);
-        //Row pk = sourceValues.getRdn();
+        RDN pk = sourceConfig.getPrimaryKeyValues(sourceValues);
+        //RDN pk = sourceValues.getRdn();
 
         String baseDn = sourceConfig.getParameter(BASE_DN);
         //log.debug("Base DN: "+baseDn);
@@ -533,7 +533,7 @@ public class JNDIAdapter extends Adapter {
         return dn;
     }
 
-    public String getDn(SourceConfig sourceConfig, Row rdn) throws Exception {
+    public String getDn(SourceConfig sourceConfig, RDN rdn) throws Exception {
         String baseDn = sourceConfig.getParameter(BASE_DN);
         //log.debug("Base DN: "+baseDn);
 
@@ -580,8 +580,8 @@ public class JNDIAdapter extends Adapter {
                 javax.naming.directory.SearchResult sr = (javax.naming.directory.SearchResult)ne.next();
                 log.debug(" - "+sr.getName()+","+ldapBase);
 
-                Row row = getPkValues(sourceConfig, sr);
-                results.add(row);
+                RDN rdn = getPkValues(sourceConfig, sr);
+                results.add(rdn);
             }
 
         } finally {
