@@ -18,7 +18,6 @@
 package org.safehaus.penrose.management;
 
 import org.safehaus.penrose.Penrose;
-import org.safehaus.penrose.ldap.ExceptionTool;
 import org.safehaus.penrose.session.PenroseSession;
 import org.ietf.ldap.LDAPException;
 import org.slf4j.LoggerFactory;

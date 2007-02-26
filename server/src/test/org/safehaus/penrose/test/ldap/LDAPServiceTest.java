@@ -20,7 +20,7 @@ package org.safehaus.penrose.test.ldap;
 import junit.framework.TestCase;
 import org.apache.log4j.*;
 import org.safehaus.penrose.server.PenroseServer;
-import org.safehaus.penrose.ldap.PenroseLDAPService;
+import org.safehaus.penrose.ldap.LDAPService;
 import org.safehaus.penrose.service.ServiceManager;
 import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.config.PenroseConfig;
@@ -73,7 +73,7 @@ public class LDAPServiceTest extends TestCase {
 
     public void testBasicSearch() throws Exception {
         ServiceManager serviceManager = penroseServer.getServiceManager();
-        PenroseLDAPService service = (PenroseLDAPService)serviceManager.getService("LDAP");
+        LDAPService service = (LDAPService)serviceManager.getService("LDAP");
         int port = service.getLdapPort();
         search(port);
     }
@@ -81,7 +81,7 @@ public class LDAPServiceTest extends TestCase {
     public void testRestartingLDAPService() throws Exception {
 
         ServiceManager serviceManager = penroseServer.getServiceManager();
-        PenroseLDAPService service = (PenroseLDAPService)serviceManager.getService("LDAP");
+        LDAPService service = (LDAPService)serviceManager.getService("LDAP");
         int port = service.getLdapPort();
 
         try {
@@ -141,7 +141,7 @@ public class LDAPServiceTest extends TestCase {
     public void testChangingLDAPPort() throws Exception {
 
         ServiceManager serviceManager = penroseServer.getServiceManager();
-        PenroseLDAPService service = (PenroseLDAPService)serviceManager.getService("LDAP");
+        LDAPService service = (LDAPService)serviceManager.getService("LDAP");
         int port = service.getLdapPort();
 
         // testing the old port

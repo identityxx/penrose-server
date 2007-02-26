@@ -9,7 +9,7 @@
     <constructor-arg><value>${penrose.home}</value></constructor-arg>
   </bean>
 
-  <bean id="penroseInterceptor" class="org.safehaus.penrose.ldap.PenroseInterceptor">
+  <bean id="penroseInterceptor" class="org.safehaus.penrose.apacheds.PenroseInterceptor">
     <property name="penroseServer"><ref bean="penroseServer"/></property>
   </bean>
 

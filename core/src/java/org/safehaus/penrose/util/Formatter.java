@@ -50,7 +50,7 @@ public class Formatter {
     }
 
     public static String repeat(String s, int length) {
-        StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
         for (int i=0; i<length; i++) sb.append(s);
         return sb.toString();
     }

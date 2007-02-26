@@ -18,7 +18,7 @@
   </service>
 
   <service name="LDAP">
-    <service-class>org.safehaus.penrose.ldap.PenroseLDAPService</service-class>
+    <service-class>org.safehaus.penrose.ldap.DefaultLDAPService</service-class>
     <parameter>
       <param-name>ldapPort</param-name>
       <param-value>10389</param-value>

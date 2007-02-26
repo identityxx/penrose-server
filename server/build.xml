@@ -61,11 +61,6 @@
 
     <target name="compile" depends="init">
         <echo message="Compiling ${product.title}."/>
-        <javacc
-            target="src/java/org/safehaus/penrose/openldap/config/SlapdParser.jj"
-            javacchome="../lib/javacc"
-            outputdirectory="src/java/org/safehaus/penrose/openldap/config"
-        />
         <mkdir dir="target/classes"/>
         <javac
             srcdir="src/java"

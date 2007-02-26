@@ -1,8 +1,8 @@
 package org.safehaus.penrose.opends;
 
-import org.safehaus.penrose.service.Service;
 import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.backend.PenroseBackend;
+import org.safehaus.penrose.ldap.LDAPService;
 import org.opends.server.core.DirectoryServer;
 import org.opends.server.core.PluginConfigManager;
 import org.opends.server.api.ConfigHandler;
@@ -20,7 +20,7 @@ import com.identyx.javabackend.opends.JavaBackend;
 /**
  * @author Endi S. Dewata
  */
-public class OpenDSLDAPService extends Service {
+public class OpenDSLDAPService extends LDAPService {
 
     public void start() throws Exception {
 
