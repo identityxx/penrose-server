@@ -19,8 +19,7 @@ package org.safehaus.penrose.backend;
 
 import com.identyx.javabackend.Results;
 import org.safehaus.penrose.session.PenroseSearchResults;
-
-import javax.naming.directory.SearchResult;
+import org.safehaus.penrose.entry.Entry;
 
 /**
  * @author Endi S. Dewata
@@ -34,7 +33,7 @@ public class PenroseResults implements Results {
     }
 
     public Object next() throws Exception {
-        SearchResult entry = (SearchResult)results.next();
+        Entry entry = (Entry)results.next();
         return new PenroseEntry(entry);
     }
 

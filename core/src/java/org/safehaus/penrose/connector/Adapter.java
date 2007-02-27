@@ -26,6 +26,7 @@ import org.safehaus.penrose.session.PenroseSearchControls;
 import org.safehaus.penrose.partition.SourceConfig;
 import org.safehaus.penrose.entry.AttributeValues;
 import org.safehaus.penrose.entry.RDN;
+import org.safehaus.penrose.util.ExceptionUtil;
 import org.ietf.ldap.LDAPException;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
@@ -57,11 +58,10 @@ public abstract class Adapter {
 	/**
 	 * Bind.
 	 * 
-	 * @throws LDAPException
+	 * @throws Exception
 	 */
-    public void bind(SourceConfig sourceConfig, RDN pk, String password) throws LDAPException {
-        int rc = LDAPException.INVALID_CREDENTIALS;
-        throw new LDAPException(LDAPException.resultCodeToString(rc), rc, null);
+    public void bind(SourceConfig sourceConfig, RDN pk, String password) throws Exception {
+        throw ExceptionUtil.createLDAPException(LDAPException.INVALID_CREDENTIALS);
     }
     
     /**
@@ -71,38 +71,49 @@ public abstract class Adapter {
      * @param results AttributeValues
      * @throws Exception
      */
-    public void search(SourceConfig sourceConfig, Filter filter, PenroseSearchControls searchControls, PenroseSearchResults results) throws Exception {
-        results.close();
+    public void search(
+            SourceConfig sourceConfig,
+            Filter filter,
+            PenroseSearchControls searchControls,
+            PenroseSearchResults results
+    ) throws Exception {
+        throw ExceptionUtil.createLDAPException(LDAPException.OPERATIONS_ERROR);
     }
 
     /**
      * Add.
      * 
-     * @throws LDAPException
+     * @throws Exception
      */
-    public void add(SourceConfig sourceConfig, RDN pk, AttributeValues sourceValues) throws LDAPException {
-        int rc = LDAPException.OPERATIONS_ERROR;
-        throw new LDAPException(LDAPException.resultCodeToString(rc), rc, null);
+    public void add(SourceConfig sourceConfig, RDN pk, AttributeValues sourceValues) throws Exception {
+        throw ExceptionUtil.createLDAPException(LDAPException.OPERATIONS_ERROR);
     }
     
     /**
      * Modify.
      * 
-     * @throws LDAPException
+     * @throws Exception
      */
-    public void modify(SourceConfig sourceConfig, RDN pk, Collection modifications) throws LDAPException {
-        int rc = LDAPException.OPERATIONS_ERROR;
-        throw new LDAPException(LDAPException.resultCodeToString(rc), rc, null);
+    public void modify(SourceConfig sourceConfig, RDN pk, Collection modifications) throws Exception {
+        throw ExceptionUtil.createLDAPException(LDAPException.OPERATIONS_ERROR);
+    }
+
+    /**
+     * Modify.
+     *
+     * @throws Exception
+     */
+    public void modrdn(SourceConfig sourceConfig, RDN oldPk, RDN newPk, boolean deleteOldRdn) throws Exception {
+        throw ExceptionUtil.createLDAPException(LDAPException.OPERATIONS_ERROR);
     }
 
     /**
      * Delete.
      * 
-     * @throws LDAPException
+     * @throws Exception
      */
-    public void delete(SourceConfig sourceConfig, RDN pk) throws LDAPException {
-        int rc = LDAPException.OPERATIONS_ERROR;
-        throw new LDAPException(LDAPException.resultCodeToString(rc), rc, null);
+    public void delete(SourceConfig sourceConfig, RDN pk) throws Exception {
+        throw ExceptionUtil.createLDAPException(LDAPException.OPERATIONS_ERROR);
     }
 
     public int getLastChangeNumber(SourceConfig sourceConfig) throws Exception {

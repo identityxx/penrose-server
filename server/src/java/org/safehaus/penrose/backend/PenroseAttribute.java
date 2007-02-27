@@ -1,21 +1,20 @@
 package org.safehaus.penrose.backend;
 
-import javax.naming.directory.Attribute;
-import javax.naming.NamingEnumeration;
+import com.identyx.javabackend.Attribute;
+
 import java.util.Collection;
-import java.util.ArrayList;
 
 /**
  * @author Endi S. Dewata
  */
-public class PenroseAttribute implements com.identyx.javabackend.Attribute {
+public class PenroseAttribute implements Attribute {
 
     String name;
-    Attribute attribute;
+    Collection values;
 
-    public PenroseAttribute(String name, Attribute attribute) throws Exception {
+    public PenroseAttribute(String name, Collection values) throws Exception {
         this.name = name;
-        this.attribute = attribute;
+        this.values = values;
     }
 
     public String getName() throws Exception {
@@ -23,15 +22,11 @@ public class PenroseAttribute implements com.identyx.javabackend.Attribute {
     }
 
     public Object getValue() throws Exception {
-        return attribute.get();
+        if (values == null || values.isEmpty()) return null;
+        return values.iterator().next();
     }
 
     public Collection getValues() throws Exception {
-        Collection values = new ArrayList();
-        for (NamingEnumeration e = attribute.getAll(); e.hasMore(); ) {
-            Object value = e.next();
-            values.add(value);
-        }
         return values;
     }
 }

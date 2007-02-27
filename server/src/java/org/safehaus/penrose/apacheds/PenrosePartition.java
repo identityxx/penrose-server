@@ -19,11 +19,10 @@ package org.safehaus.penrose.apacheds;
 
 import org.apache.directory.shared.ldap.filter.ExprNode;
 import org.apache.directory.shared.ldap.name.LdapDN;
-import org.apache.directory.shared.ldap.message.ModificationItemImpl;
 import org.apache.directory.server.core.DirectoryServiceConfiguration;
 import org.apache.directory.server.core.configuration.PartitionConfiguration;
-import org.ietf.ldap.*;
 import org.safehaus.penrose.Penrose;
+import org.safehaus.penrose.entry.Entry;
 import org.safehaus.penrose.mapping.EntryMapping;
 import org.safehaus.penrose.partition.PartitionManager;
 import org.safehaus.penrose.partition.Partition;
@@ -32,6 +31,7 @@ import org.safehaus.penrose.session.PenroseSession;
 import org.safehaus.penrose.session.PenroseSearchControls;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
+import org.ietf.ldap.LDAPException;
 
 import javax.naming.*;
 import javax.naming.directory.*;
@@ -91,7 +91,7 @@ public class PenrosePartition implements org.apache.directory.server.core.partit
             return new LdapDN(entryMapping.getDn().toString());
 
         } catch (Exception e) {
-            throw new NamingException(e.getMessage());
+            throw ExceptionTool.createNamingException(e);
         }
     }
 
@@ -126,7 +126,7 @@ public class PenrosePartition implements org.apache.directory.server.core.partit
 
         } catch (Exception e) {
             log.error(e.getMessage(), e);
-            throw new NamingException(e.getMessage());
+            throw ExceptionTool.createNamingException(e);
         }
     }
 
@@ -149,7 +149,7 @@ public class PenrosePartition implements org.apache.directory.server.core.partit
 
         } catch (Exception e) {
             log.error(e.getMessage(), e);
-            throw new NamingException(e.getMessage());
+            throw ExceptionTool.createNamingException(e);
         }
     }
 
@@ -180,7 +180,7 @@ public class PenrosePartition implements org.apache.directory.server.core.partit
 
         } catch (Exception e) {
             log.error(e.getMessage(), e);
-            throw new NamingException(e.getMessage());
+            throw ExceptionTool.createNamingException(e);
         }
     }
 
@@ -203,7 +203,7 @@ public class PenrosePartition implements org.apache.directory.server.core.partit
 
         } catch (Exception e) {
             log.error(e.getMessage(), e);
-            throw new NamingException(e.getMessage());
+            throw ExceptionTool.createNamingException(e);
         }
     }
 
@@ -231,7 +231,7 @@ public class PenrosePartition implements org.apache.directory.server.core.partit
 
         } catch (Exception e) {
             log.error(e.getMessage(), e);
-            throw new NamingException(e.getMessage());
+            throw ExceptionTool.createNamingException(e);
         }
     }
 
@@ -276,28 +276,15 @@ public class PenrosePartition implements org.apache.directory.server.core.partit
 
             return new PenroseEnumeration(results);
 
-        } catch (NamingException e) {
-            throw e;
+        } catch (LDAPException e) {
+            throw ExceptionTool.createNamingException(e);
 
         } catch (Exception e) {
             log.error(e.getMessage(), e);
-            throw new NamingException(e.getMessage());
+            throw ExceptionTool.createNamingException(e);
 
         } finally {
             if (session != null) try { session.close(); } catch (Exception e) {}
-        }
-    }
-
-    public void throwNamingException(int rc, String message) throws NamingException {
-        switch (rc) {
-            case LDAPException.SUCCESS:
-                break;
-
-            case LDAPException.NO_SUCH_OBJECT:
-                throw new NameNotFoundException(message);
-
-            default:
-                throw new NamingException("RC: "+rc);
         }
     }
 
@@ -321,23 +308,18 @@ public class PenrosePartition implements org.apache.directory.server.core.partit
                     sc,
                     results);
 
-            int rc = results.getReturnCode();
             session.close();
-
-            if (rc != LDAPException.SUCCESS) return null;
-            //throwNamingException(rc, baseDn);
-
-            if (!results.hasNext()) {
-                throw new NameNotFoundException("No such object.");
-            }
 
             SearchResult result = (SearchResult)results.next();
 
             return result.getAttributes();
 
+        } catch (LDAPException e) {
+            throw ExceptionTool.createNamingException(e);
+
         } catch (Exception e) {
             log.error(e.getMessage(), e);
-            throw new NamingException(e.getMessage());
+            throw ExceptionTool.createNamingException(e);
         }
     }
 
@@ -363,23 +345,18 @@ public class PenrosePartition implements org.apache.directory.server.core.partit
                     sc,
                     results);
 
-            int rc = results.getReturnCode();
+            Entry entry = (Entry)results.next();
+            SearchResult result = EntryTool.createSearchResult(entry);
             session.close();
-
-            if (rc != LDAPException.SUCCESS) {
-                throw ExceptionTool.createNamingException(rc);
-            }
-
-            SearchResult result = (SearchResult)results.next();
 
             return result.getAttributes();
 
-        } catch (NamingException e) {
-            throw e;
+        } catch (LDAPException e) {
+            throw ExceptionTool.createNamingException(e);
 
         } catch (Exception e) {
             log.error(e.getMessage(), e);
-            throw new NamingException(e.getMessage());
+            throw ExceptionTool.createNamingException(e);
         }
     }
 
@@ -403,7 +380,7 @@ public class PenrosePartition implements org.apache.directory.server.core.partit
                     sc,
                     results);
 
-            boolean result = results.getReturnCode() == LDAPException.SUCCESS && results.size() == 1;
+            boolean result = results.hasNext();
 
             session.close();
 
@@ -411,7 +388,7 @@ public class PenrosePartition implements org.apache.directory.server.core.partit
 
         } catch (Exception e) {
             log.error(e.getMessage(), e);
-            throw new NamingException(e.getMessage());
+            throw ExceptionTool.createNamingException(e);
         }
     }
 
@@ -436,7 +413,7 @@ public class PenrosePartition implements org.apache.directory.server.core.partit
 
         } catch (Exception e) {
             log.error(e.getMessage(), e);
-            throw new NamingException(e.getMessage());
+            throw ExceptionTool.createNamingException(e);
         }
     }
 

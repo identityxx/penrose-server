@@ -47,8 +47,8 @@ import org.slf4j.Logger;
 import org.ietf.ldap.LDAPException;
 import org.ietf.ldap.LDAPConnection;
 
+import javax.naming.*;
 import javax.naming.directory.*;
-import javax.naming.NamingEnumeration;
 import java.util.*;
 
 /**
@@ -593,9 +593,8 @@ public class Handler {
 
         if ("".equals(baseDn) && sc.getScope() == LDAPConnection.SCOPE_BASE) {
             Entry rootDSE = createRootDSE();
-            SearchResult searchResult = EntryUtil.toSearchResult(rootDSE);
-            filterAttributes(session, searchResult, sc);
-            results.add(searchResult);
+            filterAttributes(session, rootDSE, sc);
+            results.add(rootDSE);
             results.close();
             return LDAPException.SUCCESS;
         }
@@ -693,10 +692,9 @@ public class Handler {
                     }
 
                     log.debug("Returning entry "+dn);
-                    SearchResult searchResult = EntryUtil.toSearchResult(entry);
-                    filterAttributes(session, partition, entryMapping, searchResult, sc);
+                    filterAttributes(session, partition, entryMapping, entry, sc);
 
-                    results.add(searchResult);
+                    results.add(entry);
 
                 } catch (Exception e) {
                     log.error(e.getMessage(), e);
@@ -791,7 +789,7 @@ public class Handler {
             PenroseSession session,
             Partition partition,
             EntryMapping entryMapping,
-            SearchResult searchResult,
+            Entry entry,
             PenroseSearchControls sc
     ) throws Exception {
 
@@ -814,11 +812,11 @@ public class Handler {
         log.debug("Requested: "+requestedAttributeNames);
 
         Collection attributeNames = new ArrayList();
-        Attributes attributes = searchResult.getAttributes();
+        AttributeValues attributeValues = entry.getAttributeValues();
 
-        for (NamingEnumeration i=attributes.getAll(); i.hasMore(); ) {
-            Attribute attribute = (Attribute)i.next();
-            attributeNames.add(attribute.getID().toLowerCase());
+        for (Iterator i=attributeValues.getNames().iterator(); i.hasNext(); ) {
+            String name = (String)i.next();
+            attributeNames.add(name.toLowerCase());
         }
 
         log.debug("Returned: "+attributeNames);
@@ -827,7 +825,7 @@ public class Handler {
         Set denies = new HashSet();
         denies.addAll(attributeNames);
 
-        DN targetDn = new DN(searchResult.getName());
+        DN targetDn = entry.getDn();
         aclEngine.getReadableAttributes(session, partition, entryMapping, targetDn, attributeNames, grants, denies);
 
         log.debug("Granted: "+grants);
@@ -842,9 +840,8 @@ public class Handler {
 */        
         Collection list = new HashSet();
 
-        for (NamingEnumeration i=attributes.getAll(); i.hasMore(); ) {
-            Attribute attribute = (Attribute)i.next();
-            String attributeName = attribute.getID();
+        for (Iterator i=attributeValues.getNames().iterator(); i.hasNext(); ) {
+            String attributeName = (String)i.next();
             String normalizedName = attributeName.toLowerCase();
 
             if (denies.contains(normalizedName)) {
@@ -889,13 +886,13 @@ public class Handler {
 
         for (Iterator i=list.iterator(); i.hasNext(); ) {
             String attributeName = (String)i.next();
-            attributes.remove(attributeName);
+            attributeValues.remove(attributeName);
         }
     }
 
     public void filterAttributes(
             PenroseSession session,
-            SearchResult searchResult,
+            Entry entry,
             PenroseSearchControls sc
     ) throws Exception {
 
@@ -920,20 +917,19 @@ public class Handler {
         log.debug("Requested: "+requestedAttributeNames);
 
         Collection attributeNames = new ArrayList();
-        Attributes attributes = searchResult.getAttributes();
+        AttributeValues attributes = entry.getAttributeValues();
 
-        for (NamingEnumeration i=attributes.getAll(); i.hasMore(); ) {
-            Attribute attribute = (Attribute)i.next();
-            attributeNames.add(attribute.getID().toLowerCase());
+        for (Iterator i=attributes.getNames().iterator(); i.hasNext(); ) {
+            String name = (String)i.next();
+            attributeNames.add(name.toLowerCase());
         }
 
         log.debug("Returned: "+attributeNames);
 
         Collection list = new HashSet();
 
-        for (NamingEnumeration i=attributes.getAll(); i.hasMore(); ) {
-            Attribute attribute = (Attribute)i.next();
-            String attributeName = attribute.getID();
+        for (Iterator i=attributes.getNames().iterator(); i.hasNext(); ) {
+            String attributeName = (String)i.next();
             String normalizedName = attributeName.toLowerCase();
 
             if (requestedAttributeNames.contains(normalizedName)) {

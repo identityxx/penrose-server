@@ -18,13 +18,12 @@
 package org.safehaus.penrose.apacheds;
 
 import org.safehaus.penrose.session.PenroseSearchResults;
-import org.ietf.ldap.LDAPException;
+import org.safehaus.penrose.entry.Entry;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
 import javax.naming.NamingEnumeration;
 import javax.naming.NamingException;
-import javax.naming.directory.*;
 import java.util.List;
 
 /**
@@ -79,9 +78,9 @@ public class PenroseEnumeration implements NamingEnumeration {
 
     public Object next() throws NamingException {
         try {
-            SearchResult result = (SearchResult)searchResults.next();
-            return result;
-            
+            Entry entry = (Entry)searchResults.next();
+            return EntryTool.createSearchResult(entry);
+
         } catch (Exception e) {
             log.error(e.getMessage(), e);
             throw ExceptionTool.createNamingException(e);

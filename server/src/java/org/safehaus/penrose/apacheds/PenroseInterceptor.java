@@ -23,9 +23,10 @@ import org.apache.directory.server.core.configuration.InterceptorConfiguration;
 import org.apache.directory.server.core.DirectoryServiceConfiguration;
 import org.apache.directory.shared.ldap.filter.ExprNode;
 import org.apache.directory.shared.ldap.name.LdapDN;
-import org.apache.directory.shared.ldap.message.ModificationItemImpl;
 import org.safehaus.penrose.Penrose;
+import org.safehaus.penrose.entry.AttributeValues;
 import org.safehaus.penrose.entry.DN;
+import org.safehaus.penrose.entry.Entry;
 import org.safehaus.penrose.entry.RDN;
 import org.safehaus.penrose.server.PenroseServer;
 import org.safehaus.penrose.config.PenroseConfig;
@@ -133,13 +134,9 @@ public class PenroseInterceptor extends BaseInterceptor {
             next.bind(bindDn, credentials, mechanisms, saslAuthId);
 
             PenroseSession session = getSession();
-            session.setBindDn(dn);
-            session.setBindPassword(password);
+            session.bind(dn, password);
 
             //log.debug("Bind successful.");
-
-        } catch (NamingException e) {
-            throw e;
 
         } catch (LDAPException e) {
             throw ExceptionTool.createNamingException(e);
@@ -170,11 +167,12 @@ public class PenroseInterceptor extends BaseInterceptor {
 
         try {
             DN dn = new DN(name.getUpName());
-            log.debug("add(\""+dn+"\")");
+            boolean debug = log.isDebugEnabled();
+            if (debug) log.debug("add(\""+dn+"\")");
 
             Partition partition = partitionManager.getPartition(dn);
             if (partition == null) {
-                log.debug(dn+" is a static entry");
+            	if (debug) log.debug(dn+" is a static entry");
                 next.add(name, attributes);
                 return;
             }
@@ -186,10 +184,6 @@ public class PenroseInterceptor extends BaseInterceptor {
             }
 
             session.add(dn, attributes);
-
-        } catch (NamingException e) {
-            throw e;
-
         } catch (LDAPException e) {
             throw ExceptionTool.createNamingException(e);
 
@@ -209,17 +203,12 @@ public class PenroseInterceptor extends BaseInterceptor {
         log.debug("===============================================================================");
         try {
             DN dn = new DN(name.getUpName());
-            log.debug("compare(\""+dn+"\", \""+attributeName+"\", "+value+")");
+            boolean debug = log.isDebugEnabled();
+            if (debug) log.debug("compare(\""+dn+"\", \""+attributeName+"\", "+value+")");
 
             Partition partition = partitionManager.getPartition(dn);
             if (partition == null) {
-                log.debug(dn+" is a static entry");
-                return next.compare(name, attributeName, value);
-            }
-
-            Collection entryMappings = partition.findEntryMappings(dn);
-            if (entryMappings == null || entryMappings.isEmpty()) {
-                log.debug(dn+" is a static entry");
+            	if (debug) log.debug(dn+" is a static entry");
                 return next.compare(name, attributeName, value);
             }
 
@@ -230,10 +219,6 @@ public class PenroseInterceptor extends BaseInterceptor {
             }
 
             return session.compare(dn, attributeName, value);
-
-        } catch (NamingException e) {
-            throw e;
-
         } catch (LDAPException e) {
             throw ExceptionTool.createNamingException(e);
 
@@ -251,18 +236,12 @@ public class PenroseInterceptor extends BaseInterceptor {
         log.debug("===============================================================================");
         try {
             DN dn = new DN(name.getUpName());
-            log.debug("delete(\""+dn+"\")");
+            boolean debug = log.isDebugEnabled();
+            if (debug) log.debug("delete(\""+dn+"\")");
 
             Partition partition = partitionManager.getPartition(dn);
             if (partition == null) {
-                log.debug(dn+" is a static entry");
-                next.delete(name);
-                return;
-            }
-
-            Collection entryMappings = partition.findEntryMappings(dn);
-            if (entryMappings == null || entryMappings.isEmpty()) {
-                log.debug(dn+" is a static entry");
+            	if (debug) log.debug(dn+" is a static entry");
                 next.delete(name);
                 return;
             }
@@ -274,10 +253,6 @@ public class PenroseInterceptor extends BaseInterceptor {
             }
 
             session.delete(dn);
-
-        } catch (NamingException e) {
-            throw e;
-
         } catch (LDAPException e) {
             throw ExceptionTool.createNamingException(e);
 
@@ -328,17 +303,12 @@ public class PenroseInterceptor extends BaseInterceptor {
         log.debug("===============================================================================");
         try {
             DN dn = new DN(name.getUpName());
-            log.debug("list(\""+dn+"\")");
+            boolean debug = log.isDebugEnabled();
+            if (debug) log.debug("list(\""+dn+"\")");
 
             Partition partition = partitionManager.getPartition(dn);
             if (partition == null) {
-                log.debug(dn+" is a static entry");
-                return next.list(name);
-            }
-
-            Collection entryMappings = partition.findEntryMappings(dn);
-            if (entryMappings == null || entryMappings.isEmpty()) {
-                log.debug(dn+" is a static entry");
+            	if (debug) log.debug(dn+" is a static entry");
                 return next.list(name);
             }
 
@@ -359,18 +329,8 @@ public class PenroseInterceptor extends BaseInterceptor {
                     "(objectClass=*)",
                     sc,
                     results);
-/*
-            int rc = results.getReturnCode();
-            connection.close();
 
-            if (rc != LDAPException.SUCCESS) {
-                ExceptionUtil.throwNamingException(rc);
-            }
-*/
             return new PenroseEnumeration(results);
-
-        } catch (NamingException e) {
-            throw e;
 
         } catch (LDAPException e) {
             throw ExceptionTool.createNamingException(e);
@@ -389,7 +349,8 @@ public class PenroseInterceptor extends BaseInterceptor {
         log.debug("===============================================================================");
         try {
             DN dn = new DN(name.getUpName());
-            log.debug("hasEntry(\""+dn+"\")");
+            boolean debug = log.isDebugEnabled();
+            if (debug) log.debug("hasEntry(\""+dn+"\")");
 
             Partition partition = partitionManager.getPartition(dn);
             if (partition == null) {
@@ -397,13 +358,7 @@ public class PenroseInterceptor extends BaseInterceptor {
                 return next.hasEntry(name);
             }
 
-            Collection entryMappings = partition.findEntryMappings(dn);
-            if (entryMappings == null || entryMappings.isEmpty()) {
-                //log.debug(dn+" is a static entry");
-                return next.hasEntry(name);
-            }
-
-            log.debug("searching \""+dn+"\"");
+            if (debug) log.debug("searching \""+dn+"\"");
 
             PenroseSession session = getSession();
 
@@ -423,13 +378,7 @@ public class PenroseInterceptor extends BaseInterceptor {
                     sc,
                     results);
 
-            boolean result = results.getReturnCode() == LDAPException.SUCCESS && results.size() == 1;
-
-            return result;
-
-        } catch (NamingException e) {
-            throw e;
-
+            return results.hasNext();
         } catch (LDAPException e) {
             throw ExceptionTool.createNamingException(e);
 
@@ -450,15 +399,12 @@ public class PenroseInterceptor extends BaseInterceptor {
             DN dn = new DN(name.getUpName());
             log.debug("lookup(\""+dn+"\", "+Arrays.asList(attrIds)+")");
 
+            boolean debug = log.isDebugEnabled();
+            if (debug) log.debug("lookup(\""+dn+"\", "+Arrays.asList(attrIds)+")");
+
             Partition partition = partitionManager.getPartition(dn);
             if (partition == null) {
-                //log.debug(dn+" is a static entry");
-                return next.lookup(name, attrIds);
-            }
-
-            Collection entryMappings = partition.findEntryMappings(dn);
-            if (entryMappings == null || entryMappings.isEmpty()) {
-                //log.debug(dn+" is a static entry");
+            	if (debug) log.debug(dn+" is a static entry");
                 return next.lookup(name, attrIds);
             }
 
@@ -480,22 +426,10 @@ public class PenroseInterceptor extends BaseInterceptor {
                     sc,
                     results);
 
-            int rc = results.getReturnCode();
-
-            if (rc != LDAPException.SUCCESS) {
-                throw ExceptionTool.createNamingException(rc);
-            }
-
-            SearchResult result = (SearchResult)results.next();
-
-            if (result == null) {
-                throw ExceptionTool.createNamingException(LDAPException.NO_SUCH_OBJECT);
-            }
+            Entry entry = (Entry)results.next();
+            SearchResult result = EntryTool.createSearchResult(entry);
 
             return result.getAttributes();
-
-        } catch (NamingException e) {
-            throw e;
 
         } catch (LDAPException e) {
             throw ExceptionTool.createNamingException(e);
@@ -517,14 +451,9 @@ public class PenroseInterceptor extends BaseInterceptor {
             log.debug("lookup(\""+dn+"\")");
 
             Partition partition = partitionManager.getPartition(dn);
+            boolean debug = log.isDebugEnabled();
             if (partition == null) {
-                //log.debug(dn+" is a static entry");
-                return next.lookup(name);
-            }
-
-            Collection entryMappings = partition.findEntryMappings(dn);
-            if (entryMappings == null || entryMappings.isEmpty()) {
-                //log.debug(dn+" is a static entry");
+            	if (debug) log.debug(dn+" is a static entry");
                 return next.lookup(name);
             }
 
@@ -546,18 +475,10 @@ public class PenroseInterceptor extends BaseInterceptor {
                     sc,
                     results);
 
-            int rc = results.getReturnCode();
-
-            if (rc != LDAPException.SUCCESS) {
-                throw ExceptionTool.createNamingException(rc);
-            }
-
-            SearchResult result = (SearchResult)results.next();
+            Entry entry = (Entry)results.next();
+            SearchResult result = EntryTool.createSearchResult(entry);
 
             return result.getAttributes();
-
-        } catch (NamingException e) {
-            throw e;
 
         } catch (LDAPException e) {
             throw ExceptionTool.createNamingException(e);
@@ -580,9 +501,12 @@ public class PenroseInterceptor extends BaseInterceptor {
 
         try {
             DN baseDn = new DN(base.getUpName());
-            StringBuffer sb = new StringBuffer();
-            filter.printToBuffer(sb);
-            log.debug("search(\""+baseDn+"\", \""+sb+"\")");
+            boolean debug = log.isDebugEnabled();
+            if (debug) {
+                StringBuffer sb = new StringBuffer();
+                filter.printToBuffer(sb);
+            	log.debug("search(\""+baseDn+"\")");
+            }
 
             PenroseSession session = getSession();
 
@@ -590,17 +514,17 @@ public class PenroseInterceptor extends BaseInterceptor {
                 throw ExceptionTool.createNamingException(LDAPException.INSUFFICIENT_ACCESS_RIGHTS);
             }
 
-            if (!"".equals(baseDn)) {
-                Partition partition = partitionManager.getPartition(baseDn);
-                if (partition == null) {
-                    log.debug(baseDn+" is a static entry");
-                    return next.search(base, env, filter, searchControls);
-                }
+            Partition partition = partitionManager.getPartition(baseDn);
+            if (debug) log.debug("Partition: "+partition);
+            
+            if ((partition == null) && !baseDn.isEmpty()) {
+            	if (debug) log.debug(baseDn+" is a static entry");
+                return next.search(base, env, filter, searchControls);
             }
 
             if (searchControls != null && searchControls.getReturningAttributes() != null) {
 
-                if ("".equals(baseDn) && searchControls.getSearchScope() == SearchControls.OBJECT_SCOPE) {
+                if (baseDn.isEmpty() && searchControls.getSearchScope() == SearchControls.OBJECT_SCOPE) {
 
                     NamingEnumeration ne = next.search(base, env, filter, searchControls);
                     SearchResult sr = (SearchResult)ne.next();
@@ -619,23 +543,17 @@ public class PenroseInterceptor extends BaseInterceptor {
                             sc,
                             results);
 
-                    SearchResult entry = (SearchResult)results.next();
-                    Attributes set = entry.getAttributes();
+                    Entry entry = (Entry)results.next();
+                    AttributeValues attributeValues = entry.getAttributeValues();
 
                     for (NamingEnumeration ne2=attributes.getAll(); ne2.hasMore(); ) {
                         Attribute attribute = (Attribute)ne2.next();
                         String name = attribute.getID();
                         if (name.equals("vendorName") || name.equals("vendorVersion")) continue;
 
-                        Attribute ldapAttribute = set.get(name);
-                        if (ldapAttribute == null) {
-                            ldapAttribute = new BasicAttribute(name);
-                            set.put(ldapAttribute);
-                        }
-
                         for (NamingEnumeration ne3=attribute.getAll(); ne3.hasMore(); ) {
                             Object value = ne3.next();
-                            ldapAttribute.add(value);
+                            attributeValues.add(name, value);
                         }
                     }
 
@@ -653,34 +571,30 @@ public class PenroseInterceptor extends BaseInterceptor {
             List attributeNames = returningAttributes == null ? new ArrayList() : Arrays.asList(returningAttributes);
 
             String newFilter = FilterTool.convert(filter).toString();
-
-            log.debug("Searching \""+base+"\"");
-            log.debug(" - deref: "+deref);
-            log.debug(" - scope: "+scope);
-            log.debug(" - filter: "+newFilter);
-            log.debug(" - attributeNames: "+attributeNames);
+            if (debug) {
+	            log.debug("Searching \""+base+"\"");
+	            log.debug(" - deref: "+deref);
+	            log.debug(" - scope: "+scope);
+	            log.debug(" - filter: "+newFilter);
+	            log.debug(" - attributeNames: "+attributeNames);
+            }
 
             PenroseSearchResults results = new PenroseSearchResults();
 
             PenroseSearchControls sc = new PenroseSearchControls();
             sc.setScope(searchControls.getSearchScope());
+            sc.setSizeLimit(searchControls.getCountLimit());
+            sc.setTimeLimit(searchControls.getTimeLimit());
             sc.setDereference(PenroseSearchControls.DEREF_ALWAYS);
             sc.setAttributes(searchControls == null ? null : searchControls.getReturningAttributes());
 
-            int rc = session.search(
+            session.search(
                     baseDn,
                     newFilter,
                     sc,
                     results);
 
-            if (rc != LDAPException.SUCCESS) {
-                throw ExceptionTool.createNamingException(rc);
-            }
-
             return new PenroseEnumeration(results);
-
-        } catch (NamingException e) {
-            throw e;
 
         } catch (LDAPException e) {
             throw ExceptionTool.createNamingException(e);
@@ -701,18 +615,12 @@ public class PenroseInterceptor extends BaseInterceptor {
         log.debug("===============================================================================");
         try {
             DN dn = new DN(name.getUpName());
-            log.debug("modify(\""+dn+"\")");
+            boolean debug = log.isDebugEnabled();
+            if (debug) log.debug("modify(\""+dn+"\")");
 
             Partition partition = partitionManager.getPartition(dn);
             if (partition == null) {
-                log.debug(dn+" is a static entry");
-                next.modify(name, modOp, attributes);
-                return;
-            }
-
-            Collection entryMappings = partition.findEntryMappings(dn);
-            if (entryMappings == null || entryMappings.isEmpty()) {
-                log.debug(dn+" is a static entry");
+            	if (debug) log.debug(dn+" is a static entry");
                 next.modify(name, modOp, attributes);
                 return;
             }
@@ -733,10 +641,6 @@ public class PenroseInterceptor extends BaseInterceptor {
             }
 
             session.modify(dn, modifications);
-
-        } catch (NamingException e) {
-            throw e;
-
         } catch (LDAPException e) {
             throw ExceptionTool.createNamingException(e);
 
@@ -749,24 +653,18 @@ public class PenroseInterceptor extends BaseInterceptor {
     public void modify(
             NextInterceptor next,
             LdapDN name,
-            ModificationItemImpl[] modificationItems
+            ModificationItem[] modificationItems
     ) throws NamingException {
 
         log.debug("===============================================================================");
         try {
             DN dn = new DN(name.getUpName());
-            log.debug("modify(\""+dn+"\")");
+            boolean debug = log.isDebugEnabled();
+            if (debug) log.debug("modify(\""+dn+"\")");
 
             Partition partition = partitionManager.getPartition(dn);
             if (partition == null) {
-                log.debug(dn+" is a static entry");
-                next.modify(name, modificationItems);
-                return;
-            }
-
-            Collection entryMappings = partition.findEntryMappings(dn);
-            if (entryMappings == null || entryMappings.isEmpty()) {
-                log.debug(dn+" is a static entry");
+            	if (debug) log.debug(dn+" is a static entry");
                 next.modify(name, modificationItems);
                 return;
             }
@@ -779,10 +677,6 @@ public class PenroseInterceptor extends BaseInterceptor {
 
             Collection modifications = new ArrayList(Arrays.asList(modificationItems));
             session.modify(dn, modifications);
-
-        } catch (NamingException e) {
-            throw e;
-
         } catch (LDAPException e) {
             throw ExceptionTool.createNamingException(e);
 
@@ -804,18 +698,12 @@ public class PenroseInterceptor extends BaseInterceptor {
             DN dn = new DN(name.getUpName());
             RDN newRdn = new RDN(newDn);
 
-            log.debug("modifyDn(\""+dn+"\")");
+            boolean debug = log.isDebugEnabled();
+            if (debug) log.debug("modifyDn(\""+dn+"\")");
 
             Partition partition = partitionManager.getPartition(dn);
             if (partition == null) {
-                log.debug(dn+" is a static entry");
-                next.modifyRn(name, newDn, deleteOldDn);
-                return;
-            }
-
-            Collection entryMappings = partition.findEntryMappings(dn);
-            if (entryMappings == null || entryMappings.isEmpty()) {
-                log.debug(dn+" is a static entry");
+            	if (debug) log.debug(dn+" is a static entry");
                 next.modifyRn(name, newDn, deleteOldDn);
                 return;
             }
@@ -827,10 +715,6 @@ public class PenroseInterceptor extends BaseInterceptor {
             }
 
             session.modrdn(dn, newRdn, deleteOldDn);
-
-        } catch (NamingException e) {
-            throw e;
-
         } catch (LDAPException e) {
             throw ExceptionTool.createNamingException(e);
 

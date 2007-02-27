@@ -17,7 +17,6 @@
  */
 package org.safehaus.penrose.connector;
 
-import org.safehaus.penrose.connector.Adapter;
 import org.safehaus.penrose.session.PenroseSearchResults;
 import org.safehaus.penrose.session.PenroseSearchControls;
 import org.safehaus.penrose.filter.Filter;
@@ -26,7 +25,8 @@ import org.safehaus.penrose.partition.SourceConfig;
 import org.safehaus.penrose.partition.ConnectionConfig;
 import org.safehaus.penrose.entry.AttributeValues;
 import org.safehaus.penrose.entry.RDN;
-import org.ietf.ldap.LDAPException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
 import java.util.Map;
@@ -36,6 +36,8 @@ import java.util.Map;
  */
 public class Connection implements ConnectionMBean {
 
+    Logger log = LoggerFactory.getLogger(getClass());
+    
     private ConnectionConfig connectionConfig;
     private AdapterConfig adapterConfig;
     private Adapter adapter;
@@ -101,27 +103,20 @@ public class Connection implements ConnectionMBean {
         return connectionConfig.getName();
     }
 
-    public void bind(SourceConfig sourceConfig, RDN pk, String password) throws LDAPException {
-        if (adapter == null) {
-            int rc = LDAPException.INVALID_CREDENTIALS;
-            throw new LDAPException(LDAPException.resultCodeToString(rc), rc, null);
-        }
+    public void bind(SourceConfig sourceConfig, RDN pk, String password) throws Exception {
         adapter.bind(sourceConfig, pk, password);
     }
 
-    public void search(SourceConfig sourceConfig, Filter filter, PenroseSearchControls sc, PenroseSearchResults results) throws Exception {
-        if (adapter == null) {
-            results.setReturnCode(LDAPException.OPERATIONS_ERROR);
-            return;
-        }
+    public void search(
+    	    SourceConfig sourceConfig,
+    	    Filter filter,
+    	    PenroseSearchControls sc,
+    	    PenroseSearchResults results
+    ) throws Exception {
         adapter.search(sourceConfig, filter, sc, results);
     }
 
-    public void add(SourceConfig sourceConfig, RDN pk, AttributeValues sourceValues) throws LDAPException {
-        if (adapter == null) {
-            int rc = LDAPException.OPERATIONS_ERROR;
-            throw new LDAPException(LDAPException.resultCodeToString(rc), rc, null);
-        }
+    public void add(SourceConfig sourceConfig, RDN pk, AttributeValues sourceValues) throws Exception {
         adapter.add(sourceConfig, pk, sourceValues);
     }
 
@@ -138,34 +133,27 @@ public class Connection implements ConnectionMBean {
         return (AttributeValues)sr.next();
     }
 
-    public void modify(SourceConfig sourceConfig, RDN pk, Collection modifications) throws LDAPException {
-        if (adapter == null) {
-            int rc = LDAPException.OPERATIONS_ERROR;
-            throw new LDAPException(LDAPException.resultCodeToString(rc), rc, null);
-        }
+    public void modify(SourceConfig sourceConfig, RDN pk, Collection modifications) throws Exception {
         adapter.modify(sourceConfig, pk, modifications);
     }
 
+    public void modrdn(SourceConfig sourceConfig, RDN oldPk, RDN newPk, boolean deleteOldRdn) throws Exception {
+        adapter.modrdn(sourceConfig, oldPk, newPk, deleteOldRdn);
+    }
+
     public void delete(SourceConfig sourceConfig, RDN pk) throws Exception {
-        if (adapter == null) {
-            int rc = LDAPException.OPERATIONS_ERROR;
-            throw new LDAPException(LDAPException.resultCodeToString(rc), rc, null);
-        }
         adapter.delete(sourceConfig, pk);
     }
 
     public int getLastChangeNumber(SourceConfig sourceConfig) throws Exception {
-        if (adapter == null) return -1;
         return adapter.getLastChangeNumber(sourceConfig);
     }
 
     public PenroseSearchResults getChanges(SourceConfig sourceConfig, int lastChangeNumber) throws Exception {
-        if (adapter == null) return null;
         return adapter.getChanges(sourceConfig, lastChangeNumber);
     }
 
     public Object openConnection() throws Exception {
-        if (adapter == null) return null;
         return adapter.openConnection();
     }
 

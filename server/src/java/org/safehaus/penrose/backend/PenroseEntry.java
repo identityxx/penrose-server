@@ -1,25 +1,25 @@
 package org.safehaus.penrose.backend;
 
-import javax.naming.directory.SearchResult;
-
-import org.safehaus.penrose.entry.DN;
+import org.safehaus.penrose.entry.Entry;
+import com.identyx.javabackend.Attributes;
+import com.identyx.javabackend.DN;
 
 /**
  * @author Endi S. Dewata
  */
 public class PenroseEntry implements com.identyx.javabackend.Entry {
 
-    public SearchResult entry;
+    public Entry entry;
 
-    public PenroseEntry(SearchResult entry) {
+    public PenroseEntry(Entry entry) {
         this.entry = entry;
     }
 
-    public com.identyx.javabackend.DN getDn() throws Exception {
-        return new PenroseDN(new DN(entry.getName()));
+    public DN getDn() throws Exception {
+        return new PenroseDN(entry.getDn());
     }
 
-    public com.identyx.javabackend.Attributes getAttributes() throws Exception {
-        return new PenroseAttributes(entry.getAttributes());
+    public Attributes getAttributes() throws Exception {
+        return new PenroseAttributes(entry.getAttributeValues());
     }
 }

@@ -57,11 +57,14 @@ public class ApacheDSLDAPService extends LDAPService {
 
         configuration.setEnableLdaps(enableLdaps);
         configuration.setLdapsPort(ldapsPort);
+
         if (ldapsCertificateFile != null) configuration.setLdapsCertificateFile(new File(ldapsCertificateFile));
         if (ldapsCertificatePassword != null) configuration.setLdapsCertificatePassword(ldapsCertificatePassword);
 
         //log.debug("Allow anonymous access: "+allowAnonymousAccess);
         configuration.setAllowAnonymousAccess(allowAnonymousAccess);
+
+        configuration.setMaxThreads(maxThreads);
 
         // Configure working directory
         String workingDirectory = (home == null ? "" : home+File.separator)+"var"+File.separator+"data";
@@ -172,6 +175,7 @@ public class ApacheDSLDAPService extends LDAPService {
         }
 
         // Start ApacheDS synchronization thread
+/*
         Thread thread = new Thread() {
             public void run() {
                 try {
@@ -192,7 +196,7 @@ public class ApacheDSLDAPService extends LDAPService {
         };
 
         thread.start();
-
+*/
         setStatus(STARTED);
     }
 
@@ -208,7 +212,7 @@ public class ApacheDSLDAPService extends LDAPService {
         Hashtable env = new ShutdownConfiguration().toJndiEnvironment();
         env.put(Context.INITIAL_CONTEXT_FACTORY, CoreContextFactory.class.getName());
         env.put(Context.PROVIDER_URL, "ou=system");
-        env.put(Context.SECURITY_PRINCIPAL, penroseConfig.getRootUserConfig().getDn());
+        env.put(Context.SECURITY_PRINCIPAL, penroseConfig.getRootUserConfig().getDn().toString());
         env.put(Context.SECURITY_CREDENTIALS, penroseConfig.getRootUserConfig().getPassword());
         env.put(Context.SECURITY_AUTHENTICATION, "simple");
 
@@ -218,4 +222,5 @@ public class ApacheDSLDAPService extends LDAPService {
 
         log.warn("LDAP Service has been shutdown.");
     }
+
 }

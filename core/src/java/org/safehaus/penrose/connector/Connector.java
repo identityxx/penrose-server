@@ -398,7 +398,7 @@ public class Connector {
         Set addAttributes = new HashSet(newValues.getNames());
         addAttributes.removeAll(oldValues.getNames());
 
-        log.debug("Values to add:");
+        if (log.isDebugEnabled()) log.debug("Values to add:");
         for (Iterator i=addAttributes.iterator(); i.hasNext(); ) {
             String name = (String)i.next();
 
@@ -407,7 +407,7 @@ public class Connector {
 
             for (Iterator j = values.iterator(); j.hasNext(); ) {
                 Object value = j.next();
-                log.debug(" - "+name+": "+value);
+                if (log.isDebugEnabled()) log.debug(" - "+name+": "+value);
                 attribute.add(value);
             }
 
@@ -417,7 +417,7 @@ public class Connector {
         Set removeAttributes = new HashSet(oldValues.getNames());
         removeAttributes.removeAll(newValues.getNames());
 
-        log.debug("Values to remove:");
+        if (log.isDebugEnabled()) log.debug("Values to remove:");
         for (Iterator i=removeAttributes.iterator(); i.hasNext(); ) {
             String name = (String)i.next();
 
@@ -425,7 +425,7 @@ public class Connector {
             Attribute attribute = new BasicAttribute(name);
             for (Iterator j = values.iterator(); j.hasNext(); ) {
                 Object value = j.next();
-            	log.debug(" - "+name+": "+value);
+                if (log.isDebugEnabled()) log.debug(" - "+name+": "+value);
                 attribute.add(value);
             }
 
@@ -435,7 +435,7 @@ public class Connector {
         Set replaceAttributes = new HashSet(oldValues.getNames());
         replaceAttributes.retainAll(newValues.getNames());
 
-        log.debug("Values to replace:");
+        if (log.isDebugEnabled()) log.debug("Values to replace:");
         for (Iterator i=replaceAttributes.iterator(); i.hasNext(); ) {
             String name = (String)i.next();
             if (name.startsWith("primaryKey.")) continue;
@@ -444,7 +444,7 @@ public class Connector {
             Attribute attribute = new BasicAttribute(name);
             for (Iterator j = set.iterator(); j.hasNext(); ) {
                 Object value = j.next();
-                log.debug(" - "+name+": "+value);
+                if (log.isDebugEnabled()) log.debug(" - "+name+": "+value);
                 attribute.add(value);
             }
 

@@ -8,10 +8,10 @@ import org.slf4j.LoggerFactory;
 import org.safehaus.penrose.session.PenroseSession;
 import org.safehaus.penrose.session.PenroseSearchControls;
 import org.safehaus.penrose.session.PenroseSearchResults;
+import org.safehaus.penrose.entry.Entry;
 import org.safehaus.penrose.util.ExceptionUtil;
+import org.safehaus.penrose.util.EntryUtil;
 import org.ietf.ldap.LDAPException;
-
-import javax.naming.directory.SearchResult;
 
 /**
  * @author Endi S. Dewata
@@ -48,7 +48,7 @@ public class SearchHandler implements MessageHandler {
             penroseSession.search(baseDn, filter, sc, results);
 
             while (results.hasNext()) {
-                SearchResult entry = (SearchResult)results.next();
+                Entry entry = (Entry)results.next();
                 Response response = createEntry(request, entry);
                 session.write(response);
             }
@@ -70,10 +70,10 @@ public class SearchHandler implements MessageHandler {
         }
     }
 
-    public Response createEntry(SearchRequest request, SearchResult entry) throws Exception {
+    public Response createEntry(SearchRequest request, Entry entry) throws Exception {
         SearchResponseEntry response = new SearchResponseEntryImpl(request.getMessageId());
-        response.setObjectName(new PenroseDN(entry.getName()));
-        response.setAttributes(entry.getAttributes());
+        response.setObjectName(new PenroseDN(entry.getDn().toString()));
+        response.setAttributes(EntryUtil.getAttributes(entry));
         return response;
     }
 }
